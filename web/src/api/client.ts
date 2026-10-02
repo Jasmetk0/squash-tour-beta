@@ -2530,7 +2530,7 @@ export function getRunProspectTalentSummary(
 
 export function materializeRunProspects(
   runId: string,
-  payload: MaterializeRunProspectsRequest = {}
+  payload: MaterializeRunProspectsRequest
 ): Promise<MaterializeRunProspectsResponse> {
   return request(`/runs/${encodeURIComponent(runId)}/prospects/materialize-15yo-cohort`, { method: 'POST', body: JSON.stringify(payload) })
 }

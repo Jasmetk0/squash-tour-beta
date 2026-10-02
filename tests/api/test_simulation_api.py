@@ -10,6 +10,7 @@ import threading
 import time
 from pathlib import Path
 from urllib import error, request
+from urllib.parse import urlencode
 
 import uvicorn
 from sqlalchemy import create_engine, text
@@ -1552,6 +1553,25 @@ def test_next_match_and_round_are_allowed_until_finals_marker_is_persisted(tmp_p
         assert "finals phase has begun" in payload["detail"]
 
 
+def _reviewed_materialize(server: ApiServer, run_id: str, payload: dict[str, object]):
+    query_payload = {
+        key: value
+        for key, value in payload.items()
+        if key in {"base_annual_intake_target", "season_growth_rate", "country_code", "region"}
+    }
+    suffix = f"?{urlencode(query_payload)}" if query_payload else ""
+    status, preview = _request(
+        "GET",
+        f"{server.base_url}/runs/{run_id}/weekly-intake/cohort-season/preview{suffix}",
+    )
+    assert status == 200
+    return _request(
+        "POST",
+        f"{server.base_url}/runs/{run_id}/prospects/materialize-15yo-cohort",
+        payload | {"expected_review_fingerprint": preview["review_fingerprint"]},
+    )
+
+
 def _preview_totals(payload: dict[str, object]) -> tuple[int, int]:
     weeks = payload["weeks"]
     country_totals = payload["country_totals"]
@@ -1711,7 +1731,7 @@ def test_run_prospects_materialize_15yo_cohort_basic_idempotent_filter_and_zero(
         status, _ = _request("POST", f"{server.base_url}/runs", {"run_id": "run-materialize", "seed": 9090, "season": 2027})
         assert status == 201
 
-        status, payload = _request("POST", f"{server.base_url}/runs/run-materialize/prospects/materialize-15yo-cohort", {"base_annual_intake_target": 6})
+        status, payload = _reviewed_materialize(server, "run-materialize", {"base_annual_intake_target": 6})
         assert status == 200
         assert payload["run_id"] == "run-materialize"
         assert payload["world_id"] == "official_fax_world"
@@ -1761,7 +1781,7 @@ def test_run_prospects_materialize_15yo_cohort_basic_idempotent_filter_and_zero(
         assert sum(row["materialized_count"] for row in talent_summary["countries"]) == listed["total"]
         assert len(talent_summary["quality_policy_fingerprint"]) == 64
 
-        status, again = _request("POST", f"{server.base_url}/runs/run-materialize/prospects/materialize-15yo-cohort", {"base_annual_intake_target": 6})
+        status, again = _reviewed_materialize(server, "run-materialize", {"base_annual_intake_target": 6})
         assert status == 200
         assert again["created_count"] == 0
         assert again["skipped_count"] == payload["annual_target"]
@@ -1769,7 +1789,7 @@ def test_run_prospects_materialize_15yo_cohort_basic_idempotent_filter_and_zero(
 
         status, _ = _request("POST", f"{server.base_url}/runs", {"run_id": "run-materialize-filter", "seed": 9091, "season": 2027})
         assert status == 201
-        status, ger = _request("POST", f"{server.base_url}/runs/run-materialize-filter/prospects/materialize-15yo-cohort", {"base_annual_intake_target": 3, "country_code": "GER"})
+        status, ger = _reviewed_materialize(server, "run-materialize-filter", {"base_annual_intake_target": 3, "country_code": "GER"})
         assert status == 200
         assert ger["requested_prospect_count"] == ger["annual_target"]
         status, listed_ger = _request("GET", f"{server.base_url}/runs/run-materialize-filter/prospects?country_code=GER&limit=500")
@@ -1777,7 +1797,7 @@ def test_run_prospects_materialize_15yo_cohort_basic_idempotent_filter_and_zero(
         assert listed_ger["total"] >= 3
         assert {p["country_code"] for p in listed_ger["prospects"]} == {"GER"}
 
-        status, zero = _request("POST", f"{server.base_url}/runs/run-materialize/prospects/materialize-15yo-cohort", {"base_annual_intake_target": 0})
+        status, zero = _reviewed_materialize(server, "run-materialize", {"base_annual_intake_target": 0})
         assert status == 200
         assert zero["requested_prospect_count"] == 0
         assert zero["created_count"] == 0
@@ -1786,11 +1806,11 @@ def test_run_prospects_materialize_15yo_cohort_basic_idempotent_filter_and_zero(
 def test_run_prospects_materialize_15yo_cohort_conflict_overwrite_and_errors(tmp_path) -> None:
     database_url = f"sqlite:///{tmp_path / 'materialize-conflict.db'}"
     with ApiServer(database_url=database_url) as server:
-        status, missing = _request("POST", f"{server.base_url}/runs/missing/prospects/materialize-15yo-cohort", {"base_annual_intake_target": 1})
+        status, missing = _request("POST", f"{server.base_url}/runs/missing/prospects/materialize-15yo-cohort", {"base_annual_intake_target": 1, "expected_review_fingerprint": "0" * 64})
         assert status == 404
         status, _ = _request("POST", f"{server.base_url}/runs", {"run_id": "run-conflict", "seed": 9090, "season": 2027})
         assert status == 201
-        status, first = _request("POST", f"{server.base_url}/runs/run-conflict/prospects/materialize-15yo-cohort", {"base_annual_intake_target": 2, "country_code": "GER"})
+        status, first = _reviewed_materialize(server, "run-conflict", {"base_annual_intake_target": 2, "country_code": "GER"})
         assert status == 200
         assert first["created_count"] == first["annual_target"]
 
@@ -1799,26 +1819,22 @@ def test_run_prospects_materialize_15yo_cohort_conflict_overwrite_and_errors(tmp
         record = repository.list_run_prospects(run_id="run-conflict", country_code="GER", limit=None)[0]
         repository.upsert_run_prospects([RunProspectRecord(**(record.__dict__ | {"profile_json": {"tampered": True}}))])
 
-        status, conflict = _request("POST", f"{server.base_url}/runs/run-conflict/prospects/materialize-15yo-cohort", {"base_annual_intake_target": 2, "country_code": "GER"})
+        status, conflict = _reviewed_materialize(server, "run-conflict", {"base_annual_intake_target": 2, "country_code": "GER"})
         assert status == 409
         assert record.prospect_id in conflict["detail"]["conflicts"]
 
-        status, repaired = _request("POST", f"{server.base_url}/runs/run-conflict/prospects/materialize-15yo-cohort", {"base_annual_intake_target": 2, "country_code": "GER", "overwrite": True})
+        status, repaired = _reviewed_materialize(server, "run-conflict", {"base_annual_intake_target": 2, "country_code": "GER", "overwrite": True})
         assert status == 200
         assert repaired["conflict_count"] == 1
         assert repository.get_run_prospect(run_id="run-conflict", prospect_id=record.prospect_id).profile_json != {"tampered": True}
 
-        status, policy_conflict = _request(
-            "POST",
-            f"{server.base_url}/runs/run-conflict/prospects/materialize-15yo-cohort",
-            {"base_annual_intake_target": 4, "country_code": "GER"},
+        status, policy_conflict = _reviewed_materialize(
+            server, "run-conflict", {"base_annual_intake_target": 4, "country_code": "GER"}
         )
         assert status == 409
         assert policy_conflict["detail"]["conflicts"]
-        status, policy_overwrite = _request(
-            "POST",
-            f"{server.base_url}/runs/run-conflict/prospects/materialize-15yo-cohort",
-            {"base_annual_intake_target": 4, "country_code": "GER", "overwrite": True},
+        status, policy_overwrite = _reviewed_materialize(
+            server, "run-conflict", {"base_annual_intake_target": 4, "country_code": "GER", "overwrite": True}
         )
         assert status == 200
         assert policy_overwrite["conflict_count"] > 0
@@ -1830,5 +1846,73 @@ def test_run_prospects_materialize_15yo_cohort_conflict_overwrite_and_errors(tmp
 
         status, bad_season = _request("POST", f"{server.base_url}/runs", {"run_id": "run-before-materialize", "seed": 1, "season": 1999})
         assert status == 201
-        status, unsupported = _request("POST", f"{server.base_url}/runs/run-before-materialize/prospects/materialize-15yo-cohort", {"base_annual_intake_target": 1})
+        status, unsupported = _request("POST", f"{server.base_url}/runs/run-before-materialize/prospects/materialize-15yo-cohort", {"base_annual_intake_target": 1, "expected_review_fingerprint": "0" * 64})
         assert status == 422
+
+
+@pytest.mark.pr_critical
+def test_talent_intake_review_fingerprint_rejects_wrong_run_and_stale_inputs_without_writes(tmp_path) -> None:
+    database_url = f"sqlite:///{tmp_path / 'materialize-review-guard.db'}"
+    with ApiServer(database_url=database_url) as server:
+        assert _request("POST", f"{server.base_url}/runs", {"run_id": "review-a", "seed": 1, "season": 2027})[0] == 201
+        assert _request("POST", f"{server.base_url}/runs", {"run_id": "review-b", "seed": 2, "season": 2027})[0] == 201
+
+        status, reviewed_a = _request(
+            "GET",
+            f"{server.base_url}/runs/review-a/weekly-intake/cohort-season/preview?base_annual_intake_target=2&country_code=GER",
+        )
+        assert status == 200
+        fingerprint_a = reviewed_a["review_fingerprint"]
+        assert len(fingerprint_a) == 64
+
+        status, wrong_run = _request(
+            "POST",
+            f"{server.base_url}/runs/review-b/prospects/materialize-15yo-cohort",
+            {
+                "base_annual_intake_target": 2,
+                "country_code": "GER",
+                "expected_review_fingerprint": fingerprint_a,
+            },
+        )
+        assert status == 422
+        assert "stale" in wrong_run["detail"].lower() or "different run" in wrong_run["detail"].lower()
+
+        status, stale_inputs = _request(
+            "POST",
+            f"{server.base_url}/runs/review-a/prospects/materialize-15yo-cohort",
+            {
+                "base_annual_intake_target": 3,
+                "country_code": "GER",
+                "expected_review_fingerprint": fingerprint_a,
+            },
+        )
+        assert status == 422
+
+        engine = create_sqlite_engine(DatabaseSettings(url=database_url))
+        repository = SimulationPersistenceRepository(engine=engine, session_factory=create_session_factory(engine))
+        assert repository.count_run_prospects(run_id="review-a") == 0
+        assert repository.count_run_prospects(run_id="review-b") == 0
+
+        status, first = _request(
+            "POST",
+            f"{server.base_url}/runs/review-a/prospects/materialize-15yo-cohort",
+            {
+                "base_annual_intake_target": 2,
+                "country_code": "GER",
+                "expected_review_fingerprint": fingerprint_a,
+            },
+        )
+        assert status == 200
+        status, replay = _request(
+            "POST",
+            f"{server.base_url}/runs/review-a/prospects/materialize-15yo-cohort",
+            {
+                "base_annual_intake_target": 2,
+                "country_code": "GER",
+                "expected_review_fingerprint": fingerprint_a,
+            },
+        )
+        assert status == 200
+        assert first["created_count"] > 0
+        assert replay["created_count"] == 0
+        assert replay["already_materialized"] is True

@@ -10,7 +10,7 @@ export function TalentIntakePage(): JSX.Element {
   const [baseAnnualTarget, setBaseAnnualTarget] = useState(200)
   const [seasonGrowthRate, setSeasonGrowthRate] = useState(0.015)
   const [countryFilter, setCountryFilter] = useState('')
-  const [reviewConfirmed, setReviewConfirmed] = useState(false)
+  const [confirmedReviewFingerprint, setConfirmedReviewFingerprint] = useState<string | null>(null)
 
   const runId = (params.runId ?? runIdInput).trim()
   const previewQuery = useQuery({
@@ -44,15 +44,23 @@ export function TalentIntakePage(): JSX.Element {
   })
 
   const materializeMutation = useMutation({
-    mutationFn: () =>
-      materializeRunProspects(runId, {
-        base_annual_intake_target: baseAnnualTarget,
-        season_growth_rate: seasonGrowthRate,
-        overwrite: false
+    mutationFn: (reviewed: {
+      runId: string
+      baseAnnualTarget: number
+      seasonGrowthRate: number
+      reviewFingerprint: string
+    }) =>
+      materializeRunProspects(reviewed.runId, {
+        base_annual_intake_target: reviewed.baseAnnualTarget,
+        season_growth_rate: reviewed.seasonGrowthRate,
+        overwrite: false,
+        expected_review_fingerprint: reviewed.reviewFingerprint
       }),
-    onSuccess: () => {
-      void prospectsQuery.refetch()
-      void talentSummaryQuery.refetch()
+    onSuccess: (result) => {
+      if (result.run_id === runId) {
+        void prospectsQuery.refetch()
+        void talentSummaryQuery.refetch()
+      }
     }
   })
 
@@ -74,13 +82,13 @@ export function TalentIntakePage(): JSX.Element {
       <div className="page-intro">
         <h2>Talent Intake</h2>
         <p className="subtitle">
-          Read-only preview of the season&apos;s complete 15-year-old cohort before any concrete players are materialized.
+          Review the season&apos;s deterministic 15-year-old cohort, then explicitly confirm materialization of concrete prospects.
         </p>
       </div>
 
       <p>
-        The cohort contains players whose 15th birthday falls inside the selected Run season. Weekly timing and country allocation are deterministic
-        planning data only; this page does not create or persist players.
+        The cohort contains players whose 15th birthday falls inside the selected Run season. The preview itself is read-only; only the explicit
+        Review → Confirm action persists the reviewed prospect cohort.
       </p>
 
       <section className="panel nested-panel">
@@ -89,7 +97,15 @@ export function TalentIntakePage(): JSX.Element {
           {!params.runId ? (
             <label>
               Run ID
-              <input value={runIdInput} onChange={(event) => setRunIdInput(event.target.value)} placeholder="Run ID" />
+              <input
+                value={runIdInput}
+                onChange={(event) => {
+                  setRunIdInput(event.target.value)
+                  setConfirmedReviewFingerprint(null)
+                  materializeMutation.reset()
+                }}
+                placeholder="Run ID"
+              />
             </label>
           ) : null}
           <label>
@@ -100,7 +116,7 @@ export function TalentIntakePage(): JSX.Element {
               value={baseAnnualTarget}
               onChange={(event) => {
                 setBaseAnnualTarget(Math.max(0, Number(event.target.value)))
-                setReviewConfirmed(false)
+                setConfirmedReviewFingerprint(null)
                 materializeMutation.reset()
               }}
             />
@@ -115,7 +131,7 @@ export function TalentIntakePage(): JSX.Element {
               value={seasonGrowthRate}
               onChange={(event) => {
                 setSeasonGrowthRate(Math.min(0.1, Math.max(0, Number(event.target.value))))
-                setReviewConfirmed(false)
+                setConfirmedReviewFingerprint(null)
                 materializeMutation.reset()
               }}
             />
@@ -202,16 +218,29 @@ export function TalentIntakePage(): JSX.Element {
               <label>
                 <input
                   type="checkbox"
-                  checked={reviewConfirmed}
-                  onChange={(event) => setReviewConfirmed(event.target.checked)}
+                  checked={confirmedReviewFingerprint === previewQuery.data.review_fingerprint}
+                  onChange={(event) =>
+                    setConfirmedReviewFingerprint(event.target.checked ? previewQuery.data.review_fingerprint : null)
+                  }
                 />{' '}
                 I reviewed this cohort preview and want to materialize these 15-year-old prospects.
               </label>
               <div>
                 <button
                   type="button"
-                  disabled={!reviewConfirmed || materializeMutation.isPending}
-                  onClick={() => materializeMutation.mutate()}
+                  disabled={
+                    confirmedReviewFingerprint !== previewQuery.data.review_fingerprint ||
+                    materializeMutation.isPending
+                  }
+                  onClick={() => {
+                    if (confirmedReviewFingerprint !== previewQuery.data.review_fingerprint) return
+                    materializeMutation.mutate({
+                      runId: previewQuery.data.run_id,
+                      baseAnnualTarget: previewQuery.data.base_annual_intake_target,
+                      seasonGrowthRate: previewQuery.data.season_growth_rate,
+                      reviewFingerprint: previewQuery.data.review_fingerprint
+                    })
+                  }}
                 >
                   {materializeMutation.isPending ? 'Materializing…' : 'Confirm materialization'}
                 </button>
@@ -222,7 +251,7 @@ export function TalentIntakePage(): JSX.Element {
               {materializeMutation.isError ? (
                 <p className="error">Materialization failed: {formatApiError(materializeMutation.error)}</p>
               ) : null}
-              {materializeMutation.data ? (
+              {materializeMutation.data?.run_id === runId ? (
                 <div aria-label="Talent intake materialization result">
                   <p><strong>{materializeMutation.data.message}</strong></p>
                   <p>
@@ -243,8 +272,8 @@ export function TalentIntakePage(): JSX.Element {
       <section className="panel nested-panel">
         <h3>Expected vs Generated talent quality</h3>
         <p>
-          Expected values use the shared provisional rarity policy against the exact persisted 15-year-old cohort size. Generated values are derived
-          deterministically from each persisted prospect seed.
+          Expected values use the cohort&apos;s frozen historical rarity policy against the persisted cohort size. Generated values use each prospect&apos;s
+          stored quality result/provenance, so later default-policy changes cannot relabel old cohorts.
         </p>
         {talentSummaryQuery.isLoading ? <p className="status">Loading talent quality summary…</p> : null}
         {talentSummaryQuery.isError ? <p className="error">Talent summary unavailable: {formatApiError(talentSummaryQuery.error)}</p> : null}

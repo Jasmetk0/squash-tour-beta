@@ -13,10 +13,9 @@ from beta_engine.domain.players.prospect_sporting_profile import (
 )
 from beta_engine.domain.players.talent_models import TalentQualityBand
 from beta_engine.domain.players.talent_quality_policy import (
-    TALENT_QUALITY_POLICY_ID,
-    normalized_talent_quality_weights,
-    talent_quality_band_from_seed,
-    talent_quality_policy_fingerprint,
+    current_talent_quality_policy_snapshot,
+    resolve_persisted_talent_quality,
+    talent_quality_result_evidence,
 )
 from beta_engine.infrastructure.db import RunProspectRecord, SimulationPersistenceRepository, deterministic_prospect_id
 
@@ -100,6 +99,7 @@ class RunProspectMaterializationService:
         country_code: str | None = None,
         region: str | None = None,
         overwrite: bool = False,
+        expected_review_fingerprint: str | None = None,
     ) -> MaterializeRunProspectsResult:
         preview = self.preview_service.preview_season(
             run_id=run_id,
@@ -108,6 +108,10 @@ class RunProspectMaterializationService:
             country_code=country_code,
             region=region,
         )
+        if expected_review_fingerprint is None:
+            raise ValueError("expected_review_fingerprint is required; review the current cohort preview before confirming")
+        if expected_review_fingerprint != preview.review_fingerprint:
+            raise ValueError("Talent Intake preview is stale or belongs to a different Run/season/world/input scope; review again")
         expected = self._build_records(
             preview,
             country_code=country_code,
@@ -202,20 +206,29 @@ class RunProspectMaterializationService:
             limit=None,
         )
         records = [record for record in records if record.source_type == SOURCE_TYPE]
-        weights = normalized_talent_quality_weights()
-        weight_payload = {band.value: weight for band, weight in weights.items()}
         generated = {band.value: 0 for band in TalentQualityBand}
-        country_rows: dict[tuple[str, str | None], list[RunProspectRecord]] = {}
+        country_rows: dict[tuple[str, str | None], list[tuple[RunProspectRecord, TalentQualityBand]]] = {}
+        resolved_policy = None
         for record in records:
-            band = talent_quality_band_from_seed(record.potential_seed)
+            band, snapshot, _ = resolve_persisted_talent_quality(
+                potential_seed=record.potential_seed,
+                potential_json=record.potential_json,
+                cohort_policy_version=record.cohort_policy_version,
+                profile_version=record.profile_version,
+            )
+            if resolved_policy is None:
+                resolved_policy = snapshot
+            elif resolved_policy.fingerprint != snapshot.fingerprint:
+                raise ValueError("Materialized Talent Intake season contains multiple frozen quality policies; mixed-policy summary is not supported yet")
             generated[band.value] += 1
-            country_rows.setdefault((record.country_code, record.country_name), []).append(record)
+            country_rows.setdefault((record.country_code, record.country_name), []).append((record, band))
 
+        snapshot = resolved_policy or current_talent_quality_policy_snapshot()
+        weight_payload = dict(snapshot.normalized_weights)
         countries: list[MaterializedRunProspectTalentCountrySummary] = []
         for (country_code, country_name), country_records in sorted(country_rows.items()):
             country_generated = {band.value: 0 for band in TalentQualityBand}
-            for record in country_records:
-                band = talent_quality_band_from_seed(record.potential_seed)
+            for _, band in country_records:
                 country_generated[band.value] += 1
             countries.append(
                 MaterializedRunProspectTalentCountrySummary(
@@ -223,7 +236,7 @@ class RunProspectMaterializationService:
                     country_name=country_name,
                     materialized_count=len(country_records),
                     expected_band_counts={
-                        band.value: round(len(country_records) * weights[band], 4)
+                        band.value: round(len(country_records) * weight_payload[band.value], 4)
                         for band in TalentQualityBand
                     },
                     generated_band_counts=country_generated,
@@ -234,11 +247,11 @@ class RunProspectMaterializationService:
             run_id=run_id,
             season_start_year=target_season,
             total_materialized=len(records),
-            quality_policy_id=TALENT_QUALITY_POLICY_ID,
-            quality_policy_fingerprint=talent_quality_policy_fingerprint(),
+            quality_policy_id=snapshot.policy_id,
+            quality_policy_fingerprint=snapshot.fingerprint,
             quality_weights=weight_payload,
             expected_band_counts={
-                band.value: round(len(records) * weights[band], 4)
+                band.value: round(len(records) * weight_payload[band.value], 4)
                 for band in TalentQualityBand
             },
             generated_band_counts=generated,
@@ -258,6 +271,7 @@ class RunProspectMaterializationService:
             country_code=country_code,
             region=region,
         )
+        quality_policy = current_talent_quality_policy_snapshot()
         for week in preview.weeks:
             for allocation in week.allocations:
                 for local_sequence in range(1, allocation.allocated_count + 1):
@@ -302,6 +316,7 @@ class RunProspectMaterializationService:
                         potential_json={
                             "schema_version": PROFILE_VERSION,
                             "profile_version": PROFILE_VERSION,
+                            "talent_quality": talent_quality_result_evidence(seeds["potential"], quality_policy),
                             "potential_ovr": sporting_profile.potential_ovr,
                             "potential_identity": sporting_profile.potential_identity,
                             "potential_provenance": sporting_profile.potential_provenance,

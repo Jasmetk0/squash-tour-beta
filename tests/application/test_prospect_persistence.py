@@ -172,13 +172,26 @@ def _materialization_service(repository: SimulationPersistenceRepository) -> Run
     return RunProspectMaterializationService(repository=repository, preview_service=preview)
 
 
+def _materialize(service: RunProspectMaterializationService, **kwargs):
+    preview_kwargs = {
+        key: value
+        for key, value in kwargs.items()
+        if key in {"run_id", "base_annual_intake_target", "season_growth_rate", "country_code", "region"}
+    }
+    preview = service.preview_service.preview_season(**preview_kwargs)
+    return service.materialize_15yo_cohort(
+        **kwargs,
+        expected_review_fingerprint=preview.review_fingerprint,
+    )
+
+
 @pytest.mark.pr_critical
 def test_materialize_15yo_cohort_generates_deterministic_records_and_canonical_profiles(tmp_path):
     repository, _ = _repository(tmp_path)
     repository.upsert_simulation_run(SimulationRunInfo(run_id="run-m", season=2027, seed=1))
     service = _materialization_service(repository)
 
-    result = service.materialize_15yo_cohort(run_id="run-m", base_annual_intake_target=4, country_code="GER")
+    result = _materialize(service, run_id="run-m", base_annual_intake_target=4, country_code="GER")
 
     assert result.requested_prospect_count == result.annual_target
     assert result.created_count == result.annual_target
@@ -208,6 +221,8 @@ def test_materialize_15yo_cohort_generates_deterministic_records_and_canonical_p
     assert first.profile_seed not in json.dumps(first.profile_json, sort_keys=True)
     assert first.profile_json["materialization_policy"]["sporting_profile_policy_id"]
     assert first.profile_json["materialization_policy"]["sporting_profile_policy_fingerprint"]
+    assert first.potential_json["talent_quality"]["policy_fingerprint"]
+    assert first.potential_json["talent_quality"]["result_fingerprint"]
 
     expected_band = talent_quality_band_from_seed(first.potential_seed)
     summary = service.summarize_materialized_talent(
@@ -233,8 +248,8 @@ def test_materialize_15yo_cohort_is_idempotent_and_detects_conflicts(tmp_path):
     repository.upsert_simulation_run(SimulationRunInfo(run_id="run-i", season=2027, seed=1))
     service = _materialization_service(repository)
 
-    first = service.materialize_15yo_cohort(run_id="run-i", base_annual_intake_target=2, country_code="GER")
-    second = service.materialize_15yo_cohort(run_id="run-i", base_annual_intake_target=2, country_code="GER")
+    first = _materialize(service, run_id="run-i", base_annual_intake_target=2, country_code="GER")
+    second = _materialize(service, run_id="run-i", base_annual_intake_target=2, country_code="GER")
     assert first.created_count == first.annual_target
     assert second.created_count == 0
     assert second.skipped_count == first.annual_target
@@ -243,12 +258,12 @@ def test_materialize_15yo_cohort_is_idempotent_and_detects_conflicts(tmp_path):
     record = repository.list_run_prospects(run_id="run-i", country_code="GER", limit=None)[0]
     repository.upsert_run_prospects([RunProspectRecord(**(record.__dict__ | {"display_name": "Tampered Prospect"}))])
     try:
-        service.materialize_15yo_cohort(run_id="run-i", base_annual_intake_target=2, country_code="GER")
+        _materialize(service, run_id="run-i", base_annual_intake_target=2, country_code="GER")
     except RunProspectMaterializationConflictError as exc:
         assert exc.conflicts == [record.prospect_id]
     else:
         raise AssertionError("expected conflict")
-    repaired = service.materialize_15yo_cohort(run_id="run-i", base_annual_intake_target=2, country_code="GER", overwrite=True)
+    repaired = _materialize(service, run_id="run-i", base_annual_intake_target=2, country_code="GER", overwrite=True)
     assert repaired.conflict_count == 1
     assert repository.get_run_prospect(run_id="run-i", prospect_id=record.prospect_id).display_name != "Tampered Prospect"
 
@@ -259,7 +274,7 @@ def test_materialization_overwrite_cannot_rewrite_activated_prospect(tmp_path):
         SimulationRunInfo(run_id="run-activated", season=2027, seed=1)
     )
     service = _materialization_service(repository)
-    service.materialize_15yo_cohort(
+    _materialize(service, 
         run_id="run-activated",
         base_annual_intake_target=2,
         country_code="GER",
@@ -286,7 +301,7 @@ def test_materialization_overwrite_cannot_rewrite_activated_prospect(tmp_path):
         )
 
     with pytest.raises(RunProspectMaterializationConflictError) as exc:
-        service.materialize_15yo_cohort(
+        _materialize(service, 
             run_id="run-activated",
             base_annual_intake_target=2,
             country_code="GER",
@@ -307,12 +322,12 @@ def test_materialization_policy_conflict_removes_only_stale_scope_records_on_ove
     repository.upsert_simulation_run(SimulationRunInfo(run_id="run-policy", season=2027, seed=1))
     service = _materialization_service(repository)
 
-    service.materialize_15yo_cohort(
+    _materialize(service, 
         run_id="run-policy",
         base_annual_intake_target=2,
         country_code="GER",
     )
-    unrelated = service.materialize_15yo_cohort(
+    unrelated = _materialize(service, 
         run_id="run-policy",
         base_annual_intake_target=2,
         country_code="BOG",
@@ -326,7 +341,7 @@ def test_materialization_policy_conflict_removes_only_stale_scope_records_on_ove
     repository.upsert_run_prospects([future_season_record])
 
     try:
-        service.materialize_15yo_cohort(
+        _materialize(service, 
             run_id="run-policy",
             base_annual_intake_target=4,
             country_code="GER",
@@ -336,7 +351,7 @@ def test_materialization_policy_conflict_removes_only_stale_scope_records_on_ove
     else:
         raise AssertionError("expected policy scope conflict")
 
-    overwritten = service.materialize_15yo_cohort(
+    overwritten = _materialize(service, 
         run_id="run-policy",
         base_annual_intake_target=4,
         country_code="GER",
@@ -369,7 +384,7 @@ def test_materialized_talent_summary_is_stable_and_preserves_global_rarity_autho
         SimulationRunInfo(run_id="run-band-summary", season=2027, seed=7)
     )
     service = _materialization_service(repository)
-    service.materialize_15yo_cohort(
+    _materialize(service, 
         run_id="run-band-summary",
         base_annual_intake_target=120,
     )
@@ -387,3 +402,71 @@ def test_materialized_talent_summary_is_stable_and_preserves_global_rarity_autho
         sum(country.generated_band_counts.values()) == country.materialized_count
         for country in first.countries
     )
+
+
+@pytest.mark.pr_critical
+def test_materialized_quality_history_does_not_drift_when_current_defaults_change(tmp_path, monkeypatch):
+    from beta_engine.domain.players import talent_quality_policy as policy_module
+
+    repository, _ = _repository(tmp_path)
+    repository.upsert_simulation_run(SimulationRunInfo(run_id="run-history", season=2027, seed=1))
+    service = _materialization_service(repository)
+    _materialize(service, run_id="run-history", base_annual_intake_target=12, country_code="GER")
+
+    before_records = repository.list_run_prospects(run_id="run-history", season_start_year=2027, limit=None)
+    before_bands = [
+        policy_module.resolve_persisted_talent_quality(
+            potential_seed=record.potential_seed,
+            potential_json=record.potential_json,
+            cohort_policy_version=record.cohort_policy_version,
+            profile_version=record.profile_version,
+        )[0].value
+        for record in before_records
+    ]
+    before_summary = service.summarize_materialized_talent(run_id="run-history", season_start_year=2027)
+
+    monkeypatch.setattr(
+        policy_module,
+        "PROVISIONAL_TALENT_QUALITY_WEIGHTS",
+        {
+            band: (1.0 if band.value == "generational_talent" else 0.0)
+            for band in TalentQualityBand
+        },
+    )
+
+    after_records = repository.list_run_prospects(run_id="run-history", season_start_year=2027, limit=None)
+    after_bands = [
+        policy_module.resolve_persisted_talent_quality(
+            potential_seed=record.potential_seed,
+            potential_json=record.potential_json,
+            cohort_policy_version=record.cohort_policy_version,
+            profile_version=record.profile_version,
+        )[0].value
+        for record in after_records
+    ]
+    after_summary = service.summarize_materialized_talent(run_id="run-history", season_start_year=2027)
+
+    assert after_bands == before_bands
+    assert after_summary.quality_policy_fingerprint == before_summary.quality_policy_fingerprint
+    assert after_summary.quality_weights == before_summary.quality_weights
+    assert after_summary.generated_band_counts == before_summary.generated_band_counts
+
+
+@pytest.mark.pr_critical
+def test_materialization_rejects_stale_review_before_any_write(tmp_path):
+    repository, _ = _repository(tmp_path)
+    repository.upsert_simulation_run(SimulationRunInfo(run_id="run-stale", season=2027, seed=1))
+    service = _materialization_service(repository)
+    reviewed = service.preview_service.preview_season(
+        run_id="run-stale", base_annual_intake_target=2, country_code="GER"
+    )
+
+    with pytest.raises(ValueError, match="stale|different Run"):
+        service.materialize_15yo_cohort(
+            run_id="run-stale",
+            base_annual_intake_target=3,
+            country_code="GER",
+            expected_review_fingerprint=reviewed.review_fingerprint,
+        )
+
+    assert repository.count_run_prospects(run_id="run-stale") == 0

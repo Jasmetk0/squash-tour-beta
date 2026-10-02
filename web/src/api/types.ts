@@ -2626,6 +2626,7 @@ export type MaterializeRunProspectsRequest = {
   country_code?: string | null
   region?: string | null
   overwrite?: boolean
+  expected_review_fingerprint: string
 }
 
 export type MaterializeRunProspectsCountryTotal = {
@@ -3951,6 +3952,7 @@ export type RunWeeklyIntakeCohortSeasonPreviewResponse = {
   season_variation_multiplier: number
   annual_target: number
   total_weekly_target: number
+  review_fingerprint: string
   weeks: RunWeeklyIntakeCohortSeasonWeek[]
   country_totals: RunWeeklyIntakeCohortCountryTotal[]
 }

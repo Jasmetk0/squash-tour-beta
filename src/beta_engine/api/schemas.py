@@ -627,6 +627,7 @@ class MaterializeRunProspectsRequest(BaseModel):
     country_code: str | None = None
     region: str | None = None
     overwrite: bool = False
+    expected_review_fingerprint: str = Field(min_length=64, max_length=64)
 
 
 class MaterializeRunProspectsCountryTotalResponse(BaseModel):
@@ -699,6 +700,7 @@ class RunWeeklyIntakeCohortSeasonPreviewResponse(BaseModel):
     season_variation_multiplier: float
     annual_target: int
     total_weekly_target: int
+    review_fingerprint: str
     weeks: list[RunWeeklyIntakeCohortSeasonWeekResponse] = Field(default_factory=list)
     country_totals: list[RunWeeklyIntakeCohortCountryTotalResponse] = Field(default_factory=list)
 

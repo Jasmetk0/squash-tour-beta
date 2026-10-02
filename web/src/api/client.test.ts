@@ -1043,11 +1043,11 @@ describe('world package registry client', () => {
     }
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify(responseBody), { status: 200 }))
 
-    const result = await materializeRunProspects('run/a', { base_annual_intake_target: 3, country_code: 'GER', overwrite: true })
+    const result = await materializeRunProspects('run/a', { base_annual_intake_target: 3, country_code: 'GER', overwrite: true, expected_review_fingerprint: 'a'.repeat(64) })
 
     expect(globalThis.fetch).toHaveBeenCalledWith(
       'http://127.0.0.1:8000/runs/run%2Fa/prospects/materialize-15yo-cohort',
-      expect.objectContaining({ method: 'POST', body: JSON.stringify({ base_annual_intake_target: 3, country_code: 'GER', overwrite: true }) })
+      expect.objectContaining({ method: 'POST', body: JSON.stringify({ base_annual_intake_target: 3, country_code: 'GER', overwrite: true, expected_review_fingerprint: 'a'.repeat(64) }) })
     )
     expect(result).toEqual(responseBody)
   })

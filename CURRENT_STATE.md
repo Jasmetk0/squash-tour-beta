@@ -3,16 +3,10 @@
 ## Current checkpoint — 2 October 2026 / Master v70
 
 This checkpoint supersedes older next-task notices below; their implementation evidence is retained.
-Audited `buuk`: `aceb144d79924a985ada34b9eefaec53f548cf1c` after #1093. All 19 new PRs
+Audited baseline `buuk`: `c42dc06ba73c86ffd4c64b2ce1d38e9944beab09` after #1094. All 19 new PRs
 #1075–1093 are merged. #1089 had red final-head CI; #1090 repaired it, and #1093's final-head
 Fast CI is green. See [the full audit](docs/PRE_ALPHA_CHECKPOINT_2026_10_02.md) for evidence
 and limitations. No full local release acceptance was run at this checkpoint.
-
-**Next Codex task:** [freeze Talent Intake history and reviewed scope](docs/CODEX_NEXT_TALENT_INTAKE_HISTORY_V1.md).
-Read-time quality derivation currently uses mutable global defaults, and review confirmation
-can survive a target Run change. Freeze historical policy/result provenance, bind the
-reviewed input and target on the server, invalidate stale UI review, and preserve recovery.
-Verify actual Product Run/Branch ownership instead of assuming the legacy simulation Run is identical.
 
 Remaining diagnostics: true pre-generation expected output including zero-output countries,
 explicit effective potential floor, and safe future-cohort visibility. Viewer hidden-field
@@ -20,6 +14,32 @@ projection also needs a visibility audit; additional Viewer expansion is not the
 Master v70 preserves calibration as open test work and sets the FAX acceptance reference to a
 copied template, at least 1,000 initial players and 80 fully simulated World Tour Editions;
 lower Tours remain abstract. The Official Run is not the acceptance focus.
+
+## Implemented — Talent Intake historical policy + reviewed-scope safety
+
+- Newly materialized prospects persist a frozen quality-policy snapshot, deterministic quality
+  result and integrity fingerprint in the existing Run-scoped prospect record. Reads and
+  Expected-vs-Generated summaries resolve that frozen evidence instead of current mutable defaults.
+- Existing v1 prospects without the new provenance retain an explicit compatibility derivation
+  against the immutable known v1 weights; unknown legacy versions fail closed rather than being
+  silently reclassified.
+- Season preview now returns a SHA-256 review fingerprint over the exact legacy SimulationRun,
+  locked world identity, season, intake controls, complete weekly allocations and country totals.
+  Confirm must supply that exact fingerprint; the server recomputes preview before any write and
+  rejects stale/wrong-Run/wrong-season/wrong-input confirmation.
+- Admin confirmation is fingerprint-bound rather than boolean-bound. Changing Run or intake
+  controls invalidates confirmation, and mutation variables are captured from the reviewed preview
+  so a late response from an earlier Run cannot redirect the write.
+- Saved Revision compatibility is preserved through the existing `run_prospect_source_snapshot.v1`
+  because it already captures the complete prospect JSON, including the new frozen provenance.
+  Historical restore continues to validate the shared Run-scoped catalog rather than rewriting it.
+- Ownership audit: this Talent Intake endpoint is still scoped to the legacy `SimulationRun`.
+  Product Branches carry an explicit `legacy_simulation_run_id`; similar names are not ownership
+  evidence. Legacy namespace cloning deliberately remains blocked when `run_prospects` exist, so
+  prospect-bearing Branch fork remap remains a separate fail-closed gap.
+
+**Next:** finish the remaining Talent Intake diagnostics (forecast vs realized, effective potential
+floor and future-cohort visibility) before starting the global Match/Tournament Lab.
 
 ## Implemented — Talent Calibration Lab V3 Multi-seed Robustness
 

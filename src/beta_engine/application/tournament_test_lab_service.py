@@ -1657,6 +1657,57 @@ def _built_ins() -> tuple[BuiltInTournamentLabScenario, ...]:
         match_seed=7003,
         assertions=TournamentLabAssertions(expected_played_match_count=13),
     )
+    group_participants = tuple(
+        _lab_participant(f"TLG-P{index}", 100 - index * 5)
+        for index in range(1, 9)
+    )
+    group_seed_placements = (
+        TournamentGroupSeedPlacement(seed_number=1, group_index=1, slot_index=1),
+        TournamentGroupSeedPlacement(seed_number=2, group_index=2, slot_index=1),
+        TournamentGroupSeedPlacement(seed_number=3, group_index=2, slot_index=2),
+        TournamentGroupSeedPlacement(seed_number=4, group_index=1, slot_index=2),
+    )
+    pure_groups = TournamentLabScenario(
+        scenario_id="two-groups-of-four",
+        display_name="2 groups × 4 players",
+        format_kind="groups",
+        participants=group_participants,
+        main_draw_size=8,
+        group_count=2,
+        group_size=4,
+        seeded_slots_per_group=2,
+        group_seed_placements=group_seed_placements,
+        group_match_best_of=5,
+        topology_seed=20261005,
+        seed_order_player_ids=tuple(item.player.player_id for item in group_participants),
+        draw_seed=20261005,
+        match_seed=7004,
+        match_format=TournamentLabMatchFormat(upset_variance=0.0),
+        assertions=TournamentLabAssertions(expected_played_match_count=12),
+    )
+    hybrid = pure_groups.model_copy(
+        update={
+            "scenario_id": "two-groups-to-four-player-knockout",
+            "display_name": "2 groups × 4 → 4-player knockout",
+            "format_kind": "groups_knockout",
+            "advancing_per_group": 2,
+            "knockout_crossings": (
+                TournamentGroupCrossingMatch(
+                    match_index=1,
+                    top={"group_index": 1, "finishing_position": 1},
+                    bottom={"group_index": 2, "finishing_position": 2},
+                ),
+                TournamentGroupCrossingMatch(
+                    match_index=2,
+                    top={"group_index": 2, "finishing_position": 1},
+                    bottom={"group_index": 1, "finishing_position": 2},
+                ),
+            ),
+            "topology_seed": 20261006,
+            "match_seed": 7005,
+            "assertions": TournamentLabAssertions(expected_played_match_count=15),
+        }
+    )
     definitions = (
         (
             scenario,
@@ -1669,6 +1720,14 @@ def _built_ins() -> tuple[BuiltInTournamentLabScenario, ...]:
         (
             qualification,
             "Two equal canonical Q sections resolve Q1/Q2 before the shared 8-player Main Draw.",
+        ),
+        (
+            pure_groups,
+            "Two equal round-robin groups using shared topology, schedule and standings authorities.",
+        ),
+        (
+            hybrid,
+            "Two round-robin groups feeding explicit A1/B2 and B1/A2 configured crossings into a shared hybrid knockout bracket.",
         ),
     )
     return tuple(

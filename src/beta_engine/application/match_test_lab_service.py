@@ -6,13 +6,15 @@ from collections import Counter
 from hashlib import sha256
 import json
 from statistics import mean
-from typing import Literal
+from typing import Callable, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, computed_field, model_validator
 
 from beta_engine.core import DeterministicRng
 from beta_engine.domain.matches.match_engine import MatchEngine
-from beta_engine.domain.matches.models import MatchContext, MatchResult
+from beta_engine.domain.matches.models import MatchContext, MatchParticipantContext, MatchResult
+from beta_engine.domain.players import HiddenCareerTraits, Player
+from beta_engine.infrastructure.db.models import MatchLabSessionModel
 
 
 MATCH_LAB_SCHEMA_VERSION = "match_test_lab_scenario.v1"
@@ -114,8 +116,287 @@ class MatchLabResult(BaseModel):
     diagnostics: MatchLabBatchDiagnostics
 
 
+
+class BuiltInMatchLabScenario(BaseModel):
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    scenario_id: str
+    display_name: str
+    description: str
+    read_only: Literal[True] = True
+    scenario_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    scenario: MatchLabScenario
+
+
+class MatchLabSession(BaseModel):
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    schema_version: Literal["match_test_lab_session.v1"] = "match_test_lab_session.v1"
+    session_id: str = Field(min_length=1, max_length=128)
+    display_name: str = Field(min_length=1, max_length=160)
+    version: int = Field(ge=1)
+    scenario: MatchLabScenario
+
+    @property
+    def fingerprint(self) -> str:
+        return _fingerprint(
+            {
+                "schema_version": self.schema_version,
+                "session_id": self.session_id,
+                "display_name": self.display_name,
+                "version": self.version,
+                "scenario": self.scenario.model_dump(mode="json"),
+            }
+        )
+
+    @computed_field
+    @property
+    def session_fingerprint(self) -> str:
+        return self.fingerprint
+
+
+class MatchLabSessionCreateRequest(BaseModel):
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    display_name: str = Field(min_length=1, max_length=160)
+    scenario: MatchLabScenario | None = None
+    built_in_scenario_id: str | None = Field(default=None, min_length=1, max_length=160)
+
+    @model_validator(mode="after")
+    def exactly_one_source(self):
+        if (self.scenario is None) == (self.built_in_scenario_id is None):
+            raise ValueError("provide exactly one of scenario or built_in_scenario_id")
+        return self
+
+
+class MatchLabSessionUpdateRequest(BaseModel):
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    expected_session_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    display_name: str | None = Field(default=None, min_length=1, max_length=160)
+    scenario: MatchLabScenario
+
+
+class MatchLabSessionRunRequest(BaseModel):
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    expected_session_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    batch_seeds: tuple[int, ...] = ()
+
+    @model_validator(mode="after")
+    def validate_batch(self):
+        if len(self.batch_seeds) > MAX_BATCH_SEEDS:
+            raise ValueError(f"batch_seeds must contain at most {MAX_BATCH_SEEDS} seeds")
+        if len(set(self.batch_seeds)) != len(self.batch_seeds):
+            raise ValueError("batch_seeds must not contain duplicates")
+        return self
+
+
+def _lab_player(player_id: str, base: int) -> Player:
+    return Player(
+        player_id=player_id,
+        name=player_id,
+        age=27,
+        nationality="TST",
+        technique=base,
+        movement=base,
+        physical=base,
+        mental=base,
+        consistency=base,
+        clutch=base,
+        recovery=base,
+        play_style="tempo-controller",
+        archetype="all-court tactician",
+        hidden_career_traits=HiddenCareerTraits(
+            potential_ceiling=90,
+            growth_curve="balanced",
+            professionalism=0.7,
+            ambition=0.7,
+            travel_tolerance=0.7,
+            schedule_aggression=0.6,
+            injury_proneness=0.2,
+            resilience=0.8,
+        ),
+    )
+
+
+def _built_in_scenarios() -> tuple[BuiltInMatchLabScenario, ...]:
+    definitions = (
+        (
+            "standard-even-match",
+            "Standard even match",
+            "Two evenly rated players under the normal BO5-to-11-win-by-2 format.",
+            84,
+            84,
+            777,
+        ),
+        (
+            "standard-strength-gap",
+            "Standard strength-gap match",
+            "Normal match format with a visible ability gap for deterministic batch diagnostics.",
+            90,
+            70,
+            2026,
+        ),
+    )
+    rows = []
+    for scenario_id, name, description, base_a, base_b, seed in definitions:
+        baseline = MatchLabScenario(
+            scenario_id=scenario_id,
+            context=MatchContext(
+                match_id=f"built-in:{scenario_id}",
+                player_a=MatchParticipantContext(player=_lab_player(f"{scenario_id}:A", base_a)),
+                player_b=MatchParticipantContext(player=_lab_player(f"{scenario_id}:B", base_b)),
+            ),
+            seed=seed,
+            source_kind="portable",
+        )
+        rows.append(
+            BuiltInMatchLabScenario(
+                scenario_id=scenario_id,
+                display_name=name,
+                description=description,
+                scenario_fingerprint=baseline.fingerprint,
+                scenario=baseline,
+            )
+        )
+    return tuple(rows)
+
+
+BUILT_IN_MATCH_LAB_SCENARIOS = _built_in_scenarios()
+BUILT_IN_MATCH_LAB_BY_ID = {row.scenario_id: row for row in BUILT_IN_MATCH_LAB_SCENARIOS}
+
+
 class MatchTestLabService:
-    """Runs portable scenarios without persistence using the real MatchEngine."""
+    """Runs portable scenarios and owns isolated editable Lab sessions."""
+
+    def __init__(
+        self,
+        session_factory=None,
+        id_factory: Callable[[str], str] | None = None,
+    ):
+        self._session_factory = session_factory
+        self._id_factory = id_factory
+
+    def list_built_in_scenarios(self) -> tuple[BuiltInMatchLabScenario, ...]:
+        return BUILT_IN_MATCH_LAB_SCENARIOS
+
+    def _require_persistence(self):
+        if self._session_factory is None or self._id_factory is None:
+            raise RuntimeError("Match Lab session persistence is not configured")
+
+    @staticmethod
+    def _load_session_row(row: MatchLabSessionModel) -> MatchLabSession:
+        stored = MatchLabSession.model_validate_json(row.payload_json)
+        if (
+            stored.session_id != row.session_id
+            or stored.display_name != row.display_name
+            or stored.version != row.version
+            or stored.fingerprint != row.fingerprint
+            or stored.scenario.source_kind != row.source_kind
+            or stored.scenario.source_reference != row.source_reference
+            or stored.scenario.source_fingerprint != row.source_fingerprint
+        ):
+            raise ValueError("Match Lab session persistence fingerprint mismatch")
+        return stored
+
+    @staticmethod
+    def _persist_session(session, item: MatchLabSession) -> None:
+        row = session.get(MatchLabSessionModel, item.session_id)
+        values = dict(
+            display_name=item.display_name,
+            version=item.version,
+            fingerprint=item.fingerprint,
+            source_kind=item.scenario.source_kind,
+            source_reference=item.scenario.source_reference,
+            source_fingerprint=item.scenario.source_fingerprint,
+            payload_json=item.model_dump_json(exclude={"session_fingerprint"}),
+        )
+        if row is None:
+            session.add(MatchLabSessionModel(session_id=item.session_id, **values))
+        else:
+            for key, value in values.items():
+                setattr(row, key, value)
+        session.flush()
+
+    def list_sessions(self) -> tuple[MatchLabSession, ...]:
+        self._require_persistence()
+        from sqlalchemy import select
+
+        with self._session_factory() as session:
+            rows = session.scalars(
+                select(MatchLabSessionModel).order_by(MatchLabSessionModel.display_name, MatchLabSessionModel.session_id)
+            ).all()
+            return tuple(self._load_session_row(row) for row in rows)
+
+    def get_session(self, session_id: str) -> MatchLabSession:
+        self._require_persistence()
+        with self._session_factory() as session:
+            row = session.get(MatchLabSessionModel, session_id)
+            if row is None:
+                raise KeyError("Match Lab session was not found")
+            return self._load_session_row(row)
+
+    def create_session(self, request: MatchLabSessionCreateRequest) -> MatchLabSession:
+        self._require_persistence()
+        from sqlalchemy import text
+
+        if request.built_in_scenario_id is not None:
+            built_in = BUILT_IN_MATCH_LAB_BY_ID.get(request.built_in_scenario_id)
+            if built_in is None:
+                raise KeyError("Built-in Match Lab scenario was not found")
+            scenario = built_in.scenario.model_copy(
+                update={
+                    "scenario_id": f"session-copy:{built_in.scenario_id}",
+                    "source_kind": "built_in_copy",
+                    "source_reference": built_in.scenario_id,
+                    "source_fingerprint": built_in.scenario_fingerprint,
+                }
+            )
+        else:
+            assert request.scenario is not None
+            scenario = request.scenario
+
+        session_id = self._id_factory("match-lab-session")
+        item = MatchLabSession(
+            session_id=session_id,
+            display_name=request.display_name,
+            version=1,
+            scenario=scenario,
+        )
+        with self._session_factory.begin() as session:
+            session.execute(text("BEGIN IMMEDIATE"))
+            if session.get(MatchLabSessionModel, session_id) is not None:
+                raise ValueError("generated Match Lab session identity already exists")
+            self._persist_session(session, item)
+        return item
+
+    def update_session(self, session_id: str, request: MatchLabSessionUpdateRequest) -> MatchLabSession:
+        self._require_persistence()
+        from sqlalchemy import text
+
+        with self._session_factory.begin() as session:
+            session.execute(text("BEGIN IMMEDIATE"))
+            row = session.get(MatchLabSessionModel, session_id)
+            if row is None:
+                raise KeyError("Match Lab session was not found")
+            current = self._load_session_row(row)
+            if current.fingerprint != request.expected_session_fingerprint:
+                raise ValueError("Match Lab session changed since it was reviewed")
+            updated = MatchLabSession(
+                session_id=current.session_id,
+                display_name=request.display_name or current.display_name,
+                version=current.version + 1,
+                scenario=request.scenario,
+            )
+            self._persist_session(session, updated)
+            return updated
+
+    def run_session(self, session_id: str, request: MatchLabSessionRunRequest) -> MatchLabResult:
+        current = self.get_session(session_id)
+        if current.fingerprint != request.expected_session_fingerprint:
+            raise ValueError("Match Lab session changed since it was reviewed")
+        return self.run(MatchLabRequest(scenario=current.scenario, batch_seeds=request.batch_seeds))
 
     def run(self, request: MatchLabRequest) -> MatchLabResult:
         scenario = request.scenario

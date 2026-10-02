@@ -15,6 +15,29 @@ Master v70 preserves calibration as open test work and sets the FAX acceptance r
 copied template, at least 1,000 initial players and 80 fully simulated World Tour Editions;
 lower Tours remain abstract. The Official Run is not the acceptance focus.
 
+## Implemented — Global Match Test Lab V2 isolated Test Sessions
+
+- Added deterministic read-only built-in Match Lab baselines and an explicit `New Test Session`
+  copy workflow. Built-ins cannot be edited in place.
+- A Test Session is a new global `match_test_lab_session.v1` persistence object with its own
+  generated identity, display name, version, copied scenario and reviewed session fingerprint.
+  It deliberately has no `run_id` or `branch_id`, so it is outside Saved Revision, restore,
+  fork and Candidate Branch ownership.
+- Copies from a built-in freeze `built_in_copy` provenance with the exact source scenario
+  fingerprint. Editing the session cannot mutate or live-link back to the built-in baseline.
+- Save and Run require the exact current session fingerprint. Stale editor state is rejected,
+  and persisted metadata/payload fingerprint mismatches fail closed.
+- The Admin Match Test Lab now lists built-ins, creates isolated Test Sessions, reopens them,
+  edits/saves versioned copies and runs those copies through the same production
+  `MatchEngine.simulate` kernel and V1 batch diagnostics.
+- The stateless portable scratch endpoint remains available.
+
+See [Match Test Lab V2](docs/MATCH_TEST_LAB_V2.md).
+
+**Next:** add verified historical Run/Saved Revision player-snapshot import into an isolated
+session, then begin Tournament Test Lab composition. Do not start copied-FAX season acceptance
+in parallel.
+
 ## Implemented — Global Match Test Lab V1
 
 - Added a global Admin Match Test Lab at `/admin/labs/match` using the real production
@@ -34,9 +57,9 @@ lower Tours remain abstract. The Official Run is not the acceptance focus.
 
 See [Global Match Test Lab V1](docs/MATCH_TEST_LAB_V1.md).
 
-**Next:** add verified scenario-library / New Test Session isolation and then the
-Tournament Test Lab over shared tournament/draw/match authorities. The global
-Match/Tournament Lab roadmap item is not complete yet.
+**Next:** add verified historical Run/Saved Revision snapshot import into Test Sessions,
+then the Tournament Test Lab over shared tournament/draw/match authorities. The global
+Match/Tournament Lab roadmap item remains incomplete.
 
 ## Implemented — Talent Intake diagnostics + Viewer hidden-field gate
 

@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { MatchTestLabPage } from './MatchTestLabPage'
 import { renderWithRoute } from '../test/testUtils'
 
-const api = vi.hoisted(() => ({ runMatchTestLab: vi.fn() }))
+const api = vi.hoisted(() => ({ runMatchTestLab: vi.fn(), getMatchLabBuiltInScenarios: vi.fn(), getMatchLabSessions: vi.fn(), createMatchLabSession: vi.fn(), updateMatchLabSession: vi.fn(), runMatchLabSession: vi.fn() }))
 vi.mock('../api/client', () => api)
 
 const result = {
@@ -59,8 +59,11 @@ const result = {
 
 describe('MatchTestLabPage', () => {
   beforeEach(() => {
-    api.runMatchTestLab.mockReset()
+    for (const fn of Object.values(api)) fn.mockReset()
     api.runMatchTestLab.mockResolvedValue(result)
+    api.runMatchLabSession.mockResolvedValue(result)
+    api.getMatchLabBuiltInScenarios.mockResolvedValue([])
+    api.getMatchLabSessions.mockResolvedValue([])
   })
 
   it('runs a portable multi-seed scenario and renders isolation diagnostics', async () => {
@@ -68,7 +71,7 @@ describe('MatchTestLabPage', () => {
     renderWithRoute(<MatchTestLabPage />, '/admin/labs/match')
 
     expect(screen.getByRole('heading', { name: 'Match Test Lab' })).toBeInTheDocument()
-    expect(screen.getByText(/never mutate a Run or Branch/i)).toBeInTheDocument()
+    expect(screen.getByText(/outside every Run and Branch/i)).toBeInTheDocument()
     expect((screen.getByLabelText('Match Lab scenario JSON') as HTMLTextAreaElement).value).toContain('portable-match-example')
 
     await user.type(screen.getByLabelText('Match Lab batch seeds'), '100, 101')
@@ -106,4 +109,67 @@ describe('MatchTestLabPage', () => {
     expect(api.runMatchTestLab).not.toHaveBeenCalled()
     expect(screen.getByText("Expected property name or '}' in JSON at position 1")).toBeInTheDocument()
   })
+
+  it('creates an isolated editable Test Session from a read-only built-in', async () => {
+    const user = userEvent.setup()
+    const builtIn = {
+      scenario_id: 'standard-even-match',
+      display_name: 'Standard even match',
+      description: 'Normal baseline',
+      read_only: true,
+      scenario_fingerprint: 'e'.repeat(64),
+      scenario: {
+        schema_version: 'match_test_lab_scenario.v1',
+        scenario_id: 'standard-even-match',
+        seed: 777,
+        source_kind: 'portable',
+        context: {}
+      }
+    }
+    const created = {
+      schema_version: 'match_test_lab_session.v1',
+      session_id: 'session-1',
+      display_name: 'Standard even match — Test Session',
+      version: 1,
+      session_fingerprint: 'f'.repeat(64),
+      scenario: {
+        ...builtIn.scenario,
+        scenario_id: 'session-copy:standard-even-match',
+        source_kind: 'built_in_copy',
+        source_reference: 'standard-even-match',
+        source_fingerprint: builtIn.scenario_fingerprint
+      }
+    }
+    api.getMatchLabBuiltInScenarios.mockResolvedValue([builtIn])
+    api.createMatchLabSession.mockResolvedValue(created)
+    api.getMatchLabSessions.mockResolvedValueOnce([]).mockResolvedValue([created])
+
+    renderWithRoute(<MatchTestLabPage />, '/admin/labs/match')
+
+    expect(await screen.findByText('Standard even match')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: /New Test Session from Standard even match/ }))
+
+    expect(api.createMatchLabSession).toHaveBeenCalledWith(
+      {
+        display_name: 'Standard even match — Test Session',
+        built_in_scenario_id: 'standard-even-match'
+      },
+      expect.anything()
+    )
+    expect(await screen.findByDisplayValue('Standard even match — Test Session')).toBeInTheDocument()
+
+    fireEvent.change(screen.getByLabelText('Match Lab scenario JSON'), {
+      target: { value: JSON.stringify({ ...created.scenario, seed: 999 }) }
+    })
+    await user.click(screen.getByRole('button', { name: 'Save Test Session' }))
+
+    expect(api.updateMatchLabSession).toHaveBeenCalledWith(
+      'session-1',
+      expect.objectContaining({
+        expected_session_fingerprint: 'f'.repeat(64),
+        scenario: expect.objectContaining({ seed: 999 })
+      })
+    )
+  })
+
 })

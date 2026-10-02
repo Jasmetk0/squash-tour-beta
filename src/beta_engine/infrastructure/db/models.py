@@ -721,6 +721,20 @@ class TournamentEntryFieldVersionModel(Base):
     payload_json: Mapped[str] = mapped_column(Text, nullable=False)
 
 
+class MatchLabSessionModel(Base):
+    """Global editable Match Test Lab session, intentionally outside all Run/Branch scope."""
+
+    __tablename__ = "match_lab_sessions"
+    session_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    display_name: Mapped[str] = mapped_column(String(160), nullable=False)
+    version: Mapped[int] = mapped_column(Integer, nullable=False)
+    fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    source_kind: Mapped[str] = mapped_column(String(32), nullable=False)
+    source_reference: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    source_fingerprint: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
 class StandaloneMatchWorkspaceModel(Base):
     """Mutable Run/Branch authoring state for the no-calendar pre-alpha match flow."""
 

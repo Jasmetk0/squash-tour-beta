@@ -56,6 +56,14 @@ from beta_engine.application.standalone_match_service import (
 )
 from beta_engine.application.prospect_bridge_inspection import inspect_prospect_bridge
 from beta_engine.application.pre_alpha_fax_acceptance_profile import (
+    PreAlphaFaxAcceptanceProfileService,
+)
+from beta_engine.application.pre_alpha_fax_long_acceptance_probe import (
+    PreAlphaFaxLongAcceptanceProbeReport,
+    PreAlphaFaxLongAcceptanceProbeRequest,
+    PreAlphaFaxLongAcceptanceProbeService,
+)
+from beta_engine.application.pre_alpha_fax_acceptance_profile import (
     PreAlphaFaxAcceptanceProfile,
     PreAlphaFaxAcceptanceProfileService,
 )
@@ -1657,6 +1665,43 @@ def abandon_full_simulation(
             status_code=409,
             detail={
                 "code": "authoritative_full_simulation_abandon_conflict",
+                "message": str(exc),
+            },
+        ) from exc
+
+
+@router.post(
+    "/pre-alpha/fax-long-acceptance/probe",
+    response_model=PreAlphaFaxLongAcceptanceProbeReport,
+    status_code=201,
+)
+def run_pre_alpha_fax_long_acceptance_probe(
+    run_id: str,
+    branch_id: str,
+    payload: PreAlphaFaxLongAcceptanceProbeRequest,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+    matches: Annotated[SeasonMatchService, Depends(get_season_match_service)],
+    awards: Annotated[
+        SeasonPointAwardsService, Depends(get_season_point_awards_service)
+    ],
+) -> PreAlphaFaxLongAcceptanceProbeReport:
+    try:
+        driver = _driver(runtime, matches, awards)
+        return PreAlphaFaxLongAcceptanceProbeService(
+            driver=driver,
+            profile_service=PreAlphaFaxAcceptanceProfileService(
+                runtime.repository._session_factory
+            ),
+        ).run(
+            run_id=run_id,
+            branch_id=branch_id,
+            request=payload,
+        )
+    except (KeyError, TypeError, ValueError) as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "pre_alpha_fax_long_acceptance_probe_conflict",
                 "message": str(exc),
             },
         ) from exc

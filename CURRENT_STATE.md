@@ -15,6 +15,22 @@ Master v70 preserves calibration as open test work and sets the FAX acceptance r
 copied template, at least 1,000 initial players and 80 fully simulated World Tour Editions;
 lower Tours remain abstract. The Official Run is not the acceptance focus.
 
+## Implemented — copied-FAX Full Simulation acceptance probe
+
+- Added a release-test probe that reuses the production Authoritative Full Simulation parent.
+- It first requires the Master v72 copied-FAX input profile to pass, then reviews/executes the exact
+  Full Simulation parent until completion or the first explicit canonical checkpoint.
+- The report preserves checkpoint, blockers, current week, completed-season count and fingerprints
+  of the reviewed/executed production operation.
+- Preview-level failures are also surfaced as structured blockers instead of opaque 409s.
+- Current architecture review identifies the first real blocker after materialization: InitialWorld
+  exists, but the first authoritative sporting-week/world Position has not yet been bootstrapped,
+  so Full Simulation cannot establish Week 1 (`authoritative sporting week state is missing`).
+
+See [copied-FAX long-acceptance probe](docs/PRE_ALPHA_FAX_LONG_ACCEPTANCE_PROBE.md).
+
+**Next:** add an explicit InitialWorld → Week 1 authoritative sporting/world bootstrap, then rerun
+the same Full Simulation probe and fix the next reported canonical preparation blocker.
 ## Implemented — deterministic 80-Edition copied-FAX acceptance Calendar source
 
 - Added a dedicated non-canonical release-test Calendar source for season 2000/01.

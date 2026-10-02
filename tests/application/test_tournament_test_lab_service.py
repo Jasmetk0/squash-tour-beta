@@ -170,7 +170,7 @@ def test_tournament_lab_invalid_or_unsupported_draft_is_inspectable_without_resu
     assert result.compatibility.runnable_in_lab is False
     assert result.compatibility.normal_run_compatible is False
     assert any(
-        issue.code == "FORMAT_NOT_EXECUTABLE_V1"
+        issue.code == "GROUP_GEOMETRY_INCOMPLETE"
         for issue in result.compatibility.issues
     )
     assert result.draw is None
@@ -210,6 +210,8 @@ def test_tournament_lab_built_ins_are_deterministic_and_read_only() -> None:
         "standard-eight-player-knockout",
         "oversized-eight-player-lab-bracket",
         "qualification-two-sections-to-eight-main",
+        "two-groups-of-four",
+        "two-groups-to-four-player-knockout",
     ]
     assert all(item.read_only is True for item in rows)
     assert all(item.scenario_fingerprint == item.scenario.fingerprint for item in rows)
@@ -436,3 +438,121 @@ def test_tournament_lab_no_qualification_scenario_fingerprint_compatibility() ->
     assert "qualification_draw_size" not in payload
     assert "qualifier_spots" not in payload
     assert "qualification_player_ids" not in payload
+
+
+
+def test_tournament_lab_pure_groups_use_shared_topology_schedule_and_standings() -> None:
+    service = TournamentTestLabService()
+    scenario = next(
+        item.scenario for item in service.list_built_in_scenarios()
+        if item.scenario_id == "two-groups-of-four"
+    )
+
+    result = service.run(TournamentLabRequest(scenario=scenario))
+
+    assert result.compatibility.runnable_in_lab is True
+    assert result.compatibility.normal_run_compatible is True
+    assert result.draw is None
+    assert result.topology_authority_fingerprint
+    assert result.group_schedule_fingerprint
+    assert any("TournamentTopologyAuthorityBuilder" in value for value in result.compatibility.shared_authorities)
+    assert any("TournamentGroupStandingsBuilder" in value for value in result.compatibility.shared_authorities)
+
+    run = result.runs[0]
+    assert run.tournament_complete is True
+    assert run.champion_player_id is None
+    assert run.played_match_count == 12
+    assert run.group_stage is not None
+    assert run.group_stage.blocking_issue is None
+    assert run.group_stage.match_day_count == 3
+    assert len(run.group_stage.match_results) == 12
+    assert run.group_stage.standings is not None
+    assert len(run.group_stage.standings.groups) == 2
+    assert all(len(group.rows) == 4 for group in run.group_stage.standings.groups)
+    assert run.match_results == ()
+    assert run.assertions[0].status == "passed"
+
+
+def test_tournament_lab_groups_to_knockout_use_frozen_group_positions_and_crossings() -> None:
+    service = TournamentTestLabService()
+    scenario = next(
+        item.scenario for item in service.list_built_in_scenarios()
+        if item.scenario_id == "two-groups-to-four-player-knockout"
+    )
+
+    result = service.run(TournamentLabRequest(scenario=scenario))
+
+    assert result.compatibility.runnable_in_lab is True
+    run = result.runs[0]
+    assert run.tournament_complete is True
+    assert run.group_stage is not None
+    assert run.group_stage.standings is not None
+    assert run.hybrid_knockout_bracket is not None
+    assert run.hybrid_knockout_bracket.entrant_count == 4
+    assert run.hybrid_knockout_bracket.round_count == 2
+    assert run.played_match_count == 15
+    assert len(run.match_results) == 3
+    assert run.champion_player_id is not None
+    standings = run.group_stage.standings
+    by_position = {
+        (group.group_index, row.position): row.player_id
+        for group in standings.groups
+        for row in group.rows
+    }
+    first_round = sorted(
+        (row for row in run.match_results if row.round_number == 1),
+        key=lambda row: row.round_sequence,
+    )
+    assert {
+        first_round[0].player_a_id,
+        first_round[0].player_b_id,
+    } == {by_position[(1, 1)], by_position[(2, 2)]}
+    assert {
+        first_round[1].player_a_id,
+        first_round[1].player_b_id,
+    } == {by_position[(2, 1)], by_position[(1, 2)]}
+    assert run.assertions[0].status == "passed"
+
+
+def test_tournament_lab_hybrid_stop_after_first_knockout_round_has_no_fake_champion() -> None:
+    service = TournamentTestLabService()
+    scenario = next(
+        item.scenario for item in service.list_built_in_scenarios()
+        if item.scenario_id == "two-groups-to-four-player-knockout"
+    ).model_copy(
+        update={
+            "stop_after_round": 1,
+            "assertions": TournamentLabAssertions(
+                expected_champion_player_id="TLG-P1",
+                expected_played_match_count=14,
+            ),
+        }
+    )
+
+    run = service.run(TournamentLabRequest(scenario=scenario)).runs[0]
+
+    assert run.tournament_complete is False
+    assert run.completed_rounds == 1
+    assert run.champion_player_id is None
+    assert run.played_match_count == 14
+    assert len(run.match_results) == 2
+    assertions = {item.assertion: item for item in run.assertions}
+    assert assertions["expected_champion_player_id"].status == "not_evaluated"
+    assert assertions["expected_played_match_count"].status == "passed"
+
+
+def test_tournament_lab_groups_fail_closed_on_bad_crossing_contract() -> None:
+    service = TournamentTestLabService()
+    scenario = next(
+        item.scenario for item in service.list_built_in_scenarios()
+        if item.scenario_id == "two-groups-to-four-player-knockout"
+    ).model_copy(update={"knockout_crossings": ()})
+
+    result = service.run(TournamentLabRequest(scenario=scenario))
+
+    assert result.compatibility.runnable_in_lab is False
+    assert result.runs == ()
+    assert any(
+        issue.code == "HYBRID_CROSSINGS_INCOMPLETE"
+        for issue in result.compatibility.issues
+    )

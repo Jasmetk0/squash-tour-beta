@@ -64,7 +64,9 @@ function TournamentResultPanels({ data }: { data: TournamentLabResult }): JSX.El
         { label: 'Request', value: data.request_fingerprint.slice(0, 12) },
         { label: 'Format authority', value: data.format_authority_fingerprint?.slice(0, 12) ?? 'not built' },
         { label: 'Draw input', value: data.draw_input_fingerprint?.slice(0, 12) ?? 'not built' },
-        { label: 'Draw authority', value: data.draw_authority_fingerprint?.slice(0, 12) ?? 'not built' }
+        { label: 'Draw authority', value: data.draw_authority_fingerprint?.slice(0, 12) ?? 'not built' },
+        { label: 'Topology', value: data.topology_authority_fingerprint?.slice(0, 12) ?? 'not built' },
+        { label: 'Group schedule', value: data.group_schedule_fingerprint?.slice(0, 12) ?? 'not built' }
       ]} />
     </SectionCard>
     <SectionCard title="Batch diagnostics">
@@ -105,6 +107,32 @@ function TournamentResultPanels({ data }: { data: TournamentLabResult }): JSX.El
         </tr>)}</tbody>
       </table>
     </SectionCard> : null}
+    {firstRun?.group_stage ? <SectionCard title="Group stage">
+      <SummaryPills items={[
+        { label: 'Match days', value: firstRun.group_stage.match_day_count },
+        { label: 'Group matches', value: firstRun.group_stage.match_results.length },
+        { label: 'Standings', value: firstRun.group_stage.standings ? 'resolved' : 'blocked' },
+        { label: 'Hybrid bracket', value: firstRun.hybrid_knockout_bracket ? `${firstRun.hybrid_knockout_bracket.entrant_count} entrants` : 'none' }
+      ]} />
+      {firstRun.group_stage.blocking_issue ? <p className="error">
+        {firstRun.group_stage.blocking_issue.code}: {firstRun.group_stage.blocking_issue.message}
+      </p> : null}
+      {firstRun.group_stage.standings?.groups.map((group) => <table
+        key={group.group_index}
+        aria-label={`Tournament Lab group ${group.group_index} standings`}
+      >
+        <thead><tr><th>Pos</th><th>Player</th><th>W</th><th>L</th><th>Pts</th><th>Games</th><th>Points</th></tr></thead>
+        <tbody>{group.rows.map((row) => <tr key={row.player_id}>
+          <td>{row.position}</td>
+          <td>{row.player_id}</td>
+          <td>{row.wins}</td>
+          <td>{row.losses}</td>
+          <td>{row.group_points}</td>
+          <td>{row.games_won}-{row.games_lost}</td>
+          <td>{row.points_won}-{row.points_lost}</td>
+        </tr>)}</tbody>
+      </table>)}
+    </SectionCard> : null}
     {firstRun ? <SectionCard title="First batch run">
       <SummaryPills items={[
         { label: 'Match seed', value: firstRun.match_seed },
@@ -113,6 +141,7 @@ function TournamentResultPanels({ data }: { data: TournamentLabResult }): JSX.El
         { label: 'Champion', value: firstRun.champion_player_id ?? 'not resolved' },
         { label: 'Played matches', value: firstRun.played_match_count },
         { label: 'Q sections resolved', value: firstRun.qualification_results?.length ?? 0 },
+        { label: 'Group stage', value: firstRun.group_stage ? 'yes' : 'no' },
         { label: 'BYE advances', value: firstRun.bye_advance_count }
       ]} />
       <table aria-label="Tournament Lab match results">
@@ -265,11 +294,11 @@ export function TournamentTestLabPage(): JSX.Element {
       <SummaryPills items={[
         { label: 'Run mutation', value: 'never' },
         { label: 'Live Run link', value: 'never' },
-        { label: 'Current executable slice', value: 'classic knockout' },
+        { label: 'Executable formats', value: 'knockout · groups · groups→knockout' },
         { label: 'Selected mode', value: selectedSession ? 'isolated Test Session' : 'portable scratch scenario' }
       ]} />
       <p className="status">
-        Groups, qualification, replacements, ranking consequences and Run→Lab/Lab→Run bridges remain later Tournament Lab slices. Test Sessions are isolated persistence only.
+        Knockout, Qualification, pure groups and groups→knockout are executable. Withdrawals/replacements, ranking consequences and Run→Lab/Lab→Run bridges remain later slices.
       </p>
     </SectionCard>
 

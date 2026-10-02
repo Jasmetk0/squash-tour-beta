@@ -15,6 +15,30 @@ Master v70 preserves calibration as open test work and sets the FAX acceptance r
 copied template, at least 1,000 initial players and 80 fully simulated World Tour Editions;
 lower Tours remain abstract. The Official Run is not the acceptance focus.
 
+## Implemented — Global Tournament Test Lab V4 groups and groups→knockout
+
+- Tournament Lab now executes pure `groups` and `groups_knockout` scenarios through the existing shared group authorities.
+- Group scenarios explicitly carry equal group geometry, exact seed placements, BO3/BO5, deterministic topology seed and, for hybrid formats, exact group-position crossings.
+- Group formats currently require one fully resolved participant field; Qualification/WC/BYE reservations are not silently folded into group topology.
+- V4 reuses `TournamentTopologyAuthorityBuilder`, `TournamentGroupMatchScheduleBuilder`,
+  production `MatchEngine.simulate` and `TournamentGroupStandingsBuilder`; no Lab-only group draw,
+  schedule, standings or tie-break engine exists.
+- Pure-groups runs finish with authoritative group standings and deliberately do not fabricate one global champion.
+- Groups→knockout runs freeze final group positions, materialize entrants only through
+  `TournamentHybridKnockoutEntrantsBuilder`, build the shared winner-feeder tree with
+  `TournamentHybridKnockoutBracketBuilder` and never reseed from Ranking/Race.
+- Automatic standings ties that require an Admin decision fail closed per batch run instead of falling
+  back to random/player-ID/Ranking order. Group RET/table effects not decided in Master likewise remain blocked.
+- `stop_after_round` now works as a hybrid knockout stepping boundary after groups are fully resolved.
+- Added deterministic built-ins for two groups of four and the same field feeding an explicit
+  A1-vs-B2 / B1-vs-A2 four-player knockout.
+
+See [Tournament Test Lab V4 groups](docs/TOURNAMENT_TEST_LAB_V4_GROUPS.md).
+
+**Next:** close the remaining Lab workflow boundaries: explicit import/export, Run → Lab historical
+Tournament copy and Lab → Run compatibility-preview draft bridge, then add withdrawal/WC/LL/
+replacement and ranking-consequence slices without inventing undecided sporting policy.
+
 ## Implemented — Global Tournament Test Lab V3 canonical Qualification progression
 
 - Tournament Lab scenarios can now partition portable participants into direct Main and Qualification fields with explicit Qualification draw capacity and qualifier-place count.

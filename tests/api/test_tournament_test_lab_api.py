@@ -74,6 +74,8 @@ def test_tournament_lab_api_lists_built_ins_and_inspects_without_run_scope(tmp_p
             "standard-eight-player-knockout",
             "oversized-eight-player-lab-bracket",
             "qualification-two-sections-to-eight-main",
+            "two-groups-of-four",
+            "two-groups-to-four-player-knockout",
         ]
 
         scenario = _scenario().model_dump(mode="json")
@@ -141,7 +143,7 @@ def test_tournament_lab_api_reports_unsupported_draft_without_fake_result(tmp_pa
         assert body["runs"] == []
         assert body["diagnostics"]["run_count"] == 0
         assert any(
-            issue["code"] == "FORMAT_NOT_EXECUTABLE_V1"
+            issue["code"] == "GROUP_GEOMETRY_INCOMPLETE"
             for issue in body["compatibility"]["issues"]
         )
 
@@ -289,3 +291,38 @@ def test_tournament_lab_api_runs_qualification_into_main_draw(tmp_path) -> None:
             if player is not None
         }
         assert q_winners.issubset(first_round)
+
+
+
+def test_tournament_lab_api_runs_groups_to_knockout_through_shared_authorities(tmp_path) -> None:
+    with ApiServer(database_url=f"sqlite:///{tmp_path / 'tournament-lab-groups.db'}") as server:
+        status, built_ins = _request(
+            "GET",
+            f"{server.base_url}/admin/labs/tournament/scenarios",
+        )
+        assert status == 200
+        scenario = next(
+            row["scenario"]
+            for row in built_ins
+            if row["scenario_id"] == "two-groups-to-four-player-knockout"
+        )
+
+        status, body = _request(
+            "POST",
+            f"{server.base_url}/admin/labs/tournament/run",
+            {"scenario": scenario, "batch_match_seeds": [721]},
+        )
+
+        assert status == 200, body
+        assert body["compatibility"]["runnable_in_lab"] is True
+        assert body["draw"] is None
+        assert len(body["topology_authority_fingerprint"]) == 64
+        assert len(body["group_schedule_fingerprint"]) == 64
+        run = body["runs"][0]
+        assert run["group_stage"]["blocking_issue"] is None
+        assert len(run["group_stage"]["match_results"]) == 12
+        assert len(run["group_stage"]["standings"]["groups"]) == 2
+        assert run["hybrid_knockout_bracket"]["entrant_count"] == 4
+        assert len(run["match_results"]) == 3
+        assert run["played_match_count"] == 15
+        assert run["champion_player_id"]

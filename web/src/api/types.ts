@@ -7788,6 +7788,18 @@ export type TournamentLabScenario = {
   format_kind: string
   participants: TournamentLabParticipantContext[]
   main_draw_size: number
+  group_count?: number
+  group_size?: number
+  seeded_slots_per_group?: number
+  group_seed_placements?: Array<{ seed_number: number; group_index: number; slot_index: number }>
+  group_match_best_of?: 3 | 5
+  advancing_per_group?: number
+  knockout_crossings?: Array<{
+    match_index: number
+    top: { group_index: number; finishing_position: number }
+    bottom: { group_index: number; finishing_position: number }
+  }>
+  topology_seed?: number
   qualification_draw_size?: number
   qualifier_spots?: number
   qualification_player_ids?: string[]
@@ -7855,6 +7867,49 @@ export type TournamentLabQualificationSectionResult = {
   match_results: TournamentLabMatchResult[]
 }
 
+export type TournamentLabGroupStandingRow = {
+  group_index: number
+  position: number
+  player_id: string
+  wins: number
+  losses: number
+  group_points: number
+  played_matches: number
+  walkovers_received: number
+  walkovers_conceded: number
+  games_won: number
+  games_lost: number
+  points_won: number
+  points_lost: number
+}
+
+export type TournamentLabGroupStandings = {
+  schema_version: 'tournament_group_standings_authority.v1' | 'tournament_group_standings_authority.v2'
+  groups: Array<{ group_index: number; rows: TournamentLabGroupStandingRow[] }>
+}
+
+export type TournamentLabGroupStageResult = {
+  topology_fingerprint: string
+  schedule_fingerprint: string
+  match_day_count: number
+  match_results: TournamentLabMatchResult[]
+  standings?: TournamentLabGroupStandings | null
+  blocking_issue?: TournamentLabIssue | null
+}
+
+export type TournamentLabHybridBracket = {
+  schema_version: 'tournament_hybrid_knockout_bracket_authority.v1'
+  entrant_count: number
+  round_count: number
+  terminal_match_id: string
+  matches: Array<{
+    match_id: string
+    round_number: number
+    match_index: number
+    participant_sources: [string, string]
+  }>
+}
+
 export type TournamentLabSingleRun = {
   match_seed: number
   completed_rounds: number
@@ -7863,6 +7918,8 @@ export type TournamentLabSingleRun = {
   played_match_count: number
   bye_advance_count: number
   qualification_results?: TournamentLabQualificationSectionResult[]
+  group_stage?: TournamentLabGroupStageResult | null
+  hybrid_knockout_bracket?: TournamentLabHybridBracket | null
   match_results: TournamentLabMatchResult[]
   assertions: TournamentLabAssertionResult[]
   run_fingerprint: string
@@ -7877,6 +7934,8 @@ export type TournamentLabResult = {
   format_authority_fingerprint?: string | null
   draw_input_fingerprint?: string | null
   draw_authority_fingerprint?: string | null
+  topology_authority_fingerprint?: string | null
+  group_schedule_fingerprint?: string | null
   draw?: CanonicalTournamentDrawAuthority | null
   runs: TournamentLabSingleRun[]
   diagnostics: {

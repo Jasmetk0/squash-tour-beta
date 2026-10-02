@@ -150,10 +150,10 @@ class PreAlphaFaxCurrentEntryDecisionService:
             ],
             "slot_fingerprint": raw["slot_fingerprint"],
             "decision_count": raw["decision_count"],
-            "persisted": raw["persisted"],
         }
         return PreAlphaFaxCurrentEntryDecisionPreview(
             **frozen,
+            persisted=bool(raw["persisted"]),
             preview_fingerprint=fingerprint(frozen),
         )
 

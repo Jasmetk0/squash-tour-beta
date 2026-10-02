@@ -15,6 +15,33 @@ Master v70 preserves calibration as open test work and sets the FAX acceptance r
 copied template, at least 1,000 initial players and 80 fully simulated World Tour Editions;
 lower Tours remain abstract. The Official Run is not the acceptance focus.
 
+## Implemented — Global Tournament Test Lab V1 classic-knockout foundation
+
+- Added global Admin Tournament Test Lab at `/admin/labs/tournament`, available without an active Run.
+- Portable `tournament_test_lab_scenario.v1` drafts keep unsupported/unusual format ideas inspectable
+  instead of forcing them through normal Run validation.
+- Compatibility inspection distinguishes `runnable_in_lab` from `normal_run_compatible` and returns
+  stable issue codes explaining unsupported format, invalid geometry, seed-order mismatch, unusual
+  classic capacity, nonstandard Match format and incomplete Run-copy provenance.
+- V1 executes classic knockout using the existing `TournamentFormatAuthority`,
+  `TournamentEntryFieldCapacity`, `TournamentDrawInputAuthority`,
+  `TournamentDrawAuthorityBuilder(idealized_seed_tiers.v2)` and production
+  `MatchEngine.simulate`; no Lab-only draw or Match kernel was introduced.
+- Invalid/not-yet-supported drafts return diagnostics without a draw or fabricated tournament result.
+- Round-stop execution provides a first step boundary and never fabricates a champion before the
+  final round. Machine assertions can be passed, failed or explicitly `not_evaluated`.
+- Batch mode reuses one canonical draw across up to 100 distinct match seeds and reports replay
+  fingerprints, champions, assertion failures and played-match diagnostics.
+- Included read-only normal 8-player knockout and intentionally oversized 8-in-16 BYE diagnostic
+  baselines. The latter is runnable in Lab but explicitly not normal-Run compatible.
+- Admin Home now surfaces global Test Labs.
+
+See [Tournament Test Lab V1](docs/TOURNAMENT_TEST_LAB_V1.md).
+
+**Next:** continue Tournament Lab with persistent Test Sessions and broader tournament composition
+(Qualification/groups/progression/replacements/ranking consequences), then Run↔Lab copy/draft
+bridges. Keep copied-FAX season acceptance separate.
+
 ## Implemented — Match Lab verified Saved Revision player import V1
 
 - Added reviewed historical-player import into an existing isolated Match Lab Test Session.
@@ -35,8 +62,9 @@ lower Tours remain abstract. The Official Run is not the acceptance focus.
 
 See [Match Lab Saved Revision Import V1](docs/MATCH_TEST_LAB_SAVED_REVISION_IMPORT_V1.md).
 
-**Next:** begin Tournament Test Lab composition over shared tournament/draw/match authorities.
-Keep the copied-FAX season acceptance track separate.
+**Next:** continue Tournament Lab with persistent Test Sessions and broader tournament composition
+over shared Qualification/group/progression/replacement/ranking authorities. Keep copied-FAX
+season acceptance separate.
 
 ## Implemented — Global Match Test Lab V2 isolated Test Sessions
 

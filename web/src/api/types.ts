@@ -7864,7 +7864,7 @@ export type TournamentLabResult = {
   format_authority_fingerprint?: string | null
   draw_input_fingerprint?: string | null
   draw_authority_fingerprint?: string | null
-  draw?: TournamentDrawAuthority | null
+  draw?: CanonicalTournamentDrawAuthority | null
   runs: TournamentLabSingleRun[]
   diagnostics: {
     run_count: number

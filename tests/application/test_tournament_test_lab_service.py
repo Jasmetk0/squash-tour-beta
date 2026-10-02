@@ -332,6 +332,23 @@ def test_tournament_lab_session_update_and_run_use_reviewed_fingerprint(tmp_path
 
 
 
+def test_tournament_lab_export_model_accepts_its_api_serialized_session_shape(tmp_path) -> None:
+    engine, _, service = _persistent_service(tmp_path)
+    try:
+        created = service.create_session(
+            TournamentLabSessionCreateRequest(display_name="Round trip", scenario=_scenario())
+        )
+        exported = service.export_session(created.session_id)
+        api_payload = exported.model_dump(mode="json")
+
+        reparsed = type(exported).model_validate(api_payload)
+
+        assert reparsed == exported
+        assert reparsed.export_fingerprint == exported.export_fingerprint
+    finally:
+        engine.dispose()
+
+
 def test_tournament_lab_session_export_import_is_reviewed_copy_without_live_link(tmp_path) -> None:
     engine, _, service = _persistent_service(tmp_path)
     try:

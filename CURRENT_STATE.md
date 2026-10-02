@@ -15,6 +15,29 @@ Master v70 preserves calibration as open test work and sets the FAX acceptance r
 copied template, at least 1,000 initial players and 80 fully simulated World Tour Editions;
 lower Tours remain abstract. The Official Run is not the acceptance focus.
 
+## Implemented — Match Lab verified Saved Revision player import V1
+
+- Added reviewed historical-player import into an existing isolated Match Lab Test Session.
+- Source identity is resolved through the validated reachable Saved Revision history service,
+  then the existing `initial_world` and `player_sporting_state` component loaders verify
+  identity, component fingerprint and sporting lineage before any Lab mutation.
+- The importer reuses the canonical `CanonicalMatchInputProjectionPolicy` + `project_player`
+  adapter to derive Match Engine inputs from the saved canonical 57-attribute sporting record;
+  no Lab-only sporting projection was introduced.
+- Each imported side records exact source Run/Branch/Saved Revision content hash, sporting
+  fingerprint/week, source profile fingerprint and canonical projection fingerprint.
+- Import evidence becomes part of the Test Session fingerprint once present; stale reviewed
+  session fingerprints fail closed.
+- V2 sessions with zero imports retain their exact prior fingerprint for persistence compatibility.
+- Import remains copy-only: the source Run/Branch/revision is never live-linked or mutated.
+- V1 intentionally supports only players whose complete historical profile exists in Initial World;
+  later prospects without that profile fail closed rather than having hidden data invented.
+
+See [Match Lab Saved Revision Import V1](docs/MATCH_TEST_LAB_SAVED_REVISION_IMPORT_V1.md).
+
+**Next:** begin Tournament Test Lab composition over shared tournament/draw/match authorities.
+Keep the copied-FAX season acceptance track separate.
+
 ## Implemented — Global Match Test Lab V2 isolated Test Sessions
 
 - Added deterministic read-only built-in Match Lab baselines and an explicit `New Test Session`
@@ -57,9 +80,8 @@ in parallel.
 
 See [Global Match Test Lab V1](docs/MATCH_TEST_LAB_V1.md).
 
-**Next:** add verified historical Run/Saved Revision snapshot import into Test Sessions,
-then the Tournament Test Lab over shared tournament/draw/match authorities. The global
-Match/Tournament Lab roadmap item remains incomplete.
+**Next:** begin Tournament Test Lab composition over shared tournament/draw/match authorities.
+The global Match/Tournament Lab roadmap item remains incomplete.
 
 ## Implemented — Talent Intake diagnostics + Viewer hidden-field gate
 

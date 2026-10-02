@@ -5,6 +5,7 @@ import {
   createMatchLabSession,
   getMatchLabBuiltInScenarios,
   getMatchLabSessions,
+  importMatchLabSavedRevisionPlayer,
   runMatchLabSession,
   runMatchTestLab,
   updateMatchLabSession
@@ -96,6 +97,11 @@ export function MatchTestLabPage(): JSX.Element {
   const [scenarioText, setScenarioText] = useState(JSON.stringify(defaultScenario, null, 2))
   const [sessionName, setSessionName] = useState('New Match Test Session')
   const [batchText, setBatchText] = useState('')
+  const [importRunId, setImportRunId] = useState('')
+  const [importBranchId, setImportBranchId] = useState('')
+  const [importRevisionId, setImportRevisionId] = useState('')
+  const [importPlayerId, setImportPlayerId] = useState('')
+  const [importSide, setImportSide] = useState<'player_a' | 'player_b'>('player_a')
   const [localError, setLocalError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -139,6 +145,25 @@ export function MatchTestLabPage(): JSX.Element {
         display_name: sessionName,
         scenario
       }),
+    onSuccess: async (updated) => {
+      await sessions.refetch()
+      setSelectedSessionId(updated.session_id)
+      setScenarioText(JSON.stringify(updated.scenario, null, 2))
+    }
+  })
+
+  const importMutation = useMutation({
+    mutationFn: async () => {
+      if (!selectedSession) throw new Error('Create or open a Test Session before importing a Saved Revision player.')
+      return importMatchLabSavedRevisionPlayer(selectedSession.session_id, {
+        expected_session_fingerprint: selectedSession.session_fingerprint,
+        product_run_id: importRunId.trim(),
+        branch_id: importBranchId.trim(),
+        saved_revision_id: importRevisionId.trim(),
+        player_id: importPlayerId.trim(),
+        side: importSide
+      })
+    },
     onSuccess: async (updated) => {
       await sessions.refetch()
       setSelectedSessionId(updated.session_id)
@@ -203,6 +228,49 @@ export function MatchTestLabPage(): JSX.Element {
         { label: 'Session fingerprint', value: selectedSession.session_fingerprint.slice(0, 12) }
       ]} /> : <p className="status">Scratch mode is non-persistent. Create a Test Session to keep an editable isolated copy.</p>}
     </SectionCard>
+
+    {selectedSession ? <SectionCard title="Import player from Saved Revision">
+      <p className="status">
+        Copies one validated historical player profile + saved sporting state into this Test Session.
+        The source Run/Saved Revision is never mutated or live-linked.
+      </p>
+      <label>Product Run ID
+        <input aria-label="Match Lab import Run ID" value={importRunId} onChange={(e) => setImportRunId(e.target.value)} />
+      </label>
+      <label>Branch ID
+        <input aria-label="Match Lab import Branch ID" value={importBranchId} onChange={(e) => setImportBranchId(e.target.value)} />
+      </label>
+      <label>Saved Revision ID
+        <input aria-label="Match Lab import Saved Revision ID" value={importRevisionId} onChange={(e) => setImportRevisionId(e.target.value)} />
+      </label>
+      <label>Player ID
+        <input aria-label="Match Lab import Player ID" value={importPlayerId} onChange={(e) => setImportPlayerId(e.target.value)} />
+      </label>
+      <label>Replace participant
+        <select aria-label="Match Lab import side" value={importSide} onChange={(e) => setImportSide(e.target.value as 'player_a' | 'player_b')}>
+          <option value="player_a">Player A</option>
+          <option value="player_b">Player B</option>
+        </select>
+      </label>
+      <button
+        type="button"
+        disabled={importMutation.isPending || !importRunId.trim() || !importBranchId.trim() || !importRevisionId.trim() || !importPlayerId.trim()}
+        onClick={() => importMutation.mutate()}
+      >
+        {importMutation.isPending ? 'Importing…' : 'Import historical player'}
+      </button>
+      {importMutation.isError ? <p className="error">Import failed: {String(importMutation.error)}</p> : null}
+      {(selectedSession.participant_imports ?? []).length > 0 ? <table aria-label="Match Lab historical imports">
+        <thead><tr><th>Side</th><th>Player</th><th>Source</th><th>Week</th><th>Revision hash</th></tr></thead>
+        <tbody>{selectedSession.participant_imports.map((item) => <tr key={item.side}>
+          <td>{item.side === 'player_a' ? 'Player A' : 'Player B'}</td>
+          <td>{item.player_id}</td>
+          <td>{item.product_run_id} / {item.branch_id} / {item.saved_revision_id}</td>
+          <td>{item.sporting_week_ordinal}</td>
+          <td><code>{item.saved_revision_content_hash.slice(0, 12)}</code></td>
+        </tr>)}</tbody>
+      </table> : null}
+    </SectionCard> : null}
 
     <form onSubmit={submit}>
       <SectionCard title={selectedSession ? 'Editable Test Session scenario' : 'Portable scratch scenario JSON'}>

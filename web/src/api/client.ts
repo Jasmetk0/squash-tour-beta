@@ -3424,3 +3424,14 @@ export async function runMatchLabSession(
     body: JSON.stringify(payload)
   })
 }
+
+
+export async function importMatchLabSavedRevisionPlayer(
+  sessionId: string,
+  payload: import('./types').MatchLabSavedRevisionPlayerImportRequest
+): Promise<import('./types').MatchLabSession> {
+  return request<import('./types').MatchLabSession>(
+    `/admin/labs/match/sessions/${encodeURIComponent(sessionId)}/import-saved-revision-player`,
+    { method: 'POST', body: JSON.stringify(payload) }
+  )
+}

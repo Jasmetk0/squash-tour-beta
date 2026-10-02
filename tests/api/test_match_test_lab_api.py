@@ -207,3 +207,31 @@ def test_match_lab_api_rejects_stale_session_mutation_and_run(tmp_path) -> None:
             },
         )
         assert status == 409
+
+
+
+def test_match_lab_api_saved_revision_import_requires_reachable_validated_source(tmp_path) -> None:
+    with ApiServer(database_url=f"sqlite:///{tmp_path / 'match-lab-import-missing.db'}") as server:
+        status, created = _request(
+            "POST",
+            f"{server.base_url}/admin/labs/match/sessions",
+            {
+                "display_name": "Historical import API",
+                "built_in_scenario_id": "standard-even-match",
+            },
+        )
+        assert status == 201, created
+
+        status, body = _request(
+            "POST",
+            f"{server.base_url}/admin/labs/match/sessions/{created['session_id']}/import-saved-revision-player",
+            {
+                "expected_session_fingerprint": created["session_fingerprint"],
+                "product_run_id": "missing-run",
+                "branch_id": "missing-branch",
+                "saved_revision_id": "missing-revision",
+                "player_id": "P1",
+                "side": "player_a",
+            },
+        )
+        assert status == 404, body

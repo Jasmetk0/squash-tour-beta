@@ -11,9 +11,9 @@ Baseline: `buuk` at `c42dc06ba73c86ffd4c64b2ce1d38e9944beab09` (#1094).
    preserve future-cohort visibility boundaries and gate hidden Viewer sporting data.
 3. 🟡 Complete global Match/Tournament Labs with shared engine kernels, replayable scenarios,
    batch diagnostics and safe Run-copy/draft boundaries. Match Test Lab V1 provides the
-   portable shared-kernel foundation and V2 adds read-only built-ins plus persistent isolated
-   New Test Sessions with reviewed fingerprints. Verified historical snapshot import and
-   Tournament Lab composition remain.
+   portable shared-kernel foundation; V2 adds read-only built-ins plus persistent isolated
+   New Test Sessions; verified Saved Revision historical-player import now reuses canonical
+   projection authorities with exact provenance. Tournament Lab composition remains.
 4. Validate a full season and next-season opening in a copy of the FAX template: at least
    1,000 initial players, reference 80 World Tour Editions fully simulated, lower Tours abstract.
    Retain empty-Run acceptance, CZ/EN Admin, recovery and the rest of Master pre-alpha scope.

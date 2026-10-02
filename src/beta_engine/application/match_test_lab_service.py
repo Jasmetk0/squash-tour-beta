@@ -14,7 +14,20 @@ from beta_engine.core import DeterministicRng
 from beta_engine.domain.matches.match_engine import MatchEngine
 from beta_engine.domain.matches.models import MatchContext, MatchParticipantContext, MatchResult
 from beta_engine.domain.players import HiddenCareerTraits, Player
+from beta_engine.domain.calendar.season_weeks import age_at_calendar_position, season_week_to_calendar_position
+from beta_engine.domain.simulation_slots import (
+    CanonicalMatchInputProjectionPolicy,
+    project_player,
+    projected_engine_player,
+)
+from beta_engine.infrastructure.db.initial_world_state import load_saved_initial_world
+from beta_engine.infrastructure.db.player_sporting_state import load_saved_sporting_bundle
 from beta_engine.infrastructure.db.models import MatchLabSessionModel
+from beta_engine.application.run_saved_revision_history_service import RunSavedRevisionHistoryService
+from beta_engine.infrastructure.db import (
+    SavedRevisionHistoryConflictError,
+    SavedRevisionHistoryNotFoundError,
+)
 
 
 MATCH_LAB_SCHEMA_VERSION = "match_test_lab_scenario.v1"
@@ -128,6 +141,21 @@ class BuiltInMatchLabScenario(BaseModel):
     scenario: MatchLabScenario
 
 
+class MatchLabParticipantImportEvidence(BaseModel):
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    side: Literal["player_a", "player_b"]
+    product_run_id: str
+    branch_id: str
+    saved_revision_id: str
+    saved_revision_content_hash: str = Field(pattern=r"^[0-9a-f]{64}$")
+    sporting_state_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    sporting_week_ordinal: int = Field(ge=0)
+    player_id: str
+    source_profile_fingerprint: str
+    canonical_projection_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+
+
 class MatchLabSession(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
 
@@ -136,18 +164,30 @@ class MatchLabSession(BaseModel):
     display_name: str = Field(min_length=1, max_length=160)
     version: int = Field(ge=1)
     scenario: MatchLabScenario
+    participant_imports: tuple[MatchLabParticipantImportEvidence, ...] = ()
+
+    @model_validator(mode="after")
+    def unique_import_sides(self):
+        sides = [item.side for item in self.participant_imports]
+        if len(sides) != len(set(sides)):
+            raise ValueError("Match Lab session has duplicate participant import evidence")
+        return self
 
     @property
     def fingerprint(self) -> str:
-        return _fingerprint(
-            {
-                "schema_version": self.schema_version,
-                "session_id": self.session_id,
-                "display_name": self.display_name,
-                "version": self.version,
-                "scenario": self.scenario.model_dump(mode="json"),
-            }
-        )
+        payload = {
+            "schema_version": self.schema_version,
+            "session_id": self.session_id,
+            "display_name": self.display_name,
+            "version": self.version,
+            "scenario": self.scenario.model_dump(mode="json"),
+        }
+        # Compatibility: V2 sessions without imports retain their exact historical fingerprint.
+        if self.participant_imports:
+            payload["participant_imports"] = [
+                item.model_dump(mode="json") for item in self.participant_imports
+            ]
+        return _fingerprint(payload)
 
     @computed_field
     @property
@@ -175,6 +215,17 @@ class MatchLabSessionUpdateRequest(BaseModel):
     expected_session_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
     display_name: str | None = Field(default=None, min_length=1, max_length=160)
     scenario: MatchLabScenario
+
+
+class MatchLabSavedRevisionPlayerImportRequest(BaseModel):
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    expected_session_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    product_run_id: str = Field(min_length=1, max_length=128)
+    branch_id: str = Field(min_length=1, max_length=128)
+    saved_revision_id: str = Field(min_length=1, max_length=128)
+    player_id: str = Field(min_length=1, max_length=128)
+    side: Literal["player_a", "player_b"]
 
 
 class MatchLabSessionRunRequest(BaseModel):
@@ -274,9 +325,11 @@ class MatchTestLabService:
         self,
         session_factory=None,
         id_factory: Callable[[str], str] | None = None,
+        repository=None,
     ):
         self._session_factory = session_factory
         self._id_factory = id_factory
+        self._repository = repository
 
     def list_built_in_scenarios(self) -> tuple[BuiltInMatchLabScenario, ...]:
         return BUILT_IN_MATCH_LAB_SCENARIOS
@@ -388,6 +441,120 @@ class MatchTestLabService:
                 display_name=request.display_name or current.display_name,
                 version=current.version + 1,
                 scenario=request.scenario,
+            )
+            self._persist_session(session, updated)
+            return updated
+
+    def import_saved_revision_player(
+        self,
+        session_id: str,
+        request: MatchLabSavedRevisionPlayerImportRequest,
+    ) -> MatchLabSession:
+        self._require_persistence()
+        if self._repository is None:
+            raise RuntimeError("Match Lab Saved Revision import is not configured")
+
+        history = RunSavedRevisionHistoryService(self._repository)
+        try:
+            detail = history.get_revision(
+                run_id=request.product_run_id,
+                branch_id=request.branch_id,
+                revision_id=request.saved_revision_id,
+            )
+        except SavedRevisionHistoryNotFoundError as exc:
+            raise KeyError(str(exc)) from exc
+        except SavedRevisionHistoryConflictError as exc:
+            raise ValueError(str(exc)) from exc
+        revision = detail.saved_revision
+        world = load_saved_initial_world(
+            revision.payload,
+            run_id=request.product_run_id,
+            branch_id=request.branch_id,
+        )
+        sporting_bundle = load_saved_sporting_bundle(
+            revision.payload,
+            run_id=request.product_run_id,
+            branch_id=request.branch_id,
+        )
+        if world is None:
+            raise ValueError("Saved Revision has no validated Initial World")
+        if sporting_bundle is None or not sporting_bundle[0]:
+            raise ValueError("Saved Revision has no validated player sporting state")
+
+        sporting = sporting_bundle[0][-1]
+        profile = next((item for item in world.players if item.player_id == request.player_id), None)
+        record = next((item for item in sporting.players if item.player_id == request.player_id), None)
+        if profile is None:
+            raise ValueError(
+                "Saved Revision player is not present in its Initial World; prospect-profile import is not supported by this slice"
+            )
+        if record is None:
+            raise ValueError("Saved Revision player has no sporting record at the saved sporting head")
+
+        season_start_year = 2000 + sporting.week.season_index
+        position = season_week_to_calendar_position(season_start_year, sporting.week.week)
+        age = age_at_calendar_position(
+            birth_year=profile.birth_year,
+            birth_year_week=profile.birth_year_week,
+            calendar_year=position.calendar_year,
+            year_week=position.year_week,
+        )
+        projection = project_player(
+            record,
+            source_sporting_fingerprint=sporting.fingerprint,
+            policy=CanonicalMatchInputProjectionPolicy(),
+            profile_source_fingerprint=profile.source_generation_fingerprint,
+            profile_provenance="validated Saved Revision Initial World + player sporting state",
+            age=age,
+            name=profile.name,
+            nationality=profile.nationality,
+            play_style=profile.play_style,
+            archetype=profile.archetype,
+            hidden_career_traits=profile.hidden_career_traits,
+        )
+        participant = MatchParticipantContext(
+            player=projected_engine_player(projection),
+            form_modifier=projection.form_modifier,
+            sharpness_modifier=projection.sharpness_modifier,
+            fatigue_modifier=projection.fatigue_modifier,
+        )
+        evidence = MatchLabParticipantImportEvidence(
+            side=request.side,
+            product_run_id=request.product_run_id,
+            branch_id=request.branch_id,
+            saved_revision_id=request.saved_revision_id,
+            saved_revision_content_hash=revision.content_hash,
+            sporting_state_fingerprint=sporting.fingerprint,
+            sporting_week_ordinal=sporting.week.ordinal,
+            player_id=request.player_id,
+            source_profile_fingerprint=profile.source_generation_fingerprint,
+            canonical_projection_fingerprint=projection.fingerprint,
+        )
+
+        from sqlalchemy import text
+        with self._session_factory.begin() as session:
+            session.execute(text("BEGIN IMMEDIATE"))
+            row = session.get(MatchLabSessionModel, session_id)
+            if row is None:
+                raise KeyError("Match Lab session was not found")
+            current = self._load_session_row(row)
+            if current.fingerprint != request.expected_session_fingerprint:
+                raise ValueError("Match Lab session changed since it was reviewed")
+
+            context_update = {request.side: participant}
+            scenario = current.scenario.model_copy(
+                update={"context": current.scenario.context.model_copy(update=context_update)}
+            )
+            existing = {
+                item.side: item for item in current.participant_imports
+            }
+            existing[request.side] = evidence
+            updated = MatchLabSession(
+                session_id=current.session_id,
+                display_name=current.display_name,
+                version=current.version + 1,
+                scenario=scenario,
+                participant_imports=tuple(existing[key] for key in sorted(existing)),
             )
             self._persist_session(session, updated)
             return updated

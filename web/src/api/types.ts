@@ -7709,12 +7709,26 @@ export type BuiltInMatchLabScenario = {
   scenario: MatchLabScenario
 }
 
+export type MatchLabParticipantImportEvidence = {
+  side: 'player_a' | 'player_b'
+  product_run_id: string
+  branch_id: string
+  saved_revision_id: string
+  saved_revision_content_hash: string
+  sporting_state_fingerprint: string
+  sporting_week_ordinal: number
+  player_id: string
+  source_profile_fingerprint: string
+  canonical_projection_fingerprint: string
+}
+
 export type MatchLabSession = {
   schema_version: 'match_test_lab_session.v1'
   session_id: string
   display_name: string
   version: number
   scenario: MatchLabScenario
+  participant_imports: MatchLabParticipantImportEvidence[]
   session_fingerprint: string
 }
 
@@ -7733,4 +7747,14 @@ export type MatchLabSessionUpdateRequest = {
 export type MatchLabSessionRunRequest = {
   expected_session_fingerprint: string
   batch_seeds?: number[]
+}
+
+
+export type MatchLabSavedRevisionPlayerImportRequest = {
+  expected_session_fingerprint: string
+  product_run_id: string
+  branch_id: string
+  saved_revision_id: string
+  player_id: string
+  side: 'player_a' | 'player_b'
 }

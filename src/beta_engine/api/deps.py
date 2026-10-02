@@ -237,6 +237,7 @@ def get_match_test_lab_service(request: Request) -> MatchTestLabService:
     return MatchTestLabService(
         session_factory=runtime.repository._session_factory,
         id_factory=_new_product_entity_id,
+        repository=runtime.repository,
     )
 
 

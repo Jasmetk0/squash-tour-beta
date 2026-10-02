@@ -755,7 +755,7 @@ def _historical_tournament_sources():
             self.archetype = "Power Attacker"
             self.source_generation_fingerprint = f"profile:{player_id}"
             self.hidden_career_traits = HiddenCareerTraits(
-                potential_ceiling=190,
+                potential_ceiling=99,
                 growth_curve="Standard",
                 professionalism=0.7,
                 ambition=0.7,

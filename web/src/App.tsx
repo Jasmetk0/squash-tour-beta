@@ -83,6 +83,7 @@ import {
   ViewerRunPlayersPage
 } from './pages/ViewerRunPlayersCountriesPage'
 import { TalentPreviewPage } from './pages/TalentPreviewPage'
+import { TalentCalibrationPage } from './pages/TalentCalibrationPage'
 import { TalentIntakePage } from './pages/TalentIntakePage'
 import { ManualPlayerOverridesPage } from './pages/ManualPlayerOverridesPage'
 import { WeekDetailPage } from './pages/WeekDetailPage'
@@ -126,6 +127,7 @@ export default function App(): JSX.Element {
         <Route path="admin/world/countries" element={<Navigate replace to="/admin/world/library/official_fax_world/countries" />} />
         <Route path="admin/world/countries/:countryCode" element={<Navigate replace to="/admin/world/library/official_fax_world/countries" />} />
         <Route path="admin/world/talent-preview" element={<TalentPreviewPage />} />
+        <Route path="admin/world/talent-calibration" element={<TalentCalibrationPage />} />
         <Route path="admin/world/country-momentum" element={<CountryMomentumPage />} />
         <Route path="admin/world/manual-player-overrides" element={<ManualPlayerOverridesPage />} />
         <Route path="admin/world/package" element={<Navigate replace to="/admin/world/library" />} />

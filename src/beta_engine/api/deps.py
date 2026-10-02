@@ -74,6 +74,7 @@ from beta_engine.application.run_package_service import RunPackageService
 from beta_engine.application.run_world_initial_pool_preview_service import RunWorldInitialPoolPreviewService
 from beta_engine.application.run_world_initial_world_service import RunWorldInitialWorldService
 from beta_engine.application.world_talent_preview_service import WorldTalentPreviewService
+from beta_engine.application.talent_calibration_service import TalentCalibrationService
 from beta_engine.infrastructure.config import load_settings
 from beta_engine.infrastructure.db import DatabaseSettings, SimulationPersistenceRepository, create_session_factory, create_sqlite_engine
 
@@ -224,6 +225,10 @@ def get_calendar_template_service(request: Request) -> CalendarTemplateService:
 
 def get_world_talent_preview_service(request: Request) -> WorldTalentPreviewService:
     return WorldTalentPreviewService(countries_service=get_countries_config_service(request))
+
+
+def get_talent_calibration_service() -> TalentCalibrationService:
+    return TalentCalibrationService()
 
 
 def get_manual_player_overrides_service(request: Request) -> ManualPlayerOverridesService:

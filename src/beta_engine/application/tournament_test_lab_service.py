@@ -16,10 +16,12 @@ from beta_engine.domain.matches.models import MatchContext, MatchParticipantCont
 from beta_engine.domain.tournaments.draw_authority import (
     TournamentDrawAuthority,
     TournamentDrawAuthorityBuilder,
+    TournamentDrawBracket,
 )
 from beta_engine.domain.tournaments.draw_input_authority import (
     TournamentDrawInputAuthority,
     canonical_classic_seed_count,
+    canonical_qualification_seed_count,
 )
 from beta_engine.domain.tournaments.entry_field import TournamentEntryFieldCapacity
 from beta_engine.domain.tournaments.format_authority import TournamentFormatAuthority
@@ -70,6 +72,9 @@ class TournamentLabScenario(BaseModel):
     format_kind: str = Field(min_length=1, max_length=80)
     participants: tuple[MatchParticipantContext, ...] = Field(min_length=2, max_length=128)
     main_draw_size: int = Field(ge=2, le=128)
+    qualification_draw_size: int = Field(default=0, ge=0, le=128, exclude_if=lambda value: value == 0)
+    qualifier_spots: int = Field(default=0, ge=0, le=128, exclude_if=lambda value: value == 0)
+    qualification_player_ids: tuple[str, ...] = Field(default=(), exclude_if=lambda value: not value)
     seed_order_player_ids: tuple[str, ...] = ()
     draw_seed: int
     match_seed: int
@@ -149,6 +154,20 @@ class TournamentLabMatchResult(BaseModel):
     set_scores: tuple[str, ...] = ()
     rally_count: int = Field(default=0, ge=0)
     elapsed_seconds: float = Field(default=0.0, ge=0)
+
+
+class TournamentLabQualificationSectionResult(BaseModel):
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    section_id: str
+    bracket_size: int = Field(ge=2)
+    winner_player_id: str | None
+    played_match_count: int = Field(ge=0)
+    bye_advance_count: int = Field(ge=0)
+    qualification_results: tuple[TournamentLabQualificationSectionResult, ...] = Field(
+        default=(), exclude_if=lambda value: not value
+    )
+    match_results: tuple[TournamentLabMatchResult, ...]
 
 
 class TournamentLabAssertionResult(BaseModel):

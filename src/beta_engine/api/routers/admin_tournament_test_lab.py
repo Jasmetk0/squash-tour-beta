@@ -7,6 +7,8 @@ from beta_engine.application.tournament_test_lab_service import (
     BuiltInTournamentLabScenario,
     TournamentLabCompatibility,
     TournamentLabRequest,
+    TournamentLabRunDraftPreview,
+    TournamentLabRunDraftPreviewRequest,
     TournamentLabSavedRevisionCopyRequest,
     TournamentLabResult,
     TournamentLabScenario,
@@ -60,6 +62,23 @@ def copy_saved_revision_tournament_to_lab(
 ) -> TournamentLabSession:
     try:
         return service.copy_saved_revision_tournament(request)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+
+@router.post(
+    "/sessions/{session_id}/run-draft-preview",
+    response_model=TournamentLabRunDraftPreview,
+)
+def preview_tournament_lab_run_draft(
+    session_id: str,
+    request: TournamentLabRunDraftPreviewRequest,
+    service: TournamentTestLabService = Depends(get_tournament_test_lab_service),
+) -> TournamentLabRunDraftPreview:
+    try:
+        return service.preview_run_draft(session_id, request)
     except KeyError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     except ValueError as exc:

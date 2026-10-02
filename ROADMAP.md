@@ -23,7 +23,9 @@ Baseline: `buuk` at `c42dc06ba73c86ffd4c64b2ce1d38e9944beab09` (#1094).
    ≥1,000 InitialWorld players → Saved Revision → gate. A Full Simulation acceptance probe now
    exposed an initial-position gap. Follow-up review showed sporting Week 1 already existed; the
    materializer now additionally derives, Saves and publishes the initial Official Ranking/world head.
-   The mandatory automated 50-season 2000/01–2049/50 execution remains outstanding; lower Tours remain abstract. Retain empty-Run acceptance, CZ/EN Admin,
+   A reviewed current-week bulk Ranking Snapshot bootstrap advances the materialized Week-1 Editions
+   to the real `entry_field_required` Tournament Preparation blocker. The mandatory automated 50-season
+   2000/01–2049/50 execution remains outstanding; lower Tours remain abstract. Retain empty-Run acceptance, CZ/EN Admin,
    recovery and the rest of Master pre-alpha scope.
 5. Calibrate fairness/numeric policies from measured cases once the relevant systems work;
    do not treat implementation constants as newly approved product rules.

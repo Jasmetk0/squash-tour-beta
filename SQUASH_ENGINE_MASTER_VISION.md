@@ -2,8 +2,8 @@
 
 ## Kompletní průběžná specifikace a registr rozhodnutí
 
-**Verze dokumentu:** 69
-**Aktualizováno:** 30. 9. 2026 – pre-alpha skupinový RET, Test Lab, Run ochrana/kompatibilita a uživatelský rozsah
+**Verze dokumentu:** 70
+**Aktualizováno:** 2. 10. 2026 – FAX testovací šablona, počáteční svět/ranking, abstraktní nižší Tours, Talent Intake a audit PR #1075–1093
 **Účel dokumentu:** jediný průběžný zdroj pravdy pro to, co má Squash Engine být, co už je rozhodnuté, jakým směrem se projekt ubírá, co se musí teprve dořešit a – v oddělené evidenční vrstvě – co je prokazatelně naprogramované a sloučené.
 
 Tento dokument primárně popisuje zamýšlený produkt. Samotná přítomnost produktového pravidla neznamená, že už je naprogramované. Ověřený stav kódu se od verze 51 zapisuje výhradně do samostatné kapitoly 35; implementace sama nikdy nevytváří ani nemění produktový canon.
@@ -17,6 +17,8 @@ Tento dokument primárně popisuje zamýšlený produkt. Samotná přítomnost p
 **Nová produktová rozhodnutí v68:** obecné formáty `Skupiny` a `Skupiny + pavouk`, stejně velké skupiny, nastavitelná skupinová nasazení, bodování BO3/BO5 a pořadí skupiny, upozornění při nerozhodnuté shodě bez automatického losu, zachování dokončených výsledků po odstoupení a skupinové W/O bez smyšleného skóre. World Tour Finals používají obecné formáty, mohou přidělovat Official Ranking body po fázích a po skupinách postupují podle výsledků a křížení, nikoliv nového nasazení z Race. Rozhodnutá pravidla lze později porovnávat z hlediska férovosti a u podporovaných konfigurací verzovat po Runech/sezonách; tím se nemění pevná pravidla klasického pavouku ani automaticky nezavádějí nové přepínače. Detail v 15.14–15.15 a 26.1. Jde o produktový zápis dostupných potvrzených dohod, nikoliv tvrzení o jejich implementaci nebo nové celkové počty vyřešených PAQ.
 
 **Nová rozhodnutí v69:** první pre-alpha používá skupinový RET s maximem bodů pro vítěze a vyloučením neúplného zápasu ze skupinových poměrů, srovnání stejných míst napříč srovnatelnými skupinami, jednotný formát skupinové fáze, validované návrhy křížení, neměnné Draw Versions a omezené ruční přesuny. Globální Match/Tournament Test Lab bez Runu, přenosné opakovatelné scénáře a programové batch testy jsou povinné. Potvrzeny jsou dvě jazykové verze lokálního Adminu, základní Replay bez animace, odklad Live Rankingu, zákaz přestupu země, větvení, zálohy a bezpečné migrace starších Runů. AI oprávnění rozlišují editovatelnou kopii a chráněný GitHub originál. Číslování Pre-alpha/Alpha/Beta je předběžné až do vydání. Detail a status PAQ v 31.25; nejde o tvrzení o implementaci.
+
+**Nová rozhodnutí v70:** akceptace používá editovatelnou kopii verzované FAX testovací šablony, nikoliv rozpracování chráněného Official Runu. Minimum je 1 000 dosud neretired hráčů, kteří dosáhli 15 let před prvním Weekem 1, a referenčních 80 Editions nejvyšší World Tour za sezonu. World Tour se simuluje celá; Elite, Challenger a Development Tour mají v FAX pre-alpha souhrnné výsledky a důsledky bez smyšlených zápasů. Počáteční ranking se před Weekem 1 testuje ve třech variantách. Talent Preview odděluje očekávání od skutečně vygenerovaného ročníku. World/country obsah z balíčku je editovatelná nezávislá Runová kopie. Nové rozhodnutí o skutečné proveditelnosti souběžných závazků nahrazuje dřívější plošný Week Tournament Lock. Detail v 31.26; implementační checkpoint a jeho omezení v 35.32. Implementační koeficienty ani diagnostický Calibration Lab samy nevytvářejí nové produktové pravidlo.
 
 **Canonical cesta:** `SQUASH_ENGINE_MASTER_VISION.md` v kořeni repozitáře `Jasmetk0/squash-tour-beta`. Číslo vydání se mění uvnitř; přiložená/exportovaná verze je přenosná kopie téhož obsahu. Git historie uchovává další změny bez dalšího souběžného „nejnovějšího“ Masteru. `CURRENT_STATE.md` je krátký commitově ukotvený index implementace a aktuálního zadání; `ROADMAP.md` určuje technické pořadí. Ani jeden nemění tento produktový canon.
 
@@ -607,6 +609,8 @@ Admin vždy ukáže efektivní hodnotu, `Inherited / Override`, přesný zdroj a
 
 **[PROZATÍMNÍ, SILNÝ SMĚR]** Architektura zůstává rozšiřitelná o další budoucí typy, například `Player Package`. Jejich konkrétní katalog a schémata zatím rozhodnuté nejsou.
 
+**[UPŘESNĚNÍ v70]** Uživatel označuje zdroj zemí také jako „Countries Package“. Rozhodnutý je přenos zemí a jejich parametrů do nezávislé editovatelné Runové kopie, v níž lze země měnit i přidávat. Samostatné schéma šestého typu tím není uzavřené; dosavadní World Package a jeho country scope tento princip pokrývají. Není požadováno přímé propojení s aplikací Woorld FAX. Ani shodný název země není automatický důkaz shodné identity. Poslední návrh konkrétních tlačítek pro kolize nebyl potvrzen; platí již rozhodnuté bezpečné identity, diff a zákaz tichého přepsání z 4.11.
+
 ## 4.3 Obsah World Package
 
 World Package má určovat minimálně:
@@ -863,6 +867,8 @@ Základní logická posloupnost první verze je:
 `Squash Tradition` tuto pipeline pouze mírně moduluje. Velká populace sama o sobě nesmí automaticky vytvořit nejlepší hráče a velký aktivní pool zvyšuje počet příležitostí mimořádný talent nalézt, nikoliv talent každého jednotlivce.
 
 **[ODLOŽENO]** Přesné váhy, vzorce, konverzní poměry, význam hranic `1/2/3/4/5`, roční velikost světového poolu, kalibrace jednotlivých zemí, dynamické změny ratingů v průběhu historie a jejich zpětné vazby. Národní `style_dna` se nebude zavádět, dokud nebudou dostatečně zralé individuální atributy, styly a jejich simulační logika; případný budoucí návrh nesmí porušit výše rozhodnutou hranici vrozeného talentu.
+
+**[ROZHODNUTO PRO PRE-ALPHA v70]** Talent Preview/Intake pro zvolený rok ukáže podle zemí očekávaný počet hráčů a rozdělení potenciálu/kvality, pravděpodobnosti a variabilitu. Skutečný ročník se může výrazně lišit; ani malá země nemá zaručeného jednoho hráče každý rok. Po dokončení generování ročníku se očekávání porovná se skutečností. Očekávání nesmí být pouze přejmenovaným známým výsledkem téhož seedu. Základ je populace roku narození a Country Model V1; šest ratingů ovlivňuje sampling a development/conversion, nikoliv národnostní vrozený potenciál. Přesné distribuce, rozsahy a vazba pomocných quality bands na Potential OVR se ladí empiricky nad fungujícím enginem; současné implementační váhy nejsou finální canon.
 
 ## 5.4 CSV/XLSX import zemí a populace
 
@@ -1378,15 +1384,19 @@ Samotná existence recovery dat nesmí změnit kanonický stav Runu. Viewer dál
 
 ## 9.1 Počáteční hráčský pool
 
-**[ROZHODNUTO]** Před první sezonou musí vzniknout počáteční aktivní hráčský pool.
+**[ROZHODNUTO]** Před první sezonou vznikne počáteční ne-retired hráčský pool ve věku 15–45 let. Není nutné vytvářet již retired historické hráče před startem Runu.
 
-**[ROZHODNUTO]** Počáteční aktivní hráči mohou mít 15–45 let.
+**[ROZHODNUTO PRO FAX TESTOVACÍ ŠABLONU v70]** Pool obsahuje nejméně **1 000 hráčů, kteří dosáhli 15 let ještě před začátkem prvního Weeku 1**. Nikdo z tohoto počátečního poolu již neukončil kariéru. Část může být Tour Players, část dosud pre-Tour prospects; 1 000 neznamená 1 000 již klasifikovaných profesionálů. Hráči, kteří dovrší 15 let při otevření prvního Weeku 1, přicházejí navíc v jeho běžném intake a neslouží ke splnění počátečního minima.
 
-Při startu v roce 2000 to přibližně odpovídá ročníkům narození 1955–1985; tím se také vysvětluje začátek populačních dat v roce 1955.
+Počáteční kohorty se odvozují ze stejného Country Modelu V1 jako pozdější intake, z populace jejich roku narození a odpovídajících generačních vstupů. Pro start roku 2000 jde přibližně o ročníky 1955–1985. Rozložení věků, zemí, potenciálu, okamžik vstupu na Tour a dopočet dosavadního vývoje se kalibrují při testování; nesmějí se potichu odvozovat jen z dnešní populace země.
 
-**[ROZHODNUTO]** Není potřeba vytvářet již retired historické hráče z doby před rokem 2000.
+**[ROZHODNUTO K TESTOVÁNÍ, NIKOLIV VOLBA FAX CANONU]** Před spuštěním prvního Weeku 1 lze nad stejným rosterem porovnat tři varianty počátečního Official Rankingu:
 
-**[ODLOŽENO]** Přesný způsob vytvoření počátečního rankingu, počátečních schopností, kariérní minulosti a rozložení hráčů je složitý a vyřeší se později.
+1. **Výchozí přenesené body:** explicitní seed/baseline bodů a pořadí s vlastní provenance a pravidly jejich platnosti; bez vymyšlených turnajových výsledků.
+2. **Zjednodušená předsezona:** jednorázově vytvořená/simulovaná předhistorie turnajů, umístění a bodů. První vstupy se mohou založit na tehdejší síle hráčů, takže není nutné rekurzivně simulovat další a další předchozí sezony. Předhistorie je viditelně označená a není další sezonou v pevném 50sezonním rozsahu Runu.
+3. **Světová herní přestávka:** testovací scénář typu pandemie s mimořádnou společnou policy pro zmrazené pořadí/body a jejich přechod do běžného systému. Nejde o automatické individuální zdravotní PR pro každého hráče ani o rozhodnutou oficiální historii FAX.
+
+Výběr a regenerace těchto variant patří před start prvního Weeku 1. Po zahájení se pro jiné porovnání použije branch z předstartovního uloženého bodu. Finals Race začíná novou sezonu od nuly; předsezonní podklad Official Rankingu se do ní automaticky nepřevádí. Přesné body, expirace a přechodová matematika jednotlivých variant zůstávají kalibrací a konfigurovanou policy.
 
 ## 9.2 Pravidelný příchod nových hráčů
 
@@ -1426,11 +1436,15 @@ Pokud Tournament Ranking Snapshot předchází jeho vstupu na Tour, je pro danou
 
 **[ROZHODNUTO PRO SOUČASNOU VERZI]** Běžná juniorská zápasová historie se nesimuluje.
 
-**[ROZHODNUTO PRO SOUČASNOU VERZI]** Juniorské mistrovství světa je součástí enginu a představuje výjimku z absence běžné juniorské zápasové historie.
+**[CÍLOVÝ ROZSAH, MIMO PRVNÍ PRE-ALPHA v70]** Juniorské mistrovství světa zůstává plánovanou výjimkou z absence běžné juniorské zápasové historie; první pre-alpha je nemusí simulovat.
 
 **[PROZATÍMNÍ]** Juniorské mistrovství světa bude pravděpodobně jediným simulovaným juniorským turnajem. Celý juniorský okruh ani běžná juniorská kariéra se simulovat nebudou.
 
+**[ROZHODNUTO PRO PRE-ALPHA v70]** Technické předgenerování budoucího ročníku nesmí v běžném Runovém přehledu prozrazovat konkrétní dosud nezpřístupněné hráče. Pravděpodobnostní Talent Preview a skutečně vzniklí hráči jsou oddělené. Uzavřený ročník dovolí finální Expected vs Generated srovnání; průběžný stav musí být označen jako neúplný.
+
 ## 9.3 Ruční hráči, lock a regenerace
+
+**[ROZHODNUTO PRO PRE-ALPHA v70]** Hráče lze vedle ruční tvorby a generování také importovat, včetně CSV/XLSX staging workflow. Preview, validace, identity, provenance a bezpečné řešení kolizí platí stejně jako pro ostatní importy. Konkrétní mapování sloupců a jemný UI návrh jsou implementační detail; import nedává právo přepsat uloženou historii.
 
 **[ROZHODNUTO]** Engine obsahuje `Locked Players`.
 
@@ -2008,7 +2022,7 @@ Terminální `Completed / Cancelled / Abandoned` se v současné historii znovu 
 
 **[ROZHODNUTO PRO PRVNÍ VERZI]** Je-li Tournament Edition definitivně zrušena před prvním skutečně zahájeným zápasem kvalifikace nebo Main Draw, získá historický stav `Cancelled` a důvod zůstane uložený. Nevzniknou žádné rankingové body, prize money ani titul.
 
-Všechny její přihlášky, závazky a Week Tournament Locky se uvolní bez disciplinární sankce. Tato nově vzniklá dostupnost však neobchází deadline, freeze ani replacement pravidla jiného turnaje: hráč do něj smí vstoupit jen tehdy, pokud jej jeho normální entry nebo replacement workflow ještě dovoluje.
+Všechny její přihlášky a dotčené časové závazky se uvolní bez disciplinární sankce. Tato nově vzniklá dostupnost však neobchází deadline, freeze ani replacement pravidla jiného turnaje: hráč do něj smí vstoupit jen tehdy, pokud jej jeho normální entry nebo replacement workflow ještě dovoluje.
 
 ### Postponed
 
@@ -2029,7 +2043,7 @@ FAX/Admin při odkladu výslovně zvolí jeden ze dvou režimů a před potvrzen
 
 Při obnovení pokračuje rozpracovaný zápas ze stejného skóre a zachovaného match/rally logu. Aktuální stamina, focus, fatigue a health se před pokračováním znovu odvodí podle skutečné délky přerušení a průběžných událostí; nic se automaticky neresetuje.
 
-**[ROZHODNUTO PRO PRVNÍ VERZI]** Dlouhé `Suspended` období nezamkne hráčům automaticky všechny mezilehlé weeky. Mohou v nich při splnění běžných pravidel hrát jiné turnaje; Week Tournament Lock původní Edition se znovu uplatní v jejím skutečném resume weeku.
+**[ROZHODNUTO PRO PRVNÍ VERZI]** Dlouhé `Suspended` období nezamkne hráčům automaticky všechny mezilehlé weeky. Mohou v nich při splnění běžných pravidel hrát jiné turnaje; po obnovení se znovu vyhodnotí skutečný časový závazek a dostupnost podle 13.6.
 
 Pokud konkrétní hráč při obnovení nemůže pokračovat kvůli zdraví, jeho zápas skončí `RET`. Neodůvodněné odmítnutí nebo nenastoupení se řeší jako `Default`, nikoliv `ABN`; `ABN` je vyhrazen pro vnější příčinu bez zavinění hráčů.
 
@@ -2199,27 +2213,17 @@ Ranking, seed, národnost ani popularita nesmějí samy vytvářet odpočinkovou
 
 ## 13.6 Paralelní turnaje
 
-**[ROZHODNUTO]** V jednom weeku může současně probíhat více turnajů.
+**[ROZHODNUTO]** V jednom weeku může současně probíhat více turnajů; počet souběžných turnajů nemá pevný maximální limit.
 
-**[ROZHODNUTO]** Počet souběžných turnajů nemá pevný maximální limit.
+**[NOVĚ ROZHODNUTO PRO PRE-ALPHA v70 – NAHRAZUJE PLOŠNÝ WEEK TOURNAMENT LOCK]** Engine automaticky nezakáže přihlášku či další start jen proto, že jde o dva turnaje téhož weeku. Rozhoduje skutečná časová dostupnost hráče, návaznost jeho zápasů a proveditelnost přesunu. Nikdo nemůže řádně odehrát dva skutečně kolidující zápasy. Nedořešené vícenásobné závazky jsou současně disciplinární problém podle 15.1 a 20.1; fyzická proveditelnost sama neruší pozdní odhlášení ani vzniklé podezření.
 
-**[ROZHODNUTO PRO PRVNÍ VERZI]** Jeden hráč smí během jednoho weeku aktivně soutěžit nejvýše v jednom oficiálním turnaji. Pouhý fakt, že Tournament Edition zasahuje do více weeků, hráče neblokuje po celou její nominální délku; používá se `Week Tournament Lock`:
+Příklad potvrzený uživatelem: hráč první den v turnaji A prohraje a stihne cestu i svůj první zápas druhý den v B. Druhý start se plošně nezablokuje, ale rychlé vyřazení následované druhým turnajem se automaticky prověří jako podezřelá situace a může dostat menší postih podle účinné policy. Nenastoupení kvůli jinému turnaji je závažnější. Prověření není automatický důkaz úmyslné prohry.
 
-- jakmile hráči v daném weeku začne jeho kvalifikace nebo Main Draw, původní turnaj mu obsadí celý tento week,
-- ani po vyřazení už v témže weeku nesmí začít druhý turnaj,
-- do dalšího weeku se lock přenese pouze tehdy, pokud hráč v původním turnaji stále pokračuje a Edition není pro tento week formálně `Suspended`; během dlouhého přerušení se lock uvolní a znovu se aktivuje v resume weeku podle kapitoly 13.2,
-- po vyřazení ve Weeku 20 je hráč od Weeku 21 volný; po vyřazení ve Weeku 21 je volný od Weeku 22,
-- přímo přijatý hráč do Main Draw smí v dřívějším qualification-only weeku téže Edition hrát jiný turnaj, protože jeho vlastní fáze ještě nezačala.
+**[ROZHODNUTO]** Entry objekt může používat podmíněný stav `Still Competing`. Pokud hráč skutečně pokračuje v původní akci a další závazek nemůže splnit, včas a správně označené podmíněné odstoupení zůstává omluvenou cestou; dřívější předpoklad zákazu celého weeku se nepřenáší do nové dostupnosti.
 
-**[ROZHODNUTO PRO PRVNÍ VERZI]** Week Tournament Lock platí pro všechny oficiální soutěže podporované enginem, zejména MSA Tour, olympijské hry, juniorské mistrovství světa a jejich kvalifikace. Předběžné a podmíněné přihlášky do více akcí zůstávají povolené podle kapitoly 15.1, ale nikdy z nich nevznikne právo skutečně hrát dva turnaje v jednom weeku.
+**[ROZHODNUTO]** Zjednodušená kontrola přesunu používá místa a dostupné Match Day/Simulation Slots. Stejná země sama proveditelnost nezaručuje a jiná ji nevylučuje. Detailní lety, trasy a víza se nesimulují; proveditelný přesun vytváří Travel Load podle 5.5. Turnaj kvůli individuálnímu programu automaticky nepřesouvá kola; explicitní konzistentní Admin/FAX výjimka se audituje.
 
-**[ROZHODNUTO PRO PRVNÍ VERZI]** Pro následující week může entry objekt používat podmíněný stav `Still Competing`. Pokud hráčův předchozí turnaj do dalšího weeku skutečně pokračuje, engine jej z podmíněné následující akce omluveně stáhne a dovolí jeho nahrazení. Správně označený a včas vyřešený stav `Still Competing` není disciplinárním proviněním.
-
-**[ROZHODNUTO PRO PRVNÍ VERZI]** Kombinace turnajů v po sobě jdoucích weecích je platná pouze tehdy, když zjednodušená kontrola podle míst a dostupných Simulation Slots vyhodnotí přesun jako proveditelný. Stejná země sama proveditelnost nezaručuje a jiná země ji sama nevylučuje. Detailní lety, trasy a víza se nesimulují; proveditelný přesun následně vytváří Travel Load podle kapitoly 5.5.
-
-**[ROZHODNUTO PRO PRVNÍ VERZI]** Turnaj kvůli individuálnímu programu hráče automaticky nepřesouvá zápasy ani kola. Admin/FAX může udělit výslovnou výjimku, ale zásah musí být konzistentní a zaznamenaný v Audit Logu.
-
-**[POZDĚJŠÍ POKROČILÁ VERZE]** Přesnější pravidla podle nepřekrývajících se hracích období, možnost dvou krátkých turnajů v témže weeku, clash lift, detailní doprava, víza a další výjimky. Pro první verzi je nahrazuje výše uvedený jednodušší Week Tournament Lock.
+**[OTEVŘENO / K TESTOVÁNÍ]** Přesné prahy dostupnosti a travel, sankční sazby, důkazní pravidla podezřelé prohry a jemné výjimky se kalibrují. Starší Week Tournament Lock je historická policy, nikoliv nynější povinný plošný zákaz. Migrace implementace nesmí zpětně přepsat starší uložené výsledky a tehdy použitá pravidla.
 
 ## 13.7 Prestiž turnaje
 
@@ -2396,13 +2400,13 @@ Měnit se mohou zejména:
 
 ## 14.3 Rozsah detailní simulace tour
 
-**[ROZHODNUTO PRO SOUČASNOU VERZI]** Jednotlivé zápasy a celé turnaje se detailně simulují pouze na World Tour a Elite Tour.
+**[ROZHODNUTO PRO FAX PRE-ALPHA v70]** Nejvyšší **World Tour se simuluje celá**, včetně jednotlivých zápasů. **Elite Tour, Challenger Tour a Development Tour se v sezonním FAX průchodu nesimulují plně zápas po zápase.** Plná Elite Tour může přijít například v alphě; není podmínkou první pre-alpha. Referenční sezona obsahuje 80 skutečných World Tour Editions, nikoliv 80 turnajů souhrnně ve všech Tours. Počet nižších soutěží se doplní podle potřeb testovacího světa.
 
-**[ROZHODNUTO PRO SOUČASNOU VERZI]** Challenger Tour a Development Tour se nyní nebudou simulovat zápas po zápase ani jako kompletní turnajové pavouky.
+**[ROZHODNUTO V PRINCIPU PRO PRE-ALPHA]** Nižší soutěže mají automaticky generovaný souhrnný výsledek: účastníky, konečné umístění/stage, body, titul a případné prize money. Výsledky vstupují do společného rankingu a hráčské historie; souhrnná simulace vytváří přiměřené zatížení a cestovní/časové důsledky. Obsazenost se odvíjí od skutečně dosažených kol a jejich dnů, nikoliv od fiktivního kompletního zápasového logu. Admin smí výsledky auditovaně upravit. Přesná matematika, datové schéma a podoba souhrnů se doladí při testování.
 
-**[ROZHODNUTO PRO SOUČASNOU VERZI]** Mimo běžnou MSA Tour jsou současnými plně simulovanými veřejnými výjimkami juniorské mistrovství světa a olympijské hry. Tím se nemění výše uvedená hranice, že uvnitř pravidelné MSA Tour se detailně simulují pouze World Tour a Elite Tour.
+**[ENGINE INVARIANT]** Souhrnný výsledek je označený svým původem. Nevytváří smyšlené jednotlivé zápasy, rally, skóre ani H2H soupeřů. V rámci jedné Edition se sportovní, bodové a finanční následky nezapočtou dvakrát. Rozsah plné/souhrnné simulace je konfigurovaný; FAX pre-alpha volba není univerzální zákaz jiným Runům.
 
-**[ODLOŽENO]** Jak budou Challenger a Development Tour abstraktně reprezentovat výsledky, body, postup hráčů, účast a další dopady na společný svět.
+**[ROZHODNUTO]** Tournament Test Lab umí plně zkoušet i Elite či nižší turnaj, vymyšlenou soutěž a nestandardní formát. Tato schopnost Labu není závazkem plně simulovat celou Elite sezonu v FAX Runu. Individuální MS a Finals jsou v pre-alpha; olympiáda, týmové soutěže a juniorské MS první akceptaci neblokují.
 
 ---
 
@@ -2443,7 +2447,7 @@ Novější ranking vydaný během procesu tento snapshot automaticky nenahrazuje
 
 **[ROZHODNUTO]** Výchozím Tournament Ranking Snapshotem je oficiální ranking po dokončení weeku bezprostředně před weekem, ve kterém končí Main Entry Window, tedy `Main Entry Closing Week − 1`. V Adminu lze pro konkrétní turnaj nastavit jiný existující rankingový snapshot.
 
-**[PROZATÍMNÍ VÝCHOZÍ TIMING]**
+**[ROZHODNUTÝ VÝCHOZÍ TIMING PRO PRE-ALPHA v70]**
 
 - Main Entry Window trvá dva weeky,
 - bezprostředně následuje jeden week dlouhý Qualification Entry Window,
@@ -2481,7 +2485,7 @@ Viewer v každém historickém weeku vidí pouze tehdy veřejné stavy přihlá�
 
 **[ROZHODNUTO PRO PRVNÍ VERZI]** Hráčská AI při tomto porovnávání neopomíjí Unranked turnaje. Jejich bodový přínos je přesně nula, ale mohou být atraktivní prestiží, prize money, možností získat titul, reprezentovat zemi nebo jinou hráčovou motivací. Přesné váhy těchto důvodů a individuální chování AI zůstávají otevřené pro pozdější kalibraci.
 
-**[ROZHODNUTO]** Engine nemá pevný početní limit souběžných předběžných nebo podmíněných přihlášek jednoho hráče. AI je omezuje jejich smysluplností, eligibility a konflikty; všechny skutečné závazky však musí včas zúžit tak, aby hráč splnil Week Tournament Lock a ostatní pravidla.
+**[ROZHODNUTO]** Engine nemá pevný početní limit souběžných předběžných nebo podmíněných přihlášek jednoho hráče. AI je omezuje jejich smysluplností, eligibility a konflikty; skutečné závazky musí vyřešit podle dostupnosti, cestování a disciplinární policy v 13.6 a 20.1.
 
 **[ROZHODNUTO PRO PRVNÍ VERZI]** Více kolidujících přihlášek lze během otevřeného procesu dočasně ponechat. Okamžik, od kterého je nevyřešený konflikt sankcionovaný, se řídí skutečným stavem hráče v obou fieldech:
 
@@ -2490,9 +2494,9 @@ Viewer v každém historickém weeku vidí pouze tehdy veřejné stavy přihlá�
 - pokud je v Main Draw jedné akce a mimo Main Draw druhé, může během Qualification Entry Window opustit tu, do jejíhož Main Draw se nedostal,
 - po příslušné uzávěrce roste závažnost podle délky prodlení a škody způsobené dotčeným turnajům.
 
-Tato tolerance není oprávněním hrát dva turnaje. Rozhodující je, kam hráč skutečně odjede a nastoupí: může odehrát jednu akci, nebo nenastoupit ani na jednu a vytvořit více porušení; engine mu automaticky nezachraňuje předem určený „prioritnější“ turnaj. Přesné číselné sankce jsou policy a zůstávají otevřené podle kapitoly 20.
+Po relevantní uzávěrce engine na konfliktní závazky automaticky upozorní a vyzve k jejich vyřešení. Rozhoduje skutečný průběh, čas a travel podle 13.6, nikoliv plošný zákaz dvou turnajů téhož weeku. Rychlé pozdní odhlášení znamená menší závažnost než no-show kvůli druhé akci; lze vytvořit i více samostatných provinění. Engine automaticky nezachraňuje předem zvolený „prioritnější“ turnaj. Přesné sankce jsou historicky verzovanou policy podle kapitoly 20.
 
-**[ROZHODNUTO PRO PRVNÍ VERZI]** Před `Final Commitment Deadline` může hráč svůj zvolený turnajový závazek pro daný week změnit v rámci ostatních entry pravidel. Po tomto deadline každý odpovídající potvrzený závazek zamkne příslušný week i tehdy, když hráč později odstoupí; nevyřešená vícenásobná přihláška tím nezískává právo hrát více akcí. Skutečné zranění či nemoc odstraní disciplinární sankci, nikoliv Week Tournament Lock. Lock může uvolnit zrušení akce, odklad na nový termín s právem všech hráčů znovu se rozhodnout, formální dlouhé Suspended období pro mezilehlé weeky, chyba organizátora nebo výslovné rozhodnutí FAX/Admina; podmíněný stav `Still Competing` pro následující week zůstává samostatnou omluvenou cestou podle kapitoly 13.6.
+**[ROZHODNUTO PRO PRE-ALPHA v70]** `Final Commitment Deadline` nadále odlišuje předběžný a potvrzený závazek, ale nezavádí automatický zákaz celého weeku po odstoupení. Dostupnost a skutečné kolize řeší 13.6; pozdní změny, omluvy a následky se vyhodnotí podle účinné disciplinární policy. Přesné umístění deadline a výjimky zůstávají otevřené. Zrušení, odklad a dlouhé přerušení uvolňují dotčené skutečné závazky bez automatické sankce.
 
 **[ROZHODNUTO PRO PRVNÍ VERZI]** Ruční Admin změna přihlášky má dvě varianty:
 
@@ -2502,6 +2506,8 @@ Tato tolerance není oprávněním hrát dva turnaje. Rozhodující je, kam hrá
 Obě varianty nesou Manual provenance, správný historický čas a Audit Log.
 
 **[ODLOŽENO]** Přesná eligibility, povinné turnaje, konečné umístění `Final Commitment Deadline` vůči entry closing, losu a freezes, číselné sankční prahy, detailní AI optimalizace, konečný obecný cut-off pro některé posuny a přesný způsob sestavení a seřazení WC rezerv. Priorita dostupné RWC, její trvající dostupnost, automatické odebrání WC při přímém vstupu, uchování historie a atomický přepočet jsou již rozhodnuté.
+
+**[ROZHODNUTO PRO PRE-ALPHA v70 – WILD CARDS]** Admin může WC přidělit libovolnému hráči jako výslovný zásah a engine vysvětlí důvody pro a proti v daném kontextu. Široká Admin pravomoc neobchází technickou integritu dat, kapacitu fieldu ani platný match input. V simulaci WC přiděluje turnajová AI v rámci nastavených pravidel; její přesné váhy se kalibrují. Aktivní žádosti hráčské AI o WC jsou volitelný pozdější směr. Dosavadní pravidla WC/RWC historie a náhrad zůstávají.
 
 ## 15.2 Kapacita pavouku a počet nasazených
 
@@ -2698,7 +2704,7 @@ Pokud už existuje kvalifikační los:
 
 **[ROZHODNUTO PRO PRVNÍ VERZI]** Všechny odchody, posuny, WC/RWC změny, LL sloty a náhrady vzniklé v témže procesním okně se vypočítají atomicky ze společného pre-window stavu. Výsledek nesmí záviset na technickém pořadí, v jakém engine jednotlivé změny zpracoval.
 
-**[ROZHODNUTO PRO PRVNÍ VERZI]** Prokázané skutečné zranění nebo nemoc může omluvit pozdní odhlášení či nenastoupení a odstranit disciplinární sankci. Pokud však odhlášení nastalo až po Final Commitment Deadline, samo zdravotní omluvení neuvolní hráčův Week Tournament Lock pro jinou akci téhož weeku. Zrušení turnaje, chyba organizátora nebo výslovné uvolnění FAX/Adminem se řeší samostatně podle kapitoly 15.1.
+**[ROZHODNUTO PRO PRVNÍ VERZI]** Prokázané skutečné zranění nebo nemoc může omluvit pozdní odhlášení či nenastoupení a odstranit disciplinární sankci. Skutečnou dostupnost pro jinou akci po odstoupení určuje schedule a travel podle 13.6, nikoliv automatický lock celého weeku. Zrušení turnaje, chyba organizátora nebo výslovné uvolnění FAX/Adminem se řeší samostatně podle kapitoly 15.1.
 
 **[ODLOŽENO]** Konečný katalog všech mimořádných edge cases, detailní UI atomického preview a pravidla vědomého ručního porušení automatického repair workflow. Základ tří fází, seed cascade, přímé doplnění nenasazeného slotu a hráčský replacement cut-off jsou již rozhodnuté.
 
@@ -3435,6 +3441,8 @@ Výchozí tie-break se použije postupně v tomto pořadí:
 
 **[CÍLOVÁ FUNKCE]** Viewer nebo Admin může u shodných bodů vysvětlit rozhodující tie-break vrstvu, aby bylo pořadí auditovatelné.
 
+**[ROZHODNUTO PRO PRE-ALPHA v70]** Best N je celé číslo minimálně **1**. Interval **10–18** je doporučené pásmo bez upozornění; mimo něj engine ukáže neblokující vykřičník, jehož závažnost s odchylkou roste žlutá → oranžová → červená. Přesné barevné prahy se doladí při testování. Červená barva zde označuje extrémní doporučení, nikoliv sama o sobě zákaz jinak validního N; skutečně neplatná hodnota pod 1 je validační chyba. Jde o výslovnou kontextovou výjimku z obecného barevného značení validací.
+
 ## 18.3 Zobrazení hráčů
 
 **[ROZHODNUTO]** V oficiálním rankingu jsou všichni hráči, kteří už vstoupili na Tour a nejsou `retired`, včetně aktivních či `Inactive` hráčů s 0 body.
@@ -3507,7 +3515,7 @@ Tento výpočet je pracovní default určený k testování simulacemi a může 
 
 ### 18.4.4 Použití PR
 
-**[PROZATÍMNÍ][OFFICIAL RUN DEFAULT]** PR se používá pouze pro přijetí do Main Draw nebo kvalifikace. Nasazení určuje skutečný ranking hráče, nikoliv PR.
+**[ROZHODNUTO PRO PRE-ALPHA v70][DEFAULT POLICY]** PR se používá pouze pro přijetí do Main Draw nebo kvalifikace. Nasazení určuje skutečný ranking hráče, nikoliv PR. Podrobnosti LL a další časové hranice se tím samy neuzavírají.
 
 **[ROZHODNUTO][OFFICIAL RUN DEFAULT]** Výchozí počet použití závisí na počtu započitatelných weeků:
 
@@ -3536,7 +3544,7 @@ Přesné mapování „rozhodné uzávěrky“ na budoucí Entry/Freeze okna se 
 
 **[ROZHODNUTO][OFFICIAL RUN DEFAULT]** PR lze v současném Official Runu používat pouze pro běžné individuální turnaje World Tour a Elite Tour. Výchozími výjimkami jsou World Championship, World Tour Finals, týmové soutěže, kontinentální mistrovství, Challenger Tour a Development Tour. Seznam povolených a zakázaných soutěží je součástí `Protected Ranking Policy`, takže jiné Runy nebo sezony mohou používat jiné nastavení.
 
-**[ODLOŽENO]** Přesná taxonomie a ověřování důvodů, omezení přerušené absence, definitivní výpočet hodnoty, definitivní pravidlo pro seeding, vztah k LL, přesný cut-off spotřeby použití a pravidla nového zranění po návratu.
+**[ODLOŽENO]** Přesná taxonomie a ověřování důvodů, omezení přerušené absence, definitivní výpočet hodnoty, vztah k LL, přesný cut-off spotřeby použití a pravidla nového zranění po návratu.
 
 ## 18.5 Historie rankingu
 
@@ -3664,13 +3672,15 @@ Vrozená náchylnost a vlastní recovery profil zůstávají samostatné; Financ
 
 **[ROZHODNUTO PRO PRVNÍ VERZI]** Pozdě vyřešená konfliktní přihláška, neoprávněné pozdní odhlášení nebo no-show může podle závažnosti vést k odečtu rankingových bodů, časově omezené Disciplinary Zero nebo jejich kombinaci. Více samostatných provinění se může posuzovat a skládat nezávisle; přesná tabulka následků, číselné odečty a délky `X` weeků nejsou rozhodnuté.
 
-**[ROZHODNUTO PRO PRVNÍ VERZI]** Prokázané skutečné zranění nebo nemoc disciplinární sankci za pozdní odhlášení či nenastoupení odstraní. Tím se nemění sportovní a zdravotní následky a po Final Commitment Deadline se automaticky neruší Week Tournament Lock. Další omluvitelné důvody a důkazní pravidla zůstávají otevřené.
+**[ROZHODNUTO PRO PRVNÍ VERZI]** Prokázané skutečné zranění nebo nemoc disciplinární sankci za pozdní odhlášení či nenastoupení odstraní. Tím se nemění sportovní a zdravotní následky; skutečnou dostupnost určuje 13.6. Další omluvitelné důvody a důkazní pravidla zůstávají otevřené.
 
-**[ROZHODNUTO PRO SOUČASNÝ ROZSAH]** Samotný nástup se zraněním nebo nemocí ani pozdější zveřejnění tohoto zdravotního stavu disciplinární případ nevytváří. Základní simulace řeší pouze zdravotní a sportovní následky. Případný podvod, tankování, porušení bezpečnostního protokolu nebo zneužití neveřejné zdravotní informace patří až do budoucí detailní disciplinární a integrity vrstvy.
+**[ROZHODNUTO PRO SOUČASNÝ ROZSAH]** Samotný nástup se zraněním nebo nemocí ani pozdější zveřejnění tohoto zdravotního stavu disciplinární případ nevytváří. Základní simulace řeší pouze zdravotní a sportovní následky. Podrobné dokazování podvodu, tankování, porušení bezpečnostního protokolu nebo zneužití neveřejné zdravotní informace zůstává pozdější vrstvou. Pre-alpha však již automaticky eviduje a prověřuje podezřelé kolizní situace podle níže uvedeného rozsahu.
 
 **[ROZHODNUTO]** DQ před zahájením zápasu automaticky znamená nula rankingových bodů a nula prize money z dané Edition. U DQ po zahájení se sportovní výsledek nejprve započítá jako výhra/prohra a samostatná disciplinární policy může diskvalifikovanému hráči dosažené body, prize money nebo obojí odebrat. Přesná sazba a podmínky tohoto forfeitu zůstávají odložené.
 
 **[ODLOŽENO]** Úplný katalog důvodů, přesné sankční stupně a délky, okamžik účinnosti a expiry, důkazní standard, odvolání, další dopad na ranking a turnajové pavouky i historické veřejné zobrazení.
+
+**[ROZHODNUTO PRO PRE-ALPHA v70]** Engine automaticky rozpozná a prověří konfliktní přihlášky/závazky a relevantní podezřelé průběhy. V běžných rozhodnutých případech simulace použije uloženou policy a zaznamená důvody i výsledek; v nejednoznačném nebo nepokrytém případu může požádat Admina o rozhodnutí. Preferovaný běh je samostatný, bez ručního potvrzování každé drobnosti. Menší postih po rychlém vyřešení, podezřelý přesun po rychlé prohře a závažné no-show jsou odlišné scénáře. Číselné sankce, důkazní standardy a výjimky se dolaďují při testování; Runy i sezony mohou mít jiné historicky uložené policy. „Turnajová/hráčská AI“ znamená deterministické rozhodování enginu, nikoliv oprávnění externího jazykového modelu svévolně měnit výsledky.
 
 ## 20.2 Doping
 
@@ -4162,7 +4172,7 @@ Možné sekce z předchozího návrhu:
 
 **[ROZHODNUTO PRO PRVNÍ VERZI]** Dokončený uložený zápas lze v read-only `Match Replay` postupně přehrát rally po rally z jeho autoritativního logu a uložených Post-Rally State Snapshotů. Replay nic znovu nesimuluje, nelosuje, nevolá současný RNG/model ani nemění; pouze časově přehrává původní skóre, sportovní příčiny, délky, veřejně přípustné stavy a zdravotní či časové události. Stejný uložený zápas proto zůstává totožný i po pozdější změně Match Enginu. Viewer ukazuje pouze veřejné sportovní informace, zatímco Admin může zobrazit interní průběh a skryté detaily, které už autoritativní zápas skutečně obsahuje; integritu ověřuje uložený `match_log_hash`.
 
-**[ROZHODNUTO PRO SOUČASNOU VERZI]** `Scores` pokrývá celý skutečně simulovaný veřejný rozsah: detailně simulovanou část MSA Tour, juniorské mistrovství světa, olympijské hry a případné později přidané veřejné soutěže. Běžné juniorské turnaje se tím nezačínají simulovat.
+**[CÍLOVÝ ROZSAH VIEWERU, MIMO PRVNÍ PRE-ALPHU]** `Scores` pokrývá celý skutečně simulovaný veřejný rozsah: detailně simulovanou část MSA Tour, juniorské mistrovství světa, olympijské hry a případné později přidané veřejné soutěže. Běžné juniorské turnaje se tím nezačínají simulovat.
 
 **[ODLOŽENO]** Přesný layout Scores, chronologické řazení, filtry, štítky soutěží, úplný katalog veřejných statistik, pokročilé replay ovládání, URL struktura, vizuální styl a případný pozdější live režim. Základní pre-alpha Replay však již musí zpřístupnit uloženou časovou osu, krokování dopředu/dozadu, skóre, události a zaznamenané fyzické i mentální stavy. Kurtové a úderové animace patří do velmi vzdálené budoucnosti. Detailní návrh stránky byl výslovně zastaven, aby se nejprve řešila důležitější funkčnost první verze.
 
@@ -4445,13 +4455,15 @@ Tato kapitola rozlišuje současná rozhodnutí od starších nebo odložených 
 
 ## 26.2 Individual World Championship
 
-**[CÍLOVÁ FUNKCE]** Samostatný největší individuální turnaj odlišný od Finals.
+**[ROZHODNUTO PRO PRE-ALPHA v70]** Individuální MS je součástí první pre-alpha. Použije pavouk s kvalifikací a prakticky funguje jako další turnaj Tour se zvláštním významem, nikoliv jako oddělený turnajový engine.
+
+**[ROZHODNUTÝ DEFAULT]** Main Draw má výchozí velikost **128 hráčů**. Velikost a konkrétní uspořádání kvalifikace se testují a mohou se lišit mezi ročníky. Národní kvóty se pro toto MS nezavádějí; jsou případným pozdějším tématem olympiády.
 
 **[STARŠÍ NÁVRH]** Umístění přibližně kolem W48–W50 a velmi vysoká bodová tabulka. Konkrétní dřívější čísla nejsou canonem.
 
 ## 26.3 Team World Championship
 
-**[ROZHODNUTO]** Official Run obsahuje mužský Team World Championship.
+**[CÍLOVÝ OBSAH OFFICIAL RUNU, MIMO PRVNÍ PRE-ALPHA]** Official Run má obsahovat mužský Team World Championship.
 
 **[ROZHODNUTO]** Team World Championship se koná každý lichý kalendářní rok, tedy jednou za dva roky.
 
@@ -4531,7 +4543,7 @@ Starší ligový návrh připouštěl remízy v týmovém výsledku. To není v 
 
 ## 26.7 Olympijské hry
 
-**[ROZHODNUTO PRO SOUČASNOU VERZI][OFFICIAL RUN DEFAULT]** Olympijské hry jsou vedle MSA Tour a juniorského mistrovství světa součástí veřejně simulovaného rozsahu Official Runu. Jejich zápasy se simulují stejným Match Enginem a ukládají se do Scores, statistik a Match Replay.
+**[CÍLOVÝ ROZSAH PO PRE-ALPHĚ][OFFICIAL RUN DEFAULT]** Olympijské hry jsou vedle MSA Tour a juniorského mistrovství světa součástí veřejně simulovaného rozsahu Official Runu. Jejich zápasy se simulují stejným Match Enginem a ukládají se do Scores, statistik a Match Replay.
 
 **[ODLOŽENO]** Periodicita, sezonní a weekové umístění, eligibility, kvalifikace, počet hráčů, formát, bodování, veřejná značka a ostatní olympijská pravidla. Jde o obsah Official Runu, nikoliv o další univerzální soutěž vnucenou všem Runům.
 
@@ -4718,6 +4730,8 @@ Celý seznam, jeho názvy, pořadí i přesné hranice stránek zůstávají pou
 
 **[OTEVŘENO]** Samostatné budoucí stránky `Regions & Groups`, `World Events` a `Names & Identity Data` mohou vzniknout teprve tehdy, až pro ně bude dost skutečných funkcí. Do současného stromu se nepřidávají jen kvůli úplnosti.
 
+**[UPŘESNĚNÍ v70]** Funkční požadavek Talent Preview/Intake – očekávání pro zemi/rok a porovnání s dokončeným ročníkem – je pro pre-alpha potvrzený v 5.3. Přesný layout, názvy stránek a jejich rozdělení zůstávají otevřené. Probabilistický forecast, technický plán materializace a skutečný vznik hráčů se nesmějí vydávat za totéž.
+
 ## 27.16 Rankings & Analytics jako pracovní kategorie
 
 **[PROZATÍMNÍ, SILNÝ SMĚR]** `Rankings & Analytics` má být samostatnou Run Admin kategorií, protože Admin musí nejen nastavovat vstupy, ale také kontrolovat, vysvětlovat a případně přepočítávat odvozená data. Pracovní podstránky jsou:
@@ -4788,7 +4802,7 @@ Následující seznam je rychlá kontrola nejdůležitějších pravidel potvrze
 49. Official Run obsahuje Team World Championship každý lichý rok. Duel tvoří šest dvouher `#1` proti `#1` až `#6` proti `#6`; sestavu určuje výběr z širší uzamčené soupisky a jeden rankingový snapshot před roster lockem pro celý turnaj. Edition má vlastní `roster_capacity` a `roster_lock_week`; neklasifikovaní hráči nemohou být nominováni. Mimořádné náhrady jsou jedna za jednoho, trvalé pro Edition, schvalované FAX a bez pevného početního stropu. Chybějící spodní pozice vytvářejí technické W/O `3:0 / 33:0` pouze pro týmové součty. Stav 3:3 rozhoduje rozdíl setů, potom rozdíl míčů a nakonec vítěz zápasu pozic #1.
 50. Official Run obsahuje individuální i týmové mistrovství každého kontinentu.
 51. Současným oficiálním testovacím základem jsou World, Elite, Challenger a Development Tour s kategoriemi vypsanými v kapitole 14. Category Package používá hierarchii `Competition System → volitelný Tour → Category`; tyto entity se mohou historicky měnit, mají stabilní číselná ID a použité identity se nesmějí tvrdě smazat.
-52. V současné verzi se zápasy a turnaje detailně simulují pouze na World Tour a Elite Tour.
+52. Ve FAX pre-alpha se plně simuluje celá World Tour; Elite, Challenger a Development Tour mají souhrnné výsledky a důsledky podle 14.3. Jiné Runy mohou použít jiné podporované nastavení a Tournament Lab může plně testovat libovolnou Tour.
 53. Klasický turnajový pavouk má kapacitu v mocnině dvou; prázdné sloty jsou BYE a počet seedů je `min(field, max(1, capacity/4))`.
 54. Los používá idealizované sloty; seed skupiny se náhodně rozdělují pouze uvnitř povolených sektorů a nenasazení se losují bez ochrany podle země, klubu či H2H.
 55. Prvotní BYE obsazují nejvyšší idealizované sloty. Pozdě vzniklé BYE zůstává přesně v uvolněném fyzickém slotu.
@@ -4985,16 +4999,16 @@ Následující seznam je rychlá kontrola nejdůležitějších pravidel potvrze
 246. Admin v běžném Runu i Match Test Labu podporuje `Simulate Next Rally`, `Simulate Game` a `Simulate Rest of Match`; všechny pokračují z přesného současného stavu a po každé rally lze zobrazit rozhodnutý interní detail bez simulace jednotlivých úderů.
 247. Před `Simulate Game` a `Simulate Rest of Match` vzniká automatický dočasný návratový bod. Pracovní zápas uchovává jejich časovou osu a po návratu a nové simulaci ponechá původní cestu dočasně dostupnou pro porovnání.
 248. Auto Play postupuje jednu rally za druhou, má nastavitelnou rychlost, lze jej pozastavit a sám se zastaví na konci gamu nebo při mimořádné události. Uložený dokončený zápas lze stejným principem pouze přehrát v read-only Match Replay bez nové simulace; Viewer vidí veřejné a Admin interní informace.
-249. První verze Vieweru obsahuje základní samostatný web Scores se zápasy, výsledky, veřejnými statistikami a Replayem. Pokrývá detailně simulovanou část MSA Tour, juniorské mistrovství světa a olympijské hry; běžná juniorská historie se tím nezavádí.
+249. První verze Vieweru (mimo první pre-alpha akceptaci) obsahuje základní samostatný web Scores se zápasy, výsledky, veřejnými statistikami a Replayem. Pokrývá detailně simulovanou část MSA Tour, juniorské mistrovství světa a olympijské hry; běžná juniorská historie se tím nezavádí.
 250. Match Reconstruction řadí kandidáty výchozím způsobem podle nalezení, významová editace vytváří novou constraint a kandidáta až po tlačítku a do potvrzení zachovává původní preview. Při příliš dlouhém či neúspěšném hledání Admin volí vynucení, nejbližší kandidáty nebo změnu podmínek; autoritativní zůstane jen potvrzený kandidát. `p` znamená přirozenou pravděpodobnost, `δ` směrovou a `α` bezsměrovou vzdálenost od typické oblasti, nikoliv totéž co `p`; přesná matematika zůstává otevřená.
 251. V každém nakonfigurovaném entry decision slotu hráčská AI společně přehodnotí všechny tehdy známé turnajové možnosti, může změnit přihlášky i priority a nesmí rozhodovat izolovaně podle technického pořadí turnajů. Po dokončení slotu se aktuální předběžný entry list zveřejní AI i Vieweru; rozhodnutí uvnitř běžícího slotu zůstávají do společného commitu skrytá.
-252. Počet předběžných či podmíněných přihlášek hráče nemá pevný strop. Více konfliktů lze dočasně držet, ale po relevantní uzávěrce podle Main Draw/Qualification stavu se prodlení sankcionuje stále přísněji; hráč může skutečně odehrát jen jednu akci nebo nenastoupit ani na jednu, nikoliv dva turnaje téhož weeku.
+252. Počet souběžných přihlášek nemá pevný strop. Po relevantní uzávěrce engine varuje a podle závažnosti vyhodnotí konflikt. Dva turnaje téhož weeku nejsou plošně zakázány; rozhoduje skutečná dostupnost a travel, přičemž proveditelnost neruší disciplinární následky.
 253. Entry provinění může vést k odečtu bodů, Disciplinary Zero nebo kombinaci. Každá nula po vlastních `X` weeků povinně zabírá jedno místo v Best N, poté nezávisle zanikne; více nul se skládá a Admin může jejich délku změnit. Přesné sazby a délky jsou otevřené.
 254. Admin může ručně zasáhnout do každého produktově modelovaného pravidla, stavu, rozhodnutí AI a autoritativního údaje. Smí vědomě porušit běžnou sportovní policy jako označenou výjimku, ale nesmí uložit vnitřně nemožný či poškozený stav; související změny tvoří atomický, branchově a časově správný Manual Override s Audit Logem.
-255. Ruční změna přihlášky má režimy `Jednorázová změna`, kterou AI smí v dalším entry slotu znovu přehodnotit, a `Uzamknout rozhodnutí` do odemčení či nastaveného expiry. Prokázané zranění nebo nemoc odstraňuje disciplinární sankci za pozdní odhlášení či no-show, ne však automaticky sportovní Week Tournament Lock.
-256. První verze používá Week Tournament Lock: začátek hráčovy kvalifikace nebo Main Draw mu obsadí celý příslušný week, ani po vyřazení v něm nesmí začít druhý turnaj a do dalšího weeku se lock přenese jen tehdy, pokud v původním turnaji stále pokračuje. Formální dlouhé Suspended období lock v mezilehlých weecích uvolní a aktivuje jej znovu v resume weeku; přímý Main Draw hráč není blokovaný dřívějším qualification-only weekem své Edition.
-257. Week Tournament Lock platí pro všechny oficiální soutěže včetně MSA Tour, olympijských her, juniorského mistrovství světa a jejich kvalifikací. `Still Competing` dovoluje omluvenou podmíněnou přihlášku na následující week; navazující turnajová kombinace navíc vyžaduje zjednodušeně proveditelný přesun a turnaj kvůli hráči automaticky nemění schedule.
-258. Před Final Commitment Deadline lze zvolený turnajový závazek změnit v mezích entry pravidel. Po deadline každý odpovídající potvrzený závazek zamkne daný week i po odstoupení; zdravotní důvod ruší sankci, ne lock. Uvolnit jej může zrušení akce, odklad na nový termín s novým rozhodnutím hráčů, formální dlouhé Suspended období pro mezilehlé weeky, chyba organizátora nebo výslovné rozhodnutí FAX/Admina; přesné umístění deadline zůstává otevřené.
+255. Ruční přihláška má jednorázový nebo uzamčený režim s auditem. Prokázané zranění/nemoc odstraňuje příslušnou sankci; skutečnou dostupnost řeší 13.6.
+256. Nové rozhodnutí v70 nahrazuje povinný plošný Week Tournament Lock: po vyřazení lze stihnout druhou akci i ve stejném weeku, ale engine kontroluje skutečné zápasy, přesun a podezřelý či disciplinární průběh.
+257. Still Competing zachovává omluvené řešení správně označené podmíněné účasti. Turnaj automaticky nepřesouvá zápasy podle osobního kalendáře; explicitní Admin výjimka se audituje.
+258. Final Commitment Deadline odlišuje závazek a jeho pozdní změny; po odstoupení sám nezamyká celý week. Přesný timing a číselné sankce zůstávají otevřené.
 259. Proveditelný přesun v první verzi automaticky vytváří `Low / Medium / High Travel Load` podle hrubé vzdálenosti a dostupného času. Bez nového baru dočasně přidává Fatigue, omezuje recovery, snižuje počáteční naplnění tří stamina barů, odeznívá odpočinkem a nemění trvalé atributy.
 260. Každá Tournament Edition první verze má zjednodušený Round/Match Schedule: jedno kolo dostane jeden `Match Day Slot` nebo rozsah denních slotů, konkrétní zápasy se přiřadí do dnů a uvnitř dne mají uložené pořadí bez přesných časů. Tato jednotka není globálním Simulation Slotem ani entry/draw procesním oknem.
 261. Qualification i Main Draw mají samostatně tři repair fáze. Před `Redraw Cutoff` se dotčený los celý přelosuje, od tohoto cut-offu do `Draw Freeze` se používá seed cascade a od Freeze se doplňuje přímo uvolněný fyzický slot. Redraw Cutoff začíná předposledním a Draw Freeze posledním procesním oknem příslušného losu.
@@ -5017,14 +5031,14 @@ Následující seznam je rychlá kontrola nejdůležitějších pravidel potvrze
 278. Od prvního skutečného zápasu je běžná změna statusu uzamčená. Jen mimořádné rozhodnutí FAX smí odebrat `Ranked → Unranked` s důvodem, veřejným updatem, Audit Logem a přepočtem; opačný směr je zakázaný. Po dokončení se body odstraní až od účinného bodu rozhodnutí a historické snapshoty, losy ani tehdy známé události se nepřepisují.
 279. Unranked Edition nemá MSA body ani Best N výsledek, ale její zápasy plně ovlivní stamina, fatigue, health/injuries, formu a development a vedou se v titulech, historii, statistikách, rekordech a H2H.
 280. Hráčská AI při volbě Unranked turnaje počítá s nulovým bodovým přínosem, ale může jej zvolit kvůli prestiži, prize money, titulu, reprezentaci nebo jiné motivaci; přesné váhy jsou otevřené.
-281. Edition zrušená před prvním skutečným zápasem je `Cancelled`: nevzniknou body, prize money ani titul a její přihlášky, závazky i Week Tournament Locky se uvolní bez sankcí; zrušení a důvod zůstávají v historii.
+281. Cancelled před skutečným startem nevytváří body, prize money ani titul a uvolní dotčené přihlášky a časové závazky bez sankce; důvod a historie zůstávají.
 282. Uvolnění hráče po Cancelled Edition neobchází entry, deadline, freeze ani replacement pravidla jiné akce; může do ní vstoupit jen tehdy, když to její normální workflow ještě dovoluje.
 283. `Postponed` zachovává stejné `edition_id` a historii a změnu schedule ukládá časově verzovaně. Již uzamčené oficiální `edition_number` zůstane; před prvním skutečným zápasem je pořadí jen provisional a může se změnit. Přihlášky zůstávají, ale všichni hráči mohou kvůli novému termínu znovu rozhodnout nebo bez sankce odstoupit.
 284. Režim odkladu `Preserve Field & Draw` zachová původní field, los a Tournament Ranking Snapshot; odhlášení se řeší normálními náhradami.
 285. Režim odkladu `Reopen Entry Process` zruší budoucí los, nastaví nové deadlines, vytvoří nový Tournament Ranking Snapshot a turnaj znovu vylosuje bez změny identity Edition. Mezi režimy není pevný počet weeků; FAX/Admin jej výslovně zvolí s impact preview.
 286. Již zahájený turnaj s reálnou možností pokračování může být dočasně `Suspended`: výsledky a přesný rozpracovaný stav se zachovají a další turnajová simulace se zastaví do obnovení.
 287. Obnovený zápas pokračuje ze stejného skóre a zachovaného logu; stamina, focus, fatigue a health se znovu odvodí podle skutečné délky přerušení a mezilehlých událostí, nikdy se automaticky neresetují.
-288. Dlouhé Suspended období automaticky nezamyká všechny mezilehlé weeky. Hráči mohou při splnění pravidel hrát jiné akce a Week Tournament Lock původní Edition se znovu aktivuje v resume weeku.
+288. Dlouhé Suspended období nezamyká všechny mezilehlé weeky. Při obnovení se dostupnost hráčů a travel vyhodnotí podle skutečného schedule.
 289. Nemůže-li při obnovení pokračovat konkrétní hráč kvůli zdraví, použije se RET; neodůvodněné odmítnutí či no-show je Default. ABN je vyhrazeno pro vnější příčinu bez zavinění hráčů.
 290. U formálně Abandoned Edition zůstávají dokončené zápasy oficiální ve statistikách a H2H. Bez platného finále nevzniká automatický šampion ani titul, ale FAX může výslovně přiznat mimořádný výsledek či titul.
 291. U Abandoned Edition získá hráč jen nejvyšší body skutečně odemčené běžným win/BYE/W/O kontraktem a bez platného finále nikdo nezíská champion points. Nakonfigurované prize money dají aktivním hráčům loser payout nejvyššího dosaženého fyzického stage, ne winner payout. Terminální zahájený zápas je ABN se zachovaným částečným stavem bez W/L/H2H; nezahájené sloty nejsou ABN výsledky.
@@ -5085,7 +5099,7 @@ Následující seznam je rychlá kontrola nejdůležitějších pravidel potvrze
 346. Match Preparation je dočasný bar `0–100 %` navázaný na konkrétní připravovaný zápas. Engine odděleně uchovává podíl `Opponent Study` a `Match-specific Court Training`.
 347. Při neznámém soupeři lze zvolit obecnou přípravu nebo cílit na jednoho pravděpodobného soupeře. Aktuální příprava se po cílovém zápase uzavře, ale autoritativní historie a předchozí H2H mohou zjednodušeně usnadnit budoucí přípravu.
 348. Opponent Study spotřebovává čas a soustředění s téměř nulovou fyzickou únavou, zatímco cílený trénink na kurtu spotřebovává tréninkovou kapacitu a vytváří zátěž. Účinnost závisí na relevantních atributech; okamžitý efekt patří do Match Preparation a malý dlouhodobý příspěvek do běžného developmentu, nikoliv do dočasného skoku atributu.
-349. Pre-alpha má dva povinné akceptační průchody: kompletní sezonu Official Runu až po Season Transition do Weeku 1 další sezony a samostatný prázdný Run se dvěma ručně vytvořenými hráči a jedním zápasem pro ověření operation-scoped modularity.
+349. Pre-alpha má dva povinné Admin průchody: editovatelná kopie FAX testovací šablony dokončí sezonu a Season Transition do Weeku 1 další; prázdný Run se dvěma ručně vytvořenými hráči a jedním zápasem ověří operation-scoped modularitu. Chráněný Official Run není akceptační závislost.
 350. Povinně funkční jsou Runs/Packages, hráči/development/AI, čas/transitions, turnaje, entries, losy, Match Engine, minimální Match Reconstruction, rankingy a bezpečný save/load. Pre-alpha je hotová teprve tehdy, když oba průchody opakovaně proběhnou od začátku do konce bez pádu, poškozené historie nebo ruční opravy databáze; správný operation-scoped blok není selhání.
 351. Validní simulace může běžet z Working Draftu, její následky zůstanou neuložené a Viewer dál čte poslední Saved Revision. Zahození draftu zahodí i simulaci vzniklou z jeho neuložených vstupů.
 352. `SAVE` je trvale dostupné, aktivuje se při změnách a před potvrzením ukáže krátký diff. Červená chyba zablokuje běžné uložení dotčeného celku, ale `Uložit vybrané změny` smí uložit prokazatelně nezávislé validní logické balíčky.
@@ -5276,7 +5290,7 @@ Každý očíslovaný bod této kapitoly je od verze 48a stabilní **široký ok
 
 ## Hráči
 
-15. Přesný počáteční pool a baseline ranking sezony 2000/01.
+15. Kalibrace počátečního poolu a baseline rankingu: minimum FAX testu je 1 000 ne-retired hráčů, kteří dovršili 15 let před prvním Weekem 1; tři předstartovní rankingové varianty a jejich hranice určuje 9.1. Finální FAX canon, rozložení a číselné policy nejsou vybrané.
 16. Přesný model hráčské AI pro okamžik a volbu první platné turnajové přihlášky nebo získání wild card: váhy schopností, věku, osobnosti, příležitostí a kumulativního tlaku. Formální trigger, implicitní přijetí definitivně přidělené WC, trvalost statusu po neúspěchu pod cutem, počáteční `NR`, zařazení až v následujícím Official Ranking snapshotu i pravidlo, že každý automaticky vygenerovaný prospect nakonec vstoupí, jsou rozhodnuté.
 17. Přesný název juniorského statusu, grafické rozložení profilu, podoba souhrnných statistik juniorského mistrovství světa a vzhled prázdné juniorské sekce.
 18. Přesná matematika developmentu, růstu, plateau, decline a návratů; hráčská inteligence, scouting, odhad soupeře, paměť, tvorba gameplanu a kariérní i zápasová adaptace stylu. Pevný jediný `peak_week` je vyloučený. Rozhodnuté jsou typy `Early Bloomer / Standard / Late Bloomer`, jejich celoživotní stálost, nezávislost na potenciálu, jednoduchý posun společné křivky o `−3 / 0 / +3` roky a princip dřívějšího poklesu fyzických schopností oproti možnému pozdějšímu růstu technických, taktických a mentálních schopností. Distribuce `16/68/16` a středy `26/29/32` jsou pouze prozatímní; otevřené zůstávají přesné atributové křivky, development matematika, rozhodovací váhy, chyby odhadu a kalibrace.
@@ -5298,18 +5312,18 @@ Každý očíslovaný bod této kapitoly je od verze 48a stabilní **široký ok
 31. Přesný obecný vztah technického statusu `Default` k DQ, konkrétní katalog a sazby disciplinárního forfeitu bodů či prize money po DQ zahájeného zápasu a pravděpodobnostní model RET/W/O/DQ/ABN. Při obnovení suspendovaného zápasu je už rozhodnuto, že zdravotní nemožnost pokračovat znamená RET, neodůvodněné odmítnutí či no-show Default a vnější příčina ABN. DQ před startem s nulou bodů i prize money a sportovní výhra/prohra po zahájeném DQ jsou rovněž rozhodnuté.
 32. Přesná matematika rally-by-rally Match Enginu: transition probabilities mezi pěti stavy kontroly, pravděpodobnosti terminálních incidentů, kontextové váhy atributů, styly, gameplany a úsilí, dva mentální a tři fyzické bary, finální kalibrace délky, úderů, pace, individuální zátěže, podání a interference. Granularita bez shot-by-shot simulace, čtyřvrstvá pipeline, atributové role, čtyřosý styl/gameplan, setrvačné transitions, `0–24` segmentů, opening podání, ground truth, rules resolver, terminální katalog, Rally Resolution Record, společný zdroj délky/úderů/workloadu, RallyCalibrationProfile, kauzální tempo mezi rally i neměnný hashovaný Rally Event/Post-Rally Snapshot log jsou rozhodnuté. Stejně tak Step Back/Forward, Auto Play a Replay používají uloženou pravdu bez rerunu RNG. Otevřené zůstávají přesné matice a distribuční křivky, datový fit, retence alternativních pracovních cest po opuštění zápasu, ruční override AI, kalibrace analytického připsání, finální restartové distribuce a conduct thresholds, zdravotní triggery, účinek ošetření a matematika dalších přerušení. Minimální turning, further attempt, zásah hráče míčem i taktické tempo patří do pre-alpha; chyby a individuální profily rozhodčích, detailní review, přesné trajektorie a jemná subjektivita enforcementu zůstávají pokročilé.
 33. Mimořádné edge cases seed cascade, detailní atomické preview a pravidla vědomého ručního porušení standardního repair workflow. Běžné tři fáze, tier-aware cascade, zachování seed čísel, přímá náhrada nenasazeného slotu a zákaz automatického úplného redraw po příslušném cut-offu jsou již rozhodnuté.
-34. Zbývající skupinové otázky po v68: zvláštní skupinové bodování RET a dalších mimořádných výsledků, srovnání stejných nepostupových míst napříč skupinami pro LL / best runners-up, úplný mapping dalších kombinací skupin a postupujících, vítěz více samostatných skupin bez navazující fáze a okrajové poměry bez dostatku odehraných dat. Obecné bodování BO3/BO5, pořadí podle 15.14, upozornění při úplné shodě bez automatického losu, zachování dokončených výsledků po odstoupení a skupinové W/O bez umělého skóre jsou rozhodnuté; konkrétní Q omezení 15.7 zůstávají.
-35. Přesná WC eligibility, tvorba a seřazení RWC seznamu, důvody ztráty dostupnosti a detailní Admin/Viewer historie. Priorita dostupné RWC, její trvající `Available` status, implicitní přijetí finálního přidělení, automatické odebrání WC při přímém vstupu a zachování historického původu jsou již rozhodnuté.
+34. Zbývající skupinové/LL extrémy a empirické fairness testy. Skupinový RET, srovnání srovnatelných stejných pozic, absence jediného šampiona u více samostatných skupin a základ křížení již určují 15.14 a 31.25; nevedou se znovu jako zcela otevřené.
+35. Přesné váhy turnajové AI pro WC, tvorba/seřazení RWC a detailní historie. Široká Admin možnost s vysvětlením pro/proti je potvrzená; hráčské žádosti o WC jsou pozdější směr. Dosavadní RWC priority a provenance zůstávají.
 36. Přesný celkový počet, názvy, délka a výchozí rozložení časných procesních oken uvnitř weeku, optimalizace souběžných turnajů, vztah samostatných Qualification a Main Draw plánů a mimořádné edge cases přesunu hráče z hotového Q losu. Pevné už je, že existuje jediná globální osa Simulation Slots, procesní okna začínají na jejích hranicích, Match Day Slots se na ni mapují a dependency scheduler dovolí současnost jen nezávislým událostem.
-37. Přesná dlouhodobá historie draw verzí a rozdíl mezi preview Undo, auditem, uloženou verzí a branchí. Poslední návrh, aby každý potvrzený los nebo jeho oprava vytvořily novou neměnnou `Draw Version`, zůstal bez uživatelské odpovědi a není rozhodnutý.
+37. Jemný draw UX a retence porovnání. Neměnná Draw Version po každém potvrzeném losu či opravě už je rozhodnutá ve v69; preview ji nevytváří.
 38. Team World Championship: field, kvalifikace, kalendářní weeky, skupinová/play-off struktura, úplný turnajový formát, konkrétní výchozí hodnoty a minimální validace `roster_capacity`, seznam uznávaných důkazů a detailní Admin workflow mimořádných náhrad a přesné pořadí odehrání šesti dvouher. Atribut kapacity, default roster locku, pevný rankingový snapshot, zákaz neklasifikovaných hráčů, Country-only týmová eligibility, vyloučení World/FAX Neutral a automatického World týmu, pravidla náhrad, neúplná sestava, technické W/O a řešení stavu 3:3 jsou rozhodnuté. Pořadí od `#6` k `#1` bylo odmítnuto.
-39. Kontinentální mistrovství: kompletní individuální i týmové formáty, kvalifikace a bodování. Jejich konkrétní periodicita je obsah Runu a nemá se pokládat jako otázka funkčnosti enginu. Národní mistrovství: počáteční seznam zemí, postupné rozšiřování, eligibility, formáty, kapacity, bodování a kalendář. Olympijské hry jsou rozhodnutě v současném veřejně simulovaném rozsahu, ale jejich periodicita, eligibility, kvalifikace, field, formát, bodování a kalendář zůstávají odložené jako obsah Official Runu.
-40. Abstraktní fungování Challenger Tour a Development Tour bez detailní simulace zápasů a pavouků.
+39. Kontinentální a národní soutěže a olympijské hry zůstávají cílovým obsahem, nikoliv podmínkou první pre-alpha. Individuální MS je pro pre-alpha rozhodnuté v 26.2; olympijské kvóty, formát a periodicita jsou pozdější téma.
+40. Kalibrace a přesný datový kontrakt souhrnné Elite, Challenger a Development Tour; základ umístění, bodů, titulů, prize money a přiměřených důsledků bez smyšlených match/H2H logů už určuje 14.3.
 
 ## Rankingy, historie a predikce
 
-41. Protected Ranking: přesná taxonomie a ověřování důvodů, omezení přerušené absence, definitivní výpočet hodnoty, definitivní seeding, vztah k LL, přesné napojení spotřeby použití na Entry/Freeze cut-offy a nové zranění po návratu. Tříletá aktivace, základ spotřeby, tie-break a současné povolené kategorie už mají Official Run default.
-42. Další sezonní pravidla výpočtu rankingu, povolené hodnoty Best N a jejich validace. Rozhodnuté je, že první sezona Official Runu začíná Best 15, další převezme efektivní hodnotu předchozí sezony a každá sezona zůstává samostatně konfigurovatelná; automatické propsání změny do všech budoucích zděděných sezon je zatím pouze silným směrem.
+41. Protected Ranking: přesná taxonomie a ověřování důvodů, omezení přerušené absence, definitivní výpočet hodnoty, vztah k LL, přesné napojení spotřeby použití na Entry/Freeze cut-offy a nové zranění po návratu. Tříletá aktivace, základ spotřeby, tie-break a současné povolené kategorie už mají Official Run default.
+42. Přesné barevné prahy doporučení Best N a technický impact preview dědičnosti. Minimum 1, doporučené pásmo 10–18, stupňované neblokující upozornění a samostatná sezonní policy jsou rozhodnuté; automatické propsání do všech budoucích zděděných sezon zůstává silným směrem.
 43. Přesné číselné Qualification points pro jednotlivé kategorie, sezony a stages. Jejich jedna-stage hodnota, aditivní vztah k Main Draw, rozdíl kvalifikanta a LL, BYE unlock a jedno společné Best N místo jsou již rozhodnuté.
 44. Přesný Live Ranking a propadávání bodů uvnitř weeku.
 45. Country Ranking: jeho význam a vzorec jsou výslovně odložené do doby, kdy bude fungovat základ simulace a vzniknou srovnatelná data. Race, Elo, Form a další metodiky zůstávají otevřené samostatně. Budoucí FAX Game má používat veřejné výkonové OVR oddělené od Admin truth, ale přesná data, období, atributy, vzorec a Viewer UX se vymyslí později.
@@ -5353,7 +5367,7 @@ Pre-alpha zde znamená první funkční end-to-end verzi, která opakovaně zvl�
 
 **[ROZHODNUTO PRO PRE-ALPHA]** Funkční minimum zahrnuje Runs a Packages, hráče/development/AI, čas a transitions, turnaje, entries, losy, Match Engine, minimální Match Reconstruction, rankingy a bezpečný save/load. Plný Forecast/Future Locks/Markets, hluboký trénink, detailní Awards/Records/Rivalries a pokročilé edge cases mohou být viditelně odložené nebo mimo build a dokončení pre-alpha neblokují.
 
-**[ROZHODNUTO PRO PRVNÍ PRE-ALPHA v67]** Do Official Run akceptačního průchodu patří individuální World Tour Finals podle kapitoly 26.1. Týmové soutěže jsou z první pre-alpha zcela vyjmuté; jejich existující implementace ani cílová pravidla se nemažou a týmové soutěže neblokují vydání této první verze. Admin musí zprostředkovat funkční ovládání a prohlížení rozhodnutého rozsahu, včetně skutečně zaznamenané historie zvoleného weeku. Funkční rozdělení Adminu je užitečné průběžně, rozsáhlý vizuální redesign a velký polish se odkládají až za funkční pokrytí.
+**[ROZHODNUTO PRO PRVNÍ PRE-ALPHA v67]** Do FAX testovacího akceptačního průchodu patří individuální World Tour Finals podle kapitoly 26.1. Týmové soutěže jsou z první pre-alpha zcela vyjmuté; jejich existující implementace ani cílová pravidla se nemažou a týmové soutěže neblokují vydání této první verze. Admin musí zprostředkovat funkční ovládání a prohlížení rozhodnutého rozsahu, včetně skutečně zaznamenané historie zvoleného weeku. Funkční rozdělení Adminu je užitečné průběžně, rozsáhlý vizuální redesign a velký polish se odkládají až za funkční pokrytí.
 
 **[ROZHODNUTO – VÝVOJOVÁ PRIORITA v64, 8. 9. 2026]** Nejprve dokončit funkční pre-alpha podle obou akceptačních průchodů v 31.3; další jemné ladění, vyvažování a empirické zrealističťování odložit na následnou fázi. Dosavadní měřicí nástroje a výsledky zůstávají zachované, ale další autonomní práce nemá pokračovat sérií kalibračních auditů místo chybějících funkcí. Neodkládají se správnost pravidel, determinismus, bezpečný save/load, integrita historie ani nezbytné opravy. Existující verzované výchozí profily lze použít jako prozatímní základ; nejsou tím prohlášeny za empiricky realistické. Chybí-li skutečné produktové rozhodnutí nutné pro další řez, předložit jednu doporučenou variantu s vysvětlením a krátce ji s uživatelem uzavřít. Toto rozhodnutí mění pořadí práce, nikoliv rozsah pre-alpha či status všech otevřených kalibračních PAQ.
 
@@ -5369,12 +5383,12 @@ Pre-alpha zde znamená první funkční end-to-end verzi, která opakovaně zvl�
 
 ## 31.3 Rozsah a definice hotové pre-alpha
 
-1. **PAQ-001 [RESOLVED v50][PA0][PRODUCT] – Jaký je nejmenší povinný end-to-end uživatelský průchod pre-alpha?** Odpověď (upřesněna ve v66: provádí se v Adminu): hlavní průchod odsimuluje kompletní sezonu Official Runu, bezpečně ji uloží/načte a dokončí Season Transition až do Weeku 1 následující sezony. Příklad: nestačí jeden turnajový week; musí se prokázat kontinuita výsledků, hráčských stavů, rankingů a season-scoped uzávěrky.
+1. **PAQ-001 [RESOLVED v50; UPŘESNĚNO v70][PA0][PRODUCT] – Nejmenší hlavní end-to-end průchod?** Editovatelná kopie verzované FAX testovací šablony v Adminu dokončí sezonu, save/load a Season Transition do Weeku 1 další sezony. Chráněný Official Run se k testu neupravuje.
 2. **PAQ-002 [RESOLVED v50][PA0][PRODUCT] – Které moduly musí být skutečně funkční a které smějí být pouze viditelný stub?** Odpověď: funkční musí být Runs/Packages, hráči/development/AI, čas/transitions, turnaje, entries, losy, Match Engine, minimální Match Reconstruction, rankingy a bezpečný save/load. Forecast/Future Locks/Markets, hluboký trénink, detailní Awards/Records/Rivalries a pokročilé edge cases pre-alpha neblokují.
 3. **PAQ-003 [RESOLVED v50][PA0][PRODUCT] – Jaké operace musí umět částečně sestavený Run bez globálního Start gate?** Odpověď (v Adminu): druhý povinný akceptační průchod vytvoří prázdný Run, ručně přidá dva hráče a jeden zápas a bezpečně jej odsimuluje bez kalendáře; chybějící data smějí blokovat jen operaci, která je potřebuje.
 4. **PAQ-004 [RESOLVED v50][PA0][PRODUCT] – Co přesně znamená „pre-alpha dokončena“ z pohledu uživatele?** Odpověď (v Adminu): oba povinné průchody musí opakovaně proběhnout čistě od začátku do konce včetně save/load bez pádu, poškozené historie nebo ruční opravy databáze. Správné operation-scoped zablokování operace s chybějícími či nevalidními vstupy není selhání testu.
-5. **PAQ-005 [RESOLVED v50][PA1][PRODUCT] – Bude hlavní akceptační průchod používat Official Run, prázdný Run, nebo oba?** Odpověď: povinné jsou oba; pouze Official Run musí dokončit celou sezonu a otevřít další, zatímco prázdný Run ověřuje operation-scoped modularitu na dvou hráčích a jednom zápase.
-6. **PAQ-006 [PA1][TECH] – Jak velký referenční Run musí pre-alpha zvládnout v přijatelném čase a paměti?** Příklad: jedna sezona se 300 hráči a 80 turnaji doběhne na běžném notebooku bez pádu.
+5. **PAQ-005 [RESOLVED v50; UPŘESNĚNO v70][PA1][PRODUCT] – Jaké akceptační Runy?** Povinné jsou FAX testovací kopie pro celou sezonu a samostatný prázdný Run pro dva hráče a jeden zápas. Official Run může existovat, jeho obsah se nyní nedopracovává.
+6. **PAQ-006 [ČÁSTEČNĚ ROZHODNUTO v70][PA1][TECH] – Referenční velikost a výkon?** Nejméně 1 000 ne-retired hráčů s 15. narozeninami před prvním Weekem 1 a referenčních 80 Editions nejvyšší World Tour za sezonu; nižší soutěže navíc souhrnně. Časové a paměťové limity se teprve změří na lokálním počítači.
 
 ## 31.4 Datový model, identity a historická pravda
 
@@ -5421,8 +5435,8 @@ Pre-alpha zde znamená první funkční end-to-end verzi, která opakovaně zvl�
 
 ## 31.8 Hráčský pool, generování a identita
 
-38. **PAQ-038 [PA0][CONTENT] – Jak velký a věkově rozložený je počáteční hráčský pool Official Runu 2000/01?** Příklad: obsahuje aktivní hráče od 15 do 45 let a dost hráčů pro první kvalifikace.
-39. **PAQ-039 [PA0][CALIBRATION] – Kolik nových patnáctiletých prospectů vzniká v jednotlivých weekech a zemích?** Příklad: velikost ročníku vychází z populace a country pipeline, ne z pevného stejného počtu pro každou zemi.
+38. **PAQ-038 [ČÁSTEČNĚ ROZHODNUTO v70][PA0][CONTENT] – Počáteční FAX testovací pool?** Nejméně 1 000 hráčů podle 9.1, věk 15–45, nikdo již retired, část může být dosud pre-Tour. Přesné věkové/country rozdělení se kalibruje.
+39. **PAQ-039 [ČÁSTEČNĚ ROZHODNUTO v70][PA0][CALIBRATION] – Roční country intake?** Country Model V1 s populací roku narození, očekáváním a skutečnou variabilitou; žádné garantované minimum za každou zemi/rok. Přesné počty a distribuce se testují.
 40. **PAQ-040 [PA1][CALIBRATION] – Jaké jsou výchozí distribuce narození, výšky, hmotnosti, rukovosti a základních identit?** Příklad: dvě země mohou používat jiné name pooly, ale ne jiné vrozené squashové nadání jen kvůli národnosti.
 41. **PAQ-041 [PA0][CALIBRATION] – Jaký reprodukovatelný výchozí vzorec použije Country Model V1 od populace po profesionální konverzi?** Příklad: slabší infrastruktura sníží objevení a přechod na Tour, nikoliv maximum potenciálu narozeného hráče.
 42. **PAQ-042 [RESOLVED v57][PA0][PRODUCT] – Jak se určí první formální vstup prospecta na Tour a jeho výchozí soutěžní postavení?** Odpověď: dosavadní trigger první platné přihlášky nebo definitivního přidělení WC zůstává; hráč vstupuje s 0 body, do dalšího Official snapshotu je `NR` a teprve v něm se zařadí. Dokončený Ranked výsledek je vstupem následujícího snapshotu stejně jako u všech ostatních, nikoliv zvláštními body přidělenými před rankingem. Starší snapshot jej vede pod klasifikovanými hráči; více NR řadí entry slot a stabilní turnajový token.
@@ -5477,18 +5491,18 @@ Pre-alpha zde znamená první funkční end-to-end verzi, která opakovaně zvl�
 79. **PAQ-079 [RESOLVED v62][PA0][PRODUCT] – Jak přesně fungují announcement, update a emergency update vůči Vieweru a hráčské AI?** Odpověď: Edition má společný `announcement_week` pro Viewer i AI. Veřejná změna je buď `Before Announcement`, nebo nová public version/Tournament Update od zvoleného weeku; do té doby zůstává skrytá. Již běžící week používá odůvodněný Emergency Update na nejbližší bezpečné hranici, bez retroaktivního přepočtu, a historický Viewer čte tehdy známou verzi.
 80. **PAQ-080 [RESOLVED v62][PA0][PRODUCT] – Jaké přechody a sportovní následky pokrývá pre-alpha pro `Cancelled / Postponed / Suspended / Abandoned`?** Odpověď: před startem pokračuje `Postponed`, nepokračuje `Cancelled`; po startu pokračuje `Suspended`, nepokračuje `Abandoned`. Důsledky zachování identity, entries/draw, score/logu, restavu po uplynulém čase, bodů, nakonfigurovaných výplat a absence automatického vítěze jsou v kapitole 13.2. Přesun pokračování za současný Match Day Slot vyžaduje Suspended.
 81. **PAQ-081 [RESOLVED v62][PA0][CALIBRATION] – Jak Round Schedule přiřadí zápasy do dnů a pořadí s fair-rest prioritou?** Odpověď: nejprve nepřekročitelné feedery, nejvýše jeden zápas hráče za Match Day Slot, další nejdříve v následujícím slotu, Qualification před Main Draw a configured range. Platné varianty se lexikograficky řadí podle méně odpočatého hráče, imbalance, pozdějšího minulého zápasu, Q/LL restu, previous-week carryoveru, minimální změny publikace a až pak uloženého deterministic tie-breaku; ranking/seed/národnost/popularita výhodu nedávají.
-82. **PAQ-082 [PA1][PRODUCT] – Jaký zjednodušený fallback použije pre-alpha bez hodin, paralelních kurtů a detailní venue logistiky?** Příklad: jeden Match Day Slot představuje den a zápasy mají uložené pořadí.
+82. **PAQ-082 [RESOLVED v70][PA1][PRODUCT] – Schedule bez přesných hodin a kurtů?** Denní Match Day Slots, uložené pořadí a závislosti zápasů, respekt skutečné dostupnosti a zjednodušeného travel; bez detailní venue/kurtové logistiky. Mapování na globální Simulation Slots se nemění.
 
 ## 31.13 Přihlášky, kvalifikace, los a náhrady
 
-83. **PAQ-083 [PA0][PRODUCT] – Kolik entry decision slots a procesních oken má pre-alpha a kde leží jednotlivé deadlines?** Příklad: během dvouweekového přihlašování lze rozhodnutí v každém okně změnit.
+83. **PAQ-083 [ČÁSTEČNĚ ROZHODNUTO v70][PA0][PRODUCT] – Entry okna a deadlines?** Default Main 2 weeky, následné Qualification 1 week; při vytvoření Edition vzniknou výchozí okna, která Admin může upravit. Přesný počet decision slots a všechny mezní deadlines nejsou uzavřené.
 84. **PAQ-084 [PA0][TECH] – Jak přesně vzniká společný ranking/data snapshot a atomicky zveřejněný entry list?** Příklad: všichni hráči ve slotu rozhodují ze stejného vstupu a list se ukáže až po commitu.
 85. **PAQ-085 [PA0][CALIBRATION] – Jaký výchozí scoring použije hráčská AI při volbě turnajového portfolia?** Příklad: zvažuje šanci na cut, body, únavu, travel a alternativy, nikoliv budoucí skrytý los.
-86. **PAQ-086 [PA0][PRODUCT] – Jak se přesně vyřeší více předběžných přihlášek před a po jednotlivých uzávěrkách?** Příklad: hráč v Main Draw jednoho turnaje může včas odstranit kolidující druhou přihlášku bez nejvyšší sankce.
+86. **PAQ-086 [ČÁSTEČNĚ ROZHODNUTO v70][PA0][PRODUCT] – Konfliktní přihlášky?** Bez pevného stropu; varování po příslušné uzávěrce, stupňované posouzení podle průběhu a skutečná časová/travel dostupnost namísto plošného week locku. Policy, výjimky a číselné tresty se testují; viz 13.6, 15.1 a 20.1.
 87. **PAQ-087 [PA1][CONTENT] – Jaké jsou výchozí odečty bodů, délky Disciplinary Zero a časové stupně pozdního odhlášení?** Příklad: okamžité odhlášení po deadline je méně závažné než no-show v obou turnajích.
 88. **PAQ-088 [PA0][CONTENT] – Jaké konkrétní kapacity, seed counts a BYE pravidla používají první Official Run šablony?** Příklad: draw 48 používá 16 seedů a BYE podle rozhodnutého obecného mechanismu.
 89. **PAQ-089 [ČÁSTEČNĚ ROZHODNUTO v69][PA0][PRODUCT] – Jaké úplné pořadí a tie-breaky platí pro skupinovou kvalifikaci a LL srovnání?** Skupinový default a srovnání stejných míst v srovnatelných skupinách určuje 15.14; nerozhodnutý tie engine předá Adminovi. Úplný katalog speciálních LL a mimořádných stavů se neuzavírá bez testování.
-90. **PAQ-090 [PA0][PRODUCT] – Kdo je způsobilý pro WC/RWC, jak se rezervy řadí a kdy přestanou být dostupné?** Příklad: hráči po přímém postupu WC zmizí, ale historie původního přidělení zůstane.
+90. **PAQ-090 [ČÁSTEČNĚ ROZHODNUTO v70][PA0][PRODUCT] – WC/RWC?** Admin může přidělit WC libovolnému hráči s vysvětlením pro/proti a zachováním technické integrity, simulace používá turnajovou AI. Přesné AI váhy a úplné RWC pořadí/dostupnost zůstávají otevřené; žádosti hráčské AI jsou později.
 91. **PAQ-091 [PA0][PRODUCT] – Jaké je úplné LL pořadí a bodový původ všech náhradníků?** Příklad: poražený finalista kvalifikace má prioritu před semifinalistou a shodu řeší určený ranking snapshot.
 92. **PAQ-092 [PA0][PRODUCT] – Jak se řeší všechny pre-alpha edge cases mezi redraw, seed cascade a direct-slot replacement?** Příklad: souběžná odstoupení se zpracují atomicky a seed čísla zůstanou zachovaná.
 93. **PAQ-093 [RESOLVED v69][PA0][PRODUCT] – Vytvoří každý potvrzený los nebo jeho potvrzená oprava novou neměnnou `Draw Version`?** Odpověď: ano. První potvrzení je `v1`, každá potvrzená změna (včetně ruční) vytvoří další neměnnou verzi s důvodem a provenance; preview verzí není a odehraná historie se nepřepisuje. Viz 31.25.
@@ -5496,14 +5510,14 @@ Pre-alpha zde znamená první funkční end-to-end verzi, která opakovaně zvl�
 
 ## 31.14 Ranking, body, prize money a disciplína
 
-95. **PAQ-095 [PA0][PRODUCT] – Jaký povolený rozsah a validační pravidla má sezonní Best N a jeho dědění?** Příklad: první Official sezona nabídne 15 a další převezme předchozí efektivní hodnotu, pokud nemá override.
+95. **PAQ-095 [RESOLVED v70][PA0][PRODUCT] – Best N rozsah a dědění?** Celé N ≥ 1, doporučeno 10–18, mimo pásmo stupňované neblokující varování. Každá sezona převezme předchozí efektivní N a může mít override; snapshot zachová tehdejší policy. Přesné barevné prahy a propagace budoucích zděděných plánů jsou navazující kalibrace/UX.
 96. **PAQ-096 [PA0][CONTENT] – Jaké úplné bodové tabulky dostanou všechny Ranked kategorie a jejich kvalifikace v první Official sadě?** Příklad: zveřejněná Ranked Edition nesmí mít chybějící body pro žádný dosažitelný výsledek.
 97. **PAQ-097 [RESOLVED v50][PA0][PRODUCT] – Jaké je přesné pořadí výpočtu Official snapshotu, expirace, nových bodů a sezonních změn?** Odpověď: po aktivaci nové policy se expirace, nové výsledky, disciplína a korekce zpracují atomicky a Official Ranking se z autoritativních vstupů vypočítá právě jednou. Na sezonní hranici mu předchází archivní Season Closing Ranking podle starých pravidel.
 98. **PAQ-098 [PA0][PRODUCT] – Jak se ve všech případech skládá kvalifikační a Main Draw část jediného výsledku?** Příklad: kvalifikant dostane `Qualified + dosažené Main Draw kolo`, LL svou Q stage plus Main Draw výsledek.
-99. **PAQ-099 [PA0][PRODUCT] – Jaké minimální Protected Ranking chování musí pre-alpha skutečně podporovat?** Příklad: je-li PR aktivní, musí být určeno použití pro entry, seeding a případně LL, nebo se některá část výslovně odloží.
+99. **PAQ-099 [ČÁSTEČNĚ ROZHODNUTO v70][PA0][PRODUCT] – Minimální PR?** Přijetí do Main Draw/kvalifikace ano, nasazení podle skutečného rankingu. Existující PR Case a historická policy platí; LL detaily a přesný timing nejsou touto odpovědí uzavřené.
 100. **PAQ-100 [RESOLVED v69][PA1][PRODUCT] – Potřebuje pre-alpha samostatný Live Ranking, a pokud ano, jak propadávají body uvnitř weeku?** Odpověď: Live Ranking zůstává cílovou funkcí, pro první pre-alpha není povinný. Povinný je týdenní Official Ranking, jeho historie a Season Closing Ranking; průběžný zobrazený výsledek se nesmí mylně označit za Live Ranking. Přesný budoucí Live výpočet zůstává otevřený v 18.6.
 101. **PAQ-101 [PA1][PRODUCT] – Jak se chová nepovinné prize money od nevyplněné tabulky po úplný souhrn?** Příklad: turnaj bez částek funguje, ale zadaná tabulka musí správně pokrýt Q, Main Draw, W/O i DQ pravidla.
-102. **PAQ-102 [PA1][CONTENT] – Jaké konkrétní sankční a disciplinární defaulty potřebuje první Official Run?** Příklad: je určeno, o kolik bodů a na kolik weeků se použije Disciplinary Zero při no-show.
+102. **PAQ-102 [ČÁSTEČNĚ ROZHODNUTO v70][PA1][CONTENT] – Disciplinární defaulty?** Automatická evidence/prověření a rozhodnutí simulací podle policy, Admin při nejednoznačnosti. Číselné postihy a výjimky se kalibrují a mohou se lišit po Runech/sezonách.
 
 ## 31.15 Match Reconstruction
 
@@ -5549,16 +5563,18 @@ Pre-alpha zde znamená první funkční end-to-end verzi, která opakovaně zvl�
 133. **PAQ-133 [PA1][TECH] – Jaké výkonové rozpočty platí pro zápas, turnaj, week, sezonu, import a uložení?** Příklad: UI zůstane responzivní a dlouhá sezona ukazuje průběh místo zamrznutí.
 134. **PAQ-134 [PA0][TECH] – Jaké recovery, round-trip a corruption testy musí projít před prvním pre-alpha buildem?** Příklad: exportovaný a znovu importovaný Run zachová fingerprinty, výsledky, historii i branch vztahy.
 
-## 31.19 Minimální Official Run obsah pro akceptační průchod
+## 31.19 Minimální FAX testovací šablona pro akceptační průchod
+
+**[ROZHODNUTO v70]** Zdrojová šablona je verzovaná a při každém testu se zkopíruje do editovatelného Runu. Official Run může už nyní existovat, ale jeho skutečné budování uživatel plánuje nejdříve pro hlavní verzi; jeho dokončení neblokuje pre-alpha. Starší označení „Official sada“ v PAQ znamená v této akceptační vrstvě testovací data, nikoliv oprávnění měnit chráněný originál.
 
 135. **PAQ-135 [PA0][CONTENT] – Jaký World dataset zemí, regionů, časových pásem a populační historie je minimálně úplný?** Příklad: každá země použitá hráčem či turnajem má platnou identitu a potřebná data pro příslušný week.
-136. **PAQ-136 [PA0][CONTENT] – Jaký počáteční seznam hráčů, věků, atributů, stavů a baseline rankingu se použije?** Příklad: první turnaj má dost eligible hráčů pro Main Draw i kvalifikaci.
+136. **PAQ-136 [ČÁSTEČNĚ ROZHODNUTO v70][PA0][CONTENT] – Počáteční hráči a ranking?** Minimum a tři testovací předstartovní varianty určuje 9.1; Race začíná od nuly. Finální roster, matematika a FAX canon nejsou vybrané.
 137. **PAQ-137 [PA0][CONTENT] – Jaká první hierarchie Competition Systems, Tours a Categories je pro akceptační sezonu autoritativní?** Příklad: tierové kategorie mají lokální pořadí a speciální soutěž může mít `tier_rank = null`.
-138. **PAQ-138 [PA0][CONTENT] – Jaké Tournament Series, Edition Plans a konkrétní kalendářové Editions obsahuje testovací sezona?** Příklad: kalendář zahrne souběžné možnosti, kvalifikaci, vícetýdenní turnaj i navazující week.
+138. **PAQ-138 [ČÁSTEČNĚ ROZHODNUTO v70][PA0][CONTENT] – Testovací kalendář?** Referenčních 80 skutečných World Tour Editions za sezonu, další nižší soutěže souhrnně podle potřeby. Konkrétní názvy, místa, týdny a rozdělení kategorií zůstávají obsahem šablony.
 139. **PAQ-139 [PA0][CONTENT] – Jaké šablony formátů, entry, qualification, draw a lifecycle policy budou přiřazené jednotlivým kategoriím?** Příklad: Ranked turnaj má úplnou Q/Main Draw strukturu a všechny deadlines.
 140. **PAQ-140 [PA0][CONTENT] – Jaké bodové tabulky, Best N, PR a disciplinární defaulty platí v první testovací sezoně?** Příklad: každý dosažitelný výsledek Ranked Edition má právě jednu konečnou hodnotu.
-141. **PAQ-141 [PA1][CONTENT] – Které soutěže mimo běžnou MSA Tour musí být v pre-alpha skutečně simulovatelné end-to-end?** Příklad: pokud se zahrne olympiáda nebo juniorské MS, potřebují minimální field, eligibility, formát a kalendář; jinak zůstanou vědomě mimo akceptační průchod.
-142. **PAQ-142 [PA0][CONTENT] – Jaké referenční scénáře a očekávané výsledky tvoří akceptační sadu Official Runu?** Příklad: seed cascade, LL náhrada, medical timeout, RET, změna Best N a Season Transition mají každý uložený testovací případ.
+141. **PAQ-141 [RESOLVED v70][PA1][CONTENT] – Speciální soutěže první pre-alpha?** Individuální MS s pavoukem/kvalifikací (default Main 128, kvalifikace konfigurovatelná po Edition) a World Tour Finals. Bez národních kvót pro MS. Olympiáda, týmové soutěže a juniorské MS jsou mimo první akceptaci.
+142. **PAQ-142 [ČÁSTEČNĚ ROZHODNUTO v70][PA0][CONTENT] – Referenční scénáře?** FAX šablona kopírovaná do editovatelného Runu plus prázdný Run a globální Match/Tournament Lab. Úplný katalog případů a assertions se doplní implementací/testováním; Lab nenahrazuje oba Run průchody.
 
 ## 31.20 Doplňkové průřezové mechanismy pre-alpha
 
@@ -5568,7 +5584,7 @@ Pre-alpha zde znamená první funkční end-to-end verzi, která opakovaně zvl�
 146. **PAQ-146 [PA1][TECH] – Jaké základní H2H a statistiky se musí automaticky dopočítat z autoritativních výsledků?** Příklad: RET se počítá jako sportovní výhra/prohra, ABN bez vítěze se do H2H výher nezapočte.
 147. **PAQ-147 [RESOLVED v69][PA1][PRODUCT] – Jaké minimum pokrývá kopie Runu a vestavěný Match Test Lab?** Odpověď: globální Test Lab dostupný bez vybraného Runu zahrnuje Match a Tournament testování, izolované fixtures a volitelné read-only kopie snapshotů z Runů. Sdílený autoritativní engine, deterministické scénáře, krokové/celé/batch spouštění, programové rozhraní a strojový report, uložení/import/export scénářů a očekávané výsledky jsou povinný základ. Zdrojový Run se testem nikdy nemění. Viz 31.25.
 148. **PAQ-148 [PA1][TECH] – Jaká minimální lock/concurrency matice platí pro souběžné úlohy, Runy a branche?** Příklad: Forecast v jedné branchi nesmí blokovat čtení jiné, ale dva zápisy do stejného snapshotu se serializují.
-149. **PAQ-149 [PA1][PRODUCT] – Jaké minimum CSV/XLSX staging importu musí být dostupné pro tvorbu potřebných dat?** Příklad: chybný řádek země lze opravit v preview a nezávislé platné řádky bezpečně importovat.
+149. **PAQ-149 [ČÁSTEČNĚ ROZHODNUTO v70][PA1][PRODUCT] – CSV/XLSX staging import?** Požadován pro země/populaci i hráče, s preview, validací a provenance. Přesné mapování polí a UI zůstává k implementaci.
 150. **PAQ-150 [NOT REQUIRED FOR PRE-ALPHA v66][PA0][PRODUCT] – Jaký minimální Viewer reveal/privacy režim zabrání úniku Admin truth, dokud jsou detailní reveal režimy odložené?** Odpověď pro první pre-alpha: Viewer není povinným rozhraním; jeho cílové oddělení veřejného a Admin stavu zůstává závazné, pokud je už dostupný. AI nadále nesmí vidět skrytá nebo budoucí data. Konkrétní režimy se rozhodnou před dokončením Vieweru.
 
 ## 31.21 Pokrytí kapitol Masteru pre-alpha bránou
@@ -5607,6 +5623,8 @@ Tato hranice není nové rozhodnutí o jejich definitivním odstranění. Znamen
 157. **PAQ-157 [RESOLVED v52][PA1][PRODUCT] – Jaký výchozí zobrazovaný název a pojmenovací workflow použije počáteční a každá další běžná branch?** Odpověď: počáteční branch se automaticky jmenuje `Timeline 1`; další běžná branch dostane první nepoužitý návrh `Timeline N`, který může uživatel před vytvořením nahradit vlastním jedinečným názvem.
 
 ## 31.24 Souhrn rozhodovací brány
+
+Aktuální konsolidace v70 a přepočet jsou v 31.26; tabulky starších vydání níže jsou historická evidence.
 
 Počty v tabulce níže označené v63 jsou historický snapshot. Ve v66 je ze stejných 157 identifikátorů 50 `[RESOLVED]`, 104 `[OPEN]` a 3 `[NOT REQUIRED FOR PRE-ALPHA]`; poslední status odkládá pouze povinnost pro první pre-alpha, nikoli cílovou funkci produktu. Široký registry počet 411 / 88 / 69 je historický stav v65, nikoliv nově provedený přepočet produktových položek.
 
@@ -5662,6 +5680,38 @@ Tato část zachycuje potvrzený produktový rozsah první pre-alpha a výslovn�
 
 **[VYSVĚTLENÍ HRANICE]** Poslední rozhovor o rychlém postupu běžným editovatelným Runem do konce turnaje či sezony nepřinesl nové rozhodnutí. Již rozhodnuté příkazy a rozsahy `Simulate/Manual` z 15.12 a 17.1 platí dál. Slovo „oficiální“ v otázce na rychlou simulaci neuděluje oprávnění měnit chráněný vestavěný GitHub Run.
 
+
+## 31.26 Konsolidace navazujících rozhodnutí do 2. 10. 2026 (v70)
+
+Tato část zachycuje potvrzená rozhodnutí po v69 a opravuje související kapitoly i registry. Nepovyšuje nezodpovězené návrhy na rozhodnutí. Starší auditní popisy jsou datovanou historií; pro současný rozsah platí novější výslovné rozhodnutí.
+
+### FAX šablona, pool a sezonní rozsah
+
+- Chráněná verzovaná FAX testovací šablona se vždy kopíruje do editovatelného Runu. Official Run může existovat, jeho rozpracování není priorita ani release gate.
+- Nejméně 1 000 ne-retired hráčů dovršilo 15 let před prvním Weekem 1; část může být pre-Tour. Intake v prvním Weeku 1 je navíc. Věkové/country rozdělení se kalibruje nad modelem populace roku narození a šesti ratingů.
+- Referenčních 80 turnajových Editions nejvyšší World Tour za sezonu; World Tour se simuluje celá. Elite, Challenger a Development mají souhrnné výsledky a dopady podle 14.3. Plná Elite sezona může být pozdější Alpha rozsah.
+- Individuální MS: pavouk s kvalifikací, Main default 128, kvalifikace může být v každém ročníku jiná, bez národních kvót. Finals jsou součástí pre-alpha; olympiáda, týmové a juniorské MS akceptaci neblokují.
+- Baseline ranking má tři testovací varianty podle 9.1. Volba před spuštěním prvního Weeku 1, poté branch z předstartovního bodu. Finální FAX varianta není vybraná.
+
+### Lab, přenos scénářů a reálné Runy
+
+**[ROZHODNUTO]** Tournament Lab dovoluje konfigurovat i vymyšlený turnaj a nezvyklé kombinace formátů, včetně nižších Tours. „Cokoliv“ znamená otevřený testovací návrh, nikoliv příslib, že již implementovaný engine provede matematicky nemožný či dosud nepodporovaný formát. Diagnostika přesně vysvětlí, proč návrh nemůže fungovat jako normální turnaj Runu. Nevalidní draft může být předmětem testu; nesmí se změnit ve zdánlivě platný autoritativní výsledek.
+
+**[ROZHODNUTO]** Run → Lab kopíruje stav z vybraného historického bodu bez mutace zdroje. Lab → Run vytváří editovatelný návrh po compatibility preview a validaci; samotný laboratorní experiment automaticky nepřepíše soutěžní historii. Scénáře lze uložit, klonovat, importovat/exportovat, opakovat se stejným seedem a kompatibilními verzemi; batch různých seedů nabídne souhrn i otevření konkrétního odlehlého průběhu. Programové/headless ovládání a strojové reporty pro agenty již vyžaduje 31.25, nejde o nově podmíněný doplněk.
+
+### Country data, očekávání a kalibrace
+
+**[ROZHODNUTO]** World/country balíček dodá kopii zemí a parametrů do Runu, kde lze data volně upravovat a země přidávat při zachování validace a historie. Bez živého zdrojového spojení a bez závislosti na Woorld FAX aplikaci; detail 4.1–4.3 a 4.11. Výběr názvu/schématu samostatného Countries Package zůstává otevřený. Poslední návrh konkrétního kolizního UI v chatu nebyl uživatelem zodpovězen a tato aktualizace ho neschvaluje.
+
+**[ROZHODNUTO]** Talent Preview ukazuje očekávání, pravděpodobnosti a variabilitu country/ročníku; skutečný výstup se může lišit a po dokončení ročníku se porovná. Technická materializace, veřejný/Runový vznik v 15 letech a formální Tour entry jsou oddělené události. Nový Tour Player je do dalšího Official snapshotu NR, potom se zařadí i s nulou bodů.
+
+**[ODLOŽENÁ KALIBRACE]** Počty, potenciálové distribuce, vývojové křivky, věky vstupu, číselné tresty a fairness se dolaďují při testování funkčního enginu. Politiky se mohou lišit po Runech/sezonách a mít explicitní výjimky bez retroaktivního přepočtu. Existující diagnostický Talent Calibration Lab je implementační nástroj; pět technických pásem ani současný interval Potential OVR se nestávají finálním produktovým pravidlem pouze tím, že byly mergnuté.
+
+### Další potvrzené hranice
+
+Entry okna default Main 2 + Qualification 1 week s úpravou u Edition; Best N min 1 a doporučené pásmo 10–18; široká Admin WC s vysvětlením a turnajová AI; PR pro vstup, skutečný ranking pro nasazení; import hráčů; denní schedule bez detailních hodin/kurtů. Skutečné kolizní závazky, travel a automatické disciplinární prověření podle 13.6/20.1 nahrazují povinný plošný Week Tournament Lock. Přesné sankce a kalibrace zůstávají otevřené.
+
+**Stav brány:** v70 navíc uzavírá pouze PAQ-082, 095 a 141. Ostatní dotčené otázky mají výslovně částečný status. Původní identifikátory se nemažou a implementace se nepočítá jako produktová odpověď. Aktuální strojově ověřený počet je 57 resolved, 97 neuzavřených včetně částečných a 3 mimo první pre-alpha, celkem 157. Široké registry 411/88/69 zůstávají historickými počty; nejde o nový odhad procent dokončení.
 
 # 32. Procentuální audit stavu specifikace
 
@@ -5741,7 +5791,7 @@ Kategorie auditu:
 | Viewer/Admin UX a navigace | 5 % | 89 % | 8 % | 2 % | 1 % |
 | Technika, úložiště, výkon a audit | 4 % | 81 % | 14 % | 3 % | 2 % |
 
-## 32.3 Stav dnes známého a zmapovaného rozsahu
+## 32.3 Historický stav zmapovaného rozsahu (v65)
 
 Následující tabulka se vztahuje **pouze k oblastem, které už jsou v tomto masteru pojmenované**. Není to procento celého budoucího Squash Enginu, protože jeho úplný konečný rozsah zatím neznáme.
 
@@ -6326,7 +6376,17 @@ Disciplinární nuly mají samostatný začátek, dobu platnosti a verzované op
 
 Následuje integrační checkpoint a skutečný Week Transition nad uloženými world/player/policy vstupy v pořadí kapitoly 6.5: atomicky aktualizovat stav, ranking a veřejné události; Viewer zůstává na posledním Save. Pak více týdnů, integrace entries/draws a ostatních nutných konzumentů, Season Closing/Season Transition včetně konce 50. sezony, a celosezonní Save/Restore/replay akceptace. Přesné pořadí aktualizuje `ROADMAP.md` podle aktuálních závislostí.
 
-Oba průchody kapitoly 31.3 zůstávají povinné: Official Run přes celou sezonu a otevření další; prázdný Run se dvěma ručně vytvořenými hráči a jedním zápasem bez kalendáře. Minimální Reconstruction a ostatní již rozhodnuté pre-alpha schopnosti se tím nevypouštějí. Chybějící produktové odpovědi se řeší až u skutečně závislého kroku, ne tichým stubem, který by byl vydáván za hotovou funkci.
+Oba průchody kapitoly 31.3 zůstávají povinné: kopie FAX testovací šablony přes celou sezonu a otevření další; prázdný Run se dvěma ručně vytvořenými hráči a jedním zápasem bez kalendáře. Minimální Reconstruction a ostatní již rozhodnuté pre-alpha schopnosti se tím nevypouštějí. Chybějící produktové odpovědi se řeší až u skutečně závislého kroku, ne tichým stubem, který by byl vydáván za hotovou funkci.
+
+## 35.32 Checkpoint v70 — audit po PR #1093
+
+**[OVĚŘENÝ STAV, 2. 10. 2026]** Auditovaná větev `buuk` končí merge commitem `aceb144d79924a985ada34b9eefaec53f548cf1c` (#1093). Od v69 přibylo 19 sloučených PR #1075–1093: migrace Viewer zdrojů, recovery coverage, Talent Intake preview/materializace/inspekce a diagnostický Talent Calibration Lab V1–V3. Úplný inventář, odkazy, rozsah review a reprodukce jsou v `docs/PRE_ALPHA_CHECKPOINT_2026_10_02.md`.
+
+**Ověření:** byly načteny změny všech 19 PR a jejich finální hosted Fast CI. #1089 byl sloučen s neúspěšným testem; #1090 jej opravil a pozdější finální kontroly včetně #1093 jsou zelené. Cílené čtení aktuálních zdrojů a izolované kernel probes nejsou úplnou runtime akceptací. Lokální pytest nebyl dostupný; úplná backend/frontend ani browser sada zde neběžela.
+
+**Zbývající hranice:** quality labels se při čtení odvozují z aktuální globální policy, takže změna defaults může přepsat výklad historie. UI review není pevně navázané na přesný Run/preview. Současná Expected diagnostika vychází z již vytvořeného počtu a není úplným předgeneračním forecastem; nulové země chybějí. Candidate potential může být zvýšen současným OVR. Viewer projekce vyžaduje kontrolu skrytých hodnot a historické znalosti. Zelená CI tyto produktové hranice neuzavírá.
+
+**Následující technická priorita:** nejprve uložit neměnnou Talent Intake policy/provenance a svázat Review→Confirm s přesným cílem a verzí vstupů; konkrétní zadání je `docs/CODEX_NEXT_TALENT_INTAKE_HISTORY_V1.md`. Pak doplnit diagnostické mezery, globální Match/Tournament Lab a realistický celosezonní průchod kopií FAX šablony. Číselná kalibrace a férovost zůstávají k rozhodnutí nad funkčními testy. Tento checkpoint aktualizuje starší implementační priority, nikoliv sportovní canon.
 
 # 36. AI-Assisted Development / Development Operating Model
 

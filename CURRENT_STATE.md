@@ -1,5 +1,26 @@
 # Current implementation and next action
 
+## Current checkpoint — 2 October 2026 / Master v70
+
+This checkpoint supersedes older next-task notices below; their implementation evidence is retained.
+Audited `buuk`: `aceb144d79924a985ada34b9eefaec53f548cf1c` after #1093. All 19 new PRs
+#1075–1093 are merged. #1089 had red final-head CI; #1090 repaired it, and #1093's final-head
+Fast CI is green. See [the full audit](docs/PRE_ALPHA_CHECKPOINT_2026_10_02.md) for evidence
+and limitations. No full local release acceptance was run at this checkpoint.
+
+**Next Codex task:** [freeze Talent Intake history and reviewed scope](docs/CODEX_NEXT_TALENT_INTAKE_HISTORY_V1.md).
+Read-time quality derivation currently uses mutable global defaults, and review confirmation
+can survive a target Run change. Freeze historical policy/result provenance, bind the
+reviewed input and target on the server, invalidate stale UI review, and preserve recovery.
+Verify actual Product Run/Branch ownership instead of assuming the legacy simulation Run is identical.
+
+Remaining diagnostics: true pre-generation expected output including zero-output countries,
+explicit effective potential floor, and safe future-cohort visibility. Viewer hidden-field
+projection also needs a visibility audit; additional Viewer expansion is not the pre-alpha priority.
+Master v70 preserves calibration as open test work and sets the FAX acceptance reference to a
+copied template, at least 1,000 initial players and 80 fully simulated World Tour Editions;
+lower Tours remain abstract. The Official Run is not the acceptance focus.
+
 ## Implemented — Talent Calibration Lab V3 Multi-seed Robustness
 
 - The existing diagnostic Lab can run one ephemeral five-band candidate over an explicit sequence

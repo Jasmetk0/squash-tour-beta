@@ -302,12 +302,19 @@ class PreAlphaFaxReferenceMaterializationService:
             command=ranking_command,
             expected_snapshot_fingerprint=ranking_preview.fingerprint,
         )
-        ranking_state = self.repository.get_branch_revision_state(branch_id=branch_id)
+        ranking_save_preview = self.repository.preview_ranking_save(
+            run_id=run.run_id,
+            branch_id=branch_id,
+        )
+        if not ranking_save_preview["can_save"]:
+            raise ValueError("Initial copied-FAX ranking is not independently saveable")
         saved_ranking = draft_service.save_ranking(
             run_id=run.run_id,
             branch_id=branch_id,
-            expected_draft_version=ranking_state.working_draft.draft_version,
-            expected_ranking_fingerprint=ranking.fingerprint,
+            expected_draft_version=ranking_save_preview["draft_version"],
+            expected_ranking_fingerprint=ranking_save_preview[
+                "ranking_fingerprint"
+            ],
         )
         publication = InitialOfficialRankingPublicationService(
             self.repository._session_factory

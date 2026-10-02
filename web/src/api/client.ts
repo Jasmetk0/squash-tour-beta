@@ -3386,3 +3386,41 @@ export async function runMatchTestLab(payload: MatchLabRequest): Promise<MatchLa
     body: JSON.stringify(payload)
   })
 }
+
+
+export async function getMatchLabBuiltInScenarios(): Promise<import('./types').BuiltInMatchLabScenario[]> {
+  return request<import('./types').BuiltInMatchLabScenario[]>('/admin/labs/match/scenarios')
+}
+
+export async function getMatchLabSessions(): Promise<import('./types').MatchLabSession[]> {
+  return request<import('./types').MatchLabSession[]>('/admin/labs/match/sessions')
+}
+
+export async function createMatchLabSession(
+  payload: import('./types').MatchLabSessionCreateRequest
+): Promise<import('./types').MatchLabSession> {
+  return request<import('./types').MatchLabSession>('/admin/labs/match/sessions', {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  })
+}
+
+export async function updateMatchLabSession(
+  sessionId: string,
+  payload: import('./types').MatchLabSessionUpdateRequest
+): Promise<import('./types').MatchLabSession> {
+  return request<import('./types').MatchLabSession>(`/admin/labs/match/sessions/${encodeURIComponent(sessionId)}`, {
+    method: 'PUT',
+    body: JSON.stringify(payload)
+  })
+}
+
+export async function runMatchLabSession(
+  sessionId: string,
+  payload: import('./types').MatchLabSessionRunRequest
+): Promise<MatchLabResult> {
+  return request<MatchLabResult>(`/admin/labs/match/sessions/${encodeURIComponent(sessionId)}/run`, {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  })
+}

@@ -464,7 +464,6 @@ export function ViewerRunPlayersPage(): JSX.Element {
                   <th>Age</th>
                   <th>Status</th>
                   <th>Power Rating</th>
-                  <th>Potential</th>
                   <th>Source</th>
                   <th>Player Profile</th>
                 </tr>
@@ -477,7 +476,6 @@ export function ViewerRunPlayersPage(): JSX.Element {
                     <td>{player.age}</td>
                     <td>{player.status}</td>
                     <td>{displayMetric(player.current_ovr)}</td>
-                    <td>{displayMetric(player.potential_ovr)}</td>
                     <td>{player.identity_source.replace(/_/g, ' ')}</td>
                     <td>
                       <Link to={viewerPlayerProfilePath(runId, player.player_id)}>Open Player Profile</Link>
@@ -547,11 +545,7 @@ export function ViewerRunPlayerCareerPage(): JSX.Element {
           <SectionCard title="Current sporting state">
             <MetadataList
               items={[
-                { label: 'Power Rating', value: displayMetric(playerProfile.current_ovr) },
-                { label: 'Potential Power Rating', value: displayMetric(playerProfile.potential_ovr) },
-                { label: 'Current form', value: displayMetric(playerProfile.current_form) },
-                { label: 'Match sharpness', value: displayMetric(playerProfile.match_sharpness) },
-                { label: 'Long-term fatigue', value: displayMetric(playerProfile.long_term_fatigue) }
+                { label: 'Power Rating', value: displayMetric(playerProfile.current_ovr) }
               ]}
             />
           </SectionCard>

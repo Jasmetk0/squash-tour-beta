@@ -146,7 +146,7 @@ def test_match_lab_api_built_ins_and_new_test_session_are_isolated(tmp_path) -> 
             "PUT",
             f"{server.base_url}/admin/labs/match/sessions/{session_id}",
             {
-                "expected_session_fingerprint": _session_fingerprint(created),
+                "expected_session_fingerprint": created["session_fingerprint"],
                 "display_name": "API edited session",
                 "scenario": edited,
             },
@@ -159,7 +159,7 @@ def test_match_lab_api_built_ins_and_new_test_session_are_isolated(tmp_path) -> 
             "POST",
             f"{server.base_url}/admin/labs/match/sessions/{session_id}/run",
             {
-                "expected_session_fingerprint": _session_fingerprint(updated),
+                "expected_session_fingerprint": updated["session_fingerprint"],
                 "batch_seeds": [91, 92],
             },
         )
@@ -172,15 +172,6 @@ def test_match_lab_api_built_ins_and_new_test_session_are_isolated(tmp_path) -> 
         status, scenarios_after = _request("GET", f"{server.base_url}/admin/labs/match/scenarios")
         assert status == 200
         assert scenarios_after == scenarios
-
-
-def _session_fingerprint(session_payload: dict) -> str:
-    import hashlib
-    import json
-
-    return hashlib.sha256(
-        json.dumps(session_payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
-    ).hexdigest()
 
 
 def test_match_lab_api_rejects_stale_session_mutation_and_run(tmp_path) -> None:

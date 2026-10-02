@@ -167,7 +167,7 @@ class PreAlphaFaxReferenceMaterializationService:
             id_factory=self.id_factory,
         )
         run = create.create_empty_run(display_name=command.request.display_name)
-        branch_id = run.official_branch_id
+        branch_id = run.viewer_branch_id
         if branch_id is None:
             raise ValueError("Created copied-FAX Run has no initial Branch")
 

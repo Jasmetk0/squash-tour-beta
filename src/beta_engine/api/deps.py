@@ -232,8 +232,12 @@ def get_talent_calibration_service() -> TalentCalibrationService:
     return TalentCalibrationService()
 
 
-def get_match_test_lab_service() -> MatchTestLabService:
-    return MatchTestLabService()
+def get_match_test_lab_service(request: Request) -> MatchTestLabService:
+    runtime = get_runtime(request)
+    return MatchTestLabService(
+        session_factory=runtime.repository._session_factory,
+        id_factory=_new_product_entity_id,
+    )
 
 
 def get_manual_player_overrides_service(request: Request) -> ManualPlayerOverridesService:

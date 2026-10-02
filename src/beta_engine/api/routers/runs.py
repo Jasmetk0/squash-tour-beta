@@ -106,6 +106,8 @@ def get_run_prospect_talent_summary(
         )
     except KeyError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
     return MaterializedRunProspectTalentSummaryResponse.model_validate(
         result,
         from_attributes=True,

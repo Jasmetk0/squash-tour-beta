@@ -3,7 +3,11 @@ from dataclasses import asdict
 import pytest
 
 from beta_engine.application.talent_calibration_service import BAND_ORDER, TalentCalibrationService
-from beta_engine.domain.players.prospect_sporting_profile import DEFAULT_PROSPECT_SPORTING_PROFILE_POLICY
+from beta_engine.domain.players.prospect_sporting_profile import (
+    DEFAULT_PROSPECT_SPORTING_PROFILE_POLICY,
+    materialize_prospect_sporting_profile,
+)
+from beta_engine.domain.players.talent_quality_policy import talent_quality_band_from_seed
 
 
 @pytest.mark.pr_critical
@@ -30,6 +34,29 @@ def test_calibration_is_deterministic_complete_and_in_policy_bounds() -> None:
             assert stats.minimum >= row.current_ovr.minimum
     assert left.potential_ovr.p10 <= left.potential_ovr.p25 <= left.potential_ovr.p50 <= left.potential_ovr.p75 <= left.potential_ovr.p90
     assert "seed_digest" not in str(asdict(left))
+
+
+def test_calibration_matches_production_potential_seed_band_semantics() -> None:
+    seed = 31
+    sample_count = 40
+    result = TalentCalibrationService().calibrate(seed=seed, sample_count=sample_count)
+
+    expected_counts = {band.value: 0 for band in BAND_ORDER}
+    for index in range(sample_count):
+        identity = f"talent-calibration-lab.v1:{seed}:{index}"
+        potential_seed = f"{identity}:potential"
+        band = talent_quality_band_from_seed(potential_seed)
+        expected_counts[band.value] += 1
+
+        profile = materialize_prospect_sporting_profile(
+            player_id=f"calibration://sample/{seed}/{index}",
+            profile_seed=f"{identity}:profile",
+            development_seed=f"{identity}:development",
+            potential_seed=potential_seed,
+        )
+        assert profile.potential_ovr >= profile.ovr
+
+    assert {row.band: row.generated_count for row in result.bands} == expected_counts
 
 
 def test_small_sample_keeps_zero_count_bands() -> None:

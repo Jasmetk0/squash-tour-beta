@@ -15,7 +15,11 @@ export function TalentCalibrationPage(): JSX.Element {
   const [inputs, setInputs] = useState({ seed: 0, sample_count: 5000 })
   const [params, setParams] = useState(inputs)
   const query = useQuery({ queryKey: ['talent-calibration', params], queryFn: () => getTalentCalibration(params), retry: false })
-  const submit = (event: FormEvent) => { event.preventDefault(); setParams(inputs) }
+  const submit = (event: FormEvent) => {
+    event.preventDefault()
+    comparison.reset()
+    setParams(inputs)
+  }
   const [ranges, setRanges] = useState<Record<TalentBandKey, CandidatePotentialRange> | null>(null)
   useEffect(() => {
     if (query.data && ranges === null) setRanges(baselineRanges(query.data.baseline_potential_min, query.data.baseline_potential_max))
@@ -92,6 +96,21 @@ function baselineRanges(minimum: number, maximum: number): Record<TalentBandKey,
 
 function ComparisonResults({ result }: { result: import('../api/types').TalentCalibrationCompareResponse }): JSX.Element {
   return <>
+    <SectionCard title="Global candidate comparison">
+      <SummaryPills items={[
+        { label: 'Comparison seed', value: result.seed },
+        { label: 'Samples', value: result.sample_count },
+        { label: 'Baseline median', value: show(result.global_comparison.baseline_potential_ovr.p50) },
+        { label: 'Candidate median', value: show(result.global_comparison.candidate_potential_ovr.p50) },
+        { label: 'Median Δ', value: show(result.global_comparison.delta.p50) },
+        { label: 'Mean Δ', value: show(result.global_comparison.delta.mean) }
+      ]} />
+      <table aria-label="Global candidate comparison">
+        <thead><tr><th>Baseline P10</th><th>Candidate P10</th><th>Baseline P90</th><th>Candidate P90</th><th>Increased</th><th>Same</th><th>Decreased</th></tr></thead>
+        <tbody><tr><td>{show(result.global_comparison.baseline_potential_ovr.p10)}</td><td>{show(result.global_comparison.candidate_potential_ovr.p10)}</td><td>{show(result.global_comparison.baseline_potential_ovr.p90)}</td><td>{show(result.global_comparison.candidate_potential_ovr.p90)}</td><td>{result.global_comparison.delta.increased}</td><td>{result.global_comparison.delta.unchanged}</td><td>{result.global_comparison.delta.decreased}</td></tr></tbody>
+      </table>
+      <p className="status">Candidate configuration fingerprint: <code>{result.candidate_sandbox_configuration_fingerprint}</code></p>
+    </SectionCard>
     <SectionCard title="Candidate comparison">
       <table aria-label="Candidate comparison"><thead><tr><th>Band</th><th>Candidate range</th><th>Baseline median</th><th>Candidate median</th><th>Median Δ</th><th>Baseline P10</th><th>Candidate P10</th><th>Baseline P90</th><th>Candidate P90</th><th>Mean Δ</th><th>Increased</th><th>Same</th><th>Decreased</th></tr></thead>
         <tbody>{result.bands.map((row) => <tr key={row.band}><th scope="row">{LABELS[row.band]}</th>{row.generated_count === 0 ? <td colSpan={12}>No generated samples for this seed/sample size</td> : <><td>{row.candidate_range.potential_min}–{row.candidate_range.potential_max}</td><td>{show(row.baseline_potential_ovr.p50)}</td><td>{show(row.candidate_potential_ovr.p50)}</td><td>{show(row.delta.p50)}</td><td>{show(row.baseline_potential_ovr.p10)}</td><td>{show(row.candidate_potential_ovr.p10)}</td><td>{show(row.baseline_potential_ovr.p90)}</td><td>{show(row.candidate_potential_ovr.p90)}</td><td>{show(row.delta.mean)}</td><td>{row.delta.increased}</td><td>{row.delta.unchanged}</td><td>{row.delta.decreased}</td></>}</tr>)}</tbody>

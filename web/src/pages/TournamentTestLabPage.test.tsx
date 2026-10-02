@@ -221,8 +221,8 @@ describe('TournamentTestLabPage', () => {
       normal_run_compatible: false,
       issues: [{
         severity: 'error',
-        code: 'FORMAT_NOT_EXECUTABLE_V1',
-        message: 'Tournament Lab V1 does not yet execute groups.'
+        code: 'GROUP_GEOMETRY_INCOMPLETE',
+        message: 'Group format requires explicit equal group geometry.'
       }]
     }
     api.inspectTournamentLabScenario.mockResolvedValue(blocked)
@@ -236,8 +236,8 @@ describe('TournamentTestLabPage', () => {
     await user.click(screen.getByRole('button', { name: 'Inspect compatibility' }))
 
     const issues = await screen.findByRole('table', { name: 'Tournament Lab compatibility issues' })
-    expect(within(issues).getByText('FORMAT_NOT_EXECUTABLE_V1')).toBeInTheDocument()
-    expect(screen.getByText(/does not yet execute groups/)).toBeInTheDocument()
+    expect(within(issues).getByText('GROUP_GEOMETRY_INCOMPLETE')).toBeInTheDocument()
+    expect(screen.getByText(/explicit equal group geometry/)).toBeInTheDocument()
   })
 
   it('creates, edits and runs a persistent isolated Tournament Test Session', async () => {
@@ -314,6 +314,71 @@ describe('TournamentTestLabPage', () => {
       }
     )
     expect(await screen.findByText(/Champions: P1: 2/)).toBeInTheDocument()
+  })
+
+
+  it('renders resolved group standings and hybrid knockout evidence', async () => {
+    const user = userEvent.setup()
+    const groupResult = {
+      ...result,
+      draw: null,
+      draw_input_fingerprint: null,
+      draw_authority_fingerprint: null,
+      topology_authority_fingerprint: '7'.repeat(64),
+      group_schedule_fingerprint: '8'.repeat(64),
+      runs: [{
+        ...result.runs[0],
+        played_match_count: 15,
+        group_stage: {
+          topology_fingerprint: '7'.repeat(64),
+          schedule_fingerprint: '8'.repeat(64),
+          match_day_count: 3,
+          blocking_issue: null,
+          match_results: [],
+          standings: {
+            schema_version: 'tournament_group_standings_authority.v2',
+            groups: [{
+              group_index: 1,
+              rows: [{
+                group_index: 1,
+                position: 1,
+                player_id: 'P1',
+                wins: 3,
+                losses: 0,
+                group_points: 18,
+                played_matches: 3,
+                walkovers_received: 0,
+                walkovers_conceded: 0,
+                games_won: 9,
+                games_lost: 1,
+                points_won: 110,
+                points_lost: 75
+              }]
+            }]
+          }
+        },
+        hybrid_knockout_bracket: {
+          schema_version: 'tournament_hybrid_knockout_bracket_authority.v1',
+          entrant_count: 4,
+          round_count: 2,
+          terminal_match_id: 'final',
+          matches: []
+        }
+      }]
+    }
+    api.runTournamentTestLab.mockResolvedValue(groupResult)
+
+    renderWithRoute(<TournamentTestLabPage />, '/admin/labs/tournament')
+    await user.click(await screen.findByRole('button', { name: 'Load scratch copy' }))
+    await user.click(screen.getByRole('button', { name: 'Run tournament scenario' }))
+
+    expect(await screen.findByRole('table', { name: 'Tournament Lab group 1 standings' })).toBeInTheDocument()
+    expect(screen.getByText('3 match days')).not.toBeInTheDocument()
+    expect(screen.getByText('resolved')).toBeInTheDocument()
+    expect(screen.getByText('4 entrants')).toBeInTheDocument()
+    const standings = screen.getByRole('table', { name: 'Tournament Lab group 1 standings' })
+    expect(within(standings).getByText('P1')).toBeInTheDocument()
+    expect(within(standings).getByText('18')).toBeInTheDocument()
   })
 
 })

@@ -242,8 +242,12 @@ def get_match_test_lab_service(request: Request) -> MatchTestLabService:
     )
 
 
-def get_tournament_test_lab_service() -> TournamentTestLabService:
-    return TournamentTestLabService()
+def get_tournament_test_lab_service(request: Request) -> TournamentTestLabService:
+    runtime = get_runtime(request)
+    return TournamentTestLabService(
+        session_factory=runtime.repository._session_factory,
+        id_factory=_new_product_entity_id,
+    )
 
 
 def get_manual_player_overrides_service(request: Request) -> ManualPlayerOverridesService:

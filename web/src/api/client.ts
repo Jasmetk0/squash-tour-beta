@@ -3435,3 +3435,26 @@ export async function importMatchLabSavedRevisionPlayer(
     { method: 'POST', body: JSON.stringify(payload) }
   )
 }
+
+
+export async function getTournamentLabBuiltInScenarios(): Promise<import('./types').BuiltInTournamentLabScenario[]> {
+  return request<import('./types').BuiltInTournamentLabScenario[]>('/admin/labs/tournament/scenarios')
+}
+
+export async function inspectTournamentLabScenario(
+  scenario: import('./types').TournamentLabScenario
+): Promise<import('./types').TournamentLabCompatibility> {
+  return request<import('./types').TournamentLabCompatibility>('/admin/labs/tournament/inspect', {
+    method: 'POST',
+    body: JSON.stringify(scenario)
+  })
+}
+
+export async function runTournamentTestLab(
+  payload: import('./types').TournamentLabRequest
+): Promise<import('./types').TournamentLabResult> {
+  return request<import('./types').TournamentLabResult>('/admin/labs/tournament/run', {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  })
+}

@@ -7758,3 +7758,128 @@ export type MatchLabSavedRevisionPlayerImportRequest = {
   player_id: string
   side: 'player_a' | 'player_b'
 }
+
+
+export type TournamentLabMatchFormat = {
+  best_of: number
+  games_to: number
+  win_by: number
+  upset_variance: number
+}
+
+export type TournamentLabAssertions = {
+  expected_champion_player_id?: string | null
+  expected_played_match_count?: number | null
+}
+
+export type TournamentLabParticipantContext = {
+  player: Record<string, unknown>
+  form_modifier?: number
+  sharpness_modifier?: number
+  fatigue_modifier?: number
+  health_modifier?: number
+  travel_modifier?: number
+}
+
+export type TournamentLabScenario = {
+  schema_version: 'tournament_test_lab_scenario.v1'
+  scenario_id: string
+  display_name: string
+  format_kind: string
+  participants: TournamentLabParticipantContext[]
+  main_draw_size: number
+  seed_order_player_ids: string[]
+  draw_seed: number
+  match_seed: number
+  match_format: TournamentLabMatchFormat
+  stop_after_round?: number | null
+  assertions: TournamentLabAssertions
+  source_kind: 'portable' | 'built_in_copy' | 'run_snapshot_copy'
+  source_reference?: string | null
+  source_fingerprint?: string | null
+}
+
+export type TournamentLabRequest = {
+  scenario: TournamentLabScenario
+  batch_match_seeds?: number[]
+}
+
+export type TournamentLabIssue = {
+  severity: 'warning' | 'error'
+  code: string
+  message: string
+}
+
+export type TournamentLabCompatibility = {
+  runnable_in_lab: boolean
+  normal_run_compatible: boolean
+  isolated: true
+  run_mutation_performed: false
+  run_live_link: false
+  shared_authorities: string[]
+  issues: TournamentLabIssue[]
+}
+
+export type TournamentLabMatchResult = {
+  node_id: string
+  round_number: number
+  round_sequence: number
+  player_a_id: string | null
+  player_b_id: string | null
+  winner_player_id: string | null
+  loser_player_id: string | null
+  status: 'played' | 'bye_advance' | 'empty_advance'
+  match_seed?: number | null
+  result_fingerprint?: string | null
+  set_scores: string[]
+  rally_count: number
+  elapsed_seconds: number
+}
+
+export type TournamentLabAssertionResult = {
+  assertion: string
+  status: 'passed' | 'failed' | 'not_evaluated'
+  expected: string
+  actual?: string | null
+}
+
+export type TournamentLabSingleRun = {
+  match_seed: number
+  completed_rounds: number
+  tournament_complete: boolean
+  champion_player_id?: string | null
+  played_match_count: number
+  bye_advance_count: number
+  match_results: TournamentLabMatchResult[]
+  assertions: TournamentLabAssertionResult[]
+  run_fingerprint: string
+}
+
+export type TournamentLabResult = {
+  schema_version: 'tournament_test_lab_result.v1'
+  scenario_id: string
+  scenario_fingerprint: string
+  request_fingerprint: string
+  compatibility: TournamentLabCompatibility
+  format_authority_fingerprint?: string | null
+  draw_input_fingerprint?: string | null
+  draw_authority_fingerprint?: string | null
+  draw?: CanonicalTournamentDrawAuthority | null
+  runs: TournamentLabSingleRun[]
+  diagnostics: {
+    run_count: number
+    completed_run_count: number
+    champions: Record<string, number>
+    assertion_failure_count: number
+    average_played_match_count: number
+  }
+}
+
+export type BuiltInTournamentLabScenario = {
+  scenario_id: string
+  display_name: string
+  description: string
+  read_only: true
+  scenario_fingerprint: string
+  scenario: TournamentLabScenario
+}

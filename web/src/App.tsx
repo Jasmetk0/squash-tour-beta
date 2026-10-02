@@ -84,6 +84,7 @@ import {
 } from './pages/ViewerRunPlayersCountriesPage'
 import { TalentPreviewPage } from './pages/TalentPreviewPage'
 import { TalentCalibrationPage } from './pages/TalentCalibrationPage'
+import { MatchTestLabPage } from './pages/MatchTestLabPage'
 import { TalentIntakePage } from './pages/TalentIntakePage'
 import { ManualPlayerOverridesPage } from './pages/ManualPlayerOverridesPage'
 import { WeekDetailPage } from './pages/WeekDetailPage'
@@ -152,6 +153,7 @@ export default function App(): JSX.Element {
         <Route path="admin/players/database" element={<AdminPlayersDatabasePage />} />
         <Route path="admin/players/intake" element={<TalentIntakePage />} />
         <Route path="admin/simulate" element={<AdminSimulatePage />} />
+        <Route path="admin/labs/match" element={<MatchTestLabPage />} />
         <Route path="admin/runs/new" element={<DashboardPage />} />
         <Route path="admin/runs" element={<RunsPage />} />
         <Route path="admin/runs/:runId" element={<RunPage />} />

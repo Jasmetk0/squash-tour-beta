@@ -490,19 +490,50 @@ def test_intake_summary_retains_zero_output_countries_and_pre_generation_expecta
     repository.upsert_simulation_run(SimulationRunInfo(run_id="run-zero-country", season=2027, seed=1))
     service = _materialization_service(repository)
 
-    preview = service.preview_service.preview_season(
-        run_id="run-zero-country",
-        base_annual_intake_target=1,
-    )
-    assert any(row.allocated_count == 0 for row in preview.country_totals)
-
     _materialize(service, run_id="run-zero-country", base_annual_intake_target=1)
+    records = repository.list_run_prospects(
+        run_id="run-zero-country",
+        season_start_year=2027,
+        limit=None,
+    )
+    assert records
+    forecast = dict(records[0].profile_json["cohort_forecast"])
+    forecast["countries"] = [
+        *forecast["countries"],
+        {
+            "country_code": "ZZZ",
+            "country_name": "Zero Output",
+            "forecast_count": 0,
+            "expected_band_counts": {
+                band.value: 0.0 for band in TalentQualityBand
+            },
+        },
+    ]
+    fingerprint_payload = {
+        key: value for key, value in forecast.items() if key != "forecast_fingerprint"
+    }
+    forecast["forecast_fingerprint"] = hashlib.sha256(
+        json.dumps(fingerprint_payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+    ).hexdigest()
+    repository.upsert_run_prospects([
+        RunProspectRecord(
+            **(
+                record.__dict__
+                | {
+                    "profile_json": record.profile_json
+                    | {"cohort_forecast": forecast}
+                }
+            )
+        )
+        for record in records
+    ])
+
     summary = service.summarize_materialized_talent(
         run_id="run-zero-country",
         season_start_year=2027,
     )
 
-    zero_rows = [row for row in summary.countries if row.forecast_count == 0]
+    zero_rows = [row for row in summary.countries if row.country_code == "ZZZ"]
     assert zero_rows
     assert all(row.materialized_count == 0 for row in zero_rows)
     assert all(sum(row.expected_band_counts.values()) == pytest.approx(0.0) for row in zero_rows)

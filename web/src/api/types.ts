@@ -7852,7 +7852,6 @@ export type TournamentLabQualificationSectionResult = {
   winner_player_id?: string | null
   played_match_count: number
   bye_advance_count: number
-  qualification_results?: TournamentLabQualificationSectionResult[]
   match_results: TournamentLabMatchResult[]
 }
 
@@ -7863,6 +7862,7 @@ export type TournamentLabSingleRun = {
   champion_player_id?: string | null
   played_match_count: number
   bye_advance_count: number
+  qualification_results?: TournamentLabQualificationSectionResult[]
   match_results: TournamentLabMatchResult[]
   assertions: TournamentLabAssertionResult[]
   run_fingerprint: string

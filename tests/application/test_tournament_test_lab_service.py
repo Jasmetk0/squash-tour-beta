@@ -4,10 +4,14 @@ from types import SimpleNamespace
 
 import pytest
 
+from beta_engine.application.run_branch_creation_service import RunBranchCreationService
+from beta_engine.application.run_container_creation_service import RunContainerCreationService
+from beta_engine.application.run_working_draft_service import RunWorkingDraftService
 from beta_engine.application.tournament_test_lab_service import (
     TournamentLabRunSnapshotEvidence,
     TournamentLabAssertions,
     TournamentLabRequest,
+    TournamentLabRunDraftApplyRequest,
     TournamentLabRunDraftPreviewRequest,
     TournamentLabSavedRevisionCopyRequest,
     TournamentLabScenario,
@@ -26,8 +30,21 @@ from beta_engine.domain.tournaments.entry_field import TournamentEntryField, Tou
 from beta_engine.domain.tournaments.format_authority import TournamentFormatAuthority
 from beta_engine.domain.tournaments.draw_input_authority import TournamentDrawInputAuthority
 from beta_engine.infrastructure.db.repositories import BranchSavedRevisionHistoryRecord, BranchSavedRevisionRecord
-from beta_engine.infrastructure.db import DatabaseSettings, create_session_factory, create_sqlite_engine
-from beta_engine.infrastructure.db.models import Base, TournamentLabSessionModel
+from beta_engine.infrastructure.db import (
+    DatabaseSettings,
+    SimulationPersistenceRepository,
+    create_session_factory,
+    create_sqlite_engine,
+)
+from beta_engine.infrastructure.db.models import (
+    Base,
+    RunTournamentLabDraftModel,
+    TournamentLabSessionModel,
+)
+from beta_engine.infrastructure.db.run_tournament_lab_draft_state import (
+    RUN_TOURNAMENT_LAB_DRAFT_COMPONENT_KEY,
+    load_saved_run_tournament_lab_drafts,
+)
 
 
 pytestmark = pytest.mark.pr_critical
@@ -1056,5 +1073,231 @@ def test_tournament_lab_run_draft_preview_fails_closed_on_dirty_or_stale_target(
                     event_id="target-event",
                 ),
             )
+    finally:
+        engine.dispose()
+
+
+def _run_backed_lab_service(tmp_path):
+    engine = create_sqlite_engine(
+        DatabaseSettings(url=f"sqlite:///{tmp_path / 'tournament-lab-run-draft.db'}")
+    )
+    repository = SimulationPersistenceRepository(
+        engine=engine,
+        session_factory=create_session_factory(engine),
+    )
+    repository.bootstrap_schema()
+    RunContainerCreationService(
+        repository=repository,
+        id_factory=iter(("run-lab", "branch-lab", "revision-root", "draft-root")).__next__,
+    ).create_empty_run(display_name="Tournament Lab target")
+    counter = {"value": 0}
+
+    def ids(kind: str) -> str:
+        counter["value"] += 1
+        return f"{kind}-{counter['value']}"
+
+    return engine, repository, TournamentTestLabService(
+        repository._session_factory,
+        ids,
+        repository=repository,
+    )
+
+
+def test_tournament_lab_reviewed_run_draft_apply_is_atomic_idempotent_and_saveable(
+    tmp_path,
+) -> None:
+    engine, repository, service = _run_backed_lab_service(tmp_path)
+    try:
+        created = service.create_session(
+            TournamentLabSessionCreateRequest(
+                display_name="Run draft source",
+                scenario=_scenario(),
+            )
+        )
+        preview = service.preview_run_draft(
+            created.session_id,
+            TournamentLabRunDraftPreviewRequest(
+                expected_session_fingerprint=created.fingerprint,
+                product_run_id="run-lab",
+                branch_id="branch-lab",
+                event_id="event-lab",
+            ),
+        )
+        assert preview.ready_for_draft is True
+        assert preview.preview_fingerprint == preview.fingerprint
+        assert preview.target_saved_revision_id == "revision-root"
+        assert preview.target_working_draft_version == 0
+
+        request = TournamentLabRunDraftApplyRequest(
+            command_id="apply-lab-draft-1",
+            expected_session_fingerprint=created.fingerprint,
+            product_run_id="run-lab",
+            branch_id="branch-lab",
+            event_id="event-lab",
+            expected_saved_revision_id=preview.target_saved_revision_id,
+            expected_working_draft_version=preview.target_working_draft_version,
+            expected_preview_fingerprint=preview.fingerprint,
+            expected_candidate_fingerprint=preview.candidate_fingerprint,
+        )
+        applied = service.apply_run_draft(created.session_id, request)
+        assert applied.already_applied is False
+        assert applied.working_draft_version == 1
+        assert applied.candidate_fingerprint == preview.candidate_fingerprint
+
+        replay = service.apply_run_draft(created.session_id, request)
+        assert replay.already_applied is True
+        assert replay.proposal_fingerprint == applied.proposal_fingerprint
+
+        with repository._session_factory() as db:
+            row = db.get(
+                RunTournamentLabDraftModel,
+                ("run-lab", "branch-lab", "event-lab"),
+            )
+            assert row is not None
+            assert row.fingerprint == applied.proposal_fingerprint
+
+        draft = repository.get_branch_revision_state(
+            branch_id="branch-lab"
+        ).working_draft
+        assert draft.status == "dirty"
+        assert draft.draft_version == 1
+        assert draft.change_count == 1
+
+        saved = RunWorkingDraftService(
+            repository=repository,
+            id_factory=iter(("revision-lab-draft", "audit-lab-draft")).__next__,
+        ).save(
+            run_id="run-lab",
+            branch_id="branch-lab",
+            expected_draft_version=1,
+        )
+        component = saved.saved_revision.payload["content"][
+            RUN_TOURNAMENT_LAB_DRAFT_COMPONENT_KEY
+        ]
+        assert component["fingerprint"] == applied.draft_state_fingerprint
+        loaded = load_saved_run_tournament_lab_drafts(
+            saved.saved_revision.payload,
+            run_id="run-lab",
+            branch_id="branch-lab",
+        )
+        assert loaded is not None
+        assert loaded.drafts[0].fingerprint == applied.proposal_fingerprint
+        assert saved.working_draft.status == "clean"
+    finally:
+        engine.dispose()
+
+
+def test_tournament_lab_run_draft_apply_rejects_stale_review_without_partial_write(
+    tmp_path,
+) -> None:
+    engine, repository, service = _run_backed_lab_service(tmp_path)
+    try:
+        created = service.create_session(
+            TournamentLabSessionCreateRequest(
+                display_name="Stale Run draft",
+                scenario=_scenario(),
+            )
+        )
+        preview = service.preview_run_draft(
+            created.session_id,
+            TournamentLabRunDraftPreviewRequest(
+                expected_session_fingerprint=created.fingerprint,
+                product_run_id="run-lab",
+                branch_id="branch-lab",
+                event_id="event-lab",
+            ),
+        )
+        with pytest.raises(ValueError, match="preview changed"):
+            service.apply_run_draft(
+                created.session_id,
+                TournamentLabRunDraftApplyRequest(
+                    command_id="stale-lab-draft",
+                    expected_session_fingerprint=created.fingerprint,
+                    product_run_id="run-lab",
+                    branch_id="branch-lab",
+                    event_id="event-lab",
+                    expected_saved_revision_id=preview.target_saved_revision_id,
+                    expected_working_draft_version=preview.target_working_draft_version,
+                    expected_preview_fingerprint="0" * 64,
+                    expected_candidate_fingerprint=preview.candidate_fingerprint,
+                ),
+            )
+
+        with repository._session_factory() as db:
+            assert db.get(
+                RunTournamentLabDraftModel,
+                ("run-lab", "branch-lab", "event-lab"),
+            ) is None
+        state = repository.get_branch_revision_state(branch_id="branch-lab")
+        assert state.working_draft.status == "clean"
+        assert state.working_draft.draft_version == 0
+    finally:
+        engine.dispose()
+
+
+def test_saved_tournament_lab_run_draft_materializes_safely_on_branch_fork(
+    tmp_path,
+) -> None:
+    engine, repository, service = _run_backed_lab_service(tmp_path)
+    try:
+        created = service.create_session(
+            TournamentLabSessionCreateRequest(
+                display_name="Forkable Run draft",
+                scenario=_scenario(),
+            )
+        )
+        preview = service.preview_run_draft(
+            created.session_id,
+            TournamentLabRunDraftPreviewRequest(
+                expected_session_fingerprint=created.fingerprint,
+                product_run_id="run-lab",
+                branch_id="branch-lab",
+                event_id="event-lab",
+            ),
+        )
+        applied = service.apply_run_draft(
+            created.session_id,
+            TournamentLabRunDraftApplyRequest(
+                command_id="fork-source-apply",
+                expected_session_fingerprint=created.fingerprint,
+                product_run_id="run-lab",
+                branch_id="branch-lab",
+                event_id="event-lab",
+                expected_saved_revision_id=preview.target_saved_revision_id,
+                expected_working_draft_version=preview.target_working_draft_version,
+                expected_preview_fingerprint=preview.fingerprint,
+                expected_candidate_fingerprint=preview.candidate_fingerprint,
+            ),
+        )
+        saved = RunWorkingDraftService(
+            repository=repository,
+            id_factory=iter(("revision-fork-source", "audit-fork-source")).__next__,
+        ).save(
+            run_id="run-lab",
+            branch_id="branch-lab",
+            expected_draft_version=1,
+        )
+
+        forked = RunBranchCreationService(
+            repository=repository,
+            id_factory=iter(("branch-lab-copy", "draft-lab-copy")).__next__,
+        ).create_from_saved_revision(
+            run_id="run-lab",
+            source_branch_id="branch-lab",
+            source_saved_revision_id=saved.saved_revision.revision_id,
+        )
+        assert forked.branch_id == "branch-lab-copy"
+
+        fork_state = repository.get_branch_revision_state(branch_id="branch-lab-copy")
+        loaded = load_saved_run_tournament_lab_drafts(
+            fork_state.saved_revision.payload,
+            run_id="run-lab",
+            branch_id="branch-lab-copy",
+        )
+        assert loaded is not None
+        assert loaded.drafts[0].event_id == "event-lab"
+        assert loaded.drafts[0].candidate_fingerprint == applied.candidate_fingerprint
+        assert loaded.drafts[0].branch_id == "branch-lab-copy"
+        assert loaded.drafts[0].fingerprint != applied.proposal_fingerprint
     finally:
         engine.dispose()

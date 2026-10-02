@@ -553,6 +553,6 @@ def test_tournament_lab_groups_fail_closed_on_bad_crossing_contract() -> None:
     assert result.compatibility.runnable_in_lab is False
     assert result.runs == ()
     assert any(
-        issue.code == "GROUP_CONFIGURATION_INVALID"
+        issue.code == "HYBRID_CROSSINGS_INCOMPLETE"
         for issue in result.compatibility.issues
     )

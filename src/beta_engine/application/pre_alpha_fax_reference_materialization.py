@@ -63,6 +63,7 @@ class PreAlphaFaxReferencePreview(BaseModel):
     request: PreAlphaFaxReferenceRequest
     world_source_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
     calendar_source_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    world_entity_count: int = Field(ge=0)
     calendar_event_count: int = Field(ge=0)
     world_tour_edition_count: int = Field(ge=0)
     lower_tour_edition_count: int = Field(ge=0)
@@ -141,11 +142,13 @@ class PreAlphaFaxReferenceMaterializationService:
             request=request,
             world_source_fingerprint=world.source_fingerprint,
             calendar_source_fingerprint=calendar.source_fingerprint,
+            world_entity_count=len(world.entities),
             calendar_event_count=event_count,
             world_tour_edition_count=world_tour,
             lower_tour_edition_count=lower,
             ready_to_materialize=(
-                world_tour == FAX_ACCEPTANCE_WORLD_TOUR_EDITIONS
+                len(world.entities) > 0
+                and world_tour == FAX_ACCEPTANCE_WORLD_TOUR_EDITIONS
                 and request.target_pool_size >= FAX_ACCEPTANCE_MIN_INITIAL_PLAYERS
             ),
         )
@@ -158,8 +161,9 @@ class PreAlphaFaxReferenceMaterializationService:
             raise ValueError("Copied-FAX reference preview changed since review")
         if not preview.ready_to_materialize:
             raise ValueError(
-                "Copied-FAX source is not ready: the reviewed calendar must contain "
-                f"exactly {FAX_ACCEPTANCE_WORLD_TOUR_EDITIONS} World Tour Editions"
+                "Copied-FAX source is not ready: the reviewed World Package must be "
+                "non-empty and the calendar must contain exactly "
+                f"{FAX_ACCEPTANCE_WORLD_TOUR_EDITIONS} World Tour Editions"
             )
 
         create = RunContainerCreationService(

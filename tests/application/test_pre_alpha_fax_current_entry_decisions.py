@@ -27,6 +27,7 @@ class _Driver:
         self.factory = lambda: _SessionContext()
         self.preview_calls = []
         self.commit_calls = []
+        self.persisted = False
 
     def position(self, *, run_id: str, branch_id: str):
         return SimpleNamespace(
@@ -44,11 +45,12 @@ class _Driver:
             "application_decisions_fingerprint": "c" * 64,
             "slot_fingerprint": "d" * 64,
             "decision_count": 42,
-            "persisted": False,
+            "persisted": self.persisted,
         }
 
     def commit_entry_decision_slot(self, command):
         self.commit_calls.append(command)
+        self.persisted = True
         return {
             "decision_count": 42,
             "slot_fingerprint": "d" * 64,
@@ -113,6 +115,10 @@ def test_current_entry_bootstrap_uses_authoritative_position_slot_and_stops_at_v
     assert applied.validation_policy_status == "automatic_policy_unresolved"
     assert driver.commit_calls[0].decision_slot_ordinal == 7
     assert driver.commit_calls[0].event_ids == ("event-a", "event-b")
+
+    replay_preview = service.preview(run_id="run", branch_id="branch", seed=9001)
+    assert replay_preview.persisted is True
+    assert replay_preview.preview_fingerprint == preview.preview_fingerprint
 
 
 def test_current_entry_bootstrap_refuses_non_entry_position() -> None:

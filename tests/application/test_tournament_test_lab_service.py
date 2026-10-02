@@ -1088,7 +1088,7 @@ def _run_backed_lab_service(tmp_path):
     repository.bootstrap_schema()
     RunContainerCreationService(
         repository=repository,
-        id_factory=iter(("run-lab", "branch-lab", "revision-root", "draft-root")).__next__,
+        id_factory=(lambda values=iter(("run-lab", "branch-lab", "revision-root", "draft-root")): (lambda _kind: next(values)))(),
     ).create_empty_run(display_name="Tournament Lab target")
     counter = {"value": 0}
 
@@ -1165,7 +1165,7 @@ def test_tournament_lab_reviewed_run_draft_apply_is_atomic_idempotent_and_saveab
 
         saved = RunWorkingDraftService(
             repository=repository,
-            id_factory=iter(("revision-lab-draft", "audit-lab-draft")).__next__,
+            id_factory=(lambda values=iter(("revision-lab-draft", "audit-lab-draft")): (lambda _kind: next(values)))(),
         ).save(
             run_id="run-lab",
             branch_id="branch-lab",
@@ -1271,7 +1271,7 @@ def test_saved_tournament_lab_run_draft_materializes_safely_on_branch_fork(
         )
         saved = RunWorkingDraftService(
             repository=repository,
-            id_factory=iter(("revision-fork-source", "audit-fork-source")).__next__,
+            id_factory=(lambda values=iter(("revision-fork-source", "audit-fork-source")): (lambda _kind: next(values)))(),
         ).save(
             run_id="run-lab",
             branch_id="branch-lab",
@@ -1280,7 +1280,7 @@ def test_saved_tournament_lab_run_draft_materializes_safely_on_branch_fork(
 
         forked = RunBranchCreationService(
             repository=repository,
-            id_factory=iter(("branch-lab-copy", "draft-lab-copy")).__next__,
+            id_factory=(lambda values=iter(("branch-lab-copy", "draft-lab-copy")): (lambda _kind: next(values)))(),
         ).create_from_saved_revision(
             run_id="run-lab",
             source_branch_id="branch-lab",

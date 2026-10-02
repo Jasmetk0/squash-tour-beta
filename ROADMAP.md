@@ -14,8 +14,8 @@ Baseline: `buuk` at `c42dc06ba73c86ffd4c64b2ce1d38e9944beab09` (#1094).
    persistent Test Session and verified historical-player-copy slices. Tournament Lab now has
    inspectable arbitrary drafts, executable shared-authority classic knockout, round-stop/batch
    diagnostics/assertions and persistent isolated Test Sessions with stale-state protection.
-   Qualification, groups/hybrid progression, replacements/ranking consequences and Run↔Lab
-   bridges remain.
+   Canonical Qualification sections and Q→Main placeholder progression are now executable.
+   Groups/hybrid progression, replacements/ranking consequences and Run↔Lab bridges remain.
 4. Validate a full season and next-season opening in a copy of the FAX template: at least
    1,000 initial players, reference 80 World Tour Editions fully simulated, lower Tours abstract.
    Retain empty-Run acceptance, CZ/EN Admin, recovery and the rest of Master pre-alpha scope.

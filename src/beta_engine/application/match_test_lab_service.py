@@ -8,7 +8,7 @@ import json
 from statistics import mean
 from typing import Callable, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, computed_field, model_validator
 
 from beta_engine.core import DeterministicRng
 from beta_engine.domain.matches.match_engine import MatchEngine
@@ -139,7 +139,20 @@ class MatchLabSession(BaseModel):
 
     @property
     def fingerprint(self) -> str:
-        return _fingerprint(self.model_dump(mode="json"))
+        return _fingerprint(
+            {
+                "schema_version": self.schema_version,
+                "session_id": self.session_id,
+                "display_name": self.display_name,
+                "version": self.version,
+                "scenario": self.scenario.model_dump(mode="json"),
+            }
+        )
+
+    @computed_field
+    @property
+    def session_fingerprint(self) -> str:
+        return self.fingerprint
 
 
 class MatchLabSessionCreateRequest(BaseModel):
@@ -297,7 +310,7 @@ class MatchTestLabService:
             source_kind=item.scenario.source_kind,
             source_reference=item.scenario.source_reference,
             source_fingerprint=item.scenario.source_fingerprint,
-            payload_json=item.model_dump_json(),
+            payload_json=item.model_dump_json(exclude={"session_fingerprint"}),
         )
         if row is None:
             session.add(MatchLabSessionModel(session_id=item.session_id, **values))

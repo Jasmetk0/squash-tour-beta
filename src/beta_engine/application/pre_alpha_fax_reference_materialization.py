@@ -7,6 +7,11 @@ from typing import Literal, Protocol
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from beta_engine.application.initial_official_ranking_publication import (
+    InitialOfficialRankingPublicationService,
+)
+from beta_engine.application.initial_world import derive_initial_ranking_inputs
+from beta_engine.application.ranking_bootstrap_command import RankingBootstrapCommand
 from beta_engine.application.pre_alpha_fax_acceptance_profile import (
     FAX_ACCEPTANCE_FIRST_SEASON,
     FAX_ACCEPTANCE_MIN_INITIAL_PLAYERS,
@@ -26,6 +31,7 @@ from beta_engine.application.run_world_initial_world_service import (
 )
 from beta_engine.application.world_package_run_adapter import WorldPackageRunAdapter
 from beta_engine.domain.players.lifecycle import PlayerLifecyclePolicy
+from beta_engine.domain.rankings.command_audit import RankingCommandAudit
 from beta_engine.domain.run_packages import CanonicalPackageDocument, canonical_hash
 
 
@@ -99,6 +105,8 @@ class PreAlphaFaxReferenceMaterializationResult(BaseModel):
     world_source_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
     calendar_source_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
     initial_world_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    initial_ranking_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    authoritative_world_initialized: bool
     acceptance_profile: PreAlphaFaxAcceptanceProfile
 
 
@@ -268,6 +276,47 @@ class PreAlphaFaxReferenceMaterializationService:
             expected_initial_world_fingerprint=adopted.fingerprint,
         )
 
+        ranking_policy, ranking_players = derive_initial_ranking_inputs(adopted)
+        ranking_command = RankingBootstrapCommand(
+            command_id=self.id_factory("fax-initial-ranking-command"),
+            run_id=run.run_id,
+            branch_id=branch_id,
+            policy=ranking_policy,
+            players=ranking_players,
+            discipline="none",
+            initial_world_fingerprint=adopted.fingerprint,
+            audit=RankingCommandAudit(
+                actor_label="Pre-alpha copied-FAX materializer",
+                reason="Derive and publish the canonical Week 1 ranking from the saved InitialWorld.",
+            ),
+        )
+        ranking_preview = self.repository.prepare_official_ranking(
+            run_id=run.run_id,
+            branch_id=branch_id,
+            command=ranking_command,
+            preview=True,
+        )
+        ranking = self.repository.prepare_official_ranking(
+            run_id=run.run_id,
+            branch_id=branch_id,
+            command=ranking_command,
+            expected_snapshot_fingerprint=ranking_preview.fingerprint,
+        )
+        ranking_state = self.repository.get_branch_revision_state(branch_id=branch_id)
+        saved_ranking = draft_service.save_ranking(
+            run_id=run.run_id,
+            branch_id=branch_id,
+            expected_draft_version=ranking_state.working_draft.draft_version,
+            expected_ranking_fingerprint=ranking.fingerprint,
+        )
+        publication = InitialOfficialRankingPublicationService(
+            self.repository._session_factory
+        ).publish(
+            run_id=run.run_id,
+            branch_id=branch_id,
+            expected_ranking_fingerprint=ranking.fingerprint,
+        )
+
         acceptance = PreAlphaFaxAcceptanceProfileService(
             self.repository._session_factory
         ).inspect(run_id=run.run_id, branch_id=branch_id)
@@ -283,9 +332,11 @@ class PreAlphaFaxReferenceMaterializationService:
         return PreAlphaFaxReferenceMaterializationResult(
             run_id=run.run_id,
             branch_id=branch_id,
-            saved_revision_id=saved_initial.saved_revision.revision_id,
+            saved_revision_id=saved_ranking.saved_revision.revision_id,
             world_source_fingerprint=world_document.source_fingerprint,
             calendar_source_fingerprint=calendar_document.source_fingerprint,
             initial_world_fingerprint=adopted.fingerprint,
+            initial_ranking_fingerprint=ranking.fingerprint,
+            authoritative_world_initialized=(publication.week.ordinal == 0),
             acceptance_profile=acceptance,
         )

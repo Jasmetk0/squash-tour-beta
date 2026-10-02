@@ -24,6 +24,10 @@ from beta_engine.infrastructure.db.initial_world_state import load_saved_initial
 from beta_engine.infrastructure.db.player_sporting_state import load_saved_sporting_bundle
 from beta_engine.infrastructure.db.models import MatchLabSessionModel
 from beta_engine.application.run_saved_revision_history_service import RunSavedRevisionHistoryService
+from beta_engine.infrastructure.db import (
+    SavedRevisionHistoryConflictError,
+    SavedRevisionHistoryNotFoundError,
+)
 
 
 MATCH_LAB_SCHEMA_VERSION = "match_test_lab_scenario.v1"
@@ -451,11 +455,16 @@ class MatchTestLabService:
             raise RuntimeError("Match Lab Saved Revision import is not configured")
 
         history = RunSavedRevisionHistoryService(self._repository)
-        detail = history.get_revision(
-            run_id=request.product_run_id,
-            branch_id=request.branch_id,
-            revision_id=request.saved_revision_id,
-        )
+        try:
+            detail = history.get_revision(
+                run_id=request.product_run_id,
+                branch_id=request.branch_id,
+                revision_id=request.saved_revision_id,
+            )
+        except SavedRevisionHistoryNotFoundError as exc:
+            raise KeyError(str(exc)) from exc
+        except SavedRevisionHistoryConflictError as exc:
+            raise ValueError(str(exc)) from exc
         revision = detail.saved_revision
         world = load_saved_initial_world(
             revision.payload,

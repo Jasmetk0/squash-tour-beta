@@ -5,6 +5,10 @@ from types import SimpleNamespace
 import pytest
 
 from beta_engine.application.initial_world import InitialWorldState
+from beta_engine.application.pre_alpha_fax_current_week_ranking_snapshots import (
+    PreAlphaFaxCurrentWeekRankingSnapshotApplyRequest,
+    PreAlphaFaxCurrentWeekRankingSnapshotService,
+)
 from beta_engine.application.pre_alpha_fax_reference_materialization import (
     PreAlphaFaxReferenceMaterializationService,
     PreAlphaFaxReferenceMaterializeCommand,
@@ -272,6 +276,53 @@ def test_materializes_persisted_copied_fax_reference_that_passes_release_input_g
     assert repository.verify_branch_saved_revision_hash(
         revision_id=result.saved_revision_id
     )
+
+    ranking_bootstrap = PreAlphaFaxCurrentWeekRankingSnapshotService(
+        repository._session_factory
+    )
+    ranking_preview = ranking_bootstrap.preview(
+        run_id=result.run_id,
+        branch_id=result.branch_id,
+    )
+    assert ranking_preview.current_week.model_dump(mode="json") == {
+        "season_index": 0,
+        "week": 1,
+    }
+    assert len(ranking_preview.event_ids) == 2
+    assert set(ranking_preview.event_phases.values()) == {
+        "ranking_snapshot_required"
+    }
+    assert ranking_preview.event_ids_requiring_adoption == ranking_preview.event_ids
+    assert ranking_preview.ranking_snapshot_fingerprint == (
+        result.initial_ranking_fingerprint
+    )
+
+    ranking_apply = ranking_bootstrap.apply(
+        run_id=result.run_id,
+        branch_id=result.branch_id,
+        request=PreAlphaFaxCurrentWeekRankingSnapshotApplyRequest(
+            command_id="fax-week1-ranking-snapshots",
+            expected_preview_fingerprint=ranking_preview.preview_fingerprint,
+        ),
+    )
+    assert ranking_apply.adopted_event_ids == ranking_preview.event_ids
+    assert ranking_apply.exact_retry_event_ids == ()
+    assert set(ranking_apply.post_apply_phases.values()) == {
+        "entry_field_required"
+    }
+    assert ranking_apply.all_ranking_snapshots_ready is True
+
+    retry = ranking_bootstrap.apply(
+        run_id=result.run_id,
+        branch_id=result.branch_id,
+        request=PreAlphaFaxCurrentWeekRankingSnapshotApplyRequest(
+            command_id="fax-week1-ranking-snapshots",
+            expected_preview_fingerprint=ranking_preview.preview_fingerprint,
+        ),
+    )
+    assert retry.adopted_event_ids == ()
+    assert retry.exact_retry_event_ids == ranking_preview.event_ids
+    assert set(retry.post_apply_phases.values()) == {"entry_field_required"}
 
 
 def test_preview_rejects_non_reference_world_tour_count_without_creating_run(tmp_path) -> None:

@@ -143,3 +143,105 @@ def test_tournament_lab_api_reports_unsupported_draft_without_fake_result(tmp_pa
             issue["code"] == "FORMAT_NOT_EXECUTABLE_V1"
             for issue in body["compatibility"]["issues"]
         )
+
+
+
+def test_tournament_lab_api_persistent_test_session_roundtrip_and_stale_guard(tmp_path) -> None:
+    with ApiServer(database_url=f"sqlite:///{tmp_path / 'tournament-lab-sessions.db'}") as server:
+        status, built_ins = _request(
+            "GET",
+            f"{server.base_url}/admin/labs/tournament/scenarios",
+        )
+        assert status == 200
+
+        status, created = _request(
+            "POST",
+            f"{server.base_url}/admin/labs/tournament/sessions",
+            {
+                "display_name": "API Tournament Session",
+                "built_in_scenario_id": built_ins[0]["scenario_id"],
+            },
+        )
+        assert status == 201, created
+        assert created["schema_version"] == "tournament_test_lab_session.v1"
+        assert created["version"] == 1
+        assert created["scenario"]["source_kind"] == "built_in_copy"
+        assert created["scenario"]["source_reference"] == built_ins[0]["scenario_id"]
+        assert created["scenario"]["source_fingerprint"] == built_ins[0]["scenario_fingerprint"]
+        session_id = created["session_id"]
+
+        status, listed = _request(
+            "GET",
+            f"{server.base_url}/admin/labs/tournament/sessions",
+        )
+        assert status == 200
+        assert [row["session_id"] for row in listed] == [session_id]
+
+        status, loaded = _request(
+            "GET",
+            f"{server.base_url}/admin/labs/tournament/sessions/{session_id}",
+        )
+        assert status == 200
+        assert loaded == created
+
+        edited = created["scenario"]
+        edited["draw_seed"] += 1
+        status, stale = _request(
+            "PUT",
+            f"{server.base_url}/admin/labs/tournament/sessions/{session_id}",
+            {
+                "expected_session_fingerprint": "0" * 64,
+                "display_name": "stale",
+                "scenario": edited,
+            },
+        )
+        assert status == 409, stale
+
+        status, updated = _request(
+            "PUT",
+            f"{server.base_url}/admin/labs/tournament/sessions/{session_id}",
+            {
+                "expected_session_fingerprint": created["session_fingerprint"],
+                "display_name": "API Tournament Session v2",
+                "scenario": edited,
+            },
+        )
+        assert status == 200, updated
+        assert updated["version"] == 2
+        assert updated["display_name"] == "API Tournament Session v2"
+
+        status, stale_run = _request(
+            "POST",
+            f"{server.base_url}/admin/labs/tournament/sessions/{session_id}/run",
+            {
+                "expected_session_fingerprint": created["session_fingerprint"],
+                "batch_match_seeds": [91],
+            },
+        )
+        assert status == 409, stale_run
+
+        status, result = _request(
+            "POST",
+            f"{server.base_url}/admin/labs/tournament/sessions/{session_id}/run",
+            {
+                "expected_session_fingerprint": updated["session_fingerprint"],
+                "batch_match_seeds": [91, 92],
+            },
+        )
+        assert status == 200, result
+        assert result["diagnostics"]["run_count"] == 2
+        assert result["compatibility"]["run_mutation_performed"] is False
+        assert result["compatibility"]["run_live_link"] is False
+
+
+def test_tournament_lab_api_rejects_unknown_built_in_session_source(tmp_path) -> None:
+    with ApiServer(database_url=f"sqlite:///{tmp_path / 'tournament-lab-missing-built-in.db'}") as server:
+        status, body = _request(
+            "POST",
+            f"{server.base_url}/admin/labs/tournament/sessions",
+            {
+                "display_name": "Missing source",
+                "built_in_scenario_id": "does-not-exist",
+            },
+        )
+        assert status == 404, body

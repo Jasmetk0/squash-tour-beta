@@ -7698,3 +7698,38 @@ export type MatchLabResult = {
     distinct_result_count: number
   }
 }
+
+
+export type BuiltInMatchLabScenario = {
+  scenario_id: string
+  display_name: string
+  description: string
+  read_only: true
+  scenario_fingerprint: string
+  scenario: MatchLabScenario
+}
+
+export type MatchLabSession = {
+  schema_version: 'match_test_lab_session.v1'
+  session_id: string
+  display_name: string
+  version: number
+  scenario: MatchLabScenario
+}
+
+export type MatchLabSessionCreateRequest = {
+  display_name: string
+  scenario?: MatchLabScenario
+  built_in_scenario_id?: string
+}
+
+export type MatchLabSessionUpdateRequest = {
+  expected_session_fingerprint: string
+  display_name?: string
+  scenario: MatchLabScenario
+}
+
+export type MatchLabSessionRunRequest = {
+  expected_session_fingerprint: string
+  batch_seeds?: number[]
+}

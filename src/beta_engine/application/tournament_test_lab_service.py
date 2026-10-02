@@ -13,6 +13,12 @@ from pydantic import BaseModel, ConfigDict, Field, computed_field, model_validat
 from beta_engine.core import DeterministicRng
 from beta_engine.domain.matches.match_engine import MatchEngine
 from beta_engine.domain.matches.models import MatchContext, MatchParticipantContext, MatchResult
+from beta_engine.domain.calendar.season_weeks import age_at_calendar_position, season_week_to_calendar_position
+from beta_engine.domain.simulation_slots import (
+    CanonicalMatchInputProjectionPolicy,
+    project_player,
+    projected_engine_player,
+)
 from beta_engine.domain.tournaments.draw_authority import (
     TournamentDrawAuthority,
     TournamentDrawAuthorityBuilder,
@@ -57,6 +63,14 @@ from beta_engine.domain.tournaments.topology_authority import (
     TournamentTopologyAuthorityBuilder,
 )
 from beta_engine.infrastructure.db.models import TournamentLabSessionModel
+from beta_engine.application.run_saved_revision_history_service import RunSavedRevisionHistoryService
+from beta_engine.infrastructure.db import (
+    SavedRevisionHistoryConflictError,
+    SavedRevisionHistoryNotFoundError,
+)
+from beta_engine.infrastructure.db.initial_world_state import load_saved_initial_world
+from beta_engine.infrastructure.db.player_sporting_state import load_saved_sporting_bundle
+from beta_engine.infrastructure.db.simulation_slot_state import load_saved_simulation_slot_component
 
 
 TOURNAMENT_LAB_SCENARIO_VERSION = "tournament_test_lab_scenario.v1"
@@ -90,6 +104,27 @@ class TournamentLabAssertions(BaseModel):
 
     expected_champion_player_id: str | None = None
     expected_played_match_count: int | None = Field(default=None, ge=0)
+
+
+class TournamentLabRunSnapshotEvidence(BaseModel):
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    product_run_id: str = Field(min_length=1, max_length=128)
+    branch_id: str = Field(min_length=1, max_length=128)
+    saved_revision_id: str = Field(min_length=1, max_length=128)
+    saved_revision_content_hash: str = Field(pattern=r"^[0-9a-f]{64}$")
+    event_id: str = Field(min_length=1, max_length=160)
+    entry_field_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    format_authority_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    draw_input_fingerprint: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
+    topology_authority_fingerprint: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
+    sporting_state_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    sporting_week_ordinal: int = Field(ge=0)
+    participant_projection_fingerprints: tuple[str, ...]
+
+    @property
+    def fingerprint(self) -> str:
+        return _fingerprint(self.model_dump(mode="json"))
 
 
 class TournamentLabScenario(BaseModel):
@@ -129,6 +164,9 @@ class TournamentLabScenario(BaseModel):
     source_kind: Literal["portable", "built_in_copy", "run_snapshot_copy"] = "portable"
     source_reference: str | None = Field(default=None, max_length=500)
     source_fingerprint: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
+    source_snapshot: TournamentLabRunSnapshotEvidence | None = Field(
+        default=None, exclude_if=lambda value: value is None
+    )
 
     @model_validator(mode="after")
     def participant_ids_are_unique(self):
@@ -345,6 +383,16 @@ class TournamentLabSessionCreateRequest(BaseModel):
         return self
 
 
+class TournamentLabSavedRevisionCopyRequest(BaseModel):
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    display_name: str = Field(min_length=1, max_length=160)
+    product_run_id: str = Field(min_length=1, max_length=128)
+    branch_id: str = Field(min_length=1, max_length=128)
+    saved_revision_id: str = Field(min_length=1, max_length=128)
+    event_id: str = Field(min_length=1, max_length=160)
+
+
 class TournamentLabSessionUpdateRequest(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
 
@@ -442,9 +490,11 @@ class TournamentTestLabService:
         self,
         session_factory=None,
         id_factory: Callable[[str], str] | None = None,
+        repository=None,
     ):
         self._session_factory = session_factory
         self._id_factory = id_factory
+        self._repository = repository
 
     def _require_persistence(self) -> None:
         if self._session_factory is None or self._id_factory is None:
@@ -544,6 +594,234 @@ class TournamentTestLabService:
                 raise ValueError("generated Tournament Lab session identity already exists")
             self._persist_session(session, item)
         return item
+
+    def copy_saved_revision_tournament(
+        self,
+        request: TournamentLabSavedRevisionCopyRequest,
+    ) -> TournamentLabSession:
+        self._require_persistence()
+        if self._repository is None:
+            raise RuntimeError("Tournament Lab Saved Revision copy is not configured")
+
+        history = RunSavedRevisionHistoryService(self._repository)
+        try:
+            detail = history.get_revision(
+                run_id=request.product_run_id,
+                branch_id=request.branch_id,
+                revision_id=request.saved_revision_id,
+            )
+        except SavedRevisionHistoryNotFoundError as exc:
+            raise KeyError(str(exc)) from exc
+        except SavedRevisionHistoryConflictError as exc:
+            raise ValueError(str(exc)) from exc
+
+        revision = detail.saved_revision
+        component = load_saved_simulation_slot_component(
+            revision.payload,
+            run_id=request.product_run_id,
+            branch_id=request.branch_id,
+        )
+        if component is None:
+            raise ValueError("Saved Revision has no validated simulation-slot tournament state")
+
+        from beta_engine.domain.tournaments.entry_field import TournamentEntryField
+        from beta_engine.domain.tournaments.format_authority import TournamentFormatAuthority
+        from beta_engine.domain.tournaments.draw_input_authority import TournamentDrawInputAuthority
+        from beta_engine.domain.tournaments.topology_authority import TournamentTopologyAuthority
+
+        event_fields = [
+            row for row in component.get("entry_fields", ())
+            if row["event_id"] == request.event_id
+        ]
+        if not event_fields:
+            raise ValueError("Saved Revision event has no Tournament Entry Field")
+        latest_field_row = max(event_fields, key=lambda row: row["sequence"])
+        entry_field = TournamentEntryField.model_validate_json(latest_field_row["payload_json"])
+
+        format_rows = [
+            row for row in component.get("format_authorities", ())
+            if row["event_id"] == request.event_id
+        ]
+        if len(format_rows) != 1:
+            raise ValueError("Saved Revision event requires exactly one Tournament Format authority")
+        format_authority = TournamentFormatAuthority.model_validate_json(format_rows[0]["payload_json"])
+        if format_authority.entry_field_fingerprint != entry_field.fingerprint:
+            raise ValueError("Saved Revision Tournament Format does not bind the latest Entry Field")
+
+        draw_rows = [
+            row for row in component.get("draw_inputs", ())
+            if row["event_id"] == request.event_id
+        ]
+        topology_rows = [
+            row for row in component.get("topology_authorities", ())
+            if row["event_id"] == request.event_id
+        ]
+        draw_input = (
+            TournamentDrawInputAuthority.model_validate_json(draw_rows[0]["payload_json"])
+            if len(draw_rows) == 1 else None
+        )
+        topology = (
+            TournamentTopologyAuthority.model_validate_json(topology_rows[0]["payload_json"])
+            if len(topology_rows) == 1 else None
+        )
+
+        if format_authority.format_kind == "knockout" and draw_input is None:
+            raise ValueError("Historical knockout copy requires frozen Draw Input")
+        if format_authority.format_kind != "knockout" and topology is None:
+            raise ValueError("Historical group-format copy requires frozen Topology authority")
+
+        if draw_input is not None:
+            unsupported = (
+                draw_input.wild_card_player_ids
+                or draw_input.lucky_loser_placeholder_ids
+                or draw_input.lucky_loser_player_ids
+                or draw_input.replacement_source_authority_fingerprints
+                or draw_input.released_wild_card_slot_ordinals
+                or draw_input.released_qualifier_placeholder_ids
+                or draw_input.late_bye_count
+            )
+            if unsupported:
+                raise ValueError(
+                    "Historical Tournament uses WC/LL/replacement repair not yet supported by Tournament Lab copy"
+                )
+
+        world = load_saved_initial_world(
+            revision.payload,
+            run_id=request.product_run_id,
+            branch_id=request.branch_id,
+        )
+        sporting_bundle = load_saved_sporting_bundle(
+            revision.payload,
+            run_id=request.product_run_id,
+            branch_id=request.branch_id,
+        )
+        if world is None:
+            raise ValueError("Saved Revision has no validated Initial World")
+        if sporting_bundle is None or not sporting_bundle[0]:
+            raise ValueError("Saved Revision has no validated player sporting state")
+        sporting = sporting_bundle[0][-1]
+
+        if format_authority.format_kind == "knockout":
+            assert draw_input is not None
+            active_ids = tuple(draw_input.direct_main_player_ids) + tuple(draw_input.qualification_player_ids)
+            seed_prefix = tuple(draw_input.main_seed_player_ids) + tuple(draw_input.qualification_seed_player_ids)
+            draw_seed = draw_input.draw_seed
+            qualification_ids = tuple(draw_input.qualification_player_ids)
+            capacity = draw_input.capacity
+            topology_seed = None
+        else:
+            assert topology is not None
+            active_ids = tuple(topology.participant_order_player_ids)
+            seed_prefix = active_ids
+            draw_seed = topology.topology_seed or 0
+            qualification_ids = ()
+            capacity = entry_field.capacity
+            topology_seed = topology.topology_seed
+
+        if len(active_ids) != len(set(active_ids)) or len(active_ids) < 2:
+            raise ValueError("Historical Tournament participant field is incomplete or duplicated")
+        seed_order = seed_prefix + tuple(player_id for player_id in active_ids if player_id not in seed_prefix)
+        if set(seed_order) != set(active_ids) or len(seed_order) != len(active_ids):
+            raise ValueError("Historical Tournament seed order cannot be represented without invention")
+
+        profiles = {item.player_id: item for item in world.players}
+        records = {item.player_id: item for item in sporting.players}
+        season_start_year = 2000 + sporting.week.season_index
+        position = season_week_to_calendar_position(season_start_year, sporting.week.week)
+        participants = []
+        projection_fingerprints = []
+        for player_id in active_ids:
+            profile = profiles.get(player_id)
+            record = records.get(player_id)
+            if profile is None:
+                raise ValueError(
+                    f"Saved Revision Tournament player {player_id} is not present in Initial World; prospect-profile copy is not supported by this slice"
+                )
+            if record is None:
+                raise ValueError(
+                    f"Saved Revision Tournament player {player_id} has no sporting record at the saved sporting head"
+                )
+            age = age_at_calendar_position(
+                birth_year=profile.birth_year,
+                birth_year_week=profile.birth_year_week,
+                calendar_year=position.calendar_year,
+                year_week=position.year_week,
+            )
+            projection = project_player(
+                record,
+                source_sporting_fingerprint=sporting.fingerprint,
+                policy=CanonicalMatchInputProjectionPolicy(),
+                profile_source_fingerprint=profile.source_generation_fingerprint,
+                profile_provenance="validated Saved Revision Initial World + player sporting state",
+                age=age,
+                name=profile.name,
+                nationality=profile.nationality,
+                play_style=profile.play_style,
+                archetype=profile.archetype,
+                hidden_career_traits=profile.hidden_career_traits,
+            )
+            participants.append(
+                MatchParticipantContext(
+                    player=projected_engine_player(projection),
+                    form_modifier=projection.form_modifier,
+                    sharpness_modifier=projection.sharpness_modifier,
+                    fatigue_modifier=projection.fatigue_modifier,
+                )
+            )
+            projection_fingerprints.append(projection.fingerprint)
+
+        evidence = TournamentLabRunSnapshotEvidence(
+            product_run_id=request.product_run_id,
+            branch_id=request.branch_id,
+            saved_revision_id=request.saved_revision_id,
+            saved_revision_content_hash=revision.content_hash,
+            event_id=request.event_id,
+            entry_field_fingerprint=entry_field.fingerprint,
+            format_authority_fingerprint=format_authority.fingerprint,
+            draw_input_fingerprint=draw_input.fingerprint if draw_input is not None else None,
+            topology_authority_fingerprint=topology.fingerprint if topology is not None else None,
+            sporting_state_fingerprint=sporting.fingerprint,
+            sporting_week_ordinal=sporting.week.ordinal,
+            participant_projection_fingerprints=tuple(projection_fingerprints),
+        )
+
+        group = format_authority.group_configuration
+        scenario = TournamentLabScenario(
+            scenario_id=f"run-copy:{request.event_id}:{request.saved_revision_id}",
+            display_name=request.display_name,
+            format_kind=format_authority.format_kind,
+            participants=tuple(participants),
+            main_draw_size=(
+                group.participant_capacity if group is not None else capacity.main_draw_size
+            ),
+            group_count=group.group_count if group is not None else 0,
+            group_size=group.group_size if group is not None else 0,
+            seeded_slots_per_group=group.seeded_slots_per_group if group is not None else 0,
+            group_seed_placements=group.group_seed_placements if group is not None else (),
+            group_match_best_of=group.match_best_of if group is not None else None,
+            advancing_per_group=group.advancing_per_group if group is not None else 0,
+            knockout_crossings=group.knockout_crossings if group is not None else (),
+            topology_seed=topology_seed,
+            qualification_draw_size=(capacity.qualification_draw_size if draw_input is not None else 0),
+            qualifier_spots=(capacity.qualifier_spots if draw_input is not None else 0),
+            qualification_player_ids=qualification_ids,
+            seed_order_player_ids=seed_order,
+            draw_seed=draw_seed,
+            match_seed=int(evidence.fingerprint[:16], 16),
+            source_kind="run_snapshot_copy",
+            source_reference=(
+                f"{request.product_run_id}/{request.branch_id}/"
+                f"{request.saved_revision_id}/{request.event_id}"
+            ),
+            source_fingerprint=evidence.fingerprint,
+            source_snapshot=evidence,
+        )
+        return self.create_session(
+            TournamentLabSessionCreateRequest(
+                display_name=request.display_name,
+                scenario=scenario,
+            )
+        )
 
     def update_session(
         self,

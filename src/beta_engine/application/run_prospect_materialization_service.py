@@ -272,6 +272,7 @@ class RunProspectMaterializationService:
             region=region,
         )
         quality_policy = current_talent_quality_policy_snapshot()
+        cohort_forecast = self._cohort_forecast(preview, quality_policy)
         for week in preview.weeks:
             for allocation in week.allocations:
                 for local_sequence in range(1, allocation.allocated_count + 1):
@@ -305,6 +306,7 @@ class RunProspectMaterializationService:
                             "canonical_sporting_profile": sporting_profile_payload,
                             "canonical_sporting_profile_fingerprint": sporting_profile_fingerprint,
                             "materialization_policy": policy,
+                            "cohort_forecast": cohort_forecast,
                         },
                         development_json={
                             "schema_version": PROFILE_VERSION,
@@ -318,6 +320,9 @@ class RunProspectMaterializationService:
                             "profile_version": PROFILE_VERSION,
                             "talent_quality": talent_quality_result_evidence(seeds["potential"], quality_policy),
                             "potential_ovr": sporting_profile.potential_ovr,
+                            "rolled_potential_ovr": sporting_profile.rolled_potential_ovr,
+                            "effective_potential_floor_ovr": sporting_profile.effective_potential_floor_ovr,
+                            "potential_floor_applied": sporting_profile.potential_floor_applied,
                             "potential_identity": sporting_profile.potential_identity,
                             "potential_provenance": sporting_profile.potential_provenance,
                             "source_potential_seed_digest": sporting_profile.source_potential_seed_digest,
@@ -330,6 +335,39 @@ class RunProspectMaterializationService:
                         },
                     ))
         return records
+
+    def _cohort_forecast(self, preview, quality_policy) -> dict[str, object]:
+        weights = dict(quality_policy.normalized_weights)
+        countries = [
+            {
+                "country_code": row.country_code,
+                "country_name": row.country_name,
+                "forecast_count": row.allocated_count,
+                "expected_band_counts": {
+                    band.value: round(row.allocated_count * weights[band.value], 4)
+                    for band in TalentQualityBand
+                },
+            }
+            for row in preview.country_totals
+        ]
+        payload = {
+            "schema_version": "talent_intake_cohort_forecast.v1",
+            "review_fingerprint": preview.review_fingerprint,
+            "run_id": preview.run_id,
+            "world_id": preview.world_id,
+            "season": preview.season,
+            "season_start_year": preview.season_start_year,
+            "annual_target": preview.annual_target,
+            "total_weekly_target": preview.total_weekly_target,
+            "quality_policy_id": quality_policy.policy_id,
+            "quality_policy_fingerprint": quality_policy.fingerprint,
+            "quality_weights": weights,
+            "countries": countries,
+        }
+        payload["forecast_fingerprint"] = hashlib.sha256(
+            json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+        ).hexdigest()
+        return payload
 
     @staticmethod
     def _scope_country_codes(preview) -> set[str]:

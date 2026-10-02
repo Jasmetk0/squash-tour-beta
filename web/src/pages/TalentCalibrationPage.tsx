@@ -69,7 +69,7 @@ export function TalentCalibrationPage(): JSX.Element {
         <p className="status">Diagnostic only. Runs the current Candidate Policy Sandbox configuration across an explicit deterministic seed sequence.</p>
         <div className="grid">
           <label>Starting seed<input aria-label="Starting seed" type="number" value={multiInputs.seed_start} onChange={(e) => updateMulti('seed_start', Number(e.target.value))} /></label>
-          <label>Number of seeds<input aria-label="Number of seeds" type="number" min={1} value={multiInputs.seed_count} onChange={(e) => updateMulti('seed_count', Number(e.target.value))} /></label>
+          <label>Number of seeds<input aria-label="Number of seeds" type="number" min={1} max={100} value={multiInputs.seed_count} onChange={(e) => updateMulti('seed_count', Number(e.target.value))} /></label>
           <label>Samples per seed<input aria-label="Samples per seed" type="number" min={1} max={50000} value={multiInputs.sample_count_per_seed} onChange={(e) => updateMulti('sample_count_per_seed', Number(e.target.value))} /></label>
           <button type="button" disabled={!ranges || multiComparison.isPending} onClick={compareMulti}>Run multi-seed analysis</button>
         </div>

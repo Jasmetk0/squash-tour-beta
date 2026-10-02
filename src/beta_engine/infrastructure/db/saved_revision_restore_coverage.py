@@ -44,6 +44,7 @@ from beta_engine.infrastructure.db.models import (
     RunEntryDecisionSlotAuthorityModel,
     RunProspectModel,
     RunPackageStateModel,
+    RunTournamentLabDraftModel,
     SeasonClosingRankingModel,
     SimulationEventGroupModel,
     SimulationSlotModel,
@@ -98,6 +99,9 @@ from beta_engine.infrastructure.db.simulation_slot_state import (
     COMPONENT_KEY as SIMULATION_SLOT_COMPONENT_KEY,
 )
 from beta_engine.infrastructure.db.run_package_state import RUN_PACKAGE_COMPONENT_KEY
+from beta_engine.infrastructure.db.run_tournament_lab_draft_state import (
+    RUN_TOURNAMENT_LAB_DRAFT_COMPONENT_KEY,
+)
 from beta_engine.infrastructure.db.tournament_application_submissions import (
     TOURNAMENT_APPLICATION_SUBMISSION_COMPONENT_KEY,
 )
@@ -151,6 +155,11 @@ COMPONENT_COVERAGE: tuple[SavedRevisionComponentCoverage, ...] = (
         component_key=RUN_PACKAGE_COMPONENT_KEY,
         label="Run Package state",
         models=(RunPackageStateModel,),
+    ),
+    SavedRevisionComponentCoverage(
+        component_key=RUN_TOURNAMENT_LAB_DRAFT_COMPONENT_KEY,
+        label="reviewed Tournament Lab Run drafts",
+        models=(RunTournamentLabDraftModel,),
     ),
     SavedRevisionComponentCoverage(
         component_key=PLAYER_LIFECYCLE_COMPONENT_KEY,

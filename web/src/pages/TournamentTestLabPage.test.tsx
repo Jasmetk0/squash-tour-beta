@@ -202,8 +202,7 @@ describe('TournamentTestLabPage', () => {
       expect.objectContaining({
         batch_match_seeds: [100, 101],
         scenario: expect.objectContaining({ scenario_id: 'standard-four-player' })
-      }),
-      expect.anything()
+      })
     )
     expect(await screen.findByText('idealized_seed_tiers.v2')).toBeInTheDocument()
     expect(screen.getByText(/Champions: P1: 2/)).toBeInTheDocument()
@@ -300,8 +299,7 @@ describe('TournamentTestLabPage', () => {
         expected_session_fingerprint: '1'.repeat(64),
         display_name: 'Edited Tournament Session',
         scenario: expect.objectContaining({ draw_seed: 99 })
-      }),
-      expect.anything()
+      })
     )
 
     await screen.findByDisplayValue('Edited Tournament Session')
@@ -313,8 +311,7 @@ describe('TournamentTestLabPage', () => {
       {
         expected_session_fingerprint: '2'.repeat(64),
         batch_match_seeds: [201, 202]
-      },
-      expect.anything()
+      }
     )
     expect(await screen.findByText(/Champions: P1: 2/)).toBeInTheDocument()
   })

@@ -420,8 +420,8 @@ const QUALITY_BANDS = [
 
 function formatQualityBand(value: string): string {
   return value
-    .replaceAll('_', ' ')
-    .replace(/\b\w/g, (letter) => letter.toUpperCase())
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, (letter: string) => letter.toUpperCase())
 }
 
 function formatDelta(value: number): string {

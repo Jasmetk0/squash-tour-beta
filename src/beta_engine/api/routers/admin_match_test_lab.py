@@ -7,6 +7,7 @@ from beta_engine.application.match_test_lab_service import (
     BuiltInMatchLabScenario,
     MatchLabRequest,
     MatchLabResult,
+    MatchLabSavedRevisionPlayerImportRequest,
     MatchLabSession,
     MatchLabSessionCreateRequest,
     MatchLabSessionRunRequest,
@@ -89,6 +90,21 @@ def run_match_lab_session(
 ) -> MatchLabResult:
     try:
         return service.run_session(session_id, request)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+
+
+@router.post("/sessions/{session_id}/import-saved-revision-player", response_model=MatchLabSession)
+def import_match_lab_saved_revision_player(
+    session_id: str,
+    request: MatchLabSavedRevisionPlayerImportRequest,
+    service: MatchTestLabService = Depends(get_match_test_lab_service),
+) -> MatchLabSession:
+    try:
+        return service.import_saved_revision_player(session_id, request)
     except KeyError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     except ValueError as exc:

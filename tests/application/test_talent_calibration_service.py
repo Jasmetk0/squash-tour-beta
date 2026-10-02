@@ -156,3 +156,6 @@ def test_multi_seed_zero_band_nulls_and_budget_validation() -> None:
     with pytest.raises(ValueError, match="250000"):
         service.compare_multi_seed(seed_start=0, seed_count=6, sample_count_per_seed=50_000,
                                    candidate_ranges=_candidate_ranges())
+    with pytest.raises(ValueError, match="seed_count"):
+        service.compare_multi_seed(seed_start=0, seed_count=101, sample_count_per_seed=1,
+                                   candidate_ranges=_candidate_ranges())

@@ -7883,3 +7883,30 @@ export type BuiltInTournamentLabScenario = {
   scenario_fingerprint: string
   scenario: TournamentLabScenario
 }
+
+
+export type TournamentLabSession = {
+  schema_version: 'tournament_test_lab_session.v1'
+  session_id: string
+  display_name: string
+  version: number
+  scenario: TournamentLabScenario
+  session_fingerprint: string
+}
+
+export type TournamentLabSessionCreateRequest = {
+  display_name: string
+  scenario?: TournamentLabScenario
+  built_in_scenario_id?: string
+}
+
+export type TournamentLabSessionUpdateRequest = {
+  expected_session_fingerprint: string
+  display_name?: string
+  scenario: TournamentLabScenario
+}
+
+export type TournamentLabSessionRunRequest = {
+  expected_session_fingerprint: string
+  batch_match_seeds?: number[]
+}

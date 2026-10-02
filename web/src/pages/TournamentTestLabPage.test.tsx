@@ -7,6 +7,10 @@ import { renderWithRoute } from '../test/testUtils'
 
 const api = vi.hoisted(() => ({
   getTournamentLabBuiltInScenarios: vi.fn(),
+  getTournamentLabSessions: vi.fn(),
+  createTournamentLabSession: vi.fn(),
+  updateTournamentLabSession: vi.fn(),
+  runTournamentLabSession: vi.fn(),
   inspectTournamentLabScenario: vi.fn(),
   runTournamentTestLab: vi.fn()
 }))
@@ -169,6 +173,10 @@ describe('TournamentTestLabPage', () => {
       scenario_fingerprint: 'a'.repeat(64),
       scenario
     }])
+    api.getTournamentLabSessions.mockResolvedValue([])
+    api.createTournamentLabSession.mockResolvedValue(undefined)
+    api.updateTournamentLabSession.mockResolvedValue(undefined)
+    api.runTournamentLabSession.mockResolvedValue(result)
     api.inspectTournamentLabScenario.mockResolvedValue(compatibility)
     api.runTournamentTestLab.mockResolvedValue(result)
   })
@@ -180,7 +188,7 @@ describe('TournamentTestLabPage', () => {
     expect(screen.getByRole('heading', { name: 'Tournament Test Lab' })).toBeInTheDocument()
     expect(screen.getByText(/outside Runs/i)).toBeInTheDocument()
 
-    await user.click(await screen.findByRole('button', { name: 'Load editable copy' }))
+    await user.click(await screen.findByRole('button', { name: 'Load scratch copy' }))
     expect((screen.getByLabelText('Tournament Lab scenario JSON') as HTMLTextAreaElement).value).toContain('standard-four-player')
 
     await user.click(screen.getByRole('button', { name: 'Inspect compatibility' }))
@@ -194,8 +202,7 @@ describe('TournamentTestLabPage', () => {
       expect.objectContaining({
         batch_match_seeds: [100, 101],
         scenario: expect.objectContaining({ scenario_id: 'standard-four-player' })
-      }),
-      expect.anything()
+      })
     )
     expect(await screen.findByText('idealized_seed_tiers.v2')).toBeInTheDocument()
     expect(screen.getByText(/Champions: P1: 2/)).toBeInTheDocument()
@@ -221,7 +228,7 @@ describe('TournamentTestLabPage', () => {
     api.inspectTournamentLabScenario.mockResolvedValue(blocked)
 
     renderWithRoute(<TournamentTestLabPage />, '/admin/labs/tournament')
-    await user.click(await screen.findByRole('button', { name: 'Load editable copy' }))
+    await user.click(await screen.findByRole('button', { name: 'Load scratch copy' }))
     const editor = screen.getByLabelText('Tournament Lab scenario JSON')
     fireEvent.change(editor, {
       target: { value: JSON.stringify({ ...scenario, format_kind: 'groups' }) }
@@ -232,4 +239,81 @@ describe('TournamentTestLabPage', () => {
     expect(within(issues).getByText('FORMAT_NOT_EXECUTABLE_V1')).toBeInTheDocument()
     expect(screen.getByText(/does not yet execute groups/)).toBeInTheDocument()
   })
+
+  it('creates, edits and runs a persistent isolated Tournament Test Session', async () => {
+    const user = userEvent.setup()
+    const created = {
+      schema_version: 'tournament_test_lab_session.v1',
+      session_id: 'tournament-session-1',
+      display_name: 'Standard four-player — Test Session',
+      version: 1,
+      session_fingerprint: '1'.repeat(64),
+      scenario: {
+        ...scenario,
+        scenario_id: 'session-copy:standard-four-player',
+        display_name: 'Standard four-player — Test Session',
+        source_kind: 'built_in_copy',
+        source_reference: 'standard-four-player',
+        source_fingerprint: 'a'.repeat(64)
+      }
+    }
+    const updated = {
+      ...created,
+      display_name: 'Edited Tournament Session',
+      version: 2,
+      session_fingerprint: '2'.repeat(64),
+      scenario: { ...created.scenario, draw_seed: 99 }
+    }
+    api.getTournamentLabSessions
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([created])
+      .mockResolvedValue([updated])
+    api.createTournamentLabSession.mockResolvedValue(created)
+    api.updateTournamentLabSession.mockResolvedValue(updated)
+
+    renderWithRoute(<TournamentTestLabPage />, '/admin/labs/tournament')
+    await user.click(await screen.findByRole('button', { name: 'New Test Session from Standard four-player' }))
+
+    expect(api.createTournamentLabSession).toHaveBeenCalledWith(
+      {
+        display_name: 'Standard four-player — Test Session',
+        built_in_scenario_id: 'standard-four-player'
+      },
+      expect.anything()
+    )
+    expect(await screen.findByDisplayValue('Standard four-player — Test Session')).toBeInTheDocument()
+    expect(screen.getByText('isolated Test Session')).toBeInTheDocument()
+
+    const nameInput = screen.getByLabelText('Tournament Lab session name')
+    await user.clear(nameInput)
+    await user.type(nameInput, 'Edited Tournament Session')
+    const editor = screen.getByLabelText('Tournament Lab scenario JSON')
+    fireEvent.change(editor, {
+      target: { value: JSON.stringify({ ...created.scenario, draw_seed: 99 }) }
+    })
+    await user.click(screen.getByRole('button', { name: 'Save Test Session' }))
+
+    expect(api.updateTournamentLabSession).toHaveBeenCalledWith(
+      'tournament-session-1',
+      expect.objectContaining({
+        expected_session_fingerprint: '1'.repeat(64),
+        display_name: 'Edited Tournament Session',
+        scenario: expect.objectContaining({ draw_seed: 99 })
+      })
+    )
+
+    await screen.findByDisplayValue('Edited Tournament Session')
+    await user.type(screen.getByLabelText('Tournament Lab batch match seeds'), '201, 202')
+    await user.click(screen.getByRole('button', { name: 'Run Test Session' }))
+
+    expect(api.runTournamentLabSession).toHaveBeenCalledWith(
+      'tournament-session-1',
+      {
+        expected_session_fingerprint: '2'.repeat(64),
+        batch_match_seeds: [201, 202]
+      }
+    )
+    expect(await screen.findByText(/Champions: P1: 2/)).toBeInTheDocument()
+  })
+
 })

@@ -6,9 +6,9 @@ from collections import Counter
 from hashlib import sha256
 import json
 from statistics import mean
-from typing import Literal
+from typing import Callable, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, computed_field, model_validator
 
 from beta_engine.core import DeterministicRng
 from beta_engine.domain.matches.match_engine import MatchEngine
@@ -23,6 +23,7 @@ from beta_engine.domain.tournaments.draw_input_authority import (
 )
 from beta_engine.domain.tournaments.entry_field import TournamentEntryFieldCapacity
 from beta_engine.domain.tournaments.format_authority import TournamentFormatAuthority
+from beta_engine.infrastructure.db.models import TournamentLabSessionModel
 
 
 TOURNAMENT_LAB_SCENARIO_VERSION = "tournament_test_lab_scenario.v1"
@@ -214,11 +215,221 @@ class BuiltInTournamentLabScenario(BaseModel):
     scenario: TournamentLabScenario
 
 
+class TournamentLabSession(BaseModel):
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    schema_version: Literal["tournament_test_lab_session.v1"] = "tournament_test_lab_session.v1"
+    session_id: str = Field(min_length=1, max_length=128)
+    display_name: str = Field(min_length=1, max_length=160)
+    version: int = Field(ge=1)
+    scenario: TournamentLabScenario
+
+    @property
+    def fingerprint(self) -> str:
+        return _fingerprint(
+            {
+                "schema_version": self.schema_version,
+                "session_id": self.session_id,
+                "display_name": self.display_name,
+                "version": self.version,
+                "scenario": self.scenario.model_dump(mode="json"),
+            }
+        )
+
+    @computed_field
+    @property
+    def session_fingerprint(self) -> str:
+        return self.fingerprint
+
+
+class TournamentLabSessionCreateRequest(BaseModel):
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    display_name: str = Field(min_length=1, max_length=160)
+    scenario: TournamentLabScenario | None = None
+    built_in_scenario_id: str | None = Field(default=None, max_length=160)
+
+    @model_validator(mode="after")
+    def exactly_one_source(self):
+        if (self.scenario is None) == (self.built_in_scenario_id is None):
+            raise ValueError("Provide exactly one of scenario or built_in_scenario_id")
+        return self
+
+
+class TournamentLabSessionUpdateRequest(BaseModel):
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    expected_session_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    display_name: str | None = Field(default=None, min_length=1, max_length=160)
+    scenario: TournamentLabScenario
+
+
+class TournamentLabSessionRunRequest(BaseModel):
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    expected_session_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    batch_match_seeds: tuple[int, ...] = ()
+
+    @model_validator(mode="after")
+    def validate_batch(self):
+        if len(self.batch_match_seeds) > MAX_BATCH_SEEDS:
+            raise ValueError(
+                f"batch_match_seeds must contain at most {MAX_BATCH_SEEDS} seeds"
+            )
+        if len(set(self.batch_match_seeds)) != len(self.batch_match_seeds):
+            raise ValueError("batch_match_seeds must not contain duplicates")
+        return self
+
+
 class TournamentTestLabService:
     """Portable Tournament Lab using existing domain draw authority and production MatchEngine."""
 
+    def __init__(
+        self,
+        session_factory=None,
+        id_factory: Callable[[str], str] | None = None,
+    ):
+        self._session_factory = session_factory
+        self._id_factory = id_factory
+
+    def _require_persistence(self) -> None:
+        if self._session_factory is None or self._id_factory is None:
+            raise RuntimeError("Tournament Lab session persistence is not configured")
+
+    @staticmethod
+    def _load_session_row(row: TournamentLabSessionModel) -> TournamentLabSession:
+        item = TournamentLabSession.model_validate_json(row.payload_json)
+        if item.session_id != row.session_id:
+            raise ValueError("Tournament Lab session persistence identity mismatch")
+        if item.display_name != row.display_name or item.version != row.version:
+            raise ValueError("Tournament Lab session persistence metadata mismatch")
+        if item.scenario.source_kind != row.source_kind:
+            raise ValueError("Tournament Lab session persistence source-kind mismatch")
+        if item.scenario.source_reference != row.source_reference:
+            raise ValueError("Tournament Lab session persistence source-reference mismatch")
+        if item.scenario.source_fingerprint != row.source_fingerprint:
+            raise ValueError("Tournament Lab session persistence source-fingerprint mismatch")
+        if item.fingerprint != row.fingerprint:
+            raise ValueError("Tournament Lab session persistence fingerprint mismatch")
+        return item
+
+    @staticmethod
+    def _persist_session(session, item: TournamentLabSession) -> None:
+        row = session.get(TournamentLabSessionModel, item.session_id)
+        values = dict(
+            display_name=item.display_name,
+            version=item.version,
+            fingerprint=item.fingerprint,
+            source_kind=item.scenario.source_kind,
+            source_reference=item.scenario.source_reference,
+            source_fingerprint=item.scenario.source_fingerprint,
+            payload_json=item.model_dump_json(exclude={"session_fingerprint"}),
+        )
+        if row is None:
+            session.add(TournamentLabSessionModel(session_id=item.session_id, **values))
+        else:
+            for key, value in values.items():
+                setattr(row, key, value)
+        session.flush()
+
     def list_built_in_scenarios(self) -> tuple[BuiltInTournamentLabScenario, ...]:
         return BUILT_IN_TOURNAMENT_LAB_SCENARIOS
+
+    def list_sessions(self) -> tuple[TournamentLabSession, ...]:
+        self._require_persistence()
+        from sqlalchemy import select
+
+        with self._session_factory() as session:
+            rows = session.scalars(
+                select(TournamentLabSessionModel).order_by(
+                    TournamentLabSessionModel.display_name,
+                    TournamentLabSessionModel.session_id,
+                )
+            ).all()
+            return tuple(self._load_session_row(row) for row in rows)
+
+    def get_session(self, session_id: str) -> TournamentLabSession:
+        self._require_persistence()
+        with self._session_factory() as session:
+            row = session.get(TournamentLabSessionModel, session_id)
+            if row is None:
+                raise KeyError("Tournament Lab session was not found")
+            return self._load_session_row(row)
+
+    def create_session(self, request: TournamentLabSessionCreateRequest) -> TournamentLabSession:
+        self._require_persistence()
+        from sqlalchemy import text
+
+        if request.built_in_scenario_id is not None:
+            built_in = BUILT_IN_TOURNAMENT_LAB_BY_ID.get(request.built_in_scenario_id)
+            if built_in is None:
+                raise KeyError("Built-in Tournament Lab scenario was not found")
+            scenario = built_in.scenario.model_copy(
+                update={
+                    "scenario_id": f"session-copy:{built_in.scenario_id}",
+                    "display_name": request.display_name,
+                    "source_kind": "built_in_copy",
+                    "source_reference": built_in.scenario_id,
+                    "source_fingerprint": built_in.scenario_fingerprint,
+                }
+            )
+        else:
+            assert request.scenario is not None
+            scenario = request.scenario
+
+        session_id = self._id_factory("tournament-lab-session")
+        item = TournamentLabSession(
+            session_id=session_id,
+            display_name=request.display_name,
+            version=1,
+            scenario=scenario,
+        )
+        with self._session_factory.begin() as session:
+            session.execute(text("BEGIN IMMEDIATE"))
+            if session.get(TournamentLabSessionModel, session_id) is not None:
+                raise ValueError("generated Tournament Lab session identity already exists")
+            self._persist_session(session, item)
+        return item
+
+    def update_session(
+        self,
+        session_id: str,
+        request: TournamentLabSessionUpdateRequest,
+    ) -> TournamentLabSession:
+        self._require_persistence()
+        from sqlalchemy import text
+
+        with self._session_factory.begin() as session:
+            session.execute(text("BEGIN IMMEDIATE"))
+            row = session.get(TournamentLabSessionModel, session_id)
+            if row is None:
+                raise KeyError("Tournament Lab session was not found")
+            current = self._load_session_row(row)
+            if current.fingerprint != request.expected_session_fingerprint:
+                raise ValueError("Tournament Lab session changed since it was reviewed")
+            updated = TournamentLabSession(
+                session_id=current.session_id,
+                display_name=request.display_name or current.display_name,
+                version=current.version + 1,
+                scenario=request.scenario,
+            )
+            self._persist_session(session, updated)
+            return updated
+
+    def run_session(
+        self,
+        session_id: str,
+        request: TournamentLabSessionRunRequest,
+    ) -> TournamentLabResult:
+        current = self.get_session(session_id)
+        if current.fingerprint != request.expected_session_fingerprint:
+            raise ValueError("Tournament Lab session changed since it was reviewed")
+        return self.run(
+            TournamentLabRequest(
+                scenario=current.scenario,
+                batch_match_seeds=request.batch_match_seeds,
+            )
+        )
 
     def inspect(self, scenario: TournamentLabScenario) -> TournamentLabCompatibility:
         issues: list[TournamentLabIssue] = []
@@ -693,3 +904,6 @@ def _built_ins() -> tuple[BuiltInTournamentLabScenario, ...]:
 
 
 BUILT_IN_TOURNAMENT_LAB_SCENARIOS = _built_ins()
+BUILT_IN_TOURNAMENT_LAB_BY_ID = {
+    item.scenario_id: item for item in BUILT_IN_TOURNAMENT_LAB_SCENARIOS
+}

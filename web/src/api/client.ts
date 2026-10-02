@@ -3458,3 +3458,37 @@ export async function runTournamentTestLab(
     body: JSON.stringify(payload)
   })
 }
+
+
+export async function getTournamentLabSessions(): Promise<import('./types').TournamentLabSession[]> {
+  return request<import('./types').TournamentLabSession[]>('/admin/labs/tournament/sessions')
+}
+
+export async function createTournamentLabSession(
+  payload: import('./types').TournamentLabSessionCreateRequest
+): Promise<import('./types').TournamentLabSession> {
+  return request<import('./types').TournamentLabSession>('/admin/labs/tournament/sessions', {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  })
+}
+
+export async function updateTournamentLabSession(
+  sessionId: string,
+  payload: import('./types').TournamentLabSessionUpdateRequest
+): Promise<import('./types').TournamentLabSession> {
+  return request<import('./types').TournamentLabSession>(
+    `/admin/labs/tournament/sessions/${encodeURIComponent(sessionId)}`,
+    { method: 'PUT', body: JSON.stringify(payload) }
+  )
+}
+
+export async function runTournamentLabSession(
+  sessionId: string,
+  payload: import('./types').TournamentLabSessionRunRequest
+): Promise<import('./types').TournamentLabResult> {
+  return request<import('./types').TournamentLabResult>(
+    `/admin/labs/tournament/sessions/${encodeURIComponent(sessionId)}/run`,
+    { method: 'POST', body: JSON.stringify(payload) }
+  )
+}

@@ -217,7 +217,8 @@ describe('MatchTestLabPage', () => {
     api.importMatchLabSavedRevisionPlayer.mockResolvedValue(imported)
 
     renderWithRoute(<MatchTestLabPage />, '/admin/labs/match')
-    await user.selectOptions(await screen.findByLabelText('Open Match Test Session'), 'session-history')
+    await screen.findByRole('option', { name: /Historical session/ })
+    await user.selectOptions(screen.getByLabelText('Open Match Test Session'), 'session-history')
     await user.type(screen.getByLabelText('Match Lab import Run ID'), 'run-1')
     await user.type(screen.getByLabelText('Match Lab import Branch ID'), 'branch-1')
     await user.type(screen.getByLabelText('Match Lab import Saved Revision ID'), 'revision-1')

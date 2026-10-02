@@ -287,6 +287,8 @@ class TournamentLabResult(BaseModel):
         default=None, pattern=r"^[0-9a-f]{64}$"
     )
     draw: TournamentDrawAuthority | None = None
+    topology: TournamentTopologyAuthority | None = None
+    group_schedule: TournamentGroupMatchScheduleAuthority | None = None
     runs: tuple[TournamentLabSingleRun, ...] = ()
     diagnostics: TournamentLabBatchDiagnostics
 
@@ -523,7 +525,6 @@ class TournamentTestLabService:
         ids = tuple(item.player.player_id for item in scenario.participants)
         expected_order = set(ids)
         seed_order = scenario.seed_order_player_ids or ids
-
         if len(seed_order) != len(ids) or set(seed_order) != expected_order:
             issues.append(
                 TournamentLabIssue(
@@ -533,71 +534,225 @@ class TournamentTestLabService:
                 )
             )
 
-        if scenario.format_kind == "knockout":
-            issues.extend(self._inspect_knockout(scenario, ids))
-            shared = (
-                "beta_engine.domain.tournaments.format_authority.TournamentFormatAuthority",
-                "beta_engine.domain.tournaments.draw_input_authority.canonical_qualification_seed_count",
-                "beta_engine.domain.tournaments.draw_authority.TournamentDrawAuthorityBuilder",
-                "beta_engine.domain.matches.match_engine.MatchEngine.simulate",
+        if scenario.format_kind in {"groups", "groups_knockout"}:
+            if scenario.qualification_draw_size or scenario.qualifier_spots or scenario.qualification_player_ids:
+                issues.append(
+                    TournamentLabIssue(
+                        severity="error",
+                        code="GROUP_FORMAT_QUALIFICATION_UNSUPPORTED",
+                        message="Group-format Tournament Lab currently requires one fully resolved participant field without Qualification.",
+                    )
+                )
+            if scenario.group_count <= 0 or scenario.group_size <= 0:
+                issues.append(
+                    TournamentLabIssue(
+                        severity="error",
+                        code="GROUP_GEOMETRY_INCOMPLETE",
+                        message="Group format requires positive group_count and group_size.",
+                    )
+                )
+            elif scenario.group_count * scenario.group_size != len(ids):
+                issues.append(
+                    TournamentLabIssue(
+                        severity="error",
+                        code="GROUP_FIELD_NOT_EXACTLY_FILLED",
+                        message="Group participant field must exactly fill equal configured groups.",
+                    )
+                )
+            if scenario.main_draw_size != len(ids):
+                issues.append(
+                    TournamentLabIssue(
+                        severity="warning",
+                        code="GROUP_MAIN_DRAW_SIZE_IS_DISPLAY_ONLY",
+                        message="For group formats main_draw_size is retained for scenario compatibility; group capacity is group_count × group_size.",
+                    )
+                )
+            if scenario.group_match_best_of not in {3, 5}:
+                issues.append(
+                    TournamentLabIssue(
+                        severity="error",
+                        code="GROUP_MATCH_FORMAT_REQUIRED",
+                        message="Group format requires explicit BO3 or BO5 group_match_best_of.",
+                    )
+                )
+            expected_seeded = scenario.group_count * scenario.seeded_slots_per_group
+            if len(scenario.group_seed_placements) != expected_seeded:
+                issues.append(
+                    TournamentLabIssue(
+                        severity="error",
+                        code="GROUP_SEED_PLACEMENTS_INCOMPLETE",
+                        message="Group seed placements must be explicit for every configured seeded group slot.",
+                    )
+                )
+            if scenario.topology_seed is None:
+                issues.append(
+                    TournamentLabIssue(
+                        severity="error",
+                        code="GROUP_TOPOLOGY_SEED_REQUIRED",
+                        message="Group topology requires an explicit deterministic topology seed.",
+                    )
+                )
+            if scenario.format_kind == "groups":
+                if scenario.advancing_per_group or scenario.knockout_crossings:
+                    issues.append(
+                        TournamentLabIssue(
+                            severity="error",
+                            code="PURE_GROUPS_CANNOT_CARRY_KNOCKOUT",
+                            message="Groups-only format cannot define knockout advancement or crossings.",
+                        )
+                    )
+            else:
+                if scenario.advancing_per_group <= 0:
+                    issues.append(
+                        TournamentLabIssue(
+                            severity="error",
+                            code="HYBRID_ADVANCEMENT_REQUIRED",
+                            message="Groups+knockout requires advancing_per_group.",
+                        )
+                    )
+                advancing = scenario.group_count * scenario.advancing_per_group
+                if advancing < 2 or advancing & (advancing - 1):
+                    issues.append(
+                        TournamentLabIssue(
+                            severity="error",
+                            code="HYBRID_KNOCKOUT_FIELD_NOT_POWER_OF_TWO",
+                            message="Configured hybrid knockout field must be a power of two.",
+                        )
+                    )
+                if len(scenario.knockout_crossings) != advancing // 2:
+                    issues.append(
+                        TournamentLabIssue(
+                            severity="error",
+                            code="HYBRID_CROSSINGS_INCOMPLETE",
+                            message="Groups+knockout requires explicit crossings that exactly fill the first knockout round.",
+                        )
+                    )
+        elif scenario.format_kind == "knockout":
+            qualification_ids = tuple(scenario.qualification_player_ids)
+            qualification_set = set(qualification_ids)
+            direct_main_ids = tuple(player_id for player_id in ids if player_id not in qualification_set)
+
+            if scenario.main_draw_size & (scenario.main_draw_size - 1):
+                issues.append(
+                    TournamentLabIssue(
+                        severity="error",
+                        code="MAIN_DRAW_NOT_POWER_OF_TWO",
+                        message="Classic knockout Main Draw capacity must be a power of two.",
+                    )
+                )
+            if len(qualification_ids) != len(qualification_set):
+                issues.append(
+                    TournamentLabIssue(
+                        severity="error",
+                        code="QUALIFICATION_PLAYER_DUPLICATE",
+                        message="Qualification player IDs must be unique.",
+                    )
+                )
+            if not qualification_set.issubset(expected_order):
+                issues.append(
+                    TournamentLabIssue(
+                        severity="error",
+                        code="QUALIFICATION_PLAYER_OUTSIDE_FIELD",
+                        message="Qualification contains a player outside the Tournament Lab participant field.",
+                    )
+                )
+            has_qualification = bool(
+                scenario.qualification_draw_size or scenario.qualifier_spots or qualification_ids
             )
-        elif scenario.format_kind in {"groups", "groups_knockout"}:
-            issues.extend(self._inspect_groups(scenario, ids))
-            shared = (
-                "beta_engine.domain.tournaments.format_authority.TournamentFormatAuthority",
-                "beta_engine.domain.tournaments.topology_authority.TournamentTopologyAuthorityBuilder",
-                "beta_engine.domain.tournaments.group_match_schedule_authority.TournamentGroupMatchScheduleBuilder",
-                "beta_engine.domain.tournaments.group_standings_authority.TournamentGroupStandingsBuilder",
-                "beta_engine.domain.tournaments.hybrid_knockout_entrants_authority.TournamentHybridKnockoutEntrantsBuilder",
-                "beta_engine.domain.tournaments.hybrid_knockout_bracket_authority.TournamentHybridKnockoutBracketBuilder",
-                "beta_engine.domain.matches.match_engine.MatchEngine.simulate",
-            )
+            if has_qualification:
+                if scenario.qualification_draw_size <= 0 or scenario.qualifier_spots <= 0:
+                    issues.append(
+                        TournamentLabIssue(
+                            severity="error",
+                            code="QUALIFICATION_GEOMETRY_INCOMPLETE",
+                            message="Qualification requires both a positive draw size and qualifier spot count.",
+                        )
+                    )
+                elif scenario.qualification_draw_size % scenario.qualifier_spots:
+                    issues.append(
+                        TournamentLabIssue(
+                            severity="error",
+                            code="QUALIFICATION_NOT_EQUAL_SECTIONS",
+                            message="Qualification draw size must divide evenly across equal Q sections.",
+                        )
+                    )
+                else:
+                    section_size = scenario.qualification_draw_size // scenario.qualifier_spots
+                    if section_size < 2 or section_size & (section_size - 1):
+                        issues.append(
+                            TournamentLabIssue(
+                                severity="error",
+                                code="QUALIFICATION_SECTION_NOT_POWER_OF_TWO",
+                                message="Each Qualification section must have power-of-two capacity of at least two.",
+                            )
+                        )
+                if len(qualification_ids) < scenario.qualifier_spots:
+                    issues.append(
+                        TournamentLabIssue(
+                            severity="error",
+                            code="QUALIFICATION_TOO_FEW_PLAYERS",
+                            message="Qualification requires at least one real player per Q section.",
+                        )
+                    )
+                if len(qualification_ids) > scenario.qualification_draw_size:
+                    issues.append(
+                        TournamentLabIssue(
+                            severity="error",
+                            code="QUALIFICATION_FIELD_EXCEEDS_CAPACITY",
+                            message="Qualification player field exceeds configured Qualification draw size.",
+                        )
+                    )
+            main_entrant_count = len(direct_main_ids) + scenario.qualifier_spots
+            if main_entrant_count > scenario.main_draw_size:
+                issues.append(
+                    TournamentLabIssue(
+                        severity="error",
+                        code="FIELD_EXCEEDS_MAIN_DRAW",
+                        message="Direct Main players plus qualifier places exceed Main Draw capacity.",
+                    )
+                )
+            if main_entrant_count < 2:
+                issues.append(
+                    TournamentLabIssue(
+                        severity="error",
+                        code="MAIN_FIELD_TOO_SMALL",
+                        message="Executable Main Draw requires at least two eventual entrants.",
+                    )
+                )
+            if 2 <= main_entrant_count <= 128:
+                canonical_capacity = 1 << (main_entrant_count - 1).bit_length()
+                if scenario.main_draw_size != canonical_capacity:
+                    issues.append(
+                        TournamentLabIssue(
+                            severity="warning",
+                            code="NONCANONICAL_CLASSIC_CAPACITY",
+                            message=(
+                                f"Normal Run classic geometry would derive capacity {canonical_capacity} "
+                                f"for {main_entrant_count} eventual Main entrants, not {scenario.main_draw_size}."
+                            ),
+                        )
+                    )
         else:
             issues.append(
                 TournamentLabIssue(
                     severity="error",
-                    code="FORMAT_NOT_EXECUTABLE",
-                    message=(
-                        f"Tournament Lab does not execute {scenario.format_kind!r}; "
-                        "the draft remains inspectable and no authoritative-looking result is fabricated."
-                    ),
+                    code="FORMAT_NOT_EXECUTABLE_V4",
+                    message=f"Tournament Lab V4 does not execute format {scenario.format_kind!r}.",
                 )
-            )
-            shared = (
-                "beta_engine.domain.tournaments.format_authority.TournamentFormatAuthority",
-                "beta_engine.domain.matches.match_engine.MatchEngine.simulate",
             )
 
-        if (
+        if scenario.format_kind == "knockout" and (
+            scenario.match_format.best_of,
             scenario.match_format.games_to,
             scenario.match_format.win_by,
-        ) != (11, 2):
-            issues.append(
-                TournamentLabIssue(
-                    severity="warning",
-                    code="NONSTANDARD_MATCH_SCORING",
-                    message=(
-                        "The Match Engine supports this Lab scoring, but normal FAX Run "
-                        "compatibility requires games to 11, win by 2 unless an effective "
-                        "Tournament Edition override explicitly supports otherwise."
-                    ),
-                )
-            )
-        if (
-            scenario.format_kind == "knockout"
-            and scenario.match_format.best_of != 5
-        ):
+        ) != (5, 11, 2):
             issues.append(
                 TournamentLabIssue(
                     severity="warning",
                     code="NONSTANDARD_MATCH_FORMAT",
-                    message=(
-                        "Normal knockout FAX Run compatibility requires BO5 unless an "
-                        "effective Tournament Edition override explicitly supports otherwise."
-                    ),
+                    message="Knockout Match format differs from normal BO5-to-11-win-by-2 baseline.",
                 )
             )
-
         if scenario.source_kind == "run_snapshot_copy" and scenario.source_fingerprint is None:
             issues.append(
                 TournamentLabIssue(
@@ -609,276 +764,148 @@ class TournamentTestLabService:
 
         runnable = not any(item.severity == "error" for item in issues)
         normal_run_compatible = runnable and not issues
+        shared = [
+            "beta_engine.domain.tournaments.format_authority.TournamentFormatAuthority",
+            "beta_engine.domain.matches.match_engine.MatchEngine.simulate",
+        ]
+        if scenario.format_kind == "knockout":
+            shared.extend([
+                "beta_engine.domain.tournaments.draw_input_authority.canonical_qualification_seed_count",
+                "beta_engine.domain.tournaments.draw_authority.TournamentDrawAuthorityBuilder",
+            ])
+        else:
+            shared.extend([
+                "beta_engine.domain.tournaments.topology_authority.TournamentTopologyAuthorityBuilder",
+                "beta_engine.domain.tournaments.group_match_schedule_authority.TournamentGroupMatchScheduleBuilder",
+                "beta_engine.domain.tournaments.group_standings_authority.TournamentGroupStandingsBuilder",
+            ])
+            if scenario.format_kind == "groups_knockout":
+                shared.extend([
+                    "beta_engine.domain.tournaments.hybrid_knockout_entrants_authority.TournamentHybridKnockoutEntrantsBuilder",
+                    "beta_engine.domain.tournaments.hybrid_knockout_bracket_authority.TournamentHybridKnockoutBracketBuilder",
+                ])
         return TournamentLabCompatibility(
             runnable_in_lab=runnable,
             normal_run_compatible=normal_run_compatible,
-            shared_authorities=shared,
+            shared_authorities=tuple(shared),
             issues=tuple(issues),
         )
-
-    @staticmethod
-    def _inspect_knockout(
-        scenario: TournamentLabScenario,
-        ids: tuple[str, ...],
-    ) -> tuple[TournamentLabIssue, ...]:
-        issues: list[TournamentLabIssue] = []
-        expected_order = set(ids)
-        qualification_ids = tuple(scenario.qualification_player_ids)
-        qualification_set = set(qualification_ids)
-        direct_main_ids = tuple(player_id for player_id in ids if player_id not in qualification_set)
-
-        if scenario.group_count or scenario.group_size or scenario.group_seed_placements:
-            issues.append(
-                TournamentLabIssue(
-                    severity="error",
-                    code="GROUP_CONFIGURATION_ON_KNOCKOUT",
-                    message="Knockout scenario cannot carry group configuration.",
-                )
-            )
-
-        if scenario.main_draw_size & (scenario.main_draw_size - 1):
-            issues.append(
-                TournamentLabIssue(
-                    severity="error",
-                    code="MAIN_DRAW_NOT_POWER_OF_TWO",
-                    message="Classic knockout Main Draw capacity must be a power of two.",
-                )
-            )
-        if len(qualification_ids) != len(qualification_set):
-            issues.append(
-                TournamentLabIssue(
-                    severity="error",
-                    code="QUALIFICATION_PLAYER_DUPLICATE",
-                    message="Qualification player IDs must be unique.",
-                )
-            )
-        if not qualification_set.issubset(expected_order):
-            issues.append(
-                TournamentLabIssue(
-                    severity="error",
-                    code="QUALIFICATION_PLAYER_OUTSIDE_FIELD",
-                    message="Qualification contains a player outside the Tournament Lab participant field.",
-                )
-            )
-
-        has_qualification = bool(
-            scenario.qualification_draw_size
-            or scenario.qualifier_spots
-            or qualification_ids
-        )
-        if has_qualification:
-            if scenario.qualification_draw_size <= 0 or scenario.qualifier_spots <= 0:
-                issues.append(
-                    TournamentLabIssue(
-                        severity="error",
-                        code="QUALIFICATION_GEOMETRY_INCOMPLETE",
-                        message="Qualification requires both a positive draw size and qualifier spot count.",
-                    )
-                )
-            elif scenario.qualification_draw_size % scenario.qualifier_spots:
-                issues.append(
-                    TournamentLabIssue(
-                        severity="error",
-                        code="QUALIFICATION_NOT_EQUAL_SECTIONS",
-                        message="Qualification draw size must divide evenly across equal Q sections.",
-                    )
-                )
-            else:
-                section_size = scenario.qualification_draw_size // scenario.qualifier_spots
-                if section_size < 2 or section_size & (section_size - 1):
-                    issues.append(
-                        TournamentLabIssue(
-                            severity="error",
-                            code="QUALIFICATION_SECTION_NOT_POWER_OF_TWO",
-                            message="Each Qualification section must have power-of-two capacity of at least two.",
-                        )
-                    )
-            if len(qualification_ids) < scenario.qualifier_spots:
-                issues.append(
-                    TournamentLabIssue(
-                        severity="error",
-                        code="QUALIFICATION_TOO_FEW_PLAYERS",
-                        message="Qualification requires at least one real player per Q section.",
-                    )
-                )
-            if len(qualification_ids) > scenario.qualification_draw_size:
-                issues.append(
-                    TournamentLabIssue(
-                        severity="error",
-                        code="QUALIFICATION_FIELD_EXCEEDS_CAPACITY",
-                        message="Qualification player field exceeds configured Qualification draw size.",
-                    )
-                )
-
-        main_entrant_count = len(direct_main_ids) + scenario.qualifier_spots
-        if main_entrant_count > scenario.main_draw_size:
-            issues.append(
-                TournamentLabIssue(
-                    severity="error",
-                    code="FIELD_EXCEEDS_MAIN_DRAW",
-                    message="Direct Main players plus qualifier places exceed Main Draw capacity.",
-                )
-            )
-        if main_entrant_count < 2:
-            issues.append(
-                TournamentLabIssue(
-                    severity="error",
-                    code="MAIN_FIELD_TOO_SMALL",
-                    message="Executable Main Draw requires at least two eventual entrants.",
-                )
-            )
-        if 2 <= main_entrant_count <= 128:
-            canonical_capacity = 1 << (main_entrant_count - 1).bit_length()
-            if scenario.main_draw_size != canonical_capacity:
-                issues.append(
-                    TournamentLabIssue(
-                        severity="warning",
-                        code="NONCANONICAL_CLASSIC_CAPACITY",
-                        message=(
-                            f"Normal Run classic geometry would derive capacity {canonical_capacity} "
-                            f"for {main_entrant_count} eventual Main entrants, not {scenario.main_draw_size}."
-                        ),
-                    )
-                )
-        return tuple(issues)
-
-    @staticmethod
-    def _inspect_groups(
-        scenario: TournamentLabScenario,
-        ids: tuple[str, ...],
-    ) -> tuple[TournamentLabIssue, ...]:
-        issues: list[TournamentLabIssue] = []
-        if scenario.qualification_draw_size or scenario.qualifier_spots or scenario.qualification_player_ids:
-            issues.append(
-                TournamentLabIssue(
-                    severity="error",
-                    code="QUALIFICATION_WITH_GROUP_FORMAT_UNSUPPORTED",
-                    message="Group Tournament Lab formats currently require one fully resolved field without Qualification.",
-                )
-            )
-        if scenario.group_count < 1 or scenario.group_size < 2:
-            issues.append(
-                TournamentLabIssue(
-                    severity="error",
-                    code="GROUP_GEOMETRY_INCOMPLETE",
-                    message="Group format requires positive group_count and group_size >= 2.",
-                )
-            )
-        elif scenario.group_count * scenario.group_size != len(ids):
-            issues.append(
-                TournamentLabIssue(
-                    severity="error",
-                    code="GROUP_FIELD_NOT_EXACT_CAPACITY",
-                    message="Group participant field must exactly fill equal configured groups.",
-                )
-            )
-        if scenario.topology_seed is None:
-            issues.append(
-                TournamentLabIssue(
-                    severity="error",
-                    code="GROUP_TOPOLOGY_SEED_REQUIRED",
-                    message="Group topology requires an explicit deterministic topology seed.",
-                )
-            )
-        if scenario.group_match_best_of not in {3, 5}:
-            issues.append(
-                TournamentLabIssue(
-                    severity="error",
-                    code="GROUP_MATCH_BEST_OF_REQUIRED",
-                    message="Group format requires explicit BO3 or BO5 group matches.",
-                )
-            )
-
-        if not any(item.severity == "error" for item in issues):
-            try:
-                configuration = TournamentGroupFormatConfiguration(
-                    group_count=scenario.group_count,
-                    group_size=scenario.group_size,
-                    seeded_slots_per_group=scenario.seeded_slots_per_group,
-                    group_seed_placements=scenario.group_seed_placements,
-                    match_best_of=scenario.group_match_best_of,
-                    rules_source_kind="edition_override",
-                    group_rules_policy_fingerprint="0" * 64,
-                    group_rules_effective_from_season_index=0,
-                    advancing_per_group=scenario.advancing_per_group,
-                    knockout_crossings=scenario.knockout_crossings,
-                )
-                TournamentFormatAuthority(
-                    run_id="lab:inspect",
-                    branch_id="isolated",
-                    event_id="lab-event:inspect",
-                    target_season_index=0,
-                    configured_by_command_id="tournament-lab-inspect",
-                    entry_field_fingerprint="0" * 64,
-                    format_kind=scenario.format_kind,
-                    group_configuration=configuration,
-                )
-            except ValueError as exc:
-                issues.append(
-                    TournamentLabIssue(
-                        severity="error",
-                        code="GROUP_CONFIGURATION_INVALID",
-                        message=str(exc),
-                    )
-                )
-        return tuple(issues)
 
     def run(self, request: TournamentLabRequest) -> TournamentLabResult:
         scenario = request.scenario
         compatibility = self.inspect(scenario)
         request_fingerprint = _fingerprint(request.model_dump(mode="json"))
         if not compatibility.runnable_in_lab:
-            return TournamentLabResult(
-                scenario_id=scenario.scenario_id,
-                scenario_fingerprint=scenario.fingerprint,
+            return self._blocked_result(
+                scenario=scenario,
                 request_fingerprint=request_fingerprint,
                 compatibility=compatibility,
-                diagnostics=TournamentLabBatchDiagnostics(
-                    run_count=0,
-                    completed_run_count=0,
-                    champions={},
-                    assertion_failure_count=0,
-                    average_played_match_count=0,
-                ),
             )
-
         if scenario.format_kind == "knockout":
-            format_authority, draw_input, draw = self._build_draw(scenario)
-            runs = tuple(
-                self._execute_draw(scenario, draw, match_seed=match_seed)
-                for match_seed in request.effective_match_seeds
+            return self._run_knockout(
+                request=request,
+                compatibility=compatibility,
+                request_fingerprint=request_fingerprint,
             )
-            result_kwargs = {
-                "format_authority_fingerprint": format_authority.fingerprint,
-                "draw_input_fingerprint": draw_input.fingerprint,
-                "draw_authority_fingerprint": draw.fingerprint,
-                "draw": draw,
-            }
-        else:
-            (
-                format_authority,
-                topology,
-                schedule,
-            ) = self._build_group_authorities(scenario)
-            runs = tuple(
-                self._execute_group_tournament(
-                    scenario,
-                    topology=topology,
-                    schedule=schedule,
-                    match_seed=match_seed,
-                )
-                for match_seed in request.effective_match_seeds
-            )
-            result_kwargs = {
-                "format_authority_fingerprint": format_authority.fingerprint,
-                "topology_authority_fingerprint": topology.fingerprint,
-                "group_schedule_fingerprint": schedule.fingerprint,
-            }
+        return self._run_groups(
+            request=request,
+            compatibility=compatibility,
+            request_fingerprint=request_fingerprint,
+        )
 
+    @staticmethod
+    def _blocked_result(
+        *,
+        scenario: TournamentLabScenario,
+        request_fingerprint: str,
+        compatibility: TournamentLabCompatibility,
+    ) -> TournamentLabResult:
+        return TournamentLabResult(
+            scenario_id=scenario.scenario_id,
+            scenario_fingerprint=scenario.fingerprint,
+            request_fingerprint=request_fingerprint,
+            compatibility=compatibility,
+            diagnostics=TournamentLabBatchDiagnostics(
+                run_count=0,
+                completed_run_count=0,
+                champions={},
+                assertion_failure_count=0,
+                average_played_match_count=0,
+            ),
+        )
+
+    def _run_knockout(
+        self,
+        *,
+        request: TournamentLabRequest,
+        compatibility: TournamentLabCompatibility,
+        request_fingerprint: str,
+    ) -> TournamentLabResult:
+        scenario = request.scenario
+        format_authority, draw_input, draw = self._build_draw(scenario)
+        runs = tuple(
+            self._execute_draw(scenario, draw, match_seed=match_seed)
+            for match_seed in request.effective_match_seeds
+        )
+        return self._result_from_runs(
+            scenario=scenario,
+            request_fingerprint=request_fingerprint,
+            compatibility=compatibility,
+            runs=runs,
+            format_authority_fingerprint=format_authority.fingerprint,
+            draw_input_fingerprint=draw_input.fingerprint,
+            draw_authority_fingerprint=draw.fingerprint,
+            draw=draw,
+        )
+
+    def _run_groups(
+        self,
+        *,
+        request: TournamentLabRequest,
+        compatibility: TournamentLabCompatibility,
+        request_fingerprint: str,
+    ) -> TournamentLabResult:
+        scenario = request.scenario
+        entry_field, rules, format_authority, topology, schedule = self._build_group_authorities(scenario)
+        runs = tuple(
+            self._execute_groups(
+                scenario,
+                topology=topology,
+                schedule=schedule,
+                match_seed=match_seed,
+            )
+            for match_seed in request.effective_match_seeds
+        )
+        return self._result_from_runs(
+            scenario=scenario,
+            request_fingerprint=request_fingerprint,
+            compatibility=compatibility,
+            runs=runs,
+            format_authority_fingerprint=format_authority.fingerprint,
+            topology_authority_fingerprint=topology.fingerprint,
+            group_schedule_fingerprint=schedule.fingerprint,
+            topology=topology,
+            group_schedule=schedule,
+        )
+
+    @staticmethod
+    def _result_from_runs(
+        *,
+        scenario: TournamentLabScenario,
+        request_fingerprint: str,
+        compatibility: TournamentLabCompatibility,
+        runs: tuple[TournamentLabSingleRun, ...],
+        format_authority_fingerprint: str,
+        draw_input_fingerprint: str | None = None,
+        draw_authority_fingerprint: str | None = None,
+        topology_authority_fingerprint: str | None = None,
+        group_schedule_fingerprint: str | None = None,
+        draw: TournamentDrawAuthority | None = None,
+        topology: TournamentTopologyAuthority | None = None,
+        group_schedule: TournamentGroupMatchScheduleAuthority | None = None,
+    ) -> TournamentLabResult:
         champions = Counter(
-            row.champion_player_id
-            for row in runs
-            if row.champion_player_id is not None
+            row.champion_player_id for row in runs if row.champion_player_id is not None
         )
         failure_count = sum(
             assertion.status == "failed"
@@ -890,6 +917,14 @@ class TournamentTestLabService:
             scenario_fingerprint=scenario.fingerprint,
             request_fingerprint=request_fingerprint,
             compatibility=compatibility,
+            format_authority_fingerprint=format_authority_fingerprint,
+            draw_input_fingerprint=draw_input_fingerprint,
+            draw_authority_fingerprint=draw_authority_fingerprint,
+            topology_authority_fingerprint=topology_authority_fingerprint,
+            group_schedule_fingerprint=group_schedule_fingerprint,
+            draw=draw,
+            topology=topology,
+            group_schedule=group_schedule,
             runs=runs,
             diagnostics=TournamentLabBatchDiagnostics(
                 run_count=len(runs),
@@ -900,348 +935,7 @@ class TournamentTestLabService:
                     mean(row.played_match_count for row in runs), 3
                 ),
             ),
-            **result_kwargs,
         )
-
-    @staticmethod
-    def _build_group_authorities(
-        scenario: TournamentLabScenario,
-    ) -> tuple[
-        TournamentFormatAuthority,
-        TournamentTopologyAuthority,
-        TournamentGroupMatchScheduleAuthority,
-    ]:
-        participant_order = scenario.seed_order_player_ids or tuple(
-            item.player.player_id for item in scenario.participants
-        )
-        scope = {
-            "run_id": f"lab:{scenario.scenario_id}",
-            "branch_id": "isolated",
-            "event_id": f"lab-event:{scenario.scenario_id}",
-        }
-        source_fp = _fingerprint(
-            {"scenario_fingerprint": scenario.fingerprint, "scope": "tournament-lab-source"}
-        )
-        entry = TournamentEntryField(
-            run_id=scope["run_id"],
-            branch_id=scope["branch_id"],
-            event_id=scope["event_id"],
-            mode="initial",
-            capacity=TournamentEntryFieldCapacity(
-                geometry_kind="fixed_participant_field",
-                main_draw_size=len(participant_order),
-            ),
-            tournament_ranking_authority_fingerprint=source_fp,
-            ranking_snapshot_fingerprint=source_fp,
-            applications_fingerprint=_fingerprint([]),
-            direct_main_player_ids=participant_order,
-        )
-        rules = TournamentGroupRulesPolicy(
-            run_id=scope["run_id"],
-            branch_id=scope["branch_id"],
-            effective_from_season_index=0,
-            default_match_best_of=scenario.group_match_best_of,
-            adopted_by_command_id="tournament-lab-group-rules-v4",
-        )
-        configuration = TournamentGroupFormatConfiguration(
-            group_count=scenario.group_count,
-            group_size=scenario.group_size,
-            seeded_slots_per_group=scenario.seeded_slots_per_group,
-            group_seed_placements=scenario.group_seed_placements,
-            match_best_of=scenario.group_match_best_of,
-            rules_source_kind="edition_override",
-            group_rules_policy_fingerprint=rules.fingerprint,
-            group_rules_effective_from_season_index=0,
-            advancing_per_group=scenario.advancing_per_group,
-            knockout_crossings=scenario.knockout_crossings,
-        )
-        format_authority = TournamentFormatAuthority(
-            run_id=scope["run_id"],
-            branch_id=scope["branch_id"],
-            event_id=scope["event_id"],
-            target_season_index=0,
-            configured_by_command_id="tournament-lab-format-v4",
-            entry_field_fingerprint=entry.fingerprint,
-            format_kind=scenario.format_kind,
-            group_configuration=configuration,
-        )
-        topology = TournamentTopologyAuthorityBuilder.build_groups(
-            format_authority=format_authority,
-            entry_field=entry,
-            participant_order_player_ids=participant_order,
-            command_id="tournament-lab-topology-v4",
-            topology_seed=scenario.topology_seed,
-        )
-        schedule = TournamentGroupMatchScheduleBuilder.build(
-            format_authority=format_authority,
-            topology_authority=topology,
-            command_id="tournament-lab-group-schedule-v4",
-        )
-        return format_authority, topology, schedule
-
-    def _execute_group_tournament(
-        self,
-        scenario: TournamentLabScenario,
-        *,
-        topology: TournamentTopologyAuthority,
-        schedule: TournamentGroupMatchScheduleAuthority,
-        match_seed: int,
-    ) -> TournamentLabSingleRun:
-        participants = {
-            item.player.player_id: item for item in scenario.participants
-        }
-        group_results: list[TournamentLabMatchResult] = []
-        receipts = []
-        blocking_issue: TournamentLabIssue | None = None
-
-        for scheduled in schedule.matches:
-            player_a = participants[scheduled.top_player_id]
-            player_b = participants[scheduled.bottom_player_id]
-            fmt = scheduled.effective_match_format.format
-            context = MatchContext(
-                match_id=scheduled.match_id,
-                player_a=player_a,
-                player_b=player_b,
-                best_of=fmt.best_of,
-                games_to=fmt.games_to,
-                win_by=fmt.win_by,
-                upset_variance=scenario.match_format.upset_variance,
-            )
-            seed = self._node_seed(match_seed, scheduled.match_id)
-            raw = MatchEngine(rng=DeterministicRng(seed)).simulate(context)
-            result_fp = _fingerprint(raw.model_dump(mode="json"))
-            group_results.append(
-                TournamentLabMatchResult(
-                    node_id=scheduled.match_id,
-                    round_number=scheduled.match_day_ordinal,
-                    round_sequence=scheduled.match_order,
-                    player_a_id=raw.player_a_id,
-                    player_b_id=raw.player_b_id,
-                    winner_player_id=raw.winner_player_id,
-                    loser_player_id=raw.loser_player_id,
-                    status="played",
-                    match_seed=seed,
-                    result_fingerprint=result_fp,
-                    set_scores=tuple(_set_score(raw, item.set_number) for item in raw.sets),
-                    rally_count=len(raw.rally_log.events) if raw.rally_log is not None else 0,
-                    elapsed_seconds=(
-                        raw.timeline_log.total_elapsed_seconds
-                        if raw.timeline_log is not None
-                        else 0.0
-                    ),
-                )
-            )
-            try:
-                receipts.append(
-                    TournamentGroupStandingsBuilder.receipt_from_result(
-                        scheduled_match=scheduled,
-                        result=raw,
-                        result_fingerprint=result_fp,
-                    )
-                )
-            except TournamentGroupStandingsUnsupportedResult as exc:
-                blocking_issue = TournamentLabIssue(
-                    severity="error",
-                    code="GROUP_STANDINGS_RESULT_UNSUPPORTED",
-                    message=str(exc),
-                )
-                break
-
-        standings: TournamentGroupStandingsAuthority | None = None
-        if blocking_issue is None:
-            try:
-                standings = TournamentGroupStandingsBuilder.build(
-                    schedule=schedule,
-                    receipts=tuple(receipts),
-                    command_id="tournament-lab-group-standings-v4",
-                )
-            except TournamentGroupStandingsUnresolvedTie as exc:
-                blocking_issue = TournamentLabIssue(
-                    severity="error",
-                    code="GROUP_STANDINGS_UNRESOLVED_TIE",
-                    message=(
-                        f"Automatic group criteria exhausted for group {exc.group_index}; "
-                        f"explicit Admin tie resolution is required for case {exc.case.fingerprint}."
-                    ),
-                )
-
-        group_stage = TournamentLabGroupStageResult(
-            topology_fingerprint=topology.fingerprint,
-            schedule_fingerprint=schedule.fingerprint,
-            match_day_count=schedule.match_day_count,
-            match_results=tuple(group_results),
-            standings=standings,
-            blocking_issue=blocking_issue,
-        )
-
-        if blocking_issue is not None or standings is None:
-            assertions = self._assertions(
-                scenario,
-                champion=None,
-                played_match_count=len(group_results),
-                tournament_complete=False,
-                champion_applicable=scenario.format_kind == "groups_knockout",
-            )
-            payload = {
-                "scenario_fingerprint": scenario.fingerprint,
-                "match_seed": match_seed,
-                "group_stage": group_stage.model_dump(mode="json"),
-                "assertions": [item.model_dump(mode="json") for item in assertions],
-            }
-            return TournamentLabSingleRun(
-                match_seed=match_seed,
-                completed_rounds=0,
-                tournament_complete=False,
-                champion_player_id=None,
-                played_match_count=len(group_results),
-                bye_advance_count=0,
-                group_stage=group_stage,
-                match_results=(),
-                assertions=assertions,
-                run_fingerprint=_fingerprint(payload),
-            )
-
-        if scenario.format_kind == "groups":
-            assertions = self._assertions(
-                scenario,
-                champion=None,
-                played_match_count=len(group_results),
-                tournament_complete=True,
-                champion_applicable=False,
-            )
-            payload = {
-                "scenario_fingerprint": scenario.fingerprint,
-                "match_seed": match_seed,
-                "group_stage": group_stage.model_dump(mode="json"),
-                "assertions": [item.model_dump(mode="json") for item in assertions],
-            }
-            return TournamentLabSingleRun(
-                match_seed=match_seed,
-                completed_rounds=0,
-                tournament_complete=True,
-                champion_player_id=None,
-                played_match_count=len(group_results),
-                bye_advance_count=0,
-                group_stage=group_stage,
-                match_results=(),
-                assertions=assertions,
-                run_fingerprint=_fingerprint(payload),
-            )
-
-        entrants = TournamentHybridKnockoutEntrantsBuilder.build(
-            topology=topology,
-            standings=standings,
-            command_id="tournament-lab-hybrid-entrants-v4",
-        )
-        bracket = TournamentHybridKnockoutBracketBuilder.build(
-            entrants=entrants,
-            command_id="tournament-lab-hybrid-bracket-v4",
-        )
-        knockout_results, champion, completed_rounds, tournament_complete = (
-            self._execute_hybrid_bracket(
-                scenario,
-                bracket=bracket,
-                participants=participants,
-                match_seed=match_seed,
-            )
-        )
-        total_played = len(group_results) + len(knockout_results)
-        assertions = self._assertions(
-            scenario,
-            champion=champion,
-            played_match_count=total_played,
-            tournament_complete=tournament_complete,
-            champion_applicable=True,
-        )
-        payload = {
-            "scenario_fingerprint": scenario.fingerprint,
-            "match_seed": match_seed,
-            "group_stage": group_stage.model_dump(mode="json"),
-            "hybrid_bracket": bracket.model_dump(mode="json"),
-            "knockout_results": [item.model_dump(mode="json") for item in knockout_results],
-            "assertions": [item.model_dump(mode="json") for item in assertions],
-        }
-        return TournamentLabSingleRun(
-            match_seed=match_seed,
-            completed_rounds=completed_rounds,
-            tournament_complete=tournament_complete,
-            champion_player_id=champion,
-            played_match_count=total_played,
-            bye_advance_count=0,
-            group_stage=group_stage,
-            hybrid_knockout_bracket=bracket,
-            match_results=tuple(knockout_results),
-            assertions=assertions,
-            run_fingerprint=_fingerprint(payload),
-        )
-
-    def _execute_hybrid_bracket(
-        self,
-        scenario: TournamentLabScenario,
-        *,
-        bracket: TournamentHybridKnockoutBracketAuthority,
-        participants: dict[str, MatchParticipantContext],
-        match_seed: int,
-    ) -> tuple[list[TournamentLabMatchResult], str | None, int, bool]:
-        winners: dict[str, str] = {}
-        results: list[TournamentLabMatchResult] = []
-        stop_round = min(
-            scenario.stop_after_round or bracket.round_count,
-            bracket.round_count,
-        )
-
-        def resolve(source: str) -> str:
-            if source.startswith("player:"):
-                return source.removeprefix("player:")
-            if source.startswith("winner:"):
-                match_id = source.removeprefix("winner:")
-                if match_id not in winners:
-                    raise ValueError("Hybrid Tournament Lab bracket references unresolved winner")
-                return winners[match_id]
-            raise ValueError("Hybrid Tournament Lab bracket contains unsupported source")
-
-        for match in bracket.matches:
-            if match.round_number > stop_round:
-                break
-            player_a_id = resolve(match.participant_sources[0])
-            player_b_id = resolve(match.participant_sources[1])
-            context = MatchContext(
-                match_id=match.match_id,
-                player_a=participants[player_a_id],
-                player_b=participants[player_b_id],
-                best_of=scenario.match_format.best_of,
-                games_to=scenario.match_format.games_to,
-                win_by=scenario.match_format.win_by,
-                upset_variance=scenario.match_format.upset_variance,
-            )
-            seed = self._node_seed(match_seed, match.match_id)
-            raw = MatchEngine(rng=DeterministicRng(seed)).simulate(context)
-            winners[match.match_id] = raw.winner_player_id
-            results.append(
-                TournamentLabMatchResult(
-                    node_id=match.match_id,
-                    round_number=match.round_number,
-                    round_sequence=match.match_index,
-                    player_a_id=raw.player_a_id,
-                    player_b_id=raw.player_b_id,
-                    winner_player_id=raw.winner_player_id,
-                    loser_player_id=raw.loser_player_id,
-                    status="played",
-                    match_seed=seed,
-                    result_fingerprint=_fingerprint(raw.model_dump(mode="json")),
-                    set_scores=tuple(_set_score(raw, item.set_number) for item in raw.sets),
-                    rally_count=len(raw.rally_log.events) if raw.rally_log is not None else 0,
-                    elapsed_seconds=(
-                        raw.timeline_log.total_elapsed_seconds
-                        if raw.timeline_log is not None
-                        else 0.0
-                    ),
-                )
-            )
-
-        complete = stop_round == bracket.round_count
-        champion = winners.get(bracket.terminal_match_id) if complete else None
-        return results, champion, stop_round, complete
 
     @staticmethod
     def _build_draw(
@@ -1320,6 +1014,308 @@ class TournamentTestLabService:
             algorithm_version="idealized_seed_tiers.v2",
         )
         return format_authority, draw_input, draw
+
+    @staticmethod
+    def _build_group_authorities(
+        scenario: TournamentLabScenario,
+    ) -> tuple[
+        TournamentEntryField,
+        TournamentGroupRulesPolicy,
+        TournamentFormatAuthority,
+        TournamentTopologyAuthority,
+        TournamentGroupMatchScheduleAuthority,
+    ]:
+        ids = tuple(item.player.player_id for item in scenario.participants)
+        seed_order = scenario.seed_order_player_ids or ids
+        event_id = f"lab-event:{scenario.scenario_id}"
+        run_id = f"lab:{scenario.scenario_id}"
+        entry_fp_source = _fingerprint(
+            {"scenario_fingerprint": scenario.fingerprint, "scope": "group-entry-source"}
+        )
+        entry_field = TournamentEntryField(
+            run_id=run_id,
+            branch_id="isolated",
+            event_id=event_id,
+            mode="initial",
+            capacity=TournamentEntryFieldCapacity(
+                geometry_kind="fixed_participant_field",
+                main_draw_size=len(ids),
+            ),
+            tournament_ranking_authority_fingerprint=entry_fp_source,
+            ranking_snapshot_fingerprint=entry_fp_source,
+            applications_fingerprint=_fingerprint(
+                {"scenario_fingerprint": scenario.fingerprint, "scope": "group-applications"}
+            ),
+            direct_main_player_ids=seed_order,
+        )
+        rules = TournamentGroupRulesPolicy(
+            run_id=run_id,
+            branch_id="isolated",
+            effective_from_season_index=0,
+            default_match_best_of=scenario.group_match_best_of,
+            adopted_by_command_id="tournament-lab-group-rules-v4",
+        )
+        group = TournamentGroupFormatConfiguration(
+            group_count=scenario.group_count,
+            group_size=scenario.group_size,
+            seeded_slots_per_group=scenario.seeded_slots_per_group,
+            group_seed_placements=scenario.group_seed_placements,
+            match_best_of=scenario.group_match_best_of,
+            rules_source_kind="season_policy",
+            group_rules_policy_fingerprint=rules.fingerprint,
+            group_rules_effective_from_season_index=0,
+            advancing_per_group=(
+                scenario.advancing_per_group
+                if scenario.format_kind == "groups_knockout"
+                else 0
+            ),
+            knockout_crossings=(
+                scenario.knockout_crossings
+                if scenario.format_kind == "groups_knockout"
+                else ()
+            ),
+        )
+        format_authority = TournamentFormatAuthority(
+            run_id=run_id,
+            branch_id="isolated",
+            event_id=event_id,
+            target_season_index=0,
+            configured_by_command_id="tournament-lab-format-v4",
+            entry_field_fingerprint=entry_field.fingerprint,
+            format_kind=scenario.format_kind,
+            group_configuration=group,
+        )
+        topology = TournamentTopologyAuthorityBuilder.build_groups(
+            format_authority=format_authority,
+            entry_field=entry_field,
+            participant_order_player_ids=seed_order,
+            command_id="tournament-lab-topology-v4",
+            topology_seed=scenario.topology_seed,
+        )
+        schedule = TournamentGroupMatchScheduleBuilder.build(
+            format_authority=format_authority,
+            topology_authority=topology,
+            command_id="tournament-lab-group-schedule-v4",
+        )
+        return entry_field, rules, format_authority, topology, schedule
+
+    def _execute_groups(
+        self,
+        scenario: TournamentLabScenario,
+        *,
+        topology: TournamentTopologyAuthority,
+        schedule: TournamentGroupMatchScheduleAuthority,
+        match_seed: int,
+    ) -> TournamentLabSingleRun:
+        participants = {item.player.player_id: item for item in scenario.participants}
+        match_results: list[TournamentLabMatchResult] = []
+        raw_results: list[tuple[object, MatchResult, str]] = []
+
+        for scheduled in schedule.matches:
+            player_a = participants[scheduled.top_player_id]
+            player_b = participants[scheduled.bottom_player_id]
+            fmt = scheduled.effective_match_format.format
+            context = MatchContext(
+                match_id=scheduled.match_id,
+                player_a=player_a,
+                player_b=player_b,
+                best_of=fmt.best_of,
+                games_to=fmt.games_to,
+                win_by=fmt.win_by,
+                upset_variance=scenario.match_format.upset_variance,
+            )
+            seed = self._node_seed(match_seed, scheduled.match_id)
+            raw = MatchEngine(rng=DeterministicRng(seed)).simulate(context)
+            fp = _fingerprint(raw.model_dump(mode="json"))
+            match_results.append(
+                TournamentLabMatchResult(
+                    node_id=scheduled.match_id,
+                    round_number=scheduled.match_day_ordinal,
+                    round_sequence=scheduled.match_order,
+                    player_a_id=raw.player_a_id,
+                    player_b_id=raw.player_b_id,
+                    winner_player_id=raw.winner_player_id,
+                    loser_player_id=raw.loser_player_id,
+                    status="played",
+                    match_seed=seed,
+                    result_fingerprint=fp,
+                    set_scores=tuple(_set_score(raw, item.set_number) for item in raw.sets),
+                    rally_count=len(raw.rally_log.events) if raw.rally_log is not None else 0,
+                    elapsed_seconds=(
+                        raw.timeline_log.total_elapsed_seconds
+                        if raw.timeline_log is not None
+                        else 0.0
+                    ),
+                )
+            )
+            raw_results.append((scheduled, raw, fp))
+
+        blocking: TournamentLabIssue | None = None
+        standings: TournamentGroupStandingsAuthority | None = None
+        try:
+            receipts = tuple(
+                TournamentGroupStandingsBuilder.receipt_from_result(
+                    scheduled_match=scheduled,
+                    result=raw,
+                    result_fingerprint=fp,
+                )
+                for scheduled, raw, fp in raw_results
+            )
+            standings = TournamentGroupStandingsBuilder.build(
+                schedule=schedule,
+                receipts=receipts,
+                command_id="tournament-lab-group-standings-v4",
+            )
+        except TournamentGroupStandingsUnresolvedTie as exc:
+            blocking = TournamentLabIssue(
+                severity="error",
+                code="GROUP_STANDINGS_ADMIN_TIE_RESOLUTION_REQUIRED",
+                message=(
+                    f"Group {exc.case.group_index} standings remain unresolved after all automatic criteria; "
+                    f"explicit Admin resolution is required for case {exc.case.fingerprint}."
+                ),
+            )
+        except TournamentGroupStandingsUnsupportedResult as exc:
+            blocking = TournamentLabIssue(
+                severity="error",
+                code="GROUP_STANDINGS_RESULT_EFFECT_UNRESOLVED",
+                message=str(exc),
+            )
+
+        group_stage = TournamentLabGroupStageResult(
+            topology_fingerprint=topology.fingerprint,
+            schedule_fingerprint=schedule.fingerprint,
+            match_day_count=schedule.match_day_count,
+            match_results=tuple(match_results),
+            standings=standings,
+            blocking_issue=blocking,
+        )
+
+        hybrid_bracket: TournamentHybridKnockoutBracketAuthority | None = None
+        knockout_results: list[TournamentLabMatchResult] = []
+        champion: str | None = None
+        if (
+            blocking is None
+            and standings is not None
+            and scenario.format_kind == "groups_knockout"
+        ):
+            entrants = TournamentHybridKnockoutEntrantsBuilder.build(
+                topology=topology,
+                standings=standings,
+                command_id="tournament-lab-hybrid-entrants-v4",
+            )
+            hybrid_bracket = TournamentHybridKnockoutBracketBuilder.build(
+                entrants=entrants,
+                command_id="tournament-lab-hybrid-bracket-v4",
+            )
+            knockout_results, champion = self._execute_hybrid_bracket(
+                scenario,
+                hybrid_bracket,
+                participants=participants,
+                match_seed=match_seed,
+            )
+
+        complete = blocking is None and (
+            scenario.format_kind == "groups" or champion is not None
+        )
+        played = len(match_results) + len(knockout_results)
+        assertions = self._assertions(
+            scenario,
+            champion=champion,
+            played_match_count=played,
+            tournament_complete=complete,
+        )
+        payload = {
+            "scenario_fingerprint": scenario.fingerprint,
+            "topology_fingerprint": topology.fingerprint,
+            "schedule_fingerprint": schedule.fingerprint,
+            "match_seed": match_seed,
+            "group_stage": group_stage.model_dump(mode="json"),
+            "hybrid_bracket": (
+                hybrid_bracket.model_dump(mode="json") if hybrid_bracket else None
+            ),
+            "knockout_results": [
+                item.model_dump(mode="json") for item in knockout_results
+            ],
+            "assertions": [item.model_dump(mode="json") for item in assertions],
+        }
+        return TournamentLabSingleRun(
+            match_seed=match_seed,
+            completed_rounds=(
+                hybrid_bracket.round_count
+                if hybrid_bracket is not None and champion is not None
+                else 0
+            ),
+            tournament_complete=complete,
+            champion_player_id=champion,
+            played_match_count=played,
+            bye_advance_count=0,
+            group_stage=group_stage,
+            hybrid_knockout_bracket=hybrid_bracket,
+            match_results=tuple(knockout_results),
+            assertions=assertions,
+            run_fingerprint=_fingerprint(payload),
+        )
+
+    def _execute_hybrid_bracket(
+        self,
+        scenario: TournamentLabScenario,
+        bracket: TournamentHybridKnockoutBracketAuthority,
+        *,
+        participants: dict[str, MatchParticipantContext],
+        match_seed: int,
+    ) -> tuple[list[TournamentLabMatchResult], str | None]:
+        winners: dict[str, str] = {}
+        results: list[TournamentLabMatchResult] = []
+
+        def resolve(source: str) -> str:
+            if source.startswith("player:"):
+                return source.removeprefix("player:")
+            if source.startswith("winner:"):
+                return winners[source.removeprefix("winner:")]
+            raise ValueError("Unsupported hybrid knockout source")
+
+        for node in sorted(
+            bracket.matches, key=lambda value: (value.round_number, value.match_index)
+        ):
+            player_a_id = resolve(node.participant_sources[0])
+            player_b_id = resolve(node.participant_sources[1])
+            player_a = participants[player_a_id]
+            player_b = participants[player_b_id]
+            context = MatchContext(
+                match_id=node.match_id,
+                player_a=player_a,
+                player_b=player_b,
+                best_of=scenario.match_format.best_of,
+                games_to=scenario.match_format.games_to,
+                win_by=scenario.match_format.win_by,
+                upset_variance=scenario.match_format.upset_variance,
+            )
+            seed = self._node_seed(match_seed, node.match_id)
+            raw = MatchEngine(rng=DeterministicRng(seed)).simulate(context)
+            winners[node.match_id] = raw.winner_player_id
+            results.append(
+                TournamentLabMatchResult(
+                    node_id=node.match_id,
+                    round_number=node.round_number,
+                    round_sequence=node.match_index,
+                    player_a_id=raw.player_a_id,
+                    player_b_id=raw.player_b_id,
+                    winner_player_id=raw.winner_player_id,
+                    loser_player_id=raw.loser_player_id,
+                    status="played",
+                    match_seed=seed,
+                    result_fingerprint=_fingerprint(raw.model_dump(mode="json")),
+                    set_scores=tuple(_set_score(raw, item.set_number) for item in raw.sets),
+                    rally_count=len(raw.rally_log.events) if raw.rally_log is not None else 0,
+                    elapsed_seconds=(
+                        raw.timeline_log.total_elapsed_seconds
+                        if raw.timeline_log is not None
+                        else 0.0
+                    ),
+                )
+            )
+        return results, winners.get(bracket.terminal_match_id)
 
     @staticmethod
     def _node_seed(match_seed: int, node_id: str) -> int:

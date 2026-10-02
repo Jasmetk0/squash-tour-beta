@@ -739,7 +739,7 @@ class TournamentLabSessionModel(Base):
     """Global editable Tournament Test Lab session, intentionally outside all Run/Branch scope."""
 
     __tablename__ = "tournament_lab_sessions"
-    session_id: Mapped[str] = mapped_column(String(128), primary_key_key=True)
+    session_id: Mapped[str] = mapped_column(String(128), primary_key=True)
     display_name: Mapped[str] = mapped_column(String(160), nullable=False)
     version: Mapped[int] = mapped_column(Integer, nullable=False)
     fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)

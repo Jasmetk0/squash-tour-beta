@@ -1081,6 +1081,28 @@ def _built_ins() -> tuple[BuiltInTournamentLabScenario, ...]:
             "match_seed": 7002,
         }
     )
+    qualification_participants = tuple(
+        _lab_participant(f"TLQ-P{index}", 96 - index * 2)
+        for index in range(1, 15)
+    )
+    qualification = TournamentLabScenario(
+        scenario_id="qualification-two-sections-to-eight-main",
+        display_name="2× Qualification sections → 8-player Main",
+        format_kind="knockout",
+        participants=qualification_participants,
+        main_draw_size=8,
+        qualification_draw_size=8,
+        qualifier_spots=2,
+        qualification_player_ids=tuple(
+            item.player.player_id for item in qualification_participants[6:]
+        ),
+        seed_order_player_ids=tuple(
+            item.player.player_id for item in qualification_participants
+        ),
+        draw_seed=20261004,
+        match_seed=7003,
+        assertions=TournamentLabAssertions(expected_played_match_count=13),
+    )
     definitions = (
         (
             scenario,
@@ -1089,6 +1111,10 @@ def _built_ins() -> tuple[BuiltInTournamentLabScenario, ...]:
         (
             unusual,
             "Runnable Lab-only geometry that deliberately differs from normal Run capacity derivation.",
+        ),
+        (
+            qualification,
+            "Two equal canonical Q sections resolve Q1/Q2 before the shared 8-player Main Draw.",
         ),
     )
     return tuple(

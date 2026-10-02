@@ -522,19 +522,117 @@ class TournamentTestLabService:
         issues: list[TournamentLabIssue] = []
         ids = tuple(item.player.player_id for item in scenario.participants)
         expected_order = set(ids)
+        seed_order = scenario.seed_order_player_ids or ids
+
+        if len(seed_order) != len(ids) or set(seed_order) != expected_order:
+            issues.append(
+                TournamentLabIssue(
+                    severity="error",
+                    code="SEED_ORDER_NOT_FIELD_PERMUTATION",
+                    message="Seed order must contain every participant exactly once.",
+                )
+            )
+
+        if scenario.format_kind == "knockout":
+            issues.extend(self._inspect_knockout(scenario, ids))
+            shared = (
+                "beta_engine.domain.tournaments.format_authority.TournamentFormatAuthority",
+                "beta_engine.domain.tournaments.draw_input_authority.canonical_qualification_seed_count",
+                "beta_engine.domain.tournaments.draw_authority.TournamentDrawAuthorityBuilder",
+                "beta_engine.domain.matches.match_engine.MatchEngine.simulate",
+            )
+        elif scenario.format_kind in {"groups", "groups_knockout"}:
+            issues.extend(self._inspect_groups(scenario, ids))
+            shared = (
+                "beta_engine.domain.tournaments.format_authority.TournamentFormatAuthority",
+                "beta_engine.domain.tournaments.topology_authority.TournamentTopologyAuthorityBuilder",
+                "beta_engine.domain.tournaments.group_match_schedule_authority.TournamentGroupMatchScheduleBuilder",
+                "beta_engine.domain.tournaments.group_standings_authority.TournamentGroupStandingsBuilder",
+                "beta_engine.domain.tournaments.hybrid_knockout_entrants_authority.TournamentHybridKnockoutEntrantsBuilder",
+                "beta_engine.domain.tournaments.hybrid_knockout_bracket_authority.TournamentHybridKnockoutBracketBuilder",
+                "beta_engine.domain.matches.match_engine.MatchEngine.simulate",
+            )
+        else:
+            issues.append(
+                TournamentLabIssue(
+                    severity="error",
+                    code="FORMAT_NOT_EXECUTABLE",
+                    message=(
+                        f"Tournament Lab does not execute {scenario.format_kind!r}; "
+                        "the draft remains inspectable and no authoritative-looking result is fabricated."
+                    ),
+                )
+            )
+            shared = (
+                "beta_engine.domain.tournaments.format_authority.TournamentFormatAuthority",
+                "beta_engine.domain.matches.match_engine.MatchEngine.simulate",
+            )
+
+        if (
+            scenario.match_format.games_to,
+            scenario.match_format.win_by,
+        ) != (11, 2):
+            issues.append(
+                TournamentLabIssue(
+                    severity="warning",
+                    code="NONSTANDARD_MATCH_SCORING",
+                    message=(
+                        "The Match Engine supports this Lab scoring, but normal FAX Run "
+                        "compatibility requires games to 11, win by 2 unless an effective "
+                        "Tournament Edition override explicitly supports otherwise."
+                    ),
+                )
+            )
+        if (
+            scenario.format_kind == "knockout"
+            and scenario.match_format.best_of != 5
+        ):
+            issues.append(
+                TournamentLabIssue(
+                    severity="warning",
+                    code="NONSTANDARD_MATCH_FORMAT",
+                    message=(
+                        "Normal knockout FAX Run compatibility requires BO5 unless an "
+                        "effective Tournament Edition override explicitly supports otherwise."
+                    ),
+                )
+            )
+
+        if scenario.source_kind == "run_snapshot_copy" and scenario.source_fingerprint is None:
+            issues.append(
+                TournamentLabIssue(
+                    severity="warning",
+                    code="UNVERIFIED_RUN_SNAPSHOT_COPY",
+                    message="Run snapshot copy lacks source fingerprint provenance.",
+                )
+            )
+
+        runnable = not any(item.severity == "error" for item in issues)
+        normal_run_compatible = runnable and not issues
+        return TournamentLabCompatibility(
+            runnable_in_lab=runnable,
+            normal_run_compatible=normal_run_compatible,
+            shared_authorities=shared,
+            issues=tuple(issues),
+        )
+
+    @staticmethod
+    def _inspect_knockout(
+        scenario: TournamentLabScenario,
+        ids: tuple[str, ...],
+    ) -> tuple[TournamentLabIssue, ...]:
+        issues: list[TournamentLabIssue] = []
+        expected_order = set(ids)
         qualification_ids = tuple(scenario.qualification_player_ids)
         qualification_set = set(qualification_ids)
         direct_main_ids = tuple(player_id for player_id in ids if player_id not in qualification_set)
 
-        if scenario.format_kind != "knockout":
+        if scenario.group_count or scenario.group_size or scenario.group_seed_placements:
             issues.append(
                 TournamentLabIssue(
                     severity="error",
-                    code="FORMAT_NOT_EXECUTABLE_V1",
-                    message=(
-                        f"Tournament Lab does not yet execute {scenario.format_kind!r}; "
-                        "the draft remains inspectable and no authoritative-looking result is fabricated."
-                    ),
+                    code="GROUP_CONFIGURATION_ON_KNOCKOUT",
+                    message="Knockout scenario cannot carry group configuration.",
                 )
             )
 
@@ -546,17 +644,6 @@ class TournamentTestLabService:
                     message="Classic knockout Main Draw capacity must be a power of two.",
                 )
             )
-
-        seed_order = scenario.seed_order_player_ids or ids
-        if len(seed_order) != len(ids) or set(seed_order) != expected_order:
-            issues.append(
-                TournamentLabIssue(
-                    severity="error",
-                    code="SEED_ORDER_NOT_FIELD_PERMUTATION",
-                    message="Seed order must contain every participant exactly once.",
-                )
-            )
-
         if len(qualification_ids) != len(qualification_set):
             issues.append(
                 TournamentLabIssue(
@@ -622,14 +709,6 @@ class TournamentTestLabService:
                         message="Qualification player field exceeds configured Qualification draw size.",
                     )
                 )
-        elif scenario.qualification_draw_size or scenario.qualifier_spots:
-            issues.append(
-                TournamentLabIssue(
-                    severity="error",
-                    code="QUALIFICATION_GEOMETRY_INCOMPLETE",
-                    message="Qualification geometry is incomplete.",
-                )
-            )
 
         main_entrant_count = len(direct_main_ids) + scenario.qualifier_spots
         if main_entrant_count > scenario.main_draw_size:
@@ -648,7 +727,6 @@ class TournamentTestLabService:
                     message="Executable Main Draw requires at least two eventual entrants.",
                 )
             )
-
         if 2 <= main_entrant_count <= 128:
             canonical_capacity = 1 << (main_entrant_count - 1).bit_length()
             if scenario.main_draw_size != canonical_capacity:
@@ -662,46 +740,88 @@ class TournamentTestLabService:
                         ),
                     )
                 )
+        return tuple(issues)
 
-        if (
-            scenario.match_format.best_of,
-            scenario.match_format.games_to,
-            scenario.match_format.win_by,
-        ) != (5, 11, 2):
+    @staticmethod
+    def _inspect_groups(
+        scenario: TournamentLabScenario,
+        ids: tuple[str, ...],
+    ) -> tuple[TournamentLabIssue, ...]:
+        issues: list[TournamentLabIssue] = []
+        if scenario.qualification_draw_size or scenario.qualifier_spots or scenario.qualification_player_ids:
             issues.append(
                 TournamentLabIssue(
-                    severity="warning",
-                    code="NONSTANDARD_MATCH_FORMAT",
-                    message=(
-                        "The Match Engine supports this Lab format, but normal FAX Run "
-                        "compatibility requires BO5 to 11, win by 2 unless an effective "
-                        "Tournament Edition override explicitly supports otherwise."
-                    ),
+                    severity="error",
+                    code="QUALIFICATION_WITH_GROUP_FORMAT_UNSUPPORTED",
+                    message="Group Tournament Lab formats currently require one fully resolved field without Qualification.",
+                )
+            )
+        if scenario.group_count < 1 or scenario.group_size < 2:
+            issues.append(
+                TournamentLabIssue(
+                    severity="error",
+                    code="GROUP_GEOMETRY_INCOMPLETE",
+                    message="Group format requires positive group_count and group_size >= 2.",
+                )
+            )
+        elif scenario.group_count * scenario.group_size != len(ids):
+            issues.append(
+                TournamentLabIssue(
+                    severity="error",
+                    code="GROUP_FIELD_NOT_EXACT_CAPACITY",
+                    message="Group participant field must exactly fill equal configured groups.",
+                )
+            )
+        if scenario.topology_seed is None:
+            issues.append(
+                TournamentLabIssue(
+                    severity="error",
+                    code="GROUP_TOPOLOGY_SEED_REQUIRED",
+                    message="Group topology requires an explicit deterministic topology seed.",
+                )
+            )
+        if scenario.group_match_best_of not in {3, 5}:
+            issues.append(
+                TournamentLabIssue(
+                    severity="error",
+                    code="GROUP_MATCH_BEST_OF_REQUIRED",
+                    message="Group format requires explicit BO3 or BO5 group matches.",
                 )
             )
 
-        if scenario.source_kind == "run_snapshot_copy" and scenario.source_fingerprint is None:
-            issues.append(
-                TournamentLabIssue(
-                    severity="warning",
-                    code="UNVERIFIED_RUN_SNAPSHOT_COPY",
-                    message="Run snapshot copy lacks source fingerprint provenance.",
+        if not any(item.severity == "error" for item in issues):
+            try:
+                configuration = TournamentGroupFormatConfiguration(
+                    group_count=scenario.group_count,
+                    group_size=scenario.group_size,
+                    seeded_slots_per_group=scenario.seeded_slots_per_group,
+                    group_seed_placements=scenario.group_seed_placements,
+                    match_best_of=scenario.group_match_best_of,
+                    rules_source_kind="edition_override",
+                    group_rules_policy_fingerprint="0" * 64,
+                    group_rules_effective_from_season_index=0,
+                    advancing_per_group=scenario.advancing_per_group,
+                    knockout_crossings=scenario.knockout_crossings,
                 )
-            )
-
-        runnable = not any(item.severity == "error" for item in issues)
-        normal_run_compatible = runnable and not issues
-        return TournamentLabCompatibility(
-            runnable_in_lab=runnable,
-            normal_run_compatible=normal_run_compatible,
-            shared_authorities=(
-                "beta_engine.domain.tournaments.format_authority.TournamentFormatAuthority",
-                "beta_engine.domain.tournaments.draw_input_authority.canonical_qualification_seed_count",
-                "beta_engine.domain.tournaments.draw_authority.TournamentDrawAuthorityBuilder",
-                "beta_engine.domain.matches.match_engine.MatchEngine.simulate",
-            ),
-            issues=tuple(issues),
-        )
+                TournamentFormatAuthority(
+                    run_id="lab:inspect",
+                    branch_id="isolated",
+                    event_id="lab-event:inspect",
+                    target_season_index=0,
+                    configured_by_command_id="tournament-lab-inspect",
+                    entry_field_fingerprint="0" * 64,
+                    format_kind=scenario.format_kind,
+                    group_configuration=configuration,
+                )
+            except ValueError as exc:
+                issues.append(
+                    TournamentLabIssue(
+                        severity="error",
+                        code="GROUP_CONFIGURATION_INVALID",
+                        message=str(exc),
+                    )
+                )
+        return tuple(issues)
 
     def run(self, request: TournamentLabRequest) -> TournamentLabResult:
         scenario = request.scenario

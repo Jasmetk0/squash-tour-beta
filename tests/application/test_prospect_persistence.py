@@ -179,7 +179,7 @@ def _materialize(service: RunProspectMaterializationService, **kwargs):
         if key in {"run_id", "base_annual_intake_target", "season_growth_rate", "country_code", "region"}
     }
     preview = service.preview_service.preview_season(**preview_kwargs)
-    return _materialize(service, 
+    return service.materialize_15yo_cohort(
         **kwargs,
         expected_review_fingerprint=preview.review_fingerprint,
     )

@@ -65,6 +65,8 @@ from beta_engine.domain.tournaments.topology_authority import (
 from beta_engine.infrastructure.db.models import TournamentLabSessionModel
 from beta_engine.application.run_saved_revision_history_service import RunSavedRevisionHistoryService
 from beta_engine.infrastructure.db import (
+    BranchRevisionStateConflictError,
+    BranchRevisionStateNotFoundError,
     SavedRevisionHistoryConflictError,
     SavedRevisionHistoryNotFoundError,
 )
@@ -901,7 +903,12 @@ class TournamentTestLabService:
         if current.fingerprint != request.expected_session_fingerprint:
             raise ValueError("Tournament Lab session changed since it was reviewed")
 
-        state = self._repository.get_branch_revision_state(branch_id=request.branch_id)
+        try:
+            state = self._repository.get_branch_revision_state(branch_id=request.branch_id)
+        except BranchRevisionStateNotFoundError as exc:
+            raise KeyError(str(exc)) from exc
+        except BranchRevisionStateConflictError as exc:
+            raise ValueError(str(exc)) from exc
         if state.run_id != request.product_run_id:
             raise ValueError("Target Branch does not belong to requested Product Run")
 

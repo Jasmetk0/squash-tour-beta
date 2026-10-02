@@ -76,6 +76,7 @@ from beta_engine.application.run_world_initial_world_service import RunWorldInit
 from beta_engine.application.world_talent_preview_service import WorldTalentPreviewService
 from beta_engine.application.talent_calibration_service import TalentCalibrationService
 from beta_engine.application.match_test_lab_service import MatchTestLabService
+from beta_engine.application.tournament_test_lab_service import TournamentTestLabService
 from beta_engine.infrastructure.config import load_settings
 from beta_engine.infrastructure.db import DatabaseSettings, SimulationPersistenceRepository, create_session_factory, create_sqlite_engine
 
@@ -239,6 +240,10 @@ def get_match_test_lab_service(request: Request) -> MatchTestLabService:
         id_factory=_new_product_entity_id,
         repository=runtime.repository,
     )
+
+
+def get_tournament_test_lab_service() -> TournamentTestLabService:
+    return TournamentTestLabService()
 
 
 def get_manual_player_overrides_service(request: Request) -> ManualPlayerOverridesService:

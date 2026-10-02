@@ -24,6 +24,24 @@ def _hash(value: object) -> str:
     return hashlib.sha256(_canonical_json(value).encode("utf-8")).hexdigest()
 
 
+def _require_id(value: object, *, field: str, max_length: int = 160) -> str:
+    if not isinstance(value, str) or not value.strip() or value != value.strip():
+        raise ValueError(f"Tournament Lab Run draft {field} must be a non-blank normalized string")
+    if len(value) > max_length:
+        raise ValueError(f"Tournament Lab Run draft {field} is too long")
+    return value
+
+
+def _require_sha256(value: object, *, field: str) -> str:
+    if (
+        not isinstance(value, str)
+        or len(value) != 64
+        or any(char not in "0123456789abcdef" for char in value)
+    ):
+        raise ValueError(f"Tournament Lab Run draft {field} must be SHA-256")
+    return value
+
+
 @dataclass(frozen=True)
 class RunTournamentLabDraft:
     schema_version: str
@@ -90,8 +108,28 @@ def build_run_tournament_lab_draft(
     candidate: dict[str, object],
     candidate_fingerprint: str,
 ) -> RunTournamentLabDraft:
-    if version < 1:
+    run_id = _require_id(run_id, field="run_id", max_length=128)
+    branch_id = _require_id(branch_id, field="branch_id", max_length=128)
+    event_id = _require_id(event_id, field="event_id", max_length=160)
+    source_session_id = _require_id(
+        source_session_id, field="source_session_id", max_length=128
+    )
+    if not isinstance(version, int) or isinstance(version, bool) or version < 1:
         raise ValueError("Tournament Lab Run draft version must be positive")
+    if not isinstance(candidate, dict):
+        raise ValueError("Tournament Lab Run draft candidate must be an object")
+    source_session_fingerprint = _require_sha256(
+        source_session_fingerprint, field="source_session_fingerprint"
+    )
+    source_scenario_fingerprint = _require_sha256(
+        source_scenario_fingerprint, field="source_scenario_fingerprint"
+    )
+    source_preview_fingerprint = _require_sha256(
+        source_preview_fingerprint, field="source_preview_fingerprint"
+    )
+    candidate_fingerprint = _require_sha256(
+        candidate_fingerprint, field="candidate_fingerprint"
+    )
     if candidate_fingerprint != _hash(candidate):
         raise ValueError("Tournament Lab Run draft candidate fingerprint mismatch")
     payload = _draft_payload(
@@ -221,25 +259,10 @@ def capture_run_tournament_lab_draft_state(
     )
 
 
-def capture_saved_run_tournament_lab_drafts(
-    session: Session,
-    payload: dict,
-    *,
-    run_id: str,
-    branch_id: str,
-) -> RunTournamentLabDraftState | None:
-    content = payload.setdefault("content", {})
-    if not isinstance(content, dict):
-        raise ValueError("Saved Revision content must be an object")
-    state = capture_run_tournament_lab_draft_state(
-        session,
-        run_id=run_id,
-        branch_id=branch_id,
-    )
-    if state is None:
-        content.pop(RUN_TOURNAMENT_LAB_DRAFT_COMPONENT_KEY, None)
-        return None
-    content[RUN_TOURNAMENT_LAB_DRAFT_COMPONENT_KEY] = {
+def saved_run_tournament_lab_draft_component(
+    state: RunTournamentLabDraftState,
+) -> dict[str, object]:
+    return {
         "schema_version": state.schema_version,
         "run_id": state.run_id,
         "branch_id": state.branch_id,
@@ -263,6 +286,29 @@ def capture_saved_run_tournament_lab_drafts(
         ],
         "fingerprint": state.fingerprint,
     }
+
+
+def capture_saved_run_tournament_lab_drafts(
+    session: Session,
+    payload: dict,
+    *,
+    run_id: str,
+    branch_id: str,
+) -> RunTournamentLabDraftState | None:
+    content = payload.setdefault("content", {})
+    if not isinstance(content, dict):
+        raise ValueError("Saved Revision content must be an object")
+    state = capture_run_tournament_lab_draft_state(
+        session,
+        run_id=run_id,
+        branch_id=branch_id,
+    )
+    if state is None:
+        content.pop(RUN_TOURNAMENT_LAB_DRAFT_COMPONENT_KEY, None)
+        return None
+    content[RUN_TOURNAMENT_LAB_DRAFT_COMPONENT_KEY] = (
+        saved_run_tournament_lab_draft_component(state)
+    )
     return state
 
 

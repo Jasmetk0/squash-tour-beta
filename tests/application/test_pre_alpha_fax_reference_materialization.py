@@ -102,7 +102,25 @@ class _WorldAdapter:
             source_version=1,
             provenance={"source": "test"},
             explicit_scope=("world",),
-            entities=(),
+            entities=(
+                PackageEntity(
+                    source_entity_id="CZE",
+                    entity_kind="world.country.v1",
+                    entity_schema_version=1,
+                    scope="world",
+                    payload={
+                        "code": "CZE",
+                        "name": "Czechia",
+                        "region": "EUROPE",
+                        "population": 10_000_000,
+                        "wealth_support": 5,
+                        "squash_popularity": 5,
+                        "squash_tradition": 5,
+                        "system_quality": 5,
+                        "travel_region": "EUROPE",
+                    },
+                ),
+            ),
         )
 
 
@@ -209,6 +227,7 @@ def test_materializes_persisted_copied_fax_reference_that_passes_release_input_g
     preview = service.preview(request)
 
     assert preview.ready_to_materialize is True
+    assert preview.world_entity_count == 1
     assert preview.world_tour_edition_count == 80
     assert preview.calendar_event_count == 80
     assert len(preview.preview_fingerprint) == 64

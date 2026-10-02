@@ -842,11 +842,39 @@ class TournamentTestLabService:
                 ),
             )
 
-        format_authority, draw_input, draw = self._build_draw(scenario)
-        runs = tuple(
-            self._execute_draw(scenario, draw, match_seed=match_seed)
-            for match_seed in request.effective_match_seeds
-        )
+        if scenario.format_kind == "knockout":
+            format_authority, draw_input, draw = self._build_draw(scenario)
+            runs = tuple(
+                self._execute_draw(scenario, draw, match_seed=match_seed)
+                for match_seed in request.effective_match_seeds
+            )
+            result_kwargs = {
+                "format_authority_fingerprint": format_authority.fingerprint,
+                "draw_input_fingerprint": draw_input.fingerprint,
+                "draw_authority_fingerprint": draw.fingerprint,
+                "draw": draw,
+            }
+        else:
+            (
+                format_authority,
+                topology,
+                schedule,
+            ) = self._build_group_authorities(scenario)
+            runs = tuple(
+                self._execute_group_tournament(
+                    scenario,
+                    topology=topology,
+                    schedule=schedule,
+                    match_seed=match_seed,
+                )
+                for match_seed in request.effective_match_seeds
+            )
+            result_kwargs = {
+                "format_authority_fingerprint": format_authority.fingerprint,
+                "topology_authority_fingerprint": topology.fingerprint,
+                "group_schedule_fingerprint": schedule.fingerprint,
+            }
+
         champions = Counter(
             row.champion_player_id
             for row in runs
@@ -862,10 +890,6 @@ class TournamentTestLabService:
             scenario_fingerprint=scenario.fingerprint,
             request_fingerprint=request_fingerprint,
             compatibility=compatibility,
-            format_authority_fingerprint=format_authority.fingerprint,
-            draw_input_fingerprint=draw_input.fingerprint,
-            draw_authority_fingerprint=draw.fingerprint,
-            draw=draw,
             runs=runs,
             diagnostics=TournamentLabBatchDiagnostics(
                 run_count=len(runs),
@@ -876,7 +900,348 @@ class TournamentTestLabService:
                     mean(row.played_match_count for row in runs), 3
                 ),
             ),
+            **result_kwargs,
         )
+
+    @staticmethod
+    def _build_group_authorities(
+        scenario: TournamentLabScenario,
+    ) -> tuple[
+        TournamentFormatAuthority,
+        TournamentTopologyAuthority,
+        TournamentGroupMatchScheduleAuthority,
+    ]:
+        participant_order = scenario.seed_order_player_ids or tuple(
+            item.player.player_id for item in scenario.participants
+        )
+        scope = {
+            "run_id": f"lab:{scenario.scenario_id}",
+            "branch_id": "isolated",
+            "event_id": f"lab-event:{scenario.scenario_id}",
+        }
+        source_fp = _fingerprint(
+            {"scenario_fingerprint": scenario.fingerprint, "scope": "tournament-lab-source"}
+        )
+        entry = TournamentEntryField(
+            run_id=scope["run_id"],
+            branch_id=scope["branch_id"],
+            event_id=scope["event_id"],
+            mode="initial",
+            capacity=TournamentEntryFieldCapacity(
+                geometry_kind="fixed_participant_field",
+                main_draw_size=len(participant_order),
+            ),
+            tournament_ranking_authority_fingerprint=source_fp,
+            ranking_snapshot_fingerprint=source_fp,
+            applications_fingerprint=_fingerprint([]),
+            direct_main_player_ids=participant_order,
+        )
+        rules = TournamentGroupRulesPolicy(
+            run_id=scope["run_id"],
+            branch_id=scope["branch_id"],
+            effective_from_season_index=0,
+            default_match_best_of=scenario.group_match_best_of,
+            adopted_by_command_id="tournament-lab-group-rules-v4",
+        )
+        configuration = TournamentGroupFormatConfiguration(
+            group_count=scenario.group_count,
+            group_size=scenario.group_size,
+            seeded_slots_per_group=scenario.seeded_slots_per_group,
+            group_seed_placements=scenario.group_seed_placements,
+            match_best_of=scenario.group_match_best_of,
+            rules_source_kind="edition_override",
+            group_rules_policy_fingerprint=rules.fingerprint,
+            group_rules_effective_from_season_index=0,
+            advancing_per_group=scenario.advancing_per_group,
+            knockout_crossings=scenario.knockout_crossings,
+        )
+        format_authority = TournamentFormatAuthority(
+            run_id=scope["run_id"],
+            branch_id=scope["branch_id"],
+            event_id=scope["event_id"],
+            target_season_index=0,
+            configured_by_command_id="tournament-lab-format-v4",
+            entry_field_fingerprint=entry.fingerprint,
+            format_kind=scenario.format_kind,
+            group_configuration=configuration,
+        )
+        topology = TournamentTopologyAuthorityBuilder.build_groups(
+            format_authority=format_authority,
+            entry_field=entry,
+            participant_order_player_ids=participant_order,
+            command_id="tournament-lab-topology-v4",
+            topology_seed=scenario.topology_seed,
+        )
+        schedule = TournamentGroupMatchScheduleBuilder.build(
+            format_authority=format_authority,
+            topology_authority=topology,
+            command_id="tournament-lab-group-schedule-v4",
+        )
+        return format_authority, topology, schedule
+
+    def _execute_group_tournament(
+        self,
+        scenario: TournamentLabScenario,
+        *,
+        topology: TournamentTopologyAuthority,
+        schedule: TournamentGroupMatchScheduleAuthority,
+        match_seed: int,
+    ) -> TournamentLabSingleRun:
+        participants = {
+            item.player.player_id: item for item in scenario.participants
+        }
+        group_results: list[TournamentLabMatchResult] = []
+        receipts = []
+        blocking_issue: TournamentLabIssue | None = None
+
+        for scheduled in schedule.matches:
+            player_a = participants[scheduled.top_player_id]
+            player_b = participants[scheduled.bottom_player_id]
+            fmt = scheduled.effective_match_format.format
+            context = MatchContext(
+                match_id=scheduled.match_id,
+                player_a=player_a,
+                player_b=player_b,
+                best_of=fmt.best_of,
+                games_to=fmt.games_to,
+                win_by=fmt.win_by,
+                upset_variance=scenario.match_format.upset_variance,
+            )
+            seed = self._node_seed(match_seed, scheduled.match_id)
+            raw = MatchEngine(rng=DeterministicRng(seed)).simulate(context)
+            result_fp = _fingerprint(raw.model_dump(mode="json"))
+            group_results.append(
+                TournamentLabMatchResult(
+                    node_id=scheduled.match_id,
+                    round_number=scheduled.match_day_ordinal,
+                    round_sequence=scheduled.match_order,
+                    player_a_id=raw.player_a_id,
+                    player_b_id=raw.player_b_id,
+                    winner_player_id=raw.winner_player_id,
+                    loser_player_id=raw.loser_player_id,
+                    status="played",
+                    match_seed=seed,
+                    result_fingerprint=result_fp,
+                    set_scores=tuple(_set_score(raw, item.set_number) for item in raw.sets),
+                    rally_count=len(raw.rally_log.events) if raw.rally_log is not None else 0,
+                    elapsed_seconds=(
+                        raw.timeline_log.total_elapsed_seconds
+                        if raw.timeline_log is not None
+                        else 0.0
+                    ),
+                )
+            )
+            try:
+                receipts.append(
+                    TournamentGroupStandingsBuilder.receipt_from_result(
+                        scheduled_match=scheduled,
+                        result=raw,
+                        result_fingerprint=result_fp,
+                    )
+                )
+            except TournamentGroupStandingsUnsupportedResult as exc:
+                blocking_issue = TournamentLabIssue(
+                    severity="error",
+                    code="GROUP_STANDINGS_RESULT_UNSUPPORTED",
+                    message=str(exc),
+                )
+                break
+
+        standings: TournamentGroupStandingsAuthority | None = None
+        if blocking_issue is None:
+            try:
+                standings = TournamentGroupStandingsBuilder.build(
+                    schedule=schedule,
+                    receipts=tuple(receipts),
+                    command_id="tournament-lab-group-standings-v4",
+                )
+            except TournamentGroupStandingsUnresolvedTie as exc:
+                blocking_issue = TournamentLabIssue(
+                    severity="error",
+                    code="GROUP_STANDINGS_UNRESOLVED_TIE",
+                    message=(
+                        f"Automatic group criteria exhausted for group {exc.group_index}; "
+                        f"explicit Admin tie resolution is required for case {exc.case.fingerprint}."
+                    ),
+                )
+
+        group_stage = TournamentLabGroupStageResult(
+            topology_fingerprint=topology.fingerprint,
+            schedule_fingerprint=schedule.fingerprint,
+            match_day_count=schedule.match_day_count,
+            match_results=tuple(group_results),
+            standings=standings,
+            blocking_issue=blocking_issue,
+        )
+
+        if blocking_issue is not None or standings is None:
+            assertions = self._assertions(
+                scenario,
+                champion=None,
+                played_match_count=len(group_results),
+                tournament_complete=False,
+                champion_applicable=scenario.format_kind == "groups_knockout",
+            )
+            payload = {
+                "scenario_fingerprint": scenario.fingerprint,
+                "match_seed": match_seed,
+                "group_stage": group_stage.model_dump(mode="json"),
+                "assertions": [item.model_dump(mode="json") for item in assertions],
+            }
+            return TournamentLabSingleRun(
+                match_seed=match_seed,
+                completed_rounds=0,
+                tournament_complete=False,
+                champion_player_id=None,
+                played_match_count=len(group_results),
+                bye_advance_count=0,
+                group_stage=group_stage,
+                match_results=(),
+                assertions=assertions,
+                run_fingerprint=_fingerprint(payload),
+            )
+
+        if scenario.format_kind == "groups":
+            assertions = self._assertions(
+                scenario,
+                champion=None,
+                played_match_count=len(group_results),
+                tournament_complete=True,
+                champion_applicable=False,
+            )
+            payload = {
+                "scenario_fingerprint": scenario.fingerprint,
+                "match_seed": match_seed,
+                "group_stage": group_stage.model_dump(mode="json"),
+                "assertions": [item.model_dump(mode="json") for item in assertions],
+            }
+            return TournamentLabSingleRun(
+                match_seed=match_seed,
+                completed_rounds=0,
+                tournament_complete=True,
+                champion_player_id=None,
+                played_match_count=len(group_results),
+                bye_advance_count=0,
+                group_stage=group_stage,
+                match_results=(),
+                assertions=assertions,
+                run_fingerprint=_fingerprint(payload),
+            )
+
+        entrants = TournamentHybridKnockoutEntrantsBuilder.build(
+            topology=topology,
+            standings=standings,
+            command_id="tournament-lab-hybrid-entrants-v4",
+        )
+        bracket = TournamentHybridKnockoutBracketBuilder.build(
+            entrants=entrants,
+            command_id="tournament-lab-hybrid-bracket-v4",
+        )
+        knockout_results, champion, completed_rounds, tournament_complete = (
+            self._execute_hybrid_bracket(
+                scenario,
+                bracket=bracket,
+                participants=participants,
+                match_seed=match_seed,
+            )
+        )
+        total_played = len(group_results) + len(knockout_results)
+        assertions = self._assertions(
+            scenario,
+            champion=champion,
+            played_match_count=total_played,
+            tournament_complete=tournament_complete,
+            champion_applicable=True,
+        )
+        payload = {
+            "scenario_fingerprint": scenario.fingerprint,
+            "match_seed": match_seed,
+            "group_stage": group_stage.model_dump(mode="json"),
+            "hybrid_bracket": bracket.model_dump(mode="json"),
+            "knockout_results": [item.model_dump(mode="json") for item in knockout_results],
+            "assertions": [item.model_dump(mode="json") for item in assertions],
+        }
+        return TournamentLabSingleRun(
+            match_seed=match_seed,
+            completed_rounds=completed_rounds,
+            tournament_complete=tournament_complete,
+            champion_player_id=champion,
+            played_match_count=total_played,
+            bye_advance_count=0,
+            group_stage=group_stage,
+            hybrid_knockout_bracket=bracket,
+            match_results=tuple(knockout_results),
+            assertions=assertions,
+            run_fingerprint=_fingerprint(payload),
+        )
+
+    def _execute_hybrid_bracket(
+        self,
+        scenario: TournamentLabScenario,
+        *,
+        bracket: TournamentHybridKnockoutBracketAuthority,
+        participants: dict[str, MatchParticipantContext],
+        match_seed: int,
+    ) -> tuple[list[TournamentLabMatchResult], str | None, int, bool]:
+        winners: dict[str, str] = {}
+        results: list[TournamentLabMatchResult] = []
+        stop_round = min(
+            scenario.stop_after_round or bracket.round_count,
+            bracket.round_count,
+        )
+
+        def resolve(source: str) -> str:
+            if source.startswith("player:"):
+                return source.removeprefix("player:")
+            if source.startswith("winner:"):
+                match_id = source.removeprefix("winner:")
+                if match_id not in winners:
+                    raise ValueError("Hybrid Tournament Lab bracket references unresolved winner")
+                return winners[match_id]
+            raise ValueError("Hybrid Tournament Lab bracket contains unsupported source")
+
+        for match in bracket.matches:
+            if match.round_number > stop_round:
+                break
+            player_a_id = resolve(match.participant_sources[0])
+            player_b_id = resolve(match.participant_sources[1])
+            context = MatchContext(
+                match_id=match.match_id,
+                player_a=participants[player_a_id],
+                player_b=participants[player_b_id],
+                best_of=scenario.match_format.best_of,
+                games_to=scenario.match_format.games_to,
+                win_by=scenario.match_format.win_by,
+                upset_variance=scenario.match_format.upset_variance,
+            )
+            seed = self._node_seed(match_seed, match.match_id)
+            raw = MatchEngine(rng=DeterministicRng(seed)).simulate(context)
+            winners[match.match_id] = raw.winner_player_id
+            results.append(
+                TournamentLabMatchResult(
+                    node_id=match.match_id,
+                    round_number=match.round_number,
+                    round_sequence=match.match_index,
+                    player_a_id=raw.player_a_id,
+                    player_b_id=raw.player_b_id,
+                    winner_player_id=raw.winner_player_id,
+                    loser_player_id=raw.loser_player_id,
+                    status="played",
+                    match_seed=seed,
+                    result_fingerprint=_fingerprint(raw.model_dump(mode="json")),
+                    set_scores=tuple(_set_score(raw, item.set_number) for item in raw.sets),
+                    rally_count=len(raw.rally_log.events) if raw.rally_log is not None else 0,
+                    elapsed_seconds=(
+                        raw.timeline_log.total_elapsed_seconds
+                        if raw.timeline_log is not None
+                        else 0.0
+                    ),
+                )
+            )
+
+        complete = stop_round == bracket.round_count
+        champion = winners.get(bracket.terminal_match_id) if complete else None
+        return results, champion, stop_round, complete
 
     @staticmethod
     def _build_draw(

@@ -872,7 +872,9 @@ def test_tournament_lab_historical_copy_fails_closed_for_wc_until_replacement_sl
         draw = TournamentDrawInputAuthority.model_validate_json(
             component["draw_inputs"][0]["payload_json"]
         )
-        changed = draw.model_copy(update={"wild_card_player_ids": (draw.direct_main_player_ids[1],)})
+        changed = draw.model_copy(
+            update={"replacement_source_authority_fingerprints": ("5" * 64,)}
+        )
         component = dict(component)
         component["draw_inputs"] = (
             {

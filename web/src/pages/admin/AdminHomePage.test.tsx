@@ -47,6 +47,7 @@ describe('AdminHomePage', () => {
       ['Tour & Seasons', '/admin/tour-seasons'],
       ['Runs', '/admin/runs'],
       ['Simulate', '/admin/simulate'],
+      ['Test Labs', '/admin/labs/tournament'],
       ['Diagnostics', '/admin/diagnostics'],
     ]) {
       const link = screen.getAllByRole('link').find((element) => element.textContent?.includes(label))

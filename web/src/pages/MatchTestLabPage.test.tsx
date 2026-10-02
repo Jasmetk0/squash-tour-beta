@@ -104,6 +104,6 @@ describe('MatchTestLabPage', () => {
     await user.click(screen.getByRole('button', { name: 'Run scenario' }))
 
     expect(api.runMatchTestLab).not.toHaveBeenCalled()
-    expect(screen.getByText(/Expected property name|JSON/i)).toBeInTheDocument()
+    expect(screen.getByText("Expected property name or '}' in JSON at position 1")).toBeInTheDocument()
   })
 })

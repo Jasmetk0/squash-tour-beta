@@ -265,9 +265,11 @@ def test_multi_seed_comparison_endpoint_is_bounded_deterministic_and_read_only(t
         retry_status, retry = _request("POST", f"{server.base_url}/world/talent-class/calibration/compare-multi-seed", payload)
         too_large = dict(payload, seed_count=6, sample_count_per_seed=50_000)
         invalid_status, _ = _request("POST", f"{server.base_url}/world/talent-class/calibration/compare-multi-seed", too_large)
+        too_many_seeds = dict(payload, seed_count=101, sample_count_per_seed=1)
+        seed_limit_status, _ = _request("POST", f"{server.base_url}/world/talent-class/calibration/compare-multi-seed", too_many_seeds)
         _, after = _request("GET", f"{server.base_url}/runs")
     assert status == retry_status == 200 and first == retry
-    assert invalid_status == 422
+    assert invalid_status == seed_limit_status == 422
     assert before == after
     assert first["seeds"] == [20, 21, 22]
     assert first["total_sample_count"] == 75

@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
+import hashlib
+import json
 
 from beta_engine.application.season_registry_service import SeasonRegistryEntry, SeasonRegistryService
 from beta_engine.application.world_package_countries_service import WorldPackageCountriesService
@@ -59,6 +61,7 @@ class RunWeeklyIntakeCohortSeasonPreviewResult:
     season_variation_multiplier: float
     annual_target: int
     total_weekly_target: int
+    review_fingerprint: str
     weeks: list[RunWeeklyIntakeCohortSeasonWeek]
     country_totals: list[RunWeeklyIntakeCohortCountryTotal]
 
@@ -130,6 +133,34 @@ class RunWeeklyIntakeCohortPreviewService:
                 )
             )
 
+        country_total_rows = [
+            RunWeeklyIntakeCohortCountryTotal(
+                country_code=code,
+                country_name=country_names.get(code),
+                allocated_count=allocated_count,
+            )
+            for code, allocated_count in sorted(country_totals.items())
+            if allocated_count > 0
+        ]
+        reviewed_scope = {
+            "schema_version": "talent_intake_review_scope.v1",
+            "run_id": run_info.run_id,
+            "world_id": run_info.world_id,
+            "world_name": countries_result.world_name,
+            "season": plan.season,
+            "season_start_year": plan.season_start_year,
+            "season_index": plan.season_index,
+            "base_annual_intake_target": plan.base_annual_intake_target,
+            "season_growth_rate": plan.season_growth_rate,
+            "season_variation_multiplier": plan.season_variation_multiplier,
+            "annual_target": plan.annual_target,
+            "total_weekly_target": plan.total_weekly_target,
+            "weeks": [asdict(week) for week in weeks],
+            "country_totals": [asdict(row) for row in country_total_rows],
+        }
+        review_fingerprint = hashlib.sha256(
+            json.dumps(reviewed_scope, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+        ).hexdigest()
         return RunWeeklyIntakeCohortSeasonPreviewResult(
             run_id=run_info.run_id,
             world_id=run_info.world_id,
@@ -142,16 +173,9 @@ class RunWeeklyIntakeCohortPreviewService:
             season_variation_multiplier=plan.season_variation_multiplier,
             annual_target=plan.annual_target,
             total_weekly_target=plan.total_weekly_target,
+            review_fingerprint=review_fingerprint,
             weeks=weeks,
-            country_totals=[
-                RunWeeklyIntakeCohortCountryTotal(
-                    country_code=code,
-                    country_name=country_names.get(code),
-                    allocated_count=allocated_count,
-                )
-                for code, allocated_count in sorted(country_totals.items())
-                if allocated_count > 0
-            ],
+            country_totals=country_total_rows,
         )
 
     def _get_supported_season(self, start_year: int) -> SeasonRegistryEntry:

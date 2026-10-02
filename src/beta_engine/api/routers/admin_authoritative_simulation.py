@@ -55,6 +55,10 @@ from beta_engine.application.standalone_match_service import (
     StandaloneMatchSimulateCommand,
 )
 from beta_engine.application.prospect_bridge_inspection import inspect_prospect_bridge
+from beta_engine.application.pre_alpha_fax_acceptance_profile import (
+    PreAlphaFaxAcceptanceProfile,
+    PreAlphaFaxAcceptanceProfileService,
+)
 from beta_engine.domain.players.sporting import PlayerDevelopmentPolicy
 from beta_engine.domain.rankings.official import OfficialRankingPolicy, RankingWeek
 from beta_engine.domain.simulation_slots import WeekSimulationSchedule
@@ -63,6 +67,31 @@ router = APIRouter(
     prefix="/admin/runs/{run_id}/branches/{branch_id}/authoritative-simulation",
     tags=["admin-authoritative-simulation"],
 )
+
+
+@router.get(
+    "/pre-alpha/fax-acceptance-profile",
+    response_model=PreAlphaFaxAcceptanceProfile,
+)
+def get_pre_alpha_fax_acceptance_profile(
+    run_id: str,
+    branch_id: str,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+) -> PreAlphaFaxAcceptanceProfile:
+    try:
+        return PreAlphaFaxAcceptanceProfileService(
+            runtime.repository._session_factory
+        ).inspect(run_id=run_id, branch_id=branch_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "pre_alpha_fax_acceptance_profile_conflict",
+                "message": str(exc),
+            },
+        ) from exc
 
 
 def _driver(runtime, matches, awards):

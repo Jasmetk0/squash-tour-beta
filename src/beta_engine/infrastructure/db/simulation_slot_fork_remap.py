@@ -469,6 +469,11 @@ def remap_completed_simulation_slot_core(
                 "players": players,
                 "seed": seed,
                 "engine": target_input.engine_input.match_engine_version,
+                "effective_match_format": (
+                    target_input.engine_input.effective_match_format.model_dump(
+                        mode="json"
+                    )
+                ),
                 "projection": target_input.player_projections[
                     0
                 ].projection_policy_fingerprint,

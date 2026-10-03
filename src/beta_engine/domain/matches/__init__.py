@@ -24,6 +24,13 @@ from beta_engine.domain.matches.gameplans import (
     RallyGameplanContext,
     StyleAxes,
 )
+from beta_engine.domain.matches.health import (
+    EffectiveMatchHealthSnapshot,
+    MatchHealthRecordProjection,
+    MatchPermanentHealthConsequenceProjection,
+    PlayerMatchHealthProjection,
+    project_player_health,
+)
 from beta_engine.domain.matches.inputs import MatchInputSnapshot
 from beta_engine.domain.matches.match_engine import MatchEngine
 from beta_engine.domain.matches.models import (
@@ -110,6 +117,7 @@ __all__ = [
     "BetweenRallyIntervalEvent",
     "EffectiveMatchFormatSnapshot",
     "EffectiveMatchGameplanSnapshot",
+    "EffectiveMatchHealthSnapshot",
     "EffectiveMatchStaminaSnapshot",
     "EffectiveMatchTimingSnapshot",
     "EffectiveRallyRulesSnapshot",
@@ -122,6 +130,8 @@ __all__ = [
     "GameplanTimeHorizon",
     "InterferenceRuleContext",
     "MatchContext",
+    "MatchHealthRecordProjection",
+    "MatchPermanentHealthConsequenceProjection",
     "MatchEngine",
     "MatchFormat",
     "MatchInputSnapshot",
@@ -139,6 +149,7 @@ __all__ = [
     "OfficialRallyCall",
     "OpponentStyleEstimate",
     "PlayerActiveGameplan",
+    "PlayerMatchHealthProjection",
     "PlayerControlSegmentWorkload",
     "PlayerGameplanRallyEffect",
     "PlayerGameplanState",
@@ -190,4 +201,5 @@ __all__ = [
     "StyleAxes",
     "official_match_format_snapshot",
     "resolve_effective_match_format",
+    "project_player_health",
 ]

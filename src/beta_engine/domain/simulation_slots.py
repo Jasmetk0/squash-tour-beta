@@ -521,7 +521,10 @@ class SimulationSlotPlan(FrozenInput):
 
     @property
     def fingerprint(self) -> str:
-        return fingerprint(self.model_dump(mode="json", exclude_none=True))
+        payload = self.model_dump(mode="json")
+        if self.health_state_fingerprint is None:
+            payload.pop("health_state_fingerprint", None)
+        return fingerprint(payload)
 
 
 class SimulationMatchEventPlan(FrozenInput):

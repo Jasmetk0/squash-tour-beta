@@ -155,6 +155,7 @@ from beta_engine.infrastructure.db.player_health_state import (
     put_health,
     remap_saved_health_component,
     replace_health_head,
+    restore_saved_health,
 )
 from beta_engine.infrastructure.db.player_lifecycle_state import (
     get_lifecycle,
@@ -6802,12 +6803,48 @@ def test_real_q_receipts_ll_vacancy_fill_survive_fork_restore_retry(tmp_path):
         run_id="run",
         branch_id="branch",
     )
+    capture_saved_health(
+        session,
+        source_payload,
+        run_id="run",
+        branch_id="branch",
+    )
     capture_saved_simulation_slots(
         session,
         source_payload,
         run_id="run",
         branch_id="branch",
     )
+    source_health_states = load_saved_health(
+        source_payload,
+        run_id="run",
+        branch_id="branch",
+    )
+    assert source_health_states is not None
+    target_health_component = remap_saved_health_component(
+        source_payload,
+        run_id="run",
+        source_branch_id="branch",
+        target_branch_id="target",
+    )
+    assert target_health_component is not None
+    target_health_payload = {
+        "content": {PLAYER_HEALTH_COMPONENT_KEY: target_health_component}
+    }
+    target_health_states = load_saved_health(
+        target_health_payload,
+        run_id="run",
+        branch_id="target",
+    )
+    assert target_health_states is not None
+    health_fingerprint_map = {
+        source.fingerprint: target.fingerprint
+        for source, target in zip(
+            source_health_states,
+            target_health_states,
+            strict=True,
+        )
+    }
 
     session.add(
         RunBranchModel(
@@ -6845,6 +6882,7 @@ def test_real_q_receipts_ll_vacancy_fill_survive_fork_restore_retry(tmp_path):
         tournament_ranking_authority_map={
             source_ranking.fingerprint: target_ranking,
         },
+        health_fingerprint_map=health_fingerprint_map,
     )
     assert remapped is not None
     assert len(remapped.simulation_component["draw_revisions"]) == 2
@@ -6861,9 +6899,17 @@ def test_real_q_receipts_ll_vacancy_fill_survive_fork_restore_retry(tmp_path):
 
     fork_root_payload = {
         "content": {
+            PLAYER_HEALTH_COMPONENT_KEY: target_health_component,
             "simulation_slot_match_state": remapped.simulation_component,
         }
     }
+    restore_saved_health(
+        session,
+        current_payload={"content": {}},
+        target_payload=fork_root_payload,
+        run_id="run",
+        branch_id="target",
+    )
     restore_saved_simulation_slots(
         session,
         current_payload={"content": {}},

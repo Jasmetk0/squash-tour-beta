@@ -115,7 +115,7 @@ def test_v11_protects_sharpness_and_health_separately_from_form_and_fatigue() ->
         context=context,
         effective_match_format=first.effective_match_format,
         simulation_seed=first.simulation_seed,
-        match_engine_version="match_engine_v10",
+        match_engine_version="match_engine_v11",
     )
     assert first.context.player_a.form_modifier == second.context.player_a.form_modifier
     assert (
@@ -127,6 +127,38 @@ def test_v11_protects_sharpness_and_health_separately_from_form_and_fatigue() ->
         != second.context.player_a.sharpness_modifier
     )
     assert first.snapshot_hash != second.snapshot_hash
+
+
+def test_v10_sharpness_snapshot_remains_readable_without_health_projection() -> None:
+    current = _snapshot()
+    hash_payload = MatchInputSnapshot._hash_payload(
+        schema_version="match_input_snapshot.v10",
+        match_id=current.match_id,
+        simulation_seed=current.simulation_seed,
+        match_engine_version="match_engine_v10",
+        effective_match_format=current.effective_match_format,
+        effective_match_timing=current.effective_match_timing,
+        effective_match_stamina=current.effective_match_stamina,
+        rally_calibration_profile=current.rally_calibration_profile,
+        effective_match_gameplans=current.effective_match_gameplans,
+        effective_rally_rules=current.effective_rally_rules,
+        context=current.context,
+        unsupported_future_inputs=(),
+    )
+    payload = current.model_dump(mode="json")
+    payload.pop("effective_match_health")
+    payload.update(
+        schema_version="match_input_snapshot.v10",
+        match_engine_version="match_engine_v10",
+        snapshot_hash=MatchInputSnapshot._content_hash(hash_payload),
+    )
+
+    restored = MatchInputSnapshot.model_validate(payload)
+
+    assert restored.schema_version == "match_input_snapshot.v10"
+    assert restored.effective_match_health is None
+    assert restored.context.player_a.sharpness_modifier == current.context.player_a.sharpness_modifier
+    assert restored.snapshot_hash == MatchInputSnapshot._content_hash(hash_payload)
 
 
 def test_fixed_historical_v9_payload_keeps_original_identity() -> None:

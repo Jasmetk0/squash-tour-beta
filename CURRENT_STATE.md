@@ -3,7 +3,7 @@
 ## Current checkpoint — 3 October 2026 / Master v72
 
 This checkpoint supersedes older next-task notices below; their implementation evidence is retained.
-Current integration baseline is `buuk` after merged #1118 (`121aaca35c83ea31214fbbf44da30941bc95d69b`).
+Current integration baseline is `buuk` after merged #1119 (`55831339ed741879c81a8dde9a5778069164c505`).
 The copied-FAX path now reaches the explicit automatic application-validation policy blocker.
 The mandatory 50-season release acceptance has not yet completed.
 
@@ -13,6 +13,30 @@ lifecycle-owned future visibility, and conservative Viewer hidden-field gating.
 Master v70 preserves calibration as open test work and sets the FAX acceptance reference to a
 copied template, at least 1,000 initial players and 80 fully simulated World Tour Editions;
 lower Tours remain abstract. The Official Run is not the acceptance focus.
+
+## Implemented — canonical Player Health V1 authority foundation
+
+- Added separate immutable `player_health_week_state.v1` Run/Branch/week authority rather than
+  collapsing health into the 57 sporting attributes or fixed Potential.
+- Health history supports independent Injury/Illness records, Master 0–100 Severity,
+  At Risk/Active/Recovering/Recovered lifecycle, multiple simultaneous records, recurrence links,
+  explicit pre-start history and separate permanent post-recovery consequences.
+- Week Transition currently performs deterministic carry-forward only. It preserves health truth and
+  adds empty profiles for newly materialized lifecycle identities without inventing the still-open
+  PAQ-155 stochastic rates, healing curves or stacking mathematics.
+- Health now bootstraps with InitialWorld, participates in normal Save, Saved Revision restore coverage,
+  fail-closed live-vs-head validation and materialized Branch fork remapping.
+- Atomic Week Transition freezes Health alongside Ranking/Lifecycle/Sporting and requires the reviewed
+  `X-Week-Transition-Health-Fingerprint` on confirmation.
+- Ordinary Season Transition carries Health through W61 → next-season W1; final Run closure captures
+  the current Health history.
+- Legacy Health absence can be reconstructed automatically only at the opening Week-1 boundary;
+  advanced missing history fails closed rather than pretending players were healthy.
+
+See [Player Health V1](docs/PLAYER_HEALTH_V1.md).
+
+**Next:** add explicit audited Admin Health editing/pre-start inputs, then connect the same authority to
+Match Engine limitations and Player Lab Health/recovery scenarios before calibrating stochastic Health Checks.
 
 ## Implemented — Global Player Test Lab V1 shared-development foundation
 
@@ -33,8 +57,8 @@ lower Tours remain abstract. The Official Run is not the acceptance focus.
 
 See [Player Test Lab V1](docs/PLAYER_TEST_LAB_V1.md).
 
-**Next:** implement canonical Run/Branch-owned Health V1 with save/restore/fork coverage, then extend
-Player Lab over that same Health/recovery kernel rather than creating a Lab-only substitute.
+**Next:** extend Player Lab over canonical Health V1 after explicit Health editing/projection exists;
+persistent Player Lab Test Sessions and career-AI variants remain later slices.
 
 ## Implemented — machine-readable copied-FAX Entry validation release-policy gate
 

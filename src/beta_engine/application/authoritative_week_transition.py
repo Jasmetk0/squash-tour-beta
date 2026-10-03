@@ -64,4 +64,7 @@ class AuthoritativeWeekTransitionResult(FrozenInput):
     official_ranking_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
     player_lifecycle_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
     player_sporting_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    player_health_fingerprint: str | None = Field(
+        default=None, pattern=r"^[0-9a-f]{64}$"
+    )
     world_event_kind: str = "week_transition_completed"

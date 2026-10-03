@@ -47,6 +47,7 @@ from beta_engine.infrastructure.db.models import (
     RunBranchModel,
     RunContainerModel,
 )
+from beta_engine.infrastructure.db.player_health_state import capture_saved_health
 from beta_engine.infrastructure.db.player_lifecycle_state import capture_saved_lifecycle
 from beta_engine.infrastructure.db.player_tour_entry_triggers import (
     capture_saved_tour_entry_triggers,
@@ -314,6 +315,9 @@ def commit_final_season_transition(
         session, payload, run_id=command.run_id, branch_id=command.branch_id
     )
     capture_saved_lifecycle(
+        session, payload, run_id=command.run_id, branch_id=command.branch_id
+    )
+    capture_saved_health(
         session, payload, run_id=command.run_id, branch_id=command.branch_id
     )
     capture_saved_run_entry_decision_slots(

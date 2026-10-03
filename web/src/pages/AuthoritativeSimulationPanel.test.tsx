@@ -401,6 +401,7 @@ const weekResult = {
   official_ranking_fingerprint: 'a'.repeat(64),
   player_lifecycle_fingerprint: 'b'.repeat(64),
   player_sporting_fingerprint: 'd'.repeat(64),
+  player_health_fingerprint: 'e'.repeat(64),
   world_event_kind: 'week_transition_completed' as const,
   adoption: 'committed' as const
 }
@@ -596,6 +597,7 @@ const transitionPreview = {
     official_ranking_fingerprint: 'b'.repeat(64),
     player_lifecycle_fingerprint: 'c'.repeat(64),
     player_sporting_fingerprint: 'd'.repeat(64),
+    player_health_fingerprint: 'e'.repeat(64),
     world_event_kind: 'week_transition_completed' as const
   }
 }
@@ -1197,6 +1199,7 @@ beforeEach(() => {
     default_closing_ranking_fingerprint: 'a'.repeat(64),
     default_sporting_fingerprint: '7'.repeat(64),
     default_lifecycle_fingerprint: '8'.repeat(64),
+    default_health_fingerprint: '6'.repeat(64),
     default_ranking_fingerprint: '9'.repeat(64),
     position_fingerprint: '4'.repeat(64),
     state_blockers: [],
@@ -1429,6 +1432,7 @@ beforeEach(() => {
     closure_marker_fingerprint: 'c'.repeat(64),
     player_sporting_fingerprint: 'd'.repeat(64),
     player_lifecycle_fingerprint: 'e'.repeat(64),
+    player_health_fingerprint: '1'.repeat(64),
     official_ranking_fingerprint: 'f'.repeat(64),
     world_event_kind: 'season_transition_completed',
     draft_version: 5
@@ -3802,6 +3806,7 @@ describe('AuthoritativeSimulationPanel', () => {
       default_closing_ranking_fingerprint: 'a'.repeat(64),
       default_sporting_fingerprint: '7'.repeat(64),
       default_lifecycle_fingerprint: '8'.repeat(64),
+      default_health_fingerprint: '6'.repeat(64),
       default_ranking_fingerprint: '9'.repeat(64),
       position_fingerprint: '4'.repeat(64),
       state_blockers: [],

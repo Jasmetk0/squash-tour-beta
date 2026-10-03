@@ -22,6 +22,9 @@ from beta_engine.application.season_closure_resolution import (
 from beta_engine.application.season_transition_configuration import (
     validate_season_transition_configuration,
 )
+from beta_engine.application.season_transition_health import (
+    stage_season_transition_health,
+)
 from beta_engine.application.season_transition_lifecycle import (
     stage_season_transition_lifecycle,
 )
@@ -62,6 +65,10 @@ from beta_engine.infrastructure.db.models import (
     PublishedOfficialRankingModel,
     RunBranchModel,
     RunContainerModel,
+)
+from beta_engine.infrastructure.db.player_health_state import (
+    capture_saved_health,
+    get_health,
 )
 from beta_engine.infrastructure.db.player_lifecycle_state import (
     capture_saved_lifecycle,
@@ -148,6 +155,9 @@ class OrdinarySeasonTransitionResult(FrozenInput):
     closure_marker_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
     player_sporting_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
     player_lifecycle_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    player_health_fingerprint: str | None = Field(
+        default=None, pattern=r"^[0-9a-f]{64}$"
+    )
     official_ranking_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
     world_event_kind: Literal["season_transition_completed"] = "season_transition_completed"
     draft_version: int = Field(ge=0)
@@ -186,9 +196,9 @@ def _world_event_payload(
     sporting_fingerprint: str,
     lifecycle_fingerprint: str,
     ranking_fingerprint: str,
+    health_fingerprint: str | None = None,
 ) -> str:
-    return json.dumps(
-        {
+    payload = {
             "schema_version": "season_transition_world_event.v1",
             "command_id": command.command_id,
             "completed_week": command.configuration.completed_week.model_dump(mode="json"),
@@ -201,10 +211,10 @@ def _world_event_payload(
             "player_lifecycle_fingerprint": lifecycle_fingerprint,
             "official_ranking_fingerprint": ranking_fingerprint,
             "saved_revision_id": command.season_saved_revision_id,
-        },
-        sort_keys=True,
-        separators=(",", ":"),
-    )
+        }
+    if health_fingerprint is not None:
+        payload["player_health_fingerprint"] = health_fingerprint
+    return json.dumps(payload, sort_keys=True, separators=(",", ":"))
 
 
 def _retry_result(
@@ -267,6 +277,12 @@ def _retry_result(
         branch_id=command.branch_id,
         week=target,
     )
+    health = get_health(
+        session,
+        run_id=command.run_id,
+        branch_id=command.branch_id,
+        week=target,
+    )
     closing = SeasonClosingRankingStore(session).get(
         run_id=command.run_id,
         branch_id=command.branch_id,
@@ -289,6 +305,13 @@ def _retry_result(
         or world.ranking_fingerprint != publication.snapshot_fingerprint
         or lifecycle.fingerprint != audit_payload.get("player_lifecycle_fingerprint")
         or sporting.fingerprint != audit_payload.get("player_sporting_fingerprint")
+        or (
+            audit_payload.get("player_health_fingerprint") is not None
+            and (
+                health is None
+                or health.fingerprint != audit_payload.get("player_health_fingerprint")
+            )
+        )
         or closing.fingerprint != audit_payload.get("closing_ranking_fingerprint")
         or event.event_kind != "season_transition_completed"
         or event.week_ordinal != target.ordinal
@@ -305,6 +328,7 @@ def _retry_result(
         sporting_fingerprint=sporting.fingerprint,
         lifecycle_fingerprint=lifecycle.fingerprint,
         ranking_fingerprint=publication.snapshot_fingerprint,
+        health_fingerprint=health.fingerprint if health is not None else None,
     ):
         raise ValueError("Completed Season Transition world event is corrupt")
 
@@ -332,6 +356,7 @@ def _retry_result(
         closure_marker_fingerprint=marker.fingerprint,
         player_sporting_fingerprint=sporting.fingerprint,
         player_lifecycle_fingerprint=lifecycle.fingerprint,
+        player_health_fingerprint=health.fingerprint if health is not None else None,
         official_ranking_fingerprint=publication.snapshot_fingerprint,
         draft_version=draft.draft_version,
     )
@@ -430,6 +455,11 @@ def commit_ordinary_season_transition(
     )
     sporting = stage_season_transition_sporting(session, configuration)
     lifecycle = stage_season_transition_lifecycle(session, configuration)
+    health = stage_season_transition_health(
+        session,
+        configuration,
+        target_lifecycle=lifecycle.target_state,
+    )
     ranking = stage_season_transition_ranking(session, configuration)
     snapshot = ranking.target_snapshot
 
@@ -465,6 +495,7 @@ def commit_ordinary_season_transition(
         sporting_fingerprint=sporting.target_state.fingerprint,
         lifecycle_fingerprint=lifecycle.target_state.fingerprint,
         ranking_fingerprint=snapshot.fingerprint,
+        health_fingerprint=health.target_state.fingerprint,
     )
     session.add(
         PublishedOfficialRankingModel(
@@ -524,6 +555,9 @@ def commit_ordinary_season_transition(
     capture_saved_lifecycle(
         session, payload, run_id=command.run_id, branch_id=command.branch_id
     )
+    capture_saved_health(
+        session, payload, run_id=command.run_id, branch_id=command.branch_id
+    )
     capture_saved_run_entry_decision_slots(
         session, payload, run_id=command.run_id, branch_id=command.branch_id
     )
@@ -567,6 +601,7 @@ def commit_ordinary_season_transition(
         "closure_marker_fingerprint": marker.fingerprint,
         "player_sporting_fingerprint": sporting.target_state.fingerprint,
         "player_lifecycle_fingerprint": lifecycle.target_state.fingerprint,
+        "player_health_fingerprint": health.target_state.fingerprint,
         "official_ranking_fingerprint": snapshot.fingerprint,
     }
     sequence = head.sequence + 1
@@ -659,6 +694,7 @@ def commit_ordinary_season_transition(
         closure_marker_fingerprint=marker.fingerprint,
         player_sporting_fingerprint=sporting.target_state.fingerprint,
         player_lifecycle_fingerprint=lifecycle.target_state.fingerprint,
+        player_health_fingerprint=health.target_state.fingerprint,
         official_ranking_fingerprint=snapshot.fingerprint,
         draft_version=command.expected_draft_version + 1,
     )

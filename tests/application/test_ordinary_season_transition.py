@@ -629,6 +629,7 @@ def test_completed_run_materialized_historical_branch_advances_ordinary_season(
             session, payload, run_id="run", branch_id="branch"
         )
         capture_saved_lifecycle(session, payload, run_id="run", branch_id="branch")
+        capture_saved_health(session, payload, run_id="run", branch_id="branch")
         capture_saved_sporting(session, payload, run_id="run", branch_id="branch")
         summary = json.loads(revision.change_summary_json)
         revision.payload_json = json.dumps(payload, sort_keys=True, separators=(",", ":"))

@@ -88,6 +88,7 @@ from beta_engine.infrastructure.db.models import (
     CompletedTournamentInputModel,
     LegacySimulationRunMappingModel,
     InitialWorldStateModel,
+    PlayerHealthWeekStateModel,
     PlayerLifecycleWeekStateModel,
     PlayerTourEntryTriggerModel,
     TournamentApplicationSubmissionAuthorityModel,
@@ -161,6 +162,15 @@ from beta_engine.infrastructure.db.run_tournament_lab_draft_state import (
     remap_saved_run_tournament_lab_drafts,
     restore_saved_run_tournament_lab_drafts,
     saved_run_tournament_lab_draft_component,
+)
+from beta_engine.infrastructure.db.player_health_state import (
+    PLAYER_HEALTH_COMPONENT_KEY,
+    bootstrap_health,
+    capture_saved_health,
+    load_saved_health,
+    put_health,
+    remap_saved_health_component,
+    restore_saved_health,
 )
 from beta_engine.infrastructure.db.player_lifecycle_state import (
     PLAYER_LIFECYCLE_COMPONENT_KEY,
@@ -1461,6 +1471,7 @@ class SimulationPersistenceRepository:
                 )
             lifecycle = bootstrap_lifecycle(session, stored, policy)
             bootstrap_sporting(session, stored)
+            bootstrap_health(session, stored)
             return lifecycle
 
     def adopt_initial_world(self, state, lifecycle_policy=None):
@@ -1477,6 +1488,7 @@ class SimulationPersistenceRepository:
             installed = put_initial_world(session, state)
             bootstrap_lifecycle(session, installed, lifecycle_policy)
             bootstrap_sporting(session, installed)
+            bootstrap_health(session, installed)
             return installed
 
     def preview_derived_ranking_transition_authority(
@@ -2546,6 +2558,7 @@ class SimulationPersistenceRepository:
                     INITIAL_WORLD_COMPONENT_KEY,
                     RUN_PACKAGE_COMPONENT_KEY,
                     RUN_TOURNAMENT_LAB_DRAFT_COMPONENT_KEY,
+                    PLAYER_HEALTH_COMPONENT_KEY,
                 }
                 & set(content)
             )
@@ -2635,6 +2648,7 @@ class SimulationPersistenceRepository:
                         INITIAL_WORLD_COMPONENT_KEY,
                         RUN_PACKAGE_COMPONENT_KEY,
                         RUN_TOURNAMENT_LAB_DRAFT_COMPONENT_KEY,
+                        PLAYER_HEALTH_COMPONENT_KEY,
                     }
                     & set(source_content)
                 )
@@ -2682,6 +2696,7 @@ class SimulationPersistenceRepository:
                         RANKING_COMPONENT_KEY,
                         RUN_PROSPECT_SOURCE_COMPONENT_KEY,
                         PLAYER_LIFECYCLE_COMPONENT_KEY,
+                        PLAYER_HEALTH_COMPONENT_KEY,
                         PLAYER_SPORTING_COMPONENT_KEY,
                         SIMULATION_SLOT_COMPONENT_KEY,
                         RUN_ENTRY_DECISION_SLOT_COMPONENT_KEY,
@@ -2951,6 +2966,25 @@ class SimulationPersistenceRepository:
                             strict=True,
                         )
                     }
+                    remapped_health_component = remap_saved_health_component(
+                        source_revision.payload,
+                        run_id=run_id,
+                        source_branch_id=source_branch_id,
+                        target_branch_id=branch_id,
+                    )
+                    if remapped_health_component is not None:
+                        target_payload["content"][PLAYER_HEALTH_COMPONENT_KEY] = (
+                            remapped_health_component
+                        )
+                        remapped_health_states = load_saved_health(
+                            target_payload,
+                            run_id=run_id,
+                            branch_id=branch_id,
+                        )
+                        assert remapped_health_states is not None
+                        for health_state in remapped_health_states:
+                            put_health(session, health_state)
+
                     source_to_target_lifecycle_fingerprint = {
                         source.fingerprint: target.fingerprint
                         for source, target in zip(
@@ -4307,6 +4341,22 @@ class SimulationPersistenceRepository:
                         raise SavedRevisionRestoreUnsupportedError(
                             f"Cannot restore player lifecycle: {exc}"
                         ) from exc
+                if (
+                    PLAYER_HEALTH_COMPONENT_KEY in current_content
+                    or PLAYER_HEALTH_COMPONENT_KEY in target_content
+                ):
+                    try:
+                        restore_saved_health(
+                            session,
+                            current_payload=state.saved_revision.payload,
+                            target_payload=target_revision.payload,
+                            run_id=run_id,
+                            branch_id=branch_id,
+                        )
+                    except ValueError as exc:
+                        raise SavedRevisionRestoreUnsupportedError(
+                            f"Cannot restore player health: {exc}"
+                        ) from exc
                 try:
                     validate_saved_entry_match_slot_collisions(
                         state.saved_revision.payload,
@@ -4479,6 +4529,9 @@ class SimulationPersistenceRepository:
                 # immutable legacy target. The new restore revision must describe
                 # the actual post-restore state, without rewriting that target.
                 capture_saved_lifecycle(
+                    session, payload, run_id=run_id, branch_id=branch_id
+                )
+                capture_saved_health(
                     session, payload, run_id=run_id, branch_id=branch_id
                 )
                 capture_saved_run_entry_decision_slots(
@@ -5027,6 +5080,9 @@ class SimulationPersistenceRepository:
                     session, payload, run_id=run_id, branch_id=branch_id
                 )
                 capture_saved_lifecycle(
+                    session, payload, run_id=run_id, branch_id=branch_id
+                )
+                capture_saved_health(
                     session, payload, run_id=run_id, branch_id=branch_id
                 )
                 capture_saved_run_entry_decision_slots(

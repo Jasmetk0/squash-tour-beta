@@ -6,7 +6,7 @@ from hashlib import sha256
 import json
 from typing import Literal
 
-from pydantic import Field, model_validator
+from pydantic import Field, field_validator, model_validator
 
 from beta_engine.domain.calendar.season_weeks import (
     age_at_calendar_position,
@@ -71,6 +71,13 @@ class PlayerLabVariant(FrozenInput):
     display_name: str = Field(min_length=1, max_length=160)
     competitive_match_counts: tuple[int, ...] = Field(min_length=1)
 
+    @field_validator("competitive_match_counts", mode="before")
+    @classmethod
+    def normalize_json_counts(cls, value):
+        if isinstance(value, list):
+            return tuple(value)
+        return value
+
     @model_validator(mode="after")
     def validate_counts(self):
         if any(type(value) is not int or value < 0 or value > 32 for value in self.competitive_match_counts):
@@ -92,6 +99,22 @@ class PlayerLabScenario(FrozenInput):
     source_kind: Literal["portable", "built_in_copy"] = "portable"
     source_reference: str | None = Field(default=None, max_length=500)
     source_fingerprint: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
+
+    @field_validator("player", mode="before")
+    @classmethod
+    def normalize_json_player(cls, value):
+        if isinstance(value, dict):
+            return PlayerSportingRecord.model_validate_json(
+                json.dumps(value, ensure_ascii=False)
+            )
+        return value
+
+    @field_validator("variants", mode="before")
+    @classmethod
+    def normalize_json_variants(cls, value):
+        if isinstance(value, list):
+            return tuple(value)
+        return value
 
     @model_validator(mode="after")
     def validate_scenario(self):

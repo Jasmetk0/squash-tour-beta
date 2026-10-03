@@ -75,6 +75,7 @@ class PersistedLiveMatchStore:
             rally_calibration_profile=engine_input.rally_calibration_profile,
             effective_match_gameplans=engine_input.effective_match_gameplans,
             effective_rally_rules=engine_input.effective_rally_rules,
+            effective_match_health=engine_input.effective_match_health,
         )
         if row is not None:
             if (
@@ -237,6 +238,7 @@ class PersistedLiveMatchStore:
             rally_calibration_profile=working_input.rally_calibration,
             effective_match_gameplans=working_input.gameplans,
             effective_rally_rules=working_input.rules,
+            effective_match_health=working_input.health,
         )
         if rebuilt_input.fingerprint != working_input.fingerprint:
             raise ValueError("working input cannot reproduce initial live-match state")

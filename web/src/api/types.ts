@@ -5705,6 +5705,48 @@ export type RallyCalibrationProfile = {
   tactical_effort_change_probability: number
 }
 
+export type MatchHealthRecordProjection = {
+  record_id: string
+  kind: 'Injury' | 'Illness'
+  condition_key: string
+  lifecycle: 'At Risk' | 'Active' | 'Recovering'
+  severity: number
+  affected_domains: string[]
+  provenance: string
+}
+
+export type MatchPermanentHealthConsequenceProjection = {
+  consequence_id: string
+  source_record_id: string
+  affected_domains: string[]
+  limitation_severity: number
+  provenance: string
+}
+
+export type PlayerMatchHealthProjection = {
+  player_id: string
+  current_records: MatchHealthRecordProjection[]
+  permanent_consequences: MatchPermanentHealthConsequenceProjection[]
+  affected_domains: string[]
+  highest_current_severity: number
+  highest_permanent_limitation: number
+  numeric_effect_applied: false
+  numeric_calibration_required: boolean
+}
+
+export type EffectiveMatchHealthSnapshot = {
+  schema_version: 'effective_match_health.v1'
+  projection_version: 'health_limitation_projection.v1'
+  player_profiles: [PlayerMatchHealthProjection, PlayerMatchHealthProjection]
+  numeric_effect_applied: false
+  unsupported_components: Array<
+    'numeric_limitation_effects'
+    | 'health_check'
+    | 'start_wo_ret_decision'
+    | 'medical_timeout_effect'
+  >
+}
+
 export type MatchInputSnapshot = {
   schema_version:
     | 'match_input_snapshot.v1'
@@ -5716,6 +5758,8 @@ export type MatchInputSnapshot = {
     | 'match_input_snapshot.v7'
     | 'match_input_snapshot.v8'
     | 'match_input_snapshot.v9'
+    | 'match_input_snapshot.v10'
+    | 'match_input_snapshot.v11'
   match_id: string
   simulation_seed: number
   match_engine_version: string
@@ -5725,6 +5769,7 @@ export type MatchInputSnapshot = {
   rally_calibration_profile: RallyCalibrationProfile | null
   effective_match_gameplans: EffectiveMatchGameplanSnapshot | null
   effective_rally_rules: EffectiveRallyRulesSnapshot | null
+  effective_match_health: EffectiveMatchHealthSnapshot | null
   context: Record<string, unknown>
   unsupported_future_inputs: Array<
     'active_gameplans' | 'rally_model_configuration' | 'rally_seed_stream'
@@ -7947,6 +7992,7 @@ export type PlayerLabVariant = {
   variant_id: string
   display_name: string
   competitive_match_counts: number[]
+  health_timeline?: PlayerHealthProfile[] | null
 }
 
 export type PlayerLabScenario = {
@@ -7987,6 +8033,8 @@ export type PlayerLabWeekSnapshot = {
   long_term_fatigue: number
   changed_attribute_count: number
   attribute_delta_total: number
+  health_projection: PlayerMatchHealthProjection
+  health_projection_fingerprint: string
   state_fingerprint: string
 }
 
@@ -7994,6 +8042,8 @@ export type PlayerLabVariantResult = {
   variant_id: string
   display_name: string
   initial_state_fingerprint: string
+  initial_health_projection: PlayerMatchHealthProjection
+  initial_health_projection_fingerprint: string
   final_state_fingerprint: string
   snapshots: PlayerLabWeekSnapshot[]
   final_player: Record<string, unknown>
@@ -8010,7 +8060,7 @@ export type PlayerLabResult = {
     isolated: true
     run_mutation_performed: false
     run_live_link: false
-    health_supported: false
+    health_supported: true
     training_load_supported: false
     career_ai_supported: false
     warnings: string[]

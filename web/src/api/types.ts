@@ -2502,6 +2502,7 @@ export type AuthoritativeWeekTransitionResult = {
   official_ranking_fingerprint: string
   player_lifecycle_fingerprint: string
   player_sporting_fingerprint: string
+  player_health_fingerprint: string | null
   world_event_kind: 'week_transition_completed'
 }
 

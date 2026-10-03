@@ -35,6 +35,7 @@ from beta_engine.infrastructure.db.models import (
     OfficialRankingResultVersionModel,
     OfficialRankingZeroVersionModel,
     OwnedTournamentRankingSourceModel,
+    PlayerHealthWeekStateModel,
     PlayerLifecycleWeekStateModel,
     PlayerSportingWeekStateModel,
     PlayerTourEntryTriggerModel,
@@ -75,6 +76,9 @@ from beta_engine.infrastructure.db.models import (
     WorldTourFinalsReplacementAuthorityModel,
     WorldTourFinalsRaceConfigurationModel,
     WorldTourFinalsRaceSnapshotModel,
+)
+from beta_engine.infrastructure.db.player_health_state import (
+    PLAYER_HEALTH_COMPONENT_KEY,
 )
 from beta_engine.infrastructure.db.player_lifecycle_state import (
     PLAYER_LIFECYCLE_COMPONENT_KEY,
@@ -165,6 +169,11 @@ COMPONENT_COVERAGE: tuple[SavedRevisionComponentCoverage, ...] = (
         component_key=PLAYER_LIFECYCLE_COMPONENT_KEY,
         label="player lifecycle state",
         models=(PlayerLifecycleWeekStateModel,),
+    ),
+    SavedRevisionComponentCoverage(
+        component_key=PLAYER_HEALTH_COMPONENT_KEY,
+        label="player health state",
+        models=(PlayerHealthWeekStateModel,),
     ),
     SavedRevisionComponentCoverage(
         component_key=RUN_ENTRY_DECISION_SLOT_COMPONENT_KEY,

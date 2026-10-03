@@ -4900,43 +4900,39 @@ class SimulationPersistenceRepository:
         expected_run_prospect_source_fingerprint: str | None = None,
         expected_run_package_fingerprint: str | None = None,
         expected_run_tournament_lab_draft_fingerprint: str | None = None,
+        expected_player_health_fingerprint: str | None = None,
     ) -> ViewerBranchSaveResult:
         """Commit one dirty draft as revision, audit, Viewer pointer, and clean draft."""
 
-        component_only = (
-            expected_ranking_fingerprint is not None
-            or expected_initial_world_fingerprint is not None
-            or expected_simulation_fingerprint is not None
-            or expected_run_prospect_source_fingerprint is not None
-            or expected_run_package_fingerprint is not None
-            or expected_run_tournament_lab_draft_fingerprint is not None
-        )
-        ranking_only = expected_ranking_fingerprint is not None
-        revision_kind = (
-            "ranking_preparation"
-            if ranking_only
-            else (
-                "initial_world"
-                if expected_initial_world_fingerprint is not None
-                else (
-                    "authoritative_simulation"
-                    if expected_simulation_fingerprint
-                    else (
-                        "run_prospect_source"
-                        if expected_run_prospect_source_fingerprint
-                        else (
-                            "run_package_state"
-                            if expected_run_package_fingerprint
-                            else (
-                                "tournament_lab_run_draft"
-                                if expected_run_tournament_lab_draft_fingerprint
-                                else VIEWER_BRANCH_SELECTION_SAVED_REVISION_KIND
-                            )
-                        )
-                    )
-                )
+        component_only = any(
+            fingerprint is not None
+            for fingerprint in (
+                expected_ranking_fingerprint,
+                expected_initial_world_fingerprint,
+                expected_simulation_fingerprint,
+                expected_run_prospect_source_fingerprint,
+                expected_run_package_fingerprint,
+                expected_run_tournament_lab_draft_fingerprint,
+                expected_player_health_fingerprint,
             )
         )
+        ranking_only = expected_ranking_fingerprint is not None
+        if ranking_only:
+            revision_kind = "ranking_preparation"
+        elif expected_initial_world_fingerprint is not None:
+            revision_kind = "initial_world"
+        elif expected_simulation_fingerprint is not None:
+            revision_kind = "authoritative_simulation"
+        elif expected_run_prospect_source_fingerprint is not None:
+            revision_kind = "run_prospect_source"
+        elif expected_run_package_fingerprint is not None:
+            revision_kind = "run_package_state"
+        elif expected_run_tournament_lab_draft_fingerprint is not None:
+            revision_kind = "tournament_lab_run_draft"
+        elif expected_player_health_fingerprint is not None:
+            revision_kind = "player_health_state"
+        else:
+            revision_kind = VIEWER_BRANCH_SELECTION_SAVED_REVISION_KIND
         previous_current_viewer_id = ""
         target_viewer_id = ""
         try:
@@ -4964,6 +4960,7 @@ class SimulationPersistenceRepository:
                     (
                         expected_run_package_fingerprint is not None
                         or expected_run_tournament_lab_draft_fingerprint is not None
+                        or expected_player_health_fingerprint is not None
                     )
                     and draft.status == DIRTY_WORKING_DRAFT_STATUS
                 )
@@ -5018,7 +5015,11 @@ class SimulationPersistenceRepository:
                                 if not (
                                     isinstance(change, dict)
                                     and change.get("kind")
-                                    in {"run_package_state", "run_tournament_lab_drafts"}
+                                    in {
+                                        "run_package_state",
+                                        "run_tournament_lab_drafts",
+                                        "player_health_state",
+                                    }
                                 )
                             ]
                         )
@@ -5040,6 +5041,21 @@ class SimulationPersistenceRepository:
                     ):
                         raise WorkingDraftConflictError(
                             "Tournament Lab Run draft Working Draft evidence is inconsistent"
+                        )
+                if expected_player_health_fingerprint is not None:
+                    health_changes = state.working_draft.changes
+                    if (
+                        not health_changes
+                        or any(
+                            not isinstance(change, dict)
+                            or change.get("kind") != "player_health_state"
+                            for change in health_changes
+                        )
+                        or health_changes[-1].get("fingerprint")
+                        != expected_player_health_fingerprint
+                    ):
+                        raise WorkingDraftConflictError(
+                            "Player Health Working Draft evidence is inconsistent"
                         )
                 if not component_only and saved_viewer_id == target_viewer_id:
                     raise WorkingDraftConflictError(
@@ -5236,6 +5252,29 @@ class SimulationPersistenceRepository:
                         "kind": "tournament_lab_run_draft",
                         "summary": "Saved reviewed Tournament Lab Run draft",
                         "tournament_lab_run_draft_fingerprint": component["fingerprint"],
+                    }
+                elif expected_player_health_fingerprint is not None:
+                    component = payload["content"].get(PLAYER_HEALTH_COMPONENT_KEY)
+                    if (
+                        component is None
+                        or component["fingerprint"] != expected_player_health_fingerprint
+                    ):
+                        raise WorkingDraftConflictError(
+                            "Player Health state changed since preview"
+                        )
+                    if (
+                        state.saved_revision.payload["content"].get(
+                            PLAYER_HEALTH_COMPONENT_KEY
+                        )
+                        == component
+                    ):
+                        raise WorkingDraftConflictError(
+                            "Player Health state is already saved"
+                        )
+                    summary = {
+                        "kind": "player_health_state",
+                        "summary": "Saved reviewed Admin Player Health state",
+                        "player_health_fingerprint": component["fingerprint"],
                     }
                 sequence = state.saved_revision.sequence + 1
                 content_hash = saved_revision_content_hash(

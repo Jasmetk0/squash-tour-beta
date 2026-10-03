@@ -46,7 +46,9 @@ export function AdminHomePage(): JSX.Element {
           { title: 'Tour & Seasons', description: 'Categories, tournaments, season templates, concrete calendars, and validation. Includes existing Tournament Templates and Seasons pages.', to: '/admin/tour-seasons' },
           { title: 'Runs', description: 'Master Run and sandbox run management.', to: '/admin/runs' },
           { title: 'Simulate', description: 'Simulation launcher for match, round, tournament, week, season, and full timeline.', to: '/admin/simulate' },
-          { title: 'Test Labs', description: 'Global isolated Match, Player, and Tournament engine labs with replayable scenarios and diagnostics.', to: '/admin/labs/tournament' },
+          { title: 'Match Lab', description: 'Global isolated replayable Match Engine scenarios and diagnostics.', to: '/admin/labs/match' },
+          { title: 'Player Lab', description: 'Global isolated player development scenarios over canonical sporting kernels.', to: '/admin/labs/player' },
+          { title: 'Tournament Lab', description: 'Global isolated tournament format, draw, progression, and batch diagnostics.', to: '/admin/labs/tournament' },
           { title: 'Diagnostics', description: 'World balance, calendar validation, run health, invalidated data, and future narrative locks.', to: '/admin/diagnostics' }
         ]}
       />

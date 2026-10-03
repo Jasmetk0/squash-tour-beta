@@ -122,6 +122,7 @@ def remap_slot_plan(
     source_branch_id: str,
     target_branch_id: str,
     slot_start_fingerprint_map: dict[str, str],
+    health_fingerprint_map: dict[str, str] | None = None,
 ) -> SimulationSlotPlan:
     if (plan.run_id, plan.branch_id) != (run_id, source_branch_id):
         raise SimulationSlotForkRemapUnsupportedError(
@@ -133,10 +134,21 @@ def remap_slot_plan(
         raise SimulationSlotForkRemapUnsupportedError(
             "Simulation Slot plan references slot-start evidence without a target fork mapping"
         ) from exc
+    target_health = None
+    if plan.health_state_fingerprint is not None:
+        try:
+            target_health = (health_fingerprint_map or {})[
+                plan.health_state_fingerprint
+            ]
+        except KeyError as exc:
+            raise SimulationSlotForkRemapUnsupportedError(
+                "Health-aware Simulation Slot plan has no target Health mapping"
+            ) from exc
     target = plan.model_copy(
         update={
             "branch_id": target_branch_id,
             "slot_start_fingerprint": target_start,
+            "health_state_fingerprint": target_health,
         }
     )
     return SimulationSlotPlan.model_validate_json(target.model_dump_json())
@@ -269,6 +281,7 @@ def remap_completed_simulation_slot_core(
     source_branch_id: str,
     target_branch_id: str,
     opening_sporting_fingerprint_map: dict[str, str],
+    health_fingerprint_map: dict[str, str] | None = None,
 ) -> RemappedSimulationSlotCore | None:
     """Rebuild a completed slots+groups Saved Revision core in canonical order.
 
@@ -277,9 +290,6 @@ def remap_completed_simulation_slot_core(
     """
     import json
 
-    from beta_engine.application.authoritative_slot_matches import (
-        MATCH_ENGINE_VERSION,
-    )
     from beta_engine.infrastructure.db.models import (
         SimulationEventGroupModel,
         SimulationSlotModel,
@@ -368,19 +378,30 @@ def remap_completed_simulation_slot_core(
                 "Simulation Slot start references sporting/checkpoint evidence without a target mapping"
             ) from exc
 
-        target_slot_start = fingerprint(
-            {
-                "run_id": run_id,
-                "branch_id": target_branch_id,
-                "week": source_plan.week.model_dump(mode="json"),
-                "ordinal": source_plan.ordinal,
-                "predecessor": target_predecessor,
-                "players": [
-                    player.model_dump(mode="json")
-                    for player in source_start.players
-                ],
-            }
-        )
+        target_health = None
+        if source_plan.health_state_fingerprint is not None:
+            try:
+                target_health = (health_fingerprint_map or {})[
+                    source_plan.health_state_fingerprint
+                ]
+            except KeyError as exc:
+                raise SimulationSlotForkRemapUnsupportedError(
+                    "Health-aware Simulation Slot has no target Health mapping"
+                ) from exc
+        slot_start_payload = {
+            "run_id": run_id,
+            "branch_id": target_branch_id,
+            "week": source_plan.week.model_dump(mode="json"),
+            "ordinal": source_plan.ordinal,
+            "predecessor": target_predecessor,
+            "players": [
+                player.model_dump(mode="json")
+                for player in source_start.players
+            ],
+        }
+        if target_health is not None:
+            slot_start_payload["health_state_fingerprint"] = target_health
+        target_slot_start = fingerprint(slot_start_payload)
         slot_start_map[source_slot.slot_start_fingerprint] = target_slot_start
 
         target_start = remap_sporting_checkpoint(
@@ -399,6 +420,7 @@ def remap_completed_simulation_slot_core(
             source_branch_id=source_branch_id,
             target_branch_id=target_branch_id,
             slot_start_fingerprint_map=slot_start_map,
+            health_fingerprint_map=health_fingerprint_map,
         )
         plan_map[source_slot.plan_fingerprint] = target_plan.fingerprint
 
@@ -433,27 +455,36 @@ def remap_completed_simulation_slot_core(
                 projection.player_id
                 for projection in target_input.player_projections
             ]
-            command_fingerprint = fingerprint(
-                {
-                    "scope": [
-                        run_id,
-                        target_branch_id,
-                        source_group.week_ordinal,
-                        source_group.slot_id,
-                        source_group.group_id,
-                        source_group.match_id,
-                    ],
-                    "slot_start": target_slot_start,
-                    "event_id": target_input.event_id,
-                    "players": players,
-                    "seed": seed,
-                    "engine": MATCH_ENGINE_VERSION,
-                    "projection": target_input.player_projections[
-                        0
-                    ].projection_policy_fingerprint,
-                    "effects": policy.fingerprint,
-                }
-            )
+            command_payload = {
+                "scope": [
+                    run_id,
+                    target_branch_id,
+                    source_group.week_ordinal,
+                    source_group.slot_id,
+                    source_group.group_id,
+                    source_group.match_id,
+                ],
+                "slot_start": target_slot_start,
+                "event_id": target_input.event_id,
+                "players": players,
+                "seed": seed,
+                "engine": target_input.engine_input.match_engine_version,
+                "projection": target_input.player_projections[
+                    0
+                ].projection_policy_fingerprint,
+                "effects": policy.fingerprint,
+            }
+            if target_plan.health_state_fingerprint is not None:
+                match_health = target_input.engine_input.effective_match_health
+                if match_health is None:
+                    raise SimulationSlotForkRemapUnsupportedError(
+                        "Health-aware Simulation Slot group is missing Match Health projection"
+                    )
+                command_payload["health_state"] = (
+                    target_plan.health_state_fingerprint
+                )
+                command_payload["match_health"] = match_health.fingerprint
+            command_fingerprint = fingerprint(command_payload)
             input_map[source_group.match_input_fingerprint] = (
                 remapped.match_input_fingerprint
             )

@@ -221,6 +221,13 @@ import type {
   RunWeeklyIntakeCohortSeasonPreviewParams,
   RunWeeklyIntakeCohortSeasonPreviewResponse,
   RunPlayerDetail,
+  AdminPlayerHealthView,
+  AdminHealthEditRequest,
+  AdminHealthEditPreview,
+  AdminHealthEditResult,
+  PlayerHealthSavePreview,
+  PlayerHealthSavePayload,
+  PlayerHealthSaveResponse,
   PlayerCareerHistoryResponse,
   PlayerCareerPerformanceResponse,
   PlayerTournamentResultsTimelineResponse,
@@ -2629,6 +2636,65 @@ export function listRunPlayers(
 
 export function getRunPlayerDetail(runId: string, playerId: string): Promise<RunPlayerDetail> {
   return request(`/runs/${encodeURIComponent(runId)}/players/${encodeURIComponent(playerId)}`)
+}
+
+export function getAdminPlayerHealth(
+  runId: string,
+  branchId: string,
+  playerId: string
+): Promise<AdminPlayerHealthView> {
+  return request(
+    `/admin/runs/${encodeURIComponent(runId)}/branches/${encodeURIComponent(branchId)}/players/${encodeURIComponent(playerId)}/health`
+  )
+}
+
+export function previewAdminPlayerHealthEdit(
+  runId: string,
+  branchId: string,
+  playerId: string,
+  payload: AdminHealthEditRequest
+): Promise<AdminHealthEditPreview> {
+  return request(
+    `/admin/runs/${encodeURIComponent(runId)}/branches/${encodeURIComponent(branchId)}/players/${encodeURIComponent(playerId)}/health/preview`,
+    { method: 'POST', body: JSON.stringify(payload) }
+  )
+}
+
+export function commitAdminPlayerHealthEdit(
+  runId: string,
+  branchId: string,
+  playerId: string,
+  payload: AdminHealthEditRequest,
+  previewFingerprint: string
+): Promise<AdminHealthEditResult> {
+  return request(
+    `/admin/runs/${encodeURIComponent(runId)}/branches/${encodeURIComponent(branchId)}/players/${encodeURIComponent(playerId)}/health`,
+    {
+      method: 'POST',
+      headers: { 'X-Player-Health-Preview-Fingerprint': previewFingerprint },
+      body: JSON.stringify(payload)
+    }
+  )
+}
+
+export function previewPlayerHealthSave(
+  runId: string,
+  branchId: string
+): Promise<PlayerHealthSavePreview> {
+  return request(
+    `/admin/runs/${encodeURIComponent(runId)}/branches/${encodeURIComponent(branchId)}/player-health/save/preview`
+  )
+}
+
+export function savePlayerHealthRevision(
+  runId: string,
+  branchId: string,
+  payload: PlayerHealthSavePayload
+): Promise<PlayerHealthSaveResponse> {
+  return request(
+    `/admin/runs/${encodeURIComponent(runId)}/branches/${encodeURIComponent(branchId)}/player-health/save`,
+    { method: 'POST', body: JSON.stringify(payload) }
+  )
 }
 
 export function getRunPlayerCareerHistory(runId: string, playerId: string): Promise<PlayerCareerHistoryResponse> {

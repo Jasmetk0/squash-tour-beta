@@ -597,6 +597,7 @@ const transitionPreview = {
     official_ranking_fingerprint: 'b'.repeat(64),
     player_lifecycle_fingerprint: 'c'.repeat(64),
     player_sporting_fingerprint: 'd'.repeat(64),
+    player_health_fingerprint: 'e'.repeat(64),
     world_event_kind: 'week_transition_completed' as const
   }
 }
@@ -1431,6 +1432,7 @@ beforeEach(() => {
     closure_marker_fingerprint: 'c'.repeat(64),
     player_sporting_fingerprint: 'd'.repeat(64),
     player_lifecycle_fingerprint: 'e'.repeat(64),
+    player_health_fingerprint: '1'.repeat(64),
     official_ranking_fingerprint: 'f'.repeat(64),
     world_event_kind: 'season_transition_completed',
     draft_version: 5

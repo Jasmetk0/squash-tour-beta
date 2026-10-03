@@ -9410,6 +9410,7 @@ def test_group_match_schedule_executes_through_canonical_slots_and_stops_for_sta
     )
     from beta_engine.infrastructure.db import (
         tournament_group_standings_authority as standings_module,
+        tournament_group_tie_resolution_authority as tie_resolution_module,
     )
     from beta_engine.infrastructure.db.tournament_group_standings_authority import (
         TournamentGroupStandingsAuthorityStore,
@@ -9503,6 +9504,12 @@ def test_group_match_schedule_executes_through_canonical_slots_and_stops_for_sta
         "TournamentGroupMatchScheduleAuthorityStore",
         FakeGroupScheduleStore,
     )
+    monkeypatch.setattr(
+        tie_resolution_module,
+        "TournamentGroupMatchScheduleAuthorityStore",
+        FakeGroupScheduleStore,
+    )
+
     proposal = driver.propose_topological_schedule(
         run_id="run", branch_id="branch"
     )

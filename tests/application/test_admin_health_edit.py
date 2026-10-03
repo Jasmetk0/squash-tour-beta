@@ -152,6 +152,39 @@ def test_prestart_health_preview_is_read_only_commit_is_audited_and_retry_is_ide
         assert retried.already_applied is True
         assert retried.state_fingerprint == committed.state_fingerprint
 
+        corrected = _prestart_request(
+            draft_version=1,
+            command_id="health-edit-2",
+        ).model_copy(
+            update={
+                "mode": "current_state_correction",
+                "records": (
+                    _prestart_request().records[0].model_copy(
+                        update={"severity": 34}
+                    ),
+                ),
+                "audit_reason": "Reviewed changed current knee severity",
+            }
+        )
+        corrected_preview = service.preview(
+            run_id="run",
+            branch_id="branch",
+            request=corrected,
+        )
+        service.commit(
+            run_id="run",
+            branch_id="branch",
+            request=corrected,
+            expected_preview_fingerprint=corrected_preview.preview_fingerprint,
+        )
+        with pytest.raises(ValueError, match="historical after restore or later correction"):
+            service.commit(
+                run_id="run",
+                branch_id="branch",
+                request=_prestart_request(),
+                expected_preview_fingerprint=preview.preview_fingerprint,
+            )
+
         with repository._session_factory() as session:
             receipt = session.get(
                 PlayerHealthAdminEditReceiptModel,

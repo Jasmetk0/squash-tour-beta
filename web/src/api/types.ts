@@ -843,6 +843,7 @@ export type AuthoritativeSeasonTransitionPreflight = {
   default_configuration_fingerprint: string | null
   default_sporting_fingerprint: string | null
   default_lifecycle_fingerprint: string | null
+  default_health_fingerprint: string | null
   default_ranking_fingerprint: string | null
   position_fingerprint: string
   state_blockers: string[]
@@ -903,6 +904,7 @@ export type OrdinarySeasonTransitionResult = {
   closure_marker_fingerprint: string
   player_sporting_fingerprint: string
   player_lifecycle_fingerprint: string
+  player_health_fingerprint: string | null
   official_ranking_fingerprint: string
   world_event_kind: 'season_transition_completed'
   draft_version: number
@@ -2028,6 +2030,7 @@ export type AuthoritativeWeekResult = {
   official_ranking_fingerprint: string
   player_lifecycle_fingerprint: string
   player_sporting_fingerprint: string
+  player_health_fingerprint: string | null
   world_event_kind: 'week_transition_completed'
   adoption: 'committed'
 }

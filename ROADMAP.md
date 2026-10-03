@@ -3,7 +3,7 @@
 ## Active next work — 3 October 2026 / Master v72
 
 This order supersedes older next-step notices below while preserving completed-work history.
-Baseline: `buuk` at `b43b4d7a353491dda95bde5cac81300df8f3a68b` (#1120).
+Baseline: `buuk` at `e806d774d731f9bfb0503ff3060e33ce733aa4f4` (#1121).
 
 1. ✅ Complete [Talent Intake historical policy and reviewed-scope safety](docs/CODEX_NEXT_TALENT_INTAKE_HISTORY_V1.md)
    without changing rarity weights or potential mappings.
@@ -19,7 +19,7 @@ Baseline: `buuk` at `b43b4d7a353491dda95bde5cac81300df8f3a68b` (#1120).
    The Lab → Run compatibility-preview and explicit reviewed Working Draft application boundaries are now implemented. Remaining replacement/ranking-consequence Lab work should be pulled only when it blocks copied-FAX acceptance.
    🟡 Player Lab V1 now runs portable multi-variant development scenarios through the same canonical weekly sporting kernels as Product Runs.
    ✅ Canonical Health V1 authority foundation now owns historical Injury/Illness state, recurrence/permanent-consequence data, Save/restore/fork identity and Week/Season carry-forward without inventing PAQ-155 calibration.
-   🟡 Reviewed Admin Health edit/pre-start input authority is implemented on the current branch with Working Draft/Saved Revision integration; dedicated Run Admin UI remains. Remaining Lab work is Health-to-engine projection, Health/recovery variants, persistent Player Lab sessions and optional career AI.
+   ✅ Reviewed Admin Health edit/pre-start input authority and dedicated Run Players Admin UI are implemented with Active-Branch, Preview → Commit and Working Draft → Saved Revision boundaries. Remaining Lab work is Health-to-engine projection, Health/recovery variants, persistent Player Lab sessions and optional career AI.
 4. 🟡 Validate the copied-FAX release path at Master v72 scale. The machine-readable input gate and
    reviewed persisted reference materializer and deterministic 80-Edition non-canonical acceptance
    Calendar source are implemented: Preview → editable 50-season Run → Run-owned World/Calendar →

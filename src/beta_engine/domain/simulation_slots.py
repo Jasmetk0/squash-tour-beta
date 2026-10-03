@@ -504,6 +504,7 @@ class SimulationSlotPlan(FrozenInput):
     group_ids: tuple[str, ...]
     match_events: tuple["SimulationMatchEventPlan", ...]
     slot_start_fingerprint: str
+    health_state_fingerprint: str | None = None
     provenance: str
 
     @model_validator(mode="after")

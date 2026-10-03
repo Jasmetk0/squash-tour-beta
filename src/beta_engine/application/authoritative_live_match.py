@@ -8,6 +8,7 @@ from sqlalchemy import select
 
 from beta_engine.domain.matches import (
     EffectiveMatchFormatSnapshot,
+    EffectiveMatchHealthSnapshot,
     MatchContext,
     MatchInputSnapshot,
     MatchParticipantContext,
@@ -36,6 +37,7 @@ from beta_engine.infrastructure.db.models import (
     LiveMatchWorkingModel,
     SimulationEventGroupModel,
 )
+from beta_engine.infrastructure.db.player_health_state import get_health
 from beta_engine.infrastructure.db.player_lifecycle_state import get_lifecycle
 
 
@@ -92,6 +94,84 @@ class AuthoritativeLiveMatchService:
         if (event_id, match_id) != (event_plan.event_id, event_plan.match_id):
             raise ValueError("live event/match identity differs from slot plan")
 
+        key = self._key(
+            run_id=run_id,
+            branch_id=branch_id,
+            week_ordinal=week.ordinal,
+            slot_id=slot_id,
+            group_id=group_id,
+        )
+        existing = self.session.get(AuthoritativeLiveMatchModel, key)
+        if existing is not None:
+            protected = AuthoritativeMatchInput.model_validate_json(
+                existing.authoritative_input_json
+            )
+            if protected.fingerprint != existing.authoritative_input_fingerprint:
+                raise ValueError("persisted live authoritative input fingerprint is corrupt")
+            stored_ids = tuple(
+                projection.player_id for projection in protected.player_projections
+            )
+            stored_health = protected.engine_input.effective_match_health
+            command_payload = {
+                "scope": [run_id, branch_id, week.ordinal, slot_id, group_id, match_id],
+                "slot_start": expected_slot_start_fingerprint,
+                "event_id": event_id,
+                "players": [player_a_id, player_b_id],
+                "seed": seed,
+                "engine": protected.engine_input.match_engine_version,
+                "effective_match_format": effective_match_format.model_dump(mode="json"),
+                "projection": projection_policy.fingerprint,
+                "effects": effects_policy.fingerprint,
+            }
+            if plan.health_state_fingerprint is not None:
+                command_payload["health_state"] = plan.health_state_fingerprint
+                command_payload["match_health"] = (
+                    stored_health.fingerprint if stored_health is not None else None
+                )
+            execution_fp = fingerprint(command_payload)
+            if (
+                existing.match_id != match_id
+                or protected.run_id != run_id
+                or protected.branch_id != branch_id
+                or protected.week != week
+                or protected.slot_id != slot_id
+                or protected.group_id != group_id
+                or protected.event_id != event_id
+                or stored_ids != (player_a_id, player_b_id)
+                or protected.engine_input.simulation_seed != seed
+                or protected.engine_input.effective_match_format != effective_match_format
+                or existing.execution_command_fingerprint != execution_fp
+                or existing.effects_policy_json != effects_policy.model_dump_json()
+            ):
+                raise ValueError("live authoritative match identity conflicts with frozen input")
+            working_row = self.session.get(LiveMatchWorkingModel, key)
+            if working_row is not None and working_row.status in {"completed_working", "complete"}:
+                return {
+                    "authoritative_input_fingerprint": protected.fingerprint,
+                    "state_fingerprint": None,
+                    "match_id": match_id,
+                    "complete": True,
+                }
+            state = PersistedLiveMatchStore(self.session).start_from_engine_input(
+                run_id=run_id,
+                branch_id=branch_id,
+                week_ordinal=week.ordinal,
+                slot_id=slot_id,
+                group_id=group_id,
+                engine_input=protected.engine_input,
+            )
+            return {
+                "authoritative_input_fingerprint": protected.fingerprint,
+                "state_fingerprint": state.fingerprint,
+                "match_id": match_id,
+                "complete": False,
+            }
+
+        if plan.health_state_fingerprint is None:
+            raise ValueError(
+                "unstarted legacy Simulation Slot lacks frozen Health authority"
+            )
+
         frozen = executor._load_slot_start(slot)
         players = {p.player_id: p for p in frozen.players}
         try:
@@ -103,9 +183,16 @@ class AuthoritativeLiveMatchService:
         lifecycle = get_lifecycle(
             self.session, run_id=run_id, branch_id=branch_id, week=week
         )
-        if world is None or lifecycle is None:
+        health = get_health(
+            self.session, run_id=run_id, branch_id=branch_id, week=week
+        )
+        if world is None or lifecycle is None or health is None:
             raise ValueError(
-                "authoritative InitialWorld profile and lifecycle sources are required"
+                "authoritative InitialWorld profile, lifecycle and Health sources are required"
+            )
+        if health.fingerprint != plan.health_state_fingerprint:
+            raise ValueError(
+                "authoritative Health changed after Simulation Slot freeze"
             )
         profiles = {player.player_id: player for player in world.players}
         lifecycle_players = {player.player_id: player for player in lifecycle.players}
@@ -137,6 +224,16 @@ class AuthoritativeLiveMatchService:
             )
 
         projections = (projection(a), projection(b))
+        health_players = {player.player_id: player for player in health.players}
+        try:
+            match_health = EffectiveMatchHealthSnapshot.from_profiles(
+                player_a=health_players[player_a_id],
+                player_b=health_players[player_b_id],
+            )
+        except KeyError as exc:
+            raise ValueError(
+                "live match participant is absent from authoritative Health state"
+            ) from exc
         engine_players = tuple(projected_engine_player(p) for p in projections)
         context = MatchContext(
             match_id=match_id,
@@ -162,6 +259,7 @@ class AuthoritativeLiveMatchService:
             simulation_seed=seed,
             match_engine_version=MATCH_ENGINE_VERSION,
             rally_calibration_profile=RallyCalibrationProfile(),
+            effective_match_health=match_health,
         )
         protected = AuthoritativeMatchInput(
             run_id=run_id,
@@ -185,43 +283,27 @@ class AuthoritativeLiveMatchService:
                 "engine": MATCH_ENGINE_VERSION,
                 "effective_match_format": effective_match_format.model_dump(mode="json"),
                 "projection": projection_policy.fingerprint,
+                "health_state": plan.health_state_fingerprint,
+                "match_health": match_health.fingerprint,
                 "effects": effects_policy.fingerprint,
             }
         )
 
-        key = self._key(
-            run_id=run_id,
-            branch_id=branch_id,
-            week_ordinal=week.ordinal,
-            slot_id=slot_id,
-            group_id=group_id,
-        )
-        existing = self.session.get(AuthoritativeLiveMatchModel, key)
-        if existing is not None:
-            if (
-                existing.match_id != match_id
-                or existing.authoritative_input_fingerprint != protected.fingerprint
-                or existing.authoritative_input_json != protected.model_dump_json()
-                or existing.execution_command_fingerprint != execution_fp
-                or existing.effects_policy_json != effects_policy.model_dump_json()
-            ):
-                raise ValueError("live authoritative match identity conflicts with frozen input")
-        else:
-            self.session.add(
-                AuthoritativeLiveMatchModel(
-                    run_id=run_id,
-                    branch_id=branch_id,
-                    week_ordinal=week.ordinal,
-                    slot_id=slot_id,
-                    group_id=group_id,
-                    match_id=match_id,
-                    authoritative_input_fingerprint=protected.fingerprint,
-                    authoritative_input_json=protected.model_dump_json(),
-                    execution_command_fingerprint=execution_fp,
-                    effects_policy_json=effects_policy.model_dump_json(),
-                )
+        self.session.add(
+            AuthoritativeLiveMatchModel(
+                run_id=run_id,
+                branch_id=branch_id,
+                week_ordinal=week.ordinal,
+                slot_id=slot_id,
+                group_id=group_id,
+                match_id=match_id,
+                authoritative_input_fingerprint=protected.fingerprint,
+                authoritative_input_json=protected.model_dump_json(),
+                execution_command_fingerprint=execution_fp,
+                effects_policy_json=effects_policy.model_dump_json(),
             )
-            self.session.flush()
+        )
+        self.session.flush()
 
         working_row = self.session.get(LiveMatchWorkingModel, key)
         if working_row is not None and working_row.status in {"completed_working", "complete"}:

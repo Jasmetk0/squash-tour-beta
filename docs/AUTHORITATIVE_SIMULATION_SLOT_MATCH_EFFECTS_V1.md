@@ -10,15 +10,15 @@ Each slot stores one immutable plan, its plan fingerprint, frozen slot-start che
 
 One supported atomic group is one competitive match plus its protected input, rally/timeline/stamina logs, result fingerprint, two player effects, and receipt. Calculation is staged in memory. The group row and terminal checkpoint flush only after all evidence validates. Fault seams exist after result staging, after effect staging, and before commit. Independent committed groups remain valid if another fails.
 
-The command fingerprint covers scope, slot-start state, event/player identity, seed, engine version, projection policy, and effects policy. Exact retry returns stored history without re-simulation or a second effect. Changed input under the same identity conflicts.
+The command fingerprint covers scope, slot-start state, event/player identity, seed, engine version, projection policy, canonical Health-state fingerprint, Match Health projection fingerprint, and effects policy. Exact retry returns stored history without re-simulation or a second effect. Changed input under the same identity conflicts.
 
 ## Canonical input and compatibility projection
 
-`AuthoritativeMatchInput` retains both complete ordered canonical 57 attributes, Form, Match Sharpness, long-term Fatigue, source/slot fingerprints, policy identity/fingerprint, seed, format, and existing hash-protected `MatchInputSnapshot` including timing, stamina, gameplan, rally rules and calibration.
+`AuthoritativeMatchInput` retains both complete ordered canonical 57 attributes, Form, Match Sharpness, long-term Fatigue, source/slot fingerprints, policy identity/fingerprint, seed, format, and existing hash-protected `MatchInputSnapshot` including timing, stamina, gameplan, rally rules, calibration and the participant-ordered canonical Health limitation projection.
 
 `canonical-57-to-legacy-match-engine.provisional.v1` is explicitly a temporary compatibility/calibration adapter. It averages canonical groups, scales `0..200` to seven legacy `1..99` inputs, and stores distinct Form, Sharpness and Fatigue values/modifiers. `MatchParticipantContext` carries all three independently; Match Engine calibration weights them only after that protected boundary. Ranking and OVR are never bonuses. Native 57-attribute Rally Setup can later consume retained truth without migrating history. Name, nationality, current lifecycle age, play style, archetype and hidden traits are projected from the owned InitialWorld/lifecycle snapshots and their fingerprints are retained. Missing profile truth fails closed; career-style evolution is not yet implemented.
 
-Sharpness-aware execution is protected by `match_input_snapshot.v10` and `match_engine_v10`. Historical v1-v9 snapshot hashes deliberately omit the later `sharpness_modifier` field, while their parsed runtime context receives neutral `0.0`; this preserves historical identity and replay. V10 includes the distinct field in its hash.
+Sharpness-aware execution remains protected by the v10 contract. Current authoritative execution is `match_input_snapshot.v11` / `match_engine_v11`: it additionally freezes `effective_match_health.v1` from the exact canonical Run/Branch/Week Health authority. Historical v1-v9 hashes still omit Sharpness; v10 retains Sharpness but no Health projection; all remain readable with their original identity. V11 binds Health facts while `numeric_effect_applied=false`, so no PAQ-155 penalty is invented.
 
 ## Provisional effect calibration
 
@@ -42,4 +42,4 @@ storage for authoritative results.
 
 ## Unsupported boundaries
 
-Stamina logs remain per-match truth. Carried physical bars remain unsupported; only long-term Fatigue bridges matches. Health, match World Events, general tournament award publication, Entries, full draw ownership, Qualification/WC/LL, global multi-event scheduling, AI, training, Season Transition, and Viewer UI remain out of scope.
+Stamina logs remain per-match truth. Carried physical bars remain unsupported; only long-term Fatigue bridges matches. Canonical Health **facts** are now frozen into the Match input, but numeric limitation/stacking effects, contextual Health Checks, health-driven W/O/medical-timeout/RET decisions and treatment remain unsupported. Match World Events, general tournament award publication, Entries, full draw ownership, Qualification/WC/LL, global multi-event scheduling, AI, training, Season Transition, and Viewer UI remain out of scope for this narrow contract.

@@ -3,7 +3,7 @@
 ## Active next work — 3 October 2026 / Master v72
 
 This order supersedes older next-step notices below while preserving completed-work history.
-Baseline: `buuk` at `e806d774d731f9bfb0503ff3060e33ce733aa4f4` (#1121).
+Baseline: `buuk` at `6d1965810573578f320fd986403decf686df5574` (#1122).
 
 1. ✅ Complete [Talent Intake historical policy and reviewed-scope safety](docs/CODEX_NEXT_TALENT_INTAKE_HISTORY_V1.md)
    without changing rarity weights or potential mappings.
@@ -17,9 +17,9 @@ Baseline: `buuk` at `e806d774d731f9bfb0503ff3060e33ce733aa4f4` (#1121).
    Canonical Qualification plus pure groups and groups→knockout progression are now executable
    through shared topology/schedule/standings/hybrid authorities. Explicit Session import/export and verified Run → Lab historical Tournament copy are now implemented.
    The Lab → Run compatibility-preview and explicit reviewed Working Draft application boundaries are now implemented. Remaining replacement/ranking-consequence Lab work should be pulled only when it blocks copied-FAX acceptance.
-   🟡 Player Lab V1 now runs portable multi-variant development scenarios through the same canonical weekly sporting kernels as Product Runs.
+   🟡 Player Lab now runs portable multi-variant development scenarios through the canonical weekly sporting kernels and can carry explicit canonical Health timelines through the shared Match Health limitation projection.
    ✅ Canonical Health V1 authority foundation now owns historical Injury/Illness state, recurrence/permanent-consequence data, Save/restore/fork identity and Week/Season carry-forward without inventing PAQ-155 calibration.
-   ✅ Reviewed Admin Health edit/pre-start input authority and dedicated Run Players Admin UI are implemented with Active-Branch, Preview → Commit and Working Draft → Saved Revision boundaries. Remaining Lab work is Health-to-engine projection, Health/recovery variants, persistent Player Lab sessions and optional career AI.
+   ✅ Reviewed Admin Health edit/pre-start input authority and dedicated Run Players Admin UI are implemented with Active-Branch, Preview → Commit and Working Draft → Saved Revision boundaries. `match_input_snapshot.v11` now freezes canonical Run Health projection for authoritative matches, and Player Lab exposes the same projection for explicit Health/recovery timelines without numeric penalty calibration. Remaining Health work is approved limitation/stacking calibration, stochastic Health Check/recovery, start/W/O/medical-timeout/RET AI, persistent Player Lab sessions and optional career AI.
 4. 🟡 Validate the copied-FAX release path at Master v72 scale. The machine-readable input gate and
    reviewed persisted reference materializer and deterministic 80-Edition non-canonical acceptance
    Calendar source are implemented: Preview → editable 50-season Run → Run-owned World/Calendar →

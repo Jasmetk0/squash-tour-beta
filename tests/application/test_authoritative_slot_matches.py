@@ -58,6 +58,12 @@ from beta_engine.domain.calendar.season_weeks import (
     season_week_to_calendar_position,
 )
 from beta_engine.domain.players.attribute_catalog import CANONICAL_PLAYER_ATTRIBUTES
+from beta_engine.domain.players.health import (
+    PlayerHealthProfile,
+    PlayerHealthRecord,
+    bootstrap_health_state,
+    carry_health_state_forward,
+)
 from beta_engine.domain.players.lifecycle import (
     PlayerLifecycleIdentity,
     PlayerLifecycleWeekState,
@@ -113,6 +119,7 @@ from beta_engine.domain.simulation_slots import (
     CanonicalMatchInputProjectionPolicy,
     fingerprint,
     SimulationMatchEventPlan,
+    SimulationSlotPlan,
     WeekSimulationSchedule,
     WeekSimulationScheduleSlot,
 )
@@ -139,6 +146,16 @@ from beta_engine.infrastructure.db.models import (
 from beta_engine.infrastructure.db.initial_world_state import (
     get_initial_world,
     put_initial_world,
+)
+from beta_engine.infrastructure.db.player_health_state import (
+    PLAYER_HEALTH_COMPONENT_KEY,
+    capture_saved_health,
+    get_health,
+    load_saved_health,
+    put_health,
+    remap_saved_health_component,
+    replace_health_head,
+    restore_saved_health,
 )
 from beta_engine.infrastructure.db.player_lifecycle_state import (
     get_lifecycle,
@@ -346,6 +363,23 @@ def session_at(
             ),
         ),
     )
+    health = bootstrap_health_state(
+        run_id="run",
+        branch_id="branch",
+        source_initial_world_fingerprint=world.fingerprint,
+        player_ids=tuple(sorted(player_ids)),
+    )
+    put_health(session, health)
+    while health.week.ordinal < week.ordinal:
+        health = carry_health_state_forward(
+            health,
+            target=RankingWeek(
+                season_index=(health.week.ordinal + 1) // 61,
+                week=((health.week.ordinal + 1) % 61) + 1,
+            ),
+            target_player_ids=tuple(sorted(player_ids)),
+        )
+        put_health(session, health)
     put_sporting(
         session,
         PlayerSportingWeekState(
@@ -538,8 +572,30 @@ def test_run_owned_entry_roster_projects_later_season_prospect_from_owned_state(
     assert by_id["a"].season == "2001/2002"
 
 
-def run_semifinals(path: Path, order: tuple[str, str]):
+def run_semifinals(
+    path: Path,
+    order: tuple[str, str],
+    *,
+    health_profile: PlayerHealthProfile | None = None,
+):
     session = session_at(path)
+    if health_profile is not None:
+        current_health = get_health(
+            session, run_id="run", branch_id="branch", week=WEEK
+        )
+        assert current_health is not None
+        by_id = {profile.player_id: profile for profile in current_health.players}
+        if health_profile.player_id not in by_id:
+            raise AssertionError("test Health profile must belong to the fixture roster")
+        by_id[health_profile.player_id] = health_profile
+        replace_health_head(
+            session,
+            current_health.model_copy(
+                update={"players": tuple(by_id[player_id] for player_id in sorted(by_id))}
+            ),
+            expected_fingerprint=current_health.fingerprint,
+        )
+        session.commit()
     executor = AuthoritativeSlotMatchExecutor(session)
     plan = executor.create_slot(
         run_id="run",
@@ -585,6 +641,198 @@ def run_semifinals(path: Path, order: tuple[str, str]):
         run_id="run", branch_id="branch", week=WEEK
     )
     return session, executor, plan, results, checkpoint
+
+
+def _capture_health_fork_evidence(
+    session,
+    payload: dict,
+    *,
+    source_branch_id: str = "branch",
+    target_branch_id: str = "target",
+) -> tuple[dict, dict[str, str]]:
+    capture_saved_health(
+        session,
+        payload,
+        run_id="run",
+        branch_id=source_branch_id,
+    )
+    source_states = load_saved_health(
+        payload,
+        run_id="run",
+        branch_id=source_branch_id,
+    )
+    assert source_states is not None
+    target_component = remap_saved_health_component(
+        payload,
+        run_id="run",
+        source_branch_id=source_branch_id,
+        target_branch_id=target_branch_id,
+    )
+    assert target_component is not None
+    target_payload = {
+        "content": {PLAYER_HEALTH_COMPONENT_KEY: target_component}
+    }
+    target_states = load_saved_health(
+        target_payload,
+        run_id="run",
+        branch_id=target_branch_id,
+    )
+    assert target_states is not None
+    return target_component, {
+        source.fingerprint: target.fingerprint
+        for source, target in zip(source_states, target_states, strict=True)
+    }
+
+
+@pytest.mark.pr_critical
+def test_authoritative_match_freezes_canonical_health_without_numeric_penalty(tmp_path):
+    health_profile = PlayerHealthProfile(
+        player_id="a",
+        records=(
+            PlayerHealthRecord(
+                record_id="ankle-a",
+                kind="Injury",
+                condition_key="ankle",
+                lifecycle="Active",
+                severity=35,
+                affected_domains=("movement",),
+                onset_week=WEEK,
+                recovery_window_min_weeks=1,
+                recovery_window_max_weeks=4,
+                provenance="authoritative Health match projection test",
+            ),
+        ),
+    )
+    _, _, _, results, _ = run_semifinals(
+        tmp_path / "health.sqlite",
+        ("sf-1", "sf-2"),
+        health_profile=health_profile,
+    )
+    snapshot = results["sf-1"].authoritative_input.engine_input
+
+    assert snapshot.schema_version == "match_input_snapshot.v11"
+    assert snapshot.match_engine_version == "match_engine_v11"
+    assert snapshot.effective_match_health is not None
+    by_player = {
+        profile.player_id: profile
+        for profile in snapshot.effective_match_health.player_profiles
+    }
+    assert by_player["a"].highest_current_severity == 35
+    assert by_player["a"].affected_domains == ("movement",)
+    assert by_player["a"].numeric_calibration_required is True
+    assert by_player["a"].numeric_effect_applied is False
+    assert by_player["b"].highest_current_severity == 0
+    assert snapshot.effective_match_health.numeric_effect_applied is False
+
+
+@pytest.mark.pr_critical
+def test_same_slot_health_freeze_allows_completed_retry_but_blocks_new_group_after_edit(tmp_path):
+    session = session_at(tmp_path / "health-slot-freeze.sqlite")
+    executor = AuthoritativeSlotMatchExecutor(session)
+    plan = executor.create_slot(
+        run_id="run",
+        branch_id="branch",
+        week=WEEK,
+        slot_id="slot-health",
+        ordinal=1,
+        group_ids=("sf-1", "sf-2"),
+        match_events=(
+            SimulationMatchEventPlan(
+                group_id="sf-1",
+                event_id="event",
+                match_id="sf-1",
+                direct_player_ids=("a", "b"),
+            ),
+            SimulationMatchEventPlan(
+                group_id="sf-2",
+                event_id="event",
+                match_id="sf-2",
+                direct_player_ids=("c", "d"),
+            ),
+        ),
+    )
+    first = executor.execute_match_group(
+        run_id="run",
+        branch_id="branch",
+        week=WEEK,
+        slot_id="slot-health",
+        group_id="sf-1",
+        event_id="event",
+        match_id="sf-1",
+        player_a_id="a",
+        player_b_id="b",
+        seed=101,
+        expected_slot_start_fingerprint=plan.slot_start_fingerprint,
+    )
+    session.commit()
+
+    current_health = get_health(
+        session, run_id="run", branch_id="branch", week=WEEK
+    )
+    assert current_health is not None
+    profiles = {profile.player_id: profile for profile in current_health.players}
+    profiles["c"] = PlayerHealthProfile(
+        player_id="c",
+        records=(
+            PlayerHealthRecord(
+                record_id="late-health-edit",
+                kind="Injury",
+                condition_key="ankle",
+                lifecycle="Active",
+                severity=15,
+                affected_domains=("movement",),
+                onset_week=WEEK,
+                recovery_window_min_weeks=1,
+                recovery_window_max_weeks=2,
+                provenance="post-slot Admin correction",
+            ),
+        ),
+    )
+    replace_health_head(
+        session,
+        current_health.model_copy(
+            update={
+                "players": tuple(
+                    profiles[player_id] for player_id in sorted(profiles)
+                )
+            }
+        ),
+        expected_fingerprint=current_health.fingerprint,
+    )
+    session.commit()
+
+    replay = executor.execute_match_group(
+        run_id="run",
+        branch_id="branch",
+        week=WEEK,
+        slot_id="slot-health",
+        group_id="sf-1",
+        event_id="event",
+        match_id="sf-1",
+        player_a_id="a",
+        player_b_id="b",
+        seed=101,
+        expected_slot_start_fingerprint=plan.slot_start_fingerprint,
+    )
+    assert replay.exact_retry is True
+    assert replay.result_fingerprint == first.result_fingerprint
+
+    with pytest.raises(
+        ValueError, match="Health changed after Simulation Slot freeze"
+    ):
+        executor.execute_match_group(
+            run_id="run",
+            branch_id="branch",
+            week=WEEK,
+            slot_id="slot-health",
+            group_id="sf-2",
+            event_id="event",
+            match_id="sf-2",
+            player_a_id="c",
+            player_b_id="d",
+            seed=202,
+            expected_slot_start_fingerprint=plan.slot_start_fingerprint,
+        )
 
 
 def test_same_slot_frozen_snapshot_and_iteration_order_independence(tmp_path):
@@ -4613,6 +4861,8 @@ def test_branch_fork_adapter_rebuilds_real_slot_plan_and_competitive_group(tmp_p
     assert row is not None
 
     target_start = "target-slot-start-fingerprint"
+    assert plan.health_state_fingerprint is not None
+    target_health_fingerprint = "d" * 64
     target_plan = remap_slot_plan(
         plan,
         run_id="run",
@@ -4620,6 +4870,9 @@ def test_branch_fork_adapter_rebuilds_real_slot_plan_and_competitive_group(tmp_p
         target_branch_id="target",
         slot_start_fingerprint_map={
             plan.slot_start_fingerprint: target_start,
+        },
+        health_fingerprint_map={
+            plan.health_state_fingerprint: target_health_fingerprint,
         },
     )
     remapped = remap_competitive_group_payload(
@@ -4636,6 +4889,7 @@ def test_branch_fork_adapter_rebuilds_real_slot_plan_and_competitive_group(tmp_p
     target_input = payload["authoritative_input"]
     assert target_plan.branch_id == "target"
     assert target_plan.slot_start_fingerprint == target_start
+    assert target_plan.health_state_fingerprint == target_health_fingerprint
     assert target_input["branch_id"] == "target"
     assert target_input["slot_start_fingerprint"] == target_start
     assert all(
@@ -4676,6 +4930,8 @@ def test_completed_slot_core_saved_revision_remaps_and_emits_sporting_v2_maps(tm
     assert opening is not None
     assert checkpoint is not None
 
+    assert plan.health_state_fingerprint is not None
+    target_health_fingerprint = "e" * 64
     remapped = remap_completed_simulation_slot_core(
         payload,
         run_id="run",
@@ -4683,6 +4939,9 @@ def test_completed_slot_core_saved_revision_remaps_and_emits_sporting_v2_maps(tm
         target_branch_id="target",
         opening_sporting_fingerprint_map={
             opening.fingerprint: "target-opening-sporting-fingerprint",
+        },
+        health_fingerprint_map={
+            plan.health_state_fingerprint: target_health_fingerprint
         },
     )
 
@@ -4692,6 +4951,10 @@ def test_completed_slot_core_saved_revision_remaps_and_emits_sporting_v2_maps(tm
     assert all(value["branch_id"] == "target" for value in component["slots"])
     assert all(value["branch_id"] == "target" for value in component["groups"])
     assert remapped.slot_starts[plan.slot_start_fingerprint] != plan.slot_start_fingerprint
+    remapped_plan = SimulationSlotPlan.model_validate_json(
+        component["slots"][0]["payload_json"]
+    )
+    assert remapped_plan.health_state_fingerprint == target_health_fingerprint
     assert remapped.terminal_checkpoints[checkpoint.fingerprint] != checkpoint.fingerprint
     source_result_fingerprints = {
         result.result_fingerprint for result in results.values()
@@ -5530,12 +5793,17 @@ def test_coupled_sporting_v2_and_slot_history_remap_real_week(tmp_path):
     source_sporting = payload["content"]["player_sporting_state"]
     source_simulation = payload["content"]["simulation_slot_match_state"]
 
+    assert plan.health_state_fingerprint is not None
+    target_health_fingerprint = "f" * 64
     remapped = remap_coupled_player_slot_history(
         payload,
         run_id="run",
         source_branch_id="branch",
         target_branch_id="target",
         v1_source_fingerprint_map={},
+        health_fingerprint_map={
+            plan.health_state_fingerprint: target_health_fingerprint
+        },
     )
 
     assert remapped is not None
@@ -5558,6 +5826,10 @@ def test_coupled_sporting_v2_and_slot_history_remap_real_week(tmp_path):
         for effect in result.effects
     }
     assert target_simulation["slots"][0]["slot_start_fingerprint"] != plan.slot_start_fingerprint
+    target_plan = SimulationSlotPlan.model_validate_json(
+        target_simulation["slots"][0]["payload_json"]
+    )
+    assert target_plan.health_state_fingerprint == target_health_fingerprint
     source_state_fp = fingerprint(source_sporting["states"][0])
     target_state_fp = fingerprint(target_sporting["states"][0])
     assert remapped.sporting_fingerprints[source_state_fp] == target_state_fp
@@ -5949,12 +6221,48 @@ def test_coupled_fork_remaps_entry_wc_and_draw_input_chain(tmp_path):
         run_id="run",
         branch_id="branch",
     )
+    capture_saved_health(
+        session,
+        payload,
+        run_id="run",
+        branch_id="branch",
+    )
     capture_saved_simulation_slots(
         session,
         payload,
         run_id="run",
         branch_id="branch",
     )
+    source_health_states = load_saved_health(
+        payload,
+        run_id="run",
+        branch_id="branch",
+    )
+    assert source_health_states is not None
+    target_health_component = remap_saved_health_component(
+        payload,
+        run_id="run",
+        source_branch_id="branch",
+        target_branch_id="target",
+    )
+    assert target_health_component is not None
+    target_health_payload = {
+        "content": {PLAYER_HEALTH_COMPONENT_KEY: target_health_component}
+    }
+    target_health_states = load_saved_health(
+        target_health_payload,
+        run_id="run",
+        branch_id="target",
+    )
+    assert target_health_states is not None
+    health_fingerprint_map = {
+        source.fingerprint: target.fingerprint
+        for source, target in zip(
+            source_health_states,
+            target_health_states,
+            strict=True,
+        )
+    }
     remapped = remap_coupled_player_slot_history(
         payload,
         run_id="run",
@@ -5964,6 +6272,7 @@ def test_coupled_fork_remaps_entry_wc_and_draw_input_chain(tmp_path):
         tournament_ranking_authority_map={
             source_ranking_authority.fingerprint: target_ranking_authority
         },
+        health_fingerprint_map=health_fingerprint_map,
     )
 
     assert remapped is not None
@@ -6535,12 +6844,48 @@ def test_real_q_receipts_ll_vacancy_fill_survive_fork_restore_retry(tmp_path):
         run_id="run",
         branch_id="branch",
     )
+    capture_saved_health(
+        session,
+        source_payload,
+        run_id="run",
+        branch_id="branch",
+    )
     capture_saved_simulation_slots(
         session,
         source_payload,
         run_id="run",
         branch_id="branch",
     )
+    source_health_states = load_saved_health(
+        source_payload,
+        run_id="run",
+        branch_id="branch",
+    )
+    assert source_health_states is not None
+    target_health_component = remap_saved_health_component(
+        source_payload,
+        run_id="run",
+        source_branch_id="branch",
+        target_branch_id="target",
+    )
+    assert target_health_component is not None
+    target_health_payload = {
+        "content": {PLAYER_HEALTH_COMPONENT_KEY: target_health_component}
+    }
+    target_health_states = load_saved_health(
+        target_health_payload,
+        run_id="run",
+        branch_id="target",
+    )
+    assert target_health_states is not None
+    health_fingerprint_map = {
+        source.fingerprint: target.fingerprint
+        for source, target in zip(
+            source_health_states,
+            target_health_states,
+            strict=True,
+        )
+    }
 
     session.add(
         RunBranchModel(
@@ -6578,6 +6923,7 @@ def test_real_q_receipts_ll_vacancy_fill_survive_fork_restore_retry(tmp_path):
         tournament_ranking_authority_map={
             source_ranking.fingerprint: target_ranking,
         },
+        health_fingerprint_map=health_fingerprint_map,
     )
     assert remapped is not None
     assert len(remapped.simulation_component["draw_revisions"]) == 2
@@ -6594,9 +6940,17 @@ def test_real_q_receipts_ll_vacancy_fill_survive_fork_restore_retry(tmp_path):
 
     fork_root_payload = {
         "content": {
+            PLAYER_HEALTH_COMPONENT_KEY: target_health_component,
             "simulation_slot_match_state": remapped.simulation_component,
         }
     }
+    restore_saved_health(
+        session,
+        current_payload={"content": {}},
+        target_payload=fork_root_payload,
+        run_id="run",
+        branch_id="target",
+    )
     restore_saved_simulation_slots(
         session,
         current_payload={"content": {}},
@@ -6879,6 +7233,9 @@ def test_source_bound_pre_q_revision_materializes_on_target_branch(tmp_path):
         run_id="run",
         branch_id="branch",
     )
+    target_health_component, health_fingerprint_map = (
+        _capture_health_fork_evidence(session, source_payload)
+    )
     capture_saved_simulation_slots(
         session,
         source_payload,
@@ -6924,15 +7281,24 @@ def test_source_bound_pre_q_revision_materializes_on_target_branch(tmp_path):
         tournament_ranking_authority_map={
             source_ranking.fingerprint: target_ranking,
         },
+        health_fingerprint_map=health_fingerprint_map,
     )
     assert remapped is not None
     assert len(remapped.simulation_component["draw_revisions"]) == 1
 
     fork_root = {
         "content": {
+            PLAYER_HEALTH_COMPONENT_KEY: target_health_component,
             "simulation_slot_match_state": remapped.simulation_component,
         }
     }
+    restore_saved_health(
+        session,
+        current_payload={"content": {}},
+        target_payload=fork_root,
+        run_id="run",
+        branch_id="target",
+    )
     restore_saved_simulation_slots(
         session,
         current_payload={"content": {}},
@@ -7160,6 +7526,9 @@ def test_materialized_fork_mixed_revision_restore_equivalence(tmp_path):
         run_id="run",
         branch_id="branch",
     )
+    target_health_component, health_fingerprint_map = (
+        _capture_health_fork_evidence(session, source_payload)
+    )
     capture_saved_simulation_slots(
         session,
         source_payload,
@@ -7217,6 +7586,7 @@ def test_materialized_fork_mixed_revision_restore_equivalence(tmp_path):
         tournament_ranking_authority_map={
             source_ranking.fingerprint: target_ranking,
         },
+        health_fingerprint_map=health_fingerprint_map,
     )
     assert remapped is not None
     (
@@ -7242,6 +7612,7 @@ def test_materialized_fork_mixed_revision_restore_equivalence(tmp_path):
 
     fork_root_payload = {
         "content": {
+            PLAYER_HEALTH_COMPONENT_KEY: target_health_component,
             "simulation_slot_match_state": remapped.simulation_component,
             DEFINITIVE_WILD_CARD_ASSIGNMENT_COMPONENT_KEY: (
                 remapped_definitive_wc_component
@@ -7249,6 +7620,13 @@ def test_materialized_fork_mixed_revision_restore_equivalence(tmp_path):
             PLAYER_TOUR_ENTRY_COMPONENT_KEY: remapped_tour_entry_component,
         }
     }
+    restore_saved_health(
+        session,
+        current_payload={"content": {}},
+        target_payload=fork_root_payload,
+        run_id="run",
+        branch_id="target",
+    )
     restore_saved_simulation_slots(
         session,
         current_payload={"content": {}},
@@ -7875,6 +8253,7 @@ def test_coupled_fork_remaps_basic_draw_revision_chain(tmp_path):
         run_id="run",
         branch_id="branch",
     )
+    _, health_fingerprint_map = _capture_health_fork_evidence(session, payload)
     capture_saved_simulation_slots(
         session,
         payload,
@@ -7890,6 +8269,7 @@ def test_coupled_fork_remaps_basic_draw_revision_chain(tmp_path):
         tournament_ranking_authority_map={
             source_ranking_authority.fingerprint: target_ranking_authority
         },
+        health_fingerprint_map=health_fingerprint_map,
     )
 
     assert remapped is not None
@@ -9030,6 +9410,7 @@ def test_group_match_schedule_executes_through_canonical_slots_and_stops_for_sta
     )
     from beta_engine.infrastructure.db import (
         tournament_group_standings_authority as standings_module,
+        tournament_group_tie_resolution_authority as tie_resolution_module,
     )
     from beta_engine.infrastructure.db.tournament_group_standings_authority import (
         TournamentGroupStandingsAuthorityStore,
@@ -9123,6 +9504,11 @@ def test_group_match_schedule_executes_through_canonical_slots_and_stops_for_sta
         "TournamentGroupMatchScheduleAuthorityStore",
         FakeGroupScheduleStore,
     )
+    monkeypatch.setattr(
+        tie_resolution_module,
+        "TournamentGroupMatchScheduleAuthorityStore",
+        FakeGroupScheduleStore,
+    )
 
     proposal = driver.propose_topological_schedule(
         run_id="run", branch_id="branch"
@@ -9187,10 +9573,7 @@ def test_group_match_schedule_executes_through_canonical_slots_and_stops_for_sta
 
     post_standings = driver.position(run_id="run", branch_id="branch")
     assert "group_standings_authority_required" not in post_standings.transition_blockers
-    assert (
-        "group_post_standings_progression_required"
-        in post_standings.transition_blockers
-    )
+    assert "tournament_topology_missing" in post_standings.transition_blockers
 
     with factory() as session:
         rows = session.scalars(

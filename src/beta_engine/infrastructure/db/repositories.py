@@ -2966,12 +2966,21 @@ class SimulationPersistenceRepository:
                             strict=True,
                         )
                     }
+                    source_health_states = (
+                        load_saved_health(
+                            source_revision.payload,
+                            run_id=run_id,
+                            branch_id=source_branch_id,
+                        )
+                        or ()
+                    )
                     remapped_health_component = remap_saved_health_component(
                         source_revision.payload,
                         run_id=run_id,
                         source_branch_id=source_branch_id,
                         target_branch_id=branch_id,
                     )
+                    remapped_health_states = ()
                     if remapped_health_component is not None:
                         target_payload["content"][PLAYER_HEALTH_COMPONENT_KEY] = (
                             remapped_health_component
@@ -2984,6 +2993,15 @@ class SimulationPersistenceRepository:
                         assert remapped_health_states is not None
                         for health_state in remapped_health_states:
                             put_health(session, health_state)
+
+                    source_to_target_health_fingerprint = {
+                        source.fingerprint: target.fingerprint
+                        for source, target in zip(
+                            source_health_states,
+                            remapped_health_states,
+                            strict=True,
+                        )
+                    }
 
                     source_to_target_lifecycle_fingerprint = {
                         source.fingerprint: target.fingerprint
@@ -3087,6 +3105,9 @@ class SimulationPersistenceRepository:
                                 ),
                                 entry_validation_fingerprint_map=(
                                     source_to_target_resolved_validation
+                                ),
+                                health_fingerprint_map=(
+                                    source_to_target_health_fingerprint
                                 ),
                             )
                         except (

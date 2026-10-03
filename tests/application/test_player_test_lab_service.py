@@ -9,6 +9,7 @@ from beta_engine.application.player_test_lab_service import (
     PlayerTestLabService,
 )
 from beta_engine.domain.players.attribute_catalog import CANONICAL_PLAYER_ATTRIBUTES
+from beta_engine.domain.players.health import PlayerHealthProfile, PlayerHealthRecord
 from beta_engine.domain.players.sporting import PlayerSportingRecord
 from beta_engine.domain.rankings.official import RankingWeek
 
@@ -68,7 +69,7 @@ def test_player_lab_uses_shared_kernels_and_keeps_run_boundary_isolated():
     )
     assert first.compatibility.run_mutation_performed is False
     assert first.compatibility.run_live_link is False
-    assert first.compatibility.health_supported is False
+    assert first.compatibility.health_supported is True
     assert first.compatibility.training_load_supported is False
     assert first.compatibility.career_ai_supported is False
     assert first.diagnostics.variant_count == 2
@@ -80,6 +81,77 @@ def test_player_lab_uses_shared_kernels_and_keeps_run_boundary_isolated():
     assert len(by_variant["active"].snapshots) == 4
     assert by_variant["active"].snapshots[-1].week == RankingWeek(
         season_index=0, week=5
+    )
+
+
+@pytest.mark.pr_critical
+def test_player_lab_projects_explicit_health_timeline_without_inventing_numeric_effect():
+    service = PlayerTestLabService()
+    start = RankingWeek(season_index=0, week=1)
+    active = PlayerHealthProfile(
+        player_id="P-LAB",
+        records=(
+            PlayerHealthRecord(
+                record_id="ankle",
+                kind="Injury",
+                condition_key="ankle",
+                lifecycle="Active",
+                severity=40,
+                affected_domains=("movement",),
+                onset_week=start,
+                recovery_window_min_weeks=1,
+                recovery_window_max_weeks=4,
+                provenance="test",
+            ),
+        ),
+    )
+    recovering = PlayerHealthProfile(
+        player_id="P-LAB",
+        records=(
+            active.records[0].model_copy(
+                update={"lifecycle": "Recovering", "severity": 20}
+            ),
+        ),
+    )
+    recovered = PlayerHealthProfile(
+        player_id="P-LAB",
+        records=(
+            active.records[0].model_copy(
+                update={
+                    "lifecycle": "Recovered",
+                    "severity": 0,
+                    "recovered_week": RankingWeek(season_index=0, week=3),
+                }
+            ),
+        ),
+    )
+    scenario = _scenario(
+        variants=(
+            PlayerLabVariant(
+                variant_id="health",
+                display_name="Health",
+                competitive_match_counts=(0, 0),
+                health_timeline=(active, recovering, recovered),
+            ),
+        )
+    )
+
+    result = service.run(PlayerLabRequest(scenario=scenario))
+    variant = result.variants[0]
+
+    assert result.compatibility.health_supported is True
+    assert variant.initial_health_projection.highest_current_severity == 40
+    assert variant.initial_health_projection.affected_domains == ("movement",)
+    assert variant.initial_health_projection.numeric_effect_applied is False
+    assert variant.initial_health_projection.numeric_calibration_required is True
+    assert variant.snapshots[0].health_projection.highest_current_severity == 20
+    assert variant.snapshots[0].health_projection.numeric_effect_applied is False
+    assert variant.snapshots[1].health_projection.highest_current_severity == 0
+    assert variant.snapshots[1].health_projection.current_records == ()
+    assert variant.snapshots[1].health_projection.numeric_calibration_required is False
+    assert (
+        variant.snapshots[1].health_projection_fingerprint
+        == variant.snapshots[1].health_projection.fingerprint
     )
 
 

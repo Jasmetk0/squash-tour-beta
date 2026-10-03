@@ -290,7 +290,11 @@ class AuthoritativeMatchInput(FrozenInput):
 
     @property
     def fingerprint(self) -> str:
-        return fingerprint(self.model_dump(mode="json"))
+        payload = self.model_dump(mode="json")
+        engine_input = payload["engine_input"]
+        if engine_input.get("effective_match_health") is None:
+            engine_input.pop("effective_match_health", None)
+        return fingerprint(payload)
 
 
 class MatchSportingEffectsPolicy(FrozenInput):
@@ -504,6 +508,7 @@ class SimulationSlotPlan(FrozenInput):
     group_ids: tuple[str, ...]
     match_events: tuple["SimulationMatchEventPlan", ...]
     slot_start_fingerprint: str
+    health_state_fingerprint: str | None = None
     provenance: str
 
     @model_validator(mode="after")
@@ -516,7 +521,10 @@ class SimulationSlotPlan(FrozenInput):
 
     @property
     def fingerprint(self) -> str:
-        return fingerprint(self.model_dump(mode="json"))
+        payload = self.model_dump(mode="json")
+        if self.health_state_fingerprint is None:
+            payload.pop("health_state_fingerprint", None)
+        return fingerprint(payload)
 
 
 class SimulationMatchEventPlan(FrozenInput):

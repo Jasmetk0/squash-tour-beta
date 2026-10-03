@@ -102,6 +102,29 @@ It exposes current Health inspection, complete-profile editing, reviewed server 
 commit retry semantics and explicit Health Saved Revision creation. Historical checkpoint mode
 continues to use the shared present-only boundary; no alternate UI-owned Health authority exists.
 
+## Match limitation projection
+
+`health_limitation_projection.v1` converts one canonical `PlayerHealthProfile` into
+descriptive Match evidence:
+
+- current `At Risk / Active / Recovering` Injury/Illness records;
+- Severity and affected domains;
+- persistent post-recovery consequences;
+- aggregate affected-domain and highest-Severity summaries;
+- an explicit `numeric_calibration_required` flag.
+
+The projection deliberately applies **no numeric sporting penalty**. Master v72 decides that Health
+is a separate Match input, while exact limitation profiles, diminishing-impact stacking, W/O/RET
+thresholds and Health Check probabilities remain calibration/product work.
+
+Authoritative Run matches now require the canonical Health state for their exact Week and freeze the
+participant-ordered projection inside `match_input_snapshot.v11` / `match_engine_v11`. Match command
+identity binds both the source Health-state fingerprint and Match Health projection fingerprint.
+Historical v1-v10 snapshots remain readable without a Health projection.
+
+Player Lab uses this same pure projection for explicit Health timelines; it does not own a second
+Health model.
+
 ## Explicit non-goals of this slice
 
 Health V1 does not yet implement:
@@ -114,13 +137,9 @@ Health V1 does not yet implement:
 - treatment or surgery detail;
 - health-driven W/O / medical timeout / retirement decisions;
 - return-risk career AI;
-- health-to-Match-Engine limitation projection;
-- Player Lab health/recovery scenarios.
 
 Those must build on this same authority rather than introduce parallel state.
 
 ## Next
 
-The next useful vertical slice is a shared Health limitation projection into Match Engine and
-Player Lab, followed by Health/recovery Lab scenarios. Calibrated stochastic Health Check/recovery
-mechanics remain later work.
+The next useful Health work is approved numeric limitation/stacking calibration and stochastic Health Check/recovery, followed by health-driven start/W/O/medical-timeout/RET decision support. Those mechanics must be measured in Player Lab rather than invented in production.

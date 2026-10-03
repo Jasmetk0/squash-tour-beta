@@ -12,6 +12,7 @@ from sqlalchemy import select
 from beta_engine.core import DeterministicRng
 from beta_engine.domain.matches import (
     EffectiveMatchFormatSnapshot,
+    EffectiveMatchHealthSnapshot,
     MatchContext,
     MatchEngine,
     MatchInputSnapshot,
@@ -89,9 +90,10 @@ from beta_engine.infrastructure.db.models import (
 )
 from beta_engine.infrastructure.db.player_sporting_state import get_sporting
 from beta_engine.infrastructure.db.initial_world_state import get_initial_world
+from beta_engine.infrastructure.db.player_health_state import get_health
 from beta_engine.infrastructure.db.player_lifecycle_state import get_lifecycle
 
-MATCH_ENGINE_VERSION = "match_engine_v10"
+MATCH_ENGINE_VERSION = "match_engine_v11"
 
 
 @dataclass(frozen=True)
@@ -732,6 +734,12 @@ class AuthoritativeSlotMatchExecutor:
             players = checkpoint.players
             opening_fingerprint = checkpoint.opening_week_fingerprint
             predecessor = checkpoint.fingerprint
+        health = get_health(
+            self.session, run_id=run_id, branch_id=branch_id, week=week
+        )
+        if health is None:
+            raise ValueError("Simulation Slot requires authoritative Health state")
+        health_state_fingerprint = health.fingerprint
         slot_start = fingerprint(
             {
                 "run_id": run_id,
@@ -740,6 +748,7 @@ class AuthoritativeSlotMatchExecutor:
                 "ordinal": ordinal,
                 "predecessor": predecessor,
                 "players": [p.model_dump(mode="json") for p in players],
+                "health_state_fingerprint": health_state_fingerprint,
             }
         )
         plan = SimulationSlotPlan(
@@ -752,6 +761,7 @@ class AuthoritativeSlotMatchExecutor:
             group_ids=tuple(sorted(group_ids)),
             match_events=tuple(sorted(match_events, key=lambda item: item.group_id)),
             slot_start_fingerprint=slot_start,
+            health_state_fingerprint=health_state_fingerprint,
             provenance=f"{provenance}; slot is not a draw position",
         )
         initial = PlayerSportingCheckpoint(
@@ -861,29 +871,82 @@ class AuthoritativeSlotMatchExecutor:
             )
         if expected_slot_start_fingerprint != plan.slot_start_fingerprint:
             raise ValueError("slot-start fingerprint changed; retry conflicts")
-        command = fingerprint(
-            {
+        def command_fingerprint(
+            *,
+            engine_version: str,
+            health_state_fingerprint: str | None = None,
+            match_health_fingerprint: str | None = None,
+            include_health: bool,
+        ) -> str:
+            payload = {
                 "scope": [run_id, branch_id, week.ordinal, slot_id, group_id, match_id],
                 "slot_start": expected_slot_start_fingerprint,
                 "event_id": event_id,
                 "players": [player_a_id, player_b_id],
                 "seed": seed,
-                "engine": MATCH_ENGINE_VERSION,
+                "engine": engine_version,
                 "effective_match_format": effective_match_format.model_dump(mode="json"),
                 "projection": projection_policy.fingerprint,
                 "effects": effects_policy.fingerprint,
             }
-        )
+            if include_health:
+                payload["health_state"] = health_state_fingerprint
+                payload["match_health"] = match_health_fingerprint
+            return fingerprint(payload)
+
         existing = self.session.get(
             SimulationEventGroupModel,
             (run_id, branch_id, week.ordinal, slot_id, group_id),
         )
         if existing:
+            stored = self._load_group(existing, exact_retry=True)
+            stored_match_health = stored.authoritative_input.engine_input.effective_match_health
+            include_health = plan.health_state_fingerprint is not None
+            command = command_fingerprint(
+                engine_version=stored.authoritative_input.engine_input.match_engine_version,
+                health_state_fingerprint=plan.health_state_fingerprint,
+                match_health_fingerprint=(
+                    stored_match_health.fingerprint
+                    if stored_match_health is not None
+                    else None
+                ),
+                include_health=include_health,
+            )
             if existing.command_fingerprint != command:
                 raise ValueError(
                     "completed event group command conflicts with exact receipt"
                 )
-            return self._load_group(existing, exact_retry=True)
+            return stored
+
+        if plan.health_state_fingerprint is None:
+            raise ValueError(
+                "uncompleted legacy Simulation Slot lacks frozen Health authority"
+            )
+        health = get_health(
+            self.session, run_id=run_id, branch_id=branch_id, week=week
+        )
+        if health is None:
+            raise ValueError("authoritative player Health source is required")
+        if health.fingerprint != plan.health_state_fingerprint:
+            raise ValueError(
+                "authoritative Health changed after Simulation Slot freeze"
+            )
+        health_players = {player.player_id: player for player in health.players}
+        try:
+            match_health = EffectiveMatchHealthSnapshot.from_profiles(
+                player_a=health_players[player_a_id],
+                player_b=health_players[player_b_id],
+            )
+        except KeyError as exc:
+            raise ValueError(
+                "match participant is absent from authoritative Health state"
+            ) from exc
+        command = command_fingerprint(
+            engine_version=MATCH_ENGINE_VERSION,
+            health_state_fingerprint=plan.health_state_fingerprint,
+            match_health_fingerprint=match_health.fingerprint,
+            include_health=True,
+        )
         frozen = self._load_slot_start(slot)
         players = {p.player_id: p for p in frozen.players}
         world = get_initial_world(self.session, run_id=run_id, branch_id=branch_id)
@@ -957,6 +1020,7 @@ class AuthoritativeSlotMatchExecutor:
             simulation_seed=seed,
             match_engine_version=MATCH_ENGINE_VERSION,
             rally_calibration_profile=RallyCalibrationProfile(),
+            effective_match_health=match_health,
         )
         protected = AuthoritativeMatchInput(
             run_id=run_id,
@@ -978,6 +1042,7 @@ class AuthoritativeSlotMatchExecutor:
             rally_calibration_profile=engine_input.rally_calibration_profile,
             effective_match_gameplans=engine_input.effective_match_gameplans,
             effective_rally_rules=engine_input.effective_rally_rules,
+            effective_match_health=engine_input.effective_match_health,
         )
         result_fp = fingerprint(
             {"input": protected.fingerprint, "result": result.model_dump(mode="json")}

@@ -662,6 +662,7 @@ class SeasonMatchService:
             rally_calibration_profile=input_snapshot.rally_calibration_profile,
             effective_match_gameplans=input_snapshot.effective_match_gameplans,
             effective_rally_rules=input_snapshot.effective_rally_rules,
+            effective_match_health=input_snapshot.effective_match_health,
         )
         result_payload = domain_result.model_dump(mode="json")
         result_fp = self._fingerprint({"event_id": event_id, "match_id": match_id, "match_input_snapshot_hash": input_snapshot.snapshot_hash, "result": result_payload})
@@ -998,6 +999,7 @@ class SeasonMatchService:
             rally_calibration_profile=input_snapshot.rally_calibration_profile,
             effective_match_gameplans=input_snapshot.effective_match_gameplans,
             effective_rally_rules=input_snapshot.effective_rally_rules,
+            effective_match_health=input_snapshot.effective_match_health,
         )
         result_payload = domain_result.model_dump(mode="json")
         result_fp = self._fingerprint({"event_id": package.event_id, "match_id": match.match_id, "match_input_snapshot_hash": input_snapshot.snapshot_hash, "result": result_payload})

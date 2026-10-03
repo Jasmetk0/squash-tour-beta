@@ -11,6 +11,7 @@ from pydantic import BaseModel, Field, model_validator
 from beta_engine.domain.matches.control import RallyCalibrationProfile
 from beta_engine.domain.matches.formats import EffectiveMatchFormatSnapshot
 from beta_engine.domain.matches.gameplans import EffectiveMatchGameplanSnapshot
+from beta_engine.domain.matches.health import EffectiveMatchHealthSnapshot
 from beta_engine.domain.matches.models import MatchContext
 from beta_engine.domain.matches.rally_rules import EffectiveRallyRulesSnapshot
 from beta_engine.domain.matches.stamina import EffectiveMatchStaminaSnapshot
@@ -31,7 +32,8 @@ class MatchInputSnapshot(BaseModel):
         "match_input_snapshot.v8",
         "match_input_snapshot.v9",
         "match_input_snapshot.v10",
-    ] = "match_input_snapshot.v10"
+        "match_input_snapshot.v11",
+    ] = "match_input_snapshot.v11"
     match_id: str = Field(min_length=1)
     simulation_seed: int
     match_engine_version: str = Field(min_length=1)
@@ -41,6 +43,7 @@ class MatchInputSnapshot(BaseModel):
     rally_calibration_profile: RallyCalibrationProfile | None = None
     effective_match_gameplans: EffectiveMatchGameplanSnapshot | None = None
     effective_rally_rules: EffectiveRallyRulesSnapshot | None = None
+    effective_match_health: EffectiveMatchHealthSnapshot | None = None
     context: MatchContext
     unsupported_future_inputs: tuple[
         Literal[
@@ -66,6 +69,7 @@ class MatchInputSnapshot(BaseModel):
         rally_calibration_profile: RallyCalibrationProfile | None = None,
         effective_match_gameplans: EffectiveMatchGameplanSnapshot | None = None,
         effective_rally_rules: EffectiveRallyRulesSnapshot | None = None,
+        effective_match_health: EffectiveMatchHealthSnapshot | None = None,
     ) -> MatchInputSnapshot:
         timing = effective_match_timing or EffectiveMatchTimingSnapshot.create(
             player_a_id=context.player_a.player.player_id,
@@ -80,8 +84,12 @@ class MatchInputSnapshot(BaseModel):
             context=context,
             simulation_seed=simulation_seed,
         )
+        health = effective_match_health or EffectiveMatchHealthSnapshot.create_healthy(
+            player_a_id=context.player_a.player.player_id,
+            player_b_id=context.player_b.player.player_id,
+        )
         payload = cls._hash_payload(
-            schema_version="match_input_snapshot.v10",
+            schema_version="match_input_snapshot.v11",
             match_id=context.match_id,
             simulation_seed=simulation_seed,
             match_engine_version=match_engine_version,
@@ -91,11 +99,12 @@ class MatchInputSnapshot(BaseModel):
             rally_calibration_profile=rally_calibration,
             effective_match_gameplans=gameplans,
             effective_rally_rules=rules,
+            effective_match_health=health,
             context=context,
             unsupported_future_inputs=(),
         )
         return cls(
-            schema_version="match_input_snapshot.v10",
+            schema_version="match_input_snapshot.v11",
             match_id=context.match_id,
             simulation_seed=simulation_seed,
             match_engine_version=match_engine_version,
@@ -105,6 +114,7 @@ class MatchInputSnapshot(BaseModel):
             rally_calibration_profile=rally_calibration,
             effective_match_gameplans=gameplans,
             effective_rally_rules=rules,
+            effective_match_health=health,
             context=context,
             unsupported_future_inputs=(),
             snapshot_hash=cls._content_hash(payload),
@@ -114,7 +124,7 @@ class MatchInputSnapshot(BaseModel):
     def validate_snapshot(self) -> MatchInputSnapshot:
         if (
             self.schema_version
-            in {"match_input_snapshot.v9", "match_input_snapshot.v10"}
+            in {"match_input_snapshot.v9", "match_input_snapshot.v10", "match_input_snapshot.v11"}
         ) != (self.effective_rally_rules is not None):
             raise ValueError(
                 "only v9+ match input requires protected effective rally rules"
@@ -143,6 +153,7 @@ class MatchInputSnapshot(BaseModel):
             "match_input_snapshot.v8",
             "match_input_snapshot.v9",
             "match_input_snapshot.v10",
+            "match_input_snapshot.v11",
         }:
             if self.effective_match_timing is None:
                 raise ValueError(
@@ -172,6 +183,7 @@ class MatchInputSnapshot(BaseModel):
             "match_input_snapshot.v8",
             "match_input_snapshot.v9",
             "match_input_snapshot.v10",
+            "match_input_snapshot.v11",
         }:
             if self.effective_match_stamina is None:
                 raise ValueError("v4 match input snapshot requires effective stamina")
@@ -196,6 +208,7 @@ class MatchInputSnapshot(BaseModel):
                     "match_input_snapshot.v8",
                     "match_input_snapshot.v9",
                     "match_input_snapshot.v10",
+                    "match_input_snapshot.v11",
                 }
                 and not self.effective_match_stamina.outcome_effect_applied
             ):
@@ -210,6 +223,7 @@ class MatchInputSnapshot(BaseModel):
                     "match_input_snapshot.v8",
                     "match_input_snapshot.v9",
                     "match_input_snapshot.v10",
+                    "match_input_snapshot.v11",
                 }
                 and not self.effective_match_stamina.pre_rally_effort_applied
             ):
@@ -223,6 +237,7 @@ class MatchInputSnapshot(BaseModel):
             "match_input_snapshot.v8",
             "match_input_snapshot.v9",
             "match_input_snapshot.v10",
+            "match_input_snapshot.v11",
         }:
             if self.rally_calibration_profile is None:
                 raise ValueError("v7+ match input requires rally calibration profile")
@@ -239,6 +254,7 @@ class MatchInputSnapshot(BaseModel):
             "match_input_snapshot.v8",
             "match_input_snapshot.v9",
             "match_input_snapshot.v10",
+            "match_input_snapshot.v11",
         }:
             if self.effective_match_gameplans is None:
                 raise ValueError("v8 match input requires effective active gameplans")
@@ -264,6 +280,29 @@ class MatchInputSnapshot(BaseModel):
             raise ValueError(
                 "legacy match input snapshot cannot contain effective gameplans"
             )
+        if self.schema_version == "match_input_snapshot.v11":
+            if self.effective_match_health is None:
+                raise ValueError("v11 match input requires effective Health projection")
+            health_player_ids = tuple(
+                profile.player_id
+                for profile in self.effective_match_health.player_profiles
+            )
+            context_player_ids = (
+                self.context.player_a.player.player_id,
+                self.context.player_b.player.player_id,
+            )
+            if health_player_ids != context_player_ids:
+                raise ValueError(
+                    "effective match Health does not match snapshot participants"
+                )
+            if self.effective_match_health.numeric_effect_applied:
+                raise ValueError(
+                    "v11 Health projection must not invent unresolved numeric effects"
+                )
+        elif self.effective_match_health is not None:
+            raise ValueError(
+                "legacy match input snapshot cannot contain Health projection"
+            )
         expected_hash = self._content_hash(
             self._hash_payload(
                 schema_version=self.schema_version,
@@ -276,6 +315,7 @@ class MatchInputSnapshot(BaseModel):
                 rally_calibration_profile=self.rally_calibration_profile,
                 effective_match_gameplans=self.effective_match_gameplans,
                 effective_rally_rules=self.effective_rally_rules,
+                effective_match_health=self.effective_match_health,
                 context=self.context,
                 unsupported_future_inputs=self.unsupported_future_inputs,
             )
@@ -297,6 +337,7 @@ class MatchInputSnapshot(BaseModel):
         rally_calibration_profile: RallyCalibrationProfile | None = None,
         effective_match_gameplans: EffectiveMatchGameplanSnapshot | None = None,
         effective_rally_rules: EffectiveRallyRulesSnapshot | None = None,
+        effective_match_health: EffectiveMatchHealthSnapshot | None = None,
         context: MatchContext,
         unsupported_future_inputs: tuple[str, ...],
     ) -> dict[str, object]:
@@ -320,6 +361,7 @@ class MatchInputSnapshot(BaseModel):
             "match_input_snapshot.v8",
             "match_input_snapshot.v9",
             "match_input_snapshot.v10",
+            "match_input_snapshot.v11",
         }:
             payload["effective_match_timing"] = (
                 effective_match_timing.model_dump(mode="json")
@@ -334,6 +376,7 @@ class MatchInputSnapshot(BaseModel):
             "match_input_snapshot.v8",
             "match_input_snapshot.v9",
             "match_input_snapshot.v10",
+            "match_input_snapshot.v11",
         }:
             payload["effective_match_stamina"] = (
                 effective_match_stamina.snapshot_payload()
@@ -345,6 +388,7 @@ class MatchInputSnapshot(BaseModel):
             "match_input_snapshot.v8",
             "match_input_snapshot.v9",
             "match_input_snapshot.v10",
+            "match_input_snapshot.v11",
         }:
             payload["rally_calibration_profile"] = (
                 rally_calibration_profile.model_dump(mode="json")
@@ -355,16 +399,23 @@ class MatchInputSnapshot(BaseModel):
             "match_input_snapshot.v8",
             "match_input_snapshot.v9",
             "match_input_snapshot.v10",
+            "match_input_snapshot.v11",
         }:
             payload["effective_match_gameplans"] = (
                 effective_match_gameplans.model_dump(mode="json")
                 if effective_match_gameplans is not None
                 else None
             )
-        if schema_version in {"match_input_snapshot.v9", "match_input_snapshot.v10"}:
+        if schema_version in {"match_input_snapshot.v9", "match_input_snapshot.v10", "match_input_snapshot.v11"}:
             payload["effective_rally_rules"] = (
                 effective_rally_rules.model_dump(mode="json")
                 if effective_rally_rules is not None
+                else None
+            )
+        if schema_version == "match_input_snapshot.v11":
+            payload["effective_match_health"] = (
+                effective_match_health.model_dump(mode="json")
+                if effective_match_health is not None
                 else None
             )
         return payload
@@ -374,7 +425,7 @@ class MatchInputSnapshot(BaseModel):
         context: MatchContext, *, schema_version: str
     ) -> dict[str, object]:
         payload = context.model_dump(mode="json")
-        if schema_version != "match_input_snapshot.v10":
+        if schema_version not in {"match_input_snapshot.v10", "match_input_snapshot.v11"}:
             # v1-v9 identities predate Sharpness as a distinct match input.
             payload["player_a"].pop("sharpness_modifier", None)
             payload["player_b"].pop("sharpness_modifier", None)

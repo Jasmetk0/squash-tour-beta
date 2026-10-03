@@ -53,7 +53,7 @@ def _snapshot() -> MatchInputSnapshot:
         context=context,
         effective_match_format=official_match_format_snapshot(),
         simulation_seed=777,
-        match_engine_version="match_engine_v10",
+        match_engine_version="match_engine_v11",
     )
 
 
@@ -64,7 +64,7 @@ def test_match_input_snapshot_round_trips_exact_current_engine_inputs() -> None:
     assert restored == snapshot
     assert restored.context.player_a.player.player_id == "A"
     assert restored.context.player_b.player.player_id == "B"
-    assert restored.schema_version == "match_input_snapshot.v10"
+    assert restored.schema_version == "match_input_snapshot.v11"
     assert restored.unsupported_future_inputs == ()
     assert restored.effective_match_timing is not None
     assert restored.effective_match_stamina is not None
@@ -91,9 +91,18 @@ def test_match_input_snapshot_round_trips_exact_current_engine_inputs() -> None:
         profile.player_id
         for profile in restored.effective_match_timing.player_restart_profiles
     } == {"A", "B"}
+    assert restored.effective_match_health is not None
+    assert tuple(
+        profile.player_id for profile in restored.effective_match_health.player_profiles
+    ) == ("A", "B")
+    assert all(
+        not profile.numeric_calibration_required
+        for profile in restored.effective_match_health.player_profiles
+    )
+    assert restored.effective_match_health.numeric_effect_applied is False
 
 
-def test_v10_protects_sharpness_separately_from_form_and_fatigue() -> None:
+def test_v11_protects_sharpness_and_health_separately_from_form_and_fatigue() -> None:
     first = _snapshot()
     context = first.context.model_copy(
         update={
@@ -106,7 +115,7 @@ def test_v10_protects_sharpness_separately_from_form_and_fatigue() -> None:
         context=context,
         effective_match_format=first.effective_match_format,
         simulation_seed=first.simulation_seed,
-        match_engine_version="match_engine_v10",
+        match_engine_version="match_engine_v11",
     )
     assert first.context.player_a.form_modifier == second.context.player_a.form_modifier
     assert (
@@ -118,6 +127,38 @@ def test_v10_protects_sharpness_separately_from_form_and_fatigue() -> None:
         != second.context.player_a.sharpness_modifier
     )
     assert first.snapshot_hash != second.snapshot_hash
+
+
+def test_v10_sharpness_snapshot_remains_readable_without_health_projection() -> None:
+    current = _snapshot()
+    hash_payload = MatchInputSnapshot._hash_payload(
+        schema_version="match_input_snapshot.v10",
+        match_id=current.match_id,
+        simulation_seed=current.simulation_seed,
+        match_engine_version="match_engine_v10",
+        effective_match_format=current.effective_match_format,
+        effective_match_timing=current.effective_match_timing,
+        effective_match_stamina=current.effective_match_stamina,
+        rally_calibration_profile=current.rally_calibration_profile,
+        effective_match_gameplans=current.effective_match_gameplans,
+        effective_rally_rules=current.effective_rally_rules,
+        context=current.context,
+        unsupported_future_inputs=(),
+    )
+    payload = current.model_dump(mode="json")
+    payload.pop("effective_match_health")
+    payload.update(
+        schema_version="match_input_snapshot.v10",
+        match_engine_version="match_engine_v10",
+        snapshot_hash=MatchInputSnapshot._content_hash(hash_payload),
+    )
+
+    restored = MatchInputSnapshot.model_validate(payload)
+
+    assert restored.schema_version == "match_input_snapshot.v10"
+    assert restored.effective_match_health is None
+    assert restored.context.player_a.sharpness_modifier == current.context.player_a.sharpness_modifier
+    assert restored.snapshot_hash == MatchInputSnapshot._content_hash(hash_payload)
 
 
 def test_fixed_historical_v9_payload_keeps_original_identity() -> None:
@@ -145,6 +186,7 @@ def test_match_input_snapshot_rejects_protected_input_tampering() -> None:
         "stamina",
         "rally_calibration",
         "gameplans",
+        "health",
     ):
         payload = _snapshot().model_dump(mode="json")
         if field == "player":
@@ -159,10 +201,12 @@ def test_match_input_snapshot_rejects_protected_input_tampering() -> None:
             ] -= 1
         elif field == "rally_calibration":
             payload["rally_calibration_profile"]["stay_transition_weight"] += 0.01
-        else:
+        elif field == "gameplans":
             payload["effective_match_gameplans"]["initial_gameplans"][0][
                 "confidence"
             ] -= 0.01
+        else:
+            payload["effective_match_health"]["unsupported_components"].pop()
 
         with pytest.raises(ValidationError, match="snapshot hash mismatch"):
             MatchInputSnapshot.model_validate(payload)
@@ -216,6 +260,7 @@ def test_legacy_match_input_snapshots_remain_readable(
     payload.pop("rally_calibration_profile")
     payload.pop("effective_match_gameplans")
     payload.pop("effective_rally_rules")
+    payload.pop("effective_match_health")
     payload.update(
         schema_version=schema_version,
         match_engine_version=engine_version,
@@ -246,6 +291,7 @@ def test_v3_timing_snapshot_remains_readable_without_stamina() -> None:
     payload.pop("rally_calibration_profile")
     payload.pop("effective_match_gameplans")
     payload.pop("effective_rally_rules")
+    payload.pop("effective_match_health")
     payload.update(
         schema_version="match_input_snapshot.v3",
         match_engine_version="match_engine_v3",
@@ -280,6 +326,7 @@ def test_v4_observational_stamina_snapshot_remains_readable() -> None:
     payload.pop("rally_calibration_profile")
     payload.pop("effective_match_gameplans")
     payload.pop("effective_rally_rules")
+    payload.pop("effective_match_health")
     payload.update(
         schema_version="match_input_snapshot.v4",
         match_engine_version="match_engine_v4",
@@ -326,6 +373,7 @@ def test_v5_active_stamina_snapshot_remains_readable_without_effort() -> None:
     payload.pop("rally_calibration_profile")
     payload.pop("effective_match_gameplans")
     payload.pop("effective_rally_rules")
+    payload.pop("effective_match_health")
     payload.update(
         schema_version="match_input_snapshot.v5",
         match_engine_version="match_engine_v5",
@@ -376,6 +424,7 @@ def test_v6_pre_rally_effort_snapshot_remains_readable_without_control_profile()
     payload.pop("rally_calibration_profile")
     payload.pop("effective_match_gameplans")
     payload.pop("effective_rally_rules")
+    payload.pop("effective_match_health")
     payload.update(
         schema_version="match_input_snapshot.v6",
         match_engine_version="match_engine_v6",
@@ -412,6 +461,7 @@ def test_v7_hidden_control_snapshot_remains_readable_without_gameplans() -> None
     payload = current.model_dump(mode="json")
     payload.pop("effective_match_gameplans")
     payload.pop("effective_rally_rules")
+    payload.pop("effective_match_health")
     payload.update(
         schema_version="match_input_snapshot.v7",
         match_engine_version="match_engine_v7",

@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import hashlib
+import json
+
 import pytest
 
 from beta_engine.core import DeterministicRng
@@ -8,6 +11,7 @@ from beta_engine.domain.matches import (
     MatchEngine,
     MatchInputSnapshot,
     MatchParticipantContext,
+    MatchWorkingInput,
     official_match_format_snapshot,
 )
 from beta_engine.domain.players import Player
@@ -69,6 +73,36 @@ def _session_factory(tmp_path):
     )
     Base.metadata.create_all(engine)
     return create_session_factory(engine)
+
+
+@pytest.mark.pr_critical
+def test_historical_working_input_without_health_keeps_original_fingerprint() -> None:
+    snapshot = _snapshot(seed=700)
+    working_input, _ = MatchEngine(
+        rng=DeterministicRng(snapshot.simulation_seed)
+    ).start_working_match(
+        snapshot.context,
+        log_anchor_hash=snapshot.snapshot_hash,
+        effective_match_timing=snapshot.effective_match_timing,
+        effective_match_stamina=snapshot.effective_match_stamina,
+        rally_calibration_profile=snapshot.rally_calibration_profile,
+        effective_match_gameplans=snapshot.effective_match_gameplans,
+        effective_rally_rules=snapshot.effective_rally_rules,
+        include_health_projection=False,
+    )
+    historical_payload = working_input.model_dump(mode="json", exclude={"health"})
+    historical_fingerprint = hashlib.sha256(
+        json.dumps(
+            historical_payload,
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode("utf-8")
+    ).hexdigest()
+
+    restored = MatchWorkingInput.model_validate(historical_payload)
+
+    assert restored.health is None
+    assert restored.fingerprint == historical_fingerprint
 
 
 @pytest.mark.pr_critical

@@ -3,7 +3,7 @@
 ## Current checkpoint — 3 October 2026 / Master v72
 
 This checkpoint supersedes older next-task notices below; their implementation evidence is retained.
-Current integration baseline is `buuk` after merged #1121 (`e806d774d731f9bfb0503ff3060e33ce733aa4f4`).
+Current integration baseline is `buuk` after merged #1122 (`6d1965810573578f320fd986403decf686df5574`).
 The copied-FAX path now reaches the explicit automatic application-validation policy blocker.
 The mandatory 50-season release acceptance has not yet completed.
 
@@ -32,7 +32,7 @@ lower Tours remain abstract. The Official Run is not the acceptance focus.
   the current Health history.
 - Legacy Health absence can be reconstructed automatically only at the opening Week-1 boundary;
   advanced missing history fails closed rather than pretending players were healthy.
-- The current branch adds reviewed Admin Health editing on the exact current Health head:
+- Reviewed Admin Health editing operates on the exact current Health head:
   explicit Week-1 pre-start inputs and later current-state corrections use Preview → fingerprinted
   Commit, immutable operator/reason receipts, stale/retry guards and current-Week/future-fact checks.
 - Reviewed Health edits become ordinary `player_health_state` Working Draft component changes and can
@@ -43,11 +43,16 @@ lower Tours remain abstract. The Official Run is not the acceptance focus.
   inputs, review the server preview, commit it to the Working Draft, and explicitly Save a Health Revision.
 - The UI uses the Active Admin Branch from the shared shell, stays present-only through the existing
   historical-time boundary, and disables mutation on read-only Branches rather than selecting a hidden default.
+- `health_limitation_projection.v1` now projects canonical current Injury/Illness facts and permanent
+  consequences into participant-ordered Match Health evidence without inventing numeric penalties.
+- New authoritative matches freeze that projection inside `match_input_snapshot.v11` / `match_engine_v11`;
+  the command fingerprint binds the source Health state and projection fingerprint, while v1–v10 replay remains readable.
+- Player Lab variants may carry an explicit canonical Health timeline and report the same Match Health
+  projection per week. Health generation/healing and sporting-effect calibration remain deliberately unsupported.
 
 See [Player Health V1](docs/PLAYER_HEALTH_V1.md).
 
-**Next:** connect canonical Health to Match Engine limitation projection and Player Lab Health/recovery
-scenarios before calibrating stochastic Health Checks.
+**Next:** calibrate Health limitation/stacking and stochastic Health Check/recovery only from explicit product decisions and measured Lab evidence; health-driven start/W/O/medical-timeout/RET AI remains a later slice.
 
 ## Implemented — Global Player Test Lab V1 shared-development foundation
 
@@ -55,21 +60,20 @@ scenarios before calibrating stochastic Health Checks.
 - Portable `player_test_lab_scenario.v1` inputs execute the exact production
   `weekly_player_development_update` and `between_week_state_update` kernels; no Lab-only
   development engine is introduced.
-- V1 compares multiple variants from one identical canonical `PlayerSportingRecord` and varies only
-  explicit weekly competitive-match counts, an input already consumed by the production sporting kernel.
+- V1 compares multiple variants from one identical canonical `PlayerSportingRecord`; variants can vary
+  explicit weekly competitive-match counts and an explicit canonical `PlayerHealthProfile` timeline.
 - Scenario/request and every weekly sporting state are deterministically fingerprinted; diagnostic labels
   do not alter sporting RNG, and exact replay is covered through service and HTTP tests.
 - The Admin result timeline reports week/age, completed matches, OVR/Potential, Form, Match Sharpness,
-  long-term fatigue, changed-attribute count and aggregate attribute delta.
+  long-term fatigue, canonical Health Severity/domains/projection fingerprints, changed-attribute count and aggregate attribute delta.
 - Isolation is explicit: no Product Run, Branch, Saved Revision, Ranking, Calendar or tournament state is
   created or mutated.
-- V1 intentionally reports Health, Training Load and career AI as unsupported. Experience, Match
-  Preparation and Financial Level are likewise not fabricated.
+- V1 reports canonical Health projection as supported while explicitly keeping numeric Health effects,
+  Health generation/healing, Training Load and career AI unsupported. Experience, Match Preparation and Financial Level are likewise not fabricated.
 
 See [Player Test Lab V1](docs/PLAYER_TEST_LAB_V1.md).
 
-**Next:** extend Player Lab over canonical Health V1 after explicit Health editing/projection exists;
-persistent Player Lab Test Sessions and career-AI variants remain later slices.
+**Next:** use Player Lab to calibrate approved Health/recovery mechanics; persistent Player Lab Test Sessions, Run/Saved-Revision player copy, optional standalone matches and career-AI variants remain later slices.
 
 ## Implemented — machine-readable copied-FAX Entry validation release-policy gate
 

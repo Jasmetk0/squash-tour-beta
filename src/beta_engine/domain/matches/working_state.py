@@ -13,6 +13,7 @@ from beta_engine.domain.matches.gameplans import (
     EffectiveMatchGameplanSnapshot,
     PlayerGameplanState,
 )
+from beta_engine.domain.matches.health import EffectiveMatchHealthSnapshot
 from beta_engine.domain.matches.models import MatchContext, MatchResult, SetResult
 from beta_engine.domain.matches.rallies import RallyEvent
 from beta_engine.domain.matches.rally_rules import EffectiveRallyRulesSnapshot
@@ -37,6 +38,7 @@ class MatchWorkingInput(BaseModel):
     rally_calibration: RallyCalibrationProfile
     gameplans: EffectiveMatchGameplanSnapshot
     rules: EffectiveRallyRulesSnapshot
+    health: EffectiveMatchHealthSnapshot | None = None
 
     @model_validator(mode="after")
     def validate_participants(self) -> "MatchWorkingInput":
@@ -50,12 +52,19 @@ class MatchWorkingInput(BaseModel):
             raise ValueError("working-match gameplans must match participant order")
         if {profile.player_id for profile in self.timing.player_restart_profiles} != set(ids):
             raise ValueError("working-match timing profiles must match participants")
+        if self.health is not None and tuple(
+            profile.player_id for profile in self.health.player_profiles
+        ) != ids:
+            raise ValueError("working-match Health profiles must match participant order")
         return self
 
     @property
     def fingerprint(self) -> str:
+        body = self.model_dump(mode="json")
+        if self.health is None:
+            body.pop("health", None)
         payload = json.dumps(
-            self.model_dump(mode="json"),
+            body,
             sort_keys=True,
             separators=(",", ":"),
         ).encode("utf-8")

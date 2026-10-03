@@ -1,9 +1,9 @@
 # Squash Engine roadmap
 
-## Active next work — 2 October 2026 / Master v71
+## Active next work — 3 October 2026 / Master v72
 
 This order supersedes older next-step notices below while preserving completed-work history.
-Baseline: `buuk` at `c42dc06ba73c86ffd4c64b2ce1d38e9944beab09` (#1094).
+Baseline: `buuk` at `121aaca35c83ea31214fbbf44da30941bc95d69b` (#1118).
 
 1. ✅ Complete [Talent Intake historical policy and reviewed-scope safety](docs/CODEX_NEXT_TALENT_INTAKE_HISTORY_V1.md)
    without changing rarity weights or potential mappings.
@@ -17,6 +17,7 @@ Baseline: `buuk` at `c42dc06ba73c86ffd4c64b2ce1d38e9944beab09` (#1094).
    Canonical Qualification plus pure groups and groups→knockout progression are now executable
    through shared topology/schedule/standings/hybrid authorities. Explicit Session import/export and verified Run → Lab historical Tournament copy are now implemented.
    The Lab → Run compatibility-preview and explicit reviewed Working Draft application boundaries are now implemented. Remaining replacement/ranking-consequence Lab work should be pulled only when it blocks copied-FAX acceptance.
+   🟡 Player Lab V1 now runs portable multi-variant development scenarios through the same canonical weekly sporting kernels as Product Runs. It deliberately does not invent Health, Training Load or career AI; canonical Health/recovery plus persistent Player Lab sessions remain required by Master v72.
 4. 🟡 Validate the copied-FAX release path at Master v72 scale. The machine-readable input gate and
    reviewed persisted reference materializer and deterministic 80-Edition non-canonical acceptance
    Calendar source are implemented: Preview → editable 50-season Run → Run-owned World/Calendar →

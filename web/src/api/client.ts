@@ -2423,6 +2423,15 @@ export async function previewDerivedAuthoritativeWeekTransition(
   if (!/^[0-9a-f]{64}$/.test(data.request_fingerprint)) {
     throw new Error('Week Transition preview request fingerprint is invalid.')
   }
+  if (
+    !/^[0-9a-f]{64}$/.test(data.result.official_ranking_fingerprint) ||
+    !/^[0-9a-f]{64}$/.test(data.result.player_lifecycle_fingerprint) ||
+    !/^[0-9a-f]{64}$/.test(data.result.player_sporting_fingerprint) ||
+    data.result.player_health_fingerprint === null ||
+    !/^[0-9a-f]{64}$/.test(data.result.player_health_fingerprint)
+  ) {
+    throw new Error('Week Transition preview authority fingerprints are invalid.')
+  }
   return data
 }
 

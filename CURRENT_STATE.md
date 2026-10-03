@@ -1,5 +1,17 @@
 # Current implementation and next action
 
+## Product delta — 3 October 2026 / Master v74 (implementation pending)
+
+The six country ratings are now specified as 1–10 with at most one decimal place.
+Court Count is deferred beyond pre-alpha; practical access remains `squash_access`.
+This documentation-only checkpoint does not implement the change: the current Country
+validator and participation/normalization formulas still assume 1–5, and `court_count`
+remains in the existing model/storage. Coordinate versioned package/Run migration,
+API/editor/import/export changes and tests before authoring new 1–10 Earth packages.
+Preserve historical snapshots and replay; never guess a source scale from numeric values.
+Country pipeline weights remain provisional calibration, not validated realism.
+
+
 ## Current checkpoint — 3 October 2026 / Master v72
 
 This checkpoint supersedes older next-task notices below; their implementation evidence is retained.

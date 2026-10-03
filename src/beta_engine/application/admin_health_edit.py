@@ -411,11 +411,11 @@ class AdminHealthEditService:
             if receipt is not None:
                 try:
                     payload = json.loads(receipt.payload_json)
-                    stored_preview = AdminHealthEditPreview.model_validate(
-                        payload["preview"]
+                    stored_preview = AdminHealthEditPreview.model_validate_json(
+                        json.dumps(payload["preview"])
                     )
-                    stored_result = AdminHealthEditResult.model_validate(
-                        payload["result"]
+                    stored_result = AdminHealthEditResult.model_validate_json(
+                        json.dumps(payload["result"])
                     )
                 except (KeyError, TypeError, ValueError, json.JSONDecodeError) as exc:
                     raise ValueError("Admin Health edit receipt is corrupt") from exc

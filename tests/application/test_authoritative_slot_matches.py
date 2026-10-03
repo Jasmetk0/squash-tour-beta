@@ -673,6 +673,115 @@ def test_authoritative_match_freezes_canonical_health_without_numeric_penalty(tm
     assert snapshot.effective_match_health.numeric_effect_applied is False
 
 
+@pytest.mark.pr_critical
+def test_same_slot_health_freeze_allows_completed_retry_but_blocks_new_group_after_edit(tmp_path):
+    session = session_at(tmp_path / "health-slot-freeze.sqlite")
+    executor = AuthoritativeSlotMatchExecutor(session)
+    plan = executor.create_slot(
+        run_id="run",
+        branch_id="branch",
+        week=WEEK,
+        slot_id="slot-health",
+        ordinal=1,
+        group_ids=("sf-1", "sf-2"),
+        match_events=(
+            SimulationMatchEventPlan(
+                group_id="sf-1",
+                event_id="event",
+                match_id="sf-1",
+                direct_player_ids=("a", "b"),
+            ),
+            SimulationMatchEventPlan(
+                group_id="sf-2",
+                event_id="event",
+                match_id="sf-2",
+                direct_player_ids=("c", "d"),
+            ),
+        ),
+    )
+    first = executor.execute_match_group(
+        run_id="run",
+        branch_id="branch",
+        week=WEEK,
+        slot_id="slot-health",
+        group_id="sf-1",
+        event_id="event",
+        match_id="sf-1",
+        player_a_id="a",
+        player_b_id="b",
+        seed=101,
+        expected_slot_start_fingerprint=plan.slot_start_fingerprint,
+    )
+    session.commit()
+
+    current_health = get_health(
+        session, run_id="run", branch_id="branch", week=WEEK
+    )
+    assert current_health is not None
+    profiles = {profile.player_id: profile for profile in current_health.players}
+    profiles["c"] = PlayerHealthProfile(
+        player_id="c",
+        records=(
+            PlayerHealthRecord(
+                record_id="late-health-edit",
+                kind="Injury",
+                condition_key="ankle",
+                lifecycle="Active",
+                severity=15,
+                affected_domains=("movement",),
+                onset_week=WEEK,
+                recovery_window_min_weeks=1,
+                recovery_window_max_weeks=2,
+                provenance="post-slot Admin correction",
+            ),
+        ),
+    )
+    put_health(
+        session,
+        current_health.model_copy(
+            update={
+                "players": tuple(
+                    profiles[player_id] for player_id in sorted(profiles)
+                )
+            }
+        ),
+    )
+    session.commit()
+
+    replay = executor.execute_match_group(
+        run_id="run",
+        branch_id="branch",
+        week=WEEK,
+        slot_id="slot-health",
+        group_id="sf-1",
+        event_id="event",
+        match_id="sf-1",
+        player_a_id="a",
+        player_b_id="b",
+        seed=101,
+        expected_slot_start_fingerprint=plan.slot_start_fingerprint,
+    )
+    assert replay.exact_retry is True
+    assert replay.result_fingerprint == first.result_fingerprint
+
+    with pytest.raises(
+        ValueError, match="Health changed after Simulation Slot freeze"
+    ):
+        executor.execute_match_group(
+            run_id="run",
+            branch_id="branch",
+            week=WEEK,
+            slot_id="slot-health",
+            group_id="sf-2",
+            event_id="event",
+            match_id="sf-2",
+            player_a_id="c",
+            player_b_id="d",
+            seed=202,
+            expected_slot_start_fingerprint=plan.slot_start_fingerprint,
+        )
+
+
 def test_same_slot_frozen_snapshot_and_iteration_order_independence(tmp_path):
     one = run_semifinals(tmp_path / "one.sqlite", ("sf-1", "sf-2"))
     two = run_semifinals(tmp_path / "two.sqlite", ("sf-2", "sf-1"))

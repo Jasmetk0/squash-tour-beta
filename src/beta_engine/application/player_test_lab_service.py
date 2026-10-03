@@ -12,7 +12,15 @@ from beta_engine.domain.calendar.season_weeks import (
     age_at_calendar_position,
     season_week_to_calendar_position,
 )
+from beta_engine.domain.matches.health import (
+    PlayerMatchHealthProjection,
+    project_player_health,
+)
 from beta_engine.domain.players.attribute_catalog import CANONICAL_PLAYER_ATTRIBUTES
+from beta_engine.domain.players.health import (
+    PlayerHealthProfile,
+    PlayerHealthRecord,
+)
 from beta_engine.domain.players.sporting import (
     CompletedWeekSportingContext,
     CompetitiveMatchCount,
@@ -70,6 +78,7 @@ class PlayerLabVariant(FrozenInput):
     variant_id: str = Field(min_length=1, max_length=160)
     display_name: str = Field(min_length=1, max_length=160)
     competitive_match_counts: tuple[int, ...] = Field(min_length=1)
+    health_timeline: tuple[PlayerHealthProfile, ...] | None = None
 
     @field_validator("competitive_match_counts", mode="before")
     @classmethod
@@ -78,11 +87,33 @@ class PlayerLabVariant(FrozenInput):
             return tuple(value)
         return value
 
+    @field_validator("health_timeline", mode="before")
+    @classmethod
+    def normalize_json_health_timeline(cls, value):
+        if value is None:
+            return None
+        if isinstance(value, list):
+            return tuple(
+                item
+                if isinstance(item, PlayerHealthProfile)
+                else PlayerHealthProfile.model_validate_json(
+                    json.dumps(item, ensure_ascii=False)
+                )
+                for item in value
+            )
+        return value
+
     @model_validator(mode="after")
     def validate_counts(self):
         if any(type(value) is not int or value < 0 or value > 32 for value in self.competitive_match_counts):
             raise ValueError(
                 "Player Lab weekly competitive match counts must be integers from 0 through 32"
+            )
+        if self.health_timeline is not None and len(self.health_timeline) != len(
+            self.competitive_match_counts
+        ) + 1:
+            raise ValueError(
+                "Player Lab Health timeline must contain start state plus one state per simulated week"
             )
         return self
 
@@ -133,6 +164,14 @@ class PlayerLabScenario(FrozenInput):
             )
         if self.start_week.ordinal + duration >= 50 * 61:
             raise ValueError("Player Lab scenario extends beyond the Run time horizon")
+        for variant in self.variants:
+            if variant.health_timeline is not None and any(
+                profile.player_id != self.player.player_id
+                for profile in variant.health_timeline
+            ):
+                raise ValueError(
+                    "Player Lab Health timeline identity must match the scenario player"
+                )
         age = _age_at_week(
             birth_year=self.birth_year,
             birth_year_week=self.birth_year_week,
@@ -166,7 +205,7 @@ class PlayerLabCompatibility(FrozenInput):
     isolated: Literal[True] = True
     run_mutation_performed: Literal[False] = False
     run_live_link: Literal[False] = False
-    health_supported: Literal[False] = False
+    health_supported: Literal[True] = True
     training_load_supported: Literal[False] = False
     career_ai_supported: Literal[False] = False
     warnings: tuple[str, ...]
@@ -183,6 +222,8 @@ class PlayerLabWeekSnapshot(FrozenInput):
     long_term_fatigue: int = Field(ge=0, le=100)
     changed_attribute_count: int = Field(ge=0, le=57)
     attribute_delta_total: int
+    health_projection: PlayerMatchHealthProjection
+    health_projection_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
     state_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
 
 
@@ -190,6 +231,8 @@ class PlayerLabVariantResult(FrozenInput):
     variant_id: str
     display_name: str
     initial_state_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    initial_health_projection: PlayerMatchHealthProjection
+    initial_health_projection_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
     final_state_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
     snapshots: tuple[PlayerLabWeekSnapshot, ...]
     final_player: PlayerSportingRecord
@@ -258,6 +301,67 @@ def _built_in_scenarios() -> tuple[BuiltInPlayerLabScenario, ...]:
             ),
         ),
     )
+    health_player = _record(player_id="LAB-HEALTH")
+    start = RankingWeek(season_index=0, week=1)
+    active = PlayerHealthProfile(
+        player_id=health_player.player_id,
+        records=(
+            PlayerHealthRecord(
+                record_id="ankle-1",
+                kind="Injury",
+                condition_key="ankle",
+                lifecycle="Active",
+                severity=40,
+                affected_domains=("movement",),
+                onset_week=start,
+                recovery_window_min_weeks=2,
+                recovery_window_max_weeks=5,
+                provenance="Player Lab explicit diagnostic path",
+            ),
+        ),
+    )
+    recovering = PlayerHealthProfile(
+        player_id=health_player.player_id,
+        records=(
+            active.records[0].model_copy(
+                update={"lifecycle": "Recovering", "severity": 20}
+            ),
+        ),
+    )
+    recovered = PlayerHealthProfile(
+        player_id=health_player.player_id,
+        records=(
+            active.records[0].model_copy(
+                update={
+                    "lifecycle": "Recovered",
+                    "severity": 0,
+                    "recovered_week": RankingWeek(season_index=0, week=4),
+                }
+            ),
+        ),
+    )
+    healthy = PlayerHealthProfile(player_id=health_player.player_id)
+    health_scenario = PlayerLabScenario(
+        scenario_id="health-projection-explicit-recovery",
+        player=health_player,
+        birth_year=1980,
+        birth_year_week=1,
+        start_week=start,
+        variants=(
+            PlayerLabVariant(
+                variant_id="explicit-injury",
+                display_name="Explicit ankle recovery path",
+                competitive_match_counts=(0, 0, 0),
+                health_timeline=(active, active, recovering, recovered),
+            ),
+            PlayerLabVariant(
+                variant_id="healthy-control",
+                display_name="Healthy control",
+                competitive_match_counts=(0, 0, 0),
+                health_timeline=(healthy, healthy, healthy, healthy),
+            ),
+        ),
+    )
     return (
         BuiltInPlayerLabScenario(
             scenario_id=scenario.scenario_id,
@@ -269,6 +373,17 @@ def _built_in_scenarios() -> tuple[BuiltInPlayerLabScenario, ...]:
             ),
             scenario_fingerprint=scenario.fingerprint,
             scenario=scenario,
+        ),
+        BuiltInPlayerLabScenario(
+            scenario_id=health_scenario.scenario_id,
+            display_name="Health projection explicit recovery",
+            description=(
+                "Compares an explicit Active → Recovering → Recovered Injury timeline "
+                "against a healthy control through the same Match Health projection. "
+                "The Lab does not generate healing or apply an unapproved numeric penalty."
+            ),
+            scenario_fingerprint=health_scenario.fingerprint,
+            scenario=health_scenario,
         ),
     )
 
@@ -313,8 +428,13 @@ class PlayerTestLabService:
         state = initial
         snapshots: list[PlayerLabWeekSnapshot] = []
         initial_attributes = dict(scenario.player.attributes)
+        health_timeline = variant.health_timeline or tuple(
+            PlayerHealthProfile(player_id=scenario.player.player_id)
+            for _ in range(len(variant.competitive_match_counts) + 1)
+        )
+        initial_health_projection = project_player_health(health_timeline[0])
 
-        for match_count in variant.competitive_match_counts:
+        for week_index, match_count in enumerate(variant.competitive_match_counts):
             player_before = state.players[0]
             context = CompletedWeekSportingContext(
                 run_id=state.run_id,
@@ -356,6 +476,9 @@ class PlayerTestLabService:
             )
             player_after = state.players[0]
             current_attributes = dict(player_after.attributes)
+            health_projection = project_player_health(
+                health_timeline[week_index + 1]
+            )
             snapshots.append(
                 PlayerLabWeekSnapshot(
                     week=state.week,
@@ -378,6 +501,8 @@ class PlayerTestLabService:
                         current_attributes[name] - initial_attributes[name]
                         for name in CANONICAL_PLAYER_ATTRIBUTES
                     ),
+                    health_projection=health_projection,
+                    health_projection_fingerprint=health_projection.fingerprint,
                     state_fingerprint=state.fingerprint,
                 )
             )
@@ -386,6 +511,8 @@ class PlayerTestLabService:
             variant_id=variant.variant_id,
             display_name=variant.display_name,
             initial_state_fingerprint=initial.fingerprint,
+            initial_health_projection=initial_health_projection,
+            initial_health_projection_fingerprint=initial_health_projection.fingerprint,
             final_state_fingerprint=state.fingerprint,
             snapshots=tuple(snapshots),
             final_player=state.players[0],
@@ -410,9 +537,9 @@ class PlayerTestLabService:
                     "between_week_state_update",
                 ),
                 warnings=(
-                    "Health is not yet a canonical Player Lab input; PlayerSportingRecord.health_state remains unsupported.",
+                    "Health timelines use canonical PlayerHealthProfile and the shared Match Health limitation projection.",
+                    "Health recovery generation and numeric sporting effects remain uncalibrated; explicit Health timelines do not alter the development kernel yet.",
                     "Training Load, Match Preparation, Experience, Financial Level and career AI are not modeled by Player Lab V1.",
-                    "V1 variants differ only through explicit weekly competitive-match counts already consumed by the production sporting kernel.",
                 ),
             ),
             variants=variants,

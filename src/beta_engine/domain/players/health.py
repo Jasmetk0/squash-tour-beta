@@ -136,7 +136,7 @@ class PlayerHealthProfile(FrozenInput):
             if cursor.record_id in seen:
                 raise ValueError("Health recurrence chain cannot contain a cycle")
 
-        consequence_ids = tuple
+        consequence_ids = tuple(
             consequence.consequence_id for consequence in self.permanent_consequences
         )
         if consequence_ids != tuple(sorted(set(consequence_ids))):

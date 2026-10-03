@@ -2819,6 +2819,124 @@ export type RunPlayerDetail = {
   talent_sequence: number | null
 }
 
+export type PlayerHealthKind = 'Injury' | 'Illness'
+export type PlayerHealthLifecycle = 'At Risk' | 'Active' | 'Recovering' | 'Recovered'
+
+export type PlayerHealthWeek = {
+  season_index: number
+  week: number
+}
+
+export type PlayerHealthRecord = {
+  record_id: string
+  kind: PlayerHealthKind
+  condition_key: string
+  lifecycle: PlayerHealthLifecycle
+  severity: number
+  affected_domains: string[]
+  onset_week: PlayerHealthWeek | null
+  recovered_week: PlayerHealthWeek | null
+  started_before_run: boolean
+  recurrence_of_record_id: string | null
+  recovery_window_min_weeks: number | null
+  recovery_window_max_weeks: number | null
+  provenance: string
+}
+
+export type PermanentHealthConsequence = {
+  consequence_id: string
+  source_record_id: string
+  affected_domains: string[]
+  limitation_severity: number
+  provenance: string
+}
+
+export type PlayerHealthProfile = {
+  player_id: string
+  records: PlayerHealthRecord[]
+  permanent_consequences: PermanentHealthConsequence[]
+}
+
+export type PlayerHealthWeekState = {
+  schema_version: 'player_health_week_state.v1'
+  run_id: string
+  branch_id: string
+  week: PlayerHealthWeek
+  players: PlayerHealthProfile[]
+  source_initial_world_fingerprint: string
+  predecessor_fingerprint: string | null
+  stage_provenance: string
+}
+
+export type AdminPlayerHealthView = {
+  schema_version: 'admin_health_current_view.v1'
+  run_id: string
+  branch_id: string
+  week: PlayerHealthWeek
+  player: PlayerHealthProfile
+  state_fingerprint: string
+  health_component_fingerprint: string
+  draft_version: number
+}
+
+export type AdminHealthEditMode = 'pre_start_input' | 'current_state_correction'
+
+export type AdminHealthEditRequest = {
+  schema_version: 'admin_health_edit_request.v1'
+  command_id: string
+  player_id: string
+  mode: AdminHealthEditMode
+  expected_draft_version: number
+  records: PlayerHealthRecord[]
+  permanent_consequences: PermanentHealthConsequence[]
+  audit_label: string
+  audit_reason: string
+}
+
+export type AdminHealthEditPreview = {
+  schema_version: 'admin_health_edit_preview.v1'
+  run_id: string
+  branch_id: string
+  week: PlayerHealthWeek
+  request_fingerprint: string
+  expected_draft_version: number
+  before_state_fingerprint: string
+  after_state: PlayerHealthWeekState
+  before_component_fingerprint: string
+  after_component_fingerprint: string
+  preview_fingerprint: string
+}
+
+export type AdminHealthEditResult = {
+  schema_version: 'admin_health_edit_result.v1'
+  run_id: string
+  branch_id: string
+  command_id: string
+  week: PlayerHealthWeek
+  player_id: string
+  state_fingerprint: string
+  health_component_fingerprint: string
+  draft_version: number
+  already_applied: boolean
+}
+
+export type PlayerHealthSavePreview = {
+  run_id: string
+  branch_id: string
+  draft_version: number
+  draft_status: 'clean' | 'dirty'
+  health_component_fingerprint: string
+  changed_since_saved_head: boolean
+  can_save: boolean
+}
+
+export type PlayerHealthSavePayload = {
+  expected_draft_version: number
+  expected_player_health_fingerprint: string
+}
+
+export type PlayerHealthSaveResponse = AuthoritativeSimulationSaveResponse
+
 export type PlayerCareerHistoryEntry = {
   run_id: string
   season: number

@@ -12,6 +12,24 @@ const api = vi.hoisted(() => ({
 }))
 
 vi.mock('../api/client', () => api)
+vi.mock('../admin/AdminBranchContext', () => ({
+  useAdminBranch: () => ({
+    runId: 'run-a',
+    selectedBranchId: 'branch-a',
+    selectedBranch: { branch_id: 'branch-a', run_id: 'run-a', display_name: 'Timeline A', read_only: false },
+    branches: [],
+    viewerBranchId: 'branch-a',
+    isLoading: false,
+    error: null,
+    viewerBranchMissing: false,
+    selectBranch: vi.fn()
+  })
+}))
+vi.mock('./PlayerHealthAdminPanel', () => ({
+  PlayerHealthAdminPanel: ({ branchId, playerId }: { branchId: string; playerId: string }) => (
+    <div data-testid="health-panel">Health {branchId}/{playerId}</div>
+  )
+}))
 
 describe('PlayersPage', () => {
   beforeEach(() => {
@@ -95,6 +113,7 @@ describe('PlayersPage', () => {
     renderWithRoute(<PlayersPage />, '/runs/run-a/players')
 
     expect(await screen.findByRole('heading', { name: 'Run Players Explorer' })).toBeInTheDocument()
+    expect(screen.getByText('Timeline A')).toBeInTheDocument()
     const table = await screen.findByRole('table')
     expect(within(table).getByText('Ali A')).toBeInTheDocument()
 
@@ -130,6 +149,7 @@ describe('PlayersPage', () => {
       'href',
       '/runs/run-a/players/EGY-0001/career'
     )
+    expect(screen.getByTestId('health-panel')).toHaveTextContent('Health branch-a/EGY-0001')
   })
 
   it('shows list error state', async () => {

@@ -3,7 +3,7 @@
 ## Current checkpoint — 3 October 2026 / Master v72
 
 This checkpoint supersedes older next-task notices below; their implementation evidence is retained.
-Current integration baseline is `buuk` after merged #1120 (`b43b4d7a353491dda95bde5cac81300df8f3a68b`).
+Current integration baseline is `buuk` after merged #1121 (`e806d774d731f9bfb0503ff3060e33ce733aa4f4`).
 The copied-FAX path now reaches the explicit automatic application-validation policy blocker.
 The mandatory 50-season release acceptance has not yet completed.
 
@@ -38,11 +38,16 @@ lower Tours remain abstract. The Official Run is not the acceptance focus.
 - Reviewed Health edits become ordinary `player_health_state` Working Draft component changes and can
   be Saved into recoverable Saved Revisions; the generic Viewer-Branch draft resolver preserves and
   ignores them correctly as component evidence rather than misreading them as Viewer selection changes.
+- Run Players Admin now exposes the same Branch-owned authority as a reviewed UI: inspect current
+  Injury/Illness history, edit the complete current profile, add recurrence/recovery/permanent-consequence
+  inputs, review the server preview, commit it to the Working Draft, and explicitly Save a Health Revision.
+- The UI uses the Active Admin Branch from the shared shell, stays present-only through the existing
+  historical-time boundary, and disables mutation on read-only Branches rather than selecting a hidden default.
 
 See [Player Health V1](docs/PLAYER_HEALTH_V1.md).
 
-**Next:** expose the reviewed Health edit workflow in Run Admin UI, then connect the same authority to
-Match Engine limitation projection and Player Lab Health/recovery scenarios before calibrating stochastic Health Checks.
+**Next:** connect canonical Health to Match Engine limitation projection and Player Lab Health/recovery
+scenarios before calibrating stochastic Health Checks.
 
 ## Implemented — Global Player Test Lab V1 shared-development foundation
 

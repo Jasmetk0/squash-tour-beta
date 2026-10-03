@@ -97,8 +97,10 @@ The reviewed Admin mutation boundary operates only on the exact current Health h
 - The committed edit is staged as ordinary `player_health_state` Working Draft component
   evidence and can be Saved as a recoverable Saved Revision through the normal Run boundary.
 
-A dedicated Run Admin UI for this backend workflow remains a follow-up; no alternate UI-owned
-Health authority is allowed.
+The Run Players Admin UI now consumes this exact backend workflow on the Active Admin Branch.
+It exposes current Health inspection, complete-profile editing, reviewed server preview, exact
+commit retry semantics and explicit Health Saved Revision creation. Historical checkpoint mode
+continues to use the shared present-only boundary; no alternate UI-owned Health authority exists.
 
 ## Explicit non-goals of this slice
 
@@ -119,6 +121,6 @@ Those must build on this same authority rather than introduce parallel state.
 
 ## Next
 
-The next useful vertical slice is the Run Admin UI over the reviewed Health edit boundary,
-followed by a shared Health limitation projection into Match Engine and Player Lab. Calibrated
-stochastic Health Check/recovery mechanics remain later work.
+The next useful vertical slice is a shared Health limitation projection into Match Engine and
+Player Lab, followed by Health/recovery Lab scenarios. Calibrated stochastic Health Check/recovery
+mechanics remain later work.

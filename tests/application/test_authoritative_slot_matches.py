@@ -146,7 +146,11 @@ from beta_engine.infrastructure.db.initial_world_state import (
     get_initial_world,
     put_initial_world,
 )
-from beta_engine.infrastructure.db.player_health_state import get_health, put_health
+from beta_engine.infrastructure.db.player_health_state import (
+    get_health,
+    put_health,
+    replace_health_head,
+)
 from beta_engine.infrastructure.db.player_lifecycle_state import (
     get_lifecycle,
     put_lifecycle,
@@ -578,11 +582,12 @@ def run_semifinals(
         if health_profile.player_id not in by_id:
             raise AssertionError("test Health profile must belong to the fixture roster")
         by_id[health_profile.player_id] = health_profile
-        put_health(
+        replace_health_head(
             session,
             current_health.model_copy(
                 update={"players": tuple(by_id[player_id] for player_id in sorted(by_id))}
             ),
+            expected_fingerprint=current_health.fingerprint,
         )
         session.commit()
     executor = AuthoritativeSlotMatchExecutor(session)
@@ -736,7 +741,7 @@ def test_same_slot_health_freeze_allows_completed_retry_but_blocks_new_group_aft
             ),
         ),
     )
-    put_health(
+    replace_health_head(
         session,
         current_health.model_copy(
             update={
@@ -745,6 +750,7 @@ def test_same_slot_health_freeze_allows_completed_retry_but_blocks_new_group_aft
                 )
             }
         ),
+        expected_fingerprint=current_health.fingerprint,
     )
     session.commit()
 

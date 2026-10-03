@@ -22,6 +22,7 @@ from beta_engine.domain.matches.gameplans import (
     PlayerRallyGameplanDecision,
     RallyGameplanContext,
 )
+from beta_engine.domain.matches.health import EffectiveMatchHealthSnapshot
 from beta_engine.domain.matches.models import (
     MatchContext,
     MatchParticipantContext,
@@ -159,6 +160,7 @@ class MatchEngine:
         rally_calibration_profile: RallyCalibrationProfile | None = None,
         effective_match_gameplans: EffectiveMatchGameplanSnapshot | None = None,
         effective_rally_rules: EffectiveRallyRulesSnapshot | None = None,
+        effective_match_health: EffectiveMatchHealthSnapshot | None = None,
     ) -> tuple[MatchWorkingInput, MatchRallyWorkingState]:
         """Freeze effective inputs and create a serializable pre-first-rally state."""
 
@@ -177,6 +179,10 @@ class MatchEngine:
             context=context,
             simulation_seed=self.rng.seed.value,
         )
+        health = effective_match_health or EffectiveMatchHealthSnapshot.create_healthy(
+            player_a_id=player_a.player_id,
+            player_b_id=player_b.player_id,
+        )
         working_input = MatchWorkingInput(
             context=context,
             simulation_seed=self.rng.seed.value,
@@ -186,6 +192,7 @@ class MatchEngine:
             rally_calibration=rally_calibration,
             gameplans=gameplans,
             rules=rules,
+            health=health,
         )
         match_rng = self.rng.branch(
             SeedScope.MATCH,
@@ -727,6 +734,7 @@ class MatchEngine:
         rally_calibration_profile: RallyCalibrationProfile | None = None,
         effective_match_gameplans: EffectiveMatchGameplanSnapshot | None = None,
         effective_rally_rules: EffectiveRallyRulesSnapshot | None = None,
+        effective_match_health: EffectiveMatchHealthSnapshot | None = None,
     ) -> MatchResult:
         player_a = context.player_a.player
         player_b = context.player_b.player
@@ -746,6 +754,10 @@ class MatchEngine:
             context=context,
             simulation_seed=self.rng.seed.value,
         )
+        health = effective_match_health or EffectiveMatchHealthSnapshot.create_healthy(
+            player_a_id=player_a.player_id,
+            player_b_id=player_b.player_id,
+        )
         if {profile.player_id for profile in timing.player_restart_profiles} != {
             player_a.player_id,
             player_b.player_id,
@@ -763,6 +775,11 @@ class MatchEngine:
             player_b.player_id,
         ):
             raise ValueError("effective gameplans must match participant order")
+        if tuple(profile.player_id for profile in health.player_profiles) != (
+            player_a.player_id,
+            player_b.player_id,
+        ):
+            raise ValueError("effective Health profiles must match participant order")
         gameplan_applied = stamina.within_rally_effort_applied
 
         strength_a = self._base_strength(context.player_a)

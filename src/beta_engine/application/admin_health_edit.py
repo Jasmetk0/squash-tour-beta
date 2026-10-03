@@ -113,6 +113,17 @@ class AdminHealthEditPreview(FrozenInput):
         return _hash(self.model_dump(mode="json"))
 
 
+class AdminHealthCurrentView(FrozenInput):
+    schema_version: Literal["admin_health_current_view.v1"] = "admin_health_current_view.v1"
+    run_id: str
+    branch_id: str
+    week: RankingWeek
+    player: PlayerHealthProfile
+    state_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    health_component_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    draft_version: int = Field(ge=0)
+
+
 class AdminHealthEditResult(FrozenInput):
     schema_version: Literal["admin_health_edit_result.v1"] = "admin_health_edit_result.v1"
     run_id: str
@@ -294,6 +305,59 @@ class AdminHealthEditService:
             before_component_fingerprint=component["fingerprint"],
             after_component_fingerprint=self._component_after(component, after_state),
         )
+
+    def inspect(
+        self,
+        *,
+        run_id: str,
+        branch_id: str,
+        player_id: str,
+    ) -> AdminHealthCurrentView:
+        with self.repository._session_factory() as session:
+            draft = session.scalar(
+                select(BranchWorkingDraftModel).where(
+                    BranchWorkingDraftModel.run_id == run_id,
+                    BranchWorkingDraftModel.branch_id == branch_id,
+                )
+            )
+            head_row = session.scalar(
+                select(PlayerHealthWeekStateModel)
+                .where(
+                    PlayerHealthWeekStateModel.run_id == run_id,
+                    PlayerHealthWeekStateModel.branch_id == branch_id,
+                )
+                .order_by(PlayerHealthWeekStateModel.week_ordinal.desc())
+                .limit(1)
+            )
+            if draft is None or head_row is None:
+                raise ValueError("Admin Health current state is unavailable")
+            week = RankingWeek(
+                season_index=head_row.week_ordinal // 61,
+                week=head_row.week_ordinal % 61 + 1,
+            )
+            state = get_health(
+                session, run_id=run_id, branch_id=branch_id, week=week
+            )
+            component = health_component(
+                session, run_id=run_id, branch_id=branch_id
+            )
+            if state is None or component is None:
+                raise ValueError("Admin Health current state is unavailable")
+            player = next(
+                (item for item in state.players if item.player_id == player_id),
+                None,
+            )
+            if player is None:
+                raise ValueError("Admin Health player is absent from current roster")
+            return AdminHealthCurrentView(
+                run_id=run_id,
+                branch_id=branch_id,
+                week=week,
+                player=player,
+                state_fingerprint=state.fingerprint,
+                health_component_fingerprint=component["fingerprint"],
+                draft_version=draft.draft_version,
+            )
 
     def preview(
         self,

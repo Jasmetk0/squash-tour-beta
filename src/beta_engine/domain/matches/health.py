@@ -69,6 +69,19 @@ class PlayerMatchHealthProjection(FrozenInput):
             )
         if self.affected_domains != tuple(sorted(set(self.affected_domains))):
             raise ValueError("Match Health affected domains must be sorted and unique")
+        expected_domains = tuple(
+            sorted(
+                {
+                    domain
+                    for item in (*self.current_records, *self.permanent_consequences)
+                    for domain in item.affected_domains
+                }
+            )
+        )
+        if self.affected_domains != expected_domains:
+            raise ValueError(
+                "Match Health affected domains must derive from projected limitations"
+            )
         if self.highest_current_severity != max(
             (item.severity for item in self.current_records), default=0
         ):

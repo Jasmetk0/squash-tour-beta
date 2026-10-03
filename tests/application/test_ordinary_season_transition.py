@@ -20,6 +20,7 @@ from beta_engine.application.season_transition_configuration import (
 )
 from beta_engine.application.run_branch_creation_service import RunBranchCreationService
 from beta_engine.domain.calendar.season_weeks import season_week_to_calendar_position
+from beta_engine.domain.players.health import carry_health_state_forward
 from beta_engine.domain.players.lifecycle import PlayerLifecycleWeekState
 from beta_engine.domain.players.prospect_sporting_profile import (
     materialize_prospect_sporting_profile,
@@ -66,6 +67,12 @@ from beta_engine.infrastructure.db.models import (
     SeasonClosingRankingModel,
 )
 from beta_engine.infrastructure.db.official_rankings import OfficialRankingCandidateStore
+from beta_engine.infrastructure.db.player_health_state import (
+    bootstrap_health_from_week_one_identity,
+    capture_saved_health,
+    get_health,
+    put_health,
+)
 from beta_engine.infrastructure.db.player_lifecycle_state import (
     capture_saved_lifecycle,
     get_lifecycle,
@@ -320,6 +327,24 @@ def _install_boundary(session):
             ),
         )
     assert sporting.week == completed
+
+    health = bootstrap_health_from_week_one_identity(
+        session,
+        run_id="run",
+        branch_id="branch",
+        source_initial_world_fingerprint="world",
+        player_ids=(),
+    )
+    for week_number in range(2, 62):
+        health = put_health(
+            session,
+            carry_health_state_forward(
+                health,
+                target=RankingWeek(season_index=0, week=week_number),
+                target_player_ids=(),
+            ),
+        )
+    assert health.week == completed
     return completed
 
 

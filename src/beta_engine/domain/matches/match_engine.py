@@ -161,6 +161,7 @@ class MatchEngine:
         effective_match_gameplans: EffectiveMatchGameplanSnapshot | None = None,
         effective_rally_rules: EffectiveRallyRulesSnapshot | None = None,
         effective_match_health: EffectiveMatchHealthSnapshot | None = None,
+        include_health_projection: bool = True,
     ) -> tuple[MatchWorkingInput, MatchRallyWorkingState]:
         """Freeze effective inputs and create a serializable pre-first-rally state."""
 
@@ -179,9 +180,15 @@ class MatchEngine:
             context=context,
             simulation_seed=self.rng.seed.value,
         )
-        health = effective_match_health or EffectiveMatchHealthSnapshot.create_healthy(
-            player_a_id=player_a.player_id,
-            player_b_id=player_b.player_id,
+        health = (
+            effective_match_health
+            if effective_match_health is not None
+            else EffectiveMatchHealthSnapshot.create_healthy(
+                player_a_id=player_a.player_id,
+                player_b_id=player_b.player_id,
+            )
+            if include_health_projection
+            else None
         )
         working_input = MatchWorkingInput(
             context=context,

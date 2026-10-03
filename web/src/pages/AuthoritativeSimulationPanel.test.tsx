@@ -1443,7 +1443,7 @@ describe('AuthoritativeSimulationPanel', () => {
 
     expect(await screen.findByText('automatic_application_eligibility_deadline.v1')).toBeInTheDocument()
     expect(await screen.findByText('application_validation_policy_unresolved')).toBeInTheDocument()
-    expect(\n      within(screen.getByText('Frozen Entry decisions').closest('li')!).getByText('12')\n    ).toBeInTheDocument()
+    expect(within(screen.getByText('Frozen Entry decisions').closest('li')!).getByText('12')).toBeInTheDocument()
   })
 
   it('shows the Master v72 FAX long-acceptance input gate', async () => {

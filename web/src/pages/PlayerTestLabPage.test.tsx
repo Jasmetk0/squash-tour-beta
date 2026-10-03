@@ -49,16 +49,27 @@ const result = {
     isolated: true,
     run_mutation_performed: false,
     run_live_link: false,
-    health_supported: false,
+    health_supported: true,
     training_load_supported: false,
     career_ai_supported: false,
-    warnings: ['Health is not yet supported.']
+    warnings: ['Health projection supported; numeric effects remain uncalibrated.']
   },
   variants: [
     {
       variant_id: 'active',
       display_name: 'Active',
       initial_state_fingerprint: 'c'.repeat(64),
+      initial_health_projection: {
+        player_id: 'LAB-PLAYER',
+        current_records: [],
+        permanent_consequences: [],
+        affected_domains: [],
+        highest_current_severity: 0,
+        highest_permanent_limitation: 0,
+        numeric_effect_applied: false,
+        numeric_calibration_required: false
+      },
+      initial_health_projection_fingerprint: '2'.repeat(64),
       final_state_fingerprint: 'd'.repeat(64),
       snapshots: [{
         week: { season_index: 0, week: 2 },
@@ -71,6 +82,17 @@ const result = {
         long_term_fatigue: 12,
         changed_attribute_count: 4,
         attribute_delta_total: 4,
+        health_projection: {
+          player_id: 'LAB-PLAYER',
+          current_records: [],
+          permanent_consequences: [],
+          affected_domains: [],
+          highest_current_severity: 0,
+          highest_permanent_limitation: 0,
+          numeric_effect_applied: false,
+          numeric_calibration_required: false
+        },
+        health_projection_fingerprint: '3'.repeat(64),
         state_fingerprint: 'e'.repeat(64)
       }],
       final_player: {}
@@ -79,6 +101,17 @@ const result = {
       variant_id: 'idle',
       display_name: 'Idle',
       initial_state_fingerprint: 'c'.repeat(64),
+      initial_health_projection: {
+        player_id: 'LAB-PLAYER',
+        current_records: [],
+        permanent_consequences: [],
+        affected_domains: [],
+        highest_current_severity: 0,
+        highest_permanent_limitation: 0,
+        numeric_effect_applied: false,
+        numeric_calibration_required: false
+      },
+      initial_health_projection_fingerprint: '2'.repeat(64),
       final_state_fingerprint: 'f'.repeat(64),
       snapshots: [{
         week: { season_index: 0, week: 2 },
@@ -91,6 +124,17 @@ const result = {
         long_term_fatigue: 12,
         changed_attribute_count: 4,
         attribute_delta_total: 4,
+        health_projection: {
+          player_id: 'LAB-PLAYER',
+          current_records: [],
+          permanent_consequences: [],
+          affected_domains: [],
+          highest_current_severity: 0,
+          highest_permanent_limitation: 0,
+          numeric_effect_applied: false,
+          numeric_calibration_required: false
+        },
+        health_projection_fingerprint: '3'.repeat(64),
         state_fingerprint: '1'.repeat(64)
       }],
       final_player: {}
@@ -140,7 +184,9 @@ describe('PlayerTestLabPage', () => {
       })
     })
     expect(await screen.findByText(/weekly_player_development_update/)).toBeInTheDocument()
-    expect(screen.getAllByText('not yet supported')).toHaveLength(3)
+    expect(screen.getByText('supported')).toBeInTheDocument()
+    expect(screen.getAllByText('not yet supported')).toHaveLength(2)
+    expect(screen.getAllByText('not calibrated').length).toBeGreaterThan(0)
     expect(screen.getByRole('table', { name: 'Player Lab active timeline' })).toBeInTheDocument()
     expect(screen.getByRole('table', { name: 'Player Lab idle timeline' })).toBeInTheDocument()
   })

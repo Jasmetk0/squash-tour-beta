@@ -60,8 +60,11 @@ class MatchWorkingInput(BaseModel):
 
     @property
     def fingerprint(self) -> str:
+        body = self.model_dump(mode="json")
+        if self.health is None:
+            body.pop("health", None)
         payload = json.dumps(
-            self.model_dump(mode="json", exclude_none=True),
+            body,
             sort_keys=True,
             separators=(",", ":"),
         ).encode("utf-8")

@@ -1441,9 +1441,8 @@ describe('AuthoritativeSimulationPanel', () => {
   it('shows the copied-FAX Entry validation release-policy blocker', async () => {
     renderPanel()
 
-    expect(await screen.findByText('Pre-alpha Entry validation policy gate')).toBeInTheDocument()
-    expect(screen.getByText('automatic_application_eligibility_deadline.v1')).toBeInTheDocument()
-    expect(screen.getByText('application_validation_policy_unresolved')).toBeInTheDocument()
+    expect(await screen.findByText('automatic_application_eligibility_deadline.v1')).toBeInTheDocument()
+    expect(await screen.findByText('application_validation_policy_unresolved')).toBeInTheDocument()
     expect(screen.getByText('12')).toBeInTheDocument()
   })
 

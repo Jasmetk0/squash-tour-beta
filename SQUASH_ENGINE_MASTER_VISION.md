@@ -2,8 +2,8 @@
 
 ## Kompletní průběžná specifikace a registr rozhodnutí
 
-**Verze dokumentu:** 73
-**Aktualizováno:** 3. 10. 2026 – uzávěrka závazků, PR Cases a spotřeba, RWC pořadí, obnova Runu, zásahy před rally a sjednocení starších formulací
+**Verze dokumentu:** 74
+**Aktualizováno:** 3. 10. 2026 – atributy zemí 1–10 s jedním desetinným místem; Court Count až po pre-alpha
 **Účel dokumentu:** jediný průběžný zdroj pravdy pro to, co má Squash Engine být, co už je rozhodnuté, jakým směrem se projekt ubírá, co se musí teprve dořešit a – v oddělené evidenční vrstvě – co je prokazatelně naprogramované a sloučené.
 
 Tento dokument primárně popisuje zamýšlený produkt. Samotná přítomnost produktového pravidla neznamená, že už je naprogramované. Ověřený stav kódu se od verze 51 zapisuje výhradně do samostatné kapitoly 35; implementace sama nikdy nevytváří ani nemění produktový canon.
@@ -25,6 +25,8 @@ Tento dokument primárně popisuje zamýšlený produkt. Samotná přítomnost p
 **Nová rozhodnutí v72:** univerzální omezená znalost hráčské AI; dostupnost a způsobilost LL, pořadí bez použití PR; trvalé zdravotní následky, recidiva, zkušenost s návratem a zdravotní výjimka před vstupem na Tour. Globální Test Lab obsahuje také Player Lab s porovnáním variant, opakováním, skutečnými zápasy a volitelnou kariérní AI. Země, populace a kalendář se v pre-alpha autonomně nevyvíjejí; přerušení/odklad/zrušení oznámených turnajů a doping nejsou podmínkou prvního vydání. Přibývá povinný průchod všemi 50 sezonami. Úplný blok a hranice jsou v 31.28. Nejde o nový audit implementace; kapitola 35 zůstává datovanou evidencí.
 
 **Nová rozhodnutí v73:** výchozí Final Commitment Deadline na konci Qualification Entry Window; pozdní odhlášení s rostoucí závažností a možností nulového trestu při uznaném důvodu. PR spotřeba navazuje na tuto uzávěrku nebo pozdější definitivní přijetí; pokračování stejného zdravotního případu ani souběh více PR Cases nevytvářejí další použití zdarma. Pořadí RWC navrhuje turnajová AI, Admin je může výslovně měnit. Import existující identity nabízí kopii nebo potvrzenou obnovu se zálohou a diffem. Admin v Runu i Match Labu smí před další rally změnit úsilí/gameplan jednorázově nebo se zámkem. Konkrétní nové PR mechaniky jsou rozhodnuté pre-alpha defaulty; jejich Run/season nastavitelnost je požadavkem pozdější verze, nikoliv zrušením jiných již schválených nastavení. Konsolidace v 31.29 synchronizuje i staré registry; nepřidává audit runtime kódu.
+
+**Nová rozhodnutí v74:** šest atributů zemí používá už v pre-alpha škálu `1–10` s nejvýše jedním desetinným místem (krok `0,1`). `Court Count` není součástí pre-alpha zadávání, balíčků ani simulačních vstupů; je odložen do pozdější verze. Dostupnost sportu nadále vyjadřuje `Squash Access`. Změna škály vyžaduje verzovanou migraci a úpravu výpočtů, nikoliv pouhé přeznačení hodnot; historické snapshoty a replay se nepřepisují. Význam šesti atributů a zákaz národního bonusu k vrozenému potenciálu se nemění. Jde o produktové rozhodnutí, nikoliv tvrzení o hotové implementaci.
 
 **Canonical cesta:** `SQUASH_ENGINE_MASTER_VISION.md` v kořeni repozitáře `Jasmetk0/squash-tour-beta`. Číslo vydání se mění uvnitř; přiložená/exportovaná verze je přenosná kopie téhož obsahu. Git historie uchovává další změny bez dalšího souběžného „nejnovějšího“ Masteru. `CURRENT_STATE.md` je krátký commitově ukotvený index implementace a aktuálního zadání; `ROADMAP.md` určuje technické pořadí. Ani jeden nemění tento produktový canon.
 
@@ -626,7 +628,7 @@ World Package má určovat minimálně:
 - `Travel Regions`, `Timezone Areas` a jejich přiřazení,
 - jejich kódy a názvy,
 - populační historii,
-- faktická country data podle podporovaného modelu, například rozlohu, Region a případný počet kurtů,
+- faktická country data podle podporovaného modelu, například rozlohu a Region; počet kurtů je mimo první pre-alpha,
 - šest ručně authorovaných squashových ratingů Country Modelu V1,
 - parametry a verzovanou logiku produkční pipeline hráčů,
 - případná world-specific pravidla,
@@ -849,7 +851,7 @@ Změna ovlivní pouze budoucí generování.
 
 ## 5.3 Country Model V1: sampling a conversion
 
-**[ROZHODNUTO PRO PRVNÍ VERZI][RUN CONFIG]** Každá země má šest vzájemně významově odlišených ručně authorovaných ratingů na společné škále `1–5`:
+**[ROZHODNUTO PRO PRVNÍ VERZI][RUN CONFIG]** Každá země má šest vzájemně významově odlišených ručně authorovaných ratingů na společné škále `1–10`, už pro pre-alpha s nejvýše jedním desetinným místem (krok `0,1`; například `7,4`):
 
 1. `Squash Popularity` — pravděpodobnost či tendence, že člověk v dané zemi začne squash aktivně hrát; nejde o fanouškovskou sledovanost.
 2. `Squash Access` — praktická možnost hrát pravidelně: dostupnost kurtů, geografická a cenová dostupnost, kluby a možnost trénovat.
@@ -858,11 +860,13 @@ Změna ovlivní pouze budoucí generování.
 5. `Elite Support` — jak dobře země umožní elitnímu juniorovi přejít k profesionálnímu sportu: finance, cestování, zahraniční turnaje, fyzio, kondiční příprava, sportovní medicína a případná stipendia.
 6. `Squash Tradition` — dlouhodobá kultura, know-how a kontinuita: bývalí hráči a trenéři, role models, historické kluby a generačně předávaná znalost cesty sportem.
 
+**[ROZHODNUTO PRO PRE-ALPHA v74]** Nová škála nemění význam atributů ani sama o sobě nezaručuje realističtější výsledky. API, import/export, editory, validace a výpočty musí používat tutéž verzovanou interpretaci. Staré hodnoty `1–5` se nesmějí tiše interpretovat jako nové `1–10` ani hromadně přepsat v historických balíčcích či Run snapshotech. Konkrétní převod a normalizace musí být explicitní, testované a zachovat reprodukovatelnost starších simulací; kalibrace účinků zůstává otevřená.
+
 `Squash Tradition` může ostatní části pipeline mírně podporovat, ale v první verzi nesmí fungovat jako silný přímý bonus k hráčovým schopnostem nebo OVR. Přesné relativní váhy všech šesti ratingů zůstávají otevřené.
 
 **[ROZHODNUTO PRO PRVNÍ VERZI]** `Competition Quality` není totéž co `Competitive Depth`. První je authorovaný popis soutěžních příležitostí země. Druhá musí být odvozena z hráčů a konkurence, kteří v daném čase skutečně existují v konkrétní branchi Runu; Egypt ani jiná země proto nedostane hloubku pouze ručně zadaným labelem.
 
-**[ROZHODNUTO PRO PRVNÍ VERZI]** Vedle ratingů zůstávají oddělená faktická data, nikoliv další ratingy: `Population Timeline`, `Area`, `Region`, `Travel Region`, `Timezone Area` a případně `Court Count`. `Travel Region` a `Timezone Area` se řídí geografickým modelem kapitoly 5.5. Konkrétní počet kurtů může být užitečným vstupem nebo validačním údajem, ale sám nenahrazuje rating `Squash Access`.
+**[ROZHODNUTO PRO PRVNÍ VERZI]** Vedle ratingů zůstávají oddělená faktická data, nikoliv další ratingy: `Population Timeline`, `Area`, `Region`, `Travel Region`, `Timezone Area` (bez `Court Count` v pre-alpha). `Travel Region` a `Timezone Area` se řídí geografickým modelem kapitoly 5.5. **[POZDĚJI, MIMO PRE-ALPHA v74]** Konkrétní počet kurtů (`Court Count`) není pre-alpha vstupem, editovatelným polem ani požadovaným obsahem nových balíčků. Dostupnost se v pre-alpha vyjadřuje přímo ratingem `Squash Access`. Případné budoucí využití počtu kurtů k odvození či validaci dostupnosti vyžaduje pozdější návrh; starší uložený údaj může zůstat pouze pro kompatibilitu, bez simulačního účinku.
 
 **[ROZHODNUTO PRO PRVNÍ VERZI]** Engine z autoritativního stavu dopočítává hodnoty, které se nemají ručně ukládat jako další pevné country ratingy: minimálně `Effective Squash Pool`, `Competitive Depth`, `Talent Discovery Rate`, `Professional Conversion Rate` a `Current Country Strength`. Každá odvozená hodnota musí respektovat čas, branch a použitou verzi modelu.
 
@@ -874,7 +878,7 @@ Základní logická posloupnost první verze je:
 
 `Squash Tradition` tuto pipeline pouze mírně moduluje. Velká populace sama o sobě nesmí automaticky vytvořit nejlepší hráče a velký aktivní pool zvyšuje počet příležitostí mimořádný talent nalézt, nikoliv talent každého jednotlivce.
 
-**[ODLOŽENO]** Přesné váhy, vzorce, konverzní poměry, význam hranic `1/2/3/4/5`, roční velikost světového poolu, kalibrace jednotlivých zemí, dynamické změny ratingů v průběhu historie a jejich zpětné vazby. Národní `style_dna` se nebude zavádět, dokud nebudou dostatečně zralé individuální atributy, styly a jejich simulační logika; případný budoucí návrh nesmí porušit výše rozhodnutou hranici vrozeného talentu.
+**[ODLOŽENO]** Přesné váhy, vzorce, konverzní poměry, význam hodnot škály `1–10`, roční velikost světového poolu, kalibrace jednotlivých zemí, dynamické změny ratingů v průběhu historie a jejich zpětné vazby. Národní `style_dna` se nebude zavádět, dokud nebudou dostatečně zralé individuální atributy, styly a jejich simulační logika; případný budoucí návrh nesmí porušit výše rozhodnutou hranici vrozeného talentu.
 
 **[ROZHODNUTO PRO PRE-ALPHA v70]** Talent Preview/Intake pro zvolený rok ukáže podle zemí očekávaný počet hráčů a rozdělení potenciálu/kvality, pravděpodobnosti a variabilitu. Skutečný ročník se může výrazně lišit; ani malá země nemá zaručeného jednoho hráče každý rok. Po dokončení generování ročníku se očekávání porovná se skutečností. Očekávání nesmí být pouze přejmenovaným známým výsledkem téhož seedu. Základ je populace roku narození a Country Model V1; šest ratingů ovlivňuje sampling a development/conversion, nikoliv národnostní vrozený potenciál. Přesné distribuce, rozsahy a vazba pomocných quality bands na Potential OVR se ladí empiricky nad fungujícím enginem; současné implementační váhy nejsou finální canon.
 
@@ -5063,7 +5067,7 @@ Následující seznam je rychlá kontrola nejdůležitějších pravidel potvrze
 237. Autoritativní zápasová časová osa ukládá skutečnou mezeru před každou další rally, každou přestávku mezi gamy samostatně a zdravotní událost včetně délky přestávky a následného `pokračovat / RET`; celková délka zápasu vzniká ze všech těchto událostí a rally.
 238. První verze obsahuje Match Reconstruction: ručně zadaná fakta jsou závazné constraints, Builder podporuje kombinace přesných hodnot, rozsahů, minim a maxim a odděluje Pre-match Form, Match Performance a odvozenou Post-match Form. Validace používá globální oranžovou/červenou závažnost; přesný katalog a prahy zůstávají otevřené nebo pouze směrem.
 239. Admin si pro každou Match Reconstruction nastaví počet kandidátů. Všechny se nejprve ukážou v kompaktním přehledu, každý lze otevřít v úplném read-only Admin detailu a pouze výslovně vybraný kandidát se stane autoritativní historií a zdrojem následků.
-240. Country Model V1 používá šest ručně authorovaných ratingů `1–5`: Squash Popularity, Squash Access, Development Quality, Competition Quality, Elite Support a Squash Tradition, každý s významem vymezeným v kapitole 5.3.
+240. Country Model V1 používá šest ručně authorovaných ratingů `1–10` s nejvýše jedním desetinným místem: Squash Popularity, Squash Access, Development Quality, Competition Quality, Elite Support a Squash Tradition, každý s významem vymezeným v kapitole 5.3.
 241. Population Timeline, Area, Region, Travel Region, Timezone Area a případný Court Count jsou faktická data oddělená od ratingů. Effective Squash Pool, Competitive Depth, Talent Discovery Rate, Professional Conversion Rate a Current Country Strength jsou naopak časově a branchově odvozené hodnoty, nikoliv další ruční ratingy.
 242. Země nesmí přímo měnit vrozenou distribuci talentu, potenciálový strop ani vytvářet národní technický, mentální či stylový bias. Ovlivňuje sampling a conversion pipeline; i systémově slabá země má nenulovou šanci na generační L+ talent.
 243. Kategorie hráčských atributů jsou pouze organizační a samy nejsou simulačním souhrnným atributem. Historický zápas uchovává použitou verzi atributového a simulačního modelu; konkrétní pracovní katalog první verze zůstává prozatímní.
@@ -5358,7 +5362,7 @@ Každý očíslovaný bod této kapitoly je od verze 48a stabilní **široký ok
 10. Úplný field-specific katalog, přesné konfigurační UI, validace a migrace hodnot dostupných na jednotlivých úrovních. Samotná hierarchie `Official default → Package → Run → season → Competition System → Tour → Category → Series → Edition Plan → Edition → phase → round → match`, nearest-permitted-override pravidlo, provenance, lock minulosti a užší Match Format výjimka jsou od v62 rozhodnuté.
 11. Přesný datový formát, Admin UX a validace vzniku, deaktivace, reaktivace a nahrazení Competition Systems, Tours a Categories. Historická proměnlivost, stabilní číselná ID, nerecyklování ID, sezonní hierarchie, lokální význam `tier_rank`, speciální `tier_rank = null`, dědění pořadí i sourozenecká unikátnost názvů jsou rozhodnuté. Shodný `tier_rank` více srovnatelných sourozenců je výslovně odložen do dalších verzí.
 12. Individuální kompatibilita a migrace World, Category, Series, Calendar a Setup Packages vůči starší či novější verzi schématu enginu; heuristické matching a detailní pozdější ruční mapping UX unresolved referencí; konfliktní priority; konečný obsah Setup mapování a přesná souborová schémata. Významová hranice Series versus Calendar Package, nedestruktivní partial scope všech pěti typů, přesné automatické vyřešení podle kompatibilní source identity, bezpečné pre-alpha minimum chybějící závislosti, Setup version snapshot, aplikace neúplného Setupu a Package version lifecycle už jsou rozhodnuté. Samostatně zůstává otevřený katalog dalších budoucích typů včetně případného `Player Package`.
-13. Country Model V1: přesné váhy a vzorce šesti ratingů, význam hranic `1/2/3/4/5`, conversion rates, velikost každého ročníku talentů, kalibrace konkrétních zemí, odvození Effective Squash Pool / Competitive Depth / Talent Discovery Rate / Professional Conversion Rate / Current Country Strength a pozdější dynamický historický vývoj ratingů; jejich autonomní změny jsou mimo první pre-alpha dle v72. Rozhodnuté jsou názvy, významy, škála 1–5, oddělení faktických a odvozených hodnot a zákaz přímého národního vlivu na vrozený talent. `style_dna` zůstává odložené do zralé atributové a stylové verze.
+13. Country Model V1: přesné váhy a vzorce šesti ratingů, význam hodnot škály `1–10`, conversion rates, velikost každého ročníku talentů, kalibrace konkrétních zemí, odvození Effective Squash Pool / Competitive Depth / Talent Discovery Rate / Professional Conversion Rate / Current Country Strength a pozdější dynamický historický vývoj ratingů; jejich autonomní změny jsou mimo první pre-alpha dle v72. Rozhodnuté jsou názvy, významy, škála 1–10 s krokem 0,1, oddělení faktických a odvozených hodnot a zákaz přímého národního vlivu na vrozený talent. `style_dna` zůstává odložené do zralé atributové a stylové verze.
 14. Přesné mapování libovolně pojmenovaných sloupců, úplná sada doménových validátorů a konkrétní vzhled CSV/XLSX importního editoru. Staging preview, přesné vysvětlení chyb, opravování bez nového uploadu, bezpečný částečný import nezávislých řádků a atomický zápis jsou rozhodnuté.
 
 ## Hráči

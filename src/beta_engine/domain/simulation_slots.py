@@ -290,7 +290,11 @@ class AuthoritativeMatchInput(FrozenInput):
 
     @property
     def fingerprint(self) -> str:
-        return fingerprint(self.model_dump(mode="json"))
+        payload = self.model_dump(mode="json")
+        engine_input = payload["engine_input"]
+        if engine_input.get("effective_match_health") is None:
+            engine_input.pop("effective_match_health", None)
+        return fingerprint(payload)
 
 
 class MatchSportingEffectsPolicy(FrozenInput):

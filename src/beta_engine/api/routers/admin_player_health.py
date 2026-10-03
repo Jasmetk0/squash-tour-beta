@@ -128,6 +128,11 @@ def preview_player_health_save(
             run_id=run_id,
             branch_id=branch_id,
         )
+        revision_state = runtime.repository.get_branch_revision_state(
+            branch_id=branch_id
+        )
+        if revision_state.run_id != run_id:
+            raise ValueError("Player Health Save Run/Branch scope differs")
         with runtime.repository._session_factory() as session:
             component = health_component(
                 session,
@@ -144,6 +149,7 @@ def preview_player_health_save(
             if saved is not None
             else None
         )
+        changes = revision_state.working_draft.changes
         return {
             "run_id": run_id,
             "branch_id": branch_id,
@@ -154,11 +160,11 @@ def preview_player_health_save(
             "can_save": (
                 draft.status == "dirty"
                 and component != saved_component
-                and bool(draft.changes)
+                and bool(changes)
                 and all(
                     isinstance(change, dict)
                     and change.get("kind") == "player_health_state"
-                    for change in draft.changes
+                    for change in changes
                 )
             ),
         }

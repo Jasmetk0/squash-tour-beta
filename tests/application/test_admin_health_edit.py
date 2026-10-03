@@ -136,10 +136,11 @@ def test_prestart_health_preview_is_read_only_commit_is_audited_and_retry_is_ide
         draft = repository.get_viewer_branch_working_draft(
             run_id="run", branch_id="branch"
         )
+        revision_state = repository.get_branch_revision_state(branch_id="branch")
         assert draft.status == "dirty"
-        assert draft.changes[-1]["kind"] == "player_health_state"
+        assert revision_state.working_draft.changes[-1]["kind"] == "player_health_state"
         assert (
-            draft.changes[-1]["fingerprint"]
+            revision_state.working_draft.changes[-1]["fingerprint"]
             == committed.health_component_fingerprint
         )
 

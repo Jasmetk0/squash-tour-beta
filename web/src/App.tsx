@@ -85,6 +85,7 @@ import {
 import { TalentPreviewPage } from './pages/TalentPreviewPage'
 import { TalentCalibrationPage } from './pages/TalentCalibrationPage'
 import { MatchTestLabPage } from './pages/MatchTestLabPage'
+import { PlayerTestLabPage } from './pages/PlayerTestLabPage'
 import { TournamentTestLabPage } from './pages/TournamentTestLabPage'
 import { TalentIntakePage } from './pages/TalentIntakePage'
 import { ManualPlayerOverridesPage } from './pages/ManualPlayerOverridesPage'
@@ -155,6 +156,7 @@ export default function App(): JSX.Element {
         <Route path="admin/players/intake" element={<TalentIntakePage />} />
         <Route path="admin/simulate" element={<AdminSimulatePage />} />
         <Route path="admin/labs/match" element={<MatchTestLabPage />} />
+        <Route path="admin/labs/player" element={<PlayerTestLabPage />} />
         <Route path="admin/labs/tournament" element={<TournamentTestLabPage />} />
         <Route path="admin/runs/new" element={<DashboardPage />} />
         <Route path="admin/runs" element={<RunsPage />} />

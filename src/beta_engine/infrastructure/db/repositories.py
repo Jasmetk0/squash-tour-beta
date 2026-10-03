@@ -3563,6 +3563,7 @@ class SimulationPersistenceRepository:
                 component_change_kinds = {
                     "run_package_state",
                     "run_tournament_lab_drafts",
+                    "player_health_state",
                 }
                 viewer_changes = [
                     change
@@ -3652,7 +3653,11 @@ class SimulationPersistenceRepository:
                 for change in existing_changes
                 if isinstance(change, dict)
                 and change.get("kind")
-                in {"run_package_state", "run_tournament_lab_drafts"}
+                in {
+                    "run_package_state",
+                    "run_tournament_lab_drafts",
+                    "player_health_state",
+                }
             ]
 
             if viewer_branch_id == draft.saved_viewer_branch_id:

@@ -275,15 +275,24 @@ def restore_saved_health(
         branch_id=branch_id,
     )
     target_world = None
+    target_lifecycle = None
     if target is None:
         from beta_engine.infrastructure.db.initial_world_state import (
             load_saved_initial_world,
+        )
+        from beta_engine.infrastructure.db.player_lifecycle_state import (
+            load_saved_lifecycle,
         )
         from beta_engine.infrastructure.db.saved_revision_rankings import (
             load_saved_ranking_component,
         )
 
         target_world = load_saved_initial_world(
+            target_payload,
+            run_id=run_id,
+            branch_id=branch_id,
+        )
+        target_lifecycle = load_saved_lifecycle(
             target_payload,
             run_id=run_id,
             branch_id=branch_id,
@@ -297,8 +306,18 @@ def restore_saved_health(
             target_ranking.authoritative_transition_state if target_ranking else None
         )
         world_clock = authoritative.get("world") if authoritative else None
-        if (target_world is None and target_ranking is not None) or (
-            world_clock is not None and world_clock["current_ordinal"] > 0
+        opening_lifecycle = (
+            target_lifecycle is not None
+            and len(target_lifecycle) == 1
+            and target_lifecycle[0].week.ordinal == 0
+        )
+        if (
+            world_clock is not None
+            and world_clock["current_ordinal"] > 0
+        ) or (
+            target_world is None
+            and target_ranking is not None
+            and not opening_lifecycle
         ):
             raise ValueError(
                 "Legacy Saved Revision has no health component and cannot be "
@@ -339,7 +358,22 @@ def restore_saved_health(
     for state in target or ():
         put_health(session, state)
 
-    if target is None and target_world is not None:
+    if target is None and target_lifecycle is not None:
+        opening = target_lifecycle[0]
+        put_health(
+            session,
+            bootstrap_health_state(
+                run_id=run_id,
+                branch_id=branch_id,
+                source_initial_world_fingerprint=(
+                    opening.source_initial_world_fingerprint
+                ),
+                player_ids=tuple(
+                    player.player_id for player in opening.players
+                ),
+            ),
+        )
+    elif target is None and target_world is not None:
         from beta_engine.infrastructure.db.initial_world_state import get_initial_world
 
         world = get_initial_world(session, run_id=run_id, branch_id=branch_id)

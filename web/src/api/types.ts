@@ -936,6 +936,31 @@ export type PreAlphaFaxAcceptanceIssue = {
   message: string
 }
 
+export type PreAlphaFaxEntryValidationPolicyGate = {
+  schema_version: 'pre_alpha_fax_entry_validation_policy_gate.v1'
+  run_id: string
+  branch_id: string
+  policy_id: 'automatic_application_eligibility_deadline.v1'
+  policy_status: 'unresolved'
+  master_status: 'open'
+  blocks_unattended_release: true
+  current_week: AuthoritativeRankingWeek
+  current_slot_kind: 'entry' | 'match' | null
+  current_slot_ordinal: number | null
+  current_position_fingerprint: string
+  current_entry_slot_frozen: boolean
+  current_entry_slot_fingerprint?: string | null
+  current_entry_decision_count: number
+  current_entry_validation_resolved: boolean
+  current_validation_fingerprint?: string | null
+  current_blocker_code:
+    | 'entry_decision_slot_required'
+    | 'application_validation_policy_unresolved'
+    | 'current_slot_not_entry'
+  detail: string
+  gate_fingerprint: string
+}
+
 export type PreAlphaFaxAcceptanceProfile = {
   schema_version: 'pre_alpha_fax_acceptance_profile.v1'
   run_id: string

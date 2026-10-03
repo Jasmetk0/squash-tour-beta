@@ -6,6 +6,7 @@ import {
   adoptAuthoritativeWeekSchedule,
   getAuthoritativeSimulationPosition,
   getPreAlphaFaxAcceptanceProfile,
+  getPreAlphaFaxEntryValidationPolicyGate,
   inspectAuthoritativeEntryDecisionSlot,
   reviewAuthoritativeEntryDecisionSlot,
   inspectWeekTournamentLock,
@@ -464,6 +465,13 @@ export function AuthoritativeSimulationPanel({
       (!schedulePreflightQuery.data.schedule_required ||
         schedulePreflightQuery.data.schedule_already_adopted)
   )
+  const faxEntryValidationPolicyGateQuery = useQuery({
+    queryKey: ['pre-alpha-fax-entry-validation-policy-gate', runId, branchId],
+    queryFn: () => getPreAlphaFaxEntryValidationPolicyGate(runId, branchId),
+    enabled,
+    retry: false
+  })
+
   const faxAcceptanceProfileQuery = useQuery({
     queryKey: ['pre-alpha-fax-acceptance-profile', runId, branchId],
     queryFn: () => getPreAlphaFaxAcceptanceProfile(runId, branchId),
@@ -2221,6 +2229,45 @@ export function AuthoritativeSimulationPanel({
         Run/Branch-owned sporting path: Week Schedule → Position → Next Match / Next Slot / Next Match Day / Next Round / Next Tournament / Next Week / Next Season / Full Simulation → Save / reviewed boundaries.
         It does not use the legacy simulation-run binding.
       </p>
+
+      <h4>Pre-alpha Entry validation policy gate</h4>
+      <p className="status">
+        Unattended copied-FAX release simulation is blocked until the automatic application
+        eligibility/deadline policy is explicitly decided and versioned.
+      </p>
+      {faxEntryValidationPolicyGateQuery.isLoading && enabled ? (
+        <p className="status">Checking Entry validation policy gate…</p>
+      ) : null}
+      {faxEntryValidationPolicyGateQuery.error ? (
+        <p className="error">
+          Entry validation policy gate unavailable: {formatApiError(faxEntryValidationPolicyGateQuery.error)}
+        </p>
+      ) : null}
+      {faxEntryValidationPolicyGateQuery.data ? (
+        <>
+          <SummaryPills
+            items={[
+              { label: 'Policy', value: faxEntryValidationPolicyGateQuery.data.policy_id },
+              { label: 'Master status', value: faxEntryValidationPolicyGateQuery.data.master_status },
+              { label: 'Unattended release', value: 'blocked' },
+              {
+                label: 'Current blocker',
+                value: faxEntryValidationPolicyGateQuery.data.current_blocker_code
+              },
+              {
+                label: 'Frozen Entry decisions',
+                value: faxEntryValidationPolicyGateQuery.data.current_entry_decision_count
+              },
+              {
+                label: 'Validation resolved',
+                value: faxEntryValidationPolicyGateQuery.data.current_entry_validation_resolved ? 'yes' : 'no'
+              },
+              { label: 'Gate', value: faxEntryValidationPolicyGateQuery.data.gate_fingerprint.slice(0, 12) }
+            ]}
+          />
+          <p className="status">{faxEntryValidationPolicyGateQuery.data.detail}</p>
+        </>
+      ) : null}
 
       <h4>Pre-alpha FAX release gate</h4>
       <p className="status">

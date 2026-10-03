@@ -17,6 +17,9 @@ from beta_engine.application.authoritative_run_simulation_driver import (
     AuthoritativeFullSimulationPreviewRequest,
     AuthoritativeRunSimulationDriver,
 )
+from beta_engine.application.pre_alpha_fax_entry_validation_policy_gate import (
+    PreAlphaFaxEntryValidationPolicyGateService,
+)
 from beta_engine.application.pre_alpha_fax_acceptance_profile import (
     PreAlphaFaxAcceptanceProfile,
     PreAlphaFaxAcceptanceProfileService,
@@ -54,6 +57,10 @@ class PreAlphaFaxLongAcceptanceProbeReport(BaseModel):
     current_week: dict | None = None
     detail: str | None = None
     execution_fingerprint: str | None = Field(
+        default=None, pattern=r"^[0-9a-f]{64}$"
+    )
+    release_policy_blocker: str | None = None
+    release_policy_gate_fingerprint: str | None = Field(
         default=None, pattern=r"^[0-9a-f]{64}$"
     )
 
@@ -131,6 +138,15 @@ class PreAlphaFaxLongAcceptanceProbeService:
             )
 
         execution_fp = fingerprint(execution)
+        release_policy_blocker = None
+        release_policy_gate_fingerprint = None
+        if status == "blocked" and execution.get("checkpoint") == "entry_process_required":
+            policy_gate = PreAlphaFaxEntryValidationPolicyGateService(
+                self.driver
+            ).inspect(run_id=run_id, branch_id=branch_id)
+            if policy_gate.current_blocker_code == "application_validation_policy_unresolved":
+                release_policy_blocker = policy_gate.current_blocker_code
+                release_policy_gate_fingerprint = policy_gate.gate_fingerprint
         return PreAlphaFaxLongAcceptanceProbeReport(
             run_id=run_id,
             branch_id=branch_id,
@@ -148,4 +164,6 @@ class PreAlphaFaxLongAcceptanceProbeService:
             current_week=execution.get("current_week"),
             detail=execution.get("detail"),
             execution_fingerprint=execution_fp,
+            release_policy_blocker=release_policy_blocker,
+            release_policy_gate_fingerprint=release_policy_gate_fingerprint,
         )

@@ -15,6 +15,24 @@ Master v70 preserves calibration as open test work and sets the FAX acceptance r
 copied template, at least 1,000 initial players and 80 fully simulated World Tour Editions;
 lower Tours remain abstract. The Official Run is not the acceptance focus.
 
+## Implemented — machine-readable copied-FAX Entry validation release-policy gate
+
+- Added an explicit pre-alpha release gate for the still-open automatic tournament-application
+  eligibility/deadline policy.
+- The gate binds the current authoritative Week, slot, Position fingerprint and, when present, the
+  frozen Entry decision-slot fingerprint, decision count and validation state.
+- A frozen current Entry slot without validation now reports the precise blocker
+  `application_validation_policy_unresolved` instead of being indistinguishable from generic Entry work.
+- The copied-FAX long-acceptance probe enriches `entry_process_required` with this blocker and the
+  exact policy-gate fingerprint.
+- Admin Simulation shows the blocker separately from FAX input readiness so missing data and an
+  intentionally unresolved product policy are not conflated.
+- This slice does not invent eligibility/deadline rules and therefore does not fabricate valid submissions.
+
+See [copied-FAX Entry validation policy gate](docs/PRE_ALPHA_FAX_ENTRY_VALIDATION_POLICY_GATE.md).
+
+**Next:** resolve and version the automatic application eligibility/deadline policy; then implement
+that policy as validation authority and continue through persisted valid submissions → Entry Field.
 ## Implemented — copied-FAX current authoritative Entry decision bootstrap
 
 - Added a reviewed Preview → Apply helper over the production Authoritative Simulation Entry slot.

@@ -66,6 +66,9 @@ from beta_engine.application.season_closing_ranking_resolution import (
 from beta_engine.application.season_transition_configuration import (
     resolve_season_transition_configuration,
 )
+from beta_engine.application.season_transition_health import (
+    resolve_season_transition_health,
+)
 from beta_engine.application.season_transition_lifecycle import (
     resolve_season_transition_lifecycle,
 )
@@ -890,6 +893,7 @@ class AuthoritativeSeasonTransitionPreflight(FrozenInput):
     default_configuration_fingerprint: str | None = None
     default_sporting_fingerprint: str | None = None
     default_lifecycle_fingerprint: str | None = None
+    default_health_fingerprint: str | None = None
     default_ranking_fingerprint: str | None = None
     position_fingerprint: str
     state_blockers: tuple[str, ...] = ()
@@ -2441,6 +2445,7 @@ class AuthoritativeRunSimulationDriver:
         default_configuration = None
         default_sporting = None
         default_lifecycle = None
+        default_health = None
         default_ranking = None
         if target_week is not None:
             try:
@@ -2467,6 +2472,14 @@ class AuthoritativeRunSimulationDriver:
                 except ValueError:
                     blockers.append("season_transition_lifecycle_unavailable")
                 if default_lifecycle is not None:
+                    try:
+                        default_health = resolve_season_transition_health(
+                            session,
+                            default_configuration,
+                            target_lifecycle=default_lifecycle.target_state,
+                        )
+                    except ValueError:
+                        blockers.append("season_transition_health_unavailable")
                     try:
                         default_ranking = resolve_season_transition_ranking(
                             session,
@@ -2499,6 +2512,9 @@ class AuthoritativeRunSimulationDriver:
             "default_lifecycle_fingerprint": (
                 default_lifecycle.target_state.fingerprint if default_lifecycle else None
             ),
+            "default_health_fingerprint": (
+                default_health.target_state.fingerprint if default_health else None
+            ),
             "default_ranking_fingerprint": (
                 default_ranking.target_snapshot.fingerprint if default_ranking else None
             ),
@@ -2528,6 +2544,9 @@ class AuthoritativeRunSimulationDriver:
             ),
             default_lifecycle_fingerprint=(
                 default_lifecycle.target_state.fingerprint if default_lifecycle else None
+            ),
+            default_health_fingerprint=(
+                default_health.target_state.fingerprint if default_health else None
             ),
             default_ranking_fingerprint=(
                 default_ranking.target_snapshot.fingerprint if default_ranking else None

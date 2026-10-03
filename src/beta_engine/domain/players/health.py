@@ -116,14 +116,27 @@ class PlayerHealthProfile(FrozenInput):
             source = record_by_id.get(record.recurrence_of_record_id)
             if source is None:
                 raise ValueError("Health recurrence references unknown source record")
-            if source.record_id >= record.record_id:
-                raise ValueError(
-                    "Health recurrence source must precede the recurrent record in canonical order"
-                )
+            if source.record_id == record.record_id:
+                raise ValueError("Health recurrence cannot reference itself")
             if source.kind != record.kind:
                 raise ValueError("Health recurrence cannot cross Injury/Illness kind")
 
-        consequence_ids = tuple(
+            seen = {record.record_id}
+            cursor = source
+            while cursor.recurrence_of_record_id is not None:
+                if cursor.record_id in seen:
+                    raise ValueError("Health recurrence chain cannot contain a cycle")
+                seen.add(cursor.record_id)
+                parent = record_by_id.get(cursor.recurrence_of_record_id)
+                if parent is None:
+                    raise ValueError(
+                        "Health recurrence references unknown source record"
+                    )
+                cursor = parent
+            if cursor.record_id in seen:
+                raise ValueError("Health recurrence chain cannot contain a cycle")
+
+        consequence_ids = tuple
             consequence.consequence_id for consequence in self.permanent_consequences
         )
         if consequence_ids != tuple(sorted(set(consequence_ids))):

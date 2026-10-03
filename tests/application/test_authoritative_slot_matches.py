@@ -9573,10 +9573,7 @@ def test_group_match_schedule_executes_through_canonical_slots_and_stops_for_sta
 
     post_standings = driver.position(run_id="run", branch_id="branch")
     assert "group_standings_authority_required" not in post_standings.transition_blockers
-    assert (
-        "group_post_standings_progression_required"
-        in post_standings.transition_blockers
-    )
+    assert "tournament_topology_missing" in post_standings.transition_blockers
 
     with factory() as session:
         rows = session.scalars(

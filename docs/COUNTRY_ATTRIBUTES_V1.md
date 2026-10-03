@@ -1,7 +1,7 @@
 # Country Game Attributes V1
 
 **Status:** `[DECIDED FOR V1]` attribute structure; exact calibration remains open.  
-**Decision date:** 10 Aug 2026.  
+**Decision date:** 10 Aug 2026; scale and Court Count scope revised 3 Oct 2026 (Master v74).  
 **Scope:** World Package country model and first-version player-pipeline semantics.
 
 ## 1. V1 principle
@@ -16,7 +16,7 @@ A small or weak squash country must retain a non-zero chance of producing a gene
 
 ## 2. Authored Country Game Attributes
 
-All six V1 game attributes are finite numeric ratings on the inclusive **1 to 5** scale; fractional values are valid. Values are neither rounded nor clamped, and the domain defines no arbitrary decimal granularity.
+All six pre-alpha game attributes are finite numeric ratings on the inclusive **1 to 10** scale, with at most one decimal place (step **0.1**). Whole numbers are valid. This is the Master v74 target contract; the current runtime still validates 1–5 and requires a separate coordinated migration. Invalid inputs must not be silently rounded or clamped.
 
 | Attribute | V1 meaning |
 |---|---|
@@ -38,14 +38,13 @@ These remain factual/configuration data rather than game-strength ratings:
 - `region`,
 - `travel_region`,
 - `timezone_area`,
-- `court_count` where known,
 - country identity/name/flag/notes.
 
 `Travel Region` and `Timezone Area` are independent geography layers in Master v45: Travel Region represents coarse physical travel burden, while Timezone Area represents biological time shift / jet-lag topology. They must not be collapsed into one field.
 
-The current repository already has Travel Regions but does **not** yet have a Timezone Area registry/assignment layer. That is a known implementation gap, not an open product decision. This Country V1 slice must not fake the missing layer by reusing `region` or `travel_region`; the geography layer is a dedicated immediate follow-up.
+The repository now has a dedicated Timezone Area registry/assignment layer (see the implementation note below). It must not fake missing assignments by reusing `region` or `travel_region`.
 
-`court_count` may later help derive or validate access, but it is not itself a V1 quality rating.
+**Deferred beyond pre-alpha (Master v74):** `court_count` is not an active pre-alpha input, editor field, new-package requirement or simulation factor. `squash_access` directly represents practical access. Existing stored court counts may survive only as inert compatibility data; their later use to derive/validate access is not yet specified.
 
 ## 4. Derived values — never authored as Country V1 ratings
 
@@ -91,13 +90,15 @@ Backward-loading bridge for pre-V1 World Packages:
 - legacy `system_quality` → initial `development_quality`,
 - legacy `competition_density` → initial `competition_quality`,
 - legacy `federation_quality` → initial `elite_support`,
-- existing `squash_popularity` and `squash_tradition` remain directly usable.
+- existing `squash_popularity` and `squash_tradition` keep their semantic identities; their numeric scale must still be interpreted from the source version.
 
 This mapping is a deterministic migration bridge only; it does **not** claim semantic equivalence. It only fills a V1 field when an actual legacy source exists; missing authored V1 ratings are not silently invented and invalid legacy ratings are rejected rather than clamped.
 
 `style_dna` / national play-style predispositions are deferred beyond V1. They must not bias first-version player style, personality or innate potential by nationality.
 
 ## 7. Migration/storage rule
+
+**Master v74 migration requirement (not implemented by this documentation change):** version the rating scale explicitly across packages, imports/exports and Run snapshots. Coordinate domain/API validation, editor bounds/step and every normalization/formula currently assuming a maximum of 5. Never infer the scale from a value alone: 3 is valid in both scales. Do not rewrite historical snapshots or change historical replay semantics. The exact numerical conversion and calibration must be explicit and tested; this decision does not prescribe a formula.
 
 Built-in read-only World Packages authored with legacy attribute files remain readable through the compatibility loader. New countries and edited custom-package countries are written only in the canonical V1 attribute format currently supported by the repository.
 

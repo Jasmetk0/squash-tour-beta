@@ -187,6 +187,9 @@ def confirm(url, command, preview):
             "X-Week-Transition-Sporting-Fingerprint": preview["result"][
                 "player_sporting_fingerprint"
             ],
+            "X-Week-Transition-Health-Fingerprint": preview["result"][
+                "player_health_fingerprint"
+            ],
         },
     )
     with request.urlopen(req) as response:

@@ -94,6 +94,27 @@ def bootstrap_health(session: Session, world) -> PlayerHealthWeekState:
     return put_health(session, state)
 
 
+def bootstrap_health_from_week_one_identity(
+    session: Session,
+    *,
+    run_id: str,
+    branch_id: str,
+    source_initial_world_fingerprint: str,
+    player_ids: tuple[str, ...],
+) -> PlayerHealthWeekState:
+    """Compatibility bootstrap for explicit Week-1 identity without fake pre-history."""
+
+    return put_health(
+        session,
+        bootstrap_health_state(
+            run_id=run_id,
+            branch_id=branch_id,
+            source_initial_world_fingerprint=source_initial_world_fingerprint,
+            player_ids=player_ids,
+        ),
+    )
+
+
 def transition_health(
     session: Session,
     *,

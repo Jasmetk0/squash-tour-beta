@@ -58,6 +58,10 @@ from beta_engine.domain.calendar.season_weeks import (
     season_week_to_calendar_position,
 )
 from beta_engine.domain.players.attribute_catalog import CANONICAL_PLAYER_ATTRIBUTES
+from beta_engine.domain.players.health import (
+    bootstrap_health_state,
+    carry_health_state_forward,
+)
 from beta_engine.domain.players.lifecycle import (
     PlayerLifecycleIdentity,
     PlayerLifecycleWeekState,
@@ -140,6 +144,7 @@ from beta_engine.infrastructure.db.initial_world_state import (
     get_initial_world,
     put_initial_world,
 )
+from beta_engine.infrastructure.db.player_health_state import put_health
 from beta_engine.infrastructure.db.player_lifecycle_state import (
     get_lifecycle,
     put_lifecycle,
@@ -346,6 +351,23 @@ def session_at(
             ),
         ),
     )
+    health = bootstrap_health_state(
+        run_id="run",
+        branch_id="branch",
+        source_initial_world_fingerprint=world.fingerprint,
+        player_ids=tuple(sorted(player_ids)),
+    )
+    put_health(session, health)
+    while health.week.ordinal < week.ordinal:
+        health = carry_health_state_forward(
+            health,
+            target=RankingWeek(
+                season_index=(health.week.ordinal + 1) // 61,
+                week=((health.week.ordinal + 1) % 61) + 1,
+            ),
+            target_player_ids=tuple(sorted(player_ids)),
+        )
+        put_health(session, health)
     put_sporting(
         session,
         PlayerSportingWeekState(

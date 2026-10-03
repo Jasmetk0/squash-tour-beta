@@ -41,6 +41,11 @@ from beta_engine.infrastructure.db.player_lifecycle_state import (
     get_lifecycle,
     transition_lifecycle,
 )
+from beta_engine.infrastructure.db.player_health_state import (
+    bootstrap_health_from_week_one_identity,
+    get_health,
+    transition_health,
+)
 from beta_engine.infrastructure.db.player_sporting_state import (
     get_completed_context,
     get_sporting,
@@ -119,7 +124,17 @@ def week_transition_readiness_blockers(session, *, run_id, branch_id, completed_
     )
     if lifecycle is None:
         blockers.append("lifecycle_roster_missing")
-    elif authority is not None:
+    health = get_health(
+        session, run_id=run_id, branch_id=branch_id, week=completed_week
+    )
+    if health is None:
+        if completed_week.ordinal != 0:
+            blockers.append("health_roster_missing")
+    elif lifecycle is not None and tuple(
+        player.player_id for player in health.players
+    ) != tuple(player.player_id for player in lifecycle.players):
+        blockers.append("health_roster_mismatch")
+    if lifecycle is not None and authority is not None:
         try:
             target_lifecycle = advance_lifecycle_with_completed_tour_entries(
                 session,
@@ -285,19 +300,19 @@ def _world_event_payload(
     ranking_fingerprint: str,
     lifecycle_fingerprint: str,
     sporting_fingerprint: str,
+    health_fingerprint: str | None = None,
 ) -> str:
-    return json.dumps(
-        {
-            "audit": command.audit.model_dump(mode="json"),
-            "completed_week": command.completed_week.model_dump(mode="json"),
-            "target_week": command.target_week.model_dump(mode="json"),
-            "official_ranking_fingerprint": ranking_fingerprint,
-            "player_lifecycle_fingerprint": lifecycle_fingerprint,
-            "player_sporting_fingerprint": sporting_fingerprint,
-        },
-        sort_keys=True,
-        separators=(",", ":"),
-    )
+    payload = {
+        "audit": command.audit.model_dump(mode="json"),
+        "completed_week": command.completed_week.model_dump(mode="json"),
+        "target_week": command.target_week.model_dump(mode="json"),
+        "official_ranking_fingerprint": ranking_fingerprint,
+        "player_lifecycle_fingerprint": lifecycle_fingerprint,
+        "player_sporting_fingerprint": sporting_fingerprint,
+    }
+    if health_fingerprint is not None:
+        payload["player_health_fingerprint"] = health_fingerprint
+    return json.dumps(payload, sort_keys=True, separators=(",", ":"))
 
 
 class AuthoritativeWeekTransitionRunner:
@@ -320,6 +335,7 @@ class AuthoritativeWeekTransitionRunner:
         expected_ranking_fingerprint=None,
         expected_lifecycle_fingerprint=None,
         expected_sporting_fingerprint=None,
+        expected_health_fingerprint=None,
     ):
         with self.factory.begin() as session:
             session.execute(text("BEGIN IMMEDIATE"))
@@ -340,6 +356,11 @@ class AuthoritativeWeekTransitionRunner:
                     expected_sporting_fingerprint is not None
                     and result.player_sporting_fingerprint
                     != expected_sporting_fingerprint
+                )
+                or (
+                    expected_health_fingerprint is not None
+                    and result.player_health_fingerprint
+                    != expected_health_fingerprint
                 )
             ):
                 raise ValueError("Week Transition inputs changed since preview")
@@ -404,6 +425,7 @@ def transition_in_transaction(session: Session, awards, command):
                     result.official_ranking_fingerprint,
                     result.player_lifecycle_fingerprint,
                     result.player_sporting_fingerprint,
+                    result.player_health_fingerprint,
                 )
             )
         ):
@@ -467,6 +489,15 @@ def transition_in_transaction(session: Session, awards, command):
             raise ValueError(
                 "Completed Week Transition sporting context link is corrupt"
             )
+        if result.player_health_fingerprint is not None:
+            health = get_health(
+                session,
+                run_id=command.run_id,
+                branch_id=command.branch_id,
+                week=result.target_week,
+            )
+            if health is None or health.fingerprint != result.player_health_fingerprint:
+                raise ValueError("Completed Week Transition player health is corrupt")
         return result
 
     run = session.get(RunContainerModel, command.run_id)
@@ -577,6 +608,32 @@ def transition_in_transaction(session: Session, awards, command):
         raise ValueError(
             "Authoritative predecessor player sporting snapshot is missing"
         )
+    predecessor_health = get_health(
+        session,
+        run_id=command.run_id,
+        branch_id=command.branch_id,
+        week=command.completed_week,
+    )
+    if predecessor_health is None:
+        if command.completed_week.ordinal != 0:
+            raise ValueError(
+                "Authoritative predecessor player health snapshot is missing"
+            )
+        predecessor_health = bootstrap_health_from_week_one_identity(
+            session,
+            run_id=command.run_id,
+            branch_id=command.branch_id,
+            source_initial_world_fingerprint=(
+                predecessor_sporting.source_initial_world_fingerprint
+            ),
+            player_ids=tuple(
+                player.player_id for player in predecessor_lifecycle.players
+            ),
+        )
+    if tuple(player.player_id for player in predecessor_health.players) != tuple(
+        player.player_id for player in predecessor_lifecycle.players
+    ):
+        raise ValueError("Authoritative predecessor player health roster differs")
     player_ids = tuple(player.player_id for player in predecessor_sporting.players)
     try:
         resolve_completed_context_from_authoritative_matches(
@@ -625,6 +682,15 @@ def transition_in_transaction(session: Session, awards, command):
         target=command.target_week,
     )
     _fault_injection_point("after_lifecycle_staging")
+    health = transition_health(
+        session,
+        run_id=command.run_id,
+        branch_id=command.branch_id,
+        completed=command.completed_week,
+        target=command.target_week,
+        target_player_ids=tuple(player.player_id for player in lifecycle.players),
+    )
+    _fault_injection_point("after_health_staging")
     derived_players = lifecycle.ranking_roster()
     authority_identity = tuple(
         (p.player_id, p.tie_break_token, p.tour_entry_week) for p in authority.players
@@ -679,7 +745,11 @@ def transition_in_transaction(session: Session, awards, command):
     world.current_ordinal = command.target_week.ordinal
     world.ranking_fingerprint = snapshot.fingerprint
     event_payload = _world_event_payload(
-        command, snapshot.fingerprint, lifecycle.fingerprint, sporting.fingerprint
+        command,
+        snapshot.fingerprint,
+        lifecycle.fingerprint,
+        sporting.fingerprint,
+        health.fingerprint,
     )
     session.add(
         AuthoritativeWorldEventModel(
@@ -700,6 +770,7 @@ def transition_in_transaction(session: Session, awards, command):
         official_ranking_fingerprint=snapshot.fingerprint,
         player_lifecycle_fingerprint=lifecycle.fingerprint,
         player_sporting_fingerprint=sporting.fingerprint,
+        player_health_fingerprint=health.fingerprint,
     )
     session.add(
         AuthoritativeWeekTransitionReceiptModel(

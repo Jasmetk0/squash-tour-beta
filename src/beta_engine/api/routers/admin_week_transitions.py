@@ -28,6 +28,7 @@ def _run(
     expected_ranking=None,
     expected_lifecycle=None,
     expected_sporting=None,
+    expected_health=None,
     expected_request=None,
 ):
     try:
@@ -42,6 +43,7 @@ def _run(
             expected_ranking_fingerprint=expected_ranking,
             expected_lifecycle_fingerprint=expected_lifecycle,
             expected_sporting_fingerprint=expected_sporting,
+            expected_health_fingerprint=expected_health,
         )
         return {"request_fingerprint": command.fingerprint, "result": result}
     except ValidationError as exc:
@@ -105,6 +107,7 @@ def confirm_week_transition(run_id: str, branch_id: str, payload: dict,
     expected_ranking: Annotated[str, Header(alias="X-Week-Transition-Ranking-Fingerprint", pattern=r"^[0-9a-f]{64}$")],
     expected_lifecycle: Annotated[str, Header(alias="X-Week-Transition-Lifecycle-Fingerprint", pattern=r"^[0-9a-f]{64}$")],
     expected_sporting: Annotated[str, Header(alias="X-Week-Transition-Sporting-Fingerprint", pattern=r"^[0-9a-f]{64}$")],
+    expected_health: Annotated[str, Header(alias="X-Week-Transition-Health-Fingerprint", pattern=r"^[0-9a-f]{64}$")],
     expected_request: Annotated[str, Header(alias="X-Week-Transition-Request-Fingerprint", pattern=r"^[0-9a-f]{64}$")]):
     return _run(
         runtime,
@@ -116,5 +119,6 @@ def confirm_week_transition(run_id: str, branch_id: str, payload: dict,
         expected_ranking=expected_ranking,
         expected_lifecycle=expected_lifecycle,
         expected_sporting=expected_sporting,
+        expected_health=expected_health,
         expected_request=expected_request,
     )

@@ -198,3 +198,43 @@ def test_health_carry_forward_never_silently_drops_identity():
             target=RankingWeek(season_index=0, week=2),
             target_player_ids=("a",),
         )
+
+def test_health_recurrence_identity_is_not_ordered_by_record_id_and_cycles_fail_closed():
+    source = PlayerHealthRecord(
+        record_id="z-source",
+        kind="Injury",
+        condition_key="hamstring",
+        lifecycle="Recovered",
+        severity=30,
+        affected_domains=("movement",),
+        onset_week=RankingWeek(season_index=0, week=1),
+        recovered_week=RankingWeek(season_index=0, week=2),
+        provenance="source",
+    )
+    recurrence = PlayerHealthRecord(
+        record_id="a-recurrence",
+        kind="Injury",
+        condition_key="hamstring",
+        lifecycle="Active",
+        severity=25,
+        affected_domains=("movement",),
+        onset_week=RankingWeek(season_index=0, week=4),
+        recurrence_of_record_id="z-source",
+        provenance="recurrence",
+    )
+
+    profile = PlayerHealthProfile(
+        player_id="p1",
+        records=(recurrence, source),
+    )
+    assert profile.records[0].recurrence_of_record_id == "z-source"
+
+    first = recurrence.model_copy(
+        update={"record_id": "a", "recurrence_of_record_id": "b"}
+    )
+    second = source.model_copy(
+        update={"record_id": "b", "recurrence_of_record_id": "a"}
+    )
+    with pytest.raises(ValidationError, match="cycle"):
+        PlayerHealthProfile(player_id="p1", records=(first, second))
+

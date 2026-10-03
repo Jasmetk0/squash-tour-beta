@@ -4814,6 +4814,8 @@ def test_branch_fork_adapter_rebuilds_real_slot_plan_and_competitive_group(tmp_p
     assert row is not None
 
     target_start = "target-slot-start-fingerprint"
+    assert plan.health_state_fingerprint is not None
+    target_health_fingerprint = "d" * 64
     target_plan = remap_slot_plan(
         plan,
         run_id="run",
@@ -4821,6 +4823,9 @@ def test_branch_fork_adapter_rebuilds_real_slot_plan_and_competitive_group(tmp_p
         target_branch_id="target",
         slot_start_fingerprint_map={
             plan.slot_start_fingerprint: target_start,
+        },
+        health_fingerprint_map={
+            plan.health_state_fingerprint: target_health_fingerprint,
         },
     )
     remapped = remap_competitive_group_payload(
@@ -4837,6 +4842,7 @@ def test_branch_fork_adapter_rebuilds_real_slot_plan_and_competitive_group(tmp_p
     target_input = payload["authoritative_input"]
     assert target_plan.branch_id == "target"
     assert target_plan.slot_start_fingerprint == target_start
+    assert target_plan.health_state_fingerprint == target_health_fingerprint
     assert target_input["branch_id"] == "target"
     assert target_input["slot_start_fingerprint"] == target_start
     assert all(

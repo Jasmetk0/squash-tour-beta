@@ -22,6 +22,7 @@ from beta_engine.api.routers.admin_events import router as admin_events_router
 from beta_engine.api.routers.admin_lifecycle import router as admin_lifecycle_router
 from beta_engine.api.routers.admin_matches import router as admin_matches_router
 from beta_engine.api.routers.admin_match_test_lab import router as admin_match_test_lab_router
+from beta_engine.api.routers.admin_player_test_lab import router as admin_player_test_lab_router
 from beta_engine.api.routers.admin_tournament_test_lab import router as admin_tournament_test_lab_router
 from beta_engine.api.routers.admin_results import router as admin_results_router
 from beta_engine.api.routers.admin_weeks import router as admin_weeks_router
@@ -87,6 +88,7 @@ router.include_router(admin_lifecycle_router)
 router.include_router(admin_draws_router)
 router.include_router(admin_matches_router)
 router.include_router(admin_match_test_lab_router)
+router.include_router(admin_player_test_lab_router)
 router.include_router(admin_tournament_test_lab_router)
 router.include_router(admin_results_router)
 router.include_router(admin_weeks_router)

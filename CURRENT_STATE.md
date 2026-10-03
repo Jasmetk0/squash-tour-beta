@@ -1,12 +1,11 @@
 # Current implementation and next action
 
-## Current checkpoint — 2 October 2026 / Master v71
+## Current checkpoint — 3 October 2026 / Master v72
 
 This checkpoint supersedes older next-task notices below; their implementation evidence is retained.
-Audited baseline `buuk`: `c42dc06ba73c86ffd4c64b2ce1d38e9944beab09` after #1094. All 19 new PRs
-#1075–1093 are merged. #1089 had red final-head CI; #1090 repaired it, and #1093's final-head
-Fast CI is green. See [the full audit](docs/PRE_ALPHA_CHECKPOINT_2026_10_02.md) for evidence
-and limitations. No full local release acceptance was run at this checkpoint.
+Current integration baseline is `buuk` after merged #1118 (`121aaca35c83ea31214fbbf44da30941bc95d69b`).
+The copied-FAX path now reaches the explicit automatic application-validation policy blocker.
+The mandatory 50-season release acceptance has not yet completed.
 
 Talent Intake's remaining audited diagnostic gaps are closed by the current diagnostics slice:
 stored pre-generation forecast including zero-output countries, explicit effective potential floor,
@@ -14,6 +13,28 @@ lifecycle-owned future visibility, and conservative Viewer hidden-field gating.
 Master v70 preserves calibration as open test work and sets the FAX acceptance reference to a
 copied template, at least 1,000 initial players and 80 fully simulated World Tour Editions;
 lower Tours remain abstract. The Official Run is not the acceptance focus.
+
+## Implemented — Global Player Test Lab V1 shared-development foundation
+
+- Added the third global Test Lab surface at `/admin/labs/player`, available without an active Run.
+- Portable `player_test_lab_scenario.v1` inputs execute the exact production
+  `weekly_player_development_update` and `between_week_state_update` kernels; no Lab-only
+  development engine is introduced.
+- V1 compares multiple variants from one identical canonical `PlayerSportingRecord` and varies only
+  explicit weekly competitive-match counts, an input already consumed by the production sporting kernel.
+- Scenario/request and every weekly sporting state are deterministically fingerprinted; diagnostic labels
+  do not alter sporting RNG, and exact replay is covered through service and HTTP tests.
+- The Admin result timeline reports week/age, completed matches, OVR/Potential, Form, Match Sharpness,
+  long-term fatigue, changed-attribute count and aggregate attribute delta.
+- Isolation is explicit: no Product Run, Branch, Saved Revision, Ranking, Calendar or tournament state is
+  created or mutated.
+- V1 intentionally reports Health, Training Load and career AI as unsupported. Experience, Match
+  Preparation and Financial Level are likewise not fabricated.
+
+See [Player Test Lab V1](docs/PLAYER_TEST_LAB_V1.md).
+
+**Next:** implement canonical Run/Branch-owned Health V1 with save/restore/fork coverage, then extend
+Player Lab over that same Health/recovery kernel rather than creating a Lab-only substitute.
 
 ## Implemented — machine-readable copied-FAX Entry validation release-policy gate
 

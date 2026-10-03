@@ -7821,6 +7821,91 @@ export type MatchLabSavedRevisionPlayerImportRequest = {
 }
 
 
+export type PlayerLabVariant = {
+  variant_id: string
+  display_name: string
+  competitive_match_counts: number[]
+}
+
+export type PlayerLabScenario = {
+  schema_version: 'player_test_lab_scenario.v1'
+  scenario_id: string
+  player: Record<string, unknown>
+  birth_year: number
+  birth_year_week: number
+  start_week: { season_index: number; week: number }
+  development_policy: Record<string, unknown>
+  variants: PlayerLabVariant[]
+  source_kind: 'portable' | 'built_in_copy'
+  source_reference?: string | null
+  source_fingerprint?: string | null
+}
+
+export type BuiltInPlayerLabScenario = {
+  scenario_id: string
+  display_name: string
+  description: string
+  read_only: true
+  scenario_fingerprint: string
+  scenario: PlayerLabScenario
+}
+
+export type PlayerLabRequest = {
+  scenario: PlayerLabScenario
+}
+
+export type PlayerLabWeekSnapshot = {
+  week: { season_index: number; week: number }
+  age: number
+  completed_competitive_matches: number
+  ovr: number
+  potential_ovr: number
+  current_form: number
+  match_sharpness: number
+  long_term_fatigue: number
+  changed_attribute_count: number
+  attribute_delta_total: number
+  state_fingerprint: string
+}
+
+export type PlayerLabVariantResult = {
+  variant_id: string
+  display_name: string
+  initial_state_fingerprint: string
+  final_state_fingerprint: string
+  snapshots: PlayerLabWeekSnapshot[]
+  final_player: Record<string, unknown>
+}
+
+export type PlayerLabResult = {
+  schema_version: 'player_test_lab_result.v1'
+  scenario_id: string
+  scenario_fingerprint: string
+  request_fingerprint: string
+  compatibility: {
+    production_kernels: string[]
+    portable: true
+    isolated: true
+    run_mutation_performed: false
+    run_live_link: false
+    health_supported: false
+    training_load_supported: false
+    career_ai_supported: false
+    warnings: string[]
+  }
+  variants: PlayerLabVariantResult[]
+  diagnostics: {
+    variant_count: number
+    duration_weeks: number
+    distinct_final_state_count: number
+    min_final_ovr: number
+    max_final_ovr: number
+    min_final_sharpness: number
+    max_final_sharpness: number
+  }
+}
+
+
 export type TournamentLabMatchFormat = {
   best_of: number
   games_to: number

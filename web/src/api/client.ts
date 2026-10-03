@@ -3465,6 +3465,20 @@ export async function importMatchLabSavedRevisionPlayer(
 }
 
 
+export async function getPlayerLabBuiltInScenarios(): Promise<import('./types').BuiltInPlayerLabScenario[]> {
+  return request<import('./types').BuiltInPlayerLabScenario[]>('/admin/labs/player/scenarios')
+}
+
+export async function runPlayerTestLab(
+  payload: import('./types').PlayerLabRequest
+): Promise<import('./types').PlayerLabResult> {
+  return request<import('./types').PlayerLabResult>('/admin/labs/player/run', {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  })
+}
+
+
 export async function getTournamentLabBuiltInScenarios(): Promise<import('./types').BuiltInTournamentLabScenario[]> {
   return request<import('./types').BuiltInTournamentLabScenario[]>('/admin/labs/tournament/scenarios')
 }

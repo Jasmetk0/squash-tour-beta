@@ -734,6 +734,12 @@ class AuthoritativeSlotMatchExecutor:
             players = checkpoint.players
             opening_fingerprint = checkpoint.opening_week_fingerprint
             predecessor = checkpoint.fingerprint
+        health = get_health(
+            self.session, run_id=run_id, branch_id=branch_id, week=week
+        )
+        if health is None:
+            raise ValueError("Simulation Slot requires authoritative Health state")
+        health_state_fingerprint = health.fingerprint
         slot_start = fingerprint(
             {
                 "run_id": run_id,
@@ -742,6 +748,7 @@ class AuthoritativeSlotMatchExecutor:
                 "ordinal": ordinal,
                 "predecessor": predecessor,
                 "players": [p.model_dump(mode="json") for p in players],
+                "health_state_fingerprint": health_state_fingerprint,
             }
         )
         plan = SimulationSlotPlan(
@@ -754,6 +761,7 @@ class AuthoritativeSlotMatchExecutor:
             group_ids=tuple(sorted(group_ids)),
             match_events=tuple(sorted(match_events, key=lambda item: item.group_id)),
             slot_start_fingerprint=slot_start,
+            health_state_fingerprint=health_state_fingerprint,
             provenance=f"{provenance}; slot is not a draw position",
         )
         initial = PlayerSportingCheckpoint(

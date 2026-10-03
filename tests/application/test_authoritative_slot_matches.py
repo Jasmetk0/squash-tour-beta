@@ -643,6 +643,47 @@ def run_semifinals(
     return session, executor, plan, results, checkpoint
 
 
+def _capture_health_fork_evidence(
+    session,
+    payload: dict,
+    *,
+    source_branch_id: str = "branch",
+    target_branch_id: str = "target",
+) -> tuple[dict, dict[str, str]]:
+    capture_saved_health(
+        session,
+        payload,
+        run_id="run",
+        branch_id=source_branch_id,
+    )
+    source_states = load_saved_health(
+        payload,
+        run_id="run",
+        branch_id=source_branch_id,
+    )
+    assert source_states is not None
+    target_component = remap_saved_health_component(
+        payload,
+        run_id="run",
+        source_branch_id=source_branch_id,
+        target_branch_id=target_branch_id,
+    )
+    assert target_component is not None
+    target_payload = {
+        "content": {PLAYER_HEALTH_COMPONENT_KEY: target_component}
+    }
+    target_states = load_saved_health(
+        target_payload,
+        run_id="run",
+        branch_id=target_branch_id,
+    )
+    assert target_states is not None
+    return target_component, {
+        source.fingerprint: target.fingerprint
+        for source, target in zip(source_states, target_states, strict=True)
+    }
+
+
 @pytest.mark.pr_critical
 def test_authoritative_match_freezes_canonical_health_without_numeric_penalty(tmp_path):
     health_profile = PlayerHealthProfile(
@@ -7192,6 +7233,9 @@ def test_source_bound_pre_q_revision_materializes_on_target_branch(tmp_path):
         run_id="run",
         branch_id="branch",
     )
+    target_health_component, health_fingerprint_map = (
+        _capture_health_fork_evidence(session, source_payload)
+    )
     capture_saved_simulation_slots(
         session,
         source_payload,
@@ -7237,15 +7281,24 @@ def test_source_bound_pre_q_revision_materializes_on_target_branch(tmp_path):
         tournament_ranking_authority_map={
             source_ranking.fingerprint: target_ranking,
         },
+        health_fingerprint_map=health_fingerprint_map,
     )
     assert remapped is not None
     assert len(remapped.simulation_component["draw_revisions"]) == 1
 
     fork_root = {
         "content": {
+            PLAYER_HEALTH_COMPONENT_KEY: target_health_component,
             "simulation_slot_match_state": remapped.simulation_component,
         }
     }
+    restore_saved_health(
+        session,
+        current_payload={"content": {}},
+        target_payload=fork_root,
+        run_id="run",
+        branch_id="target",
+    )
     restore_saved_simulation_slots(
         session,
         current_payload={"content": {}},
@@ -7473,6 +7526,9 @@ def test_materialized_fork_mixed_revision_restore_equivalence(tmp_path):
         run_id="run",
         branch_id="branch",
     )
+    target_health_component, health_fingerprint_map = (
+        _capture_health_fork_evidence(session, source_payload)
+    )
     capture_saved_simulation_slots(
         session,
         source_payload,
@@ -7530,6 +7586,7 @@ def test_materialized_fork_mixed_revision_restore_equivalence(tmp_path):
         tournament_ranking_authority_map={
             source_ranking.fingerprint: target_ranking,
         },
+        health_fingerprint_map=health_fingerprint_map,
     )
     assert remapped is not None
     (
@@ -7555,6 +7612,7 @@ def test_materialized_fork_mixed_revision_restore_equivalence(tmp_path):
 
     fork_root_payload = {
         "content": {
+            PLAYER_HEALTH_COMPONENT_KEY: target_health_component,
             "simulation_slot_match_state": remapped.simulation_component,
             DEFINITIVE_WILD_CARD_ASSIGNMENT_COMPONENT_KEY: (
                 remapped_definitive_wc_component
@@ -7562,6 +7620,13 @@ def test_materialized_fork_mixed_revision_restore_equivalence(tmp_path):
             PLAYER_TOUR_ENTRY_COMPONENT_KEY: remapped_tour_entry_component,
         }
     }
+    restore_saved_health(
+        session,
+        current_payload={"content": {}},
+        target_payload=fork_root_payload,
+        run_id="run",
+        branch_id="target",
+    )
     restore_saved_simulation_slots(
         session,
         current_payload={"content": {}},
@@ -8188,6 +8253,7 @@ def test_coupled_fork_remaps_basic_draw_revision_chain(tmp_path):
         run_id="run",
         branch_id="branch",
     )
+    _, health_fingerprint_map = _capture_health_fork_evidence(session, payload)
     capture_saved_simulation_slots(
         session,
         payload,
@@ -8203,6 +8269,7 @@ def test_coupled_fork_remaps_basic_draw_revision_chain(tmp_path):
         tournament_ranking_authority_map={
             source_ranking_authority.fingerprint: target_ranking_authority
         },
+        health_fingerprint_map=health_fingerprint_map,
     )
 
     assert remapped is not None

@@ -148,7 +148,7 @@ class CanonicalMatchInputProjectionPolicy(FrozenInput):
 
     @property
     def fingerprint(self) -> str:
-        return fingerprint(self.model_dump(mode="json"))
+        return fingerprint(self.model_dump(mode="json", exclude_none=True))
 
 
 class CanonicalPlayerMatchProjection(FrozenInput):

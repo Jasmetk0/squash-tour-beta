@@ -12,10 +12,7 @@ transitions:
 - `weekly_player_development_update`;
 - `between_week_state_update`.
 
-V1 deliberately varies only explicit completed competitive-match counts because that
-is already a real input of the canonical sporting kernel. It does not invent a Lab-only
-Training Load, health model, Experience, Match Preparation, Financial Level or career
-AI contract.
+V1 varies explicit completed competitive-match counts through the canonical sporting kernel and may also carry an explicit canonical `PlayerHealthProfile` timeline through the shared Match Health limitation projection. It does not invent a Lab-only Health model, Training Load, Experience, Match Preparation, Financial Level or career AI contract.
 
 ## Isolation and determinism
 
@@ -26,6 +23,7 @@ A `player_test_lab_scenario.v1` contains:
 - one historically explicit `PlayerDevelopmentPolicy`;
 - one or more named variants;
 - an explicit weekly competitive-match-count sequence per variant;
+- an optional explicit Health timeline containing the start profile plus one profile per simulated week;
 - portable provenance.
 
 Execution creates only in-memory `PlayerSportingWeekState` and
@@ -45,6 +43,7 @@ Each variant returns the weekly:
 - completed competitive-match count;
 - OVR and Potential OVR;
 - Form, Match Sharpness and long-term fatigue;
+- canonical Match Health projection, affected domains, highest current Severity and projection fingerprint;
 - count of attributes changed from the initial state;
 - aggregate attribute delta;
 - canonical sporting-state fingerprint.
@@ -58,26 +57,18 @@ states.
 - `POST /admin/labs/player/run`
 - Admin page: `/admin/labs/player`
 
-The first built-in scenario compares eight weeks with one competitive match each week
-against eight inactive weeks from the same initial state.
+The first built-in scenario compares eight weeks with one competitive match each week against eight inactive weeks from the same initial state. A second built-in compares an explicit `Active → Recovering → Recovered` ankle-Injury timeline with a healthy control.
 
 ## Explicit V1 boundaries
 
 The compatibility response truthfully reports:
 
-- `health_supported=false`;
+- `health_supported=true` for canonical explicit Health timelines and Match limitation projection;
 - `training_load_supported=false`;
 - `career_ai_supported=false`.
 
-The current canonical `PlayerSportingRecord.health_state` is still
-`unsupported`. V1 therefore does not claim to satisfy Master v72's health/recovery
-Player Lab requirements. Persistent Player Lab Test Sessions, Run/Saved Revision
-player copy, simulated standalone matches, Health/recovery variants and optional career
-AI remain later slices.
+`PlayerSportingRecord.health_state` remains an unrelated legacy placeholder; Player Lab Health comes from canonical `PlayerHealthProfile` timelines. The Lab does **not** generate Health Checks, healing, stacking or numeric Match penalties. Persistent Player Lab Test Sessions, Run/Saved Revision player copy, optional standalone matches and career AI remain later slices.
 
 ## Next
 
-Build canonical Run/Branch-owned Health V1 first, including historically versioned
-state and save/restore/fork coverage. Then extend Player Lab over that same health
-kernel rather than creating a Lab-only substitute. Persistent Player Lab sessions can
-then preserve replayable development/health comparisons safely.
+Use the shared Health projection to test approved limitation/stacking and recovery calibration before those effects enter Product Runs. Persistent Player Lab sessions can then preserve replayable development/Health comparisons safely.

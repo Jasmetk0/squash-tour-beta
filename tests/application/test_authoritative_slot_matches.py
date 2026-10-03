@@ -148,8 +148,12 @@ from beta_engine.infrastructure.db.initial_world_state import (
     put_initial_world,
 )
 from beta_engine.infrastructure.db.player_health_state import (
+    PLAYER_HEALTH_COMPONENT_KEY,
+    capture_saved_health,
     get_health,
+    load_saved_health,
     put_health,
+    remap_saved_health_component,
     replace_health_head,
 )
 from beta_engine.infrastructure.db.player_lifecycle_state import (
@@ -6175,12 +6179,48 @@ def test_coupled_fork_remaps_entry_wc_and_draw_input_chain(tmp_path):
         run_id="run",
         branch_id="branch",
     )
+    capture_saved_health(
+        session,
+        payload,
+        run_id="run",
+        branch_id="branch",
+    )
     capture_saved_simulation_slots(
         session,
         payload,
         run_id="run",
         branch_id="branch",
     )
+    source_health_states = load_saved_health(
+        payload,
+        run_id="run",
+        branch_id="branch",
+    )
+    assert source_health_states is not None
+    target_health_component = remap_saved_health_component(
+        payload,
+        run_id="run",
+        source_branch_id="branch",
+        target_branch_id="target",
+    )
+    assert target_health_component is not None
+    target_health_payload = {
+        "content": {PLAYER_HEALTH_COMPONENT_KEY: target_health_component}
+    }
+    target_health_states = load_saved_health(
+        target_health_payload,
+        run_id="run",
+        branch_id="target",
+    )
+    assert target_health_states is not None
+    health_fingerprint_map = {
+        source.fingerprint: target.fingerprint
+        for source, target in zip(
+            source_health_states,
+            target_health_states,
+            strict=True,
+        )
+    }
     remapped = remap_coupled_player_slot_history(
         payload,
         run_id="run",
@@ -6190,6 +6230,7 @@ def test_coupled_fork_remaps_entry_wc_and_draw_input_chain(tmp_path):
         tournament_ranking_authority_map={
             source_ranking_authority.fingerprint: target_ranking_authority
         },
+        health_fingerprint_map=health_fingerprint_map,
     )
 
     assert remapped is not None

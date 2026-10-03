@@ -61,7 +61,7 @@ class MatchWorkingInput(BaseModel):
     @property
     def fingerprint(self) -> str:
         payload = json.dumps(
-            self.model_dump(mode="json"),
+            self.model_dump(mode="json", exclude_none=True),
             sort_keys=True,
             separators=(",", ":"),
         ).encode("utf-8")

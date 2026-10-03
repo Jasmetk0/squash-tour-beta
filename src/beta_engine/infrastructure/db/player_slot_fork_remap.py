@@ -1016,6 +1016,7 @@ def remap_coupled_player_slot_history(
     ranking_snapshot_fingerprint_map: dict[str, str] | None = None,
     transition_authority_fingerprint_map: dict[str, str] | None = None,
     entry_validation_fingerprint_map: dict[str, str] | None = None,
+    health_fingerprint_map: dict[str, str] | None = None,
 ) -> CoupledPlayerSlotForkRemap | None:
     """Remap sporting + completed Slot core in canonical week order.
 
@@ -1043,6 +1044,7 @@ def remap_coupled_player_slot_history(
         transition_authority_fingerprint_map or {}
     )
     entry_validation_fingerprint_map = entry_validation_fingerprint_map or {}
+    health_fingerprint_map = health_fingerprint_map or {}
 
     auxiliary = set(source_slot_component) - {
         "fingerprint",
@@ -1679,6 +1681,7 @@ def remap_coupled_player_slot_history(
                 opening_sporting_fingerprint_map={
                     source_state.fingerprint: target_state.fingerprint
                 },
+                health_fingerprint_map=health_fingerprint_map,
             )
             assert week_remap is not None
             target_slot_components.append(week_remap.component)

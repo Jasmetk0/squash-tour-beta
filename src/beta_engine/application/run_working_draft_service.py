@@ -18,6 +18,10 @@ from beta_engine.infrastructure.db.run_tournament_lab_draft_state import (
     capture_run_tournament_lab_draft_state,
     load_saved_run_tournament_lab_drafts,
 )
+from beta_engine.infrastructure.db.player_health_state import (
+    PLAYER_HEALTH_COMPONENT_KEY,
+    health_component,
+)
 
 EntityIdFactory = Callable[[str], str]
 
@@ -82,6 +86,7 @@ class RunWorkingDraftService:
         draft = self.get_viewer_branch_draft(run_id=run_id, branch_id=branch_id)
         expected_package_fingerprint = None
         expected_lab_draft_fingerprint = None
+        expected_health_fingerprint = None
         if draft.proposed_viewer_branch_id == draft.saved_viewer_branch_id:
             with self.repository._session_factory() as session:
                 package_state = get_run_package_state(
@@ -99,6 +104,12 @@ class RunWorkingDraftService:
                 saved_lab_draft_state = load_saved_run_tournament_lab_drafts(
                     saved_revision.payload, run_id=run_id, branch_id=branch_id
                 )
+                current_health_component = health_component(
+                    session, run_id=run_id, branch_id=branch_id
+                )
+                saved_health_component = saved_revision.payload.get("content", {}).get(
+                    PLAYER_HEALTH_COMPONENT_KEY
+                )
                 package_changed = (
                     package_state.fingerprint if package_state else None
                 ) != (
@@ -109,7 +120,16 @@ class RunWorkingDraftService:
                 ) != (
                     saved_lab_draft_state.fingerprint if saved_lab_draft_state else None
                 )
-                if package_changed and lab_draft_changed:
+                health_changed = current_health_component != saved_health_component
+                changed_component_count = sum(
+                    int(changed)
+                    for changed in (
+                        package_changed,
+                        lab_draft_changed,
+                        health_changed,
+                    )
+                )
+                if changed_component_count > 1:
                     raise ValueError(
                         "Working Draft contains multiple independently saved component changes"
                     )
@@ -121,12 +141,19 @@ class RunWorkingDraftService:
                     expected_lab_draft_fingerprint = (
                         lab_draft_state.fingerprint if lab_draft_state else None
                     )
+                elif health_changed:
+                    if current_health_component is None:
+                        raise ValueError(
+                            "Working Draft cannot save removal of canonical Player Health"
+                        )
+                    expected_health_fingerprint = current_health_component["fingerprint"]
         return self.repository.save_viewer_branch_selection_atomically(
             run_id=run_id,
             branch_id=branch_id,
             expected_draft_version=expected_draft_version,
             expected_run_package_fingerprint=expected_package_fingerprint,
             expected_run_tournament_lab_draft_fingerprint=expected_lab_draft_fingerprint,
+            expected_player_health_fingerprint=expected_health_fingerprint,
             revision_id=revision_id,
             audit_event_id=audit_event_id,
         )
@@ -242,6 +269,36 @@ class RunWorkingDraftService:
             expected_run_tournament_lab_draft_fingerprint=(
                 expected_tournament_lab_draft_fingerprint
             ),
+            revision_id=_validated_entity_id(
+                self.id_factory("saved-revision"), kind="saved revision"
+            ),
+            audit_event_id=_validated_entity_id(
+                self.id_factory("revision-audit-event"), kind="revision audit event"
+            ),
+        )
+
+    def save_player_health(
+        self,
+        *,
+        run_id: str,
+        branch_id: str,
+        expected_draft_version: int,
+        expected_player_health_fingerprint: str,
+    ) -> ViewerBranchSaveResult:
+        if (
+            not isinstance(expected_player_health_fingerprint, str)
+            or len(expected_player_health_fingerprint) != 64
+            or any(
+                c not in "0123456789abcdef"
+                for c in expected_player_health_fingerprint
+            )
+        ):
+            raise ValueError("Expected Player Health fingerprint must be SHA-256")
+        return self.repository.save_viewer_branch_selection_atomically(
+            run_id=run_id,
+            branch_id=branch_id,
+            expected_draft_version=expected_draft_version,
+            expected_player_health_fingerprint=expected_player_health_fingerprint,
             revision_id=_validated_entity_id(
                 self.id_factory("saved-revision"), kind="saved revision"
             ),

@@ -3,7 +3,7 @@
 ## Current checkpoint — 3 October 2026 / Master v72
 
 This checkpoint supersedes older next-task notices below; their implementation evidence is retained.
-Current integration baseline is `buuk` after merged #1119 (`55831339ed741879c81a8dde9a5778069164c505`).
+Current integration baseline is `buuk` after merged #1120 (`b43b4d7a353491dda95bde5cac81300df8f3a68b`).
 The copied-FAX path now reaches the explicit automatic application-validation policy blocker.
 The mandatory 50-season release acceptance has not yet completed.
 
@@ -32,11 +32,17 @@ lower Tours remain abstract. The Official Run is not the acceptance focus.
   the current Health history.
 - Legacy Health absence can be reconstructed automatically only at the opening Week-1 boundary;
   advanced missing history fails closed rather than pretending players were healthy.
+- The current branch adds reviewed Admin Health editing on the exact current Health head:
+  explicit Week-1 pre-start inputs and later current-state corrections use Preview → fingerprinted
+  Commit, immutable operator/reason receipts, stale/retry guards and current-Week/future-fact checks.
+- Reviewed Health edits become ordinary `player_health_state` Working Draft component changes and can
+  be Saved into recoverable Saved Revisions; the generic Viewer-Branch draft resolver preserves and
+  ignores them correctly as component evidence rather than misreading them as Viewer selection changes.
 
 See [Player Health V1](docs/PLAYER_HEALTH_V1.md).
 
-**Next:** add explicit audited Admin Health editing/pre-start inputs, then connect the same authority to
-Match Engine limitations and Player Lab Health/recovery scenarios before calibrating stochastic Health Checks.
+**Next:** expose the reviewed Health edit workflow in Run Admin UI, then connect the same authority to
+Match Engine limitation projection and Player Lab Health/recovery scenarios before calibrating stochastic Health Checks.
 
 ## Implemented — Global Player Test Lab V1 shared-development foundation
 

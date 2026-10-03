@@ -140,6 +140,83 @@ def transition_health(
     return put_health(session, result)
 
 
+def replace_health_head(
+    session: Session,
+    state: PlayerHealthWeekState,
+    *,
+    expected_fingerprint: str,
+) -> PlayerHealthWeekState:
+    """Replace only the current Health head through an explicit audited Admin path."""
+
+    rows = session.scalars(
+        select(PlayerHealthWeekStateModel)
+        .where(
+            PlayerHealthWeekStateModel.run_id == state.run_id,
+            PlayerHealthWeekStateModel.branch_id == state.branch_id,
+        )
+        .order_by(PlayerHealthWeekStateModel.week_ordinal)
+    ).all()
+    if not rows:
+        raise ValueError("Player health history is missing")
+    head = rows[-1]
+    if head.week_ordinal != state.week.ordinal:
+        raise ValueError("Admin Health edit may replace only the current health head")
+    current = _load(head, state.run_id, state.branch_id, state.week)
+    if current.fingerprint != expected_fingerprint:
+        raise ValueError("Player health head changed since preview")
+    if current.predecessor_fingerprint != state.predecessor_fingerprint:
+        raise ValueError("Admin Health edit cannot rewrite predecessor history")
+    if current.source_initial_world_fingerprint != state.source_initial_world_fingerprint:
+        raise ValueError("Admin Health edit cannot rewrite InitialWorld provenance")
+
+    head.fingerprint = state.fingerprint
+    head.payload_json = state.model_dump_json()
+    session.flush()
+    installed = get_health(
+        session,
+        run_id=state.run_id,
+        branch_id=state.branch_id,
+        week=state.week,
+    )
+    if installed is None or installed.fingerprint != state.fingerprint:
+        raise ValueError("Admin Health edit write could not be verified")
+    return installed
+
+
+def health_component(
+    session: Session,
+    *,
+    run_id: str,
+    branch_id: str,
+) -> dict | None:
+    """Return the canonical Saved Revision Health component for live state."""
+
+    rows = session.scalars(
+        select(PlayerHealthWeekStateModel)
+        .where(
+            PlayerHealthWeekStateModel.run_id == run_id,
+            PlayerHealthWeekStateModel.branch_id == branch_id,
+        )
+        .order_by(PlayerHealthWeekStateModel.week_ordinal)
+    ).all()
+    if not rows:
+        return None
+    states = tuple(
+        _load(
+            row,
+            run_id,
+            branch_id,
+            RankingWeek(
+                season_index=row.week_ordinal // 61,
+                week=row.week_ordinal % 61 + 1,
+            ),
+        )
+        for row in rows
+    )
+    _validate_chain(states)
+    return _component(states)
+
+
 def _component(states: tuple[PlayerHealthWeekState, ...] | list[PlayerHealthWeekState]):
     body = [state.model_dump(mode="json") for state in states]
     return {
@@ -171,30 +248,9 @@ def capture_saved_health(
     run_id: str,
     branch_id: str,
 ) -> None:
-    rows = session.scalars(
-        select(PlayerHealthWeekStateModel)
-        .where(
-            PlayerHealthWeekStateModel.run_id == run_id,
-            PlayerHealthWeekStateModel.branch_id == branch_id,
-        )
-        .order_by(PlayerHealthWeekStateModel.week_ordinal)
-    ).all()
-    if not rows:
-        return
-    states = tuple(
-        _load(
-            row,
-            run_id,
-            branch_id,
-            RankingWeek(
-                season_index=row.week_ordinal // 61,
-                week=row.week_ordinal % 61 + 1,
-            ),
-        )
-        for row in rows
-    )
-    _validate_chain(states)
-    payload["content"][PLAYER_HEALTH_COMPONENT_KEY] = _component(states)
+    component = health_component(session, run_id=run_id, branch_id=branch_id)
+    if component is not None:
+        payload["content"][PLAYER_HEALTH_COMPONENT_KEY] = component
 
 
 def load_saved_health(

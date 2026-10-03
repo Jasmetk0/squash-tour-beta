@@ -672,6 +672,24 @@ class PlayerHealthWeekStateModel(Base):
     payload_json: Mapped[str] = mapped_column(Text, nullable=False)
 
 
+class PlayerHealthAdminEditReceiptModel(Base):
+    """Immutable audit receipt for one explicit Admin Health correction."""
+
+    __tablename__ = "player_health_admin_edit_receipts"
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    command_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    week_ordinal: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
+    player_id: Mapped[str] = mapped_column(String(160), nullable=False, index=True)
+    request_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    before_state_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    after_state_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[str] = mapped_column(
+        String(32), nullable=False, server_default=text("CURRENT_TIMESTAMP")
+    )
+
+
 class PlayerSportingWeekStateModel(Base):
     """Immutable Run/Branch-owned canonical sporting snapshot at one FAX week."""
     __tablename__ = "player_sporting_week_states"

@@ -80,6 +80,26 @@ Ordinary Season Transition likewise carries Health into next-season Week 1 and
 includes its fingerprint in the Season Transition result, World Event, change
 summary and Saved Revision.
 
+## Reviewed Admin editing
+
+The reviewed Admin mutation boundary operates only on the exact current Health head.
+
+- `pre_start_input` is permitted only at opening Week 1 and every supplied record must
+  explicitly declare `started_before_run=true`; the engine does not invent a pre-Run week.
+- Later `current_state_correction` edits may replace the selected player's complete current
+  Health profile but cannot rewrite predecessor Health history or InitialWorld provenance.
+- Onset/recovery facts cannot point into the future relative to the current authoritative Week.
+- Preview is read-only. Commit requires the exact
+  `X-Player-Health-Preview-Fingerprint`, revalidates Working Draft/version/current Week under
+  one write transaction and records operator/reason plus before/after fingerprints.
+- Exact retries are idempotent only while that committed Health result remains current. A
+  receipt made historical by a later correction or restore cannot silently re-apply itself.
+- The committed edit is staged as ordinary `player_health_state` Working Draft component
+  evidence and can be Saved as a recoverable Saved Revision through the normal Run boundary.
+
+A dedicated Run Admin UI for this backend workflow remains a follow-up; no alternate UI-owned
+Health authority is allowed.
+
 ## Explicit non-goals of this slice
 
 Health V1 does not yet implement:
@@ -93,14 +113,12 @@ Health V1 does not yet implement:
 - health-driven W/O / medical timeout / retirement decisions;
 - return-risk career AI;
 - health-to-Match-Engine limitation projection;
-- Admin mutation endpoints for explicit health editing;
 - Player Lab health/recovery scenarios.
 
 Those must build on this same authority rather than introduce parallel state.
 
 ## Next
 
-The next useful vertical slice is explicit audited Admin Health editing, including
-pre-start inputs and current-state corrections. After that, the shared health
-projection can feed Match Engine and Player Lab, followed by calibrated stochastic
-Health Check/recovery mechanics.
+The next useful vertical slice is the Run Admin UI over the reviewed Health edit boundary,
+followed by a shared Health limitation projection into Match Engine and Player Lab. Calibrated
+stochastic Health Check/recovery mechanics remain later work.

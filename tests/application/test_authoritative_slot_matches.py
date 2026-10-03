@@ -119,6 +119,7 @@ from beta_engine.domain.simulation_slots import (
     CanonicalMatchInputProjectionPolicy,
     fingerprint,
     SimulationMatchEventPlan,
+    SimulationSlotPlan,
     WeekSimulationSchedule,
     WeekSimulationScheduleSlot,
 )

@@ -60,19 +60,36 @@ class AdminHealthEditRequest(FrozenInput):
     audit_label: str = Field(min_length=1, max_length=200)
     audit_reason: str = Field(min_length=1, max_length=2000)
 
-    @field_validator("records")
+    @field_validator("records", mode="before")
     @classmethod
-    def canonical_records(
-        cls, value: tuple[PlayerHealthRecord, ...]
-    ) -> tuple[PlayerHealthRecord, ...]:
-        return tuple(sorted(value, key=lambda record: record.record_id))
+    def canonical_records(cls, value) -> tuple[PlayerHealthRecord, ...]:
+        if value is None:
+            return ()
+        records = tuple(
+            item
+            if isinstance(item, PlayerHealthRecord)
+            else PlayerHealthRecord.model_validate_json(json.dumps(item))
+            for item in value
+        )
+        return tuple(sorted(records, key=lambda record: record.record_id))
 
-    @field_validator("permanent_consequences")
+    @field_validator("permanent_consequences", mode="before")
     @classmethod
-    def canonical_consequences(
-        cls, value: tuple[PermanentHealthConsequence, ...]
-    ) -> tuple[PermanentHealthConsequence, ...]:
-        return tuple(sorted(value, key=lambda consequence: consequence.consequence_id))
+    def canonical_consequences(cls, value) -> tuple[PermanentHealthConsequence, ...]:
+        if value is None:
+            return ()
+        consequences = tuple(
+            item
+            if isinstance(item, PermanentHealthConsequence)
+            else PermanentHealthConsequence.model_validate_json(json.dumps(item))
+            for item in value
+        )
+        return tuple(
+            sorted(
+                consequences,
+                key=lambda consequence: consequence.consequence_id,
+            )
+        )
 
     @model_validator(mode="after")
     def unique_ids(self):
@@ -409,6 +426,20 @@ class AdminHealthEditService:
                 ):
                     raise ValueError(
                         "Admin Health edit retry differs from the stored reviewed command"
+                    )
+                current = get_health(
+                    session,
+                    run_id=run_id,
+                    branch_id=branch_id,
+                    week=stored_result.week,
+                )
+                if (
+                    current is None
+                    or current.fingerprint != stored_result.state_fingerprint
+                ):
+                    raise ValueError(
+                        "Admin Health edit receipt is historical after restore or later correction; "
+                        "use a new command_id"
                     )
                 return stored_result.model_copy(update={"already_applied": True})
 

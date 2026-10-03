@@ -140,7 +140,7 @@ describe('PlayerTestLabPage', () => {
       })
     })
     expect(await screen.findByText(/weekly_player_development_update/)).toBeInTheDocument()
-    expect(screen.getByText('not yet supported')).toBeInTheDocument()
+    expect(screen.getAllByText('not yet supported')).toHaveLength(3)
     expect(screen.getByRole('table', { name: 'Player Lab active timeline' })).toBeInTheDocument()
     expect(screen.getByRole('table', { name: 'Player Lab idle timeline' })).toBeInTheDocument()
   })

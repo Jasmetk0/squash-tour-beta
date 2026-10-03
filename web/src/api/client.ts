@@ -1225,6 +1225,10 @@ export async function getAuthoritativeSeasonTransitionPreflight(
       !/^[0-9a-f]{64}$/.test(data.default_lifecycle_fingerprint)
     ) ||
     (
+      data.default_health_fingerprint !== null &&
+      !/^[0-9a-f]{64}$/.test(data.default_health_fingerprint)
+    ) ||
+    (
       data.default_ranking_fingerprint !== null &&
       !/^[0-9a-f]{64}$/.test(data.default_ranking_fingerprint)
     )
@@ -1286,6 +1290,8 @@ export async function advanceAuthoritativeOrdinarySeason(
     !/^[0-9a-f]{64}$/.test(data.closure_marker_fingerprint) ||
     !/^[0-9a-f]{64}$/.test(data.player_sporting_fingerprint) ||
     !/^[0-9a-f]{64}$/.test(data.player_lifecycle_fingerprint) ||
+    data.player_health_fingerprint === null ||
+    !/^[0-9a-f]{64}$/.test(data.player_health_fingerprint) ||
     !/^[0-9a-f]{64}$/.test(data.official_ranking_fingerprint)
   ) {
     throw new Error('Ordinary Season Transition response is invalid.')
@@ -2079,7 +2085,9 @@ export async function simulateAuthoritativeNextWeek(
     !/^[0-9a-f]{64}$/.test(data.week_transition_request_fingerprint) ||
     !/^[0-9a-f]{64}$/.test(data.official_ranking_fingerprint) ||
     !/^[0-9a-f]{64}$/.test(data.player_lifecycle_fingerprint) ||
-    !/^[0-9a-f]{64}$/.test(data.player_sporting_fingerprint)
+    !/^[0-9a-f]{64}$/.test(data.player_sporting_fingerprint) ||
+    data.player_health_fingerprint === null ||
+    !/^[0-9a-f]{64}$/.test(data.player_health_fingerprint)
   ) {
     throw new Error('Authoritative Week result is invalid.')
   }
@@ -2437,6 +2445,7 @@ export async function confirmAuthoritativeWeekTransition(
         'X-Week-Transition-Ranking-Fingerprint': preview.result.official_ranking_fingerprint,
         'X-Week-Transition-Lifecycle-Fingerprint': preview.result.player_lifecycle_fingerprint,
         'X-Week-Transition-Sporting-Fingerprint': preview.result.player_sporting_fingerprint,
+        'X-Week-Transition-Health-Fingerprint': preview.result.player_health_fingerprint ?? '',
         'X-Week-Transition-Request-Fingerprint': preview.request_fingerprint
       }
     }
@@ -2449,7 +2458,8 @@ export async function confirmAuthoritativeWeekTransition(
     data.result.command_id !== preview.result.command_id ||
     data.result.official_ranking_fingerprint !== preview.result.official_ranking_fingerprint ||
     data.result.player_lifecycle_fingerprint !== preview.result.player_lifecycle_fingerprint ||
-    data.result.player_sporting_fingerprint !== preview.result.player_sporting_fingerprint
+    data.result.player_sporting_fingerprint !== preview.result.player_sporting_fingerprint ||
+    data.result.player_health_fingerprint !== preview.result.player_health_fingerprint
   ) {
     throw new Error('Confirmed Week Transition differs from the reviewed preview.')
   }

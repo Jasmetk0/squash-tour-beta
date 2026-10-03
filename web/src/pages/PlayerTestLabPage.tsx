@@ -23,9 +23,9 @@ function ResultPanels({ data }: { data: PlayerLabResult }): JSX.Element {
     {data.variants.map((variant) => <SectionCard key={variant.variant_id} title={variant.display_name}>
       <SummaryPills items={[
         { label: 'Variant', value: variant.variant_id },
-        { label: 'Final OVR', value: variant.snapshots.at(-1)?.ovr ?? '—' },
-        { label: 'Final sharpness', value: variant.snapshots.at(-1)?.match_sharpness ?? '—' },
-        { label: 'Final fatigue', value: variant.snapshots.at(-1)?.long_term_fatigue ?? '—' },
+        { label: 'Final OVR', value: variant.snapshots[variant.snapshots.length - 1]?.ovr ?? '—' },
+        { label: 'Final sharpness', value: variant.snapshots[variant.snapshots.length - 1]?.match_sharpness ?? '—' },
+        { label: 'Final fatigue', value: variant.snapshots[variant.snapshots.length - 1]?.long_term_fatigue ?? '—' },
         { label: 'Final state', value: variant.final_state_fingerprint.slice(0, 12) }
       ]} />
       <table aria-label={`Player Lab ${variant.variant_id} timeline`}>

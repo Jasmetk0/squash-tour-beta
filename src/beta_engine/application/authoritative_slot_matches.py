@@ -12,6 +12,7 @@ from sqlalchemy import select
 from beta_engine.core import DeterministicRng
 from beta_engine.domain.matches import (
     EffectiveMatchFormatSnapshot,
+    EffectiveMatchHealthSnapshot,
     MatchContext,
     MatchEngine,
     MatchInputSnapshot,
@@ -89,9 +90,10 @@ from beta_engine.infrastructure.db.models import (
 )
 from beta_engine.infrastructure.db.player_sporting_state import get_sporting
 from beta_engine.infrastructure.db.initial_world_state import get_initial_world
+from beta_engine.infrastructure.db.player_health_state import get_health
 from beta_engine.infrastructure.db.player_lifecycle_state import get_lifecycle
 
-MATCH_ENGINE_VERSION = "match_engine_v10"
+MATCH_ENGINE_VERSION = "match_engine_v11"
 
 
 @dataclass(frozen=True)
@@ -861,6 +863,21 @@ class AuthoritativeSlotMatchExecutor:
             )
         if expected_slot_start_fingerprint != plan.slot_start_fingerprint:
             raise ValueError("slot-start fingerprint changed; retry conflicts")
+        health = get_health(
+            self.session, run_id=run_id, branch_id=branch_id, week=week
+        )
+        if health is None:
+            raise ValueError("authoritative player Health source is required")
+        health_players = {player.player_id: player for player in health.players}
+        try:
+            match_health = EffectiveMatchHealthSnapshot.from_profiles(
+                player_a=health_players[player_a_id],
+                player_b=health_players[player_b_id],
+            )
+        except KeyError as exc:
+            raise ValueError(
+                "match participant is absent from authoritative Health state"
+            ) from exc
         command = fingerprint(
             {
                 "scope": [run_id, branch_id, week.ordinal, slot_id, group_id, match_id],
@@ -871,6 +888,8 @@ class AuthoritativeSlotMatchExecutor:
                 "engine": MATCH_ENGINE_VERSION,
                 "effective_match_format": effective_match_format.model_dump(mode="json"),
                 "projection": projection_policy.fingerprint,
+                "health_state": health.fingerprint,
+                "match_health": match_health.fingerprint,
                 "effects": effects_policy.fingerprint,
             }
         )
@@ -957,6 +976,7 @@ class AuthoritativeSlotMatchExecutor:
             simulation_seed=seed,
             match_engine_version=MATCH_ENGINE_VERSION,
             rally_calibration_profile=RallyCalibrationProfile(),
+            effective_match_health=match_health,
         )
         protected = AuthoritativeMatchInput(
             run_id=run_id,
@@ -978,6 +998,7 @@ class AuthoritativeSlotMatchExecutor:
             rally_calibration_profile=engine_input.rally_calibration_profile,
             effective_match_gameplans=engine_input.effective_match_gameplans,
             effective_rally_rules=engine_input.effective_rally_rules,
+            effective_match_health=engine_input.effective_match_health,
         )
         result_fp = fingerprint(
             {"input": protected.fingerprint, "result": result.model_dump(mode="json")}

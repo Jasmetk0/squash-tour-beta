@@ -5206,6 +5206,9 @@ class AuthoritativeRunSimulationDriver:
                 "expected_sporting_fingerprint": (
                     transition_preview.player_sporting_fingerprint
                 ),
+                "expected_health_fingerprint": (
+                    transition_preview.player_health_fingerprint
+                ),
             }
 
             with self.factory.begin() as session:
@@ -5265,6 +5268,9 @@ class AuthoritativeRunSimulationDriver:
             expected_sporting_fingerprint=transition_payload[
                 "expected_sporting_fingerprint"
             ],
+            expected_health_fingerprint=transition_payload[
+                "expected_health_fingerprint"
+            ],
         )
 
         with self.factory.begin() as session:
@@ -5286,6 +5292,8 @@ class AuthoritativeRunSimulationDriver:
                 != transition_payload["expected_lifecycle_fingerprint"]
                 or transition_result.player_sporting_fingerprint
                 != transition_payload["expected_sporting_fingerprint"]
+                or transition_result.player_health_fingerprint
+                != transition_payload["expected_health_fingerprint"]
             ):
                 raise ValueError(
                     "Next Week transition result differs from frozen preview"
@@ -5325,6 +5333,9 @@ class AuthoritativeRunSimulationDriver:
                 ),
                 "player_sporting_fingerprint": (
                     transition_result.player_sporting_fingerprint
+                ),
+                "player_health_fingerprint": (
+                    transition_result.player_health_fingerprint
                 ),
                 "world_event_kind": transition_result.world_event_kind,
                 "adoption": "committed",

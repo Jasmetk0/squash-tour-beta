@@ -26,12 +26,14 @@ function ResultPanels({ data }: { data: PlayerLabResult }): JSX.Element {
         { label: 'Final OVR', value: variant.snapshots[variant.snapshots.length - 1]?.ovr ?? '—' },
         { label: 'Final sharpness', value: variant.snapshots[variant.snapshots.length - 1]?.match_sharpness ?? '—' },
         { label: 'Final fatigue', value: variant.snapshots[variant.snapshots.length - 1]?.long_term_fatigue ?? '—' },
+        { label: 'Final Health severity', value: variant.snapshots[variant.snapshots.length - 1]?.health_projection.highest_current_severity ?? 0 },
+        { label: 'Health numeric effect', value: variant.snapshots[variant.snapshots.length - 1]?.health_projection.numeric_effect_applied ? 'active' : 'not calibrated' },
         { label: 'Final state', value: variant.final_state_fingerprint.slice(0, 12) }
       ]} />
       <table aria-label={`Player Lab ${variant.variant_id} timeline`}>
         <thead><tr>
           <th>Week</th><th>Age</th><th>Matches</th><th>OVR</th><th>Potential</th>
-          <th>Form</th><th>Sharpness</th><th>Fatigue</th><th>Changed attrs</th><th>Δ attributes</th>
+          <th>Form</th><th>Sharpness</th><th>Fatigue</th><th>Health severity</th><th>Health domains</th><th>Changed attrs</th><th>Δ attributes</th>
         </tr></thead>
         <tbody>{variant.snapshots.map((snapshot) => <tr key={snapshot.state_fingerprint}>
           <td>S{snapshot.week.season_index + 1} W{snapshot.week.week}</td>
@@ -42,6 +44,8 @@ function ResultPanels({ data }: { data: PlayerLabResult }): JSX.Element {
           <td>{snapshot.current_form}</td>
           <td>{snapshot.match_sharpness}</td>
           <td>{snapshot.long_term_fatigue}</td>
+          <td>{snapshot.health_projection.highest_current_severity}</td>
+          <td>{snapshot.health_projection.affected_domains.join(', ') || '—'}</td>
           <td>{snapshot.changed_attribute_count}</td>
           <td>{snapshot.attribute_delta_total > 0 ? '+' : ''}{snapshot.attribute_delta_total}</td>
         </tr>)}</tbody>
@@ -95,13 +99,15 @@ export function PlayerTestLabPage(): JSX.Element {
     <SectionCard title="Safety boundary">
       <p>
         Player Lab V1 never creates, saves or mutates a Product Run. Portable scenarios are replayable JSON.
-        V1 deliberately tests only development inputs already supported by the canonical sporting kernel;
-        Health, Training Load, Experience, Match Preparation, Financial Level and career AI remain explicit follow-up work.
+        Player Lab now also accepts an explicit canonical Health timeline and projects it through the same
+        Match Health limitation authority used by Product Runs. Health generation/healing and numeric sporting
+        effects remain deliberately uncalibrated; Training Load, Experience, Match Preparation, Financial Level
+        and career AI remain explicit follow-up work.
       </p>
       <SummaryPills items={[
         { label: 'Run mutation', value: 'never' },
         { label: 'Live Run link', value: 'none' },
-        { label: 'Kernel', value: 'canonical weekly development' }
+        { label: 'Kernel', value: 'weekly development + Match Health projection' }
       ]} />
     </SectionCard>
 

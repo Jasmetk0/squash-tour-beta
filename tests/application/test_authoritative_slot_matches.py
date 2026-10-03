@@ -59,6 +59,8 @@ from beta_engine.domain.calendar.season_weeks import (
 )
 from beta_engine.domain.players.attribute_catalog import CANONICAL_PLAYER_ATTRIBUTES
 from beta_engine.domain.players.health import (
+    PlayerHealthProfile,
+    PlayerHealthRecord,
     bootstrap_health_state,
     carry_health_state_forward,
 )
@@ -144,7 +146,7 @@ from beta_engine.infrastructure.db.initial_world_state import (
     get_initial_world,
     put_initial_world,
 )
-from beta_engine.infrastructure.db.player_health_state import put_health
+from beta_engine.infrastructure.db.player_health_state import get_health, put_health
 from beta_engine.infrastructure.db.player_lifecycle_state import (
     get_lifecycle,
     put_lifecycle,
@@ -560,8 +562,29 @@ def test_run_owned_entry_roster_projects_later_season_prospect_from_owned_state(
     assert by_id["a"].season == "2001/2002"
 
 
-def run_semifinals(path: Path, order: tuple[str, str]):
+def run_semifinals(
+    path: Path,
+    order: tuple[str, str],
+    *,
+    health_profile: PlayerHealthProfile | None = None,
+):
     session = session_at(path)
+    if health_profile is not None:
+        current_health = get_health(
+            session, run_id="run", branch_id="branch", week=WEEK
+        )
+        assert current_health is not None
+        by_id = {profile.player_id: profile for profile in current_health.players}
+        if health_profile.player_id not in by_id:
+            raise AssertionError("test Health profile must belong to the fixture roster")
+        by_id[health_profile.player_id] = health_profile
+        put_health(
+            session,
+            current_health.model_copy(
+                update={"players": tuple(by_id[player_id] for player_id in sorted(by_id))}
+            ),
+        )
+        session.commit()
     executor = AuthoritativeSlotMatchExecutor(session)
     plan = executor.create_slot(
         run_id="run",
@@ -607,6 +630,47 @@ def run_semifinals(path: Path, order: tuple[str, str]):
         run_id="run", branch_id="branch", week=WEEK
     )
     return session, executor, plan, results, checkpoint
+
+
+@pytest.mark.pr_critical
+def test_authoritative_match_freezes_canonical_health_without_numeric_penalty(tmp_path):
+    health_profile = PlayerHealthProfile(
+        player_id="a",
+        records=(
+            PlayerHealthRecord(
+                record_id="ankle-a",
+                kind="Injury",
+                condition_key="ankle",
+                lifecycle="Active",
+                severity=35,
+                affected_domains=("movement",),
+                onset_week=WEEK,
+                recovery_window_min_weeks=1,
+                recovery_window_max_weeks=4,
+                provenance="authoritative Health match projection test",
+            ),
+        ),
+    )
+    _, _, _, results, _ = run_semifinals(
+        tmp_path / "health.sqlite",
+        ("sf-1", "sf-2"),
+        health_profile=health_profile,
+    )
+    snapshot = results["sf-1"].authoritative_input.engine_input
+
+    assert snapshot.schema_version == "match_input_snapshot.v11"
+    assert snapshot.match_engine_version == "match_engine_v11"
+    assert snapshot.effective_match_health is not None
+    by_player = {
+        profile.player_id: profile
+        for profile in snapshot.effective_match_health.player_profiles
+    }
+    assert by_player["a"].highest_current_severity == 35
+    assert by_player["a"].affected_domains == ("movement",)
+    assert by_player["a"].numeric_calibration_required is True
+    assert by_player["a"].numeric_effect_applied is False
+    assert by_player["b"].highest_current_severity == 0
+    assert snapshot.effective_match_health.numeric_effect_applied is False
 
 
 def test_same_slot_frozen_snapshot_and_iteration_order_independence(tmp_path):

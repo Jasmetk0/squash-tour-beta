@@ -4877,6 +4877,8 @@ def test_completed_slot_core_saved_revision_remaps_and_emits_sporting_v2_maps(tm
     assert opening is not None
     assert checkpoint is not None
 
+    assert plan.health_state_fingerprint is not None
+    target_health_fingerprint = "e" * 64
     remapped = remap_completed_simulation_slot_core(
         payload,
         run_id="run",
@@ -4884,6 +4886,9 @@ def test_completed_slot_core_saved_revision_remaps_and_emits_sporting_v2_maps(tm
         target_branch_id="target",
         opening_sporting_fingerprint_map={
             opening.fingerprint: "target-opening-sporting-fingerprint",
+        },
+        health_fingerprint_map={
+            plan.health_state_fingerprint: target_health_fingerprint
         },
     )
 
@@ -4893,6 +4898,10 @@ def test_completed_slot_core_saved_revision_remaps_and_emits_sporting_v2_maps(tm
     assert all(value["branch_id"] == "target" for value in component["slots"])
     assert all(value["branch_id"] == "target" for value in component["groups"])
     assert remapped.slot_starts[plan.slot_start_fingerprint] != plan.slot_start_fingerprint
+    remapped_plan = SimulationSlotPlan.model_validate_json(
+        component["slots"][0]["payload_json"]
+    )
+    assert remapped_plan.health_state_fingerprint == target_health_fingerprint
     assert remapped.terminal_checkpoints[checkpoint.fingerprint] != checkpoint.fingerprint
     source_result_fingerprints = {
         result.result_fingerprint for result in results.values()
@@ -5731,12 +5740,17 @@ def test_coupled_sporting_v2_and_slot_history_remap_real_week(tmp_path):
     source_sporting = payload["content"]["player_sporting_state"]
     source_simulation = payload["content"]["simulation_slot_match_state"]
 
+    assert plan.health_state_fingerprint is not None
+    target_health_fingerprint = "f" * 64
     remapped = remap_coupled_player_slot_history(
         payload,
         run_id="run",
         source_branch_id="branch",
         target_branch_id="target",
         v1_source_fingerprint_map={},
+        health_fingerprint_map={
+            plan.health_state_fingerprint: target_health_fingerprint
+        },
     )
 
     assert remapped is not None
@@ -5759,6 +5773,10 @@ def test_coupled_sporting_v2_and_slot_history_remap_real_week(tmp_path):
         for effect in result.effects
     }
     assert target_simulation["slots"][0]["slot_start_fingerprint"] != plan.slot_start_fingerprint
+    target_plan = SimulationSlotPlan.model_validate_json(
+        target_simulation["slots"][0]["payload_json"]
+    )
+    assert target_plan.health_state_fingerprint == target_health_fingerprint
     source_state_fp = fingerprint(source_sporting["states"][0])
     target_state_fp = fingerprint(target_sporting["states"][0])
     assert remapped.sporting_fingerprints[source_state_fp] == target_state_fp

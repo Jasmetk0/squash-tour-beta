@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+
 import pytest
 
 from beta_engine.domain.matches import (
@@ -44,7 +46,9 @@ def test_historical_simulation_slot_plan_without_health_keeps_original_fingerpri
     }
     historical = fingerprint(payload)
 
-    restored = SimulationSlotPlan.model_validate(payload)
+    restored = SimulationSlotPlan.model_validate_json(
+        json.dumps(payload, sort_keys=True, separators=(",", ":"))
+    )
 
     assert restored.health_state_fingerprint is None
     assert restored.fingerprint == historical

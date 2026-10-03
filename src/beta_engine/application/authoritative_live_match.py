@@ -8,6 +8,7 @@ from sqlalchemy import select
 
 from beta_engine.domain.matches import (
     EffectiveMatchFormatSnapshot,
+    EffectiveMatchHealthSnapshot,
     MatchContext,
     MatchInputSnapshot,
     MatchParticipantContext,
@@ -36,6 +37,7 @@ from beta_engine.infrastructure.db.models import (
     LiveMatchWorkingModel,
     SimulationEventGroupModel,
 )
+from beta_engine.infrastructure.db.player_health_state import get_health
 from beta_engine.infrastructure.db.player_lifecycle_state import get_lifecycle
 
 
@@ -103,9 +105,12 @@ class AuthoritativeLiveMatchService:
         lifecycle = get_lifecycle(
             self.session, run_id=run_id, branch_id=branch_id, week=week
         )
-        if world is None or lifecycle is None:
+        health = get_health(
+            self.session, run_id=run_id, branch_id=branch_id, week=week
+        )
+        if world is None or lifecycle is None or health is None:
             raise ValueError(
-                "authoritative InitialWorld profile and lifecycle sources are required"
+                "authoritative InitialWorld profile, lifecycle and Health sources are required"
             )
         profiles = {player.player_id: player for player in world.players}
         lifecycle_players = {player.player_id: player for player in lifecycle.players}
@@ -137,6 +142,16 @@ class AuthoritativeLiveMatchService:
             )
 
         projections = (projection(a), projection(b))
+        health_players = {player.player_id: player for player in health.players}
+        try:
+            match_health = EffectiveMatchHealthSnapshot.from_profiles(
+                player_a=health_players[player_a_id],
+                player_b=health_players[player_b_id],
+            )
+        except KeyError as exc:
+            raise ValueError(
+                "live match participant is absent from authoritative Health state"
+            ) from exc
         engine_players = tuple(projected_engine_player(p) for p in projections)
         context = MatchContext(
             match_id=match_id,
@@ -162,6 +177,7 @@ class AuthoritativeLiveMatchService:
             simulation_seed=seed,
             match_engine_version=MATCH_ENGINE_VERSION,
             rally_calibration_profile=RallyCalibrationProfile(),
+            effective_match_health=match_health,
         )
         protected = AuthoritativeMatchInput(
             run_id=run_id,
@@ -185,6 +201,8 @@ class AuthoritativeLiveMatchService:
                 "engine": MATCH_ENGINE_VERSION,
                 "effective_match_format": effective_match_format.model_dump(mode="json"),
                 "projection": projection_policy.fingerprint,
+                "health_state": health.fingerprint,
+                "match_health": match_health.fingerprint,
                 "effects": effects_policy.fingerprint,
             }
         )

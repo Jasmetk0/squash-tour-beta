@@ -4,11 +4,19 @@ import { Link, useParams } from 'react-router-dom'
 
 import { getRunPlayerDetail, listRunPlayers } from '../api/client'
 import { CurrentContextStrip, PageIntro, SectionCard } from '../components/RunScopedUi'
+import { useAdminBranch } from '../admin/AdminBranchContext'
+import { PlayerHealthAdminPanel } from './PlayerHealthAdminPanel'
 
 const SOURCE_OPTIONS = ['', 'rollover_carried', 'planner_generated', 'manual_override']
 
 export function PlayersPage(): JSX.Element {
   const { runId = '' } = useParams()
+  const {
+    selectedBranchId,
+    selectedBranch,
+    isLoading: branchLoading,
+    error: branchError
+  } = useAdminBranch()
   const [search, setSearch] = useState('')
   const [countryCode, setCountryCode] = useState('')
   const [sourceType, setSourceType] = useState('')
@@ -48,6 +56,7 @@ export function PlayersPage(): JSX.Element {
       <CurrentContextStrip
         items={[
           { label: 'Run', value: runId || 'unknown' },
+          { label: 'Active Admin Branch', value: selectedBranch?.display_name ?? selectedBranchId ?? '—' },
           { label: 'Visible rows', value: playersQuery.data?.players.length ?? '—' },
           { label: 'Total filtered', value: playersQuery.data?.total ?? '—' }
         ]}
@@ -152,6 +161,19 @@ export function PlayersPage(): JSX.Element {
           </>
         ) : null}
       </SectionCard>
+      {selectedPlayerId ? (
+        branchLoading ? <p role="status">Loading Active Admin Branch for Health…</p>
+          : branchError ? <p role="alert">Health Branch context unavailable: {branchError}</p>
+          : selectedBranchId && selectedBranch ? (
+            <PlayerHealthAdminPanel
+              key={`${selectedBranchId}/${selectedPlayerId}`}
+              runId={runId}
+              branchId={selectedBranchId}
+              branchReadOnly={selectedBranch.read_only}
+              playerId={selectedPlayerId}
+            />
+          ) : <p role="alert">Select an Active Admin Branch before inspecting Health.</p>
+      ) : null}
     </section>
   )
 }

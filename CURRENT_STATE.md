@@ -1,5 +1,32 @@
 # Current implementation and next action
 
+## Candidate — complete original FIFA prototype set + country-history sharding (4 October 2026)
+
+This slice finishes the remaining three countries from the original nine-country
+FIFA prototype and removes the monolithic research-file scaling bottleneck.
+
+- New complete histories: FRO, USA and ZAF.
+- New ratings: 3 × 72 × 6 = **1,296**.
+- FIFA Earth now resolves **9 / 250 complete country histories** and **3,888 annual
+  attribute ratings**.
+- FRO/USA/ZAF are stored as `country_rating_history.v2` shards under
+  `config/earth_research/countries/fifa_earth/`; existing inline histories remain
+  fully compatible.
+- `load_earth_research_bundle()` now discovers these optional shards, validates
+  each through `CountryRatingHistory`, rejects invalid filenames and rejects
+  duplicate inline/sharded country codes before the existing source/observation
+  integrity checks run.
+- This is required for scale: the inline FIFA research JSON was already ~3.1 MB at
+  six countries and would become impractical long before 250 countries.
+- Faroese artificial turf, the 1984 NASL collapse, and South Africa's 1961
+  exclusion / 1992 readmission remain explicit structural breaks rather than being
+  smoothed away.
+
+**Next after green CI:** expand FIFA beyond the original prototype set using country
+shards from the start. Prefer evidence-rich batches from the already normalized Big
+Count / Professional 2023 / structural registry. ATP can use the same shard mechanism
+when its inline file approaches the same scaling limit.
+
 ## Candidate — FIFA Earth reviewed batch 2: JPN + IND + MAR + SEN (4 October 2026)
 
 This slice adds four more complete canonical FIFA Earth histories instead of more

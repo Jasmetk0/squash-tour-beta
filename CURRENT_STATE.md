@@ -1,5 +1,23 @@
 # Current implementation and next action
 
+## Candidate — provisional FIFA 1–10 dimension evidence scores (4 October 2026)
+
+Stacked on the green empirical-signal/audit landing candidate. This slice defines
+the first explicit, versioned 1–10 transfer model over canonical FIFA evidence.
+
+The model is data/config-driven rather than hidden in runtime code. A monotone
+piecewise percentile curve maps empirical signal strength into provisional
+`evidence_score` values on `country_ratings_1_10.v2`. Dimension recipes remain
+separate: popularity uses participation; access uses registration+clubs;
+competition and elite support use different professional-player/club weightings.
+Development quality and tradition deliberately remain unsupported by the current
+quantitative source slice.
+
+Every output is `rating_ready=false`. Missing required signals remain missing and
+no score is copied into canonical country history. The next step is a held-out /
+prototype review of these evidence scores before any canonical rating-authoring
+rule is permitted.
+
 ## Candidate — FIFA prototype-versus-signal calibration audit (4 October 2026)
 
 Stacked on the green empirical signal slice (#1135). This candidate compares the

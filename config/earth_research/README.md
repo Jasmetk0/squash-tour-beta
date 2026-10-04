@@ -62,3 +62,19 @@ view. It now partitions **1,328 canonical observations**: Big Count/Professional
 
 See [the implementation/research boundary](../../docs/EARTH_SPORT_HISTORY_V1.md)
 for source limitations, provenance rules, audit/build commands and next steps.
+
+
+## Structural dimension evidence summary
+
+`scripts/build_fifa_structural_dimension_evidence.py` projects canonical structural
+events into a read-only 250-country view for `development_quality` and
+`squash_tradition`.
+
+The summary reports event timelines, first/last evidence year, pre-1955 history,
+conflict groups and exact observation IDs. Event counts are explicitly documentation
+coverage only: more events never imply a better football environment, and countries
+without seeded structural events remain unknown rather than receiving a zero score.
+
+The current nine-country seed contains 19 development-relevant event references and
+16 tradition-relevant event references. The Morocco academy timing conflict remains
+visible in the summary.

@@ -22,12 +22,7 @@ from beta_engine.application.earth_research_observations import (
     EarthObservationDatasetManifest,
     observation_dataset_sha256,
 )
-from scripts.reconcile_fifa_big_count_identities import (
-    DEFAULT_EARTH_ROOT,
-    DEFAULT_OVERRIDES,
-    DEFAULT_SOURCE,
-    build_report,
-)
+from scripts.reconcile_fifa_big_count_identities import DEFAULT_SOURCE
 
 DATASET_ID = "fifa-big-count-2006-v2"
 SOURCE_ID = "fifa-big-count-2006"
@@ -139,54 +134,7 @@ def _input_sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def _identity_metadata(mapping: dict[str, Any]) -> tuple[str | None, str | None, str | None, list[str]]:
-    status = mapping["status"]
-    if status in {"explicit_map", "exact_normalized_name"}:
-        return (
-            mapping["earth_code"],
-            None,
-            "direct_association_to_earth_entity",
-            [],
-        )
-    if status == "aggregate_member":
-        return (
-            mapping["earth_code"],
-            None,
-            "component_association_of_aggregate_earth_entity",
-            ["component_association_not_full_earth_entity"],
-        )
-    if status == "manual_review":
-        return (
-            None,
-            mapping["association"],
-            "historical_identity_requires_manual_reconciliation",
-            ["earth_identity_manual_review_required"],
-        )
-    raise ValueError(
-        f"{mapping['association']}: unresolved source identity cannot be normalized"
-    )
-
-
-def build_dataset(
-    *,
-    source: Path = DEFAULT_SOURCE,
-    earth_root: Path = DEFAULT_EARTH_ROOT,
-    overrides_path: Path = DEFAULT_OVERRIDES,
-) -> EarthObservationDataset:
-    identity = build_report(
-        source=source,
-        earth_root=earth_root,
-        overrides_path=overrides_path,
-    )
-    if identity["unresolved_count"]:
-        raise ValueError(
-            f"Big Count identity reconciliation has unresolved rows: "
-            f"{identity['unresolved']}"
-        )
-    mapping_by_association = {
-        item["association"]: item for item in identity["mappings"]
-    }
-
+def build_dataset(*, source: Path = DEFAULT_SOURCE) -> EarthObservationDataset:
     with source.open("r", encoding="utf-8", newline="") as handle:
         rows = list(csv.DictReader(handle))
 
@@ -194,10 +142,6 @@ def build_dataset(
     seen_local_ids: set[str] = set()
     for row in rows:
         association = row["Association"]
-        mapping = mapping_by_association[association]
-        earth_code, historical_entity, mapping_method, mapping_flags = _identity_metadata(
-            mapping
-        )
         association_slug = _slug(association)
 
         for source_field, spec in FIELD_SPECS.items():
@@ -210,14 +154,14 @@ def build_dataset(
                 raise ValueError(f"duplicate normalized observation local ID {local_id!r}")
             seen_local_ids.add(local_id)
 
-            flags = list(dict.fromkeys(BASE_FLAGS + spec["flags"] + mapping_flags))
+            flags = list(dict.fromkeys(BASE_FLAGS + spec["flags"]))
             observations.append(
                 EarthObservation(
                     observation_id=f"{DATASET_ID}#{local_id}",
                     source_id=SOURCE_ID,
                     source_entity=association,
-                    earth_country_code=earth_code,
-                    historical_entity=historical_entity,
+                    earth_country_code=None,
+                    historical_entity=association,
                     observation_year=2006,
                     measurement_type=spec["measurement_type"],
                     sex_scope=spec["sex_scope"],
@@ -231,7 +175,7 @@ def build_dataset(
                     cross_country_comparable=False,
                     is_direct_observation=None,
                     is_statistically_modelled=None,
-                    territory_mapping_method=mapping_method,
+                    territory_mapping_method=None,
                     source_locator=(
                         f"Big Count All Players table; association={association!r}; "
                         f"column={source_field!r}"
@@ -263,8 +207,9 @@ def build_dataset(
             "male/female splits or per-cell FIFA statistical-processing flags. FIFA's "
             "methodology supplemented missing association responses with prior surveys "
             "and internal analysis. Registration, club and officials definitions are "
-            "not assumed globally identical. Historical identity rows requiring manual "
-            "review are preserved without a modern Earth code."
+            "not assumed globally identical. Earth/geopolitical identity mapping is "
+            "intentionally a separate reviewed transformation and is not embedded into "
+            "these normalized source facts."
         ),
         observations=observations,
     )
@@ -290,17 +235,11 @@ def build_manifest(
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--source", type=Path, default=DEFAULT_SOURCE)
-    parser.add_argument("--earth-root", type=Path, default=DEFAULT_EARTH_ROOT)
-    parser.add_argument("--overrides", type=Path, default=DEFAULT_OVERRIDES)
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
     parser.add_argument("--manifest-output", type=Path)
     args = parser.parse_args()
 
-    dataset = build_dataset(
-        source=args.source,
-        earth_root=args.earth_root,
-        overrides_path=args.overrides,
-    )
+    dataset = build_dataset(source=args.source)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(
         json.dumps(dataset.model_dump(mode="json"), indent=2, ensure_ascii=False)

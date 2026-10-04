@@ -1,5 +1,5 @@
 {
-  "schema_version": "earth_sport_research.v1",
+  "schema_version": "earth_sport_research.v2",
   "data_cutoff": "2026-10-03",
   "countries": {},
   "world_id": "atp_earth",

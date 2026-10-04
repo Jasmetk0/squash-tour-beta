@@ -84,3 +84,23 @@ football quality. Countries with no seeded event remain unknown rather than zero
 Held-out events carry `held_out_validation_country` and must not be used to fit
 transfer curves, weights or rating deltas. Morocco's conflicting 2009/2019 academy
 timing remains an explicit unresolved source conflict rather than being collapsed.
+
+
+## Factual structural features and held-out audit
+
+`scripts/build_fifa_structural_features.py` derives factual timeline features from
+canonical structural observations without producing ratings. Examples include
+earliest tradition evidence, institutional-foundation year, first competition,
+first/latest development evidence, pathway/training-centre milestones, structural
+break years and source-conflict groups.
+
+Validation role is explicit:
+- nine review countries: `fit_allowed=true`;
+- Germany, Brazil, Iceland and San Marino: `held_out_validation`,
+  `fit_allowed=false`;
+- countries without curated structural evidence: unknown / not fit-eligible.
+
+`scripts/audit_fifa_structural_features_heldout.py` places held-out factual features
+into review-set descriptive distributions without changing those distributions.
+These percentiles are diagnostics, not rating curves. Long historical span or recent
+development evidence must never be interpreted as overall football quality.

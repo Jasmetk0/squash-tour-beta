@@ -206,3 +206,32 @@ def test_explicit_reviewed_country_fact_is_admitted_without_global_identity_reso
         "fifa-structural-ofc-new-zealand-grassroots-2011-v1#nzl-u19-organised-players-2011"
         in nzl_ids
     )
+
+
+def test_pacific_association_identities_resolve_to_earth_territories_without_sovereign_collapse() -> None:
+    index = build_index()
+
+    expected = {
+        "ASM": "fifa-big-count-2006-all-players-v2#american-samoa",
+        "PYF": "fifa-big-count-2006-all-players-v2#tahiti",
+        "NCL": "fifa-big-count-2006-all-players-v2#new-caledonia",
+    }
+    for earth_code, observation_id in expected.items():
+        facts = {
+            fact["observation_id"]: fact
+            for fact in index["countries"][earth_code]
+        }
+        assert observation_id in facts
+        assert facts[observation_id]["earth_country_code"] == earth_code
+
+    pyf_ids = {
+        fact["observation_id"]
+        for fact in index["countries"]["PYF"]
+    }
+    ncl_ids = {
+        fact["observation_id"]
+        for fact in index["countries"]["NCL"]
+    }
+    assert "fifa-structural-ofc-tahiti-profile-v1#pyf-ftf-foundation-1989" in pyf_ids
+    assert "fifa-structural-ofc-new-caledonia-profile-v1#ncl-fcf-foundation-1928" in ncl_ids
+    assert not any("france" in observation_id.lower() for observation_id in pyf_ids | ncl_ids)

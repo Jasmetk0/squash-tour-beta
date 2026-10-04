@@ -31,6 +31,10 @@ The two 2023 datasets preserve the source PDF SHA-256, page numbers, the mismatc
 between extracted national sums and FIFA's published global headline, and the known
 page-38 KUWAIT/Kyrgyzstan identity anomaly without silently reassigning it.
 
+A third canonical family stores **43 structural football events across 25 source-specific datasets** for the nine-country review set. These observations cover federation/league foundations, professionalisation, training centres, academy/youth-pathway launches, infrastructure milestones and governance discontinuities. They use `collection_method=official_narrative`, preserve original event years (including pre-1955 history), and encode dimension relevance only as quality flags such as `supports_development_quality` or `supports_squash_tradition`. They never encode a rating or effect size.
+
+The Mohammed VI Academy timing conflict is intentionally stored twice (2009 establishment vs 2019 opening) under one conflict group rather than being silently reconciled.
+
 The Big Count normalization deliberately does **not**:
 - invent country-level male/female splits missing from the checked-in extract;
 - claim whether an individual cell was direct or statistically supplemented when
@@ -54,10 +58,7 @@ identity catalogue SHA-256. Direct, aggregate-member, manual-review and unresolv
 states are explicit; manual/unresolved facts never receive a resolved Earth code.
 
 `scripts/build_fifa_country_evidence_index.py` is the next read-only calibration
-view. It partitions every canonical FIFA observation exactly once: safe direct or
-aggregate-member facts are indexed under their Earth code, while manual/unresolved
-facts remain outside country evidence. Aggregate-member observations are kept as
-components rather than silently summed, and the index is explicitly `rating_ready=false`.
+view. It now partitions **1,328 canonical observations**: Big Count/Professional facts still use the reviewed identity-resolution layer, while structural events may enter directly only when the normalized observation carries the explicit `explicit_reviewed_event_to_earth` mapping. The result is 1,306 safe facts, 22 manual-review facts and zero unresolved facts. Aggregate-member observations are kept as components rather than silently summed, and the index is explicitly `rating_ready=false`.
 
 See [the implementation/research boundary](../../docs/EARTH_SPORT_HISTORY_V1.md)
 for source limitations, provenance rules, audit/build commands and next steps.

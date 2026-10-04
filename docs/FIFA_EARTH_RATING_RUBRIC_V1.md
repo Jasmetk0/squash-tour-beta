@@ -334,3 +334,27 @@ This is a safety boundary, not missing implementation.
 Each candidate also records the provisional dimension evidence score and its delta
 from the reviewed prototype value. A >=1.5 point difference is a review flag only.
 Every candidate remains `promotion_ready=false`.
+
+
+## First complete six-attribute anchor-year candidate
+
+`scripts/build_cze_2006_full_anchor_candidate.py` builds CZE 2006 as the first
+complete six-attribute `RatingYear` candidate using production
+`CountryRatingHistory.v2` / `RatingEvidence` contracts.
+
+Evidence split:
+
+- popularity/access: exact FIFA Big Count 2006 observations;
+- development: 2002 UEFA U21 title + 2005 registered-youth snapshot;
+- competition: EURO 1996 runner-up + EURO 2004 semi-final + 16-club 2004/05 top division;
+- elite support: 2005 UEFA professional-player, club, team and top-division structure;
+- tradition: UEFA timeline observations for 1892, 1901, 1954 and the independent Czech era from 1993.
+
+The six reviewed prototype values are preserved, but confidence is attribute-specific;
+elite support is deliberately low-confidence because the available evidence measures
+system scale/structure rather than funding, medicine, travel or sport science
+directly.
+
+The candidate is a valid one-year `CountryRatingHistory.v2` but still has 71
+missing Earth years. It therefore remains `promotion_ready=false` and is not
+inserted into canonical `fifa_earth.json` country histories.

@@ -26,6 +26,7 @@ def test_fifa_calibration_review_export_is_self_consistent(tmp_path) -> None:
         "fifa_structural_features.json",
         "fifa_structural_heldout_audit.json",
         "fifa_structural_feature_hypothesis_audit.json",
+        "fifa_development_evidence_gap_audit.json",
         "summary.json",
     }
     assert {path.name for path in output.iterdir()} == expected_files
@@ -61,6 +62,11 @@ def test_fifa_calibration_review_export_is_self_consistent(tmp_path) -> None:
             encoding="utf-8"
         )
     )
+    gap_audit = json.loads(
+        (output / "fifa_development_evidence_gap_audit.json").read_text(
+            encoding="utf-8"
+        )
+    )
 
     assert scores["rating_ready"] is False
     assert score_audit["rating_ready"] is False
@@ -69,6 +75,7 @@ def test_fifa_calibration_review_export_is_self_consistent(tmp_path) -> None:
     assert structural_features["rating_ready"] is False
     assert heldout_audit["rating_ready"] is False
     assert hypothesis_audit["rating_ready"] is False
+    assert gap_audit["rating_ready"] is False
 
     assert set(summary["dimension_score_audit"]) == set(score_audit["recipes"])
     assert set(summary["signal_audit"]) == set(signal_audit["comparisons"])
@@ -84,4 +91,22 @@ def test_fifa_calibration_review_export_is_self_consistent(tmp_path) -> None:
     assert all(
         value["decision"] == "rejected_as_single_factor_transfer"
         for value in summary["structural_hypothesis_audit"].values()
+    )
+
+
+def test_review_bundle_exposes_missing_development_source_families(tmp_path) -> None:
+    summary = export_review(tmp_path / "review")
+    gap = summary["development_gap_audit"]["development_facet_coverage"]
+
+    for facet in (
+        "talent_identification",
+        "playing_opportunities",
+        "youth_to_senior_transition",
+        "coaching_capacity",
+    ):
+        assert gap[facet]["review"] == 0
+        assert gap[facet]["held_out_validation"] == 0
+
+    assert summary["development_gap_audit"]["next_source_priorities"][0] == (
+        "talent_identification"
     )

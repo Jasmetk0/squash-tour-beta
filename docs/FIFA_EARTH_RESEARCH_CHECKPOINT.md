@@ -2,6 +2,16 @@
 
 Status: research checkpoint only. This file does **not** assign final 1–10 country ratings.
 
+## Provenance boundary after #1129
+
+The canonical Earth research contract is now `earth_sport_research.v2` with exact
+normalized `observation_ids` from registered `earth_source_observations.v2` datasets.
+This checkpoint predates that ingestion step. Its anchor ratings remain a
+**non-canonical calibration prototype** and must not be copied into the canonical
+FIFA Earth research file until their underlying evidence is normalized and linked
+to exact observation records. `scripts/materialize_fifa_earth_prototype.py` therefore
+emits `fifa_earth_materialized_prototype.v3`, not `earth_sport_research.v2`.
+
 ## Product constraints already fixed
 
 - FIFA Earth models real-world football environments on the shared six country attributes:

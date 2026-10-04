@@ -595,6 +595,83 @@
       "source_document_sha256": null,
       "input_artifact_sha256": "aa48ab28872008467eedb7601a7d7f0246490a54779b88bd51303e501d31cf1c",
       "generated_by": "scripts/normalize_fifa_structural_events.py"
+    },
+    "fifa-structural-cbf-granja-comary-history-v1": {
+      "schema_version": "earth_source_observations_manifest.v1",
+      "dataset_id": "fifa-structural-cbf-granja-comary-history-v1",
+      "source_id": "cbf-granja-comary-history",
+      "relative_path": "observations/normalized/structural/fifa_structural_cbf_granja_comary_history_v1.json",
+      "sha256": "04c970408d6cc4bd5b11d7473a0e371dcde3877fcaf0deef75dd58fd30dfd27d",
+      "record_count": 1,
+      "source_document_sha256": null,
+      "input_artifact_sha256": "695b29b9552a8fb59133db25ec8948951a78217a9a1c049734c73ad79b75f665",
+      "generated_by": "scripts/normalize_fifa_structural_events.py"
+    },
+    "fifa-structural-cbf-history-1914-v1": {
+      "schema_version": "earth_source_observations_manifest.v1",
+      "dataset_id": "fifa-structural-cbf-history-1914-v1",
+      "source_id": "cbf-history-1914",
+      "relative_path": "observations/normalized/structural/fifa_structural_cbf_history_1914_v1.json",
+      "sha256": "0ba8d76bd841d386fd0cf09ff66eb3bb7ac308781e34a5f74c189129223fd71c",
+      "record_count": 1,
+      "source_document_sha256": null,
+      "input_artifact_sha256": "695b29b9552a8fb59133db25ec8948951a78217a9a1c049734c73ad79b75f665",
+      "generated_by": "scripts/normalize_fifa_structural_events.py"
+    },
+    "fifa-structural-cbf-tds-2026-v1": {
+      "schema_version": "earth_source_observations_manifest.v1",
+      "dataset_id": "fifa-structural-cbf-tds-2026-v1",
+      "source_id": "cbf-tds-2026",
+      "relative_path": "observations/normalized/structural/fifa_structural_cbf_tds_2026_v1.json",
+      "sha256": "033086128f491f0accd19e4878164a3d292d97580549be10f16af50c79f1da36",
+      "record_count": 1,
+      "source_document_sha256": null,
+      "input_artifact_sha256": "695b29b9552a8fb59133db25ec8948951a78217a9a1c049734c73ad79b75f665",
+      "generated_by": "scripts/normalize_fifa_structural_events.py"
+    },
+    "fifa-structural-dfb-campus-2022-v1": {
+      "schema_version": "earth_source_observations_manifest.v1",
+      "dataset_id": "fifa-structural-dfb-campus-2022-v1",
+      "source_id": "dfb-campus-2022",
+      "relative_path": "observations/normalized/structural/fifa_structural_dfb_campus_2022_v1.json",
+      "sha256": "4e0b58b9638b40863da4255f7c2987699b3d26042f359d89758e04bdc072976c",
+      "record_count": 1,
+      "source_document_sha256": null,
+      "input_artifact_sha256": "695b29b9552a8fb59133db25ec8948951a78217a9a1c049734c73ad79b75f665",
+      "generated_by": "scripts/normalize_fifa_structural_events.py"
+    },
+    "fifa-structural-dfb-history-v1": {
+      "schema_version": "earth_source_observations_manifest.v1",
+      "dataset_id": "fifa-structural-dfb-history-v1",
+      "source_id": "dfb-history",
+      "relative_path": "observations/normalized/structural/fifa_structural_dfb_history_v1.json",
+      "sha256": "e4e34251665a4738e9aa120947b8adf9e530cfd425989938aa41ae1fdad9bc06",
+      "record_count": 2,
+      "source_document_sha256": null,
+      "input_artifact_sha256": "695b29b9552a8fb59133db25ec8948951a78217a9a1c049734c73ad79b75f665",
+      "generated_by": "scripts/normalize_fifa_structural_events.py"
+    },
+    "fifa-structural-uefa-iceland-history-v1": {
+      "schema_version": "earth_source_observations_manifest.v1",
+      "dataset_id": "fifa-structural-uefa-iceland-history-v1",
+      "source_id": "uefa-iceland-history",
+      "relative_path": "observations/normalized/structural/fifa_structural_uefa_iceland_history_v1.json",
+      "sha256": "a960df4c72cb87506d259cc81e89d1ed194aec0028fa10b9e7ce0b2dd693403b",
+      "record_count": 2,
+      "source_document_sha256": null,
+      "input_artifact_sha256": "695b29b9552a8fb59133db25ec8948951a78217a9a1c049734c73ad79b75f665",
+      "generated_by": "scripts/normalize_fifa_structural_events.py"
+    },
+    "fifa-structural-uefa-san-marino-history-v1": {
+      "schema_version": "earth_source_observations_manifest.v1",
+      "dataset_id": "fifa-structural-uefa-san-marino-history-v1",
+      "source_id": "uefa-san-marino-history",
+      "relative_path": "observations/normalized/structural/fifa_structural_uefa_san_marino_history_v1.json",
+      "sha256": "8415ec042e0cc648ddee3bc68de13ae4fc96f9436944d52943dab1ab00027890",
+      "record_count": 6,
+      "source_document_sha256": null,
+      "input_artifact_sha256": "695b29b9552a8fb59133db25ec8948951a78217a9a1c049734c73ad79b75f665",
+      "generated_by": "scripts/normalize_fifa_structural_events.py"
     }
   }
 }

@@ -11,6 +11,7 @@ def test_country_evidence_index_partitions_all_canonical_fifa_facts() -> None:
     index = build_index()
 
     assert index["observation_count"] == 1285
+    assert index["contextual_observation_count"] == 15
     assert index["safe_country_evidence_count"] == 1263
     assert index["manual_review_count"] == 22
     assert index["unresolved_count"] == 0
@@ -27,6 +28,11 @@ def test_country_evidence_index_partitions_all_canonical_fifa_facts() -> None:
     all_ids = safe_ids + manual_ids + unresolved_ids
     assert len(all_ids) == 1285
     assert len(all_ids) == len(set(all_ids))
+    assert set(index["contextual_observation_dataset_sha256s"]) == {
+        "uefa-czechia-history-events-v2",
+        "uefa-czech-republic-2005-06-snapshot-v2",
+    }
+    assert len(index["input_observation_dataset_sha256s"]) == 7
 
 
 def test_usa_evidence_combines_2006_participation_and_2023_professional_facts() -> None:

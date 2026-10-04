@@ -13,16 +13,24 @@
         "playing_opportunities",
         "youth_to_senior_transition"
       ],
-      "note": "FIFA global talent-development study identifies these as key areas of the talent-development ecosystem."
+      "note": "FIFA's global talent-development study analysed 205 member associations and identifies these as key areas of the talent-development ecosystem."
     },
     {
-      "source_id": "fifa-tds-academies-strategy",
+      "source_id": "fifa-tds-academies-strategy-2023",
       "authority": "FIFA",
       "facets": [
         "coaching_capacity",
         "academy_pathway_coverage"
       ],
-      "note": "FIFA TDS/Talent Academy strategy explicitly uses deployed coaches, academy standards and local talent-development pathways."
+      "note": "FIFA's Talent Academy/TDS strategy uses academy standards, deployed talent coaches, local coaching capacity and structured talent-development pathways."
+    },
+    {
+      "source_id": "uefa-coaching-convention",
+      "authority": "UEFA",
+      "facets": [
+        "coaching_capacity"
+      ],
+      "note": "UEFA's Coaching Convention provides a standard coach-education framework and recognised licence pathway across member associations."
     }
   ],
   "development_facets": {

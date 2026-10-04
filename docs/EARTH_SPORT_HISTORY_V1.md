@@ -49,10 +49,7 @@ separate inputs. Innate potential rarity must remain independent of nationality.
 - **Neither official Earth directory exists yet. Both research `countries` maps
   remain empty.** Registering future IDs does not display nonexistent packages.
   No fabricated neutral profiles are shipped to satisfy coverage mechanically.
-- FIFA Big Count 2006 now has five canonical normalized
-  `earth_source_observations.v2` datasets (all players, registered, unregistered,
-  clubs and officials/staff). FIFA Professional Football Report 2023 adds two
-  canonical datasets (men's professional players and professional clubs). Other files directly under
+- FIFA Big Count 2006 has five canonical normalized datasets and FIFA Professional Football Report 2023 adds two more. The review set now also has 25 source-specific structural-event datasets containing 43 dated institutional/development/tradition facts. Other files directly under
   `config/earth_research/observations/` remain raw/source-specific inputs until
   explicitly normalized.
 - Observation manifests are content-addressed provenance declarations.
@@ -77,9 +74,7 @@ separate inputs. Innate potential rarity must remain independent of nationality.
 ## Research already stored
 
 `config/earth_research/fifa_earth.json` and `atp_earth.json` are
-`earth_sport_research.v2` catalogues. FIFA Earth now registers seven canonical
-observation datasets: five from Big Count 2006 and two from FIFA Professional
-Football Report 2023. Both country-rating maps remain empty.
+`earth_sport_research.v2` catalogues. FIFA Earth now registers **32 canonical observation datasets / 1,328 observations**: five Big Count datasets, two Professional 2023 datasets and 25 structural-event datasets. Both country-rating maps remain empty.
 
 Current evidence includes:
 
@@ -92,7 +87,8 @@ Current evidence includes:
    135 professional-club observations. Page 38 remains a distinct KUWAIT/Kyrgyzstan
    identity anomaly; extracted national sums remain intentionally different from the
    published global headline rather than being silently adjusted.
-3. ITF 2019 Czech/German participation, clubs and coach counts. Edition/report
+3. FIFA structural-event seed: 43 dated facts for the nine-country review set, including pre-1955 institutional/competition history, academy/training-centre milestones and governance breaks. Relevance tags support development/tradition review but are never numeric effect sizes; the Morocco academy timing conflict remains unresolved by design.
+4. ITF 2019 Czech/German participation, clubs and coach counts. Edition/report
    timing is distinct from the underlying observation date, and mixed-sex
    participation must not be presented as men's participation.
 

@@ -17,9 +17,21 @@ from beta_engine.infrastructure.world_package_storage import WorldPackageCountry
 from beta_engine.application.earth_package_builder import EarthSportResearch, audit_earth_research, build_earth_package
 
 
+DATASET_ID = "synthetic-observations"
+OBSERVATION_ID = f"{DATASET_ID}#test"
+DATASET_SHA = "0" * 64
+
+
 def evidence(value, year):
-    return dict(value=value, method="sourced_estimate", confidence="low", source_ids=["test"],
-                rationale="Synthetic test data; not real country research.", anchor_years=[year])
+    return dict(
+        value=value,
+        method="sourced_estimate",
+        confidence="low",
+        source_ids=["test"],
+        observation_ids=[OBSERVATION_ID],
+        rationale="Synthetic test data; not real country research.",
+        anchor_years=[year],
+    )
 
 
 def history(year_values):
@@ -44,9 +56,30 @@ def country(h=None, **extra):
 
 
 def research(h, world_id="fifa_earth"):
-    return EarthSportResearch.model_validate(dict(world_id=world_id, data_cutoff="2026-10-03",
-        countries={"AAA": h.model_dump()}, sources={"test": dict(title="Synthetic test", url="https://example.com/test",
-        accessed_on="2026-10-03", scope="Only synthetic test evidence", limitations="Not real country data")}))
+    return EarthSportResearch.model_validate(dict(
+        world_id=world_id,
+        data_cutoff="2026-10-03",
+        countries={"AAA": h.model_dump()},
+        sources={
+            "test": dict(
+                title="Synthetic test",
+                url="https://example.com/test",
+                accessed_on="2026-10-03",
+                scope="Only synthetic test evidence",
+                limitations="Not real country data",
+            )
+        },
+        observation_datasets={
+            DATASET_ID: dict(
+                dataset_id=DATASET_ID,
+                source_id="test",
+                relative_path="observations/synthetic.json",
+                sha256=DATASET_SHA,
+                record_count=1,
+                generated_by="tests",
+            )
+        },
+    ))
 
 
 class CountryRatingHistoryTests(unittest.TestCase):
@@ -107,6 +140,25 @@ class CountryRatingHistoryTests(unittest.TestCase):
         with self.assertRaises(ValidationError):
             CountryRatingHistory.model_validate(raw)
 
+    def test_derived_estimate_requires_calibration_model(self):
+        raw = history({1955: 3}).model_dump()
+        rating = raw["years"][1955]["ratings"]["elite_support"]
+        rating["method"] = "derived_estimate"
+        with self.assertRaises(ValidationError):
+            CountryRatingHistory.model_validate(raw)
+        rating["calibration_model_id"] = "football-country-calibration.v1"
+        CountryRatingHistory.model_validate(raw)
+
+    def test_observation_ids_are_required_and_namespaced(self):
+        raw = history({1955: 3}).model_dump()
+        rating = raw["years"][1955]["ratings"]["elite_support"]
+        rating["observation_ids"] = []
+        with self.assertRaises(ValidationError):
+            CountryRatingHistory.model_validate(raw)
+        rating["observation_ids"] = ["not-namespaced"]
+        with self.assertRaises(ValidationError):
+            CountryRatingHistory.model_validate(raw)
+
     def test_history_cannot_be_attached_to_legacy_scale(self):
         with self.assertRaises(ValidationError):
             country(rating_history=history({1955: 3}))
@@ -142,10 +194,33 @@ class CountryRatingHistoryTests(unittest.TestCase):
         self.assertFalse(report["coverage_complete"])
         self.assertEqual(report["missing_years"]["AAA"], list(range(1955, 2000)))
         self.assertEqual(report["required_rating_count"], 432)
+        self.assertEqual(report["observation_dataset_count"], 1)
+        self.assertEqual(report["observation_record_count"], 1)
 
     def test_unknown_source_is_rejected(self):
         raw = research(history({1955: 3})).model_dump()
         raw["sources"] = {}
+        with self.assertRaises(ValidationError):
+            EarthSportResearch.model_validate(raw)
+
+    def test_unknown_observation_dataset_is_rejected(self):
+        raw = research(history({1955: 3})).model_dump()
+        raw["countries"]["AAA"]["years"][1955]["ratings"]["elite_support"]["observation_ids"] = [
+            "missing-dataset#observation"
+        ]
+        with self.assertRaises(ValidationError):
+            EarthSportResearch.model_validate(raw)
+
+    def test_observation_dataset_source_must_be_cited(self):
+        raw = research(history({1955: 3})).model_dump()
+        raw["sources"]["other"] = dict(
+            title="Other source",
+            url="https://example.com/other",
+            accessed_on="2026-10-03",
+            scope="Other synthetic evidence",
+            limitations="Not real country data",
+        )
+        raw["observation_datasets"][DATASET_ID]["source_id"] = "other"
         with self.assertRaises(ValidationError):
             EarthSportResearch.model_validate(raw)
 
@@ -159,6 +234,7 @@ class CountryRatingHistoryTests(unittest.TestCase):
                 report = build_earth_package(base_package=base, research=research(history({year: 7.4 for year in range(1955, 2027)}), world_id), output=output)
                 self.assertTrue(report["coverage_complete"])
                 self.assertEqual(len(WorldPackageCountryStore(output).load_country("AAA").rating_history.years), 72)
+                self.assertTrue((output / "generation/country_rating_observation_datasets.json").is_file())
                 self.assertEqual(before, {str(p.relative_to(base)): p.read_bytes() for p in base.rglob("*") if p.is_file()})
                 with self.assertRaises(FileExistsError):
                     build_earth_package(base_package=base, research=research(history({1955: 3}), world_id), output=output)

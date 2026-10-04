@@ -68,6 +68,8 @@ class WorldPackageRegistryService:
   if player_identity.is_file(): payload['player_identity']=self._read_json(player_identity)
   rating_sources=path/'generation/country_rating_sources.json'
   if rating_sources.is_file(): payload['country_rating_sources']=self._read_json(rating_sources)
+  rating_observations=path/'generation/country_rating_observation_datasets.json'
+  if rating_observations.is_file(): payload['country_rating_observation_datasets']=self._read_json(rating_observations)
   return payload
  def _custom_package_dirs(self):
   root=self.world_packages_root/'custom'; return sorted((p for p in root.iterdir() if p.is_dir()),key=lambda p:p.name) if root.is_dir() else []

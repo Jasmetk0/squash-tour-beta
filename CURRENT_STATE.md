@@ -1,5 +1,21 @@
 # Current implementation and next action
 
+## Candidate — Earth research provenance V1 (4 October 2026)
+
+On merged `buuk` #1126 (`434e32b6db00a0443aceb0003810870fb5ebdd36`),
+this candidate hardens the still-empty FIFA Earth / ATP Earth research path before
+mass data authoring. It introduces normalized `earth_source_observations.v2` facts,
+content-addressed observation dataset manifests, exact rating `observation_ids`,
+explicit `derived_estimate` provenance with a required calibration-model ID,
+persisted validation and semantic package fingerprinting for those manifests.
+`country_rating_history.v2` and `earth_sport_research.v2` make the breaking
+provenance contract explicit rather than silently changing the V1 schemas.
+
+**No FIFA Earth or ATP Earth ratings are populated by this slice.** Existing raw
+`config/earth_research/observations/*` files remain pre-normalization evidence and
+must be explicitly converted before new rating histories can cite them. Byte-level
+verification/conversion of normalized dataset files remains the next ingestion
+slice; realism validation is still false.
 ## Candidate — Earth historical-rating foundation (3 October 2026)
 
 On baseline `buuk` `7d2e120253cc3bea0c6e20113bcb1aec1a826df4`, this candidate adds

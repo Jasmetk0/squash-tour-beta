@@ -192,6 +192,55 @@
       "accessed_on": "2026-10-04",
       "scope": "Modern high-performance and development infrastructure.",
       "limitations": "Modern evidence only; cannot be backcast."
+    },
+    "dfb-history": {
+      "title": "DFB — History: 125 years of the German Football Association",
+      "url": "https://www.dfb.de/historie",
+      "accessed_on": "2026-10-04",
+      "scope": "Official DFB timeline including the 1900 association foundation and first German championship in 1903.",
+      "limitations": "Institutional/competition chronology is strong tradition evidence but does not directly quantify participation, development quality or current competitive strength."
+    },
+    "dfb-campus-2022": {
+      "title": "DFB — DFB Campus",
+      "url": "https://www.dfb.de/ueber-uns/der-dfb/dfb-campus",
+      "accessed_on": "2026-10-04",
+      "scope": "Official DFB account of the Campus in Frankfurt, home of the DFB since June 2022 and its first own sporting infrastructure integrating administration, sport and science.",
+      "limitations": "A national-association campus is direct elite/development infrastructure evidence but not a nationwide development-quality or access measurement."
+    },
+    "cbf-history-1914": {
+      "title": "CBF — 110 years of history",
+      "url": "https://www.cbf.com.br/a-cbf/noticias/detalhes/informes/cbf-completa-110-anos-de-historia",
+      "accessed_on": "2026-10-04",
+      "scope": "Official CBF history stating the governing body's foundation on 8 June 1914 and later institutional evolution.",
+      "limitations": "Federation history supports institutional continuity/tradition but does not directly measure player development or mass participation."
+    },
+    "cbf-granja-comary-history": {
+      "title": "CBF — Carlo Ancelotti visits Granja Comary",
+      "url": "https://www.cbf.com.br/selecao-brasileira/noticias/noticias-selecao-masculina/a/carlo-ancelotti-conhece-estrutura-da-granja-comary",
+      "accessed_on": "2026-10-04",
+      "scope": "Official CBF description of Granja Comary as Brazil's national-team training centre, used by the Seleção since 1987.",
+      "limitations": "National-team training-centre evidence informs elite/development infrastructure but does not describe the full national youth-development system."
+    },
+    "cbf-tds-2026": {
+      "title": "CBF — TDS FIFA Development Scheme workshop at Granja Comary",
+      "url": "https://www.cbf.com.br/selecao-brasileira/noticias/undefined/parana-x-macae/cbf-sedia-evento-voltado-para-a-formacao-de-novos-talentos",
+      "accessed_on": "2026-10-04",
+      "scope": "Official CBF report of the April 2026 FIFA TDS workshop integrating coaches/staff across Brazil's male youth and senior national-team categories with CBF Academy.",
+      "limitations": "One programme event shows current development-system activity; it is not proof of nationwide implementation quality or a historical series."
+    },
+    "uefa-iceland-history": {
+      "title": "UEFA — Developing football in Iceland",
+      "url": "https://www.uefa.com/nationalassociations/ISL/",
+      "accessed_on": "2026-10-04",
+      "scope": "Official UEFA association history including the 1912 national championship and KSÍ foundation/FIFA affiliation in 1947.",
+      "limitations": "Historical milestones support tradition/institutional context but do not directly quantify modern development quality or access."
+    },
+    "uefa-san-marino-history": {
+      "title": "UEFA — Developing football in San Marino",
+      "url": "https://www.uefa.com/nationalassociations/SMR/",
+      "accessed_on": "2026-10-04",
+      "scope": "Official UEFA timeline covering the first club, federation, official competition, youth academy, league and Casa del Calcio.",
+      "limitations": "Timeline milestones are structural evidence; they do not imply numeric rating changes or equal nationwide impact."
     }
   },
   "observation_datasets": {

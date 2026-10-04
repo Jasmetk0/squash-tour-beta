@@ -34,6 +34,9 @@ from scripts.audit_fifa_structural_features_heldout import (
 from scripts.audit_fifa_structural_feature_hypotheses import (
     build_audit as build_structural_hypothesis_audit,
 )
+from scripts.audit_fifa_competition_against_2023_ranking import (
+    build_audit as build_competition_outcome_audit,
+)
 
 
 def export_review(output_dir: Path) -> dict[str, object]:
@@ -46,6 +49,7 @@ def export_review(output_dir: Path) -> dict[str, object]:
     structural_features = build_structural_features()
     structural_heldout_audit = build_structural_heldout_audit()
     structural_hypothesis_audit = build_structural_hypothesis_audit()
+    competition_outcome_audit = build_competition_outcome_audit()
 
     files = {
         "dimension_scores": output_dir / "fifa_dimension_evidence_scores.json",
@@ -55,6 +59,7 @@ def export_review(output_dir: Path) -> dict[str, object]:
         "structural_features": output_dir / "fifa_structural_features.json",
         "structural_heldout_audit": output_dir / "fifa_structural_heldout_audit.json",
         "structural_hypothesis_audit": output_dir / "fifa_structural_feature_hypothesis_audit.json",
+        "competition_outcome_audit": output_dir / "fifa_competition_outcome_validation.json",
     }
     payloads = {
         "dimension_scores": dimension_scores,
@@ -64,6 +69,7 @@ def export_review(output_dir: Path) -> dict[str, object]:
         "structural_features": structural_features,
         "structural_heldout_audit": structural_heldout_audit,
         "structural_hypothesis_audit": structural_hypothesis_audit,
+        "competition_outcome_audit": competition_outcome_audit,
     }
 
     for key, path in files.items():
@@ -119,6 +125,18 @@ def export_review(output_dir: Path) -> dict[str, object]:
                 "decision": value["decision"],
             }
             for key, value in structural_hypothesis_audit["hypotheses"].items()
+        },
+        "competition_outcome_audit": {
+            role: {
+                "ranking_outcome_count": value["ranking_outcome_count"],
+                "numeric_comparison_count": value["numeric_comparison_count"],
+                "spearman_score_vs_better_rank": value["spearman_score_vs_better_rank"],
+                "pairwise": value["pairwise"],
+                "missing_competition_score_country_codes": value[
+                    "missing_competition_score_country_codes"
+                ],
+            }
+            for role, value in competition_outcome_audit["groups"].items()
         },
         "files": {key: path.name for key, path in files.items()},
     }

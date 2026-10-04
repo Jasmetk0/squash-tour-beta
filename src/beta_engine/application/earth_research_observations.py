@@ -104,7 +104,7 @@ class EarthObservationDataset(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     schema_version: Literal["earth_source_observations.v2"] = OBSERVATION_SCHEMA_V2
-    dataset_id: str = Field(min_length=1)
+    dataset_id: str = Field(min_length=1, pattern=r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
     source_id: str = Field(min_length=1)
     source_url: str = Field(pattern=r"^https://")
     source_document_sha256: str | None = Field(
@@ -136,7 +136,7 @@ class EarthObservationDatasetManifest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     schema_version: Literal["earth_source_observations_manifest.v1"] = OBSERVATION_MANIFEST_SCHEMA_V1
-    dataset_id: str = Field(min_length=1)
+    dataset_id: str = Field(min_length=1, pattern=r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
     source_id: str = Field(min_length=1)
     relative_path: str = Field(min_length=1)
     sha256: str = Field(pattern=r"^[0-9a-f]{64}$")

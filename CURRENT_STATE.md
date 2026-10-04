@@ -1,5 +1,33 @@
 # Current implementation and next action
 
+## Candidate — FIFA Earth reviewed batch 2: JPN + IND + MAR + SEN (4 October 2026)
+
+This slice adds four more complete canonical FIFA Earth histories instead of more
+research tooling.
+
+- New complete histories: JPN, IND, MAR and SEN.
+- Each covers 1955–2026 and all six attributes: 4 × 72 × 6 = **1,728 new authored
+  ratings**.
+- FIFA Earth therefore has **6 / 250 complete country histories** and **2,592
+  authored annual attribute ratings** in its `countries` map.
+- Every new rating is an explicit `derived_estimate` with exact normalized
+  observation IDs and model id
+  `fifa-earth-reviewed-country-history-jpn-ind-mar-sen.v1`.
+- Big Count remains popularity/access evidence rather than a universal football
+  strength score. Professional-player/club observations remain ecosystem evidence,
+  not a direct elite-support measurement.
+- Morocco's normalized FIFA sources conflict on the Mohammed VI Academy timing
+  (2009 establishment vs 2019 opening). Both observations remain cited; the conflict
+  is not silently resolved and modern development/support confidence is bounded.
+- Senegal 1955 remains a low-confidence pre-independence backcast. India does not
+  convert absolute population scale into high access. Japan's training-centre and
+  professionalisation milestones are kept dimension-specific.
+
+**Next after green CI:** continue with the remaining reviewed FIFA prototype countries
+(FRO, USA, ZAF) where normalized evidence can support complete histories, then expand
+beyond the original prototype set in coherent regional/evidence batches. ATP remains
+at 2 / 250 complete histories and needs the same evidence-first expansion.
+
 ## Candidate — first complete ATP Earth histories: CZE + DEU (4 October 2026)
 
 This slice moves ATP Earth from normalized-source-only status to actual annual country

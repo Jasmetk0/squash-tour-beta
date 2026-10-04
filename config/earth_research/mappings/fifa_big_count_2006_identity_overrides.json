@@ -1,0 +1,69 @@
+{
+  "schema_version": "earth_source_identity_overrides.v1",
+  "source_id": "fifa-big-count-2006",
+  "direct": {
+    "Bolivia": "BOL",
+    "British Virgin Islands": "VGB",
+    "Brunei Darussalam": "BRN",
+    "Cape Verde Islands": "CPV",
+    "China PR": "CHN",
+    "Chinese Taipei": "TWN",
+    "Congo": "COG",
+    "Congo DR": "COD",
+    "Côte d'Ivoire": "CIV",
+    "Czech Republic": "CZE",
+    "FYR Macedonia": "MKD",
+    "Iran": "IRN",
+    "Korea DPR": "PRK",
+    "Korea Republic": "KOR",
+    "Laos": "LAO",
+    "Macau": "MAC",
+    "Moldova": "MDA",
+    "Palestine": "PSE",
+    "Puerto Rico": "PRI",
+    "Republic of Ireland": "IRL",
+    "Russia": "RUS",
+    "Sao Tome e Principe": "STP",
+    "St. Kitts and Nevis": "KNA",
+    "St. Lucia": "LCA",
+    "St. Vincent and the Grenadines": "VCT",
+    "Swaziland": "SWZ",
+    "Syria": "SYR",
+    "Tahiti": "PYF",
+    "Tanzania": "TZA",
+    "Timor-Leste": "TLS",
+    "Turkey": "TUR",
+    "Turks and Caicos Islands": "TCA",
+    "United Arab Emirates": "ARE",
+    "US Virgin Islands": "VIR",
+    "USA": "USA",
+    "Venezuela": "VEN",
+    "Vietnam": "VNM"
+  },
+  "aggregate_groups": {
+    "GBR": {
+      "source_associations": [
+        "England",
+        "Scotland",
+        "Wales",
+        "Northern Ireland"
+      ],
+      "numeric_policy": "sum_non_overlapping_association_counts",
+      "reason": "Big Count observes the four UK home associations separately while the Earth catalogue represents the United Kingdom as GBR. For participation/registration/club/official counts, these territorial association rows are non-overlapping inputs to one GBR aggregate. Competition/results evidence is not aggregated by this rule."
+    }
+  },
+  "manual_review": {
+    "Netherlands Antilles": {
+      "reason": "The 2006 observation predates dissolution of the Netherlands Antilles and cannot be allocated to present-day Earth entities without historical territorial reconciliation."
+    },
+    "Curacao": {
+      "reason": "The Big Count row duplicates the Netherlands Antilles counts exactly in the extracted table. Do not auto-join to CUW until the source duplication/identity is reconciled."
+    },
+    "Serbia": {
+      "reason": "The source year overlaps the 2006 dissolution of Serbia and Montenegro. Observation timing and territorial denominator must be reconciled before using the row with current SRB population."
+    },
+    "Sudan": {
+      "reason": "The 2006 association observation predates South Sudan independence. Current SDN population geography is not automatically compatible with the historical association total."
+    }
+  }
+}

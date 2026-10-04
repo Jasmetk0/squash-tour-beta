@@ -1,5 +1,30 @@
 # Current implementation and next action
 
+## Candidate — FIFA factual structural features + held-out audit (4 October 2026)
+
+On top of the green V2 review + structural-evidence rebuild, this slice extracts
+non-scoring structural features for all 250 Earth countries.
+
+Review/validation separation is machine-readable:
+- 9 review countries;
+- 4 held-out validation countries (DEU/BRA/ISL/SMR);
+- 237 countries with no curated structural seed.
+
+Features include tradition span, pre-1955 continuity, institutional/competition
+foundation dates, first/latest development evidence, academy/pathway/training-centre
+milestones, negative structural breaks and source-conflict groups. No feature is
+converted into a country rating.
+
+The held-out audit projects DEU/BRA/ISL/SMR into distributions defined only by the
+nine review countries. Held-out values never alter fit parameters or reference
+distributions. This deliberately demonstrates that long tradition, long development
+history and recent development evidence are separate factual axes rather than one
+hidden football-strength score.
+
+**Next:** after green CI, use these features to design a reviewed tradition/development
+calibration hypothesis, but validate it on held-out countries before any canonical
+rating promotion.
+
 ## Candidate — FIFA structural evidence rebuilt on V2 calibration baseline (4 October 2026)
 
 This candidate ports the previously green structural-evidence stack onto the current

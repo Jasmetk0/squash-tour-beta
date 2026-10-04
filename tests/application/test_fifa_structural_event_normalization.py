@@ -12,7 +12,7 @@ from beta_engine.application.earth_research_observations import (
     EarthObservationDataset,
     observation_dataset_sha256,
 )
-from scripts.normalize_fifa_structural_events import (
+HELDOUT_SEED = Path("config/earth_research/observations/structural/fifa_structural_events_heldout_v1.json")\n\n\nfrom scripts.normalize_fifa_structural_events import (
     DEFAULT_OUTPUT_DIR,
     DEFAULT_RESEARCH,
     DEFAULT_SEED,
@@ -145,15 +145,15 @@ def test_structural_dimension_tags_are_relevance_only_not_rating_values() -> Non
 def test_fifa_research_bundle_includes_structural_events_with_existing_sources() -> None:
     bundle = load_earth_research_bundle(DEFAULT_RESEARCH)
 
-    assert len(bundle.datasets) == 32
-    assert len(bundle.observations) == 1328
+    assert len(bundle.datasets) == 39
+    assert len(bundle.observations) == 1342
 
     structural = [
         observation
         for observation in bundle.observations.values()
         if observation.measurement_type == "football_structural_event"
     ]
-    assert len(structural) == 43
+    assert len(structural) == 57
     assert all(
         observation.source_id in bundle.research.sources
         for observation in structural
@@ -164,3 +164,43 @@ def test_fifa_research_bundle_includes_structural_events_with_existing_sources()
         == "explicit_reviewed_event_to_earth"
         for observation in structural
     )
+
+
+
+def test_heldout_structural_event_datasets_are_reproducible_and_separate() -> None:
+    datasets = build_datasets(seed_path=HELDOUT_SEED)
+    manifests = build_manifests(datasets)
+    research = json.loads(DEFAULT_RESEARCH.read_text(encoding="utf-8"))
+
+    assert len(datasets) == 7
+    assert sum(len(dataset.observations) for dataset in datasets.values()) == 14
+
+    for dataset_id, dataset in datasets.items():
+        manifest = manifests[dataset_id]
+        assert research["observation_datasets"][dataset_id] == manifest.model_dump(
+            mode="json"
+        )
+        checked_in = EarthObservationDataset.model_validate_json(
+            (Path("config/earth_research") / manifest.relative_path).read_text(
+                encoding="utf-8"
+            )
+        )
+        assert checked_in == dataset
+        assert observation_dataset_sha256(checked_in) == manifest.sha256
+        assert "held-out validation set" in checked_in.scope
+        assert all(
+            "held_out_validation_country" in observation.quality_flags
+            for observation in checked_in.observations
+        )
+
+
+def test_review_and_heldout_structural_seeds_have_independent_input_hashes() -> None:
+    review = build_datasets(seed_path=DEFAULT_SEED)
+    heldout = build_datasets(seed_path=HELDOUT_SEED)
+
+    review_hashes = {dataset.input_artifact_sha256 for dataset in review.values()}
+    heldout_hashes = {dataset.input_artifact_sha256 for dataset in heldout.values()}
+
+    assert len(review_hashes) == 1
+    assert len(heldout_hashes) == 1
+    assert review_hashes.isdisjoint(heldout_hashes)

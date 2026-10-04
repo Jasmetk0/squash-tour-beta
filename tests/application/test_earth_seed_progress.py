@@ -11,7 +11,7 @@ from beta_engine.application.earth_package_builder import load_earth_research_bu
 
 def test_fifa_first_reviewed_country_histories_are_complete_and_resolvable():
     bundle = load_earth_research_bundle(Path("config/earth_research/fifa_earth.json"))
-    assert set(bundle.research.countries) == {"CZE", "SVK", "JPN", "IND", "MAR", "SEN"}
+    assert set(bundle.research.countries) == {"CZE", "SVK", "JPN", "IND", "MAR", "SEN", "FRO", "USA", "ZAF"}
     assert bundle.research.data_cutoff.isoformat() == "2026-10-03"
 
     for code in ("CZE", "SVK"):
@@ -70,6 +70,55 @@ def test_fifa_second_reviewed_batch_is_complete_resolvable_and_preserves_conflic
     sen = bundle.research.countries["SEN"]
     assert sen.years[1955].ratings["squash_popularity"].confidence == "low"
     assert sen.years[2020].ratings["development_quality"].confidence == "medium"
+
+
+def test_fifa_third_reviewed_batch_uses_shards_and_preserves_structural_breaks():
+    bundle = load_earth_research_bundle(Path("config/earth_research/fifa_earth.json"))
+    batch = {"FRO", "USA", "ZAF"}
+
+    for code in batch:
+        history = bundle.research.countries[code]
+        assert history.missing_earth_years == []
+        assert len(history.years) == 72
+        assert history.reference_year == 2026
+        for year in history.years.values():
+            assert len(year.ratings) == 6
+            for rating in year.ratings.values():
+                assert rating.method == "derived_estimate"
+                assert rating.calibration_model_id == "fifa-earth-reviewed-country-history-fro-usa-zaf.v1"
+                assert rating.observation_ids
+                assert all(item in bundle.observations for item in rating.observation_ids)
+
+    shard_root = Path("config/earth_research/countries/fifa_earth")
+    assert all((shard_root / f"{code}.json").exists() for code in batch)
+
+    fro = bundle.research.countries["FRO"]
+    assert fro.years[1986].ratings["squash_access"].confidence == "medium"
+    assert "fifa-structural-uefa-faroe-history-v1#fro-artificial-turf-1986" in (
+        fro.years[1986].ratings["squash_access"].observation_ids
+    )
+
+    usa = bundle.research.countries["USA"]
+    assert usa.years[1984].ratings["competition_quality"].value < (
+        usa.years[1968].ratings["competition_quality"].value
+    )
+    assert usa.years[1996].ratings["competition_quality"].value > (
+        usa.years[1984].ratings["competition_quality"].value
+    )
+    assert "fifa-structural-ussoccer-timeline-v1#usa-nasl-collapse-1984" in (
+        usa.years[1984].ratings["competition_quality"].observation_ids
+    )
+
+    zaf = bundle.research.countries["ZAF"]
+    assert zaf.years[1961].ratings["competition_quality"].value < (
+        zaf.years[1955].ratings["competition_quality"].value
+    )
+    assert zaf.years[1992].ratings["competition_quality"].value > (
+        zaf.years[1961].ratings["competition_quality"].value
+    )
+    assert "fifa-structural-caf-south-africa-v1#zaf-readmission-1992" in (
+        zaf.years[1992].ratings["competition_quality"].observation_ids
+    )
 
 
 def test_atp_first_complete_histories_are_evidence_resolvable_and_conservative():

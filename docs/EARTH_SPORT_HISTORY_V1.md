@@ -81,8 +81,10 @@ separate inputs. Innate potential rarity must remain independent of nationality.
 `config/earth_research/fifa_earth.json` and `atp_earth.json` are
 `earth_sport_research.v2` catalogues. FIFA Earth contains the broader canonical
 observation registry plus the first complete country histories for CZE and SVK.
-ATP Earth now registers two normalized ITF 2019 national snapshot datasets for CZE
-and DEU; ATP country histories are still not authored.
+ATP Earth now contains complete 1955–2026 histories for CZE and DEU. Its evidence
+registry combines ITF 2019 national snapshots with Davis Cup outcomes, DTB historical
+membership checkpoints, German high-performance infrastructure and Czech talent-centre
+support.
 
 Current evidence includes:
 
@@ -170,3 +172,19 @@ year; the checked-in raw extract does not establish a separate observation year,
 the normalized facts intentionally keep `observation_year=null`. Mixed-sex player
 counts are not represented as men's participation, and coach counts are not treated
 as development quality.
+
+
+## ATP canonical-history progress — 4 October 2026
+
+ATP Earth now has its first two complete country histories: CZE and DEU. Both cover
+all 72 years and all six attributes. The numerical values are explicit project
+estimates under `atp-earth-cze-deu-seed-model.v1`; source facts remain separate
+normalized observations.
+
+Germany has unusually strong longitudinal popularity/access evidence through selected
+checkpoints from the DTB membership series. Before reunification this evidence covers
+West Germany only and is therefore marked as partial current-territory context. Czech
+early participation/access remains much less certain. Davis Cup outcomes are used for
+competition/tradition context only, while current development/support ratings use the
+documented Czech talent-centre framework and German federal high-performance-centre
+system. Court count remains excluded.

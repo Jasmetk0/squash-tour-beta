@@ -257,3 +257,21 @@ Mexico separates very high popularity from more mixed access evidence; Australia
 preserves federation, league and confederation discontinuities; and New Zealand
 keeps strong modern access/development investment distinct from football's lower
 relative cultural dominance in a rugby-led sporting environment.
+
+
+## FIFA canonical-history batch 6 — sparse Oceania
+
+Fiji, Papua New Guinea, Solomon Islands and Cook Islands are now complete
+1955–2026 country-history shards. This batch deliberately tests the rule that
+participation/access density is not a universal football-strength score.
+
+Cook Islands has extremely dense 2006 registration and club evidence but remains
+small in competition and elite-support depth. Fiji combines strong organised access
+with a small explicit professional ecosystem and current infrastructure investment.
+Papua New Guinea's difficult geography is preserved as direct access/development
+context. Solomon Islands maps to Earth code `SLB` and can carry very high cultural
+popularity while still having materially lower competition depth.
+
+Missing FIFA Professional 2023 values for PNG, SLB and COK remain missing, never
+synthetic zeros. Sparse pre-association periods are authored only as explicit
+low-confidence backcasts bounded by the first documented association structures.

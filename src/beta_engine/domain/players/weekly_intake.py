@@ -105,7 +105,9 @@ class WeeklyIntakePlanner:
             # V1 country allocation samples from effective population,
             # popularity and access. Do not clamp small positive weights to 1:
             # doing so would erase authored differences for small squash nations.
-            weight = talent_model.effective_squash_pool_weight(country, resolved.effective_population)
+            weight = talent_model.effective_squash_pool_weight(
+                country.at_rating_year(population_year), resolved.effective_population
+            )
             rows.append((country.code, resolved, weight))
 
         total_weight = sum(weight for _, _, weight in rows)

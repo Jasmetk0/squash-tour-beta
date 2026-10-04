@@ -1,0 +1,22 @@
+{
+  "schema_version": "earth_sport_research.v1",
+  "data_cutoff": "2026-10-03",
+  "countries": {},
+  "world_id": "fifa_earth",
+  "sources": {
+    "fifa-professional-2023": {
+      "title": "FIFA Professional Football Report 2023",
+      "url": "https://digitalhub.fifa.com/m/2a5dc95026d9cf8a/original/FIFA-Professional-Football-Report-2023.pdf",
+      "accessed_on": "2026-10-03",
+      "scope": "2023 men’s professional football; national association coverage and definitions.",
+      "limitations": "211 national pages extracted in observations/fifa_professional_2023.json. Page 38 has conflicting country identity; national sums disagree with the global headline. Unreconciled, not usable as automatic rating anchors. Employment counts are not total participation or direct measurements of the six country attributes."
+    },
+    "fifa-big-count-2006": {
+      "title": "FIFA Big Count 2006 — All Players (archived original table)",
+      "url": "https://web.archive.org/web/20160304131953/http://www.fifa.com/worldfootball/bigcount/allplayers.html",
+      "accessed_on": "2026-10-03",
+      "scope": "208 original table rows, association totals, registered/unregistered players, clubs and officials; raw facts in observations/fifa_big_count_2006.csv.",
+      "limitations": "This All Players table is not men-only. Association identities do not equal the Earth ISO country catalogue. Missing data must not be read as zero. Single survey year cannot substantiate an annual 1955–2026 history."
+    }
+  }
+}

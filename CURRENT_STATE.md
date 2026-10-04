@@ -1,5 +1,16 @@
 # Current implementation and next action
 
+## Candidate — Earth historical-rating foundation (3 October 2026)
+
+On baseline `buuk` `7d2e120253cc3bea0c6e20113bcb1aec1a826df4`, this candidate adds
+explicit v2 1–10 ratings, evidence-bearing histories, storage/API year resolution,
+birth-year intake selection, a completeness-gated builder and focused tests.
+See [the exact boundary and source limitations](docs/EARTH_SPORT_HISTORY_V1.md).
+**Neither FIFA Earth nor ATP Earth is populated or ready to use.** The checked-in
+research catalogues deliberately contain no country ratings yet. Source observation
+extraction is partial and has unresolved source inconsistencies. This candidate is
+not a claim of realistic historical calibration or complete Run integration.
+
 ## Product delta — 3 October 2026 / Master v74 (implementation pending)
 
 The six country ratings are now specified as 1–10 with at most one decimal place.

@@ -3,10 +3,14 @@
 from __future__ import annotations
 
 import math
-from typing import Annotated, Any, Self
+from typing import Annotated, Any, Self, Literal
 
-from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, field_validator, model_validator
+from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, field_validator, model_validator, model_serializer
 
+
+from beta_engine.domain.countries.rating_history import (
+    CountryRatingHistory, GAME_ATTRIBUTE_NAMES, LEGACY_RATING_SCALE, RATING_SCALE_V2, validate_rating_v2,
+)
 
 def _validate_country_rating(value: Any) -> float:
     """Accept only finite JSON-style numbers on the inclusive V1 scale."""
@@ -22,6 +26,17 @@ def _validate_country_rating(value: Any) -> float:
 
 
 CountrySimFactor = Annotated[float, BeforeValidator(_validate_country_rating)]
+
+
+def _validate_versioned_rating(value: Any) -> float:
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise ValueError("country rating must be numeric")
+    if not math.isfinite(value) or not 1 <= value <= 10:
+        raise ValueError("country rating must be finite and between 1 and 10")
+    return float(value)
+
+
+VersionedCountrySimFactor = Annotated[float, BeforeValidator(_validate_versioned_rating)]
 
 
 class Country(BaseModel):
@@ -51,13 +66,64 @@ class Country(BaseModel):
     timezone_area: str | None = None
     notes: str | None = None
 
-    # Country Game Attributes V1. All six are finite numeric ratings 1..5.
-    squash_popularity: CountrySimFactor
-    squash_access: CountrySimFactor
-    development_quality: CountrySimFactor
-    competition_quality: CountrySimFactor
-    elite_support: CountrySimFactor
-    squash_tradition: CountrySimFactor
+    rating_scale: Literal["country_ratings_1_5.v1", "country_ratings_1_10.v2"] = LEGACY_RATING_SCALE
+    rating_history: CountryRatingHistory | None = None
+    rating_effective_year: int | None = None
+
+    # The scale is explicit; a missing version always means legacy 1..5.
+    squash_popularity: VersionedCountrySimFactor
+    squash_access: VersionedCountrySimFactor
+    development_quality: VersionedCountrySimFactor
+    competition_quality: VersionedCountrySimFactor
+    elite_support: VersionedCountrySimFactor
+    squash_tradition: VersionedCountrySimFactor
+
+    @field_validator(*GAME_ATTRIBUTE_NAMES)
+    @classmethod
+    def validate_scaled_field(cls, value: float, info) -> float:
+        validator = validate_rating_v2 if info.data.get("rating_scale") == RATING_SCALE_V2 else _validate_country_rating
+        return validator(value)
+
+    @model_validator(mode="after")
+    def validate_rating_version(self) -> Self:
+        validator = validate_rating_v2 if self.rating_scale == RATING_SCALE_V2 else _validate_country_rating
+        for name in GAME_ATTRIBUTE_NAMES:
+            validator(getattr(self, name))
+        if self.rating_scale == RATING_SCALE_V2 and self.court_count is not None:
+            raise ValueError("Court Count is deferred beyond pre-alpha in new-scale countries")
+        if self.rating_history is not None:
+            if self.rating_scale != RATING_SCALE_V2:
+                raise ValueError("historical ratings require the explicit 1..10 scale")
+            year = self.rating_effective_year if self.rating_effective_year is not None else self.rating_history.reference_year
+            _, entry = self.rating_history.resolve(year)
+            if any(getattr(self, name) != entry.ratings[name].value for name in GAME_ATTRIBUTE_NAMES):
+                raise ValueError("scalar ratings must match the selected history year")
+        elif self.rating_effective_year is not None:
+            raise ValueError("effective rating year requires a history")
+        return self
+
+    @model_serializer(mode="wrap")
+    def serialize_rating_version(self, handler):
+        payload = handler(self)
+        # Exact legacy payloads remain unchanged, including their snapshot hashes.
+        if self.rating_scale == LEGACY_RATING_SCALE:
+            for name in ("rating_scale", "rating_history", "rating_effective_year"):
+                payload.pop(name, None)
+        return payload
+
+    def at_rating_year(self, year: int) -> Self:
+        if self.rating_history is None:
+            return self
+        _, entry = self.rating_history.resolve(year)
+        # Values come from the already validated history, not untrusted input.
+        return self.model_copy(update={
+            **{name: entry.ratings[name].value for name in GAME_ATTRIBUTE_NAMES},
+            "rating_effective_year": year,
+        })
+
+    @property
+    def rating_maximum(self) -> int:
+        return 10 if self.rating_scale == RATING_SCALE_V2 else 5
 
     @model_validator(mode="before")
     @classmethod
@@ -154,9 +220,8 @@ class Country(BaseModel):
         normalized = value.strip()
         return normalized or None
 
-    @staticmethod
-    def _normalize_factor(value: float) -> float:
-        return (value - 1) / 4.0
+    def _normalize_factor(self, value: float) -> float:
+        return (value - 1) / (self.rating_maximum - 1)
 
     @property
     def squash_popularity_norm(self) -> float:

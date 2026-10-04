@@ -4,6 +4,7 @@ import json,re
 from dataclasses import dataclass
 from typing import Literal
 from beta_engine.application.world_package_registry_service import WorldPackageRegistryService
+from beta_engine.application.country_history_validation import country_history_errors
 from beta_engine.domain.timezone_areas import TimezoneArea, validate_timezone_areas
 from beta_engine.infrastructure.world_package_storage import ATTRIBUTE_NAMES, COUNTRIES_INDEX_SCHEMA, PACKAGE_FORMAT_VERSION, WorldPackageCountryStore
 ValidationSeverity=Literal['info','warning','error']; ValidationCheckStatus=Literal['passed','warning','failed']; ValidationStatus=Literal['valid','warnings','errors']
@@ -72,5 +73,7 @@ class WorldPackageValidationService:
     if not required.issubset(country.population_by_year):bad('population_coverage_valid',f'{country.code}/attributes/population.json lacks declared population years {sorted(required-set(country.population_by_year))}',root/'countries'/country.code/'attributes/population.json')
   if isinstance(world.get('population_years'),dict) and not any(c.code=='population_coverage_valid' and c.status=='failed' for c in checks):
    ok('population_coverage_valid','All countries preserve the declared population timeline.',store.countries_root)
+  for message in country_history_errors(root,world,countries):
+   bad('country_rating_history_valid',message,root/'generation/country_rating_sources.json')
   errors=sum(c.severity=='error' for c in checks); warnings=sum(c.severity=='warning' for c in checks); infos=sum(c.severity=='info' for c in checks)
   return WorldPackageValidationResult(world_id,'errors' if errors else 'warnings' if warnings else 'valid',errors,warnings,infos,checks)

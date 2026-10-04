@@ -248,9 +248,10 @@ def get_world_package_country_effective_population(
 def get_world_package_country(
     world_id: str,
     country_code: str,
+    rating_year: int | None = Query(default=None, ge=1954, le=2050),
     service: WorldPackageCountriesService = Depends(get_world_package_countries_service),
 ) -> WorldPackageCountryV1DetailResponse:
-    result = service.get_country(world_id, country_code)
+    result = service.get_country(world_id, country_code, rating_year=rating_year)
     if result is None:
         if service.registry_service.get_package(world_id) is None:
             raise HTTPException(status_code=404, detail=f"world package '{world_id}' not found")

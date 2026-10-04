@@ -38,6 +38,7 @@ class AnnualTalentClassPlanner:
         self._country_model = CountryTalentModel()
 
     def plan(self, *, year: int, seed: int, countries: list[Country]) -> AnnualTalentClassPlan:
+        countries = [country.at_rating_year(year) for country in countries]
         if not countries:
             return AnnualTalentClassPlan(year=year, seed=seed, total_talents=0, allocations=[])
 

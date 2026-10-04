@@ -704,7 +704,9 @@ class InitialPlayerPoolGenerator:
         rng = DeterministicRng(seed).branch(
             SeedScope.SEASON, "initial_pool", season, country.code, sequence
         )
-        development_environment = CountryTalentModel().development_environment(country)
+        development_environment = CountryTalentModel().development_environment(
+            country.at_rating_year(self._season_start_year(season))
+        )
         stage = self._choose_stage(rng)
         age_min, age_max = STAGE_AGE_RANGES[stage]
         age = rng.randint(age_min, age_max)
@@ -799,6 +801,16 @@ class InitialPlayerPoolGenerator:
         )
 
     def _quantity_weight(self, country: Country, *, season_start_year: int) -> float:
+        if country.rating_history is not None:
+            # Keep each birth cohort's population and environment in the same year.
+            model = CountryTalentModel()
+            return max(0.000001, sum(
+                cohort_weight * model.effective_squash_pool_weight(
+                    country.at_rating_year(year),
+                    resolve_effective_population(country, year).effective_population,
+                )
+                for year, cohort_weight in initial_pool_birth_year_weights(season_start_year).items()
+            ))
         effective_quantity_population = self._effective_population_quantity(
             country, season_start_year
         )

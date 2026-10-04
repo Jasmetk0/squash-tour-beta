@@ -647,8 +647,9 @@ def test_legacy_fingerprint_stays_stable_until_timezone_data_is_authored(tmp_pat
     shutil.copytree("config/world_packages/official_fax_world", root / "official_fax_world")
     registry = WorldPackageRegistryService(world_packages_root=root)
     before = registry.get_official_package().fingerprint
-    # Regression value from pre-Timezone-Area support: optional schema support is not semantic content.
-    assert before == "4113f00b2f9c68e511b7ab8aa65c1139003f666bdb909a9e09c5c86888fc5ae9"
+    # Baseline at buuk 7d2e120, including the subsequently authored player_identity.
+    # New optional rating/timezone schema support must not change these legacy bytes.
+    assert before == "df1823bba6f4500b6b27a03a856f6e725ff8e763f4d37cda61f7ee1ec1e41a07"
     # Loading support alone does not materialize either optional storage layer.
     assert not (root / "official_fax_world/geography/timezone_areas.json").exists()
     assert registry.get_official_package().fingerprint == before

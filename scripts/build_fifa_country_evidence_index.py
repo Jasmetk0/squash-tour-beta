@@ -63,6 +63,15 @@ def _direct_mapped_fact(observation) -> dict[str, Any]:
             "Canonical FIFA outcome-validation observation carries an explicit "
             "reviewed Earth mapping."
         )
+    elif (
+        mapping == "explicit_reviewed_fact_to_earth"
+        and "explicit_reviewed_country_fact" in observation.quality_flags
+        and observation.cross_country_comparable is False
+    ):
+        reason = (
+            "Canonical country-specific fact carries an explicit reviewed Earth "
+            "mapping and is explicitly non-comparable across countries."
+        )
     else:
         raise ValueError(
             f"observation {observation.observation_id!r} lacks canonical identity handling"

@@ -1,0 +1,111 @@
+{
+  "schema_version": "fifa_development_evidence_framework.v1",
+  "framework_id": "fifa-development-evidence-framework-v1",
+  "status": "research_gap_framework",
+  "rating_ready": false,
+  "source_basis": [
+    {
+      "source_id": "fifa-global-talent-development-report-2021",
+      "authority": "FIFA",
+      "facets": [
+        "talent_identification",
+        "training_environment",
+        "playing_opportunities",
+        "youth_to_senior_transition"
+      ],
+      "note": "FIFA global talent-development study identifies these as key areas of the talent-development ecosystem."
+    },
+    {
+      "source_id": "fifa-tds-academies-strategy",
+      "authority": "FIFA",
+      "facets": [
+        "coaching_capacity",
+        "academy_pathway_coverage"
+      ],
+      "note": "FIFA TDS/Talent Academy strategy explicitly uses deployed coaches, academy standards and local talent-development pathways."
+    }
+  ],
+  "development_facets": {
+    "talent_identification": {
+      "description": "Evidence that talent is systematically identified/scouted rather than relying only on incidental club discovery.",
+      "canonical_structural_event_types": [],
+      "direct_evidence_required": true
+    },
+    "training_environment": {
+      "description": "Evidence of structured high-performance training environments, technical centres or equivalent sustained training provision.",
+      "canonical_structural_event_types": [
+        "training_centre_opening",
+        "training_centre_milestone",
+        "infrastructure_milestone"
+      ],
+      "direct_evidence_required": true
+    },
+    "playing_opportunities": {
+      "description": "Evidence that youth talent receives structured age-appropriate competitive playing opportunities.",
+      "canonical_structural_event_types": [],
+      "direct_evidence_required": true
+    },
+    "youth_to_senior_transition": {
+      "description": "Evidence about the pathway and transition from youth development into senior/professional football.",
+      "canonical_structural_event_types": [],
+      "direct_evidence_required": true
+    },
+    "coaching_capacity": {
+      "description": "Evidence about qualified coach depth, coach education, coach educators or comparable technical-human-capital capacity.",
+      "canonical_structural_event_types": [],
+      "direct_evidence_required": true
+    },
+    "academy_pathway_coverage": {
+      "description": "Evidence of academy/pathway structures and their coverage, standards or accreditation rather than merely one academy existing.",
+      "canonical_structural_event_types": [
+        "development_pathway_launch",
+        "development_framework_launch",
+        "academy_foundation",
+        "academy_milestone"
+      ],
+      "direct_evidence_required": true
+    }
+  },
+  "tradition_facets": {
+    "institutional_roots": {
+      "description": "Dated national football-governance roots.",
+      "canonical_structural_event_types": [
+        "institutional_foundation"
+      ]
+    },
+    "organised_competition_roots": {
+      "description": "Dated roots of organised national or territory-wide competition.",
+      "canonical_structural_event_types": [
+        "competition_launch"
+      ]
+    },
+    "club_roots": {
+      "description": "Dated early club-football roots where directly sourced.",
+      "canonical_structural_event_types": [
+        "club_foundation_milestone"
+      ]
+    },
+    "continuity_discontinuity_context": {
+      "description": "Evidence of governance/competition breaks or transitions that prevents treating age as uninterrupted continuity.",
+      "canonical_structural_event_types": [
+        "governance_transition",
+        "governance_discontinuity",
+        "competition_discontinuity",
+        "international_reintegration"
+      ]
+    },
+    "cultural_audience_embedding": {
+      "description": "Independent evidence of long-run cultural salience, audience/fan embedding or comparable societal football importance.",
+      "canonical_structural_event_types": []
+    }
+  },
+  "safeguards": [
+    "Facet coverage is evidence coverage, not a quality score.",
+    "No facet count may be converted mechanically into a 1-10 rating.",
+    "A single academy, centre or programme does not establish nationwide quality or coverage.",
+    "Held-out validation countries must remain excluded from model fitting.",
+    "Missing facet evidence is unknown, not negative evidence.",
+    "Development calibration must not be attempted from structural timeline age alone.",
+    "Tradition calibration requires cultural/continuity context beyond historical age."
+  ]
+}

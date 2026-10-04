@@ -1,5 +1,23 @@
 # Current implementation and next action
 
+## Candidate — FIFA structural dimension evidence summary (4 October 2026)
+
+Stacked on the canonical structural-event slice. This candidate adds a read-only
+250-country projection for the two dimensions still intentionally unsupported by the
+quantitative score model: `development_quality` and `squash_tradition`.
+
+The summary contains no score or rating. It reports exact structural observation IDs,
+chronological events, first/last evidence year, pre-1955 history and unresolved
+conflict groups. Event count is documentation coverage only; countries outside the
+nine-country seed remain unknown rather than receiving a low value.
+
+Current seed coverage is 19 development-relevant event references and 16
+tradition-relevant references, with the Morocco academy timing conflict preserved.
+
+**Next after validation:** expand structural evidence to held-out/global countries,
+then define dimension-specific calibration semantics only after coverage is broad
+enough that source density itself cannot distort ratings.
+
 ## Candidate — canonical FIFA structural-event observations (4 October 2026)
 
 Stacked on the green calibration/audit head pending direct landing #1146. This slice adds the first canonical evidence family aimed specifically at the dimensions that Big Count / Professional 2023 cannot measure well: development quality and tradition.

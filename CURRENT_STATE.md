@@ -1,5 +1,36 @@
 # Current implementation and next action
 
+## Candidate — FIFA evidence expansion + ARG/MEX/AUS/NZL histories (4 October 2026)
+
+This slice removes the remaining monolithic-research bottleneck and uses the new
+structure immediately for four additional complete country histories.
+
+- `load_earth_research_bundle()` now merges optional sharded **sources** and
+  **observation dataset manifests** in addition to country histories.
+- New source shards live under `config/earth_research/sources/<world_id>/`.
+- New manifest shards live under
+  `config/earth_research/observation_manifests/<world_id>/`.
+- Duplicate inline/sharded source IDs and dataset IDs fail closed before normal
+  research validation.
+- Added five newly normalized official structural datasets: AFA history, FMF history,
+  Football Australia history, OFC New Zealand history, and the 2011 New Zealand
+  grassroots/development snapshot.
+- New complete histories: ARG, MEX, AUS, NZL.
+- New ratings: 4 × 72 × 6 = **1,728**.
+- FIFA Earth now resolves **17 / 250 complete country histories** and **7,344 annual
+  attribute ratings**.
+- Australia keeps the 1960 governance disruption, 1961-63 recovery, 2004 NSL end,
+  2005 A-League relaunch and 2006 AFC transfer as separate structural anchors.
+- Mexico hosting milestones affect elite-support context only; New Zealand's 2011
+  development grants are programme evidence, not realised-outcome evidence.
+
+**Next after green CI:** continue expanding normalized structural evidence and country
+shards in batches. The research manifest no longer needs to grow for each new source,
+dataset or country, so full 250-country authoring can proceed without rewriting the
+multi-megabyte root JSON.
+
+# Current implementation and next action
+
 ## Candidate — first post-prototype FIFA batch: BRA + DEU + ISL + SMR (4 October 2026)
 
 This slice promotes the four previously held-out validation countries into complete

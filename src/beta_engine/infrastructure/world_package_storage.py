@@ -13,6 +13,7 @@ from typing import Any
 from pydantic import BaseModel, Field, StrictInt, field_validator
 
 from beta_engine.domain.countries import CountriesConfig, Country
+from beta_engine.domain.countries.rating_history import RATING_SCALE_V2
 
 COUNTRIES_INDEX_SCHEMA = "world_package_countries_index.v1"
 COUNTRY_IDENTITY_SCHEMA = "world_package_country.v1"
@@ -180,9 +181,21 @@ class WorldPackageCountryStore:
         if identity.code != code:
             raise ValueError(f"{identity_path} code {identity.code!r} does not match directory {code!r}")
         attributes = {}
+        rating_context_path = country_root / "attributes" / "rating_context.json"
+        rating_context = _read_object(rating_context_path) if rating_context_path.is_file() else {}
+        if rating_context_path.is_file():
+            if rating_context.get("schema_version") != "country_rating_context.v1":
+                raise ValueError(f"{rating_context_path} has an unsupported schema")
+            if set(rating_context) != {"schema_version", "rating_scale", "rating_history", "rating_effective_year"}:
+                raise ValueError(f"{rating_context_path} has missing or unknown fields")
+            if rating_context["rating_scale"] != RATING_SCALE_V2:
+                raise ValueError(f"{rating_context_path} must explicitly use the 1..10 scale")
         timezone_path = country_root / "attributes" / "timezone_area.json"
         for name in ATTRIBUTE_NAMES:
             if name == "timezone_area" and not timezone_path.is_file():
+                attributes[name] = None
+            elif name == "court_count" and rating_context:
+                # Deferred for new pre-alpha packages. Preserve old sources as-is.
                 attributes[name] = None
             else:
                 attributes[name] = self._load_attribute(country_root, name)
@@ -196,6 +209,7 @@ class WorldPackageCountryStore:
         return Country.model_validate({
             **identity.model_dump(exclude={"schema_version"}),
             **attributes,
+            **{key: value for key, value in rating_context.items() if key != "schema_version"},
             "population": default_population,
             "default_population": default_population,
             "default_population_year": population.default_year,
@@ -236,7 +250,20 @@ class WorldPackageCountryStore:
         })
         dumped = country.model_dump(mode="json")
         for name in ATTRIBUTE_NAMES:
+            if name == "court_count" and country.rating_scale == RATING_SCALE_V2:
+                (root / "attributes" / "court_count.json").unlink(missing_ok=True)
+                continue
             _write_json_atomic(root / "attributes" / f"{name}.json", {"schema_version": COUNTRY_ATTRIBUTE_SCHEMA, "value": dumped.get(name)})
+        context_path = root / "attributes" / "rating_context.json"
+        if country.rating_scale == RATING_SCALE_V2:
+            _write_json_atomic(context_path, {
+                "schema_version": "country_rating_context.v1",
+                "rating_scale": country.rating_scale,
+                "rating_history": dumped["rating_history"],
+                "rating_effective_year": country.rating_effective_year,
+            })
+        else:
+            context_path.unlink(missing_ok=True)
         # A direct write into an existing scratch directory should not leave a
         # mixed old/new country behind. Normal replace flows already stage fresh.
         for legacy_name in LEGACY_ATTRIBUTE_NAMES:

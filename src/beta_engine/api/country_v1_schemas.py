@@ -6,7 +6,7 @@ small, reviewable and does not require rewriting unrelated API contracts.
 
 from __future__ import annotations
 
-from pydantic import BaseModel, ConfigDict, Field, StrictInt, field_validator
+from pydantic import BaseModel, ConfigDict, Field, StrictInt, field_validator, model_validator
 
 from beta_engine.api.schemas import (
     WorldPackageContinentResponse,
@@ -16,30 +16,13 @@ from beta_engine.api.schemas import (
     WorldPackageTimezoneAreaResponse,
     WorldPackageValidationResponse,
 )
-from beta_engine.domain.countries.models import CountrySimFactor
+from beta_engine.domain.countries.models import Country, VersionedCountrySimFactor, _validate_country_rating
+from beta_engine.domain.countries.rating_history import CountryRatingHistory, GAME_ATTRIBUTE_NAMES, RATING_SCALE_V2, LEGACY_RATING_SCALE, validate_rating_v2
 
 
-class CountryV1Response(BaseModel):
-    code: str
-    name: str
-    flag_asset: str | None = None
-    region: str
-    population: int
-    area_km2: int | None = None
-    default_population_year: int | None = None
-    default_population: int | None = None
-    population_by_year: dict[int, int | None] | None = None
-    court_count: int | None = None
-    travel_region: str | None = None
-    timezone_area: str | None = None
-    notes: str | None = None
+class CountryV1Response(Country):
+    """Preserve the explicit rating scale/history in all country responses."""
 
-    squash_popularity: CountrySimFactor
-    squash_access: CountrySimFactor
-    development_quality: CountrySimFactor
-    competition_quality: CountrySimFactor
-    elite_support: CountrySimFactor
-    squash_tradition: CountrySimFactor
 
 
 class CountryV1UpsertRequest(CountryV1Response):
@@ -114,16 +97,31 @@ class WorldPackageCountryV1UpdateRequest(BaseModel):
     region: str = Field(min_length=1)
     travel_region: str | None = None
     timezone_area: str | None = None
-    court_count: int | None = Field(ge=0)
+    court_count: int | None = Field(default=None, ge=0)
+    rating_scale: str = "country_ratings_1_5.v1"
+    rating_history: CountryRatingHistory | None = None
+    rating_effective_year: int | None = None
 
-    squash_popularity: CountrySimFactor
-    squash_access: CountrySimFactor
-    development_quality: CountrySimFactor
-    competition_quality: CountrySimFactor
-    elite_support: CountrySimFactor
-    squash_tradition: CountrySimFactor
+    squash_popularity: VersionedCountrySimFactor
+    squash_access: VersionedCountrySimFactor
+    development_quality: VersionedCountrySimFactor
+    competition_quality: VersionedCountrySimFactor
+    elite_support: VersionedCountrySimFactor
+    squash_tradition: VersionedCountrySimFactor
 
     expected_package_fingerprint: str | None = None
+
+
+    @model_validator(mode="after")
+    def validate_scale(self):
+        if self.rating_scale not in (LEGACY_RATING_SCALE, RATING_SCALE_V2):
+            raise ValueError("unsupported country rating scale")
+        validate = validate_rating_v2 if self.rating_scale == RATING_SCALE_V2 else _validate_country_rating
+        for name in GAME_ATTRIBUTE_NAMES:
+            validate(getattr(self, name))
+        if self.rating_scale == RATING_SCALE_V2 and self.court_count is not None:
+            raise ValueError("Court Count is deferred beyond pre-alpha")
+        return self
 
 
 class WorldPackageCountryV1CreateRequest(WorldPackageCountryV1UpdateRequest):

@@ -1,0 +1,36 @@
+{
+  "schema_version": "earth_sport_research.v1",
+  "data_cutoff": "2026-10-03",
+  "countries": {},
+  "world_id": "atp_earth",
+  "sources": {
+    "itf-publications": {
+      "title": "ITF Global Tennis Report editions and national reports",
+      "url": "https://www.itftennis.com/en/about-us/organisation/publications-and-resources/publications/",
+      "accessed_on": "2026-10-03",
+      "scope": "Index of 2019, 2021 and 2024 survey editions, with national reports.",
+      "limitations": "Survey years are not a 1955–2026 annual panel. Mixed-sex participation must not be presented as men-only. Selected national tables are available in the indexed public report; full coverage remains incomplete."
+    },
+    "atp-2000-02-21": {
+      "title": "ATP singles ranking archive, 21 February 2000",
+      "url": "https://www.atptour.com/en/rankings/singles?dateWeek=2000-02-21",
+      "accessed_on": "2026-10-03",
+      "scope": "Dated professional results cross-check.",
+      "limitations": "Rankings are outcomes, not direct measurements of popularity, access, coaching or elite support."
+    },
+    "itf-2019-cze": {
+      "title": "ITF Global Tennis Report 2019 — Czech Republic participation",
+      "url": "https://itf.uberflip.com/i/1169265-itf-global-tennis-report-2019-nations-a-k/105",
+      "accessed_on": "2026-10-03",
+      "scope": "Published national participation, clubs and coaches, all sexes. Report label 23 April 2019.",
+      "limitations": "Edition/report year is not proof of a common observation date for every value. Not men-only, not a historical annual series. Coach count does not measure coaching quality."
+    },
+    "itf-2019-deu": {
+      "title": "ITF Global Tennis Report 2019 — Germany participation",
+      "url": "https://itf.uberflip.com/i/1169265-itf-global-tennis-report-2019-nations-a-k/141",
+      "accessed_on": "2026-10-03",
+      "scope": "Published national participation, clubs and coaches, all sexes. Report label 23 April 2019.",
+      "limitations": "Edition/report year is not proof of a common observation date for every value. Not men-only, not a historical annual series. Coach count does not measure coaching quality."
+    }
+  }
+}

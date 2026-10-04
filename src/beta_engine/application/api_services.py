@@ -2680,7 +2680,7 @@ class SimulationApiService:
             for talent in allocation.talents:
                 next_sequence += 1
                 player = generator.generate_from_talent_seed(
-                    country=country,
+                    country=country.at_rating_year(season),
                     sequence=next_sequence,
                     talent_seed_value=talent.seed_value,
                     quality_band=talent.quality_band,
@@ -2748,7 +2748,7 @@ class SimulationApiService:
                 index,
             ).value
             base_player = generator.generate_from_talent_seed(
-                country=country,
+                country=country.at_rating_year(season),
                 sequence=manual_sequence,
                 talent_seed_value=seed_value,
                 quality_band=quality_band,

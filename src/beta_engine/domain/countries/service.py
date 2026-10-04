@@ -27,12 +27,12 @@ class CountryTalentModel:
     def participation_factor(self, country: Country) -> float:
         """Per-capita squash-pool factor from popularity and practical access.
 
-        Ratings use value/5 rather than the normalized 1->0 helper so even a
+        Ratings use value/scale_maximum rather than the normalized 1->0 helper so even a
         country rated 1 retains a small non-zero squash population.
         """
 
-        popularity = country.squash_popularity / 5.0
-        access = country.squash_access / 5.0
+        popularity = country.squash_popularity / country.rating_maximum
+        access = country.squash_access / country.rating_maximum
         return popularity * access
 
     def effective_squash_pool_weight(self, country: Country, population: int | float | None = None) -> float:

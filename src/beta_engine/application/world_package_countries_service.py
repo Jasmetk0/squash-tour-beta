@@ -7,11 +7,12 @@ import json
 from pathlib import Path
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field, StrictInt, field_validator
+from pydantic import BaseModel, ConfigDict, Field, StrictInt, field_validator, model_validator
 
 from beta_engine.application.world_package_registry_service import WorldPackageRegistryRecord, WorldPackageRegistryService
 from beta_engine.domain.countries import Country
-from beta_engine.domain.countries.models import CountrySimFactor
+from beta_engine.domain.countries.models import VersionedCountrySimFactor, _validate_country_rating
+from beta_engine.domain.countries.rating_history import CountryRatingHistory, GAME_ATTRIBUTE_NAMES, RATING_SCALE_V2, LEGACY_RATING_SCALE, validate_rating_v2
 from beta_engine.domain.timezone_areas import TimezoneArea, validate_timezone_areas
 from beta_engine.infrastructure.world_package_storage import WorldPackageCountryStore
 from beta_engine.application.world_package_validation_service import WorldPackageValidationResult, WorldPackageValidationService
@@ -77,14 +78,29 @@ class WorldPackageCountryUpdate(BaseModel):
     region: str = Field(min_length=1)
     travel_region: str | None = None
     timezone_area: str | None = None
-    court_count: int | None = Field(ge=0)
-    squash_popularity: CountrySimFactor
-    squash_access: CountrySimFactor
-    development_quality: CountrySimFactor
-    competition_quality: CountrySimFactor
-    elite_support: CountrySimFactor
-    squash_tradition: CountrySimFactor
+    court_count: int | None = Field(default=None, ge=0)
+    rating_scale: str = "country_ratings_1_5.v1"
+    rating_history: CountryRatingHistory | None = None
+    rating_effective_year: int | None = None
+    squash_popularity: VersionedCountrySimFactor
+    squash_access: VersionedCountrySimFactor
+    development_quality: VersionedCountrySimFactor
+    competition_quality: VersionedCountrySimFactor
+    elite_support: VersionedCountrySimFactor
+    squash_tradition: VersionedCountrySimFactor
     expected_package_fingerprint: str | None = None
+
+
+    @model_validator(mode="after")
+    def validate_scale(self):
+        if self.rating_scale not in (LEGACY_RATING_SCALE, RATING_SCALE_V2):
+            raise ValueError("unsupported country rating scale")
+        validate = validate_rating_v2 if self.rating_scale == RATING_SCALE_V2 else _validate_country_rating
+        for name in GAME_ATTRIBUTE_NAMES:
+            validate(getattr(self, name))
+        if self.rating_scale == RATING_SCALE_V2 and self.court_count is not None:
+            raise ValueError("Court Count is deferred beyond pre-alpha")
+        return self
 
 
 class WorldPackageCountryPopulationUpdate(BaseModel):
@@ -172,14 +188,17 @@ class WorldPackageCountriesService:
             raise WorldPackageMutationError("population years must be between 1955 and 2050")
         if any(isinstance(value, bool) or value <= 0 for value in timeline.values()):
             raise WorldPackageMutationError("population values must be positive integers")
-        country = Country.model_validate({
-            **create.model_dump(exclude={"expected_package_fingerprint", "population_by_year"}),
-            "flag_asset": None,
-            "population": timeline[2020],
-            "default_population": timeline[2020],
-            "default_population_year": 2020,
-            "population_by_year": timeline,
-        })
+        try:
+            country = Country.model_validate({
+                **create.model_dump(exclude={"expected_package_fingerprint", "population_by_year"}),
+                "flag_asset": None,
+                "population": timeline[2020],
+                "default_population": timeline[2020],
+                "default_population_year": 2020,
+                "population_by_year": timeline,
+            })
+        except ValueError as exc:
+            raise WorldPackageMutationError(str(exc)) from exc
         original: bytes | None = None
         try:
             original = store.create_country(country)
@@ -249,7 +268,7 @@ class WorldPackageCountriesService:
         try:
             updated = Country.model_validate({
                 **original.model_dump(),
-                **update.model_dump(exclude={"expected_package_fingerprint"}),
+                **update.model_dump(exclude={"expected_package_fingerprint"} | ({"rating_scale", "rating_history", "rating_effective_year"} - update.model_fields_set)),
             })
             store.replace_country(updated)
             assert self.validation_service is not None
@@ -367,7 +386,7 @@ class WorldPackageCountriesService:
             timezone_areas_authored=paths["timezone_areas"].is_file(),
         )
 
-    def get_country(self, world_id: str, country_code: str) -> WorldPackageCountryDetailResult | None:
+    def get_country(self, world_id: str, country_code: str, *, rating_year: int | None = None) -> WorldPackageCountryDetailResult | None:
         package = self.registry_service.get_package(world_id)
         paths = self.registry_service.package_paths(world_id)
         if package is None or paths is None:
@@ -377,6 +396,8 @@ class WorldPackageCountriesService:
         if code not in store.load_index().country_codes:
             return None
         country = store.load_country(code)
+        if rating_year is not None:
+            country = country.at_rating_year(rating_year)
         geography = self.get_geography(world_id)
         assert geography is not None
         region = next((item for item in geography.regions if item.code == country.region), None)

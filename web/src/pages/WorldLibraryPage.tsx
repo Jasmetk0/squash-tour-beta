@@ -286,7 +286,7 @@ function PackageCountriesTable({ countries, worldId }: { countries: CountryRecor
     <table>
       <thead>
         <tr>
-          <th>Code</th><th>Name</th><th>Region</th><th>Population</th><th>Population coverage</th><th>Area km²</th><th>Travel Region</th><th>Timezone Area</th><th>Squash Popularity</th><th>Squash Access</th><th>Development Quality</th><th>Competition Quality</th><th>Elite Support</th><th>Squash Tradition</th><th>Courts</th><th>Action</th>
+          <th>Code</th><th>Name</th><th>Region</th><th>Population</th><th>Population coverage</th><th>Area km²</th><th>Travel Region</th><th>Timezone Area</th><th>Squash Popularity</th><th>Squash Access</th><th>Development Quality</th><th>Competition Quality</th><th>Elite Support</th><th>Squash Tradition</th><th>Action</th>
         </tr>
       </thead>
       <tbody>
@@ -306,7 +306,6 @@ function PackageCountriesTable({ countries, worldId }: { countries: CountryRecor
             <CountryCell value={country.competition_quality} />
             <CountryCell value={country.elite_support} />
             <CountryCell value={country.squash_tradition} />
-            <CountryCell value={country.court_count} />
             <td><Link to={`/admin/world/library/${encodeURIComponent(worldId)}/countries/${encodeURIComponent(country.code)}`}>Open</Link></td>
           </tr>
         ))}
@@ -447,7 +446,7 @@ export function WorldPackageCountryCreatePage(): JSX.Element {
   const geographyQuery = useQuery({ queryKey: ['world-package-geography', worldId], queryFn: () => getWorldPackageGeography(worldId), retry: false })
   const [identity, setIdentity] = useState({ code: '', name: '', notes: '', area: '' })
   const [region, setRegion] = useState(''); const [travelRegion, setTravelRegion] = useState(''); const [timezoneArea, setTimezoneArea] = useState('')
-  const [values, setValues] = useState({ squash_popularity: '3', squash_access: '3', development_quality: '3', competition_quality: '3', elite_support: '3', squash_tradition: '3', court_count: '0' })
+  const [values, setValues] = useState({ squash_popularity: '5.5', squash_access: '5.5', development_quality: '5.5', competition_quality: '5.5', elite_support: '5.5', squash_tradition: '5.5', court_count: '' })
   const [populations, setPopulations] = useState<Array<PopulationRow & { id: number }>>([{ id: 0, year: '2020', population: '' }])
   const [validationError, setValidationError] = useState('')
   const mutation = useMutation({ mutationFn: (payload: WorldPackageCountryCreatePayload) => createWorldPackageCountry(worldId, payload), onSuccess: async response => {
@@ -463,7 +462,7 @@ export function WorldPackageCountryCreatePage(): JSX.Element {
     if (!years.includes('2020')) { setValidationError('Population year 2020 is required.'); return }
     setValidationError('')
     mutation.mutate({ code: identity.code, name: identity.name, notes: identity.notes || null, area_km2: identity.area ? Number(identity.area) : null, region, travel_region: travelRegion || null, timezone_area: timezoneArea || null,
-      squash_popularity: Number(values.squash_popularity), squash_access: Number(values.squash_access), development_quality: Number(values.development_quality), competition_quality: Number(values.competition_quality), elite_support: Number(values.elite_support), squash_tradition: Number(values.squash_tradition), court_count: values.court_count === '' ? null : Number(values.court_count),
+      rating_scale: 'country_ratings_1_10.v2', squash_popularity: Number(values.squash_popularity), squash_access: Number(values.squash_access), development_quality: Number(values.development_quality), competition_quality: Number(values.competition_quality), elite_support: Number(values.elite_support), squash_tradition: Number(values.squash_tradition), court_count: values.court_count === '' ? null : Number(values.court_count),
       population_by_year: Object.fromEntries(sortedPopulations.map(row => [row.year, Number(row.population)])), expected_package_fingerprint: pkg.fingerprint }) }
   if (packageQuery.isLoading || geographyQuery.isLoading) return <p className="status">Loading country form...</p>
   if (!allowed) return <section className="panel"><p className="error">Countries can only be created in an editable Custom World source.</p></section>
@@ -472,7 +471,7 @@ export function WorldPackageCountryCreatePage(): JSX.Element {
     <fieldset><legend>Identity</legend><label>Code<input required pattern="[A-Z]{3}" maxLength={3} value={identity.code} onChange={e => setIdentity({...identity,code:e.target.value})} /></label><label>Name<input required value={identity.name} onChange={e => setIdentity({...identity,name:e.target.value})} /></label><label>Notes<textarea value={identity.notes} onChange={e => setIdentity({...identity,notes:e.target.value})} /></label><label>Area km²<input type="number" min="1" value={identity.area} onChange={e => setIdentity({...identity,area:e.target.value})} /></label></fieldset>
     <fieldset><legend>Geography</legend><label>Region<select required value={region} onChange={e => setRegion(e.target.value)}><option value="">Select region</option>{geographyQuery.data?.regions.map(item=><option key={item.code} value={item.code}>{item.name} ({item.code})</option>)}</select></label><label>Travel Region<select value={travelRegion} onChange={e=>setTravelRegion(e.target.value)}><option value="">None</option>{geographyQuery.data?.travel_regions.map(item=><option key={item.code} value={item.code}>{item.name} ({item.code})</option>)}</select></label><label>Timezone Area<select value={timezoneArea} onChange={e=>setTimezoneArea(e.target.value)}><option value="">Not assigned</option>{(geographyQuery.data?.timezone_areas ?? []).map(item=><option key={item.code} value={item.code}>{item.name} ({item.code})</option>)}</select></label></fieldset>
     <fieldset><legend>Population</legend>{sortedPopulations.map(row=><div key={row.id}><input aria-label={`Population year ${row.id === 0 ? '2020' : row.id}`} type="number" min="1955" max="2050" required readOnly={row.year==='2020'} value={row.year} onChange={e=>setPopulations(rows=>rows.map(item=>item.id===row.id?{...item,year:e.target.value}:item))}/><input aria-label={`Population value ${row.year || row.id}`} type="number" min="1" required value={row.population} onChange={e=>setPopulations(rows=>rows.map(item=>item.id===row.id?{...item,population:e.target.value}:item))}/>{row.year!=='2020'&&<button type="button" onClick={()=>setPopulations(rows=>rows.filter(item=>item.id!==row.id))}>Remove</button>}</div>)}<button type="button" onClick={()=>setPopulations(rows=>[...rows,{id:Math.max(...rows.map(row=>row.id))+1,year:'',population:''}])}>+ Add authored year</button></fieldset>
-    <fieldset><legend>Squash / Country strength</legend>{Object.entries(values).map(([key,value])=><label key={key}>{key.split('_').join(' ')}<input type="number" required min={key==='court_count'?0:1} max={key==='court_count'?undefined:5} step={key==='court_count'?1:'any'} value={value} onChange={e=>setNumber(key as keyof typeof values,e.target.value)}/></label>)}</fieldset>
+    <fieldset><legend>Squash / Country strength</legend>{Object.entries(values).filter(([key]) => key !== 'court_count').map(([key,value])=><label key={key}>{key.split('_').join(' ')}<input type="number" required min={key==='court_count'?0:1} max={10} step={0.1} value={value} onChange={e=>setNumber(key as keyof typeof values,e.target.value)}/></label>)}</fieldset>
     <button type="submit" disabled={mutation.isPending}>{mutation.isPending?'Saving…':'Save country'}</button>
   </form></section>
 }
@@ -550,7 +549,7 @@ export function WorldPackageCountryDetailPage(): JSX.Element {
       {populationEditing && <PopulationEditForm detail={data} saving={populationMutation.isPending} error={populationMutation.error} onCancel={() => { setPopulationEditing(false); populationMutation.reset() }} onSave={payload => populationMutation.mutate(payload)} />}
       <SectionCard title="Geography"><DetailRow label="Area km²" value={formatNumber(data.country.area_km2)} /><DetailRow label="Region" value={data.region ? `${data.region.name} (${data.region.code})` : data.country.region} /><DetailRow label="Continent" value={data.continent?.name ?? '—'} /><DetailRow label="Travel Region" value={data.travel_region ? `${data.travel_region.name} (${data.travel_region.code})` : data.country.travel_region ?? '—'} /></SectionCard>
       <SectionCard title="Squash / Country strength">
-        <DetailRow label="Squash Popularity" value={data.country.squash_popularity} /><DetailRow label="Squash Access" value={data.country.squash_access} /><DetailRow label="Development Quality" value={data.country.development_quality} /><DetailRow label="Competition Quality" value={data.country.competition_quality} /><DetailRow label="Elite Support" value={data.country.elite_support} /><DetailRow label="Squash Tradition" value={data.country.squash_tradition} /><DetailRow label="Court Count" value={formatNumber(data.country.court_count)} />
+        <DetailRow label="Squash Popularity" value={data.country.squash_popularity} /><DetailRow label="Squash Access" value={data.country.squash_access} /><DetailRow label="Development Quality" value={data.country.development_quality} /><DetailRow label="Competition Quality" value={data.country.competition_quality} /><DetailRow label="Elite Support" value={data.country.elite_support} /><DetailRow label="Squash Tradition" value={data.country.squash_tradition} />
       </SectionCard>
       <details><summary>Technical source</summary><code>{data.source_path}</code></details>
     </>}
@@ -588,6 +587,8 @@ function PopulationEditForm({ detail, saving, error, onCancel, onSave }: { detai
 
 function CountryEditForm({ detail, geography, saving, error, onCancel, onSave }: { detail: WorldPackageCountryDetail, geography?: WorldPackageGeography, saving: boolean, error: unknown, onCancel: () => void, onSave: (payload: WorldPackageCountryUpdatePayload) => void }): JSX.Element {
   const country = detail.country
+  const ratingMaximum = country.rating_scale === "country_ratings_1_10.v2" ? 10 : 5
+  const ratingStep = ratingMaximum === 10 ? 0.1 : "any"
   const [name, setName] = useState(country.name)
   const [notes, setNotes] = useState(country.notes ?? '')
   const [area, setArea] = useState(country.area_km2 == null ? '' : String(country.area_km2))
@@ -597,7 +598,7 @@ function CountryEditForm({ detail, geography, saving, error, onCancel, onSave }:
   const [values, setValues] = useState({ squash_popularity: String(country.squash_popularity), squash_access: String(country.squash_access), development_quality: String(country.development_quality), competition_quality: String(country.competition_quality), elite_support: String(country.elite_support), squash_tradition: String(country.squash_tradition), court_count: country.court_count == null ? '' : String(country.court_count) })
   const submit = (event: FormEvent) => {
     event.preventDefault()
-    onSave({ name, notes: notes || null, area_km2: area ? Number(area) : null, region, travel_region: travelRegion || null, timezone_area: timezoneArea || null,
+    onSave({ rating_scale: country.rating_scale, name, notes: notes || null, area_km2: area ? Number(area) : null, region, travel_region: travelRegion || null, timezone_area: timezoneArea || null,
       squash_popularity: Number(values.squash_popularity), squash_access: Number(values.squash_access), development_quality: Number(values.development_quality), competition_quality: Number(values.competition_quality), elite_support: Number(values.elite_support), squash_tradition: Number(values.squash_tradition), court_count: values.court_count === '' ? null : Number(values.court_count), expected_package_fingerprint: detail.package.fingerprint })
   }
   const numeric = (key: keyof typeof values, label: string, min: number, max?: number, step: number | 'any' = 'any') => <label>{label}<input type="number" required min={min} max={max} step={step} value={values[key]} onChange={event => setValues(current => ({ ...current, [key]: event.target.value }))} /></label>
@@ -609,7 +610,7 @@ function CountryEditForm({ detail, geography, saving, error, onCancel, onSave }:
     <label>Region<select value={region} onChange={event => setRegion(event.target.value)}>{geography?.regions.map(item => <option key={item.code} value={item.code}>{item.name} ({item.code})</option>)}</select></label>
     <label>Travel Region<select value={travelRegion} onChange={event => setTravelRegion(event.target.value)}><option value="">None</option>{geography?.travel_regions.map(item => <option key={item.code} value={item.code}>{item.name} ({item.code})</option>)}</select></label>
     <label>Timezone Area<select value={timezoneArea} onChange={event => setTimezoneArea(event.target.value)}><option value="">Not assigned</option>{(geography?.timezone_areas ?? []).map(item => <option key={item.code} value={item.code}>{item.name} ({item.code})</option>)}</select></label>
-    {numeric('squash_popularity', 'Squash Popularity', 1, 5)}{numeric('squash_access', 'Squash Access', 1, 5)}{numeric('development_quality', 'Development Quality', 1, 5)}{numeric('competition_quality', 'Competition Quality', 1, 5)}{numeric('elite_support', 'Elite Support', 1, 5)}{numeric('squash_tradition', 'Squash Tradition', 1, 5)}{numeric('court_count', 'Court Count', 0, undefined, 1)}
-    <p><button type="submit" disabled={saving}>{saving ? 'Saving…' : 'Save changes'}</button> <button type="button" disabled={saving} onClick={onCancel}>Cancel</button></p>
+    {numeric('squash_popularity', 'Squash Popularity', 1, ratingMaximum, ratingStep)}{numeric('squash_access', 'Squash Access', 1, ratingMaximum, ratingStep)}{numeric('development_quality', 'Development Quality', 1, ratingMaximum, ratingStep)}{numeric('competition_quality', 'Competition Quality', 1, ratingMaximum, ratingStep)}{numeric('elite_support', 'Elite Support', 1, ratingMaximum, ratingStep)}{numeric('squash_tradition', 'Squash Tradition', 1, ratingMaximum, ratingStep)}
+    <p>{country.rating_history && <span>Historical ratings require an explicit year and evidence; edit the versioned history through import/API. </span>}<button type="submit" disabled={saving || Boolean(country.rating_history)}>{saving ? 'Saving…' : 'Save changes'}</button> <button type="button" disabled={saving} onClick={onCancel}>Cancel</button></p>
   </form></SectionCard>
 }

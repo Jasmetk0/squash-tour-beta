@@ -3796,6 +3796,9 @@ export type BootstrapNextSeasonResponse = {
 }
 
 export type CountryRecord = {
+  rating_scale?: "country_ratings_1_5.v1" | "country_ratings_1_10.v2"
+  rating_history?: { reference_year: number; data_cutoff: string; years: Record<string, unknown> } | null
+  rating_effective_year?: number | null
   code: string
   name: string
   flag_asset: string | null
@@ -4057,6 +4060,7 @@ export type WorldPackageCountryDetail = {
 }
 
 export type WorldPackageCountryUpdatePayload = {
+  rating_scale?: "country_ratings_1_5.v1" | "country_ratings_1_10.v2"
   name: string
   notes: string | null
   area_km2: number | null

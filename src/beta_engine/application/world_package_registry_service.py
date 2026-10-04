@@ -61,11 +61,13 @@ class WorldPackageRegistryService:
   return WorldPackageRegistryRecord(world_id=expected,name=str(m['name']),description=str(m.get('description','')),type=str(m['type']),status=str(m['status']),source=str(m['source']),editable=bool(m['editable']),deletable=bool(m['deletable']),archivable=bool(m['archivable']),version=str(m['version']),fingerprint=self._fingerprint(path),country_count=len(countries.countries),continent_count=len(self._items(path/'geography/continents.json','continents')),region_count=len(self._items(path/'geography/regions.json','regions')),travel_region_count=len(self._items(path/'geography/travel_regions.json','travel_regions')),timezone_area_count=len(self._items(path/'geography/timezone_areas.json','timezone_areas')) if (path/'geography/timezone_areas.json').is_file() else 0,used_by_run_count=None,validation_status='valid',storage=self._storage_summary(path))
  def _fingerprint(self,path): return hashlib.sha256(json.dumps(self._fingerprint_payload(path),sort_keys=True,separators=(',',':')).encode()).hexdigest()
  def _fingerprint_payload(self,path):
-  m=self._read_json(path/'world.json'); keys=('world_id','name','type','status','source','editable','deletable','archivable','version','content_schema_version','package_format_version')
+  m=self._read_json(path/'world.json'); keys=('world_id','name','type','status','source','editable','deletable','archivable','version','content_schema_version','package_format_version','rating_scale','rating_years','data_cutoff')
   payload={'world_metadata':{k:m[k] for k in keys if k in m},'countries':WorldPackageCountryStore(path).semantic_payload(),'continents':self._read_json(path/'geography/continents.json'),'regions':self._read_json(path/'geography/regions.json'),'travel_regions':self._read_json(path/'geography/travel_regions.json')}
   if (path/'geography/timezone_areas.json').is_file(): payload['timezone_areas']=self._read_json(path/'geography/timezone_areas.json')
   player_identity=path/'generation/player_identity.json'
   if player_identity.is_file(): payload['player_identity']=self._read_json(player_identity)
+  rating_sources=path/'generation/country_rating_sources.json'
+  if rating_sources.is_file(): payload['country_rating_sources']=self._read_json(rating_sources)
   return payload
  def _custom_package_dirs(self):
   root=self.world_packages_root/'custom'; return sorted((p for p in root.iterdir() if p.is_dir()),key=lambda p:p.name) if root.is_dir() else []

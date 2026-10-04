@@ -1,5 +1,12 @@
 # Squash Engine roadmap
 
+## Owner-requested Earth package work — candidate, 3 October 2026
+
+Historical-rating foundation and source research are in progress. Both complete
+1955–2026 datasets, historical territory mappings, generic official-source cloning,
+per-year editing and realism calibration remain required. See
+[Earth history implementation boundary](docs/EARTH_SPORT_HISTORY_V1.md).
+
 ## Active next work — 3 October 2026 / Master v72
 
 This order supersedes older next-step notices below while preserving completed-work history.

@@ -118,13 +118,13 @@ def test_kuwait_kyrgyzstan_source_anomaly_remains_two_page_specific_facts() -> N
     assert "Kyrgyzstan" in anomalous_38.definition_notes
 
 
-def test_fifa_bundle_now_contains_big_count_and_professional_2023() -> None:
+def test_fifa_bundle_contains_big_count_professional_and_structural_evidence() -> None:
     bundle = load_earth_research_bundle(RESEARCH)
 
     expected_2023 = {spec["dataset_id"] for spec in FIELD_SPECS.values()}
     assert expected_2023.issubset(bundle.datasets)
-    assert len(bundle.datasets) == 7
-    assert len(bundle.observations) == 1_285
+    assert len(bundle.datasets) == 32
+    assert len(bundle.observations) == 1_328
 
     for dataset_id in expected_2023:
         assert (

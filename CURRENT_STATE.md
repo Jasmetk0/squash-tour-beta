@@ -1,5 +1,29 @@
 # Current implementation and next action
 
+## Candidate — first canonical FIFA histories + first normalized ATP slice (4 October 2026)
+
+This slice converts two reviewed FIFA prototype countries into the actual
+`earth_sport_research.v2` country map instead of another calibration-only artifact.
+
+- FIFA Earth now has complete 1955–2026 `country_rating_history.v2` histories for
+  CZE and SVK: 2 countries × 72 years × 6 attributes = **864 authored ratings**.
+- Every rating is an explicit `derived_estimate` using calibration model
+  `fifa-earth-reviewed-country-history-cze-svk.v1`, exact normalized
+  `observation_ids`, source IDs, rationale and confidence.
+- Sparse dimensions remain low confidence; FIFA outcome rankings remain
+  validation-only and are not used as automatic rating inputs.
+- ATP Earth now registers its first two normalized datasets: ITF 2019 CZE and DEU
+  national snapshots, 3 observations each (players, clubs, coaches). The mixed-sex
+  and unknown observation-year limitations remain explicit.
+- ATP `countries` deliberately remains empty in this slice: participation/club/
+  coach counts alone are insufficient to author all six historical attributes.
+
+**Next:** normalize independent ATP competition/tradition/development evidence for
+CZE/DEU and author the first ATP 1955–2026 histories; then expand FIFA by the next
+reviewed country group. Official `world_packages/fifa_earth` and
+`world_packages/atp_earth` still cannot be built until all Earth countries have
+complete histories.
+
 ## Candidate — independent FIFA 2023 outcome validation for competition quality (4 October 2026)
 
 Stacked on the direct #1154 V2/structural landing head. This slice adds an independent

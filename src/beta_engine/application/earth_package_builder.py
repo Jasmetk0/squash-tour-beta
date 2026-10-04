@@ -86,36 +86,82 @@ class EarthResearchBundle:
     observations: dict[str, EarthObservation]
 
 
-def _load_country_history_shards(
-    *, research_path: Path, payload: dict
-) -> dict:
-    """Merge optional per-country history files without weakening research validation."""
+def _load_research_shards(*, research_path: Path, payload: dict) -> dict:
+    """Merge optional source, observation-manifest and country-history shards."""
 
     world_id = payload.get("world_id")
     if world_id not in {"fifa_earth", "atp_earth"}:
         return payload
 
-    shard_dir = research_path.parent / "countries" / world_id
-    if not shard_dir.exists():
-        return payload
-    if not shard_dir.is_dir():
-        raise ValueError(f"country history shard path is not a directory: {shard_dir}")
-
-    countries = dict(payload.get("countries") or {})
-    for shard_path in sorted(shard_dir.glob("*.json")):
-        code = shard_path.stem
-        if len(code) != 3 or not code.isascii() or not code.isalpha() or not code.isupper():
-            raise ValueError(f"invalid country history shard filename {shard_path.name!r}")
-        if code in countries:
-            raise ValueError(f"duplicate country history {code!r} in inline research and shards")
-        try:
-            shard_payload = json.loads(shard_path.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError) as exc:
-            raise ValueError(f"{code}: country history shard is unavailable or invalid") from exc
-        countries[code] = CountryRatingHistory.model_validate(shard_payload).model_dump(mode="json")
-
+    root = research_path.parent
     merged = dict(payload)
+
+    source_dir = root / "sources" / world_id
+    sources = dict(payload.get("sources") or {})
+    if source_dir.exists():
+        if not source_dir.is_dir():
+            raise ValueError(f"research source shard path is not a directory: {source_dir}")
+        for shard_path in sorted(source_dir.glob("*.json")):
+            source_id = shard_path.stem
+            if not source_id or any(ch.isspace() for ch in source_id):
+                raise ValueError(f"invalid research source shard filename {shard_path.name!r}")
+            if source_id in sources:
+                raise ValueError(f"duplicate research source {source_id!r} in inline research and shards")
+            try:
+                shard_payload = json.loads(shard_path.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError) as exc:
+                raise ValueError(f"{source_id}: research source shard is unavailable or invalid") from exc
+            sources[source_id] = EarthSource.model_validate(shard_payload).model_dump(mode="json")
+    merged["sources"] = sources
+
+    manifest_dir = root / "observation_manifests" / world_id
+    manifests = dict(payload.get("observation_datasets") or {})
+    if manifest_dir.exists():
+        if not manifest_dir.is_dir():
+            raise ValueError(
+                f"observation manifest shard path is not a directory: {manifest_dir}"
+            )
+        for shard_path in sorted(manifest_dir.glob("*.json")):
+            dataset_id = shard_path.stem
+            if not dataset_id or any(ch.isspace() for ch in dataset_id):
+                raise ValueError(f"invalid observation manifest shard filename {shard_path.name!r}")
+            if dataset_id in manifests:
+                raise ValueError(
+                    f"duplicate observation dataset {dataset_id!r} in inline research and shards"
+                )
+            try:
+                shard_payload = json.loads(shard_path.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError) as exc:
+                raise ValueError(
+                    f"{dataset_id}: observation manifest shard is unavailable or invalid"
+                ) from exc
+            manifest = EarthObservationDatasetManifest.model_validate(shard_payload)
+            if manifest.dataset_id != dataset_id:
+                raise ValueError(
+                    f"observation manifest shard {dataset_id!r} declares "
+                    f"{manifest.dataset_id!r}"
+                )
+            manifests[dataset_id] = manifest.model_dump(mode="json")
+    merged["observation_datasets"] = manifests
+
+    country_dir = root / "countries" / world_id
+    countries = dict(payload.get("countries") or {})
+    if country_dir.exists():
+        if not country_dir.is_dir():
+            raise ValueError(f"country history shard path is not a directory: {country_dir}")
+        for shard_path in sorted(country_dir.glob("*.json")):
+            code = shard_path.stem
+            if len(code) != 3 or not code.isascii() or not code.isalpha() or not code.isupper():
+                raise ValueError(f"invalid country history shard filename {shard_path.name!r}")
+            if code in countries:
+                raise ValueError(f"duplicate country history {code!r} in inline research and shards")
+            try:
+                shard_payload = json.loads(shard_path.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError) as exc:
+                raise ValueError(f"{code}: country history shard is unavailable or invalid") from exc
+            countries[code] = CountryRatingHistory.model_validate(shard_payload).model_dump(mode="json")
     merged["countries"] = countries
+
     return merged
 
 
@@ -125,7 +171,7 @@ def load_earth_research_bundle(path: Path) -> EarthResearchBundle:
     research_path = path.resolve()
     root = research_path.parent
     payload = json.loads(research_path.read_text(encoding="utf-8"))
-    payload = _load_country_history_shards(research_path=research_path, payload=payload)
+    payload = _load_research_shards(research_path=research_path, payload=payload)
     research = EarthSportResearch.model_validate(payload)
     datasets: dict[str, EarthObservationDataset] = {}
     observations: dict[str, EarthObservation] = {}

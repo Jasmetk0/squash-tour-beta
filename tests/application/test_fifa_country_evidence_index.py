@@ -10,8 +10,8 @@ from scripts.build_fifa_country_evidence_index import build_index
 def test_country_evidence_index_partitions_all_canonical_fifa_facts() -> None:
     index = build_index()
 
-    assert index["observation_count"] == 1355
-    assert index["safe_country_evidence_count"] == 1333
+    assert index["observation_count"] == 1378
+    assert index["safe_country_evidence_count"] == 1356
     assert index["manual_review_count"] == 22
     assert index["unresolved_count"] == 0
     assert index["direct_mapped_observation_count"] == 93

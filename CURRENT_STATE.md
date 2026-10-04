@@ -1,5 +1,27 @@
 # Current implementation and next action
 
+## Candidate — canonical FIFA observation identity resolution (4 October 2026)
+
+Stacked on the green Big Count + Professional 2023 canonical-ingestion slices.
+This candidate introduces typed, content-addressed observation→Earth identity
+resolution sets without mutating normalized source facts.
+
+The deterministic FIFA resolver binds the semantic hashes of all seven canonical
+input datasets, the reviewed identity-override artifact SHA-256 and the Earth
+identity catalogue SHA-256. It classifies each observation as direct,
+aggregate-member, manual-review or unresolved and never gives manual/unresolved
+evidence a resolved Earth code.
+
+PR-critical coverage requires all 1,285 canonical FIFA observations exactly once:
+Big Count = 998 direct + 20 UK aggregate-member + 20 manual-review;
+Professional 2023 = 239 direct + 6 UK aggregate-member + 2 page-38 manual-review.
+The KUWAIT/Kyrgyzstan conflict therefore remains unresolved at the identity layer
+instead of being silently assigned.
+
+This still authors **zero country ratings**. The next calibration slice can finally
+consume source facts through explicit Earth identity rather than matching names
+ad hoc.
+
 ## Candidate — FIFA Professional Football Report 2023 canonical ingestion (4 October 2026)
 
 Stacked on the green Big Count canonical-ingestion candidate (#1130). This slice

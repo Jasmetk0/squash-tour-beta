@@ -54,7 +54,7 @@ def test_fifa_2023_ranking_dataset_is_reproducible_and_registered() -> None:
 
     bundle = load_earth_research_bundle(RESEARCH)
     assert bundle.datasets[DATASET_ID] == checked_in
-    assert len(bundle.observations) == 1378
+    assert len(bundle.observations) == 1410
 
 
 def test_ranking_seed_preserves_exact_review_and_heldout_2023_values() -> None:

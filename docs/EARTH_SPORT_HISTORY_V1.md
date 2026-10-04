@@ -188,3 +188,19 @@ early participation/access remains much less certain. Davis Cup outcomes are use
 competition/tradition context only, while current development/support ratings use the
 documented Czech talent-centre framework and German federal high-performance-centre
 system. Court count remains excluded.
+
+
+## FIFA canonical-history batch 2 — 4 October 2026
+
+FIFA Earth now contains six complete country histories: CZE, SVK, JPN, IND, MAR
+and SEN. The second batch adds 1,728 annual attribute ratings across JPN, IND, MAR
+and SEN, all stored as `derived_estimate` values with exact canonical observation
+references.
+
+The batch deliberately preserves evidence asymmetry. Japan has long structural
+JFA evidence; India separates absolute participation scale from organised access;
+Senegal's modern academy/youth/professional pathway is much better evidenced than
+its 1955 pre-independence backcast. Morocco retains both conflicting FIFA academy
+timing observations (2009 establishment and 2019 opening) instead of manufacturing
+a false resolution. Outcome rankings remain validation data rather than automatic
+authoring inputs, and court count remains outside pre-alpha.

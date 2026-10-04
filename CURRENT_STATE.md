@@ -1,5 +1,23 @@
 # Current implementation and next action
 
+## Candidate — FIFA Professional Football Report 2023 canonical ingestion (4 October 2026)
+
+Stacked on the green Big Count canonical-ingestion candidate (#1130). This slice
+adds two content-addressed `earth_source_observations.v2` datasets from the
+checked-in FIFA Professional Football Report 2023 extraction: 112 non-null men's
+professional-player observations and 135 professional-club observations.
+
+The normalized facts preserve PDF page provenance and the source document SHA-256.
+Missing values remain missing. The extracted national sums (129,388 players /
+3,997 clubs) remain distinct from FIFA's published global headline, and the source
+page labelled KUWAIT while showing Kyrgyzstan identity is preserved as its own
+page-specific observation with `source_identity_anomaly` and
+`do_not_auto_map_to_earth` flags.
+
+With #1130 underneath, FIFA Earth research contains 7 canonical datasets / 1,285
+normalized observations and still **zero authored country ratings**. Association→Earth
+mapping and calibration remain later reviewed stages.
+
 ## Candidate — FIFA Big Count canonical ingestion (4 October 2026)
 
 Baseline is merged `buuk` after #1129 (Earth research provenance), #1128

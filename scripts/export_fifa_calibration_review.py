@@ -34,6 +34,9 @@ from scripts.audit_fifa_structural_features_heldout import (
 from scripts.audit_fifa_structural_feature_hypotheses import (
     build_audit as build_structural_hypothesis_audit,
 )
+from scripts.audit_fifa_development_evidence_gaps import (
+    build_gap_audit as build_development_gap_audit,
+)
 
 
 def export_review(output_dir: Path) -> dict[str, object]:
@@ -46,6 +49,7 @@ def export_review(output_dir: Path) -> dict[str, object]:
     structural_features = build_structural_features()
     structural_heldout_audit = build_structural_heldout_audit()
     structural_hypothesis_audit = build_structural_hypothesis_audit()
+    development_gap_audit = build_development_gap_audit()
 
     files = {
         "dimension_scores": output_dir / "fifa_dimension_evidence_scores.json",
@@ -55,6 +59,7 @@ def export_review(output_dir: Path) -> dict[str, object]:
         "structural_features": output_dir / "fifa_structural_features.json",
         "structural_heldout_audit": output_dir / "fifa_structural_heldout_audit.json",
         "structural_hypothesis_audit": output_dir / "fifa_structural_feature_hypothesis_audit.json",
+        "development_gap_audit": output_dir / "fifa_development_evidence_gap_audit.json",
     }
     payloads = {
         "dimension_scores": dimension_scores,
@@ -64,6 +69,7 @@ def export_review(output_dir: Path) -> dict[str, object]:
         "structural_features": structural_features,
         "structural_heldout_audit": structural_heldout_audit,
         "structural_hypothesis_audit": structural_hypothesis_audit,
+        "development_gap_audit": development_gap_audit,
     }
 
     for key, path in files.items():
@@ -119,6 +125,11 @@ def export_review(output_dir: Path) -> dict[str, object]:
                 "decision": value["decision"],
             }
             for key, value in structural_hypothesis_audit["hypotheses"].items()
+        },
+        "development_gap_audit": {
+            "development_facet_coverage": development_gap_audit["development_facet_coverage"],
+            "tradition_facet_coverage": development_gap_audit["tradition_facet_coverage"],
+            "next_source_priorities": development_gap_audit["next_source_priorities"],
         },
         "files": {key: path.name for key, path in files.items()},
     }

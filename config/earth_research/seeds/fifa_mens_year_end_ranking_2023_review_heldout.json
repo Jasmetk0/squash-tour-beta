@@ -1,0 +1,139 @@
+{
+  "schema_version": "fifa_mens_year_end_ranking_seed.v1",
+  "ranking_year": 2023,
+  "ranking_date": "2023-12-21",
+  "source_family": "FIFA/Coca-Cola Men's World Ranking",
+  "methodology_note": "FIFA's SUM ranking model has been in use since August 2018; year-end rank is senior men's national-team outcome evidence and is not a direct measure of domestic league quality.",
+  "countries": [
+    {
+      "earth_country_code": "CZE",
+      "fifa_code": "CZE",
+      "country_name": "Czechia",
+      "validation_role": "review",
+      "final_rank": 39,
+      "best_rank": 37,
+      "worst_rank": 41,
+      "source_url": "https://inside.fifa.com/en/fifa-rankings/world-ranking/CZE?gender=men"
+    },
+    {
+      "earth_country_code": "FRO",
+      "fifa_code": "FRO",
+      "country_name": "Faroe Islands",
+      "validation_role": "review",
+      "final_rank": 135,
+      "best_rank": 125,
+      "worst_rank": 135,
+      "source_url": "https://inside.fifa.com/fifa-rankings/world-ranking/FRO?gender=men"
+    },
+    {
+      "earth_country_code": "IND",
+      "fifa_code": "IND",
+      "country_name": "India",
+      "validation_role": "review",
+      "final_rank": 102,
+      "best_rank": 99,
+      "worst_rank": 102,
+      "source_url": "https://inside.fifa.com/en/fifa-rankings/world-ranking/IND?gender=men"
+    },
+    {
+      "earth_country_code": "JPN",
+      "fifa_code": "JPN",
+      "country_name": "Japan",
+      "validation_role": "review",
+      "final_rank": 17,
+      "best_rank": 17,
+      "worst_rank": 20,
+      "source_url": "https://inside.fifa.com/en/fifa-rankings/world-ranking/JPN?gender=men"
+    },
+    {
+      "earth_country_code": "MAR",
+      "fifa_code": "MAR",
+      "country_name": "Morocco",
+      "validation_role": "review",
+      "final_rank": 13,
+      "best_rank": 11,
+      "worst_rank": 14,
+      "source_url": "https://inside.fifa.com/fifa-rankings/world-ranking/MAR?gender=men"
+    },
+    {
+      "earth_country_code": "SEN",
+      "fifa_code": "SEN",
+      "country_name": "Senegal",
+      "validation_role": "review",
+      "final_rank": 20,
+      "best_rank": 18,
+      "worst_rank": 20,
+      "source_url": "https://inside.fifa.com/fifa-rankings/world-ranking/SEN?gender=men"
+    },
+    {
+      "earth_country_code": "SVK",
+      "fifa_code": "SVK",
+      "country_name": "Slovakia",
+      "validation_role": "review",
+      "final_rank": 45,
+      "best_rank": 45,
+      "worst_rank": 51,
+      "source_url": "https://inside.fifa.com/fifa-rankings/world-ranking/SVK?gender=men"
+    },
+    {
+      "earth_country_code": "USA",
+      "fifa_code": "USA",
+      "country_name": "USA",
+      "validation_role": "review",
+      "final_rank": 12,
+      "best_rank": 11,
+      "worst_rank": 13,
+      "source_url": "https://inside.fifa.com/fifa-rankings/world-ranking/USA?gender=men"
+    },
+    {
+      "earth_country_code": "ZAF",
+      "fifa_code": "RSA",
+      "country_name": "South Africa",
+      "validation_role": "review",
+      "final_rank": 66,
+      "best_rank": 62,
+      "worst_rank": 66,
+      "source_url": "https://inside.fifa.com/fifa-rankings/world-ranking/RSA?gender=men"
+    },
+    {
+      "earth_country_code": "BRA",
+      "fifa_code": "BRA",
+      "country_name": "Brazil",
+      "validation_role": "held_out_validation",
+      "final_rank": 5,
+      "best_rank": 3,
+      "worst_rank": 5,
+      "source_url": "https://inside.fifa.com/fifa-rankings/world-ranking/BRA?gender=men"
+    },
+    {
+      "earth_country_code": "DEU",
+      "fifa_code": "GER",
+      "country_name": "Germany",
+      "validation_role": "held_out_validation",
+      "final_rank": 16,
+      "best_rank": 14,
+      "worst_rank": 16,
+      "source_url": "https://inside.fifa.com/fifa-rankings/world-ranking/GER?gender=men"
+    },
+    {
+      "earth_country_code": "ISL",
+      "fifa_code": "ISL",
+      "country_name": "Iceland",
+      "validation_role": "held_out_validation",
+      "final_rank": 71,
+      "best_rank": 64,
+      "worst_rank": 71,
+      "source_url": "https://inside.fifa.com/fifa-rankings/world-ranking/ISL?gender=men"
+    },
+    {
+      "earth_country_code": "SMR",
+      "fifa_code": "SMR",
+      "country_name": "San Marino",
+      "validation_role": "held_out_validation",
+      "final_rank": 210,
+      "best_rank": 207,
+      "worst_rank": 211,
+      "source_url": "https://inside.fifa.com/fifa-rankings/world-ranking/SMR?gender=men"
+    }
+  ]
+}

@@ -17,6 +17,237 @@
       "accessed_on": "2026-10-03",
       "scope": "208 original table rows, association totals, registered/unregistered players, clubs and officials; raw facts in observations/fifa_big_count_2006.csv.",
       "limitations": "Checked-in normalized observation v2 datasets preserve the 2006 all-player, registered, unregistered, club and officials fields without treating missing cells as zero. The legacy extract is mixed-sex, does not retain per-cell direct/statistically-processed flags, and field definitions are not assumed globally identical. Earth identity reconciliation remains a separate reviewed layer."
+    },
+    "aiff-academy-accreditation-2023": {
+      "title": "AIFF — Academy Accreditation Rules and Regulations 2023-24",
+      "url": "https://www.the-aiff.com/index.php/article/aiff-announces-academy-accreditation-rules-and-regulations-2023-24",
+      "accessed_on": "2026-10-04",
+      "scope": "2023 nine-tier academy accreditation and youth-development system.",
+      "limitations": "Regulatory framework does not by itself measure realised academy quality."
+    },
+    "aiff-history": {
+      "title": "All India Football Federation — History",
+      "url": "https://www.the-aiff.com/history",
+      "accessed_on": "2026-10-04",
+      "scope": "Indian federation and national competition history.",
+      "limitations": "Institutional history is stronger evidence for tradition/competition than national popularity/access."
+    },
+    "aiff-isl-grassroots-2014": {
+      "title": "AIFF — Hero Indian Super League to kick off Grassroots Programme in Kolkata",
+      "url": "https://nt.the-aiff.com/article/hero-indian-super-league-to-kick-off-grassroots-programme-in-kolkata",
+      "accessed_on": "2026-10-04",
+      "scope": "2014 ISL-linked grassroots development structure and club development staffing.",
+      "limitations": "Programme launch evidence, not proof of nationwide implementation quality."
+    },
+    "caf-senegal-academies-league": {
+      "title": "CAF — Football academies supply Senegal's den",
+      "url": "https://www.cafonline.com/afcon2025/news/football-academies-supply-senegal-s-den/",
+      "accessed_on": "2026-10-04",
+      "scope": "Official CAF account: Génération Foot founded in 2000, Diambars in 2003, professional league launched in 2009, and academy-trained players represented strongly in the national team.",
+      "limitations": "Academy success is evidence for development pathways; league launch is competition/elite-support evidence. Neither directly measures mass participation."
+    },
+    "caf-senegal-member": {
+      "title": "CAF — Senegal member association",
+      "url": "https://www.cafonline.com/inside-caf/member-associations/senegal/",
+      "accessed_on": "2026-10-04",
+      "scope": "Official CAF association record: FSF created in 1960 and affiliated to FIFA and CAF in 1964.",
+      "limitations": "Association dates are institutional anchors only; they do not directly measure popularity, access, development or competition quality."
+    },
+    "caf-south-africa": {
+      "title": "CAF — South Africa member association",
+      "url": "https://www.cafonline.com/inside-caf/member-associations/south-africa/",
+      "accessed_on": "2026-10-04",
+      "scope": "South African association history and modern affiliation context.",
+      "limitations": "Association milestones alone do not quantify apartheid-era domestic participation."
+    },
+    "facr-rfa-2015": {
+      "title": "FAČR — First Regional Football Academy opened in Plzeň",
+      "url": "https://www.fotbal.cz/facr/video-foto-regionalni-fotbalove-akademie-slavnostni-otevreni-v-plzni/a1405",
+      "accessed_on": "2026-10-04",
+      "scope": "2015 launch of the FAČR regional academy model for U14/U15 talent development.",
+      "limitations": "Elite youth-development evidence, not a national participation measure."
+    },
+    "fifa-india-forward-2019": {
+      "title": "FIFA — Forward reaches new heights in India fostering technical capacity building",
+      "url": "https://inside.fifa.com/en/advancing-football/fifa-forward/news/fifa-forward-reaches-new-heights-in-india-fostering-technical-capacity-building",
+      "accessed_on": "2026-10-04",
+      "scope": "2018-2019 State Development Project, youth competitions and capacity building.",
+      "limitations": "Programme evidence is stronger for institutional/development direction than for national participation outcomes."
+    },
+    "fifa-morocco-academy-2009": {
+      "title": "FIFA — Morocco football academy history (2009 establishment)",
+      "url": "https://www.fifa.com/en/tournaments/womens/womensworldcup/australia-new-zealand2023/articles/morocco-womens-world-cup-team-2023-atlas-lionesses-france-preview",
+      "accessed_on": "2026-10-04",
+      "scope": "FIFA article stating Mohammed VI Football Academy was established in 2009.",
+      "limitations": "Other FIFA/Inside FIFA articles describe a 2019 opening of the Mohammed VI Football Academy. The conflict is preserved explicitly; 2009 is only a provisional prototype anchor pending reconciliation of whether the sources refer to different establishment/opening phases."
+    },
+    "fifa-morocco-development": {
+      "title": "FIFA — Talent Development Scheme gains new ground in Morocco",
+      "url": "https://inside.fifa.com/advancing-football/news/talent-development-scheme-gains-new-ground-in-morocco",
+      "accessed_on": "2026-10-04",
+      "scope": "Modern academy and technical-development evidence.",
+      "limitations": "Primarily modern elite/development evidence. This Inside FIFA source states a 2019 opening of the Mohammed VI Football Academy, while other FIFA articles state establishment/unveiling in 2009; preserve the conflict explicitly."
+    },
+    "fifa-senegal-generation-foot-2000": {
+      "title": "FIFA — Fatma Samoura and Senegalese football look to the future in Dakar",
+      "url": "https://inside.fifa.com/en/news/fatma-samoura-and-senegalese-football-look-to-the-future-in-dakar",
+      "accessed_on": "2026-10-04",
+      "scope": "Official FIFA account stating Génération Foot was founded in 2000 and documenting its training infrastructure and player-development role.",
+      "limitations": "Academy evidence is strong for elite development but does not represent nationwide access or participation."
+    },
+    "fifa-senegal-youth-2020": {
+      "title": "FIFA Forward paves way for youth competitions in Senegal",
+      "url": "https://inside.fifa.com/advancing-football/news/fifa-forward-paves-way-for-youth-competitions-in-senegal",
+      "accessed_on": "2026-10-04",
+      "scope": "2020 introduction of national U15/U17/U20 youth competition pathways across Senegal's regions.",
+      "limitations": "Programme-launch evidence; supports a structural development/competition-pathway anchor but is not a direct national participation or quality measurement."
+    },
+    "fifa-south-africa-history": {
+      "title": "FIFA historical publication — South African football and international exclusion",
+      "url": "https://img.fifa.com/image/upload/ghd0g4e9zyk5pbithtcg.pdf",
+      "accessed_on": "2026-10-04",
+      "scope": "Suspension/expulsion, domestic structures and readmission context.",
+      "limitations": "Historical narrative; numeric ratings remain model estimates."
+    },
+    "frmf-history": {
+      "title": "Royal Moroccan Football Federation — History of Moroccan football",
+      "url": "https://frmf.ma/fr/histoire-du-football-marocain",
+      "accessed_on": "2026-10-04",
+      "scope": "Moroccan league and federation history.",
+      "limitations": "Does not provide a complete annual participation series."
+    },
+    "jfa-history": {
+      "title": "Japan Football Association — History",
+      "url": "https://jfa.jp/eng/about_jfa/history/",
+      "accessed_on": "2026-10-04",
+      "scope": "JFA institutional, competition and professionalisation milestones.",
+      "limitations": "Milestones do not directly measure the six ratings."
+    },
+    "sfz-history-1938": {
+      "title": "Slovak Football Association — 1938 foundation history",
+      "url": "https://old.futbalsfz.sk/slovensko/zaujimavosti/novinka/pred-75-rokmi-4-novembra-1938-bol-zalozeny-slovensky-futbalovy-svaez-sfs.html",
+      "accessed_on": "2026-10-04",
+      "scope": "1938 Slovak association, independent 1939–45 period and continuity narrative into modern SFZ.",
+      "limitations": "Historical narrative; later Czechoslovak national totals/results are not automatically Slovak observations."
+    },
+    "uefa-czechia-history": {
+      "title": "UEFA — Developing football in Czechia",
+      "url": "https://www.uefa.com/news-media/news/0282-1830fd7e681b-d29c43b082a6-1000--developing-football-in-czechia/",
+      "accessed_on": "2026-10-04",
+      "scope": "Czech football association roots, Czech/Czechoslovak timeline, post-1993 competition and development context.",
+      "limitations": "Czechoslovak national-team results are not duplicated as Czech territorial observations; only localisable/inherited tradition context is used."
+    },
+    "uefa-faroe-history": {
+      "title": "UEFA — Faroe Islands association history",
+      "url": "https://www.uefa.com/nationalassociations/fro/",
+      "accessed_on": "2026-10-04",
+      "scope": "Club, competition, association, artificial-turf and UEFA/FIFA history.",
+      "limitations": "Sparse annual quantitative participation/development measures."
+    },
+    "uefa-slovakia-hattrick": {
+      "title": "UEFA — Developing football in Slovakia, HatTrick infrastructure",
+      "url": "https://www.uefa.com/news-media/news/025b-0ee5404d32d3-509db714df92-1000--developing-football-in-slovakia/",
+      "accessed_on": "2026-10-04",
+      "scope": "2018–22 youth/grassroots strategy, School Cup participation, 14 artificial pitches and national training centres.",
+      "limitations": "Programme evidence is period-specific and must not be backcast."
+    },
+    "uefa-slovakia-hattrick-review": {
+      "title": "UEFA HatTrick Review 2004–2014 — Slovakia",
+      "url": "https://www.uefa.com/MultimediaFiles/Download/uefaorg/HatTrick/02/18/45/84/2184584_DOWNLOAD.pdf",
+      "accessed_on": "2026-10-04",
+      "scope": "100 mini-pitches, ten full-size artificial pitches and grassroots/access infrastructure in Slovakia.",
+      "limitations": "Infrastructure evidence does not directly measure elite competition quality."
+    },
+    "ussoccer-development-academy-2007": {
+      "title": "U.S. Soccer — Development Academy history",
+      "url": "https://www.ussoccer.com/mnt-travel-roster/2017/10/five-things-to-know-about-the-us-soccer-development-academy",
+      "accessed_on": "2026-10-04",
+      "scope": "Development Academy launched in 2007 to improve elite youth player-development environments.",
+      "limitations": "Elite youth development evidence; not a mass-participation measure."
+    },
+    "ussoccer-history-framework": {
+      "title": "U.S. Soccer — History",
+      "url": "https://www.ussoccer.com/history",
+      "accessed_on": "2026-10-04",
+      "scope": "2003 National Training Center and federation player-development framework.",
+      "limitations": "Federation narrative; does not directly quantify national access or popularity."
+    },
+    "ussoccer-national-development-center-2018": {
+      "title": "U.S. Soccer — National Development Center grand opening",
+      "url": "https://www.ussoccer.com/stories/2018/05/ribbon-cutting-ceremony-marks-grand-opening-of-national-development-center",
+      "accessed_on": "2026-10-04",
+      "scope": "2018 coaching education, sports medicine and high-performance development facility.",
+      "limitations": "Elite/development infrastructure evidence only."
+    },
+    "ussoccer-timeline": {
+      "title": "U.S. Soccer — Historical timeline",
+      "url": "https://www.ussoccer.com/history/timeline",
+      "accessed_on": "2026-10-04",
+      "scope": "Federation, competitions, professional-league and major-event history.",
+      "limitations": "Chronology is not a quantitative popularity/access series."
+    },
+    "ussoccer-training-center": {
+      "title": "U.S. Soccer — National Training Center groundbreaking",
+      "url": "https://www.ussoccer.com/stories/2024/04/us-soccer-breaks-ground-on-the-arthur-m-blank-us-soccer-national-training-center",
+      "accessed_on": "2026-10-04",
+      "scope": "Modern high-performance and development infrastructure.",
+      "limitations": "Modern evidence only; cannot be backcast."
+    },
+    "dfb-history": {
+      "title": "DFB — History: 125 years of the German Football Association",
+      "url": "https://www.dfb.de/historie",
+      "accessed_on": "2026-10-04",
+      "scope": "Official DFB timeline including the 1900 association foundation and first German championship in 1903.",
+      "limitations": "Institutional/competition chronology is strong tradition evidence but does not directly quantify participation, development quality or current competitive strength."
+    },
+    "dfb-campus-2022": {
+      "title": "DFB — DFB Campus",
+      "url": "https://www.dfb.de/ueber-uns/der-dfb/dfb-campus",
+      "accessed_on": "2026-10-04",
+      "scope": "Official DFB account of the Campus in Frankfurt, home of the DFB since June 2022 and its first own sporting infrastructure integrating administration, sport and science.",
+      "limitations": "A national-association campus is direct elite/development infrastructure evidence but not a nationwide development-quality or access measurement."
+    },
+    "cbf-history-1914": {
+      "title": "CBF — 110 years of history",
+      "url": "https://www.cbf.com.br/a-cbf/noticias/detalhes/informes/cbf-completa-110-anos-de-historia",
+      "accessed_on": "2026-10-04",
+      "scope": "Official CBF history stating the governing body's foundation on 8 June 1914 and later institutional evolution.",
+      "limitations": "Federation history supports institutional continuity/tradition but does not directly measure player development or mass participation."
+    },
+    "cbf-granja-comary-history": {
+      "title": "CBF — Carlo Ancelotti visits Granja Comary",
+      "url": "https://www.cbf.com.br/selecao-brasileira/noticias/noticias-selecao-masculina/a/carlo-ancelotti-conhece-estrutura-da-granja-comary",
+      "accessed_on": "2026-10-04",
+      "scope": "Official CBF description of Granja Comary as Brazil's national-team training centre, used by the Seleção since 1987.",
+      "limitations": "National-team training-centre evidence informs elite/development infrastructure but does not describe the full national youth-development system."
+    },
+    "cbf-tds-2026": {
+      "title": "CBF — TDS FIFA Development Scheme workshop at Granja Comary",
+      "url": "https://www.cbf.com.br/selecao-brasileira/noticias/undefined/parana-x-macae/cbf-sedia-evento-voltado-para-a-formacao-de-novos-talentos",
+      "accessed_on": "2026-10-04",
+      "scope": "Official CBF report of the April 2026 FIFA TDS workshop integrating coaches/staff across Brazil's male youth and senior national-team categories with CBF Academy.",
+      "limitations": "One programme event shows current development-system activity; it is not proof of nationwide implementation quality or a historical series."
+    },
+    "uefa-iceland-history": {
+      "title": "UEFA — Developing football in Iceland",
+      "url": "https://www.uefa.com/nationalassociations/ISL/",
+      "accessed_on": "2026-10-04",
+      "scope": "Official UEFA association history including the 1912 national championship and KSÍ foundation/FIFA affiliation in 1947.",
+      "limitations": "Historical milestones support tradition/institutional context but do not directly quantify modern development quality or access."
+    },
+    "uefa-san-marino-history": {
+      "title": "UEFA — Developing football in San Marino",
+      "url": "https://www.uefa.com/nationalassociations/SMR/",
+      "accessed_on": "2026-10-04",
+      "scope": "Official UEFA timeline covering the first club, federation, official competition, youth academy, league and Casa del Calcio.",
+      "limitations": "Timeline milestones are structural evidence; they do not imply numeric rating changes or equal nationwide impact."
+    },
+    "fifa-mens-ranking-year-end-2023-review-heldout": {
+      "title": "FIFA/Coca-Cola Men's World Ranking — 2023 year-end review/held-out snapshot",
+      "url": "https://inside.fifa.com/fifa-rankings/world-ranking/news/argentina-peerless-panama-buoyant",
+      "accessed_on": "2026-10-04",
+      "scope": "Official 2023 year-end senior men's ranking outcomes for the nine review countries and four held-out validation countries; exact country historical-page locators are preserved per observation.",
+      "limitations": "Validation-only senior national-team outcome evidence. It is not a direct measure of domestic league depth and must not be used to fit the V2 professional ecosystem model."
     }
   },
   "observation_datasets": {
@@ -96,6 +327,369 @@
       "source_document_sha256": "fb15135da80e3cf395cadf1b2fcd2762f52268292cebc5e86957115b260c0e71",
       "input_artifact_sha256": "d3782c520864667195d44b8359bdbadf85f0dec51fe0ead8c626ac8619120bb4",
       "generated_by": "scripts/normalize_fifa_professional_2023.py"
+    },
+    "fifa-structural-aiff-academy-accreditation-2023-v1": {
+      "schema_version": "earth_source_observations_manifest.v1",
+      "dataset_id": "fifa-structural-aiff-academy-accreditation-2023-v1",
+      "source_id": "aiff-academy-accreditation-2023",
+      "relative_path": "observations/normalized/structural/fifa_structural_aiff_academy_accreditation_2023_v1.json",
+      "sha256": "06b175f5d71ec5fdcf2db6936d2dcb3afcad887cff91a5d370e18b2119d0f579",
+      "record_count": 1,
+      "source_document_sha256": null,
+      "input_artifact_sha256": "aa48ab28872008467eedb7601a7d7f0246490a54779b88bd51303e501d31cf1c",
+      "generated_by": "scripts/normalize_fifa_structural_events.py"
+    },
+    "fifa-structural-aiff-history-v1": {
+      "schema_version": "earth_source_observations_manifest.v1",
+      "dataset_id": "fifa-structural-aiff-history-v1",
+      "source_id": "aiff-history",
+      "relative_path": "observations/normalized/structural/fifa_structural_aiff_history_v1.json",
+      "sha256": "ca1be7c090e26e6801a1716fd874465cbe2e5f7290a26d4f07c4285e6fed1715",
+      "record_count": 4,
+      "source_document_sha256": null,
+      "input_artifact_sha256": "aa48ab28872008467eedb7601a7d7f0246490a54779b88bd51303e501d31cf1c",
+      "generated_by": "scripts/normalize_fifa_structural_events.py"
+    },
+    "fifa-structural-aiff-isl-grassroots-2014-v1": {
+      "schema_version": "earth_source_observations_manifest.v1",
+      "dataset_id": "fifa-structural-aiff-isl-grassroots-2014-v1",
+      "source_id": "aiff-isl-grassroots-2014",
+      "relative_path": "observations/normalized/structural/fifa_structural_aiff_isl_grassroots_2014_v1.json",
+      "sha256": "dbba72cbf20bc3e7a4f59bffe616e8fa531f0225bdc741cde8ddb764046a0004",
+      "record_count": 1,
+      "source_document_sha256": null,
+      "input_artifact_sha256": "aa48ab28872008467eedb7601a7d7f0246490a54779b88bd51303e501d31cf1c",
+      "generated_by": "scripts/normalize_fifa_structural_events.py"
+    },
+    "fifa-structural-caf-senegal-academies-league-v1": {
+      "schema_version": "earth_source_observations_manifest.v1",
+      "dataset_id": "fifa-structural-caf-senegal-academies-league-v1",
+      "source_id": "caf-senegal-academies-league",
+      "relative_path": "observations/normalized/structural/fifa_structural_caf_senegal_academies_league_v1.json",
+      "sha256": "21a6bf4f4ba6e6eb4693d79deac3e4012a951c58c4f68998f18df40c4954a6da",
+      "record_count": 2,
+      "source_document_sha256": null,
+      "input_artifact_sha256": "aa48ab28872008467eedb7601a7d7f0246490a54779b88bd51303e501d31cf1c",
+      "generated_by": "scripts/normalize_fifa_structural_events.py"
+    },
+    "fifa-structural-caf-senegal-member-v1": {
+      "schema_version": "earth_source_observations_manifest.v1",
+      "dataset_id": "fifa-structural-caf-senegal-member-v1",
+      "source_id": "caf-senegal-member",
+      "relative_path": "observations/normalized/structural/fifa_structural_caf_senegal_member_v1.json",
+      "sha256": "d1f2ade8cd77b2953d75c5a5d8204218817a19aca49ee226ec047e6aa0466054",
+      "record_count": 1,
+      "source_document_sha256": null,
+      "input_artifact_sha256": "aa48ab28872008467eedb7601a7d7f0246490a54779b88bd51303e501d31cf1c",
+      "generated_by": "scripts/normalize_fifa_structural_events.py"
+    },
+    "fifa-structural-caf-south-africa-v1": {
+      "schema_version": "earth_source_observations_manifest.v1",
+      "dataset_id": "fifa-structural-caf-south-africa-v1",
+      "source_id": "caf-south-africa",
+      "relative_path": "observations/normalized/structural/fifa_structural_caf_south_africa_v1.json",
+      "sha256": "954fba6dde15854a3c93de20fdbcd6ec12dd80698a2dc309f585f82522905b64",
+      "record_count": 2,
+      "source_document_sha256": null,
+      "input_artifact_sha256": "aa48ab28872008467eedb7601a7d7f0246490a54779b88bd51303e501d31cf1c",
+      "generated_by": "scripts/normalize_fifa_structural_events.py"
+    },
+    "fifa-structural-facr-rfa-2015-v1": {
+      "schema_version": "earth_source_observations_manifest.v1",
+      "dataset_id": "fifa-structural-facr-rfa-2015-v1",
+      "source_id": "facr-rfa-2015",
+      "relative_path": "observations/normalized/structural/fifa_structural_facr_rfa_2015_v1.json",
+      "sha256": "0a997e5ac58d227258d53e51232d690fb9c9022e7656f1e32ab29f5ccb805e61",
+      "record_count": 1,
+      "source_document_sha256": null,
+      "input_artifact_sha256": "aa48ab28872008467eedb7601a7d7f0246490a54779b88bd51303e501d31cf1c",
+      "generated_by": "scripts/normalize_fifa_structural_events.py"
+    },
+    "fifa-structural-fifa-india-forward-2019-v1": {
+      "schema_version": "earth_source_observations_manifest.v1",
+      "dataset_id": "fifa-structural-fifa-india-forward-2019-v1",
+      "source_id": "fifa-india-forward-2019",
+      "relative_path": "observations/normalized/structural/fifa_structural_fifa_india_forward_2019_v1.json",
+      "sha256": "196a339df211b8fd3c6d88f33a22d3bed2976b9bf5de65e61d29eb775452fe7e",
+      "record_count": 1,
+      "source_document_sha256": null,
+      "input_artifact_sha256": "aa48ab28872008467eedb7601a7d7f0246490a54779b88bd51303e501d31cf1c",
+      "generated_by": "scripts/normalize_fifa_structural_events.py"
+    },
+    "fifa-structural-fifa-morocco-academy-2009-v1": {
+      "schema_version": "earth_source_observations_manifest.v1",
+      "dataset_id": "fifa-structural-fifa-morocco-academy-2009-v1",
+      "source_id": "fifa-morocco-academy-2009",
+      "relative_path": "observations/normalized/structural/fifa_structural_fifa_morocco_academy_2009_v1.json",
+      "sha256": "9f46c6cc7a41d6da49a9999142b7f541f210f07baf8f48874d5050f91ce0b3e6",
+      "record_count": 1,
+      "source_document_sha256": null,
+      "input_artifact_sha256": "aa48ab28872008467eedb7601a7d7f0246490a54779b88bd51303e501d31cf1c",
+      "generated_by": "scripts/normalize_fifa_structural_events.py"
+    },
+    "fifa-structural-fifa-morocco-development-v1": {
+      "schema_version": "earth_source_observations_manifest.v1",
+      "dataset_id": "fifa-structural-fifa-morocco-development-v1",
+      "source_id": "fifa-morocco-development",
+      "relative_path": "observations/normalized/structural/fifa_structural_fifa_morocco_development_v1.json",
+      "sha256": "e964c795b17160906fe7f00d7952af91d7ad9ccfaaa22406634c00211318a28c",
+      "record_count": 1,
+      "source_document_sha256": null,
+      "input_artifact_sha256": "aa48ab28872008467eedb7601a7d7f0246490a54779b88bd51303e501d31cf1c",
+      "generated_by": "scripts/normalize_fifa_structural_events.py"
+    },
+    "fifa-structural-fifa-senegal-generation-foot-2000-v1": {
+      "schema_version": "earth_source_observations_manifest.v1",
+      "dataset_id": "fifa-structural-fifa-senegal-generation-foot-2000-v1",
+      "source_id": "fifa-senegal-generation-foot-2000",
+      "relative_path": "observations/normalized/structural/fifa_structural_fifa_senegal_generation_foot_2000_v1.json",
+      "sha256": "d788afb323f3725feb5318b8b02a8ab2d05d7a29788b265eead4070eb086c681",
+      "record_count": 1,
+      "source_document_sha256": null,
+      "input_artifact_sha256": "aa48ab28872008467eedb7601a7d7f0246490a54779b88bd51303e501d31cf1c",
+      "generated_by": "scripts/normalize_fifa_structural_events.py"
+    },
+    "fifa-structural-fifa-senegal-youth-2020-v1": {
+      "schema_version": "earth_source_observations_manifest.v1",
+      "dataset_id": "fifa-structural-fifa-senegal-youth-2020-v1",
+      "source_id": "fifa-senegal-youth-2020",
+      "relative_path": "observations/normalized/structural/fifa_structural_fifa_senegal_youth_2020_v1.json",
+      "sha256": "730904036d647d7a5ab03dc46109b5691b89768ffeb7dc41b64a6ef7b848ecff",
+      "record_count": 1,
+      "source_document_sha256": null,
+      "input_artifact_sha256": "aa48ab28872008467eedb7601a7d7f0246490a54779b88bd51303e501d31cf1c",
+      "generated_by": "scripts/normalize_fifa_structural_events.py"
+    },
+    "fifa-structural-fifa-south-africa-history-v1": {
+      "schema_version": "earth_source_observations_manifest.v1",
+      "dataset_id": "fifa-structural-fifa-south-africa-history-v1",
+      "source_id": "fifa-south-africa-history",
+      "relative_path": "observations/normalized/structural/fifa_structural_fifa_south_africa_history_v1.json",
+      "sha256": "f88290e29cb174ec6ab1c68bcc43e3a70cc2c6fdc8297b6e976ef4760b974420",
+      "record_count": 1,
+      "source_document_sha256": null,
+      "input_artifact_sha256": "aa48ab28872008467eedb7601a7d7f0246490a54779b88bd51303e501d31cf1c",
+      "generated_by": "scripts/normalize_fifa_structural_events.py"
+    },
+    "fifa-structural-frmf-history-v1": {
+      "schema_version": "earth_source_observations_manifest.v1",
+      "dataset_id": "fifa-structural-frmf-history-v1",
+      "source_id": "frmf-history",
+      "relative_path": "observations/normalized/structural/fifa_structural_frmf_history_v1.json",
+      "sha256": "6c152033515593fc538fbd05c950d514da005372bf4cea92e5f733ffedfb19c9",
+      "record_count": 2,
+      "source_document_sha256": null,
+      "input_artifact_sha256": "aa48ab28872008467eedb7601a7d7f0246490a54779b88bd51303e501d31cf1c",
+      "generated_by": "scripts/normalize_fifa_structural_events.py"
+    },
+    "fifa-structural-jfa-history-v1": {
+      "schema_version": "earth_source_observations_manifest.v1",
+      "dataset_id": "fifa-structural-jfa-history-v1",
+      "source_id": "jfa-history",
+      "relative_path": "observations/normalized/structural/fifa_structural_jfa_history_v1.json",
+      "sha256": "fa8e6c1d95a22ec4f3413eb48839e5765c7b53d0677257fb25594f861ed923ec",
+      "record_count": 6,
+      "source_document_sha256": null,
+      "input_artifact_sha256": "aa48ab28872008467eedb7601a7d7f0246490a54779b88bd51303e501d31cf1c",
+      "generated_by": "scripts/normalize_fifa_structural_events.py"
+    },
+    "fifa-structural-sfz-history-1938-v1": {
+      "schema_version": "earth_source_observations_manifest.v1",
+      "dataset_id": "fifa-structural-sfz-history-1938-v1",
+      "source_id": "sfz-history-1938",
+      "relative_path": "observations/normalized/structural/fifa_structural_sfz_history_1938_v1.json",
+      "sha256": "07a420a46482738ac0166f8f0c80636f304521c6397e406ab835397931c5624a",
+      "record_count": 1,
+      "source_document_sha256": null,
+      "input_artifact_sha256": "aa48ab28872008467eedb7601a7d7f0246490a54779b88bd51303e501d31cf1c",
+      "generated_by": "scripts/normalize_fifa_structural_events.py"
+    },
+    "fifa-structural-uefa-czechia-history-v1": {
+      "schema_version": "earth_source_observations_manifest.v1",
+      "dataset_id": "fifa-structural-uefa-czechia-history-v1",
+      "source_id": "uefa-czechia-history",
+      "relative_path": "observations/normalized/structural/fifa_structural_uefa_czechia_history_v1.json",
+      "sha256": "0298c3867fd73bb51584855c43aac6f81ebdac89b6e1bba32280a7f15ac4eb82",
+      "record_count": 2,
+      "source_document_sha256": null,
+      "input_artifact_sha256": "aa48ab28872008467eedb7601a7d7f0246490a54779b88bd51303e501d31cf1c",
+      "generated_by": "scripts/normalize_fifa_structural_events.py"
+    },
+    "fifa-structural-uefa-faroe-history-v1": {
+      "schema_version": "earth_source_observations_manifest.v1",
+      "dataset_id": "fifa-structural-uefa-faroe-history-v1",
+      "source_id": "uefa-faroe-history",
+      "relative_path": "observations/normalized/structural/fifa_structural_uefa_faroe_history_v1.json",
+      "sha256": "6faf67cf1e0b42cf699653327ba1e495388b0d6ae47e9f1363d3d82781db8604",
+      "record_count": 4,
+      "source_document_sha256": null,
+      "input_artifact_sha256": "aa48ab28872008467eedb7601a7d7f0246490a54779b88bd51303e501d31cf1c",
+      "generated_by": "scripts/normalize_fifa_structural_events.py"
+    },
+    "fifa-structural-uefa-slovakia-hattrick-v1": {
+      "schema_version": "earth_source_observations_manifest.v1",
+      "dataset_id": "fifa-structural-uefa-slovakia-hattrick-v1",
+      "source_id": "uefa-slovakia-hattrick",
+      "relative_path": "observations/normalized/structural/fifa_structural_uefa_slovakia_hattrick_v1.json",
+      "sha256": "d0e063429d539c9ddb905fd3b3b59eb00082e713c8cbcd0120b2c2edc98d84ec",
+      "record_count": 1,
+      "source_document_sha256": null,
+      "input_artifact_sha256": "aa48ab28872008467eedb7601a7d7f0246490a54779b88bd51303e501d31cf1c",
+      "generated_by": "scripts/normalize_fifa_structural_events.py"
+    },
+    "fifa-structural-uefa-slovakia-hattrick-review-v1": {
+      "schema_version": "earth_source_observations_manifest.v1",
+      "dataset_id": "fifa-structural-uefa-slovakia-hattrick-review-v1",
+      "source_id": "uefa-slovakia-hattrick-review",
+      "relative_path": "observations/normalized/structural/fifa_structural_uefa_slovakia_hattrick_review_v1.json",
+      "sha256": "d781a918756988d7899e72836b824cc4afabc55c8b264a7cf7fef2ef2ffe3a2c",
+      "record_count": 1,
+      "source_document_sha256": null,
+      "input_artifact_sha256": "aa48ab28872008467eedb7601a7d7f0246490a54779b88bd51303e501d31cf1c",
+      "generated_by": "scripts/normalize_fifa_structural_events.py"
+    },
+    "fifa-structural-ussoccer-development-academy-2007-v1": {
+      "schema_version": "earth_source_observations_manifest.v1",
+      "dataset_id": "fifa-structural-ussoccer-development-academy-2007-v1",
+      "source_id": "ussoccer-development-academy-2007",
+      "relative_path": "observations/normalized/structural/fifa_structural_ussoccer_development_academy_2007_v1.json",
+      "sha256": "cd1a0bb65ed1942ffaa7bb322bfa3f2d5aa6ab21112965d750b5ed5600053255",
+      "record_count": 1,
+      "source_document_sha256": null,
+      "input_artifact_sha256": "aa48ab28872008467eedb7601a7d7f0246490a54779b88bd51303e501d31cf1c",
+      "generated_by": "scripts/normalize_fifa_structural_events.py"
+    },
+    "fifa-structural-ussoccer-history-framework-v1": {
+      "schema_version": "earth_source_observations_manifest.v1",
+      "dataset_id": "fifa-structural-ussoccer-history-framework-v1",
+      "source_id": "ussoccer-history-framework",
+      "relative_path": "observations/normalized/structural/fifa_structural_ussoccer_history_framework_v1.json",
+      "sha256": "5a3ad3fd192b2c3c396a1afee48d2da7edbd128eda43ddac1367905fcb27f9ea",
+      "record_count": 1,
+      "source_document_sha256": null,
+      "input_artifact_sha256": "aa48ab28872008467eedb7601a7d7f0246490a54779b88bd51303e501d31cf1c",
+      "generated_by": "scripts/normalize_fifa_structural_events.py"
+    },
+    "fifa-structural-ussoccer-national-development-center-2018-v1": {
+      "schema_version": "earth_source_observations_manifest.v1",
+      "dataset_id": "fifa-structural-ussoccer-national-development-center-2018-v1",
+      "source_id": "ussoccer-national-development-center-2018",
+      "relative_path": "observations/normalized/structural/fifa_structural_ussoccer_national_development_center_2018_v1.json",
+      "sha256": "ae495e14f19ea0c545c293e9127debc9814b1f3122a6a444a0e389707dc06928",
+      "record_count": 1,
+      "source_document_sha256": null,
+      "input_artifact_sha256": "aa48ab28872008467eedb7601a7d7f0246490a54779b88bd51303e501d31cf1c",
+      "generated_by": "scripts/normalize_fifa_structural_events.py"
+    },
+    "fifa-structural-ussoccer-timeline-v1": {
+      "schema_version": "earth_source_observations_manifest.v1",
+      "dataset_id": "fifa-structural-ussoccer-timeline-v1",
+      "source_id": "ussoccer-timeline",
+      "relative_path": "observations/normalized/structural/fifa_structural_ussoccer_timeline_v1.json",
+      "sha256": "cf039763f19620e047c8bac93a15322cf11ed9d7eb02888db28cd84fb7c847b7",
+      "record_count": 4,
+      "source_document_sha256": null,
+      "input_artifact_sha256": "aa48ab28872008467eedb7601a7d7f0246490a54779b88bd51303e501d31cf1c",
+      "generated_by": "scripts/normalize_fifa_structural_events.py"
+    },
+    "fifa-structural-ussoccer-training-center-v1": {
+      "schema_version": "earth_source_observations_manifest.v1",
+      "dataset_id": "fifa-structural-ussoccer-training-center-v1",
+      "source_id": "ussoccer-training-center",
+      "relative_path": "observations/normalized/structural/fifa_structural_ussoccer_training_center_v1.json",
+      "sha256": "d93632eeaca251cc12fd2ce622ed050490d4508617929ec9a4d108e06b3a5fa3",
+      "record_count": 1,
+      "source_document_sha256": null,
+      "input_artifact_sha256": "aa48ab28872008467eedb7601a7d7f0246490a54779b88bd51303e501d31cf1c",
+      "generated_by": "scripts/normalize_fifa_structural_events.py"
+    },
+    "fifa-structural-cbf-granja-comary-history-v1": {
+      "schema_version": "earth_source_observations_manifest.v1",
+      "dataset_id": "fifa-structural-cbf-granja-comary-history-v1",
+      "source_id": "cbf-granja-comary-history",
+      "relative_path": "observations/normalized/structural/fifa_structural_cbf_granja_comary_history_v1.json",
+      "sha256": "89036ad91ae84650939f4e6aada525fb7177be8842e3d84f706b180e3850df1e",
+      "record_count": 1,
+      "source_document_sha256": null,
+      "input_artifact_sha256": "695b29b9552a8fb59133db25ec8948951a78217a9a1c049734c73ad79b75f665",
+      "generated_by": "scripts/normalize_fifa_structural_events.py"
+    },
+    "fifa-structural-cbf-history-1914-v1": {
+      "schema_version": "earth_source_observations_manifest.v1",
+      "dataset_id": "fifa-structural-cbf-history-1914-v1",
+      "source_id": "cbf-history-1914",
+      "relative_path": "observations/normalized/structural/fifa_structural_cbf_history_1914_v1.json",
+      "sha256": "47a9e88e0725a1f1b387843c521e8d4026f5b9e189ed42fc0d46be081736c9ed",
+      "record_count": 1,
+      "source_document_sha256": null,
+      "input_artifact_sha256": "695b29b9552a8fb59133db25ec8948951a78217a9a1c049734c73ad79b75f665",
+      "generated_by": "scripts/normalize_fifa_structural_events.py"
+    },
+    "fifa-structural-cbf-tds-2026-v1": {
+      "schema_version": "earth_source_observations_manifest.v1",
+      "dataset_id": "fifa-structural-cbf-tds-2026-v1",
+      "source_id": "cbf-tds-2026",
+      "relative_path": "observations/normalized/structural/fifa_structural_cbf_tds_2026_v1.json",
+      "sha256": "a552e55d6d3214a68b5794fb21df725267df2b68856ab6fd1ff7bd147403da12",
+      "record_count": 1,
+      "source_document_sha256": null,
+      "input_artifact_sha256": "695b29b9552a8fb59133db25ec8948951a78217a9a1c049734c73ad79b75f665",
+      "generated_by": "scripts/normalize_fifa_structural_events.py"
+    },
+    "fifa-structural-dfb-campus-2022-v1": {
+      "schema_version": "earth_source_observations_manifest.v1",
+      "dataset_id": "fifa-structural-dfb-campus-2022-v1",
+      "source_id": "dfb-campus-2022",
+      "relative_path": "observations/normalized/structural/fifa_structural_dfb_campus_2022_v1.json",
+      "sha256": "033915844a676ae4f7675d5c43525ff48283d32cda068c97ce1daf83a39f9517",
+      "record_count": 1,
+      "source_document_sha256": null,
+      "input_artifact_sha256": "695b29b9552a8fb59133db25ec8948951a78217a9a1c049734c73ad79b75f665",
+      "generated_by": "scripts/normalize_fifa_structural_events.py"
+    },
+    "fifa-structural-dfb-history-v1": {
+      "schema_version": "earth_source_observations_manifest.v1",
+      "dataset_id": "fifa-structural-dfb-history-v1",
+      "source_id": "dfb-history",
+      "relative_path": "observations/normalized/structural/fifa_structural_dfb_history_v1.json",
+      "sha256": "e6611caee95581076789b62600a92e2846a798955c049558e85521cf955f6a2a",
+      "record_count": 2,
+      "source_document_sha256": null,
+      "input_artifact_sha256": "695b29b9552a8fb59133db25ec8948951a78217a9a1c049734c73ad79b75f665",
+      "generated_by": "scripts/normalize_fifa_structural_events.py"
+    },
+    "fifa-structural-uefa-iceland-history-v1": {
+      "schema_version": "earth_source_observations_manifest.v1",
+      "dataset_id": "fifa-structural-uefa-iceland-history-v1",
+      "source_id": "uefa-iceland-history",
+      "relative_path": "observations/normalized/structural/fifa_structural_uefa_iceland_history_v1.json",
+      "sha256": "e5f37ad84e438198ffe7bf4d1b7a0e2212b1ed66385a5fbc7b156e49143aa3f8",
+      "record_count": 2,
+      "source_document_sha256": null,
+      "input_artifact_sha256": "695b29b9552a8fb59133db25ec8948951a78217a9a1c049734c73ad79b75f665",
+      "generated_by": "scripts/normalize_fifa_structural_events.py"
+    },
+    "fifa-structural-uefa-san-marino-history-v1": {
+      "schema_version": "earth_source_observations_manifest.v1",
+      "dataset_id": "fifa-structural-uefa-san-marino-history-v1",
+      "source_id": "uefa-san-marino-history",
+      "relative_path": "observations/normalized/structural/fifa_structural_uefa_san_marino_history_v1.json",
+      "sha256": "7278134c6aa5b3c6649dc7fa4c37209f7e44743aeff662cfb43cf2dee8e0089d",
+      "record_count": 6,
+      "source_document_sha256": null,
+      "input_artifact_sha256": "695b29b9552a8fb59133db25ec8948951a78217a9a1c049734c73ad79b75f665",
+      "generated_by": "scripts/normalize_fifa_structural_events.py"
+    },
+    "fifa-mens-year-end-ranking-2023-review-heldout-v1": {
+      "schema_version": "earth_source_observations_manifest.v1",
+      "dataset_id": "fifa-mens-year-end-ranking-2023-review-heldout-v1",
+      "source_id": "fifa-mens-ranking-year-end-2023-review-heldout",
+      "relative_path": "observations/normalized/fifa_mens_year_end_ranking_2023_review_heldout_v1.json",
+      "sha256": "0c1dd57c57235157e6dda57dec1853ab66ef94aecc32f6258b211aa5764eeb26",
+      "record_count": 13,
+      "source_document_sha256": null,
+      "input_artifact_sha256": "624594f149c32b3380e98480d3354383706bf5185c210b7daf519e9efeef996f",
+      "generated_by": "scripts/normalize_fifa_mens_ranking_2023.py"
     }
   }
 }

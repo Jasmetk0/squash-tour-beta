@@ -368,3 +368,92 @@ Access remains the strongest current quantitative candidate because registered-p
 and club-density rankings align much more closely with the reviewed prototype.
 
 All V2 results remain `rating_ready=false`.
+
+
+## V2 quantitative review decision
+
+The V2 scale-dominant professional recipes are now protected by a reproducible
+V1→V2 review policy in
+`config/earth_research/calibration/fifa_dimension_evidence_v2_review_policy.json`
+and `scripts/review_fifa_dimension_evidence_v2.py`.
+
+Measured nine-country prototype audit results:
+
+| Recipe | V1 MAD | V2 MAD | V2 max delta | V2 review countries |
+|---|---:|---:|---:|---|
+| competition quality 2023 | 2.683 | 0.600 | 1.9 | ZAF |
+| elite support 2023 | 2.917 | 0.983 | 2.5 | ZAF |
+| access 2006 | 0.700 | 0.700 | 2.0 | IND, USA |
+
+Competition quality therefore passes the current quantitative review gate, but
+**not** canonical authoring. Elite support remains context-required because the
+candidate is systematically below the review prototype and professional counts do
+not measure federation funding, technical centres, medical/science provision or
+travel/support capacity.
+
+The review explicitly forbids further V2 weight tuning against this same prototype
+set merely to improve fit. The next evidence step must be independent held-out or
+contextual validation. Popularity remains unsupported until independent
+cultural/audience evidence is normalized; development quality and tradition remain
+outside the current quantitative model.
+
+
+## Rejected single-factor structural transfer hypotheses
+
+Canonical structural evidence is useful context, but the review-set audit explicitly
+rejects four tempting shortcuts as standalone rating rules.
+
+Across the nine review countries:
+
+| Hypothesis | 2026 prototype attribute | Spearman rho | Decision |
+|---|---|---:|---|
+| tradition evidence span alone | tradition | 0.0169 | rejected |
+| pre-1955 event count alone | tradition | -0.0151 | rejected |
+| development-history span alone | development quality | -0.0840 | rejected |
+| development-evidence recency alone | development quality | -0.0252 | rejected |
+
+The candidate threshold is |rho| >= 0.60; none is remotely close.
+
+Therefore:
+- an older federation or older national competition does **not** automatically mean
+  a higher tradition rating;
+- a longer documented academy/development history does **not** automatically mean
+  higher development quality;
+- recent development activity does **not** prove successful development outcomes;
+- event counts remain documentation coverage, never quality weights.
+
+This negative result does not make structural evidence irrelevant. It means any
+future development/tradition calibration must be multifactor and supported by richer
+independent evidence (for example coaching/licensing depth, academy coverage,
+youth-competition structure and cultural/audience evidence) rather than a single
+timeline statistic. Held-out BRA/DEU/ISL/SMR remain excluded from fitting.
+
+
+## Independent 2023 competition outcome validation
+
+The V2 professional-ecosystem competition recipe is now checked against a separate
+outcome family rather than only against the nine-country prototype.
+
+`fifa-mens-year-end-ranking-2023-review-heldout-v1` stores the official FIFA men's
+year-end 2023 rank for:
+- review: CZE, FRO, IND, JPN, MAR, SEN, SVK, USA, ZAF;
+- held-out validation: BRA, DEU, ISL, SMR.
+
+The observations are tagged `outcome_validation_only` and
+`supports_competition_quality`. They are **not** direct domestic competition
+measurements and must never become V2 recipe components or fitting targets.
+
+`scripts/audit_fifa_competition_against_2023_ranking.py` reports review and held-out
+agreement separately:
+- Spearman correlation between V2 competition evidence score and negative FIFA rank
+  (higher score vs better/lower rank);
+- pairwise concordance;
+- countries with a ranking outcome but missing V2 competition score.
+
+Held-out countries remain `fit_allowed=false`. Ranking observations never appear
+inside V2 score component provenance. San Marino therefore remains a valid outcome
+observation with a missing V2 score rather than receiving an invented zero.
+
+This audit can strengthen or weaken confidence in the V2 competition recipe, but it
+cannot by itself author a canonical competition rating because senior national-team
+results and domestic competition depth are related but distinct concepts.

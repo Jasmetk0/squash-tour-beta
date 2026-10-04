@@ -10,10 +10,11 @@ from scripts.build_fifa_country_evidence_index import build_index
 def test_country_evidence_index_partitions_all_canonical_fifa_facts() -> None:
     index = build_index()
 
-    assert index["observation_count"] == 1285
-    assert index["safe_country_evidence_count"] == 1263
+    assert index["observation_count"] == 1355
+    assert index["safe_country_evidence_count"] == 1333
     assert index["manual_review_count"] == 22
     assert index["unresolved_count"] == 0
+    assert index["direct_mapped_observation_count"] == 70
     assert index["rating_ready"] is False
 
     safe_ids = [
@@ -25,7 +26,7 @@ def test_country_evidence_index_partitions_all_canonical_fifa_facts() -> None:
     unresolved_ids = [fact["observation_id"] for fact in index["unresolved"]]
 
     all_ids = safe_ids + manual_ids + unresolved_ids
-    assert len(all_ids) == 1285
+    assert len(all_ids) == 1355
     assert len(all_ids) == len(set(all_ids))
 
 
@@ -33,17 +34,33 @@ def test_usa_evidence_combines_2006_participation_and_2023_professional_facts() 
     index = build_index()
     usa = index["countries"]["USA"]
 
-    assert len(usa) == 7
-    assert {fact["observation_year"] for fact in usa} == {2006, 2023}
+    numeric_usa = [
+        fact
+        for fact in usa
+        if fact["measurement_type"] != "football_structural_event"
+    ]
+    structural_usa = [
+        fact
+        for fact in usa
+        if fact["measurement_type"] == "football_structural_event"
+    ]
+    assert len(numeric_usa) == 8
+    assert len(structural_usa) == 8
+    assert {fact["observation_year"] for fact in numeric_usa} == {2006, 2023}
 
-    by_type = {fact["measurement_type"]: fact for fact in usa}
+    by_type = {fact["measurement_type"]: fact for fact in numeric_usa}
     assert by_type["players_all_registered_and_unregistered"]["numeric_value"] == 24_472_778
     assert by_type["players_registered_or_association_reported"]["numeric_value"] == 4_186_778
     assert by_type["professional_male_players_reported"]["numeric_value"] == 2_791
     assert by_type["professional_clubs_reported"]["numeric_value"] == 101
+    assert by_type["fifa_mens_year_end_world_rank"]["numeric_value"] == 12
 
     assert {fact["identity_status"] for fact in usa} == {"direct"}
     assert {fact["earth_country_code"] for fact in usa} == {"USA"}
+    assert {
+        fact["identity_method"]
+        for fact in structural_usa
+    } == {"explicit_reviewed_event_to_earth"}
 
 
 def test_gbr_keeps_home_associations_as_components_not_synthetic_totals() -> None:
@@ -119,3 +136,63 @@ def test_manual_big_count_historical_geographies_never_enter_safe_country_index(
     assert len(big_count_manual) == 20
     assert {fact["source_entity"] for fact in big_count_manual} == expected_manual_entities
     assert all(fact["earth_country_code"] is None for fact in big_count_manual)
+
+
+
+def test_structural_events_enter_safe_country_evidence_without_fake_numeric_values() -> None:
+    index = build_index()
+
+    japan = [
+        fact
+        for fact in index["countries"]["JPN"]
+        if fact["measurement_type"] == "football_structural_event"
+    ]
+    assert len(japan) == 6
+    assert {fact["observation_year"] for fact in japan} == {
+        1921,
+        1965,
+        1977,
+        1986,
+        1991,
+        1993,
+    }
+    assert all(fact["numeric_value"] is None for fact in japan)
+    assert all(fact["text_value"] for fact in japan)
+    assert all(fact["identity_status"] == "direct" for fact in japan)
+
+
+def test_morocco_source_timing_conflict_is_preserved_as_two_safe_facts() -> None:
+    index = build_index()
+
+    events = [
+        fact
+        for fact in index["countries"]["MAR"]
+        if fact["measurement_type"] == "football_structural_event"
+        and any(
+            flag == "conflict_group:mar-mohammed-vi-academy-timing"
+            for flag in fact["quality_flags"]
+        )
+    ]
+    assert len(events) == 2
+    assert {fact["observation_year"] for fact in events} == {2009, 2019}
+    assert all("source_timing_conflict" in fact["quality_flags"] for fact in events)
+
+
+
+def test_heldout_structural_facts_are_safe_but_explicitly_labelled() -> None:
+    index = build_index()
+
+    heldout_codes = {"DEU", "BRA", "ISL", "SMR"}
+    heldout = [
+        fact
+        for code in heldout_codes
+        for fact in index["countries"][code]
+        if fact["measurement_type"] == "football_structural_event"
+    ]
+
+    assert len(heldout) == 14
+    assert all(
+        "held_out_validation_country" in fact["quality_flags"]
+        for fact in heldout
+    )
+    assert all(fact["identity_status"] == "direct" for fact in heldout)

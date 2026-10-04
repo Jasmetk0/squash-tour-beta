@@ -1,5 +1,125 @@
 # Current implementation and next action
 
+## Candidate — independent FIFA 2023 outcome validation for competition quality (4 October 2026)
+
+Stacked on the direct #1154 V2/structural landing head. This slice adds an independent
+canonical outcome family: FIFA/Coca-Cola Men's World Ranking year-end 2023 for the
+nine review countries plus four held-out countries (BRA/DEU/ISL/SMR).
+
+The 13 rank observations are direct Earth-mapped, cross-country-comparable and
+explicitly `outcome_validation_only`. They support competition-quality validation
+but are not domestic-league measurements and are forbidden from fitting the V2
+professional-player/club recipe.
+
+Expected canonical state after this slice:
+- 40 observation datasets;
+- 1,355 observations total;
+- country evidence: 1,333 safe + 22 manual + 0 unresolved;
+- 70 direct-mapped facts = 57 structural + 13 ranking outcomes.
+
+A dedicated audit compares V2 `competition_quality@2023` with the independent
+ranking ordering separately for review and held-out groups using Spearman and
+pairwise concordance. Review outcomes never change model weights; held-out outcomes
+remain `fit_allowed=false`. San Marino intentionally has a ranking outcome but no
+numeric V2 competition score because its FIFA Professional Report player/club fields
+are missing.
+
+**Next after green CI:** inspect the independent outcome agreement. If V2 competition
+also behaves plausibly on BRA/DEU/ISL without retuning, competition-quality can move
+closer to a canonical-authoring gate; otherwise retain it as provisional.
+
+## Candidate — reject simple FIFA structural rating proxies (4 October 2026)
+
+The factual structural feature layer now has an explicit hypothesis audit against
+the nine-country review prototype. Four obvious one-factor models all fail:
+
+- tradition span → tradition: Spearman rho 0.0169;
+- pre-1955 event count → tradition: rho -0.0151;
+- development-history span → development quality: rho -0.0840;
+- development-evidence recency → development quality: rho -0.0252.
+
+All are below the predeclared |rho| >= 0.60 candidate threshold and are locked as
+`rejected_as_single_factor_transfer`. BRA/DEU/ISL/SMR remain completely excluded
+from fit and thresholds.
+
+This is a useful negative calibration result: structural dates remain provenance-rich
+context, but they cannot be converted mechanically into development/tradition scores.
+**Next:** broaden independent evidence families before attempting any multifactor
+development/tradition model; do not tune another formula from the same timeline data.
+
+## Candidate — FIFA factual structural features + held-out audit (4 October 2026)
+
+On top of the green V2 review + structural-evidence rebuild, this slice extracts
+non-scoring structural features for all 250 Earth countries.
+
+Review/validation separation is machine-readable:
+- 9 review countries;
+- 4 held-out validation countries (DEU/BRA/ISL/SMR);
+- 237 countries with no curated structural seed.
+
+Features include tradition span, pre-1955 continuity, institutional/competition
+foundation dates, first/latest development evidence, academy/pathway/training-centre
+milestones, negative structural breaks and source-conflict groups. No feature is
+converted into a country rating.
+
+The held-out audit projects DEU/BRA/ISL/SMR into distributions defined only by the
+nine review countries. Held-out values never alter fit parameters or reference
+distributions. This deliberately demonstrates that long tradition, long development
+history and recent development evidence are separate factual axes rather than one
+hidden football-strength score.
+
+**Next:** after green CI, use these features to design a reviewed tradition/development
+calibration hypothesis, but validate it on held-out countries before any canonical
+rating promotion.
+
+## Candidate — FIFA structural evidence rebuilt on V2 calibration baseline (4 October 2026)
+
+This candidate ports the previously green structural-evidence stack onto the current
+V2 calibration/review baseline without reverting any V2 signal or review work.
+
+Expected canonical FIFA research state:
+- 39 normalized observation datasets;
+- 1,342 observations total;
+- country evidence: 1,320 safe + 22 manual + 0 unresolved;
+- 57 direct-mapped structural events;
+- 43 review events + 14 held-out validation events;
+- development-relevant structural references: 23;
+- tradition-relevant structural references: 25.
+
+Structural observations are dated facts only. They carry no numeric quality score,
+and event count is never a rating proxy. The held-out Germany/Brazil/Iceland/
+San Marino events are labelled and must not be used to fit weights or transfer
+curves.
+
+**Next after green CI:** use held-out structural evidence to test contextual
+development/tradition/elite-support reasoning without retuning V2 against the same
+nine-country prototype.
+
+## Candidate — FIFA dimension evidence V2 review decision (4 October 2026)
+
+The reproducible V1→V2 review now confirms that the scale-dominant professional
+recipes materially fixed the density-only failure without further tuning against
+the same nine-country prototype.
+
+Measured prototype audit:
+- competition quality MAD: 2.683 → 0.600 (improvement 2.083);
+- elite support MAD: 2.917 → 0.983 (improvement 1.934);
+- both 2023 recipes now have one >=1.5-point review outlier: South Africa.
+
+Decision:
+- `competition_quality@2023`: quantitative review passed, but canonical authoring
+  remains blocked pending held-out/context validation;
+- `elite_support@2023`: context required; the model remains systematically below
+  the prototype and does not measure federation funding/technical/medical support;
+- `squash_access@2006`: retained provisional with India/USA review outliers;
+- popularity remains unsupported in V2; development/tradition remain unsupported
+  by the quantitative source slice.
+
+The checked-in review policy explicitly forbids further weight tuning on the same
+nine-country prototype merely to reduce residual error. **Next:** use independent
+held-out structural evidence and contextual source families before any canonical
+rating promotion.
+
 ## Candidate — FIFA dimension evidence model V2 (4 October 2026)
 
 The merged calibration-review artifact exposed a structural flaw in V1:

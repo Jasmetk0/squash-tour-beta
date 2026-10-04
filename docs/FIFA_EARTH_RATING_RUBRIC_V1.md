@@ -247,3 +247,45 @@ human review before any transfer curve is made canonical.
 
 The audit never writes ratings, never changes anchors and remains
 `rating_ready=false`.
+
+
+## Provisional dimension evidence-score model
+
+`config/earth_research/calibration/fifa_dimension_evidence_model_v1.json`
+defines the first explicit 1–10 transfer model over the canonical empirical signal
+layer. This is a **calibration aid**, not canonical country-rating authorship.
+
+The percentile→evidence-score curve is monotone and piecewise linear:
+
+| Percentile | Evidence score |
+|---:|---:|
+| 0 | 1.5 |
+| 5 | 2.5 |
+| 15 | 3.5 |
+| 30 | 4.5 |
+| 50 | 5.5 |
+| 70 | 6.5 |
+| 85 | 7.5 |
+| 95 | 8.5 |
+| 99 | 9.3 |
+| 100 | 9.7 |
+
+The curve deliberately does not use `percentile / 10`. It aligns empirical
+relative strength with the existing qualitative 1–10 rubric while leaving room
+below/above observed samples and keeping 10.0 exceptional rather than automatic.
+
+Current recipes:
+
+- `squash_popularity@2006`: 100% participation intensity;
+- `squash_access@2006`: 65% registered-player intensity + 35% club footprint;
+- `competition_quality@2023`: 65% professional-player density + 35% professional-club density;
+- `elite_support@2023`: 45% professional-player density + 55% professional-club density.
+
+All required components must exist. Missing remains missing. The current source
+slice does not produce quantitative evidence scores for `development_quality` or
+`squash_tradition`.
+
+Every result from
+`scripts/build_fifa_dimension_evidence_scores.py` is marked
+`rating_ready=false`. A later canonical rating may use these scores only alongside
+independent historical/context evidence with exact observation provenance.

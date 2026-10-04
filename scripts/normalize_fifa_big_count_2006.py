@@ -177,8 +177,8 @@ def build_dataset(*, source: Path = DEFAULT_SOURCE) -> EarthObservationDataset:
                     is_statistically_modelled=None,
                     territory_mapping_method=None,
                     source_locator=(
-                        f"Big Count All Players table; association={association!r}; "
-                        f"column={source_field!r}"
+                        "Big Count All Players table; "
+                        f"association={association};column={source_field}"
                     ),
                     definition_notes=(
                         spec["notes"]

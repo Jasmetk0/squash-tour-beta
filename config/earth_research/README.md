@@ -53,5 +53,11 @@ binds the exact input dataset semantic hashes, override-artifact SHA-256 and Ear
 identity catalogue SHA-256. Direct, aggregate-member, manual-review and unresolved
 states are explicit; manual/unresolved facts never receive a resolved Earth code.
 
+`scripts/build_fifa_country_evidence_index.py` is the next read-only calibration
+view. It partitions every canonical FIFA observation exactly once: safe direct or
+aggregate-member facts are indexed under their Earth code, while manual/unresolved
+facts remain outside country evidence. Aggregate-member observations are kept as
+components rather than silently summed, and the index is explicitly `rating_ready=false`.
+
 See [the implementation/research boundary](../../docs/EARTH_SPORT_HISTORY_V1.md)
 for source limitations, provenance rules, audit/build commands and next steps.

@@ -36,6 +36,8 @@ separate inputs. Innate potential rarity must remain independent of nationality.
 - Initial-pool quantity and weekly intake use birth-cohort-year population and
   ratings. Annual talent planning uses its requested year; player generation uses
   the requested season environment. Existing non-history behavior is preserved.
+- New-country UI authors v2 tenths; Court Count no longer appears in the World
+  Library table/detail/editor. Old inert Court Count data survives old contracts.
 - Builder refuses incomplete country/year coverage and refuses to overwrite an
   existing package. Source catalogue, observation dataset manifests and history
   metadata participate in package identity. Persisted validation checks declared
@@ -46,6 +48,7 @@ separate inputs. Innate potential rarity must remain independent of nationality.
 
 - **Neither official Earth directory exists yet. Both research `countries` maps
   remain empty.** Registering future IDs does not display nonexistent packages.
+  No fabricated neutral profiles are shipped to satisfy coverage mechanically.
 - Existing files under `config/earth_research/observations/` are earlier raw or
   source-specific extracts. They are intentionally **not** silently promoted to
   `earth_source_observations.v2`. Each must be re-extracted/normalized with its

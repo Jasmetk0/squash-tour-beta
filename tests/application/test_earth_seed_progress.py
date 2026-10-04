@@ -37,7 +37,7 @@ def test_atp_first_complete_histories_are_evidence_resolvable_and_conservative()
     assert set(bundle.research.countries) == {"CZE", "DEU"}
     assert bundle.research.data_cutoff.isoformat() == "2026-10-04"
     assert len(bundle.datasets) == 8
-    assert len(bundle.observations) == 30
+    assert len(bundle.observations) == 33
 
     for code, history in bundle.research.countries.items():
         assert history.missing_earth_years == []

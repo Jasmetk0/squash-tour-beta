@@ -10,11 +10,11 @@ from scripts.build_fifa_country_evidence_index import build_index
 def test_country_evidence_index_partitions_all_canonical_fifa_facts() -> None:
     index = build_index()
 
-    assert index["observation_count"] == 1378
-    assert index["safe_country_evidence_count"] == 1356
+    assert index["observation_count"] == 1410
+    assert index["safe_country_evidence_count"] == 1388
     assert index["manual_review_count"] == 22
     assert index["unresolved_count"] == 0
-    assert index["direct_mapped_observation_count"] == 93
+    assert index["direct_mapped_observation_count"] == 125
     assert index["rating_ready"] is False
 
     safe_ids = [
@@ -26,7 +26,7 @@ def test_country_evidence_index_partitions_all_canonical_fifa_facts() -> None:
     unresolved_ids = [fact["observation_id"] for fact in index["unresolved"]]
 
     all_ids = safe_ids + manual_ids + unresolved_ids
-    assert len(all_ids) == 1378
+    assert len(all_ids) == 1410
     assert len(all_ids) == len(set(all_ids))
 
 

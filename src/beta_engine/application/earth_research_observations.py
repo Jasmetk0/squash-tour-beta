@@ -46,6 +46,7 @@ class EarthObservation(BaseModel):
         "administrative_registry",
         "survey",
         "published_table",
+        "official_narrative",
         "statistically_processed",
         "modelled_source_estimate",
         "mixed",

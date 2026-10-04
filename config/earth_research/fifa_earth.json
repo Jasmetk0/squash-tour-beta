@@ -16,8 +16,64 @@
       "url": "https://web.archive.org/web/20160304131953/http://www.fifa.com/worldfootball/bigcount/allplayers.html",
       "accessed_on": "2026-10-03",
       "scope": "208 original table rows, association totals, registered/unregistered players, clubs and officials; raw facts in observations/fifa_big_count_2006.csv.",
-      "limitations": "This All Players table is not men-only. Association identities do not equal the Earth ISO country catalogue. Missing data must not be read as zero. Single survey year cannot substantiate an annual 1955–2026 history."
+      "limitations": "Checked-in normalized observation v2 datasets preserve the 2006 all-player, registered, unregistered, club and officials fields without treating missing cells as zero. The legacy extract is mixed-sex, does not retain per-cell direct/statistically-processed flags, and field definitions are not assumed globally identical. Earth identity reconciliation remains a separate reviewed layer."
     }
   },
-  "observation_datasets": {}
+  "observation_datasets": {
+    "fifa-big-count-2006-all-players-v2": {
+      "schema_version": "earth_source_observations_manifest.v1",
+      "dataset_id": "fifa-big-count-2006-all-players-v2",
+      "source_id": "fifa-big-count-2006",
+      "relative_path": "observations/normalized/fifa_big_count_2006_all_players_v2.json",
+      "sha256": "a4434dd56e227c2466f6a12f793b1a4200d8f1d9e8c992789b1be3f31df12d7f",
+      "record_count": 208,
+      "source_document_sha256": null,
+      "input_artifact_sha256": "00bb138d03f6cbfed6f909311f44fc5fc8643ad4338e6be17f3f0305a35a6944",
+      "generated_by": "scripts/normalize_fifa_big_count_2006.py"
+    },
+    "fifa-big-count-2006-registered-v2": {
+      "schema_version": "earth_source_observations_manifest.v1",
+      "dataset_id": "fifa-big-count-2006-registered-v2",
+      "source_id": "fifa-big-count-2006",
+      "relative_path": "observations/normalized/fifa_big_count_2006_registered_v2.json",
+      "sha256": "41f9ad69613151c71f7f991c4620d94cc89a244ffe93c818b715b2b212d9fa3c",
+      "record_count": 208,
+      "source_document_sha256": null,
+      "input_artifact_sha256": "00bb138d03f6cbfed6f909311f44fc5fc8643ad4338e6be17f3f0305a35a6944",
+      "generated_by": "scripts/normalize_fifa_big_count_2006.py"
+    },
+    "fifa-big-count-2006-unregistered-v2": {
+      "schema_version": "earth_source_observations_manifest.v1",
+      "dataset_id": "fifa-big-count-2006-unregistered-v2",
+      "source_id": "fifa-big-count-2006",
+      "relative_path": "observations/normalized/fifa_big_count_2006_unregistered_v2.json",
+      "sha256": "000f0e196f49e4d6b0e6fb36eb39c540ad36f6c358dc03f93b60c511787ded4c",
+      "record_count": 208,
+      "source_document_sha256": null,
+      "input_artifact_sha256": "00bb138d03f6cbfed6f909311f44fc5fc8643ad4338e6be17f3f0305a35a6944",
+      "generated_by": "scripts/normalize_fifa_big_count_2006.py"
+    },
+    "fifa-big-count-2006-clubs-v2": {
+      "schema_version": "earth_source_observations_manifest.v1",
+      "dataset_id": "fifa-big-count-2006-clubs-v2",
+      "source_id": "fifa-big-count-2006",
+      "relative_path": "observations/normalized/fifa_big_count_2006_clubs_v2.json",
+      "sha256": "ba4b13fb49850ecf25b42f7e058366ba27e6894fc0ca1f5c40a7ad80af3fe5f6",
+      "record_count": 206,
+      "source_document_sha256": null,
+      "input_artifact_sha256": "00bb138d03f6cbfed6f909311f44fc5fc8643ad4338e6be17f3f0305a35a6944",
+      "generated_by": "scripts/normalize_fifa_big_count_2006.py"
+    },
+    "fifa-big-count-2006-officials-v2": {
+      "schema_version": "earth_source_observations_manifest.v1",
+      "dataset_id": "fifa-big-count-2006-officials-v2",
+      "source_id": "fifa-big-count-2006",
+      "relative_path": "observations/normalized/fifa_big_count_2006_officials_v2.json",
+      "sha256": "0ac39d2aed669122c0ffb64dd3b697ade11a460c78bd4e19e0859a47743e5d72",
+      "record_count": 208,
+      "source_document_sha256": null,
+      "input_artifact_sha256": "00bb138d03f6cbfed6f909311f44fc5fc8643ad4338e6be17f3f0305a35a6944",
+      "generated_by": "scripts/normalize_fifa_big_count_2006.py"
+    }
+  }
 }

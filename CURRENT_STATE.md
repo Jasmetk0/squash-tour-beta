@@ -1,5 +1,37 @@
 # Current implementation and next action
 
+## Candidate — Oceania association-identity batch: ASM + PYF + NCL (4 October 2026)
+
+This slice completes three association-specific Pacific histories and closes a hidden
+global-test-count debt left after the previous sparse-Oceania expansion.
+
+- New complete histories: American Samoa (ASM), Tahiti/French Polynesia football
+  association (PYF), and New Caledonia (NCL).
+- New ratings: 3 × 72 × 6 = **1,296**.
+- FIFA Earth now resolves **24 / 250 complete country histories** and **10,368 annual
+  attribute ratings**.
+- Added seven official OFC/FIFA source shards and seven normalized,
+  content-addressed structural datasets/manifests.
+- Tahiti football evidence maps explicitly to **PYF** and never inherits metropolitan
+  France observations or ratings.
+- New Caledonia remains its own **NCL** FIFA/OFC association with federation and league
+  history from 1928 and full FIFA/OFC membership only from 2004.
+- American Samoa preserves the 2005–07 normalisation as an actual governance
+  discontinuity: elite support falls during the crisis and recovers with FFAS/Goal
+  infrastructure.
+- Tahiti's 2023 artificial pitch and 2025 FIFA Talent Academy are modern-only
+  development/support anchors.
+- Missing FIFA Professional 2023 values for ASM/PYF/NCL remain unknown, never zero.
+- Global FIFA evidence tests are refreshed to **59 datasets / 1,410 observations /
+  1,388 safe facts / 125 direct-mapped facts**, including the 16 observations added
+  in the previous Oceania batch that were not reflected in those full-suite totals.
+
+**Next after green CI:** continue ordinary OFC members with Samoa, Tonga and Vanuatu,
+then handle associate/non-FIFA Pacific entities separately instead of fabricating
+FIFA-equivalent histories.
+
+# Current implementation and next action
+
 ## Candidate — sparse Oceania FIFA batch: FJI + PNG + SLB + COK (4 October 2026)
 
 This slice adds four complete 1955–2026 country histories designed specifically to

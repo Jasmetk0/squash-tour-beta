@@ -39,6 +39,37 @@ def _fact(observation, resolution) -> dict[str, Any]:
     }
 
 
+def _direct_mapped_fact(observation) -> dict[str, Any]:
+    if (
+        observation.measurement_type != "football_structural_event"
+        or observation.earth_country_code is None
+        or observation.territory_mapping_method != "explicit_reviewed_event_to_earth"
+    ):
+        raise ValueError(
+            f"observation {observation.observation_id!r} lacks canonical identity handling"
+        )
+    return {
+        "observation_id": observation.observation_id,
+        "source_id": observation.source_id,
+        "source_entity": observation.source_entity,
+        "source_page": observation.source_page,
+        "observation_year": observation.observation_year,
+        "measurement_type": observation.measurement_type,
+        "numeric_value": observation.numeric_value,
+        "text_value": observation.text_value,
+        "unit": observation.unit,
+        "identity_status": "direct",
+        "identity_method": "explicit_reviewed_event_to_earth",
+        "identity_confidence": "high",
+        "earth_country_code": observation.earth_country_code,
+        "candidate_earth_codes": [],
+        "identity_reason": (
+            "Canonical structural observation carries an explicit reviewed Earth mapping."
+        ),
+        "quality_flags": list(observation.quality_flags),
+    }
+
+
 def build_index(research_path: Path = RESEARCH) -> dict[str, Any]:
     bundle = load_earth_research_bundle(research_path)
     resolution_sets = build_resolution_sets()
@@ -52,20 +83,27 @@ def build_index(research_path: Path = RESEARCH) -> dict[str, Any]:
                 )
             resolutions[resolution.observation_id] = resolution
 
-    if set(resolutions) != set(bundle.observations):
-        missing = sorted(set(bundle.observations) - set(resolutions))
-        extra = sorted(set(resolutions) - set(bundle.observations))
+    extra = sorted(set(resolutions) - set(bundle.observations))
+    if extra:
         raise ValueError(
-            f"identity/evidence coverage mismatch; missing={missing}, extra={extra}"
+            f"identity resolutions reference observations not in research bundle: {extra}"
         )
 
     countries: dict[str, list[dict[str, Any]]] = {}
     manual_review: list[dict[str, Any]] = []
     unresolved: list[dict[str, Any]] = []
+    direct_mapped_observation_count = 0
 
     for observation_id in sorted(bundle.observations):
         observation = bundle.observations[observation_id]
-        resolution = resolutions[observation_id]
+        resolution = resolutions.get(observation_id)
+
+        if resolution is None:
+            fact = _direct_mapped_fact(observation)
+            countries.setdefault(fact["earth_country_code"], []).append(fact)
+            direct_mapped_observation_count += 1
+            continue
+
         fact = _fact(observation, resolution)
 
         if resolution.status in {"direct", "aggregate_member"}:
@@ -103,6 +141,7 @@ def build_index(research_path: Path = RESEARCH) -> dict[str, Any]:
         "manual_review_count": len(manual_review),
         "unresolved_count": len(unresolved),
         "country_count_with_safe_evidence": len(countries),
+        "direct_mapped_observation_count": direct_mapped_observation_count,
         "input_observation_dataset_sha256s": {
             dataset_id: manifest.sha256
             for dataset_id, manifest in sorted(
@@ -121,6 +160,7 @@ def build_index(research_path: Path = RESEARCH) -> dict[str, Any]:
             "Safe evidence is grouped by Earth identity but is not a country rating.",
             "Aggregate-member facts remain source components; no synthetic aggregate is created here.",
             "Manual-review and unresolved observations are excluded from country evidence.",
+            "Structural events may bypass separate identity-resolution sets only when their canonical observation carries an explicit reviewed Earth mapping.",
             "Cross-country comparability flags and source-definition limitations remain authoritative.",
         ],
     }
@@ -143,6 +183,7 @@ def main() -> None:
             "manual_review_count",
             "unresolved_count",
             "country_count_with_safe_evidence",
+            "direct_mapped_observation_count",
         )
     }
     print(json.dumps(summary, indent=2))

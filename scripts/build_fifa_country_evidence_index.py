@@ -41,14 +41,33 @@ def _fact(observation, resolution) -> dict[str, Any]:
 
 
 def _direct_mapped_fact(observation) -> dict[str, Any]:
-    if (
-        observation.measurement_type != "football_structural_event"
-        or observation.earth_country_code is None
-        or observation.territory_mapping_method != "explicit_reviewed_event_to_earth"
-    ):
+    mapping = observation.territory_mapping_method
+    if observation.earth_country_code is None:
         raise ValueError(
             f"observation {observation.observation_id!r} lacks canonical identity handling"
         )
+
+    if (
+        observation.measurement_type == "football_structural_event"
+        and mapping == "explicit_reviewed_event_to_earth"
+    ):
+        reason = (
+            "Canonical structural observation carries an explicit reviewed Earth mapping."
+        )
+    elif (
+        observation.measurement_type == "fifa_mens_year_end_world_rank"
+        and mapping == "explicit_reviewed_outcome_to_earth"
+        and "outcome_validation_only" in observation.quality_flags
+    ):
+        reason = (
+            "Canonical FIFA outcome-validation observation carries an explicit "
+            "reviewed Earth mapping."
+        )
+    else:
+        raise ValueError(
+            f"observation {observation.observation_id!r} lacks canonical identity handling"
+        )
+
     return {
         "observation_id": observation.observation_id,
         "source_id": observation.source_id,
@@ -61,13 +80,11 @@ def _direct_mapped_fact(observation) -> dict[str, Any]:
         "text_value": observation.text_value,
         "unit": observation.unit,
         "identity_status": "direct",
-        "identity_method": "explicit_reviewed_event_to_earth",
+        "identity_method": mapping,
         "identity_confidence": "high",
         "earth_country_code": observation.earth_country_code,
         "candidate_earth_codes": [],
-        "identity_reason": (
-            "Canonical structural observation carries an explicit reviewed Earth mapping."
-        ),
+        "identity_reason": reason,
         "quality_flags": list(observation.quality_flags),
     }
 
@@ -162,7 +179,7 @@ def build_index(research_path: Path = RESEARCH) -> dict[str, Any]:
             "Safe evidence is grouped by Earth identity but is not a country rating.",
             "Aggregate-member facts remain source components; no synthetic aggregate is created here.",
             "Manual-review and unresolved observations are excluded from country evidence.",
-            "Structural events may bypass separate identity-resolution sets only when their canonical observation carries an explicit reviewed Earth mapping.",
+            "Structural and validation-only outcome observations may bypass separate identity-resolution sets only when their canonical observation carries an explicit reviewed Earth mapping.",
             "Cross-country comparability flags and source-definition limitations remain authoritative.",
         ],
     }

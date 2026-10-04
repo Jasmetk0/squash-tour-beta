@@ -22,6 +22,18 @@ from scripts.audit_fifa_prototype_against_signals import (
 from scripts.build_fifa_dimension_evidence_scores import (
     build_dimension_evidence_scores,
 )
+from scripts.review_fifa_dimension_evidence_v2 import (
+    build_review as build_dimension_v2_review,
+)
+from scripts.build_fifa_structural_features import (
+    build_features as build_structural_features,
+)
+from scripts.audit_fifa_structural_features_heldout import (
+    build_audit as build_structural_heldout_audit,
+)
+from scripts.audit_fifa_structural_feature_hypotheses import (
+    build_audit as build_structural_hypothesis_audit,
+)
 
 
 def export_review(output_dir: Path) -> dict[str, object]:
@@ -30,16 +42,28 @@ def export_review(output_dir: Path) -> dict[str, object]:
     dimension_scores = build_dimension_evidence_scores()
     signal_audit = build_signal_audit()
     dimension_score_audit = build_dimension_score_audit()
+    dimension_v2_review = build_dimension_v2_review()
+    structural_features = build_structural_features()
+    structural_heldout_audit = build_structural_heldout_audit()
+    structural_hypothesis_audit = build_structural_hypothesis_audit()
 
     files = {
         "dimension_scores": output_dir / "fifa_dimension_evidence_scores.json",
         "signal_audit": output_dir / "fifa_prototype_signal_audit.json",
         "dimension_score_audit": output_dir / "fifa_dimension_score_prototype_audit.json",
+        "dimension_v2_review": output_dir / "fifa_dimension_evidence_v2_review.json",
+        "structural_features": output_dir / "fifa_structural_features.json",
+        "structural_heldout_audit": output_dir / "fifa_structural_heldout_audit.json",
+        "structural_hypothesis_audit": output_dir / "fifa_structural_feature_hypothesis_audit.json",
     }
     payloads = {
         "dimension_scores": dimension_scores,
         "signal_audit": signal_audit,
         "dimension_score_audit": dimension_score_audit,
+        "dimension_v2_review": dimension_v2_review,
+        "structural_features": structural_features,
+        "structural_heldout_audit": structural_heldout_audit,
+        "structural_hypothesis_audit": structural_hypothesis_audit,
     }
 
     for key, path in files.items():
@@ -72,6 +96,29 @@ def export_review(output_dir: Path) -> dict[str, object]:
                 "review_country_codes": value["review_country_codes"],
             }
             for key, value in dimension_score_audit["recipes"].items()
+        },
+        "dimension_v2_review": {
+            "review_pass": dimension_v2_review["review_pass"],
+            "policy_checks_pass": dimension_v2_review["policy_checks_pass"],
+            "regression_checks_pass": dimension_v2_review["regression_checks_pass"],
+            "measured_improvement": dimension_v2_review["measured_improvement"],
+        },
+        "structural_features": {
+            "country_count": structural_features["country_count"],
+            "validation_role_counts": structural_features["validation_role_counts"],
+        },
+        "structural_heldout_audit": {
+            "review_country_codes": structural_heldout_audit["review_country_codes"],
+            "heldout_country_codes": structural_heldout_audit["heldout_country_codes"],
+            "reference_sample_sizes": structural_heldout_audit["reference_sample_sizes"],
+        },
+        "structural_hypothesis_audit": {
+            key: {
+                "sample_count": value["sample_count"],
+                "spearman_rho": value["spearman_rho"],
+                "decision": value["decision"],
+            }
+            for key, value in structural_hypothesis_audit["hypotheses"].items()
         },
         "files": {key: path.name for key, path in files.items()},
     }

@@ -36,19 +36,19 @@ def test_transfer_curve_is_explicit_monotone_and_hits_declared_points() -> None:
 def test_dimension_evidence_scores_cover_all_earth_countries_and_stay_noncanonical() -> None:
     result = build_dimension_evidence_scores()
 
-    assert result["schema_version"] == "fifa_dimension_evidence_scores.v1"
+    assert result["schema_version"] == "fifa_dimension_evidence_scores.v2"
     assert result["rating_scale"] == "country_ratings_1_10.v2"
     assert result["rating_ready"] is False
     assert result["country_count"] == 250
     assert len(result["countries"]) == 250
 
     assert set(result["recipes"]) == {
-        "squash_popularity@2006",
         "squash_access@2006",
         "competition_quality@2023",
         "elite_support@2023",
     }
     assert set(result["unsupported_attributes"]) == {
+        "squash_popularity",
         "development_quality",
         "squash_tradition",
     }
@@ -66,28 +66,27 @@ def test_recipe_coverage_matches_required_signal_intersections() -> None:
     scores = build_dimension_evidence_scores()
 
     expected = {
-        "squash_popularity@2006": sum(
-            country["participation_intensity_2006"]["rate"] is not None
-            for country in signals["countries"].values()
-        ),
         "squash_access@2006": sum(
-            country["registered_intensity_2006"]["rate"] is not None
-            and country["club_footprint_2006"]["rate"] is not None
+            country["registered_intensity_2006"]["signal_value"] is not None
+            and country["club_footprint_2006"]["signal_value"] is not None
             for country in signals["countries"].values()
         ),
         "competition_quality@2023": sum(
-            country["professional_player_density_2023"]["rate"] is not None
-            and country["professional_club_density_2023"]["rate"] is not None
+            country["professional_player_density_2023"]["signal_value"] is not None
+            and country["professional_club_density_2023"]["signal_value"] is not None
+            and country["professional_player_scale_2023"]["signal_value"] is not None
+            and country["professional_club_scale_2023"]["signal_value"] is not None
             for country in signals["countries"].values()
         ),
         "elite_support@2023": sum(
-            country["professional_player_density_2023"]["rate"] is not None
-            and country["professional_club_density_2023"]["rate"] is not None
+            country["professional_player_density_2023"]["signal_value"] is not None
+            and country["professional_club_density_2023"]["signal_value"] is not None
+            and country["professional_player_scale_2023"]["signal_value"] is not None
+            and country["professional_club_scale_2023"]["signal_value"] is not None
             for country in signals["countries"].values()
         ),
     }
 
-    assert expected["squash_popularity@2006"] == 201
     assert expected["squash_access@2006"] == 199
     assert scores["recipe_observed_counts"] == expected
 
@@ -137,8 +136,36 @@ def test_model_file_has_no_recipe_for_dimensions_not_measured_by_current_sources
     model = json.loads(DEFAULT_MODEL.read_text(encoding="utf-8"))
 
     authored_attributes = {recipe["attribute"] for recipe in model["recipes"].values()}
+    assert "squash_popularity" not in authored_attributes
     assert "development_quality" not in authored_attributes
     assert "squash_tradition" not in authored_attributes
 
+    assert "squash_popularity" in model["unsupported_attributes"]
     assert "development_quality" in model["unsupported_attributes"]
     assert "squash_tradition" in model["unsupported_attributes"]
+
+
+def test_professional_recipes_are_scale_dominant_in_model_v2() -> None:
+    model = _load_model()
+
+    competition = model["recipes"]["competition_quality@2023"]["components"]
+    elite = model["recipes"]["elite_support@2023"]["components"]
+
+    competition_weights = {item["signal_id"]: item["weight"] for item in competition}
+    elite_weights = {item["signal_id"]: item["weight"] for item in elite}
+
+    assert competition_weights["professional_player_scale_2023"] == 0.40
+    assert competition_weights["professional_club_scale_2023"] == 0.35
+    assert sum(
+        weight
+        for signal_id, weight in competition_weights.items()
+        if "scale" in signal_id
+    ) == pytest.approx(0.75)
+
+    assert elite_weights["professional_club_scale_2023"] == 0.40
+    assert elite_weights["professional_player_scale_2023"] == 0.30
+    assert sum(
+        weight
+        for signal_id, weight in elite_weights.items()
+        if "scale" in signal_id
+    ) == pytest.approx(0.70)

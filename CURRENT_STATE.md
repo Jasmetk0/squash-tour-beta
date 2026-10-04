@@ -1,5 +1,21 @@
 # Current implementation and next action
 
+## Candidate — FIFA dimension evidence-score prototype audit (4 October 2026)
+
+Stacked on the provisional 1–10 evidence-score model. This slice compares those
+scores directly with the nine-country prototype on the same scale without changing
+either side.
+
+The audit covers 9 prototype countries for 2006 popularity/access and 6 countries
+for 2023 competition/elite-support because professional source missingness remains
+explicit. Each comparison preserves exact source observation IDs and prototype
+method/confidence/anchor years. Absolute differences >=1.5 points are surfaced as
+human-review flags only.
+
+This is the decision gate before any canonical authoring. A transfer curve or recipe
+must not become a country-rating rule merely because it is numerically close to the
+prototype; large and small deltas both require evidence interpretation.
+
 ## Candidate — provisional FIFA 1–10 dimension evidence scores (4 October 2026)
 
 Stacked on the green empirical-signal/audit landing candidate. This slice defines

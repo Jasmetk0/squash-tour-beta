@@ -227,3 +227,23 @@ GBR is treated conservatively: Big Count 2006 can use the reviewed sum of four
 non-overlapping home-association counts; Professional 2023 remains missing at GBR
 level because Northern Ireland is missing in the source. Manual identity cases are
 never admitted into these signals.
+
+
+## Prototype-versus-signal diagnostic audit
+
+`scripts/audit_fifa_prototype_against_signals.py` compares the nine-country
+prototype against the canonical empirical signal layer at the signal observation
+year.
+
+The audit uses Spearman rank agreement only as a diagnostic. It also lists
+pairwise review inversions when one prototype country is at least 25 percentile
+points stronger on a measured signal but at least 0.5 rating points lower on the
+relevant prototype attribute.
+
+Neither condition is a rejection rule. A country rating may legitimately differ
+from one signal because access, affordability, institutional context, source
+coverage and other evidence matter. The audit exists to identify places that need
+human review before any transfer curve is made canonical.
+
+The audit never writes ratings, never changes anchors and remains
+`rating_ready=false`.

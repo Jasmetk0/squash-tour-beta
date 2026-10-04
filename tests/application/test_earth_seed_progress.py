@@ -11,7 +11,7 @@ from beta_engine.application.earth_package_builder import load_earth_research_bu
 
 def test_fifa_first_reviewed_country_histories_are_complete_and_resolvable():
     bundle = load_earth_research_bundle(Path("config/earth_research/fifa_earth.json"))
-    assert set(bundle.research.countries) == {"CZE", "SVK", "JPN", "IND", "MAR", "SEN", "FRO", "USA", "ZAF", "BRA", "DEU", "ISL", "SMR"}
+    assert set(bundle.research.countries) == {"CZE", "SVK", "JPN", "IND", "MAR", "SEN", "FRO", "USA", "ZAF", "BRA", "DEU", "ISL", "SMR", "ARG", "MEX", "AUS", "NZL"}
     assert bundle.research.data_cutoff.isoformat() == "2026-10-03"
 
     for code in ("CZE", "SVK"):
@@ -160,6 +160,71 @@ def test_fifa_heldout_batch_is_complete_independent_and_plausible():
         "fifa-professional-2023" not in rating.source_ids
         for year in bundle.research.countries["SMR"].years.values()
         for rating in year.ratings.values()
+    )
+
+
+def test_fifa_arg_mex_aus_nzl_batch_loads_sharded_sources_manifests_and_histories():
+    bundle = load_earth_research_bundle(Path("config/earth_research/fifa_earth.json"))
+    batch = {"ARG", "MEX", "AUS", "NZL"}
+    expected_datasets = {
+        "fifa-structural-afa-history-v1",
+        "fifa-structural-fmf-history-v1",
+        "fifa-structural-football-australia-history-v1",
+        "fifa-structural-ofc-new-zealand-history-v1",
+        "fifa-structural-ofc-new-zealand-grassroots-2011-v1",
+    }
+    expected_sources = {
+        "afa-history",
+        "fmf-history",
+        "football-australia-history",
+        "ofc-new-zealand-history",
+        "ofc-new-zealand-grassroots-2011",
+    }
+
+    assert expected_datasets <= bundle.datasets.keys()
+    assert expected_sources <= bundle.research.sources.keys()
+
+    for code in batch:
+        history = bundle.research.countries[code]
+        assert history.missing_earth_years == []
+        assert len(history.years) == 72
+        assert history.reference_year == 2026
+        for year in history.years.values():
+            assert len(year.ratings) == 6
+            for rating in year.ratings.values():
+                assert rating.method == "derived_estimate"
+                assert rating.calibration_model_id == "fifa-earth-country-history-arg-mex-aus-nzl.v1"
+                assert rating.observation_ids
+                assert all(item in bundle.observations for item in rating.observation_ids)
+
+    arg = bundle.research.countries["ARG"]
+    assert arg.years[2023].ratings["competition_quality"].value >= 9.0
+    assert arg.years[1955].ratings["squash_tradition"].value >= 8.5
+
+    mex = bundle.research.countries["MEX"]
+    assert mex.years[2006].ratings["squash_popularity"].value > (
+        mex.years[2006].ratings["squash_access"].value
+    )
+    assert "fifa-structural-fmf-history-v1#mex-world-cup-host-1970" in (
+        mex.years[1970].ratings["elite_support"].observation_ids
+    )
+
+    aus = bundle.research.countries["AUS"]
+    assert aus.years[1960].ratings["elite_support"].value < aus.years[1955].ratings["elite_support"].value
+    assert aus.years[1963].ratings["elite_support"].value > aus.years[1960].ratings["elite_support"].value
+    assert aus.years[2005].ratings["competition_quality"].value > (
+        aus.years[2004].ratings["competition_quality"].value
+    )
+    assert "fifa-structural-football-australia-history-v1#aus-a-league-launch-2005" in (
+        aus.years[2005].ratings["competition_quality"].observation_ids
+    )
+
+    nzl = bundle.research.countries["NZL"]
+    assert nzl.years[2011].ratings["development_quality"].value > (
+        nzl.years[2006].ratings["development_quality"].value
+    )
+    assert "fifa-structural-ofc-new-zealand-grassroots-2011-v1#nzl-foundation-development-grants-2011" in (
+        nzl.years[2011].ratings["development_quality"].observation_ids
     )
 
 

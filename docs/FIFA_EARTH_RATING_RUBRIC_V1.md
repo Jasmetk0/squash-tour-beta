@@ -195,3 +195,35 @@ The first pass exposed three under-calibrated access cases:
 South Africa is raised more moderately because high participation coexists with lower club density and persistent inequality/geographic barriers. USA remains strong in access but below the three densest prototype cases, while its popularity remains lower because soccer was not the dominant national spectator sport.
 
 This comparative pass is a prototype check, not a universal formula. Full FIFA Earth calibration still requires association-to-Earth identity reconciliation and a global population-normalised benchmark across all usable Big Count rows.
+
+
+## Canonical empirical signal layer
+
+Before any canonical 1–10 rating conversion, FIFA Earth now derives separate
+measurement-level calibration signals from normalized, identity-resolved evidence.
+
+`scripts/build_fifa_country_calibration_signals.py` produces:
+
+- 2006 all-player participation per 1,000 population;
+- 2006 registered-player footprint per 1,000 population;
+- 2006 reported clubs per million population;
+- 2023 men's professional players per million population;
+- 2023 professional clubs per million population.
+
+Each observed signal preserves the exact source observation IDs, source value,
+population denominator, empirical descending rank and ascending midrank percentile.
+All 250 Earth countries are present in the output; unobserved or incomplete evidence
+remains missing rather than becoming zero.
+
+These percentiles are **not** game ratings and there is deliberately no
+`percentile / 10` or equivalent conversion. The observed comparison set differs by
+signal, source definitions have explicit limitations, and each signal maps only to
+the dimensions it can reasonably inform. In particular, Big Count evidence primarily
+informs popularity/access, while professional-player/club density is evidence for
+competition/elite-support ecosystem depth. None directly determines development,
+tradition, or a universal "football strength" score.
+
+GBR is treated conservatively: Big Count 2006 can use the reviewed sum of four
+non-overlapping home-association counts; Professional 2023 remains missing at GBR
+level because Northern Ireland is missing in the source. Manual identity cases are
+never admitted into these signals.

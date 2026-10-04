@@ -1,5 +1,27 @@
 # Current implementation and next action
 
+## Candidate — FIFA empirical country calibration signals (4 October 2026)
+
+Stacked on the canonical FIFA country-evidence landing stack. This candidate is the
+first actual calibration-data slice rather than another provenance layer.
+
+Five independent empirical signals are derived for all 250 Earth countries:
+2006 participation intensity, registration intensity and club footprint; 2023 men's
+professional-player density and professional-club density. Observed values preserve
+the exact source observation IDs and population denominator and add empirical
+rank/percentile only within the comparable observed set. Missing evidence stays
+missing.
+
+Expected observed coverage is 201 / 201 / 199 / 108 / 131 countries respectively.
+GBR Big Count is a reviewed complete four-home-association aggregate; GBR
+Professional 2023 remains partial/missing because Northern Ireland is absent.
+No composite football-strength score and no automatic percentile→1–10 conversion
+exists. The output is explicitly `rating_ready=false`.
+
+**Next after validation:** define reviewed dimension-specific 1–10 anchor transfer
+functions against these empirical distributions and the historical structural
+prototype, then test them on held-out countries before authoring canonical histories.
+
 ## Candidate — FIFA country evidence index (4 October 2026)
 
 Stacked on the green canonical observation + identity-resolution slices. This

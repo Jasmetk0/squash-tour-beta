@@ -11,7 +11,7 @@ from beta_engine.application.earth_package_builder import load_earth_research_bu
 
 def test_fifa_first_reviewed_country_histories_are_complete_and_resolvable():
     bundle = load_earth_research_bundle(Path("config/earth_research/fifa_earth.json"))
-    assert set(bundle.research.countries) == {"CZE", "SVK", "JPN", "IND", "MAR", "SEN", "FRO", "USA", "ZAF", "BRA", "DEU", "ISL", "SMR", "ARG", "MEX", "AUS", "NZL", "FJI", "PNG", "SLB", "COK"}
+    assert set(bundle.research.countries) == {"CZE", "SVK", "JPN", "IND", "MAR", "SEN", "FRO", "USA", "ZAF", "BRA", "DEU", "ISL", "SMR", "ARG", "MEX", "AUS", "NZL", "FJI", "PNG", "SLB", "COK", "ASM", "PYF", "NCL"}
     assert bundle.research.data_cutoff.isoformat() == "2026-10-03"
 
     for code in ("CZE", "SVK"):
@@ -277,6 +277,67 @@ def test_fifa_oceania_sparse_batch_preserves_access_scale_and_missingness():
             "fifa-professional-2023" not in rating.source_ids
             for year in bundle.research.countries[code].years.values()
             for rating in year.ratings.values()
+        )
+
+
+def test_fifa_oceania_association_identity_batch_preserves_governance_and_territories():
+    bundle = load_earth_research_bundle(Path("config/earth_research/fifa_earth.json"))
+    batch = {"ASM", "PYF", "NCL"}
+
+    for code in batch:
+        history = bundle.research.countries[code]
+        assert history.missing_earth_years == []
+        assert len(history.years) == 72
+        assert history.reference_year == 2026
+        for year in history.years.values():
+            assert len(year.ratings) == 6
+            for rating in year.ratings.values():
+                assert rating.method == "derived_estimate"
+                assert rating.calibration_model_id == "fifa-earth-country-history-asm-pyf-ncl.v1"
+                assert rating.observation_ids
+                assert all(item in bundle.observations for item in rating.observation_ids)
+                assert "fifa-professional-2023" not in rating.source_ids
+
+    asm = bundle.research.countries["ASM"]
+    assert asm.years[2005].ratings["elite_support"].value < (
+        asm.years[1998].ratings["elite_support"].value
+    )
+    assert asm.years[2007].ratings["elite_support"].value > (
+        asm.years[2005].ratings["elite_support"].value
+    )
+    assert "fifa-structural-ofc-american-samoa-normalisation-v1#asm-normalisation-start-2005" in (
+        asm.years[2005].ratings["elite_support"].observation_ids
+    )
+
+    pyf = bundle.research.countries["PYF"]
+    assert pyf.years[2006].ratings["squash_access"].value >= 8.0
+    assert pyf.years[2025].ratings["development_quality"].value > (
+        pyf.years[2023].ratings["development_quality"].value
+    )
+    assert "fifa-structural-fifa-tahiti-development-2026-v1#pyf-talent-academy-2025" in (
+        pyf.years[2025].ratings["development_quality"].observation_ids
+    )
+    assert "metropolitan France" in pyf.years[2026].territory_mapping_note
+
+    ncl = bundle.research.countries["NCL"]
+    assert ncl.years[1955].ratings["squash_tradition"].value >= 6.5
+    assert "fifa-structural-fifa-new-caledonia-history-v1#ncl-league-launch-1928" in (
+        ncl.years[1955].ratings["competition_quality"].observation_ids
+    )
+    assert "fifa-structural-ofc-new-caledonia-profile-v1#ncl-fifa-ofc-membership-2004" in (
+        ncl.years[2004].ratings["elite_support"].observation_ids
+    )
+    assert ncl.years[2026].ratings["elite_support"].value > (
+        ncl.years[2006].ratings["elite_support"].value
+    )
+
+    for code in ("PYF", "NCL"):
+        history = bundle.research.countries[code]
+        assert all(
+            "france" not in item.lower()
+            for year in history.years.values()
+            for rating in year.ratings.values()
+            for item in (*rating.source_ids, *rating.observation_ids)
         )
 
 

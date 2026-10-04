@@ -84,7 +84,7 @@ class RatingYear(BaseModel):
 
 class CountryRatingHistory(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    schema_version: Literal["country_rating_history.v1"] = "country_rating_history.v1"
+    schema_version: Literal["country_rating_history.v2"] = "country_rating_history.v2"
     rating_scale: Literal["country_ratings_1_10.v2"] = RATING_SCALE_V2
     reference_year: int = Field(ge=1955, le=2026)
     data_cutoff: date

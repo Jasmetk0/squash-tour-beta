@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import json
+from pathlib import Path
+
 import pytest
 
 pytestmark = pytest.mark.pr_critical
@@ -124,4 +127,28 @@ def test_gap_audit_priorities_match_missing_source_families() -> None:
     assert any(
         "unknown, not negative evidence" in safeguard
         for safeguard in audit["safeguards"]
+    )
+
+
+def test_framework_source_basis_is_registered_in_canonical_fifa_research() -> None:
+    framework = json.loads(
+        Path(
+            "config/earth_research/calibration/"
+            "fifa_development_evidence_framework_v1.json"
+        ).read_text(encoding="utf-8")
+    )
+    research = json.loads(
+        Path("config/earth_research/fifa_earth.json").read_text(encoding="utf-8")
+    )
+
+    source_ids = {item["source_id"] for item in framework["source_basis"]}
+    assert source_ids == {
+        "fifa-global-talent-development-report-2021",
+        "fifa-tds-academies-strategy-2023",
+        "uefa-coaching-convention",
+    }
+    assert source_ids.issubset(research["sources"])
+    assert all(
+        research["sources"][source_id]["url"].startswith("https://")
+        for source_id in source_ids
     )

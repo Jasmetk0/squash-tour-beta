@@ -46,9 +46,11 @@ separate inputs. Innate potential rarity must remain independent of nationality.
 
 ## Not implemented or not proven
 
-- **Neither official Earth directory exists yet. Both research `countries` maps
-  remain empty.** Registering future IDs does not display nonexistent packages.
-  No fabricated neutral profiles are shipped to satisfy coverage mechanically.
+- **Neither official Earth directory exists yet.** FIFA research now contains complete
+  1955–2026 histories for CZE and SVK (864 authored ratings total). ATP `countries`
+  remains empty, but its first two normalized ITF 2019 national datasets (CZE/DEU,
+  six observations total) are registered. No fabricated neutral profiles are shipped
+  to satisfy coverage mechanically.
 - FIFA Big Count 2006 now has five canonical normalized
   `earth_source_observations.v2` datasets (all players, registered, unregistered,
   clubs and officials/staff). FIFA Professional Football Report 2023 adds two
@@ -77,9 +79,10 @@ separate inputs. Innate potential rarity must remain independent of nationality.
 ## Research already stored
 
 `config/earth_research/fifa_earth.json` and `atp_earth.json` are
-`earth_sport_research.v2` catalogues. FIFA Earth now registers seven canonical
-observation datasets: five from Big Count 2006 and two from FIFA Professional
-Football Report 2023. Both country-rating maps remain empty.
+`earth_sport_research.v2` catalogues. FIFA Earth contains the broader canonical
+observation registry plus the first complete country histories for CZE and SVK.
+ATP Earth now registers two normalized ITF 2019 national snapshot datasets for CZE
+and DEU; ATP country histories are still not authored.
 
 Current evidence includes:
 
@@ -150,3 +153,20 @@ Structural dimension summaries may report timeline coverage, first/last evidence
 year, pre-1955 evidence and source-conflict groups. They must not infer a quality
 score from event count or treat absence from the curated seed as evidence of
 non-existence.
+
+
+## Seeded canonical-history progress — 4 October 2026
+
+The first actual country histories are CZE and SVK in FIFA Earth. Their values reuse
+the reviewed prototype trajectories only after re-grounding every annual attribute
+on exact normalized observation IDs. They are stored as `derived_estimate` rather
+than pretending the game ratings were measured by FIFA/UEFA/FAČR/SFZ. Weak evidence
+families remain low confidence, and validation-only ranking outcomes are not used as
+automatic authoring inputs.
+
+ATP Earth has begun canonical normalization with CZE and DEU ITF 2019 player, club
+and coach facts. The edition/report date is retained separately from observation
+year; the checked-in raw extract does not establish a separate observation year, so
+the normalized facts intentionally keep `observation_year=null`. Mixed-sex player
+counts are not represented as men's participation, and coach counts are not treated
+as development quality.

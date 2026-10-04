@@ -289,3 +289,21 @@ Every result from
 `scripts/build_fifa_dimension_evidence_scores.py` is marked
 `rating_ready=false`. A later canonical rating may use these scores only alongside
 independent historical/context evidence with exact observation provenance.
+
+
+## Evidence-score versus prototype audit
+
+`scripts/audit_fifa_dimension_scores_against_prototype.py` compares the provisional
+1–10 evidence scores with the nine-country prototype at the same attribute/year.
+
+The audit reports:
+- signed and absolute score/rating delta;
+- mean and maximum absolute delta by recipe;
+- exact prototype method/confidence/anchor years;
+- exact source observation IDs behind each evidence-score component;
+- a human-review flag when the absolute difference is at least 1.5 points.
+
+The 1.5-point threshold is a review heuristic, not a pass/fail rule. A large
+difference can be legitimate because the prototype includes contextual evidence
+outside the current quantitative source slice. A small difference likewise does not
+validate the model. The audit never writes a canonical or recommended rating.

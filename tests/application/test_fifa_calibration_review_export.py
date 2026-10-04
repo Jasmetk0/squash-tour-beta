@@ -16,7 +16,7 @@ def test_fifa_calibration_review_export_is_self_consistent(tmp_path) -> None:
     assert summary["schema_version"] == "fifa_calibration_review_bundle.v1"
     assert summary["rating_ready"] is False
     assert summary["country_count"] == 250
-    assert summary["evidence_model_id"] == "fifa-dimension-evidence-v1"
+    assert summary["evidence_model_id"] == "fifa-dimension-evidence-v2"
 
     expected_files = {
         "fifa_dimension_evidence_scores.json",

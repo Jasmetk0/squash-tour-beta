@@ -17,6 +17,97 @@
       "accessed_on": "2026-10-03",
       "scope": "208 original table rows, association totals, registered/unregistered players, clubs and officials; raw facts in observations/fifa_big_count_2006.csv.",
       "limitations": "Checked-in normalized observation v2 datasets preserve the 2006 all-player, registered, unregistered, club and officials fields without treating missing cells as zero. The legacy extract is mixed-sex, does not retain per-cell direct/statistically-processed flags, and field definitions are not assumed globally identical. Earth identity reconciliation remains a separate reviewed layer."
+    },
+    "aiff-history": {
+      "title": "All India Football Federation — History",
+      "url": "https://www.the-aiff.com/history",
+      "accessed_on": "2026-10-04",
+      "scope": "Indian federation and national competition history.",
+      "limitations": "Institutional history is stronger evidence for tradition/competition than national popularity/access."
+    },
+    "caf-senegal-academies-league": {
+      "title": "CAF — Football academies supply Senegal's den",
+      "url": "https://www.cafonline.com/afcon2025/news/football-academies-supply-senegal-s-den/",
+      "accessed_on": "2026-10-04",
+      "scope": "Official CAF account: Génération Foot founded in 2000, Diambars in 2003, professional league launched in 2009, and academy-trained players represented strongly in the national team.",
+      "limitations": "Academy success is evidence for development pathways; league launch is competition/elite-support evidence. Neither directly measures mass participation."
+    },
+    "caf-south-africa": {
+      "title": "CAF — South Africa member association",
+      "url": "https://www.cafonline.com/inside-caf/member-associations/south-africa/",
+      "accessed_on": "2026-10-04",
+      "scope": "South African association history and modern affiliation context.",
+      "limitations": "Association milestones alone do not quantify apartheid-era domestic participation."
+    },
+    "fifa-senegal-generation-foot-2000": {
+      "title": "FIFA — Fatma Samoura and Senegalese football look to the future in Dakar",
+      "url": "https://inside.fifa.com/en/news/fatma-samoura-and-senegalese-football-look-to-the-future-in-dakar",
+      "accessed_on": "2026-10-04",
+      "scope": "Official FIFA account stating Génération Foot was founded in 2000 and documenting its training infrastructure and player-development role.",
+      "limitations": "Academy evidence is strong for elite development but does not represent nationwide access or participation."
+    },
+    "fifa-south-africa-history": {
+      "title": "FIFA historical publication — South African football and international exclusion",
+      "url": "https://img.fifa.com/image/upload/ghd0g4e9zyk5pbithtcg.pdf",
+      "accessed_on": "2026-10-04",
+      "scope": "Suspension/expulsion, domestic structures and readmission context.",
+      "limitations": "Historical narrative; numeric ratings remain model estimates."
+    },
+    "frmf-history": {
+      "title": "Royal Moroccan Football Federation — History of Moroccan football",
+      "url": "https://frmf.ma/fr/histoire-du-football-marocain",
+      "accessed_on": "2026-10-04",
+      "scope": "Moroccan league and federation history.",
+      "limitations": "Does not provide a complete annual participation series."
+    },
+    "jfa-history": {
+      "title": "Japan Football Association — History",
+      "url": "https://jfa.jp/eng/about_jfa/history/",
+      "accessed_on": "2026-10-04",
+      "scope": "JFA institutional, competition and professionalisation milestones.",
+      "limitations": "Milestones do not directly measure the six ratings."
+    },
+    "uefa-czechia-history": {
+      "title": "UEFA — Developing football in Czechia",
+      "url": "https://www.uefa.com/news-media/news/0282-1830fd7e681b-d29c43b082a6-1000--developing-football-in-czechia/",
+      "accessed_on": "2026-10-04",
+      "scope": "Czech football association roots, Czech/Czechoslovak timeline, post-1993 competition and development context.",
+      "limitations": "Czechoslovak national-team results are not duplicated as Czech territorial observations; only localisable/inherited tradition context is used."
+    },
+    "uefa-faroe-history": {
+      "title": "UEFA — Faroe Islands association history",
+      "url": "https://www.uefa.com/nationalassociations/fro/",
+      "accessed_on": "2026-10-04",
+      "scope": "Club, competition, association, artificial-turf and UEFA/FIFA history.",
+      "limitations": "Sparse annual quantitative participation/development measures."
+    },
+    "uefa-slovakia-hattrick-review": {
+      "title": "UEFA HatTrick Review 2004–2014 — Slovakia",
+      "url": "https://www.uefa.com/MultimediaFiles/Download/uefaorg/HatTrick/02/18/45/84/2184584_DOWNLOAD.pdf",
+      "accessed_on": "2026-10-04",
+      "scope": "100 mini-pitches, ten full-size artificial pitches and grassroots/access infrastructure in Slovakia.",
+      "limitations": "Infrastructure evidence does not directly measure elite competition quality."
+    },
+    "uefa-slovakia-history": {
+      "title": "UEFA — Developing football in Slovakia",
+      "url": "https://www.uefa.com/nationalassociations/svk/",
+      "accessed_on": "2026-10-04",
+      "scope": "Slovak association timeline, 1969 Slovan European title, 1993/94 international affiliation and modern development strategy.",
+      "limitations": "Results are primarily competition/tradition evidence."
+    },
+    "ussoccer-history-framework": {
+      "title": "U.S. Soccer — History",
+      "url": "https://www.ussoccer.com/history",
+      "accessed_on": "2026-10-04",
+      "scope": "2003 National Training Center and federation player-development framework.",
+      "limitations": "Federation narrative; does not directly quantify national access or popularity."
+    },
+    "ussoccer-timeline": {
+      "title": "U.S. Soccer — Historical timeline",
+      "url": "https://www.ussoccer.com/history/timeline",
+      "accessed_on": "2026-10-04",
+      "scope": "Federation, competitions, professional-league and major-event history.",
+      "limitations": "Chronology is not a quantitative popularity/access series."
     }
   },
   "observation_datasets": {

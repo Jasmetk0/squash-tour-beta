@@ -61,12 +61,6 @@ def _dimension_summary(events: list[dict[str, Any]], dimension: str) -> dict[str
         "first_event_year": min(years) if years else None,
         "last_event_year": max(years) if years else None,
         "pre_1955_event_count": len(pre_game),
-        "event_types": sorted(
-            {
-                event["identity_reason"] if False else event.get("event_type", "")
-                for event in []
-            }
-        ),
         "conflict_groups": conflicts,
         "observation_ids": [event["observation_id"] for event in supporting],
         "events": supporting,

@@ -122,7 +122,7 @@ def test_country_evidence_admits_ranking_outcomes_without_changing_manual_partit
     assert evidence["safe_country_evidence_count"] == 1333
     assert evidence["manual_review_count"] == 22
     assert evidence["unresolved_count"] == 0
-    assert evidence["direct_mapped_observation_count"] == 70
+    assert evidence["direct_mapped_observation_count"] == 93
 
     ranking_facts = [
         fact

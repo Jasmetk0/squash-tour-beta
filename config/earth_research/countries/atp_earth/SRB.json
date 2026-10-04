@@ -5610,7 +5610,7 @@
           "observation_ids": [
             "atp-tss-history-v1#srb-yugoslav-federation-1922"
           ],
-          "rationale": "ATP Earth SRB popularity estimate for 2006. The 1–10 value is project-authored from country-specific anchors; cited observations are evidence/context, not measured game ratings. Sparse historical evidence makes this an explicit low-confidence estimate; later golden-period evidence is excluded.",
+          "rationale": "ATP Earth SRB squash_popularity estimate for 2006. The 1–10 value is project-authored from Serbia-specific anchors; cited observations are evidence/context rather than measured ratings. The later 2007–2014 federation period summary is not treated as contemporaneous evidence before that period closes. This dimension therefore remains a low-confidence authored estimate rather than being inferred from Davis Cup results.",
           "anchor_years": [
             2006
           ],
@@ -5626,7 +5626,7 @@
           "observation_ids": [
             "atp-tss-history-v1#srb-yugoslav-federation-1922"
           ],
-          "rationale": "ATP Earth SRB access estimate for 2006. The 1–10 value is project-authored from country-specific anchors; cited observations are evidence/context, not measured game ratings. Sparse historical evidence makes this an explicit low-confidence estimate; later golden-period evidence is excluded.",
+          "rationale": "ATP Earth SRB squash_access estimate for 2006. The 1–10 value is project-authored from Serbia-specific anchors; cited observations are evidence/context rather than measured ratings. The later 2007–2014 federation period summary is not treated as contemporaneous evidence before that period closes. This dimension therefore remains a low-confidence authored estimate rather than being inferred from Davis Cup results.",
           "anchor_years": [
             2006
           ],
@@ -5642,7 +5642,7 @@
           "observation_ids": [
             "atp-tss-history-v1#srb-yugoslav-federation-1922"
           ],
-          "rationale": "ATP Earth SRB development quality estimate for 2006. The 1–10 value is project-authored from country-specific anchors; cited observations are evidence/context, not measured game ratings. Sparse historical evidence makes this an explicit low-confidence estimate; later golden-period evidence is excluded.",
+          "rationale": "ATP Earth SRB development_quality estimate for 2006. The 1–10 value is project-authored from Serbia-specific anchors; cited observations are evidence/context rather than measured ratings. The later 2007–2014 federation period summary is not treated as contemporaneous evidence before that period closes. This dimension therefore remains a low-confidence authored estimate rather than being inferred from Davis Cup results.",
           "anchor_years": [
             2006
           ],
@@ -5674,7 +5674,7 @@
           "observation_ids": [
             "atp-tss-history-v1#srb-yugoslav-federation-1922"
           ],
-          "rationale": "ATP Earth SRB elite support estimate for 2006. The 1–10 value is project-authored from country-specific anchors; cited observations are evidence/context, not measured game ratings. Sparse historical evidence makes this an explicit low-confidence estimate; later golden-period evidence is excluded.",
+          "rationale": "ATP Earth SRB elite_support estimate for 2006. The 1–10 value is project-authored from Serbia-specific anchors; cited observations are evidence/context rather than measured ratings. The later 2007–2014 federation period summary is not treated as contemporaneous evidence before that period closes. This dimension therefore remains a low-confidence authored estimate rather than being inferred from Davis Cup results.",
           "anchor_years": [
             2006
           ],
@@ -5692,7 +5692,7 @@
             "atp-tss-history-v1#srb-yugoslav-federation-1922",
             "atp-tss-history-v1#srb-yugoslav-davis-debut-1927"
           ],
-          "rationale": "ATP Earth SRB tradition estimate for 2006. The 1–10 value is project-authored from country-specific anchors; cited observations are evidence/context, not measured game ratings. Early regional and Yugoslav federation/Davis Cup milestones support continuity, while predecessor history is not duplicated as Serbian population evidence.",
+          "rationale": "ATP Earth SRB tradition estimate for 2006. The 1–10 value is project-authored. Earlier regional/Yugoslav milestones and any Serbian Davis Cup outcomes already reached by this year support continuity; the later 2007–2014 federation period summary is excluded until its period closes.",
           "anchor_years": [
             2006
           ],
@@ -5712,10 +5712,9 @@
             "tss-history"
           ],
           "observation_ids": [
-            "atp-tss-history-v1#srb-yugoslav-federation-1922",
-            "atp-tss-history-v1#srb-golden-period-2007-2014"
+            "atp-tss-history-v1#srb-yugoslav-federation-1922"
           ],
-          "rationale": "ATP Earth SRB popularity estimate for 2007. The 1–10 value is project-authored from country-specific anchors; cited observations are evidence/context, not measured game ratings. TSS's self-described 2007–14 golden period is used only as contextual evidence, not as an independent metric or a substitute for participation data.",
+          "rationale": "ATP Earth SRB squash_popularity estimate for 2007. The 1–10 value is project-authored from Serbia-specific anchors; cited observations are evidence/context rather than measured ratings. The later 2007–2014 federation period summary is not treated as contemporaneous evidence before that period closes. This dimension therefore remains a low-confidence authored estimate rather than being inferred from Davis Cup results.",
           "anchor_years": [
             2006,
             2010
@@ -5730,10 +5729,9 @@
             "tss-history"
           ],
           "observation_ids": [
-            "atp-tss-history-v1#srb-yugoslav-federation-1922",
-            "atp-tss-history-v1#srb-golden-period-2007-2014"
+            "atp-tss-history-v1#srb-yugoslav-federation-1922"
           ],
-          "rationale": "ATP Earth SRB access estimate for 2007. The 1–10 value is project-authored from country-specific anchors; cited observations are evidence/context, not measured game ratings. TSS's self-described 2007–14 golden period is used only as contextual evidence, not as an independent metric or a substitute for participation data.",
+          "rationale": "ATP Earth SRB squash_access estimate for 2007. The 1–10 value is project-authored from Serbia-specific anchors; cited observations are evidence/context rather than measured ratings. The later 2007–2014 federation period summary is not treated as contemporaneous evidence before that period closes. This dimension therefore remains a low-confidence authored estimate rather than being inferred from Davis Cup results.",
           "anchor_years": [
             2006,
             2010
@@ -5748,10 +5746,9 @@
             "tss-history"
           ],
           "observation_ids": [
-            "atp-tss-history-v1#srb-yugoslav-federation-1922",
-            "atp-tss-history-v1#srb-golden-period-2007-2014"
+            "atp-tss-history-v1#srb-yugoslav-federation-1922"
           ],
-          "rationale": "ATP Earth SRB development quality estimate for 2007. The 1–10 value is project-authored from country-specific anchors; cited observations are evidence/context, not measured game ratings. TSS's self-described 2007–14 golden period is used only as contextual evidence, not as an independent metric or a substitute for participation data.",
+          "rationale": "ATP Earth SRB development_quality estimate for 2007. The 1–10 value is project-authored from Serbia-specific anchors; cited observations are evidence/context rather than measured ratings. The later 2007–2014 federation period summary is not treated as contemporaneous evidence before that period closes. This dimension therefore remains a low-confidence authored estimate rather than being inferred from Davis Cup results.",
           "anchor_years": [
             2006,
             2010
@@ -5783,10 +5780,9 @@
             "tss-history"
           ],
           "observation_ids": [
-            "atp-tss-history-v1#srb-yugoslav-federation-1922",
-            "atp-tss-history-v1#srb-golden-period-2007-2014"
+            "atp-tss-history-v1#srb-yugoslav-federation-1922"
           ],
-          "rationale": "ATP Earth SRB elite support estimate for 2007. The 1–10 value is project-authored from country-specific anchors; cited observations are evidence/context, not measured game ratings. TSS's self-described 2007–14 golden period is used only as contextual evidence, not as an independent metric or a substitute for participation data.",
+          "rationale": "ATP Earth SRB elite_support estimate for 2007. The 1–10 value is project-authored from Serbia-specific anchors; cited observations are evidence/context rather than measured ratings. The later 2007–2014 federation period summary is not treated as contemporaneous evidence before that period closes. This dimension therefore remains a low-confidence authored estimate rather than being inferred from Davis Cup results.",
           "anchor_years": [
             2006,
             2010
@@ -5803,10 +5799,9 @@
           "observation_ids": [
             "atp-tss-history-v1#srb-early-competition-1878",
             "atp-tss-history-v1#srb-yugoslav-federation-1922",
-            "atp-tss-history-v1#srb-yugoslav-davis-debut-1927",
-            "atp-tss-history-v1#srb-golden-period-2007-2014"
+            "atp-tss-history-v1#srb-yugoslav-davis-debut-1927"
           ],
-          "rationale": "ATP Earth SRB tradition estimate for 2007. The 1–10 value is project-authored from country-specific anchors; cited observations are evidence/context, not measured game ratings. Early regional and Yugoslav federation/Davis Cup milestones support continuity, while predecessor history is not duplicated as Serbian population evidence.",
+          "rationale": "ATP Earth SRB tradition estimate for 2007. The 1–10 value is project-authored. Earlier regional/Yugoslav milestones and any Serbian Davis Cup outcomes already reached by this year support continuity; the later 2007–2014 federation period summary is excluded until its period closes.",
           "anchor_years": [
             2006,
             2010
@@ -5827,10 +5822,9 @@
             "tss-history"
           ],
           "observation_ids": [
-            "atp-tss-history-v1#srb-yugoslav-federation-1922",
-            "atp-tss-history-v1#srb-golden-period-2007-2014"
+            "atp-tss-history-v1#srb-yugoslav-federation-1922"
           ],
-          "rationale": "ATP Earth SRB popularity estimate for 2008. The 1–10 value is project-authored from country-specific anchors; cited observations are evidence/context, not measured game ratings. TSS's self-described 2007–14 golden period is used only as contextual evidence, not as an independent metric or a substitute for participation data.",
+          "rationale": "ATP Earth SRB squash_popularity estimate for 2008. The 1–10 value is project-authored from Serbia-specific anchors; cited observations are evidence/context rather than measured ratings. The later 2007–2014 federation period summary is not treated as contemporaneous evidence before that period closes. This dimension therefore remains a low-confidence authored estimate rather than being inferred from Davis Cup results.",
           "anchor_years": [
             2006,
             2010
@@ -5845,10 +5839,9 @@
             "tss-history"
           ],
           "observation_ids": [
-            "atp-tss-history-v1#srb-yugoslav-federation-1922",
-            "atp-tss-history-v1#srb-golden-period-2007-2014"
+            "atp-tss-history-v1#srb-yugoslav-federation-1922"
           ],
-          "rationale": "ATP Earth SRB access estimate for 2008. The 1–10 value is project-authored from country-specific anchors; cited observations are evidence/context, not measured game ratings. TSS's self-described 2007–14 golden period is used only as contextual evidence, not as an independent metric or a substitute for participation data.",
+          "rationale": "ATP Earth SRB squash_access estimate for 2008. The 1–10 value is project-authored from Serbia-specific anchors; cited observations are evidence/context rather than measured ratings. The later 2007–2014 federation period summary is not treated as contemporaneous evidence before that period closes. This dimension therefore remains a low-confidence authored estimate rather than being inferred from Davis Cup results.",
           "anchor_years": [
             2006,
             2010
@@ -5863,10 +5856,9 @@
             "tss-history"
           ],
           "observation_ids": [
-            "atp-tss-history-v1#srb-yugoslav-federation-1922",
-            "atp-tss-history-v1#srb-golden-period-2007-2014"
+            "atp-tss-history-v1#srb-yugoslav-federation-1922"
           ],
-          "rationale": "ATP Earth SRB development quality estimate for 2008. The 1–10 value is project-authored from country-specific anchors; cited observations are evidence/context, not measured game ratings. TSS's self-described 2007–14 golden period is used only as contextual evidence, not as an independent metric or a substitute for participation data.",
+          "rationale": "ATP Earth SRB development_quality estimate for 2008. The 1–10 value is project-authored from Serbia-specific anchors; cited observations are evidence/context rather than measured ratings. The later 2007–2014 federation period summary is not treated as contemporaneous evidence before that period closes. This dimension therefore remains a low-confidence authored estimate rather than being inferred from Davis Cup results.",
           "anchor_years": [
             2006,
             2010
@@ -5898,10 +5890,9 @@
             "tss-history"
           ],
           "observation_ids": [
-            "atp-tss-history-v1#srb-yugoslav-federation-1922",
-            "atp-tss-history-v1#srb-golden-period-2007-2014"
+            "atp-tss-history-v1#srb-yugoslav-federation-1922"
           ],
-          "rationale": "ATP Earth SRB elite support estimate for 2008. The 1–10 value is project-authored from country-specific anchors; cited observations are evidence/context, not measured game ratings. TSS's self-described 2007–14 golden period is used only as contextual evidence, not as an independent metric or a substitute for participation data.",
+          "rationale": "ATP Earth SRB elite_support estimate for 2008. The 1–10 value is project-authored from Serbia-specific anchors; cited observations are evidence/context rather than measured ratings. The later 2007–2014 federation period summary is not treated as contemporaneous evidence before that period closes. This dimension therefore remains a low-confidence authored estimate rather than being inferred from Davis Cup results.",
           "anchor_years": [
             2006,
             2010
@@ -5918,10 +5909,9 @@
           "observation_ids": [
             "atp-tss-history-v1#srb-early-competition-1878",
             "atp-tss-history-v1#srb-yugoslav-federation-1922",
-            "atp-tss-history-v1#srb-yugoslav-davis-debut-1927",
-            "atp-tss-history-v1#srb-golden-period-2007-2014"
+            "atp-tss-history-v1#srb-yugoslav-davis-debut-1927"
           ],
-          "rationale": "ATP Earth SRB tradition estimate for 2008. The 1–10 value is project-authored from country-specific anchors; cited observations are evidence/context, not measured game ratings. Early regional and Yugoslav federation/Davis Cup milestones support continuity, while predecessor history is not duplicated as Serbian population evidence.",
+          "rationale": "ATP Earth SRB tradition estimate for 2008. The 1–10 value is project-authored. Earlier regional/Yugoslav milestones and any Serbian Davis Cup outcomes already reached by this year support continuity; the later 2007–2014 federation period summary is excluded until its period closes.",
           "anchor_years": [
             2006,
             2010
@@ -5942,10 +5932,9 @@
             "tss-history"
           ],
           "observation_ids": [
-            "atp-tss-history-v1#srb-yugoslav-federation-1922",
-            "atp-tss-history-v1#srb-golden-period-2007-2014"
+            "atp-tss-history-v1#srb-yugoslav-federation-1922"
           ],
-          "rationale": "ATP Earth SRB popularity estimate for 2009. The 1–10 value is project-authored from country-specific anchors; cited observations are evidence/context, not measured game ratings. TSS's self-described 2007–14 golden period is used only as contextual evidence, not as an independent metric or a substitute for participation data.",
+          "rationale": "ATP Earth SRB squash_popularity estimate for 2009. The 1–10 value is project-authored from Serbia-specific anchors; cited observations are evidence/context rather than measured ratings. The later 2007–2014 federation period summary is not treated as contemporaneous evidence before that period closes. This dimension therefore remains a low-confidence authored estimate rather than being inferred from Davis Cup results.",
           "anchor_years": [
             2006,
             2010
@@ -5960,10 +5949,9 @@
             "tss-history"
           ],
           "observation_ids": [
-            "atp-tss-history-v1#srb-yugoslav-federation-1922",
-            "atp-tss-history-v1#srb-golden-period-2007-2014"
+            "atp-tss-history-v1#srb-yugoslav-federation-1922"
           ],
-          "rationale": "ATP Earth SRB access estimate for 2009. The 1–10 value is project-authored from country-specific anchors; cited observations are evidence/context, not measured game ratings. TSS's self-described 2007–14 golden period is used only as contextual evidence, not as an independent metric or a substitute for participation data.",
+          "rationale": "ATP Earth SRB squash_access estimate for 2009. The 1–10 value is project-authored from Serbia-specific anchors; cited observations are evidence/context rather than measured ratings. The later 2007–2014 federation period summary is not treated as contemporaneous evidence before that period closes. This dimension therefore remains a low-confidence authored estimate rather than being inferred from Davis Cup results.",
           "anchor_years": [
             2006,
             2010
@@ -5978,10 +5966,9 @@
             "tss-history"
           ],
           "observation_ids": [
-            "atp-tss-history-v1#srb-yugoslav-federation-1922",
-            "atp-tss-history-v1#srb-golden-period-2007-2014"
+            "atp-tss-history-v1#srb-yugoslav-federation-1922"
           ],
-          "rationale": "ATP Earth SRB development quality estimate for 2009. The 1–10 value is project-authored from country-specific anchors; cited observations are evidence/context, not measured game ratings. TSS's self-described 2007–14 golden period is used only as contextual evidence, not as an independent metric or a substitute for participation data.",
+          "rationale": "ATP Earth SRB development_quality estimate for 2009. The 1–10 value is project-authored from Serbia-specific anchors; cited observations are evidence/context rather than measured ratings. The later 2007–2014 federation period summary is not treated as contemporaneous evidence before that period closes. This dimension therefore remains a low-confidence authored estimate rather than being inferred from Davis Cup results.",
           "anchor_years": [
             2006,
             2010
@@ -6013,10 +6000,9 @@
             "tss-history"
           ],
           "observation_ids": [
-            "atp-tss-history-v1#srb-yugoslav-federation-1922",
-            "atp-tss-history-v1#srb-golden-period-2007-2014"
+            "atp-tss-history-v1#srb-yugoslav-federation-1922"
           ],
-          "rationale": "ATP Earth SRB elite support estimate for 2009. The 1–10 value is project-authored from country-specific anchors; cited observations are evidence/context, not measured game ratings. TSS's self-described 2007–14 golden period is used only as contextual evidence, not as an independent metric or a substitute for participation data.",
+          "rationale": "ATP Earth SRB elite_support estimate for 2009. The 1–10 value is project-authored from Serbia-specific anchors; cited observations are evidence/context rather than measured ratings. The later 2007–2014 federation period summary is not treated as contemporaneous evidence before that period closes. This dimension therefore remains a low-confidence authored estimate rather than being inferred from Davis Cup results.",
           "anchor_years": [
             2006,
             2010
@@ -6033,10 +6019,9 @@
           "observation_ids": [
             "atp-tss-history-v1#srb-early-competition-1878",
             "atp-tss-history-v1#srb-yugoslav-federation-1922",
-            "atp-tss-history-v1#srb-yugoslav-davis-debut-1927",
-            "atp-tss-history-v1#srb-golden-period-2007-2014"
+            "atp-tss-history-v1#srb-yugoslav-davis-debut-1927"
           ],
-          "rationale": "ATP Earth SRB tradition estimate for 2009. The 1–10 value is project-authored from country-specific anchors; cited observations are evidence/context, not measured game ratings. Early regional and Yugoslav federation/Davis Cup milestones support continuity, while predecessor history is not duplicated as Serbian population evidence.",
+          "rationale": "ATP Earth SRB tradition estimate for 2009. The 1–10 value is project-authored. Earlier regional/Yugoslav milestones and any Serbian Davis Cup outcomes already reached by this year support continuity; the later 2007–2014 federation period summary is excluded until its period closes.",
           "anchor_years": [
             2006,
             2010
@@ -6057,10 +6042,9 @@
             "tss-history"
           ],
           "observation_ids": [
-            "atp-tss-history-v1#srb-yugoslav-federation-1922",
-            "atp-tss-history-v1#srb-golden-period-2007-2014"
+            "atp-tss-history-v1#srb-yugoslav-federation-1922"
           ],
-          "rationale": "ATP Earth SRB popularity estimate for 2010. The 1–10 value is project-authored from country-specific anchors; cited observations are evidence/context, not measured game ratings. TSS's self-described 2007–14 golden period is used only as contextual evidence, not as an independent metric or a substitute for participation data.",
+          "rationale": "ATP Earth SRB squash_popularity estimate for 2010. The 1–10 value is project-authored from Serbia-specific anchors; cited observations are evidence/context rather than measured ratings. The later 2007–2014 federation period summary is not treated as contemporaneous evidence before that period closes. This dimension therefore remains a low-confidence authored estimate rather than being inferred from Davis Cup results.",
           "anchor_years": [
             2010
           ],
@@ -6074,10 +6058,9 @@
             "tss-history"
           ],
           "observation_ids": [
-            "atp-tss-history-v1#srb-yugoslav-federation-1922",
-            "atp-tss-history-v1#srb-golden-period-2007-2014"
+            "atp-tss-history-v1#srb-yugoslav-federation-1922"
           ],
-          "rationale": "ATP Earth SRB access estimate for 2010. The 1–10 value is project-authored from country-specific anchors; cited observations are evidence/context, not measured game ratings. TSS's self-described 2007–14 golden period is used only as contextual evidence, not as an independent metric or a substitute for participation data.",
+          "rationale": "ATP Earth SRB squash_access estimate for 2010. The 1–10 value is project-authored from Serbia-specific anchors; cited observations are evidence/context rather than measured ratings. The later 2007–2014 federation period summary is not treated as contemporaneous evidence before that period closes. This dimension therefore remains a low-confidence authored estimate rather than being inferred from Davis Cup results.",
           "anchor_years": [
             2010
           ],
@@ -6091,10 +6074,9 @@
             "tss-history"
           ],
           "observation_ids": [
-            "atp-tss-history-v1#srb-yugoslav-federation-1922",
-            "atp-tss-history-v1#srb-golden-period-2007-2014"
+            "atp-tss-history-v1#srb-yugoslav-federation-1922"
           ],
-          "rationale": "ATP Earth SRB development quality estimate for 2010. The 1–10 value is project-authored from country-specific anchors; cited observations are evidence/context, not measured game ratings. TSS's self-described 2007–14 golden period is used only as contextual evidence, not as an independent metric or a substitute for participation data.",
+          "rationale": "ATP Earth SRB development_quality estimate for 2010. The 1–10 value is project-authored from Serbia-specific anchors; cited observations are evidence/context rather than measured ratings. The later 2007–2014 federation period summary is not treated as contemporaneous evidence before that period closes. This dimension therefore remains a low-confidence authored estimate rather than being inferred from Davis Cup results.",
           "anchor_years": [
             2010
           ],
@@ -6126,10 +6108,9 @@
             "tss-history"
           ],
           "observation_ids": [
-            "atp-tss-history-v1#srb-yugoslav-federation-1922",
-            "atp-tss-history-v1#srb-golden-period-2007-2014"
+            "atp-tss-history-v1#srb-yugoslav-federation-1922"
           ],
-          "rationale": "ATP Earth SRB elite support estimate for 2010. The 1–10 value is project-authored from country-specific anchors; cited observations are evidence/context, not measured game ratings. TSS's self-described 2007–14 golden period is used only as contextual evidence, not as an independent metric or a substitute for participation data.",
+          "rationale": "ATP Earth SRB elite_support estimate for 2010. The 1–10 value is project-authored from Serbia-specific anchors; cited observations are evidence/context rather than measured ratings. The later 2007–2014 federation period summary is not treated as contemporaneous evidence before that period closes. This dimension therefore remains a low-confidence authored estimate rather than being inferred from Davis Cup results.",
           "anchor_years": [
             2010
           ],
@@ -6147,10 +6128,9 @@
             "atp-tss-history-v1#srb-early-competition-1878",
             "atp-tss-history-v1#srb-yugoslav-federation-1922",
             "atp-tss-history-v1#srb-yugoslav-davis-debut-1927",
-            "atp-tss-history-v1#srb-golden-period-2007-2014",
             "atp-davis-cup-usa-aus-esp-srb-v1#srb-champion-2010"
           ],
-          "rationale": "ATP Earth SRB tradition estimate for 2010. The 1–10 value is project-authored from country-specific anchors; cited observations are evidence/context, not measured game ratings. Early regional and Yugoslav federation/Davis Cup milestones support continuity, while predecessor history is not duplicated as Serbian population evidence.",
+          "rationale": "ATP Earth SRB tradition estimate for 2010. The 1–10 value is project-authored. Earlier regional/Yugoslav milestones and any Serbian Davis Cup outcomes already reached by this year support continuity; the later 2007–2014 federation period summary is excluded until its period closes.",
           "anchor_years": [
             2010
           ],
@@ -6170,10 +6150,9 @@
             "tss-history"
           ],
           "observation_ids": [
-            "atp-tss-history-v1#srb-yugoslav-federation-1922",
-            "atp-tss-history-v1#srb-golden-period-2007-2014"
+            "atp-tss-history-v1#srb-yugoslav-federation-1922"
           ],
-          "rationale": "ATP Earth SRB popularity estimate for 2011. The 1–10 value is project-authored from country-specific anchors; cited observations are evidence/context, not measured game ratings. TSS's self-described 2007–14 golden period is used only as contextual evidence, not as an independent metric or a substitute for participation data.",
+          "rationale": "ATP Earth SRB squash_popularity estimate for 2011. The 1–10 value is project-authored from Serbia-specific anchors; cited observations are evidence/context rather than measured ratings. The later 2007–2014 federation period summary is not treated as contemporaneous evidence before that period closes. This dimension therefore remains a low-confidence authored estimate rather than being inferred from Davis Cup results.",
           "anchor_years": [
             2010,
             2014
@@ -6188,10 +6167,9 @@
             "tss-history"
           ],
           "observation_ids": [
-            "atp-tss-history-v1#srb-yugoslav-federation-1922",
-            "atp-tss-history-v1#srb-golden-period-2007-2014"
+            "atp-tss-history-v1#srb-yugoslav-federation-1922"
           ],
-          "rationale": "ATP Earth SRB access estimate for 2011. The 1–10 value is project-authored from country-specific anchors; cited observations are evidence/context, not measured game ratings. TSS's self-described 2007–14 golden period is used only as contextual evidence, not as an independent metric or a substitute for participation data.",
+          "rationale": "ATP Earth SRB squash_access estimate for 2011. The 1–10 value is project-authored from Serbia-specific anchors; cited observations are evidence/context rather than measured ratings. The later 2007–2014 federation period summary is not treated as contemporaneous evidence before that period closes. This dimension therefore remains a low-confidence authored estimate rather than being inferred from Davis Cup results.",
           "anchor_years": [
             2010,
             2014
@@ -6206,10 +6184,9 @@
             "tss-history"
           ],
           "observation_ids": [
-            "atp-tss-history-v1#srb-yugoslav-federation-1922",
-            "atp-tss-history-v1#srb-golden-period-2007-2014"
+            "atp-tss-history-v1#srb-yugoslav-federation-1922"
           ],
-          "rationale": "ATP Earth SRB development quality estimate for 2011. The 1–10 value is project-authored from country-specific anchors; cited observations are evidence/context, not measured game ratings. TSS's self-described 2007–14 golden period is used only as contextual evidence, not as an independent metric or a substitute for participation data.",
+          "rationale": "ATP Earth SRB development_quality estimate for 2011. The 1–10 value is project-authored from Serbia-specific anchors; cited observations are evidence/context rather than measured ratings. The later 2007–2014 federation period summary is not treated as contemporaneous evidence before that period closes. This dimension therefore remains a low-confidence authored estimate rather than being inferred from Davis Cup results.",
           "anchor_years": [
             2010,
             2014
@@ -6243,10 +6220,9 @@
             "tss-history"
           ],
           "observation_ids": [
-            "atp-tss-history-v1#srb-yugoslav-federation-1922",
-            "atp-tss-history-v1#srb-golden-period-2007-2014"
+            "atp-tss-history-v1#srb-yugoslav-federation-1922"
           ],
-          "rationale": "ATP Earth SRB elite support estimate for 2011. The 1–10 value is project-authored from country-specific anchors; cited observations are evidence/context, not measured game ratings. TSS's self-described 2007–14 golden period is used only as contextual evidence, not as an independent metric or a substitute for participation data.",
+          "rationale": "ATP Earth SRB elite_support estimate for 2011. The 1–10 value is project-authored from Serbia-specific anchors; cited observations are evidence/context rather than measured ratings. The later 2007–2014 federation period summary is not treated as contemporaneous evidence before that period closes. This dimension therefore remains a low-confidence authored estimate rather than being inferred from Davis Cup results.",
           "anchor_years": [
             2010,
             2014
@@ -6265,10 +6241,9 @@
             "atp-tss-history-v1#srb-early-competition-1878",
             "atp-tss-history-v1#srb-yugoslav-federation-1922",
             "atp-tss-history-v1#srb-yugoslav-davis-debut-1927",
-            "atp-tss-history-v1#srb-golden-period-2007-2014",
             "atp-davis-cup-usa-aus-esp-srb-v1#srb-champion-2010"
           ],
-          "rationale": "ATP Earth SRB tradition estimate for 2011. The 1–10 value is project-authored from country-specific anchors; cited observations are evidence/context, not measured game ratings. Early regional and Yugoslav federation/Davis Cup milestones support continuity, while predecessor history is not duplicated as Serbian population evidence.",
+          "rationale": "ATP Earth SRB tradition estimate for 2011. The 1–10 value is project-authored. Earlier regional/Yugoslav milestones and any Serbian Davis Cup outcomes already reached by this year support continuity; the later 2007–2014 federation period summary is excluded until its period closes.",
           "anchor_years": [
             2010,
             2026
@@ -6289,10 +6264,9 @@
             "tss-history"
           ],
           "observation_ids": [
-            "atp-tss-history-v1#srb-yugoslav-federation-1922",
-            "atp-tss-history-v1#srb-golden-period-2007-2014"
+            "atp-tss-history-v1#srb-yugoslav-federation-1922"
           ],
-          "rationale": "ATP Earth SRB popularity estimate for 2012. The 1–10 value is project-authored from country-specific anchors; cited observations are evidence/context, not measured game ratings. TSS's self-described 2007–14 golden period is used only as contextual evidence, not as an independent metric or a substitute for participation data.",
+          "rationale": "ATP Earth SRB squash_popularity estimate for 2012. The 1–10 value is project-authored from Serbia-specific anchors; cited observations are evidence/context rather than measured ratings. The later 2007–2014 federation period summary is not treated as contemporaneous evidence before that period closes. This dimension therefore remains a low-confidence authored estimate rather than being inferred from Davis Cup results.",
           "anchor_years": [
             2010,
             2014
@@ -6307,10 +6281,9 @@
             "tss-history"
           ],
           "observation_ids": [
-            "atp-tss-history-v1#srb-yugoslav-federation-1922",
-            "atp-tss-history-v1#srb-golden-period-2007-2014"
+            "atp-tss-history-v1#srb-yugoslav-federation-1922"
           ],
-          "rationale": "ATP Earth SRB access estimate for 2012. The 1–10 value is project-authored from country-specific anchors; cited observations are evidence/context, not measured game ratings. TSS's self-described 2007–14 golden period is used only as contextual evidence, not as an independent metric or a substitute for participation data.",
+          "rationale": "ATP Earth SRB squash_access estimate for 2012. The 1–10 value is project-authored from Serbia-specific anchors; cited observations are evidence/context rather than measured ratings. The later 2007–2014 federation period summary is not treated as contemporaneous evidence before that period closes. This dimension therefore remains a low-confidence authored estimate rather than being inferred from Davis Cup results.",
           "anchor_years": [
             2010,
             2014
@@ -6325,10 +6298,9 @@
             "tss-history"
           ],
           "observation_ids": [
-            "atp-tss-history-v1#srb-yugoslav-federation-1922",
-            "atp-tss-history-v1#srb-golden-period-2007-2014"
+            "atp-tss-history-v1#srb-yugoslav-federation-1922"
           ],
-          "rationale": "ATP Earth SRB development quality estimate for 2012. The 1–10 value is project-authored from country-specific anchors; cited observations are evidence/context, not measured game ratings. TSS's self-described 2007–14 golden period is used only as contextual evidence, not as an independent metric or a substitute for participation data.",
+          "rationale": "ATP Earth SRB development_quality estimate for 2012. The 1–10 value is project-authored from Serbia-specific anchors; cited observations are evidence/context rather than measured ratings. The later 2007–2014 federation period summary is not treated as contemporaneous evidence before that period closes. This dimension therefore remains a low-confidence authored estimate rather than being inferred from Davis Cup results.",
           "anchor_years": [
             2010,
             2014
@@ -6362,10 +6334,9 @@
             "tss-history"
           ],
           "observation_ids": [
-            "atp-tss-history-v1#srb-yugoslav-federation-1922",
-            "atp-tss-history-v1#srb-golden-period-2007-2014"
+            "atp-tss-history-v1#srb-yugoslav-federation-1922"
           ],
-          "rationale": "ATP Earth SRB elite support estimate for 2012. The 1–10 value is project-authored from country-specific anchors; cited observations are evidence/context, not measured game ratings. TSS's self-described 2007–14 golden period is used only as contextual evidence, not as an independent metric or a substitute for participation data.",
+          "rationale": "ATP Earth SRB elite_support estimate for 2012. The 1–10 value is project-authored from Serbia-specific anchors; cited observations are evidence/context rather than measured ratings. The later 2007–2014 federation period summary is not treated as contemporaneous evidence before that period closes. This dimension therefore remains a low-confidence authored estimate rather than being inferred from Davis Cup results.",
           "anchor_years": [
             2010,
             2014
@@ -6384,10 +6355,9 @@
             "atp-tss-history-v1#srb-early-competition-1878",
             "atp-tss-history-v1#srb-yugoslav-federation-1922",
             "atp-tss-history-v1#srb-yugoslav-davis-debut-1927",
-            "atp-tss-history-v1#srb-golden-period-2007-2014",
             "atp-davis-cup-usa-aus-esp-srb-v1#srb-champion-2010"
           ],
-          "rationale": "ATP Earth SRB tradition estimate for 2012. The 1–10 value is project-authored from country-specific anchors; cited observations are evidence/context, not measured game ratings. Early regional and Yugoslav federation/Davis Cup milestones support continuity, while predecessor history is not duplicated as Serbian population evidence.",
+          "rationale": "ATP Earth SRB tradition estimate for 2012. The 1–10 value is project-authored. Earlier regional/Yugoslav milestones and any Serbian Davis Cup outcomes already reached by this year support continuity; the later 2007–2014 federation period summary is excluded until its period closes.",
           "anchor_years": [
             2010,
             2026
@@ -6408,10 +6378,9 @@
             "tss-history"
           ],
           "observation_ids": [
-            "atp-tss-history-v1#srb-yugoslav-federation-1922",
-            "atp-tss-history-v1#srb-golden-period-2007-2014"
+            "atp-tss-history-v1#srb-yugoslav-federation-1922"
           ],
-          "rationale": "ATP Earth SRB popularity estimate for 2013. The 1–10 value is project-authored from country-specific anchors; cited observations are evidence/context, not measured game ratings. TSS's self-described 2007–14 golden period is used only as contextual evidence, not as an independent metric or a substitute for participation data.",
+          "rationale": "ATP Earth SRB squash_popularity estimate for 2013. The 1–10 value is project-authored from Serbia-specific anchors; cited observations are evidence/context rather than measured ratings. The later 2007–2014 federation period summary is not treated as contemporaneous evidence before that period closes. This dimension therefore remains a low-confidence authored estimate rather than being inferred from Davis Cup results.",
           "anchor_years": [
             2010,
             2014
@@ -6426,10 +6395,9 @@
             "tss-history"
           ],
           "observation_ids": [
-            "atp-tss-history-v1#srb-yugoslav-federation-1922",
-            "atp-tss-history-v1#srb-golden-period-2007-2014"
+            "atp-tss-history-v1#srb-yugoslav-federation-1922"
           ],
-          "rationale": "ATP Earth SRB access estimate for 2013. The 1–10 value is project-authored from country-specific anchors; cited observations are evidence/context, not measured game ratings. TSS's self-described 2007–14 golden period is used only as contextual evidence, not as an independent metric or a substitute for participation data.",
+          "rationale": "ATP Earth SRB squash_access estimate for 2013. The 1–10 value is project-authored from Serbia-specific anchors; cited observations are evidence/context rather than measured ratings. The later 2007–2014 federation period summary is not treated as contemporaneous evidence before that period closes. This dimension therefore remains a low-confidence authored estimate rather than being inferred from Davis Cup results.",
           "anchor_years": [
             2010,
             2014
@@ -6444,10 +6412,9 @@
             "tss-history"
           ],
           "observation_ids": [
-            "atp-tss-history-v1#srb-yugoslav-federation-1922",
-            "atp-tss-history-v1#srb-golden-period-2007-2014"
+            "atp-tss-history-v1#srb-yugoslav-federation-1922"
           ],
-          "rationale": "ATP Earth SRB development quality estimate for 2013. The 1–10 value is project-authored from country-specific anchors; cited observations are evidence/context, not measured game ratings. TSS's self-described 2007–14 golden period is used only as contextual evidence, not as an independent metric or a substitute for participation data.",
+          "rationale": "ATP Earth SRB development_quality estimate for 2013. The 1–10 value is project-authored from Serbia-specific anchors; cited observations are evidence/context rather than measured ratings. The later 2007–2014 federation period summary is not treated as contemporaneous evidence before that period closes. This dimension therefore remains a low-confidence authored estimate rather than being inferred from Davis Cup results.",
           "anchor_years": [
             2010,
             2014
@@ -6481,10 +6448,9 @@
             "tss-history"
           ],
           "observation_ids": [
-            "atp-tss-history-v1#srb-yugoslav-federation-1922",
-            "atp-tss-history-v1#srb-golden-period-2007-2014"
+            "atp-tss-history-v1#srb-yugoslav-federation-1922"
           ],
-          "rationale": "ATP Earth SRB elite support estimate for 2013. The 1–10 value is project-authored from country-specific anchors; cited observations are evidence/context, not measured game ratings. TSS's self-described 2007–14 golden period is used only as contextual evidence, not as an independent metric or a substitute for participation data.",
+          "rationale": "ATP Earth SRB elite_support estimate for 2013. The 1–10 value is project-authored from Serbia-specific anchors; cited observations are evidence/context rather than measured ratings. The later 2007–2014 federation period summary is not treated as contemporaneous evidence before that period closes. This dimension therefore remains a low-confidence authored estimate rather than being inferred from Davis Cup results.",
           "anchor_years": [
             2010,
             2014
@@ -6503,11 +6469,10 @@
             "atp-tss-history-v1#srb-early-competition-1878",
             "atp-tss-history-v1#srb-yugoslav-federation-1922",
             "atp-tss-history-v1#srb-yugoslav-davis-debut-1927",
-            "atp-tss-history-v1#srb-golden-period-2007-2014",
             "atp-davis-cup-usa-aus-esp-srb-v1#srb-champion-2010",
             "atp-davis-cup-usa-aus-esp-srb-v1#srb-finalist-2013"
           ],
-          "rationale": "ATP Earth SRB tradition estimate for 2013. The 1–10 value is project-authored from country-specific anchors; cited observations are evidence/context, not measured game ratings. Early regional and Yugoslav federation/Davis Cup milestones support continuity, while predecessor history is not duplicated as Serbian population evidence.",
+          "rationale": "ATP Earth SRB tradition estimate for 2013. The 1–10 value is project-authored. Earlier regional/Yugoslav milestones and any Serbian Davis Cup outcomes already reached by this year support continuity; the later 2007–2014 federation period summary is excluded until its period closes.",
           "anchor_years": [
             2010,
             2026

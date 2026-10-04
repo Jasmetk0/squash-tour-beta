@@ -195,3 +195,139 @@ The first pass exposed three under-calibrated access cases:
 South Africa is raised more moderately because high participation coexists with lower club density and persistent inequality/geographic barriers. USA remains strong in access but below the three densest prototype cases, while its popularity remains lower because soccer was not the dominant national spectator sport.
 
 This comparative pass is a prototype check, not a universal formula. Full FIFA Earth calibration still requires association-to-Earth identity reconciliation and a global population-normalised benchmark across all usable Big Count rows.
+
+
+## Canonical empirical signal layer
+
+Before any canonical 1–10 rating conversion, FIFA Earth now derives separate
+measurement-level calibration signals from normalized, identity-resolved evidence.
+
+`scripts/build_fifa_country_calibration_signals.py` produces:
+
+- 2006 all-player participation per 1,000 population;
+- 2006 registered-player footprint per 1,000 population;
+- 2006 reported clubs per million population;
+- 2023 men's professional players per million population;
+- 2023 professional clubs per million population.
+
+Each observed signal preserves the exact source observation IDs, source value,
+population denominator, empirical descending rank and ascending midrank percentile.
+All 250 Earth countries are present in the output; unobserved or incomplete evidence
+remains missing rather than becoming zero.
+
+These percentiles are **not** game ratings and there is deliberately no
+`percentile / 10` or equivalent conversion. The observed comparison set differs by
+signal, source definitions have explicit limitations, and each signal maps only to
+the dimensions it can reasonably inform. In particular, Big Count evidence primarily
+informs popularity/access, while professional-player/club density is evidence for
+competition/elite-support ecosystem depth. None directly determines development,
+tradition, or a universal "football strength" score.
+
+GBR is treated conservatively: Big Count 2006 can use the reviewed sum of four
+non-overlapping home-association counts; Professional 2023 remains missing at GBR
+level because Northern Ireland is missing in the source. Manual identity cases are
+never admitted into these signals.
+
+
+## Prototype-versus-signal diagnostic audit
+
+`scripts/audit_fifa_prototype_against_signals.py` compares the nine-country
+prototype against the canonical empirical signal layer at the signal observation
+year.
+
+The audit uses Spearman rank agreement only as a diagnostic. It also lists
+pairwise review inversions when one prototype country is at least 25 percentile
+points stronger on a measured signal but at least 0.5 rating points lower on the
+relevant prototype attribute.
+
+Neither condition is a rejection rule. A country rating may legitimately differ
+from one signal because access, affordability, institutional context, source
+coverage and other evidence matter. The audit exists to identify places that need
+human review before any transfer curve is made canonical.
+
+The audit never writes ratings, never changes anchors and remains
+`rating_ready=false`.
+
+
+## Provisional dimension evidence-score model
+
+`config/earth_research/calibration/fifa_dimension_evidence_model_v1.json`
+defines the first explicit 1–10 transfer model over the canonical empirical signal
+layer. This is a **calibration aid**, not canonical country-rating authorship.
+
+The percentile→evidence-score curve is monotone and piecewise linear:
+
+| Percentile | Evidence score |
+|---:|---:|
+| 0 | 1.5 |
+| 5 | 2.5 |
+| 15 | 3.5 |
+| 30 | 4.5 |
+| 50 | 5.5 |
+| 70 | 6.5 |
+| 85 | 7.5 |
+| 95 | 8.5 |
+| 99 | 9.3 |
+| 100 | 9.7 |
+
+The curve deliberately does not use `percentile / 10`. It aligns empirical
+relative strength with the existing qualitative 1–10 rubric while leaving room
+below/above observed samples and keeping 10.0 exceptional rather than automatic.
+
+Current recipes:
+
+- `squash_popularity@2006`: 100% participation intensity;
+- `squash_access@2006`: 65% registered-player intensity + 35% club footprint;
+- `competition_quality@2023`: 65% professional-player density + 35% professional-club density;
+- `elite_support@2023`: 45% professional-player density + 55% professional-club density.
+
+All required components must exist. Missing remains missing. The current source
+slice does not produce quantitative evidence scores for `development_quality` or
+`squash_tradition`.
+
+Every result from
+`scripts/build_fifa_dimension_evidence_scores.py` is marked
+`rating_ready=false`. A later canonical rating may use these scores only alongside
+independent historical/context evidence with exact observation provenance.
+
+
+## Evidence-score versus prototype audit
+
+`scripts/audit_fifa_dimension_scores_against_prototype.py` compares the provisional
+1–10 evidence scores with the nine-country prototype at the same attribute/year.
+
+The audit reports:
+- signed and absolute score/rating delta;
+- mean and maximum absolute delta by recipe;
+- exact prototype method/confidence/anchor years;
+- exact source observation IDs behind each evidence-score component;
+- a human-review flag when the absolute difference is at least 1.5 points.
+
+The 1.5-point threshold is a review heuristic, not a pass/fail rule. A large
+difference can be legitimate because the prototype includes contextual evidence
+outside the current quantitative source slice. A small difference likewise does not
+validate the model. The audit never writes a canonical or recommended rating.
+
+
+## Dimension evidence-score versus prototype audit
+
+`scripts/audit_fifa_dimension_scores_against_prototype.py` compares the provisional
+1–10 evidence scores directly against the nine-country review prototype on the same
+scale.
+
+For each available country/recipe it records:
+
+- provisional evidence score;
+- prototype rating at the same evidence year;
+- signed and absolute delta;
+- prototype method, confidence and anchor years;
+- the component signal percentiles and exact source observation IDs.
+
+An absolute delta of **1.5 or more** is surfaced for human review. This is not an
+automatic failure and never changes a rating. Large deltas may reflect missing
+context in the quantitative model; small deltas do not validate the model.
+
+Expected review samples remain intentionally incomplete where source evidence is
+missing: nine countries for 2006 popularity/access and six countries for 2023
+competition/elite-support. This audit is the explicit gate before any evidence-score
+recipe can be considered for canonical rating authoring.

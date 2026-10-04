@@ -1,5 +1,81 @@
 # Current implementation and next action
 
+## Candidate — FIFA dimension evidence-score prototype audit (4 October 2026)
+
+Stacked on the provisional 1–10 evidence-score model. This slice compares those
+scores directly with the nine-country prototype on the same scale without changing
+either side.
+
+The audit covers 9 prototype countries for 2006 popularity/access and 6 countries
+for 2023 competition/elite-support because professional source missingness remains
+explicit. Each comparison preserves exact source observation IDs and prototype
+method/confidence/anchor years. Absolute differences >=1.5 points are surfaced as
+human-review flags only.
+
+This is the decision gate before any canonical authoring. A transfer curve or recipe
+must not become a country-rating rule merely because it is numerically close to the
+prototype; large and small deltas both require evidence interpretation.
+
+## Candidate — provisional FIFA 1–10 dimension evidence scores (4 October 2026)
+
+Stacked on the green empirical-signal/audit landing candidate. This slice defines
+the first explicit, versioned 1–10 transfer model over canonical FIFA evidence.
+
+The model is data/config-driven rather than hidden in runtime code. A monotone
+piecewise percentile curve maps empirical signal strength into provisional
+`evidence_score` values on `country_ratings_1_10.v2`. Dimension recipes remain
+separate: popularity uses participation; access uses registration+clubs;
+competition and elite support use different professional-player/club weightings.
+Development quality and tradition deliberately remain unsupported by the current
+quantitative source slice.
+
+Every output is `rating_ready=false`. Missing required signals remain missing and
+no score is copied into canonical country history. The next step is a held-out /
+prototype review of these evidence scores before any canonical rating-authoring
+rule is permitted.
+
+## Candidate — FIFA prototype-versus-signal calibration audit (4 October 2026)
+
+Stacked on the green empirical signal slice (#1135). This candidate compares the
+nine-country FIFA Earth prototype against canonical 2006/2023 measured signals
+without changing any rating.
+
+Seven diagnostic comparisons are produced: participation→popularity,
+registration→access, clubs→access, and professional-player/club density against
+competition quality and elite support. Spearman rank agreement is reported only
+for review. Material pairwise inversions (>=25 percentile points opposite to
+>=0.5 prototype rating points) are listed as human-review candidates, not failures.
+
+Expected prototype sample sizes are 9/9/9 for the three Big Count signals, 6 for
+professional-player comparisons, and 8 for professional-club comparisons because
+source missingness remains explicit.
+
+**No transfer curve is canonical yet.** The next step after this audit is to inspect
+the flagged comparisons and define dimension-specific transfer anchors only where
+the measured evidence and historical context support them.
+
+## Candidate — FIFA empirical country calibration signals (4 October 2026)
+
+Stacked on the canonical FIFA country-evidence landing stack. This candidate is the
+first actual calibration-data slice rather than another provenance layer.
+
+Five independent empirical signals are derived for all 250 Earth countries:
+2006 participation intensity, registration intensity and club footprint; 2023 men's
+professional-player density and professional-club density. Observed values preserve
+the exact source observation IDs and population denominator and add empirical
+rank/percentile only within the comparable observed set. Missing evidence stays
+missing.
+
+Expected observed coverage is 201 / 201 / 199 / 108 / 131 countries respectively.
+GBR Big Count is a reviewed complete four-home-association aggregate; GBR
+Professional 2023 remains partial/missing because Northern Ireland is absent.
+No composite football-strength score and no automatic percentile→1–10 conversion
+exists. The output is explicitly `rating_ready=false`.
+
+**Next after validation:** define reviewed dimension-specific 1–10 anchor transfer
+functions against these empirical distributions and the historical structural
+prototype, then test them on held-out countries before authoring canonical histories.
+
 ## Candidate — FIFA country evidence index (4 October 2026)
 
 Stacked on the green canonical observation + identity-resolution slices. This

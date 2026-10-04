@@ -240,3 +240,20 @@ partial. Iceland has near-top access with smaller absolute competition depth. Sa
 Marino likewise has excellent local access and long tradition while maintaining
 modest competition quality; missing professional-report fields remain missing rather
 than becoming zero.
+
+
+## FIFA canonical-history batch 5 — source/manifest sharding and four new countries
+
+The Earth research loader can now merge sharded source records and observation
+dataset manifests before the existing `EarthSportResearch` validation. Together
+with country-history sharding, new research can be added without rewriting the
+multi-megabyte root research JSON. Duplicate identifiers fail closed and every
+normalized dataset still passes the existing semantic SHA, source, record-count and
+observation-ID integrity checks.
+
+The first batch using the complete sharded research path adds Argentina, Mexico,
+Australia and New Zealand. Argentina enters 1955 with mature professional competition;
+Mexico separates very high popularity from more mixed access evidence; Australia
+preserves federation, league and confederation discontinuities; and New Zealand
+keeps strong modern access/development investment distinct from football's lower
+relative cultural dominance in a rugby-led sporting environment.

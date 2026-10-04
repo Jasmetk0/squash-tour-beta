@@ -77,10 +77,11 @@ def build_audit(
         earth_country_codes=_load_earth_country_codes(country_index_path),
     )
 
+    prototype_codes = set(prototype["countries"])
     review_codes = sorted(
         code
         for code, country in features["countries"].items()
-        if country["validation_role"] == "review"
+        if country["validation_role"] == "review" and code in prototype_codes
     )
     heldout_codes = sorted(
         code

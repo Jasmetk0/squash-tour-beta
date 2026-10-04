@@ -8,6 +8,9 @@ previously required persisted national ``style_dna``.
 
 from __future__ import annotations
 
+import shutil
+from pathlib import Path
+
 import pytest
 
 from tests.api import world_package_api_contract_suite as _suite
@@ -96,6 +99,7 @@ def test_clone_endpoint_accepts_any_registered_builtin_source(tmp_path) -> None:
     _suite._write_fixture(countries_path, _suite.COUNTRIES_FIXTURE)
     _suite._write_fixture(overrides_path, _suite.OVERRIDES_FIXTURE)
     worlds_root = _suite._copy_worlds_root(tmp_path)
+    shutil.copytree(Path("config/world_packages/real_world"), worlds_root / "real_world")
 
     with _suite.ApiServer(
         database_url=f"sqlite:///{tmp_path / 'generic-clone.db'}",

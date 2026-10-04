@@ -108,6 +108,13 @@
       "accessed_on": "2026-10-04",
       "scope": "Federation, competitions, professional-league and major-event history.",
       "limitations": "Chronology is not a quantitative popularity/access series."
+    },
+    "uefa-first-division-clubs-2005-06": {
+      "title": "UEFA — First division clubs in Europe 2005/06",
+      "url": "https://www.uefa.com/newsfiles/332930.pdf",
+      "accessed_on": "2026-10-04",
+      "scope": "UEFA association directory, Czech Republic page 36, information updated 20 July 2005: registered-player categories, clubs/teams, referees and domestic competition 2004/05.",
+      "limitations": "A one-season association snapshot. Counts describe system scale and structure; they are contextual evidence rather than direct measurements of coaching, competition or elite-support quality."
     }
   },
   "observation_datasets": {
@@ -187,6 +194,28 @@
       "source_document_sha256": "fb15135da80e3cf395cadf1b2fcd2762f52268292cebc5e86957115b260c0e71",
       "input_artifact_sha256": "d3782c520864667195d44b8359bdbadf85f0dec51fe0ead8c626ac8619120bb4",
       "generated_by": "scripts/normalize_fifa_professional_2023.py"
+    },
+    "uefa-czechia-history-events-v2": {
+      "schema_version": "earth_source_observations_manifest.v1",
+      "dataset_id": "uefa-czechia-history-events-v2",
+      "source_id": "uefa-czechia-history",
+      "relative_path": "observations/normalized/uefa_czechia_history_events_v2.json",
+      "sha256": "4c6272e654616fe4d99ce24ba8c6fecf75b54f529d5fed4d5530c159b3cb53b5",
+      "record_count": 7,
+      "source_document_sha256": null,
+      "input_artifact_sha256": null,
+      "generated_by": "scripts/curate_cze_uefa_2006_observations.py"
+    },
+    "uefa-czech-republic-2005-06-snapshot-v2": {
+      "schema_version": "earth_source_observations_manifest.v1",
+      "dataset_id": "uefa-czech-republic-2005-06-snapshot-v2",
+      "source_id": "uefa-first-division-clubs-2005-06",
+      "relative_path": "observations/normalized/uefa_czech_republic_2005_06_snapshot_v2.json",
+      "sha256": "30f377cb4d35d9b8adc80f24a2d19275b956eed8325ff381a2fd64c592261439",
+      "record_count": 8,
+      "source_document_sha256": null,
+      "input_artifact_sha256": null,
+      "generated_by": "scripts/curate_cze_uefa_2006_observations.py"
     }
   }
 }

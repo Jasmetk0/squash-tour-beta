@@ -1,5 +1,30 @@
 # Current implementation and next action
 
+## Candidate — FIFA dimension evidence V2 review decision (4 October 2026)
+
+The reproducible V1→V2 review now confirms that the scale-dominant professional
+recipes materially fixed the density-only failure without further tuning against
+the same nine-country prototype.
+
+Measured prototype audit:
+- competition quality MAD: 2.683 → 0.600 (improvement 2.083);
+- elite support MAD: 2.917 → 0.983 (improvement 1.934);
+- both 2023 recipes now have one >=1.5-point review outlier: South Africa.
+
+Decision:
+- `competition_quality@2023`: quantitative review passed, but canonical authoring
+  remains blocked pending held-out/context validation;
+- `elite_support@2023`: context required; the model remains systematically below
+  the prototype and does not measure federation funding/technical/medical support;
+- `squash_access@2006`: retained provisional with India/USA review outliers;
+- popularity remains unsupported in V2; development/tradition remain unsupported
+  by the quantitative source slice.
+
+The checked-in review policy explicitly forbids further weight tuning on the same
+nine-country prototype merely to reduce residual error. **Next:** use independent
+held-out structural evidence and contextual source families before any canonical
+rating promotion.
+
 ## Candidate — FIFA dimension evidence model V2 (4 October 2026)
 
 The merged calibration-review artifact exposed a structural flaw in V1:

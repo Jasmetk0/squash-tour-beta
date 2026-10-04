@@ -31,7 +31,7 @@ from beta_engine.api.schemas import (
 from beta_engine.application.world_package_clone_service import WorldPackageCloneResult, WorldPackageCloneService
 from beta_engine.application.world_package_countries_service import WorldPackageCountriesResult, WorldPackageCountriesService, WorldPackageCountryPopulationUpdate, WorldPackageMutationError
 from beta_engine.application.world_package_effective_population_service import WorldPackageCountryEffectivePopulationResult, WorldPackageEffectivePopulationService
-from beta_engine.application.world_package_registry_service import OFFICIAL_FAX_WORLD_ID, WorldPackageRegistryRecord, WorldPackageRegistryService
+from beta_engine.application.world_package_registry_service import WorldPackageRegistryRecord, WorldPackageRegistryService
 from beta_engine.application.world_package_validation_service import WorldPackageValidationResult, WorldPackageValidationService
 from beta_engine.application.season_registry_service import SeasonRegistryService
 from beta_engine.application.world_package_weekly_intake_preview_service import WorldPackageWeeklyIntakePreviewResult, WorldPackageWeeklyIntakeSeasonSchedulePreviewResult, WorldPackageWeeklyIntakeSeasonScheduleWeek, WorldPackageWeeklyIntakePreviewService
@@ -165,9 +165,8 @@ def clone_world_package(
     payload: WorldPackageCloneRequest,
     service: WorldPackageCloneService = Depends(get_world_package_clone_service),
 ) -> WorldPackageCloneResponse:
-    if world_id != OFFICIAL_FAX_WORLD_ID:
-        raise HTTPException(status_code=404, detail=f"world package '{world_id}' clone is not supported")
-    result = service.clone_official_world(
+    result = service.clone_world(
+        source_world_id=world_id,
         new_world_id=payload.new_world_id,
         name=payload.name,
         description=payload.description,

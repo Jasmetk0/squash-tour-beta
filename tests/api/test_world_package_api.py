@@ -8,6 +8,11 @@ previously required persisted national ``style_dna``.
 
 from __future__ import annotations
 
+import shutil
+from pathlib import Path
+
+import pytest
+
 from tests.api import world_package_api_contract_suite as _suite
 
 
@@ -85,6 +90,38 @@ def _assert_canonical_v1_attribute_files(package_root, code: str) -> None:
     assert not stems.intersection(
         {"wealth_support", "system_quality", "competition_density", "federation_quality", "style_dna"}
     )
+
+
+@pytest.mark.pr_critical
+def test_clone_endpoint_accepts_any_registered_builtin_source(tmp_path) -> None:
+    countries_path = tmp_path / "countries.json"
+    overrides_path = tmp_path / "overrides.json"
+    _suite._write_fixture(countries_path, _suite.COUNTRIES_FIXTURE)
+    _suite._write_fixture(overrides_path, _suite.OVERRIDES_FIXTURE)
+    worlds_root = _suite._copy_worlds_root(tmp_path)
+    shutil.copytree(Path("config/world_packages/real_world"), worlds_root / "real_world")
+
+    with _suite.ApiServer(
+        database_url=f"sqlite:///{tmp_path / 'generic-clone.db'}",
+        countries_config_path=str(countries_path),
+        manual_overrides_config_path=str(overrides_path),
+        worlds_root=str(worlds_root),
+    ) as server:
+        status, response = _suite._request(
+            "POST",
+            f"{server.base_url}/world/packages/real_world/clone",
+            {"new_world_id": "editable_earth", "name": "Editable Earth", "dry_run": False},
+        )
+        detail_status, detail = _suite._request(
+            "GET", f"{server.base_url}/world/packages/editable_earth"
+        )
+
+    assert status == 200 and detail_status == 200
+    assert response["ok"] is True
+    assert response["source_world_id"] == "real_world"
+    assert detail["type"] == "custom"
+    assert detail["source"] == "custom_config"
+    assert detail["country_count"] == response["package"]["country_count"]
 
 
 def test_put_custom_country_persists_edit_and_preserves_population_and_index(tmp_path) -> None:

@@ -943,8 +943,12 @@ export function getWorldPackageCountryEffectivePopulation(
   )
 }
 
+export function cloneWorldPackage(sourceWorldId: string, payload: WorldPackageClonePayload): Promise<WorldPackageCloneResponse> {
+  return request(`/world/packages/${encodeURIComponent(sourceWorldId)}/clone`, { method: 'POST', body: JSON.stringify(payload) })
+}
+
 export function cloneOfficialWorldPackage(payload: WorldPackageClonePayload): Promise<WorldPackageCloneResponse> {
-  return request('/world/packages/official_fax_world/clone', { method: 'POST', body: JSON.stringify(payload) })
+  return cloneWorldPackage('official_fax_world', payload)
 }
 
 export function createRun(payload: CreateRunPayload): Promise<RunSummary> {

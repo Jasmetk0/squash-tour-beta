@@ -154,6 +154,50 @@ def test_clone_recursively_preserves_directory_country_storage(tmp_path: Path) -
     ).load_country("GER")
 
 
+@pytest.mark.pr_critical
+def test_generic_builtin_clone_preserves_package_owned_evidence_and_is_independent(tmp_path: Path) -> None:
+    root = tmp_path / "packages"
+    source = root / "fifa_earth"
+    shutil.copytree("config/world_packages/real_world", source)
+    metadata_path = source / "world.json"
+    metadata = json.loads(metadata_path.read_text())
+    metadata.update(
+        world_id="fifa_earth",
+        name="FIFA Earth Package",
+        description="Synthetic Earth clone-source fixture.",
+        type="official",
+        source="built_in",
+        editable=False,
+        deletable=False,
+        archivable=False,
+    )
+    metadata_path.write_text(json.dumps(metadata, indent=2) + "\n")
+    evidence_path = source / "generation/country_rating_sources.json"
+    evidence_path.parent.mkdir(exist_ok=True)
+    evidence_path.write_text(json.dumps({"fixture-source": {"title": "Fixture evidence"}}) + "\n")
+
+    registry = WorldPackageRegistryService(world_packages_root=root)
+    validation = WorldPackageValidationService(registry)
+    result = WorldPackageCloneService(registry, validation).clone_world(
+        source_world_id="fifa_earth",
+        new_world_id="editable_fifa",
+        name="Editable FIFA Earth",
+        description=None,
+        dry_run=False,
+    )
+
+    assert result.ok and result.source_world_id == "fifa_earth"
+    target = root / "custom/editable_fifa"
+    cloned_metadata = json.loads((target / "world.json").read_text())
+    assert cloned_metadata["cloned_from_world_id"] == "fifa_earth"
+    assert cloned_metadata["type"] == "custom"
+    assert cloned_metadata["source"] == "custom_config"
+    assert (target / "generation/country_rating_sources.json").read_text() == evidence_path.read_text()
+
+    evidence_path.write_text(json.dumps({"fixture-source": {"title": "Changed source"}}) + "\n")
+    assert json.loads((target / "generation/country_rating_sources.json").read_text())["fixture-source"]["title"] == "Fixture evidence"
+
+
 def test_scalar_population_country_roundtrips_through_write_and_update(tmp_path: Path) -> None:
     store = WorldPackageCountryStore(tmp_path / "custom_world")
     store.replace_dataset(CountriesConfig(dataset_status="test", countries=[_scalar_country()]))

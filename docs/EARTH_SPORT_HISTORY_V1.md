@@ -58,6 +58,11 @@ separate inputs. Innate potential rarity must remain independent of nationality.
 - Observation manifests are content-addressed provenance declarations.
   `load_earth_research_bundle()` resolves their relative files and fail-closes on
   dataset/source/count/input-artifact/semantic-hash mismatch before audit/build.
+- FIFA association→Earth identity is a separate typed transform, not a mutation of
+  source observations. `earth_observation_identity_resolutions.v1` binds every
+  resolved/manual observation to its input dataset hashes, reviewed override hash
+  and Earth identity catalogue hash; aggregate members and manual-review cases remain
+  explicit instead of being silently collapsed.
 - Historical ratings in an editable copy require versioned import/API authoring;
   the flat World Library editor deliberately disables Save for a history-bearing
   profile. A dedicated per-year/evidence editor is still required.
@@ -116,10 +121,12 @@ distinct measurements. A richer Big Count re-extraction should recover country-l
 male/female and source statistical-processing metadata where the original material
 supports it.
 
-Map sporting associations and historical polities explicitly to the Earth country
-catalogue (including UK associations, USSR, Yugoslavia, Czechoslovakia and colonial
-territories). Population must not be duplicated when a predecessor has several
-successors. Collect independent evidence for participation/access, development,
+Use the canonical observation identity-resolution layer before calibration. The
+current FIFA source slices now resolve every normalized Big Count / Professional
+2023 observation exactly once, while reviewed ambiguous cases stay manual. Extend
+this same mechanism to historical polities and later source families (including
+USSR, Yugoslavia, Czechoslovakia and colonial territories). Population must not be
+duplicated when a predecessor has several successors. Collect independent evidence for participation/access, development,
 competition, elite support and tradition; ranking outcomes alone cannot measure
 all six. Author period anchors with uncertainties, preserve documented structural
 breaks, and use explicit `derived_estimate` provenance for calibrated ramps/lags.

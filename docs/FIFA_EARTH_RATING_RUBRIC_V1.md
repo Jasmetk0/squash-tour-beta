@@ -331,3 +331,40 @@ Expected review samples remain intentionally incomplete where source evidence is
 missing: nine countries for 2006 popularity/access and six countries for 2023
 competition/elite-support. This audit is the explicit gate before any evidence-score
 recipe can be considered for canonical rating authoring.
+
+
+## Calibration model V2 — scale and density separation
+
+The first 1–10 evidence-score model exposed a structural error rather than a small
+weighting error.
+
+Review artifact results for model V1:
+- access@2006: mean absolute delta 0.70 versus the nine-country prototype;
+- popularity@2006: mean absolute delta 1.49, with major misses for Japan, India,
+  Morocco and Senegal and an overstatement for the USA;
+- competition_quality@2023: mean absolute delta 2.68;
+- elite_support@2023: mean absolute delta 2.92.
+
+The professional failures came from using only per-capita density. That rewards
+small countries with concentrated professional ecosystems and heavily penalises
+large countries that can sustain substantial absolute professional leagues. Density
+therefore cannot stand in for competition quality or elite support.
+
+Model V2 introduces two additional canonical signals:
+- absolute men's professional-player scale;
+- absolute professional-club scale.
+
+The corresponding professional recipes now make absolute scale dominant and retain
+per-capita density only as secondary evidence.
+
+Model V2 also removes the automatic popularity evidence-score recipe. Big Count
+participation intensity is still useful empirical evidence, but it cannot by itself
+represent football's cultural/social importance. The review set showed that this
+single-signal conversion materially underestimates Japan, India, Morocco and Senegal
+while overstating the USA. Popularity therefore returns to an unsupported
+quantitative-rating state until independent audience/cultural evidence is normalized.
+
+Access remains the strongest current quantitative candidate because registered-player
+and club-density rankings align much more closely with the reviewed prototype.
+
+All V2 results remain `rating_ready=false`.

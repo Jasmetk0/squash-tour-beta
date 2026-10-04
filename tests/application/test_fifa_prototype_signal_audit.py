@@ -10,9 +10,9 @@ from scripts.audit_fifa_prototype_against_signals import build_audit
 def test_prototype_signal_audit_uses_expected_samples_without_authoring_ratings() -> None:
     audit = build_audit()
 
-    assert audit["schema_version"] == "fifa_prototype_signal_audit.v1"
+    assert audit["schema_version"] == "fifa_prototype_signal_audit.v2"
     assert audit["prototype_country_count"] == 9
-    assert audit["comparison_count"] == 7
+    assert audit["comparison_count"] == 11
     assert audit["rating_ready"] is False
 
     expected_samples = {
@@ -23,6 +23,10 @@ def test_prototype_signal_audit_uses_expected_samples_without_authoring_ratings(
         "professional_player_density_2023__elite_support": 6,
         "professional_club_density_2023__competition_quality": 8,
         "professional_club_density_2023__elite_support": 8,
+        "professional_player_scale_2023__competition_quality": 6,
+        "professional_player_scale_2023__elite_support": 6,
+        "professional_club_scale_2023__competition_quality": 8,
+        "professional_club_scale_2023__elite_support": 8,
     }
 
     assert set(audit["comparisons"]) == set(expected_samples)
@@ -36,6 +40,7 @@ def test_prototype_signal_audit_uses_expected_samples_without_authoring_ratings(
         )
         assert all(
             "prototype_rating" in row
+            and "signal_value" in row
             and "signal_percentile" in row
             and "source_observation_ids" in row
             for row in comparison["countries"]

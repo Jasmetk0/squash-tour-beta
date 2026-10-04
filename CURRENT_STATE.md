@@ -1,5 +1,31 @@
 # Current implementation and next action
 
+## Candidate — held-out FIFA structural evidence validation set (4 October 2026)
+
+Stacked on the green structural-summary head. This candidate adds a deliberately
+separate structural-event seed for four held-out benchmark countries: Germany,
+Brazil, Iceland and San Marino.
+
+The held-out seed contains 14 events from 7 official DFB/CBF/UEFA sources and is
+content-addressed independently from the 43-event review seed. Every held-out
+observation carries `held_out_validation_country`; the structural summary reports
+review and held-out counts separately and explicitly forbids held-out events as
+model-fit inputs.
+
+Canonical FIFA research on this branch contains 39 observation datasets / 1,342
+observations. Country evidence partitions them into 1,320 safe facts + 22 manual +
+0 unresolved, with 57 direct-mapped structural facts. Structural summary coverage is
+57 events total = 43 review + 14 held-out; 23 events are development-relevant and 25
+tradition-relevant.
+
+Held-out milestones include DFB foundation/1903 championship/2022 Campus, CBF 1914
+foundation/Granja Comary since 1987/2026 TDS activity, Iceland's 1912 championship
+and 1947 KSÍ foundation, and San Marino's 1928–2008 institutional/youth/league
+timeline.
+
+**Still no development/tradition score is fitted.** The held-out set exists to test
+future calibration semantics without contaminating their fit.
+
 ## Candidate — FIFA structural dimension evidence summary (4 October 2026)
 
 Stacked on the canonical structural-event slice. This candidate adds a read-only

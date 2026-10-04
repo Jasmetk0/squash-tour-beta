@@ -31,7 +31,7 @@ class EarthSource(BaseModel):
 
 class EarthSportResearch(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    schema_version: Literal["earth_sport_research.v1"] = "earth_sport_research.v1"
+    schema_version: Literal["earth_sport_research.v2"] = "earth_sport_research.v2"
     world_id: Literal["fifa_earth", "atp_earth"]
     data_cutoff: date
     sources: dict[str, EarthSource]

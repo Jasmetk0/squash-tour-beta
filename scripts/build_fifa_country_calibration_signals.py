@@ -24,6 +24,7 @@ SIGNAL_SPECS = {
         "source_id": "fifa-big-count-2006",
         "measurement_type": "players_all_registered_and_unregistered",
         "year": 2006,
+        "normalization": "per_population",
         "per": 1_000,
         "unit": "players_per_1000_population",
         "primary_dimensions": ["squash_popularity"],
@@ -36,6 +37,7 @@ SIGNAL_SPECS = {
         "source_id": "fifa-big-count-2006",
         "measurement_type": "players_registered_or_association_reported",
         "year": 2006,
+        "normalization": "per_population",
         "per": 1_000,
         "unit": "registered_players_per_1000_population",
         "primary_dimensions": ["squash_access"],
@@ -48,6 +50,7 @@ SIGNAL_SPECS = {
         "source_id": "fifa-big-count-2006",
         "measurement_type": "clubs_reported",
         "year": 2006,
+        "normalization": "per_population",
         "per": 1_000_000,
         "unit": "clubs_per_million_population",
         "primary_dimensions": ["squash_access"],
@@ -60,6 +63,7 @@ SIGNAL_SPECS = {
         "source_id": "fifa-professional-2023",
         "measurement_type": "professional_male_players_reported",
         "year": 2023,
+        "normalization": "per_population",
         "per": 1_000_000,
         "unit": "professional_male_players_per_million_population",
         "primary_dimensions": ["competition_quality", "elite_support"],
@@ -72,12 +76,38 @@ SIGNAL_SPECS = {
         "source_id": "fifa-professional-2023",
         "measurement_type": "professional_clubs_reported",
         "year": 2023,
+        "normalization": "per_population",
         "per": 1_000_000,
         "unit": "professional_clubs_per_million_population",
         "primary_dimensions": ["competition_quality", "elite_support"],
         "interpretation": (
             "Population-normalised professional-club footprint. Evidence for the "
             "professional competition/support ecosystem, not mass access."
+        ),
+    },
+    "professional_player_scale_2023": {
+        "source_id": "fifa-professional-2023",
+        "measurement_type": "professional_male_players_reported",
+        "year": 2023,
+        "normalization": "absolute",
+        "unit": "professional_male_players",
+        "primary_dimensions": ["competition_quality", "elite_support"],
+        "interpretation": (
+            "Absolute men's professional-player employment scale. Captures ecosystem "
+            "size that per-capita density misses in large countries; it is not a "
+            "direct measure of league or player quality."
+        ),
+    },
+    "professional_club_scale_2023": {
+        "source_id": "fifa-professional-2023",
+        "measurement_type": "professional_clubs_reported",
+        "year": 2023,
+        "normalization": "absolute",
+        "unit": "professional_clubs",
+        "primary_dimensions": ["competition_quality", "elite_support"],
+        "interpretation": (
+            "Absolute professional-club ecosystem scale. Complements density without "
+            "claiming that club count alone measures competitive quality."
         ),
     },
 }
@@ -192,9 +222,9 @@ def _collect_value(
 
 def _midrank_percentiles(rows: dict[str, dict[str, Any]]) -> None:
     observed = [
-        (code, float(payload["rate"]))
+        (code, float(payload["signal_value"]))
         for code, payload in rows.items()
-        if payload["rate"] is not None
+        if payload["signal_value"] is not None
     ]
     if not observed:
         return
@@ -242,11 +272,17 @@ def build_signals(
             )
             population = _population(earth_root, code, spec["year"])
             value = collected.pop("value")
-            rate = (
-                None
-                if value is None
-                else round(float(value) / population * spec["per"], 6)
-            )
+            normalization = spec["normalization"]
+            if value is None:
+                signal_value = None
+            elif normalization == "per_population":
+                signal_value = round(float(value) / population * spec["per"], 6)
+            elif normalization == "absolute":
+                signal_value = float(value)
+            else:
+                raise ValueError(
+                    f"{signal_id}: unsupported normalization {normalization!r}"
+                )
             rows[code] = {
                 "earth_country_code": code,
                 "observation_year": spec["year"],
@@ -254,7 +290,8 @@ def build_signals(
                 "measurement_type": spec["measurement_type"],
                 "source_value": value,
                 "population": population,
-                "rate": rate,
+                "signal_value": signal_value,
+                "normalization": normalization,
                 "unit": spec["unit"],
                 "percentile": None,
                 "rank_desc": None,
@@ -272,7 +309,7 @@ def build_signals(
         }
 
     return {
-        "schema_version": "fifa_country_calibration_signals.v1",
+        "schema_version": "fifa_country_calibration_signals.v2",
         "world_id": "fifa_earth",
         "rating_ready": False,
         "source_evidence_observation_count": evidence["observation_count"],
@@ -285,11 +322,12 @@ def build_signals(
                 "measurement_type": spec["measurement_type"],
                 "observation_year": spec["year"],
                 "unit": spec["unit"],
+                "normalization": spec["normalization"],
                 "primary_dimensions": list(spec["primary_dimensions"]),
                 "interpretation": spec["interpretation"],
                 "percentile_method": (
                     "Empirical ascending midrank percentile among Earth entities with "
-                    "a complete observed rate for this signal; 100 = highest observed."
+                    "a complete observed signal value; 100 = highest observed."
                 ),
             }
             for signal_id, spec in SIGNAL_SPECS.items()
@@ -319,10 +357,10 @@ def main() -> None:
     summary = {
         signal_id: {
             "observed_entity_count": sum(
-                row["rate"] is not None for row in rows.values()
+                row["signal_value"] is not None for row in rows.values()
             ),
             "missing_entity_count": sum(
-                row["rate"] is None for row in rows.values()
+                row["signal_value"] is None for row in rows.values()
             ),
         }
         for signal_id, rows in result["signals"].items()

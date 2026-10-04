@@ -44,7 +44,9 @@ def build_index(research_path: Path = RESEARCH) -> dict[str, Any]:
     resolution_sets = build_resolution_sets()
 
     resolutions = {}
+    identity_dataset_ids: set[str] = set()
     for resolution_set in resolution_sets.values():
+        identity_dataset_ids.update(resolution_set.input_dataset_sha256s)
         for resolution in resolution_set.resolutions:
             if resolution.observation_id in resolutions:
                 raise ValueError(
@@ -52,18 +54,31 @@ def build_index(research_path: Path = RESEARCH) -> dict[str, Any]:
                 )
             resolutions[resolution.observation_id] = resolution
 
-    if set(resolutions) != set(bundle.observations):
-        missing = sorted(set(bundle.observations) - set(resolutions))
-        extra = sorted(set(resolutions) - set(bundle.observations))
+    missing_datasets = sorted(identity_dataset_ids - set(bundle.datasets))
+    if missing_datasets:
+        raise ValueError(
+            f"identity resolution references missing datasets: {missing_datasets}"
+        )
+
+    identity_observation_ids = {
+        observation.observation_id
+        for dataset_id in identity_dataset_ids
+        for observation in bundle.datasets[dataset_id].observations
+    }
+    if set(resolutions) != identity_observation_ids:
+        missing = sorted(identity_observation_ids - set(resolutions))
+        extra = sorted(set(resolutions) - identity_observation_ids)
         raise ValueError(
             f"identity/evidence coverage mismatch; missing={missing}, extra={extra}"
         )
+
+    contextual_observation_ids = set(bundle.observations) - identity_observation_ids
 
     countries: dict[str, list[dict[str, Any]]] = {}
     manual_review: list[dict[str, Any]] = []
     unresolved: list[dict[str, Any]] = []
 
-    for observation_id in sorted(bundle.observations):
+    for observation_id in sorted(identity_observation_ids):
         observation = bundle.observations[observation_id]
         resolution = resolutions[observation_id]
         fact = _fact(observation, resolution)
@@ -92,22 +107,25 @@ def build_index(research_path: Path = RESEARCH) -> dict[str, Any]:
 
     safe_count = sum(len(facts) for facts in countries.values())
     total_count = safe_count + len(manual_review) + len(unresolved)
-    if total_count != len(bundle.observations):
+    if total_count != len(identity_observation_ids):
         raise ValueError("country evidence partition lost or duplicated observations")
 
     return {
         "schema_version": "fifa_country_evidence_index.v1",
         "world_id": "fifa_earth",
-        "observation_count": len(bundle.observations),
+        "observation_count": len(identity_observation_ids),
+        "contextual_observation_count": len(contextual_observation_ids),
         "safe_country_evidence_count": safe_count,
         "manual_review_count": len(manual_review),
         "unresolved_count": len(unresolved),
         "country_count_with_safe_evidence": len(countries),
         "input_observation_dataset_sha256s": {
-            dataset_id: manifest.sha256
-            for dataset_id, manifest in sorted(
-                bundle.research.observation_datasets.items()
-            )
+            dataset_id: bundle.research.observation_datasets[dataset_id].sha256
+            for dataset_id in sorted(identity_dataset_ids)
+        },
+        "contextual_observation_dataset_sha256s": {
+            dataset_id: bundle.research.observation_datasets[dataset_id].sha256
+            for dataset_id in sorted(set(bundle.datasets) - identity_dataset_ids)
         },
         "input_identity_resolution_sha256s": {
             set_id: identity_resolution_sha256(resolution_set)
@@ -122,6 +140,7 @@ def build_index(research_path: Path = RESEARCH) -> dict[str, Any]:
             "Aggregate-member facts remain source components; no synthetic aggregate is created here.",
             "Manual-review and unresolved observations are excluded from country evidence.",
             "Cross-country comparability flags and source-definition limitations remain authoritative.",
+            "Contextual/non-FIFA-association datasets are loaded and validated by the research bundle but remain outside this identity-indexed evidence partition.",
         ],
     }
 

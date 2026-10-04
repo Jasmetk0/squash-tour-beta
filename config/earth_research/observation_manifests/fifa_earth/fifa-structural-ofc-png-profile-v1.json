@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-ofc-png-profile-v1",
+  "source_id": "ofc-png-profile",
+  "relative_path": "observations/normalized/structural/fifa_structural_ofc_png_profile_v1.json",
+  "sha256": "fb16b2727c30b609410a628214890f19af3835751da59930220603cb65c95d78",
+  "record_count": 3,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-04"
+}

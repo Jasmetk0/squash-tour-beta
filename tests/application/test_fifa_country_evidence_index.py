@@ -13,7 +13,8 @@ def test_country_evidence_index_partitions_all_canonical_fifa_facts() -> None:
     assert index["observation_count"] == 1328
     assert index["safe_country_evidence_count"] == 1306
     assert index["manual_review_count"] == 22
-    assert index["unresolved_count"] == 0\n    assert index["direct_mapped_observation_count"] == 43
+    assert index["unresolved_count"] == 0
+    assert index["direct_mapped_observation_count"] == 43
     assert index["rating_ready"] is False
 
     safe_ids = [

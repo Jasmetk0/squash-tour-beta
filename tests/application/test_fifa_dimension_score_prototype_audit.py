@@ -18,8 +18,9 @@ def test_dimension_score_audit_uses_expected_prototype_samples() -> None:
     assert audit["rating_ready"] is False
     assert audit["review_absolute_delta_threshold"] == REVIEW_ABSOLUTE_DELTA == 1.5
 
+    assert audit["evidence_model_id"] == "fifa-dimension-evidence-v2"
+
     expected_samples = {
-        "squash_popularity@2006": 9,
         "squash_access@2006": 9,
         "competition_quality@2023": 6,
         "elite_support@2023": 6,

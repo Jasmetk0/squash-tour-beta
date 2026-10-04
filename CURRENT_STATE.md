@@ -1,5 +1,24 @@
 # Current implementation and next action
 
+## Candidate — reject simple FIFA structural rating proxies (4 October 2026)
+
+The factual structural feature layer now has an explicit hypothesis audit against
+the nine-country review prototype. Four obvious one-factor models all fail:
+
+- tradition span → tradition: Spearman rho 0.0169;
+- pre-1955 event count → tradition: rho -0.0151;
+- development-history span → development quality: rho -0.0840;
+- development-evidence recency → development quality: rho -0.0252.
+
+All are below the predeclared |rho| >= 0.60 candidate threshold and are locked as
+`rejected_as_single_factor_transfer`. BRA/DEU/ISL/SMR remain completely excluded
+from fit and thresholds.
+
+This is a useful negative calibration result: structural dates remain provenance-rich
+context, but they cannot be converted mechanically into development/tradition scores.
+**Next:** broaden independent evidence families before attempting any multifactor
+development/tradition model; do not tune another formula from the same timeline data.
+
 ## Candidate — FIFA factual structural features + held-out audit (4 October 2026)
 
 On top of the green V2 review + structural-evidence rebuild, this slice extracts

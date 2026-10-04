@@ -1,5 +1,62 @@
 # Current implementation and next action
 
+## Candidate — FIFA country evidence index (4 October 2026)
+
+Stacked on the green canonical observation + identity-resolution slices. This
+candidate creates the first Earth-code-indexed FIFA evidence view without authoring
+ratings or mutating source facts.
+
+All 1,285 canonical observations are partitioned exactly once:
+1,263 safe direct/aggregate-member facts become country evidence, 22 reviewed
+manual facts remain outside country evidence, and unresolved count is zero.
+UK observations remain explicit home-association components (26 facts across the
+two source families) rather than being silently summed. The KUWAIT page-38 anomaly
+remains manual and never leaks into KWT or KGZ evidence.
+
+The evidence index binds the exact observation-dataset and identity-resolution
+semantic hashes and is explicitly `rating_ready=false`. This is the final safe
+projection layer before numerical calibration.
+
+## Candidate — canonical FIFA observation identity resolution (4 October 2026)
+
+Stacked on the green Big Count + Professional 2023 canonical-ingestion slices.
+This candidate introduces typed, content-addressed observation→Earth identity
+resolution sets without mutating normalized source facts.
+
+The deterministic FIFA resolver binds the semantic hashes of all seven canonical
+input datasets, the reviewed identity-override artifact SHA-256 and the Earth
+identity catalogue SHA-256. It classifies each observation as direct,
+aggregate-member, manual-review or unresolved and never gives manual/unresolved
+evidence a resolved Earth code.
+
+PR-critical coverage requires all 1,285 canonical FIFA observations exactly once:
+Big Count = 998 direct + 20 UK aggregate-member + 20 manual-review;
+Professional 2023 = 239 direct + 6 UK aggregate-member + 2 page-38 manual-review.
+The KUWAIT/Kyrgyzstan conflict therefore remains unresolved at the identity layer
+instead of being silently assigned.
+
+This still authors **zero country ratings**. The next calibration slice can finally
+consume source facts through explicit Earth identity rather than matching names
+ad hoc.
+
+## Candidate — FIFA Professional Football Report 2023 canonical ingestion (4 October 2026)
+
+Stacked on the green Big Count canonical-ingestion candidate (#1130). This slice
+adds two content-addressed `earth_source_observations.v2` datasets from the
+checked-in FIFA Professional Football Report 2023 extraction: 112 non-null men's
+professional-player observations and 135 professional-club observations.
+
+The normalized facts preserve PDF page provenance and the source document SHA-256.
+Missing values remain missing. The extracted national sums (129,388 players /
+3,997 clubs) remain distinct from FIFA's published global headline, and the source
+page labelled KUWAIT while showing Kyrgyzstan identity is preserved as its own
+page-specific observation with `source_identity_anomaly` and
+`do_not_auto_map_to_earth` flags.
+
+With #1130 underneath, FIFA Earth research contains 7 canonical datasets / 1,285
+normalized observations and still **zero authored country ratings**. Association→Earth
+mapping and calibration remain later reviewed stages.
+
 ## Candidate — FIFA Big Count canonical ingestion (4 October 2026)
 
 Baseline is merged `buuk` after #1129 (Earth research provenance), #1128

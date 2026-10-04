@@ -9,7 +9,7 @@
       "url": "https://digitalhub.fifa.com/m/2a5dc95026d9cf8a/original/FIFA-Professional-Football-Report-2023.pdf",
       "accessed_on": "2026-10-03",
       "scope": "2023 men’s professional football; national association coverage and definitions.",
-      "limitations": "211 national pages extracted in observations/fifa_professional_2023.json. Page 38 has conflicting country identity; national sums disagree with the global headline. Unreconciled, not usable as automatic rating anchors. Employment counts are not total participation or direct measurements of the six country attributes."
+      "limitations": "Two canonical normalized v2 datasets preserve non-null men's professional-player and professional-club counts from all 211 national pages. Missing values remain missing. Extracted national sums differ from FIFA's published global headline and are not altered. Page 38 has a KUWAIT/Kyrgyzstan identity anomaly and must not be auto-mapped."
     },
     "fifa-big-count-2006": {
       "title": "FIFA Big Count 2006 — All Players (archived original table)",
@@ -74,6 +74,28 @@
       "source_document_sha256": null,
       "input_artifact_sha256": "00bb138d03f6cbfed6f909311f44fc5fc8643ad4338e6be17f3f0305a35a6944",
       "generated_by": "scripts/normalize_fifa_big_count_2006.py"
+    },
+    "fifa-professional-2023-players-v2": {
+      "schema_version": "earth_source_observations_manifest.v1",
+      "dataset_id": "fifa-professional-2023-players-v2",
+      "source_id": "fifa-professional-2023",
+      "relative_path": "observations/normalized/fifa_professional_2023_players_v2.json",
+      "sha256": "3d4b1b4c7146c6938d6b37653137134906d32a0da266ffb8ab7f1839a3105422",
+      "record_count": 112,
+      "source_document_sha256": "fb15135da80e3cf395cadf1b2fcd2762f52268292cebc5e86957115b260c0e71",
+      "input_artifact_sha256": "d3782c520864667195d44b8359bdbadf85f0dec51fe0ead8c626ac8619120bb4",
+      "generated_by": "scripts/normalize_fifa_professional_2023.py"
+    },
+    "fifa-professional-2023-clubs-v2": {
+      "schema_version": "earth_source_observations_manifest.v1",
+      "dataset_id": "fifa-professional-2023-clubs-v2",
+      "source_id": "fifa-professional-2023",
+      "relative_path": "observations/normalized/fifa_professional_2023_clubs_v2.json",
+      "sha256": "6dbc40c997a81edd470be3f934ca59406abbc0255e58bb8695ec395362cfd813",
+      "record_count": 135,
+      "source_document_sha256": "fb15135da80e3cf395cadf1b2fcd2762f52268292cebc5e86957115b260c0e71",
+      "input_artifact_sha256": "d3782c520864667195d44b8359bdbadf85f0dec51fe0ead8c626ac8619120bb4",
+      "generated_by": "scripts/normalize_fifa_professional_2023.py"
     }
   }
 }

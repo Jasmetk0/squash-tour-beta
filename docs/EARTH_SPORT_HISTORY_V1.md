@@ -51,12 +51,18 @@ separate inputs. Innate potential rarity must remain independent of nationality.
   No fabricated neutral profiles are shipped to satisfy coverage mechanically.
 - FIFA Big Count 2006 now has five canonical normalized
   `earth_source_observations.v2` datasets (all players, registered, unregistered,
-  clubs and officials/staff). Other files directly under
+  clubs and officials/staff). FIFA Professional Football Report 2023 adds two
+  canonical datasets (men's professional players and professional clubs). Other files directly under
   `config/earth_research/observations/` remain raw/source-specific inputs until
   explicitly normalized.
 - Observation manifests are content-addressed provenance declarations.
   `load_earth_research_bundle()` resolves their relative files and fail-closes on
   dataset/source/count/input-artifact/semantic-hash mismatch before audit/build.
+- FIFA association→Earth identity is a separate typed transform, not a mutation of
+  source observations. `earth_observation_identity_resolutions.v1` binds every
+  resolved/manual observation to its input dataset hashes, reviewed override hash
+  and Earth identity catalogue hash; aggregate members and manual-review cases remain
+  explicit instead of being silently collapsed.
 - Historical ratings in an editable copy require versioned import/API authoring;
   the flat World Library editor deliberately disables Save for a history-bearing
   profile. A dedicated per-year/evidence editor is still required.
@@ -71,9 +77,9 @@ separate inputs. Innate potential rarity must remain independent of nationality.
 ## Research already stored
 
 `config/earth_research/fifa_earth.json` and `atp_earth.json` are
-`earth_sport_research.v2` catalogues. FIFA Earth now registers the first five
-canonical observation datasets derived from Big Count 2006; both country-rating
-maps remain empty.
+`earth_sport_research.v2` catalogues. FIFA Earth now registers seven canonical
+observation datasets: five from Big Count 2006 and two from FIFA Professional
+Football Report 2023. Both country-rating maps remain empty.
 
 Current evidence includes:
 
@@ -81,9 +87,11 @@ Current evidence includes:
    as raw input and normalized into five content-addressed v2 datasets. The normalized
    facts are mixed-sex; missing club cells remain missing; row-level direct-vs-
    statistically-supplemented flags cannot be recovered from this legacy extract.
-2. FIFA Professional Football Report 2023: 211 national pages with professional
-   player/club totals. Page 38 is labelled KUWAIT but shows a Kyrgyzstan
-   flag/emblem; national sums also differ from the published global headline.
+2. FIFA Professional Football Report 2023: 211 national pages are retained as raw
+   input and normalized into 112 non-null men's professional-player observations and
+   135 professional-club observations. Page 38 remains a distinct KUWAIT/Kyrgyzstan
+   identity anomaly; extracted national sums remain intentionally different from the
+   published global headline rather than being silently adjusted.
 3. ITF 2019 Czech/German participation, clubs and coach counts. Edition/report
    timing is distinct from the underlying observation date, and mixed-sex
    participation must not be presented as men's participation.
@@ -113,10 +121,12 @@ distinct measurements. A richer Big Count re-extraction should recover country-l
 male/female and source statistical-processing metadata where the original material
 supports it.
 
-Map sporting associations and historical polities explicitly to the Earth country
-catalogue (including UK associations, USSR, Yugoslavia, Czechoslovakia and colonial
-territories). Population must not be duplicated when a predecessor has several
-successors. Collect independent evidence for participation/access, development,
+Use the canonical observation identity-resolution layer before calibration. The
+current FIFA source slices now resolve every normalized Big Count / Professional
+2023 observation exactly once, while reviewed ambiguous cases stay manual. Extend
+this same mechanism to historical polities and later source families (including
+USSR, Yugoslavia, Czechoslovakia and colonial territories). Population must not be
+duplicated when a predecessor has several successors. Collect independent evidence for participation/access, development,
 competition, elite support and tradition; ranking outcomes alone cannot measure
 all six. Author period anchors with uncertainties, preserve documented structural
 breaks, and use explicit `derived_estimate` provenance for calibrated ramps/lags.

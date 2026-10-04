@@ -1,5 +1,26 @@
 # Current implementation and next action
 
+## Candidate — first complete FIFA Earth anchor year: CZE 2006 (4 October 2026)
+
+Stacked on the green calibration/partial-anchor work. Two canonical UEFA Czechia
+context datasets are added: 7 association/history events and 8 pre-anchor 2005
+system facts. The research bundle becomes 9 datasets / 1,300 observations while the
+FIFA identity-indexed partition intentionally remains 1,285 observations.
+
+Using those facts plus exact Big Count observations, CZE 2006 is now constructed as
+the first complete six-attribute production-contract `RatingYear` candidate:
+popularity 8.0, access 8.6, development 7.6, competition 7.6, elite support 6.7,
+tradition 9.0. Every attribute has exact observation IDs and no observation later
+than 2006 is accepted.
+
+The candidate validates as `CountryRatingHistory.v2` with one authored year, but
+71 years remain missing. Canonical FIFA Earth histories are still untouched and
+`promotion_ready=false`.
+
+**Next after validation:** repeat this evidence-normalisation/complete-anchor process
+for a deliberately diverse small country set before deciding how to expand annual
+1955-2026 histories.
+
 ## Candidate — provenance-complete FIFA 2006 partial rating anchors (4 October 2026)
 
 Stacked on the empirical-calibration/evidence-score work. This slice creates the

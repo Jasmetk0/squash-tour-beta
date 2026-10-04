@@ -1,5 +1,24 @@
 # Current implementation and next action
 
+## Candidate — provenance-complete FIFA 2006 partial rating anchors (4 October 2026)
+
+Stacked on the empirical-calibration/evidence-score work. This slice creates the
+first production-contract rating-authoring experiment.
+
+For the nine reviewed prototype countries, 2006 `squash_popularity` and
+`squash_access` are emitted as 18 validated `RatingEvidence` candidates. Their
+reviewed prototype values/confidences/rationales are preserved, Big Count evidence
+is linked to exact normalized observation IDs, and all contextual sources cited by
+those anchors are now registered in the canonical FIFA source catalogue.
+
+The four unsupported 2006 attributes are deliberately not copied merely to satisfy
+the six-attribute history schema. Therefore the candidate set remains partial and
+`promotion_ready=false`; canonical `CountryRatingHistory.v2` is still untouched.
+
+This is the first bridge from prototype ratings to exact canonical provenance.
+The next authoring decision is whether each 2006 popularity/access candidate survives
+evidence-score/context review before building complete six-attribute anchor years.
+
 ## Candidate — FIFA dimension evidence-score prototype audit (4 October 2026)
 
 Stacked on the provisional 1–10 evidence-score model. This slice compares those

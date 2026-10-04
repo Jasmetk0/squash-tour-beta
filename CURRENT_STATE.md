@@ -1,5 +1,22 @@
 # Current implementation and next action
 
+## Candidate — FIFA country evidence index (4 October 2026)
+
+Stacked on the green canonical observation + identity-resolution slices. This
+candidate creates the first Earth-code-indexed FIFA evidence view without authoring
+ratings or mutating source facts.
+
+All 1,285 canonical observations are partitioned exactly once:
+1,263 safe direct/aggregate-member facts become country evidence, 22 reviewed
+manual facts remain outside country evidence, and unresolved count is zero.
+UK observations remain explicit home-association components (26 facts across the
+two source families) rather than being silently summed. The KUWAIT page-38 anomaly
+remains manual and never leaks into KWT or KGZ evidence.
+
+The evidence index binds the exact observation-dataset and identity-resolution
+semantic hashes and is explicitly `rating_ready=false`. This is the final safe
+projection layer before numerical calibration.
+
 ## Candidate — canonical FIFA observation identity resolution (4 October 2026)
 
 Stacked on the green Big Count + Professional 2023 canonical-ingestion slices.

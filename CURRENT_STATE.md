@@ -1,5 +1,29 @@
 # Current implementation and next action
 
+## Candidate — FIFA Big Count canonical ingestion (4 October 2026)
+
+Baseline is merged `buuk` after #1129 (Earth research provenance), #1128
+(FIFA research checkpoint/prototype) and #1127 (generic built-in World cloning).
+
+This candidate adds the first real canonical FIFA Earth observation data:
+five content-addressed `earth_source_observations.v2` datasets from the checked-in
+FIFA Big Count 2006 All Players extract (208 all-player, 208 registered,
+208 unregistered, 206 club and 208 officials/staff observations; 1038 total).
+Missing source cells remain missing, all-player/registration observations remain
+explicitly mixed-sex, and lost per-cell direct/statistically-supplemented provenance
+is represented as unknown rather than guessed.
+
+The canonical research loader now resolves and validates normalized dataset files
+from their manifests, including dataset/source identity, record counts, input
+artifact SHA-256 and semantic SHA-256. The CLI audit/build path uses this verified
+bundle loader rather than trusting manifest metadata alone.
+
+This slice still does **not** populate FIFA Earth country ratings. Association→Earth
+identity reconciliation remains a separate reviewed layer, and a richer future Big
+Count re-extraction should recover male/female and original per-cell provenance where
+the underlying source permits it. FIFA Professional Football Report 2023 remains the
+next high-value normalization target.
+
 ## Candidate — Earth research provenance V1 (4 October 2026)
 
 On merged `buuk` #1126 (`434e32b6db00a0443aceb0003810870fb5ebdd36`),

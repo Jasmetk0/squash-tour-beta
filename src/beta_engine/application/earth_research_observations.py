@@ -5,7 +5,10 @@ ratings and they are deliberately separate from runtime simulation state.
 """
 from __future__ import annotations
 
+import hashlib
+import json
 import math
+from pathlib import Path
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -35,7 +38,7 @@ class EarthObservation(BaseModel):
     age_scope: str | None = None
     competition_scope: str | None = None
 
-    numeric_value: float | None = None
+    numeric_value: int | float | None = None
     text_value: str | None = None
     unit: str = Field(min_length=1)
 
@@ -59,8 +62,10 @@ class EarthObservation(BaseModel):
     comparability_group: str | None = None
     cross_country_comparable: bool = False
 
-    is_direct_observation: bool
-    is_statistically_modelled: bool = False
+    # Null means the checked-in extract cannot recover this per-observation fact.
+    # That is preferable to inventing a boolean provenance claim.
+    is_direct_observation: bool | None = None
+    is_statistically_modelled: bool | None = None
 
     territory_mapping_method: str | None = None
     territory_weight: float | None = Field(default=None, gt=0, le=1)
@@ -80,8 +85,11 @@ class EarthObservation(BaseModel):
         textual = self.text_value is not None
         if numeric == textual:
             raise ValueError("exactly one of numeric_value or text_value must be provided")
-        if numeric and not math.isfinite(self.numeric_value):
-            raise ValueError("numeric_value must be finite")
+        if numeric:
+            if isinstance(self.numeric_value, bool):
+                raise ValueError("numeric_value must not be boolean")
+            if not math.isfinite(float(self.numeric_value)):
+                raise ValueError("numeric_value must be finite")
         if textual and not self.text_value.strip():
             raise ValueError("text_value must not be blank")
         if self.period_start_year is not None or self.period_end_year is not None:
@@ -93,6 +101,8 @@ class EarthObservation(BaseModel):
             raise ValueError("use either observation_year or a period, not both")
         if self.territory_weight is not None and not self.territory_mapping_method:
             raise ValueError("territory_weight requires territory_mapping_method")
+        if any(not flag.strip() for flag in self.quality_flags):
+            raise ValueError("quality_flags must not contain blank values")
         if len(set(self.quality_flags)) != len(self.quality_flags):
             raise ValueError("quality_flags must be unique")
         return self
@@ -108,6 +118,9 @@ class EarthObservationDataset(BaseModel):
     source_id: str = Field(min_length=1)
     source_url: str = Field(pattern=r"^https://")
     source_document_sha256: str | None = Field(
+        default=None, pattern=r"^[0-9a-f]{64}$"
+    )
+    input_artifact_sha256: str | None = Field(
         default=None, pattern=r"^[0-9a-f]{64}$"
     )
     generated_by: str = Field(min_length=1)
@@ -144,6 +157,9 @@ class EarthObservationDatasetManifest(BaseModel):
     source_document_sha256: str | None = Field(
         default=None, pattern=r"^[0-9a-f]{64}$"
     )
+    input_artifact_sha256: str | None = Field(
+        default=None, pattern=r"^[0-9a-f]{64}$"
+    )
     generated_by: str = Field(min_length=1)
 
     @model_validator(mode="after")
@@ -161,3 +177,23 @@ def observation_dataset_id(observation_id: str) -> str:
     if not separator or not dataset_id or not local_id:
         raise ValueError("observation_id must use '<dataset_id>#<local-id>'")
     return dataset_id
+
+
+def observation_dataset_semantic_bytes(dataset: EarthObservationDataset) -> bytes:
+    """Canonical bytes used for content identity, independent of JSON formatting."""
+
+    payload = dataset.model_dump(mode="json")
+    return json.dumps(
+        payload,
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode("utf-8")
+
+
+def observation_dataset_sha256(dataset: EarthObservationDataset) -> str:
+    return hashlib.sha256(observation_dataset_semantic_bytes(dataset)).hexdigest()
+
+
+def load_normalized_observation_dataset(path: Path) -> EarthObservationDataset:
+    return EarthObservationDataset.model_validate_json(path.read_text(encoding="utf-8"))

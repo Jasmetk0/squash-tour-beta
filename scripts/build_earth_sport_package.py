@@ -5,7 +5,7 @@ import argparse
 import json
 from pathlib import Path
 
-from beta_engine.application.earth_package_builder import EarthSportResearch, audit_earth_research, build_earth_package
+from beta_engine.application.earth_package_builder import audit_earth_research, build_earth_package, load_earth_research_bundle
 from beta_engine.infrastructure.world_package_storage import WorldPackageCountryStore
 
 
@@ -15,7 +15,8 @@ def main() -> None:
     parser.add_argument("--base", type=Path, default=Path("config/world_packages/real_world"))
     parser.add_argument("--output", type=Path)
     args = parser.parse_args()
-    research = EarthSportResearch.model_validate_json(args.research.read_text())
+    bundle = load_earth_research_bundle(args.research)
+    research = bundle.research
     report = audit_earth_research(research, WorldPackageCountryStore(args.base).load_config().countries)
     print(json.dumps(report, indent=2))
     if args.output:

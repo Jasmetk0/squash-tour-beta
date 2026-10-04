@@ -49,20 +49,19 @@ separate inputs. Innate potential rarity must remain independent of nationality.
 - **Neither official Earth directory exists yet. Both research `countries` maps
   remain empty.** Registering future IDs does not display nonexistent packages.
   No fabricated neutral profiles are shipped to satisfy coverage mechanically.
-- Existing files under `config/earth_research/observations/` are earlier raw or
-  source-specific extracts. They are intentionally **not** silently promoted to
-  `earth_source_observations.v2`. Each must be re-extracted/normalized with its
-  exact semantics before it can be referenced by a populated rating history.
-- Observation manifests are content-addressed provenance declarations. The current
-  package builder persists and fingerprints those declarations; conversion and
-  byte-level verification of the normalized external dataset files is the next
-  research-data ingestion slice.
+- FIFA Big Count 2006 now has five canonical normalized
+  `earth_source_observations.v2` datasets (all players, registered, unregistered,
+  clubs and officials/staff). Other files directly under
+  `config/earth_research/observations/` remain raw/source-specific inputs until
+  explicitly normalized.
+- Observation manifests are content-addressed provenance declarations.
+  `load_earth_research_bundle()` resolves their relative files and fail-closes on
+  dataset/source/count/input-artifact/semantic-hash mismatch before audit/build.
 - Historical ratings in an editable copy require versioned import/API authoring;
   the flat World Library editor deliberately disables Save for a history-bearing
   profile. A dedicated per-year/evidence editor is still required.
-- The existing Custom World clone route is FAX-specific; generic Earth source
-  cloning is still required before shipping these built-ins. Run source snapshots
-  serialize Country history, but this foundation does not prove a complete Earth
+- Generic built-in World Package cloning is now available (merged #1127), including
+  package-owned history/provenance files. This still does not prove a complete Earth
   Run lifecycle or 50-season acceptance.
 - Initial player development uses the season-start environment; it does not yet
   integrate every year of a player's pre-start development path.
@@ -72,14 +71,16 @@ separate inputs. Innate potential rarity must remain independent of nationality.
 ## Research already stored
 
 `config/earth_research/fifa_earth.json` and `atp_earth.json` are
-`earth_sport_research.v2` catalogues. Their `observation_datasets` maps deliberately
-remain empty until the existing raw/source-specific extracts are normalized.
+`earth_sport_research.v2` catalogues. FIFA Earth now registers the first five
+canonical observation datasets derived from Big Count 2006; both country-rating
+maps remain empty.
 
-Current raw evidence includes:
+Current evidence includes:
 
-1. FIFA Big Count 2006: 208 association rows, all-player participation, registered
-   and unregistered players, clubs and officials. The checked-in CSV predates the
-   normalized semantic contract and is not men-only.
+1. FIFA Big Count 2006: the checked-in 208-association all-player extract is retained
+   as raw input and normalized into five content-addressed v2 datasets. The normalized
+   facts are mixed-sex; missing club cells remain missing; row-level direct-vs-
+   statistically-supplemented flags cannot be recovered from this legacy extract.
 2. FIFA Professional Football Report 2023: 211 national pages with professional
    player/club totals. Page 38 is labelled KUWAIT but shows a Kyrgyzstan
    flag/emblem; national sums also differ from the published global headline.
@@ -104,9 +105,13 @@ The builder's `coverage_complete` is structural; `realism_validated` stays false
 
 ## Required data completion
 
-Normalize source observations before calibration. Do not infer that similarly named
-counts share the same definition across federations: membership, registered player,
-active player and modelled/casual participation are distinct measurements.
+Continue normalizing source observations before calibration. Big Count v2 is the
+first completed slice, but it is not sufficient for men's FIFA Earth on its own.
+Do not infer that similarly named counts share the same definition across federations:
+membership, registered player, active player and modelled/casual participation are
+distinct measurements. A richer Big Count re-extraction should recover country-level
+male/female and source statistical-processing metadata where the original material
+supports it.
 
 Map sporting associations and historical polities explicitly to the Earth country
 catalogue (including UK associations, USSR, Yugoslavia, Czechoslovakia and colonial

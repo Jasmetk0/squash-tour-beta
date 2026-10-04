@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import shutil
 import tempfile
+from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
 from typing import Literal
@@ -12,8 +13,12 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from beta_engine.application.earth_research_observations import (
+    EarthObservation,
+    EarthObservationDataset,
     EarthObservationDatasetManifest,
+    load_normalized_observation_dataset,
     observation_dataset_id,
+    observation_dataset_sha256,
 )
 from beta_engine.domain.countries import Country, CountriesConfig
 from beta_engine.domain.countries.rating_history import CountryRatingHistory, GAME_ATTRIBUTE_NAMES, RATING_SCALE_V2
@@ -70,6 +75,97 @@ class EarthSportResearch(BaseModel):
                                 f"{manifest.source_id!r}, which is not cited by the rating evidence"
                             )
         return self
+
+
+@dataclass(frozen=True)
+class EarthResearchBundle:
+    """File-verified research document plus its normalized observation index."""
+
+    research: EarthSportResearch
+    datasets: dict[str, EarthObservationDataset]
+    observations: dict[str, EarthObservation]
+
+
+def load_earth_research_bundle(path: Path) -> EarthResearchBundle:
+    """Load a research file and fail closed on stale/tampered observation manifests."""
+
+    research_path = path.resolve()
+    root = research_path.parent
+    research = EarthSportResearch.model_validate_json(
+        research_path.read_text(encoding="utf-8")
+    )
+    datasets: dict[str, EarthObservationDataset] = {}
+    observations: dict[str, EarthObservation] = {}
+
+    for dataset_id, manifest in sorted(research.observation_datasets.items()):
+        candidate = (root / manifest.relative_path).resolve()
+        if not candidate.is_relative_to(root):
+            raise ValueError(
+                f"{dataset_id}: observation dataset path escapes the research directory"
+            )
+        try:
+            dataset = load_normalized_observation_dataset(candidate)
+        except OSError as exc:
+            raise ValueError(
+                f"{dataset_id}: observation dataset file is unavailable: {candidate}"
+            ) from exc
+
+        if dataset.dataset_id != dataset_id:
+            raise ValueError(
+                f"{dataset_id}: dataset file declares {dataset.dataset_id!r}"
+            )
+        if dataset.source_id != manifest.source_id:
+            raise ValueError(
+                f"{dataset_id}: dataset source {dataset.source_id!r} differs from manifest"
+            )
+        if len(dataset.observations) != manifest.record_count:
+            raise ValueError(
+                f"{dataset_id}: manifest record_count {manifest.record_count} "
+                f"!= dataset count {len(dataset.observations)}"
+            )
+        if dataset.source_document_sha256 != manifest.source_document_sha256:
+            raise ValueError(
+                f"{dataset_id}: source document SHA-256 differs from manifest"
+            )
+        if dataset.input_artifact_sha256 != manifest.input_artifact_sha256:
+            raise ValueError(
+                f"{dataset_id}: input artifact SHA-256 differs from manifest"
+            )
+        if dataset.generated_by != manifest.generated_by:
+            raise ValueError(
+                f"{dataset_id}: generated_by differs from manifest"
+            )
+        actual_hash = observation_dataset_sha256(dataset)
+        if actual_hash != manifest.sha256:
+            raise ValueError(
+                f"{dataset_id}: semantic SHA-256 mismatch; "
+                f"manifest={manifest.sha256}, actual={actual_hash}"
+            )
+
+        datasets[dataset_id] = dataset
+        for observation in dataset.observations:
+            if observation.observation_id in observations:
+                raise ValueError(
+                    f"duplicate observation ID across datasets: "
+                    f"{observation.observation_id!r}"
+                )
+            observations[observation.observation_id] = observation
+
+    for code, history in research.countries.items():
+        for year in history.years.values():
+            for evidence in year.ratings.values():
+                for observation_id in evidence.observation_ids:
+                    if observation_id not in observations:
+                        raise ValueError(
+                            f"{code}: rating references missing normalized observation "
+                            f"{observation_id!r}"
+                        )
+
+    return EarthResearchBundle(
+        research=research,
+        datasets=datasets,
+        observations=observations,
+    )
 
 
 def audit_earth_research(research: EarthSportResearch, countries: list[Country]) -> dict:

@@ -307,3 +307,27 @@ The 1.5-point threshold is a review heuristic, not a pass/fail rule. A large
 difference can be legitimate because the prototype includes contextual evidence
 outside the current quantitative source slice. A small difference likewise does not
 validate the model. The audit never writes a canonical or recommended rating.
+
+
+## Dimension evidence-score versus prototype audit
+
+`scripts/audit_fifa_dimension_scores_against_prototype.py` compares the provisional
+1–10 evidence scores directly against the nine-country review prototype on the same
+scale.
+
+For each available country/recipe it records:
+
+- provisional evidence score;
+- prototype rating at the same evidence year;
+- signed and absolute delta;
+- prototype method, confidence and anchor years;
+- the component signal percentiles and exact source observation IDs.
+
+An absolute delta of **1.5 or more** is surfaced for human review. This is not an
+automatic failure and never changes a rating. Large deltas may reflect missing
+context in the quantitative model; small deltas do not validate the model.
+
+Expected review samples remain intentionally incomplete where source evidence is
+missing: nine countries for 2006 popularity/access and six countries for 2023
+competition/elite-support. This audit is the explicit gate before any evidence-score
+recipe can be considered for canonical rating authoring.

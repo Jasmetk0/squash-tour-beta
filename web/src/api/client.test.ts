@@ -4,6 +4,7 @@ import {
   applyCalendarTemplateToPlanningCalendar,
   compareCalendarTemplateDryRun,
   cloneOfficialWorldPackage,
+  cloneWorldPackage,
   createCalendarTemplate,
   getPlanningSeasonCalendar,
   listPlanningSeasonCalendars,
@@ -1116,6 +1117,29 @@ describe('world package registry client', () => {
       })
     )
     expect(result).toEqual(responseBody)
+  })
+
+
+  it('clones an arbitrary built-in World Package through its source-aware route', async () => {
+    const payload = {
+      new_world_id: 'editable_earth',
+      name: 'Editable Earth',
+      description: null,
+      dry_run: false
+    }
+    const responseBody = { ok: true, source_world_id: 'real_world', new_world_id: 'editable_earth' }
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(JSON.stringify(responseBody), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      })
+    )
+
+    await expect(cloneWorldPackage('real_world', payload)).resolves.toEqual(responseBody)
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      'http://127.0.0.1:8000/world/packages/real_world/clone',
+      expect.objectContaining({ method: 'POST', body: JSON.stringify(payload) })
+    )
   })
 
   it('lists Run branches with an encoded run query and encodes branch detail ids', async () => {

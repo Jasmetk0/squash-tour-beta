@@ -1,5 +1,25 @@
 # Current implementation and next action
 
+## Candidate — FIFA prototype-versus-signal calibration audit (4 October 2026)
+
+Stacked on the green empirical signal slice (#1135). This candidate compares the
+nine-country FIFA Earth prototype against canonical 2006/2023 measured signals
+without changing any rating.
+
+Seven diagnostic comparisons are produced: participation→popularity,
+registration→access, clubs→access, and professional-player/club density against
+competition quality and elite support. Spearman rank agreement is reported only
+for review. Material pairwise inversions (>=25 percentile points opposite to
+>=0.5 prototype rating points) are listed as human-review candidates, not failures.
+
+Expected prototype sample sizes are 9/9/9 for the three Big Count signals, 6 for
+professional-player comparisons, and 8 for professional-club comparisons because
+source missingness remains explicit.
+
+**No transfer curve is canonical yet.** The next step after this audit is to inspect
+the flagged comparisons and define dimension-specific transfer anchors only where
+the measured evidence and historical context support them.
+
 ## Candidate — FIFA empirical country calibration signals (4 October 2026)
 
 Stacked on the canonical FIFA country-evidence landing stack. This candidate is the

@@ -118,11 +118,11 @@ def test_ranking_observations_are_validation_only_direct_mapped_outcomes() -> No
 def test_country_evidence_admits_ranking_outcomes_without_changing_manual_partition() -> None:
     evidence = build_index()
 
-    assert evidence["observation_count"] == 1378
-    assert evidence["safe_country_evidence_count"] == 1356
+    assert evidence["observation_count"] == 1410
+    assert evidence["safe_country_evidence_count"] == 1388
     assert evidence["manual_review_count"] == 22
     assert evidence["unresolved_count"] == 0
-    assert evidence["direct_mapped_observation_count"] == 93
+    assert evidence["direct_mapped_observation_count"] == 125
 
     ranking_facts = [
         fact

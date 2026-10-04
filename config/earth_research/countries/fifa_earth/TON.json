@@ -2,7 +2,7 @@
   "schema_version": "country_rating_history.v2",
   "rating_scale": "country_ratings_1_10.v2",
   "reference_year": 2026,
-  "data_cutoff": "2026-10-04",
+  "data_cutoff": "2026-10-03",
   "years": {
     "1955": {
       "historical_entity": "Kingdom of Tonga",

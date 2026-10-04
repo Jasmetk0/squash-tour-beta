@@ -12,7 +12,7 @@ from beta_engine.application.earth_package_builder import load_earth_research_bu
 def test_fifa_first_reviewed_country_histories_are_complete_and_resolvable():
     bundle = load_earth_research_bundle(Path("config/earth_research/fifa_earth.json"))
     assert set(bundle.research.countries) == {"CZE", "SVK", "JPN", "IND", "MAR", "SEN", "FRO", "USA", "ZAF", "BRA", "DEU", "ISL", "SMR", "ARG", "MEX", "AUS", "NZL", "FJI", "PNG", "SLB", "COK", "ASM", "PYF", "NCL", "WSM", "TON", "VUT"}
-    assert bundle.research.data_cutoff.isoformat() == "2026-10-04"
+    assert bundle.research.data_cutoff.isoformat() == "2026-10-03"
 
     for code in ("CZE", "SVK"):
         history = bundle.research.countries[code]

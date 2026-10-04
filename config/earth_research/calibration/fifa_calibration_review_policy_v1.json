@@ -1,0 +1,60 @@
+{
+  "schema_version": "fifa_calibration_review_policy.v1",
+  "policy_id": "fifa-calibration-review-policy-v1",
+  "model_id": "fifa-dimension-evidence-v2",
+  "canonical_authoring_allowed": false,
+  "thresholds": {
+    "minimum_review_sample_count": 6,
+    "maximum_mean_absolute_delta_for_baseline_candidate": 1,
+    "maximum_absolute_delta_for_baseline_candidate": 2,
+    "maximum_review_count_for_baseline_candidate": 2,
+    "maximum_mean_absolute_delta_for_context_gap": 1,
+    "maximum_review_count_for_context_gap": 2
+  },
+  "states": {
+    "quantitative_baseline_candidate": "Quantitative evidence is sufficiently aligned with the current review set to proceed to contextual anchor review, but it is not a canonical rating.",
+    "quantitative_baseline_with_context_gap": "Aggregate quantitative alignment is usable, but at least one material country/context gap prevents baseline-candidate status until independent context evidence is reviewed.",
+    "quantitative_model_rejected": "The quantitative recipe is too inconsistent with the current review set to use as an anchor baseline.",
+    "insufficient_review_sample": "The quantitative recipe has too few reviewed prototype countries for this policy.",
+    "quantitatively_unsupported": "The active evidence model intentionally has no quantitative 1–10 recipe for this attribute."
+  },
+  "context_requirements": {
+    "squash_popularity": [
+      "cultural/audience evidence",
+      "football's relative importance among national sports",
+      "community/club engagement context"
+    ],
+    "squash_access": [
+      "facilities/geographic availability",
+      "affordability and inequality barriers",
+      "school/community pathway evidence"
+    ],
+    "development_quality": [
+      "coach education",
+      "academy/talent-centre structure",
+      "youth competition and pathway evidence"
+    ],
+    "competition_quality": [
+      "domestic league depth/structure",
+      "club and national competitive outcomes",
+      "opponent-quality context"
+    ],
+    "elite_support": [
+      "federation technical capacity",
+      "high-performance infrastructure",
+      "funding/medical/science/support context"
+    ],
+    "squash_tradition": [
+      "federation/league continuity",
+      "long-lived club/institution evidence",
+      "historical cultural embeddedness"
+    ]
+  },
+  "safeguards": [
+    "Passing this gate never permits automatic canonical rating authoring.",
+    "Prototype agreement is a calibration diagnostic, not a gold-standard validation target.",
+    "Context evidence must be independently sourced; it cannot be reverse-engineered from prototype ratings.",
+    "Unsupported attributes remain missing rather than receiving neutral/default scores.",
+    "Material review-country gaps must stay visible in downstream evidence."
+  ]
+}

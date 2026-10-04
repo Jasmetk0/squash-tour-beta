@@ -396,3 +396,34 @@ set merely to improve fit. The next evidence step must be independent held-out o
 contextual validation. Popularity remains unsupported until independent
 cultural/audience evidence is normalized; development quality and tradition remain
 outside the current quantitative model.
+
+
+## Rejected single-factor structural transfer hypotheses
+
+Canonical structural evidence is useful context, but the review-set audit explicitly
+rejects four tempting shortcuts as standalone rating rules.
+
+Across the nine review countries:
+
+| Hypothesis | 2026 prototype attribute | Spearman rho | Decision |
+|---|---|---:|---|
+| tradition evidence span alone | tradition | 0.0169 | rejected |
+| pre-1955 event count alone | tradition | -0.0151 | rejected |
+| development-history span alone | development quality | -0.0840 | rejected |
+| development-evidence recency alone | development quality | -0.0252 | rejected |
+
+The candidate threshold is |rho| >= 0.60; none is remotely close.
+
+Therefore:
+- an older federation or older national competition does **not** automatically mean
+  a higher tradition rating;
+- a longer documented academy/development history does **not** automatically mean
+  higher development quality;
+- recent development activity does **not** prove successful development outcomes;
+- event counts remain documentation coverage, never quality weights.
+
+This negative result does not make structural evidence irrelevant. It means any
+future development/tradition calibration must be multifactor and supported by richer
+independent evidence (for example coaching/licensing depth, academy coverage,
+youth-competition structure and cultural/audience evidence) rather than a single
+timeline statistic. Held-out BRA/DEU/ISL/SMR remain excluded from fitting.

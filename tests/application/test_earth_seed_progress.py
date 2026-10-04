@@ -11,7 +11,7 @@ from beta_engine.application.earth_package_builder import load_earth_research_bu
 
 def test_fifa_first_reviewed_country_histories_are_complete_and_resolvable():
     bundle = load_earth_research_bundle(Path("config/earth_research/fifa_earth.json"))
-    assert set(bundle.research.countries) == {"CZE", "SVK", "JPN", "IND", "MAR", "SEN", "FRO", "USA", "ZAF"}
+    assert set(bundle.research.countries) == {"CZE", "SVK", "JPN", "IND", "MAR", "SEN", "FRO", "USA", "ZAF", "BRA", "DEU", "ISL", "SMR"}
     assert bundle.research.data_cutoff.isoformat() == "2026-10-03"
 
     for code in ("CZE", "SVK"):
@@ -118,6 +118,48 @@ def test_fifa_third_reviewed_batch_uses_shards_and_preserves_structural_breaks()
     )
     assert "fifa-structural-caf-south-africa-v1#zaf-readmission-1992" in (
         zaf.years[1992].ratings["competition_quality"].observation_ids
+    )
+
+
+def test_fifa_heldout_batch_is_complete_independent_and_plausible():
+    bundle = load_earth_research_bundle(Path("config/earth_research/fifa_earth.json"))
+    batch = {"BRA", "DEU", "ISL", "SMR"}
+    ranking_prefix = "fifa-mens-year-end-ranking-2023-review-heldout-v1#"
+
+    for code in batch:
+        history = bundle.research.countries[code]
+        assert history.missing_earth_years == []
+        assert len(history.years) == 72
+        assert history.reference_year == 2026
+        for year in history.years.values():
+            assert len(year.ratings) == 6
+            for rating in year.ratings.values():
+                assert rating.method == "derived_estimate"
+                assert rating.calibration_model_id == "fifa-earth-heldout-history-bra-deu-isl-smr.v1"
+                assert rating.observation_ids
+                assert all(item in bundle.observations for item in rating.observation_ids)
+                assert not any(item.startswith(ranking_prefix) for item in rating.observation_ids)
+
+    competition_2023 = {
+        code: bundle.research.countries[code].years[2023].ratings["competition_quality"].value
+        for code in batch
+    }
+    assert competition_2023["BRA"] > competition_2023["DEU"] > competition_2023["ISL"] > competition_2023["SMR"]
+
+    rank_2023 = {
+        code: bundle.observations[f"{ranking_prefix}{code.lower()}"].numeric_value
+        for code in batch
+    }
+    assert rank_2023 == {"BRA": 5.0, "DEU": 16.0, "ISL": 71.0, "SMR": 210.0}
+
+    assert bundle.research.countries["DEU"].years[1955].historical_entity.startswith(
+        "Federal Republic of Germany"
+    )
+    assert bundle.research.countries["SMR"].years[2006].ratings["squash_access"].value >= 9.0
+    assert all(
+        "fifa-professional-2023" not in rating.source_ids
+        for year in bundle.research.countries["SMR"].years.values()
+        for rating in year.ratings.values()
     )
 
 

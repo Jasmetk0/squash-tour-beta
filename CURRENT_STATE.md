@@ -1,5 +1,35 @@
 # Current implementation and next action
 
+## Candidate — first post-prototype FIFA batch: BRA + DEU + ISL + SMR (4 October 2026)
+
+This slice promotes the four previously held-out validation countries into complete
+canonical country histories without using their held-out ranking outcomes as rating
+inputs.
+
+- New complete histories: BRA, DEU, ISL and SMR.
+- New ratings: 4 × 72 × 6 = **1,728**.
+- FIFA Earth now resolves **13 / 250 complete country histories** and **5,616 annual
+  attribute ratings**.
+- All four countries use sharded `country_rating_history.v2` files.
+- Their official 2023 FIFA year-end ranks remain independent validation observations;
+  regression tests assert that no ranking observation ID appears in any rating
+  provenance.
+- The resulting 2023 competition ordering is BRA > DEU > ISL > SMR, matching the
+  held-out outcome ordering without fitting to it.
+- San Marino's missing FIFA Professional 2023 fields remain unknown, not zero.
+- Germany's pre-1991 history explicitly under-covers the former GDR instead of
+  fabricating a complete current-territory series.
+- Iceland and San Marino demonstrate attribute independence: access can be near the
+  top of the scale while competition depth remains materially lower.
+
+**Next after green CI:** continue with evidence-rich normalized countries in regional
+batches, prioritising countries that already have Big Count + Professional 2023 and
+at least one independent structural/history source. Keep held-out/outcome observations
+as validation-only and add new structural normalization only where it materially
+improves a dimension.
+
+# Current implementation and next action
+
 ## Candidate — complete original FIFA prototype set + country-history sharding (4 October 2026)
 
 This slice finishes the remaining three countries from the original nine-country

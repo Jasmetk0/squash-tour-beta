@@ -5,6 +5,10 @@ import tempfile
 import unittest
 from pathlib import Path
 
+import pytest
+
+pytestmark = pytest.mark.pr_critical
+
 from pydantic import ValidationError
 
 from beta_engine.domain.countries import Country, CountryTalentModel, CountriesConfig

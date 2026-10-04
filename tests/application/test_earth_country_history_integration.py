@@ -6,6 +6,8 @@ from pathlib import Path
 
 import pytest
 
+pytestmark = pytest.mark.pr_critical
+
 from beta_engine.application.earth_package_builder import build_earth_package
 from beta_engine.application.world_package_registry_service import WorldPackageRegistryService
 from beta_engine.application.world_package_countries_service import WorldPackageCountriesService

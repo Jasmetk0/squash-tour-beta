@@ -1,5 +1,33 @@
 # Current implementation and next action
 
+## Candidate — independent FIFA 2023 outcome validation for competition quality (4 October 2026)
+
+Stacked on the direct #1154 V2/structural landing head. This slice adds an independent
+canonical outcome family: FIFA/Coca-Cola Men's World Ranking year-end 2023 for the
+nine review countries plus four held-out countries (BRA/DEU/ISL/SMR).
+
+The 13 rank observations are direct Earth-mapped, cross-country-comparable and
+explicitly `outcome_validation_only`. They support competition-quality validation
+but are not domestic-league measurements and are forbidden from fitting the V2
+professional-player/club recipe.
+
+Expected canonical state after this slice:
+- 40 observation datasets;
+- 1,355 observations total;
+- country evidence: 1,333 safe + 22 manual + 0 unresolved;
+- 70 direct-mapped facts = 57 structural + 13 ranking outcomes.
+
+A dedicated audit compares V2 `competition_quality@2023` with the independent
+ranking ordering separately for review and held-out groups using Spearman and
+pairwise concordance. Review outcomes never change model weights; held-out outcomes
+remain `fit_allowed=false`. San Marino intentionally has a ranking outcome but no
+numeric V2 competition score because its FIFA Professional Report player/club fields
+are missing.
+
+**Next after green CI:** inspect the independent outcome agreement. If V2 competition
+also behaves plausibly on BRA/DEU/ISL without retuning, competition-quality can move
+closer to a canonical-authoring gate; otherwise retain it as provisional.
+
 ## Candidate — reject simple FIFA structural rating proxies (4 October 2026)
 
 The factual structural feature layer now has an explicit hypothesis audit against

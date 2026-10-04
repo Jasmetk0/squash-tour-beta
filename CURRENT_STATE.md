@@ -1,5 +1,17 @@
 # Current implementation and next action
 
+## Candidate — canonical FIFA structural-event observations (4 October 2026)
+
+Stacked on the green calibration/audit head pending direct landing #1146. This slice adds the first canonical evidence family aimed specifically at the dimensions that Big Count / Professional 2023 cannot measure well: development quality and tradition.
+
+A reviewed seed contains 43 dated structural facts across the nine-country prototype set, backed by 25 official source IDs. The normalizer emits one content-addressed `earth_source_observations.v2` dataset per original source. Events include federation/league foundations, professionalisation, training centres, academy/youth-pathway launches, infrastructure milestones and governance discontinuities.
+
+Pre-1955 history stays at its original year rather than being rewritten as 1955. Dimension tags are relevance metadata only; every structural observation has `numeric_value=null`. The conflicting official Mohammed VI Academy dates (2009 establishment vs 2019 opening) remain two separate observations in one explicit conflict group.
+
+The canonical FIFA research bundle on this branch contains 32 datasets / 1,328 observations. Country evidence safely partitions them into 1,306 safe facts + 22 manual + 0 unresolved. Structural observations may bypass Big Count/Professional identity-resolution only when they carry the explicit reviewed Earth mapping.
+
+**Still zero canonical country-rating histories are authored.** Next after validation is to build separate tradition/development evidence summaries from these events before permitting any structural-event-to-rating transfer model.
+
 ## Candidate — FIFA dimension evidence-score prototype audit (4 October 2026)
 
 Stacked on the provisional 1–10 evidence-score model. This slice compares those

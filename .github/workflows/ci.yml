@@ -79,7 +79,7 @@ jobs:
       - name: Generate FIFA calibration review bundle
         if: needs.changes.outputs.fifa_calibration == 'true'
         run: |
-          PYTHONPATH=src python scripts/export_fifa_calibration_review.py /tmp/fifa-calibration-review
+          PYTHONPATH=src:. python scripts/export_fifa_calibration_review.py /tmp/fifa-calibration-review
       - name: Upload FIFA calibration review bundle
         if: needs.changes.outputs.fifa_calibration == 'true'
         uses: actions/upload-artifact@v4

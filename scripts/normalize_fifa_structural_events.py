@@ -85,6 +85,12 @@ def build_datasets(
         raise ValueError("Earth research source catalogue is missing")
 
     seed_sha256 = _file_sha256(seed_path)
+    seed_role = str(seed.get("seed_role") or "review")
+    scope_label = (
+        "held-out validation set"
+        if seed_role == "held_out_validation"
+        else "review set"
+    )
     grouped: dict[str, list[dict[str, Any]]] = {}
     for event in seed["events"]:
         source_id = str(event["source_id"])
@@ -157,7 +163,7 @@ def build_datasets(
             generated_by=GENERATED_BY,
             scope=(
                 f"Canonical structural football events from source {source_id!r} "
-                "for the FIFA Earth review set."
+                f"for the FIFA Earth {scope_label}."
             ),
             limitations=(
                 source["limitations"]

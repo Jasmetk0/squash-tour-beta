@@ -86,14 +86,47 @@ class EarthResearchBundle:
     observations: dict[str, EarthObservation]
 
 
+def _load_country_history_shards(
+    *, research_path: Path, payload: dict
+) -> dict:
+    """Merge optional per-country history files without weakening research validation."""
+
+    world_id = payload.get("world_id")
+    if world_id not in {"fifa_earth", "atp_earth"}:
+        return payload
+
+    shard_dir = research_path.parent / "countries" / world_id
+    if not shard_dir.exists():
+        return payload
+    if not shard_dir.is_dir():
+        raise ValueError(f"country history shard path is not a directory: {shard_dir}")
+
+    countries = dict(payload.get("countries") or {})
+    for shard_path in sorted(shard_dir.glob("*.json")):
+        code = shard_path.stem
+        if len(code) != 3 or not code.isascii() or not code.isalpha() or not code.isupper():
+            raise ValueError(f"invalid country history shard filename {shard_path.name!r}")
+        if code in countries:
+            raise ValueError(f"duplicate country history {code!r} in inline research and shards")
+        try:
+            shard_payload = json.loads(shard_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as exc:
+            raise ValueError(f"{code}: country history shard is unavailable or invalid") from exc
+        countries[code] = CountryRatingHistory.model_validate(shard_payload).model_dump(mode="json")
+
+    merged = dict(payload)
+    merged["countries"] = countries
+    return merged
+
+
 def load_earth_research_bundle(path: Path) -> EarthResearchBundle:
     """Load a research file and fail closed on stale/tampered observation manifests."""
 
     research_path = path.resolve()
     root = research_path.parent
-    research = EarthSportResearch.model_validate_json(
-        research_path.read_text(encoding="utf-8")
-    )
+    payload = json.loads(research_path.read_text(encoding="utf-8"))
+    payload = _load_country_history_shards(research_path=research_path, payload=payload)
+    research = EarthSportResearch.model_validate(payload)
     datasets: dict[str, EarthObservationDataset] = {}
     observations: dict[str, EarthObservation] = {}
 

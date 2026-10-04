@@ -1,0 +1,31 @@
+{
+  "schema_version": "fifa_earth_reviewed_country_batch.v1",
+  "model_id": "fifa-earth-reviewed-country-history-fro-usa-zaf.v1",
+  "created_on": "2026-10-04",
+  "countries": [
+    "FRO",
+    "USA",
+    "ZAF"
+  ],
+  "coverage": {
+    "from": 1955,
+    "to": 2026,
+    "attributes": 6
+  },
+  "storage": "country-history shards under config/earth_research/countries/fifa_earth/",
+  "rating_scale": "country_ratings_1_10.v2",
+  "method": "Reviewed reuse of prototype trajectories, re-grounded on exact canonical normalized observations and loaded through optional per-country shards.",
+  "evidence_rules": [
+    "Big Count primarily informs popularity/access and never acts as a universal football-strength score.",
+    "Structural breaks can move dimensions in opposite directions; discontinuities are preserved rather than smoothed away.",
+    "Infrastructure/project starts are not treated as completed outcomes.",
+    "International exclusion is not interpreted as disappearance of domestic football culture.",
+    "Court count remains outside pre-alpha.",
+    "Every annual value remains a project-authored derived estimate."
+  ],
+  "country_notes": {
+    "FRO": "Artificial turf is a major access/development breakpoint against an already deep football culture; tiny population constrains elite depth.",
+    "USA": "NASL creation and collapse plus MLS relaunch are explicit competition/elite-support discontinuities; development centres and academy structures are separate evidence.",
+    "ZAF": "Apartheid-era exclusion is modelled as governance/international-access disruption, while 1991 unification and 1992 readmission are explicit recovery anchors."
+  }
+}

@@ -204,3 +204,23 @@ its 1955 pre-independence backcast. Morocco retains both conflicting FIFA academ
 timing observations (2009 establishment and 2019 opening) instead of manufacturing
 a false resolution. Outcome rankings remain validation data rather than automatic
 authoring inputs, and court count remains outside pre-alpha.
+
+
+## FIFA canonical-history batch 3 and sharding — 4 October 2026
+
+FIFA Earth now resolves nine complete histories: CZE, SVK, JPN, IND, MAR, SEN,
+FRO, USA and ZAF. The third batch adds 1,296 ratings for FRO, USA and ZAF and
+completes the original nine-country prototype set.
+
+Country history storage is now optionally sharded under
+`config/earth_research/countries/<world_id>/CODE.json`. The loader merges those
+histories before the existing `EarthSportResearch` validation, rejects duplicate
+inline/sharded codes and validates every sidecar through `CountryRatingHistory`.
+This keeps the research contract unchanged while avoiding an impractical 100+ MB
+monolithic research document at full 250-country coverage.
+
+The batch preserves meaningful discontinuities: Faroe Islands' artificial-turf
+breakpoint primarily changes access/development; the United States retains the NASL
+collapse before MLS recovery; and South Africa's apartheid-era exclusion is treated
+as an institutional/international-competition disruption rather than absence of
+domestic football culture.

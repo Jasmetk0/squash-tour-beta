@@ -34,6 +34,14 @@ COMPARISONS = {
         "competition_quality",
         "elite_support",
     ),
+    "professional_player_scale_2023": (
+        "competition_quality",
+        "elite_support",
+    ),
+    "professional_club_scale_2023": (
+        "competition_quality",
+        "elite_support",
+    ),
 }
 
 REVIEW_PERCENTILE_GAP = 25.0
@@ -138,7 +146,7 @@ def build_audit(
             rows: list[dict[str, Any]] = []
             for code in prototype_codes:
                 signal = signals["countries"][code][signal_id]
-                if signal["rate"] is None:
+                if signal["signal_value"] is None:
                     continue
                 rating = prototype["countries"][code]["years"][year]["ratings"][
                     attribute
@@ -146,7 +154,7 @@ def build_audit(
                 rows.append(
                     {
                         "country_code": code,
-                        "signal_rate": signal["rate"],
+                        "signal_value": signal["signal_value"],
                         "signal_unit": signal["unit"],
                         "signal_percentile": signal["percentile"],
                         "signal_rank_desc": signal["rank_desc"],
@@ -187,7 +195,7 @@ def build_audit(
             comparisons[key]["review_inversions"] = inversions
 
     return {
-        "schema_version": "fifa_prototype_signal_audit.v1",
+        "schema_version": "fifa_prototype_signal_audit.v2",
         "prototype_schema_version": prototype["schema_version"],
         "prototype_country_count": len(prototype_codes),
         "prototype_countries": prototype_codes,

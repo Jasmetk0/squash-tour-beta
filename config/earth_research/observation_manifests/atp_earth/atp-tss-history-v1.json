@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-tss-history-v1",
+  "source_id": "tss-history",
+  "relative_path": "observations/normalized/atp-tss-history-v1.json",
+  "sha256": "1055564b65d3e4e3f4ea5a658df66a57113f02a0e8773ab1dc746c995cdb8373",
+  "record_count": 4,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-04"
+}

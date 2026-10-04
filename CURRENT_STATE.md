@@ -1,5 +1,29 @@
 # Current implementation and next action
 
+## Candidate — FIFA dimension evidence model V2 (4 October 2026)
+
+The merged calibration-review artifact exposed a structural flaw in V1:
+per-capita professional density materially under-rates large professional ecosystems.
+The nine-country review produced V1 mean absolute deltas of 2.68 for competition
+quality and 2.92 for elite support, with Japan/USA/India especially under-scored.
+
+This candidate upgrades the empirical signal schema to v2 with explicit
+`signal_value` + normalization semantics and adds absolute professional-player and
+professional-club scale signals alongside density. Competition/elite-support recipes
+become scale-dominant, density-secondary.
+
+The V1 popularity recipe is removed entirely: participation intensity alone failed
+to represent cultural popularity (large review misses for Japan, India, Morocco and
+Senegal, plus USA overstatement). Popularity is now explicitly unsupported until
+independent cultural/audience evidence is normalized. Access remains the strongest
+current quantitative recipe.
+
+The new default is `fifa-dimension-evidence-v2`; V1 remains loadable by explicit
+path for reproducibility. Every output remains `rating_ready=false`.
+
+**Next after CI artifact:** inspect V2 score/prototype deltas and tune or reject the
+professional recipes based on measured improvement, not by intuition.
+
 ## Candidate — FIFA dimension evidence-score prototype audit (4 October 2026)
 
 Stacked on the provisional 1–10 evidence-score model. This slice compares those

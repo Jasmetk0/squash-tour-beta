@@ -151,15 +151,15 @@ def test_structural_dimension_tags_are_relevance_only_not_rating_values() -> Non
 def test_fifa_research_bundle_includes_structural_events_with_existing_sources() -> None:
     bundle = load_earth_research_bundle(DEFAULT_RESEARCH)
 
-    assert len(bundle.datasets) == 40
-    assert len(bundle.observations) == 1355
+    assert len(bundle.datasets) == 45
+    assert len(bundle.observations) == 1378
 
     structural = [
         observation
         for observation in bundle.observations.values()
         if observation.measurement_type == "football_structural_event"
     ]
-    assert len(structural) == 57
+    assert len(structural) == 79
     assert all(
         observation.source_id in bundle.research.sources
         for observation in structural

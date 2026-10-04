@@ -31,22 +31,39 @@ RatingV2 = Annotated[float, BeforeValidator(validate_rating_v2)]
 
 
 class RatingEvidence(BaseModel):
-    """Ratings are model estimates, even when their underlying counts are observed."""
+    """A model estimate linked to exact normalized source observations."""
 
     model_config = ConfigDict(extra="forbid")
     value: RatingV2
-    method: Literal["sourced_estimate", "interpolated", "carried_forward", "backcast"]
+    method: Literal[
+        "sourced_estimate",
+        "interpolated",
+        "carried_forward",
+        "backcast",
+        "derived_estimate",
+    ]
     confidence: Literal["low", "medium", "high"]
     source_ids: list[str] = Field(min_length=1)
+    observation_ids: list[str] = Field(min_length=1)
     rationale: str = Field(min_length=1)
     anchor_years: list[int] = Field(min_length=1)
+    calibration_model_id: str | None = None
 
     @model_validator(mode="after")
     def meaningful_evidence(self) -> "RatingEvidence":
         if not self.rationale.strip() or any(not item.strip() for item in self.source_ids):
             raise ValueError("evidence and source identifiers must not be blank")
+        if any(not item.strip() or "#" not in item for item in self.observation_ids):
+            raise ValueError("observation_ids must use '<dataset_id>#<local-id>'")
         if len(set(self.source_ids)) != len(self.source_ids):
             raise ValueError("duplicate source identifier")
+        if len(set(self.observation_ids)) != len(self.observation_ids):
+            raise ValueError("duplicate observation identifier")
+        if self.method == "derived_estimate":
+            if not self.calibration_model_id or not self.calibration_model_id.strip():
+                raise ValueError("derived estimates require calibration_model_id")
+        elif self.calibration_model_id is not None:
+            raise ValueError("calibration_model_id is only valid for derived estimates")
         return self
 
 
@@ -92,6 +109,8 @@ class CountryRatingHistory(BaseModel):
                     raise ValueError("carry-forward must identify an earlier anchor")
                 if evidence.method == "backcast" and not (len(anchors) == 1 and anchors[0] > year):
                     raise ValueError("backcast must identify a later anchor")
+                if evidence.method == "derived_estimate" and not anchors:
+                    raise ValueError("derived estimates must identify at least one calibration anchor")
         return self
 
     def resolve(self, year: int) -> tuple[int, RatingYear]:

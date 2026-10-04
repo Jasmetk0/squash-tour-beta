@@ -4,6 +4,10 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from beta_engine.application.earth_research_observations import (
+    EarthObservationDatasetManifest,
+    observation_dataset_id,
+)
 from beta_engine.domain.countries import Country
 from beta_engine.domain.countries.rating_history import RATING_SCALE_V2
 
@@ -36,6 +40,28 @@ def country_history_errors(root: Path, metadata: dict, countries: list[Country])
     except (OSError, ValueError, TypeError) as exc:
         errors.append(f"invalid country rating source catalogue: {exc}")
         sources = {}
+    try:
+        raw_manifests = json.loads(
+            (root / "generation/country_rating_observation_datasets.json").read_text()
+        )
+        if not isinstance(raw_manifests, dict) or not raw_manifests:
+            raise ValueError("observation dataset catalogue must be a non-empty object")
+        manifests: dict[str, EarthObservationDatasetManifest] = {}
+        for dataset_id, value in raw_manifests.items():
+            manifest = EarthObservationDatasetManifest.model_validate(value)
+            if dataset_id != manifest.dataset_id:
+                raise ValueError(
+                    f"observation dataset key {dataset_id!r} must match manifest dataset_id"
+                )
+            if manifest.source_id not in sources:
+                raise ValueError(
+                    f"observation dataset {dataset_id!r} references unknown source "
+                    f"{manifest.source_id!r}"
+                )
+            manifests[dataset_id] = manifest
+    except (OSError, ValueError, TypeError) as exc:
+        errors.append(f"invalid country rating observation dataset catalogue: {exc}")
+        manifests = {}
     for country in countries:
         history = country.rating_history
         if history is None:
@@ -51,4 +77,23 @@ def country_history_errors(root: Path, metadata: dict, countries: list[Country])
                    for source in rating.source_ids if source not in sources}
         if unknown:
             errors.append(f"{country.code}: unknown rating sources {sorted(unknown)}")
+        for entry in history.years.values():
+            for rating in entry.ratings.values():
+                for observation_id in rating.observation_ids:
+                    try:
+                        dataset_id = observation_dataset_id(observation_id)
+                    except ValueError as exc:
+                        errors.append(f"{country.code}: invalid observation reference: {exc}")
+                        continue
+                    manifest = manifests.get(dataset_id)
+                    if manifest is None:
+                        errors.append(
+                            f"{country.code}: observation {observation_id!r} references "
+                            f"unknown dataset {dataset_id!r}"
+                        )
+                    elif manifest.source_id not in rating.source_ids:
+                        errors.append(
+                            f"{country.code}: observation {observation_id!r} source "
+                            f"{manifest.source_id!r} is not cited by the rating evidence"
+                        )
     return errors

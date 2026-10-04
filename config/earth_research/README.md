@@ -104,3 +104,24 @@ Validation role is explicit:
 into review-set descriptive distributions without changing those distributions.
 These percentiles are diagnostics, not rating curves. Long historical span or recent
 development evidence must never be interpreted as overall football quality.
+
+
+## Development / tradition evidence-gap framework
+
+`fifa_development_evidence_framework_v1.json` defines the evidence families that
+must be collected before another development/tradition calibration attempt.
+
+Development target facets follow FIFA's talent-development framing and current TDS
+practice: talent identification, training environment, playing opportunities,
+youth-to-senior transition, coaching capacity and academy/pathway coverage.
+Tradition additionally requires institutional/competition/club roots, continuity
+context and independent cultural/audience embedding.
+
+`scripts/audit_fifa_development_evidence_gaps.py` reports evidence coverage only;
+it produces no score. Current review-set structural coverage is intentionally sparse:
+training environment 4/9, academy/pathway proxy 5/9, while talent identification,
+playing opportunities, transition and coaching capacity are 0/9. Cultural/audience
+tradition evidence is also 0/9.
+
+These zeros mean **no canonical evidence in the current corpus**, not zero country
+capability. They define the next source-acquisition priorities.

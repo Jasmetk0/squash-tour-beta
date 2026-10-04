@@ -69,7 +69,7 @@ def test_fifa_second_reviewed_batch_is_complete_resolvable_and_preserves_conflic
 
     sen = bundle.research.countries["SEN"]
     assert sen.years[1955].ratings["squash_popularity"].confidence == "low"
-    assert sen.years[2020].ratings["development_quality"].confidence == "high"
+    assert sen.years[2020].ratings["development_quality"].confidence == "medium"
 
 
 def test_atp_first_complete_histories_are_evidence_resolvable_and_conservative():

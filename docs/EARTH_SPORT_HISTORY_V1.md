@@ -133,3 +133,20 @@ breaks, and use explicit `derived_estimate` provenance for calibrated ramps/lags
 Label sparse early years as estimates and 2026 as incomplete through the stated
 cutoff. Then compare intake/development distributions with held-out sporting
 observations in Test Labs.
+
+
+## Structural evidence layer
+
+Structural football milestones are stored as canonical source observations rather
+than as direct rating deltas. Federation/league foundations, academies, technical
+centres, infrastructure milestones and governance discontinuities preserve their
+actual dates, including pre-1955 history.
+
+The current structural layer contains 57 events: 43 review events plus 14 explicitly
+held-out validation events. The held-out set (Germany, Brazil, Iceland and San
+Marino) is excluded from model fitting by policy.
+
+Structural dimension summaries may report timeline coverage, first/last evidence
+year, pre-1955 evidence and source-conflict groups. They must not infer a quality
+score from event count or treat absence from the curated seed as evidence of
+non-existence.

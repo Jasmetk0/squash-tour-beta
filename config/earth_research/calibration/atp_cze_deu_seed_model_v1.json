@@ -1,0 +1,47 @@
+{
+  "schema_version": "atp_earth_seed_model.v1",
+  "model_id": "atp-earth-cze-deu-seed-model.v1",
+  "created_on": "2026-10-04",
+  "scope": "First canonical ATP Earth histories for CZE and DEU, 1955–2026.",
+  "rating_scale": "country_ratings_1_10.v2",
+  "principles": [
+    "All annual values are project-authored derived estimates, never presented as measured tennis facts.",
+    "Participation/membership primarily informs popularity and access; it does not automatically set development, competition, elite support or tradition.",
+    "Davis Cup outcomes inform competition/tradition context only.",
+    "Current talent-centre/high-performance infrastructure informs development and elite support but is not backcast unchanged.",
+    "Predecessor-state evidence is explicitly mapped and must not duplicate population or participation across successor countries.",
+    "Court count is excluded from pre-alpha."
+  ],
+  "country_anchor_years": {
+    "CZE": [
+      1955,
+      1975,
+      1980,
+      1993,
+      2012,
+      2013,
+      2019,
+      2025,
+      2026
+    ],
+    "DEU": [
+      1955,
+      1970,
+      1980,
+      1988,
+      1989,
+      1993,
+      1994,
+      2000,
+      2010,
+      2019,
+      2021,
+      2024,
+      2026
+    ]
+  },
+  "uncertainty": {
+    "CZE": "Pre-2019 participation/access and pre-2025 development/support are intentionally low confidence; predecessor Czechoslovak outcomes are inherited context only.",
+    "DEU": "Pre-reunification DTB membership covers West Germany only, so popularity/access for current DEU territory are intentionally conservative; modern development/support is much better evidenced than early history."
+  }
+}

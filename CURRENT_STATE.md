@@ -1,5 +1,35 @@
 # Current implementation and next action
 
+## Candidate — first complete ATP Earth histories: CZE + DEU (4 October 2026)
+
+This slice moves ATP Earth from normalized-source-only status to actual annual country
+histories.
+
+- ATP Earth now has complete 1955–2026 `country_rating_history.v2` histories for
+  CZE and DEU: 2 countries × 72 years × 6 attributes = **864 authored ratings**.
+- Six new normalized evidence datasets add 27 observations: selected Davis Cup
+  outcomes, eleven DTB membership checkpoints, DTB federation/current structure,
+  German federal high-performance centres, Czech nationwide talent-centre support
+  and the German 2021 Davis Cup semifinal context.
+- Together with the previously normalized ITF CZE/DEU snapshots, ATP Earth now has
+  8 registered datasets and 33 normalized observations.
+- Every annual rating is an explicit `derived_estimate` with exact source and
+  observation references and model id `atp-earth-cze-deu-seed-model.v1`.
+- German pre-reunification evidence is explicitly partial-current-territory
+  evidence; West German membership/results are not silently treated as full
+  current-Germany territory.
+- Czechoslovak Davis Cup outcomes are inherited Czech competition/tradition context
+  only under the official Davis Cup honour-roll convention. Population and
+  participation are not duplicated.
+- Sparse Czech early participation/development and German pre-reunification
+  current-territory coverage remain deliberately low confidence.
+
+**Next after green CI:** expand FIFA Earth by the next reviewed prototype group and
+expand ATP Earth with countries where independent participation + competition +
+development evidence can be normalized without inventing neutral histories.
+
+# Current implementation and next action
+
 ## Candidate — first canonical FIFA histories + first normalized ATP slice (4 October 2026)
 
 This slice converts two reviewed FIFA prototype countries into the actual

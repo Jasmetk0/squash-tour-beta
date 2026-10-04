@@ -241,6 +241,27 @@
       "accessed_on": "2026-10-04",
       "scope": "Official UEFA timeline covering the first club, federation, official competition, youth academy, league and Casa del Calcio.",
       "limitations": "Timeline milestones are structural evidence; they do not imply numeric rating changes or equal nationwide impact."
+    },
+    "fifa-global-talent-development-report-2021": {
+      "title": "FIFA global report — Give every talent a chance",
+      "url": "https://inside.fifa.com/en/news/fifa-global-report-give-every-talent-a-chance",
+      "accessed_on": "2026-10-04",
+      "scope": "FIFA global talent-development ecosystem study across 205 participating member associations; identifies talent identification, training, playing opportunities and youth-to-senior transition as key development areas.",
+      "limitations": "The public global report describes framework-level findings and methodology; dedicated country reports are not treated as publicly available canonical country observations unless separately sourced."
+    },
+    "fifa-tds-academies-strategy-2023": {
+      "title": "FIFA — Arsène Wenger outlines global FIFA Academies plan",
+      "url": "https://inside.fifa.com/en/football-development/news/en/news/arsene-wenger-outlines-global-fifa-academies-plan",
+      "accessed_on": "2026-10-04",
+      "scope": "FIFA Talent Development Scheme / Academy strategy describing academy standards, talent identification, training contact, deployed talent coaches and local coaching capacity.",
+      "limitations": "Programme design and global targets are framework evidence; enrolment or programme existence does not by itself prove country-level implementation quality or outcomes."
+    },
+    "uefa-coaching-convention": {
+      "title": "UEFA coach education — Coaching Convention overview",
+      "url": "https://www.uefa.com/development/coaches/coaching-courses/",
+      "accessed_on": "2026-10-04",
+      "scope": "UEFA standard coach-education framework and recognised licence pathways across member associations.",
+      "limitations": "The framework defines standards but does not provide a complete country-by-country count of active qualified coaches on this page; country-specific coach-capacity observations require separate sources."
     }
   },
   "observation_datasets": {

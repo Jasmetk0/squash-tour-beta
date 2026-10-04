@@ -11,8 +11,8 @@ from beta_engine.application.earth_package_builder import load_earth_research_bu
 
 def test_fifa_first_reviewed_country_histories_are_complete_and_resolvable():
     bundle = load_earth_research_bundle(Path("config/earth_research/fifa_earth.json"))
-    assert set(bundle.research.countries) == {"CZE", "SVK", "JPN", "IND", "MAR", "SEN", "FRO", "USA", "ZAF", "BRA", "DEU", "ISL", "SMR", "ARG", "MEX", "AUS", "NZL", "FJI", "PNG", "SLB", "COK", "ASM", "PYF", "NCL"}
-    assert bundle.research.data_cutoff.isoformat() == "2026-10-03"
+    assert set(bundle.research.countries) == {"CZE", "SVK", "JPN", "IND", "MAR", "SEN", "FRO", "USA", "ZAF", "BRA", "DEU", "ISL", "SMR", "ARG", "MEX", "AUS", "NZL", "FJI", "PNG", "SLB", "COK", "ASM", "PYF", "NCL", "WSM", "TON", "VUT"}
+    assert bundle.research.data_cutoff.isoformat() == "2026-10-04"
 
     for code in ("CZE", "SVK"):
         history = bundle.research.countries[code]
@@ -340,6 +340,70 @@ def test_fifa_oceania_association_identity_batch_preserves_governance_and_territ
             for item in (*rating.source_ids, *rating.observation_ids)
         )
 
+
+
+def test_fifa_wsm_ton_vut_batch_is_complete_and_dimensionally_temporal():
+    bundle = load_earth_research_bundle(Path("config/earth_research/fifa_earth.json"))
+    batch = {"WSM", "TON", "VUT"}
+
+    for code in batch:
+        history = bundle.research.countries[code]
+        assert history.missing_earth_years == []
+        assert len(history.years) == 72
+        assert history.reference_year == 2026
+        for year in history.years.values():
+            assert len(year.ratings) == 6
+            for rating in year.ratings.values():
+                assert rating.method == "derived_estimate"
+                assert rating.calibration_model_id == "fifa-earth-wsm-ton-vut-model.v1"
+                assert rating.observation_ids
+                assert all(item in bundle.observations for item in rating.observation_ids)
+
+    wsm = bundle.research.countries["WSM"]
+    assert "backcast" in wsm.years[1955].ratings["squash_popularity"].rationale.lower()
+    assert "fifa-big-count-2006-all-players-v2#samoa" not in (
+        wsm.years[2005].ratings["squash_popularity"].observation_ids
+    )
+    assert "fifa-big-count-2006-all-players-v2#samoa" in (
+        wsm.years[2006].ratings["squash_popularity"].observation_ids
+    )
+    assert wsm.years[2010].ratings["elite_support"].value < (
+        wsm.years[2006].ratings["elite_support"].value
+    )
+    assert "fifa-structural-samoa-savaii-centre-2013-v1#wsm-savaii-centre-2013" in (
+        wsm.years[2013].ratings["development_quality"].observation_ids
+    )
+
+    ton = bundle.research.countries["TON"]
+    assert "backcast" in ton.years[1955].ratings["squash_access"].rationale.lower()
+    assert "fifa-structural-tonga-vavau-2020-v1#ton-vavau-facility-2020" not in (
+        ton.years[2019].ratings["squash_access"].observation_ids
+    )
+    assert "fifa-structural-tonga-vavau-2020-v1#ton-vavau-facility-2020" in (
+        ton.years[2020].ratings["squash_access"].observation_ids
+    )
+    assert ton.years[2026].ratings["squash_popularity"].value < (
+        ton.years[2026].ratings["squash_access"].value
+    )
+    assert "rugby" in ton.years[2026].ratings["squash_popularity"].rationale.lower()
+
+    vut = bundle.research.countries["VUT"]
+    assert "New Hebrides" in vut.years[1955].historical_entity
+    assert "fifa-structural-ofc-vanuatu-profile-v1#vut-academy-pilot-start-2008" not in (
+        vut.years[2007].ratings["development_quality"].observation_ids
+    )
+    assert "fifa-structural-ofc-vanuatu-profile-v1#vut-academy-pilot-start-2008" in (
+        vut.years[2008].ratings["development_quality"].observation_ids
+    )
+    assert "fifa-structural-vanuatu-forward-2023-v1#vut-freshwater-stadium-2023" not in (
+        vut.years[2022].ratings["elite_support"].observation_ids
+    )
+    assert "fifa-structural-vanuatu-forward-2023-v1#vut-freshwater-stadium-2023" in (
+        vut.years[2023].ratings["elite_support"].observation_ids
+    )
+    assert "fifa-structural-ofc-vanuatu-profile-v1#vut-nations-cup-runner-up-2024" in (
+        vut.years[2024].ratings["competition_quality"].observation_ids
+    )
 
 def test_fifa_pyf_backcasts_do_not_claim_future_infrastructure_as_historical_support():
     bundle = load_earth_research_bundle(Path("config/earth_research/fifa_earth.json"))

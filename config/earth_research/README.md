@@ -61,3 +61,19 @@ components rather than silently summed, and the index is explicitly `rating_read
 
 See [the implementation/research boundary](../../docs/EARTH_SPORT_HISTORY_V1.md)
 for source limitations, provenance rules, audit/build commands and next steps.
+
+
+## Czechia 2006 contextual provenance
+
+Two additional canonical datasets support the first complete six-attribute anchor
+candidate without entering the FIFA association identity index:
+
+- `uefa-czechia-history-events-v2` — 7 official UEFA timeline/history events from
+  1892 through 2004;
+- `uefa-czech-republic-2005-06-snapshot-v2` — 8 association/system facts from
+  UEFA's 2005/06 directory, Czech Republic page 36.
+
+This brings the research bundle to 9 datasets / 1,300 observations. The existing
+FIFA identity-resolution/country-evidence partition remains exactly 1,285
+Big Count/Professional Report observations; the 15 Czech contextual observations are
+loaded, hashed and validated separately and are cited directly by rating evidence.

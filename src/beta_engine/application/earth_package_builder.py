@@ -11,6 +11,10 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from beta_engine.application.earth_research_observations import (
+    EarthObservationDatasetManifest,
+    observation_dataset_id,
+)
 from beta_engine.domain.countries import Country, CountriesConfig
 from beta_engine.domain.countries.rating_history import CountryRatingHistory, GAME_ATTRIBUTE_NAMES, RATING_SCALE_V2
 from beta_engine.infrastructure.world_package_storage import WorldPackageCountryStore
@@ -31,10 +35,18 @@ class EarthSportResearch(BaseModel):
     world_id: Literal["fifa_earth", "atp_earth"]
     data_cutoff: date
     sources: dict[str, EarthSource]
+    observation_datasets: dict[str, EarthObservationDatasetManifest]
     countries: dict[str, CountryRatingHistory]
 
     @model_validator(mode="after")
     def references_exist(self) -> "EarthSportResearch":
+        for dataset_id, manifest in self.observation_datasets.items():
+            if dataset_id != manifest.dataset_id:
+                raise ValueError(f"observation dataset key {dataset_id!r} must match manifest dataset_id")
+            if manifest.source_id not in self.sources:
+                raise ValueError(
+                    f"observation dataset {dataset_id!r} references unknown source {manifest.source_id!r}"
+                )
         for code, history in self.countries.items():
             if len(code) != 3 or not code.isascii() or not code.isalpha() or not code.isupper():
                 raise ValueError(f"invalid country code {code!r}")
@@ -45,6 +57,18 @@ class EarthSportResearch(BaseModel):
                     missing = set(evidence.source_ids) - self.sources.keys()
                     if missing:
                         raise ValueError(f"{code}: unknown sources {sorted(missing)}")
+                    for observation_id in evidence.observation_ids:
+                        dataset_id = observation_dataset_id(observation_id)
+                        manifest = self.observation_datasets.get(dataset_id)
+                        if manifest is None:
+                            raise ValueError(
+                                f"{code}: observation {observation_id!r} references unknown dataset {dataset_id!r}"
+                            )
+                        if manifest.source_id not in evidence.source_ids:
+                            raise ValueError(
+                                f"{code}: observation {observation_id!r} comes from source "
+                                f"{manifest.source_id!r}, which is not cited by the rating evidence"
+                            )
         return self
 
 
@@ -77,6 +101,10 @@ def audit_earth_research(research: EarthSportResearch, countries: list[Country])
         "missing_years": missing_years,
         "methods": method_counts,
         "confidence": confidence_counts,
+        "observation_dataset_count": len(research.observation_datasets),
+        "observation_record_count": sum(
+            manifest.record_count for manifest in research.observation_datasets.values()
+        ),
         "data_cutoff": research.data_cutoff.isoformat(),
         "realism_validated": False,
     }
@@ -120,6 +148,13 @@ def build_earth_package(*, base_package: Path, research: EarthSportResearch, out
         generation.mkdir(exist_ok=True)
         (generation / "country_rating_sources.json").write_text(json.dumps(
             {key: value.model_dump(mode="json") for key, value in research.sources.items()}, indent=2
+        ) + "\n")
+        (generation / "country_rating_observation_datasets.json").write_text(json.dumps(
+            {
+                key: value.model_dump(mode="json")
+                for key, value in research.observation_datasets.items()
+            },
+            indent=2,
         ) + "\n")
         (generation / "country_rating_coverage.json").write_text(json.dumps(report, indent=2) + "\n")
         # Round-trip the actual persisted country source before publishing the directory.

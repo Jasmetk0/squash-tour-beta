@@ -4,7 +4,9 @@ import json
 from pathlib import Path
 
 import pytest
+from pydantic import ValidationError
 
+from beta_engine.application.earth_package_builder import EarthSportResearch
 from scripts.materialize_fifa_earth_prototype import audit_anchor_transitions, materialise
 
 pytestmark = pytest.mark.pr_critical
@@ -28,6 +30,8 @@ def _materialise() -> dict:
 def test_prototype_materialises_complete_histories_for_review_set() -> None:
     result = _materialise()
 
+    assert result["schema_version"] == "fifa_earth_materialized_prototype.v3"
+    assert result["canonical_ready"] is False
     assert set(result["countries"]) == {"CZE", "FRO", "IND", "JPN", "MAR", "SEN", "SVK", "USA", "ZAF"}
     assert sum(len(history["years"]) for history in result["countries"].values()) == 9 * 72
     assert sum(
@@ -125,3 +129,10 @@ def test_big_count_2006_cross_country_access_calibration() -> None:
     assert popularity["ZAF"] > popularity["USA"]
     assert popularity["SEN"] > popularity["USA"]
     assert popularity["CZE"] > popularity["USA"]
+
+
+def test_prototype_cannot_masquerade_as_canonical_earth_research_v2() -> None:
+    result = _materialise()
+
+    with pytest.raises(ValidationError):
+        EarthSportResearch.model_validate(result)

@@ -12,7 +12,7 @@ histories.
   German federal high-performance centres, Czech nationwide talent-centre support
   and the German 2021 Davis Cup semifinal context.
 - Together with the previously normalized ITF CZE/DEU snapshots, ATP Earth now has
-  8 registered datasets and 30 normalized observations.
+  8 registered datasets and 33 normalized observations.
 - Every annual rating is an explicit `derived_estimate` with exact source and
   observation references and model id `atp-earth-cze-deu-seed-model.v1`.
 - German pre-reunification evidence is explicitly partial-current-territory

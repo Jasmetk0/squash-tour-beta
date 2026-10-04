@@ -20,6 +20,7 @@ jobs:
       backend: ${{ steps.filter.outputs.backend }}
       frontend: ${{ steps.filter.outputs.frontend }}
       docs_only: ${{ steps.filter.outputs.docs_only }}
+      fifa_calibration: ${{ steps.filter.outputs.fifa_calibration }}
     steps:
       - uses: actions/checkout@v4
 
@@ -34,11 +35,16 @@ jobs:
             backend:
               - 'config/world_packages/**'
               - 'config/player_generation/**'
+              - 'config/earth_research/**'
               - 'scripts/**'
               - 'src/**'
               - 'tests/**'
               - 'pyproject.toml'
               - 'requirements*.txt'
+            fifa_calibration:
+              - 'config/earth_research/**'
+              - 'scripts/*fifa*'
+              - 'tests/application/test_fifa*'
             frontend:
               # Canonical World Package changes affect API contracts consumed by the UI.
               - 'config/world_packages/**'
@@ -70,6 +76,18 @@ jobs:
       - name: Run PR critical backend tests
         run: |
           python -m pytest -m pr_critical --maxfail=1 --durations=10
+      - name: Generate FIFA calibration review bundle
+        if: needs.changes.outputs.fifa_calibration == 'true'
+        run: |
+          PYTHONPATH=src:. python scripts/export_fifa_calibration_review.py /tmp/fifa-calibration-review
+      - name: Upload FIFA calibration review bundle
+        if: needs.changes.outputs.fifa_calibration == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: fifa-calibration-review
+          path: /tmp/fifa-calibration-review/
+          if-no-files-found: error
+          retention-days: 7
 
   frontend-checks:
     name: Frontend build + critical tests

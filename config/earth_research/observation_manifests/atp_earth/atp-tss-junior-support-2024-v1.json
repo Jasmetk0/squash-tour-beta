@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-tss-junior-support-2024-v1",
+  "source_id": "tss-junior-support-2024",
+  "relative_path": "observations/normalized/atp-tss-junior-support-2024-v1.json",
+  "sha256": "f0bf6adf55dbeb90a8b60ec4db69628ec405bebc2fa88e24bd6ec0668489a5e7",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-04"
+}

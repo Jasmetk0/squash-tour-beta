@@ -31,7 +31,7 @@ The two 2023 datasets preserve the source PDF SHA-256, page numbers, the mismatc
 between extracted national sums and FIFA's published global headline, and the known
 page-38 KUWAIT/Kyrgyzstan identity anomaly without silently reassigning it.
 
-A third canonical family stores **43 structural football events across 25 source-specific datasets** for the nine-country review set. These observations cover federation/league foundations, professionalisation, training centres, academy/youth-pathway launches, infrastructure milestones and governance discontinuities. They use `collection_method=official_narrative`, preserve original event years (including pre-1955 history), and encode dimension relevance only as quality flags such as `supports_development_quality` or `supports_squash_tradition`. They never encode a rating or effect size.
+A third canonical family stores structural football events as source-specific datasets. The review seed contains **43 events across 25 datasets** for the nine-country calibration review set; a separate held-out validation seed adds **14 events across 7 datasets** for Germany, Brazil, Iceland and San Marino. These observations cover federation/league foundations, professionalisation, training centres, academy/youth-pathway launches, infrastructure milestones and governance discontinuities. They use `collection_method=official_narrative`, preserve original event years (including pre-1955 history), and encode dimension relevance only as quality flags such as `supports_development_quality` or `supports_squash_tradition`. They never encode a rating or effect size.
 
 The Mohammed VI Academy timing conflict is intentionally stored twice (2009 establishment vs 2019 opening) under one conflict group rather than being silently reconciled.
 
@@ -75,6 +75,4 @@ conflict groups and exact observation IDs. Event counts are explicitly documenta
 coverage only: more events never imply a better football environment, and countries
 without seeded structural events remain unknown rather than receiving a zero score.
 
-The current nine-country seed contains 19 development-relevant event references and
-16 tradition-relevant event references. The Morocco academy timing conflict remains
-visible in the summary.
+Across both seeds, the structural summary contains 23 development-relevant and 25 tradition-relevant event references. Review and held-out counts remain separate; held-out events are explicitly forbidden as model-fit inputs. The Morocco academy timing conflict remains visible in the summary.

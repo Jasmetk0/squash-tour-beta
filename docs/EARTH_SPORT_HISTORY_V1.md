@@ -224,3 +224,19 @@ breakpoint primarily changes access/development; the United States retains the N
 collapse before MLS recovery; and South Africa's apartheid-era exclusion is treated
 as an institutional/international-competition disruption rather than absence of
 domestic football culture.
+
+
+## FIFA canonical-history batch 4 — held-out validation countries
+
+Brazil, Germany, Iceland and San Marino are now authored as complete 1955–2026
+country-history shards. These countries were previously held out from calibration
+fitting, so their 2023 FIFA ranking observations remain an independent outcome check
+and are explicitly forbidden from rating provenance.
+
+The batch intentionally separates dimensions. Brazil combines world-leading
+popularity/tradition with less-than-maximal organised access. Germany has extremely
+strong access/development/support but pre-1991 current-territory coverage is marked
+partial. Iceland has near-top access with smaller absolute competition depth. San
+Marino likewise has excellent local access and long tradition while maintaining
+modest competition quality; missing professional-report fields remain missing rather
+than becoming zero.

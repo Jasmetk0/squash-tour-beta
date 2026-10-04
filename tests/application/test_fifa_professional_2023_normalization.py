@@ -123,8 +123,12 @@ def test_fifa_bundle_now_contains_big_count_and_professional_2023() -> None:
 
     expected_2023 = {spec["dataset_id"] for spec in FIELD_SPECS.values()}
     assert expected_2023.issubset(bundle.datasets)
-    assert len(bundle.datasets) == 7
-    assert len(bundle.observations) == 1_285
+    assert len(bundle.datasets) == 9
+    assert len(bundle.observations) == 1_300
+    assert {
+        "uefa-czechia-history-events-v2",
+        "uefa-czech-republic-2005-06-snapshot-v2",
+    }.issubset(bundle.datasets)
 
     for dataset_id in expected_2023:
         assert (

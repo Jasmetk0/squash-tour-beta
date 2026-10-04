@@ -275,3 +275,26 @@ popularity while still having materially lower competition depth.
 Missing FIFA Professional 2023 values for PNG, SLB and COK remain missing, never
 synthetic zeros. Sparse pre-association periods are authored only as explicit
 low-confidence backcasts bounded by the first documented association structures.
+
+
+## FIFA canonical-history batch 7 — association identity in Oceania
+
+American Samoa, Tahiti/French Polynesia and New Caledonia are now complete
+1955–2026 country-history shards.
+
+The key rule in this batch is that football-association identity is independent from
+political sovereignty. Tahiti observations map to Earth `PYF`, New Caledonia to
+`NCL`, and American Samoa to `ASM`. Tahiti and New Caledonia never inherit
+metropolitan France evidence; American Samoa never inherits United States football
+evidence.
+
+American Samoa explicitly preserves the 2005–07 governance normalisation rather
+than interpolating smoothly across it. Tahiti receives modern development anchors
+for the 2023 artificial pitch and 2025 FIFA Talent Academy without backcasting
+those facilities into earlier decades. New Caledonia preserves federation and
+league history from 1928 while treating full FIFA/OFC membership in 2004 as a later
+institutional transition rather than the beginning of football.
+
+The batch also refreshes full-suite FIFA evidence totals after the preceding
+Oceania expansion so global exact-count tests track all sharded datasets and
+observations.

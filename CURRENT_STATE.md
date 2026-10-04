@@ -1,42 +1,43 @@
 # Current implementation and next action
 
-## Candidate — ATP USA/AUS/ESP/SRB histories + temporal evidence cleanup (4 October 2026)
+## Candidate — Earth package expansion: ATP four-country + FIFA Pacific trio (4 October 2026)
 
-This slice expands ATP Earth with a deliberately diverse four-country batch and
-tightens the historical-evidence boundary exposed by the previous Tahiti/PYF batch.
+This slice expands both real-world sport templates with complete country histories and
+tightens temporal evidence where the previous Tahiti/PYF batch exposed a backcast problem.
 
 - New complete ATP histories: **USA, AUS, ESP and SRB**, each with all 72 years
   (1955–2026) and all six attributes.
-- New ATP ratings: 4 × 72 × 6 = **1,728**; ATP Earth now resolves **6 / 250**
-  complete histories and **2,592 annual attribute ratings**.
-- ATP evidence now resolves **19 normalized datasets / 84 observations** through
-  `load_earth_research_bundle()`.
-- The batch adds separate official evidence families for US participation/history,
-  Australian historical structure, modern access and high-performance pathways,
-  Spanish licence/development history, Serbian predecessor-state history and current
-  junior-support constraints, plus selected Davis Cup outcomes.
-- Davis Cup results are restricted to competition/tradition context. They do not
-  determine popularity, access, development quality or elite support.
-- Serbia explicitly preserves Yugoslavia / FR Yugoslavia / Serbia and Montenegro as
-  predecessor-state context before 2006. Predecessor observations are never presented
-  as Serbia-only population or participation.
+- ATP adds **1,728 ratings** and now resolves **6 / 250 histories**, **19 normalized
+  datasets / 84 observations**, and **2,592 annual attribute ratings**.
+- New complete FIFA histories: **Samoa (WSM), Tonga (TON) and Vanuatu (VUT)**.
+- FIFA adds **1,296 ratings** and now resolves **27 / 250 histories**, **65 datasets /
+  1,437 observations**, **1,415 safe evidence facts / 152 direct-mapped facts**, and
+  **11,664 annual attribute ratings**.
+- ATP evidence remains dimensionally separated: Davis Cup outcomes inform
+  competition/tradition only; participation/access and development/support use
+  country-specific sources and temporal gates.
+- Serbia preserves Yugoslavia / FR Yugoslavia / Serbia and Montenegro as predecessor
+  context before 2006, never as Serbia-only population/participation.
+- Samoa preserves the 2010 inactivity/normalisation break and 2011 recovery; Tonga
+  preserves the national rugby-leading constraint and the 2020 Vava’u access expansion;
+  Vanuatu preserves its 2008 full-time academy pathway and later Forward infrastructure.
+- FIFA Big Count 2006 observations are used for popularity/access only; the mixed-sex,
+  source-definition limitations remain explicit.
 - PYF pre-1989 rationales now identify themselves as low-confidence backcasts. The
   2023 artificial pitch and 2025 Talent Academy are only direct support from their
-  actual years onward rather than being cited as historical evidence for 1955.
-- `docs/EARTH_SPORT_HISTORY_V1.md` now has one authoritative current summary while
-  retaining old dated batch sections as implementation history.
+  actual years onward rather than historical evidence for 1955.
+- `docs/EARTH_SPORT_HISTORY_V1.md` has one authoritative current summary while older
+  dated sections remain implementation history.
 - Official `config/world_packages/fifa_earth/` and `atp_earth/` directories remain
-  intentionally absent: the all-or-nothing builder still requires complete 250-country
-  research before package publication.
-- Player-history integration is still partial: historical cohort ratings affect
-  quantity paths, but generated-player development uses the requested season
-  environment; ordinary World Library persistence/editing of full rating histories
-  remains unfinished.
+  intentionally absent: the all-or-nothing builder still requires all 250 histories.
+- Player-history integration remains partial: historical cohort ratings affect quantity
+  paths, but generated-player development uses the requested season environment;
+  ordinary World Library persistence/editing of full rating histories is unfinished.
 
-**Next after green CI:** continue ATP first, using another evidence-rich but diverse
-batch rather than adding generic infrastructure. Good next candidates are France,
-Great Britain, Argentina and Japan; separately continue FIFA toward full 250-country
-coverage.
+**Next after green CI:** continue ATP first with another evidence-rich diverse batch
+(France, Great Britain, Argentina, Japan are strong candidates), while continuing FIFA
+with the next ordinary OFC/member-association group rather than building new generic
+research infrastructure.
 
 
 ## Candidate — Oceania association-identity batch: ASM + PYF + NCL (4 October 2026)

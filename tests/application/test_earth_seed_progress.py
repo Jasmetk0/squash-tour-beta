@@ -11,7 +11,7 @@ from beta_engine.application.earth_package_builder import load_earth_research_bu
 
 def test_fifa_first_reviewed_country_histories_are_complete_and_resolvable():
     bundle = load_earth_research_bundle(Path("config/earth_research/fifa_earth.json"))
-    assert set(bundle.research.countries) == {"CZE", "SVK", "JPN", "IND", "MAR", "SEN", "FRO", "USA", "ZAF", "BRA", "DEU", "ISL", "SMR", "ARG", "MEX", "AUS", "NZL"}
+    assert set(bundle.research.countries) == {"CZE", "SVK", "JPN", "IND", "MAR", "SEN", "FRO", "USA", "ZAF", "BRA", "DEU", "ISL", "SMR", "ARG", "MEX", "AUS", "NZL", "FJI", "PNG", "SLB", "COK"}
     assert bundle.research.data_cutoff.isoformat() == "2026-10-03"
 
     for code in ("CZE", "SVK"):
@@ -226,6 +226,58 @@ def test_fifa_arg_mex_aus_nzl_batch_loads_sharded_sources_manifests_and_historie
     assert "fifa-structural-ofc-new-zealand-grassroots-2011-v1#nzl-foundation-development-grants-2011" in (
         nzl.years[2011].ratings["development_quality"].observation_ids
     )
+
+
+def test_fifa_oceania_sparse_batch_preserves_access_scale_and_missingness():
+    bundle = load_earth_research_bundle(Path("config/earth_research/fifa_earth.json"))
+    batch = {"FJI", "PNG", "SLB", "COK"}
+
+    for code in batch:
+        history = bundle.research.countries[code]
+        assert history.missing_earth_years == []
+        assert len(history.years) == 72
+        assert history.reference_year == 2026
+        for year in history.years.values():
+            assert len(year.ratings) == 6
+            for rating in year.ratings.values():
+                assert rating.method == "derived_estimate"
+                assert rating.calibration_model_id == "fifa-earth-country-history-fji-png-slb-cok.v1"
+                assert rating.observation_ids
+                assert all(item in bundle.observations for item in rating.observation_ids)
+
+    fji = bundle.research.countries["FJI"]
+    assert fji.years[2006].ratings["squash_access"].value >= 8.0
+    assert fji.years[2026].ratings["elite_support"].value > fji.years[2023].ratings["elite_support"].value
+    assert {
+        "fifa-professional-2023-players-v2#fiji-p189",
+        "fifa-professional-2023-clubs-v2#fiji-p189",
+    }.issubset(set(fji.years[2023].ratings["competition_quality"].observation_ids))
+
+    png = bundle.research.countries["PNG"]
+    assert png.years[2006].ratings["squash_access"].value < fji.years[2006].ratings["squash_access"].value
+    assert "fifa-structural-ofc-png-profile-v1#png-geography-development-constraint" in (
+        png.years[2026].ratings["squash_access"].observation_ids
+    )
+
+    slb = bundle.research.countries["SLB"]
+    assert slb.years[2026].ratings["squash_popularity"].value >= 9.0
+    assert slb.years[2026].ratings["squash_popularity"].value > (
+        slb.years[2026].ratings["competition_quality"].value
+    )
+    assert slb.years[1955].ratings["squash_tradition"].confidence == "low"
+
+    cok = bundle.research.countries["COK"]
+    assert cok.years[2006].ratings["squash_access"].value >= 8.5
+    assert cok.years[2006].ratings["squash_access"].value > (
+        cok.years[2006].ratings["competition_quality"].value + 4.0
+    )
+
+    for code in ("PNG", "SLB", "COK"):
+        assert all(
+            "fifa-professional-2023" not in rating.source_ids
+            for year in bundle.research.countries[code].years.values()
+            for rating in year.ratings.values()
+        )
 
 
 def test_atp_first_complete_histories_are_evidence_resolvable_and_conservative():

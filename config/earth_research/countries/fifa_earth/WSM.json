@@ -6206,10 +6206,9 @@
           "observation_ids": [
             "fifa-structural-ofc-samoa-profile-v1#wsm-foundation-1968",
             "fifa-structural-ofc-samoa-profile-v1#wsm-affiliation-1986",
-            "fifa-structural-ofc-samoa-profile-v1#wsm-inactivity-reforms-2010",
-            "fifa-structural-ofc-samoa-profile-v1#wsm-normalisation-ended-2011"
+            "fifa-structural-ofc-samoa-profile-v1#wsm-inactivity-reforms-2010"
           ],
-          "rationale": "FIFA Earth WSM squash tradition estimate for 2010. The 1–10 value is project-authored from country-specific anchors; cited observations are evidence/context, not measured game ratings. Federation foundation/affiliation and the documented governance discontinuity/recovery support tradition/continuity; participation and stadium projects are not converted into tradition.",
+          "rationale": "FIFA Earth WSM squash tradition estimate for 2010. The 1–10 value is project-authored from country-specific anchors; cited observations are evidence/context, not measured game ratings. Federation foundation/affiliation and the documented 2010 inactivity/reform break support continuity context; the 2011 end of normalisation is not used until 2011.",
           "anchor_years": [
             2010
           ],

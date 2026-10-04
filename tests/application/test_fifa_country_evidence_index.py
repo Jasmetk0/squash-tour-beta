@@ -10,11 +10,11 @@ from scripts.build_fifa_country_evidence_index import build_index
 def test_country_evidence_index_partitions_all_canonical_fifa_facts() -> None:
     index = build_index()
 
-    assert index["observation_count"] == 1328
-    assert index["safe_country_evidence_count"] == 1306
+    assert index["observation_count"] == 1342
+    assert index["safe_country_evidence_count"] == 1320
     assert index["manual_review_count"] == 22
     assert index["unresolved_count"] == 0
-    assert index["direct_mapped_observation_count"] == 43
+    assert index["direct_mapped_observation_count"] == 57
     assert index["rating_ready"] is False
 
     safe_ids = [
@@ -26,7 +26,7 @@ def test_country_evidence_index_partitions_all_canonical_fifa_facts() -> None:
     unresolved_ids = [fact["observation_id"] for fact in index["unresolved"]]
 
     all_ids = safe_ids + manual_ids + unresolved_ids
-    assert len(all_ids) == 1328
+    assert len(all_ids) == 1342
     assert len(all_ids) == len(set(all_ids))
 
 
@@ -175,3 +175,23 @@ def test_morocco_source_timing_conflict_is_preserved_as_two_safe_facts() -> None
     assert len(events) == 2
     assert {fact["observation_year"] for fact in events} == {2009, 2019}
     assert all("source_timing_conflict" in fact["quality_flags"] for fact in events)
+
+
+
+def test_heldout_structural_facts_are_safe_but_explicitly_labelled() -> None:
+    index = build_index()
+
+    heldout_codes = {"DEU", "BRA", "ISL", "SMR"}
+    heldout = [
+        fact
+        for code in heldout_codes
+        for fact in index["countries"][code]
+        if fact["measurement_type"] == "football_structural_event"
+    ]
+
+    assert len(heldout) == 14
+    assert all(
+        "held_out_validation_country" in fact["quality_flags"]
+        for fact in heldout
+    )
+    assert all(fact["identity_status"] == "direct" for fact in heldout)

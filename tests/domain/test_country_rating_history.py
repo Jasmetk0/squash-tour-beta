@@ -50,6 +50,14 @@ def research(h, world_id="fifa_earth"):
 
 
 class CountryRatingHistoryTests(unittest.TestCase):
+    def test_builder_rejects_output_inside_source_without_writing(self):
+        with tempfile.TemporaryDirectory() as directory:
+            base = Path(directory)
+            with self.assertRaisesRegex(ValueError, "outside the base"):
+                build_earth_package(base_package=base, research=research(history({1955: 3})),
+                                    output=base / "nested" / "earth")
+            self.assertEqual(list(base.iterdir()), [])
+
     def test_legacy_serialization_and_math_are_unchanged(self):
         c = country(competition_quality=4.75)
         self.assertNotIn("rating_scale", c.model_dump())

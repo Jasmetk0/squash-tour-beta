@@ -84,6 +84,10 @@ def audit_earth_research(research: EarthSportResearch, countries: list[Country])
 
 def build_earth_package(*, base_package: Path, research: EarthSportResearch, output: Path) -> dict:
     """All-or-nothing build into a new directory; shared sources are never changed."""
+    base_package = base_package.resolve()
+    output = output.resolve()
+    if output.is_relative_to(base_package):
+        raise ValueError("output must be outside the base package; recursive self-copy is forbidden")
     if output.exists():
         raise FileExistsError(f"refusing to overwrite {output}")
     countries = WorldPackageCountryStore(base_package).load_config().countries

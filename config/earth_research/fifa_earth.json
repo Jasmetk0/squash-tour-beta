@@ -17,6 +17,181 @@
       "accessed_on": "2026-10-03",
       "scope": "208 original table rows, association totals, registered/unregistered players, clubs and officials; raw facts in observations/fifa_big_count_2006.csv.",
       "limitations": "Checked-in normalized observation v2 datasets preserve the 2006 all-player, registered, unregistered, club and officials fields without treating missing cells as zero. The legacy extract is mixed-sex, does not retain per-cell direct/statistically-processed flags, and field definitions are not assumed globally identical. Earth identity reconciliation remains a separate reviewed layer."
+    },
+    "aiff-academy-accreditation-2023": {
+      "title": "AIFF — Academy Accreditation Rules and Regulations 2023-24",
+      "url": "https://www.the-aiff.com/index.php/article/aiff-announces-academy-accreditation-rules-and-regulations-2023-24",
+      "accessed_on": "2026-10-04",
+      "scope": "2023 nine-tier academy accreditation and youth-development system.",
+      "limitations": "Regulatory framework does not by itself measure realised academy quality."
+    },
+    "aiff-history": {
+      "title": "All India Football Federation — History",
+      "url": "https://www.the-aiff.com/history",
+      "accessed_on": "2026-10-04",
+      "scope": "Indian federation and national competition history.",
+      "limitations": "Institutional history is stronger evidence for tradition/competition than national popularity/access."
+    },
+    "aiff-isl-grassroots-2014": {
+      "title": "AIFF — Hero Indian Super League to kick off Grassroots Programme in Kolkata",
+      "url": "https://nt.the-aiff.com/article/hero-indian-super-league-to-kick-off-grassroots-programme-in-kolkata",
+      "accessed_on": "2026-10-04",
+      "scope": "2014 ISL-linked grassroots development structure and club development staffing.",
+      "limitations": "Programme launch evidence, not proof of nationwide implementation quality."
+    },
+    "caf-senegal-academies-league": {
+      "title": "CAF — Football academies supply Senegal's den",
+      "url": "https://www.cafonline.com/afcon2025/news/football-academies-supply-senegal-s-den/",
+      "accessed_on": "2026-10-04",
+      "scope": "Official CAF account: Génération Foot founded in 2000, Diambars in 2003, professional league launched in 2009, and academy-trained players represented strongly in the national team.",
+      "limitations": "Academy success is evidence for development pathways; league launch is competition/elite-support evidence. Neither directly measures mass participation."
+    },
+    "caf-senegal-member": {
+      "title": "CAF — Senegal member association",
+      "url": "https://www.cafonline.com/inside-caf/member-associations/senegal/",
+      "accessed_on": "2026-10-04",
+      "scope": "Official CAF association record: FSF created in 1960 and affiliated to FIFA and CAF in 1964.",
+      "limitations": "Association dates are institutional anchors only; they do not directly measure popularity, access, development or competition quality."
+    },
+    "caf-south-africa": {
+      "title": "CAF — South Africa member association",
+      "url": "https://www.cafonline.com/inside-caf/member-associations/south-africa/",
+      "accessed_on": "2026-10-04",
+      "scope": "South African association history and modern affiliation context.",
+      "limitations": "Association milestones alone do not quantify apartheid-era domestic participation."
+    },
+    "facr-rfa-2015": {
+      "title": "FAČR — First Regional Football Academy opened in Plzeň",
+      "url": "https://www.fotbal.cz/facr/video-foto-regionalni-fotbalove-akademie-slavnostni-otevreni-v-plzni/a1405",
+      "accessed_on": "2026-10-04",
+      "scope": "2015 launch of the FAČR regional academy model for U14/U15 talent development.",
+      "limitations": "Elite youth-development evidence, not a national participation measure."
+    },
+    "fifa-india-forward-2019": {
+      "title": "FIFA — Forward reaches new heights in India fostering technical capacity building",
+      "url": "https://inside.fifa.com/en/advancing-football/fifa-forward/news/fifa-forward-reaches-new-heights-in-india-fostering-technical-capacity-building",
+      "accessed_on": "2026-10-04",
+      "scope": "2018-2019 State Development Project, youth competitions and capacity building.",
+      "limitations": "Programme evidence is stronger for institutional/development direction than for national participation outcomes."
+    },
+    "fifa-morocco-academy-2009": {
+      "title": "FIFA — Morocco football academy history (2009 establishment)",
+      "url": "https://www.fifa.com/en/tournaments/womens/womensworldcup/australia-new-zealand2023/articles/morocco-womens-world-cup-team-2023-atlas-lionesses-france-preview",
+      "accessed_on": "2026-10-04",
+      "scope": "FIFA article stating Mohammed VI Football Academy was established in 2009.",
+      "limitations": "Other FIFA/Inside FIFA articles describe a 2019 opening of the Mohammed VI Football Academy. The conflict is preserved explicitly; 2009 is only a provisional prototype anchor pending reconciliation of whether the sources refer to different establishment/opening phases."
+    },
+    "fifa-morocco-development": {
+      "title": "FIFA — Talent Development Scheme gains new ground in Morocco",
+      "url": "https://inside.fifa.com/advancing-football/news/talent-development-scheme-gains-new-ground-in-morocco",
+      "accessed_on": "2026-10-04",
+      "scope": "Modern academy and technical-development evidence.",
+      "limitations": "Primarily modern elite/development evidence. This Inside FIFA source states a 2019 opening of the Mohammed VI Football Academy, while other FIFA articles state establishment/unveiling in 2009; preserve the conflict explicitly."
+    },
+    "fifa-senegal-generation-foot-2000": {
+      "title": "FIFA — Fatma Samoura and Senegalese football look to the future in Dakar",
+      "url": "https://inside.fifa.com/en/news/fatma-samoura-and-senegalese-football-look-to-the-future-in-dakar",
+      "accessed_on": "2026-10-04",
+      "scope": "Official FIFA account stating Génération Foot was founded in 2000 and documenting its training infrastructure and player-development role.",
+      "limitations": "Academy evidence is strong for elite development but does not represent nationwide access or participation."
+    },
+    "fifa-senegal-youth-2020": {
+      "title": "FIFA Forward paves way for youth competitions in Senegal",
+      "url": "https://inside.fifa.com/advancing-football/news/fifa-forward-paves-way-for-youth-competitions-in-senegal",
+      "accessed_on": "2026-10-04",
+      "scope": "2020 introduction of national U15/U17/U20 youth competition pathways across Senegal's regions.",
+      "limitations": "Programme-launch evidence; supports a structural development/competition-pathway anchor but is not a direct national participation or quality measurement."
+    },
+    "fifa-south-africa-history": {
+      "title": "FIFA historical publication — South African football and international exclusion",
+      "url": "https://img.fifa.com/image/upload/ghd0g4e9zyk5pbithtcg.pdf",
+      "accessed_on": "2026-10-04",
+      "scope": "Suspension/expulsion, domestic structures and readmission context.",
+      "limitations": "Historical narrative; numeric ratings remain model estimates."
+    },
+    "frmf-history": {
+      "title": "Royal Moroccan Football Federation — History of Moroccan football",
+      "url": "https://frmf.ma/fr/histoire-du-football-marocain",
+      "accessed_on": "2026-10-04",
+      "scope": "Moroccan league and federation history.",
+      "limitations": "Does not provide a complete annual participation series."
+    },
+    "jfa-history": {
+      "title": "Japan Football Association — History",
+      "url": "https://jfa.jp/eng/about_jfa/history/",
+      "accessed_on": "2026-10-04",
+      "scope": "JFA institutional, competition and professionalisation milestones.",
+      "limitations": "Milestones do not directly measure the six ratings."
+    },
+    "sfz-history-1938": {
+      "title": "Slovak Football Association — 1938 foundation history",
+      "url": "https://old.futbalsfz.sk/slovensko/zaujimavosti/novinka/pred-75-rokmi-4-novembra-1938-bol-zalozeny-slovensky-futbalovy-svaez-sfs.html",
+      "accessed_on": "2026-10-04",
+      "scope": "1938 Slovak association, independent 1939–45 period and continuity narrative into modern SFZ.",
+      "limitations": "Historical narrative; later Czechoslovak national totals/results are not automatically Slovak observations."
+    },
+    "uefa-czechia-history": {
+      "title": "UEFA — Developing football in Czechia",
+      "url": "https://www.uefa.com/news-media/news/0282-1830fd7e681b-d29c43b082a6-1000--developing-football-in-czechia/",
+      "accessed_on": "2026-10-04",
+      "scope": "Czech football association roots, Czech/Czechoslovak timeline, post-1993 competition and development context.",
+      "limitations": "Czechoslovak national-team results are not duplicated as Czech territorial observations; only localisable/inherited tradition context is used."
+    },
+    "uefa-faroe-history": {
+      "title": "UEFA — Faroe Islands association history",
+      "url": "https://www.uefa.com/nationalassociations/fro/",
+      "accessed_on": "2026-10-04",
+      "scope": "Club, competition, association, artificial-turf and UEFA/FIFA history.",
+      "limitations": "Sparse annual quantitative participation/development measures."
+    },
+    "uefa-slovakia-hattrick": {
+      "title": "UEFA — Developing football in Slovakia, HatTrick infrastructure",
+      "url": "https://www.uefa.com/news-media/news/025b-0ee5404d32d3-509db714df92-1000--developing-football-in-slovakia/",
+      "accessed_on": "2026-10-04",
+      "scope": "2018–22 youth/grassroots strategy, School Cup participation, 14 artificial pitches and national training centres.",
+      "limitations": "Programme evidence is period-specific and must not be backcast."
+    },
+    "uefa-slovakia-hattrick-review": {
+      "title": "UEFA HatTrick Review 2004–2014 — Slovakia",
+      "url": "https://www.uefa.com/MultimediaFiles/Download/uefaorg/HatTrick/02/18/45/84/2184584_DOWNLOAD.pdf",
+      "accessed_on": "2026-10-04",
+      "scope": "100 mini-pitches, ten full-size artificial pitches and grassroots/access infrastructure in Slovakia.",
+      "limitations": "Infrastructure evidence does not directly measure elite competition quality."
+    },
+    "ussoccer-development-academy-2007": {
+      "title": "U.S. Soccer — Development Academy history",
+      "url": "https://www.ussoccer.com/mnt-travel-roster/2017/10/five-things-to-know-about-the-us-soccer-development-academy",
+      "accessed_on": "2026-10-04",
+      "scope": "Development Academy launched in 2007 to improve elite youth player-development environments.",
+      "limitations": "Elite youth development evidence; not a mass-participation measure."
+    },
+    "ussoccer-history-framework": {
+      "title": "U.S. Soccer — History",
+      "url": "https://www.ussoccer.com/history",
+      "accessed_on": "2026-10-04",
+      "scope": "2003 National Training Center and federation player-development framework.",
+      "limitations": "Federation narrative; does not directly quantify national access or popularity."
+    },
+    "ussoccer-national-development-center-2018": {
+      "title": "U.S. Soccer — National Development Center grand opening",
+      "url": "https://www.ussoccer.com/stories/2018/05/ribbon-cutting-ceremony-marks-grand-opening-of-national-development-center",
+      "accessed_on": "2026-10-04",
+      "scope": "2018 coaching education, sports medicine and high-performance development facility.",
+      "limitations": "Elite/development infrastructure evidence only."
+    },
+    "ussoccer-timeline": {
+      "title": "U.S. Soccer — Historical timeline",
+      "url": "https://www.ussoccer.com/history/timeline",
+      "accessed_on": "2026-10-04",
+      "scope": "Federation, competitions, professional-league and major-event history.",
+      "limitations": "Chronology is not a quantitative popularity/access series."
+    },
+    "ussoccer-training-center": {
+      "title": "U.S. Soccer — National Training Center groundbreaking",
+      "url": "https://www.ussoccer.com/stories/2024/04/us-soccer-breaks-ground-on-the-arthur-m-blank-us-soccer-national-training-center",
+      "accessed_on": "2026-10-04",
+      "scope": "Modern high-performance and development infrastructure.",
+      "limitations": "Modern evidence only; cannot be backcast."
     }
   },
   "observation_datasets": {

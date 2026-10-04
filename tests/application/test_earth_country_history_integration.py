@@ -40,12 +40,27 @@ def test_real_registry_and_year_detail_preserve_history_and_fingerprint(tmp_path
     assert service.get_country(world_id, "AAA", rating_year=1955).country.elite_support == 2
     assert service.get_country(world_id, "AAA", rating_year=2026).country.elite_support == 8
     assert registry.get_package(world_id).fingerprint == original.fingerprint
-    # Evidence is part of package identity even when the numerical ratings do not change.
+
+    # Observation dataset content identity participates in package identity even
+    # when the already-authored numerical country ratings do not change.
+    manifests = root / world_id / "generation/country_rating_observation_datasets.json"
+    manifest_payload = json.loads(manifests.read_text())
+    original_manifest_payload = json.loads(manifests.read_text())
+    manifest_payload["synthetic-observations"]["sha256"] = "1" * 64
+    manifests.write_text(json.dumps(manifest_payload))
+    assert registry.get_package(world_id).fingerprint != original.fingerprint
+    manifests.write_text(json.dumps(original_manifest_payload))
+    assert registry.get_package(world_id).fingerprint == original.fingerprint
+
+    # Source catalogue evidence also remains semantic package identity.
     sources = root / world_id / "generation/country_rating_sources.json"
     payload = json.loads(sources.read_text())
+    original_sources = json.loads(sources.read_text())
     payload["test"]["limitations"] += " Reviewed again."
     sources.write_text(json.dumps(payload))
     assert registry.get_package(world_id).fingerprint != original.fingerprint
+    sources.write_text(json.dumps(original_sources))
+
     context_path = root / world_id / "countries/AAA/attributes/rating_context.json"
     context = json.loads(context_path.read_text())
     del context["rating_history"]["years"]["1960"]
@@ -53,7 +68,21 @@ def test_real_registry_and_year_detail_preserve_history_and_fingerprint(tmp_path
     invalid = WorldPackageValidationService(registry).validate_package(world_id)
     assert invalid.status == "errors"
     assert any("1960" in check.message for check in invalid.checks if check.status == "failed")
-    # Evidence references are checked from persisted content, not a stale coverage report.
+
+    # Observation evidence is checked from persisted content, not a stale
+    # coverage report.
+    manifest_payload = json.loads(manifests.read_text())
+    manifest_payload.clear()
+    manifests.write_text(json.dumps(manifest_payload))
+    invalid = WorldPackageValidationService(registry).validate_package(world_id)
+    assert any(
+        "observation dataset catalogue" in check.message
+        for check in invalid.checks
+        if check.status == "failed"
+    )
+
+    # Source references are likewise validated from persisted content.
+    payload = json.loads(sources.read_text())
     payload.clear()
     sources.write_text(json.dumps(payload))
     invalid = WorldPackageValidationService(registry).validate_package(world_id)

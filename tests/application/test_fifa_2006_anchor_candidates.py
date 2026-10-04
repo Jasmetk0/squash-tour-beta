@@ -135,6 +135,14 @@ def test_promoted_context_sources_are_registered_without_fabricating_observation
     observation_source_ids = {
         dataset.source_id for dataset in bundle.datasets.values()
     }
-    # These sources are contextual URL/document citations, not fabricated normalized
-    # observation datasets. Only source families actually normalized belong here.
-    assert expected_context_sources.isdisjoint(observation_source_ids)
+
+    # Czechia is the first contextual source family intentionally promoted from URL
+    # metadata into exact normalized observations. The remaining contextual sources
+    # must still not acquire fabricated datasets merely because they are registered.
+    assert "uefa-czechia-history" in observation_source_ids
+    assert sum(
+        dataset.source_id == "uefa-czechia-history"
+        for dataset in bundle.datasets.values()
+    ) == 1
+    still_metadata_only = expected_context_sources - {"uefa-czechia-history"}
+    assert still_metadata_only.isdisjoint(observation_source_ids)

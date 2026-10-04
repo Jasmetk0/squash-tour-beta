@@ -43,5 +43,15 @@ Other files directly under `observations/` are still raw/source-specific researc
 inputs until explicitly normalized. They must not be silently treated as comparable
 measurements or referenced by new rating histories.
 
+## Observation identity resolution
+
+Canonical source facts remain association-level and are never rewritten in place.
+`scripts/build_fifa_observation_identity_resolutions.py` deterministically derives
+typed observation→Earth resolutions from the normalized datasets plus the reviewed
+Big Count / Professional 2023 identity overrides. Each generated resolution set
+binds the exact input dataset semantic hashes, override-artifact SHA-256 and Earth
+identity catalogue SHA-256. Direct, aggregate-member, manual-review and unresolved
+states are explicit; manual/unresolved facts never receive a resolved Earth code.
+
 See [the implementation/research boundary](../../docs/EARTH_SPORT_HISTORY_V1.md)
 for source limitations, provenance rules, audit/build commands and next steps.

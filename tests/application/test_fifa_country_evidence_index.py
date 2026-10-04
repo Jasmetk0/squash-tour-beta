@@ -14,7 +14,7 @@ def test_country_evidence_index_partitions_all_canonical_fifa_facts() -> None:
     assert index["safe_country_evidence_count"] == 1333
     assert index["manual_review_count"] == 22
     assert index["unresolved_count"] == 0
-    assert index["direct_mapped_observation_count"] == 70
+    assert index["direct_mapped_observation_count"] == 93
     assert index["rating_ready"] is False
 
     safe_ids = [
@@ -196,3 +196,13 @@ def test_heldout_structural_facts_are_safe_but_explicitly_labelled() -> None:
         for fact in heldout
     )
     assert all(fact["identity_status"] == "direct" for fact in heldout)
+
+
+def test_explicit_reviewed_country_fact_is_admitted_without_global_identity_resolution() -> None:
+    index = build_index()
+    nzl_ids = {item["observation_id"] for item in index["countries"]["NZL"]}
+
+    assert (
+        "fifa-structural-ofc-new-zealand-grassroots-2011-v1#nzl-u19-organised-players-2011"
+        in nzl_ids
+    )

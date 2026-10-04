@@ -18,10 +18,14 @@ separate inputs. Innate potential rarity must remain independent of nationality.
 This section is the authoritative current summary; dated batch sections below are
 preserved as implementation history.
 
-- FIFA Earth has **24 / 250** complete 1955–2026 country/territory histories,
-  covering all six attributes. Its canonical research bundle resolves **59 datasets
-  and 1,410 normalized observations**.
+- FIFA Earth has **27 / 250** complete 1955–2026 country/territory histories,
+  covering all six attributes. Its canonical research bundle resolves **65 datasets
+  and 1,437 normalized observations**.
 - ATP Earth has **6 / 250** complete histories: CZE, DEU, USA, AUS, ESP and SRB.
+- The latest FIFA batch adds **WSM (Samoa), TON (Tonga) and VUT (Vanuatu)**,
+  another **1,296 annual attribute ratings**. It preserves Samoa's 2010–11 governance
+  discontinuity, Tonga's rugby-leading national context and Vanuatu's 2008 academy
+  pathway instead of smoothing the three Pacific environments into one template.
   The current bundle resolves **19 datasets and 84 normalized observations**.
 - The USA/AUS/ESP/SRB ATP batch adds **1,728 annual attribute ratings**. Country
   trajectories are independently authored; Davis Cup outcomes are limited to
@@ -72,7 +76,7 @@ preserved as implementation history.
 
 ## Not implemented or not proven
 
-- **Neither official Earth directory exists yet.** FIFA currently has 24 complete
+- **Neither official Earth directory exists yet.** FIFA currently has 27 complete
   histories and ATP has 6; neither reaches the required 250-country all-or-nothing
   build threshold. No fabricated neutral profiles are shipped to satisfy coverage
   mechanically. See the current-status section above for authoritative counts.

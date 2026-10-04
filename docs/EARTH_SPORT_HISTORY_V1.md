@@ -13,6 +13,32 @@ The six attributes keep their existing meanings on an explicit 1–10 scale with
 at most one decimal. Court Count is outside pre-alpha. Population/geography are
 separate inputs. Innate potential rarity must remain independent of nationality.
 
+## Current implementation status — 4 October 2026
+
+This section is the authoritative current summary; dated batch sections below are
+preserved as implementation history.
+
+- FIFA Earth has **24 / 250** complete 1955–2026 country/territory histories,
+  covering all six attributes. Its canonical research bundle resolves **59 datasets
+  and 1,410 normalized observations**.
+- ATP Earth has **6 / 250** complete histories: CZE, DEU, USA, AUS, ESP and SRB.
+  The current bundle resolves **19 datasets and 84 normalized observations**.
+- The USA/AUS/ESP/SRB ATP batch adds **1,728 annual attribute ratings**. Country
+  trajectories are independently authored; Davis Cup outcomes are limited to
+  competition/tradition evidence, while participation, access and development/support
+  use separate source families with explicit temporal limits.
+- Neither `config/world_packages/fifa_earth/` nor
+  `config/world_packages/atp_earth/` is installed yet. The builder intentionally
+  refuses to publish an incomplete 250-country research bundle, so absence of those
+  directories is expected until coverage is complete.
+- Coverage and provenance must be measured through
+  `load_earth_research_bundle()`, because sources, manifests and country histories
+  may live in shards rather than only in the root JSON.
+- Historical profiles are not yet a fully closed player-lifecycle feature: quantity
+  paths can use historical cohort ratings, while generated-player development still
+  uses the requested season environment. Ordinary World Library editing/persistence
+  of the full historical profile remains an integration boundary.
+
 ## Implemented foundation
 
 - Explicit `country_ratings_1_10.v2`; unversioned legacy data retains its 1–5
@@ -46,11 +72,10 @@ separate inputs. Innate potential rarity must remain independent of nationality.
 
 ## Not implemented or not proven
 
-- **Neither official Earth directory exists yet.** FIFA research now contains complete
-  1955–2026 histories for CZE and SVK (864 authored ratings total). ATP `countries`
-  remains empty, but its first two normalized ITF 2019 national datasets (CZE/DEU,
-  six observations total) are registered. No fabricated neutral profiles are shipped
-  to satisfy coverage mechanically.
+- **Neither official Earth directory exists yet.** FIFA currently has 24 complete
+  histories and ATP has 6; neither reaches the required 250-country all-or-nothing
+  build threshold. No fabricated neutral profiles are shipped to satisfy coverage
+  mechanically. See the current-status section above for authoritative counts.
 - FIFA Big Count 2006 now has five canonical normalized
   `earth_source_observations.v2` datasets (all players, registered, unregistered,
   clubs and officials/staff). FIFA Professional Football Report 2023 adds two
@@ -79,12 +104,12 @@ separate inputs. Innate potential rarity must remain independent of nationality.
 ## Research already stored
 
 `config/earth_research/fifa_earth.json` and `atp_earth.json` are
-`earth_sport_research.v2` catalogues. FIFA Earth contains the broader canonical
-observation registry plus the first complete country histories for CZE and SVK.
-ATP Earth now contains complete 1955–2026 histories for CZE and DEU. Its evidence
-registry combines ITF 2019 national snapshots with Davis Cup outcomes, DTB historical
-membership checkpoints, German high-performance infrastructure and Czech talent-centre
-support.
+`earth_sport_research.v2` catalogues whose root records are extended by sharded
+sources, observation manifests and country histories. FIFA currently resolves 24
+complete histories. ATP resolves CZE, DEU, USA, AUS, ESP and SRB; its evidence now
+combines ITF national snapshots, federation histories/participation records, Davis Cup
+outcomes and country-specific development/support evidence. Root-JSON contents alone
+must not be used as the coverage count.
 
 Current evidence includes:
 
@@ -156,6 +181,9 @@ year, pre-1955 evidence and source-conflict groups. They must not infer a qualit
 score from event count or treat absence from the curated seed as evidence of
 non-existence.
 
+
+> The dated sections from this point record how coverage evolved. They are retained for
+> audit/history and do not override the current-status summary above.
 
 ## Seeded canonical-history progress — 4 October 2026
 

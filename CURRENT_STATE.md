@@ -1,5 +1,35 @@
 # Current implementation and next action
 
+## Candidate — sparse Oceania FIFA batch: FJI + PNG + SLB + COK (4 October 2026)
+
+This slice adds four complete 1955–2026 country histories designed specifically to
+exercise sparse-country realism and attribute independence.
+
+- New complete histories: Fiji (FJI), Papua New Guinea (PNG), Solomon Islands (SLB)
+  and Cook Islands (COK).
+- New ratings: 4 × 72 × 6 = **1,728**.
+- FIFA Earth now resolves **21 / 250 complete country histories** and **9,072 annual
+  attribute ratings**.
+- Added seven official OFC/FIFA source shards and seven normalized, content-addressed
+  structural datasets/manifests.
+- Cook Islands' extraordinary 2006 per-capita registration/club density supports
+  very high access while competition quality remains modest.
+- Papua New Guinea keeps explicit geography/logistics constraints in access and
+  development rather than inferring them from competition results.
+- Solomon Islands uses Earth code **SLB** and models football's national-sport status
+  as cultural-popularity evidence, not as automatic competition/elite strength.
+- Fiji is the only country in this batch with explicit non-null FIFA Professional
+  2023 player/club observations; missing professional values for PNG/SLB/COK remain
+  unknown rather than zero.
+- Pre-association years for PNG, SLB and COK are explicit low-confidence backcasts,
+  never fabricated high-precision histories.
+
+**Next after green CI:** continue Oceania with association-specific cases such as
+American Samoa, Tahiti and New Caledonia, where governance discontinuity and
+non-sovereign football identity provide useful validation of the Earth mapping model.
+
+# Current implementation and next action
+
 ## Candidate — FIFA evidence expansion + ARG/MEX/AUS/NZL histories (4 October 2026)
 
 This slice removes the remaining monolithic-research bottleneck and uses the new

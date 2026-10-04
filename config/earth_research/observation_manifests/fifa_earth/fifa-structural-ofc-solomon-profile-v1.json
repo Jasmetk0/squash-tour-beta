@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-ofc-solomon-profile-v1",
+  "source_id": "ofc-solomon-profile",
+  "relative_path": "observations/normalized/structural/fifa_structural_ofc_solomon_profile_v1.json",
+  "sha256": "1bedfb5bbb6da2b7a40a0ba12c99c402b4d264143187ee218ff8216eb39ad817",
+  "record_count": 3,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-04"
+}

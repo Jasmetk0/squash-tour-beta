@@ -1,0 +1,32 @@
+{
+  "schema_version": "fifa_earth_reviewed_country_batch.v1",
+  "model_id": "fifa-earth-country-history-fji-png-slb-cok.v1",
+  "created_on": "2026-10-04",
+  "countries": [
+    "FJI",
+    "PNG",
+    "SLB",
+    "COK"
+  ],
+  "coverage": {
+    "from": 1955,
+    "to": 2026,
+    "attributes": 6
+  },
+  "rating_scale": "country_ratings_1_10.v2",
+  "method": "Country-authored derived estimates combining official OFC/FIFA structural evidence with Big Count 2006 and Professional 2023 where present.",
+  "evidence_rules": [
+    "Earth catalog uses SLB for Solomon Islands even where football abbreviations differ.",
+    "Missing FIFA Professional 2023 values for PNG, SLB and COK remain unknown and never become zero.",
+    "Per-capita participation primarily informs popularity/access, not competition or elite-support depth.",
+    "Archipelagic/geographic constraints affect access/development context and do not alter innate player potential.",
+    "Current FIFA Forward or association-network evidence is not backcast into earlier decades.",
+    "Pre-association years for sparse countries remain explicit low-confidence backcasts rather than fabricated historical precision."
+  ],
+  "country_notes": {
+    "FJI": "Long pre-1955 organised structure, strong modern participation density, small explicit professional ecosystem and current infrastructure investment.",
+    "PNG": "Large absolute participation but much lower per-capita density and material geographic barriers; modern competition/support remains low-confidence.",
+    "SLB": "Football is culturally dominant and participation is dense, while absolute competition/elite-support depth remains bounded by scale and sparse professional evidence.",
+    "COK": "Exceptional per-capita registration/club density supports high access while tiny population and absent professional data keep competition/support modest."
+  }
+}

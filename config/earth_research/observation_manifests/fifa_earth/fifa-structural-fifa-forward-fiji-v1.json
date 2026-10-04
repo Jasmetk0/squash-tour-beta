@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-fifa-forward-fiji-v1",
+  "source_id": "fifa-forward-fiji-impact",
+  "relative_path": "observations/normalized/structural/fifa_structural_fifa_forward_fiji_v1.json",
+  "sha256": "7c6572c25121e8505c7ad0b6cbb3699395cfa8b4488920aabe822f6347bfceea",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-04"
+}

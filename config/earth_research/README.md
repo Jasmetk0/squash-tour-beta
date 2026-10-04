@@ -61,3 +61,26 @@ components rather than silently summed, and the index is explicitly `rating_read
 
 See [the implementation/research boundary](../../docs/EARTH_SPORT_HISTORY_V1.md)
 for source limitations, provenance rules, audit/build commands and next steps.
+
+
+## Canonical structural-event evidence
+
+FIFA Earth also contains canonical dated structural-event observations for reviewed
+development/tradition context. These observations use
+`measurement_type=football_structural_event`,
+`collection_method=official_narrative`, and an explicit reviewed Earth mapping.
+
+Current structural corpus:
+- 43 review events across the nine-country calibration review set;
+- 14 independently labelled held-out validation events for Germany, Brazil,
+  Iceland and San Marino;
+- 57 structural observations total;
+- structural observations carry no numeric quality value.
+
+`scripts/build_fifa_structural_dimension_evidence.py` exposes development/tradition
+timelines without producing a score. Event count is documentation coverage, not
+football quality. Countries with no seeded event remain unknown rather than zero.
+
+Held-out events carry `held_out_validation_country` and must not be used to fit
+transfer curves, weights or rating deltas. Morocco's conflicting 2009/2019 academy
+timing remains an explicit unresolved source conflict rather than being collapsed.

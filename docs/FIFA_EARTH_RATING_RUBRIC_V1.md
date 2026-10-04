@@ -368,3 +368,31 @@ Access remains the strongest current quantitative candidate because registered-p
 and club-density rankings align much more closely with the reviewed prototype.
 
 All V2 results remain `rating_ready=false`.
+
+
+## V2 quantitative review decision
+
+The V2 scale-dominant professional recipes are now protected by a reproducible
+V1→V2 review policy in
+`config/earth_research/calibration/fifa_dimension_evidence_v2_review_policy.json`
+and `scripts/review_fifa_dimension_evidence_v2.py`.
+
+Measured nine-country prototype audit results:
+
+| Recipe | V1 MAD | V2 MAD | V2 max delta | V2 review countries |
+|---|---:|---:|---:|---|
+| competition quality 2023 | 2.683 | 0.600 | 1.9 | ZAF |
+| elite support 2023 | 2.917 | 0.983 | 2.5 | ZAF |
+| access 2006 | 0.700 | 0.700 | 2.0 | IND, USA |
+
+Competition quality therefore passes the current quantitative review gate, but
+**not** canonical authoring. Elite support remains context-required because the
+candidate is systematically below the review prototype and professional counts do
+not measure federation funding, technical centres, medical/science provision or
+travel/support capacity.
+
+The review explicitly forbids further V2 weight tuning against this same prototype
+set merely to improve fit. The next evidence step must be independent held-out or
+contextual validation. Popularity remains unsupported until independent
+cultural/audience evidence is normalized; development quality and tradition remain
+outside the current quantitative model.

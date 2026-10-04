@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-tonga-vavau-2020-v1",
+  "source_id": "fifa-tonga-vavau-2020",
+  "relative_path": "observations/normalized/fifa-structural-tonga-vavau-2020-v1.json",
+  "sha256": "98a2e72f9200b1cdfac168af42e0cdc9cf016b0258527d5ee69b6156f3c771f6",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-04"
+}

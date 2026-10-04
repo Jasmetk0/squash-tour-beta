@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-vanuatu-forward-2023-v1",
+  "source_id": "fifa-vanuatu-forward-2023",
+  "relative_path": "observations/normalized/fifa-structural-vanuatu-forward-2023-v1.json",
+  "sha256": "d7d986d851d067a6bb124ef630285c22e63740dbcc817b5bcff7de60690087b7",
+  "record_count": 3,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-04"
+}

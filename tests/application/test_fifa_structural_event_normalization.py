@@ -12,12 +12,18 @@ from beta_engine.application.earth_research_observations import (
     EarthObservationDataset,
     observation_dataset_sha256,
 )
-HELDOUT_SEED = Path("config/earth_research/observations/structural/fifa_structural_events_heldout_v1.json")\n\n\nfrom scripts.normalize_fifa_structural_events import (
+from scripts.normalize_fifa_structural_events import (
     DEFAULT_OUTPUT_DIR,
     DEFAULT_RESEARCH,
     DEFAULT_SEED,
     build_datasets,
     build_manifests,
+)
+
+
+HELDOUT_SEED = Path(
+    "config/earth_research/observations/structural/"
+    "fifa_structural_events_heldout_v1.json"
 )
 
 

@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 
-import { cloneOfficialWorldPackage, createWorldPackageCountry, deleteWorldPackageCountry, getWorldPackage, getWorldPackageCountries, getWorldPackageCountry, getWorldPackageGeography, getWorldPackageValidation, listWorldPackages, replaceWorldPackageTimezoneAreas, updateWorldPackageCountry, updateWorldPackageCountryPopulation } from '../api/client'
+import { cloneWorldPackage, createWorldPackageCountry, deleteWorldPackageCountry, getWorldPackage, getWorldPackageCountries, getWorldPackageCountry, getWorldPackageGeography, getWorldPackageValidation, listWorldPackages, replaceWorldPackageTimezoneAreas, updateWorldPackageCountry, updateWorldPackageCountryPopulation } from '../api/client'
 import type { CountryRecord, WorldPackage, WorldPackageCloneResponse, WorldPackageCountryCreatePayload, WorldPackageCountryDetail, WorldPackageCountryPopulationUpdatePayload, WorldPackageCountryUpdatePayload, WorldPackageGeography, WorldPackageValidation } from '../api/types'
 import { SectionCard } from '../components/RunScopedUi'
 import { formatApiError } from '../utils/apiErrors'
@@ -142,15 +142,15 @@ function CloneResultCard({ result }: { result: WorldPackageCloneResponse }): JSX
   )
 }
 
-function CloneOfficialWorldSection(): JSX.Element {
+function CloneBuiltInWorldSection({ source }: { source: WorldPackage }): JSX.Element {
   const queryClient = useQueryClient()
   const [newWorldId, setNewWorldId] = useState('')
   const [name, setName] = useState('')
-  const [description, setDescription] = useState('Custom world cloned from Official FAX World.')
+  const [description, setDescription] = useState(`Custom world cloned from ${source.name}.`)
   const [result, setResult] = useState<WorldPackageCloneResponse | null>(null)
   const [apiError, setApiError] = useState<string | null>(null)
   const mutation = useMutation({
-    mutationFn: cloneOfficialWorldPackage,
+    mutationFn: (payload) => cloneWorldPackage(source.world_id, payload),
     onSuccess: (response) => {
       setResult(response)
       setApiError(null)
@@ -181,9 +181,9 @@ function CloneOfficialWorldSection(): JSX.Element {
   }
 
   return (
-    <SectionCard title="Clone Official World">
-      <p>Create a repository-stored Custom World by cloning the current built-in Official FAX World package. This does not edit Official FAX World and does not affect existing runs.</p>
-      <p className="status">Clone creates a new Custom World Package only. Editing, deleting, and archiving Custom World Packages are not implemented yet.</p>
+    <SectionCard title="Clone Built-in World">
+      <p>Create an independent repository-stored Custom World from <strong>{source.name}</strong>. The built-in source and existing Runs are never changed.</p>
+      <p className="status">The clone copies the complete package tree, including historical rating evidence and package-owned generation inputs when present.</p>
       <form onSubmit={handleSubmit}>
         <label>
           New World ID
@@ -196,7 +196,7 @@ function CloneOfficialWorldSection(): JSX.Element {
         </label>
         <label>
           Description
-          <textarea value={description} onChange={(event) => setDescription(event.target.value)} placeholder="Custom world cloned from Official FAX World." />
+          <textarea value={description} onChange={(event) => setDescription(event.target.value)} placeholder={`Custom world cloned from ${source.name}.`} />
         </label>
         <div className="actions">
           <button type="button" disabled={mutation.isPending} onClick={() => submitClone(true)}>Preview clone</button>
@@ -405,9 +405,9 @@ export function WorldLibraryDetailPage(): JSX.Element {
             <DetailRow label="Editable" value={yesNo(pkg.editable, 'Editable', 'Read-only')} />
             <DetailRow label="Deletable" value={yesNo(pkg.deletable, 'Deletable', 'Not deletable')} />
             <DetailRow label="Archivable" value={yesNo(pkg.archivable, 'Archivable', 'Not archivable')} />
-            <p className="status">Official FAX World is built into repository config and is read-only. Custom World mutation actions are not implemented yet; safety fields are metadata only.</p>
+            <p className="status">Built-in World Packages are protected repository inputs. Custom clones are independent editable sources; existing Runs keep their own saved snapshots.</p>
           </SectionCard>
-          {pkg.world_id === 'official_fax_world' && pkg.type === 'official' && <CloneOfficialWorldSection />}
+          {pkg.type === 'official' && pkg.source === 'built_in' && <CloneBuiltInWorldSection source={pkg} />}
           <SectionCard title="Contents">
             <DetailRow label="Countries" value={<><span>{pkg.country_count}</span> · <Link to={`/admin/world/library/${encodeURIComponent(pkg.world_id)}/countries`}>Open package countries</Link></>} />
             <DetailRow label="Continents" value={pkg.continent_count} />

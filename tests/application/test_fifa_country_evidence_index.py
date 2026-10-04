@@ -10,11 +10,11 @@ from scripts.build_fifa_country_evidence_index import build_index
 def test_country_evidence_index_partitions_all_canonical_fifa_facts() -> None:
     index = build_index()
 
-    assert index["observation_count"] == 1342
-    assert index["safe_country_evidence_count"] == 1320
+    assert index["observation_count"] == 1355
+    assert index["safe_country_evidence_count"] == 1333
     assert index["manual_review_count"] == 22
     assert index["unresolved_count"] == 0
-    assert index["direct_mapped_observation_count"] == 57
+    assert index["direct_mapped_observation_count"] == 70
     assert index["rating_ready"] is False
 
     safe_ids = [
@@ -26,7 +26,7 @@ def test_country_evidence_index_partitions_all_canonical_fifa_facts() -> None:
     unresolved_ids = [fact["observation_id"] for fact in index["unresolved"]]
 
     all_ids = safe_ids + manual_ids + unresolved_ids
-    assert len(all_ids) == 1342
+    assert len(all_ids) == 1355
     assert len(all_ids) == len(set(all_ids))
 
 
@@ -44,7 +44,7 @@ def test_usa_evidence_combines_2006_participation_and_2023_professional_facts() 
         for fact in usa
         if fact["measurement_type"] == "football_structural_event"
     ]
-    assert len(numeric_usa) == 7
+    assert len(numeric_usa) == 8
     assert len(structural_usa) == 8
     assert {fact["observation_year"] for fact in numeric_usa} == {2006, 2023}
 
@@ -53,6 +53,7 @@ def test_usa_evidence_combines_2006_participation_and_2023_professional_facts() 
     assert by_type["players_registered_or_association_reported"]["numeric_value"] == 4_186_778
     assert by_type["professional_male_players_reported"]["numeric_value"] == 2_791
     assert by_type["professional_clubs_reported"]["numeric_value"] == 101
+    assert by_type["fifa_mens_year_end_world_rank"]["numeric_value"] == 12
 
     assert {fact["identity_status"] for fact in usa} == {"direct"}
     assert {fact["earth_country_code"] for fact in usa} == {"USA"}

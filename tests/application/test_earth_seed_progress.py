@@ -11,10 +11,11 @@ from beta_engine.application.earth_package_builder import load_earth_research_bu
 
 def test_fifa_first_reviewed_country_histories_are_complete_and_resolvable():
     bundle = load_earth_research_bundle(Path("config/earth_research/fifa_earth.json"))
-    assert set(bundle.research.countries) == {"CZE", "SVK"}
+    assert set(bundle.research.countries) == {"CZE", "SVK", "JPN", "IND", "MAR", "SEN"}
     assert bundle.research.data_cutoff.isoformat() == "2026-10-03"
 
-    for code, history in bundle.research.countries.items():
+    for code in ("CZE", "SVK"):
+        history = bundle.research.countries[code]
         assert history.missing_earth_years == []
         assert len(history.years) == 72
         assert history.reference_year == 2026
@@ -30,6 +31,45 @@ def test_fifa_first_reviewed_country_histories_are_complete_and_resolvable():
 
     assert bundle.research.countries["CZE"].years[2006].ratings["squash_access"].confidence == "medium"
     assert bundle.research.countries["SVK"].years[2018].ratings["development_quality"].confidence == "medium"
+
+
+def test_fifa_second_reviewed_batch_is_complete_resolvable_and_preserves_conflicts():
+    bundle = load_earth_research_bundle(Path("config/earth_research/fifa_earth.json"))
+    batch = {"JPN", "IND", "MAR", "SEN"}
+
+    for code in batch:
+        history = bundle.research.countries[code]
+        assert history.missing_earth_years == []
+        assert len(history.years) == 72
+        assert history.reference_year == 2026
+        for year in history.years.values():
+            assert len(year.ratings) == 6
+            for rating in year.ratings.values():
+                assert rating.method == "derived_estimate"
+                assert rating.calibration_model_id == "fifa-earth-reviewed-country-history-jpn-ind-mar-sen.v1"
+                assert rating.observation_ids
+                assert all(item in bundle.observations for item in rating.observation_ids)
+
+    jpn = bundle.research.countries["JPN"]
+    assert jpn.years[1977].ratings["development_quality"].confidence == "medium"
+    assert "fifa-structural-jfa-history-v1#jpn-training-centre-1977" in (
+        jpn.years[1977].ratings["development_quality"].observation_ids
+    )
+
+    ind = bundle.research.countries["IND"]
+    assert ind.years[2023].ratings["development_quality"].confidence == "medium"
+
+    mar = bundle.research.countries["MAR"]
+    mar_development = mar.years[2020].ratings["development_quality"]
+    assert mar_development.confidence == "low"
+    assert {
+        "fifa-structural-fifa-morocco-academy-2009-v1#mar-academy-established-2009",
+        "fifa-structural-fifa-morocco-development-v1#mar-academy-opening-2019",
+    }.issubset(set(mar_development.observation_ids))
+
+    sen = bundle.research.countries["SEN"]
+    assert sen.years[1955].ratings["squash_popularity"].confidence == "low"
+    assert sen.years[2020].ratings["development_quality"].confidence == "medium"
 
 
 def test_atp_first_complete_histories_are_evidence_resolvable_and_conservative():

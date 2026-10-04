@@ -65,7 +65,7 @@
       "cross_country_comparable": false,
       "is_direct_observation": true,
       "is_statistically_modelled": false,
-      "territory_mapping_method": "explicit_reviewed_event_to_earth",
+      "territory_mapping_method": "explicit_reviewed_fact_to_earth",
       "territory_weight": null,
       "source_page": null,
       "source_locator": "OFC 2 Nov 2011 — currently around 85,000 young people under 19 in organised football",
@@ -74,7 +74,8 @@
         "approximate_value",
         "supports_squash_popularity",
         "supports_squash_access",
-        "youth_only"
+        "youth_only",
+        "explicit_reviewed_country_fact"
       ]
     }
   ]

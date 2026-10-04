@@ -23,6 +23,14 @@ FIFA Big Count 2006 is the first canonical ingestion slice. Five datasets under
 `load_earth_research_bundle()` validates dataset identity, source, record count,
 input-artifact hash and semantic hash before research can be audited/built.
 
+FIFA Professional Football Report 2023 is the second canonical ingestion slice:
+- men's professional players — 112 non-null national-page observations;
+- professional clubs — 135 non-null national-page observations.
+
+The two 2023 datasets preserve the source PDF SHA-256, page numbers, the mismatch
+between extracted national sums and FIFA's published global headline, and the known
+page-38 KUWAIT/Kyrgyzstan identity anomaly without silently reassigning it.
+
 The Big Count normalization deliberately does **not**:
 - invent country-level male/female splits missing from the checked-in extract;
 - claim whether an individual cell was direct or statistically supplemented when

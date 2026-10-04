@@ -10,7 +10,6 @@ import json
 from pathlib import Path
 from typing import Any
 
-from beta_engine.application.earth_package_builder import EarthSportResearch
 from beta_engine.domain.countries.rating_history import GAME_ATTRIBUTE_NAMES
 
 FIRST_YEAR = 1955
@@ -198,20 +197,26 @@ def materialise(raw: dict[str, Any], *, earth_country_codes: set[str]) -> dict[s
                 "ratings": ratings,
             }
         countries[code] = {
-            "schema_version": "country_rating_history.v1",
+            "schema_version": "fifa_country_rating_history_prototype.v3",
             "rating_scale": "country_ratings_1_10.v2",
             "reference_year": int(country.get("reference_year", LAST_YEAR)),
             "data_cutoff": raw["data_cutoff"],
             "years": years,
         }
     output = {
-        "schema_version": "earth_sport_research.v1",
+        "schema_version": "fifa_earth_materialized_prototype.v3",
         "world_id": "fifa_earth",
         "data_cutoff": raw["data_cutoff"],
         "sources": raw["sources"],
         "countries": countries,
+        "canonical_ready": False,
+        "provenance_note": (
+            "Research prototype only. It intentionally does not satisfy "
+            "earth_sport_research.v2 or country_rating_history.v2 because the "
+            "review anchors have not yet been normalized into exact observation "
+            "datasets/observation_ids."
+        ),
     }
-    EarthSportResearch.model_validate(output)
     return output
 
 

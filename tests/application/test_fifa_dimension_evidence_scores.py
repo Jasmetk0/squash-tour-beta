@@ -120,12 +120,16 @@ def test_professional_scores_require_both_components_and_never_fill_missing() ->
     assert set(faroes_competition["missing_signal_ids"]) == {
         "professional_player_density_2023",
         "professional_club_density_2023",
+        "professional_player_scale_2023",
+        "professional_club_scale_2023",
     }
 
     assert gbr_elite["evidence_score"] is None
     assert set(gbr_elite["missing_signal_ids"]) == {
         "professional_player_density_2023",
         "professional_club_density_2023",
+        "professional_player_scale_2023",
+        "professional_club_scale_2023",
     }
 
     assert cze_competition["evidence_score"] is not None

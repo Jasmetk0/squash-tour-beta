@@ -26,7 +26,7 @@ def test_country_evidence_index_partitions_all_canonical_fifa_facts() -> None:
     unresolved_ids = [fact["observation_id"] for fact in index["unresolved"]]
 
     all_ids = safe_ids + manual_ids + unresolved_ids
-    assert len(all_ids) == 1355
+    assert len(all_ids) == 1378
     assert len(all_ids) == len(set(all_ids))
 
 

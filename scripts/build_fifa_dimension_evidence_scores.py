@@ -14,13 +14,16 @@ from beta_engine.domain.countries.rating_history import GAME_ATTRIBUTE_NAMES
 from scripts.build_fifa_country_calibration_signals import build_signals
 
 DEFAULT_MODEL = Path(
-    "config/earth_research/calibration/fifa_dimension_evidence_model_v1.json"
+    "config/earth_research/calibration/fifa_dimension_evidence_model_v2.json"
 )
 
 
 def _load_model(path: Path = DEFAULT_MODEL) -> dict[str, Any]:
     model = json.loads(path.read_text(encoding="utf-8"))
-    if model.get("schema_version") != "fifa_dimension_evidence_model.v1":
+    if model.get("schema_version") not in {
+        "fifa_dimension_evidence_model.v1",
+        "fifa_dimension_evidence_model.v2",
+    }:
         raise ValueError("unsupported FIFA dimension evidence model schema")
     if model.get("rating_scale") != "country_ratings_1_10.v2":
         raise ValueError("dimension evidence model must target the 1–10 rating scale")
@@ -210,7 +213,7 @@ def build_dimension_evidence_scores(
         countries[code] = country_scores
 
     return {
-        "schema_version": "fifa_dimension_evidence_scores.v1",
+        "schema_version": "fifa_dimension_evidence_scores.v2",
         "world_id": "fifa_earth",
         "model_id": model["model_id"],
         "model_schema_version": model["schema_version"],
@@ -226,7 +229,7 @@ def build_dimension_evidence_scores(
             "Evidence scores are provisional 1–10 calibration aids, not canonical game ratings.",
             "The percentile transfer curve expresses relative empirical evidence strength, not universal semantic truth.",
             "Required missing components keep a recipe score missing rather than zero-filled.",
-            "Development quality and tradition are intentionally unsupported by the current quantitative source slice.",
+            "Any attribute listed in unsupported_attributes has no quantitative 1–10 recipe in the active model.",
             "Future canonical ratings require independent historical/context evidence and exact observation provenance.",
         ],
     }

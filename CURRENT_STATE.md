@@ -1,5 +1,29 @@
 # Current implementation and next action
 
+## Candidate — FIFA development/tradition evidence gap audit (4 October 2026)
+
+After rejecting simple structural timeline proxies, this slice formalises what
+evidence must exist before another development/tradition calibration attempt.
+
+Current review-set coverage:
+- talent identification: 0/9;
+- structured training environment: 4/9;
+- playing opportunities: 0/9;
+- youth-to-senior transition: 0/9;
+- coaching capacity: 0/9;
+- academy/pathway structural proxy: 5/9;
+- cultural/audience embedding for tradition: 0/9.
+
+The framework has no weights, no score and no transfer curve. Missing facet evidence
+means unknown, never weak capability. Held-out BRA/DEU/ISL/SMR remain excluded from
+fit.
+
+**Next source priorities:** standardised talent-identification, coaching, youth
+competition/playing-opportunity, transition, academy-coverage-depth and cultural
+audience evidence. FIFA's global talent-development study/TDS and UEFA coach
+education are the preferred official source families where public country-level
+evidence is available.
+
 ## Candidate — reject simple FIFA structural rating proxies (4 October 2026)
 
 The factual structural feature layer now has an explicit hypothesis audit against

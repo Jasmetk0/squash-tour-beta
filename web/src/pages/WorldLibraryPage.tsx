@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 
 import { cloneWorldPackage, createWorldPackageCountry, deleteWorldPackageCountry, getWorldPackage, getWorldPackageCountries, getWorldPackageCountry, getWorldPackageGeography, getWorldPackageValidation, listWorldPackages, replaceWorldPackageTimezoneAreas, updateWorldPackageCountry, updateWorldPackageCountryPopulation } from '../api/client'
-import type { CountryRecord, WorldPackage, WorldPackageCloneResponse, WorldPackageCountryCreatePayload, WorldPackageCountryDetail, WorldPackageCountryPopulationUpdatePayload, WorldPackageCountryUpdatePayload, WorldPackageGeography, WorldPackageValidation } from '../api/types'
+import type { CountryRecord, WorldPackage, WorldPackageClonePayload, WorldPackageCloneResponse, WorldPackageCountryCreatePayload, WorldPackageCountryDetail, WorldPackageCountryPopulationUpdatePayload, WorldPackageCountryUpdatePayload, WorldPackageGeography, WorldPackageValidation } from '../api/types'
 import { SectionCard } from '../components/RunScopedUi'
 import { formatApiError } from '../utils/apiErrors'
 
@@ -150,7 +150,7 @@ function CloneBuiltInWorldSection({ source }: { source: WorldPackage }): JSX.Ele
   const [result, setResult] = useState<WorldPackageCloneResponse | null>(null)
   const [apiError, setApiError] = useState<string | null>(null)
   const mutation = useMutation({
-    mutationFn: (payload) => cloneWorldPackage(source.world_id, payload),
+    mutationFn: (payload: WorldPackageClonePayload) => cloneWorldPackage(source.world_id, payload),
     onSuccess: (response) => {
       setResult(response)
       setApiError(null)

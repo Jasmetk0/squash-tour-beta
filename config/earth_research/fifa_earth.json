@@ -216,6 +216,28 @@
       "source_document_sha256": null,
       "input_artifact_sha256": null,
       "generated_by": "scripts/curate_cze_uefa_2006_observations.py"
+    },
+    "uefa-faroe-history-events-v2": {
+      "schema_version": "earth_source_observations_manifest.v1",
+      "dataset_id": "uefa-faroe-history-events-v2",
+      "source_id": "uefa-faroe-history",
+      "relative_path": "observations/normalized/uefa_faroe_history_events_v2.json",
+      "sha256": "33bf8f85eebfbbd2a790a0fdd29c4e9ad18bc02aa8c2ce7f58307a7d7457b7c0",
+      "record_count": 8,
+      "source_document_sha256": null,
+      "input_artifact_sha256": null,
+      "generated_by": "scripts/curate_fro_uefa_2006_observations.py"
+    },
+    "uefa-faroe-islands-2005-06-snapshot-v2": {
+      "schema_version": "earth_source_observations_manifest.v1",
+      "dataset_id": "uefa-faroe-islands-2005-06-snapshot-v2",
+      "source_id": "uefa-first-division-clubs-2005-06",
+      "relative_path": "observations/normalized/uefa_faroe_islands_2005_06_snapshot_v2.json",
+      "sha256": "49cb2fc5a31d5d3bc8bcbb47623c1fc889965cf5a38c5073fac59ba4a5fe5ac8",
+      "record_count": 9,
+      "source_document_sha256": null,
+      "input_artifact_sha256": null,
+      "generated_by": "scripts/curate_fro_uefa_2006_observations.py"
     }
   }
 }

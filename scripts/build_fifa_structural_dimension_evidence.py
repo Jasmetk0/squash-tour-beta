@@ -54,6 +54,11 @@ def _dimension_summary(events: list[dict[str, Any]], dimension: str) -> dict[str
         for event in supporting
         if "pre_game_start_history" in event["quality_flags"]
     ]
+    held_out = [
+        event
+        for event in supporting
+        if "held_out_validation_country" in event["quality_flags"]
+    ]
 
     return {
         "evidence_present": bool(supporting),
@@ -61,6 +66,8 @@ def _dimension_summary(events: list[dict[str, Any]], dimension: str) -> dict[str
         "first_event_year": min(years) if years else None,
         "last_event_year": max(years) if years else None,
         "pre_1955_event_count": len(pre_game),
+        "review_event_count": len(supporting) - len(held_out),
+        "held_out_validation_event_count": len(held_out),
         "conflict_groups": conflicts,
         "observation_ids": [event["observation_id"] for event in supporting],
         "events": supporting,
@@ -75,6 +82,7 @@ def build_summary(*, earth_root: Path = DEFAULT_EARTH_ROOT) -> dict[str, Any]:
 
     countries: dict[str, Any] = {}
     total_structural_events = 0
+    held_out_validation_event_count = 0
     dimension_totals = {dimension: 0 for dimension in TARGET_DIMENSIONS}
 
     for code in earth_codes:
@@ -91,6 +99,12 @@ def build_summary(*, earth_root: Path = DEFAULT_EARTH_ROOT) -> dict[str, Any]:
             )
         )
         total_structural_events += len(structural)
+        country_held_out = [
+            event
+            for event in structural
+            if "held_out_validation_country" in event["quality_flags"]
+        ]
+        held_out_validation_event_count += len(country_held_out)
 
         dimensions = {}
         for dimension in TARGET_DIMENSIONS:
@@ -100,6 +114,8 @@ def build_summary(*, earth_root: Path = DEFAULT_EARTH_ROOT) -> dict[str, Any]:
 
         countries[code] = {
             "structural_event_count": len(structural),
+            "review_event_count": len(structural) - len(country_held_out),
+            "held_out_validation_event_count": len(country_held_out),
             "structural_observation_ids": [
                 event["observation_id"] for event in structural
             ],
@@ -122,12 +138,15 @@ def build_summary(*, earth_root: Path = DEFAULT_EARTH_ROOT) -> dict[str, Any]:
         "rating_ready": False,
         "country_count": len(countries),
         "structural_event_count": total_structural_events,
+        "review_event_count": total_structural_events - held_out_validation_event_count,
+        "held_out_validation_event_count": held_out_validation_event_count,
         "target_dimensions": list(TARGET_DIMENSIONS),
         "dimension_event_counts": dimension_totals,
         "conflict_groups": conflict_groups,
         "countries": countries,
         "limitations": [
             "Event count is documentation coverage, not a proxy for country quality.",
+            "Held-out validation events are labelled separately and must not be used to fit calibration weights or transfer curves.",
             "Structural events indicate dated changes in institutions/pathways but carry no numeric effect size.",
             "Absence of an event means this seed has no canonical event for that country/dimension, not that football structure was absent.",
             "Pre-1955 facts may inform later tradition review but retain their real historical year.",
@@ -150,6 +169,8 @@ def main() -> None:
             {
                 "country_count": result["country_count"],
                 "structural_event_count": result["structural_event_count"],
+                "review_event_count": result["review_event_count"],
+                "held_out_validation_event_count": result["held_out_validation_event_count"],
                 "dimension_event_counts": result["dimension_event_counts"],
                 "conflict_groups": result["conflict_groups"],
                 "rating_ready": result["rating_ready"],

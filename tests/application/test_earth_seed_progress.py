@@ -12,7 +12,7 @@ from beta_engine.application.earth_package_builder import load_earth_research_bu
 def test_fifa_first_reviewed_country_histories_are_complete_and_resolvable():
     bundle = load_earth_research_bundle(Path("config/earth_research/fifa_earth.json"))
     assert set(bundle.research.countries) == {"CZE", "SVK"}
-    assert bundle.research.data_cutoff.isoformat() == "2026-10-04"
+    assert bundle.research.data_cutoff.isoformat() == "2026-10-03"
 
     for code, history in bundle.research.countries.items():
         assert history.missing_earth_years == []

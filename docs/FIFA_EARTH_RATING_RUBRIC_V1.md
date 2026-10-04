@@ -307,3 +307,30 @@ The 1.5-point threshold is a review heuristic, not a pass/fail rule. A large
 difference can be legitimate because the prototype includes contextual evidence
 outside the current quantitative source slice. A small difference likewise does not
 validate the model. The audit never writes a canonical or recommended rating.
+
+
+## First provenance-complete rating-anchor candidates
+
+`scripts/build_fifa_2006_anchor_candidates.py` is the first rating-authoring
+experiment that uses the production `RatingEvidence` contract rather than a
+prototype-only evidence shape.
+
+Scope is deliberately narrow:
+
+- nine already-reviewed prototype countries;
+- year 2006 only;
+- `squash_popularity` and `squash_access` only;
+- exactly 18 partial candidates.
+
+Each candidate preserves the reviewed prototype value/confidence/rationale, promotes
+all contextual source metadata into the canonical FIFA source catalogue, and links
+the Big Count component to exact normalized `observation_ids`.
+
+The remaining four attributes are intentionally not copied into the candidate year.
+A partial two-attribute candidate cannot be inserted into
+`CountryRatingHistory.v2`, which requires all six attributes per authored year.
+This is a safety boundary, not missing implementation.
+
+Each candidate also records the provisional dimension evidence score and its delta
+from the reviewed prototype value. A >=1.5 point difference is a review flag only.
+Every candidate remains `promotion_ready=false`.

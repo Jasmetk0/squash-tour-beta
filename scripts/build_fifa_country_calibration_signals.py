@@ -223,6 +223,8 @@ def build_signals(
 ) -> dict[str, Any]:
     evidence = build_index()
     countries = evidence["countries"]
+    earth_index = json.loads((earth_root / "index.json").read_text(encoding="utf-8"))
+    earth_codes = sorted(earth_index["country_codes"])
 
     signal_rows: dict[str, dict[str, dict[str, Any]]] = {
         signal_id: {} for signal_id in SIGNAL_SPECS
@@ -230,7 +232,8 @@ def build_signals(
 
     for signal_id, spec in SIGNAL_SPECS.items():
         rows = signal_rows[signal_id]
-        for code, facts in countries.items():
+        for code in earth_codes:
+            facts = countries.get(code, [])
             collected = _collect_value(
                 facts=facts,
                 source_id=spec["source_id"],
@@ -238,7 +241,7 @@ def build_signals(
                 code=code,
             )
             population = _population(earth_root, code, spec["year"])
-            value = collected["value"]
+            value = collected.pop("value")
             rate = (
                 None
                 if value is None
@@ -261,9 +264,8 @@ def build_signals(
 
         _midrank_percentiles(rows)
 
-    country_codes = sorted(countries)
     country_view: dict[str, dict[str, Any]] = {}
-    for code in country_codes:
+    for code in earth_codes:
         country_view[code] = {
             signal_id: signal_rows[signal_id][code]
             for signal_id in SIGNAL_SPECS

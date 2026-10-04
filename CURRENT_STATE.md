@@ -1,5 +1,28 @@
 # Current implementation and next action
 
+## Candidate — FIFA structural evidence rebuilt on V2 calibration baseline (4 October 2026)
+
+This candidate ports the previously green structural-evidence stack onto the current
+V2 calibration/review baseline without reverting any V2 signal or review work.
+
+Expected canonical FIFA research state:
+- 39 normalized observation datasets;
+- 1,342 observations total;
+- country evidence: 1,320 safe + 22 manual + 0 unresolved;
+- 57 direct-mapped structural events;
+- 43 review events + 14 held-out validation events;
+- development-relevant structural references: 23;
+- tradition-relevant structural references: 25.
+
+Structural observations are dated facts only. They carry no numeric quality score,
+and event count is never a rating proxy. The held-out Germany/Brazil/Iceland/
+San Marino events are labelled and must not be used to fit weights or transfer
+curves.
+
+**Next after green CI:** use held-out structural evidence to test contextual
+development/tradition/elite-support reasoning without retuning V2 against the same
+nine-country prototype.
+
 ## Candidate — FIFA dimension evidence V2 review decision (4 October 2026)
 
 The reproducible V1→V2 review now confirms that the scale-dominant professional

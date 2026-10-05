@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-algeria-history-v1",
+  "source_id": "fat-algeria-profile",
+  "relative_path": "observations/normalized/atp_algeria_history_v1.json",
+  "sha256": "03fb942f92fd1a7c95bc488c8310f865192e62415442fdf47cdb5d7f43d09bf0",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

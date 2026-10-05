@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-uefa-croatia-profile-v1",
+  "source_id": "uefa-croatia-profile",
+  "relative_path": "observations/normalized/structural/fifa_structural_uefa_croatia_profile_v1.json",
+  "sha256": "ac01bf9aad5da4c9d3679446a40d3f43d6677723767f84cd83847093e4892ac2",
+  "record_count": 5,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

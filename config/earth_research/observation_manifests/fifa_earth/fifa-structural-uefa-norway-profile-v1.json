@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-uefa-norway-profile-v1",
+  "source_id": "uefa-norway-profile",
+  "relative_path": "observations/normalized/structural/fifa_structural_uefa_norway_profile_v1.json",
+  "sha256": "1d0e6ab510c6862bf728a9343dd0e1b650252015272b31106c98351a69591af6",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

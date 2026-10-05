@@ -5497,3 +5497,16 @@ bands should shape 0..200 potential. No threshold is inferred from current OVR v
 - Solomon Islands uses an explicit low-confidence 1955–1992 pre-association baseline, the ITF-recorded 1993 association foundation, OTF membership in 2012, the 2022 West Pacific junior pathway and current federation structure in 2026.
 - Tonga separates the 1955–1958 pre-association baseline from the 1959 association foundation, then gates OTF membership to 2012, East Pacific junior competition to 2024 and the current development/federation structure to 2026.
 - No junior result, ranking or title is used as a calibration target; both countries remain conservatively rated for national scale.
+
+
+## Candidate — Algeria + Cote d'Ivoire dual Earth batch (5 October 2026)
+
+- New complete FIFA histories: **Algeria (DZA)** and **Cote d'Ivoire (CIV)**.
+- New complete ATP histories: **Algeria (DZA)** and **Cote d'Ivoire (CIV)**.
+- New ratings: 4 × 72 × 6 = **1,728**; FIFA Earth and ATP Earth both move **111 -> 113 / 250 complete histories**.
+- FIFA adds **2 structural datasets / 8 observations**, taking the canonical bundle to **160 datasets / 1,752 observations**. Big Count 2006 and Professional Football Report 2023 are reused rather than duplicated.
+- Algeria gates football association creation to 1962, FIFA affiliation to 1963 and CAF affiliation to 1964; its 2006 and 2023 global evidence remains strictly time-gated.
+- Cote d'Ivoire gates association/CAF evidence to 1960 and FIFA affiliation to 1964. Professional 2023 has a club count but no checked-in player count, so no player value is inferred.
+- ATP Algeria uses FAT creation in 1962, ITF JTI activity in 2021, the 2023 FAT/ITF development-support and planned federal-centre discussion, and 2026 development eligibility.
+- ATP Cote d'Ivoire uses FIT creation in 1963, CAT membership in 1973, full ITF membership in 1985, JTI activity in 2021, 2025-2030 development priorities from 2025, and 2026 development eligibility.
+- Rankings, titles and match outcomes are not calibration targets. Official package publication remains blocked by the intentional **250 / 250** completeness requirement for both worlds.

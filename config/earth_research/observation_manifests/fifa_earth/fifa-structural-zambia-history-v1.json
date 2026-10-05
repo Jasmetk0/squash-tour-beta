@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-zambia-history-v1",
+  "source_id": "caf-zambia-profile",
+  "relative_path": "observations/normalized/structural/fifa_structural_zambia_history_v1.json",
+  "sha256": "be649f3df96a7c43d2cc3266389d4d87573bdda2ae44f226acbf09a97668da29",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

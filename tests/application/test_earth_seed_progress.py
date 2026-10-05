@@ -428,11 +428,11 @@ def test_fifa_pyf_backcasts_do_not_claim_future_infrastructure_as_historical_sup
 
 def test_atp_complete_histories_are_evidence_resolvable_and_temporally_bounded():
     bundle = load_earth_research_bundle(Path("config/earth_research/atp_earth.json"))
-    expected_countries = {"CZE", "DEU", "USA", "AUS", "ESP", "SRB", "FRA", "GBR", "ARG", "JPN", "CAN", "ITA", "NED", "SWE", "SUI", "CRO", "POL", "CHN", "NOR", "GRE", "BEL", "ZAF"}
+    expected_countries = {"CZE", "DEU", "USA", "AUS", "ESP", "SRB", "FRA", "GBR", "ARG", "JPN", "CAN", "ITA", "NED", "SWE", "SUI", "CRO", "POL", "CHN", "NOR", "GRE", "BEL", "ZAF", "DEN", "FIN", "NZL", "PRT", "IRL", "HUN", "ROU", "SVN", "SVK"}
     assert set(bundle.research.countries) == expected_countries
     assert bundle.research.data_cutoff.isoformat() == "2026-10-04"
-    assert len(bundle.datasets) == 71
-    assert len(bundle.observations) == 240
+    assert len(bundle.datasets) == 98
+    assert len(bundle.observations) == 303
 
     expected_models = {
         "CZE": "atp-earth-cze-deu-seed-model.v1",
@@ -457,6 +457,15 @@ def test_atp_complete_histories_are_evidence_resolvable_and_temporally_bounded()
         "GRE": "atp-earth-nor-gre-bel-rsa-model.v1",
         "BEL": "atp-earth-nor-gre-bel-rsa-model.v1",
         "ZAF": "atp-earth-nor-gre-bel-rsa-model.v1",
+        "DEN": "atp-earth-den-fin-nzl-model.v1",
+        "FIN": "atp-earth-den-fin-nzl-model.v1",
+        "NZL": "atp-earth-den-fin-nzl-model.v1",
+        "PRT": "atp-earth-prt-irl-model.v1",
+        "IRL": "atp-earth-prt-irl-model.v1",
+        "HUN": "atp-earth-hun-rou-model.v1",
+        "ROU": "atp-earth-hun-rou-model.v1",
+        "SVN": "atp-earth-svn-model.v1",
+        "SVK": "atp-earth-svk-model.v1",
     }
     for code, history in bundle.research.countries.items():
         assert history.missing_earth_years == []
@@ -810,3 +819,239 @@ def test_atp_source_scopes_and_current_competition_quality_are_semantically_guar
 
     for rating in (nor, gre, bel, zaf):
         assert "outcome context" in rating.rationale.lower()
+
+
+def test_atp_den_fin_nzl_batch_is_complete_and_dimensionally_grounded():
+    bundle = load_earth_research_bundle(Path("config/earth_research/atp_earth.json"))
+
+    for code in ("DEN", "FIN", "NZL"):
+        history = bundle.research.countries[code]
+        assert history.missing_earth_years == []
+        assert len(history.years) == 72
+        for year in history.years.values():
+            assert len(year.ratings) == 6
+            for rating in year.ratings.values():
+                assert rating.calibration_model_id == "atp-earth-den-fin-nzl-model.v1"
+                assert rating.observation_ids
+                assert all(item in bundle.observations for item in rating.observation_ids)
+
+    den = bundle.research.countries["DEN"]
+    assert den.years[1990].ratings["squash_popularity"].value > (
+        den.years[2016].ratings["squash_popularity"].value
+    )
+    assert "atp-dtf-members-2024-v1#den-members-2024" not in (
+        den.years[2023].ratings["squash_access"].observation_ids
+    )
+    assert "atp-dtf-members-2024-v1#den-members-2024" in (
+        den.years[2024].ratings["squash_access"].observation_ids
+    )
+    assert "atp-dtf-history-v1#den-senior-championships-current" in (
+        den.years[2026].ratings["competition_quality"].observation_ids
+    )
+
+    fin = bundle.research.countries["FIN"]
+    assert "atp-stl-annual-2025-v1#fin-members-2025" not in (
+        fin.years[2024].ratings["squash_popularity"].observation_ids
+    )
+    assert "atp-stl-annual-2025-v1#fin-members-2025" in (
+        fin.years[2025].ratings["squash_popularity"].observation_ids
+    )
+    assert "atp-stl-high-performance-2026-v1#fin-hp-system-2026" in (
+        fin.years[2026].ratings["elite_support"].observation_ids
+    )
+
+    nzl = bundle.research.countries["NZL"]
+    assert "atp-tennis-nz-home-2026-v1#nzl-hot-shots-venues-2026" not in (
+        nzl.years[2025].ratings["squash_access"].observation_ids
+    )
+    assert "atp-tennis-nz-home-2026-v1#nzl-hot-shots-venues-2026" in (
+        nzl.years[2026].ratings["squash_access"].observation_ids
+    )
+    hot_shots = bundle.observations[
+        "atp-tennis-nz-home-2026-v1#nzl-hot-shots-venues-2026"
+    ]
+    assert hot_shots.age_scope == "children"
+    assert "age_limited" in hot_shots.quality_flags
+    assert nzl.years[2026].ratings["squash_access"].confidence == "low"
+    assert "atp-tennis-nz-pathway-2025-v1#nzl-planning-competition-2025" in (
+        nzl.years[2026].ratings["competition_quality"].observation_ids
+    )
+
+
+def test_atp_prt_irl_batch_preserves_scope_and_temporal_evidence():
+    bundle = load_earth_research_bundle(Path("config/earth_research/atp_earth.json"))
+
+    for code in ("PRT", "IRL"):
+        history = bundle.research.countries[code]
+        assert history.missing_earth_years == []
+        assert len(history.years) == 72
+        for year in history.years.values():
+            assert len(year.ratings) == 6
+            for rating in year.ratings.values():
+                assert rating.calibration_model_id == "atp-earth-prt-irl-model.v1"
+                assert rating.observation_ids
+                assert all(item in bundle.observations for item in rating.observation_ids)
+
+    prt = bundle.research.countries["PRT"]
+    assert "atp-fpt-history-profile-v1#prt-practitioners-current-2026" not in (
+        prt.years[2025].ratings["squash_popularity"].observation_ids
+    )
+    assert "atp-fpt-history-profile-v1#prt-practitioners-current-2026" in (
+        prt.years[2026].ratings["squash_popularity"].observation_ids
+    )
+    assert "broad_participation_not_membership" in bundle.observations[
+        "atp-fpt-history-profile-v1#prt-practitioners-current-2026"
+    ].quality_flags
+    assert "atp-fpt-junior-national-2025-v1#prt-u16-national-field-2025" in (
+        prt.years[2025].ratings["competition_quality"].observation_ids
+    )
+
+    irl = bundle.research.countries["IRL"]
+    profile = bundle.observations["atp-tennis-ireland-profile-v1#irl-clubs-current-2026"]
+    assert profile.coverage_scope == "partial"
+    assert profile.territory_mapping_method == "current_country_partial_association_context"
+    assert "association_spans_northern_ireland" in profile.quality_flags
+    assert "Northern Ireland" in irl.years[2026].territory_mapping_note
+    assert irl.years[2026].ratings["squash_access"].confidence == "low"
+    assert "atp-tennis-ireland-performance-v1#irl-team-ireland-support-2020" not in (
+        irl.years[2019].ratings["elite_support"].observation_ids
+    )
+    assert "atp-tennis-ireland-performance-v1#irl-team-ireland-support-2020" in (
+        irl.years[2020].ratings["elite_support"].observation_ids
+    )
+    assert "atp-tennis-ireland-performance-v1#irl-national-pathway-2026" in (
+        irl.years[2026].ratings["competition_quality"].observation_ids
+    )
+
+
+def test_atp_hun_rou_batch_preserves_history_and_temporal_gating():
+    bundle = load_earth_research_bundle(Path("config/earth_research/atp_earth.json"))
+
+    for code in ("HUN", "ROU"):
+        history = bundle.research.countries[code]
+        assert history.missing_earth_years == []
+        assert len(history.years) == 72
+        for year in history.years.values():
+            assert len(year.ratings) == 6
+            for rating in year.ratings.values():
+                assert rating.calibration_model_id == "atp-earth-hun-rou-model.v1"
+                assert rating.observation_ids
+                assert all(item in bundle.observations for item in rating.observation_ids)
+
+    hun = bundle.research.countries["HUN"]
+    assert hun.years[1989].historical_entity == "Hungarian People's Republic"
+    assert hun.years[1990].historical_entity == "Hungary"
+    assert "atp-mtsz-professional-plan-2025-v1#hun-national-training-support-2025" not in (
+        hun.years[2024].ratings["development_quality"].observation_ids
+    )
+    assert "atp-mtsz-professional-plan-2025-v1#hun-national-training-support-2025" in (
+        hun.years[2025].ratings["development_quality"].observation_ids
+    )
+    assert "atp-mtsz-international-events-2026-v1#hun-pro-international-events-2026" in (
+        hun.years[2026].ratings["competition_quality"].observation_ids
+    )
+
+    rou = bundle.research.countries["ROU"]
+    assert rou.years[1964].historical_entity == "Romanian People's Republic"
+    assert rou.years[1965].historical_entity == "Socialist Republic of Romania"
+    assert rou.years[1990].historical_entity == "Romania"
+    assert "atp-frt-coach-licensing-v1#rou-coach-development-system" not in (
+        rou.years[2018].ratings["development_quality"].observation_ids
+    )
+    assert "atp-frt-coach-licensing-v1#rou-coach-development-system" in (
+        rou.years[2019].ratings["development_quality"].observation_ids
+    )
+    assert "atp-frt-u10-national-2025-v1#rou-u10-national-championship-2025" not in (
+        rou.years[2024].ratings["competition_quality"].observation_ids
+    )
+    assert "atp-frt-u10-national-2025-v1#rou-u10-national-championship-2025" in (
+        rou.years[2025].ratings["competition_quality"].observation_ids
+    )
+
+
+def test_atp_svn_history_preserves_pre_independence_context_and_modern_gating():
+    bundle = load_earth_research_bundle(Path("config/earth_research/atp_earth.json"))
+    svn = bundle.research.countries["SVN"]
+
+    assert svn.missing_earth_years == []
+    assert len(svn.years) == 72
+    assert svn.years[1990].historical_entity == "Slovenian tennis within Yugoslavia"
+    assert svn.years[1991].historical_entity == "Slovenia"
+    assert "not treated as an independent Slovenian state" in svn.years[1990].territory_mapping_note
+
+    for year in svn.years.values():
+        assert len(year.ratings) == 6
+        for rating in year.ratings.values():
+            assert rating.calibration_model_id == "atp-earth-svn-model.v1"
+            assert rating.observation_ids
+            assert all(item in bundle.observations for item in rating.observation_ids)
+
+    assert "atp-tenis-slovenija-profile-v1#svn-successor-1991" not in (
+        svn.years[1990].ratings["squash_tradition"].observation_ids
+    )
+    assert "atp-tenis-slovenija-profile-v1#svn-successor-1991" in (
+        svn.years[1991].ratings["squash_tradition"].observation_ids
+    )
+    assert "atp-tenis-slovenija-wtt-2026-v1#svn-wtt-development-project-2021" not in (
+        svn.years[2020].ratings["competition_quality"].observation_ids
+    )
+    assert "atp-tenis-slovenija-wtt-2026-v1#svn-wtt-development-project-2021" in (
+        svn.years[2021].ratings["competition_quality"].observation_ids
+    )
+    assert "atp-tenis-slovenija-profile-v1#svn-members-current-2026" not in (
+        svn.years[2025].ratings["squash_access"].observation_ids
+    )
+    assert "atp-tenis-slovenija-profile-v1#svn-members-current-2026" in (
+        svn.years[2026].ratings["squash_access"].observation_ids
+    )
+    assert "atp-tenis-slovenija-wtt-2026-v1#svn-wtt-events-2026" in (
+        svn.years[2026].ratings["competition_quality"].observation_ids
+    )
+    assert "atp-tenis-slovenija-tutor-2026-v1#svn-tutor-programme-2026" in (
+        svn.years[2026].ratings["development_quality"].observation_ids
+    )
+
+
+def test_atp_svk_history_uses_true_historical_anchors_before_independence():
+    bundle = load_earth_research_bundle(Path("config/earth_research/atp_earth.json"))
+    svk = bundle.research.countries["SVK"]
+
+    assert svk.missing_earth_years == []
+    assert len(svk.years) == 72
+    assert svk.years[1992].historical_entity == "Slovak tennis within Czechoslovakia"
+    assert svk.years[1993].historical_entity == "Slovakia"
+
+    for year in svk.years.values():
+        assert len(year.ratings) == 6
+        for rating in year.ratings.values():
+            assert rating.calibration_model_id == "atp-earth-svk-model.v1"
+            assert rating.observation_ids
+            assert all(item in bundle.observations for item in rating.observation_ids)
+
+    for year in range(1955, 1990):
+        for rating in svk.years[year].ratings.values():
+            assert "atp-stz-institution-history-v1#svk-stz-registered-1990" not in rating.observation_ids
+            assert "atp-stz-early-history-v1#svk-first-clubs-1899" in rating.observation_ids
+            assert "atp-stz-early-history-v1#svk-international-tournament-1924" in rating.observation_ids
+
+    assert "atp-stz-institution-history-v1#svk-itf-tennis-europe-1993" not in (
+        svk.years[1992].ratings["competition_quality"].observation_ids
+    )
+    assert "atp-stz-institution-history-v1#svk-itf-tennis-europe-1993" in (
+        svk.years[1993].ratings["competition_quality"].observation_ids
+    )
+    assert "atp-stz-structural-milestones-v1#svk-ntc-team-project-2000" not in (
+        svk.years[1999].ratings["elite_support"].observation_ids
+    )
+    assert "atp-stz-structural-milestones-v1#svk-ntc-team-project-2000" in (
+        svk.years[2000].ratings["elite_support"].observation_ids
+    )
+    assert "atp-stz-active-athletes-2025-v1#svk-active-athletes-2025" not in (
+        svk.years[2024].ratings["squash_access"].observation_ids
+    )
+    assert "atp-stz-active-athletes-2025-v1#svk-active-athletes-2025" in (
+        svk.years[2025].ratings["squash_access"].observation_ids
+    )
+    assert "atp-stz-leagues-2026-v1#svk-national-leagues-2026" in (
+        svk.years[2026].ratings["competition_quality"].observation_ids
+    )

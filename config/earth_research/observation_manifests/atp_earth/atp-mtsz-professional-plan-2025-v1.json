@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-mtsz-professional-plan-2025-v1",
+  "source_id": "mtsz-professional-plan-2025",
+  "relative_path": "observations/normalized/atp-mtsz-professional-plan-2025-v1.json",
+  "sha256": "ecaff66e9fe8ccbdb6b428ef137136a7da97f21d58fc9f5627af289e24b28961",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

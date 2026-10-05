@@ -1,5 +1,68 @@
 # Current implementation and next action
 
+## Candidate — ATP Slovakia history (5 October 2026)
+
+- New complete ATP history: **Slovakia (SVK)**.
+- New ratings: 72 × 6 = **432**; ATP Earth now resolves **31 / 250 complete histories**.
+- ATP research now resolves **98 normalized datasets / 303 observations**.
+- Pre-1990 Slovak ratings are grounded in historical STZ archive evidence from current Slovak territory (first clubs in 1899 and the 1924 Banská Bystrica international tournament), not in future 1990 federation facts.
+- 1993 independent international membership, the first Slovak Challenger, the 2000 NTC team project, 2025 active-athlete count and 2026 national leagues are all temporally gated.
+- Official ATP package publication remains blocked by the 250/250 completeness rule.
+
+**Next after green CI:** continue another evidence-rich ATP/FIFA batch.
+
+
+## Candidate — ATP Slovenia history (5 October 2026)
+
+- New complete ATP history: **Slovenia (SVN)**.
+- New ratings: 72 × 6 = **432**; ATP Earth now resolves **30 / 250 complete histories**.
+- ATP research now resolves **93 normalized datasets / 295 observations**.
+- Slovenian history preserves 19th-century tennis roots, the 1940 Slovenian federation, the 1991 independent successor and current registered scale.
+- Pre-1991 years are explicitly modelled as Slovenian tennis within Yugoslavia, not as an independent Slovenian state.
+- Modern competition/development evidence includes the WTT expansion pathway and 2026 Tutor coach/player development programme, with strict temporal gating.
+- Official ATP package publication remains blocked by the 250/250 completeness rule.
+
+**Next after green CI:** continue with another evidence-rich ATP/FIFA batch.
+
+
+## Candidate — ATP HUN/ROU structural-evidence batch (5 October 2026)
+
+- New complete ATP histories: **Hungary (HUN), Romania (ROU)**.
+- New ratings: 2 × 72 × 6 = **864**; ATP Earth now resolves **29 / 250 complete histories**.
+- ATP research now resolves **90 normalized datasets / 285 observations**.
+- Hungary combines federation history with the National Training Centre/player-support framework and a published 2026 international junior/pro event calendar.
+- Romania combines the FRT national mandate, National Tennis Centre, formal coach-licensing/development system and current national junior competition structure.
+- Historical state names are preserved for Hungary/Romania rather than projecting 2026 country labels backward unchanged.
+- Official ATP package publication remains blocked by the intentional 250/250 completeness rule.
+
+**Next after green CI:** continue with another evidence-rich ATP/FIFA batch; do not replace missing countries with generic curves.
+
+
+## Candidate — ATP PRT/IRL evidence-rich batch (5 October 2026)
+
+- New complete ATP histories: **Portugal (PRT), Ireland (IRL)**.
+- New ratings: 2 × 72 × 6 = **864**; ATP Earth now resolves **27 / 250 complete histories**.
+- ATP research now resolves **84 normalized datasets / 275 observations**.
+- Portugal preserves federation, Davis Cup and national-championship continuity from 1925; current 300+ clubs / ~150,000 practitioners remain broad mixed participation context rather than men's-only membership.
+- Ireland explicitly preserves the Tennis Ireland all-island mismatch: current club/player and performance-pathway evidence spans Northern Ireland and therefore remains partial/overbroad context for Earth IRL.
+- Official ATP package publication remains blocked by the intentional 250/250 completeness rule.
+
+**Next after green CI:** continue with another evidence-rich ATP/FIFA batch rather than filling missing countries with generic curves.
+
+
+## Candidate — ATP DEN/FIN/NZL evidence-rich batch (5 October 2026)
+
+- New complete ATP histories: **Denmark (DEN), Finland (FIN), New Zealand (NZL)**.
+- New ratings: 3 × 72 × 6 = **1,296**; ATP Earth now resolves **25 / 250 complete histories**.
+- ATP research now resolves **79 normalized datasets / 261 observations**.
+- Denmark preserves the long federation membership trajectory and current national senior/junior championship structure without relabelling mixed membership as men's-only participation.
+- Finland combines long federation/championship lineage with 2025 organised membership, junior activity and the current high-performance coaching/competition system.
+- New Zealand combines deep national-championship tradition with the current club-to-regional-to-national/international pathway; Hot Shots venue evidence remains explicitly child-limited.
+- Official ATP package publication remains blocked by the intentional 250/250 completeness rule; World Library historical-profile persistence and the full historical player-development lifecycle remain unfinished.
+
+**Next after green CI:** continue with another evidence-rich ATP/FIFA batch rather than padding remaining countries with generic curves.
+
+
 ## Candidate — ATP NOR/GRE/BEL/ZAF evidence-rich batch (5 October 2026)
 
 - New complete ATP histories: **Norway (NOR), Greece (GRE), Belgium (BEL),

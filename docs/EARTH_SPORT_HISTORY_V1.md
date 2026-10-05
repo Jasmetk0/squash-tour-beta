@@ -21,10 +21,24 @@ preserved as implementation history.
 - FIFA Earth has **27 / 250** complete 1955–2026 country/territory histories,
   covering all six attributes. Its canonical research bundle resolves **65 datasets
   and 1,437 normalized observations**.
-- ATP Earth has **22 / 250** complete histories: CZE, DEU, USA, AUS, ESP, SRB,
-  FRA, GBR, ARG, JPN, CAN, ITA, NED, SWE, SUI, CRO, POL, CHN, NOR, GRE, BEL and ZAF.
-  Its canonical bundle resolves **71 datasets and 240 normalized observations**.
-- The latest ATP batch adds **NOR, GRE, BEL and ZAF**, another **1,728 annual
+- ATP Earth has **31 / 250** complete histories: CZE, DEU, USA, AUS, ESP, SRB,
+  FRA, GBR, ARG, JPN, CAN, ITA, NED, SWE, SUI, CRO, POL, CHN, NOR, GRE, BEL, ZAF,
+  DEN, FIN, NZL, PRT, IRL, HUN, ROU, SVN and SVK. Its canonical bundle resolves **98 datasets and 303 normalized observations**.
+- The latest ATP addition is **SVK**, adding **432 annual attribute ratings**. Pre-1990 Slovak ratings use true historical anchors from current Slovak territory (1899 clubs and the 1924 Banská Bystrica international tournament); independent-era STZ, Challenger, NTC, active-athlete and league evidence is gated from its actual dates.
+- The preceding ATP addition is **SVN**, adding **432 annual attribute ratings**. Slovenia preserves pre-1991 tennis institutions as Yugoslav-territory context rather than pretending independent statehood, while current registered scale, WTT pathway and Tutor development evidence stay temporally gated.
+- The preceding ATP batch adds **HUN and ROU**, another **864 annual attribute ratings**. Hungary combines federation history with current national player-support and a dense 2026 international-event calendar; Romania combines federation mandate, National Tennis Centre, coach-licensing structure and national junior competition evidence.
+- The preceding ATP batch adds **PRT and IRL**, another **864 annual attribute ratings**.
+  Portugal combines federation/national-championship continuity from 1925 with current
+  broad participation, junior competition and national-camp evidence. Ireland keeps
+  Tennis Ireland's all-island remit explicit: club/player/pathway evidence is partial
+  Earth IRL context rather than a Republic-only census.
+- The preceding ATP batch adds **DEN, FIN and NZL**, another **1,296 annual
+  attribute ratings**. Denmark uses its long official membership trajectory and current
+  national-championship structure; Finland combines current member/junior activity with
+  its high-performance system; New Zealand combines deep championship lineage with a
+  current club-to-regional-to-national/international pathway. Modern evidence remains
+  temporally gated and mixed/child-limited observations keep their actual scope.
+- The preceding ATP batch adds **NOR, GRE, BEL and ZAF**, another **1,728 annual
   attribute ratings**. Norway and Greece preserve modern elite spikes without turning
   star-player results into participation evidence; Belgium marks Flemish tennis/padel
   scale as partial-country combined-sport evidence; South Africa separates deep tennis
@@ -129,7 +143,7 @@ preserved as implementation history.
 `config/earth_research/fifa_earth.json` and `atp_earth.json` are
 `earth_sport_research.v2` catalogues whose root records are extended by sharded
 sources, observation manifests and country histories. FIFA currently resolves 27
-complete histories. ATP currently resolves 22 complete histories (CZE, DEU, USA, AUS, ESP, SRB, FRA, GBR, ARG, JPN, CAN, ITA, NED, SWE, SUI, CRO, POL, CHN, NOR, GRE, BEL and ZAF); its evidence now
+complete histories. ATP currently resolves 31 complete histories (CZE, DEU, USA, AUS, ESP, SRB, FRA, GBR, ARG, JPN, CAN, ITA, NED, SWE, SUI, CRO, POL, CHN, NOR, GRE, BEL, ZAF, DEN, FIN, NZL, PRT, IRL, HUN, ROU, SVN and SVK); its evidence now
 combines ITF national snapshots, federation histories/participation records, Davis Cup
 outcomes and country-specific development/support evidence. Root-JSON contents alone
 must not be used as the coverage count.

@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-frt-organisation-v1",
+  "source_id": "frt-organisation",
+  "relative_path": "observations/normalized/atp-frt-organisation-v1.json",
+  "sha256": "5e4d3b1d49d5d2eee14ea3247c666deedf40815ce40e2fa045ee8da76441dd42",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

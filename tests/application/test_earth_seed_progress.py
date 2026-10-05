@@ -428,11 +428,11 @@ def test_fifa_pyf_backcasts_do_not_claim_future_infrastructure_as_historical_sup
 
 def test_atp_complete_histories_are_evidence_resolvable_and_temporally_bounded():
     bundle = load_earth_research_bundle(Path("config/earth_research/atp_earth.json"))
-    expected_countries = {"CZE", "DEU", "USA", "AUS", "ESP", "SRB"}
+    expected_countries = {"CZE", "DEU", "USA", "AUS", "ESP", "SRB", "FRA", "GBR", "ARG", "JPN"}
     assert set(bundle.research.countries) == expected_countries
     assert bundle.research.data_cutoff.isoformat() == "2026-10-04"
-    assert len(bundle.datasets) == 19
-    assert len(bundle.observations) == 84
+    assert len(bundle.datasets) == 33
+    assert len(bundle.observations) == 140
 
     expected_models = {
         "CZE": "atp-earth-cze-deu-seed-model.v1",
@@ -441,6 +441,10 @@ def test_atp_complete_histories_are_evidence_resolvable_and_temporally_bounded()
         "AUS": "atp-earth-usa-aus-esp-srb-model.v1",
         "ESP": "atp-earth-usa-aus-esp-srb-model.v1",
         "SRB": "atp-earth-usa-aus-esp-srb-model.v1",
+        "FRA": "atp-earth-fra-gbr-arg-jpn-model.v1",
+        "GBR": "atp-earth-fra-gbr-arg-jpn-model.v1",
+        "ARG": "atp-earth-fra-gbr-arg-jpn-model.v1",
+        "JPN": "atp-earth-fra-gbr-arg-jpn-model.v1",
     }
     for code, history in bundle.research.countries.items():
         assert history.missing_earth_years == []
@@ -511,3 +515,62 @@ def test_atp_complete_histories_are_evidence_resolvable_and_temporally_bounded()
     assert "missing national training centre" in (
         srb.years[2024].ratings["elite_support"].rationale.lower()
     )
+
+    fra = bundle.research.countries["FRA"]
+    assert "atp-fft-profile-2026-v1#fra-licences-2026" not in (
+        fra.years[2025].ratings["squash_popularity"].observation_ids
+    )
+    assert "atp-fft-profile-2026-v1#fra-licences-2026" in (
+        fra.years[2026].ratings["squash_popularity"].observation_ids
+    )
+    assert "atp-fft-dtn-history-v1#fra-first-dtn-1963" not in (
+        fra.years[1962].ratings["development_quality"].observation_ids
+    )
+    assert "atp-fft-dtn-history-v1#fra-first-dtn-1963" in (
+        fra.years[1963].ratings["development_quality"].observation_ids
+    )
+
+    gbr = bundle.research.countries["GBR"]
+    assert "Northern Ireland" in gbr.years[2026].territory_mapping_note
+    assert bundle.observations[
+        "atp-lta-participation-2025-v1#gbr-adult-annual-2025"
+    ].coverage_scope == "partial"
+    assert bundle.observations[
+        "atp-lta-participation-2025-v1#gbr-adult-annual-2025"
+    ].territory_mapping_method == "current_country_partial_association_context"
+    assert "atp-lta-participation-2025-v1#gbr-adult-annual-2025" not in (
+        gbr.years[2024].ratings["squash_popularity"].observation_ids
+    )
+    assert "atp-lta-participation-2025-v1#gbr-adult-annual-2025" in (
+        gbr.years[2025].ratings["squash_popularity"].observation_ids
+    )
+
+    arg = bundle.research.countries["ARG"]
+    assert "atp-aat-profile-v1#arg-federated-players-current" not in (
+        arg.years[2025].ratings["squash_access"].observation_ids
+    )
+    assert "atp-aat-profile-v1#arg-federated-players-current" in (
+        arg.years[2026].ratings["squash_access"].observation_ids
+    )
+    assert "atp-arg-deta-2026-v1#arg-deta-interdisciplinary-support-2026" in (
+        arg.years[2026].ratings["elite_support"].observation_ids
+    )
+    assert arg.years[2016].ratings["competition_quality"].value > (
+        arg.years[2006].ratings["competition_quality"].value
+    )
+
+    jpn = bundle.research.countries["JPN"]
+    assert jpn.years[2001].ratings["elite_support"].value < (
+        jpn.years[2000].ratings["elite_support"].value
+    )
+    assert jpn.years[2008].ratings["elite_support"].value > (
+        jpn.years[2001].ratings["elite_support"].value
+    )
+    assert "atp-jta-fuji-project-v1#jpn-male-top100-2017-2021" not in (
+        jpn.years[2020].ratings["competition_quality"].observation_ids
+    )
+    assert "atp-jta-fuji-project-v1#jpn-male-top100-2017-2021" in (
+        jpn.years[2021].ratings["competition_quality"].observation_ids
+    )
+    assert "decline" in jpn.years[2026].ratings["squash_popularity"].rationale.lower()
+

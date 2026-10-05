@@ -1,5 +1,22 @@
 # Current implementation and next action
 
+## Current — Djibouti/Comoros dual-world Earth batch (5 October 2026)
+
+- Based directly on merged `buuk` commit `2e8f2a786604dc58e11b9e492f47169d9592ba22` (#1216); independent coverage PR.
+- New complete histories in both worlds: **Djibouti (DJI) and Comoros (COM)**.
+- FIFA Earth: **95 / 250**, **142 datasets / 1,684 normalized observations**.
+- ATP Earth: **95 / 250**, **290 datasets / 670 normalized observations**.
+- Adds **1,728 authored annual attribute ratings**.
+- Djibouti gates creation 1979 and FIFA/CAF 1994; Comoros gates creation 1979 and FIFA/CAF 2005.
+- Both use Big Count 2006 only from 2006 and deliberately omit unavailable Professional 2023 values.
+- ATP histories separate low-confidence pre-2020 context from direct ITF 2020 national activity status and 2026 development eligibility.
+- Official package publication remains blocked until **250 / 250** in each world.
+
+**Next after green CI:** continue the next evidence-backed dual-world batch.
+
+> Older Current/Candidate entries below are implementation history and do not override this section.
+
+
 ## Current — Gambia/Cape Verde dual-world Earth batch (5 October 2026)
 
 - Based directly on merged `buuk` commit `bf18d58025d269921a5f53062e6d766e6d12baa6` (#1215); independent coverage PR.

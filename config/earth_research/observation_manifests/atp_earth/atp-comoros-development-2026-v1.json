@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-comoros-development-2026-v1",
+  "source_id": "itf-comoros-development-eligibility-2026",
+  "relative_path": "observations/normalized/atp_comoros_development_2026_v1.json",
+  "sha256": "45e22339e5dea68f52620e52a0c147a33dacec6711063b5d5a0869d0f09133a5",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

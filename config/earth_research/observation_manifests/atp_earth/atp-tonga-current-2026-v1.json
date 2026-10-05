@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-tonga-current-2026-v1",
+  "source_id": "otf-tonga-current-2026",
+  "relative_path": "observations/normalized/atp_tonga_current_2026_v1.json",
+  "sha256": "02fe27af99a333c6a9d698c1d674c2be7e1dd1c84e72b5bda5947326c17d6685",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

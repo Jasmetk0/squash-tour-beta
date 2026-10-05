@@ -1,5 +1,17 @@
 # Current implementation and next action
 
+## Candidate — ATP PRT/IRL evidence-rich batch (5 October 2026)
+
+- New complete ATP histories: **Portugal (PRT), Ireland (IRL)**.
+- New ratings: 2 × 72 × 6 = **864**; ATP Earth now resolves **27 / 250 complete histories**.
+- ATP research now resolves **84 normalized datasets / 275 observations**.
+- Portugal preserves federation, Davis Cup and national-championship continuity from 1925; current 300+ clubs / ~150,000 practitioners remain broad mixed participation context rather than men's-only membership.
+- Ireland explicitly preserves the Tennis Ireland all-island mismatch: current club/player and performance-pathway evidence spans Northern Ireland and therefore remains partial/overbroad context for Earth IRL.
+- Official ATP package publication remains blocked by the intentional 250/250 completeness rule.
+
+**Next after green CI:** continue with another evidence-rich ATP/FIFA batch rather than filling missing countries with generic curves.
+
+
 ## Candidate — ATP DEN/FIN/NZL evidence-rich batch (5 October 2026)
 
 - New complete ATP histories: **Denmark (DEN), Finland (FIN), New Zealand (NZL)**.

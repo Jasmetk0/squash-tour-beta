@@ -54,7 +54,7 @@ def test_fifa_2023_ranking_dataset_is_reproducible_and_registered() -> None:
 
     bundle = load_earth_research_bundle(RESEARCH)
     assert bundle.datasets[DATASET_ID] == checked_in
-    assert len(bundle.observations) == 1483
+    assert len(bundle.observations) == 1492
 
 
 def test_ranking_seed_preserves_exact_review_and_heldout_2023_values() -> None:
@@ -118,11 +118,11 @@ def test_ranking_observations_are_validation_only_direct_mapped_outcomes() -> No
 def test_country_evidence_admits_ranking_outcomes_without_changing_manual_partition() -> None:
     evidence = build_index()
 
-    assert evidence["observation_count"] == 1483
-    assert evidence["safe_country_evidence_count"] == 1461
+    assert evidence["observation_count"] == 1492
+    assert evidence["safe_country_evidence_count"] == 1470
     assert evidence["manual_review_count"] == 22
     assert evidence["unresolved_count"] == 0
-    assert evidence["direct_mapped_observation_count"] == 198
+    assert evidence["direct_mapped_observation_count"] == 207
 
     ranking_facts = [
         fact

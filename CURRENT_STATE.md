@@ -1,5 +1,18 @@
 # Current implementation and next action
 
+## Candidate — ATP HUN/ROU structural-evidence batch (5 October 2026)
+
+- New complete ATP histories: **Hungary (HUN), Romania (ROU)**.
+- New ratings: 2 × 72 × 6 = **864**; ATP Earth now resolves **29 / 250 complete histories**.
+- ATP research now resolves **90 normalized datasets / 285 observations**.
+- Hungary combines federation history with the National Training Centre/player-support framework and a published 2026 international junior/pro event calendar.
+- Romania combines the FRT national mandate, National Tennis Centre, formal coach-licensing/development system and current national junior competition structure.
+- Historical state names are preserved for Hungary/Romania rather than projecting 2026 country labels backward unchanged.
+- Official ATP package publication remains blocked by the intentional 250/250 completeness rule.
+
+**Next after green CI:** continue with another evidence-rich ATP/FIFA batch; do not replace missing countries with generic curves.
+
+
 ## Candidate — ATP PRT/IRL evidence-rich batch (5 October 2026)
 
 - New complete ATP histories: **Portugal (PRT), Ireland (IRL)**.

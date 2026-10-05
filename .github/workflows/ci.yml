@@ -92,7 +92,6 @@ jobs:
         if: needs.changes.outputs.earth_data == 'true' && needs.changes.outputs.backend_core != 'true'
         run: |
           python -m pytest tests/application/test_earth_seed_progress.py \
-            -k 'first_reviewed_country_histories_are_complete_and_resolvable or complete_histories_are_evidence_resolvable_and_temporally_bounded or dual_world_batch' \
             --maxfail=1 --durations=10
       - name: Run PR critical backend tests
         if: needs.changes.outputs.backend_core == 'true' || needs.changes.outputs.earth_data != 'true'

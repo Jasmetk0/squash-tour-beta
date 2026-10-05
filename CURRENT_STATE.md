@@ -1,5 +1,18 @@
 # Current implementation and next action
 
+## Candidate — ATP DEN/FIN/NZL evidence-rich batch (5 October 2026)
+
+- New complete ATP histories: **Denmark (DEN), Finland (FIN), New Zealand (NZL)**.
+- New ratings: 3 × 72 × 6 = **1,296**; ATP Earth now resolves **25 / 250 complete histories**.
+- ATP research now resolves **79 normalized datasets / 261 observations**.
+- Denmark preserves the long federation membership trajectory and current national senior/junior championship structure without relabelling mixed membership as men's-only participation.
+- Finland combines long federation/championship lineage with 2025 organised membership, junior activity and the current high-performance coaching/competition system.
+- New Zealand combines deep national-championship tradition with the current club-to-regional-to-national/international pathway; Hot Shots venue evidence remains explicitly child-limited.
+- Official ATP package publication remains blocked by the intentional 250/250 completeness rule; World Library historical-profile persistence and the full historical player-development lifecycle remain unfinished.
+
+**Next after green CI:** continue with another evidence-rich ATP/FIFA batch rather than padding remaining countries with generic curves.
+
+
 ## Candidate — ATP NOR/GRE/BEL/ZAF evidence-rich batch (5 October 2026)
 
 - New complete ATP histories: **Norway (NOR), Greece (GRE), Belgium (BEL),

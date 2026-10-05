@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-oetv-scale-v1",
+  "source_id": "oetv-scale",
+  "relative_path": "observations/normalized/atp-oetv-scale-v1.json",
+  "sha256": "543cef8fd1abe5e26af79f5043baabcd10a64ce91f3923fa56d87f10bed89691",
+  "record_count": 7,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

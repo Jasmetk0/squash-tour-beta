@@ -5033,3 +5033,14 @@ bands should shape 0..200 potential. No threshold is inferred from current OVR v
 - Papua New Guinea uses an explicit low-confidence **1955–1962 pre-association baseline** derived from the ITF-recorded 1963 foundation year, then separately adds 1963 South Pacific Games tennis, the 2001 federation mandate, 2022 junior pathway and 2026 OTF membership.
 - Samoa preserves Tennis Samoa's **1955** foundation, historical naming through independence in 1962 and the 1997 name change, then gates OTF membership to 2012, Pacific junior development to 2022 and current federation/junior-development structure to 2026.
 - No rankings, titles or match outcomes are calibration targets. Official package publication remains blocked by the intentional **250 / 250** completeness requirement.
+
+
+
+## Candidate — accelerated FIFA Korea Republic + Thailand batch (5 October 2026)
+
+- New complete FIFA histories: **Korea Republic (KOR)** and **Thailand (THA)**.
+- New ratings: 2 × 72 × 6 = **864**; FIFA Earth moves **57 -> 59 / 250 complete histories**.
+- FIFA adds **3 structural datasets / 6 direct observations**, taking FIFA research from **96 datasets / 1,555 observations** to **99 datasets / 1,561 observations**.
+- Korea Republic preserves KFA's 1933 origin, FIFA membership in 1948, AFC membership in 1954 and the 1983 professional-league launch, while Big Count 2006 and Professional 2023 remain strictly time-gated.
+- Thailand preserves the 1916 federation foundation, Big Count 2006, AFC Grassroots Charter Silver accreditation in 2022 and Professional 2023 as distinct eras.
+- Rankings and tournament outcomes are not calibration targets; all 2026 dimensions remain below 9.0.

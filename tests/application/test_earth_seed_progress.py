@@ -11,7 +11,7 @@ from beta_engine.application.earth_package_builder import load_earth_research_bu
 
 def test_fifa_first_reviewed_country_histories_are_complete_and_resolvable():
     bundle = load_earth_research_bundle(Path("config/earth_research/fifa_earth.json"))
-    assert set(bundle.research.countries) == {"CZE", "SVK", "JPN", "IND", "MAR", "SEN", "FRO", "USA", "ZAF", "BRA", "DEU", "ISL", "SMR", "ARG", "MEX", "AUS", "NZL", "FJI", "PNG", "SLB", "COK", "ASM", "PYF", "NCL", "WSM", "TON", "VUT", "FRA", "ESP", "ITA", "NLD", "BEL", "PRT", "AUT", "DNK", "SWE", "CHE", "NOR", "FIN", "HRV", "SVN", "POL", "ROU", "UKR", "LTU", "LVA", "EST", "CAN", "GRC", "SRB", "CHL", "HUN", "ISR", "BGR", "KAZ", "CHN", "TUR"}
+    assert set(bundle.research.countries) == {"CZE", "SVK", "JPN", "IND", "MAR", "SEN", "FRO", "USA", "ZAF", "BRA", "DEU", "ISL", "SMR", "ARG", "MEX", "AUS", "NZL", "FJI", "PNG", "SLB", "COK", "ASM", "PYF", "NCL", "WSM", "TON", "VUT", "FRA", "ESP", "ITA", "NLD", "BEL", "PRT", "AUT", "DNK", "SWE", "CHE", "NOR", "FIN", "HRV", "SVN", "POL", "ROU", "UKR", "LTU", "LVA", "EST", "CAN", "GRC", "SRB", "CHL", "HUN", "ISR", "BGR", "KAZ", "CHN", "TUR", "KOR", "THA"}
     assert bundle.research.data_cutoff.isoformat() == "2026-10-03"
 
     for code in ("CZE", "SVK"):
@@ -2232,3 +2232,38 @@ def test_accelerated_chn_tur_png_wsm_batch_is_complete_and_time_gated():
 
     for history in (chn, tur, png, wsm):
         assert max(r.value for r in history.years[2026].ratings.values()) < 9.0
+
+
+
+def test_fifa_kor_tha_accelerated_batch_is_complete_and_time_gated():
+    bundle = load_earth_research_bundle(Path("config/earth_research/fifa_earth.json"))
+
+    for code, model_id in {
+        "KOR": "fifa-earth-kor-model.v1",
+        "THA": "fifa-earth-tha-model.v1",
+    }.items():
+        history = bundle.research.countries[code]
+        assert history.missing_earth_years == []
+        assert len(history.years) == 72
+        for year in history.years.values():
+            for rating in year.ratings.values():
+                assert rating.calibration_model_id == model_id
+                assert rating.observation_ids
+                assert all(item in bundle.observations for item in rating.observation_ids)
+
+    kor = bundle.research.countries["KOR"]
+    assert "fifa-structural-kfa-history-v1#kor-professional-league-1983" not in kor.years[1982].ratings["competition_quality"].observation_ids
+    assert "fifa-structural-kfa-history-v1#kor-professional-league-1983" in kor.years[1983].ratings["competition_quality"].observation_ids
+    assert "fifa-big-count-2006-registered-v2#korea-republic" not in kor.years[2005].ratings["squash_access"].observation_ids
+    assert "fifa-big-count-2006-registered-v2#korea-republic" in kor.years[2006].ratings["squash_access"].observation_ids
+    assert "fifa-professional-2023-clubs-v2#korea-republic-p36" in kor.years[2023].ratings["competition_quality"].observation_ids
+
+    tha = bundle.research.countries["THA"]
+    assert "fifa-big-count-2006-registered-v2#thailand" not in tha.years[2005].ratings["squash_access"].observation_ids
+    assert "fifa-big-count-2006-registered-v2#thailand" in tha.years[2006].ratings["squash_access"].observation_ids
+    assert "fifa-structural-thailand-grassroots-v1#tha-grassroots-silver-2022" not in tha.years[2021].ratings["development_quality"].observation_ids
+    assert "fifa-structural-thailand-grassroots-v1#tha-grassroots-silver-2022" in tha.years[2022].ratings["development_quality"].observation_ids
+    assert "fifa-professional-2023-clubs-v2#thailand-p57" in tha.years[2023].ratings["competition_quality"].observation_ids
+
+    assert max(r.value for r in kor.years[2026].ratings.values()) < 9.0
+    assert max(r.value for r in tha.years[2026].ratings.values()) < 9.0

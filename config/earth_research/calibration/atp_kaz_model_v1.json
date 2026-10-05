@@ -1,0 +1,87 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "atp-earth-kaz-model.v1",
+  "world_id": "atp_earth",
+  "data_cutoff": "2026-10-05",
+  "countries": [
+    "KAZ"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "method": "Country-specific piecewise annual history grounded in early territorial tennis, post-independence competition continuity, transition-era constraints and strictly gated current infrastructure/development evidence.",
+  "evidence_rules": [
+    "Pre-1991 ratings describe tennis on current Kazakhstan territory within Soviet governance and never inherit USSR-wide counts or outcomes.",
+    "1933/1935 Almaty/Dynamo history supports tradition and limited competition context, not national participation.",
+    "1990s/2000s underfunding is qualitative constraint evidence, not an annual funding series.",
+    "President's Cup continuity and 2007 Challenger status measure organised competition opportunity, not player quality.",
+    "2026 branches, programmes, centres and courts are current-only and are not backcast.",
+    "9+ remains reserved for clearly world-leading dimensions; modern structural investment alone is insufficient."
+  ],
+  "anchor_values": {
+    "KAZ": {
+      "1955": [
+        4,
+        3.5,
+        4,
+        4.2,
+        3.5,
+        6.5
+      ],
+      "1990": [
+        4.6,
+        4,
+        4.6,
+        5.2,
+        4,
+        7.2
+      ],
+      "1991": [
+        4.7,
+        4.1,
+        4.5,
+        5.6,
+        4.1,
+        7.3
+      ],
+      "2006": [
+        5.2,
+        4.7,
+        5,
+        6,
+        4.7,
+        7.6
+      ],
+      "2007": [
+        5.3,
+        4.9,
+        5.3,
+        6.5,
+        5.2,
+        7.7
+      ],
+      "2020": [
+        7,
+        7.4,
+        7.8,
+        8,
+        7.8,
+        8.2
+      ],
+      "2026": [
+        8.1,
+        8.8,
+        8.9,
+        8.8,
+        8.9,
+        8.6
+      ]
+    }
+  },
+  "evidence_sources": [
+    "kaz-noc-tennis-history",
+    "ktf-transition-history",
+    "ktf-presidents-cup-history",
+    "ktf-federation-profile",
+    "ktf-world-tennis-day-2026"
+  ],
+  "heldout_ranking_used": false
+}

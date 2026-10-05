@@ -1,0 +1,73 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "atp-earth-smr-model.v1",
+  "world_id": "atp_earth",
+  "data_cutoff": "2026-10-04",
+  "countries": [
+    "SMR"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "evidence_rules": [
+    "The 1949 clubs/tournaments provide pre-1955 context; federation identity begins only in 1957.",
+    "International events in 1988, the 1991 tennis centre and Davis Cup participation from 1992 are separate structural steps.",
+    "Current Federal Tennis School and international-event calendar are used only in 2026.",
+    "Small-state institutional density is not treated as world-leading national scale.",
+    "No ranking or title outcome is used as a calibration target."
+  ],
+  "anchor_values": {
+    "SMR": {
+      "1955": [
+        4,
+        4.3,
+        3.6,
+        3.8,
+        3.5,
+        5.5
+      ],
+      "1957": [
+        4.2,
+        4.5,
+        4,
+        4,
+        4,
+        5.8
+      ],
+      "1988": [
+        5.3,
+        5.5,
+        5.1,
+        5.4,
+        4.9,
+        6.5
+      ],
+      "1991": [
+        5.7,
+        6,
+        5.5,
+        5.8,
+        5.4,
+        6.8
+      ],
+      "1992": [
+        5.8,
+        6.1,
+        5.6,
+        6,
+        5.6,
+        6.9
+      ],
+      "2026": [
+        6.4,
+        6.6,
+        6.4,
+        6.5,
+        6.3,
+        7.4
+      ]
+    }
+  },
+  "evidence_sources": [
+    "fst-san-marino-history"
+  ],
+  "heldout_ranking_used": false
+}

@@ -1,5 +1,23 @@
 # Current implementation and next action
 
+## Current — Niger/Chad dual-world Earth batch (5 October 2026)
+
+- Based directly on merged `buuk` commit `ad36ee1e30cd730ad2016b45481526d54d8dfb4e` (#1222); independent coverage PR.
+- New complete histories in both worlds: **Niger (NER) and Chad (CHA)**.
+- FIFA Earth: **107 / 250**, **154 datasets / 1,730 normalized observations**.
+- ATP Earth: **107 / 250**, **314 datasets / 705 normalized observations**.
+- Adds **1,728 authored annual attribute ratings**.
+- Niger gates creation 1961, FIFA 1964, CAF 1967 and Big Count 2006.
+- Chad gates creation 1962, FIFA/CAF 1964 and Big Count 2006.
+- Both deliberately omit unavailable Professional 2023 values.
+- ATP histories separate low-confidence pre-2020 context from direct ITF 1 September 2020 closure status and 2026 development eligibility.
+- Official package publication remains blocked until **250 / 250** in each world.
+
+**Next after green CI:** continue the next evidence-backed dual-world batch.
+
+> Older Current/Candidate entries below are implementation history and do not override this section.
+
+
 ## Current — Mali/Mauritania dual-world Earth batch (5 October 2026)
 
 - Based directly on merged `buuk` commit `abfa9dbb12bdc3dec91fc231dd10a5f923151be4` (#1221); independent coverage PR.

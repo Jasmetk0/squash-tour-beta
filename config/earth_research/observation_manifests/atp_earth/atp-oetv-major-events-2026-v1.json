@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-oetv-major-events-2026-v1",
+  "source_id": "oetv-major-events-2026",
+  "relative_path": "observations/normalized/atp-oetv-major-events-2026-v1.json",
+  "sha256": "090d154f6c5c95f2382bfd794b5cf096fbfa086c84c7106cfb38228629cbb745",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

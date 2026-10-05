@@ -1,5 +1,22 @@
 # Current implementation and next action
 
+## Current — Equatorial Guinea/Guinea-Bissau dual-world Earth batch (5 October 2026)
+
+- Based directly on merged `buuk` commit `b17e31a23289b69c234fb7f34519ca22899867b9` (#1217); independent coverage PR.
+- New complete histories in both worlds: **Equatorial Guinea (EQG) and Guinea-Bissau (GNB)**.
+- FIFA Earth: **97 / 250**, **144 datasets / 1,691 normalized observations**.
+- ATP Earth: **97 / 250**, **294 datasets / 676 normalized observations**.
+- Adds **1,728 authored annual attribute ratings**.
+- Equatorial Guinea gates creation 1957 and FIFA/CAF 1986; Guinea-Bissau gates creation 1974 and FIFA/CAF 1986.
+- Both use Big Count 2006 only from 2006 and deliberately omit unavailable Professional 2023 values.
+- ATP histories separate low-confidence pre-2020 context from direct ITF 2020 national activity status and 2026 development eligibility.
+- Official package publication remains blocked until **250 / 250** in each world.
+
+**Next after green CI:** continue the next evidence-backed dual-world batch.
+
+> Older Current/Candidate entries below are implementation history and do not override this section.
+
+
 ## Current — Djibouti/Comoros dual-world Earth batch (5 October 2026)
 
 - Based directly on merged `buuk` commit `2e8f2a786604dc58e11b9e492f47169d9592ba22` (#1216); independent coverage PR.

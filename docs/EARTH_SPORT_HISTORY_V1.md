@@ -21,10 +21,15 @@ preserved as implementation history.
 - FIFA Earth has **27 / 250** complete 1955–2026 country/territory histories,
   covering all six attributes. Its canonical research bundle resolves **65 datasets
   and 1,437 normalized observations**.
-- ATP Earth has **18 / 250** complete histories: CZE, DEU, USA, AUS, ESP, SRB,
-  FRA, GBR, ARG, JPN, CAN, ITA, NED, SWE, SUI, CRO, POL and CHN. Its canonical
-  bundle resolves **58 datasets and 212 normalized observations**.
-- The latest ATP batch adds **SUI, CRO, POL and CHN**, another **1,728 annual
+- ATP Earth has **22 / 250** complete histories: CZE, DEU, USA, AUS, ESP, SRB,
+  FRA, GBR, ARG, JPN, CAN, ITA, NED, SWE, SUI, CRO, POL, CHN, NOR, GRE, BEL and ZAF.
+  Its canonical bundle resolves **71 datasets and 240 normalized observations**.
+- The latest ATP batch adds **NOR, GRE, BEL and ZAF**, another **1,728 annual
+  attribute ratings**. Norway and Greece preserve modern elite spikes without turning
+  star-player results into participation evidence; Belgium marks Flemish tennis/padel
+  scale as partial-country combined-sport evidence; South Africa separates deep tennis
+  tradition and the Anderson peak from current access/development constraints.
+- The preceding ATP batch added **SUI, CRO, POL and CHN**, another **1,728 annual
   attribute ratings**. Switzerland separates current federation scale from elite
   outcomes; Croatia preserves pre-1992 Yugoslav territory context; Poland preserves
   the 1951 governance break and gates modern youth support; China keeps its large
@@ -91,7 +96,7 @@ preserved as implementation history.
 ## Not implemented or not proven
 
 - **Neither official Earth directory exists yet.** FIFA currently has 27 complete
-  histories and ATP has 18; neither reaches the required 250-country all-or-nothing
+  histories and ATP has 22; neither reaches the required 250-country all-or-nothing
   build threshold. No fabricated neutral profiles are shipped to satisfy coverage
   mechanically. See the current-status section above for authoritative counts.
 - FIFA Big Count 2006 now has five canonical normalized
@@ -123,8 +128,8 @@ preserved as implementation history.
 
 `config/earth_research/fifa_earth.json` and `atp_earth.json` are
 `earth_sport_research.v2` catalogues whose root records are extended by sharded
-sources, observation manifests and country histories. FIFA currently resolves 24
-complete histories. ATP resolves CZE, DEU, USA, AUS, ESP and SRB; its evidence now
+sources, observation manifests and country histories. FIFA currently resolves 27
+complete histories. ATP currently resolves 22 complete histories (CZE, DEU, USA, AUS, ESP, SRB, FRA, GBR, ARG, JPN, CAN, ITA, NED, SWE, SUI, CRO, POL, CHN, NOR, GRE, BEL and ZAF); its evidence now
 combines ITF national snapshots, federation histories/participation records, Davis Cup
 outcomes and country-specific development/support evidence. Root-JSON contents alone
 must not be used as the coverage count.

@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-greece-clubs-2026-v1",
+  "source_id": "oaka-greece-tennis",
+  "relative_path": "observations/normalized/atp-greece-clubs-2026-v1.json",
+  "sha256": "15f83aa1544573b8cb61a98b431a11f0b95919d2bfe2f9a59beba32b84839c61",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

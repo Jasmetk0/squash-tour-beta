@@ -19,8 +19,8 @@
       "period_start_year": null,
       "period_end_year": null,
       "measurement_type": "court_booking_hours",
-      "sex_scope": "male",
-      "age_scope": "senior",
+      "sex_scope": "mixed",
+      "age_scope": null,
       "competition_scope": null,
       "numeric_value": 1000000,
       "text_value": null,
@@ -35,8 +35,11 @@
       "territory_weight": null,
       "source_page": null,
       "source_locator": null,
-      "definition_notes": "Tennis Australia reported more than one million hours of tennis court bookings nationwide in just over twelve months.",
-      "quality_flags": []
+      "definition_notes": "Tennis Australia reported more than one million hours of tennis court bookings nationwide in just over twelve months. The source describes broad public use, including families and players across age groups; it does not support male-only or senior-only scoping.",
+      "quality_flags": [
+        "aggregate_booking_use_not_unique_players",
+        "broad_public_use"
+      ]
     }
   ]
 }

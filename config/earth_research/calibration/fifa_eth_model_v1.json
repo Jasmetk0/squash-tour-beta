@@ -1,0 +1,66 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "fifa-earth-eth-model.v1",
+  "world_id": "fifa_earth",
+  "data_cutoff": "2026-10-03",
+  "countries": [
+    "ETH"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "evidence_rules": [
+    "Association creation 1943 and FIFA affiliation 1952 predate the game-history window; CAF affiliation enters from 1957.",
+    "Big Count 2006 enters only from 2006.",
+    "Professional 2023 player and club evidence enters only from 2023.",
+    "No ranking or event outcome is mechanically converted to a rating."
+  ],
+  "anchor_values": {
+    "ETH": {
+      "1955": [
+        5.4,
+        4.8,
+        5,
+        5.1,
+        4.6,
+        5.7
+      ],
+      "1957": [
+        5.7,
+        5.1,
+        5.3,
+        5.4,
+        4.9,
+        5.9
+      ],
+      "2006": [
+        7.5,
+        6.7,
+        6.9,
+        7.1,
+        6.6,
+        7.2
+      ],
+      "2023": [
+        7.7,
+        6.9,
+        7.1,
+        7.3,
+        6.9,
+        7.4
+      ],
+      "2026": [
+        7.8,
+        7,
+        7.2,
+        7.4,
+        7,
+        7.5
+      ]
+    }
+  },
+  "evidence_sources": [
+    "caf-ethiopia-profile",
+    "fifa-big-count-2006",
+    "fifa-professional-2023"
+  ],
+  "heldout_ranking_used": false
+}

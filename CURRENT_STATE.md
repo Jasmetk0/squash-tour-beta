@@ -1,5 +1,22 @@
 # Current implementation and next action
 
+## Current — Ethiopia/Eritrea dual-world Earth batch (5 October 2026)
+
+- Based directly on merged `buuk` commit `68fd8a8e3066d2eede3614c26a2d76920650da87` (#1223); independent coverage PR.
+- New complete histories in both worlds: **Ethiopia (ETH) and Eritrea (ERI)**.
+- FIFA Earth: **109 / 250**, **156 datasets / 1,737 normalized observations**.
+- ATP Earth: **109 / 250**, **318 datasets / 711 normalized observations**.
+- Adds **1,728 authored annual attribute ratings**.
+- Ethiopia carries 1943 creation and 1952 FIFA affiliation into the 1955+ window, gates CAF 1957, Big Count 2006 and both checked-in Professional 2023 observations.
+- Eritrea uses explicit pre-1996 territorial context, then gates creation 1996, FIFA/CAF 1998 and Big Count 2006; it does not inherit Ethiopia federation evidence.
+- ATP histories separate low-confidence pre-2020 context from direct ITF 25 May 2020 closure status and 2026 development eligibility.
+- Official package publication remains blocked until **250 / 250** in each world.
+
+**Next after green CI:** continue the next evidence-backed dual-world batch.
+
+> Older Current/Candidate entries below are implementation history and do not override this section.
+
+
 ## Current — Niger/Chad dual-world Earth batch (5 October 2026)
 
 - Based directly on merged `buuk` commit `ad36ee1e30cd730ad2016b45481526d54d8dfb4e` (#1222); independent coverage PR.

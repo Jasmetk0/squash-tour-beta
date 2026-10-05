@@ -128,8 +128,8 @@ preserved as implementation history.
 
 `config/earth_research/fifa_earth.json` and `atp_earth.json` are
 `earth_sport_research.v2` catalogues whose root records are extended by sharded
-sources, observation manifests and country histories. FIFA currently resolves 24
-complete histories. ATP resolves CZE, DEU, USA, AUS, ESP and SRB; its evidence now
+sources, observation manifests and country histories. FIFA currently resolves 27
+complete histories. ATP currently resolves 22 complete histories (CZE, DEU, USA, AUS, ESP, SRB, FRA, GBR, ARG, JPN, CAN, ITA, NED, SWE, SUI, CRO, POL, CHN, NOR, GRE, BEL and ZAF); its evidence now
 combines ITF national snapshots, federation histories/participation records, Davis Cup
 outcomes and country-specific development/support evidence. Root-JSON contents alone
 must not be used as the coverage count.

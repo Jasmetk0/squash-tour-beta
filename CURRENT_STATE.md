@@ -5033,3 +5033,18 @@ bands should shape 0..200 potential. No threshold is inferred from current OVR v
 - Papua New Guinea uses an explicit low-confidence **1955–1962 pre-association baseline** derived from the ITF-recorded 1963 foundation year, then separately adds 1963 South Pacific Games tennis, the 2001 federation mandate, 2022 junior pathway and 2026 OTF membership.
 - Samoa preserves Tennis Samoa's **1955** foundation, historical naming through independence in 1962 and the 1997 name change, then gates OTF membership to 2012, Pacific junior development to 2022 and current federation/junior-development structure to 2026.
 - No rankings, titles or match outcomes are calibration targets. Official package publication remains blocked by the intentional **250 / 250** completeness requirement.
+
+
+
+## Candidate — accelerated Korea/Thailand/Solomon/Tonga batch (5 October 2026)
+
+- New complete FIFA histories: **Korea Republic (KOR)** and **Thailand (THA)**.
+- New complete ATP histories: **Solomon Islands (SLB)** and **Tonga (TON)**.
+- New ratings: 4 × 72 × 6 = **1,728**; both FIFA Earth and ATP Earth move **57 -> 59 / 250 complete histories (23.6%)**.
+- FIFA adds **3 structural datasets / 6 direct observations**, taking FIFA research from **96 datasets / 1,555 observations** to **99 datasets / 1,561 observations**.
+- Korea Republic preserves the 1933 predecessor association, 1948 FIFA/KFA transition, 1954 AFC founding membership and 1983 professional-league launch, with Big Count 2006 and Professional 2023 evidence strictly gated.
+- Thailand preserves the 1916 association foundation and 1925 FIFA membership as historical structure; 2006 participation and 2023 professional depth remain separate, later evidence layers.
+- ATP adds **7 datasets / 9 observations**, taking ATP research from **191 datasets / 518 observations** to **198 datasets / 527 observations**.
+- Solomon Islands uses an explicit low-confidence **1955–1992 pre-association baseline**, then gates federation formation to 1993, regional junior competition to 2012, OTF development activity to 2023 and current federation administration to 2026.
+- Tonga uses an explicit low-confidence **1955–1958 pre-association baseline**, then gates federation formation to 1959, East Pacific junior participation to 2024 and current federation/development structure to 2026.
+- No rankings, titles or match outcomes are calibration targets. Official package publication remains blocked by the intentional **250 / 250** completeness requirement.

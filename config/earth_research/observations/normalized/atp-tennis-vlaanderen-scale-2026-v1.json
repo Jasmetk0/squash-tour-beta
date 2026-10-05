@@ -37,7 +37,10 @@
       "source_locator": null,
       "definition_notes": "Tennis en Padel Vlaanderen reports more than 500 Flemish tennis/padel clubs.",
       "quality_flags": [
-        "partial_current_territory"
+        "partial_current_territory",
+        "combined_tennis_padel",
+        "current_only",
+        "minimum_count"
       ]
     },
     {
@@ -68,7 +71,10 @@
       "source_locator": null,
       "definition_notes": "Tennis en Padel Vlaanderen reports more than 200,000 members across tennis and padel.",
       "quality_flags": [
-        "partial_current_territory"
+        "partial_current_territory",
+        "combined_tennis_padel",
+        "current_only",
+        "minimum_count"
       ]
     },
     {

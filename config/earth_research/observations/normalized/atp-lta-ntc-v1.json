@@ -7,14 +7,14 @@
   "input_artifact_sha256": null,
   "generated_by": "manual-normalization-2026-10-05",
   "scope": "LTA National Tennis Centre opening and current support services.",
-  "limitations": "Infrastructure/service capacity is not realised performance and is not backcast.",
+  "limitations": "Infrastructure/service capacity is not realised performance and is not backcast. LTA jurisdiction excludes Northern Ireland, so evidence under-covers Earth GBR.",
   "observations": [
     {
       "observation_id": "atp-lta-ntc-v1#gbr-ntc-opened-2007",
       "source_id": "lta-national-tennis-centre",
       "source_entity": "Lawn Tennis Association",
       "earth_country_code": "GBR",
-      "historical_entity": null,
+      "historical_entity": "Great Britain / LTA jurisdiction (excludes Northern Ireland)",
       "observation_year": 2007,
       "period_start_year": null,
       "period_end_year": null,
@@ -26,19 +26,20 @@
       "text_value": "The LTA National Tennis Centre in Roehampton opened in 2007.",
       "unit": "event",
       "collection_method": "official_narrative",
-      "coverage_scope": "national",
+      "coverage_scope": "partial",
       "comparability_group": null,
       "cross_country_comparable": false,
       "is_direct_observation": true,
       "is_statistically_modelled": false,
-      "territory_mapping_method": "direct_earth_country",
+      "territory_mapping_method": "current_country_partial_association_context",
       "territory_weight": null,
       "source_page": null,
       "source_locator": null,
       "definition_notes": "Direct central high-performance infrastructure milestone from 2007 onward.",
       "quality_flags": [
         "development_infrastructure",
-        "capacity_not_outcome"
+        "capacity_not_outcome",
+        "partial_current_territory"
       ]
     },
     {
@@ -46,7 +47,7 @@
       "source_id": "lta-national-tennis-centre",
       "source_entity": "Lawn Tennis Association",
       "earth_country_code": "GBR",
-      "historical_entity": null,
+      "historical_entity": "Great Britain / LTA jurisdiction (excludes Northern Ireland)",
       "observation_year": 2026,
       "period_start_year": null,
       "period_end_year": null,
@@ -58,19 +59,20 @@
       "text_value": "The NTC provides 20 tennis courts plus performance analysis, fitness, psychology, rehabilitation, strength and conditioning, medical and nutrition support.",
       "unit": "service_bundle",
       "collection_method": "official_narrative",
-      "coverage_scope": "national",
+      "coverage_scope": "partial",
       "comparability_group": null,
       "cross_country_comparable": false,
       "is_direct_observation": true,
       "is_statistically_modelled": false,
-      "territory_mapping_method": "direct_earth_country",
+      "territory_mapping_method": "current_country_partial_association_context",
       "territory_weight": null,
       "source_page": null,
       "source_locator": null,
       "definition_notes": "Current multidisciplinary development/elite-support capacity; not evidence for earlier years or guaranteed outcomes.",
       "quality_flags": [
         "current_only",
-        "programme_capacity_not_outcome"
+        "programme_capacity_not_outcome",
+        "partial_current_territory"
       ]
     }
   ]

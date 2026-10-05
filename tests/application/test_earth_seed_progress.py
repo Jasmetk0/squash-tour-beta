@@ -428,11 +428,11 @@ def test_fifa_pyf_backcasts_do_not_claim_future_infrastructure_as_historical_sup
 
 def test_atp_complete_histories_are_evidence_resolvable_and_temporally_bounded():
     bundle = load_earth_research_bundle(Path("config/earth_research/atp_earth.json"))
-    expected_countries = {"CZE", "DEU", "USA", "AUS", "ESP", "SRB", "FRA", "GBR", "ARG", "JPN", "CAN", "ITA", "NED", "SWE", "SUI", "CRO", "POL", "CHN", "NOR", "GRE", "BEL", "ZAF", "DEN", "FIN", "NZL", "PRT", "IRL", "HUN", "ROU", "SVN", "SVK", "ISR", "BGR"}
+    expected_countries = {"CZE", "DEU", "USA", "AUS", "ESP", "SRB", "FRA", "GBR", "ARG", "JPN", "CAN", "ITA", "NED", "SWE", "SUI", "CRO", "POL", "CHN", "NOR", "GRE", "BEL", "ZAF", "DEN", "FIN", "NZL", "PRT", "IRL", "HUN", "ROU", "SVN", "SVK", "ISR", "BGR", "AUT"}
     assert set(bundle.research.countries) == expected_countries
     assert bundle.research.data_cutoff.isoformat() == "2026-10-04"
-    assert len(bundle.datasets) == 105
-    assert len(bundle.observations) == 321
+    assert len(bundle.datasets) == 108
+    assert len(bundle.observations) == 332
 
     expected_models = {
         "CZE": "atp-earth-cze-deu-seed-model.v1",
@@ -468,6 +468,7 @@ def test_atp_complete_histories_are_evidence_resolvable_and_temporally_bounded()
         "SVK": "atp-earth-svk-model.v1",
         "ISR": "atp-earth-isr-bgr-model.v1",
         "BGR": "atp-earth-isr-bgr-model.v1",
+        "AUT": "atp-earth-aut-model.v1",
     }
     for code, history in bundle.research.countries.items():
         assert history.missing_earth_years == []
@@ -1106,3 +1107,40 @@ def test_atp_isr_bgr_batch_preserves_temporal_and_semantic_scopes():
     assert "atp-btf-calendar-framework-2026-v1#bgr-national-regional-calendar-2026" in (
         bgr.years[2026].ratings["competition_quality"].observation_ids
     )
+
+
+def test_atp_aut_history_uses_current_scale_without_backcasting():
+    bundle = load_earth_research_bundle(Path("config/earth_research/atp_earth.json"))
+    aut = bundle.research.countries["AUT"]
+
+    assert aut.missing_earth_years == []
+    assert len(aut.years) == 72
+    for year in aut.years.values():
+        assert len(year.ratings) == 6
+        for rating in year.ratings.values():
+            assert rating.calibration_model_id == "atp-earth-aut-model.v1"
+            assert rating.observation_ids
+            assert all(item in bundle.observations for item in rating.observation_ids)
+
+    assert "atp-oetv-itf-wtt-2025-v1#aut-itf-wtt-events-2025" not in (
+        aut.years[2024].ratings["competition_quality"].observation_ids
+    )
+    assert "atp-oetv-itf-wtt-2025-v1#aut-itf-wtt-events-2025" in (
+        aut.years[2025].ratings["competition_quality"].observation_ids
+    )
+    assert "atp-oetv-scale-v1#aut-members-2026" not in (
+        aut.years[2025].ratings["squash_popularity"].observation_ids
+    )
+    assert "atp-oetv-scale-v1#aut-members-2026" in (
+        aut.years[2026].ratings["squash_popularity"].observation_ids
+    )
+    assert "atp-oetv-scale-v1#aut-coaches-2026" in (
+        aut.years[2026].ratings["development_quality"].observation_ids
+    )
+    assert "atp-oetv-major-events-2026-v1#aut-atp-events-2026" in (
+        aut.years[2026].ratings["competition_quality"].observation_ids
+    )
+    assert bundle.observations[
+        "atp-oetv-major-events-2026-v1#aut-atp-events-2026"
+    ].numeric_value == 5
+    assert aut.years[2026].ratings["competition_quality"].confidence == "high"

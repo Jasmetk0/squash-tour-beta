@@ -548,7 +548,9 @@ def test_atp_complete_histories_are_evidence_resolvable_and_temporally_bounded()
         "BWA": "atp-earth-bwa-model.v1",
         "NAM": "atp-earth-nam-model.v1",
         "SWZ": "atp-earth-swz-model.v1",
-        "MOZ": "atp-earth-moz-model.v1",\n        "ANG": "atp-earth-ang-model.v1",\n        "LES": "atp-earth-les-model.v1",
+        "MOZ": "atp-earth-moz-model.v1",
+        "ANG": "atp-earth-ang-model.v1",
+        "LES": "atp-earth-les-model.v1",
     }
     for code, history in bundle.research.countries.items():
         assert history.missing_earth_years == []

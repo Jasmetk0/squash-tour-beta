@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-korea-history-v1",
+  "source_id": "kfa-history-official",
+  "relative_path": "observations/normalized/structural/fifa_structural_korea_history_v1.json",
+  "sha256": "287b359122c9ed53928dea19efc12f119f17ea6965c6eed780ae1dacc3248217",
+  "record_count": 4,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

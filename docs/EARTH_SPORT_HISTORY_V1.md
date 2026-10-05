@@ -15,75 +15,34 @@ separate inputs. Innate potential rarity must remain independent of nationality.
 
 ## Current implementation status — 5 October 2026
 
-This section is the authoritative current summary; dated batch sections below are
-preserved as implementation history.
+This section is the authoritative current summary. Dated batch sections below are
+retained only as implementation history and do not override these numbers.
 
-- FIFA Earth has **29 / 250** complete 1955–2026 country/territory histories,
-  covering all six attributes. Its canonical research bundle resolves **69 datasets
-  and 1,449 normalized observations**.
-- The latest FIFA batch adds **FRA and ESP**, another **864 annual attribute ratings**. France is dimensionally anchored by official FFF technical/development history plus the 2006 participation and 2023 professional checkpoints; Spain combines the 1909 RFEF foundation, 2003 Ciudad del Fútbol and 2026 talent-development process. Big Count remains popularity/access evidence, Professional 2023 remains competition/elite-ecosystem context, and neither programme existence nor federation age is a direct score formula.
-- The KOR/THA ATP batch has been re-audited against the same scale: 9+ remains world-leading, current programme/calendar facts are separated from confidence in the authored estimate, and tests now enforce temporal evidence rather than hard-coded high confidence.
-- ATP Earth has **44 / 250** complete histories: CZE, DEU, USA, AUS, ESP, SRB,
-  FRA, GBR, ARG, JPN, CAN, ITA, NED, SWE, SUI, CRO, POL, CHN, NOR, GRE, BEL, ZAF,
-  DEN, FIN, NZL, PRT, IRL, HUN, ROU, SVN, SVK, ISR, BGR, AUT, TUR, CYP, BRA, CHL, COL, MEX, ECU, IND, KOR and THA. Its canonical bundle resolves **147 datasets and 431 normalized observations**.
-- The latest ATP batch adds **KOR and THA**, another **864 annual attribute ratings**. Korea combines 1945/1948/1968 institutional continuity, the 1971 Jangchung complex and 1989 ITF men's circuit milestone with a current 16-branch/6-federation network and broad 2026 U10-to-adult calendar. Thailand combines its 1926 association, National Tennis Development Centre and a current nationwide development/competition system spanning regional U8-U18 events, national-team selection, national championships and ITF J200/J300 events.
-- The preceding ATP batch adds **ECU and IND**, another **864 annual attribute ratings**. Ecuador combines 1899/1905 tennis roots and the 1967 federation with current National Tennis Centre, CEJ and JTI child-development structures. India combines deep 1880s/1910/1920 institutional history with the 1996 National Stadium and 2026 HPC/ACE 2032/coaching/junior-pipeline reforms.
-- The preceding ATP batch adds **COL and MEX**, another **864 annual attribute ratings**. Colombia combines its 1932 federation history with 2025 Interligas/training-site evidence and 2026 national affiliation/child-circuit structures. Mexico combines 1894-era club history and the 1963 FMT foundation with a nationwide state-association network, ~30k current affiliates and strongly documented 2025/2026 junior competition layers.
-- The preceding ATP batch adds **BRA and CHL**, another **864 annual attribute ratings**. Brazil combines the 1955 CBT foundation and pre-CBT state-federation context with current affiliated-player scale, national junior/Tennis 10s rules and a formal coach-graduation system. Chile combines 1880s/1890s roots, its 1920 federation and 1927 ITF affiliation with 2025 JTI reach and 2026 junior-circuit decentralisation, zonal qualifying and development grants.
-- The preceding ATP batch adds **TUR and CYP**, another **864 annual attribute ratings**. Turkey combines 1923/1953 institutional anchors with current national training centres, coach education, a broad 2026 competition calendar and a multi-province club network. Cyprus combines 1900/1913/1951 history, 1984 ITF/Tennis Europe membership, the 1999 National Tennis Centre and current development/tournament structures while retaining partial-association territorial caution.
-- The preceding ATP addition is **AUT**, adding **432 annual attribute ratings**. Austria has unusually strong current structural evidence: ~210k federation members, ~1,750 clubs, ~95k championship players, 11,369 teams, 450 tournaments and 3,000+ coaches/instructors, plus 2025 ITF WTT and five 2026 ATP/Challenger events.
-- The preceding ATP batch adds **ISR and BGR**, another **864 annual attribute ratings**. Israel combines the 1950 federation and early Davis Cup continuity with current nationwide development and multi-level youth competition structures; Bulgaria combines 1896/1911/1925/1930 historical anchors with 128 current clubs, a nationwide child-entry programme and the 2026 competition framework.
-- The preceding ATP addition is **SVK**, adding **432 annual attribute ratings**. Pre-1990 Slovak ratings use true historical anchors from current Slovak territory (1899 clubs and the 1924 Banská Bystrica international tournament); independent-era STZ, Challenger, NTC, active-athlete and league evidence is gated from its actual dates.
-- The preceding ATP addition is **SVN**, adding **432 annual attribute ratings**. Slovenia preserves pre-1991 tennis institutions as Yugoslav-territory context rather than pretending independent statehood, while current registered scale, WTT pathway and Tutor development evidence stay temporally gated.
-- The preceding ATP batch adds **HUN and ROU**, another **864 annual attribute ratings**. Hungary combines federation history with current national player-support and a dense 2026 international-event calendar; Romania combines federation mandate, National Tennis Centre, coach-licensing structure and national junior competition evidence.
-- The preceding ATP batch adds **PRT and IRL**, another **864 annual attribute ratings**.
-  Portugal combines federation/national-championship continuity from 1925 with current
-  broad participation, junior competition and national-camp evidence. Ireland keeps
-  Tennis Ireland's all-island remit explicit: club/player/pathway evidence is partial
-  Earth IRL context rather than a Republic-only census.
-- The preceding ATP batch adds **DEN, FIN and NZL**, another **1,296 annual
-  attribute ratings**. Denmark uses its long official membership trajectory and current
-  national-championship structure; Finland combines current member/junior activity with
-  its high-performance system; New Zealand combines deep championship lineage with a
-  current club-to-regional-to-national/international pathway. Modern evidence remains
-  temporally gated and mixed/child-limited observations keep their actual scope.
-- The preceding ATP batch adds **NOR, GRE, BEL and ZAF**, another **1,728 annual
-  attribute ratings**. Norway and Greece preserve modern elite spikes without turning
-  star-player results into participation evidence; Belgium marks Flemish tennis/padel
-  scale as partial-country combined-sport evidence; South Africa separates deep tennis
-  tradition and the Anderson peak from current access/development constraints.
-- The preceding ATP batch added **SUI, CRO, POL and CHN**, another **1,728 annual
-  attribute ratings**. Switzerland separates current federation scale from elite
-  outcomes; Croatia preserves pre-1992 Yugoslav territory context; Poland preserves
-  the 1951 governance break and gates modern youth support; China keeps its large
-  modern youth-development system separate from weaker current men's elite output.
-- The preceding ATP batch added **CAN, ITA, NED and SWE**, another **1,728 annual
-  attribute ratings**. Canada separates 2025 mass participation from the 2007 NTC
-  pathway; Italy preserves the Formia development lineage and current decentralized
-  junior system; Netherlands keeps combined tennis/padel membership explicitly
-  non-tennis-only; Sweden preserves elite historical dominance without pretending its
-  current competition quality still matches the 1980s.
-- The preceding ATP batch added **FRA, GBR, ARG and JPN**, another **1,728 annual
-  attribute ratings**. Great Britain explicitly preserves the LTA/United Kingdom
-  territory mismatch instead of treating LTA participation as a synthetic UK census;
-  Japan preserves the 2001 national-training-base setback and 2008 recovery;
-  Argentina gates current federation/DETA evidence to 2026; France uses DTN and
-  high-performance milestones independently from Davis Cup outcomes.
-- The latest FIFA batch adds **WSM (Samoa), TON (Tonga) and VUT (Vanuatu)**,
-  another **1,296 annual attribute ratings**. It preserves Samoa's 2010–11 governance
-  discontinuity, Tonga's rugby-leading national context and Vanuatu's 2008 academy
-  pathway instead of smoothing the three Pacific environments into one template.
+- **FIFA Earth: 69 / 250** complete 1955–2026 country/territory histories, all six
+  attributes present for every authored year. The canonical bundle resolves
+  **116 datasets / 1,599 normalized observations**.
+- **ATP Earth: 69 / 250** complete 1955–2026 country/territory histories, all six
+  attributes present for every authored year. The canonical bundle resolves
+  **231 datasets / 581 normalized observations**.
+- The reconciliation after merged PRs #1202 and #1203 preserves the newer Korea
+  Republic/Thailand and Solomon Islands/Tonga work, then adds the still-unmerged
+  country shards from #1197–#1201 without reintroducing the superseded #1196 base.
+- Newly preserved FIFA histories are **COL, CYP, ECU, IRL, EGY, MYS, SAU, ARE,
+  QAT and OMN**. Newly preserved ATP histories are **COK, NCL, ASM, VUT, EGY,
+  MYS, PHL, IDN, SGP and PAK**.
+- Coverage/provenance is measured through `load_earth_research_bundle()`; sharded
+  sources, manifests, normalized observations and country histories all participate
+  in validation. Missing facts are not converted into zeroes or universal fallback
+  curves.
+- The numerical ratings remain authored project estimates on the 1–10 scale with
+  at most one decimal. Direct facts, derived estimates and confidence are kept
+  separate; uncertainty in a score is not evidence uncertainty.
 - Neither `config/world_packages/fifa_earth/` nor
-  `config/world_packages/atp_earth/` is installed yet. The builder intentionally
-  refuses to publish an incomplete 250-country research bundle, so absence of those
-  directories is expected until coverage is complete.
-- Coverage and provenance must be measured through
-  `load_earth_research_bundle()`, because sources, manifests and country histories
-  may live in shards rather than only in the root JSON.
-- Historical profiles are not yet a fully closed player-lifecycle feature: quantity
-  paths can use historical cohort ratings, while generated-player development still
-  uses the requested season environment. Ordinary World Library editing/persistence
-  of the full historical profile remains an integration boundary.
+  `config/world_packages/atp_earth/` is installed yet. The builder still refuses
+  publication before full 250-country coverage.
+- Historical profile integration remains incomplete beyond research coverage:
+  ordinary World Library editing/persistence and full historical-environment use
+  during initial-player development are still open integration boundaries.
 
 ## Implemented foundation
 
@@ -118,9 +77,7 @@ preserved as implementation history.
 
 ## Not implemented or not proven
 
-- **Neither official Earth directory exists yet.** FIFA currently has 27 complete
-  histories and ATP has 22; neither reaches the required 250-country all-or-nothing
-  build threshold. No fabricated neutral profiles are shipped to satisfy coverage
+- **Neither official Earth directory exists yet.** FIFA and ATP each currently have 69 complete histories; neither reaches the required 250-country all-or-nothing build threshold. No fabricated neutral profiles are shipped to satisfy coverage
   mechanically. See the current-status section above for authoritative counts.
 - FIFA Big Count 2006 now has five canonical normalized
   `earth_source_observations.v2` datasets (all players, registered, unregistered,

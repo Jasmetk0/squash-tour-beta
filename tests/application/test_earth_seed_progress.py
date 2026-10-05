@@ -428,11 +428,11 @@ def test_fifa_pyf_backcasts_do_not_claim_future_infrastructure_as_historical_sup
 
 def test_atp_complete_histories_are_evidence_resolvable_and_temporally_bounded():
     bundle = load_earth_research_bundle(Path("config/earth_research/atp_earth.json"))
-    expected_countries = {"CZE", "DEU", "USA", "AUS", "ESP", "SRB", "FRA", "GBR", "ARG", "JPN", "CAN", "ITA", "NED", "SWE", "SUI", "CRO", "POL", "CHN"}
+    expected_countries = {"CZE", "DEU", "USA", "AUS", "ESP", "SRB", "FRA", "GBR", "ARG", "JPN", "CAN", "ITA", "NED", "SWE", "SUI", "CRO", "POL", "CHN", "NOR", "GRE", "BEL", "ZAF"}
     assert set(bundle.research.countries) == expected_countries
     assert bundle.research.data_cutoff.isoformat() == "2026-10-04"
-    assert len(bundle.datasets) == 58
-    assert len(bundle.observations) == 212
+    assert len(bundle.datasets) == 71
+    assert len(bundle.observations) == 240
 
     expected_models = {
         "CZE": "atp-earth-cze-deu-seed-model.v1",
@@ -453,6 +453,10 @@ def test_atp_complete_histories_are_evidence_resolvable_and_temporally_bounded()
         "CRO": "atp-earth-sui-cro-pol-chn-model.v1",
         "POL": "atp-earth-sui-cro-pol-chn-model.v1",
         "CHN": "atp-earth-sui-cro-pol-chn-model.v1",
+        "NOR": "atp-earth-nor-gre-bel-rsa-model.v1",
+        "GRE": "atp-earth-nor-gre-bel-rsa-model.v1",
+        "BEL": "atp-earth-nor-gre-bel-rsa-model.v1",
+        "ZAF": "atp-earth-nor-gre-bel-rsa-model.v1",
     }
     for code, history in bundle.research.countries.items():
         assert history.missing_earth_years == []
@@ -672,5 +676,53 @@ def test_atp_complete_histories_are_evidence_resolvable_and_temporally_bounded()
     )
     assert chn.years[2026].ratings["development_quality"].value > (
         chn.years[2026].ratings["competition_quality"].value
+    )
+
+    nor = bundle.research.countries["NOR"]
+    assert "atp-ntpf-profile-v1#nor-clubs-2022" not in (
+        nor.years[2021].ratings["squash_access"].observation_ids
+    )
+    assert "atp-ntpf-profile-v1#nor-clubs-2022" in (
+        nor.years[2022].ratings["squash_access"].observation_ids
+    )
+    assert nor.years[2022].ratings["competition_quality"].value > (
+        nor.years[2015].ratings["competition_quality"].value
+    )
+
+    gre = bundle.research.countries["GRE"]
+    assert "atp-greece-clubs-2026-v1#gre-member-clubs-2026" not in (
+        gre.years[2025].ratings["squash_access"].observation_ids
+    )
+    assert "atp-greece-clubs-2026-v1#gre-member-clubs-2026" in (
+        gre.years[2026].ratings["squash_access"].observation_ids
+    )
+    assert gre.years[2021].ratings["competition_quality"].value > (
+        gre.years[2015].ratings["competition_quality"].value
+    )
+
+    bel = bundle.research.countries["BEL"]
+    assert bundle.observations[
+        "atp-tennis-vlaanderen-scale-2026-v1#bel-flanders-members-2026"
+    ].coverage_scope == "partial"
+    assert "combined_tennis_padel" in bundle.observations[
+        "atp-tennis-vlaanderen-scale-2026-v1#bel-flanders-members-2026"
+    ].quality_flags
+    assert "atp-tennis-vlaanderen-scale-2026-v1#bel-flanders-members-2026" not in (
+        bel.years[2025].ratings["squash_access"].observation_ids
+    )
+    assert "atp-tennis-vlaanderen-scale-2026-v1#bel-flanders-members-2026" in (
+        bel.years[2026].ratings["squash_access"].observation_ids
+    )
+
+    zaf = bundle.research.countries["ZAF"]
+    assert "Union of South Africa" in zaf.years[1955].historical_entity
+    assert "atp-tsa-development-v1#zaf-development-centres-2019" not in (
+        zaf.years[2018].ratings["development_quality"].observation_ids
+    )
+    assert "atp-tsa-development-v1#zaf-development-centres-2019" in (
+        zaf.years[2019].ratings["development_quality"].observation_ids
+    )
+    assert zaf.years[2018].ratings["competition_quality"].value > (
+        zaf.years[2026].ratings["competition_quality"].value
     )
 

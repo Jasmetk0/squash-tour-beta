@@ -1,0 +1,60 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "fifa-earth-tha-model.v1",
+  "world_id": "fifa_earth",
+  "data_cutoff": "2026-10-03",
+  "countries": [
+    "THA"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "principles": [
+    "FA Thailand foundation (1916) and FIFA membership (1925) provide pre-1955 institutional depth.",
+    "FIFA Big Count 2006 is gated to 2006+ and large all-player participation does not mechanically set professional quality.",
+    "FIFA Professional Football Report 2023 is gated to 2023+ for professional ecosystem depth.",
+    "Regional/national-team results are not calibration targets.",
+    "9+ remains world-leading."
+  ],
+  "anchor_values": {
+    "THA": {
+      "1955": [
+        6.1,
+        5.7,
+        5.9,
+        6,
+        5.8,
+        7.6
+      ],
+      "2006": [
+        7.4,
+        6.5,
+        6.6,
+        6.8,
+        6.6,
+        8
+      ],
+      "2023": [
+        7.6,
+        6.9,
+        7.1,
+        7.3,
+        7.1,
+        8.2
+      ],
+      "2026": [
+        7.6,
+        7,
+        7.2,
+        7.3,
+        7.2,
+        8.2
+      ]
+    }
+  },
+  "evidence_sources": [
+    "afc-thailand-centenary",
+    "fifa-thailand-member-1925",
+    "fifa-big-count-2006",
+    "fifa-professional-2023"
+  ],
+  "heldout_ranking_used": false
+}

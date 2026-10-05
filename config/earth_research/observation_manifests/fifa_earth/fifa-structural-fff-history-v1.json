@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-fff-history-v1",
+  "source_id": "fff-history",
+  "relative_path": "observations/normalized/structural/fifa_structural_fff_history_v1.json",
+  "sha256": "c2e8797ede015f7d3511e2e0e14f1ae942983ed44f133bd109a7bd60e78a387b",
+  "record_count": 7,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

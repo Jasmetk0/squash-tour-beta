@@ -1,5 +1,18 @@
 # Current implementation and next action
 
+## Candidate — ATP Slovenia history (5 October 2026)
+
+- New complete ATP history: **Slovenia (SVN)**.
+- New ratings: 72 × 6 = **432**; ATP Earth now resolves **30 / 250 complete histories**.
+- ATP research now resolves **93 normalized datasets / 295 observations**.
+- Slovenian history preserves 19th-century tennis roots, the 1940 Slovenian federation, the 1991 independent successor and current registered scale.
+- Pre-1991 years are explicitly modelled as Slovenian tennis within Yugoslavia, not as an independent Slovenian state.
+- Modern competition/development evidence includes the WTT expansion pathway and 2026 Tutor coach/player development programme, with strict temporal gating.
+- Official ATP package publication remains blocked by the 250/250 completeness rule.
+
+**Next after green CI:** continue with another evidence-rich ATP/FIFA batch.
+
+
 ## Candidate — ATP HUN/ROU structural-evidence batch (5 October 2026)
 
 - New complete ATP histories: **Hungary (HUN), Romania (ROU)**.

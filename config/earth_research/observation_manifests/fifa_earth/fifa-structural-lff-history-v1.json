@@ -3,7 +3,7 @@
   "dataset_id": "fifa-structural-lff-history-v1",
   "source_id": "lff-history",
   "relative_path": "observations/normalized/structural/fifa_structural_lff_history_v1.json",
-  "sha256": "9e4cfcfd556fefb589a522294dd0b51d7ef64ca5b4118304f8d4bfc3fabe179d",
+  "sha256": "157569020e72207ad3fa380519d20a1c93e4570b510950b2a6b36a08cc10a2f1",
   "record_count": 5,
   "source_document_sha256": null,
   "input_artifact_sha256": null,

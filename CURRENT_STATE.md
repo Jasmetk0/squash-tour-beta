@@ -1,5 +1,20 @@
 # Current implementation and next action
 
+## Candidate — ATP calibration correction + FIFA France/Spain batch (5 October 2026)
+
+- Re-audited ATP KOR/THA against the documented 1–10 rubric and older reference countries. A documented federation/programme/calendar fact is now explicitly separated from confidence in the authored numeric rating.
+- KOR competition/development no longer cross into the 9+ world-leading band merely from network/calendar breadth; current high-confidence authored estimates were reduced to medium. THA was re-based more broadly because federation age had been carrying popularity/tradition and current programme/calendar evidence had been carrying too much score across several dimensions.
+- India 2026 development/elite-support confidence is medium rather than high: the programme facts are direct, but their effect size on the 1–10 rating remains modelled.
+- Tests no longer freeze KOR/THA competition or IND development confidence as unquestionable truth; they keep checking temporal evidence gating instead.
+- New complete FIFA histories: **France (FRA) and Spain (ESP)**, adding **864 annual attribute ratings** and taking FIFA Earth to **29 / 250 complete histories**.
+- FIFA research now resolves **69 normalized datasets / 1,449 observations**. The 12 new structural observations are explicit direct Earth mappings, taking safe evidence to **1,427 facts** and direct-mapped observations to **164**.
+- France uses the official FFF history (1919 federation, 1932 professionalisation, 1970 DTN, 1972 INF, 1988 Clairefontaine, 2014 development recognition and 2016 modernisation), plus Big Count 2006 only for popularity/access and Professional 2023 only for competition/elite ecosystem context.
+- Spain uses the 1909 RFEF institutional anchor, the 2003 Ciudad del Fútbol and 2026 coordinated talent-identification process, with the same strict dimensional use of Big Count and Professional 2023 evidence.
+- Official FIFA/ATP package publication remains blocked by the 250/250 completeness rule.
+
+**Next after green CI:** continue another evidence-rich FIFA/ATP batch; FIFA remains the larger coverage gap.
+
+
 ## Candidate — ATP Korea/Thailand batch (5 October 2026)
 
 - New complete ATP histories: **South Korea (KOR), Thailand (THA)**.

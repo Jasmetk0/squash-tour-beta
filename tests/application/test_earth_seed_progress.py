@@ -428,11 +428,11 @@ def test_fifa_pyf_backcasts_do_not_claim_future_infrastructure_as_historical_sup
 
 def test_atp_complete_histories_are_evidence_resolvable_and_temporally_bounded():
     bundle = load_earth_research_bundle(Path("config/earth_research/atp_earth.json"))
-    expected_countries = {"CZE", "DEU", "USA", "AUS", "ESP", "SRB", "FRA", "GBR", "ARG", "JPN"}
+    expected_countries = {"CZE", "DEU", "USA", "AUS", "ESP", "SRB", "FRA", "GBR", "ARG", "JPN", "CAN", "ITA", "NED", "SWE"}
     assert set(bundle.research.countries) == expected_countries
-    assert bundle.research.data_cutoff.isoformat() == "2026-10-04"
-    assert len(bundle.datasets) == 33
-    assert len(bundle.observations) == 140
+    assert bundle.research.data_cutoff.isoformat() == "2026-10-05"
+    assert len(bundle.datasets) == 45
+    assert len(bundle.observations) == 178
 
     expected_models = {
         "CZE": "atp-earth-cze-deu-seed-model.v1",
@@ -445,6 +445,10 @@ def test_atp_complete_histories_are_evidence_resolvable_and_temporally_bounded()
         "GBR": "atp-earth-fra-gbr-arg-jpn-model.v1",
         "ARG": "atp-earth-fra-gbr-arg-jpn-model.v1",
         "JPN": "atp-earth-fra-gbr-arg-jpn-model.v1",
+        "CAN": "atp-earth-can-ita-ned-swe-model.v1",
+        "ITA": "atp-earth-can-ita-ned-swe-model.v1",
+        "NED": "atp-earth-can-ita-ned-swe-model.v1",
+        "SWE": "atp-earth-can-ita-ned-swe-model.v1",
     }
     for code, history in bundle.research.countries.items():
         assert history.missing_earth_years == []
@@ -573,4 +577,45 @@ def test_atp_complete_histories_are_evidence_resolvable_and_temporally_bounded()
         jpn.years[2021].ratings["competition_quality"].observation_ids
     )
     assert "decline" in jpn.years[2026].ratings["squash_popularity"].rationale.lower()
+
+    can = bundle.research.countries["CAN"]
+    assert "atp-tennis-canada-participation-2025-v1#can-players-2025" not in (
+        can.years[2024].ratings["squash_popularity"].observation_ids
+    )
+    assert "atp-tennis-canada-participation-2025-v1#can-players-2025" in (
+        can.years[2025].ratings["squash_popularity"].observation_ids
+    )
+    assert "atp-tennis-canada-ntc-v1#can-ntc-opened-2007" in (
+        can.years[2007].ratings["development_quality"].observation_ids
+    )
+
+    ita = bundle.research.countries["ITA"]
+    assert ita.years[2024].ratings["competition_quality"].value == 10.0
+    assert "atp-fitp-junior-system-2025-v1#ita-federal-schools-2025" not in (
+        ita.years[2024].ratings["development_quality"].observation_ids
+    )
+    assert "atp-fitp-junior-system-2025-v1#ita-federal-schools-2025" in (
+        ita.years[2025].ratings["development_quality"].observation_ids
+    )
+
+    ned = bundle.research.countries["NED"]
+    assert "combined tennis/padel" in ned.years[2026].ratings["squash_access"].rationale.lower()
+    assert "atp-knltb-profile-v1#ned-members-current-2026" not in (
+        ned.years[2025].ratings["squash_access"].observation_ids
+    )
+    assert "atp-knltb-profile-v1#ned-members-current-2026" in (
+        ned.years[2026].ratings["squash_access"].observation_ids
+    )
+
+    swe = bundle.research.countries["SWE"]
+    assert swe.years[1985].ratings["competition_quality"].value > (
+        swe.years[2026].ratings["competition_quality"].value
+    )
+    assert swe.years[2026].ratings["squash_tradition"].value == 10.0
+    assert "atp-svtf-annual-2025-v1#swe-rog-children-2025" not in (
+        swe.years[2024].ratings["development_quality"].observation_ids
+    )
+    assert "atp-svtf-annual-2025-v1#swe-rog-children-2025" in (
+        swe.years[2025].ratings["development_quality"].observation_ids
+    )
 

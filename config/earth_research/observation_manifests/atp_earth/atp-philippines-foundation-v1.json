@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-philippines-foundation-v1",
+  "source_id": "itf-philippines-foundation-2015",
+  "relative_path": "observations/normalized/atp_philippines_foundation_v1.json",
+  "sha256": "a1420b52d536315b7311468a81b7921a779a2d373bfbb7b4da688860e1cf2cf3",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

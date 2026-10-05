@@ -152,7 +152,7 @@ def test_structural_events_enter_safe_country_evidence_without_fake_numeric_valu
         1921,
         1965,
         1977,
-        2076,
+        1986,
         1991,
         1993,
     }
@@ -232,6 +232,6 @@ def test_pacific_association_identities_resolve_to_earth_territories_without_sov
         fact["observation_id"]
         for fact in index["countries"]["NCL"]
     }
-    assert "fifa-structural-ofc-tahiti-profile-v1#pyf-ftf-foundation-2079" in pyf_ids
+    assert "fifa-structural-ofc-tahiti-profile-v1#pyf-ftf-foundation-1989" in pyf_ids
     assert "fifa-structural-ofc-new-caledonia-profile-v1#ncl-fcf-foundation-1928" in ncl_ids
     assert not any("france" in observation_id.lower() for observation_id in pyf_ids | ncl_ids)

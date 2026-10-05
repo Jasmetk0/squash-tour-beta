@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-guinea-history-v1",
+  "source_id": "caf-guinea-profile",
+  "relative_path": "observations/normalized/structural/fifa_structural_guinea_history_v1.json",
+  "sha256": "d12f325297c5ef7fb42f1d4c3d67a5ab71b15f6843f865a77fe71643ebdfd15b",
+  "record_count": 4,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

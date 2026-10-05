@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-lts-lithuania-history-v1",
+  "source_id": "lts-lithuania-history-2023",
+  "relative_path": "observations/normalized/atp_lts_lithuania_history_v1.json",
+  "sha256": "bb5c048546d99d46ac9926bdb79d3f810c4da36c6442c6fea9a902be36cd8aa5",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

@@ -1,5 +1,22 @@
 # Current implementation and next action
 
+## Current — Togo/Burkina Faso dual-world Earth batch (5 October 2026)
+
+- Based directly on merged `buuk` commit `5d92dedffe83b1a8cad396b308ec1570664a641f` (#1220); independent coverage PR.
+- New complete histories in both worlds: **Togo (TGO) and Burkina Faso (BFA)**.
+- FIFA Earth: **103 / 250**, **150 datasets / 1,714 normalized observations**.
+- ATP Earth: **103 / 250**, **306 datasets / 693 normalized observations**.
+- Adds **1,728 authored annual attribute ratings**.
+- Togo gates creation 1960 and FIFA/CAF 1964; Burkina Faso gates creation 1960, CAF 1961 and FIFA 1964.
+- Both use Big Count 2006 only from 2006 and deliberately omit unavailable Professional 2023 values.
+- ATP histories separate low-confidence pre-2020 context from direct ITF 8 June 2020 activity status and 2026 development eligibility.
+- Official package publication remains blocked until **250 / 250** in each world.
+
+**Next after green CI:** continue the next evidence-backed dual-world batch.
+
+> Older Current/Candidate entries below are implementation history and do not override this section.
+
+
 ## Current — Liberia/Sierra Leone dual-world Earth batch (5 October 2026)
 
 - Based directly on merged `buuk` commit `793a9913c7681fd69264b35c0a84fb207f70f9f5` (#1219); independent coverage PR.

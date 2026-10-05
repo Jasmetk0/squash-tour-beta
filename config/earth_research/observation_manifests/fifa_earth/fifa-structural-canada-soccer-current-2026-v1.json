@@ -3,7 +3,7 @@
   "dataset_id": "fifa-structural-canada-soccer-current-2026-v1",
   "source_id": "canada-soccer-about-2026",
   "relative_path": "observations/normalized/structural/fifa_structural_canada_soccer_current_2026_v1.json",
-  "sha256": "8993cc3726651c7ecf869c4f0687e9631558770133b96e4de04c8d050a885c07",
+  "sha256": "93a0c91a241329fc1565d6d7356e217bef7617e80aeaa5902db2ca764d55db59",
   "record_count": 2,
   "source_document_sha256": null,
   "input_artifact_sha256": null,

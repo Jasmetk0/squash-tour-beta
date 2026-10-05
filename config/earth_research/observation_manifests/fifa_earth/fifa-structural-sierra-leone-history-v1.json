@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-sierra-leone-history-v1",
+  "source_id": "caf-sierra-leone-profile",
+  "relative_path": "observations/normalized/structural/fifa_structural_sierra_leone_history_v1.json",
+  "sha256": "8795f28f1c09029836f22be2f55973e8f990470f444154e685102019888704c6",
+  "record_count": 4,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

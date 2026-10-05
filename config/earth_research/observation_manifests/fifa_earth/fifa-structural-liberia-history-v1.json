@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-liberia-history-v1",
+  "source_id": "caf-liberia-profile",
+  "relative_path": "observations/normalized/structural/fifa_structural_liberia_history_v1.json",
+  "sha256": "fbf009f4a7880ff43524081ce876dc7d08ef75045080f458a2661ed51b8cf69d",
+  "record_count": 3,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

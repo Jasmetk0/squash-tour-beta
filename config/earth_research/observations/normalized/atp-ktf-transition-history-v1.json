@@ -1,0 +1,46 @@
+{
+  "schema_version": "earth_source_observations.v2",
+  "dataset_id": "atp-ktf-transition-history-v1",
+  "source_id": "ktf-transition-history",
+  "source_url": "https://ktf.kz/ru/press-center/news/?id=5465",
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05",
+  "scope": "KTF retrospective on the difficult financing environment of the 1990s/2000s and constraints on international player development.",
+  "limitations": "Retrospective qualitative evidence; the broad period is not an annual finance series and does not quantify participation or funding amounts.",
+  "observations": [
+    {
+      "observation_id": "atp-ktf-transition-history-v1#kaz-underfunded-1990-2009",
+      "source_id": "ktf-transition-history",
+      "source_entity": "Kazakhstan tennis system",
+      "earth_country_code": "KAZ",
+      "historical_entity": "Independent Kazakhstan",
+      "observation_year": null,
+      "period_start_year": 1990,
+      "period_end_year": 2009,
+      "measurement_type": "development_financing_constraint_period",
+      "sex_scope": "mixed",
+      "age_scope": "all_or_unspecified",
+      "competition_scope": "elite_and_international_development",
+      "numeric_value": null,
+      "text_value": "The KTF retrospective describes the 1990s and 2000s as a difficult period for tennis development because of insufficient financing and limited international tournament travel.",
+      "unit": "period_statement",
+      "collection_method": "official_narrative",
+      "coverage_scope": "national",
+      "comparability_group": "development_financing_constraint",
+      "cross_country_comparable": false,
+      "is_direct_observation": true,
+      "is_statistically_modelled": false,
+      "territory_mapping_method": "direct_earth_country",
+      "territory_weight": null,
+      "source_page": null,
+      "source_locator": "KTF federation explainer — development in the 1990s and 2000s",
+      "definition_notes": "Qualitative historical constraint evidence; does not provide annual funding totals or a complete system census.",
+      "quality_flags": [
+        "supports_development_quality",
+        "supports_elite_support",
+        "retrospective_historical_context"
+      ]
+    }
+  ]
+}

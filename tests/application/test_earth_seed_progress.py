@@ -11,7 +11,7 @@ from beta_engine.application.earth_package_builder import load_earth_research_bu
 
 def test_fifa_first_reviewed_country_histories_are_complete_and_resolvable():
     bundle = load_earth_research_bundle(Path("config/earth_research/fifa_earth.json"))
-    assert set(bundle.research.countries) == {"CZE", "SVK", "JPN", "IND", "MAR", "SEN", "FRO", "USA", "ZAF", "BRA", "DEU", "ISL", "SMR", "ARG", "MEX", "AUS", "NZL", "FJI", "PNG", "SLB", "COK", "ASM", "PYF", "NCL", "WSM", "TON", "VUT", "FRA", "ESP", "ITA", "NLD", "BEL", "PRT", "AUT", "DNK", "SWE", "CHE", "NOR", "FIN", "HRV", "SVN", "POL", "ROU", "UKR", "LTU", "LVA", "EST", "CAN", "GRC", "SRB"}
+    assert set(bundle.research.countries) == {"CZE", "SVK", "JPN", "IND", "MAR", "SEN", "FRO", "USA", "ZAF", "BRA", "DEU", "ISL", "SMR", "ARG", "MEX", "AUS", "NZL", "FJI", "PNG", "SLB", "COK", "ASM", "PYF", "NCL", "WSM", "TON", "VUT", "FRA", "ESP", "ITA", "NLD", "BEL", "PRT", "AUT", "DNK", "SWE", "CHE", "NOR", "FIN", "HRV", "SVN", "POL", "ROU", "UKR", "LTU", "LVA", "EST", "CAN", "GRC", "SRB", "CHL"}
     assert bundle.research.data_cutoff.isoformat() == "2026-10-03"
 
     for code in ("CZE", "SVK"):
@@ -458,11 +458,11 @@ def test_fifa_fra_esp_batch_is_complete_and_temporally_dimensioned():
 
 def test_atp_complete_histories_are_evidence_resolvable_and_temporally_bounded():
     bundle = load_earth_research_bundle(Path("config/earth_research/atp_earth.json"))
-    expected_countries = {"CZE", "DEU", "USA", "AUS", "ESP", "SRB", "FRA", "GBR", "ARG", "JPN", "CAN", "ITA", "NED", "SWE", "SUI", "CRO", "POL", "CHN", "NOR", "GRE", "BEL", "ZAF", "DEN", "FIN", "NZL", "PRT", "IRL", "HUN", "ROU", "SVN", "SVK", "ISR", "BGR", "AUT", "TUR", "CYP", "BRA", "CHL", "COL", "MEX", "ECU", "IND", "KOR", "THA", "KAZ", "LVA", "EST", "LTU", "UKR", "MAR"}
+    expected_countries = {"CZE", "DEU", "USA", "AUS", "ESP", "SRB", "FRA", "GBR", "ARG", "JPN", "CAN", "ITA", "NED", "SWE", "SUI", "CRO", "POL", "CHN", "NOR", "GRE", "BEL", "ZAF", "DEN", "FIN", "NZL", "PRT", "IRL", "HUN", "ROU", "SVN", "SVK", "ISR", "BGR", "AUT", "TUR", "CYP", "BRA", "CHL", "COL", "MEX", "ECU", "IND", "KOR", "THA", "KAZ", "LVA", "EST", "LTU", "UKR", "MAR", "SEN"}
     assert set(bundle.research.countries) == expected_countries
     assert bundle.research.data_cutoff.isoformat() == "2026-10-04"
-    assert len(bundle.datasets) == 169
-    assert len(bundle.observations) == 480
+    assert len(bundle.datasets) == 173
+    assert len(bundle.observations) == 487
 
     expected_models = {
         "CZE": "atp-earth-cze-deu-seed-model.v1",
@@ -515,6 +515,7 @@ def test_atp_complete_histories_are_evidence_resolvable_and_temporally_bounded()
         "LTU": "atp-earth-ltu-model.v1",
         "UKR": "atp-earth-ukr-model.v1",
         "MAR": "atp-earth-mar-model.v1",
+        "SEN": "atp-earth-sen-model.v1",
     }
     for code, history in bundle.research.countries.items():
         assert history.missing_earth_years == []
@@ -1949,3 +1950,64 @@ def test_atp_mar_history_separates_pre_frmt_foundation_and_current_mandate():
     assert "atp-frmt-current-mandate-v1#mar-access-ranking-competition-2026" not in mar.years[2025].ratings["squash_access"].observation_ids
     assert "atp-frmt-current-mandate-v1#mar-access-ranking-competition-2026" in mar.years[2026].ratings["squash_access"].observation_ids
     assert max(r.value for r in mar.years[2026].ratings.values()) < 9.0
+
+
+
+def test_fifa_chl_history_keeps_global_and_2026_infrastructure_evidence_time_gated():
+    bundle = load_earth_research_bundle(Path("config/earth_research/fifa_earth.json"))
+    chl = bundle.research.countries["CHL"]
+
+    assert chl.missing_earth_years == []
+    assert len(chl.years) == 72
+    assert chl.reference_year == 2026
+
+    for year_number, year in chl.years.items():
+        for rating in year.ratings.values():
+            assert rating.calibration_model_id == "fifa-earth-chl-model.v1"
+            assert rating.observation_ids
+            assert all(item in bundle.observations for item in rating.observation_ids)
+            if year_number < 2006:
+                assert "fifa-big-count-2006" not in rating.source_ids
+            if year_number < 2023:
+                assert "fifa-professional-2023" not in rating.source_ids
+            if year_number < 2026:
+                assert "anfp-chile-forward-2026" not in rating.source_ids
+
+    assert "fifa-big-count-2006-registered-v2#chile" not in chl.years[2005].ratings["squash_access"].observation_ids
+    assert "fifa-big-count-2006-registered-v2#chile" in chl.years[2006].ratings["squash_access"].observation_ids
+    assert "fifa-professional-2023-clubs-v2#chile-p174" not in chl.years[2022].ratings["competition_quality"].observation_ids
+    assert "fifa-professional-2023-clubs-v2#chile-p174" in chl.years[2023].ratings["competition_quality"].observation_ids
+    assert "fifa-structural-chile-forward-2026-v1#chl-high-performance-complex-2026" not in chl.years[2025].ratings["development_quality"].observation_ids
+    assert "fifa-structural-chile-forward-2026-v1#chl-high-performance-complex-2026" in chl.years[2026].ratings["development_quality"].observation_ids
+    assert max(r.value for r in chl.years[2026].ratings.values()) < 9.0
+
+
+def test_atp_sen_history_preserves_1975_shift_decline_and_modern_recovery_gating():
+    bundle = load_earth_research_bundle(Path("config/earth_research/atp_earth.json"))
+    sen = bundle.research.countries["SEN"]
+
+    assert sen.missing_earth_years == []
+    assert len(sen.years) == 72
+    assert sen.reference_year == 2026
+    assert "French West Africa" in sen.years[1955].historical_entity
+    assert sen.years[1960].historical_entity == "Senegal"
+
+    for year in sen.years.values():
+        for rating in year.ratings.values():
+            assert rating.calibration_model_id == "atp-earth-sen-model.v1"
+            assert rating.observation_ids
+            assert all(item in bundle.observations for item in rating.observation_ids)
+
+    assert "atp-senegal-tennis-history-v1#sen-governance-transition-1975" not in sen.years[1974].ratings["elite_support"].observation_ids
+    assert "atp-senegal-tennis-history-v1#sen-governance-transition-1975" in sen.years[1975].ratings["elite_support"].observation_ids
+    assert sen.years[1985].ratings["development_quality"].value > sen.years[2001].ratings["development_quality"].value
+    assert "atp-senegal-tennis-history-v1#sen-development-decline-1985-2001" in sen.years[1985].ratings["development_quality"].observation_ids
+    assert "atp-senegal-tennis-history-v1#sen-development-decline-1985-2001" in sen.years[2001].ratings["competition_quality"].observation_ids
+    assert "atp-senegal-tennis-history-v1#sen-development-decline-1985-2001" not in sen.years[2002].ratings["development_quality"].observation_ids
+    assert "atp-fft-senegal-cooperation-2022-v1#sen-france-cooperation-2022" not in sen.years[2021].ratings["development_quality"].observation_ids
+    assert "atp-fft-senegal-cooperation-2022-v1#sen-france-cooperation-2022" in sen.years[2022].ratings["development_quality"].observation_ids
+    assert "atp-davis-cup-senegal-2025-v1#sen-africa-group-iii-promotion-2025" not in sen.years[2024].ratings["competition_quality"].observation_ids
+    assert "atp-davis-cup-senegal-2025-v1#sen-africa-group-iii-promotion-2025" in sen.years[2025].ratings["competition_quality"].observation_ids
+    assert "atp-itf-senegal-member-2026-v1#sen-itf-member-association-2026" not in sen.years[2025].ratings["squash_tradition"].observation_ids
+    assert "atp-itf-senegal-member-2026-v1#sen-itf-member-association-2026" in sen.years[2026].ratings["squash_tradition"].observation_ids
+    assert max(r.value for r in sen.years[2026].ratings.values()) < 9.0

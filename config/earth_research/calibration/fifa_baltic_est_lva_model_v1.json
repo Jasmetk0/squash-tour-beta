@@ -1,0 +1,142 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "fifa-earth-baltic-est-lva-model.v1",
+  "world_id": "fifa_earth",
+  "data_cutoff": "2026-10-03",
+  "countries": [
+    "EST",
+    "LVA"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "principles": [
+    "Soviet-era current-territory football never inherits USSR-wide counts or outcomes.",
+    "2006 and 2023 global FIFA observations are strictly temporally gated.",
+    "Restored association/international membership is represented as dated governance context, not an automatic score jump.",
+    "No held-out rankings or titles are tuning inputs."
+  ],
+  "anchor_values": {
+    "EST": {
+      "1955": [
+        6.5,
+        5.7,
+        6,
+        6.3,
+        5.8,
+        7.8
+      ],
+      "1988": [
+        6.8,
+        6,
+        6.2,
+        6.4,
+        6,
+        8.1
+      ],
+      "1991": [
+        6.9,
+        6.1,
+        6.3,
+        6.5,
+        6.2,
+        8.2
+      ],
+      "1992": [
+        6.9,
+        6.2,
+        6.4,
+        6.8,
+        6.5,
+        8.2
+      ],
+      "2006": [
+        7.6,
+        8,
+        7.8,
+        7.9,
+        7.8,
+        8.5
+      ],
+      "2023": [
+        7.7,
+        8,
+        8.2,
+        8.3,
+        8.2,
+        8.7
+      ],
+      "2026": [
+        7.7,
+        8,
+        8.3,
+        8.3,
+        8.3,
+        8.7
+      ]
+    },
+    "LVA": {
+      "1955": [
+        6.7,
+        5.5,
+        5.9,
+        6.4,
+        5.7,
+        7.9
+      ],
+      "1990": [
+        6.9,
+        5.7,
+        6,
+        6.5,
+        5.8,
+        8.1
+      ],
+      "1991": [
+        7,
+        5.8,
+        6.1,
+        6.4,
+        6,
+        8.2
+      ],
+      "1992": [
+        7,
+        5.9,
+        6.2,
+        6.7,
+        6.3,
+        8.2
+      ],
+      "2006": [
+        7.8,
+        7.2,
+        7.5,
+        7.9,
+        7.6,
+        8.5
+      ],
+      "2023": [
+        7.8,
+        7.2,
+        7.8,
+        8,
+        7.8,
+        8.7
+      ],
+      "2026": [
+        7.8,
+        7.3,
+        7.9,
+        8,
+        7.9,
+        8.7
+      ]
+    }
+  },
+  "evidence_sources": [
+    "ejl-history",
+    "lff-history",
+    "fifa-big-count-2006",
+    "fifa-professional-2023"
+  ],
+  "heldout_ranking_used": false
+}

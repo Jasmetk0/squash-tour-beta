@@ -428,11 +428,11 @@ def test_fifa_pyf_backcasts_do_not_claim_future_infrastructure_as_historical_sup
 
 def test_atp_complete_histories_are_evidence_resolvable_and_temporally_bounded():
     bundle = load_earth_research_bundle(Path("config/earth_research/atp_earth.json"))
-    expected_countries = {"CZE", "DEU", "USA", "AUS", "ESP", "SRB", "FRA", "GBR", "ARG", "JPN", "CAN", "ITA", "NED", "SWE", "SUI", "CRO", "POL", "CHN", "NOR", "GRE", "BEL", "ZAF", "DEN", "FIN", "NZL"}
+    expected_countries = {"CZE", "DEU", "USA", "AUS", "ESP", "SRB", "FRA", "GBR", "ARG", "JPN", "CAN", "ITA", "NED", "SWE", "SUI", "CRO", "POL", "CHN", "NOR", "GRE", "BEL", "ZAF", "DEN", "FIN", "NZL", "PRT", "IRL"}
     assert set(bundle.research.countries) == expected_countries
     assert bundle.research.data_cutoff.isoformat() == "2026-10-04"
-    assert len(bundle.datasets) == 79
-    assert len(bundle.observations) == 261
+    assert len(bundle.datasets) == 84
+    assert len(bundle.observations) == 275
 
     expected_models = {
         "CZE": "atp-earth-cze-deu-seed-model.v1",
@@ -460,6 +460,8 @@ def test_atp_complete_histories_are_evidence_resolvable_and_temporally_bounded()
         "DEN": "atp-earth-den-fin-nzl-model.v1",
         "FIN": "atp-earth-den-fin-nzl-model.v1",
         "NZL": "atp-earth-den-fin-nzl-model.v1",
+        "PRT": "atp-earth-prt-irl-model.v1",
+        "IRL": "atp-earth-prt-irl-model.v1",
     }
     for code, history in bundle.research.countries.items():
         assert history.missing_earth_years == []
@@ -869,4 +871,50 @@ def test_atp_den_fin_nzl_batch_is_complete_and_dimensionally_grounded():
     assert nzl.years[2026].ratings["squash_access"].confidence == "low"
     assert "atp-tennis-nz-pathway-2025-v1#nzl-planning-competition-2025" in (
         nzl.years[2026].ratings["competition_quality"].observation_ids
+    )
+
+
+def test_atp_prt_irl_batch_preserves_scope_and_temporal_evidence():
+    bundle = load_earth_research_bundle(Path("config/earth_research/atp_earth.json"))
+
+    for code in ("PRT", "IRL"):
+        history = bundle.research.countries[code]
+        assert history.missing_earth_years == []
+        assert len(history.years) == 72
+        for year in history.years.values():
+            assert len(year.ratings) == 6
+            for rating in year.ratings.values():
+                assert rating.calibration_model_id == "atp-earth-prt-irl-model.v1"
+                assert rating.observation_ids
+                assert all(item in bundle.observations for item in rating.observation_ids)
+
+    prt = bundle.research.countries["PRT"]
+    assert "atp-fpt-history-profile-v1#prt-practitioners-current-2026" not in (
+        prt.years[2025].ratings["squash_popularity"].observation_ids
+    )
+    assert "atp-fpt-history-profile-v1#prt-practitioners-current-2026" in (
+        prt.years[2026].ratings["squash_popularity"].observation_ids
+    )
+    assert "broad_participation_not_membership" in bundle.observations[
+        "atp-fpt-history-profile-v1#prt-practitioners-current-2026"
+    ].quality_flags
+    assert "atp-fpt-junior-national-2025-v1#prt-u16-national-field-2025" in (
+        prt.years[2025].ratings["competition_quality"].observation_ids
+    )
+
+    irl = bundle.research.countries["IRL"]
+    profile = bundle.observations["atp-tennis-ireland-profile-v1#irl-clubs-current-2026"]
+    assert profile.coverage_scope == "partial"
+    assert profile.territory_mapping_method == "current_country_partial_association_context"
+    assert "association_spans_northern_ireland" in profile.quality_flags
+    assert "Northern Ireland" in irl.years[2026].territory_mapping_note
+    assert irl.years[2026].ratings["squash_access"].confidence == "low"
+    assert "atp-tennis-ireland-performance-v1#irl-team-ireland-support-2020" not in (
+        irl.years[2019].ratings["elite_support"].observation_ids
+    )
+    assert "atp-tennis-ireland-performance-v1#irl-team-ireland-support-2020" in (
+        irl.years[2020].ratings["elite_support"].observation_ids
+    )
+    assert "atp-tennis-ireland-performance-v1#irl-national-pathway-2026" in (
+        irl.years[2026].ratings["competition_quality"].observation_ids
     )

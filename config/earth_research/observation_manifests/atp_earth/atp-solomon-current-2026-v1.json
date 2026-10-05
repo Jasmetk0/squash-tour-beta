@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-solomon-current-2026-v1",
+  "source_id": "otf-solomon-current-2026",
+  "relative_path": "observations/normalized/atp_solomon_current_2026_v1.json",
+  "sha256": "b22c628c9ace29ec354b407704e6f4a67d3bff89005eea39f51f631d70dc4aaa",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

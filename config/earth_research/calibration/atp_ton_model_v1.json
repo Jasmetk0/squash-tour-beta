@@ -1,0 +1,68 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "atp-earth-ton-model.v1",
+  "world_id": "atp_earth",
+  "data_cutoff": "2026-10-04",
+  "countries": [
+    "TON"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "evidence_rules": [
+    "1955–1958 is an explicitly low-confidence pre-association baseline derived from the ITF-recorded 1959 foundation year.",
+    "The 1959 association foundation and 2012 OTF membership are separately time-gated.",
+    "The 2024 East Pacific junior pathway is development/competition evidence, not a senior-player outcome target.",
+    "The 2026 OTF profile, including a development officer, is current-only.",
+    "No ranking or junior result is used as a calibration target."
+  ],
+  "anchor_values": {
+    "TON": {
+      "1955": [
+        2.5,
+        2.2,
+        2,
+        2.1,
+        2,
+        2.5
+      ],
+      "1959": [
+        3.8,
+        3.5,
+        3.4,
+        3.5,
+        3.4,
+        4.5
+      ],
+      "2012": [
+        4.5,
+        4.2,
+        4.3,
+        4.2,
+        4.2,
+        5.3
+      ],
+      "2024": [
+        5.1,
+        4.7,
+        5.2,
+        4.9,
+        5,
+        5.6
+      ],
+      "2026": [
+        5.2,
+        4.9,
+        5.4,
+        5,
+        5.2,
+        5.8
+      ]
+    }
+  },
+  "evidence_sources": [
+    "itf-pacific-associations-2015",
+    "otf-member-nations-2012",
+    "otf-tonga-juniors-2024",
+    "otf-tonga-current-2026"
+  ],
+  "heldout_ranking_used": false
+}

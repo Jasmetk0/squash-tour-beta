@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-stl-annual-2025-v1",
+  "source_id": "stl-annual-2025",
+  "relative_path": "observations/normalized/atp-stl-annual-2025-v1.json",
+  "sha256": "b69ebd5a72b4abe4d998b0e529401384eceef21fb1601f14cef180e7ef1690af",
+  "record_count": 3,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

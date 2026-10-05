@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-mtsz-history-v1",
+  "source_id": "mtsz-history",
+  "relative_path": "observations/normalized/atp-mtsz-history-v1.json",
+  "sha256": "64645e56e14306927080a24f3a166b1d2671adeec4f54f1eca90741e790fecc2",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

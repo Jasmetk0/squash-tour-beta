@@ -1,0 +1,24 @@
+{
+  "schema_version": "atp_earth_reviewed_country_batch.v1",
+  "model_id": "atp-earth-bra-chl-model.v1",
+  "created_on": "2026-10-05",
+  "countries": [
+    "BRA",
+    "CHL"
+  ],
+  "coverage": {
+    "from": 1955,
+    "to": 2026,
+    "attributes": 6
+  },
+  "rating_scale": "country_ratings_1_10.v2",
+  "method": "Country-specific piecewise annual histories grounded in federation history and temporally gated current competition/development structures.",
+  "evidence_rules": [
+    "Brazil's 1950 state-federation context and 1955 CBT foundation anchor institutional history; current affiliation, junior-regulation and coach-registry evidence is not backcast.",
+    "Chile's 1880s/1890s tennis roots, 1920 federation and 1927 ITF affiliation anchor tradition; JTI and junior-circuit reforms are gated to 2025/2026.",
+    "Programme capacity, affiliations and tournament structures are distinct from participation and player outcomes.",
+    "Competition quality is based on organised opportunity/system depth rather than direct conversion of elite-player success.",
+    "Historical interpolation remains lower-confidence where no contemporaneous national structural observation is available.",
+    "No held-out validation ranking is used for tuning."
+  ]
+}

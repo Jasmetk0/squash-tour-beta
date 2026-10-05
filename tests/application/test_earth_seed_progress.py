@@ -11,7 +11,7 @@ from beta_engine.application.earth_package_builder import load_earth_research_bu
 
 def test_fifa_first_reviewed_country_histories_are_complete_and_resolvable():
     bundle = load_earth_research_bundle(Path("config/earth_research/fifa_earth.json"))
-    assert set(bundle.research.countries) == {"CZE", "SVK", "JPN", "IND", "MAR", "SEN", "FRO", "USA", "ZAF", "BRA", "DEU", "ISL", "SMR", "ARG", "MEX", "AUS", "NZL", "FJI", "PNG", "SLB", "COK", "ASM", "PYF", "NCL", "WSM", "TON", "VUT", "FRA", "ESP", "ITA", "NLD", "BEL", "PRT", "AUT", "DNK", "SWE", "CHE", "NOR", "FIN", "HRV", "SVN", "POL", "ROU", "UKR", "LTU", "LVA", "EST", "CAN", "GRC", "SRB", "CHL", "HUN", "ISR", "BGR", "KAZ", "CHN", "TUR", "KOR", "THA", "COL", "CYP", "ECU", "IRL", "EGY", "MYS", "SAU", "ARE", "QAT", "OMN"}
+    assert set(bundle.research.countries) == {"CZE", "SVK", "JPN", "IND", "MAR", "SEN", "FRO", "USA", "ZAF", "BRA", "DEU", "ISL", "SMR", "ARG", "MEX", "AUS", "NZL", "FJI", "PNG", "SLB", "COK", "ASM", "PYF", "NCL", "WSM", "TON", "VUT", "FRA", "ESP", "ITA", "NLD", "BEL", "PRT", "AUT", "DNK", "SWE", "CHE", "NOR", "FIN", "HRV", "SVN", "POL", "ROU", "UKR", "LTU", "LVA", "EST", "CAN", "GRC", "SRB", "CHL", "HUN", "ISR", "BGR", "KAZ", "CHN", "TUR", "KOR", "THA", "COL", "CYP", "ECU", "IRL", "EGY", "MYS", "SAU", "ARE", "QAT", "OMN", "GHA", "NGA"}
     assert bundle.research.data_cutoff.isoformat() == "2026-10-03"
 
     for code in ("CZE", "SVK"):
@@ -458,11 +458,11 @@ def test_fifa_fra_esp_batch_is_complete_and_temporally_dimensioned():
 
 def test_atp_complete_histories_are_evidence_resolvable_and_temporally_bounded():
     bundle = load_earth_research_bundle(Path("config/earth_research/atp_earth.json"))
-    expected_countries = {"CZE", "DEU", "USA", "AUS", "ESP", "SRB", "FRA", "GBR", "ARG", "JPN", "CAN", "ITA", "NED", "SWE", "SUI", "CRO", "POL", "CHN", "NOR", "GRE", "BEL", "ZAF", "DEN", "FIN", "NZL", "PRT", "IRL", "HUN", "ROU", "SVN", "SVK", "ISR", "BGR", "AUT", "TUR", "CYP", "BRA", "CHL", "COL", "MEX", "ECU", "IND", "KOR", "THA", "KAZ", "LVA", "EST", "LTU", "UKR", "MAR", "SEN", "ISL", "SMR", "FRO", "FJI", "PNG", "WSM", "SLB", "TON", "COK", "NCL", "ASM", "VUT", "EGY", "MYS", "PHL", "IDN", "SGP", "PAK"}
+    expected_countries = {"CZE", "DEU", "USA", "AUS", "ESP", "SRB", "FRA", "GBR", "ARG", "JPN", "CAN", "ITA", "NED", "SWE", "SUI", "CRO", "POL", "CHN", "NOR", "GRE", "BEL", "ZAF", "DEN", "FIN", "NZL", "PRT", "IRL", "HUN", "ROU", "SVN", "SVK", "ISR", "BGR", "AUT", "TUR", "CYP", "BRA", "CHL", "COL", "MEX", "ECU", "IND", "KOR", "THA", "KAZ", "LVA", "EST", "LTU", "UKR", "MAR", "SEN", "ISL", "SMR", "FRO", "FJI", "PNG", "WSM", "SLB", "TON", "COK", "NCL", "ASM", "VUT", "EGY", "MYS", "PHL", "IDN", "SGP", "PAK", "GHA", "NGA"}
     assert set(bundle.research.countries) == expected_countries
     assert bundle.research.data_cutoff.isoformat() == "2026-10-04"
-    assert len(bundle.datasets) == 231
-    assert len(bundle.observations) == 581
+    assert len(bundle.datasets) == 237
+    assert len(bundle.observations) == 591
 
     expected_models = {
         "CZE": "atp-earth-cze-deu-seed-model.v1",
@@ -534,6 +534,8 @@ def test_atp_complete_histories_are_evidence_resolvable_and_temporally_bounded()
         "IDN": "atp-earth-idn-model.v1",
         "SGP": "atp-earth-sgp-model.v1",
         "PAK": "atp-earth-pak-model.v1",
+        "GHA": "atp-earth-gha-model.v1",
+        "NGA": "atp-earth-nga-model.v1",
     }
     for code, history in bundle.research.countries.items():
         assert history.missing_earth_years == []
@@ -2703,3 +2705,164 @@ def test_accelerated_qat_omn_sgp_pak_batch_is_complete_and_time_gated():
 
     for history in (qat, omn, sgp, pak):
         assert max(r.value for r in history.years[2026].ratings.values()) < 9.0
+
+def test_ghana_nigeria_dual_world_batch_is_complete_resolvable_and_time_gated():
+    fifa = load_earth_research_bundle(Path("config/earth_research/fifa_earth.json"))
+    atp = load_earth_research_bundle(Path("config/earth_research/atp_earth.json"))
+
+    assert len(fifa.research.countries) == 71
+    assert len(fifa.datasets) == 118
+    assert len(fifa.observations) == 1606
+    assert len(atp.research.countries) == 71
+    assert len(atp.datasets) == 237
+    assert len(atp.observations) == 591
+
+    for bundle, expected_models in (
+        (
+            fifa,
+            {
+                "GHA": "fifa-earth-gha-model.v1",
+                "NGA": "fifa-earth-nga-model.v1",
+            },
+        ),
+        (
+            atp,
+            {
+                "GHA": "atp-earth-gha-model.v1",
+                "NGA": "atp-earth-nga-model.v1",
+            },
+        ),
+    ):
+        for code, model_id in expected_models.items():
+            history = bundle.research.countries[code]
+            assert history.missing_earth_years == []
+            assert len(history.years) == 72
+            assert history.reference_year == 2026
+            for year in history.years.values():
+                assert len(year.ratings) == 6
+                for rating in year.ratings.values():
+                    assert rating.method == "derived_estimate"
+                    assert rating.calibration_model_id == model_id
+                    assert rating.observation_ids
+                    assert all(item in bundle.observations for item in rating.observation_ids)
+
+    # Ghana's CAF source chronology is intentionally preserved rather than silently
+    # repaired: the page gives CAF affiliation 1956 but association creation 1957.
+    gha_caf = fifa.observations[
+        "fifa-structural-ghana-history-v1#gha-caf-affiliation-1956"
+    ]
+    gha_created = fifa.observations[
+        "fifa-structural-ghana-history-v1#gha-created-1957"
+    ]
+    assert "source_internal_chronology_anomaly" in gha_caf.quality_flags
+    assert "source_internal_chronology_anomaly" in gha_created.quality_flags
+    assert (
+        "fifa-structural-ghana-history-v1#gha-caf-affiliation-1956"
+        not in fifa.research.countries["GHA"].years[1955]
+        .ratings["competition_quality"]
+        .observation_ids
+    )
+    assert (
+        "fifa-structural-ghana-history-v1#gha-caf-affiliation-1956"
+        in fifa.research.countries["GHA"].years[1956]
+        .ratings["competition_quality"]
+        .observation_ids
+    )
+
+    # Shared FIFA source families are strictly time gated.
+    assert (
+        "fifa-big-count-2006-all-players-v2#ghana"
+        not in fifa.research.countries["GHA"].years[2005]
+        .ratings["squash_popularity"]
+        .observation_ids
+    )
+    assert (
+        "fifa-big-count-2006-all-players-v2#ghana"
+        in fifa.research.countries["GHA"].years[2006]
+        .ratings["squash_popularity"]
+        .observation_ids
+    )
+    assert (
+        "fifa-professional-2023-players-v2#nigeria-p108"
+        not in fifa.research.countries["NGA"].years[2022]
+        .ratings["competition_quality"]
+        .observation_ids
+    )
+    assert (
+        "fifa-professional-2023-players-v2#nigeria-p108"
+        in fifa.research.countries["NGA"].years[2023]
+        .ratings["competition_quality"]
+        .observation_ids
+    )
+
+    # Nigeria's institutional chronology also enters only at its stated dates.
+    nga_fifa = fifa.research.countries["NGA"]
+    assert (
+        "fifa-structural-nigeria-history-v1#nga-caf-affiliation-1957"
+        not in nga_fifa.years[1956].ratings["competition_quality"].observation_ids
+    )
+    assert (
+        "fifa-structural-nigeria-history-v1#nga-caf-affiliation-1957"
+        in nga_fifa.years[1957].ratings["competition_quality"].observation_ids
+    )
+    assert (
+        "fifa-structural-nigeria-history-v1#nga-fifa-affiliation-1960"
+        not in nga_fifa.years[1959].ratings["competition_quality"].observation_ids
+    )
+    assert (
+        "fifa-structural-nigeria-history-v1#nga-fifa-affiliation-1960"
+        in nga_fifa.years[1960].ratings["competition_quality"].observation_ids
+    )
+
+    # The historical tennis anchors are explicitly secondary-source evidence.
+    assert "secondary_source" in atp.observations[
+        "atp-ghana-history-v1#gha-amateur-lawn-tennis-association-1952"
+    ].quality_flags
+    assert "secondary_source" in atp.observations[
+        "atp-nigeria-history-v1#nga-association-formed-1954"
+    ].quality_flags
+
+    gha_atp = atp.research.countries["GHA"]
+    assert (
+        "atp-ghana-current-v1#gha-junior-championships-2024"
+        not in gha_atp.years[2023].ratings["development_quality"].observation_ids
+    )
+    assert (
+        "atp-ghana-current-v1#gha-junior-championships-2024"
+        in gha_atp.years[2024].ratings["development_quality"].observation_ids
+    )
+    assert (
+        "atp-ghana-current-v1#gha-davis-zone-iii-2026"
+        not in gha_atp.years[2025].ratings["competition_quality"].observation_ids
+    )
+    assert (
+        "atp-ghana-masters-2026-v1#gha-mt100-hosting-2026"
+        not in gha_atp.years[2025].ratings["competition_quality"].observation_ids
+    )
+    assert (
+        "atp-ghana-current-v1#gha-davis-zone-iii-2026"
+        in gha_atp.years[2026].ratings["competition_quality"].observation_ids
+    )
+    assert (
+        "atp-ghana-masters-2026-v1#gha-mt100-hosting-2026"
+        in gha_atp.years[2026].ratings["competition_quality"].observation_ids
+    )
+
+    nga_atp = atp.research.countries["NGA"]
+    assert (
+        "atp-nigeria-governance-2025-v1#nga-development-programmes-2025"
+        not in nga_atp.years[2024].ratings["development_quality"].observation_ids
+    )
+    assert (
+        "atp-nigeria-governance-2025-v1#nga-development-programmes-2025"
+        in nga_atp.years[2025].ratings["development_quality"].observation_ids
+    )
+    assert (
+        "atp-nigeria-m25-2026-v1#nga-m25-lagos-2026"
+        not in nga_atp.years[2025].ratings["competition_quality"].observation_ids
+    )
+    assert (
+        "atp-nigeria-m25-2026-v1#nga-m25-lagos-2026"
+        in nga_atp.years[2026].ratings["competition_quality"].observation_ids
+    )
+

@@ -6731,9 +6731,9 @@
           "calibration_model_id": "atp-earth-nor-gre-bel-rsa-model.v1"
         },
         "competition_quality": {
-          "value": 8.8,
+          "value": 7.2,
           "method": "derived_estimate",
-          "confidence": "medium",
+          "confidence": "low",
           "source_ids": [
             "sa-tennis-history-secondary",
             "atp-kevin-anderson"
@@ -6742,7 +6742,7 @@
             "atp-sa-history-v1#zaf-first-championship-1891",
             "atp-kevin-anderson-v1#zaf-us-open-final-2017"
           ],
-          "rationale": "ATP Earth ZAF competition quality estimate for 2017. The 1-10 value is project-authored for the South Africa tennis environment; cited facts are evidence/context rather than measured game ratings. Before Anderson's peak, current programme evidence is not backcast into competition quality.",
+          "rationale": "ATP Earth ZAF competition quality estimate for 2017. The 1-10 value is project-authored for the men's tennis environment; cited facts are evidence/context rather than measured game ratings. South Africa's current federation structure explicitly includes tournament structures and events, which is direct environment evidence for organised competition availability. Anderson's 2017–18 elite results are retained as outcome context rather than used as a direct proxy for the whole competition system.",
           "anchor_years": [
             2017
           ],
@@ -6842,9 +6842,9 @@
           "calibration_model_id": "atp-earth-nor-gre-bel-rsa-model.v1"
         },
         "competition_quality": {
-          "value": 9.3,
+          "value": 7.4,
           "method": "derived_estimate",
-          "confidence": "medium",
+          "confidence": "low",
           "source_ids": [
             "sa-tennis-history-secondary",
             "atp-kevin-anderson"
@@ -6855,7 +6855,7 @@
             "atp-kevin-anderson-v1#zaf-career-high-2018",
             "atp-kevin-anderson-v1#zaf-wimbledon-final-2018"
           ],
-          "rationale": "ATP Earth ZAF competition quality estimate for 2018. The 1-10 value is project-authored for the South Africa tennis environment; cited facts are evidence/context rather than measured game ratings. Anderson's 2017 US Open final, 2018 Wimbledon final and No. 5 peak support the modern elite peak; development-centre evidence remains separate.",
+          "rationale": "ATP Earth ZAF competition quality estimate for 2018. The 1-10 value is project-authored for the men's tennis environment; cited facts are evidence/context rather than measured game ratings. South Africa's current federation structure explicitly includes tournament structures and events, which is direct environment evidence for organised competition availability. Anderson's 2017–18 elite results are retained as outcome context rather than used as a direct proxy for the whole competition system.",
           "anchor_years": [
             2018
           ],
@@ -6960,9 +6960,9 @@
           "calibration_model_id": "atp-earth-nor-gre-bel-rsa-model.v1"
         },
         "competition_quality": {
-          "value": 9.1,
+          "value": 7.4,
           "method": "derived_estimate",
-          "confidence": "medium",
+          "confidence": "low",
           "source_ids": [
             "sa-tennis-history-secondary",
             "atp-kevin-anderson"
@@ -6973,7 +6973,7 @@
             "atp-kevin-anderson-v1#zaf-career-high-2018",
             "atp-kevin-anderson-v1#zaf-wimbledon-final-2018"
           ],
-          "rationale": "ATP Earth ZAF competition quality estimate for 2019. The 1-10 value is project-authored for the South Africa tennis environment; cited facts are evidence/context rather than measured game ratings. Anderson's 2017 US Open final, 2018 Wimbledon final and No. 5 peak support the modern elite peak; development-centre evidence remains separate.",
+          "rationale": "ATP Earth ZAF competition quality estimate for 2019. The 1-10 value is project-authored for the men's tennis environment; cited facts are evidence/context rather than measured game ratings. South Africa's current federation structure explicitly includes tournament structures and events, which is direct environment evidence for organised competition availability. Anderson's 2017–18 elite results are retained as outcome context rather than used as a direct proxy for the whole competition system.",
           "anchor_years": [
             2018,
             2026
@@ -7084,9 +7084,9 @@
           "calibration_model_id": "atp-earth-nor-gre-bel-rsa-model.v1"
         },
         "competition_quality": {
-          "value": 8.9,
+          "value": 7.3,
           "method": "derived_estimate",
-          "confidence": "medium",
+          "confidence": "low",
           "source_ids": [
             "sa-tennis-history-secondary",
             "atp-kevin-anderson"
@@ -7097,7 +7097,7 @@
             "atp-kevin-anderson-v1#zaf-career-high-2018",
             "atp-kevin-anderson-v1#zaf-wimbledon-final-2018"
           ],
-          "rationale": "ATP Earth ZAF competition quality estimate for 2020. The 1-10 value is project-authored for the South Africa tennis environment; cited facts are evidence/context rather than measured game ratings. Anderson's 2017 US Open final, 2018 Wimbledon final and No. 5 peak support the modern elite peak; development-centre evidence remains separate.",
+          "rationale": "ATP Earth ZAF competition quality estimate for 2020. The 1-10 value is project-authored for the men's tennis environment; cited facts are evidence/context rather than measured game ratings. South Africa's current federation structure explicitly includes tournament structures and events, which is direct environment evidence for organised competition availability. Anderson's 2017–18 elite results are retained as outcome context rather than used as a direct proxy for the whole competition system.",
           "anchor_years": [
             2018,
             2026
@@ -7209,9 +7209,9 @@
           "calibration_model_id": "atp-earth-nor-gre-bel-rsa-model.v1"
         },
         "competition_quality": {
-          "value": 8.6,
+          "value": 7.2,
           "method": "derived_estimate",
-          "confidence": "medium",
+          "confidence": "low",
           "source_ids": [
             "sa-tennis-history-secondary",
             "atp-kevin-anderson"
@@ -7222,7 +7222,7 @@
             "atp-kevin-anderson-v1#zaf-career-high-2018",
             "atp-kevin-anderson-v1#zaf-wimbledon-final-2018"
           ],
-          "rationale": "ATP Earth ZAF competition quality estimate for 2021. The 1-10 value is project-authored for the South Africa tennis environment; cited facts are evidence/context rather than measured game ratings. Anderson's 2017 US Open final, 2018 Wimbledon final and No. 5 peak support the modern elite peak; development-centre evidence remains separate.",
+          "rationale": "ATP Earth ZAF competition quality estimate for 2021. The 1-10 value is project-authored for the men's tennis environment; cited facts are evidence/context rather than measured game ratings. South Africa's current federation structure explicitly includes tournament structures and events, which is direct environment evidence for organised competition availability. Anderson's 2017–18 elite results are retained as outcome context rather than used as a direct proxy for the whole competition system.",
           "anchor_years": [
             2018,
             2026
@@ -7334,9 +7334,9 @@
           "calibration_model_id": "atp-earth-nor-gre-bel-rsa-model.v1"
         },
         "competition_quality": {
-          "value": 8.4,
+          "value": 7.1,
           "method": "derived_estimate",
-          "confidence": "medium",
+          "confidence": "low",
           "source_ids": [
             "sa-tennis-history-secondary",
             "atp-kevin-anderson"
@@ -7347,7 +7347,7 @@
             "atp-kevin-anderson-v1#zaf-career-high-2018",
             "atp-kevin-anderson-v1#zaf-wimbledon-final-2018"
           ],
-          "rationale": "ATP Earth ZAF competition quality estimate for 2022. The 1-10 value is project-authored for the South Africa tennis environment; cited facts are evidence/context rather than measured game ratings. Anderson's 2017 US Open final, 2018 Wimbledon final and No. 5 peak support the modern elite peak; development-centre evidence remains separate.",
+          "rationale": "ATP Earth ZAF competition quality estimate for 2022. The 1-10 value is project-authored for the men's tennis environment; cited facts are evidence/context rather than measured game ratings. South Africa's current federation structure explicitly includes tournament structures and events, which is direct environment evidence for organised competition availability. Anderson's 2017–18 elite results are retained as outcome context rather than used as a direct proxy for the whole competition system.",
           "anchor_years": [
             2018,
             2026
@@ -7459,9 +7459,9 @@
           "calibration_model_id": "atp-earth-nor-gre-bel-rsa-model.v1"
         },
         "competition_quality": {
-          "value": 8.2,
+          "value": 7,
           "method": "derived_estimate",
-          "confidence": "medium",
+          "confidence": "low",
           "source_ids": [
             "sa-tennis-history-secondary",
             "atp-kevin-anderson"
@@ -7472,7 +7472,7 @@
             "atp-kevin-anderson-v1#zaf-career-high-2018",
             "atp-kevin-anderson-v1#zaf-wimbledon-final-2018"
           ],
-          "rationale": "ATP Earth ZAF competition quality estimate for 2023. The 1-10 value is project-authored for the South Africa tennis environment; cited facts are evidence/context rather than measured game ratings. Anderson's 2017 US Open final, 2018 Wimbledon final and No. 5 peak support the modern elite peak; development-centre evidence remains separate.",
+          "rationale": "ATP Earth ZAF competition quality estimate for 2023. The 1-10 value is project-authored for the men's tennis environment; cited facts are evidence/context rather than measured game ratings. South Africa's current federation structure explicitly includes tournament structures and events, which is direct environment evidence for organised competition availability. Anderson's 2017–18 elite results are retained as outcome context rather than used as a direct proxy for the whole competition system.",
           "anchor_years": [
             2018,
             2026
@@ -7584,9 +7584,9 @@
           "calibration_model_id": "atp-earth-nor-gre-bel-rsa-model.v1"
         },
         "competition_quality": {
-          "value": 8,
+          "value": 6.9,
           "method": "derived_estimate",
-          "confidence": "medium",
+          "confidence": "low",
           "source_ids": [
             "sa-tennis-history-secondary",
             "atp-kevin-anderson"
@@ -7597,7 +7597,7 @@
             "atp-kevin-anderson-v1#zaf-career-high-2018",
             "atp-kevin-anderson-v1#zaf-wimbledon-final-2018"
           ],
-          "rationale": "ATP Earth ZAF competition quality estimate for 2024. The 1-10 value is project-authored for the South Africa tennis environment; cited facts are evidence/context rather than measured game ratings. Anderson's 2017 US Open final, 2018 Wimbledon final and No. 5 peak support the modern elite peak; development-centre evidence remains separate.",
+          "rationale": "ATP Earth ZAF competition quality estimate for 2024. The 1-10 value is project-authored for the men's tennis environment; cited facts are evidence/context rather than measured game ratings. South Africa's current federation structure explicitly includes tournament structures and events, which is direct environment evidence for organised competition availability. Anderson's 2017–18 elite results are retained as outcome context rather than used as a direct proxy for the whole competition system.",
           "anchor_years": [
             2018,
             2026
@@ -7709,9 +7709,9 @@
           "calibration_model_id": "atp-earth-nor-gre-bel-rsa-model.v1"
         },
         "competition_quality": {
-          "value": 7.7,
+          "value": 6.9,
           "method": "derived_estimate",
-          "confidence": "medium",
+          "confidence": "low",
           "source_ids": [
             "sa-tennis-history-secondary",
             "atp-kevin-anderson"
@@ -7722,7 +7722,7 @@
             "atp-kevin-anderson-v1#zaf-career-high-2018",
             "atp-kevin-anderson-v1#zaf-wimbledon-final-2018"
           ],
-          "rationale": "ATP Earth ZAF competition quality estimate for 2025. The 1-10 value is project-authored for the South Africa tennis environment; cited facts are evidence/context rather than measured game ratings. Anderson's 2017 US Open final, 2018 Wimbledon final and No. 5 peak support the modern elite peak; development-centre evidence remains separate.",
+          "rationale": "ATP Earth ZAF competition quality estimate for 2025. The 1-10 value is project-authored for the men's tennis environment; cited facts are evidence/context rather than measured game ratings. South Africa's current federation structure explicitly includes tournament structures and events, which is direct environment evidence for organised competition availability. Anderson's 2017–18 elite results are retained as outcome context rather than used as a direct proxy for the whole competition system.",
           "anchor_years": [
             2018,
             2026
@@ -7837,20 +7837,22 @@
           "calibration_model_id": "atp-earth-nor-gre-bel-rsa-model.v1"
         },
         "competition_quality": {
-          "value": 7.5,
+          "value": 7.2,
           "method": "derived_estimate",
           "confidence": "medium",
           "source_ids": [
             "sa-tennis-history-secondary",
-            "atp-kevin-anderson"
+            "atp-kevin-anderson",
+            "tsa-structure"
           ],
           "observation_ids": [
             "atp-sa-history-v1#zaf-first-championship-1891",
             "atp-kevin-anderson-v1#zaf-us-open-final-2017",
             "atp-kevin-anderson-v1#zaf-career-high-2018",
-            "atp-kevin-anderson-v1#zaf-wimbledon-final-2018"
+            "atp-kevin-anderson-v1#zaf-wimbledon-final-2018",
+            "atp-tsa-structure-v1#zaf-head-office-divisions-2026"
           ],
-          "rationale": "ATP Earth ZAF competition quality estimate for 2026. The 1-10 value is project-authored for the South Africa tennis environment; cited facts are evidence/context rather than measured game ratings. Anderson's 2017 US Open final, 2018 Wimbledon final and No. 5 peak support the modern elite peak; development-centre evidence remains separate.",
+          "rationale": "ATP Earth ZAF competition quality estimate for 2026. The 1-10 value is project-authored for the men's tennis environment; cited facts are evidence/context rather than measured game ratings. South Africa's current federation structure explicitly includes tournament structures and events, which is direct environment evidence for organised competition availability. Anderson's 2017–18 elite results are retained as outcome context rather than used as a direct proxy for the whole competition system.",
           "anchor_years": [
             2026
           ],

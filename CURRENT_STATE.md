@@ -1,5 +1,34 @@
 # Current implementation and next action
 
+## Current — Tanzania/Zambia dual-world Earth batch (5 October 2026)
+
+- Based directly on merged `buuk` commit
+  `cc8c1208342427e6a72f73db2851f40564b7052b` (#1206); this remains an independent
+  coverage PR rather than a dependent stack.
+- New complete histories in both worlds: **Tanzania (TZA) and Zambia (ZMB)**.
+- FIFA Earth now resolves **75 / 250** complete histories and **122 datasets /
+  1,615 normalized observations**.
+- ATP Earth now resolves **75 / 250** complete histories and **247 datasets /
+  606 normalized observations**.
+- The batch adds **1,728 authored annual attribute ratings** across four histories
+  (4 × 72 years × 6 attributes).
+- FIFA 2023 professional-player counts for Tanzania and Zambia are absent from the
+  checked-in source family and remain absent; only published professional-club
+  observations are used.
+- ATP Tanzania and Zambia explicitly distinguish low-confidence pre-documented
+  history from later direct governance/development/competition evidence. Zambia's
+  12-year ITF membership hiatus is not treated as zero tennis activity.
+- Official package publication remains blocked until **250 / 250** in each world.
+  Installed packages, ordinary historical-profile editing and complete initial-player
+  historical-environment integration remain unfinished.
+
+**Next after green CI:** continue another evidence-backed coverage batch directly
+from the merged result; keep PRs independent and shallow.
+
+> Older Current/Candidate entries below are implementation history and do not
+> override this section.
+
+
 ## Current — Kenya/Uganda dual-world Earth batch (5 October 2026)
 
 - Based directly on merged `buuk` commit

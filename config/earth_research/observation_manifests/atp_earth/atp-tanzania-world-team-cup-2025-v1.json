@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-tanzania-world-team-cup-2025-v1",
+  "source_id": "itf-tanzania-world-team-cup-2025",
+  "relative_path": "observations/normalized/atp_tanzania_world_team_cup_2025_v1.json",
+  "sha256": "c51b41c16611a91587e81d99ecdaf82172f39640b42a76da9b0be9d03596e1d5",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

@@ -11,11 +11,11 @@ from beta_engine.application.earth_package_builder import load_earth_research_bu
 
 def test_fifa_first_reviewed_country_histories_are_complete_and_resolvable():
     bundle = load_earth_research_bundle(Path("config/earth_research/fifa_earth.json"))
-    assert set(bundle.research.countries) == {"CZE", "SVK", "JPN", "IND", "MAR", "SEN", "FRO", "USA", "ZAF", "BRA", "DEU", "ISL", "SMR", "ARG", "MEX", "AUS", "NZL", "FJI", "PNG", "SLB", "COK", "ASM", "PYF", "NCL", "WSM", "TON", "VUT", "FRA", "ESP", "ITA", "NLD", "BEL", "PRT", "AUT", "DNK", "SWE", "CHE", "NOR", "FIN", "HRV", "SVN", "POL", "ROU", "UKR", "LTU", "LVA", "EST", "CAN", "GRC", "SRB", "CHL", "HUN", "ISR", "BGR", "KAZ", "CHN", "TUR", "KOR", "THA", "COL", "CYP", "ECU", "IRL", "EGY", "MYS", "SAU", "ARE", "QAT", "OMN", "GHA", "NGA", "KEN", "UGA"}
+    assert set(bundle.research.countries) == {"CZE", "SVK", "JPN", "IND", "MAR", "SEN", "FRO", "USA", "ZAF", "BRA", "DEU", "ISL", "SMR", "ARG", "MEX", "AUS", "NZL", "FJI", "PNG", "SLB", "COK", "ASM", "PYF", "NCL", "WSM", "TON", "VUT", "FRA", "ESP", "ITA", "NLD", "BEL", "PRT", "AUT", "DNK", "SWE", "CHE", "NOR", "FIN", "HRV", "SVN", "POL", "ROU", "UKR", "LTU", "LVA", "EST", "CAN", "GRC", "SRB", "CHL", "HUN", "ISR", "BGR", "KAZ", "CHN", "TUR", "KOR", "THA", "COL", "CYP", "ECU", "IRL", "EGY", "MYS", "SAU", "ARE", "QAT", "OMN", "GHA", "NGA", "KEN", "UGA", "TZA", "ZMB"}
     assert bundle.research.data_cutoff.isoformat() == "2026-10-03"
-    assert len(bundle.research.countries) == 73
-    assert len(bundle.datasets) == 120
-    assert len(bundle.observations) == 1611
+    assert len(bundle.research.countries) == 75
+    assert len(bundle.datasets) == 122
+    assert len(bundle.observations) == 1615
 
     for code in ("CZE", "SVK"):
         history = bundle.research.countries[code]
@@ -461,11 +461,11 @@ def test_fifa_fra_esp_batch_is_complete_and_temporally_dimensioned():
 
 def test_atp_complete_histories_are_evidence_resolvable_and_temporally_bounded():
     bundle = load_earth_research_bundle(Path("config/earth_research/atp_earth.json"))
-    expected_countries = {"CZE", "DEU", "USA", "AUS", "ESP", "SRB", "FRA", "GBR", "ARG", "JPN", "CAN", "ITA", "NED", "SWE", "SUI", "CRO", "POL", "CHN", "NOR", "GRE", "BEL", "ZAF", "DEN", "FIN", "NZL", "PRT", "IRL", "HUN", "ROU", "SVN", "SVK", "ISR", "BGR", "AUT", "TUR", "CYP", "BRA", "CHL", "COL", "MEX", "ECU", "IND", "KOR", "THA", "KAZ", "LVA", "EST", "LTU", "UKR", "MAR", "SEN", "ISL", "SMR", "FRO", "FJI", "PNG", "WSM", "SLB", "TON", "COK", "NCL", "ASM", "VUT", "EGY", "MYS", "PHL", "IDN", "SGP", "PAK", "GHA", "NGA", "KEN", "UGA"}
+    expected_countries = {"CZE", "DEU", "USA", "AUS", "ESP", "SRB", "FRA", "GBR", "ARG", "JPN", "CAN", "ITA", "NED", "SWE", "SUI", "CRO", "POL", "CHN", "NOR", "GRE", "BEL", "ZAF", "DEN", "FIN", "NZL", "PRT", "IRL", "HUN", "ROU", "SVN", "SVK", "ISR", "BGR", "AUT", "TUR", "CYP", "BRA", "CHL", "COL", "MEX", "ECU", "IND", "KOR", "THA", "KAZ", "LVA", "EST", "LTU", "UKR", "MAR", "SEN", "ISL", "SMR", "FRO", "FJI", "PNG", "WSM", "SLB", "TON", "COK", "NCL", "ASM", "VUT", "EGY", "MYS", "PHL", "IDN", "SGP", "PAK", "GHA", "NGA", "KEN", "UGA", "TZA", "ZMB"}
     assert set(bundle.research.countries) == expected_countries
     assert bundle.research.data_cutoff.isoformat() == "2026-10-04"
-    assert len(bundle.datasets) == 242
-    assert len(bundle.observations) == 597
+    assert len(bundle.datasets) == 247
+    assert len(bundle.observations) == 606
 
     expected_models = {
         "CZE": "atp-earth-cze-deu-seed-model.v1",
@@ -541,6 +541,8 @@ def test_atp_complete_histories_are_evidence_resolvable_and_temporally_bounded()
         "NGA": "atp-earth-nga-model.v1",
         "KEN": "atp-earth-ken-model.v1",
         "UGA": "atp-earth-uga-model.v1",
+        "TZA": "atp-earth-tza-model.v1",
+        "ZMB": "atp-earth-zmb-model.v1",
     }
     for code, history in bundle.research.countries.items():
         assert history.missing_earth_years == []
@@ -2997,5 +2999,144 @@ def test_kenya_uganda_dual_world_batch_is_complete_resolvable_and_time_gated():
     assert (
         "atp-uganda-registration-2026-v1#uga-national-registration-2026"
         in uga_atp.years[2026].ratings["elite_support"].observation_ids
+    )
+
+def test_tanzania_zambia_dual_world_batch_is_complete_resolvable_and_time_gated():
+    fifa = load_earth_research_bundle(Path("config/earth_research/fifa_earth.json"))
+    atp = load_earth_research_bundle(Path("config/earth_research/atp_earth.json"))
+
+    for bundle, expected_models in (
+        (
+            fifa,
+            {
+                "TZA": "fifa-earth-tza-model.v1",
+                "ZMB": "fifa-earth-zmb-model.v1",
+            },
+        ),
+        (
+            atp,
+            {
+                "TZA": "atp-earth-tza-model.v1",
+                "ZMB": "atp-earth-zmb-model.v1",
+            },
+        ),
+    ):
+        for code, model_id in expected_models.items():
+            history = bundle.research.countries[code]
+            assert history.missing_earth_years == []
+            assert len(history.years) == 72
+            assert history.reference_year == 2026
+            for year in history.years.values():
+                assert len(year.ratings) == 6
+                for rating in year.ratings.values():
+                    assert rating.method == "derived_estimate"
+                    assert rating.calibration_model_id == model_id
+                    assert rating.observation_ids
+                    assert all(item in bundle.observations for item in rating.observation_ids)
+
+    tza_fifa = fifa.research.countries["TZA"]
+    assert (
+        "fifa-structural-tanzania-history-v1#tza-fifa-caf-1964"
+        not in tza_fifa.years[1963].ratings["competition_quality"].observation_ids
+    )
+    assert (
+        "fifa-structural-tanzania-history-v1#tza-fifa-caf-1964"
+        in tza_fifa.years[1964].ratings["competition_quality"].observation_ids
+    )
+    assert (
+        "fifa-big-count-2006-all-players-v2#tanzania"
+        not in tza_fifa.years[2005].ratings["squash_popularity"].observation_ids
+    )
+    assert (
+        "fifa-big-count-2006-all-players-v2#tanzania"
+        in tza_fifa.years[2006].ratings["squash_popularity"].observation_ids
+    )
+    assert (
+        "fifa-professional-2023-clubs-v2#tanzania-p118"
+        not in tza_fifa.years[2022].ratings["competition_quality"].observation_ids
+    )
+    assert (
+        "fifa-professional-2023-clubs-v2#tanzania-p118"
+        in tza_fifa.years[2023].ratings["competition_quality"].observation_ids
+    )
+    assert all(
+        "fifa-professional-2023-players-v2#tanzania" not in observation_id
+        for year in tza_fifa.years.values()
+        for rating in year.ratings.values()
+        for observation_id in rating.observation_ids
+    )
+
+    zmb_fifa = fifa.research.countries["ZMB"]
+    assert (
+        "fifa-structural-zambia-history-v1#zmb-fifa-caf-1964"
+        not in zmb_fifa.years[1963].ratings["competition_quality"].observation_ids
+    )
+    assert (
+        "fifa-structural-zambia-history-v1#zmb-fifa-caf-1964"
+        in zmb_fifa.years[1964].ratings["competition_quality"].observation_ids
+    )
+    assert (
+        "fifa-professional-2023-clubs-v2#zambia-p122"
+        not in zmb_fifa.years[2022].ratings["competition_quality"].observation_ids
+    )
+    assert (
+        "fifa-professional-2023-clubs-v2#zambia-p122"
+        in zmb_fifa.years[2023].ratings["competition_quality"].observation_ids
+    )
+    assert all(
+        "fifa-professional-2023-players-v2#zambia" not in observation_id
+        for year in zmb_fifa.years.values()
+        for rating in year.ratings.values()
+        for observation_id in rating.observation_ids
+    )
+
+    tza_atp = atp.research.countries["TZA"]
+    assert "derived_pre_evidence_context" in atp.observations[
+        "atp-tanzania-membership-v1#tza-pre-documented-baseline-1955-2014"
+    ].quality_flags
+    assert (
+        "atp-tanzania-membership-v1#tza-itf-member-2015"
+        not in tza_atp.years[2014].ratings["squash_tradition"].observation_ids
+    )
+    assert (
+        "atp-tanzania-membership-v1#tza-itf-member-2015"
+        in tza_atp.years[2015].ratings["squash_tradition"].observation_ids
+    )
+    assert (
+        "atp-tanzania-world-team-cup-2025-v1#tza-womens-world-group-2025"
+        not in tza_atp.years[2024].ratings["competition_quality"].observation_ids
+    )
+    assert (
+        "atp-tanzania-world-team-cup-2025-v1#tza-womens-world-group-2025"
+        in tza_atp.years[2025].ratings["competition_quality"].observation_ids
+    )
+
+    zmb_atp = atp.research.countries["ZMB"]
+    assert "derived_pre_evidence_context" in atp.observations[
+        "atp-zambia-history-v1#zmb-pre-documented-baseline-1955-2006"
+    ].quality_flags
+    assert (
+        "atp-zambia-history-v1#zmb-active-association-2007"
+        not in zmb_atp.years[2006].ratings["squash_tradition"].observation_ids
+    )
+    assert (
+        "atp-zambia-history-v1#zmb-active-association-2007"
+        in zmb_atp.years[2007].ratings["squash_tradition"].observation_ids
+    )
+    assert (
+        "atp-zambia-reinstatement-2025-v1#zmb-itf-reinstated-2025"
+        not in zmb_atp.years[2024].ratings["elite_support"].observation_ids
+    )
+    assert (
+        "atp-zambia-reinstatement-2025-v1#zmb-itf-reinstated-2025"
+        in zmb_atp.years[2025].ratings["elite_support"].observation_ids
+    )
+    assert (
+        "atp-zambia-j30-2026-v1#zmb-j30-hosting-2026"
+        not in zmb_atp.years[2025].ratings["competition_quality"].observation_ids
+    )
+    assert (
+        "atp-zambia-j30-2026-v1#zmb-j30-hosting-2026"
+        in zmb_atp.years[2026].ratings["competition_quality"].observation_ids
     )
 

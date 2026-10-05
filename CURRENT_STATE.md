@@ -5079,3 +5079,18 @@ bands should shape 0..200 potential. No threshold is inferred from current OVR v
 - American Samoa uses an explicit **1955–1984 low-confidence pre-association baseline** and derives the **1985** ASTA foundation from the American Samoa Government's 2025 40-year anniversary statement; 2019 Pacific Games, 2025 Pacific Nations Cup hosting and 2026 OTF/AO Pathway evidence are separately gated.
 - Vanuatu deliberately avoids backcasting modern federation capacity before the first direct VTF operational evidence in **2010**; the 2014 Kindy Tennis school programme, 2019 Pacific Games and 2026 OTF/AO Pathway/Pacific Oceania Davis Cup signals are separately gated.
 - No rankings, titles or match outcomes are calibration targets. Official package publication remains blocked by the intentional **250 / 250** completeness requirement.
+
+
+
+## Candidate — accelerated Egypt/Malaysia dual-world batch (5 October 2026)
+
+- New complete FIFA histories: **Egypt (EGY)** and **Malaysia (MYS)**.
+- New complete ATP histories: **Egypt (EGY)** and **Malaysia (MYS)**.
+- New ratings: 4 × 72 × 6 = **1,728**; both FIFA Earth and ATP Earth move **63 -> 65 / 250 complete histories (26.0%)**.
+- FIFA adds **6 structural datasets / 10 direct observations**, taking FIFA research from **104 datasets / 1,571 observations** to **110 datasets / 1,581 observations**.
+- Egypt preserves EFA creation in 1921, FIFA affiliation in 1923 and CAF affiliation in 1957, while Big Count 2006, the 2021 headquarters and Professional 2023 evidence are separately gated.
+- Malaysia treats pre-1963 Football Association of Malaya history as partial lineage rather than assuming equal Sabah/Sarawak coverage; Big Count 2006, FAM statutes/Professional 2023 and Football for Schools/National Training Centre 2023–2024 are separately gated.
+- ATP adds **4 datasets / 11 observations**, taking ATP research from **214 datasets / 550 observations** to **218 datasets / 561 observations**.
+- Egyptian tennis preserves the 1907 Egypt International, 1920 federation and 1945 registration as deep-history anchors, with the 1976 federation-name transition and 2024 national club league separately gated.
+- Malaysian tennis preserves Malayan Lawn Tennis from 1921 and the 1923 inter-team competition as partial pre-1963 context, then gates LTAM/ITF affiliation to 1965, the National Tennis Academy to 2014 and current national/junior/ITF competition to 2026.
+- No rankings, titles or match outcomes are calibration targets. Official package publication remains blocked by the intentional **250 / 250** completeness requirement.

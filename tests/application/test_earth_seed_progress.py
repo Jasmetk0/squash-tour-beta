@@ -428,11 +428,11 @@ def test_fifa_pyf_backcasts_do_not_claim_future_infrastructure_as_historical_sup
 
 def test_atp_complete_histories_are_evidence_resolvable_and_temporally_bounded():
     bundle = load_earth_research_bundle(Path("config/earth_research/atp_earth.json"))
-    expected_countries = {"CZE", "DEU", "USA", "AUS", "ESP", "SRB", "FRA", "GBR", "ARG", "JPN", "CAN", "ITA", "NED", "SWE", "SUI", "CRO", "POL", "CHN", "NOR", "GRE", "BEL", "ZAF", "DEN", "FIN", "NZL", "PRT", "IRL", "HUN", "ROU", "SVN", "SVK", "ISR", "BGR", "AUT", "TUR", "CYP", "BRA", "CHL", "COL", "MEX", "ECU", "IND"}
+    expected_countries = {"CZE", "DEU", "USA", "AUS", "ESP", "SRB", "FRA", "GBR", "ARG", "JPN", "CAN", "ITA", "NED", "SWE", "SUI", "CRO", "POL", "CHN", "NOR", "GRE", "BEL", "ZAF", "DEN", "FIN", "NZL", "PRT", "IRL", "HUN", "ROU", "SVN", "SVK", "ISR", "BGR", "AUT", "TUR", "CYP", "BRA", "CHL", "COL", "MEX", "ECU", "IND", "KOR", "THA"}
     assert set(bundle.research.countries) == expected_countries
     assert bundle.research.data_cutoff.isoformat() == "2026-10-04"
-    assert len(bundle.datasets) == 140
-    assert len(bundle.observations) == 411
+    assert len(bundle.datasets) == 147
+    assert len(bundle.observations) == 431
 
     expected_models = {
         "CZE": "atp-earth-cze-deu-seed-model.v1",
@@ -477,6 +477,8 @@ def test_atp_complete_histories_are_evidence_resolvable_and_temporally_bounded()
         "MEX": "atp-earth-col-mex-model.v1",
         "ECU": "atp-earth-ecu-ind-model.v1",
         "IND": "atp-earth-ecu-ind-model.v1",
+        "KOR": "atp-earth-kor-tha-model.v1",
+        "THA": "atp-earth-kor-tha-model.v1",
     }
     for code, history in bundle.research.countries.items():
         assert history.missing_earth_years == []
@@ -1370,3 +1372,66 @@ def test_atp_ecu_ind_batch_preserves_historical_and_modern_gating():
         ind.years[2026].ratings["competition_quality"].observation_ids
     )
     assert ind.years[2026].ratings["development_quality"].confidence == "high"
+
+
+def test_atp_kor_tha_batch_preserves_network_calendar_and_infrastructure_gating():
+    bundle = load_earth_research_bundle(Path("config/earth_research/atp_earth.json"))
+
+    for code in ("KOR", "THA"):
+        history = bundle.research.countries[code]
+        assert history.missing_earth_years == []
+        assert len(history.years) == 72
+        for year in history.years.values():
+            assert len(year.ratings) == 6
+            for rating in year.ratings.values():
+                assert rating.calibration_model_id == "atp-earth-kor-tha-model.v1"
+                assert rating.observation_ids
+                assert all(item in bundle.observations for item in rating.observation_ids)
+
+    kor = bundle.research.countries["KOR"]
+    assert "atp-kta-history-v1#kor-atf-member-1968" not in (
+        kor.years[1967].ratings["squash_tradition"].observation_ids
+    )
+    assert "atp-kta-history-v1#kor-atf-member-1968" in (
+        kor.years[1968].ratings["squash_tradition"].observation_ids
+    )
+    assert "atp-kta-history-v1#kor-jangchung-courts-1971" not in (
+        kor.years[1970].ratings["squash_access"].observation_ids
+    )
+    assert "atp-kta-history-v1#kor-jangchung-courts-1971" in (
+        kor.years[1971].ratings["squash_access"].observation_ids
+    )
+    assert "atp-kta-history-v1#kor-itf-mens-circuit-1989" not in (
+        kor.years[1988].ratings["competition_quality"].observation_ids
+    )
+    assert "atp-kta-history-v1#kor-itf-mens-circuit-1989" in (
+        kor.years[1989].ratings["competition_quality"].observation_ids
+    )
+    assert "atp-kta-network-2026-v1#kor-regional-branches-2026" in (
+        kor.years[2026].ratings["development_quality"].observation_ids
+    )
+    assert "atp-kta-calendar-2026-v1#kor-domestic-events-2026" in (
+        kor.years[2026].ratings["competition_quality"].observation_ids
+    )
+    assert kor.years[2026].ratings["competition_quality"].confidence == "high"
+
+    tha = bundle.research.countries["THA"]
+    assert "atp-ltat-national-centre-v1#tha-national-centre-10-courts-2022" not in (
+        tha.years[2021].ratings["squash_access"].observation_ids
+    )
+    assert "atp-ltat-national-centre-v1#tha-national-centre-10-courts-2022" in (
+        tha.years[2022].ratings["squash_access"].observation_ids
+    )
+    assert "atp-ltat-development-overview-v1#tha-national-development-role-2026" not in (
+        tha.years[2025].ratings["development_quality"].observation_ids
+    )
+    assert "atp-ltat-development-overview-v1#tha-national-development-role-2026" in (
+        tha.years[2026].ratings["development_quality"].observation_ids
+    )
+    assert "atp-ltat-calendar-2026-v1#tha-regional-development-series-2026" in (
+        tha.years[2026].ratings["competition_quality"].observation_ids
+    )
+    assert "atp-ltat-calendar-2026-v1#tha-itf-junior-events-2026" in (
+        tha.years[2026].ratings["competition_quality"].observation_ids
+    )
+    assert tha.years[2026].ratings["competition_quality"].confidence == "high"

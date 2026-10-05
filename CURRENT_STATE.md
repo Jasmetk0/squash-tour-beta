@@ -1,5 +1,18 @@
 # Current implementation and next action
 
+## Candidate — ATP Korea/Thailand batch (5 October 2026)
+
+- New complete ATP histories: **South Korea (KOR), Thailand (THA)**.
+- New ratings: 2 × 72 × 6 = **864**; ATP Earth now resolves **44 / 250 complete histories**.
+- ATP research now resolves **147 normalized datasets / 431 observations**.
+- Korea uses 1945 association foundation, 1948 ITF and 1968 ATF membership, 1971 national infrastructure and 1989 ITF men's circuit context plus a current 16-region/6-federation development network and broad 2026 domestic calendar.
+- Thailand uses its 1926 association, National Tennis Development Centre and current player/coach development mandate plus regional U8-U18 development events, junior national-team selection, national championships and ITF J200/J300 events.
+- Modern network/calendar evidence is temporally gated and competition breadth is not equated with player quality or participation.
+- Official ATP package publication remains blocked by the 250/250 completeness rule.
+
+**Next after green CI:** continue another evidence-rich ATP/FIFA batch.
+
+
 ## Candidate — ATP Ecuador/India batch (5 October 2026)
 
 - New complete ATP histories: **Ecuador (ECU), India (IND)**.

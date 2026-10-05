@@ -1,0 +1,24 @@
+{
+  "schema_version": "atp_earth_reviewed_country_batch.v1",
+  "model_id": "atp-earth-kor-tha-model.v1",
+  "created_on": "2026-10-05",
+  "countries": [
+    "KOR",
+    "THA"
+  ],
+  "coverage": {
+    "from": 1955,
+    "to": 2026,
+    "attributes": 6
+  },
+  "rating_scale": "country_ratings_1_10.v2",
+  "method": "Country-specific piecewise annual histories grounded in federation continuity plus temporally gated competition, development-network and infrastructure evidence.",
+  "evidence_rules": [
+    "Korea's 1945 association, 1948 ITF membership and 1968 ATF membership anchor institutional continuity; current branch/federation counts and 2026 calendar are not backcast.",
+    "Thailand's 1926 association anchors tradition; National Tennis Development Centre evidence begins from the dated facility snapshot and current 2026 development/calendar evidence is not backcast.",
+    "Calendar breadth measures organised competition opportunity, not player quality or total participation.",
+    "Junior pathways and development mandates represent programme capacity, not realised outcomes.",
+    "Historical interpolation remains lower-confidence where contemporaneous structural data is sparse.",
+    "No held-out validation ranking is used for tuning."
+  ]
+}

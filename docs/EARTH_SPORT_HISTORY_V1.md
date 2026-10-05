@@ -21,10 +21,15 @@ preserved as implementation history.
 - FIFA Earth has **27 / 250** complete 1955–2026 country/territory histories,
   covering all six attributes. Its canonical research bundle resolves **65 datasets
   and 1,437 normalized observations**.
-- ATP Earth has **14 / 250** complete histories: CZE, DEU, USA, AUS, ESP, SRB,
-  FRA, GBR, ARG, JPN, CAN, ITA, NED and SWE. Its canonical bundle resolves
-  **45 datasets and 178 normalized observations**.
-- The latest ATP batch adds **CAN, ITA, NED and SWE**, another **1,728 annual
+- ATP Earth has **18 / 250** complete histories: CZE, DEU, USA, AUS, ESP, SRB,
+  FRA, GBR, ARG, JPN, CAN, ITA, NED, SWE, SUI, CRO, POL and CHN. Its canonical
+  bundle resolves **58 datasets and 212 normalized observations**.
+- The latest ATP batch adds **SUI, CRO, POL and CHN**, another **1,728 annual
+  attribute ratings**. Switzerland separates current federation scale from elite
+  outcomes; Croatia preserves pre-1992 Yugoslav territory context; Poland preserves
+  the 1951 governance break and gates modern youth support; China keeps its large
+  modern youth-development system separate from weaker current men's elite output.
+- The preceding ATP batch added **CAN, ITA, NED and SWE**, another **1,728 annual
   attribute ratings**. Canada separates 2025 mass participation from the 2007 NTC
   pathway; Italy preserves the Formia development lineage and current decentralized
   junior system; Netherlands keeps combined tennis/padel membership explicitly
@@ -86,7 +91,7 @@ preserved as implementation history.
 ## Not implemented or not proven
 
 - **Neither official Earth directory exists yet.** FIFA currently has 27 complete
-  histories and ATP has 14; neither reaches the required 250-country all-or-nothing
+  histories and ATP has 18; neither reaches the required 250-country all-or-nothing
   build threshold. No fabricated neutral profiles are shipped to satisfy coverage
   mechanically. See the current-status section above for authoritative counts.
 - FIFA Big Count 2006 now has five canonical normalized

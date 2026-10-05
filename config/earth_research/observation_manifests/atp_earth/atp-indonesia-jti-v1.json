@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-indonesia-jti-v1",
+  "source_id": "itf-indonesia-jti-2021",
+  "relative_path": "observations/normalized/atp_indonesia_jti_v1.json",
+  "sha256": "2c2c07c654b50a1ad0d13debe0826b948895f114a5daf79a36b816c95928c40d",
+  "record_count": 3,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

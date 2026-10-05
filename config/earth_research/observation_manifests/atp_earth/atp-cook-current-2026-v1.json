@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-cook-current-2026-v1",
+  "source_id": "tennis-cook-current-2026",
+  "relative_path": "observations/normalized/atp_cook_current_2026_v1.json",
+  "sha256": "f1b9c73ceef374d40c0f8047d516741496171751ecdf3f00e4c298105d45da2a",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

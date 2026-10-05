@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-aopp-2026-asm-vut-v1",
+  "source_id": "otf-aopp-2026",
+  "relative_path": "observations/normalized/atp_aopp_2026_asm_vut_v1.json",
+  "sha256": "799c4a217e3b59996be49c795c23e771f7cb409a5c1709a5d6e1ca7bf1cf788a",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

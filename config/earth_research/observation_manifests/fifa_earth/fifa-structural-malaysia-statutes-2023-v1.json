@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-malaysia-statutes-2023-v1",
+  "source_id": "fam-statutes-2023",
+  "relative_path": "observations/normalized/structural/fifa_structural_malaysia_statutes_2023_v1.json",
+  "sha256": "c6dcd9d28b4288fab2e7f55e285bed9230a76ed0837f070a2931c735ea1bb2f5",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

@@ -1,5 +1,36 @@
 # Current implementation and next action
 
+## Candidate — ATP FRA/GBR/ARG/JPN evidence-rich batch (5 October 2026)
+
+This slice continues real-world package completion rather than adding generic research
+infrastructure.
+
+- New complete ATP histories: **France (FRA), United Kingdom Earth profile / Great
+  Britain tennis evidence (GBR), Argentina (ARG), Japan (JPN)**.
+- New ratings: 4 × 72 × 6 = **1,728**; ATP Earth now resolves **10 / 250 complete
+  histories** and **4,320 annual attribute ratings**.
+- ATP research now resolves **33 normalized datasets / 140 observations**.
+- France separates modern FFT licence/club scale from DTN/high-performance evidence;
+  Davis Cup outcomes remain competition/tradition only.
+- GBR explicitly records that LTA evidence excludes Northern Ireland. LTA participation,
+  NTC and PSP observations are marked partial Earth-territory evidence rather than a
+  fabricated full-UK census.
+- Argentina uses current AAT organised scale only from 2026 and the DETA CeNARD camp
+  only for modern development/support; its Davis Cup history does not become a proxy
+  for access or participation.
+- Japan preserves its documented 2001 NTC setback and 2008 recovery, gates the
+  2017–2021 five-men Top100 retrospective to 2021 onward, and keeps the current junior
+  participation decline separate from innate player potential.
+- The official ATP package directory remains absent because the builder still requires
+  all 250 Earth histories before publication.
+- World Library historical-profile editing/persistence and the full historical
+  player-development lifecycle remain unfinished integration boundaries.
+
+**Next after green CI:** continue ATP with another deliberately diverse evidence-rich
+batch (for example CAN, ITA, NED and SWE) while FIFA continues independently toward
+250 / 250.
+
+
 ## Candidate — Earth package expansion: ATP four-country + FIFA Pacific trio (4 October 2026)
 
 This slice expands both real-world sport templates with complete country histories and

@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-cbt-junior-regulations-2026-v1",
+  "source_id": "cbt-junior-regulations-2026",
+  "relative_path": "observations/normalized/atp-cbt-junior-regulations-2026-v1.json",
+  "sha256": "fd1c4b317911d58a7b00aff745b9d1705ab8219af23aecef9842cc5b3733f1ab",
+  "record_count": 3,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

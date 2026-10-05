@@ -1442,7 +1442,10 @@ def test_atp_kor_tha_batch_preserves_network_calendar_and_infrastructure_gating(
     assert "atp-kta-calendar-2026-v1#kor-domestic-events-2026" in (
         kor.years[2026].ratings["competition_quality"].observation_ids
     )
-    assert "atp-kta-calendar-2026-v1#kor-domestic-events-2026" not in (\n        kor.years[2025].ratings["competition_quality"].observation_ids\n    )\n
+    assert "atp-kta-calendar-2026-v1#kor-domestic-events-2026" not in (
+        kor.years[2025].ratings["competition_quality"].observation_ids
+    )
+
     tha = bundle.research.countries["THA"]
     assert "atp-ltat-national-centre-v1#tha-national-centre-10-courts-2022" not in (
         tha.years[2021].ratings["squash_access"].observation_ids
@@ -1462,4 +1465,6 @@ def test_atp_kor_tha_batch_preserves_network_calendar_and_infrastructure_gating(
     assert "atp-ltat-calendar-2026-v1#tha-itf-junior-events-2026" in (
         tha.years[2026].ratings["competition_quality"].observation_ids
     )
-    assert "atp-ltat-calendar-2026-v1#tha-itf-junior-events-2026" not in (\n        tha.years[2025].ratings["competition_quality"].observation_ids\n    )\n
+    assert "atp-ltat-calendar-2026-v1#tha-itf-junior-events-2026" not in (
+        tha.years[2025].ratings["competition_quality"].observation_ids
+    )

@@ -4161,3 +4161,43 @@ def test_niger_chad_dual_world_batch_is_complete_resolvable_and_time_gated():
         key = code.lower()
         assert f"atp-{slug}-history-v1#{key}-status-2020" in h.years[2020].ratings["squash_access"].observation_ids
         assert f"atp-{slug}-development-2026-v1#{key}-eligible-2026" in h.years[2026].ratings["development_quality"].observation_ids
+
+
+def test_niger_chad_dual_world_batch_is_complete_resolvable_and_time_gated():
+    fifa = load_earth_research_bundle(Path("config/earth_research/fifa_earth.json"))
+    atp = load_earth_research_bundle(Path("config/earth_research/atp_earth.json"))
+
+    for bundle, expected_models in (
+        (fifa, {"NER": "fifa-earth-ner-model.v1", "CHA": "fifa-earth-cha-model.v1"}),
+        (atp, {"NER": "atp-earth-ner-model.v1", "CHA": "atp-earth-cha-model.v1"}),
+    ):
+        for code, model_id in expected_models.items():
+            history = bundle.research.countries[code]
+            assert history.missing_earth_years == []
+            assert len(history.years) == 72
+            for year in history.years.values():
+                assert len(year.ratings) == 6
+                for rating in year.ratings.values():
+                    assert rating.calibration_model_id == model_id
+                    assert rating.observation_ids
+                    assert all(item in bundle.observations for item in rating.observation_ids)
+
+    ner = fifa.research.countries["NER"]
+    assert "fifa-structural-niger-history-v1#ner-created-1961" in ner.years[1961].ratings["squash_tradition"].observation_ids
+    assert "fifa-structural-niger-history-v1#ner-fifa-1964" in ner.years[1964].ratings["competition_quality"].observation_ids
+    assert "fifa-structural-niger-history-v1#ner-caf-1967" in ner.years[1967].ratings["competition_quality"].observation_ids
+    assert "fifa-big-count-2006-all-players-v2#niger" in ner.years[2006].ratings["squash_popularity"].observation_ids
+    assert all("fifa-professional-2023" not in sid for y in ner.years.values() for r in y.ratings.values() for sid in r.source_ids)
+
+    cha = fifa.research.countries["CHA"]
+    assert "fifa-structural-chad-history-v1#cha-created-1962" in cha.years[1962].ratings["squash_tradition"].observation_ids
+    assert "fifa-structural-chad-history-v1#cha-fifa-1964" in cha.years[1964].ratings["competition_quality"].observation_ids
+    assert "fifa-structural-chad-history-v1#cha-caf-1964" in cha.years[1964].ratings["competition_quality"].observation_ids
+    assert "fifa-big-count-2006-all-players-v2#chad" in cha.years[2006].ratings["squash_popularity"].observation_ids
+    assert all("fifa-professional-2023" not in sid for y in cha.years.values() for r in y.ratings.values() for sid in r.source_ids)
+
+    for code, slug in (("NER", "niger"), ("CHA", "chad")):
+        h = atp.research.countries[code]
+        key = code.lower()
+        assert f"atp-{slug}-history-v1#{key}-status-2020" in h.years[2020].ratings["squash_access"].observation_ids
+        assert f"atp-{slug}-development-2026-v1#{key}-eligible-2026" in h.years[2026].ratings["development_quality"].observation_ids

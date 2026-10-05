@@ -9,7 +9,7 @@
 - FIFA Earth now resolves **75 / 250** complete histories and **122 datasets /
   1,615 normalized observations**.
 - ATP Earth now resolves **75 / 250** complete histories and **247 datasets /
-  605 normalized observations**.
+  606 normalized observations**.
 - The batch adds **1,728 authored annual attribute ratings** across four histories
   (4 × 72 years × 6 attributes).
 - FIFA 2023 professional-player counts for Tanzania and Zambia are absent from the

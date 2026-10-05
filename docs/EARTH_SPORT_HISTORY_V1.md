@@ -21,10 +21,11 @@ preserved as implementation history.
 - FIFA Earth has **27 / 250** complete 1955–2026 country/territory histories,
   covering all six attributes. Its canonical research bundle resolves **65 datasets
   and 1,437 normalized observations**.
-- ATP Earth has **42 / 250** complete histories: CZE, DEU, USA, AUS, ESP, SRB,
+- ATP Earth has **44 / 250** complete histories: CZE, DEU, USA, AUS, ESP, SRB,
   FRA, GBR, ARG, JPN, CAN, ITA, NED, SWE, SUI, CRO, POL, CHN, NOR, GRE, BEL, ZAF,
-  DEN, FIN, NZL, PRT, IRL, HUN, ROU, SVN, SVK, ISR, BGR, AUT, TUR, CYP, BRA, CHL, COL, MEX, ECU and IND. Its canonical bundle resolves **140 datasets and 411 normalized observations**.
-- The latest ATP batch adds **ECU and IND**, another **864 annual attribute ratings**. Ecuador combines 1899/1905 tennis roots and the 1967 federation with current National Tennis Centre, CEJ and JTI child-development structures. India combines deep 1880s/1910/1920 institutional history with the 1996 National Stadium and 2026 HPC/ACE 2032/coaching/junior-pipeline reforms.
+  DEN, FIN, NZL, PRT, IRL, HUN, ROU, SVN, SVK, ISR, BGR, AUT, TUR, CYP, BRA, CHL, COL, MEX, ECU, IND, KOR and THA. Its canonical bundle resolves **147 datasets and 431 normalized observations**.
+- The latest ATP batch adds **KOR and THA**, another **864 annual attribute ratings**. Korea combines 1945/1948/1968 institutional continuity, the 1971 Jangchung complex and 1989 ITF men's circuit milestone with a current 16-branch/6-federation network and broad 2026 U10-to-adult calendar. Thailand combines its 1926 association, National Tennis Development Centre and a current nationwide development/competition system spanning regional U8-U18 events, national-team selection, national championships and ITF J200/J300 events.
+- The preceding ATP batch adds **ECU and IND**, another **864 annual attribute ratings**. Ecuador combines 1899/1905 tennis roots and the 1967 federation with current National Tennis Centre, CEJ and JTI child-development structures. India combines deep 1880s/1910/1920 institutional history with the 1996 National Stadium and 2026 HPC/ACE 2032/coaching/junior-pipeline reforms.
 - The preceding ATP batch adds **COL and MEX**, another **864 annual attribute ratings**. Colombia combines its 1932 federation history with 2025 Interligas/training-site evidence and 2026 national affiliation/child-circuit structures. Mexico combines 1894-era club history and the 1963 FMT foundation with a nationwide state-association network, ~30k current affiliates and strongly documented 2025/2026 junior competition layers.
 - The preceding ATP batch adds **BRA and CHL**, another **864 annual attribute ratings**. Brazil combines the 1955 CBT foundation and pre-CBT state-federation context with current affiliated-player scale, national junior/Tennis 10s rules and a formal coach-graduation system. Chile combines 1880s/1890s roots, its 1920 federation and 1927 ITF affiliation with 2025 JTI reach and 2026 junior-circuit decentralisation, zonal qualifying and development grants.
 - The preceding ATP batch adds **TUR and CYP**, another **864 annual attribute ratings**. Turkey combines 1923/1953 institutional anchors with current national training centres, coach education, a broad 2026 competition calendar and a multi-province club network. Cyprus combines 1900/1913/1951 history, 1984 ITF/Tennis Europe membership, the 1999 National Tennis Centre and current development/tournament structures while retaining partial-association territorial caution.
@@ -149,7 +150,7 @@ preserved as implementation history.
 `config/earth_research/fifa_earth.json` and `atp_earth.json` are
 `earth_sport_research.v2` catalogues whose root records are extended by sharded
 sources, observation manifests and country histories. FIFA currently resolves 27
-complete histories. ATP currently resolves 42 complete histories (CZE, DEU, USA, AUS, ESP, SRB, FRA, GBR, ARG, JPN, CAN, ITA, NED, SWE, SUI, CRO, POL, CHN, NOR, GRE, BEL, ZAF, DEN, FIN, NZL, PRT, IRL, HUN, ROU, SVN, SVK, ISR, BGR, AUT, TUR, CYP, BRA, CHL, COL, MEX, ECU and IND); its evidence now
+complete histories. ATP currently resolves 44 complete histories (CZE, DEU, USA, AUS, ESP, SRB, FRA, GBR, ARG, JPN, CAN, ITA, NED, SWE, SUI, CRO, POL, CHN, NOR, GRE, BEL, ZAF, DEN, FIN, NZL, PRT, IRL, HUN, ROU, SVN, SVK, ISR, BGR, AUT, TUR, CYP, BRA, CHL, COL, MEX, ECU, IND, KOR and THA); its evidence now
 combines ITF national snapshots, federation histories/participation records, Davis Cup
 outcomes and country-specific development/support evidence. Root-JSON contents alone
 must not be used as the coverage count.

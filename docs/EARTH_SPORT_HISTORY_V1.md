@@ -18,25 +18,23 @@ separate inputs. Innate potential rarity must remain independent of nationality.
 This section is the authoritative current summary. Dated batch sections below are
 retained only as implementation history and do not override these numbers.
 
-- **FIFA Earth: 75 / 250** complete 1955–2026 country/territory histories, all six
+- **FIFA Earth: 77 / 250** complete 1955–2026 country/territory histories, all six
   attributes present for every authored year. The canonical bundle resolves
-  **122 datasets / 1,615 normalized observations**.
-- **ATP Earth: 75 / 250** complete 1955–2026 country/territory histories, all six
+  **124 datasets / 1,621 normalized observations**.
+- **ATP Earth: 77 / 250** complete 1955–2026 country/territory histories, all six
   attributes present for every authored year. The canonical bundle resolves
-  **247 datasets / 606 normalized observations**.
-- The latest dual-world batch adds **Tanzania (TZA) and Zambia (ZMB)** to both
+  **252 datasets / 613 normalized observations**.
+- The latest dual-world batch adds **Zimbabwe (ZWE) and Malawi (MWI)** to both
   packages, another **1,728 annual attribute ratings**.
-- FIFA Tanzania and Zambia preserve their pre-1955 association continuity and
-  gate FIFA/CAF membership to 1964. Big Count 2006 remains dimension-scoped and
-  Professional 2023 uses only the published club observations; missing professional
-  player counts are not inferred.
-- ATP Tanzania deliberately uses a low-confidence pre-documented baseline before
-  direct 2015 ITF association-status evidence, then adds the 2025 World Team Cup
-  pathway only from that year.
-- ATP Zambia uses a similarly explicit pre-documented baseline before the official
-  2007 government record, preserves the later 12-year ITF membership hiatus as
-  governance history rather than zero tennis activity, and gates the 2025
-  reinstatement/development evidence and 2026 J30 hosting to their actual dates.
+- FIFA Zimbabwe gates association/FIFA status to 1965 and CAF affiliation to 1980,
+  while FIFA Malawi gates association creation to 1966 and FIFA/CAF membership to
+  1968. Big Count 2006 remains dimension-scoped and only Zimbabwe has published
+  Professional 2023 player/club observations in the checked-in source family.
+- ATP Zimbabwe and Malawi both use explicit low-confidence pre-documented baselines
+  before direct 2020 activity evidence. Their 2026 ITF development eligibility is
+  treated as capacity/opportunity context rather than realised programme output.
+- Zimbabwe additionally uses direct J100 Harare 2026 hosting evidence from the ITF,
+  strictly from 2026; event results are not calibration targets.
 - Coverage/provenance is measured through `load_earth_research_bundle()`; sharded
   sources, manifests, normalized observations and country histories all participate
   in validation. Missing facts are not converted into zeroes or universal fallback
@@ -84,7 +82,7 @@ retained only as implementation history and do not override these numbers.
 
 ## Not implemented or not proven
 
-- **Neither official Earth directory exists yet.** FIFA and ATP each currently have 75 complete histories; neither reaches the required 250-country all-or-nothing build threshold. No fabricated neutral profiles are shipped to satisfy coverage
+- **Neither official Earth directory exists yet.** FIFA and ATP each currently have 77 complete histories; neither reaches the required 250-country all-or-nothing build threshold. No fabricated neutral profiles are shipped to satisfy coverage
   mechanically. See the current-status section above for authoritative counts.
 - FIFA Big Count 2006 now has five canonical normalized
   `earth_source_observations.v2` datasets (all players, registered, unregistered,

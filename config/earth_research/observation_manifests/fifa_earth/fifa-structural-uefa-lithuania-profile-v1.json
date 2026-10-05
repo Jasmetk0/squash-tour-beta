@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-uefa-lithuania-profile-v1",
+  "source_id": "uefa-lithuania-profile",
+  "relative_path": "observations/normalized/structural/fifa_structural_uefa_lithuania_profile_v1.json",
+  "sha256": "c0c89478c6a3d2c8d35f991614242a99ef495a25c5de3146313126887300dce7",
+  "record_count": 6,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

@@ -11,7 +11,7 @@ from beta_engine.application.earth_package_builder import load_earth_research_bu
 
 def test_fifa_first_reviewed_country_histories_are_complete_and_resolvable():
     bundle = load_earth_research_bundle(Path("config/earth_research/fifa_earth.json"))
-    assert set(bundle.research.countries) == {"CZE", "SVK", "JPN", "IND", "MAR", "SEN", "FRO", "USA", "ZAF", "BRA", "DEU", "ISL", "SMR", "ARG", "MEX", "AUS", "NZL", "FJI", "PNG", "SLB", "COK", "ASM", "PYF", "NCL", "WSM", "TON", "VUT", "FRA", "ESP", "ITA", "NLD", "BEL", "PRT", "AUT", "DNK", "SWE", "CHE", "NOR", "FIN", "HRV", "SVN"}
+    assert set(bundle.research.countries) == {"CZE", "SVK", "JPN", "IND", "MAR", "SEN", "FRO", "USA", "ZAF", "BRA", "DEU", "ISL", "SMR", "ARG", "MEX", "AUS", "NZL", "FJI", "PNG", "SLB", "COK", "ASM", "PYF", "NCL", "WSM", "TON", "VUT", "FRA", "ESP", "ITA", "NLD", "BEL", "PRT", "AUT", "DNK", "SWE", "CHE", "NOR", "FIN", "HRV", "SVN", "POL", "ROU", "UKR", "LTU"}
     assert bundle.research.data_cutoff.isoformat() == "2026-10-03"
 
     for code in ("CZE", "SVK"):
@@ -1600,3 +1600,46 @@ def test_fifa_nor_fin_hrv_svn_batch_preserves_governance_and_evidence_gating():
     assert "fifa-structural-uefa-slovenia-profile-v1#svn-uefa-membership-1993" in (
         svn.years[1993].ratings["elite_support"].observation_ids
     )
+
+
+def test_fifa_pol_rou_ukr_ltu_batch_preserves_soviet_transitions_and_gating():
+    bundle = load_earth_research_bundle(Path("config/earth_research/fifa_earth.json"))
+    batch = {"POL", "ROU", "UKR", "LTU"}
+
+    for code in batch:
+        history = bundle.research.countries[code]
+        assert history.missing_earth_years == []
+        assert len(history.years) == 72
+        for year_number, year in history.years.items():
+            for rating in year.ratings.values():
+                assert rating.calibration_model_id == "fifa-earth-country-history-pol-rou-ukr-ltu.v1"
+                assert rating.observation_ids
+                assert all(item in bundle.observations for item in rating.observation_ids)
+                if year_number < 2006:
+                    assert "fifa-big-count-2006" not in rating.source_ids
+                if year_number < 2023:
+                    assert "fifa-professional-2023" not in rating.source_ids
+
+    pol = bundle.research.countries["POL"]
+    assert "fifa-structural-uefa-poland-profile-v1#pol-euro-host-2012" not in pol.years[2011].ratings["elite_support"].observation_ids
+    assert "fifa-structural-uefa-poland-profile-v1#pol-euro-host-2012" in pol.years[2012].ratings["elite_support"].observation_ids
+
+    rou = bundle.research.countries["ROU"]
+    assert "fifa-structural-uefa-romania-profile-v1#rou-frf-founded-1957" not in rou.years[1956].ratings["elite_support"].observation_ids
+    assert "fifa-structural-uefa-romania-profile-v1#rou-frf-founded-1957" in rou.years[1957].ratings["elite_support"].observation_ids
+
+    ukr = bundle.research.countries["UKR"]
+    assert "Soviet" in ukr.years[1990].historical_entity
+    assert ukr.years[1991].historical_entity == "Ukraine"
+    assert ukr.years[1991].ratings["elite_support"].value < ukr.years[1990].ratings["elite_support"].value
+    assert "fifa-structural-uefa-ukraine-profile-v1#ukr-first-league-cup-1992" not in ukr.years[1991].ratings["competition_quality"].observation_ids
+    assert "fifa-structural-uefa-ukraine-profile-v1#ukr-first-league-cup-1992" in ukr.years[1992].ratings["competition_quality"].observation_ids
+    assert ukr.years[2023].ratings["squash_access"].value < ukr.years[2022].ratings["squash_access"].value
+    assert ukr.years[2023].ratings["squash_access"].confidence == "low"
+
+    ltu = bundle.research.countries["LTU"]
+    assert "Soviet" in ltu.years[1989].historical_entity
+    assert ltu.years[1990].historical_entity == "Lithuania"
+    assert ltu.years[1990].ratings["elite_support"].value < ltu.years[1989].ratings["elite_support"].value
+    assert "fifa-structural-uefa-lithuania-profile-v1#ltu-fifa-readmission-1991" not in ltu.years[1990].ratings["competition_quality"].observation_ids
+    assert "fifa-structural-uefa-lithuania-profile-v1#ltu-fifa-readmission-1991" in ltu.years[1991].ratings["competition_quality"].observation_ids

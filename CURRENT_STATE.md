@@ -1,5 +1,32 @@
 # Current implementation and next action
 
+## Current — Earth history PR reconciliation after #1203 (5 October 2026)
+
+- Integration base is merged `buuk` commit `1cc2fb6529472c16c9ba31ab51061fcfe965b810`
+  (#1203 on top of #1202).
+- The integration branch preserves only the useful new files from #1197–#1201 and
+  deliberately does **not** restore the superseded #1196 versions of KOR/THA/SLB/TON.
+- FIFA Earth resolves **69 / 250** complete histories and **116 datasets / 1,599
+  normalized observations**.
+- ATP Earth resolves **69 / 250** complete histories and **231 datasets / 581
+  normalized observations**.
+- Newly preserved FIFA histories: **COL, CYP, ECU, IRL, EGY, MYS, SAU, ARE, QAT,
+  OMN**. Newly preserved ATP histories: **COK, NCL, ASM, VUT, EGY, MYS, PHL, IDN,
+  SGP, PAK**.
+- The exact country sets are asserted through `load_earth_research_bundle()` in
+  `tests/application/test_earth_seed_progress.py`, together with the newer
+  #1202/#1203 checks and the five pending-batch temporal/provenance tests.
+- Official package publication remains blocked until **250 / 250** in each world.
+  Installed packages, ordinary historical-profile editing and complete use of the
+  historical environment during initial-player development remain unfinished.
+
+**Next:** require green checks on the integration PR, then retire #1196–#1201 as
+superseded and continue another data-coverage batch from the merged integration base.
+
+> The dated Candidate entries below are historical progress notes. They are not the
+> authoritative current coverage summary.
+
+
 ## Candidate — ATP calibration correction + FIFA France/Spain batch (5 October 2026)
 
 - Re-audited ATP KOR/THA against the documented 1–10 rubric and older reference countries. A documented federation/programme/calendar fact is now explicitly separated from confidence in the authored numeric rating.

@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-benin-history-v1",
+  "source_id": "itf-benin-return-to-play-2020",
+  "relative_path": "observations/normalized/atp_benin_history_v1.json",
+  "sha256": "19f7f65db140e6a175540f099083b7fdfa2a1f5997d874ba4c4f383ed06cbfd1",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

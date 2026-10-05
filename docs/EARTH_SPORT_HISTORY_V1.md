@@ -415,3 +415,28 @@ or outcome score.
 Pre-2006 annual values are low-confidence backcasts toward the first direct checkpoint.
 Professional 2023 observations are cited only from 2023 onward. No held-out rankings,
 trophy counts or tournament outcomes are used for calibration.
+
+
+## FIFA canonical-history batch — NOR/FIN/HRV/SVN structural governance (5 October 2026)
+
+Norway, Finland, Croatia and Slovenia now have complete 1955–2026 FIFA Earth
+histories. The batch adds **1,728 annual attribute ratings**, taking FIFA Earth to
+**41 / 250 complete histories**.
+
+Four UEFA national-association profiles are normalized into 14 structural observations.
+The evidence is used as dated chronology rather than as automatic rating deltas.
+Norway and Finland provide long-running institutional anchors; Finland's currently
+described regional centres of excellence are cited only in 2026 development/support
+ratings.
+
+Croatia and Slovenia deliberately exercise successor-state handling. Pre-independence
+years describe football on the current Earth territory within Yugoslav governance,
+without assigning Yugoslavia-wide participation, professional counts or outcomes to
+the successor state. The 1991 political/competition transition is represented as a
+real discontinuity, with FIFA and UEFA memberships gated to their documented later
+years.
+
+Big Count 2006 is never cited before 2006 and Professional Football Report 2023 is
+never cited before 2023. High access density, professional ecosystem depth and
+institutional tradition remain separate dimensions, and held-out rankings/titles are
+not calibration inputs.

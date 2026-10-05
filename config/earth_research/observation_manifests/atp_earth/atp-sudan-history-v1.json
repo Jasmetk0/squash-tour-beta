@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-sudan-history-v1",
+  "source_id": "itf-sudan-return-to-play-2020",
+  "relative_path": "observations/normalized/atp_sudan_history_v1.json",
+  "sha256": "aa9f410499b6a41ba9e88e4594a9e72dc87037c058e0d132b174b54a3bbd62a2",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

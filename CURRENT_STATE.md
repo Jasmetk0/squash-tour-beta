@@ -1,5 +1,33 @@
 # Current implementation and next action
 
+## Current — Botswana/Namibia dual-world Earth batch (5 October 2026)
+
+- Based directly on merged `buuk` commit
+  `c15f180c9d88f0ebe18a6ed42577368ebf0f8a39` (#1208); this remains an independent
+  coverage PR rather than a dependent stack.
+- New complete histories in both worlds: **Botswana (BWA) and Namibia (NAM)**.
+- FIFA Earth now resolves **79 / 250** complete histories and **126 datasets /
+  1,628 normalized observations**.
+- ATP Earth now resolves **79 / 250** complete histories and **258 datasets /
+  622 normalized observations**.
+- The batch adds **1,728 authored annual attribute ratings** across four histories
+  (4 × 72 years × 6 attributes).
+- Botswana FIFA uses separate 1970/1976/1982 institutional milestones; Namibia
+  uses 1990/1992. Big Count and Professional evidence remain strictly gated, and
+  Namibia's missing professional-player observation remains missing.
+- ATP Botswana/Namibia explicitly separate low-confidence pre-documented history
+  from direct 2020 activity and 2026 development/event evidence.
+- Official package publication remains blocked until **250 / 250** in each world.
+  Installed packages, ordinary historical-profile editing and complete initial-player
+  historical-environment integration remain unfinished.
+
+**Next after green CI:** continue another evidence-backed coverage batch directly
+from the merged result; keep PRs independent and shallow.
+
+> Older Current/Candidate entries below are implementation history and do not
+> override this section.
+
+
 ## Current — Zimbabwe/Malawi dual-world Earth batch (5 October 2026)
 
 - Based directly on merged `buuk` commit

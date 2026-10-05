@@ -3,7 +3,7 @@
   "dataset_id": "fifa-structural-canada-soccer-development-v1",
   "source_id": "canada-soccer-development-legacy",
   "relative_path": "observations/normalized/structural/fifa_structural_canada_soccer_development_v1.json",
-  "sha256": "391112f508d950db0ebee64cac6b0d9ddddf3e7ca40f07fcdd54e7b9b7974ac4",
+  "sha256": "b832306fb79680cf336443b2254d0ca3013fd050ed6142af6af8c1ff2e210490",
   "record_count": 2,
   "source_document_sha256": null,
   "input_artifact_sha256": null,

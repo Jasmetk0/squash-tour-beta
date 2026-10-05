@@ -2,7 +2,7 @@
   "schema_version": "earth_country_calibration_model.v1",
   "calibration_model_id": "fifa-earth-tha-model.v1",
   "world_id": "fifa_earth",
-  "data_cutoff": "2026-10-05",
+  "data_cutoff": "2026-10-03",
   "countries": [
     "THA"
   ],

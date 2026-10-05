@@ -11,7 +11,7 @@ from beta_engine.application.earth_package_builder import load_earth_research_bu
 
 def test_fifa_first_reviewed_country_histories_are_complete_and_resolvable():
     bundle = load_earth_research_bundle(Path("config/earth_research/fifa_earth.json"))
-    assert set(bundle.research.countries) == {"CZE", "SVK", "JPN", "IND", "MAR", "SEN", "FRO", "USA", "ZAF", "BRA", "DEU", "ISL", "SMR", "ARG", "MEX", "AUS", "NZL", "FJI", "PNG", "SLB", "COK", "ASM", "PYF", "NCL", "WSM", "TON", "VUT", "FRA", "ESP", "ITA", "NLD", "BEL", "PRT", "AUT", "DNK", "SWE", "CHE", "NOR", "FIN", "HRV", "SVN", "POL", "ROU", "UKR", "LTU", "LVA", "EST", "CAN", "GRC", "SRB", "CHL", "HUN", "ISR", "BGR", "KAZ", "CHN", "TUR"}
+    assert set(bundle.research.countries) == {"CZE", "SVK", "JPN", "IND", "MAR", "SEN", "FRO", "USA", "ZAF", "BRA", "DEU", "ISL", "SMR", "ARG", "MEX", "AUS", "NZL", "FJI", "PNG", "SLB", "COK", "ASM", "PYF", "NCL", "WSM", "TON", "VUT", "FRA", "ESP", "ITA", "NLD", "BEL", "PRT", "AUT", "DNK", "SWE", "CHE", "NOR", "FIN", "HRV", "SVN", "POL", "ROU", "UKR", "LTU", "LVA", "EST", "CAN", "GRC", "SRB", "CHL", "HUN", "ISR", "BGR", "KAZ", "CHN", "TUR", "KOR", "THA"}
     assert bundle.research.data_cutoff.isoformat() == "2026-10-03"
 
     for code in ("CZE", "SVK"):
@@ -458,11 +458,11 @@ def test_fifa_fra_esp_batch_is_complete_and_temporally_dimensioned():
 
 def test_atp_complete_histories_are_evidence_resolvable_and_temporally_bounded():
     bundle = load_earth_research_bundle(Path("config/earth_research/atp_earth.json"))
-    expected_countries = {"CZE", "DEU", "USA", "AUS", "ESP", "SRB", "FRA", "GBR", "ARG", "JPN", "CAN", "ITA", "NED", "SWE", "SUI", "CRO", "POL", "CHN", "NOR", "GRE", "BEL", "ZAF", "DEN", "FIN", "NZL", "PRT", "IRL", "HUN", "ROU", "SVN", "SVK", "ISR", "BGR", "AUT", "TUR", "CYP", "BRA", "CHL", "COL", "MEX", "ECU", "IND", "KOR", "THA", "KAZ", "LVA", "EST", "LTU", "UKR", "MAR", "SEN", "ISL", "SMR", "FRO", "FJI", "PNG", "WSM"}
+    expected_countries = {"CZE", "DEU", "USA", "AUS", "ESP", "SRB", "FRA", "GBR", "ARG", "JPN", "CAN", "ITA", "NED", "SWE", "SUI", "CRO", "POL", "CHN", "NOR", "GRE", "BEL", "ZAF", "DEN", "FIN", "NZL", "PRT", "IRL", "HUN", "ROU", "SVN", "SVK", "ISR", "BGR", "AUT", "TUR", "CYP", "BRA", "CHL", "COL", "MEX", "ECU", "IND", "KOR", "THA", "KAZ", "LVA", "EST", "LTU", "UKR", "MAR", "SEN", "ISL", "SMR", "FRO", "FJI", "PNG", "WSM", "SLB", "TON"}
     assert set(bundle.research.countries) == expected_countries
     assert bundle.research.data_cutoff.isoformat() == "2026-10-04"
-    assert len(bundle.datasets) == 191
-    assert len(bundle.observations) == 518
+    assert len(bundle.datasets) == 198
+    assert len(bundle.observations) == 527
 
     expected_models = {
         "CZE": "atp-earth-cze-deu-seed-model.v1",
@@ -522,6 +522,8 @@ def test_atp_complete_histories_are_evidence_resolvable_and_temporally_bounded()
         "FJI": "atp-earth-fji-model.v1",
         "PNG": "atp-earth-png-model.v1",
         "WSM": "atp-earth-wsm-model.v1",
+        "SLB": "atp-earth-slb-model.v1",
+        "TON": "atp-earth-ton-model.v1",
     }
     for code, history in bundle.research.countries.items():
         assert history.missing_earth_years == []
@@ -2231,4 +2233,75 @@ def test_accelerated_chn_tur_png_wsm_batch_is_complete_and_time_gated():
     assert "atp-samoa-current-2026-v1#wsm-current-federation-2026" in wsm.years[2026].ratings["development_quality"].observation_ids
 
     for history in (chn, tur, png, wsm):
+        assert max(r.value for r in history.years[2026].ratings.values()) < 9.0
+
+
+
+def test_accelerated_kor_tha_slb_ton_batch_is_complete_and_time_gated():
+    fifa = load_earth_research_bundle(Path("config/earth_research/fifa_earth.json"))
+    atp = load_earth_research_bundle(Path("config/earth_research/atp_earth.json"))
+
+    for code, model_id in {
+        "KOR": "fifa-earth-kor-model.v1",
+        "THA": "fifa-earth-tha-model.v1",
+    }.items():
+        history = fifa.research.countries[code]
+        assert history.missing_earth_years == []
+        assert len(history.years) == 72
+        assert history.reference_year == 2026
+        for year in history.years.values():
+            for rating in year.ratings.values():
+                assert rating.calibration_model_id == model_id
+                assert rating.observation_ids
+                assert all(item in fifa.observations for item in rating.observation_ids)
+
+    kor = fifa.research.countries["KOR"]
+    assert "fifa-structural-korea-history-v1#kor-pro-league-1983" not in kor.years[1982].ratings["competition_quality"].observation_ids
+    assert "fifa-structural-korea-history-v1#kor-pro-league-1983" in kor.years[1983].ratings["competition_quality"].observation_ids
+    assert "fifa-big-count-2006-registered-v2#korea-republic" not in kor.years[2005].ratings["squash_access"].observation_ids
+    assert "fifa-big-count-2006-registered-v2#korea-republic" in kor.years[2006].ratings["squash_access"].observation_ids
+    assert "fifa-professional-2023-clubs-v2#korea-republic-p36" not in kor.years[2022].ratings["competition_quality"].observation_ids
+    assert "fifa-professional-2023-clubs-v2#korea-republic-p36" in kor.years[2023].ratings["competition_quality"].observation_ids
+
+    tha = fifa.research.countries["THA"]
+    assert "fifa-big-count-2006-registered-v2#thailand" not in tha.years[2005].ratings["squash_access"].observation_ids
+    assert "fifa-big-count-2006-registered-v2#thailand" in tha.years[2006].ratings["squash_access"].observation_ids
+    assert "fifa-professional-2023-clubs-v2#thailand-p57" not in tha.years[2022].ratings["competition_quality"].observation_ids
+    assert "fifa-professional-2023-clubs-v2#thailand-p57" in tha.years[2023].ratings["competition_quality"].observation_ids
+
+    for code, model_id in {
+        "SLB": "atp-earth-slb-model.v1",
+        "TON": "atp-earth-ton-model.v1",
+    }.items():
+        history = atp.research.countries[code]
+        assert history.missing_earth_years == []
+        assert len(history.years) == 72
+        assert history.reference_year == 2026
+        for year in history.years.values():
+            for rating in year.ratings.values():
+                assert rating.calibration_model_id == model_id
+                assert rating.observation_ids
+                assert all(item in atp.observations for item in rating.observation_ids)
+
+    slb = atp.research.countries["SLB"]
+    assert "pre-association" in slb.years[1955].territory_mapping_note
+    assert "atp-solomon-foundation-v1#slb-association-founded-1993" not in slb.years[1992].ratings["squash_tradition"].observation_ids
+    assert "atp-solomon-foundation-v1#slb-association-founded-1993" in slb.years[1993].ratings["squash_tradition"].observation_ids
+    assert "atp-solomon-regional-2012-v1#slb-regional-juniors-2012" not in slb.years[2011].ratings["development_quality"].observation_ids
+    assert "atp-solomon-regional-2012-v1#slb-regional-juniors-2012" in slb.years[2012].ratings["development_quality"].observation_ids
+    assert "atp-solomon-development-2023-v1#slb-otf-development-visits-2023" not in slb.years[2022].ratings["squash_access"].observation_ids
+    assert "atp-solomon-development-2023-v1#slb-otf-development-visits-2023" in slb.years[2023].ratings["squash_access"].observation_ids
+    assert "atp-solomon-current-2026-v1#slb-current-federation-2026" not in slb.years[2025].ratings["squash_tradition"].observation_ids
+    assert "atp-solomon-current-2026-v1#slb-current-federation-2026" in slb.years[2026].ratings["squash_tradition"].observation_ids
+
+    ton = atp.research.countries["TON"]
+    assert "pre-association" in ton.years[1955].territory_mapping_note
+    assert "atp-tonga-foundation-v1#ton-association-founded-1959" not in ton.years[1958].ratings["squash_tradition"].observation_ids
+    assert "atp-tonga-foundation-v1#ton-association-founded-1959" in ton.years[1959].ratings["squash_tradition"].observation_ids
+    assert "atp-tonga-eprc-2024-v1#ton-east-pacific-juniors-2024" not in ton.years[2023].ratings["development_quality"].observation_ids
+    assert "atp-tonga-eprc-2024-v1#ton-east-pacific-juniors-2024" in ton.years[2024].ratings["development_quality"].observation_ids
+    assert "atp-tonga-current-2026-v1#ton-current-federation-2026" not in ton.years[2025].ratings["development_quality"].observation_ids
+    assert "atp-tonga-current-2026-v1#ton-current-federation-2026" in ton.years[2026].ratings["development_quality"].observation_ids
+
+    for history in (kor, tha, slb, ton):
         assert max(r.value for r in history.years[2026].ratings.values()) < 9.0

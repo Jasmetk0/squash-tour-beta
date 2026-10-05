@@ -458,7 +458,7 @@ def test_fifa_fra_esp_batch_is_complete_and_temporally_dimensioned():
 
 def test_atp_complete_histories_are_evidence_resolvable_and_temporally_bounded():
     bundle = load_earth_research_bundle(Path("config/earth_research/atp_earth.json"))
-    expected_countries = {"CZE", "DEU", "USA", "AUS", "ESP", "SRB", "FRA", "GBR", "ARG", "JPN", "CAN", "ITA", "NED", "SWE", "SUI", "CRO", "POL", "CHN", "NOR", "GRE", "BEL", "ZAF", "DEN", "FIN", "NZL", "PRT", "IRL", "HUN", "ROU", "SVN", "SVK", "ISR", "BGR", "AUT", "TUR", "CYP", "BRA", "CHL", "COL", "MEX", "ECU", "IND", "KOR", "THA"}
+    expected_countries = {"CZE", "DEU", "USA", "AUS", "ESP", "SRB", "FRA", "GBR", "ARG", "JPN", "CAN", "ITA", "NED", "SWE", "SUI", "CRO", "POL", "CHN", "NOR", "GRE", "BEL", "ZAF", "DEN", "FIN", "NZL", "PRT", "IRL", "HUN", "ROU", "SVN", "SVK", "ISR", "BGR", "AUT", "TUR", "CYP", "BRA", "CHL", "COL", "MEX", "ECU", "IND", "KOR", "THA", "KAZ"}
     assert set(bundle.research.countries) == expected_countries
     assert bundle.research.data_cutoff.isoformat() == "2026-10-04"
     assert len(bundle.datasets) == 147
@@ -1643,3 +1643,44 @@ def test_fifa_pol_rou_ukr_ltu_batch_preserves_soviet_transitions_and_gating():
     assert ltu.years[1990].ratings["elite_support"].value < ltu.years[1989].ratings["elite_support"].value
     assert "fifa-structural-uefa-lithuania-profile-v1#ltu-fifa-readmission-1991" not in ltu.years[1990].ratings["competition_quality"].observation_ids
     assert "fifa-structural-uefa-lithuania-profile-v1#ltu-fifa-readmission-1991" in ltu.years[1991].ratings["competition_quality"].observation_ids
+
+
+def test_atp_kaz_history_preserves_soviet_context_transition_constraints_and_current_gating():
+    bundle = load_earth_research_bundle(Path("config/earth_research/atp_earth.json"))
+    kaz = bundle.research.countries["KAZ"]
+
+    assert kaz.missing_earth_years == []
+    assert len(kaz.years) == 72
+    assert kaz.years[1990].historical_entity == "Kazakh SSR within the Soviet Union"
+    assert kaz.years[1991].historical_entity == "Kazakhstan"
+
+    for year_number, year in kaz.years.items():
+        assert len(year.ratings) == 6
+        for rating in year.ratings.values():
+            assert rating.calibration_model_id == "atp-earth-kaz-model.v1"
+            assert rating.observation_ids
+            assert all(item in bundle.observations for item in rating.observation_ids)
+            if year_number < 2026:
+                assert "atp-ktf-federation-profile-2026-v1#kaz-regional-branches-2026" not in rating.observation_ids
+                assert "atp-ktf-infrastructure-2026-v1#kaz-high-performance-centres-2026" not in rating.observation_ids
+                assert "atp-ktf-infrastructure-2026-v1#kaz-courts-2026" not in rating.observation_ids
+
+    assert "atp-kaz-noc-history-v1#kaz-dynamo-programme-1933" in kaz.years[1955].ratings["squash_tradition"].observation_ids
+    assert "atp-kaz-noc-history-v1#kaz-almaty-city-competition-1935" in kaz.years[1955].ratings["competition_quality"].observation_ids
+
+    assert "atp-ktf-presidents-cup-history-v1#kaz-presidents-cup-since-1991" not in kaz.years[1990].ratings["competition_quality"].observation_ids
+    assert "atp-ktf-presidents-cup-history-v1#kaz-presidents-cup-since-1991" in kaz.years[1991].ratings["competition_quality"].observation_ids
+
+    assert "atp-ktf-transition-history-v1#kaz-underfunded-1990-2009" in kaz.years[1991].ratings["elite_support"].observation_ids
+    assert "atp-ktf-transition-history-v1#kaz-underfunded-1990-2009" in kaz.years[2009].ratings["development_quality"].observation_ids
+    assert "atp-ktf-transition-history-v1#kaz-underfunded-1990-2009" not in kaz.years[2010].ratings["elite_support"].observation_ids
+
+    assert "atp-ktf-presidents-cup-history-v1#kaz-challenger-upgrade-2007" not in kaz.years[2006].ratings["competition_quality"].observation_ids
+    assert "atp-ktf-presidents-cup-history-v1#kaz-challenger-upgrade-2007" in kaz.years[2007].ratings["competition_quality"].observation_ids
+
+    assert kaz.years[2026].ratings["squash_access"].value == 8.8
+    assert kaz.years[2026].ratings["development_quality"].value == 8.9
+    assert kaz.years[2026].ratings["elite_support"].value == 8.9
+    assert kaz.years[2026].ratings["competition_quality"].value < 9.0
+    assert "atp-ktf-federation-profile-2026-v1#kaz-regional-branches-2026" in kaz.years[2026].ratings["squash_access"].observation_ids
+    assert "atp-ktf-infrastructure-2026-v1#kaz-high-performance-centres-2026" in kaz.years[2026].ratings["development_quality"].observation_ids

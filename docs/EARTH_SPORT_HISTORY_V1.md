@@ -440,3 +440,27 @@ Big Count 2006 is never cited before 2006 and Professional Football Report 2023 
 never cited before 2023. High access density, professional ecosystem depth and
 institutional tradition remain separate dimensions, and held-out rankings/titles are
 not calibration inputs.
+
+
+## FIFA canonical-history batch — POL/ROU/UKR/LTU transitions (5 October 2026)
+
+Poland, Romania, Ukraine and Lithuania now have complete 1955–2026 FIFA Earth
+histories, adding **1,728 annual attribute ratings** and taking FIFA Earth to
+**45 / 250 complete histories**.
+
+The batch adds twenty direct UEFA structural observations. Poland and Romania
+provide long institutional continuity with dated reorganisation/infrastructure
+anchors. Ukraine and Lithuania exercise Soviet-successor handling: current-territory
+football is represented inside USSR governance without inheriting USSR-wide
+participation, professional counts or outcomes.
+
+Ukraine's 1991 autonomous-association/independence break and 1992 independent league
+are explicitly gated. Lithuania likewise separates restored independence in 1990,
+FIFA readmission in 1991 and UEFA membership in 1992. The authoring does not smooth
+those governance changes away.
+
+For Ukraine, the 2023–2026 access/development/support trajectory also remains below
+the pre-2022 path rather than assuming operating conditions were unaffected.
+Professional 2023 evidence remains a dated ecosystem observation, not proof that
+the wider environment was unchanged. Big Count definition anomalies reduce confidence
+rather than mechanically determining a rating.

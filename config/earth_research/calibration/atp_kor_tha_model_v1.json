@@ -20,5 +20,46 @@
     "Junior pathways and development mandates represent programme capacity, not realised outcomes.",
     "Historical interpolation remains lower-confidence where contemporaneous structural data is sparse.",
     "No held-out validation ranking is used for tuning."
-  ]
+  ],
+  "scale_interpretation": {
+    "8.0-8.9": "Strong/deeply developed environment for the dimension; values still require dimension-specific evidence.",
+    "9.0-9.7": "World-leading environment for the dimension. Federation age, programme existence or calendar breadth alone are insufficient."
+  },
+  "confidence_policy": [
+    "Confidence describes the authored 1–10 estimate, not merely confidence that a cited source fact is true.",
+    "Direct official documentation of a programme can coexist with medium or low rating confidence when its effect size on the 1–10 scale is modelled.",
+    "High confidence requires multiple strong observations that map clearly to the specific dimension, not multiple observations of the same institutional fact."
+  ],
+  "comparability_review": {
+    "references": [
+      "AUT",
+      "JPN",
+      "ESP",
+      "USA",
+      "SRB",
+      "FRA",
+      "GBR",
+      "ARG",
+      "IND"
+    ],
+    "finding": "The previous KOR/THA 2026 9.0 competition ratings with high confidence were not comparable with reference countries whose 9+ or near-9 competition estimates have richer outcome/scale evidence and are commonly only medium confidence.",
+    "action": "KOR competition is capped below the world-leading band and THA dimensions are rebased where federation age or calendar/programme existence had been carrying too much of the score. Current rating confidence is medium at most unless direct dimension-specific quantitative evidence justifies more.",
+    "heldout_ranking_used": false
+  },
+  "country_dimension_adjustments": {
+    "KOR": {
+      "competition_quality": "1989 circuit continuity plus the 2026 multilayer calendar supports strong organised competition, but not a 9+ world-leading claim; recent score capped at 8.6.",
+      "development_quality": "2026 network/junior-development evidence supports strong capacity but not measured outcomes; recent score capped at 8.6.",
+      "squash_access": "Network evidence is not equivalent to public access measurement; recent score capped at 8.4.",
+      "squash_tradition": "Institutional age is retained as evidence but the trajectory is shifted down 0.4 to avoid treating federation longevity as a near-maximum formula."
+    },
+    "THA": {
+      "squash_popularity": "The old trajectory relied mostly on the 1926 foundation; shifted down 0.8 because federation age is not participation/popularity evidence.",
+      "squash_access": "Shifted down 0.3; a national centre and regional series evidence organised capacity, not nationwide public access.",
+      "development_quality": "Shifted down 0.3; current programmes support a strong environment but remain capacity evidence.",
+      "competition_quality": "Shifted down 0.5; championships and ITF junior events show opportunity, not world-leading player quality.",
+      "elite_support": "Shifted down 0.3 because support breadth/outcomes are not directly measured.",
+      "squash_tradition": "Shifted down 0.7 because 1926 foundation alone should not imply a near-maximum tradition score."
+    }
+  }
 }

@@ -3,7 +3,7 @@
   "dataset_id": "fifa-structural-canada-soccer-history-v1",
   "source_id": "canada-soccer-history-timeline",
   "relative_path": "observations/normalized/structural/fifa_structural_canada_soccer_history_v1.json",
-  "sha256": "73d083c6fd7b667438c8812df1d249d1b0d611855a49c097419ed415499c3a3c",
+  "sha256": "52c4a437fbadddad548464fc86f67ab11c20c186cb3d85657346c657c115a457",
   "record_count": 7,
   "source_document_sha256": null,
   "input_artifact_sha256": null,

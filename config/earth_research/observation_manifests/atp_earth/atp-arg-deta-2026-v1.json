@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-arg-deta-2026-v1",
+  "source_id": "argentina-gov-deta-2026",
+  "relative_path": "observations/normalized/atp-arg-deta-2026-v1.json",
+  "sha256": "c223b6623e5e00ee4324839da5c5fc81b4e241451aa371553e8836805c603759",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

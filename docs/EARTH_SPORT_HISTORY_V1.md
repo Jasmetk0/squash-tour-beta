@@ -13,7 +13,7 @@ The six attributes keep their existing meanings on an explicit 1–10 scale with
 at most one decimal. Court Count is outside pre-alpha. Population/geography are
 separate inputs. Innate potential rarity must remain independent of nationality.
 
-## Current implementation status — 4 October 2026
+## Current implementation status — 5 October 2026
 
 This section is the authoritative current summary; dated batch sections below are
 preserved as implementation history.
@@ -21,16 +21,19 @@ preserved as implementation history.
 - FIFA Earth has **27 / 250** complete 1955–2026 country/territory histories,
   covering all six attributes. Its canonical research bundle resolves **65 datasets
   and 1,437 normalized observations**.
-- ATP Earth has **6 / 250** complete histories: CZE, DEU, USA, AUS, ESP and SRB.
+- ATP Earth has **10 / 250** complete histories: CZE, DEU, USA, AUS, ESP, SRB,
+  FRA, GBR, ARG and JPN. Its canonical bundle resolves **33 datasets and 140
+  normalized observations**.
+- The latest ATP batch adds **FRA, GBR, ARG and JPN**, another **1,728 annual
+  attribute ratings**. Great Britain explicitly preserves the LTA/United Kingdom
+  territory mismatch instead of treating LTA participation as a synthetic UK census;
+  Japan preserves the 2001 national-training-base setback and 2008 recovery;
+  Argentina gates current federation/DETA evidence to 2026; France uses DTN and
+  high-performance milestones independently from Davis Cup outcomes.
 - The latest FIFA batch adds **WSM (Samoa), TON (Tonga) and VUT (Vanuatu)**,
   another **1,296 annual attribute ratings**. It preserves Samoa's 2010–11 governance
   discontinuity, Tonga's rugby-leading national context and Vanuatu's 2008 academy
   pathway instead of smoothing the three Pacific environments into one template.
-  The current bundle resolves **19 datasets and 84 normalized observations**.
-- The USA/AUS/ESP/SRB ATP batch adds **1,728 annual attribute ratings**. Country
-  trajectories are independently authored; Davis Cup outcomes are limited to
-  competition/tradition evidence, while participation, access and development/support
-  use separate source families with explicit temporal limits.
 - Neither `config/world_packages/fifa_earth/` nor
   `config/world_packages/atp_earth/` is installed yet. The builder intentionally
   refuses to publish an incomplete 250-country research bundle, so absence of those
@@ -77,7 +80,7 @@ preserved as implementation history.
 ## Not implemented or not proven
 
 - **Neither official Earth directory exists yet.** FIFA currently has 27 complete
-  histories and ATP has 6; neither reaches the required 250-country all-or-nothing
+  histories and ATP has 10; neither reaches the required 250-country all-or-nothing
   build threshold. No fabricated neutral profiles are shipped to satisfy coverage
   mechanically. See the current-status section above for authoritative counts.
 - FIFA Big Count 2006 now has five canonical normalized

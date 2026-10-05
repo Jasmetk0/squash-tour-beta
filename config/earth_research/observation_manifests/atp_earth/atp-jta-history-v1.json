@@ -3,8 +3,8 @@
   "dataset_id": "atp-jta-history-v1",
   "source_id": "jta-history",
   "relative_path": "observations/normalized/atp-jta-history-v1.json",
-  "sha256": "de4f415f57454a1be665183d20bf8f605f574ad18ea7fe4c238564e2874c788e",
-  "record_count": 3,
+  "sha256": "92edd070ff1c8fa7413d8778077db645e1b8960b0856eab8c9650d82201c16b8",
+  "record_count": 6,
   "source_document_sha256": null,
   "input_artifact_sha256": null,
   "generated_by": "manual-normalization-2026-10-05"

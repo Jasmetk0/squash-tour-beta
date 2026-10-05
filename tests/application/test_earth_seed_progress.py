@@ -430,7 +430,7 @@ def test_atp_complete_histories_are_evidence_resolvable_and_temporally_bounded()
     bundle = load_earth_research_bundle(Path("config/earth_research/atp_earth.json"))
     expected_countries = {"CZE", "DEU", "USA", "AUS", "ESP", "SRB", "FRA", "GBR", "ARG", "JPN", "CAN", "ITA", "NED", "SWE"}
     assert set(bundle.research.countries) == expected_countries
-    assert bundle.research.data_cutoff.isoformat() == "2026-10-05"
+    assert bundle.research.data_cutoff.isoformat() == "2026-10-04"
     assert len(bundle.datasets) == 45
     assert len(bundle.observations) == 178
 

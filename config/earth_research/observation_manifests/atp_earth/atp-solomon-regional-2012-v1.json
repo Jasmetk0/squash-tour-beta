@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-solomon-regional-2012-v1",
+  "source_id": "otf-solomon-regional-2012",
+  "relative_path": "observations/normalized/atp_solomon_regional_2012_v1.json",
+  "sha256": "583343e192c9cd817993d24232409125c8ea9c8b7ba5f6d2ecb3aab6d1aab2fc",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

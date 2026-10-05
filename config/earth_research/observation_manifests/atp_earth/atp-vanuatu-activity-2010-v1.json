@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-vanuatu-activity-2010-v1",
+  "source_id": "vanuatu-activity-report-2010",
+  "relative_path": "observations/normalized/atp_vanuatu_activity_2010_v1.json",
+  "sha256": "1b90f81668ab8588da8bd05b907e7ab31a29c98d72e48dd57e962cde245cb493",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

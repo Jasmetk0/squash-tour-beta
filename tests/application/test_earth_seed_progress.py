@@ -428,11 +428,11 @@ def test_fifa_pyf_backcasts_do_not_claim_future_infrastructure_as_historical_sup
 
 def test_atp_complete_histories_are_evidence_resolvable_and_temporally_bounded():
     bundle = load_earth_research_bundle(Path("config/earth_research/atp_earth.json"))
-    expected_countries = {"CZE", "DEU", "USA", "AUS", "ESP", "SRB", "FRA", "GBR", "ARG", "JPN", "CAN", "ITA", "NED", "SWE", "SUI", "CRO", "POL", "CHN", "NOR", "GRE", "BEL", "ZAF", "DEN", "FIN", "NZL", "PRT", "IRL", "HUN", "ROU", "SVN", "SVK", "ISR", "BGR", "AUT", "TUR", "CYP", "BRA", "CHL", "COL", "MEX"}
+    expected_countries = {"CZE", "DEU", "USA", "AUS", "ESP", "SRB", "FRA", "GBR", "ARG", "JPN", "CAN", "ITA", "NED", "SWE", "SUI", "CRO", "POL", "CHN", "NOR", "GRE", "BEL", "ZAF", "DEN", "FIN", "NZL", "PRT", "IRL", "HUN", "ROU", "SVN", "SVK", "ISR", "BGR", "AUT", "TUR", "CYP", "BRA", "CHL", "COL", "MEX", "ECU", "IND"}
     assert set(bundle.research.countries) == expected_countries
     assert bundle.research.data_cutoff.isoformat() == "2026-10-04"
-    assert len(bundle.datasets) == 132
-    assert len(bundle.observations) == 391
+    assert len(bundle.datasets) == 140
+    assert len(bundle.observations) == 411
 
     expected_models = {
         "CZE": "atp-earth-cze-deu-seed-model.v1",
@@ -475,6 +475,8 @@ def test_atp_complete_histories_are_evidence_resolvable_and_temporally_bounded()
         "CHL": "atp-earth-bra-chl-model.v1",
         "COL": "atp-earth-col-mex-model.v1",
         "MEX": "atp-earth-col-mex-model.v1",
+        "ECU": "atp-earth-ecu-ind-model.v1",
+        "IND": "atp-earth-ecu-ind-model.v1",
     }
     for code, history in bundle.research.countries.items():
         assert history.missing_earth_years == []
@@ -1312,3 +1314,59 @@ def test_atp_col_mex_batch_preserves_current_evidence_gating():
     assert "atp-fmt-regionals-2026-v1#mex-regional-players-2026" in (
         mex.years[2026].ratings["competition_quality"].observation_ids
     )
+
+
+def test_atp_ecu_ind_batch_preserves_historical_and_modern_gating():
+    bundle = load_earth_research_bundle(Path("config/earth_research/atp_earth.json"))
+
+    for code in ("ECU", "IND"):
+        history = bundle.research.countries[code]
+        assert history.missing_earth_years == []
+        assert len(history.years) == 72
+        for year in history.years.values():
+            assert len(year.ratings) == 6
+            for rating in year.ratings.values():
+                assert rating.calibration_model_id == "atp-earth-ecu-ind-model.v1"
+                assert rating.observation_ids
+                assert all(item in bundle.observations for item in rating.observation_ids)
+
+    ecu = bundle.research.countries["ECU"]
+    assert "atp-fet-history-profile-v1#ecu-federation-founded-1967" not in (
+        ecu.years[1966].ratings["squash_tradition"].observation_ids
+    )
+    assert "atp-fet-history-profile-v1#ecu-federation-founded-1967" in (
+        ecu.years[1967].ratings["squash_tradition"].observation_ids
+    )
+    assert "atp-fet-history-profile-v1#ecu-national-centre-facilities-2026" not in (
+        ecu.years[2025].ratings["development_quality"].observation_ids
+    )
+    assert "atp-fet-history-profile-v1#ecu-national-centre-facilities-2026" in (
+        ecu.years[2026].ratings["development_quality"].observation_ids
+    )
+    assert "atp-fet-junior-circuit-2026-v1#ecu-national-junior-circuit-2026" in (
+        ecu.years[2026].ratings["competition_quality"].observation_ids
+    )
+    assert "atp-fet-jti-2026-v1#ecu-jti-recurring-stages-2026" in (
+        ecu.years[2026].ratings["development_quality"].observation_ids
+    )
+
+    ind = bundle.research.countries["IND"]
+    assert "atp-aita-history-v1#ind-national-stadium-1996" not in (
+        ind.years[1995].ratings["squash_access"].observation_ids
+    )
+    assert "atp-aita-history-v1#ind-national-stadium-1996" in (
+        ind.years[1996].ratings["squash_access"].observation_ids
+    )
+    assert "atp-aita-actc-2026-v1#ind-hpc-network-2026" not in (
+        ind.years[2025].ratings["elite_support"].observation_ids
+    )
+    assert "atp-aita-actc-2026-v1#ind-hpc-network-2026" in (
+        ind.years[2026].ratings["elite_support"].observation_ids
+    )
+    assert "atp-aita-coaching-2026-v1#ind-coach-course-system-2026" in (
+        ind.years[2026].ratings["development_quality"].observation_ids
+    )
+    assert "atp-aita-ace2032-2026-v1#ind-u12-u14-world-team-pathway-2026" in (
+        ind.years[2026].ratings["competition_quality"].observation_ids
+    )
+    assert ind.years[2026].ratings["development_quality"].confidence == "high"

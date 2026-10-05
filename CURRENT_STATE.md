@@ -1,5 +1,19 @@
 # Current implementation and next action
 
+## Candidate — ATP Ecuador/India batch (5 October 2026)
+
+- New complete ATP histories: **Ecuador (ECU), India (IND)**.
+- New ratings: 2 × 72 × 6 = **864**; ATP Earth now resolves **42 / 250 complete histories**.
+- ATP research now resolves **140 normalized datasets / 411 observations**.
+- Ecuador uses 1899/1905 tennis roots, the 1967 federation, current National Tennis Centre infrastructure, the 2026 Ecuadorian junior circuit and recurring child-entry JTI/Ecuajunior structures.
+- India uses deep pre-1955 competition/federation history, the 1996 National Stadium and 2026 ACTC high-performance centre network, ACE 2032, coach education and structured junior talent pipeline.
+- Historical Indian elite results are outcome context only and are not converted directly into competition-quality ratings.
+- Modern programme/infrastructure evidence is temporally gated and not backcast.
+- Official ATP package publication remains blocked by the 250/250 completeness rule.
+
+**Next after green CI:** continue another evidence-rich ATP/FIFA batch.
+
+
 ## Candidate — ATP Colombia/Mexico batch (5 October 2026)
 
 - New complete ATP histories: **Colombia (COL), Mexico (MEX)**.

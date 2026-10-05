@@ -1,0 +1,24 @@
+{
+  "schema_version": "atp_earth_reviewed_country_batch.v1",
+  "model_id": "atp-earth-ecu-ind-model.v1",
+  "created_on": "2026-10-05",
+  "countries": [
+    "ECU",
+    "IND"
+  ],
+  "coverage": {
+    "from": 1955,
+    "to": 2026,
+    "attributes": 6
+  },
+  "rating_scale": "country_ratings_1_10.v2",
+  "method": "Country-specific piecewise annual histories grounded in institutional continuity plus temporally gated development, training and competition-system evidence.",
+  "evidence_rules": [
+    "Ecuador's pre-1955 Guayaquil tennis history anchors tradition only; the 1967 federation and current National Tennis Centre/CEJ/JTI structures are gated from their actual years.",
+    "India's pre-1955 club/championship/federation history anchors tradition and organised competition context; elite player results in the history narrative are not converted directly into country ratings.",
+    "AITA's 2026 HPC, ACE 2032, coaching and junior-pipeline commitments represent programme capacity, not realised outcomes.",
+    "Modern programme and infrastructure evidence is never backcast.",
+    "Missing historical structural data lowers confidence rather than being treated as zero.",
+    "No held-out validation ranking is used for tuning."
+  ]
+}

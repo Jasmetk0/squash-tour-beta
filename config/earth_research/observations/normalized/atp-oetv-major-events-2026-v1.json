@@ -22,7 +22,7 @@
       "sex_scope": "male",
       "age_scope": "senior",
       "competition_scope": "ATP Tour and ATP Challenger",
-      "numeric_value": 4,
+      "numeric_value": 5,
       "text_value": null,
       "unit": "events",
       "collection_method": "official_narrative",
@@ -35,10 +35,8 @@
       "territory_weight": null,
       "source_page": null,
       "source_locator": null,
-      "definition_notes": "ÖTV lists ATP 250 Kitzbühel, ATP 500 Vienna and ATP Challenger events in Mauthausen, Tulln and Bad Waltersdorf; this observation conservatively counts the clearly men's ATP/Challenger competition environment as at least four top-level events.",
-      "quality_flags": [
-        "minimum_count"
-      ]
+      "definition_notes": "ÖTV lists ATP 250 Kitzbühel, ATP 500 Vienna and ATP Challenger events in Mauthausen, Tulln and Bad Waltersdorf: five men's ATP/Challenger events in Austria in 2026.",
+      "quality_flags": []
     }
   ]
 }

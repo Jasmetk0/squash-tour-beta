@@ -5000,3 +5000,4 @@ bands should shape 0..200 potential. No threshold is inferred from current OVR v
 - Iceland preserves low-confidence early-tennis context, organised growth in the 1970s, TSÍ foundation in 1987, the Kópavogur indoor-hall step in 1995 and current 2026 indoor instruction as distinct eras.
 - San Marino preserves the 1949 club base, federation foundation in 1957, Internationals from 1988, tennis centre in 1991, Davis Cup participation from 1992 and current Federal Tennis School/international-event structure in 2026.
 - No rankings or title outcomes are calibration targets. Official package publication remains blocked by the intentional **250 / 250** completeness requirement.
+- All five new observation manifests in this accelerated batch were written with semantic SHA-256 identity before CI validation.

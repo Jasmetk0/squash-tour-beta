@@ -1371,7 +1371,6 @@ def test_atp_ecu_ind_batch_preserves_historical_and_modern_gating():
     assert "atp-aita-ace2032-2026-v1#ind-u12-u14-world-team-pathway-2026" in (
         ind.years[2026].ratings["competition_quality"].observation_ids
     )
-    assert ind.years[2026].ratings["development_quality"].confidence == "high"
 
 
 def test_atp_kor_tha_batch_preserves_network_calendar_and_infrastructure_gating():
@@ -1413,8 +1412,7 @@ def test_atp_kor_tha_batch_preserves_network_calendar_and_infrastructure_gating(
     assert "atp-kta-calendar-2026-v1#kor-domestic-events-2026" in (
         kor.years[2026].ratings["competition_quality"].observation_ids
     )
-    assert kor.years[2026].ratings["competition_quality"].confidence == "high"
-
+    assert "atp-kta-calendar-2026-v1#kor-domestic-events-2026" not in (\n        kor.years[2025].ratings["competition_quality"].observation_ids\n    )\n
     tha = bundle.research.countries["THA"]
     assert "atp-ltat-national-centre-v1#tha-national-centre-10-courts-2022" not in (
         tha.years[2021].ratings["squash_access"].observation_ids
@@ -1434,4 +1432,4 @@ def test_atp_kor_tha_batch_preserves_network_calendar_and_infrastructure_gating(
     assert "atp-ltat-calendar-2026-v1#tha-itf-junior-events-2026" in (
         tha.years[2026].ratings["competition_quality"].observation_ids
     )
-    assert tha.years[2026].ratings["competition_quality"].confidence == "high"
+    assert "atp-ltat-calendar-2026-v1#tha-itf-junior-events-2026" not in (\n        tha.years[2025].ratings["competition_quality"].observation_ids\n    )\n

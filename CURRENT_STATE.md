@@ -1,5 +1,18 @@
 # Current implementation and next action
 
+## Candidate — ATP Brazil/Chile batch (5 October 2026)
+
+- New complete ATP histories: **Brazil (BRA), Chile (CHL)**.
+- New ratings: 2 × 72 × 6 = **864**; ATP Earth now resolves **38 / 250 complete histories**.
+- ATP research now resolves **124 normalized datasets / 372 observations**.
+- Brazil uses the 1955 CBT foundation plus partial pre-CBT state-federation context, current ~30,000 affiliated-athlete scale, national GA/G1/G2 and Tennis 10s competition rules, and a formal national coach-graduation registry.
+- Chile uses 1880s/1890s tennis roots, the 1920 federation and 1927 ITF affiliation plus 2025 JTI reach and 2026 junior-circuit growth/decentralisation, zonal qualifying and development grants.
+- Modern evidence is strictly temporally gated; affiliations, programmes and competition structures are not equated with total participation or elite-player outcomes.
+- Official ATP package publication remains blocked by the 250/250 completeness rule.
+
+**Next after green CI:** continue another evidence-rich ATP/FIFA batch.
+
+
 ## Candidate — ATP Turkey/Cyprus batch (5 October 2026)
 
 - New complete ATP histories: **Turkey (TUR), Cyprus (CYP)**.

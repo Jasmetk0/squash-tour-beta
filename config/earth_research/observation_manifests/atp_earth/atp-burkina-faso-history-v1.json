@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-burkina-faso-history-v1",
+  "source_id": "itf-burkina-faso-return-to-play-2020",
+  "relative_path": "observations/normalized/atp_burkina_faso_history_v1.json",
+  "sha256": "141ca9bf522cf02ffff9b1ca5a84a4638bad9866f9f8cbf83062ff49d128a42a",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

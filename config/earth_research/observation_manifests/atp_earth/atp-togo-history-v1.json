@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-togo-history-v1",
+  "source_id": "itf-togo-return-to-play-2020",
+  "relative_path": "observations/normalized/atp_togo_history_v1.json",
+  "sha256": "ef57fd7824b9d13aa77d16f802bf73aedb64d5ea545a74b6f0704578e831ad18",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

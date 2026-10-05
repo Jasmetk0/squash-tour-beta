@@ -11,7 +11,7 @@ from beta_engine.application.earth_package_builder import load_earth_research_bu
 
 def test_fifa_first_reviewed_country_histories_are_complete_and_resolvable():
     bundle = load_earth_research_bundle(Path("config/earth_research/fifa_earth.json"))
-    assert set(bundle.research.countries) == {"CZE", "SVK", "JPN", "IND", "MAR", "SEN", "FRO", "USA", "ZAF", "BRA", "DEU", "ISL", "SMR", "ARG", "MEX", "AUS", "NZL", "FJI", "PNG", "SLB", "COK", "ASM", "PYF", "NCL", "WSM", "TON", "VUT", "FRA", "ESP", "ITA", "NLD", "BEL", "PRT", "AUT", "DNK", "SWE", "CHE", "NOR", "FIN", "HRV", "SVN", "POL", "ROU", "UKR", "LTU", "LVA", "EST"}
+    assert set(bundle.research.countries) == {"CZE", "SVK", "JPN", "IND", "MAR", "SEN", "FRO", "USA", "ZAF", "BRA", "DEU", "ISL", "SMR", "ARG", "MEX", "AUS", "NZL", "FJI", "PNG", "SLB", "COK", "ASM", "PYF", "NCL", "WSM", "TON", "VUT", "FRA", "ESP", "ITA", "NLD", "BEL", "PRT", "AUT", "DNK", "SWE", "CHE", "NOR", "FIN", "HRV", "SVN", "POL", "ROU", "UKR", "LTU", "LVA", "EST", "CAN"}
     assert bundle.research.data_cutoff.isoformat() == "2026-10-03"
 
     for code in ("CZE", "SVK"):
@@ -1797,3 +1797,37 @@ def test_atp_ltu_history_preserves_soviet_context_and_temporal_gating():
     assert "atp-lts-lithuania-governance-v1#ltu-lts-established-1995" in ltu.years[1995].ratings["squash_tradition"].observation_ids
     assert "atp-lts-lithuania-mandate-v1#ltu-national-federation-mandate-2022" not in ltu.years[2021].ratings["development_quality"].observation_ids
     assert "atp-lts-lithuania-mandate-v1#ltu-national-federation-mandate-2022" in ltu.years[2022].ratings["development_quality"].observation_ids
+
+
+
+def test_fifa_can_history_is_complete_temporally_gated_and_conservative():
+    bundle = load_earth_research_bundle(Path("config/earth_research/fifa_earth.json"))
+    can = bundle.research.countries["CAN"]
+
+    assert can.missing_earth_years == []
+    assert len(can.years) == 72
+    assert can.reference_year == 2026
+
+    for year_number, year in can.years.items():
+        for rating in year.ratings.values():
+            assert rating.calibration_model_id == "fifa-earth-can-model.v1"
+            assert rating.observation_ids
+            assert all(item in bundle.observations for item in rating.observation_ids)
+            if year_number < 2006:
+                assert "fifa-big-count-2006" not in rating.source_ids
+            if year_number < 2023:
+                assert "fifa-professional-2023" not in rating.source_ids
+            if year_number < 2026:
+                assert "canada-soccer-about-2026" not in rating.source_ids
+
+    assert "fifa-big-count-2006-registered-v2#canada" not in can.years[2005].ratings["squash_access"].observation_ids
+    assert "fifa-big-count-2006-registered-v2#canada" in can.years[2006].ratings["squash_access"].observation_ids
+    assert "fifa-structural-canada-soccer-development-v1#can-ltpd-2008" not in can.years[2007].ratings["development_quality"].observation_ids
+    assert "fifa-structural-canada-soccer-development-v1#can-ltpd-2008" in can.years[2008].ratings["development_quality"].observation_ids
+    assert can.years[2015].ratings["development_quality"].value > can.years[2013].ratings["development_quality"].value
+    assert can.years[2019].ratings["competition_quality"].value > can.years[2015].ratings["competition_quality"].value
+    assert "fifa-professional-2023-clubs-v2#canada-p138" not in can.years[2022].ratings["competition_quality"].observation_ids
+    assert "fifa-professional-2023-clubs-v2#canada-p138" in can.years[2023].ratings["competition_quality"].observation_ids
+    assert "fifa-structural-canada-soccer-current-2026-v1#can-clubs-2026" not in can.years[2025].ratings["squash_access"].observation_ids
+    assert "fifa-structural-canada-soccer-current-2026-v1#can-clubs-2026" in can.years[2026].ratings["squash_access"].observation_ids
+    assert max(r.value for r in can.years[2026].ratings.values()) < 9.0

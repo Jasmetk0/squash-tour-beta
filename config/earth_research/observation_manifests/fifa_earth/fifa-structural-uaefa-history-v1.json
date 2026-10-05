@@ -3,7 +3,7 @@
   "dataset_id": "fifa-structural-uaefa-history-v1",
   "source_id": "uaefa-history",
   "relative_path": "observations/normalized/structural/fifa_structural_uaefa_history_v1.json",
-  "sha256": "66865f80fdb57286ba88c4d0fcb496306070cce21566ea4d43a02d0446768e5e",
+  "sha256": "79baacc3ce2db5aea2ebd2fb76db337993a22ee9bf9123eb8da94ab3626eed7b",
   "record_count": 4,
   "source_document_sha256": null,
   "input_artifact_sha256": null,

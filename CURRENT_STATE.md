@@ -4860,3 +4860,18 @@ bands should shape 0..200 potential. No threshold is inferred from current OVR v
 - Official FIFA package publication remains blocked by the intentional **250 / 250** completeness requirement.
 
 **Next after green CI:** continue FIFA with another mixed batch, keeping a balance between high-comparability global-source countries and historically discontinuous territories so coverage growth does not become generic interpolation.
+
+
+## Candidate — FIFA POL/ROU/UKR/LTU structural-transition batch (5 October 2026)
+
+- New complete FIFA histories: **Poland (POL), Romania (ROU), Ukraine (UKR), Lithuania (LTU)**.
+- New ratings: 4 × 72 × 6 = **1,728**; FIFA Earth now resolves **45 / 250 complete histories**.
+- Added four UEFA structural source shards and four normalized structural datasets with **20 direct observations**.
+- FIFA research now resolves **77 normalized datasets / 1,483 observations**, including **1,461 safe country facts** and **198 direct-mapped observations**.
+- Poland preserves pre-1955 PZPN/FIFA continuity, post-war league restart and the 2012 EURO infrastructure/support milestone.
+- Romania preserves 1930–32 association/league formation, UEFA founding membership, the 1957 FRF reorganisation and 1990 independent federation elections.
+- Ukraine before 1991 is modelled as current-territory football inside USSR governance; USSR-wide counts/results are not inherited. The 1991 association/independence break and 1992 independent league are separately gated.
+- Ukraine 2023–2026 does not assume that the pre-2022 access/development/support trajectory continued unchanged; the contemporary operating disruption is explicitly reflected while Professional 2023 remains ecosystem context only.
+- Lithuania before 1990 is current-territory football under Soviet governance; restored independence (1990), FIFA readmission (1991) and UEFA membership (1992) are separately represented.
+- The anomalously small Ukraine Big Count club field is treated as definition-sensitive evidence and keeps access confidence low rather than forcing a density-derived score.
+- Official FIFA package publication remains blocked by the intentional **250 / 250** completeness requirement.

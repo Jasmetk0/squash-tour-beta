@@ -48,7 +48,7 @@
       "historical_entity": null,
       "observation_year": 2022,
       "period_start_year": 2022,
-      "period_end_year": 2032,
+      "period_end_year": 2026,
       "measurement_type": "top100_pathway_plan",
       "sex_scope": "mixed",
       "age_scope": "development_to_senior",
@@ -66,10 +66,11 @@
       "territory_weight": null,
       "source_page": null,
       "source_locator": null,
-      "definition_notes": "Direct modern development/support strategy; a plan is not guaranteed realised performance.",
+      "definition_notes": "The source plan runs 2022–2032. Structured period fields are bounded to the engine/research observation horizon through 2026; the source text retains the full 2032 target. Programme capacity is not guaranteed realised performance.",
       "quality_flags": [
         "programme_capacity_not_outcome",
-        "strategic_plan"
+        "strategic_plan",
+        "source_plan_extends_beyond_engine_horizon"
       ]
     },
     {

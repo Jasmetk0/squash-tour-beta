@@ -11,7 +11,7 @@ from beta_engine.application.earth_package_builder import load_earth_research_bu
 
 def test_fifa_first_reviewed_country_histories_are_complete_and_resolvable():
     bundle = load_earth_research_bundle(Path("config/earth_research/fifa_earth.json"))
-    assert set(bundle.research.countries) == {"CZE", "SVK", "JPN", "IND", "MAR", "SEN", "FRO", "USA", "ZAF", "BRA", "DEU", "ISL", "SMR", "ARG", "MEX", "AUS", "NZL", "FJI", "PNG", "SLB", "COK", "ASM", "PYF", "NCL", "WSM", "TON", "VUT"}
+    assert set(bundle.research.countries) == {"CZE", "SVK", "JPN", "IND", "MAR", "SEN", "FRO", "USA", "ZAF", "BRA", "DEU", "ISL", "SMR", "ARG", "MEX", "AUS", "NZL", "FJI", "PNG", "SLB", "COK", "ASM", "PYF", "NCL", "WSM", "TON", "VUT", "FRA", "ESP"}
     assert bundle.research.data_cutoff.isoformat() == "2026-10-03"
 
     for code in ("CZE", "SVK"):
@@ -424,6 +424,36 @@ def test_fifa_pyf_backcasts_do_not_claim_future_infrastructure_as_historical_sup
         pyf.years[2025].ratings["development_quality"].observation_ids
     )
     assert "programme launch" in pyf.years[2025].ratings["development_quality"].rationale.lower()
+
+
+def test_fifa_fra_esp_batch_is_complete_and_temporally_dimensioned():
+    bundle = load_earth_research_bundle(Path("config/earth_research/fifa_earth.json"))
+
+    for code in ("FRA", "ESP"):
+        history = bundle.research.countries[code]
+        assert history.missing_earth_years == []
+        assert len(history.years) == 72
+        for year in history.years.values():
+            assert len(year.ratings) == 6
+            for rating in year.ratings.values():
+                assert rating.calibration_model_id == "fifa-earth-country-history-fra-esp.v1"
+                assert rating.observation_ids
+                assert all(item in bundle.observations for item in rating.observation_ids)
+
+    fra = bundle.research.countries["FRA"]
+    assert "fifa-structural-fff-history-v1#fra-dtn-training-plan-1970" not in fra.years[1969].ratings["development_quality"].observation_ids
+    assert "fifa-structural-fff-history-v1#fra-dtn-training-plan-1970" in fra.years[1970].ratings["development_quality"].observation_ids
+    assert "fifa-big-count-2006-all-players-v2#france" not in fra.years[2005].ratings["squash_popularity"].observation_ids
+    assert "fifa-big-count-2006-all-players-v2#france" in fra.years[2006].ratings["squash_popularity"].observation_ids
+    assert "fifa-professional-2023-players-v2#france-p221" not in fra.years[2022].ratings["competition_quality"].observation_ids
+    assert "fifa-professional-2023-players-v2#france-p221" in fra.years[2023].ratings["competition_quality"].observation_ids
+
+    esp = bundle.research.countries["ESP"]
+    assert "fifa-structural-rfef-ciudad-futbol-v1#esp-ciudad-inaugurated-2003" not in esp.years[2002].ratings["development_quality"].observation_ids
+    assert "fifa-structural-rfef-ciudad-futbol-v1#esp-ciudad-inaugurated-2003" in esp.years[2003].ratings["development_quality"].observation_ids
+    assert "fifa-structural-rfef-talent-development-2026-v1#esp-national-talent-process-2026" not in esp.years[2025].ratings["development_quality"].observation_ids
+    assert "fifa-structural-rfef-talent-development-2026-v1#esp-national-talent-process-2026" in esp.years[2026].ratings["development_quality"].observation_ids
+    assert "fifa-big-count-2006-clubs-v2#spain" in esp.years[2006].ratings["squash_access"].observation_ids
 
 
 def test_atp_complete_histories_are_evidence_resolvable_and_temporally_bounded():

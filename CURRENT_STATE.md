@@ -4875,3 +4875,17 @@ bands should shape 0..200 potential. No threshold is inferred from current OVR v
 - Lithuania before 1990 is current-territory football under Soviet governance; restored independence (1990), FIFA readmission (1991) and UEFA membership (1992) are separately represented.
 - The anomalously small Ukraine Big Count club field is treated as definition-sensitive evidence and keeps access confidence low rather than forcing a density-derived score.
 - Official FIFA package publication remains blocked by the intentional **250 / 250** completeness requirement.
+
+
+## Candidate — ATP Kazakhstan history batch (5 October 2026)
+
+- New complete ATP history: **Kazakhstan (KAZ)**.
+- New ratings: 72 × 6 = **432**; ATP Earth now resolves **45 / 250 complete histories**, matching FIFA at 45 / 250.
+- Added **5 normalized datasets / 12 observations** from Kazakhstan Tennis Federation and Kazakhstan National Olympic Committee evidence, taking ATP research from **147 datasets / 431 observations** to **152 datasets / 443 observations**.
+- Pre-1991 years are explicitly current-territory Kazakh tennis within Soviet governance; USSR-wide participation, player strength or competition results are not inherited.
+- Early 1933/1935 organised-tennis milestones anchor tradition and limited competition context without pretending to be national participation measurements.
+- The President's Cup is gated from 1991, and its ATP Challenger/ITF upgrade from 2007.
+- KTF's own retrospective describing the 1990s/2000s as underfunded constrains development/elite-support during 1991–2009 instead of smoothing the modern growth backwards.
+- 2026 KTF evidence documents a 14-branch national network, children's/regional/coach-development programmes, a broad junior-to-ATP competition portfolio, and 39 high-performance centres with 394 courts. Those current facts are never backcast.
+- Modern Kazakhstan reaches strong but sub-9.0 ratings: access 8.8, development 8.9, competition 8.8, elite support 8.9. Infrastructure/programme scale alone does not qualify as world-leading 9+.
+- Official ATP package publication remains blocked by the intentional **250 / 250** completeness requirement.

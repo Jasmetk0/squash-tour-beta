@@ -464,3 +464,28 @@ the pre-2022 path rather than assuming operating conditions were unaffected.
 Professional 2023 evidence remains a dated ecosystem observation, not proof that
 the wider environment was unchanged. Big Count definition anomalies reduce confidence
 rather than mechanically determining a rating.
+
+
+## ATP canonical-history batch — Kazakhstan (5 October 2026)
+
+Kazakhstan now has a complete 1955–2026 ATP Earth history, adding **432 annual
+attribute ratings** and taking ATP Earth to **45 / 250 complete histories**, level
+with FIFA Earth.
+
+The historical model deliberately separates current-territory tennis from state
+identity. Pre-1991 values describe documented Kazakh tennis activity inside Soviet
+governance; USSR-wide participation, rankings or competition outcomes are not
+assigned to KAZ. Kazakhstan NOC material anchors organised tennis in 1933 and the
+first Almaty city-wide competition in 1935.
+
+Independent-era competition begins with the President's Cup from 1991. KTF's own
+retrospective describes the 1990s and 2000s as a difficult underfunded period with
+limited international travel, so development and elite-support remain constrained
+through 2009. The 2007 President's Cup Challenger/ITF upgrade marks a genuine
+competition-system step.
+
+Current 2026 evidence is strictly gated: KTF reports 14 regional branches, a
+children/regional/coaching/referee development portfolio, a broad hosted competition
+ladder, and a current infrastructure network of 39 high-performance centres and
+394 courts. These are capacity/opportunity observations rather than direct player
+outcomes, so modern KAZ remains below the 9+ world-leading threshold.

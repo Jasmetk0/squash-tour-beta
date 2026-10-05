@@ -1,5 +1,18 @@
 # Current implementation and next action
 
+## Candidate — ATP Israel/Bulgaria evidence-rich batch (5 October 2026)
+
+- New complete ATP histories: **Israel (ISR), Bulgaria (BGR)**.
+- New ratings: 2 × 72 × 6 = **864**; ATP Earth now resolves **33 / 250 complete histories**.
+- ATP research now resolves **105 normalized datasets / 321 observations**.
+- Israel uses the 1950 ITA foundation, early Davis Cup continuity and current nationwide youth/development competition structures. Geopolitical or military conditions are not direct sport-rating inputs.
+- Bulgaria uses pre-1955 institutional/competition anchors, current 128-club federation scale, the 2025 nationwide child-access programme and the 2026 national/regional competition framework.
+- Modern evidence is strictly temporally gated; programme capacity is not equated with participation or player outcomes.
+- Official ATP package publication remains blocked by the 250/250 completeness rule.
+
+**Next after green CI:** continue with another evidence-rich ATP/FIFA batch.
+
+
 ## Candidate — ATP Slovakia history (5 October 2026)
 
 - New complete ATP history: **Slovakia (SVK)**.

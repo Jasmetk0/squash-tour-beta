@@ -3,7 +3,7 @@
   "dataset_id": "atp-jta-fuji-project-v1",
   "source_id": "jta-fuji-project",
   "relative_path": "observations/normalized/atp-jta-fuji-project-v1.json",
-  "sha256": "a228cf969a5b3e79b26fe6747dca735f6b491ea739bd6c23851925324914e36b",
+  "sha256": "39de4d0744b78c287b9d2a3bc9487f93830a2738c911334ce7f97d2b7988e309",
   "record_count": 3,
   "source_document_sha256": null,
   "input_artifact_sha256": null,

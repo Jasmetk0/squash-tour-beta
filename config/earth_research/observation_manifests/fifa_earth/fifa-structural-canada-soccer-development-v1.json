@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-canada-soccer-development-v1",
+  "source_id": "canada-soccer-development-legacy",
+  "relative_path": "observations/normalized/structural/fifa_structural_canada_soccer_development_v1.json",
+  "sha256": "391112f508d950db0ebee64cac6b0d9ddddf3e7ca40f07fcdd54e7b9b7974ac4",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

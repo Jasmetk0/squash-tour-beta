@@ -31,14 +31,15 @@
       "cross_country_comparable": false,
       "is_direct_observation": true,
       "is_statistically_modelled": false,
-      "territory_mapping_method": "current_country_historical_territory_context",
+      "territory_mapping_method": "explicit_reviewed_fact_to_earth",
       "territory_weight": null,
       "source_page": null,
       "source_locator": null,
       "definition_notes": "Long-run organised-football/tradition context on current Vanuatu territory.",
       "quality_flags": [
         "pre_game_start_history",
-        "institutional_context"
+        "institutional_context",
+        "explicit_reviewed_country_fact"
       ]
     },
     {
@@ -63,13 +64,14 @@
       "cross_country_comparable": false,
       "is_direct_observation": true,
       "is_statistically_modelled": false,
-      "territory_mapping_method": "direct_earth_country",
+      "territory_mapping_method": "explicit_reviewed_fact_to_earth",
       "territory_weight": null,
       "source_page": null,
       "source_locator": null,
       "definition_notes": "Formal international/confederation structure context.",
       "quality_flags": [
-        "institutional_context"
+        "institutional_context",
+        "explicit_reviewed_country_fact"
       ]
     },
     {
@@ -94,13 +96,14 @@
       "cross_country_comparable": false,
       "is_direct_observation": true,
       "is_statistically_modelled": false,
-      "territory_mapping_method": "direct_earth_country",
+      "territory_mapping_method": "explicit_reviewed_fact_to_earth",
       "territory_weight": null,
       "source_page": null,
       "source_locator": null,
       "definition_notes": "Direct development/elite-support programme evidence from 2008 onward.",
       "quality_flags": [
-        "programme_capacity_not_outcome"
+        "programme_capacity_not_outcome",
+        "explicit_reviewed_country_fact"
       ]
     },
     {
@@ -125,13 +128,14 @@
       "cross_country_comparable": false,
       "is_direct_observation": true,
       "is_statistically_modelled": false,
-      "territory_mapping_method": "direct_earth_country",
+      "territory_mapping_method": "explicit_reviewed_fact_to_earth",
       "territory_weight": null,
       "source_page": null,
       "source_locator": null,
       "definition_notes": "Elite club competition context only.",
       "quality_flags": [
-        "outcome_context_only"
+        "outcome_context_only",
+        "explicit_reviewed_country_fact"
       ]
     },
     {
@@ -156,13 +160,14 @@
       "cross_country_comparable": false,
       "is_direct_observation": true,
       "is_statistically_modelled": false,
-      "territory_mapping_method": "direct_earth_country",
+      "territory_mapping_method": "explicit_reviewed_fact_to_earth",
       "territory_weight": null,
       "source_page": null,
       "source_locator": null,
       "definition_notes": "Youth elite/development outcome context; not senior competition or participation evidence.",
       "quality_flags": [
-        "youth_outcome_context_only"
+        "youth_outcome_context_only",
+        "explicit_reviewed_country_fact"
       ]
     },
     {
@@ -187,13 +192,14 @@
       "cross_country_comparable": false,
       "is_direct_observation": true,
       "is_statistically_modelled": false,
-      "territory_mapping_method": "direct_earth_country",
+      "territory_mapping_method": "explicit_reviewed_fact_to_earth",
       "territory_weight": null,
       "source_page": null,
       "source_locator": null,
       "definition_notes": "Senior elite competition context only.",
       "quality_flags": [
-        "outcome_context_only"
+        "outcome_context_only",
+        "explicit_reviewed_country_fact"
       ]
     },
     {
@@ -218,14 +224,15 @@
       "cross_country_comparable": false,
       "is_direct_observation": true,
       "is_statistically_modelled": false,
-      "territory_mapping_method": "direct_earth_country",
+      "territory_mapping_method": "explicit_reviewed_fact_to_earth",
       "territory_weight": null,
       "source_page": null,
       "source_locator": null,
       "definition_notes": "Current development-context statement; not an independent measured quality score.",
       "quality_flags": [
         "current_context",
-        "federation_profile_statement"
+        "federation_profile_statement",
+        "explicit_reviewed_country_fact"
       ]
     },
     {
@@ -250,14 +257,15 @@
       "cross_country_comparable": false,
       "is_direct_observation": true,
       "is_statistically_modelled": false,
-      "territory_mapping_method": "direct_earth_country",
+      "territory_mapping_method": "explicit_reviewed_fact_to_earth",
       "territory_weight": null,
       "source_page": null,
       "source_locator": null,
       "definition_notes": "Current elite-pathway outcome context; source does not provide a start date here, so it is not backdated.",
       "quality_flags": [
         "current_context",
-        "elite_pathway_outcome"
+        "elite_pathway_outcome",
+        "explicit_reviewed_country_fact"
       ]
     }
   ]

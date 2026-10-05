@@ -31,14 +31,15 @@
       "cross_country_comparable": false,
       "is_direct_observation": true,
       "is_statistically_modelled": false,
-      "territory_mapping_method": "direct_earth_country",
+      "territory_mapping_method": "explicit_reviewed_fact_to_earth",
       "territory_weight": null,
       "source_page": null,
       "source_locator": null,
       "definition_notes": "Direct regional access/development/support capacity from 2020 onward.",
       "quality_flags": [
         "regional_infrastructure",
-        "programme_capacity_not_outcome"
+        "programme_capacity_not_outcome",
+        "explicit_reviewed_country_fact"
       ]
     },
     {
@@ -63,7 +64,7 @@
       "cross_country_comparable": false,
       "is_direct_observation": true,
       "is_statistically_modelled": false,
-      "territory_mapping_method": "direct_earth_country",
+      "territory_mapping_method": "explicit_reviewed_fact_to_earth",
       "territory_weight": null,
       "source_page": null,
       "source_locator": null,
@@ -71,7 +72,8 @@
       "quality_flags": [
         "regional_variation",
         "rugby_leading_nationally",
-        "not_participation_count"
+        "not_participation_count",
+        "explicit_reviewed_country_fact"
       ]
     }
   ]

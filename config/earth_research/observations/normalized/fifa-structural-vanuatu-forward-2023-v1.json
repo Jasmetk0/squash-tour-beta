@@ -31,14 +31,15 @@
       "cross_country_comparable": false,
       "is_direct_observation": true,
       "is_statistically_modelled": false,
-      "territory_mapping_method": "direct_earth_country",
+      "territory_mapping_method": "explicit_reviewed_fact_to_earth",
       "territory_weight": null,
       "source_page": null,
       "source_locator": null,
       "definition_notes": "FIFA reported Freshwater Stadium, home of Vanuatu’s national sides, was constructed with USD 4.15 million in FIFA Forward funding.",
       "quality_flags": [
         "modern_infrastructure",
-        "funding_not_quality_measure"
+        "funding_not_quality_measure",
+        "explicit_reviewed_country_fact"
       ]
     },
     {
@@ -63,13 +64,14 @@
       "cross_country_comparable": false,
       "is_direct_observation": true,
       "is_statistically_modelled": false,
-      "territory_mapping_method": "direct_earth_country",
+      "territory_mapping_method": "explicit_reviewed_fact_to_earth",
       "territory_weight": null,
       "source_page": null,
       "source_locator": null,
       "definition_notes": "Direct current development/support capacity; not automatic professional output.",
       "quality_flags": [
-        "programme_capacity_not_outcome"
+        "programme_capacity_not_outcome",
+        "explicit_reviewed_country_fact"
       ]
     },
     {
@@ -94,14 +96,15 @@
       "cross_country_comparable": false,
       "is_direct_observation": true,
       "is_statistically_modelled": false,
-      "territory_mapping_method": "direct_earth_country",
+      "territory_mapping_method": "explicit_reviewed_fact_to_earth",
       "territory_weight": null,
       "source_page": null,
       "source_locator": null,
       "definition_notes": "Modern pathway/support context only; plans are not treated as completed outcomes.",
       "quality_flags": [
         "programme_plan",
-        "capacity_not_outcome"
+        "capacity_not_outcome",
+        "explicit_reviewed_country_fact"
       ]
     }
   ]

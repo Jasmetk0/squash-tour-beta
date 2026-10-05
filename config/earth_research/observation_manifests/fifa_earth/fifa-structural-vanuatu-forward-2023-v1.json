@@ -3,7 +3,7 @@
   "dataset_id": "fifa-structural-vanuatu-forward-2023-v1",
   "source_id": "fifa-vanuatu-forward-2023",
   "relative_path": "observations/normalized/fifa-structural-vanuatu-forward-2023-v1.json",
-  "sha256": "d7d986d851d067a6bb124ef630285c22e63740dbcc817b5bcff7de60690087b7",
+  "sha256": "f8a43cabb74665b3911e3de10e788aca136c543d4342f49e697579a2ccf8a081",
   "record_count": 3,
   "source_document_sha256": null,
   "input_artifact_sha256": null,

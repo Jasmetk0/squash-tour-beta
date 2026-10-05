@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-uaefa-history-v1",
+  "source_id": "uaefa-history",
+  "relative_path": "observations/normalized/structural/fifa_structural_uaefa_history_v1.json",
+  "sha256": "66865f80fdb57286ba88c4d0fcb496306070cce21566ea4d43a02d0446768e5e",
+  "record_count": 4,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

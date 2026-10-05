@@ -4844,3 +4844,19 @@ bands should shape 0..200 potential. No threshold is inferred from current OVR v
 - Official FIFA package publication remains blocked by the intentional **250 / 250** completeness requirement.
 
 **Next after green CI:** continue another comparable FIFA batch while periodically mixing in countries that require structural/governance discontinuities so the remaining catalogue is not filled by smooth generic curves.
+
+
+## Candidate — FIFA NOR/FIN/HRV/SVN structural-governance batch (5 October 2026)
+
+- New complete FIFA histories: **Norway (NOR), Finland (FIN), Croatia (HRV), Slovenia (SVN)**.
+- New ratings: 4 × 72 × 6 = **1,728**; FIFA Earth now resolves **41 / 250 complete histories**.
+- Added four UEFA structural source shards and four normalized structural datasets with **14 direct observations**.
+- FIFA research now resolves **73 normalized datasets / 1,463 observations**, including **1,441 safe country facts** and **178 direct-mapped observations**.
+- Norway preserves long pre-1955 institutional continuity and very dense 2006 organised access without converting club density directly into competition quality.
+- Finland preserves 1907 federation continuity and gates UEFA-described regional centres of excellence strictly to 2026 development/elite-support context.
+- Croatia before 1991 is modelled as Croatian football within Yugoslav governance; the 1991 independence transition produces a real short-term governance/competition-support discontinuity, followed by FIFA renewal in 1992 and UEFA membership in 1993.
+- Slovenia before 1991 is likewise current-territory Slovenian football inside Yugoslav structures; 1991 independence/national championship, 1992 FIFA membership and 1993 UEFA membership are separately gated.
+- No Yugoslavia-wide participation counts, professional counts, rankings or results are inherited by HRV/SVN.
+- Official FIFA package publication remains blocked by the intentional **250 / 250** completeness requirement.
+
+**Next after green CI:** continue FIFA with another mixed batch, keeping a balance between high-comparability global-source countries and historically discontinuous territories so coverage growth does not become generic interpolation.

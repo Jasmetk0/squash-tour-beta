@@ -6958,9 +6958,9 @@
           "calibration_model_id": "atp-earth-nor-gre-bel-rsa-model.v1"
         },
         "competition_quality": {
-          "value": 8.8,
+          "value": 6.6,
           "method": "derived_estimate",
-          "confidence": "medium",
+          "confidence": "low",
           "source_ids": [
             "htf-statute-2016",
             "atp-stefanos-tsitsipas"
@@ -6969,7 +6969,7 @@
             "atp-htf-statute-v1#gre-founded-1938",
             "atp-tsitsipas-v1#gre-atp-finals-title-2019"
           ],
-          "rationale": "ATP Earth GRE competition quality estimate for 2019. The 1-10 value is project-authored for the Greece tennis environment; cited facts are evidence/context rather than measured game ratings. Before the modern elite breakthrough, later Tsitsipas outcomes are excluded.",
+          "rationale": "ATP Earth GRE competition quality estimate for 2019. The 1-10 value is project-authored for the men's tennis environment; cited facts are evidence/context rather than measured game ratings. Greece's 2026 federation-club network supports the availability side of competition quality. Tsitsipas's results remain elite outcome context only; they do not by themselves establish nationwide competitive depth or tournament quality.",
           "anchor_years": [
             2019
           ],
@@ -7070,9 +7070,9 @@
           "calibration_model_id": "atp-earth-nor-gre-bel-rsa-model.v1"
         },
         "competition_quality": {
-          "value": 9.3,
+          "value": 6.8,
           "method": "derived_estimate",
-          "confidence": "medium",
+          "confidence": "low",
           "source_ids": [
             "htf-statute-2016",
             "atp-stefanos-tsitsipas"
@@ -7081,7 +7081,7 @@
             "atp-htf-statute-v1#gre-founded-1938",
             "atp-tsitsipas-v1#gre-atp-finals-title-2019"
           ],
-          "rationale": "ATP Earth GRE competition quality estimate for 2020. The 1-10 value is project-authored for the Greece tennis environment; cited facts are evidence/context rather than measured game ratings. Before the modern elite breakthrough, later Tsitsipas outcomes are excluded.",
+          "rationale": "ATP Earth GRE competition quality estimate for 2020. The 1-10 value is project-authored for the men's tennis environment; cited facts are evidence/context rather than measured game ratings. Greece's 2026 federation-club network supports the availability side of competition quality. Tsitsipas's results remain elite outcome context only; they do not by themselves establish nationwide competitive depth or tournament quality.",
           "anchor_years": [
             2019,
             2021
@@ -7182,9 +7182,9 @@
           "calibration_model_id": "atp-earth-nor-gre-bel-rsa-model.v1"
         },
         "competition_quality": {
-          "value": 9.7,
+          "value": 7,
           "method": "derived_estimate",
-          "confidence": "medium",
+          "confidence": "low",
           "source_ids": [
             "htf-statute-2016",
             "atp-stefanos-tsitsipas"
@@ -7194,7 +7194,7 @@
             "atp-tsitsipas-v1#gre-atp-finals-title-2019",
             "atp-tsitsipas-v1#gre-career-high-2021"
           ],
-          "rationale": "ATP Earth GRE competition quality estimate for 2021. The 1-10 value is project-authored for the Greece tennis environment; cited facts are evidence/context rather than measured game ratings. Tsitsipas's ATP Finals title, No. 3 peak and Grand Slam finals support the modern elite spike; federation/club scale is kept separate.",
+          "rationale": "ATP Earth GRE competition quality estimate for 2021. The 1-10 value is project-authored for the men's tennis environment; cited facts are evidence/context rather than measured game ratings. Greece's 2026 federation-club network supports the availability side of competition quality. Tsitsipas's results remain elite outcome context only; they do not by themselves establish nationwide competitive depth or tournament quality.",
           "anchor_years": [
             2021
           ],
@@ -7297,9 +7297,9 @@
           "calibration_model_id": "atp-earth-nor-gre-bel-rsa-model.v1"
         },
         "competition_quality": {
-          "value": 9.6,
+          "value": 7.1,
           "method": "derived_estimate",
-          "confidence": "medium",
+          "confidence": "low",
           "source_ids": [
             "htf-statute-2016",
             "atp-stefanos-tsitsipas"
@@ -7309,7 +7309,7 @@
             "atp-tsitsipas-v1#gre-atp-finals-title-2019",
             "atp-tsitsipas-v1#gre-career-high-2021"
           ],
-          "rationale": "ATP Earth GRE competition quality estimate for 2022. The 1-10 value is project-authored for the Greece tennis environment; cited facts are evidence/context rather than measured game ratings. Tsitsipas's ATP Finals title, No. 3 peak and Grand Slam finals support the modern elite spike; federation/club scale is kept separate.",
+          "rationale": "ATP Earth GRE competition quality estimate for 2022. The 1-10 value is project-authored for the men's tennis environment; cited facts are evidence/context rather than measured game ratings. Greece's 2026 federation-club network supports the availability side of competition quality. Tsitsipas's results remain elite outcome context only; they do not by themselves establish nationwide competitive depth or tournament quality.",
           "anchor_years": [
             2021,
             2023
@@ -7414,9 +7414,9 @@
           "calibration_model_id": "atp-earth-nor-gre-bel-rsa-model.v1"
         },
         "competition_quality": {
-          "value": 9.5,
+          "value": 7.2,
           "method": "derived_estimate",
-          "confidence": "medium",
+          "confidence": "low",
           "source_ids": [
             "htf-statute-2016",
             "atp-stefanos-tsitsipas"
@@ -7427,7 +7427,7 @@
             "atp-tsitsipas-v1#gre-career-high-2021",
             "atp-tsitsipas-v1#gre-australian-final-2023"
           ],
-          "rationale": "ATP Earth GRE competition quality estimate for 2023. The 1-10 value is project-authored for the Greece tennis environment; cited facts are evidence/context rather than measured game ratings. Tsitsipas's ATP Finals title, No. 3 peak and Grand Slam finals support the modern elite spike; federation/club scale is kept separate.",
+          "rationale": "ATP Earth GRE competition quality estimate for 2023. The 1-10 value is project-authored for the men's tennis environment; cited facts are evidence/context rather than measured game ratings. Greece's 2026 federation-club network supports the availability side of competition quality. Tsitsipas's results remain elite outcome context only; they do not by themselves establish nationwide competitive depth or tournament quality.",
           "anchor_years": [
             2023
           ],
@@ -7532,9 +7532,9 @@
           "calibration_model_id": "atp-earth-nor-gre-bel-rsa-model.v1"
         },
         "competition_quality": {
-          "value": 9.3,
+          "value": 7.1,
           "method": "derived_estimate",
-          "confidence": "medium",
+          "confidence": "low",
           "source_ids": [
             "htf-statute-2016",
             "atp-stefanos-tsitsipas"
@@ -7545,7 +7545,7 @@
             "atp-tsitsipas-v1#gre-career-high-2021",
             "atp-tsitsipas-v1#gre-australian-final-2023"
           ],
-          "rationale": "ATP Earth GRE competition quality estimate for 2024. The 1-10 value is project-authored for the Greece tennis environment; cited facts are evidence/context rather than measured game ratings. Tsitsipas's ATP Finals title, No. 3 peak and Grand Slam finals support the modern elite spike; federation/club scale is kept separate.",
+          "rationale": "ATP Earth GRE competition quality estimate for 2024. The 1-10 value is project-authored for the men's tennis environment; cited facts are evidence/context rather than measured game ratings. Greece's 2026 federation-club network supports the availability side of competition quality. Tsitsipas's results remain elite outcome context only; they do not by themselves establish nationwide competitive depth or tournament quality.",
           "anchor_years": [
             2023,
             2026
@@ -7651,9 +7651,9 @@
           "calibration_model_id": "atp-earth-nor-gre-bel-rsa-model.v1"
         },
         "competition_quality": {
-          "value": 9,
+          "value": 7,
           "method": "derived_estimate",
-          "confidence": "medium",
+          "confidence": "low",
           "source_ids": [
             "htf-statute-2016",
             "atp-stefanos-tsitsipas"
@@ -7664,7 +7664,7 @@
             "atp-tsitsipas-v1#gre-career-high-2021",
             "atp-tsitsipas-v1#gre-australian-final-2023"
           ],
-          "rationale": "ATP Earth GRE competition quality estimate for 2025. The 1-10 value is project-authored for the Greece tennis environment; cited facts are evidence/context rather than measured game ratings. Tsitsipas's ATP Finals title, No. 3 peak and Grand Slam finals support the modern elite spike; federation/club scale is kept separate.",
+          "rationale": "ATP Earth GRE competition quality estimate for 2025. The 1-10 value is project-authored for the men's tennis environment; cited facts are evidence/context rather than measured game ratings. Greece's 2026 federation-club network supports the availability side of competition quality. Tsitsipas's results remain elite outcome context only; they do not by themselves establish nationwide competitive depth or tournament quality.",
           "anchor_years": [
             2023,
             2026
@@ -7769,20 +7769,22 @@
           "calibration_model_id": "atp-earth-nor-gre-bel-rsa-model.v1"
         },
         "competition_quality": {
-          "value": 8.8,
+          "value": 7.4,
           "method": "derived_estimate",
-          "confidence": "medium",
+          "confidence": "low",
           "source_ids": [
             "htf-statute-2016",
-            "atp-stefanos-tsitsipas"
+            "atp-stefanos-tsitsipas",
+            "oaka-greece-tennis"
           ],
           "observation_ids": [
             "atp-htf-statute-v1#gre-founded-1938",
             "atp-tsitsipas-v1#gre-atp-finals-title-2019",
             "atp-tsitsipas-v1#gre-career-high-2021",
-            "atp-tsitsipas-v1#gre-australian-final-2023"
+            "atp-tsitsipas-v1#gre-australian-final-2023",
+            "atp-greece-clubs-2026-v1#gre-member-clubs-2026"
           ],
-          "rationale": "ATP Earth GRE competition quality estimate for 2026. The 1-10 value is project-authored for the Greece tennis environment; cited facts are evidence/context rather than measured game ratings. Tsitsipas's ATP Finals title, No. 3 peak and Grand Slam finals support the modern elite spike; federation/club scale is kept separate.",
+          "rationale": "ATP Earth GRE competition quality estimate for 2026. The 1-10 value is project-authored for the men's tennis environment; cited facts are evidence/context rather than measured game ratings. Greece's 2026 federation-club network supports the availability side of competition quality. Tsitsipas's results remain elite outcome context only; they do not by themselves establish nationwide competitive depth or tournament quality.",
           "anchor_years": [
             2026
           ],

@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-aus-court-hire-2024-v1",
+  "source_id": "tennis-australia-court-hire-2024",
+  "relative_path": "observations/normalized/atp-aus-court-hire-2024-v1.json",
+  "sha256": "8a29ce070d63bf955633ea4fc1efa2ddc1c0bcdfe71e27d37cfb540eeb8659fb",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-04"
+}

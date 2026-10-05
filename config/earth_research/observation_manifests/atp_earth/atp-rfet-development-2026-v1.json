@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-rfet-development-2026-v1",
+  "source_id": "rfet-development-2026",
+  "relative_path": "observations/normalized/atp-rfet-development-2026-v1.json",
+  "sha256": "f4e40974a74e5b2d89b5cc92bfa4b1a984ff0d43cf83a6743d9c930e297fd075",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-04"
+}

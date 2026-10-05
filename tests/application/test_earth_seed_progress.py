@@ -11,7 +11,7 @@ from beta_engine.application.earth_package_builder import load_earth_research_bu
 
 def test_fifa_first_reviewed_country_histories_are_complete_and_resolvable():
     bundle = load_earth_research_bundle(Path("config/earth_research/fifa_earth.json"))
-    assert set(bundle.research.countries) == {"CZE", "SVK", "JPN", "IND", "MAR", "SEN", "FRO", "USA", "ZAF", "BRA", "DEU", "ISL", "SMR", "ARG", "MEX", "AUS", "NZL", "FJI", "PNG", "SLB", "COK", "ASM", "PYF", "NCL"}
+    assert set(bundle.research.countries) == {"CZE", "SVK", "JPN", "IND", "MAR", "SEN", "FRO", "USA", "ZAF", "BRA", "DEU", "ISL", "SMR", "ARG", "MEX", "AUS", "NZL", "FJI", "PNG", "SLB", "COK", "ASM", "PYF", "NCL", "WSM", "TON", "VUT"}
     assert bundle.research.data_cutoff.isoformat() == "2026-10-03"
 
     for code in ("CZE", "SVK"):
@@ -341,13 +341,107 @@ def test_fifa_oceania_association_identity_batch_preserves_governance_and_territ
         )
 
 
-def test_atp_first_complete_histories_are_evidence_resolvable_and_conservative():
-    bundle = load_earth_research_bundle(Path("config/earth_research/atp_earth.json"))
-    assert set(bundle.research.countries) == {"CZE", "DEU"}
-    assert bundle.research.data_cutoff.isoformat() == "2026-10-04"
-    assert len(bundle.datasets) == 8
-    assert len(bundle.observations) == 33
 
+def test_fifa_wsm_ton_vut_batch_is_complete_and_dimensionally_temporal():
+    bundle = load_earth_research_bundle(Path("config/earth_research/fifa_earth.json"))
+    batch = {"WSM", "TON", "VUT"}
+
+    for code in batch:
+        history = bundle.research.countries[code]
+        assert history.missing_earth_years == []
+        assert len(history.years) == 72
+        assert history.reference_year == 2026
+        for year in history.years.values():
+            assert len(year.ratings) == 6
+            for rating in year.ratings.values():
+                assert rating.method == "derived_estimate"
+                assert rating.calibration_model_id == "fifa-earth-wsm-ton-vut-model.v1"
+                assert rating.observation_ids
+                assert all(item in bundle.observations for item in rating.observation_ids)
+
+    wsm = bundle.research.countries["WSM"]
+    assert "backcast" in wsm.years[1955].ratings["squash_popularity"].rationale.lower()
+    assert "fifa-big-count-2006-all-players-v2#samoa" not in (
+        wsm.years[2005].ratings["squash_popularity"].observation_ids
+    )
+    assert "fifa-big-count-2006-all-players-v2#samoa" in (
+        wsm.years[2006].ratings["squash_popularity"].observation_ids
+    )
+    assert wsm.years[2010].ratings["elite_support"].value < (
+        wsm.years[2006].ratings["elite_support"].value
+    )
+    assert "fifa-structural-samoa-savaii-centre-2013-v1#wsm-savaii-centre-2013" in (
+        wsm.years[2013].ratings["development_quality"].observation_ids
+    )
+
+    ton = bundle.research.countries["TON"]
+    assert "backcast" in ton.years[1955].ratings["squash_access"].rationale.lower()
+    assert "fifa-structural-tonga-vavau-2020-v1#ton-vavau-facility-2020" not in (
+        ton.years[2019].ratings["squash_access"].observation_ids
+    )
+    assert "fifa-structural-tonga-vavau-2020-v1#ton-vavau-facility-2020" in (
+        ton.years[2020].ratings["squash_access"].observation_ids
+    )
+    assert ton.years[2026].ratings["squash_popularity"].value < (
+        ton.years[2026].ratings["squash_access"].value
+    )
+    assert "rugby" in ton.years[2026].ratings["squash_popularity"].rationale.lower()
+
+    vut = bundle.research.countries["VUT"]
+    assert "New Hebrides" in vut.years[1955].historical_entity
+    assert "fifa-structural-ofc-vanuatu-profile-v1#vut-academy-pilot-start-2008" not in (
+        vut.years[2007].ratings["development_quality"].observation_ids
+    )
+    assert "fifa-structural-ofc-vanuatu-profile-v1#vut-academy-pilot-start-2008" in (
+        vut.years[2008].ratings["development_quality"].observation_ids
+    )
+    assert "fifa-structural-vanuatu-forward-2023-v1#vut-freshwater-stadium-2023" not in (
+        vut.years[2022].ratings["elite_support"].observation_ids
+    )
+    assert "fifa-structural-vanuatu-forward-2023-v1#vut-freshwater-stadium-2023" in (
+        vut.years[2023].ratings["elite_support"].observation_ids
+    )
+    assert "fifa-structural-ofc-vanuatu-profile-v1#vut-nations-cup-runner-up-2024" in (
+        vut.years[2024].ratings["competition_quality"].observation_ids
+    )
+
+def test_fifa_pyf_backcasts_do_not_claim_future_infrastructure_as_historical_support():
+    bundle = load_earth_research_bundle(Path("config/earth_research/fifa_earth.json"))
+    pyf = bundle.research.countries["PYF"]
+
+    early = pyf.years[1955]
+    for rating in early.ratings.values():
+        assert "backcast" in rating.rationale.lower()
+        assert "2023" not in rating.rationale
+        assert "2025" not in rating.rationale
+        assert all("pyf-artificial-pitch-2023" not in item for item in rating.observation_ids)
+        assert all("pyf-talent-academy-2025" not in item for item in rating.observation_ids)
+
+    assert "pyf-artificial-pitch-2023" in " ".join(
+        pyf.years[2023].ratings["development_quality"].observation_ids
+    )
+    assert "pyf-talent-academy-2025" in " ".join(
+        pyf.years[2025].ratings["development_quality"].observation_ids
+    )
+    assert "programme launch" in pyf.years[2025].ratings["development_quality"].rationale.lower()
+
+
+def test_atp_complete_histories_are_evidence_resolvable_and_temporally_bounded():
+    bundle = load_earth_research_bundle(Path("config/earth_research/atp_earth.json"))
+    expected_countries = {"CZE", "DEU", "USA", "AUS", "ESP", "SRB"}
+    assert set(bundle.research.countries) == expected_countries
+    assert bundle.research.data_cutoff.isoformat() == "2026-10-04"
+    assert len(bundle.datasets) == 19
+    assert len(bundle.observations) == 84
+
+    expected_models = {
+        "CZE": "atp-earth-cze-deu-seed-model.v1",
+        "DEU": "atp-earth-cze-deu-seed-model.v1",
+        "USA": "atp-earth-usa-aus-esp-srb-model.v1",
+        "AUS": "atp-earth-usa-aus-esp-srb-model.v1",
+        "ESP": "atp-earth-usa-aus-esp-srb-model.v1",
+        "SRB": "atp-earth-usa-aus-esp-srb-model.v1",
+    }
     for code, history in bundle.research.countries.items():
         assert history.missing_earth_years == []
         assert len(history.years) == 72
@@ -356,7 +450,7 @@ def test_atp_first_complete_histories_are_evidence_resolvable_and_conservative()
             assert len(year.ratings) == 6
             for rating in year.ratings.values():
                 assert rating.method == "derived_estimate"
-                assert rating.calibration_model_id == "atp-earth-cze-deu-seed-model.v1"
+                assert rating.calibration_model_id == expected_models[code]
                 assert rating.observation_ids
                 assert all(item in bundle.observations for item in rating.observation_ids)
 
@@ -370,5 +464,50 @@ def test_atp_first_complete_histories_are_evidence_resolvable_and_conservative()
     assert bundle.research.countries["CZE"].years[1955].ratings["squash_popularity"].confidence == "low"
     assert bundle.research.countries["CZE"].years[2025].ratings["development_quality"].confidence == "medium"
     assert bundle.research.countries["DEU"].years[1955].historical_entity.startswith("Federal Republic")
-    assert bundle.research.countries["DEU"].years[1955].ratings["squash_popularity"].confidence == "low"
     assert bundle.research.countries["DEU"].years[2026].ratings["elite_support"].confidence == "medium"
+
+    usa = bundle.research.countries["USA"]
+    assert usa.years[1955].ratings["squash_popularity"].confidence == "low"
+    assert "atp-usta-participation-2025-v1#usa-players-2025" not in (
+        usa.years[1955].ratings["squash_popularity"].observation_ids
+    )
+    assert "atp-usta-participation-2025-v1#usa-players-2025" in (
+        usa.years[2025].ratings["squash_popularity"].observation_ids
+    )
+    assert usa.years[2025].ratings["squash_popularity"].confidence == "medium"
+
+    aus = bundle.research.countries["AUS"]
+    assert aus.years[1955].ratings["competition_quality"].value == 10.0
+    assert "partial" in aus.years[1955].territory_mapping_note.lower()
+    assert "atp-aus-national-academy-2010-v1#aus-national-academy-support-2010" not in (
+        aus.years[2009].ratings["development_quality"].observation_ids
+    )
+    assert "atp-aus-national-academy-2010-v1#aus-national-academy-support-2010" in (
+        aus.years[2010].ratings["development_quality"].observation_ids
+    )
+
+    esp = bundle.research.countries["ESP"]
+    assert esp.years[1965].ratings["competition_quality"].value > (
+        esp.years[1955].ratings["competition_quality"].value
+    )
+    assert "atp-rfet-licences-2024-v1#esp-licences-2023-24" not in (
+        esp.years[2023].ratings["squash_access"].observation_ids
+    )
+    assert "atp-rfet-licences-2024-v1#esp-licences-2023-24" in (
+        esp.years[2024].ratings["squash_access"].observation_ids
+    )
+
+    srb = bundle.research.countries["SRB"]
+    assert "Yugoslavia" in srb.years[1991].historical_entity
+    assert srb.years[1992].ratings["elite_support"].value < (
+        srb.years[1980].ratings["elite_support"].value
+    )
+    assert srb.years[2010].ratings["competition_quality"].value > (
+        srb.years[2006].ratings["competition_quality"].value
+    )
+    assert "atp-tss-junior-support-2024-v1#srb-junior-support-and-missing-centre-2024" in (
+        srb.years[2024].ratings["elite_support"].observation_ids
+    )
+    assert "missing national training centre" in (
+        srb.years[2024].ratings["elite_support"].rationale.lower()
+    )

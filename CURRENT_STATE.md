@@ -1,5 +1,45 @@
 # Current implementation and next action
 
+## Candidate — Earth package expansion: ATP four-country + FIFA Pacific trio (4 October 2026)
+
+This slice expands both real-world sport templates with complete country histories and
+tightens temporal evidence where the previous Tahiti/PYF batch exposed a backcast problem.
+
+- New complete ATP histories: **USA, AUS, ESP and SRB**, each with all 72 years
+  (1955–2026) and all six attributes.
+- ATP adds **1,728 ratings** and now resolves **6 / 250 histories**, **19 normalized
+  datasets / 84 observations**, and **2,592 annual attribute ratings**.
+- New complete FIFA histories: **Samoa (WSM), Tonga (TON) and Vanuatu (VUT)**.
+- FIFA adds **1,296 ratings** and now resolves **27 / 250 histories**, **65 datasets /
+  1,437 observations**, **1,415 safe evidence facts / 152 direct-mapped facts**, and
+  **11,664 annual attribute ratings**.
+- ATP evidence remains dimensionally separated: Davis Cup outcomes inform
+  competition/tradition only; participation/access and development/support use
+  country-specific sources and temporal gates.
+- Serbia preserves Yugoslavia / FR Yugoslavia / Serbia and Montenegro as predecessor
+  context before 2006, never as Serbia-only population/participation.
+- Samoa preserves the 2010 inactivity/normalisation break and 2011 recovery; Tonga
+  preserves the national rugby-leading constraint and the 2020 Vava’u access expansion;
+  Vanuatu preserves its 2008 full-time academy pathway and later Forward infrastructure.
+- FIFA Big Count 2006 observations are used for popularity/access only; the mixed-sex,
+  source-definition limitations remain explicit.
+- PYF pre-1989 rationales now identify themselves as low-confidence backcasts. The
+  2023 artificial pitch and 2025 Talent Academy are only direct support from their
+  actual years onward rather than historical evidence for 1955.
+- `docs/EARTH_SPORT_HISTORY_V1.md` has one authoritative current summary while older
+  dated sections remain implementation history.
+- Official `config/world_packages/fifa_earth/` and `atp_earth/` directories remain
+  intentionally absent: the all-or-nothing builder still requires all 250 histories.
+- Player-history integration remains partial: historical cohort ratings affect quantity
+  paths, but generated-player development uses the requested season environment;
+  ordinary World Library persistence/editing of full rating histories is unfinished.
+
+**Next after green CI:** continue ATP first with another evidence-rich diverse batch
+(France, Great Britain, Argentina, Japan are strong candidates), while continuing FIFA
+with the next ordinary OFC/member-association group rather than building new generic
+research infrastructure.
+
+
 ## Candidate — Oceania association-identity batch: ASM + PYF + NCL (4 October 2026)
 
 This slice completes three association-specific Pacific histories and closes a hidden
@@ -226,11 +266,10 @@ This slice converts two reviewed FIFA prototype countries into the actual
 - ATP `countries` deliberately remains empty in this slice: participation/club/
   coach counts alone are insufficient to author all six historical attributes.
 
-**Next:** normalize independent ATP competition/tradition/development evidence for
-CZE/DEU and author the first ATP 1955–2026 histories; then expand FIFA by the next
-reviewed country group. Official `world_packages/fifa_earth` and
-`world_packages/atp_earth` still cannot be built until all Earth countries have
-complete histories.
+**Historical next-step note (superseded):** this entry originally called for
+the first CZE/DEU ATP histories. Those histories are now complete and ATP has since
+expanded to six countries. The official FIFA/ATP package directories still cannot be
+built until all 250 Earth countries have complete histories.
 
 ## Candidate — independent FIFA 2023 outcome validation for competition quality (4 October 2026)
 

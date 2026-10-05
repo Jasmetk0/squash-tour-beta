@@ -9044,7 +9044,7 @@
         "development_quality": {
           "value": 9,
           "method": "derived_estimate",
-          "confidence": "high",
+          "confidence": "medium",
           "source_ids": [
             "aita-history",
             "aita-actc-2026",
@@ -9063,7 +9063,7 @@
             "atp-aita-actc-2026-v1#ind-coach-official-upgrade-2026",
             "atp-aita-coaching-2026-v1#ind-coach-course-system-2026"
           ],
-          "rationale": "ATP Earth IND development quality estimate for 2026. The 1-10 value is project-authored for the national tennis environment; cited facts are evidence/context rather than measured game ratings. Current ACTC commitments, HPC network, ACE 2032 pathway and coach-development system provide strong structural evidence; elite historical results are deliberately not converted directly into environment ratings.",
+          "rationale": "ATP Earth IND development quality estimate for 2026. The 1-10 value is project-authored for the national tennis environment; cited facts are evidence/context rather than measured game ratings. Current ACTC commitments, HPC network, ACE 2032 pathway and coach-development system provide strong structural evidence; elite historical results are deliberately not converted directly into environment ratings. The 2026 programme facts are directly documented, but confidence in the authored 1–10 conversion remains medium because programme capacity is not the same as measured development outcomes.",
           "anchor_years": [
             2026
           ],
@@ -9093,7 +9093,7 @@
         "elite_support": {
           "value": 9,
           "method": "derived_estimate",
-          "confidence": "high",
+          "confidence": "medium",
           "source_ids": [
             "aita-history",
             "aita-actc-2026",
@@ -9109,7 +9109,7 @@
             "atp-aita-actc-2026-v1#ind-junior-talent-pipeline-2026",
             "atp-aita-ace2032-2026-v1#ind-ace2032-2026"
           ],
-          "rationale": "ATP Earth IND elite support estimate for 2026. The 1-10 value is project-authored for the national tennis environment; cited facts are evidence/context rather than measured game ratings. Current ACTC commitments, HPC network, ACE 2032 pathway and coach-development system provide strong structural evidence; elite historical results are deliberately not converted directly into environment ratings.",
+          "rationale": "ATP Earth IND elite support estimate for 2026. The 1-10 value is project-authored for the national tennis environment; cited facts are evidence/context rather than measured game ratings. Current ACTC commitments, HPC network, ACE 2032 pathway and coach-development system provide strong structural evidence; elite historical results are deliberately not converted directly into environment ratings. The 2026 programme facts are directly documented, but confidence in the authored 1–10 conversion remains medium because programme capacity is not the same as measured development outcomes.",
           "anchor_years": [
             2026
           ],

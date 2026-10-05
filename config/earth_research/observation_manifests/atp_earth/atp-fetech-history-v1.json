@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-fetech-history-v1",
+  "source_id": "fetech-history",
+  "relative_path": "observations/normalized/atp-fetech-history-v1.json",
+  "sha256": "20ec1ad06cfd64be36dddbd8bb18bdee0f58f08e99bbca31e971a73f67fcb11b",
+  "record_count": 4,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

@@ -21,10 +21,11 @@ preserved as implementation history.
 - FIFA Earth has **27 / 250** complete 1955–2026 country/territory histories,
   covering all six attributes. Its canonical research bundle resolves **65 datasets
   and 1,437 normalized observations**.
-- ATP Earth has **36 / 250** complete histories: CZE, DEU, USA, AUS, ESP, SRB,
+- ATP Earth has **38 / 250** complete histories: CZE, DEU, USA, AUS, ESP, SRB,
   FRA, GBR, ARG, JPN, CAN, ITA, NED, SWE, SUI, CRO, POL, CHN, NOR, GRE, BEL, ZAF,
-  DEN, FIN, NZL, PRT, IRL, HUN, ROU, SVN, SVK, ISR, BGR, AUT, TUR and CYP. Its canonical bundle resolves **115 datasets and 349 normalized observations**.
-- The latest ATP batch adds **TUR and CYP**, another **864 annual attribute ratings**. Turkey combines 1923/1953 institutional anchors with current national training centres, coach education, a broad 2026 competition calendar and a multi-province club network. Cyprus combines 1900/1913/1951 history, 1984 ITF/Tennis Europe membership, the 1999 National Tennis Centre and current development/tournament structures while retaining partial-association territorial caution.
+  DEN, FIN, NZL, PRT, IRL, HUN, ROU, SVN, SVK, ISR, BGR, AUT, TUR, CYP, BRA and CHL. Its canonical bundle resolves **124 datasets and 372 normalized observations**.
+- The latest ATP batch adds **BRA and CHL**, another **864 annual attribute ratings**. Brazil combines the 1955 CBT foundation and pre-CBT state-federation context with current affiliated-player scale, national junior/Tennis 10s rules and a formal coach-graduation system. Chile combines 1880s/1890s roots, its 1920 federation and 1927 ITF affiliation with 2025 JTI reach and 2026 junior-circuit decentralisation, zonal qualifying and development grants.
+- The preceding ATP batch adds **TUR and CYP**, another **864 annual attribute ratings**. Turkey combines 1923/1953 institutional anchors with current national training centres, coach education, a broad 2026 competition calendar and a multi-province club network. Cyprus combines 1900/1913/1951 history, 1984 ITF/Tennis Europe membership, the 1999 National Tennis Centre and current development/tournament structures while retaining partial-association territorial caution.
 - The preceding ATP addition is **AUT**, adding **432 annual attribute ratings**. Austria has unusually strong current structural evidence: ~210k federation members, ~1,750 clubs, ~95k championship players, 11,369 teams, 450 tournaments and 3,000+ coaches/instructors, plus 2025 ITF WTT and five 2026 ATP/Challenger events.
 - The preceding ATP batch adds **ISR and BGR**, another **864 annual attribute ratings**. Israel combines the 1950 federation and early Davis Cup continuity with current nationwide development and multi-level youth competition structures; Bulgaria combines 1896/1911/1925/1930 historical anchors with 128 current clubs, a nationwide child-entry programme and the 2026 competition framework.
 - The preceding ATP addition is **SVK**, adding **432 annual attribute ratings**. Pre-1990 Slovak ratings use true historical anchors from current Slovak territory (1899 clubs and the 1924 Banská Bystrica international tournament); independent-era STZ, Challenger, NTC, active-athlete and league evidence is gated from its actual dates.
@@ -146,7 +147,7 @@ preserved as implementation history.
 `config/earth_research/fifa_earth.json` and `atp_earth.json` are
 `earth_sport_research.v2` catalogues whose root records are extended by sharded
 sources, observation manifests and country histories. FIFA currently resolves 27
-complete histories. ATP currently resolves 36 complete histories (CZE, DEU, USA, AUS, ESP, SRB, FRA, GBR, ARG, JPN, CAN, ITA, NED, SWE, SUI, CRO, POL, CHN, NOR, GRE, BEL, ZAF, DEN, FIN, NZL, PRT, IRL, HUN, ROU, SVN, SVK, ISR, BGR, AUT, TUR and CYP); its evidence now
+complete histories. ATP currently resolves 38 complete histories (CZE, DEU, USA, AUS, ESP, SRB, FRA, GBR, ARG, JPN, CAN, ITA, NED, SWE, SUI, CRO, POL, CHN, NOR, GRE, BEL, ZAF, DEN, FIN, NZL, PRT, IRL, HUN, ROU, SVN, SVK, ISR, BGR, AUT, TUR, CYP, BRA and CHL); its evidence now
 combines ITF national snapshots, federation histories/participation records, Davis Cup
 outcomes and country-specific development/support evidence. Root-JSON contents alone
 must not be used as the coverage count.

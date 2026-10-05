@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-fetech-minor-circuit-growth-2026-v1",
+  "source_id": "fetech-minor-circuit-growth-2026",
+  "relative_path": "observations/normalized/atp-fetech-minor-circuit-growth-2026-v1.json",
+  "sha256": "a3e167c2ab9d62bd8224e64266a38c69259fbd5925b47a7891f319b79aad4124",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

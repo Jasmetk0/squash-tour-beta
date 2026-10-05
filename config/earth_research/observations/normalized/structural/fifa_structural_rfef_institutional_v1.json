@@ -1,0 +1,46 @@
+{
+  "schema_version": "earth_source_observations.v2",
+  "dataset_id": "fifa-structural-rfef-institutional-v1",
+  "source_id": "rfef-institutional",
+  "source_url": "https://rfef.es/es/federacion/transparencia/informacion-institucional",
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05",
+  "scope": "Official RFEF institutional foundation and organisation evidence.",
+  "limitations": "Institutional structure supports continuity only; it is not direct participation, development or competition-quality measurement.",
+  "observations": [
+    {
+      "observation_id": "fifa-structural-rfef-institutional-v1#esp-rfef-founded-1909",
+      "source_id": "rfef-institutional",
+      "source_entity": "Real Federación Española de Fútbol",
+      "earth_country_code": "ESP",
+      "historical_entity": "Spain",
+      "observation_year": 1909,
+      "period_start_year": null,
+      "period_end_year": null,
+      "measurement_type": "football_structural_event",
+      "sex_scope": "not_applicable",
+      "age_scope": null,
+      "competition_scope": "football_system_structure",
+      "numeric_value": null,
+      "text_value": "The RFEF was constituted on 29 September 1909 and integrates territorial federations, clubs, footballers, referees, coaches and the professional league.",
+      "unit": "event",
+      "collection_method": "official_narrative",
+      "coverage_scope": "association",
+      "comparability_group": "institutional_foundation",
+      "cross_country_comparable": false,
+      "is_direct_observation": true,
+      "is_statistically_modelled": false,
+      "territory_mapping_method": "explicit_reviewed_event_to_earth",
+      "territory_weight": null,
+      "source_page": null,
+      "source_locator": "RFEF institutional information — constitution and membership",
+      "definition_notes": "Long institutional continuity and system breadth evidence; age alone does not set a rating.",
+      "quality_flags": [
+        "pre_game_start_history",
+        "supports_squash_tradition",
+        "supports_elite_support"
+      ]
+    }
+  ]
+}

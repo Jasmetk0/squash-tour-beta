@@ -1,5 +1,34 @@
 # Current implementation and next action
 
+## Current — Zimbabwe/Malawi dual-world Earth batch (5 October 2026)
+
+- Based directly on merged `buuk` commit
+  `5e4f155232782629d1d6f67e40a7b58e5643148d` (#1207); this remains an
+  independent coverage PR rather than a dependent stack.
+- New complete histories in both worlds: **Zimbabwe (ZWE) and Malawi (MWI)**.
+- FIFA Earth now resolves **77 / 250** complete histories and **124 datasets /
+  1,621 normalized observations**.
+- ATP Earth now resolves **77 / 250** complete histories and **252 datasets /
+  613 normalized observations**.
+- The batch adds **1,728 authored annual attribute ratings** across four histories
+  (4 × 72 years × 6 attributes).
+- Zimbabwe FIFA uses direct CAF chronology plus Big Count 2006 and Professional
+  2023 evidence; Malawi keeps absent Professional 2023 data absent rather than
+  inventing or zero-filling it.
+- ATP Zimbabwe/Malawi explicitly separate low-confidence pre-documented history
+  from direct 2020 ITF activity evidence and 2026 development eligibility.
+  Zimbabwe additionally has direct 2026 J100 Harare hosting evidence.
+- Official package publication remains blocked until **250 / 250** in each world.
+  Installed packages, ordinary historical-profile editing and complete initial-player
+  historical-environment integration remain unfinished.
+
+**Next after green CI:** continue another evidence-backed coverage batch directly
+from the merged result; keep PRs independent and shallow.
+
+> Older Current/Candidate entries below are implementation history and do not
+> override this section.
+
+
 ## Current — Tanzania/Zambia dual-world Earth batch (5 October 2026)
 
 - Based directly on merged `buuk` commit

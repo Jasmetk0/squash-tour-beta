@@ -428,11 +428,11 @@ def test_fifa_pyf_backcasts_do_not_claim_future_infrastructure_as_historical_sup
 
 def test_atp_complete_histories_are_evidence_resolvable_and_temporally_bounded():
     bundle = load_earth_research_bundle(Path("config/earth_research/atp_earth.json"))
-    expected_countries = {"CZE", "DEU", "USA", "AUS", "ESP", "SRB", "FRA", "GBR", "ARG", "JPN", "CAN", "ITA", "NED", "SWE", "SUI", "CRO", "POL", "CHN", "NOR", "GRE", "BEL", "ZAF", "DEN", "FIN", "NZL", "PRT", "IRL", "HUN", "ROU", "SVN"}
+    expected_countries = {"CZE", "DEU", "USA", "AUS", "ESP", "SRB", "FRA", "GBR", "ARG", "JPN", "CAN", "ITA", "NED", "SWE", "SUI", "CRO", "POL", "CHN", "NOR", "GRE", "BEL", "ZAF", "DEN", "FIN", "NZL", "PRT", "IRL", "HUN", "ROU", "SVN", "SVK"}
     assert set(bundle.research.countries) == expected_countries
     assert bundle.research.data_cutoff.isoformat() == "2026-10-04"
-    assert len(bundle.datasets) == 93
-    assert len(bundle.observations) == 295
+    assert len(bundle.datasets) == 98
+    assert len(bundle.observations) == 303
 
     expected_models = {
         "CZE": "atp-earth-cze-deu-seed-model.v1",
@@ -465,6 +465,7 @@ def test_atp_complete_histories_are_evidence_resolvable_and_temporally_bounded()
         "HUN": "atp-earth-hun-rou-model.v1",
         "ROU": "atp-earth-hun-rou-model.v1",
         "SVN": "atp-earth-svn-model.v1",
+        "SVK": "atp-earth-svk-model.v1",
     }
     for code, history in bundle.research.countries.items():
         assert history.missing_earth_years == []
@@ -1008,4 +1009,49 @@ def test_atp_svn_history_preserves_pre_independence_context_and_modern_gating():
     )
     assert "atp-tenis-slovenija-tutor-2026-v1#svn-tutor-programme-2026" in (
         svn.years[2026].ratings["development_quality"].observation_ids
+    )
+
+
+def test_atp_svk_history_uses_true_historical_anchors_before_independence():
+    bundle = load_earth_research_bundle(Path("config/earth_research/atp_earth.json"))
+    svk = bundle.research.countries["SVK"]
+
+    assert svk.missing_earth_years == []
+    assert len(svk.years) == 72
+    assert svk.years[1992].historical_entity == "Slovak tennis within Czechoslovakia"
+    assert svk.years[1993].historical_entity == "Slovakia"
+
+    for year in svk.years.values():
+        assert len(year.ratings) == 6
+        for rating in year.ratings.values():
+            assert rating.calibration_model_id == "atp-earth-svk-model.v1"
+            assert rating.observation_ids
+            assert all(item in bundle.observations for item in rating.observation_ids)
+
+    for year in range(1955, 1990):
+        for rating in svk.years[year].ratings.values():
+            assert "atp-stz-institution-history-v1#svk-stz-registered-1990" not in rating.observation_ids
+            assert "atp-stz-early-history-v1#svk-first-clubs-1899" in rating.observation_ids
+            assert "atp-stz-early-history-v1#svk-international-tournament-1924" in rating.observation_ids
+
+    assert "atp-stz-institution-history-v1#svk-itf-tennis-europe-1993" not in (
+        svk.years[1992].ratings["competition_quality"].observation_ids
+    )
+    assert "atp-stz-institution-history-v1#svk-itf-tennis-europe-1993" in (
+        svk.years[1993].ratings["competition_quality"].observation_ids
+    )
+    assert "atp-stz-structural-milestones-v1#svk-ntc-team-project-2000" not in (
+        svk.years[1999].ratings["elite_support"].observation_ids
+    )
+    assert "atp-stz-structural-milestones-v1#svk-ntc-team-project-2000" in (
+        svk.years[2000].ratings["elite_support"].observation_ids
+    )
+    assert "atp-stz-active-athletes-2025-v1#svk-active-athletes-2025" not in (
+        svk.years[2024].ratings["squash_access"].observation_ids
+    )
+    assert "atp-stz-active-athletes-2025-v1#svk-active-athletes-2025" in (
+        svk.years[2025].ratings["squash_access"].observation_ids
+    )
+    assert "atp-stz-leagues-2026-v1#svk-national-leagues-2026" in (
+        svk.years[2026].ratings["competition_quality"].observation_ids
     )

@@ -3,7 +3,7 @@
   "dataset_id": "fifa-structural-canada-soccer-2015-legacy-v1",
   "source_id": "canada-soccer-2015-legacy",
   "relative_path": "observations/normalized/structural/fifa_structural_canada_soccer_2015_legacy_v1.json",
-  "sha256": "2d69c685a79fcdd7a1784552038cc601c975f7f5771e19a7ad6be253b0409ba2",
+  "sha256": "35ef37fad50fb2342a156f1b01cd812a5d34e47aee8dc1fa67f5a38854279bd1",
   "record_count": 1,
   "source_document_sha256": null,
   "input_artifact_sha256": null,

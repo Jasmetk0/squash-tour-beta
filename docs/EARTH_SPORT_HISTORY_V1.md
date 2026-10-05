@@ -21,10 +21,16 @@ preserved as implementation history.
 - FIFA Earth has **27 / 250** complete 1955–2026 country/territory histories,
   covering all six attributes. Its canonical research bundle resolves **65 datasets
   and 1,437 normalized observations**.
-- ATP Earth has **22 / 250** complete histories: CZE, DEU, USA, AUS, ESP, SRB,
-  FRA, GBR, ARG, JPN, CAN, ITA, NED, SWE, SUI, CRO, POL, CHN, NOR, GRE, BEL and ZAF.
-  Its canonical bundle resolves **71 datasets and 240 normalized observations**.
-- The latest ATP batch adds **NOR, GRE, BEL and ZAF**, another **1,728 annual
+- ATP Earth has **25 / 250** complete histories: CZE, DEU, USA, AUS, ESP, SRB,
+  FRA, GBR, ARG, JPN, CAN, ITA, NED, SWE, SUI, CRO, POL, CHN, NOR, GRE, BEL, ZAF,
+  DEN, FIN and NZL. Its canonical bundle resolves **79 datasets and 261 normalized observations**.
+- The latest ATP batch adds **DEN, FIN and NZL**, another **1,296 annual
+  attribute ratings**. Denmark uses its long official membership trajectory and current
+  national-championship structure; Finland combines current member/junior activity with
+  its high-performance system; New Zealand combines deep championship lineage with a
+  current club-to-regional-to-national/international pathway. Modern evidence remains
+  temporally gated and mixed/child-limited observations keep their actual scope.
+- The preceding ATP batch adds **NOR, GRE, BEL and ZAF**, another **1,728 annual
   attribute ratings**. Norway and Greece preserve modern elite spikes without turning
   star-player results into participation evidence; Belgium marks Flemish tennis/padel
   scale as partial-country combined-sport evidence; South Africa separates deep tennis
@@ -129,7 +135,7 @@ preserved as implementation history.
 `config/earth_research/fifa_earth.json` and `atp_earth.json` are
 `earth_sport_research.v2` catalogues whose root records are extended by sharded
 sources, observation manifests and country histories. FIFA currently resolves 27
-complete histories. ATP currently resolves 22 complete histories (CZE, DEU, USA, AUS, ESP, SRB, FRA, GBR, ARG, JPN, CAN, ITA, NED, SWE, SUI, CRO, POL, CHN, NOR, GRE, BEL and ZAF); its evidence now
+complete histories. ATP currently resolves 25 complete histories (CZE, DEU, USA, AUS, ESP, SRB, FRA, GBR, ARG, JPN, CAN, ITA, NED, SWE, SUI, CRO, POL, CHN, NOR, GRE, BEL, ZAF, DEN, FIN and NZL); its evidence now
 combines ITF national snapshots, federation histories/participation records, Davis Cup
 outcomes and country-specific development/support evidence. Root-JSON contents alone
 must not be used as the coverage count.

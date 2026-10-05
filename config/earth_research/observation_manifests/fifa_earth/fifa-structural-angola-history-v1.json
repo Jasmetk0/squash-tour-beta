@@ -3,7 +3,7 @@
   "dataset_id": "fifa-structural-angola-history-v1",
   "source_id": "caf-angola-profile",
   "relative_path": "observations/normalized/structural/fifa_structural_angola_history_v1.json",
-  "sha256": "cbdbc0be014d0642f1b933025645b2553b168f48d02ebd967f0f8f2180b79cd9",
+  "sha256": "0bf6b728d80c362ca7ea225254988f1cea8ed0940b375d75dc9d2893f60e137b",
   "record_count": 3,
   "source_document_sha256": null,
   "input_artifact_sha256": null,

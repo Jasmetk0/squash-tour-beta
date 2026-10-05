@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-malaysia-schools-2024-v1",
+  "source_id": "fifa-malaysia-schools-2024",
+  "relative_path": "observations/normalized/structural/fifa_structural_malaysia_schools_2024_v1.json",
+  "sha256": "7f6a39bdeb7b6d3f97d76e9e37719a27b2515e5c97adee289fd37491012a05cc",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

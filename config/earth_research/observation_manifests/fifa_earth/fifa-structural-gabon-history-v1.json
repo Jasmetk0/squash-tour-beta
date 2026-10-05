@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-gabon-history-v1",
+  "source_id": "caf-gabon-profile",
+  "relative_path": "observations/normalized/structural/fifa_structural_gabon_history_v1.json",
+  "sha256": "3c5af295f7ca511e66a25862feb3d5d0106f24ed74835f09e28f3c55f6587bc2",
+  "record_count": 4,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

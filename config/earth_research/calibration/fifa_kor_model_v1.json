@@ -1,0 +1,67 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "fifa-earth-kor-model.v1",
+  "world_id": "fifa_earth",
+  "data_cutoff": "2026-10-03",
+  "countries": [
+    "KOR"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "principles": [
+    "KFA predecessor formation (1933), FIFA membership (1948), AFC founding membership (1954) and professional-league launch (1983) are structural chronology, not outcome targets.",
+    "FIFA Big Count 2006 is gated to 2006+ for participation/access context.",
+    "FIFA Professional Football Report 2023 is gated to 2023+ for professional-ecosystem context.",
+    "World Cup/Asian Cup results and FIFA rankings are not calibration targets.",
+    "9+ remains reserved for world-leading dimensions."
+  ],
+  "anchor_values": {
+    "KOR": {
+      "1955": [
+        7.2,
+        6.6,
+        7,
+        7.4,
+        6.9,
+        8.2
+      ],
+      "1983": [
+        8,
+        7.3,
+        7.9,
+        8.2,
+        7.9,
+        8.6
+      ],
+      "2006": [
+        8.4,
+        7.7,
+        8.3,
+        8.5,
+        8.3,
+        8.8
+      ],
+      "2023": [
+        8.5,
+        7.9,
+        8.5,
+        8.7,
+        8.6,
+        8.9
+      ],
+      "2026": [
+        8.5,
+        8,
+        8.6,
+        8.7,
+        8.6,
+        8.9
+      ]
+    }
+  },
+  "evidence_sources": [
+    "kfa-history-official",
+    "fifa-big-count-2006",
+    "fifa-professional-2023"
+  ],
+  "heldout_ranking_used": false
+}

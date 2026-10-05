@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-mauritania-development-2026-v1",
+  "source_id": "itf-mauritania-development-eligibility-2026",
+  "relative_path": "observations/normalized/atp_mauritania_development_2026_v1.json",
+  "sha256": "9527eddc766c6cb5cc4d8bc610461ac057c969dc83d632837a9f175dc13781b3",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

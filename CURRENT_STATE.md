@@ -1,5 +1,22 @@
 # Current implementation and next action
 
+## Current — Mali/Mauritania dual-world Earth batch (5 October 2026)
+
+- Based directly on merged `buuk` commit `abfa9dbb12bdc3dec91fc231dd10a5f923151be4` (#1221); independent coverage PR.
+- New complete histories in both worlds: **Mali (MLI) and Mauritania (MRT)**.
+- FIFA Earth: **105 / 250**, **152 datasets / 1,722 normalized observations**.
+- ATP Earth: **105 / 250**, **310 datasets / 699 normalized observations**.
+- Adds **1,728 authored annual attribute ratings**.
+- Mali gates creation 1960, CAF 1963, FIFA 1964, Big Count 2006 and the checked-in 2023 professional-club observation.
+- Mauritania gates creation 1961, CAF 1968, FIFA 1970 and Big Count 2006; unavailable Professional 2023 values remain absent.
+- ATP histories separate low-confidence pre-2020 context from direct ITF 25 May 2020 closure status and 2026 development eligibility.
+- Official package publication remains blocked until **250 / 250** in each world.
+
+**Next after green CI:** continue the next evidence-backed dual-world batch.
+
+> Older Current/Candidate entries below are implementation history and do not override this section.
+
+
 ## Current — Togo/Burkina Faso dual-world Earth batch (5 October 2026)
 
 - Based directly on merged `buuk` commit `5d92dedffe83b1a8cad396b308ec1570664a641f` (#1220); independent coverage PR.

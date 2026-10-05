@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-mali-history-v1",
+  "source_id": "itf-mali-return-to-play-2020",
+  "relative_path": "observations/normalized/atp_mali_history_v1.json",
+  "sha256": "e4784d0a3b9b731cf4ee1e2779f152689032166b095a7376b86b87cd1992f370",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-etl-centenary-history-v1",
+  "source_id": "etl-centenary-history",
+  "relative_path": "observations/normalized/atp_etl_centenary_history_v1.json",
+  "sha256": "f2fba5f559bd5e283daf6c277532adde41e5304101c3f17d8c81a72732d521f9",
+  "record_count": 3,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

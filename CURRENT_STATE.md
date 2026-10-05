@@ -4918,3 +4918,19 @@ bands should shape 0..200 potential. No threshold is inferred from current OVR v
 - The 1959 federation-presidium milestone, 1995 Lithuanian Tennis Union establishment and 2022 national-federation mandate are each temporally gated to their documented years.
 - Sparse historical evidence remains conservative: modern federation structure is not backcast and no ranking/title outcome is used as a calibration target.
 - Official ATP package publication remains blocked by the intentional **250 / 250** completeness requirement.
+
+
+
+## Candidate — FIFA Canada history batch (5 October 2026)
+
+- New complete FIFA history: **Canada (CAN)**.
+- New ratings: 72 × 6 = **432**; FIFA Earth moves **47 -> 48 / 250 complete histories**, matching ATP at 48 / 250.
+- Added **4 structural datasets / 12 direct observations**, taking FIFA research from **79 datasets / 1,494 observations** to **83 datasets / 1,506 observations**.
+- Federation foundation (1912) and FIFA readmission (1948) provide pre-1955 institutional context without being treated as direct annual quality measurements.
+- The 1967 multi-province league, 1986 Women's National Team programme, 2007 U-20 World Cup hosting, 2008 Canadian Championship, and 2019 Canadian Premier League are distinct competition/system milestones.
+- Development is separately gated through the 2008 Long-Term Player Development framework, Regional EXCEL/Super EXCEL pathway from 2013, and the 2015 infrastructure legacy.
+- FIFA Big Count 2006 evidence (2,695,712 all players, 865,712 registered players, 10,000 clubs) is used only from 2006 onward.
+- FIFA Professional Football Report 2023 evidence (189 men's professional players, 8 professional clubs) is used only from 2023 onward and prevents mass participation from being mistaken for a world-leading professional ecosystem.
+- Current 2026 Canada Soccer evidence of nearly one million active registered participants and 1,200 clubs is current-only and never backcast.
+- Modern ratings remain strong but below 9.0; access reaches 8.7 in 2026 while competition/elite dimensions remain lower.
+- No rankings or title outcomes are calibration targets. Official FIFA package publication remains blocked by the intentional **250 / 250** completeness requirement.

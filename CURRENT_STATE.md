@@ -1,5 +1,17 @@
 # Current implementation and next action
 
+## Candidate — ATP Slovakia history (5 October 2026)
+
+- New complete ATP history: **Slovakia (SVK)**.
+- New ratings: 72 × 6 = **432**; ATP Earth now resolves **31 / 250 complete histories**.
+- ATP research now resolves **98 normalized datasets / 303 observations**.
+- Pre-1990 Slovak ratings are grounded in historical STZ archive evidence from current Slovak territory (first clubs in 1899 and the 1924 Banská Bystrica international tournament), not in future 1990 federation facts.
+- 1993 independent international membership, the first Slovak Challenger, the 2000 NTC team project, 2025 active-athlete count and 2026 national leagues are all temporally gated.
+- Official ATP package publication remains blocked by the 250/250 completeness rule.
+
+**Next after green CI:** continue another evidence-rich ATP/FIFA batch.
+
+
 ## Candidate — ATP Slovenia history (5 October 2026)
 
 - New complete ATP history: **Slovenia (SVN)**.

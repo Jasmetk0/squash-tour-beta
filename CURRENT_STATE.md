@@ -1,5 +1,19 @@
 # Current implementation and next action
 
+## Candidate — ATP Turkey/Cyprus batch (5 October 2026)
+
+- New complete ATP histories: **Turkey (TUR), Cyprus (CYP)**.
+- New ratings: 2 × 72 × 6 = **864**; ATP Earth now resolves **36 / 250 complete histories**.
+- ATP research now resolves **115 normalized datasets / 349 observations**.
+- Turkey uses 1923 organised-governance and 1953 federation anchors plus 2026 national training centres, coach-course capacity, broad age-level competition calendar and development/team structures spanning 86 clubs from 38 provinces.
+- Cyprus uses 1900/1913 tennis roots, 1951 federation foundation, 1984 ITF/Tennis Europe membership, 1985 Davis Cup entry, the 1999 National Tennis Centre and current child-development/tournament structures.
+- Modern CTF evidence is explicitly treated as **partial association context** for Earth CYP rather than proof of every tennis activity across the entire island.
+- Modern evidence is temporally gated; programme capacity and tournament-platform listings are not equated with participation or player outcomes.
+- Official ATP package publication remains blocked by the 250/250 completeness rule.
+
+**Next after green CI:** continue another evidence-rich ATP/FIFA batch.
+
+
 ## Candidate — ATP Austria history (5 October 2026)
 
 - New complete ATP history: **Austria (AUT)**.

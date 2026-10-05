@@ -428,11 +428,11 @@ def test_fifa_pyf_backcasts_do_not_claim_future_infrastructure_as_historical_sup
 
 def test_atp_complete_histories_are_evidence_resolvable_and_temporally_bounded():
     bundle = load_earth_research_bundle(Path("config/earth_research/atp_earth.json"))
-    expected_countries = {"CZE", "DEU", "USA", "AUS", "ESP", "SRB", "FRA", "GBR", "ARG", "JPN", "CAN", "ITA", "NED", "SWE", "SUI", "CRO", "POL", "CHN", "NOR", "GRE", "BEL", "ZAF", "DEN", "FIN", "NZL", "PRT", "IRL", "HUN", "ROU", "SVN", "SVK", "ISR", "BGR", "AUT"}
+    expected_countries = {"CZE", "DEU", "USA", "AUS", "ESP", "SRB", "FRA", "GBR", "ARG", "JPN", "CAN", "ITA", "NED", "SWE", "SUI", "CRO", "POL", "CHN", "NOR", "GRE", "BEL", "ZAF", "DEN", "FIN", "NZL", "PRT", "IRL", "HUN", "ROU", "SVN", "SVK", "ISR", "BGR", "AUT", "TUR", "CYP"}
     assert set(bundle.research.countries) == expected_countries
     assert bundle.research.data_cutoff.isoformat() == "2026-10-04"
-    assert len(bundle.datasets) == 108
-    assert len(bundle.observations) == 332
+    assert len(bundle.datasets) == 115
+    assert len(bundle.observations) == 349
 
     expected_models = {
         "CZE": "atp-earth-cze-deu-seed-model.v1",
@@ -469,6 +469,8 @@ def test_atp_complete_histories_are_evidence_resolvable_and_temporally_bounded()
         "ISR": "atp-earth-isr-bgr-model.v1",
         "BGR": "atp-earth-isr-bgr-model.v1",
         "AUT": "atp-earth-aut-model.v1",
+        "TUR": "atp-earth-tur-cyp-model.v1",
+        "CYP": "atp-earth-tur-cyp-model.v1",
     }
     for code, history in bundle.research.countries.items():
         assert history.missing_earth_years == []
@@ -1144,3 +1146,61 @@ def test_atp_aut_history_uses_current_scale_without_backcasting():
         "atp-oetv-major-events-2026-v1#aut-atp-events-2026"
     ].numeric_value == 5
     assert aut.years[2026].ratings["competition_quality"].confidence == "high"
+
+
+def test_atp_tur_cyp_batch_preserves_temporal_and_territorial_scope():
+    bundle = load_earth_research_bundle(Path("config/earth_research/atp_earth.json"))
+
+    for code in ("TUR", "CYP"):
+        history = bundle.research.countries[code]
+        assert history.missing_earth_years == []
+        assert len(history.years) == 72
+        for year in history.years.values():
+            assert len(year.ratings) == 6
+            for rating in year.ratings.values():
+                assert rating.calibration_model_id == "atp-earth-tur-cyp-model.v1"
+                assert rating.observation_ids
+                assert all(item in bundle.observations for item in rating.observation_ids)
+
+    tur = bundle.research.countries["TUR"]
+    assert "atp-ttf-history-infrastructure-v1#tur-national-centres-2026" not in (
+        tur.years[2025].ratings["development_quality"].observation_ids
+    )
+    assert "atp-ttf-history-infrastructure-v1#tur-national-centres-2026" in (
+        tur.years[2026].ratings["development_quality"].observation_ids
+    )
+    assert "atp-ttf-calendar-2026-v1#tur-multilevel-calendar-2026" in (
+        tur.years[2026].ratings["competition_quality"].observation_ids
+    )
+    assert "atp-ttf-coach-courses-2026-v1#tur-coach-course-capacity-2026" in (
+        tur.years[2026].ratings["development_quality"].observation_ids
+    )
+    assert "atp-ttf-development-clubs-2026-v1#tur-development-workshop-clubs-2026" in (
+        tur.years[2026].ratings["squash_access"].observation_ids
+    )
+
+    cyp = bundle.research.countries["CYP"]
+    assert all(
+        rating.confidence == "low"
+        for year in cyp.years.values()
+        for rating in year.ratings.values()
+    )
+    assert "partial association context" in cyp.years[2026].territory_mapping_note.lower()
+    assert "atp-ctf-history-v1#cyp-itf-te-member-1984" not in (
+        cyp.years[1983].ratings["competition_quality"].observation_ids
+    )
+    assert "atp-ctf-history-v1#cyp-itf-te-member-1984" in (
+        cyp.years[1984].ratings["competition_quality"].observation_ids
+    )
+    assert "atp-ctf-history-v1#cyp-national-centre-1999" not in (
+        cyp.years[1998].ratings["development_quality"].observation_ids
+    )
+    assert "atp-ctf-history-v1#cyp-national-centre-1999" in (
+        cyp.years[1999].ratings["development_quality"].observation_ids
+    )
+    assert "atp-ctf-development-2026-v1#cyp-development-championship-2026" not in (
+        cyp.years[2025].ratings["development_quality"].observation_ids
+    )
+    assert "atp-ctf-development-2026-v1#cyp-development-championship-2026" in (
+        cyp.years[2026].ratings["development_quality"].observation_ids
+    )

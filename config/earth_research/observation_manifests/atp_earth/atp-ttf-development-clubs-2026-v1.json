@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-ttf-development-clubs-2026-v1",
+  "source_id": "ttf-development-clubs-2026",
+  "relative_path": "observations/normalized/atp-ttf-development-clubs-2026-v1.json",
+  "sha256": "bb60963ae0ed431072f8db41a2942377f625d93210cd9622b6895569faf32ac1",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

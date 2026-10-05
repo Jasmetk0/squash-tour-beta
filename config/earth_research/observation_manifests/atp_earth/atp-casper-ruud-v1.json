@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-casper-ruud-v1",
+  "source_id": "atp-casper-ruud",
+  "relative_path": "observations/normalized/atp-casper-ruud-v1.json",
+  "sha256": "2aec854a0118192213e88893c52c3b6ba0eff0e3f3a9f7fcc3119feed82fb8da",
+  "record_count": 3,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

@@ -18,24 +18,17 @@ separate inputs. Innate potential rarity must remain independent of nationality.
 This section is the authoritative current summary. Dated batch sections below are
 retained only as implementation history and do not override these numbers.
 
-- **FIFA Earth: 81 / 250** complete 1955–2026 country/territory histories, all six
+- **FIFA Earth: 83 / 250** complete 1955–2026 country/territory histories, all six
   attributes present for every authored year. The canonical bundle resolves
-  **128 datasets / 1,634 normalized observations**.
-- **ATP Earth: 81 / 250** complete 1955–2026 country/territory histories, all six
+  **130 datasets / 1,639 normalized observations**.
+- **ATP Earth: 83 / 250** complete 1955–2026 country/territory histories, all six
   attributes present for every authored year. The canonical bundle resolves
-  **262 datasets / 628 normalized observations**.
-- The latest dual-world batch adds **Eswatini (SWZ) and Mozambique (MOZ)** to both
+  **266 datasets / 634 normalized observations**.
+- The latest dual-world batch adds **Angola (ANG) and Lesotho (LES)** to both
   packages, another **1,728 annual attribute ratings**.
-- FIFA Eswatini gates association creation to 1968 and FIFA/CAF membership to
-  1978; the Big Count 2006 source still uses the historical label `Swaziland`,
-  which is retained as source provenance rather than rewritten.
-- FIFA Mozambique gates association creation to 1976 and FIFA/CAF membership to
-  1980. Big Count 2006 remains dimension-scoped and Professional 2023 enters only
-  from 2023.
-- ATP Eswatini and Mozambique both use explicit low-confidence pre-documented
-  baselines before direct ITF activity evidence in 2020. Their 2026 ITF
-  development eligibility is treated as capacity/opportunity context, not realised
-  programme delivery or player quality.
+- FIFA Angola gates association creation to 1979 and FIFA/CAF affiliation to 1980; Big Count 2006 and Professional 2023 enter only from their observed years.
+- FIFA Lesotho carries the directly documented 1932 association creation into the 1955+ window, gates FIFA/CAF affiliation to 1964, and does not invent missing Professional 2023 counts.
+- ATP Angola and Lesotho use explicit low-confidence pre-documented baselines before direct 2020 ITF status evidence; 2026 development eligibility is opportunity context rather than realised output.
 - Coverage/provenance is measured through `load_earth_research_bundle()`; sharded
   sources, manifests, normalized observations and country histories all participate
   in validation. Missing facts are not converted into zeroes or universal fallback
@@ -83,7 +76,7 @@ retained only as implementation history and do not override these numbers.
 
 ## Not implemented or not proven
 
-- **Neither official Earth directory exists yet.** FIFA and ATP each currently have 81 complete histories; neither reaches the required 250-country all-or-nothing build threshold. No fabricated neutral profiles are shipped to satisfy coverage
+- **Neither official Earth directory exists yet.** FIFA and ATP each currently have 83 complete histories; neither reaches the required 250-country all-or-nothing build threshold. No fabricated neutral profiles are shipped to satisfy coverage
   mechanically. See the current-status section above for authoritative counts.
 - FIFA Big Count 2006 now has five canonical normalized
   `earth_source_observations.v2` datasets (all players, registered, unregistered,

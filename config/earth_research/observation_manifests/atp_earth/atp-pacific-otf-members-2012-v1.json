@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-pacific-otf-members-2012-v1",
+  "source_id": "otf-member-nations-2012",
+  "relative_path": "observations/normalized/atp_pacific_otf_members_2012_v1.json",
+  "sha256": "e422279b9d4491fb9ce907e5664eceaab80b6c8fe61f08d3677842c4e75146b6",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

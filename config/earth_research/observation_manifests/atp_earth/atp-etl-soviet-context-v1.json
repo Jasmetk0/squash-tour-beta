@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-etl-soviet-context-v1",
+  "source_id": "etl-honorary-members-history",
+  "relative_path": "observations/normalized/atp_etl_soviet_context_v1.json",
+  "sha256": "4ab0c22428278aacb52ea338b00b898ba79bc86ae21affe4e9477bc37b55ac93",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

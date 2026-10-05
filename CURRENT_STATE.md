@@ -4830,3 +4830,17 @@ bands should shape 0..200 potential. No threshold is inferred from current OVR v
 - Official FIFA package publication remains blocked by the intentional **250 / 250** completeness requirement.
 
 **Next after green CI:** continue another evidence-rich FIFA batch, adding structural sources only where they materially improve temporal/dimensional grounding rather than merely increasing source count.
+
+
+## Candidate — FIFA AUT/DNK/SWE/CHE comparable-evidence batch (5 October 2026)
+
+- New complete FIFA histories: **Austria (AUT), Denmark (DNK), Sweden (SWE), Switzerland (CHE)**.
+- New ratings: 4 × 72 × 6 = **1,728**; FIFA Earth now resolves **37 / 250 complete histories**.
+- FIFA normalized evidence inventory remains **69 datasets / 1,449 observations**; the batch deliberately reuses the same canonical FIFA Big Count 2006 and Professional Football Report 2023 source families for cross-country comparability.
+- Calibration uses population-normalised context rather than raw counts alone. Denmark and Sweden have materially denser 2006 club footprints than Austria/Switzerland; Sweden also has a much larger 2023 professional-player density.
+- High club density raises organised access without automatically becoming high competition quality. Professional-player/club density is ecosystem context, not rankings or match quality.
+- Every pre-2006 value remains explicit low-confidence backcast; Professional 2023 observations are prohibited from pre-2023 ratings.
+- No held-out ranking, title count or tournament-result data was used for tuning.
+- Official FIFA package publication remains blocked by the intentional **250 / 250** completeness requirement.
+
+**Next after green CI:** continue another comparable FIFA batch while periodically mixing in countries that require structural/governance discontinuities so the remaining catalogue is not filled by smooth generic curves.

@@ -11,7 +11,7 @@ from beta_engine.application.earth_package_builder import load_earth_research_bu
 
 def test_fifa_first_reviewed_country_histories_are_complete_and_resolvable():
     bundle = load_earth_research_bundle(Path("config/earth_research/fifa_earth.json"))
-    assert set(bundle.research.countries) == {"CZE", "SVK", "JPN", "IND", "MAR", "SEN", "FRO", "USA", "ZAF", "BRA", "DEU", "ISL", "SMR", "ARG", "MEX", "AUS", "NZL", "FJI", "PNG", "SLB", "COK", "ASM", "PYF", "NCL", "WSM", "TON", "VUT", "FRA", "ESP", "ITA", "NLD", "BEL", "PRT"}
+    assert set(bundle.research.countries) == {"CZE", "SVK", "JPN", "IND", "MAR", "SEN", "FRO", "USA", "ZAF", "BRA", "DEU", "ISL", "SMR", "ARG", "MEX", "AUS", "NZL", "FJI", "PNG", "SLB", "COK", "ASM", "PYF", "NCL", "WSM", "TON", "VUT", "FRA", "ESP", "ITA", "NLD", "BEL", "PRT", "AUT", "DNK", "SWE", "CHE"}
     assert bundle.research.data_cutoff.isoformat() == "2026-10-03"
 
     for code in ("CZE", "SVK"):
@@ -1505,3 +1505,40 @@ def test_fifa_ita_nld_bel_prt_batch_is_complete_and_temporally_gated():
     assert prt.years[2026].ratings["development_quality"].value >= 9.0
     assert ita.years[2026].ratings["competition_quality"].value < 9.0
     assert bel.years[2026].ratings["squash_access"].value > bel.years[1955].ratings["squash_access"].value
+
+
+def test_fifa_aut_dnk_swe_che_batch_is_complete_comparable_and_temporally_gated():
+    bundle = load_earth_research_bundle(Path("config/earth_research/fifa_earth.json"))
+    batch = {"AUT", "DNK", "SWE", "CHE"}
+
+    for code in batch:
+        history = bundle.research.countries[code]
+        assert history.missing_earth_years == []
+        assert len(history.years) == 72
+        assert history.reference_year == 2026
+
+        for year_number, year in history.years.items():
+            assert len(year.ratings) == 6
+            for rating in year.ratings.values():
+                assert rating.method == "derived_estimate"
+                assert rating.calibration_model_id == "fifa-earth-country-history-aut-dnk-swe-che.v1"
+                assert rating.observation_ids
+                assert all(item in bundle.observations for item in rating.observation_ids)
+                if year_number < 2006:
+                    assert rating.confidence == "low"
+                if year_number < 2023:
+                    assert "fifa-professional-2023" not in rating.source_ids
+                    assert not any(
+                        item.startswith("fifa-professional-2023-")
+                        for item in rating.observation_ids
+                    )
+
+    aut = bundle.research.countries["AUT"]
+    dnk = bundle.research.countries["DNK"]
+    swe = bundle.research.countries["SWE"]
+    che = bundle.research.countries["CHE"]
+
+    assert dnk.years[2006].ratings["squash_access"].value > aut.years[2006].ratings["squash_access"].value
+    assert swe.years[2006].ratings["squash_access"].value >= dnk.years[2006].ratings["squash_access"].value
+    assert swe.years[2023].ratings["competition_quality"].value >= 9.0
+    assert che.years[2026].ratings["squash_popularity"].value < aut.years[2026].ratings["squash_popularity"].value

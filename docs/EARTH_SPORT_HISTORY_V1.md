@@ -396,3 +396,22 @@ The calibration keeps 9.0+ exceptional, does not use held-out rankings or title
 outcomes, and records that tradition values in this batch are conservative continuity
 estimates from observed organised-football footprint rather than mechanically converted
 federation-foundation dates.
+
+
+## FIFA canonical-history batch — AUT/DNK/SWE/CHE comparable evidence (5 October 2026)
+
+Austria, Denmark, Sweden and Switzerland now have complete 1955–2026 FIFA Earth
+histories, adding **1,728 annual attribute ratings** and taking FIFA Earth to
+**37 / 250 complete histories**.
+
+This batch is calibrated from the same canonical Big Count 2006 and Professional
+Football Report 2023 families as the preceding ITA/NLD/BEL/PRT slice, with explicit
+population-normalised context. The measured signals are not collapsed into one
+football-strength score: Denmark and Sweden's dense club networks primarily strengthen
+organised access, while Sweden's high 2023 professional-player density strengthens
+professional competition/elite ecosystem context without becoming a direct ranking
+or outcome score.
+
+Pre-2006 annual values are low-confidence backcasts toward the first direct checkpoint.
+Professional 2023 observations are cited only from 2023 onward. No held-out rankings,
+trophy counts or tournament outcomes are used for calibration.

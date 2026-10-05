@@ -1,5 +1,23 @@
 # Current implementation and next action
 
+## Current — São Tomé and Príncipe/Guinea dual-world Earth batch (5 October 2026)
+
+- Based directly on merged `buuk` commit `a65d1193534ff4e4b731eb40207f2bd868ed15b4` (#1218); independent coverage PR.
+- New complete histories in both worlds: **São Tomé and Príncipe (STP) and Guinea (GIN)**.
+- FIFA Earth: **99 / 250**, **146 datasets / 1,699 normalized observations**.
+- ATP Earth: **99 / 250**, **298 datasets / 681 normalized observations**.
+- Adds **1,728 authored annual attribute ratings**.
+- São Tomé gates creation 1975 and FIFA/CAF 1986; Guinea gates creation 1960, FIFA 1962 and CAF 1963.
+- Both use Big Count 2006 only from 2006; Guinea additionally uses the checked-in Professional 2023 club observation from 2023, while missing player counts remain absent.
+- Guinea ATP uses direct ITF 2020 status plus 2026 development eligibility.
+- São Tomé ATP deliberately keeps 1955–2025 as an explicit low-confidence pre-documented baseline because the first checked-in direct ITF evidence used here is 2026 eligibility.
+- Official package publication remains blocked until **250 / 250** in each world.
+
+**Next after green CI:** continue the next evidence-backed dual-world batch.
+
+> Older Current/Candidate entries below are implementation history and do not override this section.
+
+
 ## Current — Equatorial Guinea/Guinea-Bissau dual-world Earth batch (5 October 2026)
 
 - Based directly on merged `buuk` commit `b17e31a23289b69c234fb7f34519ca22899867b9` (#1217); independent coverage PR.

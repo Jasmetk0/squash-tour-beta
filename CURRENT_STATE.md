@@ -1,5 +1,18 @@
 # Current implementation and next action
 
+## Candidate — ATP Austria history (5 October 2026)
+
+- New complete ATP history: **Austria (AUT)**.
+- New ratings: 72 × 6 = **432**; ATP Earth now resolves **34 / 250 complete histories**.
+- ATP research now resolves **108 normalized datasets / 332 observations**.
+- Austria has unusually strong current structural evidence: ~210,000 members, ~1,750 clubs, ~95,000 championship players, 11,369 teams, 450 tournaments and 3,000+ coaches/instructors.
+- 2025 ITF World Tennis Tour hosting and five 2026 ATP/Challenger events support current competition/pathway quality without being treated as domestic player outcomes.
+- Current scale remains gated to 2026; historical values remain anchored by the 1902 federation and founding ITF lineage.
+- Official ATP package publication remains blocked by the 250/250 completeness rule.
+
+**Next after green CI:** continue with another evidence-rich ATP/FIFA batch.
+
+
 ## Candidate — ATP Israel/Bulgaria evidence-rich batch (5 October 2026)
 
 - New complete ATP histories: **Israel (ISR), Bulgaria (BGR)**.

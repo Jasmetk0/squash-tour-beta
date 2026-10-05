@@ -4951,3 +4951,19 @@ bands should shape 0..200 potential. No threshold is inferred from current OVR v
 - The destruction of the seven-court UTF centre in Irpin is an explicit 2022 access/development/competition shock rather than being smoothed away.
 - 2025 youth-team and club-team regulations document continued federation structure, but 2026 access remains below the 2021 pre-invasion level.
 - No rankings or title outcomes are calibration targets. Official package publication remains blocked by the intentional **250 / 250** completeness requirement for both worlds.
+
+
+
+## Candidate — FIFA Serbia + ATP Morocco dual batch (5 October 2026)
+
+- New complete FIFA history: **Serbia (SRB)**.
+- New complete ATP history: **Morocco (MAR)**.
+- New ratings: 2 × 72 × 6 = **864**; both FIFA Earth and ATP Earth move **49 -> 50 / 250 complete histories**.
+- FIFA adds **1 structural dataset / 4 direct observations**, taking FIFA research from **84 datasets / 1,512 observations** to **85 datasets / 1,516 observations**.
+- Serbia preserves current-territory history across SFR Yugoslavia, FR Yugoslavia, Serbia and Montenegro, and independent Serbia from 2006 without inheriting predecessor-state totals or outcomes wholesale.
+- FIFA Big Count 2006 evidence (441,682 all players; 132,182 registered players; 2,096 clubs) is gated to 2006+, and FIFA Professional 2023 evidence (972 men's professionals; 32 clubs) to 2023+.
+- ATP adds **3 datasets / 7 observations**, taking ATP research from **166 datasets / 473 observations** to **169 datasets / 480 observations**.
+- Morocco's 1955–56 committee is retained as pre-independence/pre-FRMT context; the official FRMT foundation is gated to **1957**.
+- Mohamed M'Jid's presidency is gated from 1964 and Faïçal Laraïchi's from 2009; governance continuity supports tradition but is not treated as direct participation/player-quality measurement.
+- The CNOM-described current mandate for access, rankings, national competition and international affiliations appears only in **2026** and is never backcast.
+- No rankings or title outcomes are calibration targets. Official package publication remains blocked by the intentional **250 / 250** completeness requirement for both worlds.

@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-aita-history-v1",
+  "source_id": "aita-history",
+  "relative_path": "observations/normalized/atp-aita-history-v1.json",
+  "sha256": "b17046a9bbc215fa09a52c380bd7dd19965ad8dd04ac617ee9f3186d0b5d5de3",
+  "record_count": 5,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

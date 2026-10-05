@@ -3,7 +3,7 @@
   "dataset_id": "fifa-structural-uefa-estonia-profile-v1",
   "source_id": "uefa-estonia-profile",
   "relative_path": "observations/normalized/structural/fifa_structural_uefa_estonia_profile_v1.json",
-  "sha256": "284d1152c1ce699fb30f6315d886df68f5b36947c6363b93bf8563e944ac52b5",
+  "sha256": "f5eb80b067f935228c55d2618d59728d24cbd593c38337b18142a72f683181cf",
   "record_count": 6,
   "source_document_sha256": null,
   "input_artifact_sha256": null,

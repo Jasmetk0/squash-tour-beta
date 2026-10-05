@@ -11,8 +11,11 @@ from beta_engine.application.earth_package_builder import load_earth_research_bu
 
 def test_fifa_first_reviewed_country_histories_are_complete_and_resolvable():
     bundle = load_earth_research_bundle(Path("config/earth_research/fifa_earth.json"))
-    assert set(bundle.research.countries) == {"CZE", "SVK", "JPN", "IND", "MAR", "SEN", "FRO", "USA", "ZAF", "BRA", "DEU", "ISL", "SMR", "ARG", "MEX", "AUS", "NZL", "FJI", "PNG", "SLB", "COK", "ASM", "PYF", "NCL", "WSM", "TON", "VUT", "FRA", "ESP", "ITA", "NLD", "BEL", "PRT", "AUT", "DNK", "SWE", "CHE", "NOR", "FIN", "HRV", "SVN", "POL", "ROU", "UKR", "LTU", "LVA", "EST", "CAN", "GRC", "SRB", "CHL", "HUN", "ISR", "BGR", "KAZ", "CHN", "TUR", "KOR", "THA", "COL", "CYP", "ECU", "IRL", "EGY", "MYS", "SAU", "ARE", "QAT", "OMN", "GHA", "NGA"}
+    assert set(bundle.research.countries) == {"CZE", "SVK", "JPN", "IND", "MAR", "SEN", "FRO", "USA", "ZAF", "BRA", "DEU", "ISL", "SMR", "ARG", "MEX", "AUS", "NZL", "FJI", "PNG", "SLB", "COK", "ASM", "PYF", "NCL", "WSM", "TON", "VUT", "FRA", "ESP", "ITA", "NLD", "BEL", "PRT", "AUT", "DNK", "SWE", "CHE", "NOR", "FIN", "HRV", "SVN", "POL", "ROU", "UKR", "LTU", "LVA", "EST", "CAN", "GRC", "SRB", "CHL", "HUN", "ISR", "BGR", "KAZ", "CHN", "TUR", "KOR", "THA", "COL", "CYP", "ECU", "IRL", "EGY", "MYS", "SAU", "ARE", "QAT", "OMN", "GHA", "NGA", "KEN", "UGA"}
     assert bundle.research.data_cutoff.isoformat() == "2026-10-03"
+    assert len(bundle.research.countries) == 73
+    assert len(bundle.datasets) == 120
+    assert len(bundle.observations) == 1611
 
     for code in ("CZE", "SVK"):
         history = bundle.research.countries[code]
@@ -458,11 +461,11 @@ def test_fifa_fra_esp_batch_is_complete_and_temporally_dimensioned():
 
 def test_atp_complete_histories_are_evidence_resolvable_and_temporally_bounded():
     bundle = load_earth_research_bundle(Path("config/earth_research/atp_earth.json"))
-    expected_countries = {"CZE", "DEU", "USA", "AUS", "ESP", "SRB", "FRA", "GBR", "ARG", "JPN", "CAN", "ITA", "NED", "SWE", "SUI", "CRO", "POL", "CHN", "NOR", "GRE", "BEL", "ZAF", "DEN", "FIN", "NZL", "PRT", "IRL", "HUN", "ROU", "SVN", "SVK", "ISR", "BGR", "AUT", "TUR", "CYP", "BRA", "CHL", "COL", "MEX", "ECU", "IND", "KOR", "THA", "KAZ", "LVA", "EST", "LTU", "UKR", "MAR", "SEN", "ISL", "SMR", "FRO", "FJI", "PNG", "WSM", "SLB", "TON", "COK", "NCL", "ASM", "VUT", "EGY", "MYS", "PHL", "IDN", "SGP", "PAK", "GHA", "NGA"}
+    expected_countries = {"CZE", "DEU", "USA", "AUS", "ESP", "SRB", "FRA", "GBR", "ARG", "JPN", "CAN", "ITA", "NED", "SWE", "SUI", "CRO", "POL", "CHN", "NOR", "GRE", "BEL", "ZAF", "DEN", "FIN", "NZL", "PRT", "IRL", "HUN", "ROU", "SVN", "SVK", "ISR", "BGR", "AUT", "TUR", "CYP", "BRA", "CHL", "COL", "MEX", "ECU", "IND", "KOR", "THA", "KAZ", "LVA", "EST", "LTU", "UKR", "MAR", "SEN", "ISL", "SMR", "FRO", "FJI", "PNG", "WSM", "SLB", "TON", "COK", "NCL", "ASM", "VUT", "EGY", "MYS", "PHL", "IDN", "SGP", "PAK", "GHA", "NGA", "KEN", "UGA"}
     assert set(bundle.research.countries) == expected_countries
     assert bundle.research.data_cutoff.isoformat() == "2026-10-04"
-    assert len(bundle.datasets) == 237
-    assert len(bundle.observations) == 591
+    assert len(bundle.datasets) == 242
+    assert len(bundle.observations) == 597
 
     expected_models = {
         "CZE": "atp-earth-cze-deu-seed-model.v1",
@@ -536,6 +539,8 @@ def test_atp_complete_histories_are_evidence_resolvable_and_temporally_bounded()
         "PAK": "atp-earth-pak-model.v1",
         "GHA": "atp-earth-gha-model.v1",
         "NGA": "atp-earth-nga-model.v1",
+        "KEN": "atp-earth-ken-model.v1",
+        "UGA": "atp-earth-uga-model.v1",
     }
     for code, history in bundle.research.countries.items():
         assert history.missing_earth_years == []
@@ -2710,13 +2715,6 @@ def test_ghana_nigeria_dual_world_batch_is_complete_resolvable_and_time_gated():
     fifa = load_earth_research_bundle(Path("config/earth_research/fifa_earth.json"))
     atp = load_earth_research_bundle(Path("config/earth_research/atp_earth.json"))
 
-    assert len(fifa.research.countries) == 71
-    assert len(fifa.datasets) == 118
-    assert len(fifa.observations) == 1606
-    assert len(atp.research.countries) == 71
-    assert len(atp.datasets) == 237
-    assert len(atp.observations) == 591
-
     for bundle, expected_models in (
         (
             fifa,
@@ -2864,5 +2862,140 @@ def test_ghana_nigeria_dual_world_batch_is_complete_resolvable_and_time_gated():
     assert (
         "atp-nigeria-m25-2026-v1#nga-m25-lagos-2026"
         in nga_atp.years[2026].ratings["competition_quality"].observation_ids
+    )
+
+def test_kenya_uganda_dual_world_batch_is_complete_resolvable_and_time_gated():
+    fifa = load_earth_research_bundle(Path("config/earth_research/fifa_earth.json"))
+    atp = load_earth_research_bundle(Path("config/earth_research/atp_earth.json"))
+
+    for bundle, expected_models in (
+        (
+            fifa,
+            {
+                "KEN": "fifa-earth-ken-model.v1",
+                "UGA": "fifa-earth-uga-model.v1",
+            },
+        ),
+        (
+            atp,
+            {
+                "KEN": "atp-earth-ken-model.v1",
+                "UGA": "atp-earth-uga-model.v1",
+            },
+        ),
+    ):
+        for code, model_id in expected_models.items():
+            history = bundle.research.countries[code]
+            assert history.missing_earth_years == []
+            assert len(history.years) == 72
+            assert history.reference_year == 2026
+            for year in history.years.values():
+                assert len(year.ratings) == 6
+                for rating in year.ratings.values():
+                    assert rating.method == "derived_estimate"
+                    assert rating.calibration_model_id == model_id
+                    assert rating.observation_ids
+                    assert all(item in bundle.observations for item in rating.observation_ids)
+
+    ken_fifa = fifa.research.countries["KEN"]
+    assert (
+        "fifa-structural-kenya-history-v1#ken-created-fifa-1960"
+        not in ken_fifa.years[1959].ratings["competition_quality"].observation_ids
+    )
+    assert (
+        "fifa-structural-kenya-history-v1#ken-created-fifa-1960"
+        in ken_fifa.years[1960].ratings["competition_quality"].observation_ids
+    )
+    assert (
+        "fifa-structural-kenya-history-v1#ken-caf-affiliation-1968"
+        not in ken_fifa.years[1967].ratings["competition_quality"].observation_ids
+    )
+    assert (
+        "fifa-structural-kenya-history-v1#ken-caf-affiliation-1968"
+        in ken_fifa.years[1968].ratings["competition_quality"].observation_ids
+    )
+    assert (
+        "fifa-big-count-2006-all-players-v2#kenya"
+        not in ken_fifa.years[2005].ratings["squash_popularity"].observation_ids
+    )
+    assert (
+        "fifa-big-count-2006-all-players-v2#kenya"
+        in ken_fifa.years[2006].ratings["squash_popularity"].observation_ids
+    )
+    assert (
+        "fifa-professional-2023-clubs-v2#kenya-p95"
+        not in ken_fifa.years[2022].ratings["competition_quality"].observation_ids
+    )
+    assert (
+        "fifa-professional-2023-clubs-v2#kenya-p95"
+        in ken_fifa.years[2023].ratings["competition_quality"].observation_ids
+    )
+    assert all(
+        "fifa-professional-2023-players-v2#kenya" not in observation_id
+        for year in ken_fifa.years.values()
+        for rating in year.ratings.values()
+        for observation_id in rating.observation_ids
+    )
+
+    uga_fifa = fifa.research.countries["UGA"]
+    assert (
+        "fifa-structural-uganda-history-v1#uga-fifa-caf-1960"
+        not in uga_fifa.years[1959].ratings["competition_quality"].observation_ids
+    )
+    assert (
+        "fifa-structural-uganda-history-v1#uga-fifa-caf-1960"
+        in uga_fifa.years[1960].ratings["competition_quality"].observation_ids
+    )
+    assert (
+        "fifa-professional-2023-players-v2#uganda-p121"
+        not in uga_fifa.years[2022].ratings["competition_quality"].observation_ids
+    )
+    assert (
+        "fifa-professional-2023-players-v2#uganda-p121"
+        in uga_fifa.years[2023].ratings["competition_quality"].observation_ids
+    )
+
+    # Early tennis chronology is explicitly secondary-source evidence.
+    assert "secondary_source" in atp.observations[
+        "atp-kenya-history-v1#ken-association-inception-1922"
+    ].quality_flags
+    assert "secondary_source" in atp.observations[
+        "atp-uganda-history-v1#uga-association-founded-1948"
+    ].quality_flags
+
+    ken_atp = atp.research.countries["KEN"]
+    assert (
+        "atp-kenya-jti-2026-v1#ken-jti-pathway-2026"
+        not in ken_atp.years[2025].ratings["development_quality"].observation_ids
+    )
+    assert (
+        "atp-kenya-jti-2026-v1#ken-jti-pathway-2026"
+        in ken_atp.years[2026].ratings["development_quality"].observation_ids
+    )
+
+    uga_atp = atp.research.countries["UGA"]
+    assert (
+        "atp-uganda-development-2025-v1#uga-jti-grassroots-by-2022"
+        not in uga_atp.years[2021].ratings["development_quality"].observation_ids
+    )
+    assert (
+        "atp-uganda-development-2025-v1#uga-jti-grassroots-by-2022"
+        in uga_atp.years[2022].ratings["development_quality"].observation_ids
+    )
+    assert (
+        "atp-uganda-development-2025-v1#uga-international-hosting-by-2022"
+        not in uga_atp.years[2021].ratings["competition_quality"].observation_ids
+    )
+    assert (
+        "atp-uganda-development-2025-v1#uga-international-hosting-by-2022"
+        in uga_atp.years[2022].ratings["competition_quality"].observation_ids
+    )
+    assert (
+        "atp-uganda-registration-2026-v1#uga-national-registration-2026"
+        not in uga_atp.years[2025].ratings["elite_support"].observation_ids
+    )
+    assert (
+        "atp-uganda-registration-2026-v1#uga-national-registration-2026"
+        in uga_atp.years[2026].ratings["elite_support"].observation_ids
     )
 

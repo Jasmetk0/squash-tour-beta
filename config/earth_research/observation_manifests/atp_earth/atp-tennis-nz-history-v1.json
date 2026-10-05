@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-tennis-nz-history-v1",
+  "source_id": "tennis-nz-history",
+  "relative_path": "observations/normalized/atp-tennis-nz-history-v1.json",
+  "sha256": "21369551882ff016833c5cd5ac92ca21a0fa9882921e6d2d593f803f989f5761",
+  "record_count": 3,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

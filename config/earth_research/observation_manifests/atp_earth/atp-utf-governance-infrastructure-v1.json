@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-utf-governance-infrastructure-v1",
+  "source_id": "utf-governance-report-2017",
+  "relative_path": "observations/normalized/atp_utf_governance_infrastructure_v1.json",
+  "sha256": "93ff441a2d2cb3bf07abf5ab9e4790c5533b0832913ddc942a5d46c025b171fc",
+  "record_count": 3,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

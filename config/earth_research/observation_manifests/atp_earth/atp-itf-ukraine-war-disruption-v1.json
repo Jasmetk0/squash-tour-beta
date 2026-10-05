@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-itf-ukraine-war-disruption-v1",
+  "source_id": "itf-ukraine-centre-destroyed-2022",
+  "relative_path": "observations/normalized/atp_itf_ukraine_war_disruption_v1.json",
+  "sha256": "e6487daed9126135d7822334a1562fd20aa7c7fd2195261467983111e8a7b3e3",
+  "record_count": 3,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

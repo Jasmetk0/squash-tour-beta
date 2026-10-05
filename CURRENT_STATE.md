@@ -4934,3 +4934,20 @@ bands should shape 0..200 potential. No threshold is inferred from current OVR v
 - Current 2026 Canada Soccer evidence of nearly one million active registered participants and 1,200 clubs is current-only and never backcast.
 - Modern ratings remain strong but below 9.0; access reaches 8.7 in 2026 while competition/elite dimensions remain lower.
 - No rankings or title outcomes are calibration targets. Official FIFA package publication remains blocked by the intentional **250 / 250** completeness requirement.
+
+
+
+## Candidate — FIFA Greece + ATP Ukraine dual batch (5 October 2026)
+
+- New complete FIFA history: **Greece (GRC)**.
+- New complete ATP history: **Ukraine (UKR)**.
+- New ratings: 2 × 72 × 6 = **864**; both FIFA Earth and ATP Earth move **48 -> 49 / 250 complete histories**.
+- FIFA adds **1 structural dataset / 6 direct observations**, taking FIFA research from **83 datasets / 1,506 observations** to **84 datasets / 1,512 observations**.
+- Greece is anchored by HFF foundation (1926), FIFA membership (1927), UEFA founding participation (1954) and later hosting milestones, while FIFA Big Count 2006 and Professional Football Report 2023 remain strictly time-gated.
+- Greece does not use the 2004 European Championship title or rankings as calibration targets; modern ratings remain below 9.0 despite strong participation and professional depth.
+- ATP adds **4 datasets / 11 observations**, taking ATP research from **162 datasets / 462 observations** to **166 datasets / 473 observations**.
+- Ukraine before 1991 is current-territory tennis inside Soviet governance; USSR-wide player counts and outcomes are not inherited.
+- The independent UTF transition is gated to 1991, coach-development evidence to 2015, regional governance/court projects to 2017, and the Irpin federation-centre competition infrastructure to 2021.
+- The destruction of the seven-court UTF centre in Irpin is an explicit 2022 access/development/competition shock rather than being smoothed away.
+- 2025 youth-team and club-team regulations document continued federation structure, but 2026 access remains below the 2021 pre-invasion level.
+- No rankings or title outcomes are calibration targets. Official package publication remains blocked by the intentional **250 / 250** completeness requirement for both worlds.

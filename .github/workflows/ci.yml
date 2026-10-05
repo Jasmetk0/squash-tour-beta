@@ -33,6 +33,7 @@ jobs:
         id: filter
         uses: dorny/paths-filter@v3
         with:
+          predicate-quantifier: 'some-with-excludes'
           filters: |
             backend:
               - 'config/world_packages/**'

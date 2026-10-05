@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-liberia-history-v1",
+  "source_id": "itf-liberia-return-to-play-2020",
+  "relative_path": "observations/normalized/atp_liberia_history_v1.json",
+  "sha256": "a1487fc2a4b6db9d578a056267962e2c124ca7c34cc898a4f5b6a787ce7faab5",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

@@ -489,3 +489,22 @@ children/regional/coaching/referee development portfolio, a broad hosted competi
 ladder, and a current infrastructure network of 39 high-performance centres and
 394 courts. These are capacity/opportunity observations rather than direct player
 outcomes, so modern KAZ remains below the 9+ world-leading threshold.
+
+
+## Baltic mixed FIFA/ATP batch (5 October 2026)
+
+The next mixed batch keeps FIFA Earth and ATP Earth exactly aligned at
+**47 / 250 complete histories each**.
+
+FIFA adds Estonia and Latvia. Both histories preserve current-territory football
+inside Soviet governance rather than inheriting USSR-wide participation or results.
+Estonia's UEFA membership is gated from 1992. Latvia separately gates federation
+restoration in 1991 and FIFA/UEFA reintegration in 1992. Big Count 2006 and
+Professional Football Report 2023 remain strictly dated evidence layers.
+
+ATP adds Estonia and Lithuania. Estonia is anchored by the 1921 tennis section and
+1922 federation foundation, while the current adult/junior competition system is
+cited only in 2026. Lithuania uses intentionally partial evidence: organised Vilnius
+tennis in 1948, federation institutional activity from 1959, the current association
+from 1995 and the national federation mandate from 2022. These sources establish
+continuity/capacity but do not justify high confidence for historical national scale.

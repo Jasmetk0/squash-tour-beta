@@ -1,5 +1,23 @@
 # Current implementation and next action
 
+## Current — Liberia/Sierra Leone dual-world Earth batch (5 October 2026)
+
+- Based directly on merged `buuk` commit `793a9913c7681fd69264b35c0a84fb207f70f9f5` (#1219); independent coverage PR.
+- New complete histories in both worlds: **Liberia (LBR) and Sierra Leone (SLE)**.
+- FIFA Earth: **101 / 250**, **148 datasets / 1,706 normalized observations**.
+- ATP Earth: **101 / 250**, **302 datasets / 687 normalized observations**.
+- Adds **1,728 authored annual attribute ratings**.
+- Liberia carries 1936 creation into the 1955+ window and gates CAF 1962, FIFA 1964 and Big Count 2006.
+- Sierra Leone preserves CAF's published non-monotonic chronology (FIFA 1959, Created 1960, CAF 1960) as explicit provenance rather than silently rewriting it.
+- Both deliberately omit unavailable Professional 2023 values.
+- ATP histories separate low-confidence pre-2020 context from direct ITF September 2020 restricted-play evidence and 2026 development eligibility.
+- Official package publication remains blocked until **250 / 250** in each world.
+
+**Next after green CI:** continue the next evidence-backed dual-world batch.
+
+> Older Current/Candidate entries below are implementation history and do not override this section.
+
+
 ## Current — São Tomé and Príncipe/Guinea dual-world Earth batch (5 October 2026)
 
 - Based directly on merged `buuk` commit `a65d1193534ff4e4b731eb40207f2bd868ed15b4` (#1218); independent coverage PR.

@@ -1,0 +1,82 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "atp-earth-civ-model.v1",
+  "world_id": "atp_earth",
+  "data_cutoff": "2026-10-04",
+  "countries": [
+    "CIV"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "evidence_rules": [
+    "Pre-1963 ratings are low-confidence territorial estimates; FIT creation is gated to 1963, CAT membership to 1973 and full ITF membership to 1985.",
+    "ITF JTI active-programme evidence enters only from 2021.",
+    "FIT's 2025-2030 strategic priorities are capacity intent and enter only from 2025.",
+    "2026 ITF development eligibility is opportunity/capacity context only; no result or ranking is a calibration target."
+  ],
+  "anchor_values": {
+    "CIV": {
+      "1955": [
+        2.5,
+        2.2,
+        2.2,
+        2.1,
+        2,
+        2.8
+      ],
+      "1963": [
+        4,
+        3.6,
+        3.7,
+        3.5,
+        3.4,
+        5.2
+      ],
+      "1973": [
+        4.3,
+        3.9,
+        4,
+        3.8,
+        3.7,
+        5.5
+      ],
+      "1985": [
+        4.7,
+        4.2,
+        4.4,
+        4.2,
+        4.1,
+        5.9
+      ],
+      "2021": [
+        5.2,
+        4.7,
+        5.1,
+        4.8,
+        4.8,
+        6.2
+      ],
+      "2025": [
+        5.5,
+        5,
+        5.5,
+        5,
+        5.2,
+        6.4
+      ],
+      "2026": [
+        5.6,
+        5.1,
+        5.6,
+        5.1,
+        5.3,
+        6.5
+      ]
+    }
+  },
+  "evidence_sources": [
+    "fit-cote-divoire-history",
+    "itf-jti-active-2021",
+    "itf-cote-divoire-development-eligibility-2026"
+  ],
+  "heldout_ranking_used": false
+}

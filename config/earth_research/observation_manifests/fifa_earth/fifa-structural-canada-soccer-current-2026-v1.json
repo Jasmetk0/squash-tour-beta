@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-canada-soccer-current-2026-v1",
+  "source_id": "canada-soccer-about-2026",
+  "relative_path": "observations/normalized/structural/fifa_structural_canada_soccer_current_2026_v1.json",
+  "sha256": "1677b38ff2ae722c074541ce3e21d826968177ee9d07787239bdce3f906f088d",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

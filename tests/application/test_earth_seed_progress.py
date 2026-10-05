@@ -11,11 +11,11 @@ from beta_engine.application.earth_package_builder import load_earth_research_bu
 
 def test_fifa_first_reviewed_country_histories_are_complete_and_resolvable():
     bundle = load_earth_research_bundle(Path("config/earth_research/fifa_earth.json"))
-    assert set(bundle.research.countries) == {"CZE", "SVK", "JPN", "IND", "MAR", "SEN", "FRO", "USA", "ZAF", "BRA", "DEU", "ISL", "SMR", "ARG", "MEX", "AUS", "NZL", "FJI", "PNG", "SLB", "COK", "ASM", "PYF", "NCL", "WSM", "TON", "VUT", "FRA", "ESP", "ITA", "NLD", "BEL", "PRT", "AUT", "DNK", "SWE", "CHE", "NOR", "FIN", "HRV", "SVN", "POL", "ROU", "UKR", "LTU", "LVA", "EST", "CAN", "GRC", "SRB", "CHL", "HUN", "ISR", "BGR", "KAZ", "CHN", "TUR", "KOR", "THA", "COL", "CYP", "ECU", "IRL", "EGY", "MYS", "SAU", "ARE", "QAT", "OMN", "GHA", "NGA", "KEN", "UGA", "TZA", "ZMB", "ZWE", "MWI", "BWA", "NAM", "SWZ", "MOZ", "ANG", "LES", "CMR", "BEN", "GAB", "MUS", "MDG", "SEY", "RWA", "BDI", "GAM", "CPV", "DJI", "COM", "EQG", "GNB", "STP", "GIN", "LBR", "SLE", "TGO", "BFA", "MLI", "MRT", "NER", "CHA"}
+    assert set(bundle.research.countries) == {"CZE", "SVK", "JPN", "IND", "MAR", "SEN", "FRO", "USA", "ZAF", "BRA", "DEU", "ISL", "SMR", "ARG", "MEX", "AUS", "NZL", "FJI", "PNG", "SLB", "COK", "ASM", "PYF", "NCL", "WSM", "TON", "VUT", "FRA", "ESP", "ITA", "NLD", "BEL", "PRT", "AUT", "DNK", "SWE", "CHE", "NOR", "FIN", "HRV", "SVN", "POL", "ROU", "UKR", "LTU", "LVA", "EST", "CAN", "GRC", "SRB", "CHL", "HUN", "ISR", "BGR", "KAZ", "CHN", "TUR", "KOR", "THA", "COL", "CYP", "ECU", "IRL", "EGY", "MYS", "SAU", "ARE", "QAT", "OMN", "GHA", "NGA", "KEN", "UGA", "TZA", "ZMB", "ZWE", "MWI", "BWA", "NAM", "SWZ", "MOZ", "ANG", "LES", "CMR", "BEN", "GAB", "MUS", "MDG", "SEY", "RWA", "BDI", "GAM", "CPV", "DJI", "COM", "EQG", "GNB", "STP", "GIN", "LBR", "SLE", "TGO", "BFA", "MLI", "MRT", "NER", "CHA", "ETH", "ERI"}
     assert bundle.research.data_cutoff.isoformat() == "2026-10-03"
-    assert len(bundle.research.countries) == 107
-    assert len(bundle.datasets) == 154
-    assert len(bundle.observations) == 1730
+    assert len(bundle.research.countries) == 109
+    assert len(bundle.datasets) == 156
+    assert len(bundle.observations) == 1737
 
     for code in ("CZE", "SVK"):
         history = bundle.research.countries[code]
@@ -461,11 +461,11 @@ def test_fifa_fra_esp_batch_is_complete_and_temporally_dimensioned():
 
 def test_atp_complete_histories_are_evidence_resolvable_and_temporally_bounded():
     bundle = load_earth_research_bundle(Path("config/earth_research/atp_earth.json"))
-    expected_countries = {"CZE", "DEU", "USA", "AUS", "ESP", "SRB", "FRA", "GBR", "ARG", "JPN", "CAN", "ITA", "NED", "SWE", "SUI", "CRO", "POL", "CHN", "NOR", "GRE", "BEL", "ZAF", "DEN", "FIN", "NZL", "PRT", "IRL", "HUN", "ROU", "SVN", "SVK", "ISR", "BGR", "AUT", "TUR", "CYP", "BRA", "CHL", "COL", "MEX", "ECU", "IND", "KOR", "THA", "KAZ", "LVA", "EST", "LTU", "UKR", "MAR", "SEN", "ISL", "SMR", "FRO", "FJI", "PNG", "WSM", "SLB", "TON", "COK", "NCL", "ASM", "VUT", "EGY", "MYS", "PHL", "IDN", "SGP", "PAK", "GHA", "NGA", "KEN", "UGA", "TZA", "ZMB", "ZWE", "MWI", "BWA", "NAM", "SWZ", "MOZ", "ANG", "LES", "CMR", "BEN", "GAB", "MUS", "MDG", "SEY", "RWA", "BDI", "GAM", "CPV", "DJI", "COM", "EQG", "GNB", "STP", "GIN", "LBR", "SLE", "TGO", "BFA", "MLI", "MRT", "NER", "CHA"}
+    expected_countries = {"CZE", "DEU", "USA", "AUS", "ESP", "SRB", "FRA", "GBR", "ARG", "JPN", "CAN", "ITA", "NED", "SWE", "SUI", "CRO", "POL", "CHN", "NOR", "GRE", "BEL", "ZAF", "DEN", "FIN", "NZL", "PRT", "IRL", "HUN", "ROU", "SVN", "SVK", "ISR", "BGR", "AUT", "TUR", "CYP", "BRA", "CHL", "COL", "MEX", "ECU", "IND", "KOR", "THA", "KAZ", "LVA", "EST", "LTU", "UKR", "MAR", "SEN", "ISL", "SMR", "FRO", "FJI", "PNG", "WSM", "SLB", "TON", "COK", "NCL", "ASM", "VUT", "EGY", "MYS", "PHL", "IDN", "SGP", "PAK", "GHA", "NGA", "KEN", "UGA", "TZA", "ZMB", "ZWE", "MWI", "BWA", "NAM", "SWZ", "MOZ", "ANG", "LES", "CMR", "BEN", "GAB", "MUS", "MDG", "SEY", "RWA", "BDI", "GAM", "CPV", "DJI", "COM", "EQG", "GNB", "STP", "GIN", "LBR", "SLE", "TGO", "BFA", "MLI", "MRT", "NER", "CHA", "ETH", "ERI"}
     assert set(bundle.research.countries) == expected_countries
     assert bundle.research.data_cutoff.isoformat() == "2026-10-04"
-    assert len(bundle.datasets) == 314
-    assert len(bundle.observations) == 705
+    assert len(bundle.datasets) == 318
+    assert len(bundle.observations) == 711
 
     expected_models = {
         "CZE": "atp-earth-cze-deu-seed-model.v1",
@@ -575,6 +575,8 @@ def test_atp_complete_histories_are_evidence_resolvable_and_temporally_bounded()
         "MRT": "atp-earth-mrt-model.v1",
         "NER": "atp-earth-ner-model.v1",
         "CHA": "atp-earth-cha-model.v1",
+        "ETH": "atp-earth-eth-model.v1",
+        "ERI": "atp-earth-eri-model.v1",
     }
     for code, history in bundle.research.countries.items():
         assert history.missing_earth_years == []
@@ -4157,6 +4159,48 @@ def test_niger_chad_dual_world_batch_is_complete_resolvable_and_time_gated():
     assert all("fifa-professional-2023" not in sid for y in cha.years.values() for r in y.ratings.values() for sid in r.source_ids)
 
     for code, slug in (("NER", "niger"), ("CHA", "chad")):
+        h = atp.research.countries[code]
+        key = code.lower()
+        assert f"atp-{slug}-history-v1#{key}-status-2020" in h.years[2020].ratings["squash_access"].observation_ids
+        assert f"atp-{slug}-development-2026-v1#{key}-eligible-2026" in h.years[2026].ratings["development_quality"].observation_ids
+
+
+def test_ethiopia_eritrea_dual_world_batch_is_complete_resolvable_and_time_gated():
+    fifa = load_earth_research_bundle(Path("config/earth_research/fifa_earth.json"))
+    atp = load_earth_research_bundle(Path("config/earth_research/atp_earth.json"))
+
+    for bundle, expected_models in (
+        (fifa, {"ETH": "fifa-earth-eth-model.v1", "ERI": "fifa-earth-eri-model.v1"}),
+        (atp, {"ETH": "atp-earth-eth-model.v1", "ERI": "atp-earth-eri-model.v1"}),
+    ):
+        for code, model_id in expected_models.items():
+            history = bundle.research.countries[code]
+            assert history.missing_earth_years == []
+            assert len(history.years) == 72
+            for year in history.years.values():
+                assert len(year.ratings) == 6
+                for rating in year.ratings.values():
+                    assert rating.calibration_model_id == model_id
+                    assert rating.observation_ids
+                    assert all(item in bundle.observations for item in rating.observation_ids)
+
+    eth = fifa.research.countries["ETH"]
+    assert "fifa-structural-ethiopia-history-v1#eth-created-1943" in eth.years[1955].ratings["squash_tradition"].observation_ids
+    assert "fifa-structural-ethiopia-history-v1#eth-fifa-1952" in eth.years[1955].ratings["competition_quality"].observation_ids
+    assert "fifa-structural-ethiopia-history-v1#eth-caf-1957" in eth.years[1957].ratings["competition_quality"].observation_ids
+    assert "fifa-big-count-2006-all-players-v2#ethiopia" in eth.years[2006].ratings["squash_popularity"].observation_ids
+    assert "fifa-professional-2023-players-v2#ethiopia-p89" in eth.years[2023].ratings["elite_support"].observation_ids
+    assert "fifa-professional-2023-clubs-v2#ethiopia-p89" in eth.years[2023].ratings["competition_quality"].observation_ids
+
+    eri = fifa.research.countries["ERI"]
+    assert "fifa-structural-eritrea-history-v1#eri-created-1996" not in eri.years[1995].ratings["squash_tradition"].observation_ids
+    assert "fifa-structural-eritrea-history-v1#eri-created-1996" in eri.years[1996].ratings["squash_tradition"].observation_ids
+    assert "fifa-structural-eritrea-history-v1#eri-fifa-1998" in eri.years[1998].ratings["competition_quality"].observation_ids
+    assert "fifa-structural-eritrea-history-v1#eri-caf-1998" in eri.years[1998].ratings["competition_quality"].observation_ids
+    assert "fifa-big-count-2006-all-players-v2#eritrea" in eri.years[2006].ratings["squash_popularity"].observation_ids
+    assert all("fifa-professional-2023" not in sid for y in eri.years.values() for r in y.ratings.values() for sid in r.source_ids)
+
+    for code, slug in (("ETH", "ethiopia"), ("ERI", "eritrea")):
         h = atp.research.countries[code]
         key = code.lower()
         assert f"atp-{slug}-history-v1#{key}-status-2020" in h.years[2020].ratings["squash_access"].observation_ids

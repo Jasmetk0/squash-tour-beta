@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-fetech-jti-loslagos-2026-v1",
+  "source_id": "fetech-jti-loslagos-2026",
+  "relative_path": "observations/normalized/atp-fetech-jti-loslagos-2026-v1.json",
+  "sha256": "66a845260617c90171668c862798b4ddc89e5800c46ee46bd9b64f054ad11cec",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

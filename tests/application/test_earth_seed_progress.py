@@ -428,11 +428,11 @@ def test_fifa_pyf_backcasts_do_not_claim_future_infrastructure_as_historical_sup
 
 def test_atp_complete_histories_are_evidence_resolvable_and_temporally_bounded():
     bundle = load_earth_research_bundle(Path("config/earth_research/atp_earth.json"))
-    expected_countries = {"CZE", "DEU", "USA", "AUS", "ESP", "SRB", "FRA", "GBR", "ARG", "JPN", "CAN", "ITA", "NED", "SWE", "SUI", "CRO", "POL", "CHN", "NOR", "GRE", "BEL", "ZAF", "DEN", "FIN", "NZL", "PRT", "IRL"}
+    expected_countries = {"CZE", "DEU", "USA", "AUS", "ESP", "SRB", "FRA", "GBR", "ARG", "JPN", "CAN", "ITA", "NED", "SWE", "SUI", "CRO", "POL", "CHN", "NOR", "GRE", "BEL", "ZAF", "DEN", "FIN", "NZL", "PRT", "IRL", "HUN", "ROU"}
     assert set(bundle.research.countries) == expected_countries
     assert bundle.research.data_cutoff.isoformat() == "2026-10-04"
-    assert len(bundle.datasets) == 84
-    assert len(bundle.observations) == 275
+    assert len(bundle.datasets) == 90
+    assert len(bundle.observations) == 285
 
     expected_models = {
         "CZE": "atp-earth-cze-deu-seed-model.v1",
@@ -462,6 +462,8 @@ def test_atp_complete_histories_are_evidence_resolvable_and_temporally_bounded()
         "NZL": "atp-earth-den-fin-nzl-model.v1",
         "PRT": "atp-earth-prt-irl-model.v1",
         "IRL": "atp-earth-prt-irl-model.v1",
+        "HUN": "atp-earth-hun-rou-model.v1",
+        "ROU": "atp-earth-hun-rou-model.v1",
     }
     for code, history in bundle.research.countries.items():
         assert history.missing_earth_years == []
@@ -917,4 +919,49 @@ def test_atp_prt_irl_batch_preserves_scope_and_temporal_evidence():
     )
     assert "atp-tennis-ireland-performance-v1#irl-national-pathway-2026" in (
         irl.years[2026].ratings["competition_quality"].observation_ids
+    )
+
+
+def test_atp_hun_rou_batch_preserves_history_and_temporal_gating():
+    bundle = load_earth_research_bundle(Path("config/earth_research/atp_earth.json"))
+
+    for code in ("HUN", "ROU"):
+        history = bundle.research.countries[code]
+        assert history.missing_earth_years == []
+        assert len(history.years) == 72
+        for year in history.years.values():
+            assert len(year.ratings) == 6
+            for rating in year.ratings.values():
+                assert rating.calibration_model_id == "atp-earth-hun-rou-model.v1"
+                assert rating.observation_ids
+                assert all(item in bundle.observations for item in rating.observation_ids)
+
+    hun = bundle.research.countries["HUN"]
+    assert hun.years[1989].historical_entity == "Hungarian People's Republic"
+    assert hun.years[1990].historical_entity == "Hungary"
+    assert "atp-mtsz-professional-plan-2025-v1#hun-national-training-support-2025" not in (
+        hun.years[2024].ratings["development_quality"].observation_ids
+    )
+    assert "atp-mtsz-professional-plan-2025-v1#hun-national-training-support-2025" in (
+        hun.years[2025].ratings["development_quality"].observation_ids
+    )
+    assert "atp-mtsz-international-events-2026-v1#hun-pro-international-events-2026" in (
+        hun.years[2026].ratings["competition_quality"].observation_ids
+    )
+
+    rou = bundle.research.countries["ROU"]
+    assert rou.years[1964].historical_entity == "Romanian People's Republic"
+    assert rou.years[1965].historical_entity == "Socialist Republic of Romania"
+    assert rou.years[1990].historical_entity == "Romania"
+    assert "atp-frt-coach-licensing-v1#rou-coach-development-system" not in (
+        rou.years[2018].ratings["development_quality"].observation_ids
+    )
+    assert "atp-frt-coach-licensing-v1#rou-coach-development-system" in (
+        rou.years[2019].ratings["development_quality"].observation_ids
+    )
+    assert "atp-frt-u10-national-2025-v1#rou-u10-national-championship-2025" not in (
+        rou.years[2024].ratings["competition_quality"].observation_ids
+    )
+    assert "atp-frt-u10-national-2025-v1#rou-u10-national-championship-2025" in (
+        rou.years[2025].ratings["competition_quality"].observation_ids
     )

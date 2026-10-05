@@ -2599,7 +2599,7 @@ def test_accelerated_sau_are_phl_idn_batch_is_complete_and_time_gated():
     assert "atp-philippines-current-2026-v1#phl-itf-member-2026" in phl.years[2026].ratings["squash_tradition"].observation_ids
 
     idn = atp.research.countries["IDN"]
-    assert "Dutch East Indies" in idn.years[1949 - 1 + 7].historical_entity if False else True
+    assert idn.years[1955].historical_entity == "Indonesia"
     assert "atp-indonesia-jti-v1#idn-jti-joined-2019" not in idn.years[2018].ratings["development_quality"].observation_ids
     assert "atp-indonesia-jti-v1#idn-jti-joined-2019" in idn.years[2019].ratings["development_quality"].observation_ids
     assert "atp-indonesia-jti-v1#idn-jti-participants-2020" not in idn.years[2019].ratings["squash_access"].observation_ids

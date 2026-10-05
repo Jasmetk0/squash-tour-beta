@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-equatorial-guinea-history-v1",
+  "source_id": "itf-equatorial-guinea-return-to-play-2020",
+  "relative_path": "observations/normalized/atp_equatorial_guinea_history_v1.json",
+  "sha256": "6ca0b8fdccc1ae23dbc8bd891eb94fc86cfd11322fbee7c064f670c875e89320",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

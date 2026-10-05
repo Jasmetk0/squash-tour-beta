@@ -461,8 +461,8 @@ def test_atp_complete_histories_are_evidence_resolvable_and_temporally_bounded()
     expected_countries = {"CZE", "DEU", "USA", "AUS", "ESP", "SRB", "FRA", "GBR", "ARG", "JPN", "CAN", "ITA", "NED", "SWE", "SUI", "CRO", "POL", "CHN", "NOR", "GRE", "BEL", "ZAF", "DEN", "FIN", "NZL", "PRT", "IRL", "HUN", "ROU", "SVN", "SVK", "ISR", "BGR", "AUT", "TUR", "CYP", "BRA", "CHL", "COL", "MEX", "ECU", "IND", "KOR", "THA", "KAZ"}
     assert set(bundle.research.countries) == expected_countries
     assert bundle.research.data_cutoff.isoformat() == "2026-10-04"
-    assert len(bundle.datasets) == 147
-    assert len(bundle.observations) == 431
+    assert len(bundle.datasets) == 152
+    assert len(bundle.observations) == 443
 
     expected_models = {
         "CZE": "atp-earth-cze-deu-seed-model.v1",
@@ -509,6 +509,7 @@ def test_atp_complete_histories_are_evidence_resolvable_and_temporally_bounded()
         "IND": "atp-earth-ecu-ind-model.v1",
         "KOR": "atp-earth-kor-tha-model.v1",
         "THA": "atp-earth-kor-tha-model.v1",
+        "KAZ": "atp-earth-kaz-model.v1",
     }
     for code, history in bundle.research.countries.items():
         assert history.missing_earth_years == []

@@ -1,0 +1,57 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "atp-earth-mus-model.v1",
+  "world_id": "atp_earth",
+  "data_cutoff": "2026-10-04",
+  "countries": [
+    "MUS"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "evidence_rules": [
+    "No verified foundation date is asserted; pre-2020 years use a low-confidence baseline derived only from later confirmed national tennis context.",
+    "ITF 2020 closure status enters only in 2020 and is not treated as performance.",
+    "2026 development eligibility enters only in 2026.",
+    "Event results are not rating targets."
+  ],
+  "anchor_values": {
+    "MUS": {
+      "1955": [
+        3.8,
+        3.4,
+        3.5,
+        3.4,
+        3.2,
+        4.4
+      ],
+      "2000": [
+        4.6,
+        4.2,
+        4.4,
+        4.4,
+        4.1,
+        5.2
+      ],
+      "2020": [
+        5,
+        4.6,
+        4.8,
+        4.8,
+        4.5,
+        5.6
+      ],
+      "2026": [
+        5.5,
+        5.1,
+        5.3,
+        5.3,
+        5,
+        6
+      ]
+    }
+  },
+  "evidence_sources": [
+    "itf-mauritius-return-to-play-2020",
+    "itf-mauritius-development-eligibility-2026"
+  ],
+  "heldout_ranking_used": false
+}

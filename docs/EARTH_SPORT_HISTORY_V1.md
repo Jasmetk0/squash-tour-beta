@@ -18,18 +18,25 @@ separate inputs. Innate potential rarity must remain independent of nationality.
 This section is the authoritative current summary. Dated batch sections below are
 retained only as implementation history and do not override these numbers.
 
-- **FIFA Earth: 69 / 250** complete 1955–2026 country/territory histories, all six
+- **FIFA Earth: 71 / 250** complete 1955–2026 country/territory histories, all six
   attributes present for every authored year. The canonical bundle resolves
-  **116 datasets / 1,599 normalized observations**.
-- **ATP Earth: 69 / 250** complete 1955–2026 country/territory histories, all six
+  **118 datasets / 1,606 normalized observations**.
+- **ATP Earth: 71 / 250** complete 1955–2026 country/territory histories, all six
   attributes present for every authored year. The canonical bundle resolves
-  **231 datasets / 581 normalized observations**.
-- The reconciliation after merged PRs #1202 and #1203 preserves the newer Korea
-  Republic/Thailand and Solomon Islands/Tonga work, then adds the still-unmerged
-  country shards from #1197–#1201 without reintroducing the superseded #1196 base.
-- Newly preserved FIFA histories are **COL, CYP, ECU, IRL, EGY, MYS, SAU, ARE,
-  QAT and OMN**. Newly preserved ATP histories are **COK, NCL, ASM, VUT, EGY,
-  MYS, PHL, IDN, SGP and PAK**.
+  **237 datasets / 591 normalized observations**.
+- The latest dual-world batch adds **Ghana (GHA) and Nigeria (NGA)** to both
+  packages, another **1,728 annual attribute ratings**.
+- FIFA Ghana preserves CAF's own chronology anomaly: the source lists CAF
+  affiliation in 1956 but association creation in 1957. Both source facts remain
+  visible and flagged instead of being silently reconciled. Nigeria preserves its
+  1945 association foundation with CAF 1957 and FIFA 1960 gated separately.
+- FIFA Big Count 2006 remains limited to participation/access/development context
+  from 2006 onward; Professional Football Report 2023 enters only from 2023 for
+  professional ecosystem dimensions. Neither family is a universal strength score.
+- ATP Ghana uses a secondary pre-1955 institutional anchor with low numerical
+  confidence, then direct GTF/World Tennis development and competition-pathway
+  evidence from 2024/2026. ATP Nigeria likewise keeps its early chronology
+  explicitly secondary-source while World Tennis evidence enters only in 2025/2026.
 - Coverage/provenance is measured through `load_earth_research_bundle()`; sharded
   sources, manifests, normalized observations and country histories all participate
   in validation. Missing facts are not converted into zeroes or universal fallback
@@ -77,7 +84,7 @@ retained only as implementation history and do not override these numbers.
 
 ## Not implemented or not proven
 
-- **Neither official Earth directory exists yet.** FIFA and ATP each currently have 69 complete histories; neither reaches the required 250-country all-or-nothing build threshold. No fabricated neutral profiles are shipped to satisfy coverage
+- **Neither official Earth directory exists yet.** FIFA and ATP each currently have 71 complete histories; neither reaches the required 250-country all-or-nothing build threshold. No fabricated neutral profiles are shipped to satisfy coverage
   mechanically. See the current-status section above for authoritative counts.
 - FIFA Big Count 2006 now has five canonical normalized
   `earth_source_observations.v2` datasets (all players, registered, unregistered,

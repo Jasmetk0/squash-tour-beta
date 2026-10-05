@@ -1,5 +1,34 @@
 # Current implementation and next action
 
+## Current — Ghana/Nigeria dual-world Earth batch (5 October 2026)
+
+- Based directly on merged `buuk` commit
+  `c5276ae3de513aae6b3947b97c4fc26e6f45c361` (#1204); this is a new independent
+  PR rather than another dependent stack.
+- New complete histories in both worlds: **Ghana (GHA) and Nigeria (NGA)**.
+- FIFA Earth now resolves **71 / 250** complete histories and **118 datasets /
+  1,606 normalized observations**.
+- ATP Earth now resolves **71 / 250** complete histories and **237 datasets /
+  591 normalized observations**.
+- The batch adds **1,728 authored annual attribute ratings** across four histories
+  (4 × 72 years × 6 attributes).
+- Ghana FIFA deliberately preserves CAF's source-level 1956 affiliation / 1957
+  association-creation anomaly instead of inventing a resolution.
+- FIFA Big Count 2006 and Professional 2023 remain strictly time- and
+  dimension-gated. Tennis historical anchors for Ghana/Nigeria are explicitly
+  secondary-source/low-confidence, while direct modern GTF/World Tennis evidence
+  enters only from 2024–2026.
+- Official package publication remains blocked until **250 / 250** in each world.
+  Installed packages, ordinary historical-profile editing and complete initial-player
+  historical-environment integration remain unfinished.
+
+**Next after green CI:** continue the next evidence-backed coverage batch directly
+from the merged result; do not build another long dependent PR chain.
+
+> Older Current/Candidate entries below are implementation history and do not
+> override this section.
+
+
 ## Current — Earth history PR reconciliation after #1203 (5 October 2026)
 
 - Integration base is merged `buuk` commit `1cc2fb6529472c16c9ba31ab51061fcfe965b810`

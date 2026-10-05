@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-fitp-junior-system-2025-v1",
+  "source_id": "fitp-juniors-2025",
+  "relative_path": "observations/normalized/atp-fitp-junior-system-2025-v1.json",
+  "sha256": "457531d612529e5e1d9c9110ed4f4c832b01958fd061072b5bf0e8946eff367c",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

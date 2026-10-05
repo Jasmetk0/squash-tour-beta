@@ -1,5 +1,31 @@
 # Current implementation and next action
 
+## Candidate — ATP NOR/GRE/BEL/ZAF evidence-rich batch (5 October 2026)
+
+- New complete ATP histories: **Norway (NOR), Greece (GRE), Belgium (BEL),
+  South Africa (ZAF)**.
+- New ratings: 4 × 72 × 6 = **1,728**; ATP Earth now resolves **22 / 250 complete
+  histories** and **9,504 annual attribute ratings**.
+- ATP research now resolves **71 normalized datasets / 240 observations**.
+- Norway separates Ruud's unprecedented elite output from a much smaller organised
+  club base and targeted access support.
+- Greece separates the Tsitsipas-era elite spike from federation/club structure;
+  current 214-club evidence is used only from 2026.
+- Belgium treats the Flemish **500+ clubs / 200,000+ members** signal as partial Earth
+  BEL coverage and combined tennis/padel evidence rather than a fabricated national
+  tennis census.
+- South Africa preserves deep historical tradition and the 2017–18 Anderson peak while
+  modern access/development relies on actual development centres, provincial structure
+  and transformation-oriented programmes.
+- Official ATP package publication remains blocked by the intentional 250/250
+  completeness rule; World Library historical-profile persistence and the full
+  player-development lifecycle remain unfinished integration work.
+
+**Next after green CI:** continue another varied ATP batch, but keep enough non-European
+systems in the sequence so the package does not become Europe-heavy merely because
+European federation sources are easier to obtain.
+
+
 ## Candidate — ATP SUI/CRO/POL/CHN evidence-rich batch (5 October 2026)
 
 - New complete ATP histories: **Switzerland (SUI), Croatia (CRO), Poland (POL),

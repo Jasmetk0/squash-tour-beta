@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-bra-pre-cbt-history-v1",
+  "source_id": "bra-pre-cbt-history",
+  "relative_path": "observations/normalized/atp-bra-pre-cbt-history-v1.json",
+  "sha256": "b856664d33a864e04a4d72a1eb9231427c97999e71c288fcba422feae4fa4752",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

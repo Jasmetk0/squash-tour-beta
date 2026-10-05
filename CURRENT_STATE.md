@@ -1,5 +1,22 @@
 # Current implementation and next action
 
+## Current — Cameroon/Benin dual-world Earth batch (5 October 2026)
+
+- Based directly on merged `buuk` commit `b2277a1fc06d79156612252c683ae53908bb24f3` (#1211); independent coverage PR.
+- New complete histories in both worlds: **Cameroon (CMR) and Benin (BEN)**.
+- FIFA Earth: **85 / 250**, **132 datasets / 1,647 normalized observations**.
+- ATP Earth: **85 / 250**, **270 datasets / 640 normalized observations**.
+- Adds **1,728 authored annual attribute ratings**.
+- Cameroon gates association creation 1959, FIFA 1962, CAF 1963, Big Count 2006 and Professional 2023.
+- Benin preserves CAF's published non-monotonic chronology (CAF 1962, FIFA 1964, Created 1976) as an explicit provenance anomaly instead of silently rewriting it; missing Professional 2023 player data remains missing.
+- ATP histories separate low-confidence pre-2020 context from direct 2020 ITF status and 2026 development eligibility.
+- Official package publication remains blocked until **250 / 250** in each world.
+
+**Next after green CI:** continue the next evidence-backed dual-world batch.
+
+> Older Current/Candidate entries below are implementation history and do not override this section.
+
+
 ## Current — Angola/Lesotho dual-world Earth batch (5 October 2026)
 
 - Based directly on merged `buuk` commit `fec7b76ae90cfe221a7b6cfbcd3f7955bd165eed` (#1210); independent coverage PR.

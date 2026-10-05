@@ -4967,3 +4967,21 @@ bands should shape 0..200 potential. No threshold is inferred from current OVR v
 - Mohamed M'Jid's presidency is gated from 1964 and Faïçal Laraïchi's from 2009; governance continuity supports tradition but is not treated as direct participation/player-quality measurement.
 - The CNOM-described current mandate for access, rankings, national competition and international affiliations appears only in **2026** and is never backcast.
 - No rankings or title outcomes are calibration targets. Official package publication remains blocked by the intentional **250 / 250** completeness requirement for both worlds.
+
+
+
+## Candidate — FIFA Chile + ATP Senegal dual batch (5 October 2026)
+
+- New complete FIFA history: **Chile (CHL)**.
+- New complete ATP history: **Senegal (SEN)**.
+- New ratings: 2 × 72 × 6 = **864**; both FIFA Earth and ATP Earth move **50 -> 51 / 250 complete histories**.
+- FIFA adds **2 structural datasets / 5 direct observations**, taking FIFA research from **85 datasets / 1,516 observations** to **87 datasets / 1,521 observations**.
+- Chile's long institutional line is anchored by the 1895 association origin, FIFA affiliation in 1913/1914 and CONMEBOL co-founding in 1916, without using national-team rankings or tournament outcomes as calibration targets.
+- FIFA Big Count 2006 evidence (2,608,337 all players; 478,337 registered players; 5,762 clubs) is gated to 2006+, and FIFA Professional 2023 evidence (1,350 men's professionals; 46 professional clubs) to 2023+.
+- The renovated José Sulantay Silva high-performance complex is a **2026-only** development/access/elite-support signal and is never backcast.
+- ATP adds **4 datasets / 7 observations**, taking ATP research from **169 datasets / 480 observations** to **173 datasets / 487 observations**.
+- Senegal starts from low-confidence pre-independence organised-tennis/federation context under expatriate control, then models the **1975** Senegalese governance transition and club-school programme as a real structural improvement.
+- The academic history's **1985–2001 decline** is represented explicitly rather than smoothed away.
+- Modern recovery is separately gated through the **2022** FFT cooperation protocol, **2025** Davis Cup Africa Group III promotion and **2026** ITF member-association listing.
+- Davis Cup performance is used only to establish active competition structure, not as an outcome-based calibration target.
+- Official package publication remains blocked by the intentional **250 / 250** completeness requirement for both worlds.

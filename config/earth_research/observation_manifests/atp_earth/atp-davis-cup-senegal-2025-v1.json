@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-davis-cup-senegal-2025-v1",
+  "source_id": "davis-cup-senegal-2025",
+  "relative_path": "observations/normalized/atp_davis_cup_senegal_2025_v1.json",
+  "sha256": "ac26613746028a6537f3abe568cbee421caa934ab1699a712a98e73bd62968b3",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

@@ -774,3 +774,39 @@ def test_atp_complete_histories_are_evidence_resolvable_and_temporally_bounded()
         zaf.years[2019].ratings["development_quality"].observation_ids
     )
 
+
+
+def test_atp_source_scopes_and_current_competition_quality_are_semantically_guarded():
+    bundle = load_earth_research_bundle(Path("config/earth_research/atp_earth.json"))
+
+    aus_booking = bundle.observations["atp-aus-court-hire-2024-v1#aus-booking-hours-2024"]
+    assert aus_booking.sex_scope == "mixed"
+    assert aus_booking.age_scope is None
+    assert "broad_public_use" in aus_booking.quality_flags
+
+    bel_clubs = bundle.observations["atp-tennis-vlaanderen-scale-2026-v1#bel-flanders-clubs-2026"]
+    bel_members = bundle.observations["atp-tennis-vlaanderen-scale-2026-v1#bel-flanders-members-2026"]
+    assert bel_clubs.source_entity == "Tennis en Padel Vlaanderen"
+    assert bel_members.source_entity == "Tennis en Padel Vlaanderen"
+    assert bel_clubs.coverage_scope == "partial"
+    assert "combined_tennis_padel" in bel_clubs.quality_flags
+
+    nor = bundle.research.countries["NOR"].years[2026].ratings["competition_quality"]
+    gre = bundle.research.countries["GRE"].years[2026].ratings["competition_quality"]
+    bel = bundle.research.countries["BEL"].years[2026].ratings["competition_quality"]
+    zaf = bundle.research.countries["ZAF"].years[2026].ratings["competition_quality"]
+
+    assert nor.value == 7.4
+    assert gre.value == 7.4
+    assert bel.value == 7.7
+    assert zaf.value == 7.2
+    assert nor.confidence == gre.confidence == bel.confidence == "low"
+    assert zaf.confidence == "medium"
+
+    assert "atp-ntpf-profile-v1#nor-clubs-2022" in nor.observation_ids
+    assert "atp-greece-clubs-2026-v1#gre-member-clubs-2026" in gre.observation_ids
+    assert "atp-tennis-vlaanderen-scale-2026-v1#bel-flanders-clubs-2026" in bel.observation_ids
+    assert "atp-tsa-structure-v1#zaf-head-office-divisions-2026" in zaf.observation_ids
+
+    for rating in (nor, gre, bel, zaf):
+        assert "outcome context" in rating.rationale.lower()

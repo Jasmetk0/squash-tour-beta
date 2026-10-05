@@ -4816,3 +4816,17 @@ This integration deliberately does **not** map `potential_ovr` to a quality band
 The provisional prospect sporting-profile potential policy remains a separate
 calibration authority until an explicit product decision defines how innate quality
 bands should shape 0..200 potential. No threshold is inferred from current OVR values.
+
+
+## Candidate — FIFA ITA/NLD/BEL/PRT empirical-evidence batch (5 October 2026)
+
+- New complete FIFA histories: **Italy (ITA), Netherlands (NLD), Belgium (BEL), Portugal (PRT)**.
+- New ratings: 4 × 72 × 6 = **1,728**; FIFA Earth now resolves **33 / 250 complete histories**.
+- FIFA normalized evidence inventory remains **69 datasets / 1,449 observations**; this batch reuses canonical FIFA Big Count 2006 and Professional Football Report 2023 observations rather than adding weak duplicate source families.
+- Pre-2006 values are explicit low-confidence calibration backcasts toward the first direct 2006 participation/club checkpoint.
+- The 2006 Big Count remains mixed-sex and definition-sensitive: all-player evidence informs popularity; registered-player and club evidence informs organised access and only weak structural context elsewhere.
+- 2023 professional-player/club evidence is used only from 2023 onward and only as professional ecosystem context for development, competition and elite support; it is not treated as rankings, results, popularity or programme-quality measurement.
+- No held-out ranking or title outcome was used to tune the four histories.
+- Official FIFA package publication remains blocked by the intentional **250 / 250** completeness requirement.
+
+**Next after green CI:** continue another evidence-rich FIFA batch, adding structural sources only where they materially improve temporal/dimensional grounding rather than merely increasing source count.

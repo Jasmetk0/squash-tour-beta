@@ -11,11 +11,11 @@ from beta_engine.application.earth_package_builder import load_earth_research_bu
 
 def test_fifa_first_reviewed_country_histories_are_complete_and_resolvable():
     bundle = load_earth_research_bundle(Path("config/earth_research/fifa_earth.json"))
-    assert set(bundle.research.countries) == {"CZE", "SVK", "JPN", "IND", "MAR", "SEN", "FRO", "USA", "ZAF", "BRA", "DEU", "ISL", "SMR", "ARG", "MEX", "AUS", "NZL", "FJI", "PNG", "SLB", "COK", "ASM", "PYF", "NCL", "WSM", "TON", "VUT", "FRA", "ESP", "ITA", "NLD", "BEL", "PRT", "AUT", "DNK", "SWE", "CHE", "NOR", "FIN", "HRV", "SVN", "POL", "ROU", "UKR", "LTU", "LVA", "EST", "CAN", "GRC", "SRB", "CHL", "HUN", "ISR", "BGR", "KAZ", "CHN", "TUR", "KOR", "THA", "COL", "CYP", "ECU", "IRL", "EGY", "MYS", "SAU", "ARE", "QAT", "OMN", "GHA", "NGA", "KEN", "UGA", "TZA", "ZMB", "ZWE", "MWI", "BWA", "NAM", "SWZ", "MOZ", "ANG", "LES", "CMR", "BEN", "GAB", "MUS", "MDG", "SEY", "RWA", "BDI", "GAM", "CPV", "DJI", "COM", "EQG", "GNB"}
+    assert set(bundle.research.countries) == {"CZE", "SVK", "JPN", "IND", "MAR", "SEN", "FRO", "USA", "ZAF", "BRA", "DEU", "ISL", "SMR", "ARG", "MEX", "AUS", "NZL", "FJI", "PNG", "SLB", "COK", "ASM", "PYF", "NCL", "WSM", "TON", "VUT", "FRA", "ESP", "ITA", "NLD", "BEL", "PRT", "AUT", "DNK", "SWE", "CHE", "NOR", "FIN", "HRV", "SVN", "POL", "ROU", "UKR", "LTU", "LVA", "EST", "CAN", "GRC", "SRB", "CHL", "HUN", "ISR", "BGR", "KAZ", "CHN", "TUR", "KOR", "THA", "COL", "CYP", "ECU", "IRL", "EGY", "MYS", "SAU", "ARE", "QAT", "OMN", "GHA", "NGA", "KEN", "UGA", "TZA", "ZMB", "ZWE", "MWI", "BWA", "NAM", "SWZ", "MOZ", "ANG", "LES", "CMR", "BEN", "GAB", "MUS", "MDG", "SEY", "RWA", "BDI", "GAM", "CPV", "DJI", "COM", "EQG", "GNB", "STP", "GIN"}
     assert bundle.research.data_cutoff.isoformat() == "2026-10-03"
-    assert len(bundle.research.countries) == 97
-    assert len(bundle.datasets) == 144
-    assert len(bundle.observations) == 1691
+    assert len(bundle.research.countries) == 99
+    assert len(bundle.datasets) == 146
+    assert len(bundle.observations) == 1699
 
     for code in ("CZE", "SVK"):
         history = bundle.research.countries[code]
@@ -461,11 +461,11 @@ def test_fifa_fra_esp_batch_is_complete_and_temporally_dimensioned():
 
 def test_atp_complete_histories_are_evidence_resolvable_and_temporally_bounded():
     bundle = load_earth_research_bundle(Path("config/earth_research/atp_earth.json"))
-    expected_countries = {"CZE", "DEU", "USA", "AUS", "ESP", "SRB", "FRA", "GBR", "ARG", "JPN", "CAN", "ITA", "NED", "SWE", "SUI", "CRO", "POL", "CHN", "NOR", "GRE", "BEL", "ZAF", "DEN", "FIN", "NZL", "PRT", "IRL", "HUN", "ROU", "SVN", "SVK", "ISR", "BGR", "AUT", "TUR", "CYP", "BRA", "CHL", "COL", "MEX", "ECU", "IND", "KOR", "THA", "KAZ", "LVA", "EST", "LTU", "UKR", "MAR", "SEN", "ISL", "SMR", "FRO", "FJI", "PNG", "WSM", "SLB", "TON", "COK", "NCL", "ASM", "VUT", "EGY", "MYS", "PHL", "IDN", "SGP", "PAK", "GHA", "NGA", "KEN", "UGA", "TZA", "ZMB", "ZWE", "MWI", "BWA", "NAM", "SWZ", "MOZ", "ANG", "LES", "CMR", "BEN", "GAB", "MUS", "MDG", "SEY", "RWA", "BDI", "GAM", "CPV", "DJI", "COM", "EQG", "GNB"}
+    expected_countries = {"CZE", "DEU", "USA", "AUS", "ESP", "SRB", "FRA", "GBR", "ARG", "JPN", "CAN", "ITA", "NED", "SWE", "SUI", "CRO", "POL", "CHN", "NOR", "GRE", "BEL", "ZAF", "DEN", "FIN", "NZL", "PRT", "IRL", "HUN", "ROU", "SVN", "SVK", "ISR", "BGR", "AUT", "TUR", "CYP", "BRA", "CHL", "COL", "MEX", "ECU", "IND", "KOR", "THA", "KAZ", "LVA", "EST", "LTU", "UKR", "MAR", "SEN", "ISL", "SMR", "FRO", "FJI", "PNG", "WSM", "SLB", "TON", "COK", "NCL", "ASM", "VUT", "EGY", "MYS", "PHL", "IDN", "SGP", "PAK", "GHA", "NGA", "KEN", "UGA", "TZA", "ZMB", "ZWE", "MWI", "BWA", "NAM", "SWZ", "MOZ", "ANG", "LES", "CMR", "BEN", "GAB", "MUS", "MDG", "SEY", "RWA", "BDI", "GAM", "CPV", "DJI", "COM", "EQG", "GNB", "STP", "GIN"}
     assert set(bundle.research.countries) == expected_countries
     assert bundle.research.data_cutoff.isoformat() == "2026-10-04"
-    assert len(bundle.datasets) == 294
-    assert len(bundle.observations) == 676
+    assert len(bundle.datasets) == 298
+    assert len(bundle.observations) == 681
 
     expected_models = {
         "CZE": "atp-earth-cze-deu-seed-model.v1",
@@ -565,6 +565,8 @@ def test_atp_complete_histories_are_evidence_resolvable_and_temporally_bounded()
         "COM": "atp-earth-com-model.v1",
         "EQG": "atp-earth-eqg-model.v1",
         "GNB": "atp-earth-gnb-model.v1",
+        "STP": "atp-earth-stp-model.v1",
+        "GIN": "atp-earth-gin-model.v1",
     }
     for code, history in bundle.research.countries.items():
         assert history.missing_earth_years == []
@@ -3941,3 +3943,52 @@ def test_equatorial_guinea_guinea_bissau_dual_world_batch_is_complete_resolvable
         assert f"atp-{slug}-history-v1#{key}-status-2020" not in h.years[2019].ratings["squash_access"].observation_ids
         assert f"atp-{slug}-history-v1#{key}-status-2020" in h.years[2020].ratings["squash_access"].observation_ids
         assert f"atp-{slug}-development-2026-v1#{key}-eligible-2026" in h.years[2026].ratings["development_quality"].observation_ids
+
+
+def test_sao_tome_guinea_dual_world_batch_is_complete_resolvable_and_time_gated():
+    fifa = load_earth_research_bundle(Path("config/earth_research/fifa_earth.json"))
+    atp = load_earth_research_bundle(Path("config/earth_research/atp_earth.json"))
+
+    for bundle, expected_models in (
+        (fifa, {"STP": "fifa-earth-stp-model.v1", "GIN": "fifa-earth-gin-model.v1"}),
+        (atp, {"STP": "atp-earth-stp-model.v1", "GIN": "atp-earth-gin-model.v1"}),
+    ):
+        for code, model_id in expected_models.items():
+            history = bundle.research.countries[code]
+            assert history.missing_earth_years == []
+            assert len(history.years) == 72
+            for year in history.years.values():
+                assert len(year.ratings) == 6
+                for rating in year.ratings.values():
+                    assert rating.calibration_model_id == model_id
+                    assert rating.observation_ids
+                    assert all(item in bundle.observations for item in rating.observation_ids)
+
+    stp = fifa.research.countries["STP"]
+    assert "fifa-structural-sao-tome-and-principe-history-v1#stp-created-1975" not in stp.years[1974].ratings["squash_tradition"].observation_ids
+    assert "fifa-structural-sao-tome-and-principe-history-v1#stp-created-1975" in stp.years[1975].ratings["squash_tradition"].observation_ids
+    assert "fifa-structural-sao-tome-and-principe-history-v1#stp-fifa-1986" in stp.years[1986].ratings["competition_quality"].observation_ids
+    assert "fifa-structural-sao-tome-and-principe-history-v1#stp-caf-1986" in stp.years[1986].ratings["competition_quality"].observation_ids
+    assert "fifa-big-count-2006-all-players-v2#sao-tome-e-principe" in stp.years[2006].ratings["squash_popularity"].observation_ids
+    assert all("fifa-professional-2023" not in sid for y in stp.years.values() for r in y.ratings.values() for sid in r.source_ids)
+
+    gin = fifa.research.countries["GIN"]
+    assert "fifa-structural-guinea-history-v1#gin-created-1960" not in gin.years[1959].ratings["squash_tradition"].observation_ids
+    assert "fifa-structural-guinea-history-v1#gin-created-1960" in gin.years[1960].ratings["squash_tradition"].observation_ids
+    assert "fifa-structural-guinea-history-v1#gin-fifa-1962" in gin.years[1962].ratings["competition_quality"].observation_ids
+    assert "fifa-structural-guinea-history-v1#gin-caf-1963" in gin.years[1963].ratings["competition_quality"].observation_ids
+    assert "fifa-big-count-2006-all-players-v2#guinea" in gin.years[2006].ratings["squash_popularity"].observation_ids
+    assert "fifa-professional-2023-clubs-v2#guinea-p93" in gin.years[2023].ratings["competition_quality"].observation_ids
+    assert all("fifa-professional-2023-players-v2#guinea" not in oid for y in gin.years.values() for r in y.ratings.values() for oid in r.observation_ids)
+
+    stp_atp = atp.research.countries["STP"]
+    assert "derived_pre_evidence_context" in atp.observations[
+        "atp-sao-tome-and-principe-history-v1#stp-pre-documented-baseline-1955-2025"
+    ].quality_flags
+    assert "atp-sao-tome-and-principe-history-v1#stp-pre-documented-baseline-1955-2025" in stp_atp.years[2025].ratings["squash_access"].observation_ids
+    assert "atp-sao-tome-and-principe-development-2026-v1#stp-eligible-2026" in stp_atp.years[2026].ratings["development_quality"].observation_ids
+
+    gin_atp = atp.research.countries["GIN"]
+    assert "atp-guinea-history-v1#gin-status-2020" not in gin_atp.years[2019].ratings["squash_access"].observation_ids
+    assert "atp-guinea-history-v1#gin-status-2020" in gin_atp.years[2020].ratings["squash_access"].observation_ids
+    assert "atp-guinea-development-2026-v1#gin-eligible-2026" in gin_atp.years[2026].ratings["development_quality"].observation_ids

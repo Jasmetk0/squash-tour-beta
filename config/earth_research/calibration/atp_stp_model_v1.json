@@ -1,0 +1,56 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "atp-earth-stp-model.v1",
+  "world_id": "atp_earth",
+  "data_cutoff": "2026-10-04",
+  "countries": [
+    "STP"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "evidence_rules": [
+    "The first checked-in direct ITF evidence used here is 2026 development eligibility.",
+    "1955-2025 uses an explicitly low-confidence pre-documented baseline; no foundation date or activity level is asserted.",
+    "2026 eligibility is opportunity/capacity context only.",
+    "No ranking or event outcome is mechanically converted to a rating."
+  ],
+  "anchor_values": {
+    "STP": {
+      "1955": [
+        2.7,
+        2.4,
+        2.5,
+        2.4,
+        2.3,
+        3
+      ],
+      "2000": [
+        3.4,
+        3,
+        3.2,
+        3.2,
+        2.9,
+        3.9
+      ],
+      "2025": [
+        3.8,
+        3.4,
+        3.6,
+        3.6,
+        3.3,
+        4.3
+      ],
+      "2026": [
+        4.3,
+        3.9,
+        4.1,
+        4.1,
+        3.8,
+        4.8
+      ]
+    }
+  },
+  "evidence_sources": [
+    "itf-sao-tome-and-principe-development-eligibility-2026"
+  ],
+  "heldout_ranking_used": false
+}

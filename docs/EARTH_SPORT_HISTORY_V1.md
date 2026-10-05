@@ -18,13 +18,13 @@ separate inputs. Innate potential rarity must remain independent of nationality.
 This section is the authoritative current summary. Dated batch sections below are
 retained only as implementation history and do not override these numbers.
 
-- **FIFA Earth: 89 / 250** complete 1955–2026 country/territory histories, all six
+- **FIFA Earth: 91 / 250** complete 1955–2026 country/territory histories, all six
   attributes present for every authored year. The canonical bundle resolves
-  **136 datasets / 1,662 normalized observations**.
-- **ATP Earth: 89 / 250** complete 1955–2026 country/territory histories, all six
+  **138 datasets / 1,669 normalized observations**.
+- **ATP Earth: 91 / 250** complete 1955–2026 country/territory histories, all six
   attributes present for every authored year. The canonical bundle resolves
-  **278 datasets / 652 normalized observations**.
-- The latest dual-world batch adds **Madagascar (MDG) and Seychelles (SEY)** to both
+  **282 datasets / 658 normalized observations**.
+- The latest dual-world batch adds **Rwanda (RWA) and Burundi (BDI)** to both
   packages, another **1,728 annual attribute ratings**.
 - FIFA Angola gates association creation to 1979 and FIFA/CAF affiliation to 1980; Big Count 2006 and Professional 2023 enter only from their observed years.
 - FIFA Lesotho carries the directly documented 1932 association creation into the 1955+ window, gates FIFA/CAF affiliation to 1964, and does not invent missing Professional 2023 counts.
@@ -76,7 +76,7 @@ retained only as implementation history and do not override these numbers.
 
 ## Not implemented or not proven
 
-- **Neither official Earth directory exists yet.** FIFA and ATP each currently have 89 complete histories; neither reaches the required 250-country all-or-nothing build threshold. No fabricated neutral profiles are shipped to satisfy coverage
+- **Neither official Earth directory exists yet.** FIFA and ATP each currently have 91 complete histories; neither reaches the required 250-country all-or-nothing build threshold. No fabricated neutral profiles are shipped to satisfy coverage
   mechanically. See the current-status section above for authoritative counts.
 - FIFA Big Count 2006 now has five canonical normalized
   `earth_source_observations.v2` datasets (all players, registered, unregistered,

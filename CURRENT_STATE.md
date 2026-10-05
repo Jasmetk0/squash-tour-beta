@@ -1,5 +1,22 @@
 # Current implementation and next action
 
+## Current — Rwanda/Burundi dual-world Earth batch (5 October 2026)
+
+- Based directly on merged `buuk` commit `9e559b69416465c22027a63998ce3efc81c216cb` (#1214); independent coverage PR.
+- New complete histories in both worlds: **Rwanda (RWA) and Burundi (BDI)**.
+- FIFA Earth: **91 / 250**, **138 datasets / 1,669 normalized observations**.
+- ATP Earth: **91 / 250**, **282 datasets / 658 normalized observations**.
+- Adds **1,728 authored annual attribute ratings**.
+- Rwanda gates creation 1972 and FIFA/CAF 1978; Burundi carries 1948 creation into 1955+ and gates FIFA/CAF to 1972.
+- Both use Big Count 2006 only from 2006 and deliberately omit unavailable Professional 2023 values.
+- ATP histories separate low-confidence pre-2020 context from direct ITF 2020 national activity status and 2026 development eligibility.
+- Official package publication remains blocked until **250 / 250** in each world.
+
+**Next after green CI:** continue the next evidence-backed dual-world batch.
+
+> Older Current/Candidate entries below are implementation history and do not override this section.
+
+
 ## Current — Madagascar/Seychelles dual-world Earth batch (5 October 2026)
 
 - Based directly on merged `buuk` commit `82d40ca291ffc4c9bdcad3a418400d6ee110f40b` (#1213); independent coverage PR.

@@ -7055,9 +7055,9 @@
           "calibration_model_id": "atp-earth-nor-gre-bel-rsa-model.v1"
         },
         "competition_quality": {
-          "value": 8,
+          "value": 6.6,
           "method": "derived_estimate",
-          "confidence": "medium",
+          "confidence": "low",
           "source_ids": [
             "ntpf-history-profile",
             "atp-casper-ruud"
@@ -7066,7 +7066,7 @@
             "atp-ntpf-profile-v1#nor-founded-1909",
             "atp-casper-ruud-v1#nor-first-atp-title-2020"
           ],
-          "rationale": "ATP Earth NOR competition quality estimate for 2020. The 1-10 value is project-authored for the Norway tennis environment; cited facts are evidence/context rather than measured game ratings. Before Ruud's elite breakthrough, competition quality is a lower-confidence authored trajectory and later results are not backcast.",
+          "rationale": "ATP Earth NOR competition quality estimate for 2020. The 1-10 value is project-authored for the men's tennis environment; cited facts are evidence/context rather than measured game ratings. Norway's federation/club structure is the available proxy for meaningful domestic competition opportunities; Ruud's elite results are retained only as outcome context and are not treated as a direct measurement of the whole national competition environment.",
           "anchor_years": [
             2020
           ],
@@ -7164,9 +7164,9 @@
           "calibration_model_id": "atp-earth-nor-gre-bel-rsa-model.v1"
         },
         "competition_quality": {
-          "value": 8.9,
+          "value": 6.8,
           "method": "derived_estimate",
-          "confidence": "medium",
+          "confidence": "low",
           "source_ids": [
             "ntpf-history-profile",
             "atp-casper-ruud"
@@ -7175,7 +7175,7 @@
             "atp-ntpf-profile-v1#nor-founded-1909",
             "atp-casper-ruud-v1#nor-first-atp-title-2020"
           ],
-          "rationale": "ATP Earth NOR competition quality estimate for 2021. The 1-10 value is project-authored for the Norway tennis environment; cited facts are evidence/context rather than measured game ratings. Before Ruud's elite breakthrough, competition quality is a lower-confidence authored trajectory and later results are not backcast.",
+          "rationale": "ATP Earth NOR competition quality estimate for 2021. The 1-10 value is project-authored for the men's tennis environment; cited facts are evidence/context rather than measured game ratings. Norway's federation/club structure is the available proxy for meaningful domestic competition opportunities; Ruud's elite results are retained only as outcome context and are not treated as a direct measurement of the whole national competition environment.",
           "anchor_years": [
             2020,
             2022
@@ -7275,9 +7275,9 @@
           "calibration_model_id": "atp-earth-nor-gre-bel-rsa-model.v1"
         },
         "competition_quality": {
-          "value": 9.7,
+          "value": 7,
           "method": "derived_estimate",
-          "confidence": "medium",
+          "confidence": "low",
           "source_ids": [
             "ntpf-history-profile",
             "atp-casper-ruud"
@@ -7285,9 +7285,10 @@
           "observation_ids": [
             "atp-ntpf-profile-v1#nor-founded-1909",
             "atp-casper-ruud-v1#nor-first-atp-title-2020",
-            "atp-casper-ruud-v1#nor-grand-slam-finals-2022"
+            "atp-casper-ruud-v1#nor-grand-slam-finals-2022",
+            "atp-ntpf-profile-v1#nor-clubs-2022"
           ],
-          "rationale": "ATP Earth NOR competition quality estimate for 2022. The 1-10 value is project-authored for the Norway tennis environment; cited facts are evidence/context rather than measured game ratings. Ruud's Grand Slam finals and No. 2 peak support a very strong modern male competition environment; club/access evidence is not converted into competition quality.",
+          "rationale": "ATP Earth NOR competition quality estimate for 2022. The 1-10 value is project-authored for the men's tennis environment; cited facts are evidence/context rather than measured game ratings. Norway's federation/club structure is the available proxy for meaningful domestic competition opportunities; Ruud's elite results are retained only as outcome context and are not treated as a direct measurement of the whole national competition environment.",
           "anchor_years": [
             2022
           ],
@@ -7392,9 +7393,9 @@
           "calibration_model_id": "atp-earth-nor-gre-bel-rsa-model.v1"
         },
         "competition_quality": {
-          "value": 9.6,
+          "value": 7.1,
           "method": "derived_estimate",
-          "confidence": "medium",
+          "confidence": "low",
           "source_ids": [
             "ntpf-history-profile",
             "atp-casper-ruud"
@@ -7402,9 +7403,10 @@
           "observation_ids": [
             "atp-ntpf-profile-v1#nor-founded-1909",
             "atp-casper-ruud-v1#nor-first-atp-title-2020",
-            "atp-casper-ruud-v1#nor-grand-slam-finals-2022"
+            "atp-casper-ruud-v1#nor-grand-slam-finals-2022",
+            "atp-ntpf-profile-v1#nor-clubs-2022"
           ],
-          "rationale": "ATP Earth NOR competition quality estimate for 2023. The 1-10 value is project-authored for the Norway tennis environment; cited facts are evidence/context rather than measured game ratings. Ruud's Grand Slam finals and No. 2 peak support a very strong modern male competition environment; club/access evidence is not converted into competition quality.",
+          "rationale": "ATP Earth NOR competition quality estimate for 2023. The 1-10 value is project-authored for the men's tennis environment; cited facts are evidence/context rather than measured game ratings. Norway's federation/club structure is the available proxy for meaningful domestic competition opportunities; Ruud's elite results are retained only as outcome context and are not treated as a direct measurement of the whole national competition environment.",
           "anchor_years": [
             2022,
             2025
@@ -7512,9 +7514,9 @@
           "calibration_model_id": "atp-earth-nor-gre-bel-rsa-model.v1"
         },
         "competition_quality": {
-          "value": 9.6,
+          "value": 7.2,
           "method": "derived_estimate",
-          "confidence": "medium",
+          "confidence": "low",
           "source_ids": [
             "ntpf-history-profile",
             "atp-casper-ruud"
@@ -7522,9 +7524,10 @@
           "observation_ids": [
             "atp-ntpf-profile-v1#nor-founded-1909",
             "atp-casper-ruud-v1#nor-first-atp-title-2020",
-            "atp-casper-ruud-v1#nor-grand-slam-finals-2022"
+            "atp-casper-ruud-v1#nor-grand-slam-finals-2022",
+            "atp-ntpf-profile-v1#nor-clubs-2022"
           ],
-          "rationale": "ATP Earth NOR competition quality estimate for 2024. The 1-10 value is project-authored for the Norway tennis environment; cited facts are evidence/context rather than measured game ratings. Ruud's Grand Slam finals and No. 2 peak support a very strong modern male competition environment; club/access evidence is not converted into competition quality.",
+          "rationale": "ATP Earth NOR competition quality estimate for 2024. The 1-10 value is project-authored for the men's tennis environment; cited facts are evidence/context rather than measured game ratings. Norway's federation/club structure is the available proxy for meaningful domestic competition opportunities; Ruud's elite results are retained only as outcome context and are not treated as a direct measurement of the whole national competition environment.",
           "anchor_years": [
             2022,
             2025
@@ -7633,9 +7636,9 @@
           "calibration_model_id": "atp-earth-nor-gre-bel-rsa-model.v1"
         },
         "competition_quality": {
-          "value": 9.5,
+          "value": 7.3,
           "method": "derived_estimate",
-          "confidence": "medium",
+          "confidence": "low",
           "source_ids": [
             "ntpf-history-profile",
             "atp-casper-ruud"
@@ -7644,9 +7647,10 @@
             "atp-ntpf-profile-v1#nor-founded-1909",
             "atp-casper-ruud-v1#nor-first-atp-title-2020",
             "atp-casper-ruud-v1#nor-grand-slam-finals-2022",
-            "atp-casper-ruud-v1#nor-masters-title-2025"
+            "atp-casper-ruud-v1#nor-masters-title-2025",
+            "atp-ntpf-profile-v1#nor-clubs-2022"
           ],
-          "rationale": "ATP Earth NOR competition quality estimate for 2025. The 1-10 value is project-authored for the Norway tennis environment; cited facts are evidence/context rather than measured game ratings. Ruud's Grand Slam finals and No. 2 peak support a very strong modern male competition environment; club/access evidence is not converted into competition quality.",
+          "rationale": "ATP Earth NOR competition quality estimate for 2025. The 1-10 value is project-authored for the men's tennis environment; cited facts are evidence/context rather than measured game ratings. Norway's federation/club structure is the available proxy for meaningful domestic competition opportunities; Ruud's elite results are retained only as outcome context and are not treated as a direct measurement of the whole national competition environment.",
           "anchor_years": [
             2025
           ],
@@ -7752,9 +7756,9 @@
           "calibration_model_id": "atp-earth-nor-gre-bel-rsa-model.v1"
         },
         "competition_quality": {
-          "value": 9.4,
+          "value": 7.4,
           "method": "derived_estimate",
-          "confidence": "medium",
+          "confidence": "low",
           "source_ids": [
             "ntpf-history-profile",
             "atp-casper-ruud"
@@ -7763,9 +7767,10 @@
             "atp-ntpf-profile-v1#nor-founded-1909",
             "atp-casper-ruud-v1#nor-first-atp-title-2020",
             "atp-casper-ruud-v1#nor-grand-slam-finals-2022",
-            "atp-casper-ruud-v1#nor-masters-title-2025"
+            "atp-casper-ruud-v1#nor-masters-title-2025",
+            "atp-ntpf-profile-v1#nor-clubs-2022"
           ],
-          "rationale": "ATP Earth NOR competition quality estimate for 2026. The 1-10 value is project-authored for the Norway tennis environment; cited facts are evidence/context rather than measured game ratings. Ruud's Grand Slam finals and No. 2 peak support a very strong modern male competition environment; club/access evidence is not converted into competition quality.",
+          "rationale": "ATP Earth NOR competition quality estimate for 2026. The 1-10 value is project-authored for the men's tennis environment; cited facts are evidence/context rather than measured game ratings. Norway's federation/club structure is the available proxy for meaningful domestic competition opportunities; Ruud's elite results are retained only as outcome context and are not treated as a direct measurement of the whole national competition environment.",
           "anchor_years": [
             2026
           ],

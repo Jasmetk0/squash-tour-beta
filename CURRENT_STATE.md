@@ -1,5 +1,30 @@
 # Current implementation and next action
 
+## Candidate — ATP SUI/CRO/POL/CHN evidence-rich batch (5 October 2026)
+
+- New complete ATP histories: **Switzerland (SUI), Croatia (CRO), Poland (POL),
+  China (CHN)**.
+- New ratings: 4 × 72 × 6 = **1,728**; ATP Earth now resolves **18 / 250 complete
+  histories** and **7,776 annual attribute ratings**.
+- ATP research now resolves **58 normalized datasets / 212 observations**.
+- Switzerland separates its current licensed/member/club infrastructure from elite
+  Davis Cup outcomes and uses youth/NLZ evidence only from the modern period.
+- Croatia before 1992 is explicitly modeled as the current Croatian territory within
+  Yugoslavia; independent federation continuity begins in 1992.
+- Poland preserves the 1951 political governance discontinuity and only applies the
+  multi-age national training pathway from 2025 and centrally funded support from 2026.
+- China distinguishes scale from outcomes: its 2024–25 CTJ youth pipeline materially
+  raises access/development/support, while the official 2025 zero-men-in-ATP-Top-100
+  snapshot constrains current competition quality.
+- Official ATP package publication remains blocked by the intentional 250/250
+  completeness rule; World Library historical-profile persistence and the full
+  player-development lifecycle remain separate unfinished integration work.
+
+**Next after green CI:** continue another varied ATP batch, preferably mixing one
+historically elite environment with emerging and smaller systems; avoid padding coverage
+with generic inferred profiles.
+
+
 ## Candidate — ATP CAN/ITA/NED/SWE evidence-rich batch (5 October 2026)
 
 - New complete ATP histories: **Canada (CAN), Italy (ITA), Netherlands (NED),

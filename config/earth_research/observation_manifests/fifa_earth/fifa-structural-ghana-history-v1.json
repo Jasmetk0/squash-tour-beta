@@ -3,7 +3,7 @@
   "dataset_id": "fifa-structural-ghana-history-v1",
   "source_id": "caf-ghana-profile",
   "relative_path": "observations/normalized/structural/fifa_structural_ghana_history_v1.json",
-  "sha256": "b0b3b5302a065195fa09f3612a3ad769f9adb34de66e1d32b3643512d523a57a",
+  "sha256": "a3930cd223fc9e86af090c3b822d3cc177829c29810168d06d749fb9d7fe0d3b",
   "record_count": 4,
   "source_document_sha256": null,
   "input_artifact_sha256": null,

@@ -7,6 +7,31 @@
 - New ratings: 4 × 72 × 6 = **1,728**; ATP Earth now resolves **22 / 250 complete
   histories** and **9,504 annual attribute ratings**.
 - ATP research now resolves **71 normalized datasets / 240 observations**.
+- Norway separates Ruud's elite surge from a much smaller organised base; the 2022
+  club count is tennis/padel combined and 2023 inclusion funding is access support,
+  not participation.
+- Greece keeps Tsitsipas's modern elite spike separate from the federation's older
+  institutional base and current 214-club access signal.
+- Belgium treats the current Flemish 500+ clubs / 200,000+ members as **partial Earth
+  BEL coverage** and combined tennis/padel rather than a synthetic Belgium-wide census.
+- South Africa preserves deep tennis tradition and Anderson's 2017–18 elite peak while
+  modern development centres/provincial structure raise development/support more than
+  uniform access.
+- Official ATP package publication remains blocked by the intentional 250/250
+  completeness rule; World Library historical-profile persistence and the full
+  player-development lifecycle remain separate unfinished integration work.
+
+**Next after green CI:** continue ATP with another diverse evidence-rich batch rather
+than padding the remaining countries with generic curves.
+
+
+## Candidate — ATP NOR/GRE/BEL/ZAF evidence-rich batch (5 October 2026)
+
+- New complete ATP histories: **Norway (NOR), Greece (GRE), Belgium (BEL),
+  South Africa (ZAF)**.
+- New ratings: 4 × 72 × 6 = **1,728**; ATP Earth now resolves **22 / 250 complete
+  histories** and **9,504 annual attribute ratings**.
+- ATP research now resolves **71 normalized datasets / 240 observations**.
 - Norway separates Ruud's unprecedented elite output from a much smaller organised
   club base and targeted access support.
 - Greece separates the Tsitsipas-era elite spike from federation/club structure;

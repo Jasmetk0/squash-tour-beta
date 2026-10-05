@@ -18,25 +18,24 @@ separate inputs. Innate potential rarity must remain independent of nationality.
 This section is the authoritative current summary. Dated batch sections below are
 retained only as implementation history and do not override these numbers.
 
-- **FIFA Earth: 79 / 250** complete 1955–2026 country/territory histories, all six
+- **FIFA Earth: 81 / 250** complete 1955–2026 country/territory histories, all six
   attributes present for every authored year. The canonical bundle resolves
-  **126 datasets / 1,628 normalized observations**.
-- **ATP Earth: 79 / 250** complete 1955–2026 country/territory histories, all six
+  **128 datasets / 1,634 normalized observations**.
+- **ATP Earth: 81 / 250** complete 1955–2026 country/territory histories, all six
   attributes present for every authored year. The canonical bundle resolves
-  **258 datasets / 622 normalized observations**.
-- The latest dual-world batch adds **Botswana (BWA) and Namibia (NAM)** to both
+  **262 datasets / 628 normalized observations**.
+- The latest dual-world batch adds **Eswatini (SWZ) and Mozambique (MOZ)** to both
   packages, another **1,728 annual attribute ratings**.
-- FIFA Botswana gates association creation to 1970, CAF membership to 1976 and
-  FIFA membership to 1982. FIFA Namibia gates association creation to 1990 and
-  FIFA/CAF membership to 1992.
-- Big Count 2006 remains dimension-scoped and time-gated. Professional 2023 uses
-  Botswana's checked-in player/club observations; Namibia uses only the checked-in
-  club observation and does not invent a missing professional-player count.
-- ATP Botswana and Namibia both use explicit low-confidence pre-documented
-  baselines before direct 2020 ITF activity evidence. Their 2026 development
-  eligibility is capacity/opportunity context rather than realised outcome.
-- Botswana additionally uses direct 2026 Gaborone professional/junior hosting
-  evidence, while Namibia uses direct 2026 J60 Windhoek hosting evidence.
+- FIFA Eswatini gates association creation to 1968 and FIFA/CAF membership to
+  1978; the Big Count 2006 source still uses the historical label `Swaziland`,
+  which is retained as source provenance rather than rewritten.
+- FIFA Mozambique gates association creation to 1976 and FIFA/CAF membership to
+  1980. Big Count 2006 remains dimension-scoped and Professional 2023 enters only
+  from 2023.
+- ATP Eswatini and Mozambique both use explicit low-confidence pre-documented
+  baselines before direct ITF activity evidence in 2020. Their 2026 ITF
+  development eligibility is treated as capacity/opportunity context, not realised
+  programme delivery or player quality.
 - Coverage/provenance is measured through `load_earth_research_bundle()`; sharded
   sources, manifests, normalized observations and country histories all participate
   in validation. Missing facts are not converted into zeroes or universal fallback
@@ -84,7 +83,7 @@ retained only as implementation history and do not override these numbers.
 
 ## Not implemented or not proven
 
-- **Neither official Earth directory exists yet.** FIFA and ATP each currently have 79 complete histories; neither reaches the required 250-country all-or-nothing build threshold. No fabricated neutral profiles are shipped to satisfy coverage
+- **Neither official Earth directory exists yet.** FIFA and ATP each currently have 81 complete histories; neither reaches the required 250-country all-or-nothing build threshold. No fabricated neutral profiles are shipped to satisfy coverage
   mechanically. See the current-status section above for authoritative counts.
 - FIFA Big Count 2006 now has five canonical normalized
   `earth_source_observations.v2` datasets (all players, registered, unregistered,

@@ -3,7 +3,7 @@
   "dataset_id": "fifa-structural-turkiye-history-v1",
   "source_id": "uefa-turkiye-profile",
   "relative_path": "observations/normalized/structural/fifa_structural_turkiye_history_v1.json",
-  "sha256": "5bb605fe5b572986ff542792844ff044f50ca6e84d00d4fd5c5946c05b6caa98",
+  "sha256": "598d7af86024c8ab9a49150eb175f60460ccb74d741047cf1f3d688e28b94d59",
   "record_count": 6,
   "source_document_sha256": null,
   "input_artifact_sha256": null,

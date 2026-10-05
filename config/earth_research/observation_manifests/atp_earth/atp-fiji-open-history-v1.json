@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-fiji-open-history-v1",
+  "source_id": "fiji-open-history-2022",
+  "relative_path": "observations/normalized/atp_fiji_open_history_v1.json",
+  "sha256": "d8f7615923b604c02e735e96022d0e4bcc729a5b8c6c136526721de9edc8285c",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

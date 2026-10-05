@@ -1,0 +1,68 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "atp-earth-fji-model.v1",
+  "world_id": "atp_earth",
+  "data_cutoff": "2026-10-04",
+  "countries": [
+    "FJI"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "evidence_rules": [
+    "The 1907 Fiji Open and 1934 association foundation establish deep competition/institutional tradition but do not directly measure nationwide participation or elite player quality.",
+    "Pre-1970 ratings refer to current Fiji territory under colonial governance; post-1970 ratings use independent Fiji.",
+    "The 2022 regional junior championships are gated to 2022 as development/competition evidence.",
+    "The current Lautoka/Nadi/Suva club network is gated to 2026 and not backcast.",
+    "No tournament result or ranking is used as a calibration target; 9+ remains world-leading."
+  ],
+  "anchor_values": {
+    "FJI": {
+      "1955": [
+        5,
+        4.9,
+        4.5,
+        5.3,
+        4.5,
+        7.5
+      ],
+      "1970": [
+        5.1,
+        5,
+        4.7,
+        5.4,
+        4.7,
+        7.7
+      ],
+      "2000": [
+        5.3,
+        5.2,
+        5,
+        5.5,
+        5,
+        7.9
+      ],
+      "2022": [
+        5.6,
+        5.5,
+        5.8,
+        5.8,
+        5.6,
+        8
+      ],
+      "2026": [
+        5.8,
+        5.9,
+        6,
+        5.9,
+        5.8,
+        8.1
+      ]
+    }
+  },
+  "evidence_sources": [
+    "fiji-open-history-2022",
+    "itf-fiji-foundation-2015",
+    "itf-fiji-juniors-2022",
+    "fasanoc-tennis-fiji-2026"
+  ],
+  "heldout_ranking_used": false
+}

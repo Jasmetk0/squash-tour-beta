@@ -11,7 +11,7 @@ from beta_engine.application.earth_package_builder import load_earth_research_bu
 
 def test_fifa_first_reviewed_country_histories_are_complete_and_resolvable():
     bundle = load_earth_research_bundle(Path("config/earth_research/fifa_earth.json"))
-    assert set(bundle.research.countries) == {"CZE", "SVK", "JPN", "IND", "MAR", "SEN", "FRO", "USA", "ZAF", "BRA", "DEU", "ISL", "SMR", "ARG", "MEX", "AUS", "NZL", "FJI", "PNG", "SLB", "COK", "ASM", "PYF", "NCL", "WSM", "TON", "VUT", "FRA", "ESP", "ITA", "NLD", "BEL", "PRT", "AUT", "DNK", "SWE", "CHE", "NOR", "FIN", "HRV", "SVN", "POL", "ROU", "UKR", "LTU", "LVA", "EST", "CAN", "GRC", "SRB", "CHL", "HUN", "ISR"}
+    assert set(bundle.research.countries) == {"CZE", "SVK", "JPN", "IND", "MAR", "SEN", "FRO", "USA", "ZAF", "BRA", "DEU", "ISL", "SMR", "ARG", "MEX", "AUS", "NZL", "FJI", "PNG", "SLB", "COK", "ASM", "PYF", "NCL", "WSM", "TON", "VUT", "FRA", "ESP", "ITA", "NLD", "BEL", "PRT", "AUT", "DNK", "SWE", "CHE", "NOR", "FIN", "HRV", "SVN", "POL", "ROU", "UKR", "LTU", "LVA", "EST", "CAN", "GRC", "SRB", "CHL", "HUN", "ISR", "BGR", "KAZ"}
     assert bundle.research.data_cutoff.isoformat() == "2026-10-03"
 
     for code in ("CZE", "SVK"):
@@ -458,11 +458,11 @@ def test_fifa_fra_esp_batch_is_complete_and_temporally_dimensioned():
 
 def test_atp_complete_histories_are_evidence_resolvable_and_temporally_bounded():
     bundle = load_earth_research_bundle(Path("config/earth_research/atp_earth.json"))
-    expected_countries = {"CZE", "DEU", "USA", "AUS", "ESP", "SRB", "FRA", "GBR", "ARG", "JPN", "CAN", "ITA", "NED", "SWE", "SUI", "CRO", "POL", "CHN", "NOR", "GRE", "BEL", "ZAF", "DEN", "FIN", "NZL", "PRT", "IRL", "HUN", "ROU", "SVN", "SVK", "ISR", "BGR", "AUT", "TUR", "CYP", "BRA", "CHL", "COL", "MEX", "ECU", "IND", "KOR", "THA", "KAZ", "LVA", "EST", "LTU", "UKR", "MAR", "SEN", "ISL", "SMR"}
+    expected_countries = {"CZE", "DEU", "USA", "AUS", "ESP", "SRB", "FRA", "GBR", "ARG", "JPN", "CAN", "ITA", "NED", "SWE", "SUI", "CRO", "POL", "CHN", "NOR", "GRE", "BEL", "ZAF", "DEN", "FIN", "NZL", "PRT", "IRL", "HUN", "ROU", "SVN", "SVK", "ISR", "BGR", "AUT", "TUR", "CYP", "BRA", "CHL", "COL", "MEX", "ECU", "IND", "KOR", "THA", "KAZ", "LVA", "EST", "LTU", "UKR", "MAR", "SEN", "ISL", "SMR", "FRO", "FJI"}
     assert set(bundle.research.countries) == expected_countries
     assert bundle.research.data_cutoff.isoformat() == "2026-10-04"
-    assert len(bundle.datasets) == 176
-    assert len(bundle.observations) == 499
+    assert len(bundle.datasets) == 183
+    assert len(bundle.observations) == 508
 
     expected_models = {
         "CZE": "atp-earth-cze-deu-seed-model.v1",
@@ -518,6 +518,8 @@ def test_atp_complete_histories_are_evidence_resolvable_and_temporally_bounded()
         "SEN": "atp-earth-sen-model.v1",
         "ISL": "atp-earth-isl-model.v1",
         "SMR": "atp-earth-smr-model.v1",
+        "FRO": "atp-earth-fro-model.v1",
+        "FJI": "atp-earth-fji-model.v1",
     }
     for code, history in bundle.research.countries.items():
         assert history.missing_earth_years == []
@@ -2070,3 +2072,78 @@ def test_four_country_acceleration_batch_is_complete_resolvable_and_time_gated()
     assert max(r.value for r in isr.years[2026].ratings.values()) < 9.0
     assert max(r.value for r in isl.years[2026].ratings.values()) < 9.0
     assert max(r.value for r in smr.years[2026].ratings.values()) < 9.0
+
+
+
+def test_accelerated_bgr_kaz_fro_fji_batch_is_complete_and_time_gated():
+    fifa = load_earth_research_bundle(Path("config/earth_research/fifa_earth.json"))
+    atp = load_earth_research_bundle(Path("config/earth_research/atp_earth.json"))
+
+    for code, model_id in {
+        "BGR": "fifa-earth-bgr-model.v1",
+        "KAZ": "fifa-earth-kaz-model.v1",
+    }.items():
+        history = fifa.research.countries[code]
+        assert history.missing_earth_years == []
+        assert len(history.years) == 72
+        assert history.reference_year == 2026
+        for year in history.years.values():
+            for rating in year.ratings.values():
+                assert rating.calibration_model_id == model_id
+                assert rating.observation_ids
+                assert all(item in fifa.observations for item in rating.observation_ids)
+
+    bgr = fifa.research.countries["BGR"]
+    assert bgr.years[1955].historical_entity == "People's Republic of Bulgaria"
+    assert bgr.years[1990].historical_entity == "Bulgaria"
+    assert "fifa-big-count-2006-registered-v2#bulgaria" not in bgr.years[2005].ratings["squash_access"].observation_ids
+    assert "fifa-big-count-2006-registered-v2#bulgaria" in bgr.years[2006].ratings["squash_access"].observation_ids
+    assert "fifa-structural-uefa-bulgaria-history-v1#bgr-house-of-football-2016" not in bgr.years[2015].ratings["development_quality"].observation_ids
+    assert "fifa-structural-uefa-bulgaria-history-v1#bgr-house-of-football-2016" in bgr.years[2016].ratings["development_quality"].observation_ids
+    assert "fifa-professional-2023-clubs-v2#bulgaria-p212" not in bgr.years[2022].ratings["competition_quality"].observation_ids
+    assert "fifa-professional-2023-clubs-v2#bulgaria-p212" in bgr.years[2023].ratings["competition_quality"].observation_ids
+
+    kaz = fifa.research.countries["KAZ"]
+    assert "Soviet" in kaz.years[1990].historical_entity
+    assert kaz.years[1991].historical_entity == "Kazakhstan"
+    assert "fifa-structural-uefa-kazakhstan-history-v1#kaz-ssr-federation-1959" not in kaz.years[1958].ratings["elite_support"].observation_ids
+    assert "fifa-structural-uefa-kazakhstan-history-v1#kaz-ssr-federation-1959" in kaz.years[1959].ratings["elite_support"].observation_ids
+    assert "fifa-structural-uefa-kazakhstan-history-v1#kaz-independent-association-1992" not in kaz.years[1991].ratings["squash_tradition"].observation_ids
+    assert "fifa-structural-uefa-kazakhstan-history-v1#kaz-independent-association-1992" in kaz.years[1992].ratings["squash_tradition"].observation_ids
+    assert "fifa-structural-uefa-kazakhstan-history-v1#kaz-uefa-member-2002" not in kaz.years[2001].ratings["competition_quality"].observation_ids
+    assert "fifa-structural-uefa-kazakhstan-history-v1#kaz-uefa-member-2002" in kaz.years[2002].ratings["competition_quality"].observation_ids
+    assert "fifa-professional-2023-clubs-v2#kazakhstan-p230" not in kaz.years[2022].ratings["competition_quality"].observation_ids
+    assert "fifa-professional-2023-clubs-v2#kazakhstan-p230" in kaz.years[2023].ratings["competition_quality"].observation_ids
+
+    for code, model_id in {
+        "FRO": "atp-earth-fro-model.v1",
+        "FJI": "atp-earth-fji-model.v1",
+    }.items():
+        history = atp.research.countries[code]
+        assert history.missing_earth_years == []
+        assert len(history.years) == 72
+        assert history.reference_year == 2026
+        for year in history.years.values():
+            for rating in year.ratings.values():
+                assert rating.calibration_model_id == model_id
+                assert rating.observation_ids
+                assert all(item in atp.observations for item in rating.observation_ids)
+
+    fro = atp.research.countries["FRO"]
+    assert "atp-faroe-island-games-2013-v1#fro-island-games-tennis-2013" not in fro.years[2012].ratings["competition_quality"].observation_ids
+    assert "atp-faroe-island-games-2013-v1#fro-island-games-tennis-2013" in fro.years[2013].ratings["competition_quality"].observation_ids
+    assert "atp-faroe-tennis-europe-2026-v1#fro-federation-founded-2017" not in fro.years[2016].ratings["development_quality"].observation_ids
+    assert "atp-faroe-tennis-europe-2026-v1#fro-federation-founded-2017" in fro.years[2017].ratings["development_quality"].observation_ids
+    assert "itf-faroe-membership-2026" not in fro.years[2025].ratings["elite_support"].source_ids
+    assert "itf-faroe-membership-2026" in fro.years[2026].ratings["elite_support"].source_ids
+
+    fji = atp.research.countries["FJI"]
+    assert "British Fiji" in fji.years[1969].historical_entity
+    assert fji.years[1970].historical_entity == "Fiji"
+    assert "atp-fiji-juniors-2022-v1#fji-west-pacific-juniors-2022" not in fji.years[2021].ratings["development_quality"].observation_ids
+    assert "atp-fiji-juniors-2022-v1#fji-west-pacific-juniors-2022" in fji.years[2022].ratings["development_quality"].observation_ids
+    assert "atp-fiji-current-2026-v1#fji-district-club-network-2026" not in fji.years[2025].ratings["squash_access"].observation_ids
+    assert "atp-fiji-current-2026-v1#fji-district-club-network-2026" in fji.years[2026].ratings["squash_access"].observation_ids
+
+    for history in (bgr, kaz, fro, fji):
+        assert max(r.value for r in history.years[2026].ratings.values()) < 9.0

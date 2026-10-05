@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-faroe-island-games-2013-v1",
+  "source_id": "island-games-faroe-tennis-2013",
+  "relative_path": "observations/normalized/atp_faroe_island_games_2013_v1.json",
+  "sha256": "cccddd8cd26f6f84b714e7eea9ee629a3d3e7f65d45588f9f3e3f0dad6ebd676",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

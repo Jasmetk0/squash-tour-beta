@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-uefa-bulgaria-history-v1",
+  "source_id": "uefa-bulgaria-profile",
+  "relative_path": "observations/normalized/structural/fifa_structural_uefa_bulgaria_history_v1.json",
+  "sha256": "3852f73be2e6b2f071831af1ed9591426ad6c8f9923fad05bc47c0f827ec4e3c",
+  "record_count": 5,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

@@ -5001,3 +5001,18 @@ bands should shape 0..200 potential. No threshold is inferred from current OVR v
 - San Marino preserves the 1949 club base, federation foundation in 1957, Internationals from 1988, tennis centre in 1991, Davis Cup participation from 1992 and current Federal Tennis School/international-event structure in 2026.
 - No rankings or title outcomes are calibration targets. Official package publication remains blocked by the intentional **250 / 250** completeness requirement.
 - All five new observation manifests in this accelerated batch were written with semantic SHA-256 identity before CI validation.
+
+
+
+## Candidate — accelerated Bulgaria/Kazakhstan/Faroe/Fiji batch (5 October 2026)
+
+- New complete FIFA histories: **Bulgaria (BGR)** and **Kazakhstan (KAZ)**.
+- New complete ATP histories: **Faroe Islands (FRO)** and **Fiji (FJI)**.
+- New ratings: 4 × 72 × 6 = **1,728**; both FIFA Earth and ATP Earth move **53 -> 55 / 250 complete histories (22%)**.
+- FIFA adds **2 structural datasets / 12 direct observations**, taking FIFA research from **89 datasets / 1,531 observations** to **91 datasets / 1,543 observations**.
+- Bulgaria preserves the 1923 federation, 1924 FIFA membership, 1937 national league, 1954 UEFA membership and 2016 House of Football as distinct structural milestones; Big Count 2006 and Professional 2023 remain strictly gated.
+- Kazakhstan keeps current-territory football inside Soviet governance before independence, then separately gates the 1959 Kazakh SSR federation, 1992 independent association, 1994 FIFA/AFC membership, 2001 AFC exit and 2002 UEFA entry.
+- ATP adds **7 datasets / 9 direct observations**, taking ATP research from **176 datasets / 499 observations** to **183 datasets / 508 observations**.
+- Faroe Islands retain a genuinely low historical tennis baseline, organised Island Games participation by 2013, federation formation in 2017 and Tennis Europe/ITF integration only in 2026.
+- Fiji uses the 1907 Fiji Open and 1934 association foundation as deep-tradition anchors, with modern development evidence introduced only through the 2022 Pacific junior pathway and 2026 Lautoka/Nadi/Suva club network.
+- No rankings, titles or match outcomes are calibration targets. Official package publication remains blocked by the intentional **250 / 250** completeness requirement.

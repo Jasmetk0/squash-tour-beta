@@ -3,7 +3,7 @@
   "dataset_id": "fifa-structural-ejl-history-v1",
   "source_id": "ejl-history",
   "relative_path": "observations/normalized/structural/fifa_structural_ejl_history_v1.json",
-  "sha256": "30c409742f32aaafe546f38d593c9254e7fcd120aa45ef70dcda46e9aa95fa35",
+  "sha256": "24a8216611db73b7e9ff33e868ee997158fb8185d2045e449eb5b71eb9f37d20",
   "record_count": 4,
   "source_document_sha256": null,
   "input_artifact_sha256": null,

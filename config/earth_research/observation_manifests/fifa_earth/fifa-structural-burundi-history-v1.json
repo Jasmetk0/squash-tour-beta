@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-burundi-history-v1",
+  "source_id": "caf-burundi-profile",
+  "relative_path": "observations/normalized/structural/fifa_structural_burundi_history_v1.json",
+  "sha256": "33c6df220399d9bea529924e63a6c8eba1d22a57ef1a5433e3561b702140330a",
+  "record_count": 3,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

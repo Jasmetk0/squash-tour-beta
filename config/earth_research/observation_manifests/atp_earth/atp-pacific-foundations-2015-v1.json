@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-pacific-foundations-2015-v1",
+  "source_id": "itf-pacific-associations-2015",
+  "relative_path": "observations/normalized/atp_pacific_foundations_2015_v1.json",
+  "sha256": "713690fad14800f6ec0c3fa4a258a0882ff2e56c40d3dda464321cec367db0bf",
+  "record_count": 4,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

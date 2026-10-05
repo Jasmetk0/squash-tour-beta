@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-stz-structural-milestones-v1",
+  "source_id": "stz-structural-milestones",
+  "relative_path": "observations/normalized/atp-stz-structural-milestones-v1.json",
+  "sha256": "497873021a04b06a4c93719410ffb4da786418723246a0a8e117abaf6c8eaa50",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

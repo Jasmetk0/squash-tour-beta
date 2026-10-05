@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-ethiopia-history-v1",
+  "source_id": "caf-ethiopia-profile",
+  "relative_path": "observations/normalized/structural/fifa_structural_ethiopia_history_v1.json",
+  "sha256": "fd373869642d200c5692baa8958c1f5a170c36dac4e5b09a450aaba64c66fe2c",
+  "record_count": 3,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

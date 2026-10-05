@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-solomon-foundation-v1",
+  "source_id": "itf-solomon-tonga-foundation-2015",
+  "relative_path": "observations/normalized/atp_solomon_foundation_v1.json",
+  "sha256": "2f47fe1ce15f2b19a1fbef2de5d062c69a87ad2fe516995f2b2a4b07997f893d",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

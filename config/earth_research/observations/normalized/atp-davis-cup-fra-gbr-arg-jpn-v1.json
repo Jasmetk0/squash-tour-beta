@@ -355,7 +355,7 @@
       "source_id": "davis-cup-previous-champions",
       "source_entity": "Great Britain",
       "earth_country_code": "GBR",
-      "historical_entity": null,
+      "historical_entity": "Great Britain Davis Cup team / Earth GBR association proxy",
       "observation_year": 1936,
       "period_start_year": null,
       "period_end_year": null,
@@ -372,13 +372,14 @@
       "cross_country_comparable": false,
       "is_direct_observation": true,
       "is_statistically_modelled": false,
-      "territory_mapping_method": "direct_earth_country",
+      "territory_mapping_method": "reviewed_great_britain_team_proxy_to_gbr",
       "territory_weight": null,
       "source_page": null,
       "source_locator": null,
       "definition_notes": "Official Davis Cup outcome used only for elite competition/tradition context; it does not measure popularity, access, development quality or support.",
       "quality_flags": [
-        "outcome_context_only"
+        "outcome_context_only",
+        "association_remit_not_exact_earth_country"
       ]
     },
     {
@@ -386,7 +387,7 @@
       "source_id": "davis-cup-previous-champions",
       "source_entity": "Great Britain",
       "earth_country_code": "GBR",
-      "historical_entity": null,
+      "historical_entity": "Great Britain Davis Cup team / Earth GBR association proxy",
       "observation_year": 1937,
       "period_start_year": null,
       "period_end_year": null,
@@ -403,13 +404,14 @@
       "cross_country_comparable": false,
       "is_direct_observation": true,
       "is_statistically_modelled": false,
-      "territory_mapping_method": "direct_earth_country",
+      "territory_mapping_method": "reviewed_great_britain_team_proxy_to_gbr",
       "territory_weight": null,
       "source_page": null,
       "source_locator": null,
       "definition_notes": "Official Davis Cup outcome used only for elite competition/tradition context; it does not measure popularity, access, development quality or support.",
       "quality_flags": [
-        "outcome_context_only"
+        "outcome_context_only",
+        "association_remit_not_exact_earth_country"
       ]
     },
     {
@@ -417,7 +419,7 @@
       "source_id": "davis-cup-previous-champions",
       "source_entity": "Great Britain",
       "earth_country_code": "GBR",
-      "historical_entity": null,
+      "historical_entity": "Great Britain Davis Cup team / Earth GBR association proxy",
       "observation_year": 1978,
       "period_start_year": null,
       "period_end_year": null,
@@ -434,13 +436,14 @@
       "cross_country_comparable": false,
       "is_direct_observation": true,
       "is_statistically_modelled": false,
-      "territory_mapping_method": "direct_earth_country",
+      "territory_mapping_method": "reviewed_great_britain_team_proxy_to_gbr",
       "territory_weight": null,
       "source_page": null,
       "source_locator": null,
       "definition_notes": "Official Davis Cup outcome used only for elite competition/tradition context; it does not measure popularity, access, development quality or support.",
       "quality_flags": [
-        "outcome_context_only"
+        "outcome_context_only",
+        "association_remit_not_exact_earth_country"
       ]
     },
     {
@@ -448,7 +451,7 @@
       "source_id": "davis-cup-previous-champions",
       "source_entity": "Great Britain",
       "earth_country_code": "GBR",
-      "historical_entity": null,
+      "historical_entity": "Great Britain Davis Cup team / Earth GBR association proxy",
       "observation_year": 2015,
       "period_start_year": null,
       "period_end_year": null,
@@ -465,13 +468,14 @@
       "cross_country_comparable": false,
       "is_direct_observation": true,
       "is_statistically_modelled": false,
-      "territory_mapping_method": "direct_earth_country",
+      "territory_mapping_method": "reviewed_great_britain_team_proxy_to_gbr",
       "territory_weight": null,
       "source_page": null,
       "source_locator": null,
       "definition_notes": "Official Davis Cup outcome used only for elite competition/tradition context; it does not measure popularity, access, development quality or support.",
       "quality_flags": [
-        "outcome_context_only"
+        "outcome_context_only",
+        "association_remit_not_exact_earth_country"
       ]
     },
     {

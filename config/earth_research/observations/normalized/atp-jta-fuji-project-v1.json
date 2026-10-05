@@ -16,12 +16,12 @@
       "earth_country_code": "JPN",
       "historical_entity": null,
       "observation_year": null,
-      "period_start_year": null,
-      "period_end_year": null,
+      "period_start_year": 2017,
+      "period_end_year": 2021,
       "measurement_type": "distinct_male_top100_players",
-      "sex_scope": "mixed",
+      "sex_scope": "male",
       "age_scope": null,
-      "competition_scope": null,
+      "competition_scope": "ATP_singles",
       "numeric_value": 5,
       "text_value": null,
       "unit": "players_minimum",
@@ -36,7 +36,9 @@
       "source_page": null,
       "source_locator": null,
       "definition_notes": "JTA’s retrospective notes Kei Nishikori plus four other Japanese men reached the singles world top 100 during the 2017–2021 period.",
-      "quality_flags": []
+      "quality_flags": [
+        "retrospective_period_outcome"
+      ]
     },
     {
       "observation_id": "atp-jta-fuji-project-v1#jpn-fuji-plan-2022-2032",

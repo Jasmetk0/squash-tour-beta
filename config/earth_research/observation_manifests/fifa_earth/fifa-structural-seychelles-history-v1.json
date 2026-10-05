@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-seychelles-history-v1",
+  "source_id": "caf-seychelles-profile",
+  "relative_path": "observations/normalized/structural/fifa_structural_seychelles_history_v1.json",
+  "sha256": "166730880ef1a44201d68e0a53aad865cb270275909b87610322d8acad33901f",
+  "record_count": 4,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

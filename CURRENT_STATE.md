@@ -5094,3 +5094,18 @@ bands should shape 0..200 potential. No threshold is inferred from current OVR v
 - Egyptian tennis preserves the 1907 Egypt International, 1920 federation and 1945 registration as deep-history anchors, with the 1976 federation-name transition and 2024 national club league separately gated.
 - Malaysian tennis preserves Malayan Lawn Tennis from 1921 and the 1923 inter-team competition as partial pre-1963 context, then gates LTAM/ITF affiliation to 1965, the National Tennis Academy to 2014 and current national/junior/ITF competition to 2026.
 - No rankings, titles or match outcomes are calibration targets. Official package publication remains blocked by the intentional **250 / 250** completeness requirement.
+
+
+
+## Candidate — accelerated Saudi Arabia/UAE/Philippines/Indonesia batch (5 October 2026)
+
+- New complete FIFA histories: **Saudi Arabia (SAU)** and **United Arab Emirates (ARE)**.
+- New complete ATP histories: **Philippines (PHL)** and **Indonesia (IDN)**.
+- New ratings: 4 × 72 × 6 = **1,728**; both FIFA Earth and ATP Earth move **65 -> 67 / 250 complete histories (26.8%)**.
+- FIFA adds **2 structural datasets / 6 observations**, taking FIFA research from **110 datasets / 1,581 observations** to **112 datasets / 1,587 observations**.
+- Saudi Arabia gates SAFF foundation (1955), FIFA recognition (1956), Big Count 2006 and Professional 2023 evidence separately; 2023 professional depth is not converted mechanically into 9+ ratings.
+- UAE uses an explicit low-confidence **1955–1970 pre-national-federation baseline**, then separately gates UAE FA formation (1971), FIFA membership (1972), AFC/Arab membership (1974), Big Count 2006 and Professional 2023.
+- ATP adds **8 datasets / 10 observations**, taking ATP research from **218 datasets / 561 observations** to **226 datasets / 571 observations**.
+- Philippines preserves PHILTA's 1946 foundation but also models the **2020 ITF suspension** as a real governance/competition shock, followed by gradual recovery after ITF reinstatement in January 2024 and confirmed membership in 2026.
+- Indonesia preserves PELTI's 1935 pre-independence foundation, then separately gates the ITF Junior Tennis Initiative (2019), its 2020 programme participation, coach-education recognition (2021), W25 Jakarta hosting (2023), and current ITF membership (2025).
+- No rankings, titles or match outcomes are calibration targets. Official package publication remains blocked by the intentional **250 / 250** completeness requirement.

@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-samoa-member-2012-v1",
+  "source_id": "otf-samoa-member-2012",
+  "relative_path": "observations/normalized/atp_samoa_member_2012_v1.json",
+  "sha256": "3d9885f3122c74276a11920acea37cca8bab64af8944bb7e22c9774d345d9015",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

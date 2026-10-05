@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-qfa-history-v1",
+  "source_id": "qfa-history",
+  "relative_path": "observations/normalized/structural/fifa_structural_qfa_history_v1.json",
+  "sha256": "d7cda94b34b33339cdc990c7d4b5faee2fe5510d0c5022e382fb3af6b22ba16c",
+  "record_count": 4,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

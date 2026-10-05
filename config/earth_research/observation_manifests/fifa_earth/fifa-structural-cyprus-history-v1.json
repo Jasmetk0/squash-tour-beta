@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-cyprus-history-v1",
+  "source_id": "cfa-cyprus-history",
+  "relative_path": "observations/normalized/structural/fifa_structural_cyprus_history_v1.json",
+  "sha256": "5a3af3477977bb37f445e62b57a6d43ac54a094faa8592ecb963c457289ca23a",
+  "record_count": 4,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

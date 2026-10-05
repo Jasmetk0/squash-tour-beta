@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-egypt-history-v1",
+  "source_id": "etf-history",
+  "relative_path": "observations/normalized/atp_egypt_history_v1.json",
+  "sha256": "9da3e8a5743571eeb2a3201a81e7fb83d09791a9a926ccc316cedeeebe47a6d4",
+  "record_count": 4,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

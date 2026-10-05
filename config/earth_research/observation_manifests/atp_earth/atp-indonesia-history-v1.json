@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-indonesia-history-v1",
+  "source_id": "pelti-history",
+  "relative_path": "observations/normalized/atp_indonesia_history_v1.json",
+  "sha256": "7355a93034a20fbeb54e768769815711fa2e617bf415a3499eafdb071fece0d6",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

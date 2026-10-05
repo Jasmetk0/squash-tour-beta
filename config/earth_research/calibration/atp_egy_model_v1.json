@@ -1,0 +1,66 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "atp-earth-egy-model.v1",
+  "world_id": "atp_earth",
+  "data_cutoff": "2026-10-04",
+  "countries": [
+    "EGY"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "evidence_rules": [
+    "The 1907 Egypt International, 1920 federation and 1945 registration provide deep pre-1955 institutional/competition context.",
+    "The 1976 current-name re-registration is gated to 1976 and does not create an artificial quality jump.",
+    "The 2024 national club-league structure is gated to 2024.",
+    "Historic tournament winners and modern player rankings are not calibration targets.",
+    "Strong tradition is separated from participation, access and elite-support dimensions."
+  ],
+  "anchor_values": {
+    "EGY": {
+      "1955": [
+        6.6,
+        6.2,
+        6.5,
+        6.5,
+        6.3,
+        8.3
+      ],
+      "1976": [
+        6.9,
+        6.5,
+        6.8,
+        6.8,
+        6.6,
+        8.5
+      ],
+      "2000": [
+        7.2,
+        6.8,
+        7.1,
+        7.1,
+        6.9,
+        8.6
+      ],
+      "2024": [
+        7.8,
+        7.4,
+        7.8,
+        7.8,
+        7.5,
+        8.8
+      ],
+      "2026": [
+        7.9,
+        7.5,
+        7.9,
+        7.9,
+        7.6,
+        8.8
+      ]
+    }
+  },
+  "evidence_sources": [
+    "etf-history",
+    "etf-league-2024"
+  ],
+  "heldout_ranking_used": false
+}

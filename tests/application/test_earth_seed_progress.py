@@ -462,7 +462,7 @@ def test_atp_complete_histories_are_evidence_resolvable_and_temporally_bounded()
     assert set(bundle.research.countries) == expected_countries
     assert bundle.research.data_cutoff.isoformat() == "2026-10-04"
     assert len(bundle.datasets) == 159
-    assert len(bundle.observations) == 455
+    assert len(bundle.observations) == 458
 
     expected_models = {
         "CZE": "atp-earth-cze-deu-seed-model.v1",

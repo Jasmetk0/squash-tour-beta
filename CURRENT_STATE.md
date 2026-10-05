@@ -5044,3 +5044,14 @@ bands should shape 0..200 potential. No threshold is inferred from current OVR v
 - Korea Republic preserves KFA's 1933 origin, FIFA membership in 1948, AFC membership in 1954 and the 1983 professional-league launch, while Big Count 2006 and Professional 2023 remain strictly time-gated.
 - Thailand preserves the 1916 federation foundation, Big Count 2006, AFC Grassroots Charter Silver accreditation in 2022 and Professional 2023 as distinct eras.
 - Rankings and tournament outcomes are not calibration targets; all 2026 dimensions remain below 9.0.
+
+
+
+## Candidate — accelerated ATP Solomon Islands + Tonga batch (5 October 2026)
+
+- New complete ATP histories: **Solomon Islands (SLB)** and **Tonga (TON)**.
+- New ratings: 2 × 72 × 6 = **864**; ATP Earth moves **57 -> 59 / 250 complete histories**.
+- ATP adds **6 datasets / 10 observations**, taking ATP research from **191 datasets / 518 observations** to **197 datasets / 528 observations**.
+- Solomon Islands uses an explicit low-confidence 1955–1992 pre-association baseline, the ITF-recorded 1993 association foundation, OTF membership in 2012, the 2022 West Pacific junior pathway and current federation structure in 2026.
+- Tonga separates the 1955–1958 pre-association baseline from the 1959 association foundation, then gates OTF membership to 2012, East Pacific junior competition to 2024 and the current development/federation structure to 2026.
+- No junior result, ranking or title is used as a calibration target; both countries remain conservatively rated for national scale.

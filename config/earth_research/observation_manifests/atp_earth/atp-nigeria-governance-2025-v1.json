@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-nigeria-governance-2025-v1",
+  "source_id": "itf-nigeria-governance-2025",
+  "relative_path": "observations/normalized/atp_nigeria_governance_2025_v1.json",
+  "sha256": "80414e317eaf7b853ed92ae27ac8c0fec4749251bbe66b68893f34f26833f108",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

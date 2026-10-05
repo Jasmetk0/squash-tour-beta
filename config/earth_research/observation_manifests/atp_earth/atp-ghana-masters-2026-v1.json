@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-ghana-masters-2026-v1",
+  "source_id": "itf-ghana-masters-2026",
+  "relative_path": "observations/normalized/atp_ghana_masters_2026_v1.json",
+  "sha256": "464ce5ca3cb95c91c7fd626fc97bc7a4acaa9a5519487bf955a5ac9389a56143",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

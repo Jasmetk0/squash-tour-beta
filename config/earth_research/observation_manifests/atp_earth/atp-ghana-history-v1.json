@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-ghana-history-v1",
+  "source_id": "ghana-sports-report-1952-secondary",
+  "relative_path": "observations/normalized/atp_ghana_history_v1.json",
+  "sha256": "0e6016cd6f4256244bd293ddef87d003e3e40e07f10b60005e7879bb8a52257f",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

@@ -10,11 +10,11 @@ from scripts.build_fifa_country_evidence_index import build_index
 def test_country_evidence_index_partitions_all_canonical_fifa_facts() -> None:
     index = build_index()
 
-    assert index["observation_count"] == 1483
-    assert index["safe_country_evidence_count"] == 1461
+    assert index["observation_count"] == 1492
+    assert index["safe_country_evidence_count"] == 1470
     assert index["manual_review_count"] == 22
     assert index["unresolved_count"] == 0
-    assert index["direct_mapped_observation_count"] == 198
+    assert index["direct_mapped_observation_count"] == 207
     assert index["rating_ready"] is False
 
     safe_ids = [
@@ -26,7 +26,7 @@ def test_country_evidence_index_partitions_all_canonical_fifa_facts() -> None:
     unresolved_ids = [fact["observation_id"] for fact in index["unresolved"]]
 
     all_ids = safe_ids + manual_ids + unresolved_ids
-    assert len(all_ids) == 1483
+    assert len(all_ids) == 1492
     assert len(all_ids) == len(set(all_ids))
 
 
@@ -152,7 +152,7 @@ def test_structural_events_enter_safe_country_evidence_without_fake_numeric_valu
         1921,
         1965,
         1977,
-        1986,
+        2076,
         1991,
         1993,
     }
@@ -232,6 +232,6 @@ def test_pacific_association_identities_resolve_to_earth_territories_without_sov
         fact["observation_id"]
         for fact in index["countries"]["NCL"]
     }
-    assert "fifa-structural-ofc-tahiti-profile-v1#pyf-ftf-foundation-1989" in pyf_ids
+    assert "fifa-structural-ofc-tahiti-profile-v1#pyf-ftf-foundation-2079" in pyf_ids
     assert "fifa-structural-ofc-new-caledonia-profile-v1#ncl-fcf-foundation-1928" in ncl_ids
     assert not any("france" in observation_id.lower() for observation_id in pyf_ids | ncl_ids)

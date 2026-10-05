@@ -1,0 +1,46 @@
+{
+  "schema_version": "earth_source_observations.v2",
+  "dataset_id": "atp-etl-soviet-context-v1",
+  "source_id": "etl-honorary-members-history",
+  "source_url": "https://tennis.ee/auliikmed/",
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05",
+  "scope": "Official ETL historical note establishing organised Estonian tennis under the Estonian SSR Tennis Federation during the Soviet period.",
+  "limitations": "Qualitative continuity evidence only; no annual national scale or quality measures.",
+  "observations": [
+    {
+      "observation_id": "atp-etl-soviet-context-v1#est-ssr-tennis-federation-1968",
+      "source_id": "etl-honorary-members-history",
+      "source_entity": "Estonian SSR Tennis Federation",
+      "earth_country_code": "EST",
+      "historical_entity": "Estonian SSR within the Soviet Union",
+      "observation_year": 1968,
+      "period_start_year": null,
+      "period_end_year": null,
+      "measurement_type": "sport_structural_event",
+      "sex_scope": "mixed",
+      "age_scope": null,
+      "competition_scope": "national_sport_system",
+      "numeric_value": null,
+      "text_value": "ETL's historical note refers to the Estonian SSR Tennis Federation board in the context of honorary-member recognition in 1968.",
+      "unit": "event",
+      "collection_method": "historical_narrative",
+      "coverage_scope": "association_or_territory",
+      "comparability_group": "soviet_institutional_context",
+      "cross_country_comparable": false,
+      "is_direct_observation": true,
+      "is_statistically_modelled": false,
+      "territory_mapping_method": "explicit_reviewed_event_to_earth",
+      "territory_weight": null,
+      "source_page": null,
+      "source_locator": "Historical source milestone — 1968",
+      "definition_notes": "Chronology/context evidence; not a direct 1–10 measurement.",
+      "quality_flags": [
+        "historical_governance_context",
+        "supports_squash_tradition",
+        "supports_elite_support"
+      ]
+    }
+  ]
+}

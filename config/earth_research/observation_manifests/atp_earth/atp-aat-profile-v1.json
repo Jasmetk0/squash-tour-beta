@@ -3,7 +3,7 @@
   "dataset_id": "atp-aat-profile-v1",
   "source_id": "aat-official-profile",
   "relative_path": "observations/normalized/atp-aat-profile-v1.json",
-  "sha256": "f9e2ceb23b0c4091e2fde17a851a5585616dbca0fb9455a6f95cb09e12633f87",
+  "sha256": "d0e58063369137bca2bbeb6f464e99abc4c0845e3a980083276fa2b0125fb8d0",
   "record_count": 3,
   "source_document_sha256": null,
   "input_artifact_sha256": null,

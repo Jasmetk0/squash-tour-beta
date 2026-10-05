@@ -31,13 +31,14 @@
       "cross_country_comparable": false,
       "is_direct_observation": true,
       "is_statistically_modelled": false,
-      "territory_mapping_method": "direct_earth_country",
+      "territory_mapping_method": "explicit_reviewed_fact_to_earth",
       "territory_weight": null,
       "source_page": null,
       "source_locator": null,
       "definition_notes": "Institutional tradition/support context; not a quantitative player measure.",
       "quality_flags": [
-        "institutional_context"
+        "institutional_context",
+        "explicit_reviewed_country_fact"
       ]
     },
     {
@@ -62,13 +63,14 @@
       "cross_country_comparable": false,
       "is_direct_observation": true,
       "is_statistically_modelled": false,
-      "territory_mapping_method": "direct_earth_country",
+      "territory_mapping_method": "explicit_reviewed_fact_to_earth",
       "territory_weight": null,
       "source_page": null,
       "source_locator": null,
       "definition_notes": "Formal international/confederation structure context.",
       "quality_flags": [
-        "institutional_context"
+        "institutional_context",
+        "explicit_reviewed_country_fact"
       ]
     },
     {
@@ -93,14 +95,15 @@
       "cross_country_comparable": false,
       "is_direct_observation": true,
       "is_statistically_modelled": false,
-      "territory_mapping_method": "direct_earth_country",
+      "territory_mapping_method": "explicit_reviewed_fact_to_earth",
       "territory_weight": null,
       "source_page": null,
       "source_locator": null,
       "definition_notes": "Direct governance discontinuity relevant to organised competition/support, not evidence that participation fell to zero.",
       "quality_flags": [
         "governance_break",
-        "missing_not_zero"
+        "missing_not_zero",
+        "explicit_reviewed_country_fact"
       ]
     },
     {
@@ -125,13 +128,14 @@
       "cross_country_comparable": false,
       "is_direct_observation": true,
       "is_statistically_modelled": false,
-      "territory_mapping_method": "direct_earth_country",
+      "territory_mapping_method": "explicit_reviewed_fact_to_earth",
       "territory_weight": null,
       "source_page": null,
       "source_locator": null,
       "definition_notes": "Direct governance recovery marker.",
       "quality_flags": [
-        "governance_recovery"
+        "governance_recovery",
+        "explicit_reviewed_country_fact"
       ]
     },
     {
@@ -156,13 +160,14 @@
       "cross_country_comparable": false,
       "is_direct_observation": true,
       "is_statistically_modelled": false,
-      "territory_mapping_method": "direct_earth_country",
+      "territory_mapping_method": "explicit_reviewed_fact_to_earth",
       "territory_weight": null,
       "source_page": null,
       "source_locator": null,
       "definition_notes": "Senior elite competition context only.",
       "quality_flags": [
-        "outcome_context_only"
+        "outcome_context_only",
+        "explicit_reviewed_country_fact"
       ]
     },
     {
@@ -187,13 +192,14 @@
       "cross_country_comparable": false,
       "is_direct_observation": true,
       "is_statistically_modelled": false,
-      "territory_mapping_method": "direct_earth_country",
+      "territory_mapping_method": "explicit_reviewed_fact_to_earth",
       "territory_weight": null,
       "source_page": null,
       "source_locator": null,
       "definition_notes": "Senior elite competition context only.",
       "quality_flags": [
-        "outcome_context_only"
+        "outcome_context_only",
+        "explicit_reviewed_country_fact"
       ]
     },
     {
@@ -218,13 +224,14 @@
       "cross_country_comparable": false,
       "is_direct_observation": true,
       "is_statistically_modelled": false,
-      "territory_mapping_method": "direct_earth_country",
+      "territory_mapping_method": "explicit_reviewed_fact_to_earth",
       "territory_weight": null,
       "source_page": null,
       "source_locator": null,
       "definition_notes": "Modern infrastructure/support context only; it is not backcast.",
       "quality_flags": [
-        "modern_infrastructure"
+        "modern_infrastructure",
+        "explicit_reviewed_country_fact"
       ]
     },
     {
@@ -249,14 +256,15 @@
       "cross_country_comparable": false,
       "is_direct_observation": true,
       "is_statistically_modelled": false,
-      "territory_mapping_method": "direct_earth_country",
+      "territory_mapping_method": "explicit_reviewed_fact_to_earth",
       "territory_weight": null,
       "source_page": null,
       "source_locator": null,
       "definition_notes": "Current cultural/popularity context only; not a measured participation rate.",
       "quality_flags": [
         "current_context",
-        "not_participation_count"
+        "not_participation_count",
+        "explicit_reviewed_country_fact"
       ]
     }
   ]

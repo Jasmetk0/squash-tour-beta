@@ -3,7 +3,7 @@
   "dataset_id": "fifa-structural-ofc-samoa-profile-v1",
   "source_id": "ofc-samoa-profile",
   "relative_path": "observations/normalized/fifa-structural-ofc-samoa-profile-v1.json",
-  "sha256": "a80ef1808b057cb54ea7ee53670e219dfdba7683a0f80e2716927abb42a7c042",
+  "sha256": "d112b60232d1cbc732ec4b66e7b0a0e72fa13c6112919ae7c0887acbb8e24d48",
   "record_count": 8,
   "source_document_sha256": null,
   "input_artifact_sha256": null,

@@ -31,14 +31,15 @@
       "cross_country_comparable": false,
       "is_direct_observation": true,
       "is_statistically_modelled": false,
-      "territory_mapping_method": "direct_earth_country",
+      "territory_mapping_method": "explicit_reviewed_fact_to_earth",
       "territory_weight": null,
       "source_page": null,
       "source_locator": null,
       "definition_notes": "Direct decentralised access/development/support capacity from 2013 onward.",
       "quality_flags": [
         "regional_infrastructure",
-        "programme_capacity_not_outcome"
+        "programme_capacity_not_outcome",
+        "explicit_reviewed_country_fact"
       ]
     }
   ]

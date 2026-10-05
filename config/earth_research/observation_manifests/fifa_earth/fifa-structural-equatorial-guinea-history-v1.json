@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-equatorial-guinea-history-v1",
+  "source_id": "caf-equatorial-guinea-profile",
+  "relative_path": "observations/normalized/structural/fifa_structural_equatorial_guinea_history_v1.json",
+  "sha256": "b9cffaa28444f0a55b81c0c5c4c54f661793621a3b6a65b3be3e965ef6f0ce1c",
+  "record_count": 3,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

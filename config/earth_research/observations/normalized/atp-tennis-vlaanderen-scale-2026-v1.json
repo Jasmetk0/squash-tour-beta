@@ -12,7 +12,7 @@
     {
       "observation_id": "atp-tennis-vlaanderen-scale-2026-v1#bel-flanders-clubs-2026",
       "source_id": "tennis-vlaanderen-scale-2026",
-      "source_entity": "Tennis Belgium / KBTB",
+      "source_entity": "Tennis en Padel Vlaanderen",
       "earth_country_code": "BEL",
       "historical_entity": "Flanders / Tennis en Padel Vlaanderen (partial Belgium coverage)",
       "observation_year": 2026,
@@ -46,7 +46,7 @@
     {
       "observation_id": "atp-tennis-vlaanderen-scale-2026-v1#bel-flanders-members-2026",
       "source_id": "tennis-vlaanderen-scale-2026",
-      "source_entity": "Tennis Belgium / KBTB",
+      "source_entity": "Tennis en Padel Vlaanderen",
       "earth_country_code": "BEL",
       "historical_entity": "Flanders / Tennis en Padel Vlaanderen (partial Belgium coverage)",
       "observation_year": 2026,

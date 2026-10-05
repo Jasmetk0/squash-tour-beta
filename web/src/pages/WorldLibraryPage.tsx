@@ -281,6 +281,152 @@ function CountryCell({ value }: { value: ReactNode }): JSX.Element {
   return <td>{value === null || value === undefined || value === '' ? '—' : value}</td>
 }
 
+
+const COUNTRY_RATING_ATTRIBUTES = [
+  ['squash_popularity', 'Squash Popularity'],
+  ['squash_access', 'Squash Access'],
+  ['development_quality', 'Development Quality'],
+  ['competition_quality', 'Competition Quality'],
+  ['elite_support', 'Elite Support'],
+  ['squash_tradition', 'Squash Tradition'],
+] as const
+
+type CountryRatingAttribute = typeof COUNTRY_RATING_ATTRIBUTES[number][0]
+type RatingPoint = { year: number, value: number }
+type CountryRatingSeries = { code: string, name: string, points: RatingPoint[], color: string }
+
+function ratingValue(country: CountryRecord, year: string, attribute: CountryRatingAttribute): number | null {
+  const yearEntry = country.rating_history?.years?.[year]
+  if (typeof yearEntry !== 'object' || yearEntry === null || Array.isArray(yearEntry)) return null
+  const ratings = (yearEntry as { ratings?: unknown }).ratings
+  if (typeof ratings !== 'object' || ratings === null || Array.isArray(ratings)) return null
+  const evidence = (ratings as Record<string, unknown>)[attribute]
+  if (typeof evidence !== 'object' || evidence === null || Array.isArray(evidence)) return null
+  const value = (evidence as { value?: unknown }).value
+  return typeof value === 'number' && Number.isFinite(value) && value >= 1 && value <= 10 ? value : null
+}
+
+function countrySeries(countries: CountryRecord[], attribute: CountryRatingAttribute): CountryRatingSeries[] {
+  const available = countries
+    .map(country => {
+      const points = Object.keys(country.rating_history?.years ?? {})
+        .map(year => ({ year: Number(year), value: ratingValue(country, year, attribute) }))
+        .filter((point): point is RatingPoint => Number.isInteger(point.year) && point.year >= 1955 && point.year <= 2026 && point.value !== null)
+        .sort((left, right) => left.year - right.year)
+      return { code: country.code, name: country.name, points }
+    })
+    .filter(series => series.points.length > 0)
+    .sort((left, right) => left.code.localeCompare(right.code))
+  return available.map((series, index) => ({
+    ...series,
+    color: 'hsl(' + Math.round((index * 360) / Math.max(1, available.length)) + ' 68% 48%)',
+  }))
+}
+
+function CountryAttributeHistoryChart({ countries, attribute, label }: { countries: CountryRecord[], attribute: CountryRatingAttribute, label: string }): JSX.Element {
+  const series = countrySeries(countries, attribute)
+  const width = 960
+  const height = 360
+  const left = 58
+  const right = 22
+  const top = 18
+  const bottom = 42
+  const plotWidth = width - left - right
+  const plotHeight = height - top - bottom
+  const x = (year: number) => left + ((year - 1955) / (2026 - 1955)) * plotWidth
+  const y = (value: number) => top + ((10 - value) / 9) * plotHeight
+  const xTicks = [1955, 1965, 1975, 1985, 1995, 2005, 2015, 2026]
+  const yTicks = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+
+  return (
+    <div style={{ marginBottom: '2rem' }}>
+      <h4>{label}</h4>
+      {series.length === 0 ? (
+        <p className="status">No historical rating data are available for this attribute in this package.</p>
+      ) : (
+        <>
+          <p className="status">{series.length} countries with historical data · X = year (1955–2026) · Y = rating (1–10)</p>
+          <div style={{ overflowX: 'auto' }}>
+            <svg
+              aria-label={label + ' history chart'}
+              role="img"
+              viewBox={'0 0 ' + width + ' ' + height}
+              style={{ display: 'block', minWidth: '720px', width: '100%', maxWidth: '1200px', background: 'var(--panel-bg, transparent)' }}
+            >
+              {yTicks.map(value => (
+                <g key={'y-' + value}>
+                  <line x1={left} x2={width - right} y1={y(value)} y2={y(value)} stroke="currentColor" strokeOpacity="0.12" />
+                  <text x={left - 10} y={y(value) + 4} textAnchor="end" fontSize="12" fill="currentColor">{value}</text>
+                </g>
+              ))}
+              {xTicks.map(year => (
+                <g key={'x-' + year}>
+                  <line x1={x(year)} x2={x(year)} y1={top} y2={height - bottom} stroke="currentColor" strokeOpacity="0.08" />
+                  <text x={x(year)} y={height - 16} textAnchor="middle" fontSize="12" fill="currentColor">{year}</text>
+                </g>
+              ))}
+              <line x1={left} x2={left} y1={top} y2={height - bottom} stroke="currentColor" strokeOpacity="0.55" />
+              <line x1={left} x2={width - right} y1={height - bottom} y2={height - bottom} stroke="currentColor" strokeOpacity="0.55" />
+              {series.map(country => country.points.length > 1 ? (
+                <polyline
+                  key={country.code}
+                  aria-label={country.code + ' ' + country.name}
+                  points={country.points.map(point => x(point.year).toFixed(2) + ',' + y(point.value).toFixed(2)).join(' ')}
+                  fill="none"
+                  stroke={country.color}
+                  strokeWidth="1.7"
+                  strokeOpacity="0.8"
+                  vectorEffect="non-scaling-stroke"
+                >
+                  <title>{country.code + ' — ' + country.name}</title>
+                </polyline>
+              ) : (
+                <circle
+                  key={country.code}
+                  aria-label={country.code + ' ' + country.name}
+                  cx={x(country.points[0].year)}
+                  cy={y(country.points[0].value)}
+                  r="3"
+                  fill={country.color}
+                >
+                  <title>{country.code + ' — ' + country.name + ': ' + country.points[0].year + ' = ' + country.points[0].value}</title>
+                </circle>
+              ))}
+            </svg>
+          </div>
+          <details>
+            <summary>Countries shown ({series.length})</summary>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem 0.9rem', marginTop: '0.6rem' }}>
+              {series.map(country => (
+                <span key={country.code} style={{ whiteSpace: 'nowrap' }}>
+                  <span aria-hidden="true" style={{ display: 'inline-block', width: '0.8rem', height: '0.8rem', marginRight: '0.3rem', backgroundColor: country.color, verticalAlign: '-0.08rem' }} />
+                  <code>{country.code}</code> {country.name}
+                </span>
+              ))}
+            </div>
+          </details>
+        </>
+      )}
+    </div>
+  )
+}
+
+function CountryRatingHistoryCharts({ countries }: { countries: CountryRecord[] }): JSX.Element {
+  const countriesWithHistory = countries.filter(country => Object.keys(country.rating_history?.years ?? {}).length > 0)
+  return (
+    <SectionCard title="Country attribute history charts">
+      <p>
+        Historical country ratings available in this World Package. Every chart uses the same axes so packages and attributes remain directly comparable.
+        Countries without authored historical rating years are not fabricated into the graph.
+      </p>
+      <DetailRow label="Countries with authored rating history" value={countriesWithHistory.length + ' / ' + countries.length} />
+      {COUNTRY_RATING_ATTRIBUTES.map(([attribute, label]) => (
+        <CountryAttributeHistoryChart key={attribute} countries={countries} attribute={attribute} label={label} />
+      ))}
+    </SectionCard>
+  )
+}
+
 function PackageCountriesTable({ countries, worldId }: { countries: CountryRecord[], worldId: string }): JSX.Element {
   return (
     <table>
@@ -347,6 +493,7 @@ export function WorldPackageCountriesPage(): JSX.Element {
             <DetailRow label="Country count" value={data.country_count} />
             <DetailRow label="Package mode" value={`${data.type === 'custom' ? 'Custom' : 'Built-in'} · ${data.read_only ? 'Read-only' : 'Editable source'}`} />
           </SectionCard>
+          <CountryRatingHistoryCharts countries={data.countries} />
           <SectionCard title="Package countries">
             <p className="status">This inspection screen does not currently provide bulk edit, import, or export actions.</p>
             {data.type === 'custom' && data.source === 'custom_config' && !data.read_only && <p><Link to={`/admin/world/library/${encodeURIComponent(worldId)}/countries/new`}>+ Add country</Link></p>}

@@ -11,7 +11,7 @@ from beta_engine.application.earth_package_builder import load_earth_research_bu
 
 def test_fifa_first_reviewed_country_histories_are_complete_and_resolvable():
     bundle = load_earth_research_bundle(Path("config/earth_research/fifa_earth.json"))
-    assert set(bundle.research.countries) == {"CZE", "SVK", "JPN", "IND", "MAR", "SEN", "FRO", "USA", "ZAF", "BRA", "DEU", "ISL", "SMR", "ARG", "MEX", "AUS", "NZL", "FJI", "PNG", "SLB", "COK", "ASM", "PYF", "NCL", "WSM", "TON", "VUT", "FRA", "ESP", "ITA", "NLD", "BEL", "PRT", "AUT", "DNK", "SWE", "CHE"}
+    assert set(bundle.research.countries) == {"CZE", "SVK", "JPN", "IND", "MAR", "SEN", "FRO", "USA", "ZAF", "BRA", "DEU", "ISL", "SMR", "ARG", "MEX", "AUS", "NZL", "FJI", "PNG", "SLB", "COK", "ASM", "PYF", "NCL", "WSM", "TON", "VUT", "FRA", "ESP", "ITA", "NLD", "BEL", "PRT", "AUT", "DNK", "SWE", "CHE", "NOR", "FIN", "HRV", "SVN"}
     assert bundle.research.data_cutoff.isoformat() == "2026-10-03"
 
     for code in ("CZE", "SVK"):
@@ -1542,3 +1542,61 @@ def test_fifa_aut_dnk_swe_che_batch_is_complete_comparable_and_temporally_gated(
     assert swe.years[2006].ratings["squash_access"].value >= dnk.years[2006].ratings["squash_access"].value
     assert swe.years[2023].ratings["competition_quality"].value >= 9.0
     assert che.years[2026].ratings["squash_popularity"].value < aut.years[2026].ratings["squash_popularity"].value
+
+
+def test_fifa_nor_fin_hrv_svn_batch_preserves_governance_and_evidence_gating():
+    bundle = load_earth_research_bundle(Path("config/earth_research/fifa_earth.json"))
+    batch = {"NOR", "FIN", "HRV", "SVN"}
+
+    for code in batch:
+        history = bundle.research.countries[code]
+        assert history.missing_earth_years == []
+        assert len(history.years) == 72
+        assert history.reference_year == 2026
+        for year_number, year in history.years.items():
+            assert len(year.ratings) == 6
+            for rating in year.ratings.values():
+                assert rating.method == "derived_estimate"
+                assert rating.calibration_model_id == "fifa-earth-country-history-nor-fin-hrv-svn.v1"
+                assert rating.observation_ids
+                assert all(item in bundle.observations for item in rating.observation_ids)
+                if year_number < 2006:
+                    assert "fifa-big-count-2006" not in rating.source_ids
+                    assert not any(item.startswith("fifa-big-count-2006-") for item in rating.observation_ids)
+                if year_number < 2023:
+                    assert "fifa-professional-2023" not in rating.source_ids
+                    assert not any(item.startswith("fifa-professional-2023-") for item in rating.observation_ids)
+
+    nor = bundle.research.countries["NOR"]
+    assert nor.years[2006].ratings["squash_access"].value >= 9.5
+    assert nor.years[2006].ratings["squash_access"].value > nor.years[2006].ratings["competition_quality"].value
+
+    fin = bundle.research.countries["FIN"]
+    assert "fifa-structural-uefa-finland-profile-v1#fin-regional-centres-2026" not in (
+        fin.years[2025].ratings["development_quality"].observation_ids
+    )
+    assert "fifa-structural-uefa-finland-profile-v1#fin-regional-centres-2026" in (
+        fin.years[2026].ratings["development_quality"].observation_ids
+    )
+
+    hrv = bundle.research.countries["HRV"]
+    assert "Yugoslavia" in hrv.years[1990].historical_entity
+    assert hrv.years[1991].historical_entity == "Croatia"
+    assert hrv.years[1991].ratings["competition_quality"].value < hrv.years[1990].ratings["competition_quality"].value
+    assert "fifa-structural-uefa-croatia-profile-v1#hrv-fifa-renewal-1992" not in (
+        hrv.years[1991].ratings["competition_quality"].observation_ids
+    )
+    assert "fifa-structural-uefa-croatia-profile-v1#hrv-fifa-renewal-1992" in (
+        hrv.years[1992].ratings["competition_quality"].observation_ids
+    )
+
+    svn = bundle.research.countries["SVN"]
+    assert "Yugoslavia" in svn.years[1990].historical_entity
+    assert svn.years[1991].historical_entity == "Slovenia"
+    assert svn.years[1991].ratings["elite_support"].value < svn.years[1990].ratings["elite_support"].value
+    assert "fifa-structural-uefa-slovenia-profile-v1#svn-uefa-membership-1993" not in (
+        svn.years[1992].ratings["elite_support"].observation_ids
+    )
+    assert "fifa-structural-uefa-slovenia-profile-v1#svn-uefa-membership-1993" in (
+        svn.years[1993].ratings["elite_support"].observation_ids
+    )

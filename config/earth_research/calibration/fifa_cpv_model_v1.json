@@ -1,0 +1,81 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "fifa-earth-cpv-model.v1",
+  "world_id": "fifa_earth",
+  "data_cutoff": "2026-10-03",
+  "countries": [
+    "CPV"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "evidence_rules": [
+    "Association creation 1982, FIFA affiliation 1986 and CAF affiliation 2000 are separately gated.",
+    "Big Count 2006 enters only from 2006.",
+    "No checked-in Professional 2023 player/club observations exist, so none are inferred.",
+    "No ranking or event outcome is mechanically converted to a rating."
+  ],
+  "anchor_values": {
+    "CPV": {
+      "1955": [
+        3.2,
+        2.8,
+        2.9,
+        2.9,
+        2.6,
+        3.1
+      ],
+      "1982": [
+        4.7,
+        4.1,
+        4.2,
+        4.3,
+        3.9,
+        4.7
+      ],
+      "1986": [
+        5.1,
+        4.5,
+        4.7,
+        4.8,
+        4.4,
+        5.1
+      ],
+      "2000": [
+        5.5,
+        4.9,
+        5.1,
+        5.2,
+        4.8,
+        5.5
+      ],
+      "2006": [
+        5.9,
+        5.3,
+        5.5,
+        5.7,
+        5.2,
+        5.9
+      ],
+      "2023": [
+        6.1,
+        5.5,
+        5.7,
+        5.9,
+        5.4,
+        6.1
+      ],
+      "2026": [
+        6.2,
+        5.6,
+        5.8,
+        6,
+        5.5,
+        6.2
+      ]
+    }
+  },
+  "evidence_sources": [
+    "caf-cape-verde-profile",
+    "fifa-big-count-2006"
+  ],
+  "heldout_ranking_used": false
+}

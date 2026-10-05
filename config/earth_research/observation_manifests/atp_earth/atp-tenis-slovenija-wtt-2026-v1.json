@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-tenis-slovenija-wtt-2026-v1",
+  "source_id": "tenis-slovenija-wtt-2026",
+  "relative_path": "observations/normalized/atp-tenis-slovenija-wtt-2026-v1.json",
+  "sha256": "a7d7b2dfc91de3a35dfe3bfea48994db7227b9d2b648cbd3c7e703afd965f4ea",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-comoros-history-v1",
+  "source_id": "itf-comoros-return-to-play-2020",
+  "relative_path": "observations/normalized/atp_comoros_history_v1.json",
+  "sha256": "3c36bd021fc36e21de70d8ee15a3ce154b4abdc66170e9a59976dcc700ad4c48",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

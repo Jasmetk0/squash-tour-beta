@@ -428,11 +428,11 @@ def test_fifa_pyf_backcasts_do_not_claim_future_infrastructure_as_historical_sup
 
 def test_atp_complete_histories_are_evidence_resolvable_and_temporally_bounded():
     bundle = load_earth_research_bundle(Path("config/earth_research/atp_earth.json"))
-    expected_countries = {"CZE", "DEU", "USA", "AUS", "ESP", "SRB", "FRA", "GBR", "ARG", "JPN", "CAN", "ITA", "NED", "SWE", "SUI", "CRO", "POL", "CHN", "NOR", "GRE", "BEL", "ZAF", "DEN", "FIN", "NZL", "PRT", "IRL", "HUN", "ROU", "SVN", "SVK", "ISR", "BGR", "AUT", "TUR", "CYP", "BRA", "CHL"}
+    expected_countries = {"CZE", "DEU", "USA", "AUS", "ESP", "SRB", "FRA", "GBR", "ARG", "JPN", "CAN", "ITA", "NED", "SWE", "SUI", "CRO", "POL", "CHN", "NOR", "GRE", "BEL", "ZAF", "DEN", "FIN", "NZL", "PRT", "IRL", "HUN", "ROU", "SVN", "SVK", "ISR", "BGR", "AUT", "TUR", "CYP", "BRA", "CHL", "COL", "MEX"}
     assert set(bundle.research.countries) == expected_countries
     assert bundle.research.data_cutoff.isoformat() == "2026-10-04"
-    assert len(bundle.datasets) == 124
-    assert len(bundle.observations) == 372
+    assert len(bundle.datasets) == 132
+    assert len(bundle.observations) == 391
 
     expected_models = {
         "CZE": "atp-earth-cze-deu-seed-model.v1",
@@ -473,6 +473,8 @@ def test_atp_complete_histories_are_evidence_resolvable_and_temporally_bounded()
         "CYP": "atp-earth-tur-cyp-model.v1",
         "BRA": "atp-earth-bra-chl-model.v1",
         "CHL": "atp-earth-bra-chl-model.v1",
+        "COL": "atp-earth-col-mex-model.v1",
+        "MEX": "atp-earth-col-mex-model.v1",
     }
     for code, history in bundle.research.countries.items():
         assert history.missing_earth_years == []
@@ -1254,4 +1256,59 @@ def test_atp_bra_chl_batch_preserves_temporal_development_evidence():
     )
     assert "atp-fetech-national-minors-2026-v1#chl-development-grants-2026" in (
         chl.years[2026].ratings["elite_support"].observation_ids
+    )
+
+
+def test_atp_col_mex_batch_preserves_current_evidence_gating():
+    bundle = load_earth_research_bundle(Path("config/earth_research/atp_earth.json"))
+
+    for code in ("COL", "MEX"):
+        history = bundle.research.countries[code]
+        assert history.missing_earth_years == []
+        assert len(history.years) == 72
+        for year in history.years.values():
+            assert len(year.ratings) == 6
+            for rating in year.ratings.values():
+                assert rating.calibration_model_id == "atp-earth-col-mex-model.v1"
+                assert rating.observation_ids
+                assert all(item in bundle.observations for item in rating.observation_ids)
+
+    col = bundle.research.countries["COL"]
+    assert "atp-fct-interligas-sites-2025-v1#col-interligas-leagues-2025" not in (
+        col.years[2024].ratings["competition_quality"].observation_ids
+    )
+    assert "atp-fct-interligas-sites-2025-v1#col-interligas-leagues-2025" in (
+        col.years[2025].ratings["competition_quality"].observation_ids
+    )
+    assert "atp-fct-affiliation-competition-2026-v1#col-junior-tournaments-2026" not in (
+        col.years[2025].ratings["competition_quality"].observation_ids
+    )
+    assert "atp-fct-affiliation-competition-2026-v1#col-junior-tournaments-2026" in (
+        col.years[2026].ratings["competition_quality"].observation_ids
+    )
+    assert "atp-fct-child-circuit-2026-v1#col-child-circuit-2026" in (
+        col.years[2026].ratings["development_quality"].observation_ids
+    )
+
+    mex = bundle.research.countries["MEX"]
+    assert "atp-fmt-history-v1#mex-federation-founded-1963" not in (
+        mex.years[1962].ratings["squash_tradition"].observation_ids
+    )
+    assert "atp-fmt-history-v1#mex-federation-founded-1963" in (
+        mex.years[1963].ratings["squash_tradition"].observation_ids
+    )
+    assert "atp-fmt-cnij-2025-v1#mex-state-tournaments-2025" not in (
+        mex.years[2024].ratings["competition_quality"].observation_ids
+    )
+    assert "atp-fmt-cnij-2025-v1#mex-state-tournaments-2025" in (
+        mex.years[2025].ratings["competition_quality"].observation_ids
+    )
+    assert "atp-fmt-profile-2026-v1#mex-affiliates-2026" not in (
+        mex.years[2025].ratings["squash_access"].observation_ids
+    )
+    assert "atp-fmt-profile-2026-v1#mex-affiliates-2026" in (
+        mex.years[2026].ratings["squash_access"].observation_ids
+    )
+    assert "atp-fmt-regionals-2026-v1#mex-regional-players-2026" in (
+        mex.years[2026].ratings["competition_quality"].observation_ids
     )

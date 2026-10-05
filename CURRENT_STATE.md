@@ -1,5 +1,18 @@
 # Current implementation and next action
 
+## Candidate — ATP Colombia/Mexico batch (5 October 2026)
+
+- New complete ATP histories: **Colombia (COL), Mexico (MEX)**.
+- New ratings: 2 × 72 × 6 = **864**; ATP Earth now resolves **40 / 250 complete histories**.
+- ATP research now resolves **132 normalized datasets / 391 observations**.
+- Colombia uses the 1932 federation anchor plus 2025 Interligas participation/training sites and 2026 national competition affiliation and entry-level child circuit.
+- Mexico uses formal club history from 1894, the 1963 FMT foundation, current ~30,000 affiliated players, 33 state associations, nationwide programme coverage and strongly documented 2025/2026 junior-circuit participation.
+- Modern affiliation and event counts remain scoped to federation/competition records and are not treated as total population participation.
+- Official ATP package publication remains blocked by the 250/250 completeness rule.
+
+**Next after green CI:** continue another evidence-rich ATP/FIFA batch.
+
+
 ## Candidate — ATP Brazil/Chile batch (5 October 2026)
 
 - New complete ATP histories: **Brazil (BRA), Chile (CHL)**.

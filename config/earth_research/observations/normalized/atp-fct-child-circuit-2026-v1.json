@@ -1,0 +1,44 @@
+{
+  "schema_version": "earth_source_observations.v2",
+  "dataset_id": "atp-fct-child-circuit-2026-v1",
+  "source_id": "fct-child-circuit-2026",
+  "source_url": "https://www.fedecoltenis.com/site/3764?galeria=1",
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05",
+  "scope": "2026 entry-level national children's development circuit.",
+  "limitations": "Programme design demonstrates access/development capacity and does not measure total child participation.",
+  "observations": [
+    {
+      "observation_id": "atp-fct-child-circuit-2026-v1#col-child-circuit-2026",
+      "source_id": "fct-child-circuit-2026",
+      "source_entity": "Federación Colombiana de Tenis",
+      "earth_country_code": "COL",
+      "historical_entity": null,
+      "observation_year": 2026,
+      "period_start_year": null,
+      "period_end_year": null,
+      "measurement_type": "entry_level_child_circuit",
+      "sex_scope": "mixed",
+      "age_scope": "4-5+",
+      "competition_scope": "entry-level national child circuit",
+      "numeric_value": null,
+      "text_value": "FCT launched a national children's circuit designed for boys and girls beginning their tennis experience from ages 4–5.",
+      "unit": "statement",
+      "collection_method": "official_narrative",
+      "coverage_scope": "national",
+      "comparability_group": null,
+      "cross_country_comparable": false,
+      "is_direct_observation": true,
+      "is_statistically_modelled": false,
+      "territory_mapping_method": "direct_earth_country",
+      "territory_weight": null,
+      "source_page": null,
+      "source_locator": null,
+      "definition_notes": "FCT launched a national children's circuit designed for boys and girls beginning their tennis experience from ages 4–5.",
+      "quality_flags": [
+        "programme_capacity_not_participation"
+      ]
+    }
+  ]
+}

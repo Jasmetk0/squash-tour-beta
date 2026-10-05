@@ -23,7 +23,7 @@ retained only as implementation history and do not override these numbers.
   **122 datasets / 1,615 normalized observations**.
 - **ATP Earth: 75 / 250** complete 1955–2026 country/territory histories, all six
   attributes present for every authored year. The canonical bundle resolves
-  **247 datasets / 605 normalized observations**.
+  **247 datasets / 606 normalized observations**.
 - The latest dual-world batch adds **Tanzania (TZA) and Zambia (ZMB)** to both
   packages, another **1,728 annual attribute ratings**.
 - FIFA Tanzania and Zambia preserve their pre-1955 association continuity and

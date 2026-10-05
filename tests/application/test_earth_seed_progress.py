@@ -726,3 +726,51 @@ def test_atp_complete_histories_are_evidence_resolvable_and_temporally_bounded()
         zaf.years[2026].ratings["competition_quality"].value
     )
 
+    nor = bundle.research.countries["NOR"]
+    assert "atp-casper-ruud-v1#nor-first-atp-title-2020" not in (
+        nor.years[2019].ratings["competition_quality"].observation_ids
+    )
+    assert "atp-casper-ruud-v1#nor-first-atp-title-2020" in (
+        nor.years[2020].ratings["competition_quality"].observation_ids
+    )
+    assert nor.years[2022].ratings["competition_quality"].value > (
+        nor.years[2015].ratings["competition_quality"].value
+    )
+
+    gre = bundle.research.countries["GRE"]
+    assert "atp-tsitsipas-v1#gre-atp-finals-title-2019" not in (
+        gre.years[2018].ratings["competition_quality"].observation_ids
+    )
+    assert "atp-tsitsipas-v1#gre-atp-finals-title-2019" in (
+        gre.years[2019].ratings["competition_quality"].observation_ids
+    )
+    assert "atp-greece-clubs-2026-v1#gre-member-clubs-2026" not in (
+        gre.years[2025].ratings["squash_access"].observation_ids
+    )
+
+    bel = bundle.research.countries["BEL"]
+    assert bundle.observations[
+        "atp-tennis-vlaanderen-scale-2026-v1#bel-flanders-members-2026"
+    ].coverage_scope == "partial"
+    assert bundle.observations[
+        "atp-tennis-vlaanderen-scale-2026-v1#bel-flanders-members-2026"
+    ].territory_mapping_method == "current_country_partial_association_context"
+    assert "partial Belgium coverage" in (
+        bel.years[2026].ratings["squash_access"].rationale
+    )
+    assert "atp-tennis-vlaanderen-scale-2026-v1#bel-flanders-members-2026" not in (
+        bel.years[2025].ratings["squash_access"].observation_ids
+    )
+
+    zaf = bundle.research.countries["ZAF"]
+    assert "Union of South Africa" in zaf.years[1955].historical_entity
+    assert zaf.years[2018].ratings["competition_quality"].value > (
+        zaf.years[2026].ratings["competition_quality"].value
+    )
+    assert "atp-tsa-development-v1#zaf-development-centres-2019" not in (
+        zaf.years[2018].ratings["development_quality"].observation_ids
+    )
+    assert "atp-tsa-development-v1#zaf-development-centres-2019" in (
+        zaf.years[2019].ratings["development_quality"].observation_ids
+    )
+

@@ -11,11 +11,11 @@ from beta_engine.application.earth_package_builder import load_earth_research_bu
 
 def test_fifa_first_reviewed_country_histories_are_complete_and_resolvable():
     bundle = load_earth_research_bundle(Path("config/earth_research/fifa_earth.json"))
-    assert set(bundle.research.countries) == {"CZE", "SVK", "JPN", "IND", "MAR", "SEN", "FRO", "USA", "ZAF", "BRA", "DEU", "ISL", "SMR", "ARG", "MEX", "AUS", "NZL", "FJI", "PNG", "SLB", "COK", "ASM", "PYF", "NCL", "WSM", "TON", "VUT", "FRA", "ESP", "ITA", "NLD", "BEL", "PRT", "AUT", "DNK", "SWE", "CHE", "NOR", "FIN", "HRV", "SVN", "POL", "ROU", "UKR", "LTU", "LVA", "EST", "CAN", "GRC", "SRB", "CHL", "HUN", "ISR", "BGR", "KAZ", "CHN", "TUR", "KOR", "THA", "COL", "CYP", "ECU", "IRL", "EGY", "MYS", "SAU", "ARE", "QAT", "OMN", "GHA", "NGA", "KEN", "UGA", "TZA", "ZMB", "ZWE", "MWI", "BWA", "NAM"}
+    assert set(bundle.research.countries) == {"CZE", "SVK", "JPN", "IND", "MAR", "SEN", "FRO", "USA", "ZAF", "BRA", "DEU", "ISL", "SMR", "ARG", "MEX", "AUS", "NZL", "FJI", "PNG", "SLB", "COK", "ASM", "PYF", "NCL", "WSM", "TON", "VUT", "FRA", "ESP", "ITA", "NLD", "BEL", "PRT", "AUT", "DNK", "SWE", "CHE", "NOR", "FIN", "HRV", "SVN", "POL", "ROU", "UKR", "LTU", "LVA", "EST", "CAN", "GRC", "SRB", "CHL", "HUN", "ISR", "BGR", "KAZ", "CHN", "TUR", "KOR", "THA", "COL", "CYP", "ECU", "IRL", "EGY", "MYS", "SAU", "ARE", "QAT", "OMN", "GHA", "NGA", "KEN", "UGA", "TZA", "ZMB", "ZWE", "MWI", "BWA", "NAM", "SWZ", "MOZ"}
     assert bundle.research.data_cutoff.isoformat() == "2026-10-03"
-    assert len(bundle.research.countries) == 79
-    assert len(bundle.datasets) == 126
-    assert len(bundle.observations) == 1628
+    assert len(bundle.research.countries) == 81
+    assert len(bundle.datasets) == 128
+    assert len(bundle.observations) == 1634
 
     for code in ("CZE", "SVK"):
         history = bundle.research.countries[code]
@@ -461,11 +461,11 @@ def test_fifa_fra_esp_batch_is_complete_and_temporally_dimensioned():
 
 def test_atp_complete_histories_are_evidence_resolvable_and_temporally_bounded():
     bundle = load_earth_research_bundle(Path("config/earth_research/atp_earth.json"))
-    expected_countries = {"CZE", "DEU", "USA", "AUS", "ESP", "SRB", "FRA", "GBR", "ARG", "JPN", "CAN", "ITA", "NED", "SWE", "SUI", "CRO", "POL", "CHN", "NOR", "GRE", "BEL", "ZAF", "DEN", "FIN", "NZL", "PRT", "IRL", "HUN", "ROU", "SVN", "SVK", "ISR", "BGR", "AUT", "TUR", "CYP", "BRA", "CHL", "COL", "MEX", "ECU", "IND", "KOR", "THA", "KAZ", "LVA", "EST", "LTU", "UKR", "MAR", "SEN", "ISL", "SMR", "FRO", "FJI", "PNG", "WSM", "SLB", "TON", "COK", "NCL", "ASM", "VUT", "EGY", "MYS", "PHL", "IDN", "SGP", "PAK", "GHA", "NGA", "KEN", "UGA", "TZA", "ZMB", "ZWE", "MWI", "BWA", "NAM"}
+    expected_countries = {"CZE", "DEU", "USA", "AUS", "ESP", "SRB", "FRA", "GBR", "ARG", "JPN", "CAN", "ITA", "NED", "SWE", "SUI", "CRO", "POL", "CHN", "NOR", "GRE", "BEL", "ZAF", "DEN", "FIN", "NZL", "PRT", "IRL", "HUN", "ROU", "SVN", "SVK", "ISR", "BGR", "AUT", "TUR", "CYP", "BRA", "CHL", "COL", "MEX", "ECU", "IND", "KOR", "THA", "KAZ", "LVA", "EST", "LTU", "UKR", "MAR", "SEN", "ISL", "SMR", "FRO", "FJI", "PNG", "WSM", "SLB", "TON", "COK", "NCL", "ASM", "VUT", "EGY", "MYS", "PHL", "IDN", "SGP", "PAK", "GHA", "NGA", "KEN", "UGA", "TZA", "ZMB", "ZWE", "MWI", "BWA", "NAM", "SWZ", "MOZ"}
     assert set(bundle.research.countries) == expected_countries
     assert bundle.research.data_cutoff.isoformat() == "2026-10-04"
-    assert len(bundle.datasets) == 258
-    assert len(bundle.observations) == 622
+    assert len(bundle.datasets) == 262
+    assert len(bundle.observations) == 628
 
     expected_models = {
         "CZE": "atp-earth-cze-deu-seed-model.v1",
@@ -547,6 +547,8 @@ def test_atp_complete_histories_are_evidence_resolvable_and_temporally_bounded()
         "MWI": "atp-earth-mwi-model.v1",
         "BWA": "atp-earth-bwa-model.v1",
         "NAM": "atp-earth-nam-model.v1",
+        "SWZ": "atp-earth-swz-model.v1",
+        "MOZ": "atp-earth-moz-model.v1",
     }
     for code, history in bundle.research.countries.items():
         assert history.missing_earth_years == []
@@ -3420,5 +3422,138 @@ def test_botswana_namibia_dual_world_batch_is_complete_resolvable_and_time_gated
     assert (
         "atp-namibia-events-2026-v1#nam-j60-windhoek-2026"
         in nam_atp.years[2026].ratings["competition_quality"].observation_ids
+    )
+
+def test_eswatini_mozambique_dual_world_batch_is_complete_resolvable_and_time_gated():
+    fifa = load_earth_research_bundle(Path("config/earth_research/fifa_earth.json"))
+    atp = load_earth_research_bundle(Path("config/earth_research/atp_earth.json"))
+
+    for bundle, expected_models in (
+        (
+            fifa,
+            {
+                "SWZ": "fifa-earth-swz-model.v1",
+                "MOZ": "fifa-earth-moz-model.v1",
+            },
+        ),
+        (
+            atp,
+            {
+                "SWZ": "atp-earth-swz-model.v1",
+                "MOZ": "atp-earth-moz-model.v1",
+            },
+        ),
+    ):
+        for code, model_id in expected_models.items():
+            history = bundle.research.countries[code]
+            assert history.missing_earth_years == []
+            assert len(history.years) == 72
+            assert history.reference_year == 2026
+            for year in history.years.values():
+                assert len(year.ratings) == 6
+                for rating in year.ratings.values():
+                    assert rating.method == "derived_estimate"
+                    assert rating.calibration_model_id == model_id
+                    assert rating.observation_ids
+                    assert all(item in bundle.observations for item in rating.observation_ids)
+
+    swz_fifa = fifa.research.countries["SWZ"]
+    assert (
+        "fifa-structural-eswatini-history-v1#swz-created-1968"
+        not in swz_fifa.years[1967].ratings["squash_tradition"].observation_ids
+    )
+    assert (
+        "fifa-structural-eswatini-history-v1#swz-created-1968"
+        in swz_fifa.years[1968].ratings["squash_tradition"].observation_ids
+    )
+    assert (
+        "fifa-structural-eswatini-history-v1#swz-fifa-caf-1978"
+        not in swz_fifa.years[1977].ratings["competition_quality"].observation_ids
+    )
+    assert (
+        "fifa-structural-eswatini-history-v1#swz-fifa-caf-1978"
+        in swz_fifa.years[1978].ratings["competition_quality"].observation_ids
+    )
+    assert (
+        "fifa-big-count-2006-all-players-v2#swaziland"
+        not in swz_fifa.years[2005].ratings["squash_popularity"].observation_ids
+    )
+    assert (
+        "fifa-big-count-2006-all-players-v2#swaziland"
+        in swz_fifa.years[2006].ratings["squash_popularity"].observation_ids
+    )
+    assert all(
+        "fifa-professional-2023" not in source_id
+        for year in swz_fifa.years.values()
+        for rating in year.ratings.values()
+        for source_id in rating.source_ids
+    )
+
+    moz_fifa = fifa.research.countries["MOZ"]
+    assert (
+        "fifa-structural-mozambique-history-v1#moz-created-1976"
+        not in moz_fifa.years[1975].ratings["squash_tradition"].observation_ids
+    )
+    assert (
+        "fifa-structural-mozambique-history-v1#moz-created-1976"
+        in moz_fifa.years[1976].ratings["squash_tradition"].observation_ids
+    )
+    assert (
+        "fifa-structural-mozambique-history-v1#moz-fifa-caf-1980"
+        not in moz_fifa.years[1979].ratings["competition_quality"].observation_ids
+    )
+    assert (
+        "fifa-structural-mozambique-history-v1#moz-fifa-caf-1980"
+        in moz_fifa.years[1980].ratings["competition_quality"].observation_ids
+    )
+    assert (
+        "fifa-professional-2023-players-v2#mozambique-p105"
+        not in moz_fifa.years[2022].ratings["competition_quality"].observation_ids
+    )
+    assert (
+        "fifa-professional-2023-players-v2#mozambique-p105"
+        in moz_fifa.years[2023].ratings["competition_quality"].observation_ids
+    )
+
+    swz_atp = atp.research.countries["SWZ"]
+    assert "derived_pre_evidence_context" in atp.observations[
+        "atp-eswatini-history-v1#swz-pre-documented-baseline-1955-2019"
+    ].quality_flags
+    assert (
+        "atp-eswatini-history-v1#swz-play-possible-2020"
+        not in swz_atp.years[2019].ratings["squash_access"].observation_ids
+    )
+    assert (
+        "atp-eswatini-history-v1#swz-play-possible-2020"
+        in swz_atp.years[2020].ratings["squash_access"].observation_ids
+    )
+    assert (
+        "atp-eswatini-development-2026-v1#swz-eligible-2026"
+        not in swz_atp.years[2025].ratings["development_quality"].observation_ids
+    )
+    assert (
+        "atp-eswatini-development-2026-v1#swz-eligible-2026"
+        in swz_atp.years[2026].ratings["development_quality"].observation_ids
+    )
+
+    moz_atp = atp.research.countries["MOZ"]
+    assert "derived_pre_evidence_context" in atp.observations[
+        "atp-mozambique-history-v1#moz-pre-documented-baseline-1955-2019"
+    ].quality_flags
+    assert (
+        "atp-mozambique-history-v1#moz-play-possible-2020"
+        not in moz_atp.years[2019].ratings["squash_access"].observation_ids
+    )
+    assert (
+        "atp-mozambique-history-v1#moz-play-possible-2020"
+        in moz_atp.years[2020].ratings["squash_access"].observation_ids
+    )
+    assert (
+        "atp-mozambique-development-2026-v1#moz-eligible-2026"
+        not in moz_atp.years[2025].ratings["development_quality"].observation_ids
+    )
+    assert (
+        "atp-mozambique-development-2026-v1#moz-eligible-2026"
+        in moz_atp.years[2026].ratings["development_quality"].observation_ids
     )
 

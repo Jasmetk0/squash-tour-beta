@@ -1,0 +1,82 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "fifa-earth-bwa-model.v1",
+  "world_id": "fifa_earth",
+  "data_cutoff": "2026-10-03",
+  "countries": [
+    "BWA"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "evidence_rules": [
+    "CAF creation 1970, CAF affiliation 1976 and FIFA affiliation 1982 are separately gated.",
+    "Big Count 2006 enters only from 2006.",
+    "Professional 2023 player and club observations enter only from 2023.",
+    "No ranking or tournament result is a calibration target."
+  ],
+  "anchor_values": {
+    "BWA": {
+      "1955": [
+        4.2,
+        3.7,
+        3.6,
+        3.7,
+        3.4,
+        4
+      ],
+      "1970": [
+        5,
+        4.4,
+        4.5,
+        4.6,
+        4.2,
+        5
+      ],
+      "1976": [
+        5.3,
+        4.7,
+        4.8,
+        5,
+        4.6,
+        5.4
+      ],
+      "1982": [
+        5.6,
+        5,
+        5.1,
+        5.3,
+        4.9,
+        5.7
+      ],
+      "2006": [
+        6.5,
+        5.8,
+        6,
+        6.2,
+        5.8,
+        6.4
+      ],
+      "2023": [
+        6.8,
+        6.1,
+        6.4,
+        6.6,
+        6.3,
+        6.7
+      ],
+      "2026": [
+        6.9,
+        6.2,
+        6.5,
+        6.7,
+        6.4,
+        6.8
+      ]
+    }
+  },
+  "evidence_sources": [
+    "caf-botswana-profile",
+    "fifa-big-count-2006",
+    "fifa-professional-2023"
+  ],
+  "heldout_ranking_used": false
+}

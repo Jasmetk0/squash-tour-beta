@@ -1,0 +1,84 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "atp-earth-phl-model.v1",
+  "world_id": "atp_earth",
+  "data_cutoff": "2026-10-04",
+  "countries": [
+    "PHL"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "evidence_rules": [
+    "The 1946 PHILTA foundation establishes institutional continuity but does not imply constant modern governance quality.",
+    "The ITF suspension beginning in 2020 is represented as a real governance/international-competition shock, especially for competition and elite support.",
+    "The 2024 reinstatement is a governance recovery milestone, not an instant restoration to pre-suspension capacity.",
+    "The 2026 ITF directory confirms continued membership only.",
+    "No rankings, titles or player results are calibration targets."
+  ],
+  "anchor_values": {
+    "PHL": {
+      "1955": [
+        5,
+        4.6,
+        4.7,
+        4.9,
+        4.6,
+        6.3
+      ],
+      "1980": [
+        5.6,
+        5.1,
+        5.2,
+        5.4,
+        5.1,
+        6.8
+      ],
+      "2019": [
+        6.5,
+        6,
+        6.2,
+        6.4,
+        6.1,
+        7.4
+      ],
+      "2020": [
+        6.3,
+        5.8,
+        5.8,
+        5.5,
+        5.4,
+        7.4
+      ],
+      "2023": [
+        6.2,
+        5.8,
+        5.9,
+        5.6,
+        5.5,
+        7.4
+      ],
+      "2024": [
+        6.4,
+        6,
+        6.1,
+        6.1,
+        6,
+        7.5
+      ],
+      "2026": [
+        6.8,
+        6.4,
+        6.5,
+        6.7,
+        6.6,
+        7.6
+      ]
+    }
+  },
+  "evidence_sources": [
+    "itf-philippines-foundation-2015",
+    "itf-philippines-governance-2023",
+    "itf-philippines-reinstatement-2024",
+    "itf-philippines-current-2026"
+  ],
+  "heldout_ranking_used": false
+}

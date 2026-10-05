@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-cape-verde-history-v1",
+  "source_id": "caf-cape-verde-profile",
+  "relative_path": "observations/normalized/structural/fifa_structural_cape_verde_history_v1.json",
+  "sha256": "9ac238832727527f033715f8e3a6c750f0740b2debd1bcedef8cb2f306cd3b4b",
+  "record_count": 4,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

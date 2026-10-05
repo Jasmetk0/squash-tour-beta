@@ -4275,7 +4275,7 @@ def test_dza_civ_dual_world_batch_is_complete_resolvable_and_time_gated():
 
     fifa_dza = fifa.research.countries["DZA"]
     assert "dza-pre-association-1955-1961" in fifa_dza.years[1961].ratings["squash_tradition"].observation_ids[0]
-    assert "dza-created-1962" in fifa_dza.years[1962].ratings["squash_tradition"].observation_ids
+    assert "fifa-structural-algeria-history-v1#dza-created-1962" in fifa_dza.years[1962].ratings["squash_tradition"].observation_ids
     assert "dza-fifa-1963" not in " ".join(fifa_dza.years[1962].ratings["competition_quality"].observation_ids)
     assert "fifa-structural-algeria-history-v1#dza-fifa-1963" in fifa_dza.years[1963].ratings["competition_quality"].observation_ids
     assert "fifa-structural-algeria-history-v1#dza-caf-1964" in fifa_dza.years[1964].ratings["elite_support"].observation_ids

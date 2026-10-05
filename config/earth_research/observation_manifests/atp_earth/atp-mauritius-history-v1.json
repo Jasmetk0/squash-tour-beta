@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-mauritius-history-v1",
+  "source_id": "itf-mauritius-return-to-play-2020",
+  "relative_path": "observations/normalized/atp_mauritius_history_v1.json",
+  "sha256": "253187286265853a9083cef0fde6fc63fcd02a762f8a1434b908b38915b0e3d3",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

@@ -1,0 +1,66 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "fifa-earth-mus-model.v1",
+  "world_id": "fifa_earth",
+  "data_cutoff": "2026-10-03",
+  "countries": [
+    "MUS"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "evidence_rules": [
+    "Association creation 1952 and CAF affiliation 1953 predate the game-history window; FIFA affiliation enters from 1964.",
+    "Big Count 2006 enters only from 2006.",
+    "Professional 2023 club observation enters only from 2023; missing player data is not inferred.",
+    "No ranking or tournament result is a calibration target."
+  ],
+  "anchor_values": {
+    "MUS": {
+      "1955": [
+        4.8,
+        4.3,
+        4.3,
+        4.4,
+        4,
+        5.3
+      ],
+      "1964": [
+        5.4,
+        4.8,
+        4.9,
+        5.1,
+        4.6,
+        5.7
+      ],
+      "2006": [
+        6.2,
+        5.6,
+        5.8,
+        5.9,
+        5.5,
+        6.3
+      ],
+      "2023": [
+        6.3,
+        5.7,
+        5.9,
+        6,
+        5.7,
+        6.4
+      ],
+      "2026": [
+        6.4,
+        5.8,
+        6,
+        6.1,
+        5.8,
+        6.5
+      ]
+    }
+  },
+  "evidence_sources": [
+    "caf-mauritius-profile",
+    "fifa-big-count-2006",
+    "fifa-professional-2023"
+  ],
+  "heldout_ranking_used": false
+}

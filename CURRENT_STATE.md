@@ -1,5 +1,22 @@
 # Current implementation and next action
 
+## Current — Gabon/Mauritius dual-world Earth batch (5 October 2026)
+
+- Based directly on merged `buuk` commit `7022bb7109a79768b2d834ddd552c33b072e4001` (#1212); independent coverage PR.
+- New complete histories in both worlds: **Gabon (GAB) and Mauritius (MUS)**.
+- FIFA Earth: **87 / 250**, **134 datasets / 1,654 normalized observations**.
+- ATP Earth: **87 / 250**, **274 datasets / 646 normalized observations**.
+- Adds **1,728 authored annual attribute ratings**.
+- Gabon gates association creation 1962, FIFA 1966, CAF 1967, Big Count 2006 and Professional 2023 club evidence.
+- Mauritius carries documented 1952 creation and 1953 CAF affiliation into the 1955+ window, gates FIFA affiliation to 1964, and leaves missing Professional 2023 player data absent.
+- ATP histories separate low-confidence pre-2020 context from direct ITF 2020 status and 2026 development eligibility.
+- Official package publication remains blocked until **250 / 250** in each world.
+
+**Next after green CI:** continue the next evidence-backed dual-world batch.
+
+> Older Current/Candidate entries below are implementation history and do not override this section.
+
+
 ## Current — Cameroon/Benin dual-world Earth batch (5 October 2026)
 
 - Based directly on merged `buuk` commit `b2277a1fc06d79156612252c683ae53908bb24f3` (#1211); independent coverage PR.

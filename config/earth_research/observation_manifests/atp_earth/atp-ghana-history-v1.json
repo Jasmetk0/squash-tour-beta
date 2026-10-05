@@ -3,7 +3,7 @@
   "dataset_id": "atp-ghana-history-v1",
   "source_id": "ghana-sports-report-1952-secondary",
   "relative_path": "observations/normalized/atp_ghana_history_v1.json",
-  "sha256": "0e6016cd6f4256244bd293ddef87d003e3e40e07f10b60005e7879bb8a52257f",
+  "sha256": "7ebeecde836f7eff6b5dc448aab7fc6be7f15ec9bd51997303bdc27596982299",
   "record_count": 1,
   "source_document_sha256": null,
   "input_artifact_sha256": null,

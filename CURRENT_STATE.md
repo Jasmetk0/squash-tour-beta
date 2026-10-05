@@ -4905,3 +4905,16 @@ bands should shape 0..200 potential. No threshold is inferred from current OVR v
 - ATP Latvia is anchored by documented 1904 competition history, 1929 LTS foundation and 1937 ITF admission; the amateur league is gated from 2013 and current federation-development/ITF membership evidence to 2026.
 - ATP Estonia is anchored by the 1913 birth tournament, 1921 tennis section, 1922 ETL foundation and documented Estonian SSR Tennis Federation context in 1968; current ETL competition/development mandates are gated to 2026.
 - Official package publication remains blocked by the intentional **250 / 250** completeness rule for both worlds.
+
+
+
+## Candidate — ATP Lithuania recovery batch (5 October 2026)
+
+- New complete ATP history: **Lithuania (LTU)**.
+- New ratings: 72 × 6 = **432**; ATP Earth moves **47 -> 48 / 250 complete histories**.
+- Recovered the Lithuania-only evidence from superseded PR #1186 without reintroducing its duplicate Estonia/Latvia changes.
+- Added **3 normalized datasets / 4 observations**, taking ATP research from **159 datasets / 458 observations** to **162 datasets / 462 observations**.
+- Pre-1990 years model current-territory Lithuanian tennis under Soviet governance without inheriting USSR-wide player counts, outcomes or programme quality.
+- The 1959 federation-presidium milestone, 1995 Lithuanian Tennis Union establishment and 2022 national-federation mandate are each temporally gated to their documented years.
+- Sparse historical evidence remains conservative: modern federation structure is not backcast and no ranking/title outcome is used as a calibration target.
+- Official ATP package publication remains blocked by the intentional **250 / 250** completeness requirement.

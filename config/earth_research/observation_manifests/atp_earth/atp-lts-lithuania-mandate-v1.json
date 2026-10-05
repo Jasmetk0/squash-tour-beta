@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-lts-lithuania-mandate-v1",
+  "source_id": "lts-lithuania-statutes",
+  "relative_path": "observations/normalized/atp_lts_lithuania_mandate_v1.json",
+  "sha256": "a01eb69df2faf4f5a4cdaec530837be8e6821852523489947ab581e69f18809c",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

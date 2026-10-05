@@ -4889,3 +4889,19 @@ bands should shape 0..200 potential. No threshold is inferred from current OVR v
 - 2026 KTF evidence documents a 14-branch national network, children's/regional/coach-development programmes, a broad junior-to-ATP competition portfolio, and 39 high-performance centres with 394 courts. Those current facts are never backcast.
 - Modern Kazakhstan reaches strong but sub-9.0 ratings: access 8.8, development 8.9, competition 8.8, elite support 8.9. Infrastructure/programme scale alone does not qualify as world-leading 9+.
 - Official ATP package publication remains blocked by the intentional **250 / 250** completeness requirement.
+
+
+## Candidate — Baltic Latvia/Estonia dual FIFA + ATP batch (5 October 2026)
+
+- New complete FIFA histories: **Latvia (LVA), Estonia (EST)**.
+- New complete ATP histories: **Latvia (LVA), Estonia (EST)**.
+- New ratings: 4 × 72 × 6 = **1,728** total; FIFA Earth moves **45 -> 47 / 250**, ATP Earth moves **45 -> 47 / 250**.
+- FIFA adds **2 structural datasets / 11 observations**, taking FIFA research to **79 datasets / 1,494 observations**, with **1,472 safe country facts** and **209 direct-mapped observations**.
+- ATP adds **7 datasets / 15 observations**, taking ATP research to **159 datasets / 458 observations**.
+- Both sports explicitly model pre-1991 current-territory Latvia/Estonia inside Soviet governance without inheriting USSR-wide player counts, competition results or development quality.
+- FIFA Latvia preserves the 1921/1922 institutional line, Soviet Latvian championship context from 1945, restored independence in 1991 and Virsliga/UEFA transition in 1992.
+- FIFA Estonia preserves the 1921/1923 line, the 1940 interruption, EFA re-formation in 1988, FIFA return from 1991 and UEFA/Meistriliiga restart in 1992.
+- FIFA 2006/2023 global evidence remains strictly gated. Estonia's denser 2006 club/registration footprint and larger 2023 professional-player density support stronger access/pro ecosystem estimates than Latvia without becoming ranking-based tuning.
+- ATP Latvia is anchored by documented 1904 competition history, 1929 LTS foundation and 1937 ITF admission; the amateur league is gated from 2013 and current federation-development/ITF membership evidence to 2026.
+- ATP Estonia is anchored by the 1913 birth tournament, 1921 tennis section, 1922 ETL foundation and documented Estonian SSR Tennis Federation context in 1968; current ETL competition/development mandates are gated to 2026.
+- Official package publication remains blocked by the intentional **250 / 250** completeness rule for both worlds.

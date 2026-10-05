@@ -91,7 +91,8 @@ jobs:
       - name: Run focused Earth-data validation
         if: needs.changes.outputs.earth_data == 'true' && needs.changes.outputs.backend_core != 'true'
         run: |
-          python -m pytest tests/application/test_earth_seed_progress.py \
+          GITHUB_EVENT_NAME=earth_validation \
+            python -m pytest tests/application/test_earth_seed_progress.py \
             --maxfail=1 --durations=10
       - name: Run PR critical backend tests
         if: needs.changes.outputs.backend_core == 'true' || needs.changes.outputs.earth_data != 'true'

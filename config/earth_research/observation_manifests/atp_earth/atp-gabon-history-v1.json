@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-gabon-history-v1",
+  "source_id": "itf-gabon-return-to-play-2020",
+  "relative_path": "observations/normalized/atp_gabon_history_v1.json",
+  "sha256": "b444b35533b66c8fbd76caf9a717f78a8295bd1366be7497e0795a17945def49",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

@@ -1,5 +1,23 @@
 # Current implementation and next action
 
+## Current — Gambia/Cape Verde dual-world Earth batch (5 October 2026)
+
+- Based directly on merged `buuk` commit `bf18d58025d269921a5f53062e6d766e6d12baa6` (#1215); independent coverage PR.
+- New complete histories in both worlds: **Gambia (GAM) and Cape Verde (CPV)**.
+- FIFA Earth: **93 / 250**, **140 datasets / 1,676 normalized observations**.
+- ATP Earth: **93 / 250**, **286 datasets / 664 normalized observations**.
+- Adds **1,728 authored annual attribute ratings**.
+- Gambia carries 1952 creation into 1955+ and gates CAF 1966, FIFA 1968 and Big Count 2006.
+- Cape Verde gates creation 1982, FIFA 1986, CAF 2000 and Big Count 2006.
+- Neither country receives invented Professional 2023 values.
+- ATP histories separate low-confidence pre-2020 context from direct ITF 2020 activity/status evidence and 2026 development eligibility.
+- Official package publication remains blocked until **250 / 250** in each world.
+
+**Next after green CI:** continue the next evidence-backed dual-world batch.
+
+> Older Current/Candidate entries below are implementation history and do not override this section.
+
+
 ## Current — Rwanda/Burundi dual-world Earth batch (5 October 2026)
 
 - Based directly on merged `buuk` commit `9e559b69416465c22027a63998ce3efc81c216cb` (#1214); independent coverage PR.

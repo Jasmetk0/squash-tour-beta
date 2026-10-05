@@ -5048,3 +5048,19 @@ bands should shape 0..200 potential. No threshold is inferred from current OVR v
 - Solomon Islands uses an explicit low-confidence **1955–1992 pre-association baseline**, then gates federation formation to 1993, regional junior competition to 2012, OTF development activity to 2023 and current federation administration to 2026.
 - Tonga uses an explicit low-confidence **1955–1958 pre-association baseline**, then gates federation formation to 1959, East Pacific junior participation to 2024 and current federation/development structure to 2026.
 - No rankings, titles or match outcomes are calibration targets. Official package publication remains blocked by the intentional **250 / 250** completeness requirement.
+
+
+
+## Candidate — accelerated Colombia/Cyprus/Cook Islands/New Caledonia batch (5 October 2026)
+
+- New complete FIFA histories: **Colombia (COL)** and **Cyprus (CYP)**.
+- New complete ATP histories: **Cook Islands (COK)** and **New Caledonia (NCL)**.
+- New ratings: 4 × 72 × 6 = **1,728**; both FIFA Earth and ATP Earth move **59 -> 61 / 250 complete histories (24.4%)**.
+- FIFA adds **2 structural datasets / 5 direct observations**, taking FIFA research from **99 datasets / 1,561 observations** to **101 datasets / 1,566 observations**.
+- Colombia preserves its 1924 federation foundation as structural depth, with FIFA Big Count 2006 and Professional 2023 evidence strictly time-gated.
+- Cyprus preserves the 1934 CFA foundation and 1948 FIFA membership before independence, then separately gates the 1960 state transition, 1962 UEFA membership, 2006 participation, 2023 professional depth and 2026 domestic club/division structure.
+- ATP adds **8 datasets / 10 observations**, taking ATP research from **198 datasets / 527 observations** to **206 datasets / 537 observations**.
+- Cook Islands uses Tennis Cook Islands' ITF-recorded **1947** foundation, then separately gates the ITF grassroots/participation snapshot to 2020, junior regional competition to 2022 and current programmes to 2026.
+- New Caledonia uses the **1933** Ligue Calédonienne de Tennis foundation, 2010/2012 Oceania Championships hosting, and current 2026 FFT evidence of **18 clubs / 2,450 licensed players** plus OTF associate membership.
+- French metropolitan participation and outcomes are not inherited by New Caledonia; small-territory density is interpreted locally rather than as global scale.
+- No rankings, titles or match outcomes are calibration targets. Official package publication remains blocked by the intentional **250 / 250** completeness requirement.

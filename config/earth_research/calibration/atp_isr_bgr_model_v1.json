@@ -1,0 +1,24 @@
+{
+  "schema_version": "atp_earth_reviewed_country_batch.v1",
+  "model_id": "atp-earth-isr-bgr-model.v1",
+  "created_on": "2026-10-05",
+  "countries": [
+    "ISR",
+    "BGR"
+  ],
+  "coverage": {
+    "from": 1955,
+    "to": 2026,
+    "attributes": 6
+  },
+  "rating_scale": "country_ratings_1_10.v2",
+  "method": "Country-specific piecewise annual histories grounded in federation continuity, competition systems and temporally gated development/access evidence.",
+  "evidence_rules": [
+    "Israel ratings use tennis institutions and competition/development evidence only; geopolitical or military conditions are not used as direct sport-rating inputs.",
+    "Bulgarian pre-1955 federation and competition history anchors tradition but does not become measured 1955 participation.",
+    "Current clubs, programmes and competition calendars are not backcast.",
+    "Programme capacity is distinct from participation and player outcomes.",
+    "Competition quality is based on organised competition opportunity/system depth rather than one star player's peak.",
+    "No held-out validation ranking is used for tuning."
+  ]
+}

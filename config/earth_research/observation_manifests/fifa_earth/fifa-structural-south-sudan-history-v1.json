@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-south-sudan-history-v1",
+  "source_id": "caf-south-sudan-profile",
+  "relative_path": "observations/normalized/structural/fifa_structural_south_sudan_history_v1.json",
+  "sha256": "a5c93673ff338f2a1247e333de6f9f5df864642c57f4d35882b654c6caedf95d",
+  "record_count": 3,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

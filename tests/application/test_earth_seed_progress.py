@@ -428,11 +428,11 @@ def test_fifa_pyf_backcasts_do_not_claim_future_infrastructure_as_historical_sup
 
 def test_atp_complete_histories_are_evidence_resolvable_and_temporally_bounded():
     bundle = load_earth_research_bundle(Path("config/earth_research/atp_earth.json"))
-    expected_countries = {"CZE", "DEU", "USA", "AUS", "ESP", "SRB", "FRA", "GBR", "ARG", "JPN", "CAN", "ITA", "NED", "SWE", "SUI", "CRO", "POL", "CHN", "NOR", "GRE", "BEL", "ZAF", "DEN", "FIN", "NZL", "PRT", "IRL", "HUN", "ROU", "SVN", "SVK", "ISR", "BGR", "AUT", "TUR", "CYP"}
+    expected_countries = {"CZE", "DEU", "USA", "AUS", "ESP", "SRB", "FRA", "GBR", "ARG", "JPN", "CAN", "ITA", "NED", "SWE", "SUI", "CRO", "POL", "CHN", "NOR", "GRE", "BEL", "ZAF", "DEN", "FIN", "NZL", "PRT", "IRL", "HUN", "ROU", "SVN", "SVK", "ISR", "BGR", "AUT", "TUR", "CYP", "BRA", "CHL"}
     assert set(bundle.research.countries) == expected_countries
     assert bundle.research.data_cutoff.isoformat() == "2026-10-04"
-    assert len(bundle.datasets) == 115
-    assert len(bundle.observations) == 349
+    assert len(bundle.datasets) == 124
+    assert len(bundle.observations) == 372
 
     expected_models = {
         "CZE": "atp-earth-cze-deu-seed-model.v1",
@@ -471,6 +471,8 @@ def test_atp_complete_histories_are_evidence_resolvable_and_temporally_bounded()
         "AUT": "atp-earth-aut-model.v1",
         "TUR": "atp-earth-tur-cyp-model.v1",
         "CYP": "atp-earth-tur-cyp-model.v1",
+        "BRA": "atp-earth-bra-chl-model.v1",
+        "CHL": "atp-earth-bra-chl-model.v1",
     }
     for code, history in bundle.research.countries.items():
         assert history.missing_earth_years == []
@@ -1203,4 +1205,53 @@ def test_atp_tur_cyp_batch_preserves_temporal_and_territorial_scope():
     )
     assert "atp-ctf-development-2026-v1#cyp-development-championship-2026" in (
         cyp.years[2026].ratings["development_quality"].observation_ids
+    )
+
+
+def test_atp_bra_chl_batch_preserves_temporal_development_evidence():
+    bundle = load_earth_research_bundle(Path("config/earth_research/atp_earth.json"))
+
+    for code in ("BRA", "CHL"):
+        history = bundle.research.countries[code]
+        assert history.missing_earth_years == []
+        assert len(history.years) == 72
+        for year in history.years.values():
+            assert len(year.ratings) == 6
+            for rating in year.ratings.values():
+                assert rating.calibration_model_id == "atp-earth-bra-chl-model.v1"
+                assert rating.observation_ids
+                assert all(item in bundle.observations for item in rating.observation_ids)
+
+    bra = bundle.research.countries["BRA"]
+    assert "atp-cbt-profile-v1#bra-affiliated-athletes-current" not in (
+        bra.years[2025].ratings["squash_access"].observation_ids
+    )
+    assert "atp-cbt-profile-v1#bra-affiliated-athletes-current" in (
+        bra.years[2026].ratings["squash_access"].observation_ids
+    )
+    assert "atp-cbt-junior-regulations-2026-v1#bra-national-junior-grades-2026" in (
+        bra.years[2026].ratings["competition_quality"].observation_ids
+    )
+    assert "atp-cbt-coach-registry-2026-v1#bra-coach-grades-2026" in (
+        bra.years[2026].ratings["development_quality"].observation_ids
+    )
+    assert bundle.observations[
+        "atp-bra-pre-cbt-history-v1#bra-parana-federation-1950"
+    ].coverage_scope == "partial"
+
+    chl = bundle.research.countries["CHL"]
+    assert "atp-fetech-jti-2025-v1#chl-jti-centres-2025" not in (
+        chl.years[2024].ratings["development_quality"].observation_ids
+    )
+    assert "atp-fetech-jti-2025-v1#chl-jti-centres-2025" in (
+        chl.years[2025].ratings["development_quality"].observation_ids
+    )
+    assert "atp-fetech-minor-circuit-growth-2026-v1#chl-junior-circuit-growth-2026" not in (
+        chl.years[2025].ratings["competition_quality"].observation_ids
+    )
+    assert "atp-fetech-minor-circuit-growth-2026-v1#chl-junior-circuit-growth-2026" in (
+        chl.years[2026].ratings["competition_quality"].observation_ids
+    )
+    assert "atp-fetech-national-minors-2026-v1#chl-development-grants-2026" in (
+        chl.years[2026].ratings["elite_support"].observation_ids
     )

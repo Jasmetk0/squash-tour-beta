@@ -11,7 +11,7 @@ from beta_engine.application.earth_package_builder import load_earth_research_bu
 
 def test_fifa_first_reviewed_country_histories_are_complete_and_resolvable():
     bundle = load_earth_research_bundle(Path("config/earth_research/fifa_earth.json"))
-    assert set(bundle.research.countries) == {"CZE", "SVK", "JPN", "IND", "MAR", "SEN", "FRO", "USA", "ZAF", "BRA", "DEU", "ISL", "SMR", "ARG", "MEX", "AUS", "NZL", "FJI", "PNG", "SLB", "COK", "ASM", "PYF", "NCL", "WSM", "TON", "VUT", "FRA", "ESP", "ITA", "NLD", "BEL", "PRT", "AUT", "DNK", "SWE", "CHE", "NOR", "FIN", "HRV", "SVN", "POL", "ROU", "UKR", "LTU"}
+    assert set(bundle.research.countries) == {"CZE", "SVK", "JPN", "IND", "MAR", "SEN", "FRO", "USA", "ZAF", "BRA", "DEU", "ISL", "SMR", "ARG", "MEX", "AUS", "NZL", "FJI", "PNG", "SLB", "COK", "ASM", "PYF", "NCL", "WSM", "TON", "VUT", "FRA", "ESP", "ITA", "NLD", "BEL", "PRT", "AUT", "DNK", "SWE", "CHE", "NOR", "FIN", "HRV", "SVN", "POL", "ROU", "UKR", "LTU", "EST", "LVA"}
     assert bundle.research.data_cutoff.isoformat() == "2026-10-03"
 
     for code in ("CZE", "SVK"):
@@ -458,11 +458,11 @@ def test_fifa_fra_esp_batch_is_complete_and_temporally_dimensioned():
 
 def test_atp_complete_histories_are_evidence_resolvable_and_temporally_bounded():
     bundle = load_earth_research_bundle(Path("config/earth_research/atp_earth.json"))
-    expected_countries = {"CZE", "DEU", "USA", "AUS", "ESP", "SRB", "FRA", "GBR", "ARG", "JPN", "CAN", "ITA", "NED", "SWE", "SUI", "CRO", "POL", "CHN", "NOR", "GRE", "BEL", "ZAF", "DEN", "FIN", "NZL", "PRT", "IRL", "HUN", "ROU", "SVN", "SVK", "ISR", "BGR", "AUT", "TUR", "CYP", "BRA", "CHL", "COL", "MEX", "ECU", "IND", "KOR", "THA", "KAZ"}
+    expected_countries = {"CZE", "DEU", "USA", "AUS", "ESP", "SRB", "FRA", "GBR", "ARG", "JPN", "CAN", "ITA", "NED", "SWE", "SUI", "CRO", "POL", "CHN", "NOR", "GRE", "BEL", "ZAF", "DEN", "FIN", "NZL", "PRT", "IRL", "HUN", "ROU", "SVN", "SVK", "ISR", "BGR", "AUT", "TUR", "CYP", "BRA", "CHL", "COL", "MEX", "ECU", "IND", "KOR", "THA", "KAZ", "EST", "LTU"}
     assert set(bundle.research.countries) == expected_countries
     assert bundle.research.data_cutoff.isoformat() == "2026-10-04"
-    assert len(bundle.datasets) == 152
-    assert len(bundle.observations) == 443
+    assert len(bundle.datasets) == 157
+    assert len(bundle.observations) == 451
 
     expected_models = {
         "CZE": "atp-earth-cze-deu-seed-model.v1",
@@ -510,6 +510,8 @@ def test_atp_complete_histories_are_evidence_resolvable_and_temporally_bounded()
         "KOR": "atp-earth-kor-tha-model.v1",
         "THA": "atp-earth-kor-tha-model.v1",
         "KAZ": "atp-earth-kaz-model.v1",
+        "EST": "atp-earth-baltic-est-ltu-model.v1",
+        "LTU": "atp-earth-baltic-est-ltu-model.v1",
     }
     for code, history in bundle.research.countries.items():
         assert history.missing_earth_years == []
@@ -1685,3 +1687,62 @@ def test_atp_kaz_history_preserves_soviet_context_transition_constraints_and_cur
     assert kaz.years[2026].ratings["competition_quality"].value < 9.0
     assert "atp-ktf-federation-profile-2026-v1#kaz-regional-branches-2026" in kaz.years[2026].ratings["squash_access"].observation_ids
     assert "atp-ktf-infrastructure-2026-v1#kaz-high-performance-centres-2026" in kaz.years[2026].ratings["development_quality"].observation_ids
+
+
+def test_fifa_baltic_est_lva_histories_preserve_soviet_and_membership_gating():
+    bundle = load_earth_research_bundle(Path("config/earth_research/fifa_earth.json"))
+    for code in ("EST", "LVA"):
+        history = bundle.research.countries[code]
+        assert history.missing_earth_years == []
+        assert len(history.years) == 72
+        for year_number, year in history.years.items():
+            for rating in year.ratings.values():
+                assert rating.calibration_model_id == "fifa-earth-baltic-est-lva-model.v1"
+                assert rating.observation_ids
+                assert all(item in bundle.observations for item in rating.observation_ids)
+                if year_number < 2006:
+                    assert "fifa-big-count-2006" not in rating.source_ids
+                if year_number < 2023:
+                    assert "fifa-professional-2023" not in rating.source_ids
+
+    est = bundle.research.countries["EST"]
+    assert "Soviet" in est.years[1990].historical_entity
+    assert est.years[1991].historical_entity == "Estonia"
+    assert "fifa-structural-ejl-history-v1#est-uefa-member-1992" not in est.years[1991].ratings["competition_quality"].observation_ids
+    assert "fifa-structural-ejl-history-v1#est-uefa-member-1992" in est.years[1992].ratings["competition_quality"].observation_ids
+
+    lva = bundle.research.countries["LVA"]
+    assert "Soviet" in lva.years[1990].historical_entity
+    assert lva.years[1991].historical_entity == "Latvia"
+    assert "fifa-structural-lff-history-v1#lva-federation-restored-1991" in lva.years[1991].ratings["elite_support"].observation_ids
+    assert "fifa-structural-lff-history-v1#lva-fifa-uefa-1992" not in lva.years[1991].ratings["competition_quality"].observation_ids
+    assert "fifa-structural-lff-history-v1#lva-fifa-uefa-1992" in lva.years[1992].ratings["competition_quality"].observation_ids
+
+
+def test_atp_baltic_est_ltu_histories_use_conservative_temporal_evidence():
+    bundle = load_earth_research_bundle(Path("config/earth_research/atp_earth.json"))
+    est = bundle.research.countries["EST"]
+    ltu = bundle.research.countries["LTU"]
+
+    for code, history in {"EST": est, "LTU": ltu}.items():
+        assert history.missing_earth_years == []
+        assert len(history.years) == 72
+        for year in history.years.values():
+            for rating in year.ratings.values():
+                assert rating.calibration_model_id == "atp-earth-baltic-est-ltu-model.v1"
+                assert rating.observation_ids
+                assert all(item in bundle.observations for item in rating.observation_ids)
+
+    assert "Soviet" in est.years[1990].historical_entity
+    assert est.years[1991].historical_entity == "Estonia"
+    assert "atp-etl-competition-2026-v1#est-junior-system-2026" not in est.years[2025].ratings["development_quality"].observation_ids
+    assert "atp-etl-competition-2026-v1#est-junior-system-2026" in est.years[2026].ratings["development_quality"].observation_ids
+
+    assert "Soviet" in ltu.years[1989].historical_entity
+    assert ltu.years[1990].historical_entity == "Lithuania"
+    assert "atp-lts-lithuania-history-v1#ltu-federation-presidium-1959" not in ltu.years[1958].ratings["elite_support"].observation_ids
+    assert "atp-lts-lithuania-history-v1#ltu-federation-presidium-1959" in ltu.years[1959].ratings["elite_support"].observation_ids
+    assert "atp-lts-lithuania-governance-v1#ltu-lts-established-1995" not in ltu.years[1994].ratings["squash_tradition"].observation_ids
+    assert "atp-lts-lithuania-governance-v1#ltu-lts-established-1995" in ltu.years[1995].ratings["squash_tradition"].observation_ids
+    assert "atp-lts-lithuania-mandate-v1#ltu-national-federation-mandate-2022" not in ltu.years[2021].ratings["development_quality"].observation_ids
+    assert "atp-lts-lithuania-mandate-v1#ltu-national-federation-mandate-2022" in ltu.years[2022].ratings["development_quality"].observation_ids

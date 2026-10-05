@@ -1,0 +1,57 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "atp-earth-les-model.v1",
+  "world_id": "atp_earth",
+  "data_cutoff": "2026-10-04",
+  "countries": [
+    "LES"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "evidence_rules": [
+    "No verified foundation date is asserted; pre-2020 years use a low-confidence baseline derived only from later confirmed national tennis context.",
+    "ITF 2020 closure status enters only in 2020 and is not treated as a performance score.",
+    "2026 development eligibility enters only in 2026.",
+    "Event results are not rating targets."
+  ],
+  "anchor_values": {
+    "LES": {
+      "1955": [
+        3.2,
+        2.8,
+        2.9,
+        2.8,
+        2.6,
+        3.6
+      ],
+      "2000": [
+        4,
+        3.6,
+        3.8,
+        3.8,
+        3.5,
+        4.6
+      ],
+      "2020": [
+        4.4,
+        3.9,
+        4.2,
+        4.1,
+        3.8,
+        5
+      ],
+      "2026": [
+        4.8,
+        4.3,
+        4.6,
+        4.5,
+        4.2,
+        5.4
+      ]
+    }
+  },
+  "evidence_sources": [
+    "itf-lesotho-return-to-play-2020",
+    "itf-lesotho-development-eligibility-2026"
+  ],
+  "heldout_ranking_used": false
+}

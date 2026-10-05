@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-togo-history-v1",
+  "source_id": "caf-togo-profile",
+  "relative_path": "observations/normalized/structural/fifa_structural_togo_history_v1.json",
+  "sha256": "47812341b7ebdba3d37c915d667537cb2c3004099fe751a277f874074635f0dd",
+  "record_count": 4,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

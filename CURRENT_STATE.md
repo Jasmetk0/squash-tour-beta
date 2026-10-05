@@ -4889,3 +4889,17 @@ bands should shape 0..200 potential. No threshold is inferred from current OVR v
 - 2026 KTF evidence documents a 14-branch national network, children's/regional/coach-development programmes, a broad junior-to-ATP competition portfolio, and 39 high-performance centres with 394 courts. Those current facts are never backcast.
 - Modern Kazakhstan reaches strong but sub-9.0 ratings: access 8.8, development 8.9, competition 8.8, elite support 8.9. Infrastructure/programme scale alone does not qualify as world-leading 9+.
 - Official ATP package publication remains blocked by the intentional **250 / 250** completeness requirement.
+
+
+## Candidate — Baltic mixed FIFA/ATP batch (5 October 2026)
+
+- New complete FIFA histories: **Estonia (EST), Latvia (LVA)**.
+- New complete ATP histories: **Estonia (EST), Lithuania (LTU)**.
+- New ratings: 4 × 72 × 6 = **1,728**.
+- FIFA Earth: **45 → 47 / 250**, with **79 datasets / 1,492 observations**, **1,470 safe country facts / 207 direct-mapped observations**.
+- ATP Earth: **45 → 47 / 250**, with **157 datasets / 451 observations**.
+- FIFA EST/LVA explicitly preserve Soviet-era current-territory governance and separately gate restored independence/international membership; USSR-wide statistics are never inherited.
+- ATP Estonia uses 1921/1922 institutional continuity and gates the 2026 adult/junior competition system strictly to 2026.
+- ATP Lithuania uses partial but genuine post-war evidence (Vilnius tennis in 1948, federation activity from 1959), current-association reorganisation in 1995 and the national federation mandate from 2022. Sparse evidence keeps older ratings conservative.
+- No rankings, titles or held-out outcomes are calibration targets.
+- Both FIFA and ATP now stand at **47 / 250 complete histories**.

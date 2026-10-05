@@ -1,5 +1,34 @@
 # Current implementation and next action
 
+## Current — Kenya/Uganda dual-world Earth batch (5 October 2026)
+
+- Based directly on merged `buuk` commit
+  `df59ce06879609957ba5f0bd47e4c9864d32919f` (#1205); this is another independent
+  coverage PR rather than a dependent stack.
+- New complete histories in both worlds: **Kenya (KEN) and Uganda (UGA)**.
+- FIFA Earth now resolves **73 / 250** complete histories and **120 datasets /
+  1,611 normalized observations**.
+- ATP Earth now resolves **73 / 250** complete histories and **242 datasets /
+  597 normalized observations**.
+- The batch adds **1,728 authored annual attribute ratings** across four histories
+  (4 × 72 years × 6 attributes).
+- Kenya FIFA intentionally leaves the missing 2023 professional-player observation
+  missing; only the published professional-club evidence is used. Uganda has both
+  checked-in professional-player and club observations.
+- Kenya ATP's early institutional chronology and Uganda ATP's 1948 association date
+  remain explicitly secondary-source/low-confidence. Modern direct development,
+  hosting and governance evidence is not backcast before its documented boundary.
+- Official package publication remains blocked until **250 / 250** in each world.
+  Installed packages, ordinary historical-profile editing and complete initial-player
+  historical-environment integration remain unfinished.
+
+**Next after green CI:** continue another evidence-backed coverage batch directly
+from the merged result; keep PRs independent and shallow.
+
+> Older Current/Candidate entries below are implementation history and do not
+> override this section.
+
+
 ## Current — Ghana/Nigeria dual-world Earth batch (5 October 2026)
 
 - Based directly on merged `buuk` commit

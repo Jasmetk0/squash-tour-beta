@@ -1,0 +1,57 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "atp-earth-gam-model.v1",
+  "world_id": "atp_earth",
+  "data_cutoff": "2026-10-04",
+  "countries": [
+    "GAM"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "evidence_rules": [
+    "No verified tennis foundation date is asserted; pre-2020 years use a low-confidence baseline.",
+    "ITF 2020 activity status enters only in 2020.",
+    "2026 development eligibility enters only in 2026.",
+    "No ranking or event outcome is mechanically converted to a rating."
+  ],
+  "anchor_values": {
+    "GAM": {
+      "1955": [
+        3.2,
+        2.9,
+        3,
+        2.9,
+        2.7,
+        3.6
+      ],
+      "2000": [
+        4,
+        3.6,
+        3.8,
+        3.8,
+        3.5,
+        4.6
+      ],
+      "2020": [
+        4.5,
+        4.1,
+        4.3,
+        4.3,
+        4,
+        5.1
+      ],
+      "2026": [
+        5,
+        4.6,
+        4.8,
+        4.8,
+        4.5,
+        5.6
+      ]
+    }
+  },
+  "evidence_sources": [
+    "itf-gambia-return-to-play-2020",
+    "itf-gambia-development-eligibility-2026"
+  ],
+  "heldout_ranking_used": false
+}

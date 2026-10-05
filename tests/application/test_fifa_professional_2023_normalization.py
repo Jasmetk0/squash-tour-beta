@@ -124,7 +124,7 @@ def test_fifa_bundle_contains_big_count_professional_and_structural_evidence() -
     expected_2023 = {spec["dataset_id"] for spec in FIELD_SPECS.values()}
     assert expected_2023.issubset(bundle.datasets)
     assert len(bundle.datasets) == 65
-    assert len(bundle.observations) == 1_410
+    assert len(bundle.observations) == 1_437
 
     for dataset_id in expected_2023:
         assert (

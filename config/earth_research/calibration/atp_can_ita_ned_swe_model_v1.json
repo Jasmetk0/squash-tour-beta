@@ -1,0 +1,25 @@
+{
+  "schema_version": "atp_earth_reviewed_country_batch.v1",
+  "model_id": "atp-earth-can-ita-ned-swe-model.v1",
+  "created_on": "2026-10-05",
+  "countries": [
+    "CAN",
+    "ITA",
+    "NED",
+    "SWE"
+  ],
+  "coverage": {
+    "from": 1955,
+    "to": 2026,
+    "attributes": 6
+  },
+  "rating_scale": "country_ratings_1_10.v2",
+  "method": "Country-specific piecewise anchor histories with dimension-specific evidence and explicit temporal gates.",
+  "evidence_rules": [
+    "Davis Cup and Grand Slam outcomes inform competition/tradition only.",
+    "Current participation/membership facts never backcast into earlier years.",
+    "Combined tennis/padel KNLTB membership is treated as organised-scale context, not tennis-only participation.",
+    "Swedish historical development/support is not mechanically inferred from elite team titles.",
+    "No held-out validation ranking is used to tune authored ratings."
+  ]
+}

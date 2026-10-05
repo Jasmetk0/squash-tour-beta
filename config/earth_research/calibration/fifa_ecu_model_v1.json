@@ -1,0 +1,67 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "fifa-earth-ecu-model.v1",
+  "world_id": "fifa_earth",
+  "data_cutoff": "2026-10-03",
+  "countries": [
+    "ECU"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "principles": [
+    "The 1925 national sports federation structure and 1967 Ecuadorian Football Association transition establish governance depth but are not direct annual playing-quality measurements.",
+    "FIFA Big Count 2006 is gated to 2006+ for participation/access context.",
+    "FIFA Professional Football Report 2023 is gated to 2023+ for professional-ecosystem context.",
+    "Very large all-player participation is not mechanically converted into elite quality.",
+    "No FIFA ranking or tournament outcome is used as a calibration target; 9+ remains world-leading."
+  ],
+  "anchor_values": {
+    "ECU": {
+      "1955": [
+        6.4,
+        5.8,
+        6.1,
+        6.3,
+        6,
+        7.4
+      ],
+      "1967": [
+        6.7,
+        6.1,
+        6.4,
+        6.6,
+        6.3,
+        7.6
+      ],
+      "2006": [
+        7.8,
+        6.7,
+        6.8,
+        7.2,
+        6.9,
+        8.2
+      ],
+      "2023": [
+        8,
+        6.9,
+        7.3,
+        7.9,
+        7.8,
+        8.4
+      ],
+      "2026": [
+        8.1,
+        7,
+        7.4,
+        8,
+        7.9,
+        8.4
+      ]
+    }
+  },
+  "evidence_sources": [
+    "fef-ecuador-statutes-2022",
+    "fifa-big-count-2006",
+    "fifa-professional-2023"
+  ],
+  "heldout_ranking_used": false
+}

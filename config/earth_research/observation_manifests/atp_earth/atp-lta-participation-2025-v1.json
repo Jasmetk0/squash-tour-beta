@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-lta-participation-2025-v1",
+  "source_id": "lta-participation-2025",
+  "relative_path": "observations/normalized/atp-lta-participation-2025-v1.json",
+  "sha256": "9a8fa6711e1911379090d584d97b206e51fe29620b86e3a5d6143a59681f78f5",
+  "record_count": 3,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

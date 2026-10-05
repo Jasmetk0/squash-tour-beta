@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-lta-psp-2026-v1",
+  "source_id": "lta-pro-scholarship-2026",
+  "relative_path": "observations/normalized/atp-lta-psp-2026-v1.json",
+  "sha256": "20061775177697aef000c09e021526d65206838b91b616c69aa3fc17522f652c",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

@@ -372,3 +372,27 @@ institutional transition rather than the beginning of football.
 The batch also refreshes full-suite FIFA evidence totals after the preceding
 Oceania expansion so global exact-count tests track all sharded datasets and
 observations.
+
+
+## FIFA canonical-history batch — ITA/NLD/BEL/PRT empirical calibration (5 October 2026)
+
+Italy, Netherlands, Belgium and Portugal are now complete 1955–2026 FIFA Earth
+country-history shards. The batch adds **1,728 annual attribute ratings**, taking
+FIFA Earth to **33 / 250 complete histories**.
+
+This slice intentionally reuses the already-normalized FIFA Big Count 2006 and
+FIFA Professional Football Report 2023 datasets instead of manufacturing extra
+historical observations from weak secondary pages. Before 2006, every rating is
+low confidence and explicitly described as a calibration backcast toward the first
+direct participation/club checkpoint. From 2006 onward, Big Count remains historical
+participation/access context rather than a current census.
+
+Professional 2023 evidence is temporally gated: no pre-2023 rating cites the
+professional-player or professional-club datasets. From 2023 onward those observations
+inform only development/competition/elite ecosystem scale. They do not directly
+measure match quality, federation spending, academy outcomes or popularity.
+
+The calibration keeps 9.0+ exceptional, does not use held-out rankings or title
+outcomes, and records that tradition values in this batch are conservative continuity
+estimates from observed organised-football footprint rather than mechanically converted
+federation-foundation dates.

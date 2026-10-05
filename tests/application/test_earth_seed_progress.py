@@ -11,7 +11,7 @@ from beta_engine.application.earth_package_builder import load_earth_research_bu
 
 def test_fifa_first_reviewed_country_histories_are_complete_and_resolvable():
     bundle = load_earth_research_bundle(Path("config/earth_research/fifa_earth.json"))
-    assert set(bundle.research.countries) == {"CZE", "SVK", "JPN", "IND", "MAR", "SEN", "FRO", "USA", "ZAF", "BRA", "DEU", "ISL", "SMR", "ARG", "MEX", "AUS", "NZL", "FJI", "PNG", "SLB", "COK", "ASM", "PYF", "NCL", "WSM", "TON", "VUT", "FRA", "ESP"}
+    assert set(bundle.research.countries) == {"CZE", "SVK", "JPN", "IND", "MAR", "SEN", "FRO", "USA", "ZAF", "BRA", "DEU", "ISL", "SMR", "ARG", "MEX", "AUS", "NZL", "FJI", "PNG", "SLB", "COK", "ASM", "PYF", "NCL", "WSM", "TON", "VUT", "FRA", "ESP", "ITA", "NLD", "BEL", "PRT"}
     assert bundle.research.data_cutoff.isoformat() == "2026-10-03"
 
     for code in ("CZE", "SVK"):
@@ -1468,3 +1468,40 @@ def test_atp_kor_tha_batch_preserves_network_calendar_and_infrastructure_gating(
     assert "atp-ltat-calendar-2026-v1#tha-itf-junior-events-2026" not in (
         tha.years[2025].ratings["competition_quality"].observation_ids
     )
+
+
+def test_fifa_ita_nld_bel_prt_batch_is_complete_and_temporally_gated():
+    bundle = load_earth_research_bundle(Path("config/earth_research/fifa_earth.json"))
+    batch = {"ITA", "NLD", "BEL", "PRT"}
+
+    for code in batch:
+        history = bundle.research.countries[code]
+        assert history.missing_earth_years == []
+        assert len(history.years) == 72
+        assert history.reference_year == 2026
+
+        for year_number, year in history.years.items():
+            assert len(year.ratings) == 6
+            for rating in year.ratings.values():
+                assert rating.method == "derived_estimate"
+                assert rating.calibration_model_id == "fifa-earth-country-history-ita-nld-bel-prt.v1"
+                assert rating.observation_ids
+                assert all(item in bundle.observations for item in rating.observation_ids)
+                if year_number < 2006:
+                    assert rating.confidence == "low"
+                if year_number < 2023:
+                    assert "fifa-professional-2023" not in rating.source_ids
+                    assert not any(
+                        item.startswith("fifa-professional-2023-")
+                        for item in rating.observation_ids
+                    )
+
+    ita = bundle.research.countries["ITA"]
+    nld = bundle.research.countries["NLD"]
+    bel = bundle.research.countries["BEL"]
+    prt = bundle.research.countries["PRT"]
+
+    assert nld.years[2006].ratings["squash_access"].value > ita.years[2006].ratings["squash_access"].value
+    assert prt.years[2026].ratings["development_quality"].value >= 9.0
+    assert ita.years[2026].ratings["competition_quality"].value < 9.0
+    assert bel.years[2026].ratings["squash_access"].value > bel.years[1955].ratings["squash_access"].value

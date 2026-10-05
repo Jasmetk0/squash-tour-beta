@@ -1,5 +1,22 @@
 # Current implementation and next action
 
+## Current — Angola/Lesotho dual-world Earth batch (5 October 2026)
+
+- Based directly on merged `buuk` commit `fec7b76ae90cfe221a7b6cfbcd3f7955bd165eed` (#1210); independent coverage PR.
+- New complete histories in both worlds: **Angola (ANG) and Lesotho (LES)**.
+- FIFA Earth: **83 / 250**, **130 datasets / 1,639 normalized observations**.
+- ATP Earth: **83 / 250**, **266 datasets / 634 normalized observations**.
+- Adds **1,728 authored annual attribute ratings** (4 histories × 72 years × 6 attributes).
+- Angola FIFA gates 1979 creation, 1980 FIFA/CAF membership, Big Count 2006 and Professional 2023.
+- Lesotho FIFA carries the documented 1932 creation into the game window, gates FIFA/CAF membership to 1964, and leaves absent Professional 2023 counts absent.
+- ATP histories separate low-confidence pre-2020 context from direct ITF 2020 status and 2026 development eligibility.
+- Official package publication remains blocked until **250 / 250** in each world.
+
+**Next after green CI:** continue the next evidence-backed dual-world coverage batch directly from the merged result.
+
+> Older Current/Candidate entries below are implementation history and do not override this section.
+
+
 ## Current — Eswatini/Mozambique dual-world Earth batch (5 October 2026)
 
 - Based directly on merged `buuk` commit

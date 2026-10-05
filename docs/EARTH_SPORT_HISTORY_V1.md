@@ -489,3 +489,28 @@ children/regional/coaching/referee development portfolio, a broad hosted competi
 ladder, and a current infrastructure network of 39 high-performance centres and
 394 courts. These are capacity/opportunity observations rather than direct player
 outcomes, so modern KAZ remains below the 9+ world-leading threshold.
+
+
+## Baltic dual-world canonical-history batch — Latvia and Estonia (5 October 2026)
+
+Latvia and Estonia now have complete 1955–2026 histories in **both FIFA Earth and
+ATP Earth**, adding **1,728 annual attribute ratings**. Coverage is now balanced at
+**47 / 250 FIFA histories** and **47 / 250 ATP histories**.
+
+For FIFA, official UEFA timelines preserve the pre-war associations, Soviet-era
+governance and restored independent competition systems. Latvia's 1991 independence
+and 1992 Virsliga/UEFA transition are separately gated. Estonia preserves the 1940
+interruption, 1988 EFA re-formation, 1991 FIFA return and 1992 UEFA/Meistriliiga
+restart. Big Count 2006 and Professional 2023 evidence are never cited early.
+
+For ATP, the histories are deliberately independent from the football ratings.
+Latvia is anchored by documented 1904 organised competition, the 1929 Latvian Tennis
+Union foundation and 1937 ITF admission, with the amateur league entering only from
+2013 and current LTS/ITF capacity only in 2026. Estonia uses its 1913 birth tournament,
+1921 tennis section, 1922 federation foundation and official evidence of the Estonian
+SSR Tennis Federation in 1968 before adding current ETL governance/development
+capacity in 2026.
+
+Across both worlds, current-territory Baltic sport during Soviet rule does **not**
+inherit USSR-wide participation, player-strength or outcome evidence. Structural
+milestones are chronology/capacity evidence, not automatic rating bonuses.

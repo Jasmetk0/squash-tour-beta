@@ -18,9 +18,11 @@ separate inputs. Innate potential rarity must remain independent of nationality.
 This section is the authoritative current summary; dated batch sections below are
 preserved as implementation history.
 
-- FIFA Earth has **27 / 250** complete 1955–2026 country/territory histories,
-  covering all six attributes. Its canonical research bundle resolves **65 datasets
-  and 1,437 normalized observations**.
+- FIFA Earth has **29 / 250** complete 1955–2026 country/territory histories,
+  covering all six attributes. Its canonical research bundle resolves **69 datasets
+  and 1,449 normalized observations**.
+- The latest FIFA batch adds **FRA and ESP**, another **864 annual attribute ratings**. France is dimensionally anchored by official FFF technical/development history plus the 2006 participation and 2023 professional checkpoints; Spain combines the 1909 RFEF foundation, 2003 Ciudad del Fútbol and 2026 talent-development process. Big Count remains popularity/access evidence, Professional 2023 remains competition/elite-ecosystem context, and neither programme existence nor federation age is a direct score formula.
+- The KOR/THA ATP batch has been re-audited against the same scale: 9+ remains world-leading, current programme/calendar facts are separated from confidence in the authored estimate, and tests now enforce temporal evidence rather than hard-coded high confidence.
 - ATP Earth has **44 / 250** complete histories: CZE, DEU, USA, AUS, ESP, SRB,
   FRA, GBR, ARG, JPN, CAN, ITA, NED, SWE, SUI, CRO, POL, CHN, NOR, GRE, BEL, ZAF,
   DEN, FIN, NZL, PRT, IRL, HUN, ROU, SVN, SVK, ISR, BGR, AUT, TUR, CYP, BRA, CHL, COL, MEX, ECU, IND, KOR and THA. Its canonical bundle resolves **147 datasets and 431 normalized observations**.

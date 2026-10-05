@@ -3,7 +3,7 @@
   "dataset_id": "atp-cbt-coach-registry-2026-v1",
   "source_id": "cbt-coach-registry-2026",
   "relative_path": "observations/normalized/atp-cbt-coach-registry-2026-v1.json",
-  "sha256": "6f65168ba5f1c6056b2691551c8188743c670f437228268297422604b7b488b9",
+  "sha256": "db24086450dd799065f1816d69f15c590e1b592b2545bc519e3d6702befbc81a",
   "record_count": 2,
   "source_document_sha256": null,
   "input_artifact_sha256": null,

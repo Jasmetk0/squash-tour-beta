@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-cote-divoire-jti-2021-v1",
+  "source_id": "itf-jti-active-2021",
+  "relative_path": "observations/normalized/atp_cote_divoire_jti_2021_v1.json",
+  "sha256": "0cfbc29c1b7326d9f9d705db9a86d172f3c1ae4fa2d1b47ff9a15340a83f1a3e",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

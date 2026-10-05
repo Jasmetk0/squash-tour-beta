@@ -5016,6 +5016,7 @@ bands should shape 0..200 potential. No threshold is inferred from current OVR v
 - Faroe Islands retain a genuinely low historical tennis baseline, organised Island Games participation by 2013, federation formation in 2017 and Tennis Europe/ITF integration only in 2026.
 - Fiji uses the 1907 Fiji Open and 1934 association foundation as deep-tradition anchors, with modern development evidence introduced only through the 2022 Pacific junior pathway and 2026 Lautoka/Nadi/Suva club network.
 - No rankings, titles or match outcomes are calibration targets. Official package publication remains blocked by the intentional **250 / 250** completeness requirement.
+- All new observation manifests in this batch use semantic SHA-256 identities before CI validation.
 
 
 

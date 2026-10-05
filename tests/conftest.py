@@ -77,19 +77,13 @@ def _pull_request_changed_test_paths() -> set[str] | None:
         capture_output=True,
         text=True,
     ).stdout.splitlines()
-    changed_tests = {
+    return {
         path
         for path in changed
         if path.startswith("tests/")
         and path.endswith(".py")
         and Path(path).name.startswith("test_")
     }
-
-    # A PR that changes only production/config/support files has no changed test
-    # module to select. In that case keep the caller's normal pytest selection
-    # (for example the compact pr_critical baseline or focused Earth file)
-    # instead of deselecting the entire suite and exiting with pytest code 5.
-    return changed_tests or None
 
 
 def pytest_collection_modifyitems(config, items):

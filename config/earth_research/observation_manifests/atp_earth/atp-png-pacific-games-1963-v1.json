@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-png-pacific-games-1963-v1",
+  "source_id": "png-olympic-pacific-games-1963",
+  "relative_path": "observations/normalized/atp_png_pacific_games_1963_v1.json",
+  "sha256": "3c5455bbf5937ee9c42ee3a5b9b11d4a744de8cec0fff6d00c1464c061d9b09c",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

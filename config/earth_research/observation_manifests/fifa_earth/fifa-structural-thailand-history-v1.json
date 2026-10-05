@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-thailand-history-v1",
+  "source_id": "afc-thailand-centenary",
+  "relative_path": "observations/normalized/structural/fifa_structural_thailand_history_v1.json",
+  "sha256": "39b2e9fdf179efc821ae0660b4186a2827cb7a831f6a49e62bcaa5e23094005b",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

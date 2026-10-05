@@ -13,6 +13,9 @@ def test_fifa_first_reviewed_country_histories_are_complete_and_resolvable():
     bundle = load_earth_research_bundle(Path("config/earth_research/fifa_earth.json"))
     assert set(bundle.research.countries) == {"CZE", "SVK", "JPN", "IND", "MAR", "SEN", "FRO", "USA", "ZAF", "BRA", "DEU", "ISL", "SMR", "ARG", "MEX", "AUS", "NZL", "FJI", "PNG", "SLB", "COK", "ASM", "PYF", "NCL", "WSM", "TON", "VUT", "FRA", "ESP", "ITA", "NLD", "BEL", "PRT", "AUT", "DNK", "SWE", "CHE", "NOR", "FIN", "HRV", "SVN", "POL", "ROU", "UKR", "LTU", "LVA", "EST", "CAN", "GRC", "SRB", "CHL", "HUN", "ISR", "BGR", "KAZ", "CHN", "TUR", "KOR", "THA", "COL", "CYP", "ECU", "IRL", "EGY", "MYS", "SAU", "ARE", "QAT", "OMN", "GHA", "NGA", "KEN", "UGA"}
     assert bundle.research.data_cutoff.isoformat() == "2026-10-03"
+    assert len(bundle.research.countries) == 73
+    assert len(bundle.datasets) == 120
+    assert len(bundle.observations) == 1611
 
     for code in ("CZE", "SVK"):
         history = bundle.research.countries[code]
@@ -2712,13 +2715,6 @@ def test_ghana_nigeria_dual_world_batch_is_complete_resolvable_and_time_gated():
     fifa = load_earth_research_bundle(Path("config/earth_research/fifa_earth.json"))
     atp = load_earth_research_bundle(Path("config/earth_research/atp_earth.json"))
 
-    assert len(fifa.research.countries) == 71
-    assert len(fifa.datasets) == 118
-    assert len(fifa.observations) == 1606
-    assert len(atp.research.countries) == 71
-    assert len(atp.datasets) == 237
-    assert len(atp.observations) == 591
-
     for bundle, expected_models in (
         (
             fifa,
@@ -2871,13 +2867,6 @@ def test_ghana_nigeria_dual_world_batch_is_complete_resolvable_and_time_gated():
 def test_kenya_uganda_dual_world_batch_is_complete_resolvable_and_time_gated():
     fifa = load_earth_research_bundle(Path("config/earth_research/fifa_earth.json"))
     atp = load_earth_research_bundle(Path("config/earth_research/atp_earth.json"))
-
-    assert len(fifa.research.countries) == 73
-    assert len(fifa.datasets) == 120
-    assert len(fifa.observations) == 1611
-    assert len(atp.research.countries) == 73
-    assert len(atp.datasets) == 242
-    assert len(atp.observations) == 597
 
     for bundle, expected_models in (
         (

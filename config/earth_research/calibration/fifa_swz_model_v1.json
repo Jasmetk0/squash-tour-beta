@@ -1,0 +1,73 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "fifa-earth-swz-model.v1",
+  "world_id": "fifa_earth",
+  "data_cutoff": "2026-10-03",
+  "countries": [
+    "SWZ"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "evidence_rules": [
+    "CAF creation 1968 and FIFA/CAF affiliation 1978 are separately gated.",
+    "Big Count 2006 enters only from 2006.",
+    "No checked-in Professional 2023 observation exists for Eswatini/Swaziland, so none is inferred.",
+    "No ranking or result is a calibration target."
+  ],
+  "anchor_values": {
+    "SWZ": {
+      "1955": [
+        4,
+        3.5,
+        3.4,
+        3.5,
+        3.2,
+        3.8
+      ],
+      "1968": [
+        4.8,
+        4.2,
+        4.3,
+        4.4,
+        4,
+        4.8
+      ],
+      "1978": [
+        5.2,
+        4.6,
+        4.7,
+        4.9,
+        4.5,
+        5.3
+      ],
+      "2006": [
+        6.2,
+        5.5,
+        5.7,
+        5.9,
+        5.4,
+        6
+      ],
+      "2023": [
+        6.3,
+        5.6,
+        5.8,
+        6,
+        5.5,
+        6.1
+      ],
+      "2026": [
+        6.4,
+        5.7,
+        5.9,
+        6.1,
+        5.6,
+        6.2
+      ]
+    }
+  },
+  "evidence_sources": [
+    "caf-eswatini-profile",
+    "fifa-big-count-2006"
+  ],
+  "heldout_ranking_used": false
+}

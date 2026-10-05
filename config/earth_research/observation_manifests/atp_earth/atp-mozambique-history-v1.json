@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-mozambique-history-v1",
+  "source_id": "itf-mozambique-return-to-play-2020",
+  "relative_path": "observations/normalized/atp_mozambique_history_v1.json",
+  "sha256": "2d5eec6b2f44fce8f0b5d00a20b6b9246562902075d44467e226620ab7e5454b",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

@@ -47,7 +47,7 @@
       "source_entity": "ARG",
       "earth_country_code": "ARG",
       "historical_entity": null,
-      "observation_year": null,
+      "observation_year": 2026,
       "period_start_year": null,
       "period_end_year": null,
       "measurement_type": "affiliated_clubs_and_federations",
@@ -68,7 +68,9 @@
       "source_page": null,
       "source_locator": null,
       "definition_notes": "AAT’s official organisation profile describes more than 200 affiliated clubs and federations.",
-      "quality_flags": []
+      "quality_flags": [
+        "current_profile"
+      ]
     },
     {
       "observation_id": "atp-aat-profile-v1#arg-federated-players-current",
@@ -76,7 +78,7 @@
       "source_entity": "ARG",
       "earth_country_code": "ARG",
       "historical_entity": null,
-      "observation_year": null,
+      "observation_year": 2026,
       "period_start_year": null,
       "period_end_year": null,
       "measurement_type": "federated_players",
@@ -97,7 +99,9 @@
       "source_page": null,
       "source_locator": null,
       "definition_notes": "AAT’s official organisation profile describes more than 8,000 federated players.",
-      "quality_flags": []
+      "quality_flags": [
+        "current_profile"
+      ]
     }
   ]
 }

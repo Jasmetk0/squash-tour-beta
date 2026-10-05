@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-tenis-slovenija-profile-v1",
+  "source_id": "tenis-slovenija-profile",
+  "relative_path": "observations/normalized/atp-tenis-slovenija-profile-v1.json",
+  "sha256": "4c89d0c6fe717523d435bb8ee791812af97f0e71c738a413ff5393a651331a68",
+  "record_count": 7,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

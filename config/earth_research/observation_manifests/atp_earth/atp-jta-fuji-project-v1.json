@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-jta-fuji-project-v1",
+  "source_id": "jta-fuji-project",
+  "relative_path": "observations/normalized/atp-jta-fuji-project-v1.json",
+  "sha256": "a228cf969a5b3e79b26fe6747dca735f6b491ea739bd6c23851925324914e36b",
+  "record_count": 3,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

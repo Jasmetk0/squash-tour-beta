@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-jta-history-v1",
+  "source_id": "jta-history",
+  "relative_path": "observations/normalized/atp-jta-history-v1.json",
+  "sha256": "de4f415f57454a1be665183d20bf8f605f574ad18ea7fe4c238564e2874c788e",
+  "record_count": 3,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

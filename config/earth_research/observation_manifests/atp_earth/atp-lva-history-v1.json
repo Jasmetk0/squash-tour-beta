@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-lva-history-v1",
+  "source_id": "latvia-national-encyclopedia-tennis",
+  "relative_path": "observations/normalized/atp_lva_history_v1.json",
+  "sha256": "0359ede31149b4c97ebe8d9eb5a6b4aa7af4be0777db0b798bbc30edc86103c2",
+  "record_count": 3,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

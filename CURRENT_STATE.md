@@ -5109,3 +5109,18 @@ bands should shape 0..200 potential. No threshold is inferred from current OVR v
 - Philippines preserves PHILTA's 1946 foundation but also models the **2020 ITF suspension** as a real governance/competition shock, followed by gradual recovery after ITF reinstatement in January 2024 and confirmed membership in 2026.
 - Indonesia preserves PELTI's 1935 pre-independence foundation, then separately gates the ITF Junior Tennis Initiative (2019), its 2020 programme participation, coach-education recognition (2021), W25 Jakarta hosting (2023), and current ITF membership (2025).
 - No rankings, titles or match outcomes are calibration targets. Official package publication remains blocked by the intentional **250 / 250** completeness requirement.
+
+
+
+## Candidate — accelerated Qatar/Oman/Singapore/Pakistan batch (5 October 2026)
+
+- New complete FIFA histories: **Qatar (QAT)** and **Oman (OMN)**.
+- New complete ATP histories: **Singapore (SGP)** and **Pakistan (PAK)**.
+- New ratings: 4 × 72 × 6 = **1,728**; both FIFA Earth and ATP Earth move **67 -> 69 / 250 complete histories (27.6%)**.
+- FIFA adds **4 structural datasets / 12 observations**, taking FIFA research from **112 datasets / 1,587 observations** to **116 datasets / 1,599 observations**.
+- Qatar preserves rapid pre-federation football growth in the 1950s, then separately gates QFA foundation (1960), FIFA membership (1963), AFC membership (1967), Big Count 2006, Professional 2023 and the current 2024–2030 QFA development/governance strategy.
+- Oman preserves the 1942 first-club context without backcasting a national federation, then gates Sultan's Cup structure (1972/1974), OFA/FIFA (1978), AFC (1980), OFA re-establishment (1983), Big Count 2006, available Professional 2023 evidence and the current 44-club network (2026).
+- ATP adds **6 datasets / 9 observations**, taking ATP research from **226 datasets / 571 observations** to **232 datasets / 580 observations**.
+- Singapore preserves the 1928 association across colonial/Malaysia/independent governance phases, then gates active JTI evidence to 2021 and J60 competition at Kallang Tennis Hub to 2026.
+- Pakistan explicitly retains the **ITF 1947 foundation vs PTF 1948 operational-start source conflict**, then separately gates coach-education bronze recognition (2020), JTI/CBI development (2021) and Islamabad Challenger 50 hosting (2025).
+- No rankings, titles or match outcomes are calibration targets. Official package publication remains blocked by the intentional **250 / 250** completeness requirement.

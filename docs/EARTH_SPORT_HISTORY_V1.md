@@ -18,26 +18,25 @@ separate inputs. Innate potential rarity must remain independent of nationality.
 This section is the authoritative current summary. Dated batch sections below are
 retained only as implementation history and do not override these numbers.
 
-- **FIFA Earth: 73 / 250** complete 1955–2026 country/territory histories, all six
+- **FIFA Earth: 75 / 250** complete 1955–2026 country/territory histories, all six
   attributes present for every authored year. The canonical bundle resolves
-  **120 datasets / 1,611 normalized observations**.
-- **ATP Earth: 73 / 250** complete 1955–2026 country/territory histories, all six
+  **122 datasets / 1,615 normalized observations**.
+- **ATP Earth: 75 / 250** complete 1955–2026 country/territory histories, all six
   attributes present for every authored year. The canonical bundle resolves
-  **242 datasets / 597 normalized observations**.
-- The latest dual-world batch adds **Kenya (KEN) and Uganda (UGA)** to both
+  **247 datasets / 605 normalized observations**.
+- The latest dual-world batch adds **Tanzania (TZA) and Zambia (ZMB)** to both
   packages, another **1,728 annual attribute ratings**.
-- FIFA Kenya gates CAF's 1960 association/FIFA milestone and 1968 CAF affiliation
-  separately. FIFA Uganda preserves its 1924 association continuity and gates
-  FIFA/CAF membership to 1960.
-- FIFA Big Count 2006 remains limited to participation/access/development context
-  from 2006 onward. Professional Football Report 2023 enters only from 2023; Kenya
-  uses the published club count without inventing a missing professional-player
-  count, while Uganda uses its published player and club observations.
-- ATP Kenya keeps its pre-1955 governing-body chronology explicitly secondary-source
-  and introduces direct World Tennis Junior Tennis Initiative pathway evidence only
-  in 2026. ATP Uganda keeps the 1948 association date secondary-source, gates the
-  ITF retrospective development/hosting evidence conservatively to 2022, and treats
-  the 2026 UTA legal registration as governance continuity rather than performance.
+- FIFA Tanzania and Zambia preserve their pre-1955 association continuity and
+  gate FIFA/CAF membership to 1964. Big Count 2006 remains dimension-scoped and
+  Professional 2023 uses only the published club observations; missing professional
+  player counts are not inferred.
+- ATP Tanzania deliberately uses a low-confidence pre-documented baseline before
+  direct 2015 ITF association-status evidence, then adds the 2025 World Team Cup
+  pathway only from that year.
+- ATP Zambia uses a similarly explicit pre-documented baseline before the official
+  2007 government record, preserves the later 12-year ITF membership hiatus as
+  governance history rather than zero tennis activity, and gates the 2025
+  reinstatement/development evidence and 2026 J30 hosting to their actual dates.
 - Coverage/provenance is measured through `load_earth_research_bundle()`; sharded
   sources, manifests, normalized observations and country histories all participate
   in validation. Missing facts are not converted into zeroes or universal fallback
@@ -85,7 +84,7 @@ retained only as implementation history and do not override these numbers.
 
 ## Not implemented or not proven
 
-- **Neither official Earth directory exists yet.** FIFA and ATP each currently have 73 complete histories; neither reaches the required 250-country all-or-nothing build threshold. No fabricated neutral profiles are shipped to satisfy coverage
+- **Neither official Earth directory exists yet.** FIFA and ATP each currently have 75 complete histories; neither reaches the required 250-country all-or-nothing build threshold. No fabricated neutral profiles are shipped to satisfy coverage
   mechanically. See the current-status section above for authoritative counts.
 - FIFA Big Count 2006 now has five canonical normalized
   `earth_source_observations.v2` datasets (all players, registered, unregistered,

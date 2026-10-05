@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-mauritius-history-v1",
+  "source_id": "caf-mauritius-profile",
+  "relative_path": "observations/normalized/structural/fifa_structural_mauritius_history_v1.json",
+  "sha256": "5fa841614b0f9cde2b21da7ed9feb61ba2204c3550de37e9819b0aef3c330971",
+  "record_count": 3,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

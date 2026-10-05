@@ -428,11 +428,11 @@ def test_fifa_pyf_backcasts_do_not_claim_future_infrastructure_as_historical_sup
 
 def test_atp_complete_histories_are_evidence_resolvable_and_temporally_bounded():
     bundle = load_earth_research_bundle(Path("config/earth_research/atp_earth.json"))
-    expected_countries = {"CZE", "DEU", "USA", "AUS", "ESP", "SRB", "FRA", "GBR", "ARG", "JPN", "CAN", "ITA", "NED", "SWE", "SUI", "CRO", "POL", "CHN", "NOR", "GRE", "BEL", "ZAF"}
+    expected_countries = {"CZE", "DEU", "USA", "AUS", "ESP", "SRB", "FRA", "GBR", "ARG", "JPN", "CAN", "ITA", "NED", "SWE", "SUI", "CRO", "POL", "CHN", "NOR", "GRE", "BEL", "ZAF", "DEN", "FIN", "NZL"}
     assert set(bundle.research.countries) == expected_countries
     assert bundle.research.data_cutoff.isoformat() == "2026-10-04"
-    assert len(bundle.datasets) == 71
-    assert len(bundle.observations) == 240
+    assert len(bundle.datasets) == 79
+    assert len(bundle.observations) == 261
 
     expected_models = {
         "CZE": "atp-earth-cze-deu-seed-model.v1",
@@ -457,6 +457,9 @@ def test_atp_complete_histories_are_evidence_resolvable_and_temporally_bounded()
         "GRE": "atp-earth-nor-gre-bel-rsa-model.v1",
         "BEL": "atp-earth-nor-gre-bel-rsa-model.v1",
         "ZAF": "atp-earth-nor-gre-bel-rsa-model.v1",
+        "DEN": "atp-earth-den-fin-nzl-model.v1",
+        "FIN": "atp-earth-den-fin-nzl-model.v1",
+        "NZL": "atp-earth-den-fin-nzl-model.v1",
     }
     for code, history in bundle.research.countries.items():
         assert history.missing_earth_years == []
@@ -810,3 +813,60 @@ def test_atp_source_scopes_and_current_competition_quality_are_semantically_guar
 
     for rating in (nor, gre, bel, zaf):
         assert "outcome context" in rating.rationale.lower()
+
+
+def test_atp_den_fin_nzl_batch_is_complete_and_dimensionally_grounded():
+    bundle = load_earth_research_bundle(Path("config/earth_research/atp_earth.json"))
+
+    for code in ("DEN", "FIN", "NZL"):
+        history = bundle.research.countries[code]
+        assert history.missing_earth_years == []
+        assert len(history.years) == 72
+        for year in history.years.values():
+            assert len(year.ratings) == 6
+            for rating in year.ratings.values():
+                assert rating.calibration_model_id == "atp-earth-den-fin-nzl-model.v1"
+                assert rating.observation_ids
+                assert all(item in bundle.observations for item in rating.observation_ids)
+
+    den = bundle.research.countries["DEN"]
+    assert den.years[1990].ratings["squash_popularity"].value > (
+        den.years[2016].ratings["squash_popularity"].value
+    )
+    assert "atp-dtf-members-2024-v1#den-members-2024" not in (
+        den.years[2023].ratings["squash_access"].observation_ids
+    )
+    assert "atp-dtf-members-2024-v1#den-members-2024" in (
+        den.years[2024].ratings["squash_access"].observation_ids
+    )
+    assert "atp-dtf-history-v1#den-senior-championships-current" in (
+        den.years[2026].ratings["competition_quality"].observation_ids
+    )
+
+    fin = bundle.research.countries["FIN"]
+    assert "atp-stl-annual-2025-v1#fin-members-2025" not in (
+        fin.years[2024].ratings["squash_popularity"].observation_ids
+    )
+    assert "atp-stl-annual-2025-v1#fin-members-2025" in (
+        fin.years[2025].ratings["squash_popularity"].observation_ids
+    )
+    assert "atp-stl-high-performance-2026-v1#fin-hp-system-2026" in (
+        fin.years[2026].ratings["elite_support"].observation_ids
+    )
+
+    nzl = bundle.research.countries["NZL"]
+    assert "atp-tennis-nz-home-2026-v1#nzl-hot-shots-venues-2026" not in (
+        nzl.years[2025].ratings["squash_access"].observation_ids
+    )
+    assert "atp-tennis-nz-home-2026-v1#nzl-hot-shots-venues-2026" in (
+        nzl.years[2026].ratings["squash_access"].observation_ids
+    )
+    hot_shots = bundle.observations[
+        "atp-tennis-nz-home-2026-v1#nzl-hot-shots-venues-2026"
+    ]
+    assert hot_shots.age_scope == "children"
+    assert "age_limited" in hot_shots.quality_flags
+    assert nzl.years[2026].ratings["squash_access"].confidence == "low"
+    assert "atp-tennis-nz-pathway-2025-v1#nzl-planning-competition-2025" in (
+        nzl.years[2026].ratings["competition_quality"].observation_ids
+    )

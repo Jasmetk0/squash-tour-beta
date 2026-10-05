@@ -4985,3 +4985,18 @@ bands should shape 0..200 potential. No threshold is inferred from current OVR v
 - Modern recovery is separately gated through the **2022** FFT cooperation protocol, **2025** Davis Cup Africa Group III promotion and **2026** ITF member-association listing.
 - Davis Cup performance is used only to establish active competition structure, not as an outcome-based calibration target.
 - Official package publication remains blocked by the intentional **250 / 250** completeness requirement for both worlds.
+
+
+
+## Candidate — accelerated four-country Earth batch (5 October 2026)
+
+- New complete FIFA histories: **Hungary (HUN)** and **Israel (ISR)**.
+- New complete ATP histories: **Iceland (ISL)** and **San Marino (SMR)**.
+- New ratings: 4 × 72 × 6 = **1,728**; both FIFA Earth and ATP Earth move **51 -> 53 / 250 complete histories**.
+- FIFA adds **2 structural datasets / 10 direct observations**, taking FIFA research from **87 datasets / 1,521 observations** to **89 datasets / 1,531 observations**.
+- Hungary uses MLSZ foundation (1901), FIFA membership (1906), professionalisation (1926) and post-war restart (1946) as historical structure, with FIFA Big Count 2006 and Professional 2023 strictly time-gated.
+- Israel separates the pre-state association/FIFA line, 1948 state transition, AFC admission in 1956, AFC exit in 1974 and full UEFA membership in 1994; rankings and tournament outcomes are not calibration targets.
+- ATP adds **3 datasets / 12 observations**, taking ATP research from **173 datasets / 487 observations** to **176 datasets / 499 observations**.
+- Iceland preserves low-confidence early-tennis context, organised growth in the 1970s, TSÍ foundation in 1987, the Kópavogur indoor-hall step in 1995 and current 2026 indoor instruction as distinct eras.
+- San Marino preserves the 1949 club base, federation foundation in 1957, Internationals from 1988, tennis centre in 1991, Davis Cup participation from 1992 and current Federal Tennis School/international-event structure in 2026.
+- No rankings or title outcomes are calibration targets. Official package publication remains blocked by the intentional **250 / 250** completeness requirement.

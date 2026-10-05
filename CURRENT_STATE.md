@@ -5016,3 +5016,19 @@ bands should shape 0..200 potential. No threshold is inferred from current OVR v
 - Faroe Islands retain a genuinely low historical tennis baseline, organised Island Games participation by 2013, federation formation in 2017 and Tennis Europe/ITF integration only in 2026.
 - Fiji uses the 1907 Fiji Open and 1934 association foundation as deep-tradition anchors, with modern development evidence introduced only through the 2022 Pacific junior pathway and 2026 Lautoka/Nadi/Suva club network.
 - No rankings, titles or match outcomes are calibration targets. Official package publication remains blocked by the intentional **250 / 250** completeness requirement.
+
+
+
+## Candidate — accelerated China/Türkiye/PNG/Samoa batch (5 October 2026)
+
+- New complete FIFA histories: **China PR (CHN)** and **Türkiye (TUR)**.
+- New complete ATP histories: **Papua New Guinea (PNG)** and **Samoa (WSM)**.
+- New ratings: 4 × 72 × 6 = **1,728**; both FIFA Earth and ATP Earth move **55 -> 57 / 250 complete histories (22.8%)**.
+- FIFA adds **5 structural datasets / 12 direct observations**, taking FIFA research from **91 datasets / 1,543 observations** to **96 datasets / 1,555 observations**.
+- China separates the modern CFA foundation (1955), nationwide cup structure (1956), FIFA Big Count 2006, AFC grassroots Silver/Gold accreditations (2018/2024), FIFA Professional 2023 and AFC Elite Youth two-/three-star milestones (2024/2026).
+- China's 26.2m Big Count all-player estimate is deliberately not treated as professional or elite quality; 2026 dimensions remain below 9.0.
+- Türkiye preserves TFF/FIFA foundation (1923), professionalism (1951), nationwide professional league (1959), UEFA membership (1962), federation autonomy (1988), national-team centre (2014), and separately gated FIFA 2006/2023 evidence.
+- ATP adds **8 datasets / 10 observations**, taking ATP research from **183 datasets / 508 observations** to **191 datasets / 518 observations**.
+- Papua New Guinea uses an explicit low-confidence **1955–1962 pre-association baseline** derived from the ITF-recorded 1963 foundation year, then separately adds 1963 South Pacific Games tennis, the 2001 federation mandate, 2022 junior pathway and 2026 OTF membership.
+- Samoa preserves Tennis Samoa's **1955** foundation, historical naming through independence in 1962 and the 1997 name change, then gates OTF membership to 2012, Pacific junior development to 2022 and current federation/junior-development structure to 2026.
+- No rankings, titles or match outcomes are calibration targets. Official package publication remains blocked by the intentional **250 / 250** completeness requirement.

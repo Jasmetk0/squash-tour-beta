@@ -2,7 +2,7 @@
   "schema_version": "earth_country_calibration_model.v1",
   "calibration_model_id": "atp-earth-ton-model.v1",
   "world_id": "atp_earth",
-  "data_cutoff": "2026-10-05",
+  "data_cutoff": "2026-10-04",
   "countries": [
     "TON"
   ],

@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-algeria-development-2026-v1",
+  "source_id": "itf-algeria-development-eligibility-2026",
+  "relative_path": "observations/normalized/atp_algeria_development_2026_v1.json",
+  "sha256": "a0cf322ea60d6d244dc35544a518e03e72ef854b06cd8346f57916f644ef8ff5",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

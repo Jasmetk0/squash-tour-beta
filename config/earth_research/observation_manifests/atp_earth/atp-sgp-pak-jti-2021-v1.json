@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-sgp-pak-jti-2021-v1",
+  "source_id": "itf-jti-guidance-2022",
+  "relative_path": "observations/normalized/atp_sgp_pak_jti_2021_v1.json",
+  "sha256": "8b7bf62268417ab51e89889bdb0471d2dcb00fa5f76d50088d8278f4de7bf46e",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

@@ -3,7 +3,7 @@
   "dataset_id": "atp-etl-soviet-context-v1",
   "source_id": "etl-honorary-members-history",
   "relative_path": "observations/normalized/atp_etl_soviet_context_v1.json",
-  "sha256": "4ab0c22428278aacb52ea338b00b898ba79bc86ae21affe4e9477bc37b55ac93",
+  "sha256": "9d1f52073219deb9e57a49c04ef11a799b753afdba320ed403e36ff991be6431",
   "record_count": 1,
   "source_document_sha256": null,
   "input_artifact_sha256": null,

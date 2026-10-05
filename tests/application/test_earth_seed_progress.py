@@ -428,11 +428,11 @@ def test_fifa_pyf_backcasts_do_not_claim_future_infrastructure_as_historical_sup
 
 def test_atp_complete_histories_are_evidence_resolvable_and_temporally_bounded():
     bundle = load_earth_research_bundle(Path("config/earth_research/atp_earth.json"))
-    expected_countries = {"CZE", "DEU", "USA", "AUS", "ESP", "SRB", "FRA", "GBR", "ARG", "JPN", "CAN", "ITA", "NED", "SWE"}
+    expected_countries = {"CZE", "DEU", "USA", "AUS", "ESP", "SRB", "FRA", "GBR", "ARG", "JPN", "CAN", "ITA", "NED", "SWE", "SUI", "CRO", "POL", "CHN"}
     assert set(bundle.research.countries) == expected_countries
     assert bundle.research.data_cutoff.isoformat() == "2026-10-04"
-    assert len(bundle.datasets) == 45
-    assert len(bundle.observations) == 178
+    assert len(bundle.datasets) == 58
+    assert len(bundle.observations) == 212
 
     expected_models = {
         "CZE": "atp-earth-cze-deu-seed-model.v1",
@@ -449,6 +449,10 @@ def test_atp_complete_histories_are_evidence_resolvable_and_temporally_bounded()
         "ITA": "atp-earth-can-ita-ned-swe-model.v1",
         "NED": "atp-earth-can-ita-ned-swe-model.v1",
         "SWE": "atp-earth-can-ita-ned-swe-model.v1",
+        "SUI": "atp-earth-sui-cro-pol-chn-model.v1",
+        "CRO": "atp-earth-sui-cro-pol-chn-model.v1",
+        "POL": "atp-earth-sui-cro-pol-chn-model.v1",
+        "CHN": "atp-earth-sui-cro-pol-chn-model.v1",
     }
     for code, history in bundle.research.countries.items():
         assert history.missing_earth_years == []
@@ -617,5 +621,56 @@ def test_atp_complete_histories_are_evidence_resolvable_and_temporally_bounded()
     )
     assert "atp-svtf-annual-2025-v1#swe-rog-children-2025" in (
         swe.years[2025].ratings["development_quality"].observation_ids
+    )
+
+    sui = bundle.research.countries["SUI"]
+    assert "atp-swiss-tennis-profile-2026-v1#sui-members-2026" not in (
+        sui.years[2025].ratings["squash_popularity"].observation_ids
+    )
+    assert "atp-swiss-tennis-profile-2026-v1#sui-members-2026" in (
+        sui.years[2026].ratings["squash_popularity"].observation_ids
+    )
+    assert sui.years[2014].ratings["competition_quality"].value > (
+        sui.years[1992].ratings["competition_quality"].value
+    )
+
+    cro = bundle.research.countries["CRO"]
+    assert "Yugoslavia" in cro.years[1991].historical_entity
+    assert cro.years[1992].historical_entity == "Croatia"
+    assert "atp-hts-profile-v1#cro-itf-membership-1992" not in (
+        cro.years[1991].ratings["squash_access"].observation_ids
+    )
+    assert "atp-hts-profile-v1#cro-itf-membership-1992" in (
+        cro.years[1992].ratings["squash_access"].observation_ids
+    )
+    assert cro.years[2018].ratings["competition_quality"].value == 10.0
+
+    pol = bundle.research.countries["POL"]
+    assert "Polish People's Republic" in pol.years[1955].historical_entity
+    assert "atp-pzt-history-v1#pol-dissolved-state-section-1951" in (
+        pol.years[1955].ratings["elite_support"].observation_ids
+    )
+    assert "atp-pzt-training-2025-v1#pol-u12-training-2025" not in (
+        pol.years[2024].ratings["development_quality"].observation_ids
+    )
+    assert "atp-pzt-training-2025-v1#pol-u12-training-2025" in (
+        pol.years[2025].ratings["development_quality"].observation_ids
+    )
+
+    chn = bundle.research.countries["CHN"]
+    assert "atp-china-ctj-2024-v1#chn-ranked-youth-2024" not in (
+        chn.years[2023].ratings["development_quality"].observation_ids
+    )
+    assert "atp-china-ctj-2024-v1#chn-ranked-youth-2024" in (
+        chn.years[2024].ratings["development_quality"].observation_ids
+    )
+    assert "atp-china-tennis-2025-review-v1#chn-men-top100-2025" not in (
+        chn.years[2024].ratings["competition_quality"].observation_ids
+    )
+    assert "atp-china-tennis-2025-review-v1#chn-men-top100-2025" in (
+        chn.years[2025].ratings["competition_quality"].observation_ids
+    )
+    assert chn.years[2026].ratings["development_quality"].value > (
+        chn.years[2026].ratings["competition_quality"].value
     )
 

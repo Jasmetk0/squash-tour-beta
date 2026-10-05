@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-tsa-development-v1",
+  "source_id": "tsa-development-centres",
+  "relative_path": "observations/normalized/atp-tsa-development-v1.json",
+  "sha256": "faf7dadcc649b0ddc359f0a0e2735122b8f44a2823acb3d4475980a1719c5a8d",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

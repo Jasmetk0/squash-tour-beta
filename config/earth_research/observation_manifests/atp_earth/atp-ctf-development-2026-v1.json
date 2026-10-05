@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-ctf-development-2026-v1",
+  "source_id": "ctf-development-2026",
+  "relative_path": "observations/normalized/atp-ctf-development-2026-v1.json",
+  "sha256": "676aab7df5e4e06fe44675eb3f72a7866c017ed132bbe443e64f71075ed937b3",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

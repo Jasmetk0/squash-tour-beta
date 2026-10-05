@@ -5064,3 +5064,18 @@ bands should shape 0..200 potential. No threshold is inferred from current OVR v
 - New Caledonia uses the **1933** Ligue Calédonienne de Tennis foundation, 2010/2012 Oceania Championships hosting, and current 2026 FFT evidence of **18 clubs / 2,450 licensed players** plus OTF associate membership.
 - French metropolitan participation and outcomes are not inherited by New Caledonia; small-territory density is interpreted locally rather than as global scale.
 - No rankings, titles or match outcomes are calibration targets. Official package publication remains blocked by the intentional **250 / 250** completeness requirement.
+
+
+
+## Candidate — accelerated Ecuador/Ireland/American Samoa/Vanuatu batch (5 October 2026)
+
+- New complete FIFA histories: **Ecuador (ECU)** and **Republic of Ireland (IRL)**.
+- New complete ATP histories: **American Samoa (ASM)** and **Vanuatu (VUT)**.
+- New ratings: 4 × 72 × 6 = **1,728**; both FIFA Earth and ATP Earth move **61 -> 63 / 250 complete histories (25.2%)**.
+- FIFA adds **3 structural datasets / 5 direct observations**, taking FIFA research from **101 datasets / 1,566 observations** to **104 datasets / 1,571 observations**.
+- Ecuador preserves its 1925 national football-governance structure and 1967 association transition, while Big Count 2006 and Professional 2023 evidence remain strictly time-gated.
+- Republic of Ireland preserves the 1921 FAI foundation and 1922 domestic league/cup structure; its broad 2006 registered/club base, 2007 National Sports Campus headquarters and 2023 professional ecosystem are separate evidence eras.
+- ATP adds **8 datasets / 13 observations**, taking ATP research from **206 datasets / 537 observations** to **214 datasets / 550 observations**.
+- American Samoa uses an explicit **1955–1984 low-confidence pre-association baseline** and derives the **1985** ASTA foundation from the American Samoa Government's 2025 40-year anniversary statement; 2019 Pacific Games, 2025 Pacific Nations Cup hosting and 2026 OTF/AO Pathway evidence are separately gated.
+- Vanuatu deliberately avoids backcasting modern federation capacity before the first direct VTF operational evidence in **2010**; the 2014 Kindy Tennis school programme, 2019 Pacific Games and 2026 OTF/AO Pathway/Pacific Oceania Davis Cup signals are separately gated.
+- No rankings, titles or match outcomes are calibration targets. Official package publication remains blocked by the intentional **250 / 250** completeness requirement.

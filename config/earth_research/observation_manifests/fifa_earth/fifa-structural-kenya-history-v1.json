@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-kenya-history-v1",
+  "source_id": "caf-kenya-profile",
+  "relative_path": "observations/normalized/structural/fifa_structural_kenya_history_v1.json",
+  "sha256": "1c95ab199feadd6c67cda5add032158fed291a0eaeea287899ff59526704c32b",
+  "record_count": 3,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

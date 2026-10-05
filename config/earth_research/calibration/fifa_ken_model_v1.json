@@ -1,0 +1,74 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "fifa-earth-ken-model.v1",
+  "world_id": "fifa_earth",
+  "data_cutoff": "2026-10-03",
+  "countries": [
+    "KEN"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "evidence_rules": [
+    "CAF's 1960 creation/FIFA membership and 1968 CAF affiliation are separately gated.",
+    "Big Count 2006 enters only from 2006 for participation/access/development dimensions.",
+    "Professional 2023 Kenya evidence contains clubs but no checked-in professional-player observation; the missing player count is not inferred or zero-filled.",
+    "No rankings or match outcomes are calibration targets."
+  ],
+  "anchor_values": {
+    "KEN": {
+      "1955": [
+        5.4,
+        4.8,
+        4.6,
+        4.8,
+        4.3,
+        5
+      ],
+      "1960": [
+        5.8,
+        5.1,
+        5.1,
+        5.3,
+        5,
+        5.6
+      ],
+      "1968": [
+        6.2,
+        5.5,
+        5.5,
+        5.8,
+        5.4,
+        6
+      ],
+      "2006": [
+        7.4,
+        6.5,
+        6.7,
+        6.8,
+        6.3,
+        7.1
+      ],
+      "2023": [
+        7.6,
+        6.6,
+        6.9,
+        7,
+        6.5,
+        7.2
+      ],
+      "2026": [
+        7.7,
+        6.7,
+        7,
+        7.1,
+        6.6,
+        7.3
+      ]
+    }
+  },
+  "evidence_sources": [
+    "caf-kenya-profile",
+    "fifa-big-count-2006",
+    "fifa-professional-2023"
+  ],
+  "heldout_ranking_used": false
+}

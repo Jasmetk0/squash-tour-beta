@@ -3,7 +3,7 @@
   "dataset_id": "atp-ghana-current-v1",
   "source_id": "gtf-current-2024-2026",
   "relative_path": "observations/normalized/atp_ghana_current_v1.json",
-  "sha256": "ba9199678c541cd813af0fecfdc16eb52d53f92eaf114b4644ddb573803717c0",
+  "sha256": "edcae756ff342fbfa00f0aa448897d2c88a7c1fe7094db834b837279431511df",
   "record_count": 3,
   "source_document_sha256": null,
   "input_artifact_sha256": null,

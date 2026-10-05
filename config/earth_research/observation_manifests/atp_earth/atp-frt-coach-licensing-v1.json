@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-frt-coach-licensing-v1",
+  "source_id": "frt-coach-licensing",
+  "relative_path": "observations/normalized/atp-frt-coach-licensing-v1.json",
+  "sha256": "33e12691e0181b0aff75dfe684cc0fb54559ba6826998d93d1ab09e30afd4cbc",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

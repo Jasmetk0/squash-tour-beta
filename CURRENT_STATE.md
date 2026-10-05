@@ -1,5 +1,29 @@
 # Current implementation and next action
 
+## Candidate — ATP CAN/ITA/NED/SWE evidence-rich batch (5 October 2026)
+
+- New complete ATP histories: **Canada (CAN), Italy (ITA), Netherlands (NED),
+  Sweden (SWE)**.
+- New ratings: 4 × 72 × 6 = **1,728**; ATP Earth now resolves **14 / 250 complete
+  histories** and **6,048 annual attribute ratings**.
+- ATP research now resolves **45 normalized datasets / 178 observations**.
+- Canada gates its 2025 participation surge separately from the 2007 national training
+  centre and current regional/high-performance pathway.
+- Italy separates the Formia development lineage and current 2,000+ school decentralized
+  pathway from Davis Cup competition outcomes and the 2025 popularity boom.
+- Netherlands treats KNLTB's 650,000+ current members as **combined tennis/padel**
+  organised scale rather than a tennis-only participation count.
+- Sweden keeps its exceptional historical competition/tradition peak while current
+  participation, access and junior-development signals come from the 2025 annual report;
+  Davis Cup titles are not reused as direct development/support evidence.
+- Official ATP package publication remains blocked by the intentional 250/250 completeness
+  requirement; World Library historical-profile persistence and the full player-development
+  lifecycle remain separate unfinished integration work.
+
+**Next after green CI:** continue another varied ATP batch while keeping FIFA progress
+independent; do not add neutral filler profiles merely to raise the coverage counter.
+
+
 ## Candidate — ATP FRA/GBR/ARG/JPN evidence-rich batch (5 October 2026)
 
 This slice continues real-world package completion rather than adding generic research

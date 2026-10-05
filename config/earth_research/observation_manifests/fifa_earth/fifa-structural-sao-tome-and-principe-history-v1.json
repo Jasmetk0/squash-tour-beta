@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-sao-tome-and-principe-history-v1",
+  "source_id": "caf-sao-tome-and-principe-profile",
+  "relative_path": "observations/normalized/structural/fifa_structural_sao_tome_and_principe_history_v1.json",
+  "sha256": "b27b13414d8ba590caf584c1b806c9493e929af36800fb7ae5c830bd447c6ace",
+  "record_count": 4,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

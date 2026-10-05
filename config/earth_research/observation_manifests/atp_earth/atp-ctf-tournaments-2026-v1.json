@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-ctf-tournaments-2026-v1",
+  "source_id": "ctf-tournaments-2026",
+  "relative_path": "observations/normalized/atp-ctf-tournaments-2026-v1.json",
+  "sha256": "766273a1e4ca57922fb13447bd279101fe4b602a6a761748d5479e2b918a833b",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

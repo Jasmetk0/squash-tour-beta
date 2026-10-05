@@ -1,5 +1,22 @@
 # Current implementation and next action
 
+## Current — Madagascar/Seychelles dual-world Earth batch (5 October 2026)
+
+- Based directly on merged `buuk` commit `82d40ca291ffc4c9bdcad3a418400d6ee110f40b` (#1213); independent coverage PR.
+- New complete histories in both worlds: **Madagascar (MDG) and Seychelles (SEY)**.
+- FIFA Earth: **89 / 250**, **136 datasets / 1,662 normalized observations**.
+- ATP Earth: **89 / 250**, **278 datasets / 652 normalized observations**.
+- Adds **1,728 authored annual attribute ratings**.
+- Madagascar gates association creation 1961, CAF 1963, FIFA 1964 and Big Count 2006; no missing Professional 2023 values are invented.
+- Seychelles gates creation 1979, FIFA/CAF 1986 and Big Count 2006; no missing Professional 2023 values are invented.
+- ATP histories separate low-confidence pre-2020 context from direct ITF 2020 activity evidence and 2026 development eligibility.
+- Official package publication remains blocked until **250 / 250** in each world.
+
+**Next after green CI:** continue the next evidence-backed dual-world batch.
+
+> Older Current/Candidate entries below are implementation history and do not override this section.
+
+
 ## Current — Gabon/Mauritius dual-world Earth batch (5 October 2026)
 
 - Based directly on merged `buuk` commit `7022bb7109a79768b2d834ddd552c33b072e4001` (#1212); independent coverage PR.

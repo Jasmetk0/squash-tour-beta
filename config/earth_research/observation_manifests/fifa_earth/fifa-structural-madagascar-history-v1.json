@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-madagascar-history-v1",
+  "source_id": "caf-madagascar-profile",
+  "relative_path": "observations/normalized/structural/fifa_structural_madagascar_history_v1.json",
+  "sha256": "41f2780b1f6458629f820f559308b4e9831299aa84c5a2c954f9ffd538ef753a",
+  "record_count": 4,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

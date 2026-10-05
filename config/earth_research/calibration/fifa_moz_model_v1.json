@@ -1,0 +1,74 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "fifa-earth-moz-model.v1",
+  "world_id": "fifa_earth",
+  "data_cutoff": "2026-10-03",
+  "countries": [
+    "MOZ"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "evidence_rules": [
+    "CAF creation 1976 and FIFA/CAF affiliation 1980 are separately gated.",
+    "Big Count 2006 enters only from 2006.",
+    "Professional 2023 player and club observations enter only from 2023.",
+    "No ranking or result is a calibration target."
+  ],
+  "anchor_values": {
+    "MOZ": {
+      "1955": [
+        4.5,
+        3.9,
+        3.9,
+        4,
+        3.6,
+        4.2
+      ],
+      "1976": [
+        5.6,
+        4.9,
+        5,
+        5.2,
+        4.7,
+        5.5
+      ],
+      "1980": [
+        5.9,
+        5.2,
+        5.3,
+        5.5,
+        5,
+        5.8
+      ],
+      "2006": [
+        7.3,
+        6.3,
+        6.5,
+        6.8,
+        6.2,
+        7
+      ],
+      "2023": [
+        7.5,
+        6.5,
+        6.9,
+        7.1,
+        6.7,
+        7.2
+      ],
+      "2026": [
+        7.6,
+        6.6,
+        7,
+        7.2,
+        6.8,
+        7.3
+      ]
+    }
+  },
+  "evidence_sources": [
+    "caf-mozambique-profile",
+    "fifa-big-count-2006",
+    "fifa-professional-2023"
+  ],
+  "heldout_ranking_used": false
+}

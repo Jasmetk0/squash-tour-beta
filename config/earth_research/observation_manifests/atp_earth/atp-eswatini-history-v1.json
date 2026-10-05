@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-eswatini-history-v1",
+  "source_id": "itf-eswatini-return-to-play-2020",
+  "relative_path": "observations/normalized/atp_eswatini_history_v1.json",
+  "sha256": "6a9ddb97c3d7c3504a3615aebf9520bdc1a1e1b0cc7c262b87494944a8274f4e",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

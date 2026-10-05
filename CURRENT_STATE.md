@@ -1,5 +1,34 @@
 # Current implementation and next action
 
+## Current — Eswatini/Mozambique dual-world Earth batch (5 October 2026)
+
+- Based directly on merged `buuk` commit
+  `6cc20d285a513ffb7a22c60be66ee65631f7e186` (#1209); this remains an independent
+  coverage PR rather than a dependent stack.
+- New complete histories in both worlds: **Eswatini (SWZ) and Mozambique (MOZ)**.
+- FIFA Earth now resolves **81 / 250** complete histories and **128 datasets /
+  1,634 normalized observations**.
+- ATP Earth now resolves **81 / 250** complete histories and **262 datasets /
+  628 normalized observations**.
+- The batch adds **1,728 authored annual attribute ratings** across four histories
+  (4 × 72 years × 6 attributes).
+- Eswatini FIFA preserves the legacy `Swaziland` label only where the 2006 source
+  itself uses it, while the country history transitions to Eswatini from 2018.
+- Mozambique FIFA uses checked-in Professional 2023 player/club evidence; Eswatini
+  has no checked-in Professional 2023 observation and none is invented.
+- ATP histories deliberately distinguish low-confidence pre-documented years from
+  direct 2020 ITF activity and 2026 development-eligibility evidence.
+- Official package publication remains blocked until **250 / 250** in each world.
+  Installed packages, ordinary historical-profile editing and complete initial-player
+  historical-environment integration remain unfinished.
+
+**Next after green CI:** continue another evidence-backed coverage batch directly
+from the merged result; keep PRs independent and shallow.
+
+> Older Current/Candidate entries below are implementation history and do not
+> override this section.
+
+
 ## Current — Botswana/Namibia dual-world Earth batch (5 October 2026)
 
 - Based directly on merged `buuk` commit

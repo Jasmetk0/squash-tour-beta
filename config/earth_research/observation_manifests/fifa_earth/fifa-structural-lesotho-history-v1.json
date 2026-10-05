@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-lesotho-history-v1",
+  "source_id": "caf-lesotho-profile",
+  "relative_path": "observations/normalized/structural/fifa_structural_lesotho_history_v1.json",
+  "sha256": "ed2c9827094b83a7d685c145997e8eef030c1d06bbb2a28f0a1a4efa5bdc04cf",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

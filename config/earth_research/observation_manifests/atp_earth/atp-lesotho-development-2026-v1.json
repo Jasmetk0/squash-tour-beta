@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-lesotho-development-2026-v1",
+  "source_id": "itf-lesotho-development-eligibility-2026",
+  "relative_path": "observations/normalized/atp_lesotho_development_2026_v1.json",
+  "sha256": "bccb548835e3d6fd25843ae98b5b3ccc08fa8424e58f5a61fccd2c7241585299",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

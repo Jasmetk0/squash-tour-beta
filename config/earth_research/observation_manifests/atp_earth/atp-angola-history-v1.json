@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-angola-history-v1",
+  "source_id": "itf-angola-return-to-play-2020",
+  "relative_path": "observations/normalized/atp_angola_history_v1.json",
+  "sha256": "f293952ae6176c0745c5ecb0ae428fc3e58fa8ec810a4b0e5b7816d68ed9f05c",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

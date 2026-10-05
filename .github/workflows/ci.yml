@@ -21,6 +21,8 @@ jobs:
       frontend: ${{ steps.filter.outputs.frontend }}
       docs_only: ${{ steps.filter.outputs.docs_only }}
       fifa_calibration: ${{ steps.filter.outputs.fifa_calibration }}
+      earth_data: ${{ steps.filter.outputs.earth_data }}
+      backend_core: ${{ steps.filter.outputs.backend_core }}
     steps:
       - uses: actions/checkout@v4
 
@@ -45,6 +47,18 @@ jobs:
               - 'config/earth_research/**'
               - 'scripts/*fifa*'
               - 'tests/application/test_fifa*'
+            earth_data:
+              - 'config/earth_research/**'
+              - 'tests/application/test_earth_seed_progress.py'
+            backend_core:
+              - 'config/world_packages/**'
+              - 'config/player_generation/**'
+              - 'scripts/**'
+              - 'src/**'
+              - 'tests/**'
+              - '!tests/application/test_earth_seed_progress.py'
+              - 'pyproject.toml'
+              - 'requirements*.txt'
             frontend:
               # Canonical World Package changes affect API contracts consumed by the UI.
               - 'config/world_packages/**'
@@ -73,15 +87,22 @@ jobs:
         run: python -m pip install -e . pytest
       - name: Compile backend source
         run: python -m compileall -q src
+      - name: Run focused Earth-data validation
+        if: needs.changes.outputs.earth_data == 'true' && needs.changes.outputs.backend_core != 'true'
+        run: |
+          python -m pytest tests/application/test_earth_seed_progress.py \
+            -k 'first_reviewed_country_histories_are_complete_and_resolvable or complete_histories_are_evidence_resolvable_and_temporally_bounded or dual_world_batch' \
+            --maxfail=1 --durations=10
       - name: Run PR critical backend tests
+        if: needs.changes.outputs.backend_core == 'true' || needs.changes.outputs.earth_data != 'true'
         run: |
           python -m pytest -m pr_critical --maxfail=1 --durations=10
       - name: Generate FIFA calibration review bundle
-        if: needs.changes.outputs.fifa_calibration == 'true'
+        if: needs.changes.outputs.fifa_calibration == 'true' && needs.changes.outputs.backend_core == 'true'
         run: |
           PYTHONPATH=src:. python scripts/export_fifa_calibration_review.py /tmp/fifa-calibration-review
       - name: Upload FIFA calibration review bundle
-        if: needs.changes.outputs.fifa_calibration == 'true'
+        if: needs.changes.outputs.fifa_calibration == 'true' && needs.changes.outputs.backend_core == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: fifa-calibration-review

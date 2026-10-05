@@ -11,11 +11,11 @@ from beta_engine.application.earth_package_builder import load_earth_research_bu
 
 def test_fifa_first_reviewed_country_histories_are_complete_and_resolvable():
     bundle = load_earth_research_bundle(Path("config/earth_research/fifa_earth.json"))
-    assert set(bundle.research.countries) == {"CZE", "SVK", "JPN", "IND", "MAR", "SEN", "FRO", "USA", "ZAF", "BRA", "DEU", "ISL", "SMR", "ARG", "MEX", "AUS", "NZL", "FJI", "PNG", "SLB", "COK", "ASM", "PYF", "NCL", "WSM", "TON", "VUT", "FRA", "ESP", "ITA", "NLD", "BEL", "PRT", "AUT", "DNK", "SWE", "CHE", "NOR", "FIN", "HRV", "SVN", "POL", "ROU", "UKR", "LTU", "LVA", "EST", "CAN", "GRC", "SRB", "CHL", "HUN", "ISR", "BGR", "KAZ", "CHN", "TUR", "KOR", "THA", "COL", "CYP", "ECU", "IRL", "EGY", "MYS", "SAU", "ARE", "QAT", "OMN", "GHA", "NGA", "KEN", "UGA", "TZA", "ZMB", "ZWE", "MWI", "BWA", "NAM", "SWZ", "MOZ"}
+    assert set(bundle.research.countries) == {"CZE", "SVK", "JPN", "IND", "MAR", "SEN", "FRO", "USA", "ZAF", "BRA", "DEU", "ISL", "SMR", "ARG", "MEX", "AUS", "NZL", "FJI", "PNG", "SLB", "COK", "ASM", "PYF", "NCL", "WSM", "TON", "VUT", "FRA", "ESP", "ITA", "NLD", "BEL", "PRT", "AUT", "DNK", "SWE", "CHE", "NOR", "FIN", "HRV", "SVN", "POL", "ROU", "UKR", "LTU", "LVA", "EST", "CAN", "GRC", "SRB", "CHL", "HUN", "ISR", "BGR", "KAZ", "CHN", "TUR", "KOR", "THA", "COL", "CYP", "ECU", "IRL", "EGY", "MYS", "SAU", "ARE", "QAT", "OMN", "GHA", "NGA", "KEN", "UGA", "TZA", "ZMB", "ZWE", "MWI", "BWA", "NAM", "SWZ", "MOZ", "ANG", "LES"}
     assert bundle.research.data_cutoff.isoformat() == "2026-10-03"
-    assert len(bundle.research.countries) == 81
-    assert len(bundle.datasets) == 128
-    assert len(bundle.observations) == 1634
+    assert len(bundle.research.countries) == 83
+    assert len(bundle.datasets) == 130
+    assert len(bundle.observations) == 1639
 
     for code in ("CZE", "SVK"):
         history = bundle.research.countries[code]
@@ -461,11 +461,11 @@ def test_fifa_fra_esp_batch_is_complete_and_temporally_dimensioned():
 
 def test_atp_complete_histories_are_evidence_resolvable_and_temporally_bounded():
     bundle = load_earth_research_bundle(Path("config/earth_research/atp_earth.json"))
-    expected_countries = {"CZE", "DEU", "USA", "AUS", "ESP", "SRB", "FRA", "GBR", "ARG", "JPN", "CAN", "ITA", "NED", "SWE", "SUI", "CRO", "POL", "CHN", "NOR", "GRE", "BEL", "ZAF", "DEN", "FIN", "NZL", "PRT", "IRL", "HUN", "ROU", "SVN", "SVK", "ISR", "BGR", "AUT", "TUR", "CYP", "BRA", "CHL", "COL", "MEX", "ECU", "IND", "KOR", "THA", "KAZ", "LVA", "EST", "LTU", "UKR", "MAR", "SEN", "ISL", "SMR", "FRO", "FJI", "PNG", "WSM", "SLB", "TON", "COK", "NCL", "ASM", "VUT", "EGY", "MYS", "PHL", "IDN", "SGP", "PAK", "GHA", "NGA", "KEN", "UGA", "TZA", "ZMB", "ZWE", "MWI", "BWA", "NAM", "SWZ", "MOZ"}
+    expected_countries = {"CZE", "DEU", "USA", "AUS", "ESP", "SRB", "FRA", "GBR", "ARG", "JPN", "CAN", "ITA", "NED", "SWE", "SUI", "CRO", "POL", "CHN", "NOR", "GRE", "BEL", "ZAF", "DEN", "FIN", "NZL", "PRT", "IRL", "HUN", "ROU", "SVN", "SVK", "ISR", "BGR", "AUT", "TUR", "CYP", "BRA", "CHL", "COL", "MEX", "ECU", "IND", "KOR", "THA", "KAZ", "LVA", "EST", "LTU", "UKR", "MAR", "SEN", "ISL", "SMR", "FRO", "FJI", "PNG", "WSM", "SLB", "TON", "COK", "NCL", "ASM", "VUT", "EGY", "MYS", "PHL", "IDN", "SGP", "PAK", "GHA", "NGA", "KEN", "UGA", "TZA", "ZMB", "ZWE", "MWI", "BWA", "NAM", "SWZ", "MOZ", "ANG", "LES"}
     assert set(bundle.research.countries) == expected_countries
     assert bundle.research.data_cutoff.isoformat() == "2026-10-04"
-    assert len(bundle.datasets) == 262
-    assert len(bundle.observations) == 628
+    assert len(bundle.datasets) == 266
+    assert len(bundle.observations) == 634
 
     expected_models = {
         "CZE": "atp-earth-cze-deu-seed-model.v1",
@@ -549,6 +549,8 @@ def test_atp_complete_histories_are_evidence_resolvable_and_temporally_bounded()
         "NAM": "atp-earth-nam-model.v1",
         "SWZ": "atp-earth-swz-model.v1",
         "MOZ": "atp-earth-moz-model.v1",
+        "ANG": "atp-earth-ang-model.v1",
+        "LES": "atp-earth-les-model.v1",
     }
     for code, history in bundle.research.countries.items():
         assert history.missing_earth_years == []
@@ -3557,3 +3559,62 @@ def test_eswatini_mozambique_dual_world_batch_is_complete_resolvable_and_time_ga
         in moz_atp.years[2026].ratings["development_quality"].observation_ids
     )
 
+
+
+def test_angola_lesotho_dual_world_batch_is_complete_resolvable_and_time_gated():
+    fifa = load_earth_research_bundle(Path("config/earth_research/fifa_earth.json"))
+    atp = load_earth_research_bundle(Path("config/earth_research/atp_earth.json"))
+
+    for bundle, expected_models in (
+        (fifa, {"ANG": "fifa-earth-ang-model.v1", "LES": "fifa-earth-les-model.v1"}),
+        (atp, {"ANG": "atp-earth-ang-model.v1", "LES": "atp-earth-les-model.v1"}),
+    ):
+        for code, model_id in expected_models.items():
+            history = bundle.research.countries[code]
+            assert history.missing_earth_years == []
+            assert len(history.years) == 72
+            assert history.reference_year == 2026
+            for year in history.years.values():
+                assert len(year.ratings) == 6
+                for rating in year.ratings.values():
+                    assert rating.method == "derived_estimate"
+                    assert rating.calibration_model_id == model_id
+                    assert rating.observation_ids
+                    assert all(item in bundle.observations for item in rating.observation_ids)
+
+    ang_fifa = fifa.research.countries["ANG"]
+    assert "fifa-structural-angola-history-v1#ang-created-1979" not in ang_fifa.years[1978].ratings["squash_tradition"].observation_ids
+    assert "fifa-structural-angola-history-v1#ang-created-1979" in ang_fifa.years[1979].ratings["squash_tradition"].observation_ids
+    assert "fifa-structural-angola-history-v1#ang-fifa-caf-1980" not in ang_fifa.years[1979].ratings["competition_quality"].observation_ids
+    assert "fifa-structural-angola-history-v1#ang-fifa-caf-1980" in ang_fifa.years[1980].ratings["competition_quality"].observation_ids
+    assert "fifa-big-count-2006-all-players-v2#angola" not in ang_fifa.years[2005].ratings["squash_popularity"].observation_ids
+    assert "fifa-big-count-2006-all-players-v2#angola" in ang_fifa.years[2006].ratings["squash_popularity"].observation_ids
+    assert "fifa-professional-2023-players-v2#angola-p71" not in ang_fifa.years[2022].ratings["competition_quality"].observation_ids
+    assert "fifa-professional-2023-players-v2#angola-p71" in ang_fifa.years[2023].ratings["competition_quality"].observation_ids
+
+    les_fifa = fifa.research.countries["LES"]
+    assert "fifa-structural-lesotho-history-v1#les-fifa-caf-1964" not in les_fifa.years[1963].ratings["competition_quality"].observation_ids
+    assert "fifa-structural-lesotho-history-v1#les-fifa-caf-1964" in les_fifa.years[1964].ratings["competition_quality"].observation_ids
+    assert "fifa-big-count-2006-all-players-v2#lesotho" in les_fifa.years[2006].ratings["squash_popularity"].observation_ids
+    assert all(
+        "fifa-professional-2023" not in source_id
+        for year in les_fifa.years.values()
+        for rating in year.ratings.values()
+        for source_id in rating.source_ids
+    )
+
+    ang_atp = atp.research.countries["ANG"]
+    assert "derived_pre_evidence_context" in atp.observations[
+        "atp-angola-history-v1#ang-pre-documented-baseline-1955-2019"
+    ].quality_flags
+    assert "atp-angola-history-v1#ang-status-2020" not in ang_atp.years[2019].ratings["squash_access"].observation_ids
+    assert "atp-angola-history-v1#ang-status-2020" in ang_atp.years[2020].ratings["squash_access"].observation_ids
+    assert "atp-angola-development-2026-v1#ang-eligible-2026" not in ang_atp.years[2025].ratings["development_quality"].observation_ids
+    assert "atp-angola-development-2026-v1#ang-eligible-2026" in ang_atp.years[2026].ratings["development_quality"].observation_ids
+
+    les_atp = atp.research.countries["LES"]
+    assert "derived_pre_evidence_context" in atp.observations[
+        "atp-lesotho-history-v1#les-pre-documented-baseline-1955-2019"
+    ].quality_flags
+    assert "atp-lesotho-history-v1#les-status-2020" in les_atp.years[2020].ratings["squash_access"].observation_ids
+    assert "atp-lesotho-development-2026-v1#les-eligible-2026" in les_atp.years[2026].ratings["development_quality"].observation_ids

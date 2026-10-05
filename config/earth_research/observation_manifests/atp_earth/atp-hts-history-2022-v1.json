@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-hts-history-2022-v1",
+  "source_id": "hts-history-2022",
+  "relative_path": "observations/normalized/atp-hts-history-2022-v1.json",
+  "sha256": "2fa059b78b0d8ebd383c7d1207520c4cf7fe60b381897d1eac651cad3f71da9b",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

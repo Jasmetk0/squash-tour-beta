@@ -1,5 +1,17 @@
 # Current implementation and next action
 
+## Current merged baseline + Kyrgyzstan/Georgia candidate (6 October 2026)
+
+- Verified merged `buuk` HEAD for this batch: `3393c83120613a3009bd4753bcabbaf3a7ff6756` (#1244).
+- **Merged data in `buuk`: FIFA Earth 139 / 250 and ATP Earth 139 / 250 complete 1955–2026 histories.**
+- This branch adds **Kyrgyzstan (KGZ)** and **Georgia (GEO)** to both worlds.
+- **Proposed result after merge:** FIFA Earth **141 / 250**, **191 datasets / 1,815 observations**; ATP Earth **141 / 250**, **366 datasets / 794 observations**.
+- FIFA Big Count 2006 is time-gated for both countries.
+- The Professional 2023 KUWAIT/Kyrgyzstan identity conflict remains unresolved and is explicitly not joined; Georgia has no retained Professional 2023 row.
+- ATP 1955–2025 values remain explicit low-confidence project-authored baselines with `is_direct_observation=false` and `is_statistically_modelled=false`.
+
+> Older sections below are historical and do not override this section.
+
 ## Current merged baseline + Tajikistan/Turkmenistan candidate (6 October 2026)
 
 - Verified merged `buuk` HEAD for this batch: `e12b6824e8ea39a5b51a83774fdae59b4f9bab15` (#1243).

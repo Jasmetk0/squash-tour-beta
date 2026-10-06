@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-saint-kitts-and-nevis-history-v1",
+  "source_id": "fifa-saint-kitts-and-nevis-member-context-2026",
+  "relative_path": "observations/normalized/structural/fifa_saint_kitts_and_nevis_history_v1.json",
+  "sha256": "dcb7ff9d3473197fc8394f711749d0eaf80791744a5ab8580b8ba6e7917eef9d",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

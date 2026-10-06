@@ -1,5 +1,21 @@
 # Current implementation and next action
 
+## Current merged baseline + Palestine/Bahrain candidate (6 October 2026)
+
+- Verified merged `buuk` HEAD for this batch: `31be2002d9fe908241bf9935f4585547af72284b` (#1234).
+- **Merged data in `buuk`: FIFA Earth 119 / 250 and ATP Earth 119 / 250 complete 1955–2026 histories.**
+- Merged loader expectations: **FIFA 166 datasets / 1,767 observations** and **ATP 341 datasets / 747 observations**.
+- This independent branch adds **Palestine (PSE)** and **Bahrain (BHR)** to both worlds.
+- **Proposed result after merge:** FIFA Earth **121 / 250**, **170 datasets / 1,774 observations**; ATP Earth **121 / 250**, **345 datasets / 753 observations**.
+- Palestine pre-1998 FIFA ratings are explicit territorial backcasts for the present Earth country and do **not** imply uninterrupted institutional continuity of the modern PFA. FIFA admission starts in 1998 and later evidence is time-gated.
+- Palestine later evidence includes FIFA Forward infrastructure (2019), AFC Grassroots Charter Silver / school-festival evidence (2024), and FIFA Arena facilities (2026).
+- Bahrain uses an explicit 1955–1956 pre-association baseline and BFA establishment from **1957**, plus Big Count 2006.
+- ATP 1955–2025 values remain explicit low-confidence **project-authored baselines**, with `is_direct_observation=false` and `is_statistically_modelled=false`; current ITF membership and 2026 eligibility are separate facts.
+- Research coverage still does not mean installed package completion, ordinary historical-profile editing, or full historical-environment integration into initial-player development.
+
+> Older Current/Candidate sections below are dated implementation history and do not override this section.
+
+
 ## Current merged baseline + Lebanon/Syria candidate (6 October 2026)
 
 - Verified merged `buuk` HEAD for this batch: `9a2b0cc303978a541bed1e77d5235c16fb573d50` (#1233).

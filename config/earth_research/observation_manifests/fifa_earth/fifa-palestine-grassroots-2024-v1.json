@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-palestine-grassroots-2024-v1",
+  "source_id": "afc-palestine-grassroots-review-2024",
+  "relative_path": "observations/normalized/structural/fifa_palestine_grassroots_2024_v1.json",
+  "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

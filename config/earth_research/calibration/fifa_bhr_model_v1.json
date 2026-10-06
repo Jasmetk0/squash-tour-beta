@@ -1,0 +1,56 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "fifa-earth-bhr-model.v1",
+  "world_id": "fifa_earth",
+  "data_cutoff": "2026-10-06",
+  "countries": [
+    "BHR"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "evidence_rules": [
+    "1955-1956 values are explicit pre-association estimates.",
+    "BFA establishment enters from 1957; Big Count from 2006.",
+    "No rankings or match outcomes are calibration targets."
+  ],
+  "anchor_values": {
+    "BHR": {
+      "1955": [
+        4.7,
+        4.3,
+        4.4,
+        4.4,
+        4.1,
+        4.8
+      ],
+      "1957": [
+        5.3,
+        4.8,
+        5,
+        5,
+        4.7,
+        5.4
+      ],
+      "2006": [
+        6.8,
+        6,
+        6.3,
+        6.5,
+        6,
+        6.7
+      ],
+      "2026": [
+        7.3,
+        6.6,
+        6.8,
+        7,
+        6.6,
+        7.2
+      ]
+    }
+  },
+  "evidence_sources": [
+    "afc-bfa-statutes-2023",
+    "fifa-big-count-2006"
+  ],
+  "heldout_ranking_used": false
+}

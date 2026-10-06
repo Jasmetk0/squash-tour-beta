@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-dominican-republic-history-v1",
+  "source_id": "itf-dominican-republic-profile",
+  "relative_path": "observations/normalized/atp_dominican_republic_history_v1.json",
+  "sha256": "2a11fb6b937b2da4d95bef2a8bce5bd68e8cd068bf83658fbbbd526804ea15f4",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

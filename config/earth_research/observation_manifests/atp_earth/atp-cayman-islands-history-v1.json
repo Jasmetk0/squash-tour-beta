@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-cayman-islands-history-v1",
+  "source_id": "itf-cayman-islands-profile",
+  "relative_path": "observations/normalized/atp_cayman_islands_history_v1.json",
+  "sha256": "add21fda5420f605690910befac8a93dc2f417e8482bfe3b835d4ae66c92a216",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

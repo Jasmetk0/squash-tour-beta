@@ -5520,3 +5520,12 @@ bands should shape 0..200 potential. No threshold is inferred from current OVR v
 - Tunisia FIFA gates federation creation to 1957, FIFA/CAF affiliation to 1960, Big Count to 2006 and the available professional-club observation to 2023.
 - Libya FIFA gates federation creation to 1962 and FIFA affiliation to 1964; no missing 2023 professional value is inferred.
 - Tunisia ATP uses Bronze National Training Centre recognition from 2024 and ITF development eligibility in 2026. Libya ATP remains deliberately sparse and low confidence, with current member-association context and 2026 eligibility not backdated into invented historical milestones.
+
+
+## Candidate — Iraq + Jordan dual Earth batch (6 October 2026)
+
+- Adds complete 1955–2026 FIFA Earth and ATP Earth histories for **Iraq (IRQ)** and **Jordan (JOR)**.
+- Both worlds move **115 -> 117 / 250 complete histories**; the batch adds **1,728 ratings**.
+- FIFA becomes **164 datasets / 1,761 observations**. ATP becomes **337 datasets / 741 observations**.
+- FIFA uses FIFA-documented association founding years (Iraq 1948; Jordan 1949), Big Count 2006 and available Professional 2023 club counts, all time-gated.
+- ATP remains deliberately sparse and low confidence before 2026; current ITF membership context and 2026 development eligibility are not backdated into invented historical federation milestones.

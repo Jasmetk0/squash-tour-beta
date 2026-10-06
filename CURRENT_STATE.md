@@ -1,5 +1,18 @@
 # Current implementation and next action
 
+## Current merged baseline + Sri Lanka/Bhutan candidate (6 October 2026)
+
+- Verified merged `buuk` HEAD for this batch: `6e95d47a85d5726f901b8bc1ce840646626cf0d1` (#1238).
+- **Merged data in `buuk`: FIFA Earth 127 / 250 and ATP Earth 127 / 250 complete 1955–2026 histories.**
+- Merged loader expectations: **FIFA 177 datasets / 1,787 observations** and **ATP 352 datasets / 766 observations**.
+- This branch adds **Sri Lanka (LKA)** and **Bhutan (BTN)** to both worlds.
+- **Proposed result after merge:** FIFA Earth **129 / 250**, **179 datasets / 1,791 observations**; ATP Earth **129 / 250**, **354 datasets / 770 observations**.
+- FIFA Professional 2023 player/club fields are null for both countries, so those values remain missing and are not converted to zero.
+- ATP 1955–2025 values remain explicit low-confidence project-authored baselines with `is_direct_observation=false` and `is_statistically_modelled=false`.
+
+> Older sections below are historical and do not override this section.
+
+
 ## Current merged baseline + Bangladesh/Nepal candidate (6 October 2026)
 
 - Verified merged `buuk` HEAD for this batch: `3e32e2ee2a5f4de653ad56b332bf21b1f372b261` (#1237).

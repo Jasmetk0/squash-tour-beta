@@ -3,7 +3,7 @@
   "dataset_id": "fifa-structural-cape-verde-history-v1",
   "source_id": "caf-cape-verde-profile",
   "relative_path": "observations/normalized/structural/fifa_structural_cape_verde_history_v1.json",
-  "sha256": "9ac238832727527f033715f8e3a6c750f0740b2debd1bcedef8cb2f306cd3b4b",
+  "sha256": "fe17fdf76e95bfa3aa027f2278cee66d0b2f1b6b052f7ca9dbe877e7c20bd0c9",
   "record_count": 4,
   "source_document_sha256": null,
   "input_artifact_sha256": null,

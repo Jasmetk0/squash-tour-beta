@@ -3,7 +3,7 @@
   "dataset_id": "fifa-structural-benin-history-v1",
   "source_id": "caf-benin-profile",
   "relative_path": "observations/normalized/structural/fifa_structural_benin_history_v1.json",
-  "sha256": "dbb1f02eebd43dcf04ee6c19d8850841cf3d9aa02b6e391660e957297976eefd",
+  "sha256": "775996227a56a6cf8b1ae8b1abb54275495cadf9d087865570b6fddf2441f64a",
   "record_count": 4,
   "source_document_sha256": null,
   "input_artifact_sha256": null,

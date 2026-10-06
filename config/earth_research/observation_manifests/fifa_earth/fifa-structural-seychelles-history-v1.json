@@ -3,7 +3,7 @@
   "dataset_id": "fifa-structural-seychelles-history-v1",
   "source_id": "caf-seychelles-profile",
   "relative_path": "observations/normalized/structural/fifa_structural_seychelles_history_v1.json",
-  "sha256": "166730880ef1a44201d68e0a53aad865cb270275909b87610322d8acad33901f",
+  "sha256": "8e3bf5e328c8aaabfcf759f7b24eb80b1f96284fa6041ef4c46f974914a366e9",
   "record_count": 4,
   "source_document_sha256": null,
   "input_artifact_sha256": null,

@@ -3,7 +3,7 @@
   "dataset_id": "fifa-structural-togo-history-v1",
   "source_id": "caf-togo-profile",
   "relative_path": "observations/normalized/structural/fifa_structural_togo_history_v1.json",
-  "sha256": "47812341b7ebdba3d37c915d667537cb2c3004099fe751a277f874074635f0dd",
+  "sha256": "bf283f2fa1906025173a5c8b281fe8519564cf0f555aa3b31a57e2b565ee5ddc",
   "record_count": 4,
   "source_document_sha256": null,
   "input_artifact_sha256": null,

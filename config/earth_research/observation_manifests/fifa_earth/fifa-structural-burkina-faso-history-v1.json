@@ -3,7 +3,7 @@
   "dataset_id": "fifa-structural-burkina-faso-history-v1",
   "source_id": "caf-burkina-faso-profile",
   "relative_path": "observations/normalized/structural/fifa_structural_burkina_faso_history_v1.json",
-  "sha256": "56b747c9417f5fa3fba8a73cd493f8e7ab24025a0c04aca1d43cf21cee4625a8",
+  "sha256": "b430f5ae0336376c77316e38bd353b7db6fc0cceceea5c3636ab7c60e89ddccd",
   "record_count": 4,
   "source_document_sha256": null,
   "input_artifact_sha256": null,

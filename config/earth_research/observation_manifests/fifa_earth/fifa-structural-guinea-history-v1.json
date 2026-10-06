@@ -3,7 +3,7 @@
   "dataset_id": "fifa-structural-guinea-history-v1",
   "source_id": "caf-guinea-profile",
   "relative_path": "observations/normalized/structural/fifa_structural_guinea_history_v1.json",
-  "sha256": "d12f325297c5ef7fb42f1d4c3d67a5ab71b15f6843f865a77fe71643ebdfd15b",
+  "sha256": "7a6217e95aa076116c73870524f597e94741cacca046ff80b8a4477535c233a1",
   "record_count": 4,
   "source_document_sha256": null,
   "input_artifact_sha256": null,

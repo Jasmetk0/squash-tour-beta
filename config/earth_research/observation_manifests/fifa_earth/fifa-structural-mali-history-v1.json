@@ -3,7 +3,7 @@
   "dataset_id": "fifa-structural-mali-history-v1",
   "source_id": "caf-mali-profile",
   "relative_path": "observations/normalized/structural/fifa_structural_mali_history_v1.json",
-  "sha256": "acb159bbe43f3a3ed6bd10daf62a7b226e3cfe2a10571a4d92100e0f9647ae17",
+  "sha256": "b27e500d44840543306110a98576207d430db5697936c39e63177ff2a7c13a64",
   "record_count": 4,
   "source_document_sha256": null,
   "input_artifact_sha256": null,

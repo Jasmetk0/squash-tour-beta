@@ -1,5 +1,17 @@
 # Current implementation and next action
 
+## Current merged baseline + Panama/Dominican Republic candidate (6 October 2026)
+
+- Verified merged `buuk` HEAD for this batch: `05c02b0418621b0f7f0f21c34acc7384e0993314` (#1251).
+- **Merged data in `buuk`: FIFA Earth 153 / 250 and ATP Earth 153 / 250 complete 1955–2026 histories.**
+- This branch adds **Panama (PAN)** and **Dominican Republic (DOM)** to both worlds.
+- **Proposed result after merge:** FIFA Earth **155 / 250**, **205 datasets / 1,843 observations**; ATP Earth **155 / 250**, **380 datasets / 822 observations**.
+- FIFA Big Count 2006 is time-gated for both countries.
+- FIFA Professional 2023 is used from 2023 onward: PAN **396 professional players / 12 clubs**, DOM **300 players / 9 clubs**.
+- ATP 1955–2025 values remain explicit low-confidence project-authored baselines with `is_direct_observation=false` and `is_statistically_modelled=false`.
+
+> Older sections below are historical and do not override this section.
+
 ## Current merged baseline + Jamaica/Trinidad and Tobago candidate (6 October 2026)
 
 - Verified merged `buuk` HEAD for this batch: `b46045abe8733b654ff160a5b541ca63baf7e225` (#1250).

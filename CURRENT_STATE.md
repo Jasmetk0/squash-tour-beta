@@ -1,5 +1,16 @@
 # Current implementation and next action
 
+## Current merged baseline + Laos/Brunei candidate (6 October 2026)
+
+- Verified merged `buuk` HEAD for this batch: `76d7dc36704889071036e853210ecb4ee4912d2f` (#1241).
+- **Merged data in `buuk`: FIFA Earth 133 / 250 and ATP Earth 133 / 250 complete 1955–2026 histories.**
+- This branch adds **Laos (LAO)** and **Brunei Darussalam (BRN)** to both worlds.
+- **Proposed result after merge:** FIFA Earth **135 / 250**, **185 datasets / 1,803 observations**; ATP Earth **135 / 250**, **360 datasets / 782 observations**.
+- FIFA Big Count 2006 is time-gated; Brunei uses the checked-in `brunei-darussalam` observation slug.
+- ATP 1955–2025 values remain explicit low-confidence project-authored baselines with `is_direct_observation=false` and `is_statistically_modelled=false`.
+
+> Older sections below are historical and do not override this section.
+
 ## Current merged baseline + Cambodia/Myanmar candidate (6 October 2026)
 
 - Verified merged `buuk` HEAD for this batch: `176b2c5974807dc1d0a0f8e306f60c1c8643ce92` (#1240).

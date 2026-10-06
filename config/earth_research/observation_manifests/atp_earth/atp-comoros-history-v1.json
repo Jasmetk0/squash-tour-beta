@@ -3,7 +3,7 @@
   "dataset_id": "atp-comoros-history-v1",
   "source_id": "itf-comoros-return-to-play-2020",
   "relative_path": "observations/normalized/atp_comoros_history_v1.json",
-  "sha256": "3c36bd021fc36e21de70d8ee15a3ce154b4abdc66170e9a59976dcc700ad4c48",
+  "sha256": "7812794a7cbecbc9b74168a49aa99a9874cb06630ae6f46471b2531425930b87",
   "record_count": 2,
   "source_document_sha256": null,
   "input_artifact_sha256": null,

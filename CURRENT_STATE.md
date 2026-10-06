@@ -1,5 +1,21 @@
 # Current implementation and next action
 
+## Current merged baseline + Kuwait/Yemen candidate (6 October 2026)
+
+- Verified merged `buuk` HEAD for this batch: `ab067ebda8707611e56e3342beac3c7dd4aa6139` (#1235).
+- **Merged data in `buuk`: FIFA Earth 121 / 250 and ATP Earth 121 / 250 complete 1955–2026 histories.**
+- Merged loader expectations: **FIFA 170 datasets / 1,774 observations** and **ATP 345 datasets / 753 observations**.
+- This independent branch adds **Kuwait (KWT)** and **Yemen (YEM)** to both worlds.
+- **Proposed result after merge:** FIFA Earth **123 / 250**, **173 datasets / 1,779 observations**; ATP Earth **123 / 250**, **348 datasets / 758 observations**.
+- Kuwait deliberately excludes FIFA Professional Football Report 2023 because the repository preserves an unresolved Kuwait/Kyrgyzstan identity anomaly. Big Count 2006 and current FIFA member context are used instead.
+- Yemen 1955–1989 is an explicit territorial Earth backcast spanning the former YAR/PDRY predecessor states. The unified Republic of Yemen begins on **22 May 1990**; no single-state continuity is implied before that boundary.
+- ATP Kuwait has no fabricated 2026 development-eligibility evidence when absent from the checked ITF list. Yemen does use its checked 2026 eligibility entry.
+- ATP 1955–2025 values remain explicit low-confidence **project-authored baselines**, with `is_direct_observation=false` and `is_statistically_modelled=false`.
+- Research coverage still does not mean installed package completion, ordinary historical-profile editing, or full historical-environment integration into initial-player development.
+
+> Older Current/Candidate sections below are dated implementation history and do not override this section.
+
+
 ## Current merged baseline + Palestine/Bahrain candidate (6 October 2026)
 
 - Verified merged `buuk` HEAD for this batch: `31be2002d9fe908241bf9935f4585547af72284b` (#1234).

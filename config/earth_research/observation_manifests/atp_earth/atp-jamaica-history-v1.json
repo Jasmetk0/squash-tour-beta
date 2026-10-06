@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-jamaica-history-v1",
+  "source_id": "itf-jamaica-profile",
+  "relative_path": "observations/normalized/atp_jamaica_history_v1.json",
+  "sha256": "fa3639353eac9637e75961637d718cbbb1b9e4c42460bc041921fbf44162c045",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

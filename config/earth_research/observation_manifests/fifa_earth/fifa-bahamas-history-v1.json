@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-bahamas-history-v1",
+  "source_id": "fifa-bahamas-member-context-2026",
+  "relative_path": "observations/normalized/structural/fifa_bahamas_history_v1.json",
+  "sha256": "2fd270a05fd480b449350eaaf0701d849b53ff50564162cd87b6bf303454c7c7",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

@@ -1,5 +1,18 @@
 # Current implementation and next action
 
+## Current merged baseline + Saint Vincent and the Grenadines/Saint Kitts and Nevis candidate (6 October 2026)
+
+- Verified merged `buuk` HEAD for this batch: `5fee3dda0dab24f810d54930bbfb338185bed8c3` (#1262).
+- **Merged data in `buuk`: FIFA Earth 175 / 250 and ATP Earth 175 / 250 complete 1955–2026 histories.**
+- This branch adds **Saint Vincent and the Grenadines (VCT)** and **Saint Kitts and Nevis (KNA)** to both worlds.
+- **Proposed result after merge:** FIFA Earth **177 / 250**, **227 datasets / 1,887 observations**; ATP Earth **177 / 250**, **402 datasets / 866 observations**.
+- FIFA Big Count 2006 is time-gated: VCT **9,500 players / 52 clubs**, KNA **3,500 players / 31 clubs**.
+- FIFA Professional 2023 player and club fields are null for both countries and remain unused.
+- Historical labels: VCT uses **Saint Vincent and the Grenadines (British colony)** through 1978 and the modern entity from 1979; KNA uses **Saint Kitts and Nevis (British colony)** through 1982 and the modern entity from 1983.
+- ATP 1955–2025 values remain explicit low-confidence project-authored baselines with `is_direct_observation=false` and `is_statistically_modelled=false`.
+
+> Older sections below are historical and do not override this section.
+
 ## Current merged baseline + Antigua and Barbuda/Saint Lucia candidate (6 October 2026)
 
 - Verified merged `buuk` HEAD for this batch: `0e49edca0b36b0dc3a103fb95f4ba3e38c0046a1` (#1261).

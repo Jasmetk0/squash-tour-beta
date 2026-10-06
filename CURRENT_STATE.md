@@ -1,5 +1,17 @@
 # Current implementation and next action
 
+## Current merged baseline + Guatemala/Honduras candidate (6 October 2026)
+
+- Verified merged `buuk` HEAD for this batch: `6ba3bbabc25c2ba088399a2161556370d457ef47` (#1252).
+- **Merged data in `buuk`: FIFA Earth 155 / 250 and ATP Earth 155 / 250 complete 1955–2026 histories.**
+- This branch adds **Guatemala (GTM)** and **Honduras (HND)** to both worlds.
+- **Proposed result after merge:** FIFA Earth **157 / 250**, **207 datasets / 1,847 observations**; ATP Earth **157 / 250**, **382 datasets / 826 observations**.
+- FIFA Big Count 2006 is time-gated for both countries: GTM **2,006,649 players / 139 clubs**, HND **420,600 players / 227 clubs**.
+- FIFA Professional 2023 is used from 2023 onward: GTM **945 professional players / 72 clubs**, HND **328 players / 10 clubs**.
+- ATP 1955–2025 values remain explicit low-confidence project-authored baselines with `is_direct_observation=false` and `is_statistically_modelled=false`.
+
+> Older sections below are historical and do not override this section.
+
 ## Current merged baseline + Panama/Dominican Republic candidate (6 October 2026)
 
 - Verified merged `buuk` HEAD for this batch: `05c02b0418621b0f7f0f21c34acc7384e0993314` (#1251).

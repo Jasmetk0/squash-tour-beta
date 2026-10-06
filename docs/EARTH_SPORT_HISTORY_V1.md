@@ -18,21 +18,21 @@ separate inputs. Innate potential rarity must remain independent of nationality.
 This section is the authoritative current summary. Dated batch sections below are
 retained only as implementation history and do not override these numbers.
 
-- **Merged `buuk` baseline:** FIFA Earth **119 / 250** complete 1955–2026 histories
-  with **166 datasets / 1,767 normalized observations**; ATP Earth **119 / 250**
-  complete histories with **341 datasets / 747 normalized observations**.
-- **Palestine/Bahrain candidate branch:** adds **Palestine (PSE)** and **Bahrain (BHR)**
-  to both worlds. If merged unchanged, both packages become **121 / 250**. Expected
-  loader totals become **FIFA 170 datasets / 1,774 observations** and
-  **ATP 345 datasets / 753 observations**.
-- Palestine's pre-1998 FIFA values are explicit territorial Earth backcasts and do
-  not assert uninterrupted continuity of today's Palestine Football Association.
-  FIFA admission starts in 1998; later FIFA/AFC infrastructure and grassroots
-  evidence is time-gated.
-- Bahrain uses an explicit 1955–1956 pre-association baseline; BFA establishment
-  begins in 1957 and Big Count enters from 2006.
-- Sparse ATP 1955–2025 histories in this batch remain low-confidence
-  **project-authored baselines**, not ITF measurements or statistical models.
+- **Merged `buuk` baseline:** FIFA Earth **121 / 250** complete 1955–2026 histories
+  with **170 datasets / 1,774 normalized observations**; ATP Earth **121 / 250**
+  complete histories with **345 datasets / 753 normalized observations**.
+- **Kuwait/Yemen candidate branch:** adds **Kuwait (KWT)** and **Yemen (YEM)** to
+  both worlds. If merged unchanged, both packages become **123 / 250**. Expected
+  loader totals become **FIFA 173 datasets / 1,779 observations** and
+  **ATP 348 datasets / 758 observations**.
+- Kuwait does not use FIFA Professional Football Report 2023 because the checked
+  source set preserves an unresolved Kuwait/Kyrgyzstan page-level identity anomaly.
+- Yemen's pre-1990 values are territorial Earth backcasts spanning the YAR/PDRY
+  predecessor states. The unified Republic of Yemen starts on 22 May 1990.
+- Kuwait is not assigned a 2026 ITF development-eligibility fact when the checked
+  eligibility list does not provide one; Yemen's listed eligibility is time-gated to 2026.
+- Sparse ATP 1955–2025 histories remain low-confidence **project-authored baselines**,
+  not ITF measurements or statistical models.
 - All four histories cover every year **1955–2026**, all six attributes, with
   explicit **1–10** values at max one decimal.
 - Coverage/provenance is validated through `load_earth_research_bundle()`.

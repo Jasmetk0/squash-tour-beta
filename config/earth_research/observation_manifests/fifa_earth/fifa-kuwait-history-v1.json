@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-kuwait-history-v1",
+  "source_id": "fifa-kuwait-member-context-2026",
+  "relative_path": "observations/normalized/structural/fifa_kuwait_history_v1.json",
+  "sha256": "2696c0ed06964fd2abf90ae7dd970b90733901b35db5b8b24ad790e0208815e1",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

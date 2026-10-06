@@ -1,5 +1,18 @@
 # Current implementation and next action
 
+## Current merged baseline + Antigua and Barbuda/Saint Lucia candidate (6 October 2026)
+
+- Verified merged `buuk` HEAD for this batch: `0e49edca0b36b0dc3a103fb95f4ba3e38c0046a1` (#1261).
+- **Merged data in `buuk`: FIFA Earth 173 / 250 and ATP Earth 173 / 250 complete 1955–2026 histories.**
+- This branch adds **Antigua and Barbuda (ATG)** and **Saint Lucia (LCA)** to both worlds.
+- **Proposed result after merge:** FIFA Earth **175 / 250**, **225 datasets / 1,883 observations**; ATP Earth **175 / 250**, **400 datasets / 862 observations**.
+- FIFA Big Count 2006 is time-gated: ATG **6,600 players / 21 clubs**, LCA **11,023 players / 41 clubs**.
+- FIFA Professional 2023 player and club fields are null for both countries and remain unused.
+- Historical labels: Antigua and Barbuda uses **Antigua and Barbuda (British colony)** through 1980 and the modern entity from 1981; Saint Lucia uses **Saint Lucia (British colony)** through 1978 and Saint Lucia from 1979.
+- ATP 1955–2025 values remain explicit low-confidence project-authored baselines with `is_direct_observation=false` and `is_statistically_modelled=false`.
+
+> Older sections below are historical and do not override this section.
+
 ## Current merged baseline + Grenada/Dominica candidate (6 October 2026)
 
 - Verified merged `buuk` HEAD for this batch: `761868bd3d831e1683504e89127b10b099afa579` (#1260).

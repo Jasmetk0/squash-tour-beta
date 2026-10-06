@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-saint-lucia-history-v1",
+  "source_id": "itf-saint-lucia-profile",
+  "relative_path": "observations/normalized/atp_saint_lucia_history_v1.json",
+  "sha256": "37364375b21fa854cbdb7180dbfe324a07cd8083956659bcea1fa12f1b4ee2e8",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

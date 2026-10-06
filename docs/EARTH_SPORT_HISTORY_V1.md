@@ -18,20 +18,19 @@ separate inputs. Innate potential rarity must remain independent of nationality.
 This section is the authoritative current summary. Dated batch sections below are
 retained only as implementation history and do not override these numbers.
 
-- **Merged `buuk` baseline:** FIFA Earth **123 / 250** complete 1955–2026 histories
-  with **173 datasets / 1,779 normalized observations**; ATP Earth **123 / 250**
-  complete histories with **348 datasets / 758 normalized observations**.
-- **Iran/Afghanistan candidate branch:** adds **Iran (IRN)** and **Afghanistan (AFG)**
-  to both worlds. If merged unchanged, both packages become **125 / 250**. Expected
-  loader totals become **FIFA 175 datasets / 1,783 observations** and
-  **ATP 350 datasets / 762 observations**.
-- Iran's federation/FIFA chronology predates simulation start; Big Count 2006 and
-  safely reconciled FIFA Professional 2023 evidence are time-gated.
-- Afghanistan's Professional 2023 evidence uses only the published **12-club**
-  observation. The missing professional-player value remains missing rather than zero.
+- **Merged `buuk` baseline:** FIFA Earth **125 / 250** complete 1955–2026 histories
+  with **175 datasets / 1,783 normalized observations**; ATP Earth **125 / 250**
+  complete histories with **350 datasets / 762 normalized observations**.
+- **Bangladesh/Nepal candidate branch:** adds **Bangladesh (BGD)** and **Nepal (NPL)**
+  to both worlds. If merged unchanged, both packages become **127 / 250**. Expected
+  loader totals become **FIFA 177 datasets / 1,787 observations** and
+  **ATP 352 datasets / 766 observations**.
+- Bangladesh uses Big Count 2006 plus FIFA Professional 2023 evidence with
+  **368 professional players / 11 clubs**.
+- Nepal's Professional 2023 player/club fields are null; those missing values stay
+  missing and are not interpreted as zeros.
 - Sparse ATP 1955–2025 histories remain low-confidence **project-authored baselines**,
-  not ITF measurements or statistical models; no 2026 eligibility fact is inferred
-  without a checked source entry.
+  not ITF measurements or statistical models.
 - All four histories cover every year **1955–2026**, all six attributes, with
   explicit **1–10** values at max one decimal.
 - Coverage/provenance is validated through `load_earth_research_bundle()`.

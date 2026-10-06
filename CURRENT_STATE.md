@@ -1,5 +1,20 @@
 # Current implementation and next action
 
+## Current merged baseline + Bangladesh/Nepal candidate (6 October 2026)
+
+- Verified merged `buuk` HEAD for this batch: `3e32e2ee2a5f4de653ad56b332bf21b1f372b261` (#1237).
+- **Merged data in `buuk`: FIFA Earth 125 / 250 and ATP Earth 125 / 250 complete 1955–2026 histories.**
+- Merged loader expectations: **FIFA 175 datasets / 1,783 observations** and **ATP 350 datasets / 762 observations**.
+- This independent branch adds **Bangladesh (BGD)** and **Nepal (NPL)** to both worlds.
+- **Proposed result after merge:** FIFA Earth **127 / 250**, **177 datasets / 1,787 observations**; ATP Earth **127 / 250**, **352 datasets / 766 observations**.
+- Bangladesh uses Big Count 2006 plus FIFA Professional 2023 (**368 professional players / 11 clubs**) as time-gated evidence.
+- Nepal uses Big Count 2006 and current FIFA member context; FIFA Professional 2023 player/club fields are null and remain missing rather than zero.
+- ATP 1955–2025 values remain explicit low-confidence **project-authored baselines**, with `is_direct_observation=false` and `is_statistically_modelled=false`. No development-eligibility facts are inferred without checked entries.
+- Research coverage still does not mean installed package completion, ordinary historical-profile editing, or full historical-environment integration into initial-player development.
+
+> Older Current/Candidate sections below are dated implementation history and do not override this section.
+
+
 ## Current merged baseline + Iran/Afghanistan candidate (6 October 2026)
 
 - Verified merged `buuk` HEAD for this batch: `1b04aa13bad449a2675f9b8506b7ff39944bf3f4` (#1236).

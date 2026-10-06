@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-lebanon-history-v1",
+  "source_id": "itf-lebanon-profile",
+  "relative_path": "observations/normalized/atp_lebanon_history_v1.json",
+  "sha256": "1d8a76020846d80c0714fc78d68a25e9e0062246173b1770d0ad0f49d8719f85",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

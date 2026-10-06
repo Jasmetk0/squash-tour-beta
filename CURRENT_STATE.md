@@ -1,5 +1,21 @@
 # Current implementation and next action
 
+## Current merged baseline + Lebanon/Syria candidate (6 October 2026)
+
+- Verified merged `buuk` HEAD for this batch: `9a2b0cc303978a541bed1e77d5235c16fb573d50` (#1233).
+- **Merged data in `buuk`: FIFA Earth 117 / 250 and ATP Earth 117 / 250 complete 1955–2026 histories.**
+- Merged loader expectations: **FIFA 164 datasets / 1,761 observations** and **ATP 337 datasets / 741 observations**.
+- This independent branch adds **Lebanon (LBN)** and **Syria (SYR)** to both worlds.
+- **Proposed result after merge:** FIFA Earth **119 / 250**, **166 datasets / 1,767 observations**; ATP Earth **119 / 250**, **341 datasets / 747 observations**.
+- Added histories cover every year **1955–2026**, all six attributes, explicit **1–10** values with at most one decimal, and content-addressed observation manifests.
+- Lebanon FIFA uses directly sourced LFA chronology (1933 foundation, FIFA 1935, AFC 1964) plus Big Count 2006. Syria FIFA uses 1936 foundation, FIFA 1937, AFC 1970 and Big Count 2006. Later evidence is not backdated.
+- Syria's conflict-era effect is not claimed as independently quantified in this coverage-first baseline; later joint calibration may refine the trajectory when stronger evidence is added.
+- ATP 1955–2025 values are explicit low-confidence **project-authored baselines**, with `is_direct_observation=false` and `is_statistically_modelled=false`. ITF membership and 2026 development eligibility are context, not authorship of the numeric curve.
+- Research coverage still does not mean installed package completion, ordinary historical-profile editing, or full historical-environment integration into initial-player development.
+
+> Older Current/Candidate sections below are dated implementation history and do not override this section.
+
+
 ## Current merged baseline + clean Iraq/Jordan candidate (6 October 2026)
 
 - Verified merged `buuk` HEAD before this branch: `3682c9604484d25552dc2cb2b296c5ee88b69bc1`.

@@ -8,7 +8,6 @@ import pytest
 pytestmark = pytest.mark.pr_critical
 
 from beta_engine.application.earth_package_builder import load_earth_research_bundle as _load_earth_research_bundle
-from beta_engine.application.earth_research_observations import load_normalized_observation_dataset, observation_dataset_sha256
 
 @lru_cache(maxsize=2)
 def load_earth_research_bundle(path: Path):
@@ -18,22 +17,6 @@ def load_earth_research_bundle(path: Path):
 
 
 def test_fifa_first_reviewed_country_histories_are_complete_and_resolvable():
-    diagnostic_paths = [
-        "config/earth_research/observations/normalized/structural/fifa_palestine_history_v1.json",
-        "config/earth_research/observations/normalized/structural/fifa_palestine_grassroots_2024_v1.json",
-        "config/earth_research/observations/normalized/structural/fifa_palestine_arenas_2026_v1.json",
-        "config/earth_research/observations/normalized/structural/fifa_bahrain_history_v1.json",
-        "config/earth_research/observations/normalized/atp_palestine_history_v1.json",
-        "config/earth_research/observations/normalized/atp_palestine_development_2026_v1.json",
-        "config/earth_research/observations/normalized/atp_bahrain_history_v1.json",
-        "config/earth_research/observations/normalized/atp_bahrain_development_2026_v1.json",
-    ]
-    diagnostic_hashes = {
-        path: observation_dataset_sha256(load_normalized_observation_dataset(Path(path)))
-        for path in diagnostic_paths
-    }
-    raise AssertionError(f"SEMANTIC_HASHES={diagnostic_hashes!r}")
-
     bundle = load_earth_research_bundle(Path("config/earth_research/fifa_earth.json"))
     assert set(bundle.research.countries) == {"CZE", "SVK", "JPN", "IND", "MAR", "SEN", "FRO", "USA", "ZAF", "BRA", "DEU", "ISL", "SMR", "ARG", "MEX", "AUS", "NZL", "FJI", "PNG", "SLB", "COK", "ASM", "PYF", "NCL", "WSM", "TON", "VUT", "FRA", "ESP", "ITA", "NLD", "BEL", "PRT", "AUT", "DNK", "SWE", "CHE", "NOR", "FIN", "HRV", "SVN", "POL", "ROU", "UKR", "LTU", "LVA", "EST", "CAN", "GRC", "SRB", "CHL", "HUN", "ISR", "BGR", "KAZ", "CHN", "TUR", "KOR", "THA", "COL", "CYP", "ECU", "IRL", "EGY", "MYS", "SAU", "ARE", "QAT", "OMN", "GHA", "NGA", "KEN", "UGA", "TZA", "ZMB", "ZWE", "MWI", "BWA", "NAM", "SWZ", "MOZ", "ANG", "LES", "CMR", "BEN", "GAB", "MUS", "MDG", "SEY", "RWA", "BDI", "GAM", "CPV", "DJI", "COM", "EQG", "GNB", "STP", "GIN", "LBR", "SLE", "TGO", "BFA", "MLI", "MRT", "NER", "CHA", "ETH", "ERI", "SDN", "SSD", "DZA", "CIV", "TUN", "LBY", "IRQ", "JOR", "LBN", "SYR", "PSE", "BHR"}
     assert bundle.research.data_cutoff.isoformat() == "2026-10-06"

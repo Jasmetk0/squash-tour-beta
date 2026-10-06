@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-maldives-history-v1",
+  "source_id": "itf-maldives-profile",
+  "relative_path": "observations/normalized/atp_maldives_history_v1.json",
+  "sha256": "524251fb24b58844ad3f980c68d981e075fccd3becac98827379b8ebf1a39647",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

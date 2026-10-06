@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-haiti-history-v1",
+  "source_id": "fifa-haiti-member-context-2026",
+  "relative_path": "observations/normalized/structural/fifa_haiti_history_v1.json",
+  "sha256": "7b2e5566bb3f9a2dd1d788759eae6b4ebe0143c16dcc1c5b471f6e36dd3078e7",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

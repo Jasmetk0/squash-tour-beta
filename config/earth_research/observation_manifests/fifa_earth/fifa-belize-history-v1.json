@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-belize-history-v1",
+  "source_id": "fifa-belize-member-context-2026",
+  "relative_path": "observations/normalized/structural/fifa_belize_history_v1.json",
+  "sha256": "47a90ddfa39682d730dc3e09b5b31cca3db966efdd774a41b8933dc21c3e1e54",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

@@ -1,5 +1,17 @@
 # Current implementation and next action
 
+## Current merged baseline + Peru/Bolivia candidate (6 October 2026)
+
+- Verified merged `buuk` HEAD for this batch: `5e127647d7e45a7089ce0a0b43d6fa643691dce7` (#1255).
+- **Merged data in `buuk`: FIFA Earth 161 / 250 and ATP Earth 161 / 250 complete 1955–2026 histories.**
+- This branch adds **Peru (PER)** and **Bolivia (BOL)** to both worlds.
+- **Proposed result after merge:** FIFA Earth **163 / 250**, **213 datasets / 1,859 observations**; ATP Earth **163 / 250**, **388 datasets / 838 observations**.
+- FIFA Big Count 2006 is time-gated: PER **1,891,790 players / 2,100 clubs**, BOL **578,800 players / 897 clubs**.
+- FIFA Professional 2023 is used from 2023 onward: PER **555 professional players / 33 clubs**, BOL **563 players / 17 clubs**.
+- ATP 1955–2025 values remain explicit low-confidence project-authored baselines with `is_direct_observation=false` and `is_statistically_modelled=false`.
+
+> Older sections below are historical and do not override this section.
+
 ## Current merged baseline + Belize/Haiti candidate (6 October 2026)
 
 - Verified merged `buuk` HEAD for this batch: `eae0fb81ad96aab9a9f7737fef8dd13339dd1a30` (#1254).

@@ -1,5 +1,18 @@
 # Current implementation and next action
 
+## Current merged baseline + North Macedonia/Bosnia candidate (6 October 2026)
+
+- Verified merged `buuk` HEAD for this batch: `71bc178160327930f2a88c673bada8c5d23537b5` (#1247).
+- **Merged data in `buuk`: FIFA Earth 145 / 250 and ATP Earth 145 / 250 complete 1955–2026 histories.**
+- This branch adds **North Macedonia (MKD)** and **Bosnia and Herzegovina (BIH)** to both worlds.
+- **Proposed result after merge:** FIFA Earth **147 / 250**, **197 datasets / 1,827 observations**; ATP Earth **147 / 250**, **372 datasets / 806 observations**.
+- FIFA Big Count 2006 is time-gated for both countries.
+- FIFA Professional 2023 is used from 2023 onward for development, competition and elite-support context: MKD **256 professional players / 12 clubs**, BIH **387 players / 12 clubs**.
+- Historical entity labels are reviewed: MKD uses Yugoslavia through 1990, Macedonia through 2018 and North Macedonia from 2019; BIH uses Yugoslavia through 1991.
+- ATP 1955–2025 values remain explicit low-confidence project-authored baselines with `is_direct_observation=false` and `is_statistically_modelled=false`.
+
+> Older sections below are historical and do not override this section.
+
 ## Current merged baseline + Albania/Moldova candidate (6 October 2026)
 
 - Verified merged `buuk` HEAD for this batch: `710e1bb38bae5fb93b024f9d291703743950396e` (#1246).

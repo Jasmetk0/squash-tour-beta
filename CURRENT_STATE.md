@@ -1,5 +1,18 @@
 # Current implementation and next action
 
+## Current merged baseline + Venezuela/Guyana candidate (6 October 2026)
+
+- Verified merged `buuk` HEAD for this batch: `8514e33826423fc7828b92abbccfb6802acb84bb` (#1257).
+- **Merged data in `buuk`: FIFA Earth 165 / 250 and ATP Earth 165 / 250 complete 1955–2026 histories.**
+- This branch adds **Venezuela (VEN)** and **Guyana (GUY)** to both worlds.
+- **Proposed result after merge:** FIFA Earth **167 / 250**, **217 datasets / 1,867 observations**; ATP Earth **167 / 250**, **392 datasets / 846 observations**.
+- FIFA Big Count 2006 is time-gated: VEN **1,490,573 players / 920 clubs**, GUY **50,740 players / 98 clubs**.
+- FIFA Professional 2023 is used from 2023 onward for VEN: **505 professional players / 31 clubs**. Guyana's Professional 2023 player and club fields are null and remain unused.
+- Guyana uses **British Guiana** as the historical entity through 1965, then Guyana from 1966 onward.
+- ATP 1955–2025 values remain explicit low-confidence project-authored baselines with `is_direct_observation=false` and `is_statistically_modelled=false`.
+
+> Older sections below are historical and do not override this section.
+
 ## Current merged baseline + Paraguay/Uruguay candidate (6 October 2026)
 
 - Verified merged `buuk` HEAD for this batch: `b561e67ec2f89f3f2af19504f5cb1588899476d6` (#1256).

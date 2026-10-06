@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-us-virgin-islands-history-v1",
+  "source_id": "fifa-us-virgin-islands-member-context-2026",
+  "relative_path": "observations/normalized/structural/fifa_us_virgin_islands_history_v1.json",
+  "sha256": "33d29488f11ebf22f7b2ea9d5b78fe0bff8244f7077a8cec095a29525179496d",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

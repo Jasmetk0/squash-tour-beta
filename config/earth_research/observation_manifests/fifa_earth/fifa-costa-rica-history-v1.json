@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-costa-rica-history-v1",
+  "source_id": "fifa-costa-rica-member-context-2026",
+  "relative_path": "observations/normalized/structural/fifa_costa_rica_history_v1.json",
+  "sha256": "d11f57c39a90c92c0883876cc2da1631f3b1d4b69ef65a5fd1d2920a38fe4557",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

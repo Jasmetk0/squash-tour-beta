@@ -3,7 +3,7 @@
   "dataset_id": "atp-madagascar-history-v1",
   "source_id": "itf-madagascar-return-to-play-2020",
   "relative_path": "observations/normalized/atp_madagascar_history_v1.json",
-  "sha256": "d8c3e369182bd176aa787e91fb2aee6f243ae1591dfd7d43ee23668e71f0d454",
+  "sha256": "ffa1497b19ec458fae58ec8f0f46feda638ce709c3a14e4582bdebe444fbd54d",
   "record_count": 2,
   "source_document_sha256": null,
   "input_artifact_sha256": null,

@@ -1,5 +1,16 @@
 # Current implementation and next action
 
+## Current merged baseline + Cambodia/Myanmar candidate (6 October 2026)
+
+- Verified merged `buuk` HEAD for this batch: `176b2c5974807dc1d0a0f8e306f60c1c8643ce92` (#1240).
+- **Merged data in `buuk`: FIFA Earth 131 / 250 and ATP Earth 131 / 250 complete 1955–2026 histories.**
+- This branch adds **Cambodia (KHM)** and **Myanmar (MMR)** to both worlds.
+- **Proposed result after merge:** FIFA Earth **133 / 250**, **183 datasets / 1,799 observations**; ATP Earth **133 / 250**, **358 datasets / 778 observations**.
+- FIFA Big Count 2006 is time-gated; current FIFA context is not backdated.
+- ATP 1955–2025 values remain explicit low-confidence project-authored baselines with `is_direct_observation=false` and `is_statistically_modelled=false`.
+
+> Older sections below are historical and do not override this section.
+
 ## Current merged baseline + Maldives/Mongolia candidate (6 October 2026)
 
 - Verified merged `buuk` HEAD for this batch: `6707c9c4953e3a1777b85ce39724558d910acb9d` (#1239).

@@ -1,5 +1,18 @@
 # Current implementation and next action
 
+## Current merged baseline + Luxembourg/Costa Rica candidate (6 October 2026)
+
+- Verified merged `buuk` HEAD for this batch: `af02a90fdc9e5760570c43b7f9e41adc24def97f` (#1249).
+- **Merged data in `buuk`: FIFA Earth 149 / 250 and ATP Earth 149 / 250 complete 1955–2026 histories.**
+- This branch adds **Luxembourg (LUX)** and **Costa Rica (CRI)** to both worlds.
+- **Proposed result after merge:** FIFA Earth **151 / 250**, **201 datasets / 1,835 observations**; ATP Earth **151 / 250**, **376 datasets / 814 observations**.
+- FIFA Big Count 2006 is time-gated for both countries.
+- FIFA Professional 2023 is used from 2023 onward for Costa Rica development/competition/elite context (**818 professional players / 30 clubs**).
+- Luxembourg's Professional 2023 player and club fields are both null; missing values remain missing and are not converted to zero or cited as numeric evidence.
+- ATP 1955–2025 values remain explicit low-confidence project-authored baselines with `is_direct_observation=false` and `is_statistically_modelled=false`.
+
+> Older sections below are historical and do not override this section.
+
 ## Current merged baseline + Belarus/Malta candidate (6 October 2026)
 
 - Verified merged `buuk` HEAD for this batch: `fc8bba0241b6ff66f460542f7fadc9246f404371` (#1248).

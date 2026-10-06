@@ -1,5 +1,18 @@
 # Current implementation and next action
 
+## Current merged baseline + Belize/Haiti candidate (6 October 2026)
+
+- Verified merged `buuk` HEAD for this batch: `eae0fb81ad96aab9a9f7737fef8dd13339dd1a30` (#1254).
+- **Merged data in `buuk`: FIFA Earth 159 / 250 and ATP Earth 159 / 250 complete 1955–2026 histories.**
+- This branch adds **Belize (BLZ)** and **Haiti (HTI)** to both worlds.
+- **Proposed result after merge:** FIFA Earth **161 / 250**, **211 datasets / 1,855 observations**; ATP Earth **161 / 250**, **386 datasets / 834 observations**.
+- FIFA Big Count 2006 is time-gated: BLZ **17,800 players / 42 clubs**, HTI **451,724 players / 340 clubs**.
+- FIFA Professional 2023 is used only where non-null: BLZ **260 professional players / 8 clubs**; HTI **720 players**, while its club field remains missing and is not synthesized.
+- Belize uses **British Honduras** as the historical entity through 1972, then Belize from 1973 onward.
+- ATP 1955–2025 values remain explicit low-confidence project-authored baselines with `is_direct_observation=false` and `is_statistically_modelled=false`.
+
+> Older sections below are historical and do not override this section.
+
 ## Current merged baseline + El Salvador/Nicaragua candidate (6 October 2026)
 
 - Verified merged `buuk` HEAD for this batch: `c8ce13ea55017996b2c6a2943c64f40b67c0b738` (#1253).

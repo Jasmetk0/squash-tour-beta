@@ -1,5 +1,17 @@
 # Current implementation and next action
 
+## Current merged baseline + El Salvador/Nicaragua candidate (6 October 2026)
+
+- Verified merged `buuk` HEAD for this batch: `c8ce13ea55017996b2c6a2943c64f40b67c0b738` (#1253).
+- **Merged data in `buuk`: FIFA Earth 157 / 250 and ATP Earth 157 / 250 complete 1955–2026 histories.**
+- This branch adds **El Salvador (SLV)** and **Nicaragua (NIC)** to both worlds.
+- **Proposed result after merge:** FIFA Earth **159 / 250**, **209 datasets / 1,851 observations**; ATP Earth **159 / 250**, **384 datasets / 830 observations**.
+- FIFA Big Count 2006 is time-gated: SLV **459,692 players / 70 clubs**, NIC **467,031 players / 1,281 clubs**.
+- FIFA Professional 2023 is used from 2023 onward: SLV **1,700 professional players / 68 clubs**, NIC **263 players / 10 clubs**.
+- ATP 1955–2025 values remain explicit low-confidence project-authored baselines with `is_direct_observation=false` and `is_statistically_modelled=false`.
+
+> Older sections below are historical and do not override this section.
+
 ## Current merged baseline + Guatemala/Honduras candidate (6 October 2026)
 
 - Verified merged `buuk` HEAD for this batch: `6ba3bbabc25c2ba088399a2161556370d457ef47` (#1252).

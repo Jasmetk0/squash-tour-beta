@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-nicaragua-history-v1",
+  "source_id": "itf-nicaragua-profile",
+  "relative_path": "observations/normalized/atp_nicaragua_history_v1.json",
+  "sha256": "6b741680ad6a060c7ac96c17080c1e8df0e6f8e201b766992e1a092dd73030d6",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

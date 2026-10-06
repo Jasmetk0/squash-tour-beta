@@ -1,5 +1,16 @@
 # Current implementation and next action
 
+## Current merged baseline + Maldives/Mongolia candidate (6 October 2026)
+
+- Verified merged `buuk` HEAD for this batch: `6707c9c4953e3a1777b85ce39724558d910acb9d` (#1239).
+- **Merged data in `buuk`: FIFA Earth 129 / 250 and ATP Earth 129 / 250 complete 1955–2026 histories.**
+- This branch adds **Maldives (MDV)** and **Mongolia (MNG)** to both worlds.
+- **Proposed result after merge:** FIFA Earth **131 / 250**, **181 datasets / 1,795 observations**; ATP Earth **131 / 250**, **356 datasets / 774 observations**.
+- FIFA Big Count 2006 is time-gated; current FIFA context is not backdated.
+- ATP 1955–2025 values remain explicit low-confidence project-authored baselines with `is_direct_observation=false` and `is_statistically_modelled=false`.
+
+> Older sections below are historical and do not override this section.
+
 ## Current merged baseline + Sri Lanka/Bhutan candidate (6 October 2026)
 
 - Verified merged `buuk` HEAD for this batch: `6e95d47a85d5726f901b8bc1ce840646626cf0d1` (#1238).

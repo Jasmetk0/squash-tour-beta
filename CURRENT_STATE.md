@@ -1,5 +1,18 @@
 # Current implementation and next action
 
+## Current merged baseline + Belarus/Malta candidate (6 October 2026)
+
+- Verified merged `buuk` HEAD for this batch: `fc8bba0241b6ff66f460542f7fadc9246f404371` (#1248).
+- **Merged data in `buuk`: FIFA Earth 147 / 250 and ATP Earth 147 / 250 complete 1955–2026 histories.**
+- This branch adds **Belarus (BLR)** and **Malta (MLT)** to both worlds.
+- **Proposed result after merge:** FIFA Earth **149 / 250**, **199 datasets / 1,831 observations**; ATP Earth **149 / 250**, **374 datasets / 810 observations**.
+- FIFA Big Count 2006 is time-gated for both countries.
+- FIFA Professional 2023 is used from 2023 onward for development, competition and elite-support context: BLR **1,534 professional players / 32 clubs**, MLT **530 players / 30 clubs**.
+- Historical entity labels are reviewed: BLR uses Soviet Union through 1990, Belarus from 1991; Malta uses Crown Colony of Malta through 1963, Malta from 1964.
+- ATP 1955–2025 values remain explicit low-confidence project-authored baselines with `is_direct_observation=false` and `is_statistically_modelled=false`.
+
+> Older sections below are historical and do not override this section.
+
 ## Current merged baseline + North Macedonia/Bosnia candidate (6 October 2026)
 
 - Verified merged `buuk` HEAD for this batch: `71bc178160327930f2a88c673bada8c5d23537b5` (#1247).

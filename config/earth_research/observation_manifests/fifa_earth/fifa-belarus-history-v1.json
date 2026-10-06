@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-belarus-history-v1",
+  "source_id": "fifa-belarus-member-context-2026",
+  "relative_path": "observations/normalized/structural/fifa_belarus_history_v1.json",
+  "sha256": "bb2916dd7eb035ce233989970769c0f44045d0f1c94463da36bb3eeb0d78b8f0",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

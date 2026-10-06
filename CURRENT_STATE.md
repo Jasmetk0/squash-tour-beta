@@ -1,5 +1,16 @@
 # Current implementation and next action
 
+## Current merged baseline + Tajikistan/Turkmenistan candidate (6 October 2026)
+
+- Verified merged `buuk` HEAD for this batch: `e12b6824e8ea39a5b51a83774fdae59b4f9bab15` (#1243).
+- **Merged data in `buuk`: FIFA Earth 137 / 250 and ATP Earth 137 / 250 complete 1955–2026 histories.**
+- This branch adds **Tajikistan (TJK)** and **Turkmenistan (TKM)** to both worlds.
+- **Proposed result after merge:** FIFA Earth **139 / 250**, **189 datasets / 1,811 observations**; ATP Earth **139 / 250**, **364 datasets / 790 observations**.
+- FIFA Big Count 2006 is time-gated for both countries; Professional 2023 contains no retained row for either country, so no values are invented.
+- ATP 1955–2025 values remain explicit low-confidence project-authored baselines with `is_direct_observation=false` and `is_statistically_modelled=false`.
+
+> Older sections below are historical and do not override this section.
+
 ## Current merged baseline + Vietnam/Uzbekistan candidate (6 October 2026)
 
 - Verified merged `buuk` HEAD for this batch: `0c3989ae64d2dab909ae6e4ec64cd55bdff3e7f9` (#1242).

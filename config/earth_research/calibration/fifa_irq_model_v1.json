@@ -1,0 +1,58 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "fifa-earth-irq-model.v1",
+  "world_id": "fifa_earth",
+  "data_cutoff": "2026-10-03",
+  "countries": [
+    "IRQ"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "evidence_rules": [
+    "IFA founding 1948 is institutional chronology.",
+    "Big Count enters from 2006; professional club evidence from 2023.",
+    "Current membership context is not backdated.",
+    "No rankings or outcomes are calibration targets."
+  ],
+  "anchor_values": {
+    "IRQ": {
+      "1955": [
+        6.1,
+        5.3,
+        5.5,
+        5.7,
+        5.2,
+        6.4
+      ],
+      "2006": [
+        7.4,
+        6.3,
+        6.7,
+        7,
+        6.5,
+        7.4
+      ],
+      "2023": [
+        7.5,
+        6.4,
+        6.8,
+        7.1,
+        6.6,
+        7.5
+      ],
+      "2026": [
+        7.7,
+        6.5,
+        6.9,
+        7.2,
+        6.8,
+        7.6
+      ]
+    }
+  },
+  "evidence_sources": [
+    "fifa-competitive-balance-2020-irq-jor",
+    "fifa-big-count-2006",
+    "fifa-professional-2023"
+  ],
+  "heldout_ranking_used": false
+}

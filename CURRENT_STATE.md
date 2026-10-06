@@ -1,5 +1,18 @@
 # Current implementation and next action
 
+## Current merged baseline + Jamaica/Trinidad and Tobago candidate (6 October 2026)
+
+- Verified merged `buuk` HEAD for this batch: `b46045abe8733b654ff160a5b541ca63baf7e225` (#1250).
+- **Merged data in `buuk`: FIFA Earth 151 / 250 and ATP Earth 151 / 250 complete 1955–2026 histories.**
+- This branch adds **Jamaica (JAM)** and **Trinidad and Tobago (TTO)** to both worlds.
+- **Proposed result after merge:** FIFA Earth **153 / 250**, **203 datasets / 1,839 observations**; ATP Earth **153 / 250**, **378 datasets / 818 observations**.
+- FIFA Big Count 2006 is time-gated for both countries.
+- FIFA Professional 2023 is used from 2023 onward: JAM **447 professional players / 14 clubs**; TTO has **12 clubs** while the professional-player field is null and remains missing.
+- Historical entity labels are reviewed: Jamaica and Trinidad and Tobago use their colonial entities through 1961 and sovereign entities from 1962.
+- ATP 1955–2025 values remain explicit low-confidence project-authored baselines with `is_direct_observation=false` and `is_statistically_modelled=false`.
+
+> Older sections below are historical and do not override this section.
+
 ## Current merged baseline + Luxembourg/Costa Rica candidate (6 October 2026)
 
 - Verified merged `buuk` HEAD for this batch: `af02a90fdc9e5760570c43b7f9e41adc24def97f` (#1249).

@@ -3,7 +3,7 @@
   "dataset_id": "fifa-structural-lesotho-history-v1",
   "source_id": "caf-lesotho-profile",
   "relative_path": "observations/normalized/structural/fifa_structural_lesotho_history_v1.json",
-  "sha256": "ed2c9827094b83a7d685c145997e8eef030c1d06bbb2a28f0a1a4efa5bdc04cf",
+  "sha256": "27af84da227b17c50999448ce40635d90487f72f07ff0f77786a4d03740e3716",
   "record_count": 2,
   "source_document_sha256": null,
   "input_artifact_sha256": null,

@@ -3,7 +3,7 @@
   "dataset_id": "fifa-structural-cameroon-history-v1",
   "source_id": "caf-cameroon-profile",
   "relative_path": "observations/normalized/structural/fifa_structural_cameroon_history_v1.json",
-  "sha256": "5b458b0e16fa8e72c0a0d15885713db201be8fb3016d5c647a739504c431e8cb",
+  "sha256": "34f66a797f6249f0ebff093f0b3051f1e86be2eaa9b62158442021c3014c214b",
   "record_count": 4,
   "source_document_sha256": null,
   "input_artifact_sha256": null,

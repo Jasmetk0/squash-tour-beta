@@ -1,5 +1,17 @@
 # Current implementation and next action
 
+## Current merged baseline + Paraguay/Uruguay candidate (6 October 2026)
+
+- Verified merged `buuk` HEAD for this batch: `b561e67ec2f89f3f2af19504f5cb1588899476d6` (#1256).
+- **Merged data in `buuk`: FIFA Earth 163 / 250 and ATP Earth 163 / 250 complete 1955–2026 histories.**
+- This branch adds **Paraguay (PRY)** and **Uruguay (URY)** to both worlds.
+- **Proposed result after merge:** FIFA Earth **165 / 250**, **215 datasets / 1,863 observations**; ATP Earth **165 / 250**, **390 datasets / 842 observations**.
+- FIFA Big Count 2006 is time-gated: PRY **1,037,435 players / 1,709 clubs**, URY **241,300 players / 1,220 clubs**.
+- FIFA Professional 2023 is used from 2023 onward: PRY **492 professional players / 12 clubs**, URY **516 players / 30 clubs**.
+- ATP 1955–2025 values remain explicit low-confidence project-authored baselines with `is_direct_observation=false` and `is_statistically_modelled=false`.
+
+> Older sections below are historical and do not override this section.
+
 ## Current merged baseline + Peru/Bolivia candidate (6 October 2026)
 
 - Verified merged `buuk` HEAD for this batch: `5e127647d7e45a7089ce0a0b43d6fa643691dce7` (#1255).

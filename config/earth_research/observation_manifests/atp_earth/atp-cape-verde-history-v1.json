@@ -3,7 +3,7 @@
   "dataset_id": "atp-cape-verde-history-v1",
   "source_id": "itf-cape-verde-return-to-play-2020",
   "relative_path": "observations/normalized/atp_cape_verde_history_v1.json",
-  "sha256": "0c56c6ad5786fa6430b3fd79d0ceadb04eb8d1ec8f0b2847f5cd0dcc6697e652",
+  "sha256": "657714f86076268ccbd7a359388c4cf56e2e5b2b19980cfd57bbff05b245db44",
   "record_count": 2,
   "source_document_sha256": null,
   "input_artifact_sha256": null,

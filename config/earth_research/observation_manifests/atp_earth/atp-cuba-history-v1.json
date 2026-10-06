@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-cuba-history-v1",
+  "source_id": "itf-cuba-profile",
+  "relative_path": "observations/normalized/atp_cuba_history_v1.json",
+  "sha256": "d18387f732764e6414f5b592c7d7ba7a112f89d671429cfcdb877ebb3f2d1ed6",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

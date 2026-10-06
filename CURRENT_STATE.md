@@ -5510,3 +5510,13 @@ bands should shape 0..200 potential. No threshold is inferred from current OVR v
 - ATP Algeria uses FAT creation in 1962, ITF JTI activity in 2021, the 2023 FAT/ITF development-support and planned federal-centre discussion, and 2026 development eligibility.
 - ATP Cote d'Ivoire uses FIT creation in 1963, CAT membership in 1973, full ITF membership in 1985, JTI activity in 2021, 2025-2030 development priorities from 2025, and 2026 development eligibility.
 - Rankings, titles and match outcomes are not calibration targets. Official package publication remains blocked by the intentional **250 / 250** completeness requirement for both worlds.
+
+
+## Candidate — Tunisia + Libya dual Earth batch (6 October 2026)
+
+- Adds complete 1955–2026 FIFA Earth and ATP Earth histories for **Tunisia (TUN)** and **Libya (LBY)**.
+- Both worlds move **113 -> 115 / 250 complete histories**; the batch adds **1,728 ratings**.
+- FIFA becomes **162 datasets / 1,759 observations**. ATP becomes **333 datasets / 735 observations**.
+- Tunisia FIFA gates federation creation to 1957, FIFA/CAF affiliation to 1960, Big Count to 2006 and the available professional-club observation to 2023.
+- Libya FIFA gates federation creation to 1962 and FIFA affiliation to 1964; no missing 2023 professional value is inferred.
+- Tunisia ATP uses Bronze National Training Centre recognition from 2024 and ITF development eligibility in 2026. Libya ATP remains deliberately sparse and low confidence, with current member-association context and 2026 eligibility not backdated into invented historical milestones.

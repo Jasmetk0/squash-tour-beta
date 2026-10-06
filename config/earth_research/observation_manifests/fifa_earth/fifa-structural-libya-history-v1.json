@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-libya-history-v1",
+  "source_id": "caf-libya-profile",
+  "relative_path": "observations/normalized/structural/fifa_structural_libya_history_v1.json",
+  "sha256": "4b5175468c02f7b2dd28e176897900d7eda8fd5818d16ecdcbcee9e7b021008a",
+  "record_count": 3,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

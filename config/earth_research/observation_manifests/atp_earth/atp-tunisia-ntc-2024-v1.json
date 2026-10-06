@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-tunisia-ntc-2024-v1",
+  "source_id": "itf-tunisia-national-training-centre-2024",
+  "relative_path": "observations/normalized/atp_tunisia_ntc_2024_v1.json",
+  "sha256": "de10cf975d3c2118e3bf3c82e5086f566988a2f3ed77ec081b594d6271553116",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

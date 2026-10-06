@@ -5930,3 +5930,14 @@ bands should shape 0..200 potential. No threshold is inferred from current OVR v
 - FIFA Big Count 2006 is time-gated; Professional 2023 player and club fields are null for both territories and remain unused.
 - ATP pre-2026 values remain explicit project-authored, non-direct, non-statistically-modelled baselines.
 - Added 1,728 authored annual ratings across the two Earth packages.
+
+
+### Earth packages progress - AIA + BMU dual batch (2026-10-06)
+- Added complete 1955-2026 FIFA Earth and ATP Earth histories for Anguilla (AIA) and Bermuda (BMU).
+- FIFA Earth coverage: 179 -> 181 / 250 countries/territories.
+- ATP Earth coverage: 179 -> 181 / 250 countries/territories.
+- FIFA loader totals: 231 datasets / 1,895 observations.
+- ATP loader totals: 406 datasets / 874 observations.
+- FIFA Big Count 2006 is time-gated; Professional 2023 player and club fields are null for both territories and remain unused.
+- Current FIFA association identifiers differ from Earth/ISO codes where appropriate (Bermuda uses FIFA BER -> Earth BMU).
+- ATP pre-2026 values remain explicit project-authored, non-direct, non-statistically-modelled baselines.

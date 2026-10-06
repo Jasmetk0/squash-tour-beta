@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-bermuda-history-v1",
+  "source_id": "itf-bermuda-profile",
+  "relative_path": "observations/normalized/atp_bermuda_history_v1.json",
+  "sha256": "262c671d2bf90aa2de627d0817d04c315ab00eb93402dce840e6398638c862ab",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

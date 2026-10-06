@@ -18,11 +18,11 @@ def load_earth_research_bundle(path: Path):
 
 def test_fifa_first_reviewed_country_histories_are_complete_and_resolvable():
     bundle = load_earth_research_bundle(Path("config/earth_research/fifa_earth.json"))
-    assert set(bundle.research.countries) == {"CZE", "SVK", "JPN", "IND", "MAR", "SEN", "FRO", "USA", "ZAF", "BRA", "DEU", "ISL", "SMR", "ARG", "MEX", "AUS", "NZL", "FJI", "PNG", "SLB", "COK", "ASM", "PYF", "NCL", "WSM", "TON", "VUT", "FRA", "ESP", "ITA", "NLD", "BEL", "PRT", "AUT", "DNK", "SWE", "CHE", "NOR", "FIN", "HRV", "SVN", "POL", "ROU", "UKR", "LTU", "LVA", "EST", "CAN", "GRC", "SRB", "CHL", "HUN", "ISR", "BGR", "KAZ", "CHN", "TUR", "KOR", "THA", "COL", "CYP", "ECU", "IRL", "EGY", "MYS", "SAU", "ARE", "QAT", "OMN", "GHA", "NGA", "KEN", "UGA", "TZA", "ZMB", "ZWE", "MWI", "BWA", "NAM", "SWZ", "MOZ", "ANG", "LES", "CMR", "BEN", "GAB", "MUS", "MDG", "SEY", "RWA", "BDI", "GAM", "CPV", "DJI", "COM", "EQG", "GNB", "STP", "GIN", "LBR", "SLE", "TGO", "BFA", "MLI", "MRT", "NER", "CHA", "ETH", "ERI", "SDN", "SSD", "DZA", "CIV", "TUN", "LBY", "IRQ", "JOR", "LBN", "SYR", "PSE", "BHR", "KWT", "YEM", "IRN", "AFG", "BGD", "NPL", "LKA", "BTN", "MDV", "MNG", "KHM", "MMR", "LAO", "BRN", "VNM", "UZB", "TJK", "TKM", "KGZ", "GEO", "ARM", "AZE", "ALB", "MDA", "MKD", "BIH", "BLR", "MLT", "LUX", "CRI", "JAM", "TTO", "PAN", "DOM", "GTM", "HND", "SLV", "NIC", "BLZ", "HTI", "PER", "BOL", "PRY", "URY", "VEN", "GUY", "CUB", "SUR", "BHS", "BRB"}
+    assert set(bundle.research.countries) == {"CZE", "SVK", "JPN", "IND", "MAR", "SEN", "FRO", "USA", "ZAF", "BRA", "DEU", "ISL", "SMR", "ARG", "MEX", "AUS", "NZL", "FJI", "PNG", "SLB", "COK", "ASM", "PYF", "NCL", "WSM", "TON", "VUT", "FRA", "ESP", "ITA", "NLD", "BEL", "PRT", "AUT", "DNK", "SWE", "CHE", "NOR", "FIN", "HRV", "SVN", "POL", "ROU", "UKR", "LTU", "LVA", "EST", "CAN", "GRC", "SRB", "CHL", "HUN", "ISR", "BGR", "KAZ", "CHN", "TUR", "KOR", "THA", "COL", "CYP", "ECU", "IRL", "EGY", "MYS", "SAU", "ARE", "QAT", "OMN", "GHA", "NGA", "KEN", "UGA", "TZA", "ZMB", "ZWE", "MWI", "BWA", "NAM", "SWZ", "MOZ", "ANG", "LES", "CMR", "BEN", "GAB", "MUS", "MDG", "SEY", "RWA", "BDI", "GAM", "CPV", "DJI", "COM", "EQG", "GNB", "STP", "GIN", "LBR", "SLE", "TGO", "BFA", "MLI", "MRT", "NER", "CHA", "ETH", "ERI", "SDN", "SSD", "DZA", "CIV", "TUN", "LBY", "IRQ", "JOR", "LBN", "SYR", "PSE", "BHR", "KWT", "YEM", "IRN", "AFG", "BGD", "NPL", "LKA", "BTN", "MDV", "MNG", "KHM", "MMR", "LAO", "BRN", "VNM", "UZB", "TJK", "TKM", "KGZ", "GEO", "ARM", "AZE", "ALB", "MDA", "MKD", "BIH", "BLR", "MLT", "LUX", "CRI", "JAM", "TTO", "PAN", "DOM", "GTM", "HND", "SLV", "NIC", "BLZ", "HTI", "PER", "BOL", "PRY", "URY", "VEN", "GUY", "CUB", "SUR", "BHS", "BRB", "GRD", "DMA"}
     assert bundle.research.data_cutoff.isoformat() == "2026-10-03"
-    assert len(bundle.research.countries) == 171
-    assert len(bundle.datasets) == 221
-    assert len(bundle.observations) == 1875
+    assert len(bundle.research.countries) == 173
+    assert len(bundle.datasets) == 223
+    assert len(bundle.observations) == 1879
 
     for code in ("CZE", "SVK"):
         history = bundle.research.countries[code]
@@ -468,11 +468,11 @@ def test_fifa_fra_esp_batch_is_complete_and_temporally_dimensioned():
 
 def test_atp_complete_histories_are_evidence_resolvable_and_temporally_bounded():
     bundle = load_earth_research_bundle(Path("config/earth_research/atp_earth.json"))
-    expected_countries = {"CZE", "DEU", "USA", "AUS", "ESP", "SRB", "FRA", "GBR", "ARG", "JPN", "CAN", "ITA", "NED", "SWE", "SUI", "CRO", "POL", "CHN", "NOR", "GRE", "BEL", "ZAF", "DEN", "FIN", "NZL", "PRT", "IRL", "HUN", "ROU", "SVN", "SVK", "ISR", "BGR", "AUT", "TUR", "CYP", "BRA", "CHL", "COL", "MEX", "ECU", "IND", "KOR", "THA", "KAZ", "LVA", "EST", "LTU", "UKR", "MAR", "SEN", "ISL", "SMR", "FRO", "FJI", "PNG", "WSM", "SLB", "TON", "COK", "NCL", "ASM", "VUT", "EGY", "MYS", "PHL", "IDN", "SGP", "PAK", "GHA", "NGA", "KEN", "UGA", "TZA", "ZMB", "ZWE", "MWI", "BWA", "NAM", "SWZ", "MOZ", "ANG", "LES", "CMR", "BEN", "GAB", "MUS", "MDG", "SEY", "RWA", "BDI", "GAM", "CPV", "DJI", "COM", "EQG", "GNB", "STP", "GIN", "LBR", "SLE", "TGO", "BFA", "MLI", "MRT", "NER", "CHA", "ETH", "ERI", "SDN", "SSD", "DZA", "CIV", "TUN", "LBY", "IRQ", "JOR", "LBN", "SYR", "PSE", "BHR", "KWT", "YEM", "IRN", "AFG", "BGD", "NPL", "LKA", "BTN", "MDV", "MNG", "KHM", "MMR", "LAO", "BRN", "VNM", "UZB", "TJK", "TKM", "KGZ", "GEO", "ARM", "AZE", "ALB", "MDA", "MKD", "BIH", "BLR", "MLT", "LUX", "CRI", "JAM", "TTO", "PAN", "DOM", "GTM", "HND", "SLV", "NIC", "BLZ", "HTI", "PER", "BOL", "PRY", "URY", "VEN", "GUY", "CUB", "SUR", "BHS", "BRB"}
+    expected_countries = {"CZE", "DEU", "USA", "AUS", "ESP", "SRB", "FRA", "GBR", "ARG", "JPN", "CAN", "ITA", "NED", "SWE", "SUI", "CRO", "POL", "CHN", "NOR", "GRE", "BEL", "ZAF", "DEN", "FIN", "NZL", "PRT", "IRL", "HUN", "ROU", "SVN", "SVK", "ISR", "BGR", "AUT", "TUR", "CYP", "BRA", "CHL", "COL", "MEX", "ECU", "IND", "KOR", "THA", "KAZ", "LVA", "EST", "LTU", "UKR", "MAR", "SEN", "ISL", "SMR", "FRO", "FJI", "PNG", "WSM", "SLB", "TON", "COK", "NCL", "ASM", "VUT", "EGY", "MYS", "PHL", "IDN", "SGP", "PAK", "GHA", "NGA", "KEN", "UGA", "TZA", "ZMB", "ZWE", "MWI", "BWA", "NAM", "SWZ", "MOZ", "ANG", "LES", "CMR", "BEN", "GAB", "MUS", "MDG", "SEY", "RWA", "BDI", "GAM", "CPV", "DJI", "COM", "EQG", "GNB", "STP", "GIN", "LBR", "SLE", "TGO", "BFA", "MLI", "MRT", "NER", "CHA", "ETH", "ERI", "SDN", "SSD", "DZA", "CIV", "TUN", "LBY", "IRQ", "JOR", "LBN", "SYR", "PSE", "BHR", "KWT", "YEM", "IRN", "AFG", "BGD", "NPL", "LKA", "BTN", "MDV", "MNG", "KHM", "MMR", "LAO", "BRN", "VNM", "UZB", "TJK", "TKM", "KGZ", "GEO", "ARM", "AZE", "ALB", "MDA", "MKD", "BIH", "BLR", "MLT", "LUX", "CRI", "JAM", "TTO", "PAN", "DOM", "GTM", "HND", "SLV", "NIC", "BLZ", "HTI", "PER", "BOL", "PRY", "URY", "VEN", "GUY", "CUB", "SUR", "BHS", "BRB", "GRD", "DMA"}
     assert set(bundle.research.countries) == expected_countries
     assert bundle.research.data_cutoff.isoformat() == "2026-10-04"
-    assert len(bundle.datasets) == 396
-    assert len(bundle.observations) == 854
+    assert len(bundle.datasets) == 398
+    assert len(bundle.observations) == 858
 
     expected_models = {
         "CZE": "atp-earth-cze-deu-seed-model.v1",
@@ -646,6 +646,8 @@ def test_atp_complete_histories_are_evidence_resolvable_and_temporally_bounded()
         "SUR": "atp-earth-sur-model.v1",
         "BHS": "atp-earth-bhs-model.v1",
         "BRB": "atp-earth-brb-model.v1",
+        "GRD": "atp-earth-grd-model.v1",
+        "DMA": "atp-earth-dma-model.v1",
     }
     for code, history in bundle.research.countries.items():
         assert history.missing_earth_years == []
@@ -5719,4 +5721,53 @@ def test_bhs_brb_dual_world_batch_keeps_null_professional_fields_unused():
     assert fifa.research.countries["BRB"].years[1966].historical_entity == "Barbados"
     assert atp.research.countries["BRB"].years[1965].historical_entity == "Barbados (British colony)"
     assert atp.research.countries["BRB"].years[1966].historical_entity == "Barbados"
+
+def test_grd_dma_dual_world_batch_preserves_partial_professional_evidence():
+    fifa = load_earth_research_bundle(Path("config/earth_research/fifa_earth.json"))
+    atp = load_earth_research_bundle(Path("config/earth_research/atp_earth.json"))
+
+    for code, model_fifa, model_atp, slug in (
+        ("GRD", "fifa-earth-grd-model.v1", "atp-earth-grd-model.v1", "grenada"),
+        ("DMA", "fifa-earth-dma-model.v1", "atp-earth-dma-model.v1", "dominica"),
+    ):
+        for bundle, model_id in ((fifa, model_fifa), (atp, model_atp)):
+            history = bundle.research.countries[code]
+            assert history.missing_earth_years == []
+            assert len(history.years) == 72
+            for year in history.years.values():
+                assert len(year.ratings) == 6
+                for rating in year.ratings.values():
+                    assert rating.calibration_model_id == model_id
+                    assert rating.observation_ids
+                    assert all(item in bundle.observations for item in rating.observation_ids)
+                    assert 1.0 <= rating.value <= 10.0
+                    assert round(rating.value, 1) == rating.value
+
+        baseline = atp.observations[f"atp-{slug}-history-v1#{code.lower()}-pre-modern-baseline-1955-2025"]
+        assert baseline.is_direct_observation is False
+        assert baseline.is_statistically_modelled is False
+        assert "project_authored_baseline" in baseline.quality_flags
+
+    grenada = fifa.research.countries["GRD"]
+    for attr in ("development_quality", "competition_quality", "elite_support"):
+        assert "fifa-professional-2023" not in grenada.years[2023].ratings[attr].source_ids
+        assert all(not item.startswith("fifa-professional-2023-") for item in grenada.years[2023].ratings[attr].observation_ids)
+
+    dominica = fifa.research.countries["DMA"]
+    club_id = "fifa-professional-2023-clubs-v2#dominica-p143"
+    for attr in ("development_quality", "competition_quality", "elite_support"):
+        assert club_id not in dominica.years[2022].ratings[attr].observation_ids
+        assert club_id in dominica.years[2023].ratings[attr].observation_ids
+        assert "fifa-professional-2023" in dominica.years[2023].ratings[attr].source_ids
+        assert all("fifa-professional-2023-players-v2#dominica" not in item for item in dominica.years[2023].ratings[attr].observation_ids)
+
+    assert fifa.research.countries["GRD"].years[1973].historical_entity == "Grenada (British colony)"
+    assert fifa.research.countries["GRD"].years[1974].historical_entity == "Grenada"
+    assert atp.research.countries["GRD"].years[1973].historical_entity == "Grenada (British colony)"
+    assert atp.research.countries["GRD"].years[1974].historical_entity == "Grenada"
+
+    assert fifa.research.countries["DMA"].years[1977].historical_entity == "Dominica (British colony)"
+    assert fifa.research.countries["DMA"].years[1978].historical_entity == "Dominica"
+    assert atp.research.countries["DMA"].years[1977].historical_entity == "Dominica (British colony)"
+    assert atp.research.countries["DMA"].years[1978].historical_entity == "Dominica"
 

@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-dominica-history-v1",
+  "source_id": "fifa-dominica-member-context-2026",
+  "relative_path": "observations/normalized/structural/fifa_dominica_history_v1.json",
+  "sha256": "07fca3fa20d9d9dfa2dade14f271f40b30da2a0d296e5bb89cf33df37c03e1e7",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

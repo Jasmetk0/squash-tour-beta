@@ -18,29 +18,24 @@ separate inputs. Innate potential rarity must remain independent of nationality.
 This section is the authoritative current summary. Dated batch sections below are
 retained only as implementation history and do not override these numbers.
 
-- **Merged `buuk` baseline:** FIFA Earth **117 / 250** complete 1955–2026 histories
-  with **164 datasets / 1,761 normalized observations**; ATP Earth **117 / 250**
-  complete histories with **337 datasets / 741 normalized observations**.
-- **Lebanon/Syria candidate branch:** adds **Lebanon (LBN)** and **Syria (SYR)** to
-  both worlds. If merged unchanged, both packages become **119 / 250**. Expected
-  loader totals become **FIFA 166 datasets / 1,767 observations** and
-  **ATP 341 datasets / 747 observations**.
-- All added country histories cover every year **1955–2026**, all six attributes,
-  and the explicit **1–10** scale with at most one decimal.
-- FIFA chronology and comparative checkpoints are time-gated. Lebanon uses LFA
-  foundation 1933, FIFA membership 1935, AFC membership 1964 and Big Count 2006.
-  Syria uses federation foundation 1936, FIFA affiliation 1937, AFC entry 1970
-  and Big Count 2006.
-- Coverage-first histories do not invent quantified conflict effects when no
-  reviewed observation supports the size of that effect. Syria's later curve is
-  therefore deliberately conservative pending later calibration.
-- Sparse ATP 1955–2025 histories for this batch are explicit low-confidence
-  **project-authored baselines**, not ITF measurements. Their provenance keeps
-  `is_direct_observation=false` and `is_statistically_modelled=false`; current
-  ITF association context and 2026 development eligibility are separate facts.
-- Coverage/provenance is measured through `load_earth_research_bundle()`, including
-  all country shards, source metadata, normalized observations, manifests and
-  calibration references.
+- **Merged `buuk` baseline:** FIFA Earth **119 / 250** complete 1955–2026 histories
+  with **166 datasets / 1,767 normalized observations**; ATP Earth **119 / 250**
+  complete histories with **341 datasets / 747 normalized observations**.
+- **Palestine/Bahrain candidate branch:** adds **Palestine (PSE)** and **Bahrain (BHR)**
+  to both worlds. If merged unchanged, both packages become **121 / 250**. Expected
+  loader totals become **FIFA 170 datasets / 1,774 observations** and
+  **ATP 345 datasets / 753 observations**.
+- Palestine's pre-1998 FIFA values are explicit territorial Earth backcasts and do
+  not assert uninterrupted continuity of today's Palestine Football Association.
+  FIFA admission starts in 1998; later FIFA/AFC infrastructure and grassroots
+  evidence is time-gated.
+- Bahrain uses an explicit 1955–1956 pre-association baseline; BFA establishment
+  begins in 1957 and Big Count enters from 2006.
+- Sparse ATP 1955–2025 histories in this batch remain low-confidence
+  **project-authored baselines**, not ITF measurements or statistical models.
+- All four histories cover every year **1955–2026**, all six attributes, with
+  explicit **1–10** values at max one decimal.
+- Coverage/provenance is validated through `load_earth_research_bundle()`.
 - Innate player-potential rarity remains independent of nationality.
 - Installed FIFA/ATP Earth packages, ordinary historical-profile editing/persistence,
   and complete initial-player historical-environment integration remain unfinished.

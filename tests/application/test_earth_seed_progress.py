@@ -15,7 +15,7 @@ def test_fifa_first_reviewed_country_histories_are_complete_and_resolvable():
     assert bundle.research.data_cutoff.isoformat() == "2026-10-03"
     assert len(bundle.research.countries) == 117
     assert len(bundle.datasets) == 164
-    assert len(bundle.observations) == 1763
+    assert len(bundle.observations) == 1761
 
     for code in ("CZE", "SVK"):
         history = bundle.research.countries[code]

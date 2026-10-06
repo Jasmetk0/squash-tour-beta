@@ -3,7 +3,7 @@
   "dataset_id": "fifa-structural-niger-history-v1",
   "source_id": "caf-niger-profile",
   "relative_path": "observations/normalized/structural/fifa_structural_niger_history_v1.json",
-  "sha256": "a5ab865f5aab045849bfc0367623f78bce06da45a68de3938ef9497ac97858e3",
+  "sha256": "329d7ae9403e311462a58e0fdce1db63baf3e28d3e9045efe1fd0d8e6300a91e",
   "record_count": 4,
   "source_document_sha256": null,
   "input_artifact_sha256": null,

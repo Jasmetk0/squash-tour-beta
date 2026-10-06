@@ -3,7 +3,7 @@
   "dataset_id": "atp-niger-history-v1",
   "source_id": "itf-niger-return-to-play-2020",
   "relative_path": "observations/normalized/atp_niger_history_v1.json",
-  "sha256": "8906eb3206ce3a998cd48c5fb7f24f71b29a88f76083c4147461c72a9a6f8118",
+  "sha256": "f6774a05ddb374ea694f99a45e06c4f3b026b0bf86970a3e2bafec833707881f",
   "record_count": 2,
   "source_document_sha256": null,
   "input_artifact_sha256": null,

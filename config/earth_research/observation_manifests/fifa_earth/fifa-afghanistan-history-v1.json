@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-afghanistan-history-v1",
+  "source_id": "fifa-afghanistan-member-context-2026",
+  "relative_path": "observations/normalized/structural/fifa_afghanistan_history_v1.json",
+  "sha256": "745f0cb564290cef3adeb01e9b423a0e06d1d3b854faacd031269e868c7fb9b1",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

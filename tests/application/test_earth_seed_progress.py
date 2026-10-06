@@ -18,11 +18,11 @@ def load_earth_research_bundle(path: Path):
 
 def test_fifa_first_reviewed_country_histories_are_complete_and_resolvable():
     bundle = load_earth_research_bundle(Path("config/earth_research/fifa_earth.json"))
-    assert set(bundle.research.countries) == {"CZE", "SVK", "JPN", "IND", "MAR", "SEN", "FRO", "USA", "ZAF", "BRA", "DEU", "ISL", "SMR", "ARG", "MEX", "AUS", "NZL", "FJI", "PNG", "SLB", "COK", "ASM", "PYF", "NCL", "WSM", "TON", "VUT", "FRA", "ESP", "ITA", "NLD", "BEL", "PRT", "AUT", "DNK", "SWE", "CHE", "NOR", "FIN", "HRV", "SVN", "POL", "ROU", "UKR", "LTU", "LVA", "EST", "CAN", "GRC", "SRB", "CHL", "HUN", "ISR", "BGR", "KAZ", "CHN", "TUR", "KOR", "THA", "COL", "CYP", "ECU", "IRL", "EGY", "MYS", "SAU", "ARE", "QAT", "OMN", "GHA", "NGA", "KEN", "UGA", "TZA", "ZMB", "ZWE", "MWI", "BWA", "NAM", "SWZ", "MOZ", "ANG", "LES", "CMR", "BEN", "GAB", "MUS", "MDG", "SEY", "RWA", "BDI", "GAM", "CPV", "DJI", "COM", "EQG", "GNB", "STP", "GIN", "LBR", "SLE", "TGO", "BFA", "MLI", "MRT", "NER", "CHA", "ETH", "ERI", "SDN", "SSD", "DZA", "CIV", "TUN", "LBY", "IRQ", "JOR", "LBN", "SYR", "PSE", "BHR", "KWT", "YEM"}
+    assert set(bundle.research.countries) == {"CZE", "SVK", "JPN", "IND", "MAR", "SEN", "FRO", "USA", "ZAF", "BRA", "DEU", "ISL", "SMR", "ARG", "MEX", "AUS", "NZL", "FJI", "PNG", "SLB", "COK", "ASM", "PYF", "NCL", "WSM", "TON", "VUT", "FRA", "ESP", "ITA", "NLD", "BEL", "PRT", "AUT", "DNK", "SWE", "CHE", "NOR", "FIN", "HRV", "SVN", "POL", "ROU", "UKR", "LTU", "LVA", "EST", "CAN", "GRC", "SRB", "CHL", "HUN", "ISR", "BGR", "KAZ", "CHN", "TUR", "KOR", "THA", "COL", "CYP", "ECU", "IRL", "EGY", "MYS", "SAU", "ARE", "QAT", "OMN", "GHA", "NGA", "KEN", "UGA", "TZA", "ZMB", "ZWE", "MWI", "BWA", "NAM", "SWZ", "MOZ", "ANG", "LES", "CMR", "BEN", "GAB", "MUS", "MDG", "SEY", "RWA", "BDI", "GAM", "CPV", "DJI", "COM", "EQG", "GNB", "STP", "GIN", "LBR", "SLE", "TGO", "BFA", "MLI", "MRT", "NER", "CHA", "ETH", "ERI", "SDN", "SSD", "DZA", "CIV", "TUN", "LBY", "IRQ", "JOR", "LBN", "SYR", "PSE", "BHR", "KWT", "YEM", "IRN", "AFG"}
     assert bundle.research.data_cutoff.isoformat() == "2026-10-03"
-    assert len(bundle.research.countries) == 123
-    assert len(bundle.datasets) == 173
-    assert len(bundle.observations) == 1779
+    assert len(bundle.research.countries) == 125
+    assert len(bundle.datasets) == 175
+    assert len(bundle.observations) == 1783
 
     for code in ("CZE", "SVK"):
         history = bundle.research.countries[code]
@@ -468,11 +468,11 @@ def test_fifa_fra_esp_batch_is_complete_and_temporally_dimensioned():
 
 def test_atp_complete_histories_are_evidence_resolvable_and_temporally_bounded():
     bundle = load_earth_research_bundle(Path("config/earth_research/atp_earth.json"))
-    expected_countries = {"CZE", "DEU", "USA", "AUS", "ESP", "SRB", "FRA", "GBR", "ARG", "JPN", "CAN", "ITA", "NED", "SWE", "SUI", "CRO", "POL", "CHN", "NOR", "GRE", "BEL", "ZAF", "DEN", "FIN", "NZL", "PRT", "IRL", "HUN", "ROU", "SVN", "SVK", "ISR", "BGR", "AUT", "TUR", "CYP", "BRA", "CHL", "COL", "MEX", "ECU", "IND", "KOR", "THA", "KAZ", "LVA", "EST", "LTU", "UKR", "MAR", "SEN", "ISL", "SMR", "FRO", "FJI", "PNG", "WSM", "SLB", "TON", "COK", "NCL", "ASM", "VUT", "EGY", "MYS", "PHL", "IDN", "SGP", "PAK", "GHA", "NGA", "KEN", "UGA", "TZA", "ZMB", "ZWE", "MWI", "BWA", "NAM", "SWZ", "MOZ", "ANG", "LES", "CMR", "BEN", "GAB", "MUS", "MDG", "SEY", "RWA", "BDI", "GAM", "CPV", "DJI", "COM", "EQG", "GNB", "STP", "GIN", "LBR", "SLE", "TGO", "BFA", "MLI", "MRT", "NER", "CHA", "ETH", "ERI", "SDN", "SSD", "DZA", "CIV", "TUN", "LBY", "IRQ", "JOR", "LBN", "SYR", "PSE", "BHR", "KWT", "YEM"}
+    expected_countries = {"CZE", "DEU", "USA", "AUS", "ESP", "SRB", "FRA", "GBR", "ARG", "JPN", "CAN", "ITA", "NED", "SWE", "SUI", "CRO", "POL", "CHN", "NOR", "GRE", "BEL", "ZAF", "DEN", "FIN", "NZL", "PRT", "IRL", "HUN", "ROU", "SVN", "SVK", "ISR", "BGR", "AUT", "TUR", "CYP", "BRA", "CHL", "COL", "MEX", "ECU", "IND", "KOR", "THA", "KAZ", "LVA", "EST", "LTU", "UKR", "MAR", "SEN", "ISL", "SMR", "FRO", "FJI", "PNG", "WSM", "SLB", "TON", "COK", "NCL", "ASM", "VUT", "EGY", "MYS", "PHL", "IDN", "SGP", "PAK", "GHA", "NGA", "KEN", "UGA", "TZA", "ZMB", "ZWE", "MWI", "BWA", "NAM", "SWZ", "MOZ", "ANG", "LES", "CMR", "BEN", "GAB", "MUS", "MDG", "SEY", "RWA", "BDI", "GAM", "CPV", "DJI", "COM", "EQG", "GNB", "STP", "GIN", "LBR", "SLE", "TGO", "BFA", "MLI", "MRT", "NER", "CHA", "ETH", "ERI", "SDN", "SSD", "DZA", "CIV", "TUN", "LBY", "IRQ", "JOR", "LBN", "SYR", "PSE", "BHR", "KWT", "YEM", "IRN", "AFG"}
     assert set(bundle.research.countries) == expected_countries
     assert bundle.research.data_cutoff.isoformat() == "2026-10-04"
-    assert len(bundle.datasets) == 348
-    assert len(bundle.observations) == 758
+    assert len(bundle.datasets) == 350
+    assert len(bundle.observations) == 762
 
     expected_models = {
         "CZE": "atp-earth-cze-deu-seed-model.v1",
@@ -598,6 +598,8 @@ def test_atp_complete_histories_are_evidence_resolvable_and_temporally_bounded()
         "BHR": "atp-earth-bhr-model.v1",
         "KWT": "atp-earth-kwt-model.v1",
         "YEM": "atp-earth-yem-model.v1",
+        "IRN": "atp-earth-irn-model.v1",
+        "AFG": "atp-earth-afg-model.v1",
     }
     for code, history in bundle.research.countries.items():
         assert history.missing_earth_years == []
@@ -4524,3 +4526,49 @@ def test_kwt_yem_dual_world_batch_is_complete_resolvable_and_temporal():
     assert "atp-yemen-development-2026-v1#yem-eligible-2026" in (
         atp.research.countries["YEM"].years[2026].ratings["development_quality"].observation_ids
     )
+
+
+def test_irn_afg_dual_world_batch_is_complete_resolvable_and_temporal():
+    fifa = load_earth_research_bundle(Path("config/earth_research/fifa_earth.json"))
+    atp = load_earth_research_bundle(Path("config/earth_research/atp_earth.json"))
+
+    for bundle, expected_models in (
+        (fifa, {"IRN": "fifa-earth-irn-model.v1", "AFG": "fifa-earth-afg-model.v1"}),
+        (atp, {"IRN": "atp-earth-irn-model.v1", "AFG": "atp-earth-afg-model.v1"}),
+    ):
+        for code, model_id in expected_models.items():
+            history = bundle.research.countries[code]
+            assert history.missing_earth_years == []
+            assert len(history.years) == 72
+            assert history.reference_year == 2026
+            for year in history.years.values():
+                assert len(year.ratings) == 6
+                for rating in year.ratings.values():
+                    assert rating.calibration_model_id == model_id
+                    assert rating.observation_ids
+                    assert all(item in bundle.observations for item in rating.observation_ids)
+                    assert 1.0 <= rating.value <= 10.0
+                    assert round(rating.value, 1) == rating.value
+
+    irn = fifa.research.countries["IRN"]
+    assert "fifa-iran-history-v1#irn-federation-1946" in irn.years[1955].ratings["squash_tradition"].observation_ids
+    assert "fifa-big-count-2006-all-players-v2#iran" not in irn.years[2005].ratings["squash_popularity"].observation_ids
+    assert "fifa-big-count-2006-all-players-v2#iran" in irn.years[2006].ratings["squash_popularity"].observation_ids
+    assert "fifa-professional-2023-players-v2#ir-iran-p31" in irn.years[2023].ratings["competition_quality"].observation_ids
+    assert "fifa-professional-2023-clubs-v2#ir-iran-p31" in irn.years[2023].ratings["elite_support"].observation_ids
+
+    afg = fifa.research.countries["AFG"]
+    assert "fifa-big-count-2006-all-players-v2#afghanistan" in afg.years[2006].ratings["squash_popularity"].observation_ids
+    assert "fifa-professional-2023-clubs-v2#afghanistan-p18" in afg.years[2023].ratings["competition_quality"].observation_ids
+    assert all(
+        "fifa-professional-2023-players-v2#afghanistan" not in item
+        for year in afg.years.values()
+        for rating in year.ratings.values()
+        for item in rating.observation_ids
+    )
+
+    for code, slug in (("IRN", "iran"), ("AFG", "afghanistan")):
+        baseline = atp.observations[f"atp-{slug}-history-v1#{code.lower()}-pre-modern-baseline-1955-2025"]
+        assert baseline.is_direct_observation is False
+        assert baseline.is_statistically_modelled is False
+        assert "project_authored_baseline" in baseline.quality_flags

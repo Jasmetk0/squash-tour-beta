@@ -1,5 +1,20 @@
 # Current implementation and next action
 
+## Current merged baseline + Iran/Afghanistan candidate (6 October 2026)
+
+- Verified merged `buuk` HEAD for this batch: `1b04aa13bad449a2675f9b8506b7ff39944bf3f4` (#1236).
+- **Merged data in `buuk`: FIFA Earth 123 / 250 and ATP Earth 123 / 250 complete 1955–2026 histories.**
+- Merged loader expectations: **FIFA 173 datasets / 1,779 observations** and **ATP 348 datasets / 758 observations**.
+- This independent branch adds **Iran (IRN)** and **Afghanistan (AFG)** to both worlds.
+- **Proposed result after merge:** FIFA Earth **125 / 250**, **175 datasets / 1,783 observations**; ATP Earth **125 / 250**, **350 datasets / 762 observations**.
+- Iran enters 1955 with a documented federation established in 1946 and FIFA membership from 1948. Big Count 2006 and safely reconciled FIFA Professional 2023 observations are time-gated.
+- Afghanistan uses an explicit low-confidence pre-2006 project baseline, then Big Count 2006 and the published **12 professional clubs** from FIFA Professional 2023. The missing professional-player value stays missing and is never converted to zero.
+- ATP 1955–2025 values remain explicit low-confidence **project-authored baselines**, with `is_direct_observation=false` and `is_statistically_modelled=false`. No 2026 development eligibility is inferred without a checked entry.
+- Research coverage still does not mean installed package completion, ordinary historical-profile editing, or full historical-environment integration into initial-player development.
+
+> Older Current/Candidate sections below are dated implementation history and do not override this section.
+
+
 ## Current merged baseline + Kuwait/Yemen candidate (6 October 2026)
 
 - Verified merged `buuk` HEAD for this batch: `ab067ebda8707611e56e3342beac3c7dd4aa6139` (#1235).

@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-iraq-history-v1",
+  "source_id": "fifa-competitive-balance-2020-irq-jor",
+  "relative_path": "observations/normalized/structural/fifa_structural_iraq_history_v1.json",
+  "sha256": "146facf94857fcd19a1b8daa5dbdb6e3a35740e1373bce61a7d472585f0bc4b0",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

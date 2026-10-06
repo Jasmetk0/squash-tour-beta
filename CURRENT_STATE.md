@@ -1,5 +1,16 @@
 # Current implementation and next action
 
+## Current merged baseline + Albania/Moldova candidate (6 October 2026)
+
+- Verified merged `buuk` HEAD for this batch: `710e1bb38bae5fb93b024f9d291703743950396e` (#1246).
+- **Merged data in `buuk`: FIFA Earth 143 / 250 and ATP Earth 143 / 250 complete 1955–2026 histories.**
+- This branch adds **Albania (ALB)** and **Moldova (MDA)** to both worlds.
+- **Proposed result after merge:** FIFA Earth **145 / 250**, **195 datasets / 1,823 observations**; ATP Earth **145 / 250**, **370 datasets / 802 observations**.
+- FIFA Big Count 2006 is time-gated for both countries; Professional 2023 contains no retained row for either country, so no values are invented.
+- ATP 1955–2025 values remain explicit low-confidence project-authored baselines with `is_direct_observation=false` and `is_statistically_modelled=false`.
+
+> Older sections below are historical and do not override this section.
+
 ## Current merged baseline + Armenia/Azerbaijan candidate (6 October 2026)
 
 - Verified merged `buuk` HEAD for this batch: `164720657b6bb1c27d2b1170402f9a3b9db82847` (#1245).

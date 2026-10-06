@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-turks-and-caicos-islands-history-v1",
+  "source_id": "itf-turks-and-caicos-islands-profile",
+  "relative_path": "observations/normalized/atp_turks_and_caicos_islands_history_v1.json",
+  "sha256": "6ec89054870e53fdff8230ac13cad53393fca2bb2a867374f0edda0fafa4204b",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

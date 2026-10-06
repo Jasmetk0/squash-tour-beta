@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-british-virgin-islands-history-v1",
+  "source_id": "itf-british-virgin-islands-profile",
+  "relative_path": "observations/normalized/atp_british_virgin_islands_history_v1.json",
+  "sha256": "643be69a10be940cee4c77dc012f9587647fbdf801a8358e556161ef8c3414e7",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

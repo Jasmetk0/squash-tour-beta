@@ -5919,3 +5919,14 @@ bands should shape 0..200 potential. No threshold is inferred from current OVR v
 - Tunisia FIFA gates federation creation to 1957, FIFA/CAF affiliation to 1960, Big Count to 2006 and the available professional-club observation to 2023.
 - Libya FIFA gates federation creation to 1962 and FIFA affiliation to 1964; no missing 2023 professional value is inferred.
 - Tunisia ATP uses Bronze National Training Centre recognition from 2024 and ITF development eligibility in 2026. Libya ATP remains deliberately sparse and low confidence, with current member-association context and 2026 eligibility not backdated into invented historical milestones.
+
+
+### Earth packages progress - VGB + TCA dual batch (2026-10-06)
+- Added complete 1955-2026 FIFA Earth and ATP Earth histories for British Virgin Islands (VGB) and Turks and Caicos Islands (TCA).
+- FIFA Earth coverage: 177 -> 179 / 250 countries/territories.
+- ATP Earth coverage: 177 -> 179 / 250 countries/territories.
+- FIFA loader totals: 229 datasets / 1,891 observations.
+- ATP loader totals: 404 datasets / 870 observations.
+- FIFA Big Count 2006 is time-gated; Professional 2023 player and club fields are null for both territories and remain unused.
+- ATP pre-2026 values remain explicit project-authored, non-direct, non-statistically-modelled baselines.
+- Added 1,728 authored annual ratings across the two Earth packages.

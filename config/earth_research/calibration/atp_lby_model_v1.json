@@ -1,0 +1,40 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "atp-earth-lby-model.v1",
+  "world_id": "atp_earth",
+  "data_cutoff": "2026-10-04",
+  "countries": [
+    "LBY"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "evidence_rules": [
+    "Sparse 1955-2025 history remains low confidence.",
+    "Current member-association context is not backdated.",
+    "2026 development eligibility is capacity/opportunity context only."
+  ],
+  "anchor_values": {
+    "LBY": {
+      "1955": [
+        2.5,
+        2.2,
+        2.3,
+        2.2,
+        2,
+        2.8
+      ],
+      "2026": [
+        4.8,
+        4.3,
+        4.5,
+        4.2,
+        4.1,
+        5.2
+      ]
+    }
+  },
+  "evidence_sources": [
+    "itf-libya-profile",
+    "itf-libya-development-eligibility-2026"
+  ],
+  "heldout_ranking_used": false
+}

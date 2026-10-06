@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-bosnia-and-herzegovina-history-v1",
+  "source_id": "fifa-bosnia-herzegovina-member-context-2026",
+  "relative_path": "observations/normalized/structural/fifa_bosnia_and_herzegovina_history_v1.json",
+  "sha256": "2f4c0ca7e949226449bc27a5ea7dbb6568c7ad599e1e4d539d5bf235c919be57",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

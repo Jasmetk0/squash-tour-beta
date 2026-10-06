@@ -3,7 +3,7 @@
   "dataset_id": "atp-liberia-history-v1",
   "source_id": "itf-liberia-return-to-play-2020",
   "relative_path": "observations/normalized/atp_liberia_history_v1.json",
-  "sha256": "a1487fc2a4b6db9d578a056267962e2c124ca7c34cc898a4f5b6a787ce7faab5",
+  "sha256": "d618288395a0086889ccb2d3d1bce44ab97d9910666276d2faf7be99ddc071a8",
   "record_count": 2,
   "source_document_sha256": null,
   "input_artifact_sha256": null,

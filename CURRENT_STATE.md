@@ -1,5 +1,18 @@
 # Current implementation and next action
 
+## Current merged baseline + Grenada/Dominica candidate (6 October 2026)
+
+- Verified merged `buuk` HEAD for this batch: `761868bd3d831e1683504e89127b10b099afa579` (#1260).
+- **Merged data in `buuk`: FIFA Earth 171 / 250 and ATP Earth 171 / 250 complete 1955–2026 histories.**
+- This branch adds **Grenada (GRD)** and **Dominica (DMA)** to both worlds.
+- **Proposed result after merge:** FIFA Earth **173 / 250**, **223 datasets / 1,879 observations**; ATP Earth **173 / 250**, **398 datasets / 858 observations**.
+- FIFA Big Count 2006 is time-gated: GRD **6,682 players / 20 clubs**, DMA **4,500 players / 21 clubs**.
+- FIFA Professional 2023: Grenada player and club fields are null and remain unused; Dominica uses only the non-null **34-club** observation from 2023 onward while its player field remains missing.
+- Historical labels: Grenada uses **Grenada (British colony)** through 1973 and Grenada from 1974; Dominica uses **Dominica (British colony)** through 1977 and Dominica from 1978.
+- ATP 1955–2025 values remain explicit low-confidence project-authored baselines with `is_direct_observation=false` and `is_statistically_modelled=false`.
+
+> Older sections below are historical and do not override this section.
+
 ## Current merged baseline + Bahamas/Barbados candidate (6 October 2026)
 
 - Verified merged `buuk` HEAD for this batch: `4047c18aca73cba2780b2009d9ca7e407f4a9de3` (#1259).

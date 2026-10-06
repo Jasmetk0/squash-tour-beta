@@ -1,0 +1,49 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "fifa-earth-lao-model.v1",
+  "world_id": "fifa_earth",
+  "data_cutoff": "2026-10-03",
+  "countries": [
+    "LAO"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "evidence_rules": [
+    "1955-2005 values are a low-confidence project-authored baseline.",
+    "Big Count enters from 2006.",
+    "Professional 2023 missing fields remain missing.",
+    "Current FIFA membership is context only."
+  ],
+  "anchor_values": {
+    "LAO": {
+      "1955": [
+        3.3,
+        2.9,
+        3,
+        3,
+        2.8,
+        3.5
+      ],
+      "2006": [
+        5.2,
+        4.5,
+        4.7,
+        4.8,
+        4.4,
+        5.1
+      ],
+      "2026": [
+        5.5,
+        4.8,
+        5,
+        5.1,
+        4.7,
+        5.4
+      ]
+    }
+  },
+  "evidence_sources": [
+    "fifa-laos-member-context-2026",
+    "fifa-big-count-2006"
+  ],
+  "heldout_ranking_used": false
+}

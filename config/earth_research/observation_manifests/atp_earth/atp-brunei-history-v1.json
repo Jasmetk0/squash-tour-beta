@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-brunei-history-v1",
+  "source_id": "itf-brunei-profile",
+  "relative_path": "observations/normalized/atp_brunei_history_v1.json",
+  "sha256": "0a0dc37b42e93ad43b9928277fa3a3847af0bb70a4de378743e827bb86c71a22",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

@@ -3,7 +3,7 @@
   "dataset_id": "fifa-structural-gambia-history-v1",
   "source_id": "caf-gambia-profile",
   "relative_path": "observations/normalized/structural/fifa_structural_gambia_history_v1.json",
-  "sha256": "3918c7b57043d2550a2236375541e075614a7fbbf0412f7cb969c3ce4684e43f",
+  "sha256": "0b70c220c54ceb2f16b40abd50efef58c259579ddb4e1247277aa90c2b83ad64",
   "record_count": 3,
   "source_document_sha256": null,
   "input_artifact_sha256": null,

@@ -3,7 +3,7 @@
   "dataset_id": "fifa-bahrain-history-v1",
   "source_id": "afc-bfa-statutes-2023",
   "relative_path": "observations/normalized/structural/fifa_bahrain_history_v1.json",
-  "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+  "sha256": "1586e5efce34ea6b1e498853f1a4a7ddc250783e594d1fa84353e8b816f92fbb",
   "record_count": 2,
   "source_document_sha256": null,
   "input_artifact_sha256": null,

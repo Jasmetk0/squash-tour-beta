@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-panama-history-v1",
+  "source_id": "itf-panama-profile",
+  "relative_path": "observations/normalized/atp_panama_history_v1.json",
+  "sha256": "75e67212ca1f467e9a6f07c789b77a0102997a2c6513f8aa23d5a34949470fc3",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

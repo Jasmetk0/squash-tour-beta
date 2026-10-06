@@ -1,5 +1,18 @@
 # Current implementation and next action
 
+## Current merged baseline + Cuba/Suriname candidate (6 October 2026)
+
+- Verified merged `buuk` HEAD for this batch: `53645505f7d5fcc24896342928e4ef009e3d738d` (#1258).
+- **Merged data in `buuk`: FIFA Earth 167 / 250 and ATP Earth 167 / 250 complete 1955–2026 histories.**
+- This branch adds **Cuba (CUB)** and **Suriname (SUR)** to both worlds.
+- **Proposed result after merge:** FIFA Earth **169 / 250**, **219 datasets / 1,871 observations**; ATP Earth **169 / 250**, **394 datasets / 850 observations**.
+- FIFA Big Count 2006 is time-gated: CUB **1,141,825 players / 353 clubs**, SUR **35,250 players / 31 clubs**.
+- Cuba's FIFA Professional 2023 player and club fields are null and remain unused. Suriname uses only its non-null Professional 2023 **10-club** observation; its player field remains missing.
+- Suriname uses **Suriname (Kingdom of the Netherlands)** through 1974, then Suriname from 1975 onward.
+- ATP 1955–2025 values remain explicit low-confidence project-authored baselines with `is_direct_observation=false` and `is_statistically_modelled=false`.
+
+> Older sections below are historical and do not override this section.
+
 ## Current merged baseline + Venezuela/Guyana candidate (6 October 2026)
 
 - Verified merged `buuk` HEAD for this batch: `8514e33826423fc7828b92abbccfb6802acb84bb` (#1257).

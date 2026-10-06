@@ -5952,3 +5952,16 @@ bands should shape 0..200 potential. No threshold is inferred from current OVR v
 - FIFA Big Count 2006 is time-gated; Professional 2023 player and club fields are null for both and remain unused.
 - Non-sovereign association identities remain mapped to Earth territory codes CYM and VIR.
 - ATP pre-2026 values remain explicit project-authored, non-direct, non-statistically-modelled baselines.
+
+
+### Earth packages progress - ABW + PRI dual batch (2026-10-06)
+- Added complete 1955-2026 FIFA Earth and ATP Earth histories for Aruba (ABW) and Puerto Rico (PRI).
+- FIFA Earth coverage: 183 -> 185 / 250 countries/territories.
+- ATP Earth coverage: 183 -> 185 / 250 countries/territories.
+- FIFA loader totals: 235 datasets / 1,903 observations.
+- ATP loader totals: 410 datasets / 882 observations.
+- FIFA Big Count 2006 is time-gated for both.
+- Aruba Professional 2023 player/club fields are null and remain unused.
+- Puerto Rico Professional 2023 players are null; the published 6-club observation is used only from 2023 onward.
+- FIFA association identities ARU and PUR remain mapped to Earth codes ABW and PRI.
+- ATP pre-2026 values remain explicit project-authored, non-direct, non-statistically-modelled baselines.

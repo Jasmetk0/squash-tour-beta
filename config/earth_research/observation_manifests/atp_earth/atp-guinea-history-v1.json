@@ -3,7 +3,7 @@
   "dataset_id": "atp-guinea-history-v1",
   "source_id": "itf-guinea-return-to-play-2020",
   "relative_path": "observations/normalized/atp_guinea_history_v1.json",
-  "sha256": "5b491af79fc3b644e9e04595fbd646b885e5532e161540e7adb075e703a5a53e",
+  "sha256": "a3d768bb4737db86ad9ad003f36074f6b21d325e6156bad3a9b819d263a660ba",
   "record_count": 2,
   "source_document_sha256": null,
   "input_artifact_sha256": null,

@@ -26,9 +26,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Fast CI intentionally runs only a compact catastrophic-regression gate.
-      # Frontend also runs changed/colocated tests. The separate "Full Test Suite"
-      # retains complete coverage after merge to buuk and nightly.
+      # Fast CI intentionally runs only focused PR checks, including a dedicated
+      # Earth-data path when Earth research changes. The separate "Full Test Suite"
+      # is manual-only during ordinary pre-alpha construction (workflow_dispatch).
       - name: Detect changed areas
         id: filter
         uses: dorny/paths-filter@v4

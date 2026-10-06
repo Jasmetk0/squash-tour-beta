@@ -1,5 +1,21 @@
 # Current implementation and next action
 
+## Current merged baseline + clean Iraq/Jordan candidate (6 October 2026)
+
+- Verified merged `buuk` HEAD before this branch: `3682c9604484d25552dc2cb2b296c5ee88b69bc1`.
+- **Merged data in `buuk`: FIFA Earth 115 / 250 and ATP Earth 115 / 250 complete 1955–2026 histories.**
+- Merged loader expectations at that HEAD are **FIFA 162 datasets / 1,759 normalized observations** and **ATP 333 datasets / 735 normalized observations**.
+- This branch is based directly on that `buuk` HEAD and adds only **Iraq (IRQ) and Jordan (JOR)** plus current-status/provenance/CI-description corrections.
+- **Proposed result after merge:** FIFA Earth **117 / 250**, **164 datasets / 1,761 observations**; ATP Earth **117 / 250**, **337 datasets / 741 observations**.
+- Every added country history spans **1955–2026**, has all six attributes, uses the explicit **1–10** scale with at most one decimal, and resolves its checked-in observation references through `load_earth_research_bundle()`.
+- FIFA association founding years, Big Count 2006, Professional 2023 and current association context are time-gated and are not silently backdated.
+- ATP pre-2026 sparse-history values are **authored low-confidence project baselines**, not measurements published by the ITF. ITF membership and 2026 development-eligibility sources provide contextual facts only; an `observation_id` referencing those files does not turn the authored numeric ratings into independently observed history.
+- `is_direct_observation` and `is_statistically_modelled` remain separate provenance concepts. Authored low-confidence baselines are not automatically labelled statistical models.
+- Coverage of research data is not completion of the application feature: installed Earth packages, ordinary historical-profile editing/persistence, and full use of historical environment during initial-player development remain unfinished.
+
+> All older Current/Candidate sections below are dated implementation history and do not override this section.
+
+
 ## Current — Ethiopia/Eritrea dual-world Earth batch (5 October 2026)
 
 - Based directly on merged `buuk` commit `68fd8a8e3066d2eede3614c26a2d76920650da87` (#1223); independent coverage PR.

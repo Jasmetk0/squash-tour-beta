@@ -4,7 +4,7 @@
   "source_id": "caf-equatorial-guinea-profile",
   "relative_path": "observations/normalized/structural/fifa_structural_equatorial_guinea_history_v1.json",
   "sha256": "49e630b8ab2c8570b5865049e46e0614b9530e7fa9df2c6ef46be1bfd960d7f4",
-  "record_count": 3,
+  "record_count": 4,
   "source_document_sha256": null,
   "input_artifact_sha256": null,
   "generated_by": "manual-normalization-2026-10-05"

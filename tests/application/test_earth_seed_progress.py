@@ -652,6 +652,10 @@ def test_atp_complete_histories_are_evidence_resolvable_and_temporally_bounded()
         "LCA": "atp-earth-lca-model.v1",
         "VCT": "atp-earth-vct-model.v1",
         "KNA": "atp-earth-kna-model.v1",
+        "VGB": "atp-earth-vgb-model.v1",
+        "TCA": "atp-earth-tca-model.v1",
+        "AIA": "atp-earth-aia-model.v1",
+        "BMU": "atp-earth-bmu-model.v1",
     }
     for code, history in bundle.research.countries.items():
         assert history.missing_earth_years == []

@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-tunisia-development-2026-v1",
+  "source_id": "itf-tunisia-development-eligibility-2026",
+  "relative_path": "observations/normalized/atp_tunisia_development_2026_v1.json",
+  "sha256": "ad647ef9dfb41b0bdfd3153bd1592a2b8d298065727af6169cdf0255ead7d0ac",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

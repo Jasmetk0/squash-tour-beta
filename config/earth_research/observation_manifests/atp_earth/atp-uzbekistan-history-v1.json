@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-uzbekistan-history-v1",
+  "source_id": "itf-uzbekistan-profile",
+  "relative_path": "observations/normalized/atp_uzbekistan_history_v1.json",
+  "sha256": "2a8ff827ace3b83846b36806e800e13ebbe0192de7473f9aaa607ff85bd1e5d1",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

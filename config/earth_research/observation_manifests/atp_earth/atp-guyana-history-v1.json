@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-guyana-history-v1",
+  "source_id": "itf-guyana-profile",
+  "relative_path": "observations/normalized/atp_guyana_history_v1.json",
+  "sha256": "66731ce404aae31debc9dfb25841c45762c69c50f0821ef79c72a13589214c56",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

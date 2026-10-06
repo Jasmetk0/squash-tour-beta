@@ -1,0 +1,58 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "fifa-earth-ven-model.v1",
+  "world_id": "fifa_earth",
+  "data_cutoff": "2026-10-03",
+  "countries": [
+    "VEN"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "evidence_rules": [
+    "1955-2005 values are a low-confidence project-authored baseline.",
+    "FIFA Big Count enters from 2006.",
+    "FIFA Professional 2023 players and clubs enter from 2023 only as professional ecosystem context.",
+    "Current FIFA membership is context only and is not backdated."
+  ],
+  "anchor_values": {
+    "VEN": {
+      "1955": [
+        4.5,
+        4,
+        4.2,
+        4.4,
+        3.9,
+        4.6
+      ],
+      "2006": [
+        6.7,
+        6.1,
+        6.3,
+        6.6,
+        5.9,
+        6.6
+      ],
+      "2023": [
+        7,
+        6.4,
+        6.6,
+        6.9,
+        6.2,
+        6.9
+      ],
+      "2026": [
+        7,
+        6.4,
+        6.6,
+        6.9,
+        6.2,
+        6.9
+      ]
+    }
+  },
+  "evidence_sources": [
+    "fifa-venezuela-member-context-2026",
+    "fifa-big-count-2006",
+    "fifa-professional-2023"
+  ],
+  "heldout_ranking_used": false
+}

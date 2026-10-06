@@ -1,5 +1,18 @@
 # Current implementation and next action
 
+## Current merged baseline + Bahamas/Barbados candidate (6 October 2026)
+
+- Verified merged `buuk` HEAD for this batch: `4047c18aca73cba2780b2009d9ca7e407f4a9de3` (#1259).
+- **Merged data in `buuk`: FIFA Earth 169 / 250 and ATP Earth 169 / 250 complete 1955–2026 histories.**
+- This branch adds **Bahamas (BHS)** and **Barbados (BRB)** to both worlds.
+- **Proposed result after merge:** FIFA Earth **171 / 250**, **221 datasets / 1,875 observations**; ATP Earth **171 / 250**, **396 datasets / 854 observations**.
+- FIFA Big Count 2006 is time-gated: BHS **17,944 players / 41 clubs**, BRB **37,550 players / 134 clubs**.
+- FIFA Professional 2023 player and club fields are null for both countries and remain unused.
+- Historical labels: Bahamas uses **Bahamas (British colony)** through 1972 and Bahamas from 1973; Barbados uses **Barbados (British colony)** through 1965 and Barbados from 1966.
+- ATP 1955–2025 values remain explicit low-confidence project-authored baselines with `is_direct_observation=false` and `is_statistically_modelled=false`.
+
+> Older sections below are historical and do not override this section.
+
 ## Current merged baseline + Cuba/Suriname candidate (6 October 2026)
 
 - Verified merged `buuk` HEAD for this batch: `53645505f7d5fcc24896342928e4ef009e3d738d` (#1258).

@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-antigua-and-barbuda-history-v1",
+  "source_id": "fifa-antigua-and-barbuda-member-context-2026",
+  "relative_path": "observations/normalized/structural/fifa_antigua_and_barbuda_history_v1.json",
+  "sha256": "85f13e756840a02fd57c239402689457f36f5dff9994ab1254b256dd727ae112",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

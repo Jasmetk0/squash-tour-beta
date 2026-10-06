@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-antigua-and-barbuda-history-v1",
+  "source_id": "itf-antigua-and-barbuda-profile",
+  "relative_path": "observations/normalized/atp_antigua_and_barbuda_history_v1.json",
+  "sha256": "f032f15f2705131c694a9c24cf120baad3a3af5822dc2675d3961067d30f6a22",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

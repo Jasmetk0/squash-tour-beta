@@ -18,37 +18,32 @@ separate inputs. Innate potential rarity must remain independent of nationality.
 This section is the authoritative current summary. Dated batch sections below are
 retained only as implementation history and do not override these numbers.
 
-- **Merged `buuk` baseline:** FIFA Earth **115 / 250** complete 1955–2026 histories
-  with **162 datasets / 1,759 normalized observations**; ATP Earth **115 / 250**
-  complete histories with **333 datasets / 735 normalized observations**.
-- **This clean Iraq/Jordan integration branch:** adds **Iraq (IRQ) and Jordan (JOR)**
-  to both worlds. If merged unchanged, both packages become **117 / 250**.
-  The resulting loader expectations are **FIFA 164 datasets / 1,761 observations**
-  and **ATP 337 datasets / 741 observations**.
+- **Merged `buuk` baseline:** FIFA Earth **117 / 250** complete 1955–2026 histories
+  with **164 datasets / 1,761 normalized observations**; ATP Earth **117 / 250**
+  complete histories with **337 datasets / 741 normalized observations**.
+- **Lebanon/Syria candidate branch:** adds **Lebanon (LBN)** and **Syria (SYR)** to
+  both worlds. If merged unchanged, both packages become **119 / 250**. Expected
+  loader totals become **FIFA 166 datasets / 1,767 observations** and
+  **ATP 341 datasets / 747 observations**.
+- All added country histories cover every year **1955–2026**, all six attributes,
+  and the explicit **1–10** scale with at most one decimal.
+- FIFA chronology and comparative checkpoints are time-gated. Lebanon uses LFA
+  foundation 1933, FIFA membership 1935, AFC membership 1964 and Big Count 2006.
+  Syria uses federation foundation 1936, FIFA affiliation 1937, AFC entry 1970
+  and Big Count 2006.
+- Coverage-first histories do not invent quantified conflict effects when no
+  reviewed observation supports the size of that effect. Syria's later curve is
+  therefore deliberately conservative pending later calibration.
+- Sparse ATP 1955–2025 histories for this batch are explicit low-confidence
+  **project-authored baselines**, not ITF measurements. Their provenance keeps
+  `is_direct_observation=false` and `is_statistically_modelled=false`; current
+  ITF association context and 2026 development eligibility are separate facts.
 - Coverage/provenance is measured through `load_earth_research_bundle()`, including
-  sharded country histories, source metadata, normalized observations, manifests
-  and calibration-model references. A PR state of “merged” on another base is not
-  treated as evidence that its data exist in `buuk`.
-- The six attributes remain project-authored ratings on the explicit **1–10 scale**
-  with at most one decimal for every year **1955–2026**. Missing facts are not
-  converted into zeroes or invented measurements.
-- Direct source facts, authored baselines, derived ratings and uncertainty must stay
-  distinguishable. In particular, the sparse ATP Tunisia/Libya/Iraq/Jordan historical
-  baselines are explicit low-confidence **project assumptions**. ITF member-association
-  and development-eligibility sources are contextual evidence; they are not the authors
-  of our numeric historical rating curves merely because those ratings reference an
-  observation ID.
-- `is_direct_observation` and `is_statistically_modelled` describe different
-  provenance properties. An authored assumption is not automatically a statistical
-  model.
-- Innate player-potential rarity remains independent of nationality; Earth environment
-  may shape development context but must not change innate rarity by country.
-- Neither `config/world_packages/fifa_earth/` nor
-  `config/world_packages/atp_earth/` is installed yet. Official publication still
-  requires **250 / 250** in each world.
-- Ordinary World Library historical-profile editing/persistence and complete use of
-  historical environment during initial-player development remain unfinished
-  integration boundaries.
+  all country shards, source metadata, normalized observations, manifests and
+  calibration references.
+- Innate player-potential rarity remains independent of nationality.
+- Installed FIFA/ATP Earth packages, ordinary historical-profile editing/persistence,
+  and complete initial-player historical-environment integration remain unfinished.
 ## Implemented foundation
 
 - Explicit `country_ratings_1_10.v2`; unversioned legacy data retains its 1–5

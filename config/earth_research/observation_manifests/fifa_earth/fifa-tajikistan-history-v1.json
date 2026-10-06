@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-tajikistan-history-v1",
+  "source_id": "fifa-tajikistan-member-context-2026",
+  "relative_path": "observations/normalized/structural/fifa_tajikistan_history_v1.json",
+  "sha256": "320ea7b68eaf99010fa677be7ea00ed895a4a8e8601b5555e57fddeb9232a784",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

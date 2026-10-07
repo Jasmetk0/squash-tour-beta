@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-caf-cod-project-assumptions-v1",
+  "source_id": "caf-cod-atp-project-assumptions",
+  "relative_path": "observations/normalized/atp_caf_cod_project_assumptions_v1.json",
+  "sha256": "09a5a3d646a2524e153b0f5afa307decf67e32c980225f8fb793cea647e52216",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-caf-cod-batch-2026-10-07"
+}

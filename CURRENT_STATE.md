@@ -6037,3 +6037,10 @@ bands should shape 0..200 potential. No threshold is inferred from current OVR v
 - Authored history coverage: FIFA Earth 199/250; ATP Earth 199/250.
 - Timor-Leste preserves Portuguese, Indonesian/UN-transition and independent identity periods; FFTL 2002, international debut 2003 and FIFA 2005 are dated.
 - Somalia milestones use CAF's federation creation 1951, FIFA affiliation 1962 and CAF affiliation 1968; current ITF evidence enters only in 2026.
+
+### Earth CAF/COD batch — 2026-10-07
+- Added complete 1955–2026 FIFA Earth and ATP Earth histories for Central African Republic (CAF) and DR Congo (COD).
+- Authored history coverage: FIFA Earth 201/250; ATP Earth 201/250.
+- Central African Republic uses CAF profile milestones 1961/1964/1965.
+- DR Congo preserves Belgian Congo -> Congo-Léopoldville -> Zaire -> DR Congo identities and explicitly retains CAF profile's 1997-created versus 1964-affiliation chronology tension for later review.
+- Current ITF 2026 association evidence is not backdated.

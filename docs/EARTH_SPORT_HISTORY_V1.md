@@ -494,3 +494,6 @@ GUM and CUW now have complete 1955–2026 histories in both FIFA Earth and ATP E
 
 ### Timor-Leste + Somalia reviewed batch (2026-10-07)
 TLS and SOM now have complete 1955–2026 histories in both FIFA Earth and ATP Earth. Timor-Leste's colonial/transition/independent identities and 2002–2005 football milestones are explicit; Somalia's 1951/1962/1968 federation milestones are dated. Current ITF evidence is not backdated and numeric ratings remain low-confidence project estimates.
+
+### Central African Republic + DR Congo reviewed batch (2026-10-07)
+CAF and COD now have complete 1955–2026 histories in both FIFA Earth and ATP Earth. CAF federation milestones are dated from the current CAF profile. COD preserves historical state identities and the official CAF profile's internal chronology tension (created 1997, affiliated FIFA/CAF 1964) rather than silently reconciling it. Current ITF 2026 association evidence enters only in 2026.

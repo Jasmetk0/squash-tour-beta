@@ -518,6 +518,11 @@ def test_receipt_contains_auditable_application_evidence():
         )
         evidence = json.loads(receipt.payload_json)
     assert evidence["document"]["package_id"] == "p"
+    assert evidence["document"]["entity_count"] == 1
+    assert evidence["document"]["source_fingerprint"] == package.source_fingerprint
+    assert "entities" not in evidence["document"]
+    assert "document" not in evidence["preview"]
+    assert evidence["preview"]["preview_fingerprint"]
     assert evidence["selected_entities"] == ["p/a"]
     assert evidence["source_to_run_local_ids"] == {"p/a": 1}
     assert evidence["request_fingerprint"] == receipt.request_fingerprint

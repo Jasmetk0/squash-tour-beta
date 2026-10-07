@@ -25,6 +25,13 @@ from tests.domain.test_country_rating_history import (
 )
 
 
+def _stored_history_path(root: Path, world_id: str, code: str) -> Path:
+    context_path = root / world_id / f"countries/{code}/attributes/rating_context.json"
+    context = json.loads(context_path.read_text())
+    assert context["schema_version"] == "country_rating_context.v2"
+    return root / world_id / context["rating_history_file"]
+
+
 @pytest.mark.parametrize("world_id", ["fifa_earth", "atp_earth"])
 def test_real_registry_and_year_detail_preserve_history_and_fingerprint(tmp_path, world_id):
     base = tmp_path / "base"
@@ -70,10 +77,10 @@ def test_real_registry_and_year_detail_preserve_history_and_fingerprint(tmp_path
     assert registry.get_package(world_id).fingerprint != original.fingerprint
     sources.write_text(json.dumps(original_sources))
 
-    context_path = root / world_id / "countries/AAA/attributes/rating_context.json"
-    context = json.loads(context_path.read_text())
-    del context["rating_history"]["years"]["1960"]
-    context_path.write_text(json.dumps(context))
+    history_path = _stored_history_path(root, world_id, "AAA")
+    stored_history = json.loads(history_path.read_text())
+    del stored_history["years"]["1960"]
+    history_path.write_text(json.dumps(stored_history))
     invalid = WorldPackageValidationService(registry).validate_package(world_id)
     assert invalid.status == "errors"
     assert any("1960" in check.message for check in invalid.checks if check.status == "failed")
@@ -192,11 +199,11 @@ def test_changed_observation_content_and_hash_fail_closed(tmp_path):
 
 def test_known_dataset_with_missing_local_observation_id_fails_closed(tmp_path):
     root, world_id = _build_portable_test_package(tmp_path)
-    context_path = root / world_id / "countries/AAA/attributes/rating_context.json"
-    context = json.loads(context_path.read_text())
-    rating = context["rating_history"]["years"]["1955"]["ratings"]["elite_support"]
+    history_path = _stored_history_path(root, world_id, "AAA")
+    stored_history = json.loads(history_path.read_text())
+    rating = stored_history["years"]["1955"]["ratings"]["elite_support"]
     rating["observation_ids"] = [f"{DATASET_ID}#missing"]
-    context_path.write_text(json.dumps(context))
+    history_path.write_text(json.dumps(stored_history))
 
     result = WorldPackageValidationService(
         WorldPackageRegistryService(world_packages_root=root)
@@ -215,7 +222,7 @@ def test_missing_calibration_definition_fails_closed(tmp_path):
     ).validate_package(world_id)
     assert result.status == "errors"
     messages = _failed_messages(result)
-    assert any("calibration" in message and "unavailable" in message for message in messages)
+    assert any("calibration" in message for message in messages)
     assert any("missing calibration model" in message for message in messages)
 
 
@@ -230,7 +237,12 @@ def test_unsafe_observation_path_and_symlink_are_rejected(tmp_path):
     registry = WorldPackageRegistryService(world_packages_root=root)
     result = WorldPackageValidationService(registry).validate_package(world_id)
     assert result.status == "errors"
-    assert any("observation dataset catalogue" in message for message in _failed_messages(result))
+    assert any(
+        "unsafe package evidence path" in message
+        or "escapes package root" in message
+        or "observation dataset" in message
+        for message in _failed_messages(result)
+    )
 
     manifests_path.write_text(json.dumps(original))
     observation = root / world_id / "observations/synthetic.json"

@@ -94,7 +94,10 @@ def _load_calibration_models(root: Path, metadata: dict, errors: list[str]) -> d
                 model = load_json_object(path)
                 model_id = _calibration_model_id(model)
                 if model_id is None:
-                    raise ValueError(f"calibration file {path.name!r} has no model ID")
+                    # The calibration directory also contains review/audit policy
+                    # documents. They participate in the package fingerprint but
+                    # are not calibration-model definitions.
+                    continue
                 if model_id in models:
                     raise ValueError(f"duplicate calibration model {model_id!r}")
                 world_id = model.get("world_id")

@@ -1,5 +1,35 @@
 # Current implementation and next action
 
+## Andorra / Montenegro research batch — 7 October 2026
+
+Baseline: `buuk` at `f91b10f9eed9bd45bb2c2ba144510ba1e11eb79d`.
+This candidate adds AND and MNE to FIFA Earth and ATP Earth: four complete
+1955–2026 histories, 1,728 authored annual attribute ratings.
+
+- FIFA: 185 -> 187 authored histories; 238 datasets / 1,916 records.
+- ATP: 185 -> 187 authored histories; 415 datasets / 890 records.
+- All new values are explicitly low-confidence project estimates, not measured
+  FIFA/ATP ratings. Structural sources, project assumptions and numeric models
+  remain separate; early assumptions cite the project rather than a federation.
+- Football evidence gates federation/affiliation, competition and training/stadium
+  milestones to their actual years. Montenegro retains territorial continuity
+  without inheriting Yugoslav or Serbian national totals.
+- Tennis uses documented Andorran men's competition from 2000, Montenegro's
+  regional membership from 2006, 2021 grant eligibility and April 2026 junior
+  development opportunities. Eligibility is not receipt; it causes no rating jump.
+- Tests exercise all 72 years, six dimensions, source/observation integrity,
+  dated-evidence gating, country identity and the non-measurement of early priors.
+
+**Completion boundary:** 187 is the authored-history count, not 187 fully matched
+Earth catalogue countries. The audited baseline still contains six FIFA and eleven
+ATP sport-code aliases requiring a separate identity correction (e.g. ANG/AGO,
+CRO/HRV). This candidate's AND/MNE codes already match the Earth catalogue.
+The complete 250-country package build, final realism calibration and pending
+integration repairs are not claimed completed by this data PR.
+
+> Older status sections below are historical; the candidate summary above takes precedence.
+
+
 ## Current merged baseline + Saint Vincent and the Grenadines/Saint Kitts and Nevis candidate (6 October 2026)
 
 - Verified merged `buuk` HEAD for this batch: `5fee3dda0dab24f810d54930bbfb338185bed8c3` (#1262).

@@ -13,30 +13,33 @@ The six attributes keep their existing meanings on an explicit 1–10 scale with
 at most one decimal. Court Count is outside pre-alpha. Population/geography are
 separate inputs. Innate potential rarity must remain independent of nationality.
 
-## Current implementation status — 6 October 2026
+## Andorra / Montenegro research batch — 7 October 2026
 
-This section is the authoritative current summary. Dated batch sections below are
-retained only as implementation history and do not override these numbers.
+Baseline: `buuk` at `f91b10f9eed9bd45bb2c2ba144510ba1e11eb79d`.
+This candidate adds AND and MNE to FIFA Earth and ATP Earth: four complete
+1955–2026 histories, 1,728 authored annual attribute ratings.
 
-- **Merged `buuk` baseline:** FIFA Earth **125 / 250** complete 1955–2026 histories
-  with **175 datasets / 1,783 normalized observations**; ATP Earth **125 / 250**
-  complete histories with **350 datasets / 762 normalized observations**.
-- **Bangladesh/Nepal candidate branch:** adds **Bangladesh (BGD)** and **Nepal (NPL)**
-  to both worlds. If merged unchanged, both packages become **127 / 250**. Expected
-  loader totals become **FIFA 177 datasets / 1,787 observations** and
-  **ATP 352 datasets / 766 observations**.
-- Bangladesh uses Big Count 2006 plus FIFA Professional 2023 evidence with
-  **368 professional players / 11 clubs**.
-- Nepal's Professional 2023 player/club fields are null; those missing values stay
-  missing and are not interpreted as zeros.
-- Sparse ATP 1955–2025 histories remain low-confidence **project-authored baselines**,
-  not ITF measurements or statistical models.
-- All four histories cover every year **1955–2026**, all six attributes, with
-  explicit **1–10** values at max one decimal.
-- Coverage/provenance is validated through `load_earth_research_bundle()`.
-- Innate player-potential rarity remains independent of nationality.
-- Installed FIFA/ATP Earth packages, ordinary historical-profile editing/persistence,
-  and complete initial-player historical-environment integration remain unfinished.
+- FIFA: 185 -> 187 authored histories; 238 datasets / 1,916 records.
+- ATP: 185 -> 187 authored histories; 415 datasets / 890 records.
+- All new values are explicitly low-confidence project estimates, not measured
+  FIFA/ATP ratings. Structural sources, project assumptions and numeric models
+  remain separate; early assumptions cite the project rather than a federation.
+- Football evidence gates federation/affiliation, competition and training/stadium
+  milestones to their actual years. Montenegro retains territorial continuity
+  without inheriting Yugoslav or Serbian national totals.
+- Tennis uses documented Andorran men's competition from 2000, Montenegro's
+  regional membership from 2006, 2021 grant eligibility and April 2026 junior
+  development opportunities. Eligibility is not receipt; it causes no rating jump.
+- Tests exercise all 72 years, six dimensions, source/observation integrity,
+  dated-evidence gating, country identity and the non-measurement of early priors.
+
+**Completion boundary:** 187 is the authored-history count, not 187 fully matched
+Earth catalogue countries. The audited baseline still contains six FIFA and eleven
+ATP sport-code aliases requiring a separate identity correction (e.g. ANG/AGO,
+CRO/HRV). This candidate's AND/MNE codes already match the Earth catalogue.
+The complete 250-country package build, final realism calibration and pending
+integration repairs are not claimed completed by this data PR.
+
 ## Implemented foundation
 
 - Explicit `country_ratings_1_10.v2`; unversioned legacy data retains its 1–5

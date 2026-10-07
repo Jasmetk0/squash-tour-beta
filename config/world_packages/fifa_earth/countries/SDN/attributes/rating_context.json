@@ -1,0 +1,6 @@
+{
+  "schema_version": "country_rating_context.v2",
+  "rating_scale": "country_ratings_1_10.v2",
+  "rating_history_file": "generation/country_histories/SDN.json",
+  "rating_effective_year": null
+}

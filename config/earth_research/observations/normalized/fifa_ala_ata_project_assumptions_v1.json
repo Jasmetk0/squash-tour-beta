@@ -6,7 +6,7 @@
   "source_document_sha256": null,
   "input_artifact_sha256": null,
   "generated_by": "reviewed-ala-ata-batch-2026-10-07",
-  "scope": "Åland Islands and Antarctica; explicit project priors only, with no national-federation membership inferred.",
+  "scope": "Aland Islands and Antarctica; explicit project priors only, with no national-federation membership inferred.",
   "limitations": "Numeric six-attribute ratings are project-authored low-confidence estimates; absence of a separate federation is not converted into measured zero activity.",
   "observations": [
     {
@@ -14,7 +14,7 @@
       "source_id": "ala-ata-fifa-project-assumptions",
       "source_entity": "Project-authored calibration assumptions",
       "earth_country_code": "ALA",
-      "historical_entity": "Åland Islands (autonomous region of Finland)",
+      "historical_entity": "Aland Islands (autonomous region of Finland)",
       "observation_year": null,
       "period_start_year": null,
       "period_end_year": null,
@@ -23,7 +23,7 @@
       "age_scope": null,
       "competition_scope": null,
       "numeric_value": null,
-      "text_value": "Åland Islands FIFA-Earth values are explicit low-confidence project priors; no separate FIFA/ITF membership is inferred.",
+      "text_value": "Aland Islands FIFA-Earth values are explicit low-confidence project priors; no separate FIFA/ITF membership is inferred.",
       "unit": "event",
       "collection_method": "modelled_source_estimate",
       "coverage_scope": "territory",

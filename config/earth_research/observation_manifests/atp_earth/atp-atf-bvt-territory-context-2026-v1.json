@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-atf-bvt-territory-context-2026-v1",
+  "source_id": "atf-bvt-territory-context-2026",
+  "relative_path": "observations/normalized/atp_atf_bvt_territory_context_2026_v1.json",
+  "sha256": "c2e3319f4caa8fb4b2fc3bbfdc42bfed6fd4e8b94ec40f2f92a63141057b8d92",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-atf-bvt-batch-2026-10-07"
+}

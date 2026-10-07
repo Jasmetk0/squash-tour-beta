@@ -1,9 +1,9 @@
 {
   "schema_version": "earth_source_observations_manifest.v1",
   "dataset_id": "atp-iot-creation-1965-v1",
-  "source_id": "British Indian Ocean Territory Order 1965",
+  "source_id": "iot-creation-1965",
   "relative_path": "observations/normalized/atp_iot_creation_1965_v1.json",
-  "sha256": "786b18530a7a9d65b96cd2c44362284d3b1ab79849798392b2eee802d2806812",
+  "sha256": "e27d881b55a6a6ee8b6c9304384e7c0d8a076a9c4c7025c8fd08811838af9714",
   "record_count": 1,
   "source_document_sha256": null,
   "input_artifact_sha256": null,

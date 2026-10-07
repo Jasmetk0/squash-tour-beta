@@ -1,7 +1,7 @@
 {
   "schema_version": "earth_source_observations.v2",
   "dataset_id": "atp-iot-seychelles-islands-return-1976-v1",
-  "source_id": "The National Archives — BIOT migrated archives guidance",
+  "source_id": "iot-seychelles-islands-return-1976",
   "source_url": "https://cdn.nationalarchives.gov.uk/documents/migrated-archives-guidance.pdf",
   "source_document_sha256": null,
   "input_artifact_sha256": null,
@@ -11,7 +11,7 @@
   "observations": [
     {
       "observation_id": "atp-iot-seychelles-islands-return-1976-v1#iot-seychelles-islands-return-1976",
-      "source_id": "The National Archives — BIOT migrated archives guidance",
+      "source_id": "iot-seychelles-islands-return-1976",
       "source_entity": "The National Archives — BIOT migrated archives guidance",
       "earth_country_code": "IOT",
       "historical_entity": "British Indian Ocean Territory (Chagos Archipelago)",

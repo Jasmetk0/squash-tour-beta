@@ -1,9 +1,9 @@
 {
   "schema_version": "earth_source_observations_manifest.v1",
   "dataset_id": "fifa-flk-overseas-territory-2002-v1",
-  "source_id": "British Overseas Territories Act 2002",
+  "source_id": "flk-overseas-territory-2002",
   "relative_path": "observations/normalized/fifa_flk_overseas_territory_2002_v1.json",
-  "sha256": "d63f3bb6736bcdca488f6fcee79875fedb71b37fb9c5a5206785f5e14ec1d157",
+  "sha256": "7b95e586c930b4c081036589332f4eea4668fb87ce5fc0bb459da7ea2c9ca3a4",
   "record_count": 1,
   "source_document_sha256": null,
   "input_artifact_sha256": null,

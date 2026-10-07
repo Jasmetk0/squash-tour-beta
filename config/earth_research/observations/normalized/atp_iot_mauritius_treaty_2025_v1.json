@@ -1,7 +1,7 @@
 {
   "schema_version": "earth_source_observations.v2",
   "dataset_id": "atp-iot-mauritius-treaty-2025-v1",
-  "source_id": "UK/Mauritius Chagos Agreement 2025",
+  "source_id": "iot-mauritius-treaty-2025",
   "source_url": "https://www.gov.uk/government/publications/ukmauritius-agreement-concerning-the-chagos-archipelago-including-diego-garcia-cs-mauritius-no12025",
   "source_document_sha256": null,
   "input_artifact_sha256": null,
@@ -11,7 +11,7 @@
   "observations": [
     {
       "observation_id": "atp-iot-mauritius-treaty-2025-v1#iot-mauritius-treaty-2025",
-      "source_id": "UK/Mauritius Chagos Agreement 2025",
+      "source_id": "iot-mauritius-treaty-2025",
       "source_entity": "UK/Mauritius Chagos Agreement 2025",
       "earth_country_code": "IOT",
       "historical_entity": "British Indian Ocean Territory (Chagos Archipelago)",

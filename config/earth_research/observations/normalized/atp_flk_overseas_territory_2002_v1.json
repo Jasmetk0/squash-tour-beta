@@ -1,7 +1,7 @@
 {
   "schema_version": "earth_source_observations.v2",
   "dataset_id": "atp-flk-overseas-territory-2002-v1",
-  "source_id": "British Overseas Territories Act 2002",
+  "source_id": "flk-overseas-territory-2002",
   "source_url": "https://www.legislation.gov.uk/ukpga/2002/8/contents",
   "source_document_sha256": null,
   "input_artifact_sha256": null,
@@ -11,7 +11,7 @@
   "observations": [
     {
       "observation_id": "atp-flk-overseas-territory-2002-v1#flk-overseas-territory-2002",
-      "source_id": "British Overseas Territories Act 2002",
+      "source_id": "flk-overseas-territory-2002",
       "source_entity": "British Overseas Territories Act 2002",
       "earth_country_code": "FLK",
       "historical_entity": "Falkland Islands (British Overseas Territory)",

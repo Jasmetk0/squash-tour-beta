@@ -6131,3 +6131,10 @@ bands should shape 0..200 potential. No threshold is inferred from current OVR v
 - UMI remains at or near the floor; current Census context notes that the aggregate generally does not include year-round population.
 - Current demographic context enters only in 2026 and is treated as contextual, not direct sports evidence.
 - No football or tennis federation membership, organised competition, rankings, titles or athlete outcomes are inferred.
+
+### Earth GGY/JEY batch — 2026-10-07
+- Added complete 1955-2026 FIFA Earth and ATP Earth histories for Guernsey (GGY) and Jersey (JEY).
+- Authored-history coverage becomes 226/250 in both packages after PCN/UMI.
+- Ratings are explicit low-confidence local project estimates with gradual 1955/1980/2000/2026 anchors.
+- The batch deliberately does not inherit Great Britain or UK-wide sports evidence into either island identity.
+- No football or tennis federation membership, organised competition, rankings, titles or athlete outcomes are inferred.

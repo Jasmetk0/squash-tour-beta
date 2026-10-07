@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-ggy-jey-project-assumptions-v1",
+  "source_id": "ggy-jey-atp-project-assumptions",
+  "relative_path": "observations/normalized/atp_ggy_jey_project_assumptions_v1.json",
+  "sha256": "c77948615a536113648ec0c4043a59417bbf881b8ac2b6fd014e53460c9c563a",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-ggy-jey-batch-2026-10-07"
+}

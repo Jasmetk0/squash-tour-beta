@@ -70,14 +70,19 @@ class WorldPackageRegistryService:
   source_dir=path/'generation/sources'
   if source_dir.is_dir():
    payload['country_rating_sources']={
-    p.stem:canonical_json_sha256(load_json_object(p)) for p in sorted(source_dir.glob('*.json'))
+    p.stem:canonical_json_sha256(
+     load_json_object(safe_package_file(path,p.relative_to(path).as_posix()))
+    ) for p in sorted(source_dir.glob('*.json'))
    }
   else:
    rating_sources=path/'generation/country_rating_sources.json'
    if rating_sources.is_file(): payload['country_rating_sources']=self._read_json(rating_sources)
   manifest_dir=path/'generation/observation_manifests'
   if manifest_dir.is_dir():
-   manifests={p.stem:load_json_object(p) for p in sorted(manifest_dir.glob('*.json'))}
+   manifests={
+    p.stem:load_json_object(safe_package_file(path,p.relative_to(path).as_posix()))
+    for p in sorted(manifest_dir.glob('*.json'))
+   }
   else:
    rating_observations=path/'generation/country_rating_observation_datasets.json'
    manifests=self._read_json(rating_observations) if rating_observations.is_file() else {}
@@ -92,7 +97,9 @@ class WorldPackageRegistryService:
   calibration_dir=path/'generation/calibration'
   if calibration_dir.is_dir():
    payload['country_rating_calibration_files']={
-    p.name:canonical_json_sha256(load_json_object(p)) for p in sorted(calibration_dir.glob('*.json'))
+    p.name:canonical_json_sha256(
+     load_json_object(safe_package_file(path,p.relative_to(path).as_posix()))
+    ) for p in sorted(calibration_dir.glob('*.json'))
    }
   else:
    calibration_catalog=path/'generation/country_rating_calibration_models.json'

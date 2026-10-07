@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-paraguay-history-v1",
+  "source_id": "itf-paraguay-profile",
+  "relative_path": "observations/normalized/atp_paraguay_history_v1.json",
+  "sha256": "1ddccdd712b783fc4c215c168c9b2a98d28947a336c2c8cb5a8262557eb67830",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

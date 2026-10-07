@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-honduras-history-v1",
+  "source_id": "itf-honduras-profile",
+  "relative_path": "observations/normalized/atp_honduras_history_v1.json",
+  "sha256": "872b72969af06d42acb0039b0066d65284fa86d340d1dc26cbcb51f5eb4d92d6",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

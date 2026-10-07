@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-fct-affiliation-competition-2026-v1",
+  "source_id": "fct-affiliation-competition-2026",
+  "relative_path": "observations/normalized/atp-fct-affiliation-competition-2026-v1.json",
+  "sha256": "efe46ad808333ee3dbbc68db91c5e8b6e81eabddb4b95b1a1ba21cd39d09a4b6",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

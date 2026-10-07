@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-nru-tuv-associations-2026-v1",
+  "source_id": "nru-tuv-itf-associations-2026",
+  "relative_path": "observations/normalized/atp_nru_tuv_associations_2026_v1.json",
+  "sha256": "9fc2afb2744dd0be333ed79d68e162693c7f03ad02fd71fd8e8647b525a69171",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-nru-tuv-batch-2026-10-07"
+}

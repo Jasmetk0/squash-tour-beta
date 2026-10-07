@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-utf-current-structure-2025-v1",
+  "source_id": "utf-regulations-2025",
+  "relative_path": "observations/normalized/atp_utf_current_structure_2025_v1.json",
+  "sha256": "d06ded7b668364cdb44b4c2a3589634ed60ed191833c874d856b03c60954c9c1",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

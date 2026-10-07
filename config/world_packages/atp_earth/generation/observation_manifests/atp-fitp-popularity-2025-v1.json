@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-fitp-popularity-2025-v1",
+  "source_id": "fitp-boom-2025",
+  "relative_path": "observations/normalized/atp-fitp-popularity-2025-v1.json",
+  "sha256": "833cccccc0f302f5faa3486a7d479827f09aacdc4851bb01635be47811128640",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

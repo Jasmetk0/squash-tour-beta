@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-zambia-history-v1",
+  "source_id": "zambia-parliament-sports-associations-2007",
+  "relative_path": "observations/normalized/atp_zambia_history_v1.json",
+  "sha256": "04908186e783d3f5011ae74093464ab05dce2ac5475b00835fb010eb7257f9a1",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

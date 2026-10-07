@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-dtf-members-2024-v1",
+  "source_id": "dtf-members-2024",
+  "relative_path": "observations/normalized/atp-dtf-members-2024-v1.json",
+  "sha256": "1f703ecf0f240f7d74ea695d0509a1ddbd5024e15dccf4cef45e5c483be12831",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-malta-history-v1",
+  "source_id": "itf-malta-profile",
+  "relative_path": "observations/normalized/atp_malta_history_v1.json",
+  "sha256": "63a6a46f61c52b9e8406685965771002d059d46b5f8f10b596cc8b08bcc4ec3a",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-gap5-project-assumptions-v1",
+  "source_id": "atp-gap5-project-assumptions",
+  "relative_path": "observations/normalized/atp_gap5_project_assumptions_v1.json",
+  "sha256": "70ce52e5c5b6bbd383c98bfd76b264702348a651ceedbf1c0463252551b27afc",
+  "record_count": 5,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-atp-gap5-2026-10-07"
+}

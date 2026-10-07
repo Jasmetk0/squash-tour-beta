@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-mozambique-development-2026-v1",
+  "source_id": "itf-mozambique-development-eligibility-2026",
+  "relative_path": "observations/normalized/atp_mozambique_development_2026_v1.json",
+  "sha256": "84e1adc9d2197d7807ed0489f98a13d611f50a34a3e59c145070d2dda7479f3a",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

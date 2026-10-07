@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-svtf-profile-v1",
+  "source_id": "svtf-about",
+  "relative_path": "observations/normalized/atp-svtf-profile-v1.json",
+  "sha256": "e453d6a53dd45ba4614ed8a2884f52705073fbd4c4bc2ec296304f951ccdfee7",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

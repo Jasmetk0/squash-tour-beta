@@ -1,0 +1,46 @@
+{
+  "schema_version": "earth_source_observations.v2",
+  "dataset_id": "fifa-structural-ofc-fiji-referees-v1",
+  "source_id": "ofc-fiji-referees-history",
+  "source_url": "https://www.oceaniafootball.com/archives-12245/",
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-04",
+  "scope": "Official OFC historical observation of organised refereeing in Fiji.",
+  "limitations": "Refereeing organisation is evidence of technical football structure, not a direct league-quality score.",
+  "observations": [
+    {
+      "observation_id": "fifa-structural-ofc-fiji-referees-v1#fji-referees-association-1954",
+      "source_id": "ofc-fiji-referees-history",
+      "source_entity": "Fiji refereeing structure",
+      "earth_country_code": "FJI",
+      "historical_entity": "Fiji",
+      "observation_year": 1954,
+      "period_start_year": null,
+      "period_end_year": null,
+      "measurement_type": "football_structural_event",
+      "sex_scope": "not_applicable",
+      "age_scope": null,
+      "competition_scope": "football_system_structure",
+      "numeric_value": null,
+      "text_value": "A dedicated referees association was established in Fiji in 1954.",
+      "unit": "event",
+      "collection_method": "official_narrative",
+      "coverage_scope": "association",
+      "comparability_group": "technical_organisation_milestone",
+      "cross_country_comparable": false,
+      "is_direct_observation": true,
+      "is_statistically_modelled": false,
+      "territory_mapping_method": "explicit_reviewed_event_to_earth",
+      "territory_weight": null,
+      "source_page": null,
+      "source_locator": null,
+      "definition_notes": "Reviewed structural football history; the event is context, not a direct 1–10 rating.",
+      "quality_flags": [
+        "pre_game_start_history",
+        "supports_competition_quality",
+        "supports_elite_support"
+      ]
+    }
+  ]
+}

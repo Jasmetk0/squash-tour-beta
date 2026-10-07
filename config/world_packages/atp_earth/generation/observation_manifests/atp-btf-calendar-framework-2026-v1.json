@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-btf-calendar-framework-2026-v1",
+  "source_id": "btf-calendar-framework-2026",
+  "relative_path": "observations/normalized/atp-btf-calendar-framework-2026-v1.json",
+  "sha256": "84e39ac02aa3b649c43937b016ce1cfa9e5bd4b97e9f927e31a36ab3751f4ce2",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

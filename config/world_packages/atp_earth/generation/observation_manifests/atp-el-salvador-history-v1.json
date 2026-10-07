@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-el-salvador-history-v1",
+  "source_id": "itf-el-salvador-profile",
+  "relative_path": "observations/normalized/atp_el_salvador_history_v1.json",
+  "sha256": "5aa731d453c9addad9f5a39ce139f8e78501ed929387f793be453484e4dacf14",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

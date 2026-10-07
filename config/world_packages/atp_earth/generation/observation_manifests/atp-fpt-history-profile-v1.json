@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-fpt-history-profile-v1",
+  "source_id": "fpt-history-profile",
+  "relative_path": "observations/normalized/atp-fpt-history-profile-v1.json",
+  "sha256": "e06212e8cab7f05b71ee8959d8e55ef3dbfce41ee4a23b3c8fa18e1e1f5723fd",
+  "record_count": 5,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

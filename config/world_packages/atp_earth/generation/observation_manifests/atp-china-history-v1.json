@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-china-history-v1",
+  "source_id": "china-tennis-history",
+  "relative_path": "observations/normalized/atp-china-history-v1.json",
+  "sha256": "15f789ab038f7930e00474f430a66f28a18c2e1833675eb289619b1e4903fd51",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

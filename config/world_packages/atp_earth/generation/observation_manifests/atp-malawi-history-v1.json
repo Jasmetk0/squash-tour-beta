@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-malawi-history-v1",
+  "source_id": "itf-malawi-return-to-play-2020",
+  "relative_path": "observations/normalized/atp_malawi_history_v1.json",
+  "sha256": "7777217fd2a7128cdc28ccfe187eb183940d3562493f93e39357c0f7efda30a2",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

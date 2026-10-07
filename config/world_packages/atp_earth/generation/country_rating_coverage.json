@@ -1,0 +1,26 @@
+{
+  "world_id": "atp_earth",
+  "coverage_complete": true,
+  "required_years": {
+    "from": 1955,
+    "to": 2026
+  },
+  "required_country_count": 250,
+  "required_rating_count": 108000,
+  "authored_rating_count": 108000,
+  "missing_countries": [],
+  "unexpected_countries": [],
+  "missing_years": {},
+  "methods": {
+    "derived_estimate": 108000
+  },
+  "confidence": {
+    "low": 90867,
+    "medium": 17128,
+    "high": 5
+  },
+  "observation_dataset_count": 486,
+  "observation_record_count": 1033,
+  "data_cutoff": "2026-10-04",
+  "realism_validated": false
+}

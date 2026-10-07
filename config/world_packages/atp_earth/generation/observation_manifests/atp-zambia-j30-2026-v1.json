@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-zambia-j30-2026-v1",
+  "source_id": "itf-zambia-j30-2026",
+  "relative_path": "observations/normalized/atp_zambia_j30_2026_v1.json",
+  "sha256": "8e97f46ce73547cd0274f7d3d95b8e946164f9ce576347e4f636f1cb235edad2",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

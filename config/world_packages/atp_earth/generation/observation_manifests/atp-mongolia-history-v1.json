@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-mongolia-history-v1",
+  "source_id": "itf-mongolia-profile",
+  "relative_path": "observations/normalized/atp_mongolia_history_v1.json",
+  "sha256": "523b5b63d1febc16bb00ae3c0cb68e89d717986018430da9c8e5de94612e71ac",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

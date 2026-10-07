@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-hkg-mac-tennis-structure-v1",
+  "source_id": "hkg-mac-itf-tennis-structure",
+  "relative_path": "observations/normalized/atp_hkg_mac_tennis_structure_v1.json",
+  "sha256": "3c0c0f36175e56019b88f45e301442c2a23dad108e14c07d888d6f5fd129f6ec",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-hkg-mac-batch-2026-10-07"
+}

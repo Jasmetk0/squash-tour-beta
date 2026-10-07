@@ -1,0 +1,46 @@
+{
+  "schema_version": "earth_source_observations.v2",
+  "dataset_id": "atp-sa-history-v1",
+  "source_id": "sa-tennis-history-secondary",
+  "source_url": "https://southafrica.co.za/tennis.html",
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05",
+  "scope": "South Africa broad tennis history.",
+  "limitations": "Secondary source used only for tradition context.",
+  "observations": [
+    {
+      "observation_id": "atp-sa-history-v1#zaf-first-championship-1891",
+      "source_id": "sa-tennis-history-secondary",
+      "source_entity": "South African tennis",
+      "earth_country_code": "ZAF",
+      "historical_entity": "South African historical tennis context",
+      "observation_year": 1891,
+      "period_start_year": null,
+      "period_end_year": null,
+      "measurement_type": "national_championship_history",
+      "sex_scope": "mixed",
+      "age_scope": null,
+      "competition_scope": null,
+      "numeric_value": null,
+      "text_value": "The first South African Championships were held in 1891.",
+      "unit": "event",
+      "collection_method": "unknown",
+      "coverage_scope": "national",
+      "comparability_group": null,
+      "cross_country_comparable": false,
+      "is_direct_observation": true,
+      "is_statistically_modelled": false,
+      "territory_mapping_method": "direct_earth_country",
+      "territory_weight": null,
+      "source_page": null,
+      "source_locator": null,
+      "definition_notes": "Pre-1955 broad tradition context from a secondary historical source. The source is explicitly flagged secondary; collection_method is 'unknown' because the schema has no secondary-narrative enum.",
+      "quality_flags": [
+        "pre_game_start_history",
+        "secondary_source",
+        "tradition_context_only"
+      ]
+    }
+  ]
+}

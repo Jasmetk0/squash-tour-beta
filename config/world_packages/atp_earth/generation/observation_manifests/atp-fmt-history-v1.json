@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-fmt-history-v1",
+  "source_id": "fmt-history",
+  "relative_path": "observations/normalized/atp-fmt-history-v1.json",
+  "sha256": "08b3f6e2cd0f2313c944e7d4b86d1b4e5d22f95106516ee75ebff5230421804d",
+  "record_count": 3,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

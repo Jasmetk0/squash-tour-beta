@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-ncl-current-2026-v1",
+  "source_id": "fft-ncl-current-2026",
+  "relative_path": "observations/normalized/atp_ncl_current_2026_v1.json",
+  "sha256": "89c2c2f719e8d5b5923950048e0e302d4852483a58c003a4af6b65c9dd2ab0ae",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

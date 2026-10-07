@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-usta-history-v1",
+  "source_id": "usta-about-history",
+  "relative_path": "observations/normalized/atp-usta-history-v1.json",
+  "sha256": "8bf9474eebf78d5b6ae2f218128bb3d7dbf50154d8030a7e44da92f3b041a2ee",
+  "record_count": 4,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-04"
+}

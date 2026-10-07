@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-flk-overseas-territory-2002-v1",
+  "source_id": "flk-overseas-territory-2002",
+  "relative_path": "observations/normalized/atp_flk_overseas_territory_2002_v1.json",
+  "sha256": "976a0847101978d3a5da2b944b0f2da2e00989277db5837bc01115744f14ab6a",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-flk-iot-batch-2026-10-07"
+}

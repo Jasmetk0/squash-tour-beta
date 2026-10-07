@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-bes-sxm-project-assumptions-v1",
+  "source_id": "bes-sxm-atp-project-assumptions",
+  "relative_path": "observations/normalized/atp_bes_sxm_project_assumptions_v1.json",
+  "sha256": "8ec2046e0efba4e69fa41a75d87fa958a49362ae9258184e0923cd268c8aec69",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-bes-sxm-batch-2026-10-07"
+}

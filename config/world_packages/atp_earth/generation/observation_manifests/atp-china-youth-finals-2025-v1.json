@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-china-youth-finals-2025-v1",
+  "source_id": "china-youth-2025",
+  "relative_path": "observations/normalized/atp-china-youth-finals-2025-v1.json",
+  "sha256": "4ab51b91a4b2131833dd8e0156ec48c26a3500204fe475f2019402ebbbc63f55",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-guf-reu-project-assumptions-v1",
+  "source_id": "guf-reu-fifa-project-assumptions",
+  "relative_path": "observations/normalized/fifa_guf_reu_project_assumptions_v1.json",
+  "sha256": "b43597709f6169139ce3fe2a84210e106ca35ecfeeaaa3b4fa9812be0a01df27",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-guf-reu-batch-2026-10-07"
+}

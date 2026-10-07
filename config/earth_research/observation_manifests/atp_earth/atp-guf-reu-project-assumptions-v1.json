@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-guf-reu-project-assumptions-v1",
+  "source_id": "guf-reu-atp-project-assumptions",
+  "relative_path": "observations/normalized/atp_guf_reu_project_assumptions_v1.json",
+  "sha256": "721ed644f959a0b9c833efb8b8f08ee7b2dc50ff90ff4abb0a87a385f5ccc8e5",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-guf-reu-batch-2026-10-07"
+}

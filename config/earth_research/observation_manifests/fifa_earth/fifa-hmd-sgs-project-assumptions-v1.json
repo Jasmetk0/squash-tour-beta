@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-hmd-sgs-project-assumptions-v1",
+  "source_id": "hmd-sgs-fifa-project-assumptions",
+  "relative_path": "observations/normalized/fifa_hmd_sgs_project_assumptions_v1.json",
+  "sha256": "6ae21edb8a5d4adf381f3ee8c664c4de9fe8634d40175b8b816a2a609057ea72",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-hmd-sgs-batch-2026-10-07"
+}

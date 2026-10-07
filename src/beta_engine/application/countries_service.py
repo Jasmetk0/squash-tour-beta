@@ -104,6 +104,27 @@ class CountriesConfigService:
     def import_countries_csv(self, *, csv_text: str, dry_run: bool) -> CountriesImportResult:
         errors: list[CountriesImportError] = []
         current = self._load()
+        if any(country.rating_history is not None for country in current.countries):
+            return CountriesImportResult(
+                ok=False,
+                dry_run=dry_run,
+                summary=CountriesImportSummary(
+                    total_records=0,
+                    new_records=0,
+                    updated_records=0,
+                    unchanged_records=0,
+                ),
+                errors=[
+                    CountriesImportError(
+                        row_number=None,
+                        field=None,
+                        message=(
+                            "flat CSV import is not supported for history-bearing World Packages; "
+                            "it cannot represent per-year ratings/provenance and must not replace them"
+                        ),
+                    )
+                ],
+            )
         current_by_code = {country.code: country for country in current.countries}
 
         try:

@@ -3,7 +3,7 @@
   "dataset_id": "fifa-sjm-norway-status-v1",
   "source_id": "sjm-norway-status",
   "relative_path": "observations/normalized/fifa_sjm_norway_status_v1.json",
-  "sha256": "e956da720c73daa847e311ebb10fc26374d99aa623a699fca13c2412bd013bc1",
+  "sha256": "160fa3b63a803e46e6318914936bd90178db4d3fe0d08be2c002a47de53e98b5",
   "record_count": 2,
   "source_document_sha256": null,
   "input_artifact_sha256": null,

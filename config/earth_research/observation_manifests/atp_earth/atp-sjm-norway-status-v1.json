@@ -3,7 +3,7 @@
   "dataset_id": "atp-sjm-norway-status-v1",
   "source_id": "sjm-norway-status",
   "relative_path": "observations/normalized/atp_sjm_norway_status_v1.json",
-  "sha256": "610182dfad607f905c25bd4c44107bf8f442c01f0ef50f2f268b593e41eb161f",
+  "sha256": "a4dad31aaed1d01cd5222d17c3677d617d0e7af06b619f132290e661e9614691",
   "record_count": 2,
   "source_document_sha256": null,
   "input_artifact_sha256": null,

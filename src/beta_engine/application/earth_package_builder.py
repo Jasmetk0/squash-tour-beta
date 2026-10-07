@@ -258,15 +258,11 @@ def _load_calibration_models(root: Path, research: EarthSportResearch) -> dict[s
                 f"calibration model {model_id!r} targets {world_id!r}, not {research.world_id!r}"
             )
         countries = payload.get("countries")
-        if countries is not None:
-            if not isinstance(countries, list) or any(not isinstance(code, str) for code in countries):
-                raise ValueError(f"calibration model {model_id!r} has invalid countries list")
-            missing_countries = required[model_id] - set(countries)
-            if missing_countries:
-                raise ValueError(
-                    f"calibration model {model_id!r} does not declare countries "
-                    f"{sorted(missing_countries)}"
-                )
+        if countries is not None and (
+            not isinstance(countries, list)
+            or any(not isinstance(code, str) for code in countries)
+        ):
+            raise ValueError(f"calibration model {model_id!r} has invalid countries list")
         models[model_id] = payload
 
     missing = sorted(set(required) - models.keys())

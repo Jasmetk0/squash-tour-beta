@@ -16,7 +16,13 @@ from beta_engine.domain.countries import CountriesConfig
 from beta_engine.domain.players.weekly_intake import WeeklyIntakePlanner
 from beta_engine.domain.players.talent_planner import AnnualTalentClassPlanner
 from beta_engine.infrastructure.world_package_storage import WorldPackageCountryStore
-from tests.domain.test_country_rating_history import country, history, research
+from tests.domain.test_country_rating_history import (
+    DATASET_ID,
+    OBSERVATION_ID,
+    country,
+    history,
+    research_bundle,
+)
 
 
 @pytest.mark.parametrize("world_id", ["fifa_earth", "atp_earth"])
@@ -29,9 +35,12 @@ def test_real_registry_and_year_detail_preserve_history_and_fingerprint(tmp_path
     template = WorldPackageCountryStore(real).load_country("CZE")
     template = template.model_copy(update={"code": "AAA"})
     WorldPackageCountryStore(base).replace_dataset(CountriesConfig(countries=[template]))
-    profile = research(history({year: (2.0 if year < 2000 else 8.0) for year in range(1955, 2027)}), world_id)
+    profile = research_bundle(
+        history({year: (2.0 if year < 2000 else 8.0) for year in range(1955, 2027)}),
+        world_id,
+    )
     root = tmp_path / "packages"
-    build_earth_package(base_package=base, research=profile, output=root / world_id)
+    build_earth_package(base_package=base, bundle=profile, output=root / world_id)
     registry = WorldPackageRegistryService(world_packages_root=root)
     service = WorldPackageCountriesService(registry)
     original = registry.get_package(world_id)
@@ -108,3 +117,144 @@ def test_annual_intake_reads_requested_year():
     old = planner.plan(year=1955, seed=42, countries=[changing, fixed])
     new = planner.plan(year=2026, seed=42, countries=[changing, fixed])
     assert old.allocations[0].planned_count / old.total_talents < new.allocations[0].planned_count / new.total_talents
+
+
+
+def _build_portable_test_package(tmp_path: Path, *, derived: bool = False) -> tuple[Path, str]:
+    world_id = "fifa_earth"
+    real = Path("config/world_packages/real_world")
+    base = tmp_path / "base"
+    base.mkdir()
+    shutil.copy(real / "world.json", base / "world.json")
+    shutil.copytree(real / "geography", base / "geography")
+    template = WorldPackageCountryStore(real).load_country("CZE").model_copy(update={"code": "AAA"})
+    WorldPackageCountryStore(base).replace_dataset(CountriesConfig(countries=[template]))
+
+    authored = history({year: 4.0 for year in range(1955, 2027)})
+    calibration_models = {}
+    if derived:
+        raw = authored.model_dump()
+        for entry in raw["years"].values():
+            for rating in entry["ratings"].values():
+                rating["method"] = "derived_estimate"
+                rating["calibration_model_id"] = "synthetic-calibration.v1"
+        authored = type(authored).model_validate(raw)
+        calibration_models = {
+            "synthetic-calibration.v1": {
+                "schema_version": "earth_country_calibration_model.v1",
+                "calibration_model_id": "synthetic-calibration.v1",
+                "world_id": world_id,
+                "countries": ["AAA"],
+                "description": "Synthetic calibration definition for provenance tests.",
+            }
+        }
+
+    root = tmp_path / "packages"
+    build_earth_package(
+        base_package=base,
+        bundle=research_bundle(authored, world_id, calibration_models),
+        output=root / world_id,
+    )
+    return root, world_id
+
+
+def _failed_messages(result) -> list[str]:
+    return [check.message for check in result.checks if check.status == "failed"]
+
+
+def test_missing_observation_file_fails_closed(tmp_path):
+    root, world_id = _build_portable_test_package(tmp_path)
+    observation = root / world_id / f"generation/observations/{DATASET_ID}.json"
+    observation.unlink()
+
+    result = WorldPackageValidationService(
+        WorldPackageRegistryService(world_packages_root=root)
+    ).validate_package(world_id)
+    assert result.status == "errors"
+    assert any("unavailable" in message for message in _failed_messages(result))
+
+
+def test_changed_observation_content_and_hash_fail_closed(tmp_path):
+    root, world_id = _build_portable_test_package(tmp_path)
+    observation = root / world_id / f"generation/observations/{DATASET_ID}.json"
+    payload = json.loads(observation.read_text())
+    payload["observations"][0]["text_value"] = "Tampered evidence"
+    observation.write_text(json.dumps(payload))
+
+    registry = WorldPackageRegistryService(world_packages_root=root)
+    result = WorldPackageValidationService(registry).validate_package(world_id)
+    assert result.status == "errors"
+    assert any("SHA-256 mismatch" in message for message in _failed_messages(result))
+
+
+def test_known_dataset_with_missing_local_observation_id_fails_closed(tmp_path):
+    root, world_id = _build_portable_test_package(tmp_path)
+    context_path = root / world_id / "countries/AAA/attributes/rating_context.json"
+    context = json.loads(context_path.read_text())
+    rating = context["rating_history"]["years"]["1955"]["ratings"]["elite_support"]
+    rating["observation_ids"] = [f"{DATASET_ID}#missing"]
+    context_path.write_text(json.dumps(context))
+
+    result = WorldPackageValidationService(
+        WorldPackageRegistryService(world_packages_root=root)
+    ).validate_package(world_id)
+    assert result.status == "errors"
+    assert any("missing normalized observation" in message for message in _failed_messages(result))
+
+
+def test_missing_calibration_definition_fails_closed(tmp_path):
+    root, world_id = _build_portable_test_package(tmp_path, derived=True)
+    model = root / world_id / "generation/calibration/synthetic-calibration.v1.json"
+    model.unlink()
+
+    result = WorldPackageValidationService(
+        WorldPackageRegistryService(world_packages_root=root)
+    ).validate_package(world_id)
+    assert result.status == "errors"
+    messages = _failed_messages(result)
+    assert any("calibration" in message and "unavailable" in message for message in messages)
+    assert any("missing calibration model" in message for message in messages)
+
+
+def test_unsafe_observation_path_and_symlink_are_rejected(tmp_path):
+    root, world_id = _build_portable_test_package(tmp_path)
+    manifests_path = root / world_id / "generation/country_rating_observation_datasets.json"
+    original = json.loads(manifests_path.read_text())
+
+    unsafe = json.loads(manifests_path.read_text())
+    unsafe[DATASET_ID]["relative_path"] = "../outside.json"
+    manifests_path.write_text(json.dumps(unsafe))
+    registry = WorldPackageRegistryService(world_packages_root=root)
+    result = WorldPackageValidationService(registry).validate_package(world_id)
+    assert result.status == "errors"
+    assert any("observation dataset catalogue" in message for message in _failed_messages(result))
+
+    manifests_path.write_text(json.dumps(original))
+    observation = root / world_id / f"generation/observations/{DATASET_ID}.json"
+    outside = tmp_path / "outside.json"
+    outside.write_bytes(observation.read_bytes())
+    observation.unlink()
+    observation.symlink_to(outside)
+    result = WorldPackageValidationService(registry).validate_package(world_id)
+    assert result.status == "errors"
+    assert any("symlink" in message for message in _failed_messages(result))
+
+
+def test_relocated_package_remains_self_contained(tmp_path):
+    root, world_id = _build_portable_test_package(tmp_path, derived=True)
+    moved_root = tmp_path / "relocated"
+    shutil.copytree(root / world_id, moved_root / world_id)
+    shutil.rmtree(root)
+
+    registry = WorldPackageRegistryService(world_packages_root=moved_root)
+    package = registry.get_package(world_id)
+    assert package is not None
+    assert package.type == "official"
+    assert package.editable is False
+    assert WorldPackageValidationService(registry).validate_package(world_id).status == "valid"
+    assert (moved_root / world_id / f"generation/observations/{DATASET_ID}.json").is_file()
+    assert (
+        moved_root
+        / world_id
+        / "generation/calibration/synthetic-calibration.v1.json"
+    ).is_file()

@@ -216,17 +216,11 @@ def country_history_errors(root: Path, metadata: dict, countries: list[Country])
             errors.append(f"{country.code}: unknown rating sources {sorted(unknown)}")
         for entry in history.years.values():
             for rating in entry.ratings.values():
-                if rating.calibration_model_id:
-                    model = calibration_models.get(rating.calibration_model_id)
-                    countries_declared = model.get("countries") if model else None
-                    if (
-                        isinstance(countries_declared, list)
-                        and country.code not in countries_declared
-                    ):
-                        errors.append(
-                            f"{country.code}: calibration model "
-                            f"{rating.calibration_model_id!r} does not declare this country"
-                        )
+                if rating.calibration_model_id and rating.calibration_model_id not in calibration_models:
+                    errors.append(
+                        f"{country.code}: missing calibration model "
+                        f"{rating.calibration_model_id!r}"
+                    )
                 for observation_id in rating.observation_ids:
                     try:
                         dataset_id = observation_dataset_id(observation_id)

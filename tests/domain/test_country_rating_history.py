@@ -14,12 +14,20 @@ from pydantic import ValidationError
 from beta_engine.domain.countries import Country, CountryTalentModel, CountriesConfig
 from beta_engine.domain.countries.rating_history import CountryRatingHistory, GAME_ATTRIBUTE_NAMES, RATING_SCALE_V2
 from beta_engine.infrastructure.world_package_storage import WorldPackageCountryStore
-from beta_engine.application.earth_package_builder import EarthSportResearch, audit_earth_research, build_earth_package
+from beta_engine.application.earth_package_builder import (
+    EarthResearchBundle,
+    EarthSportResearch,
+    audit_earth_research,
+    build_earth_package,
+)
+from beta_engine.application.earth_research_observations import (
+    EarthObservationDataset,
+    observation_dataset_sha256,
+)
 
 
 DATASET_ID = "synthetic-observations"
 OBSERVATION_ID = f"{DATASET_ID}#test"
-DATASET_SHA = "0" * 64
 
 
 def evidence(value, year):
@@ -55,7 +63,32 @@ def country(h=None, **extra):
     return Country.model_validate(fields)
 
 
+def observation_dataset():
+    return EarthObservationDataset.model_validate(dict(
+        dataset_id=DATASET_ID,
+        source_id="test",
+        source_url="https://example.com/test",
+        generated_by="tests",
+        scope="Synthetic package provenance test",
+        limitations="Not real country data",
+        observations=[dict(
+            observation_id=OBSERVATION_ID,
+            source_id="test",
+            source_entity="Synthetic source",
+            earth_country_code="AAA",
+            observation_year=2026,
+            measurement_type="synthetic_fact",
+            text_value="Synthetic evidence",
+            unit="event",
+            collection_method="official_narrative",
+            coverage_scope="national",
+            definition_notes="Synthetic observation used only by tests.",
+        )],
+    ))
+
+
 def research(h, world_id="fifa_earth"):
+    dataset = observation_dataset()
     return EarthSportResearch.model_validate(dict(
         world_id=world_id,
         data_cutoff="2026-10-03",
@@ -74,7 +107,7 @@ def research(h, world_id="fifa_earth"):
                 dataset_id=DATASET_ID,
                 source_id="test",
                 relative_path="observations/synthetic.json",
-                sha256=DATASET_SHA,
+                sha256=observation_dataset_sha256(dataset),
                 record_count=1,
                 generated_by="tests",
             )
@@ -82,13 +115,27 @@ def research(h, world_id="fifa_earth"):
     ))
 
 
+def research_bundle(h, world_id="fifa_earth", calibration_models=None):
+    dataset = observation_dataset()
+    profile = research(h, world_id)
+    return EarthResearchBundle(
+        research=profile,
+        datasets={DATASET_ID: dataset},
+        observations={OBSERVATION_ID: dataset.observations[0]},
+        calibration_models=calibration_models or {},
+    )
+
+
 class CountryRatingHistoryTests(unittest.TestCase):
     def test_builder_rejects_output_inside_source_without_writing(self):
         with tempfile.TemporaryDirectory() as directory:
             base = Path(directory)
             with self.assertRaisesRegex(ValueError, "outside the base"):
-                build_earth_package(base_package=base, research=research(history({1955: 3})),
-                                    output=base / "nested" / "earth")
+                build_earth_package(
+                    base_package=base,
+                    bundle=research_bundle(history({1955: 3})),
+                    output=base / "nested" / "earth",
+                )
             self.assertEqual(list(base.iterdir()), [])
 
     def test_legacy_serialization_and_math_are_unchanged(self):
@@ -231,20 +278,35 @@ class CountryRatingHistoryTests(unittest.TestCase):
                 WorldPackageCountryStore(base).replace_dataset(CountriesConfig(countries=[country()]))
                 (base / "world.json").write_text(json.dumps({"world_id": "real_world"}))
                 before = {str(p.relative_to(base)): p.read_bytes() for p in base.rglob("*") if p.is_file()}
-                report = build_earth_package(base_package=base, research=research(history({year: 7.4 for year in range(1955, 2027)}), world_id), output=output)
+                report = build_earth_package(
+                    base_package=base,
+                    bundle=research_bundle(
+                        history({year: 7.4 for year in range(1955, 2027)}),
+                        world_id,
+                    ),
+                    output=output,
+                )
                 self.assertTrue(report["coverage_complete"])
                 self.assertEqual(len(WorldPackageCountryStore(output).load_country("AAA").rating_history.years), 72)
                 self.assertTrue((output / "generation/country_rating_observation_datasets.json").is_file())
                 self.assertEqual(before, {str(p.relative_to(base)): p.read_bytes() for p in base.rglob("*") if p.is_file()})
                 with self.assertRaises(FileExistsError):
-                    build_earth_package(base_package=base, research=research(history({1955: 3}), world_id), output=output)
+                    build_earth_package(
+                        base_package=base,
+                        bundle=research_bundle(history({1955: 3}), world_id),
+                        output=output,
+                    )
 
     def test_incomplete_research_never_creates_output(self):
         with tempfile.TemporaryDirectory() as d:
             base, output = Path(d) / "base", Path(d) / "fifa_earth"
             WorldPackageCountryStore(base).replace_dataset(CountriesConfig(countries=[country()]))
             with self.assertRaises(ValueError):
-                build_earth_package(base_package=base, research=research(history({2000: 3})), output=output)
+                build_earth_package(
+                    base_package=base,
+                    bundle=research_bundle(history({2000: 3})),
+                    output=output,
+                )
             self.assertFalse(output.exists())
 
 

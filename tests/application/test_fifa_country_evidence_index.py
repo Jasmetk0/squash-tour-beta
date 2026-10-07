@@ -275,6 +275,7 @@ def test_territorial_context_is_partitioned_out_of_empirical_country_evidence() 
         "fifa-atf-bvt-territory-context-2026-v1#atf-no-permanent-population-2026",
         "fifa-bes-sxm-status-2010-v1#bes-public-bodies-2010",
         "fifa-bes-sxm-status-2010-v1#sxm-country-2010",
+        "fifa-caf-profile-v1#caf-caf-1965",
     }
     assert expected <= context_ids
     assert expected.isdisjoint(safe_ids)

@@ -6188,3 +6188,12 @@ bands should shape 0..200 potential. No threshold is inferred from current OVR v
 - Constitutional and territorial status is identity context only and never used as direct sports evidence.
 - Ratings are explicit low-confidence local project estimates and do not automatically inherit New Zealand-wide sports evidence.
 - No football or tennis federation membership, organised competition, rankings, titles or athlete outcomes are inferred.
+
+### Earth BES/SXM batch — 2026-10-07
+- Added complete 1955-2026 FIFA Earth and ATP Earth histories for Caribbean Netherlands (BES) and Sint Maarten (SXM).
+- Authored-history coverage becomes 240/250 in both packages after NIU/TKL.
+- Both histories explicitly preserve the 10 October 2010 dissolution of the Netherlands Antilles.
+- BES transitions to the three Caribbean Netherlands public bodies of the Netherlands; Sint Maarten transitions to an autonomous country within the Kingdom of the Netherlands.
+- Constitutional status is identity context only and never used as direct sports evidence.
+- Ratings are explicit low-confidence local project estimates and do not automatically inherit Netherlands- or Kingdom-wide sports evidence.
+- No football or tennis federation membership, organised competition, rankings, titles or athlete outcomes are inferred.

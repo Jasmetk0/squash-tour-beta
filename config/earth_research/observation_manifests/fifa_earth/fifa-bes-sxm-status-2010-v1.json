@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-bes-sxm-status-2010-v1",
+  "source_id": "bes-sxm-status-2010",
+  "relative_path": "observations/normalized/fifa_bes_sxm_status_2010_v1.json",
+  "sha256": "3529ccf431f21736c4d59bb2b3ca43ff38465e19b3711580bbd0e41e82477d77",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-bes-sxm-batch-2026-10-07"
+}

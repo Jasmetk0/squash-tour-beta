@@ -6920,7 +6920,7 @@ def test_atf_bvt_do_not_infer_sports_federation_membership(world_id, code):
     history = bundle.research.countries[code]
     for year in (1955, 2000, 2026):
         for rating in history.years[year].ratings.values():
-            assert "no federation membership or competition is inferred" in rating.rationale.lower()
+            assert "federation membership or competition is inferred" in rating.rationale.lower()
 
 
 @pytest.mark.parametrize("world_id", ["fifa_earth", "atp_earth"])

@@ -11,6 +11,10 @@
 - ✅ The missing FIFA CZE/SVK calibration definition records the original manual-anchor
   + linear-interpolation procedure and exactly reproduces all 864 stored values.
 - 🟡 PR integration/CI audit must be green before merge.
+- ✅ Deterministic realism-audit tooling now surfaces low-confidence concentration,
+  large annual jumps, long flat runs and duplicate numeric trajectories across/between worlds.
+- 🟡 Use the audit queue for historical calibration review; the tooling itself does not
+  certify realism.
 - ⏳ Historical realism/calibration validation remains separate future work;
   `realism_validated` stays false.
 

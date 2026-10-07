@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-iot-mauritius-treaty-2025-v1",
+  "source_id": "UK/Mauritius Chagos Agreement 2025",
+  "relative_path": "observations/normalized/atp_iot_mauritius_treaty_2025_v1.json",
+  "sha256": "488f0eb6a3c8cf39e1202b06754b7c9e2e0c6aa4bf9a7c6d7226fdebedec964d",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-flk-iot-batch-2026-10-07"
+}

@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-iot-mauritius-treaty-2025-v1",
+  "source_id": "UK/Mauritius Chagos Agreement 2025",
+  "relative_path": "observations/normalized/fifa_iot_mauritius_treaty_2025_v1.json",
+  "sha256": "ba78499b9942d03a476a309b8219f01bb4b85b10c3edacd768fab52e59f3ce4f",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-flk-iot-batch-2026-10-07"
+}

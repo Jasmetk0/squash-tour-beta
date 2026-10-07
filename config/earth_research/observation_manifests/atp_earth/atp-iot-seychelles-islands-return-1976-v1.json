@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-iot-seychelles-islands-return-1976-v1",
+  "source_id": "The National Archives — BIOT migrated archives guidance",
+  "relative_path": "observations/normalized/atp_iot_seychelles_islands_return_1976_v1.json",
+  "sha256": "d7a5f91ce06fb3a48bb93bbd54c4c619ba909909fea4eebdbe8d7599c069f137",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-flk-iot-batch-2026-10-07"
+}

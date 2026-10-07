@@ -1,0 +1,44 @@
+{
+  "schema_version": "earth_source_observations.v2",
+  "dataset_id": "atp-iot-creation-1965-v1",
+  "source_id": "British Indian Ocean Territory Order 1965",
+  "source_url": "https://www.legislation.gov.uk/uksi/1965/1920/pdfs/uksi_19651920_en.pdf",
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-flk-iot-batch-2026-10-07",
+  "scope": "IOT; territorial/constitutional context.",
+  "limitations": "Territorial, constitutional or treaty identity context only; not sports evidence.",
+  "observations": [
+    {
+      "observation_id": "atp-iot-creation-1965-v1#iot-creation-1965",
+      "source_id": "British Indian Ocean Territory Order 1965",
+      "source_entity": "British Indian Ocean Territory Order 1965",
+      "earth_country_code": "IOT",
+      "historical_entity": "British Indian Ocean Territory (including Chagos and Seychelles-origin islands)",
+      "observation_year": 1965,
+      "period_start_year": null,
+      "period_end_year": null,
+      "measurement_type": "structural_event",
+      "sex_scope": "not_applicable",
+      "age_scope": null,
+      "competition_scope": null,
+      "numeric_value": null,
+      "text_value": "The 1965 Order formed the British Indian Ocean Territory from the Chagos Archipelago and specified islands previously administered with Seychelles.",
+      "unit": "event",
+      "collection_method": "official_narrative",
+      "coverage_scope": "territory",
+      "comparability_group": null,
+      "cross_country_comparable": false,
+      "is_direct_observation": true,
+      "is_statistically_modelled": false,
+      "territory_mapping_method": null,
+      "territory_weight": null,
+      "source_page": null,
+      "source_locator": "Article 3",
+      "definition_notes": "Identity/status context only; not sports evidence.",
+      "quality_flags": [
+        "territorial_status_not_sports_measurement"
+      ]
+    }
+  ]
+}

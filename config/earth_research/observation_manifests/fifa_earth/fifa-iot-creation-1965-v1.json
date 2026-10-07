@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-iot-creation-1965-v1",
+  "source_id": "British Indian Ocean Territory Order 1965",
+  "relative_path": "observations/normalized/fifa_iot_creation_1965_v1.json",
+  "sha256": "1531aea9889d8ae128190ac4eecb583a9f7e03688b0c9a1e90a1d3e51a64f9f2",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-flk-iot-batch-2026-10-07"
+}

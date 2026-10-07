@@ -6171,3 +6171,11 @@ bands should shape 0..200 potential. No threshold is inferred from current OVR v
 - Administrative transitions are identity context only and never used as direct sports evidence.
 - Ratings are explicit low-confidence local project estimates and do not automatically inherit France-wide sports evidence.
 - No football or tennis federation membership, organised competition, rankings, titles or athlete outcomes are inferred.
+
+### Earth CCK/CXR batch — 2026-10-07
+- Added complete 1955-2026 FIFA Earth and ATP Earth histories for Cocos (Keeling) Islands (CCK) and Christmas Island (CXR).
+- Authored-history coverage becomes 236/250 in both packages after MYT/SPM.
+- Cocos (Keeling) Islands explicitly records Commonwealth acceptance/administration in 1955; Christmas Island explicitly transitions from Singapore administration to Australian territory identity in 1958.
+- Territorial transfer/legal status is identity context only and never used as direct sports evidence.
+- Ratings are explicit low-confidence local project estimates and do not automatically inherit Australia-wide sports evidence.
+- No football or tennis federation membership, organised competition, rankings, titles or athlete outcomes are inferred.

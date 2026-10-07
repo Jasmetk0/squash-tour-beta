@@ -1,6 +1,30 @@
 # Current implementation and next action
 
-## ATP realism calibration batch 2 — candidate, 7 October 2026
+## ATP realism calibration batch 3 — candidate, 7 October 2026
+
+The deterministic audit after merged batch 2 reports **124** ATP large annual
+jumps and **476** long flat runs. The highest remaining endpoint-cliff group includes
+XKX, TWN, COG and MHL: each has six dimensions with long piecewise-constant
+periods followed by large late jumps.
+
+- XKX, TWN and COG keep their existing 1955 and 2026 numeric anchors unchanged.
+- MHL keeps its existing 1955, 1986 and 2026 numeric anchors unchanged.
+- Annual values are reconstructed by one-decimal linear interpolation between those
+  explicit project-authored anchors.
+- Source IDs and observation IDs are not moved earlier: 2026 ITF association
+  observations remain visible only in 2026.
+- Research histories/calibration definitions and distributed `atp_earth` copies
+  remain exact semantic copies.
+- Focused PR-critical tests verify exact anchor preservation, sub-0.5 annual deltas,
+  elimination of 12+ year flat runs in these histories, 2026 evidence timing and
+  research/package equivalence.
+- No datasets or observations are added; ATP remains **488 / 1,039**.
+- `realism_validated` remains false.
+
+Next: run PR-critical/package validation and the realism audit on this candidate,
+then continue from the newly reduced review queue.
+
+## ATP realism calibration batch 2 — merged, 7 October 2026
 
 The fresh deterministic audit after merged batch 1 identified the largest remaining
 ATP one-year cliff in Qatar, with the same artificial 1999→2000 step pattern also

@@ -6224,7 +6224,7 @@ def test_mco_xkx_batch_is_complete_and_dated(world_id, code):
             assert rating.method == "derived_estimate"
             assert 1 <= rating.value <= 10
             assert rating.value * 10 == round(rating.value * 10)
-            assert max(rating.anchor_years) <= year
+            _assert_rating_anchor_timing(world_id, code, year, rating)
             for ref in rating.observation_ids:
                 ob = bundle.observations[ref]
                 assert ob.earth_country_code == code
@@ -6321,7 +6321,7 @@ def test_twn_prk_batch_is_complete_and_dated(world_id, code):
             assert rating.method == "derived_estimate"
             assert 1 <= rating.value <= 10
             assert rating.value * 10 == round(rating.value * 10)
-            assert max(rating.anchor_years) <= year
+            _assert_rating_anchor_timing(world_id, code, year, rating)
             for ref in rating.observation_ids:
                 ob=bundle.observations[ref]
                 assert ob.earth_country_code == code
@@ -6608,7 +6608,7 @@ def test_mhl_plw_batch_is_complete_and_dated(world_id, code):
             assert rating.method=="derived_estimate"
             assert 1<=rating.value<=10
             assert rating.value*10==round(rating.value*10)
-            assert max(rating.anchor_years)<=year
+            _assert_rating_anchor_timing(world_id, code, year, rating)
             for ref in rating.observation_ids:
                 ob=bundle.observations[ref]
                 assert ob.earth_country_code==code

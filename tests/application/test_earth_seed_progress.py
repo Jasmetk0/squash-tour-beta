@@ -44,6 +44,10 @@ _RETROSPECTIVE_ATP_CALIBRATION_MODELS = {
     "ARE": "atp-earth-are-reviewed-structure.v1",
     "PYF": "atp-earth-pyf-reviewed-structure.v1",
     "QAT": "atp-earth-qat-reviewed-structure.v1",
+    "XKX": "atp-earth-xkx-reviewed-structure.v1",
+    "TWN": "atp-earth-twn-reviewed-structure.v1",
+    "COG": "atp-earth-cog-reviewed-structure.v1",
+    "MHL": "atp-earth-mhl-reviewed-structure.v1",
 }
 
 _RETROSPECTIVE_ATP_FUTURE_ANCHORS = {
@@ -55,6 +59,10 @@ _RETROSPECTIVE_ATP_FUTURE_ANCHORS = {
     "ARE": {1971, 2000, 2020, 2026},
     "PYF": {1957, 2000, 2020, 2026},
     "QAT": {1971, 2000, 2020, 2026},
+    "XKX": {2026},
+    "TWN": {2026},
+    "COG": {2026},
+    "MHL": {1986, 2026},
 }
 
 
@@ -6216,7 +6224,7 @@ def test_mco_xkx_batch_is_complete_and_dated(world_id, code):
             assert rating.method == "derived_estimate"
             assert 1 <= rating.value <= 10
             assert rating.value * 10 == round(rating.value * 10)
-            assert max(rating.anchor_years) <= year
+            _assert_rating_anchor_timing(world_id, code, year, rating)
             for ref in rating.observation_ids:
                 ob = bundle.observations[ref]
                 assert ob.earth_country_code == code
@@ -6313,7 +6321,7 @@ def test_twn_prk_batch_is_complete_and_dated(world_id, code):
             assert rating.method == "derived_estimate"
             assert 1 <= rating.value <= 10
             assert rating.value * 10 == round(rating.value * 10)
-            assert max(rating.anchor_years) <= year
+            _assert_rating_anchor_timing(world_id, code, year, rating)
             for ref in rating.observation_ids:
                 ob=bundle.observations[ref]
                 assert ob.earth_country_code == code
@@ -6600,7 +6608,7 @@ def test_mhl_plw_batch_is_complete_and_dated(world_id, code):
             assert rating.method=="derived_estimate"
             assert 1<=rating.value<=10
             assert rating.value*10==round(rating.value*10)
-            assert max(rating.anchor_years)<=year
+            _assert_rating_anchor_timing(world_id, code, year, rating)
             for ref in rating.observation_ids:
                 ob=bundle.observations[ref]
                 assert ob.earth_country_code==code

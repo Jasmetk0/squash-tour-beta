@@ -35,12 +35,18 @@
       ]
     }
   },
-  "selection": "Piecewise-constant authored periods; no hidden interpolation and no observation enters before its event year.",
+  "selection": "Retrospective piecewise-linear reconstruction between explicit project-authored numeric anchors; structural observations remain time-gated to their evidence years.",
   "limitations": [
     "All numbers are project estimates with low confidence, not source measurements.",
     "Structural events establish context but cannot identify all six numeric dimensions; cross-country calibration is outstanding.",
     "Early priors are registered separately from independent federation observations.",
     "No rankings, titles or athlete results are used to fit ratings.",
-    "2026 is partial through the bundle cutoff, not a forecast."
-  ]
+    "2026 is partial through the bundle cutoff, not a forecast.",
+    "Linear interpolation is a transparent project-authored reconstruction between sparse numeric anchors, not a measured annual sporting trajectory."
+  ],
+  "construction": {
+    "kind": "explicit_anchor_linear_interpolation",
+    "description": "Annual project estimates are linearly interpolated between the existing explicit numeric calibration anchors and rounded to one decimal. Numeric anchors remain project-authored estimates; source observations stay time-gated to their actual evidence years, and future numeric anchors are used only for retrospective reconstruction.",
+    "rounding": "one_decimal"
+  }
 }

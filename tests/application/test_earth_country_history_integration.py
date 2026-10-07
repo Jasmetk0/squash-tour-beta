@@ -14,7 +14,7 @@ from beta_engine.application.world_package_run_adapter import WorldPackageRunAda
 from beta_engine.application.world_package_clone_service import WorldPackageCloneService
 from beta_engine.application.world_package_countries_service import WorldPackageCountriesService
 from beta_engine.application.world_package_validation_service import WorldPackageValidationService
-from beta_engine.domain.countries import CountriesConfig
+from beta_engine.domain.countries import Country, CountriesConfig
 from beta_engine.domain.players.weekly_intake import WeeklyIntakePlanner
 from beta_engine.domain.players.talent_planner import AnnualTalentClassPlanner
 from beta_engine.infrastructure.world_package_storage import WorldPackageCountryStore
@@ -356,11 +356,6 @@ def test_earth_history_survives_run_package_adapter(world_id):
         for entity in document.entities
         if entity.scope == "countries" and entity.source_entity_id == "CZE"
     )
-    run_country = country(country_entity.payload.get("rating_history")).model_copy(
-        update=country_entity.payload
-    ) if False else None
-    from beta_engine.domain.countries import Country
-
     run_country = Country.model_validate(country_entity.payload)
     assert run_country.rating_history is not None
     assert len(run_country.rating_history.years) == 72

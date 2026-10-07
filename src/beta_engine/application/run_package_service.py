@@ -58,6 +58,59 @@ def _baseline(entity: PackageEntity) -> str:
     )
 
 
+def _document_receipt_evidence(document: CanonicalPackageDocument) -> dict[str, object]:
+    """Compact immutable identity for audit receipts.
+
+    The canonical source fingerprint commits to the complete Package document, so a
+    receipt does not need to duplicate every large country-history payload.
+    """
+
+    leaves = document.leaf_documents()
+    return {
+        "schema_version": document.schema_version,
+        "package_type": document.package_type.value,
+        "package_id": document.package_id,
+        "source_version": document.source_version,
+        "source_fingerprint": document.source_fingerprint,
+        "parent_source_fingerprint": document.parent_source_fingerprint,
+        "explicit_scope": list(document.explicit_scope),
+        "entity_count": sum(len(leaf.entities) for leaf in leaves),
+        "leaf_packages": [
+            {
+                "package_type": leaf.package_type.value,
+                "package_id": leaf.package_id,
+                "source_version": leaf.source_version,
+                "source_fingerprint": leaf.source_fingerprint,
+                "entity_count": len(leaf.entities),
+            }
+            for leaf in leaves
+        ],
+    }
+
+
+def _preview_receipt_evidence(
+    preview: PackagePreview, *, preview_fingerprint: str
+) -> dict[str, object]:
+    """Persist the reviewed diff without embedding the Package document again."""
+
+    return {
+        "preview_fingerprint": preview_fingerprint,
+        "run_id": preview.run_id,
+        "branch_id": preview.branch_id,
+        "saved_head_revision_id": preview.saved_head_revision_id,
+        "draft_version": preview.draft_version,
+        "current_state_fingerprint": preview.current_state_fingerprint,
+        "additions": list(preview.additions),
+        "unchanged": list(preview.unchanged),
+        "updates": list(preview.updates),
+        "not_included": list(preview.not_included),
+        "unresolved": list(preview.unresolved),
+        "automatically_resolvable": list(preview.automatically_resolvable),
+        "invalid": list(preview.invalid),
+        "conflicts": list(preview.conflicts),
+    }
+
+
 def _require_writable(run, branch) -> None:
     if (
         run.read_only
@@ -331,11 +384,12 @@ class RunPackageService:
             preview = self._preview(
                 session, run_id=run_id, branch_id=branch_id, document=document
             )
+            actual_preview_fingerprint = preview.preview_fingerprint
             if (
                 branch.saved_head_revision_id != expected_head_revision_id
                 or draft.draft_version != expected_draft_version
                 or preview.current_state_fingerprint != expected_state_fingerprint
-                or preview.preview_fingerprint != expected_preview_fingerprint
+                or actual_preview_fingerprint != expected_preview_fingerprint
             ):
                 raise RunPackageConflictError("Package preview is stale")
             reviewed_labels = {
@@ -537,10 +591,12 @@ class RunPackageService:
                 evidence = {
                     "command_id": command_id,
                     "request_fingerprint": request_fp,
-                    "document": document.model_dump(mode="json"),
+                    "document": _document_receipt_evidence(document),
                     "selected_entities": sorted(selected),
                     "conflict_resolutions": resolutions,
-                    "preview": preview.model_dump(mode="json"),
+                    "preview": _preview_receipt_evidence(
+                        preview, preview_fingerprint=actual_preview_fingerprint
+                    ),
                     "draft_version": draft.draft_version,
                     "already_applied": True,
                     "state": old.model_dump(mode="json") if old else None,

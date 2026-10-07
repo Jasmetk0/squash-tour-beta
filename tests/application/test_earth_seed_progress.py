@@ -488,11 +488,11 @@ def test_fifa_fra_esp_batch_is_complete_and_temporally_dimensioned():
 
 def test_atp_complete_histories_are_evidence_resolvable_and_temporally_bounded():
     bundle = load_earth_research_bundle(Path("config/earth_research/atp_earth.json"))
-    expected_countries = {"CZE", "DEU", "USA", "AUS", "ESP", "SRB", "FRA", "GBR", "ARG", "JPN", "CAN", "ITA", "NLD", "SWE", "CHE", "HRV", "POL", "CHN", "NOR", "GRC", "BEL", "ZAF", "DNK", "FIN", "NZL", "PRT", "IRL", "HUN", "ROU", "SVN", "SVK", "ISR", "BGR", "AUT", "TUR", "CYP", "BRA", "CHL", "COL", "MEX", "ECU", "IND", "KOR", "THA", "KAZ", "LVA", "EST", "LTU", "UKR", "MAR", "SEN", "ISL", "SMR", "FRO", "FJI", "PNG", "WSM", "SLB", "TON", "COK", "NCL", "ASM", "VUT", "EGY", "MYS", "PHL", "IDN", "SGP", "PAK", "GHA", "NGA", "KEN", "UGA", "TZA", "ZMB", "ZWE", "MWI", "BWA", "NAM", "SWZ", "MOZ", "AGO", "LSO", "CMR", "BEN", "GAB", "MUS", "MDG", "SYC", "RWA", "BDI", "GMB", "CPV", "DJI", "COM", "GNQ", "GNB", "STP", "GIN", "LBR", "SLE", "TGO", "BFA", "MLI", "MRT", "NER", "TCD", "ETH", "ERI", "SDN", "SSD", "DZA", "CIV", "TUN", "LBY", "IRQ", "JOR", "LBN", "SYR", "PSE", "BHR", "KWT", "YEM", "IRN", "AFG", "BGD", "NPL", "LKA", "BTN", "MDV", "MNG", "KHM", "MMR", "LAO", "BRN", "VNM", "UZB", "TJK", "TKM", "KGZ", "GEO", "ARM", "AZE", "ALB", "MDA", "MKD", "BIH", "BLR", "MLT", "LUX", "CRI", "JAM", "TTO", "PAN", "DOM", "GTM", "HND", "SLV", "NIC", "BLZ", "HTI", "PER", "BOL", "PRY", "URY", "VEN", "GUY", "CUB", "SUR", "BHS", "BRB", "GRD", "DMA", "ATG", "LCA", "VCT", "KNA", "VGB", "TCA", "AIA", "BMU", "CYM", "VIR", "ABW", "PRI", "AND", "MNE", "LIE", "GIB", "MCO", "XKX", "HKG", "MAC", "TWN", "PRK", "GUM", "CUW", "TLS", "SOM", "CAF", "COD", "COG", "FSM", "RUS", "KIR", "MHL", "PLW", "ALA", "ATA", "NRU", "TUV"}
+    expected_countries = {"CZE", "DEU", "USA", "AUS", "ESP", "SRB", "FRA", "GBR", "ARG", "JPN", "CAN", "ITA", "NLD", "SWE", "CHE", "HRV", "POL", "CHN", "NOR", "GRC", "BEL", "ZAF", "DNK", "FIN", "NZL", "PRT", "IRL", "HUN", "ROU", "SVN", "SVK", "ISR", "BGR", "AUT", "TUR", "CYP", "BRA", "CHL", "COL", "MEX", "ECU", "IND", "KOR", "THA", "KAZ", "LVA", "EST", "LTU", "UKR", "MAR", "SEN", "ISL", "SMR", "FRO", "FJI", "PNG", "WSM", "SLB", "TON", "COK", "NCL", "ASM", "VUT", "EGY", "MYS", "PHL", "IDN", "SGP", "PAK", "GHA", "NGA", "KEN", "UGA", "TZA", "ZMB", "ZWE", "MWI", "BWA", "NAM", "SWZ", "MOZ", "AGO", "LSO", "CMR", "BEN", "GAB", "MUS", "MDG", "SYC", "RWA", "BDI", "GMB", "CPV", "DJI", "COM", "GNQ", "GNB", "STP", "GIN", "LBR", "SLE", "TGO", "BFA", "MLI", "MRT", "NER", "TCD", "ETH", "ERI", "SDN", "SSD", "DZA", "CIV", "TUN", "LBY", "IRQ", "JOR", "LBN", "SYR", "PSE", "BHR", "KWT", "YEM", "IRN", "AFG", "BGD", "NPL", "LKA", "BTN", "MDV", "MNG", "KHM", "MMR", "LAO", "BRN", "VNM", "UZB", "TJK", "TKM", "KGZ", "GEO", "ARM", "AZE", "ALB", "MDA", "MKD", "BIH", "BLR", "MLT", "LUX", "CRI", "JAM", "TTO", "PAN", "DOM", "GTM", "HND", "SLV", "NIC", "BLZ", "HTI", "PER", "BOL", "PRY", "URY", "VEN", "GUY", "CUB", "SUR", "BHS", "BRB", "GRD", "DMA", "ATG", "LCA", "VCT", "KNA", "VGB", "TCA", "AIA", "BMU", "CYM", "VIR", "ABW", "PRI", "AND", "MNE", "LIE", "GIB", "MCO", "XKX", "HKG", "MAC", "TWN", "PRK", "GUM", "CUW", "TLS", "SOM", "CAF", "COD", "COG", "FSM", "RUS", "KIR", "MHL", "PLW", "ALA", "ATA", "NRU", "TUV", "ARE", "OMN", "PYF", "QAT", "SAU"}
     assert set(bundle.research.countries) == expected_countries
     assert bundle.research.data_cutoff.isoformat() == "2026-10-04"
-    assert len(bundle.datasets) == 439
-    assert len(bundle.observations) == 939
+    assert len(bundle.datasets) == 442
+    assert len(bundle.observations) == 954
 
     expected_models = {
         "CZE": "atp-earth-cze-deu-seed-model.v1",
@@ -706,6 +706,11 @@ def test_atp_complete_histories_are_evidence_resolvable_and_temporally_bounded()
         "ATA": "atp-earth-ata-reviewed-structure.v1",
         "NRU": "atp-earth-nru-reviewed-structure.v1",
         "TUV": "atp-earth-tuv-reviewed-structure.v1",
+        "ARE": "atp-earth-are-reviewed-structure.v1",
+        "OMN": "atp-earth-omn-reviewed-structure.v1",
+        "PYF": "atp-earth-pyf-reviewed-structure.v1",
+        "QAT": "atp-earth-qat-reviewed-structure.v1",
+        "SAU": "atp-earth-sau-reviewed-structure.v1",
     }
     for code, history in bundle.research.countries.items():
         assert history.missing_earth_years == []
@@ -6683,3 +6688,47 @@ def test_nru_tuv_atp_activity_and_association_evidence_is_time_gated():
             "itf-association-2026" in ref
             for ref in history.years[2026].ratings["development_quality"].observation_ids
         )
+
+
+@pytest.mark.parametrize("code", ["ARE", "OMN", "PYF", "QAT", "SAU"])
+def test_atp_gap5_histories_are_complete_resolvable_and_time_gated(code):
+    bundle = load_earth_research_bundle(Path("config/earth_research/atp_earth.json"))
+    history = bundle.research.countries[code]
+    assert set(history.years) == set(range(1955, 2027))
+    assert len(history.years) == 72
+    for year, entry in history.years.items():
+        assert len(entry.ratings) == 6
+        for rating in entry.ratings.values():
+            assert rating.confidence == "low"
+            assert rating.method == "derived_estimate"
+            assert 1 <= rating.value <= 10
+            assert rating.value * 10 == round(rating.value * 10)
+            assert max(rating.anchor_years) <= year
+            for ref in rating.observation_ids:
+                observation = bundle.observations[ref]
+                assert observation.earth_country_code == code
+                if observation.observation_year is None:
+                    assert observation.measurement_type == "project_authored_assumption"
+                    assert observation.is_direct_observation is False
+                else:
+                    assert observation.observation_year <= year
+
+    rating_2019 = history.years[2019].ratings["squash_access"]
+    assert not any("return-2020" in ref for ref in rating_2019.observation_ids)
+    rating_2020 = history.years[2020].ratings["squash_access"]
+    assert any("return-2020" in ref for ref in rating_2020.observation_ids)
+    assert not any("association-2026" in ref for ref in history.years[2025].ratings["development_quality"].observation_ids)
+    assert any("association-2026" in ref for ref in history.years[2026].ratings["development_quality"].observation_ids)
+
+
+def test_atp_gap5_historical_identity_transitions_are_explicit():
+    bundle = load_earth_research_bundle(Path("config/earth_research/atp_earth.json"))
+    assert "Trucial States" in bundle.research.countries["ARE"].years[1970].historical_entity
+    assert bundle.research.countries["ARE"].years[1971].historical_entity == "United Arab Emirates"
+    assert "Muscat and Oman" in bundle.research.countries["OMN"].years[1969].historical_entity
+    assert bundle.research.countries["OMN"].years[1970].historical_entity == "Sultanate of Oman"
+    assert "French Establishments in Oceania" in bundle.research.countries["PYF"].years[1956].historical_entity
+    assert bundle.research.countries["PYF"].years[1957].historical_entity == "French Polynesia"
+    assert "British protection" in bundle.research.countries["QAT"].years[1970].historical_entity
+    assert bundle.research.countries["QAT"].years[1971].historical_entity == "State of Qatar"
+    assert bundle.research.countries["SAU"].years[1955].historical_entity == "Kingdom of Saudi Arabia"

@@ -6084,3 +6084,10 @@ bands should shape 0..200 potential. No threshold is inferred from current OVR v
 - Nauru FIFA history uses explicit project priors only; no FIFA/OFC membership is inferred.
 - Tuvalu uses current OFC associate-member evidence only from 2026 onward and does not infer FIFA membership.
 - ATP histories use dated 2020 ITF/Oceania activity evidence and current 2026 ITF association listings without backdating either source.
+
+### ATP Earth five-country asymmetry batch — 2026-10-07
+- Added complete 1955–2026 ATP Earth histories for ARE, OMN, PYF, QAT and SAU.
+- ATP authored-history coverage becomes 216/250; FIFA remains 211/250 until the reciprocal FIFA gap-five batch is added.
+- Historical territorial/state transitions are explicit for UAE, Oman, French Polynesia and Qatar; Saudi Arabia's current state predates the 1955 horizon.
+- Dated ITF 2020 return-to-tennis observations enter only from 2020, while current ITF association-directory evidence enters only from 2026.
+- All six numeric ratings remain low-confidence project estimates with explicit provenance and no outcome fitting.

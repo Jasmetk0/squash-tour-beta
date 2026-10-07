@@ -6077,3 +6077,10 @@ bands should shape 0..200 potential. No threshold is inferred from current OVR v
 - Stored normalized observation datasets remain unchanged so their content-addressed semantic hashes and provenance stay valid; only the resolved observation index exposes canonical Earth identity.
 - Country histories now load under the same codes as the 250-country real-world package catalogue, with fail-closed collision detection.
 - Authored history count remains 209/250 in both Earth research bundles; this change fixes identity correctness rather than inflating coverage.
+
+### Earth NRU/TUV batch — 2026-10-07
+- Added complete 1955–2026 FIFA Earth and ATP Earth histories for Nauru (NRU) and Tuvalu (TUV).
+- Authored history coverage becomes 211/250 in both Earth research bundles once the canonical-code normalization prerequisite is integrated.
+- Nauru FIFA history uses explicit project priors only; no FIFA/OFC membership is inferred.
+- Tuvalu uses current OFC associate-member evidence only from 2026 onward and does not infer FIFA membership.
+- ATP histories use dated 2020 ITF/Oceania activity evidence and current 2026 ITF association listings without backdating either source.

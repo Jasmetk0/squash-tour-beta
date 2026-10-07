@@ -208,7 +208,7 @@ class WorldPackageCountryStore:
         stored_rating_context = _read_object(rating_context_path) if rating_context_path.is_file() else {}
         rating_context: dict[str, Any] = {}
         external_history: CountryRatingHistory | None = None
-        if stored_rating_context:
+        if rating_context_path.is_file():
             schema = stored_rating_context.get("schema_version")
             if stored_rating_context.get("rating_scale") != RATING_SCALE_V2:
                 raise ValueError(f"{rating_context_path} must explicitly use the 1..10 scale")

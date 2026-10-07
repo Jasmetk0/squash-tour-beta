@@ -6115,6 +6115,7 @@ bands should shape 0..200 potential. No threshold is inferred from current OVR v
 - Current official territory context enters only in 2026: TAAF has no permanent population; Bouvet Island is an extremely isolated Norwegian nature reserve.
 - Territory facts are treated as contextual only, not as direct sports measurements.
 - No football or tennis federation membership, organised competition, rankings, titles or athlete outcomes are inferred.
+- Structural observations use stable repository source IDs and semantic manifests.
 
 ### Earth HMD/SGS batch — 2026-10-07
 - Added complete 1955–2026 FIFA Earth and ATP Earth histories for Heard Island and McDonald Islands (HMD) and South Georgia and the South Sandwich Islands (SGS).

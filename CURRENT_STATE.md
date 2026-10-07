@@ -6019,3 +6019,9 @@ bands should shape 0..200 potential. No threshold is inferred from current OVR v
 - Authored history coverage: FIFA Earth 193/250; ATP Earth 193/250.
 - Historical entity labels preserve the 1997 Hong Kong and 1999 Macau sovereignty transitions without inheriting China PR totals.
 - FIFA/AFC milestones and current ITF association evidence are dated and not backfilled before their observation years.
+
+### Earth TWN/PRK batch — 2026-10-07
+- Added complete 1955–2026 FIFA Earth and ATP Earth histories for Taiwan/Chinese Taipei (TWN) and DPR Korea (PRK).
+- Authored history coverage: FIFA Earth 195/250; ATP Earth 195/250.
+- Taiwan naming/association history is explicit and China PR totals are not inherited.
+- DPR Korea remains a separate Earth identity; current FIFA/ITF evidence is not backdated.

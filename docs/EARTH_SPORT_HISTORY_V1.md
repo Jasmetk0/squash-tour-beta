@@ -485,3 +485,6 @@ MCO and XKX now have complete 1955–2026 histories in both FIFA Earth and ATP E
 
 ### Hong Kong + Macau reviewed batch (2026-10-07)
 HKG and MAC now have complete 1955–2026 histories in both FIFA Earth and ATP Earth. Hong Kong uses British Hong Kong before 1997 and HKSAR afterward; Macau uses Portuguese Macau before 1999 and MSAR afterward. External football milestones remain dated, current ITF evidence enters only in 2026, and numeric ratings remain explicit low-confidence project estimates.
+
+### Taiwan + DPR Korea reviewed batch (2026-10-07)
+TWN and PRK now have complete 1955–2026 histories in both FIFA Earth and ATP Earth. Taiwan/Chinese Taipei naming and association milestones are explicitly dated, DPR Korea is kept distinct from Korea Republic, current federation-directory evidence is not backdated, and numeric ratings remain low-confidence project estimates.

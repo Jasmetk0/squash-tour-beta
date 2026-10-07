@@ -1,5 +1,17 @@
 # Current implementation and next action
 
+## Liechtenstein / Gibraltar research batch — 7 October 2026
+
+Baseline: `buuk` at `90279b3df104a0c78400adf6b9a3f94af83f8f19`.
+This candidate adds LIE and GIB to FIFA Earth and ATP Earth: four complete 1955–2026 histories (1,728 authored annual attribute ratings).
+
+- FIFA: 187 -> 189 authored histories; expected 241 datasets / 1,926 records.
+- ATP: 187 -> 189 authored histories; expected 417 datasets / 894 records.
+- Liechtenstein football uses UEFA-dated membership/infrastructure milestones through the September 2026 LFV Campus opening.
+- Gibraltar football preserves its 1895 association history while gating UEFA membership to 2013 and FIFA membership to 2016.
+- Tennis remains conservative: early values are explicit project assumptions and current structure is not backdated.
+- All numeric ratings remain low-confidence project estimates, not measured federation values.
+
 ## Andorra / Montenegro research batch — 7 October 2026
 
 Baseline: `buuk` at `f91b10f9eed9bd45bb2c2ba144510ba1e11eb79d`.

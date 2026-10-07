@@ -1,5 +1,23 @@
 # Current implementation and next action
 
+## Earth realism audit tooling — candidate, 7 October 2026
+
+- Added deterministic two-world audit code for FIFA Earth and ATP Earth histories.
+- The audit reports low-confidence concentration, large year-to-year rating jumps,
+  long unchanged runs, same-world duplicate numeric trajectories and exact
+  cross-world FIFA/ATP numeric-history duplicates.
+- Findings are review signals only: the report always keeps
+  `realism_validated=false` and explicitly separates technical package validity
+  from historical calibration quality.
+- CLI: `python scripts/audit_earth_realism.py` (optional JSON output via
+  `--output <path>`).
+- PR-critical tests cover cross-world duplicates, large jumps, low-confidence
+  concentration, long flat runs and a clean no-flag case.
+
+Next: run the audit against both complete 250-country histories, use its deterministic
+review queue to calibrate suspicious histories, and only mark realism validated after
+that separate evidence review.
+
 ## Earth packages — portable technical integration candidate, 7 October 2026
 
 This section is the authoritative current Earth-package status. Older dated Earth

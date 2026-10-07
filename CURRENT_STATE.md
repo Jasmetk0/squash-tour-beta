@@ -6070,3 +6070,10 @@ bands should shape 0..200 potential. No threshold is inferred from current OVR v
 - Both histories are explicit low-confidence project priors only; no separate FIFA/UEFA/ITF membership is inferred.
 - Åland does not inherit Finland-wide federation statistics, and Antarctica does not inherit claimant-state totals.
 - All annual ratings remain derived estimates with explicit provenance; no outcome fitting is used.
+
+### Earth canonical country-code normalization — 2026-10-07
+- Added a load-time compatibility layer from legacy federation/association codes to canonical Earth package codes.
+- Canonicalized ANG→AGO, CHA→TCD, EQG→GNQ, GAM→GMB, LES→LSO, SEY→SYC, plus ATP legacy NED→NLD, SUI→CHE, CRO→HRV, GRE→GRC and DEN→DNK.
+- Stored normalized observation datasets remain unchanged so their content-addressed semantic hashes and provenance stay valid; only the resolved observation index exposes canonical Earth identity.
+- Country histories now load under the same codes as the 250-country real-world package catalogue, with fail-closed collision detection.
+- Authored history count remains 209/250 in both Earth research bundles; this change fixes identity correctness rather than inflating coverage.

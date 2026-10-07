@@ -15,10 +15,30 @@ def load_earth_research_bundle(path: Path):
     return _load_earth_research_bundle(path)
 
 
+_LEGACY_OBSERVATION_CODE = {
+    "AGO": "ang",
+    "TCD": "cha",
+    "GNQ": "eqg",
+    "GMB": "gam",
+    "LSO": "les",
+    "SYC": "sey",
+    "NLD": "ned",
+    "CHE": "sui",
+    "HRV": "cro",
+    "GRC": "gre",
+    "DNK": "den",
+}
+
+
+def _stored_observation_code(code: str) -> str:
+    """Preserve legacy provenance-local IDs while bundle keys use canonical Earth codes."""
+    return _LEGACY_OBSERVATION_CODE.get(code, code.lower())
+
+
 
 def test_fifa_first_reviewed_country_histories_are_complete_and_resolvable():
     bundle = load_earth_research_bundle(Path("config/earth_research/fifa_earth.json"))
-    assert set(bundle.research.countries) == {"CZE", "SVK", "JPN", "IND", "MAR", "SEN", "FRO", "USA", "ZAF", "BRA", "DEU", "ISL", "SMR", "ARG", "MEX", "AUS", "NZL", "FJI", "PNG", "SLB", "COK", "ASM", "PYF", "NCL", "WSM", "TON", "VUT", "FRA", "ESP", "ITA", "NLD", "BEL", "PRT", "AUT", "DNK", "SWE", "CHE", "NOR", "FIN", "HRV", "SVN", "POL", "ROU", "UKR", "LTU", "LVA", "EST", "CAN", "GRC", "SRB", "CHL", "HUN", "ISR", "BGR", "KAZ", "CHN", "TUR", "KOR", "THA", "COL", "CYP", "ECU", "IRL", "EGY", "MYS", "SAU", "ARE", "QAT", "OMN", "GHA", "NGA", "KEN", "UGA", "TZA", "ZMB", "ZWE", "MWI", "BWA", "NAM", "SWZ", "MOZ", "ANG", "LES", "CMR", "BEN", "GAB", "MUS", "MDG", "SEY", "RWA", "BDI", "GAM", "CPV", "DJI", "COM", "EQG", "GNB", "STP", "GIN", "LBR", "SLE", "TGO", "BFA", "MLI", "MRT", "NER", "CHA", "ETH", "ERI", "SDN", "SSD", "DZA", "CIV", "TUN", "LBY", "IRQ", "JOR", "LBN", "SYR", "PSE", "BHR", "KWT", "YEM", "IRN", "AFG", "BGD", "NPL", "LKA", "BTN", "MDV", "MNG", "KHM", "MMR", "LAO", "BRN", "VNM", "UZB", "TJK", "TKM", "KGZ", "GEO", "ARM", "AZE", "ALB", "MDA", "MKD", "BIH", "BLR", "MLT", "LUX", "CRI", "JAM", "TTO", "PAN", "DOM", "GTM", "HND", "SLV", "NIC", "BLZ", "HTI", "PER", "BOL", "PRY", "URY", "VEN", "GUY", "CUB", "SUR", "BHS", "BRB", "GRD", "DMA", "ATG", "LCA", "VCT", "KNA", "VGB", "TCA", "AIA", "BMU", "CYM", "VIR", "ABW", "PRI", "AND", "MNE", "LIE", "GIB", "MCO", "XKX", "HKG", "MAC", "TWN", "PRK", "GUM", "CUW", "TLS", "SOM", "CAF", "COD", "COG", "FSM", "RUS", "KIR", "MHL", "PLW", "ALA", "ATA"}
+    assert set(bundle.research.countries) == {"CZE", "SVK", "JPN", "IND", "MAR", "SEN", "FRO", "USA", "ZAF", "BRA", "DEU", "ISL", "SMR", "ARG", "MEX", "AUS", "NZL", "FJI", "PNG", "SLB", "COK", "ASM", "PYF", "NCL", "WSM", "TON", "VUT", "FRA", "ESP", "ITA", "NLD", "BEL", "PRT", "AUT", "DNK", "SWE", "CHE", "NOR", "FIN", "HRV", "SVN", "POL", "ROU", "UKR", "LTU", "LVA", "EST", "CAN", "GRC", "SRB", "CHL", "HUN", "ISR", "BGR", "KAZ", "CHN", "TUR", "KOR", "THA", "COL", "CYP", "ECU", "IRL", "EGY", "MYS", "SAU", "ARE", "QAT", "OMN", "GHA", "NGA", "KEN", "UGA", "TZA", "ZMB", "ZWE", "MWI", "BWA", "NAM", "SWZ", "MOZ", "AGO", "LSO", "CMR", "BEN", "GAB", "MUS", "MDG", "SYC", "RWA", "BDI", "GMB", "CPV", "DJI", "COM", "GNQ", "GNB", "STP", "GIN", "LBR", "SLE", "TGO", "BFA", "MLI", "MRT", "NER", "TCD", "ETH", "ERI", "SDN", "SSD", "DZA", "CIV", "TUN", "LBY", "IRQ", "JOR", "LBN", "SYR", "PSE", "BHR", "KWT", "YEM", "IRN", "AFG", "BGD", "NPL", "LKA", "BTN", "MDV", "MNG", "KHM", "MMR", "LAO", "BRN", "VNM", "UZB", "TJK", "TKM", "KGZ", "GEO", "ARM", "AZE", "ALB", "MDA", "MKD", "BIH", "BLR", "MLT", "LUX", "CRI", "JAM", "TTO", "PAN", "DOM", "GTM", "HND", "SLV", "NIC", "BLZ", "HTI", "PER", "BOL", "PRY", "URY", "VEN", "GUY", "CUB", "SUR", "BHS", "BRB", "GRD", "DMA", "ATG", "LCA", "VCT", "KNA", "VGB", "TCA", "AIA", "BMU", "CYM", "VIR", "ABW", "PRI", "AND", "MNE", "LIE", "GIB", "MCO", "XKX", "HKG", "MAC", "TWN", "PRK", "GUM", "CUW", "TLS", "SOM", "CAF", "COD", "COG", "FSM", "RUS", "KIR", "MHL", "PLW", "ALA", "ATA"}
     assert bundle.research.data_cutoff.isoformat() == "2026-10-03"
     assert len(bundle.research.countries) == 209
     assert len(bundle.datasets) == 267
@@ -157,7 +177,7 @@ def test_fifa_heldout_batch_is_complete_independent_and_plausible():
     assert competition_2023["BRA"] > competition_2023["DEU"] > competition_2023["ISL"] > competition_2023["SMR"]
 
     rank_2023 = {
-        code: bundle.observations[f"{ranking_prefix}{code.lower()}"].numeric_value
+        code: bundle.observations[f"{ranking_prefix}{_stored_observation_code(code)}"].numeric_value
         for code in batch
     }
     assert rank_2023 == {"BRA": 5.0, "DEU": 16.0, "ISL": 71.0, "SMR": 210.0}
@@ -468,7 +488,7 @@ def test_fifa_fra_esp_batch_is_complete_and_temporally_dimensioned():
 
 def test_atp_complete_histories_are_evidence_resolvable_and_temporally_bounded():
     bundle = load_earth_research_bundle(Path("config/earth_research/atp_earth.json"))
-    expected_countries = {"CZE", "DEU", "USA", "AUS", "ESP", "SRB", "FRA", "GBR", "ARG", "JPN", "CAN", "ITA", "NED", "SWE", "SUI", "CRO", "POL", "CHN", "NOR", "GRE", "BEL", "ZAF", "DEN", "FIN", "NZL", "PRT", "IRL", "HUN", "ROU", "SVN", "SVK", "ISR", "BGR", "AUT", "TUR", "CYP", "BRA", "CHL", "COL", "MEX", "ECU", "IND", "KOR", "THA", "KAZ", "LVA", "EST", "LTU", "UKR", "MAR", "SEN", "ISL", "SMR", "FRO", "FJI", "PNG", "WSM", "SLB", "TON", "COK", "NCL", "ASM", "VUT", "EGY", "MYS", "PHL", "IDN", "SGP", "PAK", "GHA", "NGA", "KEN", "UGA", "TZA", "ZMB", "ZWE", "MWI", "BWA", "NAM", "SWZ", "MOZ", "ANG", "LES", "CMR", "BEN", "GAB", "MUS", "MDG", "SEY", "RWA", "BDI", "GAM", "CPV", "DJI", "COM", "EQG", "GNB", "STP", "GIN", "LBR", "SLE", "TGO", "BFA", "MLI", "MRT", "NER", "CHA", "ETH", "ERI", "SDN", "SSD", "DZA", "CIV", "TUN", "LBY", "IRQ", "JOR", "LBN", "SYR", "PSE", "BHR", "KWT", "YEM", "IRN", "AFG", "BGD", "NPL", "LKA", "BTN", "MDV", "MNG", "KHM", "MMR", "LAO", "BRN", "VNM", "UZB", "TJK", "TKM", "KGZ", "GEO", "ARM", "AZE", "ALB", "MDA", "MKD", "BIH", "BLR", "MLT", "LUX", "CRI", "JAM", "TTO", "PAN", "DOM", "GTM", "HND", "SLV", "NIC", "BLZ", "HTI", "PER", "BOL", "PRY", "URY", "VEN", "GUY", "CUB", "SUR", "BHS", "BRB", "GRD", "DMA", "ATG", "LCA", "VCT", "KNA", "VGB", "TCA", "AIA", "BMU", "CYM", "VIR", "ABW", "PRI", "AND", "MNE", "LIE", "GIB", "MCO", "XKX", "HKG", "MAC", "TWN", "PRK", "GUM", "CUW", "TLS", "SOM", "CAF", "COD", "COG", "FSM", "RUS", "KIR", "MHL", "PLW", "ALA", "ATA"}
+    expected_countries = {"CZE", "DEU", "USA", "AUS", "ESP", "SRB", "FRA", "GBR", "ARG", "JPN", "CAN", "ITA", "NLD", "SWE", "CHE", "HRV", "POL", "CHN", "NOR", "GRC", "BEL", "ZAF", "DNK", "FIN", "NZL", "PRT", "IRL", "HUN", "ROU", "SVN", "SVK", "ISR", "BGR", "AUT", "TUR", "CYP", "BRA", "CHL", "COL", "MEX", "ECU", "IND", "KOR", "THA", "KAZ", "LVA", "EST", "LTU", "UKR", "MAR", "SEN", "ISL", "SMR", "FRO", "FJI", "PNG", "WSM", "SLB", "TON", "COK", "NCL", "ASM", "VUT", "EGY", "MYS", "PHL", "IDN", "SGP", "PAK", "GHA", "NGA", "KEN", "UGA", "TZA", "ZMB", "ZWE", "MWI", "BWA", "NAM", "SWZ", "MOZ", "AGO", "LSO", "CMR", "BEN", "GAB", "MUS", "MDG", "SYC", "RWA", "BDI", "GMB", "CPV", "DJI", "COM", "GNQ", "GNB", "STP", "GIN", "LBR", "SLE", "TGO", "BFA", "MLI", "MRT", "NER", "TCD", "ETH", "ERI", "SDN", "SSD", "DZA", "CIV", "TUN", "LBY", "IRQ", "JOR", "LBN", "SYR", "PSE", "BHR", "KWT", "YEM", "IRN", "AFG", "BGD", "NPL", "LKA", "BTN", "MDV", "MNG", "KHM", "MMR", "LAO", "BRN", "VNM", "UZB", "TJK", "TKM", "KGZ", "GEO", "ARM", "AZE", "ALB", "MDA", "MKD", "BIH", "BLR", "MLT", "LUX", "CRI", "JAM", "TTO", "PAN", "DOM", "GTM", "HND", "SLV", "NIC", "BLZ", "HTI", "PER", "BOL", "PRY", "URY", "VEN", "GUY", "CUB", "SUR", "BHS", "BRB", "GRD", "DMA", "ATG", "LCA", "VCT", "KNA", "VGB", "TCA", "AIA", "BMU", "CYM", "VIR", "ABW", "PRI", "AND", "MNE", "LIE", "GIB", "MCO", "XKX", "HKG", "MAC", "TWN", "PRK", "GUM", "CUW", "TLS", "SOM", "CAF", "COD", "COG", "FSM", "RUS", "KIR", "MHL", "PLW", "ALA", "ATA"}
     assert set(bundle.research.countries) == expected_countries
     assert bundle.research.data_cutoff.isoformat() == "2026-10-04"
     assert len(bundle.datasets) == 436
@@ -487,17 +507,17 @@ def test_atp_complete_histories_are_evidence_resolvable_and_temporally_bounded()
         "JPN": "atp-earth-fra-gbr-arg-jpn-model.v1",
         "CAN": "atp-earth-can-ita-ned-swe-model.v1",
         "ITA": "atp-earth-can-ita-ned-swe-model.v1",
-        "NED": "atp-earth-can-ita-ned-swe-model.v1",
+        "NLD": "atp-earth-can-ita-ned-swe-model.v1",
         "SWE": "atp-earth-can-ita-ned-swe-model.v1",
-        "SUI": "atp-earth-sui-cro-pol-chn-model.v1",
-        "CRO": "atp-earth-sui-cro-pol-chn-model.v1",
+        "CHE": "atp-earth-sui-cro-pol-chn-model.v1",
+        "HRV": "atp-earth-sui-cro-pol-chn-model.v1",
         "POL": "atp-earth-sui-cro-pol-chn-model.v1",
         "CHN": "atp-earth-sui-cro-pol-chn-model.v1",
         "NOR": "atp-earth-nor-gre-bel-rsa-model.v1",
-        "GRE": "atp-earth-nor-gre-bel-rsa-model.v1",
+        "GRC": "atp-earth-nor-gre-bel-rsa-model.v1",
         "BEL": "atp-earth-nor-gre-bel-rsa-model.v1",
         "ZAF": "atp-earth-nor-gre-bel-rsa-model.v1",
-        "DEN": "atp-earth-den-fin-nzl-model.v1",
+        "DNK": "atp-earth-den-fin-nzl-model.v1",
         "FIN": "atp-earth-den-fin-nzl-model.v1",
         "NZL": "atp-earth-den-fin-nzl-model.v1",
         "PRT": "atp-earth-prt-irl-model.v1",
@@ -556,21 +576,21 @@ def test_atp_complete_histories_are_evidence_resolvable_and_temporally_bounded()
         "NAM": "atp-earth-nam-model.v1",
         "SWZ": "atp-earth-swz-model.v1",
         "MOZ": "atp-earth-moz-model.v1",
-        "ANG": "atp-earth-ang-model.v1",
-        "LES": "atp-earth-les-model.v1",
+        "AGO": "atp-earth-ang-model.v1",
+        "LSO": "atp-earth-les-model.v1",
         "CMR": "atp-earth-cmr-model.v1",
         "BEN": "atp-earth-ben-model.v1",
         "GAB": "atp-earth-gab-model.v1",
         "MUS": "atp-earth-mus-model.v1",
         "MDG": "atp-earth-mdg-model.v1",
-        "SEY": "atp-earth-sey-model.v1",
+        "SYC": "atp-earth-sey-model.v1",
         "RWA": "atp-earth-rwa-model.v1",
         "BDI": "atp-earth-bdi-model.v1",
-        "GAM": "atp-earth-gam-model.v1",
+        "GMB": "atp-earth-gam-model.v1",
         "CPV": "atp-earth-cpv-model.v1",
         "DJI": "atp-earth-dji-model.v1",
         "COM": "atp-earth-com-model.v1",
-        "EQG": "atp-earth-eqg-model.v1",
+        "GNQ": "atp-earth-eqg-model.v1",
         "GNB": "atp-earth-gnb-model.v1",
         "STP": "atp-earth-stp-model.v1",
         "GIN": "atp-earth-gin-model.v1",
@@ -581,7 +601,7 @@ def test_atp_complete_histories_are_evidence_resolvable_and_temporally_bounded()
         "MLI": "atp-earth-mli-model.v1",
         "MRT": "atp-earth-mrt-model.v1",
         "NER": "atp-earth-ner-model.v1",
-        "CHA": "atp-earth-cha-model.v1",
+        "TCD": "atp-earth-cha-model.v1",
         "ETH": "atp-earth-eth-model.v1",
         "ERI": "atp-earth-eri-model.v1",
         "SDN": "atp-earth-sdn-model.v1",
@@ -833,7 +853,7 @@ def test_atp_complete_histories_are_evidence_resolvable_and_temporally_bounded()
         ita.years[2025].ratings["development_quality"].observation_ids
     )
 
-    ned = bundle.research.countries["NED"]
+    ned = bundle.research.countries["NLD"]
     assert "combined tennis/padel" in ned.years[2026].ratings["squash_access"].rationale.lower()
     assert "atp-knltb-profile-v1#ned-members-current-2026" not in (
         ned.years[2025].ratings["squash_access"].observation_ids
@@ -854,7 +874,7 @@ def test_atp_complete_histories_are_evidence_resolvable_and_temporally_bounded()
         swe.years[2025].ratings["development_quality"].observation_ids
     )
 
-    sui = bundle.research.countries["SUI"]
+    sui = bundle.research.countries["CHE"]
     assert "atp-swiss-tennis-profile-2026-v1#sui-members-2026" not in (
         sui.years[2025].ratings["squash_popularity"].observation_ids
     )
@@ -865,7 +885,7 @@ def test_atp_complete_histories_are_evidence_resolvable_and_temporally_bounded()
         sui.years[1992].ratings["competition_quality"].value
     )
 
-    cro = bundle.research.countries["CRO"]
+    cro = bundle.research.countries["HRV"]
     assert "Yugoslavia" in cro.years[1991].historical_entity
     assert cro.years[1992].historical_entity == "Croatia"
     assert "atp-hts-profile-v1#cro-itf-membership-1992" not in (
@@ -916,7 +936,7 @@ def test_atp_complete_histories_are_evidence_resolvable_and_temporally_bounded()
         nor.years[2015].ratings["competition_quality"].value
     )
 
-    gre = bundle.research.countries["GRE"]
+    gre = bundle.research.countries["GRC"]
     assert "atp-greece-clubs-2026-v1#gre-member-clubs-2026" not in (
         gre.years[2025].ratings["squash_access"].observation_ids
     )
@@ -964,7 +984,7 @@ def test_atp_complete_histories_are_evidence_resolvable_and_temporally_bounded()
         nor.years[2015].ratings["competition_quality"].value
     )
 
-    gre = bundle.research.countries["GRE"]
+    gre = bundle.research.countries["GRC"]
     assert "atp-tsitsipas-v1#gre-atp-finals-title-2019" not in (
         gre.years[2018].ratings["competition_quality"].observation_ids
     )
@@ -1019,7 +1039,7 @@ def test_atp_source_scopes_and_current_competition_quality_are_semantically_guar
     assert "combined_tennis_padel" in bel_clubs.quality_flags
 
     nor = bundle.research.countries["NOR"].years[2026].ratings["competition_quality"]
-    gre = bundle.research.countries["GRE"].years[2026].ratings["competition_quality"]
+    gre = bundle.research.countries["GRC"].years[2026].ratings["competition_quality"]
     bel = bundle.research.countries["BEL"].years[2026].ratings["competition_quality"]
     zaf = bundle.research.countries["ZAF"].years[2026].ratings["competition_quality"]
 
@@ -1042,7 +1062,7 @@ def test_atp_source_scopes_and_current_competition_quality_are_semantically_guar
 def test_atp_den_fin_nzl_batch_is_complete_and_dimensionally_grounded():
     bundle = load_earth_research_bundle(Path("config/earth_research/atp_earth.json"))
 
-    for code in ("DEN", "FIN", "NZL"):
+    for code in ("DNK", "FIN", "NZL"):
         history = bundle.research.countries[code]
         assert history.missing_earth_years == []
         assert len(history.years) == 72
@@ -1053,7 +1073,7 @@ def test_atp_den_fin_nzl_batch_is_complete_and_dimensionally_grounded():
                 assert rating.observation_ids
                 assert all(item in bundle.observations for item in rating.observation_ids)
 
-    den = bundle.research.countries["DEN"]
+    den = bundle.research.countries["DNK"]
     assert den.years[1990].ratings["squash_popularity"].value > (
         den.years[2016].ratings["squash_popularity"].value
     )
@@ -3699,8 +3719,8 @@ def test_angola_lesotho_dual_world_batch_is_complete_resolvable_and_time_gated()
     atp = load_earth_research_bundle(Path("config/earth_research/atp_earth.json"))
 
     for bundle, expected_models in (
-        (fifa, {"ANG": "fifa-earth-ang-model.v1", "LES": "fifa-earth-les-model.v1"}),
-        (atp, {"ANG": "atp-earth-ang-model.v1", "LES": "atp-earth-les-model.v1"}),
+        (fifa, {"AGO": "fifa-earth-ang-model.v1", "LSO": "fifa-earth-les-model.v1"}),
+        (atp, {"AGO": "atp-earth-ang-model.v1", "LSO": "atp-earth-les-model.v1"}),
     ):
         for code, model_id in expected_models.items():
             history = bundle.research.countries[code]
@@ -3715,7 +3735,7 @@ def test_angola_lesotho_dual_world_batch_is_complete_resolvable_and_time_gated()
                     assert rating.observation_ids
                     assert all(item in bundle.observations for item in rating.observation_ids)
 
-    ang_fifa = fifa.research.countries["ANG"]
+    ang_fifa = fifa.research.countries["AGO"]
     assert "fifa-structural-angola-history-v1#ang-created-1979" not in ang_fifa.years[1978].ratings["squash_tradition"].observation_ids
     assert "fifa-structural-angola-history-v1#ang-created-1979" in ang_fifa.years[1979].ratings["squash_tradition"].observation_ids
     assert "fifa-structural-angola-history-v1#ang-fifa-caf-1980" not in ang_fifa.years[1979].ratings["competition_quality"].observation_ids
@@ -3725,7 +3745,7 @@ def test_angola_lesotho_dual_world_batch_is_complete_resolvable_and_time_gated()
     assert "fifa-professional-2023-players-v2#angola-p71" not in ang_fifa.years[2022].ratings["competition_quality"].observation_ids
     assert "fifa-professional-2023-players-v2#angola-p71" in ang_fifa.years[2023].ratings["competition_quality"].observation_ids
 
-    les_fifa = fifa.research.countries["LES"]
+    les_fifa = fifa.research.countries["LSO"]
     assert "fifa-structural-lesotho-history-v1#les-fifa-caf-1964" not in les_fifa.years[1963].ratings["competition_quality"].observation_ids
     assert "fifa-structural-lesotho-history-v1#les-fifa-caf-1964" in les_fifa.years[1964].ratings["competition_quality"].observation_ids
     assert "fifa-big-count-2006-all-players-v2#lesotho" in les_fifa.years[2006].ratings["squash_popularity"].observation_ids
@@ -3736,7 +3756,7 @@ def test_angola_lesotho_dual_world_batch_is_complete_resolvable_and_time_gated()
         for source_id in rating.source_ids
     )
 
-    ang_atp = atp.research.countries["ANG"]
+    ang_atp = atp.research.countries["AGO"]
     assert "derived_pre_evidence_context" in atp.observations[
         "atp-angola-history-v1#ang-pre-documented-baseline-1955-2019"
     ].quality_flags
@@ -3745,7 +3765,7 @@ def test_angola_lesotho_dual_world_batch_is_complete_resolvable_and_time_gated()
     assert "atp-angola-development-2026-v1#ang-eligible-2026" not in ang_atp.years[2025].ratings["development_quality"].observation_ids
     assert "atp-angola-development-2026-v1#ang-eligible-2026" in ang_atp.years[2026].ratings["development_quality"].observation_ids
 
-    les_atp = atp.research.countries["LES"]
+    les_atp = atp.research.countries["LSO"]
     assert "derived_pre_evidence_context" in atp.observations[
         "atp-lesotho-history-v1#les-pre-documented-baseline-1955-2019"
     ].quality_flags
@@ -3801,7 +3821,7 @@ def test_cameroon_benin_dual_world_batch_is_complete_resolvable_and_time_gated()
 
     for code, slug in (("CMR", "cameroon"), ("BEN", "benin")):
         history = atp.research.countries[code]
-        key = code.lower()
+        key = _stored_observation_code(code)
         assert "derived_pre_evidence_context" in atp.observations[
             f"atp-{slug}-history-v1#{key}-pre-documented-baseline-1955-2019"
         ].quality_flags
@@ -3847,7 +3867,7 @@ def test_gabon_mauritius_dual_world_batch_is_complete_resolvable_and_time_gated(
 
     for code, slug in (("GAB", "gabon"), ("MUS", "mauritius")):
         h = atp.research.countries[code]
-        key = code.lower()
+        key = _stored_observation_code(code)
         assert f"atp-{slug}-history-v1#{key}-status-2020" not in h.years[2019].ratings["squash_access"].observation_ids
         assert f"atp-{slug}-history-v1#{key}-status-2020" in h.years[2020].ratings["squash_access"].observation_ids
         assert f"atp-{slug}-development-2026-v1#{key}-eligible-2026" in h.years[2026].ratings["development_quality"].observation_ids
@@ -3858,8 +3878,8 @@ def test_madagascar_seychelles_dual_world_batch_is_complete_resolvable_and_time_
     atp = load_earth_research_bundle(Path("config/earth_research/atp_earth.json"))
 
     for bundle, expected_models in (
-        (fifa, {"MDG": "fifa-earth-mdg-model.v1", "SEY": "fifa-earth-sey-model.v1"}),
-        (atp, {"MDG": "atp-earth-mdg-model.v1", "SEY": "atp-earth-sey-model.v1"}),
+        (fifa, {"MDG": "fifa-earth-mdg-model.v1", "SYC": "fifa-earth-sey-model.v1"}),
+        (atp, {"MDG": "atp-earth-mdg-model.v1", "SYC": "atp-earth-sey-model.v1"}),
     ):
         for code, model_id in expected_models.items():
             history = bundle.research.countries[code]
@@ -3880,7 +3900,7 @@ def test_madagascar_seychelles_dual_world_batch_is_complete_resolvable_and_time_
     assert "fifa-big-count-2006-all-players-v2#madagascar" in mdg.years[2006].ratings["squash_popularity"].observation_ids
     assert all("fifa-professional-2023" not in sid for y in mdg.years.values() for r in y.ratings.values() for sid in r.source_ids)
 
-    sey = fifa.research.countries["SEY"]
+    sey = fifa.research.countries["SYC"]
     assert "fifa-structural-seychelles-history-v1#sey-created-1979" not in sey.years[1978].ratings["squash_tradition"].observation_ids
     assert "fifa-structural-seychelles-history-v1#sey-created-1979" in sey.years[1979].ratings["squash_tradition"].observation_ids
     assert "fifa-structural-seychelles-history-v1#sey-fifa-1986" in sey.years[1986].ratings["competition_quality"].observation_ids
@@ -3888,9 +3908,9 @@ def test_madagascar_seychelles_dual_world_batch_is_complete_resolvable_and_time_
     assert "fifa-big-count-2006-all-players-v2#seychelles" in sey.years[2006].ratings["squash_popularity"].observation_ids
     assert all("fifa-professional-2023" not in sid for y in sey.years.values() for r in y.ratings.values() for sid in r.source_ids)
 
-    for code, slug in (("MDG", "madagascar"), ("SEY", "seychelles")):
+    for code, slug in (("MDG", "madagascar"), ("SYC", "seychelles")):
         h = atp.research.countries[code]
-        key = code.lower()
+        key = _stored_observation_code(code)
         assert f"atp-{slug}-history-v1#{key}-play-possible-2020" not in h.years[2019].ratings["squash_access"].observation_ids
         assert f"atp-{slug}-history-v1#{key}-play-possible-2020" in h.years[2020].ratings["squash_access"].observation_ids
         assert f"atp-{slug}-development-2026-v1#{key}-eligible-2026" in h.years[2026].ratings["development_quality"].observation_ids
@@ -3930,7 +3950,7 @@ def test_rwanda_burundi_dual_world_batch_is_complete_resolvable_and_time_gated()
 
     for code, slug in (("RWA", "rwanda"), ("BDI", "burundi")):
         h = atp.research.countries[code]
-        key = code.lower()
+        key = _stored_observation_code(code)
         assert f"atp-{slug}-history-v1#{key}-status-2020" not in h.years[2019].ratings["squash_access"].observation_ids
         assert f"atp-{slug}-history-v1#{key}-status-2020" in h.years[2020].ratings["squash_access"].observation_ids
         assert f"atp-{slug}-development-2026-v1#{key}-eligible-2026" in h.years[2026].ratings["development_quality"].observation_ids
@@ -3941,8 +3961,8 @@ def test_gambia_cape_verde_dual_world_batch_is_complete_resolvable_and_time_gate
     atp = load_earth_research_bundle(Path("config/earth_research/atp_earth.json"))
 
     for bundle, expected_models in (
-        (fifa, {"GAM": "fifa-earth-gam-model.v1", "CPV": "fifa-earth-cpv-model.v1"}),
-        (atp, {"GAM": "atp-earth-gam-model.v1", "CPV": "atp-earth-cpv-model.v1"}),
+        (fifa, {"GMB": "fifa-earth-gam-model.v1", "CPV": "fifa-earth-cpv-model.v1"}),
+        (atp, {"GMB": "atp-earth-gam-model.v1", "CPV": "atp-earth-cpv-model.v1"}),
     ):
         for code, model_id in expected_models.items():
             history = bundle.research.countries[code]
@@ -3955,7 +3975,7 @@ def test_gambia_cape_verde_dual_world_batch_is_complete_resolvable_and_time_gate
                     assert rating.observation_ids
                     assert all(item in bundle.observations for item in rating.observation_ids)
 
-    gam = fifa.research.countries["GAM"]
+    gam = fifa.research.countries["GMB"]
     assert "fifa-structural-gambia-history-v1#gam-created-1952" in gam.years[1955].ratings["squash_tradition"].observation_ids
     assert "fifa-structural-gambia-history-v1#gam-caf-1966" in gam.years[1966].ratings["competition_quality"].observation_ids
     assert "fifa-structural-gambia-history-v1#gam-fifa-1968" in gam.years[1968].ratings["competition_quality"].observation_ids
@@ -3970,9 +3990,9 @@ def test_gambia_cape_verde_dual_world_batch_is_complete_resolvable_and_time_gate
     assert "fifa-big-count-2006-all-players-v2#cape-verde-islands" in cpv.years[2006].ratings["squash_popularity"].observation_ids
     assert all("fifa-professional-2023" not in sid for y in cpv.years.values() for r in y.ratings.values() for sid in r.source_ids)
 
-    for code, slug in (("GAM", "gambia"), ("CPV", "cape-verde")):
+    for code, slug in (("GMB", "gambia"), ("CPV", "cape-verde")):
         h = atp.research.countries[code]
-        key = code.lower()
+        key = _stored_observation_code(code)
         assert f"atp-{slug}-history-v1#{key}-status-2020" not in h.years[2019].ratings["squash_access"].observation_ids
         assert f"atp-{slug}-history-v1#{key}-status-2020" in h.years[2020].ratings["squash_access"].observation_ids
         assert f"atp-{slug}-development-2026-v1#{key}-eligible-2026" in h.years[2026].ratings["development_quality"].observation_ids
@@ -4015,7 +4035,7 @@ def test_djibouti_comoros_dual_world_batch_is_complete_resolvable_and_time_gated
 
     for code, slug in (("DJI", "djibouti"), ("COM", "comoros")):
         h = atp.research.countries[code]
-        key = code.lower()
+        key = _stored_observation_code(code)
         assert f"atp-{slug}-history-v1#{key}-status-2020" not in h.years[2019].ratings["squash_access"].observation_ids
         assert f"atp-{slug}-history-v1#{key}-status-2020" in h.years[2020].ratings["squash_access"].observation_ids
         assert f"atp-{slug}-development-2026-v1#{key}-eligible-2026" in h.years[2026].ratings["development_quality"].observation_ids
@@ -4026,8 +4046,8 @@ def test_equatorial_guinea_guinea_bissau_dual_world_batch_is_complete_resolvable
     atp = load_earth_research_bundle(Path("config/earth_research/atp_earth.json"))
 
     for bundle, expected_models in (
-        (fifa, {"EQG": "fifa-earth-eqg-model.v1", "GNB": "fifa-earth-gnb-model.v1"}),
-        (atp, {"EQG": "atp-earth-eqg-model.v1", "GNB": "atp-earth-gnb-model.v1"}),
+        (fifa, {"GNQ": "fifa-earth-eqg-model.v1", "GNB": "fifa-earth-gnb-model.v1"}),
+        (atp, {"GNQ": "atp-earth-eqg-model.v1", "GNB": "atp-earth-gnb-model.v1"}),
     ):
         for code, model_id in expected_models.items():
             history = bundle.research.countries[code]
@@ -4040,7 +4060,7 @@ def test_equatorial_guinea_guinea_bissau_dual_world_batch_is_complete_resolvable
                     assert rating.observation_ids
                     assert all(item in bundle.observations for item in rating.observation_ids)
 
-    eqg = fifa.research.countries["EQG"]
+    eqg = fifa.research.countries["GNQ"]
     assert "fifa-structural-equatorial-guinea-history-v1#eqg-created-1957" not in eqg.years[1956].ratings["squash_tradition"].observation_ids
     assert "fifa-structural-equatorial-guinea-history-v1#eqg-created-1957" in eqg.years[1957].ratings["squash_tradition"].observation_ids
     assert "fifa-structural-equatorial-guinea-history-v1#eqg-fifa-1986" in eqg.years[1986].ratings["competition_quality"].observation_ids
@@ -4054,9 +4074,9 @@ def test_equatorial_guinea_guinea_bissau_dual_world_batch_is_complete_resolvable
     assert "fifa-structural-guinea-bissau-history-v1#gnb-caf-1986" in gnb.years[1986].ratings["competition_quality"].observation_ids
     assert "fifa-big-count-2006-all-players-v2#guinea-bissau" in gnb.years[2006].ratings["squash_popularity"].observation_ids
 
-    for code, slug in (("EQG", "equatorial-guinea"), ("GNB", "guinea-bissau")):
+    for code, slug in (("GNQ", "equatorial-guinea"), ("GNB", "guinea-bissau")):
         h = atp.research.countries[code]
-        key = code.lower()
+        key = _stored_observation_code(code)
         assert f"atp-{slug}-history-v1#{key}-status-2020" not in h.years[2019].ratings["squash_access"].observation_ids
         assert f"atp-{slug}-history-v1#{key}-status-2020" in h.years[2020].ratings["squash_access"].observation_ids
         assert f"atp-{slug}-development-2026-v1#{key}-eligible-2026" in h.years[2026].ratings["development_quality"].observation_ids
@@ -4146,7 +4166,7 @@ def test_liberia_sierra_leone_dual_world_batch_is_complete_resolvable_and_time_g
 
     for code, slug in (("LBR", "liberia"), ("SLE", "sierra-leone")):
         h = atp.research.countries[code]
-        key = code.lower()
+        key = _stored_observation_code(code)
         assert f"atp-{slug}-history-v1#{key}-status-2020" not in h.years[2019].ratings["squash_access"].observation_ids
         assert f"atp-{slug}-history-v1#{key}-status-2020" in h.years[2020].ratings["squash_access"].observation_ids
         assert f"atp-{slug}-development-2026-v1#{key}-eligible-2026" in h.years[2026].ratings["development_quality"].observation_ids
@@ -4186,7 +4206,7 @@ def test_togo_burkina_faso_dual_world_batch_is_complete_resolvable_and_time_gate
 
     for code, slug in (("TGO", "togo"), ("BFA", "burkina-faso")):
         h = atp.research.countries[code]
-        key = code.lower()
+        key = _stored_observation_code(code)
         assert f"atp-{slug}-history-v1#{key}-status-2020" in h.years[2020].ratings["squash_access"].observation_ids
         assert f"atp-{slug}-development-2026-v1#{key}-eligible-2026" in h.years[2026].ratings["development_quality"].observation_ids
 
@@ -4227,7 +4247,7 @@ def test_mali_mauritania_dual_world_batch_is_complete_resolvable_and_time_gated(
 
     for code, slug in (("MLI", "mali"), ("MRT", "mauritania")):
         h = atp.research.countries[code]
-        key = code.lower()
+        key = _stored_observation_code(code)
         assert f"atp-{slug}-history-v1#{key}-status-2020" in h.years[2020].ratings["squash_access"].observation_ids
         assert f"atp-{slug}-development-2026-v1#{key}-eligible-2026" in h.years[2026].ratings["development_quality"].observation_ids
 
@@ -4237,8 +4257,8 @@ def test_niger_chad_dual_world_batch_is_complete_resolvable_and_time_gated():
     atp = load_earth_research_bundle(Path("config/earth_research/atp_earth.json"))
 
     for bundle, expected_models in (
-        (fifa, {"NER": "fifa-earth-ner-model.v1", "CHA": "fifa-earth-cha-model.v1"}),
-        (atp, {"NER": "atp-earth-ner-model.v1", "CHA": "atp-earth-cha-model.v1"}),
+        (fifa, {"NER": "fifa-earth-ner-model.v1", "TCD": "fifa-earth-cha-model.v1"}),
+        (atp, {"NER": "atp-earth-ner-model.v1", "TCD": "atp-earth-cha-model.v1"}),
     ):
         for code, model_id in expected_models.items():
             history = bundle.research.countries[code]
@@ -4258,16 +4278,16 @@ def test_niger_chad_dual_world_batch_is_complete_resolvable_and_time_gated():
     assert "fifa-big-count-2006-all-players-v2#niger" in ner.years[2006].ratings["squash_popularity"].observation_ids
     assert all("fifa-professional-2023" not in sid for y in ner.years.values() for r in y.ratings.values() for sid in r.source_ids)
 
-    cha = fifa.research.countries["CHA"]
+    cha = fifa.research.countries["TCD"]
     assert "fifa-structural-chad-history-v1#cha-created-1962" in cha.years[1962].ratings["squash_tradition"].observation_ids
     assert "fifa-structural-chad-history-v1#cha-fifa-1964" in cha.years[1964].ratings["competition_quality"].observation_ids
     assert "fifa-structural-chad-history-v1#cha-caf-1964" in cha.years[1964].ratings["competition_quality"].observation_ids
     assert "fifa-big-count-2006-all-players-v2#chad" in cha.years[2006].ratings["squash_popularity"].observation_ids
     assert all("fifa-professional-2023" not in sid for y in cha.years.values() for r in y.ratings.values() for sid in r.source_ids)
 
-    for code, slug in (("NER", "niger"), ("CHA", "chad")):
+    for code, slug in (("NER", "niger"), ("TCD", "chad")):
         h = atp.research.countries[code]
-        key = code.lower()
+        key = _stored_observation_code(code)
         assert f"atp-{slug}-history-v1#{key}-status-2020" in h.years[2020].ratings["squash_access"].observation_ids
         assert f"atp-{slug}-development-2026-v1#{key}-eligible-2026" in h.years[2026].ratings["development_quality"].observation_ids
 
@@ -4309,7 +4329,7 @@ def test_ethiopia_eritrea_dual_world_batch_is_complete_resolvable_and_time_gated
 
     for code, slug in (("ETH", "ethiopia"), ("ERI", "eritrea")):
         h = atp.research.countries[code]
-        key = code.lower()
+        key = _stored_observation_code(code)
         assert f"atp-{slug}-history-v1#{key}-status-2020" in h.years[2020].ratings["squash_access"].observation_ids
         assert f"atp-{slug}-development-2026-v1#{key}-eligible-2026" in h.years[2026].ratings["development_quality"].observation_ids
 
@@ -4501,12 +4521,12 @@ def test_lbn_syr_dual_world_batch_is_complete_resolvable_and_temporal():
     for code, slug in (("LBN", "lebanon"), ("SYR", "syria")):
         history = atp.research.countries[code]
         baseline = atp.observations[
-            f"atp-{slug}-history-v1#{code.lower()}-pre-modern-baseline-1955-2025"
+            f"atp-{slug}-history-v1#{_stored_observation_code(code)}-pre-modern-baseline-1955-2025"
         ]
         assert baseline.is_direct_observation is False
         assert baseline.is_statistically_modelled is False
         assert "project_authored_baseline" in baseline.quality_flags
-        assert f"atp-{slug}-development-2026-v1#{code.lower()}-eligible-2026" in (
+        assert f"atp-{slug}-development-2026-v1#{_stored_observation_code(code)}-eligible-2026" in (
             history.years[2026].ratings["development_quality"].observation_ids
         )
 
@@ -4551,11 +4571,11 @@ def test_pse_bhr_dual_world_batch_is_complete_resolvable_and_temporal():
 
     for code, slug in (("PSE", "palestine"), ("BHR", "bahrain")):
         history = atp.research.countries[code]
-        baseline = atp.observations[f"atp-{slug}-history-v1#{code.lower()}-pre-modern-baseline-1955-2025"]
+        baseline = atp.observations[f"atp-{slug}-history-v1#{_stored_observation_code(code)}-pre-modern-baseline-1955-2025"]
         assert baseline.is_direct_observation is False
         assert baseline.is_statistically_modelled is False
         assert "project_authored_baseline" in baseline.quality_flags
-        assert f"atp-{slug}-development-2026-v1#{code.lower()}-eligible-2026" in (
+        assert f"atp-{slug}-development-2026-v1#{_stored_observation_code(code)}-eligible-2026" in (
             history.years[2026].ratings["development_quality"].observation_ids
         )
 
@@ -4652,7 +4672,7 @@ def test_irn_afg_dual_world_batch_is_complete_resolvable_and_temporal():
     )
 
     for code, slug in (("IRN", "iran"), ("AFG", "afghanistan")):
-        baseline = atp.observations[f"atp-{slug}-history-v1#{code.lower()}-pre-modern-baseline-1955-2025"]
+        baseline = atp.observations[f"atp-{slug}-history-v1#{_stored_observation_code(code)}-pre-modern-baseline-1955-2025"]
         assert baseline.is_direct_observation is False
         assert baseline.is_statistically_modelled is False
         assert "project_authored_baseline" in baseline.quality_flags
@@ -4695,7 +4715,7 @@ def test_bgd_npl_dual_world_batch_is_complete_resolvable_and_temporal():
     )
 
     for code, slug in (("BGD", "bangladesh"), ("NPL", "nepal")):
-        baseline = atp.observations[f"atp-{slug}-history-v1#{code.lower()}-pre-modern-baseline-1955-2025"]
+        baseline = atp.observations[f"atp-{slug}-history-v1#{_stored_observation_code(code)}-pre-modern-baseline-1955-2025"]
         assert baseline.is_direct_observation is False
         assert baseline.is_statistically_modelled is False
         assert "project_authored_baseline" in baseline.quality_flags
@@ -4731,7 +4751,7 @@ def test_lka_btn_dual_world_batch_is_complete_resolvable_and_temporal():
             for rating in year.ratings.values()
             for item in rating.observation_ids
         )
-        baseline = atp.observations[f"atp-{slug}-history-v1#{code.lower()}-pre-modern-baseline-1955-2025"]
+        baseline = atp.observations[f"atp-{slug}-history-v1#{_stored_observation_code(code)}-pre-modern-baseline-1955-2025"]
         assert baseline.is_direct_observation is False
         assert baseline.is_statistically_modelled is False
         assert "project_authored_baseline" in baseline.quality_flags
@@ -4761,7 +4781,7 @@ def test_mdv_mng_dual_world_batch_is_complete_resolvable_and_temporal():
     for code, slug in (("MDV", "maldives"), ("MNG", "mongolia")):
         history = fifa.research.countries[code]
         assert f"fifa-big-count-2006-all-players-v2#{slug}" in history.years[2006].ratings["squash_popularity"].observation_ids
-        baseline = atp.observations[f"atp-{slug}-history-v1#{code.lower()}-pre-modern-baseline-1955-2025"]
+        baseline = atp.observations[f"atp-{slug}-history-v1#{_stored_observation_code(code)}-pre-modern-baseline-1955-2025"]
         assert baseline.is_direct_observation is False
         assert baseline.is_statistically_modelled is False
         assert "project_authored_baseline" in baseline.quality_flags
@@ -4791,7 +4811,7 @@ def test_khm_mmr_dual_world_batch_is_complete_resolvable_and_temporal():
     for code, slug in (("KHM", "cambodia"), ("MMR", "myanmar")):
         history = fifa.research.countries[code]
         assert f"fifa-big-count-2006-all-players-v2#{slug}" in history.years[2006].ratings["squash_popularity"].observation_ids
-        baseline = atp.observations[f"atp-{slug}-history-v1#{code.lower()}-pre-modern-baseline-1955-2025"]
+        baseline = atp.observations[f"atp-{slug}-history-v1#{_stored_observation_code(code)}-pre-modern-baseline-1955-2025"]
         assert baseline.is_direct_observation is False
         assert baseline.is_statistically_modelled is False
         assert "project_authored_baseline" in baseline.quality_flags
@@ -4824,7 +4844,7 @@ def test_lao_brn_dual_world_batch_is_complete_resolvable_and_temporal():
     ):
         history = fifa.research.countries[code]
         assert f"fifa-big-count-2006-all-players-v2#{big_slug}" in history.years[2006].ratings["squash_popularity"].observation_ids
-        baseline = atp.observations[f"atp-{slug}-history-v1#{code.lower()}-pre-modern-baseline-1955-2025"]
+        baseline = atp.observations[f"atp-{slug}-history-v1#{_stored_observation_code(code)}-pre-modern-baseline-1955-2025"]
         assert baseline.is_direct_observation is False
         assert baseline.is_statistically_modelled is False
         assert "project_authored_baseline" in baseline.quality_flags
@@ -4854,7 +4874,7 @@ def test_vnm_uzb_dual_world_batch_is_complete_resolvable_and_temporal():
     for code, slug in (("VNM", "vietnam"), ("UZB", "uzbekistan")):
         history = fifa.research.countries[code]
         assert f"fifa-big-count-2006-all-players-v2#{slug}" in history.years[2006].ratings["squash_popularity"].observation_ids
-        baseline = atp.observations[f"atp-{slug}-history-v1#{code.lower()}-pre-modern-baseline-1955-2025"]
+        baseline = atp.observations[f"atp-{slug}-history-v1#{_stored_observation_code(code)}-pre-modern-baseline-1955-2025"]
         assert baseline.is_direct_observation is False
         assert baseline.is_statistically_modelled is False
         assert "project_authored_baseline" in baseline.quality_flags
@@ -4884,7 +4904,7 @@ def test_tjk_tkm_dual_world_batch_is_complete_resolvable_and_temporal():
     for code, slug in (("TJK", "tajikistan"), ("TKM", "turkmenistan")):
         history = fifa.research.countries[code]
         assert f"fifa-big-count-2006-all-players-v2#{slug}" in history.years[2006].ratings["squash_popularity"].observation_ids
-        baseline = atp.observations[f"atp-{slug}-history-v1#{code.lower()}-pre-modern-baseline-1955-2025"]
+        baseline = atp.observations[f"atp-{slug}-history-v1#{_stored_observation_code(code)}-pre-modern-baseline-1955-2025"]
         assert baseline.is_direct_observation is False
         assert baseline.is_statistically_modelled is False
         assert "project_authored_baseline" in baseline.quality_flags
@@ -4914,7 +4934,7 @@ def test_kgz_geo_dual_world_batch_is_complete_resolvable_and_temporal():
     for code, slug in (("KGZ", "kyrgyzstan"), ("GEO", "georgia")):
         history = fifa.research.countries[code]
         assert f"fifa-big-count-2006-all-players-v2#{slug}" in history.years[2006].ratings["squash_popularity"].observation_ids
-        baseline = atp.observations[f"atp-{slug}-history-v1#{code.lower()}-pre-modern-baseline-1955-2025"]
+        baseline = atp.observations[f"atp-{slug}-history-v1#{_stored_observation_code(code)}-pre-modern-baseline-1955-2025"]
         assert baseline.is_direct_observation is False
         assert baseline.is_statistically_modelled is False
         assert "project_authored_baseline" in baseline.quality_flags
@@ -4944,7 +4964,7 @@ def test_arm_aze_dual_world_batch_is_complete_resolvable_and_temporal():
     for code, slug in (("ARM", "armenia"), ("AZE", "azerbaijan")):
         history = fifa.research.countries[code]
         assert f"fifa-big-count-2006-all-players-v2#{slug}" in history.years[2006].ratings["squash_popularity"].observation_ids
-        baseline = atp.observations[f"atp-{slug}-history-v1#{code.lower()}-pre-modern-baseline-1955-2025"]
+        baseline = atp.observations[f"atp-{slug}-history-v1#{_stored_observation_code(code)}-pre-modern-baseline-1955-2025"]
         assert baseline.is_direct_observation is False
         assert baseline.is_statistically_modelled is False
         assert "project_authored_baseline" in baseline.quality_flags
@@ -4974,7 +4994,7 @@ def test_alb_mda_dual_world_batch_is_complete_resolvable_and_temporal():
     for code, slug in (("ALB", "albania"), ("MDA", "moldova")):
         history = fifa.research.countries[code]
         assert f"fifa-big-count-2006-all-players-v2#{slug}" in history.years[2006].ratings["squash_popularity"].observation_ids
-        baseline = atp.observations[f"atp-{slug}-history-v1#{code.lower()}-pre-modern-baseline-1955-2025"]
+        baseline = atp.observations[f"atp-{slug}-history-v1#{_stored_observation_code(code)}-pre-modern-baseline-1955-2025"]
         assert baseline.is_direct_observation is False
         assert baseline.is_statistically_modelled is False
         assert "project_authored_baseline" in baseline.quality_flags
@@ -5032,7 +5052,7 @@ def test_mkd_bih_dual_world_batch_is_complete_resolvable_and_temporal():
             assert "fifa-professional-2023" in fifa_history.years[2023].ratings[attr].source_ids
 
         baseline = atp.observations[
-            f"atp-{meta['atp_slug']}-history-v1#{code.lower()}-pre-modern-baseline-1955-2025"
+            f"atp-{meta['atp_slug']}-history-v1#{_stored_observation_code(code)}-pre-modern-baseline-1955-2025"
         ]
         assert baseline.is_direct_observation is False
         assert baseline.is_statistically_modelled is False
@@ -5101,7 +5121,7 @@ def test_blr_mlt_dual_world_batch_is_complete_resolvable_and_temporal():
             assert "fifa-professional-2023" in fifa_history.years[2023].ratings[attr].source_ids
 
         baseline = atp.observations[
-            f"atp-{meta['atp_slug']}-history-v1#{code.lower()}-pre-modern-baseline-1955-2025"
+            f"atp-{meta['atp_slug']}-history-v1#{_stored_observation_code(code)}-pre-modern-baseline-1955-2025"
         ]
         assert baseline.is_direct_observation is False
         assert baseline.is_statistically_modelled is False
@@ -5159,7 +5179,7 @@ def test_lux_cri_dual_world_batch_is_complete_resolvable_and_temporal():
         )
 
         baseline = atp.observations[
-            f"atp-{meta['atp_slug']}-history-v1#{code.lower()}-pre-modern-baseline-1955-2025"
+            f"atp-{meta['atp_slug']}-history-v1#{_stored_observation_code(code)}-pre-modern-baseline-1955-2025"
         ]
         assert baseline.is_direct_observation is False
         assert baseline.is_statistically_modelled is False
@@ -5228,7 +5248,7 @@ def test_jam_tto_dual_world_batch_is_complete_resolvable_and_temporal():
         )
 
         baseline = atp.observations[
-            f"atp-{meta['atp_slug']}-history-v1#{code.lower()}-pre-modern-baseline-1955-2025"
+            f"atp-{meta['atp_slug']}-history-v1#{_stored_observation_code(code)}-pre-modern-baseline-1955-2025"
         ]
         assert baseline.is_direct_observation is False
         assert baseline.is_statistically_modelled is False
@@ -5316,7 +5336,7 @@ def test_pan_dom_dual_world_batch_is_complete_resolvable_and_temporal():
             assert "fifa-professional-2023" in fifa_history.years[2023].ratings[attr].source_ids
 
         baseline = atp.observations[
-            f"atp-{meta['atp_slug']}-history-v1#{code.lower()}-pre-modern-baseline-1955-2025"
+            f"atp-{meta['atp_slug']}-history-v1#{_stored_observation_code(code)}-pre-modern-baseline-1955-2025"
         ]
         assert baseline.is_direct_observation is False
         assert baseline.is_statistically_modelled is False
@@ -5369,7 +5389,7 @@ def test_gtm_hnd_dual_world_batch_is_complete_resolvable_and_temporal():
             assert meta["pro_clubs"] in fifa_history.years[2023].ratings[attr].observation_ids
             assert "fifa-professional-2023" in fifa_history.years[2023].ratings[attr].source_ids
 
-        baseline = atp.observations[f"atp-{meta['atp_slug']}-history-v1#{code.lower()}-pre-modern-baseline-1955-2025"]
+        baseline = atp.observations[f"atp-{meta['atp_slug']}-history-v1#{_stored_observation_code(code)}-pre-modern-baseline-1955-2025"]
         assert baseline.is_direct_observation is False
         assert baseline.is_statistically_modelled is False
         assert "project_authored_baseline" in baseline.quality_flags
@@ -5421,7 +5441,7 @@ def test_slv_nic_dual_world_batch_is_complete_resolvable_and_temporal():
             assert meta["pro_clubs"] in fifa_history.years[2023].ratings[attr].observation_ids
             assert "fifa-professional-2023" in fifa_history.years[2023].ratings[attr].source_ids
 
-        baseline = atp.observations[f"atp-{meta['atp_slug']}-history-v1#{code.lower()}-pre-modern-baseline-1955-2025"]
+        baseline = atp.observations[f"atp-{meta['atp_slug']}-history-v1#{_stored_observation_code(code)}-pre-modern-baseline-1955-2025"]
         assert baseline.is_direct_observation is False
         assert baseline.is_statistically_modelled is False
         assert "project_authored_baseline" in baseline.quality_flags
@@ -5474,7 +5494,7 @@ def test_blz_hti_dual_world_batch_preserves_partial_professional_evidence():
             else:
                 assert all("fifa-professional-2023-clubs-v2#haiti" not in item for item in fifa_history.years[2023].ratings[attr].observation_ids)
 
-        baseline = atp.observations[f"atp-{meta['atp_slug']}-history-v1#{code.lower()}-pre-modern-baseline-1955-2025"]
+        baseline = atp.observations[f"atp-{meta['atp_slug']}-history-v1#{_stored_observation_code(code)}-pre-modern-baseline-1955-2025"]
         assert baseline.is_direct_observation is False
         assert baseline.is_statistically_modelled is False
         assert "project_authored_baseline" in baseline.quality_flags
@@ -5531,7 +5551,7 @@ def test_per_bol_dual_world_batch_is_complete_resolvable_and_temporal():
             assert meta["pro_clubs"] in fifa_history.years[2023].ratings[attr].observation_ids
             assert "fifa-professional-2023" in fifa_history.years[2023].ratings[attr].source_ids
 
-        baseline = atp.observations[f"atp-{meta['atp_slug']}-history-v1#{code.lower()}-pre-modern-baseline-1955-2025"]
+        baseline = atp.observations[f"atp-{meta['atp_slug']}-history-v1#{_stored_observation_code(code)}-pre-modern-baseline-1955-2025"]
         assert baseline.is_direct_observation is False
         assert baseline.is_statistically_modelled is False
         assert "project_authored_baseline" in baseline.quality_flags
@@ -5583,7 +5603,7 @@ def test_pry_ury_dual_world_batch_is_complete_resolvable_and_temporal():
             assert meta["pro_clubs"] in fifa_history.years[2023].ratings[attr].observation_ids
             assert "fifa-professional-2023" in fifa_history.years[2023].ratings[attr].source_ids
 
-        baseline = atp.observations[f"atp-{meta['atp_slug']}-history-v1#{code.lower()}-pre-modern-baseline-1955-2025"]
+        baseline = atp.observations[f"atp-{meta['atp_slug']}-history-v1#{_stored_observation_code(code)}-pre-modern-baseline-1955-2025"]
         assert baseline.is_direct_observation is False
         assert baseline.is_statistically_modelled is False
         assert "project_authored_baseline" in baseline.quality_flags
@@ -5637,7 +5657,7 @@ def test_ven_guy_dual_world_batch_handles_missing_professional_fields_and_histor
                 assert "fifa-professional-2023" not in fifa_history.years[2023].ratings[attr].source_ids
                 assert all("fifa-professional-2023-" not in item for item in fifa_history.years[2023].ratings[attr].observation_ids)
 
-        baseline = atp.observations[f"atp-{meta['atp_slug']}-history-v1#{code.lower()}-pre-modern-baseline-1955-2025"]
+        baseline = atp.observations[f"atp-{meta['atp_slug']}-history-v1#{_stored_observation_code(code)}-pre-modern-baseline-1955-2025"]
         assert baseline.is_direct_observation is False
         assert baseline.is_statistically_modelled is False
         assert "project_authored_baseline" in baseline.quality_flags
@@ -5694,7 +5714,7 @@ def test_cub_sur_dual_world_batch_preserves_partial_professional_evidence():
                 assert meta["pro_clubs"] in fifa_history.years[2023].ratings[attr].observation_ids
                 assert "fifa-professional-2023" in fifa_history.years[2023].ratings[attr].source_ids
 
-        baseline = atp.observations[f"atp-{meta['atp_slug']}-history-v1#{code.lower()}-pre-modern-baseline-1955-2025"]
+        baseline = atp.observations[f"atp-{meta['atp_slug']}-history-v1#{_stored_observation_code(code)}-pre-modern-baseline-1955-2025"]
         assert baseline.is_direct_observation is False
         assert baseline.is_statistically_modelled is False
         assert "project_authored_baseline" in baseline.quality_flags
@@ -5743,7 +5763,7 @@ def test_bhs_brb_dual_world_batch_keeps_null_professional_fields_unused():
             assert "fifa-professional-2023" not in fifa_history.years[2023].ratings[attr].source_ids
             assert all(not item.startswith("fifa-professional-2023-") for item in fifa_history.years[2023].ratings[attr].observation_ids)
 
-        baseline = atp.observations[f"atp-{meta['atp_slug']}-history-v1#{code.lower()}-pre-modern-baseline-1955-2025"]
+        baseline = atp.observations[f"atp-{meta['atp_slug']}-history-v1#{_stored_observation_code(code)}-pre-modern-baseline-1955-2025"]
         assert baseline.is_direct_observation is False
         assert baseline.is_statistically_modelled is False
         assert "project_authored_baseline" in baseline.quality_flags
@@ -5779,7 +5799,7 @@ def test_grd_dma_dual_world_batch_preserves_partial_professional_evidence():
                     assert 1.0 <= rating.value <= 10.0
                     assert round(rating.value, 1) == rating.value
 
-        baseline = atp.observations[f"atp-{slug}-history-v1#{code.lower()}-pre-modern-baseline-1955-2025"]
+        baseline = atp.observations[f"atp-{slug}-history-v1#{_stored_observation_code(code)}-pre-modern-baseline-1955-2025"]
         assert baseline.is_direct_observation is False
         assert baseline.is_statistically_modelled is False
         assert "project_authored_baseline" in baseline.quality_flags
@@ -5836,7 +5856,7 @@ def test_atg_lca_dual_world_batch_keeps_null_professional_fields_unused():
             assert "fifa-professional-2023" not in fifa_history.years[2023].ratings[attr].source_ids
             assert all(not item.startswith("fifa-professional-2023-") for item in fifa_history.years[2023].ratings[attr].observation_ids)
 
-        baseline = atp.observations[f"atp-{atp_slug}-history-v1#{code.lower()}-pre-modern-baseline-1955-2025"]
+        baseline = atp.observations[f"atp-{atp_slug}-history-v1#{_stored_observation_code(code)}-pre-modern-baseline-1955-2025"]
         assert baseline.is_direct_observation is False
         assert baseline.is_statistically_modelled is False
         assert "project_authored_baseline" in baseline.quality_flags
@@ -5880,7 +5900,7 @@ def test_vct_kna_dual_world_batch_keeps_null_professional_fields_unused():
             assert "fifa-professional-2023" not in fifa_history.years[2023].ratings[attr].source_ids
             assert all(not item.startswith("fifa-professional-2023-") for item in fifa_history.years[2023].ratings[attr].observation_ids)
 
-        baseline = atp.observations[f"atp-{atp_slug}-history-v1#{code.lower()}-pre-modern-baseline-1955-2025"]
+        baseline = atp.observations[f"atp-{atp_slug}-history-v1#{_stored_observation_code(code)}-pre-modern-baseline-1955-2025"]
         assert baseline.is_direct_observation is False
         assert baseline.is_statistically_modelled is False
         assert "project_authored_baseline" in baseline.quality_flags
@@ -5922,7 +5942,7 @@ def test_vgb_tca_dual_world_batch_keeps_null_professional_fields_unused():
         for attr in ("development_quality", "competition_quality", "elite_support"):
             assert "fifa-professional-2023" not in fifa_history.years[2023].ratings[attr].source_ids
             assert all(not item.startswith("fifa-professional-2023-") for item in fifa_history.years[2023].ratings[attr].observation_ids)
-        baseline = atp.observations[f"atp-{atp_slug}-history-v1#{code.lower()}-pre-modern-baseline-1955-2025"]
+        baseline = atp.observations[f"atp-{atp_slug}-history-v1#{_stored_observation_code(code)}-pre-modern-baseline-1955-2025"]
         assert baseline.is_direct_observation is False
         assert baseline.is_statistically_modelled is False
         assert "project_authored_baseline" in baseline.quality_flags
@@ -5955,7 +5975,7 @@ def test_aia_bmu_dual_world_batch_keeps_null_professional_fields_unused():
         for attr in ("development_quality", "competition_quality", "elite_support"):
             assert "fifa-professional-2023" not in fifa_history.years[2023].ratings[attr].source_ids
             assert all(not item.startswith("fifa-professional-2023-") for item in fifa_history.years[2023].ratings[attr].observation_ids)
-        baseline = atp.observations[f"atp-{atp_slug}-history-v1#{code.lower()}-pre-modern-baseline-1955-2025"]
+        baseline = atp.observations[f"atp-{atp_slug}-history-v1#{_stored_observation_code(code)}-pre-modern-baseline-1955-2025"]
         assert baseline.is_direct_observation is False
         assert baseline.is_statistically_modelled is False
         assert "project_authored_baseline" in baseline.quality_flags
@@ -6569,3 +6589,24 @@ def test_ala_ata_do_not_inherit_external_federation_membership(world_id):
             for rating in b.research.countries[code].years[year].ratings.values():
                 assert all("project-assumptions" in source for source in rating.source_ids)
                 assert all(b.observations[x].observation_year is None for x in rating.observation_ids)
+
+
+def test_earth_loaded_country_codes_use_canonical_world_identity():
+    aliases = {
+        "ANG": "AGO",
+        "CHA": "TCD",
+        "EQG": "GNQ",
+        "GAM": "GMB",
+        "LES": "LSO",
+        "SEY": "SYC",
+        "NED": "NLD",
+        "SUI": "CHE",
+        "CRO": "HRV",
+        "GRE": "GRC",
+        "DEN": "DNK",
+    }
+    for world_id in ("fifa_earth", "atp_earth"):
+        bundle = load_earth_research_bundle(Path(f"config/earth_research/{world_id}.json"))
+        for legacy_code, canonical_code in aliases.items():
+            assert legacy_code not in bundle.research.countries
+            assert canonical_code in bundle.research.countries

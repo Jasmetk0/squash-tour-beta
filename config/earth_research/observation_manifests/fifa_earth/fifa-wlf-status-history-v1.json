@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-wlf-status-history-v1",
+  "source_id": "wlf-status-history",
+  "relative_path": "observations/normalized/fifa_wlf_status_history_v1.json",
+  "sha256": "283fde57fd5c4e65cc449b2a48e62dbebd48aa7d88526cb761c0ea6e68d953d1",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-final4-batch-2026-10-07"
+}

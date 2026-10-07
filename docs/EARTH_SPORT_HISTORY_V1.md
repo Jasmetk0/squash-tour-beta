@@ -503,3 +503,6 @@ COG and FSM now have complete 1955–2026 histories in both FIFA Earth and ATP E
 
 ### Russia + Kiribati reviewed batch (2026-10-07)
 RUS and KIR now have complete 1955–2026 histories in both FIFA Earth and ATP Earth. Russia's USSR-to-Russian-Federation identity transition is explicit and 2022 football/tennis suspension context is dated rather than backfilled. Kiribati is treated as an OFC associate-member football identity without inferring FIFA membership; current ITF evidence enters only in 2026.
+
+### Marshall Islands + Palau reviewed batch (2026-10-07)
+MHL and PLW now have complete 1955–2026 histories in both FIFA Earth and ATP Earth. Their FIFA histories deliberately remain project-prior-only rather than inventing federation membership. Trust-territory transitions are explicit (MHL 1986, PLW 1994), while current ITF association evidence enters only in 2026.

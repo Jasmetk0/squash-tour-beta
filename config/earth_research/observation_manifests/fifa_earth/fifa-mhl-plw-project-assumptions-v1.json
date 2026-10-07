@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-mhl-plw-project-assumptions-v1",
+  "source_id": "mhl-plw-fifa-project-assumptions",
+  "relative_path": "observations/normalized/fifa_mhl_plw_project_assumptions_v1.json",
+  "sha256": "61931ddea84e7df898845645beb16283f7a3166669df1aeda09fe4c6d4bc26b3",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-mhl-plw-batch-2026-10-07"
+}

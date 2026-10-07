@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-mhl-plw-project-assumptions-v1",
+  "source_id": "mhl-plw-atp-project-assumptions",
+  "relative_path": "observations/normalized/atp_mhl_plw_project_assumptions_v1.json",
+  "sha256": "426b151aaf853ae44bdfd44c12424e9e65025c5726933aa19c7e3288e528a8c6",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-mhl-plw-batch-2026-10-07"
+}

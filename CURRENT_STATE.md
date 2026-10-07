@@ -6227,3 +6227,12 @@ bands should shape 0..200 potential. No threshold is inferred from current OVR v
 - Constitutional and territorial status is identity context only and never used as direct sports evidence.
 - Ratings are explicit low-confidence local project estimates and do not automatically inherit Denmark- or Norway-wide sports evidence.
 - No football or tennis federation membership, organised competition, rankings, titles or athlete outcomes are inferred.
+
+### Earth final ESH/IMN/VAT/WLF batch — 2026-10-07
+- Added complete 1955-2026 FIFA Earth and ATP Earth histories for Western Sahara (ESH), Isle of Man (IMN), Vatican City (VAT) and Wallis and Futuna (WLF).
+- Authored-history coverage reaches 250/250 in both packages.
+- Western Sahara preserves the 1963 UN Non-Self-Governing Territory listing and Spain's 1976 end of presence as identity context; the model does not turn territorial-status claims into sports evidence.
+- Isle of Man is represented as a distinct self-governing Crown Dependency identity rather than inheriting United Kingdom-wide sports evidence.
+- Vatican City remains a stable Vatican City State identity throughout the 1955-2026 window, with the 1929 Lateran Treaty retained as pre-window identity context.
+- Wallis and Futuna preserves the 1961 overseas-territory transition and 2003 overseas-collectivity terminology.
+- All ratings remain explicit low-confidence local project estimates; no football or tennis federation membership, organised competition, rankings, titles or athlete outcomes are inferred.

@@ -22,6 +22,7 @@ jobs:
       docs_only: ${{ steps.filter.outputs.docs_only }}
       fifa_calibration: ${{ steps.filter.outputs.fifa_calibration }}
       earth_data: ${{ steps.filter.outputs.earth_data }}
+      earth_realism: ${{ steps.filter.outputs.earth_realism }}
       backend_core: ${{ steps.filter.outputs.backend_core }}
     steps:
       - uses: actions/checkout@v4
@@ -36,6 +37,7 @@ jobs:
           predicate-quantifier: 'some-with-excludes'
           filters: |
             backend:
+              - '.github/workflows/ci.yml'
               - 'config/world_packages/**'
               - 'config/player_generation/**'
               - 'config/earth_research/**'
@@ -51,6 +53,12 @@ jobs:
             earth_data:
               - 'config/earth_research/**'
               - 'tests/application/test_earth_seed_progress.py'
+            earth_realism:
+              - '.github/workflows/ci.yml'
+              - 'config/earth_research/**'
+              - 'src/beta_engine/application/earth_realism_audit.py'
+              - 'scripts/audit_earth_realism.py'
+              - 'tests/application/test_earth_realism_audit.py'
             backend_core:
               - 'config/world_packages/**'
               - 'config/player_generation/**'
@@ -95,9 +103,62 @@ jobs:
             python -m pytest tests/application/test_earth_seed_progress.py \
             --maxfail=1 --durations=10
       - name: Run PR critical backend tests
-        if: needs.changes.outputs.backend_core == 'true' || needs.changes.outputs.earth_data != 'true'
+        if: needs.changes.outputs.backend_core == 'true'
         run: |
           python -m pytest -m pr_critical --maxfail=1 --durations=10
+      - name: Generate Earth realism audit
+        if: needs.changes.outputs.earth_realism == 'true'
+        run: |
+          mkdir -p /tmp/earth-realism-audit
+          PYTHONPATH=src:. python scripts/audit_earth_realism.py \
+            --output /tmp/earth-realism-audit/report.json >/dev/null
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          report = json.loads(Path("/tmp/earth-realism-audit/report.json").read_text())
+          print("EARTH_REALISM_AUDIT_SUMMARY")
+          for world_id in ("fifa_earth", "atp_earth"):
+              world = report["worlds"][world_id]
+              ranked = sorted(
+                  world["countries"].items(),
+                  key=lambda item: (
+                      -len(item[1]["review_flags"]),
+                      -item[1]["low_confidence_share"],
+                      -item[1]["large_annual_jump_count"],
+                      -item[1]["long_flat_run_count"],
+                      item[0],
+                  ),
+              )
+              print(
+                  f"{world_id}: countries={world['country_count']} "
+                  f"ratings={world['rating_count']} "
+                  f"review={world['countries_requiring_review_count']} "
+                  f"jumps={world['large_annual_jump_count']} "
+                  f"flat_runs={world['long_flat_run_count']} "
+                  f"duplicate_groups={world['same_world_identical_numeric_history_group_count']}"
+              )
+              print("top_review=" + ",".join(
+                  f"{code}:{'/'.join(data['review_flags']) or 'none'}"
+                  for code, data in ranked[:20]
+              ))
+          cross = report["cross_world"]
+          print(
+              "cross_world: "
+              f"shared={cross['shared_country_count']} "
+              f"identical={cross['identical_numeric_history_count']}"
+          )
+          print("cross_world_identical=" + ",".join(cross["identical_numeric_histories"][:50]))
+          PY
+      - name: Upload Earth realism audit
+        if: needs.changes.outputs.earth_realism == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: earth-realism-audit
+          path: /tmp/earth-realism-audit/report.json
+          if-no-files-found: error
+          retention-days: 7
+
       - name: Generate FIFA calibration review bundle
         if: needs.changes.outputs.fifa_calibration == 'true' && needs.changes.outputs.backend_core == 'true'
         run: |

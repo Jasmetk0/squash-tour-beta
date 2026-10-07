@@ -440,7 +440,10 @@ def build_earth_package(*, base_package: Path, bundle: EarthResearchBundle, outp
                 court_count=None,
             )
             converted.append(Country.model_validate(payload))
-        WorldPackageCountryStore(staged).replace_dataset(CountriesConfig(countries=converted))
+        staged_store = WorldPackageCountryStore(staged)
+        staged_store.replace_dataset(CountriesConfig(countries=converted))
+        for country in converted:
+            staged_store.externalize_rating_history(country.code)
 
         metadata = json.loads((staged / "world.json").read_text(encoding="utf-8"))
         metadata.update(
@@ -508,7 +511,7 @@ def build_earth_package(*, base_package: Path, bundle: EarthResearchBundle, outp
             encoding="utf-8",
         )
 
-        if WorldPackageCountryStore(staged).load_config().countries != converted:
+        if staged_store.load_config().countries != converted:
             raise ValueError("Earth package did not round-trip")
 
         from beta_engine.application.country_history_validation import country_history_errors

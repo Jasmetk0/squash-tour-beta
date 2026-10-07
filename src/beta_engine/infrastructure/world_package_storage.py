@@ -13,7 +13,7 @@ from typing import Any
 from pydantic import BaseModel, Field, StrictInt, field_validator
 
 from beta_engine.domain.countries import CountriesConfig, Country
-from beta_engine.domain.countries.rating_history import RATING_SCALE_V2
+from beta_engine.domain.countries.rating_history import CountryRatingHistory, RATING_SCALE_V2
 
 COUNTRIES_INDEX_SCHEMA = "world_package_countries_index.v1"
 COUNTRY_IDENTITY_SCHEMA = "world_package_country.v1"
@@ -106,6 +106,29 @@ def _read_object(path: Path) -> dict[str, Any]:
     return value
 
 
+
+def _safe_package_owned_file(root: Path, relative_path: str) -> Path:
+    if not isinstance(relative_path, str) or not relative_path or "\\" in relative_path:
+        raise ValueError("rating history path must be a non-empty portable relative path")
+    relative = Path(relative_path)
+    if relative.is_absolute() or any(part in {"", ".", ".."} for part in relative.parts):
+        raise ValueError(f"unsafe rating history path {relative_path!r}")
+    root_resolved = root.resolve()
+    cursor = root
+    for part in relative.parts:
+        cursor = cursor / part
+        if cursor.is_symlink():
+            raise ValueError(f"rating history path uses symlink {relative_path!r}")
+    try:
+        resolved = (root / relative).resolve(strict=True)
+    except OSError as exc:
+        raise ValueError(f"rating history file is unavailable: {relative_path}") from exc
+    if not resolved.is_relative_to(root_resolved):
+        raise ValueError(f"rating history path escapes package root: {relative_path!r}")
+    if not resolved.is_file():
+        raise ValueError(f"rating history path is not a regular file: {relative_path!r}")
+    return resolved
+
 def _write_json_atomic(path: Path, payload: object) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with tempfile.NamedTemporaryFile("w", encoding="utf-8", dir=path.parent, prefix=f".{path.name}.", delete=False) as fh:
@@ -182,14 +205,40 @@ class WorldPackageCountryStore:
             raise ValueError(f"{identity_path} code {identity.code!r} does not match directory {code!r}")
         attributes = {}
         rating_context_path = country_root / "attributes" / "rating_context.json"
-        rating_context = _read_object(rating_context_path) if rating_context_path.is_file() else {}
-        if rating_context_path.is_file():
-            if rating_context.get("schema_version") != "country_rating_context.v1":
-                raise ValueError(f"{rating_context_path} has an unsupported schema")
-            if set(rating_context) != {"schema_version", "rating_scale", "rating_history", "rating_effective_year"}:
-                raise ValueError(f"{rating_context_path} has missing or unknown fields")
-            if rating_context["rating_scale"] != RATING_SCALE_V2:
+        stored_rating_context = _read_object(rating_context_path) if rating_context_path.is_file() else {}
+        rating_context: dict[str, Any] = {}
+        external_history: CountryRatingHistory | None = None
+        if stored_rating_context:
+            schema = stored_rating_context.get("schema_version")
+            if stored_rating_context.get("rating_scale") != RATING_SCALE_V2:
                 raise ValueError(f"{rating_context_path} must explicitly use the 1..10 scale")
+            if schema == "country_rating_context.v1":
+                if set(stored_rating_context) != {
+                    "schema_version", "rating_scale", "rating_history", "rating_effective_year"
+                }:
+                    raise ValueError(f"{rating_context_path} has missing or unknown fields")
+                rating_context = {
+                    key: value
+                    for key, value in stored_rating_context.items()
+                    if key != "schema_version"
+                }
+            elif schema == "country_rating_context.v2":
+                if set(stored_rating_context) != {
+                    "schema_version", "rating_scale", "rating_history_file", "rating_effective_year"
+                }:
+                    raise ValueError(f"{rating_context_path} has missing or unknown fields")
+                history_path = _safe_package_owned_file(
+                    self.package_root,
+                    stored_rating_context["rating_history_file"],
+                )
+                external_history = CountryRatingHistory.model_validate(_read_object(history_path))
+                rating_context = {
+                    "rating_scale": stored_rating_context["rating_scale"],
+                    "rating_history": external_history,
+                    "rating_effective_year": stored_rating_context["rating_effective_year"],
+                }
+            else:
+                raise ValueError(f"{rating_context_path} has an unsupported schema")
         timezone_path = country_root / "attributes" / "timezone_area.json"
         for name in ATTRIBUTE_NAMES:
             if name == "timezone_area" and not timezone_path.is_file():
@@ -197,6 +246,8 @@ class WorldPackageCountryStore:
             elif name == "court_count" and rating_context:
                 # Deferred for new pre-alpha packages. Preserve old sources as-is.
                 attributes[name] = None
+            elif external_history is not None and name in COUNTRY_GAME_ATTRIBUTE_NAMES:
+                attributes[name] = external_history.years[external_history.reference_year].ratings[name].value
             else:
                 attributes[name] = self._load_attribute(country_root, name)
         population_path = country_root / "attributes" / "population.json"
@@ -209,7 +260,7 @@ class WorldPackageCountryStore:
         return Country.model_validate({
             **identity.model_dump(exclude={"schema_version"}),
             **attributes,
-            **{key: value for key, value in rating_context.items() if key != "schema_version"},
+            **rating_context,
             "population": default_population,
             "default_population": default_population,
             "default_population_year": population.default_year,
@@ -268,6 +319,27 @@ class WorldPackageCountryStore:
         # mixed old/new country behind. Normal replace flows already stage fresh.
         for legacy_name in LEGACY_ATTRIBUTE_NAMES:
             (root / "attributes" / f"{legacy_name}.json").unlink(missing_ok=True)
+
+    def externalize_rating_history(self, code: str) -> None:
+        """Store one historical country's timeline once and make rating_context point to it."""
+
+        country = self.load_country(code)
+        if country.rating_scale != RATING_SCALE_V2 or country.rating_history is None:
+            raise ValueError(f"country {code!r} has no V2 rating history to externalize")
+        history_root = self.package_root / "generation" / "country_histories"
+        history_path = history_root / f"{country.code}.json"
+        _write_json_atomic(history_path, country.rating_history.model_dump(mode="json"))
+        context_path = self.countries_root / country.code / "attributes" / "rating_context.json"
+        _write_json_atomic(context_path, {
+            "schema_version": "country_rating_context.v2",
+            "rating_scale": country.rating_scale,
+            "rating_history_file": f"generation/country_histories/{country.code}.json",
+            "rating_effective_year": country.rating_effective_year,
+        })
+        for name in (*COUNTRY_GAME_ATTRIBUTE_NAMES, "court_count"):
+            (self.countries_root / country.code / "attributes" / f"{name}.json").unlink(missing_ok=True)
+        if self.load_country(country.code) != country:
+            raise ValueError(f"externalized country {country.code} did not round-trip")
 
     def create_country(self, country: Country) -> bytes:
         """Create one country and update the index, returning exact old index bytes."""

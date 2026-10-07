@@ -1,0 +1,82 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "fifa-earth-cmr-model.v1",
+  "world_id": "fifa_earth",
+  "data_cutoff": "2026-10-03",
+  "countries": [
+    "CMR"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "evidence_rules": [
+    "CAF creation 1959, FIFA affiliation 1962 and CAF affiliation 1963 are separately gated.",
+    "Big Count 2006 enters only from 2006.",
+    "Professional 2023 player and club observations enter only from 2023.",
+    "No ranking or tournament result is a calibration target."
+  ],
+  "anchor_values": {
+    "CMR": {
+      "1955": [
+        4.2,
+        3.7,
+        3.7,
+        3.8,
+        3.4,
+        4.1
+      ],
+      "1959": [
+        5.2,
+        4.6,
+        4.7,
+        4.8,
+        4.4,
+        5.2
+      ],
+      "1962": [
+        5.6,
+        5,
+        5.2,
+        5.4,
+        4.9,
+        5.6
+      ],
+      "1963": [
+        5.8,
+        5.2,
+        5.4,
+        5.6,
+        5.1,
+        5.8
+      ],
+      "2006": [
+        7.6,
+        6.8,
+        7,
+        7.5,
+        6.9,
+        7.3
+      ],
+      "2023": [
+        8,
+        7.1,
+        7.4,
+        8,
+        7.4,
+        7.6
+      ],
+      "2026": [
+        8.1,
+        7.2,
+        7.5,
+        8.1,
+        7.5,
+        7.7
+      ]
+    }
+  },
+  "evidence_sources": [
+    "caf-cameroon-profile",
+    "fifa-big-count-2006",
+    "fifa-professional-2023"
+  ],
+  "heldout_ranking_used": false
+}

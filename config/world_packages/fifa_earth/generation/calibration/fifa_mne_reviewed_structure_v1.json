@@ -1,0 +1,79 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "fifa-earth-mne-reviewed-structure.v1",
+  "world_id": "fifa_earth",
+  "countries": [
+    "MNE"
+  ],
+  "data_cutoff": "2026-10-03",
+  "rating_scale": "country_ratings_1_10.v2",
+  "attribute_order": [
+    "squash_popularity",
+    "squash_access",
+    "development_quality",
+    "competition_quality",
+    "elite_support",
+    "squash_tradition"
+  ],
+  "anchor_values": {
+    "MNE": {
+      "1955": [
+        7,
+        4.8,
+        5,
+        5.4,
+        4.2,
+        6.4
+      ],
+      "1992": [
+        7,
+        4.4,
+        4.7,
+        4.8,
+        3.8,
+        6.7
+      ],
+      "2006": [
+        7.3,
+        5.3,
+        5.1,
+        5,
+        4.5,
+        7
+      ],
+      "2007": [
+        7.3,
+        5.8,
+        5.6,
+        5.1,
+        5,
+        7
+      ],
+      "2022": [
+        7.6,
+        6.1,
+        5.9,
+        5.3,
+        5.1,
+        7.4
+      ],
+      "2026": [
+        7.6,
+        6.1,
+        5.9,
+        5.3,
+        5.1,
+        7.4
+      ]
+    }
+  },
+  "selection": "Piecewise-constant authored periods; no hidden interpolation and no observation enters before its event year.",
+  "limitations": [
+    "All numbers are project estimates with low confidence, not source measurements.",
+    "Structural events establish context but cannot identify all six numeric dimensions; cross-country calibration is outstanding.",
+    "Early priors are registered separately from independent federation observations.",
+    "No rankings, titles, athlete results or predecessor-wide population/player totals are used.",
+    "2021 grant eligibility is not funding receipt and makes no numerical change.",
+    "2026 is partial through the bundle cutoff, not a forecast."
+  ]
+}

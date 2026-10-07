@@ -1,0 +1,58 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "fifa-earth-afg-model.v1",
+  "world_id": "fifa_earth",
+  "data_cutoff": "2026-10-03",
+  "countries": [
+    "AFG"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "evidence_rules": [
+    "1955-2005 values are a low-confidence project-authored baseline.",
+    "Big Count enters from 2006.",
+    "Professional 2023 contributes only the published 12-club count; missing player count remains missing, never zero.",
+    "Current FIFA membership is context only."
+  ],
+  "anchor_values": {
+    "AFG": {
+      "1955": [
+        3.8,
+        3.2,
+        3.4,
+        3.3,
+        3,
+        4
+      ],
+      "2006": [
+        5.3,
+        4.4,
+        4.7,
+        4.8,
+        4.2,
+        5.2
+      ],
+      "2023": [
+        5.1,
+        4.3,
+        4.5,
+        4.6,
+        4.1,
+        5
+      ],
+      "2026": [
+        5.1,
+        4.3,
+        4.5,
+        4.6,
+        4.1,
+        5
+      ]
+    }
+  },
+  "evidence_sources": [
+    "fifa-afghanistan-member-context-2026",
+    "fifa-big-count-2006",
+    "fifa-professional-2023"
+  ],
+  "heldout_ranking_used": false
+}

@@ -1,0 +1,62 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "fifa-earth-cck-reviewed-structure.v1",
+  "world_id": "fifa_earth",
+  "countries": [
+    "CCK"
+  ],
+  "data_cutoff": "2026-10-03",
+  "rating_scale": "country_ratings_1_10.v2",
+  "attribute_order": [
+    "squash_popularity",
+    "squash_access",
+    "development_quality",
+    "competition_quality",
+    "elite_support",
+    "squash_tradition"
+  ],
+  "anchor_values": {
+    "CCK": {
+      "1955": [
+        1.5,
+        1.6,
+        1.4,
+        1.2,
+        1.1,
+        1.4
+      ],
+      "1980": [
+        1.8,
+        1.9,
+        1.6,
+        1.3,
+        1.2,
+        1.6
+      ],
+      "2000": [
+        2.2,
+        2.3,
+        1.9,
+        1.5,
+        1.4,
+        2
+      ],
+      "2026": [
+        2.3,
+        2.5,
+        2,
+        1.6,
+        1.5,
+        2.1
+      ]
+    }
+  },
+  "selection": "Piecewise-constant authored periods; transfer/status events are identity context only and local ratings do not inherit Australia-wide sports evidence.",
+  "limitations": [
+    "All numeric ratings are project estimates with low confidence, not source measurements.",
+    "Australia-wide sports evidence is not inherited automatically.",
+    "No football federation membership or organised competition is inferred.",
+    "Territorial transfer/status is context only, not sports-performance evidence.",
+    "No rankings, titles or athlete outcomes are used to fit ratings."
+  ]
+}

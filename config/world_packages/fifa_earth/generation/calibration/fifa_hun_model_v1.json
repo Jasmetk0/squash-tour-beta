@@ -1,0 +1,75 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "fifa-earth-hun-model.v1",
+  "world_id": "fifa_earth",
+  "data_cutoff": "2026-10-03",
+  "countries": [
+    "HUN"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "principles": [
+    "MLSZ foundation, FIFA membership, professionalisation and post-war restart define structural chronology but are not direct annual quality measurements.",
+    "FIFA Big Count 2006 is gated to 2006+ for participation/access context.",
+    "FIFA Professional Football Report 2023 is gated to 2023+ for professional-ecosystem context.",
+    "Historic national-team results are not calibration targets; the model preserves strong tradition without using rankings or trophies.",
+    "9+ remains reserved for clearly world-leading dimensions; this pre-alpha curve tops out below 9.0."
+  ],
+  "anchor_values": {
+    "HUN": {
+      "1955": [
+        8.3,
+        7.4,
+        8.3,
+        8.6,
+        8.2,
+        8.9
+      ],
+      "1970": [
+        8,
+        7.3,
+        8,
+        8.3,
+        8,
+        8.9
+      ],
+      "1990": [
+        7.4,
+        6.9,
+        7.2,
+        7.5,
+        7.2,
+        8.9
+      ],
+      "2006": [
+        7.5,
+        7.6,
+        7.5,
+        7.7,
+        7.4,
+        8.9
+      ],
+      "2023": [
+        7.9,
+        7.8,
+        7.9,
+        8.1,
+        7.9,
+        8.9
+      ],
+      "2026": [
+        8,
+        7.9,
+        8,
+        8.1,
+        8,
+        8.9
+      ]
+    }
+  },
+  "evidence_sources": [
+    "uefa-hungary-125-2026",
+    "fifa-big-count-2006",
+    "fifa-professional-2023"
+  ],
+  "heldout_ranking_used": false
+}

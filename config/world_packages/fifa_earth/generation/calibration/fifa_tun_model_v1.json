@@ -1,0 +1,74 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "fifa-earth-tun-model.v1",
+  "world_id": "fifa_earth",
+  "data_cutoff": "2026-10-03",
+  "countries": [
+    "TUN"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "evidence_rules": [
+    "Pre-1957 is low-confidence territorial context.",
+    "CAF creation 1957 and FIFA/CAF affiliation 1960 are time-gated.",
+    "Big Count enters from 2006 and Professional 2023 club evidence from 2023.",
+    "No rankings or outcomes are calibration targets."
+  ],
+  "anchor_values": {
+    "TUN": {
+      "1955": [
+        5.4,
+        4.8,
+        4.8,
+        4.8,
+        4.6,
+        5.5
+      ],
+      "1957": [
+        6.2,
+        5.4,
+        5.5,
+        5.7,
+        5.3,
+        6.2
+      ],
+      "1960": [
+        6.7,
+        5.8,
+        6,
+        6.2,
+        5.8,
+        6.7
+      ],
+      "2006": [
+        7.8,
+        6.7,
+        7.1,
+        7.4,
+        6.9,
+        7.8
+      ],
+      "2023": [
+        8,
+        6.9,
+        7.3,
+        7.6,
+        7.2,
+        8
+      ],
+      "2026": [
+        8.1,
+        7,
+        7.4,
+        7.7,
+        7.3,
+        8.1
+      ]
+    }
+  },
+  "evidence_sources": [
+    "caf-tunisia-profile",
+    "fifa-big-count-2006",
+    "fifa-professional-2023"
+  ],
+  "heldout_ranking_used": false
+}

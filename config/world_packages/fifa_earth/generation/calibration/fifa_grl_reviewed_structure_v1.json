@@ -1,0 +1,70 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "fifa-earth-grl-reviewed-structure.v1",
+  "world_id": "fifa_earth",
+  "countries": [
+    "GRL"
+  ],
+  "data_cutoff": "2026-10-03",
+  "rating_scale": "country_ratings_1_10.v2",
+  "attribute_order": [
+    "squash_popularity",
+    "squash_access",
+    "development_quality",
+    "competition_quality",
+    "elite_support",
+    "squash_tradition"
+  ],
+  "anchor_values": {
+    "GRL": {
+      "1955": [
+        2.4,
+        2.5,
+        2.2,
+        1.9,
+        1.8,
+        2.3
+      ],
+      "1979": [
+        2.9,
+        3,
+        2.6,
+        2.2,
+        2.1,
+        2.7
+      ],
+      "2000": [
+        3.4,
+        3.5,
+        3,
+        2.6,
+        2.4,
+        3.2
+      ],
+      "2009": [
+        3.6,
+        3.7,
+        3.2,
+        2.8,
+        2.6,
+        3.4
+      ],
+      "2026": [
+        3.8,
+        3.9,
+        3.4,
+        3,
+        2.8,
+        3.6
+      ]
+    }
+  },
+  "selection": "Piecewise-constant authored periods with explicit 1979 Home Rule and 2009 Self-Government identity transitions; ratings remain local project estimates.",
+  "limitations": [
+    "All numeric ratings are project estimates with low confidence, not source measurements.",
+    "Denmark-wide sports evidence is not inherited automatically.",
+    "No football federation membership or organised competition is inferred.",
+    "Constitutional or territorial status is context only, not direct sports-performance evidence.",
+    "No rankings, titles or athlete outcomes are used to fit ratings."
+  ]
+}

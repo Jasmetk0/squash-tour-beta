@@ -1,0 +1,49 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "fifa-earth-npl-model.v1",
+  "world_id": "fifa_earth",
+  "data_cutoff": "2026-10-03",
+  "countries": [
+    "NPL"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "evidence_rules": [
+    "1955-2005 values are a low-confidence project-authored baseline.",
+    "Big Count enters from 2006.",
+    "Professional 2023 null player/club values remain missing and are not converted to zero.",
+    "Current FIFA membership is context only."
+  ],
+  "anchor_values": {
+    "NPL": {
+      "1955": [
+        4,
+        3.5,
+        3.7,
+        3.7,
+        3.4,
+        4.2
+      ],
+      "2006": [
+        5.8,
+        5,
+        5.2,
+        5.4,
+        4.9,
+        5.7
+      ],
+      "2026": [
+        6,
+        5.2,
+        5.4,
+        5.6,
+        5.1,
+        5.9
+      ]
+    }
+  },
+  "evidence_sources": [
+    "fifa-nepal-member-context-2026",
+    "fifa-big-count-2006"
+  ],
+  "heldout_ranking_used": false
+}

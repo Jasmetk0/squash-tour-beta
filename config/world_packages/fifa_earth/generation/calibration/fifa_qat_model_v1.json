@@ -1,0 +1,92 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "fifa-earth-qat-model.v1",
+  "world_id": "fifa_earth",
+  "data_cutoff": "2026-10-03",
+  "countries": [
+    "QAT"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "principles": [
+    "The documented rapid 1950s football growth is pre-federation context; QFA identity begins only in 1960.",
+    "FIFA membership (1963) and AFC membership (1967) are separately gated.",
+    "FIFA Big Count 2006 is used only from 2006 and its relatively small participation base is kept distinct from later professional/infrastructure strength.",
+    "FIFA Professional Football Report 2023 is gated to 2023; QFA's 2024–2030 strategy is a current development/governance signal from 2024.",
+    "Hosting, rankings and tournament results are not calibration targets; no dimension exceeds 9.0."
+  ],
+  "anchor_values": {
+    "QAT": {
+      "1955": [
+        4.2,
+        3.9,
+        3.8,
+        3.7,
+        3.6,
+        4.6
+      ],
+      "1960": [
+        5,
+        4.5,
+        4.8,
+        4.5,
+        4.6,
+        5.3
+      ],
+      "1963": [
+        5.3,
+        4.8,
+        5,
+        4.9,
+        5,
+        5.5
+      ],
+      "1967": [
+        5.5,
+        5,
+        5.2,
+        5.2,
+        5.2,
+        5.7
+      ],
+      "2006": [
+        6.8,
+        6.8,
+        7,
+        7.1,
+        7.2,
+        7.3
+      ],
+      "2023": [
+        7.7,
+        7.8,
+        8.1,
+        8.2,
+        8.3,
+        7.9
+      ],
+      "2024": [
+        7.8,
+        8,
+        8.3,
+        8.2,
+        8.4,
+        8
+      ],
+      "2026": [
+        7.9,
+        8.1,
+        8.4,
+        8.2,
+        8.5,
+        8
+      ]
+    }
+  },
+  "evidence_sources": [
+    "qfa-history",
+    "qfa-strategy-2024",
+    "fifa-big-count-2006",
+    "fifa-professional-2023"
+  ],
+  "heldout_ranking_used": false
+}

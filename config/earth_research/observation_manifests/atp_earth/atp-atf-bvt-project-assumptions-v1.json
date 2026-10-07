@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-atf-bvt-project-assumptions-v1",
+  "source_id": "atf-bvt-atp-project-assumptions",
+  "relative_path": "observations/normalized/atp_atf_bvt_project_assumptions_v1.json",
+  "sha256": "98cdccedeb211e8ae8510ff313ee9de34909385a03ead20e36428185f3a8f347",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-atf-bvt-batch-2026-10-07"
+}

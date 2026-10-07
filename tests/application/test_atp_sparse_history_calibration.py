@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from functools import lru_cache
 from pathlib import Path
 
 import pytest
@@ -13,6 +14,11 @@ from beta_engine.domain.countries.rating_history import GAME_ATTRIBUTE_NAMES
 
 RESEARCH = Path("config/earth_research/atp_earth.json")
 PACKAGE_HISTORY_ROOT = Path("config/world_packages/atp_earth/generation/country_histories")
+
+@lru_cache(maxsize=1)
+def _bundle():
+    return load_earth_research_bundle(RESEARCH)
+
 
 SPARSE_HISTORY_ANCHORS = {
     "GUM": (
@@ -39,7 +45,7 @@ SPARSE_HISTORY_ANCHORS = {
 
 
 def test_sparse_history_sources_are_verified_and_resolvable() -> None:
-    bundle = load_earth_research_bundle(RESEARCH)
+    bundle = _bundle()
 
     assert "atp-itf-affiliated-associations-2015-v1" in bundle.datasets
     assert "atp-itf-timor-leste-membership-2021-v1" in bundle.datasets
@@ -57,7 +63,7 @@ def test_sparse_history_sources_are_verified_and_resolvable() -> None:
 
 
 def test_sparse_histories_replace_false_2026_cliffs_with_explicit_reconstruction() -> None:
-    bundle = load_earth_research_bundle(RESEARCH)
+    bundle = _bundle()
 
     for code, (anchor_year, observation_id) in SPARSE_HISTORY_ANCHORS.items():
         history = bundle.research.countries[code]
@@ -93,7 +99,7 @@ def test_sparse_histories_replace_false_2026_cliffs_with_explicit_reconstruction
 
 
 def test_timor_leste_keeps_membership_and_first_development_visit_distinct() -> None:
-    bundle = load_earth_research_bundle(RESEARCH)
+    bundle = _bundle()
     tls = bundle.research.countries["TLS"]
 
     membership = "atp-itf-timor-leste-membership-2021-v1#tls-itf-membership-2021"
@@ -105,7 +111,7 @@ def test_timor_leste_keeps_membership_and_first_development_visit_distinct() -> 
 
 
 def test_distributed_sparse_histories_match_research_exactly() -> None:
-    bundle = load_earth_research_bundle(RESEARCH)
+    bundle = _bundle()
 
     for code in SPARSE_HISTORY_ANCHORS:
         packaged = json.loads((PACKAGE_HISTORY_ROOT / f"{code}.json").read_text())

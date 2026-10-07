@@ -491,3 +491,6 @@ TWN and PRK now have complete 1955–2026 histories in both FIFA Earth and ATP E
 
 ### Guam + Curacao reviewed batch (2026-10-07)
 GUM and CUW now have complete 1955–2026 histories in both FIFA Earth and ATP Earth. Guam federation/confederation milestones are explicitly dated; Curacao keeps pre-2011 Netherlands-Antilles context separate from its successor identity. Current ITF evidence is not backdated and numeric ratings remain low-confidence project estimates.
+
+### Timor-Leste + Somalia reviewed batch (2026-10-07)
+TLS and SOM now have complete 1955–2026 histories in both FIFA Earth and ATP Earth. Timor-Leste's colonial/transition/independent identities and 2002–2005 football milestones are explicit; Somalia's 1951/1962/1968 federation milestones are dated. Current ITF evidence is not backdated and numeric ratings remain low-confidence project estimates.

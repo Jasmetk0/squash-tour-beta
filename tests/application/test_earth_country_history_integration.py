@@ -203,6 +203,23 @@ def test_changed_observation_content_and_hash_fail_closed(tmp_path):
     assert any("SHA-256 mismatch" in message for message in _failed_messages(result))
 
 
+def test_changed_manifest_sha_fails_closed(tmp_path):
+    root, world_id = _build_portable_test_package(tmp_path)
+    manifest_path = (
+        root
+        / world_id
+        / "generation/observation_manifests/synthetic-observations.json"
+    )
+    manifest = json.loads(manifest_path.read_text())
+    manifest["sha256"] = "1" * 64
+    manifest_path.write_text(json.dumps(manifest))
+
+    registry = WorldPackageRegistryService(world_packages_root=root)
+    result = WorldPackageValidationService(registry).validate_package(world_id)
+    assert result.status == "errors"
+    assert any("SHA-256 mismatch" in message for message in _failed_messages(result))
+
+
 def test_known_dataset_with_missing_local_observation_id_fails_closed(tmp_path):
     root, world_id = _build_portable_test_package(tmp_path)
     history_path = _stored_history_path(root, world_id, "AAA")

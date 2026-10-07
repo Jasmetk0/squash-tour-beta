@@ -10,6 +10,7 @@ pytestmark = pytest.mark.pr_critical
 
 from beta_engine.application.earth_package_builder import build_earth_package
 from beta_engine.application.world_package_registry_service import WorldPackageRegistryService
+from beta_engine.application.world_package_clone_service import WorldPackageCloneService
 from beta_engine.application.world_package_countries_service import WorldPackageCountriesService
 from beta_engine.application.world_package_validation_service import WorldPackageValidationService
 from beta_engine.domain.countries import CountriesConfig
@@ -273,3 +274,70 @@ def test_relocated_package_remains_self_contained(tmp_path):
         / world_id
         / "generation/calibration/synthetic-calibration.v1.json"
     ).is_file()
+
+
+
+@pytest.mark.parametrize(
+    ("world_id", "expected_name"),
+    [
+        ("fifa_earth", "FIFA Earth Package"),
+        ("atp_earth", "ATP Earth Package"),
+    ],
+)
+def test_distributed_earth_packages_are_registered_and_valid(world_id, expected_name):
+    registry = WorldPackageRegistryService()
+    package = registry.get_package(world_id)
+    assert package is not None
+    assert package.name == expected_name
+    assert package.type == "official"
+    assert package.source == "built_in"
+    assert package.editable is False
+    assert package.deletable is False
+    assert package.archivable is False
+    assert package.country_count == 250
+
+    validation = WorldPackageValidationService(registry).validate_package(world_id)
+    assert validation is not None
+    assert validation.status == "valid"
+
+    countries = WorldPackageCountriesService(registry)
+    old = countries.get_country(world_id, "CZE", rating_year=1955)
+    current = countries.get_country(world_id, "CZE", rating_year=2026)
+    assert old is not None and current is not None
+    assert old.country.rating_effective_year == 1955
+    assert current.country.rating_effective_year == 2026
+    assert old.country.court_count is None
+    assert current.country.court_count is None
+
+
+def test_portable_earth_clone_keeps_provenance_and_is_independent(tmp_path):
+    root, world_id = _build_portable_test_package(tmp_path, derived=True)
+    registry = WorldPackageRegistryService(world_packages_root=root)
+    validation = WorldPackageValidationService(registry)
+    clone_service = WorldPackageCloneService(registry, validation)
+
+    result = clone_service.clone_world(
+        source_world_id=world_id,
+        new_world_id="portable_copy",
+        name="Portable copy",
+        description="Independent editable clone.",
+        dry_run=False,
+    )
+    assert result.ok
+    assert result.package is not None
+    assert result.package.type == "custom"
+    assert result.package.editable is True
+    assert result.validation is not None
+    assert result.validation.status == "valid"
+
+    source_history = _stored_history_path(root, world_id, "AAA")
+    clone_context = json.loads(
+        (root / "custom/portable_copy/countries/AAA/attributes/rating_context.json").read_text()
+    )
+    clone_history = root / "custom/portable_copy" / clone_context["rating_history_file"]
+    assert clone_history.read_bytes() == source_history.read_bytes()
+
+    changed = json.loads(clone_history.read_text())
+    changed["years"]["1955"]["ratings"]["elite_support"]["value"] = 4.1
+    clone_history.write_text(json.dumps(changed))
+    assert json.loads(source_history.read_text())["years"]["1955"]["ratings"]["elite_support"]["value"] == 4.0

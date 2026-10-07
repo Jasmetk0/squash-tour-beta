@@ -288,7 +288,10 @@ class CountryRatingHistoryTests(unittest.TestCase):
                 )
                 self.assertTrue(report["coverage_complete"])
                 self.assertEqual(len(WorldPackageCountryStore(output).load_country("AAA").rating_history.years), 72)
-                self.assertTrue((output / "generation/country_rating_observation_datasets.json").is_file())
+                self.assertTrue(
+                    (output / f"generation/observation_manifests/{DATASET_ID}.json").is_file()
+                )
+                self.assertTrue((output / "observations/synthetic.json").is_file())
                 self.assertEqual(before, {str(p.relative_to(base)): p.read_bytes() for p in base.rglob("*") if p.is_file()})
                 with self.assertRaises(FileExistsError):
                     build_earth_package(

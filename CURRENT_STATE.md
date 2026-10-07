@@ -6099,3 +6099,11 @@ bands should shape 0..200 potential. No threshold is inferred from current OVR v
 - GBR is intentionally represented as an Earth-package United Kingdom aggregate and does not invent a single FIFA GBR member association.
 - Singapore's colonial, self-governing, Malaysia and independent phases are explicit.
 - All numeric ratings remain low-confidence project estimates with explicit provenance and no outcome fitting.
+
+### Earth MNP/NFK batch — 2026-10-07
+- Added complete 1955–2026 FIFA Earth and ATP Earth histories for Northern Mariana Islands (MNP) and Norfolk Island (NFK).
+- Authored-history coverage becomes 218/250 in both packages after the preceding gap-five integration.
+- MNP uses current AFC structural evidence only from 2026 in FIFA Earth; no FIFA membership is inferred from AFC status.
+- NFK FIFA history remains explicit project priors only.
+- ATP uses current ITF association-directory evidence for both territories only from 2026 onward.
+- All numeric ratings are low-confidence project estimates with no outcome fitting.

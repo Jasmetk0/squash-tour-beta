@@ -1,0 +1,29 @@
+{
+  "schema_version": "continents.v1",
+  "continents": [
+    {
+      "code": "AFR",
+      "name": "Africa"
+    },
+    {
+      "code": "AME",
+      "name": "Americas"
+    },
+    {
+      "code": "ASI",
+      "name": "Asia"
+    },
+    {
+      "code": "EUR",
+      "name": "Europe"
+    },
+    {
+      "code": "OCE",
+      "name": "Oceania"
+    },
+    {
+      "code": "ANT",
+      "name": "Antarctica"
+    }
+  ]
+}

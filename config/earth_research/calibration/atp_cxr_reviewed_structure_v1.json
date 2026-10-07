@@ -1,0 +1,69 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "atp-earth-cxr-reviewed-structure.v1",
+  "world_id": "atp_earth",
+  "countries": [
+    "CXR"
+  ],
+  "data_cutoff": "2026-10-04",
+  "rating_scale": "country_ratings_1_10.v2",
+  "attribute_order": [
+    "squash_popularity",
+    "squash_access",
+    "development_quality",
+    "competition_quality",
+    "elite_support",
+    "squash_tradition"
+  ],
+  "anchor_values": {
+    "CXR": {
+      "1955": [
+        1.8,
+        1.7,
+        1.5,
+        1.3,
+        1.4,
+        1.7
+      ],
+      "1980": [
+        2.2,
+        2.1,
+        1.9,
+        1.6,
+        1.7,
+        2
+      ],
+      "2000": [
+        2.7,
+        2.6,
+        2.3,
+        2,
+        2.1,
+        2.4
+      ],
+      "2021": [
+        3.1,
+        3,
+        2.7,
+        2.3,
+        2.4,
+        2.8
+      ],
+      "2026": [
+        3.2,
+        3.1,
+        2.8,
+        2.4,
+        2.5,
+        2.9
+      ]
+    }
+  },
+  "selection": "Piecewise-constant authored periods; no hidden interpolation and the dated 2021 census context enters only from 2021.",
+  "limitations": [
+    "All numeric ratings are project estimates with low confidence, not source measurements.",
+    "Population is demographic context only and is not treated as direct sports participation, infrastructure or quality evidence.",
+    "No tennis federation membership or organised competition is inferred.",
+    "No rankings, titles or athlete outcomes are used to fit ratings."
+  ]
+}

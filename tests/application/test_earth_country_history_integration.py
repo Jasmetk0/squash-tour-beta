@@ -12,6 +12,7 @@ from beta_engine.application.earth_package_builder import (
     build_earth_package,
     load_earth_research_bundle,
 )
+from beta_engine.application.countries_service import CountriesConfigService
 from beta_engine.application.world_package_registry_service import WorldPackageRegistryService
 from beta_engine.application.world_package_run_adapter import WorldPackageRunAdapter
 from beta_engine.application.world_package_clone_service import WorldPackageCloneService
@@ -398,3 +399,33 @@ def test_full_earth_research_builds_to_valid_distributed_semantics(tmp_path, wor
     assert WorldPackageCountryStore(output).semantic_payload() == (
         WorldPackageCountryStore(distributed_root).semantic_payload()
     )
+
+
+def test_flat_csv_import_refuses_to_strip_history_from_editable_clone(tmp_path):
+    root, world_id = _build_portable_test_package(tmp_path, derived=True)
+    registry = WorldPackageRegistryService(world_packages_root=root)
+    validation = WorldPackageValidationService(registry)
+    clone_service = WorldPackageCloneService(registry, validation)
+    result = clone_service.clone_world(
+        source_world_id=world_id,
+        new_world_id="history_csv_guard",
+        name="History CSV guard",
+        description="Editable historical clone.",
+        dry_run=False,
+    )
+    assert result.ok
+
+    clone_root = root / "custom/history_csv_guard"
+    countries = CountriesConfigService(package_root=clone_root)
+    csv_text = countries.export_countries_csv()
+    history_path = _stored_history_path(root / "custom", "history_csv_guard", "AAA")
+    history_before = history_path.read_bytes()
+
+    imported = countries.import_countries_csv(csv_text=csv_text, dry_run=False)
+    assert imported.ok is False
+    assert any(
+        "history-bearing World Packages" in error.message
+        for error in imported.errors
+    )
+    assert history_path.read_bytes() == history_before
+    assert WorldPackageValidationService(registry).validate_package("history_csv_guard").status == "valid"

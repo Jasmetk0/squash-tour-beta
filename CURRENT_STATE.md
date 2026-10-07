@@ -6218,3 +6218,12 @@ bands should shape 0..200 potential. No threshold is inferred from current OVR v
 - Constitutional and disaster events are context only and never used as direct sports measurements.
 - Ratings are explicit low-confidence local project estimates and do not automatically inherit UK-wide sports evidence.
 - No football or tennis federation membership, organised competition, rankings, titles or athlete outcomes are inferred.
+
+### Earth GRL/SJM batch — 2026-10-07
+- Added complete 1955-2026 FIFA Earth and ATP Earth histories for Greenland (GRL) and Svalbard and Jan Mayen (SJM).
+- Authored-history coverage becomes 246/250 in both packages after SHN/MSR.
+- Greenland explicitly preserves the 1979 Home Rule transition and the 2009 Self-Government transition while remaining within the Kingdom of Denmark.
+- SJM is represented as a stable combined Earth identity throughout 1955-2026: Svalbard has been part of Norway since 1925 and Jan Mayen since 1930.
+- Constitutional and territorial status is identity context only and never used as direct sports evidence.
+- Ratings are explicit low-confidence local project estimates and do not automatically inherit Denmark- or Norway-wide sports evidence.
+- No football or tennis federation membership, organised competition, rankings, titles or athlete outcomes are inferred.

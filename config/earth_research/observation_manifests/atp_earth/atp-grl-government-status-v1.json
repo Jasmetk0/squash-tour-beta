@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-grl-government-status-v1",
+  "source_id": "grl-government-status",
+  "relative_path": "observations/normalized/atp_grl_government_status_v1.json",
+  "sha256": "4734d454263fe9db0d1d24193aa0c0df11ed1a71aadc10be6f0915f2dfbd97ab",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-grl-sjm-batch-2026-10-07"
+}

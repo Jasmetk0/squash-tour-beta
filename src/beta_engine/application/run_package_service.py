@@ -164,8 +164,9 @@ class RunPackageService:
             else document.leaf_documents()
         )
         for leaf in reviewed_documents:
+            leaf_source_fingerprint = leaf.source_fingerprint
             prior_same = versions.get((leaf.package_id, leaf.source_version))
-            if prior_same and prior_same.source_fingerprint != leaf.source_fingerprint:
+            if prior_same and prior_same.source_fingerprint != leaf_source_fingerprint:
                 conflicts.append(
                     f"{leaf.package_id}@{leaf.source_version}:source_history_divergence"
                 )
@@ -407,6 +408,7 @@ class RunPackageService:
                 else document.leaf_documents()
             )
             for leaf in documents_to_record:
+                leaf_source_fingerprint = leaf.source_fingerprint
                 leaf_selected = tuple(
                     sorted(
                         entity.source_entity_id
@@ -432,7 +434,7 @@ class RunPackageService:
                     package_type=leaf.package_type,
                     package_id=leaf.package_id,
                     source_version=leaf.source_version,
-                    source_fingerprint=leaf.source_fingerprint,
+                    source_fingerprint=leaf_source_fingerprint,
                     parent_source_fingerprint=leaf.parent_source_fingerprint,
                     document_explicit_scope=leaf.explicit_scope,
                     applied_entity_ids=(
@@ -506,7 +508,7 @@ class RunPackageService:
                         ),
                         source_package_id=leaf.package_id,
                         source_package_version=leaf.source_version,
-                        source_package_fingerprint=leaf.source_fingerprint,
+                        source_package_fingerprint=leaf_source_fingerprint,
                         source_entity_id=entity.source_entity_id,
                         entity_kind=entity.entity_kind,
                         entity_schema_version=entity.entity_schema_version,
@@ -531,6 +533,7 @@ class RunPackageService:
                     versions[versions.index(existing_version)] = version
                     changed = True
             if not changed:
+                old_fingerprint = old.fingerprint if old else canonical_hash(None)
                 evidence = {
                     "command_id": command_id,
                     "request_fingerprint": request_fp,
@@ -548,9 +551,7 @@ class RunPackageService:
                         branch_id=branch_id,
                         command_id=command_id,
                         request_fingerprint=request_fp,
-                        result_fingerprint=old.fingerprint
-                        if old
-                        else canonical_hash(None),
+                        result_fingerprint=old_fingerprint,
                         payload_json=json.dumps(
                             evidence, sort_keys=True, separators=(",", ":")
                         ),
@@ -567,7 +568,8 @@ class RunPackageService:
                     sorted(versions, key=lambda v: (v.package_id, v.source_version))
                 ),
             )
-            put_run_package_state(session, state)
+            state_fingerprint = state.fingerprint
+            put_run_package_state(session, state, expected_fingerprint=state_fingerprint)
             claimed = session.execute(
                 update(BranchWorkingDraftModel)
                 .where(
@@ -584,7 +586,7 @@ class RunPackageService:
                         + [
                             {
                                 "kind": "run_package_state",
-                                "fingerprint": state.fingerprint,
+                                "fingerprint": state_fingerprint,
                             }
                         ],
                         sort_keys=True,
@@ -602,7 +604,7 @@ class RunPackageService:
                 "conflict_resolutions": resolutions,
                 "preview": preview.model_dump(mode="json"),
                 "draft_version": expected_draft_version + 1,
-                "state_fingerprint": state.fingerprint,
+                "state_fingerprint": state_fingerprint,
                 "already_applied": False,
                 "state": state.model_dump(mode="json"),
                 "source_to_run_local_ids": {
@@ -618,7 +620,7 @@ class RunPackageService:
                     branch_id=branch_id,
                     command_id=command_id,
                     request_fingerprint=request_fp,
-                    result_fingerprint=state.fingerprint,
+                    result_fingerprint=state_fingerprint,
                     payload_json=json.dumps(
                         result, sort_keys=True, separators=(",", ":")
                     ),

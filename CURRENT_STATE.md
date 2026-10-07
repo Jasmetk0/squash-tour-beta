@@ -6050,3 +6050,9 @@ bands should shape 0..200 potential. No threshold is inferred from current OVR v
 - Authored history coverage: FIFA Earth 203/250; ATP Earth 203/250.
 - Congo milestones use CAF's 1962 creation, 1964 FIFA and 1966 CAF affiliation fields.
 - FSM uses dated 2015 OFC Pacific Games participation as participation evidence only; it does not infer FIFA membership. Current ITF evidence enters only in 2026.
+
+### Earth RUS/KIR batch — 2026-10-07
+- Added complete 1955–2026 FIFA Earth and ATP Earth histories for Russia (RUS) and Kiribati (KIR).
+- Authored history coverage: FIFA Earth 205/250; ATP Earth 205/250.
+- Russia preserves USSR context through 1991, separate Russian identity from 1992, and FIFA/UEFA plus ITF suspension context from 2022 without backdating.
+- Kiribati uses OFC associate-member evidence without inferring FIFA membership; current ITF association evidence enters only in 2026.

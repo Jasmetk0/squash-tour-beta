@@ -500,3 +500,6 @@ CAF and COD now have complete 1955–2026 histories in both FIFA Earth and ATP E
 
 ### Republic of the Congo + FSM reviewed batch (2026-10-07)
 COG and FSM now have complete 1955–2026 histories in both FIFA Earth and ATP Earth. Congo federation milestones are dated from CAF. FSM's 2015 Pacific Games record is used only as participation context and does not imply FIFA membership. Current ITF association evidence is not backdated; numeric ratings remain low-confidence project estimates.
+
+### Russia + Kiribati reviewed batch (2026-10-07)
+RUS and KIR now have complete 1955–2026 histories in both FIFA Earth and ATP Earth. Russia's USSR-to-Russian-Federation identity transition is explicit and 2022 football/tennis suspension context is dated rather than backfilled. Kiribati is treated as an OFC associate-member football identity without inferring FIFA membership; current ITF evidence enters only in 2026.

@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-msr-overseas-territory-2002-v1",
+  "source_id": "msr-overseas-territory-2002",
+  "relative_path": "observations/normalized/fifa_msr_overseas_territory_2002_v1.json",
+  "sha256": "23fa811ca54d6e1cc0f11d2b381b83cca4cae450bd8776386c2ed7095753f4e4",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-shn-msr-batch-2026-10-07"
+}

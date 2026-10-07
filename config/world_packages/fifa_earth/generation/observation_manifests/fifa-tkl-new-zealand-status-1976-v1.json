@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-tkl-new-zealand-status-1976-v1",
+  "source_id": "tkl-new-zealand-status-1976",
+  "relative_path": "observations/normalized/fifa_tkl_new_zealand_status_1976_v1.json",
+  "sha256": "6f06af7d5efb49ac61a7d95ac1c9187ae77da956cc9fabba60565a2d9b951b8b",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-niu-tkl-batch-2026-10-07"
+}

@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-mnp-afc-current-2026-v1",
+  "source_id": "mnp-afc-current-2026",
+  "relative_path": "observations/normalized/fifa_mnp_afc_current_2026_v1.json",
+  "sha256": "f0b079b96a2bcb2ac3f09edb965ec64ddd32094dd6a049a436d0fc563823cf48",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-mnp-nfk-batch-2026-10-07"
+}

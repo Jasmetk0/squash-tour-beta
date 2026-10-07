@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-ireland-history-v1",
+  "source_id": "uefa-ireland-profile",
+  "relative_path": "observations/normalized/structural/fifa_structural_ireland_history_v1.json",
+  "sha256": "62363d23129b0732ced4adc9c8b3f266ebe3a605a8fd39a4c5a8fcc59ff4c946",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

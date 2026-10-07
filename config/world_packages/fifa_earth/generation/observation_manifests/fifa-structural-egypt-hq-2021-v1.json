@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-egypt-hq-2021-v1",
+  "source_id": "fifa-egypt-hq-2021",
+  "relative_path": "observations/normalized/structural/fifa_structural_egypt_hq_2021_v1.json",
+  "sha256": "132853b9b510a3411b6d7bd1a288ababf23425d15b9dda4af53b4ab2e21c736e",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

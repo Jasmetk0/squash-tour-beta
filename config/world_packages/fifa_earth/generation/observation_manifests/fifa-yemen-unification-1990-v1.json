@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-yemen-unification-1990-v1",
+  "source_id": "un-yemen-unification-1990",
+  "relative_path": "observations/normalized/structural/fifa_yemen_unification_1990_v1.json",
+  "sha256": "a517b32d93cac90844c2cd8d99c27deffab1e80f42e6085e01f3a95794678f44",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

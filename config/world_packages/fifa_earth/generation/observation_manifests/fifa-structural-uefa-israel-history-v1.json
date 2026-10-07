@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-uefa-israel-history-v1",
+  "source_id": "uefa-israel-profile",
+  "relative_path": "observations/normalized/structural/fifa_structural_uefa_israel_history_v1.json",
+  "sha256": "f620492d3eeb3c43a70e56ec816178da56510ed990e0b183ed9911504d580ee4",
+  "record_count": 6,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

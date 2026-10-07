@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-blm-maf-status-2007-v1",
+  "source_id": "blm-maf-status-2007",
+  "relative_path": "observations/normalized/fifa_blm_maf_status_2007_v1.json",
+  "sha256": "b586904a9cce358349b6a727cab80fb0b862c9aa5fc91416cd0b79e80c5ffe56",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-blm-maf-batch-2026-10-07"
+}

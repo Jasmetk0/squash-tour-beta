@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-samoa-savaii-centre-2013-v1",
+  "source_id": "ofc-samoa-savaii-2013",
+  "relative_path": "observations/normalized/fifa-structural-samoa-savaii-centre-2013-v1.json",
+  "sha256": "4439be13ef9a5d7fbb7134095dded9941613e77cab2a25214b9081c72b48357a",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-04"
+}

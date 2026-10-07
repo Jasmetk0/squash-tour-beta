@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-chile-history-v1",
+  "source_id": "fifa-chile-125-history",
+  "relative_path": "observations/normalized/structural/fifa_structural_chile_history_v1.json",
+  "sha256": "a8a1a1727ee792319c7e82fe7963f4235e3f80bcf94989cad80dbb479240cc44",
+  "record_count": 4,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

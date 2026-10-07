@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-mongolia-history-v1",
+  "source_id": "fifa-mongolia-member-context-2026",
+  "relative_path": "observations/normalized/structural/fifa_mongolia_history_v1.json",
+  "sha256": "7931b6b4c423198d3cffeefc6952d72e7949d541436aea1eb927b28376ccff10",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

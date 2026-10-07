@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-ofc-vanuatu-profile-v1",
+  "source_id": "ofc-vanuatu-profile",
+  "relative_path": "observations/normalized/fifa-structural-ofc-vanuatu-profile-v1.json",
+  "sha256": "1926e3c2303d5db14f2866870a1cb329756485a779d5dcb88822d78bd8dedcb8",
+  "record_count": 8,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-04"
+}

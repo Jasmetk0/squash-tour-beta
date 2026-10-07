@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-nigeria-history-v1",
+  "source_id": "caf-nigeria-profile",
+  "relative_path": "observations/normalized/structural/fifa_structural_nigeria_history_v1.json",
+  "sha256": "cf8ff5ecb9e6e467c3ecabd21bcb9de30fca5e3cc6a72456f56adb7a24d2e900",
+  "record_count": 3,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

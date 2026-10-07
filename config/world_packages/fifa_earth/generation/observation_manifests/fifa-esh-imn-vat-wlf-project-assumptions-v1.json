@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-esh-imn-vat-wlf-project-assumptions-v1",
+  "source_id": "esh-imn-vat-wlf-fifa-project-assumptions",
+  "relative_path": "observations/normalized/fifa_esh_imn_vat_wlf_project_assumptions_v1.json",
+  "sha256": "37b50f8411a5ef3c13f430790cac98f29f1acfd75a6c7bf3e5f36bf1c4c914ce",
+  "record_count": 4,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-final4-batch-2026-10-07"
+}

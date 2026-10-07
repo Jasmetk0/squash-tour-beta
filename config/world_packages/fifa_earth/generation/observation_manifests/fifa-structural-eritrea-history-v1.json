@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-eritrea-history-v1",
+  "source_id": "caf-eritrea-profile",
+  "relative_path": "observations/normalized/structural/fifa_structural_eritrea_history_v1.json",
+  "sha256": "c1aee519c7662f895f041ab68e8b20a31cbb3f89914abb51e7a24eae08a7407e",
+  "record_count": 4,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-rus-kir-project-assumptions-v1",
+  "source_id": "rus-kir-fifa-project-assumptions",
+  "relative_path": "observations/normalized/fifa_rus_kir_project_assumptions_v1.json",
+  "sha256": "1e750ad548b4ec9ac87e1a9050c61a295a2268fcab6dcbd4c606540ae7be66cc",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-rus-kir-batch-2026-10-07"
+}

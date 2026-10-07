@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-fifa-and-mne-project-assumptions-v1",
+  "source_id": "and-mne-fifa-and-mne-project-assumptions",
+  "relative_path": "observations/normalized/fifa_fifa_and_mne_project_assumptions_v1.json",
+  "sha256": "f183d5ebe16da6fd56c72abffc2d996fb05442e18a71fdda042b99416bdda986",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-and-mne-batch-2026-10-07"
+}

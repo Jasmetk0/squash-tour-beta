@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-trinidad-and-tobago-history-v1",
+  "source_id": "fifa-trinidad-tobago-member-context-2026",
+  "relative_path": "observations/normalized/structural/fifa_trinidad_and_tobago_history_v1.json",
+  "sha256": "19943b8e97dbfc48e944f6c9c9680deb8868642c56306d1e892dbac25b716d4d",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

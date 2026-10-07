@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-tuv-ofc-2026-v1",
+  "source_id": "nru-tuv-ofc-tuvalu-2026",
+  "relative_path": "observations/normalized/fifa_tuv_ofc_2026_v1.json",
+  "sha256": "5dba49612e6408e39db5ccb728e062a606da7c38e9a1a50f01375a2e847a2dfd",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-nru-tuv-batch-2026-10-07"
+}

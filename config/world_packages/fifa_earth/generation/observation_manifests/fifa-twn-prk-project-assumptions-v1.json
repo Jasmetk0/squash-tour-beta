@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-twn-prk-project-assumptions-v1",
+  "source_id": "twn-prk-fifa-project-assumptions",
+  "relative_path": "observations/normalized/fifa_twn_prk_project_assumptions_v1.json",
+  "sha256": "ad4d979185ed29fd8038e4a5da74f659e241de45e6285b8184b349d6903a0dd1",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-twn-prk-batch-2026-10-07"
+}

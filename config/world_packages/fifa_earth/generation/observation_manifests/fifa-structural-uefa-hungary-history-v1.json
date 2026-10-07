@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-uefa-hungary-history-v1",
+  "source_id": "uefa-hungary-125-2026",
+  "relative_path": "observations/normalized/structural/fifa_structural_uefa_hungary_history_v1.json",
+  "sha256": "f9d76502f0c6c53c1a937987f7c3b94f9b76a8838b278168216b7e1b2b0af7eb",
+  "record_count": 4,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

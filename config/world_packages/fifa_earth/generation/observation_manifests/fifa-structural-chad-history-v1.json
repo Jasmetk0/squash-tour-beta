@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-chad-history-v1",
+  "source_id": "caf-chad-profile",
+  "relative_path": "observations/normalized/structural/fifa_structural_chad_history_v1.json",
+  "sha256": "2344f8819f234a827ec1463ab6ccc4cb76845b03eb0742186dd939449abbbbe1",
+  "record_count": 4,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

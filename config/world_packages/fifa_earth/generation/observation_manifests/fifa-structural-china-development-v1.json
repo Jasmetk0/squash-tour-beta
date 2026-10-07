@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-china-development-v1",
+  "source_id": "afc-china-grassroots-2024",
+  "relative_path": "observations/normalized/structural/fifa_structural_china_development_v1.json",
+  "sha256": "fdf0896f88967e4776fa7dddf31d611219b50515e6b5b6b111fddd9ba8d8c209",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

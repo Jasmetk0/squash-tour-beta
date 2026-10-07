@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-fsm-ofc-2015-v1",
+  "source_id": "cog-fsm-ofc-fsm-2015",
+  "relative_path": "observations/normalized/fifa_fsm_ofc_2015_v1.json",
+  "sha256": "8b644caeaf67600f2113d3919ed3bb3ad0d493958f7300b5d717b8104d058792",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-cog-fsm-batch-2026-10-07"
+}

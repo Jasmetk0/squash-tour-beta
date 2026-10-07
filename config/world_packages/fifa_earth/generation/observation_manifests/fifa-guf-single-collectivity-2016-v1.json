@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-guf-single-collectivity-2016-v1",
+  "source_id": "guf-single-collectivity-2016",
+  "relative_path": "observations/normalized/fifa_guf_reu_guf_single_collectivity_2016_v1.json",
+  "sha256": "567a52edcac829f97471f626841d6f21b980364bf05864368c20c8344f2d9841",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-guf-reu-batch-2026-10-07"
+}

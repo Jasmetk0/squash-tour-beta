@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-professional-2023-players-v2",
+  "source_id": "fifa-professional-2023",
+  "relative_path": "observations/normalized/fifa_professional_2023_players_v2.json",
+  "sha256": "3d4b1b4c7146c6938d6b37653137134906d32a0da266ffb8ab7f1839a3105422",
+  "record_count": 112,
+  "source_document_sha256": "fb15135da80e3cf395cadf1b2fcd2762f52268292cebc5e86957115b260c0e71",
+  "input_artifact_sha256": "d3782c520864667195d44b8359bdbadf85f0dec51fe0ead8c626ac8619120bb4",
+  "generated_by": "scripts/normalize_fifa_professional_2023.py"
+}

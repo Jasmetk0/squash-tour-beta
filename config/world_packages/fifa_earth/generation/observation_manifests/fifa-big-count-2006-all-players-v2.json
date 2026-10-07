@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-big-count-2006-all-players-v2",
+  "source_id": "fifa-big-count-2006",
+  "relative_path": "observations/normalized/fifa_big_count_2006_all_players_v2.json",
+  "sha256": "a4434dd56e227c2466f6a12f793b1a4200d8f1d9e8c992789b1be3f31df12d7f",
+  "record_count": 208,
+  "source_document_sha256": null,
+  "input_artifact_sha256": "00bb138d03f6cbfed6f909311f44fc5fc8643ad4338e6be17f3f0305a35a6944",
+  "generated_by": "scripts/normalize_fifa_big_count_2006.py"
+}

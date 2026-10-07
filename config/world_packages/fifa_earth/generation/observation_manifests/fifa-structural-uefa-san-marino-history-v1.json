@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-uefa-san-marino-history-v1",
+  "source_id": "uefa-san-marino-history",
+  "relative_path": "observations/normalized/structural/fifa_structural_uefa_san_marino_history_v1.json",
+  "sha256": "7278134c6aa5b3c6649dc7fa4c37209f7e44743aeff662cfb43cf2dee8e0089d",
+  "record_count": 6,
+  "source_document_sha256": null,
+  "input_artifact_sha256": "695b29b9552a8fb59133db25ec8948951a78217a9a1c049734c73ad79b75f665",
+  "generated_by": "scripts/normalize_fifa_structural_events.py"
+}

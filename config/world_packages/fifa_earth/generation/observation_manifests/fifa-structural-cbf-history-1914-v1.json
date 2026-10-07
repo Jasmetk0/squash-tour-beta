@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-cbf-history-1914-v1",
+  "source_id": "cbf-history-1914",
+  "relative_path": "observations/normalized/structural/fifa_structural_cbf_history_1914_v1.json",
+  "sha256": "47a9e88e0725a1f1b387843c521e8d4026f5b9e189ed42fc0d46be081736c9ed",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": "695b29b9552a8fb59133db25ec8948951a78217a9a1c049734c73ad79b75f665",
+  "generated_by": "scripts/normalize_fifa_structural_events.py"
+}

@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-cxr-cck-project-assumptions-v1",
+  "source_id": "cxr-cck-fifa-project-assumptions",
+  "relative_path": "observations/normalized/fifa_cxr_cck_project_assumptions_v1.json",
+  "sha256": "e1d96cc4bcc273b21456a5f1bf7b16f0329ee84e866e920feb5a6261129f8927",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-cxr-cck-batch-2026-10-07"
+}

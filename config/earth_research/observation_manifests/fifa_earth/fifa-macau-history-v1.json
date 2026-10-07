@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-macau-history-v1",
+  "source_id": "hkg-mac-fifa-macau-history",
+  "relative_path": "observations/normalized/fifa_macau_history_v1.json",
+  "sha256": "4ec0e36b2f5e23be750bd872616fe0e6bae9f978814ef0748b644ab1397e36fc",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-hkg-mac-batch-2026-10-07"
+}

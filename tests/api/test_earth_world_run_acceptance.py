@@ -13,6 +13,8 @@ live authoring files or flattening their historical country data.
 from __future__ import annotations
 
 from collections import Counter
+from pathlib import Path
+import shutil
 from urllib.parse import quote
 
 import pytest
@@ -26,6 +28,17 @@ from tests.support.world_packages import copy_builtin_world_packages
 EARTH_WORLD_IDS = (FIFA_EARTH_ID, ATP_EARTH_ID)
 INITIAL_POOL_SIZE = 1_000
 INITIAL_POOL_SEED = 20261007
+REPOSITORY_WORLD_PACKAGES_ROOT = Path("config/world_packages")
+
+
+def _copy_world_packages_with_earth(destination: Path) -> Path:
+    copy_builtin_world_packages(destination)
+    for world_id in EARTH_WORLD_IDS:
+        shutil.copytree(
+            REPOSITORY_WORLD_PACKAGES_ROOT / world_id,
+            destination / world_id,
+        )
+    return destination
 
 
 def _rating_vector(country: dict[str, object], year: int) -> tuple[float, ...]:
@@ -203,7 +216,7 @@ def test_both_earth_packages_drive_1000_player_product_runs_save_reopen_and_fork
     tmp_path,
 ):
     db_path = tmp_path / "earth-product-run.db"
-    world_root = copy_builtin_world_packages(tmp_path / "world-packages")
+    world_root = _copy_world_packages_with_earth(tmp_path / "world-packages")
     results: dict[str, dict[str, object]] = {}
 
     server = ApiServer(database_url=f"sqlite:///{db_path}")
@@ -320,7 +333,7 @@ def test_earth_season_runtime_materializes_generation_and_survives_three_weeks_a
     world_id: str,
 ):
     db_path = tmp_path / f"{world_id}-season-runtime.db"
-    world_root = copy_builtin_world_packages(
+    world_root = _copy_world_packages_with_earth(
         tmp_path / f"{world_id}-runtime-world-packages"
     )
     run_id = f"earth-runtime-{world_id}"

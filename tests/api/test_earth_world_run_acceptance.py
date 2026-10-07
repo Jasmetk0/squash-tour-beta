@@ -12,7 +12,6 @@ live authoring files or flattening their historical country data.
 
 from __future__ import annotations
 
-from collections import Counter
 from itertools import count
 from pathlib import Path
 import shutil
@@ -229,9 +228,10 @@ def _materialize_product_run(
         "saved_revision_id": saved_world.saved_revision.revision_id,
         "countries": countries,
         "pool": pool,
-        "pool_counts": Counter(
-            player.country_code for player in pool.result.players
-        ),
+        "allocation_diagnostics": [
+            row.model_dump(mode="json")
+            for row in pool.result.metadata.population_weighting_diagnostics
+        ],
         "world_country_content_fingerprint": adopted.world_country_content_fingerprint,
         "world_generation_content_fingerprint": (
             adopted.world_generation_content_fingerprint
@@ -276,8 +276,8 @@ def test_both_earth_packages_drive_1000_player_product_runs_save_reopen_and_fork
     assert fifa_pool.preview_fingerprint != atp_pool.preview_fingerprint
     assert fifa_pool.result.players != atp_pool.result.players
     assert (
-        results[FIFA_EARTH_ID]["pool_counts"]
-        != results[ATP_EARTH_ID]["pool_counts"]
+        results[FIFA_EARTH_ID]["allocation_diagnostics"]
+        != results[ATP_EARTH_ID]["allocation_diagnostics"]
     )
 
     # Reopen through a fresh engine/session factory, then fork the exact Saved

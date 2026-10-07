@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-cod-profile-v1",
+  "source_id": "caf-cod-caf-congo-dr",
+  "relative_path": "observations/normalized/fifa_cod_profile_v1.json",
+  "sha256": "2df8c92623ceef00b4d2c00dbda599b2662141d4328606cabfb4e47878036f92",
+  "record_count": 3,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-caf-cod-batch-2026-10-07"
+}

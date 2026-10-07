@@ -9,6 +9,8 @@ InitialWorld -> ranking -> three empty authoritative weeks -> Save/reopen -> Bra
 from __future__ import annotations
 
 import math
+import shutil
+from pathlib import Path
 
 import pytest
 
@@ -242,6 +244,10 @@ def test_earth_package_survives_real_run_generation_weeks_reopen_and_fork(
     server, _ = _server_state(case_root)
     database_url = f"sqlite:///{case_root / 'api.sqlite'}"
     world_packages_root = copy_builtin_world_packages(case_root / "world-packages")
+    shutil.copytree(
+        Path("config/world_packages") / world_id,
+        world_packages_root / world_id,
+    )
     server.app.state.world_packages_root = world_packages_root
     _remove_first_three_source_events(server)
 

@@ -6131,3 +6131,11 @@ bands should shape 0..200 potential. No threshold is inferred from current OVR v
 - UMI remains at or near the floor; current Census context notes that the aggregate generally does not include year-round population.
 - Current demographic context enters only in 2026 and is treated as contextual, not direct sports evidence.
 - No football or tennis federation membership, organised competition, rankings, titles or athlete outcomes are inferred.
+
+### Earth CXR/CCK batch — 2026-10-07
+- Added complete 1955–2026 FIFA Earth and ATP Earth histories for Christmas Island (CXR) and Cocos (Keeling) Islands (CCK).
+- Authored-history coverage becomes 226/250 in both packages after PCN/UMI.
+- Official Australian 2021 Census population counts enter only from 2021: 1,692 for Christmas Island and 593 for Cocos (Keeling) Islands.
+- Population is explicitly treated as demographic context, not as direct evidence of sports participation or quality.
+- No football or tennis federation membership, organised competition, rankings, titles or athlete outcomes are inferred.
+- All numeric ratings remain low-confidence project estimates.

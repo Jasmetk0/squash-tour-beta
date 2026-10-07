@@ -382,6 +382,12 @@ def test_earth_history_survives_run_package_adapter(world_id):
     assert len(run_country.rating_history.years) == 72
     assert run_country.at_rating_year(1955).rating_effective_year == 1955
     assert run_country.at_rating_year(2026).rating_effective_year == 2026
+    generation_entities = [
+        entity for entity in document.entities if entity.scope == "player_generation"
+    ]
+    assert len(generation_entities) == 1
+    assert generation_entities[0].source_entity_id == "generation.player_identity"
+    assert generation_entities[0].payload["given_names"]
 
 
 @pytest.mark.parametrize("world_id", ["fifa_earth", "atp_earth"])
@@ -416,6 +422,11 @@ def test_full_earth_research_builds_to_valid_distributed_semantics(tmp_path, wor
     assert WorldPackageCountryStore(output).semantic_payload() == (
         WorldPackageCountryStore(distributed_root).semantic_payload()
     )
+    assert (
+        output / "generation/player_identity.json"
+    ).read_bytes() == (
+        distributed_root / "generation/player_identity.json"
+    ).read_bytes()
 
 
 def test_flat_csv_import_refuses_to_strip_history_from_editable_clone(tmp_path):

@@ -682,6 +682,8 @@ def test_atp_complete_histories_are_evidence_resolvable_and_temporally_bounded()
         "KIR": "atp-earth-kir-reviewed-structure.v1",
         "MHL": "atp-earth-mhl-reviewed-structure.v1",
         "PLW": "atp-earth-plw-reviewed-structure.v1",
+        "ALA": "atp-earth-ala-reviewed-structure.v1",
+        "ATA": "atp-earth-ata-reviewed-structure.v1",
     }
     for code, history in bundle.research.countries.items():
         assert history.missing_earth_years == []

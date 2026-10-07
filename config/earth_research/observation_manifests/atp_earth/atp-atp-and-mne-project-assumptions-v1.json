@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-atp-and-mne-project-assumptions-v1",
+  "source_id": "and-mne-atp-and-mne-project-assumptions",
+  "relative_path": "observations/normalized/atp_atp_and_mne_project_assumptions_v1.json",
+  "sha256": "b27cfab9c0136b4dc5ad1365f17802f123f98f2f8d825fbcf2e6c72d6b7b7cd6",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-and-mne-batch-2026-10-07"
+}

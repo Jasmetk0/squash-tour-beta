@@ -25,6 +25,28 @@ from beta_engine.domain.countries.rating_history import CountryRatingHistory, GA
 from beta_engine.infrastructure.world_package_storage import WorldPackageCountryStore
 
 
+EARTH_COUNTRY_CODE_ALIASES: dict[str, str] = {
+    # Legacy football/tennis association codes -> canonical Earth/ISO package codes.
+    "ANG": "AGO",
+    "CHA": "TCD",
+    "EQG": "GNQ",
+    "GAM": "GMB",
+    "LES": "LSO",
+    "SEY": "SYC",
+    "NED": "NLD",
+    "SUI": "CHE",
+    "CRO": "HRV",
+    "GRE": "GRC",
+    "DEN": "DNK",
+}
+
+
+def _canonical_earth_country_code(code: str | None) -> str | None:
+    if code is None:
+        return None
+    return EARTH_COUNTRY_CODE_ALIASES.get(code, code)
+
+
 class EarthSource(BaseModel):
     model_config = ConfigDict(extra="forbid")
     title: str = Field(min_length=1)
@@ -145,20 +167,37 @@ def _load_research_shards(*, research_path: Path, payload: dict) -> dict:
     merged["observation_datasets"] = manifests
 
     country_dir = root / "countries" / world_id
-    countries = dict(payload.get("countries") or {})
+    countries: dict[str, dict] = {}
+    for stored_code, history_payload in dict(payload.get("countries") or {}).items():
+        code = _canonical_earth_country_code(stored_code)
+        if code in countries:
+            raise ValueError(
+                f"duplicate canonical Earth country history {code!r} "
+                f"after normalizing stored code {stored_code!r}"
+            )
+        countries[code] = history_payload
     if country_dir.exists():
         if not country_dir.is_dir():
             raise ValueError(f"country history shard path is not a directory: {country_dir}")
         for shard_path in sorted(country_dir.glob("*.json")):
-            code = shard_path.stem
-            if len(code) != 3 or not code.isascii() or not code.isalpha() or not code.isupper():
+            stored_code = shard_path.stem
+            if (
+                len(stored_code) != 3
+                or not stored_code.isascii()
+                or not stored_code.isalpha()
+                or not stored_code.isupper()
+            ):
                 raise ValueError(f"invalid country history shard filename {shard_path.name!r}")
+            code = _canonical_earth_country_code(stored_code)
             if code in countries:
-                raise ValueError(f"duplicate country history {code!r} in inline research and shards")
+                raise ValueError(
+                    f"duplicate canonical Earth country history {code!r} "
+                    f"after normalizing stored code {stored_code!r}"
+                )
             try:
                 shard_payload = json.loads(shard_path.read_text(encoding="utf-8"))
             except (OSError, json.JSONDecodeError) as exc:
-                raise ValueError(f"{code}: country history shard is unavailable or invalid") from exc
+                raise ValueError(f"{stored_code}: country history shard is unavailable or invalid") from exc
             countries[code] = CountryRatingHistory.model_validate(shard_payload).model_dump(mode="json")
     merged["countries"] = countries
 
@@ -221,14 +260,22 @@ def load_earth_research_bundle(path: Path) -> EarthResearchBundle:
                 f"manifest={manifest.sha256}, actual={actual_hash}"
             )
 
+        # Keep the verified dataset object byte/semantic-identical to its manifest,
+        # but expose canonical Earth identity through the resolved observation index.
         datasets[dataset_id] = dataset
         for observation in dataset.observations:
-            if observation.observation_id in observations:
+            canonical_code = _canonical_earth_country_code(observation.earth_country_code)
+            resolved_observation = (
+                observation
+                if canonical_code == observation.earth_country_code
+                else observation.model_copy(update={"earth_country_code": canonical_code})
+            )
+            if resolved_observation.observation_id in observations:
                 raise ValueError(
                     f"duplicate observation ID across datasets: "
-                    f"{observation.observation_id!r}"
+                    f"{resolved_observation.observation_id!r}"
                 )
-            observations[observation.observation_id] = observation
+            observations[resolved_observation.observation_id] = resolved_observation
 
     for code, history in research.countries.items():
         for year in history.years.values():

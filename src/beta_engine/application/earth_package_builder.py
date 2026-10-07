@@ -24,6 +24,7 @@ from beta_engine.application.earth_research_observations import (
 from beta_engine.domain.countries import Country, CountriesConfig
 from beta_engine.domain.countries.rating_history import CountryRatingHistory, GAME_ATTRIBUTE_NAMES, RATING_SCALE_V2
 from beta_engine.infrastructure.world_package_storage import WorldPackageCountryStore
+from beta_engine.infrastructure.world_config import load_player_identity_config
 
 
 EARTH_COUNTRY_CODE_ALIASES: dict[str, str] = {
@@ -470,6 +471,21 @@ def build_earth_package(*, base_package: Path, bundle: EarthResearchBundle, outp
 
         generation = staged / "generation"
         generation.mkdir(exist_ok=True)
+
+        # Earth Packages must carry their generation identity inputs with the
+        # historical country data.  This is engine-generation configuration, not
+        # federation/tennis evidence, and makes the distributed package directly
+        # usable by a Run without falling back to live global config.
+        player_identity = load_player_identity_config()
+        (generation / "player_identity.json").write_text(
+            json.dumps(
+                player_identity.model_dump(mode="json"),
+                ensure_ascii=False,
+                indent=2,
+            )
+            + "\n",
+            encoding="utf-8",
+        )
 
         source_root = generation / "sources"
         source_root.mkdir(exist_ok=True)

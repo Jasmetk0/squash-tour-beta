@@ -40,7 +40,8 @@ def _load_sources(root: Path, errors: list[str]) -> dict:
                 source_id = path.stem
                 if source_id in sources:
                     raise ValueError(f"duplicate source {source_id!r}")
-                sources[source_id] = EarthSource.model_validate(load_json_object(path))
+                safe_path = safe_package_file(root, path.relative_to(root).as_posix())
+                sources[source_id] = EarthSource.model_validate(load_json_object(safe_path))
         else:
             legacy = load_json_object(root / "generation/country_rating_sources.json")
             sources = {
@@ -59,7 +60,15 @@ def _load_manifests(root: Path, sources: dict, errors: list[str]) -> dict[str, E
     manifests: dict[str, EarthObservationDatasetManifest] = {}
     try:
         if manifest_root.is_dir():
-            entries = [(path.stem, load_json_object(path)) for path in sorted(manifest_root.glob("*.json"))]
+            entries = [
+                (
+                    path.stem,
+                    load_json_object(
+                        safe_package_file(root, path.relative_to(root).as_posix())
+                    ),
+                )
+                for path in sorted(manifest_root.glob("*.json"))
+            ]
         else:
             legacy = load_json_object(root / "generation/country_rating_observation_datasets.json")
             entries = list(legacy.items())
@@ -91,7 +100,8 @@ def _load_calibration_models(root: Path, metadata: dict, errors: list[str]) -> d
         if calibration_root.is_dir():
             paths = sorted(calibration_root.glob("*.json"))
             for path in paths:
-                model = load_json_object(path)
+                safe_path = safe_package_file(root, path.relative_to(root).as_posix())
+                model = load_json_object(safe_path)
                 model_id = _calibration_model_id(model)
                 if model_id is None:
                     # The calibration directory also contains review/audit policy

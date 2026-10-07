@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-niu-self-government-1974-v1",
+  "source_id": "niu-self-government-1974",
+  "relative_path": "observations/normalized/atp_niu_self_government_1974_v1.json",
+  "sha256": "f383a5efd3a1ac3568bfed8621132bb7c9242213824e722bca8a6e7db6586f98",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-niu-tkl-batch-2026-10-07"
+}

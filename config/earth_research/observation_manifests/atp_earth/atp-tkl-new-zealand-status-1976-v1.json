@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-tkl-new-zealand-status-1976-v1",
+  "source_id": "tkl-new-zealand-status-1976",
+  "relative_path": "observations/normalized/atp_tkl_new_zealand_status_1976_v1.json",
+  "sha256": "c0949f9d5a2c32d018aff1b99f4852eaf12d17e584331e797f78131c95e2352d",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-niu-tkl-batch-2026-10-07"
+}

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 import shutil
 import tempfile
 from dataclasses import dataclass
@@ -20,6 +21,7 @@ from beta_engine.application.earth_research_observations import (
     observation_dataset_id,
     observation_dataset_sha256,
 )
+from beta_engine.application.package_evidence_files import canonical_json_sha256
 from beta_engine.domain.countries import Country, CountriesConfig
 from beta_engine.domain.countries.rating_history import CountryRatingHistory, GAME_ATTRIBUTE_NAMES, RATING_SCALE_V2
 from beta_engine.infrastructure.world_package_storage import WorldPackageCountryStore
@@ -101,11 +103,12 @@ class EarthSportResearch(BaseModel):
 
 @dataclass(frozen=True)
 class EarthResearchBundle:
-    """File-verified research document plus its normalized observation index."""
+    """File-verified research document plus portable provenance inputs."""
 
     research: EarthSportResearch
     datasets: dict[str, EarthObservationDataset]
     observations: dict[str, EarthObservation]
+    calibration_models: dict[str, dict]
 
 
 def _load_research_shards(*, research_path: Path, payload: dict) -> dict:
@@ -204,6 +207,74 @@ def _load_research_shards(*, research_path: Path, payload: dict) -> dict:
     return merged
 
 
+
+def _required_calibration_models(research: EarthSportResearch) -> dict[str, set[str]]:
+    required: dict[str, set[str]] = {}
+    for code, history in research.countries.items():
+        for entry in history.years.values():
+            for rating in entry.ratings.values():
+                if rating.calibration_model_id:
+                    required.setdefault(rating.calibration_model_id, set()).add(code)
+    return required
+
+
+def _load_calibration_models(root: Path, research: EarthSportResearch) -> dict[str, dict]:
+    """Resolve every referenced calibration definition from checked-in research."""
+
+    required = _required_calibration_models(research)
+    if not required:
+        return {}
+    calibration_root = root / "calibration"
+    if not calibration_root.is_dir():
+        raise ValueError("referenced calibration models exist but calibration directory is missing")
+
+    models: dict[str, dict] = {}
+    for path in sorted(calibration_root.glob("*.json")):
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as exc:
+            raise ValueError(f"invalid calibration definition {path.name!r}") from exc
+        if not isinstance(payload, dict):
+            raise ValueError(f"calibration definition {path.name!r} must contain an object")
+        declared_ids = [
+            value for value in (
+                payload.get("calibration_model_id"),
+                payload.get("model_id"),
+            )
+            if isinstance(value, str) and value.strip()
+        ]
+        if not declared_ids:
+            continue
+        if len(set(declared_ids)) != 1:
+            raise ValueError(f"calibration definition {path.name!r} declares conflicting model IDs")
+        model_id = declared_ids[0]
+        if model_id not in required:
+            continue
+        if model_id in models:
+            raise ValueError(f"duplicate calibration definition for {model_id!r}")
+        world_id = payload.get("world_id")
+        if world_id is not None and world_id != research.world_id:
+            raise ValueError(
+                f"calibration model {model_id!r} targets {world_id!r}, not {research.world_id!r}"
+            )
+        countries = payload.get("countries")
+        if countries is not None:
+            if not isinstance(countries, list) or any(not isinstance(code, str) for code in countries):
+                raise ValueError(f"calibration model {model_id!r} has invalid countries list")
+            missing_countries = required[model_id] - set(countries)
+            if missing_countries:
+                raise ValueError(
+                    f"calibration model {model_id!r} does not declare countries "
+                    f"{sorted(missing_countries)}"
+                )
+        models[model_id] = payload
+
+    missing = sorted(set(required) - models.keys())
+    if missing:
+        raise ValueError(f"missing calibration model definitions: {missing}")
+    return models
+
+
 def load_earth_research_bundle(path: Path) -> EarthResearchBundle:
     """Load a research file and fail closed on stale/tampered observation manifests."""
 
@@ -287,10 +358,13 @@ def load_earth_research_bundle(path: Path) -> EarthResearchBundle:
                             f"{observation_id!r}"
                         )
 
+    calibration_models = _load_calibration_models(root, research)
+
     return EarthResearchBundle(
         research=research,
         datasets=datasets,
         observations=observations,
+        calibration_models=calibration_models,
     )
 
 
@@ -332,18 +406,27 @@ def audit_earth_research(research: EarthSportResearch, countries: list[Country])
     }
 
 
-def build_earth_package(*, base_package: Path, research: EarthSportResearch, output: Path) -> dict:
-    """All-or-nothing build into a new directory; shared sources are never changed."""
+def build_earth_package(*, base_package: Path, bundle: EarthResearchBundle, output: Path) -> dict:
+    """Build a self-contained historical package atomically without touching its source."""
+
+    research = bundle.research
     base_package = base_package.resolve()
     output = output.resolve()
     if output.is_relative_to(base_package):
         raise ValueError("output must be outside the base package; recursive self-copy is forbidden")
     if output.exists():
         raise FileExistsError(f"refusing to overwrite {output}")
+    if set(bundle.datasets) != set(research.observation_datasets):
+        raise ValueError("verified observation datasets do not match the research manifest catalogue")
+    required_models = set(_required_calibration_models(research))
+    if set(bundle.calibration_models) != required_models:
+        raise ValueError("verified calibration definitions do not match referenced calibration models")
+
     countries = WorldPackageCountryStore(base_package).load_config().countries
     report = audit_earth_research(research, countries)
     if not report["coverage_complete"]:
         raise ValueError("Earth research is incomplete; run audit_earth_research for missing countries/years")
+
     output.parent.mkdir(parents=True, exist_ok=True)
     staged = Path(tempfile.mkdtemp(prefix=".earth-build-", dir=output.parent))
     try:
@@ -354,34 +437,110 @@ def build_earth_package(*, base_package: Path, research: EarthSportResearch, out
             entry = history.years[history.reference_year]
             payload = country.model_dump()
             payload.update({name: entry.ratings[name].value for name in GAME_ATTRIBUTE_NAMES})
-            payload.update(rating_scale=RATING_SCALE_V2, rating_history=history.model_dump(),
-                           rating_effective_year=None, court_count=None)
+            payload.update(
+                rating_scale=RATING_SCALE_V2,
+                rating_history=history.model_dump(),
+                rating_effective_year=None,
+                court_count=None,
+            )
             converted.append(Country.model_validate(payload))
         WorldPackageCountryStore(staged).replace_dataset(CountriesConfig(countries=converted))
-        metadata = json.loads((staged / "world.json").read_text())
-        metadata.update(world_id=research.world_id,
-                        name="FIFA Earth Package" if research.world_id == "fifa_earth" else "ATP Earth Package",
-                        description="Historical sporting environment estimates, 1955–2026; project-authored, not a federation endorsement.",
-                        version="v1", type="official", source="built_in", editable=False,
-                        deletable=False, archivable=False, rating_scale=RATING_SCALE_V2,
-                        rating_years={"from": 1955, "to": 2026}, data_cutoff=research.data_cutoff.isoformat())
-        (staged / "world.json").write_text(json.dumps(metadata, indent=2) + "\n")
+
+        metadata = json.loads((staged / "world.json").read_text(encoding="utf-8"))
+        metadata.update(
+            world_id=research.world_id,
+            name="FIFA Earth Package" if research.world_id == "fifa_earth" else "ATP Earth Package",
+            description=(
+                "Historical sporting environment estimates, 1955–2026; "
+                "project-authored, not a federation endorsement."
+            ),
+            version="v1",
+            type="official",
+            source="built_in",
+            editable=False,
+            deletable=False,
+            archivable=False,
+            rating_scale=RATING_SCALE_V2,
+            rating_years={"from": 1955, "to": 2026},
+            data_cutoff=research.data_cutoff.isoformat(),
+        )
+        (staged / "world.json").write_text(
+            json.dumps(metadata, ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8",
+        )
+
         generation = staged / "generation"
         generation.mkdir(exist_ok=True)
-        (generation / "country_rating_sources.json").write_text(json.dumps(
-            {key: value.model_dump(mode="json") for key, value in research.sources.items()}, indent=2
-        ) + "\n")
-        (generation / "country_rating_observation_datasets.json").write_text(json.dumps(
-            {
-                key: value.model_dump(mode="json")
-                for key, value in research.observation_datasets.items()
-            },
-            indent=2,
-        ) + "\n")
-        (generation / "country_rating_coverage.json").write_text(json.dumps(report, indent=2) + "\n")
-        # Round-trip the actual persisted country source before publishing the directory.
+        (generation / "country_rating_sources.json").write_text(
+            json.dumps(
+                {key: value.model_dump(mode="json") for key, value in research.sources.items()},
+                ensure_ascii=False,
+                indent=2,
+            ) + "\n",
+            encoding="utf-8",
+        )
+
+        observation_root = generation / "observations"
+        observation_root.mkdir(exist_ok=True)
+        packaged_manifests: dict[str, dict] = {}
+        for dataset_id, manifest in sorted(research.observation_datasets.items()):
+            dataset = bundle.datasets[dataset_id]
+            relative_path = f"generation/observations/{dataset_id}.json"
+            (staged / relative_path).write_text(
+                json.dumps(dataset.model_dump(mode="json"), ensure_ascii=False, indent=2) + "\n",
+                encoding="utf-8",
+            )
+            packaged_manifests[dataset_id] = manifest.model_copy(
+                update={"relative_path": relative_path}
+            ).model_dump(mode="json")
+        (generation / "country_rating_observation_datasets.json").write_text(
+            json.dumps(packaged_manifests, ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8",
+        )
+
+        calibration_root = generation / "calibration"
+        calibration_root.mkdir(exist_ok=True)
+        calibration_catalog: dict[str, dict] = {}
+        for model_id, model in sorted(bundle.calibration_models.items()):
+            if re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]*", model_id) is None:
+                raise ValueError(f"unsafe calibration model ID {model_id!r}")
+            relative_path = f"generation/calibration/{model_id}.json"
+            (staged / relative_path).write_text(
+                json.dumps(model, ensure_ascii=False, indent=2) + "\n",
+                encoding="utf-8",
+            )
+            calibration_catalog[model_id] = {
+                "relative_path": relative_path,
+                "sha256": canonical_json_sha256(model),
+            }
+        (generation / "country_rating_calibration_models.json").write_text(
+            json.dumps(
+                {
+                    "schema_version": "earth_country_calibration_catalog.v1",
+                    "models": calibration_catalog,
+                },
+                ensure_ascii=False,
+                indent=2,
+            ) + "\n",
+            encoding="utf-8",
+        )
+        (generation / "country_rating_coverage.json").write_text(
+            json.dumps(report, ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8",
+        )
+
         if WorldPackageCountryStore(staged).load_config().countries != converted:
             raise ValueError("Earth package did not round-trip")
+
+        from beta_engine.application.country_history_validation import country_history_errors
+
+        persisted_errors = country_history_errors(staged, metadata, converted)
+        if persisted_errors:
+            raise ValueError(
+                "built Earth package provenance validation failed: "
+                + "; ".join(persisted_errors[:10])
+            )
+
         staged.rename(output)
         return report
     finally:

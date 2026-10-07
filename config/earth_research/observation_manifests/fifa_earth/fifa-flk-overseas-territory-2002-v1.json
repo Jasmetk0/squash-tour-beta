@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-flk-overseas-territory-2002-v1",
+  "source_id": "flk-overseas-territory-2002",
+  "relative_path": "observations/normalized/fifa_flk_overseas_territory_2002_v1.json",
+  "sha256": "7b95e586c930b4c081036589332f4eea4668fb87ce5fc0bb459da7ea2c9ca3a4",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-flk-iot-batch-2026-10-07"
+}

@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-iot-seychelles-islands-return-1976-v1",
+  "source_id": "iot-seychelles-islands-return-1976",
+  "relative_path": "observations/normalized/atp_iot_seychelles_islands_return_1976_v1.json",
+  "sha256": "5d98ec01c2213d359d6a9564c1536ee4f57b56b20fc7f459acc4d53ffe647b97",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-flk-iot-batch-2026-10-07"
+}

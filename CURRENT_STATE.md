@@ -6115,6 +6115,7 @@ bands should shape 0..200 potential. No threshold is inferred from current OVR v
 - Current official territory context enters only in 2026: TAAF has no permanent population; Bouvet Island is an extremely isolated Norwegian nature reserve.
 - Territory facts are treated as contextual only, not as direct sports measurements.
 - No football or tennis federation membership, organised competition, rankings, titles or athlete outcomes are inferred.
+- Structural observations use stable repository source IDs and semantic manifests.
 
 ### Earth HMD/SGS batch — 2026-10-07
 - Added complete 1955–2026 FIFA Earth and ATP Earth histories for Heard Island and McDonald Islands (HMD) and South Georgia and the South Sandwich Islands (SGS).
@@ -6196,4 +6197,14 @@ bands should shape 0..200 potential. No threshold is inferred from current OVR v
 - BES transitions to the three Caribbean Netherlands public bodies of the Netherlands; Sint Maarten transitions to an autonomous country within the Kingdom of the Netherlands.
 - Constitutional status is identity context only and never used as direct sports evidence.
 - Ratings are explicit low-confidence local project estimates and do not automatically inherit Netherlands- or Kingdom-wide sports evidence.
+- No football or tennis federation membership, organised competition, rankings, titles or athlete outcomes are inferred.
+
+### Earth FLK/IOT batch — 2026-10-07
+- Added complete 1955-2026 FIFA Earth and ATP Earth histories for Falkland Islands (FLK) and British Indian Ocean Territory (IOT).
+- Authored-history coverage becomes 242/250 in both packages after BES/SXM.
+- Falkland Islands preserves the 2002 British Overseas Territory terminology transition.
+- IOT preserves creation in 1965 and the 1976 return of Seychelles-origin islands, leaving the Chagos Archipelago composition.
+- The 2025 UK-Mauritius Chagos treaty is recorded as pending context only; no sovereignty transfer is applied before treaty entry into force, so the 2026 Earth identity remains BIOT.
+- Territorial, constitutional and treaty events are identity context only and never used as direct sports evidence.
+- Ratings are explicit low-confidence local project estimates and do not automatically inherit UK-wide sports evidence.
 - No football or tennis federation membership, organised competition, rankings, titles or athlete outcomes are inferred.

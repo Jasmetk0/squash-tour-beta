@@ -1,0 +1,42 @@
+{
+  "schema_version": "earth_source_observations.v2",
+  "dataset_id": "fifa-fsm-ofc-2015-v1",
+  "source_id": "cog-fsm-ofc-fsm-2015",
+  "source_url": "https://www.oceaniafootball.com/archives-9363/",
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-cog-fsm-batch-2026-10-07",
+  "scope": "Federated States of Micronesia; dated OFC-recorded Pacific Games participation without inferring FIFA membership.",
+  "limitations": "Structural context only; numeric six-attribute ratings remain project-authored low-confidence estimates.",
+  "observations": [
+    {
+      "observation_id": "fifa-fsm-ofc-2015-v1#fsm-pacific-games-2015",
+      "source_id": "cog-fsm-ofc-fsm-2015",
+      "source_entity": "Oceania Football Confederation",
+      "earth_country_code": "FSM",
+      "historical_entity": "Federated States of Micronesia",
+      "observation_year": 2015,
+      "period_start_year": null,
+      "period_end_year": null,
+      "measurement_type": "structural_event",
+      "sex_scope": "not_applicable",
+      "age_scope": null,
+      "competition_scope": null,
+      "numeric_value": null,
+      "text_value": "OFC recorded the Federated States of Micronesia team competing against Fiji at the 2015 Pacific Games; this is participation evidence only and does not imply FIFA membership.",
+      "unit": "event",
+      "collection_method": "official_narrative",
+      "coverage_scope": "territory",
+      "comparability_group": null,
+      "cross_country_comparable": false,
+      "is_direct_observation": true,
+      "is_statistically_modelled": false,
+      "territory_mapping_method": null,
+      "territory_weight": null,
+      "source_page": null,
+      "source_locator": null,
+      "definition_notes": "Structural sporting context only; not a direct measurement of the six game ratings.",
+      "quality_flags": []
+    }
+  ]
+}

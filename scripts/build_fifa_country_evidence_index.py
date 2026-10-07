@@ -82,24 +82,23 @@ def _project_assumption_fact(observation) -> dict[str, Any]:
 
 
 def _context_only_fact(observation) -> dict[str, Any]:
-    """Keep non-sport territorial/context facts auditable but out of calibration."""
+    """Keep generic structural/context facts auditable but out of empirical calibration."""
 
-    notes = (observation.definition_notes or "").lower()
-    explicitly_non_sport = (
-        "not a sports measurement" in notes
-        or "not sports evidence" in notes
-        or "constitutional_status_not_sports_measurement" in observation.quality_flags
-    )
+    # Generic structural_event is the explicit context-only type in this index.
+    # Sport evidence intended for country calibration uses the separate
+    # football_structural_event / sport_structural_event types and an explicit
+    # reviewed Earth mapping. Do not infer this boundary from prose in
+    # definition_notes: wording varies across reviewed datasets.
     if (
         observation.earth_country_code is None
         or observation.measurement_type != "structural_event"
         or observation.territory_mapping_method is not None
         or observation.numeric_value is not None
+        or observation.text_value is None
         or observation.cross_country_comparable is not False
         or observation.is_direct_observation is not True
         or observation.is_statistically_modelled is not False
         or observation.competition_scope is not None
-        or not explicitly_non_sport
     ):
         raise ValueError(
             f"observation {observation.observation_id!r} is not reviewed context-only evidence"
@@ -121,8 +120,8 @@ def _context_only_fact(observation) -> dict[str, Any]:
         "earth_country_code": observation.earth_country_code,
         "candidate_earth_codes": [],
         "identity_reason": (
-            "Explicit territorial/context fact is retained for auditability only and "
-            "is excluded from empirical sport calibration evidence."
+            "Explicit generic structural/context fact is retained for auditability only "
+            "and is excluded from empirical sport calibration evidence."
         ),
         "quality_flags": list(observation.quality_flags),
     }

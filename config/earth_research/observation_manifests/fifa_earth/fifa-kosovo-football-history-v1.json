@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-kosovo-football-history-v1",
+  "source_id": "mco-xkx-uefa-fifa-kosovo-history",
+  "relative_path": "observations/normalized/fifa_kosovo_football_history_v1.json",
+  "sha256": "71d656518d069ae9e5423c473e97c266e1f99934ca9103d2670fd6d826dfefd4",
+  "record_count": 4,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-mco-xkx-batch-2026-10-07"
+}

@@ -479,3 +479,6 @@ capacity in 2026.
 Across both worlds, current-territory Baltic sport during Soviet rule does **not**
 inherit USSR-wide participation, player-strength or outcome evidence. Structural
 milestones are chronology/capacity evidence, not automatic rating bonuses.
+
+### Monaco + Kosovo reviewed batch (2026-10-07)
+MCO and XKX now have complete 1955–2026 histories in both FIFA Earth and ATP Earth. Project-authored numeric priors remain explicit low-confidence estimates separate from external structural observations. Kosovo jurisdiction is represented in historical-entity labels, Monaco football evidence does not imply FIFA/UEFA membership, and current ITF member-association evidence enters only in 2026.

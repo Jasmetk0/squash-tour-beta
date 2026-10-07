@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-mnp-nfk-project-assumptions-v1",
+  "source_id": "mnp-nfk-fifa-project-assumptions",
+  "relative_path": "observations/normalized/fifa_mnp_nfk_project_assumptions_v1.json",
+  "sha256": "9d53ec9a7d862c6a1d2f1786043fba794a2f8660321cd7b1d2cd85c3823a396d",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-mnp-nfk-batch-2026-10-07"
+}

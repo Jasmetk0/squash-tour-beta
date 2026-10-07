@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-gap5-pak-association-2026-v1",
+  "source_id": "fifa-gap5-pak-2026",
+  "relative_path": "observations/normalized/fifa_gap5_pak_association_2026_v1.json",
+  "sha256": "9c866c79f8261f4313bc9480e6ec066872a099ef291802f4f838e8b53c9d9be1",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-fifa-gap5-2026-10-07"
+}

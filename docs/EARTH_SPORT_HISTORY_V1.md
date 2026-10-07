@@ -482,3 +482,6 @@ milestones are chronology/capacity evidence, not automatic rating bonuses.
 
 ### Monaco + Kosovo reviewed batch (2026-10-07)
 MCO and XKX now have complete 1955–2026 histories in both FIFA Earth and ATP Earth. Project-authored numeric priors remain explicit low-confidence estimates separate from external structural observations. Kosovo jurisdiction is represented in historical-entity labels, Monaco football evidence does not imply FIFA/UEFA membership, and current ITF member-association evidence enters only in 2026.
+
+### Hong Kong + Macau reviewed batch (2026-10-07)
+HKG and MAC now have complete 1955–2026 histories in both FIFA Earth and ATP Earth. Hong Kong uses British Hong Kong before 1997 and HKSAR afterward; Macau uses Portuguese Macau before 1999 and MSAR afterward. External football milestones remain dated, current ITF evidence enters only in 2026, and numeric ratings remain explicit low-confidence project estimates.

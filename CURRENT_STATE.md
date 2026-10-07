@@ -6013,3 +6013,9 @@ bands should shape 0..200 potential. No threshold is inferred from current OVR v
 - Authored history coverage: FIFA Earth 191/250; ATP Earth 191/250.
 - Monaco football evidence stays limited to official Monaco association/legal structure; no FIFA/UEFA membership is inferred.
 - Kosovo football milestones are dated (FFK 1946, FIFA friendlies 2014, UEFA/FIFA 2016); current ITF evidence is not backdated.
+
+### Earth HKG/MAC batch — 2026-10-07
+- Added complete 1955–2026 FIFA Earth and ATP Earth histories for Hong Kong (HKG) and Macau (MAC).
+- Authored history coverage: FIFA Earth 193/250; ATP Earth 193/250.
+- Historical entity labels preserve the 1997 Hong Kong and 1999 Macau sovereignty transitions without inheriting China PR totals.
+- FIFA/AFC milestones and current ITF association evidence are dated and not backfilled before their observation years.

@@ -48,7 +48,7 @@ def _direct_mapped_fact(observation) -> dict[str, Any]:
         )
 
     if (
-        observation.measurement_type == "football_structural_event"
+        observation.measurement_type in {"football_structural_event", "sport_structural_event"}
         and mapping == "explicit_reviewed_event_to_earth"
     ):
         reason = (

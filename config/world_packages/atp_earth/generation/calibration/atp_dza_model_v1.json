@@ -1,0 +1,75 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "atp-earth-dza-model.v1",
+  "world_id": "atp_earth",
+  "data_cutoff": "2026-10-04",
+  "countries": [
+    "DZA"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "evidence_rules": [
+    "Pre-1962 ratings are low-confidence territorial estimates; FAT creation is gated to 1962.",
+    "ITF JTI active-programme evidence enters only from 2021.",
+    "The 2023 federal-centre discussion is treated as planned support/capacity, not completed infrastructure.",
+    "2026 ITF development eligibility is opportunity/capacity context only; no result or ranking is a calibration target."
+  ],
+  "anchor_values": {
+    "DZA": {
+      "1955": [
+        3.6,
+        3.3,
+        3.2,
+        3.2,
+        3,
+        4
+      ],
+      "1962": [
+        4.8,
+        4.4,
+        4.5,
+        4.4,
+        4.2,
+        5.8
+      ],
+      "2000": [
+        5.5,
+        5,
+        5.1,
+        5,
+        4.8,
+        6.4
+      ],
+      "2021": [
+        6,
+        5.5,
+        5.9,
+        5.5,
+        5.5,
+        6.8
+      ],
+      "2023": [
+        6.2,
+        5.7,
+        6.2,
+        5.7,
+        5.9,
+        6.9
+      ],
+      "2026": [
+        6.5,
+        6,
+        6.5,
+        6,
+        6.2,
+        7.1
+      ]
+    }
+  },
+  "evidence_sources": [
+    "fat-algeria-profile",
+    "itf-jti-active-2021",
+    "fat-algeria-federal-centre-2023",
+    "itf-algeria-development-eligibility-2026"
+  ],
+  "heldout_ranking_used": false
+}

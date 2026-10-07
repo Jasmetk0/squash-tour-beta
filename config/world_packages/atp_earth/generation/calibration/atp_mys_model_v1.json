@@ -1,0 +1,66 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "atp-earth-mys-model.v1",
+  "world_id": "atp_earth",
+  "data_cutoff": "2026-10-04",
+  "countries": [
+    "MYS"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "evidence_rules": [
+    "Pre-1963 Malayan tennis history is treated as partial historical context for present Malaysia territory.",
+    "The 1965 LTAM formation/ITF affiliation is a distinct institutional step.",
+    "The National Tennis Academy is gated to 2014 as development/access/elite-support infrastructure.",
+    "The 2026 national/junior/ITF calendar is current-only competition evidence.",
+    "No player rankings or event outcomes are calibration targets."
+  ],
+  "anchor_values": {
+    "MYS": {
+      "1955": [
+        5.8,
+        5.4,
+        5.6,
+        5.4,
+        5.3,
+        7.5
+      ],
+      "1963": [
+        6,
+        5.6,
+        5.8,
+        5.5,
+        5.5,
+        7.6
+      ],
+      "1965": [
+        6.2,
+        5.9,
+        6.1,
+        5.8,
+        5.9,
+        7.8
+      ],
+      "2014": [
+        7,
+        7.1,
+        7.5,
+        6.8,
+        7.3,
+        8.3
+      ],
+      "2026": [
+        7.5,
+        7.5,
+        7.8,
+        7.4,
+        7.7,
+        8.5
+      ]
+    }
+  },
+  "evidence_sources": [
+    "ltam-history",
+    "ltam-calendar-2026"
+  ],
+  "heldout_ranking_used": false
+}

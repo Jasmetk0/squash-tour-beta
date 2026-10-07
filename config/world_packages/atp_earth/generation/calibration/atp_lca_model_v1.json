@@ -1,0 +1,40 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "atp-earth-lca-model.v1",
+  "world_id": "atp_earth",
+  "data_cutoff": "2026-10-04",
+  "countries": [
+    "LCA"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "evidence_rules": [
+    "1955-2025 remains a low-confidence project-authored baseline.",
+    "Current ITF membership context is not backdated.",
+    "No 2026 development eligibility is inferred without a checked entry.",
+    "Authored baseline does not imply statistical modelling."
+  ],
+  "anchor_values": {
+    "LCA": {
+      "1955": [
+        2.8,
+        2.5,
+        2.7,
+        2.6,
+        2.5,
+        3
+      ],
+      "2026": [
+        4.3,
+        3.9,
+        4.1,
+        4,
+        3.8,
+        4.5
+      ]
+    }
+  },
+  "evidence_sources": [
+    "itf-saint-lucia-profile"
+  ],
+  "heldout_ranking_used": false
+}

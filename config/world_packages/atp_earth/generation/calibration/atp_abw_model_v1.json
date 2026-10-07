@@ -1,0 +1,40 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "atp-earth-abw-model.v1",
+  "world_id": "atp_earth",
+  "data_cutoff": "2026-10-04",
+  "countries": [
+    "ABW"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "evidence_rules": [
+    "1955-2025 remains a low-confidence project-authored baseline.",
+    "Current ITF membership context is not backdated.",
+    "No 2026 development eligibility is inferred without a checked entry.",
+    "Authored baseline does not imply statistical modelling."
+  ],
+  "anchor_values": {
+    "ABW": {
+      "1955": [
+        2.5,
+        2.3,
+        2.4,
+        2.3,
+        2.2,
+        2.7
+      ],
+      "2026": [
+        3.9,
+        3.5,
+        3.7,
+        3.6,
+        3.4,
+        4.1
+      ]
+    }
+  },
+  "evidence_sources": [
+    "itf-aruba-profile"
+  ],
+  "heldout_ranking_used": false
+}

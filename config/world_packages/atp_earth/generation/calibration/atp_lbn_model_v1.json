@@ -1,0 +1,41 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "atp-earth-lbn-model.v1",
+  "world_id": "atp_earth",
+  "data_cutoff": "2026-10-04",
+  "countries": [
+    "LBN"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "evidence_rules": [
+    "Sparse 1955-2025 history remains a low-confidence project-authored baseline.",
+    "Current ITF membership context is not backdated.",
+    "2026 development eligibility is capacity/opportunity context only.",
+    "Authored baseline does not imply statistical modelling."
+  ],
+  "anchor_values": {
+    "LBN": {
+      "1955": [
+        3.8,
+        3.4,
+        3.6,
+        3.5,
+        3.3,
+        4.1
+      ],
+      "2026": [
+        5.8,
+        5.2,
+        5.5,
+        5.1,
+        5,
+        6
+      ]
+    }
+  },
+  "evidence_sources": [
+    "itf-lebanon-profile",
+    "itf-lebanon-development-eligibility-2026"
+  ],
+  "heldout_ranking_used": false
+}

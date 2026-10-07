@@ -1,0 +1,53 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "atp-earth-mnp-reviewed-structure.v1",
+  "world_id": "atp_earth",
+  "countries": [
+    "MNP"
+  ],
+  "data_cutoff": "2026-10-04",
+  "rating_scale": "country_ratings_1_10.v2",
+  "attribute_order": [
+    "squash_popularity",
+    "squash_access",
+    "development_quality",
+    "competition_quality",
+    "elite_support",
+    "squash_tradition"
+  ],
+  "anchor_values": {
+    "MNP": {
+      "1955": [
+        1.6,
+        1.5,
+        1.4,
+        1.3,
+        1.3,
+        1.5
+      ],
+      "2000": [
+        3,
+        2.8,
+        2.6,
+        2.3,
+        2.4,
+        2.8
+      ],
+      "2026": [
+        4.8,
+        4.6,
+        4.2,
+        3.7,
+        3.9,
+        4.4
+      ]
+    }
+  },
+  "selection": "Piecewise-constant authored periods; no hidden interpolation and no observation enters before its evidence year.",
+  "limitations": [
+    "All numeric ratings are project estimates with low confidence, not source measurements.",
+    "Current ITF association evidence is used only from 2026 and does not establish historical membership timing.",
+    "No rankings, titles or athlete results are used to fit ratings.",
+    "2026 is partial through the bundle cutoff, not a forecast."
+  ]
+}

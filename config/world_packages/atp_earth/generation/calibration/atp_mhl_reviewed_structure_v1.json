@@ -1,0 +1,54 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "atp-earth-mhl-reviewed-structure.v1",
+  "world_id": "atp_earth",
+  "countries": [
+    "MHL"
+  ],
+  "data_cutoff": "2026-10-04",
+  "rating_scale": "country_ratings_1_10.v2",
+  "attribute_order": [
+    "squash_popularity",
+    "squash_access",
+    "development_quality",
+    "competition_quality",
+    "elite_support",
+    "squash_tradition"
+  ],
+  "anchor_values": {
+    "MHL": {
+      "1955": [
+        1.8,
+        1.7,
+        1.6,
+        1.5,
+        1.5,
+        1.7
+      ],
+      "1986": [
+        2.8,
+        2.5,
+        2.4,
+        2.2,
+        2.2,
+        2.6
+      ],
+      "2026": [
+        5,
+        5.3,
+        4.8,
+        4.1,
+        4.3,
+        4.7
+      ]
+    }
+  },
+  "selection": "Piecewise-constant authored periods; no hidden interpolation. Where no independent football evidence is registered, anchors remain explicit project assumptions.",
+  "limitations": [
+    "All numbers are project estimates with low confidence, not source measurements.",
+    "No FIFA/OFC membership is inferred for Marshall Islands or Palau from absence/presence of unrelated evidence.",
+    "Early priors are registered separately from independent tennis observations.",
+    "No rankings, titles or athlete results are used to fit ratings.",
+    "2026 is partial through the bundle cutoff, not a forecast."
+  ]
+}

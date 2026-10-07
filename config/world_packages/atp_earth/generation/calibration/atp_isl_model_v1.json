@@ -1,0 +1,74 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "atp-earth-isl-model.v1",
+  "world_id": "atp_earth",
+  "data_cutoff": "2026-10-04",
+  "countries": [
+    "ISL"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "evidence_rules": [
+    "Pre-1970 ratings use only the documented early presence of tennis and stay low-confidence.",
+    "The organised-play expansion is gated to the 1970s, TSÍ foundation to 1987 and the Kópavogur indoor-hall step to 1995.",
+    "Current 2026 indoor instruction/coaching is current-only and is not backcast.",
+    "Small-population access and institutional continuity are not treated as world-leading playing quality.",
+    "No rankings or title outcomes are calibration targets."
+  ],
+  "anchor_values": {
+    "ISL": {
+      "1955": [
+        2.8,
+        2.4,
+        2.2,
+        2.2,
+        2,
+        3.4
+      ],
+      "1970": [
+        3.2,
+        3,
+        2.7,
+        2.6,
+        2.5,
+        3.9
+      ],
+      "1979": [
+        3.7,
+        3.5,
+        3.1,
+        3,
+        3,
+        4.4
+      ],
+      "1987": [
+        4.3,
+        4.2,
+        4,
+        3.7,
+        4,
+        5.2
+      ],
+      "1995": [
+        5,
+        5.5,
+        4.9,
+        4.5,
+        4.7,
+        5.8
+      ],
+      "2026": [
+        5.8,
+        6.1,
+        5.9,
+        5.4,
+        5.7,
+        6.5
+      ]
+    }
+  },
+  "evidence_sources": [
+    "visir-iceland-tennis-history-2023",
+    "tennis-is-current-2026"
+  ],
+  "heldout_ranking_used": false
+}

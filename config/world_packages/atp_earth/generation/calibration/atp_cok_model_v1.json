@@ -1,0 +1,76 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "atp-earth-cok-model.v1",
+  "world_id": "atp_earth",
+  "data_cutoff": "2026-10-04",
+  "countries": [
+    "COK"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "evidence_rules": [
+    "Tennis Cook Islands foundation is anchored to 1947 and supplies institutional continuity only.",
+    "The 2020 ITF participation/development snapshot is gated to 2020; it is not backcast across earlier decades.",
+    "The 2022 junior pathway and 2026 current programmes are separately time-gated.",
+    "Small-population participation counts are interpreted in local-system context rather than as world-scale volume.",
+    "No event result or ranking is a calibration target."
+  ],
+  "anchor_values": {
+    "COK": {
+      "1955": [
+        3.8,
+        3.4,
+        3.2,
+        3.3,
+        3.1,
+        5.3
+      ],
+      "1965": [
+        4,
+        3.6,
+        3.4,
+        3.5,
+        3.3,
+        5.5
+      ],
+      "2000": [
+        4.4,
+        4,
+        4.1,
+        4,
+        3.9,
+        5.8
+      ],
+      "2020": [
+        5.2,
+        5,
+        5.3,
+        4.9,
+        5,
+        6
+      ],
+      "2022": [
+        5.4,
+        5.1,
+        5.5,
+        5.2,
+        5.3,
+        6.1
+      ],
+      "2026": [
+        5.6,
+        5.4,
+        5.7,
+        5.4,
+        5.5,
+        6.3
+      ]
+    }
+  },
+  "evidence_sources": [
+    "itf-cook-foundation-2023",
+    "itf-cook-development-2020",
+    "itf-cook-juniors-2022",
+    "tennis-cook-current-2026"
+  ],
+  "heldout_ranking_used": false
+}

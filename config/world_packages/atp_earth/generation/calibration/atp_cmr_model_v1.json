@@ -1,0 +1,57 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "atp-earth-cmr-model.v1",
+  "world_id": "atp_earth",
+  "data_cutoff": "2026-10-04",
+  "countries": [
+    "CMR"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "evidence_rules": [
+    "No verified foundation date is asserted; pre-2020 years use a low-confidence baseline derived only from later confirmed national tennis context.",
+    "ITF 2020 closure status enters only in 2020 and is not treated as performance.",
+    "2026 development eligibility enters only in 2026.",
+    "Event results are not rating targets."
+  ],
+  "anchor_values": {
+    "CMR": {
+      "1955": [
+        3.8,
+        3.4,
+        3.5,
+        3.4,
+        3.1,
+        4.3
+      ],
+      "2000": [
+        4.7,
+        4.2,
+        4.5,
+        4.5,
+        4.1,
+        5.2
+      ],
+      "2020": [
+        5.2,
+        4.7,
+        5,
+        5,
+        4.6,
+        5.7
+      ],
+      "2026": [
+        5.7,
+        5.2,
+        5.5,
+        5.5,
+        5.1,
+        6.1
+      ]
+    }
+  },
+  "evidence_sources": [
+    "itf-cameroon-return-to-play-2020",
+    "itf-cameroon-development-eligibility-2026"
+  ],
+  "heldout_ranking_used": false
+}

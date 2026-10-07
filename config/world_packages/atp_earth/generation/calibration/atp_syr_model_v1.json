@@ -1,0 +1,41 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "atp-earth-syr-model.v1",
+  "world_id": "atp_earth",
+  "data_cutoff": "2026-10-04",
+  "countries": [
+    "SYR"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "evidence_rules": [
+    "Sparse 1955-2025 history remains a low-confidence project-authored baseline.",
+    "Current ITF membership context is not backdated.",
+    "2026 development eligibility is capacity/opportunity context only.",
+    "Authored baseline does not imply statistical modelling."
+  ],
+  "anchor_values": {
+    "SYR": {
+      "1955": [
+        3.2,
+        2.9,
+        3,
+        3,
+        2.8,
+        3.5
+      ],
+      "2026": [
+        4.8,
+        4.2,
+        4.4,
+        4.1,
+        4,
+        5
+      ]
+    }
+  },
+  "evidence_sources": [
+    "itf-syria-profile",
+    "itf-syria-development-eligibility-2026"
+  ],
+  "heldout_ranking_used": false
+}

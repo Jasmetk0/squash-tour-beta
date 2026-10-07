@@ -5998,7 +5998,11 @@ def test_abw_pri_dual_world_batch_uses_only_available_professional_fields():
     pri = fifa.research.countries["PRI"]
     assert "fifa-professional-2023-clubs-v2#puerto-rico-p156" in pri.years[2023].ratings["competition_quality"].observation_ids
     assert "fifa-professional-2023-clubs-v2#puerto-rico-p156" in pri.years[2023].ratings["elite_support"].observation_ids
-    assert all("players-v2#puerto-rico" not in item for item in pri.years[2023].ratings["competition_quality"].observation_ids)
+    # Big Count all-player evidence is valid; only the absent Professional 2023
+    # player field must be excluded. A suffix match accidentally rejected both.
+    references = pri.years[2023].ratings["competition_quality"].observation_ids
+    assert "fifa-big-count-2006-all-players-v2#puerto-rico" in references
+    assert not any(item.startswith("fifa-professional-2023-players-v2#") for item in references)
 
 
 @pytest.mark.parametrize("world_id", ["fifa_earth", "atp_earth"])

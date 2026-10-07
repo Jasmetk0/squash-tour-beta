@@ -32,7 +32,7 @@ _LEGACY_OBSERVATION_CODE = {
 
 def _stored_observation_code(code: str) -> str:
     """Preserve legacy provenance-local IDs while bundle keys use canonical Earth codes."""
-    return _LEGACY_OBSERVATION_CODE.get(code, _stored_observation_code(code))
+    return _LEGACY_OBSERVATION_CODE.get(code, code.lower())
 
 
 

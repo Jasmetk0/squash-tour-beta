@@ -1,5 +1,45 @@
 # Current implementation and next action
 
+## Earth packages — portable technical integration candidate, 7 October 2026
+
+This section is the authoritative current Earth-package status. Older dated Earth
+sections below are retained as implementation history only.
+
+- Research coverage is structurally complete for both worlds: **250/250** Earth
+  countries/territories, all **72 years (1955–2026)** and exactly six game attributes.
+- FIFA Earth: **318 normalized datasets / 2,081 observations / 108,000 values**.
+- ATP Earth: **486 normalized datasets / 1,033 observations / 108,000 values**.
+- Both built-in directories are now materialized under
+  `config/world_packages/fifa_earth` and `config/world_packages/atp_earth`.
+- Historical package provenance is self-contained: package-owned source shards,
+  observation manifests, normalized observation files, calibration definitions and
+  country histories travel with the package.
+- Validation fails closed on missing/tampered observation files, semantic SHA-256
+  mismatch, record-count/source/dataset mismatch, nonexistent local
+  `observation_id`, missing calibration definition and unsafe/symlinked paths.
+- Package identity fingerprints include the actual packaged provenance content, not
+  only manifest metadata.
+- The missing FIFA CZE/SVK model
+  `fifa-earth-reviewed-country-history-cze-svk.v1` is restored from the original
+  manually reviewed anchors + the original linear-interpolation/one-decimal
+  materializer. All 864 stored CZE/SVK values match that procedure exactly.
+- Built-in Earth sources remain official/read-only; normal clones carry the complete
+  history/provenance tree and become editable custom packages.
+- Court Count remains excluded from the historical V2 package.
+- **Realism is not validated.** Every value is still a project-authored
+  `derived_estimate`; FIFA confidence is 85,046 low / 22,954 medium, ATP is
+  90,867 low / 17,128 medium / 5 high. Passing integrity tests must not set
+  `realism_validated=true`.
+- 2026 means evidence through the recorded cutoff, not knowledge of a complete
+  calendar year.
+
+Next: finish the PR-level integration/audit checks and only then treat the technical
+package integration as merge-ready. Separate historical realism/calibration review
+remains future work.
+
+> All dated Earth progress sections below this notice are historical snapshots and
+> must not be used as the current coverage count.
+
 ## Liechtenstein / Gibraltar research batch — 7 October 2026
 
 Baseline: `buuk` at `90279b3df104a0c78400adf6b9a3f94af83f8f19`.

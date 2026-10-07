@@ -1,5 +1,45 @@
 # Earth sport histories — implementation and research boundary
 
+## Current implementation status — 7 October 2026
+
+Both Earth histories are now technically complete and distributed as built-in World
+Packages:
+
+| Package | Earth identities | Years | Values | Datasets | Observations |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| FIFA Earth | 250/250 | 1955–2026 | 108,000 | 318 | 2,081 |
+| ATP Earth | 250/250 | 1955–2026 | 108,000 | 486 | 1,033 |
+
+The package builder now publishes complete package-owned provenance rather than only
+catalogue metadata. Validation reopens the actual normalized observation files and
+checks semantic hashes, dataset/source identity, record counts, exact observation
+IDs, calibration-model definitions and safe relative paths. Built packages are
+self-contained after relocation and their semantic fingerprint changes when packaged
+provenance content changes.
+
+Country history storage uses a package-owned external-history context so the 72-year
+timeline has one distributed source of truth rather than being duplicated into every
+country attribute envelope. Legacy non-history packages keep their old contract.
+
+The CZE/SVK FIFA calibration reference is now backed by an explicit definition of
+the procedure actually used: manually reviewed anchor values from the original FIFA
+prototype plus the original per-attribute linear interpolation rounded to one
+decimal. A direct comparison found **0 mismatches across all 864 CZE/SVK values**.
+This records provenance; it does not upgrade those estimates into measured facts.
+
+### Realism boundary
+
+Structural completeness is **not** realism validation. All 216,000 values use
+`derived_estimate`; FIFA has 85,046 low-confidence and 22,954 medium-confidence
+values, while ATP has 90,867 low, 17,128 medium and 5 high. Known sharp transitions
+and cross-sport duplicate trajectories remain calibration-review candidates.
+`realism_validated` must remain false until a separate evidence/calibration review
+supports it. 2026 is only evidence through the recorded cutoff.
+
+> The dated progress sections below are historical snapshots. Their partial counts
+> and statements that the package directories do not exist are superseded by this
+> section.
+
 Status: historical-rating foundation merged in #1126; this branch adds the
 research-provenance layer required before populated FIFA Earth / ATP Earth data.
 
@@ -85,8 +125,8 @@ integration repairs are not claimed completed by this data PR.
 
 ## Not implemented or not proven
 
-- **Neither official Earth directory exists yet.** FIFA and ATP each currently have 113 complete histories; neither reaches the required 250-country all-or-nothing build threshold. No fabricated neutral profiles are shipped to satisfy coverage
-  mechanically. See the current-status section above for authoritative counts.
+- Both official Earth directories now exist and are technically portable/validated.
+  What remains unproven is **historical realism**, not structural coverage.
 - FIFA Big Count 2006 now has five canonical normalized
   `earth_source_observations.v2` datasets (all players, registered, unregistered,
   clubs and officials/staff). FIFA Professional Football Report 2023 adds two
@@ -116,11 +156,10 @@ integration repairs are not claimed completed by this data PR.
 
 `config/earth_research/fifa_earth.json` and `atp_earth.json` are
 `earth_sport_research.v2` catalogues whose root records are extended by sharded
-sources, observation manifests and country histories. FIFA currently resolves 27
-complete histories. ATP currently resolves 44 complete histories (CZE, DEU, USA, AUS, ESP, SRB, FRA, GBR, ARG, JPN, CAN, ITA, NED, SWE, SUI, CRO, POL, CHN, NOR, GRE, BEL, ZAF, DEN, FIN, NZL, PRT, IRL, HUN, ROU, SVN, SVK, ISR, BGR, AUT, TUR, CYP, BRA, CHL, COL, MEX, ECU, IND, KOR and THA); its evidence now
-combines ITF national snapshots, federation histories/participation records, Davis Cup
-outcomes and country-specific development/support evidence. Root-JSON contents alone
-must not be used as the coverage count.
+sources, observation manifests and country histories. FIFA and ATP each resolve all 250 Earth identities. FIFA contains 318 normalized
+datasets / 2,081 observations and ATP contains 486 / 1,033. Root-JSON contents alone
+must not be used as the coverage count because both catalogues are extended by
+sharded sources, manifests and country histories.
 
 Current evidence includes:
 

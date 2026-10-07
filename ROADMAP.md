@@ -1,5 +1,21 @@
 # Squash Engine roadmap
 
+## Earth packages — technical integration complete candidate, 7 October 2026
+
+- ✅ FIFA Earth and ATP Earth research are structurally complete at 250/250 identities,
+  1955–2026, six attributes and 108,000 values per package.
+- ✅ Both built-in package directories are materialized and carry package-owned
+  histories plus portable provenance/calibration inputs.
+- ✅ Provenance validation now checks actual files, hashes, exact observation IDs and
+  safe paths; package fingerprints include the packaged provenance content.
+- ✅ The missing FIFA CZE/SVK calibration definition records the original manual-anchor
+  + linear-interpolation procedure and exactly reproduces all 864 stored values.
+- 🟡 PR integration/CI audit must be green before merge.
+- ⏳ Historical realism/calibration validation remains separate future work;
+  `realism_validated` stays false.
+
+> Older Earth roadmap text below is historical and superseded by this section.
+
 ## Owner-requested Earth package work — candidate, 3 October 2026
 
 Historical-rating foundation and source research are in progress. Both complete

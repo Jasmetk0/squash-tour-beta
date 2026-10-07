@@ -23,8 +23,12 @@ from beta_engine.application.earth_research_observations import (
 )
 from beta_engine.domain.countries import Country, CountriesConfig
 from beta_engine.domain.countries.rating_history import CountryRatingHistory, GAME_ATTRIBUTE_NAMES, RATING_SCALE_V2
+from beta_engine.infrastructure.world_config import load_player_identity_config
 from beta_engine.infrastructure.world_package_storage import WorldPackageCountryStore
 from beta_engine.infrastructure.world_config import load_player_identity_config
+
+
+EARTH_PLAYER_IDENTITY_CONFIG_PATH = Path("config/player_generation/player_identity.json")
 
 
 EARTH_COUNTRY_CODE_ALIASES: dict[str, str] = {

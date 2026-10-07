@@ -6138,3 +6138,11 @@ bands should shape 0..200 potential. No threshold is inferred from current OVR v
 - Ratings are explicit low-confidence local project estimates with gradual 1955/1980/2000/2026 anchors.
 - The batch deliberately does not inherit Great Britain or UK-wide sports evidence into either island identity.
 - No football or tennis federation membership, organised competition, rankings, titles or athlete outcomes are inferred.
+
+### Earth BLM/MAF batch — 2026-10-07
+- Added complete 1955-2026 FIFA Earth and ATP Earth histories for Saint Barthélemy (BLM) and Saint Martin (MAF).
+- Authored-history coverage becomes 228/250 in both packages after GGY/JEY.
+- Histories explicitly preserve the 2007 transition from communes within Guadeloupe to separate French overseas collectivities.
+- The legal-status transition is recorded as territorial identity context only and is never used as direct sports evidence.
+- Ratings remain explicit low-confidence local project estimates and do not automatically inherit Guadeloupe- or France-wide sports evidence.
+- No football or tennis federation membership, organised competition, rankings, titles or athlete outcomes are inferred.

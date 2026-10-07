@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-esh-un-status-v1",
+  "source_id": "esh-un-status",
+  "relative_path": "observations/normalized/atp_esh_un_status_v1.json",
+  "sha256": "8ff114bc5a54edf62998cc6c2f7ef51ccf8e9c9a6e11fc757bb147131cb88567",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-final4-batch-2026-10-07"
+}

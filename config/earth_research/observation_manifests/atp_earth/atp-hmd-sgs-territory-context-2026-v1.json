@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-hmd-sgs-territory-context-2026-v1",
+  "source_id": "hmd-sgs-territory-context-2026",
+  "relative_path": "observations/normalized/atp_hmd_sgs_territory_context_2026_v1.json",
+  "sha256": "346e94ee53d38ece0dc3a9ecf87881e8058d073d813df9d443a46c6939964796",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-hmd-sgs-batch-2026-10-07"
+}

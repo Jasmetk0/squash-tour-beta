@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-cxr-cck-project-assumptions-v1",
+  "source_id": "cxr-cck-atp-project-assumptions",
+  "relative_path": "observations/normalized/atp_cxr_cck_project_assumptions_v1.json",
+  "sha256": "fcb95f49c49b72ab75dfcad907d798cb385ffa633f8be3b043d1257bc14c266b",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-cxr-cck-batch-2026-10-07"
+}

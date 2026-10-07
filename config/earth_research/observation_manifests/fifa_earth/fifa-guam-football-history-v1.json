@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-guam-football-history-v1",
+  "source_id": "gum-cuw-guam-football-history",
+  "relative_path": "observations/normalized/fifa_guam_football_history_v1.json",
+  "sha256": "9f46b05051fe568e2bae8c6a7764bcc70b1c89e86af8c917057861fdb176ec1d",
+  "record_count": 4,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-gum-cuw-batch-2026-10-07"
+}

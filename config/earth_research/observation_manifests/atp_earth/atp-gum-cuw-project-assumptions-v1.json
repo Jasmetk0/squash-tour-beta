@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-gum-cuw-project-assumptions-v1",
+  "source_id": "gum-cuw-atp-project-assumptions",
+  "relative_path": "observations/normalized/atp_gum_cuw_project_assumptions_v1.json",
+  "sha256": "8f94599c55bc385a54bec9243adc7773c189f904e34a7c4c7119ab0a68d7222b",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-gum-cuw-batch-2026-10-07"
+}

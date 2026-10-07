@@ -497,3 +497,6 @@ TLS and SOM now have complete 1955–2026 histories in both FIFA Earth and ATP E
 
 ### Central African Republic + DR Congo reviewed batch (2026-10-07)
 CAF and COD now have complete 1955–2026 histories in both FIFA Earth and ATP Earth. CAF federation milestones are dated from the current CAF profile. COD preserves historical state identities and the official CAF profile's internal chronology tension (created 1997, affiliated FIFA/CAF 1964) rather than silently reconciling it. Current ITF 2026 association evidence enters only in 2026.
+
+### Republic of the Congo + FSM reviewed batch (2026-10-07)
+COG and FSM now have complete 1955–2026 histories in both FIFA Earth and ATP Earth. Congo federation milestones are dated from CAF. FSM's 2015 Pacific Games record is used only as participation context and does not imply FIFA membership. Current ITF association evidence is not backdated; numeric ratings remain low-confidence project estimates.

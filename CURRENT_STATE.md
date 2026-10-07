@@ -6044,3 +6044,9 @@ bands should shape 0..200 potential. No threshold is inferred from current OVR v
 - Central African Republic uses CAF profile milestones 1961/1964/1965.
 - DR Congo preserves Belgian Congo -> Congo-Léopoldville -> Zaire -> DR Congo identities and explicitly retains CAF profile's 1997-created versus 1964-affiliation chronology tension for later review.
 - Current ITF 2026 association evidence is not backdated.
+
+### Earth COG/FSM batch — 2026-10-07
+- Added complete 1955–2026 FIFA Earth and ATP Earth histories for Republic of the Congo (COG) and Federated States of Micronesia (FSM).
+- Authored history coverage: FIFA Earth 203/250; ATP Earth 203/250.
+- Congo milestones use CAF's 1962 creation, 1964 FIFA and 1966 CAF affiliation fields.
+- FSM uses dated 2015 OFC Pacific Games participation as participation evidence only; it does not infer FIFA membership. Current ITF evidence enters only in 2026.

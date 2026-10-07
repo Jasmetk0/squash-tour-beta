@@ -38,11 +38,11 @@ def _stored_observation_code(code: str) -> str:
 
 def test_fifa_first_reviewed_country_histories_are_complete_and_resolvable():
     bundle = load_earth_research_bundle(Path("config/earth_research/fifa_earth.json"))
-    assert set(bundle.research.countries) == {"CZE", "SVK", "JPN", "IND", "MAR", "SEN", "FRO", "USA", "ZAF", "BRA", "DEU", "ISL", "SMR", "ARG", "MEX", "AUS", "NZL", "FJI", "PNG", "SLB", "COK", "ASM", "PYF", "NCL", "WSM", "TON", "VUT", "FRA", "ESP", "ITA", "NLD", "BEL", "PRT", "AUT", "DNK", "SWE", "CHE", "NOR", "FIN", "HRV", "SVN", "POL", "ROU", "UKR", "LTU", "LVA", "EST", "CAN", "GRC", "SRB", "CHL", "HUN", "ISR", "BGR", "KAZ", "CHN", "TUR", "KOR", "THA", "COL", "CYP", "ECU", "IRL", "EGY", "MYS", "SAU", "ARE", "QAT", "OMN", "GHA", "NGA", "KEN", "UGA", "TZA", "ZMB", "ZWE", "MWI", "BWA", "NAM", "SWZ", "MOZ", "AGO", "LSO", "CMR", "BEN", "GAB", "MUS", "MDG", "SYC", "RWA", "BDI", "GMB", "CPV", "DJI", "COM", "GNQ", "GNB", "STP", "GIN", "LBR", "SLE", "TGO", "BFA", "MLI", "MRT", "NER", "TCD", "ETH", "ERI", "SDN", "SSD", "DZA", "CIV", "TUN", "LBY", "IRQ", "JOR", "LBN", "SYR", "PSE", "BHR", "KWT", "YEM", "IRN", "AFG", "BGD", "NPL", "LKA", "BTN", "MDV", "MNG", "KHM", "MMR", "LAO", "BRN", "VNM", "UZB", "TJK", "TKM", "KGZ", "GEO", "ARM", "AZE", "ALB", "MDA", "MKD", "BIH", "BLR", "MLT", "LUX", "CRI", "JAM", "TTO", "PAN", "DOM", "GTM", "HND", "SLV", "NIC", "BLZ", "HTI", "PER", "BOL", "PRY", "URY", "VEN", "GUY", "CUB", "SUR", "BHS", "BRB", "GRD", "DMA", "ATG", "LCA", "VCT", "KNA", "VGB", "TCA", "AIA", "BMU", "CYM", "VIR", "ABW", "PRI", "AND", "MNE", "LIE", "GIB", "MCO", "XKX", "HKG", "MAC", "TWN", "PRK", "GUM", "CUW", "TLS", "SOM", "CAF", "COD", "COG", "FSM", "RUS", "KIR", "MHL", "PLW", "ALA", "ATA", "NRU", "TUV", "GBR", "IDN", "PAK", "PHL", "SGP", "MNP", "NFK", "ATF", "BVT", "HMD", "SGS", "PCN", "UMI", "GGY", "JEY", "BLM", "MAF", "GLP", "MTQ", "GUF", "REU"}
+    assert set(bundle.research.countries) == {"CZE", "SVK", "JPN", "IND", "MAR", "SEN", "FRO", "USA", "ZAF", "BRA", "DEU", "ISL", "SMR", "ARG", "MEX", "AUS", "NZL", "FJI", "PNG", "SLB", "COK", "ASM", "PYF", "NCL", "WSM", "TON", "VUT", "FRA", "ESP", "ITA", "NLD", "BEL", "PRT", "AUT", "DNK", "SWE", "CHE", "NOR", "FIN", "HRV", "SVN", "POL", "ROU", "UKR", "LTU", "LVA", "EST", "CAN", "GRC", "SRB", "CHL", "HUN", "ISR", "BGR", "KAZ", "CHN", "TUR", "KOR", "THA", "COL", "CYP", "ECU", "IRL", "EGY", "MYS", "SAU", "ARE", "QAT", "OMN", "GHA", "NGA", "KEN", "UGA", "TZA", "ZMB", "ZWE", "MWI", "BWA", "NAM", "SWZ", "MOZ", "AGO", "LSO", "CMR", "BEN", "GAB", "MUS", "MDG", "SYC", "RWA", "BDI", "GMB", "CPV", "DJI", "COM", "GNQ", "GNB", "STP", "GIN", "LBR", "SLE", "TGO", "BFA", "MLI", "MRT", "NER", "TCD", "ETH", "ERI", "SDN", "SSD", "DZA", "CIV", "TUN", "LBY", "IRQ", "JOR", "LBN", "SYR", "PSE", "BHR", "KWT", "YEM", "IRN", "AFG", "BGD", "NPL", "LKA", "BTN", "MDV", "MNG", "KHM", "MMR", "LAO", "BRN", "VNM", "UZB", "TJK", "TKM", "KGZ", "GEO", "ARM", "AZE", "ALB", "MDA", "MKD", "BIH", "BLR", "MLT", "LUX", "CRI", "JAM", "TTO", "PAN", "DOM", "GTM", "HND", "SLV", "NIC", "BLZ", "HTI", "PER", "BOL", "PRY", "URY", "VEN", "GUY", "CUB", "SUR", "BHS", "BRB", "GRD", "DMA", "ATG", "LCA", "VCT", "KNA", "VGB", "TCA", "AIA", "BMU", "CYM", "VIR", "ABW", "PRI", "AND", "MNE", "LIE", "GIB", "MCO", "XKX", "HKG", "MAC", "TWN", "PRK", "GUM", "CUW", "TLS", "SOM", "CAF", "COD", "COG", "FSM", "RUS", "KIR", "MHL", "PLW", "ALA", "ATA", "NRU", "TUV", "GBR", "IDN", "PAK", "PHL", "SGP", "MNP", "NFK", "ATF", "BVT", "HMD", "SGS", "PCN", "UMI", "GGY", "JEY", "BLM", "MAF", "GLP", "MTQ", "GUF", "REU", "MYT", "SPM"}
     assert bundle.research.data_cutoff.isoformat() == "2026-10-03"
-    assert len(bundle.research.countries) == 232
-    assert len(bundle.datasets) == 290
-    assert len(bundle.observations) == 2033
+    assert len(bundle.research.countries) == 234
+    assert len(bundle.datasets) == 292
+    assert len(bundle.observations) == 2041
 
     for code in ("CZE", "SVK"):
         history = bundle.research.countries[code]
@@ -488,11 +488,11 @@ def test_fifa_fra_esp_batch_is_complete_and_temporally_dimensioned():
 
 def test_atp_complete_histories_are_evidence_resolvable_and_temporally_bounded():
     bundle = load_earth_research_bundle(Path("config/earth_research/atp_earth.json"))
-    expected_countries = {"CZE", "DEU", "USA", "AUS", "ESP", "SRB", "FRA", "GBR", "ARG", "JPN", "CAN", "ITA", "NLD", "SWE", "CHE", "HRV", "POL", "CHN", "NOR", "GRC", "BEL", "ZAF", "DNK", "FIN", "NZL", "PRT", "IRL", "HUN", "ROU", "SVN", "SVK", "ISR", "BGR", "AUT", "TUR", "CYP", "BRA", "CHL", "COL", "MEX", "ECU", "IND", "KOR", "THA", "KAZ", "LVA", "EST", "LTU", "UKR", "MAR", "SEN", "ISL", "SMR", "FRO", "FJI", "PNG", "WSM", "SLB", "TON", "COK", "NCL", "ASM", "VUT", "EGY", "MYS", "PHL", "IDN", "SGP", "PAK", "GHA", "NGA", "KEN", "UGA", "TZA", "ZMB", "ZWE", "MWI", "BWA", "NAM", "SWZ", "MOZ", "AGO", "LSO", "CMR", "BEN", "GAB", "MUS", "MDG", "SYC", "RWA", "BDI", "GMB", "CPV", "DJI", "COM", "GNQ", "GNB", "STP", "GIN", "LBR", "SLE", "TGO", "BFA", "MLI", "MRT", "NER", "TCD", "ETH", "ERI", "SDN", "SSD", "DZA", "CIV", "TUN", "LBY", "IRQ", "JOR", "LBN", "SYR", "PSE", "BHR", "KWT", "YEM", "IRN", "AFG", "BGD", "NPL", "LKA", "BTN", "MDV", "MNG", "KHM", "MMR", "LAO", "BRN", "VNM", "UZB", "TJK", "TKM", "KGZ", "GEO", "ARM", "AZE", "ALB", "MDA", "MKD", "BIH", "BLR", "MLT", "LUX", "CRI", "JAM", "TTO", "PAN", "DOM", "GTM", "HND", "SLV", "NIC", "BLZ", "HTI", "PER", "BOL", "PRY", "URY", "VEN", "GUY", "CUB", "SUR", "BHS", "BRB", "GRD", "DMA", "ATG", "LCA", "VCT", "KNA", "VGB", "TCA", "AIA", "BMU", "CYM", "VIR", "ABW", "PRI", "AND", "MNE", "LIE", "GIB", "MCO", "XKX", "HKG", "MAC", "TWN", "PRK", "GUM", "CUW", "TLS", "SOM", "CAF", "COD", "COG", "FSM", "RUS", "KIR", "MHL", "PLW", "ALA", "ATA", "NRU", "TUV", "ARE", "OMN", "PYF", "QAT", "SAU", "MNP", "NFK", "ATF", "BVT", "HMD", "SGS", "PCN", "UMI", "GGY", "JEY", "BLM", "MAF", "GLP", "MTQ", "GUF", "REU"}
+    expected_countries = {"CZE", "DEU", "USA", "AUS", "ESP", "SRB", "FRA", "GBR", "ARG", "JPN", "CAN", "ITA", "NLD", "SWE", "CHE", "HRV", "POL", "CHN", "NOR", "GRC", "BEL", "ZAF", "DNK", "FIN", "NZL", "PRT", "IRL", "HUN", "ROU", "SVN", "SVK", "ISR", "BGR", "AUT", "TUR", "CYP", "BRA", "CHL", "COL", "MEX", "ECU", "IND", "KOR", "THA", "KAZ", "LVA", "EST", "LTU", "UKR", "MAR", "SEN", "ISL", "SMR", "FRO", "FJI", "PNG", "WSM", "SLB", "TON", "COK", "NCL", "ASM", "VUT", "EGY", "MYS", "PHL", "IDN", "SGP", "PAK", "GHA", "NGA", "KEN", "UGA", "TZA", "ZMB", "ZWE", "MWI", "BWA", "NAM", "SWZ", "MOZ", "AGO", "LSO", "CMR", "BEN", "GAB", "MUS", "MDG", "SYC", "RWA", "BDI", "GMB", "CPV", "DJI", "COM", "GNQ", "GNB", "STP", "GIN", "LBR", "SLE", "TGO", "BFA", "MLI", "MRT", "NER", "TCD", "ETH", "ERI", "SDN", "SSD", "DZA", "CIV", "TUN", "LBY", "IRQ", "JOR", "LBN", "SYR", "PSE", "BHR", "KWT", "YEM", "IRN", "AFG", "BGD", "NPL", "LKA", "BTN", "MDV", "MNG", "KHM", "MMR", "LAO", "BRN", "VNM", "UZB", "TJK", "TKM", "KGZ", "GEO", "ARM", "AZE", "ALB", "MDA", "MKD", "BIH", "BLR", "MLT", "LUX", "CRI", "JAM", "TTO", "PAN", "DOM", "GTM", "HND", "SLV", "NIC", "BLZ", "HTI", "PER", "BOL", "PRY", "URY", "VEN", "GUY", "CUB", "SUR", "BHS", "BRB", "GRD", "DMA", "ATG", "LCA", "VCT", "KNA", "VGB", "TCA", "AIA", "BMU", "CYM", "VIR", "ABW", "PRI", "AND", "MNE", "LIE", "GIB", "MCO", "XKX", "HKG", "MAC", "TWN", "PRK", "GUM", "CUW", "TLS", "SOM", "CAF", "COD", "COG", "FSM", "RUS", "KIR", "MHL", "PLW", "ALA", "ATA", "NRU", "TUV", "ARE", "OMN", "PYF", "QAT", "SAU", "MNP", "NFK", "ATF", "BVT", "HMD", "SGS", "PCN", "UMI", "GGY", "JEY", "BLM", "MAF", "GLP", "MTQ", "GUF", "REU", "MYT", "SPM"}
     assert set(bundle.research.countries) == expected_countries
     assert bundle.research.data_cutoff.isoformat() == "2026-10-04"
-    assert len(bundle.datasets) == 458
-    assert len(bundle.observations) == 985
+    assert len(bundle.datasets) == 460
+    assert len(bundle.observations) == 993
 
     expected_models = {
         "CZE": "atp-earth-cze-deu-seed-model.v1",
@@ -727,6 +727,8 @@ def test_atp_complete_histories_are_evidence_resolvable_and_temporally_bounded()
         "MTQ": "atp-earth-mtq-reviewed-structure.v1",
         "GUF": "atp-earth-guf-reviewed-structure.v1",
         "REU": "atp-earth-reu-reviewed-structure.v1",
+        "MYT": "atp-earth-myt-reviewed-structure.v1",
+        "SPM": "atp-earth-spm-reviewed-structure.v1",
     }
     for code, history in bundle.research.countries.items():
         assert history.missing_earth_years == []
@@ -7212,3 +7214,55 @@ def test_guf_reu_do_not_inherit_france_wide_sports_evidence(world_id, code):
             assert "france-wide sports evidence is inherited automatically" in r
             assert "federation membership or competition is inferred" in r
             assert not any("region-1982" in ref or "single-collectivity-2016" in ref for ref in rating.observation_ids)
+
+
+@pytest.mark.parametrize("world_id", ["fifa_earth", "atp_earth"])
+@pytest.mark.parametrize("code", ["MYT", "SPM"])
+def test_myt_spm_histories_are_complete_local_and_resolvable(world_id, code):
+    bundle = load_earth_research_bundle(Path(f"config/earth_research/{world_id}.json"))
+    history = bundle.research.countries[code]
+    assert set(history.years) == set(range(1955, 2027))
+    assert len(history.years) == 72
+    for year, entry in history.years.items():
+        assert len(entry.ratings) == 6
+        for rating in entry.ratings.values():
+            assert rating.method == "derived_estimate"
+            assert rating.confidence == "low"
+            assert 1.0 <= rating.value <= 4.0
+            assert rating.value * 10 == round(rating.value * 10)
+            assert max(rating.anchor_years) <= year
+            assert rating.observation_ids
+            for ref in rating.observation_ids:
+                assert bundle.observations[ref].earth_country_code == code
+
+
+@pytest.mark.parametrize("world_id", ["fifa_earth", "atp_earth"])
+def test_mayotte_status_transitions_are_explicit(world_id):
+    bundle = load_earth_research_bundle(Path(f"config/earth_research/{world_id}.json"))
+    h = bundle.research.countries["MYT"]
+    assert "Comoros" in h.years[1975].historical_entity
+    assert h.years[1976].historical_entity == "Territorial Collectivity of Mayotte"
+    assert h.years[2001].historical_entity == "Departmental Collectivity of Mayotte"
+    assert h.years[2011].historical_entity == "Department of Mayotte"
+
+
+@pytest.mark.parametrize("world_id", ["fifa_earth", "atp_earth"])
+def test_spm_status_transitions_are_explicit(world_id):
+    bundle = load_earth_research_bundle(Path(f"config/earth_research/{world_id}.json"))
+    h = bundle.research.countries["SPM"]
+    assert "overseas territory" in h.years[1975].historical_entity
+    assert "overseas department" in h.years[1976].historical_entity
+    assert "sui generis" in h.years[1985].historical_entity
+    assert "overseas collectivity" in h.years[2003].historical_entity
+
+
+@pytest.mark.parametrize("world_id", ["fifa_earth", "atp_earth"])
+@pytest.mark.parametrize("code", ["MYT", "SPM"])
+def test_myt_spm_status_events_are_not_rating_evidence(world_id, code):
+    bundle = load_earth_research_bundle(Path(f"config/earth_research/{world_id}.json"))
+    for year in (1955, 1976, 2001, 2011, 2026):
+        for rating in bundle.research.countries[code].years[year].ratings.values():
+            r = rating.rationale.lower()
+            assert "france-wide sports evidence is inherited automatically" in r
+            assert "federation membership or competition is inferred" in r
+            assert not any("status-history" in ref for ref in rating.observation_ids)

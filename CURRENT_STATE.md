@@ -6162,3 +6162,12 @@ bands should shape 0..200 potential. No threshold is inferred from current OVR v
 - Administrative transitions are identity context only and never used as direct sports evidence.
 - Ratings are explicit low-confidence local project estimates and do not automatically inherit France-wide sports evidence.
 - No football or tennis federation membership, organised competition, rankings, titles or athlete outcomes are inferred.
+
+### Earth MYT/SPM batch — 2026-10-07
+- Added complete 1955-2026 FIFA Earth and ATP Earth histories for Mayotte (MYT) and Saint-Pierre-et-Miquelon (SPM).
+- Authored-history coverage becomes 234/250 in both packages after GUF/REU.
+- Mayotte explicitly preserves status transitions in 1976, 2001 and 2011.
+- Saint-Pierre-et-Miquelon explicitly preserves status transitions in 1976, 1985 and 2003.
+- Administrative transitions are identity context only and never used as direct sports evidence.
+- Ratings are explicit low-confidence local project estimates and do not automatically inherit France-wide sports evidence.
+- No football or tennis federation membership, organised competition, rankings, titles or athlete outcomes are inferred.

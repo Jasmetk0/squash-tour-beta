@@ -8,7 +8,10 @@ import pytest
 
 pytestmark = pytest.mark.pr_critical
 
-from beta_engine.application.earth_package_builder import build_earth_package
+from beta_engine.application.earth_package_builder import (
+    build_earth_package,
+    load_earth_research_bundle,
+)
 from beta_engine.application.world_package_registry_service import WorldPackageRegistryService
 from beta_engine.application.world_package_run_adapter import WorldPackageRunAdapter
 from beta_engine.application.world_package_clone_service import WorldPackageCloneService
@@ -361,3 +364,37 @@ def test_earth_history_survives_run_package_adapter(world_id):
     assert len(run_country.rating_history.years) == 72
     assert run_country.at_rating_year(1955).rating_effective_year == 1955
     assert run_country.at_rating_year(2026).rating_effective_year == 2026
+
+
+@pytest.mark.parametrize("world_id", ["fifa_earth", "atp_earth"])
+def test_full_earth_research_builds_to_valid_distributed_semantics(tmp_path, world_id):
+    research_path = Path(f"config/earth_research/{world_id}.json")
+    bundle = load_earth_research_bundle(research_path)
+    output = tmp_path / world_id
+
+    report = build_earth_package(
+        base_package=Path("config/world_packages/real_world"),
+        bundle=bundle,
+        output=output,
+    )
+    assert report["coverage_complete"] is True
+    assert report["required_country_count"] == 250
+    assert report["authored_rating_count"] == 108_000
+    assert report["observation_dataset_count"] == (318 if world_id == "fifa_earth" else 486)
+    assert report["observation_record_count"] == (2081 if world_id == "fifa_earth" else 1033)
+    assert report["realism_validated"] is False
+
+    built_registry = WorldPackageRegistryService(world_packages_root=tmp_path)
+    built_record = built_registry.get_package(world_id)
+    assert built_record is not None
+    assert built_record.country_count == 250
+    validation = WorldPackageValidationService(built_registry).validate_package(world_id)
+    assert validation is not None
+    assert validation.status == "valid", [
+        check.message for check in validation.checks if check.status == "failed"
+    ]
+
+    distributed_root = Path("config/world_packages") / world_id
+    assert WorldPackageCountryStore(output).semantic_payload() == (
+        WorldPackageCountryStore(distributed_root).semantic_payload()
+    )

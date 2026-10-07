@@ -1,0 +1,61 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "atp-earth-ala-reviewed-structure.v1",
+  "world_id": "atp_earth",
+  "countries": [
+    "ALA"
+  ],
+  "data_cutoff": "2026-10-04",
+  "rating_scale": "country_ratings_1_10.v2",
+  "attribute_order": [
+    "squash_popularity",
+    "squash_access",
+    "development_quality",
+    "competition_quality",
+    "elite_support",
+    "squash_tradition"
+  ],
+  "anchor_values": {
+    "ALA": {
+      "1955": [
+        2.7,
+        2.5,
+        2.3,
+        2.1,
+        2.1,
+        2.6
+      ],
+      "1980": [
+        3.4,
+        3.2,
+        3,
+        2.7,
+        2.7,
+        3.1
+      ],
+      "2000": [
+        4.2,
+        3.9,
+        3.7,
+        3.4,
+        3.4,
+        3.9
+      ],
+      "2026": [
+        4.8,
+        4.6,
+        4.3,
+        4,
+        4,
+        4.4
+      ]
+    }
+  },
+  "selection": "Piecewise-constant authored periods from explicit project priors; no hidden interpolation and no federation membership is inferred.",
+  "limitations": [
+    "All numbers are project estimates with low confidence, not source measurements.",
+    "No Finland-wide or claimant-state federation totals are inherited into these territories.",
+    "No rankings, titles or athlete results are used to fit ratings.",
+    "2026 is partial through the bundle cutoff, not a forecast."
+  ]
+}

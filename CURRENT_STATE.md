@@ -6025,3 +6025,9 @@ bands should shape 0..200 potential. No threshold is inferred from current OVR v
 - Authored history coverage: FIFA Earth 195/250; ATP Earth 195/250.
 - Taiwan naming/association history is explicit and China PR totals are not inherited.
 - DPR Korea remains a separate Earth identity; current FIFA/ITF evidence is not backdated.
+
+### Earth GUM/CUW batch — 2026-10-07
+- Added complete 1955–2026 FIFA Earth and ATP Earth histories for Guam (GUM) and Curacao (CUW).
+- Authored history coverage: FIFA Earth 197/250; ATP Earth 197/250.
+- Guam milestones cover GFA 1975, AFC 1991, FIFA 1996 and EAFF 2002 without backdating.
+- Curacao preserves Netherlands-Antilles historical context through 2010 and Curacao identity from 2011; current ITF evidence enters only in 2026.

@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-gum-cuw-tennis-structure-v1",
+  "source_id": "gum-cuw-itf-tennis-structure",
+  "relative_path": "observations/normalized/atp_gum_cuw_tennis_structure_v1.json",
+  "sha256": "2ad7188bd9a862fb4699767a51165764a4b672102e7f44b9bd5f15cd943519d1",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-gum-cuw-batch-2026-10-07"
+}

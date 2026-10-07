@@ -18,11 +18,11 @@ def load_earth_research_bundle(path: Path):
 
 def test_fifa_first_reviewed_country_histories_are_complete_and_resolvable():
     bundle = load_earth_research_bundle(Path("config/earth_research/fifa_earth.json"))
-    assert set(bundle.research.countries) == {"CZE", "SVK", "JPN", "IND", "MAR", "SEN", "FRO", "USA", "ZAF", "BRA", "DEU", "ISL", "SMR", "ARG", "MEX", "AUS", "NZL", "FJI", "PNG", "SLB", "COK", "ASM", "PYF", "NCL", "WSM", "TON", "VUT", "FRA", "ESP", "ITA", "NLD", "BEL", "PRT", "AUT", "DNK", "SWE", "CHE", "NOR", "FIN", "HRV", "SVN", "POL", "ROU", "UKR", "LTU", "LVA", "EST", "CAN", "GRC", "SRB", "CHL", "HUN", "ISR", "BGR", "KAZ", "CHN", "TUR", "KOR", "THA", "COL", "CYP", "ECU", "IRL", "EGY", "MYS", "SAU", "ARE", "QAT", "OMN", "GHA", "NGA", "KEN", "UGA", "TZA", "ZMB", "ZWE", "MWI", "BWA", "NAM", "SWZ", "MOZ", "ANG", "LES", "CMR", "BEN", "GAB", "MUS", "MDG", "SEY", "RWA", "BDI", "GAM", "CPV", "DJI", "COM", "EQG", "GNB", "STP", "GIN", "LBR", "SLE", "TGO", "BFA", "MLI", "MRT", "NER", "CHA", "ETH", "ERI", "SDN", "SSD", "DZA", "CIV", "TUN", "LBY", "IRQ", "JOR", "LBN", "SYR", "PSE", "BHR", "KWT", "YEM", "IRN", "AFG", "BGD", "NPL", "LKA", "BTN", "MDV", "MNG", "KHM", "MMR", "LAO", "BRN", "VNM", "UZB", "TJK", "TKM", "KGZ", "GEO", "ARM", "AZE", "ALB", "MDA", "MKD", "BIH", "BLR", "MLT", "LUX", "CRI", "JAM", "TTO", "PAN", "DOM", "GTM", "HND", "SLV", "NIC", "BLZ", "HTI", "PER", "BOL", "PRY", "URY", "VEN", "GUY", "CUB", "SUR", "BHS", "BRB", "GRD", "DMA", "ATG", "LCA", "VCT", "KNA", "VGB", "TCA", "AIA", "BMU", "CYM", "VIR", "ABW", "PRI", "AND", "MNE", "LIE", "GIB", "MCO", "XKX", "HKG", "MAC", "TWN", "PRK"}
+    assert set(bundle.research.countries) == {"CZE", "SVK", "JPN", "IND", "MAR", "SEN", "FRO", "USA", "ZAF", "BRA", "DEU", "ISL", "SMR", "ARG", "MEX", "AUS", "NZL", "FJI", "PNG", "SLB", "COK", "ASM", "PYF", "NCL", "WSM", "TON", "VUT", "FRA", "ESP", "ITA", "NLD", "BEL", "PRT", "AUT", "DNK", "SWE", "CHE", "NOR", "FIN", "HRV", "SVN", "POL", "ROU", "UKR", "LTU", "LVA", "EST", "CAN", "GRC", "SRB", "CHL", "HUN", "ISR", "BGR", "KAZ", "CHN", "TUR", "KOR", "THA", "COL", "CYP", "ECU", "IRL", "EGY", "MYS", "SAU", "ARE", "QAT", "OMN", "GHA", "NGA", "KEN", "UGA", "TZA", "ZMB", "ZWE", "MWI", "BWA", "NAM", "SWZ", "MOZ", "ANG", "LES", "CMR", "BEN", "GAB", "MUS", "MDG", "SEY", "RWA", "BDI", "GAM", "CPV", "DJI", "COM", "EQG", "GNB", "STP", "GIN", "LBR", "SLE", "TGO", "BFA", "MLI", "MRT", "NER", "CHA", "ETH", "ERI", "SDN", "SSD", "DZA", "CIV", "TUN", "LBY", "IRQ", "JOR", "LBN", "SYR", "PSE", "BHR", "KWT", "YEM", "IRN", "AFG", "BGD", "NPL", "LKA", "BTN", "MDV", "MNG", "KHM", "MMR", "LAO", "BRN", "VNM", "UZB", "TJK", "TKM", "KGZ", "GEO", "ARM", "AZE", "ALB", "MDA", "MKD", "BIH", "BLR", "MLT", "LUX", "CRI", "JAM", "TTO", "PAN", "DOM", "GTM", "HND", "SLV", "NIC", "BLZ", "HTI", "PER", "BOL", "PRY", "URY", "VEN", "GUY", "CUB", "SUR", "BHS", "BRB", "GRD", "DMA", "ATG", "LCA", "VCT", "KNA", "VGB", "TCA", "AIA", "BMU", "CYM", "VIR", "ABW", "PRI", "AND", "MNE", "LIE", "GIB", "MCO", "XKX", "HKG", "MAC", "TWN", "PRK", "GUM", "CUW"}
     assert bundle.research.data_cutoff.isoformat() == "2026-10-03"
-    assert len(bundle.research.countries) == 195
-    assert len(bundle.datasets) == 250
-    assert len(bundle.observations) == 1949
+    assert len(bundle.research.countries) == 197
+    assert len(bundle.datasets) == 253
+    assert len(bundle.observations) == 1957
 
     for code in ("CZE", "SVK"):
         history = bundle.research.countries[code]
@@ -468,11 +468,11 @@ def test_fifa_fra_esp_batch_is_complete_and_temporally_dimensioned():
 
 def test_atp_complete_histories_are_evidence_resolvable_and_temporally_bounded():
     bundle = load_earth_research_bundle(Path("config/earth_research/atp_earth.json"))
-    expected_countries = {"CZE", "DEU", "USA", "AUS", "ESP", "SRB", "FRA", "GBR", "ARG", "JPN", "CAN", "ITA", "NED", "SWE", "SUI", "CRO", "POL", "CHN", "NOR", "GRE", "BEL", "ZAF", "DEN", "FIN", "NZL", "PRT", "IRL", "HUN", "ROU", "SVN", "SVK", "ISR", "BGR", "AUT", "TUR", "CYP", "BRA", "CHL", "COL", "MEX", "ECU", "IND", "KOR", "THA", "KAZ", "LVA", "EST", "LTU", "UKR", "MAR", "SEN", "ISL", "SMR", "FRO", "FJI", "PNG", "WSM", "SLB", "TON", "COK", "NCL", "ASM", "VUT", "EGY", "MYS", "PHL", "IDN", "SGP", "PAK", "GHA", "NGA", "KEN", "UGA", "TZA", "ZMB", "ZWE", "MWI", "BWA", "NAM", "SWZ", "MOZ", "ANG", "LES", "CMR", "BEN", "GAB", "MUS", "MDG", "SEY", "RWA", "BDI", "GAM", "CPV", "DJI", "COM", "EQG", "GNB", "STP", "GIN", "LBR", "SLE", "TGO", "BFA", "MLI", "MRT", "NER", "CHA", "ETH", "ERI", "SDN", "SSD", "DZA", "CIV", "TUN", "LBY", "IRQ", "JOR", "LBN", "SYR", "PSE", "BHR", "KWT", "YEM", "IRN", "AFG", "BGD", "NPL", "LKA", "BTN", "MDV", "MNG", "KHM", "MMR", "LAO", "BRN", "VNM", "UZB", "TJK", "TKM", "KGZ", "GEO", "ARM", "AZE", "ALB", "MDA", "MKD", "BIH", "BLR", "MLT", "LUX", "CRI", "JAM", "TTO", "PAN", "DOM", "GTM", "HND", "SLV", "NIC", "BLZ", "HTI", "PER", "BOL", "PRY", "URY", "VEN", "GUY", "CUB", "SUR", "BHS", "BRB", "GRD", "DMA", "ATG", "LCA", "VCT", "KNA", "VGB", "TCA", "AIA", "BMU", "CYM", "VIR", "ABW", "PRI", "AND", "MNE", "LIE", "GIB", "MCO", "XKX", "HKG", "MAC", "TWN", "PRK"}
+    expected_countries = {"CZE", "DEU", "USA", "AUS", "ESP", "SRB", "FRA", "GBR", "ARG", "JPN", "CAN", "ITA", "NED", "SWE", "SUI", "CRO", "POL", "CHN", "NOR", "GRE", "BEL", "ZAF", "DEN", "FIN", "NZL", "PRT", "IRL", "HUN", "ROU", "SVN", "SVK", "ISR", "BGR", "AUT", "TUR", "CYP", "BRA", "CHL", "COL", "MEX", "ECU", "IND", "KOR", "THA", "KAZ", "LVA", "EST", "LTU", "UKR", "MAR", "SEN", "ISL", "SMR", "FRO", "FJI", "PNG", "WSM", "SLB", "TON", "COK", "NCL", "ASM", "VUT", "EGY", "MYS", "PHL", "IDN", "SGP", "PAK", "GHA", "NGA", "KEN", "UGA", "TZA", "ZMB", "ZWE", "MWI", "BWA", "NAM", "SWZ", "MOZ", "ANG", "LES", "CMR", "BEN", "GAB", "MUS", "MDG", "SEY", "RWA", "BDI", "GAM", "CPV", "DJI", "COM", "EQG", "GNB", "STP", "GIN", "LBR", "SLE", "TGO", "BFA", "MLI", "MRT", "NER", "CHA", "ETH", "ERI", "SDN", "SSD", "DZA", "CIV", "TUN", "LBY", "IRQ", "JOR", "LBN", "SYR", "PSE", "BHR", "KWT", "YEM", "IRN", "AFG", "BGD", "NPL", "LKA", "BTN", "MDV", "MNG", "KHM", "MMR", "LAO", "BRN", "VNM", "UZB", "TJK", "TKM", "KGZ", "GEO", "ARM", "AZE", "ALB", "MDA", "MKD", "BIH", "BLR", "MLT", "LUX", "CRI", "JAM", "TTO", "PAN", "DOM", "GTM", "HND", "SLV", "NIC", "BLZ", "HTI", "PER", "BOL", "PRY", "URY", "VEN", "GUY", "CUB", "SUR", "BHS", "BRB", "GRD", "DMA", "ATG", "LCA", "VCT", "KNA", "VGB", "TCA", "AIA", "BMU", "CYM", "VIR", "ABW", "PRI", "AND", "MNE", "LIE", "GIB", "MCO", "XKX", "HKG", "MAC", "TWN", "PRK", "GUM", "CUW"}
     assert set(bundle.research.countries) == expected_countries
     assert bundle.research.data_cutoff.isoformat() == "2026-10-04"
-    assert len(bundle.datasets) == 423
-    assert len(bundle.observations) == 906
+    assert len(bundle.datasets) == 425
+    assert len(bundle.observations) == 910
 
     expected_models = {
         "CZE": "atp-earth-cze-deu-seed-model.v1",
@@ -670,6 +670,8 @@ def test_atp_complete_histories_are_evidence_resolvable_and_temporally_bounded()
         "MAC": "atp-earth-mac-reviewed-structure.v1",
         "TWN": "atp-earth-twn-reviewed-structure.v1",
         "PRK": "atp-earth-prk-reviewed-structure.v1",
+        "GUM": "atp-earth-gum-reviewed-structure.v1",
+        "CUW": "atp-earth-cuw-reviewed-structure.v1",
     }
     for code, history in bundle.research.countries.items():
         assert history.missing_earth_years == []
@@ -6229,6 +6231,53 @@ def test_twn_prk_structural_milestones_are_not_backdated():
 def test_twn_prk_itf_current_structure_is_not_backdated():
     b=load_earth_research_bundle(Path("config/earth_research/atp_earth.json"))
     for code in ("TWN", "PRK"):
+        h=b.research.countries[code]
+        assert not any("itf-association-2026" in x for x in h.years[2025].ratings["development_quality"].observation_ids)
+        assert any("itf-association-2026" in x for x in h.years[2026].ratings["development_quality"].observation_ids)
+
+
+@pytest.mark.parametrize("world_id", ["fifa_earth", "atp_earth"])
+@pytest.mark.parametrize("code", ["GUM", "CUW"])
+def test_gum_cuw_batch_is_complete_and_dated(world_id, code):
+    bundle=load_earth_research_bundle(Path(f"config/earth_research/{world_id}.json"))
+    h=bundle.research.countries[code]
+    assert set(h.years)==set(range(1955,2027))
+    for year,entry in h.years.items():
+        assert len(entry.ratings)==6
+        for rating in entry.ratings.values():
+            assert rating.confidence=="low"
+            assert rating.method=="derived_estimate"
+            assert 1<=rating.value<=10
+            assert rating.value*10==round(rating.value*10)
+            assert max(rating.anchor_years)<=year
+            for ref in rating.observation_ids:
+                ob=bundle.observations[ref]
+                assert ob.earth_country_code==code
+                if ob.observation_year is None:
+                    assert ob.measurement_type=="project_authored_assumption"
+                    assert ob.is_direct_observation is False
+                    assert ob.is_statistically_modelled is False
+                else:
+                    assert ob.observation_year<=year
+    if code=="CUW":
+        assert "Netherlands Antilles" in h.years[2010].historical_entity
+        assert h.years[2011].historical_entity=="Curacao"
+
+
+def test_gum_cuw_structural_milestones_are_not_backdated():
+    b=load_earth_research_bundle(Path("config/earth_research/fifa_earth.json"))
+    gum=b.research.countries["GUM"]
+    for year,suffix in [(1975,"founded-1975"),(1991,"afc-1991"),(1996,"fifa-1996"),(2002,"eaff-2002")]:
+        assert not any(suffix in x for x in gum.years[year-1].ratings["development_quality"].observation_ids)
+        assert any(suffix in x for x in gum.years[year].ratings["development_quality"].observation_ids)
+    cuw=b.research.countries["CUW"]
+    assert not any("successor-2011" in x for x in cuw.years[2010].ratings["development_quality"].observation_ids)
+    assert any("successor-2011" in x for x in cuw.years[2011].ratings["development_quality"].observation_ids)
+
+
+def test_gum_cuw_itf_current_structure_is_not_backdated():
+    b=load_earth_research_bundle(Path("config/earth_research/atp_earth.json"))
+    for code in ("GUM","CUW"):
         h=b.research.countries[code]
         assert not any("itf-association-2026" in x for x in h.years[2025].ratings["development_quality"].observation_ids)
         assert any("itf-association-2026" in x for x in h.years[2026].ratings["development_quality"].observation_ids)

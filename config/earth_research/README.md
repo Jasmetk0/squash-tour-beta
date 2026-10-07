@@ -8,6 +8,15 @@ Both FIFA Earth and ATP Earth resolve all 250 Earth identities for every year
 observations; ATP contains 488 / 1,039. Each world therefore contains 108,000
 authored rating values.
 
+The first ATP realism-audit calibration batch is merged: GUM, KIR, FSM, MNP and
+TLS now use reviewed historical institutional anchors instead of artificial 2026
+one-year cliffs. A second candidate batch removes artificial piecewise-constant
+cliffs for QAT, PYF and ARE by linearly reconstructing annual values between their
+already-authored numeric anchors; the anchor values themselves and all source
+evidence timing remain unchanged. These are targeted audit corrections only; the
+remaining review queue is still driven by the deterministic Earth realism audit and
+`realism_validated` remains false.
+
 The research files remain the auditable authoring source. The standard build now
 produces self-contained World Packages under `config/world_packages/fifa_earth`
 and `config/world_packages/atp_earth`: source shards, observation manifests,

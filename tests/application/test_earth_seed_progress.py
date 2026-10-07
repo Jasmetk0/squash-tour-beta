@@ -41,6 +41,9 @@ _RETROSPECTIVE_ATP_CALIBRATION_MODELS = {
     "FSM": "atp-earth-fsm-reviewed-structure.v1",
     "MNP": "atp-earth-mnp-reviewed-structure.v1",
     "TLS": "atp-earth-tls-reviewed-structure.v1",
+    "ARE": "atp-earth-are-reviewed-structure.v1",
+    "PYF": "atp-earth-pyf-reviewed-structure.v1",
+    "QAT": "atp-earth-qat-reviewed-structure.v1",
 }
 
 _RETROSPECTIVE_ATP_FUTURE_ANCHORS = {
@@ -49,6 +52,9 @@ _RETROSPECTIVE_ATP_FUTURE_ANCHORS = {
     "FSM": {2026},
     "MNP": {2000, 2026},
     "TLS": {2026},
+    "ARE": {1971, 2000, 2020, 2026},
+    "PYF": {1957, 2000, 2020, 2026},
+    "QAT": {1971, 2000, 2020, 2026},
 }
 
 
@@ -6767,7 +6773,7 @@ def test_atp_gap5_histories_are_complete_resolvable_and_time_gated(code):
             assert rating.method == "derived_estimate"
             assert 1 <= rating.value <= 10
             assert rating.value * 10 == round(rating.value * 10)
-            assert max(rating.anchor_years) <= year
+            _assert_rating_anchor_timing("atp_earth", code, year, rating)
             for ref in rating.observation_ids:
                 observation = bundle.observations[ref]
                 assert observation.earth_country_code == code

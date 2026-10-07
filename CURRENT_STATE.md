@@ -1,5 +1,27 @@
 # Current implementation and next action
 
+## ATP realism calibration batch 2 — candidate, 7 October 2026
+
+The fresh deterministic audit after merged batch 1 identified the largest remaining
+ATP one-year cliff in Qatar, with the same artificial 1999→2000 step pattern also
+present in French Polynesia and the United Arab Emirates.
+
+- QAT, PYF and ARE keep every existing explicit numeric anchor unchanged.
+- Their previous piecewise-constant periods are replaced by one-decimal linear
+  interpolation between those existing project-authored anchors.
+- No new historical sporting fact is invented: source/observation IDs remain
+  time-gated to the years in which their evidence actually applies.
+- Research histories and distributed `atp_earth` histories/calibration definitions
+  remain exact semantic copies.
+- Focused PR-critical coverage verifies exact anchor preservation, sub-0.5 annual
+  changes, evidence timing and research/package equivalence.
+- Dataset totals remain **488 / 1,039** because this is a calibration-shape correction,
+  not a new evidence-ingestion batch.
+- `realism_validated` remains false.
+
+Next: run the full PR-critical/package validation and rerun the realism audit on this
+candidate, then continue from the updated highest-severity queue.
+
 ## ATP sparse-history calibration batch 1 — candidate, 7 October 2026
 
 The first realism-audit-driven data correction targets five ATP Earth histories whose

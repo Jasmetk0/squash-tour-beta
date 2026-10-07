@@ -1,0 +1,62 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "atp-earth-glp-reviewed-structure.v1",
+  "world_id": "atp_earth",
+  "countries": [
+    "GLP"
+  ],
+  "data_cutoff": "2026-10-04",
+  "rating_scale": "country_ratings_1_10.v2",
+  "attribute_order": [
+    "squash_popularity",
+    "squash_access",
+    "development_quality",
+    "competition_quality",
+    "elite_support",
+    "squash_tradition"
+  ],
+  "anchor_values": {
+    "GLP": {
+      "1955": [
+        3,
+        3.2,
+        2.7,
+        2.4,
+        2.3,
+        2.8
+      ],
+      "1980": [
+        3.7,
+        4,
+        3.3,
+        3,
+        2.8,
+        3.5
+      ],
+      "2000": [
+        4.3,
+        4.5,
+        3.8,
+        3.4,
+        3.2,
+        4
+      ],
+      "2026": [
+        4.4,
+        4.7,
+        4,
+        3.6,
+        3.4,
+        4.2
+      ]
+    }
+  },
+  "selection": "Piecewise-constant authored periods; local island identities are calibrated independently of France-wide sports evidence.",
+  "limitations": [
+    "All numeric ratings are project estimates with low confidence, not source measurements.",
+    "France-wide sports evidence is not inherited automatically.",
+    "No tennis federation membership or organised competition is inferred.",
+    "Administrative status is context only, not sports-performance evidence.",
+    "No rankings, titles or athlete outcomes are used to fit ratings."
+  ]
+}

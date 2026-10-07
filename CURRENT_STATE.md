@@ -6146,3 +6146,11 @@ bands should shape 0..200 potential. No threshold is inferred from current OVR v
 - The legal-status transition is recorded as territorial identity context only and is never used as direct sports evidence.
 - Ratings remain explicit low-confidence local project estimates and do not automatically inherit Guadeloupe- or France-wide sports evidence.
 - No football or tennis federation membership, organised competition, rankings, titles or athlete outcomes are inferred.
+
+### Earth GLP/MTQ batch — 2026-10-07
+- Added complete 1955-2026 FIFA Earth and ATP Earth histories for Guadeloupe (GLP) and Martinique (MTQ).
+- Authored-history coverage becomes 230/250 in both packages after BLM/MAF.
+- Martinique explicitly transitions to the Territorial Collectivity of Martinique in 2016; Guadeloupe remains represented as a French overseas department and region.
+- Administrative status is contextual only and never used as direct sports evidence.
+- Ratings are explicit low-confidence local project estimates and do not automatically inherit France-wide sports evidence.
+- No football or tennis federation membership, organised competition, rankings, titles or athlete outcomes are inferred.

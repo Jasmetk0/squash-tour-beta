@@ -298,7 +298,9 @@ def test_distributed_earth_packages_are_registered_and_valid(world_id, expected_
 
     validation = WorldPackageValidationService(registry).validate_package(world_id)
     assert validation is not None
-    assert validation.status == "valid"
+    assert validation.status == "valid", [
+        check.message for check in validation.checks if check.status == "failed"
+    ]
 
     countries = WorldPackageCountriesService(registry)
     old = countries.get_country(world_id, "CZE", rating_year=1955)

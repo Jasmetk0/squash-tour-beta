@@ -6123,3 +6123,11 @@ bands should shape 0..200 potential. No threshold is inferred from current OVR v
 - SGS remains near the floor and preserves the 1985 transition from Falkland Islands Dependencies to the separate South Georgia and South Sandwich Islands territory.
 - Current no-permanent-resident context enters only in 2026 and is treated as territorial context, not direct sports evidence.
 - No football or tennis federation membership, organised competition, rankings, titles or athlete outcomes are inferred.
+
+### Earth PCN/UMI batch — 2026-10-07
+- Added complete 1955–2026 FIFA Earth and ATP Earth histories for Pitcairn Islands (PCN) and United States Minor Outlying Islands (UMI).
+- Authored-history coverage becomes 224/250 in both packages after HMD/SGS.
+- Pitcairn stays near the rating floor; current official context describes a population of around fifty.
+- UMI remains at or near the floor; current Census context notes that the aggregate generally does not include year-round population.
+- Current demographic context enters only in 2026 and is treated as contextual, not direct sports evidence.
+- No football or tennis federation membership, organised competition, rankings, titles or athlete outcomes are inferred.

@@ -6860,13 +6860,11 @@
           "confidence": "low",
           "source_ids": [
             "tls-som-atp-project-assumptions",
-            "itf-timor-leste-membership-2022",
-            "tls-som-itf-tennis-structure"
+            "itf-timor-leste-membership-2022"
           ],
           "observation_ids": [
             "atp-tls-som-project-assumptions-v1#tls-early-baseline",
-            "atp-itf-timor-leste-membership-2021-v1#tls-itf-membership-2021",
-            "atp-tls-som-tennis-structure-v1#tls-itf-association-2026"
+            "atp-itf-timor-leste-membership-2021-v1#tls-itf-membership-2021"
           ],
           "rationale": "Retrospective ATP Earth low-confidence project estimate. The ITF states that Timor-Leste membership was approved in 2021; its first ITF development visit followed in 2022. The squash_popularity value is reconstructed from explicit calibration anchors 2021 and 2026 by linear interpolation and rounded to one decimal. Source facts establish institutional timing/context; they do not directly measure this 1–10 rating, and later endpoint evidence is used only for retrospective reconstruction.",
           "anchor_years": [
@@ -6881,14 +6879,12 @@
           "confidence": "low",
           "source_ids": [
             "tls-som-atp-project-assumptions",
-            "itf-timor-leste-membership-2022",
-            "tls-som-itf-tennis-structure"
+            "itf-timor-leste-membership-2022"
           ],
           "observation_ids": [
             "atp-tls-som-project-assumptions-v1#tls-early-baseline",
             "atp-itf-timor-leste-membership-2021-v1#tls-itf-membership-2021",
-            "atp-itf-timor-leste-membership-2021-v1#tls-first-itf-visit-2022",
-            "atp-tls-som-tennis-structure-v1#tls-itf-association-2026"
+            "atp-itf-timor-leste-membership-2021-v1#tls-first-itf-visit-2022"
           ],
           "rationale": "Retrospective ATP Earth low-confidence project estimate. The ITF states that Timor-Leste membership was approved in 2021; its first ITF development visit followed in 2022. The squash_access value is reconstructed from explicit calibration anchors 2021 and 2026 by linear interpolation and rounded to one decimal. Source facts establish institutional timing/context; they do not directly measure this 1–10 rating, and later endpoint evidence is used only for retrospective reconstruction.",
           "anchor_years": [
@@ -6903,14 +6899,12 @@
           "confidence": "low",
           "source_ids": [
             "tls-som-atp-project-assumptions",
-            "itf-timor-leste-membership-2022",
-            "tls-som-itf-tennis-structure"
+            "itf-timor-leste-membership-2022"
           ],
           "observation_ids": [
             "atp-tls-som-project-assumptions-v1#tls-early-baseline",
             "atp-itf-timor-leste-membership-2021-v1#tls-itf-membership-2021",
-            "atp-itf-timor-leste-membership-2021-v1#tls-first-itf-visit-2022",
-            "atp-tls-som-tennis-structure-v1#tls-itf-association-2026"
+            "atp-itf-timor-leste-membership-2021-v1#tls-first-itf-visit-2022"
           ],
           "rationale": "Retrospective ATP Earth low-confidence project estimate. The ITF states that Timor-Leste membership was approved in 2021; its first ITF development visit followed in 2022. The development_quality value is reconstructed from explicit calibration anchors 2021 and 2026 by linear interpolation and rounded to one decimal. Source facts establish institutional timing/context; they do not directly measure this 1–10 rating, and later endpoint evidence is used only for retrospective reconstruction.",
           "anchor_years": [
@@ -6925,13 +6919,11 @@
           "confidence": "low",
           "source_ids": [
             "tls-som-atp-project-assumptions",
-            "itf-timor-leste-membership-2022",
-            "tls-som-itf-tennis-structure"
+            "itf-timor-leste-membership-2022"
           ],
           "observation_ids": [
             "atp-tls-som-project-assumptions-v1#tls-early-baseline",
-            "atp-itf-timor-leste-membership-2021-v1#tls-itf-membership-2021",
-            "atp-tls-som-tennis-structure-v1#tls-itf-association-2026"
+            "atp-itf-timor-leste-membership-2021-v1#tls-itf-membership-2021"
           ],
           "rationale": "Retrospective ATP Earth low-confidence project estimate. The ITF states that Timor-Leste membership was approved in 2021; its first ITF development visit followed in 2022. The competition_quality value is reconstructed from explicit calibration anchors 2021 and 2026 by linear interpolation and rounded to one decimal. Source facts establish institutional timing/context; they do not directly measure this 1–10 rating, and later endpoint evidence is used only for retrospective reconstruction.",
           "anchor_years": [
@@ -6946,14 +6938,12 @@
           "confidence": "low",
           "source_ids": [
             "tls-som-atp-project-assumptions",
-            "itf-timor-leste-membership-2022",
-            "tls-som-itf-tennis-structure"
+            "itf-timor-leste-membership-2022"
           ],
           "observation_ids": [
             "atp-tls-som-project-assumptions-v1#tls-early-baseline",
             "atp-itf-timor-leste-membership-2021-v1#tls-itf-membership-2021",
-            "atp-itf-timor-leste-membership-2021-v1#tls-first-itf-visit-2022",
-            "atp-tls-som-tennis-structure-v1#tls-itf-association-2026"
+            "atp-itf-timor-leste-membership-2021-v1#tls-first-itf-visit-2022"
           ],
           "rationale": "Retrospective ATP Earth low-confidence project estimate. The ITF states that Timor-Leste membership was approved in 2021; its first ITF development visit followed in 2022. The elite_support value is reconstructed from explicit calibration anchors 2021 and 2026 by linear interpolation and rounded to one decimal. Source facts establish institutional timing/context; they do not directly measure this 1–10 rating, and later endpoint evidence is used only for retrospective reconstruction.",
           "anchor_years": [
@@ -6968,13 +6958,11 @@
           "confidence": "low",
           "source_ids": [
             "tls-som-atp-project-assumptions",
-            "itf-timor-leste-membership-2022",
-            "tls-som-itf-tennis-structure"
+            "itf-timor-leste-membership-2022"
           ],
           "observation_ids": [
             "atp-tls-som-project-assumptions-v1#tls-early-baseline",
-            "atp-itf-timor-leste-membership-2021-v1#tls-itf-membership-2021",
-            "atp-tls-som-tennis-structure-v1#tls-itf-association-2026"
+            "atp-itf-timor-leste-membership-2021-v1#tls-itf-membership-2021"
           ],
           "rationale": "Retrospective ATP Earth low-confidence project estimate. The ITF states that Timor-Leste membership was approved in 2021; its first ITF development visit followed in 2022. The squash_tradition value is reconstructed from explicit calibration anchors 2021 and 2026 by linear interpolation and rounded to one decimal. Source facts establish institutional timing/context; they do not directly measure this 1–10 rating, and later endpoint evidence is used only for retrospective reconstruction.",
           "anchor_years": [
@@ -6995,13 +6983,11 @@
           "confidence": "low",
           "source_ids": [
             "tls-som-atp-project-assumptions",
-            "itf-timor-leste-membership-2022",
-            "tls-som-itf-tennis-structure"
+            "itf-timor-leste-membership-2022"
           ],
           "observation_ids": [
             "atp-tls-som-project-assumptions-v1#tls-early-baseline",
-            "atp-itf-timor-leste-membership-2021-v1#tls-itf-membership-2021",
-            "atp-tls-som-tennis-structure-v1#tls-itf-association-2026"
+            "atp-itf-timor-leste-membership-2021-v1#tls-itf-membership-2021"
           ],
           "rationale": "Retrospective ATP Earth low-confidence project estimate. The ITF states that Timor-Leste membership was approved in 2021; its first ITF development visit followed in 2022. The squash_popularity value is reconstructed from explicit calibration anchors 2021 and 2026 by linear interpolation and rounded to one decimal. Source facts establish institutional timing/context; they do not directly measure this 1–10 rating, and later endpoint evidence is used only for retrospective reconstruction.",
           "anchor_years": [
@@ -7016,14 +7002,12 @@
           "confidence": "low",
           "source_ids": [
             "tls-som-atp-project-assumptions",
-            "itf-timor-leste-membership-2022",
-            "tls-som-itf-tennis-structure"
+            "itf-timor-leste-membership-2022"
           ],
           "observation_ids": [
             "atp-tls-som-project-assumptions-v1#tls-early-baseline",
             "atp-itf-timor-leste-membership-2021-v1#tls-itf-membership-2021",
-            "atp-itf-timor-leste-membership-2021-v1#tls-first-itf-visit-2022",
-            "atp-tls-som-tennis-structure-v1#tls-itf-association-2026"
+            "atp-itf-timor-leste-membership-2021-v1#tls-first-itf-visit-2022"
           ],
           "rationale": "Retrospective ATP Earth low-confidence project estimate. The ITF states that Timor-Leste membership was approved in 2021; its first ITF development visit followed in 2022. The squash_access value is reconstructed from explicit calibration anchors 2021 and 2026 by linear interpolation and rounded to one decimal. Source facts establish institutional timing/context; they do not directly measure this 1–10 rating, and later endpoint evidence is used only for retrospective reconstruction.",
           "anchor_years": [
@@ -7038,14 +7022,12 @@
           "confidence": "low",
           "source_ids": [
             "tls-som-atp-project-assumptions",
-            "itf-timor-leste-membership-2022",
-            "tls-som-itf-tennis-structure"
+            "itf-timor-leste-membership-2022"
           ],
           "observation_ids": [
             "atp-tls-som-project-assumptions-v1#tls-early-baseline",
             "atp-itf-timor-leste-membership-2021-v1#tls-itf-membership-2021",
-            "atp-itf-timor-leste-membership-2021-v1#tls-first-itf-visit-2022",
-            "atp-tls-som-tennis-structure-v1#tls-itf-association-2026"
+            "atp-itf-timor-leste-membership-2021-v1#tls-first-itf-visit-2022"
           ],
           "rationale": "Retrospective ATP Earth low-confidence project estimate. The ITF states that Timor-Leste membership was approved in 2021; its first ITF development visit followed in 2022. The development_quality value is reconstructed from explicit calibration anchors 2021 and 2026 by linear interpolation and rounded to one decimal. Source facts establish institutional timing/context; they do not directly measure this 1–10 rating, and later endpoint evidence is used only for retrospective reconstruction.",
           "anchor_years": [
@@ -7060,13 +7042,11 @@
           "confidence": "low",
           "source_ids": [
             "tls-som-atp-project-assumptions",
-            "itf-timor-leste-membership-2022",
-            "tls-som-itf-tennis-structure"
+            "itf-timor-leste-membership-2022"
           ],
           "observation_ids": [
             "atp-tls-som-project-assumptions-v1#tls-early-baseline",
-            "atp-itf-timor-leste-membership-2021-v1#tls-itf-membership-2021",
-            "atp-tls-som-tennis-structure-v1#tls-itf-association-2026"
+            "atp-itf-timor-leste-membership-2021-v1#tls-itf-membership-2021"
           ],
           "rationale": "Retrospective ATP Earth low-confidence project estimate. The ITF states that Timor-Leste membership was approved in 2021; its first ITF development visit followed in 2022. The competition_quality value is reconstructed from explicit calibration anchors 2021 and 2026 by linear interpolation and rounded to one decimal. Source facts establish institutional timing/context; they do not directly measure this 1–10 rating, and later endpoint evidence is used only for retrospective reconstruction.",
           "anchor_years": [
@@ -7081,14 +7061,12 @@
           "confidence": "low",
           "source_ids": [
             "tls-som-atp-project-assumptions",
-            "itf-timor-leste-membership-2022",
-            "tls-som-itf-tennis-structure"
+            "itf-timor-leste-membership-2022"
           ],
           "observation_ids": [
             "atp-tls-som-project-assumptions-v1#tls-early-baseline",
             "atp-itf-timor-leste-membership-2021-v1#tls-itf-membership-2021",
-            "atp-itf-timor-leste-membership-2021-v1#tls-first-itf-visit-2022",
-            "atp-tls-som-tennis-structure-v1#tls-itf-association-2026"
+            "atp-itf-timor-leste-membership-2021-v1#tls-first-itf-visit-2022"
           ],
           "rationale": "Retrospective ATP Earth low-confidence project estimate. The ITF states that Timor-Leste membership was approved in 2021; its first ITF development visit followed in 2022. The elite_support value is reconstructed from explicit calibration anchors 2021 and 2026 by linear interpolation and rounded to one decimal. Source facts establish institutional timing/context; they do not directly measure this 1–10 rating, and later endpoint evidence is used only for retrospective reconstruction.",
           "anchor_years": [
@@ -7103,13 +7081,11 @@
           "confidence": "low",
           "source_ids": [
             "tls-som-atp-project-assumptions",
-            "itf-timor-leste-membership-2022",
-            "tls-som-itf-tennis-structure"
+            "itf-timor-leste-membership-2022"
           ],
           "observation_ids": [
             "atp-tls-som-project-assumptions-v1#tls-early-baseline",
-            "atp-itf-timor-leste-membership-2021-v1#tls-itf-membership-2021",
-            "atp-tls-som-tennis-structure-v1#tls-itf-association-2026"
+            "atp-itf-timor-leste-membership-2021-v1#tls-itf-membership-2021"
           ],
           "rationale": "Retrospective ATP Earth low-confidence project estimate. The ITF states that Timor-Leste membership was approved in 2021; its first ITF development visit followed in 2022. The squash_tradition value is reconstructed from explicit calibration anchors 2021 and 2026 by linear interpolation and rounded to one decimal. Source facts establish institutional timing/context; they do not directly measure this 1–10 rating, and later endpoint evidence is used only for retrospective reconstruction.",
           "anchor_years": [
@@ -7130,13 +7106,11 @@
           "confidence": "low",
           "source_ids": [
             "tls-som-atp-project-assumptions",
-            "itf-timor-leste-membership-2022",
-            "tls-som-itf-tennis-structure"
+            "itf-timor-leste-membership-2022"
           ],
           "observation_ids": [
             "atp-tls-som-project-assumptions-v1#tls-early-baseline",
-            "atp-itf-timor-leste-membership-2021-v1#tls-itf-membership-2021",
-            "atp-tls-som-tennis-structure-v1#tls-itf-association-2026"
+            "atp-itf-timor-leste-membership-2021-v1#tls-itf-membership-2021"
           ],
           "rationale": "Retrospective ATP Earth low-confidence project estimate. The ITF states that Timor-Leste membership was approved in 2021; its first ITF development visit followed in 2022. The squash_popularity value is reconstructed from explicit calibration anchors 2021 and 2026 by linear interpolation and rounded to one decimal. Source facts establish institutional timing/context; they do not directly measure this 1–10 rating, and later endpoint evidence is used only for retrospective reconstruction.",
           "anchor_years": [
@@ -7151,14 +7125,12 @@
           "confidence": "low",
           "source_ids": [
             "tls-som-atp-project-assumptions",
-            "itf-timor-leste-membership-2022",
-            "tls-som-itf-tennis-structure"
+            "itf-timor-leste-membership-2022"
           ],
           "observation_ids": [
             "atp-tls-som-project-assumptions-v1#tls-early-baseline",
             "atp-itf-timor-leste-membership-2021-v1#tls-itf-membership-2021",
-            "atp-itf-timor-leste-membership-2021-v1#tls-first-itf-visit-2022",
-            "atp-tls-som-tennis-structure-v1#tls-itf-association-2026"
+            "atp-itf-timor-leste-membership-2021-v1#tls-first-itf-visit-2022"
           ],
           "rationale": "Retrospective ATP Earth low-confidence project estimate. The ITF states that Timor-Leste membership was approved in 2021; its first ITF development visit followed in 2022. The squash_access value is reconstructed from explicit calibration anchors 2021 and 2026 by linear interpolation and rounded to one decimal. Source facts establish institutional timing/context; they do not directly measure this 1–10 rating, and later endpoint evidence is used only for retrospective reconstruction.",
           "anchor_years": [
@@ -7173,14 +7145,12 @@
           "confidence": "low",
           "source_ids": [
             "tls-som-atp-project-assumptions",
-            "itf-timor-leste-membership-2022",
-            "tls-som-itf-tennis-structure"
+            "itf-timor-leste-membership-2022"
           ],
           "observation_ids": [
             "atp-tls-som-project-assumptions-v1#tls-early-baseline",
             "atp-itf-timor-leste-membership-2021-v1#tls-itf-membership-2021",
-            "atp-itf-timor-leste-membership-2021-v1#tls-first-itf-visit-2022",
-            "atp-tls-som-tennis-structure-v1#tls-itf-association-2026"
+            "atp-itf-timor-leste-membership-2021-v1#tls-first-itf-visit-2022"
           ],
           "rationale": "Retrospective ATP Earth low-confidence project estimate. The ITF states that Timor-Leste membership was approved in 2021; its first ITF development visit followed in 2022. The development_quality value is reconstructed from explicit calibration anchors 2021 and 2026 by linear interpolation and rounded to one decimal. Source facts establish institutional timing/context; they do not directly measure this 1–10 rating, and later endpoint evidence is used only for retrospective reconstruction.",
           "anchor_years": [
@@ -7195,13 +7165,11 @@
           "confidence": "low",
           "source_ids": [
             "tls-som-atp-project-assumptions",
-            "itf-timor-leste-membership-2022",
-            "tls-som-itf-tennis-structure"
+            "itf-timor-leste-membership-2022"
           ],
           "observation_ids": [
             "atp-tls-som-project-assumptions-v1#tls-early-baseline",
-            "atp-itf-timor-leste-membership-2021-v1#tls-itf-membership-2021",
-            "atp-tls-som-tennis-structure-v1#tls-itf-association-2026"
+            "atp-itf-timor-leste-membership-2021-v1#tls-itf-membership-2021"
           ],
           "rationale": "Retrospective ATP Earth low-confidence project estimate. The ITF states that Timor-Leste membership was approved in 2021; its first ITF development visit followed in 2022. The competition_quality value is reconstructed from explicit calibration anchors 2021 and 2026 by linear interpolation and rounded to one decimal. Source facts establish institutional timing/context; they do not directly measure this 1–10 rating, and later endpoint evidence is used only for retrospective reconstruction.",
           "anchor_years": [
@@ -7216,14 +7184,12 @@
           "confidence": "low",
           "source_ids": [
             "tls-som-atp-project-assumptions",
-            "itf-timor-leste-membership-2022",
-            "tls-som-itf-tennis-structure"
+            "itf-timor-leste-membership-2022"
           ],
           "observation_ids": [
             "atp-tls-som-project-assumptions-v1#tls-early-baseline",
             "atp-itf-timor-leste-membership-2021-v1#tls-itf-membership-2021",
-            "atp-itf-timor-leste-membership-2021-v1#tls-first-itf-visit-2022",
-            "atp-tls-som-tennis-structure-v1#tls-itf-association-2026"
+            "atp-itf-timor-leste-membership-2021-v1#tls-first-itf-visit-2022"
           ],
           "rationale": "Retrospective ATP Earth low-confidence project estimate. The ITF states that Timor-Leste membership was approved in 2021; its first ITF development visit followed in 2022. The elite_support value is reconstructed from explicit calibration anchors 2021 and 2026 by linear interpolation and rounded to one decimal. Source facts establish institutional timing/context; they do not directly measure this 1–10 rating, and later endpoint evidence is used only for retrospective reconstruction.",
           "anchor_years": [
@@ -7238,13 +7204,11 @@
           "confidence": "low",
           "source_ids": [
             "tls-som-atp-project-assumptions",
-            "itf-timor-leste-membership-2022",
-            "tls-som-itf-tennis-structure"
+            "itf-timor-leste-membership-2022"
           ],
           "observation_ids": [
             "atp-tls-som-project-assumptions-v1#tls-early-baseline",
-            "atp-itf-timor-leste-membership-2021-v1#tls-itf-membership-2021",
-            "atp-tls-som-tennis-structure-v1#tls-itf-association-2026"
+            "atp-itf-timor-leste-membership-2021-v1#tls-itf-membership-2021"
           ],
           "rationale": "Retrospective ATP Earth low-confidence project estimate. The ITF states that Timor-Leste membership was approved in 2021; its first ITF development visit followed in 2022. The squash_tradition value is reconstructed from explicit calibration anchors 2021 and 2026 by linear interpolation and rounded to one decimal. Source facts establish institutional timing/context; they do not directly measure this 1–10 rating, and later endpoint evidence is used only for retrospective reconstruction.",
           "anchor_years": [
@@ -7265,13 +7229,11 @@
           "confidence": "low",
           "source_ids": [
             "tls-som-atp-project-assumptions",
-            "itf-timor-leste-membership-2022",
-            "tls-som-itf-tennis-structure"
+            "itf-timor-leste-membership-2022"
           ],
           "observation_ids": [
             "atp-tls-som-project-assumptions-v1#tls-early-baseline",
-            "atp-itf-timor-leste-membership-2021-v1#tls-itf-membership-2021",
-            "atp-tls-som-tennis-structure-v1#tls-itf-association-2026"
+            "atp-itf-timor-leste-membership-2021-v1#tls-itf-membership-2021"
           ],
           "rationale": "Retrospective ATP Earth low-confidence project estimate. The ITF states that Timor-Leste membership was approved in 2021; its first ITF development visit followed in 2022. The squash_popularity value is reconstructed from explicit calibration anchors 2021 and 2026 by linear interpolation and rounded to one decimal. Source facts establish institutional timing/context; they do not directly measure this 1–10 rating, and later endpoint evidence is used only for retrospective reconstruction.",
           "anchor_years": [
@@ -7286,14 +7248,12 @@
           "confidence": "low",
           "source_ids": [
             "tls-som-atp-project-assumptions",
-            "itf-timor-leste-membership-2022",
-            "tls-som-itf-tennis-structure"
+            "itf-timor-leste-membership-2022"
           ],
           "observation_ids": [
             "atp-tls-som-project-assumptions-v1#tls-early-baseline",
             "atp-itf-timor-leste-membership-2021-v1#tls-itf-membership-2021",
-            "atp-itf-timor-leste-membership-2021-v1#tls-first-itf-visit-2022",
-            "atp-tls-som-tennis-structure-v1#tls-itf-association-2026"
+            "atp-itf-timor-leste-membership-2021-v1#tls-first-itf-visit-2022"
           ],
           "rationale": "Retrospective ATP Earth low-confidence project estimate. The ITF states that Timor-Leste membership was approved in 2021; its first ITF development visit followed in 2022. The squash_access value is reconstructed from explicit calibration anchors 2021 and 2026 by linear interpolation and rounded to one decimal. Source facts establish institutional timing/context; they do not directly measure this 1–10 rating, and later endpoint evidence is used only for retrospective reconstruction.",
           "anchor_years": [
@@ -7308,14 +7268,12 @@
           "confidence": "low",
           "source_ids": [
             "tls-som-atp-project-assumptions",
-            "itf-timor-leste-membership-2022",
-            "tls-som-itf-tennis-structure"
+            "itf-timor-leste-membership-2022"
           ],
           "observation_ids": [
             "atp-tls-som-project-assumptions-v1#tls-early-baseline",
             "atp-itf-timor-leste-membership-2021-v1#tls-itf-membership-2021",
-            "atp-itf-timor-leste-membership-2021-v1#tls-first-itf-visit-2022",
-            "atp-tls-som-tennis-structure-v1#tls-itf-association-2026"
+            "atp-itf-timor-leste-membership-2021-v1#tls-first-itf-visit-2022"
           ],
           "rationale": "Retrospective ATP Earth low-confidence project estimate. The ITF states that Timor-Leste membership was approved in 2021; its first ITF development visit followed in 2022. The development_quality value is reconstructed from explicit calibration anchors 2021 and 2026 by linear interpolation and rounded to one decimal. Source facts establish institutional timing/context; they do not directly measure this 1–10 rating, and later endpoint evidence is used only for retrospective reconstruction.",
           "anchor_years": [
@@ -7330,13 +7288,11 @@
           "confidence": "low",
           "source_ids": [
             "tls-som-atp-project-assumptions",
-            "itf-timor-leste-membership-2022",
-            "tls-som-itf-tennis-structure"
+            "itf-timor-leste-membership-2022"
           ],
           "observation_ids": [
             "atp-tls-som-project-assumptions-v1#tls-early-baseline",
-            "atp-itf-timor-leste-membership-2021-v1#tls-itf-membership-2021",
-            "atp-tls-som-tennis-structure-v1#tls-itf-association-2026"
+            "atp-itf-timor-leste-membership-2021-v1#tls-itf-membership-2021"
           ],
           "rationale": "Retrospective ATP Earth low-confidence project estimate. The ITF states that Timor-Leste membership was approved in 2021; its first ITF development visit followed in 2022. The competition_quality value is reconstructed from explicit calibration anchors 2021 and 2026 by linear interpolation and rounded to one decimal. Source facts establish institutional timing/context; they do not directly measure this 1–10 rating, and later endpoint evidence is used only for retrospective reconstruction.",
           "anchor_years": [
@@ -7351,14 +7307,12 @@
           "confidence": "low",
           "source_ids": [
             "tls-som-atp-project-assumptions",
-            "itf-timor-leste-membership-2022",
-            "tls-som-itf-tennis-structure"
+            "itf-timor-leste-membership-2022"
           ],
           "observation_ids": [
             "atp-tls-som-project-assumptions-v1#tls-early-baseline",
             "atp-itf-timor-leste-membership-2021-v1#tls-itf-membership-2021",
-            "atp-itf-timor-leste-membership-2021-v1#tls-first-itf-visit-2022",
-            "atp-tls-som-tennis-structure-v1#tls-itf-association-2026"
+            "atp-itf-timor-leste-membership-2021-v1#tls-first-itf-visit-2022"
           ],
           "rationale": "Retrospective ATP Earth low-confidence project estimate. The ITF states that Timor-Leste membership was approved in 2021; its first ITF development visit followed in 2022. The elite_support value is reconstructed from explicit calibration anchors 2021 and 2026 by linear interpolation and rounded to one decimal. Source facts establish institutional timing/context; they do not directly measure this 1–10 rating, and later endpoint evidence is used only for retrospective reconstruction.",
           "anchor_years": [
@@ -7373,13 +7327,11 @@
           "confidence": "low",
           "source_ids": [
             "tls-som-atp-project-assumptions",
-            "itf-timor-leste-membership-2022",
-            "tls-som-itf-tennis-structure"
+            "itf-timor-leste-membership-2022"
           ],
           "observation_ids": [
             "atp-tls-som-project-assumptions-v1#tls-early-baseline",
-            "atp-itf-timor-leste-membership-2021-v1#tls-itf-membership-2021",
-            "atp-tls-som-tennis-structure-v1#tls-itf-association-2026"
+            "atp-itf-timor-leste-membership-2021-v1#tls-itf-membership-2021"
           ],
           "rationale": "Retrospective ATP Earth low-confidence project estimate. The ITF states that Timor-Leste membership was approved in 2021; its first ITF development visit followed in 2022. The squash_tradition value is reconstructed from explicit calibration anchors 2021 and 2026 by linear interpolation and rounded to one decimal. Source facts establish institutional timing/context; they do not directly measure this 1–10 rating, and later endpoint evidence is used only for retrospective reconstruction.",
           "anchor_years": [

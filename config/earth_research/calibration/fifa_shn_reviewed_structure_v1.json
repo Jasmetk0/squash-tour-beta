@@ -1,0 +1,70 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "fifa-earth-shn-reviewed-structure.v1",
+  "world_id": "fifa_earth",
+  "countries": [
+    "SHN"
+  ],
+  "data_cutoff": "2026-10-03",
+  "rating_scale": "country_ratings_1_10.v2",
+  "attribute_order": [
+    "squash_popularity",
+    "squash_access",
+    "development_quality",
+    "competition_quality",
+    "elite_support",
+    "squash_tradition"
+  ],
+  "anchor_values": {
+    "SHN": {
+      "1955": [
+        2.6,
+        2.8,
+        2.4,
+        2.1,
+        2,
+        2.5
+      ],
+      "1980": [
+        3.1,
+        3.3,
+        2.8,
+        2.4,
+        2.2,
+        3
+      ],
+      "2000": [
+        3.5,
+        3.7,
+        3.1,
+        2.7,
+        2.5,
+        3.4
+      ],
+      "2009": [
+        3.6,
+        3.8,
+        3.2,
+        2.8,
+        2.6,
+        3.5
+      ],
+      "2026": [
+        3.7,
+        3.9,
+        3.3,
+        2.9,
+        2.7,
+        3.6
+      ]
+    }
+  },
+  "selection": "Piecewise-constant authored periods; territorial/constitutional events are identity context only and local ratings do not inherit UK-wide sports evidence.",
+  "limitations": [
+    "All numeric ratings are project estimates with low confidence, not source measurements.",
+    "UK-wide sports evidence is not inherited automatically.",
+    "No football federation membership or organised competition is inferred.",
+    "Legal, constitutional and disaster events are context inputs only, not direct sports-performance measurements.",
+    "No rankings, titles or athlete outcomes are used to fit ratings."
+  ]
+}

@@ -6208,3 +6208,13 @@ bands should shape 0..200 potential. No threshold is inferred from current OVR v
 - Territorial, constitutional and treaty events are identity context only and never used as direct sports evidence.
 - Ratings are explicit low-confidence local project estimates and do not automatically inherit UK-wide sports evidence.
 - No football or tennis federation membership, organised competition, rankings, titles or athlete outcomes are inferred.
+
+### Earth SHN/MSR batch — 2026-10-07
+- Added complete 1955-2026 FIFA Earth and ATP Earth histories for Saint Helena, Ascension and Tristan da Cunha (SHN) and Montserrat (MSR).
+- Authored-history coverage becomes 244/250 in both packages after FLK/IOT.
+- SHN preserves the 2009 transition from St Helena and Dependencies to Saint Helena, Ascension and Tristan da Cunha under the new Constitution.
+- Montserrat preserves the 2002 British Overseas Territory terminology and the 2010 Constitution.
+- The 1995 Soufrière Hills eruption is represented as an explicit structural-shock calibration period with later recovery anchors; the disaster observation itself is not treated as direct sports evidence.
+- Constitutional and disaster events are context only and never used as direct sports measurements.
+- Ratings are explicit low-confidence local project estimates and do not automatically inherit UK-wide sports evidence.
+- No football or tennis federation membership, organised competition, rankings, titles or athlete outcomes are inferred.

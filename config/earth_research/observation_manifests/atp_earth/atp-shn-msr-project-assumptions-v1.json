@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-shn-msr-project-assumptions-v1",
+  "source_id": "shn-msr-atp-project-assumptions",
+  "relative_path": "observations/normalized/atp_shn_msr_project_assumptions_v1.json",
+  "sha256": "2bc1a6c1241331bbd8798578ed5e43b673d8735a83e68d959edaff50a723cfe4",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-shn-msr-batch-2026-10-07"
+}

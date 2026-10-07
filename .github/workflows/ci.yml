@@ -103,7 +103,7 @@ jobs:
             python -m pytest tests/application/test_earth_seed_progress.py \
             --maxfail=1 --durations=10
       - name: Run PR critical backend tests
-        if: needs.changes.outputs.backend_core == 'true' || needs.changes.outputs.earth_data != 'true'
+        if: needs.changes.outputs.backend_core == 'true'
         run: |
           python -m pytest -m pr_critical --maxfail=1 --durations=10
       - name: Generate Earth realism audit

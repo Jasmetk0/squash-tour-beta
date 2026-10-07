@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-imn-government-status-v1",
+  "source_id": "imn-government-status",
+  "relative_path": "observations/normalized/atp_imn_government_status_v1.json",
+  "sha256": "16f620ab51cbd0047e71ea9bf36ddaa27cc82df0b9df9f693a288f2764d47d95",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-final4-batch-2026-10-07"
+}

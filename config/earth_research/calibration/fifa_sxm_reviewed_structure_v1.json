@@ -1,0 +1,70 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "fifa-earth-sxm-reviewed-structure.v1",
+  "world_id": "fifa_earth",
+  "countries": [
+    "SXM"
+  ],
+  "data_cutoff": "2026-10-03",
+  "rating_scale": "country_ratings_1_10.v2",
+  "attribute_order": [
+    "squash_popularity",
+    "squash_access",
+    "development_quality",
+    "competition_quality",
+    "elite_support",
+    "squash_tradition"
+  ],
+  "anchor_values": {
+    "SXM": {
+      "1955": [
+        2.8,
+        3,
+        2.5,
+        2.2,
+        2,
+        2.6
+      ],
+      "1980": [
+        3.6,
+        3.8,
+        3.2,
+        2.8,
+        2.6,
+        3.4
+      ],
+      "2000": [
+        4.3,
+        4.5,
+        3.8,
+        3.4,
+        3.1,
+        4
+      ],
+      "2010": [
+        4.5,
+        4.7,
+        4,
+        3.6,
+        3.3,
+        4.2
+      ],
+      "2026": [
+        4.7,
+        4.9,
+        4.2,
+        3.8,
+        3.5,
+        4.4
+      ]
+    }
+  },
+  "selection": "Piecewise-constant authored periods with an explicit 2010 constitutional transition; local ratings do not inherit Netherlands- or Kingdom-wide sports evidence.",
+  "limitations": [
+    "All numeric ratings are project estimates with low confidence, not source measurements.",
+    "Netherlands- and Kingdom-wide sports evidence is not inherited automatically.",
+    "No football federation membership or organised competition is inferred.",
+    "The 2010 constitutional transition is identity context only, not sports-performance evidence.",
+    "No rankings, titles or athlete outcomes are used to fit ratings."
+  ]
+}

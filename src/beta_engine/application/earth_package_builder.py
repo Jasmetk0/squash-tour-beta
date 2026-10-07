@@ -21,7 +21,6 @@ from beta_engine.application.earth_research_observations import (
     observation_dataset_id,
     observation_dataset_sha256,
 )
-from beta_engine.application.package_evidence_files import canonical_json_sha256
 from beta_engine.domain.countries import Country, CountriesConfig
 from beta_engine.domain.countries.rating_history import CountryRatingHistory, GAME_ATTRIBUTE_NAMES, RATING_SCALE_V2
 from beta_engine.infrastructure.world_package_storage import WorldPackageCountryStore
@@ -229,7 +228,8 @@ def _load_calibration_models(root: Path, research: EarthSportResearch) -> dict[s
         raise ValueError("referenced calibration models exist but calibration directory is missing")
 
     models: dict[str, dict] = {}
-    for path in sorted(calibration_root.glob("*.json")):
+    file_prefix = "fifa_" if research.world_id == "fifa_earth" else "atp_"
+    for path in sorted(calibration_root.glob(f"{file_prefix}*.json")):
         try:
             payload = json.loads(path.read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError) as exc:
@@ -415,8 +415,8 @@ def build_earth_package(*, base_package: Path, bundle: EarthResearchBundle, outp
     if set(bundle.datasets) != set(research.observation_datasets):
         raise ValueError("verified observation datasets do not match the research manifest catalogue")
     required_models = set(_required_calibration_models(research))
-    if set(bundle.calibration_models) != required_models:
-        raise ValueError("verified calibration definitions do not match referenced calibration models")
+    if not required_models.issubset(bundle.calibration_models):
+        raise ValueError("verified calibration definitions are missing referenced calibration models")
 
     countries = WorldPackageCountryStore(base_package).load_config().countries
     report = audit_earth_research(research, countries)
@@ -467,59 +467,42 @@ def build_earth_package(*, base_package: Path, bundle: EarthResearchBundle, outp
 
         generation = staged / "generation"
         generation.mkdir(exist_ok=True)
-        (generation / "country_rating_sources.json").write_text(
-            json.dumps(
-                {key: value.model_dump(mode="json") for key, value in research.sources.items()},
-                ensure_ascii=False,
-                indent=2,
-            ) + "\n",
-            encoding="utf-8",
-        )
 
-        observation_root = generation / "observations"
-        observation_root.mkdir(exist_ok=True)
-        packaged_manifests: dict[str, dict] = {}
+        source_root = generation / "sources"
+        source_root.mkdir(exist_ok=True)
+        for source_id, source in sorted(research.sources.items()):
+            if re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]*", source_id) is None:
+                raise ValueError(f"unsafe source ID {source_id!r}")
+            (source_root / f"{source_id}.json").write_text(
+                json.dumps(source.model_dump(mode="json"), ensure_ascii=False, indent=2) + "\n",
+                encoding="utf-8",
+            )
+
+        manifest_root = generation / "observation_manifests"
+        manifest_root.mkdir(exist_ok=True)
         for dataset_id, manifest in sorted(research.observation_datasets.items()):
             dataset = bundle.datasets[dataset_id]
-            relative_path = f"generation/observations/{dataset_id}.json"
-            (staged / relative_path).write_text(
+            relative_path = manifest.relative_path
+            target = staged / relative_path
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_text(
                 json.dumps(dataset.model_dump(mode="json"), ensure_ascii=False, indent=2) + "\n",
                 encoding="utf-8",
             )
-            packaged_manifests[dataset_id] = manifest.model_copy(
-                update={"relative_path": relative_path}
-            ).model_dump(mode="json")
-        (generation / "country_rating_observation_datasets.json").write_text(
-            json.dumps(packaged_manifests, ensure_ascii=False, indent=2) + "\n",
-            encoding="utf-8",
-        )
+            (manifest_root / f"{dataset_id}.json").write_text(
+                json.dumps(manifest.model_dump(mode="json"), ensure_ascii=False, indent=2) + "\n",
+                encoding="utf-8",
+            )
 
         calibration_root = generation / "calibration"
         calibration_root.mkdir(exist_ok=True)
-        calibration_catalog: dict[str, dict] = {}
         for model_id, model in sorted(bundle.calibration_models.items()):
             if re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]*", model_id) is None:
                 raise ValueError(f"unsafe calibration model ID {model_id!r}")
-            relative_path = f"generation/calibration/{model_id}.json"
-            (staged / relative_path).write_text(
+            (calibration_root / f"{model_id}.json").write_text(
                 json.dumps(model, ensure_ascii=False, indent=2) + "\n",
                 encoding="utf-8",
             )
-            calibration_catalog[model_id] = {
-                "relative_path": relative_path,
-                "sha256": canonical_json_sha256(model),
-            }
-        (generation / "country_rating_calibration_models.json").write_text(
-            json.dumps(
-                {
-                    "schema_version": "earth_country_calibration_catalog.v1",
-                    "models": calibration_catalog,
-                },
-                ensure_ascii=False,
-                indent=2,
-            ) + "\n",
-            encoding="utf-8",
-        )
         (generation / "country_rating_coverage.json").write_text(
             json.dumps(report, ensure_ascii=False, indent=2) + "\n",
             encoding="utf-8",

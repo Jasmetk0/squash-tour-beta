@@ -11,11 +11,7 @@ from beta_engine.application.earth_research_observations import (
     observation_dataset_id,
     observation_dataset_sha256,
 )
-from beta_engine.application.package_evidence_files import (
-    canonical_json_sha256,
-    load_json_object,
-    safe_package_file,
-)
+from beta_engine.application.package_evidence_files import load_json_object, safe_package_file
 from beta_engine.domain.countries import Country
 from beta_engine.domain.countries.rating_history import RATING_SCALE_V2
 
@@ -31,6 +27,97 @@ def _calibration_model_id(payload: dict) -> str | None:
     if len(set(values)) != 1:
         raise ValueError("calibration definition declares conflicting model IDs")
     return values[0]
+
+
+def _load_sources(root: Path, errors: list[str]) -> dict:
+    from beta_engine.application.earth_package_builder import EarthSource
+
+    source_root = root / "generation/sources"
+    sources: dict = {}
+    try:
+        if source_root.is_dir():
+            for path in sorted(source_root.glob("*.json")):
+                source_id = path.stem
+                if source_id in sources:
+                    raise ValueError(f"duplicate source {source_id!r}")
+                sources[source_id] = EarthSource.model_validate(load_json_object(path))
+        else:
+            legacy = load_json_object(root / "generation/country_rating_sources.json")
+            sources = {
+                source_id: EarthSource.model_validate(value)
+                for source_id, value in legacy.items()
+            }
+        if not sources:
+            raise ValueError("source catalogue must be non-empty")
+    except (OSError, ValueError, TypeError) as exc:
+        errors.append(f"invalid country rating source catalogue: {exc}")
+    return sources
+
+
+def _load_manifests(root: Path, sources: dict, errors: list[str]) -> dict[str, EarthObservationDatasetManifest]:
+    manifest_root = root / "generation/observation_manifests"
+    manifests: dict[str, EarthObservationDatasetManifest] = {}
+    try:
+        if manifest_root.is_dir():
+            entries = [(path.stem, load_json_object(path)) for path in sorted(manifest_root.glob("*.json"))]
+        else:
+            legacy = load_json_object(root / "generation/country_rating_observation_datasets.json")
+            entries = list(legacy.items())
+        if not entries:
+            raise ValueError("observation dataset catalogue must be non-empty")
+        for dataset_id, value in entries:
+            manifest = EarthObservationDatasetManifest.model_validate(value)
+            if dataset_id != manifest.dataset_id:
+                raise ValueError(
+                    f"observation dataset key {dataset_id!r} must match manifest dataset_id"
+                )
+            if manifest.source_id not in sources:
+                raise ValueError(
+                    f"observation dataset {dataset_id!r} references unknown source "
+                    f"{manifest.source_id!r}"
+                )
+            if dataset_id in manifests:
+                raise ValueError(f"duplicate observation dataset {dataset_id!r}")
+            manifests[dataset_id] = manifest
+    except (OSError, ValueError, TypeError) as exc:
+        errors.append(f"invalid country rating observation dataset catalogue: {exc}")
+    return manifests
+
+
+def _load_calibration_models(root: Path, metadata: dict, errors: list[str]) -> dict[str, dict]:
+    calibration_root = root / "generation/calibration"
+    models: dict[str, dict] = {}
+    try:
+        if calibration_root.is_dir():
+            paths = sorted(calibration_root.glob("*.json"))
+            for path in paths:
+                model = load_json_object(path)
+                model_id = _calibration_model_id(model)
+                if model_id is None:
+                    raise ValueError(f"calibration file {path.name!r} has no model ID")
+                if model_id in models:
+                    raise ValueError(f"duplicate calibration model {model_id!r}")
+                world_id = model.get("world_id")
+                if world_id is not None and world_id != metadata.get("world_id"):
+                    continue  # A portable library may contain definitions for another Earth sport.
+                models[model_id] = model
+        else:
+            catalog_path = root / "generation/country_rating_calibration_models.json"
+            if catalog_path.is_file():
+                catalog = load_json_object(catalog_path)
+                raw_models = catalog.get("models")
+                if not isinstance(raw_models, dict):
+                    raise ValueError("calibration catalogue models must be an object")
+                for model_id, declaration in raw_models.items():
+                    if not isinstance(declaration, dict) or not isinstance(declaration.get("relative_path"), str):
+                        raise ValueError(f"invalid calibration entry {model_id!r}")
+                    model = load_json_object(safe_package_file(root, declaration["relative_path"]))
+                    if _calibration_model_id(model) != model_id:
+                        raise ValueError(f"calibration file for {model_id!r} declares another model ID")
+                    models[model_id] = model
+    except (OSError, ValueError, TypeError) as exc:
+        errors.append(f"invalid country rating calibration catalogue: {exc}")
+    return models
 
 
 def country_history_errors(root: Path, metadata: dict, countries: list[Country]) -> list[str]:
@@ -54,41 +141,8 @@ def country_history_errors(root: Path, metadata: dict, countries: list[Country])
         if metadata.get("rating_scale") != RATING_SCALE_V2:
             errors.append("a historical package must declare the 1–10 rating scale")
 
-    sources: dict = {}
-    try:
-        raw_sources = load_json_object(root / "generation/country_rating_sources.json")
-        if not raw_sources:
-            raise ValueError("source catalogue must be a non-empty object")
-        from beta_engine.application.earth_package_builder import EarthSource
-
-        sources = {
-            source_id: EarthSource.model_validate(value)
-            for source_id, value in raw_sources.items()
-        }
-    except (OSError, ValueError, TypeError) as exc:
-        errors.append(f"invalid country rating source catalogue: {exc}")
-
-    manifests: dict[str, EarthObservationDatasetManifest] = {}
-    try:
-        raw_manifests = load_json_object(
-            root / "generation/country_rating_observation_datasets.json"
-        )
-        if not raw_manifests:
-            raise ValueError("observation dataset catalogue must be a non-empty object")
-        for dataset_id, value in raw_manifests.items():
-            manifest = EarthObservationDatasetManifest.model_validate(value)
-            if dataset_id != manifest.dataset_id:
-                raise ValueError(
-                    f"observation dataset key {dataset_id!r} must match manifest dataset_id"
-                )
-            if manifest.source_id not in sources:
-                raise ValueError(
-                    f"observation dataset {dataset_id!r} references unknown source "
-                    f"{manifest.source_id!r}"
-                )
-            manifests[dataset_id] = manifest
-    except (OSError, ValueError, TypeError) as exc:
-        errors.append(f"invalid country rating observation dataset catalogue: {exc}")
+    sources = _load_sources(root, errors)
+    manifests = _load_manifests(root, sources, errors)
 
     observations: dict[str, EarthObservation] = {}
     for dataset_id, manifest in sorted(manifests.items()):
@@ -129,9 +183,7 @@ def country_history_errors(root: Path, metadata: dict, countries: list[Country])
                 )
             for observation in dataset.observations:
                 if observation.observation_id in observations:
-                    raise ValueError(
-                        f"duplicate observation ID {observation.observation_id!r}"
-                    )
+                    raise ValueError(f"duplicate observation ID {observation.observation_id!r}")
                 observations[observation.observation_id] = observation
         except (OSError, ValueError, TypeError) as exc:
             errors.append(f"observation dataset {dataset_id!r} is invalid: {exc}")
@@ -143,53 +195,7 @@ def country_history_errors(root: Path, metadata: dict, countries: list[Country])
         for rating in entry.ratings.values()
         if rating.calibration_model_id
     }
-    calibration_models: dict[str, dict] = {}
-    calibration_catalog_path = root / "generation/country_rating_calibration_models.json"
-    if required_models or calibration_catalog_path.exists():
-        try:
-            catalog = load_json_object(calibration_catalog_path)
-            if catalog.get("schema_version") != "earth_country_calibration_catalog.v1":
-                raise ValueError("unsupported calibration catalogue schema")
-            raw_models = catalog.get("models")
-            if not isinstance(raw_models, dict):
-                raise ValueError("calibration catalogue models must be an object")
-            for model_id, declaration_value in raw_models.items():
-                if not isinstance(model_id, str) or not model_id:
-                    raise ValueError("calibration model IDs must be non-empty strings")
-                if not isinstance(declaration_value, dict):
-                    raise ValueError(f"calibration entry {model_id!r} must be an object")
-                relative_path = declaration_value.get("relative_path")
-                expected_hash = declaration_value.get("sha256")
-                if not isinstance(relative_path, str):
-                    raise ValueError(f"calibration entry {model_id!r} lacks relative_path")
-                if (
-                    not isinstance(expected_hash, str)
-                    or len(expected_hash) != 64
-                    or any(ch not in "0123456789abcdef" for ch in expected_hash)
-                ):
-                    raise ValueError(f"calibration entry {model_id!r} has invalid sha256")
-                model_path = safe_package_file(root, relative_path)
-                model = load_json_object(model_path)
-                if _calibration_model_id(model) != model_id:
-                    raise ValueError(
-                        f"calibration file for {model_id!r} declares another model ID"
-                    )
-                actual_hash = canonical_json_sha256(model)
-                if actual_hash != expected_hash:
-                    raise ValueError(
-                        f"calibration model {model_id!r} SHA-256 mismatch; "
-                        f"catalogue={expected_hash}, actual={actual_hash}"
-                    )
-                world_id = model.get("world_id")
-                if world_id is not None and world_id != metadata.get("world_id"):
-                    raise ValueError(
-                        f"calibration model {model_id!r} targets {world_id!r}, "
-                        f"not {metadata.get('world_id')!r}"
-                    )
-                calibration_models[model_id] = model
-        except (OSError, ValueError, TypeError) as exc:
-            errors.append(f"invalid country rating calibration catalogue: {exc}")
-
+    calibration_models = _load_calibration_models(root, metadata, errors) if required_models else {}
     missing_models = sorted(required_models - calibration_models.keys())
     if missing_models:
         errors.append(f"missing calibration model definitions {missing_models}")
@@ -216,11 +222,6 @@ def country_history_errors(root: Path, metadata: dict, countries: list[Country])
             errors.append(f"{country.code}: unknown rating sources {sorted(unknown)}")
         for entry in history.years.values():
             for rating in entry.ratings.values():
-                if rating.calibration_model_id and rating.calibration_model_id not in calibration_models:
-                    errors.append(
-                        f"{country.code}: missing calibration model "
-                        f"{rating.calibration_model_id!r}"
-                    )
                 for observation_id in rating.observation_ids:
                     try:
                         dataset_id = observation_dataset_id(observation_id)

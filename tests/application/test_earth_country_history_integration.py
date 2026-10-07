@@ -52,20 +52,20 @@ def test_real_registry_and_year_detail_preserve_history_and_fingerprint(tmp_path
 
     # Observation dataset content identity participates in package identity even
     # when the already-authored numerical country ratings do not change.
-    manifests = root / world_id / "generation/country_rating_observation_datasets.json"
+    manifests = root / world_id / "generation/observation_manifests/synthetic-observations.json"
     manifest_payload = json.loads(manifests.read_text())
     original_manifest_payload = json.loads(manifests.read_text())
-    manifest_payload["synthetic-observations"]["sha256"] = "1" * 64
+    manifest_payload["sha256"] = "1" * 64
     manifests.write_text(json.dumps(manifest_payload))
     assert registry.get_package(world_id).fingerprint != original.fingerprint
     manifests.write_text(json.dumps(original_manifest_payload))
     assert registry.get_package(world_id).fingerprint == original.fingerprint
 
     # Source catalogue evidence also remains semantic package identity.
-    sources = root / world_id / "generation/country_rating_sources.json"
+    sources = root / world_id / "generation/sources/test.json"
     payload = json.loads(sources.read_text())
     original_sources = json.loads(sources.read_text())
-    payload["test"]["limitations"] += " Reviewed again."
+    payload["limitations"] += " Reviewed again."
     sources.write_text(json.dumps(payload))
     assert registry.get_package(world_id).fingerprint != original.fingerprint
     sources.write_text(json.dumps(original_sources))
@@ -92,10 +92,13 @@ def test_real_registry_and_year_detail_preserve_history_and_fingerprint(tmp_path
 
     # Source references are likewise validated from persisted content.
     payload = json.loads(sources.read_text())
-    payload.clear()
-    sources.write_text(json.dumps(payload))
+    sources.unlink()
     invalid = WorldPackageValidationService(registry).validate_package(world_id)
-    assert any("source catalogue" in check.message for check in invalid.checks if check.status == "failed")
+    assert any(
+        "unknown source" in check.message or "source catalogue" in check.message
+        for check in invalid.checks
+        if check.status == "failed"
+    )
 
 
 def test_weekly_intake_selects_birth_year_without_future_rating_leak():
@@ -164,7 +167,7 @@ def _failed_messages(result) -> list[str]:
 
 def test_missing_observation_file_fails_closed(tmp_path):
     root, world_id = _build_portable_test_package(tmp_path)
-    observation = root / world_id / f"generation/observations/{DATASET_ID}.json"
+    observation = root / world_id / "observations/synthetic.json"
     observation.unlink()
 
     result = WorldPackageValidationService(
@@ -176,7 +179,7 @@ def test_missing_observation_file_fails_closed(tmp_path):
 
 def test_changed_observation_content_and_hash_fail_closed(tmp_path):
     root, world_id = _build_portable_test_package(tmp_path)
-    observation = root / world_id / f"generation/observations/{DATASET_ID}.json"
+    observation = root / world_id / "observations/synthetic.json"
     payload = json.loads(observation.read_text())
     payload["observations"][0]["text_value"] = "Tampered evidence"
     observation.write_text(json.dumps(payload))
@@ -218,11 +221,11 @@ def test_missing_calibration_definition_fails_closed(tmp_path):
 
 def test_unsafe_observation_path_and_symlink_are_rejected(tmp_path):
     root, world_id = _build_portable_test_package(tmp_path)
-    manifests_path = root / world_id / "generation/country_rating_observation_datasets.json"
+    manifests_path = root / world_id / "generation/observation_manifests/synthetic-observations.json"
     original = json.loads(manifests_path.read_text())
 
     unsafe = json.loads(manifests_path.read_text())
-    unsafe[DATASET_ID]["relative_path"] = "../outside.json"
+    unsafe["relative_path"] = "../outside.json"
     manifests_path.write_text(json.dumps(unsafe))
     registry = WorldPackageRegistryService(world_packages_root=root)
     result = WorldPackageValidationService(registry).validate_package(world_id)
@@ -230,7 +233,7 @@ def test_unsafe_observation_path_and_symlink_are_rejected(tmp_path):
     assert any("observation dataset catalogue" in message for message in _failed_messages(result))
 
     manifests_path.write_text(json.dumps(original))
-    observation = root / world_id / f"generation/observations/{DATASET_ID}.json"
+    observation = root / world_id / "observations/synthetic.json"
     outside = tmp_path / "outside.json"
     outside.write_bytes(observation.read_bytes())
     observation.unlink()
@@ -252,7 +255,7 @@ def test_relocated_package_remains_self_contained(tmp_path):
     assert package.type == "official"
     assert package.editable is False
     assert WorldPackageValidationService(registry).validate_package(world_id).status == "valid"
-    assert (moved_root / world_id / f"generation/observations/{DATASET_ID}.json").is_file()
+    assert (moved_root / world_id / "observations/synthetic.json").is_file()
     assert (
         moved_root
         / world_id

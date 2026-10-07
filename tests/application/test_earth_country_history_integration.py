@@ -10,6 +10,7 @@ pytestmark = pytest.mark.pr_critical
 
 from beta_engine.application.earth_package_builder import build_earth_package
 from beta_engine.application.world_package_registry_service import WorldPackageRegistryService
+from beta_engine.application.world_package_run_adapter import WorldPackageRunAdapter
 from beta_engine.application.world_package_clone_service import WorldPackageCloneService
 from beta_engine.application.world_package_countries_service import WorldPackageCountriesService
 from beta_engine.application.world_package_validation_service import WorldPackageValidationService
@@ -343,3 +344,25 @@ def test_portable_earth_clone_keeps_provenance_and_is_independent(tmp_path):
     changed["years"]["1955"]["ratings"]["elite_support"]["value"] = 4.1
     clone_history.write_text(json.dumps(changed))
     assert json.loads(source_history.read_text())["years"]["1955"]["ratings"]["elite_support"]["value"] == 4.0
+
+
+
+@pytest.mark.parametrize("world_id", ["fifa_earth", "atp_earth"])
+def test_earth_history_survives_run_package_adapter(world_id):
+    registry = WorldPackageRegistryService()
+    document = WorldPackageRunAdapter(registry).build_document(world_id)
+    country_entity = next(
+        entity
+        for entity in document.entities
+        if entity.scope == "countries" and entity.source_entity_id == "CZE"
+    )
+    run_country = country(country_entity.payload.get("rating_history")).model_copy(
+        update=country_entity.payload
+    ) if False else None
+    from beta_engine.domain.countries import Country
+
+    run_country = Country.model_validate(country_entity.payload)
+    assert run_country.rating_history is not None
+    assert len(run_country.rating_history.years) == 72
+    assert run_country.at_rating_year(1955).rating_effective_year == 1955
+    assert run_country.at_rating_year(2026).rating_effective_year == 2026

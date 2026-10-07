@@ -25,6 +25,14 @@
         1.6,
         1.9
       ],
+      "1979": [
+        2,
+        1.9,
+        1.8,
+        1.6,
+        1.6,
+        1.9
+      ],
       "2026": [
         4.7,
         5,
@@ -35,12 +43,18 @@
       ]
     }
   },
-  "selection": "Piecewise-constant authored periods; no hidden interpolation and no observation enters before its event year.",
+  "selection": "Retrospective piecewise-linear calibration between documented institutional anchors and the 2026 current-structure endpoint; no historical association evidence is backdated before its verified year.",
   "limitations": [
     "All numbers are project estimates with low confidence, not source measurements.",
     "Structural events establish context but cannot identify all six numeric dimensions; cross-country calibration is outstanding.",
     "Early priors are registered separately from independent federation observations.",
     "No rankings, titles or athlete results are used to fit ratings.",
-    "2026 is partial through the bundle cutoff, not a forecast."
-  ]
+    "2026 is partial through the bundle cutoff, not a forecast.",
+    "Linear interpolation is a transparent project-authored reconstruction between sparse anchors, not measured annual sporting change."
+  ],
+  "construction": {
+    "kind": "documented_anchor_linear_interpolation",
+    "description": "Values before the first verified institutional anchor retain the prior low-confidence baseline. From the verified institutional anchor onward, annual project estimates are linearly interpolated between explicit numeric anchors and rounded to one decimal. Later endpoint evidence is used retrospectively to reconstruct history; it is not claimed to have been measured in earlier years.",
+    "rounding": "one_decimal"
+  }
 }

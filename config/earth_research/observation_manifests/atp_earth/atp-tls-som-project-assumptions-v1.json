@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-tls-som-project-assumptions-v1",
+  "source_id": "tls-som-atp-project-assumptions",
+  "relative_path": "observations/normalized/atp_tls_som_project_assumptions_v1.json",
+  "sha256": "5f425c3994eb32958ba1613a14c80745ac2531e84cf003db2ac6077641fd6854",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-tls-som-batch-2026-10-07"
+}

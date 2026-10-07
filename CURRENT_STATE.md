@@ -6031,3 +6031,9 @@ bands should shape 0..200 potential. No threshold is inferred from current OVR v
 - Authored history coverage: FIFA Earth 197/250; ATP Earth 197/250.
 - Guam milestones cover GFA 1975, AFC 1991, FIFA 1996 and EAFF 2002 without backdating.
 - Curacao preserves Netherlands-Antilles historical context through 2010 and Curacao identity from 2011; current ITF evidence enters only in 2026.
+
+### Earth TLS/SOM batch — 2026-10-07
+- Added complete 1955–2026 FIFA Earth and ATP Earth histories for Timor-Leste (TLS) and Somalia (SOM).
+- Authored history coverage: FIFA Earth 199/250; ATP Earth 199/250.
+- Timor-Leste preserves Portuguese, Indonesian/UN-transition and independent identity periods; FFTL 2002, international debut 2003 and FIFA 2005 are dated.
+- Somalia milestones use CAF's federation creation 1951, FIFA affiliation 1962 and CAF affiliation 1968; current ITF evidence enters only in 2026.

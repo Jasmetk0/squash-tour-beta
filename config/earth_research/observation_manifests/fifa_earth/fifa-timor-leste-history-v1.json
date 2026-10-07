@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-timor-leste-history-v1",
+  "source_id": "tls-som-fifa-timor-leste-history",
+  "relative_path": "observations/normalized/fifa_timor_leste_history_v1.json",
+  "sha256": "1ecac30722ad1320e4fa0245b5f539e2d2192c9016e45bf3035bf1e35c68289e",
+  "record_count": 3,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-tls-som-batch-2026-10-07"
+}

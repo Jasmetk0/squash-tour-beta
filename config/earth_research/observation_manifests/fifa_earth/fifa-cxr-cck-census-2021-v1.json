@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-cxr-cck-census-2021-v1",
+  "source_id": "cxr-cck-census-2021",
+  "relative_path": "observations/normalized/fifa_cxr_cck_census_2021_v1.json",
+  "sha256": "40304cabe5e837b065a48ce2f303735442aecefdf9e258eaefce824b17516df2",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-cxr-cck-batch-2026-10-07"
+}

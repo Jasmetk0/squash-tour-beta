@@ -6007,3 +6007,9 @@ bands should shape 0..200 potential. No threshold is inferred from current OVR v
 - Puerto Rico Professional 2023 players are null; the published 6-club observation is used only from 2023 onward.
 - FIFA association identities ARU and PUR remain mapped to Earth codes ABW and PRI.
 - ATP pre-2026 values remain explicit project-authored, non-direct, non-statistically-modelled baselines.
+
+### Earth MCO/XKX batch — 2026-10-07
+- Added complete 1955–2026 FIFA Earth and ATP Earth histories for Monaco (MCO) and Kosovo (XKX).
+- Authored history coverage: FIFA Earth 191/250; ATP Earth 191/250.
+- Monaco football evidence stays limited to official Monaco association/legal structure; no FIFA/UEFA membership is inferred.
+- Kosovo football milestones are dated (FFK 1946, FIFA friendlies 2014, UEFA/FIFA 2016); current ITF evidence is not backdated.

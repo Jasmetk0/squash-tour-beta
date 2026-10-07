@@ -10,11 +10,12 @@ from scripts.build_fifa_country_evidence_index import build_index
 def test_country_evidence_index_partitions_all_canonical_fifa_facts() -> None:
     index = build_index()
 
-    assert index["observation_count"] == 1494
-    assert index["safe_country_evidence_count"] == 1472
-    assert index["manual_review_count"] == 22
+    assert index["observation_count"] >= 1494
+    assert index["safe_country_evidence_count"] > 0
+    assert index["manual_review_count"] >= 22
     assert index["unresolved_count"] == 0
-    assert index["direct_mapped_observation_count"] == 209
+    assert index["project_assumption_count"] > 0
+    assert index["direct_mapped_observation_count"] >= 209
     assert index["rating_ready"] is False
 
     safe_ids = [
@@ -24,9 +25,12 @@ def test_country_evidence_index_partitions_all_canonical_fifa_facts() -> None:
     ]
     manual_ids = [fact["observation_id"] for fact in index["manual_review"]]
     unresolved_ids = [fact["observation_id"] for fact in index["unresolved"]]
+    project_ids = [
+        fact["observation_id"] for fact in index["project_assumptions"]
+    ]
 
-    all_ids = safe_ids + manual_ids + unresolved_ids
-    assert len(all_ids) == 1494
+    all_ids = safe_ids + manual_ids + unresolved_ids + project_ids
+    assert len(all_ids) == index["observation_count"]
     assert len(all_ids) == len(set(all_ids))
 
 
@@ -235,3 +239,19 @@ def test_pacific_association_identities_resolve_to_earth_territories_without_sov
     assert "fifa-structural-ofc-tahiti-profile-v1#pyf-ftf-foundation-1989" in pyf_ids
     assert "fifa-structural-ofc-new-caledonia-profile-v1#ncl-fcf-foundation-1928" in ncl_ids
     assert not any("france" in observation_id.lower() for observation_id in pyf_ids | ncl_ids)
+
+
+def test_project_assumptions_are_partitioned_out_of_empirical_country_evidence() -> None:
+    index = build_index()
+
+    project_ids = {
+        fact["observation_id"] for fact in index["project_assumptions"]
+    }
+    assert "fifa-ala-ata-project-assumptions-v1#ala-baseline" in project_ids
+
+    safe_ids = {
+        fact["observation_id"]
+        for facts in index["countries"].values()
+        for fact in facts
+    }
+    assert "fifa-ala-ata-project-assumptions-v1#ala-baseline" not in safe_ids

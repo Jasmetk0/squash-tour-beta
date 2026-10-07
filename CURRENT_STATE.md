@@ -6091,3 +6091,11 @@ bands should shape 0..200 potential. No threshold is inferred from current OVR v
 - Historical territorial/state transitions are explicit for UAE, Oman, French Polynesia and Qatar; Saudi Arabia's current state predates the 1955 horizon.
 - Dated ITF 2020 return-to-tennis observations enter only from 2020, while current ITF association-directory evidence enters only from 2026.
 - All six numeric ratings remain low-confidence project estimates with explicit provenance and no outcome fitting.
+
+### FIFA Earth five-country asymmetry batch — 2026-10-07
+- Added complete 1955–2026 FIFA Earth histories for GBR, IDN, PAK, PHL and SGP.
+- FIFA authored-history coverage becomes 216/250, matching ATP's 216/250 after the preceding ATP gap-five batch.
+- IDN, PAK, PHL and SGP use current official FIFA association evidence only from 2026 onward; historical membership dates are not inferred.
+- GBR is intentionally represented as an Earth-package United Kingdom aggregate and does not invent a single FIFA GBR member association.
+- Singapore's colonial, self-governing, Malaysia and independent phases are explicit.
+- All numeric ratings remain low-confidence project estimates with explicit provenance and no outcome fitting.

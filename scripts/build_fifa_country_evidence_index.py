@@ -85,6 +85,11 @@ def _context_only_fact(observation) -> dict[str, Any]:
     """Keep non-sport territorial/context facts auditable but out of calibration."""
 
     notes = (observation.definition_notes or "").lower()
+    explicitly_non_sport = (
+        "not a sports measurement" in notes
+        or "not sports evidence" in notes
+        or "constitutional_status_not_sports_measurement" in observation.quality_flags
+    )
     if (
         observation.earth_country_code is None
         or observation.measurement_type != "structural_event"
@@ -94,7 +99,7 @@ def _context_only_fact(observation) -> dict[str, Any]:
         or observation.is_direct_observation is not True
         or observation.is_statistically_modelled is not False
         or observation.competition_scope is not None
-        or "not a sports measurement" not in notes
+        or not explicitly_non_sport
     ):
         raise ValueError(
             f"observation {observation.observation_id!r} is not reviewed context-only evidence"

@@ -27,18 +27,28 @@ def get_run_package_state(
     return state
 
 
-def put_run_package_state(session: Session, state: RunPackageState) -> None:
+def put_run_package_state(
+    session: Session,
+    state: RunPackageState,
+    *,
+    expected_fingerprint: str | None = None,
+) -> None:
+    state_fingerprint = expected_fingerprint or state.fingerprint
+    if expected_fingerprint is not None and expected_fingerprint != state.fingerprint:
+        raise ValueError("Precomputed Run Package state fingerprint is stale")
     row = session.get(RunPackageStateModel, (state.run_id, state.branch_id))
     if row is None:
         row = RunPackageStateModel(run_id=state.run_id, branch_id=state.branch_id)
         session.add(row)
-    row.fingerprint = state.fingerprint
-    row.payload_json = state.model_dump_json()
+    payload_json = state.model_dump_json()
+    row.fingerprint = state_fingerprint
+    row.payload_json = payload_json
     session.flush()
-    if (
-        get_run_package_state(session, run_id=state.run_id, branch_id=state.branch_id)
-        != state
-    ):
+    # Verify the exact bytes/fingerprint held by the ORM row without reparsing and
+    # rehashing a potentially very large World snapshot immediately after writing it.
+    # Normal reads still perform full semantic validation in get_run_package_state().
+    session.refresh(row)
+    if row.fingerprint != state_fingerprint or row.payload_json != payload_json:
         raise ValueError("Run Package state write could not be verified")
 
 

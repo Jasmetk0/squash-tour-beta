@@ -6063,3 +6063,10 @@ bands should shape 0..200 potential. No threshold is inferred from current OVR v
 - FIFA histories intentionally use project-authored priors only: no FIFA/OFC membership is inferred without registered evidence.
 - Marshall Islands transition to its 1986 identity and Palau's 1994 identity are explicit.
 - ITF 2026 association evidence is used only from 2026 onward.
+
+### Earth ALA/ATA batch — 2026-10-07
+- Added complete 1955–2026 FIFA Earth and ATP Earth histories for Åland Islands (ALA) and Antarctica (ATA).
+- Authored history coverage: FIFA Earth 209/250; ATP Earth 209/250.
+- Both histories are explicit low-confidence project priors only; no separate FIFA/UEFA/ITF membership is inferred.
+- Åland does not inherit Finland-wide federation statistics, and Antarctica does not inherit claimant-state totals.
+- All annual ratings remain derived estimates with explicit provenance; no outcome fitting is used.

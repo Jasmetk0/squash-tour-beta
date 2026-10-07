@@ -506,3 +506,11 @@ RUS and KIR now have complete 1955–2026 histories in both FIFA Earth and ATP E
 
 ### Marshall Islands + Palau reviewed batch (2026-10-07)
 MHL and PLW now have complete 1955–2026 histories in both FIFA Earth and ATP Earth. Their FIFA histories deliberately remain project-prior-only rather than inventing federation membership. Trust-territory transitions are explicit (MHL 1986, PLW 1994), while current ITF association evidence enters only in 2026.
+
+## ALA/ATA territory-only batch — 7 October 2026
+
+FIFA Earth and ATP Earth now each resolve 209 complete histories. Åland Islands (ALA)
+and Antarctica (ATA) are intentionally treated as territory-only profiles: their
+ratings are explicit low-confidence project priors and do not inherit Finland-wide
+or claimant-state federation statistics. No separate FIFA, UEFA or ITF membership is
+inferred for either territory, and all 1955–2026 values retain explicit provenance.

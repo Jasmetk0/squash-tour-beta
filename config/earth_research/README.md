@@ -10,8 +10,11 @@ authored rating values.
 
 The first ATP realism-audit calibration batch is merged: GUM, KIR, FSM, MNP and
 TLS now use reviewed historical institutional anchors instead of artificial 2026
-one-year cliffs. This is a targeted audit correction only; the remaining review
-queue is still driven by the deterministic Earth realism audit and
+one-year cliffs. A second candidate batch removes artificial piecewise-constant
+cliffs for QAT, PYF and ARE by linearly reconstructing annual values between their
+already-authored numeric anchors; the anchor values themselves and all source
+evidence timing remain unchanged. These are targeted audit corrections only; the
+remaining review queue is still driven by the deterministic Earth realism audit and
 `realism_validated` remains false.
 
 The research files remain the auditable authoring source. The standard build now

@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-davis-cup-cze-deu-outcomes-v1",
+  "source_id": "davis-cup-previous-champions",
+  "relative_path": "observations/normalized/atp_davis_cup_cze_deu_outcomes_v1.json",
+  "sha256": "40a0b542b8bad9f6857107efb6ab7f76156aaed3492f30568414401b923885c4",
+  "record_count": 8,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual normalization from official Davis Cup champions record"
+}

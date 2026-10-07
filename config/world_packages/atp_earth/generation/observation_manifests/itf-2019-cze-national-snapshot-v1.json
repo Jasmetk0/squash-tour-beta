@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "itf-2019-cze-national-snapshot-v1",
+  "source_id": "itf-2019-cze",
+  "relative_path": "observations/normalized/itf_2019_cze_national_snapshot_v1.json",
+  "sha256": "2d963a4a3b47bcfe69a85d4c2d8565efdab5920e4d109921631a19e28252d3be",
+  "record_count": 3,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual normalization from config/earth_research/observations/itf_2019_selected.json"
+}

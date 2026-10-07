@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "itf-2019-deu-national-snapshot-v1",
+  "source_id": "itf-2019-deu",
+  "relative_path": "observations/normalized/itf_2019_deu_national_snapshot_v1.json",
+  "sha256": "eceef0d2664c786201145513623a884cbcd22f6983c4ec74a0d45df7b46ee4a0",
+  "record_count": 3,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual normalization from config/earth_research/observations/itf_2019_selected.json"
+}

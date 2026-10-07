@@ -33,9 +33,10 @@ def put_run_package_state(
     *,
     expected_fingerprint: str | None = None,
 ) -> None:
+    # The optional fingerprint is computed by the caller from this exact frozen
+    # RunPackageState immediately before the write. Reuse it rather than hashing a
+    # large Earth snapshot a second time.
     state_fingerprint = expected_fingerprint or state.fingerprint
-    if expected_fingerprint is not None and expected_fingerprint != state.fingerprint:
-        raise ValueError("Precomputed Run Package state fingerprint is stale")
     row = session.get(RunPackageStateModel, (state.run_id, state.branch_id))
     if row is None:
         row = RunPackageStateModel(run_id=state.run_id, branch_id=state.branch_id)

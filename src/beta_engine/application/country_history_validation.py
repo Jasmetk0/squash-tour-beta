@@ -101,8 +101,16 @@ def _load_calibration_models(root: Path, metadata: dict, errors: list[str]) -> d
                 if model_id in models:
                     raise ValueError(f"duplicate calibration model {model_id!r}")
                 world_id = model.get("world_id")
-                if world_id is not None and world_id != metadata.get("world_id"):
-                    continue  # A portable library may contain definitions for another Earth sport.
+                allowed_world_ids = {
+                    value
+                    for value in (
+                        metadata.get("world_id"),
+                        metadata.get("cloned_from_world_id"),
+                    )
+                    if isinstance(value, str) and value
+                }
+                if world_id is not None and world_id not in allowed_world_ids:
+                    continue  # Ignore definitions belonging to another Earth sport.
                 models[model_id] = model
         else:
             catalog_path = root / "generation/country_rating_calibration_models.json"

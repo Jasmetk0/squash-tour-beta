@@ -8,7 +8,7 @@ Packages:
 | Package | Earth identities | Years | Values | Datasets | Observations |
 | --- | ---: | ---: | ---: | ---: | ---: |
 | FIFA Earth | 250/250 | 1955–2026 | 108,000 | 318 | 2,081 |
-| ATP Earth | 250/250 | 1955–2026 | 108,000 | 486 | 1,033 |
+| ATP Earth | 250/250 | 1955–2026 | 108,000 | 488 | 1,039 |
 
 The package builder now publishes complete package-owned provenance rather than only
 catalogue metadata. Validation reopens the actual normalized observation files and
@@ -161,7 +161,7 @@ integration repairs are not claimed completed by this data PR.
 `config/earth_research/fifa_earth.json` and `atp_earth.json` are
 `earth_sport_research.v2` catalogues whose root records are extended by sharded
 sources, observation manifests and country histories. FIFA and ATP each resolve all 250 Earth identities. FIFA contains 318 normalized
-datasets / 2,081 observations and ATP contains 486 / 1,033. Root-JSON contents alone
+datasets / 2,081 observations and ATP contains 488 / 1,039. Root-JSON contents alone
 must not be used as the coverage count because both catalogues are extended by
 sharded sources, manifests and country histories.
 

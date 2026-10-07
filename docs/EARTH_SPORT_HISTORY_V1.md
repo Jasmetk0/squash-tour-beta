@@ -112,6 +112,10 @@ integration repairs are not claimed completed by this data PR.
   `GET /world/packages/{world_id}/countries/{code}?rating_year=2000` resolves a year
   without changing the source. Nearest authored year is used outside coverage;
   earlier wins ties. After 2026 this is a frozen last observation, not a forecast.
+- Flat country CSV import now fails closed for history-bearing World Packages because
+  that format cannot represent per-year ratings/evidence. It must never silently
+  replace a 72-year profile with one flattened row; full package clone/copy remains
+  the supported portable path for Earth provenance.
 - Initial-pool quantity and weekly intake use birth-cohort-year population and
   ratings. Annual talent planning uses its requested year; player generation uses
   the requested season environment. Existing non-history behavior is preserved.

@@ -398,8 +398,8 @@ def test_full_earth_research_builds_to_valid_distributed_semantics(tmp_path, wor
     assert report["coverage_complete"] is True
     assert report["required_country_count"] == 250
     assert report["authored_rating_count"] == 108_000
-    assert report["observation_dataset_count"] == (318 if world_id == "fifa_earth" else 486)
-    assert report["observation_record_count"] == (2081 if world_id == "fifa_earth" else 1033)
+    assert report["observation_dataset_count"] == (318 if world_id == "fifa_earth" else 488)
+    assert report["observation_record_count"] == (2081 if world_id == "fifa_earth" else 1039)
     assert report["realism_validated"] is False
 
     built_registry = WorldPackageRegistryService(world_packages_root=tmp_path)

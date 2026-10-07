@@ -35,6 +35,36 @@ def _stored_observation_code(code: str) -> str:
     return _LEGACY_OBSERVATION_CODE.get(code, code.lower())
 
 
+_RETROSPECTIVE_ATP_CALIBRATION_MODELS = {
+    "GUM": "atp-earth-gum-reviewed-structure.v1",
+    "KIR": "atp-earth-kir-reviewed-structure.v1",
+    "FSM": "atp-earth-fsm-reviewed-structure.v1",
+    "MNP": "atp-earth-mnp-reviewed-structure.v1",
+    "TLS": "atp-earth-tls-reviewed-structure.v1",
+}
+
+_RETROSPECTIVE_ATP_FUTURE_ANCHORS = {
+    "GUM": {2026},
+    "KIR": {2026},
+    "FSM": {2026},
+    "MNP": {2000, 2026},
+    "TLS": {2026},
+}
+
+
+def _assert_rating_anchor_timing(world_id: str, code: str, year: int, rating) -> None:
+    """Keep future anchors forbidden except for explicitly reviewed retrospective ATP models."""
+
+    if max(rating.anchor_years) <= year:
+        return
+
+    assert world_id == "atp_earth"
+    assert code in _RETROSPECTIVE_ATP_CALIBRATION_MODELS
+    assert rating.calibration_model_id == _RETROSPECTIVE_ATP_CALIBRATION_MODELS[code]
+    assert min(rating.anchor_years) <= year < 2026
+    assert max(rating.anchor_years) in _RETROSPECTIVE_ATP_FUTURE_ANCHORS[code]
+
+
 
 def test_fifa_first_reviewed_country_histories_are_complete_and_resolvable():
     bundle = load_earth_research_bundle(Path("config/earth_research/fifa_earth.json"))
@@ -491,8 +521,8 @@ def test_atp_complete_histories_are_evidence_resolvable_and_temporally_bounded()
     expected_countries = {"CZE", "DEU", "USA", "AUS", "ESP", "SRB", "FRA", "GBR", "ARG", "JPN", "CAN", "ITA", "NLD", "SWE", "CHE", "HRV", "POL", "CHN", "NOR", "GRC", "BEL", "ZAF", "DNK", "FIN", "NZL", "PRT", "IRL", "HUN", "ROU", "SVN", "SVK", "ISR", "BGR", "AUT", "TUR", "CYP", "BRA", "CHL", "COL", "MEX", "ECU", "IND", "KOR", "THA", "KAZ", "LVA", "EST", "LTU", "UKR", "MAR", "SEN", "ISL", "SMR", "FRO", "FJI", "PNG", "WSM", "SLB", "TON", "COK", "NCL", "ASM", "VUT", "EGY", "MYS", "PHL", "IDN", "SGP", "PAK", "GHA", "NGA", "KEN", "UGA", "TZA", "ZMB", "ZWE", "MWI", "BWA", "NAM", "SWZ", "MOZ", "AGO", "LSO", "CMR", "BEN", "GAB", "MUS", "MDG", "SYC", "RWA", "BDI", "GMB", "CPV", "DJI", "COM", "GNQ", "GNB", "STP", "GIN", "LBR", "SLE", "TGO", "BFA", "MLI", "MRT", "NER", "TCD", "ETH", "ERI", "SDN", "SSD", "DZA", "CIV", "TUN", "LBY", "IRQ", "JOR", "LBN", "SYR", "PSE", "BHR", "KWT", "YEM", "IRN", "AFG", "BGD", "NPL", "LKA", "BTN", "MDV", "MNG", "KHM", "MMR", "LAO", "BRN", "VNM", "UZB", "TJK", "TKM", "KGZ", "GEO", "ARM", "AZE", "ALB", "MDA", "MKD", "BIH", "BLR", "MLT", "LUX", "CRI", "JAM", "TTO", "PAN", "DOM", "GTM", "HND", "SLV", "NIC", "BLZ", "HTI", "PER", "BOL", "PRY", "URY", "VEN", "GUY", "CUB", "SUR", "BHS", "BRB", "GRD", "DMA", "ATG", "LCA", "VCT", "KNA", "VGB", "TCA", "AIA", "BMU", "CYM", "VIR", "ABW", "PRI", "AND", "MNE", "LIE", "GIB", "MCO", "XKX", "HKG", "MAC", "TWN", "PRK", "GUM", "CUW", "TLS", "SOM", "CAF", "COD", "COG", "FSM", "RUS", "KIR", "MHL", "PLW", "ALA", "ATA", "NRU", "TUV", "ARE", "OMN", "PYF", "QAT", "SAU", "MNP", "NFK", "ATF", "BVT", "HMD", "SGS", "PCN", "UMI", "GGY", "JEY", "BLM", "MAF", "GLP", "MTQ", "GUF", "REU", "MYT", "SPM", "CCK", "CXR", "NIU", "TKL", "BES", "SXM", "FLK", "IOT", "SHN", "MSR", "GRL", "SJM", "ESH", "IMN", "VAT", "WLF"}
     assert set(bundle.research.countries) == expected_countries
     assert bundle.research.data_cutoff.isoformat() == "2026-10-04"
-    assert len(bundle.datasets) == 486
-    assert len(bundle.observations) == 1033
+    assert len(bundle.datasets) == 488
+    assert len(bundle.observations) == 1039
 
     expected_models = {
         "CZE": "atp-earth-cze-deu-seed-model.v1",
@@ -6322,7 +6352,7 @@ def test_gum_cuw_batch_is_complete_and_dated(world_id, code):
             assert rating.method=="derived_estimate"
             assert 1<=rating.value<=10
             assert rating.value*10==round(rating.value*10)
-            assert max(rating.anchor_years)<=year
+            _assert_rating_anchor_timing(world_id, code, year, rating)
             for ref in rating.observation_ids:
                 ob=bundle.observations[ref]
                 assert ob.earth_country_code==code
@@ -6369,7 +6399,7 @@ def test_tls_som_batch_is_complete_and_dated(world_id, code):
             assert rating.method=="derived_estimate"
             assert 1<=rating.value<=10
             assert rating.value*10==round(rating.value*10)
-            assert max(rating.anchor_years)<=year
+            _assert_rating_anchor_timing(world_id, code, year, rating)
             for ref in rating.observation_ids:
                 ob=bundle.observations[ref]
                 assert ob.earth_country_code==code
@@ -6467,7 +6497,7 @@ def test_cog_fsm_batch_is_complete_and_dated(world_id, code):
             assert rating.method=="derived_estimate"
             assert 1<=rating.value<=10
             assert rating.value*10==round(rating.value*10)
-            assert max(rating.anchor_years)<=year
+            _assert_rating_anchor_timing(world_id, code, year, rating)
             for ref in rating.observation_ids:
                 ob=bundle.observations[ref]
                 assert ob.earth_country_code==code
@@ -6513,7 +6543,7 @@ def test_rus_kir_batch_is_complete_and_dated(world_id, code):
             assert rating.method=="derived_estimate"
             assert 1<=rating.value<=10
             assert rating.value*10==round(rating.value*10)
-            assert max(rating.anchor_years)<=year
+            _assert_rating_anchor_timing(world_id, code, year, rating)
             for ref in rating.observation_ids:
                 ob=bundle.observations[ref]
                 assert ob.earth_country_code==code
@@ -6843,7 +6873,7 @@ def test_mnp_nfk_histories_are_complete_and_low_confidence(world_id, code):
             assert rating.confidence == "low"
             assert 1 <= rating.value <= 10
             assert rating.value * 10 == round(rating.value * 10)
-            assert max(rating.anchor_years) <= year
+            _assert_rating_anchor_timing(world_id, code, year, rating)
             assert rating.observation_ids
             for ref in rating.observation_ids:
                 observation = bundle.observations[ref]

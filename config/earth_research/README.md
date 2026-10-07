@@ -5,7 +5,7 @@
 The research layer is now **structurally complete**, not historically validated.
 Both FIFA Earth and ATP Earth resolve all 250 Earth identities for every year
 1955–2026 with six 1–10 attributes. FIFA contains 318 normalized datasets / 2,081
-observations; ATP contains 486 / 1,033. Each world therefore contains 108,000
+observations; ATP contains 488 / 1,039. Each world therefore contains 108,000
 authored rating values.
 
 The research files remain the auditable authoring source. The standard build now

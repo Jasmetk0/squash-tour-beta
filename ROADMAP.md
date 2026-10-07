@@ -15,6 +15,9 @@
   large annual jumps, long flat runs and duplicate numeric trajectories across/between worlds.
 - 🟡 Use the audit queue for historical calibration review; the tooling itself does not
   certify realism.
+- 🟡 First ATP audit-driven calibration batch corrects false 2026 cliffs for GUM, KIR,
+  FSM, MNP and TLS using verified historical institutional anchors while preserving
+  low-confidence status and the unchanged 2026 endpoints.
 - ⏳ Historical realism/calibration validation remains separate future work;
   `realism_validated` stays false.
 

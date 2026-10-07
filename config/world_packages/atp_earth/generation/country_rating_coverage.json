@@ -19,8 +19,8 @@
     "medium": 17128,
     "high": 5
   },
-  "observation_dataset_count": 486,
-  "observation_record_count": 1033,
+  "observation_dataset_count": 488,
+  "observation_record_count": 1039,
   "data_cutoff": "2026-10-04",
   "realism_validated": false
 }

@@ -1,5 +1,30 @@
 # Current implementation and next action
 
+## ATP sparse-history calibration batch 1 — candidate, 7 October 2026
+
+The first realism-audit-driven data correction targets five ATP Earth histories whose
+current association evidence had been treated as a new 2026 event, creating artificial
+one-year cliffs.
+
+- Guam: historical ITF association anchor **1973**.
+- Kiribati: historical ITF association anchor **1979**.
+- Federated States of Micronesia: historical ITF association anchor **1995**.
+- Northern Mariana Islands: historical ITF association anchor **1998**.
+- Timor-Leste: ITF membership approval **2021**; first ITF development visit **2022**.
+- Before the verified institutional anchor, the existing low-confidence baseline is
+  retained. From the anchor onward, annual project estimates use explicit one-decimal
+  piecewise-linear reconstruction to the unchanged 2026 endpoint.
+- Ratings remain low-confidence `derived_estimate` values. Institutional dates are
+  evidence for timing/context, not direct measurements of the six 1–10 attributes.
+- ATP provenance expands to **488 normalized datasets / 1,039 observations**.
+- Research histories and the distributed `atp_earth` package are kept byte-semantic
+  equivalents for these five country histories.
+- `realism_validated` remains false; this is one reviewed correction batch, not a
+  global certification.
+
+Next: pass PR-critical/package validation, rerun the realism audit, then take the next
+highest-severity temporal-cliff batch from the updated report.
+
 ## Earth realism audit tooling — candidate, 7 October 2026
 
 - Added deterministic two-world audit code for FIFA Earth and ATP Earth histories.
@@ -26,7 +51,7 @@ sections below are retained as implementation history only.
 - Research coverage is structurally complete for both worlds: **250/250** Earth
   countries/territories, all **72 years (1955–2026)** and exactly six game attributes.
 - FIFA Earth: **318 normalized datasets / 2,081 observations / 108,000 values**.
-- ATP Earth: **486 normalized datasets / 1,033 observations / 108,000 values**.
+- ATP Earth: **488 normalized datasets / 1,039 observations / 108,000 values**.
 - Both built-in directories are now materialized under
   `config/world_packages/fifa_earth` and `config/world_packages/atp_earth`.
 - Historical package provenance is self-contained: package-owned source shards,

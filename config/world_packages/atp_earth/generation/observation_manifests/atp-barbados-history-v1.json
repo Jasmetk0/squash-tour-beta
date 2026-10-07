@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-barbados-history-v1",
+  "source_id": "itf-barbados-profile",
+  "relative_path": "observations/normalized/atp_barbados_history_v1.json",
+  "sha256": "87f7060296bf0d1564c7fa8f64668d0120be788580df4499f20bf10f3e653045",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

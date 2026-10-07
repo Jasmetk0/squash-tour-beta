@@ -1,0 +1,82 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "fifa-earth-gin-model.v1",
+  "world_id": "fifa_earth",
+  "data_cutoff": "2026-10-03",
+  "countries": [
+    "GIN"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "evidence_rules": [
+    "Association creation 1960, FIFA affiliation 1962 and CAF affiliation 1963 are separately gated.",
+    "Big Count 2006 enters only from 2006.",
+    "Professional 2023 club evidence enters only from 2023; missing player count is not inferred.",
+    "No ranking or event outcome is mechanically converted to a rating."
+  ],
+  "anchor_values": {
+    "GIN": {
+      "1955": [
+        4,
+        3.5,
+        3.6,
+        3.6,
+        3.3,
+        3.9
+      ],
+      "1960": [
+        5.1,
+        4.5,
+        4.6,
+        4.7,
+        4.3,
+        5.1
+      ],
+      "1962": [
+        5.4,
+        4.8,
+        5,
+        5.1,
+        4.6,
+        5.4
+      ],
+      "1963": [
+        5.6,
+        5,
+        5.2,
+        5.3,
+        4.8,
+        5.6
+      ],
+      "2006": [
+        6.6,
+        5.9,
+        6.1,
+        6.3,
+        5.8,
+        6.4
+      ],
+      "2023": [
+        6.8,
+        6.1,
+        6.3,
+        6.5,
+        6.1,
+        6.6
+      ],
+      "2026": [
+        6.9,
+        6.2,
+        6.4,
+        6.6,
+        6.2,
+        6.7
+      ]
+    }
+  },
+  "evidence_sources": [
+    "caf-guinea-profile",
+    "fifa-big-count-2006",
+    "fifa-professional-2023"
+  ],
+  "heldout_ranking_used": false
+}

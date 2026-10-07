@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-china-youth-2026-v1",
+  "source_id": "afc-china-youth-2026",
+  "relative_path": "observations/normalized/structural/fifa_structural_china_youth_2026_v1.json",
+  "sha256": "b6eeeb626893ebc9cadc9070541ec504ec01fe048673452dae98c6908b494315",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

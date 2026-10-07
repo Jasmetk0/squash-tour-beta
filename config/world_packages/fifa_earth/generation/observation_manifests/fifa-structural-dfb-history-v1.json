@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-dfb-history-v1",
+  "source_id": "dfb-history",
+  "relative_path": "observations/normalized/structural/fifa_structural_dfb_history_v1.json",
+  "sha256": "e6611caee95581076789b62600a92e2846a798955c049558e85521cf955f6a2a",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": "695b29b9552a8fb59133db25ec8948951a78217a9a1c049734c73ad79b75f665",
+  "generated_by": "scripts/normalize_fifa_structural_events.py"
+}

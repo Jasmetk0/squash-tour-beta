@@ -675,7 +675,12 @@ def test_world_packages_registry_lists_built_in_official_package(tmp_path) -> No
     ) as server:
         status, payload = _request("GET", f"{server.base_url}/world/packages")
         assert status == 200
-        assert len(payload["packages"]) == 2
+        assert [item["world_id"] for item in payload["packages"]] == [
+            "official_fax_world",
+            "real_world",
+            "fifa_earth",
+            "atp_earth",
+        ]
         package = payload["packages"][0]
         assert package["world_id"] == "official_fax_world"
         assert package["name"] == "Official FAX World"

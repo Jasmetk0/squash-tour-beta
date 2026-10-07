@@ -1,0 +1,26 @@
+{
+  "schema_version": "atp_earth_reviewed_country_batch.v1",
+  "model_id": "atp-earth-sui-cro-pol-chn-model.v1",
+  "created_on": "2026-10-05",
+  "countries": [
+    "SUI",
+    "CRO",
+    "POL",
+    "CHN"
+  ],
+  "coverage": {
+    "from": 1955,
+    "to": 2026,
+    "attributes": 6
+  },
+  "rating_scale": "country_ratings_1_10.v2",
+  "method": "Country-specific piecewise anchor histories using institutional continuity, dimension-specific participation/development facts and temporally gated elite competition evidence.",
+  "evidence_rules": [
+    "Team/elite outcomes inform competition/tradition only.",
+    "Croatia before 1992 is explicit current-territory-within-Yugoslavia context, not independent-state fiction.",
+    "Poland preserves the 1951 governance discontinuity and does not backcast modern youth funding.",
+    "China's large youth system raises access/development separately from men's elite competition; the 2025 zero-Top100 fact constrains competition quality.",
+    "Current Swiss participation and infrastructure are not backcast.",
+    "No held-out validation ranking is used to tune authored ratings."
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-namibia-history-v1",
+  "source_id": "itf-namibia-return-to-play-2020",
+  "relative_path": "observations/normalized/atp_namibia_history_v1.json",
+  "sha256": "f749f468a922118382f010197ddaf7880f9cefac8bc753d54018924422d0383c",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

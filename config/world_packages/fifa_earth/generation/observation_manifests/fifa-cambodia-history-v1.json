@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-cambodia-history-v1",
+  "source_id": "fifa-cambodia-member-context-2026",
+  "relative_path": "observations/normalized/structural/fifa_cambodia_history_v1.json",
+  "sha256": "bff892ed327f7a07b17043c39dfeae0d7b3cdfa6df343e928c13213955b48f25",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

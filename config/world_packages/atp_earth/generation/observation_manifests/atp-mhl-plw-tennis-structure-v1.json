@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-mhl-plw-tennis-structure-v1",
+  "source_id": "mhl-plw-itf-2026-associations",
+  "relative_path": "observations/normalized/atp_mhl_plw_tennis_structure_v1.json",
+  "sha256": "f9825f7463703d72689ac38e1dfc2eb25187384df0377be439f7271160612e27",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-mhl-plw-batch-2026-10-07"
+}

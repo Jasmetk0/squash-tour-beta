@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-eritrea-history-v1",
+  "source_id": "itf-eritrea-return-to-play-2020",
+  "relative_path": "observations/normalized/atp_eritrea_history_v1.json",
+  "sha256": "0d38a84acb8781e7197f269cd8a32b7f644e7ce4b5c89ac1b6c89cafc03cbdc8",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

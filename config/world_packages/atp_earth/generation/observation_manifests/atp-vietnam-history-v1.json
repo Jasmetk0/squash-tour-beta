@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-vietnam-history-v1",
+  "source_id": "itf-vietnam-profile",
+  "relative_path": "observations/normalized/atp_vietnam_history_v1.json",
+  "sha256": "76db4e995b9f67c5e2f3c989d25ff701db44127c5dd6117953db7eea2a4bbd2b",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

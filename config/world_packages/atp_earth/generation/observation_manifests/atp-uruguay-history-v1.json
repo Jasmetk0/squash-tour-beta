@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-uruguay-history-v1",
+  "source_id": "itf-uruguay-profile",
+  "relative_path": "observations/normalized/atp_uruguay_history_v1.json",
+  "sha256": "9fb2414031f4185de67f60f9b99ce09afbe0fe2f631f7cfc739474194b56b0f5",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

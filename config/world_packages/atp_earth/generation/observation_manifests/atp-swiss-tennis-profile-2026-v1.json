@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-swiss-tennis-profile-2026-v1",
+  "source_id": "swiss-tennis-profile-2026",
+  "relative_path": "observations/normalized/atp-swiss-tennis-profile-2026-v1.json",
+  "sha256": "37f191b9da01b1fd099b7a5d801f0c27ed9f05f3d5b5d46a8841e9d0f4b9b002",
+  "record_count": 5,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

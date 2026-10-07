@@ -20,7 +20,7 @@ def main() -> None:
     report = audit_earth_research(research, WorldPackageCountryStore(args.base).load_config().countries)
     print(json.dumps(report, indent=2))
     if args.output:
-        build_earth_package(base_package=args.base, research=research, output=args.output)
+        build_earth_package(base_package=args.base, bundle=bundle, output=args.output)
 
 
 if __name__ == "__main__":

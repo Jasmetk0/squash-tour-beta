@@ -1,0 +1,73 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "fifa-earth-eri-model.v1",
+  "world_id": "fifa_earth",
+  "data_cutoff": "2026-10-03",
+  "countries": [
+    "ERI"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "evidence_rules": [
+    "Pre-1996 years are explicit low-confidence territorial context and do not inherit Ethiopia federation evidence.",
+    "Association creation 1996 and FIFA/CAF affiliation 1998 are separately gated.",
+    "Big Count 2006 enters only from 2006.",
+    "No checked-in Professional 2023 player/club observations exist, so none are inferred."
+  ],
+  "anchor_values": {
+    "ERI": {
+      "1955": [
+        3.2,
+        2.8,
+        2.9,
+        2.9,
+        2.6,
+        3.1
+      ],
+      "1996": [
+        4.8,
+        4.2,
+        4.3,
+        4.4,
+        4,
+        4.8
+      ],
+      "1998": [
+        5.2,
+        4.6,
+        4.8,
+        4.9,
+        4.5,
+        5.2
+      ],
+      "2006": [
+        5.9,
+        5.3,
+        5.5,
+        5.7,
+        5.2,
+        5.9
+      ],
+      "2023": [
+        6,
+        5.4,
+        5.6,
+        5.8,
+        5.3,
+        6
+      ],
+      "2026": [
+        6.1,
+        5.5,
+        5.7,
+        5.9,
+        5.4,
+        6.1
+      ]
+    }
+  },
+  "evidence_sources": [
+    "caf-eritrea-profile",
+    "fifa-big-count-2006"
+  ],
+  "heldout_ranking_used": false
+}

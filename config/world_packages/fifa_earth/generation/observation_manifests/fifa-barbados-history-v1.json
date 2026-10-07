@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-barbados-history-v1",
+  "source_id": "fifa-barbados-member-context-2026",
+  "relative_path": "observations/normalized/structural/fifa_barbados_history_v1.json",
+  "sha256": "213d62a599e29c2dfe3515a51fa49dcc21c9b7ac8cc692711335890f9fc7c107",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

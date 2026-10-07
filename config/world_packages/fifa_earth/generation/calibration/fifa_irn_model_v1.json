@@ -1,0 +1,58 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "fifa-earth-irn-model.v1",
+  "world_id": "fifa_earth",
+  "data_cutoff": "2026-10-03",
+  "countries": [
+    "IRN"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "evidence_rules": [
+    "Federation established 1946 and FIFA membership 1948 predate simulation start.",
+    "Big Count enters from 2006.",
+    "Professional 2023 uses explicitly reconciled IR IRAN identity; 1,800 players and 16 clubs are time-gated to 2023.",
+    "No rankings or outcomes are calibration targets."
+  ],
+  "anchor_values": {
+    "IRN": {
+      "1955": [
+        6.7,
+        6,
+        6.2,
+        6.4,
+        6,
+        6.9
+      ],
+      "2006": [
+        8,
+        7.2,
+        7.5,
+        7.8,
+        7.3,
+        8
+      ],
+      "2023": [
+        8.2,
+        7.5,
+        7.8,
+        8,
+        7.6,
+        8.2
+      ],
+      "2026": [
+        8.2,
+        7.5,
+        7.8,
+        8,
+        7.6,
+        8.2
+      ]
+    }
+  },
+  "evidence_sources": [
+    "afc-iran-bid-2027",
+    "fifa-big-count-2006",
+    "fifa-professional-2023"
+  ],
+  "heldout_ranking_used": false
+}

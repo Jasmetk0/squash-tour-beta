@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-fifa-morocco-academy-2009-v1",
+  "source_id": "fifa-morocco-academy-2009",
+  "relative_path": "observations/normalized/structural/fifa_structural_fifa_morocco_academy_2009_v1.json",
+  "sha256": "9f46c6cc7a41d6da49a9999142b7f541f210f07baf8f48874d5050f91ce0b3e6",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": "aa48ab28872008467eedb7601a7d7f0246490a54779b88bd51303e501d31cf1c",
+  "generated_by": "scripts/normalize_fifa_structural_events.py"
+}

@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-nicaragua-history-v1",
+  "source_id": "fifa-nicaragua-member-context-2026",
+  "relative_path": "observations/normalized/structural/fifa_nicaragua_history_v1.json",
+  "sha256": "b75f3c0b9ded4d85dd42732ad718febbeb63d5048ae5aa9fe3a5a49fc09246d6",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

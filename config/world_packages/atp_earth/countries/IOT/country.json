@@ -1,0 +1,7 @@
+{
+  "schema_version": "world_package_country.v1",
+  "code": "IOT",
+  "name": "British Indian Ocean Territory",
+  "flag_asset": null,
+  "notes": "Gameplay fallback: United Kingdom curve; personnel anchor; not a separate UN WPP series."
+}

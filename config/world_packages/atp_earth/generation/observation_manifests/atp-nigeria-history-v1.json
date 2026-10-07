@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-nigeria-history-v1",
+  "source_id": "nigeria-tennis-history-secondary",
+  "relative_path": "observations/normalized/atp_nigeria_history_v1.json",
+  "sha256": "42cec9b5fd30dd320fcd3517791096060185c35727fccbd659796864989e61be",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

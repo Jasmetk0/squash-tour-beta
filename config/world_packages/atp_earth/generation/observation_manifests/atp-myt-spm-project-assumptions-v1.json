@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-myt-spm-project-assumptions-v1",
+  "source_id": "myt-spm-atp-project-assumptions",
+  "relative_path": "observations/normalized/atp_myt_spm_project_assumptions_v1.json",
+  "sha256": "69d2aae57c91643c6a2015d468482b47099161d163fab2e39165b403e18b3001",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-myt-spm-batch-2026-10-07"
+}

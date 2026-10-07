@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-djibouti-history-v1",
+  "source_id": "caf-djibouti-profile",
+  "relative_path": "observations/normalized/structural/fifa_structural_djibouti_history_v1.json",
+  "sha256": "1910a59f113297df21788158a0344db43456bb757605974bcbbf1b02db472794",
+  "record_count": 4,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

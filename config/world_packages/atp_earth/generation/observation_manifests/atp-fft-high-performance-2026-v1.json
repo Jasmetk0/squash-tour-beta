@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-fft-high-performance-2026-v1",
+  "source_id": "fft-high-performance-2026",
+  "relative_path": "observations/normalized/atp-fft-high-performance-2026-v1.json",
+  "sha256": "b262610ddcd34c70d833fa0708c89792772c90e83123661f89ae66341b74928b",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

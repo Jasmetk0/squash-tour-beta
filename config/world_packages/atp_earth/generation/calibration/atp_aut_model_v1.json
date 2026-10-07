@@ -1,0 +1,22 @@
+{
+  "schema_version": "atp_earth_reviewed_country_batch.v1",
+  "model_id": "atp-earth-aut-model.v1",
+  "created_on": "2026-10-05",
+  "countries": [
+    "AUT"
+  ],
+  "coverage": {
+    "from": 1955,
+    "to": 2026,
+    "attributes": 6
+  },
+  "rating_scale": "country_ratings_1_10.v2",
+  "method": "Piecewise annual history combining pre-1955 federation/ITF lineage with current national membership, club, league, tournament, coaching and international-event pathway evidence.",
+  "evidence_rules": [
+    "Current membership/club/team/coach counts are used only from 2026 and are not backcast.",
+    "2025 ITF World Tennis Tour hosting informs competition and professional-transition opportunity from 2025 onward.",
+    "Major ATP/Challenger hosting informs 2026 competition quality but is not treated as domestic player quality.",
+    "Historical federation and ITF-founder facts primarily anchor tradition/institutional continuity.",
+    "No held-out validation ranking is used for tuning."
+  ]
+}

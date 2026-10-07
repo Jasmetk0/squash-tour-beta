@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-tunisia-history-v1",
+  "source_id": "itf-tunisia-profile",
+  "relative_path": "observations/normalized/atp_tunisia_history_v1.json",
+  "sha256": "b0c60d5f181b759c1aef93f51b7b9dd5c377fc10c5be29de87e0987a0ee9b05e",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

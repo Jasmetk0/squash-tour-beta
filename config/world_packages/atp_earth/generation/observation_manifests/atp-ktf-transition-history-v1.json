@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-ktf-transition-history-v1",
+  "source_id": "ktf-transition-history",
+  "relative_path": "observations/normalized/atp-ktf-transition-history-v1.json",
+  "sha256": "8d5a1cee825cd6293a6d02caa4f6830b959f4f51d05de6ec3c199f74cee521ea",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

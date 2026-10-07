@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-dprk-football-history-v1",
+  "source_id": "twn-prk-fifa-dprk-history",
+  "relative_path": "observations/normalized/fifa_dprk_football_history_v1.json",
+  "sha256": "1dc30c629030cc5d5eac1347f892cd2038ec9fea276068578d2a5091f9a6c8d2",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-twn-prk-batch-2026-10-07"
+}

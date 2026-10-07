@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-namibia-development-2026-v1",
+  "source_id": "itf-namibia-development-eligibility-2026",
+  "relative_path": "observations/normalized/atp_namibia_development_2026_v1.json",
+  "sha256": "6f360d2c15e863160ebd2b30a8d60f40d66c450e71e0bc84b5d628d202a324ec",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

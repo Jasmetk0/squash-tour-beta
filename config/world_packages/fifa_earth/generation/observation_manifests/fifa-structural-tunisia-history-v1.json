@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-tunisia-history-v1",
+  "source_id": "caf-tunisia-profile",
+  "relative_path": "observations/normalized/structural/fifa_structural_tunisia_history_v1.json",
+  "sha256": "56a25e9def7a5637ca70110023b62a566e916ba716d60eb28e7bd6a51d5e94b2",
+  "record_count": 3,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

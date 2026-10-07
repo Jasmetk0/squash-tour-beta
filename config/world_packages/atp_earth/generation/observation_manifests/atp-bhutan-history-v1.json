@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-bhutan-history-v1",
+  "source_id": "itf-bhutan-profile",
+  "relative_path": "observations/normalized/atp_bhutan_history_v1.json",
+  "sha256": "d6a9af9be3ff7467481b7dcb292e17f1e650161ecc6d7602cb20dffaaf0dbb25",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

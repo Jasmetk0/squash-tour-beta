@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-eswatini-history-v1",
+  "source_id": "caf-eswatini-profile",
+  "relative_path": "observations/normalized/structural/fifa_structural_eswatini_history_v1.json",
+  "sha256": "5d9ba81cb8286f0dd6c351e1e53b931e099440f66978c054a7d5ff9053cc94da",
+  "record_count": 3,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

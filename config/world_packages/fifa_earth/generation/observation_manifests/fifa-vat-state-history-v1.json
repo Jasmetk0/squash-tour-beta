@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-vat-state-history-v1",
+  "source_id": "vat-state-history",
+  "relative_path": "observations/normalized/fifa_vat_state_history_v1.json",
+  "sha256": "23072a669d24cc3bff03c442e942dc28926157321dc3707606042a3e1ce2d20f",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-final4-batch-2026-10-07"
+}

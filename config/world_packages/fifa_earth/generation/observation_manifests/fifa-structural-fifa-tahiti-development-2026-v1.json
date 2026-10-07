@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-fifa-tahiti-development-2026-v1",
+  "source_id": "fifa-tahiti-development-2026",
+  "relative_path": "observations/normalized/structural/fifa_structural_fifa_tahiti_development_2026_v1.json",
+  "sha256": "c2540610a10c5483e2a3e5880ff2f666356068c6bcd99430f0972a562bcb2daa",
+  "record_count": 3,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-04"
+}

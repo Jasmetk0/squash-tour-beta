@@ -1,0 +1,40 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "atp-earth-mda-model.v1",
+  "world_id": "atp_earth",
+  "data_cutoff": "2026-10-04",
+  "countries": [
+    "MDA"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "evidence_rules": [
+    "1955-2025 remains a low-confidence project-authored baseline.",
+    "Current ITF membership context is not backdated.",
+    "No 2026 development eligibility is inferred without a checked entry.",
+    "Authored baseline does not imply statistical modelling."
+  ],
+  "anchor_values": {
+    "MDA": {
+      "1955": [
+        3.2,
+        3,
+        3.1,
+        3,
+        2.9,
+        3.4
+      ],
+      "2026": [
+        4.7,
+        4.2,
+        4.4,
+        4.2,
+        4.1,
+        4.9
+      ]
+    }
+  },
+  "evidence_sources": [
+    "itf-moldova-profile"
+  ],
+  "heldout_ranking_used": false
+}

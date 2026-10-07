@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-twn-prk-project-assumptions-v1",
+  "source_id": "twn-prk-atp-project-assumptions",
+  "relative_path": "observations/normalized/atp_twn_prk_project_assumptions_v1.json",
+  "sha256": "1c89d1c901f8674cf9a3424b13e0cf00becca5c3c83bc6b6ad24e197023bdb6d",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-twn-prk-batch-2026-10-07"
+}

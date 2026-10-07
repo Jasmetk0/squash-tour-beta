@@ -1,0 +1,66 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "atp-earth-zmb-model.v1",
+  "world_id": "atp_earth",
+  "data_cutoff": "2026-10-04",
+  "countries": [
+    "ZMB"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "evidence_rules": [
+    "No verified foundation date is asserted; pre-2007 years use a low-confidence baseline derived only from later confirmed association existence.",
+    "Official government evidence of active ZTA status enters in 2007.",
+    "The ITF-reported 12-year membership hiatus is preserved as governance history, not interpreted as zero tennis activity.",
+    "2025 reinstatement/development evidence and 2026 J30 hosting are time-gated to those years."
+  ],
+  "anchor_values": {
+    "ZMB": {
+      "1955": [
+        3.9,
+        3.5,
+        3.6,
+        3.5,
+        3.2,
+        5
+      ],
+      "2007": [
+        4.7,
+        4.2,
+        4.4,
+        4.3,
+        4,
+        5.8
+      ],
+      "2013": [
+        4.8,
+        4.2,
+        4.3,
+        4.1,
+        3.9,
+        5.9
+      ],
+      "2025": [
+        5.3,
+        5,
+        5.4,
+        5,
+        5,
+        6.2
+      ],
+      "2026": [
+        5.5,
+        5.3,
+        5.7,
+        5.5,
+        5.3,
+        6.3
+      ]
+    }
+  },
+  "evidence_sources": [
+    "zambia-parliament-sports-associations-2007",
+    "itf-zambia-reinstatement-2025",
+    "itf-zambia-j30-2026"
+  ],
+  "heldout_ranking_used": false
+}

@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-ctf-history-v1",
+  "source_id": "ctf-history",
+  "relative_path": "observations/normalized/atp-ctf-history-v1.json",
+  "sha256": "af00b32e9b9ed61552b9bc0a683fa1391733c99bf3c35178d9815fce1162496a",
+  "record_count": 6,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

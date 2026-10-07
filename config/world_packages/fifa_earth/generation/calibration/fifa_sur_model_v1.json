@@ -1,0 +1,58 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "fifa-earth-sur-model.v1",
+  "world_id": "fifa_earth",
+  "data_cutoff": "2026-10-03",
+  "countries": [
+    "SUR"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "evidence_rules": [
+    "1955-2005 values are a low-confidence project-authored baseline.",
+    "FIFA Big Count enters from 2006.",
+    "Only the non-null FIFA Professional 2023 club field enters from 2023; the player field remains missing.",
+    "Current FIFA membership is context only and is not backdated."
+  ],
+  "anchor_values": {
+    "SUR": {
+      "1955": [
+        3.5,
+        3.1,
+        3.2,
+        3.3,
+        3,
+        3.7
+      ],
+      "2006": [
+        5,
+        4.5,
+        4.6,
+        4.8,
+        4.3,
+        5.1
+      ],
+      "2023": [
+        5.2,
+        4.7,
+        4.8,
+        5,
+        4.5,
+        5.3
+      ],
+      "2026": [
+        5.2,
+        4.7,
+        4.8,
+        5,
+        4.5,
+        5.3
+      ]
+    }
+  },
+  "evidence_sources": [
+    "fifa-suriname-member-context-2026",
+    "fifa-big-count-2006",
+    "fifa-professional-2023"
+  ],
+  "heldout_ranking_used": false
+}

@@ -1,0 +1,24 @@
+{
+  "schema_version": "atp_earth_reviewed_country_batch.v1",
+  "model_id": "atp-earth-tur-cyp-model.v1",
+  "created_on": "2026-10-05",
+  "countries": [
+    "TUR",
+    "CYP"
+  ],
+  "coverage": {
+    "from": 1955,
+    "to": 2026,
+    "attributes": 6
+  },
+  "rating_scale": "country_ratings_1_10.v2",
+  "method": "Country-specific piecewise annual histories using institutional continuity plus temporally gated training, coaching, development and competition-system evidence.",
+  "evidence_rules": [
+    "Turkey's 1923 organised-governance and 1953 federation milestones anchor history; current national centres, coach courses and 2026 calendar are not backcast.",
+    "Cyprus pre-1955 tennis/federation history anchors tradition; later ITF/Tennis Europe membership and National Tennis Centre are gated from their actual years.",
+    "Modern Cyprus federation observations are treated as partial association context rather than proof of all tennis activity across the entire island.",
+    "Programme capacity and tournament listings are not equated with participation or player outcomes.",
+    "Competition quality uses organised opportunity/system depth, not one famous player's peak.",
+    "No held-out validation ranking is used for tuning."
+  ]
+}

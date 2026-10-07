@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-north-macedonia-history-v1",
+  "source_id": "itf-north-macedonia-profile",
+  "relative_path": "observations/normalized/atp_north_macedonia_history_v1.json",
+  "sha256": "5e27ca1008a8560d67d1648fe9b3c82ba941d6660830046da8e6047e476bb14e",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

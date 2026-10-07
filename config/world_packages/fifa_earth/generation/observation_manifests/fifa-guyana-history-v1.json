@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-guyana-history-v1",
+  "source_id": "fifa-guyana-member-context-2026",
+  "relative_path": "observations/normalized/structural/fifa_guyana_history_v1.json",
+  "sha256": "8270f6ff264364c96e45d70c197f0a0e961d44bfbf219e1a43d98f296230d87e",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-stz-early-history-v1",
+  "source_id": "stz-early-history",
+  "relative_path": "observations/normalized/atp-stz-early-history-v1.json",
+  "sha256": "d8fccda8f2d3ef59b0baa9b51976d154d3ea6525e9b1aa4da28388ae00958233",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

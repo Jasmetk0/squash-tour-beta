@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-sa-history-v1",
+  "source_id": "sa-tennis-history-secondary",
+  "relative_path": "observations/normalized/atp-sa-history-v1.json",
+  "sha256": "7c1faf5b1d81bc94684e34f073f26c1e4b69401c02676a0e8d820a36b8603c82",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-ofc-new-zealand-history-v1",
+  "source_id": "ofc-new-zealand-history",
+  "relative_path": "observations/normalized/structural/fifa_structural_ofc_new_zealand_history_v1.json",
+  "sha256": "d6b3241b5568ddc92f2ace2729bd4582c77f4e1a65eedecbdbf9fe1553ceba2b",
+  "record_count": 3,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-04"
+}

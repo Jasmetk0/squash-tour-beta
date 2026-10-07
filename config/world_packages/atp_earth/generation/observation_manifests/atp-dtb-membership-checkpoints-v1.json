@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-dtb-membership-checkpoints-v1",
+  "source_id": "dtb-membership-history",
+  "relative_path": "observations/normalized/atp_dtb_membership_checkpoints_v1.json",
+  "sha256": "3ee513b13209a481deaa11e27d62994aea89aa74193adb89cef388bd7c486a66",
+  "record_count": 11,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual normalization of selected total-membership checkpoints from DTB membership history PDF"
+}

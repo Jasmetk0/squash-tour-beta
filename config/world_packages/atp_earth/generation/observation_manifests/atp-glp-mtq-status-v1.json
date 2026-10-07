@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-glp-mtq-status-v1",
+  "source_id": "glp-mtq-administrative-status",
+  "relative_path": "observations/normalized/atp_glp_mtq_status_v1.json",
+  "sha256": "e5035f8f352a328a3cde273f7f32f4f229e921910ec21af5ff812879f2c98a88",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-glp-mtq-batch-2026-10-07"
+}

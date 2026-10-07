@@ -1,0 +1,67 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "fifa-earth-sau-model.v1",
+  "world_id": "fifa_earth",
+  "data_cutoff": "2026-10-03",
+  "countries": [
+    "SAU"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "principles": [
+    "SAFF foundation in 1955 and FIFA recognition in 1956 are separately gated institutional milestones.",
+    "FIFA Big Count 2006 is gated to 2006+ for participation/access context and is not mechanically converted into elite quality.",
+    "FIFA Professional Football Report 2023 is gated to 2023+ for professional ecosystem depth.",
+    "The large 2023 professional-player and club counts support competition/elite capacity but do not by themselves justify world-leading 9+ scores.",
+    "No rankings, tournament results or titles are calibration targets."
+  ],
+  "anchor_values": {
+    "SAU": {
+      "1955": [
+        5.2,
+        4.8,
+        5,
+        5,
+        4.8,
+        6
+      ],
+      "1956": [
+        5.4,
+        5,
+        5.2,
+        5.3,
+        5.1,
+        6.2
+      ],
+      "2006": [
+        7.4,
+        6.9,
+        6.8,
+        7.1,
+        7,
+        7.8
+      ],
+      "2023": [
+        8.3,
+        7.8,
+        8.2,
+        8.7,
+        8.6,
+        8.3
+      ],
+      "2026": [
+        8.3,
+        7.8,
+        8.2,
+        8.7,
+        8.6,
+        8.3
+      ]
+    }
+  },
+  "evidence_sources": [
+    "saff-history",
+    "fifa-big-count-2006",
+    "fifa-professional-2023"
+  ],
+  "heldout_ranking_used": false
+}

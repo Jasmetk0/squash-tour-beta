@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-vanuatu-current-2026-v1",
+  "source_id": "otf-vanuatu-current-2026",
+  "relative_path": "observations/normalized/atp_vanuatu_current_2026_v1.json",
+  "sha256": "ebe06dcb377f62f6ebf8d605aae6e9fc949999d593f31616ae3f6a7554e94101",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

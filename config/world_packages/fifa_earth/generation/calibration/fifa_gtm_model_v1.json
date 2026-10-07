@@ -1,0 +1,58 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "fifa-earth-gtm-model.v1",
+  "world_id": "fifa_earth",
+  "data_cutoff": "2026-10-03",
+  "countries": [
+    "GTM"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "evidence_rules": [
+    "1955-2005 values are a low-confidence project-authored baseline.",
+    "FIFA Big Count enters from 2006.",
+    "FIFA Professional 2023 players and clubs enter from 2023 only as professional ecosystem context.",
+    "Current FIFA membership is context only and is not backdated."
+  ],
+  "anchor_values": {
+    "GTM": {
+      "1955": [
+        4.1,
+        3.6,
+        3.8,
+        3.8,
+        3.5,
+        4.3
+      ],
+      "2006": [
+        6.4,
+        5.8,
+        5.9,
+        6,
+        5.6,
+        6.3
+      ],
+      "2023": [
+        6.7,
+        6.1,
+        6.2,
+        6.3,
+        5.9,
+        6.6
+      ],
+      "2026": [
+        6.7,
+        6.1,
+        6.2,
+        6.3,
+        5.9,
+        6.6
+      ]
+    }
+  },
+  "evidence_sources": [
+    "fifa-guatemala-member-context-2026",
+    "fifa-big-count-2006",
+    "fifa-professional-2023"
+  ],
+  "heldout_ranking_used": false
+}

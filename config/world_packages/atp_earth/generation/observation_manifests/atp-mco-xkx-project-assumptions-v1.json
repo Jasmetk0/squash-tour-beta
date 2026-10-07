@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-mco-xkx-project-assumptions-v1",
+  "source_id": "mco-xkx-atp-project-assumptions",
+  "relative_path": "observations/normalized/atp_mco_xkx_project_assumptions_v1.json",
+  "sha256": "c408b3d33cb2b96aada31767f2e8eb589f04574900cedce3bf20168d0f335b76",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-mco-xkx-batch-2026-10-07"
+}

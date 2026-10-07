@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-niu-tkl-project-assumptions-v1",
+  "source_id": "niu-tkl-atp-project-assumptions",
+  "relative_path": "observations/normalized/atp_niu_tkl_project_assumptions_v1.json",
+  "sha256": "de94cb95caa9722dc0411b90baebfc6bdc15a03c96b6529de147ea41b4c1585b",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-niu-tkl-batch-2026-10-07"
+}

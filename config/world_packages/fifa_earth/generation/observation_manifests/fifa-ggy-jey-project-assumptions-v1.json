@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-ggy-jey-project-assumptions-v1",
+  "source_id": "ggy-jey-fifa-project-assumptions",
+  "relative_path": "observations/normalized/fifa_ggy_jey_project_assumptions_v1.json",
+  "sha256": "b2baa59dfddee3d6b776dda9720ace59acaf8ca503db5180c298f34fd038d8c8",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-ggy-jey-batch-2026-10-07"
+}

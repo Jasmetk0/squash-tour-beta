@@ -1,0 +1,7 @@
+{
+  "schema_version": "world_package_country.v1",
+  "code": "SJM",
+  "name": "Svalbard and Jan Mayen",
+  "flag_asset": null,
+  "notes": "Gameplay fallback: Norway curve; territory anchor; not a separate UN WPP series."
+}

@@ -1,8 +1,30 @@
-# Earth source research — incomplete
+# Earth source research and portable package inputs
 
-These are source catalogues and normalized/extracted observations, not usable World
-Packages. Both `countries` maps remain empty. Do not fill missing research with
-neutral scores or present modern surveys as measured history for 1955–2026.
+## Current status — 7 October 2026
+
+The research layer is now **structurally complete**, not historically validated.
+Both FIFA Earth and ATP Earth resolve all 250 Earth identities for every year
+1955–2026 with six 1–10 attributes. FIFA contains 318 normalized datasets / 2,081
+observations; ATP contains 486 / 1,033. Each world therefore contains 108,000
+authored rating values.
+
+The research files remain the auditable authoring source. The standard build now
+produces self-contained World Packages under `config/world_packages/fifa_earth`
+and `config/world_packages/atp_earth`: source shards, observation manifests,
+normalized observations, calibration-model definitions and country histories are
+package-owned, so a moved/copied package does not depend on this research directory.
+
+Validation is content-based. It verifies the actual normalized dataset file,
+semantic SHA-256, dataset/source identity, record count, exact cited observation IDs,
+calibration-definition availability and safe in-package paths. Symlink/path escape
+attempts fail closed. Package fingerprints include the actual provenance contents.
+
+**Do not equate completeness with realism.** All 216,000 ratings remain
+project-authored `derived_estimate` values. `realism_validated` remains false.
+2026 is covered only through each package's recorded data cutoff.
+
+> Dated research-progress sections below are retained as historical development
+> notes; their older partial counts are not current status.
 
 The catalogues use `earth_sport_research.v2`. Populated rating evidence must cite
 exact normalized observation IDs from registered, content-addressed

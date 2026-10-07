@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-cameroon-history-v1",
+  "source_id": "caf-cameroon-profile",
+  "relative_path": "observations/normalized/structural/fifa_structural_cameroon_history_v1.json",
+  "sha256": "34f66a797f6249f0ebff093f0b3051f1e86be2eaa9b62158442021c3014c214b",
+  "record_count": 4,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

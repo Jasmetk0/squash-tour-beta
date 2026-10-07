@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any
 from beta_engine.application.countries_service import CountriesConfigService
 from beta_engine.application.manual_player_overrides_service import ManualPlayerOverridesService
+from beta_engine.application.package_evidence_files import canonical_json_sha256, load_json_object, safe_package_file
 from beta_engine.infrastructure.world_package_storage import PACKAGE_FORMAT_VERSION, WorldPackageCountryStore
 from beta_engine.world_packages import BUILT_IN_WORLD_IDS, OFFICIAL_FAX_WORLD_ID
 
@@ -66,10 +67,50 @@ class WorldPackageRegistryService:
   if (path/'geography/timezone_areas.json').is_file(): payload['timezone_areas']=self._read_json(path/'geography/timezone_areas.json')
   player_identity=path/'generation/player_identity.json'
   if player_identity.is_file(): payload['player_identity']=self._read_json(player_identity)
-  rating_sources=path/'generation/country_rating_sources.json'
-  if rating_sources.is_file(): payload['country_rating_sources']=self._read_json(rating_sources)
-  rating_observations=path/'generation/country_rating_observation_datasets.json'
-  if rating_observations.is_file(): payload['country_rating_observation_datasets']=self._read_json(rating_observations)
+  source_dir=path/'generation/sources'
+  if source_dir.is_dir():
+   payload['country_rating_sources']={
+    p.stem:canonical_json_sha256(
+     load_json_object(safe_package_file(path,p.relative_to(path).as_posix()))
+    ) for p in sorted(source_dir.glob('*.json'))
+   }
+  else:
+   rating_sources=path/'generation/country_rating_sources.json'
+   if rating_sources.is_file(): payload['country_rating_sources']=self._read_json(rating_sources)
+  manifest_dir=path/'generation/observation_manifests'
+  if manifest_dir.is_dir():
+   manifests={
+    p.stem:load_json_object(safe_package_file(path,p.relative_to(path).as_posix()))
+    for p in sorted(manifest_dir.glob('*.json'))
+   }
+  else:
+   rating_observations=path/'generation/country_rating_observation_datasets.json'
+   manifests=self._read_json(rating_observations) if rating_observations.is_file() else {}
+  if manifests:
+   payload['country_rating_observation_datasets']={
+    dataset_id:canonical_json_sha256(manifest) for dataset_id,manifest in sorted(manifests.items())
+   }
+   payload['country_rating_observation_files']={
+    dataset_id:canonical_json_sha256(load_json_object(safe_package_file(path,str(manifest.get('relative_path','')))))
+    for dataset_id,manifest in sorted(manifests.items()) if isinstance(manifest,dict)
+   }
+  calibration_dir=path/'generation/calibration'
+  if calibration_dir.is_dir():
+   payload['country_rating_calibration_files']={
+    p.name:canonical_json_sha256(
+     load_json_object(safe_package_file(path,p.relative_to(path).as_posix()))
+    ) for p in sorted(calibration_dir.glob('*.json'))
+   }
+  else:
+   calibration_catalog=path/'generation/country_rating_calibration_models.json'
+   if calibration_catalog.is_file():
+    catalog=self._read_json(calibration_catalog); payload['country_rating_calibration_models']=catalog
+    models=catalog.get('models')
+    if not isinstance(models,dict): raise ValueError('calibration catalogue models must be an object')
+    payload['country_rating_calibration_files']={
+     model_id:canonical_json_sha256(load_json_object(safe_package_file(path,str(declaration.get('relative_path','')))))
+     for model_id,declaration in sorted(models.items()) if isinstance(declaration,dict)
+    }
   return payload
  def _custom_package_dirs(self):
   root=self.world_packages_root/'custom'; return sorted((p for p in root.iterdir() if p.is_dir()),key=lambda p:p.name) if root.is_dir() else []

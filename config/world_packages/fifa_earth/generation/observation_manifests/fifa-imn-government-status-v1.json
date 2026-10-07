@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-imn-government-status-v1",
+  "source_id": "imn-government-status",
+  "relative_path": "observations/normalized/fifa_imn_government_status_v1.json",
+  "sha256": "f7ce2891b0a23a4bd2906f73b99909bc022639a6cb93fff941ac218212efa601",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-final4-batch-2026-10-07"
+}

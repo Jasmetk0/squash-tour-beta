@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-north-macedonia-history-v1",
+  "source_id": "fifa-north-macedonia-member-context-2026",
+  "relative_path": "observations/normalized/structural/fifa_north_macedonia_history_v1.json",
+  "sha256": "e0979ace3445f86eb9b3aa8e9c8a38031959f4873ceb672b3294b243706dd498",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

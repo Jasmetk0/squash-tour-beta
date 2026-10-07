@@ -1,0 +1,23 @@
+{
+  "schema_version": "atp_earth_reviewed_country_batch.v1",
+  "model_id": "atp-earth-svk-model.v1",
+  "created_on": "2026-10-05",
+  "countries": [
+    "SVK"
+  ],
+  "coverage": {
+    "from": 1955,
+    "to": 2026,
+    "attributes": 6
+  },
+  "rating_scale": "country_ratings_1_10.v2",
+  "method": "Piecewise annual history separating Czechoslovak-era Slovak tennis context from the independent Slovak federation era, with temporally gated competition, NTC and active-athlete evidence.",
+  "evidence_rules": [
+    "Pre-1993 ratings describe Slovak tennis within Czechoslovakia, not an independent Slovak national system.",
+    "1990 STZ registration is institutional continuity; 1993 international membership marks the independent-era system.",
+    "Active-athlete counts are federation-defined and are not total casual participation.",
+    "The first Challenger and national leagues inform competition opportunity; elite player results are not direct country-quality inputs.",
+    "NTC team evidence informs development/support only from 2000.",
+    "No held-out validation ranking is used for tuning."
+  ]
+}

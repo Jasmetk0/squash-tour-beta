@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-uefa-lie-history-v1",
+  "source_id": "lie-gib-uefa-lie-history",
+  "relative_path": "observations/normalized/fifa_uefa_lie_history_v1.json",
+  "sha256": "f073dcf21a0113bbe7dbff2f3625f2901e6bc3f3c325e84a674405cba7d7dfe8",
+  "record_count": 4,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-lie-gib-batch-2026-10-07"
+}

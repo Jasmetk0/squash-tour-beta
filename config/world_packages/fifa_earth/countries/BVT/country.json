@@ -1,0 +1,7 @@
+{
+  "schema_version": "world_package_country.v1",
+  "code": "BVT",
+  "name": "Bouvet Island",
+  "flag_asset": null,
+  "notes": "Gameplay fallback: No permanent population; simulation floor; not a separate UN WPP series."
+}

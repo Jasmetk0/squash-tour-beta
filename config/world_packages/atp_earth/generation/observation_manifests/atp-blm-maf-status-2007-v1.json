@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-blm-maf-status-2007-v1",
+  "source_id": "blm-maf-status-2007",
+  "relative_path": "observations/normalized/atp_blm_maf_status_2007_v1.json",
+  "sha256": "3204a23a6f625492139d01deec77a2161e49dabf101ef5fa2e9a288ca912cf1a",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-blm-maf-batch-2026-10-07"
+}

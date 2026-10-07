@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-uefa-kazakhstan-history-v1",
+  "source_id": "uefa-kazakhstan-profile",
+  "relative_path": "observations/normalized/structural/fifa_structural_uefa_kazakhstan_history_v1.json",
+  "sha256": "c646fd139acd919bccbd5921e54b49cc3019fa7c297f7be6bc215ab2e5537ba9",
+  "record_count": 7,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

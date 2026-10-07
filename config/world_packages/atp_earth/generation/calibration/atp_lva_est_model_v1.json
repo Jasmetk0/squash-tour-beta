@@ -1,0 +1,122 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "atp-earth-lva-est-model.v1",
+  "world_id": "atp_earth",
+  "data_cutoff": "2026-10-04",
+  "countries": [
+    "LVA",
+    "EST"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "principles": [
+    "Pre-1991 values describe current-territory Baltic tennis under Soviet governance and do not inherit USSR-wide evidence.",
+    "Latvia's 1904/1929/1937 history and Estonia's 1913/1921/1922 history anchor tradition without becoming participation measurements.",
+    "Latvia's amateur league is gated from 2013; current LTS/ETL mandates and ITF membership are gated to 2026.",
+    "Current programme and competition capacity is not treated as player outcome quality.",
+    "No ranking or title outcome is used as a calibration target."
+  ],
+  "anchor_values": {
+    "LVA": {
+      "1955": [
+        5.8,
+        5,
+        5.5,
+        5.6,
+        4.9,
+        8
+      ],
+      "1990": [
+        6.2,
+        5.4,
+        5.8,
+        6.1,
+        5.3,
+        8.3
+      ],
+      "1991": [
+        6.2,
+        5.3,
+        5.6,
+        5.9,
+        5.1,
+        8.3
+      ],
+      "2013": [
+        6.8,
+        6.3,
+        6.6,
+        6.8,
+        6.2,
+        8.5
+      ],
+      "2026": [
+        7.6,
+        7.2,
+        7.7,
+        7.8,
+        7.7,
+        8.7
+      ]
+    },
+    "EST": {
+      "1955": [
+        5.5,
+        4.8,
+        5.3,
+        5.5,
+        4.8,
+        7.8
+      ],
+      "1968": [
+        5.8,
+        5,
+        5.5,
+        5.7,
+        5.1,
+        8
+      ],
+      "1990": [
+        5.9,
+        5.1,
+        5.6,
+        5.8,
+        5.2,
+        8.1
+      ],
+      "1991": [
+        5.9,
+        5.1,
+        5.5,
+        5.6,
+        5,
+        8.1
+      ],
+      "2010": [
+        6.7,
+        6.3,
+        6.7,
+        6.7,
+        6.4,
+        8.4
+      ],
+      "2026": [
+        7.5,
+        7.4,
+        7.8,
+        7.8,
+        7.8,
+        8.7
+      ]
+    }
+  },
+  "evidence_sources": [
+    "latvia-national-encyclopedia-tennis",
+    "lts-amateur-league",
+    "lts-about",
+    "etl-centenary-history",
+    "etl-honorary-members-history",
+    "etl-current-governance",
+    "itf-members-2026"
+  ],
+  "heldout_ranking_used": false
+}

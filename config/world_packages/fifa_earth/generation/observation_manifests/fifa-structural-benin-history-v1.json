@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-benin-history-v1",
+  "source_id": "caf-benin-profile",
+  "relative_path": "observations/normalized/structural/fifa_structural_benin_history_v1.json",
+  "sha256": "775996227a56a6cf8b1ae8b1abb54275495cadf9d087865570b6fddf2441f64a",
+  "record_count": 4,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

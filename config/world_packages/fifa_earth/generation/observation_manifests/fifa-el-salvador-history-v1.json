@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-el-salvador-history-v1",
+  "source_id": "fifa-el-salvador-member-context-2026",
+  "relative_path": "observations/normalized/structural/fifa_el_salvador_history_v1.json",
+  "sha256": "d0f5f06b6bf8bba79fecfc1bfd106351a4ae4c093c319136f58f9a33b4429ac0",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

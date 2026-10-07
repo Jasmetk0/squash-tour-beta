@@ -1,0 +1,32 @@
+{
+  "schema_version": "earth_source_observations.v1",
+  "scope": "Selected published national survey facts; not complete ATP Earth ratings. Court count deliberately excluded from pre-alpha inputs.",
+  "observations": [
+    {
+      "country_code": "CZE",
+      "country_name": "Czech Republic",
+      "source_id": "itf-2019-cze",
+      "source_url": "https://itf.uberflip.com/i/1169265-itf-global-tennis-report-2019-nations-a-k/105",
+      "edition": 2019,
+      "report_date": "2019-04-23",
+      "observation_year": null,
+      "population_as_reported": 10610947,
+      "players_all_sexes": 424100,
+      "clubs": 1188,
+      "coaches": 8250
+    },
+    {
+      "country_code": "DEU",
+      "country_name": "Germany",
+      "source_id": "itf-2019-deu",
+      "source_url": "https://itf.uberflip.com/i/1169265-itf-global-tennis-report-2019-nations-a-k/141",
+      "edition": 2019,
+      "report_date": "2019-04-23",
+      "observation_year": null,
+      "population_as_reported": 81914672,
+      "players_all_sexes": 6100000,
+      "clubs": 9167,
+      "coaches": 15000
+    }
+  ]
+}

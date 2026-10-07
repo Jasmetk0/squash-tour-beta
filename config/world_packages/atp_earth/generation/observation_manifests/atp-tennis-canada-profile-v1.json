@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-tennis-canada-profile-v1",
+  "source_id": "tennis-canada-about",
+  "relative_path": "observations/normalized/atp-tennis-canada-profile-v1.json",
+  "sha256": "a2f00b906c405b707e83df3fc6810a1b7d08c9906c8e935075f1971e4adfb578",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

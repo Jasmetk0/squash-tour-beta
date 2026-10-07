@@ -1,0 +1,7 @@
+{
+  "schema_version": "world_package_country.v1",
+  "code": "ATF",
+  "name": "French Southern and Antarctic Lands",
+  "flag_asset": null,
+  "notes": "Gameplay fallback: France curve; research personnel anchor; not a separate UN WPP series."
+}

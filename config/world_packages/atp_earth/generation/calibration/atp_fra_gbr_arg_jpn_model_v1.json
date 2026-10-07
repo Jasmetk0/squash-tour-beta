@@ -1,0 +1,27 @@
+{
+  "schema_version": "atp_earth_reviewed_country_batch.v1",
+  "model_id": "atp-earth-fra-gbr-arg-jpn-model.v1",
+  "created_on": "2026-10-05",
+  "countries": [
+    "FRA",
+    "GBR",
+    "ARG",
+    "JPN"
+  ],
+  "coverage": {
+    "from": 1955,
+    "to": 2026,
+    "attributes": 6
+  },
+  "rating_scale": "country_ratings_1_10.v2",
+  "method": "Country-specific piecewise anchor histories. Annual ratings are project-authored derived estimates; direct facts stay in normalized observation datasets and are temporally gated.",
+  "evidence_rules": [
+    "Davis Cup outcomes are limited to competition/tradition context and never reused as participation, access or development/support measurements.",
+    "France uses federation scale only for modern popularity/access and DTN/high-performance milestones for development/support.",
+    "LTA evidence is explicitly partial for Earth GBR because Northern Ireland is outside LTA jurisdiction; it must not be presented as a full United Kingdom participation census.",
+    "Argentina current federation counts are used only from 2026; DETA is selected-cohort development/support evidence, not nationwide participation or guaranteed outcomes.",
+    "Japan preserves the 2001 national-training-base setback and 2008 recovery; its 2017-2021 top-100 retrospective is only complete from 2021 onward.",
+    "Japan's current participation decline and school outreach remain dimension-specific; declining participation is not treated as declining innate player potential.",
+    "No held-out validation ranking is used to tune the authored values."
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-aita-ace2032-2026-v1",
+  "source_id": "aita-ace2032-2026",
+  "relative_path": "observations/normalized/atp-aita-ace2032-2026-v1.json",
+  "sha256": "5c245b0bbe63196ee61ed3685eea871a279cb9ce73d15cd8836ce5633b5904f2",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

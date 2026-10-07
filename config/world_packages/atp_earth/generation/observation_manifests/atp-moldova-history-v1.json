@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-moldova-history-v1",
+  "source_id": "itf-moldova-profile",
+  "relative_path": "observations/normalized/atp_moldova_history_v1.json",
+  "sha256": "10159c101bf5580de2d5a3b96c817848fdf4130525c42cad221a2c259e1d70c1",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

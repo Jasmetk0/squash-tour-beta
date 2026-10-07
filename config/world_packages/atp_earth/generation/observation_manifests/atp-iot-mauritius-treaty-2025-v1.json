@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-iot-mauritius-treaty-2025-v1",
+  "source_id": "iot-mauritius-treaty-2025",
+  "relative_path": "observations/normalized/atp_iot_mauritius_treaty_2025_v1.json",
+  "sha256": "5229f25fb1c457933965354465da081b41bfa872037e2f46132795a221879005",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-flk-iot-batch-2026-10-07"
+}

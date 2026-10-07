@@ -1,0 +1,83 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "atp-earth-mar-model.v1",
+  "world_id": "atp_earth",
+  "data_cutoff": "2026-10-04",
+  "countries": [
+    "MAR"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "evidence_rules": [
+    "The 1955–56 committee is pre-independence/pre-FRMT institutional context and does not imply the post-1957 federation already existed.",
+    "FRMT foundation is gated to 1957, with committee leadership transitions gated to their documented years.",
+    "Current CNOM-described access, ranking, competition and international-affiliation mandate is used only for 2026.",
+    "Institutional continuity supports tradition and governance but is not a direct proxy for participation scale or player quality.",
+    "No ranking or title outcome is used as a calibration target; 9+ remains world-leading."
+  ],
+  "anchor_values": {
+    "MAR": {
+      "1955": [
+        4.8,
+        5,
+        4.8,
+        5,
+        4.8,
+        6.5
+      ],
+      "1956": [
+        4.9,
+        5,
+        4.9,
+        5,
+        4.8,
+        6.6
+      ],
+      "1957": [
+        5,
+        5.2,
+        5.1,
+        5.1,
+        5,
+        6.8
+      ],
+      "1964": [
+        5.4,
+        5.5,
+        5.5,
+        5.4,
+        5.4,
+        7
+      ],
+      "2009": [
+        6.2,
+        6.1,
+        6.2,
+        6.2,
+        6.1,
+        7.5
+      ],
+      "2025": [
+        6.5,
+        6.4,
+        6.5,
+        6.4,
+        6.4,
+        7.7
+      ],
+      "2026": [
+        6.7,
+        6.7,
+        6.7,
+        6.6,
+        6.6,
+        7.8
+      ]
+    }
+  },
+  "evidence_sources": [
+    "frmt-committee-history",
+    "frmt-statutes-2018",
+    "cnom-frmt-profile"
+  ],
+  "heldout_ranking_used": false
+}

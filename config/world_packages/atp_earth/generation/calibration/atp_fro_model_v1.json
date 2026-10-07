@@ -1,0 +1,67 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "atp-earth-fro-model.v1",
+  "world_id": "atp_earth",
+  "data_cutoff": "2026-10-04",
+  "countries": [
+    "FRO"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "evidence_rules": [
+    "Pre-2013 ratings use only the Tennis Europe retrospective that tennis was traditionally a very small sport in the Faroe Islands.",
+    "The 2013 Island Games establishes organised competitive presence before the national federation, not federation-era international membership.",
+    "Federation identity begins in 2017 and is never backcast.",
+    "Tennis Europe and ITF membership are gated to 2026; current international integration does not rewrite earlier decades.",
+    "Small-population participation is not treated as world-leading national scale, and no competition outcome is a calibration target."
+  ],
+  "anchor_values": {
+    "FRO": {
+      "1955": [
+        1.5,
+        1.3,
+        1.2,
+        1.2,
+        1.1,
+        1.8
+      ],
+      "2012": [
+        2.2,
+        2,
+        1.9,
+        1.8,
+        1.8,
+        2.4
+      ],
+      "2013": [
+        2.5,
+        2.2,
+        2.1,
+        2.2,
+        2,
+        2.5
+      ],
+      "2017": [
+        3.1,
+        2.7,
+        3.2,
+        2.6,
+        3,
+        3.3
+      ],
+      "2026": [
+        4.7,
+        4,
+        5,
+        4.2,
+        4.8,
+        4.4
+      ]
+    }
+  },
+  "evidence_sources": [
+    "island-games-faroe-tennis-2013",
+    "tennis-europe-faroe-2026",
+    "itf-faroe-membership-2026"
+  ],
+  "heldout_ranking_used": false
+}

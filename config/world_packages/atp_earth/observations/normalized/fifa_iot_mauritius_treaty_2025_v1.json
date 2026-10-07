@@ -1,0 +1,44 @@
+{
+  "schema_version": "earth_source_observations.v2",
+  "dataset_id": "fifa-iot-mauritius-treaty-2025-v1",
+  "source_id": "iot-mauritius-treaty-2025",
+  "source_url": "https://www.gov.uk/government/publications/ukmauritius-agreement-concerning-the-chagos-archipelago-including-diego-garcia-cs-mauritius-no12025",
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-flk-iot-batch-2026-10-07",
+  "scope": "IOT; territorial/constitutional context.",
+  "limitations": "Territorial, constitutional or treaty identity context only; not sports evidence.",
+  "observations": [
+    {
+      "observation_id": "fifa-iot-mauritius-treaty-2025-v1#iot-mauritius-treaty-2025",
+      "source_id": "iot-mauritius-treaty-2025",
+      "source_entity": "UK/Mauritius Chagos Agreement 2025",
+      "earth_country_code": "IOT",
+      "historical_entity": "British Indian Ocean Territory (Chagos Archipelago)",
+      "observation_year": 2025,
+      "period_start_year": null,
+      "period_end_year": null,
+      "measurement_type": "structural_event",
+      "sex_scope": "not_applicable",
+      "age_scope": null,
+      "competition_scope": null,
+      "numeric_value": null,
+      "text_value": "The UK and Mauritius signed an agreement in 2025 under which Mauritius will become sovereign over the Chagos Archipelago after treaty entry into force; no completed transfer is encoded here.",
+      "unit": "event",
+      "collection_method": "official_narrative",
+      "coverage_scope": "territory",
+      "comparability_group": null,
+      "cross_country_comparable": false,
+      "is_direct_observation": true,
+      "is_statistically_modelled": false,
+      "territory_mapping_method": null,
+      "territory_weight": null,
+      "source_page": null,
+      "source_locator": "Treaty and explanatory memorandum",
+      "definition_notes": "Identity/status context only; not sports evidence.",
+      "quality_flags": [
+        "pending_sovereignty_transfer_not_sports_measurement"
+      ]
+    }
+  ]
+}

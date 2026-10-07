@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-pacific-games-2019-asm-vut-v1",
+  "source_id": "otf-pacific-games-2019",
+  "relative_path": "observations/normalized/atp_pacific_games_2019_asm_vut_v1.json",
+  "sha256": "1f60099a8588f5ab49010436bf20a06a4773ef439c5995778b8f409735ec0fd4",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

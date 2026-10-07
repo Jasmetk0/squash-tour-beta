@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-equatorial-guinea-development-2026-v1",
+  "source_id": "itf-equatorial-guinea-development-eligibility-2026",
+  "relative_path": "observations/normalized/atp_equatorial_guinea_development_2026_v1.json",
+  "sha256": "90a4fe9289eb94b2e7af294627a42fdadf80b88476f4203af72bd8335b5105e5",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

@@ -1,0 +1,59 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "fifa-earth-blz-model.v1",
+  "world_id": "fifa_earth",
+  "data_cutoff": "2026-10-03",
+  "countries": [
+    "BLZ"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "evidence_rules": [
+    "1955-2005 values are a low-confidence project-authored baseline.",
+    "FIFA Big Count enters from 2006.",
+    "FIFA Professional 2023 non-null fields enter from 2023 only as professional ecosystem context.",
+    "Null Professional 2023 fields remain missing and are not synthesized.",
+    "Current FIFA membership is context only and is not backdated."
+  ],
+  "anchor_values": {
+    "BLZ": {
+      "1955": [
+        3,
+        2.8,
+        2.9,
+        2.9,
+        2.7,
+        3.3
+      ],
+      "2006": [
+        4.5,
+        4.1,
+        4.2,
+        4.2,
+        3.9,
+        4.6
+      ],
+      "2023": [
+        4.7,
+        4.3,
+        4.4,
+        4.4,
+        4.1,
+        4.8
+      ],
+      "2026": [
+        4.7,
+        4.3,
+        4.4,
+        4.4,
+        4.1,
+        4.8
+      ]
+    }
+  },
+  "evidence_sources": [
+    "fifa-belize-member-context-2026",
+    "fifa-big-count-2006",
+    "fifa-professional-2023"
+  ],
+  "heldout_ranking_used": false
+}

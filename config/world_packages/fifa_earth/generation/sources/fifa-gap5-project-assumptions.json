@@ -1,0 +1,7 @@
+{
+  "title": "Project FIFA Earth calibration assumptions for GBR/IDN/PAK/PHL/SGP",
+  "url": "https://github.com/Jasmetk0/squash-tour-beta",
+  "accessed_on": "2026-10-07",
+  "scope": "Low-confidence FIFA Earth priors for United Kingdom, Indonesia, Pakistan, Philippines and Singapore.",
+  "limitations": "Project assumptions only; GBR is an Earth-package aggregate and is not asserted to be a single FIFA member association."
+}

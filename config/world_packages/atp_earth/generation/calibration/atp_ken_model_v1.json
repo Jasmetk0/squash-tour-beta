@@ -1,0 +1,57 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "atp-earth-ken-model.v1",
+  "world_id": "atp_earth",
+  "data_cutoff": "2026-10-04",
+  "countries": [
+    "KEN"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "evidence_rules": [
+    "The 1922 governing-body inception is secondary-source historical context and keeps early numerical confidence low.",
+    "World Tennis JTI evidence enters only in 2026 as current junior participation/development-pathway capacity.",
+    "Individual player success cited by the source is not a calibration target.",
+    "No missing historical participation counts are backfilled."
+  ],
+  "anchor_values": {
+    "KEN": {
+      "1955": [
+        4.8,
+        4.2,
+        4.3,
+        4.2,
+        3.9,
+        6.8
+      ],
+      "2000": [
+        5.5,
+        4.9,
+        5.2,
+        5.1,
+        4.8,
+        7.1
+      ],
+      "2025": [
+        6,
+        5.4,
+        5.9,
+        5.8,
+        5.4,
+        7.4
+      ],
+      "2026": [
+        6.3,
+        5.6,
+        6.3,
+        6,
+        5.7,
+        7.5
+      ]
+    }
+  },
+  "evidence_sources": [
+    "tennis-kenya-centenary-secondary",
+    "itf-kenya-jti-2026"
+  ],
+  "heldout_ranking_used": false
+}

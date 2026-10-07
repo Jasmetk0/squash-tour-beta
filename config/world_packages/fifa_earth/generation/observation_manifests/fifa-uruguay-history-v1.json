@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-uruguay-history-v1",
+  "source_id": "fifa-uruguay-member-context-2026",
+  "relative_path": "observations/normalized/structural/fifa_uruguay_history_v1.json",
+  "sha256": "a0395bff310375817f447c8aa34f11b7654e3a62fedaad9c1e64ddcbdb38063e",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-guf-reu-region-1982-v1",
+  "source_id": "guf-reu-region-1982",
+  "relative_path": "observations/normalized/atp_guf_reu_region_1982_v1.json",
+  "sha256": "a6060fdbeb0c7c5938709ed48697fb2cfa4fbd61bcd907cb80c3be928f05d217",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-guf-reu-batch-2026-10-07"
+}

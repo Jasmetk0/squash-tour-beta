@@ -1,0 +1,76 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "atp-earth-wsm-model.v1",
+  "world_id": "atp_earth",
+  "data_cutoff": "2026-10-04",
+  "countries": [
+    "WSM"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "evidence_rules": [
+    "Tennis Samoa foundation is anchored to 1955, with historical state naming preserved through independence in 1962 and the 1997 name change.",
+    "OTF membership evidence is gated to 2012, not backcast to the federation's foundation.",
+    "The 2022 Pacific junior pathway supports current development/competition capacity but is not an outcome-based rating target.",
+    "The 2026 OTF profile confirms current federation and junior-development administration only.",
+    "Small-state institutional continuity is not treated as world-leading participation or elite depth."
+  ],
+  "anchor_values": {
+    "WSM": {
+      "1955": [
+        3.8,
+        3.5,
+        3.3,
+        3.4,
+        3.3,
+        5
+      ],
+      "1962": [
+        4,
+        3.7,
+        3.5,
+        3.6,
+        3.5,
+        5.2
+      ],
+      "1997": [
+        4.4,
+        4.1,
+        4,
+        4.1,
+        4,
+        5.6
+      ],
+      "2012": [
+        4.7,
+        4.4,
+        4.3,
+        4.4,
+        4.4,
+        5.8
+      ],
+      "2022": [
+        5.2,
+        4.9,
+        5.4,
+        5.2,
+        5.3,
+        6
+      ],
+      "2026": [
+        5.4,
+        5.1,
+        5.6,
+        5.3,
+        5.5,
+        6.2
+      ]
+    }
+  },
+  "evidence_sources": [
+    "itf-samoa-foundation-2015",
+    "otf-samoa-member-2012",
+    "itf-pacific-juniors-2022",
+    "otf-samoa-current-2026"
+  ],
+  "heldout_ranking_used": false
+}

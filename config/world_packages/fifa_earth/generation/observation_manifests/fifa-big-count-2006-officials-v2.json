@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-big-count-2006-officials-v2",
+  "source_id": "fifa-big-count-2006",
+  "relative_path": "observations/normalized/fifa_big_count_2006_officials_v2.json",
+  "sha256": "0ac39d2aed669122c0ffb64dd3b697ade11a460c78bd4e19e0859a47743e5d72",
+  "record_count": 208,
+  "source_document_sha256": null,
+  "input_artifact_sha256": "00bb138d03f6cbfed6f909311f44fc5fc8643ad4338e6be17f3f0305a35a6944",
+  "generated_by": "scripts/normalize_fifa_big_count_2006.py"
+}

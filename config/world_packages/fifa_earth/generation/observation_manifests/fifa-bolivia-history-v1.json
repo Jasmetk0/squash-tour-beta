@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-bolivia-history-v1",
+  "source_id": "fifa-bolivia-member-context-2026",
+  "relative_path": "observations/normalized/structural/fifa_bolivia_history_v1.json",
+  "sha256": "2f2ac7fa3eff9c4a33a62a0e77785f9208e50f8c053e6b307c659f0d353fcfb1",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

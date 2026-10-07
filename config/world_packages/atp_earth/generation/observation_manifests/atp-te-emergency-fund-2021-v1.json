@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-te-emergency-fund-2021-v1",
+  "source_id": "and-mne-te-emergency-fund-2021",
+  "relative_path": "observations/normalized/atp_te_emergency_fund_2021_v1.json",
+  "sha256": "89f1760a69813dfdaa76c46119df78b826d70435bf6e02d3a788567772707020",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-and-mne-batch-2026-10-07"
+}

@@ -1,0 +1,44 @@
+{
+  "schema_version": "earth_source_observations.v2",
+  "dataset_id": "atp-niu-self-government-1974-v1",
+  "source_id": "niu-self-government-1974",
+  "source_url": "https://www.legislation.govt.nz/act/public/1974/42/en/latest/",
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-niu-tkl-batch-2026-10-07",
+  "scope": "Niue self-government under the Niue Constitution Act 1974.",
+  "limitations": "Constitutional identity context only; not sports evidence.",
+  "observations": [
+    {
+      "observation_id": "atp-niu-self-government-1974-v1#niu-self-governing-1974",
+      "source_id": "niu-self-government-1974",
+      "source_entity": "New Zealand Legislation — Niue Constitution Act 1974",
+      "earth_country_code": "NIU",
+      "historical_entity": "Niue (self-governing state in free association with New Zealand)",
+      "observation_year": 1974,
+      "period_start_year": null,
+      "period_end_year": null,
+      "measurement_type": "structural_event",
+      "sex_scope": "not_applicable",
+      "age_scope": null,
+      "competition_scope": null,
+      "numeric_value": null,
+      "text_value": "The Niue Constitution Act 1974 provides for self-government by the people of Niue and a Constitution for Niue.",
+      "unit": "event",
+      "collection_method": "official_narrative",
+      "coverage_scope": "territory",
+      "comparability_group": null,
+      "cross_country_comparable": false,
+      "is_direct_observation": true,
+      "is_statistically_modelled": false,
+      "territory_mapping_method": null,
+      "territory_weight": null,
+      "source_page": null,
+      "source_locator": "Section 3 — Niue to be self-governing",
+      "definition_notes": "Constitutional status only; not sports evidence.",
+      "quality_flags": [
+        "constitutional_status_not_sports_measurement"
+      ]
+    }
+  ]
+}

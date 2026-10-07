@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-uganda-registration-2026-v1",
+  "source_id": "uta-registration-2026",
+  "relative_path": "observations/normalized/atp_uganda_registration_2026_v1.json",
+  "sha256": "98c5c53e4314b5a7bba9ae2975b7d876b1d0728d522c9c7d6104f8f66fed04c3",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-ussoccer-training-center-v1",
+  "source_id": "ussoccer-training-center",
+  "relative_path": "observations/normalized/structural/fifa_structural_ussoccer_training_center_v1.json",
+  "sha256": "d93632eeaca251cc12fd2ce622ed050490d4508617929ec9a4d108e06b3a5fa3",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": "aa48ab28872008467eedb7601a7d7f0246490a54779b88bd51303e501d31cf1c",
+  "generated_by": "scripts/normalize_fifa_structural_events.py"
+}

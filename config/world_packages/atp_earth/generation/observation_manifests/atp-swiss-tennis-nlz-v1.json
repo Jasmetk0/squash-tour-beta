@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-swiss-tennis-nlz-v1",
+  "source_id": "swiss-tennis-nlz",
+  "relative_path": "observations/normalized/atp-swiss-tennis-nlz-v1.json",
+  "sha256": "0bd027538d9506e60dcbf717f6f161d90afe6153637a6e3d4451a8a95d3d7aad",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

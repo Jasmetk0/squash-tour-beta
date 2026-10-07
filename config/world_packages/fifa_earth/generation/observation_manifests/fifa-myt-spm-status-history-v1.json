@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-myt-spm-status-history-v1",
+  "source_id": "myt-spm-status-history",
+  "relative_path": "observations/normalized/fifa_myt_spm_status_history_v1.json",
+  "sha256": "e81f13d0686a4438886a9a238c15ecd0ebe0f954a7cda05406bd31d46e64d7c1",
+  "record_count": 6,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-myt-spm-batch-2026-10-07"
+}

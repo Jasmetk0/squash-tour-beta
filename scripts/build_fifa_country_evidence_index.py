@@ -81,6 +81,48 @@ def _project_assumption_fact(observation) -> dict[str, Any]:
     }
 
 
+def _context_only_fact(observation) -> dict[str, Any]:
+    """Keep non-sport territorial/context facts auditable but out of calibration."""
+
+    notes = (observation.definition_notes or "").lower()
+    if (
+        observation.earth_country_code is None
+        or observation.measurement_type != "structural_event"
+        or observation.territory_mapping_method is not None
+        or observation.numeric_value is not None
+        or observation.cross_country_comparable is not False
+        or observation.is_direct_observation is not True
+        or observation.is_statistically_modelled is not False
+        or observation.competition_scope is not None
+        or "not a sports measurement" not in notes
+    ):
+        raise ValueError(
+            f"observation {observation.observation_id!r} is not reviewed context-only evidence"
+        )
+    return {
+        "observation_id": observation.observation_id,
+        "source_id": observation.source_id,
+        "source_entity": observation.source_entity,
+        "source_page": observation.source_page,
+        "observation_year": observation.observation_year,
+        "measurement_type": observation.measurement_type,
+        "comparability_group": observation.comparability_group,
+        "numeric_value": observation.numeric_value,
+        "text_value": observation.text_value,
+        "unit": observation.unit,
+        "identity_status": "context_only",
+        "identity_method": "explicit_earth_code_context_only",
+        "identity_confidence": "high",
+        "earth_country_code": observation.earth_country_code,
+        "candidate_earth_codes": [],
+        "identity_reason": (
+            "Explicit territorial/context fact is retained for auditability only and "
+            "is excluded from empirical sport calibration evidence."
+        ),
+        "quality_flags": list(observation.quality_flags),
+    }
+
+
 def _direct_mapped_fact(observation) -> dict[str, Any]:
     mapping = observation.territory_mapping_method
     if observation.earth_country_code is None:
@@ -162,6 +204,7 @@ def build_index(research_path: Path = RESEARCH) -> dict[str, Any]:
     manual_review: list[dict[str, Any]] = []
     unresolved: list[dict[str, Any]] = []
     project_assumptions: list[dict[str, Any]] = []
+    context_only: list[dict[str, Any]] = []
     direct_mapped_observation_count = 0
 
     for observation_id in sorted(bundle.observations):
@@ -171,6 +214,9 @@ def build_index(research_path: Path = RESEARCH) -> dict[str, Any]:
         if resolution is None:
             if observation.measurement_type == "project_authored_assumption":
                 project_assumptions.append(_project_assumption_fact(observation))
+                continue
+            if observation.measurement_type == "structural_event":
+                context_only.append(_context_only_fact(observation))
                 continue
             fact = _direct_mapped_fact(observation)
             countries.setdefault(fact["earth_country_code"], []).append(fact)
@@ -201,6 +247,7 @@ def build_index(research_path: Path = RESEARCH) -> dict[str, Any]:
     manual_review.sort(key=lambda item: item["observation_id"])
     unresolved.sort(key=lambda item: item["observation_id"])
     project_assumptions.sort(key=lambda item: item["observation_id"])
+    context_only.sort(key=lambda item: item["observation_id"])
 
     safe_count = sum(len(facts) for facts in countries.values())
     total_count = (
@@ -208,6 +255,7 @@ def build_index(research_path: Path = RESEARCH) -> dict[str, Any]:
         + len(manual_review)
         + len(unresolved)
         + len(project_assumptions)
+        + len(context_only)
     )
     if total_count != len(bundle.observations):
         raise ValueError("country evidence partition lost or duplicated observations")
@@ -220,6 +268,7 @@ def build_index(research_path: Path = RESEARCH) -> dict[str, Any]:
         "manual_review_count": len(manual_review),
         "unresolved_count": len(unresolved),
         "project_assumption_count": len(project_assumptions),
+        "context_only_count": len(context_only),
         "country_count_with_safe_evidence": len(countries),
         "direct_mapped_observation_count": direct_mapped_observation_count,
         "input_observation_dataset_sha256s": {
@@ -236,12 +285,14 @@ def build_index(research_path: Path = RESEARCH) -> dict[str, Any]:
         "manual_review": manual_review,
         "unresolved": unresolved,
         "project_assumptions": project_assumptions,
+        "context_only": context_only,
         "rating_ready": False,
         "limitations": [
             "Safe evidence is grouped by Earth identity but is not a country rating.",
             "Aggregate-member facts remain source components; no synthetic aggregate is created here.",
             "Manual-review, unresolved and project-authored assumption observations are excluded from empirical country evidence.",
             "Project-authored assumptions remain separately indexed for provenance and never feed the empirical calibration signals.",
+            "Territorial/demographic context-only facts remain separately indexed and never feed empirical sport calibration signals.",
             "Structural and validation-only outcome observations may bypass separate identity-resolution sets only when their canonical observation carries an explicit reviewed Earth mapping.",
             "Cross-country comparability flags and source-definition limitations remain authoritative.",
         ],
@@ -265,6 +316,7 @@ def main() -> None:
             "manual_review_count",
             "unresolved_count",
             "project_assumption_count",
+            "context_only_count",
             "country_count_with_safe_evidence",
             "direct_mapped_observation_count",
         )

@@ -15,6 +15,7 @@ def test_country_evidence_index_partitions_all_canonical_fifa_facts() -> None:
     assert index["manual_review_count"] >= 22
     assert index["unresolved_count"] == 0
     assert index["project_assumption_count"] > 0
+    assert index["context_only_count"] > 0
     assert index["direct_mapped_observation_count"] >= 209
     assert index["rating_ready"] is False
 
@@ -28,8 +29,11 @@ def test_country_evidence_index_partitions_all_canonical_fifa_facts() -> None:
     project_ids = [
         fact["observation_id"] for fact in index["project_assumptions"]
     ]
+    context_ids = [
+        fact["observation_id"] for fact in index["context_only"]
+    ]
 
-    all_ids = safe_ids + manual_ids + unresolved_ids + project_ids
+    all_ids = safe_ids + manual_ids + unresolved_ids + project_ids + context_ids
     assert len(all_ids) == index["observation_count"]
     assert len(all_ids) == len(set(all_ids))
 
@@ -255,3 +259,18 @@ def test_project_assumptions_are_partitioned_out_of_empirical_country_evidence()
         for fact in facts
     }
     assert "fifa-ala-ata-project-assumptions-v1#ala-baseline" not in safe_ids
+
+
+def test_territorial_context_is_partitioned_out_of_empirical_country_evidence() -> None:
+    index = build_index()
+    observation_id = (
+        "fifa-atf-bvt-territory-context-2026-v1#atf-no-permanent-population-2026"
+    )
+    assert observation_id in {
+        fact["observation_id"] for fact in index["context_only"]
+    }
+    assert observation_id not in {
+        fact["observation_id"]
+        for facts in index["countries"].values()
+        for fact in facts
+    }

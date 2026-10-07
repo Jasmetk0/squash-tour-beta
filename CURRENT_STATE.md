@@ -6179,3 +6179,12 @@ bands should shape 0..200 potential. No threshold is inferred from current OVR v
 - Territorial transfer/legal status is identity context only and never used as direct sports evidence.
 - Ratings are explicit low-confidence local project estimates and do not automatically inherit Australia-wide sports evidence.
 - No football or tennis federation membership, organised competition, rankings, titles or athlete outcomes are inferred.
+
+### Earth NIU/TKL batch — 2026-10-07
+- Added complete 1955-2026 FIFA Earth and ATP Earth histories for Niue (NIU) and Tokelau (TKL).
+- Authored-history coverage becomes 238/250 in both packages after CCK/CXR.
+- Niue explicitly transitions to self-government in free association with New Zealand in 1974.
+- Tokelau remains represented as part of New Zealand, with the 1976 statutory naming transition from Tokelau Islands to Tokelau preserved.
+- Constitutional and territorial status is identity context only and never used as direct sports evidence.
+- Ratings are explicit low-confidence local project estimates and do not automatically inherit New Zealand-wide sports evidence.
+- No football or tennis federation membership, organised competition, rankings, titles or athlete outcomes are inferred.

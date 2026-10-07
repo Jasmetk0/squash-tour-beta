@@ -1,0 +1,69 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "fifa-earth-cck-reviewed-structure.v1",
+  "world_id": "fifa_earth",
+  "countries": [
+    "CCK"
+  ],
+  "data_cutoff": "2026-10-03",
+  "rating_scale": "country_ratings_1_10.v2",
+  "attribute_order": [
+    "squash_popularity",
+    "squash_access",
+    "development_quality",
+    "competition_quality",
+    "elite_support",
+    "squash_tradition"
+  ],
+  "anchor_values": {
+    "CCK": {
+      "1955": [
+        1.6,
+        1.5,
+        1.4,
+        1.2,
+        1.3,
+        1.6
+      ],
+      "1980": [
+        2,
+        1.9,
+        1.7,
+        1.5,
+        1.6,
+        1.9
+      ],
+      "2000": [
+        2.4,
+        2.3,
+        2,
+        1.7,
+        1.8,
+        2.2
+      ],
+      "2021": [
+        2.7,
+        2.6,
+        2.3,
+        1.9,
+        2,
+        2.5
+      ],
+      "2026": [
+        2.8,
+        2.7,
+        2.4,
+        2,
+        2.1,
+        2.6
+      ]
+    }
+  },
+  "selection": "Piecewise-constant authored periods; no hidden interpolation and the dated 2021 census context enters only from 2021.",
+  "limitations": [
+    "All numeric ratings are project estimates with low confidence, not source measurements.",
+    "Population is demographic context only and is not treated as direct sports participation, infrastructure or quality evidence.",
+    "No football federation membership or organised competition is inferred.",
+    "No rankings, titles or athlete outcomes are used to fit ratings."
+  ]
+}

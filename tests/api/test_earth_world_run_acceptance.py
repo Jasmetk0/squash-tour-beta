@@ -13,14 +13,34 @@ live authoring files or flattening their historical country data.
 from __future__ import annotations
 
 from collections import Counter
+from itertools import count
 from pathlib import Path
 import shutil
-from urllib.parse import quote
 
 import pytest
 
+from beta_engine.application.run_branch_creation_service import RunBranchCreationService
+from beta_engine.application.run_container_creation_service import RunContainerCreationService
+from beta_engine.application.run_package_service import RunPackageService
+from beta_engine.application.run_working_draft_service import RunWorkingDraftService
+from beta_engine.application.run_world_initial_pool_preview_service import (
+    RunWorldInitialPoolPreviewRequest,
+    RunWorldInitialPoolPreviewService,
+)
+from beta_engine.application.run_world_initial_world_service import (
+    RunWorldInitialWorldAdoptionRequest,
+    RunWorldInitialWorldService,
+)
+from beta_engine.application.world_package_registry_service import WorldPackageRegistryService
+from beta_engine.application.world_package_run_adapter import WorldPackageRunAdapter
+from beta_engine.domain.players.lifecycle import PlayerLifecyclePolicy
+from beta_engine.infrastructure.db import (
+    DatabaseSettings,
+    SimulationPersistenceRepository,
+    create_session_factory,
+    create_sqlite_engine,
+)
 from beta_engine.world_packages import ATP_EARTH_ID, FIFA_EARTH_ID
-from tests.api.test_initial_world_ranking_integration import _post_headers
 from tests.api.test_saved_revision_history_api import ApiServer, _request
 from tests.support.world_packages import copy_builtin_world_packages
 
@@ -63,151 +83,160 @@ def _rating_vector(country: dict[str, object], year: int) -> tuple[float, ...]:
     )
 
 
-def _apply_earth_world_and_adopt_1000(
-    server: ApiServer,
+def _id_factory(prefix: str):
+    sequence = count(1)
+
+    def make(kind: str) -> str:
+        return f"{prefix}-{kind}-{next(sequence)}"
+
+    return make
+
+
+def _repository(url: str) -> SimulationPersistenceRepository:
+    engine = create_sqlite_engine(DatabaseSettings(url=url))
+    repository = SimulationPersistenceRepository(
+        engine=engine,
+        session_factory=create_session_factory(engine),
+    )
+    repository.bootstrap_schema()
+    return repository
+
+
+def _materialize_product_run(
+    repository: SimulationPersistenceRepository,
     *,
+    world_root: Path,
     world_id: str,
 ) -> dict[str, object]:
-    status, created = _request(
-        "POST",
-        f"{server.base_url}/run-containers",
-        {"display_name": f"Earth acceptance {world_id}"},
+    ids = _id_factory(world_id)
+    created = RunContainerCreationService(repository, ids).create_empty_run(
+        display_name=f"Earth acceptance {world_id}"
     )
-    assert status == 201, created
-    run_id = created["run_id"]
-    branch_id = created["viewer_branch_id"]
+    run_id = created.run_id
+    branch_id = created.viewer_branch_id
+    assert branch_id is not None
 
-    package_root = (
-        f"{server.base_url}/admin/runs/{quote(run_id, safe='')}"
-        f"/branches/{quote(branch_id, safe='')}/packages"
-    )
-    source_world_root = package_root + f"/source-world/{world_id}"
-    status, package_preview = _request("POST", source_world_root + "/preview")
-    assert status == 200, package_preview
-    status, applied = _request(
-        "POST",
-        source_world_root + "/confirm",
-        {
-            "command_id": f"earth-acceptance-apply-{world_id}",
-            "expected_head_revision_id": package_preview["saved_head_revision_id"],
-            "expected_draft_version": package_preview["draft_version"],
-            "expected_state_fingerprint": package_preview["current_state_fingerprint"],
-            "expected_preview_fingerprint": package_preview["preview_fingerprint"],
-            "conflict_resolutions": {},
-        },
-    )
-    assert status == 200, applied
+    registry = WorldPackageRegistryService(world_packages_root=world_root)
+    adapter = WorldPackageRunAdapter(registry_service=registry)
+    package_service = RunPackageService(repository)
+    draft_service = RunWorkingDraftService(repository, ids)
 
-    save_url = (
-        f"{server.base_url}/run-containers/{quote(run_id, safe='')}"
-        f"/branches/{quote(branch_id, safe='')}/working-draft/save"
+    document = adapter.build_document(world_id)
+    package_preview = package_service.preview(
+        run_id=run_id,
+        branch_id=branch_id,
+        document=document,
     )
-    status, saved_package = _request(
-        "POST",
-        save_url,
-        {"expected_draft_version": applied["draft_version"]},
+    applied = package_service.confirm(
+        run_id=run_id,
+        branch_id=branch_id,
+        document=document,
+        command_id=f"earth-acceptance-apply-{world_id}",
+        expected_head_revision_id=package_preview.saved_head_revision_id,
+        expected_draft_version=package_preview.draft_version,
+        expected_state_fingerprint=package_preview.current_state_fingerprint,
+        expected_preview_fingerprint=package_preview.preview_fingerprint,
     )
-    assert status == 201, saved_package
+    draft_service.save(
+        run_id=run_id,
+        branch_id=branch_id,
+        expected_draft_version=applied.draft_version,
+    )
 
-    status, projection = _request(
-        "GET",
-        package_root + f"/world/{world_id}/countries",
-    )
-    assert status == 200, projection
-    countries = projection["countries"]
+    state = package_service.get(run_id=run_id, branch_id=branch_id)
+    assert state is not None
+    projection = adapter.project_countries(state, package_id=world_id)
+    countries = [
+        country.model_dump(mode="json") for country in projection.countries
+    ]
     assert len(countries) == 250
     assert all(country["rating_history"] is not None for country in countries)
     assert all(
-        set(country["rating_history"]["years"]) == {str(year) for year in range(1955, 2027)}
+        set(country["rating_history"]["years"])
+        == {str(year) for year in range(1955, 2027)}
         for country in countries
     )
 
-    initial_pool_request = {
-        "world_package_id": world_id,
-        "season": "2000/2001",
-        "seed": INITIAL_POOL_SEED,
-        "target_pool_size": INITIAL_POOL_SIZE,
-    }
-    initial_pool_url = (
-        f"{server.base_url}/admin/players/runs/{quote(run_id, safe='')}"
-        f"/branches/{quote(branch_id, safe='')}"
-        "/initial-pool/world-package/preview"
+    pool_service = RunWorldInitialPoolPreviewService(
+        package_service=package_service,
+        world_adapter=adapter,
     )
-    status, pool = _request("POST", initial_pool_url, initial_pool_request)
-    assert status == 200, pool
-    assert pool["preview_only"] is True
-    assert len(pool["result"]["players"]) == INITIAL_POOL_SIZE
-    assert pool["result"]["metadata"]["target_pool_size"] == INITIAL_POOL_SIZE
-    assert pool["result"]["metadata"]["population_weighting"] == (
-        "effective_population_birth_year_aggregate"
+    initial_world_service = RunWorldInitialWorldService(
+        preview_service=pool_service
     )
-    assert pool["result"]["metadata"]["population_year_min"] < 2000
-    assert pool["result"]["metadata"]["population_year_max"] < 2000
+    generation = RunWorldInitialPoolPreviewRequest(
+        world_package_id=world_id,
+        season="2000/2001",
+        seed=INITIAL_POOL_SEED,
+        target_pool_size=INITIAL_POOL_SIZE,
+    )
+    pool = pool_service.preview(
+        run_id=run_id,
+        branch_id=branch_id,
+        request=generation,
+    )
+    assert len(pool.result.players) == INITIAL_POOL_SIZE
+    assert pool.result.metadata.target_pool_size == INITIAL_POOL_SIZE
+    assert (
+        pool.result.metadata.population_weighting
+        == "effective_population_birth_year_aggregate"
+    )
+    assert pool.result.metadata.population_year_min is not None
+    assert pool.result.metadata.population_year_max is not None
+    assert pool.result.metadata.population_year_min < 2000
+    assert pool.result.metadata.population_year_max < 2000
 
-    world_root = (
-        f"{server.base_url}/admin/players/runs/{quote(run_id, safe='')}"
-        f"/branches/{quote(branch_id, safe='')}/initial-world"
-    )
-    adoption = {
-        "command_id": f"earth-acceptance-adopt-{world_id}",
-        "generation": initial_pool_request,
-        "audit_label": "Earth World integration acceptance",
-        "audit_reason": (
+    adoption_request = RunWorldInitialWorldAdoptionRequest(
+        command_id=f"earth-acceptance-adopt-{world_id}",
+        generation=generation,
+        audit_label="Earth World integration acceptance",
+        audit_reason=(
             "Bind the reviewed Run-owned Earth World snapshot to a 1000-player "
             "InitialWorld for end-to-end acceptance"
         ),
-        "official_run": True,
-    }
-    status, world_preview = _request(
-        "POST",
-        world_root + "/world-package/preview",
-        adoption,
+        official_run=False,
+        best_n=15,
+        automatic_retirement_age=46,
     )
-    assert status == 200, world_preview
-    assert len(world_preview["state"]["players"]) == INITIAL_POOL_SIZE
-    assert world_preview["state"]["world_package_id"] == world_id
-    assert world_preview["state"]["source_kind"] == "run_world_generated_pool.v1"
+    preview_world = initial_world_service.preview(
+        run_id=run_id,
+        branch_id=branch_id,
+        request=adoption_request,
+    )
+    assert len(preview_world.players) == INITIAL_POOL_SIZE
+    assert preview_world.world_package_id == world_id
+    assert preview_world.source_kind == "run_world_generated_pool.v1"
 
-    status, adopted = _post_headers(
-        world_root + "/world-package",
-        adoption,
-        {
-            "X-Initial-World-Preview-Fingerprint": world_preview["fingerprint"],
-        },
+    adopted = repository.adopt_initial_world(
+        preview_world,
+        lifecycle_policy=PlayerLifecyclePolicy(
+            policy_id="earth-integration-lifecycle.v1",
+            automatic_retirement_age=46,
+            provenance="Earth Run integration acceptance",
+        ),
     )
-    assert status == 201, adopted
-    assert len(adopted["players"]) == INITIAL_POOL_SIZE
-
-    status, save_preview = _request("GET", world_root + "/save/preview")
-    assert status == 200, save_preview
-    status, saved_world = _request(
-        "POST",
-        world_root + "/save",
-        {
-            "expected_draft_version": save_preview["draft_version"],
-            "expected_initial_world_fingerprint": save_preview[
-                "initial_world_fingerprint"
-            ],
-        },
+    revision_state = repository.get_branch_revision_state(branch_id=branch_id)
+    saved_world = draft_service.save_initial_world(
+        run_id=run_id,
+        branch_id=branch_id,
+        expected_draft_version=revision_state.working_draft.draft_version,
+        expected_initial_world_fingerprint=adopted.fingerprint,
     )
-    assert status == 201, saved_world
 
     return {
         "run_id": run_id,
         "branch_id": branch_id,
-        "saved_revision_id": saved_world["saved_revision"]["revision_id"],
+        "saved_revision_id": saved_world.saved_revision.revision_id,
         "countries": countries,
         "pool": pool,
         "pool_counts": Counter(
-            player["country_code"] for player in pool["result"]["players"]
+            player.country_code for player in pool.result.players
         ),
-        "world_country_content_fingerprint": adopted[
-            "world_country_content_fingerprint"
-        ],
-        "world_generation_content_fingerprint": adopted[
-            "world_generation_content_fingerprint"
-        ],
-        "initial_world_fingerprint": adopted["fingerprint"],
+        "world_country_content_fingerprint": adopted.world_country_content_fingerprint,
+        "world_generation_content_fingerprint": (
+            adopted.world_generation_content_fingerprint
+        ),
+        "initial_world_fingerprint": adopted.fingerprint,
     }
 
 
@@ -216,17 +245,17 @@ def test_both_earth_packages_drive_1000_player_product_runs_save_reopen_and_fork
     tmp_path,
 ):
     db_path = tmp_path / "earth-product-run.db"
+    database_url = f"sqlite:///{db_path}"
     world_root = _copy_world_packages_with_earth(tmp_path / "world-packages")
+    repository = _repository(database_url)
     results: dict[str, dict[str, object]] = {}
 
-    server = ApiServer(database_url=f"sqlite:///{db_path}")
-    server.app.state.world_packages_root = world_root
-    with server:
-        for world_id in EARTH_WORLD_IDS:
-            results[world_id] = _apply_earth_world_and_adopt_1000(
-                server,
-                world_id=world_id,
-            )
+    for world_id in EARTH_WORLD_IDS:
+        results[world_id] = _materialize_product_run(
+            repository,
+            world_root=world_root,
+            world_id=world_id,
+        )
 
     fifa_countries = {
         country["code"]: country for country in results[FIFA_EARTH_ID]["countries"]
@@ -242,88 +271,87 @@ def test_both_earth_packages_drive_1000_player_product_runs_save_reopen_and_fork
     }
     assert differing_2000
 
-    # Same seed, same season and the same Earth identities still produce different
-    # generated worlds when the package histories differ.  This catches accidental
-    # flattening/ignoring of the package-owned historical ratings at the Run boundary.
     fifa_pool = results[FIFA_EARTH_ID]["pool"]
     atp_pool = results[ATP_EARTH_ID]["pool"]
-    assert fifa_pool["preview_fingerprint"] != atp_pool["preview_fingerprint"]
-    assert fifa_pool["result"]["players"] != atp_pool["result"]["players"]
+    assert fifa_pool.preview_fingerprint != atp_pool.preview_fingerprint
+    assert fifa_pool.result.players != atp_pool.result.players
     assert (
         results[FIFA_EARTH_ID]["pool_counts"]
         != results[ATP_EARTH_ID]["pool_counts"]
     )
 
-    reopened = ApiServer(database_url=f"sqlite:///{db_path}")
-    reopened.app.state.world_packages_root = world_root
-    with reopened:
-        for world_id in EARTH_WORLD_IDS:
-            result = results[world_id]
-            run_id = result["run_id"]
-            branch_id = result["branch_id"]
-            package_root = (
-                f"{reopened.base_url}/admin/runs/{quote(run_id, safe='')}"
-                f"/branches/{quote(branch_id, safe='')}/packages"
-            )
-            status, projection = _request(
-                "GET",
-                package_root + f"/world/{world_id}/countries",
-            )
-            assert status == 200, projection
-            assert projection["countries"] == result["countries"]
+    # Reopen through a fresh engine/session factory, then fork the exact Saved
+    # Revision. This proves persistence rather than process-local object reuse.
+    reopened = _repository(database_url)
+    registry = WorldPackageRegistryService(world_packages_root=world_root)
+    adapter = WorldPackageRunAdapter(registry_service=registry)
+    for world_id in EARTH_WORLD_IDS:
+        result = results[world_id]
+        run_id = result["run_id"]
+        branch_id = result["branch_id"]
 
-            world_root_url = (
-                f"{reopened.base_url}/admin/players/runs/{quote(run_id, safe='')}"
-                f"/branches/{quote(branch_id, safe='')}/initial-world"
-            )
-            status, loaded_world = _request("GET", world_root_url)
-            assert status == 200, loaded_world
-            assert len(loaded_world["players"]) == INITIAL_POOL_SIZE
-            assert loaded_world["world_package_id"] == world_id
-            assert loaded_world["world_country_content_fingerprint"] == result[
-                "world_country_content_fingerprint"
-            ]
-            assert loaded_world["world_generation_content_fingerprint"] == result[
-                "world_generation_content_fingerprint"
-            ]
+        package_state = RunPackageService(reopened).get(
+            run_id=run_id,
+            branch_id=branch_id,
+        )
+        assert package_state is not None
+        projection = adapter.project_countries(
+            package_state,
+            package_id=world_id,
+        )
+        assert [
+            country.model_dump(mode="json") for country in projection.countries
+        ] == result["countries"]
 
-            status, fork = _request(
-                "POST",
-                f"{reopened.base_url}/run-containers/{quote(run_id, safe='')}/branches",
-                {
-                    "source_branch_id": branch_id,
-                    "source_saved_revision_id": result["saved_revision_id"],
-                    "display_name": f"{world_id} integration fork",
-                },
-            )
-            assert status == 201, fork
-            fork_id = fork["branch_id"]
+        loaded_world = reopened.get_initial_world(
+            run_id=run_id,
+            branch_id=branch_id,
+        )
+        assert loaded_world is not None
+        assert len(loaded_world.players) == INITIAL_POOL_SIZE
+        assert loaded_world.world_package_id == world_id
+        assert loaded_world.world_country_content_fingerprint == result[
+            "world_country_content_fingerprint"
+        ]
+        assert loaded_world.world_generation_content_fingerprint == result[
+            "world_generation_content_fingerprint"
+        ]
 
-            fork_package_root = (
-                f"{reopened.base_url}/admin/runs/{quote(run_id, safe='')}"
-                f"/branches/{quote(fork_id, safe='')}/packages"
-            )
-            status, fork_projection = _request(
-                "GET",
-                fork_package_root + f"/world/{world_id}/countries",
-            )
-            assert status == 200, fork_projection
-            assert fork_projection["countries"] == result["countries"]
+        fork = RunBranchCreationService(
+            reopened,
+            _id_factory(f"{world_id}-fork"),
+        ).create_from_saved_revision(
+            run_id=run_id,
+            source_branch_id=branch_id,
+            source_saved_revision_id=result["saved_revision_id"],
+            display_name=f"{world_id} integration fork",
+        )
+        fork_state = RunPackageService(reopened).get(
+            run_id=run_id,
+            branch_id=fork.branch_id,
+        )
+        assert fork_state is not None
+        fork_projection = adapter.project_countries(
+            fork_state,
+            package_id=world_id,
+        )
+        assert [
+            country.model_dump(mode="json") for country in fork_projection.countries
+        ] == result["countries"]
 
-            fork_world_root = (
-                f"{reopened.base_url}/admin/players/runs/{quote(run_id, safe='')}"
-                f"/branches/{quote(fork_id, safe='')}/initial-world"
-            )
-            status, fork_world = _request("GET", fork_world_root)
-            assert status == 200, fork_world
-            assert fork_world["branch_id"] == fork_id
-            assert len(fork_world["players"]) == INITIAL_POOL_SIZE
-            assert fork_world["world_country_content_fingerprint"] == result[
-                "world_country_content_fingerprint"
-            ]
-            assert fork_world["world_generation_content_fingerprint"] == result[
-                "world_generation_content_fingerprint"
-            ]
+        fork_world = reopened.get_initial_world(
+            run_id=run_id,
+            branch_id=fork.branch_id,
+        )
+        assert fork_world is not None
+        assert fork_world.branch_id == fork.branch_id
+        assert len(fork_world.players) == INITIAL_POOL_SIZE
+        assert fork_world.world_country_content_fingerprint == result[
+            "world_country_content_fingerprint"
+        ]
+        assert fork_world.world_generation_content_fingerprint == result[
+            "world_generation_content_fingerprint"
+        ]
 
 
 @pytest.mark.pr_critical

@@ -38,11 +38,11 @@ def _stored_observation_code(code: str) -> str:
 
 def test_fifa_first_reviewed_country_histories_are_complete_and_resolvable():
     bundle = load_earth_research_bundle(Path("config/earth_research/fifa_earth.json"))
-    assert set(bundle.research.countries) == {"CZE", "SVK", "JPN", "IND", "MAR", "SEN", "FRO", "USA", "ZAF", "BRA", "DEU", "ISL", "SMR", "ARG", "MEX", "AUS", "NZL", "FJI", "PNG", "SLB", "COK", "ASM", "PYF", "NCL", "WSM", "TON", "VUT", "FRA", "ESP", "ITA", "NLD", "BEL", "PRT", "AUT", "DNK", "SWE", "CHE", "NOR", "FIN", "HRV", "SVN", "POL", "ROU", "UKR", "LTU", "LVA", "EST", "CAN", "GRC", "SRB", "CHL", "HUN", "ISR", "BGR", "KAZ", "CHN", "TUR", "KOR", "THA", "COL", "CYP", "ECU", "IRL", "EGY", "MYS", "SAU", "ARE", "QAT", "OMN", "GHA", "NGA", "KEN", "UGA", "TZA", "ZMB", "ZWE", "MWI", "BWA", "NAM", "SWZ", "MOZ", "AGO", "LSO", "CMR", "BEN", "GAB", "MUS", "MDG", "SYC", "RWA", "BDI", "GMB", "CPV", "DJI", "COM", "GNQ", "GNB", "STP", "GIN", "LBR", "SLE", "TGO", "BFA", "MLI", "MRT", "NER", "TCD", "ETH", "ERI", "SDN", "SSD", "DZA", "CIV", "TUN", "LBY", "IRQ", "JOR", "LBN", "SYR", "PSE", "BHR", "KWT", "YEM", "IRN", "AFG", "BGD", "NPL", "LKA", "BTN", "MDV", "MNG", "KHM", "MMR", "LAO", "BRN", "VNM", "UZB", "TJK", "TKM", "KGZ", "GEO", "ARM", "AZE", "ALB", "MDA", "MKD", "BIH", "BLR", "MLT", "LUX", "CRI", "JAM", "TTO", "PAN", "DOM", "GTM", "HND", "SLV", "NIC", "BLZ", "HTI", "PER", "BOL", "PRY", "URY", "VEN", "GUY", "CUB", "SUR", "BHS", "BRB", "GRD", "DMA", "ATG", "LCA", "VCT", "KNA", "VGB", "TCA", "AIA", "BMU", "CYM", "VIR", "ABW", "PRI", "AND", "MNE", "LIE", "GIB", "MCO", "XKX", "HKG", "MAC", "TWN", "PRK", "GUM", "CUW", "TLS", "SOM", "CAF", "COD", "COG", "FSM", "RUS", "KIR", "MHL", "PLW", "ALA", "ATA", "NRU", "TUV"}
+    assert set(bundle.research.countries) == {"CZE", "SVK", "JPN", "IND", "MAR", "SEN", "FRO", "USA", "ZAF", "BRA", "DEU", "ISL", "SMR", "ARG", "MEX", "AUS", "NZL", "FJI", "PNG", "SLB", "COK", "ASM", "PYF", "NCL", "WSM", "TON", "VUT", "FRA", "ESP", "ITA", "NLD", "BEL", "PRT", "AUT", "DNK", "SWE", "CHE", "NOR", "FIN", "HRV", "SVN", "POL", "ROU", "UKR", "LTU", "LVA", "EST", "CAN", "GRC", "SRB", "CHL", "HUN", "ISR", "BGR", "KAZ", "CHN", "TUR", "KOR", "THA", "COL", "CYP", "ECU", "IRL", "EGY", "MYS", "SAU", "ARE", "QAT", "OMN", "GHA", "NGA", "KEN", "UGA", "TZA", "ZMB", "ZWE", "MWI", "BWA", "NAM", "SWZ", "MOZ", "AGO", "LSO", "CMR", "BEN", "GAB", "MUS", "MDG", "SYC", "RWA", "BDI", "GMB", "CPV", "DJI", "COM", "GNQ", "GNB", "STP", "GIN", "LBR", "SLE", "TGO", "BFA", "MLI", "MRT", "NER", "TCD", "ETH", "ERI", "SDN", "SSD", "DZA", "CIV", "TUN", "LBY", "IRQ", "JOR", "LBN", "SYR", "PSE", "BHR", "KWT", "YEM", "IRN", "AFG", "BGD", "NPL", "LKA", "BTN", "MDV", "MNG", "KHM", "MMR", "LAO", "BRN", "VNM", "UZB", "TJK", "TKM", "KGZ", "GEO", "ARM", "AZE", "ALB", "MDA", "MKD", "BIH", "BLR", "MLT", "LUX", "CRI", "JAM", "TTO", "PAN", "DOM", "GTM", "HND", "SLV", "NIC", "BLZ", "HTI", "PER", "BOL", "PRY", "URY", "VEN", "GUY", "CUB", "SUR", "BHS", "BRB", "GRD", "DMA", "ATG", "LCA", "VCT", "KNA", "VGB", "TCA", "AIA", "BMU", "CYM", "VIR", "ABW", "PRI", "AND", "MNE", "LIE", "GIB", "MCO", "XKX", "HKG", "MAC", "TWN", "PRK", "GUM", "CUW", "TLS", "SOM", "CAF", "COD", "COG", "FSM", "RUS", "KIR", "MHL", "PLW", "ALA", "ATA", "NRU", "TUV", "GBR", "IDN", "PAK", "PHL", "SGP"}
     assert bundle.research.data_cutoff.isoformat() == "2026-10-03"
-    assert len(bundle.research.countries) == 211
-    assert len(bundle.datasets) == 269
-    assert len(bundle.observations) == 1994
+    assert len(bundle.research.countries) == 216
+    assert len(bundle.datasets) == 274
+    assert len(bundle.observations) == 2003
 
     for code in ("CZE", "SVK"):
         history = bundle.research.countries[code]
@@ -6732,3 +6732,64 @@ def test_atp_gap5_historical_identity_transitions_are_explicit():
     assert "British protection" in bundle.research.countries["QAT"].years[1970].historical_entity
     assert bundle.research.countries["QAT"].years[1971].historical_entity == "State of Qatar"
     assert bundle.research.countries["SAU"].years[1955].historical_entity == "Kingdom of Saudi Arabia"
+
+
+@pytest.mark.parametrize("code", ["GBR", "IDN", "PAK", "PHL", "SGP"])
+def test_fifa_gap5_histories_are_complete_and_resolvable(code):
+    bundle = load_earth_research_bundle(Path("config/earth_research/fifa_earth.json"))
+    history = bundle.research.countries[code]
+    assert set(history.years) == set(range(1955, 2027))
+    assert len(history.years) == 72
+    for year, entry in history.years.items():
+        assert len(entry.ratings) == 6
+        for rating in entry.ratings.values():
+            assert rating.confidence == "low"
+            assert rating.method == "derived_estimate"
+            assert 1 <= rating.value <= 10
+            assert rating.value * 10 == round(rating.value * 10)
+            assert max(rating.anchor_years) <= year
+            for ref in rating.observation_ids:
+                observation = bundle.observations[ref]
+                assert observation.earth_country_code == code
+                if observation.observation_year is None:
+                    assert observation.measurement_type == "project_authored_assumption"
+                    assert observation.is_direct_observation is False
+                else:
+                    assert observation.observation_year <= year
+
+
+@pytest.mark.parametrize("code", ["IDN", "PAK", "PHL", "SGP"])
+def test_fifa_gap5_current_association_evidence_is_not_backdated(code):
+    bundle = load_earth_research_bundle(Path("config/earth_research/fifa_earth.json"))
+    history = bundle.research.countries[code]
+    assert not any(
+        "association-2026" in ref
+        for ref in history.years[2025].ratings["development_quality"].observation_ids
+    )
+    assert any(
+        "association-2026" in ref
+        for ref in history.years[2026].ratings["development_quality"].observation_ids
+    )
+
+
+def test_fifa_gbr_is_explicit_earth_aggregate_not_fake_single_fifa_member():
+    bundle = load_earth_research_bundle(Path("config/earth_research/fifa_earth.json"))
+    history = bundle.research.countries["GBR"]
+    for year in (1955, 1992, 2026):
+        for rating in history.years[year].ratings.values():
+            assert rating.source_ids == ["fifa-gap5-project-assumptions"]
+            assert all(
+                bundle.observations[ref].observation_year is None
+                for ref in rating.observation_ids
+            )
+    assert "aggregate" in history.years[2026].territory_mapping_note.lower()
+    assert "single GBR FIFA membership" in history.years[2026].territory_mapping_note
+
+
+def test_fifa_singapore_historical_identity_transitions_are_explicit():
+    bundle = load_earth_research_bundle(Path("config/earth_research/fifa_earth.json"))
+    history = bundle.research.countries["SGP"]
+    assert history.years[1958].historical_entity == "Colony of Singapore"
+    assert history.years[1959].historical_entity == "State of Singapore"
+    assert history.years[1963].historical_entity == "Singapore in Malaysia"
+    assert history.years[1965].historical_entity == "Republic of Singapore"

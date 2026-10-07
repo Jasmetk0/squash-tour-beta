@@ -429,3 +429,33 @@ def test_flat_csv_import_refuses_to_strip_history_from_editable_clone(tmp_path):
     )
     assert history_path.read_bytes() == history_before
     assert WorldPackageValidationService(registry).validate_package("history_csv_guard").status == "valid"
+
+
+def test_source_and_calibration_symlink_shards_are_rejected(tmp_path):
+    for kind in ("source", "calibration"):
+        case = tmp_path / kind
+        case.mkdir()
+        root, world_id = _build_portable_test_package(case, derived=True)
+        if kind == "source":
+            target = root / world_id / "generation/sources/test.json"
+        else:
+            target = (
+                root
+                / world_id
+                / "generation/calibration/synthetic-calibration.v1.json"
+            )
+        outside = case / f"outside-{kind}.json"
+        outside.write_bytes(target.read_bytes())
+        target.unlink()
+        target.symlink_to(outside)
+
+        registry = WorldPackageRegistryService(world_packages_root=root)
+        validation = WorldPackageValidationService(registry).validate_package(world_id)
+        assert validation is not None
+        assert validation.status == "errors"
+        assert any(
+            "symlink" in check.message
+            for check in validation.checks
+            if check.status == "failed"
+        )
+        assert registry.get_package(world_id) is None

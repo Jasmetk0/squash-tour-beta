@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-cck-australian-transfer-1955-v1",
+  "source_id": "cck-australian-transfer-1955",
+  "relative_path": "observations/normalized/atp_cck_australian_transfer_1955_v1.json",
+  "sha256": "f956fdd4a25e3c72c8d7852c8927712a65442412e6f9094d3a3df640696102ed",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-cck-cxr-batch-2026-10-07"
+}

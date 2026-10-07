@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-cck-australian-transfer-1955-v1",
+  "source_id": "cck-australian-transfer-1955",
+  "relative_path": "observations/normalized/fifa_cck_australian_transfer_1955_v1.json",
+  "sha256": "9e3beedd721a3d80e4a01906461c6a799e306148cb8a8587e2d1c3fe2d3e34f4",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-cck-cxr-batch-2026-10-07"
+}

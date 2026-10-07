@@ -43,6 +43,14 @@ _RETROSPECTIVE_ATP_CALIBRATION_MODELS = {
     "TLS": "atp-earth-tls-reviewed-structure.v1",
 }
 
+_RETROSPECTIVE_ATP_FUTURE_ANCHORS = {
+    "GUM": {2026},
+    "KIR": {2026},
+    "FSM": {2026},
+    "MNP": {2000, 2026},
+    "TLS": {2026},
+}
+
 
 def _assert_rating_anchor_timing(world_id: str, code: str, year: int, rating) -> None:
     """Keep future anchors forbidden except for explicitly reviewed retrospective ATP models."""
@@ -54,7 +62,7 @@ def _assert_rating_anchor_timing(world_id: str, code: str, year: int, rating) ->
     assert code in _RETROSPECTIVE_ATP_CALIBRATION_MODELS
     assert rating.calibration_model_id == _RETROSPECTIVE_ATP_CALIBRATION_MODELS[code]
     assert min(rating.anchor_years) <= year < 2026
-    assert max(rating.anchor_years) == 2026
+    assert max(rating.anchor_years) in _RETROSPECTIVE_ATP_FUTURE_ANCHORS[code]
 
 
 

@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-nru-tuv-project-assumptions-v1",
+  "source_id": "nru-tuv-fifa-project-assumptions",
+  "relative_path": "observations/normalized/fifa_nru_tuv_project_assumptions_v1.json",
+  "sha256": "4871a021dca9336b7b03071ec8aeedd3b15a8e3e170a7d9709a012c52c4fb5bc",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-nru-tuv-batch-2026-10-07"
+}

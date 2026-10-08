@@ -545,3 +545,65 @@ def test_rank_transition_bundle_rejects_missing_mappings_or_wrong_target(change)
         )
     with pytest.raises(WeekTransitionForkAuditUnsupportedError):
         _bind_pair(source, target, **overrides)
+
+
+def test_confirmed_transition_saved_revision_can_follow_authority_revision():
+    """A Save between authority staging and command confirmation is historical fact."""
+    from beta_engine.application.authoritative_week_transition import (
+        AuthoritativeWeekTransitionCommand,
+    )
+    from beta_engine.infrastructure.db.week_transition_fork_audit import (
+        WeekTransitionForkAuditUnsupportedError,
+    )
+
+    source, target = _paired_completed_transition()
+    state = source.authoritative_transition_state
+    receipt = state["receipts"][0].copy()
+    original = AuthoritativeWeekTransitionCommand.model_validate_json(
+        receipt["request_payload_json"]
+    )
+    confirmed = AuthoritativeWeekTransitionCommand.model_validate_json(
+        original.model_copy(
+            update={"base_revision_id": "confirmed-after-authority-save"}
+        ).model_dump_json()
+    )
+    receipt["request_payload_json"] = confirmed.canonical_request_json
+    receipt["request_fingerprint"] = confirmed.fingerprint
+    source_with_save = RankingRevisionState.model_validate_json(
+        source.model_copy(
+            update={
+                "authoritative_transition_state": {
+                    **state, "receipts": [receipt],
+                }
+            }
+        ).model_dump_json()
+    )
+
+    with pytest.raises(
+        WeekTransitionForkAuditUnsupportedError,
+        match="differs from frozen ranking authority",
+    ):
+        _bind_pair(source_with_save, target)
+
+    rebound = _bind_pair(
+        source_with_save, target,
+        valid_source_revision_ids=frozenset(
+            {"source-revision", "confirmed-after-authority-save"}
+        ),
+    )
+    assert rebound.authoritative_transition_state["receipts"]
+    assert (
+        AuthoritativeWeekTransitionCommand.model_validate_json(
+            rebound.authoritative_transition_state["receipts"][0][
+                "request_payload_json"
+            ]
+        ).base_revision_id == "target-materialized-root"
+    )
+    with pytest.raises(
+        WeekTransitionForkAuditUnsupportedError,
+        match="differs from frozen ranking authority",
+    ):
+        _bind_pair(
+            source_with_save, target,
+            valid_source_revision_ids=frozenset({"source-revision"}),
+        )

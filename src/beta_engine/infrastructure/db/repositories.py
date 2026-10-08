@@ -130,6 +130,9 @@ from beta_engine.infrastructure.db.player_state_fork_proof import (
     PlayerStateForkProofError,
     verify_fork_player_state_maps,
 )
+from beta_engine.domain.rankings.revision_state import (
+    ranking_revision_states_equivalent,
+)
 from beta_engine.infrastructure.db.week_transition_fork_audit import (
     WeekTransitionForkAuditUnsupportedError,
 )

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 from sqlalchemy.orm import Session
 
 from beta_engine.domain.run_packages import RunPackageState
@@ -27,18 +26,29 @@ def get_run_package_state(
     return state
 
 
-def put_run_package_state(session: Session, state: RunPackageState) -> None:
+def put_run_package_state(
+    session: Session,
+    state: RunPackageState,
+    *,
+    expected_fingerprint: str | None = None,
+) -> None:
+    # The optional fingerprint is computed by the caller from this exact frozen
+    # RunPackageState immediately before the write. Reuse it rather than hashing a
+    # large Earth snapshot a second time.
+    state_fingerprint = expected_fingerprint or state.fingerprint
     row = session.get(RunPackageStateModel, (state.run_id, state.branch_id))
     if row is None:
         row = RunPackageStateModel(run_id=state.run_id, branch_id=state.branch_id)
         session.add(row)
-    row.fingerprint = state.fingerprint
-    row.payload_json = state.model_dump_json()
+    payload_json = state.model_dump_json()
+    row.fingerprint = state_fingerprint
+    row.payload_json = payload_json
     session.flush()
-    if (
-        get_run_package_state(session, run_id=state.run_id, branch_id=state.branch_id)
-        != state
-    ):
+    # Verify the exact bytes/fingerprint held by the ORM row without reparsing and
+    # rehashing a potentially very large World snapshot immediately after writing it.
+    # Normal reads still perform full semantic validation in get_run_package_state().
+    session.refresh(row)
+    if row.fingerprint != state_fingerprint or row.payload_json != payload_json:
         raise ValueError("Run Package state write could not be verified")
 
 
@@ -61,7 +71,7 @@ def load_saved_run_package_state(
         return None
     if not isinstance(component, dict) or set(component) != {"fingerprint", "state"}:
         raise ValueError("Invalid Saved Revision Run Package component")
-    state = RunPackageState.model_validate_json(json.dumps(component["state"]))
+    state = RunPackageState.model_validate(component["state"])
     if (state.run_id, state.branch_id, state.fingerprint) != (
         run_id,
         branch_id,

@@ -35,7 +35,7 @@ from beta_engine.infrastructure.db.models import (
 )
 from beta_engine.domain.run_revisions import saved_revision_content_hash
 
-from test_saved_revision_history_api import ApiServer, _create_run, _request
+from tests.api.test_saved_revision_history_api import ApiServer, _create_run, _request
 
 
 def _post_headers(url, payload, headers):

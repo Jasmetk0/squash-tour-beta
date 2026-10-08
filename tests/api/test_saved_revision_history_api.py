@@ -8,6 +8,7 @@ from typing import Self
 from urllib import error, parse, request
 
 import uvicorn
+import pytest
 from sqlalchemy import text
 
 from beta_engine.main import create_app
@@ -88,6 +89,7 @@ def _create_run(server: ApiServer, *, display_name: str) -> tuple[str, str, str]
     return run_id, branch_id, revision_id
 
 
+@pytest.mark.pr_critical
 def test_saved_revision_history_api_supports_historical_branching(tmp_path) -> None:
     database_url = f"sqlite:///{tmp_path / 'revision-history-api.db'}"
     with ApiServer(database_url=database_url) as server:
@@ -185,9 +187,21 @@ def test_saved_revision_history_api_supports_historical_branching(tmp_path) -> N
         assert comparison["branch_id"] == fork_id
         assert comparison["from_revision"]["revision_id"] == initial_revision_id
         assert comparison["to_revision"]["revision_id"] == saved_revision_id
-        assert comparison["branch_changes"] == {}
+        assert comparison["branch_changes"] == {
+            "branch_id": {"before": initial_branch_id, "after": fork_id},
+            "display_name": {"before": "Timeline 1", "after": fork["display_name"]},
+            "forked_from_branch_id": {"before": None, "after": initial_branch_id},
+            "forked_from_saved_revision_id": {"before": None, "after": initial_revision_id},
+        }
         assert "viewer_branch_id" in comparison["run_changes"]
-        assert comparison["components"] == []
+        # Save captures the currently supported empty authority components too.
+        assert {item["component_key"] for item in comparison["components"]} == {
+            "application_validation_slots", "definitive_wild_card_assignments",
+            "player_tour_entry_triggers", "run_entry_decision_slots",
+            "tournament_application_submissions",
+        }
+        assert all(item["status"] == "added" and item["before_fingerprint"] is None
+                   and item["after_fingerprint"] for item in comparison["components"])
 
         status_code, detail = _request(
             "GET",
@@ -213,6 +227,7 @@ def test_saved_revision_history_api_supports_historical_branching(tmp_path) -> N
         assert historical_fork["forked_from_branch_id"] == fork_id
 
 
+@pytest.mark.pr_critical
 def test_saved_revision_history_api_is_scoped_and_fail_closed(tmp_path) -> None:
     database_url = f"sqlite:///{tmp_path / 'revision-history-api-errors.db'}"
     with ApiServer(database_url=database_url) as server:

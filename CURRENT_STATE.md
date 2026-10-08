@@ -1,5 +1,33 @@
 # Current implementation and next action
 
+## Earth canonical Run acceptance and performance — PR #1310 candidate, 8 October 2026
+
+- Reconciles the remaining #1310 changes onto merged #1309 (`buuk` at
+  `1abc43a8`), retaining the existing Earth identity configuration and historical data.
+- The real HTTP/SQLite acceptance covers both Earth packages through World/Calendar,
+  1,000-player historical generation, InitialWorld, initial Official Ranking, three
+  empty authoritative weeks, Save, API restart and a materialized Week-4 Branch fork.
+  Generation and rolled-back transition previews must replay exactly. The disposable
+  source package is removed before simulation/recovery to verify Run snapshot ownership.
+- Fixed quadratic serialization/hash work: weekly development previously hashed the
+  entire roster/context for each of 57 attributes of every player; InitialWorld and
+  lifecycle bootstrap also repeatedly hashed shared inputs. Fingerprints are now
+  computed once per operation without changing seed inputs or historical results.
+- Saved Revision validation retains a bounded cache of exact-byte validation proofs,
+  never cached mutable payloads. Every read rehashes stored bytes and metadata and
+  rechecks ownership/lineage. Internal head/fork reads retain only needed payloads;
+  public history still materializes the complete lineage. Corruption, including a
+  rehashed invalid component, remains blocking.
+- Completed compact Package receipt evidence for successful applications as well as
+  no-op applications; normal Package reads still validate semantic fingerprints.
+- Focused evidence: 50-player development fell from 5.36 s to 0.012 s with the same
+  fingerprint; 1,000-player development took 0.30 s. The formerly timed-out real
+  Week Transition preview completed in 6.85 s (repeat: 7.59 s). SQLite reading the
+  66 MB Package took 0.08 s versus 1.01 s validation and 2.10 s semantic hashing.
+- Completion remains gated on final-head PR-critical tests and Fast CI. These are
+  **empty-week** acceptance flows, not tournament/match or full-season certification.
+  No historical Earth ratings, realism status, sporting policy or lockfile changed.
+
 ## ATP realism calibration batch 3 — candidate, 7 October 2026
 
 The deterministic audit after merged batch 2 reports **124** ATP large annual

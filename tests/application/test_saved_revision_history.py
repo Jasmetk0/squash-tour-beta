@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Iterator
+import json
 
 import pytest
 from sqlalchemy import text
@@ -18,6 +19,7 @@ from beta_engine.application.run_working_draft_service import (
     RunWorkingDraftService,
 )
 from beta_engine.infrastructure.db import (
+    BranchRevisionStateConflictError,
     DatabaseSettings,
     SavedRevisionHistoryConflictError,
     SavedRevisionHistoryNotFoundError,
@@ -25,6 +27,8 @@ from beta_engine.infrastructure.db import (
     create_session_factory,
     create_sqlite_engine,
 )
+from beta_engine.infrastructure.db.models import BranchSavedRevisionModel, RunBranchModel
+from beta_engine.domain.run_revisions import saved_revision_content_hash
 
 
 def _repository(database_url: str) -> SimulationPersistenceRepository:
@@ -212,3 +216,53 @@ def test_history_validates_shared_fork_origin_after_branch_has_own_revisions(
     service = RunSavedRevisionHistoryService(repository=repository)
     with pytest.raises(SavedRevisionHistoryConflictError, match="shared fork origin"):
         service.list_history(run_id="run-one", branch_id="branch-two")
+
+
+@pytest.mark.pr_critical
+@pytest.mark.parametrize("corruption", ["payload", "summary", "sequence", "owner", "rehashed_component"])
+def test_cached_revision_validation_still_rejects_ancestor_corruption(tmp_path, corruption):
+    repository = _repository(f"sqlite:///{tmp_path / 'cached-history.db'}")
+    _create_run_and_fork(repository)
+    _save_twice_on_fork(repository)
+    repository.get_branch_revision_state(branch_id="branch-two")
+    with repository._session_factory.begin() as session:
+        row = session.get(BranchSavedRevisionModel, "revision-one")
+        if corruption == "payload":
+            row.payload_json = row.payload_json.replace("Revision History", "Tampered History")
+        elif corruption == "summary":
+            row.change_summary_json = '{"tampered":true}'
+        elif corruption == "sequence":
+            row.sequence = 19
+        elif corruption == "owner":
+            session.get(RunBranchModel, "branch-one").run_id = "missing-run"
+        else:
+            payload = json.loads(row.payload_json)
+            payload["content"]["run_package_state"] = {"fingerprint": "0" * 64, "state": {}}
+            row.payload_json = json.dumps(payload)
+            row.content_hash = saved_revision_content_hash(
+                revision_id=row.revision_id, run_id=row.run_id, branch_id=row.branch_id,
+                sequence=row.sequence, parent_revision_id=row.parent_revision_id,
+                kind=row.kind, payload_schema_version=row.payload_schema_version,
+                payload=payload, change_summary=json.loads(row.change_summary_json),
+            )
+    with pytest.raises(BranchRevisionStateConflictError):
+        repository.get_branch_revision_state(branch_id="branch-two")
+
+
+@pytest.mark.pr_critical
+def test_revision_validation_cache_keeps_no_payloads_and_returns_independent_reads(tmp_path):
+    repository = _repository(f"sqlite:///{tmp_path / 'cached-independent.db'}")
+    _create_run_and_fork(repository)
+    _save_twice_on_fork(repository)
+    first = repository.get_branch_revision_state(branch_id="branch-two")
+    first.saved_revision.payload["run"]["display_name"] = "changed returned object"
+    second = repository.get_branch_revision_state(branch_id="branch-two")
+    assert second.saved_revision.payload["run"]["display_name"] == "Revision History"
+    assert repository._revision_validation_cache
+    assert all(not item.payload and not item.change_summary
+               for item in repository._revision_validation_cache.values())
+    # Public history still returns every complete revision, including ancestors.
+    history = repository.get_branch_saved_revision_history(run_id="run-one", branch_id="branch-two")
+    assert len(history.saved_revisions) == 3
+    assert all(item.payload["run"]["display_name"] == "Revision History"
+               for item in history.saved_revisions)

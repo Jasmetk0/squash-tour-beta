@@ -208,6 +208,10 @@ def weekly_player_development_update(
         raise ValueError(
             "Completed-week context must contain exactly the predecessor sporting roster"
         )
+    # These command-local inputs do not change while developing the roster.
+    # Hashing the whole roster for each attribute made this step quadratic.
+    predecessor_fingerprint = predecessor.fingerprint
+    context_fingerprint = context.fingerprint
     developed = []
     for player in sorted(predecessor.players, key=lambda item: item.player_id):
         age = player_ages[player.player_id]
@@ -239,10 +243,10 @@ def weekly_player_development_update(
             roll = _roll(
                 predecessor.run_id,
                 predecessor.branch_id,
-                predecessor.fingerprint,
+                predecessor_fingerprint,
                 predecessor.week.ordinal,
                 predecessor.effective_development_policy.policy_id,
-                context.fingerprint,
+                context_fingerprint,
                 player.player_id,
                 attribute,
                 modulus=10000,
@@ -264,9 +268,9 @@ def weekly_player_development_update(
         applied_development_policy_fingerprint=_fingerprint(
             predecessor.effective_development_policy.model_dump(mode="json")
         ),
-        completed_context_fingerprint=context.fingerprint,
+        completed_context_fingerprint=context_fingerprint,
         source_initial_world_fingerprint=predecessor.source_initial_world_fingerprint,
-        predecessor_fingerprint=predecessor.fingerprint,
+        predecessor_fingerprint=predecessor_fingerprint,
         stage_provenance="weekly_player_development_update.v1:pre-between-week",
     )
 

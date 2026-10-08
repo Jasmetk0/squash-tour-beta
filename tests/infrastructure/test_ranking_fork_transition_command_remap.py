@@ -607,3 +607,235 @@ def test_confirmed_transition_saved_revision_can_follow_authority_revision():
             source_with_save, target,
             valid_source_revision_ids=frozenset({"source-revision"}),
         )
+
+
+def _paired_two_completed_transitions():
+    """A real three-publication lineage with two matching empty-week audits."""
+    from beta_engine.application.authoritative_week_transition import (
+        AuthoritativeWeekTransitionCommand,
+        AuthoritativeWeekTransitionResult,
+    )
+    from beta_engine.infrastructure.db.authoritative_week_transition import (
+        _world_event_payload,
+    )
+
+    source, _ = _paired_completed_transition()
+    previous = source.entries[-1].snapshot
+    week2 = RankingWeek(season_index=0, week=2)
+    week3 = RankingWeek(season_index=0, week=3)
+    previous_authority = source.transition_authorities[0]
+    authority = previous_authority.model_copy(
+        update={
+            "completed_week": week2,
+            "target_week": week3,
+            "adopted_by_command_id": "week-3",
+        }
+    )
+    command = RankingWeekCommand(
+        command_id="week-3",
+        context=RankingTransitionContext(
+            run_id="run",
+            branch_id="source",
+            completed_week=week2,
+            target_week=week3,
+            policy=previous.policy,
+            players=(),
+            discipline="stored_zeros",
+        ),
+        tournaments=(),
+        zero_versions=(),
+        audit=authority.audit,
+        authority_fingerprint=authority.fingerprint,
+    )
+    snapshot = calculate_official_ranking(
+        run_id="run",
+        branch_id="source",
+        week=week3,
+        policy=previous.policy,
+        players=(),
+        results=(),
+        previous=previous,
+        disciplinary_zeros=(),
+    )
+    entry = RankingRevisionEntry(
+        snapshot=snapshot,
+        inputs=RankingInputManifest(
+            players=(),
+            results=(),
+            zeros_from_history=True,
+            command_request_fingerprint=command.fingerprint,
+        ),
+        receipts=(
+            RankingRevisionReceipt(
+                command_id=command.command_id,
+                request_fingerprint=command.fingerprint,
+                request_payload_json=command.canonical_request_json,
+            ),
+        ),
+    )
+    request = AuthoritativeWeekTransitionCommand(
+        command_id="advance-week-2",
+        run_id="run",
+        branch_id="source",
+        base_revision_id=authority.base_revision_id,
+        completed_week=week2,
+        target_week=week3,
+        authority_fingerprint=authority.fingerprint,
+        audit=authority.audit,
+    )
+    result = AuthoritativeWeekTransitionResult(
+        run_id="run",
+        branch_id="source",
+        command_id=request.command_id,
+        completed_week=week2,
+        target_week=week3,
+        official_ranking_fingerprint=snapshot.fingerprint,
+        player_lifecycle_fingerprint="1" * 64,
+        player_sporting_fingerprint="2" * 64,
+        player_health_fingerprint="3" * 64,
+    )
+    old = source.authoritative_transition_state
+    updated = {
+        **old,
+        "world": {
+            **old["world"],
+            "current_ordinal": week3.ordinal,
+            "ranking_fingerprint": snapshot.fingerprint,
+        },
+        "publications": old["publications"] + [{
+            "run_id": "run",
+            "branch_id": "source",
+            "week_ordinal": week3.ordinal,
+            "snapshot_fingerprint": snapshot.fingerprint,
+            "payload_json": snapshot.model_dump_json(),
+        }],
+        "receipts": old["receipts"] + [{
+            "run_id": "run",
+            "branch_id": "source",
+            "command_id": request.command_id,
+            "request_fingerprint": request.fingerprint,
+            "request_payload_json": request.canonical_request_json,
+            "result_json": result.model_dump_json(),
+        }],
+        "events": old["events"] + [{
+            "run_id": "run",
+            "branch_id": "source",
+            "command_id": request.command_id,
+            "week_ordinal": week3.ordinal,
+            "event_kind": "week_transition_completed",
+            "payload_json": _world_event_payload(
+                request,
+                result.official_ranking_fingerprint,
+                result.player_lifecycle_fingerprint,
+                result.player_sporting_fingerprint,
+                result.player_health_fingerprint,
+            ),
+        }],
+    }
+    source = RankingRevisionState.model_validate_json(
+        source.model_copy(
+            update={
+                "entries": source.entries + (entry,),
+                "transition_authorities": source.transition_authorities + (authority,),
+                "authoritative_transition_state": updated,
+            }
+        ).model_dump_json()
+    )
+    stripped = source.model_copy(
+        update={
+            "authoritative_transition_state": {
+                **updated,
+                "receipts": [],
+                "events": [],
+            }
+        }
+    )
+    target = remap_source_free_ranking_state_for_branch(
+        stripped,
+        run_id="run",
+        source_branch_id="source",
+        target_branch_id="target",
+        target_base_revision_id="target-materialized-root",
+    )
+    return source, target
+
+
+def test_two_published_transitions_remap_all_confirmed_history():
+    from beta_engine.application.authoritative_week_transition import (
+        AuthoritativeWeekTransitionCommand,
+    )
+
+    source, target = _paired_two_completed_transitions()
+    rebound = _bind_pair(source, target)
+    records = rebound.authoritative_transition_state["receipts"]
+    assert len(records) == len(rebound.authoritative_transition_state["events"]) == 2
+    assert {
+        AuthoritativeWeekTransitionCommand.model_validate_json(
+            record["request_payload_json"]
+        ).target_week.week for record in records
+    } == {2, 3}
+    assert all(record["branch_id"] == "target" for record in records)
+    assert source.authoritative_transition_state["receipts"][0]["branch_id"] == "source"
+    assert target.authoritative_transition_state["receipts"] == []
+
+
+@pytest.mark.parametrize("missing_index", [0, 1])
+def test_multiweek_fork_rejects_missing_receipt_and_event_as_a_pair(missing_index):
+    """A missing *pair* evades mere receipt-vs-event count checks."""
+    from beta_engine.infrastructure.db.week_transition_fork_audit import (
+        WeekTransitionForkAuditUnsupportedError,
+    )
+
+    source, target = _paired_two_completed_transitions()
+    saved = source.authoritative_transition_state
+    corrupt = {
+        **saved,
+        "receipts": [
+            row for index, row in enumerate(saved["receipts"])
+            if index != missing_index
+        ],
+        "events": [
+            row for index, row in enumerate(saved["events"])
+            if index != missing_index
+        ],
+    }
+    source = source.model_copy(update={"authoritative_transition_state": corrupt})
+    with pytest.raises(
+        WeekTransitionForkAuditUnsupportedError,
+        match="lack exactly paired Week Transition receipts",
+    ):
+        _bind_pair(source, target)
+
+
+@pytest.mark.parametrize(
+    "corruption",
+    ["missing_initial_publication", "skipped_publication", "wrong_world_head", "wrong_snapshot"],
+)
+def test_multiweek_fork_rejects_incomplete_published_ranking_history(corruption):
+    from beta_engine.infrastructure.db.week_transition_fork_audit import (
+        WeekTransitionForkAuditUnsupportedError,
+    )
+
+    source, target = _paired_two_completed_transitions()
+    frozen = source.authoritative_transition_state
+    publications = [dict(row) for row in frozen["publications"]]
+    world = dict(frozen["world"])
+    if corruption == "missing_initial_publication":
+        publications.pop(0)
+    elif corruption == "skipped_publication":
+        publications.pop(1)
+    elif corruption == "wrong_world_head":
+        world["current_ordinal"] = 1
+    elif corruption == "wrong_snapshot":
+        publications[1]["snapshot_fingerprint"] = "f" * 64
+    broken = source.model_copy(
+        update={
+            "authoritative_transition_state": {
+                **frozen,
+                "publications": publications,
+                "world": world,
+            }
+        }
+    )
+    with pytest.raises(WeekTransitionForkAuditUnsupportedError):
+        _bind_pair(broken, target)

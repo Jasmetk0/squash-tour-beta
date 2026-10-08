@@ -86,7 +86,10 @@ def bind_event_free_transition_audit_to_ranking_fork(
     snapshot_map = _unique_fingerprint_map(
         tuple(entry.snapshot for entry in source.entries),
         tuple(entry.snapshot for entry in target.entries),
-        identity=lambda row: (row.week, row.policy, row.players),
+        identity=lambda row: (
+            row.week, row.policy,
+            tuple((item.player_id, item.rank, item.points) for item in row.rows),
+        ),
         field="snapshot",
     )
     authority_map = _unique_fingerprint_map(

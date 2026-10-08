@@ -42,6 +42,63 @@ def _unique_fingerprint_map(
     return mapping
 
 
+def _verify_published_transition_coverage(
+    source: RankingRevisionState,
+) -> None:
+    """Reject missing history even when receipt and World Event vanish together.
+
+    Published ranking weeks are authoritative and cannot be silently inferred
+    from a surviving subset of Week Transition receipts. Staged, *unpublished*
+    future ranking candidates/authorities are not part of this requirement.
+    """
+    state = source.authoritative_transition_state
+    if not isinstance(state, dict):
+        _reject("Post-transition fork requires captured publication history")
+    publications = state.get("publications")
+    world = state.get("world")
+    receipts = state.get("receipts")
+    if not isinstance(publications, list) or not isinstance(receipts, list) or not isinstance(world, dict):
+        _reject("Post-transition fork requires authoritative published history")
+
+    # A Run begins with Week 1 (ordinal zero) and every confirmed empty
+    # transition publishes exactly the following ordinal. Never treat an
+    # intermediate gap as a branchable Saved Revision.
+    expected_ordinals = list(range(len(publications)))
+    actual_ordinals = [row.get("week_ordinal") for row in publications if isinstance(row, dict)]
+    if not publications or actual_ordinals != expected_ordinals:
+        _reject("Published ranking history is missing, duplicated or out of order")
+    snapshots = {entry.snapshot.week.ordinal: entry.snapshot for entry in source.entries}
+    if (
+        len(snapshots) != len(source.entries)
+        or any(
+            ordinal not in snapshots
+            or row.get("run_id") != source.run_id
+            or row.get("branch_id") != source.branch_id
+            or row.get("snapshot_fingerprint") != snapshots[ordinal].fingerprint
+            for ordinal, row in enumerate(publications)
+        )
+        or world.get("run_id") != source.run_id
+        or world.get("branch_id") != source.branch_id
+        or world.get("current_ordinal") != expected_ordinals[-1]
+        or world.get("ranking_fingerprint") != snapshots[expected_ordinals[-1]].fingerprint
+    ):
+        _reject("Published ranking/world head differs from frozen source snapshots")
+
+    confirmed_weeks: list[int] = []
+    for row in receipts:
+        try:
+            command = AuthoritativeWeekTransitionCommand.model_validate_json(
+                row["request_payload_json"]
+            )
+        except (KeyError, TypeError, ValueError) as exc:
+            raise WeekTransitionForkAuditUnsupportedError(
+                "Published Week Transition receipt is invalid"
+            ) from exc
+        confirmed_weeks.append(command.target_week.ordinal)
+    if sorted(confirmed_weeks) != expected_ordinals[1:]:
+        _reject("Published ranking weeks lack exactly paired Week Transition receipts")
+
+
 def bind_event_free_transition_audit_to_ranking_fork(
     *,
     source: RankingRevisionState,
@@ -86,6 +143,7 @@ def bind_event_free_transition_audit_to_ranking_fork(
         _reject("Source Week Transition audit is incomplete")
     if source.season_closing_rankings or target.season_closing_rankings:
         _reject("Season Closing fork evidence is not supported")
+    _verify_published_transition_coverage(source)
 
     snapshot_map = _unique_fingerprint_map(
         tuple(entry.snapshot for entry in source.entries),

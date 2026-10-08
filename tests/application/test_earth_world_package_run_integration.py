@@ -3,7 +3,9 @@
 This is deliberately broader than the adapter unit/contract tests.  It exercises the
 real HTTP/application/persistence path with the checked-in FIFA/ATP Earth packages:
 source Package -> independent Run snapshot -> historical initial generation ->
-InitialWorld -> ranking -> three empty authoritative weeks -> Save/reopen -> Branch.
+InitialWorld -> ranking -> three empty authoritative weeks -> Save/reopen.
+The current post-transition Branch fork is deliberately fail-closed until the
+transition/lifecycle/sporting authorities have a safe identity remap.
 """
 
 from __future__ import annotations
@@ -257,9 +259,12 @@ def _advance_empty_week(
     return _save_ranking(server, ranking_root)
 
 
-@pytest.mark.pr_critical
+# Heavy 1000-player / three-week cross-boundary acceptance belongs in the
+# full regression run. PR critical already verifies the 1000-player Product
+# Run Save/reopen/fork and the three-week legacy season runtime separately.
+@pytest.mark.smoke
 @pytest.mark.parametrize("world_id", EARTH_WORLD_IDS)
-def test_earth_package_survives_real_run_generation_weeks_reopen_and_fork(
+def test_earth_package_survives_real_run_generation_weeks_reopen_and_blocks_unsafe_fork(
     tmp_path,
     world_id: str,
 ):
@@ -452,6 +457,10 @@ def test_earth_package_survives_real_run_generation_weeks_reopen_and_fork(
             "week": 4,
         }
 
+        # A ranking-bearing fork after Week Transitions is not supported yet:
+        # remapping only ranking snapshots would omit authoritative transition
+        # receipts, World Events, lifecycle and sporting state. Fail closed
+        # rather than construct a misleading branch with corrupted provenance.
         status, fork = _request(
             "POST",
             f"{reopened.base_url}/run-containers/{run_id}/branches",
@@ -461,34 +470,12 @@ def test_earth_package_survives_real_run_generation_weeks_reopen_and_fork(
                 "display_name": f"{world_id} week-4 fork",
             },
         )
-        assert status == 201, fork
-        fork_id = fork["branch_id"]
+        assert status == 409, fork
+        assert fork["detail"]["code"] == "saved_revision_branch_conflict"
+        assert "transition receipts/events" in fork["detail"]["message"]
+        assert "lifecycle/sporting remapping first" in fork["detail"]["message"]
 
-        status, fork_world = _request(
-            "GET",
-            f"{reopened.base_url}/admin/players/runs/{run_id}/branches/"
-            f"{fork_id}/initial-world",
-        )
-        assert status == 200, fork_world
-        assert len(fork_world["players"]) == TARGET_POOL_SIZE
-        assert fork_world["world_package_id"] == world_id
-        assert fork_world["players"] == reopened_world["players"]
-
-        status, fork_countries = _request(
-            "GET",
-            f"{reopened.base_url}/admin/runs/{run_id}/branches/{fork_id}/packages"
-            f"/world/{world_id}/countries",
-        )
-        assert status == 200, fork_countries
-        assert fork_countries["countries"] == reopened_countries["countries"]
-
-        status, fork_position = _request(
-            "GET",
-            f"{reopened.base_url}/admin/runs/{run_id}/branches/{fork_id}"
-            "/authoritative-simulation/position",
-        )
-        assert status == 200, fork_position
-        assert fork_position["current_week"] == {
-            "season_index": 0,
-            "week": 4,
-        }
+        # Failed branching must not change the saved source Run position.
+        status, still_position = _request("GET", sim_root + "/position")
+        assert status == 200, still_position
+        assert still_position == reopened_position

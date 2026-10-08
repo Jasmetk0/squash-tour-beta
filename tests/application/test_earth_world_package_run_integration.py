@@ -4,8 +4,8 @@ This is deliberately broader than the adapter unit/contract tests.  It exercises
 real HTTP/application/persistence path with the checked-in FIFA/ATP Earth packages:
 source Package -> independent Run snapshot -> historical initial generation ->
 InitialWorld -> ranking -> three empty authoritative weeks -> Save/reopen.
-The current post-transition Branch fork is deliberately fail-closed until the
-transition/lifecycle/sporting authorities have a safe identity remap.
+The post-transition Branch fork must recreate immutable transition audit and
+player-state evidence atomically; this acceptance exercises the resulting Branch.
 """
 
 from __future__ import annotations
@@ -259,14 +259,10 @@ def _advance_empty_week(
     return _save_ranking(server, ranking_root)
 
 
-# Heavy 1000-player / three-week cross-boundary acceptance belongs in the
-# full regression run. PR critical already verifies the 1000-player Product
-# Run Save/reopen/fork and the three-week legacy season runtime separately.
-@pytest.mark.smoke
-@pytest.mark.parametrize("world_id", EARTH_WORLD_IDS)
-def test_earth_package_survives_real_run_generation_weeks_reopen_and_blocks_unsafe_fork(
+def _verify_earth_post_transition_fork(
     tmp_path,
     world_id: str,
+    target_pool_size: int,
 ):
     case_root = tmp_path / world_id
     server, _ = _server_state(case_root)
@@ -317,7 +313,7 @@ def test_earth_package_survives_real_run_generation_weeks_reopen_and_blocks_unsa
             "world_package_id": world_id,
             "season": "2000/2001",
             "seed": GENERATION_SEED,
-            "target_pool_size": TARGET_POOL_SIZE,
+            "target_pool_size": target_pool_size,
         }
         pool_url = (
             f"{server.base_url}/admin/players/runs/{run_id}/branches/{branch_id}"
@@ -325,8 +321,8 @@ def test_earth_package_survives_real_run_generation_weeks_reopen_and_blocks_unsa
         )
         status, pool_preview = _request("POST", pool_url, generation)
         assert status == 200, pool_preview
-        assert pool_preview["result"]["summary"]["total_players"] == TARGET_POOL_SIZE
-        assert pool_preview["result"]["metadata"]["generated_count"] == TARGET_POOL_SIZE
+        assert pool_preview["result"]["summary"]["total_players"] == target_pool_size
+        assert pool_preview["result"]["metadata"]["generated_count"] == target_pool_size
         assert pool_preview["result"]["metadata"]["population_year_max"] < 2000
         assert pool_preview["result"]["summary"]["countries_represented"] > 20
         _assert_historical_rating_weighting(pool_preview, qatar)
@@ -349,7 +345,7 @@ def test_earth_package_survives_real_run_generation_weeks_reopen_and_blocks_unsa
             "POST", world_root + "/world-package/preview", adoption
         )
         assert status == 200, world_preview
-        assert len(world_preview["state"]["players"]) == TARGET_POOL_SIZE
+        assert len(world_preview["state"]["players"]) == target_pool_size
         assert world_preview["state"]["world_package_id"] == world_id
         status, adopted = _post_headers(
             world_root + "/world-package",
@@ -361,7 +357,7 @@ def test_earth_package_survives_real_run_generation_weeks_reopen_and_blocks_unsa
             },
         )
         assert status == 201, adopted
-        assert len(adopted["players"]) == TARGET_POOL_SIZE
+        assert len(adopted["players"]) == target_pool_size
         revision = _save_initial_world(world_root)
 
         ranking_root = (
@@ -412,8 +408,8 @@ def test_earth_package_survives_real_run_generation_weeks_reopen_and_blocks_unsa
                 week=RankingWeek(season_index=0, week=4),
             )
             assert week_one is not None and week_four is not None
-            assert len(week_one.players) == TARGET_POOL_SIZE
-            assert len(week_four.players) == TARGET_POOL_SIZE
+            assert len(week_one.players) == target_pool_size
+            assert len(week_four.players) == target_pool_size
             before = {player.player_id: player for player in week_one.players}
             changed = sum(
                 before[player.player_id].attributes != player.attributes
@@ -443,7 +439,7 @@ def test_earth_package_survives_real_run_generation_weeks_reopen_and_blocks_unsa
         )
         status, reopened_world = _request("GET", world_root)
         assert status == 200, reopened_world
-        assert len(reopened_world["players"]) == TARGET_POOL_SIZE
+        assert len(reopened_world["players"]) == target_pool_size
         assert reopened_world == adopted
 
         sim_root = (
@@ -457,10 +453,9 @@ def test_earth_package_survives_real_run_generation_weeks_reopen_and_blocks_unsa
             "week": 4,
         }
 
-        # A ranking-bearing fork after Week Transitions is not supported yet:
-        # remapping only ranking snapshots would omit authoritative transition
-        # receipts, World Events, lifecycle and sporting state. Fail closed
-        # rather than construct a misleading branch with corrupted provenance.
+        # Production API + SQLite fork must materialize target-owned ranking,
+        # lifecycle, health, sporting, transition receipts and World Events
+        # with an independent Branch identity. Source must stay unchanged.
         status, fork = _request(
             "POST",
             f"{reopened.base_url}/run-containers/{run_id}/branches",
@@ -470,12 +465,73 @@ def test_earth_package_survives_real_run_generation_weeks_reopen_and_blocks_unsa
                 "display_name": f"{world_id} week-4 fork",
             },
         )
-        assert status == 409, fork
-        assert fork["detail"]["code"] == "saved_revision_branch_conflict"
-        assert "transition receipts/events" in fork["detail"]["message"]
-        assert "lifecycle/sporting remapping first" in fork["detail"]["message"]
+        assert status == 201, fork
+        target_branch_id = fork["branch_id"]
+        assert target_branch_id != branch_id
+        assert fork["saved_head_revision_id"] != revision
 
-        # Failed branching must not change the saved source Run position.
+        fork_position_url = (
+            f"{reopened.base_url}/admin/runs/{run_id}/branches/{target_branch_id}"
+            "/authoritative-simulation/position"
+        )
+        status, fork_position = _request("GET", fork_position_url)
+        assert status == 200, fork_position
+        assert fork_position["current_week"] == {"season_index": 0, "week": 4}
+
+        from beta_engine.infrastructure.db.models import (
+            AuthoritativeWeekTransitionReceiptModel,
+            AuthoritativeWorldEventModel,
+        )
+        from sqlalchemy import select
+
+        with reopened.app.state.runtime.repository._session_factory() as session:
+            source_receipts = session.scalars(
+                select(AuthoritativeWeekTransitionReceiptModel).where(
+                    AuthoritativeWeekTransitionReceiptModel.run_id == run_id,
+                    AuthoritativeWeekTransitionReceiptModel.branch_id == branch_id,
+                )
+            ).all()
+            target_receipts = session.scalars(
+                select(AuthoritativeWeekTransitionReceiptModel).where(
+                    AuthoritativeWeekTransitionReceiptModel.run_id == run_id,
+                    AuthoritativeWeekTransitionReceiptModel.branch_id == target_branch_id,
+                )
+            ).all()
+            target_events = session.scalars(
+                select(AuthoritativeWorldEventModel).where(
+                    AuthoritativeWorldEventModel.run_id == run_id,
+                    AuthoritativeWorldEventModel.branch_id == target_branch_id,
+                )
+            ).all()
+            assert len(source_receipts) == len(target_receipts) == len(target_events) == 3
+            source_sporting = get_sporting(
+                session, run_id=run_id, branch_id=branch_id,
+                week=RankingWeek(season_index=0, week=4),
+            )
+            target_sporting = get_sporting(
+                session, run_id=run_id, branch_id=target_branch_id,
+                week=RankingWeek(season_index=0, week=4),
+            )
+            assert source_sporting is not None and target_sporting is not None
+            assert len(source_sporting.players) == len(target_sporting.players) == target_pool_size
+            assert source_sporting.players == target_sporting.players
+            assert source_sporting.fingerprint != target_sporting.fingerprint
+
         status, still_position = _request("GET", sim_root + "/position")
         assert status == 200, still_position
         assert still_position == reopened_position
+
+
+@pytest.mark.pr_critical
+def test_fifa_earth_small_run_can_fork_after_three_authoritative_weeks(tmp_path):
+    # One real smaller Run per PR, so the full 1000-player acceptance stays
+    # in smoke instead of consuming ~20 minutes on every backend change.
+    _verify_earth_post_transition_fork(tmp_path, "fifa_earth", 64)
+
+
+@pytest.mark.smoke
+@pytest.mark.parametrize("world_id", EARTH_WORLD_IDS)
+def test_earth_package_survives_real_run_generation_weeks_reopen_and_forks(
+    tmp_path, world_id: str,
+):
+    _verify_earth_post_transition_fork(tmp_path, world_id, TARGET_POOL_SIZE)

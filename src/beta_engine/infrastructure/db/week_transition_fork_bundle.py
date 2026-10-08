@@ -52,6 +52,7 @@ def bind_event_free_transition_audit_to_ranking_fork(
     lifecycle_fingerprint_map: Mapping[str, str],
     sporting_fingerprint_map: Mapping[str, str],
     health_fingerprint_map: Mapping[str, str],
+    valid_source_revision_ids: frozenset[str] | None = None,
 ) -> RankingRevisionState:
     """Return a validated target ranking bundle with rebuilt Week Transition audit.
 
@@ -62,6 +63,9 @@ def bind_event_free_transition_audit_to_ranking_fork(
     target-local player state; this pure layer cannot prove their provenance.
     It must NOT be installed until the surrounding atomic player/slot/revision
     fork transaction and replay/rollback verification are implemented.
+    When the caller supplies its independently validated source revision lineage,
+    both the authority's creation revision and the later confirmed command's
+    base revision must be reachable; a Save may legitimately occur between them.
     """
     if (
         not run_id or not source_branch_id or not target_branch_id
@@ -134,7 +138,14 @@ def bind_event_free_transition_audit_to_ranking_fork(
             original.completed_week != authority.completed_week
             or original.target_week != authority.target_week
             or original.authority_fingerprint != authority.fingerprint
-            or original.base_revision_id != authority.base_revision_id
+            or (
+                original.base_revision_id != authority.base_revision_id
+                if valid_source_revision_ids is None
+                else (
+                    original.base_revision_id not in valid_source_revision_ids
+                    or authority.base_revision_id not in valid_source_revision_ids
+                )
+            )
             or original.audit != authority.audit
             or result.target_week != original.target_week
             or result.official_ranking_fingerprint != source_snapshot.fingerprint

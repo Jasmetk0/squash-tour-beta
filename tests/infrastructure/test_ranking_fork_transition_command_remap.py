@@ -500,8 +500,11 @@ def test_rank_transition_bundle_rejects_corrupted_snapshot_link_even_with_matchi
             **state, "receipts": [receipt], "events": [forged_event],
         }}
     )
+    from beta_engine.infrastructure.db.week_transition_fork_audit import (
+        WeekTransitionForkAuditUnsupportedError,
+    )
     with pytest.raises(
-        RankingForkRemapUnsupportedError,
+        WeekTransitionForkAuditUnsupportedError,
         match="Saved Week Transition receipt differs from frozen ranking authority",
     ):
         _bind_pair(corrupted, target)

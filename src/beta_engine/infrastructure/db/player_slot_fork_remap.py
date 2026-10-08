@@ -8,6 +8,8 @@ from beta_engine.domain.players.sporting import (
     PlayerSportingWeekState,
 )
 from beta_engine.domain.simulation_slots import WeekSimulationSchedule, fingerprint
+from beta_engine.application.calendar_package_run_adapter import CalendarPackageRunAdapter
+from beta_engine.infrastructure.db.run_package_state import load_saved_run_package_state
 from beta_engine.domain.tournaments.draw_authority import (
     TournamentDrawAuthority,
     TournamentDrawAuthorityBuilder,
@@ -1001,6 +1003,86 @@ def _retarget_lucky_loser_fill_authority(
     )
 
 
+
+# Exact production provenance from AuthoritativeRunSimulationDriver.  Empty-week
+# calendar hashes are content-addressed and do not include Branch identity.
+_EMPTY_WEEK_PROVENANCE = (
+    "explicit Run/Branch empty-week completion against frozen season Calendar authority"
+)
+
+
+def _verified_empty_week_calendar_evidence(
+    source_payload: dict,
+    target_payload: dict | None,
+    *,
+    run_id: str,
+    source_branch_id: str,
+    target_branch_id: str,
+    context: CompletedWeekSportingContext,
+) -> str:
+    """Prove that a v1 empty-week source fingerprint is reusable in the fork.
+
+    Ordinary v1 contexts are mapped from branch-owned tournament sources; the
+    explicit empty-week context instead cites a *branch-independent* calendar
+    content hash. Recompute it from BOTH validated saved Run Package states,
+    not from the untrusted string carried in the sporting context.
+    """
+    if target_payload is None:
+        raise SimulationSlotForkRemapUnsupportedError(
+            "Explicit empty-week fork requires target Run Package evidence"
+        )
+    season = (
+        f"{2000 + context.completed_week.season_index}/"
+        f"{2001 + context.completed_week.season_index}"
+    )
+    package_id = CalendarPackageRunAdapter.package_id_for_season(season)
+    evidence = []
+    for payload, branch_id in (
+        (source_payload, source_branch_id),
+        (target_payload, target_branch_id),
+    ):
+        package_state = load_saved_run_package_state(
+            payload, run_id=run_id, branch_id=branch_id
+        )
+        if package_state is None:
+            raise SimulationSlotForkRemapUnsupportedError(
+                "Explicit empty-week fork requires saved Run Calendar Package"
+            )
+        projection = CalendarPackageRunAdapter.project_calendar(
+            package_state, package_id=package_id
+        )
+        if projection.season != season:
+            raise SimulationSlotForkRemapUnsupportedError(
+                "Explicit empty-week fork Calendar season differs"
+            )
+        if any(
+            (event.start_season_week or event.season_week)
+            <= context.completed_week.week
+            <= (event.end_season_week or event.start_season_week or event.season_week)
+            for event in projection.calendar.events
+        ):
+            raise SimulationSlotForkRemapUnsupportedError(
+                "Explicit empty-week fork Calendar contains an event"
+            )
+        evidence.append(
+            fingerprint(
+                {
+                    "schema_version": "empty_week_calendar_evidence.v2",
+                    "season": season,
+                    "week": context.completed_week.model_dump(mode="json"),
+                    "calendar_authority_mode": "run_package",
+                    "calendar_authority_fingerprint": projection.content_fingerprint,
+                    "calendar": projection.calendar.model_dump(mode="json"),
+                }
+            )
+        )
+    if evidence[0] != evidence[1] or context.source_fingerprints != (evidence[0],):
+        raise SimulationSlotForkRemapUnsupportedError(
+            "Explicit empty-week context disagrees with source/target Calendar evidence"
+        )
+    return evidence[1]
+
+
 def remap_coupled_player_slot_history(
     payload,
     *,
@@ -1009,6 +1091,7 @@ def remap_coupled_player_slot_history(
     target_branch_id: str,
     target_base_revision_id: str | None = None,
     v1_source_fingerprint_map: dict[str, str],
+    target_payload: dict | None = None,
     tournament_ranking_authority_map: dict[
         str, TournamentRankingSnapshotAuthority
     ] | None = None,
@@ -1697,17 +1780,44 @@ def remap_coupled_player_slot_history(
             continue
 
         if source_context.schema_version == "completed_week_sporting_context.v1":
-            try:
-                mapped_sources = tuple(
-                    sorted(
-                        v1_source_fingerprint_map[value]
-                        for value in source_context.source_fingerprints
+            if source_context.provenance == _EMPTY_WEEK_PROVENANCE:
+                # This is not a tournament fingerprint. Its independently
+                # recomputed Calendar evidence must match on BOTH Branches.
+                if (
+                    week_remap is not None
+                    or len(source_context.source_fingerprints) != 1
+                    or source_context.terminal_sporting_fingerprint is not None
+                    or source_context.match_effect_fingerprints
+                    or tuple(
+                        item.player_id for item in source_context.competitive_match_counts
+                    ) != tuple(sorted(item.player_id for item in source_state.players))
+                    or any(item.count != 0 for item in source_context.competitive_match_counts)
+                ):
+                    raise SimulationSlotForkRemapUnsupportedError(
+                        "Explicit empty-week sporting evidence is incomplete or nonempty"
                     )
+                mapped_sources = (
+                    _verified_empty_week_calendar_evidence(
+                        payload,
+                        target_payload,
+                        run_id=run_id,
+                        source_branch_id=source_branch_id,
+                        target_branch_id=target_branch_id,
+                        context=source_context,
+                    ),
                 )
-            except KeyError as exc:
-                raise SimulationSlotForkRemapUnsupportedError(
-                    "Sporting v1 context references evidence without a target mapping"
-                ) from exc
+            else:
+                try:
+                    mapped_sources = tuple(
+                        sorted(
+                            v1_source_fingerprint_map[value]
+                            for value in source_context.source_fingerprints
+                        )
+                    )
+                except KeyError as exc:
+                    raise SimulationSlotForkRemapUnsupportedError(
+                        "Sporting v1 context references evidence without a target mapping"
+                    ) from exc
             context_updates = {
                 "branch_id": target_branch_id,
                 "source_fingerprints": mapped_sources,

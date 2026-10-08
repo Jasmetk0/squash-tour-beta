@@ -1,5 +1,26 @@
 # Current implementation and next action
 
+## Post-transition fork atomic integration — under validation (8 Oct 2026)
+
+- The materialized Branch path now stages ranking without source Week Transition
+  audit rows, installs InitialWorld/ranking and verified target-local player
+  history, then binds the complete original event-free transition receipts and
+  World Events to those immutable target histories inside the same SQLite
+  transaction. A fresh ranking capture must match the new target bundle before
+  the target Saved Revision can commit; any mismatch aborts the Branch.
+- This integrates the remappers from #1311/#1312 and the player-history proof
+  from #1313. The ordinary pre-transition fork path remains unchanged.
+- Full real HTTP/SQLite Earth acceptance was updated to demand an independent
+  Week-4 Branch with three paired target-owned receipts/events, identical
+  sporting player data, a different Branch fingerprint, and an unchanged
+  source. An 8-player, one-week real HTTP/SQLite fork runs as
+  `pr_critical`; both 1000-player Earth packages retain three-week `smoke`
+  acceptance. The latter is not release-validated until separately run.
+- **Do not certify release or full post-transition fork support until the
+  new end-to-end test succeeds.** Non-event-free tournament/discipline
+  histories, Season Transitions and tampered evidence must continue to fail
+  closed. This slice intentionally leaves these unsupported.
+
 ## Materialized Branch player-state equivalence proof (8 October 2026)
 
 - Production `create_branch_from_saved_revision_atomically` now verifies the

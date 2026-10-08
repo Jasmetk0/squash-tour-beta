@@ -1,5 +1,24 @@
 # Current implementation and next action
 
+## Materialized Branch player-state equivalence proof (8 October 2026)
+
+- Production `create_branch_from_saved_revision_atomically` now verifies the
+  **complete** source/target lifecycle, sporting, health and completed-week
+  context histories before committing any materialized fork. Identity, week
+  ordering, predecessor chains, player facts, effective policy, stage provenance
+  and completed-week context linking are checked; a mismatch aborts the
+  transaction instead of trusting positional fingerprint zips.
+- A small `verify_fork_player_state_maps` helper derives exact
+  source-to-target fingerprints after verification. PR-critical tests include
+  positive Week-2 histories, empty forks, and missing/falsified data,
+  ownership, chronology, provenance, health and sporting context.
+- This proof improves **existing supported materialized forks** and provides
+  the player-evidence layer needed to connect the verified audit/ranking
+  adapters from #1311 and #1312. It does NOT turn on the unsupported Week-4
+  post-transition fork yet: atomic receipt/event installation, saved-revision
+  lineage and real replay/rollback must still be implemented and tested.
+  Existing HTTP 409 refusal remains intact.
+
 ## Verified Week Transition audit-to-ranking binding (PR candidate, 8 October 2026)
 
 - Added a pure `bind_event_free_transition_audit_to_ranking_fork` helper which

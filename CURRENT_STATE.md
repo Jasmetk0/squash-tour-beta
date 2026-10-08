@@ -4,11 +4,19 @@
 
 - Reconciles the remaining #1310 changes onto merged #1309 (`buuk` at
   `1abc43a8`), retaining the existing Earth identity configuration and historical data.
-- The real HTTP/SQLite acceptance covers both Earth packages through World/Calendar,
-  1,000-player historical generation, InitialWorld, initial Official Ranking, three
-  empty authoritative weeks, Save, API restart and a materialized Week-4 Branch fork.
-  Generation and rolled-back transition previews must replay exactly. The disposable
-  source package is removed before simulation/recovery to verify Run snapshot ownership.
+- The full real HTTP/SQLite **smoke** acceptance covers both Earth packages through
+  World/Calendar, 1,000-player historical generation, InitialWorld, initial Official
+  Ranking, three empty authoritative weeks, Save and API restart. Generation and
+  rolled-back transition previews must replay exactly. The disposable source package
+  is removed before simulation/recovery to verify Run snapshot ownership.
+- **Known, fail-closed blocker:** forking a Saved Revision after authoritative Week
+  Transitions still returns `saved_revision_branch_conflict` (409). Remapping only
+  ranking history is unsafe while transition receipts/events, lifecycle and sporting
+  authorities lack branch-local remapping. The heavy acceptance now asserts this
+  explicit refusal and unchanged source position rather than incorrectly claiming a
+  materialized Week-4 Branch. An earlier saved Product Run fork remains covered by
+  existing PR-critical tests. Implement and test full post-transition identity remap
+  as a separate architectural slice before claiming this capability.
 - Fixed quadratic serialization/hash work: weekly development previously hashed the
   entire roster/context for each of 57 attributes of every player; InitialWorld and
   lifecycle bootstrap also repeatedly hashed shared inputs. Fingerprints are now
@@ -24,8 +32,11 @@
   fingerprint; 1,000-player development took 0.30 s. The formerly timed-out real
   Week Transition preview completed in 6.85 s (repeat: 7.59 s). SQLite reading the
   66 MB Package took 0.08 s versus 1.01 s validation and 2.10 s semantic hashing.
-- Completion remains gated on final-head PR-critical tests and Fast CI. These are
-  **empty-week** acceptance flows, not tournament/match or full-season certification.
+- Completion is gated on final-head PR-critical tests and Fast CI. The expensive
+  1,000-player, three-week, both-world end-to-end acceptance is `smoke`, not part
+  of each Fast CI run, as required by the test policy; it requires a separate full
+  suite run before a release claim. These are **empty-week** acceptance flows, not
+  tournament/match, post-transition fork or full-season certification.
   No historical Earth ratings, realism status, sporting policy or lockfile changed.
 
 ## ATP realism calibration batch 3 — candidate, 7 October 2026

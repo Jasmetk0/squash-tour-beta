@@ -130,6 +130,15 @@ from beta_engine.infrastructure.db.player_state_fork_proof import (
     PlayerStateForkProofError,
     verify_fork_player_state_maps,
 )
+from beta_engine.infrastructure.db.week_transition_fork_audit import (
+    WeekTransitionForkAuditUnsupportedError,
+)
+from beta_engine.infrastructure.db.week_transition_fork_bundle import (
+    bind_event_free_transition_audit_to_ranking_fork,
+)
+from beta_engine.infrastructure.db.week_transition_fork_install import (
+    install_remapped_week_transition_audit,
+)
 from beta_engine.infrastructure.db.ranking_fork_remap import (
     RankingForkRemapUnsupportedError,
     remap_source_free_ranking_state_for_branch,
@@ -2777,9 +2786,33 @@ class SimulationPersistenceRepository:
                             run_id=run_id,
                             branch_id=source_branch_id,
                         )
+                        remap_week_audit = bool(
+                            source_ranking is not None
+                            and source_ranking.authoritative_transition_state is not None
+                            and (
+                                source_ranking.authoritative_transition_state["receipts"]
+                                or source_ranking.authoritative_transition_state["events"]
+                            )
+                        )
                         if source_ranking is not None:
+                            # Planning only: build/install the ranking lineage
+                            # without audit rows. The frozen source is retained
+                            # and the verified audit is installed later, after
+                            # target-local player history is materialized.
+                            ranking_for_remap = source_ranking
+                            if remap_week_audit:
+                                transition = source_ranking.authoritative_transition_state
+                                ranking_for_remap = source_ranking.model_copy(
+                                    update={
+                                        "authoritative_transition_state": {
+                                            **transition,
+                                            "receipts": [],
+                                            "events": [],
+                                        }
+                                    }
+                                )
                             remapped_ranking = remap_source_free_ranking_state_for_branch(
-                                source_ranking,
+                                ranking_for_remap,
                                 run_id=run_id,
                                 source_branch_id=source_branch_id,
                                 target_branch_id=branch_id,
@@ -3285,6 +3318,44 @@ class SimulationPersistenceRepository:
                         raise SavedRevisionBranchForkConflictError(
                             "Materialized Branch player-state fingerprint maps differ"
                         )
+
+                    if remap_week_audit:
+                        # Complete, independently verified target player evidence
+                        # is now present in this exact SQLite fork transaction.
+                        # Install receipts/events and re-capture full ranking
+                        # evidence before the target Saved Revision is written.
+                        assert source_ranking is not None
+                        assert remapped_ranking is not None
+                        try:
+                            rebound = bind_event_free_transition_audit_to_ranking_fork(
+                                source=source_ranking,
+                                target=remapped_ranking,
+                                run_id=run_id,
+                                source_branch_id=source_branch_id,
+                                target_branch_id=branch_id,
+                                lifecycle_fingerprint_map=player_state_proof.lifecycle,
+                                sporting_fingerprint_map=player_state_proof.sporting,
+                                health_fingerprint_map=player_state_proof.health,
+                            )
+                            installed_with_audit = install_remapped_week_transition_audit(
+                                session,
+                                state=rebound,
+                                run_id=run_id,
+                                branch_id=branch_id,
+                            )
+                            if not ranking_revision_states_equivalent(
+                                installed_with_audit, rebound
+                            ):
+                                raise ValueError("Installed transition audit changed")
+                        except (WeekTransitionForkAuditUnsupportedError, ValueError) as exc:
+                            raise SavedRevisionBranchForkConflictError(
+                                f"Post-transition Branch fork cannot be materialized safely: {exc}"
+                            ) from exc
+                        remapped_ranking = rebound
+                        target_payload["content"][RANKING_COMPONENT_KEY] = {
+                            "fingerprint": rebound.fingerprint,
+                            "state": rebound.model_dump(mode="json"),
+                        }
 
                     if remapped_entry_component is not None:
                         try:

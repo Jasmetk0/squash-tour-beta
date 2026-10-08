@@ -3339,6 +3339,10 @@ class SimulationPersistenceRepository:
                                 lifecycle_fingerprint_map=player_state_proof.lifecycle,
                                 sporting_fingerprint_map=player_state_proof.sporting,
                                 health_fingerprint_map=player_state_proof.health,
+                                valid_source_revision_ids=frozenset(
+                                    entry.revision_id for entry in source_lineage
+                                    if entry.sequence <= source_revision.sequence
+                                ),
                             )
                             installed_with_audit = install_remapped_week_transition_audit(
                                 session,

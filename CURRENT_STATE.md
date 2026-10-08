@@ -13,8 +13,9 @@
 - Full real HTTP/SQLite Earth acceptance was updated to demand an independent
   Week-4 Branch with three paired target-owned receipts/events, identical
   sporting player data, a different Branch fingerprint, and an unchanged
-  source. A smaller 64-player variant runs as `pr_critical` while both
-  1000-player Earth packages remain `smoke`.
+  source. An 8-player, one-week real HTTP/SQLite fork runs as
+  `pr_critical`; both 1000-player Earth packages retain three-week `smoke`
+  acceptance. The latter is not release-validated until separately run.
 - **Do not certify release or full post-transition fork support until the
   new end-to-end test succeeds.** Non-event-free tournament/discipline
   histories, Season Transitions and tampered evidence must continue to fail

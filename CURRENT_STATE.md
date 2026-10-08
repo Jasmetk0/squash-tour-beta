@@ -1,5 +1,23 @@
 # Current implementation and next action
 
+## Verified Week Transition audit-to-ranking binding (PR candidate, 8 October 2026)
+
+- Added a pure `bind_event_free_transition_audit_to_ranking_fork` helper which
+  checks that source Week Transition receipts reference the **exact saved**
+  ranking authority, historical Saved Revision identity, ranking snapshot and
+  week/audit evidence. It compares the independent target remapped ranking
+  lineage, reconstructs the new receipts/World Events using the reviewed
+  adapter from #1311, and validates the resulting full ranking revision bundle.
+- Rejects missing player-state maps, mismatched authority or snapshot evidence,
+  wrong Branch ownership, incomplete target lineage and duplicate target audit.
+  Dedicated PR-critical tests use actual immutable ranking and transition
+  models and prove source and target data are not mutated.
+- **Still not executable fork:** player-state maps have to be proven against
+  target-local lifecycle/sporting/health snapshots and installed together with
+  ranking and Saved Revision lineage in one atomic transaction. No production
+  fork/restore guard was weakened, and a post-transition fork still returns 409.
+  This is a trust-boundary integration building block, not an end-to-end pass.
+
 ## Post-transition Branch fork — audit remap foundation (PR candidate, 8 October 2026)
 
 - Added a **pure, fail-closed** Week Transition receipt/World Event remapper for

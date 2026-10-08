@@ -334,3 +334,214 @@ def test_transition_receipts_events_stay_fail_closed_until_player_state_remap():
             source_entries=source.entries,
             target_entries=source.entries,
         )
+
+
+def _paired_completed_transition():
+    """A real ranking lineage plus one fully frozen empty-week transition."""
+    from beta_engine.application.authoritative_week_transition import (
+        AuthoritativeWeekTransitionCommand,
+        AuthoritativeWeekTransitionResult,
+    )
+    from beta_engine.infrastructure.db.authoritative_week_transition import (
+        _world_event_payload,
+    )
+
+    source = _with_publication_world(_transition_backed_state())
+    authority = source.transition_authorities[0]
+    week_command = AuthoritativeWeekTransitionCommand(
+        command_id="advance-week-1",
+        run_id="run",
+        branch_id="source",
+        base_revision_id=authority.base_revision_id,
+        completed_week=authority.completed_week,
+        target_week=authority.target_week,
+        authority_fingerprint=authority.fingerprint,
+        audit=authority.audit,
+    )
+    result = AuthoritativeWeekTransitionResult(
+        run_id="run",
+        branch_id="source",
+        command_id=week_command.command_id,
+        completed_week=week_command.completed_week,
+        target_week=week_command.target_week,
+        official_ranking_fingerprint=source.entries[1].snapshot.fingerprint,
+        player_lifecycle_fingerprint="1" * 64,
+        player_sporting_fingerprint="2" * 64,
+        player_health_fingerprint="3" * 64,
+    )
+    source_state = {
+        **source.authoritative_transition_state,
+        "receipts": [{
+            "run_id": "run",
+            "branch_id": "source",
+            "command_id": week_command.command_id,
+            "request_fingerprint": week_command.fingerprint,
+            "request_payload_json": week_command.canonical_request_json,
+            "result_json": result.model_dump_json(),
+        }],
+        "events": [{
+            "run_id": "run",
+            "branch_id": "source",
+            "command_id": week_command.command_id,
+            "week_ordinal": week_command.target_week.ordinal,
+            "event_kind": "week_transition_completed",
+            "payload_json": _world_event_payload(
+                week_command,
+                result.official_ranking_fingerprint,
+                result.player_lifecycle_fingerprint,
+                result.player_sporting_fingerprint,
+                result.player_health_fingerprint,
+            ),
+        }],
+    }
+    source = RankingRevisionState.model_validate_json(
+        source.model_copy(
+            update={"authoritative_transition_state": source_state}
+        ).model_dump_json()
+    )
+    # Preparation is in memory only. Production must not install an
+    # audit-stripped bundle; the helper will rebind the complete evidence.
+    source_without_audit = source.model_copy(
+        update={
+            "authoritative_transition_state": {
+                **source_state, "receipts": [], "events": [],
+            }
+        }
+    )
+    target = remap_source_free_ranking_state_for_branch(
+        source_without_audit,
+        run_id="run",
+        source_branch_id="source",
+        target_branch_id="target",
+        target_base_revision_id="target-materialized-root",
+    )
+    return source, target
+
+
+def _bind_pair(source, target, **overrides):
+    from beta_engine.infrastructure.db.week_transition_fork_bundle import (
+        bind_event_free_transition_audit_to_ranking_fork,
+    )
+    args = {
+        "source": source,
+        "target": target,
+        "run_id": "run",
+        "source_branch_id": "source",
+        "target_branch_id": "target",
+        "lifecycle_fingerprint_map": {"1" * 64: "4" * 64},
+        "sporting_fingerprint_map": {"2" * 64: "5" * 64},
+        "health_fingerprint_map": {"3" * 64: "6" * 64},
+    }
+    args.update(overrides)
+    return bind_event_free_transition_audit_to_ranking_fork(**args)
+
+
+def test_verified_week_transition_audit_rebinds_into_complete_ranking_bundle():
+    from beta_engine.application.authoritative_week_transition import (
+        AuthoritativeWeekTransitionCommand,
+        AuthoritativeWeekTransitionResult,
+    )
+
+    source, target = _paired_completed_transition()
+    rebound = _bind_pair(source, target)
+    assert rebound.authoritative_transition_state["world"] == (
+        target.authoritative_transition_state["world"]
+    )
+    audit = rebound.authoritative_transition_state
+    assert len(audit["receipts"]) == len(audit["events"]) == 1
+    command = AuthoritativeWeekTransitionCommand.model_validate_json(
+        audit["receipts"][0]["request_payload_json"]
+    )
+    result = AuthoritativeWeekTransitionResult.model_validate_json(
+        audit["receipts"][0]["result_json"]
+    )
+    assert command.branch_id == result.branch_id == "target"
+    assert command.base_revision_id == "target-materialized-root"
+    assert command.authority_fingerprint == rebound.transition_authorities[0].fingerprint
+    assert result.official_ranking_fingerprint == rebound.entries[1].snapshot.fingerprint
+    assert result.player_lifecycle_fingerprint == "4" * 64
+    assert result.player_sporting_fingerprint == "5" * 64
+    assert result.player_health_fingerprint == "6" * 64
+    assert source.authoritative_transition_state["receipts"][0]["branch_id"] == "source"
+    assert target.authoritative_transition_state["receipts"] == []
+    assert RankingRevisionState.model_validate_json(rebound.model_dump_json()) == rebound
+    assert _bind_pair(source, target).fingerprint == rebound.fingerprint
+
+
+def test_rank_transition_bundle_rejects_corrupted_snapshot_link_even_with_matching_event():
+    from beta_engine.application.authoritative_week_transition import (
+        AuthoritativeWeekTransitionCommand,
+        AuthoritativeWeekTransitionResult,
+    )
+    from beta_engine.infrastructure.db.authoritative_week_transition import (
+        _world_event_payload,
+    )
+
+    source, target = _paired_completed_transition()
+    state = source.authoritative_transition_state
+    receipt = state["receipts"][0].copy()
+    result = AuthoritativeWeekTransitionResult.model_validate_json(receipt["result_json"])
+    forged_result = result.model_copy(update={"official_ranking_fingerprint": "f" * 64})
+    receipt["result_json"] = forged_result.model_dump_json()
+    command = AuthoritativeWeekTransitionCommand.model_validate_json(
+        receipt["request_payload_json"]
+    )
+    forged_event = {
+        **state["events"][0],
+        "payload_json": _world_event_payload(
+            command, forged_result.official_ranking_fingerprint,
+            forged_result.player_lifecycle_fingerprint,
+            forged_result.player_sporting_fingerprint,
+            forged_result.player_health_fingerprint,
+        ),
+    }
+    corrupted = source.model_copy(
+        update={"authoritative_transition_state": {
+            **state, "receipts": [receipt], "events": [forged_event],
+        }}
+    )
+    from beta_engine.infrastructure.db.week_transition_fork_audit import (
+        WeekTransitionForkAuditUnsupportedError,
+    )
+    with pytest.raises(
+        WeekTransitionForkAuditUnsupportedError,
+        match="Saved Week Transition receipt differs from frozen ranking authority",
+    ):
+        _bind_pair(corrupted, target)
+
+
+@pytest.mark.parametrize(
+    "change",
+    [
+        "missing_lifecycle", "missing_sporting", "missing_health",
+        "branch_mismatch", "audit_already_installed", "authority_mismatch",
+    ],
+)
+def test_rank_transition_bundle_rejects_missing_mappings_or_wrong_target(change):
+    from beta_engine.infrastructure.db.week_transition_fork_audit import (
+        WeekTransitionForkAuditUnsupportedError,
+    )
+
+    source, target = _paired_completed_transition()
+    overrides = {}
+    if change == "missing_lifecycle":
+        overrides["lifecycle_fingerprint_map"] = {}
+    elif change == "missing_sporting":
+        overrides["sporting_fingerprint_map"] = {}
+    elif change == "missing_health":
+        overrides["health_fingerprint_map"] = {}
+    elif change == "branch_mismatch":
+        overrides["target_branch_id"] = "wrong"
+    elif change == "audit_already_installed":
+        target = target.model_copy(
+            update={"authoritative_transition_state": {
+                **target.authoritative_transition_state,
+                "receipts": source.authoritative_transition_state["receipts"],
+            }}
+        )
+    elif change == "authority_mismatch":
+        target = target.model_copy(
+            update={"transition_authorities": ()}
+        )
+    with pytest.raises(WeekTransitionForkAuditUnsupportedError):
+        _bind_pair(source, target, **overrides)

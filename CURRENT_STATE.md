@@ -1,5 +1,23 @@
 # Current implementation and next action
 
+## Post-transition Branch fork — audit remap foundation (PR candidate, 8 October 2026)
+
+- Added a **pure, fail-closed** Week Transition receipt/World Event remapper for
+  event-free transitions. It validates the original canonical request fingerprint,
+  target/result identity and exact World Event payload before rebuilding target
+  Branch-local receipts and deterministic events from explicit maps of saved
+  revisions, ranking authorities/snapshots, lifecycle, sporting and health states.
+- Multiple consecutive weeks can be reconstructed in a standalone adapter; missing,
+  duplicated, corrupted, cross-Branch or incomplete evidence is rejected. No DB
+  rows, source Package contents, or Saved Revisions are changed by the adapter.
+- **This does not enable post-transition Branch creation yet.** It must be joined
+  atomically with verified target-local Saved Revision lineage, remapped lifecycle,
+  sporting/health states, published ranking history and replay/idempotence tests.
+  Production's existing 409 fail-closed guard remains unchanged. Non-empty
+  tournament/disciplinary transitions are deliberately not supported by this slice.
+- The new tests are short PR-critical unit tests. The earlier 1,000-player/two-world
+  end-to-end Run acceptance remains separate smoke coverage.
+
 ## Earth canonical Run acceptance and performance — PR #1310 candidate, 8 October 2026
 
 - Reconciles the remaining #1310 changes onto merged #1309 (`buuk` at

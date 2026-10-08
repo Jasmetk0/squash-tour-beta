@@ -126,6 +126,10 @@ from beta_engine.infrastructure.db.saved_revision_rankings import (
     load_saved_ranking_component,
     restore_saved_ranking_component,
 )
+from beta_engine.infrastructure.db.player_state_fork_proof import (
+    PlayerStateForkProofError,
+    verify_fork_player_state_maps,
+)
 from beta_engine.infrastructure.db.ranking_fork_remap import (
     RankingForkRemapUnsupportedError,
     remap_source_free_ranking_state_for_branch,
@@ -3231,6 +3235,56 @@ class SimulationPersistenceRepository:
                             put_completed_context(session, sporting_context)
                         for sporting_state in sporting_states:
                             put_sporting(session, sporting_state)
+
+                    # Do not rely on positional fingerprint zips alone: the
+                    # materialized Branch must preserve player facts, policies,
+                    # week chronology and completed-week sporting evidence.
+                    # All proof checks are inside this fork transaction; a
+                    # mismatch aborts before Saved Revision insertion.
+                    source_sporting_bundle = load_saved_sporting_bundle(
+                        source_revision.payload,
+                        run_id=run_id,
+                        branch_id=source_branch_id,
+                    )
+                    try:
+                        player_state_proof = verify_fork_player_state_maps(
+                            run_id=run_id,
+                            source_branch_id=source_branch_id,
+                            target_branch_id=branch_id,
+                            source_lifecycle=source_lifecycle_states,
+                            target_lifecycle=remapped_lifecycle_states or (),
+                            source_health=source_health_states,
+                            target_health=remapped_health_states or (),
+                            source_sporting=(
+                                source_sporting_bundle[0]
+                                if source_sporting_bundle is not None else ()
+                            ),
+                            target_sporting=(
+                                sporting_states
+                                if remapped_sporting_component is not None else ()
+                            ),
+                            source_contexts=(
+                                source_sporting_bundle[1]
+                                if source_sporting_bundle is not None else ()
+                            ),
+                            target_contexts=(
+                                sporting_contexts
+                                if remapped_sporting_component is not None else ()
+                            ),
+                        )
+                    except PlayerStateForkProofError as exc:
+                        raise SavedRevisionBranchForkConflictError(
+                            f"Materialized Branch player-state evidence mismatch: {exc}"
+                        ) from exc
+                    if (
+                        player_state_proof.lifecycle
+                        != source_to_target_lifecycle_fingerprint
+                        or player_state_proof.health
+                        != source_to_target_health_fingerprint
+                    ):
+                        raise SavedRevisionBranchForkConflictError(
+                            "Materialized Branch player-state fingerprint maps differ"
+                        )
 
                     if remapped_entry_component is not None:
                         try:

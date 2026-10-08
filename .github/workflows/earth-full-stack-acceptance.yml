@@ -37,7 +37,10 @@ jobs:
         run: |
           set -o pipefail
           mkdir -p earth-acceptance-logs
-          python -m pytest \
+          # Unlike Fast CI, this explicitly targets unchanged smoke modules.
+          # The repo's conftest scopes tests to changed paths on pull_request;
+          # use the established non-PR sentinel for this separate release gate.
+          GITHUB_EVENT_NAME=earth_full_stack_acceptance python -m pytest \
             tests/application/test_earth_world_package_run_integration.py \
             -m smoke -k "$EARTH_WORLD_ID" \
             --maxfail=1 --durations=20 -ra -s \

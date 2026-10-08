@@ -1,0 +1,52 @@
+name: Earth Full-Stack Acceptance
+
+# Expensive three-week / 1,000-player Earth acceptance is never part of Fast CI.
+# Run it manually for a release checkpoint. This workflow tests itself once when
+# first introduced or deliberately changed via a PR.
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - '.github/workflows/earth-full-stack-acceptance.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  earth-three-week:
+    name: ${{ matrix.world_id }} — 1000 players, 3 weeks, fork
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    strategy:
+      fail-fast: false
+      matrix:
+        world_id: [fifa_earth, atp_earth]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: pyproject.toml
+      - name: Install production backend and pytest
+        run: python -m pip install -e . pytest
+      - name: Run real HTTP/SQLite three-week Earth acceptance
+        shell: bash
+        env:
+          EARTH_WORLD_ID: ${{ matrix.world_id }}
+        run: |
+          set -o pipefail
+          mkdir -p earth-acceptance-logs
+          python -m pytest \
+            tests/application/test_earth_world_package_run_integration.py \
+            -m smoke -k "$EARTH_WORLD_ID" \
+            --maxfail=1 --durations=20 -ra -s \
+            2>&1 | tee "earth-acceptance-logs/${EARTH_WORLD_ID}.log"
+      - name: Preserve evidence even on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: earth-full-stack-${{ matrix.world_id }}-${{ github.run_id }}
+          path: earth-acceptance-logs/
+          if-no-files-found: warn
+          retention-days: 14

@@ -264,6 +264,8 @@ def _verify_earth_post_transition_fork(
     world_id: str,
     target_pool_size: int,
     weeks: int,
+    *,
+    continue_fork: bool = False,
 ):
     case_root = tmp_path / world_id
     server, _ = _server_state(case_root)
@@ -523,16 +525,75 @@ def _verify_earth_post_transition_fork(
             assert source_sporting.players == target_sporting.players
             assert source_sporting.fingerprint != target_sporting.fingerprint
 
+        if continue_fork:
+            # A Branch fork is useful only if it can author new independent
+            # history through the *same production HTTP/SQLite boundaries*.
+            # Weeks 1-3 were made truly event-free in the disposable fixture.
+            # Source remains at Week 2 while the target transitions to Week 3.
+            continuation_revision = _advance_empty_week(
+                reopened,
+                run_id=run_id,
+                branch_id=target_branch_id,
+                revision=fork["saved_head_revision_id"],
+                week=weeks + 1,
+            )
+            assert continuation_revision != fork["saved_head_revision_id"]
+
+            status, continued_position = _request("GET", fork_position_url)
+            assert status == 200, continued_position
+            assert continued_position["current_week"] == {
+                "season_index": 0, "week": weeks + 2
+            }
+            assert continued_position != fork_position
+
+            with reopened.app.state.runtime.repository._session_factory() as session:
+                source_next = get_sporting(
+                    session, run_id=run_id, branch_id=branch_id,
+                    week=RankingWeek(season_index=0, week=weeks + 2),
+                )
+                target_next = get_sporting(
+                    session, run_id=run_id, branch_id=target_branch_id,
+                    week=RankingWeek(season_index=0, week=weeks + 2),
+                )
+                assert source_next is None
+                assert target_next is not None
+                assert len(target_next.players) == target_pool_size
+                source_events_after = session.scalars(
+                    select(AuthoritativeWorldEventModel).where(
+                        AuthoritativeWorldEventModel.run_id == run_id,
+                        AuthoritativeWorldEventModel.branch_id == branch_id,
+                    )
+                ).all()
+                target_events_after = session.scalars(
+                    select(AuthoritativeWorldEventModel).where(
+                        AuthoritativeWorldEventModel.run_id == run_id,
+                        AuthoritativeWorldEventModel.branch_id == target_branch_id,
+                    )
+                ).all()
+                assert len(source_events_after) == weeks
+                assert len(target_events_after) == weeks + 1
+
+            # The target fork's own Saved Revision must be durable and distinct.
+            status, target_history = _request(
+                "GET",
+                f"{reopened.base_url}/run-containers/{run_id}/branches/"
+                f"{target_branch_id}/saved-revisions",
+            )
+            assert status == 200, target_history
+            assert target_history["saved_head_revision_id"] == continuation_revision
+
         status, still_position = _request("GET", sim_root + "/position")
         assert status == 200, still_position
         assert still_position == reopened_position
 
 
 @pytest.mark.pr_critical
-def test_fifa_earth_small_run_can_fork_after_one_authoritative_week(tmp_path):
-    # One real 8-player/one-week fork per PR. The full 1000-player,
-    # three-week, two-world acceptance stays in smoke.
-    _verify_earth_post_transition_fork(tmp_path, "fifa_earth", 8, 1)
+def test_fifa_earth_small_run_can_fork_and_continue_independently(tmp_path):
+    # Real 8-player/one-week fork + target-owned Week-2→3 continuation.
+    # Full 1000-player three-week, two-world acceptance stays in smoke.
+    _verify_earth_post_transition_fork(
+        tmp_path, "fifa_earth", 8, 1, continue_fork=True
+    )
 
 
 @pytest.mark.smoke

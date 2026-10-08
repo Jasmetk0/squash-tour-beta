@@ -23,6 +23,7 @@ from beta_engine.application.earth_research_observations import (
 )
 from beta_engine.domain.countries import Country, CountriesConfig
 from beta_engine.domain.countries.rating_history import CountryRatingHistory, GAME_ATTRIBUTE_NAMES, RATING_SCALE_V2
+from beta_engine.infrastructure.world_config import load_player_identity_config
 from beta_engine.infrastructure.world_package_storage import WorldPackageCountryStore
 
 
@@ -470,6 +471,15 @@ def build_earth_package(*, base_package: Path, bundle: EarthResearchBundle, outp
 
         generation = staged / "generation"
         generation.mkdir(exist_ok=True)
+        (generation / "player_identity.json").write_text(
+            json.dumps(
+                load_player_identity_config().model_dump(mode="json"),
+                ensure_ascii=False,
+                indent=2,
+            )
+            + "\n",
+            encoding="utf-8",
+        )
 
         source_root = generation / "sources"
         source_root.mkdir(exist_ok=True)

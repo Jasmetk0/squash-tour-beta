@@ -164,8 +164,9 @@ class RunPackageService:
             else document.leaf_documents()
         )
         for leaf in reviewed_documents:
+            leaf_source_fingerprint = leaf.source_fingerprint
             prior_same = versions.get((leaf.package_id, leaf.source_version))
-            if prior_same and prior_same.source_fingerprint != leaf.source_fingerprint:
+            if prior_same and prior_same.source_fingerprint != leaf_source_fingerprint:
                 conflicts.append(
                     f"{leaf.package_id}@{leaf.source_version}:source_history_divergence"
                 )
@@ -407,6 +408,7 @@ class RunPackageService:
                 else document.leaf_documents()
             )
             for leaf in documents_to_record:
+                leaf_source_fingerprint = leaf.source_fingerprint
                 leaf_selected = tuple(
                     sorted(
                         entity.source_entity_id
@@ -432,7 +434,7 @@ class RunPackageService:
                     package_type=leaf.package_type,
                     package_id=leaf.package_id,
                     source_version=leaf.source_version,
-                    source_fingerprint=leaf.source_fingerprint,
+                    source_fingerprint=leaf_source_fingerprint,
                     parent_source_fingerprint=leaf.parent_source_fingerprint,
                     document_explicit_scope=leaf.explicit_scope,
                     applied_entity_ids=(
@@ -506,7 +508,7 @@ class RunPackageService:
                         ),
                         source_package_id=leaf.package_id,
                         source_package_version=leaf.source_version,
-                        source_package_fingerprint=leaf.source_fingerprint,
+                        source_package_fingerprint=leaf_source_fingerprint,
                         source_entity_id=entity.source_entity_id,
                         entity_kind=entity.entity_kind,
                         entity_schema_version=entity.entity_schema_version,

@@ -416,6 +416,13 @@ def test_full_earth_research_builds_to_valid_distributed_semantics(tmp_path, wor
     assert WorldPackageCountryStore(output).semantic_payload() == (
         WorldPackageCountryStore(distributed_root).semantic_payload()
     )
+    built_identity = output / "generation/player_identity.json"
+    distributed_identity = distributed_root / "generation/player_identity.json"
+    assert built_identity.is_file()
+    assert distributed_identity.is_file()
+    assert json.loads(built_identity.read_text()) == json.loads(
+        distributed_identity.read_text()
+    )
 
 
 def test_flat_csv_import_refuses_to_strip_history_from_editable_clone(tmp_path):

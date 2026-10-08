@@ -263,6 +263,7 @@ def _verify_earth_post_transition_fork(
     tmp_path,
     world_id: str,
     target_pool_size: int,
+    weeks: int,
 ):
     case_root = tmp_path / world_id
     server, _ = _server_state(case_root)
@@ -324,7 +325,9 @@ def _verify_earth_post_transition_fork(
         assert pool_preview["result"]["summary"]["total_players"] == target_pool_size
         assert pool_preview["result"]["metadata"]["generated_count"] == target_pool_size
         assert pool_preview["result"]["metadata"]["population_year_max"] < 2000
-        assert pool_preview["result"]["summary"]["countries_represented"] > 20
+        assert pool_preview["result"]["summary"]["countries_represented"] > min(
+            20, max(1, target_pool_size // 10)
+        )
         _assert_historical_rating_weighting(pool_preview, qatar)
         status, replay_pool = _request("POST", pool_url, generation)
         assert status == 200, replay_pool
@@ -377,7 +380,7 @@ def _verify_earth_post_transition_fork(
         # Run snapshot, even when the disposable authoring source disappears.
         shutil.rmtree(world_packages_root / world_id)
 
-        for week in (1, 2, 3):
+        for week in range(1, weeks + 1):
             revision = _advance_empty_week(
                 server,
                 run_id=run_id,
@@ -392,7 +395,7 @@ def _verify_earth_post_transition_fork(
         )
         status, position = _request("GET", sim_root + "/position")
         assert status == 200, position
-        assert position["current_week"] == {"season_index": 0, "week": 4}
+        assert position["current_week"] == {"season_index": 0, "week": weeks + 1}
 
         with server.app.state.runtime.repository._session_factory() as session:
             week_one = get_sporting(
@@ -401,21 +404,22 @@ def _verify_earth_post_transition_fork(
                 branch_id=branch_id,
                 week=RankingWeek(season_index=0, week=1),
             )
-            week_four = get_sporting(
+            final_week = get_sporting(
                 session,
                 run_id=run_id,
                 branch_id=branch_id,
-                week=RankingWeek(season_index=0, week=4),
+                week=RankingWeek(season_index=0, week=weeks + 1),
             )
-            assert week_one is not None and week_four is not None
+            assert week_one is not None and final_week is not None
             assert len(week_one.players) == target_pool_size
-            assert len(week_four.players) == target_pool_size
-            before = {player.player_id: player for player in week_one.players}
-            changed = sum(
-                before[player.player_id].attributes != player.attributes
-                for player in week_four.players
-            )
-            assert changed > 0
+            assert len(final_week.players) == target_pool_size
+            if weeks >= 3:
+                before = {player.player_id: player for player in week_one.players}
+                changed = sum(
+                    before[player.player_id].attributes != player.attributes
+                    for player in final_week.players
+                )
+                assert changed > 0
 
         source_world_fingerprint = countries["fingerprint"]
 
@@ -450,7 +454,7 @@ def _verify_earth_post_transition_fork(
         assert status == 200, reopened_position
         assert reopened_position["current_week"] == {
             "season_index": 0,
-            "week": 4,
+            "week": weeks + 1,
         }
 
         # Production API + SQLite fork must materialize target-owned ranking,
@@ -462,7 +466,7 @@ def _verify_earth_post_transition_fork(
             {
                 "source_branch_id": branch_id,
                 "source_saved_revision_id": revision,
-                "display_name": f"{world_id} week-4 fork",
+                "display_name": f"{world_id} week-{weeks + 1} fork",
             },
         )
         assert status == 201, fork
@@ -476,7 +480,9 @@ def _verify_earth_post_transition_fork(
         )
         status, fork_position = _request("GET", fork_position_url)
         assert status == 200, fork_position
-        assert fork_position["current_week"] == {"season_index": 0, "week": 4}
+        assert fork_position["current_week"] == {
+            "season_index": 0, "week": weeks + 1
+        }
 
         from beta_engine.infrastructure.db.models import (
             AuthoritativeWeekTransitionReceiptModel,
@@ -503,14 +509,14 @@ def _verify_earth_post_transition_fork(
                     AuthoritativeWorldEventModel.branch_id == target_branch_id,
                 )
             ).all()
-            assert len(source_receipts) == len(target_receipts) == len(target_events) == 3
+            assert len(source_receipts) == len(target_receipts) == len(target_events) == weeks
             source_sporting = get_sporting(
                 session, run_id=run_id, branch_id=branch_id,
-                week=RankingWeek(season_index=0, week=4),
+                week=RankingWeek(season_index=0, week=weeks + 1),
             )
             target_sporting = get_sporting(
                 session, run_id=run_id, branch_id=target_branch_id,
-                week=RankingWeek(season_index=0, week=4),
+                week=RankingWeek(season_index=0, week=weeks + 1),
             )
             assert source_sporting is not None and target_sporting is not None
             assert len(source_sporting.players) == len(target_sporting.players) == target_pool_size
@@ -523,10 +529,10 @@ def _verify_earth_post_transition_fork(
 
 
 @pytest.mark.pr_critical
-def test_fifa_earth_small_run_can_fork_after_three_authoritative_weeks(tmp_path):
-    # One real smaller Run per PR, so the full 1000-player acceptance stays
-    # in smoke instead of consuming ~20 minutes on every backend change.
-    _verify_earth_post_transition_fork(tmp_path, "fifa_earth", 64)
+def test_fifa_earth_small_run_can_fork_after_one_authoritative_week(tmp_path):
+    # One real 8-player/one-week fork per PR. The full 1000-player,
+    # three-week, two-world acceptance stays in smoke.
+    _verify_earth_post_transition_fork(tmp_path, "fifa_earth", 8, 1)
 
 
 @pytest.mark.smoke
@@ -534,4 +540,4 @@ def test_fifa_earth_small_run_can_fork_after_three_authoritative_weeks(tmp_path)
 def test_earth_package_survives_real_run_generation_weeks_reopen_and_forks(
     tmp_path, world_id: str,
 ):
-    _verify_earth_post_transition_fork(tmp_path, world_id, TARGET_POOL_SIZE)
+    _verify_earth_post_transition_fork(tmp_path, world_id, TARGET_POOL_SIZE, 3)

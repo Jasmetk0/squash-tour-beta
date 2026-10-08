@@ -3172,6 +3172,7 @@ class SimulationPersistenceRepository:
                                 v1_source_fingerprint_map=(
                                     source_to_target_tournament_fingerprint
                                 ),
+                                target_payload=target_payload,
                                 tournament_ranking_authority_map=(
                                     source_to_target_tournament_ranking_authority
                                 ),

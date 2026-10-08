@@ -84,6 +84,7 @@ def bootstrap_lifecycle(
     policy: PlayerLifecyclePolicy | None = None,
 ):
     week = RankingWeek(season_index=0, week=1)
+    world_fingerprint = world.fingerprint
     players = []
     for p in world.players:
         provenance = json.dumps(
@@ -113,7 +114,7 @@ def bootstrap_lifecycle(
                     year_week=season_week_to_calendar_position(2000, 1).year_week,
                 ),
                 status="active",
-                origin=f"initial_world:{world.fingerprint}",
+                origin=f"initial_world:{world_fingerprint}",
             )
         )
     return put_lifecycle(
@@ -123,7 +124,7 @@ def bootstrap_lifecycle(
             branch_id=world.branch_id,
             week=week,
             players=tuple(players),
-            source_initial_world_fingerprint=world.fingerprint,
+            source_initial_world_fingerprint=world_fingerprint,
             policy=policy or PlayerLifecycleWeekState.model_fields["policy"].default,
         ),
     )

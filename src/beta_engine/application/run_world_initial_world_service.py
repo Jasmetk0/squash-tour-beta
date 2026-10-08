@@ -76,6 +76,7 @@ class RunWorldInitialWorldService:
             branch_id=branch_id,
             request=request.generation,
         )
+        pool_fingerprint = pool.preview_fingerprint
         players = tuple(
             sorted(
                 (
@@ -83,7 +84,7 @@ class RunWorldInitialWorldService:
                         player,
                         season=request.generation.season,
                         bootstrap_seed=request.generation.seed,
-                        source_fingerprint=pool.preview_fingerprint,
+                        source_fingerprint=pool_fingerprint,
                     )
                     for player in pool.result.players
                 ),
@@ -95,7 +96,7 @@ class RunWorldInitialWorldService:
             raise ValueError("Custom Run requires an explicit first-season Best N")
         bootstrap_fingerprint = canonical_hash(
             {
-                "pool_preview_fingerprint": pool.preview_fingerprint,
+                "pool_preview_fingerprint": pool_fingerprint,
                 "bootstrap_seed": request.generation.seed,
                 "players": [player.model_dump(mode="json") for player in players],
             }
@@ -109,11 +110,11 @@ class RunWorldInitialWorldService:
             ),
             source_kind="run_world_generated_pool.v1",
             source_season=request.generation.season,
-            source_fingerprint=pool.preview_fingerprint,
+            source_fingerprint=pool_fingerprint,
             world_package_id=request.generation.world_package_id,
             world_country_content_fingerprint=pool.world_country_content_fingerprint,
             world_generation_content_fingerprint=pool.world_generation_content_fingerprint,
-            run_world_pool_preview_fingerprint=pool.preview_fingerprint,
+            run_world_pool_preview_fingerprint=pool_fingerprint,
             bootstrap_seed=request.generation.seed,
             bootstrap_fingerprint=bootstrap_fingerprint,
             adopted_by_command_id=request.command_id,

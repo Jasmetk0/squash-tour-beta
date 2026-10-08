@@ -79,6 +79,33 @@ def context_for(value, *, counts=None, source="source-a"):
     )
 
 
+@pytest.mark.pr_critical
+@pytest.mark.parametrize("size,expected", [
+    (10, "b4969ed8a6e740dad396a921e8d9c035d4b37c255c5fb910d056f8e312936911"),
+    (50, "cefeff6e91e9dcd408e0b0231362be756b6ee56831ef142273a5d4ee15f0289c"),
+])
+def test_development_preserves_pre_optimization_replay(size, expected):
+    value = state([record(f"p{i:04d}") for i in range(size)])
+    assert develop(value, {p.player_id: 20 for p in value.players}).fingerprint == expected
+
+
+@pytest.mark.pr_critical
+def test_thousand_player_development_hashes_shared_inputs_once(monkeypatch):
+    calls = {"state": 0, "context": 0}
+    for model, label in ((PlayerSportingWeekState, "state"), (CompletedWeekSportingContext, "context")):
+        original = model.fingerprint.fget
+
+        def measured(self, original=original, label=label):
+            calls[label] += 1
+            return original(self)
+
+        monkeypatch.setattr(model, "fingerprint", property(measured))
+    value = state([record(f"p{i:04d}") for i in range(1000)])
+    result = develop(value, {p.player_id: 20 for p in value.players})
+    assert len(result.players) == 1000
+    assert calls == {"state": 1, "context": 1}
+
+
 def test_catalog_is_exactly_master_57_and_validation_is_closed():
     assert len(ATTRIBUTE_GROUPS) == 6
     assert len(CANONICAL_PLAYER_ATTRIBUTES) == 57

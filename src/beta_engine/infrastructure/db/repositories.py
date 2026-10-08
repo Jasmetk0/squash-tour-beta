@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import hashlib
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
+from threading import Lock
 from typing import Callable, Literal
 
 from sqlalchemy import Engine, Select, func, select, text, update
@@ -1422,6 +1423,11 @@ class SimulationPersistenceRepository:
     ) -> None:
         self._engine = engine
         self._session_factory = session_factory
+        # Cache only proof of validation, never mutable payloads or ORM rows.
+        # Every lookup rehashes the exact stored bytes and metadata; tampering,
+        # including a rewritten content hash, invalidates the proof.
+        self._revision_validation_cache: dict[tuple, BranchSavedRevisionRecord] = {}
+        self._revision_validation_lock = Lock()
 
     def prepare_official_ranking(
         self,
@@ -2368,15 +2374,38 @@ class SimulationPersistenceRepository:
         *,
         session: Session,
         model: BranchSavedRevisionModel,
+        materialize_payload: bool = True,
     ) -> BranchSavedRevisionRecord:
         """Load one immutable revision and validate its stored owner and hash."""
 
-        revision = self._to_branch_saved_revision(model)
+        signature = (
+            model.revision_id,
+            model.run_id,
+            model.branch_id,
+            model.sequence,
+            model.parent_revision_id,
+            model.kind,
+            model.payload_schema_version,
+            model.content_hash_algorithm,
+            model.content_hash,
+            model.created_at,
+            hashlib.sha256(model.payload_json.encode()).digest(),
+            hashlib.sha256(model.change_summary_json.encode()).digest(),
+        )
+        with self._revision_validation_lock:
+            verified = self._revision_validation_cache.get(signature)
+        revision = (
+            self._to_branch_saved_revision(model, validate_components=verified is None)
+            if materialize_payload or verified is None
+            else verified
+        )
         owner = session.get(RunBranchModel, revision.branch_id)
         if owner is None or owner.run_id != revision.run_id:
             raise BranchRevisionStateConflictError(
                 f"Saved Revision {revision.revision_id} has no coherent owning Branch"
             )
+        if verified is not None:
+            return revision
         payload_run = revision.payload.get("run")
         payload_branch = revision.payload.get("branch")
         if (
@@ -2399,7 +2428,14 @@ class SimulationPersistenceRepository:
             raise BranchRevisionStateConflictError(
                 f"Saved Revision {revision.revision_id} failed content integrity validation"
             )
-        return revision
+        metadata = replace(revision, payload={}, change_summary={})
+        with self._revision_validation_lock:
+            self._revision_validation_cache[signature] = metadata
+            if len(self._revision_validation_cache) > 128:
+                self._revision_validation_cache.pop(
+                    next(iter(self._revision_validation_cache))
+                )
+        return revision if materialize_payload else metadata
 
     def _validated_branch_revision_lineage_in_session(
         self,
@@ -2407,8 +2443,12 @@ class SimulationPersistenceRepository:
         session: Session,
         branch: RunBranchModel,
         visiting_branch_ids: frozenset[str] = frozenset(),
+        payload_revision_ids: frozenset[str] | None = None,
     ) -> list[BranchSavedRevisionRecord]:
-        """Return newest-to-oldest valid history reachable by one Branch."""
+        """Validate every ancestor; retain only requested payloads for internal reads.
+
+        Public history uses the default to materialize the complete lineage.
+        """
 
         if branch.branch_id in visiting_branch_ids:
             raise BranchRevisionStateConflictError(
@@ -2424,14 +2464,6 @@ class SimulationPersistenceRepository:
             raise BranchRevisionStateConflictError(
                 f"Saved Revision {head_revision_id} was not found"
             )
-        head_revision = self._validated_saved_revision_in_session(
-            session=session, model=head_model
-        )
-        if head_revision.run_id != branch.run_id:
-            raise BranchRevisionStateConflictError(
-                "Saved Revision identity does not match its Run"
-            )
-
         lineage: list[BranchSavedRevisionRecord] = []
         visited_revision_ids: set[str] = set()
         current_model: BranchSavedRevisionModel | None = head_model
@@ -2442,7 +2474,12 @@ class SimulationPersistenceRepository:
                 )
             visited_revision_ids.add(current_model.revision_id)
             current = self._validated_saved_revision_in_session(
-                session=session, model=current_model
+                session=session,
+                model=current_model,
+                materialize_payload=(
+                    payload_revision_ids is None
+                    or current_model.revision_id in payload_revision_ids
+                ),
             )
             if current.run_id != branch.run_id:
                 raise BranchRevisionStateConflictError(
@@ -2496,6 +2533,7 @@ class SimulationPersistenceRepository:
                 session=session,
                 branch=source_branch,
                 visiting_branch_ids=(visiting_branch_ids | {branch.branch_id}),
+                payload_revision_ids=frozenset(),
             )
             if shared_origin.revision_id not in {
                 revision.revision_id for revision in source_lineage
@@ -2532,6 +2570,7 @@ class SimulationPersistenceRepository:
                 lineage = self._validated_branch_revision_lineage_in_session(
                     session=session,
                     branch=source_branch,
+                    payload_revision_ids=frozenset({source_revision_id}),
                 )
             except BranchRevisionStateConflictError as exc:
                 raise SavedRevisionBranchForkConflictError(str(exc)) from exc
@@ -2616,7 +2655,9 @@ class SimulationPersistenceRepository:
                     )
                 try:
                     source_lineage = self._validated_branch_revision_lineage_in_session(
-                        session=session, branch=source_branch
+                        session=session,
+                        branch=source_branch,
+                        payload_revision_ids=frozenset({source_revision_id}),
                     )
                 except BranchRevisionStateConflictError as exc:
                     raise SavedRevisionBranchForkConflictError(str(exc)) from exc
@@ -3345,6 +3386,8 @@ class SimulationPersistenceRepository:
     @staticmethod
     def _to_branch_saved_revision(
         model: BranchSavedRevisionModel,
+        *,
+        validate_components: bool = True,
     ) -> BranchSavedRevisionRecord:
         try:
             payload = _from_json(model.payload_json)
@@ -3358,12 +3401,13 @@ class SimulationPersistenceRepository:
                 f"Saved Revision {model.revision_id} contains malformed JSON"
             )
         try:
-            load_saved_ranking_component(
-                payload, run_id=model.run_id, branch_id=model.branch_id
-            )
-            load_saved_run_package_state(
-                payload, run_id=model.run_id, branch_id=model.branch_id
-            )
+            if validate_components:
+                load_saved_ranking_component(
+                    payload, run_id=model.run_id, branch_id=model.branch_id
+                )
+                load_saved_run_package_state(
+                    payload, run_id=model.run_id, branch_id=model.branch_id
+                )
         except (TypeError, ValueError) as exc:
             raise BranchRevisionStateConflictError(
                 f"Saved Revision {model.revision_id} has invalid ranking content: {exc}"
@@ -3501,7 +3545,9 @@ class SimulationPersistenceRepository:
         self, *, session: Session, branch: RunBranchModel
     ) -> BranchRevisionStateRecord:
         revision = self._validated_branch_revision_lineage_in_session(
-            session=session, branch=branch
+            session=session,
+            branch=branch,
+            payload_revision_ids=frozenset({branch.saved_head_revision_id}),
         )[0]
         draft_model = session.execute(
             select(BranchWorkingDraftModel).where(
@@ -5442,7 +5488,9 @@ class SimulationPersistenceRepository:
                 )
             try:
                 lineage = self._validated_branch_revision_lineage_in_session(
-                    session=session, branch=branch
+                    session=session,
+                    branch=branch,
+                    payload_revision_ids=frozenset({revision_id}),
                 )
                 revision = lineage[0]
                 if revision.revision_id != revision_id:

@@ -133,7 +133,7 @@ def remap_event_free_week_transition_audit(
             ):
                 raise ValueError("source World Event differs from receipt")
 
-            target_command = AuthoritativeWeekTransitionCommand.model_validate(
+            target_command = AuthoritativeWeekTransitionCommand.model_validate_json(
                 original.model_copy(
                     update={
                         "branch_id": target_branch_id,
@@ -146,7 +146,7 @@ def remap_event_free_week_transition_audit(
                             "ranking authority",
                         ),
                     }
-                )
+                ).model_dump_json()
             )
             health_fingerprint = (
                 _mapped(

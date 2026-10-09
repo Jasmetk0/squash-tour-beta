@@ -2,7 +2,7 @@
 
 This document supersedes older general next-task suggestions **for the immediate Admin usability milestone only**. Master and newer product decisions remain authoritative.
 
-## Implemented in candidate PR (not yet merged)
+## Implemented and merged — PR #1331 (9 October 2026)
 
 - `/admin/runs/new` uses the production `POST /run-containers` empty Product Run command, with only a unique display name supplied by the operator.
 - `/admin/runs` lists canonical Product Runs independently of legacy `GET /runs` Simulation Run entries. Legacy records stay explicitly labeled and usable during migration.
@@ -15,11 +15,20 @@ This document supersedes older general next-task suggestions **for the immediate
 
 - Existing backend `POST /run-containers` contract was inspected; its creation service returns a persisted `RunContainerResponse`.
 - New frontend component tests cover create success, duplicate-name error, mismatched API response, canonical list/reopen and empty Run legacy-404 fallback.
-- Full browser clickthrough, real HTTP/SQLite save/restart and Fast CI on the **last PR commit** are **not yet verified** at authoring time. Do not infer them from mocked component tests.
+- PR #1331 passed final-HEAD Fast CI: 153 stable frontend critical tests, 74 changed-module tests and production build. Real full browser clickthrough of an empty Run remains unverified; existing backend Run creation coverage is separate from frontend mocks.
+
+## Implemented in candidate PR #1332 — World/Calendar source copy
+
+- Run Home offers World Package selection and persisted 2000/01 Calendar source preview using the pre-existing Run/Branch source adapters.
+- Explicit Confirm applies reviewed source content only to a Working Draft with Run, Branch, Saved Revision, Draft-version and Package-state verification; conflicts/invalid entities block.
+- Explicit Save creates a recoverable Saved Revision after confirming the current Working Draft and recorded applied Package fingerprint.
+- Applied snapshots are independent of source mutation by production Package service design; no simulation, Player or Ranking state is fabricated.
+- Frontend preview/confirm/save and cross-identity protection are newly exercised by focused component tests. Existing backend `tests/api/test_run_package_api.py`, `test_world_package_run_adapter.py` and `test_calendar_package_run_adapter.py` establish production HTTP/SQLite behavior separately.
+- This frontend change is not a proven browser end-to-end run, and source-calendar 2000/01 must exist and be valid in the selected environment. Calibration and tournament policy remain unchanged.
 
 ## Still blocking the requested user journey
 
-1. Inspect and complete the **existing Admin** World + Calendar source-preview/confirm operation from an empty Product Run, preserving Run/Branch ownership and snapshots.
+1. Browser-check World and Calendar source import with a real disposable Product Run, using validated source season files and save/restart, not only mocked frontend tests and existing backend adapters.
 2. Generate and review initial players through authoritative Run-backed state, then persist as a Saved Revision; the legacy global Initial Pool UI is **not** proof of that path.
 3. Establish and publish the initial ranking using the recorded ranking authority.
 4. Prepare one standard tournament through canonical entries, manual reviewed applications if necessary, field, draw, schedule and real match execution.

@@ -92,6 +92,7 @@ export function RunPage(): JSX.Element {
   const rebuildAction = useMutation({ mutationFn: () => rebuildRunWorld(runId), onSuccess: invalidateHome })
 
   const run = runQuery.data?.run
+  const canonicalOnly = Boolean(containerQuery.data?.run_id === runId && isApiNotFound(runQuery.error))
   const seasonState = runQuery.data?.season_state
   const progress = statusQuery.data?.progress
   const nextEvent = seasonState?.ordered_events[seasonState.next_event_index] ?? null
@@ -156,7 +157,27 @@ export function RunPage(): JSX.Element {
       )}
 
       {runQuery.isLoading && <p className="status">Loading run...</p>}
-      {runQuery.error && <p role="alert" className="error">Failed to load run: {formatApiError(runQuery.error)}</p>}
+      {runQuery.error && !canonicalOnly && <p role="alert" className="error">Failed to load run: {formatApiError(runQuery.error)}</p>}
+      {canonicalOnly && containerQuery.data && (
+        <SectionCard title="Product Run — initial setup">
+          <p className="status">This is a canonical saved Product Run. It does not yet have a legacy Simulation Run, which is normal for an empty Run. Its own Saved Revision and Branch remain authoritative.</p>
+          <MetadataList items={[
+            { label: 'Name', value: containerQuery.data.display_name ?? runId },
+            { label: 'Status', value: containerQuery.data.status },
+            { label: 'Access', value: containerQuery.data.read_only ? 'Read-only' : 'Editable' },
+            { label: 'Active Admin Branch', value: selectedBranch?.run_id === runId ? selectedBranch.display_name : 'Not available' },
+            { label: 'Viewer Branch', value: viewerBranchId ?? 'Not available' },
+            { label: 'Saved Revision', value: selectedBranch?.run_id === runId && selectedBranch.saved_head_revision_id ? 'Saved' : 'Not verified' }
+          ]} />
+          <p>Next: prepare independent World and Calendar content, generate players, and establish a ranking before running the first tournament. These steps are not performed automatically by creating the Run.</p>
+          <div className="actions">
+            <Link to={`/admin/runs/${encodeURIComponent(runId)}/branches`}>Manage timelines and saved revisions</Link>
+            <Link to={`/admin/runs/${encodeURIComponent(runId)}/simulate`}>Inspect simulation preparation</Link>
+            <Link to="/admin/world/library">Browse World sources</Link>
+            <Link to="/admin/runs">Back to Runs</Link>
+          </div>
+        </SectionCard>
+      )}
       {run && (
         <>
           <SectionCard title="Run overview">

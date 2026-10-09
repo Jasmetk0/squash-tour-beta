@@ -63,7 +63,7 @@ This document supersedes older general next-task suggestions **for the immediate
 - Existing Event detail already has explicit published-ranking authority adoption, valid-submission Entry Field creation, Draw Input and Draw authority interfaces. **This slice does not invent or auto-validate applications or build/simulate the first tournament.** The first-tournament application-validation policy remains a known blocker.
 - Focused frontend tests cover earliest chronological selection (including simultaneous events), correct source, readiness link, no legacy Run, stale fingerprint rejection and protected scope. Backend Package Calendar adapter and tournament-preparation service remain unchanged; full browser end-to-end pending.
 
-## Candidate PR #1337 — explicit frozen Entry application reviews from the real first tournament
+## Implemented and merged — PR #1337: explicit frozen Entry application reviews from the real first tournament
 
 - Extend the Run-owned Planned Event detail (canonical Calendar handoff only) with manual review of **already-frozen authoritative Entry decision slot evidence**, using existing production `/authoritative-simulation/position`, `/entry-decision-slot/{ordinal}` and `/entry-decision-slot/validation/review` endpoints.
 - Require current selected Product Run / Branch, clean Draft against exact Saved Revision head, the engine's current Slot, verified same Run/Branch/Week and SHA-256 fingerprints. The targeted Event must occur in the frozen shared slot. Never create artificial candidates.
@@ -72,12 +72,21 @@ This document supersedes older general next-task suggestions **for the immediate
 - The automatic application eligibility/deadline policy remains `unresolved`: user-reviewed validation is a manual pre-alpha path, not an invented universal automatic sport rule. The Event can proceed to **existing** valid-submission Entry Field UI only when real submitted evidence is present and earlier Rank Snapshot authority has been adopted. The current canonical simulation must be able to freeze the Entry decision slot; this is *not* automatically materialized from an initial player pool.
 - Tests validate multiple events in one slot, explicit rejection, full review, Save identity guard, protected/stale/foreign scope and resolved-slot refusal. Real browser end-to-end and complete sporting simulation are not asserted.
 
+## Candidate PR #1338 — preview and freeze first Run-owned Entry AI decisions
+
+- Expose the **existing production** `GET /authoritative-simulation/pre-alpha/fax-current-entry/preview` and `POST .../apply` services through strictly scoped TypeScript API adapters. Although the endpoint name reflects copied-FAX acceptance, its implementation scopes to whichever valid Run/Branch the operator selects; it reads that Branch's real current Position, run-owned 2000/01 Calendar, lifecycle/sporting player roster and World country snapshots.
+- Add a first-tournament **Generate tournament Entry decisions** panel on the verified Run-owned Calendar Planned Event route, immediately before #1337's manual validation UI. Require a writable custom Product Run, active Branch, current clean Working Draft whose base equals the Saved Revision head and actual current Entry decision slot. Refuse unrelated edition IDs (including tournaments not in current World Tour week).
+- Run a nonpersistent deterministic preview using the production fixed seed 12345, verify Run/Branch/Week/Slot/current Position fingerprint/Saved head, sorted simultaneous tournament IDs, SHA-256 generation/batch/slot/preview fingerprints, and nonzero genuine decisions; never fabricate any player ID or mark it as valid.
+- Require a distinct reviewed confirmation and exact preview fingerprint. Production Apply recomputes the full proposal and uses its existing `AuthoritativeEntryDecisionSlotCommand` to reject stale revision, World/Player state, slot collisions and chronology violations.
+- After successful Apply, show that this is still unvalidated frozen **Entry** evidence, then invalidate #1337's real frozen-slot/Position queries so its explicit Admin validation handles **every** concurrent tournament. No automatic eligibility/deadline decision, implicit Entry Field, draw or result is included.
+- Targeted frontend tests cover preview/confirm, shared Week events, source identity, incomplete/dirty branch, empty proposal and already-frozen slot. Existing backend critical tests `test_pre_alpha_fax_current_entry_decisions.py` and `test_authoritative_entry_decision_slot.py` verify the production generator/commit pathway; end-to-end browser re-open remains pending.
+
 ## Still blocking the requested user journey
 
 1. Browser-check World and Calendar source import with a real disposable Product Run, using validated source season files and save/restart, not only mocked frontend tests and existing backend adapters.
 2. Verify the newly connected initial-player generation, review, adopt, Save and reopen sequence by clicking through a real disposable custom Run, and measure both Earth source packages.
 3. Browser-verify Week-1 ranking derive/confirm/Save, publish, second Save and Viewer readback on a real disposable custom Run, including restart and selected Viewer Branch semantics.
-4. On an authoritative frozen Entry slot, use PR #1337's explicit Admin review of genuine application evidence; decide a separate automatic eligibility/deadline policy for unattended runs, then build the Entry Field, Draw Input, Draw and execute matches.
+4. Use PR #1338's production Run-owned Entry preview/apply to freeze genuine AI decisions; review the frozen evidence using PR #1337, separately resolve the unattended eligibility/deadline policy, then build the Entry Field, Draw Input, Draw and execute matches.
 5. Verify point award, correct ranking-publication timing, save/reopen and continuation through real HTTP/SQLite/browser evidence.
 6. Only then measure FIFA Earth / ATP Earth generation in existing Lab tools without changing unproven probabilities.
 

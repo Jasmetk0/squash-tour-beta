@@ -13,6 +13,7 @@ from beta_engine.api.deps import (
     get_season_point_awards_service,
 )
 from beta_engine.domain.rankings.official import RankingWeek
+from beta_engine.domain.tournaments.models import SeasonCalendar
 from beta_engine.application.season_draw_service import SeasonDrawsRegistry
 from beta_engine.application.season_event_results_service import SeasonEventResultsRegistry
 from beta_engine.application.season_point_awards_service import SeasonPointAwardsRegistry
@@ -44,7 +45,7 @@ from test_authoritative_simulation_api import (
     _server_state,
     confirm,
 )
-from test_authoritative_three_completed_weeks import _save_ranking
+from test_authoritative_three_completed_weeks import _save_ranking, _save_simulation
 
 
 # This file is the whole-season acceptance boundary for Master §31.3.
@@ -1394,3 +1395,146 @@ def test_official_run_completes_whole_season_reopens_and_rolls_to_next_season(
             assert event_payload["official_ranking_fingerprint"] == (
                 target_after.entries[-1].snapshot.fingerprint
             )
+
+    # Reopen *after* the real HTTP fork to prove the materialized Branch does
+    # not rely on the original API process or any in-memory reconstruction.
+    # An explicit Run-owned Calendar for 2001/02 is a required authority for
+    # completing an event-free first week; do not invent such a policy inside
+    # the simulation engine.
+    continued = ApiServer(database_url=f"sqlite:///{db_path}")
+    continued.app.dependency_overrides[get_season_match_service] = lambda: matches
+    continued.app.dependency_overrides[get_season_point_awards_service] = lambda: awards
+    continued.app.state.season_calendar_registry_path = (
+        awards.calendar_service.calendar_registry_path
+    )
+    continued.app.state.world_packages_root = world_packages_root
+
+    awards.calendar_service.create_calendar_if_absent(
+        season="2001/2002",
+        calendar=SeasonCalendar(season="2001/2002", events=[]),
+    )
+    with continued:
+        source_sim_root = (
+            f"{continued.base_url}/admin/runs/{run_id}/branches/{branch_id}"
+            "/authoritative-simulation"
+        )
+        target_ranking_root, target_week_root, target_sim_root = _roots(
+            continued, run_id, target_branch_id
+        )
+        assert _request("GET", source_sim_root + "/position")[1][
+            "current_week"
+        ] == {"season_index": 1, "week": 1}
+        assert _request("GET", target_sim_root + "/position")[1][
+            "current_week"
+        ] == {"season_index": 1, "week": 1}
+
+        source_calendar_root = (
+            f"{continued.base_url}/admin/runs/{run_id}/branches/{target_branch_id}"
+            "/packages/source-calendar/2001-2002"
+        )
+        status, calendar_preview = _request(
+            "POST", source_calendar_root + "/preview",
+        )
+        assert status == 200, calendar_preview
+        assert calendar_preview["document"]["package_id"] == "calendar-2001-2002"
+        status, applied = _request(
+            "POST", source_calendar_root + "/confirm", {
+                "command_id": "target-explicit-2001-02-calendar",
+                "expected_head_revision_id": calendar_preview["saved_head_revision_id"],
+                "expected_draft_version": calendar_preview["draft_version"],
+                "expected_state_fingerprint": calendar_preview["current_state_fingerprint"],
+                "expected_preview_fingerprint": calendar_preview["preview_fingerprint"],
+                "conflict_resolutions": {},
+            },
+        )
+        assert status == 200, applied
+        status, target_calendar_saved = _request(
+            "POST",
+            f"{continued.base_url}/run-containers/{run_id}/branches/"
+            f"{target_branch_id}/working-draft/save",
+            {"expected_draft_version": applied["draft_version"]},
+        )
+        assert status == 201, target_calendar_saved
+        continuation_base_revision = target_calendar_saved["saved_revision"]["revision_id"]
+        assert continuation_base_revision != fork["saved_head_revision_id"]
+
+        # Only the target Branch adopted the new season's explicit Calendar;
+        # the source Branch's saved package/calendar is untouched.
+        target_calendar_url = (
+            f"{continued.base_url}/admin/runs/{run_id}/branches/{target_branch_id}"
+            "/packages/calendar/calendar-2001-2002"
+        )
+        assert _request("GET", target_calendar_url)[0] == 200
+        source_calendar_url = (
+            f"{continued.base_url}/admin/runs/{run_id}/branches/{branch_id}"
+            "/packages/calendar/calendar-2001-2002"
+        )
+        assert _request("GET", source_calendar_url)[0] == 404
+
+        position = _request("GET", target_sim_root + "/position")[1]
+        status, completed_empty_week = _request(
+            "POST", target_sim_root + "/empty-week/complete", {
+                "command_id": "fork-season-two-explicit-empty-week-one",
+                "expected_week": {"season_index": 1, "week": 1},
+                "expected_position_fingerprint": position["position_fingerprint"],
+                "expected_revision_id": continuation_base_revision,
+                "operator_label": "Season Transition fork acceptance Admin",
+                "audit_reason": "Complete first event-free week against explicit target-owned 2001/02 calendar",
+            },
+        )
+        assert status == 201, completed_empty_week
+        assert completed_empty_week["competitive_match_count"] == 0
+        after_empty_revision = _save_simulation(target_sim_root)
+        _derive_transition_authority(
+            target_ranking_root, completed_week=1,
+        )
+        after_authority_revision = _save_ranking(None, target_ranking_root)
+        assert after_authority_revision != after_empty_revision
+
+        status, week_preview = _request(
+            "POST", target_week_root + "/derived/preview",
+            {"command_id": "fork-season-two-week-one-to-two"},
+        )
+        assert status == 200, week_preview
+        assert week_preview["command"]["completed_week"] == {
+            "season_index": 1, "week": 1,
+        }
+        assert week_preview["command"]["target_week"] == {
+            "season_index": 1, "week": 2,
+        }
+        assert confirm(
+            target_week_root, week_preview["command"], week_preview
+        )[0] == 201
+        final_target_revision = _save_ranking(None, target_ranking_root)
+        assert final_target_revision not in {
+            fork["saved_head_revision_id"], continuation_base_revision,
+        }
+        assert _request("GET", target_sim_root + "/position")[1][
+            "current_week"
+        ] == {"season_index": 1, "week": 2}
+        assert _request("GET", source_sim_root + "/position")[1][
+            "current_week"
+        ] == {"season_index": 1, "week": 1}
+
+        persisted_repository = continued.app.state.runtime.repository
+        with persisted_repository._session_factory.begin() as session:
+            session.execute(text("BEGIN"))
+            source_final = capture_ranking_revision_state(
+                session, run_id=run_id, branch_id=branch_id,
+            )
+            target_final = capture_ranking_revision_state(
+                session, run_id=run_id, branch_id=target_branch_id,
+            )
+            assert source_final.fingerprint == source_ranking_before_fork.fingerprint
+            assert len(source_final.entries) == 62
+            assert len(target_final.entries) == 63
+            assert len(target_final.tournament_sources) == 1
+            assert len(target_final.season_closing_rankings) == 1
+            assert len(target_final.authoritative_transition_state["receipts"]) == 61
+            assert len(target_final.authoritative_transition_state["events"]) == 62
+            assert session.get(
+                BranchSavedRevisionModel, source_revision
+            ).payload_json == original_source_payload
+            assert session.get(
+                BranchSavedRevisionModel, final_target_revision
+            ).branch_id == target_branch_id

@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type { RunBranch, RunContainer } from '../api/types'
+import type { RankingCandidateDetail } from '../api/rankingCandidates'
 import {
   verifyDerivedInitialCandidate, verifyDerivedInitialPreview
 } from '../api/runInitialRankingSetup'
@@ -54,7 +55,7 @@ let prepared = false
 let draftVersion = 0
 let saved = false
 let expectedCommandId = ''
-const candidate = (cmd: string) => ({
+const candidate = (cmd: string): RankingCandidateDetail => ({
   publication_status: 'candidate_only', fingerprint: hash('b'), command_ids: [cmd],
   snapshot: {
     run_id: run.run_id, branch_id: branch.branch_id,

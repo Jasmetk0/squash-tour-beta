@@ -66,7 +66,16 @@ function validEntryGate(
     value && value.run_id === runId && value.branch_id === branchId &&
     value.current_week.season_index === position.current_week.season_index &&
     value.current_week.week === position.current_week.week &&
-    value.current_position_fingerprint === position.position_fingerprint
+    value.current_position_fingerprint === position.position_fingerprint &&
+    value.schema_version === 'pre_alpha_fax_entry_validation_policy_gate.v1' &&
+    value.policy_id === 'automatic_application_eligibility_deadline.v1' &&
+    value.policy_status === 'unresolved' &&
+    value.master_status === 'open' &&
+    value.blocks_unattended_release === true &&
+    value.current_slot_kind === 'entry' &&
+    value.current_slot_ordinal === position.slot_ordinal &&
+    value.current_blocker_code !== 'current_slot_not_entry' &&
+    typeof value.gate_fingerprint === 'string' && value.gate_fingerprint.length === 64
   )
 }
 

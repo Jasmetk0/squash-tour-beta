@@ -8,23 +8,6 @@ import type {
 const sha = (v: unknown): v is string =>
   typeof v === 'string' && /^[0-9a-f]{64}$/.test(v)
 
-export function verifiedDrawInputSource(
-  preparation: CanonicalTournamentPreparationState | null | undefined,
-  field: CanonicalTournamentEntryFieldState | null | undefined,
-  draw: CanonicalTournamentDrawState | null | undefined,
-  runId: string, branchId: string, eventId: string
-): boolean {
-  return Boolean(preparation && field && draw &&
-    preparation.schema_version === 'canonical_tournament_preparation_state.v1' &&
-    preparation.run_id === runId && preparation.branch_id === branchId &&
-    preparation.event_id === eventId &&
-    preparation.authority_source === 'run_owned_db_authorities.v1' &&
-    preparation.entry_field_ready === true &&
-    preparation.ranking_snapshot_ready === true &&
-    preparation.next_required_action === 'review_pre_draw_or_commit_draw_input' &&
-    !preparation.wild_card_required || false)
-}
-
 /** Complete early-fail guard: never show Draw commit on unready Wild Card or stale field. */
 export function canReviewInitialDrawInput(
   preparation: CanonicalTournamentPreparationState | null | undefined,

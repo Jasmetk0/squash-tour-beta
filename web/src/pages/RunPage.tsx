@@ -29,6 +29,7 @@ import { RunPackageSetupPanel } from '../components/RunPackageSetupPanel'
 import { RunInitialWorldSetupPanel } from '../components/RunInitialWorldSetupPanel'
 import { RunInitialRankingSetupPanel } from '../components/RunInitialRankingSetupPanel'
 import { RunInitialRankingPublicationPanel } from '../components/RunInitialRankingPublicationPanel'
+import { RunFirstTournamentPanel } from '../components/RunFirstTournamentPanel'
 import { normalizeRunSourceType } from '../utils/runSourceTypes'
 
 export function RunPage(): JSX.Element {
@@ -190,6 +191,8 @@ export function RunPage(): JSX.Element {
         <RunInitialRankingSetupPanel run={containerQuery.data} branch={selectedBranch} />}
       {containerQuery.data?.run_id === runId && containerQuery.data.storage_kind === 'custom_local' && !containerQuery.data.read_only &&
         <RunInitialRankingPublicationPanel run={containerQuery.data} branch={selectedBranch} />}
+      {containerQuery.data?.run_id === runId && containerQuery.data.storage_kind === 'custom_local' && !containerQuery.data.read_only &&
+        <RunFirstTournamentPanel run={containerQuery.data} branch={selectedBranch} />}
       {run && (
         <>
           <SectionCard title="Run overview">

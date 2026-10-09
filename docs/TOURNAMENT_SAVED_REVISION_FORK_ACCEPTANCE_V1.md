@@ -54,9 +54,13 @@ reconstruction and forgery tests, including missing/wrong tournament target
 and damaged receipt data. Existing event-free PR-critical regressions remain
 mandatory.
 
-**Evidence status:** Implementation candidate; the entire acceptance is
-unproven until the last-commit focused test and Fast CI finish successfully.
-A green isolated helper is not proof of a playable tournament fork.
+**Evidence status (9 Oct 2026):** First real HTTP/SQLite integration passed in
+Fast CI workflow `37895207678` at commit `b9904863a45696a4d79a5e160600da8c07384c04`
+(26 PR-critical tests passed; 3478 intentionally deselected). That run includes
+one completed tournament, fork, independent continuation and rollback injection.
+Follow-up changes still require green checks on their final PR head. This
+proves only the narrow four-player standard-tournament scenario, not a
+50-season or multi-tournament pre-alpha gate.
 
 ## Explicitly unsupported
 

@@ -1021,6 +1021,50 @@ describe('PlannedEventDetailPage', () => {
 
 
 
+  it('blocks a foreign-Branch event handoff before reading or writing its authorities', async () => {
+    adminTime.viewed.mockImplementation(() => ({
+      ...presentBranchView(),
+      time: { runId: 'run-a', branchId: 'branch-a' }
+    }))
+    renderAt('/runs/run-a/calendar/E1?branch=branch-b')
+    expect(screen.getByRole('region', { name: 'Planned event Branch handoff blocked' })).toBeInTheDocument()
+    expect(screen.getByRole('alert')).toHaveTextContent('Branch branch-b')
+    expect(screen.getByRole('link', { name: 'Inspect requested simulation Branch' }))
+      .toHaveAttribute('href', '/admin/runs/run-a/simulate?branch=branch-b')
+    expect(api.getCanonicalTournamentPreparation).not.toHaveBeenCalled()
+    expect(api.getCanonicalWildCardState).not.toHaveBeenCalled()
+    expect(api.createTournamentEntryFieldFromValidSubmissions).not.toHaveBeenCalled()
+  })
+
+  it('allows a Branch-qualified handoff only in the exact active Run and Present Branch', async () => {
+    adminTime.viewed.mockImplementation(() => ({
+      ...presentBranchView(),
+      time: { runId: 'run-a', branchId: 'branch-a' }
+    }))
+    renderAt('/runs/run-a/calendar/E1?branch=branch-a')
+    expect(await screen.findByText('Canonical tournament preparation')).toBeInTheDocument()
+    expect(api.getCanonicalTournamentPreparation).toHaveBeenCalledWith('run-a', 'branch-a', 'E1')
+    expect(screen.queryByRole('region', { name: 'Planned event Branch handoff blocked' }))
+      .not.toBeInTheDocument()
+  })
+
+  it('blocks an event handoff whose Admin Time context belongs to another Run', () => {
+    adminTime.viewed.mockImplementation(() => ({
+      ...presentBranchView(),
+      time: { runId: 'another-run', branchId: 'branch-a' }
+    }))
+    renderAt('/runs/run-a/calendar/E1?branch=branch-a')
+    expect(screen.getByRole('region', { name: 'Planned event Branch handoff blocked' })).toBeInTheDocument()
+    expect(api.getCanonicalTournamentPreparation).not.toHaveBeenCalled()
+  })
+
+  it('rejects an empty Branch query instead of treating it as an unqualified link', () => {
+    adminTime.viewed.mockImplementation(presentBranchView)
+    renderAt('/runs/run-a/calendar/E1?branch=')
+    expect(screen.getByRole('region', { name: 'Planned event Branch handoff blocked' })).toBeInTheDocument()
+    expect(api.getCanonicalTournamentPreparation).not.toHaveBeenCalled()
+  })
+
   it('shows canonical tournament preparation readiness on the planned event', async () => {
     adminTime.viewed.mockImplementation(presentBranchView)
     renderAt('/runs/run-a/calendar/E1')

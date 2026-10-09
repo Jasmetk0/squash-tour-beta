@@ -97,6 +97,7 @@ import type {
 import { newCommandId } from '../admin/branchSimulation'
 import { EmptyState, MetadataList, SectionCard, SummaryPills } from '../components/RunScopedUi'
 import { CanonicalSimulationBlockerGuide } from '../components/CanonicalSimulationBlockerGuide'
+import { TournamentPreparationGuide } from '../components/TournamentPreparationGuide'
 import type {
   DerivedRankingTransitionAuthorityPreview,
   DerivedRankingTransitionAuthorityRequest
@@ -2594,6 +2595,12 @@ export function AuthoritativeSimulationPanel({
                   : 'Loading'
               }
             ]}
+          />
+          <TournamentPreparationGuide
+            runId={runId}
+            branchId={branchId}
+            enabled={enabled}
+            preflight={schedulePreflightQuery.data}
           />
           {schedulePreflightQuery.data?.canonical_preparation ? (
             <>

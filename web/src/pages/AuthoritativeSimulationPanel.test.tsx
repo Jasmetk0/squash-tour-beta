@@ -1637,6 +1637,18 @@ describe('AuthoritativeSimulationPanel', () => {
     ).toBeEnabled()
   })
 
+  it('exposes Branch-safe tournament preparation links from canonical Week Schedule preflight', async () => {
+    renderPanel()
+    const guide = await screen.findByRole('region', { name: 'Tournament preparation guide' })
+    const links = within(guide).getAllByRole('link', { name: 'Open Branch-scoped planned event review' })
+    expect(links).toHaveLength(2)
+    expect(links[0]).toHaveAttribute(
+      'href', '/admin/runs/run-a/calendar/event-a?branch=branch-a'
+    )
+    expect(within(guide).getByText(/2 of 2 tournaments/)).toBeInTheDocument()
+    expect(within(guide).queryByRole('button')).not.toBeInTheDocument()
+  })
+
   it('blocks Match Day proposal from canonical preparation blockers before a 409', async () => {
     api.inspectAuthoritativeWeekSchedulePreflight.mockResolvedValue({
       ...schedulePreflight,

@@ -3,12 +3,13 @@
 ## Scope
 
 A materialized Branch created from a Saved Revision after Week Transition may
-inherit **at most two** completed, standard, canonical Run-owned tournaments
-across its confirmed historical Week Transitions. Both different-week and
-**two same-week events in one Week Transition** are covered, provided the
-independently validated player/entry, draw, Slot, result, award and ranking
-history is complete. No Season Transition, ranking correction, disciplinary-zero
-version, unsupported tournament format or third completed tournament is enabled.
+inherit a fully evidenced history of **canonical standard Run-owned tournaments
+without an arbitrary count limit**, across different weeks or multiple events
+in a Week Transition. Each independent edition must have unique identity and
+complete matching player/entry, draw, Slot, result, award, ranking and audit
+history. This removes only the artificial count cap: no Season Transition,
+ranking correction, disciplinary-zero version or unsupported tournament format
+is implicitly enabled.
 
 Ranking's existing remapper must independently reconstruct the target-Branch
 tournament result and point/prize authority, its ranking result-version chain,
@@ -33,10 +34,12 @@ is considered supported.
 
 ## Focused PR acceptance
 
-`tests/application/test_single_tournament_saved_revision_fork.py` runs both
-the original one-tournament and the new consecutive two-tournament cases,
-using the full-season acceptance's canonical four-player setup but never
-running a 61-week or 50-season campaign:
+`tests/application/test_single_tournament_saved_revision_fork.py` now runs
+four real HTTP/SQLite variants: one completed tournament, two across two
+weeks, two simultaneous in Week 1, and **three tournaments** (two Week-1
+events plus an independently completed Week-2 event). These use the
+full-season acceptance's real Run-owned World/Calendar infrastructure,
+without running a 61-week or 50-season campaign:
 
 1. Create a real HTTP/SQLite Run, apply World/Calendar package snapshots,
    adopt the initial players and Official Ranking.
@@ -57,15 +60,21 @@ running a 61-week or 50-season campaign:
    (so Week Tournament Lock requires no selection), create both Run-owned
    canonical draws, execute both real tournament match schedules and close
    them in **one** Week Transition before Save/reopen/fork.
-8. Verify both independent canonical tournament/result/point authorities
-   survive the target fork with identical sporting outcomes but distinct
-   Branch-owned fingerprints, then complete the next event-free week on
-   the fork and Save. Confirm the original ranking and position do not move.
+8. The three-tournament variant clones a distinct source Calendar/MatchPackage
+   **before** Run adoption to keep the separate Week-2 event; after adoption,
+   every entry, tournament Draw, rally, result and Week Transition comes from
+   production Run-owned HTTP/SQLite authority. The two Week-1 fields remain
+   disjoint; Week 2 uses explicitly revalidated players.
+9. Verify every canonical tournament/result/point authority survives the
+   target fork with identical sporting outcomes and new Branch-owned
+   fingerprints, then complete the next event-free week on the fork and
+   Save. Confirm the original ranking and position do not move.
 
 `tests/infrastructure/test_week_transition_fork_audit.py` supplies short
-reconstruction and forgery tests, including missing/wrong tournament target
-and damaged receipt data. Existing event-free PR-critical regressions remain
-mandatory.
+reconstruction and forgery tests, including 3, 7 and 12 fully bound tournaments
+across two historical receipts. Negative tests cover missing/foreign bindings,
+duplicate editions or same-week events, forged publication weeks, and surplus
+target sources. Existing event-free PR-critical regressions remain mandatory.
 
 **Evidence status (9 Oct 2026):** First real HTTP/SQLite integration passed in
 Fast CI workflow `37895207678` at commit `b9904863a45696a4d79a5e160600da8c07384c04`
@@ -81,22 +90,30 @@ strengthened evidence assertions and documentation require their own final-head
 green checks. This proves only the bounded four-player, two-tournament case,
 not universal tournaments, full pre-alpha or a 50-season checkpoint.
 
-**Same-week checkpoint (9 Oct 2026):** The real HTTP/SQLite
-two-simultaneous-tournament acceptance completed successfully in Fast CI
-`37899367675` (the run had 42 passing tests and one failing schema-invalid
-adversarial *test input*, which is corrected in a follow-up commit).
-The production two-event fork path has therefore been exercised, but this
-is **not** final-head merge evidence: the final commit must pass every
-PR-required check. This narrow result does not establish 50-season support,
-overlapping entrant arbitration, hybrid tournaments or general multi-tournament
-capacity.
+**Same-week checkpoint (9 Oct 2026):** The final #1320 Fast CI
+workflow `37899754724` passed **44 focused tests** on
+`ab6a82a8434c985962a199549ceed335b5d2f266`, including the genuine
+two-simultaneous-tournament HTTP/SQLite fork and independent continuation.
+This does not establish 50-season support, overlapping entrant arbitration,
+hybrid tournaments or general multi-tournament capacity.
+
+**Unbounded standard-history checkpoint (9 Oct 2026):** initial
+Fast CI workflow `37901923845` on `cb944da3920d94a43370ce695c8444bc72e173b0`
+reported **55 passed / 3,478 deselected / one unrelated deprecation warning**,
+including the real three-tournament fork, rollback and independent continuation,
+plus pure 3/7/12-event audit remapping. This is provisional checkpoint evidence
+until the final PR head (including these documentation changes) passes all
+required checks. It is **not** a universal-load, full-season or 50-season release
+certificate.
 
 ## Explicitly unsupported
 
-- More than two tournaments in confirmed history or more than two within
-  the same Week Transition. Players with overlapping tournament entries still
-  require separate Week Tournament Lock resolution; this acceptance uses
-  disjoint four-player fields rather than overriding that policy.
+- A claim of arbitrary-scale performance or all possible tournament formats
+  from the existing tests: 12-event source/audit rebind is a pure test, while
+  the full production Run path has exercised three authentic tournaments.
+- Overlapping accepted tournament entries still require separate verified
+  Week Tournament Lock resolution; this acceptance intentionally uses disjoint
+  four-player Week-1 fields rather than overriding that policy.
 - Tournament corrections and disciplinary zeros in confirmed history.
 - Season Transition, Season Closing and final season rollover.
 - Tournament-group/hybrid ranking remaps lacking dedicated nested provenance.

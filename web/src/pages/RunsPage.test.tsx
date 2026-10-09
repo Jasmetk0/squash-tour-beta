@@ -35,6 +35,7 @@ vi.mock('../api/client', () => api)
 
 describe('RunsPage', () => {
   beforeEach(() => {
+    vi.clearAllMocks()
     localStorage.clear()
     navigateMock.mockReset()
     api.listRunContainers.mockResolvedValue({ run_containers: [

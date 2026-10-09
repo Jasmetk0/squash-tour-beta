@@ -10,7 +10,16 @@ vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom')
   return { ...actual, useNavigate: () => navigate }
 })
-const api = vi.hoisted(() => ({ createEmptyRunContainer: vi.fn() }))
+const api = vi.hoisted(() => {
+  class ApiError extends Error {
+    status: number
+    constructor(message: string, status: number) {
+      super(message)
+      this.status = status
+    }
+  }
+  return { ApiError, createEmptyRunContainer: vi.fn() }
+})
 vi.mock('../api/client', () => api)
 
 describe('canonical Product Run creation', () => {

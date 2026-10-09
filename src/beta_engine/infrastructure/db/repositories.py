@@ -3323,6 +3323,32 @@ class SimulationPersistenceRepository:
                             "Materialized Branch player-state fingerprint maps differ"
                         )
 
+                    if remap_week_audit and source_ranking.tournament_sources:
+                        # A ranking source is not sufficient proof of a played
+                        # tournament. All competitive match fingerprints must
+                        # belong to the original saved Simulation Slot ledger
+                        # and must have a validated target-local counterpart.
+                        if coupled_player_slot is None:
+                            raise SavedRevisionBranchForkConflictError(
+                                "Completed tournament fork requires saved Simulation Slot history"
+                            )
+                        source_match_results = {
+                            match.result_fingerprint
+                            for source in source_ranking.tournament_sources
+                            for match in source.canonical_result.matches
+                            if match.result_fingerprint is not None
+                        }
+                        if (
+                            not source_match_results
+                            or not source_match_results.issubset(
+                                coupled_player_slot.result_fingerprints
+                            )
+                        ):
+                            raise SavedRevisionBranchForkConflictError(
+                                "Completed tournament has missing or foreign "
+                                "Simulation Slot match result evidence"
+                            )
+
                     if remap_week_audit:
                         # Complete, independently verified target player evidence
                         # is now present in this exact SQLite fork transaction.

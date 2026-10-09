@@ -322,3 +322,30 @@ def test_one_tournament_audit_rejects_missing_or_forged_sources(corruption):
         # Keep the receipt's stored request hash stale to test fail-closed.
     with pytest.raises(WeekTransitionForkAuditUnsupportedError):
         _remap(state, maps)
+
+
+@pytest.mark.parametrize("forgery", ["source_branch", "source_event"])
+def test_semantically_forged_tournament_fails_even_with_valid_receipt_hash(forgery):
+    state, maps, source, target = _one_tournament_case()
+    row = state["receipts"][0]
+    original = AuthoritativeWeekTransitionCommand.model_validate_json(
+        row["request_payload_json"]
+    )
+    tampered = source.model_copy(update={
+        "branch_id": "foreign-branch",
+    }) if forgery == "source_branch" else source.model_copy(update={
+        "event_id": "phantom-completed-tournament",
+    })
+    command = AuthoritativeWeekTransitionCommand.model_validate_json(
+        original.model_copy(update={"tournaments": (tampered,)}).model_dump_json()
+    )
+    row["request_payload_json"] = command.canonical_request_json
+    row["request_fingerprint"] = command.fingerprint
+    # Retain the correct World Event: its v1 payload cites the ranking/player
+    # snapshots and audit, not the tournament tuple. Hash-only checks therefore
+    # cannot detect this forged but syntactically valid tournament identity.
+    with pytest.raises(
+        WeekTransitionForkAuditUnsupportedError,
+        match="tournament binding has no matching target ownership",
+    ):
+        _remap(state, maps)

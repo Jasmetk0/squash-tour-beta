@@ -37,6 +37,9 @@ const source = {
   entry_field_ready: false, valid_submission_count: 7,
   valid_main_submission_count: 3, valid_qualification_submission_count: 4,
   preparation_fingerprint: sha('b'),
+  blockers:['tournament_entry_field_required'],
+  ready_for_match_schedule:false,
+  effective_draw_fingerprint:null,
   entry_capacity_suggestion: {
     schema_version:'canonical_entry_capacity_suggestion.v1' as const,
     source:'run_owned_calendar_package.v1' as const,

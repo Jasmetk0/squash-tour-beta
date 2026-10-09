@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 
-import { getRun, getRunStatusSummary, listRuns } from '../api/client'
+import { getRun, getRunStatusSummary, listRunContainers, listRuns } from '../api/client'
 import { CompactSummaryCard, EmptyState, MetadataList, PageIntro, SectionCard, SummaryPills } from '../components/RunScopedUi'
 import { formatApiError } from '../utils/apiErrors'
 import { normalizeRunSourceType } from '../utils/runSourceTypes'
@@ -24,6 +24,12 @@ export function RunsPage(): JSX.Element {
   const [openingRunId, setOpeningRunId] = useState<string | null>(null)
   const [openError, setOpenError] = useState<string | null>(null)
   const [rememberedRunId, setRememberedRunId] = useState(() => readLastRunId())
+
+  const canonicalRunsQuery = useQuery({
+    queryKey: ['canonical-run-containers'],
+    queryFn: listRunContainers,
+    retry: false
+  })
 
   const runsQuery = useQuery({
     queryKey: ['runs-index-page'],
@@ -118,13 +124,29 @@ export function RunsPage(): JSX.Element {
 
       <section className="runs-hub-actions" aria-label="Run management actions">
         <div>
-          <h3>Create or open a run</h3>
-          <p className="status">Create a new 2000/01 root run, or use the browser below to continue an existing run.</p>
+          <h3>Create or open a Product Run</h3>
+          <p className="status">Create an isolated empty 2000/01 Product Run, then copy your chosen packages and prepare players. Existing saved Runs are listed below.</p>
         </div>
         <Link className="button-link" to="/admin/runs/new">
           Create new run
         </Link>
       </section>
+
+      <SectionCard title="Product Runs (Saved Revision authority)">
+        <p className="status">Each Product Run owns its own timeline and Viewer Branch. A Run can be reopened even before it contains sporting content.</p>
+        {canonicalRunsQuery.isLoading && <p role="status">Loading Product Runs…</p>}
+        {canonicalRunsQuery.isError && <p role="alert" className="error">Product Runs unavailable: {formatApiError(canonicalRunsQuery.error)}</p>}
+        {canonicalRunsQuery.data && canonicalRunsQuery.data.run_containers.length === 0 && <p className="status">No Product Runs yet. Use Create new run above.</p>}
+        {canonicalRunsQuery.data && <ul className="item-list" aria-label="Product Runs">
+          {canonicalRunsQuery.data.run_containers.map(container => <li key={container.run_id}>
+            <Link to={`/admin/runs/${encodeURIComponent(container.run_id)}`}
+              onClick={() => { writeLastRunId(container.run_id); setRememberedRunId(container.run_id) }}>
+              {container.display_name || container.run_id}
+            </Link>{' '}
+            <span className="status">{container.read_only ? 'Protected / read-only' : 'Editable'} · {container.status} · {container.timeline_start_season}/{String((container.timeline_start_season + 1) % 100).padStart(2, '0')}</span>
+          </li>)}
+        </ul>}
+      </SectionCard>
 
       <SectionCard title="Filters">
         <div className="grid">
@@ -169,7 +191,7 @@ export function RunsPage(): JSX.Element {
 
       {!runsQuery.isLoading && !runsQuery.isError && filteredRuns.length > 0 ? (
         <div className="grid">
-          <SectionCard title="Matching runs">
+          <SectionCard title="Legacy simulation runs">
             <p className="status">{filteredRuns.length} matching run(s), preserving API order.</p>
             <ul className="item-list" aria-label="Matching runs">
               {filteredRuns.map((run) => {

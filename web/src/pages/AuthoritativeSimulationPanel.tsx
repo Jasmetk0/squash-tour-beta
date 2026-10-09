@@ -96,6 +96,7 @@ import type {
 } from '../api/types'
 import { newCommandId } from '../admin/branchSimulation'
 import { EmptyState, MetadataList, SectionCard, SummaryPills } from '../components/RunScopedUi'
+import { CanonicalSimulationBlockerGuide } from '../components/CanonicalSimulationBlockerGuide'
 import type {
   DerivedRankingTransitionAuthorityPreview,
   DerivedRankingTransitionAuthorityRequest
@@ -2342,6 +2343,15 @@ export function AuthoritativeSimulationPanel({
       {scheduleQuery.error ? <p className="error">Week Schedule unavailable: {formatApiError(scheduleQuery.error)}</p> : null}
       {savePreviewQuery.error ? <p className="error">Save preview unavailable: {formatApiError(savePreviewQuery.error)}</p> : null}
 
+      <CanonicalSimulationBlockerGuide
+        runId={runId}
+        branchId={branchId}
+        available={enabled}
+        position={positionQuery.data}
+        schedulePreflight={schedulePreflightQuery.data}
+        scheduleInspectionAvailable={Boolean(scheduleQuery.data)}
+      />
+
       {weekLockQuery.isLoading && enabled ? (
         <p className="status">Inspecting Week Tournament Lock conflicts…</p>
       ) : null}
@@ -2352,7 +2362,7 @@ export function AuthoritativeSimulationPanel({
       ) : null}
       {weekLockQuery.data ? (
         <>
-          <h4>Week Tournament Lock</h4>
+          <h4 id="canonical-week-lock">Week Tournament Lock</h4>
           <p className="status">
             Explicit pre-alpha Admin resolution of overlapping accepted tournament fields.
             The engine does not invent a preferred event or a Final Commitment deadline.
@@ -2551,7 +2561,7 @@ export function AuthoritativeSimulationPanel({
 
       {scheduleQuery.data ? (
         <>
-          <h4>Week Simulation Schedule</h4>
+          <h4 id="canonical-week-schedule">Week Simulation Schedule</h4>
           {schedulePreflightQuery.isLoading ? (
             <p className="status">Loading canonical Week Schedule preflight…</p>
           ) : null}
@@ -2798,13 +2808,13 @@ export function AuthoritativeSimulationPanel({
 
       {position ? (
         <>
-          <h4>Execute current canonical position</h4>
+          <h4 id="canonical-current-slot">Execute current canonical position</h4>
           {currentEntrySlot ? (
             <>
               <p className="status">
                 The nearest unresolved Simulation Slot is an Entry decision slot. Complete its application validation before match simulation can continue.
               </p>
-              <h4>Entry application validation</h4>
+              <h4 id="canonical-entry-validation">Entry application validation</h4>
               <p className="status">
                 This is an explicit audited Admin resolution over frozen Entry evidence. The engine does not infer the still-open automatic eligibility or deadline rules here.
               </p>
@@ -4652,7 +4662,7 @@ export function AuthoritativeSimulationPanel({
 
       {savePreviewQuery.data ? (
         <>
-          <h4>Save canonical simulation draft</h4>
+          <h4 id="canonical-simulation-save">Save canonical simulation draft</h4>
           <MetadataList
             items={[
               { label: 'Unsaved changes', value: savePreviewQuery.data.can_save ? 'Yes' : 'No' },
@@ -4680,7 +4690,7 @@ export function AuthoritativeSimulationPanel({
 
       {position && (rankingAuthorityMissing || rankingAuthorityCommitted) ? (
         <>
-          <h4>Ranking Transition Authority</h4>
+          <h4 id="canonical-ranking-authority">Ranking Transition Authority</h4>
           <p className="status">
             The server derives the target-week lifecycle roster and reuses the predecessor Official Ranking policy. Admin supplies only audit provenance.
           </p>
@@ -4810,7 +4820,7 @@ export function AuthoritativeSimulationPanel({
 
       {position?.current_week.week === 61 ? (
         <>
-          <h4>Canonical Season Transition preflight</h4>
+          <h4 id="canonical-season-transition">Canonical Season Transition preflight</h4>
           <p className="status">
             Week 61 crosses a season boundary. Ordinary rollover becomes executable when this exact persisted state has no branch blocker and no boundary-specific engine gap; the final 2049/50 closure uses its dedicated terminal path.
           </p>
@@ -5002,7 +5012,7 @@ export function AuthoritativeSimulationPanel({
 
       {position && position.current_week.week !== 61 ? (
         <>
-          <h4>Canonical Week Transition</h4>
+          <h4 id="canonical-week-transition">Canonical Week Transition</h4>
           {!position.week_ready_for_transition ? (
             <p className="status">
               Week Transition is not ready. Resolve the canonical blockers shown above before advancing world time.

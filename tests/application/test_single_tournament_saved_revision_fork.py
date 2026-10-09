@@ -125,13 +125,15 @@ def _complete_second_standard_tournament(
     )
     assert status == 201, field
     assert set(field["direct_main_player_ids"]) == set(players)
+    status, field_state = _request("GET", field_root)
+    assert status == 200, field_state
     draw_root = tournament_root + "/draw"
     status, draw_input = _request(
         "POST", draw_root + "/commit-input",
         {
             "command_id": "second-week-frozen-draw-input",
             "run_id": run_id, "branch_id": branch_id, "event_id": event_id,
-            "expected_field_fingerprint": field["field_fingerprint"],
+            "expected_field_fingerprint": field_state["field_fingerprint"],
             "draw_seed": 200002,
         },
     )

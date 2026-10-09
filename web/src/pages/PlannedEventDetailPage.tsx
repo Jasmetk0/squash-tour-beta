@@ -47,6 +47,7 @@ import { isRunCalendarProjection } from '../api/runFirstTournament'
 import { RunTournamentEntryReviewPanel } from '../components/RunTournamentEntryReviewPanel'
 import { RunCurrentEntryFreezePanel } from '../components/RunCurrentEntryFreezePanel'
 import { RunReviewedEntryFieldPanel } from '../components/RunReviewedEntryFieldPanel'
+import { RunFirstDrawPanel } from '../components/RunFirstDrawPanel'
 import { getPlannedEventStatus } from './plannedEventUtils'
 import { useAdminViewedSeasonState } from '../admin/useAdminViewedSeasonState'
 import type {
@@ -1262,6 +1263,12 @@ export function PlannedEventDetailPage(): JSX.Element {
         canonicalPreparationQuery.data.branch_id === activeBranchId &&
         canonicalPreparationQuery.data.event_id === eventId &&
         canonicalPreparationQuery.data.authority_source === 'run_owned_db_authorities.v1' &&
+        <RunFirstDrawPanel runId={runId} branchId={activeBranchId} eventId={eventId} />}
+      {canonicalSeasonState && plannedEvent && !viewed.historical && activeBranchId &&
+        canonicalPreparationQuery.data?.run_id === runId &&
+        canonicalPreparationQuery.data.branch_id === activeBranchId &&
+        canonicalPreparationQuery.data.event_id === eventId &&
+        canonicalPreparationQuery.data.authority_source === 'run_owned_db_authorities.v1' &&
         <RunCurrentEntryFreezePanel runId={runId} branchId={activeBranchId} eventId={eventId} />}
       {canonicalSeasonState && plannedEvent && !viewed.historical && activeBranchId &&
         canonicalPreparationQuery.data?.run_id === runId &&
@@ -1616,7 +1623,7 @@ export function PlannedEventDetailPage(): JSX.Element {
                   { label: 'Algorithm', value: canonicalDrawStateQuery.data.draw_algorithm_version ?? '—' }
                 ]}
               />
-              {!canonicalDrawStateQuery.data.draw_input_committed ? (
+              {!canonicalSeasonState && !canonicalDrawStateQuery.data.draw_input_committed ? (
                 <div className="grid">
                   <label>
                     Technical draw seed
@@ -1643,7 +1650,7 @@ export function PlannedEventDetailPage(): JSX.Element {
                   </button>
                 </div>
               ) : null}
-              {canonicalDrawStateQuery.data.draw_input_committed && !canonicalDrawStateQuery.data.initial_draw_generated ? (
+              {!canonicalSeasonState && canonicalDrawStateQuery.data.draw_input_committed && !canonicalDrawStateQuery.data.initial_draw_generated ? (
                 <button
                   type="button"
                   onClick={() => canonicalDrawGenerateMutation.mutate()}
@@ -1901,7 +1908,7 @@ export function PlannedEventDetailPage(): JSX.Element {
           {canonicalEffectiveDrawAuthorityQuery.error ? (
             <p className="error">Failed to load effective canonical Draw authority: {formatApiError(canonicalEffectiveDrawAuthorityQuery.error)}</p>
           ) : null}
-          {displayedCanonicalDrawAuthority ? (
+          {!canonicalSeasonState && displayedCanonicalDrawAuthority ? (
             <>
               <SummaryPills
                 items={[

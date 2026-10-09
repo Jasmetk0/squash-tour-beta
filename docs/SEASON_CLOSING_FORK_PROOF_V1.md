@@ -1,6 +1,6 @@
-# Canonical Season Closing Ranking — pre-fork proof V1
+# Canonical Season Closing Ranking — fork proof and guarded integration
 
-**Status: pure proof plus ranking replay integration; post-season Saved Revision fork remains blocked.**
+**Status (PR #1325, proposed to `buuk`): one verified terminal Season Transition fork integrated; full HTTP/played-tournament/independent-continuation acceptance remains open.**
 
 A Season Transition is distinct from an ordinary Week Transition. Its
 archived Season Closing Ranking belongs to the **completed Week 61**, must use
@@ -29,14 +29,14 @@ deterministic, **fail-closed preliminary adapter**. It requires:
    totals and counted sporting results, while changing the branch-bound
    predecessor/input/archive fingerprints.
 
-The caller remains responsible for **independently verifying** that these
-target collections originate from installed target-local ranking/zero and
-owned tournament authority; a caller-created mapping is *not* sufficient
-proof by itself. The later transaction must additionally verify/copy the
-season summary, closure marker and binding to the **new** Saved Revision ID,
-Season Transition World Event, player sporting/lifecycle/health rollover,
-publication history, atomic installation and independent next-season
-continuation.
+The transaction must **independently verify** that the target collections
+originate from target-local ranking/zero and owned tournament authority;
+a caller-created mapping is not sufficient proof by itself. The bounded
+Season Transition fork path now couples the archive with the target Season
+Summary/Closure Marker, World Event, player sporting/lifecycle/health state
+and authoritative publication history in one transaction. Independent
+next-season continuation after restarting the complete HTTP/played-tournament
+scenario remains an explicit acceptance gap.
 
 ## Focused acceptance
 
@@ -59,13 +59,9 @@ Closing-only-source adapter and remains unsupported.
 deterministic replay of a Week-61 result first eligible in the following season,
 and rejects forged ranking sources and missing Week-61 predecessors.
 
-**This does not enable production post-season Branch creation.** The saved
-Season Summary/Closure Marker still requires target revision rebinding. The
-atomic ranking fork installer continues to reject Closing archives and
-Season Transition World Events, and Week Transition audit remapping remains
-event-scoped. Those guards must not be lifted until rollover state, event
-provenance, archived closure identity, persistence, rollback and independent
-continuation are integrated and tested together. No HTTP/SQLite season-fork,
+**Historical scope of PR #1323:** the ranking-only adapter at that checkpoint
+did not yet permit post-season Branch creation. The later PRs add the guarded
+closure and event wiring described below. No full HTTP/played-tournament,
 50-season/realism or pre-alpha release status is implied.
 
 ## Cross-Branch Saved Revision closure and SQLite archive install (follow-up)
@@ -84,12 +80,10 @@ under a nested savepoint in the caller's outer Branch-fork transaction.
 Focused tests use real SQLAlchemy/SQLite persistence, forged data and rollback
 after a later injected failure.
 
-**These building blocks are not yet wired to production Run Branch creation.**
-That endpoint still rejects Season Closure Saved Revisions and Season Transition
-World Events; no guard has been disabled. Full integration must also reconstruct
-the Season Transition event's configuration/player/ranking fingerprints from
-canonical original and target authority, install its World Event, and recapture
-the entire target state together with source-independent continuation.
+**Historical scope of PR #1324:** these storage and closure components were
+then not yet connected to top-level Run Branch creation. PR #1325 proposes
+their guarded integration for exactly one completed ordinary Season Transition.
+Other closure boundaries remain blocked until separately proven.
 
 ## One ordinary Season Transition: guarded Run Branch fork integration
 
@@ -131,3 +125,7 @@ proofs, and unremapped season-scoped statistic sources. The
 Pre-alpha requires the separate live played-tournament → Save → Season
 Transition → restart → Branch → next-week acceptance before this subsystem
 can be treated as fully complete.
+
+The focused PR #1325 Fast CI backend run on commit `065d5c02` completed
+with 16 passed, 3,562 deselected; full release and HTTP E2E gates were not
+run.

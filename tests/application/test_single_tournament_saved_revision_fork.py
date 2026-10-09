@@ -8,7 +8,7 @@ It deliberately stops after Week 1 so Fast CI never runs all 61 weeks.
 from __future__ import annotations
 
 import pytest
-from sqlalchemy import func, select
+from sqlalchemy import func, select, text
 
 import beta_engine.infrastructure.db.repositories as repository_module
 from beta_engine.infrastructure.db.models import RunBranchModel
@@ -633,6 +633,7 @@ def test_single_completed_run_owned_tournament_fork_reopen_and_continue(
         }
         repository = reopened.app.state.runtime.repository
         with repository._session_factory.begin() as session:
+            session.execute(text("BEGIN"))
             original_ranking = capture_ranking_revision_state(
                 session, run_id=run_id, branch_id=branch_id
             )
@@ -647,6 +648,7 @@ def test_single_completed_run_owned_tournament_fork_reopen_and_continue(
         # player, Branch and audit row must roll back together.
         fork_url = f"{reopened.base_url}/run-containers/{run_id}/branches"
         with repository._session_factory.begin() as session:
+            session.execute(text("BEGIN"))
             rollback_counts_before = tuple(
                 session.scalar(
                     select(func.count()).select_from(model).where(model.run_id == run_id)
@@ -682,6 +684,7 @@ def test_single_completed_run_owned_tournament_fork_reopen_and_continue(
                 original_install,
             )
         with repository._session_factory.begin() as session:
+            session.execute(text("BEGIN"))
             assert session.scalars(
                 select(RunBranchModel).where(
                     RunBranchModel.run_id == run_id,
@@ -718,6 +721,7 @@ def test_single_completed_run_owned_tournament_fork_reopen_and_continue(
         assert fork["saved_head_revision_id"] != revision
 
         with repository._session_factory.begin() as session:
+            session.execute(text("BEGIN"))
             target_ranking = capture_ranking_revision_state(
                 session, run_id=run_id, branch_id=target_branch_id
             )
@@ -762,6 +766,7 @@ def test_single_completed_run_owned_tournament_fork_reopen_and_continue(
         assert _request("GET", source_sim_root + "/position")[1] == source_position
 
         with repository._session_factory.begin() as session:
+            session.execute(text("BEGIN"))
             assert capture_ranking_revision_state(
                 session, run_id=run_id, branch_id=branch_id
             ).fingerprint == original_ranking.fingerprint

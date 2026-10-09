@@ -24,6 +24,7 @@ const api = vi.hoisted(() => {
 
   return {
     ApiError,
+    listRunContainers: vi.fn(),
     listRuns: vi.fn(),
     getRun: vi.fn(),
     getRunStatusSummary: vi.fn()
@@ -36,6 +37,10 @@ describe('RunsPage', () => {
   beforeEach(() => {
     localStorage.clear()
     navigateMock.mockReset()
+    api.listRunContainers.mockResolvedValue({ run_containers: [
+      { run_id: 'saved-run', display_name: 'Sandbox One', read_only: false, status: 'working', timeline_start_season: 2000 },
+      { run_id: 'official-protected', display_name: 'Protected World', read_only: true, status: 'active', timeline_start_season: 2000 }
+    ] })
     api.listRuns.mockResolvedValue({
       runs: [
         {
@@ -79,6 +84,16 @@ describe('RunsPage', () => {
       history_counts: { events: runId === 'run-1' ? 1 : 7, ranking_snapshots: 9, race_snapshots: 9 }
     }))
     api.getRun.mockResolvedValue({ run: { run_id: 'run-3' } })
+  })
+
+  it('lists saved Product Runs independently from legacy Simulation Runs', async () => {
+    renderWithRoute(<RunsPage />, '/admin/runs')
+    expect(await screen.findByRole('link', { name: 'Sandbox One' })).toHaveAttribute('href', '/admin/runs/saved-run')
+    expect(screen.getByRole('link', { name: 'Protected World' })).toHaveAttribute('href', '/admin/runs/official-protected')
+    expect(screen.getByText(/Protected \/ read-only/)).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('link', { name: 'Sandbox One' }))
+    expect(localStorage.getItem('beta_engine:last_run_id')).toBe('saved-run')
+    expect(api.getRun).not.toHaveBeenCalled()
   })
 
   it('renders /runs route shell and runs list from GET /runs', async () => {

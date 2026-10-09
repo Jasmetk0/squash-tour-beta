@@ -19,6 +19,12 @@ const api = vi.hoisted(() => ({
   listRunBranches: vi.fn(),
   getBranchWorkingDraft: vi.fn(),
   getAuthoritativeSimulationPosition: vi.fn(),
+  inspectAuthoritativeWeekSchedulePreflight: vi.fn(),
+  inspectAuthoritativeWeekSchedule: vi.fn(),
+  inspectAuthoritativeMatchReconstruction: vi.fn(),
+  listAuthoritativeMatchReplays: vi.fn(),
+  getAuthoritativeMatchReplayContext: vi.fn(),
+  simulateAuthoritativeNextMatch: vi.fn(),
   inspectAuthoritativeEntryDecisionSlot: vi.fn(),
   reviewAuthoritativeEntryDecisionSlot: vi.fn(),
   listEvents: vi.fn(),
@@ -99,6 +105,22 @@ describe('PlannedEventDetailPage', () => {
     api.getBranchWorkingDraft.mockResolvedValue({
       run_id: 'run-a', branch_id: 'branch-a',
       base_saved_revision_id: 'rev-1', status: 'clean', draft_version: 0
+    })
+    api.inspectAuthoritativeWeekSchedulePreflight.mockResolvedValue({
+      schema_version: 'authoritative_week_schedule_preflight.v1',
+      run_id:'run-a',branch_id:'branch-a',
+      week:{season_index:0,week:1},event_ids:['E1'],group_ids:[],
+      schedule_required:true,schedule_already_adopted:false,
+      canonical_preparation:null,canonical_preparation_ready:false,
+      blockers:['initial_draw_required'],can_propose_schedule:false,
+      expected_position_fingerprint:'a'.repeat(64),
+      preflight_fingerprint:'b'.repeat(64),read_only:true
+    })
+    api.inspectAuthoritativeWeekSchedule.mockRejectedValue(new api.ApiError('Schedule not adopted',404))
+    api.inspectAuthoritativeMatchReconstruction.mockRejectedValue(new api.ApiError('No current match',409))
+    api.listAuthoritativeMatchReplays.mockResolvedValue({
+      schema_version:'authoritative_match_replay_list.v1',
+      run_id:'run-a',branch_id:'branch-a',read_only:true,matches:[]
     })
     api.getAuthoritativeSimulationPosition.mockResolvedValue({
       run_id: 'run-a', branch_id: 'branch-a',current_week:{season_index:0,week:1},

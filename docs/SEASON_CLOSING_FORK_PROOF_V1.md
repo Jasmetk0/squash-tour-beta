@@ -90,3 +90,44 @@ World Events; no guard has been disabled. Full integration must also reconstruct
 the Season Transition event's configuration/player/ranking fingerprints from
 canonical original and target authority, install its World Event, and recapture
 the entire target state together with source-independent continuation.
+
+## One ordinary Season Transition: guarded Run Branch fork integration
+
+The ordinary saved Season Transition boundary is now assembled inside
+`create_branch_from_saved_revision_atomically` **only for an exact single
+terminal Season Transition Saved Revision** with one archived Season Closing
+Ranking and one matching World Event. The fork transaction installs the
+replayed ranking/publication ledger, installs and verifies the target Closing
+Ranking archive using the existing SQLite savepoint adapter, reconstructs the
+source Season Summary/Closure Marker against the target archive and new Saved
+Revision identity, then verifies and remaps the Season Transition World Event
+using independently proven player lifecycle, sporting and health mappings.
+The Week Transition audit installer confirms the complete Week 1–61 chain
+plus the Season boundary and re-captures the full target ranking state; all
+writes, including Branch/Saved Revision creation, are still owned by the same
+outer SQLite fork transaction.
+
+The original Season Transition configuration fingerprint remains the exact
+**historical source** fingerprint, not a newly fabricated target-Branch
+configuration: the original transaction persisted its fingerprint but not the
+complete historical configuration command. All actual target-Branch output
+fingerprints are reconstructed from verified target state. This provenance
+limitation is intentional and must be considered before broadening replay.
+
+`tests/infrastructure/test_season_transition_fork_event.py` checks target
+fingerprints and hostile event mutations. The 61-week
+`tests/infrastructure/test_season_transition_fork_bundle.py` exercises real
+canonical ranking/Week Transition command chronology, missing event rejection,
+SQLite replay/commit/reopen/original-Branch isolation and full rollback of
+target ranking/archive/event writes. These do **not** by themselves certify
+real played-match and tournament continuity, the full HTTP Run-fork route,
+or independent next-week play after fork.
+
+Fail-closed cases remain: further Season Transitions, older/non-terminal
+revision snapshots with orphaned closure components, final 2049/50 Closing-only
+sources, incomplete publication/event histories, missing target player/slot
+proofs, and unremapped season-scoped statistic sources. The
+`application_validation_policy_unresolved` entry-decision gate is unchanged.
+Pre-alpha requires the separate live played-tournament → Save → Season
+Transition → restart → Branch → next-week acceptance before this subsystem
+can be treated as fully complete.

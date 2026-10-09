@@ -379,6 +379,8 @@ def test_single_completed_run_owned_tournament_fork_reopen_and_continue(
     )
     assert len(participant_ids) == 4
 
+    first_match_evidence = None
+
     full_review = {
         "command_id": "official-full-simulation-parent",
         "operator_label": "Official Run acceptance admin",
@@ -942,6 +944,99 @@ def test_single_completed_run_owned_tournament_fork_reopen_and_continue(
             "week": 1,
         }
 
+        if scenario == "single":
+            # Exercise actual PR #1341 sporting command separately from the
+            # full-Week runner, then PR #1342's real Save/reload boundary.
+            assert position["current_slot_kind"] == "match", position
+            assert position["eligible_match_ids"], position
+            group_id = position["eligible_match_ids"][0]
+            status, frozen_match = _request(
+                "GET", sim_root + f"/match-reconstruction/state?group_id={group_id}",
+            )
+            assert status == 200, frozen_match
+            assert frozen_match["event_id"] == event_id
+            assert frozen_match["group_id"] == group_id
+            assert frozen_match["expected_revision_id"] == revision
+            assert {frozen_match["player_a_id"], frozen_match["player_b_id"]} <= set(
+                primary_players
+            )
+
+            command = {
+                "command_id": "first-real-reviewed-squash-match",
+                "run_id": run_id,
+                "branch_id": branch_id,
+                "expected_week": position["current_week"],
+                "expected_position_fingerprint": position["position_fingerprint"],
+                "expected_revision_id": revision,
+                "group_id": group_id,
+            }
+            status, after_match = _request(
+                "POST", sim_root + "/simulate-next-match", command,
+            )
+            assert status == 200, after_match
+            assert after_match["position_fingerprint"] != position["position_fingerprint"]
+            assert _request(
+                "POST", sim_root + "/simulate-next-match", command
+            ) == (200, after_match)  # same command is an exact retry, not a second result
+
+            status, replays = _request("GET", sim_root + "/match-replays?limit=50")
+            assert status == 200, replays
+            assert replays["read_only"] is True
+            matches_after_first = [
+                match for match in replays["matches"]
+                if match["group_id"] == group_id
+            ]
+            assert len(matches_after_first) == 1, replays
+            real_match = matches_after_first[0]
+            assert real_match["replay_available"] is True
+            assert len(real_match["result_fingerprint"]) == 64
+            assert real_match["total_rallies"] > 0
+            assert {
+                real_match["winner_player_id"], real_match["loser_player_id"]
+            } == {frozen_match["player_a_id"], frozen_match["player_b_id"]}
+            status, context = _request(
+                "GET",
+                sim_root + f"/match-replay/context?group_id={group_id}",
+            )
+            assert status == 200, context
+            assert context["verified"] is True
+            assert context["rng_rerun"] is False
+            assert context["replay_source"] == "stored_authoritative_events"
+            assert context["result_fingerprint"] == real_match["result_fingerprint"]
+            assert context["match_id"] == frozen_match["match_id"]
+            first_match_evidence = {
+                "group_id": group_id,
+                "match_id": real_match["match_id"],
+                "winner": real_match["winner_player_id"],
+                "result_fingerprint": real_match["result_fingerprint"],
+            }
+
+            status, save_preview = _request("GET", sim_root + "/save/preview")
+            assert status == 200, save_preview
+            assert save_preview["can_save"] is True
+            assert save_preview["has_unsaved_changes"] is True
+            assert save_preview["saved_head_revision_id"] == revision
+            status, saved = _request(
+                "POST", sim_root + "/save",
+                {
+                    "expected_draft_version": save_preview["draft_version"],
+                    "expected_simulation_fingerprint": save_preview[
+                        "simulation_fingerprint"
+                    ],
+                },
+            )
+            assert status == 201, saved
+            assert saved["saved_revision"]["parent_revision_id"] == revision
+            revision = saved["saved_revision"]["revision_id"]
+            assert saved["working_draft"]["base_saved_revision_id"] == revision
+            assert saved["working_draft"]["status"] == "clean"
+            status, saved_preview_again = _request(
+                "GET", sim_root + "/save/preview",
+            )
+            assert status == 200, saved_preview_again
+            assert saved_preview_again["can_save"] is False
+            assert saved_preview_again["saved_head_revision_id"] == revision
+
         review = {
             "command_id": "one-tournament-week-one-next-week",
             "operator_label": "Run-owned tournament fork acceptance admin",
@@ -1010,6 +1105,34 @@ def test_single_completed_run_owned_tournament_fork_reopen_and_continue(
         assert source_position["current_week"] == {
             "season_index": 0, "week": fork_week
         }
+        if first_match_evidence is not None:
+            # New HTTP server, same file-backed SQLite: no result recomputation.
+            status, reopen_replays = _request(
+                "GET", source_sim_root + "/match-replays?limit=100",
+            )
+            assert status == 200, reopen_replays
+            exact = [
+                row for row in reopen_replays["matches"]
+                if row["group_id"] == first_match_evidence["group_id"]
+            ]
+            assert len(exact) == 1
+            assert exact[0]["match_id"] == first_match_evidence["match_id"]
+            assert exact[0]["winner_player_id"] == first_match_evidence["winner"]
+            assert (
+                exact[0]["result_fingerprint"]
+                == first_match_evidence["result_fingerprint"]
+            )
+            status, persisted_context = _request(
+                "GET",
+                source_sim_root + "/match-replay/context?group_id="
+                + first_match_evidence["group_id"],
+            )
+            assert status == 200, persisted_context
+            assert persisted_context["verified"] is True
+            assert (
+                persisted_context["result_fingerprint"]
+                == first_match_evidence["result_fingerprint"]
+            )
         repository = reopened.app.state.runtime.repository
         with repository._session_factory.begin() as session:
             session.execute(text("BEGIN"))

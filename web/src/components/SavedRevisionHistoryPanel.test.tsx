@@ -327,7 +327,20 @@ describe('SavedRevisionHistoryPanel', () => {
     await userEvent.click(await screen.findByRole('button', { name: /Revision 1:/ }))
     await screen.findByLabelText('Saved Revision read-only preview')
     await userEvent.type(screen.getByLabelText('New Branch name from Saved Revision'), '  Alternative history  ')
-    await userEvent.click(screen.getByRole('button', { name: 'Create new Branch from this revision' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Review new Branch creation' }))
+    const review = screen.getByRole('alertdialog', { name: 'Review new Branch creation' })
+    expect(review).toHaveTextContent('revision-one')
+    expect(review).toHaveTextContent('hash-one')
+    expect(review).toHaveTextContent('revision-two')
+    expect(review).toHaveTextContent('Alternative history')
+    expect(review).toHaveTextContent('branch-two')
+    expect(api.createRunBranchFromSavedRevision).not.toHaveBeenCalled()
+
+    const confirm = screen.getByRole('button', { name: 'Confirm new Branch creation' })
+    expect(confirm).toBeDisabled()
+    await userEvent.click(screen.getByRole('checkbox', { name: 'Confirm new Branch creation' }))
+    expect(confirm).toBeEnabled()
+    await userEvent.click(confirm)
 
     await waitFor(() => expect(api.createRunBranchFromSavedRevision).toHaveBeenCalledTimes(1))
     expect(api.createRunBranchFromSavedRevision).toHaveBeenCalledWith(run.run_id, {
@@ -339,6 +352,59 @@ describe('SavedRevisionHistoryPanel', () => {
       'The Viewer Branch was not changed.'
     )
     expect(api.restoreSavedRevision).not.toHaveBeenCalled()
+  })
+
+  it('cancels a reviewed Branch creation without touching source, Viewer or persisted Branches', async () => {
+    renderPanel()
+    await userEvent.click(await screen.findByRole('button', { name: /Revision 1:/ }))
+    await screen.findByLabelText('Saved Revision read-only preview')
+    await userEvent.click(screen.getByRole('button', { name: 'Review new Branch creation' }))
+    const review = screen.getByRole('alertdialog', { name: 'Review new Branch creation' })
+    expect(review).toHaveTextContent('First unused Timeline N')
+    await userEvent.click(screen.getByRole('button', { name: 'Cancel Branch creation' }))
+    expect(screen.queryByRole('alertdialog', { name: 'Review new Branch creation' })).not.toBeInTheDocument()
+    expect(api.createRunBranchFromSavedRevision).not.toHaveBeenCalled()
+  })
+
+  it('blocks confirmation if the proposed name changes after the exact revision was reviewed', async () => {
+    renderPanel()
+    await userEvent.click(await screen.findByRole('button', { name: /Revision 1:/ }))
+    await screen.findByLabelText('Saved Revision read-only preview')
+    await userEvent.type(screen.getByLabelText('New Branch name from Saved Revision'), 'Original name')
+    await userEvent.click(screen.getByRole('button', { name: 'Review new Branch creation' }))
+    await userEvent.click(screen.getByRole('checkbox', { name: 'Confirm new Branch creation' }))
+    expect(screen.getByRole('button', { name: 'Confirm new Branch creation' })).toBeEnabled()
+    await userEvent.type(screen.getByLabelText('New Branch name from Saved Revision'), ' changed')
+    expect(screen.getByRole('button', { name: 'Confirm new Branch creation' })).toBeDisabled()
+    expect(screen.getByText(/proposed name changed/)).toBeInTheDocument()
+    expect(api.createRunBranchFromSavedRevision).not.toHaveBeenCalled()
+  })
+
+  it('clears an unconfirmed review after switching historical Saved Revisions', async () => {
+    renderPanel()
+    await userEvent.click(await screen.findByRole('button', { name: /Revision 1:/ }))
+    await screen.findByLabelText('Saved Revision read-only preview')
+    await userEvent.click(screen.getByRole('button', { name: 'Review new Branch creation' }))
+    await userEvent.click(screen.getByRole('button', { name: /Revision 2:/ }))
+    expect(screen.queryByRole('alertdialog', { name: 'Review new Branch creation' })).not.toBeInTheDocument()
+    expect(api.createRunBranchFromSavedRevision).not.toHaveBeenCalled()
+  })
+
+  it('rejects a mismatched Saved Revision preview instead of offering a Branch mutation', async () => {
+    api.getSavedRevision.mockResolvedValueOnce({ ...detail, branch_id: 'foreign-branch' })
+    renderPanel()
+    await userEvent.click(await screen.findByRole('button', { name: /Revision 1:/ }))
+    expect(await screen.findByText('The preview returned a mismatched Saved Revision identity.')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Review new Branch creation' })).not.toBeInTheDocument()
+    expect(api.createRunBranchFromSavedRevision).not.toHaveBeenCalled()
+  })
+
+  it('does not permit Branch creation from a read-only Run', async () => {
+    renderPanel({ run: { ...run, read_only: true } })
+    await userEvent.click(await screen.findByRole('button', { name: /Revision 1:/ }))
+    await screen.findByLabelText('Saved Revision read-only preview')
+    expect(screen.getByRole('button', { name: 'Review new Branch creation' })).toBeDisabled()
+    expect(api.createRunBranchFromSavedRevision).not.toHaveBeenCalled()
   })
 
   it('requires the reviewed phrase and checkbox before submitting the exact restore snapshot', async () => {

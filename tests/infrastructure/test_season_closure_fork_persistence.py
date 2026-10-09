@@ -103,7 +103,7 @@ def test_cross_branch_closure_rejects_unproven_source_and_sporting_changes(tampe
         candidate["content"]["season_closure"]["fingerprint"] = "0" * 64
     else:
         target = target.model_copy(update={"rows": ()})
-    with pytest.raises(ValueError, match="Season Closure|Cross-Branch"):
+    with pytest.raises(ValueError, match="(?i)season closure|cross-branch"):
         rebind_cross_branch_season_closure(
             candidate, original_target,
             run_id="run", source_branch_id="source",

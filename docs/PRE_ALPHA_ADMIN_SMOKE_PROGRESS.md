@@ -44,7 +44,7 @@ This document supersedes older general next-task suggestions **for the immediate
 - Existing Week-1 candidate blocks duplicate bootstrap; protected Runs cannot mutate. Nothing is published to Viewer and no week transition is executed.
 - Focused frontend tests exercise happy path, immutable save, empty Week-1 rows, recovery, duplicate guard and changed audit input. Production integration evidence for derive/confirm/save/reopen is in `tests/api/test_initial_world_ranking_integration.py`; this PR still needs real browser acceptance.
 
-## Candidate PR #1335 — publish the first Week-1 ranking
+## Implemented and merged — PR #1335: publish the first Week-1 ranking
 
 - Add canonical Run Home publication review for exactly one saved, clean 2000/01 Week-1 ranking candidate from the selected Run/Branch; never derive a substitute or invent classified player rows.
 - Use the **existing** production `POST /ranking-candidates/publish-initial` with exact reviewed candidate fingerprint and strict response Run/Branch/Week/fingerprint verification; exact idempotent retry is supported by the server.
@@ -54,12 +54,21 @@ This document supersedes older general next-task suggestions **for the immediate
 - Repair the preceding initial-ranking Save UI gate: the production ranking component can legitimately have unsaved changes while the Viewer-branch Working Draft is still **clean**; trust the dedicated verified ranking save preflight. Add targeted regression.
 - New frontend component tests validate each durable boundary, protected Run, non-Viewer selection, stale candidate safety, recovery and the clean-draft regression. Existing backend production publication and Viewer read-model tests are retained. Full browser acceptance remains unverified.
 
+## Candidate PR #1336 — first Run-owned Calendar event handoff
+
+- From Run Home, discover the earliest scheduled Season Week in the **already applied detached 2000/01 Run-owned Calendar** by calling the existing `GET /admin/runs/{run}/branches/{branch}/packages/calendar/{package_id}`. Validate exact scope, content fingerprints and no Calendar validation errors; do not reuse the legacy `/runs` season's events or fabricate a Calendar.
+- For each event in the earliest Week, permit explicit selection, inspect its **actual** `CanonicalTournamentPreparationService` state, display phase/next action/blockers, and hand off with encoded Run/Branch/Calendar identities to the already implemented Event detail UI.
+- On the existing Planned Event detail route, permit that explicit scoped Calendar handoff when `GET /runs/{run_id}` is legitimately 404 because a new Product Run has no legacy Simulation Run. Cross-check source Calendar against the current Run Package fingerprint and selected Present Admin Branch. Show canonical preparation and controls only for an event actually found inside the verified detached Calendar.
+- Do not equate missing legacy event history with missing canonical tournament data; never bypass historical/Branch handoff protection.
+- Existing Event detail already has explicit published-ranking authority adoption, valid-submission Entry Field creation, Draw Input and Draw authority interfaces. **This slice does not invent or auto-validate applications or build/simulate the first tournament.** The first-tournament application-validation policy remains a known blocker.
+- Focused frontend tests cover earliest chronological selection (including simultaneous events), correct source, readiness link, no legacy Run, stale fingerprint rejection and protected scope. Backend Package Calendar adapter and tournament-preparation service remain unchanged; full browser end-to-end pending.
+
 ## Still blocking the requested user journey
 
 1. Browser-check World and Calendar source import with a real disposable Product Run, using validated source season files and save/restart, not only mocked frontend tests and existing backend adapters.
 2. Verify the newly connected initial-player generation, review, adopt, Save and reopen sequence by clicking through a real disposable custom Run, and measure both Earth source packages.
 3. Browser-verify Week-1 ranking derive/confirm/Save, publish, second Save and Viewer readback on a real disposable custom Run, including restart and selected Viewer Branch semantics.
-4. Prepare one standard tournament through canonical entries, manual reviewed applications if necessary, field, draw, schedule and real match execution.
+4. Follow the new Run-owned first event handoff and resolve the unresolved application-validation policy; then prepare canonical applications, field, draw, schedule and real match execution.
 5. Verify point award, correct ranking-publication timing, save/reopen and continuation through real HTTP/SQLite/browser evidence.
 6. Only then measure FIFA Earth / ATP Earth generation in existing Lab tools without changing unproven probabilities.
 

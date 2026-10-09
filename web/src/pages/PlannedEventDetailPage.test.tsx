@@ -16,6 +16,9 @@ const api = vi.hoisted(() => ({
   },
   getRun: vi.fn(),
   listEvents: vi.fn(),
+  getRunOwnedCalendar: vi.fn(),
+  getRunPackageState: vi.fn(),
+  getBranchWorkingDraft: vi.fn(),
   getCanonicalWildCardState: vi.fn(),
   previewCanonicalWildCardAssignment: vi.fn(),
   commitCanonicalWildCardAssignment: vi.fn(),
@@ -484,6 +487,67 @@ describe('PlannedEventDetailPage', () => {
 
 
 
+  })
+
+  it('opens Run-owned Calendar event without a legacy Simulation Run and exposes real canonical preparation', async () => {
+    adminTime.viewed.mockReturnValue({
+      historical: false, seasonState: null, unavailable: false, failed: false,
+      query: { isLoading: false }, time: { runId: 'run-a', branchId: 'branch-a' }
+    })
+    api.getRun.mockRejectedValue(new api.ApiError('Legacy Run not found', 404))
+    api.listEvents.mockRejectedValue(new api.ApiError('Legacy event history not found', 404))
+    api.getBranchWorkingDraft.mockResolvedValue({
+      run_id: 'run-a', branch_id: 'branch-a', base_saved_revision_id: 'rev-1',
+      status: 'clean', draft_version: 0
+    })
+    api.getRunPackageState.mockResolvedValue({
+      state: { run_id: 'run-a', branch_id: 'branch-a' }, fingerprint: 'a'.repeat(64)
+    })
+    api.getRunOwnedCalendar.mockResolvedValue({
+      run_id: 'run-a', branch_id: 'branch-a',
+      package_id: 'calendar-2000-2001', season: '2000/2001',
+      fingerprint: 'b'.repeat(64), content_fingerprint: 'c'.repeat(64),
+      run_package_state_fingerprint: 'a'.repeat(64),
+      calendar: { season: '2000/2001', validation_errors: [], events: [{
+        event_id: 'E1', season: '2000/2001', season_week: 1, event_name: 'First',
+        template_id: 'TEMP-A', category: 'GOLD', tour_level: 'WORLD',
+        host_country: 'CZE', main_draw_size: 8, qualification_draw_size: 0
+      }] }
+    })
+    renderAt('/runs/run-a/calendar/E1?branch=branch-a&calendar=calendar-2000-2001')
+    expect(await screen.findByText(/Using the validated Run-owned Calendar snapshot/)).toBeInTheDocument()
+    expect(await screen.findByText(/Canonical tournament preparation/)).toBeInTheDocument()
+    expect(api.getCanonicalTournamentPreparation).toHaveBeenCalledWith('run-a','branch-a','E1')
+    expect(screen.queryByText(/Failed to load run season state/)).not.toBeInTheDocument()
+  })
+
+  it('rejects a stale Run Package fingerprint instead of trusting calendar URL parameters', async () => {
+    adminTime.viewed.mockReturnValue({
+      historical: false, seasonState: null, unavailable: false, failed: false,
+      query: { isLoading: false }, time: { runId: 'run-a', branchId: 'branch-a' }
+    })
+    api.getRun.mockRejectedValue(new api.ApiError('Legacy Run not found', 404))
+    api.getBranchWorkingDraft.mockResolvedValue({
+      run_id: 'run-a', branch_id: 'branch-a', base_saved_revision_id: 'rev-1',
+      status: 'clean', draft_version: 0
+    })
+    api.getRunPackageState.mockResolvedValue({
+      state: { run_id: 'run-a', branch_id: 'branch-a' }, fingerprint: 'a'.repeat(64)
+    })
+    api.getRunOwnedCalendar.mockResolvedValue({
+      run_id: 'run-a', branch_id: 'branch-a',
+      package_id: 'calendar-2000-2001', season: '2000/2001',
+      fingerprint: 'b'.repeat(64), content_fingerprint: 'c'.repeat(64),
+      run_package_state_fingerprint: 'd'.repeat(64),
+      calendar: { season: '2000/2001', validation_errors: [], events: [{
+        event_id: 'E1', season: '2000/2001', season_week: 1, event_name: 'First',
+        template_id: 'TEMP-A', category: 'GOLD', tour_level: 'WORLD',
+        host_country: 'CZE', main_draw_size: 8, qualification_draw_size: 0
+      }] }
+    })
+    renderAt('/runs/run-a/calendar/E1?branch=branch-a&calendar=calendar-2000-2001')
+    expect(await screen.findByText(/Run-owned Calendar scope or Package fingerprint does not match/)).toBeInTheDocument()
+    expect(screen.queryByText(/Using the validated Run-owned Calendar snapshot/)).not.toBeInTheDocument()
   })
 
   it('renders historical planned-event detail without current or commissioner API reads', async () => {

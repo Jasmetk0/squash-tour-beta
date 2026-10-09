@@ -28,6 +28,9 @@ import {
   previewCanonicalWildCardAssignment,
   commitCanonicalWildCardAssignment,
   getRun,
+  getRunOwnedCalendar,
+  getRunPackageState,
+  getBranchWorkingDraft,
   listEvents
 } from '../api/client'
 import {
@@ -39,7 +42,8 @@ import {
   SectionCard,
   SummaryPills
 } from '../components/RunScopedUi'
-import { formatApiError } from '../utils/apiErrors'
+import { formatApiError, isApiNotFound } from '../utils/apiErrors'
+import { isRunCalendarProjection } from '../api/runFirstTournament'
 import { getPlannedEventStatus } from './plannedEventUtils'
 import { useAdminViewedSeasonState } from '../admin/useAdminViewedSeasonState'
 import type {
@@ -52,6 +56,7 @@ export function PlannedEventDetailPage(): JSX.Element {
   const { runId = '', eventId = '' } = useParams()
   const [searchParams] = useSearchParams()
   const requestedBranchId = searchParams.get('branch')
+  const requestedCalendarId = searchParams.get('calendar')
   const queryClient = useQueryClient()
   const viewed = useAdminViewedSeasonState()
   const [canonicalWildcardOriginalInput, setCanonicalWildcardOriginalInput] = useState('')
@@ -104,6 +109,39 @@ export function PlannedEventDetailPage(): JSX.Element {
     !viewed.historical
   )
   const activeBranchId = handoffMismatch ? '' : (viewed.time?.branchId ?? '')
+  // Canonical Product Runs have no legacy Simulation Run. Explicit package handoff
+  // stays scoped to the selected Present Branch and validated Package snapshot.
+  const canonicalCalendarRequested = Boolean(
+    !viewed.historical && !handoffMismatch && requestedBranchId &&
+    requestedCalendarId && activeBranchId === requestedBranchId
+  )
+  const calendarPackageQuery = useQuery({
+    queryKey: ['run-package-state', runId, activeBranchId],
+    queryFn: () => getRunPackageState(runId, activeBranchId),
+    enabled: canonicalCalendarRequested,
+    retry: false
+  })
+  const canonicalCalendarDraftQuery = useQuery({
+    queryKey: ['package-working-draft', runId, activeBranchId],
+    queryFn: () => getBranchWorkingDraft(runId, activeBranchId),
+    enabled: canonicalCalendarRequested,
+    retry: false
+  })
+  const canonicalCalendarQuery = useQuery({
+    queryKey: ['run-calendar', runId, activeBranchId, requestedCalendarId],
+    queryFn: () => getRunOwnedCalendar(runId, activeBranchId, requestedCalendarId!),
+    enabled: canonicalCalendarRequested,
+    retry: false
+  })
+  const canonicalCalendar = canonicalCalendarRequested && canonicalCalendarQuery.data &&
+    isRunCalendarProjection(canonicalCalendarQuery.data, runId, activeBranchId, requestedCalendarId!) &&
+    calendarPackageQuery.data?.state?.run_id === runId &&
+    calendarPackageQuery.data?.state?.branch_id === activeBranchId &&
+    canonicalCalendarDraftQuery.data?.run_id === runId &&
+    canonicalCalendarDraftQuery.data?.branch_id === activeBranchId &&
+    canonicalCalendarDraftQuery.data?.status === 'clean' &&
+    canonicalCalendarQuery.data.run_package_state_fingerprint === calendarPackageQuery.data.fingerprint
+    ? canonicalCalendarQuery.data : null
   const canonicalPreparationQuery = useQuery({
     queryKey: ['canonical-tournament-preparation', runId, activeBranchId, eventId],
     queryFn: () => getCanonicalTournamentPreparation(runId, activeBranchId, eventId),
@@ -740,7 +778,24 @@ export function PlannedEventDetailPage(): JSX.Element {
     }
   })
 
-  const seasonState = viewed.historical ? viewed.seasonState : runQuery.data?.season_state
+  const canonicalSeasonState = canonicalCalendar && isApiNotFound(runQuery.error)
+    ? {
+        season: 2000,
+        next_event_index: 0,
+        completed_event_ids: [] as string[],
+        ordered_events: canonicalCalendar.calendar.events
+          .slice()
+          .sort((a, b) => a.season_week - b.season_week || a.event_id.localeCompare(b.event_id))
+          .map(event => ({
+            event_id: event.event_id,
+            season: 2000,
+            week: event.season_week,
+            tour: event.tour_level ?? '',
+            category: event.category,
+            template_id: event.template_id
+          }))
+      } : null
+  const seasonState = viewed.historical ? viewed.seasonState : runQuery.data?.season_state ?? canonicalSeasonState
   const orderedEvents = seasonState?.ordered_events ?? []
   const nextEventIndex = seasonState?.next_event_index ?? 0
   const completedEventIds = new Set(seasonState?.completed_event_ids ?? [])
@@ -989,7 +1044,7 @@ export function PlannedEventDetailPage(): JSX.Element {
 
       <SectionCard title="Planned event summary">
         {runQuery.isLoading ? <p className="status">Loading planned event...</p> : null}
-        {runQuery.error ? <p className="error">Failed to load run season state: {formatApiError(runQuery.error)}</p> : null}
+        {runQuery.error && !canonicalSeasonState ? <p className="error">Failed to load run season state: {formatApiError(runQuery.error)}</p> : null}
         {eventId && seasonState && !plannedEvent ? (
           <EmptyState message={`Event ${eventId} is not present in this run's ordered season plan.`} />
         ) : null}
@@ -1050,7 +1105,17 @@ export function PlannedEventDetailPage(): JSX.Element {
         </SectionCard>
       ) : null}
 
-      {eventsQuery.error ? <p className="error">Failed to load persisted events: {formatApiError(eventsQuery.error)}</p> : null}
+      {canonicalCalendarRequested && canonicalCalendarDraftQuery.error ?
+        <p role="alert" className="error">Canonical Working Draft unavailable: {formatApiError(canonicalCalendarDraftQuery.error)}</p> : null}
+      {canonicalCalendarRequested && calendarPackageQuery.error ?
+        <p role="alert" className="error">Canonical Run Package unavailable: {formatApiError(calendarPackageQuery.error)}</p> : null}
+      {canonicalCalendarRequested && canonicalCalendarQuery.error ?
+        <p role="alert" className="error">Run-owned Calendar unavailable: {formatApiError(canonicalCalendarQuery.error)}</p> : null}
+      {canonicalCalendarRequested && canonicalCalendarQuery.isSuccess && !canonicalCalendar ?
+        <p role="alert" className="error">Run-owned Calendar scope or Package fingerprint does not match the selected Run and Branch.</p> : null}
+      {canonicalSeasonState && plannedEvent ?
+        <p role="status">Using the validated Run-owned Calendar snapshot for this canonical Product Run. Legacy Simulation Run history is absent; canonical tournament authorities below remain independent.</p> : null}
+      {eventsQuery.error && !canonicalSeasonState ? <p className="error">Failed to load persisted events: {formatApiError(eventsQuery.error)}</p> : null}
 
       {plannedEvent && !viewed.historical && activeBranchId ? (
         <SectionCard title="Canonical tournament preparation">

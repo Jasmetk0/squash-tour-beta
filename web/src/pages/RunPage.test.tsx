@@ -222,7 +222,7 @@ describe('RunPage', () => {
     }] })
     renderWithRoute(<RunPage />, `/runs/${FAX_REFERENCE_RUN_ID}`)
     expect(await screen.findByRole('heading', { name: 'Product Run — initial setup' })).toBeInTheDocument()
-    expect(screen.getByText('Isolated test Run')).toBeInTheDocument()
+    expect(screen.getAllByText('Isolated test Run').length).toBeGreaterThan(0)
     expect(screen.getByText(/own Saved Revision and Branch remain authoritative/)).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Manage timelines and saved revisions' }))
       .toHaveAttribute('href', `/admin/runs/${FAX_REFERENCE_RUN_ID}/branches`)

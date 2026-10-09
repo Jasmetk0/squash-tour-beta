@@ -33,7 +33,7 @@ export function RunPage(): JSX.Element {
   const { selectedBranch, selectedBranchId, viewerBranchId } = useAdminBranch()
   const time = useAdminTime()
 
-  const runQuery = useQuery({ queryKey: ['run', runId], queryFn: () => getRun(runId), enabled: Boolean(runId) })
+  const runQuery = useQuery({ queryKey: ['run', runId], queryFn: () => getRun(runId), enabled: Boolean(runId), retry: false })
   const containerQuery = useQuery({
     queryKey: ['run-container', runId],
     queryFn: () => getRunContainer(runId),

@@ -419,6 +419,83 @@ class TournamentEntryFieldStore:
         history = self.history(run_id=run_id, branch_id=branch_id, event_id=event_id)
         return history[-1] if history else None
 
+    def preview_initial_from_persisted_submissions(
+        self,
+        *,
+        run_id: str,
+        branch_id: str,
+        event_id: str,
+        capacity: TournamentEntryFieldCapacity,
+    ) -> TournamentEntryField:
+        """Resolve real validated applications read-only before initial Entry Field cut.
+
+        This uses the identical resolver, ranking authority and source submissions
+        as the write path. No field version or command receipt is persisted here.
+        """
+        self._scope(run_id, branch_id, writing=True)
+        if self._rows(run_id=run_id, branch_id=branch_id, event_id=event_id):
+            raise TournamentEntryFieldConflict(
+                "Tournament entry field already exists for this event"
+            )
+        finals = WorldTourFinalsParticipantSelectionStore(
+            self.session
+        ).find_snapshot_for_event(
+            run_id=run_id, branch_id=branch_id, event_id=event_id
+        )
+        if finals is not None:
+            raise TournamentEntryFieldConflict(
+                "Finals Entry Field must use frozen Finals participant authority"
+            )
+        authority = TournamentRankingSnapshotAuthorityStore(self.session).get(
+            run_id=run_id, branch_id=branch_id, event_id=event_id
+        )
+        if authority is None:
+            raise ValueError(
+                "Tournament entry field requires Tournament Ranking Snapshot authority"
+            )
+        submissions = TournamentApplicationSubmissionStore(self.session).list_for_event(
+            run_id=run_id, branch_id=branch_id, event_id=event_id
+        )
+        if not submissions:
+            raise TournamentEntryFieldConflict(
+                "Reviewed Tournament Entry Field requires persisted valid submissions"
+            )
+        applications = _canonical_applications(
+            tuple(item.to_entry_field_application() for item in submissions)
+        )
+        return TournamentEntryFieldResolver.build_initial(
+            authority=authority, applications=applications, capacity=capacity
+        )
+
+    def stage_reviewed_initial_from_persisted_submissions(
+        self,
+        *,
+        run_id: str,
+        branch_id: str,
+        event_id: str,
+        capacity: TournamentEntryFieldCapacity,
+        command_id: str,
+        expected_field_fingerprint: str,
+    ) -> TournamentEntryField:
+        """Compare reviewed exact field against fresh source inside one transaction."""
+        preview = self.preview_initial_from_persisted_submissions(
+            run_id=run_id, branch_id=branch_id, event_id=event_id,
+            capacity=capacity,
+        )
+        if preview.fingerprint != expected_field_fingerprint:
+            raise TournamentEntryFieldConflict(
+                "Reviewed Entry Field preview is stale: ranking, valid submissions or capacity changed"
+            )
+        field = self.stage_initial_from_persisted_submissions(
+            run_id=run_id, branch_id=branch_id, event_id=event_id,
+            capacity=capacity, command_id=command_id,
+        )
+        if field.fingerprint != expected_field_fingerprint:
+            raise TournamentEntryFieldConflict(
+                "Stored Entry Field no longer matches reviewed source fingerprint"
+            )
+        return field
+
     def stage_initial_from_persisted_submissions(
         self,
         *,

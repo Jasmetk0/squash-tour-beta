@@ -35,7 +35,7 @@ This document supersedes older general next-task suggestions **for the immediate
 - Regression coverage adds focused frontend integration tests; production HTTP/SQLite adoption/save/restart is already covered in tests/api/test_world_package_run_adapter.py and tests/api/test_earth_world_run_acceptance.py. Full browser run is still not verified.
 - Does not calibrate player rarity/ability or fabricate the first-season ranking. No protected Run is mutated.
 
-## Candidate PR #1334 — Week-1 ranking candidate setup
+## Implemented and merged — PR #1334: Week-1 ranking candidate setup
 
 - Add an Admin Run Home section after InitialWorld adoption for the existing Run/Branch-derived initial-ranking endpoints, with server-derived roster, Best N and tie-break evidence.
 - Require a previously saved InitialWorld, writable selected Branch and clean Working Draft. Show actual Run player count and confirm that a Week-1 candidate may legitimately have zero classified rows before match results.
@@ -44,11 +44,21 @@ This document supersedes older general next-task suggestions **for the immediate
 - Existing Week-1 candidate blocks duplicate bootstrap; protected Runs cannot mutate. Nothing is published to Viewer and no week transition is executed.
 - Focused frontend tests exercise happy path, immutable save, empty Week-1 rows, recovery, duplicate guard and changed audit input. Production integration evidence for derive/confirm/save/reopen is in `tests/api/test_initial_world_ranking_integration.py`; this PR still needs real browser acceptance.
 
+## Candidate PR #1335 — publish the first Week-1 ranking
+
+- Add canonical Run Home publication review for exactly one saved, clean 2000/01 Week-1 ranking candidate from the selected Run/Branch; never derive a substitute or invent classified player rows.
+- Use the **existing** production `POST /ranking-candidates/publish-initial` with exact reviewed candidate fingerprint and strict response Run/Branch/Week/fingerprint verification; exact idempotent retry is supported by the server.
+- Distinguish the live authoritative publication from the **separate ranking Saved Revision needed for Viewer**. The Viewer ranking read model reads saved `ranking_preparation.authoritative_transition_state` on the Viewer Branch, not the live published tables.
+- After publication, explicitly review the updated ranking save preflight and use the existing CAS Ranking Save endpoint to capture public World head into immutable Branch history; then refetch/validate Viewer Run, Viewer Branch, Week-1 and candidate fingerprint.
+- Allow Save-only recovery after lost publication response or page refresh when ranking state differs from its saved component. A Branch other than the selected Viewer Branch cannot be claimed visible in Viewer.
+- Repair the preceding initial-ranking Save UI gate: the production ranking component can legitimately have unsaved changes while the Viewer-branch Working Draft is still **clean**; trust the dedicated verified ranking save preflight. Add targeted regression.
+- New frontend component tests validate each durable boundary, protected Run, non-Viewer selection, stale candidate safety, recovery and the clean-draft regression. Existing backend production publication and Viewer read-model tests are retained. Full browser acceptance remains unverified.
+
 ## Still blocking the requested user journey
 
 1. Browser-check World and Calendar source import with a real disposable Product Run, using validated source season files and save/restart, not only mocked frontend tests and existing backend adapters.
 2. Verify the newly connected initial-player generation, review, adopt, Save and reopen sequence by clicking through a real disposable custom Run, and measure both Earth source packages.
-3. Browser-verify Week-1 ranking derive/confirm/Save on a real disposable custom Run, then explicitly publish the saved initial ranking through the separate production publication authority.
+3. Browser-verify Week-1 ranking derive/confirm/Save, publish, second Save and Viewer readback on a real disposable custom Run, including restart and selected Viewer Branch semantics.
 4. Prepare one standard tournament through canonical entries, manual reviewed applications if necessary, field, draw, schedule and real match execution.
 5. Verify point award, correct ranking-publication timing, save/reopen and continuation through real HTTP/SQLite/browser evidence.
 6. Only then measure FIFA Earth / ATP Earth generation in existing Lab tools without changing unproven probabilities.

@@ -315,8 +315,8 @@ def test_initial_entry_field_can_be_created_from_persisted_valid_submissions_htt
         assert preview["field"]["direct_main_player_ids"] == ["A", "C", "D"]
         assert preview["field"]["qualification_player_ids"] == ["B", "E"]
         assert preview["field"]["below_qualification_cut_player_ids"] == ["F", "G"]
-        assert preview["field_fingerprint"] == TournamentEntryField.model_validate(
-            preview["field"]
+        assert preview["field_fingerprint"] == TournamentEntryField.model_validate_json(
+            json.dumps(preview["field"])
         ).fingerprint
         # Dry-run means no field was added to real SQLite.
         assert _request("GET", root)[0] == 404

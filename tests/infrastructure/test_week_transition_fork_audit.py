@@ -432,3 +432,102 @@ def test_two_tournament_weeks_fail_closed_on_incomplete_or_ambiguous_sources(cor
         row["request_fingerprint"] = modified.fingerprint
     with pytest.raises(WeekTransitionForkAuditUnsupportedError):
         _remap(state, maps)
+
+
+def _two_simultaneous_tournament_events():
+    state, maps, first, first_target = _one_tournament_case()
+    second = first.model_copy(update={
+        "edition_id": "independent-second-week-one-edition",
+        "event_id": "independent-second-week-one-event",
+        "expected_result_fingerprint": _fingerprint(2201),
+        "expected_award_fingerprint": _fingerprint(2202),
+    })
+    second_target = second.model_copy(update={
+        "branch_id": "fork",
+        "expected_result_fingerprint": _fingerprint(3201),
+        "expected_award_fingerprint": _fingerprint(3202),
+    })
+    original = AuthoritativeWeekTransitionCommand.model_validate_json(
+        state["receipts"][0]["request_payload_json"]
+    )
+    command = AuthoritativeWeekTransitionCommand.model_validate_json(
+        original.model_copy(
+            update={"tournaments": (first, second)}
+        ).model_dump_json()
+    )
+    state["receipts"][0]["request_payload_json"] = command.canonical_request_json
+    state["receipts"][0]["request_fingerprint"] = command.fingerprint
+    maps["tournament_bindings"][second.edition_id] = second_target
+    return state, maps, (first, second), (first_target, second_target)
+
+
+def test_two_same_week_tournaments_rebind_both_full_receipt_bindings_without_mutation():
+    state, maps, sources, targets = _two_simultaneous_tournament_events()
+    source_copy = deepcopy(state)
+    rebound = _remap(state, maps)
+    assert state == source_copy
+    assert _remap(state, maps) == rebound
+    first_command = AuthoritativeWeekTransitionCommand.model_validate_json(
+        rebound["receipts"][0]["request_payload_json"]
+    )
+    assert first_command.tournaments == targets
+    assert tuple(x.edition_id for x in first_command.tournaments) == tuple(
+        x.edition_id for x in sources
+    )
+    assert all(x.branch_id == "fork" for x in first_command.tournaments)
+    assert rebound["receipts"][0]["request_fingerprint"] == first_command.fingerprint
+    second_command = AuthoritativeWeekTransitionCommand.model_validate_json(
+        rebound["receipts"][1]["request_payload_json"]
+    )
+    assert second_command.tournaments == ()
+    assert len(rebound["events"]) == 2
+
+
+@pytest.mark.parametrize("corruption", [
+    "missing_second", "foreign_second", "forged_second_event",
+    "duplicate_edition", "duplicate_event", "third_tournament",
+    "second_completion_week", "extra_source",
+])
+def test_two_same_week_tournaments_reject_incomplete_or_forged_provenance(corruption):
+    state, maps, sources, targets = _two_simultaneous_tournament_events()
+    original = AuthoritativeWeekTransitionCommand.model_validate_json(
+        state["receipts"][0]["request_payload_json"]
+    )
+    tournaments = list(original.tournaments)
+    if corruption == "missing_second":
+        maps["tournament_bindings"].pop(sources[1].edition_id)
+    elif corruption == "foreign_second":
+        maps["tournament_bindings"][sources[1].edition_id] = targets[1].model_copy(
+            update={"branch_id": "foreign"}
+        )
+    elif corruption == "extra_source":
+        maps["tournament_bindings"]["phantom-edition"] = targets[1]
+    else:
+        if corruption == "forged_second_event":
+            tournaments[1] = tournaments[1].model_copy(
+                update={"event_id": "phantom-event"}
+            )
+        elif corruption == "duplicate_edition":
+            tournaments[1] = tournaments[0]
+        elif corruption == "duplicate_event":
+            tournaments[1] = tournaments[1].model_copy(
+                update={"event_id": tournaments[0].event_id}
+            )
+        elif corruption == "third_tournament":
+            tournaments.append(tournaments[1].model_copy(update={
+                "edition_id": "third-independent-tournament",
+                "event_id": "third-independent-event",
+            }))
+        elif corruption == "second_completion_week":
+            tournaments[1] = tournaments[1].model_copy(update={
+                "completed_week": RankingWeek(season_index=0, week=2)
+            })
+        replaced = AuthoritativeWeekTransitionCommand.model_validate_json(
+            original.model_copy(update={
+                "tournaments": tuple(tournaments)
+            }).model_dump_json()
+        )
+        state["receipts"][0]["request_payload_json"] = replaced.canonical_request_json
+        state["receipts"][0]["request_fingerprint"] = replaced.fingerprint
+    with pytest.raises(WeekTransitionForkAuditUnsupportedError):
+        _remap(state, maps)

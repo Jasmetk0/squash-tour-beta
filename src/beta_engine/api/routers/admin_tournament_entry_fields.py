@@ -31,6 +31,79 @@ def _service(runtime: ApiRuntime) -> CanonicalPreDrawWithdrawalService:
     return CanonicalPreDrawWithdrawalService(runtime.repository._session_factory)
 
 
+@router.post("/from-valid-submissions/preview")
+def preview_reviewed_entry_field_from_valid_submissions(
+    run_id: str,
+    branch_id: str,
+    event_id: str,
+    payload: dict,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+) -> dict:
+    """Read-only, complete player cut with exact source fingerprint for Admin review."""
+    try:
+        capacity = TournamentEntryFieldCapacity.model_validate(payload["capacity"])
+        with runtime.repository._session_factory() as session:
+            field = TournamentEntryFieldStore(
+                session
+            ).preview_initial_from_persisted_submissions(
+                run_id=run_id, branch_id=branch_id, event_id=event_id,
+                capacity=capacity,
+            )
+        return {
+            "preview_only": True,
+            "run_id": run_id,
+            "branch_id": branch_id,
+            "event_id": event_id,
+            "field_fingerprint": field.fingerprint,
+            "field": field.model_dump(mode="json"),
+        }
+    except (KeyError, TypeError, ValidationError) as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={"code": "reviewed_entry_field_preview_conflict", "message": str(exc)},
+        ) from exc
+
+
+@router.post(
+    "/from-valid-submissions/reviewed",
+    status_code=201,
+    response_model=TournamentEntryField,
+)
+def commit_reviewed_entry_field_from_valid_submissions(
+    run_id: str,
+    branch_id: str,
+    event_id: str,
+    payload: dict,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+) -> TournamentEntryField:
+    """Replay Preview and atomically refuse a changed Ranking/Submission field cut."""
+    try:
+        capacity = TournamentEntryFieldCapacity.model_validate(payload["capacity"])
+        expected = payload["expected_field_fingerprint"]
+        if not isinstance(expected, str) or len(expected) != 64 or any(
+            char not in "0123456789abcdef" for char in expected
+        ):
+            raise ValueError("expected_field_fingerprint must be SHA-256")
+        command_id = payload["command_id"]
+        with runtime.repository._session_factory.begin() as session:
+            return TournamentEntryFieldStore(
+                session
+            ).stage_reviewed_initial_from_persisted_submissions(
+                run_id=run_id, branch_id=branch_id, event_id=event_id,
+                capacity=capacity, command_id=command_id,
+                expected_field_fingerprint=expected,
+            )
+    except (KeyError, TypeError, ValidationError) as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={"code": "reviewed_entry_field_commit_conflict", "message": str(exc)},
+        ) from exc
+
+
 @router.post(
     "/from-valid-submissions",
     status_code=201,

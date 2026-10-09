@@ -27,6 +27,7 @@ import {
 import { formatApiError, isApiNotFound } from '../utils/apiErrors'
 import { RunPackageSetupPanel } from '../components/RunPackageSetupPanel'
 import { RunInitialWorldSetupPanel } from '../components/RunInitialWorldSetupPanel'
+import { RunInitialRankingSetupPanel } from '../components/RunInitialRankingSetupPanel'
 import { normalizeRunSourceType } from '../utils/runSourceTypes'
 
 export function RunPage(): JSX.Element {
@@ -184,6 +185,8 @@ export function RunPage(): JSX.Element {
         <RunPackageSetupPanel run={containerQuery.data} branch={selectedBranch} />}
       {containerQuery.data?.run_id === runId && containerQuery.data.storage_kind === 'custom_local' && !containerQuery.data.read_only &&
         <RunInitialWorldSetupPanel run={containerQuery.data} branch={selectedBranch} />}
+      {containerQuery.data?.run_id === runId && containerQuery.data.storage_kind === 'custom_local' && !containerQuery.data.read_only &&
+        <RunInitialRankingSetupPanel run={containerQuery.data} branch={selectedBranch} />}
       {run && (
         <>
           <SectionCard title="Run overview">

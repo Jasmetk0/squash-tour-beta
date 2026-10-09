@@ -1317,6 +1317,11 @@ export type GenerateTournamentGroupMatchSchedulePayload = {
 
 export type CanonicalTournamentPreparationState = {
   schema_version: 'canonical_tournament_preparation_state.v1'
+  preparation_fingerprint?: string
+  ranking_snapshot_ready?: boolean
+  ranking_authority_fingerprint?: string
+  entry_field_ready?: boolean
+  entry_field_fingerprint?: string | null
   run_id: string
   branch_id: string
   event_id: string

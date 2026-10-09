@@ -153,6 +153,14 @@ from beta_engine.infrastructure.db.saved_revision_season_closure import (
     SEASON_CLOSURE_COMPONENT_KEY,
     load_saved_revision_season_closure,
     rebind_saved_revision_season_closure,
+    rebind_cross_branch_season_closure,
+)
+from beta_engine.infrastructure.db.season_closing_fork_install import (
+    install_verified_fork_season_closings,
+)
+from beta_engine.infrastructure.db.season_transition_fork_event import (
+    SeasonTransitionForkEventError,
+    rebind_verified_season_transition_event,
 )
 from beta_engine.infrastructure.db.initial_world_state import (
     INITIAL_WORLD_COMPONENT_KEY,
@@ -2697,6 +2705,7 @@ class SimulationPersistenceRepository:
                     )
 
                 remapped_ranking = None
+                source_ranking = None
                 remapped_initial_world = None
                 source_initial_world = None
                 materialize_fork_root = bool(
@@ -2763,6 +2772,7 @@ class SimulationPersistenceRepository:
                         PLAYER_TOUR_ENTRY_COMPONENT_KEY,
                         RUN_PACKAGE_COMPONENT_KEY,
                         RUN_TOURNAMENT_LAB_DRAFT_COMPONENT_KEY,
+                        SEASON_CLOSURE_COMPONENT_KEY,
                         *fork_safe_empty_components,
                     }
                     if unsupported_content:
@@ -2832,10 +2842,48 @@ class SimulationPersistenceRepository:
                         "materialized fork revision id was supplied for a shared-history fork"
                     )
 
-                if SEASON_CLOSURE_COMPONENT_KEY in source_content:
+                fork_season_boundary = SEASON_CLOSURE_COMPONENT_KEY in source_content
+                if fork_season_boundary:
+                    source_transition = (
+                        source_ranking.authoritative_transition_state
+                        if source_ranking is not None else None
+                    )
+                    source_season_events = (
+                        tuple(
+                            event for event in source_transition["events"]
+                            if event.get("event_kind") == "season_transition_completed"
+                        )
+                        if source_transition is not None else ()
+                    )
+                    if (
+                        not materialize_fork_root
+                        or source_revision.kind != SEASON_TRANSITION_SAVED_REVISION_KIND
+                        or source_ranking is None
+                        or len(source_ranking.season_closing_rankings) != 1
+                        or len(source_season_events) != 1
+                        or source_season_events[0]["week_ordinal"]
+                        != source_ranking.entries[-1].snapshot.week.ordinal
+                        or source_ranking.season_closing_rankings[0].completed_week.ordinal + 1
+                        != source_season_events[0]["week_ordinal"]
+                    ):
+                        raise SavedRevisionBranchForkConflictError(
+                            "Season Transition fork supports only one complete terminal "
+                            "Season Transition Saved Revision with verified closure"
+                        )
+                elif (
+                    source_ranking is not None
+                    and (
+                        source_ranking.season_closing_rankings
+                        or any(
+                            row["event_kind"] == "season_transition_completed"
+                            for row in (
+                                source_ranking.authoritative_transition_state or {}
+                            ).get("events", ())
+                        )
+                    )
+                ):
                     raise SavedRevisionBranchForkConflictError(
-                        "Branch creation from final Season Closure revisions requires "
-                        "closure identity remapping; branch from an earlier Saved Revision"
+                        "Historical Season Transition requires a saved closure component"
                     )
 
                 if session.get(RunBranchModel, branch_id) is not None:
@@ -2934,11 +2982,28 @@ class SimulationPersistenceRepository:
                                 "remapped InitialWorld did not install exactly"
                             )
                     if remapped_ranking is not None:
+                        # Archives need target-owned Week-61 publication first.
+                        # Install the ordinary ranking ledger before its separately
+                        # proven Season Closing archive, all within this fork.
+                        ranking_install_state = (
+                            remapped_ranking.model_copy(
+                                update={
+                                    "season_closing_rankings": (),
+                                    "schema_version": (
+                                        "ranking_revision_state.v5"
+                                        if remapped_ranking.tournament_ranking_snapshot_authorities
+                                        else "ranking_revision_state.v4"
+                                    ),
+                                }
+                            )
+                            if fork_season_boundary
+                            else remapped_ranking
+                        )
                         try:
                             installed = install_ranking_revision_state(
                                 session,
-                                remapped_ranking.model_dump_json(),
-                                expected_fingerprint=remapped_ranking.fingerprint,
+                                ranking_install_state.model_dump_json(),
+                                expected_fingerprint=ranking_install_state.fingerprint,
                                 run_id=run_id,
                                 branch_id=branch_id,
                                 allow_empty_fork_target=True,
@@ -2947,10 +3012,26 @@ class SimulationPersistenceRepository:
                             raise SavedRevisionBranchForkConflictError(
                                 f"remapped ranking state could not be installed: {exc}"
                             ) from exc
-                        if installed.fingerprint != remapped_ranking.fingerprint:
+                        if installed.fingerprint != ranking_install_state.fingerprint:
                             raise SavedRevisionBranchForkConflictError(
                                 "remapped ranking state did not install exactly"
                             )
+                        if fork_season_boundary:
+                            assert source_ranking is not None
+                            try:
+                                install_verified_fork_season_closings(
+                                    session,
+                                    source_state=source_ranking,
+                                    target_state=ranking_install_state,
+                                    proposed_archives=remapped_ranking.season_closing_rankings,
+                                    run_id=run_id,
+                                    source_branch_id=source_branch_id,
+                                    target_branch_id=branch_id,
+                                )
+                            except ValueError as exc:
+                                raise SavedRevisionBranchForkConflictError(
+                                    f"Season Closing archive fork cannot be installed: {exc}"
+                                ) from exc
 
                     target_payload = viewer_branch_saved_revision_payload(
                         base_payload=source_revision.payload,
@@ -3349,6 +3430,53 @@ class SimulationPersistenceRepository:
                                 "Simulation Slot match result evidence"
                             )
 
+                    verified_season_event = None
+                    if fork_season_boundary:
+                        # Materialize both closure and historic season event only
+                        # after the ranking and player states are independently
+                        # verified within this same SQLite transaction.
+                        assert source_ranking is not None
+                        assert remapped_ranking is not None
+                        try:
+                            source_closure = load_saved_revision_season_closure(
+                                source_revision.payload,
+                                run_id=run_id,
+                                branch_id=source_branch_id,
+                                revision_id=source_revision_id,
+                            )
+                            if source_closure is None:
+                                raise ValueError("Season Transition source closure missing")
+                            target_closure = rebind_cross_branch_season_closure(
+                                source_revision.payload,
+                                target_payload,
+                                run_id=run_id,
+                                source_branch_id=source_branch_id,
+                                source_revision_id=source_revision_id,
+                                target_branch_id=branch_id,
+                                target_revision_id=materialized_fork_revision_id,
+                                source_closing=source_ranking.season_closing_rankings[0],
+                                target_closing=remapped_ranking.season_closing_rankings[0],
+                            )
+                            verified_season_event = rebind_verified_season_transition_event(
+                                source_season_events[0],
+                                run_id=run_id,
+                                source_branch_id=source_branch_id,
+                                target_branch_id=branch_id,
+                                source_revision_id=source_revision_id,
+                                target_revision_id=materialized_fork_revision_id,
+                                source_closure=source_closure,
+                                target_closure=target_closure,
+                                source_ranking=source_ranking,
+                                target_ranking=remapped_ranking,
+                                lifecycle_fingerprint_map=player_state_proof.lifecycle,
+                                sporting_fingerprint_map=player_state_proof.sporting,
+                                health_fingerprint_map=player_state_proof.health,
+                            )
+                        except (ValueError, SeasonTransitionForkEventError) as exc:
+                            raise SavedRevisionBranchForkConflictError(
+                                f"Season Transition closure/event fork cannot be verified: {exc}"
+                            ) from exc
+
                     if remap_week_audit:
                         # Complete, independently verified target player evidence
                         # is now present in this exact SQLite fork transaction.
@@ -3370,12 +3498,14 @@ class SimulationPersistenceRepository:
                                     entry.revision_id for entry in source_lineage
                                     if entry.sequence <= source_revision.sequence
                                 ),
+                                verified_season_event=verified_season_event,
                             )
                             installed_with_audit = install_remapped_week_transition_audit(
                                 session,
                                 state=rebound,
                                 run_id=run_id,
                                 branch_id=branch_id,
+                                allow_verified_season_boundary=fork_season_boundary,
                             )
                             if not ranking_revision_states_equivalent(
                                 installed_with_audit, rebound

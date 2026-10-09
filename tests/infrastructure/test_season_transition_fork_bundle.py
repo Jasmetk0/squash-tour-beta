@@ -305,3 +305,151 @@ def test_incomplete_or_spoofed_season_history_is_rejected(mutation):
         source = source.model_copy(update={"authoritative_transition_state": revised})
     with pytest.raises((WeekTransitionForkAuditUnsupportedError, ValueError)):
         _bind(source, target, event, maps)
+
+
+def _db(tmp_path):
+    from beta_engine.infrastructure.db.engine import (
+        DatabaseSettings, create_session_factory, create_sqlite_engine,
+    )
+    from beta_engine.infrastructure.db.models import (
+        Base, RunBranchModel, RunContainerModel,
+    )
+    url = f"sqlite:///{tmp_path / 'complete-season-fork.db'}"
+    engine = create_sqlite_engine(DatabaseSettings(url=url))
+    Base.metadata.create_all(engine)
+    factory = create_session_factory(engine)
+    with factory.begin() as session:
+        session.add(RunContainerModel(
+            run_id="run", timeline_start_season=2000,
+            timeline_end_season=2049,
+        ))
+        session.add(RunBranchModel(
+            run_id="run", branch_id="source",
+            display_name="Timeline 1",
+        ))
+        session.add(RunBranchModel(
+            run_id="run", branch_id="target",
+            display_name="Timeline 2", forked_from_branch_id="source",
+        ))
+    return engine, factory
+
+
+def _install_target(session, source, target, event, maps):
+    from beta_engine.infrastructure.db.ranking_revision_state import (
+        install_ranking_revision_state,
+    )
+    from beta_engine.infrastructure.db.season_closing_fork_install import (
+        install_verified_fork_season_closings,
+    )
+    from beta_engine.infrastructure.db.week_transition_fork_install import (
+        install_remapped_week_transition_audit,
+    )
+
+    # The fork first installs the verified target-owned ranking ledger and
+    # Week-61 publications, then Closing archives, then confirmed transition
+    # World Events. All changes belong to the outer SQLite transaction.
+    initial = target.model_copy(update={
+        "schema_version": "ranking_revision_state.v4",
+        "season_closing_rankings": (),
+    })
+    install_ranking_revision_state(
+        session, initial.model_dump_json(),
+        expected_fingerprint=initial.fingerprint,
+        run_id="run", branch_id="target",
+        allow_empty_fork_target=True,
+    )
+    install_verified_fork_season_closings(
+        session, source_state=source, target_state=initial,
+        proposed_archives=target.season_closing_rankings,
+        run_id="run", source_branch_id="source", target_branch_id="target",
+    )
+    rebound = _bind(source, target, event, maps)
+    return install_remapped_week_transition_audit(
+        session, state=rebound, run_id="run", branch_id="target",
+        allow_verified_season_boundary=True,
+    )
+
+
+def test_sqlite_full_61_week_season_fork_restores_independent_history(tmp_path):
+    from sqlalchemy import text
+    from beta_engine.infrastructure.db.ranking_revision_state import (
+        capture_ranking_revision_state,
+        install_ranking_revision_state,
+    )
+    from beta_engine.domain.rankings.revision_state import (
+        ranking_revision_states_equivalent,
+    )
+    from beta_engine.infrastructure.db.engine import (
+        DatabaseSettings, create_session_factory, create_sqlite_engine,
+    )
+
+    source, target, event, maps = _full_transition()
+    engine, factory = _db(tmp_path)
+    with factory.begin() as session:
+        session.execute(text("BEGIN IMMEDIATE"))
+        installed = install_ranking_revision_state(
+            session, source.model_dump_json(),
+            expected_fingerprint=source.fingerprint,
+            run_id="run", branch_id="source",
+        )
+        assert ranking_revision_states_equivalent(installed, source)
+    with factory.begin() as session:
+        session.execute(text("BEGIN IMMEDIATE"))
+        installed_target = _install_target(session, source, target, event, maps)
+        assert ranking_revision_states_equivalent(
+            installed_target, _bind(source, target, event, maps)
+        )
+        assert ranking_revision_states_equivalent(
+            capture_ranking_revision_state(
+                session, run_id="run", branch_id="source",
+            ), source
+        )
+    engine.dispose()
+    reopened = create_sqlite_engine(
+        DatabaseSettings(url=f"sqlite:///{tmp_path / 'complete-season-fork.db'}")
+    )
+    reopened_factory = create_session_factory(reopened)
+    with reopened_factory.begin() as session:
+        session.execute(text("BEGIN IMMEDIATE"))
+        actual_source = capture_ranking_revision_state(
+            session, run_id="run", branch_id="source",
+        )
+        actual_target = capture_ranking_revision_state(
+            session, run_id="run", branch_id="target",
+        )
+        assert ranking_revision_states_equivalent(actual_source, source)
+        assert ranking_revision_states_equivalent(
+            actual_target, _bind(source, target, event, maps)
+        )
+        assert len(actual_target.season_closing_rankings) == 1
+        assert actual_target.branch_id == "target"
+        assert actual_source.branch_id == "source"
+        assert actual_target.entries[-1].snapshot.fingerprint != (
+            actual_source.entries[-1].snapshot.fingerprint
+        )
+    reopened.dispose()
+
+
+def test_sqlite_failure_rolls_back_all_target_rankings_events_and_archives(tmp_path):
+    from sqlalchemy import text
+    from beta_engine.infrastructure.db.ranking_revision_state import (
+        capture_ranking_revision_state,
+    )
+
+    source, target, event, maps = _full_transition()
+    engine, factory = _db(tmp_path)
+    with pytest.raises(RuntimeError, match="fail after event installation"):
+        with factory.begin() as session:
+            session.execute(text("BEGIN IMMEDIATE"))
+            _install_target(session, source, target, event, maps)
+            raise RuntimeError("fail after event installation")
+    with factory.begin() as session:
+        session.execute(text("BEGIN IMMEDIATE"))
+        recovered = capture_ranking_revision_state(
+            session, run_id="run", branch_id="target",
+            allow_empty_fork_target=True,
+        )
+        assert not recovered.entries
+        assert not recovered.season_closing_rankings
+        assert recovered.authoritative_transition_state is None
+    engine.dispose()

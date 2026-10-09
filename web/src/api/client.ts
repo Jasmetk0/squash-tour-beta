@@ -2936,6 +2936,57 @@ export async function adoptTournamentRankingSnapshotAuthority(
   return data
 }
 
+/** Read-only authoritative field cut, including exactly ranked/validated player partitions. */
+export async function previewRunReviewedEntryField(
+  runId: string, branchId: string, eventId: string,
+  capacity: import('./types').TournamentEntryFieldCapacity
+): Promise<import('./runReviewedEntryField').ReviewedEntryFieldPreview> {
+  const root = `/admin/runs/${encodeURIComponent(runId)}/branches/${encodeURIComponent(branchId)}/tournaments/${encodeURIComponent(eventId)}/entry-field`
+  const data = await request<import('./runReviewedEntryField').ReviewedEntryFieldPreview>(
+    root + '/from-valid-submissions/preview',
+    { method: 'POST', body: JSON.stringify({ capacity }) }
+  )
+  if (!(
+    data?.preview_only === true && data.run_id === runId &&
+    data.branch_id === branchId && data.event_id === eventId &&
+    /^[a-f0-9]{64}$/.test(data.field_fingerprint) &&
+    data.field?.run_id === runId && data.field.branch_id === branchId &&
+    data.field.event_id === eventId && data.field.mode === 'initial'
+  )) throw new Error('Reviewed Entry Field preview returned incorrect Run/Branch/Event.')
+  return data
+}
+
+export async function commitRunReviewedEntryField(
+  runId: string, branchId: string, eventId: string,
+  preview: import('./runReviewedEntryField').ReviewedEntryFieldPreview,
+  commandId: string
+): Promise<TournamentEntryField> {
+  if (!commandId || commandId.length > 128 ||
+    preview.run_id !== runId || preview.branch_id !== branchId ||
+    preview.event_id !== eventId || !/^[a-f0-9]{64}$/.test(preview.field_fingerprint)) {
+    throw new Error('Reviewed Entry Field commit requires valid scoped preflight evidence.')
+  }
+  const root = `/admin/runs/${encodeURIComponent(runId)}/branches/${encodeURIComponent(branchId)}/tournaments/${encodeURIComponent(eventId)}/entry-field`
+  const saved = await request<TournamentEntryField>(
+    root + '/from-valid-submissions/reviewed',
+    { method: 'POST', body: JSON.stringify({
+      command_id: commandId, capacity: preview.field.capacity,
+      expected_field_fingerprint: preview.field_fingerprint
+    }) }
+  )
+  if (!(
+    saved.schema_version === 'tournament_entry_field.v1' &&
+    saved.run_id === runId && saved.branch_id === branchId &&
+    saved.event_id === eventId && saved.mode === 'initial' &&
+    saved.applications_fingerprint === preview.field.applications_fingerprint &&
+    saved.tournament_ranking_authority_fingerprint === preview.field.tournament_ranking_authority_fingerprint &&
+    saved.direct_main_player_ids.join('|') === preview.field.direct_main_player_ids.join('|') &&
+    saved.qualification_player_ids.join('|') === preview.field.qualification_player_ids.join('|') &&
+    saved.below_qualification_cut_player_ids.join('|') === preview.field.below_qualification_cut_player_ids.join('|')
+  )) throw new Error('Reviewed Entry Field commit differs from the exact verified preview.')
+  return saved
+}
+
 export async function createTournamentEntryFieldFromValidSubmissions(
   runId: string,
   branchId: string,

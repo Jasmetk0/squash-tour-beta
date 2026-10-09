@@ -194,23 +194,56 @@ def _complete_second_standard_tournament(
 
 
 
-def _stage_parallel_event_input(server: ApiServer, first_event_id: str) -> str:
-    """Move the independent Week-2 source fixture into Week 1 before Package adoption."""
+def _stage_parallel_event_input(
+    server: ApiServer,
+    first_event_id: str,
+    *,
+    preserve_week_two: bool = False,
+) -> str:
+    """Adapt only isolated source inputs *before* Run Package adoption.
+
+    For three-tournament acceptance, clone the Week-2 fixture to an independent
+    Week-1 event and retain the Week-2 source. The production HTTP endpoints
+    create every Run-owned Draw, match, result, ranking and Saved Revision.
+    """
     matches = server.app.dependency_overrides[get_season_match_service]()
     awards = server.app.dependency_overrides[get_season_point_awards_service]()
     registry = matches._load_registry()
-    second = next(
+    original = next(
         item for item in registry.matches_by_event_id.values()
         if item.season_week == 2 and item.event_id != first_event_id
     )
+    second = original.model_copy(deep=True) if preserve_week_two else original
+    original_event_id = second.event_id
+    if preserve_week_two:
+        second.event_id = f"{original_event_id}-parallel"
+        second.metadata.event_id = second.event_id
+        ids = {
+            match.match_id: f"{match.match_id}-parallel"
+            for match in second.qualification_matches + second.main_draw_matches
+        }
+        for match in second.qualification_matches + second.main_draw_matches:
+            match.match_id = ids[match.match_id]
+            if match.winner_to_match_id:
+                match.winner_to_match_id = ids[match.winner_to_match_id]
+            match.event_id = second.event_id
     second.season_week = 1
+    registry.matches_by_event_id[second.event_id] = second
     matches._save_registry(registry)
+
     calendars = awards.calendar_service._load_registry()
-    event = next(
-        item for item in calendars.calendars_by_season["2000/2001"].events
-        if item.event_id == second.event_id
+    events = calendars.calendars_by_season["2000/2001"].events
+    original_event = next(
+        item for item in events if item.event_id == original_event_id
     )
-    event.season_week = event.start_season_week = event.end_season_week = 1
+    parallel = (
+        original_event.model_copy(deep=True)
+        if preserve_week_two else original_event
+    )
+    parallel.event_id = second.event_id
+    parallel.season_week = parallel.start_season_week = parallel.end_season_week = 1
+    if preserve_week_two:
+        events.insert(0, parallel)
     awards.calendar_service._save_registry(calendars)
     return second.event_id
 
@@ -249,19 +282,23 @@ def _prepare_parallel_canonical_draw(
 
 
 @pytest.mark.pr_critical
-@pytest.mark.parametrize("scenario", ["single", "two_weeks", "same_week"])
+@pytest.mark.parametrize(
+    "scenario", ["single", "two_weeks", "same_week", "three_mixed"]
+)
 def test_single_completed_run_owned_tournament_fork_reopen_and_continue(
     tmp_path, monkeypatch, scenario,
 ):
     server, week_one_package = _server_state(tmp_path)
-    two_tournaments = scenario == "two_weeks"
-    same_week = scenario == "same_week"
+    two_tournaments = scenario in {"two_weeks", "three_mixed"}
+    same_week = scenario in {"same_week", "three_mixed"}
     parallel_event = None
     if scenario == "single":
         _remove_week_two_source_fixture(server)
     elif same_week:
         parallel_event = _stage_parallel_event_input(
-            server, week_one_package.event_id
+            server,
+            week_one_package.event_id,
+            preserve_week_two=scenario == "three_mixed",
         )
     db_path = tmp_path / "api.sqlite"
     world_packages_root = copy_builtin_world_packages(tmp_path / "world-packages")
@@ -909,13 +946,13 @@ def test_single_completed_run_owned_tournament_fork_reopen_and_continue(
                 run_id=run_id,
                 branch_id=branch_id,
                 event_id=week_two_events[0]["event_id"],
-                players=generated_ids,
+                players=primary_players,
                 revision=revision,
             )
 
     fork_week = 3 if two_tournaments else 2
-    count_tournaments = 2 if (two_tournaments or same_week) else 1
-    count_transitions = 2 if two_tournaments else 1
+    count_tournaments = 1 + int(same_week) + int(two_tournaments)
+    count_transitions = 1 + int(two_tournaments)
 
     # Restart the actual API with the same persisted SQLite database. No mock
     # ranking, results, Slot ledger or manually populated SQL is used here.

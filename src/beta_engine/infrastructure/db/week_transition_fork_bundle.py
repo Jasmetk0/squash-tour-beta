@@ -1,7 +1,7 @@
 """Bind verified Week Transition receipts to their target-owned ranking lineage.
 
-A single standard tournament is supported only when the frozen canonical
-ranking sources and result evidence have already been independently remapped.
+At most two standard tournaments in distinct completed weeks are supported
+only when each frozen canonical source has independently remapped evidence.
 No database writes occur in this module.
 """
 
@@ -100,7 +100,7 @@ def _verify_published_transition_coverage(
         _reject("Published ranking weeks lack exactly paired Week Transition receipts")
 
 
-def _verified_single_tournament_bindings(
+def _verified_tournament_bindings(
     source: RankingRevisionState,
     target: RankingRevisionState,
     *,
@@ -115,9 +115,10 @@ def _verified_single_tournament_bindings(
     """
     if len(source.tournament_sources) != len(target.tournament_sources):
         _reject("Tournament ranking source count changed in fork")
-    if len(source.tournament_sources) > 1:
-        _reject("More than one completed tournament is not yet supported")
+    if len(source.tournament_sources) > 2:
+        _reject("More than two completed tournaments are not yet supported")
     bindings = {}
+    completed_weeks: set[int] = set()
     for original, remapped in zip(
         source.tournament_sources, target.tournament_sources, strict=True
     ):
@@ -162,9 +163,11 @@ def _verified_single_tournament_bindings(
                 remapped.canonical_result.players,
             )
             or old.edition_id in bindings
+            or old.completed_week.ordinal in completed_weeks
         ):
             _reject("Completed tournament canonical source does not match fork evidence")
         bindings[old.edition_id] = new
+        completed_weeks.add(old.completed_week.ordinal)
     return bindings
 
 
@@ -214,7 +217,7 @@ def bind_event_free_transition_audit_to_ranking_fork(
         _reject("Season Closing fork evidence is not supported")
     _verify_published_transition_coverage(source)
 
-    tournament_bindings = _verified_single_tournament_bindings(
+    tournament_bindings = _verified_tournament_bindings(
         source, target,
         source_branch_id=source_branch_id,
         target_branch_id=target_branch_id,

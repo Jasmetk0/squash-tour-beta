@@ -111,8 +111,8 @@ describe('RunsPage', () => {
 
     renderWithRoute(<RunsPage />, '/admin/runs')
 
-    expect(await screen.findByRole('heading', { name: 'No runs exist yet.' })).toBeInTheDocument()
-    expect(screen.getByText('Create your first 2000/01 root run to start the MSA timeline.')).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'No legacy simulation runs exist yet.' })).toBeInTheDocument()
+    expect(screen.getByText(/Product Runs above can exist without a legacy Simulation Run/)).toBeInTheDocument()
     expect(screen.getAllByRole('link', { name: 'Create new run' })).toHaveLength(2)
     for (const link of screen.getAllByRole('link', { name: 'Create new run' })) {
       expect(link).toHaveAttribute('href', '/admin/runs/new')

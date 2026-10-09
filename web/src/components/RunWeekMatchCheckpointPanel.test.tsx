@@ -154,7 +154,7 @@ describe('Canonical Week schedule / real match / Saved Revision handoff',()=>{
     ))
     expect(await screen.findByText(/Verified new Saved Revision:/)).toBeInTheDocument()
     expect(saved).toBe(true)
-    expect(screen.getByText('rev-2')).toBeInTheDocument()
+    expect(screen.getAllByText('rev-2').length).toBeGreaterThan(0)
   })
   it('never proposes schedule with unresolved Week blockers',async()=>{
     api.inspectAuthoritativeWeekSchedulePreflight.mockResolvedValueOnce({

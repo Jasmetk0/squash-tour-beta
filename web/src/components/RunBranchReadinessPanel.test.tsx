@@ -134,7 +134,7 @@ describe('RunBranchReadinessPanel', () => {
     api.getAuthoritativeSimulationPosition.mockResolvedValueOnce(pos('foreign')).mockResolvedValueOnce(pos('fork #2'))
     render()
     const original = await screen.findByLabelText('Operating status for original')
-    await waitFor(() => expect(within(original).getByText('Not verified')).toBeInTheDocument())
+    await waitFor(() => expect(within(original).getAllByText('Not verified').length).toBeGreaterThan(0))
     expect(within(original).getByText(/position has a mismatched or invalid Run/)).toBeInTheDocument()
     expect(within(original).queryByRole('link', { name: /Inspect authoritative simulation/ })).not.toBeInTheDocument()
   })

@@ -38,12 +38,167 @@ from test_official_run_full_season_acceptance import (
 from test_earth_world_package_run_integration import _advance_empty_week
 
 
+
+def _complete_second_standard_tournament(
+    server: ApiServer,
+    *,
+    run_id: str,
+    branch_id: str,
+    event_id: str,
+    players: tuple[str, ...],
+    revision: str,
+) -> str:
+    """Use actual Week-2 Admin, Draw, Slot and rally production endpoints."""
+    ranking_root, _, sim_root = _roots(server, run_id, branch_id)
+    base = f"{server.base_url}/admin/runs/{run_id}/branches/{branch_id}"
+    tournament_root = f"{base}/tournaments/{event_id}"
+    week = {"season_index": 0, "week": 2}
+    status, authority = _request(
+        "POST",
+        tournament_root + "/ranking-snapshot-authority",
+        {
+            "command_id": "second-week-tournament-ranking-snapshot",
+            "ranking_week": week,
+        },
+    )
+    assert status == 201, authority
+    assert authority["event_id"] == event_id
+
+    decisions = [
+        {"event_id": event_id, "player_id": player_id, "target": "MAIN"}
+        for player_id in sorted(players)
+    ]
+    status, entry = _request(
+        "POST",
+        sim_root + "/entry-decision-slot/review",
+        {
+            "command_id": "second-week-reviewed-entry-intents",
+            "expected_week": week,
+            "expected_revision_id": revision,
+            "decision_slot_ordinal": 1,
+            "operator_label": "Two-week fork acceptance Admin",
+            "reason": "Explicitly validate Week-2 tournament entries",
+            "reviews": decisions,
+        },
+    )
+    assert status == 201, entry
+    position = _request("GET", sim_root + "/position")[1]
+    assert position["current_week"] == week
+    status, validated = _request(
+        "POST", sim_root + "/entry-decision-slot/validation/review",
+        {
+            "command_id": "second-week-application-validation",
+            "expected_week": week,
+            "expected_revision_id": revision,
+            "expected_position_fingerprint": position["position_fingerprint"],
+            "decision_slot_ordinal": 1,
+            "expected_entry_slot_fingerprint": entry["slot_fingerprint"],
+            "operator_label": "Two-week fork acceptance Admin",
+            "reason": "Audit explicit Week-2 tournament entry eligibility",
+            "reviews": [
+                {
+                    "event_id": decision["event_id"],
+                    "player_id": decision["player_id"],
+                    "outcome": "valid",
+                    "reasons": [],
+                }
+                for decision in entry["authority"]["decisions"]
+            ],
+        },
+    )
+    assert status == 201, validated
+    assert validated["valid_submission_count"] == len(players)
+
+    field_root = tournament_root + "/entry-field"
+    status, field = _request(
+        "POST", field_root + "/from-valid-submissions",
+        {
+            "command_id": "second-week-reviewed-main-entry-field",
+            "capacity": {
+                "main_draw_size": len(players),
+                "qualification_draw_size": 0,
+                "qualifier_spots": 0,
+                "wild_card_slots": 0,
+                "bye_slots": 0,
+            },
+        },
+    )
+    assert status == 201, field
+    assert set(field["direct_main_player_ids"]) == set(players)
+    draw_root = tournament_root + "/draw"
+    status, draw_input = _request(
+        "POST", draw_root + "/commit-input",
+        {
+            "command_id": "second-week-frozen-draw-input",
+            "run_id": run_id, "branch_id": branch_id, "event_id": event_id,
+            "expected_field_fingerprint": field["field_fingerprint"],
+            "draw_seed": 200002,
+        },
+    )
+    assert status == 200, draw_input
+    status, draw = _request(
+        "POST", draw_root + "/generate",
+        {
+            "command_id": "second-week-generate-canonical-draw",
+            "run_id": run_id, "branch_id": branch_id, "event_id": event_id,
+            "expected_draw_input_fingerprint": draw_input["draw_input_fingerprint"],
+        },
+    )
+    assert status == 200, draw
+    assert draw["initial_draw_generated"] is True
+    preflight = _request("GET", sim_root + "/week-schedule/preflight")[1]
+    assert preflight["canonical_preparation_ready"] is True, preflight
+    assert preflight["event_ids"] == [event_id]
+    status, proposed = _request("GET", sim_root + "/week-schedule/proposal")
+    assert status == 200, proposed
+    status, adopted = _request(
+        "POST", sim_root + "/week-schedule/adopt-proposal",
+        {
+            "request_id": "second-week-frozen-schedule",
+            "expected_week": proposed["schedule"]["week"],
+            "expected_schedule_fingerprint": proposed["schedule_fingerprint"],
+            "expected_position_fingerprint": proposed["position_fingerprint"],
+        },
+    )
+    assert status == 201, adopted
+
+    request = {
+        "command_id": "second-week-next-week-with-tournament",
+        "operator_label": "Two-week fork acceptance Admin",
+        "audit_reason": "Complete reviewed second real tournament and Week Transition",
+    }
+    status, preview = _request(
+        "POST", sim_root + "/next-week/preview", request,
+    )
+    assert status == 200, preview
+    assert preview["target_slot_ordinals"]
+    status, completed = _request(
+        "POST", sim_root + "/simulate-next-week",
+        {
+            **request,
+            "expected_week": preview["week"],
+            "expected_position_fingerprint": preview["expected_position_fingerprint"],
+            "expected_revision_id": preview["expected_revision_id"],
+            "expected_preview_fingerprint": preview["preview_fingerprint"],
+        },
+    )
+    assert status == 201, completed
+    assert completed["status"] == "complete"
+    assert completed["target_week"] == {"season_index": 0, "week": 3}
+    assert _request("GET", sim_root + "/position")[1]["current_week"] == {
+        "season_index": 0, "week": 3
+    }
+    return _save_ranking(None, ranking_root)
+
+
 @pytest.mark.pr_critical
+@pytest.mark.parametrize("two_tournaments", [False, True])
 def test_single_completed_run_owned_tournament_fork_reopen_and_continue(
-    tmp_path, monkeypatch,
+    tmp_path, monkeypatch, two_tournaments,
 ):
     server, week_one_package = _server_state(tmp_path)
-    _remove_week_two_source_fixture(server)
+    if not two_tournaments:
+        _remove_week_two_source_fixture(server)
     db_path = tmp_path / "api.sqlite"
     world_packages_root = copy_builtin_world_packages(tmp_path / "world-packages")
     server.app.state.world_packages_root = world_packages_root
@@ -617,6 +772,30 @@ def test_single_completed_run_owned_tournament_fork_reopen_and_continue(
             "season_index": 0, "week": 2
         }
 
+        if two_tournaments:
+            # The second Calendar event is part of the same authoritative
+            # Run-owned Package, not invented or inserted by direct SQL.
+            status, calendar_week_two = _request(
+                "GET", package_root + "/calendar/calendar-2000-2001",
+            )
+            assert status == 200, calendar_week_two
+            week_two_events = [
+                event for event in calendar_week_two["calendar"]["events"]
+                if event["season_week"] == 2
+            ]
+            assert len(week_two_events) == 1
+            revision = _complete_second_standard_tournament(
+                server,
+                run_id=run_id,
+                branch_id=branch_id,
+                event_id=week_two_events[0]["event_id"],
+                players=generated_ids,
+                revision=revision,
+            )
+
+    fork_week = 3 if two_tournaments else 2
+    count_tournaments = 2 if two_tournaments else 1
+
     # Restart the actual API with the same persisted SQLite database. No mock
     # ranking, results, Slot ledger or manually populated SQL is used here.
     reopened = ApiServer(database_url=f"sqlite:///{db_path}")
@@ -629,7 +808,7 @@ def test_single_completed_run_owned_tournament_fork_reopen_and_continue(
         )
         source_position = _request("GET", source_sim_root + "/position")[1]
         assert source_position["current_week"] == {
-            "season_index": 0, "week": 2
+            "season_index": 0, "week": fork_week
         }
         repository = reopened.app.state.runtime.repository
         with repository._session_factory.begin() as session:
@@ -637,12 +816,12 @@ def test_single_completed_run_owned_tournament_fork_reopen_and_continue(
             original_ranking = capture_ranking_revision_state(
                 session, run_id=run_id, branch_id=branch_id
             )
-            assert len(original_ranking.tournament_sources) == 1
+            assert len(original_ranking.tournament_sources) == count_tournaments
             original_tournament = original_ranking.tournament_sources[0]
             assert original_tournament.canonical_result is not None
             assert original_tournament.canonical_awards is not None
             assert original_tournament.canonical_result.matches
-            assert len(original_ranking.authoritative_transition_state["receipts"]) == 1
+            assert len(original_ranking.authoritative_transition_state["receipts"]) == count_tournaments
 
         # Force failure during the real SQLite installer. Every staged ranking,
         # player, Branch and audit row must roll back together.
@@ -725,7 +904,7 @@ def test_single_completed_run_owned_tournament_fork_reopen_and_continue(
             target_ranking = capture_ranking_revision_state(
                 session, run_id=run_id, branch_id=target_branch_id
             )
-            assert len(target_ranking.tournament_sources) == 1
+            assert len(target_ranking.tournament_sources) == count_tournaments
             assert target_ranking.tournament_sources[0].binding.branch_id == target_branch_id
             assert (
                 target_ranking.tournament_sources[0].canonical_result.champion_player_id
@@ -742,7 +921,7 @@ def test_single_completed_run_owned_tournament_fork_reopen_and_continue(
             ):
                 assert len(session.scalars(select(model).where(
                     model.run_id == run_id, model.branch_id == target_branch_id
-                )).all()) == 1
+                )).all()) == count_tournaments
 
         target_sim_root = (
             f"{reopened.base_url}/admin/runs/{run_id}/branches/{target_branch_id}"
@@ -750,19 +929,19 @@ def test_single_completed_run_owned_tournament_fork_reopen_and_continue(
         )
         assert _request("GET", target_sim_root + "/position")[1][
             "current_week"
-        ] == {"season_index": 0, "week": 2}
+        ] == {"season_index": 0, "week": fork_week}
 
         continuation_revision = _advance_empty_week(
             reopened,
             run_id=run_id,
             branch_id=target_branch_id,
             revision=fork["saved_head_revision_id"],
-            week=2,
+            week=fork_week,
         )
         assert continuation_revision != fork["saved_head_revision_id"]
         assert _request("GET", target_sim_root + "/position")[1][
             "current_week"
-        ] == {"season_index": 0, "week": 3}
+        ] == {"season_index": 0, "week": fork_week + 1}
         assert _request("GET", source_sim_root + "/position")[1] == source_position
 
         with repository._session_factory.begin() as session:
@@ -773,4 +952,4 @@ def test_single_completed_run_owned_tournament_fork_reopen_and_continue(
             target = capture_ranking_revision_state(
                 session, run_id=run_id, branch_id=target_branch_id
             )
-            assert len(target.authoritative_transition_state["receipts"]) == 2
+            assert len(target.authoritative_transition_state["receipts"]) == count_tournaments + 1

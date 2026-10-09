@@ -90,15 +90,12 @@ strengthened evidence assertions and documentation require their own final-head
 green checks. This proves only the bounded four-player, two-tournament case,
 not universal tournaments, full pre-alpha or a 50-season checkpoint.
 
-**Same-week checkpoint (9 Oct 2026):** The real HTTP/SQLite
-two-simultaneous-tournament acceptance completed successfully in Fast CI
-`37899367675` (the run had 42 passing tests and one failing schema-invalid
-adversarial *test input*, which is corrected in a follow-up commit).
-The production two-event fork path has therefore been exercised, but this
-is **not** final-head merge evidence: the final commit must pass every
-PR-required check. This narrow result does not establish 50-season support,
-overlapping entrant arbitration, hybrid tournaments or general multi-tournament
-capacity.
+**Same-week checkpoint (9 Oct 2026):** The final #1320 Fast CI
+workflow `37899754724` passed **44 focused tests** on
+`ab6a82a8434c985962a199549ceed335b5d2f266`, including the genuine
+two-simultaneous-tournament HTTP/SQLite fork and independent continuation.
+This does not establish 50-season support, overlapping entrant arbitration,
+hybrid tournaments or general multi-tournament capacity.
 
 **Unbounded standard-history checkpoint (9 Oct 2026):** initial
 Fast CI workflow `37901923845` on `cb944da3920d94a43370ce695c8444bc72e173b0`

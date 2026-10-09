@@ -67,3 +67,26 @@ event-scoped. Those guards must not be lifted until rollover state, event
 provenance, archived closure identity, persistence, rollback and independent
 continuation are integrated and tested together. No HTTP/SQLite season-fork,
 50-season/realism or pre-alpha release status is implied.
+
+## Cross-Branch Saved Revision closure and SQLite archive install (follow-up)
+
+`rebind_cross_branch_season_closure` rebuilds a target-owned Season Summary,
+rule-version envelope and Closure Marker with the newly materialized Saved
+Revision identity. It verifies the immutable source component against the
+original closing ranking and refuses unknown season-scoped statistic payloads
+until they have a real remapping authority. The source revision is never changed.
+
+`install_verified_fork_season_closings` is the SQLite transaction component
+for persisting the target archives. It independently recomputes every target
+archive against the source/target ranking histories, validates the proposed
+archive sequence, requires the real target Week-61 publication, and installs
+under a nested savepoint in the caller's outer Branch-fork transaction.
+Focused tests use real SQLAlchemy/SQLite persistence, forged data and rollback
+after a later injected failure.
+
+**These building blocks are not yet wired to production Run Branch creation.**
+That endpoint still rejects Season Closure Saved Revisions and Season Transition
+World Events; no guard has been disabled. Full integration must also reconstruct
+the Season Transition event's configuration/player/ranking fingerprints from
+canonical original and target authority, install its World Event, and recapture
+the entire target state together with source-independent continuation.

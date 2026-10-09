@@ -2861,6 +2861,7 @@ class SimulationPersistenceRepository:
                         or source_revision.kind != SEASON_TRANSITION_SAVED_REVISION_KIND
                         or source_ranking is None
                         or len(source_ranking.season_closing_rankings) != 1
+                        or not source_ranking.entries
                         or len(source_season_events) != 1
                         or source_season_events[0]["week_ordinal"]
                         != source_ranking.entries[-1].snapshot.week.ordinal

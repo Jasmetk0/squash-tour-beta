@@ -553,6 +553,11 @@ def test_single_completed_run_owned_tournament_fork_reopen_and_continue(
                 {"event_id": parallel_event, "player_id": player_id, "target": "MAIN"}
                 for player_id in sorted(generated_ids)
             )
+            explicit_entry_reviews.sort(
+                key=lambda review: (
+                    review["event_id"], review["player_id"], review["target"]
+                )
+            )
         status, entry_slot = _request(
             "POST",
             sim_root + "/entry-decision-slot/review",

@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 
 import {
-  getCanonicalTournamentPreparation, getRunOwnedCalendar, getRunPackageState
+  getBranchWorkingDraft, getCanonicalTournamentPreparation, getRunOwnedCalendar, getRunPackageState
 } from '../api/client'
 import type { RunBranch, RunContainer } from '../api/types'
 import {
@@ -28,6 +28,17 @@ export function RunFirstTournamentPanel({ run, branch }: {
     enabled: validBranch,
     retry: false
   })
+  const draftQuery = useQuery({
+    queryKey: ['package-working-draft', runId, branchId],
+    queryFn: () => getBranchWorkingDraft(runId, branchId),
+    enabled: validBranch,
+    retry: false
+  })
+  const savedCalendarScope = Boolean(validBranch &&
+    draftQuery.data?.run_id === runId &&
+    draftQuery.data?.branch_id === branchId &&
+    draftQuery.data?.base_saved_revision_id === head &&
+    draftQuery.data?.status === 'clean')
   const packageState = packagesQuery.data?.state
   const calendarIds = runCalendarPackageIds(
     packageState?.run_id === runId && packageState?.branch_id === branchId ? packageState : null
@@ -37,7 +48,7 @@ export function RunFirstTournamentPanel({ run, branch }: {
   const calendarQuery = useQuery({
     queryKey: ['run-calendar', runId, branchId, calendarId],
     queryFn: () => getRunOwnedCalendar(runId, branchId, calendarId),
-    enabled: validBranch && Boolean(calendarId),
+    enabled: savedCalendarScope && Boolean(calendarId),
     retry: false
   })
   const calendar = calendarQuery.data && isRunCalendarProjection(calendarQuery.data, runId, branchId, calendarId) &&
@@ -49,7 +60,7 @@ export function RunFirstTournamentPanel({ run, branch }: {
   const preparationQuery = useQuery({
     queryKey: ['canonical-tournament-preparation', runId, branchId, eventId],
     queryFn: () => getCanonicalTournamentPreparation(runId, branchId, eventId),
-    enabled: validBranch && Boolean(calendar && eventId),
+    enabled: savedCalendarScope && Boolean(calendar && eventId),
     retry: false
   })
   const preparation = preparationQuery.data?.run_id === runId &&
@@ -63,6 +74,8 @@ export function RunFirstTournamentPanel({ run, branch }: {
     <p className="status">Discover the earliest scheduled event from the saved Run-owned Calendar, not a legacy Simulation Run. The tournament readiness comes from real Run/Branch database authorities; no applications, Draw or results are auto-generated.</p>
     {!validBranch && <p role="status">Select a writable Active Admin Branch with a Saved Revision.</p>}
     {packagesQuery.error && <p role="alert" className="error">Run Package snapshot unavailable: {formatApiError(packagesQuery.error)}</p>}
+    {draftQuery.error && <p role="alert" className="error">Working Draft unavailable: {formatApiError(draftQuery.error)}</p>}
+    {validBranch && draftQuery.isSuccess && !savedCalendarScope && <p role="status">Save the current Working Draft before preparing a tournament from its Calendar Package.</p>}
     {calendarIds.length === 0 && packagesQuery.isSuccess && <p>No Calendar Package is applied. Review and save the 2000/01 Calendar source above first.</p>}
     {calendarIds.length > 1 && <label>Run Calendar Package{' '}
       <select aria-label="First-tournament Calendar Package" value={calendarId}

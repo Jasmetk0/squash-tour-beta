@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useParams, useSearchParams } from 'react-router-dom'
 
 import {
   getCanonicalTournamentEntryFieldState,
@@ -50,6 +50,8 @@ import type {
 
 export function PlannedEventDetailPage(): JSX.Element {
   const { runId = '', eventId = '' } = useParams()
+  const [searchParams] = useSearchParams()
+  const requestedBranchId = searchParams.get('branch')
   const queryClient = useQueryClient()
   const viewed = useAdminViewedSeasonState()
   const [canonicalWildcardOriginalInput, setCanonicalWildcardOriginalInput] = useState('')
@@ -93,7 +95,15 @@ export function PlannedEventDetailPage(): JSX.Element {
     enabled: Boolean(runId) && !viewed.historical,
     retry: false
   })
-  const activeBranchId = viewed.time?.branchId ?? ''
+  // A deep-link is only a Branch handoff, never permission to use a different active Branch.
+  // Until Admin explicitly selects the requested present Branch, suppress all scoped authority reads.
+  const handoffMismatch = requestedBranchId !== null && !(
+    requestedBranchId.length > 0 &&
+    viewed.time?.runId === runId &&
+    viewed.time?.branchId === requestedBranchId &&
+    !viewed.historical
+  )
+  const activeBranchId = handoffMismatch ? '' : (viewed.time?.branchId ?? '')
   const canonicalPreparationQuery = useQuery({
     queryKey: ['canonical-tournament-preparation', runId, activeBranchId, eventId],
     queryFn: () => getCanonicalTournamentPreparation(runId, activeBranchId, eventId),
@@ -912,7 +922,23 @@ export function PlannedEventDetailPage(): JSX.Element {
     return null
   }
 
-    if (viewed.historical && viewed.unavailable) return <section className="panel"><h1>Historical calendar is not available for this checkpoint.</h1><p>Checkpoint: {viewed.time?.viewCheckpointId}</p><button onClick={() => viewed.time?.selectPresent()}>Return to Present</button> <Link to={`/admin/runs/${encodeURIComponent(runId)}`}>Open Run Home</Link></section>
+  if (handoffMismatch) {
+    return (
+      <section className="panel" aria-label="Planned event Branch handoff blocked">
+        <h1>Branch selection required</h1>
+        <p role="alert">
+          This planned event link requires Run {runId} and Branch {requestedBranchId || '(missing)'}
+          in Present mode. Select that exact Admin Branch in the header and return to Present
+          before reviewing or changing tournament authorities. No tournament action is available here.
+        </p>
+        <Link to={`/admin/runs/${encodeURIComponent(runId)}/simulate?branch=${encodeURIComponent(requestedBranchId ?? '')}`}>
+          Inspect requested simulation Branch
+        </Link>
+      </section>
+    )
+  }
+
+  if (viewed.historical && viewed.unavailable) return <section className="panel"><h1>Historical calendar is not available for this checkpoint.</h1><p>Checkpoint: {viewed.time?.viewCheckpointId}</p><button onClick={() => viewed.time?.selectPresent()}>Return to Present</button> <Link to={`/admin/runs/${encodeURIComponent(runId)}`}>Open Run Home</Link></section>
   if (viewed.historical && viewed.failed) return <section className="panel"><h1>Failed to load historical calendar state.</h1><p>Checkpoint: {viewed.time?.viewCheckpointId}</p><button onClick={() => viewed.time?.selectPresent()}>Return to Present</button> <Link to={`/admin/runs/${encodeURIComponent(runId)}`}>Open Run Home</Link></section>
   if (viewed.historical && viewed.query.isLoading) return <section className="panel"><p className="status">Loading historical planned event...</p></section>
 

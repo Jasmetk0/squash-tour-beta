@@ -1,5 +1,37 @@
 # Current implementation and next action
 
+## Standard tournament history without artificial fork count — PR #1321 (9 Oct 2026)
+
+- Starting from merged #1320 on `buuk` at `381a131a`, remove
+  the artificial two-tournament restriction in both the immutable Week
+  Transition audit rebind and independently validated canonical tournament
+  ranking-bundle binding. **Do not loosen** distinct edition/week-event
+  identity, source/target Run/Branch ownership, canonical standard v4/v5,
+  match/point/ranking evidence, original Slot fingerprint coverage,
+  source receipt + World Event coherence, transaction rollback, or
+  saved revision lineage.
+- New pure PR-critical audit regression reconstructs complete 3-, 7-
+  and 12-tournament histories across two Week Transition receipts,
+  including distinct simultaneous tournaments and forged/corrupt
+  historical binding cases.
+- A fourth genuine HTTP+SQLite scenario uses 8 generated FAX players and
+  **three standard tournaments**: two independent 4-player Week-1 events,
+  followed by an audited Week-2 event; both Week Transitions are completed
+  using production match/rally, ranking, Save and audit endpoints. It
+  closes/reopens the persistent API, rejects an injected installer failure
+  atomically, forks and advances the target independently, and proves all
+  three original/target results and source Branch invariance.
+- First green production checkpoint: Fast CI `37901923845`,
+  `cb944da3`, **55 focused tests passed / 3478 deselected / one unrelated
+  warning**. The final PR head includes subsequent doc/state updates;
+  required checks must be reverified there before merge handoff.
+- This **does not** prove unbounded runtime performance, 50-season FAX,
+  tournament format hybrids/group nested provenance, Season Transition,
+  tournament corrections, discipline, player overlap via Week Tournament
+  Lock, or automatic application eligibility policy. Those remain distinct
+  work items and must not be silently enabled or advertised.
+
+
 ## Parallel standard tournaments in one Week Transition — PR #1320 (9 Oct 2026)
 
 - Verified `buuk` HEAD `ecb63015` already includes merged #1319. This

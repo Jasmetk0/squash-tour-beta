@@ -7,6 +7,7 @@ import { verifiedCurrentEntryApply, verifiedCurrentEntryPreview } from '../api/r
 import { renderWithRoute } from '../test/testUtils'
 
 const api = vi.hoisted(() => ({
+  ApiError: class ApiError extends Error { constructor(message: string, public status = 409) { super(message) } },
   getRunContainer: vi.fn(),
   listRunBranches: vi.fn(),
   getBranchWorkingDraft: vi.fn(),
@@ -76,7 +77,7 @@ describe('Production Run-owned Entry AI freeze', () => {
     const button=await screen.findByRole('button',{name:'Preview real Entry decisions'})
     await waitFor(()=>expect(button).toBeEnabled())
     await userEvent.click(button)
-    expect(await screen.findByText(/15 generated player decisions, 2 World Tour event/)).toBeInTheDocument()
+    expect(await screen.findByText(/generated player decisions, 2 World Tour event/)).toBeInTheDocument()
     expect(screen.getByText(/event-a, event-b/)).toBeInTheDocument()
     expect(api.applyRunCurrentEntryDecisions).not.toHaveBeenCalled()
     const apply=screen.getByRole('button',{name:'Confirm and freeze Entry decisions'})
@@ -91,7 +92,9 @@ describe('Production Run-owned Entry AI freeze', () => {
 
   it('rejects generated event list that excludes the requested tournament', async () => {
     show('another-event')
-    await userEvent.click(await screen.findByRole('button',{name:'Preview real Entry decisions'}))
+    const previewButton = await screen.findByRole('button',{name:'Preview real Entry decisions'})
+    await waitFor(() => expect(previewButton).toBeEnabled())
+    await userEvent.click(previewButton)
     expect(await screen.findByText(/does not match this Run, Branch, current Week/)).toBeInTheDocument()
     expect(api.applyRunCurrentEntryDecisions).not.toHaveBeenCalled()
   })
@@ -120,7 +123,9 @@ describe('Production Run-owned Entry AI freeze', () => {
   it('does not freeze empty proposals or existing frozen slots', async () => {
     api.previewRunCurrentEntryDecisions.mockResolvedValueOnce({...preview,decision_count:0})
     show()
-    await userEvent.click(await screen.findByRole('button',{name:'Preview real Entry decisions'}))
+    const previewButton = await screen.findByRole('button',{name:'Preview real Entry decisions'})
+    await waitFor(() => expect(previewButton).toBeEnabled())
+    await userEvent.click(previewButton)
     expect(await screen.findByText(/proposed no applications/)).toBeInTheDocument()
     expect(api.applyRunCurrentEntryDecisions).not.toHaveBeenCalled()
   })

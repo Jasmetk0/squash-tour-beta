@@ -1,6 +1,6 @@
 """Bind verified Week Transition receipts to their target-owned ranking lineage.
 
-At most two standard tournaments, including simultaneous same-week events, are supported
+Canonical standard tournaments, including simultaneous same-week events, are supported
 only when each frozen canonical source has independently remapped evidence.
 No database writes occur in this module.
 """
@@ -115,8 +115,6 @@ def _verified_tournament_bindings(
     """
     if len(source.tournament_sources) != len(target.tournament_sources):
         _reject("Tournament ranking source count changed in fork")
-    if len(source.tournament_sources) > 2:
-        _reject("More than two completed tournaments are not yet supported")
     bindings = {}
     week_events: set[tuple[int, str]] = set()
     for original, remapped in zip(

@@ -48,6 +48,7 @@ import { RunTournamentEntryReviewPanel } from '../components/RunTournamentEntryR
 import { RunCurrentEntryFreezePanel } from '../components/RunCurrentEntryFreezePanel'
 import { RunReviewedEntryFieldPanel } from '../components/RunReviewedEntryFieldPanel'
 import { RunFirstDrawPanel } from '../components/RunFirstDrawPanel'
+import { RunFirstMatchPanel } from '../components/RunFirstMatchPanel'
 import { getPlannedEventStatus } from './plannedEventUtils'
 import { useAdminViewedSeasonState } from '../admin/useAdminViewedSeasonState'
 import type {
@@ -1264,6 +1265,12 @@ export function PlannedEventDetailPage(): JSX.Element {
         canonicalPreparationQuery.data.event_id === eventId &&
         canonicalPreparationQuery.data.authority_source === 'run_owned_db_authorities.v1' &&
         <RunFirstDrawPanel runId={runId} branchId={activeBranchId} eventId={eventId} />}
+      {canonicalSeasonState && plannedEvent && !viewed.historical && activeBranchId &&
+        canonicalPreparationQuery.data?.run_id === runId &&
+        canonicalPreparationQuery.data.branch_id === activeBranchId &&
+        canonicalPreparationQuery.data.event_id === eventId &&
+        canonicalPreparationQuery.data.authority_source === 'run_owned_db_authorities.v1' &&
+        <RunFirstMatchPanel runId={runId} branchId={activeBranchId} eventId={eventId} />}
       {canonicalSeasonState && plannedEvent && !viewed.historical && activeBranchId &&
         canonicalPreparationQuery.data?.run_id === runId &&
         canonicalPreparationQuery.data.branch_id === activeBranchId &&

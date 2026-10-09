@@ -39,6 +39,74 @@ from test_earth_world_package_run_integration import _advance_empty_week
 
 
 
+def _reviewed_real_entry_field(
+    field_root: str,
+    *,
+    event_id: str,
+    expected_players: tuple[str, ...],
+    command_id: str,
+    main_size: int,
+) -> tuple[dict, dict]:
+    """Production HTTP/SQLite reviewed field: no preview write, stale CAS, reopen.
+
+    All four existing scenarios invoke this helper, so multiple week/event paths
+    cannot silently bypass the new Admin-reviewed field authority.
+    """
+    capacity = {
+        "main_draw_size": main_size,
+        "qualification_draw_size": 0,
+        "qualifier_spots": 0,
+        "wild_card_slots": 0,
+        "bye_slots": 0,
+    }
+    status, candidate = _request(
+        "POST", field_root + "/from-valid-submissions/preview",
+        {"capacity": capacity},
+    )
+    assert status == 200, candidate
+    assert candidate["preview_only"] is True
+    assert candidate["event_id"] == event_id
+    assert len(candidate["field_fingerprint"]) == 64
+    assert set(candidate["field"]["direct_main_player_ids"]) == set(expected_players)
+    assert candidate["field"]["qualification_player_ids"] == []
+    assert candidate["field"]["below_qualification_cut_player_ids"] == []
+
+    # The preview and rejected CAS must not persist a single Entry Field row.
+    assert _request("GET", field_root)[0] == 404
+    status, stale = _request(
+        "POST", field_root + "/from-valid-submissions/reviewed",
+        {
+            "command_id": command_id + "-stale",
+            "capacity": capacity,
+            "expected_field_fingerprint": "0" * 64,
+        },
+    )
+    assert status == 409, stale
+    assert _request("GET", field_root)[0] == 404
+
+    status, committed = _request(
+        "POST", field_root + "/from-valid-submissions/reviewed",
+        {
+            "command_id": command_id,
+            "capacity": capacity,
+            "expected_field_fingerprint": candidate["field_fingerprint"],
+        },
+    )
+    assert status == 201, committed
+    assert set(committed["direct_main_player_ids"]) == set(expected_players)
+    status, stored = _request("GET", field_root)
+    assert status == 200, stored
+    assert stored["field_fingerprint"] == candidate["field_fingerprint"]
+    assert stored["field_sequence"] == 1
+    assert set(stored["direct_main_player_ids"]) == set(expected_players)
+    assert _request(
+        "POST", field_root + "/from-valid-submissions/preview",
+        {"capacity": capacity},
+    )[0] == 409
+    return committed, stored
+
+
+
 def _complete_second_standard_tournament(
     server: ApiServer,
     *,
@@ -110,23 +178,13 @@ def _complete_second_standard_tournament(
     assert validated["valid_submission_count"] == len(players)
 
     field_root = tournament_root + "/entry-field"
-    status, field = _request(
-        "POST", field_root + "/from-valid-submissions",
-        {
-            "command_id": "second-week-reviewed-main-entry-field",
-            "capacity": {
-                "main_draw_size": len(players),
-                "qualification_draw_size": 0,
-                "qualifier_spots": 0,
-                "wild_card_slots": 0,
-                "bye_slots": 0,
-            },
-        },
+    field, field_state = _reviewed_real_entry_field(
+        field_root,
+        event_id=event_id,
+        expected_players=players,
+        command_id="second-week-reviewed-main-entry-field",
+        main_size=len(players),
     )
-    assert status == 201, field
-    assert set(field["direct_main_player_ids"]) == set(players)
-    status, field_state = _request("GET", field_root)
-    assert status == 200, field_state
     draw_root = tournament_root + "/draw"
     status, draw_input = _request(
         "POST", draw_root + "/commit-input",
@@ -254,17 +312,13 @@ def _prepare_parallel_canonical_draw(
 ):
     root = f"{base_url}/admin/runs/{run_id}/branches/{branch_id}/tournaments/{event_id}"
     field_root = root + "/entry-field"
-    status, field = _request("POST", field_root + "/from-valid-submissions", {
-        "command_id": "parallel-week-one-field",
-        "capacity": {
-            "main_draw_size": 4, "qualification_draw_size": 0,
-            "qualifier_spots": 0, "wild_card_slots": 0, "bye_slots": 0,
-        },
-    })
-    assert status == 201, field
-    assert set(field["direct_main_player_ids"]) == set(players)
-    status, stored = _request("GET", field_root)
-    assert status == 200, stored
+    field, stored = _reviewed_real_entry_field(
+        field_root,
+        event_id=event_id,
+        expected_players=players,
+        command_id="parallel-week-one-field",
+        main_size=4,
+    )
     draw_root = root + "/draw"
     status, frozen = _request("POST", draw_root + "/commit-input", {
         "command_id": "parallel-week-one-draw-input",
@@ -662,25 +716,13 @@ def test_single_completed_run_owned_tournament_fork_reopen_and_continue(
         assert validated_entry["valid_submission_count"] == len(explicit_entry_reviews)
 
         entry_field_root = tournament_root + "/entry-field"
-        status, entry_field = _request(
-            "POST",
-            entry_field_root + "/from-valid-submissions",
-            {
-                "command_id": "official-week-1-entry-field",
-                "capacity": {
-                    "main_draw_size": 4,
-                    "qualification_draw_size": 0,
-                    "qualifier_spots": 0,
-                    "wild_card_slots": 0,
-                    "bye_slots": 0,
-                },
-            },
+        entry_field, entry_field_state = _reviewed_real_entry_field(
+            entry_field_root,
+            event_id=event_id,
+            expected_players=primary_players,
+            command_id="official-week-1-entry-field",
+            main_size=4,
         )
-        assert status == 201, entry_field
-        assert set(entry_field["direct_main_player_ids"]) == set(primary_players)
-        status, entry_field_state = _request("GET", entry_field_root)
-        assert status == 200, entry_field_state
-        assert set(entry_field_state["direct_main_player_ids"]) == set(primary_players)
         if same_week:
             _prepare_parallel_canonical_draw(
                 base_url=server.base_url,

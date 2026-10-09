@@ -3636,6 +3636,28 @@ export async function saveRunDerivedInitialRankingRevision(
   return saved
 }
 
+/** Publish only the exact reviewed canonical Week-1 ranking candidate. */
+export async function publishRunInitialRanking(
+  runId: string, branchId: string, expectedFingerprint: string
+): Promise<import('./runInitialRankingPublication').InitialRankingPublication> {
+  if (!/^[a-f0-9]{64}$/.test(expectedFingerprint)) {
+    throw new Error('A valid initial ranking fingerprint is required for publication.')
+  }
+  const data = await request<import('./runInitialRankingPublication').InitialRankingPublication>(
+    `/admin/runs/${encodeURIComponent(runId)}/branches/${encodeURIComponent(branchId)}/ranking-candidates/publish-initial`, {
+      method: 'POST', body: JSON.stringify({ expected_ranking_fingerprint: expectedFingerprint })
+    }
+  )
+  if (!(
+    data.schema_version === 'initial_official_ranking_publication.v1' &&
+    data.run_id === runId && data.branch_id === branchId &&
+    data.week?.season_index === 0 && data.week.week === 1 &&
+    data.ranking_fingerprint === expectedFingerprint &&
+    typeof data.exact_retry === 'boolean'
+  )) throw new Error('Initial ranking publication response does not match reviewed Run/Branch and candidate.')
+  return data
+}
+
 export interface RankingSavePreview {
   run_id: string; branch_id: string; ranking_fingerprint: string; saved_head_revision_id: string;
   draft_version: number; has_unsaved_changes: boolean; can_save: boolean;

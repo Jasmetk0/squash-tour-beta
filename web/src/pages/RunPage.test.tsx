@@ -28,6 +28,8 @@ const api = vi.hoisted(() => ({
   getRunPackageState: vi.fn(),
   getRunOwnedInitialWorld: vi.fn(),
   getRankingCandidates: vi.fn(),
+  previewRankingSave: vi.fn(),
+  getViewerOfficialRanking: vi.fn(),
   listWorldPackages: vi.fn(),
   getRunStatusSummary: vi.fn(),
   getFinalsSummary: vi.fn(),
@@ -76,6 +78,8 @@ describe('RunPage', () => {
     })
     api.getRunPackageState.mockResolvedValue({ state: null, fingerprint: null })
     api.getRunOwnedInitialWorld.mockRejectedValue(new api.ApiError('Initial world not found', 404))
+    api.previewRankingSave.mockRejectedValue(new api.ApiError('Ranking unavailable', 409))
+    api.getViewerOfficialRanking.mockRejectedValue(new api.ApiError('Viewer has no published ranking', 409))
     api.getRankingCandidates.mockResolvedValue({
       run_id: FAX_REFERENCE_RUN_ID, branch_id: FAX_REFERENCE_BRANCH_ID,
       publication_status: 'candidate_only', candidates: []

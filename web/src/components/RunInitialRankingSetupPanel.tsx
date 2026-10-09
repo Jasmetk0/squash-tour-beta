@@ -159,12 +159,12 @@ export function RunInitialRankingSetupPanel({ run, branch }: {
   const savePreviewQuery = useQuery({
     queryKey: ['ranking-save', runId, branchId, draft?.draft_version, candidate?.fingerprint],
     queryFn: () => previewRankingSave(runId, branchId),
-    enabled: Boolean(editable && candidate && draft?.status === 'dirty'),
+    enabled: Boolean(editable && candidate && draft && draft.base_saved_revision_id === head),
     retry: false
   })
   const savePreview = savePreviewQuery.data
   const saveMatches = Boolean(editable && draft && candidate &&
-    draft.base_saved_revision_id === head && draft.status === 'dirty' &&
+    draft.base_saved_revision_id === head && (draft.status === 'dirty' || draft.status === 'clean') &&
     savePreview && savePreview.run_id === runId &&
     savePreview.branch_id === branchId && savePreview.saved_head_revision_id === head &&
     savePreview.draft_version === draft.draft_version &&
@@ -205,7 +205,7 @@ export function RunInitialRankingSetupPanel({ run, branch }: {
     {draftQuery.error && <p role="alert" className="error">Working Draft unavailable: {formatApiError(draftQuery.error)}</p>}
     {!world && isApiNotFound(worldQuery.error) && <p>First generate, adopt and save players in the InitialWorld section above.</p>}
     {world && <p>Run-owned roster: <strong>{world.players.length}</strong> players · Initial policy: Best {bestN ?? 'unavailable'}.</p>}
-    {candidate && <p role="status">Week-1 ranking candidate exists. It contains {candidate.snapshot.rows.length} classified rows. {draft?.status === 'dirty' ? 'It needs Saved Revision confirmation.' : 'No unsaved Working Draft changes are reported.'}</p>}
+    {candidate && <p role="status">Week-1 ranking candidate exists. It contains {candidate.snapshot.rows.length} classified rows. {savePreview?.has_unsaved_changes ? 'It needs Saved Revision confirmation.' : 'Review the ranking Save preflight for persistence status.'}</p>}
     {candidate && candidate.snapshot.rows.length === 0 &&
       <p className="status">Zero classified players is expected at the Week-1 bootstrap before sporting results. All players remain in InitialWorld.</p>}
     {draft && draft.status !== 'clean' && !waitingSave && !candidate &&

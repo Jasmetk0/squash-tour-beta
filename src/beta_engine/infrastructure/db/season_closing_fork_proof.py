@@ -68,8 +68,9 @@ def _prove_fingerprint_map(
     target_keys = [item.source_fingerprint for item in targets]
     if (
         not isinstance(fingerprint_map, Mapping)
-        or len(set(source_keys)) != len(source_keys)
-        or len(set(target_keys)) != len(target_keys)
+        # One Tournament may own results for multiple players, so repeated
+        # *item* fingerprints are legal; only the distinct provenance map
+        # itself must remain one-to-one.
         or set(fingerprint_map) != set(source_keys)
         or set(fingerprint_map.values()) != set(target_keys)
         or len(set(fingerprint_map.values())) != len(fingerprint_map)

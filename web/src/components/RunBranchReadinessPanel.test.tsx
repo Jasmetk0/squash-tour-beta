@@ -85,6 +85,14 @@ const revision = (branch: RunBranch) => ({
   sequence: 62
 })
 const gate = (branchId: string) => ({
+  schema_version: 'pre_alpha_fax_entry_validation_policy_gate.v1',
+  policy_id: 'automatic_application_eligibility_deadline.v1',
+  policy_status: 'unresolved',
+  master_status: 'open',
+  blocks_unattended_release: true,
+  current_slot_kind: 'entry',
+  current_slot_ordinal: null,
+  gate_fingerprint: 'c'.repeat(64),
   run_id: run.run_id,
   branch_id: branchId,
   current_week: { season_index: 1, week: 2 },
@@ -166,6 +174,26 @@ describe('RunBranchReadinessPanel', () => {
     })
     api.getPreAlphaFaxEntryValidationPolicyGate.mockResolvedValue({
       ...gate('original'), current_position_fingerprint: '0'.repeat(64)
+    })
+    render([baseBranch])
+    const card = await screen.findByLabelText('Operating status for original')
+    expect(await within(card).findByText(/Entry-validation policy identity is inconsistent/)).toBeInTheDocument()
+    expect(within(card).queryByRole('link', { name: /Inspect authoritative simulation/ })).not.toBeInTheDocument()
+  })
+
+  it.each([
+    { policy_status: 'resolved' },
+    { master_status: 'decided' },
+    { blocks_unattended_release: false },
+    { current_slot_kind: 'match' },
+    { current_blocker_code: 'current_slot_not_entry' },
+    { gate_fingerprint: '' }
+  ])('fails closed on contradictory entry policy metadata: %j', async changed => {
+    api.getAuthoritativeSimulationPosition.mockResolvedValue({
+      ...pos('original'), current_slot_kind: 'entry'
+    })
+    api.getPreAlphaFaxEntryValidationPolicyGate.mockResolvedValue({
+      ...gate('original'), ...changed
     })
     render([baseBranch])
     const card = await screen.findByLabelText('Operating status for original')

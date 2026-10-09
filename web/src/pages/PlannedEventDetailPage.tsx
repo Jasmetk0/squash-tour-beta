@@ -30,6 +30,7 @@ import {
   getRun,
   getRunOwnedCalendar,
   getRunPackageState,
+  getBranchWorkingDraft,
   listEvents
 } from '../api/client'
 import {
@@ -120,6 +121,12 @@ export function PlannedEventDetailPage(): JSX.Element {
     enabled: canonicalCalendarRequested,
     retry: false
   })
+  const canonicalCalendarDraftQuery = useQuery({
+    queryKey: ['package-working-draft', runId, activeBranchId],
+    queryFn: () => getBranchWorkingDraft(runId, activeBranchId),
+    enabled: canonicalCalendarRequested,
+    retry: false
+  })
   const canonicalCalendarQuery = useQuery({
     queryKey: ['run-calendar', runId, activeBranchId, requestedCalendarId],
     queryFn: () => getRunOwnedCalendar(runId, activeBranchId, requestedCalendarId!),
@@ -130,6 +137,9 @@ export function PlannedEventDetailPage(): JSX.Element {
     isRunCalendarProjection(canonicalCalendarQuery.data, runId, activeBranchId, requestedCalendarId!) &&
     calendarPackageQuery.data?.state?.run_id === runId &&
     calendarPackageQuery.data?.state?.branch_id === activeBranchId &&
+    canonicalCalendarDraftQuery.data?.run_id === runId &&
+    canonicalCalendarDraftQuery.data?.branch_id === activeBranchId &&
+    canonicalCalendarDraftQuery.data?.status === 'clean' &&
     canonicalCalendarQuery.data.run_package_state_fingerprint === calendarPackageQuery.data.fingerprint
     ? canonicalCalendarQuery.data : null
   const canonicalPreparationQuery = useQuery({
@@ -1095,6 +1105,8 @@ export function PlannedEventDetailPage(): JSX.Element {
         </SectionCard>
       ) : null}
 
+      {canonicalCalendarRequested && canonicalCalendarDraftQuery.error ?
+        <p role="alert" className="error">Canonical Working Draft unavailable: {formatApiError(canonicalCalendarDraftQuery.error)}</p> : null}
       {canonicalCalendarRequested && calendarPackageQuery.error ?
         <p role="alert" className="error">Canonical Run Package unavailable: {formatApiError(calendarPackageQuery.error)}</p> : null}
       {canonicalCalendarRequested && canonicalCalendarQuery.error ?

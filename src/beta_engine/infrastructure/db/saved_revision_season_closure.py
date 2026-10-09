@@ -11,6 +11,7 @@ from beta_engine.domain.season_closure import (
     SeasonClosureMarkerCandidate,
     SeasonClosurePackage,
     bind_season_closure_marker,
+    build_season_closure_package,
 )
 from beta_engine.domain.rankings.official import FrozenInput
 
@@ -172,3 +173,89 @@ def rebind_saved_revision_season_closure(
         package=package,
         marker=rebound_marker,
     )
+
+
+def rebind_cross_branch_season_closure(
+    source_payload: dict,
+    target_payload: dict,
+    *,
+    run_id: str,
+    source_branch_id: str,
+    source_revision_id: str,
+    target_branch_id: str,
+    target_revision_id: str,
+    source_closing,
+    target_closing,
+) -> SavedRevisionSeasonClosure:
+    """Rebuild the committed closure envelope for a *different* Branch.
+
+    The caller must first prove both closing archives from their complete,
+    independently remapped ranking ledgers. This function binds the verified
+    target archive, summary, policy and new Saved Revision identity; it never
+    copies a source Branch fingerprint or mutates the original revision.
+    Existing production fork guards must remain until rollover events and
+    transaction installation are integrated.
+    """
+    if (
+        not source_branch_id or not target_branch_id
+        or source_branch_id == target_branch_id
+        or not source_revision_id or not target_revision_id
+        or (source_closing.run_id, source_closing.branch_id)
+        != (run_id, source_branch_id)
+        or (target_closing.run_id, target_closing.branch_id)
+        != (run_id, target_branch_id)
+        or source_closing.completed_week != target_closing.completed_week
+        or source_closing.policy != target_closing.policy
+    ):
+        raise ValueError("Cross-Branch Season Closure scope or boundary differs")
+
+    original = load_saved_revision_season_closure(
+        source_payload,
+        run_id=run_id,
+        branch_id=source_branch_id,
+        revision_id=source_revision_id,
+    )
+    if original is None:
+        raise ValueError("Cross-Branch Season Closure source component is missing")
+
+    old_summary = original.parsed_summary
+    old_marker = original.parsed_marker
+    if old_summary.season_scoped_statistics:
+        # No season-statistic transfer adapter is authoritative in V1.
+        raise ValueError(
+            "Cross-Branch Season Closure requires remapping season-scoped statistics"
+        )
+    original_package = build_season_closure_package(
+        closing_ranking=source_closing,
+        season_scoped_statistics=old_summary.season_scoped_statistics,
+    )
+    if (
+        original_package.summary != old_summary
+        or original_package.marker.rule_versions != old_marker.rule_versions
+    ):
+        raise ValueError("Cross-Branch Season Closure original package differs from archive")
+    source_rows = tuple((row.rank, row.player_id, row.points) for row in source_closing.rows)
+    target_rows = tuple((row.rank, row.player_id, row.points) for row in target_closing.rows)
+    if source_rows != target_rows or source_closing.fingerprint == target_closing.fingerprint:
+        raise ValueError("Cross-Branch Season Closure sporting result or ownership differs")
+
+    package = build_season_closure_package(closing_ranking=target_closing)
+    marker = bind_season_closure_marker(
+        package.marker,
+        final_saved_revision_id=target_revision_id,
+    )
+    # Only the target payload is modified, and its canonical component is
+    # verified immediately against the new Branch and Saved Revision.
+    installed = install_saved_revision_season_closure(
+        target_payload,
+        package=package,
+        marker=marker,
+    )
+    if load_saved_revision_season_closure(
+        target_payload,
+        run_id=run_id,
+        branch_id=target_branch_id,
+        revision_id=target_revision_id,
+    ) != installed:
+        raise ValueError("Cross-Branch Season Closure could not be verified")
+    return installed

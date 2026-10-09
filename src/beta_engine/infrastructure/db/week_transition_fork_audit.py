@@ -51,8 +51,8 @@ def remap_event_free_week_transition_audit(
     Every changed identifier/fingerprint must have an explicitly supplied
     validated target counterpart. No source receipt bytes or embedded references
     are copied blindly, and every source Event must match its original command
-    and result exactly. At most one completed standard tournament is supported
-    across the entire transition history. The caller must prove both owned
+    and result exactly. At most two completed standard tournaments in distinct completed weeks
+    are supported across the transition history. The caller must prove both owned
     tournament sources and provide the exact target-local binding.
     """
     if (
@@ -80,11 +80,12 @@ def remap_event_free_week_transition_audit(
     seen: set[str] = set()
     ordinals: set[int] = set()
     bindings = tournament_bindings if tournament_bindings is not None else {}
-    if not isinstance(bindings, Mapping) or len(bindings) > 1:
+    if not isinstance(bindings, Mapping) or len(bindings) > 2:
         raise WeekTransitionForkAuditUnsupportedError(
-            "Only one verified tournament binding is supported"
+            "At most two verified tournament bindings are supported"
         )
     used_tournaments: set[str] = set()
+    tournament_weeks: set[int] = set()
     for row in state["receipts"]:
         try:
             if not isinstance(row, dict):
@@ -144,6 +145,11 @@ def remap_event_free_week_transition_audit(
                     or target_binding.first_publication_week != original.target_week
                 ):
                     raise ValueError("tournament binding has no matching target ownership")
+                if original.completed_week.ordinal in tournament_weeks:
+                    raise ValueError(
+                        "Completed tournaments must belong to distinct weeks"
+                    )
+                tournament_weeks.add(original.completed_week.ordinal)
                 used_tournaments.add(edition_id)
                 target_tournaments = (target_binding,)
             if original.command_id in seen:

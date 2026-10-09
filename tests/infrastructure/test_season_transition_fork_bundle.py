@@ -443,13 +443,27 @@ def test_sqlite_failure_rolls_back_all_target_rankings_events_and_archives(tmp_p
             session.execute(text("BEGIN IMMEDIATE"))
             _install_target(session, source, target, event, maps)
             raise RuntimeError("fail after event installation")
+    from sqlalchemy import select
+    from beta_engine.infrastructure.db.models import (
+        OfficialRankingCandidateModel, OfficialRankingCommandModel,
+        RankingTransitionAuthorityModel, PublishedOfficialRankingModel,
+        AuthoritativeWorldStateModel, AuthoritativeWorldEventModel,
+        AuthoritativeWeekTransitionReceiptModel, SeasonClosingRankingModel,
+    )
+    # A fork with no local ranking is deliberately not readable through the
+    # normal fork-aware history accessor. Inspect the persisted tables instead:
+    # every target-side insertion must have rolled back, including archives.
     with factory.begin() as session:
         session.execute(text("BEGIN IMMEDIATE"))
-        recovered = capture_ranking_revision_state(
-            session, run_id="run", branch_id="target",
-            allow_empty_fork_target=True,
-        )
-        assert not recovered.entries
-        assert not recovered.season_closing_rankings
-        assert recovered.authoritative_transition_state is None
+        for model in (
+            OfficialRankingCandidateModel, OfficialRankingCommandModel,
+            RankingTransitionAuthorityModel, PublishedOfficialRankingModel,
+            AuthoritativeWorldStateModel, AuthoritativeWorldEventModel,
+            AuthoritativeWeekTransitionReceiptModel, SeasonClosingRankingModel,
+        ):
+            assert session.scalars(
+                select(model).where(
+                    model.run_id == "run", model.branch_id == "target"
+                )
+            ).all() == []
     engine.dispose()

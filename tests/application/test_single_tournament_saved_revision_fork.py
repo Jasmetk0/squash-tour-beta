@@ -8,7 +8,7 @@ It deliberately stops after Week 1 so Fast CI never runs all 61 weeks.
 from __future__ import annotations
 
 import pytest
-from sqlalchemy import select
+from sqlalchemy import func, select
 
 import beta_engine.infrastructure.db.repositories as repository_module
 from beta_engine.infrastructure.db.models import RunBranchModel
@@ -646,6 +646,17 @@ def test_single_completed_run_owned_tournament_fork_reopen_and_continue(
         # Force failure during the real SQLite installer. Every staged ranking,
         # player, Branch and audit row must roll back together.
         fork_url = f"{reopened.base_url}/run-containers/{run_id}/branches"
+        with repository._session_factory.begin() as session:
+            rollback_counts_before = tuple(
+                session.scalar(
+                    select(func.count()).select_from(model).where(model.run_id == run_id)
+                )
+                for model in (
+                    RunBranchModel,
+                    AuthoritativeWeekTransitionReceiptModel,
+                    AuthoritativeWorldEventModel,
+                )
+            )
         original_install = repository_module.install_remapped_week_transition_audit
 
         def reject_install(*args, **kwargs):
@@ -680,6 +691,17 @@ def test_single_completed_run_owned_tournament_fork_reopen_and_continue(
             assert capture_ranking_revision_state(
                 session, run_id=run_id, branch_id=branch_id
             ).fingerprint == original_ranking.fingerprint
+            rollback_counts_after = tuple(
+                session.scalar(
+                    select(func.count()).select_from(model).where(model.run_id == run_id)
+                )
+                for model in (
+                    RunBranchModel,
+                    AuthoritativeWeekTransitionReceiptModel,
+                    AuthoritativeWorldEventModel,
+                )
+            )
+            assert rollback_counts_after == rollback_counts_before
 
         status, fork = _request(
             "POST",

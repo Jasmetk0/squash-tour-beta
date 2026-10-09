@@ -4,10 +4,11 @@
 
 A materialized Branch created from a Saved Revision after Week Transition may
 inherit **at most two** completed, standard, canonical Run-owned tournaments
-across its confirmed historical Week Transitions, one per distinct completed
-week. Same-week multi-event transitions remain unsupported. No Season
-Transition, ranking correction, disciplinary-zero version, unsupported
-tournament format or third completed tournament is implicitly enabled.
+across its confirmed historical Week Transitions. Both different-week and
+**two same-week events in one Week Transition** are covered, provided the
+independently validated player/entry, draw, Slot, result, award and ranking
+history is complete. No Season Transition, ranking correction, disciplinary-zero
+version, unsupported tournament format or third completed tournament is enabled.
 
 Ranking's existing remapper must independently reconstruct the target-Branch
 tournament result and point/prize authority, its ranking result-version chain,
@@ -51,7 +52,12 @@ running a 61-week or 50-season campaign:
 6. In the two-tournament variant, finish the Run-owned Week-2 tournament
    with a second audited Admin entry validation, canonical Draw, actual
    match/Slot engine, Official Ranking publication, Week Transition and Save.
-7. Verify both independent canonical tournament/result/point authorities
+7. In the parallel Week-1 variant, adopt both Calendar events into the Run,
+   generate eight players, review two disjoint four-player entrant fields
+   (so Week Tournament Lock requires no selection), create both Run-owned
+   canonical draws, execute both real tournament match schedules and close
+   them in **one** Week Transition before Save/reopen/fork.
+8. Verify both independent canonical tournament/result/point authorities
    survive the target fork with identical sporting outcomes but distinct
    Branch-owned fingerprints, then complete the next event-free week on
    the fork and Save. Confirm the original ranking and position do not move.
@@ -75,10 +81,22 @@ strengthened evidence assertions and documentation require their own final-head
 green checks. This proves only the bounded four-player, two-tournament case,
 not universal tournaments, full pre-alpha or a 50-season checkpoint.
 
+**Same-week checkpoint (9 Oct 2026):** The real HTTP/SQLite
+two-simultaneous-tournament acceptance completed successfully in Fast CI
+`37899367675` (the run had 42 passing tests and one failing schema-invalid
+adversarial *test input*, which is corrected in a follow-up commit).
+The production two-event fork path has therefore been exercised, but this
+is **not** final-head merge evidence: the final commit must pass every
+PR-required check. This narrow result does not establish 50-season support,
+overlapping entrant arbitration, hybrid tournaments or general multi-tournament
+capacity.
+
 ## Explicitly unsupported
 
-- More than two tournaments in confirmed history or more than one completed
-  tournament within the same Week Transition.
+- More than two tournaments in confirmed history or more than two within
+  the same Week Transition. Players with overlapping tournament entries still
+  require separate Week Tournament Lock resolution; this acceptance uses
+  disjoint four-player fields rather than overriding that policy.
 - Tournament corrections and disciplinary zeros in confirmed history.
 - Season Transition, Season Closing and final season rollover.
 - Tournament-group/hybrid ranking remaps lacking dedicated nested provenance.

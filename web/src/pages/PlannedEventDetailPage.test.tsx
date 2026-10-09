@@ -18,6 +18,7 @@ const api = vi.hoisted(() => ({
   listEvents: vi.fn(),
   getRunOwnedCalendar: vi.fn(),
   getRunPackageState: vi.fn(),
+  getBranchWorkingDraft: vi.fn(),
   getCanonicalWildCardState: vi.fn(),
   previewCanonicalWildCardAssignment: vi.fn(),
   commitCanonicalWildCardAssignment: vi.fn(),
@@ -495,6 +496,10 @@ describe('PlannedEventDetailPage', () => {
     })
     api.getRun.mockRejectedValue(new api.ApiError('Legacy Run not found', 404))
     api.listEvents.mockRejectedValue(new api.ApiError('Legacy event history not found', 404))
+    api.getBranchWorkingDraft.mockResolvedValue({
+      run_id: 'run-a', branch_id: 'branch-a', base_saved_revision_id: 'rev-1',
+      status: 'clean', draft_version: 0
+    })
     api.getRunPackageState.mockResolvedValue({
       state: { run_id: 'run-a', branch_id: 'branch-a' }, fingerprint: 'a'.repeat(64)
     })
@@ -522,6 +527,10 @@ describe('PlannedEventDetailPage', () => {
       query: { isLoading: false }, time: { runId: 'run-a', branchId: 'branch-a' }
     })
     api.getRun.mockRejectedValue(new api.ApiError('Legacy Run not found', 404))
+    api.getBranchWorkingDraft.mockResolvedValue({
+      run_id: 'run-a', branch_id: 'branch-a', base_saved_revision_id: 'rev-1',
+      status: 'clean', draft_version: 0
+    })
     api.getRunPackageState.mockResolvedValue({
       state: { run_id: 'run-a', branch_id: 'branch-a' }, fingerprint: 'a'.repeat(64)
     })

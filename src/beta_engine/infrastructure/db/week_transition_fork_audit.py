@@ -1,15 +1,15 @@
-"""Pure, fail-closed audit remapping for event-free Week Transition fork research.
+"""Pure, fail-closed audit remapping for supported Week Transition forks.
 
-This adapter does not install a Branch. The caller must first materialize and
-validate target-local Saved Revisions, ranking authorities, lifecycle, sporting
-and health history. Until that atomic integration exists, the production fork
-continues to reject authoritative transition receipts/events.
+The caller must supply independently verified Branch-owned ranking, tournament,
+player and Saved Revision identities. Installation is performed separately, inside
+one SQLite transaction, and must recapture the full target ranking state.
 """
 
 from __future__ import annotations
 
 from collections.abc import Mapping
 
+from beta_engine.application.ranking_tournament_ingestion import TournamentRankingBinding
 from beta_engine.application.authoritative_week_transition import (
     AuthoritativeWeekTransitionCommand,
     AuthoritativeWeekTransitionResult,
@@ -44,17 +44,16 @@ def remap_event_free_week_transition_audit(
     lifecycle_states: Mapping[str, str],
     sporting_states: Mapping[str, str],
     health_states: Mapping[str, str],
+    tournament_bindings: Mapping[str, TournamentRankingBinding] | None = None,
 ) -> dict[str, list[dict]]:
     """Reconstruct receipts and World Events from fully verified source commands.
 
     Every changed identifier/fingerprint must have an explicitly supplied
     validated target counterpart. No source receipt bytes or embedded references
     are copied blindly, and every source Event must match its original command
-    and result exactly. Tournament-bearing transitions are intentionally outside
-    this first adapter.
-
-    This is a preparation building block, NOT permission to enable the actual
-    post-transition Branch fork. The production guard remains in place.
+    and result exactly. At most one completed standard tournament is supported
+    across the entire transition history. The caller must prove both owned
+    tournament sources and provide the exact target-local binding.
     """
     if (
         not run_id or not source_branch_id or not target_branch_id
@@ -80,6 +79,12 @@ def remap_event_free_week_transition_audit(
     events = []
     seen: set[str] = set()
     ordinals: set[int] = set()
+    bindings = tournament_bindings if tournament_bindings is not None else {}
+    if not isinstance(bindings, Mapping) or len(bindings) > 1:
+        raise WeekTransitionForkAuditUnsupportedError(
+            "Only one verified tournament binding is supported"
+        )
+    used_tournaments: set[str] = set()
     for row in state["receipts"]:
         try:
             if not isinstance(row, dict):
@@ -107,8 +112,40 @@ def remap_event_free_week_transition_audit(
                 or result.world_event_kind != "week_transition_completed"
             ):
                 raise ValueError("source Week Transition receipt identity mismatch")
-            if original.tournaments or original.corrections or original.zero_versions:
-                raise ValueError("only event-free Week Transitions can be remapped")
+            if original.corrections or original.zero_versions:
+                raise ValueError("corrections and disciplinary zeros are not supported")
+            target_tournaments = ()
+            if original.tournaments:
+                if len(original.tournaments) != 1:
+                    raise ValueError("multiple tournaments in one Week Transition are unsupported")
+                source_binding = original.tournaments[0]
+                edition_id = source_binding.edition_id
+                target_binding = bindings.get(edition_id)
+                if (
+                    edition_id in used_tournaments
+                    or not isinstance(target_binding, TournamentRankingBinding)
+                    or source_binding.run_id != run_id
+                    or source_binding.branch_id != source_branch_id
+                    or target_binding.run_id != run_id
+                    or target_binding.branch_id != target_branch_id
+                    or source_binding.completed_week != original.completed_week
+                    or target_binding.completed_week != original.completed_week
+                    or source_binding.closing_only
+                    or target_binding.closing_only
+                    or (
+                        source_binding.edition_id, source_binding.event_id,
+                        source_binding.validity_weeks, source_binding.ranking_status,
+                        source_binding.first_publication_week,
+                    ) != (
+                        target_binding.edition_id, target_binding.event_id,
+                        target_binding.validity_weeks, target_binding.ranking_status,
+                        target_binding.first_publication_week,
+                    )
+                    or target_binding.first_publication_week != original.target_week
+                ):
+                    raise ValueError("tournament binding has no matching target ownership")
+                used_tournaments.add(edition_id)
+                target_tournaments = (target_binding,)
             if original.command_id in seen:
                 raise ValueError("duplicate transition command")
             seen.add(original.command_id)
@@ -145,6 +182,7 @@ def remap_event_free_week_transition_audit(
                             ranking_authorities, original.authority_fingerprint,
                             "ranking authority",
                         ),
+                        "tournaments": target_tournaments,
                     }
                 ).model_dump_json()
             )
@@ -204,6 +242,10 @@ def remap_event_free_week_transition_audit(
             ),
         })
 
+    if set(bindings) != used_tournaments:
+        raise WeekTransitionForkAuditUnsupportedError(
+            "Tournament source/Week Transition coverage is incomplete"
+        )
     if set(event_by_id) != seen:
         raise WeekTransitionForkAuditUnsupportedError(
             "Source World Event/receipt identities do not match"

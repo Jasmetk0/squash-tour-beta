@@ -11,6 +11,7 @@ import { renderWithRoute } from '../test/testUtils'
 
 const api = vi.hoisted(() => ({
   getRunPackageState: vi.fn(), getRunOwnedCalendar: vi.fn(),
+  getBranchWorkingDraft: vi.fn(),
   getCanonicalTournamentPreparation: vi.fn()
 }))
 vi.mock('../api/client', () => api)
@@ -57,6 +58,7 @@ beforeEach(() => {
     ]},fingerprint:sha('a')
   })
   api.getRunOwnedCalendar.mockResolvedValue(calendar)
+  api.getBranchWorkingDraft.mockResolvedValue({run_id:'prod-run',branch_id:'timeline-a',base_saved_revision_id:'rev-1',status:'clean',draft_version:0})
   api.getCanonicalTournamentPreparation.mockImplementation(async (_r:string,_b:string,eventId:string) => ({
     schema_version:'canonical_tournament_preparation_state.v1',
     run_id:'prod-run',branch_id:'timeline-a',event_id:eventId,
@@ -96,6 +98,17 @@ describe('First canonical tournament from Run-owned Calendar', () => {
     show(run,{...branch,read_only:true})
     expect(screen.getByText(/writable Active Admin Branch/)).toBeInTheDocument()
     expect(api.getRunPackageState).not.toHaveBeenCalled()
+  })
+
+  it('blocks tournament handoff if Package changes are not saved in the Branch', async () => {
+    api.getBranchWorkingDraft.mockResolvedValueOnce({
+      run_id:'prod-run',branch_id:'timeline-a',base_saved_revision_id:'rev-1',
+      status:'dirty',draft_version:1
+    })
+    show()
+    expect(await screen.findByText(/Save the current Working Draft before preparing/)).toBeInTheDocument()
+    expect(api.getRunOwnedCalendar).not.toHaveBeenCalled()
+    expect(api.getCanonicalTournamentPreparation).not.toHaveBeenCalled()
   })
 
   it('fails closed for foreign and duplicated Calendar events', () => {

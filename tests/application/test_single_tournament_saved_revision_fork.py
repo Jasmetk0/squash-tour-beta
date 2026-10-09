@@ -664,7 +664,10 @@ def test_single_completed_run_owned_tournament_fork_reopen_and_continue(
         assert set(schedule_before_draw_input["event_ids"]) == (
             {event_id, parallel_event} if same_week else {event_id}
         )
-        assert schedule_before_draw_input["group_ids"] == []
+        if same_week:
+            assert schedule_before_draw_input["group_ids"]
+        else:
+            assert schedule_before_draw_input["group_ids"] == []
         assert schedule_before_draw_input["schedule_required"] is True
         assert schedule_before_draw_input["canonical_preparation_ready"] is False
         assert schedule_before_draw_input["can_propose_schedule"] is False

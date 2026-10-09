@@ -632,7 +632,7 @@ def test_single_completed_run_owned_tournament_fork_reopen_and_continue(
             "season_index": 0, "week": 2
         }
         repository = reopened.app.state.runtime.repository
-        with repository._session_factory() as session:
+        with repository._session_factory.begin() as session:
             original_ranking = capture_ranking_revision_state(
                 session, run_id=run_id, branch_id=branch_id
             )
@@ -670,7 +670,7 @@ def test_single_completed_run_owned_tournament_fork_reopen_and_continue(
                 repository_module, "install_remapped_week_transition_audit",
                 original_install,
             )
-        with repository._session_factory() as session:
+        with repository._session_factory.begin() as session:
             assert session.scalars(
                 select(RunBranchModel).where(
                     RunBranchModel.run_id == run_id,
@@ -695,7 +695,7 @@ def test_single_completed_run_owned_tournament_fork_reopen_and_continue(
         assert target_branch_id != branch_id
         assert fork["saved_head_revision_id"] != revision
 
-        with repository._session_factory() as session:
+        with repository._session_factory.begin() as session:
             target_ranking = capture_ranking_revision_state(
                 session, run_id=run_id, branch_id=target_branch_id
             )
@@ -739,7 +739,7 @@ def test_single_completed_run_owned_tournament_fork_reopen_and_continue(
         ] == {"season_index": 0, "week": 3}
         assert _request("GET", source_sim_root + "/position")[1] == source_position
 
-        with repository._session_factory() as session:
+        with repository._session_factory.begin() as session:
             assert capture_ranking_revision_state(
                 session, run_id=run_id, branch_id=branch_id
             ).fingerprint == original_ranking.fingerprint

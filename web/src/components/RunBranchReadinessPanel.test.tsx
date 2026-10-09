@@ -97,8 +97,7 @@ const gate = (branchId: string) => ({
   branch_id: branchId,
   current_week: { season_index: 1, week: 2 },
   current_position_fingerprint: 'a'.repeat(64),
-  current_blocker_code: 'application_validation_policy_unresolved',
-  policy_status: 'unresolved'
+  current_blocker_code: 'application_validation_policy_unresolved'
 })
 function render(branches: RunBranch[] = [baseBranch, alternative], activeRun = run) {
   return renderWithRoute(

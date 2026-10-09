@@ -299,16 +299,45 @@ def test_initial_entry_field_can_be_created_from_persisted_valid_submissions_htt
         assert preparation["valid_main_submission_count"] == 3
         assert preparation["valid_qualification_submission_count"] == 4
 
+        capacity = {
+            "main_draw_size": 4,
+            "qualification_draw_size": 2,
+            "qualifier_spots": 1,
+        }
+        status, preview = _request(
+            "POST", root + "/from-valid-submissions/preview",
+            {"capacity": capacity},
+        )
+        assert status == 200, preview
+        assert preview["preview_only"] is True
+        assert preview["run_id"] == run_id and preview["branch_id"] == branch_id
+        assert preview["event_id"] == event_id
+        assert preview["field"]["direct_main_player_ids"] == ["A", "C", "D"]
+        assert preview["field"]["qualification_player_ids"] == ["B", "E"]
+        assert preview["field"]["below_qualification_cut_player_ids"] == ["F", "G"]
+        assert preview["field_fingerprint"] == TournamentEntryField.model_validate(
+            preview["field"]
+        ).fingerprint
+        # Dry-run means no field was added to real SQLite.
+        assert _request("GET", root)[0] == 404
+        status, stale = _request(
+            "POST", root + "/from-valid-submissions/reviewed",
+            {
+                "command_id": "stale-reviewed-field",
+                "capacity": {**capacity, "qualifier_spots": 0},
+                "expected_field_fingerprint": preview["field_fingerprint"],
+            },
+        )
+        assert status == 409, stale
+        assert _request("GET", root)[0] == 404
+
         status, field = _request(
             "POST",
-            root + "/from-valid-submissions",
+            root + "/from-valid-submissions/reviewed",
             {
-                "command_id": "initial-from-valid-submissions",
-                "capacity": {
-                    "main_draw_size": 4,
-                    "qualification_draw_size": 2,
-                    "qualifier_spots": 1,
-                },
+                "command_id": "initial-from-reviewed-valid-submissions",
+                "capacity": capacity,
+                "expected_field_fingerprint": preview["field_fingerprint"],
             },
         )
         assert status == 201
@@ -320,6 +349,14 @@ def test_initial_entry_field_can_be_created_from_persisted_valid_submissions_htt
         assert status == 200
         returned_field = TournamentEntryField.model_validate_json(json.dumps(field))
         assert inspected["field_fingerprint"] == returned_field.fingerprint
+        assert inspected["field_fingerprint"] == preview["field_fingerprint"]
+        assert inspected["field_sequence"] == 1
+        # A second reviewed proposal never silently overwrites an existing field.
+        status, conflict = _request(
+            "POST", root + "/from-valid-submissions/preview",
+            {"capacity": capacity},
+        )
+        assert status == 409, conflict
 
 
 def test_canonical_entry_field_state_withdrawal_and_retry_over_http(tmp_path):

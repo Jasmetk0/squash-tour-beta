@@ -160,7 +160,10 @@ export function RunFirstMatchPanel({ runId, branchId, eventId }: {
 
   useEffect(() => {
     setReview(null);setApproved(false);setResult(null);setNotice('')
-  }, [runId,branchId,eventId,head,position?.position_fingerprint,groupId])
+  }, [runId,branchId,eventId])
+  useEffect(() => {
+    setReview(null);setApproved(false)
+  }, [head,position?.position_fingerprint,groupId])
 
   const simulate = useMutation({
     mutationFn: async (request: ReviewedFirstMatchEvidence) => {

@@ -406,7 +406,7 @@ def test_single_completed_run_owned_tournament_fork_reopen_and_continue(
             "world_package_id": OFFICIAL_FAX_WORLD_ID,
             "season": "2000/2001",
             "seed": 200001,
-            "target_pool_size": len(participant_ids),
+            "target_pool_size": len(participant_ids) * (2 if same_week else 1),
         }
         adoption = {
             "command_id": "official-full-season-adopt-world",
@@ -435,7 +435,13 @@ def test_single_completed_run_owned_tournament_fork_reopen_and_continue(
         generated_ids = tuple(
             sorted(player["player_id"] for player in world_preview["state"]["players"])
         )
-        assert len(generated_ids) == len(participant_ids)
+        assert len(generated_ids) == len(participant_ids) * (
+            2 if same_week else 1
+        )
+        primary_players = (
+            generated_ids[:len(participant_ids)] if same_week else generated_ids
+        )
+        parallel_players = generated_ids[len(participant_ids):] if same_week else ()
 
         status, adopted = _post_headers(
             world_root + "/world-package",
@@ -546,12 +552,12 @@ def test_single_completed_run_owned_tournament_fork_reopen_and_continue(
                 "player_id": player_id,
                 "target": "MAIN",
             }
-            for player_id in sorted(generated_ids)
+            for player_id in sorted(primary_players)
         ]
         if same_week:
             explicit_entry_reviews.extend(
                 {"event_id": parallel_event, "player_id": player_id, "target": "MAIN"}
-                for player_id in sorted(generated_ids)
+                for player_id in sorted(parallel_players)
             )
             explicit_entry_reviews.sort(
                 key=lambda review: (
@@ -634,17 +640,17 @@ def test_single_completed_run_owned_tournament_fork_reopen_and_continue(
             },
         )
         assert status == 201, entry_field
-        assert set(entry_field["direct_main_player_ids"]) == set(generated_ids)
+        assert set(entry_field["direct_main_player_ids"]) == set(primary_players)
         status, entry_field_state = _request("GET", entry_field_root)
         assert status == 200, entry_field_state
-        assert set(entry_field_state["direct_main_player_ids"]) == set(generated_ids)
+        assert set(entry_field_state["direct_main_player_ids"]) == set(primary_players)
         if same_week:
             _prepare_parallel_canonical_draw(
                 base_url=server.base_url,
                 run_id=run_id,
                 branch_id=branch_id,
                 event_id=parallel_event,
-                players=generated_ids,
+                players=parallel_players,
             )
 
         # Week Schedule readiness must already see the Run-owned Calendar event before
@@ -739,7 +745,7 @@ def test_single_completed_run_owned_tournament_fork_reopen_and_continue(
             slot["player_id"]
             for slot in draw_authority["main"]["slots"]
             if slot["entrant_kind"] == "player"
-        } == set(generated_ids)
+        } == set(primary_players)
 
         preparation_root = tournament_root + "/preparation"
         status, preparation_ready = _request("GET", preparation_root)

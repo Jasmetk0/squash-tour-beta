@@ -41,6 +41,7 @@ const preparation = {
   preparation_fingerprint:sha('b'),
   blockers:[],entry_field_ready:true,entry_field_fingerprint:sha('a'),
   ranking_snapshot_ready:true,wild_card_required:false,wild_card_ready:true,
+  entry_source_kind:'ranking_applications' as const,
   ready_for_match_schedule:false,effective_draw_fingerprint:null
 }
 const initialState = {
@@ -193,7 +194,7 @@ describe('First true Run-owned immutable tournament bracket', () => {
     })
     show()
     expect(await screen.findByText(/Requires an active writable Run/)).toBeInTheDocument()
-    expect(screen.getByRole('button',{name:'Review first Draw Input'})).toBeDisabled()
+    expect(await screen.findByRole('button',{name:'Review first Draw Input'})).toBeDisabled()
   })
 
   it('refuses stale preparation on confirmation before any authoritative write', async () => {

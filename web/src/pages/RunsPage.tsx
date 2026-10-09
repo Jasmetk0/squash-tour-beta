@@ -148,7 +148,7 @@ export function RunsPage(): JSX.Element {
         </ul>}
       </SectionCard>
 
-      <SectionCard title="Filters">
+      <SectionCard title="Legacy simulation filters">
         <div className="grid">
           <label>
             Filter by run ID
@@ -177,8 +177,8 @@ export function RunsPage(): JSX.Element {
       {runsQuery.isError ? <p className="error">Runs list unavailable: {formatApiError(runsQuery.error)}</p> : null}
       {!runsQuery.isLoading && !runsQuery.isError && runsQuery.data?.runs.length === 0 ? (
         <section className="panel nested-panel" aria-labelledby="runs-empty-heading">
-          <h3 id="runs-empty-heading">No runs exist yet.</h3>
-          <EmptyState message="Create your first 2000/01 root run to start the MSA timeline." />
+          <h3 id="runs-empty-heading">No legacy simulation runs exist yet.</h3>
+          <EmptyState message="Product Runs above can exist without a legacy Simulation Run. Create or reopen a saved Product Run to start configuring it." />
           <Link className="button-link" to="/admin/runs/new">
             Create new run
           </Link>
@@ -192,7 +192,7 @@ export function RunsPage(): JSX.Element {
       {!runsQuery.isLoading && !runsQuery.isError && filteredRuns.length > 0 ? (
         <div className="grid">
           <SectionCard title="Legacy simulation runs">
-            <p className="status">{filteredRuns.length} matching run(s), preserving API order.</p>
+            <p className="status">{filteredRuns.length} legacy simulation run(s), preserving API order.</p>
             <ul className="item-list" aria-label="Matching runs">
               {filteredRuns.map((run) => {
                 const isSelected = selectedRun?.run_id === run.run_id

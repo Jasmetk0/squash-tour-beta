@@ -519,8 +519,12 @@ def test_two_same_week_tournaments_reject_incomplete_or_forged_provenance(corrup
                 "event_id": "third-independent-event",
             }))
         elif corruption == "second_completion_week":
+            # Keep the forged binding schema-valid: publish in Week 3 after
+            # its alleged Week-2 completion. Only the source Week-1 receipt
+            # can prove this tournament is not actually part of Week 1.
             tournaments[1] = tournaments[1].model_copy(update={
-                "completed_week": RankingWeek(season_index=0, week=2)
+                "completed_week": RankingWeek(season_index=0, week=2),
+                "first_publication_week": RankingWeek(season_index=0, week=3),
             })
         replaced = AuthoritativeWeekTransitionCommand.model_validate_json(
             original.model_copy(update={

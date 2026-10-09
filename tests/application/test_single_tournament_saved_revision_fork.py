@@ -819,10 +819,23 @@ def test_single_completed_run_owned_tournament_fork_reopen_and_continue(
                 session, run_id=run_id, branch_id=branch_id
             )
             assert len(original_ranking.tournament_sources) == count_tournaments
+            original_tournaments = {
+                source.binding.edition_id: source
+                for source in original_ranking.tournament_sources
+            }
+            assert len(original_tournaments) == count_tournaments
+            assert len({
+                source.binding.completed_week.ordinal
+                for source in original_tournaments.values()
+            }) == count_tournaments
+            assert all(
+                source.canonical_result is not None
+                and source.canonical_awards is not None
+                and source.canonical_result.matches
+                and source.canonical_result.champion_player_id
+                for source in original_tournaments.values()
+            )
             original_tournament = original_ranking.tournament_sources[0]
-            assert original_tournament.canonical_result is not None
-            assert original_tournament.canonical_awards is not None
-            assert original_tournament.canonical_result.matches
             assert len(original_ranking.authoritative_transition_state["receipts"]) == count_tournaments
 
         # Force failure during the real SQLite installer. Every staged ranking,
@@ -907,11 +920,32 @@ def test_single_completed_run_owned_tournament_fork_reopen_and_continue(
                 session, run_id=run_id, branch_id=target_branch_id
             )
             assert len(target_ranking.tournament_sources) == count_tournaments
-            assert target_ranking.tournament_sources[0].binding.branch_id == target_branch_id
-            assert (
-                target_ranking.tournament_sources[0].canonical_result.champion_player_id
-                == original_tournament.canonical_result.champion_player_id
-            )
+            target_tournaments = {
+                source.binding.edition_id: source
+                for source in target_ranking.tournament_sources
+            }
+            assert set(target_tournaments) == set(original_tournaments)
+            for edition_id, source in original_tournaments.items():
+                target_source = target_tournaments[edition_id]
+                assert target_source.binding.branch_id == target_branch_id
+                assert target_source.canonical_result.branch_id == target_branch_id
+                assert target_source.canonical_awards.branch_id == target_branch_id
+                assert (
+                    target_source.canonical_result.champion_player_id
+                    == source.canonical_result.champion_player_id
+                )
+                assert (
+                    target_source.canonical_result.matches
+                    == source.canonical_result.matches
+                )
+                assert (
+                    target_source.binding.expected_result_fingerprint
+                    != source.binding.expected_result_fingerprint
+                )
+                assert (
+                    target_source.binding.expected_award_fingerprint
+                    != source.binding.expected_award_fingerprint
+                )
             assert target_ranking.entries[-1].snapshot.rows != ()
             assert (
                 target_ranking.entries[-1].snapshot.fingerprint

@@ -199,7 +199,7 @@ export function RunPackageSetupPanel({ run, branch }: {
     {kind === 'world' && worldQuery.isError && <p role="alert" className="error">World sources unavailable: {formatApiError(worldQuery.error)}</p>}
     {(draftQuery.isError || packageQuery.isError) &&
       <p role="alert" className="error">Package state or Working Draft unavailable: {formatApiError(draftQuery.error ?? packageQuery.error)}</p>}
-    <p className="status">Current Run copy: {currentState?.state?.package_versions.length ?? 0} recorded package versions. Draft: {currentDraft?.status ?? 'Not verified'}.</p>
+    <p className="status">Current Run copy: {currentState?.state ? 'Present' : 'Empty'}. Draft: {currentDraft?.status ?? 'Not verified'}.</p>
     <button type="button" disabled={!editable || !validSource || !currentDraft || !currentState ||
       previewAction.isPending || confirmAction.isPending || saveAction.isPending || Boolean(pendingSave)}
       onClick={() => {

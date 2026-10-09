@@ -1381,6 +1381,57 @@ export async function getAuthoritativeSimulationPosition(
   return data
 }
 
+/** Production current Entry adapter: Run-owned roster + Calendar + shared Slot. */
+export async function previewRunCurrentEntryDecisions(
+  runId: string, branchId: string
+): Promise<import('./runCurrentEntryFreeze').CurrentEntryDecisionPreview> {
+  const data = await request<import('./runCurrentEntryFreeze').CurrentEntryDecisionPreview>(
+    authoritativeSimulationRoot(runId, branchId) + '/pre-alpha/fax-current-entry/preview'
+  )
+  if (data.schema_version !== 'pre_alpha_fax_current_entry_decision_preview.v1' ||
+    data.run_id !== runId || data.branch_id !== branchId ||
+    !/^[0-9a-f]{64}$/.test(data.preview_fingerprint) ||
+    !/^[0-9a-f]{64}$/.test(data.slot_fingerprint)) {
+    throw new Error('Current Entry preview is not scoped to the selected Run/Branch.')
+  }
+  return data
+}
+
+export async function applyRunCurrentEntryDecisions(
+  runId: string, branchId: string,
+  preview: import('./runCurrentEntryFreeze').CurrentEntryDecisionPreview,
+  commandId: string
+): Promise<import('./runCurrentEntryFreeze').CurrentEntryDecisionApplyResult> {
+  if (preview.run_id !== runId || preview.branch_id !== branchId ||
+    !/^[0-9a-f]{64}$/.test(preview.preview_fingerprint) ||
+    !commandId || commandId.length > 128) {
+    throw new Error('Current Entry apply requires exact scoped reviewed preview.')
+  }
+  const data = await request<import('./runCurrentEntryFreeze').CurrentEntryDecisionApplyResult>(
+    authoritativeSimulationRoot(runId, branchId) + '/pre-alpha/fax-current-entry/apply',
+    { method: 'POST', body: JSON.stringify({
+      command_id: commandId,
+      expected_preview_fingerprint: preview.preview_fingerprint
+    }) }
+  )
+  if (!(data.schema_version === 'pre_alpha_fax_current_entry_decision_apply.v1' &&
+    data.run_id === runId && data.branch_id === branchId &&
+    data.slot_fingerprint === preview.slot_fingerprint &&
+    data.decision_slot_ordinal === preview.decision_slot_ordinal &&
+    data.current_week.season_index === preview.current_week.season_index &&
+    data.current_week.week === preview.current_week.week &&
+    data.decision_count === preview.decision_count &&
+    data.event_ids.length === preview.event_ids.length &&
+    data.event_ids.every((id, index) => id === preview.event_ids[index]) &&
+    data.validation_required === true &&
+    data.validation_policy_status === 'automatic_policy_unresolved' &&
+    (data.adoption === 'committed' || data.adoption === 'exact_retry') &&
+    /^[0-9a-f]{64}$/.test(data.application_fingerprint))) {
+    throw new Error('Current Entry apply result differs from the reviewed frozen Slot.')
+  }
+  return data
+}
+
 export async function inspectAuthoritativeEntryDecisionSlot(
   runId: string,
   branchId: string,

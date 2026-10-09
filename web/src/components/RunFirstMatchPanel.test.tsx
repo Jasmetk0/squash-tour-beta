@@ -9,6 +9,7 @@ import {
 import { renderWithRoute } from '../test/testUtils'
 
 const api=vi.hoisted(()=>({
+  ApiError:class ApiError extends Error { constructor(message:string, public status=409) { super(message) } },
   getRunContainer:vi.fn(),listRunBranches:vi.fn(),getBranchWorkingDraft:vi.fn(),
   getCanonicalTournamentPreparation:vi.fn(),
   getCanonicalTournamentEntryFieldState:vi.fn(),

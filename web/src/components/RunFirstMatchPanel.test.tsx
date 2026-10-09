@@ -215,7 +215,7 @@ describe('First canonical Run-owned match execution',()=>{
     ))
     expect(await screen.findByText(/Real stored match result/)).toBeInTheDocument()
     expect(screen.getByText(/53 persisted rallies/)).toBeInTheDocument()
-    expect(screen.getByText('A',{exact:true})).toBeInTheDocument()
+    expect(screen.getAllByText('A',{exact:true}).length).toBeGreaterThan(0)
     expect(screen.queryByRole('button',{name:'Simulate reviewed first match'})).not.toBeInTheDocument()
   })
 

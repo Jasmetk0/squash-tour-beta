@@ -46,6 +46,7 @@ import { formatApiError, isApiNotFound } from '../utils/apiErrors'
 import { isRunCalendarProjection } from '../api/runFirstTournament'
 import { RunTournamentEntryReviewPanel } from '../components/RunTournamentEntryReviewPanel'
 import { RunCurrentEntryFreezePanel } from '../components/RunCurrentEntryFreezePanel'
+import { RunReviewedEntryFieldPanel } from '../components/RunReviewedEntryFieldPanel'
 import { getPlannedEventStatus } from './plannedEventUtils'
 import { useAdminViewedSeasonState } from '../admin/useAdminViewedSeasonState'
 import type {
@@ -1209,7 +1210,8 @@ export function PlannedEventDetailPage(): JSX.Element {
                 </div>
               ) : null}
               {canonicalPreparationQuery.data.next_required_action === 'build_entry_field' &&
-              canonicalPreparationQuery.data.entry_source_kind !== 'finals_participant_selection' ? (
+              canonicalPreparationQuery.data.entry_source_kind !== 'finals_participant_selection' &&
+              !canonicalSeasonState ? (
                 <div className="grid">
                   <h4>Build canonical Entry Field</h4>
                   <p className="status">Build only from persisted valid submissions. Capacity remains explicit at commit time.</p>
@@ -1249,6 +1251,12 @@ export function PlannedEventDetailPage(): JSX.Element {
         </SectionCard>
       ) : null}
 
+      {canonicalSeasonState && plannedEvent && !viewed.historical && activeBranchId &&
+        canonicalPreparationQuery.data?.run_id === runId &&
+        canonicalPreparationQuery.data.branch_id === activeBranchId &&
+        canonicalPreparationQuery.data.event_id === eventId &&
+        canonicalPreparationQuery.data.authority_source === 'run_owned_db_authorities.v1' &&
+        <RunReviewedEntryFieldPanel runId={runId} branchId={activeBranchId} eventId={eventId} />}
       {canonicalSeasonState && plannedEvent && !viewed.historical && activeBranchId &&
         canonicalPreparationQuery.data?.run_id === runId &&
         canonicalPreparationQuery.data.branch_id === activeBranchId &&

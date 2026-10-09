@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
-from sqlalchemy import select
+from sqlalchemy import select, func, text
 import json
+
+import beta_engine.infrastructure.db.repositories as repository_module
 import pytest
 
 from beta_engine.api.deps import (
@@ -22,6 +24,14 @@ from beta_engine.infrastructure.db.models import (
     PlayerLifecycleWeekStateModel,
     PlayerSportingWeekStateModel,
     PublishedOfficialRankingModel,
+    AuthoritativeWorldEventModel,
+    RunBranchModel,
+    BranchSavedRevisionModel,
+    SeasonClosingRankingModel,
+)
+from beta_engine.infrastructure.db.ranking_revision_state import capture_ranking_revision_state
+from beta_engine.infrastructure.db.saved_revision_season_closure import (
+    load_saved_revision_season_closure,
 )
 from tests.api.test_initial_world_ranking_integration import _post_headers
 from tests.api.test_saved_revision_history_api import ApiServer, _create_run, _request
@@ -427,7 +437,7 @@ def test_canonical_next_week_finishes_week_one_and_publishes_week_two(
 
 @pytest.mark.pr_critical
 def test_official_run_completes_whole_season_reopens_and_rolls_to_next_season(
-    tmp_path,
+    tmp_path, monkeypatch,
 ):
     server, week_one_package = _server_state(tmp_path)
     _remove_week_two_source_fixture(server)
@@ -1241,3 +1251,146 @@ def test_official_run_completes_whole_season_reopens_and_rolls_to_next_season(
             "player_sporting_fingerprint"
         ]
 
+
+        # The exact same Run now has a real played Week-1 tournament, all
+        # 60 canonical Week Transitions, published Week-61 and a saved Season
+        # Transition into 2001/02. Verify the production HTTP Branch endpoint
+        # can materialize its complete immutable history, not a mock adapter.
+        repository = reopened.app.state.runtime.repository
+        source_revision = rollover["saved_revision_id"]
+        with repository._session_factory.begin() as session:
+            session.execute(text("BEGIN"))
+            source_ranking_before_fork = capture_ranking_revision_state(
+                session, run_id=run_id, branch_id=branch_id,
+            )
+            assert len(source_ranking_before_fork.season_closing_rankings) == 1
+            assert len(source_ranking_before_fork.tournament_sources) == 1
+            assert source_ranking_before_fork.tournament_sources[0].canonical_result.matches
+            assert len(source_ranking_before_fork.authoritative_transition_state["receipts"]) == 60
+            assert len(source_ranking_before_fork.authoritative_transition_state["events"]) == 61
+            source_row = session.get(BranchSavedRevisionModel, source_revision)
+            original_source_payload = source_row.payload_json
+            source_closure = load_saved_revision_season_closure(
+                json.loads(source_row.payload_json),
+                run_id=run_id, branch_id=branch_id,
+                revision_id=source_revision,
+            )
+            assert source_closure is not None
+            counts_before = {
+                model: session.scalar(
+                    select(func.count()).select_from(model).where(model.run_id == run_id)
+                )
+                for model in (
+                    RunBranchModel, AuthoritativeWorldEventModel,
+                    SeasonClosingRankingModel,
+                )
+            }
+
+        fork_url = f"{reopened.base_url}/run-containers/{run_id}/branches"
+        original_installer = repository_module.install_remapped_week_transition_audit
+
+        def refuse_late_season_event(*args, **kwargs):
+            raise ValueError("injected Season Transition audit installation failure")
+
+        monkeypatch.setattr(
+            repository_module, "install_remapped_week_transition_audit",
+            refuse_late_season_event,
+        )
+        try:
+            status, rejected = _request("POST", fork_url, {
+                "source_branch_id": branch_id,
+                "source_saved_revision_id": source_revision,
+                "display_name": "Rejected Season Transition fork",
+            })
+            assert status == 409, rejected
+        finally:
+            monkeypatch.setattr(
+                repository_module, "install_remapped_week_transition_audit",
+                original_installer,
+            )
+        with repository._session_factory.begin() as session:
+            session.execute(text("BEGIN"))
+            assert session.scalars(select(RunBranchModel).where(
+                RunBranchModel.run_id == run_id,
+                RunBranchModel.display_name == "Rejected Season Transition fork",
+            )).all() == []
+            for model, expected in counts_before.items():
+                assert session.scalar(
+                    select(func.count()).select_from(model).where(model.run_id == run_id)
+                ) == expected
+            assert capture_ranking_revision_state(
+                session, run_id=run_id, branch_id=branch_id,
+            ).fingerprint == source_ranking_before_fork.fingerprint
+
+        status, fork = _request("POST", fork_url, {
+            "source_branch_id": branch_id,
+            "source_saved_revision_id": source_revision,
+            "display_name": "After Season Transition",
+        })
+        assert status == 201, fork
+        target_branch_id = fork["branch_id"]
+        assert target_branch_id != branch_id
+        assert fork["saved_head_revision_id"] != source_revision
+        assert _request("GET", sim_root + "/position")[1] == next_season_position
+        target_sim_root = (
+            f"{reopened.base_url}/admin/runs/{run_id}/branches/{target_branch_id}"
+            "/authoritative-simulation"
+        )
+        assert _request("GET", target_sim_root + "/position")[1][
+            "current_week"
+        ] == {"season_index": 1, "week": 1}
+
+        with repository._session_factory.begin() as session:
+            session.execute(text("BEGIN"))
+            source_after = capture_ranking_revision_state(
+                session, run_id=run_id, branch_id=branch_id,
+            )
+            target_after = capture_ranking_revision_state(
+                session, run_id=run_id, branch_id=target_branch_id,
+            )
+            assert source_after.fingerprint == source_ranking_before_fork.fingerprint
+            assert len(target_after.entries) == 62
+            assert len(target_after.tournament_sources) == 1
+            assert len(target_after.season_closing_rankings) == 1
+            assert len(target_after.authoritative_transition_state["receipts"]) == 60
+            assert len(target_after.authoritative_transition_state["events"]) == 61
+            assert target_after.season_closing_rankings[0].fingerprint != (
+                source_after.season_closing_rankings[0].fingerprint
+            )
+            assert target_after.tournament_sources[0].canonical_result.matches == (
+                source_after.tournament_sources[0].canonical_result.matches
+            )
+            assert target_after.tournament_sources[0].fingerprint != (
+                source_after.tournament_sources[0].fingerprint
+            )
+            target_row = session.get(
+                BranchSavedRevisionModel, fork["saved_head_revision_id"]
+            )
+            target_closure = load_saved_revision_season_closure(
+                json.loads(target_row.payload_json),
+                run_id=run_id,
+                branch_id=target_branch_id,
+                revision_id=fork["saved_head_revision_id"],
+            )
+            assert target_closure is not None
+            assert target_closure.parsed_marker.final_saved_revision_id == (
+                fork["saved_head_revision_id"]
+            )
+            assert target_closure.parsed_summary.closing_ranking_fingerprint == (
+                target_after.season_closing_rankings[0].fingerprint
+            )
+            assert session.get(
+                BranchSavedRevisionModel, source_revision,
+            ).payload_json == original_source_payload
+            world_event = next(
+                row for row in target_after.authoritative_transition_state["events"]
+                if row["event_kind"] == "season_transition_completed"
+            )
+            event_payload = json.loads(world_event["payload_json"])
+            assert event_payload["saved_revision_id"] == fork["saved_head_revision_id"]
+            assert event_payload["closure_marker_fingerprint"] == (
+                target_closure.parsed_marker.fingerprint
+            )
+            assert event_payload["official_ranking_fingerprint"] == (
+                target_after.entries[-1].snapshot.fingerprint
+            )

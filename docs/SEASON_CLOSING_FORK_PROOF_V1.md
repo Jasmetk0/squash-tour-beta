@@ -1,6 +1,6 @@
 # Canonical Season Closing Ranking — pre-fork proof V1
 
-**Status: implemented pure adapter, not integrated Saved Revision fork support.**
+**Status: pure proof plus ranking replay integration; post-season Saved Revision fork remains blocked.**
 
 A Season Transition is distinct from an ordinary Week Transition. Its
 archived Season Closing Ranking belongs to the **completed Week 61**, must use
@@ -47,9 +47,23 @@ disciplinary zero. It tests deterministic replay, target fingerprint
 regeneration, repeated source-event provenance, and hostile mutation cases.
 It is **not** a Week61-to-Week1 HTTP/SQLite Season Transition acceptance.
 
-The existing `RankingRevisionState` remapper and fork installer still
-deliberately **reject nonempty season_closing_rankings or Season Transition
-World Events**. Those hard guards must remain until all adjoining evidence,
-including transactional saved revision closure identity, has dedicated
-adapters and full end-to-end acceptance. No 50-season/realism or pre-alpha
-release status is implied.
+The ranking fork planner now invokes `_remap_season_closing_archives` during
+replay of the ranking lineage. It resolves each completed Week-61 boundary from
+the stored original/target ranking snapshots, frozen player inputs, result-version
+history and zero-version history. Every archived Closing Ranking is canonically
+recalculated with `rebind_verified_season_closing_ranking`; missing or forged
+sources fail closed. The last 2049/50 closure still requires its own
+Closing-only-source adapter and remains unsupported.
+
+`tests/infrastructure/test_season_closing_ranking_fork_remap.py` covers
+deterministic replay of a Week-61 result first eligible in the following season,
+and rejects forged ranking sources and missing Week-61 predecessors.
+
+**This does not enable production post-season Branch creation.** The saved
+Season Summary/Closure Marker still requires target revision rebinding. The
+atomic ranking fork installer continues to reject Closing archives and
+Season Transition World Events, and Week Transition audit remapping remains
+event-scoped. Those guards must not be lifted until rollover state, event
+provenance, archived closure identity, persistence, rollback and independent
+continuation are integrated and tested together. No HTTP/SQLite season-fork,
+50-season/realism or pre-alpha release status is implied.

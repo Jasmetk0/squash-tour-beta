@@ -22,7 +22,7 @@ from beta_engine.application.ranking_tournament_ingestion import (
     prepare_canonical_tournament_ranking_sources,
 )
 from beta_engine.domain.rankings.input_manifest import RankingInputManifest
-from beta_engine.domain.rankings.official import calculate_official_ranking
+from beta_engine.domain.rankings.official import RankingWeek, calculate_official_ranking
 from beta_engine.domain.rankings.result_history import RankingResultVersion
 from beta_engine.domain.rankings.tournament_source import OwnedTournamentRankingSource
 from beta_engine.domain.rankings.transition_authority import RankingTransitionAuthority
@@ -32,6 +32,10 @@ from beta_engine.domain.tournaments.ranking_snapshot_authority import (
 from beta_engine.domain.rankings.zero_history import (
     RankingZeroVersion,
     resolve_zero_versions,
+)
+from beta_engine.infrastructure.db.season_closing_fork_proof import (
+    SeasonClosingForkProofError,
+    rebind_verified_season_closing_ranking,
 )
 from beta_engine.domain.rankings.revision_state import (
     RankingRevisionEntry,
@@ -576,6 +580,98 @@ def _remap_tournament_ranking_snapshot_authorities(
     return tuple(remapped), by_source_fingerprint
 
 
+def _remap_season_closing_archives(
+    source: RankingRevisionState,
+    *,
+    target_entries: tuple[RankingRevisionEntry, ...],
+    target_sources: tuple[RankingResultVersion, ...],
+    target_zero_sources: tuple[RankingZeroVersion, ...],
+    target_branch_id: str,
+):
+    """Recalculate archived Season Closing Rankings from the remapped ledger.
+
+    This is ranking-layer reconstruction, *not* permission to fork a Season
+    Transition. The Saved Revision closure, rollover player state, World Event
+    and atomic installer remain separate guarded dependencies.
+    """
+    if not source.season_closing_rankings:
+        return ()
+
+    original_weeks = {entry.snapshot.week.ordinal: entry for entry in source.entries}
+    target_weeks = {entry.snapshot.week.ordinal: entry for entry in target_entries}
+    rebound = []
+    for archive in source.season_closing_rankings:
+        completed = archive.completed_week
+        if completed.season_index >= 49:
+            # Final Run closure has a Closing-only tournament source that does
+            # not enter regular result history. Never reconstruct it from a
+            # fabricated next-season ranking week.
+            raise RankingForkRemapUnsupportedError(
+                "Final Run Season Closing fork requires Closing-only source reconstruction"
+            )
+        original = original_weeks.get(completed.ordinal)
+        target = target_weeks.get(completed.ordinal)
+        if original is None or target is None:
+            raise RankingForkRemapUnsupportedError(
+                "Season Closing fork is missing its Week-61 ranking history"
+            )
+        boundary = RankingWeek(season_index=completed.season_index + 1, week=1)
+        original_results = _resolve_result_versions(source.sources, week=boundary)
+        target_results = _resolve_result_versions(target_sources, week=boundary)
+        original_zeros = resolve_zero_versions(source.zero_sources, boundary)
+        target_zeros = resolve_zero_versions(target_zero_sources, boundary)
+        original_keys = [(r.edition_id, r.player_id) for r in original_results]
+        target_keys = [(r.edition_id, r.player_id) for r in target_results]
+        if (
+            original_keys != target_keys
+            or [z.zero_id for z in original_zeros]
+            != [z.zero_id for z in target_zeros]
+        ):
+            raise RankingForkRemapUnsupportedError(
+                "Season Closing fork result/discipline identity changed"
+            )
+        result_map = {}
+        for left, right in zip(original_results, target_results, strict=True):
+            previous = result_map.setdefault(
+                left.source_fingerprint, right.source_fingerprint
+            )
+            if previous != right.source_fingerprint:
+                raise RankingForkRemapUnsupportedError(
+                    "Season Closing fork result source has conflicting target identities"
+                )
+        zero_map = {}
+        for left, right in zip(original_zeros, target_zeros, strict=True):
+            previous = zero_map.setdefault(
+                left.source_fingerprint, right.source_fingerprint
+            )
+            if previous != right.source_fingerprint:
+                raise RankingForkRemapUnsupportedError(
+                    "Season Closing fork zero source has conflicting target identities"
+                )
+        try:
+            rebound.append(
+                rebind_verified_season_closing_ranking(
+                    archive,
+                    source_predecessor=original.snapshot,
+                    target_predecessor=target.snapshot,
+                    source_players=original.inputs.players,
+                    target_players=target.inputs.players,
+                    source_results=original_results,
+                    target_results=target_results,
+                    source_zeros=original_zeros,
+                    target_zeros=target_zeros,
+                    result_fingerprint_map=result_map,
+                    zero_fingerprint_map=zero_map,
+                    target_branch_id=target_branch_id,
+                )
+            )
+        except (SeasonClosingForkProofError, ValueError) as exc:
+            raise RankingForkRemapUnsupportedError(
+                f"Season Closing archive cannot be rebound from saved evidence: {exc}"
+            ) from exc
+    return tuple(rebound)
+
+
 def remap_source_free_ranking_state_for_branch(
     source: RankingRevisionState,
     *,
@@ -599,10 +695,6 @@ def remap_source_free_ranking_state_for_branch(
     if not source.entries or source.entries[0].snapshot.week.ordinal != 0:
         raise RankingForkRemapUnsupportedError(
             "Ranking-bearing fork requires a complete Week-1 ranking root"
-        )
-    if source.season_closing_rankings:
-        raise RankingForkRemapUnsupportedError(
-            "Ranking-bearing fork does not yet support Season Closing authorities"
         )
     if source.transition_authorities and target_base_revision_id is None:
         raise RankingForkRemapUnsupportedError(
@@ -1003,6 +1095,13 @@ def remap_source_free_ranking_state_for_branch(
         source_entries=source.entries,
         target_entries=remapped_entries_tuple,
     )
+    remapped_season_closing = _remap_season_closing_archives(
+        source,
+        target_entries=remapped_entries_tuple,
+        target_sources=remapped_result_sources,
+        target_zero_sources=remapped_zero_sources,
+        target_branch_id=target_branch_id,
+    )
     remapped_transition_state = _remap_publication_world_state(
         source.authoritative_transition_state,
         run_id=run_id,
@@ -1014,9 +1113,13 @@ def remap_source_free_ranking_state_for_branch(
 
     return RankingRevisionState(
         schema_version=(
-            "ranking_revision_state.v5"
-            if remapped_tournament_ranking_snapshot_authorities
-            else "ranking_revision_state.v4"
+            "ranking_revision_state.v7"
+            if remapped_season_closing
+            else (
+                "ranking_revision_state.v5"
+                if remapped_tournament_ranking_snapshot_authorities
+                else "ranking_revision_state.v4"
+            )
         ),
         run_id=run_id,
         branch_id=target_branch_id,
@@ -1029,6 +1132,7 @@ def remap_source_free_ranking_state_for_branch(
             remapped_tournament_ranking_snapshot_authorities
         ),
         authoritative_transition_state=remapped_transition_state,
+        season_closing_rankings=remapped_season_closing,
     )
 
 

@@ -3524,6 +3524,23 @@ export function saveRunOwnedInitialWorld(
   })
 }
 
+/** Canonical Calendar adapter, never legacy Simulation Run calendar reads. */
+export async function getRunOwnedCalendar(
+  runId: string, branchId: string, packageId: string
+): Promise<import('./runFirstTournament').RunCalendarProjection> {
+  const data = await request<import('./runFirstTournament').RunCalendarProjection>(
+    `/admin/runs/${encodeURIComponent(runId)}/branches/${encodeURIComponent(branchId)}/packages/calendar/${encodeURIComponent(packageId)}`
+  )
+  if (!(
+    data?.run_id === runId &&
+    data.branch_id === branchId &&
+    data.package_id === packageId &&
+    data.calendar?.season === data.season &&
+    /^[0-9a-f]{64}$/.test(data.fingerprint)
+  )) throw new Error('Run-owned Calendar response does not match the selected Run/Branch/Package.')
+  return data
+}
+
 export async function getRunPackageState(runId: string, branchId: string): Promise<import('./types').RunPackageStateResponse> {
   const data = await request<import('./types').RunPackageStateResponse>(`/admin/runs/${encodeURIComponent(runId)}/branches/${encodeURIComponent(branchId)}/packages`)
   if (data.state !== null && (data.state.run_id !== runId || data.state.branch_id !== branchId)) {

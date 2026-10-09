@@ -45,6 +45,8 @@ def _unique_fingerprint_map(
 
 def _verify_published_transition_coverage(
     source: RankingRevisionState,
+    *,
+    season_boundary_ordinals: frozenset[int] = frozenset(),
 ) -> None:
     """Reject missing history even when receipt and World Event vanish together.
 
@@ -96,8 +98,11 @@ def _verify_published_transition_coverage(
                 "Published Week Transition receipt is invalid"
             ) from exc
         confirmed_weeks.append(command.target_week.ordinal)
-    if sorted(confirmed_weeks) != expected_ordinals[1:]:
-        _reject("Published ranking weeks lack exactly paired Week Transition receipts")
+    if (
+        any(ordinal <= 0 or ordinal >= len(publications) for ordinal in season_boundary_ordinals)
+        or sorted([*confirmed_weeks, *season_boundary_ordinals]) != expected_ordinals[1:]
+    ):
+        _reject("Published ranking weeks lack exactly paired Week/Season Transition evidence")
 
 
 def _verified_tournament_bindings(
@@ -180,6 +185,7 @@ def bind_event_free_transition_audit_to_ranking_fork(
     sporting_fingerprint_map: Mapping[str, str],
     health_fingerprint_map: Mapping[str, str],
     valid_source_revision_ids: frozenset[str] | None = None,
+    verified_season_event: dict | None = None,
 ) -> RankingRevisionState:
     """Return a validated target ranking bundle with rebuilt Week Transition audit.
 
@@ -209,17 +215,66 @@ def bind_event_free_transition_audit_to_ranking_fork(
         _reject("Ranking fork transition audit state must be captured")
     if target_state["receipts"] or target_state["events"]:
         _reject("Target ranking fork audit must be empty before rebinding")
-    if not source_state["receipts"] or len(source_state["receipts"]) != len(source_state["events"]):
-        _reject("Source Week Transition audit is incomplete")
-    if source.season_closing_rankings or target.season_closing_rankings:
+    season_events = tuple(
+        event for event in source_state["events"]
+        if event.get("event_kind") == "season_transition_completed"
+    )
+    week_events = tuple(
+        event for event in source_state["events"]
+        if event.get("event_kind") == "week_transition_completed"
+    )
+    if (
+        not source_state["receipts"]
+        or len(source_state["receipts"]) != len(week_events)
+        or len(source_state["events"]) != len(week_events) + len(season_events)
+    ):
+        _reject("Source Week/Season Transition audit is incomplete")
+    if season_events:
+        if (
+            len(season_events) != 1
+            or len(source.season_closing_rankings) != 1
+            or len(target.season_closing_rankings) != 1
+            or not isinstance(verified_season_event, dict)
+            or season_events[0]["command_id"] != verified_season_event.get("command_id")
+            or verified_season_event.get("branch_id") != target_branch_id
+            or verified_season_event.get("run_id") != run_id
+            or verified_season_event.get("event_kind") != "season_transition_completed"
+            or season_events[0]["week_ordinal"] != verified_season_event.get("week_ordinal")
+            or source.season_closing_rankings[0].completed_week.ordinal + 1
+            != season_events[0]["week_ordinal"]
+            or target.season_closing_rankings[0].completed_week
+            != source.season_closing_rankings[0].completed_week
+            or season_events[0]["week_ordinal"]
+            != source_state["world"]["current_ordinal"]
+        ):
+            _reject("Season Transition audit requires one verified terminal boundary")
+    elif (
+        verified_season_event is not None
+        or source.season_closing_rankings
+        or target.season_closing_rankings
+    ):
         _reject("Season Closing fork evidence is not supported")
-    _verify_published_transition_coverage(source)
+    _verify_published_transition_coverage(
+        source,
+        season_boundary_ordinals=frozenset(
+            event["week_ordinal"] for event in season_events
+        ),
+    )
 
     tournament_bindings = _verified_tournament_bindings(
         source, target,
         source_branch_id=source_branch_id,
         target_branch_id=target_branch_id,
     )
+    if season_events:
+        closing_week = source.season_closing_rankings[0].completed_week
+        # The Season Transition consumes Week-61 tournament results directly.
+        # They must be verified against target-owned tournament/slot authority,
+        # but must not be falsely attributed to a weekly transition receipt.
+        tournament_bindings = {
+            edition: binding for edition, binding in tournament_bindings.items()
+            if binding.completed_week != closing_week
+        }
     snapshot_map = _unique_fingerprint_map(
         tuple(entry.snapshot for entry in source.entries),
         tuple(entry.snapshot for entry in target.entries),
@@ -293,7 +348,7 @@ def bind_event_free_transition_audit_to_ranking_fork(
         _reject("No Week Transition receipts to rebind")
 
     remapped = remap_event_free_week_transition_audit(
-        {"receipts": source_state["receipts"], "events": source_state["events"]},
+        {"receipts": source_state["receipts"], "events": list(week_events)},
         run_id=run_id,
         source_branch_id=source_branch_id,
         target_branch_id=target_branch_id,
@@ -308,7 +363,12 @@ def bind_event_free_transition_audit_to_ranking_fork(
     merged_state = {
         **target_state,
         "receipts": remapped["receipts"],
-        "events": remapped["events"],
+        "events": sorted(
+            [*remapped["events"], *(
+                (verified_season_event,) if verified_season_event is not None else ()
+            )],
+            key=lambda event: event["command_id"],
+        ),
     }
     try:
         rebound = RankingRevisionState.model_validate_json(

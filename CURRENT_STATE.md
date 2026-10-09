@@ -1,5 +1,37 @@
 # Current implementation and next action
 
+## Parallel standard tournaments in one Week Transition — PR #1320 (9 Oct 2026)
+
+- Verified `buuk` HEAD `ecb63015` already includes merged #1319. This
+  slice keeps the original two-tournament limit but **permits both standard,
+  canonical tournaments in one Week Transition**. Source/target tournament
+  bindings are verified individually and reborn inside one target receipt;
+  distinct edition and week/event identity checks prevent duplicates or
+  phantom coverage. Ranking/player/Slot remappers and the single SQLite
+  transaction remain unchanged and mandatory.
+- The existing PR-critical real HTTP+SQLite tournament-fork test now covers
+  three cases: one Week-1 event, Week-1 plus Week-2 events, and two *parallel
+  Week-1* events. Parallel case generates 8 genuine Run-owned players and uses
+  disjoint explicit Admin-validated 4-player fields, both canonical Run Draws,
+  authoritative match Slot simulation, a shared Week Transition, Save/API restart,
+  fault-injection rollback, independently owned fork and another Week Transition.
+  Source sporting outcomes and match authority remain identical after fork,
+  while target result/award fingerprints are new.
+- First production parallel gate passed in Fast CI `37899367675`; that run had
+  **42 passing tests and one failing adversarial unit fixture** constructing an
+  invalid Tournament publication week. The fixture was corrected to remain
+  schema-valid. **This is not final-head green evidence yet**: recheck the
+  final pull-request head and all required jobs.
+- Parallel acceptance intentionally uses disjoint participants. Overlapping
+  accepted entrants require independently validated Week Tournament Lock;
+  do not claim that policy was covered or change it.
+- Still fail closed: third tournament, ranking corrections/disciplinary zeros,
+  group/hybrid provenance, Season Transition/Closing, entry auto-validation,
+  official 50-season FAX and realism. Next after user's merge: broaden
+  multi-tournament history without arbitrary capacity cutoffs, then Season
+  Transition and full pre-alpha gate.
+
+
 ## Two distinct completed tournament weeks — PR #1319 validation checkpoint (9 Oct 2026)
 
 - `buuk` at merge `455c46c5` already includes green #1318. #1319 extends

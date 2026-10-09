@@ -193,14 +193,76 @@ def _complete_second_standard_tournament(
     return _save_ranking(None, ranking_root)
 
 
+
+def _stage_parallel_event_input(server: ApiServer, first_event_id: str) -> str:
+    """Move the independent Week-2 source fixture into Week 1 before Package adoption."""
+    matches = server.app.dependency_overrides[get_season_match_service]()
+    awards = server.app.dependency_overrides[get_season_point_awards_service]()
+    registry = matches._load_registry()
+    second = next(
+        item for item in registry.matches_by_event_id.values()
+        if item.season_week == 2 and item.event_id != first_event_id
+    )
+    second.season_week = 1
+    matches._save_registry(registry)
+    calendars = awards.calendar_service._load_registry()
+    event = next(
+        item for item in calendars.calendars_by_season["2000/2001"].events
+        if item.event_id == second.event_id
+    )
+    event.season_week = event.start_season_week = event.end_season_week = 1
+    awards.calendar_service._save_registry(calendars)
+    return second.event_id
+
+
+def _prepare_parallel_canonical_draw(
+    *, base_url: str, run_id: str, branch_id: str,
+    event_id: str, players: tuple[str, ...],
+):
+    root = f"{base_url}/admin/runs/{run_id}/branches/{branch_id}/tournaments/{event_id}"
+    field_root = root + "/entry-field"
+    status, field = _request("POST", field_root + "/from-valid-submissions", {
+        "command_id": "parallel-week-one-field",
+        "capacity": {
+            "main_draw_size": 4, "qualification_draw_size": 0,
+            "qualifier_spots": 0, "wild_card_slots": 0, "bye_slots": 0,
+        },
+    })
+    assert status == 201, field
+    assert set(field["direct_main_player_ids"]) == set(players)
+    status, stored = _request("GET", field_root)
+    assert status == 200, stored
+    draw_root = root + "/draw"
+    status, frozen = _request("POST", draw_root + "/commit-input", {
+        "command_id": "parallel-week-one-draw-input",
+        "run_id": run_id, "branch_id": branch_id, "event_id": event_id,
+        "expected_field_fingerprint": stored["field_fingerprint"], "draw_seed": 202611,
+    })
+    assert status == 200, frozen
+    status, generated = _request("POST", draw_root + "/generate", {
+        "command_id": "parallel-week-one-generate-draw",
+        "run_id": run_id, "branch_id": branch_id, "event_id": event_id,
+        "expected_draw_input_fingerprint": frozen["draw_input_fingerprint"],
+    })
+    assert status == 200, generated
+    assert generated["initial_draw_generated"] is True
+
+
 @pytest.mark.pr_critical
-@pytest.mark.parametrize("two_tournaments", [False, True])
+@pytest.mark.parametrize("scenario", ["single", "two_weeks", "same_week"])
 def test_single_completed_run_owned_tournament_fork_reopen_and_continue(
-    tmp_path, monkeypatch, two_tournaments,
+    tmp_path, monkeypatch, scenario,
 ):
     server, week_one_package = _server_state(tmp_path)
-    if not two_tournaments:
+    two_tournaments = scenario == "two_weeks"
+    same_week = scenario == "same_week"
+    parallel_event = None
+    if scenario == "single":
         _remove_week_two_source_fixture(server)
+    elif same_week:
+        parallel_event = _stage_parallel_event_input(
+            server, week_one_package.event_id
+        )
     db_path = tmp_path / "api.sqlite"
     world_packages_root = copy_builtin_world_packages(tmp_path / "world-packages")
     server.app.state.world_packages_root = world_packages_root
@@ -344,7 +406,7 @@ def test_single_completed_run_owned_tournament_fork_reopen_and_continue(
             "world_package_id": OFFICIAL_FAX_WORLD_ID,
             "season": "2000/2001",
             "seed": 200001,
-            "target_pool_size": len(participant_ids),
+            "target_pool_size": len(participant_ids) * (2 if same_week else 1),
         }
         adoption = {
             "command_id": "official-full-season-adopt-world",
@@ -373,7 +435,13 @@ def test_single_completed_run_owned_tournament_fork_reopen_and_continue(
         generated_ids = tuple(
             sorted(player["player_id"] for player in world_preview["state"]["players"])
         )
-        assert len(generated_ids) == len(participant_ids)
+        assert len(generated_ids) == len(participant_ids) * (
+            2 if same_week else 1
+        )
+        primary_players = (
+            generated_ids[:len(participant_ids)] if same_week else generated_ids
+        )
+        parallel_players = generated_ids[len(participant_ids):] if same_week else ()
 
         status, adopted = _post_headers(
             world_root + "/world-package",
@@ -463,14 +531,39 @@ def test_single_completed_run_owned_tournament_fork_reopen_and_continue(
             "week": 1,
         }
 
+        if same_week:
+            status, parallel_authority = _request(
+                "POST",
+                (
+                    f"{server.base_url}/admin/runs/{run_id}/branches/"
+                    f"{branch_id}/tournaments/{parallel_event}/ranking-snapshot-authority"
+                ),
+                {
+                    "command_id": "parallel-week-one-ranking-authority",
+                    "ranking_week": {"season_index": 0, "week": 1},
+                },
+            )
+            assert status == 201, parallel_authority
+            assert parallel_authority["event_id"] == parallel_event
+
         explicit_entry_reviews = [
             {
                 "event_id": event_id,
                 "player_id": player_id,
                 "target": "MAIN",
             }
-            for player_id in sorted(generated_ids)
+            for player_id in sorted(primary_players)
         ]
+        if same_week:
+            explicit_entry_reviews.extend(
+                {"event_id": parallel_event, "player_id": player_id, "target": "MAIN"}
+                for player_id in sorted(parallel_players)
+            )
+            explicit_entry_reviews.sort(
+                key=lambda review: (
+                    review["event_id"], review["player_id"], review["target"]
+                )
+            )
         status, entry_slot = _request(
             "POST",
             sim_root + "/entry-decision-slot/review",
@@ -486,7 +579,7 @@ def test_single_completed_run_owned_tournament_fork_reopen_and_continue(
         )
         assert status == 201, entry_slot
         assert entry_slot["decision_mode"] == "explicit_admin_review.v1"
-        assert entry_slot["decision_count"] == len(generated_ids)
+        assert entry_slot["decision_count"] == len(explicit_entry_reviews)
         assert {
             decision["player_id"]
             for decision in entry_slot["authority"]["decisions"]
@@ -529,7 +622,7 @@ def test_single_completed_run_owned_tournament_fork_reopen_and_continue(
             },
         )
         assert status == 201, validated_entry
-        assert validated_entry["valid_submission_count"] == len(generated_ids)
+        assert validated_entry["valid_submission_count"] == len(explicit_entry_reviews)
 
         entry_field_root = tournament_root + "/entry-field"
         status, entry_field = _request(
@@ -547,10 +640,18 @@ def test_single_completed_run_owned_tournament_fork_reopen_and_continue(
             },
         )
         assert status == 201, entry_field
-        assert set(entry_field["direct_main_player_ids"]) == set(generated_ids)
+        assert set(entry_field["direct_main_player_ids"]) == set(primary_players)
         status, entry_field_state = _request("GET", entry_field_root)
         assert status == 200, entry_field_state
-        assert set(entry_field_state["direct_main_player_ids"]) == set(generated_ids)
+        assert set(entry_field_state["direct_main_player_ids"]) == set(primary_players)
+        if same_week:
+            _prepare_parallel_canonical_draw(
+                base_url=server.base_url,
+                run_id=run_id,
+                branch_id=branch_id,
+                event_id=parallel_event,
+                players=parallel_players,
+            )
 
         # Week Schedule readiness must already see the Run-owned Calendar event before
         # any Draw exists. The canonical preparation state, not MatchPackage/Draw
@@ -560,8 +661,13 @@ def test_single_completed_run_owned_tournament_fork_reopen_and_continue(
             sim_root + "/week-schedule/preflight",
         )
         assert status == 200, schedule_before_draw_input
-        assert schedule_before_draw_input["event_ids"] == [event_id]
-        assert schedule_before_draw_input["group_ids"] == []
+        assert set(schedule_before_draw_input["event_ids"]) == (
+            {event_id, parallel_event} if same_week else {event_id}
+        )
+        if same_week:
+            assert schedule_before_draw_input["group_ids"]
+        else:
+            assert schedule_before_draw_input["group_ids"] == []
         assert schedule_before_draw_input["schedule_required"] is True
         assert schedule_before_draw_input["canonical_preparation_ready"] is False
         assert schedule_before_draw_input["can_propose_schedule"] is False
@@ -569,9 +675,11 @@ def test_single_completed_run_owned_tournament_fork_reopen_and_continue(
             f"{event_id}:draw_input_ready"
         ]
         assert (
-            schedule_before_draw_input["canonical_preparation"]["tournaments"][0][
-                "phase"
-            ]
+            next(
+                x["phase"]
+                for x in schedule_before_draw_input["canonical_preparation"]["tournaments"]
+                if x["event_id"] == event_id
+            )
             == "draw_input_ready"
         )
         status, blocked_schedule_proposal = _request(
@@ -609,9 +717,11 @@ def test_single_completed_run_owned_tournament_fork_reopen_and_continue(
             f"{event_id}:draw_generation_ready"
         ]
         assert (
-            schedule_before_draw_generation["canonical_preparation"]["tournaments"][0][
-                "next_required_action"
-            ]
+            next(
+                x["next_required_action"]
+                for x in schedule_before_draw_generation["canonical_preparation"]["tournaments"]
+                if x["event_id"] == event_id
+            )
             == "generate_draw"
         )
 
@@ -638,7 +748,7 @@ def test_single_completed_run_owned_tournament_fork_reopen_and_continue(
             slot["player_id"]
             for slot in draw_authority["main"]["slots"]
             if slot["entrant_kind"] == "player"
-        } == set(generated_ids)
+        } == set(primary_players)
 
         preparation_root = tournament_root + "/preparation"
         status, preparation_ready = _request("GET", preparation_root)
@@ -683,6 +793,8 @@ def test_single_completed_run_owned_tournament_fork_reopen_and_continue(
         # Run-owned canonical Draw + Run-owned Calendar or the acceptance will fail.
         match_registry = matches._load_registry()
         match_registry.matches_by_event_id.pop(event_id, None)
+        if same_week:
+            match_registry.matches_by_event_id.pop(parallel_event, None)
         matches._save_registry(match_registry)
         assert event_id not in matches._load_registry().matches_by_event_id
 
@@ -695,17 +807,23 @@ def test_single_completed_run_owned_tournament_fork_reopen_and_continue(
         assert schedule_preflight["can_propose_schedule"] is True
         assert schedule_preflight["blockers"] == []
         assert (
-            schedule_preflight["canonical_preparation"]["event_ids"]
-            == [event_id]
+            set(schedule_preflight["canonical_preparation"]["event_ids"])
+            == ({event_id, parallel_event} if same_week else {event_id})
         )
         assert (
-            schedule_preflight["canonical_preparation"]["tournaments"][0]["phase"]
+            next(
+                x["phase"]
+                for x in schedule_preflight["canonical_preparation"]["tournaments"]
+                if x["event_id"] == event_id
+            )
             == "draw_ready"
         )
         assert (
-            schedule_preflight["canonical_preparation"]["tournaments"][0][
-                "effective_draw_fingerprint"
-            ]
+            next(
+                x["effective_draw_fingerprint"]
+                for x in schedule_preflight["canonical_preparation"]["tournaments"]
+                if x["event_id"] == event_id
+            )
             == generated_draw["draw_authority_fingerprint"]
         )
         assert (
@@ -796,7 +914,8 @@ def test_single_completed_run_owned_tournament_fork_reopen_and_continue(
             )
 
     fork_week = 3 if two_tournaments else 2
-    count_tournaments = 2 if two_tournaments else 1
+    count_tournaments = 2 if (two_tournaments or same_week) else 1
+    count_transitions = 2 if two_tournaments else 1
 
     # Restart the actual API with the same persisted SQLite database. No mock
     # ranking, results, Slot ledger or manually populated SQL is used here.
@@ -827,7 +946,7 @@ def test_single_completed_run_owned_tournament_fork_reopen_and_continue(
             assert len({
                 source.binding.completed_week.ordinal
                 for source in original_tournaments.values()
-            }) == count_tournaments
+            }) == count_transitions
             assert all(
                 source.canonical_result is not None
                 and source.canonical_awards is not None
@@ -836,7 +955,7 @@ def test_single_completed_run_owned_tournament_fork_reopen_and_continue(
                 for source in original_tournaments.values()
             )
             original_tournament = original_ranking.tournament_sources[0]
-            assert len(original_ranking.authoritative_transition_state["receipts"]) == count_tournaments
+            assert len(original_ranking.authoritative_transition_state["receipts"]) == count_transitions
 
         # Force failure during the real SQLite installer. Every staged ranking,
         # player, Branch and audit row must roll back together.
@@ -957,7 +1076,7 @@ def test_single_completed_run_owned_tournament_fork_reopen_and_continue(
             ):
                 assert len(session.scalars(select(model).where(
                     model.run_id == run_id, model.branch_id == target_branch_id
-                )).all()) == count_tournaments
+                )).all()) == count_transitions
 
         target_sim_root = (
             f"{reopened.base_url}/admin/runs/{run_id}/branches/{target_branch_id}"
@@ -988,4 +1107,4 @@ def test_single_completed_run_owned_tournament_fork_reopen_and_continue(
             target = capture_ranking_revision_state(
                 session, run_id=run_id, branch_id=target_branch_id
             )
-            assert len(target.authoritative_transition_state["receipts"]) == count_tournaments + 1
+            assert len(target.authoritative_transition_state["receipts"]) == count_transitions + 1

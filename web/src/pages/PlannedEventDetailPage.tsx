@@ -44,6 +44,7 @@ import {
 } from '../components/RunScopedUi'
 import { formatApiError, isApiNotFound } from '../utils/apiErrors'
 import { isRunCalendarProjection } from '../api/runFirstTournament'
+import { RunTournamentEntryReviewPanel } from '../components/RunTournamentEntryReviewPanel'
 import { getPlannedEventStatus } from './plannedEventUtils'
 import { useAdminViewedSeasonState } from '../admin/useAdminViewedSeasonState'
 import type {
@@ -1247,6 +1248,12 @@ export function PlannedEventDetailPage(): JSX.Element {
         </SectionCard>
       ) : null}
 
+      {canonicalSeasonState && plannedEvent && !viewed.historical && activeBranchId &&
+        canonicalPreparationQuery.data?.run_id === runId &&
+        canonicalPreparationQuery.data.branch_id === activeBranchId &&
+        canonicalPreparationQuery.data.event_id === eventId &&
+        canonicalPreparationQuery.data.authority_source === 'run_owned_db_authorities.v1' &&
+        <RunTournamentEntryReviewPanel runId={runId} branchId={activeBranchId} eventId={eventId} />}
       {plannedEvent && !viewed.historical && activeBranchId && finalsReplacementVisible ? (
         <div id="finals-race-replacement">
           <SectionCard title="World Tour Finals Race replacement">

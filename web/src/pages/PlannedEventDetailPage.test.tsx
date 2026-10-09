@@ -15,10 +15,15 @@ const api = vi.hoisted(() => ({
     }
   },
   getRun: vi.fn(),
+  getRunContainer: vi.fn(),
+  listRunBranches: vi.fn(),
+  getBranchWorkingDraft: vi.fn(),
+  getAuthoritativeSimulationPosition: vi.fn(),
+  inspectAuthoritativeEntryDecisionSlot: vi.fn(),
+  reviewAuthoritativeEntryDecisionSlot: vi.fn(),
   listEvents: vi.fn(),
   getRunOwnedCalendar: vi.fn(),
   getRunPackageState: vi.fn(),
-  getBranchWorkingDraft: vi.fn(),
   getCanonicalWildCardState: vi.fn(),
   previewCanonicalWildCardAssignment: vi.fn(),
   commitCanonicalWildCardAssignment: vi.fn(),
@@ -83,6 +88,23 @@ describe('PlannedEventDetailPage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     adminTime.viewed.mockImplementation(presentView)
+    api.getRunContainer.mockResolvedValue({
+      run_id: 'run-a', storage_kind: 'custom_local',
+      read_only: false, status: 'working'
+    })
+    api.listRunBranches.mockResolvedValue({run_branches:[{
+      run_id: 'run-a', branch_id: 'branch-a',
+      saved_head_revision_id: 'rev-1', status: 'active', read_only: false
+    }]})
+    api.getBranchWorkingDraft.mockResolvedValue({
+      run_id: 'run-a', branch_id: 'branch-a',
+      base_saved_revision_id: 'rev-1', status: 'clean', draft_version: 0
+    })
+    api.getAuthoritativeSimulationPosition.mockResolvedValue({
+      run_id: 'run-a', branch_id: 'branch-a',current_week:{season_index:0,week:1},
+      current_slot_kind:null,slot_ordinal:null,position_fingerprint:'a'.repeat(64)
+    })
+    api.inspectAuthoritativeEntryDecisionSlot.mockRejectedValue(new api.ApiError('No frozen slot', 409))
     api.getRun.mockResolvedValue({
       run: { run_id: 'run-a', season: 2029, seed: 7, next_event_index: 1, total_events: 3, completed_event_ids: ['E2'] },
       season_state: {

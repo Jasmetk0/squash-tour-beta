@@ -4,7 +4,6 @@ import { ViewerProductRunRouteBoundary } from './viewer/ViewerProductRunRouteCon
 import { Layout } from './components/Layout'
 import { BootstrapLineagePage } from './pages/BootstrapLineagePage'
 import { ActivityPage } from './pages/ActivityPage'
-import { DashboardPage } from './pages/DashboardPage'
 import { EventDetailPage } from './pages/EventDetailPage'
 import { EventsPage } from './pages/EventsPage'
 import { FinalsPage } from './pages/FinalsPage'

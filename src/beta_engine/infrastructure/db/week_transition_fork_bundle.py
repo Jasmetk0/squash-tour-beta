@@ -1,7 +1,8 @@
-"""Bind verified event-free transition receipts to a remapped ranking lineage.
+"""Bind verified Week Transition receipts to their target-owned ranking lineage.
 
-Pure planning step for a future atomic post-transition fork. No database writes
-and no relaxation of the production fail-closed branch/restore guards.
+A single standard tournament is supported only when the frozen canonical
+ranking sources and result evidence have already been independently remapped.
+No database writes occur in this module.
 """
 
 from __future__ import annotations
@@ -99,6 +100,74 @@ def _verify_published_transition_coverage(
         _reject("Published ranking weeks lack exactly paired Week Transition receipts")
 
 
+def _verified_single_tournament_bindings(
+    source: RankingRevisionState,
+    target: RankingRevisionState,
+    *,
+    source_branch_id: str,
+    target_branch_id: str,
+) -> dict:
+    """Prove exact source/target tournament identity before audit reconstruction.
+
+    Ranking remapping validates source command history, frozen result versions,
+    canonical result/point awards and target ranking recalculation. Do not allow
+    the audit adapter to invent a target binding missing from that proof.
+    """
+    if len(source.tournament_sources) != len(target.tournament_sources):
+        _reject("Tournament ranking source count changed in fork")
+    if len(source.tournament_sources) > 1:
+        _reject("More than one completed tournament is not yet supported")
+    bindings = {}
+    for original, remapped in zip(
+        source.tournament_sources, target.tournament_sources, strict=True
+    ):
+        old, new = original.binding, remapped.binding
+        if (
+            old.branch_id != source_branch_id
+            or new.branch_id != target_branch_id
+            or old.run_id != source.run_id
+            or new.run_id != target.run_id
+            or old.closing_only
+            or new.closing_only
+            or original.schema_version not in {
+                "owned_tournament_ranking_source.v4",
+                "owned_tournament_ranking_source.v5",
+            }
+            or original.canonical_result is None
+            or original.canonical_awards is None
+            or remapped.canonical_result is None
+            or remapped.canonical_awards is None
+            or not original.canonical_result.matches
+            or any(
+                match.result_fingerprint is None
+                for match in original.canonical_result.matches
+                if match.scoreline != "BYE"
+            )
+            or (
+                old.edition_id, old.event_id, old.completed_week,
+                old.first_publication_week, old.validity_weeks,
+                old.ranking_status,
+            ) != (
+                new.edition_id, new.event_id, new.completed_week,
+                new.first_publication_week, new.validity_weeks,
+                new.ranking_status,
+            )
+            or (
+                original.canonical_result.champion_player_id,
+                original.canonical_result.finalist_player_id,
+                original.canonical_result.players,
+            ) != (
+                remapped.canonical_result.champion_player_id,
+                remapped.canonical_result.finalist_player_id,
+                remapped.canonical_result.players,
+            )
+            or old.edition_id in bindings
+        ):
+            _reject("Completed tournament canonical source does not match fork evidence")
+        bindings[old.edition_id] = new
+    return bindings
+
+
 def bind_event_free_transition_audit_to_ranking_fork(
     *,
     source: RankingRevisionState,
@@ -118,8 +187,8 @@ def bind_event_free_transition_audit_to_ranking_fork(
     *copy*. The original source (including its receipts/events) is immutable.
     Caller-supplied player mappings must come from separately verified
     target-local player state; this pure layer cannot prove their provenance.
-    It must NOT be installed until the surrounding atomic player/slot/revision
-    fork transaction and replay/rollback verification are implemented.
+    It must only be installed by the surrounding atomic player/slot/revision
+    fork transaction after verified target-local player/slot evidence exists.
     When the caller supplies its independently validated source revision lineage,
     both the authority's creation revision and the later confirmed command's
     base revision must be reachable; a Save may legitimately occur between them.
@@ -145,6 +214,11 @@ def bind_event_free_transition_audit_to_ranking_fork(
         _reject("Season Closing fork evidence is not supported")
     _verify_published_transition_coverage(source)
 
+    tournament_bindings = _verified_single_tournament_bindings(
+        source, target,
+        source_branch_id=source_branch_id,
+        target_branch_id=target_branch_id,
+    )
     snapshot_map = _unique_fingerprint_map(
         tuple(entry.snapshot for entry in source.entries),
         tuple(entry.snapshot for entry in target.entries),
@@ -228,6 +302,7 @@ def bind_event_free_transition_audit_to_ranking_fork(
         lifecycle_states=lifecycle_fingerprint_map,
         sporting_states=sporting_fingerprint_map,
         health_states=health_fingerprint_map,
+        tournament_bindings=tournament_bindings,
     )
     merged_state = {
         **target_state,

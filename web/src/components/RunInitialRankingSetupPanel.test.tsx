@@ -179,6 +179,25 @@ describe('Run initial ranking', () => {
     ))
   })
 
+  it('allows initial-ranking Save when the authoritative preflight is ready and Working Draft is clean', async () => {
+    prepared = true
+    draftVersion = 1
+    expectedCommandId = 'clean-draft-ranking-command'
+    // Ranking preparation is an independently saved component: it need not dirty the
+    // viewer-branch Working Draft, as verified by backend test_ranking_independent_save.
+    api.getBranchWorkingDraft.mockResolvedValue({
+      run_id: run.run_id, branch_id: branch.branch_id,
+      base_saved_revision_id: 'rev-a', draft_version: 1, status: 'clean'
+    })
+    render()
+    await userEvent.click(await screen.findByRole('button', { name: 'Review existing ranking save' }))
+    await userEvent.click(screen.getByRole('checkbox', {name:'Approve initial ranking save'}))
+    await userEvent.click(screen.getByRole('button', {name:'Save initial ranking revision'}))
+    await waitFor(() => expect(api.saveRunDerivedInitialRankingRevision).toHaveBeenCalledWith(
+      run.run_id, branch.branch_id, 1, hash('d')
+    ))
+  })
+
   it('clears the reviewed request when audit reason changes', async () => {
     render()
     await userEvent.click(await screen.findByRole('button', {name:'Preview initial ranking'}))

@@ -349,3 +349,86 @@ def test_semantically_forged_tournament_fails_even_with_valid_receipt_hash(forge
         match="tournament binding has no matching target ownership",
     ):
         _remap(state, maps)
+
+
+def _two_distinct_tournament_weeks():
+    state, maps, first_source, first_target = _one_tournament_case()
+    second_source = first_source.model_copy(update={
+        "edition_id": "completed-standard-week-2",
+        "event_id": "week-two-classic",
+        "completed_week": RankingWeek(season_index=0, week=2),
+        "first_publication_week": RankingWeek(season_index=0, week=3),
+        "expected_result_fingerprint": _fingerprint(2101),
+        "expected_award_fingerprint": _fingerprint(2102),
+    })
+    second_target = second_source.model_copy(update={
+        "branch_id": "fork",
+        "expected_result_fingerprint": _fingerprint(3101),
+        "expected_award_fingerprint": _fingerprint(3102),
+    })
+    row = state["receipts"][1]
+    original = AuthoritativeWeekTransitionCommand.model_validate_json(
+        row["request_payload_json"]
+    )
+    second = AuthoritativeWeekTransitionCommand.model_validate_json(
+        original.model_copy(update={
+            "tournaments": (second_source,)
+        }).model_dump_json()
+    )
+    row["request_payload_json"] = second.canonical_request_json
+    row["request_fingerprint"] = second.fingerprint
+    maps["tournament_bindings"][second_source.edition_id] = second_target
+    return state, maps, (first_source, second_source), (first_target, second_target)
+
+
+def test_two_distinct_tournament_weeks_have_complete_independent_rebound():
+    state, maps, sources, targets = _two_distinct_tournament_weeks()
+    immutable = deepcopy(state)
+    remapped = _remap(state, maps)
+    assert state == immutable
+    assert _remap(state, maps) == remapped
+    assert len(remapped["receipts"]) == len(remapped["events"]) == 2
+    for index, (src, dst) in enumerate(zip(sources, targets, strict=True)):
+        command = AuthoritativeWeekTransitionCommand.model_validate_json(
+            remapped["receipts"][index]["request_payload_json"]
+        )
+        assert command.tournaments == (dst,)
+        assert command.tournaments[0].edition_id == src.edition_id
+        assert remapped["events"][index]["branch_id"] == "fork"
+        assert remapped["receipts"][index]["request_fingerprint"] == command.fingerprint
+
+
+@pytest.mark.parametrize(
+    "corruption",
+    ["missing_second", "wrong_second_week", "duplicate_edition", "two_in_one_week"],
+)
+def test_two_tournament_weeks_fail_closed_on_incomplete_or_ambiguous_sources(corruption):
+    state, maps, sources, targets = _two_distinct_tournament_weeks()
+    if corruption == "missing_second":
+        del maps["tournament_bindings"][sources[1].edition_id]
+    elif corruption == "wrong_second_week":
+        maps["tournament_bindings"][sources[1].edition_id] = (
+            targets[1].model_copy(update={
+                "completed_week": RankingWeek(season_index=0, week=1)
+            })
+        )
+    else:
+        index = 1 if corruption == "duplicate_edition" else 0
+        row = state["receipts"][index]
+        command = AuthoritativeWeekTransitionCommand.model_validate_json(
+            row["request_payload_json"]
+        )
+        replacement = sources[0] if corruption == "duplicate_edition" else None
+        replacement_tournaments = (
+            (replacement,) if replacement is not None
+            else (sources[0], sources[1])
+        )
+        modified = AuthoritativeWeekTransitionCommand.model_validate_json(
+            command.model_copy(update={
+                "tournaments": replacement_tournaments
+            }).model_dump_json()
+        )
+        row["request_payload_json"] = modified.canonical_request_json
+        row["request_fingerprint"] = modified.fingerprint
+    with pytest.raises(WeekTransitionForkAuditUnsupportedError):
+        _remap(state, maps)

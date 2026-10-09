@@ -79,6 +79,16 @@ def _prove_fingerprint_map(
     for source, target in zip(originals, targets, strict=True):
         if fingerprint_map[source.source_fingerprint] != target.source_fingerprint:
             _reject(f"Season Closing {field} provenance order differs")
+    if field == "result":
+        # A single Event/Edition authority may source many player result rows.
+        # Two *different* editions/weeks must never masquerade as one source.
+        for collection in (originals, targets):
+            owners = {}
+            for item in collection:
+                identity = (item.edition_id, item.completed_week)
+                previous = owners.setdefault(item.source_fingerprint, identity)
+                if previous != identity:
+                    _reject("Season Closing result fingerprint spans unrelated Editions")
 
 
 def rebind_verified_season_closing_ranking(

@@ -51,9 +51,9 @@ def remap_event_free_week_transition_audit(
     Every changed identifier/fingerprint must have an explicitly supplied
     validated target counterpart. No source receipt bytes or embedded references
     are copied blindly, and every source Event must match its original command
-    and result exactly. At most two completed standard tournaments, including two in the same
-    completed week, are supported. The caller must prove all owned sources
-    and target-local bindings.
+    and result exactly. Any number of fully evidenced canonical standard tournaments may be
+    remapped across confirmed Week Transitions, including distinct events
+    in the same week. Every owned source needs a valid target-local binding.
     """
     if (
         not run_id or not source_branch_id or not target_branch_id
@@ -80,9 +80,9 @@ def remap_event_free_week_transition_audit(
     seen: set[str] = set()
     ordinals: set[int] = set()
     bindings = tournament_bindings if tournament_bindings is not None else {}
-    if not isinstance(bindings, Mapping) or len(bindings) > 2:
+    if not isinstance(bindings, Mapping):
         raise WeekTransitionForkAuditUnsupportedError(
-            "At most two verified tournament bindings are supported"
+            "Tournament bindings must be a verified source-to-target mapping"
         )
     used_tournaments: set[str] = set()
     used_week_events: set[tuple[int, str]] = set()
@@ -116,10 +116,6 @@ def remap_event_free_week_transition_audit(
             if original.corrections or original.zero_versions:
                 raise ValueError("corrections and disciplinary zeros are not supported")
             target_tournaments: list[TournamentRankingBinding] = []
-            if len(original.tournaments) + len(used_tournaments) > 2:
-                raise ValueError(
-                    "More than two historical completed tournaments are unsupported"
-                )
             for source_binding in original.tournaments:
                 edition_id = source_binding.edition_id
                 week_event = (original.completed_week.ordinal, source_binding.event_id)

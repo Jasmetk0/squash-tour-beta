@@ -1,5 +1,30 @@
 # Current implementation and next action
 
+## Single completed tournament post-transition fork — pending final-head CI (9 Oct 2026)
+
+- Candidate built on `buuk` merge #1317 / `d54f14b`; see
+  `docs/TOURNAMENT_SAVED_REVISION_FORK_ACCEPTANCE_V1.md` for the explicit boundary.
+- The existing atomically installed post-transition ranking/audit path now accepts
+  a single canonical standard-tournament Week Transition only when source/target
+  OwnedTournament sources, result/points, weekly command, ranking publications,
+  player histories and saved Simulation Slot competitive results are all covered
+  by independently remapped target-local evidence. Source receipts/events remain
+  immutable, with rebuilt target command/result fingerprints.
+- Corrections, disciplinary-zero versions, Season Transition/Closing, second
+  tournaments and unsupported structures remain fail-closed.
+- New PR-critical four-player *real HTTP/SQLite* scenario exercises audited
+  Admin validation, authoritative draw and match engine, Week Transition, Save,
+  API restart, forced rollback, branch creation and independent next-week Save.
+  This is a test **candidate**, not a passing result until latest-head CI proves it.
+- Neither the earlier event-free 1,000-player Earth smoke passes nor a passing
+  isolated remapper test proves this new tournament continuity. The
+  `application_validation_policy_unresolved` automatic policy gate remains.
+- Next actions: inspect the latest-head focused CI and repair any failures; do
+  not transfer the PR as merge-ready until all required checks are green.
+  After that, broaden tournament continuity, then Season Transition, then the
+  FAX 50-season acceptance gate.
+
+
 ## Post-transition fork atomic integration — under validation (8 Oct 2026)
 
 - The materialized Branch path now stages ranking without source Week Transition

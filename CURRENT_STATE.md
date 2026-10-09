@@ -1,5 +1,34 @@
 # Current implementation and next action
 
+## Single completed tournament post-transition fork — first HTTP/SQLite gate passed (9 Oct 2026)
+
+- Candidate built on `buuk` merge #1317 / `d54f14b`; see
+  `docs/TOURNAMENT_SAVED_REVISION_FORK_ACCEPTANCE_V1.md` for the explicit boundary.
+- The existing atomically installed post-transition ranking/audit path now accepts
+  a single canonical standard-tournament Week Transition only when source/target
+  OwnedTournament sources, result/points, weekly command, ranking publications,
+  player histories and saved Simulation Slot competitive results are all covered
+  by independently remapped target-local evidence. Source receipts/events remain
+  immutable, with rebuilt target command/result fingerprints.
+- Corrections, disciplinary-zero versions, Season Transition/Closing, second
+  tournaments and unsupported structures remain fail-closed.
+- New PR-critical four-player *real HTTP/SQLite* scenario exercises audited
+  Admin validation, authoritative draw and match engine, Week Transition, Save,
+  API restart, forced rollback, branch creation and independent next-week Save.
+  The real HTTP/SQLite test passed in Fast CI on commit `b9904863`.
+- Neither the earlier event-free 1,000-player Earth smoke passes nor a passing
+  isolated remapper test proves this new tournament continuity. The
+  `application_validation_policy_unresolved` automatic policy gate remains.
+- CI evidence: Fast CI workflow `37895207678`, backend PR-critical
+  **26 passed, 3478 deselected**, including the actual first-week tournament,
+  fork, failure rollback and continued Week-2 transition. After follow-up
+  test/doc updates, recheck Fast CI on the actual final PR head before merge.
+- Next actions: final-head verification and review. Do not transfer the PR
+  as merge-ready while any required checks are pending or red.
+  After that, broaden tournament continuity, then Season Transition, then the
+  FAX 50-season acceptance gate.
+
+
 ## Post-transition fork atomic integration — under validation (8 Oct 2026)
 
 - The materialized Branch path now stages ranking without source Week Transition

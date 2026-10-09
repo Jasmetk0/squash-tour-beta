@@ -195,6 +195,29 @@ describe('RunPage', () => {
     api.simulateFullSeason.mockResolvedValue({ step: { mode: 'simulate_full_season' } })
   })
 
+  it('opens an empty canonical Run even when no legacy Simulation Run exists', async () => {
+    api.getRun.mockRejectedValueOnce(new api.ApiError('Legacy run not found', 404))
+    api.getRunContainer.mockResolvedValue({
+      ...faxReferenceRunContainer, run_id: FAX_REFERENCE_RUN_ID,
+      display_name: 'Isolated test Run', status: 'working',
+      storage_kind: 'custom_local', read_only: false,
+      official_branch_id: FAX_REFERENCE_BRANCH_ID
+    })
+    api.listRunBranches.mockResolvedValue({ run_branches: [{
+      branch_id: FAX_REFERENCE_BRANCH_ID, run_id: FAX_REFERENCE_RUN_ID,
+      display_name: 'Timeline 1', status: 'active', read_only: false,
+      saved_head_revision_id: 'saved-initial', head_checkpoint_id: null,
+      legacy_simulation_run_id: null
+    }] })
+    renderWithRoute(<RunPage />, `/runs/${FAX_REFERENCE_RUN_ID}`)
+    expect(await screen.findByRole('heading', { name: 'Product Run — initial setup' })).toBeInTheDocument()
+    expect(screen.getByText('Isolated test Run')).toBeInTheDocument()
+    expect(screen.getByText(/own Saved Revision and Branch remain authoritative/)).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Manage timelines and saved revisions' }))
+      .toHaveAttribute('href', `/admin/runs/${FAX_REFERENCE_RUN_ID}/branches`)
+    expect(screen.queryByText(/Failed to load run: Legacy run not found/)).not.toBeInTheDocument()
+  })
+
   it('renders the run-scoped Admin Home identity and live progress', async () => {
     renderWithRoute(<RunPage />, `/runs/${FAX_REFERENCE_RUN_ID}`)
     expect(await screen.findByRole('heading', { name: 'Home' })).toBeInTheDocument()

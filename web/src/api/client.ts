@@ -3548,6 +3548,94 @@ export async function getRankingCandidateInputs(runId: string, branchId: string,
   return data
 }
 
+/** Derived initial-ranking path: server alone supplies roster, policy and tie-break tokens. */
+function initialRankingRoot(runId: string, branchId: string): string {
+  return `/admin/runs/${encodeURIComponent(runId)}/branches/${encodeURIComponent(branchId)}/ranking-candidates`
+}
+
+export async function previewRunDerivedInitialRanking(
+  runId: string, branchId: string,
+  payload: import('./runInitialRankingSetup').DerivedInitialRankingIntent,
+  bestN: number
+): Promise<import('./rankingCandidates').RankingPreparationPreview> {
+  const data = await request<import('./rankingCandidates').RankingPreparationPreview>(
+    `${initialRankingRoot(runId, branchId)}/prepare/initial/derived/preview`,
+    { method: 'POST', body: JSON.stringify(payload) }
+  )
+  if (!importDerivedInitialPreviewGuard(runId, branchId, payload, bestN, data))
+    throw new Error('Initial ranking preview does not match the selected Run, Branch, command, Week 1 or Best N.')
+  return data
+}
+
+function importDerivedInitialPreviewGuard(
+  runId: string, branchId: string,
+  payload: import('./runInitialRankingSetup').DerivedInitialRankingIntent,
+  bestN: number, data: import('./rankingCandidates').RankingPreparationPreview
+): boolean {
+  return data.preview_only === true &&
+    /^[a-f0-9]{64}$/.test(data.request_fingerprint) &&
+    data.candidate?.publication_status === 'candidate_only' &&
+    /^[a-f0-9]{64}$/.test(data.candidate.fingerprint) &&
+    data.candidate.command_ids.includes(payload.command_id) &&
+    data.candidate.snapshot.run_id === runId &&
+    data.candidate.snapshot.branch_id === branchId &&
+    data.candidate.snapshot.week.season_index === 0 &&
+    data.candidate.snapshot.week.week === 1 &&
+    data.candidate.snapshot.policy.best_n === bestN
+}
+
+export async function confirmRunDerivedInitialRanking(
+  runId: string, branchId: string,
+  payload: import('./runInitialRankingSetup').DerivedInitialRankingIntent,
+  preview: import('./rankingCandidates').RankingPreparationPreview,
+  bestN: number
+): Promise<import('./rankingCandidates').RankingCandidateDetail> {
+  if (!importDerivedInitialPreviewGuard(runId, branchId, payload, bestN, preview))
+    throw new Error('Reviewed initial ranking is no longer valid.')
+  const result = await request<import('./rankingCandidates').RankingCandidateDetail>(
+    `${initialRankingRoot(runId, branchId)}/prepare/initial/derived`, {
+      method: 'POST',
+      headers: {
+        'X-Ranking-Preview-Fingerprint': preview.candidate.fingerprint,
+        'X-Ranking-Preview-Request': preview.request_fingerprint
+      },
+      body: JSON.stringify(payload)
+    }
+  )
+  if (result.fingerprint !== preview.candidate.fingerprint ||
+    result.snapshot.policy.best_n !== bestN ||
+    result.snapshot.run_id !== runId ||
+    result.snapshot.branch_id !== branchId ||
+    result.snapshot.week.season_index !== 0 ||
+    result.snapshot.week.week !== 1 ||
+    !result.command_ids.includes(payload.command_id) ||
+    result.publication_status !== 'candidate_only')
+    throw new Error('Confirmed ranking differs from the reviewed candidate.')
+  return result
+}
+
+export async function saveRunDerivedInitialRankingRevision(
+  runId: string, branchId: string, expectedDraftVersion: number, expectedRankingFingerprint: string
+): Promise<import('./runPackageSetup').RunWorkingDraftSaved> {
+  if (!/^[a-f0-9]{64}$/.test(expectedRankingFingerprint) || !Number.isInteger(expectedDraftVersion))
+    throw new Error('Invalid ranking Save preflight.')
+  const saved = await request<import('./runPackageSetup').RunWorkingDraftSaved>(
+    `${initialRankingRoot(runId, branchId)}/save`,
+    { method: 'POST', body: JSON.stringify({
+      expected_draft_version: expectedDraftVersion,
+      expected_ranking_fingerprint: expectedRankingFingerprint
+    }) }
+  )
+  if (saved.run_id !== runId || saved.branch_id !== branchId ||
+    saved.working_draft?.run_id !== runId ||
+    saved.working_draft?.branch_id !== branchId ||
+    saved.working_draft?.status !== 'clean' ||
+    !saved.saved_revision?.revision_id ||
+    saved.working_draft.base_saved_revision_id !== saved.saved_revision.revision_id)
+    throw new Error('Ranking Save returned a mismatched or incomplete Run/Branch Saved Revision.')
+  return saved
+}
+
 export interface RankingSavePreview {
   run_id: string; branch_id: string; ranking_fingerprint: string; saved_head_revision_id: string;
   draft_version: number; has_unsaved_changes: boolean; can_save: boolean;

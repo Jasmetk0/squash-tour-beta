@@ -100,7 +100,7 @@ This document supersedes older general next-task suggestions **for the immediate
 - On reopening an already saved Draw, show identical verified bracket and remove creation controls. All double-commit and stale-input conflicts continue to be refused by existing production CAS. The next separate PR will connect schedule/first-match execution to verified Draw authority.
 - Focused frontend component tests exercise initial field → explicit Input review → persisted input → separate generation → real player/BYE readback, Wild Card blockers, dirty Branch, stale sources and replay/reopen. Browser/real Run integration and unattended application-eligibility policy are still outstanding.
 
-## Candidate PR #1341 — first real scheduled sporting match, verified winner and replay
+## Implemented and merged — PR #1341: first real scheduled sporting match, verified winner and replay
 
 - Extend the **verified Run-owned Calendar Event** with an operator-reviewed first-match action; do not create a new match or scheduling engine. Reuse `CanonicalTournamentDrawService` authority, production `AuthoritativeRunSimulationDriver` Position, adopted `WeekSimulationSchedule.v2`, `match-reconstruction/state`, production `simulate-next-match`, and stored match replay list/context.
 - Require exact writable Product Run/Branch, clean Draft pinned to the current Saved Revision, genuine committed initial Draw/Draw Input and player/BYE readback, canonical tournament `draw_ready` state, and a previously **adopted** canonical Week Schedule. The existing simulation Admin owns proposal/adoption; a mere Draw does not authorize a match.
@@ -110,12 +110,22 @@ This document supersedes older general next-task suggestions **for the immediate
 - Invalidate Position and current replay queries on success. A match result is *not* the completion of the whole round, a completed draw, saved Run revision or published ranking; the existing Simulation Save is a distinct boundary. Next PR should handle authoritative Week Schedule adoption visibility, per-slot progress and explicit Save/reopen acceptance through live HTTP/SQLite.
 - Focused tests cover simulated match with exact source check, winner/replay readback, required adopted schedule, foreign Event, dirty Draft, stale Position and fabricated winner rejection. Full real-browser acceptance and unattended eligibility/deadline policy remain separate blockers.
 
+## Candidate PR #1342 — adopt real Week Schedule, inspect sporting progress and Save/reopen
+
+- The first Product Run's Calendar Event gains a **Week Schedule, match progress and Save** panel immediately after the first Draw and before the first Match. Existing Authoritative Simulation Admin still supports manual Match-Day edits and advanced operations; this is the safe proposal-only happy path for a new Run.
+- Reuse production read-only `week-schedule/preflight` and `week-schedule/proposal` for the **complete week**, including simultaneous tournaments; never fabricate a schedule from the selected event alone. Require real canonical preparation, no unresolved group/country/Entry blockers, exact current Run/Branch/Week, unique complete slot/groups and fingerprints. Show all slots/days and demand separate operator acknowledgement.
+- On approval re-fetch latest preflight, Working Draft, saved Branch HEAD and deterministic server proposal, then use existing immutable CAS `week-schedule/adopt-proposal` with exact Week and fingerprints. Read back saved `GET /week-schedule`, verifying every slot and whole schedule fingerprint. Do not re-adopt an existing schedule.
+- Show Event-scoped results solely from persisted authoritative `match-replays` intersected with the saved Week Schedule (no invented results or winners), including real winners, losers and rally counts; label them match history, not automatically verified next-round brackets.
+- Explicit simulation Save checkpoint separate from Match/Draw: preview real `save/preview` and ensure unsaved changes, Saved Revision head, draft version and SHA-256 sporting fingerprint. Separate confirmation. Before POST re-fetch preview, Draft and Branch Head; existing backend transactional CAS persists a new revision. Then re-fetch Branch Head, Draft and Save Preview; success means newly parented revision and clean Draft with no pending Save. Warn against blindly retrying if post-write verification fails.
+- Component tests cover full multi-event schedule proposal/adoption/reload, real event-specific match ledger, blockers, stale/forged proposal, Save preview/commit/reload and forged Save receipt; no claims yet of full real-browser acceptance or automatic entry-eligibility policy completion.
+- Follow-up: full disposable HTTP/SQLite/browser acceptance from World/Calendar/Players/Week1→Entry/Draw/Schedule/Match→Save/reopen and verify subsequent-round progression, ranking awards/publication.
+
 ## Still blocking the requested user journey
 
 1. Browser-check World and Calendar source import with a real disposable Product Run, using validated source season files and save/restart, not only mocked frontend tests and existing backend adapters.
 2. Verify the newly connected initial-player generation, review, adopt, Save and reopen sequence by clicking through a real disposable custom Run, and measure both Earth source packages.
 3. Browser-verify Week-1 ranking derive/confirm/Save, publish, second Save and Viewer readback on a real disposable custom Run, including restart and selected Viewer Branch semantics.
-4. Generate Entry decisions (#1338), validate shared-slot applications (#1337), create the reviewed Entry Field (#1339), prepare Draw (#1340), **adopt the authoritative Week Schedule**, then execute a verified scheduled match (#1341). The entire Product Run browser path and Save/reopen remain to be proven.
+4. Generate Entry decisions (#1338), validate applications (#1337), create Entry Field (#1339), prepare Draw (#1340), adopt the complete reviewed Week Schedule and Save (#1342), then execute first verified match (#1341) and explicitly Save again. Browser/SQLite full continuity and next-round progression remain to be proven.
 5. Verify point award, correct ranking-publication timing, save/reopen and continuation through real HTTP/SQLite/browser evidence.
 6. Only then measure FIFA Earth / ATP Earth generation in existing Lab tools without changing unproven probabilities.
 

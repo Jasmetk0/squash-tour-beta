@@ -3473,6 +3473,57 @@ export function saveRunPackageWorkingDraft(
   )
 }
 
+/** Server-side generated pool → reviewed InitialWorld adoption; never legacy global initial pool. */
+function runInitialWorldRoot(runId: string, branchId: string): string {
+  return `/admin/players/runs/${encodeURIComponent(runId)}/branches/${encodeURIComponent(branchId)}/initial-world`
+}
+
+export function previewRunOwnedInitialWorld(
+  runId: string, branchId: string,
+  payload: import('./runInitialWorldSetup').RunInitialWorldAdoption
+): Promise<import('./runInitialWorldSetup').RunInitialWorldPreview> {
+  return request(`${runInitialWorldRoot(runId, branchId)}/world-package/preview`, {
+    method: 'POST', body: JSON.stringify(payload)
+  })
+}
+
+export function adoptRunOwnedInitialWorld(
+  runId: string, branchId: string,
+  payload: import('./runInitialWorldSetup').RunInitialWorldAdoption,
+  expectedFingerprint: string
+): Promise<import('./runInitialWorldSetup').RunInitialWorldState> {
+  return request(`${runInitialWorldRoot(runId, branchId)}/world-package`, {
+    method: 'POST',
+    headers: { 'X-Initial-World-Preview-Fingerprint': expectedFingerprint },
+    body: JSON.stringify(payload)
+  })
+}
+
+export function getRunOwnedInitialWorld(
+  runId: string, branchId: string
+): Promise<import('./runInitialWorldSetup').RunInitialWorldState> {
+  return request(runInitialWorldRoot(runId, branchId))
+}
+
+export function previewRunInitialWorldSave(
+  runId: string, branchId: string
+): Promise<import('./runInitialWorldSetup').RunInitialWorldSavePreview> {
+  return request(`${runInitialWorldRoot(runId, branchId)}/save/preview`)
+}
+
+export function saveRunOwnedInitialWorld(
+  runId: string, branchId: string,
+  expectedDraftVersion: number, expectedFingerprint: string
+): Promise<import('./runInitialWorldSetup').RunInitialWorldSaved> {
+  return request(`${runInitialWorldRoot(runId, branchId)}/save`, {
+    method: 'POST',
+    body: JSON.stringify({
+      expected_draft_version: expectedDraftVersion,
+      expected_initial_world_fingerprint: expectedFingerprint
+    })
+  })
+}
+
 export async function getRunPackageState(runId: string, branchId: string): Promise<import('./types').RunPackageStateResponse> {
   const data = await request<import('./types').RunPackageStateResponse>(`/admin/runs/${encodeURIComponent(runId)}/branches/${encodeURIComponent(branchId)}/packages`)
   if (data.state !== null && (data.state.run_id !== runId || data.state.branch_id !== branchId)) {

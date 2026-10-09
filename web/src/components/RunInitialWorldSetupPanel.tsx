@@ -157,10 +157,18 @@ export function RunInitialWorldSetupPanel({ run, branch }: {
   const savePreviewQuery = useQuery({
     queryKey: ['initial-world-save-preview', runId, branchId, pendingSave?.fingerprint],
     queryFn: () => previewRunInitialWorldSave(runId, branchId),
-    enabled: Boolean(pendingSave),
+    enabled: Boolean(pendingSave || (existing && draft?.status === 'dirty')),
     retry: false
   })
   const savePreflight = savePreviewQuery.data
+  const canResume = Boolean(!pendingSave && editable && existing && draft?.status === 'dirty' &&
+    draft.base_saved_revision_id === head && savePreflight &&
+    /^[a-f0-9]{64}$/.test(savePreflight.initial_world_fingerprint) &&
+    savePreflight.draft_version === draft.draft_version &&
+    (savePreflight.run_id === undefined || savePreflight.run_id === runId) &&
+    (savePreflight.branch_id === undefined || savePreflight.branch_id === branchId) &&
+    (savePreflight.saved_head_revision_id === undefined || savePreflight.saved_head_revision_id === head) &&
+    savePreflight.can_save !== false)
   const saveReady = Boolean(pendingSave && pendingSave.runId === runId &&
     pendingSave.branchId === branchId && pendingSave.head === head &&
     existing && existing.adopted_by_command_id &&
@@ -254,6 +262,13 @@ export function RunInitialWorldSetupPanel({ run, branch }: {
       </button>
     </section>}
     {adoptAction.error && <p role="alert" className="error">Adoption failed: {formatApiError(adoptAction.error)}</p>}
+    {canResume && <section aria-label="Recover InitialWorld save">
+      <p role="status">This Branch contains an adopted InitialWorld with unsaved changes. Confirm its Saved Revision without regenerating players.</p>
+      <p>{existing?.players.length} existing players from {existing?.world_package_id}. Source seed: {existing?.bootstrap_seed}.</p>
+      <button type="button" onClick={() => savePreflight && setPendingSave({
+        runId, branchId, head, fingerprint: savePreflight.initial_world_fingerprint
+      })}>Review existing InitialWorld save</button>
+    </section>}
     {pendingSave && <section aria-label="Save InitialWorld revision">
       <p>Players are owned by the Run, but their new Saved Revision has not yet been confirmed.</p>
       {savePreviewQuery.error && <p role="alert" className="error">Save preflight failed: {formatApiError(savePreviewQuery.error)}</p>}

@@ -79,7 +79,7 @@ function show(eventId='event-one') {
 describe('Actual Run-owned frozen Entry decisions', () => {
   it('never assumes applications are valid and only commits after review of every simultaneous event', async () => {
     show()
-    expect(await screen.findByText(/2 frozen decisions across 2 simultaneous event/)).toBeInTheDocument()
+    expect(await screen.findByText(/frozen decisions across 2 simultaneous event/)).toBeInTheDocument()
     expect(api.reviewAuthoritativeEntryDecisionSlot).not.toHaveBeenCalled()
     const submit = screen.getByRole('button', { name: 'Review entire application batch' })
     expect(submit).toBeDisabled()

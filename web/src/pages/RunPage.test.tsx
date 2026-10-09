@@ -24,6 +24,9 @@ const api = vi.hoisted(() => ({
   listBranchCheckpoints: vi.fn(),
   makeOfficialRunBranch: vi.fn(),
   getRunContainer: vi.fn(),
+  getBranchWorkingDraft: vi.fn(),
+  getRunPackageState: vi.fn(),
+  listWorldPackages: vi.fn(),
   getRunStatusSummary: vi.fn(),
   getFinalsSummary: vi.fn(),
   getLatestRollover: vi.fn(),
@@ -65,6 +68,14 @@ describe('RunPage', () => {
     })
     api.getBranchState.mockResolvedValue({ branch_id: FAX_REFERENCE_BRANCH_ID, run_id: FAX_REFERENCE_RUN_ID, head_checkpoint_id: 'cp-a', current_season: 2004, current_week: 17, current_event_id: 'event-a', current_event_sequence: 3, state_schema_version: '1', status: 'ready', metadata_json: {} })
     api.listBranchCheckpoints.mockResolvedValue({ branch_checkpoints: [] })
+    api.getBranchWorkingDraft.mockResolvedValue({
+      run_id: FAX_REFERENCE_RUN_ID, branch_id: FAX_REFERENCE_BRANCH_ID,
+      base_saved_revision_id: 'saved-initial', draft_version: 0, status: 'clean'
+    })
+    api.getRunPackageState.mockResolvedValue({ state: null, fingerprint: null })
+    api.listWorldPackages.mockResolvedValue({
+      packages: [{ world_id: 'fifa_earth', name: 'FIFA Earth', status: 'active' }]
+    })
     api.getRun.mockResolvedValue({
       run: { run_id: FAX_REFERENCE_RUN_ID, season: 2025, seed: 3, next_event_index: 1, total_events: 4, completed_event_ids: ['E1'] },
       season_state: {
@@ -211,7 +222,7 @@ describe('RunPage', () => {
     }] })
     renderWithRoute(<RunPage />, `/runs/${FAX_REFERENCE_RUN_ID}`)
     expect(await screen.findByRole('heading', { name: 'Product Run — initial setup' })).toBeInTheDocument()
-    expect(screen.getByText('Isolated test Run')).toBeInTheDocument()
+    expect(screen.getAllByText('Isolated test Run').length).toBeGreaterThan(0)
     expect(screen.getByText(/own Saved Revision and Branch remain authoritative/)).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Manage timelines and saved revisions' }))
       .toHaveAttribute('href', `/admin/runs/${FAX_REFERENCE_RUN_ID}/branches`)

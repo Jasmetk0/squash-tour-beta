@@ -3442,6 +3442,37 @@ export async function getRankingCandidates(runId: string, branchId: string): Pro
   return data
 }
 
+/** Apply only through existing Run-owned Package preview/confirm authority. */
+function sourcePackageRoot(runId: string, branchId: string, kind: import('./runPackageSetup').RunSourcePackageKind, sourceId: string): string {
+  return `/admin/runs/${encodeURIComponent(runId)}/branches/${encodeURIComponent(branchId)}/packages/source-${kind}/${encodeURIComponent(sourceId)}`
+}
+
+export function previewRunSourcePackage(
+  runId: string, branchId: string,
+  kind: import('./runPackageSetup').RunSourcePackageKind, sourceId: string
+): Promise<import('./runPackageSetup').RunSourcePackagePreview> {
+  return request(`${sourcePackageRoot(runId, branchId, kind, sourceId)}/preview`, { method: 'POST' })
+}
+
+export function confirmRunSourcePackage(
+  runId: string, branchId: string,
+  kind: import('./runPackageSetup').RunSourcePackageKind, sourceId: string,
+  payload: import('./runPackageSetup').RunSourcePackageConfirm
+): Promise<import('./runPackageSetup').RunSourcePackageApplied> {
+  return request(`${sourcePackageRoot(runId, branchId, kind, sourceId)}/confirm`, {
+    method: 'POST', body: JSON.stringify(payload)
+  })
+}
+
+export function saveRunPackageWorkingDraft(
+  runId: string, branchId: string, expectedDraftVersion: number
+): Promise<import('./runPackageSetup').RunWorkingDraftSaved> {
+  return request(
+    `/run-containers/${encodeURIComponent(runId)}/branches/${encodeURIComponent(branchId)}/working-draft/save`,
+    { method: 'POST', body: JSON.stringify({ expected_draft_version: expectedDraftVersion }) }
+  )
+}
+
 export async function getRunPackageState(runId: string, branchId: string): Promise<import('./types').RunPackageStateResponse> {
   const data = await request<import('./types').RunPackageStateResponse>(`/admin/runs/${encodeURIComponent(runId)}/branches/${encodeURIComponent(branchId)}/packages`)
   if (data.state !== null && (data.state.run_id !== runId || data.state.branch_id !== branchId)) {

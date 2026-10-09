@@ -24,7 +24,6 @@ const api = vi.hoisted(() => ({
   listEvents: vi.fn(),
   getRunOwnedCalendar: vi.fn(),
   getRunPackageState: vi.fn(),
-  getBranchWorkingDraft: vi.fn(),
   getCanonicalWildCardState: vi.fn(),
   previewCanonicalWildCardAssignment: vi.fn(),
   commitCanonicalWildCardAssignment: vi.fn(),

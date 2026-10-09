@@ -26,7 +26,7 @@ This document supersedes older general next-task suggestions **for the immediate
 - Frontend preview/confirm/save and cross-identity protection are newly exercised by focused component tests. Existing backend `tests/api/test_run_package_api.py`, `test_world_package_run_adapter.py` and `test_calendar_package_run_adapter.py` establish production HTTP/SQLite behavior separately.
 - This frontend change is not a proven browser end-to-end run, and source-calendar 2000/01 must exist and be valid in the selected environment. Calibration and tournament policy remain unchanged.
 
-## Candidate PR #1333 — first-season Run-owned players
+## Implemented and merged — PR #1333: first-season Run-owned players
 
 - Use the existing /admin/players/runs/{run}/branches/{branch}/initial-world/world-package preview/adopt endpoints, not the legacy global Initial Pool.
 - On writable canonical Run Home, choose an already applied World Package and explicit 2000/01 deterministic seed, population size (1–2000) and custom first-season ranking Best N; preview all generated entities and display a first-page sample / nationality distribution.
@@ -35,11 +35,20 @@ This document supersedes older general next-task suggestions **for the immediate
 - Regression coverage adds focused frontend integration tests; production HTTP/SQLite adoption/save/restart is already covered in tests/api/test_world_package_run_adapter.py and tests/api/test_earth_world_run_acceptance.py. Full browser run is still not verified.
 - Does not calibrate player rarity/ability or fabricate the first-season ranking. No protected Run is mutated.
 
+## Candidate PR #1334 — Week-1 ranking candidate setup
+
+- Add an Admin Run Home section after InitialWorld adoption for the existing Run/Branch-derived initial-ranking endpoints, with server-derived roster, Best N and tie-break evidence.
+- Require a previously saved InitialWorld, writable selected Branch and clean Working Draft. Show actual Run player count and confirm that a Week-1 candidate may legitimately have zero classified rows before match results.
+- Preview read-only, show the candidate and its exact command/review identity; Confirm with both production fingerprint headers. Never fabricate ranking rows or legacy competition results.
+- Offer separate dedicated Ranking Save preflight → immutable Saved Revision only if Run/Branch, Saved head, Draft version, candidate and ranking component fingerprint all agree. Resume just the Save step after refresh when a candidate is already staged.
+- Existing Week-1 candidate blocks duplicate bootstrap; protected Runs cannot mutate. Nothing is published to Viewer and no week transition is executed.
+- Focused frontend tests exercise happy path, immutable save, empty Week-1 rows, recovery, duplicate guard and changed audit input. Production integration evidence for derive/confirm/save/reopen is in `tests/api/test_initial_world_ranking_integration.py`; this PR still needs real browser acceptance.
+
 ## Still blocking the requested user journey
 
 1. Browser-check World and Calendar source import with a real disposable Product Run, using validated source season files and save/restart, not only mocked frontend tests and existing backend adapters.
 2. Verify the newly connected initial-player generation, review, adopt, Save and reopen sequence by clicking through a real disposable custom Run, and measure both Earth source packages.
-3. Establish and publish the initial ranking using the recorded ranking authority.
+3. Browser-verify Week-1 ranking derive/confirm/Save on a real disposable custom Run, then explicitly publish the saved initial ranking through the separate production publication authority.
 4. Prepare one standard tournament through canonical entries, manual reviewed applications if necessary, field, draw, schedule and real match execution.
 5. Verify point award, correct ranking-publication timing, save/reopen and continuation through real HTTP/SQLite/browser evidence.
 6. Only then measure FIFA Earth / ATP Earth generation in existing Lab tools without changing unproven probabilities.

@@ -27,6 +27,7 @@ const api = vi.hoisted(() => ({
   getBranchWorkingDraft: vi.fn(),
   getRunPackageState: vi.fn(),
   getRunOwnedInitialWorld: vi.fn(),
+  getRankingCandidates: vi.fn(),
   listWorldPackages: vi.fn(),
   getRunStatusSummary: vi.fn(),
   getFinalsSummary: vi.fn(),
@@ -75,6 +76,10 @@ describe('RunPage', () => {
     })
     api.getRunPackageState.mockResolvedValue({ state: null, fingerprint: null })
     api.getRunOwnedInitialWorld.mockRejectedValue(new api.ApiError('Initial world not found', 404))
+    api.getRankingCandidates.mockResolvedValue({
+      run_id: FAX_REFERENCE_RUN_ID, branch_id: FAX_REFERENCE_BRANCH_ID,
+      publication_status: 'candidate_only', candidates: []
+    })
     api.listWorldPackages.mockResolvedValue({
       packages: [{ world_id: 'fifa_earth', name: 'FIFA Earth', status: 'active' }]
     })

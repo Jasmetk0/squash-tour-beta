@@ -45,21 +45,30 @@ def _case(*, shared_tournament_provenance: bool = False):
         ),
         OfficialRankingResult(
             edition_id="week-61-event", player_id="player-b",
-            source_fingerprint=(
-                "old-week60" if shared_tournament_provenance else "old-week61"
-            ), completed_week=week61, first_publication_week=next_week,
+            source_fingerprint="old-week61",
+            completed_week=week61, first_publication_week=next_week,
             main_points=120,
+        ),
+        *(
+            (
+                OfficialRankingResult(
+                    edition_id="week-61-event", player_id="player-a",
+                    source_fingerprint="old-week61", completed_week=week61,
+                    first_publication_week=next_week, main_points=80,
+                ),
+            )
+            if shared_tournament_provenance else ()
         ),
     )
     target_results = tuple(
         v.model_copy(update={
             "source_fingerprint": (
                 "fork-week60"
-                if i == 0 or shared_tournament_provenance
+                if v.edition_id == "week-60-event"
                 else "fork-week61"
             ),
         })
-        for i, v in enumerate(original_results)
+        for v in original_results
     )
     zeros = (
         DisciplinaryZero(
@@ -98,8 +107,7 @@ def _case(*, shared_tournament_provenance: bool = False):
         source_zeros=zeros,
         target_zeros=target_zeros,
         result_fingerprint_map={
-            "old-week60": "fork-week60",
-            **({} if shared_tournament_provenance else {"old-week61": "fork-week61"}),
+            "old-week60": "fork-week60", "old-week61": "fork-week61",
         },
         zero_fingerprint_map={"zero-source": "zero-target"},
         target_branch_id="target",
@@ -210,3 +218,39 @@ def test_season_closing_archive_rejects_partial_or_forged_cross_branch_proofs(co
         )
     with pytest.raises((SeasonClosingForkProofError, ValueError)):
         rebind_verified_season_closing_ranking(source, **proof)
+
+
+@pytest.mark.pr_critical
+def test_source_fingerprint_shared_across_different_event_editions_is_rejected():
+    source, proof = _case()
+    # Deliberately build a complete, internally hash-consistent (but forged)
+    # archive so this rejection cannot be attributed to the source hash guard.
+    source_results = (
+        proof["source_results"][0],
+        proof["source_results"][1].model_copy(
+            update={"source_fingerprint": "old-week60"}
+        ),
+    )
+    target_results = (
+        proof["target_results"][0],
+        proof["target_results"][1].model_copy(
+            update={"source_fingerprint": "fork-week60"}
+        ),
+    )
+    altered_archive = calculate_season_closing_ranking(
+        run_id=source.run_id,
+        branch_id=source.branch_id,
+        completed_week=source.completed_week,
+        policy=source.policy,
+        players=proof["source_players"],
+        results=source_results,
+        predecessor=proof["source_predecessor"],
+        disciplinary_zeros=proof["source_zeros"],
+    )
+    proof["source_results"] = source_results
+    proof["target_results"] = target_results
+    proof["result_fingerprint_map"] = {"old-week60": "fork-week60"}
+    with pytest.raises(
+        SeasonClosingForkProofError, match="spans unrelated Editions"
+    ):
+        rebind_verified_season_closing_ranking(altered_archive, **proof)

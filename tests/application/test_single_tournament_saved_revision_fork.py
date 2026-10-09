@@ -10,6 +10,9 @@ from __future__ import annotations
 import pytest
 from sqlalchemy import select
 
+import beta_engine.infrastructure.db.repositories as repository_module
+from beta_engine.infrastructure.db.models import RunBranchModel
+
 from beta_engine.api.deps import get_season_match_service, get_season_point_awards_service
 from beta_engine.world_packages import OFFICIAL_FAX_WORLD_ID
 from beta_engine.application.season_draw_service import SeasonDrawsRegistry
@@ -37,7 +40,7 @@ from test_earth_world_package_run_integration import _advance_empty_week
 
 @pytest.mark.pr_critical
 def test_single_completed_run_owned_tournament_fork_reopen_and_continue(
-    tmp_path,
+    tmp_path, monkeypatch,
 ):
     server, week_one_package = _server_state(tmp_path)
     _remove_week_two_source_fixture(server)
@@ -639,6 +642,44 @@ def test_single_completed_run_owned_tournament_fork_reopen_and_continue(
             assert original_tournament.canonical_awards is not None
             assert original_tournament.canonical_result.matches
             assert len(original_ranking.authoritative_transition_state["receipts"]) == 1
+
+        # Force failure during the real SQLite installer. Every staged ranking,
+        # player, Branch and audit row must roll back together.
+        fork_url = f"{reopened.base_url}/run-containers/{run_id}/branches"
+        original_install = repository_module.install_remapped_week_transition_audit
+
+        def reject_install(*args, **kwargs):
+            raise ValueError("injected atomic tournament audit installation failure")
+
+        monkeypatch.setattr(
+            repository_module, "install_remapped_week_transition_audit",
+            reject_install,
+        )
+        try:
+            rejected_status, rejected = _request(
+                "POST", fork_url,
+                {
+                    "source_branch_id": branch_id,
+                    "source_saved_revision_id": revision,
+                    "display_name": "Rejected tournament fork",
+                },
+            )
+            assert rejected_status == 409, rejected
+        finally:
+            monkeypatch.setattr(
+                repository_module, "install_remapped_week_transition_audit",
+                original_install,
+            )
+        with repository._session_factory() as session:
+            assert session.scalars(
+                select(RunBranchModel).where(
+                    RunBranchModel.run_id == run_id,
+                    RunBranchModel.display_name == "Rejected tournament fork",
+                )
+            ).all() == []
+            assert capture_ranking_revision_state(
+                session, run_id=run_id, branch_id=branch_id
+            ).fingerprint == original_ranking.fingerprint
 
         status, fork = _request(
             "POST",

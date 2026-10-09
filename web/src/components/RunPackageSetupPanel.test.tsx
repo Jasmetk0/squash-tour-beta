@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { RunPackageSetupPanel } from './RunPackageSetupPanel'
+import type { RunBranch, RunContainer } from '../api/types'
 import { renderWithRoute } from '../test/testUtils'
 
 const api = vi.hoisted(() => {
@@ -81,7 +82,7 @@ beforeEach(() => {
   })
 })
 
-function render(overrideRun: typeof run = run, overrideBranch: typeof branch | null = branch) {
+function render(overrideRun: RunContainer = run, overrideBranch: RunBranch | null = branch) {
   return renderWithRoute(<RunPackageSetupPanel run={overrideRun} branch={overrideBranch} />, '/admin/runs/test-product-run')
 }
 
@@ -138,7 +139,7 @@ describe('canonical World / Calendar setup in Run Home', () => {
   })
 
   it('blocks mutations on a protected Product Run', async () => {
-    render({ ...run, read_only: true } as typeof run)
+    render({ ...run, read_only: true })
     expect(await screen.findByRole('button', { name: 'Preview copy' })).toBeDisabled()
     expect(screen.getByText(/Protected Runs cannot import packages/)).toBeInTheDocument()
   })

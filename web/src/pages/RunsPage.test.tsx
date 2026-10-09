@@ -24,6 +24,7 @@ const api = vi.hoisted(() => {
 
   return {
     ApiError,
+    listRunContainers: vi.fn(),
     listRuns: vi.fn(),
     getRun: vi.fn(),
     getRunStatusSummary: vi.fn()
@@ -34,8 +35,13 @@ vi.mock('../api/client', () => api)
 
 describe('RunsPage', () => {
   beforeEach(() => {
+    vi.clearAllMocks()
     localStorage.clear()
     navigateMock.mockReset()
+    api.listRunContainers.mockResolvedValue({ run_containers: [
+      { run_id: 'saved-run', display_name: 'Sandbox One', read_only: false, status: 'working', timeline_start_season: 2000 },
+      { run_id: 'official-protected', display_name: 'Protected World', read_only: true, status: 'active', timeline_start_season: 2000 }
+    ] })
     api.listRuns.mockResolvedValue({
       runs: [
         {
@@ -81,6 +87,16 @@ describe('RunsPage', () => {
     api.getRun.mockResolvedValue({ run: { run_id: 'run-3' } })
   })
 
+  it('lists saved Product Runs independently from legacy Simulation Runs', async () => {
+    renderWithRoute(<RunsPage />, '/admin/runs')
+    expect(await screen.findByRole('link', { name: 'Sandbox One' })).toHaveAttribute('href', '/admin/runs/saved-run')
+    expect(screen.getByRole('link', { name: 'Protected World' })).toHaveAttribute('href', '/admin/runs/official-protected')
+    expect(screen.getByText(/Protected \/ read-only/)).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('link', { name: 'Sandbox One' }))
+    expect(localStorage.getItem('beta_engine:last_run_id')).toBe('saved-run')
+    expect(api.getRun).not.toHaveBeenCalled()
+  })
+
   it('renders /runs route shell and runs list from GET /runs', async () => {
     renderWithRoute(<RunsPage />, '/admin/runs')
 
@@ -96,8 +112,8 @@ describe('RunsPage', () => {
 
     renderWithRoute(<RunsPage />, '/admin/runs')
 
-    expect(await screen.findByRole('heading', { name: 'No runs exist yet.' })).toBeInTheDocument()
-    expect(screen.getByText('Create your first 2000/01 root run to start the MSA timeline.')).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'No legacy simulation runs exist yet.' })).toBeInTheDocument()
+    expect(screen.getByText(/Product Runs above can exist without a legacy Simulation Run/)).toBeInTheDocument()
     expect(screen.getAllByRole('link', { name: 'Create new run' })).toHaveLength(2)
     for (const link of screen.getAllByRole('link', { name: 'Create new run' })) {
       expect(link).toHaveAttribute('href', '/admin/runs/new')

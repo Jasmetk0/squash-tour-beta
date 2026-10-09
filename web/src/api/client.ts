@@ -959,6 +959,14 @@ export function listRuns(): Promise<RunsIndexResponse> {
   return request('/runs')
 }
 
+/** Create an independent, initially empty Product Run with a saved initial revision. */
+export function createEmptyRunContainer(displayName: string): Promise<RunContainer> {
+  return request('/run-containers', {
+    method: 'POST',
+    body: JSON.stringify({ display_name: displayName })
+  })
+}
+
 export function listRunContainers(): Promise<RunContainerListResponse> {
   return request('/run-containers')
 }

@@ -4,7 +4,7 @@ Squash Engine is a deterministic, data-driven manager and simulator of the ficti
 
 The repository is a beta in migration. The product model below is canonical target behavior, but individual capabilities may still be partial, transitional, or not implemented yet.
 
-## Product model
+For the current first-tournament Admin usability work, see [the first-tournament milestone status](docs/PRE_ALPHA_ADMIN_SMOKE_PROGRESS.md). It distinguishes newly implemented UI, tested behavior and work still needed before claiming a playable pre-alpha. Older task handoffs in CURRENT_STATE.md and ROADMAP.md may describe earlier baselines.\n\n## Product model
 
 - **Viewer** is a historically faithful, read-only environment for fictional public websites; the primary current site is **MSA Squash**.
 - **Admin** creates, edits, validates, simulates, reconstructs, and audits data. **Global Admin** manages Runs and source Packages; **Run Admin** operates one Run and one active Admin branch in a selected time context.

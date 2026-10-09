@@ -1,5 +1,34 @@
 # Current implementation and next action
 
+## Two distinct completed tournament weeks — PR #1319 validation checkpoint (9 Oct 2026)
+
+- `buuk` at merge `455c46c5` already includes green #1318. #1319 extends
+  the fail-closed materialized Saved Revision fork from one canonical standard
+  tournament to **at most two completed tournaments in distinct Season Weeks**.
+  The audit binder proves both source/target tournament bindings and the full
+  Week Transition receipt/Event coverage. Tournament sporting results, Official
+  Ranking, slot history, source provenance and Saved Revision lineage continue
+  through existing production remappers and an atomic SQLite transaction.
+- The existing true HTTP/SQLite four-player acceptance now has two variants:
+  **one completed tournament** and **two real completed tournaments in Weeks 1
+  and 2**, both followed by Save/reopen/fork, injected installer failure/rollback
+  and independent completion of the next event-free week. No fabricated SQL
+  results, event removal to avoid tournament operation, or automatic application
+  validation claims were used.
+- First two-tournament green checkpoint: Fast CI workflow `37896440268`
+  at `8ed469bc`, **34 passed / 3478 deselected**. Stronger source/target
+  cross-tournament result-fingerprint assertions and this documentation were
+  added afterward: **do not hand off PR until final-head required CI is green**.
+- Remaining exclusions: same-week multi-event, third historical tournament,
+  group/hybrid ranking remap, corrections, disciplinary zeros and Season
+  Transition/Closing. Automatic application policy gate
+  `application_validation_policy_unresolved` remains unchanged.
+- After final-head verification and owner's merge: next task is general
+  multi-tournament/week continuity, then Season Transition, then Master §31.3
+  official FAX 50-season/internal pre-alpha acceptance. This work does not
+  certify realism calibration.
+
+
 ## Single completed tournament post-transition fork — first HTTP/SQLite gate passed (9 Oct 2026)
 
 - Candidate built on `buuk` merge #1317 / `d54f14b`; see

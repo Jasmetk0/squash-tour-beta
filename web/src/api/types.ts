@@ -1322,6 +1322,8 @@ export type CanonicalTournamentPreparationState = {
   ranking_authority_fingerprint?: string
   entry_field_ready?: boolean
   entry_field_fingerprint?: string | null
+  wild_card_required?: boolean
+  wild_card_ready?: boolean
   run_id: string
   branch_id: string
   event_id: string

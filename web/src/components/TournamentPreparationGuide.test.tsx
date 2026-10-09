@@ -58,7 +58,7 @@ const preflight = (): AuthoritativeWeekSchedulePreflight => ({
   read_only: true
 })
 
-function show(snapshot: AuthoritativeWeekSchedulePreflight | undefined = preflight(), enabled = true) {
+function show(snapshot: AuthoritativeWeekSchedulePreflight | undefined, enabled = true) {
   return render(
     <TournamentPreparationGuide runId="run/a" branchId="branch #1"
       preflight={snapshot} enabled={enabled} />
@@ -67,7 +67,7 @@ function show(snapshot: AuthoritativeWeekSchedulePreflight | undefined = preflig
 
 describe('TournamentPreparationGuide', () => {
   it('describes distinct ready and blocked tournament states with exact encoded Run/Branch links', () => {
-    show()
+    show(preflight())
     const guide = screen.getByRole('region', { name: 'Tournament preparation guide' })
     expect(within(guide).getByText(/1 of 2/)).toBeInTheDocument()
     expect(within(guide).getByText('tournament_entry_field_required')).toBeInTheDocument()

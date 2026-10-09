@@ -51,9 +51,9 @@ def remap_event_free_week_transition_audit(
     Every changed identifier/fingerprint must have an explicitly supplied
     validated target counterpart. No source receipt bytes or embedded references
     are copied blindly, and every source Event must match its original command
-    and result exactly. At most two completed standard tournaments in distinct completed weeks
-    are supported across the transition history. The caller must prove both owned
-    tournament sources and provide the exact target-local binding.
+    and result exactly. At most two completed standard tournaments, including two in the same
+    completed week, are supported. The caller must prove all owned sources
+    and target-local bindings.
     """
     if (
         not run_id or not source_branch_id or not target_branch_id
@@ -85,7 +85,7 @@ def remap_event_free_week_transition_audit(
             "At most two verified tournament bindings are supported"
         )
     used_tournaments: set[str] = set()
-    tournament_weeks: set[int] = set()
+    used_week_events: set[tuple[int, str]] = set()
     for row in state["receipts"]:
         try:
             if not isinstance(row, dict):
@@ -115,15 +115,18 @@ def remap_event_free_week_transition_audit(
                 raise ValueError("source Week Transition receipt identity mismatch")
             if original.corrections or original.zero_versions:
                 raise ValueError("corrections and disciplinary zeros are not supported")
-            target_tournaments = ()
-            if original.tournaments:
-                if len(original.tournaments) != 1:
-                    raise ValueError("multiple tournaments in one Week Transition are unsupported")
-                source_binding = original.tournaments[0]
+            target_tournaments: list[TournamentRankingBinding] = []
+            if len(original.tournaments) + len(used_tournaments) > 2:
+                raise ValueError(
+                    "More than two historical completed tournaments are unsupported"
+                )
+            for source_binding in original.tournaments:
                 edition_id = source_binding.edition_id
+                week_event = (original.completed_week.ordinal, source_binding.event_id)
                 target_binding = bindings.get(edition_id)
                 if (
                     edition_id in used_tournaments
+                    or week_event in used_week_events
                     or not isinstance(target_binding, TournamentRankingBinding)
                     or source_binding.run_id != run_id
                     or source_binding.branch_id != source_branch_id
@@ -145,13 +148,9 @@ def remap_event_free_week_transition_audit(
                     or target_binding.first_publication_week != original.target_week
                 ):
                     raise ValueError("tournament binding has no matching target ownership")
-                if original.completed_week.ordinal in tournament_weeks:
-                    raise ValueError(
-                        "Completed tournaments must belong to distinct weeks"
-                    )
-                tournament_weeks.add(original.completed_week.ordinal)
+                used_week_events.add(week_event)
                 used_tournaments.add(edition_id)
-                target_tournaments = (target_binding,)
+                target_tournaments.append(target_binding)
             if original.command_id in seen:
                 raise ValueError("duplicate transition command")
             seen.add(original.command_id)
@@ -188,7 +187,7 @@ def remap_event_free_week_transition_audit(
                             ranking_authorities, original.authority_fingerprint,
                             "ranking authority",
                         ),
-                        "tournaments": target_tournaments,
+                        "tournaments": tuple(target_tournaments),
                     }
                 ).model_dump_json()
             )

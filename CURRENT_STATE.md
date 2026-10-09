@@ -1,5 +1,26 @@
 # Current implementation and next action
 
+## Season Closing Ranking fork proof prerequisite — candidate PR (9 Oct 2026)
+
+- Base: merged #1321, `buuk` at `67c6327e`. Added a **pure,
+  fail-closed** Season Closing Ranking fork proof adapter. It recalculates
+  immutable Week-61 source archive input and target Branch archive from
+  frozen canonical predecessor ranking, players, tournament results and
+  disciplinary zeros, with complete provenance fingerprint mappings.
+- Adversarial PR-critical tests require unchanged sporting ranking, 1:1
+  source-to-target authority maps, outgoing-season policy, valid Week-61
+  boundary, source archive hash, branch-specific zero and predecessor
+  identity. They also cover source fingerprint reuse across multiple
+  player results of one tournament.
+- **This does not enable post-Season-Transition Saved Revision fork.**
+  Production remap/installer guards still reject Season Closing history
+  and Season Transition World Events. Next, implement and prove canonical
+  Season Summary/Closure Marker/new Saved Revision identity, cross-boundary
+  Week Transition/Season Transition history, complete player state,
+  atomic SQLite installation and real Week61→next Week1 branch continuation.
+- Focused CI for this candidate must be final-head green before review.
+  No production sporting policy or pre-alpha release gate changed.
+
 ## Standard tournament history without artificial fork count — PR #1321 (9 Oct 2026)
 
 - Starting from merged #1320 on `buuk` at `381a131a`, remove

@@ -1469,7 +1469,9 @@ def test_official_run_completes_whole_season_reopens_and_rolls_to_next_season(
             f"{continued.base_url}/admin/runs/{run_id}/branches/{branch_id}"
             "/packages/calendar/calendar-2001-2002"
         )
-        assert _request("GET", source_calendar_url)[0] == 404
+        source_calendar_status, absent_calendar = _request("GET", source_calendar_url)
+        assert source_calendar_status == 409
+        assert "no applied Calendar Package" in str(absent_calendar)
 
         position = _request("GET", target_sim_root + "/position")[1]
         status, completed_empty_week = _request(

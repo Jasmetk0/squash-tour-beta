@@ -21,6 +21,10 @@ const api = vi.hoisted(() => ({
   getAuthoritativeSimulationPosition: vi.fn(),
   inspectAuthoritativeWeekSchedulePreflight: vi.fn(),
   inspectAuthoritativeWeekSchedule: vi.fn(),
+  proposeAuthoritativeWeekSchedule: vi.fn(),
+  adoptAuthoritativeWeekScheduleProposal: vi.fn(),
+  previewAuthoritativeSimulationSave: vi.fn(),
+  saveAuthoritativeSimulation: vi.fn(),
   inspectAuthoritativeMatchReconstruction: vi.fn(),
   listAuthoritativeMatchReplays: vi.fn(),
   getAuthoritativeMatchReplayContext: vi.fn(),
@@ -117,6 +121,12 @@ describe('PlannedEventDetailPage', () => {
       preflight_fingerprint:'b'.repeat(64),read_only:true
     })
     api.inspectAuthoritativeWeekSchedule.mockRejectedValue(new api.ApiError('Schedule not adopted',404))
+    api.previewAuthoritativeSimulationSave.mockResolvedValue({
+      run_id:'run-a',branch_id:'branch-a',saved_head_revision_id:'rev-1',
+      draft_version:0,has_unsaved_changes:false,can_save:false,
+      simulation_fingerprint:'0'.repeat(64)
+    })
+
     api.inspectAuthoritativeMatchReconstruction.mockRejectedValue(new api.ApiError('No current match',409))
     api.listAuthoritativeMatchReplays.mockResolvedValue({
       schema_version:'authoritative_match_replay_list.v1',

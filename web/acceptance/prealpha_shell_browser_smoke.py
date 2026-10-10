@@ -122,6 +122,17 @@ def main() -> None:
             evidence["run_home_canonical_segments"] = [50, 61]
             page.screenshot(path=str(artifacts / "02-created-run.png"), full_page=True)
 
+            # The new canonical player detail must not fabricate an identity for
+            # a legitimate empty Run; the selected Run and Branch remain intact.
+            page.goto(evidence["created_run_url"] + "/people/no-saved-player")
+            expect(page.get_by_role("heading", name="no-saved-player")).to_be_visible()
+            expect(page.get_by_text("No verified name for this player ID exists in this Saved Revision.")).to_be_visible()
+            expect(page.get_by_text("This is not yet a full career profile.", exact=False)).to_be_visible()
+            evidence["missing_saved_player_identity_no_fallback"] = True
+            page.get_by_role("link", name="← Back to Run Home").click()
+            expect(page.get_by_role("heading", name="World activity")).to_be_visible()
+
+
             page.get_by_role("navigation", name="Run management navigation").get_by_role(
                 "link", name="Run Management"
             ).click()

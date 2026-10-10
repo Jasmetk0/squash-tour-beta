@@ -8,6 +8,7 @@ import {
   getPendingAuthoritativeFullSimulations,
   getRunContainer,
   getRunPackageState,
+  getRunHomeActivity,
   listSavedRevisionHistory,
 } from '../api/client'
 import { useAdminBranch } from '../admin/AdminBranchContext'
@@ -46,7 +47,14 @@ const NEXT = {
     setup: 'Příprava obsahu Runu', saved: 'Uložená revize',
     waiting: 'Pozastavené/čekající plné simulace',
     inspection: 'Stav aktuálního simulačního slotu', noChanges: 'Bez přepnutí Viewer branche',
-    unknown: 'neznámý'
+    unknown: 'neznámý',
+    upcomingEvents: 'Nadcházející turnaje · uložený kalendář',
+    publishedResults: 'Publikované výsledky · uložené revize',
+    noCalendar: 'Zatím není uložený žádný Calendar Package.',
+    noPosition: 'Kalendář existuje, ale branch zatím nemá určený týden.',
+    noUpcoming: 'V uloženém kalendáři nejsou žádné další neodehrané turnaje od aktuálního týdne.',
+    noResults: 'V uložené revizi zatím nejsou publikované výsledky turnajů.',
+    rankingUnsupported: 'Změny žebříčku zatím nemají ověřenou projekci pro tuto branch.'
   },
   en: {
     subtitle: 'Selected Branch overview from canonical saved and simulation data.',
@@ -70,7 +78,14 @@ const NEXT = {
     setup: 'Run content preparation', saved: 'Saved revision',
     waiting: 'Pending/paused full simulations',
     inspection: 'Current simulation slot', noChanges: 'No Viewer Branch selection pending',
-    unknown: 'unknown'
+    unknown: 'unknown',
+    upcomingEvents: 'Upcoming tournaments · saved calendar',
+    publishedResults: 'Published results · saved revisions',
+    noCalendar: 'No Calendar Package has been saved yet.',
+    noPosition: 'The calendar exists but this Branch has no positioned week.',
+    noUpcoming: 'No further unplayed tournaments from the current week are in the saved calendar.',
+    noResults: 'No published tournament results are present in the saved revision.',
+    rankingUnsupported: 'Ranking changes have no verified Branch-scoped projection yet.'
   }
 }
 
@@ -124,6 +139,12 @@ export function RunPage(): JSX.Element {
     enabled: ready,
     retry: false
   })
+  const homeActivityQuery = useQuery({
+    queryKey: ['run-home-activity', runId, branchId, selectedBranch?.saved_head_revision_id],
+    queryFn: () => getRunHomeActivity(runId, branchId!),
+    enabled: ready && Boolean(selectedBranch?.saved_head_revision_id),
+    retry: false
+  })
   const revisionsQuery = useQuery({
     queryKey: ['run-home-revisions', runId, branchId],
     queryFn: () => listSavedRevisionHistory(runId, branchId!, { limit: 4 }),
@@ -131,6 +152,11 @@ export function RunPage(): JSX.Element {
     retry: false
   })
 
+  const homeActivity = homeActivityQuery.data?.run_id === runId
+    && homeActivityQuery.data.branch_id === branchId
+    && homeActivityQuery.data.saved_revision_id === selectedBranch?.saved_head_revision_id
+    ? homeActivityQuery.data : null
+  const homeActivityMismatch = homeActivityQuery.isSuccess && !homeActivity
   const run = containerQuery.data?.run_id === runId ? containerQuery.data : null
   const draft = draftQuery.data?.run_id === runId && draftQuery.data.branch_id === branchId ? draftQuery.data : null
   const position = positionQuery.data?.run_id === runId && positionQuery.data.branch_id === branchId ? positionQuery.data : null
@@ -151,6 +177,8 @@ export function RunPage(): JSX.Element {
     positionQuery.error && !isApiNotFound(positionQuery.error) ? formatApiError(positionQuery.error) : null,
     pendingQuery.error && !isApiNotFound(pendingQuery.error) ? formatApiError(pendingQuery.error) : null,
     revisionsQuery.error ? formatApiError(revisionsQuery.error) : null,
+    homeActivityQuery.error ? formatApiError(homeActivityQuery.error) : null,
+    homeActivityMismatch ? 'Saved Home activity identity does not match selected Branch HEAD.' : null,
     simulationHistoryQuery.error && !isApiNotFound(simulationHistoryQuery.error) ? formatApiError(simulationHistoryQuery.error) : null,
   ].filter((value): value is string => Boolean(value))
   const blockers = position?.transition_blockers ?? []
@@ -218,6 +246,21 @@ export function RunPage(): JSX.Element {
           {packageQuery.isSuccess && ownedPackages === null && <p>{l.initial}</p>}
           {noConfirmedPosition && ownedPackages !== null && <p>{l.notPositioned}</p>}
           {positionQuery.isPending && <p role="status">{l.loading}</p>}
+          {homeActivity && homeActivity.calendar_status === 'ready' && homeActivity.upcoming.length > 0 && <div>
+            <h4>{l.upcomingEvents}</h4>
+            <ul className="run-home-feed" aria-label="Upcoming saved tournaments">
+              {homeActivity.upcoming.map(event => <li key={event.event_id}>
+                <span><strong>{event.event_name}</strong><small>{event.season} · W{event.week} · {event.category}</small></span>
+                <Link to={base + '/calendar'}>{language === 'cs' ? 'Kalendář' : 'Calendar'} →</Link>
+              </li>)}
+            </ul>
+          </div>}
+          {homeActivity && homeActivity.calendar_status === 'unpositioned' && <p className="status">{l.noPosition}</p>}
+          {homeActivity && homeActivity.calendar_status === 'empty' && ownedPackages !== null && <p className="status">{l.noCalendar}</p>}
+          {homeActivity && homeActivity.calendar_status === 'ready' && homeActivity.upcoming.length === 0 && <p className="status">{l.noUpcoming}</p>}
+          {homeActivityQuery.isPending && ready && selectedBranch?.saved_head_revision_id && <p role="status">{l.loading}</p>}
+          {homeActivityQuery.isError && <Unavailable message={formatApiError(homeActivityQuery.error)}/>}
+          {homeActivityMismatch && <Unavailable message="Saved Home activity identity mismatch"/>}
           {position && <div className="run-home-status-block">
             <p><strong>{l.inspection}:</strong> {position.current_slot_kind
               ? position.current_slot_kind + (position.current_slot_id ? ' · ' + position.current_slot_id : '')
@@ -251,8 +294,23 @@ export function RunPage(): JSX.Element {
     </div>
     <SectionCard title={l.activity}>
       <p className="status">{language === 'cs'
-        ? 'Zobrazeny jsou skutečné uložené revize a checkpointy. Výsledky jednotlivých zápasů, změny rankingu a rekordy zatím nemají kompletní kanonický Home read model.'
-        : 'Actual saved revisions and checkpoints only. Individual match results, ranking changes and records do not yet have a complete canonical Home read model.'}</p>
+        ? 'Čerpáme z uložené revize vybrané branche. Výsledky jednotlivých zápasů a změny rankingu nejsou součástí této projekce.'
+        : 'Reads the selected Branch Saved Revision. Individual match scores and ranking deltas are outside this projection.'}</p>
+      {homeActivity && <section className="run-home-results">
+        <h4>{l.publishedResults}</h4>
+        {homeActivity.result_status === 'empty' && <p className="status">{l.noResults}</p>}
+        {homeActivity.result_status === 'ready' && <ul className="run-home-feed" aria-label="Published Branch tournament results">
+          {homeActivity.recent_results.map(result => <li key={result.event_id}>
+            <span><strong>{result.event_name}</strong><small>{result.season} · W{result.week} ·
+              {language === 'cs' ? ' Vítěz' : ' Champion'}: {result.champion_player_id}</small></span>
+            <Link to={base + '/events'}>{language === 'cs' ? 'Turnaje' : 'Tournaments'} →</Link>
+          </li>)}
+        </ul>}
+        <p className="status">{l.rankingUnsupported}</p>
+      </section>}
+      {homeActivityQuery.isPending && ready && <p role="status">{l.loading}</p>}
+      {homeActivityQuery.isError && <Unavailable message={formatApiError(homeActivityQuery.error)}/>}
+      {homeActivityMismatch && <Unavailable message="Saved Home activity identity mismatch"/>
       {!ready && <p className="status">{l.missing}</p>}
       {ready && revisionsQuery.isPending && <p role="status">{l.loading}</p>}
       {ready && revisionsQuery.isError && <Unavailable message={formatApiError(revisionsQuery.error)} />}

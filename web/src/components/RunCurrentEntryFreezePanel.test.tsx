@@ -72,6 +72,26 @@ function show(eventId='event-a') {
   )
 }
 describe('Production Run-owned Entry AI freeze', () => {
+  it('previews the first unmaterialized Entry slot without requiring it to exist already', async () => {
+    api.getAuthoritativeSimulationPosition.mockResolvedValue({ ...position,
+      current_slot_kind: null, current_slot_id: null, slot_ordinal: null,
+      current_slot_complete: true, transition_blockers: ['week_schedule_missing'] })
+    show()
+    const button = await screen.findByRole('button', { name: 'Preview real Entry decisions' })
+    await waitFor(() => expect(button).toBeEnabled())
+    await userEvent.click(button)
+    await userEvent.click(await screen.findByRole('checkbox', { name: 'Approve frozen Entry generation' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Confirm and freeze Entry decisions' }))
+    await waitFor(() => expect(api.applyRunCurrentEntryDecisions).toHaveBeenCalled())
+  })
+
+  it('does not use initial bootstrap for a later week or completed sporting state', () => {
+    const initial = { ...position, current_slot_kind: null, current_slot_id: null, slot_ordinal: null,
+      current_slot_complete: true, transition_blockers: ['week_schedule_missing'] }
+    expect(verifiedCurrentEntryPreview(preview, { ...initial, current_week: { season_index: 0, week: 2 } }, 'run-one', 'branch-one', 'event-a', 'rev-1')).toBe(false)
+    expect(verifiedCurrentEntryPreview(preview, { ...initial, terminal_sporting_fingerprint: sha('b') }, 'run-one', 'branch-one', 'event-a', 'rev-1')).toBe(false)
+  })
+
   it('reviews shared real events and requires distinct confirmation before freezing', async () => {
     show()
     const button=await screen.findByRole('button',{name:'Preview real Entry decisions'})

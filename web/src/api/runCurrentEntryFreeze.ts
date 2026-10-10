@@ -36,6 +36,15 @@ export type CurrentEntryDecisionApplyResult = {
 const sha = (value: unknown): value is string =>
   typeof value === 'string' && /^[0-9a-f]{64}$/.test(value)
 
+export function initialEntryBootstrapPosition(position: AuthoritativeSimulationPosition | null | undefined): boolean {
+  return Boolean(position && position.current_week.season_index === 0 && position.current_week.week === 1 &&
+    position.current_slot_kind === null && position.current_slot_id === null && position.slot_ordinal === null &&
+    position.unresolved_group_ids.length === 0 && position.eligible_match_ids.length === 0 &&
+    position.blocked_match_ids.length === 0 && position.current_slot_complete &&
+    !position.supported_tournament_complete && !position.week_ready_for_transition &&
+    position.terminal_sporting_fingerprint === null && position.transition_blockers.includes('week_schedule_missing'))
+}
+
 export function verifiedCurrentEntryPreview(
   preview: CurrentEntryDecisionPreview | null | undefined,
   position: AuthoritativeSimulationPosition | null | undefined,
@@ -46,9 +55,9 @@ export function verifiedCurrentEntryPreview(
     preview.schema_version !== 'pre_alpha_fax_current_entry_decision_preview.v1' ||
     preview.run_id !== runId || preview.branch_id !== branchId ||
     position.run_id !== runId || position.branch_id !== branchId ||
-    position.current_slot_kind !== 'entry' ||
-    !Number.isInteger(position.slot_ordinal) || position.slot_ordinal! < 1 ||
-    preview.decision_slot_ordinal !== position.slot_ordinal ||
+    !(initialEntryBootstrapPosition(position) || (position.current_slot_kind === 'entry' &&
+      Number.isInteger(position.slot_ordinal) && position.slot_ordinal! >= 1)) ||
+    preview.decision_slot_ordinal !== (initialEntryBootstrapPosition(position) ? 1 : position.slot_ordinal) ||
     preview.expected_revision_id !== savedHeadId ||
     preview.expected_position_fingerprint !== position.position_fingerprint ||
     !sha(position.position_fingerprint) ||

@@ -22,6 +22,9 @@ def create_sqlite_engine(settings: DatabaseSettings) -> Engine:
     connect_args: dict[str, object] = {}
     if settings.url.startswith("sqlite"):
         connect_args["check_same_thread"] = False
+        # Browser preflights and Saves share one writer with sporting commands.
+        # Allow bounded queueing while their reviewed transactions finish.
+        connect_args["timeout"] = 30.0
 
     engine = create_engine(settings.url, future=True, echo=settings.echo, connect_args=connect_args)
 

@@ -85,7 +85,8 @@ beforeEach(() => {
   api.getBranchWorkingDraft.mockImplementation(async () => ({
     run_id: 'first-run', branch_id: 'timeline-1',
     base_saved_revision_id: 'revision-1',
-    draft_version: draftVersion, status: saved || !adopted ? 'clean' : 'dirty'
+    // Production component adoption leaves the generic Working Draft clean.
+    draft_version: draftVersion, status: 'clean'
   }))
   api.getRunOwnedInitialWorld.mockImplementation(async () => {
     if (!adopted) throw new api.ApiError('not found', 404)
@@ -96,13 +97,13 @@ beforeEach(() => {
     return { preview_only: true, state: reviewedState, fingerprint: sha('f') }
   })
   api.adoptRunOwnedInitialWorld.mockImplementation(async () => {
-    adopted = true; draftVersion = 1
+    adopted = true
     return reviewedState
   })
   api.previewRunInitialWorldSave.mockImplementation(async () => ({
     run_id: 'first-run', branch_id: 'timeline-1',
     saved_head_revision_id: 'revision-1', draft_version: draftVersion,
-    initial_world_fingerprint: sha('f'), can_save: true
+    initial_world_fingerprint: sha('f'), has_unsaved_changes: !saved, can_save: !saved
   }))
   api.saveRunOwnedInitialWorld.mockImplementation(async () => {
     saved = true
@@ -121,6 +122,27 @@ function render(overrideRun: RunContainer = run, overrideBranch: RunBranch | nul
 }
 
 describe('Run-owned first-season player setup', () => {
+  it('recovers an unsaved component after reload with a clean generic Draft', async () => {
+    adopted = true
+    reviewedState = buildState({ command_id: 'existing', generation: { world_package_id: 'fifa_earth', seed: 7 }, best_n: 15 })
+    render()
+    await userEvent.click(await screen.findByRole('button', { name: 'Review existing InitialWorld save' }))
+    await userEvent.click(screen.getByRole('checkbox', { name: 'Approve InitialWorld revision save' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Save InitialWorld revision' }))
+    await waitFor(() => expect(api.saveRunOwnedInitialWorld).toHaveBeenCalledWith('first-run', 'timeline-1', 0, sha('f')))
+    expect(api.previewRunOwnedInitialWorld).not.toHaveBeenCalled()
+    expect(api.adoptRunOwnedInitialWorld).not.toHaveBeenCalled()
+  })
+
+  it('does not offer another Save for an already saved InitialWorld', async () => {
+    adopted = true; saved = true
+    reviewedState = buildState({ command_id: 'existing', generation: { world_package_id: 'fifa_earth', seed: 7 }, best_n: 15 })
+    render()
+    await waitFor(() => expect(api.previewRunInitialWorldSave).toHaveBeenCalled())
+    expect(screen.queryByRole('button', { name: 'Review existing InitialWorld save' })).not.toBeInTheDocument()
+    expect(api.saveRunOwnedInitialWorld).not.toHaveBeenCalled()
+  })
+
   it('reviews true generated players, adopts only that fingerprint and separately saves a revision', async () => {
     render()
     await userEvent.clear(screen.getByRole('spinbutton', { name: 'Number of generated players' }))
@@ -145,7 +167,7 @@ describe('Run-owned first-season player setup', () => {
     await userEvent.click(await screen.findByRole('checkbox', { name: 'Approve InitialWorld revision save' }))
     await userEvent.click(screen.getByRole('button', { name: 'Save InitialWorld revision' }))
     await waitFor(() => expect(api.saveRunOwnedInitialWorld).toHaveBeenCalledWith(
-      'first-run', 'timeline-1', 1, sha('f')
+      'first-run', 'timeline-1', 0, sha('f')
     ))
   })
 

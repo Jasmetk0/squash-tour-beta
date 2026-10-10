@@ -15,11 +15,29 @@ from pydantic import BaseModel, ConfigDict, Field
 from beta_engine.application.authoritative_run_simulation_driver import (
     AuthoritativeEntryDecisionSlotCommand,
     AuthoritativeRunSimulationDriver,
+    AuthoritativeSimulationPosition,
 )
 from beta_engine.application.calendar_package_run_adapter import CalendarPackageRunAdapter
 from beta_engine.domain.rankings.official import RankingWeek
 from beta_engine.domain.simulation_slots import fingerprint
 from beta_engine.infrastructure.db.run_package_state import get_run_package_state
+
+def initial_entry_bootstrap_position(position: AuthoritativeSimulationPosition) -> bool:
+    """The first reviewed Entry operation may materialize its own initial slot."""
+    return (
+        position.current_week == RankingWeek(season_index=0, week=1)
+        and position.current_slot_kind is None
+        and position.current_slot_id is None
+        and position.slot_ordinal is None
+        and not position.unresolved_group_ids
+        and not position.eligible_match_ids
+        and not position.blocked_match_ids
+        and position.current_slot_complete
+        and not position.supported_tournament_complete
+        and not position.week_ready_for_transition
+        and position.terminal_sporting_fingerprint is None
+        and "week_schedule_missing" in position.transition_blockers
+    )
 
 
 class PreAlphaFaxCurrentEntryDecisionPreview(BaseModel):
@@ -115,7 +133,8 @@ class PreAlphaFaxCurrentEntryDecisionService:
         seed: int = 12345,
     ) -> PreAlphaFaxCurrentEntryDecisionPreview:
         position = self.driver.position(run_id=run_id, branch_id=branch_id)
-        if position.current_slot_kind != "entry" or position.slot_ordinal is None:
+        initial_bootstrap = initial_entry_bootstrap_position(position) if position.current_slot_kind is None else False
+        if not initial_bootstrap and (position.current_slot_kind != "entry" or position.slot_ordinal is None):
             raise ValueError(
                 "Copied-FAX Entry decision bootstrap requires the current authoritative slot to be Entry"
             )
@@ -128,18 +147,27 @@ class PreAlphaFaxCurrentEntryDecisionService:
             raise ValueError(
                 "Copied-FAX current Entry decision has no current-week World Tour Editions"
             )
+        decision_slot_ordinal = 1 if initial_bootstrap else position.slot_ordinal
+        if initial_bootstrap:
+            with self.driver.factory() as session:
+                if (
+                    self.driver._schedule(session, run_id, branch_id, position.current_week) is not None
+                    or self.driver._entry_slot_ordinals(session, run_id, branch_id, position.current_week)
+                    or self.driver._wc_slot_ordinals(session, run_id, branch_id, position.current_week)
+                ):
+                    raise ValueError("Initial Entry bootstrap requires an unmaterialized week")
         raw = self.driver.preview_entry_decision_slot(
             run_id=run_id,
             branch_id=branch_id,
             event_ids=event_ids,
-            decision_slot_ordinal=position.slot_ordinal,
+            decision_slot_ordinal=decision_slot_ordinal,
             seed=seed,
         )
         frozen = {
             "run_id": run_id,
             "branch_id": branch_id,
             "current_week": position.current_week.model_dump(mode="json"),
-            "decision_slot_ordinal": position.slot_ordinal,
+            "decision_slot_ordinal": decision_slot_ordinal,
             "event_ids": list(event_ids),
             "seed": seed,
             "expected_revision_id": raw["expected_revision_id"],
@@ -188,6 +216,7 @@ class PreAlphaFaxCurrentEntryDecisionService:
                 branch_id=branch_id,
                 expected_week=preview.current_week,
                 expected_revision_id=preview.expected_revision_id,
+                expected_position_fingerprint=preview.expected_position_fingerprint,
                 decision_slot_ordinal=preview.decision_slot_ordinal,
                 event_ids=preview.event_ids,
                 seed=preview.seed,

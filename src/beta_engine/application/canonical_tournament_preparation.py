@@ -10,7 +10,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, computed_field
 from sqlalchemy.orm import Session, sessionmaker
 
 from beta_engine.domain.simulation_slots import fingerprint
@@ -227,6 +227,12 @@ class CanonicalTournamentPreparationState(BaseModel):
     authority_source: Literal["run_owned_db_authorities.v1"] = (
         "run_owned_db_authorities.v1"
     )
+
+    @computed_field
+    @property
+    def preparation_fingerprint(self) -> str:
+        """Bind browser reviews to the complete current authority snapshot."""
+        return fingerprint(self.model_dump(mode="json", exclude={"preparation_fingerprint"}))
 
 
 @dataclass(slots=True)

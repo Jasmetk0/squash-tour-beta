@@ -5,6 +5,7 @@ import {
   adoptAuthoritativeWeekScheduleProposal,
   adoptAuthoritativeWeekSchedule,
   getAuthoritativeSimulationPosition,
+  completeAuthoritativeEmptyWeek,
   getPreAlphaFaxAcceptanceProfile,
   getPreAlphaFaxEntryValidationPolicyGate,
   inspectAuthoritativeEntryDecisionSlot,
@@ -462,10 +463,19 @@ export function AuthoritativeSimulationPanel({
     enabled,
     retry: false
   })
+  const verifiedEmptyWeek = Boolean(
+    schedulePreflightQuery.data?.run_id === runId &&
+    schedulePreflightQuery.data.branch_id === branchId &&
+    schedulePreflightQuery.data.event_ids.length === 0 &&
+    schedulePreflightQuery.data.group_ids.length === 0 &&
+    schedulePreflightQuery.data.blockers.length === 1 &&
+    schedulePreflightQuery.data.blockers[0] === 'week_has_no_tournament_events'
+  )
   const scheduleAllowsPosition = Boolean(
     schedulePreflightQuery.data &&
       (!schedulePreflightQuery.data.schedule_required ||
-        schedulePreflightQuery.data.schedule_already_adopted)
+        schedulePreflightQuery.data.schedule_already_adopted ||
+        verifiedEmptyWeek)
   )
   const faxEntryValidationPolicyGateQuery = useQuery({
     queryKey: ['pre-alpha-fax-entry-validation-policy-gate', runId, branchId],
@@ -819,6 +829,8 @@ export function AuthoritativeSimulationPanel({
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: ['authoritative-simulation-position', runId, branchId] }),
       queryClient.invalidateQueries({ queryKey: ['authoritative-live-match', runId, branchId] }),
+      queryClient.invalidateQueries({ queryKey: ['authoritative-match-replays', runId, branchId] }),
+      queryClient.invalidateQueries({ queryKey: ['authoritative-match-reconstruction-state', runId, branchId] }),
       queryClient.invalidateQueries({ queryKey: ['authoritative-simulation-week-schedule', runId, branchId] }),
       queryClient.invalidateQueries({ queryKey: ['authoritative-simulation-week-schedule-preflight', runId, branchId] }),
       queryClient.invalidateQueries({ queryKey: ['authoritative-simulation-save-preview', runId, branchId] }),
@@ -1486,6 +1498,36 @@ export function AuthoritativeSimulationPanel({
           queryClient.invalidateQueries({ queryKey: ['run-branches', runId] })
         ])
       }
+    }
+  })
+
+  const emptyWeekMutation = useMutation({
+    mutationFn: () => {
+      const position = positionQuery.data
+      if (!verifiedEmptyWeek || !position || !savedRevisionId || !confirmed ||
+          !nextWeekOperator.trim() || !nextWeekReason.trim() ||
+          position.current_week.week !== schedulePreflightQuery.data?.week.week ||
+          position.current_week.season_index !== schedulePreflightQuery.data?.week.season_index) {
+        throw new Error('Confirm the current empty week with an operator and audit reason.')
+      }
+      return completeAuthoritativeEmptyWeek(runId, branchId, {
+        command_id: nextWeekCommandId,
+        run_id: runId,
+        branch_id: branchId,
+        expected_week: position.current_week,
+        expected_position_fingerprint: position.position_fingerprint,
+        expected_revision_id: savedRevisionId,
+        operator_label: nextWeekOperator.trim(),
+        audit_reason: nextWeekReason.trim()
+      })
+    },
+    onSuccess: async () => {
+      setNextWeekCommandId(newCommandId())
+      setConfirmed(false)
+      await refreshCanonicalSimulation()
+    },
+    onError: async (error) => {
+      if ((error as { status?: number }).status === 409) await refreshCanonicalSimulation()
     }
   })
 
@@ -2166,6 +2208,7 @@ export function AuthoritativeSimulationPanel({
     rankingAuthorityMissing
   )
   const actionPending =
+    emptyWeekMutation.isPending ||
     nextRallyMutation.isPending ||
     simulateGameMutation.isPending ||
     restOfMatchMutation.isPending ||
@@ -3459,6 +3502,21 @@ export function AuthoritativeSimulationPanel({
               />
             </label>
           </div>
+          {verifiedEmptyWeek && position.transition_blockers.includes('terminal_sporting_checkpoint_missing') ? (
+            <>
+              <p className="status">
+                This Calendar week has no tournaments. Confirm its zero-match sporting evidence,
+                then Save before reviewing Next Week. This does not advance world time.
+              </p>
+              <button type="button" onClick={() => emptyWeekMutation.mutate()}
+                disabled={!confirmed || !nextWeekOperator.trim() || !nextWeekReason.trim() || actionPending || savePreviewQuery.data?.can_save}>
+                Confirm calendar-proven empty week
+              </button>
+            </>
+          ) : null}
+          {emptyWeekMutation.error ? (
+            <p role="alert" className="error">Empty week confirmation failed: {formatApiError(emptyWeekMutation.error)}</p>
+          ) : null}
           <div className="quick-actions">
             <button
               type="button"
@@ -3537,6 +3595,7 @@ export function AuthoritativeSimulationPanel({
               disabled={
                 currentEntrySlot ||
                 position.current_week.week === 61 ||
+                (verifiedEmptyWeek && (position.transition_blockers.includes('terminal_sporting_checkpoint_missing') || savePreviewQuery.data?.can_save)) ||
                 !nextWeekOperator.trim() ||
                 !nextWeekReason.trim() ||
                 (position.current_slot_kind === 'match' &&

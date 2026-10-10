@@ -341,8 +341,8 @@ class ApiError extends Error {
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`${API_BASE}${path}`, {
-    headers: { 'Content-Type': 'application/json', ...(init?.headers ?? {}) },
-    ...init
+    ...init,
+    headers: { 'Content-Type': 'application/json', ...(init?.headers ?? {}) }
   })
 
   if (!response.ok) {
@@ -1378,6 +1378,23 @@ export async function getAuthoritativeSimulationPosition(
     authoritativeSimulationRoot(runId, branchId) + '/position'
   )
   verifyAuthoritativeSimulationScope(runId, branchId, data)
+  return data
+}
+
+export async function completeAuthoritativeEmptyWeek(
+  runId: string,
+  branchId: string,
+  payload: Omit<AuthoritativeSimulationCommandPayload, 'group_id'> & {
+    operator_label: string
+    audit_reason: string
+  }
+): Promise<{ position: AuthoritativeSimulationPosition }> {
+  const data = await request<{ run_id: string; branch_id: string; position: AuthoritativeSimulationPosition }>(
+    authoritativeSimulationRoot(runId, branchId) + '/empty-week/complete',
+    { method: 'POST', body: JSON.stringify(payload) }
+  )
+  verifyAuthoritativeSimulationScope(runId, branchId, data)
+  verifyAuthoritativeSimulationScope(runId, branchId, data.position)
   return data
 }
 

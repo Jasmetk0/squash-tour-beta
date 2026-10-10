@@ -51,6 +51,7 @@ export type RunInitialWorldPreview = {
 export type RunInitialWorldSavePreview = {
   draft_version: number
   initial_world_fingerprint: string
+  has_unsaved_changes: boolean
   run_id?: string
   branch_id?: string
   saved_head_revision_id?: string

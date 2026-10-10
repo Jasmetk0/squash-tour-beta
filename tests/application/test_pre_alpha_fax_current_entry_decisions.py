@@ -58,8 +58,9 @@ class _Driver:
         }
 
 
+@pytest.mark.parametrize("initial", [False, True])
 def test_current_entry_bootstrap_uses_authoritative_position_slot_and_stops_at_validation(
-    monkeypatch,
+    monkeypatch, initial,
 ) -> None:
     import beta_engine.application.pre_alpha_fax_current_entry_decisions as module
 
@@ -92,13 +93,27 @@ def test_current_entry_bootstrap_uses_authoritative_position_slot_and_stops_at_v
         ),
     )
     driver = _Driver()
+    ordinal = 7
+    if initial:
+        ordinal = 1
+        driver.position = lambda **kwargs: SimpleNamespace(
+            current_slot_kind=None, current_slot_id=None, slot_ordinal=None,
+            current_week=RankingWeek(season_index=0, week=1),
+            position_fingerprint="a" * 64, unresolved_group_ids=(),
+            eligible_match_ids=(), blocked_match_ids=(), current_slot_complete=True,
+            supported_tournament_complete=False, week_ready_for_transition=False,
+            terminal_sporting_fingerprint=None, transition_blockers=("week_schedule_missing",),
+        )
+        driver._schedule = lambda *args: None
+        driver._entry_slot_ordinals = lambda *args: ()
+        driver._wc_slot_ordinals = lambda *args: ()
     service = PreAlphaFaxCurrentEntryDecisionService(driver)
 
     preview = service.preview(run_id="run", branch_id="branch", seed=9001)
-    assert preview.decision_slot_ordinal == 7
+    assert preview.decision_slot_ordinal == ordinal
     assert preview.event_ids == ("event-a", "event-b")
     assert preview.decision_count == 42
-    assert driver.preview_calls[0]["decision_slot_ordinal"] == 7
+    assert driver.preview_calls[0]["decision_slot_ordinal"] == ordinal
     assert driver.preview_calls[0]["event_ids"] == ("event-a", "event-b")
 
     applied = service.apply(
@@ -113,7 +128,8 @@ def test_current_entry_bootstrap_uses_authoritative_position_slot_and_stops_at_v
     assert applied.adoption == "committed"
     assert applied.validation_required is True
     assert applied.validation_policy_status == "automatic_policy_unresolved"
-    assert driver.commit_calls[0].decision_slot_ordinal == 7
+    assert driver.commit_calls[0].decision_slot_ordinal == ordinal
+    assert driver.commit_calls[0].expected_position_fingerprint == "a" * 64
     assert driver.commit_calls[0].event_ids == ("event-a", "event-b")
 
     replay_preview = service.preview(run_id="run", branch_id="branch", seed=9001)

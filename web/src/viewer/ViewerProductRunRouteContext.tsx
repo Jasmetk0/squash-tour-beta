@@ -4,7 +4,7 @@ import type { ViewerOfficialRunContext } from '../api/types'
 import { ApiError } from '../api/client'
 import { formatApiError, isApiNotFound } from '../utils/apiErrors'
 import { readViewerActiveProductRunId, writeViewerActiveProductRunId } from './activeProductRun'
-import { readViewerActiveRunId, writeLastRunId, writeViewerActiveRunId } from './activeRun'
+import { clearLastRunId, readViewerActiveRunId, writeLastRunId, writeViewerActiveRunId } from './activeRun'
 import { useViewerOfficialRunContext } from './useViewerOfficialRunContext'
 
 export type ViewerProductRunRouteValue = {
@@ -51,8 +51,9 @@ export function ViewerProductRunRouteBoundary(): JSX.Element {
   useEffect(() => {
     if (!query.data) return
     writeViewerActiveProductRunId(query.data.product_run_id)
-    writeViewerActiveRunId(query.data.legacy_simulation_run_id)
-    writeLastRunId(query.data.legacy_simulation_run_id)
+    writeViewerActiveRunId(query.data.legacy_simulation_run_id ?? '')
+    if (query.data.legacy_simulation_run_id) writeLastRunId(query.data.legacy_simulation_run_id)
+    else clearLastRunId()
   }, [query.data])
   useEffect(() => { didRedirect.current = false }, [productRunId])
   useEffect(() => {
@@ -70,6 +71,6 @@ export function ViewerProductRunRouteBoundary(): JSX.Element {
     return <section className="panel"><h2>Product Run not found</h2><p>Product Run ID: <strong>{productRunId}</strong></p><p>This Product Run could not be found.</p><p><Link to="/viewer/runs">Return to Product Runs</Link></p></section>
   }
   if (!context) return <p className="status">Resolving this Product Run’s official Branch…</p>
-  const value: ViewerProductRunRouteValue = { productRunId: context.product_run_id, legacySimulationRunId: context.legacy_simulation_run_id, officialContext: context, productRunDisplayName: context.product_run_display_name || context.product_run_id, officialBranchId: context.official_branch_id, officialBranchDisplayName: context.official_branch_display_name, currentSeason: context.current_season, currentWeek: context.current_week, isLoading: query.isLoading, isStale, refetch: () => { void query.refetch() } }
+  const value: ViewerProductRunRouteValue = { productRunId: context.product_run_id, legacySimulationRunId: context.legacy_simulation_run_id ?? '', officialContext: context, productRunDisplayName: context.product_run_display_name || context.product_run_id, officialBranchId: context.official_branch_id, officialBranchDisplayName: context.official_branch_display_name, currentSeason: context.current_season, currentWeek: context.current_week, isLoading: query.isLoading, isStale, refetch: () => { void query.refetch() } }
   return <ViewerProductRunRouteContextProvider value={value}>{isStale ? <aside className="error">Official Branch context is temporarily stale. {formatApiError(query.error)} <button onClick={() => void query.refetch()}>Refresh</button></aside> : null}<section className="viewer-product-run-context" aria-label="Viewer Product Run context"><span><strong>Product Run:</strong> {value.productRunDisplayName} ({value.productRunId})</span><span><strong>Official Branch:</strong> {value.officialBranchDisplayName} ({value.officialBranchId})</span><span><strong>Season/week:</strong> {value.currentSeason ?? '—'} / {value.currentWeek ?? '—'}</span>{context.product_run_read_only || context.official_branch_read_only ? <span><strong>Read-only</strong></span> : null}<Link to={`/admin/runs/${encodeURIComponent(value.productRunId)}/branches`}>Open Product Run in Admin</Link></section><Outlet /></ViewerProductRunRouteContextProvider>
 }

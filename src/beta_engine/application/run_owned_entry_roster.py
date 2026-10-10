@@ -184,6 +184,11 @@ class RunOwnedEntryRosterService:
             )
 
         ranking_points, ranking_fingerprint = self._ranking_points()
+        # These immutable snapshots are shared by the complete Entry slot.
+        # Hash each once, rather than serializing the whole roster per player.
+        world_fingerprint = world.fingerprint
+        lifecycle_fingerprint = lifecycle.fingerprint
+        sporting_fingerprint = sporting.fingerprint
         players = [
             self._project_player(
                 identity=identity,
@@ -192,9 +197,9 @@ class RunOwnedEntryRosterService:
                 prospect=prospects_by_id.get(identity.player_id),
                 season=season,
                 ranking_points=ranking_points.get(identity.player_id, 0),
-                world_fingerprint=world.fingerprint,
-                lifecycle_fingerprint=lifecycle.fingerprint,
-                sporting_fingerprint=sporting.fingerprint,
+                world_fingerprint=world_fingerprint,
+                lifecycle_fingerprint=lifecycle_fingerprint,
+                sporting_fingerprint=sporting_fingerprint,
                 ranking_fingerprint=ranking_fingerprint,
             )
             for identity in sorted(active, key=lambda item: item.player_id)

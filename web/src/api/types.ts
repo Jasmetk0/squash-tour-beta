@@ -7788,7 +7788,7 @@ export type ViewerOfficialRunContext = {
   official_branch_status: string
   official_branch_read_only: boolean
   official_branch_seed: number | null
-  legacy_simulation_run_id: string
+  legacy_simulation_run_id: string | null
   head_checkpoint_id: string
   head_checkpoint_kind: string
   current_season: number | null

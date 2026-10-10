@@ -13,7 +13,7 @@ const api = vi.hoisted(() => ({
     status: number
     constructor(message: string, status: number) { super(message); this.status = status }
   },
-  getRunContainer: vi.fn(), listRunBranches: vi.fn(), getBranchState: vi.fn(), listBranchCheckpoints: vi.fn(),
+  getRunContainer: vi.fn(), listRunBranches: vi.fn(), getBranchState: vi.fn(), listBranchCheckpoints: vi.fn(), getRunHomeActivity: vi.fn(),
   getBranchWorkingDraft: vi.fn(), getRunPackageState: vi.fn(), getAuthoritativeSimulationPosition: vi.fn(),
   getPendingAuthoritativeFullSimulations: vi.fn(), getAuthoritativeFullSimulationHistory: vi.fn(), listSavedRevisionHistory: vi.fn()
 }))
@@ -71,6 +71,12 @@ describe('Run Home V1 canonical projections', () => {
     api.getAuthoritativeSimulationPosition.mockResolvedValue(refPosition())
     api.getPendingAuthoritativeFullSimulations.mockResolvedValue({ run_id: runId, branch_id: branchId, operations: [] })
     api.getAuthoritativeFullSimulationHistory.mockResolvedValue({ run_id: runId, branch_id: branchId, items: [] })
+    api.getRunHomeActivity.mockResolvedValue({
+      schema_version: 'run_home_activity.v1', run_id: runId, branch_id: branchId,
+      saved_revision_id: 'saved-1', source: 'selected_branch_saved_revision',
+      calendar_status: 'empty', result_status: 'empty', ranking_changes_status: 'unsupported',
+      total_calendar_events: 0, published_result_count: 0, upcoming: [], recent_results: []
+    })
     api.listSavedRevisionHistory.mockResolvedValue({ run_id: runId, branch_id: branchId, saved_revisions: [{
       revision_id: 'saved-1', kind: 'initial', sequence: 1, created_at: '2026-10-10'
     }] })
@@ -145,6 +151,34 @@ describe('Run Home V1 canonical projections', () => {
     expect(await screen.findByText('Poslední plná simulace')).toBeInTheDocument()
     expect(screen.getByText(/2 dokončených sezón/)).toBeInTheDocument()
     expect(screen.queryByText('Winner')).not.toBeInTheDocument()
+  })
+
+  it('displays real future tournaments and published champions from the selected saved revision', async () => {
+    api.getRunHomeActivity.mockResolvedValue({
+      schema_version: 'run_home_activity.v1', run_id: runId, branch_id: branchId,
+      saved_revision_id: 'saved-1', source: 'selected_branch_saved_revision',
+      calendar_status: 'ready', result_status: 'ready', ranking_changes_status: 'unsupported',
+      total_calendar_events: 2, published_result_count: 1,
+      upcoming: [{ event_id: 'EVT-2', event_name: 'Saved Autumn Open', season: '2002/03', season_index: 2, week: 5, category: 'PLATINUM', status: 'planned' }],
+      recent_results: [{ event_id: 'EVT-1', event_name: 'Saved Summer Cup', season: '2002/03', season_index: 2, week: 3, category: 'GOLD', status: 'completed', champion_player_id: 'p-real', finalist_player_id: 'p-final' }]
+    })
+    mount()
+    expect(await screen.findByText('Saved Autumn Open')).toBeInTheDocument()
+    expect(screen.getByText('Saved Summer Cup')).toBeInTheDocument()
+    expect(screen.getByText(/p-real/)).toBeInTheDocument()
+    expect(screen.queryByText(/fake champion/i)).not.toBeInTheDocument()
+  })
+
+  it('fails closed when returned saved revision belongs to a stale or foreign Branch', async () => {
+    api.getRunHomeActivity.mockResolvedValue({
+      schema_version: 'run_home_activity.v1', run_id: runId, branch_id: 'foreign',
+      saved_revision_id: 'saved-1', source: 'selected_branch_saved_revision',
+      calendar_status: 'empty', result_status: 'empty', ranking_changes_status: 'unsupported',
+      total_calendar_events: 0, published_result_count: 0, upcoming: [], recent_results: []
+    })
+    mount()
+    expect(await screen.findByText('Saved Home activity identity mismatch')).toBeInTheDocument()
+    expect(screen.queryByText('Saved Autumn Open')).not.toBeInTheDocument()
   })
 
   it('keeps same-run branches separate and refuses mismatched simulation position', async () => {

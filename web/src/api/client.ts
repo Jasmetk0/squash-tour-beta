@@ -4108,3 +4108,36 @@ export async function getSavedHomePlayerIdentities(
   }
   return data
 }
+
+/** Strictly read-only saved Branch sporting summary, never legacy/Viewer/live. */
+export async function getSavedPlayerProfile(
+  runId: string, branchId: string, playerId: string
+): Promise<import('./types').SavedPlayerProfile> {
+  if (!playerId || playerId.length > 128 || playerId.trim() !== playerId) {
+    throw new Error('Invalid saved player identifier.')
+  }
+  const data = await request<import('./types').SavedPlayerProfile>(
+    `/admin/runs/${encodeURIComponent(runId)}/branches/${encodeURIComponent(branchId)}/player-profiles/${encodeURIComponent(playerId)}`
+  )
+  const ranked = data.ranking_status === 'ranked'
+  if (data.schema_version !== 'saved_player_profile.v1' ||
+      data.run_id !== runId || data.branch_id !== branchId || data.player_id !== playerId ||
+      data.source !== 'selected_branch_saved_revision' || !data.saved_revision_id?.trim() ||
+      !['identity_unavailable', 'unpublished', 'ranked', 'unranked'].includes(data.ranking_status) ||
+      (ranked && (!Number.isInteger(data.rank) || data.rank! < 1 ||
+        !Number.isInteger(data.points) || data.points! < 0 || data.ranking_week_ordinal == null)) ||
+      (!ranked && (data.rank != null || data.points != null)) ||
+      (data.identity == null) !== (data.ranking_status === 'identity_unavailable') ||
+      (data.identity != null && (data.identity.player_id !== playerId ||
+        !data.identity.display_name?.trim() || !/^[A-Za-z]{3}$/.test(data.identity.country_code))) ||
+      !Number.isInteger(data.titles) || data.titles < 0 ||
+      !Number.isInteger(data.final_appearances) || data.final_appearances < data.titles ||
+      !Number.isInteger(data.total_tournament_results) ||
+      data.total_tournament_results !== data.final_appearances ||
+      !Array.isArray(data.tournament_results) || data.tournament_results.length > 10 ||
+      data.tournament_results.some(row => !row.event_id || !row.event_name ||
+        !['champion', 'runner_up'].includes(row.finish) || row.week < 1 || row.week > 61)) {
+    throw new Error('Saved player profile does not match selected Branch or has invalid sporting facts.')
+  }
+  return data
+}

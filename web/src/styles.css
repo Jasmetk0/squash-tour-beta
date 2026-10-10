@@ -2174,3 +2174,30 @@ textarea:focus-visible {
   .side-nav__bottom { margin-top: 0 !important; }
   .home-run-list li { align-items: flex-start; }
 }
+
+
+/* Run Home V1: canonical time locators and branch-scoped read-only summaries. */
+.run-home .eyebrow { font-size: .73rem; letter-spacing: .12em; color: #7db2fc; font-weight: 800; }
+.run-home-progress { background: #182640; border: 1px solid #334a6b; border-radius: 13px; padding: 1rem; margin: 1.1rem 0; }
+.run-home-progress__heading { display: flex; justify-content: space-between; align-items: baseline; gap: .8rem; margin: .7rem 0 .45rem; }
+.run-home-progress__heading h3 { font-size: .95rem; margin: 0; }
+.run-home-progress__heading span { font-size: .84rem; color: #acc4e8; }
+.run-home-progress__track { display: grid; grid-template-columns: repeat(50, minmax(0, 1fr)); gap: 2px; width: 100%; }
+.run-home-progress__track--weeks { grid-template-columns: repeat(61, minmax(0, 1fr)); }
+.run-home-progress__track span { display: block; height: 17px; border: 1px solid #425775; border-radius: 2px; background: #25344d; min-width: 0; }
+.run-home-progress__track span.is-past { background: #426eaa; border-color: #507db9; }
+.run-home-progress__track span.is-current { background: #80c7ff; border-color: #a9e1ff; box-shadow: 0 0 0 1px #e1f6ff; }
+.run-home-columns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; align-items: start; margin: 1rem 0; }
+.run-home-columns .panel { margin: 0; }
+.run-home-status-block { background: #1c2e4b; border-left: 3px solid #76b4ff; border-radius: 6px; padding: .45rem .85rem; }
+.run-home-status-block p { margin: .35rem 0; }
+.run-home-feed { list-style: none; margin: .35rem 0 1rem; padding: 0; display: flex; flex-direction: column; gap: .45rem; }
+.run-home-feed li { display: flex; justify-content: space-between; align-items: baseline; gap: .8rem; padding: .5rem .65rem; background: #1c2a42; border-radius: 8px; }
+.run-home-feed li small { font-size: .77rem; color: #a4bad7; overflow-wrap: anywhere; }
+.run-home-setup { margin-top: 1.6rem; border-top: 1px solid #2b405d; padding-top: 1rem; }
+.run-home-setup > h3 { font-size: 1.18rem; margin-bottom: .35rem; }
+@media (max-width: 850px) {
+  .run-home-columns { grid-template-columns: minmax(0, 1fr); }
+  .run-home-progress__track { gap: 1px; }
+  .run-home-progress__track span { height: 15px; }
+}

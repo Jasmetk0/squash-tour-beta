@@ -65,10 +65,10 @@ describe('Layout mode navigation', () => {
   it('renders only Global Admin navigation on a global route', async () => {
     renderWithRoute(<Layout />, '/admin/world')
 
-    expect(await screen.findByText('Admin / Engine Mode')).toBeInTheDocument()
+    expect(await screen.findByText('Administrace · Pre-alpha')).toBeInTheDocument()
     const nav = screen.getByRole('navigation', { name: 'Global Admin navigation' })
-    expect(within(nav).getByRole('link', { name: 'World' })).toHaveAttribute('href', '/admin/world')
-    expect(within(nav).getByRole('link', { name: 'Runs' })).toHaveAttribute('href', '/admin/runs')
+    expect(within(nav).getByRole('link', { name: 'Balíčky' })).toHaveAttribute('href', '/admin/packages')
+    expect(within(nav).getByRole('link', { name: 'Runy' })).toHaveAttribute('href', '/admin/runs')
     expect(screen.queryByRole('navigation', { name: 'Run Admin navigation' })).not.toBeInTheDocument()
     expect(screen.queryByText(/Current run context:/)).not.toBeInTheDocument()
     expect(screen.queryByRole('combobox', { name: 'Admin active Run' })).not.toBeInTheDocument()
@@ -79,15 +79,15 @@ describe('Layout mode navigation', () => {
   it('renders only Run Admin navigation at a Run root', async () => {
     renderWithRoute(<Layout />, `/admin/runs/${FAX_REFERENCE_RUN_ID}`)
 
-    expect(await screen.findByText('Admin / Engine Mode')).toBeInTheDocument()
+    expect(await screen.findByText('Administrace · Pre-alpha')).toBeInTheDocument()
     const nav = screen.getByRole('navigation', { name: 'Run Admin navigation' })
-    expect(within(nav).getByRole('link', { name: 'Back to Global' })).toHaveAttribute('href', '/admin')
-    expect(within(nav).getByRole('link', { name: 'Home' })).toHaveAttribute('href', `/admin/runs/${FAX_REFERENCE_RUN_ID}`)
+    expect(screen.getByRole('link', { name: 'Squash Engine global Home' })).toHaveAttribute('href', '/admin')
+    expect(within(nav).getByRole('link', { name: 'Domů' })).toHaveAttribute('href', `/admin/runs/${FAX_REFERENCE_RUN_ID}`)
     expect(within(nav).getByRole('link', { name: 'Events' })).toHaveAttribute('href', `/admin/runs/${FAX_REFERENCE_RUN_ID}/events`)
     expect(within(nav).getByRole('link', { name: 'Season Calendar' })).toHaveAttribute('href', `/admin/runs/${FAX_REFERENCE_RUN_ID}/calendar`)
     expect(screen.queryByRole('navigation', { name: 'Global Admin navigation' })).not.toBeInTheDocument()
     expect(within(nav).queryByRole('link', { name: 'Tour & Seasons' })).not.toBeInTheDocument()
-    expect(screen.getByText(`Current run context: ${FAX_REFERENCE_RUN_ID}`)).toBeInTheDocument()
+    expect(screen.getByRole('combobox', { name: 'Admin active Run' })).toHaveValue(FAX_REFERENCE_RUN_ID)
     const runSelector = await screen.findByRole('combobox', { name: 'Admin active Run' })
     expect(runSelector).toHaveValue(FAX_REFERENCE_RUN_ID)
     expect(await screen.findByRole('combobox', { name: 'Admin active Branch' })).toHaveValue(`${FAX_REFERENCE_RUN_ID}-branch`)
@@ -99,7 +99,7 @@ describe('Layout mode navigation', () => {
   it('keeps nested Run routes in Run Admin scope', async () => {
     renderWithRoute(<Layout />, `/admin/runs/${FAX_REFERENCE_RUN_ID}/finals`)
 
-    expect(await screen.findByText('Admin / Engine Mode')).toBeInTheDocument()
+    expect(await screen.findByText('Administrace · Pre-alpha')).toBeInTheDocument()
     const nav = screen.getByRole('navigation', { name: 'Run Admin navigation' })
     expect(within(nav).getByRole('link', { name: 'World Tour Finals' })).toHaveAttribute('href', `/admin/runs/${FAX_REFERENCE_RUN_ID}/finals`)
     expect(screen.queryByRole('navigation', { name: 'Global Admin navigation' })).not.toBeInTheDocument()
@@ -127,7 +127,7 @@ describe('Layout mode navigation', () => {
     await waitFor(() => expect(screen.getByLabelText('Admin view time')).toHaveTextContent('S2007 · W42'))
 
     fireEvent.click(screen.getByRole('link', { name: 'Events' }))
-    await waitFor(() => expect(screen.getByRole('link', { name: 'Admin / Engine' })).toHaveAttribute('href', `/admin/runs/${FAX_REFERENCE_RUN_ID}/events`))
+    await waitFor(() => expect(screen.getByRole('link', { name: 'Events' })).toHaveClass('active'))
     expect(screen.getByRole('combobox', { name: 'Admin active Branch' })).toHaveValue('branch-b')
     expect(screen.getByLabelText('Admin view time')).toHaveTextContent('S2007 · W42')
   })
@@ -152,18 +152,18 @@ describe('Layout mode navigation', () => {
     await screen.findByRole('option', { name: /#418 · S2005 · W31/ })
     fireEvent.change(screen.getByRole('combobox', { name: 'Admin Time context' }), { target: { value: 'cp-old' } })
 
-    fireEvent.click(screen.getByRole('link', { name: 'Simulation' }))
-    await waitFor(() => expect(screen.getByRole('link', { name: 'Admin / Engine' })).toHaveAttribute('href', `/admin/runs/${FAX_REFERENCE_RUN_ID}/simulate`))
+    fireEvent.click(screen.getByRole('link', { name: 'Simulace' }))
+    await waitFor(() => expect(screen.getByRole('link', { name: 'Simulace' })).toHaveClass('active'))
     expect(screen.getByLabelText('Admin view time')).toHaveTextContent('Past · S2005 · W31')
-    fireEvent.click(screen.getByRole('link', { name: 'Home' }))
-    await waitFor(() => expect(screen.getByRole('link', { name: 'Admin / Engine' })).toHaveAttribute('href', `/admin/runs/${FAX_REFERENCE_RUN_ID}`))
+    fireEvent.click(screen.getByRole('link', { name: 'Domů' }))
+    await waitFor(() => expect(screen.getByRole('link', { name: 'Domů' })).toHaveClass('active'))
     expect(screen.getByLabelText('Admin view time')).toHaveTextContent('Past · S2005 · W31')
 
     fireEvent.click(screen.getByRole('link', { name: 'Events' }))
     expect(await screen.findByRole('heading', { name: 'Historical view is not available on this page yet.' })).toBeInTheDocument()
     expect(screen.getByLabelText('Admin view time')).toHaveTextContent('Past · S2005 · W31')
     fireEvent.click(screen.getByRole('link', { name: 'Open Run Home' }))
-    await waitFor(() => expect(screen.getByRole('link', { name: 'Admin / Engine' })).toHaveAttribute('href', `/admin/runs/${FAX_REFERENCE_RUN_ID}`))
+    await waitFor(() => expect(screen.getByRole('link', { name: 'Domů' })).toHaveClass('active'))
     expect(screen.getByLabelText('Admin view time')).toHaveTextContent('Past · S2005 · W31')
   })
 
@@ -192,7 +192,7 @@ describe('Layout mode navigation', () => {
     fireEvent.change(screen.getByRole('combobox', { name: 'Admin active Run' }), { target: { value: nextRunId } })
 
     await waitFor(() => expect(screen.getByRole('combobox', { name: 'Admin active Run' })).toHaveValue(nextRunId))
-    expect(screen.getByRole('link', { name: 'Admin / Engine' })).toHaveAttribute('href', `/admin/runs/${nextRunId}/branches`)
+    expect(screen.getByRole('link', { name: 'Historie a větve' })).toHaveClass('active')
     expect(localStorage.getItem('beta_engine:viewer_active_product_run_id')).toBe('viewer-run')
   })
 
@@ -204,14 +204,14 @@ describe('Layout mode navigation', () => {
     fireEvent.change(screen.getByRole('combobox', { name: 'Admin active Run' }), { target: { value: nextRunId } })
 
     await waitFor(() => expect(screen.getByRole('combobox', { name: 'Admin active Run' })).toHaveValue(nextRunId))
-    expect(screen.getByRole('link', { name: 'Admin / Engine' })).toHaveAttribute('href', `/admin/runs/${nextRunId}`)
-    expect(screen.getByRole('link', { name: 'Admin / Engine' })).not.toHaveAttribute('href', `/admin/runs/${nextRunId}/events/E123`)
+    expect(screen.getByRole('link', { name: 'Domů' })).toHaveClass('active')
+    expect(screen.getByRole('link', { name: 'Domů' })).not.toHaveAttribute('href', `/admin/runs/${nextRunId}/events/E123`)
   })
 
   it('keeps the Run creation route in Global Admin scope', async () => {
     renderWithRoute(<Layout />, '/admin/runs/new')
 
-    expect(await screen.findByText('Admin / Engine Mode')).toBeInTheDocument()
+    expect(await screen.findByText('Administrace · Pre-alpha')).toBeInTheDocument()
     expect(screen.getByRole('navigation', { name: 'Global Admin navigation' })).toBeInTheDocument()
     expect(screen.queryByRole('navigation', { name: 'Run Admin navigation' })).not.toBeInTheDocument()
     expect(screen.queryByText('Current run context: new')).not.toBeInTheDocument()

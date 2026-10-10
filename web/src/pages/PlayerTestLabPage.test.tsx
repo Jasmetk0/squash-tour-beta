@@ -7,7 +7,12 @@ import { renderWithRoute } from '../test/testUtils'
 
 const api = vi.hoisted(() => ({
   getPlayerLabBuiltInScenarios: vi.fn(),
-  runPlayerTestLab: vi.fn()
+  runPlayerTestLab: vi.fn(),
+  listInitialPopulationComparisons: vi.fn().mockResolvedValue([]),
+  getInitialPopulationComparison: vi.fn(),
+  getInitialPopulationPlayers: vi.fn(),
+  runInitialPopulationComparison: vi.fn(),
+  initialPopulationExportUrl: vi.fn()
 }))
 vi.mock('../api/client', () => api)
 

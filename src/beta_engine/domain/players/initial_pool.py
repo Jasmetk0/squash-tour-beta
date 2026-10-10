@@ -368,7 +368,7 @@ def initial_pool_effective_population_quantity(
 
 
 def initial_pool_birth_year_weights(season_start_year: int) -> dict[int, float]:
-    """Expected birth-year distribution under uniform FAX birth weeks."""
+    """Expected birth years for players already fifteen before opening Week 1."""
     from beta_engine.domain.calendar.season_weeks import (
         birth_year_for_age_at_calendar_position,
         season_week_to_calendar_position,
@@ -377,7 +377,9 @@ def initial_pool_birth_year_weights(season_start_year: int) -> dict[int, float]:
     position = season_week_to_calendar_position(season_start_year, 1)
     result: dict[int, float] = {}
     for age, age_weight in initial_pool_age_weights().items():
-        for birth_week in range(1, DEFAULT_WEEKS_PER_CALENDAR_YEAR + 1):
+        weeks = tuple(week for week in range(1, DEFAULT_WEEKS_PER_CALENDAR_YEAR + 1)
+                      if age != 15 or week != position.year_week)
+        for birth_week in weeks:
             birth_year = birth_year_for_age_at_calendar_position(
                 age=age,
                 birth_year_week=birth_week,
@@ -386,7 +388,7 @@ def initial_pool_birth_year_weights(season_start_year: int) -> dict[int, float]:
             )
             result[birth_year] = (
                 result.get(birth_year, 0.0)
-                + age_weight / DEFAULT_WEEKS_PER_CALENDAR_YEAR
+                + age_weight / len(weeks)
             )
     return dict(sorted(result.items()))
 
@@ -748,7 +750,8 @@ class InitialPlayerPoolGenerator:
         )
         player_id = f"P-{season_start_year}-{country.code}-{sequence:04d}"
         name = self._name(rng, country, sequence)
-        birth_week = rng.branch(SeedScope.SEASON, "fax_birth_year_week").randint(
+        birth_rng = rng.branch(SeedScope.SEASON, "fax_birth_year_week")
+        birth_week = birth_rng.randint(
             1, DEFAULT_WEEKS_PER_CALENDAR_YEAR
         )
         from beta_engine.domain.calendar.season_weeks import (
@@ -757,6 +760,14 @@ class InitialPlayerPoolGenerator:
         )
 
         initial_position = season_week_to_calendar_position(season_start_year, 1)
+        # Opening-week fifteenth birthdays belong to intake, not the initial pool.
+        # Keep every other established player draw unchanged; only redistribute
+        # this boundary collision uniformly across the sixty eligible birth weeks.
+        if age == 15 and birth_week == initial_position.year_week:
+            birth_week = birth_rng.choice(tuple(
+                week for week in range(1, DEFAULT_WEEKS_PER_CALENDAR_YEAR + 1)
+                if week != initial_position.year_week
+            ))
         birth_year = birth_year_for_age_at_calendar_position(
             age=age,
             birth_year_week=birth_week,

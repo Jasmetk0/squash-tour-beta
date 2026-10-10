@@ -1,5 +1,18 @@
 # Current implementation and next action
 
+## Earth initial-population comparison — implementation checkpoint (10 Oct 2026)
+
+- Base `buuk` verified at `320bd1fa` (merge #1345); GitHub PR search found no open PR.
+- Existing global Player Lab now uses the actual initial-pool generator for FIFA
+  Earth versus ATP Earth, immutable SQLite Test Sessions, raw players and JSON/CSV.
+- Targeted regressions cover replay, exact input identities, historical source
+  years/fallbacks, export sums, restart and saved-payload integrity. Production
+  source snapshots remain read-only and Run/Branch stores are untouched.
+- Reproduced/fixed the fifteenth birthday falling in opening Week 1; no talent or
+  historical-country retuning. Main measurement and actual browser acceptance are
+  the next actions. See `docs/EARTH_INITIAL_POPULATION_COMPARISON.md`.
+
+
 ## Real first-tournament browser acceptance — candidate PR (10 Oct 2026)
 
 - Verified integration base `buuk` at `b480036bb59f37e6d20bb03229f788ae184ca141`

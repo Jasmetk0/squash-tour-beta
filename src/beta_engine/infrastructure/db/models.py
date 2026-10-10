@@ -764,6 +764,15 @@ class MatchLabSessionModel(Base):
     payload_json: Mapped[str] = mapped_column(Text, nullable=False)
 
 
+class PlayerLabPopulationSessionModel(Base):
+    """Immutable global Player Lab result, outside every Run and Branch."""
+
+    __tablename__ = "player_lab_population_sessions"
+    session_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
 class TournamentLabSessionModel(Base):
     """Global editable Tournament Test Lab session, intentionally outside all Run/Branch scope."""
 

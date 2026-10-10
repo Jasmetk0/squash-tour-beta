@@ -85,7 +85,7 @@ def main() -> None:
             page.get_by_role("combobox", name="Language / Jazyk").select_option("en")
             expect(page.get_by_role("heading", name="Test Lab", exact=True)).to_be_visible()
             page.reload()
-            expect(page.get_by_role("heading", name="Test Lab")).to_be_visible()
+            expect(page.get_by_role("heading", name="Test Lab", exact=True)).to_be_visible()
             assert page.get_by_role("combobox", name="Language / Jazyk").input_value() == "en"
             evidence["language_persisted"] = "en"
 

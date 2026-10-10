@@ -91,8 +91,21 @@ def test_run_home_ranking_only_compares_consecutive_saved_publications_and_survi
         assert saved["status"] == "ready"
         assert saved["previous_week_ordinal"] == 0 and saved["current_week_ordinal"] == 1
         assert saved["current_row_count"] == 2
-        assert saved["total_change_count"] == 0
-        assert saved["changes"] == []
+        first_rows = {row.player_id: row for row in first.rows}
+        second_rows = {row.player_id: row for row in second.rows}
+        expected_changed_ids = {
+            player_id for player_id in first_rows.keys() | second_rows.keys()
+            if (
+                player_id not in first_rows or player_id not in second_rows or
+                first_rows[player_id].rank != second_rows[player_id].rank or
+                first_rows[player_id].points != second_rows[player_id].points
+            )
+        }
+        assert saved["total_change_count"] == len(expected_changed_ids)
+        assert {change["player_id"] for change in saved["changes"]} == expected_changed_ids
+        assert saved["moved_count"] == sum(
+            change["movement"] in {"up", "down"} for change in saved["changes"]
+        )
 
         # An extra unpublished/future weekly ranking cannot replace the saved head.
         with _database_session(db) as session:

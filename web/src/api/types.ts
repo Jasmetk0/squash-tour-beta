@@ -8412,3 +8412,32 @@ export type TournamentLabSessionRunRequest = {
   expected_session_fingerprint: string
   batch_match_seeds?: number[]
 }
+
+
+export type RunHomeActivityEvent = {
+  event_id: string
+  event_name: string
+  season: string
+  season_index: number
+  week: number
+  category: string
+  status: string
+}
+export type RunHomeActivityResult = RunHomeActivityEvent & {
+  champion_player_id: string
+  finalist_player_id: string
+}
+export type RunHomeActivity = {
+  schema_version: 'run_home_activity.v1'
+  run_id: string
+  branch_id: string
+  saved_revision_id: string
+  source: 'selected_branch_saved_revision'
+  calendar_status: 'empty' | 'ready' | 'unpositioned'
+  result_status: 'empty' | 'ready'
+  ranking_changes_status: 'unsupported'
+  total_calendar_events: number
+  published_result_count: number
+  upcoming: RunHomeActivityEvent[]
+  recent_results: RunHomeActivityResult[]
+}

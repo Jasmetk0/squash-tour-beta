@@ -4032,3 +4032,26 @@ export async function getInitialPopulationPlayers(sessionId: string, worldId: st
 export function initialPopulationExportUrl(sessionId: string, format: 'json' | 'csv'): string {
   return API_BASE + populationComparisonRoot + '/' + encodeURIComponent(sessionId) + '/export?format=' + format
 }
+
+
+/** Read-only, Saved Revision scoped; never falls back to legacy Run or Viewer Branch. */
+export async function getRunHomeActivity(
+  runId: string, branchId: string
+): Promise<import('./types').RunHomeActivity> {
+  const data = await request<import('./types').RunHomeActivity>(
+    `/admin/runs/${encodeURIComponent(runId)}/branches/${encodeURIComponent(branchId)}/home-activity`
+  )
+  if (
+    data.schema_version !== 'run_home_activity.v1' ||
+    data.run_id !== runId || data.branch_id !== branchId ||
+    data.source !== 'selected_branch_saved_revision' ||
+    !data.saved_revision_id?.trim() ||
+    !['empty','ready','unpositioned'].includes(data.calendar_status) ||
+    !['empty','ready'].includes(data.result_status) ||
+    data.ranking_changes_status !== 'unsupported' ||
+    !Array.isArray(data.upcoming) || !Array.isArray(data.recent_results) ||
+    data.upcoming.some(event => !event.event_id || event.season_index < 0 || event.season_index > 49 || event.week < 1 || event.week > 61) ||
+    data.recent_results.some(event => !event.event_id || !event.champion_player_id || !event.finalist_player_id)
+  ) throw new Error('Home activity does not belong to the selected Run / Branch or is invalid.')
+  return data
+}

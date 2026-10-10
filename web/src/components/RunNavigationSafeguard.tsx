@@ -8,12 +8,17 @@ import { useEffect } from 'react'
 export function RunNavigationSafeguard({ runId }: { runId: string }): null {
   useEffect(() => {
     let formEdited = false
+    const shell = document.querySelector('.app-shell--admin')
+    shell?.removeAttribute('data-run-form-edited')
     const currentPrefix = '/admin/runs/' + encodeURIComponent(runId)
 
     const recordEdit = (event: Event): void => {
       const target = event.target
       if (!(target instanceof HTMLElement) || !target.closest('main')) return
-      if (target.matches('input, textarea, select')) formEdited = true
+      if (target.matches('input, textarea, select')) {
+        formEdited = true
+        shell?.setAttribute('data-run-form-edited', 'true')
+      }
     }
     const confirmLink = (event: MouseEvent): void => {
       if (event.defaultPrevented || event.button !== 0 || event.ctrlKey || event.altKey || event.metaKey || event.shiftKey) return
@@ -34,6 +39,7 @@ export function RunNavigationSafeguard({ runId }: { runId: string }): null {
         return
       }
       formEdited = false
+      shell?.removeAttribute('data-run-form-edited')
     }
     const protectReload = (event: BeforeUnloadEvent): void => {
       if (!formEdited) return
@@ -45,6 +51,7 @@ export function RunNavigationSafeguard({ runId }: { runId: string }): null {
     document.addEventListener('click', confirmLink, true)
     window.addEventListener('beforeunload', protectReload)
     return () => {
+      shell?.removeAttribute('data-run-form-edited')
       document.removeEventListener('input', recordEdit, true)
       document.removeEventListener('change', recordEdit, true)
       document.removeEventListener('click', confirmLink, true)

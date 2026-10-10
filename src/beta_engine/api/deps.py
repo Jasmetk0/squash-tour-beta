@@ -269,6 +269,16 @@ def get_player_test_lab_service() -> PlayerTestLabService:
     return PlayerTestLabService()
 
 
+def get_initial_population_comparison_service(request: Request):
+    from beta_engine.application.initial_population_comparison_service import (
+        InitialPopulationComparisonService,
+    )
+    return InitialPopulationComparisonService(
+        adapter=get_world_package_run_adapter(request),
+        session_factory=get_runtime(request).repository._session_factory,
+    )
+
+
 def get_tournament_test_lab_service(request: Request) -> TournamentTestLabService:
     runtime = get_runtime(request)
     return TournamentTestLabService(

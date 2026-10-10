@@ -3988,3 +3988,47 @@ export async function runTournamentLabSession(
     { method: 'POST', body: JSON.stringify(payload) }
   )
 }
+
+const populationComparisonRoot = '/admin/labs/player/population-comparisons'
+function assertInitialPopulationIdentity(data: import('./initialPopulationComparison').PopulationComparison): void {
+  const worlds = data.request.world_ids
+  if (data.schema_version !== 'player_lab_initial_population_comparison.v1' ||
+      worlds.length !== 2 || new Set(worlds).size !== 2 ||
+      !worlds.every(world => world === 'fifa_earth' || world === 'atp_earth') ||
+      data.sources.length !== 2 || data.aggregates.length !== 2 ||
+      !worlds.every(world => data.sources.filter(source => source.world_id === world).length === 1 &&
+        data.aggregates.filter(aggregate => aggregate.world_id === world).length === 1) ||
+      data.runs.length !== worlds.length * data.request.seeds.length ||
+      !worlds.every(world => data.request.seeds.every(seed => data.runs.filter(run =>
+        run.world_id === world && run.seed === seed && run.summary.player_count === data.request.player_count).length === 1))) {
+    throw new Error('Saved population comparison identity mismatch.')
+  }
+}
+export async function runInitialPopulationComparison(payload: import('./initialPopulationComparison').PopulationRequest): Promise<import('./initialPopulationComparison').PopulationComparison> {
+  const data = await request<import('./initialPopulationComparison').PopulationComparison>(populationComparisonRoot, {method: 'POST', body: JSON.stringify(payload)})
+  assertInitialPopulationIdentity(data)
+  const season = `${Number(payload.season.split('/')[0])}/${Number(payload.season.split('/')[0]) + 1}`
+  if (JSON.stringify(data.request.world_ids) !== JSON.stringify(payload.world_ids) || data.request.season !== season ||
+      data.request.player_count !== payload.player_count || JSON.stringify(data.request.seeds) !== JSON.stringify(payload.seeds)) {
+    throw new Error('Generated population comparison differs from requested inputs.')
+  }
+  return data
+}
+export async function listInitialPopulationComparisons(): Promise<import('./initialPopulationComparison').PopulationSessionList> {
+  return request(populationComparisonRoot)
+}
+export async function getInitialPopulationComparison(sessionId: string): Promise<import('./initialPopulationComparison').PopulationComparison> {
+  const data = await request<import('./initialPopulationComparison').PopulationComparison>(populationComparisonRoot + '/' + encodeURIComponent(sessionId))
+  assertInitialPopulationIdentity(data)
+  if (data.session_id !== sessionId) throw new Error('Saved population comparison identity mismatch.')
+  return data
+}
+export async function getInitialPopulationPlayers(sessionId: string, worldId: string, seed: number, expectedFingerprint?: string): Promise<import('./initialPopulationComparison').PopulationPlayers> {
+  const data = await request<import('./initialPopulationComparison').PopulationPlayers>(populationComparisonRoot + '/' + encodeURIComponent(sessionId) + '/players/' + encodeURIComponent(worldId) + '/' + seed)
+  if (data.session_id !== sessionId || data.world_id !== worldId || data.seed !== seed ||
+      (expectedFingerprint != null && data.gameplay_fingerprint !== expectedFingerprint)) throw new Error('Saved population identity mismatch.')
+  return data
+}
+export function initialPopulationExportUrl(sessionId: string, format: 'json' | 'csv'): string {
+  return API_BASE + populationComparisonRoot + '/' + encodeURIComponent(sessionId) + '/export?format=' + format
+}

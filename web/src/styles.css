@@ -1989,3 +1989,9 @@ textarea:focus-visible {
 .ranking-preparation textarea { min-height: 5rem; padding: 0.5rem; border: 1px solid #cbd5e1; border-radius: 8px; font: inherit; resize: vertical; }
 .ranking-preparation input, .ranking-preparation select, .ranking-preparation textarea { min-width: 0; }
 .ranking-preparation button { margin: 0.3rem 0.4rem 0.3rem 0; }
+
+/* Scoped to the production population comparison; keep dense numbers readable. */
+.initial-population-comparison .table-scroll { margin: 0.75rem 0; }
+.initial-population-comparison table { border-collapse: collapse; width: 100%; }
+.initial-population-comparison th,
+.initial-population-comparison td { padding: 0.45rem 0.6rem; text-align: left; border-bottom: 1px solid #e2e8f0; }

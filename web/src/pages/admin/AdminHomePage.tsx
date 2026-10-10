@@ -1,57 +1,44 @@
-import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
-
-import { getCountriesMetadata, getTournamentTemplatesMetadata, listRuns } from '../../api/client'
-import { LinkCardGrid } from '../../components/LinkCardGrid'
+import { Link } from 'react-router-dom'
+import { listRunContainers, listWorldPackages } from '../../api/client'
+import { useLanguage } from '../../i18n/LanguageContext'
+import { readRecentProductRuns, rememberProductRun } from '../../navigation/recentProductRuns'
+import { formatApiError } from '../../utils/apiErrors'
 
 export function AdminHomePage(): JSX.Element {
-  const countriesQuery = useQuery({ queryKey: ['admin-dashboard-countries-metadata'], queryFn: getCountriesMetadata, retry: false })
-  const templatesQuery = useQuery({ queryKey: ['admin-dashboard-tournament-templates-metadata'], queryFn: getTournamentTemplatesMetadata, retry: false })
-  const runsQuery = useQuery({ queryKey: ['admin-dashboard-runs'], queryFn: listRuns, retry: false })
-  const latestRun = useMemo(() => runsQuery.data?.runs[runsQuery.data.runs.length - 1] ?? null, [runsQuery.data?.runs])
-
-  const statusCards = [
-    { label: 'Active world', value: latestRun ? latestRun.run_id : 'Not available yet' },
-    { label: 'Active season', value: latestRun ? String(latestRun.season) : 'Not available yet' },
-    { label: 'Current season week', value: 'Pending backend integration' },
-    { label: 'Current calendar year/week', value: 'Pending backend integration' },
-    { label: 'Countries', value: countriesQuery.data ? String(countriesQuery.data.country_count) : countriesQuery.isLoading ? 'Loading…' : 'Not available yet' },
-    { label: 'Players', value: 'Run-scoped; open a run' },
-    { label: 'Tournament templates', value: templatesQuery.data ? String(templatesQuery.data.template_count) : templatesQuery.isLoading ? 'Loading…' : 'Not available yet' },
-    { label: 'Scheduled events', value: latestRun ? String(latestRun.progress.total_events) : 'Not available yet' },
-    { label: 'Simulation status', value: latestRun ? `${latestRun.progress.completed_event_count}/${latestRun.progress.total_events} events complete` : 'Not running' },
-    { label: 'Validation issues', value: countriesQuery.isError || templatesQuery.isError ? 'Metadata unavailable' : 'No dashboard validation feed yet' },
-    { label: 'Stale/invalid history warnings', value: 'Pending backend integration' }
+  const { language, t } = useLanguage()
+  const runs = useQuery({ queryKey: ['canonical-run-containers'], queryFn: listRunContainers, retry: false })
+  const worlds = useQuery({ queryKey: ['world-packages'], queryFn: listWorldPackages, retry: false })
+  const all = runs.data?.run_containers ?? []
+  const recentIds = readRecentProductRuns()
+  const recent = recentIds.map(id => all.find(run => run.run_id === id)).filter((run): run is typeof all[number] => Boolean(run))
+  const others = all.filter(run => !recentIds.includes(run.run_id)).slice(0, 5)
+  const runCount = runs.isPending ? t('Loading') : runs.isError ? t('Unavailable') : String(all.length)
+  const worldCount = worlds.isPending ? t('Loading') : worlds.isError ? t('Unavailable') : String(worlds.data.packages.length)
+  const entryCards = [
+    { name: 'Runs', to: '/admin/runs', summary: t('Create, open and manage independent saved worlds.'), metric: t('Saved Runs') + ': ' + runCount },
+    { name: 'Packages', to: '/admin/packages', summary: t('Browse source packages; applying a package creates a Run-owned copy.'), metric: t('World packages') + ': ' + worldCount },
+    { name: 'Test Lab', to: '/admin/labs', summary: t('Run isolated Match, Tournament and Player experiments.'), metric: language === 'cs' ? '3 dostupné laboratoře' : '3 available labs' }
   ]
-
-  return (
-    <section className="panel">
-      <div className="page-intro">
-        <h2>Admin Engine Dashboard</h2>
-        <p className="subtitle">Operational workspace for building, editing, validating, regenerating, and simulating worlds.</p>
-      </div>
-      <div className="dashboard-grid">
-        {statusCards.map((card) => (
-          <article className="metric-card" key={card.label}>
-            <span>{card.label}</span>
-            <strong>{card.value}</strong>
-          </article>
-        ))}
-      </div>
-      <p className="status">Dashboard cards use available backend metadata where present and explicit placeholders where backend status is not exposed yet.</p>
-      <LinkCardGrid
-        cards={[
-          { title: 'World', description: 'Countries, Talent Preview, and world model inputs.', to: '/admin/world' },
-          { title: 'Players', description: 'Player database, future Talent Intake, custom players, locks, and audits.', to: '/admin/players' },
-          { title: 'Tour & Seasons', description: 'Categories, tournaments, season templates, concrete calendars, and validation. Includes existing Tournament Templates and Seasons pages.', to: '/admin/tour-seasons' },
-          { title: 'Runs', description: 'Master Run and sandbox run management.', to: '/admin/runs' },
-          { title: 'Simulate', description: 'Simulation launcher for match, round, tournament, week, season, and full timeline.', to: '/admin/simulate' },
-          { title: 'Match Lab', description: 'Global isolated replayable Match Engine scenarios and diagnostics.', to: '/admin/labs/match' },
-          { title: 'Player Lab', description: 'Global isolated player development scenarios over canonical sporting kernels.', to: '/admin/labs/player' },
-          { title: 'Tournament Lab', description: 'Global isolated tournament format, draw, progression, and batch diagnostics.', to: '/admin/labs/tournament' },
-          { title: 'Diagnostics', description: 'World balance, calendar validation, run health, invalidated data, and future narrative locks.', to: '/admin/diagnostics' }
-        ]}
-      />
+  return <section className="panel global-home">
+    <div className="page-intro"><p className="eyebrow">PRE-ALPHA · ADMIN</p><h2>{t('Squash Engine Home')}</h2>
+      <p className="subtitle">{t('A world-building and simulation workspace. Choose what to work with.')}</p></div>
+    <div className="home-entry-grid">{entryCards.map(card => <Link className="home-entry" key={card.to} to={card.to}>
+      <span className="eyebrow">{card.metric}</span><h3>{t(card.name)} ↗</h3><p>{card.summary}</p>
+    </Link>)}</div>
+    <section className="home-recent" aria-label="Saved Product Runs">
+      <div className="home-recent__heading"><h3>{t('Saved Product Runs')}</h3><Link to="/admin/runs/new">{t('Create Run')} +</Link></div>
+      {runs.isPending && <p role="status">{t('Loading')}</p>}
+      {runs.isError && <p role="alert" className="error">{t('Unavailable')}: {formatApiError(runs.error)}</p>}
+      {runs.isSuccess && all.length === 0 && <p className="status">{t('No Runs yet')}</p>}
+      {runs.isSuccess && recent.length > 0 && <><h4>{t('Recently opened')}</h4><ul className="home-run-list">
+        {recent.map(run => <li key={run.run_id}><span><strong>{run.display_name || run.run_id}</strong><small>{run.status} · {run.read_only ? 'Read-only' : 'Editable'}</small></span>
+          <Link to={'/admin/runs/' + encodeURIComponent(run.run_id)} onClick={() => rememberProductRun(run.run_id)}>{t('Open Run')} →</Link></li>)}</ul></>}
+      {runs.isSuccess && others.length > 0 && <><h4>{recent.length ? t('Other saved Runs') : t('Saved Product Runs')}</h4><ul className="home-run-list">
+        {others.map(run => <li key={run.run_id}><span><strong>{run.display_name || run.run_id}</strong><small>{run.status} · {run.read_only ? 'Read-only' : 'Editable'}</small></span>
+          <Link to={'/admin/runs/' + encodeURIComponent(run.run_id)} onClick={() => rememberProductRun(run.run_id)}>{t('Open Run')} →</Link></li>)}</ul></>}
+      <p className="status">{language === 'cs' ? 'Na globální stránce není aktivní Run, branch ani čas. Run se otevírá pouze tvým kliknutím.' :
+        'No Run, Branch or Time is active on this page. Opening a Run requires an explicit click.'}</p>
     </section>
-  )
+  </section>
 }

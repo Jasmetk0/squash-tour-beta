@@ -65,6 +65,7 @@ import { RolloverPage } from './pages/RolloverPage'
 import { RolloverSeasonDetailPage } from './pages/RolloverSeasonDetailPage'
 import { RunDiagnosticsPage } from './pages/RunDiagnosticsPage'
 import { RunPage } from './pages/RunPage'
+import { RunPlayerSavedProfilePage } from './pages/RunPlayerSavedProfilePage'
 import { RunCreatePage } from './pages/RunCreatePage'
 import { RunSimulationPage } from './pages/RunSimulationPage'
 import { AdminRankingCandidatesPage } from './pages/AdminRankingCandidatesPage'
@@ -176,6 +177,7 @@ export default function App(): JSX.Element {
         <Route path="admin/runs/:runId/calendar/:eventId" element={<PlannedEventDetailPage />} />
         <Route path="admin/runs/:runId/activity" element={<ActivityPage />} />
         <Route path="admin/runs/:runId/players" element={<PlayersPage />} />
+        <Route path="admin/runs/:runId/players/:playerId" element={<RunPlayerSavedProfilePage />} />
         <Route path="admin/runs/:runId/players/intake" element={<TalentIntakePage />} />
         <Route path="admin/runs/:runId/players/:playerId/career" element={<PlayerCareerPage />} />
         <Route path="admin/runs/:runId/nations" element={<NationsPage />} />

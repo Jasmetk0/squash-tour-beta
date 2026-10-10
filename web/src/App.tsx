@@ -9,7 +9,9 @@ import { EventsPage } from './pages/EventsPage'
 import { FinalsPage } from './pages/FinalsPage'
 import { FinalsQualificationDetailPage } from './pages/FinalsQualificationDetailPage'
 import { FinalsResultDetailPage } from './pages/FinalsResultDetailPage'
-import { LandingPage } from './pages/LandingPage'
+import { PackagesHomePage } from './pages/admin/PackagesHomePage'
+import { TestLabHomePage } from './pages/admin/TestLabHomePage'
+import { RunManagementPage } from './pages/RunManagementPage'
 import {
   AdminHomePage,
   AdminPlayersDatabasePage,
@@ -118,9 +120,11 @@ export default function App(): JSX.Element {
   return (
     <Routes>
       <Route path="/" element={<Layout />}>
-        <Route index element={<LandingPage />} />
+        <Route index element={<Navigate to="/admin" replace />} />
 
         <Route path="admin" element={<AdminHomePage />} />
+        <Route path="admin/packages" element={<PackagesHomePage />} />
+        <Route path="admin/labs" element={<TestLabHomePage />} />
         <Route path="admin/world" element={<AdminWorldPage />} />
         <Route path="admin/world/library" element={<WorldLibraryPage />} />
         <Route path="admin/world/library/:worldId" element={<WorldLibraryDetailPage />} />
@@ -161,6 +165,7 @@ export default function App(): JSX.Element {
         <Route path="admin/runs/new" element={<RunCreatePage />} />
         <Route path="admin/runs" element={<RunsPage />} />
         <Route path="admin/runs/:runId" element={<RunPage />} />
+        <Route path="admin/runs/:runId/manage" element={<RunManagementPage />} />
         <Route path="admin/runs/:runId/simulate" element={<RunSimulationPage />} />
         <Route path="admin/runs/:runId/branches/:branchId/ranking-candidates" element={<AdminRankingCandidatesPage />} />
         <Route path="admin/runs/:runId/branches/:branchId/ranking-candidates/:seasonIndex/:week" element={<AdminRankingCandidatesPage />} />

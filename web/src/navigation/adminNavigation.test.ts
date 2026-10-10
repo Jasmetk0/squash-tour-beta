@@ -1,38 +1,20 @@
 import { describe, expect, it } from 'vitest'
+import { globalAdminNav, globalAdminBottomNav, runAdminNavFor, runAdminBottomNavFor } from './adminNavigation'
 
-import { globalAdminNav, runAdminNavFor } from './adminNavigation'
-
-describe('adminNavigation', () => {
-  it('keeps Global Admin navigation labels, order, and hrefs stable', () => {
-    expect(globalAdminNav).toEqual([
-      { to: '/admin', label: 'Dashboard' },
-      { to: '/admin/world', label: 'World' },
-      { to: '/admin/players', label: 'Players' },
-      { to: '/admin/tour-seasons', label: 'Tour & Seasons' },
-      { to: '/admin/runs', label: 'Runs' },
-      { to: '/admin/simulate', label: 'Simulate' },
-      { to: '/admin/diagnostics', label: 'Diagnostics' },
-      { to: '/admin/settings', label: 'Settings' }
-    ])
+describe('approved pre-alpha navigation', () => {
+  it('has exactly the approved four global sections and separate application settings', () => {
+    expect(globalAdminNav.map(item => item.label)).toEqual(['Home', 'Runs', 'Packages', 'Test Lab'])
+    expect(globalAdminBottomNav).toEqual([{ to: '/admin/settings', label: 'Settings' }])
   })
-
-  it('keeps Run Admin navigation labels, order, and hrefs stable', () => {
-    expect(runAdminNavFor('run-a')).toEqual([
-      { to: '/admin/runs/run-a', label: 'Home' },
-      { to: '/admin/runs/run-a/simulate', label: 'Simulation' },
-      { to: '/admin/runs/run-a/events', label: 'Events' },
-      { to: '/admin/runs/run-a/calendar', label: 'Season Calendar' },
-      { to: '/admin/runs/run-a/activity', label: 'Activity' },
-      { to: '/admin/runs/run-a/players', label: 'Players' },
-      { to: '/admin/runs/run-a/nations', label: 'Nations' },
-      { to: '/admin/runs/run-a/diagnostics', label: 'Diagnostics' },
-      { to: '/admin/runs/run-a/world-generation', label: 'World Generation' },
-      { to: '/admin/runs/run-a/finals', label: 'World Tour Finals' },
-      { to: '/admin/runs/run-a/rollover', label: 'Season Rollover' },
-      { to: '/admin/runs/run-a/bootstrap-lineage', label: 'Bootstrap / Lineage' },
-      { to: '/admin/runs/run-a/season-chain', label: 'Season Chain' },
-      { to: '/admin/runs/run-a/snapshots/ranking', label: 'Ranking Snapshots' },
-      { to: '/admin/runs/run-a/snapshots/race', label: 'Race Snapshots' }
+  it('has seven Run categories, functional routes and separate Run Management', () => {
+    const items = runAdminNavFor('run-a')
+    expect(items.map(item => item.label)).toEqual(['Home', 'World', 'Players', 'Tour', 'Rankings & Analytics', 'Simulation', 'History & Branches'])
+    expect(items.map(item => item.to)).toEqual([
+      '/admin/runs/run-a', '/admin/runs/run-a/nations', '/admin/runs/run-a/players',
+      '/admin/runs/run-a/calendar', '/admin/runs/run-a/snapshots/ranking',
+      '/admin/runs/run-a/simulate', '/admin/runs/run-a/branches'
     ])
+    expect(runAdminBottomNavFor('run-a')[0].to).toBe('/admin/runs/run-a/manage')
+    expect(items.find(item => item.label === 'Tour')?.children?.some(item => item.to.endsWith('/finals'))).toBe(true)
   })
 })

@@ -33,7 +33,14 @@ export function AdminRunSelector({ pathname, runId }: AdminRunSelectorProps): JS
         <select
           aria-label="Admin active Run"
           value={runId}
-          onChange={event => navigate(adminRunSwitchTarget(pathname, event.target.value))}
+          onChange={event => {
+            if (document.querySelector('.app-shell--admin')?.getAttribute('data-run-form-edited') === 'true'
+              && !window.confirm('You have edited a Run form. Save or discard those edits before switching Runs. Continue?')) {
+              event.currentTarget.value = runId
+              return
+            }
+            navigate(adminRunSwitchTarget(pathname, event.target.value))
+          }}
           disabled={query.isLoading || runs.length === 0}
         >
           {currentIsMissing ? <option value={runId}>{runId}</option> : null}

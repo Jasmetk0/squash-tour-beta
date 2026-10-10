@@ -1,0 +1,82 @@
+name: Pre-alpha Shell Browser
+
+# Real Chromium + production HTTP/SQLite, separate from short Fast CI.
+# Scoped to changes in the approved pre-alpha shell and its acceptance test.
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/prealpha-shell-browser.yml'
+      - 'web/acceptance/prealpha_shell_browser_smoke.py'
+      - 'web/src/components/AdminNavigation.tsx'
+      - 'web/src/components/AppShellHeader.tsx'
+      - 'web/src/components/Layout.tsx'
+      - 'web/src/pages/admin/AdminHomePage.tsx'
+      - 'web/src/pages/admin/PackagesHomePage.tsx'
+      - 'web/src/pages/admin/TestLabHomePage.tsx'
+      - 'web/src/pages/RunManagementPage.tsx'
+      - 'web/src/styles.css'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: pyproject.toml
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: Install backend and browser driver
+        run: python -m pip install -e . playwright
+      - name: Install frontend
+        run: npm --prefix web ci
+      - name: Prepare Chromium
+        run: |
+          if [ -x /usr/bin/google-chrome ]; then
+            echo "CHROME_BIN=/usr/bin/google-chrome" >> "$GITHUB_ENV"
+          else
+            python -m playwright install --with-deps chromium
+            echo "CHROME_BIN=$(python -c 'from playwright.sync_api import sync_playwright; p=sync_playwright().start(); print(p.chromium.executable_path); p.stop()')" >> "$GITHUB_ENV"
+          fi
+      - name: Start real disposable FastAPI and Vite
+        shell: bash
+        run: |
+          mkdir -p "$RUNNER_TEMP/prealpha-shell-artifacts"
+          python scripts/admin_first_tournament_smoke.py --serve "$RUNNER_TEMP/prealpha-shell-run" --port 8001 > "$RUNNER_TEMP/prealpha-shell-artifacts/api.log" 2>&1 &
+          echo $! > "$RUNNER_TEMP/prealpha-shell-artifacts/api.pid"
+          VITE_API_BASE_URL=http://127.0.0.1:8001 npm --prefix web run dev -- --host 127.0.0.1 --port 5173 --strictPort > "$RUNNER_TEMP/prealpha-shell-artifacts/web.log" 2>&1 &
+          echo $! > "$RUNNER_TEMP/prealpha-shell-artifacts/web.pid"
+          for attempt in $(seq 1 90); do
+            if curl --fail --silent http://127.0.0.1:8001/health >/dev/null &&
+               curl --fail --silent http://127.0.0.1:5173/ >/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "Production API or Vite did not become ready"
+          cat "$RUNNER_TEMP/prealpha-shell-artifacts/api.log"
+          cat "$RUNNER_TEMP/prealpha-shell-artifacts/web.log"
+          exit 1
+      - name: Real Product Run browser acceptance
+        run: |
+          python web/acceptance/prealpha_shell_browser_smoke.py \
+            --base-url http://127.0.0.1:5173 \
+            --artifacts "$RUNNER_TEMP/prealpha-shell-artifacts"
+      - name: Preserve browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: prealpha-shell-browser-${{ github.run_id }}
+          path: ${{ runner.temp }}/prealpha-shell-artifacts/
+          if-no-files-found: warn
+          retention-days: 14

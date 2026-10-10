@@ -1,56 +1,33 @@
-import { render, screen, within } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
-import { describe, expect, it } from 'vitest'
-
+import { beforeEach, describe, expect, it } from 'vitest'
 import { AdminNavigation } from './AdminNavigation'
+import { LanguageProvider } from '../i18n/LanguageContext'
 
-function renderAdminNavigation(runId?: string): void {
-  render(
-    <MemoryRouter initialEntries={[runId ? `/admin/runs/${runId}/finals` : '/admin']}>
-      <AdminNavigation scope={runId ? { kind: 'run', runId } : { kind: 'global' }} />
-    </MemoryRouter>
-  )
+function renderNav(pathname: string): void {
+  const run = pathname.match(/^\/admin\/runs\/([^/]+)/)
+  render(<MemoryRouter initialEntries={[pathname]}><LanguageProvider>
+    <AdminNavigation scope={run ? { kind: 'run', runId: run[1] } : { kind: 'global' }} />
+  </LanguageProvider></MemoryRouter>)
 }
 
-describe('AdminNavigation', () => {
-  it('renders primary Admin navigation labels and hrefs without a run context', () => {
-    renderAdminNavigation()
-
-    const primaryNav = screen.getByRole('navigation', { name: 'Global Admin navigation' })
-
-    expect(within(primaryNav).getByRole('link', { name: 'Dashboard' })).toHaveAttribute('href', '/admin')
-    expect(within(primaryNav).getByRole('link', { name: 'World' })).toHaveAttribute('href', '/admin/world')
-    expect(within(primaryNav).getByRole('link', { name: 'Players' })).toHaveAttribute('href', '/admin/players')
-    expect(within(primaryNav).getByRole('link', { name: 'Tour & Seasons' })).toHaveAttribute('href', '/admin/tour-seasons')
-    expect(within(primaryNav).getByRole('link', { name: 'Runs' })).toHaveAttribute('href', '/admin/runs')
-    expect(within(primaryNav).getByRole('link', { name: 'Simulate' })).toHaveAttribute('href', '/admin/simulate')
-    expect(within(primaryNav).getByRole('link', { name: 'Diagnostics' })).toHaveAttribute('href', '/admin/diagnostics')
-    expect(within(primaryNav).getByRole('link', { name: 'Settings' })).toHaveAttribute('href', '/admin/settings')
-    expect(screen.queryByRole('navigation', { name: 'Run Admin navigation' })).not.toBeInTheDocument()
-    expect(screen.queryByText(/Current run context:/)).not.toBeInTheDocument()
+describe('pre-alpha navigation sidebar', () => {
+  beforeEach(() => localStorage.clear())
+  it('keeps only global Home, Runs, Packages and Test Lab above bottom settings', () => {
+    renderNav('/admin')
+    const nav = screen.getByRole('navigation', { name: 'Global Admin navigation' })
+    expect(within(nav).getAllByRole('link').map(link => link.getAttribute('href'))).toEqual([
+      '/admin', '/admin/runs', '/admin/packages', '/admin/labs'
+    ])
+    expect(screen.getByRole('navigation', { name: 'Application settings navigation' })).toHaveTextContent('Nastavení aplikace')
   })
-
-  it('renders run-scoped Admin navigation labels, hrefs, and current run context', () => {
-    renderAdminNavigation('run-a')
-
-    const runNav = screen.getByRole('navigation', { name: 'Run Admin navigation' })
-
-    expect(screen.queryByRole('navigation', { name: 'Global Admin navigation' })).not.toBeInTheDocument()
-    expect(within(runNav).getByRole('link', { name: 'Back to Global' })).toHaveAttribute('href', '/admin')
-    expect(within(runNav).getByRole('link', { name: 'Home' })).toHaveAttribute('href', '/admin/runs/run-a')
-    expect(within(runNav).getByRole('link', { name: 'Events' })).toHaveAttribute('href', '/admin/runs/run-a/events')
-    expect(within(runNav).getByRole('link', { name: 'Season Calendar' })).toHaveAttribute('href', '/admin/runs/run-a/calendar')
-    expect(within(runNav).getByRole('link', { name: 'Activity' })).toHaveAttribute('href', '/admin/runs/run-a/activity')
-    expect(within(runNav).getByRole('link', { name: 'Players' })).toHaveAttribute('href', '/admin/runs/run-a/players')
-    expect(within(runNav).getByRole('link', { name: 'Nations' })).toHaveAttribute('href', '/admin/runs/run-a/nations')
-    expect(within(runNav).getByRole('link', { name: 'Diagnostics' })).toHaveAttribute('href', '/admin/runs/run-a/diagnostics')
-    expect(within(runNav).getByRole('link', { name: 'World Generation' })).toHaveAttribute('href', '/admin/runs/run-a/world-generation')
-    expect(within(runNav).getByRole('link', { name: 'World Tour Finals' })).toHaveAttribute('href', '/admin/runs/run-a/finals')
-    expect(within(runNav).getByRole('link', { name: 'Season Rollover' })).toHaveAttribute('href', '/admin/runs/run-a/rollover')
-    expect(within(runNav).getByRole('link', { name: 'Bootstrap / Lineage' })).toHaveAttribute('href', '/admin/runs/run-a/bootstrap-lineage')
-    expect(within(runNav).getByRole('link', { name: 'Season Chain' })).toHaveAttribute('href', '/admin/runs/run-a/season-chain')
-    expect(within(runNav).getByRole('link', { name: 'Ranking Snapshots' })).toHaveAttribute('href', '/admin/runs/run-a/snapshots/ranking')
-    expect(within(runNav).getByRole('link', { name: 'Race Snapshots' })).toHaveAttribute('href', '/admin/runs/run-a/snapshots/race')
-    expect(screen.getByText('Current run context: run-a')).toBeInTheDocument()
+  it('retains run context and nested active categories, allowing submenu expansion', () => {
+    renderNav('/admin/runs/run-a/finals')
+    const nav = screen.getByRole('navigation', { name: 'Run Admin navigation' })
+    expect(within(nav).getByRole('link', { name: 'Tour' })).toHaveClass('active')
+    expect(within(nav).getByRole('link', { name: 'World Tour Finals' })).toHaveAttribute('href', '/admin/runs/run-a/finals')
+    expect(screen.getByRole('navigation', { name: 'Run management navigation' })).toHaveTextContent('Správa Runu')
+    fireEvent.click(screen.getByRole('button', { name: 'Sbalit navigaci' }))
+    expect(screen.getByRole('button', { name: 'Rozbalit navigaci' })).toBeInTheDocument()
   })
 })

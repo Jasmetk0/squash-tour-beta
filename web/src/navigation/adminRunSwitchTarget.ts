@@ -1,6 +1,7 @@
 const SAFE_RUN_SUFFIXES = new Set([
   '',
   '/activity',
+  '/manage',
   '/bootstrap-lineage',
   '/branches',
   '/calendar',

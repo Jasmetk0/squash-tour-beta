@@ -1,35 +1,54 @@
 export type AdminNavItem = {
   to: string
   label: string
+  children?: AdminNavItem[]
 }
 
 export const globalAdminNav: AdminNavItem[] = [
-  { to: '/admin', label: 'Dashboard' },
-  { to: '/admin/world', label: 'World' },
-  { to: '/admin/players', label: 'Players' },
-  { to: '/admin/tour-seasons', label: 'Tour & Seasons' },
+  { to: '/admin', label: 'Home' },
   { to: '/admin/runs', label: 'Runs' },
-  { to: '/admin/simulate', label: 'Simulate' },
-  { to: '/admin/diagnostics', label: 'Diagnostics' },
+  { to: '/admin/packages', label: 'Packages' },
+  { to: '/admin/labs', label: 'Test Lab' },
+]
+export const globalAdminBottomNav: AdminNavItem[] = [
   { to: '/admin/settings', label: 'Settings' }
 ]
 
 export function runAdminNavFor(runId: string): AdminNavItem[] {
+  const base = '/admin/runs/' + encodeURIComponent(runId)
   return [
-    { to: `/admin/runs/${runId}`, label: 'Home' },
-    { to: `/admin/runs/${runId}/simulate`, label: 'Simulation' },
-    { to: `/admin/runs/${runId}/events`, label: 'Events' },
-    { to: `/admin/runs/${runId}/calendar`, label: 'Season Calendar' },
-    { to: `/admin/runs/${runId}/activity`, label: 'Activity' },
-    { to: `/admin/runs/${runId}/players`, label: 'Players' },
-    { to: `/admin/runs/${runId}/nations`, label: 'Nations' },
-    { to: `/admin/runs/${runId}/diagnostics`, label: 'Diagnostics' },
-    { to: `/admin/runs/${runId}/world-generation`, label: 'World Generation' },
-    { to: `/admin/runs/${runId}/finals`, label: 'World Tour Finals' },
-    { to: `/admin/runs/${runId}/rollover`, label: 'Season Rollover' },
-    { to: `/admin/runs/${runId}/bootstrap-lineage`, label: 'Bootstrap / Lineage' },
-    { to: `/admin/runs/${runId}/season-chain`, label: 'Season Chain' },
-    { to: `/admin/runs/${runId}/snapshots/ranking`, label: 'Ranking Snapshots' },
-    { to: `/admin/runs/${runId}/snapshots/race`, label: 'Race Snapshots' }
+    { to: base, label: 'Home' },
+    { to: base + '/nations', label: 'World', children: [
+      { to: base + '/nations', label: 'Countries' },
+      { to: base + '/world-generation', label: 'World Generation' }
+    ] },
+    { to: base + '/players', label: 'Players', children: [
+      { to: base + '/players', label: 'Player list' },
+      { to: base + '/players/intake', label: 'Talent Intake' }
+    ] },
+    { to: base + '/calendar', label: 'Tour', children: [
+      { to: base + '/calendar', label: 'Season Calendar' },
+      { to: base + '/finals', label: 'World Tour Finals' },
+      { to: base + '/rollover', label: 'Season Rollover' }
+    ] },
+    { to: base + '/snapshots/ranking', label: 'Rankings & Analytics', children: [
+      { to: base + '/snapshots/ranking', label: 'Ranking Snapshots' },
+      { to: base + '/snapshots/race', label: 'Race Snapshots' },
+    ] },
+    { to: base + '/simulate', label: 'Simulation', children: [
+      { to: base + '/simulate', label: 'Simulation controls' },
+      { to: base + '/diagnostics', label: 'Run diagnostics' }
+    ] },
+    { to: base + '/branches', label: 'History & Branches', children: [
+      { to: base + '/branches', label: 'Branches & revisions' },
+      { to: base + '/bootstrap-lineage', label: 'Bootstrap / Lineage' },
+      { to: base + '/season-chain', label: 'Season Chain' },
+      { to: base + '/activity', label: 'Activity' },
+      { to: base + '/events', label: 'Events' }
+    ] }
   ]
+}
+
+export function runAdminBottomNavFor(runId: string): AdminNavItem[] {
+  return [{ to: '/admin/runs/' + encodeURIComponent(runId) + '/manage', label: 'Run Management' }]
 }

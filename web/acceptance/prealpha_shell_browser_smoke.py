@@ -72,8 +72,13 @@ def main() -> None:
                 "link", name="Testovací laboratoř"
             ).click()
             expect(page.get_by_role("heading", name="Testovací laboratoř")).to_be_visible()
-            for module in ("Match Test Lab", "Tournament Test Lab", "Player Test Lab"):
-                expect(page.get_by_role("link", name=module + " →")).to_be_visible()
+            for module, suffix in (
+                ("Match Test Lab", "match"),
+                ("Tournament Test Lab", "tournament"),
+                ("Player Test Lab", "player"),
+            ):
+                expect(page.get_by_role("heading", name=module)).to_be_visible()
+                expect(page.locator(f'a[href="/admin/labs/{suffix}"]')).to_be_visible()
             assert page.get_by_role("combobox", name="Admin active Run").count() == 0
             evidence["labs_without_run"] = 3
 

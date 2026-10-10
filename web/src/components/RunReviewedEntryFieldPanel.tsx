@@ -167,7 +167,9 @@ export function RunReviewedEntryFieldPanel({ runId, branchId, eventId }: {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['canonical-entry-field', runId, branchId, eventId] }),
         queryClient.invalidateQueries({ queryKey: ['canonical-tournament-preparation', runId, branchId, eventId] }),
-        queryClient.invalidateQueries({ queryKey: ['canonical-draw-state', runId, branchId, eventId] })
+        queryClient.invalidateQueries({ queryKey: ['canonical-tournament-draw-state', runId, branchId, eventId] }),
+        queryClient.invalidateQueries({ queryKey: ['authoritative-simulation-week-schedule-preflight', runId, branchId] }),
+        queryClient.invalidateQueries({ queryKey: ['authoritative-simulation-save-preview', runId, branchId] })
       ])
     },
     onError: async () => {

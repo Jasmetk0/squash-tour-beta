@@ -7,7 +7,7 @@ import {
   getBranchWorkingDraft, getRunContainer, listRunBranches,
   previewRunCurrentEntryDecisions
 } from '../api/client'
-import { verifiedCurrentEntryPreview, type CurrentEntryDecisionPreview } from '../api/runCurrentEntryFreeze'
+import { initialEntryBootstrapPosition, verifiedCurrentEntryPreview, type CurrentEntryDecisionPreview } from '../api/runCurrentEntryFreeze'
 import { formatApiError } from '../utils/apiErrors'
 import { SectionCard } from './RunScopedUi'
 
@@ -59,8 +59,9 @@ export function RunCurrentEntryFreezePanel({ runId, branchId, eventId }: {
   })
   const position = positionQuery.data?.run_id === runId &&
     positionQuery.data.branch_id === branchId ? positionQuery.data : null
-  const entryReady = Boolean(editable && position?.current_slot_kind === 'entry' &&
-    position.slot_ordinal != null && position.slot_ordinal >= 1)
+  const initialBootstrap = initialEntryBootstrapPosition(position)
+  const entryReady = Boolean(editable && (initialBootstrap || (position?.current_slot_kind === 'entry' &&
+    position.slot_ordinal != null && position.slot_ordinal >= 1)))
   const scopeFetching = runQuery.isFetching || branchesQuery.isFetching ||
     draftQuery.isFetching || positionQuery.isFetching
 
@@ -129,7 +130,8 @@ export function RunCurrentEntryFreezePanel({ runId, branchId, eventId }: {
     {branchesQuery.error && <p role="alert" className="error">Branches unavailable: {formatApiError(branchesQuery.error)}</p>}
     {draftQuery.error && <p role="alert" className="error">Working Draft unavailable: {formatApiError(draftQuery.error)}</p>}
     {positionQuery.error && <p role="alert" className="error">Authoritative current position unavailable: {formatApiError(positionQuery.error)}</p>}
-    {position && position.current_slot_kind !== 'entry' && <p role="status">Current simulation position is not an Entry slot. Nothing will be generated for this Event.</p>}
+    {initialBootstrap && <p role="status">The first Entry slot has not been frozen yet. Review the production proposal to create it before preparing the Draw or Week Schedule.</p>}
+    {position && !entryReady && <p role="status">Current simulation position is not an Entry slot. Nothing will be generated for this Event.</p>}
     {position?.current_slot_kind === 'entry' &&
       <p>Authoritative Week {position.current_week.week} · Slot {position.slot_ordinal}. Generation uses the backend's fixed reviewed seed 12345.</p>}
     <button type="button" disabled={!entryReady || scopeFetching || previewAction.isPending || applyAction.isPending}

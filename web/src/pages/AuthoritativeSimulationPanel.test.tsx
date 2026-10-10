@@ -2734,6 +2734,7 @@ describe('AuthoritativeSimulationPanel', () => {
         'Authoritative Next Round failed: network response lost'
       )
     ).toBeInTheDocument()
+    const replayReadsBeforeRetry = api.listAuthoritativeMatchReplays.mock.calls.length
     const firstCommand = api.simulateAuthoritativeNextRound.mock.calls[0][2]
     expect(firstCommand).toMatchObject({
       expected_week: week,
@@ -2750,6 +2751,7 @@ describe('AuthoritativeSimulationPanel', () => {
     expect(
       api.simulateAuthoritativeNextRound.mock.calls[1][2].command_id
     ).toBe(firstCommand.command_id)
+    await waitFor(() => expect(api.listAuthoritativeMatchReplays.mock.calls.length).toBeGreaterThan(replayReadsBeforeRetry))
   })
 
   it('reviews tournament transit chronology and retries the same canonical command', async () => {

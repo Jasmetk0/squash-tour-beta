@@ -1,3 +1,4 @@
+import { QueryClient } from '@tanstack/react-query'
 import { screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -104,6 +105,7 @@ const show=()=>renderWithRoute(
 
 describe('Reviewed first tournament Entry Field', () => {
   it('requires server preview and approval, persists exact player cut, then verifies database readback', async () => {
+    const invalidations = vi.spyOn(QueryClient.prototype, 'invalidateQueries')
     show()
     const previewButton=await screen.findByRole('button',{name:'Preview actual Entry Field'})
     await waitFor(()=>expect(previewButton).toBeEnabled())
@@ -121,6 +123,8 @@ describe('Reviewed first tournament Entry Field', () => {
       'run-e','branch-e','first-event',preview,expect.stringMatching(/^admin-reviewed-entry-field-/)
     ))
     expect(await screen.findByText(/Persisted and reloaded Entry Field #1/)).toBeInTheDocument()
+    expect(invalidations).toHaveBeenCalledWith({queryKey:['canonical-tournament-draw-state','run-e','branch-e','first-event']})
+    invalidations.mockRestore()
     expect(await screen.findByText(/Entry Field saved and reloaded/)).toBeInTheDocument()
     expect(screen.queryByRole('button',{name:'Preview actual Entry Field'})).not.toBeInTheDocument()
   })

@@ -819,6 +819,8 @@ export function AuthoritativeSimulationPanel({
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: ['authoritative-simulation-position', runId, branchId] }),
       queryClient.invalidateQueries({ queryKey: ['authoritative-live-match', runId, branchId] }),
+      queryClient.invalidateQueries({ queryKey: ['authoritative-match-replays', runId, branchId] }),
+      queryClient.invalidateQueries({ queryKey: ['authoritative-match-reconstruction-state', runId, branchId] }),
       queryClient.invalidateQueries({ queryKey: ['authoritative-simulation-week-schedule', runId, branchId] }),
       queryClient.invalidateQueries({ queryKey: ['authoritative-simulation-week-schedule-preflight', runId, branchId] }),
       queryClient.invalidateQueries({ queryKey: ['authoritative-simulation-save-preview', runId, branchId] }),

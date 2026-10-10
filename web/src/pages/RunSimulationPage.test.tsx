@@ -27,6 +27,16 @@ async function submitNextMatch() { await userEvent.click(await screen.findByRole
 beforeEach(() => { vi.clearAllMocks(); context.time = { mode: 'present' }; select('branch-a', 'cp-a'); api.getRunPackageState.mockImplementation((runId: string, branchId: string) => Promise.resolve({ state: null, fingerprint: null })); api.getRunContainer.mockResolvedValue({ run_id: 'run-a', display_name: 'Run A', status: 'active', read_only: false, storage_kind: 'custom_local' }); api.getBranchState.mockImplementation((id: string) => Promise.resolve(state(id, id === 'branch-a' ? context.value.selectedBranch.head_checkpoint_id : 'cp-b'))); api.getBranchCheckpoint.mockImplementation((id: string) => Promise.resolve(checkpoint(id, id === 'cp-a' ? 'branch-a' : id === 'cp-b' && context.value.selectedBranchId === 'branch-a' ? 'branch-a' : 'branch-b'))); api.simulateNextMatchOnBranch.mockResolvedValue(response()) })
 
 describe('RunSimulationPage', () => {
+  it('admits canonical sporting controls for a Working Product Run with a Saved head', async () => {
+    api.getRunContainer.mockResolvedValue({ run_id: 'run-a', status: 'working', read_only: false })
+    context.value.selectedBranch.saved_head_revision_id = 'saved-a'
+    context.value.branches[0].saved_head_revision_id = 'saved-a'
+    renderHarness()
+    await screen.findByRole('heading', { name: 'Canonical authoritative sporting simulation' })
+    await waitFor(() => expect(api.getRunContainer).toHaveBeenCalled())
+    expect(screen.queryByText(/Canonical simulation blocked:/)).not.toBeInTheDocument()
+  })
+
   it('honors an explicit branch deep link before exposing simulation controls', async () => {
     select('branch-a', 'cp-a')
     const requestedSelection = context.value.selectBranch

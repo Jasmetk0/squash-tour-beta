@@ -689,6 +689,7 @@ class AuthoritativeEntryDecisionSlotCommand(FrozenInput):
     branch_id: str
     expected_week: RankingWeek
     expected_revision_id: str = Field(min_length=1)
+    expected_position_fingerprint: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
     decision_slot_ordinal: int = Field(ge=1)
     event_ids: tuple[str, ...] = Field(min_length=1)
     seed: int = 12345
@@ -1679,6 +1680,10 @@ class AuthoritativeRunSimulationDriver:
         with self.factory.begin() as session:
             session.execute(text("BEGIN IMMEDIATE"))
             self._require_writable_scope(session, command.run_id, command.branch_id)
+            if command.expected_position_fingerprint is not None:
+                current = self._position(session, command.run_id, command.branch_id)
+                if current.position_fingerprint != command.expected_position_fingerprint:
+                    raise ValueError("Entry decision Position changed since review")
             week = self._current_week(session, command.run_id, command.branch_id)
             if week != command.expected_week:
                 raise ValueError("Entry decision slot week is stale")
@@ -2861,6 +2866,8 @@ class AuthoritativeRunSimulationDriver:
             branch = session.get(RunBranchModel, branch_id)
             if branch is None or not branch.saved_head_revision_id:
                 raise ValueError("Match Reconstruction requires a saved Branch head")
+            if position.current_slot_kind != "match" or not position.eligible_match_ids:
+                raise ValueError("Match Reconstruction requires a current eligible Match slot")
             command = AuthoritativeSimulationCommand(
                 command_id="match-reconstruction-inspection",
                 run_id=run_id,
@@ -11240,6 +11247,14 @@ class AuthoritativeRunSimulationDriver:
         return tuple(plan.feeder_group_ids or ())
 
     def _position(self, session, run_id, branch_id, *, allow_missing_schedule=False):
+        # Readiness runs the real Week Transition under a rolled-back savepoint.
+        # Reserve SQLite's writer before reading its inputs; concurrent browser
+        # preflights must not upgrade competing read snapshots to writers.
+        connection = session.connection()
+        if connection.dialect.name == "sqlite":
+            dbapi_connection = connection.connection.driver_connection
+            if not dbapi_connection.in_transaction:
+                connection.exec_driver_sql("BEGIN IMMEDIATE")
         week = self._current_week(session, run_id, branch_id)
         frozen = session.get(
             AdoptedTournamentAuthorityModel, (run_id, branch_id, week.ordinal)

@@ -58,8 +58,8 @@ export function RunSimulationPage(): JSX.Element {
         ? 'Product Run is still loading.'
         : !runQuery.data
           ? 'Product Run is unavailable.'
-          : runQuery.data.status !== 'active'
-            ? 'Product Run must be active.'
+          : !['working', 'active', 'completed'].includes(runQuery.data.status)
+            ? 'Product Run must be Working or Completed.'
             : runQuery.data.read_only
               ? 'Product Run is read-only.'
               : executionBranch.status !== 'active'

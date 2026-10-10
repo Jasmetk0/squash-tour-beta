@@ -8,3 +8,25 @@ const api = vi.hoisted(() => ({ getViewerOfficialRunContext: vi.fn(), ApiError: 
 vi.mock('../api/client', () => api)
 function Child(){ const c=useViewerProductRunRouteContext(); return <p>{c.productRunId}:{c.legacySimulationRunId}</p> }
 describe('ViewerProductRunRouteBoundary', () => { beforeEach(() => api.getViewerOfficialRunContext.mockResolvedValue(makeFaxReferenceViewerContext())); it('resolves separate Product Run and legacy SimulationRun identities', async () => { render(<QueryClientProvider client={new QueryClient({defaultOptions:{queries:{retry:false}}})}><MemoryRouter initialEntries={[`/viewer/runs/${FAX_REFERENCE_RUN_ID}/rankings`]}><Routes><Route path="viewer/runs/:runId" element={<ViewerProductRunRouteBoundary/>}><Route path="rankings" element={<Child/>}/></Route></Routes></MemoryRouter></QueryClientProvider>); expect(screen.getByText('Resolving this Product Run’s official Branch…')).toBeInTheDocument(); expect(await screen.findByText(`${FAX_REFERENCE_RUN_ID}:${FAX_REFERENCE_LEGACY_RUN_ID}`)).toBeInTheDocument(); const strip = screen.getByLabelText('Viewer Product Run context'); expect(strip).toHaveTextContent('FAX Reference v1'); expect(strip).toHaveTextContent('Viewer Branch'); expect(strip).toHaveTextContent('2027 / 1'); expect(strip).toHaveTextContent('Read-only'); expect(screen.getByRole('link', { name: 'Open Product Run in Admin' })).toHaveAttribute('href', `/admin/runs/${FAX_REFERENCE_RUN_ID}/branches`); expect(screen.getByRole('link', { name: 'Open Product Run in Admin' })).not.toHaveAttribute('href', expect.stringContaining(FAX_REFERENCE_LEGACY_RUN_ID)); expect(localStorage.getItem('beta_engine:viewer_active_product_run_id')).toBe(FAX_REFERENCE_RUN_ID); expect(localStorage.getItem('beta_engine:viewer_active_run_id')).toBe(FAX_REFERENCE_LEGACY_RUN_ID) }) })
+
+
+it('opens a saved canonical Product Run without a legacy binding and clears the previous legacy context', async () => {
+  localStorage.setItem('beta_engine:viewer_active_run_id', 'previous-legacy')
+  localStorage.setItem('beta_engine:last_run_id', 'previous-legacy')
+  api.getViewerOfficialRunContext.mockResolvedValue({
+    ...makeFaxReferenceViewerContext(), legacy_simulation_run_id: null,
+    current_season: 2000, current_week: 2
+  })
+  render(<QueryClientProvider client={new QueryClient({defaultOptions:{queries:{retry:false}}})}>
+    <MemoryRouter initialEntries={[`/viewer/runs/${FAX_REFERENCE_RUN_ID}/rankings`]}>
+      <Routes><Route path="viewer/runs/:runId" element={<ViewerProductRunRouteBoundary/>}>
+        <Route path="rankings" element={<Child/>}/>
+      </Route></Routes>
+    </MemoryRouter>
+  </QueryClientProvider>)
+  expect(await screen.findByText(`${FAX_REFERENCE_RUN_ID}:`)).toBeInTheDocument()
+  expect(screen.getByLabelText('Viewer Product Run context')).toHaveTextContent('2000 / 2')
+  expect(localStorage.getItem('beta_engine:viewer_active_product_run_id')).toBe(FAX_REFERENCE_RUN_ID)
+  expect(localStorage.getItem('beta_engine:viewer_active_run_id')).toBeNull()
+  expect(localStorage.getItem('beta_engine:last_run_id')).toBeNull()
+})

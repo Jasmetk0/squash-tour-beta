@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 
 import {
   confirmRunDerivedInitialRanking, getBranchWorkingDraft, getRankingCandidates,
-  getRunOwnedInitialWorld, previewRankingSave, previewRunDerivedInitialRanking,
+  getRunOwnedInitialWorld, previewRunInitialWorldSave, previewRankingSave, previewRunDerivedInitialRanking,
   saveRunDerivedInitialRankingRevision
 } from '../api/client'
 import type { RunBranch, RunContainer } from '../api/types'
@@ -88,8 +88,19 @@ export function RunInitialRankingSetupPanel({ run, branch }: {
     sha(world.adoption_request_fingerprint) &&
     world.policies.length === 1 && bestN != null && bestN >= 1 &&
     Number.isInteger(bestN))
-  const cleanScope = editable && validWorld && draft?.status === 'clean' &&
-    draft.base_saved_revision_id === head && historyQuery.isSuccess && Boolean(history)
+  const worldSaveQuery = useQuery({
+    queryKey: ['initial-ranking-world-save-preview', runId, branchId, head, worldKey],
+    queryFn: () => previewRunInitialWorldSave(runId, branchId),
+    enabled: editable && validWorld,
+    retry: false
+  })
+  const savedWorld = worldSaveQuery.data
+  const worldSaved = savedWorld?.run_id === runId && savedWorld.branch_id === branchId &&
+    savedWorld.saved_head_revision_id === head && savedWorld.has_unsaved_changes === false
+  const cleanScope = editable && validWorld && worldSaved && draft?.status === 'clean' &&
+    draft.base_saved_revision_id === head && historyQuery.isSuccess && Boolean(history) &&
+    !worldSaveQuery.isFetching && !worldQuery.isFetching &&
+    !historyQuery.isFetching && !draftQuery.isFetching
   const canPreview = cleanScope && !candidate && !waitingSave &&
     reason.trim().length > 0 && reason.trim().length <= 1000
 
@@ -203,6 +214,8 @@ export function RunInitialRankingSetupPanel({ run, branch }: {
       <p role="alert" className="error">InitialWorld unavailable: {formatApiError(worldQuery.error)}</p>}
     {historyQuery.error && <p role="alert" className="error">Ranking history unavailable: {formatApiError(historyQuery.error)}</p>}
     {draftQuery.error && <p role="alert" className="error">Working Draft unavailable: {formatApiError(draftQuery.error)}</p>}
+    {worldSaveQuery.error && <p role="alert" className="error">Cannot verify saved InitialWorld: {formatApiError(worldSaveQuery.error)}</p>}
+    {world && !candidate && !worldSaved && <p role="status">Finish saving InitialWorld and verifying the current Saved Revision before preparing the ranking.</p>}
     {!world && isApiNotFound(worldQuery.error) && <p>First generate, adopt and save players in the InitialWorld section above.</p>}
     {world && <p>Run-owned roster: <strong>{world.players.length}</strong> players · Initial policy: Best {bestN ?? 'unavailable'}.</p>}
     {candidate && <p role="status">Week-1 ranking candidate exists. It contains {candidate.snapshot.rows.length} classified rows. {savePreview?.has_unsaved_changes ? 'It needs Saved Revision confirmation.' : 'Review the ranking Save preflight for persistence status.'}</p>}

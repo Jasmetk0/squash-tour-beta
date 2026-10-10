@@ -19,6 +19,7 @@ const api = vi.hoisted(() => {
     getBranchWorkingDraft: vi.fn(),
     getRankingCandidates: vi.fn(),
     getRunOwnedInitialWorld: vi.fn(),
+    previewRunInitialWorldSave: vi.fn(),
     previewRunDerivedInitialRanking: vi.fn(),
     confirmRunDerivedInitialRanking: vi.fn(),
     previewRankingSave: vi.fn(),
@@ -66,6 +67,7 @@ const candidate = (cmd: string): RankingCandidateDetail => ({
 })
 
 beforeEach(() => {
+  api.previewRunInitialWorldSave.mockResolvedValue({run_id:run.run_id,branch_id:branch.branch_id,saved_head_revision_id:branch.saved_head_revision_id,has_unsaved_changes:false})
   vi.clearAllMocks()
   prepared = false; draftVersion = 0; saved = false; expectedCommandId = ''
   api.getRunOwnedInitialWorld.mockResolvedValue(world)
@@ -207,4 +209,20 @@ describe('Run initial ranking', () => {
     await waitFor(() => expect(screen.queryByRole('button', {name:'Confirm initial ranking'})).not.toBeInTheDocument())
     expect(api.confirmRunDerivedInitialRanking).not.toHaveBeenCalled()
   })
+})
+
+
+it('blocks ranking preview while the owned InitialWorld is not saved in the selected revision', async () => {
+  api.previewRunInitialWorldSave.mockResolvedValue({run_id:run.run_id,branch_id:branch.branch_id,saved_head_revision_id:branch.saved_head_revision_id,has_unsaved_changes:true})
+  render()
+  await waitFor(() => expect(api.previewRunInitialWorldSave).toHaveBeenCalled())
+  expect(screen.getByRole('button',{name:'Preview initial ranking'})).toBeDisabled()
+  expect(api.previewRunDerivedInitialRanking).not.toHaveBeenCalled()
+})
+
+it('blocks stale InitialWorld Save readback for a different revision', async () => {
+  api.previewRunInitialWorldSave.mockResolvedValue({run_id:run.run_id,branch_id:branch.branch_id,saved_head_revision_id:'previous-head',has_unsaved_changes:false})
+  render()
+  await waitFor(() => expect(api.previewRunInitialWorldSave).toHaveBeenCalled())
+  expect(screen.getByRole('button',{name:'Preview initial ranking'})).toBeDisabled()
 })

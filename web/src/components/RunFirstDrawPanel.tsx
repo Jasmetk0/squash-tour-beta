@@ -221,7 +221,9 @@ export function RunFirstDrawPanel({ runId, branchId, eventId }: {
         qc.invalidateQueries({queryKey:['canonical-tournament-draw-state',runId,branchId,eventId]}),
         qc.invalidateQueries({queryKey:['canonical-tournament-draw-authority',runId,branchId,eventId]}),
         qc.invalidateQueries({queryKey:['canonical-tournament-effective-draw-authority',runId,branchId,eventId]}),
-        qc.invalidateQueries({queryKey:['canonical-tournament-preparation',runId,branchId,eventId]})
+        qc.invalidateQueries({queryKey:['canonical-tournament-preparation',runId,branchId,eventId]}),
+        qc.invalidateQueries({queryKey:['authoritative-simulation-week-schedule-preflight',runId,branchId]}),
+        qc.invalidateQueries({queryKey:['authoritative-simulation-save-preview',runId,branchId]})
       ])
     },
     onError: async () => {

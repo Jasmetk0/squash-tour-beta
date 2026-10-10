@@ -251,7 +251,7 @@ export function RunPage(): JSX.Element {
             <ul className="run-home-feed" aria-label="Upcoming saved tournaments">
               {homeActivity.upcoming.map(event => <li key={event.event_id}>
                 <span><strong>{event.event_name}</strong><small>{event.season} · W{event.week} · {event.category}</small></span>
-                <Link to={base + '/calendar'}>{language === 'cs' ? 'Kalendář' : 'Calendar'} →</Link>
+                <Link to={base + '/manage'}>{language === 'cs' ? 'Balíčky Runu' : 'Run packages'} →</Link>
               </li>)}
             </ul>
           </div>}
@@ -303,7 +303,7 @@ export function RunPage(): JSX.Element {
           {homeActivity.recent_results.map(result => <li key={result.event_id}>
             <span><strong>{result.event_name}</strong><small>{result.season} · W{result.week} ·
               {language === 'cs' ? ' Vítěz' : ' Champion'}: {result.champion_player_id}</small></span>
-            <Link to={base + '/events'}>{language === 'cs' ? 'Turnaje' : 'Tournaments'} →</Link>
+            <Link to={base + '/simulate'}>{l.continue} →</Link>
           </li>)}
         </ul>}
         <p className="status">{l.rankingUnsupported}</p>

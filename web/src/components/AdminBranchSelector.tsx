@@ -21,7 +21,14 @@ export function AdminBranchSelector(): JSX.Element {
         <select
           aria-label="Admin active Branch"
           value={context.selectedBranchId ?? ''}
-          onChange={event => context.selectBranch(event.target.value)}
+          onChange={event => {
+            if (document.querySelector('.app-shell--admin')?.getAttribute('data-run-form-edited') === 'true'
+              && !window.confirm('You have edited a Run form. Save or discard those edits before switching Branches. Continue?')) {
+              event.currentTarget.value = context.selectedBranchId ?? ''
+              return
+            }
+            context.selectBranch(event.target.value)
+          }}
           disabled={context.isLoading || context.branches.length === 0}
         >
           {context.selectedBranchId === null ? <option value="">{context.isLoading ? 'Loading Branches' : 'Branch unavailable'}</option> : null}

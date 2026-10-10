@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import {
   adoptRunOwnedInitialWorld,
+  completeAuthoritativeEmptyWeek,
   applyCalendarTemplateToPlanningCalendar,
   compareCalendarTemplateDryRun,
   cloneOfficialWorldPackage,
@@ -1538,4 +1539,26 @@ describe('Finals Race replacement client', () => {
       })
     )
   })
+})
+
+it('sends the existing audited empty-week command and rejects foreign Position identity', async () => {
+  const payload = {
+    command_id: 'empty-week-proof', run_id: 'run-a', branch_id: 'branch-a',
+    expected_week: {season_index: 0, week: 2}, expected_revision_id: 'saved-head',
+    expected_position_fingerprint: 'a'.repeat(64),
+    operator_label: 'Recovery admin', audit_reason: 'Calendar-proven empty Week 2'
+  }
+  const data = {run_id: 'run-a', branch_id: 'branch-a', position: {run_id: 'run-a', branch_id: 'branch-a'}}
+  const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+    new Response(JSON.stringify(data), {status: 201})
+  )
+  await expect(completeAuthoritativeEmptyWeek('run-a', 'branch-a', payload)).resolves.toEqual(data)
+  expect(fetchMock).toHaveBeenCalledWith(
+    'http://127.0.0.1:8000/admin/runs/run-a/branches/branch-a/authoritative-simulation/empty-week/complete',
+    expect.objectContaining({method: 'POST', body: JSON.stringify(payload)})
+  )
+  fetchMock.mockResolvedValue(new Response(JSON.stringify({
+    ...data, position: {...data.position, branch_id: 'foreign-branch'}
+  }), {status: 201}))
+  await expect(completeAuthoritativeEmptyWeek('run-a', 'branch-a', payload)).rejects.toThrow()
 })

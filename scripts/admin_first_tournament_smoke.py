@@ -208,6 +208,7 @@ def setup_run(page, base_url: str, artifacts: Path) -> str:
     check("Confirm reviewed application batch")
     click("Commit reviewed applications")
     page.get_by_role("button", name="Preview actual Entry Field", exact=True).wait_for()
+    page.smoke_entry_decision_count = len(selects)
     print(
         "BROWSER: generated and explicitly validated",
         len(selects),
@@ -360,6 +361,7 @@ def verify_viewer(page, run_url, artifacts: Path, prefix=""):
 
 def run_acceptance(root: Path, *, port: int, base_url: str, chromium: str):
     """Own the disposable backend process, restart it, and reopen a fresh browser."""
+    import socket
     import subprocess
     import sys
     import time
@@ -371,6 +373,11 @@ def run_acceptance(root: Path, *, port: int, base_url: str, chromium: str):
         raise ValueError(
             "Acceptance requires a fresh disposable directory; never replace a database"
         )
+    # Never accept a different backend already listening on the selected port.
+    # Health alone cannot prove that our isolated database owns the server.
+    with socket.socket() as probe:
+        probe.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        probe.bind(("127.0.0.1", port))
     root.mkdir(parents=True, exist_ok=True)
     artifacts = root / "artifacts"
     artifacts.mkdir()
@@ -426,6 +433,7 @@ def run_acceptance(root: Path, *, port: int, base_url: str, chromium: str):
             context, page = open_page(browser)
             try:
                 run_url = setup_run(page, base_url, artifacts)
+                entry_count = page.smoke_entry_decision_count
                 match_options = finish_tournament(page, artifacts)
                 ranking_rows = verify_viewer(page, run_url, artifacts)
                 context.tracing.stop(path=str(artifacts / "before-restart.zip"))
@@ -454,7 +462,25 @@ def run_acceptance(root: Path, *, port: int, base_url: str, chromium: str):
                 page.get_by_label(
                     "Confirm authoritative simulation", exact=True
                 ).check()
+                browser_click(page, "Confirm calendar-proven empty week")
+                browser_click(page, "Save authoritative simulation")
+                page.get_by_label("Next Week operator", exact=True).fill(
+                    "Browser recovery admin"
+                )
+                page.get_by_label("Next Week audit reason", exact=True).fill(
+                    "Verify continuation from saved empty-week evidence"
+                )
+                page.get_by_label(
+                    "Confirm authoritative simulation", exact=True
+                ).check()
                 browser_click(page, "Review authoritative Next Week")
+                expect(
+                    page.get_by_role(
+                        "heading",
+                        name="Reviewed canonical Week · S0 W2 → W3",
+                        exact=True,
+                    )
+                ).to_be_visible()
                 page.screenshot(
                     path=str(artifacts / "06-reopened-continuation.png"), full_page=True
                 )
@@ -463,7 +489,7 @@ def run_acceptance(root: Path, *, port: int, base_url: str, chromium: str):
                     json.dumps(
                         {
                             "run_url": run_url,
-                            "real_entry_decisions": 41,
+                            "real_entry_decisions": entry_count,
                             "matches": match_options,
                             "week2_ranking_rows": ranking_rows,
                             "browser_errors": errors,

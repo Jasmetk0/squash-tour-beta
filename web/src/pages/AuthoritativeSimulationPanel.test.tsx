@@ -49,6 +49,7 @@ const api = vi.hoisted(() => ({
   previewAuthoritativeNextTournament: vi.fn(),
   simulateAuthoritativeNextTournament: vi.fn(),
   previewAuthoritativeNextWeek: vi.fn(),
+  completeAuthoritativeEmptyWeek: vi.fn(),
   simulateAuthoritativeNextWeek: vi.fn(),
   previewAuthoritativeNextSeason: vi.fn(),
   simulateAuthoritativeNextSeason: vi.fn(),
@@ -4037,4 +4038,40 @@ describe('AuthoritativeSimulationPanel', () => {
     expect(api.previewAuthoritativeSimulationSave).not.toHaveBeenCalled()
     expect(api.simulateAuthoritativeNextMatch).not.toHaveBeenCalled()
   })
+})
+
+
+it('reopens saved replays and explicitly confirms a verified empty week before continuing', async () => {
+  api.inspectAuthoritativeWeekSchedulePreflight.mockResolvedValue({
+    ...schedulePreflight, week: {season_index: 0, week: 2},
+    event_ids: [], group_ids: [], schedule_required: true, schedule_already_adopted: false,
+    can_propose_schedule: false, blockers: ['week_has_no_tournament_events']
+  })
+  api.getAuthoritativeSimulationPosition.mockResolvedValue({
+    ...position, current_week: {season_index: 0, week: 2}, current_slot_kind: null,
+    current_slot_id: null, slot_ordinal: null, eligible_match_ids: [], blocked_match_ids: [],
+    unresolved_group_ids: [], current_slot_complete: true,
+    transition_blockers: ['week_schedule_missing', 'terminal_sporting_checkpoint_missing', 'ranking_transition_authority_missing']
+  })
+  api.previewAuthoritativeSimulationSave.mockResolvedValue({draft_version: 10, simulation_fingerprint: 'e'.repeat(64), can_save: false})
+  api.completeAuthoritativeEmptyWeek.mockResolvedValue({position})
+  renderPanel()
+  await screen.findByText('Execute current canonical position')
+  expect(screen.getByRole('button', {name: 'Simulate authoritative Next Match'})).toBeDisabled()
+  const complete = screen.getByRole('button', {name: 'Confirm calendar-proven empty week'})
+  expect(complete).toBeDisabled()
+  await userEvent.type(screen.getByLabelText('Next Week operator'), 'Recovery admin')
+  await userEvent.type(screen.getByLabelText('Next Week audit reason'), 'Continue saved empty Week 2')
+  expect(complete).toBeDisabled()
+  await userEvent.click(screen.getByLabelText('Confirm authoritative simulation'))
+  await userEvent.click(complete)
+  await waitFor(() => expect(api.completeAuthoritativeEmptyWeek).toHaveBeenCalledWith(
+    'run-a', 'branch-a', expect.objectContaining({
+      expected_week: {season_index: 0, week: 2},
+      expected_position_fingerprint: position.position_fingerprint,
+      expected_revision_id: 'revision-7', operator_label: 'Recovery admin',
+      audit_reason: 'Continue saved empty Week 2'
+    })
+  ))
+  expect(api.getAuthoritativeSimulationPosition.mock.calls.length).toBeGreaterThan(1)
 })

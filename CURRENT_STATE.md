@@ -1,5 +1,36 @@
 # Current implementation and next action
 
+## Real first-tournament browser acceptance — candidate PR (10 Oct 2026)
+
+- Verified integration base `buuk` at `b480036bb59f37e6d20bb03229f788ae184ca141`
+  (#1344); no newer merge/open PR at the baseline checks. Existing isolated
+  checkout and Python/Node dependencies were retained.
+- Actual Chromium/Playwright flow against production FastAPI/SQLite on localhost
+  completed one custom Run: copied World/validated small Calendar, 64 generated
+  players, saved/published initial ranking, 41 real Entry AI decisions explicitly
+  validated by Admin, actual Main 4/no Qualification Draw and global Week Schedule,
+  both semifinals plus winner-fed final, sporting Save and Week-2 published ranking
+  (100/60/30/30 points).
+- Backend termination/restart and a fresh browser context preserved all ranking
+  rows, published results and three stored replays. Reopened Admin confirmed and
+  saved existing Calendar-proven empty-week authority and reviewed W2→W3 Next Week;
+  W3 execution was deliberately left uncommitted.
+- Fixes address observed JSON-header loss, component Save/initial-ranking timing,
+  unmaterialized first Entry slot, missing preparation wire fingerprint, stale
+  field/draw/replay caches, Working Run eligibility, nullable legacy Viewer bridge,
+  SQLite readiness contention and recovery in an event-free week. Identity,
+  fingerprint, explicit approval, transaction and source protections remain.
+- Reproduce with [browser acceptance instructions](docs/ADMIN_FIRST_TOURNAMENT_BROWSER_ACCEPTANCE.md)
+  and `scripts/admin_first_tournament_smoke.py`. Run evidence:
+  `run-613bb3ed9f804196b5ed294d4c3e1796`, Viewer Branch
+  `branch-efcc52b3f2640396ace0ae0d9a78339`, seed 4201. Screenshots/traces are supplied
+  with the handoff rather than committed generated data.
+- This is browser integration evidence for that small standard tournament, not a
+  deployed-host test or a full pre-alpha release. Automatic application validation
+  remains unresolved. FIFA/ATP history, probabilities and match model are unchanged.
+  Next: practical fixed-input FIFA/ATP comparison in existing Lab tools after merge.
+
+
 ## Season Closing Ranking fork proof prerequisite — candidate PR (9 Oct 2026)
 
 - Base: merged #1321, `buuk` at `67c6327e`. Added a **pure,

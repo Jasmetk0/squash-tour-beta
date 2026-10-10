@@ -134,13 +134,67 @@ This document supersedes older general next-task suggestions **for the immediate
 - Canonical Event route first fetches Run Container and Branch list; only for a verified active writable Branch does it fetch the real Draft, and only for exact current Saved Head does it fetch the Run-owned Package State and Calendar. It keeps existing fingerprint/provenance checks and legacy/historical behavior. Invalid contexts fail closed with an actionable return-to-Run-Home message.
 - New frontend tests verify clean current handoff, stale Saved Head, wrong Run/Branch, read-only or archived Branch, dirty Draft, suppressed protected Package fetches and legacy-free valid Calendar loading. Do **not** claim a real browser clickthrough; this repairs a concrete UI authorization/data-freshness mismatch and adds regression coverage. Browser-driven reusable environment remains unavailable/not yet verified.
 
-## Still blocking the requested user journey
+## Real browser milestone verified — candidate PR (10 Oct 2026)
 
-1. Browser-check World and Calendar source import with a real disposable Product Run, using validated source season files and save/restart, not only mocked frontend tests and existing backend adapters.
-2. Verify the newly connected initial-player generation, review, adopt, Save and reopen sequence by clicking through a real disposable custom Run, and measure both Earth source packages.
-3. Browser-verify Week-1 ranking derive/confirm/Save, publish, second Save and Viewer readback on a real disposable custom Run, including restart and selected Viewer Branch semantics.
-4. Generate Entry decisions (#1338), validate applications (#1337), create Entry Field (#1339), prepare Draw (#1340), adopt the complete reviewed Week Schedule and Save (#1342), then execute first verified match (#1341) and explicitly Save again. Browser/SQLite full continuity and next-round progression remain to be proven.
-5. Verify point award, correct ranking-publication timing, save/reopen and continuation through real HTTP/SQLite/browser evidence.
-6. Only then measure FIFA Earth / ATP Earth generation in existing Lab tools without changing unproven probabilities.
+The baseline was merged #1344, `buuk` at `b480036bb59f37e6d20bb03229f788ae184ca141`.
+The previously pending steps 1–5 below are now proven by the actual existing React
+UI against the production FastAPI/SQLite application in isolated localhost paths.
+No deployed host was used.
 
-The automatic application validation gate (`application_validation_policy_unresolved`), multi-season Branch forks and long-run realism remain separately tracked. Passing a Run creation component test does not resolve any of them.
+- Custom Run `run-613bb3ed9f804196b5ed294d4c3e1796`, Viewer Branch
+  `branch-efcc52b3f2640396ace0ae0d9a78339`: both source copies and Saves, 64 generated
+  players (seed 4201), initial ranking prepare/Save/publish/Save and Viewer readback.
+- 41 real Entry AI applications, explicit reviewed Admin validation, Main 4/no Q
+  field, real Draw and full accepted Week Schedule. No fabricated participants,
+  SQL sporting writes or automatic validation policy.
+- Three production matches including the winner-fed final; stored champion
+  `P-2000-GER-0011`, finalist `P-2000-GER-0028`, semifinalists
+  `P-2000-BOG-0006` and `P-2000-GER-0022`. Sporting Save precedes derived ranking
+  authority and reviewed Week Transition/Save. Published Week-2 points are
+  100/60/30/30, with zero for the other 60 generated players.
+- Backend termination/restart + a fresh browser context preserves every ranking
+  row, all three replay identities and Published result. Reopened Admin confirms
+  and Saves Calendar-proven empty-week authority using the existing audited
+  command, then successfully reviews W2→W3 Next Week. That next execution is not
+  committed.
+- Six main screenshots, reopened Viewer screenshots, both Playwright traces and
+  `evidence.json` are provided with the handoff. The final unattended acceptance
+  recorded no page errors or HTTP 5xx responses.
+
+Concrete blockers repaired: JSON Content-Type lost when fingerprint headers were
+present; clean generic Draft hiding unsaved InitialWorld; preview racing saved
+player head; missing bootstrap Entry slot; absent real preparation fingerprint;
+incorrect/stale field, Draw, schedule and replay query invalidation; Working Run
+rejected by canonical simulation UI; `null` legacy Run ID crashing Viewer;
+concurrent SQLite readiness reads attempting competing write upgrades; empty-week
+schedule gate hiding replays and the continuation command. Entry roster hashing
+was made constant per state rather than repeated for every player, preserving
+identical hash/projection outputs.
+
+Focused local checks: 148 frontend tests across ten relevant files; six backend
+checks including real HTTP/SQLite setup; TypeScript/Vite build and Python compile.
+Required Fast CI must be checked on the final PR commit before the merge handoff.
+A distinct adversarial review retained Position CAS inside the Entry transaction,
+foreign Run/Branch response rejection, saved-world head gating, source isolation
+and explicit Calendar zero-match proof. The eight concurrent Position GETs are
+additional API read-only verification, separate from the browser form actions.
+
+During diagnosis an older broad authoritative API fixture lacked required Health
+state and its default tuning path wrote a shared file. That config was restored
+exactly; the affected diagnostic Run is excluded from acceptance evidence. The
+final browser Run and new integration fixture use their own copies of unchanged
+Entry tuning. That historical module is unchanged and its failures are not a
+claim about final focused tests.
+
+See [repeatable browser instructions](ADMIN_FIRST_TOURNAMENT_BROWSER_ACCEPTANCE.md)
+for setup/source-preparation boundaries and exact commands. Component tests mock
+API boundaries; they are regression coverage, not proof of the complete flow.
+
+## Remaining work outside this milestone
+
+1. Practical comparison of FIFA Earth/ATP Earth player generation in existing Lab
+   tools, with fixed seeds and unchanged source histories/model parameters.
+2. Automatic application eligibility/deadline policy remains
+   `application_validation_policy_unresolved`; this flow uses explicit Admin review.
+3. Full Official Run pre-alpha acceptance, other tournament geometries and
+   multi-season Branch/release gates remain independent work.

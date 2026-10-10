@@ -1381,6 +1381,23 @@ export async function getAuthoritativeSimulationPosition(
   return data
 }
 
+export async function completeAuthoritativeEmptyWeek(
+  runId: string,
+  branchId: string,
+  payload: Omit<AuthoritativeSimulationCommandPayload, 'group_id'> & {
+    operator_label: string
+    audit_reason: string
+  }
+): Promise<{ position: AuthoritativeSimulationPosition }> {
+  const data = await request<{ run_id: string; branch_id: string; position: AuthoritativeSimulationPosition }>(
+    authoritativeSimulationRoot(runId, branchId) + '/empty-week/complete',
+    { method: 'POST', body: JSON.stringify(payload) }
+  )
+  verifyAuthoritativeSimulationScope(runId, branchId, data)
+  verifyAuthoritativeSimulationScope(runId, branchId, data.position)
+  return data
+}
+
 /** Production current Entry adapter: Run-owned roster + Calendar + shared Slot. */
 export async function previewRunCurrentEntryDecisions(
   runId: string, branchId: string

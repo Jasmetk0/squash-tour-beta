@@ -16,14 +16,14 @@ pytestmark = pytest.mark.pr_critical
 
 def test_seed_315_fifteenth_birthday_is_before_opening_week_and_replays():
     generator = InitialPlayerPoolGenerator()
-    inputs = dict(
-        country=country(
+    inputs = {
+        "country": country(
             "BOG", population=1_000_000, system=3, popularity=3, tradition=3
         ),
-        season="2000/2001",
-        seed=315,
-        sequence=1,
-    )
+        "season": "2000/2001",
+        "seed": 315,
+        "sequence": 1,
+    }
     player = generator._generate_player(**inputs)
     assert player.age_at_generation == 15
     assert player.birth_year_week != 37  # Previously 1985/W37: fifteen only in Week 1.

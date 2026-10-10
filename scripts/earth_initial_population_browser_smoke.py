@@ -138,7 +138,9 @@ def main():
                 }
             )
             print(
-                "BROWSER: generated and saved two real Earth populations, 32 players, seed 909",
+                "BROWSER: "
+                + ("reused saved" if result["cached"] else "generated and saved")
+                + " two real Earth populations, 32 players, seed 909",
                 flush=True,
             )
             for label, kind in (

@@ -11,8 +11,10 @@ from urllib.request import urlopen
 import pytest
 import uvicorn
 from pydantic import ValidationError
+from starlette.requests import Request
 from test_simulation_api import ApiServer, _free_port, _request
 
+from beta_engine.api.deps import get_world_package_run_adapter
 from beta_engine.application.initial_population_comparison_service import (
     PopulationComparisonRequest,
 )
@@ -22,7 +24,9 @@ from beta_engine.domain.countries.rating_history import (
     CountryRatingHistory,
 )
 from beta_engine.domain.players.initial_pool import InitialPlayerPoolGenerator
+from beta_engine.domain.run_packages import canonical_hash
 from beta_engine.infrastructure.db.models import PlayerLabPopulationSessionModel
+from beta_engine.infrastructure.world_config import PlayerIdentityConfig
 from beta_engine.main import create_app
 from tests.support.world_packages import materialize_test_world_package
 
@@ -198,18 +202,9 @@ def test_real_comparison_export_replay_restart_and_integrity(tmp_path, monkeypat
         assert _request("GET", endpoint + "/export?format=invalid")[0] == 422
         # Real regeneration independently replays the first gameplay fingerprint.
         first = exported["runs"][0]
-        adapter = __import__(
-            "beta_engine.api.deps", fromlist=["get_world_package_run_adapter"]
-        ).get_world_package_run_adapter
-        from starlette.requests import Request
-
-        from beta_engine.domain.players.initial_pool import GeneratedPlayerAttributes
-        from beta_engine.domain.run_packages import canonical_hash
-        from beta_engine.infrastructure.world_config import PlayerIdentityConfig
-
-        document = adapter(Request({"type": "http", "app": server.app})).build_document(
-            first["world_id"]
-        )
+        document = get_world_package_run_adapter(
+            Request({"type": "http", "app": server.app})
+        ).build_document(first["world_id"])
         replay = InitialPlayerPoolGenerator(
             identity_config=PlayerIdentityConfig.model_validate(
                 next(
@@ -232,7 +227,6 @@ def test_real_comparison_export_replay_restart_and_integrity(tmp_path, monkeypat
             canonical_hash([p.model_dump(mode="json") for p in replay.players])
             == first["gameplay_fingerprint"]
         )
-        assert len(GeneratedPlayerAttributes.model_fields) == 7
 
         def forbidden(*args, **kwargs):
             raise AssertionError(

@@ -1,6 +1,6 @@
 # Current implementation and next action
 
-## Earth initial-population comparison — implementation checkpoint (10 Oct 2026)
+## Earth initial-population comparison — verified candidate PR (10 Oct 2026)
 
 - Base `buuk` verified at `320bd1fa` (merge #1345); GitHub PR search found no open PR.
 - Existing global Player Lab now uses the actual initial-pool generator for FIFA
@@ -9,8 +9,14 @@
   years/fallbacks, export sums, restart and saved-payload integrity. Production
   source snapshots remain read-only and Run/Branch stores are untouched.
 - Reproduced/fixed the fifteenth birthday falling in opening Week 1; no talent or
-  historical-country retuning. Main measurement and actual browser acceptance are
-  the next actions. See `docs/EARTH_INITIAL_POPULATION_COMPARISON.md`.
+  historical-country retuning. Production 2×5×1000 measurement completed in 43.88 s;
+  browser UI generated/saved/exported two 32-player populations and restored them
+  after backend restart without POST/regeneration. Main saved experiment also opened
+  read-only in the browser. Source byte hashes remain unchanged.
+- FIFA: CHN 41/1000; ATP: USA 49/1000, IND 47/1000. Potential means 75.23/75.22;
+  current ability 60.50/60.27. Existing minimum-one allocation covers all 250 countries;
+  Tour registration counts remain unavailable. Recommend allocation-size sensitivity
+  before any calibration. Final-head Fast CI is required before sharing for merge. See `docs/EARTH_INITIAL_POPULATION_COMPARISON.md`.
 
 
 ## Real first-tournament browser acceptance — candidate PR (10 Oct 2026)

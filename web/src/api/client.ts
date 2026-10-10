@@ -4077,3 +4077,34 @@ export async function getRunHomeRankingChanges(
   ) throw new Error('Home ranking movement does not match the selected Run / Branch.')
   return data
 }
+
+/** Bounded, explicit player IDs; no Viewer/legacy/live roster fallbacks. */
+export async function getSavedHomePlayerIdentities(
+  runId: string, branchId: string, playerIds: string[]
+): Promise<import('./types').SavedHomePlayerIdentities> {
+  if (playerIds.length < 1 || playerIds.length > 25 ||
+      new Set(playerIds).size !== playerIds.length ||
+      playerIds.some(id => !id || id.length > 128 || id.includes(',') || id.trim() !== id)) {
+    throw new Error('Player identity lookup requires 1–25 distinct valid IDs.')
+  }
+  const data = await request<import('./types').SavedHomePlayerIdentities>(
+    `/admin/runs/${encodeURIComponent(runId)}/branches/${encodeURIComponent(branchId)}/home-player-identities?player_ids=${encodeURIComponent(playerIds.join(','))}`
+  )
+  const requested = new Set(playerIds)
+  const all = [...(data.players ?? []).map(player => player.player_id), ...(data.unresolved_ids ?? [])]
+  if (data.schema_version !== 'run_home_player_identities.v1' ||
+      data.run_id !== runId || data.branch_id !== branchId ||
+      data.source !== 'selected_branch_saved_revision' || !data.saved_revision_id?.trim() ||
+      !['ready', 'partial', 'unavailable'].includes(data.status) ||
+      !Array.isArray(data.players) || !Array.isArray(data.unresolved_ids) ||
+      !Array.isArray(data.requested_ids) ||
+      data.requested_ids.join('\x1f') !== playerIds.join('\x1f') ||
+      all.length !== requested.size || new Set(all).size !== requested.size ||
+      all.some(id => !requested.has(id)) ||
+      data.players.some(player => !player.display_name?.trim() ||
+        !/^[A-Za-z]{3}$/.test(player.country_code) ||
+        !['initial_world', 'run_prospect'].includes(player.identity_source))) {
+    throw new Error('Saved identity response does not match selected Run/Branch or requested IDs.')
+  }
+  return data
+}

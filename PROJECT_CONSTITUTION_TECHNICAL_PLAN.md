@@ -4,6 +4,7 @@
 
 **Repository status:** subordinate repository-facing product/technical distillation; the full canonical Master is authoritative.
 **Master authority:** [`SQUASH_ENGINE_MASTER_VISION.md`](SQUASH_ENGINE_MASTER_VISION.md), with its current version declared inside. See `CURRENT_STATE.md` for implemented evidence.
+**Latest selected synchronization:** Master v75, approved pre-alpha frontend decisions of 10 October 2026; see `docs/PRE_ALPHA_FRONTEND_V1.md`. This is target design, not implementation evidence.
 **Synchronization rule:** this shorter repository distillation may lag details in the Master. It preserves still-valid earlier canon and records selected later decisions; synchronization must be additive unless the Master explicitly supersedes an older rule.
 
 > This constitution is a repository-facing distillation, not a lossless copy of the full Master Vision. A specified target does **not** imply that the repository already implements it. When a task depends on detail not stated here, use the latest audited Master or an explicit newer user decision rather than inventing the missing rule.
@@ -126,10 +127,11 @@ Admin → Viewer never silently changes the Run's Viewer Branch. If the same obj
 
 # 3. Application shell
 
-**[DECIDED]** Application root is neutral **Squash Engine Home** with current global entries:
+**[DECIDED]** Application root is neutral **Squash Engine Home** with current pre-alpha global entries:
 
 - Runs
 - Packages
+- Test Lab
 
 It does not automatically activate a Run and is not a Viewer/Admin chooser.
 
@@ -138,7 +140,8 @@ Global pages have no Run/Branch/Time selectors.
 Run-scoped upper-right controls remain conceptually:
 
 - Viewer: `Run → Time → Viewer/Admin`
-- Admin: `Run → Branch → Time → Viewer/Admin`
+- first pre-alpha Admin: `Run → Branch → Time`, with no Viewer/Admin selector,
+- later Admin with completed Viewer: `Run → Branch → Time → Viewer/Admin`.
 
 Global search and `Ctrl+K` remain part of the shell.
 
@@ -295,7 +298,7 @@ Official defaults:
 - `Official FAX World`
 - `Official FAX Category Package`
 
-**[PROVISIONAL STRONG DIRECTION]** Future Package types such as Player Packages and possible base/import distinctions remain possible but not canonized.
+**[DECIDED FOR PRE-ALPHA v75]** Packages include players as Player Package scope. Exact payload/schema, temporal basis, identity/dependencies and Setup composition remain open; see `docs/PRE_ALPHA_FRONTEND_V1.md`. Other future types and base/import distinctions are not silently canonized.
 
 ## 7.2 Global Packages area
 
@@ -741,14 +744,20 @@ Exact algorithms, sampling thresholds, UI, retention, conflict handling, fulfill
 **[DECIDED/TARGET AS SPECIFIED]**
 
 - Czech + English UI target,
-- Light / Dark / System appearance target,
+- first pre-alpha Admin: one dark theme, no Light/Dark/System selector; future Viewer appearance remains separately scoped,
 - important state is never communicated by color alone,
 - Viewer and Admin have distinct visual/textual mode indication,
 - appropriate Admin tables support multi-select with only valid bulk actions,
 - global search exists with keyboard shortcut,
 - current version is desktop-first rather than fully mobile-responsive.
 
-Full final Admin/Viewer navigation, Viewer reveal modes, exact MSA menu and many page layouts remain unresolved.
+**[DECIDED FOR PRE-ALPHA v75]** Global sidebar: Home / Runs / Packages / Test Lab, with application settings below. Global Home includes those three functional entries, brief factual summaries and recent Runs; no Run opens automatically.
+
+**[DECIDED FOR PRE-ALPHA v75]** Run sidebar: Home / World / Players / Tour / Rankings & Analytics / Simulation / History & Branches, with separate Run Management below. Run Management combines Run settings, overrides, package application, transfers/backups, validation and storage. Detailed subpages remain open.
+
+**[DECIDED FOR PRE-ALPHA v75]** Run Home combines identity/draft state, the fixed 50-season and 61-week indicators, Next steps on the left, Needs attention on the right, and World activity/digest below. Data must come from actual supported authorities; unavailable data cannot appear as a fabricated zero. Detailed metric/layout/historical-progress contracts remain open. See Master §27.17 and `docs/PRE_ALPHA_FRONTEND_V1.md`.
+
+Full Viewer navigation, Viewer reveal modes, exact MSA menu and many detailed Admin/Viewer layouts remain unresolved.
 
 ---
 

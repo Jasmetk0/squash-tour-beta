@@ -9,6 +9,7 @@ import { AdminBranchProvider } from '../admin/AdminBranchContext'
 import { AdminTimeProvider } from '../admin/AdminTimeContext'
 import { HistoricalAdminTimeBoundary } from './HistoricalAdminTimeBoundary'
 import { LanguageProvider } from '../i18n/LanguageContext'
+import { RunNavigationSafeguard } from './RunNavigationSafeguard'
 
 export function Layout(): JSX.Element {
   const location = useLocation()
@@ -19,6 +20,7 @@ export function Layout(): JSX.Element {
 
   const shell = (
       <div className={appShellClassNameForMode(mode)}>
+        {mode === 'admin' && adminScope.kind === 'run' ? <RunNavigationSafeguard runId={adminScope.runId} /> : null}
         <AppShellHeader mode={mode} pathname={location.pathname} adminScope={adminScope} />
         {mode === 'admin' ? <AdminNavigation scope={adminScope} /> : null}
         {mode === 'viewer' ? <ViewerTopbar /> : null}

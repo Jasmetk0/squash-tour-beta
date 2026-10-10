@@ -26,7 +26,7 @@ export function AdminNavigation({ scope }: AdminNavigationProps): JSX.Element {
   const describe = (item: AdminNavItem) => t(item.label)
   const links = (items: AdminNavItem[]) => items.map(item => {
     const active = isItemActive(pathname, item, root)
-    const expanded = openCategory === item.to || (openCategory === null && active)
+    const expanded = openCategory === item.to || (openCategory === null && (active || item.label === 'Tour' || item.label === 'History & Branches'))
     return <div className="side-nav__group" key={item.to}>
       <div className="side-nav__line">
         <NavLink to={item.to} end={item.to === root} title={describe(item)}

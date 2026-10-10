@@ -97,7 +97,7 @@ describe('Run Home V1 canonical projections', () => {
     api.getAuthoritativeSimulationPosition.mockRejectedValue(new api.ApiError('No position yet', 404))
     mount()
     expect(await screen.findByText('Prázdný Run je platný.', { exact: false })).toBeInTheDocument()
-    expect(screen.getAllByText('Zatím neurčeno').length).toBeGreaterThan(0)
+    expect(screen.getAllByText(/^Zatím neurčeno ·/).length).toBe(2)
     expect(screen.queryByText('Hratelné zápasy: 0')).not.toBeInTheDocument()
     expect(screen.getByRole('img', { name: '50 sezón' }).children).toHaveLength(50)
   })

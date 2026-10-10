@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom'
 
 import {
   getAuthoritativeSimulationPosition,
+  getAuthoritativeFullSimulationHistory,
   getBranchWorkingDraft,
   getPendingAuthoritativeFullSimulations,
   getRunContainer,
@@ -117,6 +118,12 @@ export function RunPage(): JSX.Element {
     enabled: ready,
     retry: false
   })
+  const simulationHistoryQuery = useQuery({
+    queryKey: ['authoritative-full-simulation-history', runId, branchId],
+    queryFn: () => getAuthoritativeFullSimulationHistory(runId, branchId!),
+    enabled: ready,
+    retry: false
+  })
   const revisionsQuery = useQuery({
     queryKey: ['run-home-revisions', runId, branchId],
     queryFn: () => listSavedRevisionHistory(runId, branchId!, { limit: 4 }),
@@ -128,6 +135,8 @@ export function RunPage(): JSX.Element {
   const draft = draftQuery.data?.run_id === runId && draftQuery.data.branch_id === branchId ? draftQuery.data : null
   const position = positionQuery.data?.run_id === runId && positionQuery.data.branch_id === branchId ? positionQuery.data : null
   const pending = pendingQuery.data?.run_id === runId && pendingQuery.data.branch_id === branchId ? pendingQuery.data : null
+  const simulationHistory = simulationHistoryQuery.data?.run_id === runId && simulationHistoryQuery.data.branch_id === branchId
+    ? simulationHistoryQuery.data.items : null
   const revisions = revisionsQuery.data?.run_id === runId && revisionsQuery.data.branch_id === branchId
     ? revisionsQuery.data.saved_revisions : null
   const ownedPackages = packageQuery.data?.state ?? null
@@ -142,6 +151,7 @@ export function RunPage(): JSX.Element {
     positionQuery.error && !isApiNotFound(positionQuery.error) ? formatApiError(positionQuery.error) : null,
     pendingQuery.error && !isApiNotFound(pendingQuery.error) ? formatApiError(pendingQuery.error) : null,
     revisionsQuery.error ? formatApiError(revisionsQuery.error) : null,
+    simulationHistoryQuery.error && !isApiNotFound(simulationHistoryQuery.error) ? formatApiError(simulationHistoryQuery.error) : null,
   ].filter((value): value is string => Boolean(value))
   const blockers = position?.transition_blockers ?? []
   const pendingCount = pending?.operations.length ?? 0
@@ -241,11 +251,23 @@ export function RunPage(): JSX.Element {
     </div>
     <SectionCard title={l.activity}>
       <p className="status">{language === 'cs'
-        ? 'Zobrazeny jsou skutečné uložené revize a checkpointy. Výsledky zápasů, změny rankingu a rekordy zatím nemají kompletní kanonický Home read model.'
-        : 'Actual saved revisions and checkpoints only. Match results, ranking changes and records do not yet have a complete canonical Home read model.'}</p>
+        ? 'Zobrazeny jsou skutečné uložené revize a checkpointy. Výsledky jednotlivých zápasů, změny rankingu a rekordy zatím nemají kompletní kanonický Home read model.'
+        : 'Actual saved revisions and checkpoints only. Individual match results, ranking changes and records do not yet have a complete canonical Home read model.'}</p>
       {!ready && <p className="status">{l.missing}</p>}
       {ready && revisionsQuery.isPending && <p role="status">{l.loading}</p>}
       {ready && revisionsQuery.isError && <Unavailable message={formatApiError(revisionsQuery.error)} />}
+      {ready && simulationHistoryQuery.isPending && <p role="status">{l.loading}</p>}
+      {ready && simulationHistoryQuery.isError && !isApiNotFound(simulationHistoryQuery.error) &&
+        <Unavailable message={formatApiError(simulationHistoryQuery.error)} />}
+      {ready && simulationHistory && simulationHistory.length > 0 && <div className="run-home-status-block">
+        <h4>{language === 'cs' ? 'Poslední plná simulace' : 'Latest full simulation'}</h4>
+        {(() => {
+          const last = simulationHistory[simulationHistory.length - 1]
+          return <p>{last.status} · {last.completed_season_count} {language === 'cs' ? 'dokončených sezón' : 'completed seasons'}
+            {' · '}{last.final_completed_week_count} {language === 'cs' ? 'závěrečných týdnů' : 'final weeks'}
+            {' · '}<Link to={base + '/simulate'}>{l.continue} →</Link></p>
+        })()}
+      </div>}
       {ready && revisions && <div className="run-home-columns">
         <div><h4>{l.recentRevisions}</h4>
           {revisions.length === 0 ? <p className="status">{l.noEvents}</p>

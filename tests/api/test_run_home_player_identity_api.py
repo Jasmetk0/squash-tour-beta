@@ -5,7 +5,6 @@ from urllib.parse import quote
 
 import pytest
 
-from beta_engine.application.run_working_draft_service import RunWorkingDraftService
 from beta_engine.infrastructure.db.initial_world_state import put_initial_world
 from tests.api.test_saved_revision_history_api import ApiServer, _create_run, _request
 from tests.application.test_viewer_people_read_model import _world
@@ -35,9 +34,19 @@ def test_identity_http_saved_head_no_live_leak_cross_run_and_restart(tmp_path):
             put_initial_world(session, source)
         assert _request("GET", url)[1] == empty
 
-        service = RunWorkingDraftService(repo, lambda kind: kind + "-identity-test")
-        draft = service.get_viewer_branch_draft(run_id=run, branch_id=branch)
-        service.save(run_id=run, branch_id=branch, expected_draft_version=draft.draft_version)
+        # Initial World has its own canonical manual Save command, not the
+        # Viewer-selection Working Draft Save used by Run Package changes.
+        save_root = (
+            f"{server.base_url}/admin/players/runs/{quote(run, safe='')}"
+            f"/branches/{quote(branch, safe='')}/initial-world/save"
+        )
+        status, preview = _request("GET", save_root + "/preview")
+        assert status == 200 and preview["can_save"], (status, preview)
+        status, _saved = _request("POST", save_root, {
+            "expected_draft_version": preview["draft_version"],
+            "expected_initial_world_fingerprint": preview["initial_world_fingerprint"],
+        })
+        assert status == 201, (status, _saved)
         status, published = _request("GET", url)
         assert status == 200, published
         assert published["status"] == "partial"

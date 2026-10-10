@@ -1,4 +1,4 @@
-import { act, fireEvent, screen, waitFor } from '@testing-library/react'
+import { fireEvent, screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { RunPage } from './RunPage'
@@ -118,7 +118,8 @@ describe('Run Home V1 canonical projections', () => {
     api.getAuthoritativeSimulationPosition.mockRejectedValue(new Error('Position projection unavailable'))
     api.getBranchWorkingDraft.mockRejectedValue(new Error('Working Draft unavailable'))
     mount()
-    expect(await screen.findByRole('alert', { name: '' })).toHaveTextContent(/Working Draft unavailable|Position projection unavailable/)
+    const alerts = await screen.findAllByRole('alert')
+    expect(alerts.some(alert => /Working Draft unavailable|Position projection unavailable/.test(alert.textContent ?? ''))).toBe(true)
     expect(screen.queryByText(/Načtená data nehlásí žádný aktuální blokátor/)).not.toBeInTheDocument()
   })
 

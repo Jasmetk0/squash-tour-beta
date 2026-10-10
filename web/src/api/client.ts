@@ -4055,3 +4055,25 @@ export async function getRunHomeActivity(
   ) throw new Error('Home activity does not belong to the selected Run / Branch or is invalid.')
   return data
 }
+
+
+/** Fail-closed saved ranking movement read, always scoped to the selected Branch. */
+export async function getRunHomeRankingChanges(
+  runId: string, branchId: string
+): Promise<import('./types').RunHomeRankingChanges> {
+  const data = await request<import('./types').RunHomeRankingChanges>(
+    `/admin/runs/${encodeURIComponent(runId)}/branches/${encodeURIComponent(branchId)}/home-ranking-changes`
+  )
+  if (
+    data.schema_version !== 'run_home_ranking_changes.v1' ||
+    data.run_id !== runId || data.branch_id !== branchId ||
+    data.source !== 'selected_branch_saved_revision' ||
+    !data.saved_revision_id?.trim() ||
+    !['unpublished', 'first_publication', 'ready'].includes(data.status) ||
+    !Array.isArray(data.changes) ||
+    !Number.isInteger(data.total_change_count) || data.total_change_count < data.changes.length ||
+    data.changes.length > 10 ||
+    data.changes.some(change => !change.player_id || !['up','down','entered','exited','points_only'].includes(change.movement))
+  ) throw new Error('Home ranking movement does not match the selected Run / Branch.')
+  return data
+}

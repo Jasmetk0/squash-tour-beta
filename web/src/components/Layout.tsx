@@ -8,6 +8,7 @@ import { ViewerContextProvider } from '../viewer/ViewerContext'
 import { AdminBranchProvider } from '../admin/AdminBranchContext'
 import { AdminTimeProvider } from '../admin/AdminTimeContext'
 import { HistoricalAdminTimeBoundary } from './HistoricalAdminTimeBoundary'
+import { LanguageProvider } from '../i18n/LanguageContext'
 
 export function Layout(): JSX.Element {
   const location = useLocation()
@@ -29,10 +30,10 @@ export function Layout(): JSX.Element {
   )
 
   return (
-    <ViewerContextProvider>
+    <LanguageProvider><ViewerContextProvider>
       {mode === 'admin' && adminScope.kind === 'run'
         ? <AdminBranchProvider runId={adminScope.runId}><AdminTimeProvider>{shell}</AdminTimeProvider></AdminBranchProvider>
         : shell}
-    </ViewerContextProvider>
+    </ViewerContextProvider></LanguageProvider>
   )
 }

@@ -28,14 +28,12 @@ export function runAdminNavFor(runId: string): AdminNavItem[] {
     ] },
     { to: base + '/calendar', label: 'Tour', children: [
       { to: base + '/calendar', label: 'Season Calendar' },
-      { to: base + '/events', label: 'Events' },
       { to: base + '/finals', label: 'World Tour Finals' },
       { to: base + '/rollover', label: 'Season Rollover' }
     ] },
     { to: base + '/snapshots/ranking', label: 'Rankings & Analytics', children: [
       { to: base + '/snapshots/ranking', label: 'Ranking Snapshots' },
       { to: base + '/snapshots/race', label: 'Race Snapshots' },
-      { to: base + '/activity', label: 'Activity' }
     ] },
     { to: base + '/simulate', label: 'Simulation', children: [
       { to: base + '/simulate', label: 'Simulation controls' },
@@ -46,7 +44,7 @@ export function runAdminNavFor(runId: string): AdminNavItem[] {
       { to: base + '/bootstrap-lineage', label: 'Bootstrap / Lineage' },
       { to: base + '/season-chain', label: 'Season Chain' },
       { to: base + '/activity', label: 'Activity' },
-      { to: base + '/events', label: 'World events' }
+      { to: base + '/events', label: 'Events' }
     ] }
   ]
 }

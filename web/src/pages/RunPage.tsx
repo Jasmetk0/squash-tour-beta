@@ -1,331 +1,280 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router-dom'
 
 import {
-  getFinalsSummary,
-  getLatestRollover,
-  getRun,
+  getAuthoritativeSimulationPosition,
+  getBranchWorkingDraft,
+  getPendingAuthoritativeFullSimulations,
   getRunContainer,
-  getRunLineage,
-  getRunSource,
-  getRunStatusSummary,
-  getRunWorldStatus,
-  listEvents,
-  rebuildRunWorld
+  getRunPackageState,
+  listSavedRevisionHistory,
 } from '../api/client'
 import { useAdminBranch } from '../admin/AdminBranchContext'
 import { useAdminTime } from '../admin/AdminTimeContext'
-import {
-  ActionStatusBlock,
-  CompactSummaryCard,
-  CurrentContextStrip,
-  MetadataList,
-  PageIntro,
-  SectionCard,
-  SummaryPills
-} from '../components/RunScopedUi'
-import { formatApiError, isApiNotFound } from '../utils/apiErrors'
-import { RunPackageSetupPanel } from '../components/RunPackageSetupPanel'
+import { CurrentContextStrip, MetadataList, SectionCard } from '../components/RunScopedUi'
 import { RunInitialWorldSetupPanel } from '../components/RunInitialWorldSetupPanel'
 import { RunInitialRankingSetupPanel } from '../components/RunInitialRankingSetupPanel'
 import { RunInitialRankingPublicationPanel } from '../components/RunInitialRankingPublicationPanel'
 import { RunFirstTournamentPanel } from '../components/RunFirstTournamentPanel'
-import { normalizeRunSourceType } from '../utils/runSourceTypes'
+import { useLanguage } from '../i18n/LanguageContext'
+import { formatApiError, isApiNotFound } from '../utils/apiErrors'
+import { RunHomeProgress } from './RunHomeProgress'
+import { seasonOrdinal, weekOrdinal } from './runHomeModel'
+
+const NEXT = {
+  cs: {
+    subtitle: 'Přehled vybrané branche z kanonických uložených a simulačních dat.',
+    present: 'Aktuální čas', past: 'Historický checkpoint',
+    missing: 'Nedostupné', loading: 'Načítání…',
+    initial: 'Prázdný Run je platný. Připrav zdrojové kopie, hráče a ranking, potom první turnaj.',
+    next: 'Další postup', attention: 'Vyžaduje pozornost',
+    activity: 'Dění ve světě', prep: 'Příprava prvního turnaje',
+    noSport: 'Pro tuto branch zatím není k dispozici ověřená sportovní projekce nadcházejících událostí. Nezobrazujeme obsah legacy Runu jako aktuální stav.',
+    noEvents: 'Zatím nejsou zaznamenané další události této branche.',
+    noIssues: 'Načtená data nehlásí žádný aktuální blokátor. Nejde o úplnou validaci Runu.',
+    noAttention: 'Nelze ověřit všechny zdroje upozornění.',
+    continue: 'Otevřít Simulation', manage: 'Otevřít Run Management',
+    history: 'Historie a revize', noPast: 'Historické výsledky a stavy ostatních částí zatím nejsou pro tento checkpoint projektovány. Zobrazeny jsou pouze uložené lokátory.',
+    back: 'Vrátit se do současnosti', notPositioned: 'Branch zatím nemá uloženou pozici simulace.',
+    draft: 'Working Draft (volba Viewer branche)', draftDirty: 'Neuložené změny',
+    draftClean: 'Čistý draft', draftUnknown: 'Stav draftu nedostupný',
+    otherDrafts: 'Další editační drafty nejsou tímto ukazatelem pokryté.',
+    recentRevisions: 'Nedávné uložené revize', recorded: 'Uložené checkpointy',
+    noHistorical: 'Vybraný checkpoint není dostupný nebo nepatří této branchi.',
+    setup: 'Příprava obsahu Runu', saved: 'Uložená revize',
+    waiting: 'Pozastavené/čekající plné simulace',
+    inspection: 'Stav aktuálního simulačního slotu', noChanges: 'Bez přepnutí Viewer branche',
+    unknown: 'neznámý'
+  },
+  en: {
+    subtitle: 'Selected Branch overview from canonical saved and simulation data.',
+    present: 'Present', past: 'Historical checkpoint',
+    missing: 'Unavailable', loading: 'Loading…',
+    initial: 'An empty Run is valid. Copy source content, create players and ranking, then start the first tournament.',
+    next: 'Next steps', attention: 'Needs attention',
+    activity: 'World activity', prep: 'First tournament preparation',
+    noSport: 'No verified upcoming sporting-event projection is available for this Branch yet. Legacy Run content is not substituted as current Branch data.',
+    noEvents: 'No additional Branch activity has been recorded yet.',
+    noIssues: 'Loaded feeds report no current blockers. This is not complete Run validation.',
+    noAttention: 'Not every attention feed can be verified.',
+    continue: 'Open Simulation', manage: 'Open Run Management',
+    history: 'History & revisions', noPast: 'Historical results and other state have not yet been projected for this checkpoint. Only recorded locators are displayed.',
+    back: 'Return to Present', notPositioned: 'This Branch has no saved simulation position yet.',
+    draft: 'Working Draft (Viewer Branch selection)', draftDirty: 'Unsaved changes',
+    draftClean: 'Clean draft', draftUnknown: 'Draft status unavailable',
+    otherDrafts: 'This indicator does not cover other editing drafts.',
+    recentRevisions: 'Recent saved revisions', recorded: 'Recorded checkpoints',
+    noHistorical: 'The selected checkpoint is unavailable or belongs to another Branch.',
+    setup: 'Run content preparation', saved: 'Saved revision',
+    waiting: 'Pending/paused full simulations',
+    inspection: 'Current simulation slot', noChanges: 'No Viewer Branch selection pending',
+    unknown: 'unknown'
+  }
+}
+
+function Unavailable({ message }: { message: string }): JSX.Element {
+  return <p className="error" role="alert">{message}</p>
+}
 
 export function RunPage(): JSX.Element {
   const { runId = '' } = useParams()
-  const queryClient = useQueryClient()
-  const { selectedBranch, selectedBranchId, viewerBranchId } = useAdminBranch()
+  const { language } = useLanguage()
+  const l = NEXT[language]
+  const { selectedBranch, selectedBranchId, viewerBranchId, isLoading: branchLoading, error: branchError } = useAdminBranch()
   const time = useAdminTime()
+  const branchId = selectedBranch?.run_id === runId ? selectedBranch.branch_id : null
+  const present = time.mode === 'present'
+  const ready = Boolean(runId && branchId && present && !branchLoading && !branchError)
 
-  const runQuery = useQuery({ queryKey: ['run', runId], queryFn: () => getRun(runId), enabled: Boolean(runId), retry: false })
   const containerQuery = useQuery({
     queryKey: ['run-container', runId],
     queryFn: () => getRunContainer(runId),
     enabled: Boolean(runId),
     retry: false
   })
-  const statusQuery = useQuery({
-    queryKey: ['run-status-summary', runId],
-    queryFn: () => getRunStatusSummary(runId),
-    enabled: Boolean(runId),
+  const draftQuery = useQuery({
+    queryKey: ['branch-working-draft', runId, branchId],
+    queryFn: () => getBranchWorkingDraft(runId, branchId!),
+    enabled: ready,
     retry: false
   })
-  const finalsQuery = useQuery({
-    queryKey: ['finals-summary', runId],
-    queryFn: () => getFinalsSummary(runId),
-    enabled: Boolean(runId),
+  const packageQuery = useQuery({
+    queryKey: ['run-package-state', runId, branchId],
+    queryFn: () => getRunPackageState(runId, branchId!),
+    enabled: ready,
     retry: false
   })
-  const rolloverQuery = useQuery({
-    queryKey: ['rollover-latest', runId],
-    queryFn: () => getLatestRollover(runId),
-    enabled: Boolean(runId),
+  const positionQuery = useQuery({
+    queryKey: ['authoritative-simulation-position', runId, branchId],
+    queryFn: () => getAuthoritativeSimulationPosition(runId, branchId!),
+    enabled: ready,
     retry: false
   })
-  const sourceQuery = useQuery({
-    queryKey: ['run-source', runId],
-    queryFn: () => getRunSource(runId),
-    enabled: Boolean(runId),
+  const pendingQuery = useQuery({
+    queryKey: ['authoritative-pending-full-simulations', runId, branchId],
+    queryFn: () => getPendingAuthoritativeFullSimulations(runId, branchId!),
+    enabled: ready,
     retry: false
   })
-  const lineageQuery = useQuery({
-    queryKey: ['run-lineage', runId],
-    queryFn: () => getRunLineage(runId),
-    enabled: Boolean(runId),
+  const revisionsQuery = useQuery({
+    queryKey: ['run-home-revisions', runId, branchId],
+    queryFn: () => listSavedRevisionHistory(runId, branchId!, { limit: 4 }),
+    enabled: ready,
     retry: false
   })
-  const worldQuery = useQuery({
-    queryKey: ['run-world-status', runId],
-    queryFn: () => getRunWorldStatus(runId),
-    enabled: Boolean(runId),
-    retry: false
-  })
-  const eventsQuery = useQuery({ queryKey: ['events', runId], queryFn: () => listEvents(runId), enabled: Boolean(runId) })
 
-  const invalidateHome = async (): Promise<void> => {
-    await Promise.all([
-      queryClient.invalidateQueries({ queryKey: ['run', runId] }),
-      queryClient.invalidateQueries({ queryKey: ['run-status-summary', runId] }),
-      queryClient.invalidateQueries({ queryKey: ['finals-summary', runId] }),
-      queryClient.invalidateQueries({ queryKey: ['rollover-latest', runId] }),
-      queryClient.invalidateQueries({ queryKey: ['run-world-status', runId] }),
-      queryClient.invalidateQueries({ queryKey: ['events', runId] })
-    ])
-  }
+  const run = containerQuery.data?.run_id === runId ? containerQuery.data : null
+  const draft = draftQuery.data?.run_id === runId && draftQuery.data.branch_id === branchId ? draftQuery.data : null
+  const position = positionQuery.data?.run_id === runId && positionQuery.data.branch_id === branchId ? positionQuery.data : null
+  const pending = pendingQuery.data?.run_id === runId && pendingQuery.data.branch_id === branchId ? pendingQuery.data : null
+  const revisions = revisionsQuery.data?.run_id === runId && revisionsQuery.data.branch_id === branchId
+    ? revisionsQuery.data.saved_revisions : null
+  const ownedPackages = packageQuery.data?.state ?? null
+  const emptyRun = ready && packageQuery.isSuccess && ownedPackages === null && positionQuery.isError && isApiNotFound(positionQuery.error)
+  const base = '/admin/runs/' + encodeURIComponent(runId)
+  const statusErrors = [
+    branchError,
+    time.error,
+    containerQuery.error ? formatApiError(containerQuery.error) : null,
+    draftQuery.error ? formatApiError(draftQuery.error) : null,
+    packageQuery.error ? formatApiError(packageQuery.error) : null,
+    positionQuery.error && !isApiNotFound(positionQuery.error) ? formatApiError(positionQuery.error) : null,
+    pendingQuery.error && !isApiNotFound(pendingQuery.error) ? formatApiError(pendingQuery.error) : null,
+    revisionsQuery.error ? formatApiError(revisionsQuery.error) : null,
+  ].filter((value): value is string => Boolean(value))
+  const blockers = position?.transition_blockers ?? []
+  const pendingCount = pending?.operations.length ?? 0
+  const draftStatus = !ready || draftQuery.isPending ? l.loading
+    : draftQuery.isError || !draft ? l.draftUnknown
+      : draft.status === 'dirty' ? l.draftDirty + ' (' + draft.change_count + ')' : l.draftClean
 
-  const rebuildAction = useMutation({ mutationFn: () => rebuildRunWorld(runId), onSuccess: invalidateHome })
-
-  const run = runQuery.data?.run
-  const canonicalOnly = Boolean(containerQuery.data?.run_id === runId && isApiNotFound(runQuery.error))
-  const seasonState = runQuery.data?.season_state
-  const progress = statusQuery.data?.progress
-  const nextEvent = seasonState?.ordered_events[seasonState.next_event_index] ?? null
-  const latestEvent = eventsQuery.data?.events[0] ?? null
-  const seasonComplete = Boolean(run && (progress?.next_event_index ?? run.next_event_index) >= (progress?.total_events ?? run.total_events))
-  const source = sourceQuery.data?.source
-  const children = lineageQuery.data?.lineage.children ?? []
-  const dataErrors = [containerQuery.error, statusQuery.error, finalsQuery.error, sourceQuery.error, lineageQuery.error, worldQuery.error, eventsQuery.error]
-    .filter((error) => error && !isApiNotFound(error))
-
-  if (time.mode === 'checkpoint') {
+  if (!present) {
     const checkpoint = time.selectedCheckpoint
-    return <section className="panel">
-      <PageIntro title="Home" subtitle="Read-only historical checkpoint on the Active Admin Branch." meta={`Run: ${runId}`} />
+    const validCheckpoint = Boolean(checkpoint && checkpoint.run_id === runId && checkpoint.branch_id === branchId)
+    return <section className="panel run-home">
+      <div className="page-intro"><h2>{l.past}</h2><p className="subtitle">{l.noPast}</p></div>
       <CurrentContextStrip items={[
-        { label: 'Run', value: runId }, { label: 'Branch', value: selectedBranch?.display_name ?? selectedBranchId ?? '—' },
-        { label: 'Time', value: 'Past' }, { label: 'Season', value: time.viewSeason ?? '—' },
-        { label: 'Week', value: time.viewWeek == null ? '—' : `W${time.viewWeek}` }, { label: 'Event', value: time.viewEventId ?? '—' },
+        { label: 'Run', value: run?.display_name || runId },
+        { label: 'Branch', value: selectedBranch?.display_name || branchId || l.missing },
+        { label: 'Time', value: l.past }
       ]} />
-      <SectionCard title="Historical checkpoint">
-        {checkpoint ? <MetadataList items={[
-          { label: 'View checkpoint', value: checkpoint.checkpoint_id }, { label: 'Sequence', value: checkpoint.sequence },
-          { label: 'Kind', value: checkpoint.kind }, { label: 'Parent checkpoint', value: checkpoint.parent_checkpoint_id ?? 'None' },
-          { label: 'Season', value: checkpoint.season }, { label: 'Week', value: checkpoint.week ?? '—' },
-          { label: 'Event', value: checkpoint.event_id ?? '—' }, { label: 'Event sequence', value: checkpoint.event_sequence ?? '—' },
-          { label: 'Command kind', value: checkpoint.command_kind }, { label: 'Command boundary', value: checkpoint.command_boundary },
-          { label: 'Content hash', value: checkpoint.content_hash },
-        ]} /> : <p role="alert" className="error">Historical Time unavailable: {time.checkpointsError ?? `checkpoint ${time.viewCheckpointId ?? 'unknown'} is unavailable`}.</p>}
-        <p className="status">This historical checkpoint is read-only. Viewing it does not rewind or mutate the Branch.</p>
-        <button type="button" onClick={time.selectPresent}>Return to Present</button>
-      </SectionCard>
-      <SectionCard title="Branch context"><MetadataList items={[
-        { label: 'Active Admin Branch', value: selectedBranchId ?? '—' }, { label: 'Viewer Branch', value: viewerBranchId ?? '—' },
-        { label: 'View checkpoint', value: time.viewCheckpointId ?? '—' }, { label: 'Current Branch HEAD', value: time.headCheckpointId ?? 'Unavailable' },
-      ]} /></SectionCard>
+      {!validCheckpoint && <Unavailable message={time.checkpointsError ?? l.noHistorical} />}
+      <RunHomeProgress season={validCheckpoint ? checkpoint!.season : null} week={validCheckpoint ? checkpoint!.week : null}
+        loading={time.checkpointsLoading} unavailable={!validCheckpoint} historical locale={language} />
+      {validCheckpoint && <SectionCard title={l.past}><MetadataList items={[
+        { label: 'Checkpoint', value: checkpoint!.checkpoint_id },
+        { label: 'Sequence', value: checkpoint!.sequence },
+        { label: 'Kind', value: checkpoint!.kind },
+        { label: 'Event', value: checkpoint!.event_id ?? '—' },
+        { label: 'Command', value: checkpoint!.command_kind }
+      ]}/></SectionCard>}
+      <button type="button" onClick={time.selectPresent}>{l.back}</button>
     </section>
   }
 
-  return (
-    <section className="panel">
-      <PageIntro
-        title="Home"
-        subtitle="Run command center for branch position, Run-level operations, and admin workflows."
-        meta={`Run: ${run?.run_id ?? runId ?? 'unknown'}`}
-      />
-      <CurrentContextStrip
-        items={[
-          { label: 'Run', value: run?.run_id ?? runId ?? 'unknown' },
-          { label: 'Branch', value: selectedBranch?.display_name ?? '—' },
-          { label: 'Time', value: 'Present' },
-          { label: 'Season', value: time.presentSeason ?? '—' },
-          { label: 'Week', value: time.presentWeek != null ? `W${time.presentWeek}` : '—' },
-          { label: 'Event', value: time.presentEventId ?? '—' }
-        ]}
-      />
+  const setupAllowed = Boolean(run && run.storage_kind === 'custom_local' && !run.read_only && selectedBranch?.run_id === runId)
+  const verified = Boolean(ready && run && time.isAvailable && !time.error)
+  const noConfirmedPosition = ready && positionQuery.isError && isApiNotFound(positionQuery.error)
 
-      {selectedBranchId && time.isLoading && <p className="status">Loading Active Admin Branch position…</p>}
-      {selectedBranchId && time.error && (
-        <p role="alert" className="error">
-          Active Admin Branch position unavailable{time.identityMismatch ? ': returned Branch State identity does not match this Run and Branch.' : '.'}
-        </p>
-      )}
+  return <section className="panel run-home">
+    <div className="page-intro">
+      <p className="eyebrow">PRODUCT RUN · ADMIN</p>
+      <h2>{run?.display_name || runId}</h2>
+      <p className="subtitle">{l.subtitle}</p>
+    </div>
+    <CurrentContextStrip items={[
+      { label: 'Run', value: runId },
+      { label: 'Branch', value: selectedBranch?.display_name ?? (branchLoading ? l.loading : l.missing) },
+      { label: 'Time', value: l.present },
+      { label: l.draft, value: draftStatus },
+      { label: l.saved, value: selectedBranch?.saved_head_revision_id ? '✓' : l.missing }
+    ]}/>
+    <p className="status">{l.otherDrafts}</p>
+    {containerQuery.isPending && <p role="status">{l.loading}</p>}
+    {containerQuery.isError && <Unavailable message={formatApiError(containerQuery.error)} />}
+    {branchError && <Unavailable message={branchError} />}
+    {time.error && <Unavailable message={time.error} />}
+    <RunHomeProgress season={time.presentSeason} week={time.presentWeek}
+      loading={branchLoading || time.isLoading}
+      unavailable={!verified} historical={false} locale={language}/>
 
-      {runQuery.isLoading && <p className="status">Loading run...</p>}
-      {runQuery.error && !canonicalOnly && <p role="alert" className="error">Failed to load run: {formatApiError(runQuery.error)}</p>}
-      {canonicalOnly && containerQuery.data && (
-        <SectionCard title="Product Run — initial setup">
-          <p className="status">This is a canonical saved Product Run. It does not yet have a legacy Simulation Run, which is normal for an empty Run. Its own Saved Revision and Branch remain authoritative.</p>
-          <MetadataList items={[
-            { label: 'Name', value: containerQuery.data.display_name ?? runId },
-            { label: 'Status', value: containerQuery.data.status },
-            { label: 'Access', value: containerQuery.data.read_only ? 'Read-only' : 'Editable' },
-            { label: 'Active Admin Branch', value: selectedBranch?.run_id === runId ? selectedBranch.display_name : 'Not available' },
-            { label: 'Viewer Branch', value: viewerBranchId ?? 'Not available' },
-            { label: 'Saved Revision', value: selectedBranch?.run_id === runId && selectedBranch.saved_head_revision_id ? 'Saved' : 'Not verified' }
-          ]} />
-          <p>Next: prepare independent World and Calendar content, generate players, and establish a ranking before running the first tournament. These steps are not performed automatically by creating the Run.</p>
-          <div className="actions">
-            <Link to={`/admin/runs/${encodeURIComponent(runId)}/branches`}>Manage timelines and saved revisions</Link>
-            <Link to={`/admin/runs/${encodeURIComponent(runId)}/simulate`}>Inspect simulation preparation</Link>
-            <Link to="/admin/world/library">Browse World sources</Link>
-            <Link to="/admin/runs">Back to Runs</Link>
-          </div>
-        </SectionCard>
-      )}
-      {containerQuery.data?.run_id === runId && containerQuery.data.storage_kind === 'custom_local' && !containerQuery.data.read_only &&
-        <RunPackageSetupPanel run={containerQuery.data} branch={selectedBranch} />}
-      {containerQuery.data?.run_id === runId && containerQuery.data.storage_kind === 'custom_local' && !containerQuery.data.read_only &&
-        <RunInitialWorldSetupPanel run={containerQuery.data} branch={selectedBranch} />}
-      {containerQuery.data?.run_id === runId && containerQuery.data.storage_kind === 'custom_local' && !containerQuery.data.read_only &&
-        <RunInitialRankingSetupPanel run={containerQuery.data} branch={selectedBranch} />}
-      {containerQuery.data?.run_id === runId && containerQuery.data.storage_kind === 'custom_local' && !containerQuery.data.read_only &&
-        <RunInitialRankingPublicationPanel run={containerQuery.data} branch={selectedBranch} />}
-      {containerQuery.data?.run_id === runId && containerQuery.data.storage_kind === 'custom_local' && !containerQuery.data.read_only &&
-        <RunFirstTournamentPanel run={containerQuery.data} branch={selectedBranch} />}
-      {run && (
-        <>
-          <SectionCard title="Run overview">
-            <SummaryPills
-              items={[
-                { label: 'Legacy simulation status', value: seasonComplete ? 'Regular season complete' : 'Active' },
-                { label: 'Legacy completed events', value: progress?.completed_event_count ?? run.completed_event_ids.length },
-                {
-                  label: 'Legacy Finals',
-                  value: finalsQuery.data?.result
-                    ? 'Complete'
-                    : finalsQuery.data?.qualification
-                      ? 'Ready to simulate'
-                      : 'Not yet qualified'
-                },
-                { label: 'World data', value: worldQuery.data?.is_stale ? 'Stale' : worldQuery.data ? 'Fresh' : 'Unavailable' }
-              ]}
-            />
-            <CompactSummaryCard
-              items={[
-                { label: 'Run ID', value: run.run_id },
-                { label: 'Seed', value: statusQuery.data?.seed ?? run.seed },
-                { label: 'World package', value: worldQuery.data?.world_id ?? '—' },
-                { label: 'Source', value: normalizeRunSourceType(source?.source_type) ?? 'Unknown' }
-              ]}
-            />
-          </SectionCard>
+    <div className="run-home-columns">
+      <SectionCard title={l.next}>
+        {!verified && <p className="status">{branchLoading || containerQuery.isPending || time.isLoading ? l.loading : l.missing}</p>}
+        {verified && <>
+          {packageQuery.isPending && <p role="status">{l.loading}</p>}
+          {packageQuery.isError && <Unavailable message={formatApiError(packageQuery.error)} />}
+          {emptyRun && <p>{l.initial}</p>}
+          {packageQuery.isSuccess && ownedPackages === null && <p>{l.initial}</p>}
+          {noConfirmedPosition && ownedPackages !== null && <p>{l.notPositioned}</p>}
+          {positionQuery.isPending && <p role="status">{l.loading}</p>}
+          {position && <div className="run-home-status-block">
+            <p><strong>{l.inspection}:</strong> {position.current_slot_kind
+              ? position.current_slot_kind + (position.current_slot_id ? ' · ' + position.current_slot_id : '')
+              : l.notPositioned}</p>
+            {position.eligible_match_ids.length > 0 && <p>{language === 'cs' ? 'Hratelné zápasy' : 'Eligible matches'}: {position.eligible_match_ids.length}</p>}
+            {position.unresolved_group_ids.length > 0 && <p>{language === 'cs' ? 'Nevyřešené skupiny' : 'Unresolved groups'}: {position.unresolved_group_ids.length}</p>}
+            {position.week_ready_for_transition && <p>{language === 'cs' ? 'Týden je připravený k přechodu.' : 'Week is ready for transition.'}</p>}
+          </div>}
+          {positionQuery.isError && !isApiNotFound(positionQuery.error) && <Unavailable message={formatApiError(positionQuery.error)} />}
+          {positionQuery.isSuccess && !position && <Unavailable message="Simulation position identity mismatch" />}
+          {pending && pendingCount > 0 && <p>{l.waiting}: <strong>{pendingCount}</strong></p>}
+          {pendingQuery.isPending && <p role="status">{l.loading}</p>}
+          {pendingQuery.isError && !isApiNotFound(pendingQuery.error) && <Unavailable message={formatApiError(pendingQuery.error)} />}
+          {positionQuery.isError && isApiNotFound(positionQuery.error) && !packageQuery.isSuccess && <p className="status">{l.noSport}</p>}
+        </>}
+        <div className="actions"><Link className="button-link" to={base + '/simulate'}>{l.continue} →</Link>
+          <Link to={base + '/manage'}>{l.manage} →</Link></div>
+      </SectionCard>
+      <SectionCard title={l.attention}>
+        {!ready && <p className="status">{l.missing}</p>}
+        {statusErrors.map((message, i) => <Unavailable key={i} message={message}/>)}
+        {ready && draftQuery.isSuccess && draft?.status === 'dirty' && <p className="error">{l.draftDirty}: {draft.change_count} · <Link to={base + '/branches'}>{l.history} →</Link></p>}
+        {blockers.map((blocker, i) => <p key={i} className="error">{blocker} · <Link to={base + '/simulate'}>{l.continue} →</Link></p>)}
+        {position && position.blocked_match_ids.length > 0 && <p className="error">{language === 'cs' ? 'Blokované zápasy' : 'Blocked matches'}: {position.blocked_match_ids.length} · <Link to={base + '/simulate'}>{l.continue} →</Link></p>}
+        {pending && pendingCount > 0 && <p>{l.waiting}: {pendingCount} · <Link to={base + '/simulate'}>{l.continue} →</Link></p>}
+        {ready && statusErrors.length === 0 && blockers.length === 0 && position?.blocked_match_ids.length === 0 && !draftQuery.isPending && draft?.status !== 'dirty' && pendingQuery.isSuccess && pendingCount === 0
+          ? <p className="status">{l.noIssues}</p>
+          : statusErrors.length === 0 && ready && !position && !emptyRun ? <p className="status">{l.noAttention}</p> : null}
+        <Link to={base + '/diagnostics'}>{language === 'cs' ? 'Otevřít diagnostiku' : 'Open diagnostics'} →</Link>
+      </SectionCard>
+    </div>
+    <SectionCard title={l.activity}>
+      <p className="status">{language === 'cs'
+        ? 'Zobrazeny jsou skutečné uložené revize a checkpointy. Výsledky zápasů, změny rankingu a rekordy zatím nemají kompletní kanonický Home read model.'
+        : 'Actual saved revisions and checkpoints only. Match results, ranking changes and records do not yet have a complete canonical Home read model.'}</p>
+      {!ready && <p className="status">{l.missing}</p>}
+      {ready && revisionsQuery.isPending && <p role="status">{l.loading}</p>}
+      {ready && revisionsQuery.isError && <Unavailable message={formatApiError(revisionsQuery.error)} />}
+      {ready && revisions && <div className="run-home-columns">
+        <div><h4>{l.recentRevisions}</h4>
+          {revisions.length === 0 ? <p className="status">{l.noEvents}</p>
+            : <ul className="run-home-feed">{[...revisions].reverse().slice(0, 3).map(revision =>
+              <li key={revision.revision_id}><strong>{revision.kind}</strong><small>#{revision.sequence} · {revision.created_at ?? '—'}</small></li>)}</ul>}</div>
+        <div><h4>{l.recorded}</h4>
+          {time.checkpointsLoading && <p role="status">{l.loading}</p>}
+          {time.checkpointsError && <Unavailable message={time.checkpointsError}/>}
+          {!time.checkpointsLoading && !time.checkpointsError && time.checkpoints.length === 0 && <p className="status">{l.noEvents}</p>}
+          <ul className="run-home-feed">{time.checkpoints.slice(0, 3).map(checkpoint =>
+            <li key={checkpoint.checkpoint_id}><strong>{checkpoint.command_kind}</strong>
+              <small>{checkpoint.kind} · #{checkpoint.sequence}</small></li>)}</ul>
+        </div>
+      </div>}
+      <Link to={base + '/branches'}>{l.history} →</Link>
+    </SectionCard>
 
-          <SectionCard title="Active Admin Branch">
-            <MetadataList
-              items={[
-                { label: 'Name', value: selectedBranch?.display_name ?? 'Not available' },
-                { label: 'Branch ID', value: selectedBranchId ?? 'Not available' },
-                { label: 'Status', value: selectedBranch?.status ?? 'Not available' },
-                { label: 'Viewing mode', value: selectedBranch?.read_only ? 'Read-only' : 'Writable' },
-                { label: 'View time', value: 'Present' },
-                { label: 'Head checkpoint', value: time.headCheckpointId ?? '—' },
-                { label: 'Current season', value: time.presentSeason ?? '—' },
-                { label: 'Current week', value: time.presentWeek ?? '—' },
-                { label: 'Current event', value: time.presentEventId ?? '—' },
-              ]}
-            />
-            {!selectedBranchId && <p className="status">No Active Admin Branch is available.</p>}
-            {selectedBranchId && !time.isLoading && !time.isAvailable && (
-              <p className="status">Branch position is unavailable. Legacy Run position is not used as a fallback.</p>
-            )}
-          </SectionCard>
-
-          <SectionCard title="Viewer publication">
-            <MetadataList
-              items={[
-                { label: 'Viewer Branch', value: viewerBranchId ?? 'Not available' },
-                { label: 'Active Branch is Viewer Branch', value: selectedBranchId && viewerBranchId ? (selectedBranchId === viewerBranchId ? 'Yes' : 'No') : '—' },
-                {
-                  label: 'Parent run',
-                  value: source?.parent_run_id ? <Link to={`/admin/runs/${source.parent_run_id}`}>{source.parent_run_id}</Link> : 'None'
-                },
-                { label: 'Child runs', value: children.length },
-                { label: 'Product run status', value: containerQuery.data?.status ?? 'Legacy run' },
-                { label: 'Branch controls', value: <Link to={`/admin/runs/${runId}/branches`}>Manage branches and Viewer Branch</Link> }
-              ]}
-            />
-          </SectionCard>
-
-          <SectionCard title="Legacy Run activity">
-            <p className="status">Transitional Simulation Run scheduling and history; this is not the Active Admin Branch position.</p>
-            <MetadataList
-              items={[
-                {
-                  label: 'Next scheduled event',
-                  value: nextEvent ? (
-                    <Link to={`/admin/runs/${runId}/calendar/${encodeURIComponent(nextEvent.event_id)}`}>
-                      {nextEvent.event_id} · W{nextEvent.week}
-                    </Link>
-                  ) : 'None — regular season complete'
-                },
-                {
-                  label: 'Latest history event',
-                  value: latestEvent ? (
-                    <Link to={`/admin/runs/${runId}/events/${encodeURIComponent(latestEvent.event_id)}`}>{latestEvent.event_id}</Link>
-                  ) : eventsQuery.isLoading ? 'Loading…' : 'None yet'
-                },
-                { label: 'Latest rollover', value: rolloverQuery.data ? `S${rolloverQuery.data.rollover.from_season} → S${rolloverQuery.data.rollover.to_season}` : 'None yet' }
-              ]}
-            />
-          </SectionCard>
-
-          <SectionCard title="Admin attention">
-            {dataErrors.length === 0 && !worldQuery.data?.is_stale && !(seasonComplete && finalsQuery.data?.qualification && !finalsQuery.data.result) ? (
-              <p className="status">No warnings require attention.</p>
-            ) : (
-              <ul aria-label="Admin warnings">
-                {worldQuery.data?.is_stale && <li className="error">World inputs are stale. Review the fingerprint and rebuild support below.</li>}
-                {seasonComplete && finalsQuery.data?.qualification && !finalsQuery.data.result && (
-                  <li className="error">Regular season is complete and the World Tour Finals result is pending.</li>
-                )}
-                {dataErrors.length > 0 && <li className="error">{dataErrors.length} run overview request(s) failed. Refresh or inspect diagnostics.</li>}
-              </ul>
-            )}
-            {worldQuery.data?.is_stale && <p>{worldQuery.data.message}</p>}
-            <div className="actions">
-              {seasonComplete && finalsQuery.data?.qualification && !finalsQuery.data.result && (
-                <Link to={`/admin/runs/${runId}/finals`}>Review World Tour Finals</Link>
-              )}
-              {seasonComplete && finalsQuery.data?.result && (
-                <Link to={`/admin/runs/${runId}/rollover`}>Continue to season rollover</Link>
-              )}
-              {worldQuery.data?.is_stale && worldQuery.data.rebuild_supported && (
-                <button type="button" onClick={() => rebuildAction.mutate()} disabled={rebuildAction.isPending}>Rebuild Run from Current World Data</button>
-              )}
-            </div>
-            <ActionStatusBlock
-              isLoading={rebuildAction.isPending}
-              loadingText="Executing maintenance command…"
-              errorText={rebuildAction.error ? `Rebuild failed: ${formatApiError(rebuildAction.error)}` : undefined}
-              successText={rebuildAction.data ? 'Run world rebuilt.' : undefined}
-            />
-          </SectionCard>
-
-          <SectionCard title="Admin shortcuts">
-            <div className="actions">
-              <Link to={`/admin/runs/${runId}/simulate`}>Open Simulate</Link>
-              <Link to={`/admin/runs/${runId}/calendar`}>Season calendar</Link>
-              <Link to={`/admin/runs/${runId}/activity`}>Run activity</Link>
-              <Link to={`/admin/runs/${runId}/diagnostics`}>Diagnostics</Link>
-              <Link to={`/admin/runs/${runId}/finals`}>World Tour Finals</Link>
-              <Link to={`/admin/runs/${runId}/rollover`}>Season rollover</Link>
-              <Link to={`/admin/runs/${runId}/bootstrap-lineage`}>Source and lineage</Link>
-            </div>
-            <p className="status">Simulation commands remain in the dedicated Simulate and Branch workflows.</p>
-          </SectionCard>
-        </>
-      )}
-    </section>
-  )
+    {setupAllowed && <section className="run-home-setup" aria-label="Run content preparation">
+      <h3>{l.setup}</h3>
+      <p className="status">{language === 'cs'
+        ? 'Existující nástroje k přípravě hráčů, rankingu a prvního turnaje. Ruční Save a potvrzovací kroky se nemění.'
+        : 'Existing player, ranking and first-tournament preparation. Manual Save and confirmations are unchanged.'}</p>
+      <RunInitialWorldSetupPanel run={run!} branch={selectedBranch} />
+      <RunInitialRankingSetupPanel run={run!} branch={selectedBranch} />
+      <RunInitialRankingPublicationPanel run={run!} branch={selectedBranch} />
+      <RunFirstTournamentPanel run={run!} branch={selectedBranch} />
+    </section>}
+    <p className="status">{viewerBranchId && branchId !== viewerBranchId
+      ? (language === 'cs' ? 'Viewer ukazuje jinou uloženou branch. Tato stránka nemění Viewer Branch.' : 'Viewer is displaying another saved Branch. This page does not change it.')
+      : ''}</p>
+  </section>
 }

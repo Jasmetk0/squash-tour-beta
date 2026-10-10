@@ -100,6 +100,10 @@ def resolve_run_home_activity(
         # A World-only Run with no Calendar is a valid empty state.
         if "no applied Calendar Package" not in str(exc):
             raise
+        # A ranking with published sources but no matching saved Calendar is
+        # inconsistent, never a normal empty Run.
+        if ranking is not None and ranking.tournament_sources:
+            raise ValueError("Saved tournament results have no matching Calendar Package") from exc
         return RunHomeActivity(
             run_id=run_id,
             branch_id=branch_id,

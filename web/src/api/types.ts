@@ -8489,3 +8489,29 @@ export type SavedHomePlayerIdentities = {
   players: SavedHomePlayerIdentity[]
   unresolved_ids: string[]
 }
+
+/** Current present-time player profile from the selected immutable Branch Saved Revision. */
+export type SavedPlayerTournamentFinish = {
+  event_id: string
+  event_name: string
+  season: string
+  week: number
+  finish: 'champion' | 'runner_up'
+}
+export type SavedPlayerProfile = {
+  schema_version: 'saved_player_profile.v1'
+  run_id: string
+  branch_id: string
+  saved_revision_id: string
+  player_id: string
+  source: 'selected_branch_saved_revision'
+  identity: SavedHomePlayerIdentity | null
+  ranking_status: 'identity_unavailable' | 'unpublished' | 'ranked' | 'unranked'
+  ranking_week_ordinal: number | null
+  rank: number | null
+  points: number | null
+  titles: number
+  final_appearances: number
+  total_tournament_results: number
+  tournament_results: SavedPlayerTournamentFinish[]
+}

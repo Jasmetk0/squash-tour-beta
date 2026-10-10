@@ -1,7 +1,8 @@
-import type { RunHomeRankingChanges, RunHomeRankingChange } from '../api/types'
+import type { RunHomeRankingChanges, RunHomeRankingChange, RunHomePlayerIdentity } from '../api/types'
+import { Link } from 'react-router-dom'
 import { seasonLabel } from './runHomeModel'
 
-type Props = { data: RunHomeRankingChanges; locale: 'cs' | 'en' }
+type Props = { data: RunHomeRankingChanges; locale: 'cs' | 'en'; runId: string; identities: Record<string, RunHomePlayerIdentity> }
 
 function weekText(ordinal: number): string {
   return seasonLabel(Math.floor(ordinal / 61)) + ' · W' + (ordinal % 61 + 1)
@@ -16,7 +17,7 @@ function movementText(change: RunHomeRankingChange, locale: 'cs' | 'en'): string
   return '#' + before + ' → #' + after + ' (' + (change.rank_delta! > 0 ? '+' : '') + change.rank_delta + ')'
 }
 
-export function RunHomeRankingPanel({ data, locale }: Props): JSX.Element {
+export function RunHomeRankingPanel({ data, locale, runId, identities }: Props): JSX.Element {
   const cs = locale === 'cs'
   return <section className="run-home-ranking" aria-label="Saved weekly ranking changes">
     <h4>{cs ? 'Změny žebříčku · publikované týdny' : 'Ranking movement · published weeks'}</h4>
@@ -39,7 +40,7 @@ export function RunHomeRankingPanel({ data, locale }: Props): JSX.Element {
         : 'No rank or point changes between these two saved publications.'}</p>}
       {data.changes.length > 0 && <ul className="run-home-feed">
         {data.changes.map(change => <li key={change.player_id}>
-          <span><strong>{change.player_id}</strong>
+          <span><strong>{identities[change.player_id] ? <Link to={'/admin/runs/' + encodeURIComponent(runId) + '/players/' + encodeURIComponent(change.player_id)}>{identities[change.player_id].name}</Link> : change.player_id}</strong>
             <small>{movementText(change, locale)}
               {change.points_delta != null && ' · ' + (change.points_delta > 0 ? '+' : '') + change.points_delta + (cs ? ' b.' : ' pts')}
             </small>

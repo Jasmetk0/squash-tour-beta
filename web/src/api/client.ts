@@ -4077,3 +4077,29 @@ export async function getRunHomeRankingChanges(
   ) throw new Error('Home ranking movement does not match the selected Run / Branch.')
   return data
 }
+
+
+/** Resolve names only from the explicitly selected Branch's immutable saved revision. */
+export async function getRunHomePlayerIdentities(
+  runId: string, branchId: string, playerIds: string[]
+): Promise<import('./types').RunHomePlayerIdentities> {
+  const ids = [...new Set(playerIds)]
+  if (ids.length > 30 || ids.some(id => !id.trim())) throw new Error('Invalid saved player identity request')
+  const params = new URLSearchParams()
+  for (const id of ids) params.append('player_id', id)
+  const data = await request<import('./types').RunHomePlayerIdentities>(
+    `/admin/runs/${encodeURIComponent(runId)}/branches/${encodeURIComponent(branchId)}/home-player-identities?${params.toString()}`
+  )
+  if (
+    data.schema_version !== 'run_home_player_identities.v1' ||
+    data.run_id !== runId || data.branch_id !== branchId ||
+    data.source !== 'selected_branch_saved_revision' ||
+    !data.saved_revision_id?.trim() ||
+    !Array.isArray(data.players) || !Array.isArray(data.unresolved_ids) ||
+    data.players.some(p => !p.player_id || !p.name?.trim() || p.country_code?.length !== 3 ||
+      !['initial_world', 'run_prospect'].includes(p.identity_source)) ||
+    new Set([...data.players.map(p => p.player_id), ...data.unresolved_ids]).size !== ids.length ||
+    [...data.players.map(p => p.player_id), ...data.unresolved_ids].some(id => !ids.includes(id))
+  ) throw new Error('Saved player identity response is not valid for selected Branch')
+  return data
+}

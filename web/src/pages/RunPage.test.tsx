@@ -1,410 +1,143 @@
-import { screen, waitFor, within } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
+import { act, fireEvent, screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { RunPage } from './RunPage'
 import { renderWithRoute as renderRoute } from '../test/testUtils'
 import { AdminBranchProvider } from '../admin/AdminBranchContext'
 import { AdminTimeProvider } from '../admin/AdminTimeContext'
-import { AdminBranchSelector } from '../components/AdminBranchSelector'
 import { AdminTimeControl } from '../components/AdminTimeControl'
-import { faxReferenceRunContainer, FAX_REFERENCE_BRANCH_ID, FAX_REFERENCE_RUN_ID } from '../test/faxReferenceFixture'
+import { LanguageProvider } from '../i18n/LanguageContext'
 
 const api = vi.hoisted(() => ({
   ApiError: class ApiError extends Error {
     status: number
-    constructor(message: string, status: number) {
-      super(message)
-      this.status = status
-    }
+    constructor(message: string, status: number) { super(message); this.status = status }
   },
-  getRun: vi.fn(),
-  listRunBranches: vi.fn(),
-  getBranchState: vi.fn(),
-  listBranchCheckpoints: vi.fn(),
-  makeOfficialRunBranch: vi.fn(),
-  getRunContainer: vi.fn(),
-  getBranchWorkingDraft: vi.fn(),
-  getRunPackageState: vi.fn(),
-  getRunOwnedInitialWorld: vi.fn(),
-  getRankingCandidates: vi.fn(),
-  previewRankingSave: vi.fn(),
-  getViewerOfficialRanking: vi.fn(),
-  listWorldPackages: vi.fn(),
-  getRunStatusSummary: vi.fn(),
-  getFinalsSummary: vi.fn(),
-  getLatestRollover: vi.fn(),
-  getRunSource: vi.fn(),
-  getRunLineage: vi.fn(),
-  getRunWorldStatus: vi.fn(),
-  listEvents: vi.fn(),
-  listRankingSnapshots: vi.fn(),
-  listRaceSnapshots: vi.fn(),
-  simulateWorldTourFinals: vi.fn(),
-  rolloverNextSeason: vi.fn(),
-  rebuildRunWorld: vi.fn(),
-  simulateNextMatch: vi.fn(),
-  simulateNextRound: vi.fn(),
-  simulateNextTournament: vi.fn(),
-  simulateNextWeek: vi.fn(),
-  simulateFullSeason: vi.fn()
+  getRunContainer: vi.fn(), listRunBranches: vi.fn(), getBranchState: vi.fn(), listBranchCheckpoints: vi.fn(),
+  getBranchWorkingDraft: vi.fn(), getRunPackageState: vi.fn(), getAuthoritativeSimulationPosition: vi.fn(),
+  getPendingAuthoritativeFullSimulations: vi.fn(), listSavedRevisionHistory: vi.fn()
 }))
-
 vi.mock('../api/client', () => api)
+vi.mock('../components/RunPackageSetupPanel', () => ({ RunPackageSetupPanel: () => <p>World and Calendar copies</p> }))
+vi.mock('../components/RunInitialWorldSetupPanel', () => ({ RunInitialWorldSetupPanel: () => <p>Player setup</p> }))
+vi.mock('../components/RunInitialRankingSetupPanel', () => ({ RunInitialRankingSetupPanel: () => <p>Ranking setup</p> }))
+vi.mock('../components/RunInitialRankingPublicationPanel', () => ({ RunInitialRankingPublicationPanel: () => <p>Ranking publication</p> }))
+vi.mock('../components/RunFirstTournamentPanel', () => ({ RunFirstTournamentPanel: () => <p>First tournament setup</p> }))
 
-function renderWithRoute(ui: JSX.Element, route: string) {
+const runId = 'run-home-test'
+const branchId = 'branch-home-test'
+function mount() {
   return renderRoute(
-    <AdminBranchProvider runId={FAX_REFERENCE_RUN_ID}>
-      <AdminTimeProvider><AdminBranchSelector /><AdminTimeControl />{ui}</AdminTimeProvider>
-    </AdminBranchProvider>,
-    route
+    <LanguageProvider><AdminBranchProvider runId={runId}><AdminTimeProvider>
+      <AdminTimeControl/><RunPage/>
+    </AdminTimeProvider></AdminBranchProvider></LanguageProvider>,
+    '/admin/runs/' + runId
   )
 }
-
-describe('RunPage', () => {
+function refPosition(overrides: Record<string, unknown> = {}) {
+  return {
+    run_id: runId, branch_id: branchId, current_week: { season_index: 2, week: 4 },
+    current_slot_kind: 'match', current_slot_id: 'week2-match', eligible_match_ids: ['m1', 'm2'],
+    blocked_match_ids: [], unresolved_group_ids: [], transition_blockers: [],
+    week_ready_for_transition: false,
+    ...overrides
+  }
+}
+describe('Run Home V1 canonical projections', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    // Transitional compatibility: RunPage passes the Product Run route ID to legacy SimulationRun APIs.
-    api.listRunBranches.mockResolvedValue({
-      run_branches: [
-        { branch_id: FAX_REFERENCE_BRANCH_ID, run_id: FAX_REFERENCE_RUN_ID, display_name: 'Viewer timeline', status: 'active', read_only: false, branch_seed: 1, forked_from_branch_id: null, forked_from_checkpoint_id: null, head_checkpoint_id: 'cp-a', legacy_simulation_run_id: FAX_REFERENCE_RUN_ID, metadata_json: {}, is_official: true },
-      ]
-    })
-    api.getBranchState.mockResolvedValue({ branch_id: FAX_REFERENCE_BRANCH_ID, run_id: FAX_REFERENCE_RUN_ID, head_checkpoint_id: 'cp-a', current_season: 2004, current_week: 17, current_event_id: 'event-a', current_event_sequence: 3, state_schema_version: '1', status: 'ready', metadata_json: {} })
-    api.listBranchCheckpoints.mockResolvedValue({ branch_checkpoints: [] })
-    api.getBranchWorkingDraft.mockResolvedValue({
-      run_id: FAX_REFERENCE_RUN_ID, branch_id: FAX_REFERENCE_BRANCH_ID,
-      base_saved_revision_id: 'saved-initial', draft_version: 0, status: 'clean'
-    })
-    api.getRunPackageState.mockResolvedValue({ state: null, fingerprint: null })
-    api.getRunOwnedInitialWorld.mockRejectedValue(new api.ApiError('Initial world not found', 404))
-    api.previewRankingSave.mockRejectedValue(new api.ApiError('Ranking unavailable', 409))
-    api.getViewerOfficialRanking.mockRejectedValue(new api.ApiError('Viewer has no published ranking', 409))
-    api.getRankingCandidates.mockResolvedValue({
-      run_id: FAX_REFERENCE_RUN_ID, branch_id: FAX_REFERENCE_BRANCH_ID,
-      publication_status: 'candidate_only', candidates: []
-    })
-    api.listWorldPackages.mockResolvedValue({
-      packages: [{ world_id: 'fifa_earth', name: 'FIFA Earth', status: 'active' }]
-    })
-    api.getRun.mockResolvedValue({
-      run: { run_id: FAX_REFERENCE_RUN_ID, season: 2025, seed: 3, next_event_index: 1, total_events: 4, completed_event_ids: ['E1'] },
-      season_state: {
-        season: 2025,
-        next_event_index: 1,
-        completed_event_ids: ['E1'],
-        ordered_events: [
-          { event_id: 'E1', season: 2025, week: 9, tour: 'WORLD', category: 'PLATINUM', template_id: 'TEMP-1' },
-          { event_id: 'E2', season: 2025, week: 10, tour: 'WORLD', category: 'GOLD', template_id: 'TEMP-2' },
-          { event_id: 'E3', season: 2025, week: 11, tour: 'WORLD', category: 'SILVER', template_id: 'TEMP-3' }
-        ]
-      }
-    })
+    localStorage.clear()
     api.getRunContainer.mockResolvedValue({
-      ...faxReferenceRunContainer,
-      run_id: FAX_REFERENCE_RUN_ID,
-      official_branch_id: FAX_REFERENCE_BRANCH_ID,
-    })
-    api.getRunStatusSummary.mockResolvedValue({
-      run_id: FAX_REFERENCE_RUN_ID,
-      season: 2025,
-      seed: 3,
-      progress: { next_event_index: 1, total_events: 4, completed_event_count: 1 },
-      finals: { qualification_available: true, result_available: false },
-      rollover: { latest_to_season: 2026, transitioned_players: 128 },
-      source: { source_type: 'bootstrap', parent_run_id: 'run-parent' },
-      lineage: { child_run_count: 2 },
-      history_counts: { events: 3, ranking_snapshots: 3, race_snapshots: 3 }
-    })
-    api.getFinalsSummary.mockResolvedValue({
-      run_id: FAX_REFERENCE_RUN_ID,
-      season: 2025,
-      qualification: { run_id: FAX_REFERENCE_RUN_ID, season: 2025, source_as_of_season: 2025, source_as_of_week: 40, qualification: {} },
-      result: null
-    })
-    api.getLatestRollover.mockResolvedValue({
-      rollover: { run_id: FAX_REFERENCE_RUN_ID, from_season: 2025, to_season: 2026, transitioned_players: 128, metadata: {} }
-    })
-    api.getRunSource.mockResolvedValue({
-      source: {
-        source_type: 'bootstrap',
-        parent_run_id: 'run-parent',
-        source_rollover_run_id: 'run-parent',
-        source_rollover_from_season: 2025,
-        source_rollover_to_season: 2026
-      }
-    })
-    api.getRunLineage.mockResolvedValue({
-      lineage: {
-        run_id: FAX_REFERENCE_RUN_ID,
-        source: {
-          source_type: 'bootstrap',
-          parent_run_id: 'run-parent',
-          source_rollover_run_id: 'run-parent',
-          source_rollover_from_season: 2025,
-          source_rollover_to_season: 2026
-        },
-        children: ['run-child-1', 'run-child-2']
-      }
-    })
-    api.getRunWorldStatus.mockResolvedValue({
-      run_id: FAX_REFERENCE_RUN_ID,
-      world_id: 'official_fax_world',
-      source_type: 'fresh_seed',
-      stored_world_generation_fingerprint: 'fp-a',
-      current_world_generation_fingerprint: 'fp-a',
-      is_stale: false,
-      rebuild_supported: true,
-      message: 'Run world inputs are fresh; rebuild is available for this pristine fresh-seed run.'
-    })
-    api.listEvents.mockResolvedValue({
-      events: [
-        { event_sequence: 3, event_id: 'E3', season: 2025, week: 11, template_id: null, tournament_result: null },
-        { event_sequence: 1, event_id: 'E1', season: 2025, week: 9, template_id: null, tournament_result: null },
-        { event_sequence: 2, event_id: 'E2', season: 2025, week: 10, template_id: null, tournament_result: null },
-        { event_sequence: 4, event_id: 'E4', season: 2025, week: 12, template_id: null, tournament_result: null }
-      ]
-    })
-    api.listRankingSnapshots.mockResolvedValue({
-      snapshots: [
-        { snapshot_sequence: 10, snapshot_kind: 'WEEK', source_event_id: 'E3', payload: {} },
-        { snapshot_sequence: 8, snapshot_kind: 'TOURNAMENT', source_event_id: null, payload: {} },
-        { snapshot_sequence: 9, snapshot_kind: 'WEEK', source_event_id: 'E2', payload: {} },
-        { snapshot_sequence: 11, snapshot_kind: 'WEEK', source_event_id: 'E4', payload: {} }
-      ]
-    })
-    api.listRaceSnapshots.mockResolvedValue({
-      snapshots: [
-        { snapshot_sequence: 7, snapshot_kind: 'WEEK', source_event_id: 'E3', payload: {} },
-        { snapshot_sequence: 5, snapshot_kind: 'TOURNAMENT', source_event_id: null, payload: {} },
-        { snapshot_sequence: 6, snapshot_kind: 'WEEK', source_event_id: 'E2', payload: {} },
-        { snapshot_sequence: 8, snapshot_kind: 'WEEK', source_event_id: 'E4', payload: {} }
-      ]
-    })
-    api.simulateWorldTourFinals.mockResolvedValue({
-      finals: {
-        run_id: FAX_REFERENCE_RUN_ID,
-        season: 2025,
-        event_id: 'WTF-2025',
-        already_simulated: false,
-        result: { champion_id: 'p-1' }
-      }
-    })
-    api.rolloverNextSeason.mockResolvedValue({
-      rollover: {
-        run_id: FAX_REFERENCE_RUN_ID,
-        from_season: 2025,
-        to_season: 2026,
-        transitioned_players: 128,
-        metadata: {},
-        already_persisted: false
-      }
-    })
-    api.rebuildRunWorld.mockResolvedValue({
-      run_id: FAX_REFERENCE_RUN_ID,
-      world_id: 'official_fax_world',
-      source_type: 'fresh_seed',
-      stored_world_generation_fingerprint: 'fp-a',
-      current_world_generation_fingerprint: 'fp-a',
-      is_stale: false,
-      rebuild_supported: true,
-      message: 'Run rebuilt.'
-    })
-    api.simulateNextMatch.mockResolvedValue({ step: { mode: 'simulate_next_match' } })
-    api.simulateNextRound.mockResolvedValue({ step: { mode: 'simulate_next_round' } })
-    api.simulateNextTournament.mockResolvedValue({ step: { mode: 'simulate_next_tournament' } })
-    api.simulateNextWeek.mockResolvedValue({ step: { mode: 'simulate_next_week' } })
-    api.simulateFullSeason.mockResolvedValue({ step: { mode: 'simulate_full_season' } })
-  })
-
-  it('opens an empty canonical Run even when no legacy Simulation Run exists', async () => {
-    api.getRun.mockRejectedValueOnce(new api.ApiError('Legacy run not found', 404))
-    api.getRunContainer.mockResolvedValue({
-      ...faxReferenceRunContainer, run_id: FAX_REFERENCE_RUN_ID,
-      display_name: 'Isolated test Run', status: 'working',
-      storage_kind: 'custom_local', read_only: false,
-      official_branch_id: FAX_REFERENCE_BRANCH_ID
+      run_id: runId, display_name: 'Demo Run', storage_kind: 'custom_local',
+      read_only: false, status: 'working', official_branch_id: branchId
     })
     api.listRunBranches.mockResolvedValue({ run_branches: [{
-      branch_id: FAX_REFERENCE_BRANCH_ID, run_id: FAX_REFERENCE_RUN_ID,
-      display_name: 'Timeline 1', status: 'active', read_only: false,
-      saved_head_revision_id: 'saved-initial', head_checkpoint_id: null,
-      legacy_simulation_run_id: null
+      run_id: runId, branch_id: branchId, display_name: 'Timeline 1', status: 'active',
+      saved_head_revision_id: 'saved-1', head_checkpoint_id: 'cp-current',
+      read_only: false, is_official: true
     }] })
-    renderWithRoute(<RunPage />, `/runs/${FAX_REFERENCE_RUN_ID}`)
-    expect(await screen.findByRole('heading', { name: 'Product Run — initial setup' })).toBeInTheDocument()
-    expect(screen.getAllByText('Isolated test Run').length).toBeGreaterThan(0)
-    expect(screen.getByText(/own Saved Revision and Branch remain authoritative/)).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Manage timelines and saved revisions' }))
-      .toHaveAttribute('href', `/admin/runs/${FAX_REFERENCE_RUN_ID}/branches`)
-    expect(screen.queryByText(/Failed to load run: Legacy run not found/)).not.toBeInTheDocument()
-  })
-
-  it('renders the run-scoped Admin Home identity and live progress', async () => {
-    renderWithRoute(<RunPage />, `/runs/${FAX_REFERENCE_RUN_ID}`)
-    expect(await screen.findByRole('heading', { name: 'Home' })).toBeInTheDocument()
-    expect(await screen.findByRole('link', { name: 'E2 · W10' })).toHaveAttribute('href', `/admin/runs/${FAX_REFERENCE_RUN_ID}/calendar/E2`)
-    expect(screen.getByText(`Run: ${FAX_REFERENCE_RUN_ID}`)).toBeInTheDocument()
-    const context = screen.getByRole('list', { name: 'Current context' })
-    expect(await within(context).findByText('event-a')).toBeInTheDocument()
-    expect(within(context).getByText('Viewer timeline')).toBeInTheDocument()
-    expect(await within(context).findByText('2004')).toBeInTheDocument()
-    expect(within(context).getByText('W17')).toBeInTheDocument()
-    expect(within(context).getByText('event-a')).toBeInTheDocument()
-  })
-
-  it('keeps Present Run Home usable when checkpoint history is unavailable', async () => {
-    api.listBranchCheckpoints.mockRejectedValue(new Error('checkpoint history unavailable'))
-    renderWithRoute(<RunPage />, `/runs/${FAX_REFERENCE_RUN_ID}`)
-    expect(await screen.findByRole('heading', { name: 'Run overview' })).toBeInTheDocument()
-    expect(await screen.findByText(/Historical checkpoints unavailable: checkpoint history unavailable/)).toBeInTheDocument()
-    await waitFor(() => expect(screen.getByLabelText('Admin view time')).toHaveTextContent('Present · S2004 · W17'))
-    expect(screen.getByRole('link', { name: 'Open Simulate' })).toBeInTheDocument()
-  })
-
-  it('renders a focused read-only historical Home and returns explicitly to Present', async () => {
-    api.getBranchState.mockResolvedValue({ branch_id: FAX_REFERENCE_BRANCH_ID, run_id: FAX_REFERENCE_RUN_ID, head_checkpoint_id: 'cp-head', current_season: 2007, current_week: 42, current_event_id: 'event-head', current_event_sequence: 42, state_schema_version: '1', status: 'ready', metadata_json: {} })
-    api.listBranchCheckpoints.mockResolvedValue({ branch_checkpoints: [{
-      checkpoint_id: 'cp-old', run_id: FAX_REFERENCE_RUN_ID, branch_id: FAX_REFERENCE_BRANCH_ID,
-      parent_checkpoint_id: 'cp-parent', sequence: 418, kind: 'completed_week', season: 2005, week: 31,
-      event_id: 'event-old', event_sequence: 31, command_id: 'command-old', command_kind: 'simulate_next_week',
-      command_boundary: 'after', config_version: null, config_fingerprint: null, world_id: 'world', world_fingerprint: null,
-      global_seed: 1, branch_seed: 1, seed_namespace: {}, payload_schema_version: '1', content_hash_algorithm: 'sha256',
-      content_hash: 'hash-old', payload: {},
-    }] })
-    renderWithRoute(<RunPage />, `/runs/${FAX_REFERENCE_RUN_ID}`)
-    await screen.findByRole('option', { name: /#418 · S2005 · W31 · event-old/ })
-    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Admin Time context' }), 'cp-old')
-
-    const context = screen.getByRole('list', { name: 'Current context' })
-    expect(within(context).getByText('Past')).toBeInTheDocument()
-    expect(within(context).getByText('2005')).toBeInTheDocument()
-    expect(within(context).getByText('W31')).toBeInTheDocument()
-    expect(within(context).getByText('event-old')).toBeInTheDocument()
-    expect(screen.getAllByText('cp-old')).toHaveLength(2)
-    expect(screen.getByText('cp-head')).toBeInTheDocument()
-    expect(screen.getByText('418')).toBeInTheDocument()
-    expect(screen.getByText('completed_week')).toBeInTheDocument()
-    expect(screen.getByText('simulate_next_week')).toBeInTheDocument()
-    expect(screen.getByText('after')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Return to Present' })).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Rebuild Run from Current World Data' })).not.toBeInTheDocument()
-    expect(screen.queryByRole('heading', { name: 'Legacy Run activity' })).not.toBeInTheDocument()
-    expect(screen.queryByRole('heading', { name: 'Admin shortcuts' })).not.toBeInTheDocument()
-    expect(screen.queryByRole('heading', { name: 'Admin attention' })).not.toBeInTheDocument()
-    expect(screen.queryByRole('link', { name: 'Review World Tour Finals' })).not.toBeInTheDocument()
-    expect(screen.queryByRole('link', { name: 'Continue to season rollover' })).not.toBeInTheDocument()
-
-    await userEvent.click(screen.getByRole('button', { name: 'Return to Present' }))
-    expect(await screen.findByRole('heading', { name: 'Run overview' })).toBeInTheDocument()
-    expect(screen.getByLabelText('Admin view time')).toHaveTextContent('Present · S2007 · W42')
-  })
-
-  it('renders real branch, world, activity, and admin navigation context', async () => {
-    renderWithRoute(<RunPage />, `/runs/${FAX_REFERENCE_RUN_ID}`)
-    expect(await screen.findByText('official_fax_world')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'run-parent' })).toHaveAttribute('href', '/admin/runs/run-parent')
-    expect(screen.getAllByText('Viewer Branch').length).toBeGreaterThan(0)
-    expect(screen.queryByText('Official branch')).not.toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Manage branches and Viewer Branch' })).toHaveAttribute('href', `/admin/runs/${FAX_REFERENCE_RUN_ID}/branches`)
-    expect(screen.getAllByText(FAX_REFERENCE_BRANCH_ID).length).toBeGreaterThan(0)
-    expect(screen.getByRole('link', { name: 'E3' })).toHaveAttribute('href', `/admin/runs/${FAX_REFERENCE_RUN_ID}/events/E3`)
-    expect(screen.getByRole('link', { name: 'Open Simulate' })).toHaveAttribute('href', `/admin/runs/${FAX_REFERENCE_RUN_ID}/simulate`)
-    expect(screen.getByRole('link', { name: 'Diagnostics' })).toHaveAttribute('href', `/admin/runs/${FAX_REFERENCE_RUN_ID}/diagnostics`)
-  })
-
-
-  it('switches Home to a read-only Active Admin Branch without changing Viewer publication', async () => {
-    const branchB = { branch_id: 'branch-b', run_id: FAX_REFERENCE_RUN_ID, display_name: 'Alternate timeline', status: 'active', read_only: true, branch_seed: 2, forked_from_branch_id: FAX_REFERENCE_BRANCH_ID, forked_from_checkpoint_id: 'cp-a', head_checkpoint_id: 'cp-b', legacy_simulation_run_id: 'legacy-b', metadata_json: {}, is_official: false }
-    const initialBranches = await api.listRunBranches()
-    api.listRunBranches.mockResolvedValue({ run_branches: [...initialBranches.run_branches, branchB] })
-    api.getBranchState.mockImplementation(async (branchId: string) => branchId === 'branch-b'
-      ? { branch_id: 'branch-b', run_id: FAX_REFERENCE_RUN_ID, head_checkpoint_id: 'cp-b', current_season: 2007, current_week: 42, current_event_id: 'event-b', current_event_sequence: 9, state_schema_version: '1', status: 'ready', metadata_json: {} }
-      : { branch_id: FAX_REFERENCE_BRANCH_ID, run_id: FAX_REFERENCE_RUN_ID, head_checkpoint_id: 'cp-a', current_season: 2004, current_week: 17, current_event_id: 'event-a', current_event_sequence: 3, state_schema_version: '1', status: 'ready', metadata_json: {} })
-    const storageSpy = vi.spyOn(Storage.prototype, 'setItem')
-
-    renderWithRoute(<RunPage />, `/runs/${FAX_REFERENCE_RUN_ID}`)
-    await within(screen.getByRole('list', { name: 'Current context' })).findByText('event-a')
-    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Admin active Branch' }), 'branch-b')
-
-    const context = screen.getByRole('list', { name: 'Current context' })
-    expect(await within(context).findByText('Alternate timeline')).toBeInTheDocument()
-    expect(within(context).getByText('2007')).toBeInTheDocument()
-    expect(within(context).getByText('W42')).toBeInTheDocument()
-    expect(within(context).getByText('event-b')).toBeInTheDocument()
-    expect(screen.getByText('Read-only')).toBeInTheDocument()
-    expect(screen.getByText('No')).toBeInTheDocument()
-    expect(screen.getAllByText(FAX_REFERENCE_BRANCH_ID).length).toBeGreaterThan(0)
-    expect(api.makeOfficialRunBranch).not.toHaveBeenCalled()
-    expect(storageSpy).not.toHaveBeenCalled()
-  })
-
-  it('keeps Home usable and does not fall back when Branch State is unavailable', async () => {
-    api.getBranchState.mockRejectedValueOnce(new api.ApiError('missing', 404))
-    renderWithRoute(<RunPage />, `/runs/${FAX_REFERENCE_RUN_ID}`)
-    expect(await screen.findByRole('alert', { name: '' })).toHaveTextContent('Active Admin Branch position unavailable')
-    expect(screen.getByRole('heading', { name: 'Home' })).toBeInTheDocument()
-    expect(screen.getByRole('combobox', { name: 'Admin active Branch' })).toHaveValue(FAX_REFERENCE_BRANCH_ID)
-    const context = screen.getByRole('list', { name: 'Current context' })
-    expect(within(context).queryByText('2025')).not.toBeInTheDocument()
-    expect(screen.getByText('Branch position is unavailable. Legacy Run position is not used as a fallback.')).toBeInTheDocument()
-  })
-
-  it('rejects Branch State with a mismatched Branch or Run identity', async () => {
-    api.getBranchState.mockResolvedValueOnce({ branch_id: 'branch-c', run_id: 'run-c', head_checkpoint_id: 'cp-c', current_season: 2049, current_week: 61, current_event_id: 'wrong-event', current_event_sequence: 99, state_schema_version: '1', status: 'ready', metadata_json: {} })
-    renderWithRoute(<RunPage />, `/runs/${FAX_REFERENCE_RUN_ID}`)
-    expect(await screen.findByText(/returned Branch State identity does not match/)).toBeInTheDocument()
-    expect(screen.queryByText('wrong-event')).not.toBeInTheDocument()
-    expect(screen.queryByText('2049')).not.toBeInTheDocument()
-  })
-
-  it('shows no attention warning when loaded run signals are healthy', async () => {
-    renderWithRoute(<RunPage />, `/runs/${FAX_REFERENCE_RUN_ID}`)
-    expect(await screen.findByText('No warnings require attention.')).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Simulate next tournament' })).not.toBeInTheDocument()
-  })
-
-  it('surfaces a stale-world warning and preserves the rebuild command', async () => {
-    api.getRunWorldStatus.mockResolvedValueOnce({ run_id: FAX_REFERENCE_RUN_ID, world_id: 'official_fax_world', source_type: 'fresh_seed', stored_world_generation_fingerprint: 'old', current_world_generation_fingerprint: 'new', is_stale: true, rebuild_supported: true, message: 'World inputs changed.' })
-    renderWithRoute(<RunPage />, `/runs/${FAX_REFERENCE_RUN_ID}`)
-    expect(await screen.findByText(/World inputs are stale/)).toBeInTheDocument()
-    await userEvent.click(screen.getByRole('button', { name: 'Rebuild Run from Current World Data' }))
-    await waitFor(() => expect(api.rebuildRunWorld).toHaveBeenCalledWith(FAX_REFERENCE_RUN_ID))
-    expect(await screen.findByText('Run world rebuilt.')).toBeInTheDocument()
-  })
-
-  it('routes pending Finals to their dedicated workflow without executing them from Home', async () => {
-    const runResponse = await api.getRun()
-    const statusResponse = await api.getRunStatusSummary()
-    api.getRunStatusSummary.mockResolvedValueOnce({ ...statusResponse, progress: { next_event_index: 4, total_events: 4, completed_event_count: 4 } })
-    api.getRun.mockResolvedValueOnce({ ...runResponse, run: { ...runResponse.run, next_event_index: 4, completed_event_ids: ['E1', 'E2', 'E3', 'E4'] }, season_state: { ...runResponse.season_state, next_event_index: 4 } })
-    renderWithRoute(<RunPage />, `/runs/${FAX_REFERENCE_RUN_ID}`)
-    expect(await screen.findByText(/World Tour Finals result is pending/)).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Review World Tour Finals' })).toHaveAttribute('href', `/admin/runs/${FAX_REFERENCE_RUN_ID}/finals`)
-    expect(screen.queryByRole('button', { name: 'Simulate World Tour Finals' })).not.toBeInTheDocument()
-    expect(api.simulateWorldTourFinals).not.toHaveBeenCalled()
-  })
-
-  it('routes an available rollover to its dedicated workflow without executing it from Home', async () => {
-    const runResponse = await api.getRun()
-    const statusResponse = await api.getRunStatusSummary()
-    api.getRunStatusSummary.mockResolvedValueOnce({ ...statusResponse, progress: { next_event_index: 4, total_events: 4, completed_event_count: 4 } })
-    api.getRun.mockResolvedValueOnce({ ...runResponse, run: { ...runResponse.run, next_event_index: 4, completed_event_ids: ['E1', 'E2', 'E3', 'E4'] }, season_state: { ...runResponse.season_state, next_event_index: 4 } })
-    api.getFinalsSummary.mockResolvedValueOnce({
-      run_id: FAX_REFERENCE_RUN_ID,
-      season: 2025,
-      qualification: { run_id: FAX_REFERENCE_RUN_ID, season: 2025, source_as_of_season: 2025, source_as_of_week: 40, qualification: {} },
-      result: { champion_id: 'p-1' }
+    api.getBranchState.mockResolvedValue({
+      run_id: runId, branch_id: branchId, current_season: 2, current_week: 4,
+      current_event_id: null, current_event_sequence: null, head_checkpoint_id: 'cp-current'
     })
-    renderWithRoute(<RunPage />, `/runs/${FAX_REFERENCE_RUN_ID}`)
-    expect(await screen.findByRole('link', { name: 'Continue to season rollover' })).toHaveAttribute('href', `/admin/runs/${FAX_REFERENCE_RUN_ID}/rollover`)
-    expect(screen.queryByRole('button', { name: 'Roll over to next season' })).not.toBeInTheDocument()
-    expect(api.rolloverNextSeason).not.toHaveBeenCalled()
+    api.listBranchCheckpoints.mockResolvedValue({ branch_checkpoints: [{
+      checkpoint_id: 'cp-past', run_id: runId, branch_id: branchId, sequence: 1,
+      kind: 'completed_week', command_kind: 'week_transition', season: 1, week: 60
+    }] })
+    api.getBranchWorkingDraft.mockResolvedValue({
+      run_id: runId, branch_id: branchId, draft_version: 1, status: 'clean', change_count: 0
+    })
+    api.getRunPackageState.mockResolvedValue({ state: { run_id: runId, branch_id: branchId }, fingerprint: 'p' })
+    api.getAuthoritativeSimulationPosition.mockResolvedValue(refPosition())
+    api.getPendingAuthoritativeFullSimulations.mockResolvedValue({ run_id: runId, branch_id: branchId, operations: [] })
+    api.listSavedRevisionHistory.mockResolvedValue({ run_id: runId, branch_id: branchId, saved_revisions: [{
+      revision_id: 'saved-1', kind: 'initial', sequence: 1, created_at: '2026-10-10'
+    }] })
   })
 
-  it('summarizes overview request failures as admin attention', async () => {
-    api.getRunWorldStatus.mockRejectedValueOnce(new Error('world unavailable'))
-    renderWithRoute(<RunPage />, `/runs/${FAX_REFERENCE_RUN_ID}`)
-    expect(await screen.findByText('1 run overview request(s) failed. Refresh or inspect diagnostics.')).toBeInTheDocument()
+  it('renders 50 seasons and 61 weeks from canonical BranchState, not legacy Run position', async () => {
+    mount()
+    expect(await screen.findByText('Demo Run')).toBeInTheDocument()
+    await waitFor(() => expect(screen.getByText('2002/03 · 50 sezón')).toBeInTheDocument())
+    expect(screen.getByText('W4 · 61 týdnů')).toBeInTheDocument()
+    expect(screen.getByRole('img', { name: '50 sezón' }).children).toHaveLength(50)
+    expect(screen.getByRole('img', { name: '61 týdnů' }).children).toHaveLength(61)
+    expect(screen.getByText('Hratelné zápasy: 2')).toBeInTheDocument()
+    expect(screen.getByText('World and Calendar copies')).toBeInTheDocument()
+    expect(api.getRunContainer).toHaveBeenCalledWith(runId)
+  })
+
+  it('allows a legitimate empty Run without inventing zero matches or a season position', async () => {
+    api.getBranchState.mockResolvedValue({
+      run_id: runId, branch_id: branchId, current_season: null, current_week: null,
+      head_checkpoint_id: null
+    })
+    api.getRunPackageState.mockResolvedValue({ state: null, fingerprint: null })
+    api.getAuthoritativeSimulationPosition.mockRejectedValue(new api.ApiError('No position yet', 404))
+    mount()
+    expect(await screen.findByText('Prázdný Run je platný.', { exact: false })).toBeInTheDocument()
+    expect(screen.getAllByText('Zatím neurčeno').length).toBeGreaterThan(0)
+    expect(screen.queryByText('Hratelné zápasy: 0')).not.toBeInTheDocument()
+    expect(screen.getByRole('img', { name: '50 sezón' }).children).toHaveLength(50)
+  })
+
+  it('exposes dirty Viewer-Branch draft and real blockers without claiming all clean', async () => {
+    api.getBranchWorkingDraft.mockResolvedValue({ run_id: runId, branch_id: branchId, status: 'dirty', change_count: 2 })
+    api.getAuthoritativeSimulationPosition.mockResolvedValue(refPosition({
+      transition_blockers: ['Rankings not published'],
+      blocked_match_ids: ['match-blocked']
+    }))
+    mount()
+    expect(await screen.findByText('Neuložené změny (2)')).toBeInTheDocument()
+    expect(await screen.findByText(/Rankings not published/)).toBeInTheDocument()
+    expect(screen.getByText(/Blokované zápasy: 1/)).toBeInTheDocument()
+    expect(screen.queryByText(/Načtená data nehlásí žádný aktuální blokátor/)).not.toBeInTheDocument()
+  })
+
+  it('keeps request failures distinct from legitimate empty data', async () => {
+    api.getAuthoritativeSimulationPosition.mockRejectedValue(new Error('Position projection unavailable'))
+    api.getBranchWorkingDraft.mockRejectedValue(new Error('Working Draft unavailable'))
+    mount()
+    expect(await screen.findByRole('alert', { name: '' })).toHaveTextContent(/Working Draft unavailable|Position projection unavailable/)
+    expect(screen.queryByText(/Načtená data nehlásí žádný aktuální blokátor/)).not.toBeInTheDocument()
+  })
+
+  it('shows checkpoint metadata only in historical Time without current event panels', async () => {
+    mount()
+    await screen.findByRole('option', { name: /#1/ })
+    fireEvent.change(screen.getByRole('combobox', { name: 'Admin Time context' }), { target: { value: 'cp-past' } })
+    expect(await screen.findByText(/Historické výsledky a stavy/)).toBeInTheDocument()
+    expect(screen.getByText('2001/02 · 50 sezón')).toBeInTheDocument()
+    expect(screen.getByText('W60 · 61 týdnů')).toBeInTheDocument()
+    expect(screen.queryByText('Hratelné zápasy: 2')).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Vrátit se do současnosti' }))
+    await waitFor(() => expect(screen.getByText('2002/03 · 50 sezón')).toBeInTheDocument())
+  })
+
+  it('keeps same-run branches separate and refuses mismatched simulation position', async () => {
+    api.getAuthoritativeSimulationPosition.mockResolvedValue(refPosition({ branch_id: 'foreign' }))
+    mount()
+    expect(await screen.findByText('Simulation position identity mismatch')).toBeInTheDocument()
+    expect(screen.queryByText('Hratelné zápasy: 2')).not.toBeInTheDocument()
   })
 })

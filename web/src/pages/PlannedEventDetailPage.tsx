@@ -31,6 +31,8 @@ import {
   getRunOwnedCalendar,
   getRunPackageState,
   getBranchWorkingDraft,
+  getRunContainer,
+  listRunBranches,
   listEvents
 } from '../api/client'
 import {
@@ -44,6 +46,7 @@ import {
 } from '../components/RunScopedUi'
 import { formatApiError, isApiNotFound } from '../utils/apiErrors'
 import { isRunCalendarProjection } from '../api/runFirstTournament'
+import { verifiedRunCalendarHandoff } from '../api/runCalendarHandoff'
 import { RunTournamentEntryReviewPanel } from '../components/RunTournamentEntryReviewPanel'
 import { RunCurrentEntryFreezePanel } from '../components/RunCurrentEntryFreezePanel'
 import { RunReviewedEntryFieldPanel } from '../components/RunReviewedEntryFieldPanel'
@@ -121,31 +124,55 @@ export function PlannedEventDetailPage(): JSX.Element {
     !viewed.historical && !handoffMismatch && requestedBranchId &&
     requestedCalendarId && activeBranchId === requestedBranchId
   )
-  const calendarPackageQuery = useQuery({
-    queryKey: ['run-package-state', runId, activeBranchId],
-    queryFn: () => getRunPackageState(runId, activeBranchId),
+  const canonicalRunQuery = useQuery({
+    queryKey: ['admin-run-container', runId],
+    queryFn: () => getRunContainer(runId),
     enabled: canonicalCalendarRequested,
     retry: false
   })
+  const canonicalBranchesQuery = useQuery({
+    queryKey: ['admin-run-branches', runId],
+    queryFn: () => listRunBranches(runId),
+    enabled: canonicalCalendarRequested,
+    retry: false
+  })
+  const canonicalActiveBranch = canonicalBranchesQuery.data?.run_branches.find(branch =>
+    branch.run_id === runId && branch.branch_id === activeBranchId)
+  const canonicalSavedHeadScope = Boolean(canonicalCalendarRequested &&
+    canonicalRunQuery.data?.run_id === runId &&
+    canonicalRunQuery.data.storage_kind === 'custom_local' &&
+    !canonicalRunQuery.data.read_only &&
+    canonicalActiveBranch?.status === 'active' &&
+    !canonicalActiveBranch.read_only &&
+    canonicalActiveBranch.saved_head_revision_id)
   const canonicalCalendarDraftQuery = useQuery({
     queryKey: ['package-working-draft', runId, activeBranchId],
     queryFn: () => getBranchWorkingDraft(runId, activeBranchId),
-    enabled: canonicalCalendarRequested,
+    enabled: canonicalSavedHeadScope,
+    retry: false
+  })
+  const verifiedCalendarScope = canonicalCalendarRequested && verifiedRunCalendarHandoff(
+    canonicalRunQuery.data,
+    canonicalBranchesQuery.data?.run_branches,
+    canonicalCalendarDraftQuery.data,
+    runId, activeBranchId
+  )
+  const calendarPackageQuery = useQuery({
+    queryKey: ['run-package-state', runId, activeBranchId],
+    queryFn: () => getRunPackageState(runId, activeBranchId),
+    enabled: verifiedCalendarScope,
     retry: false
   })
   const canonicalCalendarQuery = useQuery({
     queryKey: ['run-calendar', runId, activeBranchId, requestedCalendarId],
     queryFn: () => getRunOwnedCalendar(runId, activeBranchId, requestedCalendarId!),
-    enabled: canonicalCalendarRequested,
+    enabled: verifiedCalendarScope,
     retry: false
   })
-  const canonicalCalendar = canonicalCalendarRequested && canonicalCalendarQuery.data &&
+  const canonicalCalendar = verifiedCalendarScope && canonicalCalendarQuery.data &&
     isRunCalendarProjection(canonicalCalendarQuery.data, runId, activeBranchId, requestedCalendarId!) &&
     calendarPackageQuery.data?.state?.run_id === runId &&
     calendarPackageQuery.data?.state?.branch_id === activeBranchId &&
-    canonicalCalendarDraftQuery.data?.run_id === runId &&
-    canonicalCalendarDraftQuery.data?.branch_id === activeBranchId &&
-    canonicalCalendarDraftQuery.data?.status === 'clean' &&
     canonicalCalendarQuery.data.run_package_state_fingerprint === calendarPackageQuery.data.fingerprint
     ? canonicalCalendarQuery.data : null
   const canonicalPreparationQuery = useQuery({
@@ -1111,6 +1138,12 @@ export function PlannedEventDetailPage(): JSX.Element {
         </SectionCard>
       ) : null}
 
+      {canonicalCalendarRequested && (canonicalRunQuery.error || canonicalBranchesQuery.error) ?
+        <p role="alert" className="error">Run-owned Calendar Saved Head scope could not be verified: {formatApiError(canonicalRunQuery.error ?? canonicalBranchesQuery.error)}</p> : null}
+      {canonicalCalendarRequested &&
+        canonicalRunQuery.isSuccess && canonicalBranchesQuery.isSuccess &&
+        (!canonicalSavedHeadScope || (canonicalCalendarDraftQuery.isSuccess && !verifiedCalendarScope)) ?
+        <p role="alert" className="error">This Calendar link no longer matches an active writable Product Run Branch with a clean Working Draft based on its current Saved Revision. Reopen the tournament from Run Home after saving or selecting the right Branch.</p> : null}
       {canonicalCalendarRequested && canonicalCalendarDraftQuery.error ?
         <p role="alert" className="error">Canonical Working Draft unavailable: {formatApiError(canonicalCalendarDraftQuery.error)}</p> : null}
       {canonicalCalendarRequested && calendarPackageQuery.error ?

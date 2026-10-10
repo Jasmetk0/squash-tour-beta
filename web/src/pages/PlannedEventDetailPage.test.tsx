@@ -575,6 +575,51 @@ describe('PlannedEventDetailPage', () => {
     expect(screen.queryByText(/Failed to load run season state/)).not.toBeInTheDocument()
   })
 
+  it('refuses canonical Calendar deep links whose clean Draft is based on an old Saved Head', async () => {
+    adminTime.viewed.mockReturnValue({
+      historical: false, seasonState: null, unavailable: false, failed: false,
+      query: { isLoading: false }, time: { runId: 'run-a', branchId: 'branch-a' }
+    })
+    api.getRun.mockRejectedValue(new api.ApiError('No legacy simulation Run', 404))
+    api.listRunBranches.mockResolvedValue({
+      run_branches: [{
+        run_id:'run-a',branch_id:'branch-a',status:'active',read_only:false,
+        saved_head_revision_id:'rev-NEW'
+      }]
+    })
+    // Mocked stale cache is clean but no longer belongs to the actual Saved Head.
+    api.getBranchWorkingDraft.mockResolvedValue({
+      run_id:'run-a',branch_id:'branch-a',
+      base_saved_revision_id:'rev-OLD',status:'clean',draft_version:0
+    })
+    renderAt('/runs/run-a/calendar/E1?branch=branch-a&calendar=calendar-2000-2001')
+    expect(await screen.findByText(/no longer matches an active writable Product Run Branch/)).toBeInTheDocument()
+    expect(api.getRunPackageState).not.toHaveBeenCalled()
+    expect(api.getRunOwnedCalendar).not.toHaveBeenCalled()
+    expect(screen.queryByText(/Using the validated Run-owned Calendar snapshot/)).not.toBeInTheDocument()
+    expect(screen.queryByRole('heading',{name:'First knockout Draw — reviewed authority'})).not.toBeInTheDocument()
+  })
+
+  it('does not fetch canonical Packages for a protected or foreign Branch deep link', async () => {
+    adminTime.viewed.mockReturnValue({
+      historical: false, seasonState: null, unavailable: false, failed: false,
+      query: { isLoading: false }, time: { runId: 'run-a', branchId: 'branch-a' }
+    })
+    api.getRun.mockRejectedValue(new api.ApiError('No legacy simulation Run', 404))
+    api.listRunBranches.mockResolvedValue({
+      run_branches: [{
+        run_id:'run-a',branch_id:'branch-a',status:'active',read_only:true,
+        saved_head_revision_id:'rev-1'
+      }]
+    })
+    renderAt('/runs/run-a/calendar/E1?branch=branch-a&calendar=calendar-2000-2001')
+    expect(await screen.findByText(/no longer matches an active writable Product Run Branch/)).toBeInTheDocument()
+    expect(api.getBranchWorkingDraft).not.toHaveBeenCalled()
+    expect(api.getRunPackageState).not.toHaveBeenCalled()
+    expect(api.getRunOwnedCalendar).not.toHaveBeenCalled()
+    expect(screen.queryByText(/Using the validated Run-owned Calendar snapshot/)).not.toBeInTheDocument()
+  })
+
   it('rejects a stale Run Package fingerprint instead of trusting calendar URL parameters', async () => {
     adminTime.viewed.mockReturnValue({
       historical: false, seasonState: null, unavailable: false, failed: false,

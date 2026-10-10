@@ -2201,3 +2201,14 @@ textarea:focus-visible {
   .run-home-progress__track { gap: 1px; }
   .run-home-progress__track span { height: 15px; }
 }
+
+
+/* Published ranking movement, separate from mutable Admin working drafts. */
+.run-home-ranking { border-top: 1px solid #2d4566; padding-top: .9rem; margin: 1rem 0; }
+.run-home-ranking > h4 { margin: 0 0 .55rem; }
+.run-home-ranking .run-home-feed li span:first-child { display: flex; flex-direction: column; gap: .2rem; min-width: 0; }
+.run-home-ranking__movement { font-weight: 900; font-size: 1.05rem; min-width: 1.5rem; text-align: right; }
+.run-home-ranking__movement[data-movement="up"] { color: #6edcae; }
+.run-home-ranking__movement[data-movement="down"] { color: #ff9e9e; }
+.run-home-ranking__movement[data-movement="entered"] { color: #83b8ff; }
+.run-home-ranking__movement[data-movement="exited"] { color: #a6a7b2; }

@@ -8441,3 +8441,33 @@ export type RunHomeActivity = {
   upcoming: RunHomeActivityEvent[]
   recent_results: RunHomeActivityResult[]
 }
+
+
+/** Weekly movement between consecutive verified *saved* ranking publications. */
+export type RunHomeRankingChange = {
+  player_id: string
+  movement: 'up' | 'down' | 'entered' | 'exited' | 'points_only'
+  previous_rank: number | null
+  current_rank: number | null
+  previous_points: number | null
+  current_points: number | null
+  points_delta: number | null
+  rank_delta: number | null
+}
+export type RunHomeRankingChanges = {
+  schema_version: 'run_home_ranking_changes.v1'
+  run_id: string
+  branch_id: string
+  saved_revision_id: string
+  source: 'selected_branch_saved_revision'
+  status: 'unpublished' | 'first_publication' | 'ready'
+  previous_week_ordinal: number | null
+  current_week_ordinal: number | null
+  current_row_count: number | null
+  total_change_count: number
+  moved_count: number
+  entered_count: number
+  exited_count: number
+  points_only_count: number
+  changes: RunHomeRankingChange[]
+}

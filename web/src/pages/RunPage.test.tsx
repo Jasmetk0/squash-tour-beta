@@ -13,7 +13,7 @@ const api = vi.hoisted(() => ({
     status: number
     constructor(message: string, status: number) { super(message); this.status = status }
   },
-  getRunContainer: vi.fn(), listRunBranches: vi.fn(), getBranchState: vi.fn(), listBranchCheckpoints: vi.fn(), getRunHomeActivity: vi.fn(),
+  getRunContainer: vi.fn(), listRunBranches: vi.fn(), getBranchState: vi.fn(), listBranchCheckpoints: vi.fn(), getRunHomeActivity: vi.fn(), getRunHomeRankingChanges: vi.fn(),
   getBranchWorkingDraft: vi.fn(), getRunPackageState: vi.fn(), getAuthoritativeSimulationPosition: vi.fn(),
   getPendingAuthoritativeFullSimulations: vi.fn(), getAuthoritativeFullSimulationHistory: vi.fn(), listSavedRevisionHistory: vi.fn()
 }))
@@ -71,6 +71,13 @@ describe('Run Home V1 canonical projections', () => {
     api.getAuthoritativeSimulationPosition.mockResolvedValue(refPosition())
     api.getPendingAuthoritativeFullSimulations.mockResolvedValue({ run_id: runId, branch_id: branchId, operations: [] })
     api.getAuthoritativeFullSimulationHistory.mockResolvedValue({ run_id: runId, branch_id: branchId, items: [] })
+    api.getRunHomeRankingChanges.mockResolvedValue({
+      schema_version: 'run_home_ranking_changes.v1', run_id: runId, branch_id: branchId,
+      saved_revision_id: 'saved-1', source: 'selected_branch_saved_revision',
+      status: 'unpublished', previous_week_ordinal: null, current_week_ordinal: null,
+      current_row_count: null, total_change_count: 0, moved_count: 0,
+      entered_count: 0, exited_count: 0, points_only_count: 0, changes: []
+    })
     api.getRunHomeActivity.mockResolvedValue({
       schema_version: 'run_home_activity.v1', run_id: runId, branch_id: branchId,
       saved_revision_id: 'saved-1', source: 'selected_branch_saved_revision',
@@ -179,6 +186,41 @@ describe('Run Home V1 canonical projections', () => {
     mount()
     expect(await screen.findByText('Saved Home activity identity mismatch')).toBeInTheDocument()
     expect(screen.queryByText('Saved Autumn Open')).not.toBeInTheDocument()
+  })
+
+  it('renders saved weekly rank movement with no fabricated entrants climb', async () => {
+    api.getRunHomeRankingChanges.mockResolvedValue({
+      schema_version: 'run_home_ranking_changes.v1', run_id: runId, branch_id: branchId,
+      saved_revision_id: 'saved-1', source: 'selected_branch_saved_revision',
+      status: 'ready', previous_week_ordinal: 1, current_week_ordinal: 2,
+      current_row_count: 3, total_change_count: 3, moved_count: 1,
+      entered_count: 1, exited_count: 0, points_only_count: 1,
+      changes: [
+        { player_id: 'Player-Up', movement: 'up', previous_rank: 5, current_rank: 2, previous_points: 50, current_points: 65, points_delta: 15, rank_delta: 3 },
+        { player_id: 'Player-Entered', movement: 'entered', previous_rank: null, current_rank: 3, previous_points: null, current_points: 20, points_delta: null, rank_delta: null },
+        { player_id: 'Player-Points', movement: 'points_only', previous_rank: 1, current_rank: 1, previous_points: 100, current_points: 120, points_delta: 20, rank_delta: 0 },
+      ]
+    })
+    mount()
+    expect(await screen.findByText('Player-Up')).toBeInTheDocument()
+    expect(screen.getByText('#5 → #2 (+3) · +15 b.')).toBeInTheDocument()
+    expect(screen.getByText('Nově v pořadí')).toBeInTheDocument()
+    expect(screen.getByText('Stejná pozice · +20 b.')).toBeInTheDocument()
+    expect(screen.getByText('2000/01 · W2 → 2000/01 · W3', { exact: false })).toBeInTheDocument()
+  })
+
+  it('blocks foreign or stale Saved Revision rank movement', async () => {
+    api.getRunHomeRankingChanges.mockResolvedValue({
+      schema_version: 'run_home_ranking_changes.v1', run_id: runId, branch_id: branchId,
+      saved_revision_id: 'stale-head', source: 'selected_branch_saved_revision',
+      status: 'ready', previous_week_ordinal: 1, current_week_ordinal: 2,
+      current_row_count: 1, total_change_count: 1, moved_count: 1,
+      entered_count: 0, exited_count: 0, points_only_count: 0,
+      changes: [{ player_id: 'LEAK', movement: 'up', previous_rank: 10, current_rank: 1, points_delta: 1, rank_delta: 9 }]
+    })
+    mount()
+    expect(await screen.findByText('Saved ranking changes identity mismatch')).toBeInTheDocument()
+    expect(screen.queryByText('LEAK')).not.toBeInTheDocument()
   })
 
   it('keeps same-run branches separate and refuses mismatched simulation position', async () => {

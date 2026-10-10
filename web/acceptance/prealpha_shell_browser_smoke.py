@@ -116,6 +116,9 @@ def main() -> None:
             expect(tracks.nth(0).locator("span")).to_have_count(50)
             expect(tracks.nth(1).locator("span")).to_have_count(61)
             assert page.get_by_text("Hratelné zápasy: 0").count() == 0
+            expect(page.get_by_role("heading", name="Ranking movement · published weeks")).to_be_visible()
+            expect(page.get_by_text("This Branch has no saved Official Ranking publication yet.")).to_be_visible()
+            evidence["empty_branch_ranking_not_fabricated"] = True
             evidence["run_home_canonical_segments"] = [50, 61]
             page.screenshot(path=str(artifacts / "02-created-run.png"), full_page=True)
 

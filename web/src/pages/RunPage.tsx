@@ -9,6 +9,7 @@ import {
   getRunContainer,
   getRunPackageState,
   getRunHomeActivity,
+  getRunHomeRankingChanges,
   listSavedRevisionHistory,
 } from '../api/client'
 import { useAdminBranch } from '../admin/AdminBranchContext'
@@ -22,6 +23,7 @@ import { RunFirstTournamentPanel } from '../components/RunFirstTournamentPanel'
 import { useLanguage } from '../i18n/LanguageContext'
 import { formatApiError, isApiNotFound } from '../utils/apiErrors'
 import { RunHomeProgress } from './RunHomeProgress'
+import { RunHomeRankingPanel } from './RunHomeRankingPanel'
 import { seasonOrdinal, weekOrdinal } from './runHomeModel'
 
 const NEXT = {
@@ -145,6 +147,12 @@ export function RunPage(): JSX.Element {
     enabled: ready && Boolean(selectedBranch?.saved_head_revision_id),
     retry: false
   })
+  const rankingChangesQuery = useQuery({
+    queryKey: ['run-home-ranking-changes', runId, branchId, selectedBranch?.saved_head_revision_id],
+    queryFn: () => getRunHomeRankingChanges(runId, branchId!),
+    enabled: ready && Boolean(selectedBranch?.saved_head_revision_id),
+    retry: false
+  })
   const revisionsQuery = useQuery({
     queryKey: ['run-home-revisions', runId, branchId],
     queryFn: () => listSavedRevisionHistory(runId, branchId!, { limit: 4 }),
@@ -157,6 +165,11 @@ export function RunPage(): JSX.Element {
     && homeActivityQuery.data.saved_revision_id === selectedBranch?.saved_head_revision_id
     ? homeActivityQuery.data : null
   const homeActivityMismatch = homeActivityQuery.isSuccess && !homeActivity
+  const rankingChanges = rankingChangesQuery.data?.run_id === runId
+    && rankingChangesQuery.data.branch_id === branchId
+    && rankingChangesQuery.data.saved_revision_id === selectedBranch?.saved_head_revision_id
+    ? rankingChangesQuery.data : null
+  const rankingChangesMismatch = rankingChangesQuery.isSuccess && !rankingChanges
   const run = containerQuery.data?.run_id === runId ? containerQuery.data : null
   const draft = draftQuery.data?.run_id === runId && draftQuery.data.branch_id === branchId ? draftQuery.data : null
   const position = positionQuery.data?.run_id === runId && positionQuery.data.branch_id === branchId ? positionQuery.data : null
@@ -179,6 +192,8 @@ export function RunPage(): JSX.Element {
     revisionsQuery.error ? formatApiError(revisionsQuery.error) : null,
     homeActivityQuery.error ? formatApiError(homeActivityQuery.error) : null,
     homeActivityMismatch ? 'Saved Home activity identity does not match selected Branch HEAD.' : null,
+    rankingChangesQuery.error ? formatApiError(rankingChangesQuery.error) : null,
+    rankingChangesMismatch ? 'Saved ranking changes identity does not match selected Branch HEAD.' : null,
     simulationHistoryQuery.error && !isApiNotFound(simulationHistoryQuery.error) ? formatApiError(simulationHistoryQuery.error) : null,
   ].filter((value): value is string => Boolean(value))
   const blockers = position?.transition_blockers ?? []
@@ -294,8 +309,8 @@ export function RunPage(): JSX.Element {
     </div>
     <SectionCard title={l.activity}>
       <p className="status">{language === 'cs'
-        ? 'Čerpáme z uložené revize vybrané branche. Výsledky jednotlivých zápasů a změny rankingu nejsou součástí této projekce.'
-        : 'Reads the selected Branch Saved Revision. Individual match scores and ranking deltas are outside this projection.'}</p>
+        ? 'Čerpáme z uložené revize vybrané branche. Detail jednotlivých zápasů zatím není součástí této projekce.'
+        : 'Reads the selected Branch Saved Revision. Individual match scores are outside this projection.'}</p>
       {homeActivity && <section className="run-home-results">
         <h4>{l.publishedResults}</h4>
         {homeActivity.result_status === 'empty' && <p className="status">{l.noResults}</p>}
@@ -306,8 +321,12 @@ export function RunPage(): JSX.Element {
             <Link to={base + '/simulate'}>{l.continue} →</Link>
           </li>)}
         </ul>}
-        <p className="status">{l.rankingUnsupported}</p>
+
       </section>}
+      {rankingChanges && <RunHomeRankingPanel data={rankingChanges} locale={language}/>}
+      {rankingChangesQuery.isPending && ready && selectedBranch?.saved_head_revision_id && <p role="status">{l.loading}</p>}
+      {rankingChangesQuery.isError && <Unavailable message={formatApiError(rankingChangesQuery.error)}/>}
+      {rankingChangesMismatch && <Unavailable message="Saved ranking changes identity mismatch"/>}
       {homeActivityQuery.isPending && ready && <p role="status">{l.loading}</p>}
       {homeActivityQuery.isError && <Unavailable message={formatApiError(homeActivityQuery.error)}/>}
       {homeActivityMismatch && <Unavailable message="Saved Home activity identity mismatch"/>}

@@ -310,7 +310,7 @@ export function RunPage(): JSX.Element {
       </section>}
       {homeActivityQuery.isPending && ready && <p role="status">{l.loading}</p>}
       {homeActivityQuery.isError && <Unavailable message={formatApiError(homeActivityQuery.error)}/>}
-      {homeActivityMismatch && <Unavailable message="Saved Home activity identity mismatch"/>
+      {homeActivityMismatch && <Unavailable message="Saved Home activity identity mismatch"/>}
       {!ready && <p className="status">{l.missing}</p>}
       {ready && revisionsQuery.isPending && <p role="status">{l.loading}</p>}
       {ready && revisionsQuery.isError && <Unavailable message={formatApiError(revisionsQuery.error)} />}

@@ -13,7 +13,7 @@ const api = vi.hoisted(() => ({
     status: number
     constructor(message: string, status: number) { super(message); this.status = status }
   },
-  getRunContainer: vi.fn(), listRunBranches: vi.fn(), getBranchState: vi.fn(), listBranchCheckpoints: vi.fn(), getRunHomeActivity: vi.fn(), getRunHomeRankingChanges: vi.fn(),
+  getRunContainer: vi.fn(), listRunBranches: vi.fn(), getBranchState: vi.fn(), listBranchCheckpoints: vi.fn(), getRunHomeActivity: vi.fn(), getRunHomeRankingChanges: vi.fn(), getRunHomePlayerIdentities: vi.fn(),
   getBranchWorkingDraft: vi.fn(), getRunPackageState: vi.fn(), getAuthoritativeSimulationPosition: vi.fn(),
   getPendingAuthoritativeFullSimulations: vi.fn(), getAuthoritativeFullSimulationHistory: vi.fn(), listSavedRevisionHistory: vi.fn()
 }))
@@ -78,6 +78,12 @@ describe('Run Home V1 canonical projections', () => {
       current_row_count: null, total_change_count: 0, moved_count: 0,
       entered_count: 0, exited_count: 0, points_only_count: 0, changes: []
     })
+    api.getRunHomePlayerIdentities.mockImplementation((run: string, branch: string, ids: string[]) =>
+      Promise.resolve({
+        schema_version: 'run_home_player_identities.v1',
+        run_id: run, branch_id: branch, saved_revision_id: 'saved-1',
+        source: 'selected_branch_saved_revision', players: [], unresolved_ids: ids,
+      }))
     api.getRunHomeActivity.mockResolvedValue({
       schema_version: 'run_home_activity.v1', run_id: runId, branch_id: branchId,
       saved_revision_id: 'saved-1', source: 'selected_branch_saved_revision',
@@ -221,6 +227,62 @@ describe('Run Home V1 canonical projections', () => {
     mount()
     expect(await screen.findByText('Saved ranking changes identity mismatch')).toBeInTheDocument()
     expect(screen.queryByText('LEAK')).not.toBeInTheDocument()
+  })
+
+  it('shows canonical saved names and scoped links for ranking movers and finalists', async () => {
+    api.getRunHomeActivity.mockResolvedValue({
+      schema_version: 'run_home_activity.v1', run_id: runId, branch_id: branchId,
+      saved_revision_id: 'saved-1', source: 'selected_branch_saved_revision',
+      calendar_status: 'ready', result_status: 'ready', ranking_changes_status: 'unsupported',
+      total_calendar_events: 1, published_result_count: 1, upcoming: [],
+      recent_results: [{ event_id: 'evt', event_name: 'Test final', season: '2000/01',
+        season_index: 0, week: 1, category: 'GOLD', status: 'complete',
+        champion_player_id: 'A', finalist_player_id: 'B' }]
+    })
+    api.getRunHomeRankingChanges.mockResolvedValue({
+      schema_version: 'run_home_ranking_changes.v1', run_id: runId, branch_id: branchId,
+      saved_revision_id: 'saved-1', source: 'selected_branch_saved_revision',
+      status: 'ready', previous_week_ordinal: 1, current_week_ordinal: 2,
+      current_row_count: 1, total_change_count: 1, moved_count: 1, entered_count: 0,
+      exited_count: 0, points_only_count: 0,
+      changes: [{ player_id: 'A', movement: 'up', previous_rank: 3, current_rank: 1, previous_points: 10,
+        current_points: 12, points_delta: 2, rank_delta: 2 }],
+    })
+    api.getRunHomePlayerIdentities.mockImplementation((run: string, branch: string, ids: string[]) =>
+      Promise.resolve({
+        schema_version: 'run_home_player_identities.v1', run_id: run, branch_id: branch,
+        saved_revision_id: 'saved-1', source: 'selected_branch_saved_revision',
+        players: [{ player_id: 'A', name: 'Player Alpha', country_code: 'CZE', identity_source: 'initial_world' }],
+        unresolved_ids: ids.filter(id => id !== 'A'),
+      }))
+    mount()
+    await waitFor(() => expect(api.getRunHomePlayerIdentities).toHaveBeenCalledWith(runId, branchId, ['A', 'B']))
+    expect((await screen.findAllByRole('link', { name: 'Player Alpha' })).length).toBe(2)
+    expect(screen.getByText(/B/)).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'B' })).not.toBeInTheDocument()
+    expect(screen.getAllByRole('link', { name: 'Player Alpha' })[0]).toHaveAttribute('href',
+      '/admin/runs/' + runId + '/players/A')
+  })
+
+  it('does not show stale-head saved identities even when IDs match', async () => {
+    api.getRunHomeRankingChanges.mockResolvedValue({
+      schema_version: 'run_home_ranking_changes.v1', run_id: runId, branch_id: branchId,
+      saved_revision_id: 'saved-1', source: 'selected_branch_saved_revision',
+      status: 'ready', previous_week_ordinal: 0, current_week_ordinal: 1,
+      current_row_count: 1, total_change_count: 1, moved_count: 1,
+      entered_count: 0, exited_count: 0, points_only_count: 0,
+      changes: [{ player_id: 'A', movement: 'up', previous_rank: 2,
+        current_rank: 1, previous_points: 0, current_points: 1, points_delta: 1, rank_delta: 1 }]
+    })
+    api.getRunHomePlayerIdentities.mockResolvedValue({
+      schema_version: 'run_home_player_identities.v1', run_id: runId, branch_id: branchId,
+      saved_revision_id: 'old-saved-head', source: 'selected_branch_saved_revision',
+      players: [{ player_id: 'A', name: 'Wrong identity', country_code: 'USA', identity_source: 'initial_world' }],
+      unresolved_ids: [],
+    })
+    mount()
+    expect(await screen.findByText('Saved player identity mismatch')).toBeInTheDocument()
+    expect(screen.queryByText('Wrong identity')).not.toBeInTheDocument()
   })
 
   it('keeps same-run branches separate and refuses mismatched simulation position', async () => {

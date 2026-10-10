@@ -157,29 +157,29 @@ export function RunInitialWorldSetupPanel({ run, branch }: {
   const savePreviewQuery = useQuery({
     queryKey: ['initial-world-save-preview', runId, branchId, pendingSave?.fingerprint],
     queryFn: () => previewRunInitialWorldSave(runId, branchId),
-    enabled: Boolean(pendingSave || (existing && draft?.status === 'dirty')),
+    enabled: Boolean(pendingSave || existing),
     retry: false
   })
   const savePreflight = savePreviewQuery.data
-  const canResume = Boolean(!pendingSave && editable && existing && draft?.status === 'dirty' &&
+  const canResume = Boolean(!pendingSave && editable && existing && draft?.status === 'clean' &&
     draft.base_saved_revision_id === head && savePreflight &&
     /^[a-f0-9]{64}$/.test(savePreflight.initial_world_fingerprint) &&
     savePreflight.draft_version === draft.draft_version &&
     (savePreflight.run_id === undefined || savePreflight.run_id === runId) &&
     (savePreflight.branch_id === undefined || savePreflight.branch_id === branchId) &&
     (savePreflight.saved_head_revision_id === undefined || savePreflight.saved_head_revision_id === head) &&
-    savePreflight.can_save !== false)
+    savePreflight.has_unsaved_changes === true && savePreflight.can_save === true)
   const saveReady = Boolean(pendingSave && pendingSave.runId === runId &&
     pendingSave.branchId === branchId && pendingSave.head === head &&
     existing && existing.adopted_by_command_id &&
     existing.world_package_id &&
-    draft?.base_saved_revision_id === head && draft?.status === 'dirty' &&
+    draft?.base_saved_revision_id === head && draft?.status === 'clean' &&
     savePreflight && savePreflight.initial_world_fingerprint === pendingSave.fingerprint &&
     savePreflight.draft_version === draft?.draft_version &&
     (savePreflight.run_id === undefined || savePreflight.run_id === runId) &&
     (savePreflight.branch_id === undefined || savePreflight.branch_id === branchId) &&
     (savePreflight.saved_head_revision_id === undefined || savePreflight.saved_head_revision_id === head) &&
-    savePreflight.can_save !== false)
+    savePreflight.has_unsaved_changes === true && savePreflight.can_save === true)
 
   const saveAction = useMutation({
     mutationFn: async () => {

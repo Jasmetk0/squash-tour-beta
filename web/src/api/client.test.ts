@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import {
+  adoptRunOwnedInitialWorld,
   applyCalendarTemplateToPlanningCalendar,
   compareCalendarTemplateDryRun,
   cloneOfficialWorldPackage,
@@ -76,6 +77,31 @@ import type {
   SeasonBuilderFutureApplyRequestValidationPreviewRequest,
   SeasonBuilderFutureApplyRequestValidationPreviewResponse
 } from './types'
+
+describe('Run InitialWorld JSON transport', () => {
+  afterEach(() => vi.restoreAllMocks())
+
+  it('preserves JSON content type together with the reviewed adoption fingerprint', async () => {
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response('{}', { status: 200 })
+    )
+    const payload = {
+      command_id: 'browser-adopt',
+      generation: { world_package_id: 'official_fax_world', season: '2000/2001' as const, seed: 4201, target_pool_size: 16 },
+      audit_label: 'Run Admin', audit_reason: 'Reviewed browser adoption',
+      official_run: false as const, best_n: 15, automatic_retirement_age: 46 as const
+    }
+    const fingerprint = 'a'.repeat(64)
+    await adoptRunOwnedInitialWorld('run/a', 'branch/a', payload, fingerprint)
+    expect(fetchMock).toHaveBeenCalledWith(
+      'http://127.0.0.1:8000/admin/players/runs/run%2Fa/branches/branch%2Fa/initial-world/world-package',
+      {
+        method: 'POST', body: JSON.stringify(payload),
+        headers: { 'Content-Type': 'application/json', 'X-Initial-World-Preview-Fingerprint': fingerprint }
+      }
+    )
+  })
+})
 
 
 describe('Viewer Finals Race client', () => {

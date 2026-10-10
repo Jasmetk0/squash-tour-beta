@@ -17,6 +17,15 @@ Repository overview/operating documents (`README.md`, `ROADMAP.md`, `AGENTS.md`)
 
 ---
 
+## Newer approved pre-alpha decisions — 10 October 2026
+
+Master v75 and [Pre-alpha frontend V1](PRE_ALPHA_FRONTEND_V1.md) supersede the old provisional main menu and first-pre-alpha appearance/mode assumptions below.
+First pre-alpha Admin uses one dark theme and no Viewer/Admin selector. Active context is Run → Branch → Time.
+Global navigation is Home / Runs / Packages / Test Lab with application settings below.
+Run navigation is Home / World / Players / Tour / Rankings & Analytics / Simulation / History & Branches with separate Run Management below.
+Players belong in Packages; exact Player Package schema remains open.
+The approved main categories and Home compositions do not imply implemented routes or finalized subpages.
+
 # 1. Application-shell target
 
 ## 1.1 Global root
@@ -27,20 +36,21 @@ Current confirmed global entries:
 
 - Runs
 - Packages
+- Test Lab
 
-It is not a Viewer/Admin chooser and does not silently restore an old Run.
+Home includes brief factual summaries and recent Runs. It is not a Viewer/Admin chooser and does not silently restore an old Run.
 
 ## 1.2 Global Admin scope
 
 Global Admin has no active Run, branch or season/week. It manages genuinely global data such as Runs and source Packages.
 
-Viewer cannot be opened from a global page until a Run is selected.
+The first-pre-alpha shell shows no Viewer/Admin selector. Later Viewer cannot open without a selected Run.
 
 ## 1.3 Run Admin scope
 
 Run Admin always has selected Run, active Admin branch and viewed season/week context.
 
-The exact final sidebar remains provisional. Current working direction groups the product around areas such as Home, World, Players, Tour/Seasons, Simulation, Analysis, History/Branches and supporting operator/settings tools.
+The pre-alpha main sidebar is approved: Home, World, Players, Tour, Rankings & Analytics, Simulation, History & Branches. Separate Run Management below includes settings, overrides, package application, transfers/backups, validation and storage. Exact subpages remain open.
 
 Do not canonize a more detailed tree merely because current beta routes exist.
 
@@ -64,6 +74,8 @@ It should quickly answer:
 
 - segmented overall-Run progress indicator,
 - segmented current-season progress indicator.
+
+Approved v75 composition: identity/draft state at top; 50/61 indicators below across the width; Next steps left; Needs attention right; World activity/latest digest below. Distinguish unavailable data from empty/no-issue data. Historical-versus-current indicator semantics remain open.
 
 Home is not the primary place for every simulation mutation. Execution-heavy workflows belong in dedicated Simulation pages.
 
@@ -104,7 +116,10 @@ Current target order on Run-scoped pages:
 ### Viewer
 `Run → Time → Viewer/Admin`
 
-### Admin
+### First-pre-alpha Admin
+`Run → Branch → Time` (no Viewer/Admin selector)
+
+### Later Admin with completed Viewer
 `Run → Branch → Time → Viewer/Admin`
 
 Global search/`Ctrl+K` remains part of the shell.
@@ -509,7 +524,7 @@ Tournament Prestige is provisional; Tournament Appeal is even weaker. UX must no
 
 Do not silently finalize:
 
-- complete final Global/Run Admin sidebar,
+- detailed subpages and layout of the approved v75 Global/Run Admin categories,
 - full Viewer public-site navigation,
 - exact MSA menu and standalone News page,
 - Viewer reveal modes,

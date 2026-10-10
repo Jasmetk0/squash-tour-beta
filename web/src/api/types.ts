@@ -8471,3 +8471,21 @@ export type RunHomeRankingChanges = {
   points_only_count: number
   changes: RunHomeRankingChange[]
 }
+
+export type SavedHomePlayerIdentity = {
+  player_id: string
+  display_name: string
+  country_code: string
+  identity_source: 'initial_world' | 'run_prospect'
+}
+export type SavedHomePlayerIdentities = {
+  schema_version: 'run_home_player_identities.v1'
+  run_id: string
+  branch_id: string
+  saved_revision_id: string
+  source: 'selected_branch_saved_revision'
+  status: 'ready' | 'partial' | 'unavailable'
+  requested_ids: string[]
+  players: SavedHomePlayerIdentity[]
+  unresolved_ids: string[]
+}

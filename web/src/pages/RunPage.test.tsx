@@ -13,7 +13,7 @@ const api = vi.hoisted(() => ({
     status: number
     constructor(message: string, status: number) { super(message); this.status = status }
   },
-  getRunContainer: vi.fn(), listRunBranches: vi.fn(), getBranchState: vi.fn(), listBranchCheckpoints: vi.fn(), getRunHomeActivity: vi.fn(), getRunHomeRankingChanges: vi.fn(),
+  getRunContainer: vi.fn(), listRunBranches: vi.fn(), getBranchState: vi.fn(), listBranchCheckpoints: vi.fn(), getRunHomeActivity: vi.fn(), getRunHomeRankingChanges: vi.fn(), getSavedHomePlayerIdentities: vi.fn(),
   getBranchWorkingDraft: vi.fn(), getRunPackageState: vi.fn(), getAuthoritativeSimulationPosition: vi.fn(),
   getPendingAuthoritativeFullSimulations: vi.fn(), getAuthoritativeFullSimulationHistory: vi.fn(), listSavedRevisionHistory: vi.fn()
 }))
@@ -78,6 +78,11 @@ describe('Run Home V1 canonical projections', () => {
       current_row_count: null, total_change_count: 0, moved_count: 0,
       entered_count: 0, exited_count: 0, points_only_count: 0, changes: []
     })
+    api.getSavedHomePlayerIdentities.mockImplementation(async (_runId: string, _branchId: string, ids: string[]) => ({
+      schema_version: 'run_home_player_identities.v1', run_id: runId, branch_id: branchId,
+      saved_revision_id: 'saved-1', source: 'selected_branch_saved_revision',
+      status: 'unavailable', requested_ids: ids, players: [], unresolved_ids: ids,
+    }))
     api.getRunHomeActivity.mockResolvedValue({
       schema_version: 'run_home_activity.v1', run_id: runId, branch_id: branchId,
       saved_revision_id: 'saved-1', source: 'selected_branch_saved_revision',
@@ -221,6 +226,61 @@ describe('Run Home V1 canonical projections', () => {
     mount()
     expect(await screen.findByText('Saved ranking changes identity mismatch')).toBeInTheDocument()
     expect(screen.queryByText('LEAK')).not.toBeInTheDocument()
+  })
+
+  it('renders verified Saved Revision player names and clickable canonical identity details', async () => {
+    api.getRunHomeActivity.mockResolvedValue({
+      schema_version: 'run_home_activity.v1', run_id: runId, branch_id: branchId,
+      saved_revision_id: 'saved-1', source: 'selected_branch_saved_revision',
+      calendar_status: 'empty', result_status: 'ready', ranking_changes_status: 'unsupported',
+      total_calendar_events: 0, published_result_count: 1, upcoming: [],
+      recent_results: [{
+        event_id: 'event-1', event_name: 'Real Saved Final', season: '2000/01',
+        season_index: 0, week: 2, category: 'GOLD', status: 'completed',
+        champion_player_id: 'P1', finalist_player_id: 'P2'
+      }]
+    })
+    api.getSavedHomePlayerIdentities.mockImplementation(async (_r: string, _b: string, ids: string[]) => ({
+      schema_version: 'run_home_player_identities.v1', run_id: runId, branch_id: branchId,
+      saved_revision_id: 'saved-1', source: 'selected_branch_saved_revision',
+      status: 'ready', requested_ids: ids,
+      players: ids.map(id => ({
+        player_id: id, display_name: id === 'P1' ? 'Verified Champion' : 'Verified Finalist',
+        country_code: id === 'P1' ? 'CZE' : 'EGY', identity_source: 'initial_world'
+      })), unresolved_ids: [],
+    }))
+    mount()
+    expect(await screen.findByRole('link', { name: /Verified Champion/ })).toHaveAttribute(
+      'href', '/admin/runs/' + runId + '/people/P1'
+    )
+    expect(screen.getByRole('link', { name: /Verified Finalist/ })).toHaveAttribute(
+      'href', '/admin/runs/' + runId + '/people/P2'
+    )
+  })
+
+  it('rejects stale player identity revision without leaking a name or wrong link', async () => {
+    api.getRunHomeRankingChanges.mockResolvedValue({
+      schema_version: 'run_home_ranking_changes.v1', run_id: runId, branch_id: branchId,
+      saved_revision_id: 'saved-1', source: 'selected_branch_saved_revision',
+      status: 'ready', previous_week_ordinal: 0, current_week_ordinal: 1,
+      current_row_count: 1, total_change_count: 1, moved_count: 1,
+      entered_count: 0, exited_count: 0, points_only_count: 0,
+      changes: [{
+        player_id: 'P1', movement: 'up', previous_rank: 2, current_rank: 1,
+        previous_points: 100, current_points: 110, points_delta: 10, rank_delta: 1
+      }]
+    })
+    api.getSavedHomePlayerIdentities.mockImplementation(async (_r: string, _b: string, ids: string[]) => ({
+      schema_version: 'run_home_player_identities.v1', run_id: runId, branch_id: branchId,
+      saved_revision_id: 'foreign-revision', source: 'selected_branch_saved_revision',
+      status: 'ready', requested_ids: ids, players: [{
+        player_id: 'P1', display_name: 'WRONG NAME', country_code: 'USA', identity_source: 'initial_world'
+      }], unresolved_ids: [],
+    }))
+    mount()
+    expect(await screen.findByText('Saved player identities do not match selected Branch HEAD')).toBeInTheDocument()
+    expect(screen.queryByText(/WRONG NAME/)).not.toBeInTheDocument()
+    expect(screen.getByText('P1')).toBeInTheDocument()
   })
 
   it('keeps same-run branches separate and refuses mismatched simulation position', async () => {

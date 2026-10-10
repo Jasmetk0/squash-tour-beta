@@ -10,6 +10,7 @@ import {
   getRunPackageState,
   getRunHomeActivity,
   getRunHomeRankingChanges,
+  getSavedHomePlayerIdentities,
   listSavedRevisionHistory,
 } from '../api/client'
 import { useAdminBranch } from '../admin/AdminBranchContext'
@@ -23,6 +24,7 @@ import { RunFirstTournamentPanel } from '../components/RunFirstTournamentPanel'
 import { useLanguage } from '../i18n/LanguageContext'
 import { formatApiError, isApiNotFound } from '../utils/apiErrors'
 import { RunHomeProgress } from './RunHomeProgress'
+import { HomePlayerIdentityLink } from './HomePlayerIdentityLink'
 import { RunHomeRankingPanel } from './RunHomeRankingPanel'
 import { seasonOrdinal, weekOrdinal } from './runHomeModel'
 
@@ -153,6 +155,20 @@ export function RunPage(): JSX.Element {
     enabled: ready && Boolean(selectedBranch?.saved_head_revision_id),
     retry: false
   })
+  const identityIds = Array.from(new Set([
+    ...(homeActivityQuery.data?.run_id === runId && homeActivityQuery.data?.branch_id === branchId &&
+      homeActivityQuery.data?.saved_revision_id === selectedBranch?.saved_head_revision_id
+      ? homeActivityQuery.data.recent_results.flatMap(result => [result.champion_player_id, result.finalist_player_id]) : []),
+    ...(rankingChangesQuery.data?.run_id === runId && rankingChangesQuery.data?.branch_id === branchId &&
+      rankingChangesQuery.data?.saved_revision_id === selectedBranch?.saved_head_revision_id
+      ? rankingChangesQuery.data.changes.map(change => change.player_id) : [])
+  ])).sort()
+  const identitiesQuery = useQuery({
+    queryKey: ['run-home-player-identities', runId, branchId, selectedBranch?.saved_head_revision_id, identityIds.join('|')],
+    queryFn: () => getSavedHomePlayerIdentities(runId, branchId!, identityIds),
+    enabled: ready && Boolean(selectedBranch?.saved_head_revision_id) && identityIds.length > 0,
+    retry: false
+  })
   const revisionsQuery = useQuery({
     queryKey: ['run-home-revisions', runId, branchId],
     queryFn: () => listSavedRevisionHistory(runId, branchId!, { limit: 4 }),
@@ -170,6 +186,13 @@ export function RunPage(): JSX.Element {
     && rankingChangesQuery.data.saved_revision_id === selectedBranch?.saved_head_revision_id
     ? rankingChangesQuery.data : null
   const rankingChangesMismatch = rankingChangesQuery.isSuccess && !rankingChanges
+  const identitiesValid = identitiesQuery.data?.run_id === runId &&
+    identitiesQuery.data?.branch_id === branchId &&
+    identitiesQuery.data?.saved_revision_id === selectedBranch?.saved_head_revision_id &&
+    identitiesQuery.data?.requested_ids.join('|') === identityIds.join('|')
+  const playerIdentities = identitiesValid
+    ? Object.fromEntries(identitiesQuery.data!.players.map(player => [player.player_id, player])) : {}
+  const identitiesMismatch = identitiesQuery.isSuccess && !identitiesValid
   const run = containerQuery.data?.run_id === runId ? containerQuery.data : null
   const draft = draftQuery.data?.run_id === runId && draftQuery.data.branch_id === branchId ? draftQuery.data : null
   const position = positionQuery.data?.run_id === runId && positionQuery.data.branch_id === branchId ? positionQuery.data : null
@@ -194,6 +217,8 @@ export function RunPage(): JSX.Element {
     homeActivityMismatch ? 'Saved Home activity identity does not match selected Branch HEAD.' : null,
     rankingChangesQuery.error ? formatApiError(rankingChangesQuery.error) : null,
     rankingChangesMismatch ? 'Saved ranking changes identity does not match selected Branch HEAD.' : null,
+    identitiesQuery.error ? formatApiError(identitiesQuery.error) : null,
+    identitiesMismatch ? 'Saved player identities do not match selected Branch HEAD.' : null,
     simulationHistoryQuery.error && !isApiNotFound(simulationHistoryQuery.error) ? formatApiError(simulationHistoryQuery.error) : null,
   ].filter((value): value is string => Boolean(value))
   const blockers = position?.transition_blockers ?? []
@@ -317,13 +342,21 @@ export function RunPage(): JSX.Element {
         {homeActivity.result_status === 'ready' && <ul className="run-home-feed" aria-label="Published Branch tournament results">
           {homeActivity.recent_results.map(result => <li key={result.event_id}>
             <span><strong>{result.event_name}</strong><small>{result.season} · W{result.week} ·
-              {language === 'cs' ? ' Vítěz' : ' Champion'}: {result.champion_player_id}</small></span>
+              {language === 'cs' ? ' Vítěz' : ' Champion'}: <HomePlayerIdentityLink runId={runId}
+                playerId={result.champion_player_id} identity={playerIdentities[result.champion_player_id]}/>
+              {' · '}{language === 'cs' ? 'Finalista' : 'Finalist'}: <HomePlayerIdentityLink runId={runId}
+                playerId={result.finalist_player_id} identity={playerIdentities[result.finalist_player_id]}/></small></span>
             <Link to={base + '/simulate'}>{l.continue} →</Link>
           </li>)}
         </ul>}
 
       </section>}
-      {rankingChanges && <RunHomeRankingPanel data={rankingChanges} locale={language}/>}
+      {rankingChanges && <RunHomeRankingPanel data={rankingChanges} locale={language} runId={runId} identities={playerIdentities}/>}
+      {identitiesQuery.isPending && identityIds.length > 0 && ready && <p role="status">{language === 'cs' ? 'Načítám uložená jména hráčů…' : 'Loading saved player names…'}</p>}
+      {identitiesQuery.isError && <Unavailable message={formatApiError(identitiesQuery.error)}/>}
+      {identitiesMismatch && <Unavailable message="Saved player identities do not match selected Branch HEAD"/>}
+      {identitiesQuery.isSuccess && identitiesValid && identitiesQuery.data!.unresolved_ids.length > 0 &&
+        <p className="status">{language === 'cs' ? 'Některá jména nejsou v uložených zdrojích dostupná; zůstávají zobrazena ID.' : 'Some player names are unavailable in Saved Revision; IDs are retained.'}</p>}
       {rankingChangesQuery.isPending && ready && selectedBranch?.saved_head_revision_id && <p role="status">{l.loading}</p>}
       {rankingChangesQuery.isError && <Unavailable message={formatApiError(rankingChangesQuery.error)}/>}
       {rankingChangesMismatch && <Unavailable message="Saved ranking changes identity mismatch"/>}

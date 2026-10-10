@@ -73,6 +73,7 @@ import { RunsPage } from './pages/RunsPage'
 import { PlannedEventDetailPage } from './pages/PlannedEventDetailPage'
 import { PlayersPage } from './pages/PlayersPage'
 import { PlayerCareerPage } from './pages/PlayerCareerPage'
+import { SavedPlayerIdentityPage } from './pages/SavedPlayerIdentityPage'
 import { SeasonCalendarPage } from './pages/SeasonCalendarPage'
 import { SeasonChainPage } from './pages/SeasonChainPage'
 import { SnapshotDetailPage } from './pages/SnapshotDetailPage'
@@ -177,6 +178,7 @@ export default function App(): JSX.Element {
         <Route path="admin/runs/:runId/activity" element={<ActivityPage />} />
         <Route path="admin/runs/:runId/players" element={<PlayersPage />} />
         <Route path="admin/runs/:runId/players/intake" element={<TalentIntakePage />} />
+        <Route path="admin/runs/:runId/people/:playerId" element={<SavedPlayerIdentityPage />} />
         <Route path="admin/runs/:runId/players/:playerId/career" element={<PlayerCareerPage />} />
         <Route path="admin/runs/:runId/nations" element={<NationsPage />} />
         <Route path="admin/runs/:runId/diagnostics" element={<RunDiagnosticsPage />} />

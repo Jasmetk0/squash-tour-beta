@@ -7,6 +7,7 @@ import { CompactSummaryCard, EmptyState, MetadataList, PageIntro, SectionCard, S
 import { formatApiError } from '../utils/apiErrors'
 import { normalizeRunSourceType } from '../utils/runSourceTypes'
 import { readLastRunId, writeLastRunId } from '../viewer/activeRun'
+import { rememberProductRun } from '../navigation/recentProductRuns'
 
 function formatProgress(nextEventIndex: number, totalEvents: number): string {
   return `${nextEventIndex} / ${totalEvents}`
@@ -99,6 +100,7 @@ export function RunsPage(): JSX.Element {
       const run = await getRun(runId)
       writeLastRunId(run.run.run_id)
       setRememberedRunId(run.run.run_id)
+      rememberProductRun(run.run.run_id)
       navigate(`/admin/runs/${run.run.run_id}`)
     } catch (err) {
       setOpenError(`Could not open run: ${formatApiError(err)}`)
@@ -140,7 +142,7 @@ export function RunsPage(): JSX.Element {
         {canonicalRunsQuery.data && <ul className="item-list" aria-label="Product Runs">
           {canonicalRunsQuery.data.run_containers.map(container => <li key={container.run_id}>
             <Link to={`/admin/runs/${encodeURIComponent(container.run_id)}`}
-              onClick={() => { writeLastRunId(container.run_id); setRememberedRunId(container.run_id) }}>
+              onClick={() => { writeLastRunId(container.run_id); rememberProductRun(container.run_id); setRememberedRunId(container.run_id) }}>
               {container.display_name || container.run_id}
             </Link>{' '}
             <span className="status">{container.read_only ? 'Protected / read-only' : 'Editable'} · {container.status} · {container.timeline_start_season}/{String((container.timeline_start_season + 1) % 100).padStart(2, '0')}</span>

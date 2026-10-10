@@ -108,6 +108,15 @@ def main() -> None:
                     "link", name="Run Management"
                 )
             ).to_be_visible()
+            expect(page.get_by_role("heading", name="Next steps")).to_be_visible()
+            expect(page.get_by_role("heading", name="Needs attention")).to_be_visible()
+            expect(page.get_by_role("heading", name="World activity")).to_be_visible()
+            tracks = page.locator(".run-home-progress__track")
+            expect(tracks).to_have_count(2)
+            expect(tracks.nth(0).locator("span")).to_have_count(50)
+            expect(tracks.nth(1).locator("span")).to_have_count(61)
+            assert page.get_by_text("Hratelné zápasy: 0").count() == 0
+            evidence["run_home_canonical_segments"] = [50, 61]
             page.screenshot(path=str(artifacts / "02-created-run.png"), full_page=True)
 
             page.get_by_role("navigation", name="Run management navigation").get_by_role(

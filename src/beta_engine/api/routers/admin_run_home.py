@@ -7,6 +7,12 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from beta_engine.api.deps import ApiRuntime, get_runtime
+from beta_engine.application.run_home_player_identity import (
+    SavedHomePlayerIdentities,
+    resolve_saved_home_player_identities,
+)
+from beta_engine.infrastructure.db.initial_world_state import load_saved_initial_world
+from beta_engine.infrastructure.db.run_prospect_source_state import load_saved_run_prospect_source
 from beta_engine.application.run_home_ranking_changes import (
     RunHomeRankingChanges,
     resolve_run_home_ranking_changes,
@@ -104,4 +110,52 @@ def inspect_run_home_ranking_changes(
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail={"code": "run_home_ranking_unavailable", "message": str(exc)},
+        ) from exc
+
+
+@router.get("/home-player-identities", response_model=SavedHomePlayerIdentities)
+def get_saved_home_player_identities(
+    run_id: str,
+    branch_id: str,
+    player_ids: str,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+) -> SavedHomePlayerIdentities:
+    """Bounded player IDs with immutable source provenance, including empty/missing."""
+    if len(player_ids) > 3200:
+        raise HTTPException(status_code=422, detail="Player identity request exceeds limit")
+    ids = tuple(player_ids.split(","))
+    if (
+        not 1 <= len(ids) <= 25
+        or len(ids) != len(set(ids))
+        or any(not item or len(item) > 128 or item.strip() != item for item in ids)
+    ):
+        raise HTTPException(status_code=422, detail="Expected 1–25 distinct player IDs")
+    repository = runtime.repository
+    run = repository.get_run_container(run_id=run_id)
+    branch = repository.get_run_branch(branch_id=branch_id)
+    if run is None or branch is None or branch.run_id != run_id:
+        raise HTTPException(status_code=404, detail="Product Run / Branch was not found")
+    try:
+        state = repository.get_branch_revision_state(branch_id=branch_id)
+        revision = state.saved_revision
+        if (state.run_id, state.branch_id, revision.run_id, revision.branch_id) != (
+            run_id, branch_id, run_id, branch_id
+        ) or revision.revision_id != branch.saved_head_revision_id:
+            raise ValueError("Saved player identity HEAD belongs to another Run/Branch")
+        initial_world = load_saved_initial_world(
+            revision.payload, run_id=run_id, branch_id=branch_id
+        )
+        prospect_source = load_saved_run_prospect_source(
+            revision.payload, run_id=run_id
+        )
+        return resolve_saved_home_player_identities(
+            run_id=run_id, branch_id=branch_id,
+            saved_revision_id=revision.revision_id,
+            requested_ids=ids, initial_world=initial_world,
+            prospect_source=prospect_source,
+        )
+    except (KeyError, ValueError, TypeError) as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={"code": "run_home_player_identity_unavailable", "message": str(exc)},
         ) from exc

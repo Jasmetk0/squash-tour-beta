@@ -7,7 +7,8 @@ import { LanguageProvider } from '../../i18n/LanguageContext'
 
 const api = vi.hoisted(() => ({
   listRunContainers: vi.fn(),
-  listWorldPackages: vi.fn()
+  listWorldPackages: vi.fn(),
+  ApiError: class ApiError extends Error { status = 500 }
 }))
 vi.mock('../../api/client', () => api)
 

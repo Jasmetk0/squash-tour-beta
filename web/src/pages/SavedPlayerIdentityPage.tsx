@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router-dom'
 
 import { getSavedPlayerProfile } from '../api/client'
+import { SavedPlayerMatchesPanel } from './SavedPlayerMatchesPanel'
 import { useAdminBranch } from '../admin/AdminBranchContext'
 import { useAdminTime } from '../admin/AdminTimeContext'
 import { useLanguage } from '../i18n/LanguageContext'
@@ -83,6 +84,9 @@ export function SavedPlayerIdentityPage(): JSX.Element {
           </ul>}
           {profile.total_tournament_results > profile.tournament_results.length &&
             <p className="status">{cs ? 'Zobrazeno posledních 10 finálových výsledků.' : 'Showing the last 10 final results.'}</p>}
+          <SavedPlayerMatchesPanel key={branchId + ':' + savedHead + ':' + playerId}
+            runId={runId} branchId={branchId!} savedHead={savedHead!}
+            playerId={playerId} locale={language} />
           <p className="status">{cs
             ? 'Zdroj: ověřená Saved Revision. Nezahrnuje nepublikované turnaje, legacy kariéru, atributy ani jinou branch.'
             : 'Source: verified Saved Revision. Excludes unpublished tournaments, legacy career, attributes and other Branches.'}</p>

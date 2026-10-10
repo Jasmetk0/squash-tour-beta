@@ -8515,3 +8515,41 @@ export type SavedPlayerProfile = {
   total_tournament_results: number
   tournament_results: SavedPlayerTournamentFinish[]
 }
+
+/** Selected immutable Saved Revision: canonical tournament match results only. */
+export type SavedPlayerMatch = {
+  event_id: string
+  event_name: string
+  match_id: string
+  season_index: number
+  season: string
+  week: number
+  draw_type: 'qualification' | 'main' | 'group' | 'knockout'
+  round_number: number
+  opponent_player_id: string
+  outcome: 'win' | 'loss'
+  completion: 'played' | 'walkover'
+  scoreline: string
+}
+export type SavedPlayerMatchHistory = {
+  schema_version: 'saved_player_match_history.v1'
+  run_id: string
+  branch_id: string
+  saved_revision_id: string
+  player_id: string
+  source: 'selected_branch_saved_revision'
+  status: 'identity_unavailable' | 'ready'
+  season_index: number | null
+  available_seasons: number[]
+  offset: number
+  limit: number
+  total_results: number
+  played_wins: number
+  played_losses: number
+  walkovers: number
+  career_played_wins: number
+  career_played_losses: number
+  career_walkovers: number
+  has_more: boolean
+  matches: SavedPlayerMatch[]
+}

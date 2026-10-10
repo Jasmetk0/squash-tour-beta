@@ -15,7 +15,7 @@ const api = vi.hoisted(() => ({
   },
   getRunContainer: vi.fn(), listRunBranches: vi.fn(), getBranchState: vi.fn(), listBranchCheckpoints: vi.fn(),
   getBranchWorkingDraft: vi.fn(), getRunPackageState: vi.fn(), getAuthoritativeSimulationPosition: vi.fn(),
-  getPendingAuthoritativeFullSimulations: vi.fn(), listSavedRevisionHistory: vi.fn()
+  getPendingAuthoritativeFullSimulations: vi.fn(), getAuthoritativeFullSimulationHistory: vi.fn(), listSavedRevisionHistory: vi.fn()
 }))
 vi.mock('../api/client', () => api)
 vi.mock('../components/RunPackageSetupPanel', () => ({ RunPackageSetupPanel: () => <p>World and Calendar copies</p> }))
@@ -70,6 +70,7 @@ describe('Run Home V1 canonical projections', () => {
     api.getRunPackageState.mockResolvedValue({ state: { run_id: runId, branch_id: branchId }, fingerprint: 'p' })
     api.getAuthoritativeSimulationPosition.mockResolvedValue(refPosition())
     api.getPendingAuthoritativeFullSimulations.mockResolvedValue({ run_id: runId, branch_id: branchId, operations: [] })
+    api.getAuthoritativeFullSimulationHistory.mockResolvedValue({ run_id: runId, branch_id: branchId, items: [] })
     api.listSavedRevisionHistory.mockResolvedValue({ run_id: runId, branch_id: branchId, saved_revisions: [{
       revision_id: 'saved-1', kind: 'initial', sequence: 1, created_at: '2026-10-10'
     }] })
@@ -133,6 +134,17 @@ describe('Run Home V1 canonical projections', () => {
     expect(screen.queryByText('Hratelné zápasy: 2')).not.toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Vrátit se do současnosti' }))
     await waitFor(() => expect(screen.getByText('2002/03 · 50 sezón')).toBeInTheDocument())
+  })
+
+  it('uses actual saved full-simulation summary without fabricating match outcomes', async () => {
+    api.getAuthoritativeFullSimulationHistory.mockResolvedValue({
+      run_id: runId, branch_id: branchId,
+      items: [{ command_id: 'full-a', status: 'complete', completed_season_count: 2, final_completed_week_count: 3 }]
+    })
+    mount()
+    expect(await screen.findByText('Poslední plná simulace')).toBeInTheDocument()
+    expect(screen.getByText(/2 dokončených sezón/)).toBeInTheDocument()
+    expect(screen.queryByText('Winner')).not.toBeInTheDocument()
   })
 
   it('keeps same-run branches separate and refuses mismatched simulation position', async () => {

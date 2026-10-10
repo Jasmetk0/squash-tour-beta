@@ -6,6 +6,7 @@ import { createEmptyRunContainer } from '../api/client'
 import { PageIntro, SectionCard } from '../components/RunScopedUi'
 import { formatApiError } from '../utils/apiErrors'
 import { writeLastRunId } from '../viewer/activeRun'
+import { rememberProductRun } from '../navigation/recentProductRuns'
 
 /** The canonical Run creation flow: no preselected world, seed or legacy Simulation Run. */
 export function RunCreatePage(): JSX.Element {
@@ -27,6 +28,7 @@ export function RunCreatePage(): JSX.Element {
         throw new Error('The server returned an unexpected Run identity or ownership. Refresh the Run browser before continuing.')
       }
       writeLastRunId(created.run_id)
+      rememberProductRun(created.run_id)
       await queryClient.invalidateQueries({ queryKey: ['canonical-run-containers'] })
       navigate(`/admin/runs/${encodeURIComponent(created.run_id)}`)
     } catch (cause) {

@@ -14,6 +14,9 @@ on:
       - 'web/src/pages/admin/PackagesHomePage.tsx'
       - 'web/src/pages/admin/TestLabHomePage.tsx'
       - 'web/src/pages/RunManagementPage.tsx'
+      - 'web/src/pages/RunPage.tsx'
+      - 'web/src/pages/RunHomeProgress.tsx'
+      - 'web/src/pages/runHomeModel.ts'
       - 'web/src/styles.css'
   workflow_dispatch:
 

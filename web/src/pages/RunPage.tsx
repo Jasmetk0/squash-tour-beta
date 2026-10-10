@@ -12,6 +12,7 @@ import {
 import { useAdminBranch } from '../admin/AdminBranchContext'
 import { useAdminTime } from '../admin/AdminTimeContext'
 import { CurrentContextStrip, MetadataList, SectionCard } from '../components/RunScopedUi'
+import { RunPackageSetupPanel } from '../components/RunPackageSetupPanel'
 import { RunInitialWorldSetupPanel } from '../components/RunInitialWorldSetupPanel'
 import { RunInitialRankingSetupPanel } from '../components/RunInitialRankingSetupPanel'
 import { RunInitialRankingPublicationPanel } from '../components/RunInitialRankingPublicationPanel'
@@ -204,7 +205,6 @@ export function RunPage(): JSX.Element {
         {verified && <>
           {packageQuery.isPending && <p role="status">{l.loading}</p>}
           {packageQuery.isError && <Unavailable message={formatApiError(packageQuery.error)} />}
-          {emptyRun && <p>{l.initial}</p>}
           {packageQuery.isSuccess && ownedPackages === null && <p>{l.initial}</p>}
           {noConfirmedPosition && ownedPackages !== null && <p>{l.notPositioned}</p>}
           {positionQuery.isPending && <p role="status">{l.loading}</p>}
@@ -268,6 +268,7 @@ export function RunPage(): JSX.Element {
       <p className="status">{language === 'cs'
         ? 'Existující nástroje k přípravě hráčů, rankingu a prvního turnaje. Ruční Save a potvrzovací kroky se nemění.'
         : 'Existing player, ranking and first-tournament preparation. Manual Save and confirmations are unchanged.'}</p>
+      <RunPackageSetupPanel run={run!} branch={selectedBranch} />
       <RunInitialWorldSetupPanel run={run!} branch={selectedBranch} />
       <RunInitialRankingSetupPanel run={run!} branch={selectedBranch} />
       <RunInitialRankingPublicationPanel run={run!} branch={selectedBranch} />

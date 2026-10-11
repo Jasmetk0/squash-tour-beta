@@ -114,3 +114,35 @@ describe('typed geography and historic region replay',()=>{
     expect(verifiedInitialWorldPreview(preview(['USA','USA']),'r1','b1',travel,collision)).toBe(false)
   })
 })
+
+
+
+describe('repeatable Keep request lineage validation',()=>{
+  const source={...request,generation:{...request.generation,seed:84,region:null,
+    keep_from_seed:83,keep_from_preview_fingerprint:hash('a'),keep_player_ids:['p0'],
+    keep_history:[{
+      seed:83,keep_from_seed:42,keep_from_preview_fingerprint:hash('b'),
+      keep_player_ids:['p0']
+    }]
+  }}
+  it('accepts well-formed multiple Keep steps in a source-bound preview',()=>{
+    const fromServer=preview(['CZE','SVK'])
+    fromServer.state.bootstrap_seed=84
+    expect(verifiedInitialWorldPreview(fromServer,'r1','b1',source,options)).toBe(true)
+  })
+  it('rejects broken ancestry and duplicate historical kept identities',()=>{
+    const result=preview(['CZE','SVK'])
+    result.state.bootstrap_seed=84
+    const broken={...source,generation:{...source.generation,keep_history:[{
+      ...source.generation.keep_history[0],seed:82
+    }]}}
+    expect(verifiedInitialWorldPreview(result,'r1','b1',broken,options)).toBe(false)
+    const duplicated={...source,generation:{...source.generation,keep_history:[{
+      ...source.generation.keep_history[0],keep_player_ids:['p0','p0']
+    }]}}
+    expect(verifiedInitialWorldPreview(result,'r1','b1',duplicated,options)).toBe(false)
+    expect(verifiedInitialWorldPreview(result,'r1','b1',{
+      ...source,generation:{...source.generation,keep_history:[]}
+    },options)).toBe(true) // one pass still supported
+  })
+})

@@ -347,15 +347,30 @@ describe('Run-owned first-season player setup', () => {
       keep_from_preview_fingerprint:sha('d'),keep_player_ids:['p-1'],
       target_pool_size:2
     }))
-    expect(await screen.findByText(/One verified session Keep regeneration completed/)).toBeInTheDocument()
-    expect(screen.queryByRole('checkbox',{name:'Keep p-1'})).not.toBeInTheDocument()
+    expect(await screen.findByText(/Verified session Keep regenerations: 1/)).toBeInTheDocument()
+    expect(screen.getByRole('checkbox',{name:'Keep p-1'})).toBeChecked()
     expect(screen.getByText(/Showing 2 \/ 2/)).toBeInTheDocument()
+    expect(api.adoptRunOwnedInitialWorld).not.toHaveBeenCalled()
+    // A second pass uses the first pass as the exact reviewed source. Keep
+    // remains selected; neither earlier pass modifies the Run or saves it.
+    await userEvent.click(screen.getByRole('button',{name:'Regenerate remaining – new preview'}))
+    await waitFor(()=>expect(api.previewRunOwnedInitialWorld).toHaveBeenCalledTimes(3))
+    const third=api.previewRunOwnedInitialWorld.mock.calls[2][2]
+    expect(third.generation).toEqual(expect.objectContaining({
+      seed:20261011,keep_from_seed:20261010,
+      keep_from_preview_fingerprint:sha('d'),keep_player_ids:['p-1'],
+      keep_history:[{
+        seed:20261010,keep_from_seed:20261009,
+        keep_from_preview_fingerprint:sha('d'),keep_player_ids:['p-1']
+      }]
+    }))
+    expect(await screen.findByText(/Verified session Keep regenerations: 2/)).toBeInTheDocument()
     expect(api.adoptRunOwnedInitialWorld).not.toHaveBeenCalled()
     await userEvent.click(screen.getByRole('checkbox',{name:'Approve InitialWorld adoption'}))
     await userEvent.click(screen.getByRole('button',{name:'Adopt generated players'}))
     await waitFor(()=>expect(api.adoptRunOwnedInitialWorld).toHaveBeenCalledWith(
       'first-run','timeline-1',expect.objectContaining({
-        generation:expect.objectContaining({keep_player_ids:['p-1'],seed:20261010})
+        generation:expect.objectContaining({keep_player_ids:['p-1'],seed:20261011,keep_history:expect.any(Array)})
       }),sha('f'),{head:'revision-1',draftVersion:0,packageFingerprint:sha('e')}
     ))
     expect(api.saveRunOwnedInitialWorld).not.toHaveBeenCalled()

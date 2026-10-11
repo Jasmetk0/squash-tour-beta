@@ -216,20 +216,23 @@ describe('AdminBranchProvider and selector', () => {
     expect(confirm).toHaveBeenCalledTimes(1)
   })
 
-  it('keeps explicit deep links consistent after a selector switch and history navigation',async()=>{
+  it('keeps explicit query synchronized with the selector and protects Back/Forward',async()=>{
     renderHarness('/admin/runs/run-a?branch=a-viewer')
     const selector=await screen.findByRole('combobox',{name:'Admin active Branch'})
     await waitFor(()=>expect(selector).toHaveValue('a-viewer'))
     fireEvent.change(selector,{target:{value:'a-other'}})
     await waitFor(()=>expect(screen.getByLabelText('Current search')).toHaveTextContent('branch=a-other'))
     expect(selector).toHaveValue('a-other')
-    // Browser history and the provider must agree on the same selected Branch.
+    // A real PUSH navigation creates a history entry; the selector above uses
+    // REPLACE deliberately to keep an explicit query in sync.
+    fireEvent.click(screen.getByRole('button',{name:'Invalid deep link'}))
+    await waitFor(()=>expect(screen.getByText(/Requested Admin Branch "foreign" does not belong/)).toBeInTheDocument())
     fireEvent.click(screen.getByRole('button',{name:'History back'}))
-    await waitFor(()=>expect(screen.getByLabelText('Current search')).toHaveTextContent('branch=a-viewer'))
-    await waitFor(()=>expect(selector).toHaveValue('a-viewer'))
-    fireEvent.click(screen.getByRole('button',{name:'History forward'}))
-    await waitFor(()=>expect(screen.getByLabelText('Current search')).toHaveTextContent('branch=a-other'))
     await waitFor(()=>expect(selector).toHaveValue('a-other'))
+    await waitFor(()=>expect(screen.getByLabelText('Current search')).toHaveTextContent('branch=a-other'))
+    fireEvent.click(screen.getByRole('button',{name:'History forward'}))
+    await waitFor(()=>expect(selector).toHaveValue(''))
+    await waitFor(()=>expect(screen.getByLabelText('Current search')).toHaveTextContent('branch=foreign'))
   })
 
   it('permits a clean programmatic deep link without a modal',async()=>{

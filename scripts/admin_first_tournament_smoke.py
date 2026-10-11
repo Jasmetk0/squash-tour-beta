@@ -168,6 +168,15 @@ def setup_run(page, base_url: str, artifacts: Path) -> str:
     region_condition.select_option("")
     sport_country.select_option("")
     expect(sport_country).to_have_value("")
+    # Age constraints are hard inputs; verify both and restore unfiltered baseline.
+    minimum_age = page.get_by_label("Player generation minimum age")
+    maximum_age = page.get_by_label("Player generation maximum age")
+    minimum_age.fill("18")
+    maximum_age.fill("25")
+    expect(minimum_age).to_have_value("18")
+    expect(maximum_age).to_have_value("25")
+    minimum_age.fill("")
+    maximum_age.fill("")
     page.get_by_label("Number of generated players").fill("64")
     page.get_by_label("Player generation seed").fill("4201")
     page.get_by_label("InitialWorld audit reason").fill(

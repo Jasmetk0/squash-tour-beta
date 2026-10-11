@@ -49,13 +49,9 @@ class RunWorldInitialWorldAdoptionRequest(BaseModel):
         return self
 
     def fingerprint_for_scope(self, *, run_id: str, branch_id: str) -> str:
-        return canonical_hash(
-            {
-                "run_id": run_id,
-                "branch_id": branch_id,
-                **self.model_dump(mode="json"),
-            }
-        )
+        payload = self.model_dump(mode="json")
+        payload["generation"] = self.generation.fingerprint_payload()
+        return canonical_hash({"run_id": run_id, "branch_id": branch_id, **payload})
 
 
 @dataclass(slots=True)

@@ -1,3 +1,5 @@
 # Generation Region vs Travel Region — implementation candidate
 
 The saved Run World now has separate hard conditions `geographic_region` (country.region) and `travel_region` (country.effective_travel_region). The options endpoint returns `geographic_regions` and `travel_regions` separately, and keeps the old union `regions` field for compatibility. The old request `region` continues to mean geographic OR travel region **only for existing clients and recorded requests**; its behavior and fingerprint must not change in replay. A collision test covers geographic `SHARED` for USA vs travel `SHARED` for CZE. Typed conflicts are rejected before deterministic RNG. This patch adds no travel simulation mechanics, persistent locks or new country data, and does not itself certify pre-alpha readiness.
+
+Fingerprint compatibility: absent new typed-region and absent session-Keep keys are excluded from the legacy fingerprint payload. Legacy `region` and all prior fields remain present; adoption-request and pool-preview digests use that same normalization. New conditions remain included and change the digest.

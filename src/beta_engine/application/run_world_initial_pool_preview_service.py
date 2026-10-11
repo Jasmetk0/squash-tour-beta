@@ -35,6 +35,21 @@ class RunWorldInitialPoolPreviewRequest(BaseModel):
             raise ValueError("Age condition requires minimum age no higher than maximum age")
         return self
 
+    def fingerprint_payload(self) -> dict:
+        """Preserve the pre-extension request digest for absent optional extensions.
+
+        Old saved requests contained the legacy `region` field, but not the
+        newer typed geography or Keep extensions. Do not hash injected defaults.
+        """
+        payload = self.model_dump(mode="json")
+        for field in (
+            "geographic_region", "travel_region", "keep_from_seed",
+            "keep_from_preview_fingerprint", "keep_player_ids",
+        ):
+            if payload.get(field) is None or payload.get(field) == []:
+                payload.pop(field, None)
+        return payload
+
 
 class RunWorldInitialPoolPreview(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
@@ -54,7 +69,9 @@ class RunWorldInitialPoolPreview(BaseModel):
 
     @property
     def preview_fingerprint(self) -> str:
-        return canonical_hash(self.model_dump(mode="json"))
+        payload = self.model_dump(mode="json")
+        payload["request"] = self.request.fingerprint_payload()
+        return canonical_hash(payload)
 
 
 @dataclass(slots=True)

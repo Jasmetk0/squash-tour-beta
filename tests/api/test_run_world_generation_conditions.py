@@ -186,3 +186,30 @@ def test_same_label_geographic_travel_collision_and_legacy_replay(monkeypatch):
                 country_code="CZE", geographic_region="SHARED",
             )
         ))
+
+
+def test_legacy_request_fingerprint_excludes_new_unspecified_fields():
+    from beta_engine.domain.run_packages import canonical_hash
+    from beta_engine.application.run_world_initial_world_service import (
+        RunWorldInitialWorldAdoptionRequest,
+    )
+    request = RunWorldInitialPoolPreviewRequest(
+        world_package_id="saved-earth", season="2000/2001",
+        seed=17, target_pool_size=2, region="SHARED",
+    )
+    legacy = request.model_dump(mode="json")
+    legacy.pop("geographic_region")
+    legacy.pop("travel_region")
+    assert request.fingerprint_payload() == legacy
+    command = RunWorldInitialWorldAdoptionRequest(
+        command_id="keep-legacy", generation=request,
+        audit_label="Legacy", audit_reason="Replay compatibility",
+        official_run=False, best_n=15,
+    )
+    old_payload = command.model_dump(mode="json")
+    old_payload["generation"] = legacy
+    expected = canonical_hash({"run_id": "run-a", "branch_id": "branch-a", **old_payload})
+    assert command.fingerprint_for_scope(run_id="run-a", branch_id="branch-a") == expected
+    new = request.model_copy(update={"geographic_region": "EUROPE"})
+    assert new.fingerprint_payload()["geographic_region"] == "EUROPE"
+    assert new.fingerprint_payload() != legacy

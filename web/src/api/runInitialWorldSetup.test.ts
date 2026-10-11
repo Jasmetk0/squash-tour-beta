@@ -126,6 +126,33 @@ describe('typed geography and historic region replay',()=>{
 
 
 
+describe('preview field lock verification',()=>{
+  const edit={...request,generation:{
+    ...request.generation,field_locks:[{player_id:'p0',field:'current_ability' as const,value:78}]
+  }}
+  it('rejects a matching-count preview when an authored value was not applied',()=>{
+    expect(verifiedInitialWorldPreview(preview(['CZE','SVK']),'r1','b1',edit,options)).toBe(false)
+    const matched=preview(['CZE','SVK'])
+    matched.state.players[0].current_ability=78
+    expect(verifiedInitialWorldPreview(matched,'r1','b1',edit,options)).toBe(true)
+  })
+  it('rejects duplicate, unsorted and unsupported fields',()=>{
+    const result=preview(['CZE','SVK'])
+    result.state.players[0].current_ability=78
+    const locks=edit.generation.field_locks
+    for (const malformed of [
+      [...locks,...locks],
+      [{...locks[0],field:'attributes.height'}],
+      [{...locks[0],value:185}]
+    ]) {
+      const candidate={...edit,generation:{...edit.generation,field_locks:malformed}} as unknown as RunInitialWorldAdoption
+      expect(verifiedInitialWorldPreview(result,'r1','b1',candidate,options)).toBe(false)
+    }
+  })
+})
+
+
+
 describe('repeatable Keep request lineage validation',()=>{
   const source={...request,generation:{...request.generation,seed:84,region:null,
     keep_from_seed:83,keep_from_preview_fingerprint:hash('a'),keep_player_ids:['p0'],

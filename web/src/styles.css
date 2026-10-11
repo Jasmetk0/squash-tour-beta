@@ -2229,3 +2229,11 @@ textarea:focus-visible {
 .runs-canonical-branch .button-link { padding:.45rem .9rem; }
 .runs-legacy-entry { border-top:1px solid #30435c; margin-top:2rem; padding-top:1rem; }
 @media (max-width:600px) { .runs-canonical-branch { align-items:flex-start; flex-direction:column; } }
+
+/* Keep the content column anchored while the collapsed sidebar overlays it on hover.
+   An explicit track is necessary: max-content can shrink to zero with negative hover margins. */
+@media (min-width: 901px) {
+  .app-shell--admin:has(> .side-nav--collapsed) {
+    grid-template-columns: 65px minmax(0, 1fr);
+  }
+}

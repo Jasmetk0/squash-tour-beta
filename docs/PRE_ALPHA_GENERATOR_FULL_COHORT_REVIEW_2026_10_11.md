@@ -15,6 +15,7 @@ The existing production generator, exact Run/Branch/HEAD/World provenance, side-
 
 ## Verification
 
+- New `tests/application/test_generated_review_source_projection.py` PR-critical check: real first-week age, source 1–99 abilities, career stage, potential tier, initial unranked zero-point state and deterministic replay survive the production pool → InitialWorld conversion.
 - New pure summary utility and Vitest inspector tests: counts, age bands, potential tiers, deterministic ordering, empty preview, source immutability, country/tier/name/ID filters, no-match state, sort and show-all.
 - Existing generator integration Vitest now filters the UI to one player before confirming the original entire two-player reviewed command and separately saving.
 - Real Chromium acceptance views the 64-player inspector, filters and resets the display without changing the authority of Confirm, then verifies unchanged Saved Revision, tournament and replay after restart.

@@ -23,7 +23,9 @@ class RunWorldInitialPoolPreviewRequest(BaseModel):
     seed: int
     target_pool_size: int = Field(default=128, ge=1, le=2000)
     country_code: str | None = Field(default=None, min_length=3, max_length=3)
-    region: str | None = Field(default=None, min_length=1)
+    region: str | None = Field(default=None, min_length=1)  # Legacy union for replay
+    geographic_region: str | None = Field(default=None, min_length=1)
+    travel_region: str | None = Field(default=None, min_length=1)
     min_age: int | None = Field(default=None, ge=15, le=45)
     max_age: int | None = Field(default=None, ge=15, le=45)
 
@@ -108,10 +110,28 @@ class RunWorldInitialPoolPreviewService:
                     "countries in the saved World"
                 )
 
+        # New exact layer predicates never cross-match names. Keep old `region`
+        # union semantics unchanged for previously saved inputs and replay.
+        for requested, attribute, kind in (
+            (request.geographic_region, "region", "Geographic Region"),
+            (request.travel_region, "effective_travel_region", "Travel Region"),
+        ):
+            if requested:
+                selected_countries = [
+                    country for country in selected_countries
+                    if getattr(country, attribute) == requested
+                ]
+                if not selected_countries:
+                    raise ValueError(
+                        f"Conflicting generation conditions: {kind} '{requested}' "
+                        "has no eligible countries under the other saved-World conditions"
+                    )
+
         result = InitialPlayerPoolGenerator(
             identity_config=generation.identity_config
         ).generate(
-            countries=list(countries.countries),
+            countries=(selected_countries if request.geographic_region or request.travel_region
+                       else list(countries.countries)),
             season=request.season,
             seed=request.seed,
             target_pool_size=request.target_pool_size,

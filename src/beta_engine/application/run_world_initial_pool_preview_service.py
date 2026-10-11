@@ -5,12 +5,115 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator, ValidationError
 
 from beta_engine.application.run_package_service import RunPackageService
 from beta_engine.application.world_package_run_adapter import WorldPackageRunAdapter
-from beta_engine.domain.players.initial_pool import InitialPlayerPoolGenerator, InitialPoolResult
+from beta_engine.domain.players.initial_pool import (
+    InitialPlayerPoolGenerator, InitialPoolResult, InitialPoolGeneratedPlayer,
+)
 from beta_engine.domain.run_packages import canonical_hash
+
+
+# These are source-model ability fields (1–99), NOT canonical 57 attributes
+# or OVR on the 0–200 scale. Extend only with an authoritative profile model.
+EditableInitialField = Literal[
+    "current_ability", "potential_ability",
+    "attributes.technique", "attributes.movement", "attributes.physical",
+    "attributes.mental", "attributes.consistency", "attributes.clutch",
+    "attributes.recovery",
+]
+
+
+class RunWorldPreviewFieldLock(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True, frozen=True)
+
+    player_id: str = Field(min_length=1, max_length=128)
+    field: EditableInitialField
+    value: int = Field(ge=1, le=99)
+
+
+def _apply_preview_field_locks(
+    result: InitialPoolResult,
+    locks: list[RunWorldPreviewFieldLock],
+    *,
+    season: str,
+    seed: int,
+    generator: InitialPlayerPoolGenerator,
+) -> InitialPoolResult:
+    if not locks:
+        return result
+    by_id: dict[str, list[RunWorldPreviewFieldLock]] = {}
+    for lock in locks:
+        by_id.setdefault(lock.player_id, []).append(lock)
+    available = {player.player_id for player in result.players}
+    missing = sorted(set(by_id) - available)
+    if missing:
+        raise ValueError(
+            "Conflicting field locks: player IDs missing after regeneration: "
+            + ", ".join(missing[:8])
+        )
+    updated = []
+    for player in result.players:
+        selected = by_id.get(player.player_id)
+        if not selected:
+            updated.append(player)
+            continue
+        # Whole-player Keep already preserves the edited source provenance;
+        # don't re-fingerprint its identical locked fields on each session pass.
+        if player.manual_override and all(
+            (getattr(player.attributes, lock.field.split(".", 1)[1])
+             if lock.field.startswith("attributes.")
+             else getattr(player, lock.field)) == lock.value
+            for lock in selected
+        ):
+            updated.append(player)
+            continue
+        values = player.model_dump(mode="python")
+        attrs = player.attributes.model_dump(mode="python")
+        for lock in selected:
+            if lock.field.startswith("attributes."):
+                attrs[lock.field.split(".", 1)[1]] = lock.value
+            else:
+                values[lock.field] = lock.value
+        values["attributes"] = attrs
+        values["manual_override"] = True
+        values["locked"] = False
+        if values["current_ability"] > values["potential_ability"] + 4:
+            raise ValueError(
+                f"Conflicting field locks for {player.player_id}: "
+                "current_ability must not exceed potential_ability by more than 4"
+            )
+        if values["potential_ability"] > player.hidden_career_traits.potential_ceiling:
+            raise ValueError(
+                f"Conflicting field locks for {player.player_id}: "
+                f"potential_ability {values['potential_ability']} exceeds "
+                f"the existing hidden potential_ceiling "
+                f"{player.hidden_career_traits.potential_ceiling}"
+            )
+        # Stable per-player provenance changes when manually authored source
+        # fields change, even if the sampled seed and internal player ID do not.
+        values["generation_fingerprint"] = canonical_hash({
+            "original_fingerprint": player.generation_fingerprint,
+            "preview_field_locks": [
+                {"field": lock.field, "value": lock.value} for lock in selected
+            ],
+        })
+        try:
+            updated.append(InitialPoolGeneratedPlayer.model_validate(values))
+        except ValidationError as exc:
+            raise ValueError(
+                f"Conflicting field locks for {player.player_id}: {exc.errors()[0]['msg']}"
+            ) from exc
+    return result.model_copy(update={
+        "players": updated,
+        "summary": generator._summarize(updated),
+        "metadata": result.metadata.model_copy(update={
+            "generation_fingerprint": generator._fingerprint(
+                updated, season=season, seed=seed,
+            ),
+        }),
+    })
 
 
 class RunWorldKeepStep(BaseModel):
@@ -56,6 +159,7 @@ class RunWorldInitialPoolPreviewRequest(BaseModel):
     )
     keep_player_ids: list[str] = Field(default_factory=list)
     keep_history: list[RunWorldKeepStep] = Field(default_factory=list, max_length=16)
+    field_locks: list[RunWorldPreviewFieldLock] = Field(default_factory=list, max_length=2000)
 
     @model_validator(mode="after")
     def validate_age_range(self) -> "RunWorldInitialPoolPreviewRequest":
@@ -85,6 +189,9 @@ class RunWorldInitialPoolPreviewRequest(BaseModel):
                 previous_seed = step.seed
             if previous_seed != self.keep_from_seed:
                 raise ValueError("Keep history does not lead to the reviewed source seed")
+        identities = [(lock.player_id, lock.field) for lock in self.field_locks]
+        if identities != sorted(set(identities)):
+            raise ValueError("Preview field locks must have unique, sorted player/field keys")
         return self
 
     def fingerprint_payload(self) -> dict:
@@ -100,6 +207,8 @@ class RunWorldInitialPoolPreviewRequest(BaseModel):
             payload.pop("travel_region", None)
         if not payload.get("keep_history"):
             payload.pop("keep_history", None)  # original and one-pass digests unchanged
+        if not payload.get("field_locks"):
+            payload.pop("field_locks", None)  # existing hash/replay stays intact
         return payload
 
 
@@ -261,6 +370,11 @@ class RunWorldInitialPoolPreviewService:
                     ),
                 }),
             })
+
+        result = _apply_preview_field_locks(
+            result, request.field_locks, season=request.season, seed=request.seed,
+            generator=generator,
+        )
 
         return RunWorldInitialPoolPreview(
             run_id=run_id,

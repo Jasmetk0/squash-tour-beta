@@ -11,11 +11,14 @@ import {
 import type { RunBranch, RunContainer } from '../api/types'
 import {
   ageConditionConflict, generatorConditionConflict, runOwnedWorldIds, verifiedGenerationOptions, verifiedInitialWorldPreview,
+  orderedPreviewFieldLocks,
+  type GeneratedPlayerFieldKey, type RunWorldPreviewFieldLock,
   type RunInitialWorldAdoption, type RunInitialWorldPreview
 } from '../api/runInitialWorldSetup'
 import { formatApiError, isApiNotFound } from '../utils/apiErrors'
 import { SectionCard } from './RunScopedUi'
 import { GeneratedPlayerReviewInspector } from './GeneratedPlayerReviewInspector'
+import { GeneratedPlayerFieldLockEditor } from './GeneratedPlayerFieldLockEditor'
 
 type ReviewedWorld = {
   runId: string
@@ -51,9 +54,12 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
   const [bestN, setBestN] = useState(15)
   const [auditReason, setAuditReason] = useState('Create the first-season player population from the reviewed Run-owned World snapshot.')
   const [review, setReview] = useState<ReviewedWorld | null>(null)
+  const [reviewBaseSeed, setReviewBaseSeed] = useState<number | null>(null)
   const [approved, setApproved] = useState(false)
   const [keptIds, setKeptIds] = useState<string[]>([])
   const [rerollSeed, setRerollSeed] = useState(20261010)
+  const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null)
+  const [pendingFieldLocks, setPendingFieldLocks] = useState<RunWorldPreviewFieldLock[]>([])
   const [pendingSave, setPendingSave] = useState<PendingSave | null>(null)
   const [saveApproved, setSaveApproved] = useState(false)
   const [notice, setNotice] = useState('')
@@ -113,7 +119,10 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
 
   useEffect(() => {
     setReview(null)
+    setReviewBaseSeed(null)
     setKeptIds([])
+    setPendingFieldLocks([])
+    setSelectedPlayerId(null)
     setPendingSave(null)
     setApproved(false)
     setSaveApproved(false)
@@ -149,7 +158,8 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
         draftVersion: draft.draft_version, request, preview }
     },
     onSuccess: value => {
-      setReview(value); setKeptIds([]); setRerollSeed(seed + 1)
+      setReview(value); setReviewBaseSeed(seed); setKeptIds([]); setRerollSeed(seed + 1)
+      setPendingFieldLocks([]); setSelectedPlayerId(null)
       setApproved(false); setNotice('')
     }
   })
@@ -159,8 +169,7 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
     review.draftVersion === draft?.draft_version &&
     draft?.base_saved_revision_id === head && draft?.status === 'clean' &&
     review.request.generation.world_package_id === selectedWorldId &&
-    (review.request.generation.keep_history?.[0]?.keep_from_seed ??
-      review.request.generation.keep_from_seed ?? review.request.generation.seed) === seed &&
+    reviewBaseSeed === seed &&
     review.request.generation.target_pool_size === poolSize &&
     (review.request.generation.country_code ?? '') === countryCode &&
     (review.request.generation.geographic_region ?? '') === region &&
@@ -171,6 +180,21 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
     review.request.best_n === bestN && review.request.audit_reason === auditReason.trim() &&
     !existing && isApiNotFound(existingQuery.error))
 
+  const approvedFieldLocks = orderedPreviewFieldLocks(review?.request.generation.field_locks ?? [])
+  const locksDirty = JSON.stringify(approvedFieldLocks) !==
+    JSON.stringify(orderedPreviewFieldLocks(pendingFieldLocks))
+  const fieldEditingEnabled = Boolean(reviewMatches && review &&
+    review.request.generation.keep_from_seed == null && canPreview)
+  const onPreviewFieldChange = (field: GeneratedPlayerFieldKey, value: number | null) => {
+    if (!selectedPlayerId || !fieldEditingEnabled) return
+    setPendingFieldLocks(current => orderedPreviewFieldLocks(
+      value == null
+        ? current.filter(lock => !(lock.player_id === selectedPlayerId && lock.field === field))
+        : [...current.filter(lock => !(lock.player_id === selectedPlayerId && lock.field === field)),
+          { player_id: selectedPlayerId, field, value }]
+    ))
+    setApproved(false)
+  }
   const sessionSteps = (review?.request.generation.keep_history?.length ?? 0) +
     (review?.request.generation.keep_from_seed == null ? 0 : 1)
   const canKeepPreview = Boolean(reviewMatches && review && canPreview && sessionSteps < 17)
@@ -227,10 +251,50 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
     },
     onSuccess: value => {
       setReview(value); setKeptIds(value.retained)
+      setPendingFieldLocks(orderedPreviewFieldLocks(value.request.generation.field_locks ?? []))
       setRerollSeed(value.request.generation.seed + 1)
       setApproved(false); setNotice(
         'Regenerated the remaining players. Keep selections remain available for another pass; Adopt and Save are separate.'
       )
+    }
+  })
+
+  // No field value supplied by the browser is authoritative until the server
+  // returns a fresh exact preview. A failed edit leaves the prior review intact.
+  const fieldPreviewAction = useMutation({
+    mutationFn: async (regenerate: boolean) => {
+      if (!fieldEditingEnabled || !review || !draft || !snapshotFingerprint ||
+          keptIds.length > 0)
+        throw new Error('An unmodified, active first-cohort preview is required to edit source fields.')
+      if (regenerate && (locksDirty || !pendingFieldLocks.length ||
+          !Number.isSafeInteger(rerollSeed) ||
+          rerollSeed === review.request.generation.seed))
+        throw new Error('Apply all locks first and choose a new seed before regenerating unlocked fields.')
+      const request: RunInitialWorldAdoption = {
+        ...review.request,
+        command_id: `admin-initial-world-${crypto.randomUUID()}`,
+        generation: {
+          ...review.request.generation,
+          seed: regenerate ? rerollSeed : review.request.generation.seed,
+          ...(pendingFieldLocks.length
+            ? { field_locks: orderedPreviewFieldLocks(pendingFieldLocks) }
+            : { field_locks: [] })
+        }
+      }
+      const preview = await previewRunOwnedInitialWorld(runId, branchId, request)
+      if (!verifiedInitialWorldPreview(preview, runId, branchId, request, options))
+        throw new Error('Server preview does not match all verified locked values or generation scope.')
+      return { runId, branchId, head, sourceFingerprint: snapshotFingerprint,
+        draftVersion: draft.draft_version, request, preview, regenerate }
+    },
+    onSuccess: value => {
+      setReview(value)
+      setPendingFieldLocks(orderedPreviewFieldLocks(value.request.generation.field_locks ?? []))
+      setApproved(false)
+      if (value.regenerate) setRerollSeed(value.request.generation.seed + 1)
+      setNotice(value.regenerate
+        ? 'Unlocked source fields regenerated; locked values were verified. Review before Adopt and Save.'
+        : 'Field locks applied to the exact server preview; Run remains unchanged.')
     }
   })
 
@@ -323,7 +387,8 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
 
   const appliedKeep = review?.request.generation.keep_player_ids ?? []
   const pendingKeepChange = keptIds.join('|') !== appliedKeep.join('|')
-  const canAdopt = reviewMatches && approved && !pendingKeepChange &&
+  const canAdopt = reviewMatches && approved && !pendingKeepChange && !locksDirty &&
+    !fieldPreviewAction.isPending &&
     !regenerateAction.isPending && !adoptAction.isPending && !previewAction.isPending
   const viewedPlayers = review?.preview.state.players ?? []
 
@@ -332,8 +397,8 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
       ? 'První funkční dávka 1–1000 hráčů pro sezónu 2000/01. Používá pouze uložený World Package dané branche. Náhled nic nezapisuje; potvrzení připraví InitialWorld a teprve ruční Save vytváří Saved Revision.'
       : 'First supported complete batch (1–1000 players) for season 2000/01. Uses the saved Run-owned World Package only. Preview never writes; confirmation stages InitialWorld, then manual Save creates a Saved Revision.'}</p>
     <p className="status">{cs
-      ? 'Závazné podmínky země, regionu a věku platí pro všechny hráče dávky. Prázdná pole zachovávají automatické rozdělení. Skupiny, kvóty a individuální úpravy zatím nejsou podporované.'
-      : 'Hard country, region and age conditions apply to every player. Blank conditions preserve automatic allocation. Groups, quotas and individual editing are not supported yet.'}</p>
+      ? 'Závazné podmínky země, regionu a věku platí pro všechny hráče dávky. Prázdná pole zachovávají automatické rozdělení. Skupiny a kvóty zatím nejsou podporované; editor podporuje devět zdrojových schopností (1–99).'
+      : 'Hard country, region and age conditions apply to every player. Blank conditions preserve automatic allocation. Groups and quotas are not supported yet; the preview editor supports nine source abilities (1–99).'}</p>
     {existing && <p role="status">InitialWorld exists: {existing.players.length} players from {existing.world_package_id}; seed {existing.bootstrap_seed}. Existing players cannot be silently regenerated or overwritten.</p>}
     {unexpectedExistingError && <p role="alert" className="error">Cannot verify whether this Run already has InitialWorld: {formatApiError(existingQuery.error)}</p>}
     {packageQuery.isError && <p role="alert" className="error">Run World state unavailable: {formatApiError(packageQuery.error)}</p>}
@@ -447,6 +512,8 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
       </p>}
       <p>{cs ? 'Model' : 'Model'}: <code>{review.preview.state.source_kind}</code> · {cs ? 'Otisk náhledu' : 'Preview fingerprint'}: <code>{review.preview.fingerprint.slice(0, 20)}…</code></p>
       <GeneratedPlayerReviewInspector key={review.preview.fingerprint} players={viewedPlayers} locale={locale}
+        selectedPlayerId={selectedPlayerId}
+        onSelectPlayer={fieldEditingEnabled ? setSelectedPlayerId : undefined}
         keepIds={keptIds}
         onKeepChange={canKeepPreview ? (id, checked) => {
           setKeptIds(current => checked
@@ -454,6 +521,24 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
             : current.filter(item => item !== id))
           setApproved(false)
         } : undefined} />
+      {selectedPlayerId && viewedPlayers.some(p=>p.player_id===selectedPlayerId) &&
+        <GeneratedPlayerFieldLockEditor
+          key={selectedPlayerId + ':' + review.preview.fingerprint}
+          player={viewedPlayers.find(p=>p.player_id===selectedPlayerId)!}
+          locks={pendingFieldLocks}
+          onChange={onPreviewFieldChange}
+          onApply={()=>fieldPreviewAction.mutate(false)}
+          onRegenerate={()=>fieldPreviewAction.mutate(true)}
+          onClose={()=>setSelectedPlayerId(null)}
+          dirty={locksDirty}
+          busy={fieldPreviewAction.isPending || regenerateAction.isPending ||
+            previewAction.isPending || adoptAction.isPending}
+          disabled={!fieldEditingEnabled || keptIds.length > 0}
+          error={fieldPreviewAction.error ? formatApiError(fieldPreviewAction.error) : null}
+          seed={rerollSeed}
+        />}
+      {fieldPreviewAction.error && !selectedPlayerId &&
+        <p role="alert">Field edit conflict: {formatApiError(fieldPreviewAction.error)}</p>}
       {canKeepPreview && <section aria-label="Session Keep regeneration">
         <h5>{cs ? 'Keep vybraných a regenerace ostatních' : 'Keep selected, regenerate remaining'}</h5>
         <p className="status">{cs

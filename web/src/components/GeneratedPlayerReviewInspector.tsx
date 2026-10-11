@@ -66,11 +66,13 @@ const REVIEW_PAGE_SIZE = 50
  * Product rule: sort/search/display filters are read-only inspection,
  * not group constraints and not a session Keep/Lock action.
  */
-export function GeneratedPlayerReviewInspector({ players, locale = 'en', keepIds = [], onKeepChange }: {
+export function GeneratedPlayerReviewInspector({ players, locale = 'en', keepIds = [], onKeepChange, onSelectPlayer, selectedPlayerId }: {
   players: RunInitialWorldPlayer[]
   locale?: 'cs' | 'en'
   keepIds?: string[]
   onKeepChange?: (playerId: string, checked: boolean) => void
+  onSelectPlayer?: (playerId: string) => void
+  selectedPlayerId?: string | null
 }): JSX.Element {
   const cs = locale === 'cs'
   const [search, setSearch] = useState('')
@@ -197,7 +199,11 @@ export function GeneratedPlayerReviewInspector({ players, locale = 'en', keepIds
           {onKeepChange && <td><input type="checkbox"
             aria-label={'Keep ' + player.player_id} checked={keepIds.includes(player.player_id)}
             onChange={e => onKeepChange(player.player_id, e.target.checked)} /></td>}
-          <td>{player.name}<small> · {player.player_id}</small></td>
+          <td>{onSelectPlayer
+            ? <button type="button" aria-label={'Edit generated player ' + player.player_id}
+                aria-pressed={selectedPlayerId === player.player_id}
+                onClick={() => onSelectPlayer(player.player_id)}>{player.name}</button>
+            : player.name}<small> · {player.player_id}</small></td>
           <td>{player.country_code}</td><td>{player.age_years_at_season_start}</td>
           <td>{player.current_ability} / {player.potential_ability}</td>
           <td>{player.potential_tier}</td>

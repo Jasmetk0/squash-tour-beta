@@ -22,12 +22,12 @@ export function AdminBranchSelector(): JSX.Element {
           aria-label="Admin active Branch"
           value={context.selectedBranchId ?? ''}
           onChange={event => {
-            if (document.querySelector('.app-shell--admin')?.getAttribute('data-run-form-edited') === 'true'
-              && !window.confirm('You have edited a Run form. Save or discard those edits before switching Branches. Continue?')) {
+            if (event.target.value === context.selectedBranchId) return
+            // The provider guards *all* changes, including imperative callers.
+            // This selector only resets its native value if the change is denied.
+            if (!context.selectBranch(event.target.value)) {
               event.currentTarget.value = context.selectedBranchId ?? ''
-              return
             }
-            context.selectBranch(event.target.value)
           }}
           disabled={context.isLoading || context.branches.length === 0}
         >

@@ -44,10 +44,14 @@ def main() -> None:
         )
         # Unsaved-context safeguard prompts are tested; accept a clean Run exit.
         dialogs: list[str] = []
+        dialog_policy = {"accept": True}
 
         def accept_dialog(dialog):
             dialogs.append(dialog.message)
-            dialog.accept()
+            if dialog_policy["accept"]:
+                dialog.accept()
+            else:
+                dialog.dismiss()
 
         page.on("dialog", accept_dialog)
         try:
@@ -232,9 +236,35 @@ def main() -> None:
             page.get_by_role("combobox", name="Source kind").select_option("calendar")
             page.get_by_role("textbox", name="Calendar source season").fill("2008-2009")
             expect(page.locator(".app-shell--admin")).to_have_attribute("data-run-form-edited", "true")
+
+            # The Branch dropdown is an imperative context change: cancelling
+            # keeps both its selected Branch and the edited source values.
+            branch_selector = page.get_by_role("combobox", name="Admin active Branch")
+            initial_branch = branch_selector.input_value()
+            requested_branch = (
+                created_branch["branch_id"]
+                if initial_branch != created_branch["branch_id"]
+                else source_branch["branch_id"]
+            )
+            dialog_policy["accept"] = False
+            branch_selector.select_option(requested_branch)
+            expect(branch_selector).to_have_value(initial_branch)
+            expect(page.get_by_role("textbox", name="Calendar source season")).to_have_value("2008-2009")
+            assert len(dialogs) == 1 and "Switch Branch" in dialogs[0], dialogs
+
+            # Explicitly approving the very same transition changes only the
+            # Admin Branch; its Saved Revision / Viewer pointer is unchanged.
+            dialog_policy["accept"] = True
+            branch_selector.select_option(requested_branch)
+            expect(branch_selector).to_have_value(requested_branch)
+            assert len(dialogs) == 2, "A programmatic Branch selection must confirm exactly once"
+            evidence["imperative_branch_guard"] = "cancel preserved; approve switched once"
+            page.get_by_role("combobox", name="Source kind").select_option("calendar")
+            page.get_by_role("textbox", name="Calendar source season").fill("2008-2009")
+            expect(page.locator(".app-shell--admin")).to_have_attribute("data-run-form-edited", "true")
             page.get_by_role("link", name="Squash Engine global Home").click()
             expect(page.get_by_role("heading", name="Squash Engine Home")).to_be_visible()
-            assert len(dialogs) == 1 and "unsaved Working Draft" in dialogs[0], dialogs
+            assert len(dialogs) == 3 and "unsaved Working Draft" in dialogs[2], dialogs
             evidence["real_unsaved_run_form_warning"] = True
 
             # Selectively apply exactly one real World source entity into the

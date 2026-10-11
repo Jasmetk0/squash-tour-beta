@@ -1,10 +1,11 @@
 import { useQuery } from '@tanstack/react-query'
-import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { createContext, useContext, useEffect, useMemo, useRef, useState, useCallback } from 'react'
 import { useLocation } from 'react-router-dom'
 
 import { getRunContainer, listRunBranches } from '../api/client'
 import type { RunBranch } from '../api/types'
 import { formatApiError } from '../utils/apiErrors'
+import { confirmAdminContextChange } from '../navigation/runContextGuard'
 
 export type AdminBranchContextValue = {
   runId: string
@@ -15,7 +16,7 @@ export type AdminBranchContextValue = {
   isLoading: boolean
   error: string | null
   viewerBranchMissing: boolean
-  selectBranch: (branchId: string) => void
+  selectBranch: (branchId: string) => boolean
 }
 
 const AdminBranchContext = createContext<AdminBranchContextValue | null>(null)
@@ -39,6 +40,9 @@ export function AdminBranchProvider({ runId, children }: { runId: string; childr
   const requestedBranchId = new URLSearchParams(search).get('branch')
   const selectionsByRun = useRef(new Map<string, string>())
   const [selection, setSelection] = useState<{ runId: string; branchId: string } | null>(null)
+  const currentSelection = useRef<{runId:string; branchId:string}|null>(null)
+  currentSelection.current = selection
+  const deniedLink = useRef<string | null>(null)
   const runQuery = useQuery({ queryKey: ['admin-run-container', runId], queryFn: () => getRunContainer(runId), retry: false })
   const branchesQuery = useQuery({ queryKey: ['admin-run-branches', runId], queryFn: () => listRunBranches(runId), retry: false })
   const branches = useMemo(() => validBranches(branchesQuery.data?.run_branches, runId), [branchesQuery.data, runId])
@@ -59,19 +63,39 @@ export function AdminBranchProvider({ runId, children }: { runId: string; childr
       ?? (viewerBranchId && branches.some(branch => branch.branch_id === viewerBranchId) ? viewerBranchId : null)
       ?? branches[0]?.branch_id
       ?? null
+    const old = currentSelection.current
+    const priorBranchId = old?.runId === runId ? old.branchId : null
+    const transitionId = runId + '/' + priorBranchId + '->' + next
+    // A direct ?branch=... change after initial selection is a real context
+    // transition, even when triggered imperatively by useNavigate.
+    if (requestedBranchId && priorBranchId && next !== priorBranchId) {
+      if (deniedLink.current === transitionId) return
+      if (!confirmAdminContextChange('Branch', runId, next ?? undefined)) {
+        deniedLink.current = transitionId
+        return
+      }
+    }
+    deniedLink.current = null
     if (next) selectionsByRun.current.set(runId, next)
     else selectionsByRun.current.delete(runId)
+    currentSelection.current = next ? {runId, branchId:next} : null
     setSelection(next ? { runId, branchId: next } : null)
   }, [branches, branchesQuery.isSuccess, runId, runQuery.isLoading, viewerBranchId, requestedBranchId])
 
   const selectedBranchId = selection?.runId === runId && branches.some(branch => branch.branch_id === selection.branchId)
     ? selection.branchId
     : null
-  const selectBranch = (branchId: string) => {
-    if (!branches.some(branch => branch.branch_id === branchId)) return
+  const selectBranch = useCallback((branchId: string): boolean => {
+    if (!branches.some(branch => branch.branch_id === branchId)) return false
+    const current = currentSelection.current
+    if (current?.runId === runId && current.branchId === branchId) return true
+    if (current?.runId === runId && !confirmAdminContextChange('Branch', runId, branchId)) return false
+    deniedLink.current = null
     selectionsByRun.current.set(runId, branchId)
+    currentSelection.current = {runId, branchId}
     setSelection({ runId, branchId })
-  }
+    return true
+  }, [branches, runId])
   const errors = [
     runQuery.error ? `Run metadata unavailable: ${formatApiError(runQuery.error)}` : null,
     branchesQuery.error ? `Branch metadata unavailable: ${formatApiError(branchesQuery.error)}` : null,

@@ -37,11 +37,18 @@ describe('RunSimulationPage', () => {
     expect(screen.queryByText(/Canonical simulation blocked:/)).not.toBeInTheDocument()
   })
 
-  it('honors an explicit branch deep link before exposing simulation controls', async () => {
+  it('never uses a branch deep link to change Admin context from inside Simulation', async () => {
     select('branch-a', 'cp-a')
-    const requestedSelection = context.value.selectBranch
+    const forbiddenSelection = context.value.selectBranch
     renderHarness('/admin/runs/run-a/simulate?branch=branch-b')
-    await waitFor(() => expect(requestedSelection).toHaveBeenCalledWith('branch-b'))
+    expect(await screen.findByText(/Selecting requested Branch/i)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Next Match' })).toBeDisabled()
+    expect(forbiddenSelection).not.toHaveBeenCalled()
+    // AdminBranchProvider owns route selection and its unsaved-change guard.
+  })
+  it('exposes a verified deep-linked Branch only after the provider has selected it', async () => {
+    select('branch-b', 'cp-b')
+    renderHarness('/admin/runs/run-a/simulate?branch=branch-b')
     expect(await screen.findByText('Branch B (branch-b)')).toBeInTheDocument()
     await userEvent.click(await screen.findByRole('button', { name: 'Next Match' }))
     expect(screen.getByText('Review Next Match')).toBeInTheDocument()

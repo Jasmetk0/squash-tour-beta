@@ -17,9 +17,9 @@ Repository overview/operating documents (`README.md`, `ROADMAP.md`, `AGENTS.md`)
 
 ---
 
-## Newer approved pre-alpha decisions — 10 October 2026
+## Newer approved pre-alpha decisions — 10–11 October 2026
 
-Master v75 and [Pre-alpha frontend V1](PRE_ALPHA_FRONTEND_V1.md) supersede the old provisional main menu and first-pre-alpha appearance/mode assumptions below.
+Master v76 and [Pre-alpha frontend V1](PRE_ALPHA_FRONTEND_V1.md) supersede the old provisional main menu and first-pre-alpha appearance/mode assumptions below.
 First pre-alpha Admin uses one dark theme and no Viewer/Admin selector. Active context is Run → Branch → Time.
 Global navigation is Home / Runs / Packages / Test Lab with application settings below.
 Run navigation is Home / World / Players / Tour / Rankings & Analytics / Simulation / History & Branches with separate Run Management below.
@@ -87,7 +87,9 @@ Home is not the primary place for every simulation mutation. Execution-heavy wor
 
 All Runs is global and neutral. Confirmed presentation direction remains wide rows rather than oversized cards.
 
-Distinct Run actions:
+First-pre-alpha Runs has a simple expandable Branch list: name, supported season/week and Open. The full management surface belongs to Run → History & Branches; it is not duplicated inside the global list.
+
+Later full-product Run actions:
 
 - Open in Admin
 - Open branches
@@ -134,6 +136,16 @@ Visible relation to actual simulation state:
 ---
 
 # 5. Packages and World UX
+
+## 5.1 Approved Packages navigation and apply flow (v76)
+
+Packages starts with content/type categories and an All packages entry. Each category has its own list. Hybrid packages appear in every actually contained category and in Hybrid; All packages deduplicates the same package identity. Use actual supported schemas, not guessed new formats.
+
+Detail tabs: Overview (initial), Contents and Validation. The latter links actual errors/dependencies/warnings to affected items. Supported actions include Apply to Run, Copy and Export; built-in sources remain protected.
+
+Apply to Run opens a separate Target Run/Branch → Contents/selection → Before/after preview page. The user can select only part of the contents and supported changes. Recompute preview/validation after selection changes; show exact old/new values, conflicts and excluded changes. Confirm only the reviewed target/source version/selection; stale input invalidates preview. Preserve unselected data, manual Save and independent Run-copy semantics. Player/hybrid payloads, identity mapping and unresolved conflict mechanics remain open.
+
+## 5.2 World source and Run copies
 
 Clearly distinguish:
 

@@ -2,8 +2,8 @@
 
 ## Kompletní průběžná specifikace a registr rozhodnutí
 
-**Verze dokumentu:** 75
-**Aktualizováno:** 10. 10. 2026 – schválený pre-alpha frontend: tmavý Admin, globální a Runová navigace, obě Home stránky a hráči v Packages
+**Verze dokumentu:** 76
+**Aktualizováno:** 11. 10. 2026 – Runs/branche, kategoriální a hybridní Packages, selektivní použití s před/po diffem a frontendový checkpoint po #1358
 **Účel dokumentu:** jediný průběžný zdroj pravdy pro to, co má Squash Engine být, co už je rozhodnuté, jakým směrem se projekt ubírá, co se musí teprve dořešit a – v oddělené evidenční vrstvě – co je prokazatelně naprogramované a sloučené.
 
 Tento dokument primárně popisuje zamýšlený produkt. Samotná přítomnost produktového pravidla neznamená, že už je naprogramované. Ověřený stav kódu se od verze 51 zapisuje výhradně do samostatné kapitoly 35; implementace sama nikdy nevytváří ani nemění produktový canon.
@@ -4852,6 +4852,25 @@ Blok bez obsahu má kompaktní pravdivý empty state. Prázdný Run je použitel
 
 ---
 
+## 27.18 Runs a Packages — schválený frontendový tok (11. 10. 2026, v76)
+
+**[ROZHODNUTO PRO PRE-ALPHA]** Globální Runs zachovává široké řádky a neutrální kontext. Run lze z řádku jednoduše rozbalit: zobrazí pouze jeho branche, jejich názvy, skutečnou sezónu/week, pokud jsou dostupné, a akci Otevřít. Neurčený nebo nedostupný čas se nepřekládá na vymyšlenou Week 1. Úplná správa branchí, mapa, historie, revisions/checkpoints, porovnání a obnova patří do `Run → History & Branches`; jednoduché rozbalení v Runs je pouze vstup. Žádná branch není nadřazená Main/Official. Přesné metriky řádku, filtry, řazení a politika rychlého otevření naposledy používané branche zůstávají k dotažení; samotný tento souhlas je automaticky neuzavírá.
+
+**[ROZHODNUTO PRO PRE-ALPHA]** Výchozí Packages je rozcestník typových/obsahových kategorií; všechny balíčky se nemusí hned zobrazovat v jediném seznamu. Klik na kategorii otevře její vlastní stránku se seznamem. Samostatné tlačítko `Všechny balíčky / All packages` otevře společný vyhledávatelný a filtrovatelný seznam. Konkrétní nabídka vychází z podporovaných typů a skutečně obsažených dat, například World, Countries, Players a soutěžní obsah. Tento navigační kontrakt nepřejmenovává již rozhodnuté World/Category/Series/Calendar/Setup typy ani sám nezavádí další souborové schéma.
+
+**[ROZHODNUTO PRO PRE-ALPHA]** Hybridní balíček skutečně zahrnující více typů obsahu se zobrazuje v každé odpovídající kategorii a také v kategorii Hybridní. Obsahové štítky vysvětlí, co obsahuje. V All packages se tatáž identita zobrazuje pouze jednou; více navigačních cest není více kopiemi. Pouhá reference nebo závislost na zemi/hráči není důkaz, že balíček jejich data obsahuje. Přesná manifestová reprezentace hybridního a Player Package zůstává otevřená podle 4.9 a PAQ-022.
+
+**[ROZHODNUTO PRO PRE-ALPHA]** Detail balíčku se otevírá na `Přehled / Overview`. Má tři záložky:
+- `Přehled / Overview`: název, popis, verze, původ a skutečné shrnutí obsahu;
+- `Obsah / Contents`: podle obsahu podsekce zemí, hráčů, kategorií/Series/kalendáře atd., seznamy a detail konkrétní položky;
+- `Kontrola / Validation`: chyby, chybějící návaznosti a varování s cestou k dotčené položce.
+
+Akce zahrnují použití v Runu, vytvoření kopie a export v podporovaném rozsahu. Vlastní zdroj lze upravovat; běžná úprava oficiálního zabudovaného zdroje začíná vlastní kopií podle read-only ochrany. Nedostupná akce je výslovně označená, nikoliv předstíraně funkční.
+
+**[ROZHODNUTO PRO PRE-ALPHA]** `Použít v Runu / Apply to Run` je samostatná stránka s krátkým průvodcem: (1) cílový Run a branch, případně vytvoření nového Runu; (2) přenášený obsah a dostupný výběr; (3) konkrétní náhled změn, konfliktů a varování a výslovné potvrzení. Po dokončení lze otevřít cílový Run. Aplikace nadále respektuje Working Draft, ruční Save, audit/provenance a nezávislou Run kopii; průvodce nevytváří automatické živé propojení se zdrojem.
+
+**[ROZHODNUTO PRO PRE-ALPHA]** V průvodci lze zvolit pouze část obsahu a podporovaných změn. Náhled ukáže konkrétní přidávané/měněné položky a hodnoty `před → po`; vybrané a nevybrané změny jsou rozlišené. Po změně výběru se přepočítá náhled i validace; potvrzení se váže k přesnému cíli, zdrojové verzi a zkontrolovanému výběru. Co není vybrané, zůstane beze změny, nic se tiše nepřepíše ani nesmaže a změna cílového/zdrojového stavu zneplatní zastaralý náhled. Chybějící závislosti a konflikty se vysvětlí v daném scope; tento UI kontrakt sám nevymýšlí matching, konfliktovou prioritu, přenos kariér ani kanonické slučování identit. Doplňuje již rozhodnutý bezpečný selektivní import, nikoliv nahrazuje pravidla kapitol 4 a 8.
+
 # 28. Přehled nyní pevně rozhodnutých základů
 
 Následující seznam je rychlá kontrola nejdůležitějších pravidel potvrzených v tomto konkrétním chatu:
@@ -5441,7 +5460,7 @@ Každý očíslovaný bod této kapitoly je od verze 48a stabilní **široký ok
 ## Technika a UX
 
 49. Determinismus a seed contract celého enginu; otázka byla 5. 8. 2026 výslovně přeskočena. Determinismus samotného losu je rozhodnutý, reprodukovatelnost konkrétních Forecast vzorků je užší silný směr a nově je rozhodnutý úzký retry contract neúspěšného batch procesu. Ani tyto tři užší kontrakty samy neuzavírají obecnou otázku.
-50. Úplná tabulka konkrétních Admin/Viewer route protějšků a celý strom jednotlivých stránek; obecný přenos Runu, času, objektu a podstránky, mapování do současné `Viewer Branch` i vysvětlený fallback už jsou rozhodnuté. Od v50 je rovněž rozhodnuto, že nové označení Viewer Branch začne působit až potvrzeným Save. Dále zůstávají otevřené přesný layout a případné budoucí další vstupy `Squash Engine Home`; úplný obsah Run `Home`, přesná vizualizace a případná klikatelnost jeho 50/61 segmentů a jejich vztah k prohlíženému versus nejnovějšímu času; detailní podstránky schváleného Run Admin stromu, zejména `World` a `Rankings & Analytics`; hlavní navigace a obsahové bloky obou Home jsou od v75 potvrzené podle 27.17; přesný obsah řádků, filtry, řazení a rozložení tří akcí na `Všechny Runy`; layout globálního Packages přehledu a jeho typových seznamů; navigace při neuložené práci a jemné chování hover/pin sidebaru; vztah globální lišty k navbaru jednotlivého Viewer webu; konečné kategorie a podstránky MSA, které uživatel navrhne později; seznam, značky a funkce dalších veřejných webů; detailní MSA homepage včetně výslovně přeskočeného návrhu hlavního bloku `Current Week`, umístění automatických zpráv a hráčské profily; zda vznikne samostatná MSA stránka `News` a na kterých dalších Viewer stránkách či webech se zprávy použijí; detailní layout, zoom, seskupování, filtry, barvy a výkon rozhodnuté mapy branchí s časovou osou Historie Runu; případná budoucí synchronizace samostatného Viewer okna. U Forecastu navíc přesný Visualizer pro jednotlivé typy otázek, Match Outcome Landscape, živé a agregované kuličky, Highlight/Focus, Conditional Forecast, Scenario Inspector, `Why This Scenario?`, Saved Scenarios, výběr bodu pro materializaci branche a side-by-side counterfactual UX. Dále editor Future Locks, strom jejich závislostí, jednotlivá a společná pravděpodobnost, feasibility/bottleneck report, vykřičníky a návrhy řešení, compare Candidate Branches pro případný Conflict Fork a Admin-only provenance bez future leaku do Vieweru.
+50. Úplná tabulka konkrétních Admin/Viewer route protějšků a celý strom jednotlivých stránek; obecný přenos Runu, času, objektu a podstránky, mapování do současné `Viewer Branch` i vysvětlený fallback už jsou rozhodnuté. Od v50 je rovněž rozhodnuto, že nové označení Viewer Branch začne působit až potvrzeným Save. Dále zůstávají otevřené přesný layout a případné budoucí další vstupy `Squash Engine Home`; úplný obsah Run `Home`, přesná vizualizace a případná klikatelnost jeho 50/61 segmentů a jejich vztah k prohlíženému versus nejnovějšímu času; detailní podstránky schváleného Run Admin stromu, zejména `World` a `Rankings & Analytics`; hlavní navigace a obsahové bloky obou Home jsou od v75 potvrzené podle 27.17; přesný obsah řádků, filtry, řazení a rozložení tří akcí na `Všechny Runy`; jemný layout kategoriálních Packages seznamů a detailu; jejich rozcestník, hybridní dohledatelnost, tři záložky a samostatné selektivní použití jsou rozhodnuté ve v76 podle 27.18; navigace při neuložené práci a jemné chování hover/pin sidebaru; vztah globální lišty k navbaru jednotlivého Viewer webu; konečné kategorie a podstránky MSA, které uživatel navrhne později; seznam, značky a funkce dalších veřejných webů; detailní MSA homepage včetně výslovně přeskočeného návrhu hlavního bloku `Current Week`, umístění automatických zpráv a hráčské profily; zda vznikne samostatná MSA stránka `News` a na kterých dalších Viewer stránkách či webech se zprávy použijí; detailní layout, zoom, seskupování, filtry, barvy a výkon rozhodnuté mapy branchí s časovou osou Historie Runu; případná budoucí synchronizace samostatného Viewer okna. U Forecastu navíc přesný Visualizer pro jednotlivé typy otázek, Match Outcome Landscape, živé a agregované kuličky, Highlight/Focus, Conditional Forecast, Scenario Inspector, `Why This Scenario?`, Saved Scenarios, výběr bodu pro materializaci branche a side-by-side counterfactual UX. Dále editor Future Locks, strom jejich závislostí, jednotlivá a společná pravděpodobnost, feasibility/bottleneck report, vykřičníky a návrhy řešení, compare Candidate Branches pro případný Conflict Fork a Admin-only provenance bez future leaku do Vieweru.
 51. Přesné Viewer reveal režimy; otázka byla 5. 8. 2026 výslovně přeskočena a pracovní názvy `Public / Ratings / Full Reveal` nejsou rozhodnuté. Pro zdraví je již rozhodnuto, že Admin zná pravdu a Viewer pouze tehdy veřejnou nebo odhadovanou informaci; otevřený zůstává konkrétní vizuální a pravděpodobnostní model odhadu.
 52. Přesný vzhled BYE compact/full pohledu, draw badge a přepínače individuální/skupinové podrobnosti.
 53. Přesné formáty exportů, přípony, komprese, schema migration, rozpoznání společného předka a nejjemnější granularita. Tři rozsahy exportu Runu, přenos pěti současných Package typů, zachování `package_id + version`, nové Package-scoped ID entity vyexportované z Runu, přesně uživatelsky vybraný Package payload a bezpečný kontrakt kompatibility jsou rozhodnuté; workflow stejného `run_id` má od v73 rozhodnuté dvě pre-alpha volby (kopie nebo potvrzená obnova se zálohou/diffem); interní ID remapping a technické provedení zůstávají k implementaci.
@@ -5650,7 +5669,7 @@ Pre-alpha zde znamená první funkční end-to-end verzi, která opakovaně zvl�
 
 ## 31.17 Minimální Admin a Viewer UX
 
-119. **PAQ-119 [ČÁSTEČNĚ ROZHODNUTO v75][PA0][PRODUCT] – Které konkrétní Admin stránky tvoří minimální pre-alpha navigační strom?** Hlavní Runové sekce, oddělený Run Management, globální navigace a obsahové rozdělení Home jsou schválené v 27.17. Přesný katalog podstránek a jejich formuláře zůstávají otevřené; otázka se nezapočítává jako úplně resolved.
+119. **PAQ-119 [ČÁSTEČNĚ ROZHODNUTO v76][PA0][PRODUCT] – Které konkrétní Admin stránky tvoří minimální pre-alpha navigační strom?** Hlavní Runové sekce, oddělený Run Management, globální navigace a obsahové rozdělení Home jsou schválené v 27.17; jednoduché rozbalení branchí, Packages rozcestník/detail a selektivní použití upřesňuje 27.18. Přesný katalog podstránek a jejich formuláře zůstávají otevřené; otázka se nezapočítává jako úplně resolved.
 120. **PAQ-120 [NOT REQUIRED FOR PRE-ALPHA v66][PA0][PRODUCT] – Které konkrétní Viewer stránky musí být skutečně funkční?** Odpověď pro první pre-alpha: žádné. Cílové stránky Vieweru (například MSA homepage, Rankings, Players, Tournaments, Draw/Results a Scores) zůstávají k pozdějšímu rozhodnutí a realizaci.
 121. **PAQ-121 [NOT REQUIRED FOR PRE-ALPHA v66][PA1][PRODUCT] – Jaká je úplná minimální mapa Viewer ↔ Admin protějšků a fallbacků?** Odpověď pro první pre-alpha: žádná nová povinná mapa, protože Viewer není akceptačním rozhraním. Cílový kontextový kontrakt kapitoly 2.4 zůstává platný pro pozdější dopracování.
 122. **PAQ-122 [PA0][PRODUCT] – Jaký společný formulářový kontrakt používají editace, preview, Save/Discard a validační chyby?** Příklad: červený blok ukáže přesné pole a důvod, aniž by ztratil ostatní rozpracované změny.
@@ -5919,6 +5938,12 @@ Staré OQ-026/027 už nemají tvrdit plošný week lock/zákaz dvojího hraní p
 Schválený frontendový základ tvoří jediný tmavý Admin, kontext `Run → Branch → Čas` bez Viewer/Admin, hráči v Packages, globální Home se souhrny a nedávnými Runy, sedm hlavních Runových sekcí a Run Management a skladba Run Home dle 27.17. PAQ-119 je částečně rozhodnuté; PAQ-022 se rozšiřuje o přesné schéma Player Package, nikoliv o jeho údajné dokončení. PAQ-122/123/124/126/144 i další detailní UX a technické otázky zachovávají otevřené části.
 
 Tento blok nemění sportovní engine, historii ani release gate. Žádné další PAQ se nepovyšuje na úplně resolved; dosavadní evidence 157 ID a 59 resolved zůstává. Schválená navigace není důkazem implementace, finálního vizuálního návrhu nebo celé hotové pre-alpha. Historická kapitola 35 se nepřepisuje.
+
+## 31.31 Frontendová konsolidace v76 (11. 10. 2026)
+
+**[ROZHODNUTO PRO PRE-ALPHA]** Jednoduché rozbalení branchí v Runs je oddělené od úplné správy v Run History & Branches. Packages se otevírá jako kategoriální rozcestník s All packages; vícetypový obsah je dohledatelný v každé skutečně obsažené kategorii, ve společném seznamu bez duplicit. Detail má Přehled/Obsah/Kontrola a samostatné použití do konkrétního Runu a branche s výběrem části obsahu a konkrétním diffem `před → po` podle 27.18.
+
+Toto rozhodnutí upřesňuje UX otevřené části PAQ-119, nikoliv celý katalog obrazovek. PAQ-022 a další skutečně otevřená schémata, mapping a technické otázky zůstávají otevřené. Žádné PAQ se tím nově nepočítá jako úplně resolved; zachovává se 157 identit a dosavadní evidence resolved. Rozsah implementace a omezení nových sloučených PR jsou odděleně v 35.33. Úplná pre-alpha ani release gate nejsou deklarovány hotové.
 
 # 32. Procentuální audit stavu specifikace
 
@@ -6594,6 +6619,22 @@ Oba průchody kapitoly 31.3 zůstávají povinné: kopie FAX testovací šablony
 **Zbývající hranice:** quality labels se při čtení odvozují z aktuální globální policy, takže změna defaults může přepsat výklad historie. UI review není pevně navázané na přesný Run/preview. Současná Expected diagnostika vychází z již vytvořeného počtu a není úplným předgeneračním forecastem; nulové země chybějí. Candidate potential může být zvýšen současným OVR. Viewer projekce vyžaduje kontrolu skrytých hodnot a historické znalosti. Zelená CI tyto produktové hranice neuzavírá.
 
 **Následující technická priorita:** nejprve uložit neměnnou Talent Intake policy/provenance a svázat Review→Confirm s přesným cílem a verzí vstupů; konkrétní zadání je `docs/CODEX_NEXT_TALENT_INTAKE_HISTORY_V1.md`. Pak doplnit diagnostické mezery, globální Match/Tournament Lab a realistický celosezonní průchod kopií FAX šablony. Číselná kalibrace a férovost zůstávají k rozhodnutí nad funkčními testy. Tento checkpoint aktualizuje starší implementační priority, nikoliv sportovní canon.
+
+## 35.33 Frontendový checkpoint v76 — audit po PR #1358 (11. 10. 2026)
+
+**[OVĚŘENÁ IMPLEMENTAČNÍ EVIDENCE, NE PRODUKTOVÉ PRAVIDLO]** Ověřený `buuk` je `1f6bc2f1cfbf42e0b26b4dcb557864d2600e4ad3`, merge #1358. Dokumentační #1347 je sloučený; nové sloučené implementační/testovací řezy jsou #1348–1352 a #1354–1358. #1353 byl uzavřený bez merge jako duplicita #1352. Přehled, hosted kontrolní runy a omezení jsou v [frontendovém checkpointu](docs/PRE_ALPHA_FRONTEND_CHECKPOINT_2026_10_11.md).
+
+- #1348 dodává tmavý Admin shell, globální Home bez automatického Runu, navigaci, češtinu/angličtinu a samostatné Labs.
+- #1349 dodává Run Home s 50/61 ukazateli, vybraným Run/Branch kontextem, dílčím draft indikátorem a skutečnými simulačními/revision údaji.
+- #1350–1352 doplňují uložený kalendář/výsledky, publikované týdenní ranking změny a identity hráčů s vazbou na vybraný Saved HEAD.
+- #1354–1356 doplňují čtecí hráčský profil, turnajovou zápasovou historii a archivovaný rally replay; historický checkpoint a nepodporované zdroje zůstávají výslovně nedostupné.
+- #1357–1358 doplňují skutečný Chromium/FastAPI/SQLite průchod turnajem, Save, replay, restart a materializovaný fork se zachovanými uloženými výměnami. #1358 neprokazuje následný divergentní vývoj obou branchí.
+
+**Hranice auditu:** načteny PR metadata, změněné soubory/diffy a cílené aktuální zdroje. Všechny hosted workflow runy nalezené na posledních feature commitech uvedených sloučených PR skončily success; ověřeny kroky a úspěšný acceptance log browserového #1358. V tomto dokumentačním auditu neběžel nový lokální runtime ani úplná regresní/release sada a nebyly nově vizuálně posuzovány screenshoty. Zelené dílčí kontroly nejsou úplným release důkazem.
+
+**Zbývající konkrétní mezery:** Runs stále obsahuje rozsáhlý legacy seznam vedle kanonických Runů a nemá schválené jednoduché rozbalení branchí. Packages je základní rozcestník, nikoliv hotový seznam všech kategorií/hybridů, detail a selektivní použití. Sidebar pin/collapse je pouze stav komponenty bez trvalé preference; submenu se nepřekládá a `/people/...` profil/replay cesta není mapovaná na aktivní kategorii Players. Konzervativní ochrana navigace považuje změnu libovolného input/select v main za editaci a neřeší sama celý autoritativní Save/Undo lifecycle. Detailní historické obrazovky, plné unsaved agregace a širší World Event/health/talent feed nejsou hotové.
+
+**Doporučené navázání:** dokončit kanonické Runs se zjednodušenými branchemi a jejich přepnutím, opravit související navigační mezery; poté nové Packages UX na již podporovaných typech a skutečný bezpečný selektivní preview/apply tok. Player/hybrid schéma nevymýšlet bez uzavření jeho produktového kontraktu. Starší sportovní a release závazky trvají.
 
 # 36. AI-Assisted Development / Development Operating Model
 

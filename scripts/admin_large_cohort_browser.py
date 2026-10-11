@@ -8,6 +8,7 @@ import socket
 import subprocess
 import sys
 import time
+from collections import Counter
 from pathlib import Path
 from urllib.request import urlopen
 
@@ -116,7 +117,30 @@ def acceptance(root: Path, *, port: int, base_url: str, chromium: str):
                 page.get_by_label("Player generation seed").fill("4207")
                 page.get_by_label("InitialWorld audit reason").fill(
                     "Full 1000 player browser/SQLite acceptance")
-                browser_click(page, "Preview generated players")
+                # Exercise the real new full-cohort exact quota path, not a mock
+                # or weighted best-effort distribution. Remaining 970 must
+                # come from countries other than the two fixed countries.
+                browser_click(page, "Add country quota")
+                quota_section = page.get_by_role("region", name="Exact country quotas")
+                rows = quota_section.locator(".form-grid")
+                first = rows.nth(0).locator("select").input_value()
+                page.get_by_label(f"Exact quota {first}").fill("20")
+                browser_click(page, "Add country quota")
+                second = rows.nth(1).locator("select").input_value()
+                assert first != second, "Quota editor must select distinct countries"
+                page.get_by_label(f"Exact quota {second}").fill("10")
+                expect(page.get_by_label("Country quota summary")).to_contain_text("970 automatic")
+                with page.expect_response(
+                    lambda response: response.url.endswith("/world-package/preview")
+                    and response.request.method == "POST" and response.status == 200
+                ) as response_info:
+                    browser_click(page, "Preview generated players")
+                reviewed = response_info.value.json()
+                countries = Counter(p["country_code"] for p in reviewed["state"]["players"])
+                assert len(reviewed["state"]["players"]) == 1000
+                assert countries[first] == 20 and countries[second] == 10
+                assert sum(n for code, n in countries.items()
+                           if code not in (first, second)) == 970
                 expect(page.get_by_text("Review 1000 players")).to_be_visible()
                 inspector = page.get_by_role("region", name="Complete generated player preview")
                 expect(inspector.locator("tbody tr")).to_have_count(50)
@@ -164,6 +188,8 @@ def acceptance(root: Path, *, port: int, base_url: str, chromium: str):
                 assert not errors, errors
                 (artifacts / "evidence.json").write_text(json.dumps({
                     "count": len(after), "unique": len(set(after)),
+                    "exact_country_quotas": {first: 20, second: 10},
+                    "automatic_remainder": 970,
                     "canonical_saved_inventory": True, "ranking_published": True,
                     "reopened_after_backend_restart": True,
                     "same_player_ids_and_order": True, "errors": errors,

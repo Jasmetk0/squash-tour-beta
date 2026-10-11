@@ -12,6 +12,11 @@ export type GeneratedPlayerFieldKey =
   | 'attributes.mental' | 'attributes.consistency' | 'attributes.clutch'
   | 'attributes.recovery'
 
+export type RunWorldExactCountryQuota = {
+  country_code: string
+  count: number
+}
+
 export type RunWorldPreviewFieldLock = {
   player_id: string
   field: GeneratedPlayerFieldKey
@@ -76,6 +81,7 @@ export type RunInitialWorldGeneration = {
   travel_region?: string | null
   min_age?: number | null
   max_age?: number | null
+  country_quotas?: RunWorldExactCountryQuota[]
   keep_from_seed?: number | null
   keep_from_preview_fingerprint?: string | null
   keep_player_ids?: string[]
@@ -221,6 +227,35 @@ export function generatorConditionConflict(
   return null
 }
 
+/** Country quotas are exact whole-cohort counts, not extra players.
+ * The remaining seats may only come from eligible, non-quota countries.
+ * This deliberately does not implement overlapping talent/handedness groups.
+ */
+export function countryQuotaConflict(
+  quotas: RunWorldExactCountryQuota[], total: number,
+  options: RunWorldGenerationOptions | null,
+  countryCode = '', geographicRegion = '', travelRegion = ''
+): string | null {
+  if (!quotas.length) return null
+  if (!options) return 'Saved World country options are unavailable.'
+  const eligible = options.countries.filter(c =>
+    (!countryCode || c.code === countryCode) &&
+    (!geographicRegion || c.region === geographicRegion) &&
+    (!travelRegion || c.travel_region === travelRegion)
+  )
+  const codes = quotas.map(q => q.country_code)
+  if (codes.join('|') !== [...new Set(codes)].sort().join('|'))
+    return 'Country quota codes must be unique and alphabetically sorted.'
+  if (quotas.some(q => !Number.isSafeInteger(q.count) || q.count < 0 ||
+    q.count > 2000 || !eligible.some(c => c.code === q.country_code)))
+    return 'A quota has an invalid count or country outside the selected saved World conditions.'
+  const assigned = quotas.reduce((sum,q) => sum + q.count,0)
+  if (assigned > total) return 'Exact country quotas exceed the total number of players.'
+  if (assigned < total && eligible.every(c => codes.includes(c.code)))
+    return 'No other eligible countries remain to fill the automatic remainder.'
+  return null
+}
+
 /** Frontend preflight mirrors backend bounds; blank = unconstrained. */
 export function ageConditionConflict(minAge: string, maxAge: string): string | null {
   const valid = (value: string): boolean =>
@@ -254,6 +289,12 @@ export function verifiedInitialWorldPreview(
   if (min != null && max != null && min > max) return false
   if (!Number.isInteger(request.generation.target_pool_size) ||
       request.generation.target_pool_size < 1 || request.generation.target_pool_size > 2000) return false
+  const quotas = request.generation.country_quotas ?? []
+  if (!Array.isArray(quotas) || quotas.length > 250 ||
+      countryQuotaConflict(quotas, request.generation.target_pool_size,
+        options ?? null, request.generation.country_code ?? '',
+        request.generation.geographic_region ?? '',
+        request.generation.travel_region ?? '')) return false
   const fieldLocks = request.generation.field_locks ?? []
   if (!Array.isArray(fieldLocks) || fieldLocks.length > 2000 ||
       fieldLocks.some(lock => !lock || !lock.player_id ||
@@ -308,6 +349,9 @@ export function verifiedInitialWorldPreview(
     /^[a-f0-9]{64}$/.test(state.run_world_pool_preview_fingerprint) &&
     Array.isArray(players) && players.length === request.generation.target_pool_size &&
     new Set(players.map(p => p.player_id)).size === players.length &&
+    quotas.every(quota =>
+      players.filter(p => p.country_code === quota.country_code).length === quota.count
+    ) &&
     fieldLocks.every(lock => {
       const player = players.find(p=>p.player_id === lock.player_id)
       const value = player && (lock.field.startsWith('attributes.')

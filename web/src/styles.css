@@ -2300,3 +2300,22 @@ textarea:focus-visible {
 .generated-review-inspector .table-responsive th{position:sticky;top:0;z-index:1;background:#263d5a}
 @media(max-width:800px){.generated-review-breakdown{grid-template-columns:minmax(0,1fr)}}
 @media(max-width:560px){.generated-review-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.generated-review-filters{grid-template-columns:minmax(0,1fr)}}
+
+
+
+/* Run-owned generated player detail: fixed right-side inspector, no table jump. */
+.generated-field-editor{
+  position:fixed;z-index:45;right:1rem;top:5rem;bottom:1rem;
+  width:min(405px,calc(100vw - 2rem));overflow-y:auto;overscroll-behavior:contain;
+  padding:1.1rem;background:#172841;color:#e5edf8;border:1px solid #516b90;
+  border-radius:14px;box-shadow:0 18px 64px #000b;
+}
+.generated-field-editor .form-grid{display:grid;grid-template-columns:1fr;gap:.7rem}
+.generated-field-editor .form-grid>div{background:#1b314b;border-radius:9px;padding:.65rem}
+.generated-field-editor .form-grid label{display:block}
+.generated-field-editor .form-grid input{width:100%;max-width:150px}
+.generated-field-editor .actions{display:flex;gap:.45rem;align-items:center;flex-wrap:wrap}
+.generated-field-editor strong{color:#a8deca;font-size:.83rem}
+@media(max-width:600px){
+  .generated-field-editor{inset:3.5rem .45rem .45rem;width:auto;padding:.8rem}
+}

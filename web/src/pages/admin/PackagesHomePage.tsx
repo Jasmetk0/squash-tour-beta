@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
-import { Link, useParams, useSearchParams } from 'react-router-dom'
+import { Link, useLocation, useParams, useSearchParams } from 'react-router-dom'
 import { getWorldPackage, getWorldPackageCountries, getWorldPackageGeography, getWorldPackageValidation, listWorldPackages } from '../../api/client'
 import type { WorldPackageValidationCheck } from '../../api/types'
 import { useLanguage } from '../../i18n/LanguageContext'
@@ -66,10 +66,12 @@ export function PackagesHomePage():JSX.Element {
 }
 export function PackagesListPage():JSX.Element {
   const {categoryId=''}=useParams()
+  const {pathname}=useLocation()
+  const resolvedCategory=pathname==='/admin/packages/all'?'all':categoryId
   const {language}=useLanguage(),cs=language==='cs'
   const {query,items}=Inventory()
   const [search,setSearch]=useState(''),[origin,setOrigin]=useState('any'),[status,setStatus]=useState('any')
-  const cat:PackageFilter|null=categoryId==='all'||packageCategories.some(c=>c===categoryId) ? categoryId as PackageFilter : null
+  const cat:PackageFilter|null=resolvedCategory==='all'||packageCategories.some(c=>c===resolvedCategory) ? resolvedCategory as PackageFilter : null
   if(!cat) return <section className="panel"><h2>{cs?'Neznámá kategorie':'Unknown category'}</h2><Link to="/admin/packages">Packages</Link></section>
   const members=inCategory(items,cat)
   const shown=members.filter(item=>(origin==='any'||(origin==='custom'?item.editable:!item.editable))

@@ -54,6 +54,7 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
   const [bestN, setBestN] = useState(15)
   const [auditReason, setAuditReason] = useState('Create the first-season player population from the reviewed Run-owned World snapshot.')
   const [review, setReview] = useState<ReviewedWorld | null>(null)
+  const [reviewBaseSeed, setReviewBaseSeed] = useState<number | null>(null)
   const [approved, setApproved] = useState(false)
   const [keptIds, setKeptIds] = useState<string[]>([])
   const [rerollSeed, setRerollSeed] = useState(20261010)
@@ -118,6 +119,7 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
 
   useEffect(() => {
     setReview(null)
+    setReviewBaseSeed(null)
     setKeptIds([])
     setPendingFieldLocks([])
     setSelectedPlayerId(null)
@@ -156,7 +158,7 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
         draftVersion: draft.draft_version, request, preview }
     },
     onSuccess: value => {
-      setReview(value); setKeptIds([]); setRerollSeed(seed + 1)
+      setReview(value); setReviewBaseSeed(seed); setKeptIds([]); setRerollSeed(seed + 1)
       setPendingFieldLocks([]); setSelectedPlayerId(null)
       setApproved(false); setNotice('')
     }
@@ -167,7 +169,7 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
     review.draftVersion === draft?.draft_version &&
     draft?.base_saved_revision_id === head && draft?.status === 'clean' &&
     review.request.generation.world_package_id === selectedWorldId &&
-    (review.request.generation.keep_from_seed ?? review.request.generation.seed) === seed &&
+    reviewBaseSeed === seed &&
     (review.request.generation.keep_from_seed == null ||
       review.request.generation.seed === rerollSeed) &&
     review.request.generation.target_pool_size === poolSize &&
@@ -515,7 +517,9 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
           onApply={()=>fieldPreviewAction.mutate(false)}
           onRegenerate={()=>fieldPreviewAction.mutate(true)}
           onClose={()=>setSelectedPlayerId(null)}
-          dirty={locksDirty} busy={fieldPreviewAction.isPending}
+          dirty={locksDirty}
+          busy={fieldPreviewAction.isPending || regenerateAction.isPending ||
+            previewAction.isPending || adoptAction.isPending}
           disabled={!fieldEditingEnabled || keptIds.length > 0}
           error={fieldPreviewAction.error ? formatApiError(fieldPreviewAction.error) : null}
           seed={rerollSeed}

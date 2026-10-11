@@ -2,6 +2,12 @@ name: Pre-alpha Shell Browser
 
 # Real Chromium + production HTTP/SQLite, separate from short Fast CI.
 # Scoped to changes in the approved pre-alpha shell and its acceptance test.
+# A new commit supersedes the same PR's old browser acceptance run.
+# Explicit workflow_dispatch/release checks are never cancelled.
+concurrency:
+  group: ${{ github.workflow }}-pr-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 on:
   pull_request:
     paths:

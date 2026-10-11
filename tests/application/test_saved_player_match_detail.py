@@ -126,3 +126,14 @@ def test_replay_wrong_winner_duplicate_or_foreign_event_is_rejected(monkeypatch)
                         lambda row: _fake_competitive_match())
     with pytest.raises(ValueError, match="Multiple saved"):
         get(slots={"groups": slots["groups"] * 2})
+
+def test_saved_replay_rejects_unremapped_group_from_source_branch(monkeypatch):
+    """A future materialized fork must not borrow its parent's raw slot group."""
+    slots = {"groups": [{"match_id": "final", "week_ordinal": 2 * 61 + 16}]}
+    foreign = _fake_competitive_match()
+    foreign.authoritative_input.branch_id = "source-branch"
+    monkeypatch.setattr(detail, "load_authoritative_group", lambda row: foreign)
+    with pytest.raises(ValueError, match="contradicts canonical"):
+        get(slots=slots)
+
+

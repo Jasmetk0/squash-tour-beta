@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { useLocation } from 'react-router-dom'
 
 import { getRunContainer, listRunBranches } from '../api/client'
 import type { RunBranch } from '../api/types'
@@ -34,6 +35,8 @@ function validBranches(value: unknown, runId: string): RunBranch[] {
 export function AdminBranchProvider({ runId, children }: { runId: string; children: React.ReactNode }): JSX.Element {
   // This shell context deliberately does not make legacy Run pages branch-aware. Those pages
   // must migrate separately to real BranchState/checkpoint-backed read contracts.
+  const { search } = useLocation()
+  const requestedBranchId = new URLSearchParams(search).get('branch')
   const selectionsByRun = useRef(new Map<string, string>())
   const [selection, setSelection] = useState<{ runId: string; branchId: string } | null>(null)
   const runQuery = useQuery({ queryKey: ['admin-run-container', runId], queryFn: () => getRunContainer(runId), retry: false })
@@ -44,14 +47,22 @@ export function AdminBranchProvider({ runId, children }: { runId: string; childr
   useEffect(() => {
     if (!branchesQuery.isSuccess || runQuery.isLoading) return
     const remembered = selectionsByRun.current.get(runId)
-    const next = (remembered && branches.some(branch => branch.branch_id === remembered) ? remembered : null)
+    // An explicit Runs inventory deep link chooses *only* this Admin Branch.
+    // An invalid/stale Branch ID fails closed; never substitute the Viewer Branch.
+    if (requestedBranchId && !branches.some(branch => branch.branch_id === requestedBranchId)) {
+      selectionsByRun.current.delete(runId)
+      setSelection(null)
+      return
+    }
+    const next = (requestedBranchId && branches.some(branch => branch.branch_id === requestedBranchId) ? requestedBranchId : null)
+      ?? (remembered && branches.some(branch => branch.branch_id === remembered) ? remembered : null)
       ?? (viewerBranchId && branches.some(branch => branch.branch_id === viewerBranchId) ? viewerBranchId : null)
       ?? branches[0]?.branch_id
       ?? null
     if (next) selectionsByRun.current.set(runId, next)
     else selectionsByRun.current.delete(runId)
     setSelection(next ? { runId, branchId: next } : null)
-  }, [branches, branchesQuery.isSuccess, runId, runQuery.isLoading, viewerBranchId])
+  }, [branches, branchesQuery.isSuccess, runId, runQuery.isLoading, viewerBranchId, requestedBranchId])
 
   const selectedBranchId = selection?.runId === runId && branches.some(branch => branch.branch_id === selection.branchId)
     ? selection.branchId
@@ -72,7 +83,9 @@ export function AdminBranchProvider({ runId, children }: { runId: string; childr
     branches,
     viewerBranchId,
     isLoading: runQuery.isLoading || branchesQuery.isLoading,
-    error: errors.length ? errors.join('; ') : null,
+    error: requestedBranchId && branchesQuery.isSuccess && !branches.some(branch => branch.branch_id === requestedBranchId)
+      ? `Requested Admin Branch "${requestedBranchId}" does not belong to this Run.`
+      : errors.length ? errors.join('; ') : null,
     viewerBranchMissing: Boolean(viewerBranchId && branchesQuery.isSuccess && !branches.some(branch => branch.branch_id === viewerBranchId)),
     selectBranch,
   }

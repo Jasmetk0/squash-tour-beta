@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useState } from 'react'
+import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { AdminBranchProvider } from './AdminBranchContext'
@@ -35,8 +36,10 @@ function Harness(): JSX.Element {
   )
 }
 
-function renderHarness(): void {
-  render(<QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}><Harness /></QueryClientProvider>)
+function renderHarness(route = '/admin/runs/run-a'): void {
+  render(<QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+    <MemoryRouter initialEntries={[route]}><Harness /></MemoryRouter>
+  </QueryClientProvider>)
 }
 
 describe('AdminBranchProvider and selector', () => {
@@ -69,6 +72,21 @@ describe('AdminBranchProvider and selector', () => {
     expect(localStorage.getItem('beta_engine:viewer_active_run_id')).toBe('viewer-legacy')
     expect(api.getRunContainer).toHaveBeenCalledTimes(1)
     expect(api.listRunBranches).toHaveBeenCalledTimes(1)
+  })
+
+  it('honors a validated direct Admin Branch deep link without changing Viewer Branch', async () => {
+    localStorage.setItem('beta_engine:viewer_active_product_run_id', 'viewer-product')
+    renderHarness('/admin/runs/run-a?branch=a-other')
+    const selector = await screen.findByRole('combobox', { name: 'Admin active Branch' })
+    await waitFor(() => expect(selector).toHaveValue('a-other'))
+    expect(api.getRunContainer).toHaveBeenCalledWith('run-a')
+    expect(localStorage.getItem('beta_engine:viewer_active_product_run_id')).toBe('viewer-product')
+  })
+
+  it('rejects a stale or foreign Admin Branch deep link instead of opening another Branch', async () => {
+    renderHarness('/admin/runs/run-a?branch=foreign')
+    await screen.findByText(/Requested Admin Branch "foreign" does not belong to this Run/)
+    expect(screen.getByRole('combobox', { name: 'Admin active Branch' })).toHaveValue('')
   })
 
   it('initializes a changed Run independently from its Viewer Branch', async () => {

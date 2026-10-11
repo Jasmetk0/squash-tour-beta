@@ -1,3 +1,11 @@
+## 11 October 2026 — canonical Runs inventory implementation candidate (PR pending)
+
+- Branch starts at merge #1359 (`a9c305f50248b8446409095571faeb1f4ec6ecf7`).
+- New global Runs inventory uses only canonical `listRunContainers`, lazy Branch/BranchState reads per expanded Run, branch-specific displayed time and explicit Admin deep links. Missing time is unavailable, never Week 1.
+- Legacy Simulation Run inspector remains on the separate `/admin/legacy-runs` diagnostic route and is not canonical evidence.
+- Admin Branch deep link validates exact Run membership before selection; it does not mutate Viewer Branch. Sidebar collapse/pin preferences and CZ/EN submenu translations are covered, with canonical `/people` routes mapped to Players.
+- This entry records an implementation *candidate*, not successful CI or completion of Packages, selective apply, full dirty lifecycle or pre-alpha. The code must pass required last-head checks before it is offered for merge.
+
 # Current implementation and next action
 
 ## Frontend checkpoint and next action — verified 11 October 2026

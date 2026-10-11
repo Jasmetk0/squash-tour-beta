@@ -1,0 +1,303 @@
+import { useQuery } from '@tanstack/react-query'
+import { useEffect, useMemo, useState } from 'react'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+
+import { getRun, getRunStatusSummary, listRunContainers, listRuns } from '../api/client'
+import { CompactSummaryCard, EmptyState, MetadataList, PageIntro, SectionCard, SummaryPills } from '../components/RunScopedUi'
+import { formatApiError } from '../utils/apiErrors'
+import { normalizeRunSourceType } from '../utils/runSourceTypes'
+import { readLastRunId, writeLastRunId } from '../viewer/activeRun'
+import { rememberProductRun } from '../navigation/recentProductRuns'
+
+function formatProgress(nextEventIndex: number, totalEvents: number): string {
+  return `${nextEventIndex} / ${totalEvents}`
+}
+
+type ChildrenFilter = 'any' | 'with-children' | 'without-children'
+
+export function LegacyRunsPage(): JSX.Element {
+  const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const [runIdFilter, setRunIdFilter] = useState('')
+  const [seasonFilter, setSeasonFilter] = useState('')
+  const [sourceTypeFilter, setSourceTypeFilter] = useState('')
+  const [childrenFilter, setChildrenFilter] = useState<ChildrenFilter>('any')
+  const [openingRunId, setOpeningRunId] = useState<string | null>(null)
+  const [openError, setOpenError] = useState<string | null>(null)
+  const [rememberedRunId, setRememberedRunId] = useState(() => readLastRunId())
+
+  const canonicalRunsQuery = useQuery({
+    queryKey: ['canonical-run-containers'],
+    queryFn: listRunContainers,
+    retry: false
+  })
+
+  const runsQuery = useQuery({
+    queryKey: ['runs-index-page'],
+    queryFn: listRuns,
+    retry: false
+  })
+
+  const filteredRuns = useMemo(() => {
+    const normalizedRunFilter = runIdFilter.trim().toLowerCase()
+    const normalizedSourceFilter = sourceTypeFilter.trim().toLowerCase()
+    const normalizedSeasonFilter = seasonFilter.trim()
+
+    return (
+      runsQuery.data?.runs.filter((run) => {
+        if (normalizedRunFilter && !run.run_id.toLowerCase().includes(normalizedRunFilter)) return false
+        if (normalizedSeasonFilter && String(run.season) !== normalizedSeasonFilter) return false
+        if (normalizedSourceFilter) {
+          const sourceType = (normalizeRunSourceType(run.source_type) ?? '').toLowerCase()
+          if (!sourceType.includes(normalizedSourceFilter)) return false
+        }
+        if (childrenFilter === 'with-children' && run.child_run_count === 0) return false
+        if (childrenFilter === 'without-children' && run.child_run_count > 0) return false
+        return true
+      }) ?? []
+    )
+  }, [childrenFilter, runIdFilter, runsQuery.data?.runs, seasonFilter, sourceTypeFilter])
+
+  const selectedRunParam = searchParams.get('selected')
+  const selectedRun = useMemo(() => {
+    if (filteredRuns.length === 0) return null
+    if (!selectedRunParam) return filteredRuns[0]
+    return filteredRuns.find((run) => run.run_id === selectedRunParam) ?? filteredRuns[0]
+  }, [filteredRuns, selectedRunParam])
+
+  useEffect(() => {
+    if (!runsQuery.data) return
+
+    if (!selectedRun && selectedRunParam) {
+      setSearchParams((current) => {
+        const next = new URLSearchParams(current)
+        next.delete('selected')
+        return next
+      })
+      return
+    }
+
+    if (selectedRun && selectedRunParam !== selectedRun.run_id) {
+      setSearchParams((current) => {
+        const next = new URLSearchParams(current)
+        next.set('selected', selectedRun.run_id)
+        return next
+      })
+    }
+  }, [runsQuery.data, selectedRun, selectedRunParam, setSearchParams])
+
+  const selectedRunStatusQuery = useQuery({
+    queryKey: ['run-status-summary', selectedRun?.run_id],
+    queryFn: () => getRunStatusSummary(selectedRun?.run_id ?? ''),
+    enabled: Boolean(selectedRun?.run_id),
+    retry: false
+  })
+
+  const onOpenRun = async (runId: string) => {
+    setOpenError(null)
+    setOpeningRunId(runId)
+    try {
+      const run = await getRun(runId)
+      writeLastRunId(run.run.run_id)
+      setRememberedRunId(run.run.run_id)
+      rememberProductRun(run.run.run_id)
+      navigate(`/admin/runs/${run.run.run_id}`)
+    } catch (err) {
+      setOpenError(`Could not open run: ${formatApiError(err)}`)
+    } finally {
+      setOpeningRunId(null)
+    }
+  }
+
+  const onSelectRun = (runId: string) => {
+    setSearchParams((current) => {
+      const next = new URLSearchParams(current)
+      next.set('selected', runId)
+      return next
+    })
+  }
+
+  return (
+    <section className="panel">
+      <PageIntro
+        title="Legacy Simulation Runs diagnostics"
+        subtitle="Legacy simulation output is diagnostic, not canonical saved Product Run or Branch data."
+      />
+
+      <section className="runs-hub-actions" aria-label="Run management actions">
+        <div>
+          <h3>Create or open a Product Run</h3>
+          <p className="status">Create an isolated empty 2000/01 Product Run, then copy your chosen packages and prepare players. Existing saved Runs are listed below.</p>
+        </div>
+        <Link className="button-link" to="/admin/runs/new">
+          Create new run
+        </Link>
+      </section>
+
+      <SectionCard title="Product Runs (Saved Revision authority)">
+        <p className="status">Each Product Run owns its own timeline and Viewer Branch. A Run can be reopened even before it contains sporting content.</p>
+        {canonicalRunsQuery.isLoading && <p role="status">Loading Product Runs…</p>}
+        {canonicalRunsQuery.isError && <p role="alert" className="error">Product Runs unavailable: {formatApiError(canonicalRunsQuery.error)}</p>}
+        {canonicalRunsQuery.data && canonicalRunsQuery.data.run_containers.length === 0 && <p className="status">No Product Runs yet. Use Create new run above.</p>}
+        {canonicalRunsQuery.data && <ul className="item-list" aria-label="Product Runs">
+          {canonicalRunsQuery.data.run_containers.map(container => <li key={container.run_id}>
+            <Link to={`/admin/runs/${encodeURIComponent(container.run_id)}`}
+              onClick={() => { writeLastRunId(container.run_id); rememberProductRun(container.run_id); setRememberedRunId(container.run_id) }}>
+              {container.display_name || container.run_id}
+            </Link>{' '}
+            <span className="status">{container.read_only ? 'Protected / read-only' : 'Editable'} · {container.status} · {container.timeline_start_season}/{String((container.timeline_start_season + 1) % 100).padStart(2, '0')}</span>
+          </li>)}
+        </ul>}
+      </SectionCard>
+
+      <SectionCard title="Legacy simulation filters">
+        <div className="grid">
+          <label>
+            Filter by run ID
+            <input value={runIdFilter} onChange={(e) => setRunIdFilter(e.target.value)} placeholder="Search run_id" />
+          </label>
+          <label>
+            Filter by season
+            <input value={seasonFilter} onChange={(e) => setSeasonFilter(e.target.value)} placeholder="e.g. 2027" />
+          </label>
+          <label>
+            Filter by source type
+            <input value={sourceTypeFilter} onChange={(e) => setSourceTypeFilter(e.target.value)} placeholder="bootstrap" />
+          </label>
+          <label>
+            Child runs
+            <select value={childrenFilter} onChange={(e) => setChildrenFilter(e.target.value as ChildrenFilter)}>
+              <option value="any">Any</option>
+              <option value="with-children">Has children</option>
+              <option value="without-children">No children</option>
+            </select>
+          </label>
+        </div>
+      </SectionCard>
+
+      {runsQuery.isLoading ? <p className="status">Loading runs index…</p> : null}
+      {runsQuery.isError ? <p className="error">Runs list unavailable: {formatApiError(runsQuery.error)}</p> : null}
+      {!runsQuery.isLoading && !runsQuery.isError && runsQuery.data?.runs.length === 0 ? (
+        <section className="panel nested-panel" aria-labelledby="runs-empty-heading">
+          <h3 id="runs-empty-heading">No legacy simulation runs exist yet.</h3>
+          <EmptyState message="Product Runs above can exist without a legacy Simulation Run. Create or reopen a saved Product Run to start configuring it." />
+          <Link className="button-link" to="/admin/runs/new">
+            Create new run
+          </Link>
+        </section>
+      ) : null}
+      {!runsQuery.isLoading && !runsQuery.isError && runsQuery.data && filteredRuns.length === 0 && runsQuery.data.runs.length > 0 ? (
+        <EmptyState message="No runs match the current filters." />
+      ) : null}
+      {openError ? <p className="error">{openError}</p> : null}
+
+      {!runsQuery.isLoading && !runsQuery.isError && filteredRuns.length > 0 ? (
+        <div className="grid">
+          <SectionCard title="Legacy simulation runs">
+            <p className="status">{filteredRuns.length} legacy simulation run(s), preserving API order.</p>
+            <ul className="item-list" aria-label="Matching runs">
+              {filteredRuns.map((run) => {
+                const isSelected = selectedRun?.run_id === run.run_id
+                const isRememberedRun = rememberedRunId === run.run_id
+                return (
+                  <li key={run.run_id}>
+                    <button type="button" onClick={() => onSelectRun(run.run_id)}>
+                      {isSelected ? 'Selected' : 'Inspect'} {run.run_id}
+                    </button>{' '}
+                    <span className="status">S{run.season} · {formatProgress(run.progress.next_event_index, run.progress.total_events)}</span>{' '}
+                    {isRememberedRun ? <span className="status">Remembered</span> : null}
+                  </li>
+                )
+              })}
+            </ul>
+          </SectionCard>
+
+          {selectedRun ? (
+            <SectionCard title="Selected run detail">
+              {rememberedRunId === selectedRun.run_id ? <p className="status">Remembered run</p> : null}
+              <SummaryPills
+                items={[
+                  { label: 'Run ID', value: selectedRun.run_id },
+                  { label: 'Season', value: selectedRun.season },
+                  { label: 'Source type', value: normalizeRunSourceType(selectedRun.source_type) ?? 'N/A' },
+                  { label: 'Progress', value: formatProgress(selectedRun.progress.next_event_index, selectedRun.progress.total_events) }
+                ]}
+              />
+              <CompactSummaryCard
+                items={[
+                  { label: 'Seed', value: selectedRun.seed },
+                  { label: 'Completed events', value: selectedRun.progress.completed_event_count },
+                  { label: 'Parent run', value: selectedRun.parent_run_id ?? 'None' },
+                  { label: 'Child runs', value: selectedRun.child_run_count }
+                ]}
+              />
+
+              {selectedRunStatusQuery.isLoading ? <p className="status">Loading selected run status summary…</p> : null}
+              {selectedRunStatusQuery.isError ? (
+                <p className="error">Status summary unavailable: {formatApiError(selectedRunStatusQuery.error)}</p>
+              ) : null}
+              {selectedRunStatusQuery.data ? (
+                <MetadataList
+                  items={[
+                    { label: 'History events', value: selectedRunStatusQuery.data.history_counts.events },
+                    { label: 'Ranking snapshots', value: selectedRunStatusQuery.data.history_counts.ranking_snapshots },
+                    { label: 'Race snapshots', value: selectedRunStatusQuery.data.history_counts.race_snapshots },
+                    {
+                      label: 'Finals signal',
+                      value: selectedRunStatusQuery.data.finals.result_available
+                        ? 'Qualification + result available'
+                        : selectedRunStatusQuery.data.finals.qualification_available
+                          ? 'Qualification available'
+                          : 'None yet'
+                    },
+                    {
+                      label: 'Rollover signal',
+                      value: selectedRunStatusQuery.data.rollover
+                        ? `To S${selectedRunStatusQuery.data.rollover.latest_to_season}`
+                        : 'None yet'
+                    }
+                  ]}
+                />
+              ) : null}
+
+              <p className="status">
+                <Link to={`/admin/runs/${selectedRun.run_id}`}>Run Detail</Link> ·{' '}
+                <Link to={`/admin/runs/${selectedRun.run_id}/diagnostics`}>Diagnostics</Link> ·{' '}
+                <Link to={`/admin/runs/${selectedRun.run_id}/activity`}>Activity</Link> ·{' '}
+                <Link to={`/admin/runs/${selectedRun.run_id}/calendar`}>Season Calendar</Link>
+                {(selectedRun.parent_run_id || selectedRun.child_run_count > 0) ? (
+                  <>
+                    {' '}
+                    · <Link to={`/admin/runs/${selectedRun.run_id}/season-chain`}>Season Chain</Link>
+                  </>
+                ) : null}
+                {selectedRunStatusQuery.data?.finals.qualification_available || selectedRunStatusQuery.data?.finals.result_available ? (
+                  <>
+                    {' '}
+                    · <Link to={`/admin/runs/${selectedRun.run_id}/finals`}>World Tour Finals</Link>
+                  </>
+                ) : null}
+                {selectedRunStatusQuery.data?.rollover ? (
+                  <>
+                    {' '}
+                    · <Link to={`/admin/runs/${selectedRun.run_id}/rollover`}>Season Rollover</Link>
+                  </>
+                ) : null}
+                {(selectedRun.parent_run_id || selectedRun.child_run_count > 0 || selectedRun.source_type) ? (
+                  <>
+                    {' '}
+                    · <Link to={`/admin/runs/${selectedRun.run_id}/bootstrap-lineage`}>Bootstrap / Lineage</Link>
+                  </>
+                ) : null}
+              </p>
+
+              <button type="button" onClick={() => void onOpenRun(selectedRun.run_id)} disabled={openingRunId !== null}>
+                {openingRunId === selectedRun.run_id ? 'Opening...' : 'Open / continue'}
+              </button>
+            </SectionCard>
+          ) : null}
+        </div>
+      ) : null}
+    </section>
+  )
+}

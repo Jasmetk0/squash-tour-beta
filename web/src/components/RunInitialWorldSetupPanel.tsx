@@ -84,7 +84,7 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
     existingQuery.data.branch_id === branchId ? existingQuery.data : null
   const unexpectedExistingError = existingQuery.error && !isApiNotFound(existingQuery.error)
   const validParameters = Number.isSafeInteger(seed) && Number.isInteger(poolSize) &&
-    poolSize >= 1 && poolSize <= 128 && Number.isInteger(bestN) && bestN >= 1 &&
+    poolSize >= 1 && poolSize <= 1000 && Number.isInteger(bestN) && bestN >= 1 &&
     auditReason.trim().length >= 1 && auditReason.trim().length <= 1000
   const snapshotFingerprint = packageQuery.data?.fingerprint ?? null
   const optionsQuery = useQuery({
@@ -329,8 +329,8 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
 
   return <SectionCard title={cs ? 'Generovat hráče — první úplná dávka' : 'Generate first-season players'}>
     <p className="status">{cs
-      ? 'První funkční dávka 1–128 hráčů pro sezónu 2000/01. Používá pouze uložený World Package dané branche. Náhled nic nezapisuje; potvrzení připraví InitialWorld a teprve ruční Save vytváří Saved Revision.'
-      : 'First supported complete batch (1–128 players) for season 2000/01. Uses the saved Run-owned World Package only. Preview never writes; confirmation stages InitialWorld, then manual Save creates a Saved Revision.'}</p>
+      ? 'První funkční dávka 1–1000 hráčů pro sezónu 2000/01. Používá pouze uložený World Package dané branche. Náhled nic nezapisuje; potvrzení připraví InitialWorld a teprve ruční Save vytváří Saved Revision.'
+      : 'First supported complete batch (1–1000 players) for season 2000/01. Uses the saved Run-owned World Package only. Preview never writes; confirmation stages InitialWorld, then manual Save creates a Saved Revision.'}</p>
     <p className="status">{cs
       ? 'Závazné podmínky země, regionu a věku platí pro všechny hráče dávky. Prázdná pole zachovávají automatické rozdělení. Skupiny, kvóty a individuální úpravy zatím nejsou podporované.'
       : 'Hard country, region and age conditions apply to every player. Blank conditions preserve automatic allocation. Groups, quotas and individual editing are not supported yet.'}</p>
@@ -412,8 +412,8 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
       : 'Age at Week 1 of 2000/01. Age bounds condition the existing career-stage weights, not nationality-based innate potential.'}</p>
     <label>Seed <input aria-label="Player generation seed" type="number" value={seed}
       onChange={event => setSeed(Number(event.target.value))} /></label>
-    <label>Number of players (1–128) <input aria-label="Number of generated players" type="number"
-      min={1} max={128} value={poolSize} onChange={event => setPoolSize(Number(event.target.value))} /></label>
+    <label>Number of players (1–1000) <input aria-label="Number of generated players" type="number"
+      min={1} max={1000} value={poolSize} onChange={event => setPoolSize(Number(event.target.value))} /></label>
     <label>First-season ranking Best N <input aria-label="First-season ranking Best N" type="number"
       min={1} value={bestN} onChange={event => setBestN(Number(event.target.value))} /></label>
     <label>Audit reason <input aria-label="InitialWorld audit reason" maxLength={1000}

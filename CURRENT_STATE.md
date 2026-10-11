@@ -1,3 +1,11 @@
+# Candidate — real 1,000-player initial generation and saved recovery (11 October 2026)
+
+- New **candidate PR** based on actual buuk `533af97d10f7c030ca80ce72135fe9c5e50818cd` enables up to 1,000 initial-season players in the Run → Players generator. The production backend limit is already 2,000; this UI explicitly validates 1–1,000 pending higher-capacity proving.
+- A complete verified preview is still adopted as one batch only after explicit approval; preview, display filters/pagination and session Keep do not mutate the Run. The inspector displays 50 rows per page but its counts/summary and Keep selection cover the entire batch. The preview verifier rejects duplicate player IDs and invalid pool sizes; legacy 1–99 abilities remain distinct from canonical OVR 0–200.
+- New real Chromium/production API/isolated SQLite acceptance constructs a Run and saved World, previews 1,000 players, Adopt → manual Save, traverses 20 canonical Saved Players pages, publishes an initial ranking, restarts backend and verifies the same 1,000 identities and ordering. It has its own scoped PR workflow (not a full pre-alpha release gate), and the existing two-Earth 1,000-player SQLite integration remains as regression coverage.
+- This is a **candidate, not evidence of passing hosted checks or actual merge** until green final-head workflows confirm it. No post-2000/01 generation, attribute locks, arbitrary nested quotas or calibrated OVR implied.
+- Previous #1376 was truly merged in buuk. #1377 typed geography was still open when this candidate was branched; verify both separate PRs against actual buuk after merges, never just the badge.
+
 # Candidate: repeatable authenticated session Keep (11 October 2026)
 
 - Standalone PR on actual `buuk` `f251c05d96b10215adc9595d0781648762c3ebc6` supports repeated **Keep → Regenerate** in the same 2000/01 generator review. This entry describes proposed changes only; not yet merged or CI-approved.

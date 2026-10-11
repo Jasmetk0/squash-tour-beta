@@ -90,6 +90,15 @@ describe('single generator saved-world hard constraints',()=>{
 
 })
 
+
+describe('large preview identities',()=>{
+  it('rejects duplicate player IDs with correct aggregate count',()=>{
+    const duplicated=preview(['CZE','SVK'])
+    duplicated.state.players[1].player_id=duplicated.state.players[0].player_id
+    expect(verifiedInitialWorldPreview(duplicated,'r1','b1',request,options)).toBe(false)
+  })
+})
+
 describe('typed geography and historic region replay',()=>{
   const collision: RunWorldGenerationOptions={
     ...options,

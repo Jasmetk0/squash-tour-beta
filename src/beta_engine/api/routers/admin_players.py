@@ -27,6 +27,7 @@ from beta_engine.application.run_world_initial_world_service import (
 )
 from beta_engine.application.run_working_draft_service import RunWorkingDraftService
 from beta_engine.application.world_package_run_adapter import WorldPackageRunAdapter
+from beta_engine.infrastructure.db.run_package_state import load_saved_run_package_state
 from beta_engine.application.initial_world import (
     InitialWorldAdoptionRequest,
     InitialWorldState,
@@ -256,6 +257,43 @@ def preview_run_world_initial_world(
         ) from exc
 
 
+def _assert_reviewed_generation_context(
+    *, runtime: ApiRuntime, package_service: RunPackageService,
+    run_id: str, branch_id: str, expected_head: str,
+    expected_draft_version: int, expected_package_fingerprint: str,
+) -> None:
+    """Re-check the exact reviewed source and clean HEAD before any player write.
+
+    A Run-owned World is never allowed to silently swap to dirty/live
+    unsaved Package state, even when its identity and seed still match.
+    """
+    repository = runtime.repository
+    run = repository.get_run_container(run_id=run_id)
+    branch = repository.get_run_branch(branch_id=branch_id)
+    if (run is None or run.storage_kind != "custom_local" or run.read_only or
+        branch is None or branch.run_id != run_id or branch.read_only or
+        branch.status != "active"):
+        raise ValueError("Player generation requires a writable owned Run/Branch")
+    revision_state = repository.get_branch_revision_state(branch_id=branch_id)
+    saved = revision_state.saved_revision
+    draft = revision_state.working_draft
+    if (revision_state.run_id != run_id or revision_state.branch_id != branch_id or
+        branch.saved_head_revision_id != expected_head or
+        saved.revision_id != expected_head or
+        saved.run_id != run_id or saved.branch_id != branch_id or
+        draft.base_saved_revision_id != expected_head or
+        draft.draft_version != expected_draft_version or draft.status != "clean"):
+        raise ValueError("Player generation preview is stale: Run/Branch HEAD or Working Draft changed")
+    current = package_service.get(run_id=run_id, branch_id=branch_id)
+    saved_packages = load_saved_run_package_state(
+        saved.payload, run_id=run_id, branch_id=branch_id,
+    )
+    if (current is None or saved_packages is None or
+        current.fingerprint != expected_package_fingerprint or
+        saved_packages.fingerprint != expected_package_fingerprint):
+        raise ValueError("Player generation preview is stale: Run-owned World Package changed")
+
+
 @router.post(
     "/runs/{run_id}/branches/{branch_id}/initial-world/world-package",
     status_code=201,
@@ -270,9 +308,31 @@ def adopt_run_world_initial_world(
     service: RunWorldInitialWorldService = Depends(
         get_run_world_initial_world_service
     ),
+    package_service: RunPackageService = Depends(get_run_package_service),
+    expected_saved_head: str | None = Header(
+        default=None, alias="X-Expected-Saved-Revision-Id", max_length=128
+    ),
+    expected_draft_version: int | None = Header(
+        default=None, alias="X-Expected-Draft-Version", ge=0
+    ),
+    expected_package_fingerprint: str | None = Header(
+        default=None, alias="X-Expected-Run-Package-Fingerprint",
+        pattern=r"^[0-9a-f]{64}$"
+    ),
     runtime: ApiRuntime = Depends(get_runtime),
 ):
     try:
+        reviewed = (expected_saved_head, expected_draft_version, expected_package_fingerprint)
+        if any(item is not None for item in reviewed):
+            if any(item is None for item in reviewed):
+                raise ValueError("Reviewed generation requires complete HEAD/Draft/World preconditions")
+            _assert_reviewed_generation_context(
+                runtime=runtime, package_service=package_service,
+                run_id=run_id, branch_id=branch_id,
+                expected_head=expected_saved_head,
+                expected_draft_version=expected_draft_version,
+                expected_package_fingerprint=expected_package_fingerprint,
+            )
         current = runtime.repository.get_initial_world(
             run_id=run_id, branch_id=branch_id
         )

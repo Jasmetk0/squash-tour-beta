@@ -3,7 +3,7 @@
 from urllib.parse import quote
 import pytest
 
-from test_simulation_api import ApiServer, _request
+from tests.api.test_saved_revision_history_api import ApiServer, _request
 from beta_engine.world_packages import OFFICIAL_FAX_WORLD_ID
 from tests.support.world_packages import copy_builtin_world_packages
 

@@ -3618,6 +3618,24 @@ function runInitialWorldRoot(runId: string, branchId: string): string {
   return `/admin/players/runs/${encodeURIComponent(runId)}/branches/${encodeURIComponent(branchId)}/initial-world`
 }
 
+/** Read verified country/region constraints only from this Branch's immutable World copy. */
+export function getRunWorldGenerationOptions(
+  runId: string, branchId: string, worldId: string,
+  head: string, draftVersion: number, fingerprint: string
+): Promise<import('./runInitialWorldSetup').RunWorldGenerationOptions> {
+  if (!runId || !branchId || !worldId || !head ||
+      !Number.isInteger(draftVersion) || draftVersion < 0 ||
+      !/^[0-9a-f]{64}$/.test(fingerprint)) {
+    throw new Error('Invalid saved Run World generation options scope.')
+  }
+  const query = new URLSearchParams({
+    world_package_id: worldId, expected_head: head,
+    expected_draft_version: String(draftVersion),
+    expected_package_fingerprint: fingerprint
+  })
+  return request(`${runInitialWorldRoot(runId, branchId)}/world-package/generation-options?${query}`)
+}
+
 export function previewRunOwnedInitialWorld(
   runId: string, branchId: string,
   payload: import('./runInitialWorldSetup').RunInitialWorldAdoption

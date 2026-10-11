@@ -460,9 +460,16 @@ class InitialPlayerPoolGenerator:
         target_pool_size: int = 128,
         country_code: str | None = None,
         region: str | None = None,
+        min_age: int | None = None,
+        max_age: int | None = None,
         existing_locked_players: list[InitialPoolGeneratedPlayer] | None = None,
         dry_run: bool = True,
     ) -> InitialPoolResult:
+        if min_age is not None or max_age is not None:
+            lower = 15 if min_age is None else min_age
+            upper = 45 if max_age is None else max_age
+            if not (15 <= lower <= upper <= 45):
+                raise ValueError("Initial pool age condition must satisfy 15 <= min_age <= max_age <= 45")
         selected = self._filter_countries(
             countries, country_code=country_code, region=region
         )
@@ -494,7 +501,8 @@ class InitialPlayerPoolGenerator:
                 if sequence not in locked_sequences[country.code]:
                     generated.append(
                         self._generate_player(
-                            country=country, season=season, seed=seed, sequence=sequence
+                            country=country, season=season, seed=seed, sequence=sequence,
+                            min_age=min_age, max_age=max_age,
                         )
                     )
                     generated_for_country += 1
@@ -701,7 +709,8 @@ class InitialPlayerPoolGenerator:
         return InitialPoolAllocationPlan(counts=counts, diagnostics=diagnostics)
 
     def _generate_player(
-        self, *, country: Country, season: str, seed: int, sequence: int
+        self, *, country: Country, season: str, seed: int, sequence: int,
+        min_age: int | None = None, max_age: int | None = None,
     ) -> InitialPoolGeneratedPlayer:
         rng = DeterministicRng(seed).branch(
             SeedScope.SEASON, "initial_pool", season, country.code, sequence
@@ -709,9 +718,42 @@ class InitialPlayerPoolGenerator:
         development_environment = CountryTalentModel().development_environment(
             country.at_rating_year(self._season_start_year(season))
         )
-        stage = self._choose_stage(rng)
-        age_min, age_max = STAGE_AGE_RANGES[stage]
-        age = rng.randint(age_min, age_max)
+        if min_age is None and max_age is None:
+            # Preserve the previous unconditioned RNG stream exactly.
+            stage = self._choose_stage(rng)
+            age_min, age_max = STAGE_AGE_RANGES[stage]
+            age = rng.randint(age_min, age_max)
+        else:
+            # Conditioning the existing stage/age distribution is not a
+            # uniform-age redraw and must not retune innate potential.
+            # For each stage, use P(stage) * P(age in bounds | stage),
+            # then draw age uniformly within that stage's eligible ages.
+            lower = 15 if min_age is None else min_age
+            upper = 45 if max_age is None else max_age
+            eligible: list[tuple[CareerStage, int, int, float]] = []
+            total = 0.0
+            for candidate_stage, stage_weight in STAGE_WEIGHTS:
+                first, last = STAGE_AGE_RANGES[candidate_stage]
+                first, last = max(first, lower), min(last, upper)
+                if first > last:
+                    continue
+                original_first, original_last = STAGE_AGE_RANGES[candidate_stage]
+                weight = stage_weight * (last - first + 1) / (
+                    original_last - original_first + 1
+                )
+                eligible.append((candidate_stage, first, last, weight))
+                total += weight
+            if not eligible or total <= 0:
+                raise ValueError("Initial pool age condition has no eligible stage")
+            roll = rng.random() * total
+            cumulative = 0.0
+            stage, age_min, age_max, _ = eligible[-1]
+            for candidate_stage, first, last, weight in eligible:
+                cumulative += weight
+                if roll <= cumulative:
+                    stage, age_min, age_max = candidate_stage, first, last
+                    break
+            age = rng.randint(age_min, age_max)
         season_start_year = self._season_start_year(season)
         # Preserve the established pre-birth-week stream separation. Potential
         # is sampled globally from individual RNG, never from country strength.

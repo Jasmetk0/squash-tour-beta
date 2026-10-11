@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
-  generatorConditionConflict, verifiedGenerationOptions, verifiedInitialWorldPreview,
+  ageConditionConflict, generatorConditionConflict, verifiedGenerationOptions, verifiedInitialWorldPreview,
   type RunInitialWorldAdoption, type RunInitialWorldPreview, type RunWorldGenerationOptions
 } from './runInitialWorldSetup'
 
@@ -66,4 +66,24 @@ describe('single generator saved-world hard constraints',()=>{
     expect(verifiedInitialWorldPreview(preview(['CZE','SVK']),'r1','b1',forced,options)).toBe(false)
     expect(verifiedInitialWorldPreview(preview(['CZE','CZE']),'r1','b1',forced,options)).toBe(true)
   })
+  it('accepts automatic and single-ended age conditions but rejects impossible ranges',()=>{
+    expect(ageConditionConflict('','')).toBeNull()
+    expect(ageConditionConflict('18','')).toBeNull()
+    expect(ageConditionConflict('','25')).toBeNull()
+    expect(ageConditionConflict('18','25')).toBeNull()
+    expect(ageConditionConflict('25','18')).toContain('cannot exceed')
+    expect(ageConditionConflict('14','')).toContain('between 15 and 45')
+    expect(ageConditionConflict('','46')).toContain('between 15 and 45')
+    expect(ageConditionConflict('20.5','')).toContain('whole years')
+    expect(ageConditionConflict('-1','')).not.toBeNull()
+  })
+  it('requires every preview player to satisfy reviewed first-week age interval',()=>{
+    const ageRequest={...request,generation:{...request.generation,min_age:21,max_age:25}}
+    expect(verifiedInitialWorldPreview(preview(['CZE','SVK']),'r1','b1',ageRequest,options)).toBe(false)
+    const allowed={...request,generation:{...request.generation,min_age:18,max_age:25}}
+    expect(verifiedInitialWorldPreview(preview(['CZE','SVK']),'r1','b1',allowed,options)).toBe(true)
+    const impossible={...request,generation:{...request.generation,min_age:25,max_age:18}}
+    expect(verifiedInitialWorldPreview(preview(['CZE','SVK']),'r1','b1',impossible,options)).toBe(false)
+  })
+
 })

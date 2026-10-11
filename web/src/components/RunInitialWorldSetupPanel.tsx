@@ -10,7 +10,7 @@ import {
 } from '../api/client'
 import type { RunBranch, RunContainer } from '../api/types'
 import {
-  generatorConditionConflict, runOwnedWorldIds, verifiedGenerationOptions, verifiedInitialWorldPreview,
+  ageConditionConflict, generatorConditionConflict, runOwnedWorldIds, verifiedGenerationOptions, verifiedInitialWorldPreview,
   type RunInitialWorldAdoption, type RunInitialWorldPreview
 } from '../api/runInitialWorldSetup'
 import { formatApiError, isApiNotFound } from '../utils/apiErrors'
@@ -44,6 +44,8 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
   const [poolSize, setPoolSize] = useState(64)
   const [countryCode, setCountryCode] = useState('')
   const [region, setRegion] = useState('')
+  const [minAge, setMinAge] = useState('')
+  const [maxAge, setMaxAge] = useState('')
   const [bestN, setBestN] = useState(15)
   const [auditReason, setAuditReason] = useState('Create the first-season player population from the reviewed Run-owned World snapshot.')
   const [review, setReview] = useState<ReviewedWorld | null>(null)
@@ -98,8 +100,9 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
   const conditionConflict = optionsQuery.isSuccess
     ? generatorConditionConflict(countryCode, region, options)
     : null
+  const ageConflict = ageConditionConflict(minAge, maxAge)
   const canPreview = editable && worldIds.length > 0 && validParameters &&
-    packageQuery.isSuccess && Boolean(options) && !conditionConflict &&
+    packageQuery.isSuccess && Boolean(options) && !conditionConflict && !ageConflict &&
     draft?.base_saved_revision_id === head &&
     draft.status === 'clean' && !existing && existingQuery.isSuccess === false &&
     isApiNotFound(existingQuery.error) && !pendingSave
@@ -110,7 +113,7 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
     setApproved(false)
     setSaveApproved(false)
     setNotice('')
-  }, [runId, branchId, head, sourceId, seed, poolSize, countryCode, region, bestN, auditReason])
+  }, [runId, branchId, head, sourceId, seed, poolSize, countryCode, region, minAge, maxAge, bestN, auditReason])
 
   const previewAction = useMutation({
     mutationFn: async () => {
@@ -123,7 +126,9 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
           season: '2000/2001',
           seed, target_pool_size: poolSize,
           ...(countryCode ? { country_code: countryCode } : {}),
-          ...(region ? { region } : {})
+          ...(region ? { region } : {}),
+          ...(minAge ? { min_age: Number(minAge) } : {}),
+          ...(maxAge ? { max_age: Number(maxAge) } : {})
         },
         audit_label: 'Run Admin first-season player setup',
         audit_reason: auditReason.trim(),
@@ -147,7 +152,10 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
     review.request.generation.world_package_id === selectedWorldId &&
     review.request.generation.seed === seed && review.request.generation.target_pool_size === poolSize &&
     (review.request.generation.country_code ?? '') === countryCode &&
-    (review.request.generation.region ?? '') === region && Boolean(options) && !conditionConflict &&
+    (review.request.generation.region ?? '') === region &&
+    String(review.request.generation.min_age ?? '') === minAge &&
+    String(review.request.generation.max_age ?? '') === maxAge &&
+    Boolean(options) && !conditionConflict && !ageConflict &&
     review.request.best_n === bestN && review.request.audit_reason === auditReason.trim() &&
     !existing && isApiNotFound(existingQuery.error))
 
@@ -250,8 +258,8 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
       ? 'První funkční dávka 1–128 hráčů pro sezónu 2000/01. Používá pouze uložený World Package dané branche. Náhled nic nezapisuje; potvrzení připraví InitialWorld a teprve ruční Save vytváří Saved Revision.'
       : 'First supported complete batch (1–128 players) for season 2000/01. Uses the saved Run-owned World Package only. Preview never writes; confirmation stages InitialWorld, then manual Save creates a Saved Revision.'}</p>
     <p className="status">{cs
-      ? 'Závazné podmínky země a regionu platí pro všechny hráče dávky. Automaticky podle světa zachovává běžnou distribuci. Skupiny, kvóty, individuální úpravy a generování do rozehrané sezóny zatím nejsou podporované.'
-      : 'Hard country and region conditions apply to every player in the batch. Automatic World defaults preserve natural allocation. Groups, quotas, individual editing and mid-season generation are not supported yet.'}</p>
+      ? 'Závazné podmínky země, regionu a věku platí pro všechny hráče dávky. Prázdná pole zachovávají automatické rozdělení. Skupiny, kvóty a individuální úpravy zatím nejsou podporované.'
+      : 'Hard country, region and age conditions apply to every player. Blank conditions preserve automatic allocation. Groups, quotas and individual editing are not supported yet.'}</p>
     {existing && <p role="status">InitialWorld exists: {existing.players.length} players from {existing.world_package_id}; seed {existing.bootstrap_seed}. Existing players cannot be silently regenerated or overwritten.</p>}
     {unexpectedExistingError && <p role="alert" className="error">Cannot verify whether this Run already has InitialWorld: {formatApiError(existingQuery.error)}</p>}
     {packageQuery.isError && <p role="alert" className="error">Run World state unavailable: {formatApiError(packageQuery.error)}</p>}
@@ -301,6 +309,24 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
       {' '}{region || (cs ? 'všechny regiony' : 'all regions')}.
       {' '}{cs ? 'Nevybrané vlastnosti zůstanou přirozeně proměnlivé.' : 'Unconstrained attributes remain naturally variable.'}
     </p>}
+    <div className="form-grid" aria-label="Hard first-season age conditions">
+      <label>{cs ? 'Minimální věk (15–45)' : 'Minimum age (15–45)'}
+        <input type="number" min={15} max={45} step={1}
+          aria-label="Player generation minimum age"
+          placeholder={cs ? 'Automaticky' : 'Automatic'}
+          value={minAge} onChange={e => setMinAge(e.target.value)} />
+      </label>
+      <label>{cs ? 'Maximální věk (15–45)' : 'Maximum age (15–45)'}
+        <input type="number" min={15} max={45} step={1}
+          aria-label="Player generation maximum age"
+          placeholder={cs ? 'Automaticky' : 'Automatic'}
+          value={maxAge} onChange={e => setMaxAge(e.target.value)} />
+      </label>
+    </div>
+    {ageConflict && <p role="alert" className="error">{cs ? 'Rozpor věkových podmínek' : 'Age condition conflict'}: {ageConflict}</p>}
+    <p className="status">{cs
+      ? 'Věk k prvnímu týdnu sezóny 2000/01. Při omezení věku se přepočítají pravděpodobnosti existujících kariérních fází, nikoli potenciál hráčů podle země.'
+      : 'Age at Week 1 of 2000/01. Age bounds condition the existing career-stage weights, not nationality-based innate potential.'}</p>
     <label>Seed <input aria-label="Player generation seed" type="number" value={seed}
       onChange={event => setSeed(Number(event.target.value))} /></label>
     <label>Number of players (1–128) <input aria-label="Number of generated players" type="number"
@@ -321,11 +347,14 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
       <p>{cs ? 'Svět' : 'World'}: {review.request.generation.world_package_id} · Seed: {review.request.generation.seed} · First-season Best {review.request.best_n} · Draft v{review.draftVersion}</p>
       <p>{cs ? 'Použité závazné podmínky' : 'Reviewed hard conditions'}:
         {' '}{countryCode || (cs ? 'země automaticky' : 'country automatic')} ·
-        {' '}{region || (cs ? 'region automaticky' : 'region automatic')}.</p>
+        {' '}{region || (cs ? 'region automaticky' : 'region automatic')} ·
+        {' '}{minAge || '15'}–{maxAge || '45'} {cs ? 'let' : 'years'}.</p>
       {options && <p className="status">{cs ? 'Kontrola splnění' : 'Fulfilment'}:
         {' '}{viewedPlayers.every(player => (!countryCode || player.country_code === countryCode) &&
           (!region || options.countries.some(country => country.code === player.country_code &&
-            (country.region === region || country.travel_region === region))))
+            (country.region === region || country.travel_region === region))) &&
+          (!minAge || player.age_years_at_season_start >= Number(minAge)) &&
+          (!maxAge || player.age_years_at_season_start <= Number(maxAge)))
           ? (cs ? 'Všichni hráči splňují závazné podmínky.' : 'Every player satisfies the hard conditions.')
           : (cs ? 'Konflikt! Někteří hráči nesplňují podmínky.' : 'Conflict! Some players fail hard conditions.')}
       </p>}

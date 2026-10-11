@@ -273,4 +273,52 @@ describe('Run-owned first-season player setup', () => {
     ))
   })
 
+  it('prevents preview on conflicting or out-of-model first-season age conditions', async () => {
+    render()
+    await screen.findByRole('option',{name:'CZE — Czechia'})
+    const low=screen.getByRole('spinbutton',{name:'Player generation minimum age'})
+    const high=screen.getByRole('spinbutton',{name:'Player generation maximum age'})
+    await userEvent.type(low,'30')
+    await userEvent.type(high,'20')
+    expect(screen.getByText(/Minimum age cannot exceed maximum age/)).toBeInTheDocument()
+    expect(screen.getByRole('button',{name:'Preview generated players'})).toBeDisabled()
+    expect(api.previewRunOwnedInitialWorld).not.toHaveBeenCalled()
+    await userEvent.clear(low)
+    await userEvent.type(low,'14')
+    expect(screen.getByText(/whole years between 15 and 45/)).toBeInTheDocument()
+    expect(screen.getByRole('button',{name:'Preview generated players'})).toBeDisabled()
+  })
+
+  it('binds a reviewed age range to the original request and rejects stale preview after changing it',async()=>{
+    render()
+    await screen.findByRole('option',{name:'CZE — Czechia'})
+    await userEvent.type(screen.getByRole('spinbutton',{name:'Player generation minimum age'}),'18')
+    await userEvent.type(screen.getByRole('spinbutton',{name:'Player generation maximum age'}),'25')
+    await userEvent.clear(screen.getByRole('spinbutton',{name:'Number of generated players'}))
+    await userEvent.type(screen.getByRole('spinbutton',{name:'Number of generated players'}),'2')
+    await userEvent.click(screen.getByRole('button',{name:'Preview generated players'}))
+    await waitFor(()=>expect(api.previewRunOwnedInitialWorld).toHaveBeenCalledWith(
+      'first-run','timeline-1',
+      expect.objectContaining({generation:expect.objectContaining({min_age:18,max_age:25,target_pool_size:2})})
+    ))
+    expect(await screen.findByText('Jan A')).toBeInTheDocument()
+    expect(screen.getByText(/Every player satisfies the hard conditions/)).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('checkbox',{name:'Approve InitialWorld adoption'}))
+    await userEvent.clear(screen.getByRole('spinbutton',{name:'Player generation maximum age'}))
+    await userEvent.type(screen.getByRole('spinbutton',{name:'Player generation maximum age'}),'22')
+    expect(screen.queryByRole('button',{name:'Adopt generated players'})).not.toBeInTheDocument()
+    expect(api.adoptRunOwnedInitialWorld).not.toHaveBeenCalled()
+  })
+
+  it('rejects a generated preview containing an age outside the hard age interval',async()=>{
+    render()
+    await screen.findByRole('option',{name:'CZE — Czechia'})
+    await userEvent.type(screen.getByRole('spinbutton',{name:'Player generation minimum age'}),'21')
+    await userEvent.clear(screen.getByRole('spinbutton',{name:'Number of generated players'}))
+    await userEvent.type(screen.getByRole('spinbutton',{name:'Number of generated players'}),'2')
+    await userEvent.click(screen.getByRole('button',{name:'Preview generated players'}))
+    expect(await screen.findByText(/InitialWorld preview is inconsistent/)).toBeInTheDocument()
+    expect(api.adoptRunOwnedInitialWorld).not.toHaveBeenCalled()
+  })
+
 })

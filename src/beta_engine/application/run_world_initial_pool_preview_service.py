@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from beta_engine.application.run_package_service import RunPackageService
 from beta_engine.application.world_package_run_adapter import WorldPackageRunAdapter
@@ -24,6 +24,14 @@ class RunWorldInitialPoolPreviewRequest(BaseModel):
     target_pool_size: int = Field(default=128, ge=1, le=2000)
     country_code: str | None = Field(default=None, min_length=3, max_length=3)
     region: str | None = Field(default=None, min_length=1)
+    min_age: int | None = Field(default=None, ge=15, le=45)
+    max_age: int | None = Field(default=None, ge=15, le=45)
+
+    @model_validator(mode="after")
+    def validate_age_range(self) -> "RunWorldInitialPoolPreviewRequest":
+        if self.min_age is not None and self.max_age is not None and self.min_age > self.max_age:
+            raise ValueError("Age condition requires minimum age no higher than maximum age")
+        return self
 
 
 class RunWorldInitialPoolPreview(BaseModel):
@@ -109,6 +117,8 @@ class RunWorldInitialPoolPreviewService:
             target_pool_size=request.target_pool_size,
             country_code=request.country_code,
             region=request.region,
+            min_age=request.min_age,
+            max_age=request.max_age,
             existing_locked_players=[],
             dry_run=True,
         )

@@ -6,6 +6,8 @@ export type RunInitialWorldGeneration = {
   target_pool_size: number
   country_code?: string | null
   region?: string | null
+  min_age?: number | null
+  max_age?: number | null
 }
 
 export type RunWorldGenerationCountry = {
@@ -125,6 +127,18 @@ export function generatorConditionConflict(
   return null
 }
 
+/** Frontend preflight mirrors backend bounds; blank = unconstrained. */
+export function ageConditionConflict(minAge: string, maxAge: string): string | null {
+  const valid = (value: string): boolean =>
+    value === '' || (/^[0-9]+$/.test(value) &&
+      Number.isSafeInteger(Number(value)) && Number(value) >= 15 && Number(value) <= 45)
+  if (!valid(minAge) || !valid(maxAge))
+    return 'Age conditions must be whole years between 15 and 45.'
+  if (minAge !== '' && maxAge !== '' && Number(minAge) > Number(maxAge))
+    return 'Minimum age cannot exceed maximum age.'
+  return null
+}
+
 export function verifiedInitialWorldPreview(
   value: RunInitialWorldPreview,
   runId: string,
@@ -137,6 +151,11 @@ export function verifiedInitialWorldPreview(
   if ((request.generation.country_code || request.generation.region) &&
       generatorConditionConflict(request.generation.country_code ?? '',
         request.generation.region ?? '', options ?? null)) return false
+  const min = request.generation.min_age ?? null
+  const max = request.generation.max_age ?? null
+  if (min != null && (!Number.isInteger(min) || min < 15 || min > 45)) return false
+  if (max != null && (!Number.isInteger(max) || max < 15 || max > 45)) return false
+  if (min != null && max != null && min > max) return false
   return value?.preview_only === true &&
     /^[a-f0-9]{64}$/.test(value.fingerprint) &&
     state?.run_id === runId && state?.branch_id === branchId &&
@@ -157,7 +176,11 @@ export function verifiedInitialWorldPreview(
       (!request.generation.region || (options?.countries.some(country =>
         country.code === player.country_code &&
         (country.region === request.generation.region ||
-         country.travel_region === request.generation.region)) ?? false))) &&
+         country.travel_region === request.generation.region)) ?? false)) &&
+      (min == null || (Number.isInteger(player.age_years_at_season_start) &&
+        player.age_years_at_season_start >= min)) &&
+      (max == null || (Number.isInteger(player.age_years_at_season_start) &&
+        player.age_years_at_season_start <= max))) &&
     Array.isArray(state.policies) && state.policies.length === 1 &&
     state.policies[0].best_n === request.best_n
 }

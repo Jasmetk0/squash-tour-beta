@@ -30,8 +30,8 @@ export function RunPlayerGeneratorPage(): JSX.Element {
       <p className="eyebrow">PRODUCT RUN · PLAYERS · GENERATE</p>
       <h2>{cs ? 'Generovat hráče' : 'Generate players'}</h2>
       <p className="subtitle">{cs
-        ? 'Jediný produkční generátor: automaticky podle světa nebo se závaznou zemí/regionem, náhled, potvrzení a ruční Save.'
-        : 'One production generator: World-default or hard country/region conditions, preview, explicit confirmation and manual Save.'}</p>
+        ? 'Jediný produkční generátor: automaticky podle světa nebo se závaznou zemí, regionem a věkem, náhled, potvrzení a ruční Save.'
+        : 'One production generator: World-default or hard country/region/age conditions, preview, explicit confirmation and manual Save.'}</p>
     </div>
     <p><Link to={'/admin/runs/' + encodeURIComponent(runId) + '/players'}>
       {cs ? '← Zpět na Hráče' : '← Back to Players'}</Link></p>

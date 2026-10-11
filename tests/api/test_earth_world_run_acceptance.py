@@ -183,13 +183,14 @@ def _materialize_product_run(
     hard_request = RunWorldInitialPoolPreviewRequest(
         world_package_id=world_id, season="2000/2001",
         seed=INITIAL_POOL_SEED, target_pool_size=30,
-        country_code="CZE", region=cze.region,
+        country_code="CZE", region=cze.region, min_age=18, max_age=25,
     )
     hard_preview = pool_service.preview(
         run_id=run_id, branch_id=branch_id, request=hard_request,
     )
     assert len(hard_preview.result.players) == 30
     assert {player.country_code for player in hard_preview.result.players} == {"CZE"}
+    assert all(18 <= player.age_at_generation <= 25 for player in hard_preview.result.players)
     assert hard_preview.result.metadata.country_code == "CZE"
     assert hard_preview.result.metadata.region == cze.region
     assert hard_preview.preview_fingerprint == pool_service.preview(

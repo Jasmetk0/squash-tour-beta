@@ -83,8 +83,8 @@ describe('Layout mode navigation', () => {
     const nav = screen.getByRole('navigation', { name: 'Run Admin navigation' })
     expect(screen.getByRole('link', { name: 'Squash Engine global Home' })).toHaveAttribute('href', '/admin')
     expect(within(nav).getByRole('link', { name: 'Domů' })).toHaveAttribute('href', `/admin/runs/${FAX_REFERENCE_RUN_ID}`)
-    expect(within(nav).getByRole('link', { name: 'Events' })).toHaveAttribute('href', `/admin/runs/${FAX_REFERENCE_RUN_ID}/events`)
-    expect(within(nav).getByRole('link', { name: 'Season Calendar' })).toHaveAttribute('href', `/admin/runs/${FAX_REFERENCE_RUN_ID}/calendar`)
+    expect(within(nav).getByRole('link', { name: 'Události' })).toHaveAttribute('href', `/admin/runs/${FAX_REFERENCE_RUN_ID}/events`)
+    expect(within(nav).getByRole('link', { name: 'Sezonní kalendář' })).toHaveAttribute('href', `/admin/runs/${FAX_REFERENCE_RUN_ID}/calendar`)
     expect(screen.queryByRole('navigation', { name: 'Global Admin navigation' })).not.toBeInTheDocument()
     expect(within(nav).queryByRole('link', { name: 'Tour & Seasons' })).not.toBeInTheDocument()
     expect(screen.getByRole('combobox', { name: 'Admin active Run' })).toHaveValue(FAX_REFERENCE_RUN_ID)
@@ -101,7 +101,7 @@ describe('Layout mode navigation', () => {
 
     expect(await screen.findByText('Administrace · Pre-alpha')).toBeInTheDocument()
     const nav = screen.getByRole('navigation', { name: 'Run Admin navigation' })
-    expect(within(nav).getByRole('link', { name: 'World Tour Finals' })).toHaveAttribute('href', `/admin/runs/${FAX_REFERENCE_RUN_ID}/finals`)
+    expect(within(nav).getByRole('link', { name: 'Finálový turnaj' })).toHaveAttribute('href', `/admin/runs/${FAX_REFERENCE_RUN_ID}/finals`)
     expect(screen.queryByRole('navigation', { name: 'Global Admin navigation' })).not.toBeInTheDocument()
   })
 
@@ -126,8 +126,8 @@ describe('Layout mode navigation', () => {
     expect(selector).toHaveValue('branch-b')
     await waitFor(() => expect(screen.getByLabelText('Admin view time')).toHaveTextContent('S2007 · W42'))
 
-    fireEvent.click(screen.getByRole('link', { name: 'Events' }))
-    await waitFor(() => expect(screen.getByRole('link', { name: 'Events' })).toHaveClass('active'))
+    fireEvent.click(screen.getByRole('link', { name: 'Události' }))
+    await waitFor(() => expect(screen.getByRole('link', { name: 'Události' })).toHaveClass('active'))
     expect(screen.getByRole('combobox', { name: 'Admin active Branch' })).toHaveValue('branch-b')
     expect(screen.getByLabelText('Admin view time')).toHaveTextContent('S2007 · W42')
   })
@@ -137,7 +137,7 @@ describe('Layout mode navigation', () => {
     renderWithRoute(<Layout />, `/admin/runs/${FAX_REFERENCE_RUN_ID}`)
     await screen.findByRole('option', { name: /#1 · S2003 · W9/ })
     fireEvent.change(screen.getByRole('combobox', { name: 'Admin Time context' }), { target: { value: 'cp-old' } })
-    fireEvent.click(screen.getByRole('link', { name: 'Events' }))
+    fireEvent.click(screen.getByRole('link', { name: 'Události' }))
     expect(await screen.findByRole('heading', { name: 'Historical view is not available on this page yet.' })).toBeInTheDocument()
     expect(screen.getByRole('navigation', { name: 'Run Admin navigation' })).toBeInTheDocument()
     expect(screen.getByLabelText('Admin view time')).toHaveTextContent('Past · S2003 · W9')
@@ -159,7 +159,7 @@ describe('Layout mode navigation', () => {
     await waitFor(() => expect(screen.getByRole('link', { name: 'Domů' })).toHaveClass('active'))
     expect(screen.getByLabelText('Admin view time')).toHaveTextContent('Past · S2005 · W31')
 
-    fireEvent.click(screen.getByRole('link', { name: 'Events' }))
+    fireEvent.click(screen.getByRole('link', { name: 'Události' }))
     expect(await screen.findByRole('heading', { name: 'Historical view is not available on this page yet.' })).toBeInTheDocument()
     expect(screen.getByLabelText('Admin view time')).toHaveTextContent('Past · S2005 · W31')
     fireEvent.click(screen.getByRole('link', { name: 'Open Run Home' }))

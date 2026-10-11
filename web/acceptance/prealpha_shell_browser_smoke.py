@@ -16,6 +16,7 @@ from playwright.sync_api import expect, sync_playwright
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--base-url", default="http://127.0.0.1:5173")
+    parser.add_argument("--api-url", default="http://127.0.0.1:8001")
     parser.add_argument("--artifacts", type=Path, default=Path("work/prealpha-shell-browser"))
     args = parser.parse_args()
     base = args.base_url.rstrip("/")
@@ -98,6 +99,22 @@ def main() -> None:
             expect(page.get_by_label("Admin view time")).to_be_visible()
             assert "/admin/runs/" in page.url and not page.url.endswith("/new"), page.url
             evidence["created_run_url"] = page.url
+            run_id = page.url.split("/admin/runs/", 1)[1].split("/", 1)[0].split("?", 1)[0]
+            branch_response = page.request.get(args.api_url + "/run-branches", params={"run_id": run_id})
+            assert branch_response.ok, branch_response.text()
+            source_branch = branch_response.json()["run_branches"][0]
+            assert source_branch["saved_head_revision_id"], source_branch
+            fork_response = page.request.post(
+                args.api_url + "/run-containers/" + run_id + "/branches",
+                data={
+                    "source_branch_id": source_branch["branch_id"],
+                    "source_saved_revision_id": source_branch["saved_head_revision_id"],
+                    "display_name": "Browser Alternative",
+                },
+            )
+            assert fork_response.status == 201, fork_response.text()
+            created_branch = fork_response.json()
+            assert created_branch["branch_id"] != source_branch["branch_id"]
             expect(
                 page.get_by_role("navigation", name="Run Admin navigation").get_by_role(
                     "link", name="History & Branches"
@@ -122,12 +139,44 @@ def main() -> None:
             evidence["run_home_canonical_segments"] = [50, 61]
             page.screenshot(path=str(artifacts / "02-created-run.png"), full_page=True)
 
+            # Exercise actual API-backed Runs expansion and cross-page Admin Branch selection.
+            page.goto(base + "/admin/runs")
+            expect(page.get_by_role("heading", name="Runs", exact=True)).to_be_visible()
+            row = page.locator(".runs-canonical-row").filter(has_text="Prealpha Shell Browser Run")
+            expect(row).to_have_count(1)
+            row.get_by_role("button", name="Branches +").click()
+            alternative = row.locator(".runs-canonical-branch").filter(has_text="Browser Alternative")
+            expect(alternative).to_be_visible()
+            expect(alternative.get_by_text("Time unavailable")).to_be_visible()
+            alternative.get_by_role("link", name="Open").click()
+            branch_selector = page.get_by_role("combobox", name="Admin active Branch")
+            expect(branch_selector).to_have_value(created_branch["branch_id"])
+            page.reload()
+            expect(branch_selector).to_have_value(created_branch["branch_id"])
+            unchanged = page.request.get(args.api_url + "/run-containers/" + run_id)
+            assert unchanged.ok and unchanged.json()["viewer_branch_id"] == source_branch["branch_id"]
+            evidence["chosen_admin_branch_after_reload"] = created_branch["branch_id"]
+            evidence["viewer_branch_preserved"] = True
+
+            # Sidebar preferences survive reload and hover expansion overlays the content.
+            page.get_by_role("button", name="Unpin sidebar").click()
+            page.get_by_role("button", name="Collapse sidebar").click()
+            page.reload()
+            expect(page.get_by_role("button", name="Expand sidebar")).to_be_visible()
+            before = page.locator("main").bounding_box()
+            page.locator(".side-nav").hover()
+            after = page.locator("main").bounding_box()
+            assert before and after and abs(before["x"] - after["x"]) < 1, (before, after)
+            evidence["sidebar_hover_without_shift"] = True
+            page.get_by_role("button", name="Expand sidebar").click()
+            evidence["sidebar_preferences_persisted"] = True
+
             # The new canonical player detail must not fabricate an identity for
             # a legitimate empty Run; the selected Run and Branch remain intact.
             page.goto(evidence["created_run_url"] + "/people/no-saved-player")
             expect(page.get_by_role("heading", name="no-saved-player")).to_be_visible()
-            expect(page.get_by_text("No verified name for this player ID exists in this Saved Revision.")).to_be_visible()
-            expect(page.get_by_text("This is not yet a full career profile.", exact=False)).to_be_visible()
+            expect(page.get_by_text("No verified player identity in this Saved Revision. No sporting information is shown.")).to_be_visible()
+            assert page.get_by_text("This is not yet a full career profile.", exact=False).count() == 0
             evidence["missing_saved_player_identity_no_fallback"] = True
             page.get_by_role("link", name="← Back to Run Home").click()
             expect(page.get_by_role("heading", name="World activity")).to_be_visible()

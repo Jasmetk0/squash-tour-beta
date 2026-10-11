@@ -249,7 +249,11 @@ class RunWorldInitialPoolPreviewRequest(BaseModel):
                 raise ValueError("Versioned session requires exact origin request, fingerprint and operations")
             if self.session_origin_request.session_schema_version is not None:
                 raise ValueError("Nested session origins are forbidden")
-            if not self.session_steps or sum(step.kind == "keep" for step in self.session_steps) > 17:
+            previous_keeps = (
+                len(self.session_origin_request.keep_history) +
+                int(self.session_origin_request.keep_from_seed is not None)
+            )
+            if previous_keeps + sum(step.kind == "keep" for step in self.session_steps) > 17:
                 raise ValueError("Versioned session Keep limit exceeded")
         elif self.session_origin_request is not None or self.session_origin_fingerprint is not None or self.session_steps:
             raise ValueError("Session operations require the v2 schema version")

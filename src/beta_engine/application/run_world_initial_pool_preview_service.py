@@ -136,6 +136,16 @@ class RunWorldKeepStep(BaseModel):
         return self
 
 
+class RunWorldExactCountryQuota(BaseModel):
+    """An exact whole-batch count in a saved World; unlike overlapping conditions,
+    country identities are disjoint, so the automatic remainder is well-defined.
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True, strict=True)
+    country_code: str = Field(pattern=r"^[A-Z]{3}$")
+    count: int = Field(ge=0, le=2000)
+
+
 class RunWorldInitialPoolPreviewRequest(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True)
 
@@ -151,6 +161,8 @@ class RunWorldInitialPoolPreviewRequest(BaseModel):
     travel_region: str | None = Field(default=None, min_length=1)
     min_age: int | None = Field(default=None, ge=15, le=45)
     max_age: int | None = Field(default=None, ge=15, le=45)
+    # Explicit total only. Missing/empty retains the historical generation path.
+    country_quotas: list[RunWorldExactCountryQuota] = Field(default_factory=list, max_length=250)
     # Session-only Keep. Each prior pass is reproducibly replayed from the
     # saved World, never from browser-supplied player values or permanent locks.
     keep_from_seed: int | None = None
@@ -189,6 +201,11 @@ class RunWorldInitialPoolPreviewRequest(BaseModel):
                 previous_seed = step.seed
             if previous_seed != self.keep_from_seed:
                 raise ValueError("Keep history does not lead to the reviewed source seed")
+        quotas = [quota.country_code for quota in self.country_quotas]
+        if quotas != sorted(set(quotas)):
+            raise ValueError("Exact country quotas must have sorted unique country codes")
+        if sum(quota.count for quota in self.country_quotas) > self.target_pool_size:
+            raise ValueError("Exact country quotas exceed total generated players")
         identities = [(lock.player_id, lock.field) for lock in self.field_locks]
         if identities != sorted(set(identities)):
             raise ValueError("Preview field locks must have unique, sorted player/field keys")
@@ -209,6 +226,8 @@ class RunWorldInitialPoolPreviewRequest(BaseModel):
             payload.pop("keep_history", None)  # original and one-pass digests unchanged
         if not payload.get("field_locks"):
             payload.pop("field_locks", None)  # existing hash/replay stays intact
+        if not payload.get("country_quotas"):
+            payload.pop("country_quotas", None)  # historical fingerprints preserved
         return payload
 
 
@@ -352,6 +371,10 @@ class RunWorldInitialPoolPreviewService:
             min_age=request.min_age,
             max_age=request.max_age,
             existing_locked_players=preserved,
+            country_quotas=(
+                {quota.country_code: quota.count for quota in request.country_quotas}
+                if request.country_quotas else None
+            ),
             dry_run=True,
         )
         if preserved:

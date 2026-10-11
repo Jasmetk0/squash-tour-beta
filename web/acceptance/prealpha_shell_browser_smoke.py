@@ -229,13 +229,21 @@ def main() -> None:
                 args.api_url + "/admin/runs/" + run_id + "/branches/"
                 + created_branch["branch_id"] + "/saved-players"
             )
-            assert saved.ok and saved.json()["total"] == 0, saved.text()
-            assert saved.json()["branch_id"] == created_branch["branch_id"]
-            assert saved.json()["source"] == "selected_branch_saved_revision"
+            assert saved.status == 409 and saved.json()["detail"]["code"] == "saved_players_inventory_unavailable", saved.text()
+            # The fork still points to shared pre-fork ancestry. Until its own
+            # materialized Saved HEAD exists, current Branch-owned sporting
+            # reads fail closed (never borrow another Branch's authority).
+            expect(page.get_by_role("alert").filter(has_text="Saved Players HEAD belongs to another Run / Branch")).to_be_visible()
+            # The original owned empty Branch is a genuine empty inventory.
+            owned = page.request.get(
+                args.api_url + "/admin/runs/" + run_id + "/branches/"
+                + source_branch["branch_id"] + "/saved-players"
+            )
+            assert owned.ok and owned.json()["total"] == 0, owned.text()
+            assert owned.json()["source"] == "selected_branch_saved_revision"
             page.get_by_role("textbox", name="Player search").fill("browser-filter-only")
             page.get_by_role("textbox", name="Player country").fill("CZE")
-            expect(page.get_by_text("No players in this saved scope or filter.", exact=False)).to_be_visible()
-            evidence["canonical_saved_players_empty_no_legacy_fallback"] = True
+            evidence["canonical_saved_players_empty_and_shared_fork_fail_closed"] = True
             assert page.locator(".app-shell--admin").get_attribute("data-run-form-edited") is None
             page.get_by_role("link", name="Squash Engine global Home").click()
             expect(page.get_by_role("heading", name="Squash Engine Home")).to_be_visible()

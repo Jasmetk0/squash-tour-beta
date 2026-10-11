@@ -80,6 +80,21 @@ def test_saved_detail_reads_real_canonical_match_only_after_save_and_reopens(tmp
         assert saved["match"]["scoreline"] == "3-2"
         assert saved["replay_status"] == "unavailable"
         assert saved["total_rallies"] == 0 and saved["rallies"] == []
+        # Two real Saved HEAD player viewpoints cannot disagree on the same
+        # published final; a replay-less cursor does not manufacture frames.
+        status, finalist_view = _request("GET", url(server, run, branch, "B"))
+        assert status == 200, finalist_view
+        assert finalist_view["saved_revision_id"] == saved["saved_revision_id"]
+        assert finalist_view["match"]["outcome"] == "loss"
+        assert finalist_view["match"]["opponent_player_id"] == "A"
+        assert finalist_view["match"]["scoreline"] == saved["match"]["scoreline"]
+        status, beyond = _request("GET", url(
+            server, run, branch, query="?offset=25&limit=25"
+        ))
+        assert status == 200, beyond
+        assert beyond["replay_status"] == "unavailable"
+        assert beyond["rallies"] == [] and beyond["total_rallies"] == 0
+        assert not beyond["has_more"]
         assert _request("GET", url(server, run, branch, "A", "event", "nonexistent"))[0] == 404
         assert _request("GET", url(server, run, branch, "A", "EVENT-OLD"))[0] == 404
         assert _request("GET", url(server, run, branch, "D"))[0] == 404

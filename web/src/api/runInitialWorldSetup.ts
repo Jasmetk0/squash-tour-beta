@@ -68,6 +68,7 @@ export type RunInitialWorldPlayer = {
   current_ability: number
   potential_ability: number
   potential_tier: string
+  career_stage?: string
 }
 
 export type RunInitialWorldState = {

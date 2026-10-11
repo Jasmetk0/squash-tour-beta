@@ -1,6 +1,7 @@
 /** Read-only career match timeline; every page belongs to the current Saved HEAD. */
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
+import { Link } from 'react-router-dom'
 import { getSavedHomePlayerIdentities, getSavedPlayerMatchHistory } from '../api/client'
 
 type Props = {
@@ -66,7 +67,11 @@ export function SavedPlayerMatchesPanel({ runId, branchId, savedHead, playerId, 
         : 'No saved tournament matches for this selection.'}</p>}
       {data.matches.length > 0 && <ul className="run-home-feed">
         {data.matches.map(match => <li key={match.event_id + ':' + match.match_id}>
-          <span><strong>{match.event_name}</strong>
+          <span><strong><Link to={'/admin/runs/' + encodeURIComponent(runId) + '/people/' +
+            encodeURIComponent(playerId) + '/matches/' + encodeURIComponent(match.event_id) +
+            '/' + encodeURIComponent(match.match_id)}>
+            {match.event_name} · {cs ? 'Detail zápasu →' : 'Match detail →'}
+          </Link></strong>
             <small>{match.season} · W{match.week} · {match.draw_type} ·
               {' '}{cs ? 'kolo' : 'round'} {match.round_number}</small>
             <small>{match.outcome === 'win' ? (cs ? 'Výhra' : 'Win') : (cs ? 'Prohra' : 'Loss')}

@@ -7,6 +7,8 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from beta_engine.api.deps import ApiRuntime, get_runtime
+from beta_engine.application.saved_player_match_detail import (SavedPlayerMatchDetail, resolve_saved_player_match_detail)
+from beta_engine.infrastructure.db.simulation_slot_state import load_saved_simulation_slot_component
 from beta_engine.application.saved_player_profile import (SavedPlayerProfile, resolve_saved_player_profile)
 from beta_engine.application.saved_player_match_history import (SavedPlayerMatchHistory, resolve_saved_player_match_history)
 from beta_engine.application.run_home_player_identity import (
@@ -115,6 +117,69 @@ def inspect_run_home_ranking_changes(
         ) from exc
 
 
+
+
+
+@router.get("/player-profiles/{player_id}/matches/{event_id}/{match_id}", response_model=SavedPlayerMatchDetail)
+def get_saved_player_match_detail(
+    run_id: str,
+    branch_id: str,
+    player_id: str,
+    event_id: str,
+    match_id: str,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+    offset: int = Query(default=0, ge=0),
+    limit: int = Query(default=25, ge=1, le=25),
+) -> SavedPlayerMatchDetail:
+    """Read published result; replay only from verified matching Saved Slot group."""
+    if any(not item or len(item) > 128 or item.strip() != item
+           for item in (player_id, event_id, match_id)):
+        raise HTTPException(status_code=422, detail="Invalid match detail identifiers")
+    repository = runtime.repository
+    run = repository.get_run_container(run_id=run_id)
+    branch = repository.get_run_branch(branch_id=branch_id)
+    if run is None or branch is None or branch.run_id != run_id:
+        raise HTTPException(status_code=404, detail="Product Run / Branch was not found")
+    try:
+        state = repository.get_branch_revision_state(branch_id=branch_id)
+        revision = state.saved_revision
+        if (state.run_id, state.branch_id, revision.run_id, revision.branch_id) != (
+            run_id, branch_id, run_id, branch_id
+        ) or revision.revision_id != branch.saved_head_revision_id:
+            raise ValueError("Saved match detail HEAD belongs to another Run/Branch")
+        identities = resolve_saved_home_player_identities(
+            run_id=run_id, branch_id=branch_id,
+            saved_revision_id=revision.revision_id, requested_ids=(player_id,),
+            initial_world=load_saved_initial_world(
+                revision.payload, run_id=run_id, branch_id=branch_id,
+            ),
+            prospect_source=load_saved_run_prospect_source(
+                revision.payload, run_id=run_id,
+            ),
+        )
+        return resolve_saved_player_match_detail(
+            run_id=run_id, branch_id=branch_id,
+            saved_revision_id=revision.revision_id,
+            player_id=player_id, event_id=event_id, match_id=match_id,
+            identities=identities,
+            ranking=load_saved_ranking_component(
+                revision.payload, run_id=run_id, branch_id=branch_id,
+            ),
+            packages=load_saved_run_package_state(
+                revision.payload, run_id=run_id, branch_id=branch_id,
+            ),
+            saved_slots=load_saved_simulation_slot_component(
+                revision.payload, run_id=run_id, branch_id=branch_id,
+            ),
+            offset=offset, limit=limit,
+        )
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except (ValueError, TypeError) as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={"code": "saved_match_detail_unavailable", "message": str(exc)},
+        ) from exc
 
 
 @router.get("/player-profiles/{player_id}/matches", response_model=SavedPlayerMatchHistory)

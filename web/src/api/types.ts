@@ -8553,3 +8553,38 @@ export type SavedPlayerMatchHistory = {
   has_more: boolean
   matches: SavedPlayerMatch[]
 }
+
+/** A canonical Saved HEAD match and optional bounded archived rally frames. */
+export type SavedMatchRallyFrame = {
+  rally_index: number
+  set_number: number
+  server_player_id: string
+  winner_player_id: string | null
+  score_a_before: number
+  score_b_before: number
+  score_a_after: number
+  score_b_after: number
+  sets_a_after: number
+  sets_b_after: number
+  set_complete: boolean
+  match_complete: boolean
+}
+export type SavedPlayerMatchDetail = {
+  schema_version: 'saved_player_match_detail.v1'
+  run_id: string
+  branch_id: string
+  saved_revision_id: string
+  player_id: string
+  source: 'selected_branch_saved_revision'
+  match: SavedPlayerMatch
+  winner_player_id: string
+  loser_player_id: string
+  replay_status: 'available' | 'unavailable'
+  player_a_id: string | null
+  player_b_id: string | null
+  offset: number
+  limit: number
+  total_rallies: number
+  has_more: boolean
+  rallies: SavedMatchRallyFrame[]
+}

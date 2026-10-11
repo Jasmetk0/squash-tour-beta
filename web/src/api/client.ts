@@ -4141,3 +4141,44 @@ export async function getSavedPlayerProfile(
   }
   return data
 }
+
+/** Immutable saved tournament match page; never consult current live/Viewer state. */
+export async function getSavedPlayerMatchHistory(
+  runId: string, branchId: string, playerId: string,
+  seasonIndex: number | null = null, offset = 0, limit = 20
+): Promise<import('./types').SavedPlayerMatchHistory> {
+  if (!playerId || playerId.length > 128 || playerId.trim() !== playerId ||
+      (seasonIndex !== null && (!Number.isInteger(seasonIndex) || seasonIndex < 0 || seasonIndex > 49)) ||
+      !Number.isInteger(offset) || offset < 0 || !Number.isInteger(limit) || limit < 1 || limit > 20) {
+    throw new Error('Invalid saved player match history request.')
+  }
+  const search = new URLSearchParams({ offset: String(offset), limit: String(limit) })
+  if (seasonIndex !== null) search.set('season_index', String(seasonIndex))
+  const data = await request<import('./types').SavedPlayerMatchHistory>(
+    `/admin/runs/${encodeURIComponent(runId)}/branches/${encodeURIComponent(branchId)}/player-profiles/${encodeURIComponent(playerId)}/matches?${search}`
+  )
+  if (data.schema_version !== 'saved_player_match_history.v1' ||
+      data.run_id !== runId || data.branch_id !== branchId ||
+      data.player_id !== playerId || !data.saved_revision_id?.trim() ||
+      data.source !== 'selected_branch_saved_revision' ||
+      !['ready', 'identity_unavailable'].includes(data.status) ||
+      data.season_index !== seasonIndex || data.offset !== offset || data.limit !== limit ||
+      !Array.isArray(data.matches) || data.matches.length > limit ||
+      !Array.isArray(data.available_seasons) ||
+      data.available_seasons.some(v => !Number.isInteger(v) || v < 0 || v > 49) ||
+      ![data.total_results, data.played_wins, data.played_losses, data.walkovers,
+        data.career_played_wins, data.career_played_losses, data.career_walkovers]
+        .every(v => Number.isInteger(v) && v >= 0) ||
+      data.total_results < offset + data.matches.length && data.matches.length > 0 ||
+      data.matches.some(m => !m.event_id || !m.match_id || !m.opponent_player_id ||
+        !m.event_name || !m.scoreline || !['win', 'loss'].includes(m.outcome) ||
+        !['played', 'walkover'].includes(m.completion) ||
+        !['main', 'qualification', 'group', 'knockout'].includes(m.draw_type) ||
+        m.week < 1 || m.week > 61 ||
+        (seasonIndex !== null && m.season_index !== seasonIndex)) ||
+      typeof data.has_more !== 'boolean' ||
+      data.has_more !== (offset + limit < data.total_results)) {
+    throw new Error('Saved match history response does not match selected Run/Branch or page.')
+  }
+  return data
+}

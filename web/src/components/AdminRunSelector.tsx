@@ -5,7 +5,7 @@ import { listRunContainers } from '../api/client'
 import type { RunContainer } from '../api/types'
 import { adminRunSwitchTarget } from '../navigation/adminRunSwitchTarget'
 import { formatApiError } from '../utils/apiErrors'
-import { confirmAdminContextChange } from '../navigation/runContextGuard'
+import { allowConfirmedAdminNavigation, confirmAdminContextChange } from '../navigation/runContextGuard'
 
 type AdminRunSelectorProps = {
   pathname: string
@@ -40,7 +40,9 @@ export function AdminRunSelector({ pathname, runId }: AdminRunSelectorProps): JS
               event.currentTarget.value = runId
               return
             }
-            navigate(adminRunSwitchTarget(pathname, event.target.value))
+            const target = adminRunSwitchTarget(pathname, event.target.value)
+            allowConfirmedAdminNavigation(target)
+            navigate(target)
           }}
           disabled={query.isLoading || runs.length === 0}
         >

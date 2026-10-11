@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useEffect, useMemo, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { useContext, useEffect, useMemo, useState } from 'react'
+import { Link, UNSAFE_DataRouterContext, useParams } from 'react-router-dom'
 import {
   confirmWorldSelection, getBranchWorkingDraft, getRunPackageState, getWorldPackage,
   listRunBranches, listRunContainers, previewWorldSelection, saveRunPackageWorkingDraft
@@ -10,6 +10,7 @@ import { isExactWorldSelection } from '../../api/worldSelection'
 import type { WorldSelectionRequest, WorldSelectionPreview } from '../../api/worldSelection'
 import { useLanguage } from '../../i18n/LanguageContext'
 import { formatApiError } from '../../utils/apiErrors'
+import { AdminTransitionBlocker } from '../../navigation/AdminTransitionBlocker'
 
 type PendingSave = { runId:string; branchId:string; draftVersion:number; fingerprint:string; previousHead:string }
 function runWritable(run:RunContainer):boolean {
@@ -22,6 +23,7 @@ function jsonValue(value:unknown):string { return value===undefined?'—':JSON.s
 
 export function WorldPackageApplyPage():JSX.Element {
   const {worldId=''}=useParams()
+  const dataRouter=useContext(UNSAFE_DataRouterContext)
   const {language}=useLanguage(),cs=language==='cs',qc=useQueryClient()
   const [runId,setRunId]=useState(''),[branchId,setBranchId]=useState('')
   const [selected,setSelected]=useState<string[]>([])
@@ -61,7 +63,16 @@ export function WorldPackageApplyPage():JSX.Element {
     data.current_state_fingerprint===state.data.fingerprint &&
     !review.isFetching && !draft.isFetching && !state.isFetching
   )
+  const pendingChanges=Boolean(
+    selected.length||Object.keys(resolutions).length||approved||pendingSave||
+    (branch && draft.data?.status==='dirty')
+  )
   const canConfirm=Boolean(contextCorrect && data?.can_confirm && approved && !hasApplied && !pendingSave)
+  const recoveryReady=Boolean(
+    branch && draft.data?.run_id===runId && draft.data.branch_id===branchId &&
+    draft.data.status==='dirty' && draft.data.base_saved_revision_id===branch.saved_head_revision_id &&
+    state.data?.fingerprint && !draft.isFetching && !state.isFetching
+  )
   const saveAllowed=Boolean(
     pendingSave && pendingSave.runId===runId && pendingSave.branchId===branchId &&
     branch && branch.saved_head_revision_id===pendingSave.previousHead &&
@@ -127,12 +138,54 @@ export function WorldPackageApplyPage():JSX.Element {
   function changeSelection(next:string[]):void {
     setSelected([...new Set(next)].sort());setResolutions({});setApproved(false);setNotice('')
   }
-  function chooseRun(next:string):void {setRunId(next);setBranchId('')}
+  function permitTargetChange():boolean {
+    return !pendingChanges || window.confirm(cs
+      ? 'Tento cíl obsahuje neuložené změny nebo rozpracovaný výběr. Změnit cíl? Working Draft zůstane na serveru a lze jej znovu otevřít.'
+      : 'This target has an unsaved Working Draft or local review. Change target? The server draft is retained and can be reopened.')
+  }
+  function chooseRun(next:string):boolean {
+    if(next===runId)return true
+    if(!permitTargetChange())return false
+    setRunId(next);setBranchId('')
+    return true
+  }
+  function chooseBranch(next:string):boolean {
+    if(next===branchId)return true
+    if(!permitTargetChange())return false
+    setBranchId(next)
+    return true
+  }
+  function reopenDraft():void {
+    if(!recoveryReady || !branch || !draft.data || !state.data?.fingerprint)return
+    setPendingSave({
+      runId,branchId,draftVersion:draft.data.draft_version,
+      fingerprint:state.data.fingerprint,previousHead:branch.saved_head_revision_id!
+    })
+    setHasApplied(true)
+    setNotice(cs
+      ? 'Znovuotevřený Working Draft může obsahovat i jiné neuložené změny. Před Save zkontroluj aktuální obsah.'
+      : 'Reopened Working Draft may contain other staged changes. Review its current contents before Save.')
+  }
+  useEffect(()=>{
+    function beforeUnload(event:BeforeUnloadEvent):void {
+      if(!pendingChanges)return
+      event.preventDefault();event.returnValue=''
+    }
+    window.addEventListener('beforeunload',beforeUnload)
+    return ()=>window.removeEventListener('beforeunload',beforeUnload)
+  },[pendingChanges])
   const scopeGroups=Object.entries((data?.available??[]).reduce<Record<string,string[]>>((acc,item)=>{
     (acc[item.scope]??=[]).push(item.label);return acc
   },{}))
 
-  return <section className="panel package-apply">
+  return <>
+    {dataRouter&&<AdminTransitionBlocker
+      isDirty={()=>pendingChanges||confirm.isPending||save.isPending}
+      warning={cs
+        ? 'Rozpracovaný World Apply nebo neuložený Working Draft. Opravdu odejít? Serverový draft zůstane dostupný.'
+        : 'Unsaved World Apply review or Working Draft. Leave this page? The server draft can be reopened.'}
+    />}
+    <section className="panel package-apply">
     <p><Link to={'/admin/packages/world/'+encodeURIComponent(worldId)}>← {cs?'Detail balíčku':'Package detail'}</Link></p>
     <div className="page-intro"><h2>{cs?'Použít World Package v Runu':'Apply World Package to Run'}</h2>
       <p className="subtitle">{source.data?.name??worldId} · {cs?'výběrový import do nezávislého Working Draftu':'selective import into an independent Working Draft'}</p></div>
@@ -140,18 +193,32 @@ export function WorldPackageApplyPage():JSX.Element {
     <section className="package-apply-step">
       <h3>1. {cs?'Cílový Run a Branch':'Target Run and Branch'}</h3>
       {runs.isError&&<p role="alert" className="error">{formatApiError(runs.error)}</p>}
-      <label>{cs?'Run':'Run'}<select aria-label="Target Run" value={runId} onChange={event=>chooseRun(event.target.value)}>
+      <label>{cs?'Run':'Run'}<select aria-label="Target Run" value={runId} disabled={confirm.isPending||save.isPending} onChange={event=>{if(!chooseRun(event.target.value))event.currentTarget.value=runId}}>
         <option value="">{cs?'Vyber uložený editovatelný Run':'Choose a writable saved Run'}</option>
         {candidates.map(candidate=><option key={candidate.run_id} value={candidate.run_id}>{candidate.display_name||candidate.run_id}</option>)}
       </select></label>
       {runs.isSuccess&&candidates.length===0&&<p className="status">{cs?'Žádný editovatelný Run není dostupný.':'No writable Run is available.'}</p>}
       <p><Link to="/admin/runs/new">{cs?'Vytvořit nový Run':'Create new Run'} →</Link> <span className="status">{cs?'(potom se vrať k tomuto balíčku)':'(then return to this package)'}</span></p>
       {runId&&<>{branches.isError&&<p role="alert" className="error">{formatApiError(branches.error)}</p>}
-        <label>Branch<select aria-label="Target Branch" value={branchId} onChange={event=>setBranchId(event.target.value)}>
+        <label>Branch<select aria-label="Target Branch" value={branchId} disabled={confirm.isPending||save.isPending} onChange={event=>{if(!chooseBranch(event.target.value))event.currentTarget.value=branchId}}>
           <option value="">{cs?'Vyber editovatelnou branch':'Choose a writable Branch'}</option>
           {choices.map(item=><option key={item.branch_id} value={item.branch_id}>{item.display_name}</option>)}
         </select></label></>}
       {branch&&<p className="status">{cs?'Uložený základ':'Saved head'}: {branch.saved_head_revision_id} · {cs?'Working Draft':'Working Draft'}: {draft.data?.status??'…'} (v{draft.data?.draft_version??'…'})</p>}
+      {branch&&draft.data?.status==='dirty'&&!pendingSave&&<div className="package-apply-recovery">
+        <p role="status">{cs
+          ? 'Tato branch má již neuložený Working Draft. Navigace ho nesmaže; můžeš jej znovu otevřít.'
+          : 'This Branch already has an unsaved Working Draft. Navigation does not delete it; you may reopen it.'}</p>
+        <details><summary>{cs?'Prohlédnout aktuální serverový stav před obnovením':'Inspect current server state before recovery'}</summary>
+          <pre>{jsonValue(state.data?.state)}</pre>
+        </details>
+        <button type="button" disabled={!recoveryReady} onClick={reopenDraft}>
+          {cs?'Znovu otevřít Working Draft pro ruční Save':'Reopen Working Draft for manual Save'}
+        </button>
+        {!recoveryReady&&<p role="alert">{cs
+          ? 'Serverový draft nebo uložená revize se změnily. Obnovení Save kontextu zatím není bezpečné.'
+          : 'The server draft or saved head has changed. Save context cannot be safely recovered yet.'}</p>}
+      </div>}
     </section>
     {branch&&<section className="package-apply-step">
       <h3>2. {cs?'Vyber obsah':'Select contents'}</h3>
@@ -208,7 +275,12 @@ export function WorldPackageApplyPage():JSX.Element {
           {cs?'Uložit Saved Revision':'Save revision'}
         </button></>}
       {save.isError&&<p role="alert" className="error">{formatApiError(save.error)}</p>}
+      {pendingSave&&!saveAllowed&&!draft.isFetching&&!state.isFetching&&<p role="alert" className="error">
+        {cs?'Save je zablokován: aktuální draft, otisk nebo Saved Head již nesouhlasí. Znovu načti a prohlédni stav.':
+          'Save blocked: current draft, fingerprint or saved head no longer matches. Refresh and review state.'}
+      </p>}
       <p><Link to={'/admin/runs/'+encodeURIComponent(runId)+'?branch='+encodeURIComponent(branchId)}>{cs?'Otevřít cílový Run':'Open target Run'} →</Link></p>
     </section>}
-  </section>
+    </section>
+  </>
 }

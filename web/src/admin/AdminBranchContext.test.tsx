@@ -30,6 +30,9 @@ function ProgrammaticNavigation(): JSX.Element {
   return <>
     <button type="button" onClick={()=>selectBranch('a-other')}>Programmatic Branch change</button>
     <button type="button" onClick={()=>navigate('/admin/runs/run-a?branch=a-other')}>Programmatic deep link</button>
+    <button type="button" onClick={()=>navigate('/admin/runs/run-a?branch=foreign')}>Invalid deep link</button>
+    <button type="button" onClick={()=>navigate(-1)}>History back</button>
+    <button type="button" onClick={()=>navigate(1)}>History forward</button>
     <output aria-label="Selected Admin Branch">{selectedBranchId}</output>
     <output aria-label="Current search">{search}</output>
   </>
@@ -43,6 +46,7 @@ function Harness(): JSX.Element {
       <div className="app-shell--admin">
       <AdminBranchSelector />
       <ProgrammaticNavigation />
+      <label>Uncommitted edit <input aria-label="Uncommitted edit" defaultValue="original" /></label>
       <button onClick={() => setPage(page === 'home' ? 'branches' : 'home')}>Navigate page</button>
       <output aria-label="Current page">{page}</output>
       <button onClick={() => setRunId('run-b')}>Change Run</button>
@@ -172,8 +176,8 @@ describe('AdminBranchProvider and selector', () => {
     document.querySelector('.app-shell--admin')?.setAttribute('data-run-form-edited','true')
     const confirm=vi.spyOn(window,'confirm').mockReturnValue(false)
     fireEvent.click(screen.getByRole('button',{name:'Programmatic deep link'}))
-    await waitFor(()=>expect(screen.getByLabelText('Current search')).toHaveTextContent('branch=a-other'))
     await waitFor(()=>expect(confirm).toHaveBeenCalledTimes(1))
+    await waitFor(()=>expect(screen.getByLabelText('Current search')).toBeEmptyDOMElement())
     expect(selector).toHaveValue('a-viewer')
     fireEvent.click(screen.getByRole('button',{name:'Navigate page'}))
     expect(confirm).toHaveBeenCalledTimes(1)
@@ -183,6 +187,52 @@ describe('AdminBranchProvider and selector', () => {
     fireEvent.change(selector,{target:{value:'a-other'}})
     await waitFor(()=>expect(selector).toHaveValue('a-other'))
     expect(confirm).toHaveBeenCalledTimes(2)
+  })
+
+  it('declining a foreign Branch keeps the original form, selected Branch and URL',async()=>{
+    renderHarness()
+    const selector=await screen.findByRole('combobox',{name:'Admin active Branch'})
+    await waitFor(()=>expect(selector).toHaveValue('a-viewer'))
+    fireEvent.change(screen.getByRole('textbox',{name:'Uncommitted edit'}),{target:{value:'keep this'}})
+    document.querySelector('.app-shell--admin')?.setAttribute('data-run-form-edited','true')
+    const confirm=vi.spyOn(window,'confirm').mockReturnValue(false)
+    fireEvent.click(screen.getByRole('button',{name:'Invalid deep link'}))
+    await waitFor(()=>expect(confirm).toHaveBeenCalledTimes(1))
+    await waitFor(()=>expect(screen.getByLabelText('Current search')).toBeEmptyDOMElement())
+    expect(selector).toHaveValue('a-viewer')
+    expect(screen.getByRole('textbox',{name:'Uncommitted edit'})).toHaveValue('keep this')
+    expect(screen.queryByText(/Requested Admin Branch "foreign"/)).not.toBeInTheDocument()
+  })
+
+  it('an explicitly approved invalid Branch stays fail-closed, with an explanation',async()=>{
+    renderHarness()
+    const selector=await screen.findByRole('combobox',{name:'Admin active Branch'})
+    await waitFor(()=>expect(selector).toHaveValue('a-viewer'))
+    document.querySelector('.app-shell--admin')?.setAttribute('data-run-form-edited','true')
+    const confirm=vi.spyOn(window,'confirm').mockReturnValue(true)
+    fireEvent.click(screen.getByRole('button',{name:'Invalid deep link'}))
+    await waitFor(()=>expect(screen.getByText(/Requested Admin Branch "foreign" does not belong/)).toBeInTheDocument())
+    expect(selector).toHaveValue('')
+    expect(confirm).toHaveBeenCalledTimes(1)
+  })
+
+  it('keeps explicit query synchronized with the selector and protects Back/Forward',async()=>{
+    renderHarness('/admin/runs/run-a?branch=a-viewer')
+    const selector=await screen.findByRole('combobox',{name:'Admin active Branch'})
+    await waitFor(()=>expect(selector).toHaveValue('a-viewer'))
+    fireEvent.change(selector,{target:{value:'a-other'}})
+    await waitFor(()=>expect(screen.getByLabelText('Current search')).toHaveTextContent('branch=a-other'))
+    expect(selector).toHaveValue('a-other')
+    // A real PUSH navigation creates a history entry; the selector above uses
+    // REPLACE deliberately to keep an explicit query in sync.
+    fireEvent.click(screen.getByRole('button',{name:'Invalid deep link'}))
+    await waitFor(()=>expect(screen.getByText(/Requested Admin Branch "foreign" does not belong/)).toBeInTheDocument())
+    fireEvent.click(screen.getByRole('button',{name:'History back'}))
+    await waitFor(()=>expect(selector).toHaveValue('a-other'))
+    await waitFor(()=>expect(screen.getByLabelText('Current search')).toHaveTextContent('branch=a-other'))
+    fireEvent.click(screen.getByRole('button',{name:'History forward'}))
+    await waitFor(()=>expect(selector).toHaveValue(''))
+    await waitFor(()=>expect(screen.getByLabelText('Current search')).toHaveTextContent('branch=foreign'))
   })
 
   it('permits a clean programmatic deep link without a modal',async()=>{

@@ -267,6 +267,26 @@ def main() -> None:
             assert len(dialogs) == 3 and "unsaved Working Draft" in dialogs[2], dialogs
             evidence["real_unsaved_run_form_warning"] = True
 
+            # Actual browser Back must not discard edited Run form values.
+            page.goto(base + "/admin/runs/" + run_id)
+            page.get_by_role("navigation", name="Run management navigation").get_by_role(
+                "link", name="Run Management"
+            ).click()
+            expect(page.get_by_role("heading", name="Run Management")).to_be_visible()
+            page.get_by_role("combobox", name="Source kind").select_option("calendar")
+            page.get_by_role("textbox", name="Calendar source season").fill("2012-2013")
+            dialog_policy["accept"] = False
+            before = len(dialogs)
+            page.evaluate("window.history.back()")
+            expect(page.get_by_role("heading", name="Run Management")).to_be_visible()
+            expect(page.get_by_role("textbox", name="Calendar source season")).to_have_value("2012-2013")
+            assert len(dialogs) == before + 1, dialogs
+            dialog_policy["accept"] = True
+            page.evaluate("window.history.back()")
+            expect(page.get_by_role("heading", name="Next steps")).to_be_visible()
+            assert len(dialogs) == before + 2, dialogs
+            evidence["run_history_cancel_accept"] = True
+
             # Selectively apply exactly one real World source entity into the
             # alternative Branch, then Save; unselected entities never appear.
             assert worlds, "This acceptance requires a real World source registry"
@@ -290,12 +310,40 @@ def main() -> None:
             )
             staged = page.request.get(state_url)
             assert staged.ok and len(staged.json()["state"]["entities"]) == 1, staged.text()
+
+            # Global Apply is outside Run scope but its local Save context is
+            # protected. Rejecting navigation and target changes must keep it.
+            dialog_policy["accept"] = False
+            before = len(dialogs)
+            page.locator(".package-apply > p > a").first.click()
+            expect(page.get_by_role("heading", name="Apply World Package to Run")).to_be_visible()
+            expect(page.get_by_role("button", name="Save revision")).to_be_visible()
+            assert len(dialogs) == before + 1, dialogs
+            page.get_by_role("combobox", name="Target Branch").select_option(source_branch["branch_id"])
+            expect(page.get_by_role("combobox", name="Target Branch")).to_have_value(created_branch["branch_id"])
+            assert len(dialogs) == before + 2, dialogs
+
+            # Accept leaving. The server draft survives a full route exit
+            # and must be explicitly inspected/reopened before manual Save.
+            dialog_policy["accept"] = True
+            page.locator(".package-apply > p > a").first.click()
+            expect(page.get_by_role("heading", name=worlds[0]["name"])).to_be_visible()
+            assert len(dialogs) == before + 3, dialogs
+            reopened_state = page.request.get(state_url)
+            assert reopened_state.ok and reopened_state.json()["fingerprint"] == staged.json()["fingerprint"]
+            page.get_by_role("link", name="Apply to Run — select contents").click()
+            page.get_by_role("combobox", name="Target Run").select_option(run_id)
+            page.get_by_role("combobox", name="Target Branch").select_option(created_branch["branch_id"])
+            expect(page.get_by_role("button", name="Reopen Working Draft for manual Save")).to_be_enabled()
+            page.get_by_role("button", name="Reopen Working Draft for manual Save").click()
+            expect(page.get_by_text("Reopened Working Draft may contain other staged changes", exact=False)).to_be_visible()
             page.get_by_role("button", name="Save revision").click()
             expect(page.get_by_text("New Saved Revision saved.")).to_be_visible()
             page.reload()
             persisted = page.request.get(state_url)
             assert persisted.ok and persisted.json()["fingerprint"] == staged.json()["fingerprint"]
             evidence["selective_world_saved_one_entity"] = world_id
+            evidence["global_apply_guard_and_draft_recovery"] = True
             page.screenshot(path=str(artifacts / "04-selective-world-saved.png"), full_page=True)
 
             page.get_by_role("link", name="Squash Engine global Home").click()

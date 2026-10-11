@@ -1,8 +1,10 @@
-import { useEffect, useRef } from 'react'
+import { useContext, useEffect, useRef } from 'react'
+import { UNSAFE_DataRouterContext } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { getBranchWorkingDraft } from '../api/client'
 import { useAdminBranch } from '../admin/AdminBranchContext'
-import { allowConfirmedBranchLink } from '../navigation/runContextGuard'
+import { allowConfirmedBranchLink, hasUnsavedRunChanges } from '../navigation/runContextGuard'
+import { AdminTransitionBlocker } from '../navigation/AdminTransitionBlocker'
 
 export const RUN_NAVIGATION_SAVED = 'run-navigation-saved'
 
@@ -56,7 +58,8 @@ function originalValue(control: Control): string {
  * selectors consult the same shell flag for programmatic Run/Branch switching.
  * This does not purport to guard every programmatic navigation in legacy pages.
  */
-export function RunNavigationSafeguard({ runId }: { runId: string }): null {
+export function RunNavigationSafeguard({ runId }: { runId: string }): JSX.Element | null {
+  const dataRouter = useContext(UNSAFE_DataRouterContext)
   const { selectedBranch } = useAdminBranch()
   const branchId = selectedBranch?.run_id === runId ? selectedBranch.branch_id : null
   const savedHead = branchId ? selectedBranch?.saved_head_revision_id : null
@@ -69,7 +72,7 @@ export function RunNavigationSafeguard({ runId }: { runId: string }): null {
   const draft = draftQuery.data
   const serverDirty = Boolean(
     branchId && draft?.run_id === runId && draft.branch_id === branchId &&
-    draft.base_saved_revision_id === savedHead && draft.status === 'dirty'
+    draft.status === 'dirty'
   )
   const serverDirtyRef = useRef(serverDirty)
   const localDirtyRef = useRef(false)
@@ -145,7 +148,9 @@ export function RunNavigationSafeguard({ runId }: { runId: string }): null {
     document.addEventListener('focusin', rememberBaseline, true)
     document.addEventListener('input', recordEdit, true)
     document.addEventListener('change', recordEdit, true)
-    document.addEventListener('click', confirmLink, true)
+    // MemoryRouter fallback for older component tests; production uses the
+    // data-router blocker before a route is discarded.
+    if (!dataRouter) document.addEventListener('click', confirmLink, true)
     window.addEventListener('beforeunload', beforeUnload)
     window.addEventListener(RUN_NAVIGATION_SAVED, afterSaved)
     return () => {
@@ -157,7 +162,7 @@ export function RunNavigationSafeguard({ runId }: { runId: string }): null {
       window.removeEventListener('beforeunload', beforeUnload)
       window.removeEventListener(RUN_NAVIGATION_SAVED, afterSaved)
     }
-  }, [runId, branchId, savedHead])
+  }, [runId, branchId, savedHead, dataRouter])
 
   // Refresh the shell flag when the backend draft is refetched or saved.
   useEffect(() => {
@@ -165,5 +170,9 @@ export function RunNavigationSafeguard({ runId }: { runId: string }): null {
     if (serverDirty || localDirtyRef.current) shell?.setAttribute('data-run-form-edited', 'true')
     else shell?.removeAttribute('data-run-form-edited')
   }, [serverDirty])
-  return null
+  return dataRouter ? <AdminTransitionBlocker
+    isDirty={hasUnsavedRunChanges}
+    runId={runId}
+    warning="This Run has unapplied form edits or an unsaved Working Draft. Leave the current context?"
+  /> : null
 }

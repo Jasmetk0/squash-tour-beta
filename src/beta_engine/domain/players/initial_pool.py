@@ -463,6 +463,7 @@ class InitialPlayerPoolGenerator:
         min_age: int | None = None,
         max_age: int | None = None,
         existing_locked_players: list[InitialPoolGeneratedPlayer] | None = None,
+        country_quotas: dict[str, int] | None = None,
         dry_run: bool = True,
     ) -> InitialPoolResult:
         if min_age is not None or max_age is not None:
@@ -481,14 +482,83 @@ class InitialPlayerPoolGenerator:
             existing_locked_players or [], key=lambda player: player.player_id
         )
         unlocked_slots = max(0, target_pool_size - len(locked))
-        allocation_plan = self._build_allocation_plan(
-            selected,
-            unlocked_slots,
-            seed=seed,
-            season=season,
-            locked_counts=Counter(player.country_code for player in locked),
-        )
-        allocations = allocation_plan.counts
+        locked_counts = Counter(player.country_code for player in locked)
+        if country_quotas:
+            # Exact quotas are per country across the WHOLE cohort (including
+            # preserved Keep profiles), not weights for an independent batch.
+            # Only non-quota countries receive the automatic remainder.
+            eligible = {country.code for country in selected}
+            invalid = sorted(set(country_quotas) - eligible)
+            if invalid:
+                raise ValueError(
+                    "Country quota references ineligible saved-World countries: "
+                    + ", ".join(invalid)
+                )
+            if any(not isinstance(count, int) or isinstance(count, bool) or count < 0
+                   for count in country_quotas.values()):
+                raise ValueError("Exact country quota counts must be nonnegative integers")
+            if sum(country_quotas.values()) > target_pool_size:
+                raise ValueError("Country quota totals exceed the requested cohort size")
+            for code, count in country_quotas.items():
+                if locked_counts[code] > count:
+                    raise ValueError(
+                        f"Country quota {code} is {count}, but Keep preserves "
+                        f"{locked_counts[code]} players"
+                    )
+            remaining_countries = [
+                country for country in selected if country.code not in country_quotas
+            ]
+            kept_remainder = sum(
+                locked_counts[code] for code in eligible if code not in country_quotas
+            )
+            automatic = target_pool_size - sum(country_quotas.values())
+            remaining = automatic - kept_remainder
+            if remaining < 0:
+                raise ValueError("Preserved Keep players exceed the automatic country remainder")
+            if remaining > 0 and not remaining_countries:
+                raise ValueError(
+                    "Country quotas leave an automatic remainder with no eligible other countries"
+                )
+            weighted = (
+                self._build_allocation_plan(
+                    remaining_countries, remaining, seed=seed, season=season,
+                    locked_counts=locked_counts,
+                ).counts
+                if remaining_countries else {}
+            )
+            if sum(weighted.values()) != remaining:
+                raise ValueError("No weighted population is eligible for the automatic remainder")
+            allocations = {
+                country.code: (
+                    country_quotas[country.code] - locked_counts[country.code]
+                    if country.code in country_quotas else weighted[country.code]
+                )
+                for country in selected
+            }
+            if sum(allocations.values()) != unlocked_slots:
+                raise ValueError("Country quota allocation does not fill the requested cohort")
+            diagnostics_base = self._build_allocation_plan(
+                selected, 0, seed=seed, season=season, locked_counts=locked_counts,
+            )
+            allocation_plan = InitialPoolAllocationPlan(
+                counts=allocations,
+                diagnostics=[diagnostic.model_copy(update={
+                    "generated_allocation_count": allocations[diagnostic.country_code],
+                    "final_country_count": (
+                        allocations[diagnostic.country_code]
+                        + locked_counts[diagnostic.country_code]
+                    ),
+                }) for diagnostic in diagnostics_base.diagnostics],
+            )
+        else:
+            allocation_plan = self._build_allocation_plan(
+                selected,
+                unlocked_slots,
+                seed=seed,
+                season=season,
+                locked_counts=locked_counts,
+            )
+            allocations = allocation_plan.counts
         generated: list[InitialPoolGeneratedPlayer] = []
         locked_sequences = {
             country.code: self._locked_sequences_for_country(locked, country.code)

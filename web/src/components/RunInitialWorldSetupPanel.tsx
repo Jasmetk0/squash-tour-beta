@@ -661,7 +661,7 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
       </p>
       {quotaConflict && <p role="alert" className="error">
         {cs ? 'Rozpor kvót' : 'Country quota conflict'}: {quotaConflict}
-      </p>
+      </p>}
     </section>
     <label>First-season ranking Best N <input aria-label="First-season ranking Best N" type="number"
       min={1} value={bestN} onChange={event => setBestN(Number(event.target.value))} /></label>

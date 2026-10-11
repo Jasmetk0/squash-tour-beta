@@ -3665,6 +3665,36 @@ export function adoptRunOwnedInitialWorld(
   })
 }
 
+/** Non-authoritative, Run/Branch-scoped saved generation reviews. */
+export function getRunGenerationProposals(
+  runId: string, branchId: string
+): Promise<{proposals: import('./runInitialWorldSetup').RunSavedGenerationProposalSummary[]}> {
+  return request(`${runInitialWorldRoot(runId, branchId)}/generation-proposals`)
+}
+
+export function saveRunGenerationProposal(
+  runId: string, branchId: string,
+  proposal: import('./runInitialWorldSetup').RunSaveGenerationProposal
+): Promise<import('./runInitialWorldSetup').RunSavedGenerationProposal> {
+  return request(`${runInitialWorldRoot(runId, branchId)}/generation-proposals`, {
+    method: 'POST', body: JSON.stringify(proposal)
+  })
+}
+
+export function loadRunGenerationProposal(
+  runId: string, branchId: string, proposalId: string
+): Promise<import('./runInitialWorldSetup').RunSavedGenerationProposal> {
+  return request(`${runInitialWorldRoot(runId, branchId)}/generation-proposals/${encodeURIComponent(proposalId)}`)
+}
+
+export function deleteRunGenerationProposal(
+  runId: string, branchId: string, proposalId: string
+): Promise<void> {
+  return request(`${runInitialWorldRoot(runId, branchId)}/generation-proposals/${encodeURIComponent(proposalId)}`,{
+    method:'DELETE'
+  })
+}
+
 export function getRunOwnedInitialWorld(
   runId: string, branchId: string
 ): Promise<import('./runInitialWorldSetup').RunInitialWorldState> {

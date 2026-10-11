@@ -569,6 +569,22 @@ class InitialWorldStateModel(Base):
     payload_json: Mapped[str] = mapped_column(Text, nullable=False)
 
 
+class RunGenerationProposalModel(Base):
+    """Saved, non-authoritative generation review; never a Working Draft/Revision."""
+
+    __tablename__ = "run_generation_proposals"
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    proposal_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    label: Mapped[str] = mapped_column(String(160), nullable=False)
+    saved_revision_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    draft_version: Mapped[int] = mapped_column(Integer, nullable=False)
+    package_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    preview_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    content_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
 class PlayerLifecycleWeekStateModel(Base):
     """Immutable Run/Branch-owned lifecycle snapshot at one FAX week."""
     __tablename__ = "player_lifecycle_week_states"

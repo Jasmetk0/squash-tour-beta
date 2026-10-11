@@ -237,6 +237,19 @@ def setup_run(page, base_url: str, artifacts: Path) -> str:
     assert additional_id in inspector.inner_text() and additional_text in inspector.inner_text(), (
         "Additional Keep player changed or disappeared on second reroll"
     )
+    # Save the exact reviewed 2-pass Keep proposal with field lock, reload
+    # Chromium, then restore it from SQLite without a new generator preview.
+    page.get_by_label("Generation proposal name").fill("Two-pass exact review")
+    click("Save generation proposal")
+    expect(page.get_by_text("Generation proposal saved separately", exact=False)).to_be_visible()
+    page.reload()
+    browser_settle(page)
+    page.get_by_label("Select saved generation proposal").select_option(index=1)
+    click("Open saved proposal")
+    expect(page.get_by_text("Exact saved review restored from SQLite", exact=False)).to_be_visible()
+    expect(page.get_by_text("Verified session Keep regenerations: 2", exact=False)).to_be_visible()
+    expect(inspector.get_by_role("status")).to_contain_text("Showing 64 / 64")
+    assert kept_player_text in inspector.inner_text(), "Restored saved proposal lost Keep identity"
     check("Approve InitialWorld adoption")
     click("Adopt generated players")
     check("Approve InitialWorld revision save")

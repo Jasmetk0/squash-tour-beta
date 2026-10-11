@@ -29,6 +29,42 @@ export function orderedPreviewFieldLocks(locks: RunWorldPreviewFieldLock[]): Run
     a.field.localeCompare(b.field))
 }
 
+export type RunSavedGenerationProposal = {
+  schema_version: 'run_generation_proposal.v1'
+  run_id: string
+  branch_id: string
+  proposal_id: string
+  label: string
+  saved_revision_id: string
+  draft_version: number
+  package_fingerprint: string
+  preview_fingerprint: string
+  source_seed: number
+  next_seed: number
+  selected_keep_ids: string[]
+  pending_field_locks: RunWorldPreviewFieldLock[]
+  request: RunInitialWorldAdoption
+  preview: RunInitialWorldPreview
+}
+
+export type RunSavedGenerationProposalSummary = Pick<
+  RunSavedGenerationProposal,
+  'proposal_id' | 'label' | 'saved_revision_id' | 'draft_version' |
+  'package_fingerprint' | 'preview_fingerprint'
+>
+
+export type RunSaveGenerationProposal = Pick<
+  RunSavedGenerationProposal,
+  'proposal_id' | 'label' | 'source_seed' | 'next_seed' |
+  'selected_keep_ids' | 'pending_field_locks'
+> & {
+  saved_revision_id: string
+  draft_version: number
+  package_fingerprint: string
+  preview_fingerprint: string
+  request: RunInitialWorldAdoption
+}
+
 export type RunInitialWorldGeneration = {
   world_package_id: string
   season: '2000/2001'

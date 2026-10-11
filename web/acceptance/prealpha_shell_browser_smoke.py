@@ -220,7 +220,8 @@ def main() -> None:
             page.screenshot(path=str(artifacts / "03-run-management.png"), full_page=True)
 
             # Read-only Run exploration is not an unsaved edit, including filters.
-            page.goto(base + "/admin/runs/" + run_id + "/players")
+            page.goto(base + "/admin/runs/" + run_id + "/players?branch=" + created_branch["branch_id"])
+            expect(page.get_by_role("combobox", name="Admin active Branch")).to_have_value(created_branch["branch_id"])
             expect(page.get_by_role("heading", name="Players", exact=True)).to_be_visible()
             # Verify a genuinely empty Saved Revision, not legacy Run roster.
             expected_head = page.request.get(args.api_url + "/run-containers/" + run_id)

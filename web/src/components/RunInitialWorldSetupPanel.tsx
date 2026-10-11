@@ -11,11 +11,14 @@ import {
 import type { RunBranch, RunContainer } from '../api/types'
 import {
   ageConditionConflict, generatorConditionConflict, runOwnedWorldIds, verifiedGenerationOptions, verifiedInitialWorldPreview,
+  orderedPreviewFieldLocks,
+  type GeneratedPlayerFieldKey, type RunWorldPreviewFieldLock,
   type RunInitialWorldAdoption, type RunInitialWorldPreview
 } from '../api/runInitialWorldSetup'
 import { formatApiError, isApiNotFound } from '../utils/apiErrors'
 import { SectionCard } from './RunScopedUi'
 import { GeneratedPlayerReviewInspector } from './GeneratedPlayerReviewInspector'
+import { GeneratedPlayerFieldLockEditor } from './GeneratedPlayerFieldLockEditor'
 
 type ReviewedWorld = {
   runId: string
@@ -54,6 +57,8 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
   const [approved, setApproved] = useState(false)
   const [keptIds, setKeptIds] = useState<string[]>([])
   const [rerollSeed, setRerollSeed] = useState(20261010)
+  const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null)
+  const [pendingFieldLocks, setPendingFieldLocks] = useState<RunWorldPreviewFieldLock[]>([])
   const [pendingSave, setPendingSave] = useState<PendingSave | null>(null)
   const [saveApproved, setSaveApproved] = useState(false)
   const [notice, setNotice] = useState('')
@@ -114,6 +119,8 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
   useEffect(() => {
     setReview(null)
     setKeptIds([])
+    setPendingFieldLocks([])
+    setSelectedPlayerId(null)
     setPendingSave(null)
     setApproved(false)
     setSaveApproved(false)
@@ -150,6 +157,7 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
     },
     onSuccess: value => {
       setReview(value); setKeptIds([]); setRerollSeed(seed + 1)
+      setPendingFieldLocks([]); setSelectedPlayerId(null)
       setApproved(false); setNotice('')
     }
   })
@@ -172,6 +180,21 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
     review.request.best_n === bestN && review.request.audit_reason === auditReason.trim() &&
     !existing && isApiNotFound(existingQuery.error))
 
+  const approvedFieldLocks = orderedPreviewFieldLocks(review?.request.generation.field_locks ?? [])
+  const locksDirty = JSON.stringify(approvedFieldLocks) !==
+    JSON.stringify(orderedPreviewFieldLocks(pendingFieldLocks))
+  const fieldEditingEnabled = Boolean(reviewMatches && review &&
+    review.request.generation.keep_from_seed == null && canPreview)
+  const onPreviewFieldChange = (field: GeneratedPlayerFieldKey, value: number | null) => {
+    if (!selectedPlayerId || !fieldEditingEnabled) return
+    setPendingFieldLocks(current => orderedPreviewFieldLocks(
+      value == null
+        ? current.filter(lock => !(lock.player_id === selectedPlayerId && lock.field === field))
+        : [...current.filter(lock => !(lock.player_id === selectedPlayerId && lock.field === field)),
+          { player_id: selectedPlayerId, field, value }]
+    ))
+    setApproved(false)
+  }
   const canKeepPreview = Boolean(reviewMatches && review &&
     review.request.generation.keep_from_seed == null && canPreview)
   const canRegenerate = canKeepPreview &&
@@ -216,9 +239,49 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
         draftVersion: draft.draft_version, request, preview }
     },
     onSuccess: value => {
-      setReview(value); setKeptIds([]); setApproved(false); setNotice(
+      setReview(value); setKeptIds([]); setApproved(false)
+      setPendingFieldLocks(orderedPreviewFieldLocks(value.request.generation.field_locks ?? [])); setNotice(
         'Regenerated only the remaining players. Review the full batch, then explicitly Adopt and Save.'
       )
+    }
+  })
+
+  // No field value supplied by the browser is authoritative until the server
+  // returns a fresh exact preview. A failed edit leaves the prior review intact.
+  const fieldPreviewAction = useMutation({
+    mutationFn: async (regenerate: boolean) => {
+      if (!fieldEditingEnabled || !review || !draft || !snapshotFingerprint ||
+          keptIds.length > 0)
+        throw new Error('An unmodified, active first-cohort preview is required to edit source fields.')
+      if (regenerate && (locksDirty || !pendingFieldLocks.length ||
+          !Number.isSafeInteger(rerollSeed) ||
+          rerollSeed === review.request.generation.seed))
+        throw new Error('Apply all locks first and choose a new seed before regenerating unlocked fields.')
+      const request: RunInitialWorldAdoption = {
+        ...review.request,
+        command_id: `admin-initial-world-${crypto.randomUUID()}`,
+        generation: {
+          ...review.request.generation,
+          seed: regenerate ? rerollSeed : review.request.generation.seed,
+          ...(pendingFieldLocks.length
+            ? { field_locks: orderedPreviewFieldLocks(pendingFieldLocks) }
+            : { field_locks: [] })
+        }
+      }
+      const preview = await previewRunOwnedInitialWorld(runId, branchId, request)
+      if (!verifiedInitialWorldPreview(preview, runId, branchId, request, options))
+        throw new Error('Server preview does not match all verified locked values or generation scope.')
+      return { runId, branchId, head, sourceFingerprint: snapshotFingerprint,
+        draftVersion: draft.draft_version, request, preview, regenerate }
+    },
+    onSuccess: value => {
+      setReview(value)
+      setPendingFieldLocks(orderedPreviewFieldLocks(value.request.generation.field_locks ?? []))
+      setApproved(false)
+      if (value.regenerate) setRerollSeed(value.request.generation.seed + 1)
+      setNotice(value.regenerate
+        ? 'Unlocked source fields regenerated; locked values were verified. Review before Adopt and Save.'
+        : 'Field locks applied to the exact server preview; Run remains unchanged.')
     }
   })
 
@@ -309,7 +372,8 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
     }
   })
 
-  const canAdopt = reviewMatches && approved && keptIds.length === 0 &&
+  const canAdopt = reviewMatches && approved && !locksDirty &&
+    !fieldPreviewAction.isPending && keptIds.length === 0 &&
     !regenerateAction.isPending && !adoptAction.isPending && !previewAction.isPending
   const viewedPlayers = review?.preview.state.players ?? []
 
@@ -433,6 +497,8 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
       </p>}
       <p>{cs ? 'Model' : 'Model'}: <code>{review.preview.state.source_kind}</code> · {cs ? 'Otisk náhledu' : 'Preview fingerprint'}: <code>{review.preview.fingerprint.slice(0, 20)}…</code></p>
       <GeneratedPlayerReviewInspector key={review.preview.fingerprint} players={viewedPlayers} locale={locale}
+        selectedPlayerId={selectedPlayerId}
+        onSelectPlayer={fieldEditingEnabled ? setSelectedPlayerId : undefined}
         keepIds={keptIds}
         onKeepChange={canKeepPreview ? (id, checked) => {
           setKeptIds(current => checked
@@ -440,6 +506,22 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
             : current.filter(item => item !== id))
           setApproved(false)
         } : undefined} />
+      {selectedPlayerId && viewedPlayers.some(p=>p.player_id===selectedPlayerId) &&
+        <GeneratedPlayerFieldLockEditor
+          key={selectedPlayerId + ':' + review.preview.fingerprint}
+          player={viewedPlayers.find(p=>p.player_id===selectedPlayerId)!}
+          locks={pendingFieldLocks}
+          onChange={onPreviewFieldChange}
+          onApply={()=>fieldPreviewAction.mutate(false)}
+          onRegenerate={()=>fieldPreviewAction.mutate(true)}
+          onClose={()=>setSelectedPlayerId(null)}
+          dirty={locksDirty} busy={fieldPreviewAction.isPending}
+          disabled={!fieldEditingEnabled || keptIds.length > 0}
+          error={fieldPreviewAction.error ? formatApiError(fieldPreviewAction.error) : null}
+          seed={rerollSeed}
+        />}
+      {fieldPreviewAction.error && !selectedPlayerId &&
+        <p role="alert">Field edit conflict: {formatApiError(fieldPreviewAction.error)}</p>}
       {canKeepPreview && <section aria-label="Session Keep regeneration">
         <h5>{cs ? 'Keep vybraných a regenerace ostatních' : 'Keep selected, regenerate remaining'}</h5>
         <p className="status">{cs

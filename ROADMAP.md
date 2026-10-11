@@ -1,4 +1,33 @@
-# Active frontend implementation order — 11 October 2026 / Master v78
+# Active frontend implementation order — 11 October 2026 / Master v79
+
+Verified buuk `d1090495f3771e97995b94a6f1d119e7218a816b`, merge #1383.
+See [v79 audit](docs/PRE_ALPHA_FRONTEND_CHECKPOINT_V79_2026_10_11.md).
+#1374 integration, typed Region/Travel Region, 1,000-player acceptance, repeated Keep,
+first source-field locks, saved proposals and exact country quotas are now integrated.
+
+1. Unify evolving field edits/locks with authenticated repeated Keep and exact proposal restore.
+2. Permit exact stale-proposal inspection; explicit target revalidation remains separate and
+   stale Adopt fails closed. No hidden regeneration or mutation on Open.
+3. Implement temporary country+serial naming and approved standalone generator layout/
+   configurable supported columns, without fake canonical OVR or unsupported physical values.
+4. Add bulk preview actions with explicit selection, before/after and one session Undo.
+   Selected-profile Add needs safe generic append/persistence and remainder/duplicate handling.
+5. Build brief World overview and six-tab owned country detail, population/rating editors and
+   intake projections; preserve rating interpolation vs population nearest-year distinction.
+6. Build weekly/list Run Calendar, six-tab Edition, phase switch only in Draw/Groups, three-tab
+   match detail/recorded Replay, Simulation console and ranking points breakdown.
+7. Continue simultaneous partial-group conditions, presets/shared older-player development,
+   canonical model migration, general additions, opt-in future profiles and season integration.
+   Never convert UI approval into invented numerical or sport mechanics.
+
+World's specific brief overview is approved in §27.21. General nested population groups,
+Automatic total from partial quotas, Player/Hybrid schema and precise calibration remain OPEN.
+Keep wider pre-alpha/full-season/50-season release gates. User merges; one coherent base=buuk PR
+per slice with all required latest-head checks green. Refresh actual code/open PRs each time.
+
+## Earlier roadmap entries — superseded dated history
+
+# Historical frontend implementation order — 11 October 2026 / Master v78
 
 Verified buuk `55a2e415d5d76b27017c5667280c1d5a7647fc33`, merge #1373.
 See [v78 audit](docs/PRE_ALPHA_FRONTEND_CHECKPOINT_V78_2026_10_11.md).

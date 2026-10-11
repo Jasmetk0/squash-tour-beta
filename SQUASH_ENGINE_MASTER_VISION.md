@@ -2,8 +2,8 @@
 
 ## Kompletní průběžná specifikace a registr rozhodnutí
 
-**Verze dokumentu:** 78
-**Aktualizováno:** 11. 10. 2026 – generační podmínky a doplnění zbytku, dočasná jména, jednotlivé zámky, uložené návrhy, rozložení generátoru a audit PR #1367–1374
+**Verze dokumentu:** 79
+**Aktualizováno:** 11. 10. 2026 – kompletní konsolidace navazujícího Admin návrhu, generační výběr/bulk/Undo, World a sportovní stránky včetně bodového rozpisu, audit PR #1376–1383
 **Účel dokumentu:** jediný průběžný zdroj pravdy pro to, co má Squash Engine být, co už je rozhodnuté, jakým směrem se projekt ubírá, co se musí teprve dořešit a – v oddělené evidenční vrstvě – co je prokazatelně naprogramované a sloučené.
 
 Tento dokument primárně popisuje zamýšlený produkt. Samotná přítomnost produktového pravidla neznamená, že už je naprogramované. Ověřený stav kódu se od verze 51 zapisuje výhradně do samostatné kapitoly 35; implementace sama nikdy nevytváří ani nemění produktový canon.
@@ -28,7 +28,9 @@ Tento dokument primárně popisuje zamýšlený produkt. Samotná přítomnost p
 
 **Nová rozhodnutí v74:** šest atributů zemí používá už v pre-alpha škálu `1–10` s nejvýše jedním desetinným místem (krok `0,1`). `Court Count` není součástí pre-alpha zadávání, balíčků ani simulačních vstupů; je odložen do pozdější verze. Dostupnost sportu nadále vyjadřuje `Squash Access`. Změna škály vyžaduje verzovanou migraci a úpravu výpočtů, nikoliv pouhé přeznačení hodnot; historické snapshoty a replay se nepřepisují. Význam šesti atributů a zákaz národního bonusu k vrozenému potenciálu se nemění. Jde o produktové rozhodnutí, nikoliv tvrzení o hotové implementaci.
 
-**Nová rozhodnutí v78:** doplnění dávky podle světa při explicitním celkovém počtu se zachováním přesných kvót; současné podmínky pro část jedné skupiny bez dvojího započítání; dočasné názvy země + pořadové číslo; individuální zámky vlastností/atributů; přesné uložení návrhu a samostatná generační stránka. Detail 9.6, 27.20, 31.33. Auditovaný buuk po #1373 a chybějící integrace #1374 jsou odděleně v 35.35. Nejde o vydání pre-alpha.
+**Nová rozhodnutí v79:** sloupce/výběr a hromadné úpravy generátoru, přidání celé dávky nebo vybraných profilů, stručný World přehled, šest záložek země včetně rekordů/turnajů, Run Calendar, Edition/qualification layout, match/replay, Simulation konzole a klikací body Official Ranking/Finals Race. Detail 9.7, 27.21, 31.34. Aktuální scoped audit po #1383 je v 35.36; nejde o vydání pre-alpha.
+
+**Historická rozhodnutí v78:** doplnění dávky podle světa při explicitním celkovém počtu se zachováním přesných kvót; současné podmínky pro část jedné skupiny bez dvojího započítání; dočasné názvy země + pořadové číslo; individuální zámky vlastností/atributů; přesné uložení návrhu a samostatná generační stránka. Detail 9.6, 27.20, 31.33. Auditovaný buuk po #1373 a chybějící integrace #1374 jsou odděleně v 35.35. Nejde o vydání pre-alpha.
 
 **Historická rozhodnutí při vydání v77 (otevřené případy níže nahrazuje v78/9.6):** jednotný hráčský generátor, závazné podmínky a skupiny, přirozená/rovnoměrná/vlastní distribuce s oddělením pravděpodobnosti a přesných počtů, upravitelný náhled a session Ponechat, předvolby a zjednodušený vývoj starších hráčů. Admin může explicitně zobrazit již připravené budoucí profily; veřejná/AI znalost se nemění. Rozhodnuté jsou Players/profile tabs, Talent Preview tabulka a country/population/rating editory. Chybějící country rating se uvnitř známého intervalu lineárně interpoluje, mimo něj použije nejbližší hodnotu; populační pravidlo se nemění. Automatické doplnění nezadaného zbytku zůstává výslovně otevřené. Detail v 5.3, 9.4–9.5, 27.19 a 31.32; implementační audit šesti nových PR v 35.34. Nejde o vydání pre-alpha ani potvrzení její úplnosti.
 
@@ -1536,6 +1538,17 @@ Pokud Tournament Ranking Snapshot předchází jeho vstupu na Tour, je pro danou
 **[ROZHODNUTO PRO PRE-ALPHA]** V generačním náhledu lze u konkrétního hráče zamknout jednotlivé vlastnosti a atributy, například ručně zadanou výšku 185 cm, a regenerovat zbytek jeho profilu. Zamčená pole jsou viditelně označena a lze je jednotlivě odemknout/vrátit na Automatic. Zůstávají zachovány závazné podmínky, konzistence profilu i přesné počty. Konflikt se zobrazí a vyžaduje výslovnou opravu; engine pole tiše neodemkne ani nepřepíše. Odlišují se (a) zamčené pole náhledu, (b) Ponechat celý hráčský profil v session a (c) trvalý Locked Player. První dvě volby chrání generační návrh, nikoliv atributy po zbytek kariéry v běžné simulaci.
 
 **[ROZHODNUTO PRO PRE-ALPHA]** Nedokončený generační návrh lze uložit a později otevřít se stejnými konkrétními hráči, podmínkami, seedem, celými ponechanými profily i jednotlivými zamčenými poli, včetně provenance cílového Runu/branche, času, vstupů a modelu. Otevření uloženého návrhu samo znovu negeneruje hráče. Uložit návrh nepřidává hráče do Runu; explicitní `Přidat do Runu` a běžný ruční Save jsou samostatné kroky. Změněný cílový svět/branch/HEAD vyvolá upozornění a novou validaci před přidáním, nikoliv tichou regeneraci. Návrh s konkrétními výsledky je odlišný od pojmenované předvolby, která uchovává zadání. Technické úložiště může využít kompatibilní existující draft/session mechanismus; tímto není schváleno Player/Hybrid Package schema.
+
+
+## 9.7 Práce s celou dávkou a výběrem — rozhodnutí v79
+
+**[ROZHODNUTO PRO PRE-ALPHA]** Hráčská tabulka generačního náhledu nabízí volbu sloupců a pamatuje uživatelovu volbu. Cílový základ je jméno, země, věk, OVR, Potential OVR, vývojový typ a session Ponechat; další dostupné sloupce zahrnují rukovost, výšku a konkrétní atributy. Ručně upravené/zamčené hodnoty mají rozpoznatelný indikátor s rozpisem po kliknutí. Jde o hodnoty skutečného modelu: legacy schopnost 1–99 se nesmí přeznačit na kanonický OVR 0–200 a chybějící vlastnosti se nevymýšlejí. Klik na hráče otevře existující postranní editor a zachová filtry, stránku a pozici seznamu. Počet na stránce, počet odpovídající filtrům a celková dávka jsou odlišeny.
+
+**[ROZHODNUTO PRO PRE-ALPHA]** Hromadná úprava náhledu pracuje s explicitním výběrem hráčů. `Vybrat zobrazené` a `Vybrat všechny odpovídající filtru` jsou odlišné akce s počty; filtrace není sama výběrem. Pro podporovaná pole lze hromadně nastavit hodnotu, vrátit ji na Automatic a zamknout/odemknout. Před potvrzením je viditelná množina zasažených hráčů, před/po a dostupné odvozené dopady. Zachovají se závazné podmínky, přesné kvóty a konzistence profilů; konflikt vyžaduje výslovnou opravu. Celá potvrzená hromadná operace je jeden krok Undo v generační session. Nejde o rollback již uloženého Runu ani přepis historie.
+
+**[ROZHODNUTO PRO PRE-ALPHA]** Přidání nabízí explicitní `Přidat celou dávku` a `Přidat vybrané hráče`, vždy s přesným počtem a konkrétní množinou v potvrzení. Pouhá stránka/filtr neurčuje přidávané hráče. Nevybraný zbytek zůstává v návrhu. Pokud výběr neplní závazné počty/podmínky původní dávky, uživatel musí před přidáním výslovně upravit zadání tohoto dílčího přidání a znovu je validovat; původní kvóty se nesmějí tiše ignorovat. Přidání zachovává stabilní identity a ochranu proti duplicitnímu přidání; náhled ani výběr sám Run nemění. Výslovné přidání vytvoří Working Draft změnu, běžný ruční Save následuje samostatně. Dílčí přidání není automatickým potvrzením připravenosti celého počátečního světa ke všem simulačním operacím.
+
+**[IMPLEMENTAČNÍ HRANICE]** Schválený cíl je obecný. Současná první-cohort implementace přidává pouze celý InitialWorld a není tímto zápisem změněna na obecný append ani na částečné nahrazení autoritativního světa. Rozšiřující transakční kontrakt musí být verzovaný, zdokumentovaný a ověřený; nerozhoduje nové sportovní mechaniky.
 
 
 # 10. Hráčský profil a identita
@@ -4855,7 +4868,7 @@ Přechod na globální Package stránku opustí Runový scope, ale nesmí zahodi
 - `Population & Demography` – populační vývoj napříč zeměmi a časem, porovnávání a případné hromadné datové operace,
 - `Talent Preview` – pravděpodobnostní náhled potenciálových tříd hráčů, kteří se mohou objevit ve zvoleném období, včetně očekávaného rozdělení podle zemí.
 
-Celý seznam, jeho názvy, pořadí i přesné hranice stránek zůstávají pouze silným směrem. `World Overview` není závislé na mapě fiktivního světa. Mapa se může v budoucnu přidat, pokud vznikne použitelný podklad, ale její obtížné vytvoření nesmí blokovat tuto stránku. `Talent Preview` pracuje s pravděpodobnostmi generačního prostředí zemí; již skutečně vzniklí konkrétní hráči patří do `Players`.
+Celý strom zůstává pouze silným směrem mimo konkrétní později schválené stránky v 27.19–27.21. `World Overview` není závislé na mapě fiktivního světa. Mapa se může v budoucnu přidat, pokud vznikne použitelný podklad, ale její obtížné vytvoření nesmí blokovat tuto stránku. `Talent Preview` pracuje s pravděpodobnostmi generačního prostředí zemí; již skutečně vzniklí konkrétní hráči patří do `Players`.
 
 **[OTEVŘENO]** Samostatné budoucí stránky `Regions & Groups`, `World Events` a `Names & Identity Data` mohou vzniknout teprve tehdy, až pro ně bude dost skutečných funkcí. Do současného stromu se nepřidávají jen kvůli úplnosti.
 
@@ -4935,12 +4948,41 @@ Akce zahrnují použití v Runu, vytvoření kopie a export v podporovaném rozs
 
 **[ROZHODNUTO PRO PRE-ALPHA]** Dávkový country-rating editor má matici vybraných zemí × šest ratingů a výběr roku/období. Lze měnit jednotlivé buňky nebo použít hodnotu na explicitně vybranou množinu. Ukazuje před/po diff včetně časového/generačního dopadu. Interpolace a jednostranné použití nejbližšího známého ratingu se řídí 5.3/v77, explicitní editace dopočítaného roku vytvoří kotvu. Import/validace zachovávají škálu a historii.
 
-**[OTEVŘENO]** Podrobná World Overview stránka nebyla schválena. Přesné škály varování, matematika distribucí, numerické defaulty poměrů a algoritmy vývoje se budou kalibrovat na funkčních nástrojích. Doplnění při explicitním celkovém počtu a současné podmínky v téže skupině jsou rozhodnuté v 9.6; další otevřené případy jsou uvedené tam. Player/hybrid Package schema zůstává podle 4.9 otevřené. Nový frontendový souhlas neslouží k domýšlení těchto pravidel.
+**[AKTUALIZOVÁNO v79]** Konkrétní stručný World přehled je nyní schválen v 27.21. Přesné škály varování, matematika distribucí, numerické defaulty poměrů a algoritmy vývoje se budou kalibrovat na funkčních nástrojích. Doplnění při explicitním celkovém počtu a současné podmínky v téže skupině jsou rozhodnuté v 9.6; další otevřené případy jsou uvedené tam. Player/hybrid Package schema zůstává podle 4.9 otevřené. Nový frontendový souhlas neslouží k domýšlení těchto pravidel.
 
 
 ## 27.20 Stránka generování — schválené rozložení v78
 
 **[ROZHODNUTO PRO PRE-ALPHA]** Generátor je samostatná stránka. Vlevo má sbalitelný panel společných podmínek, skupin a předvoleb, vpravo shrnutí, konkrétní varování a hráčskou tabulku. Sbalení podmínek rozšíří prostor tabulky. Klik na hráče otevře postranní editor se zachováním pozice a kontextu seznamu; podporované individuální hodnoty a zámky se řídí 9.6. Hlavní akce jsou `Generovat`, `Uložit návrh` a `Přidat do Runu`, se zřetelným rozlišením následného ručního Save. Nezavádí se World/Custom rozdělení ani modální průvodce. Rozložení musí být použitelné i pro velkou dávku; současný počáteční limit 128 není produktový limit.
+
+
+## 27.21 Navazující Admin stránky — schválený frontendový kontrakt v79
+
+**[ROZHODNUTO PRO PRE-ALPHA — GENERÁTOR]** Volitelné sloupce, indikace ručních zásahů, explicitní vícenásobný výběr, hromadný před/po diff a Undo i přidání celé dávky/vybraných profilů se řídí 9.7. Session Ponechat, výběr pro hromadnou akci a výběr pro přidání mají odlišný význam. Nevzniká druhý World/Custom generátor.
+
+**[ROZHODNUTO PRO PRE-ALPHA — WORLD]** Hlavní stránka World začne stručným přehledem: identita světa, zvolený rok, původní balíček a Runové úpravy; tři kompaktní souhrny počtu zemí, světové populace a zemí s neúplnými daty. Pod nimi je vyhledatelná tabulka zemí s dostupnými populačními/ratingovými údaji pro zvolený rok a odkazem do detailu. Talent Preview zůstává samostatnou stránkou/záložkou. Neúplný populační součet musí být označen jako neúplný, nikoliv vydáván za úplnou světovou populaci. Počet zemí s mezerami je informativní a nenahrazuje operation-scoped validaci. Toto rozhodnutí nahrazuje staré OPEN pouze pro tento konkrétní přehled, nikoliv pro nevyřešené matematické ukazatele síly světa.
+
+**[ROZHODNUTO PRO PRE-ALPHA — COUNTRY DETAIL]** Samostatný profil země rozšiřuje 27.19 na šest záložek: `Přehled / Overview`, `Populace / Population`, `Atributy země / Country Attributes`, `Hráči a talenty / Players & Talent`, `Rekordy / Records`, `Turnaje / Tournaments`. Hlavička zachová zemi a zvolený rok. Přehled ukazuje skutečné základní údaje včetně odlišných Region, Travel Region a Timezone Area; populační a ratingové grafy/tabulky/editory zachovají provenance explicitní/interpolované/fallback hodnoty a pravidla 5.1/5.3. Hráči a talenty odliší skutečné hráče, očekávání, intake a případnou opt-in budoucí vrstvu. Návrat do seznamu zachová jeho filtry a pozici.
+
+**[ROZHODNUTO PRO PRE-ALPHA — COUNTRY RECORDS]** Rekordy čerpají ze skutečné historie a odkazují na hráče, hodnotu a čas/výsledek, kde je to dostupné. Nejlepší dosažený ranking, tituly nebo výhry jsou příklady zobrazení, nikoliv tímto stanovený úplný katalog nebo nové výpočtové formule. Sportovní rekord země respektuje historickou reprezentaci při daném výsledku a již platná pravidla 10.3 a 21.3; původ hráče a dnešní reprezentace se nezaměňují. Nedostupná historie není smyšlený rekord.
+
+**[ROZHODNUTO PRO PRE-ALPHA — COUNTRY TOURNAMENTS]** Turnaje země výchozí zobrazí aktuální sezonu. Sezonní oddíly dovolí scroll do minulosti a v Adminu i do již skutečně naplánované budoucnosti; `Aktuální sezona` vrátí na dnešní sezonu. Budoucí plán není budoucí výsledek a prohlížení neposouvá simulaci. Umístění země se čte z konkrétní Edition, protože místo série se může mezi ročníky měnit. Klik vede do společného detailu turnajové Edition.
+
+**[ROZHODNUTO PRO PRE-ALPHA — RUN CALENDAR]** Kalendář výchozí používá kompaktní weekový přehled 61 Season Weeks s turnajovými termíny/stavy, souběžné turnaje vedle sebe. Lze přepnout na běžný vyhledatelný/řaditelný seznam. Filtry zahrnují Tour, kategorii a zemi; klik otevírá Edition. Čtení kalendáře nemění globální simulační osu ani nevytváří výsledky.
+
+**[ROZHODNUTO PRO PRE-ALPHA — TOURNAMENT EDITION]** Samostatná stránka má hlavičku s názvem, sezonou, místem a stavem; záložky `Přehled / Overview`, `Přihlášky a účastníci / Entries & Participants`, `Pavouk/skupiny / Draw & Groups`, `Program a zápasy / Schedule & Matches`, `Výsledky / Results`, `Nastavení / Settings`. Přehled ukáže skutečný stav a další požadovaný krok; účastníci přihlášky, kvalifikanty, WC, rezervy a dostupná zdůvodnění; formátový pohled pavouk/skupiny; program odehrané i plánované zápasy; výsledky skutečné umístění/body; nastavení pravidla, velikosti a organizační okna. Návrat zachová pozici kalendáře.
+
+**[ROZHODNUTO PRO PRE-ALPHA — QUALIFICATION / MAIN]** Přepínač `Hlavní soutěž / Kvalifikace` patří **pouze do Pavouk/skupiny**. Ve všech ostatních relevantních záložkách jsou obě části na jedné stránce: hlavní soutěž první a výraznější, kvalifikace níže. Tlačítka `Hlavní soutěž` a `Kvalifikace` jsou odkazy pro posun na daný oddíl a zůstávají při scrollování dostupná; nejsou filtrem ani druhými záložkami. Společné informace o Edition se neduplikují, odlišná nastavení jsou ve svých oddílech. Bez kvalifikace se nepotřebné ovládání nezobrazuje. Jde o jednu Edition se společnou historií a skutečnými kvalifikačními postupy, nikoliv dva nesouvisející turnaje.
+
+**[ROZHODNUTO PRO PRE-ALPHA — MATCH DETAIL]** Klik na zápas otevře samostatnou stránku `Přehled / Overview`, `Statistiky / Statistics`, `Průběh a Replay / Course & Replay`. Přehled ukáže hráče, skóre, dostupný předzápasový stav a důvod případného nestandardního ukončení. Statistiky a průběh čerpají ze skutečně uložených dat. Návrat zachová kontext původního turnaje/seznamu.
+
+**[ROZHODNUTO PRO PRE-ALPHA — REPLAY]** Nahoře jsou hráči, skóre při aktuálním kurzoru, game a dostupný čas; vlevo chronologický seznam rally/událostí s kliknutím pro posun, vpravo vedle sebe dostupné historické stavy obou hráčů. Fyzické/mentální ukazatele čtou skutečné zaznamenané dimenze a nerozhodují dosud otevřenou mechaniku či počet mentálních barů. Ovládání zahrnuje předchozí/další rally, skok na game, přehrát/pozastavit a rychlost; detail rally je rozbalitelný. Replay pouze čte uloženou historii, nedopočítává novou simulaci ani chybějící stavy podle dnešního modelu. Animace kurtu/úderů zůstává pozdější verzí.
+
+**[ROZHODNUTO PRO PRE-ALPHA — SIMULATION]** Hlavní konzole má ovládání dalšího zápasu, dalšího slotu, dokončení weeku a simulace do vybraného dostupného časového bodu; režimy automaticky/se zásahy a tlačítko nastavení zastavování. Chronologicky ukáže další zápasy/organizační přechody, průběh a poslední dokončené události s odkazy. Při rozhodovací pauze zobrazí důvod, možnosti a dostupné doporučení enginu. Cílové rychlé akce zachovávají nejbližší nevyřešený slot, souběžnost, explicitní Week/Season Transition a všechny skutečné blokátory podle kapitol 6 a 31.27. Změna přehrávacího UI není sportovní autorita.
+
+**[ROZHODNUTO PRO PRE-ALPHA — RANKINGS]** Stránka má `Official Ranking` a `Finals Race`, každou s vlastními historicky platnými pravidly. Zobrazuje pořadí, posun oproti skutečnému předchozímu snapshotu, jméno, zemi a body; sezonu a rankingový week lze zvolit v dostupné uložené historii. Jméno otevře profil, **klik na body otevře postranní rozpis** započtených/nezapočtených výsledků, důvodů vyřazení a příslušné expirace, pokud ji daná pravidla mají. Neexistující předchozí snapshot neznamená nulový posun a budoucí nepřidělené body nejsou historie. Nevzniká nový bodový systém ani Live Ranking; ten zůstává mimo první pre-alpha.
+
+**[HRANICE CÍLE A IMPLEMENTACE]** Tato konkrétní UI rozhodnutí jsou závazným cílem pro pre-alpha. Neprohlašují současné produkční služby za úplné, nedomýšlejí Player/Hybrid Package schema, numerickou kalibraci, nové historické výsledky ani zbývající obecné submenu. Nepodporované hodnoty/operace mají být zřetelně nedostupné s důvodem.
 
 
 # 28. Přehled nyní pevně rozhodnutých základů
@@ -5397,7 +5439,7 @@ Také zde platí rozlišení rozsahu z úvodu dokumentu: prozatímní sportovní
 28. World, Category, Series, Calendar a Setup Packages zůstávají rozhodnuté. Od v75 jsou hráči jako Player Package schválení pro pre-alpha; jeho přesné schéma a další budoucí typy zůstávají otevřené.
 29. Starší pracovní strom byl ve v75 nahrazen schválenými hlavními sekcemi `Home / World / Players / Tour / Rankings & Analytics / Simulation / History & Branches` a odděleným `Run Management`. Otevřené jsou jejich přesné podstránky a detailní UX.
 30. `Rankings & Analytics` pracovně obsahuje Rankings, Ratings, Odds a Statistics/Reports. `Tour` definuje oficiální pravidla, zatímco analytická kategorie kontroluje vypočtené výsledky a modely Elo či kurzů; konečné rozdělení není rozhodnuté.
-31. `World` pracovně obsahuje World Overview, Countries, Population & Demography a Talent Preview. Overview funguje jako souhrn a blokový rozcestník bez povinné mapy; celý strom je pouze silným směrem.
+31. `World` pracovně obsahuje World Overview, Countries, Population & Demography a Talent Preview. Celý obecný strom je silným směrem; konkrétní stručný Overview a country stránky byly později schváleny v 27.19–27.21. Mapa není povinná.
 32. Významové oddělení `p` jako přirozené pravděpodobnosti, `δ` jako směrové vzdálenosti `−1 až +1` a `α` jako její bezsměrové velikosti `0 až 1` je rozhodnuté. Silným směrem zůstává univerzální použití na zápasy, hráče, turnaje, sezony, země a talentové generace; přesná definice typické oblasti a nuly, znaménka, normalizace, vícerozměrná agregace a multimodální distribuce zůstávají otevřené.
 33. Nezávazný Forecast Engine může z podporovaného uloženého bodu analyzovat jeden zápas i libovolně vzdálenou budoucnost. Nemění Run, branch, historii, čas ani budoucí náhodnost a na rozdíl od Candidate Branches vytváří statistický report, nikoliv automaticky pokračovatelnou časovou linii; pouze výslovně vybraný vzorek lze později zrekonstruovat a materializovat jako branch.
 34. Forecast pracovně dovolí pevný počet pokusů od přibližně 10 po miliardy či více i budoucí Target Accuracy. Předem a průběžně ukazuje očekávaný čas, zátěž, prostor, statistickou nejistotu a konvergenci a dlouhá úloha používá Task Center.
@@ -6020,14 +6062,21 @@ Toto rozhodnutí upřesňuje UX otevřené části PAQ-119, nikoliv celý katalo
 
 **[ROZHODNUTO PRO PRE-ALPHA]** Platí celý nový kontrakt country-rating resolveru v 5.3, jednotné generování v 9.4, explicitní budoucí Admin vrstva v 9.5 a Players/World frontend v 27.19. Tyto cíle nepředstavují potvrzení dokončeného backendu nebo frontendových formulářů. Již rozhodnuté CSV/XLSX, lock, nezávislé Run kopie, determinismus a historická veřejná znalost se zachovávají.
 
-**[HISTORICKÝ STAV PŘI v77; NAVAZUJE v78]** Při v77 byla odpověď na doplnění zbytku odložena. Pozdější potvrzení v 9.6 uzavřelo explicitní total a současné podmínky pro část stejné skupiny. Další případy, Player Package schema, přesná numerická kalibrace a World Overview zůstávají otevřené. Existující historické počty/ID PAQ se mechanicky nemění a v77 nedeklaruje novou plnou akceptaci nebo vydání.
+**[HISTORICKÝ STAV PŘI v77; NAVAZUJE v78]** Při v77 byla odpověď na doplnění zbytku odložena. Pozdější potvrzení v 9.6 uzavřelo explicitní total a současné podmínky pro část stejné skupiny. Další případy, Player Package schema a přesná numerická kalibrace zůstávají otevřené; konkrétní World přehled později schválil v79/27.21. Existující historické počty/ID PAQ se mechanicky nemění a v77 nedeklaruje novou plnou akceptaci nebo vydání.
 
 
 ## 31.33 Konsolidace schváleného bloku v78 (11. 10. 2026)
 
 **[ROZHODNUTO PRO PRE-ALPHA]** Nový navazující blok uzavírá současné podmínky pro část stejné skupiny s jedním započítáním hráče, automatické doplnění při explicitním celkovém počtu se zachováním přesných celodávkových kvót, jednotlivé zámky vlastností/atributů náhledu, přesně uložitelný nedokončený návrh a rozložení samostatné generační stránky. Dočasné jméno je název země + pořadové číslo; před vydáním se může změnit. Detail 9.6 a 27.20.
 
-**[OTEVŘENO]** Libovolné vnořené/překrývající se populační skupiny nad tento konkrétní případ, Automatic total s dílčími přesnými kvótami, Player/Hybrid Package schema, World Overview a přesná kalibrace zůstávají otevřené. Historické počty/ID PAQ se mechanicky nemění. Implementační audit je oddělený v 35.35; v78 není vydání pre-alpha ani potvrzení plné implementace.
+**[OTEVŘENO]** Libovolné vnořené/překrývající se populační skupiny nad tento konkrétní případ, Automatic total s dílčími přesnými kvótami, Player/Hybrid Package schema a přesná kalibrace zůstávají otevřené; konkrétní World přehled později schválil v79/27.21. Historické počty/ID PAQ se mechanicky nemění. Implementační audit je oddělený v 35.35; v78 není vydání pre-alpha ani potvrzení plné implementace.
+
+
+## 31.34 Konsolidace schváleného bloku v79 (11. 10. 2026)
+
+**[ROZHODNUTO PRO PRE-ALPHA]** Generační tabulka má nastavitelné sloupce a indikace manuálních hodnot/zámků; explicitní výběr pro hromadné úpravy s před/po a jedním session Undo; přidání celé dávky nebo konkrétních vybraných hráčů s opětovnou validací závazných podmínek. World dostává stručný přehled, country profil šest záložek včetně Records/Tournaments a sezonně scrollovatelný kalendář. Potvrzeny jsou Run Calendar, šest záložek Edition, tři záložky zápasu, uložený Replay, Simulation konzole a Official Ranking/Finals Race s klikacím rozpisem bodů. Přepínač kvalifikace/hlavní části je jen v Draw/Groups; jinde hlavní část první, kvalifikace níže a tlačítka pro scroll. Detail 9.7 a 27.21.
+
+**[STATUS]** Konkrétní World přehled již není OPEN; libovolné vnořené/překrývající se populační skupiny nad 9.6, Automatic total s částečnými přesnými kvótami, Player/Hybrid Package schema a numerická kalibrace zůstávají otevřené. Jde o konsolidaci produktu a scoped implementační audit v 35.36, nikoliv release gate, potvrzení plné implementace ani mechanickou změnu historických 157 PAQ ID/počtů.
 
 
 # 32. Procentuální audit stavu specifikace
@@ -6745,6 +6794,24 @@ Ověřený integrační `buuk`: `55a2e415d5d76b27017c5667280c1d5a7647fc33`, merg
 Všechny vrácené workflow běhy na uvedených final feature HEADech byly completed/success. To dokládá jejich příslušné řezy, nikoliv přítomnost #1374 v buuk, plnou matematiku realistického generování, 50 sezon nebo hotovou pre-alpha.
 
 **Navazující pořadí:** nejprve bezpečně doplnit #1374 do čerstvého buuk a opravit geografické podmínky; potom odstranit omezení počátečního review/adoption na 128 a prokázat alespoň 1 000 hráčů přes skutečný Save/restart; následně implementovat generační session, opakovaný Keep, individuální editor/zámky a přesné uložené návrhy, skupinové podmínky s doplněním zbytku a další schválené World/Players editory. Každý soudržný řez má vlastní PR do buuk a aktuální důkaz integrace. Merge vlastní uživatel. Podrobná evidence: `docs/PRE_ALPHA_FRONTEND_CHECKPOINT_V78_2026_10_11.md`.
+
+
+## 35.36 Frontendový checkpoint v79 — PR #1376–1383 (11. 10. 2026)
+
+**Auditovaný skutečný buuk:** `d1090495f3771e97995b94a6f1d119e7218a816b`, merge #1383; předchozí Master v78 je v #1375. Osm nových PR je sloučených do buuk. Čteny jejich patche, finální HEAD workflow/job výsledky, relevantní produkční backend/UI a browser skripty. Nejde o nezávislé spuštění plné testové sady.
+
+- **#1376:** session Keep je nyní na skutečném buuk; integrační chybějící #1374 z v78 je vyřešeno.
+- **#1377:** oddělené Geographic Region a Travel Region, kolizní regrese; legacy OR a absent-field hashe zůstávají pro replay.
+- **#1378:** UI první-cohort dávky 1–1 000, 50řádková paginace náhledu, plná identita bez duplicit; skutečný Chromium/SQLite průchod přes Adopt, Save, ranking a restart.
+- **#1379:** autentizovaná opakovaná Keep historie, měnitelný session výběr a ochrana proti neaplikované změně; technický limit 17 regenerací není sportovní canon.
+- **#1380:** editor devíti source-model číselných polí 1–99, ověřené preview zámky a provenance; není to kanonických 57 atributů/OVR 0–200. Editace je v UI dostupná pouze před aktivní Keep historií.
+- **#1381:** neměnné Run/Branch-scoped SQLite návrhy s přesným uloženým náhledem, pending výběrem/zámky, seedem a provenance; otevření nevolá generátor. Změna HEAD/draft/World ale dnes blokuje samotné otevření místo odděleného čtecího náhledu a nové validace; maximum 12 je implementační limit.
+- **#1382:** ruší pouze zastaralé browser běhy stejného PR/workflow; ruční workflow_dispatch má vlastní run_id a nepřebírá rušení.
+- **#1383:** přesné celodávkové country kvóty včetně nulové, doplnění ze způsobilých ne-kvótových zemí existujícím populačním kernelem, fail-closed konflikty a úplná UI kontrola; nejde o obecný solver potenciálu/rukovosti.
+
+**Ověření:** příslušné workflow na všech osmi finálních feature HEAD skončily success. #1383 Fast CI vykazuje 32 backend testů; frontend log 9 souborů/155 testů a dalších 2 souborů/33 testů plus build. Jeho skutečný browser log potvrzuje `1000-PLAYER BROWSER/SQLITE ACCEPTANCE PASSED`: 20 + 10 pevných hráčů zemí, 970 automaticky, všechny identity po Save/rankingu/restartu. #1381 browser zahrnuje dva Keep průchody, field edit před Keep, proposal reload a skutečný turnaj/replay po restartu. To neprokazuje editaci po Keep, obecné přidání do existujícího poolu, celý rok či 50 sezon ani realističnost.
+
+**Zbývající aktivní mezery:** integrované úpravy/zámky po libovolném Keep kroku a po obnovení návrhu; čtecí otevření zastaralého návrhu s bezpečnou explicitní revalidací; dočasné názvy country+serial; schválené sloupce/bulk Undo/subset Add a obecné generační workflow; skupinové podmínky, předvolby, společný vývoj starších hráčů, canonical attributes/OVR; World/country editory, v79 stránky a širší sezonní integrace. Historické candidate docs nejsou současným seznamem chyb ani potvrzením hotovosti. Detail a navazující pořadí jsou v `docs/PRE_ALPHA_FRONTEND_CHECKPOINT_V79_2026_10_11.md`, CURRENT_STATE a ROADMAP.
 
 
 # 36. AI-Assisted Development / Development Operating Model

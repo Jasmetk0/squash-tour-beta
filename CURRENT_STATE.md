@@ -1,3 +1,40 @@
+# Active audited checkpoint — Master v79 / 11 October 2026
+
+Actual buuk: `d1090495f3771e97995b94a6f1d119e7218a816b`, merge #1383.
+[Complete scoped audit](docs/PRE_ALPHA_FRONTEND_CHECKPOINT_V79_2026_10_11.md).
+Master §§9.7, 27.21, 31.34 are new **approved targets**; §35.36 records implementation only.
+
+#1376–1383 are integrated. The earlier #1374 missing-integration finding is resolved.
+Geographic/Travel Region are separate; 1,000-player whole-cohort review/Adopt/Save/ranking/
+SQLite restart is proven by actual Chromium; repeated Keep, nine legacy source-field
+locks, exact persisted proposals and explicit-total exact country quotas are present.
+Their final feature HEAD applicable hosted workflows are green. This is not a full
+regression/release/realism certificate.
+
+**Next coherent PR:** authenticated session edits/locks after Keep and after restoring
+a saved proposal (F79-01). Current UI disables field editing after the first Keep pass;
+changing old request locks would invalidate source-history fingerprints. Preserve old
+replay hashes and authority; do not trust browser player objects.
+
+Then separate exact stale-proposal read from current-target revalidation (F79-02).
+Currently a changed HEAD/draft/World blocks Open itself. Inspection must not regenerate,
+mutate saved proposal or bypass stale Adopt protections. Country+serial naming is
+still absent (F79-03). Current limits 17 rerolls, 12 proposal snapshots and 2,000 lock
+records are technical caps, not sport canon.
+
+Pending approved work: configurable supported columns, standalone layout, bulk selection/
+preview diff/one session Undo, selected-profile Add through a safe generic append
+contract, World/country detail, weekly calendar, Edition qualification layout,
+match/replay, Simulation and ranking points side panel. Legacy source 1–99 is not
+canonical 57-field/OVR 0–200. General nested group semantics, Automatic total with
+partial quotas, Player/Hybrid schema and numerical calibration remain OPEN.
+Preserve wider generator/intake/season/release goals. User merges; refresh buuk before work.
+
+## Earlier per-PR entries — dated implementation history
+
+The following candidate/checkpoint entries retain original evidence. Their limitations
+are scoped to their date/commit and are superseded by the integrated v79 audit above.
+
 # Candidate — exact country quotas with automatic remainder (11 October 2026)
 
 - Fresh `buuk 77caff6677c416c0a0661aca799de8da5f03fc79` after #1382: first-season Run-owned Generate now accepts optional exact **whole-batch** country counts under an explicit total. The existing deterministic saved-World population weighting fills only countries without explicit quotas; a zero quota excludes that country. Quota identities are disjoint, not a claim to solve overlapping potential/handedness groups.
@@ -45,7 +82,7 @@
 
 # Current implementation and next action
 
-## Active frontend checkpoint v78 — verified 11 October 2026
+## Historical frontend checkpoint v78 — verified 11 October 2026
 
 - Actual buuk `55a2e415d5d76b27017c5667280c1d5a7647fc33`, merge #1373.
 - #1367 navigation/World Apply protections, #1368 canonical Saved Branch Players,

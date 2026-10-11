@@ -536,7 +536,7 @@ Tournament Prestige is provisional; Tournament Appeal is even weaker. UX must no
 
 Do not silently finalize:
 
-- detailed subpages and layout of the approved v75 Global/Run Admin categories,
+- remaining subpages beyond the specifically approved v75–v79 Global/Run Admin layouts,
 - full Viewer public-site navigation,
 - exact MSA menu and standalone News page,
 - Viewer reveal modes,
@@ -567,3 +567,13 @@ The canonical target is Master §§5.3, 9.4–9.5, 27.19 and 31.32, distilled in
 ## Newer approved generation page/session contract — Master v78
 
 Master §§9.6 and 27.20 govern the standalone page: collapsible conditions/groups/presets on the left, summary/warnings/roster on the right, and a player side editor preserving list context. Generate, Save proposal and Add to Run are distinct; manual Run Save follows confirmed Add. Individual preview field/attribute locks are visible and independently reversible, separate from whole-player session Keep and persistent Locked Player. Exact saved proposals reopen the same players/conditions/locks/seed and provenance without regeneration; changed target context requires explicit revalidation. Partial conditions can share a player counted once; explicit-total remainder preserves whole-batch exact quotas. Temporary generated names use country name + generation serial. Do not treat these approved targets as shipped UI or silently invent unapproved general group semantics.
+
+## Selected Admin workflow decisions — Master v79
+
+Master §§9.7, 27.21 and 31.34 approve configurable generator columns, explicit bulk selection with before/after and one session Undo, and whole-batch or selected-profile Add with explicit subset constraint adjustment/revalidation. Filters, whole-player Keep and action selection are distinct; confirmed Add stages Working Draft and manual Run Save remains separate.
+
+World now has an approved brief identity/year/provenance overview, three factual summaries (countries, population, countries with incomplete data) and a country table. The country profile has Overview / Population / Country Attributes / Players & Talent / Records / Tournaments. Season sections start at current season and permit past/future Admin browsing of actual stored plans without simulation or invented results. Records remain derived from historically eligible stored results.
+
+Run Calendar has a 61-week default view and ordinary list alternative. Edition detail has Overview / Entries & Participants / Draw & Groups / Schedule & Matches / Results / Settings. **Qualification/Main switching is only in Draw & Groups**; elsewhere the main section is first, qualification below, with scroll anchors rather than phase filters. Match detail has Overview / Statistics / Course & Replay; replay reads stored rally/event history and actual states, with no re-simulation or court animation. Simulation console preserves global nearest-slot/simultaneity/transition safeguards.
+
+Official Ranking and Finals Race use their independently effective historical policies/snapshots; player names open profiles and points open a side panel of counted/excluded results, reasons and applicable expiry. Live Ranking remains deferred. No missing canonical OVR, mental state or history is invented. These approved layouts do not settle Player/Hybrid schemas or numerical calibration and are not proof of implementation. Current scoped evidence is Master §35.36 and the v79 checkpoint.

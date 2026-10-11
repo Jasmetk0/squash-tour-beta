@@ -4,7 +4,7 @@
 
 **Repository status:** subordinate repository-facing product/technical distillation; the full canonical Master is authoritative.
 **Master authority:** [`SQUASH_ENGINE_MASTER_VISION.md`](SQUASH_ENGINE_MASTER_VISION.md), with its current version declared inside. See `CURRENT_STATE.md` for implemented evidence.
-**Latest selected synchronization:** Master v78, approved pre-alpha frontend decisions of 10–11 October 2026; see `docs/PRE_ALPHA_FRONTEND_V1.md`. This is target design, not implementation evidence.
+**Latest selected synchronization:** Master v79, approved pre-alpha frontend decisions of 10–11 October 2026; see `docs/PRE_ALPHA_FRONTEND_V1.md`. This is target design, not implementation evidence.
 **Synchronization rule:** this shorter repository distillation may lag details in the Master. It preserves still-valid earlier canon and records selected later decisions; synchronization must be additive unless the Master explicitly supersedes an older rule.
 
 > This constitution is a repository-facing distillation, not a lossless copy of the full Master Vision. A specified target does **not** imply that the repository already implements it. When a task depends on detail not stated here, use the latest audited Master or an explicit newer user decision rather than inventing the missing rule.
@@ -836,3 +836,13 @@ Master §§5.3, 9.4–9.5, 27.19 and 31.32 are authoritative for the unified pla
 ## Selected generation refinements — Master v78
 
 Master §§9.6, 27.20 and 31.33 decide automatic remainder completion when total is explicit (100 total, exactly 20 CZE + 10 SVK across the batch means 70 other-country players), simultaneous partial constraints within one group with each player counted once, temporary country-name + generation-serial naming, individual preview field/attribute locks, exact resumable proposals distinct from rule presets, and the collapsible-conditions/table/side-editor page layout. Session field locks and whole-player Keep do not freeze lifetime development. Saving a proposal does not add players to a Run; explicit Add and manual Save remain separate. General nested population-group semantics, Automatic total with partial exact quotas, Player/Hybrid schema and calibration remain OPEN. This is product authority, not proof that the implementation exists; actual integration evidence is Master §35.35 and the v78 checkpoint.
+
+## Selected Admin workflow decisions — Master v79
+
+Master §§9.7, 27.21 and 31.34 approve configurable generator columns, explicit bulk selection with before/after and one session Undo, and whole-batch or selected-profile Add with explicit subset constraint adjustment/revalidation. Filters, whole-player Keep and action selection are distinct; confirmed Add stages Working Draft and manual Run Save remains separate.
+
+World now has an approved brief identity/year/provenance overview, three factual summaries (countries, population, countries with incomplete data) and a country table. The country profile has Overview / Population / Country Attributes / Players & Talent / Records / Tournaments. Season sections start at current season and permit past/future Admin browsing of actual stored plans without simulation or invented results. Records remain derived from historically eligible stored results.
+
+Run Calendar has a 61-week default view and ordinary list alternative. Edition detail has Overview / Entries & Participants / Draw & Groups / Schedule & Matches / Results / Settings. **Qualification/Main switching is only in Draw & Groups**; elsewhere the main section is first, qualification below, with scroll anchors rather than phase filters. Match detail has Overview / Statistics / Course & Replay; replay reads stored rally/event history and actual states, with no re-simulation or court animation. Simulation console preserves global nearest-slot/simultaneity/transition safeguards.
+
+Official Ranking and Finals Race use their independently effective historical policies/snapshots; player names open profiles and points open a side panel of counted/excluded results, reasons and applicable expiry. Live Ranking remains deferred. No missing canonical OVR, mental state or history is invented. These approved layouts do not settle Player/Hybrid schemas or numerical calibration and are not proof of implementation. Current scoped evidence is Master §35.36 and the v79 checkpoint.

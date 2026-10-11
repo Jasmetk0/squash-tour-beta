@@ -1,10 +1,10 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useState } from 'react'
-import { MemoryRouter } from 'react-router-dom'
+import { MemoryRouter, useNavigate, useLocation } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { AdminBranchProvider } from './AdminBranchContext'
+import { AdminBranchProvider, useAdminBranch } from './AdminBranchContext'
 import { AdminBranchSelector } from '../components/AdminBranchSelector'
 import type { RunBranch } from '../api/types'
 
@@ -23,15 +23,30 @@ function branch(runId: string, branchId: string, displayName: string, readOnly =
   }
 }
 
+function ProgrammaticNavigation(): JSX.Element {
+  const {selectedBranchId,selectBranch} = useAdminBranch()
+  const navigate = useNavigate()
+  const {search} = useLocation()
+  return <>
+    <button type="button" onClick={()=>selectBranch('a-other')}>Programmatic Branch change</button>
+    <button type="button" onClick={()=>navigate('/admin/runs/run-a?branch=a-other')}>Programmatic deep link</button>
+    <output aria-label="Selected Admin Branch">{selectedBranchId}</output>
+    <output aria-label="Current search">{search}</output>
+  </>
+}
+
 function Harness(): JSX.Element {
   const [runId, setRunId] = useState('run-a')
   const [page, setPage] = useState('home')
   return (
     <AdminBranchProvider runId={runId}>
+      <div className="app-shell--admin">
       <AdminBranchSelector />
+      <ProgrammaticNavigation />
       <button onClick={() => setPage(page === 'home' ? 'branches' : 'home')}>Navigate page</button>
       <output aria-label="Current page">{page}</output>
       <button onClick={() => setRunId('run-b')}>Change Run</button>
+      </div>
     </AdminBranchProvider>
   )
 }
@@ -45,6 +60,7 @@ function renderHarness(route = '/admin/runs/run-a'): void {
 describe('AdminBranchProvider and selector', () => {
   beforeEach(() => {
     localStorage.clear()
+    vi.restoreAllMocks()
     vi.clearAllMocks()
     api.getRunContainer.mockImplementation(async (runId: string) => ({ run_id: runId, official_branch_id: runId === 'run-a' ? 'a-viewer' : 'b-viewer' }))
     api.listRunBranches.mockImplementation(async (runId: string) => ({ run_branches: runId === 'run-a'
@@ -133,4 +149,50 @@ describe('AdminBranchProvider and selector', () => {
     fireEvent.change(selector, { target: { value: 'z-last' } })
     expect(selector).toHaveValue('z-last')
   })
+  it('prevents imperative selectBranch from dropping an edited Run form',async()=>{
+    renderHarness()
+    const selector=await screen.findByRole('combobox',{name:'Admin active Branch'})
+    await waitFor(()=>expect(selector).toHaveValue('a-viewer'))
+    document.querySelector('.app-shell--admin')?.setAttribute('data-run-form-edited','true')
+    const confirm=vi.spyOn(window,'confirm').mockReturnValue(false)
+    fireEvent.click(screen.getByRole('button',{name:'Programmatic Branch change'}))
+    expect(confirm).toHaveBeenCalledTimes(1)
+    expect(selector).toHaveValue('a-viewer')
+    expect(screen.getByLabelText('Selected Admin Branch')).toHaveTextContent('a-viewer')
+    confirm.mockReturnValue(true)
+    fireEvent.click(screen.getByRole('button',{name:'Programmatic Branch change'}))
+    await waitFor(()=>expect(selector).toHaveValue('a-other'))
+    expect(confirm).toHaveBeenCalledTimes(2)
+  })
+
+  it('guards programmatic ?branch= transitions without repeatedly prompting on re-render',async()=>{
+    renderHarness()
+    const selector=await screen.findByRole('combobox',{name:'Admin active Branch'})
+    await waitFor(()=>expect(selector).toHaveValue('a-viewer'))
+    document.querySelector('.app-shell--admin')?.setAttribute('data-run-form-edited','true')
+    const confirm=vi.spyOn(window,'confirm').mockReturnValue(false)
+    fireEvent.click(screen.getByRole('button',{name:'Programmatic deep link'}))
+    await waitFor(()=>expect(screen.getByLabelText('Current search')).toHaveTextContent('branch=a-other'))
+    await waitFor(()=>expect(confirm).toHaveBeenCalledTimes(1))
+    expect(selector).toHaveValue('a-viewer')
+    fireEvent.click(screen.getByRole('button',{name:'Navigate page'}))
+    expect(confirm).toHaveBeenCalledTimes(1)
+    expect(selector).toHaveValue('a-viewer')
+    confirm.mockReturnValue(true)
+    // Explicit user selector choice remains possible after a declined deep link.
+    fireEvent.change(selector,{target:{value:'a-other'}})
+    await waitFor(()=>expect(selector).toHaveValue('a-other'))
+    expect(confirm).toHaveBeenCalledTimes(2)
+  })
+
+  it('permits a clean programmatic deep link without a modal',async()=>{
+    renderHarness()
+    const selector=await screen.findByRole('combobox',{name:'Admin active Branch'})
+    await waitFor(()=>expect(selector).toHaveValue('a-viewer'))
+    const confirm=vi.spyOn(window,'confirm')
+    fireEvent.click(screen.getByRole('button',{name:'Programmatic deep link'}))
+    await waitFor(()=>expect(selector).toHaveValue('a-other'))
+    expect(confirm).not.toHaveBeenCalled()
+  })
+
 })

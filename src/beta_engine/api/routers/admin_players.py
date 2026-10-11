@@ -478,6 +478,8 @@ class RunGenerationProposalSave(BaseModel):
 
     @model_validator(mode="after")
     def validate_pending_review(self) -> "RunGenerationProposalSave":
+        if not self.label.strip():
+            raise ValueError("Saved proposal label must not be blank")
         keep = self.selected_keep_ids
         if keep != sorted(set(keep)) or any(not player_id or len(player_id)>128 for player_id in keep):
             raise ValueError("Saved proposal Keep IDs must be unique and sorted")

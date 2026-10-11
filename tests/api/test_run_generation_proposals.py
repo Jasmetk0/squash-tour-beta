@@ -174,3 +174,11 @@ def test_field_only_new_seed_proposal_keeps_original_form_seed_without_fake_keep
     })
     assert next_proposal.source_seed == 802
     assert next_proposal.request.generation.keep_from_seed == 811
+
+
+def test_blank_proposal_label_rejected_before_storage():
+    payload, _ = _payload()
+    with pytest.raises(ValueError, match="must not be blank"):
+        admin_players.RunGenerationProposalSave.model_validate({
+            **payload.model_dump(mode="json"), "label": "   ",
+        })

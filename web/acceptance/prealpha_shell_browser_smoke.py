@@ -215,11 +215,27 @@ def main() -> None:
             evidence["run_management"] = True
             page.screenshot(path=str(artifacts / "03-run-management.png"), full_page=True)
 
-            # Original dirty-navigation safeguard assertion must run while still
-            # inside the Run, before this new global Package workflow begins.
+            # Read-only Run exploration is not an unsaved edit, including filters.
+            page.goto(base + "/admin/runs/" + run_id + "/players")
+            expect(page.get_by_role("heading", name="Run Players Explorer")).to_be_visible()
+            page.get_by_role("textbox", name="Search (name / ID)").fill("browser-filter-only")
+            page.get_by_role("spinbutton", name="Min age").fill("20")
+            assert page.locator(".app-shell--admin").get_attribute("data-run-form-edited") is None
             page.get_by_role("link", name="Squash Engine global Home").click()
             expect(page.get_by_role("heading", name="Squash Engine Home")).to_be_visible()
-            assert dialogs, "Leaving a Run must activate the navigation safeguard"
+            assert not dialogs, "Read-only Run filters must not prompt on clean exit"
+            evidence["clean_run_exit_no_unsaved_warning"] = True
+
+            # Actual unsaved source form values must still guard the Run exit.
+            page.goto(base + "/admin/runs/" + run_id + "/manage")
+            expect(page.get_by_role("heading", name="Run Management")).to_be_visible()
+            page.get_by_role("combobox", name="Source kind").select_option("calendar")
+            page.get_by_role("textbox", name="Calendar source season").fill("2008-2009")
+            expect(page.locator(".app-shell--admin")).to_have_attribute("data-run-form-edited", "true")
+            page.get_by_role("link", name="Squash Engine global Home").click()
+            expect(page.get_by_role("heading", name="Squash Engine Home")).to_be_visible()
+            assert len(dialogs) == 1 and "unsaved Working Draft" in dialogs[0], dialogs
+            evidence["real_unsaved_run_form_warning"] = True
 
             # Selectively apply exactly one real World source entity into the
             # alternative Branch, then Save; unselected entities never appear.

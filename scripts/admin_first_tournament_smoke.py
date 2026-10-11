@@ -195,8 +195,26 @@ def setup_run(page, base_url: str, artifacts: Path) -> str:
     expect(inspector.get_by_role("status")).to_contain_text("Display filters never change")
     inspector.get_by_role("button", name="Clear display filters").click()
     expect(inspector.get_by_role("status")).to_contain_text("Showing 64 / 64")
-    # Keep one real source player and regenerate 63 others via production API.
-    # This selection is session-only, not a permanent player lock.
+    # Edit one authentic source attribute through the player side panel.
+    # Apply performs a fresh backend preview, not a Run/DB write.
+    first_player_button = inspector.locator('button[aria-label^="Edit generated player "]').first
+    first_player_button.click()
+    editor = page.get_by_role("region", name="Generated player field editor")
+    expect(editor).to_be_visible()
+    technique = editor.get_by_role("spinbutton", name="Preview field attributes.technique")
+    previous = int(technique.input_value())
+    changed = previous + 1 if previous < 99 else previous - 1
+    technique.fill(str(changed))
+    editor.get_by_role("button", name="Lock preview field attributes.technique").click()
+    expect(editor.get_by_text("Pending field locks must be previewed", exact=False)).to_be_visible()
+    click("Apply field locks to preview")
+    expect(page.get_by_text("Field locks applied to the exact server preview", exact=False)).to_be_visible()
+    editor = page.get_by_role("region", name="Generated player field editor")
+    expect(editor.get_by_role("spinbutton", name="Preview field attributes.technique")).to_have_value(str(changed))
+    editor.get_by_role("button", name="Close").click()
+    expect(inspector.get_by_role("status")).to_contain_text("Showing 64 / 64")
+    # Keep the manually edited player, regenerate 63 others on production API.
+    # Field locks from preview are session-only and not permanent career locks.
     kept_row = inspector.locator("tbody tr").first
     kept_player_text = kept_row.locator("td").nth(1).inner_text()
     kept_row.locator('input[type="checkbox"]').check()

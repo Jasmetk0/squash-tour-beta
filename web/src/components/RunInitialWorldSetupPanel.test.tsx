@@ -144,6 +144,43 @@ function render(overrideRun: RunContainer = run, overrideBranch: RunBranch | nul
 }
 
 describe('Run-owned first-season player setup', () => {
+  it('previews exact whole-batch country quotas with an automatic remainder and no implicit Save', async () => {
+    render()
+    await userEvent.clear(screen.getByRole('spinbutton', {name:'Number of generated players'}))
+    await userEvent.type(screen.getByRole('spinbutton', {name:'Number of generated players'}), '2')
+    await userEvent.click(await screen.findByRole('button', {name:'Add country quota'}))
+    expect(screen.getByRole('spinbutton', {name:'Exact quota CZE'})).toBeInTheDocument()
+    await userEvent.clear(screen.getByRole('spinbutton', {name:'Exact quota CZE'}))
+    await userEvent.type(screen.getByRole('spinbutton', {name:'Exact quota CZE'}), '1')
+    expect(screen.getByLabelText('Country quota summary')).toHaveTextContent('2 total')
+    expect(screen.getByLabelText('Country quota summary')).toHaveTextContent('1 exact')
+    expect(screen.getByLabelText('Country quota summary')).toHaveTextContent('1 automatic')
+    await userEvent.click(screen.getByRole('button', {name:'Preview generated players'}))
+    await waitFor(() => expect(api.previewRunOwnedInitialWorld).toHaveBeenCalledWith(
+      'first-run', 'timeline-1', expect.objectContaining({
+        generation: expect.objectContaining({
+          country_quotas: [{country_code:'CZE',count:1}],
+          target_pool_size:2
+        })
+      })
+    ))
+    expect(await screen.findByText('Review 2 players')).toBeInTheDocument()
+    expect(api.adoptRunOwnedInitialWorld).not.toHaveBeenCalled()
+    expect(api.saveRunOwnedInitialWorld).not.toHaveBeenCalled()
+  })
+
+  it('blocks contradictory exact quotas before invoking production preview',async()=>{
+    render()
+    await userEvent.clear(screen.getByRole('spinbutton',{name:'Number of generated players'}))
+    await userEvent.type(screen.getByRole('spinbutton',{name:'Number of generated players'}),'2')
+    await userEvent.click(await screen.findByRole('button',{name:'Add country quota'}))
+    await userEvent.clear(screen.getByRole('spinbutton',{name:'Exact quota CZE'}))
+    await userEvent.type(screen.getByRole('spinbutton',{name:'Exact quota CZE'}),'3')
+    expect(screen.getByText(/Exact country quotas exceed the total number of players/)).toBeInTheDocument()
+    expect(screen.getByRole('button',{name:'Preview generated players'})).toBeDisabled()
+    expect(api.previewRunOwnedInitialWorld).not.toHaveBeenCalled()
+  })
+
   it('persists a reviewed unadopted proposal and restores exactly without regenerating',async()=>{
     const view=render()
     await userEvent.clear(screen.getByRole('spinbutton',{name:'Number of generated players'}))

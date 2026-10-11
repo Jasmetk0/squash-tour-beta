@@ -245,6 +245,7 @@ def get_saved_players_inventory(
     search: str = Query(default="", max_length=120),
     country_code: str = Query(default="", max_length=3),
     status_filter: str = Query(default="", max_length=80),
+    include_prepared: bool = Query(default=False),
     offset: int = Query(default=0, ge=0),
     limit: int = Query(default=50, ge=1, le=100),
 ) -> SavedPlayersInventory:
@@ -273,7 +274,7 @@ def get_saved_players_inventory(
                 revision.payload, run_id=run_id, branch_id=branch_id,
             ),
             search=search, country_code=country_code, status_filter=status_filter,
-            offset=offset, limit=limit,
+            include_prepared=include_prepared, offset=offset, limit=limit,
         )
     except (ValueError, KeyError, TypeError) as exc:
         raise HTTPException(

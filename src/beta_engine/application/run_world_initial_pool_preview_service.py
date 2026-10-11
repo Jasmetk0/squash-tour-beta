@@ -752,8 +752,12 @@ class RunWorldInitialPoolPreviewService:
                 core, step.automatic_fields, baselines or {},
                 generator=generator, season=request.season, seed=step.seed,
             )
+            # Keep the verified unedited stage updated for future V2 edits.
+            # Otherwise a subsequent step could silently resurrect a previously
+            # reset inherited manual value.
+            core = before_edits
             result = _apply_preview_field_locks(
-                before_edits, step.field_locks, season=request.season,
+                core, step.field_locks, season=request.season,
                 seed=step.seed, generator=generator,
             )
             partial_request = request.model_copy(update={

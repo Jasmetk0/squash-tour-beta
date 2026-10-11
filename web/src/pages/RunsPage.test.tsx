@@ -59,10 +59,10 @@ describe('canonical Runs inventory', () => {
     const row = (await screen.findByText('Sandbox One')).closest('li')!
     await userEvent.click(within(row).getByRole('button', { name: 'Větve +' }))
     const alternative = await within(row).findByText('Alternative')
-    const target = alternative.closest('.runs-canonical-branch')!
+    const target = alternative.closest('.runs-canonical-branch') as HTMLElement
     expect(within(target).getByText('2028/29 · W27')).toBeInTheDocument()
     expect(within(target).getByRole('link', { name: 'Otevřít' })).toHaveAttribute('href', '/admin/runs/run-one?branch=b-alt')
-    const viewer = within(row).getByText('Viewer timeline').closest('.runs-canonical-branch')!
+    const viewer = within(row).getByText('Viewer timeline').closest('.runs-canonical-branch') as HTMLElement
     expect(within(viewer).getByText('Čas není dostupný')).toBeInTheDocument()
     expect(within(viewer).getByText('Zobrazuje Viewer')).toBeInTheDocument()
     await userEvent.click(within(target).getByRole('link', { name: 'Otevřít' }))

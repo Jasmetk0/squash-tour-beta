@@ -326,6 +326,34 @@ describe('Run-owned first-season player setup', () => {
     expect(api.adoptRunOwnedInitialWorld).not.toHaveBeenCalled()
   })
 
+  it('previews 1000 distinct players and requires separate explicit Adopt and Save',async()=>{
+    render()
+    await userEvent.clear(screen.getByRole('spinbutton',{name:'Number of generated players'}))
+    await userEvent.type(screen.getByRole('spinbutton',{name:'Number of generated players'}),'1000')
+    expect(screen.getByRole('button',{name:'Preview generated players'})).toBeEnabled()
+    const cohort=Array.from({length:1000},(_,i)=>({
+      ...players[0],player_id:'p-'+String(i).padStart(4,'0'),name:'Czechia '+i
+    }))
+    api.previewRunOwnedInitialWorld.mockImplementationOnce(async (_run:string,_branch:string,req:Parameters<typeof buildState>[0])=>{
+      reviewedState={...buildState(req),players:cohort}
+      return {preview_only:true,state:reviewedState,fingerprint:sha('f')}
+    })
+    await userEvent.click(screen.getByRole('button',{name:'Preview generated players'}))
+    expect(await screen.findByText('Review 1000 players')).toBeInTheDocument()
+    expect(screen.getByText(/Page 1 \/ 20/)).toBeInTheDocument()
+    expect(api.previewRunOwnedInitialWorld).toHaveBeenCalledWith(
+      'first-run','timeline-1',expect.objectContaining({
+        generation:expect.objectContaining({target_pool_size:1000})
+      })
+    )
+    expect(api.adoptRunOwnedInitialWorld).not.toHaveBeenCalled()
+    expect(api.saveRunOwnedInitialWorld).not.toHaveBeenCalled()
+    await userEvent.click(screen.getByRole('checkbox',{name:'Approve InitialWorld adoption'}))
+    await userEvent.click(screen.getByRole('button',{name:'Adopt generated players'}))
+    await waitFor(()=>expect(api.adoptRunOwnedInitialWorld).toHaveBeenCalledTimes(1))
+    expect(api.saveRunOwnedInitialWorld).not.toHaveBeenCalled()
+  })
+
   it('selects session Keep without changing original review, then previews a real-source-bound reroll',async()=>{
     render()
     await userEvent.clear(screen.getByRole('spinbutton',{name:'Number of generated players'}))

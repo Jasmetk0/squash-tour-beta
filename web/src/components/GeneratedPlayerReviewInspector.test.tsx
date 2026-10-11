@@ -1,6 +1,6 @@
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 
 import {
   GeneratedPlayerReviewInspector, summariseGeneratedPlayers
@@ -94,5 +94,35 @@ describe('immutable generated cohort inspection',()=>{
     const rows=within(table).getAllByRole('row')
     expect(within(rows[1]).getByText('Dan')).toBeInTheDocument()
     expect(within(rows[8]).getByText('Adam')).toBeInTheDocument()
+  })
+})
+
+
+describe('large first-cohort review',()=>{
+  const cohort: RunInitialWorldPlayer[]=Array.from({length:1000},(_,i)=>({
+    player_id:'p-'+String(i+1).padStart(4,'0'),name:'Czechia '+(i+1),country_code:'CZE',
+    age_years_at_season_start:20,current_ability:50,potential_ability:70,potential_tier:'A',career_stage:'developing'
+  }))
+  it('inspects all 1000 in summaries, pages only 50 rows and keeps selection across pages',async()=>{
+    const before=JSON.stringify(cohort)
+    const onKeepChange=vi.fn()
+    render(<GeneratedPlayerReviewInspector players={cohort} keepIds={['p-0001']}
+      onKeepChange={onKeepChange} />)
+    const table=screen.getByRole('region',{name:'Complete generated player preview'})
+    expect(screen.getByRole('status')).toHaveTextContent('Showing 1000 / 1000')
+    expect(screen.getByText(/Page 1 \/ 20/)).toBeInTheDocument()
+    expect(within(table).getAllByRole('row')).toHaveLength(51)
+    expect(screen.getByRole('checkbox',{name:'Keep p-0001'})).toBeChecked()
+    await userEvent.click(screen.getByRole('button',{name:'Next preview page →'}))
+    expect(screen.getByText(/Page 2 \/ 20/)).toBeInTheDocument()
+    expect(screen.queryByRole('checkbox',{name:'Keep p-0001'})).not.toBeInTheDocument()
+    expect(screen.getByText(/Session-only Keep: 1 \/ 1000/)).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('checkbox',{name:'Keep p-0051'}))
+    expect(onKeepChange).toHaveBeenCalledWith('p-0051',true)
+    await userEvent.type(screen.getByRole('textbox',{name:'Search generated player preview'}),'Czechia 1000')
+    expect(screen.getByText(/Page 1 \/ 1/)).toBeInTheDocument()
+    expect(screen.getByRole('status')).toHaveTextContent('Showing 1 / 1000')
+    expect(within(table).getAllByRole('row')).toHaveLength(2)
+    expect(JSON.stringify(cohort)).toBe(before)
   })
 })

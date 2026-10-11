@@ -48,9 +48,9 @@ jobs:
           fi
       - name: Start Vite against disposable backend port
         run: |
-          VITE_API_BASE_URL=http://127.0.0.1:8013 npm --prefix web run dev -- --host 127.0.0.1 --port 5177 --strictPort > "$RUNNER_TEMP/saved-replay-vite.log" 2>&1 &
+          VITE_API_BASE_URL=http://127.0.0.1:8013 npm --prefix web run dev -- --host 127.0.0.1 --port 5173 --strictPort > "$RUNNER_TEMP/saved-replay-vite.log" 2>&1 &
           for attempt in $(seq 1 90); do
-            if curl --fail --silent http://127.0.0.1:5177/ > /dev/null; then exit 0; fi
+            if curl --fail --silent http://127.0.0.1:5173/ > /dev/null; then exit 0; fi
             sleep 1
           done
           cat "$RUNNER_TEMP/saved-replay-vite.log"
@@ -60,7 +60,7 @@ jobs:
           python scripts/admin_first_tournament_smoke.py \
             --acceptance "$RUNNER_TEMP/saved-replay-run" \
             --port 8013 \
-            --base-url http://127.0.0.1:5177 \
+            --base-url http://127.0.0.1:5173 \
             --chromium "$CHROME_BIN"
       - name: Preserve browser evidence
         if: always()

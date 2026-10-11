@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -47,7 +47,7 @@ describe('source-backed Packages frontend',()=>{
     expect(await screen.findByRole('heading',{name:'Balíčky'})).toBeInTheDocument()
     expect(screen.getByRole('link',{name:/Všechny balíčky/})).toHaveAttribute('href','/admin/packages/all')
     expect(screen.getByRole('link',{name:/Hybridní/})).toHaveAttribute('href','/admin/packages/category/hybrid')
-    expect(screen.getByRole('link',{name:/Země/})).toHaveTextContent('1 registrovaných')
+    await waitFor(()=>expect(screen.getByRole('link',{name:/Země/})).toHaveTextContent('1 registrovaných'))
     expect(screen.queryByText('Demo World')).not.toBeInTheDocument()
   })
   it('deduplicates All, searches and filters World packages without fake hybrid sources',async()=>{

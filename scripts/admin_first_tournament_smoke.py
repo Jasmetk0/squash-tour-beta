@@ -4,8 +4,6 @@ import json
 import shutil
 from pathlib import Path
 
-from saved_player_replay_browser_checks import verify_saved_player_replay
-
 import uvicorn
 
 from beta_engine.application.season_calendar_service import SeasonCalendarService
@@ -362,6 +360,7 @@ def verify_viewer(page, run_url, artifacts: Path, prefix=""):
 
 
 def run_acceptance(root: Path, *, port: int, base_url: str, chromium: str):
+    from saved_player_replay_browser_checks import verify_saved_player_replay
     """Own the disposable backend process, restart it, and reopen a fresh browser."""
     import socket
     import subprocess

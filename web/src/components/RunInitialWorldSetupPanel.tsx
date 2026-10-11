@@ -203,8 +203,12 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
   const approvedFieldLocks = orderedPreviewFieldLocks(review?.request.generation.field_locks ?? [])
   const locksDirty = JSON.stringify(approvedFieldLocks) !==
     JSON.stringify(orderedPreviewFieldLocks(pendingFieldLocks))
-  const fieldEditingEnabled = Boolean(reviewMatches && review &&
-    review.request.generation.keep_from_seed == null && canPreview)
+  const fieldEditingEnabled = Boolean(reviewMatches && review && canPreview)
+  const lastSessionKeep = [...(review?.request.generation.session_steps ?? [])]
+    .reverse().find(step => step.kind === 'keep')
+  const reviewedKeepIds = lastSessionKeep?.keep_player_ids ??
+    review?.request.generation.keep_player_ids ?? []
+  const keepSelectionDirty = keptIds.join('|') !== reviewedKeepIds.join('|')
   const onPreviewFieldChange = (field: GeneratedPlayerFieldKey, value: number | null) => {
     if (!selectedPlayerId || !fieldEditingEnabled) return
     setPendingFieldLocks(current => orderedPreviewFieldLocks(
@@ -216,9 +220,10 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
     setApproved(false)
   }
   const sessionSteps = (review?.request.generation.keep_history?.length ?? 0) +
-    (review?.request.generation.keep_from_seed == null ? 0 : 1)
+    (review?.request.generation.keep_from_seed == null ? 0 : 1) +
+    (review?.request.generation.session_steps?.filter(step=>step.kind==='keep').length ?? 0)
   const canKeepPreview = Boolean(reviewMatches && review && canPreview && sessionSteps < 17)
-  const canRegenerate = canKeepPreview &&
+  const canRegenerate = canKeepPreview && !locksDirty &&
     keptIds.length > 0 && keptIds.length < poolSize &&
     Number.isSafeInteger(rerollSeed) && rerollSeed !== review?.request.generation.seed
 
@@ -239,17 +244,29 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
             keep_from_preview_fingerprint: previous.keep_from_preview_fingerprint!,
             keep_player_ids: previous.keep_player_ids ?? []
           }]
+      const nextLocks = orderedPreviewFieldLocks((previous.field_locks ?? []).filter(
+        lock => retained.includes(lock.player_id)))
+      const nextGeneration = previous.session_schema_version === 'run_world_generation_session.v2'
+        ? {
+            ...previous, seed: rerollSeed, field_locks: nextLocks,
+            session_steps: [...(previous.session_steps ?? []), {
+              kind: 'keep' as const,
+              source_preview_fingerprint: review.preview.state.run_world_pool_preview_fingerprint,
+              seed: rerollSeed, keep_player_ids: retained, field_locks: nextLocks
+            }]
+          }
+        : {
+            ...previous,
+            seed: rerollSeed,
+            ...(history.length ? { keep_history: history } : {}),
+            keep_from_seed: review.request.generation.seed,
+            keep_from_preview_fingerprint: review.preview.state.run_world_pool_preview_fingerprint,
+            keep_player_ids: retained
+          }
       const request: RunInitialWorldAdoption = {
         ...review.request,
         command_id: `admin-initial-world-${crypto.randomUUID()}`,
-        generation: {
-          ...previous,
-          seed: rerollSeed,
-          ...(history.length ? { keep_history: history } : {}),
-          keep_from_seed: review.request.generation.seed,
-          keep_from_preview_fingerprint: review.preview.state.run_world_pool_preview_fingerprint,
-          keep_player_ids: retained
-        },
+        generation: nextGeneration,
       }
       const preview = await previewRunOwnedInitialWorld(runId, branchId, request)
       if (!verifiedInitialWorldPreview(preview, runId, branchId, request, options))
@@ -284,22 +301,41 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
   const fieldPreviewAction = useMutation({
     mutationFn: async (regenerate: boolean) => {
       if (!fieldEditingEnabled || !review || !draft || !snapshotFingerprint ||
-          keptIds.length > 0)
-        throw new Error('An unmodified, active first-cohort preview is required to edit source fields.')
+          keepSelectionDirty)
+        throw new Error('Apply or revert pending Keep selection before editing source fields.')
       if (regenerate && (locksDirty || !pendingFieldLocks.length ||
           !Number.isSafeInteger(rerollSeed) ||
           rerollSeed === review.request.generation.seed))
         throw new Error('Apply all locks first and choose a new seed before regenerating unlocked fields.')
+      const previous = review.request.generation
+      const nextLocks = orderedPreviewFieldLocks(pendingFieldLocks)
+      const versioned = previous.session_schema_version === 'run_world_generation_session.v2'
+      const needsVersioned = versioned || previous.keep_from_seed != null
+      if (regenerate && needsVersioned)
+        throw new Error('After Keep, apply edits then regenerate using Session Keep.')
+      const step = {
+        kind: 'edit' as const,
+        seed: previous.seed,
+        source_preview_fingerprint: review.preview.state.run_world_pool_preview_fingerprint,
+        keep_player_ids: [],
+        field_locks: nextLocks
+      }
+      const generation = needsVersioned ? {
+        ...previous, field_locks: nextLocks,
+        session_schema_version: 'run_world_generation_session.v2' as const,
+        session_origin_request: versioned ? previous.session_origin_request : previous,
+        session_origin_fingerprint: versioned
+          ? previous.session_origin_fingerprint
+          : review.preview.state.run_world_pool_preview_fingerprint,
+        session_steps: [...(previous.session_steps ?? []), step],
+      } : {
+        ...previous, seed: regenerate ? rerollSeed : previous.seed,
+        field_locks: nextLocks,
+      }
       const request: RunInitialWorldAdoption = {
         ...review.request,
         command_id: `admin-initial-world-${crypto.randomUUID()}`,
-        generation: {
-          ...review.request.generation,
-          seed: regenerate ? rerollSeed : review.request.generation.seed,
-          ...(pendingFieldLocks.length
-            ? { field_locks: orderedPreviewFieldLocks(pendingFieldLocks) }
-            : { field_locks: [] })
-        }
+        generation,
       }
       const preview = await previewRunOwnedInitialWorld(runId, branchId, request)
       if (!verifiedInitialWorldPreview(preview, runId, branchId, request, options))
@@ -521,8 +557,7 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
     }
   })
 
-  const appliedKeep = review?.request.generation.keep_player_ids ?? []
-  const pendingKeepChange = keptIds.join('|') !== appliedKeep.join('|')
+  const pendingKeepChange = keepSelectionDirty
   const canAdopt = reviewMatches && approved && !pendingKeepChange && !locksDirty &&
     !fieldPreviewAction.isPending &&
     !regenerateAction.isPending && !adoptAction.isPending && !previewAction.isPending
@@ -753,11 +788,13 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
           onChange={onPreviewFieldChange}
           onApply={()=>fieldPreviewAction.mutate(false)}
           onRegenerate={()=>fieldPreviewAction.mutate(true)}
+           regenerateDisabled={review.request.generation.session_schema_version ===
+             'run_world_generation_session.v2' || review.request.generation.keep_from_seed != null}
           onClose={()=>setSelectedPlayerId(null)}
           dirty={locksDirty}
           busy={fieldPreviewAction.isPending || regenerateAction.isPending ||
             previewAction.isPending || adoptAction.isPending}
-          disabled={!fieldEditingEnabled || keptIds.length > 0}
+          disabled={!fieldEditingEnabled || keepSelectionDirty}
           error={fieldPreviewAction.error ? formatApiError(fieldPreviewAction.error) : null}
           seed={rerollSeed}
         />}

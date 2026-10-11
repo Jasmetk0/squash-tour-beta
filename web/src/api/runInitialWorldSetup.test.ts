@@ -14,7 +14,9 @@ const options: RunWorldGenerationOptions = {
     {code:'SVK',name:'Slovakia',region:'EUROPE',travel_region:'CENTRAL_EUROPE'},
     {code:'USA',name:'United States',region:'NORTH_AMERICA',travel_region:'NORTH_AMERICA'}
   ],
-  regions:['EUROPE','CENTRAL_EUROPE','NORTH_AMERICA']
+  regions:['EUROPE','CENTRAL_EUROPE','NORTH_AMERICA'],
+  geographic_regions:['EUROPE','NORTH_AMERICA'],
+  travel_regions:['CENTRAL_EUROPE','NORTH_AMERICA']
 }
 const request: RunInitialWorldAdoption = {
   command_id:'test',generation:{world_package_id:'earth',season:'2000/2001',
@@ -86,4 +88,29 @@ describe('single generator saved-world hard constraints',()=>{
     expect(verifiedInitialWorldPreview(preview(['CZE','SVK']),'r1','b1',impossible,options)).toBe(false)
   })
 
+})
+
+describe('typed geography and historic region replay',()=>{
+  const collision: RunWorldGenerationOptions={
+    ...options,
+    countries:[{code:'CZE',name:'Czechia',region:'EUROPE',travel_region:'SHARED'},
+      {code:'USA',name:'United States',region:'SHARED',travel_region:'NORTH_AMERICA'}],
+    regions:['EUROPE','SHARED','NORTH_AMERICA'],
+    geographic_regions:['EUROPE','SHARED'],travel_regions:['SHARED','NORTH_AMERICA']
+  }
+  it('rejects cross-layer identical labels but retains legacy union',()=>{
+    expect(generatorConditionConflict('CZE','',collision,'SHARED','')).toContain('Conflicting')
+    expect(generatorConditionConflict('USA','',collision,'SHARED','')).toBeNull()
+    expect(generatorConditionConflict('CZE','',collision,'','SHARED')).toBeNull()
+    expect(generatorConditionConflict('USA','',collision,'','SHARED')).toContain('Conflicting')
+    expect(generatorConditionConflict('CZE','SHARED',collision)).toBeNull()
+  })
+  it('refuses previews from the wrong region layer',()=>{
+    const geographic={...request,generation:{...request.generation,region:null,geographic_region:'SHARED'}}
+    const travel={...request,generation:{...request.generation,region:null,travel_region:'SHARED'}}
+    expect(verifiedInitialWorldPreview(preview(['CZE','CZE']),'r1','b1',geographic,collision)).toBe(false)
+    expect(verifiedInitialWorldPreview(preview(['USA','USA']),'r1','b1',geographic,collision)).toBe(true)
+    expect(verifiedInitialWorldPreview(preview(['CZE','CZE']),'r1','b1',travel,collision)).toBe(true)
+    expect(verifiedInitialWorldPreview(preview(['USA','USA']),'r1','b1',travel,collision)).toBe(false)
+  })
 })

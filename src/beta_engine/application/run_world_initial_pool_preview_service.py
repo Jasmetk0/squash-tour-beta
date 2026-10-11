@@ -23,7 +23,9 @@ class RunWorldInitialPoolPreviewRequest(BaseModel):
     seed: int
     target_pool_size: int = Field(default=128, ge=1, le=2000)
     country_code: str | None = Field(default=None, min_length=3, max_length=3)
-    region: str | None = Field(default=None, min_length=1)
+    region: str | None = Field(default=None, min_length=1)  # Legacy OR predicate
+    geographic_region: str | None = Field(default=None, min_length=1)
+    travel_region: str | None = Field(default=None, min_length=1)
     min_age: int | None = Field(default=None, ge=15, le=45)
     max_age: int | None = Field(default=None, ge=15, le=45)
     # Session-only one-pass Keep. Server regenerates the ORIGINAL source preview;
@@ -52,6 +54,19 @@ class RunWorldInitialPoolPreviewRequest(BaseModel):
                 raise ValueError("Session Keep player IDs are invalid")
         return self
 
+    def fingerprint_payload(self) -> dict:
+        """Do not include absent new typed fields in existing Keep fingerprints.
+
+        Preserve the original session Keep keys (including their defaults) as
+        already stored by the current buuk production preview.
+        """
+        payload = self.model_dump(mode="json")
+        if payload.get("geographic_region") is None:
+            payload.pop("geographic_region", None)
+        if payload.get("travel_region") is None:
+            payload.pop("travel_region", None)
+        return payload
+
 
 class RunWorldInitialPoolPreview(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
@@ -71,7 +86,9 @@ class RunWorldInitialPoolPreview(BaseModel):
 
     @property
     def preview_fingerprint(self) -> str:
-        return canonical_hash(self.model_dump(mode="json"))
+        payload = self.model_dump(mode="json")
+        payload["request"] = self.request.fingerprint_payload()
+        return canonical_hash(payload)
 
 
 @dataclass(slots=True)
@@ -127,6 +144,23 @@ class RunWorldInitialPoolPreviewService:
                     "countries in the saved World"
                 )
 
+        # Geographic and Travel Region are distinct hard predicates. The old
+        # `region` OR predicate remains for saved requests and replay.
+        for requested, attribute, kind in (
+            (request.geographic_region, "region", "Geographic Region"),
+            (request.travel_region, "effective_travel_region", "Travel Region"),
+        ):
+            if requested:
+                selected_countries = [
+                    country for country in selected_countries
+                    if getattr(country, attribute) == requested
+                ]
+                if not selected_countries:
+                    raise ValueError(
+                        f"Conflicting generation conditions: {kind} '{requested}' "
+                        "has no eligible countries under saved-World conditions"
+                    )
+
         generator = InitialPlayerPoolGenerator(identity_config=generation.identity_config)
         preserved = []
         if request.keep_from_seed is not None:
@@ -153,7 +187,8 @@ class RunWorldInitialPoolPreviewService:
             ]
 
         result = generator.generate(
-            countries=list(countries.countries),
+            countries=(selected_countries if request.geographic_region or request.travel_region
+                       else list(countries.countries)),
             season=request.season,
             seed=request.seed,
             target_pool_size=request.target_pool_size,

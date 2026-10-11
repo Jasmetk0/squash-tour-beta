@@ -95,7 +95,9 @@ beforeEach(() => {
       { code:'SVK', name:'Slovakia', region:'EUROPE', travel_region:'CENTRAL_EUROPE' },
       { code:'USA', name:'United States', region:'NORTH_AMERICA', travel_region:'NORTH_AMERICA' }
     ],
-    regions: ['CENTRAL_EUROPE','EUROPE','NORTH_AMERICA']
+    regions: ['CENTRAL_EUROPE','EUROPE','NORTH_AMERICA'],
+    geographic_regions: ['EUROPE','NORTH_AMERICA'],
+    travel_regions: ['CENTRAL_EUROPE','NORTH_AMERICA']
   }))
   api.getBranchWorkingDraft.mockImplementation(async () => ({
     run_id: 'first-run', branch_id: 'timeline-1',
@@ -221,14 +223,14 @@ describe('Run-owned first-season player setup', () => {
   })
   it('applies region to the actual reviewed production request and verifies all players', async () => {
     render()
-    await userEvent.click(await screen.findByRole('combobox', { name: 'Player generation region' }))
-    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Player generation region' }), 'EUROPE')
+    await userEvent.click(await screen.findByRole('combobox', { name: 'Player generation geographic region' }))
+    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Player generation geographic region' }), 'EUROPE')
     await userEvent.clear(screen.getByRole('spinbutton', { name: 'Number of generated players' }))
     await userEvent.type(screen.getByRole('spinbutton', { name: 'Number of generated players' }), '2')
     await userEvent.click(screen.getByRole('button', { name: 'Preview generated players' }))
     await waitFor(() => expect(api.previewRunOwnedInitialWorld).toHaveBeenCalledWith(
       'first-run', 'timeline-1', expect.objectContaining({
-        generation: expect.objectContaining({ region: 'EUROPE', target_pool_size: 2 })
+        generation: expect.objectContaining({ geographic_region: 'EUROPE', target_pool_size: 2 })
       })
     ))
     expect(await screen.findByText('Jan A')).toBeInTheDocument()
@@ -239,8 +241,8 @@ describe('Run-owned first-season player setup', () => {
     render()
     await screen.findByRole('option', { name: 'CZE — Czechia' })
     await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Player generation sport country' }), 'CZE')
-    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Player generation region' }), 'NORTH_AMERICA')
-    expect(screen.getByRole('alert')).toHaveTextContent('Country CZE does not belong to region NORTH_AMERICA')
+    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Player generation geographic region' }), 'NORTH_AMERICA')
+    expect(screen.getByRole('alert')).toHaveTextContent('Conflicting geographic/travel conditions')
     expect(screen.getByRole('button', { name: 'Preview generated players' })).toBeDisabled()
     expect(api.previewRunOwnedInitialWorld).not.toHaveBeenCalled()
   })

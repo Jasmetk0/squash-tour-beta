@@ -5,7 +5,9 @@ export type RunInitialWorldGeneration = {
   seed: number
   target_pool_size: number
   country_code?: string | null
-  region?: string | null
+  region?: string | null // Legacy geographic OR travel condition
+  geographic_region?: string | null
+  travel_region?: string | null
   min_age?: number | null
   max_age?: number | null
   keep_from_seed?: number | null
@@ -29,7 +31,9 @@ export type RunWorldGenerationOptions = {
   run_package_fingerprint: string
   world_package_id: string
   countries: RunWorldGenerationCountry[]
-  regions: string[]
+  regions: string[] // Legacy combined options
+  geographic_regions?: string[]
+  travel_regions?: string[]
 }
 
 export function verifiedGenerationOptions(
@@ -50,7 +54,13 @@ export function verifiedGenerationOptions(
     data.regions.every(region => typeof region === 'string' && region.length > 0) &&
     new Set(data.regions).size === data.regions.length &&
     data.countries.every(country => data.regions.includes(country.region) &&
-      data.regions.includes(country.travel_region))
+      data.regions.includes(country.travel_region)) &&
+    (!data.geographic_regions || (Array.isArray(data.geographic_regions) &&
+      new Set(data.geographic_regions).size === data.geographic_regions.length &&
+      data.countries.every(c => data.geographic_regions!.includes(c.region)))) &&
+    (!data.travel_regions || (Array.isArray(data.travel_regions) &&
+      new Set(data.travel_regions).size === data.travel_regions.length &&
+      data.countries.every(c => data.travel_regions!.includes(c.travel_region))))
 }
 
 export type RunInitialWorldAdoption = {
@@ -118,7 +128,8 @@ export type RunInitialWorldSaved = {
 
 /** Strict hard country+region validation; never turn an invalid combination into a hint. */
 export function generatorConditionConflict(
-  countryCode: string, region: string, options: RunWorldGenerationOptions | null
+  countryCode: string, region: string, options: RunWorldGenerationOptions | null,
+  geographicRegion = '', travelRegion = ''
 ): string | null {
   if (!options) return 'Saved World condition options are not available.'
   if (countryCode && !options.countries.some(c => c.code === countryCode))
@@ -128,6 +139,16 @@ export function generatorConditionConflict(
   if (countryCode && region && !options.countries.some(c =>
     c.code === countryCode && (c.region === region || c.travel_region === region)))
     return `Country ${countryCode} does not belong to region ${region} in this saved World.`
+  if (geographicRegion && !options.countries.some(c => c.region === geographicRegion))
+    return `Geographic Region ${geographicRegion} has no countries in this saved World.`
+  if (travelRegion && !options.countries.some(c => c.travel_region === travelRegion))
+    return `Travel Region ${travelRegion} has no countries in this saved World.`
+  if ((geographicRegion || travelRegion) && !options.countries.some(c =>
+    (!countryCode || c.code === countryCode) &&
+    (!region || c.region === region || c.travel_region === region) &&
+    (!geographicRegion || c.region === geographicRegion) &&
+    (!travelRegion || c.travel_region === travelRegion)))
+    return 'Conflicting geographic/travel conditions for the selected country or regions.'
   return null
 }
 
@@ -152,9 +173,11 @@ export function verifiedInitialWorldPreview(
 ): boolean {
   const state = value?.state
   const players = state?.players
-  if ((request.generation.country_code || request.generation.region) &&
+  if ((request.generation.country_code || request.generation.region ||
+       request.generation.geographic_region || request.generation.travel_region) &&
       generatorConditionConflict(request.generation.country_code ?? '',
-        request.generation.region ?? '', options ?? null)) return false
+        request.generation.region ?? '', options ?? null,
+        request.generation.geographic_region ?? '', request.generation.travel_region ?? '')) return false
   const min = request.generation.min_age ?? null
   const max = request.generation.max_age ?? null
   if (min != null && (!Number.isInteger(min) || min < 15 || min > 45)) return false
@@ -196,6 +219,10 @@ export function verifiedInitialWorldPreview(
         country.code === player.country_code &&
         (country.region === request.generation.region ||
          country.travel_region === request.generation.region)) ?? false)) &&
+      (!request.generation.geographic_region || (options?.countries.some(c =>
+        c.code === player.country_code && c.region === request.generation.geographic_region) ?? false)) &&
+      (!request.generation.travel_region || (options?.countries.some(c =>
+        c.code === player.country_code && c.travel_region === request.generation.travel_region) ?? false)) &&
       (min == null || (Number.isInteger(player.age_years_at_season_start) &&
         player.age_years_at_season_start >= min)) &&
       (max == null || (Number.isInteger(player.age_years_at_season_start) &&

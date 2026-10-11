@@ -533,6 +533,52 @@ describe('Run-owned first-season player setup', () => {
     expect(api.saveRunOwnedInitialWorld).not.toHaveBeenCalled()
   })
 
+  it('edits and returns Automatic after two Keep passes using authenticated v2 steps',async()=>{
+    render()
+    await userEvent.clear(screen.getByRole('spinbutton',{name:'Number of generated players'}))
+    await userEvent.type(screen.getByRole('spinbutton',{name:'Number of generated players'}),'2')
+    await userEvent.click(await screen.findByRole('button',{name:'Preview generated players'}))
+    await userEvent.click(screen.getByRole('checkbox',{name:'Keep p-1'}))
+    await userEvent.click(screen.getByRole('button',{name:'Regenerate remaining – new preview'}))
+    await waitFor(()=>expect(api.previewRunOwnedInitialWorld).toHaveBeenCalledTimes(2))
+    await userEvent.click(screen.getByRole('button',{name:'Regenerate remaining – new preview'}))
+    await waitFor(()=>expect(api.previewRunOwnedInitialWorld).toHaveBeenCalledTimes(3))
+    await userEvent.click(screen.getByRole('button',{name:'Edit generated player p-1'}))
+    const ability=screen.getByRole('spinbutton',{name:'Preview field current_ability'})
+    await userEvent.clear(ability)
+    await userEvent.type(ability,'78')
+    await userEvent.click(screen.getByRole('button',{name:'Lock preview field current_ability'}))
+    expect(screen.getByRole('button',{name:'Adopt generated players'})).toBeDisabled()
+    api.previewRunOwnedInitialWorld.mockImplementationOnce(async (
+      _run:string,_branch:string,request:Parameters<typeof buildState>[0]
+    )=>{
+      reviewedState={...buildState(request),players:[
+        {...players[0],current_ability:78},players[1]
+      ]}
+      return {preview_only:true,state:reviewedState,fingerprint:sha('f')}
+    })
+    await userEvent.click(screen.getByRole('button',{name:'Apply field locks to preview'}))
+    await waitFor(()=>expect(api.previewRunOwnedInitialWorld).toHaveBeenCalledTimes(4))
+    const applied=api.previewRunOwnedInitialWorld.mock.calls[3][2]
+    expect(applied.generation.session_schema_version).toBe('run_world_generation_session.v2')
+    expect(applied.generation.session_origin_request.keep_history).toHaveLength(1)
+    expect(applied.generation.session_origin_fingerprint).toBe(sha('d'))
+    expect(applied.generation.session_steps).toEqual([{
+      kind:'edit',source_preview_fingerprint:sha('d'),seed:20261011,
+      keep_player_ids:[],field_locks:[{player_id:'p-1',field:'current_ability',value:78}]
+    }])
+    expect(api.adoptRunOwnedInitialWorld).not.toHaveBeenCalled()
+    await userEvent.click(screen.getByRole('button',{name:'Edit generated player p-1'}))
+    await userEvent.click(screen.getByRole('button',{name:'Automatic preview field current_ability'}))
+    await userEvent.click(screen.getByRole('button',{name:'Apply field locks to preview'}))
+    await waitFor(()=>expect(api.previewRunOwnedInitialWorld).toHaveBeenCalledTimes(5))
+    const automatic=api.previewRunOwnedInitialWorld.mock.calls[4][2]
+    expect(automatic.generation.field_locks).toEqual([])
+    expect(automatic.generation.session_steps).toHaveLength(2)
+    expect(automatic.generation.session_steps[1].kind).toBe('edit')
+    expect(api.saveRunOwnedInitialWorld).not.toHaveBeenCalled()
+  })
+
   it('blocks Keep of all players and reroll with the same seed',async()=>{
     render()
     await userEvent.clear(screen.getByRole('spinbutton',{name:'Number of generated players'}))

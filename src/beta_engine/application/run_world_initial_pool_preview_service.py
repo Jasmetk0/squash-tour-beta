@@ -136,6 +136,31 @@ class RunWorldKeepStep(BaseModel):
         return self
 
 
+class RunWorldVerifiedSessionStep(BaseModel):
+    """One authenticated session operation, never a browser-supplied player."""
+
+    model_config = ConfigDict(extra="forbid", strict=True, frozen=True)
+
+    kind: Literal["edit", "keep"]
+    source_preview_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    seed: int
+    keep_player_ids: list[str] = Field(default_factory=list)
+    field_locks: list[RunWorldPreviewFieldLock] = Field(default_factory=list, max_length=2000)
+
+    @model_validator(mode="after")
+    def validate_step(self) -> "RunWorldVerifiedSessionStep":
+        if self.keep_player_ids != sorted(set(self.keep_player_ids)):
+            raise ValueError("Session step Keep IDs must be sorted and unique")
+        if any(not player_id or len(player_id) > 128 for player_id in self.keep_player_ids):
+            raise ValueError("Session step contains invalid Keep player ID")
+        if self.kind == "edit" and self.keep_player_ids:
+            raise ValueError("Field edit cannot change Keep selection")
+        identities = [(lock.player_id, lock.field) for lock in self.field_locks]
+        if identities != sorted(set(identities)):
+            raise ValueError("Session step field locks must be sorted and unique")
+        return self
+
+
 class RunWorldExactCountryQuota(BaseModel):
     """An exact whole-batch count in a saved World; unlike overlapping conditions,
     country identities are disjoint, so the automatic remainder is well-defined.
@@ -172,6 +197,15 @@ class RunWorldInitialPoolPreviewRequest(BaseModel):
     keep_player_ids: list[str] = Field(default_factory=list)
     keep_history: list[RunWorldKeepStep] = Field(default_factory=list, max_length=16)
     field_locks: list[RunWorldPreviewFieldLock] = Field(default_factory=list, max_length=2000)
+    # Opt-in v2. The exact original legacy request and its fingerprint anchor
+    # an append-only sequence of authenticated Keep/edit operations. The old
+    # request and historical hash bytes remain completely unchanged.
+    session_schema_version: Literal["run_world_generation_session.v2"] | None = None
+    session_origin_request: RunWorldInitialPoolPreviewRequest | None = None
+    session_origin_fingerprint: str | None = Field(
+        default=None, pattern=r"^[0-9a-f]{64}$"
+    )
+    session_steps: list[RunWorldVerifiedSessionStep] = Field(default_factory=list, max_length=48)
 
     @model_validator(mode="after")
     def validate_age_range(self) -> "RunWorldInitialPoolPreviewRequest":
@@ -209,6 +243,20 @@ class RunWorldInitialPoolPreviewRequest(BaseModel):
         identities = [(lock.player_id, lock.field) for lock in self.field_locks]
         if identities != sorted(set(identities)):
             raise ValueError("Preview field locks must have unique, sorted player/field keys")
+        enabled = self.session_schema_version is not None
+        if enabled:
+            if not self.session_origin_request or not self.session_origin_fingerprint or not self.session_steps:
+                raise ValueError("Versioned session requires exact origin request, fingerprint and operations")
+            if self.session_origin_request.session_schema_version is not None:
+                raise ValueError("Nested session origins are forbidden")
+            previous_keeps = (
+                len(self.session_origin_request.keep_history) +
+                int(self.session_origin_request.keep_from_seed is not None)
+            )
+            if previous_keeps + sum(step.kind == "keep" for step in self.session_steps) > 17:
+                raise ValueError("Versioned session Keep limit exceeded")
+        elif self.session_origin_request is not None or self.session_origin_fingerprint is not None or self.session_steps:
+            raise ValueError("Session operations require the v2 schema version")
         return self
 
     def fingerprint_payload(self) -> dict:
@@ -228,6 +276,16 @@ class RunWorldInitialPoolPreviewRequest(BaseModel):
             payload.pop("field_locks", None)  # existing hash/replay stays intact
         if not payload.get("country_quotas"):
             payload.pop("country_quotas", None)  # historical fingerprints preserved
+        if self.session_origin_request is None:
+            payload.pop("session_origin_request", None)
+        else:
+            payload["session_origin_request"] = self.session_origin_request.fingerprint_payload()
+        if self.session_schema_version is None:
+            payload.pop("session_schema_version", None)
+        if self.session_origin_fingerprint is None:
+            payload.pop("session_origin_fingerprint", None)
+        if not self.session_steps:
+            payload.pop("session_steps", None)
         return payload
 
 
@@ -265,7 +323,14 @@ class RunWorldInitialPoolPreviewService:
         run_id: str,
         branch_id: str,
         request: RunWorldInitialPoolPreviewRequest,
+        _preserved_players: list[InitialPoolGeneratedPlayer] | None = None,
     ) -> RunWorldInitialPoolPreview:
+        if request.session_schema_version is not None:
+            if _preserved_players is not None:
+                raise ValueError("Cannot inject Keep players into a versioned session")
+            return self._preview_verified_session(
+                run_id=run_id, branch_id=branch_id, request=request,
+            )
         state = self.package_service.get(run_id=run_id, branch_id=branch_id)
         if state is None:
             raise ValueError("Run Package state is empty")
@@ -325,7 +390,9 @@ class RunWorldInitialPoolPreviewService:
                     )
 
         generator = InitialPlayerPoolGenerator(identity_config=generation.identity_config)
-        preserved = []
+        preserved = list(_preserved_players or [])
+        if _preserved_players is not None and request.keep_from_seed is not None:
+            raise ValueError("Internal preserved players must use a fresh generation step")
         if request.keep_from_seed is not None:
             # Rebuild the exact original preview against the current Run/Branch
             # World source, instead of trusting snapshots supplied by the browser.
@@ -409,3 +476,141 @@ class RunWorldInitialPoolPreviewService:
             request=request,
             result=result,
         )
+
+
+    @staticmethod
+    def _bare_session_request(
+        original: RunWorldInitialPoolPreviewRequest, *, seed: int,
+    ) -> RunWorldInitialPoolPreviewRequest:
+        """One fresh step with the same exact World and hard conditions."""
+        return original.model_copy(update={
+            "seed": seed,
+            "keep_from_seed": None,
+            "keep_from_preview_fingerprint": None,
+            "keep_player_ids": [],
+            "keep_history": [],
+            "field_locks": [],
+            "session_schema_version": None,
+            "session_origin_request": None,
+            "session_origin_fingerprint": None,
+            "session_steps": [],
+        })
+
+    def _legacy_keep_source(
+        self, request: RunWorldInitialPoolPreviewRequest,
+    ) -> RunWorldInitialPoolPreviewRequest | None:
+        """Reproduce the immediate v1 Keep ancestor without changing its hash."""
+        if request.keep_from_seed is None:
+            return None
+        if request.keep_history:
+            previous = request.keep_history[-1]
+            return request.model_copy(update={
+                "seed": previous.seed,
+                "keep_from_seed": previous.keep_from_seed,
+                "keep_from_preview_fingerprint": previous.keep_from_preview_fingerprint,
+                "keep_player_ids": list(previous.keep_player_ids),
+                "keep_history": request.keep_history[:-1],
+            })
+        return request.model_copy(update={
+            "seed": request.keep_from_seed,
+            "keep_from_seed": None,
+            "keep_from_preview_fingerprint": None,
+            "keep_player_ids": [],
+            "keep_history": [],
+        })
+
+    def _session_stage_core(
+        self, *, run_id: str, branch_id: str,
+        original: RunWorldInitialPoolPreviewRequest, seed: int,
+        preserved: list[InitialPoolGeneratedPlayer],
+    ) -> InitialPoolResult:
+        # Only server-reconstructed identities and objects enter this call.
+        bare = self._bare_session_request(original, seed=seed)
+        return self.preview(
+            run_id=run_id, branch_id=branch_id, request=bare,
+            _preserved_players=preserved,
+        ).result
+
+    def _preview_verified_session(
+        self, *, run_id: str, branch_id: str,
+        request: RunWorldInitialPoolPreviewRequest,
+    ) -> RunWorldInitialPoolPreview:
+        original = request.session_origin_request
+        assert original is not None
+        # No step can alter a condition, source, quota or previous legacy Keep
+        # ancestry. All those settings are frozen at session creation.
+        variable = {
+            "seed", "field_locks", "session_schema_version",
+            "session_origin_request", "session_origin_fingerprint", "session_steps",
+        }
+        immutable = lambda value: value.model_dump(mode="json", exclude=variable)
+        if immutable(request) != immutable(original):
+            raise ValueError("Session cannot silently alter World, conditions, quotas or Keep ancestry")
+        source = self.preview(run_id=run_id, branch_id=branch_id, request=original)
+        if source.preview_fingerprint != request.session_origin_fingerprint:
+            raise ValueError("Versioned session origin is stale or unauthenticated")
+        previous = source
+        legacy_source = self._legacy_keep_source(original)
+        first_preserved: list[InitialPoolGeneratedPlayer] = []
+        if legacy_source is not None:
+            legacy = self.preview(run_id=run_id, branch_id=branch_id, request=legacy_source)
+            by_id = {player.player_id: player for player in legacy.result.players}
+            first_preserved = [
+                by_id[player_id].model_copy(update={"locked": True})
+                for player_id in original.keep_player_ids
+            ]
+        core = self._session_stage_core(
+            run_id=run_id, branch_id=branch_id, original=original,
+            seed=original.seed, preserved=first_preserved,
+        )
+        generation = self.world_adapter.project_generation(
+            self.package_service.get(run_id=run_id, branch_id=branch_id),
+            package_id=request.world_package_id,
+        )
+        generator = InitialPlayerPoolGenerator(identity_config=generation.identity_config)
+        for index, step in enumerate(request.session_steps):
+            if previous.preview_fingerprint != step.source_preview_fingerprint:
+                raise ValueError("Versioned session operation has stale or forged source fingerprint")
+            if step.kind == "edit":
+                if step.seed != previous.request.seed:
+                    raise ValueError("Session field edit cannot change seed")
+            else:
+                expected_locks = [
+                    lock for lock in previous.request.field_locks
+                    if lock.player_id in step.keep_player_ids
+                ]
+                if step.field_locks != expected_locks:
+                    raise ValueError(
+                        "Session Keep cannot silently alter existing field locks; "
+                        "apply an authenticated field edit first"
+                    )
+                if step.seed == previous.request.seed:
+                    raise ValueError("Session Keep requires a new seed")
+                if not 0 < len(step.keep_player_ids) < request.target_pool_size:
+                    raise ValueError("Session Keep requires a nonempty proper subset")
+                by_id = {player.player_id: player for player in previous.result.players}
+                if set(step.keep_player_ids) - set(by_id):
+                    raise ValueError("Session Keep IDs are absent from authenticated source")
+                preserved = [
+                    by_id[player_id].model_copy(update={"locked": True})
+                    for player_id in step.keep_player_ids
+                ]
+                core = self._session_stage_core(
+                    run_id=run_id, branch_id=branch_id, original=original,
+                    seed=step.seed, preserved=preserved,
+                )
+            result = _apply_preview_field_locks(
+                core, step.field_locks, season=request.season,
+                seed=step.seed, generator=generator,
+            )
+            partial_request = request.model_copy(update={
+                "seed": step.seed,
+                "field_locks": list(step.field_locks),
+                "session_steps": request.session_steps[:index + 1],
+            })
+            previous = source.model_copy(update={
+                "request": partial_request, "result": result,
+            })
+        if previous.request.seed != request.seed or previous.request.field_locks != request.field_locks:
+            raise ValueError("Final session seed/field locks do not match authenticated last step")
+        return previous

@@ -12,6 +12,15 @@ export type GeneratedPlayerFieldKey =
   | 'attributes.mental' | 'attributes.consistency' | 'attributes.clutch'
   | 'attributes.recovery'
 
+/** Append-only, fingerprint-anchored edits and Keep steps (v2 opt-in). */
+export type RunWorldVerifiedSessionStep = {
+  kind: 'edit' | 'keep'
+  source_preview_fingerprint: string
+  seed: number
+  keep_player_ids: string[]
+  field_locks: RunWorldPreviewFieldLock[]
+}
+
 export type RunWorldExactCountryQuota = {
   country_code: string
   count: number
@@ -87,6 +96,10 @@ export type RunInitialWorldGeneration = {
   keep_player_ids?: string[]
   keep_history?: RunWorldKeepHistoryStep[]
   field_locks?: RunWorldPreviewFieldLock[]
+  session_schema_version?: 'run_world_generation_session.v2' | null
+  session_origin_request?: RunInitialWorldGeneration | null
+  session_origin_fingerprint?: string | null
+  session_steps?: RunWorldVerifiedSessionStep[]
 }
 
 export type RunWorldGenerationCountry = {
@@ -304,10 +317,37 @@ export function verifiedInitialWorldPreview(
       JSON.stringify(fieldLocks) !== JSON.stringify(orderedPreviewFieldLocks(fieldLocks)) ||
       new Set(fieldLocks.map(lock => lock.player_id + ':' + lock.field)).size !== fieldLocks.length)
     return false
-  const kept = request.generation.keep_player_ids ?? []
-  const history = request.generation.keep_history ?? []
+  const session = request.generation
+  const sessionSteps = session.session_steps ?? []
+  const sessionV2 = session.session_schema_version === 'run_world_generation_session.v2'
+  if (sessionV2) {
+    const origin = session.session_origin_request
+    if (!origin || origin.session_schema_version || !/^[0-9a-f]{64}$/.test(
+      session.session_origin_fingerprint ?? ''
+    ) || !sessionSteps.length || sessionSteps.length > 48 ||
+       sessionSteps.filter(step => step.kind === 'keep').length > 17) return false
+    if (sessionSteps.some((step, index) =>
+      (step.kind !== 'edit' && step.kind !== 'keep') ||
+      !/^[0-9a-f]{64}$/.test(step.source_preview_fingerprint) ||
+      !Number.isSafeInteger(step.seed) ||
+      (step.kind === 'edit' && step.keep_player_ids.length > 0) ||
+      (step.kind === 'keep' && (!step.keep_player_ids.length ||
+        step.keep_player_ids.length >= session.target_pool_size)) ||
+      step.keep_player_ids.join('|') !== [...new Set(step.keep_player_ids)].sort().join('|') ||
+      step.field_locks.length > 2000 ||
+      JSON.stringify(step.field_locks) !== JSON.stringify(orderedPreviewFieldLocks(step.field_locks)) ||
+      new Set(step.field_locks.map(lock=>lock.player_id+':'+lock.field)).size !== step.field_locks.length
+    )) return false
+    const last = sessionSteps[sessionSteps.length-1]
+    if (last.seed !== session.seed ||
+      JSON.stringify(last.field_locks) !== JSON.stringify(fieldLocks)) return false
+  } else if (session.session_origin_request || session.session_origin_fingerprint ||
+             sessionSteps.length) return false
+  const newestKeep = [...sessionSteps].reverse().find(step=>step.kind==='keep')
+  const kept = newestKeep?.keep_player_ids ?? session.keep_player_ids ?? []
+  const history = session.keep_history ?? []
   if (!Array.isArray(history) || history.length > 16) return false
-  if (history.length && (!kept.length ||
+  if (history.length && (!session.keep_player_ids?.length ||
       history[history.length - 1].seed !== request.generation.keep_from_seed)) return false
   for (let i = 0; i < history.length; i++) {
     const step = history[i]
@@ -322,9 +362,9 @@ export function verifiedInitialWorldPreview(
         step.keep_player_ids.join('|') !== [...new Set(step.keep_player_ids)].sort().join('|')) return false
   }
   if (kept.length > 0) {
-    if (!Number.isSafeInteger(request.generation.keep_from_seed) ||
-        request.generation.keep_from_seed === request.generation.seed ||
-        !/^[0-9a-f]{64}$/.test(request.generation.keep_from_preview_fingerprint ?? '') ||
+    if ((!sessionV2 && !Number.isSafeInteger(request.generation.keep_from_seed)) ||
+        (!sessionV2 && request.generation.keep_from_seed === request.generation.seed) ||
+        (!sessionV2 && !/^[0-9a-f]{64}$/.test(request.generation.keep_from_preview_fingerprint ?? '')) ||
         kept.length >= request.generation.target_pool_size ||
         kept.some(id => typeof id !== 'string' || !id) ||
         kept.join('|') !== [...new Set(kept)].sort().join('|') ||

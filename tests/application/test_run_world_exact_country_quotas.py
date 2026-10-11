@@ -117,9 +117,8 @@ def test_keep_reroll_preserves_identity_and_exact_country_quota():
     ((("AAA", 10),), 50, "ineligible"),
 ])
 def test_impossible_quotas_fail_closed(quotas, count, fragment):
-    request = _request(*quotas, count=count)
     with pytest.raises(ValueError, match=fragment):
-        _preview(request)
+        _preview(_request(*quotas, count=count))
 
 
 def test_kept_players_cannot_break_a_country_quota():

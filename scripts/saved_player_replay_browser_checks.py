@@ -58,12 +58,28 @@ def verify_saved_player_replay(page, run_url, artifacts, port, prefix="", expect
                      "/branches/not-this-branch/"), status=404)
     get(scope + "/matches/unpublished/" + quote(match_id, safe=""), status=404)
 
+    # The same real persisted Saved Revision must contain this player in the
+    # canonical inventory; no legacy Run-level roster can satisfy this check.
+    roster_scope = ("/admin/runs/" + quote(run_id, safe="") + "/branches/" +
+                    quote(branch_id, safe="") + "/saved-players")
+    roster = get(roster_scope + "?search=" + quote(player_id, safe=""))
+    assert roster["saved_revision_id"] == career["saved_revision_id"], roster
+    assert roster["source"] == "selected_branch_saved_revision" and roster["time_context"] == "present"
+    assert any(row["player_id"] == player_id for row in roster["players"]), roster
+
     player_route = "/admin/runs/" + quote(run_id, safe="") + "/people/" + quote(player_id, safe="")
     match_route = player_route + "/matches/" + quote(event_id, safe="") + "/" + quote(match_id, safe="")
+    page.goto(base + "/admin/runs/" + quote(run_id, safe="") + "/players")
+    if expected_branch_id:
+        page.get_by_role("combobox", name="Admin active Branch").select_option(expected_branch_id)
+    page.get_by_role("combobox", name="Language / Jazyk").select_option("en")
+    page.get_by_role("textbox", name="Player search").fill(player_id)
+    expect(page.locator('a[href="' + player_route + '"]')).to_have_count(1)
     page.goto(base + player_route)
     if expected_branch_id:
         page.get_by_role("combobox", name="Admin active Branch").select_option(expected_branch_id)
     page.get_by_role("combobox", name="Language / Jazyk").select_option("en")
+    page.get_by_role("tab", name="Career & results").click()
     expect(page.get_by_role("heading", name="Match career")).to_be_visible()
     link = page.locator('a[href="' + match_route + '"]')
     expect(link).to_have_count(1)
@@ -79,6 +95,7 @@ def verify_saved_player_replay(page, run_url, artifacts, port, prefix="", expect
     expect(page.get_by_role("heading", name="Match detail")).to_be_visible()
     expect(page.get_by_text(f"Rally 1/{total}", exact=False)).to_be_visible()
     page.get_by_role("link", name="← Back to player profile").click()
+    page.get_by_role("tab", name="Career & results").click()
     expect(page.get_by_role("heading", name="Match career")).to_be_visible()
     return dict(run_id=run_id, branch_id=branch_id,
                 saved_revision_id=first["saved_revision_id"], event_id=event_id,
@@ -153,6 +170,7 @@ def verify_materialized_branch_fork_replay(page, run_url, artifacts, port, sourc
                "/people/" + quote(source["player_id"], safe=""))
     page.goto(base + profile)
     page.get_by_role("combobox", name="Admin active Branch").select_option(fork_id)
+    page.get_by_role("tab", name="Career & results").click()
     expect(page.get_by_role("heading", name="Match career")).to_be_visible()
     match_route = profile + "/matches/" + quote(source["event_id"], safe="") + "/" + quote(source["match_id"], safe="")
     page.locator('a[href="' + match_route + '"]').click()

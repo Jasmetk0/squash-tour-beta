@@ -1,160 +1,74 @@
-import { screen, waitFor, within } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-
 import { PlayersPage } from './PlayersPage'
-import { renderWithRoute } from '../test/testUtils'
 
-const api = vi.hoisted(() => ({
-  listRunPlayers: vi.fn(),
-  getRunPlayerDetail: vi.fn(),
-  getRunPlayerCareerHistory: vi.fn()
+const api=vi.hoisted(()=>({getSavedPlayersInventory:vi.fn()}))
+const context=vi.hoisted(()=>({
+  branch:{run_id:'run-a',branch_id:'a',display_name:'Timeline A',saved_head_revision_id:'head-a'},
+  time:{mode:'present',viewCheckpointId:null}
 }))
-
-vi.mock('../api/client', () => api)
-vi.mock('../admin/AdminBranchContext', () => ({
-  useAdminBranch: () => ({
-    runId: 'run-a',
-    selectedBranchId: 'branch-a',
-    selectedBranch: { branch_id: 'branch-a', run_id: 'run-a', display_name: 'Timeline A', read_only: false },
-    branches: [],
-    viewerBranchId: 'branch-a',
-    isLoading: false,
-    error: null,
-    viewerBranchMissing: false,
-    selectBranch: vi.fn()
-  })
+vi.mock('../api/client',()=>api)
+vi.mock('../admin/AdminBranchContext',()=>({
+  useAdminBranch:()=>({selectedBranch:context.branch,isLoading:false,error:null})
 }))
-vi.mock('./PlayerHealthAdminPanel', () => ({
-  PlayerHealthAdminPanel: ({ branchId, playerId }: { branchId: string; playerId: string }) => (
-    <div data-testid="health-panel">Health {branchId}/{playerId}</div>
-  )
-}))
-
-describe('PlayersPage', () => {
-  beforeEach(() => {
+vi.mock('../admin/AdminTimeContext',()=>({useAdminTime:()=>context.time}))
+vi.mock('../i18n/LanguageContext',()=>({useLanguage:()=>({language:'en'})}))
+const player=(id:string)=>({
+  player_id:id,display_name:'Player '+id,country_code:'CZE',
+  identity_source:'initial_world',age:null,status:'active',
+  ovr:null,potential_ovr:null,ranking_status:'unpublished',rank:null
+})
+function mount():void {
+  render(<QueryClientProvider client={new QueryClient({defaultOptions:{queries:{retry:false}}})}>
+    <MemoryRouter initialEntries={['/admin/runs/run-a/players']}><Routes>
+      <Route path="/admin/runs/:runId/players" element={<PlayersPage/>}/>
+    </Routes></MemoryRouter>
+  </QueryClientProvider>)
+}
+type Filters={offset:number;limit:number;search:string;country_code:string;status_filter:string;include_prepared:boolean}
+const response=(filters:Filters,head='head-a')=>({
+  schema_version:'saved_players_inventory.v1',run_id:'run-a',branch_id:'a',
+  saved_revision_id:head,source:'selected_branch_saved_revision',time_context:'present',
+  ranking_week_ordinal:null, ...filters,total:1001,has_more:filters.offset+filters.limit<1001,
+  players:[player('p'+filters.offset)]
+})
+describe('Canonical Run Players',()=>{
+  beforeEach(()=>{
     vi.clearAllMocks()
-    api.listRunPlayers.mockResolvedValue({
-      run_id: 'run-a',
-      total: 2,
-      limit: 200,
-      offset: 0,
-      players: [
-        {
-          player_id: 'EGY-0001',
-          name: 'Ali A',
-          country_code: 'EGY',
-          age: 20,
-          source_type: 'planner_generated',
-          override_id: null,
-          quality_band: 'elite_talent',
-          is_top_band: true,
-          origin_source_type: 'planner_generated',
-          origin_quality_band: 'elite_talent',
-          origin_override_id: null,
-          origin_season: 2027,
-          technique: 70,
-          movement: 68,
-          physical: 66,
-          mental: 65,
-          overall: 67
-        },
-        {
-          player_id: 'ENG-0001',
-          name: 'Bob B',
-          country_code: 'ENG',
-          age: 22,
-          source_type: 'rollover_carried',
-          override_id: null,
-          quality_band: null,
-          is_top_band: false,
-          origin_source_type: null,
-          origin_quality_band: null,
-          origin_override_id: null,
-          origin_season: null,
-          technique: 72,
-          movement: 71,
-          physical: 70,
-          mental: 73,
-          overall: 72
-        }
-      ]
-    })
-    api.getRunPlayerDetail.mockResolvedValue({
-      player_id: 'EGY-0001',
-      name: 'Ali A',
-      country_code: 'EGY',
-      age: 20,
-      play_style: 'attacking',
-      archetype: 'shotmaker',
-      technique: 70,
-      movement: 68,
-      physical: 66,
-      mental: 65,
-      consistency: 64,
-      clutch: 63,
-      recovery: 62,
-      overall: 67,
-      hidden_traits: { potential_ceiling: 90, growth_curve: 'late', professionalism: 0.8, ambition: 0.7, travel_tolerance: 0.6, schedule_aggression: 0.7, injury_proneness: 0.2, resilience: 0.8 },
-      source_type: 'planner_generated',
-      quality_band: 'elite_talent',
-      is_top_band: true,
-      override_id: null,
-      origin_source_type: 'planner_generated',
-      origin_quality_band: 'elite_talent',
-      origin_override_id: null,
-      origin_season: 2027,
-      talent_seed_value: 101,
-      talent_sequence: 1
-    })
+    context.branch.saved_head_revision_id='head-a'
+    context.time.mode='present'
+    api.getSavedPlayersInventory.mockImplementation(async (_r:string,_b:string,head:string,filters:Filters)=>response(filters,head))
   })
-
-  it('renders players table, applies filters, opens detail, and handles loading/error states', async () => {
-    renderWithRoute(<PlayersPage />, '/runs/run-a/players')
-
-    expect(await screen.findByRole('heading', { name: 'Run Players Explorer' })).toBeInTheDocument()
-    expect(screen.getByText('Timeline A')).toBeInTheDocument()
-    const table = await screen.findByRole('table')
-    expect(within(table).getByText('Ali A')).toBeInTheDocument()
-
-    await userEvent.type(screen.getByLabelText('Search (name / ID)'), 'EGY-0001')
-    await waitFor(() => {
-      expect(api.listRunPlayers).toHaveBeenLastCalledWith(
-        'run-a',
-        expect.objectContaining({ search: 'EGY-0001' })
-      )
-    })
-
-    await userEvent.type(screen.getByLabelText('Country code'), 'egy')
-    await waitFor(() => {
-      expect(api.listRunPlayers).toHaveBeenLastCalledWith(
-        'run-a',
-        expect.objectContaining({ country_code: 'EGY' })
-      )
-    })
-
-    await userEvent.selectOptions(screen.getByLabelText('Source type'), 'planner_generated')
-    await waitFor(() => {
-      expect(api.listRunPlayers).toHaveBeenLastCalledWith(
-        'run-a',
-        expect.objectContaining({ source_type: 'planner_generated' })
-      )
-    })
-
-    await userEvent.click(screen.getByRole('button', { name: 'EGY-0001' }))
-    await waitFor(() => expect(api.getRunPlayerDetail).toHaveBeenCalledWith('run-a', 'EGY-0001'))
-    expect(await screen.findByText(/Source: planner_generated/)).toBeInTheDocument()
-    expect(await screen.findByText(/Origin source: planner_generated/)).toBeInTheDocument()
-    expect(await screen.findByRole('link', { name: 'View career history' })).toHaveAttribute(
-      'href',
-      '/runs/run-a/players/EGY-0001/career'
-    )
-    expect(screen.getByTestId('health-panel')).toHaveTextContent('Health branch-a/EGY-0001')
+  it('uses Branch HEAD and real server pagination, never legacy API',async()=>{
+    mount()
+    expect(await screen.findByRole('link',{name:/Player p0/})).toHaveAttribute('href','/admin/runs/run-a/people/p0')
+    expect(screen.getAllByText('—').length).toBeGreaterThan(1)
+    expect(screen.queryByText('NR')).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button',{name:'Next →'}))
+    await waitFor(()=>expect(screen.getByRole('link',{name:/Player p50/})).toBeInTheDocument())
+    expect(api.getSavedPlayersInventory).toHaveBeenLastCalledWith('run-a','a','head-a',expect.objectContaining({offset:50,limit:50}))
+    fireEvent.change(screen.getByRole('textbox',{name:'Player search'}),{target:{value:'Olivia'}})
+    await waitFor(()=>expect(api.getSavedPlayersInventory).toHaveBeenLastCalledWith('run-a','a','head-a',expect.objectContaining({offset:0,search:'Olivia'})))
   })
-
-  it('shows list error state', async () => {
-    api.listRunPlayers.mockRejectedValueOnce(new Error('boom'))
-    renderWithRoute(<PlayersPage />, '/runs/run-a/players')
-    expect(await screen.findByText(/Failed to load players/)).toBeInTheDocument()
+  it('rejects a foreign Saved Revision response instead of displaying stale player',async()=>{
+    api.getSavedPlayersInventory.mockImplementation(async (_r:string,_b:string,_h:string,filters:Filters)=>response(filters,'foreign'))
+    mount()
+    expect(await screen.findByRole('alert')).toHaveTextContent('Response does not belong')
+    expect(screen.queryByRole('link',{name:/Player p0/})).not.toBeInTheDocument()
+  })
+  it('disables present-time fetch and shows no fake historical roster',async()=>{
+    context.time.mode='checkpoint'
+    mount()
+    expect(screen.getByText(/Historical player projection is not supported/)).toBeInTheDocument()
+    expect(api.getSavedPlayersInventory).not.toHaveBeenCalled()
+  })
+  it('requires explicit reveal before showing prepared prospects',async()=>{
+    mount()
+    await screen.findByRole('link',{name:/Player p0/})
+    expect(api.getSavedPlayersInventory).toHaveBeenCalledWith('run-a','a','head-a',expect.objectContaining({include_prepared:false}))
+    fireEvent.click(screen.getByRole('checkbox',{name:/explicitly reveal saved prepared prospects/}))
+    await waitFor(()=>expect(api.getSavedPlayersInventory).toHaveBeenLastCalledWith('run-a','a','head-a',expect.objectContaining({include_prepared:true})))
   })
 })

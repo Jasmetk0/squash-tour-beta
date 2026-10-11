@@ -8490,6 +8490,38 @@ export type SavedHomePlayerIdentities = {
   unresolved_ids: string[]
 }
 
+/** Server-paged present-time roster from the selected immutable Branch Saved Revision. */
+export type SavedInventoryPlayer = {
+  player_id: string
+  display_name: string
+  country_code: string
+  identity_source: 'initial_world' | 'run_prospect'
+  status: string | null
+  age: number | null
+  ovr: number | null
+  potential_ovr: number | null
+  ranking_status: 'unpublished' | 'ranked' | 'unranked'
+  rank: number | null
+}
+export type SavedPlayersInventory = {
+  schema_version: 'saved_players_inventory.v1'
+  run_id: string
+  branch_id: string
+  saved_revision_id: string
+  source: 'selected_branch_saved_revision'
+  time_context: 'present'
+  ranking_week_ordinal: number | null
+  search: string
+  country_code: string
+  status_filter: string
+  include_prepared: boolean
+  offset: number
+  limit: number
+  total: number
+  has_more: boolean
+  players: SavedInventoryPlayer[]
+}
+
 /** Current present-time player profile from the selected immutable Branch Saved Revision. */
 export type SavedPlayerTournamentFinish = {
   event_id: string

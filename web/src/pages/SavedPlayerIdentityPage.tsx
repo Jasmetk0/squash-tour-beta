@@ -1,5 +1,6 @@
 /** Branch-owned present-time profile from a single verified Saved Revision. */
 import { useQuery } from '@tanstack/react-query'
+import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 
 import { getSavedPlayerProfile } from '../api/client'
@@ -13,6 +14,7 @@ export function SavedPlayerIdentityPage(): JSX.Element {
   const { runId = '', playerId = '' } = useParams()
   const { language } = useLanguage()
   const cs = language === 'cs'
+  const [tab, setTab] = useState<'overview' | 'attributes' | 'career'>('overview')
   const { selectedBranch, isLoading, error } = useAdminBranch()
   const time = useAdminTime()
   const branchId = selectedBranch?.run_id === runId ? selectedBranch.branch_id : null
@@ -46,6 +48,15 @@ export function SavedPlayerIdentityPage(): JSX.Element {
           ? 'Ověřená identita není v této uložené revizi dostupná. Sportovní údaje nezobrazujeme.'
           : 'No verified player identity in this Saved Revision. No sporting information is shown.'}</p>}
         {profile && player && <>
+          <div className="actions" role="tablist" aria-label={cs ? 'Záložky profilu hráče' : 'Player profile tabs'}>
+            <button type="button" role="tab" aria-selected={tab==='overview'}
+              onClick={()=>setTab('overview')}>{cs ? 'Přehled' : 'Overview'}</button>
+            <button type="button" role="tab" aria-selected={tab==='attributes'}
+              onClick={()=>setTab('attributes')}>{cs ? 'Atributy' : 'Attributes'}</button>
+            <button type="button" role="tab" aria-selected={tab==='career'}
+              onClick={()=>setTab('career')}>{cs ? 'Kariéra a výsledky' : 'Career & results'}</button>
+          </div>
+          {tab==='overview' && <section role="tabpanel" aria-label={cs ? 'Přehled' : 'Overview'}>
           <div className="run-home-status-block">
             <p><strong>{cs ? 'Jméno' : 'Name'}:</strong> {player.display_name}</p>
             <p><strong>{cs ? 'Země' : 'Country'}:</strong> {player.country_code}</p>
@@ -68,6 +79,16 @@ export function SavedPlayerIdentityPage(): JSX.Element {
             {2000 + Math.floor(profile.ranking_week_ordinal / 61)}/{String((2001 + Math.floor(profile.ranking_week_ordinal / 61)) % 100).padStart(2, '0')}
             {' · W'}{profile.ranking_week_ordinal % 61 + 1}
           </p>}
+          </section>}
+          {tab==='attributes' && <section role="tabpanel" aria-label={cs ? 'Atributy' : 'Attributes'}>
+            <h3>{cs ? 'Sportovní atributy' : 'Sporting attributes'}</h3>
+            <p className="status">{cs
+              ? 'Autoritativní 0–200 OVR, Potential OVR a sada atributů zatím nejsou v tomto saved-player read kontraktu dostupné. Z legacy stupnice ani jiných branchí je nepřebíráme.'
+              : 'Authoritative 0–200 OVR, Potential OVR and the attribute catalogue are not available in this saved-player read contract yet. Legacy scales and other Branches are not substituted.'}</p>
+            <p className="status">{cs ? 'Režim: jen čtení. Úpravy se zpřístupní samostatným výslovným krokem.' :
+              'Read-only mode. Editing will require a separate explicit action.'}</p>
+          </section>}
+          {tab==='career' && <section role="tabpanel" aria-label={cs ? 'Kariéra a výsledky' : 'Career & results'}>
           <h3>{cs ? 'Turnajová historie' : 'Tournament history'}</h3>
           <p><strong>{cs ? 'Tituly' : 'Titles'}:</strong> {profile.titles}
             {' · '}<strong>{cs ? 'Finálové účasti' : 'Final appearances'}:</strong> {profile.final_appearances}</p>
@@ -87,11 +108,13 @@ export function SavedPlayerIdentityPage(): JSX.Element {
           <SavedPlayerMatchesPanel key={branchId + ':' + savedHead + ':' + playerId}
             runId={runId} branchId={branchId!} savedHead={savedHead!}
             playerId={playerId} locale={language} />
+          </section>}
           <p className="status">{cs
             ? 'Zdroj: ověřená Saved Revision. Nezahrnuje nepublikované turnaje, legacy kariéru, atributy ani jinou branch.'
             : 'Source: verified Saved Revision. Excludes unpublished tournaments, legacy career, attributes and other Branches.'}</p>
         </>}
       </>}
+    <p><Link to={'/admin/runs/' + encodeURIComponent(runId) + '/players'}>{cs ? '← Zpět na Hráče' : '← Back to Players'}</Link></p>
     <Link to={'/admin/runs/' + encodeURIComponent(runId)}>{cs ? '← Domů do Runu' : '← Back to Run Home'}</Link>
   </section>
 }

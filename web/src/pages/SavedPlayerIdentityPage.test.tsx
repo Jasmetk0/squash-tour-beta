@@ -1,0 +1,56 @@
+import { fireEvent, render, screen } from '@testing-library/react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { MemoryRouter, Route, Routes } from 'react-router-dom'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { SavedPlayerIdentityPage } from './SavedPlayerIdentityPage'
+
+const api=vi.hoisted(()=>({getSavedPlayerProfile:vi.fn()}))
+const context=vi.hoisted(()=>({time:{mode:'present',viewCheckpointId:null}}))
+vi.mock('../api/client',()=>api)
+vi.mock('../admin/AdminBranchContext',()=>({useAdminBranch:()=>({
+  selectedBranch:{run_id:'run-a',branch_id:'branch-a',saved_head_revision_id:'head-a'},
+  isLoading:false,error:null
+})}))
+vi.mock('../admin/AdminTimeContext',()=>({useAdminTime:()=>context.time}))
+vi.mock('../i18n/LanguageContext',()=>({useLanguage:()=>({language:'en'})}))
+vi.mock('./SavedPlayerMatchesPanel',()=>({SavedPlayerMatchesPanel:()=> <div data-testid="saved-matches">Real saved matches panel</div>}))
+function mount():void {
+  render(<QueryClientProvider client={new QueryClient({defaultOptions:{queries:{retry:false}}})}>
+    <MemoryRouter initialEntries={['/admin/runs/run-a/people/p1']}><Routes>
+      <Route path="/admin/runs/:runId/people/:playerId" element={<SavedPlayerIdentityPage/>}/>
+    </Routes></MemoryRouter>
+  </QueryClientProvider>)
+}
+const profile={
+  schema_version:'saved_player_profile.v1',run_id:'run-a',branch_id:'branch-a',
+  saved_revision_id:'head-a',player_id:'p1',source:'selected_branch_saved_revision',
+  identity:{player_id:'p1',display_name:'Sample Player',country_code:'CZE',identity_source:'initial_world'},
+  ranking_status:'unpublished',ranking_week_ordinal:null,rank:null,points:null,
+  titles:0,final_appearances:0,total_tournament_results:0,tournament_results:[]
+}
+describe('Saved player three-tab profile',()=>{
+  beforeEach(()=>{vi.clearAllMocks();context.time.mode='present';api.getSavedPlayerProfile.mockResolvedValue(profile)})
+  it('starts read-only with overview; career/matches open on explicit tab',async()=>{
+    mount()
+    expect(await screen.findByRole('heading',{name:'Sample Player'})).toBeInTheDocument()
+    expect(screen.getByRole('tab',{name:'Overview'})).toHaveAttribute('aria-selected','true')
+    expect(screen.queryByTestId('saved-matches')).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('tab',{name:'Attributes'}))
+    expect(screen.getByText(/not available in this saved-player read contract yet/)).toBeInTheDocument()
+    expect(screen.queryByText('0–200', {exact:true})).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('tab',{name:'Career & results'}))
+    expect(screen.getByTestId('saved-matches')).toBeInTheDocument()
+  })
+  it('refuses historical mode instead of querying the current profile',()=>{
+    context.time.mode='checkpoint'
+    mount()
+    expect(screen.getByText(/Historical player profile for this checkpoint is not supported/)).toBeInTheDocument()
+    expect(api.getSavedPlayerProfile).not.toHaveBeenCalled()
+  })
+  it('does not render foreign-branch profile',async()=>{
+    api.getSavedPlayerProfile.mockResolvedValue({...profile,saved_revision_id:'foreign'})
+    mount()
+    expect(await screen.findByRole('alert')).toHaveTextContent('Profile does not match')
+    expect(screen.queryByRole('tab',{name:'Career & results'})).not.toBeInTheDocument()
+  })
+})

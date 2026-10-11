@@ -195,6 +195,17 @@ def setup_run(page, base_url: str, artifacts: Path) -> str:
     expect(inspector.get_by_role("status")).to_contain_text("Display filters never change")
     inspector.get_by_role("button", name="Clear display filters").click()
     expect(inspector.get_by_role("status")).to_contain_text("Showing 64 / 64")
+    # Keep one real source player and regenerate 63 others via production API.
+    # This selection is session-only, not a permanent player lock.
+    kept_row = inspector.locator("tbody tr").first
+    kept_player_text = kept_row.locator("td").nth(1).inner_text()
+    kept_row.locator('input[type="checkbox"]').check()
+    expect(page.get_by_text("Kept: 1 / 64", exact=False)).to_be_visible()
+    page.get_by_label("Session Keep regeneration seed").fill("4202")
+    click("Regenerate remaining – new preview")
+    expect(page.get_by_text("One verified session Keep regeneration completed", exact=False)).to_be_visible()
+    expect(inspector.get_by_role("status")).to_contain_text("Showing 64 / 64")
+    assert kept_player_text in inspector.inner_text(), "Kept source player was not preserved"
     check("Approve InitialWorld adoption")
     click("Adopt generated players")
     check("Approve InitialWorld revision save")

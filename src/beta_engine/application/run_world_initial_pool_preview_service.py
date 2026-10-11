@@ -23,31 +23,48 @@ class RunWorldInitialPoolPreviewRequest(BaseModel):
     seed: int
     target_pool_size: int = Field(default=128, ge=1, le=2000)
     country_code: str | None = Field(default=None, min_length=3, max_length=3)
-    region: str | None = Field(default=None, min_length=1)  # Legacy union for replay
+    region: str | None = Field(default=None, min_length=1)  # Legacy OR predicate
     geographic_region: str | None = Field(default=None, min_length=1)
     travel_region: str | None = Field(default=None, min_length=1)
     min_age: int | None = Field(default=None, ge=15, le=45)
     max_age: int | None = Field(default=None, ge=15, le=45)
+    # Session-only one-pass Keep. Server regenerates the ORIGINAL source preview;
+    # no client-provided player objects or persistent player locks are trusted.
+    keep_from_seed: int | None = None
+    keep_from_preview_fingerprint: str | None = Field(
+        default=None, pattern=r"^[0-9a-f]{64}$"
+    )
+    keep_player_ids: list[str] = Field(default_factory=list)
 
     @model_validator(mode="after")
     def validate_age_range(self) -> "RunWorldInitialPoolPreviewRequest":
         if self.min_age is not None and self.max_age is not None and self.min_age > self.max_age:
             raise ValueError("Age condition requires minimum age no higher than maximum age")
+        keep = (self.keep_from_seed, self.keep_from_preview_fingerprint)
+        if any(value is not None for value in keep) or self.keep_player_ids:
+            if any(value is None for value in keep):
+                raise ValueError("Session Keep requires both source seed and exact preview fingerprint")
+            if self.seed == self.keep_from_seed:
+                raise ValueError("Session Keep regeneration seed must differ from the source seed")
+            if not 0 < len(self.keep_player_ids) < self.target_pool_size:
+                raise ValueError("Session Keep must preserve a nonempty proper subset of the preview")
+            if sorted(set(self.keep_player_ids)) != self.keep_player_ids:
+                raise ValueError("Session Keep player IDs must be sorted, unique and nonempty")
+            if any(not player_id or len(player_id) > 128 for player_id in self.keep_player_ids):
+                raise ValueError("Session Keep player IDs are invalid")
         return self
 
     def fingerprint_payload(self) -> dict:
-        """Preserve the pre-extension request digest for absent optional extensions.
+        """Do not include absent new typed fields in existing Keep fingerprints.
 
-        Old saved requests contained the legacy `region` field, but not the
-        newer typed geography or Keep extensions. Do not hash injected defaults.
+        Preserve the original session Keep keys (including their defaults) as
+        already stored by the current buuk production preview.
         """
         payload = self.model_dump(mode="json")
-        for field in (
-            "geographic_region", "travel_region", "keep_from_seed",
-            "keep_from_preview_fingerprint", "keep_player_ids",
-        ):
-            if payload.get(field) is None or payload.get(field) == []:
-                payload.pop(field, None)
+        if payload.get("geographic_region") is None:
+            payload.pop("geographic_region", None)
+        if payload.get("travel_region") is None:
+            payload.pop("travel_region", None)
         return payload
 
 
@@ -127,8 +144,8 @@ class RunWorldInitialPoolPreviewService:
                     "countries in the saved World"
                 )
 
-        # New exact layer predicates never cross-match names. Keep old `region`
-        # union semantics unchanged for previously saved inputs and replay.
+        # Geographic and Travel Region are distinct hard predicates. The old
+        # `region` OR predicate remains for saved requests and replay.
         for requested, attribute, kind in (
             (request.geographic_region, "region", "Geographic Region"),
             (request.travel_region, "effective_travel_region", "Travel Region"),
@@ -141,12 +158,35 @@ class RunWorldInitialPoolPreviewService:
                 if not selected_countries:
                     raise ValueError(
                         f"Conflicting generation conditions: {kind} '{requested}' "
-                        "has no eligible countries under the other saved-World conditions"
+                        "has no eligible countries under saved-World conditions"
                     )
 
-        result = InitialPlayerPoolGenerator(
-            identity_config=generation.identity_config
-        ).generate(
+        generator = InitialPlayerPoolGenerator(identity_config=generation.identity_config)
+        preserved = []
+        if request.keep_from_seed is not None:
+            # Rebuild the exact original preview against the current Run/Branch
+            # World source, instead of trusting snapshots supplied by the browser.
+            original_request = request.model_copy(update={
+                "seed": request.keep_from_seed,
+                "keep_from_seed": None,
+                "keep_from_preview_fingerprint": None,
+                "keep_player_ids": [],
+            })
+            original = self.preview(
+                run_id=run_id, branch_id=branch_id, request=original_request,
+            )
+            if original.preview_fingerprint != request.keep_from_preview_fingerprint:
+                raise ValueError("Session Keep source preview is stale or belongs to a different Run/World")
+            source_players = {player.player_id: player for player in original.result.players}
+            unknown_ids = set(request.keep_player_ids) - set(source_players)
+            if unknown_ids:
+                raise ValueError("Session Keep contains player IDs absent from the exact source preview")
+            preserved = [
+                source_players[player_id].model_copy(update={"locked": True})
+                for player_id in request.keep_player_ids
+            ]
+
+        result = generator.generate(
             countries=(selected_countries if request.geographic_region or request.travel_region
                        else list(countries.countries)),
             season=request.season,
@@ -156,9 +196,25 @@ class RunWorldInitialPoolPreviewService:
             region=request.region,
             min_age=request.min_age,
             max_age=request.max_age,
-            existing_locked_players=[],
+            existing_locked_players=preserved,
             dry_run=True,
         )
+        if preserved:
+            # Keep is limited to the current preview session. Never turn it into
+            # a permanent player Lock when InitialWorld is adopted/saved.
+            unlocked_players = [
+                player.model_copy(update={"locked": False})
+                for player in result.players
+            ]
+            result = result.model_copy(update={
+                "players": unlocked_players,
+                "summary": generator._summarize(unlocked_players),
+                "metadata": result.metadata.model_copy(update={
+                    "generation_fingerprint": generator._fingerprint(
+                        unlocked_players, season=request.season, seed=request.seed,
+                    ),
+                }),
+            })
 
         return RunWorldInitialPoolPreview(
             run_id=run_id,

@@ -4130,6 +4130,53 @@ export async function getSavedHomePlayerIdentities(
   return data
 }
 
+/** Canonical present-only inventory; caller must provide the selected Saved HEAD. */
+export async function getSavedPlayersInventory(
+  runId: string, branchId: string, savedHead: string,
+  filters: { search: string; country_code: string; status_filter: string;
+    include_prepared: boolean; offset: number; limit: number }
+): Promise<import('./types').SavedPlayersInventory> {
+  if (!runId || !branchId || !savedHead || !Number.isInteger(filters.offset) ||
+      filters.offset < 0 || !Number.isInteger(filters.limit) ||
+      filters.limit < 1 || filters.limit > 100) {
+    throw new Error('Invalid saved players context or page.')
+  }
+  const params = new URLSearchParams({
+    search: filters.search, country_code: filters.country_code,
+    status_filter: filters.status_filter,
+    include_prepared: String(filters.include_prepared),
+    offset: String(filters.offset), limit: String(filters.limit),
+  })
+  const data = await request<import('./types').SavedPlayersInventory>(
+    `/admin/runs/${encodeURIComponent(runId)}/branches/${encodeURIComponent(branchId)}/saved-players?${params.toString()}`
+  )
+  if (data.schema_version !== 'saved_players_inventory.v1' ||
+      data.run_id !== runId || data.branch_id !== branchId ||
+      data.saved_revision_id !== savedHead ||
+      data.source !== 'selected_branch_saved_revision' || data.time_context !== 'present' ||
+      data.search !== filters.search || data.country_code !== filters.country_code ||
+      data.status_filter !== filters.status_filter ||
+      data.include_prepared !== filters.include_prepared ||
+      data.offset !== filters.offset || data.limit !== filters.limit ||
+      !Number.isInteger(data.total) || data.total < 0 ||
+      data.has_more !== (filters.offset + filters.limit < data.total) ||
+      !Array.isArray(data.players) || data.players.length > filters.limit ||
+      new Set(data.players.map(row => row.player_id)).size !== data.players.length ||
+      data.players.some(row => !row.player_id || !row.display_name?.trim() ||
+        !/^[A-Za-z]{3}$/.test(row.country_code) ||
+        !['initial_world', 'run_prospect'].includes(row.identity_source) ||
+        (!filters.include_prepared && row.identity_source === 'run_prospect') ||
+        !['unpublished', 'ranked', 'unranked'].includes(row.ranking_status) ||
+        (row.ranking_status === 'ranked' ? !Number.isInteger(row.rank) || row.rank! < 1 : row.rank !== null) ||
+        (row.ranking_status === 'unpublished' && data.ranking_week_ordinal !== null) ||
+        (row.age != null && (!Number.isInteger(row.age) || row.age < 0)) ||
+        (row.ovr != null && (!Number.isInteger(row.ovr) || row.ovr < 0 || row.ovr > 200)) ||
+        (row.potential_ovr != null && (!Number.isInteger(row.potential_ovr) || row.potential_ovr < 0 || row.potential_ovr > 200)))) {
+    throw new Error('Canonical Saved Players inventory has mismatched revision or invalid facts.')
+  }
+  return data
+}
+
 /** Strictly read-only saved Branch sporting summary, never legacy/Viewer/live. */
 export async function getSavedPlayerProfile(
   runId: string, branchId: string, playerId: string

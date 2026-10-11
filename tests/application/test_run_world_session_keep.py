@@ -49,11 +49,12 @@ def source_request():
 
 
 def keep_request(original, ids, *, seed=803, **updates):
-    return original.request.model_copy(update={
+    return RunWorldInitialPoolPreviewRequest.model_validate({
+        **original.request.model_dump(mode="json"),
         "seed": seed,
         "keep_from_seed": original.request.seed,
         "keep_from_preview_fingerprint": original.preview_fingerprint,
-        "keep_player_ids": tuple(sorted(ids)),
+        "keep_player_ids": sorted(ids),
         **updates,
     })
 
@@ -92,7 +93,7 @@ def test_keep_preserves_entire_real_source_player_objects_and_regenerates_remain
 
 def test_kept_players_survive_real_initial_world_adoption_as_unlocked():
     pool = preview(source_request())
-    ids = tuple(sorted(p.player_id for p in pool.result.players[:4]))
+    ids = sorted(p.player_id for p in pool.result.players[:4])
     request = RunWorldInitialWorldAdoptionRequest(
         command_id="test-session-keep",
         generation=keep_request(pool, ids),
@@ -125,7 +126,7 @@ def test_kept_players_survive_real_initial_world_adoption_as_unlocked():
 
 @pytest.mark.parametrize("change,fragment", [
     ({"keep_from_preview_fingerprint": "f" * 64}, "source preview is stale"),
-    ({"keep_player_ids": ("P-2000-ZZZ-0001",)}, "player IDs absent"),
+    ({"keep_player_ids": ["P-2000-ZZZ-0001"]}, "player IDs absent"),
     ({"world_package_id": "other-world"}, "other-world"),
     ({"country_code": "BOG"}, "source preview is stale"),
     ({"min_age": 21}, "source preview is stale"),
@@ -140,13 +141,13 @@ def test_tampered_keep_never_silently_imports_foreign_players(change, fragment):
 
 @pytest.mark.parametrize("changes", [
     {"keep_from_seed": 123, "keep_from_preview_fingerprint": None,
-     "keep_player_ids": ("x",)},
+     "keep_player_ids": ["x"]},
     {"keep_from_seed": 123, "keep_from_preview_fingerprint": "a" * 64,
-     "keep_player_ids": ()},
+     "keep_player_ids": []},
     {"keep_from_seed": 123, "keep_from_preview_fingerprint": "a" * 64,
-     "keep_player_ids": ("x", "x")},
+     "keep_player_ids": ["x", "x"]},
     {"keep_from_seed": 123, "keep_from_preview_fingerprint": "a" * 64,
-     "keep_player_ids": ("z", "a")},
+     "keep_player_ids": ["z", "a"]},
     {"keep_from_seed": 802, "keep_from_preview_fingerprint": "a" * 64,
      "keep_player_ids": ("x",)},
 ])

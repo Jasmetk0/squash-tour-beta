@@ -110,14 +110,33 @@ export type RunInitialWorldSaved = {
   }
 }
 
+/** Strict hard country+region validation; never turn an invalid combination into a hint. */
+export function generatorConditionConflict(
+  countryCode: string, region: string, options: RunWorldGenerationOptions | null
+): string | null {
+  if (!options) return 'Saved World condition options are not available.'
+  if (countryCode && !options.countries.some(c => c.code === countryCode))
+    return `Sport country ${countryCode} is not present in the selected saved World.`
+  if (region && !options.regions.includes(region))
+    return `Region ${region} is not present in the selected saved World.`
+  if (countryCode && region && !options.countries.some(c =>
+    c.code === countryCode && (c.region === region || c.travel_region === region)))
+    return `Country ${countryCode} does not belong to region ${region} in this saved World.`
+  return null
+}
+
 export function verifiedInitialWorldPreview(
   value: RunInitialWorldPreview,
   runId: string,
   branchId: string,
-  request: RunInitialWorldAdoption
+  request: RunInitialWorldAdoption,
+  options?: RunWorldGenerationOptions | null
 ): boolean {
   const state = value?.state
   const players = state?.players
+  if ((request.generation.country_code || request.generation.region) &&
+      generatorConditionConflict(request.generation.country_code ?? '',
+        request.generation.region ?? '', options ?? null)) return false
   return value?.preview_only === true &&
     /^[a-f0-9]{64}$/.test(value.fingerprint) &&
     state?.run_id === runId && state?.branch_id === branchId &&
@@ -135,7 +154,10 @@ export function verifiedInitialWorldPreview(
       typeof player.name === 'string' && typeof player.country_code === 'string' &&
       (!request.generation.country_code ||
         player.country_code === request.generation.country_code) &&
-      (!request.generation.region || player.country_code.length === 3)) &&
+      (!request.generation.region || (options?.countries.some(country =>
+        country.code === player.country_code &&
+        (country.region === request.generation.region ||
+         country.travel_region === request.generation.region)) ?? false))) &&
     Array.isArray(state.policies) && state.policies.length === 1 &&
     state.policies[0].best_n === request.best_n
 }

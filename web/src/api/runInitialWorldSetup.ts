@@ -4,6 +4,48 @@ export type RunInitialWorldGeneration = {
   season: '2000/2001'
   seed: number
   target_pool_size: number
+  country_code?: string | null
+  region?: string | null
+}
+
+export type RunWorldGenerationCountry = {
+  code: string
+  name: string
+  region: string
+  travel_region: string
+}
+
+export type RunWorldGenerationOptions = {
+  schema_version: 'run_world_generation_options.v1'
+  run_id: string
+  branch_id: string
+  saved_revision_id: string
+  draft_version: number
+  run_package_fingerprint: string
+  world_package_id: string
+  countries: RunWorldGenerationCountry[]
+  regions: string[]
+}
+
+export function verifiedGenerationOptions(
+  data: RunWorldGenerationOptions, runId: string, branchId: string,
+  head: string, draftVersion: number, fingerprint: string, worldId: string
+): boolean {
+  return data?.schema_version === 'run_world_generation_options.v1' &&
+    data.run_id === runId && data.branch_id === branchId &&
+    data.saved_revision_id === head && data.draft_version === draftVersion &&
+    data.run_package_fingerprint === fingerprint &&
+    data.world_package_id === worldId && Array.isArray(data.countries) &&
+    data.countries.length > 0 && Array.isArray(data.regions) &&
+    data.countries.every(country => /^[A-Z]{3}$/.test(country.code) &&
+      typeof country.name === 'string' && country.name.length > 0 &&
+      typeof country.region === 'string' && country.region.length > 0 &&
+      typeof country.travel_region === 'string' && country.travel_region.length > 0) &&
+    new Set(data.countries.map(country => country.code)).size === data.countries.length &&
+    data.regions.every(region => typeof region === 'string' && region.length > 0) &&
+    new Set(data.regions).size === data.regions.length &&
+    data.countries.every(country => data.regions.includes(country.region) &&
+      data.regions.includes(country.travel_region))
 }
 
 export type RunInitialWorldAdoption = {
@@ -68,14 +110,33 @@ export type RunInitialWorldSaved = {
   }
 }
 
+/** Strict hard country+region validation; never turn an invalid combination into a hint. */
+export function generatorConditionConflict(
+  countryCode: string, region: string, options: RunWorldGenerationOptions | null
+): string | null {
+  if (!options) return 'Saved World condition options are not available.'
+  if (countryCode && !options.countries.some(c => c.code === countryCode))
+    return `Sport country ${countryCode} is not present in the selected saved World.`
+  if (region && !options.regions.includes(region))
+    return `Region ${region} is not present in the selected saved World.`
+  if (countryCode && region && !options.countries.some(c =>
+    c.code === countryCode && (c.region === region || c.travel_region === region)))
+    return `Country ${countryCode} does not belong to region ${region} in this saved World.`
+  return null
+}
+
 export function verifiedInitialWorldPreview(
   value: RunInitialWorldPreview,
   runId: string,
   branchId: string,
-  request: RunInitialWorldAdoption
+  request: RunInitialWorldAdoption,
+  options?: RunWorldGenerationOptions | null
 ): boolean {
   const state = value?.state
   const players = state?.players
+  if ((request.generation.country_code || request.generation.region) &&
+      generatorConditionConflict(request.generation.country_code ?? '',
+        request.generation.region ?? '', options ?? null)) return false
   return value?.preview_only === true &&
     /^[a-f0-9]{64}$/.test(value.fingerprint) &&
     state?.run_id === runId && state?.branch_id === branchId &&
@@ -90,7 +151,13 @@ export function verifiedInitialWorldPreview(
     /^[a-f0-9]{64}$/.test(state.run_world_pool_preview_fingerprint) &&
     Array.isArray(players) && players.length === request.generation.target_pool_size &&
     players.every(player => typeof player.player_id === 'string' && player.player_id.length > 0 &&
-      typeof player.name === 'string' && typeof player.country_code === 'string') &&
+      typeof player.name === 'string' && typeof player.country_code === 'string' &&
+      (!request.generation.country_code ||
+        player.country_code === request.generation.country_code) &&
+      (!request.generation.region || (options?.countries.some(country =>
+        country.code === player.country_code &&
+        (country.region === request.generation.region ||
+         country.travel_region === request.generation.region)) ?? false))) &&
     Array.isArray(state.policies) && state.policies.length === 1 &&
     state.policies[0].best_n === request.best_n
 }

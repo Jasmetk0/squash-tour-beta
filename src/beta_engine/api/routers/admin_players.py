@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException, status, Header
+from typing import Literal
+
+from fastapi import APIRouter, Depends, HTTPException, status, Header, Query
 
 from beta_engine.api.deps import (
     get_initial_player_pool_service,
@@ -292,6 +294,83 @@ def _assert_reviewed_generation_context(
         current.fingerprint != expected_package_fingerprint or
         saved_packages.fingerprint != expected_package_fingerprint):
         raise ValueError("Player generation preview is stale: Run-owned World Package changed")
+
+
+class RunWorldGenerationCountryOption(BaseModel):
+    model_config = ConfigDict(frozen=True, extra="forbid")
+    code: str = Field(min_length=3, max_length=3)
+    name: str
+    region: str
+    travel_region: str
+
+
+class RunWorldGenerationOptions(BaseModel):
+    """Allowed hard conditions from the exact saved Run/Branch World copy."""
+    model_config = ConfigDict(frozen=True, extra="forbid")
+    schema_version: Literal["run_world_generation_options.v1"] = "run_world_generation_options.v1"
+    run_id: str
+    branch_id: str
+    saved_revision_id: str
+    draft_version: int
+    run_package_fingerprint: str
+    world_package_id: str
+    countries: tuple[RunWorldGenerationCountryOption, ...]
+    regions: tuple[str, ...]
+
+
+@router.get(
+    "/runs/{run_id}/branches/{branch_id}/initial-world/world-package/generation-options",
+    response_model=RunWorldGenerationOptions,
+)
+def get_run_world_generation_options(
+    run_id: str,
+    branch_id: str,
+    world_package_id: str = Query(min_length=1, max_length=128),
+    expected_head: str = Query(min_length=1, max_length=128),
+    expected_draft_version: int = Query(ge=0),
+    expected_package_fingerprint: str = Query(pattern=r"^[0-9a-f]{64}$"),
+    package_service: RunPackageService = Depends(get_run_package_service),
+    world_adapter: WorldPackageRunAdapter = Depends(get_world_package_run_adapter),
+    runtime: ApiRuntime = Depends(get_runtime),
+) -> RunWorldGenerationOptions:
+    """Read-only versioned country/region choices; no global World fallbacks."""
+    try:
+        _assert_reviewed_generation_context(
+            runtime=runtime, package_service=package_service,
+            run_id=run_id, branch_id=branch_id, expected_head=expected_head,
+            expected_draft_version=expected_draft_version,
+            expected_package_fingerprint=expected_package_fingerprint,
+        )
+        state = package_service.get(run_id=run_id, branch_id=branch_id)
+        projection = world_adapter.project_countries(
+            state, package_id=world_package_id,
+        )
+        countries = tuple(
+            RunWorldGenerationCountryOption(
+                code=c.code, name=c.name, region=c.region,
+                travel_region=c.effective_travel_region,
+            )
+            for c in projection.countries
+        )
+        if not countries:
+            raise ValueError("Selected saved World has no eligible countries")
+        regions = tuple(sorted({
+            value for c in countries for value in (c.region, c.travel_region)
+            if value
+        }))
+        return RunWorldGenerationOptions(
+            run_id=run_id, branch_id=branch_id,
+            saved_revision_id=expected_head,
+            draft_version=expected_draft_version,
+            run_package_fingerprint=expected_package_fingerprint,
+            world_package_id=world_package_id,
+            countries=countries, regions=regions,
+        )
+    except (ValueError, KeyError, TypeError) as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={"code": "run_world_generation_options_unavailable", "message": str(exc)},
+        ) from exc
 
 
 @router.post(

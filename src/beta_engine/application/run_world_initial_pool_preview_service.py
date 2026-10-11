@@ -70,6 +70,36 @@ class RunWorldInitialPoolPreviewService:
             state, package_id=request.world_package_id
         )
 
+        # These are hard generation conditions, not distribution hints.
+        # Diagnose contradictions against the Run-owned snapshot itself;
+        # never fall back to another country, region, or global World.
+        selected_countries = list(countries.countries)
+        if request.country_code:
+            code = request.country_code.upper()
+            if not any(country.code == code for country in selected_countries):
+                raise ValueError(
+                    f"Country condition '{code}' is unavailable in saved World "
+                    f"'{request.world_package_id}'"
+                )
+            selected_countries = [
+                country for country in selected_countries if country.code == code
+            ]
+        if request.region:
+            if not any(
+                request.region in (country.region, country.effective_travel_region)
+                for country in selected_countries
+            ):
+                if request.country_code:
+                    raise ValueError(
+                        f"Conflicting generation conditions: country "
+                        f"'{request.country_code.upper()}' does not belong to "
+                        f"region '{request.region}' in the saved World"
+                    )
+                raise ValueError(
+                    f"Region condition '{request.region}' has no eligible "
+                    "countries in the saved World"
+                )
+
         result = InitialPlayerPoolGenerator(
             identity_config=generation.identity_config
         ).generate(

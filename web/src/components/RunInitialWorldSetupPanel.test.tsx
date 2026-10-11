@@ -15,6 +15,7 @@ const api = vi.hoisted(() => {
     getRunPackageState: vi.fn(),
     getBranchWorkingDraft: vi.fn(),
     getRunOwnedInitialWorld: vi.fn(),
+    getRunWorldGenerationOptions: vi.fn(),
     previewRunOwnedInitialWorld: vi.fn(),
     adoptRunOwnedInitialWorld: vi.fn(),
     previewRunInitialWorldSave: vi.fn(),
@@ -82,6 +83,20 @@ beforeEach(() => {
       ] },
     fingerprint: sha('e')
   })
+  api.getRunWorldGenerationOptions.mockImplementation(async (
+    _run: string, _branch: string, world: string, head: string, draft: number, fingerprint: string
+  ) => ({
+    schema_version: 'run_world_generation_options.v1',
+    run_id: 'first-run', branch_id: 'timeline-1',
+    saved_revision_id: head, draft_version: draft,
+    run_package_fingerprint: fingerprint, world_package_id: world,
+    countries: [
+      { code:'CZE', name:'Czechia', region:'EUROPE', travel_region:'CENTRAL_EUROPE' },
+      { code:'SVK', name:'Slovakia', region:'EUROPE', travel_region:'CENTRAL_EUROPE' },
+      { code:'USA', name:'United States', region:'NORTH_AMERICA', travel_region:'NORTH_AMERICA' }
+    ],
+    regions: ['CENTRAL_EUROPE','EUROPE','NORTH_AMERICA']
+  }))
   api.getBranchWorkingDraft.mockImplementation(async () => ({
     run_id: 'first-run', branch_id: 'timeline-1',
     base_saved_revision_id: 'revision-1',
@@ -199,4 +214,63 @@ describe('Run-owned first-season player setup', () => {
     expect(screen.getByRole('button', { name: 'Preview generated players' })).toBeDisabled()
     expect(api.previewRunOwnedInitialWorld).not.toHaveBeenCalled()
   })
+  it('applies region to the actual reviewed production request and verifies all players', async () => {
+    render()
+    await userEvent.click(await screen.findByRole('combobox', { name: 'Player generation region' }))
+    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Player generation region' }), 'EUROPE')
+    await userEvent.clear(screen.getByRole('spinbutton', { name: 'Number of generated players' }))
+    await userEvent.type(screen.getByRole('spinbutton', { name: 'Number of generated players' }), '2')
+    await userEvent.click(screen.getByRole('button', { name: 'Preview generated players' }))
+    await waitFor(() => expect(api.previewRunOwnedInitialWorld).toHaveBeenCalledWith(
+      'first-run', 'timeline-1', expect.objectContaining({
+        generation: expect.objectContaining({ region: 'EUROPE', target_pool_size: 2 })
+      })
+    ))
+    expect(await screen.findByText('Jan A')).toBeInTheDocument()
+    expect(screen.getByText('Every player satisfies the hard conditions.', { exact: false })).toBeInTheDocument()
+  })
+
+  it('blocks incompatible country and region before sending even a preview', async () => {
+    render()
+    await screen.findByRole('option', { name: 'CZE — Czechia' })
+    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Player generation sport country' }), 'CZE')
+    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Player generation region' }), 'NORTH_AMERICA')
+    expect(screen.getByRole('alert')).toHaveTextContent('Country CZE does not belong to region NORTH_AMERICA')
+    expect(screen.getByRole('button', { name: 'Preview generated players' })).toBeDisabled()
+    expect(api.previewRunOwnedInitialWorld).not.toHaveBeenCalled()
+  })
+
+  it('refuses a preview violating a hard sport-country constraint', async () => {
+    render()
+    await screen.findByRole('option', { name: 'CZE — Czechia' })
+    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Player generation sport country' }), 'CZE')
+    await userEvent.clear(screen.getByRole('spinbutton', { name: 'Number of generated players' }))
+    await userEvent.type(screen.getByRole('spinbutton', { name: 'Number of generated players' }), '2')
+    await userEvent.click(screen.getByRole('button', { name: 'Preview generated players' }))
+    expect(await screen.findByText(/InitialWorld preview is inconsistent/)).toBeInTheDocument()
+    expect(api.adoptRunOwnedInitialWorld).not.toHaveBeenCalled()
+  })
+
+  it('validates country-only preview and retains the exact reviewed country at commit', async () => {
+    render()
+    await screen.findByRole('option', { name: 'CZE — Czechia' })
+    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Player generation sport country' }), 'CZE')
+    await userEvent.clear(screen.getByRole('spinbutton', { name: 'Number of generated players' }))
+    await userEvent.type(screen.getByRole('spinbutton', { name: 'Number of generated players' }), '1')
+    const req = {command_id:'country-preview',generation:{world_package_id:'fifa_earth',seed:20261009},best_n:15}
+    api.previewRunOwnedInitialWorld.mockImplementationOnce(async (_run: string, _branch: string, request: Parameters<typeof buildState>[0]) => {
+      reviewedState = {...buildState(req), adopted_by_command_id:request.command_id, players:[players[0]]}
+      return { preview_only:true, state:reviewedState, fingerprint:sha('f') }
+    })
+    await userEvent.click(screen.getByRole('button', { name: 'Preview generated players' }))
+    expect(await screen.findByText('Jan A')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('checkbox', { name: 'Approve InitialWorld adoption' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Adopt generated players' }))
+    await waitFor(() => expect(api.adoptRunOwnedInitialWorld).toHaveBeenCalledWith(
+      'first-run','timeline-1',
+      expect.objectContaining({generation:expect.objectContaining({country_code:'CZE',target_pool_size:1})}),
+      sha('f'),{head:'revision-1',draftVersion:0,packageFingerprint:sha('e')}
+    ))
+  })
+
 })

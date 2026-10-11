@@ -188,6 +188,7 @@ def setup_run(page, base_url: str, artifacts: Path) -> str:
     page.get_by_role(
         "link", name="Open first Run-owned tournament preparation", exact=True
     ).click()
+    assert "/calendar/" in page.url, ("Tournament preparation navigation was blocked", page.url, page.smoke_dialogs)
     page.get_by_label("Published Official Ranking", exact=True).select_option(index=1)
     click("Adopt selected Official Ranking")
     click("Preview real Entry decisions")
@@ -414,6 +415,14 @@ def run_acceptance(root: Path, *, port: int, base_url: str, chromium: str):
         page.on("request", lambda r: page.smoke_pending_requests.add(r))
         page.on("requestfinished", lambda r: page.smoke_pending_requests.discard(r))
         page.on("requestfailed", lambda r: page.smoke_pending_requests.discard(r))
+        # The current Admin shell guards navigation with a native confirmation.
+        # Chromium dismisses dialogs without a handler and silently cancels
+        # the user click, so explicitly accept the real navigation prompt.
+        page.smoke_dialogs = []
+        def accept_dialog(dialog):
+            page.smoke_dialogs.append(dialog.message)
+            dialog.accept()
+        page.on("dialog", accept_dialog)
         page.on("pageerror", lambda e: errors.append(str(e)))
         page.on(
             "response",

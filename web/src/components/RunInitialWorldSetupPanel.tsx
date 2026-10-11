@@ -1,6 +1,7 @@
 import { acknowledgeSavedRunForm } from './RunNavigationSafeguard'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 
 import {
   adoptRunOwnedInitialWorld, getBranchWorkingDraft, getRunOwnedInitialWorld,
@@ -231,7 +232,12 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
     {unexpectedExistingError && <p role="alert" className="error">Cannot verify whether this Run already has InitialWorld: {formatApiError(existingQuery.error)}</p>}
     {packageQuery.isError && <p role="alert" className="error">Run World state unavailable: {formatApiError(packageQuery.error)}</p>}
     {draftQuery.isError && <p role="alert" className="error">Working Draft unavailable: {formatApiError(draftQuery.error)}</p>}
-    {!existing && worldIds.length === 0 && <p>First copy and save a World Package with country and player-generation identity data above.</p>}
+    {!existing && worldIds.length === 0 && <p>{cs
+      ? 'Nejprve musíš zkopírovat World Package do Runu a ručně jej uložit.'
+      : 'First copy a World Package into the Run and manually Save its revision.'}
+      {' '}<Link to={'/admin/runs/' + encodeURIComponent(runId) + '/manage'}>
+        {cs ? 'Otevřít správu Runu →' : 'Open Run Management →'}
+      </Link></p>}
     {draft && draft.status !== 'clean' && !pendingSave && <p className="status">Save or resolve existing Working Draft changes before generating new players.</p>}
     <label>Run-owned World{' '}
       <select aria-label="Run World for player generation" value={selectedWorldId}
@@ -259,13 +265,17 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
       <p>{cs ? 'Svět' : 'World'}: {review.request.generation.world_package_id} · Seed: {review.request.generation.seed} · First-season Best {review.request.best_n} · Draft v{review.draftVersion}</p>
       <p>{cs ? 'Model' : 'Model'}: <code>{review.preview.state.source_kind}</code> · {cs ? 'Otisk náhledu' : 'Preview fingerprint'}: <code>{review.preview.fingerprint.slice(0, 20)}…</code></p>
       <p>Largest nationality groups: {distribution.map(([country, count]) => `${country} ${count}`).join(' · ')}</p>
-      <table><thead><tr><th>Player</th><th>Country</th><th>Age</th><th>Current / potential</th></tr></thead>
-        <tbody>{viewedPlayers.slice(0, 12).map(player =>
-          <tr key={player.player_id}><td>{player.name}</td><td>{player.country_code}</td>
-            <td>{player.age_years_at_season_start}</td>
+      <div className="table-responsive"><table>
+        <thead><tr><th>{cs ? 'Hráč' : 'Player'}</th><th>{cs ? 'Země' : 'Country'}</th>
+          <th>{cs ? 'Věk na začátku sezóny' : 'First-season age'}</th>
+          <th>{cs ? 'Aktuální / potenciál (zdrojová škála)' : 'Current / potential (source scale)'}</th></tr></thead>
+        <tbody>{viewedPlayers.map(player =>
+          <tr key={player.player_id}><td>{player.name}<small> · {player.player_id}</small></td>
+            <td>{player.country_code}</td><td>{player.age_years_at_season_start}</td>
             <td>{player.current_ability} / {player.potential_ability}</td></tr>
-        )}</tbody></table>
-      <p className="status">{cs ? 'Náhled prvních' : 'Showing first'} {Math.min(12, viewedPlayers.length)} {cs ? 'hráčů ze skutečné produkční dávky.' : 'players from the real production batch.'} {cs ? 'Potvrzení zahrne všech' : 'Confirm includes all'} {viewedPlayers.length}.</p>
+        )}</tbody>
+      </table></div>
+      <p className="status">{cs ? 'V náhledu je kompletní skutečná dávka' : 'Full actual batch is reviewable'}: {viewedPlayers.length}.</p>
       <p className="status">{cs ? 'Aktuální schopnosti 1–99 nejsou canonical 0–200 OVR. Žádné falešné historické zápasy nebo ranking se nevytvářejí.' : 'Current 1–99 abilities are not canonical 0–200 OVR. No fictional past matches or rankings are generated.'}</p>
       {!reviewMatches && <p role="alert" className="error">Review expired: selected Run, Branch, World, revision or generation inputs changed.</p>}
       <label><input type="checkbox" aria-label="Approve InitialWorld adoption" checked={approved}

@@ -166,7 +166,7 @@ def test_legacy_hashes_omit_all_v2_fields_and_bad_steps_do_not_pass():
     assert first.request.fingerprint_payload().get("session_steps") is None
     assert first.request.fingerprint_payload().get("session_schema_version") is None
     assert second == preview(second.request)
-    with pytest.raises(ValidationError, match="session"):
+    with pytest.raises(ValidationError, match="[Ss]ession"):
         RunWorldInitialPoolPreviewRequest.model_validate({
             **source_request().model_dump(mode="json"),
             "session_steps": [{

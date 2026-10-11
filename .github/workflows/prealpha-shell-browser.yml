@@ -12,6 +12,7 @@ on:
       - 'web/src/components/Layout.tsx'
       - 'web/src/pages/admin/AdminHomePage.tsx'
       - 'web/src/pages/admin/PackagesHomePage.tsx'
+      - 'web/src/pages/admin/WorldPackageApplyPage.tsx'
       - 'web/src/pages/admin/packageCatalog.ts'
       - 'web/src/pages/admin/TestLabHomePage.tsx'
       - 'web/src/pages/RunManagementPage.tsx'

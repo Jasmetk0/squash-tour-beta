@@ -143,13 +143,17 @@ export function WorldPackageApplyPage():JSX.Element {
       ? 'Tento cíl obsahuje neuložené změny nebo rozpracovaný výběr. Změnit cíl? Working Draft zůstane na serveru a lze jej znovu otevřít.'
       : 'This target has an unsaved Working Draft or local review. Change target? The server draft is retained and can be reopened.')
   }
-  function chooseRun(next:string):void {
-    if(next===runId || !permitTargetChange())return
+  function chooseRun(next:string):boolean {
+    if(next===runId)return true
+    if(!permitTargetChange())return false
     setRunId(next);setBranchId('')
+    return true
   }
-  function chooseBranch(next:string):void {
-    if(next===branchId || !permitTargetChange())return
+  function chooseBranch(next:string):boolean {
+    if(next===branchId)return true
+    if(!permitTargetChange())return false
     setBranchId(next)
+    return true
   }
   function reopenDraft():void {
     if(!recoveryReady || !branch || !draft.data || !state.data?.fingerprint)return
@@ -189,14 +193,14 @@ export function WorldPackageApplyPage():JSX.Element {
     <section className="package-apply-step">
       <h3>1. {cs?'Cílový Run a Branch':'Target Run and Branch'}</h3>
       {runs.isError&&<p role="alert" className="error">{formatApiError(runs.error)}</p>}
-      <label>{cs?'Run':'Run'}<select aria-label="Target Run" value={runId} disabled={confirm.isPending||save.isPending} onChange={event=>chooseRun(event.target.value)}>
+      <label>{cs?'Run':'Run'}<select aria-label="Target Run" value={runId} disabled={confirm.isPending||save.isPending} onChange={event=>{if(!chooseRun(event.target.value))event.currentTarget.value=runId}}>
         <option value="">{cs?'Vyber uložený editovatelný Run':'Choose a writable saved Run'}</option>
         {candidates.map(candidate=><option key={candidate.run_id} value={candidate.run_id}>{candidate.display_name||candidate.run_id}</option>)}
       </select></label>
       {runs.isSuccess&&candidates.length===0&&<p className="status">{cs?'Žádný editovatelný Run není dostupný.':'No writable Run is available.'}</p>}
       <p><Link to="/admin/runs/new">{cs?'Vytvořit nový Run':'Create new Run'} →</Link> <span className="status">{cs?'(potom se vrať k tomuto balíčku)':'(then return to this package)'}</span></p>
       {runId&&<>{branches.isError&&<p role="alert" className="error">{formatApiError(branches.error)}</p>}
-        <label>Branch<select aria-label="Target Branch" value={branchId} disabled={confirm.isPending||save.isPending} onChange={event=>chooseBranch(event.target.value)}>
+        <label>Branch<select aria-label="Target Branch" value={branchId} disabled={confirm.isPending||save.isPending} onChange={event=>{if(!chooseBranch(event.target.value))event.currentTarget.value=branchId}}>
           <option value="">{cs?'Vyber editovatelnou branch':'Choose a writable Branch'}</option>
           {choices.map(item=><option key={item.branch_id} value={item.branch_id}>{item.display_name}</option>)}
         </select></label></>}

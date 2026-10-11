@@ -156,3 +156,110 @@ def test_keep_request_requires_valid_one_pass_reviewed_subset(changes):
         RunWorldInitialPoolPreviewRequest(
             **{**source_request().model_dump(), **changes},
         )
+
+
+
+def test_multiple_keep_steps_replay_exactly_and_allow_growing_selection():
+    base = preview(source_request())
+    base_id = base.result.players[0].player_id
+    first = preview(keep_request(base, [base_id], seed=803))
+    added = next(p.player_id for p in first.result.players if p.player_id != base_id)
+    from beta_engine.application.run_world_initial_pool_preview_service import (
+        RunWorldKeepStep,
+    )
+    history = [RunWorldKeepStep(
+        seed=first.request.seed,
+        keep_from_seed=first.request.keep_from_seed,
+        keep_from_preview_fingerprint=first.request.keep_from_preview_fingerprint,
+        keep_player_ids=first.request.keep_player_ids,
+    )]
+    second_req = keep_request(
+        first, [base_id, added], seed=804, keep_history=history,
+    )
+    second = preview(second_req)
+    assert second == preview(second_req)
+    assert second.preview_fingerprint != first.preview_fingerprint
+    assert {p.player_id for p in second.result.players} >= {base_id, added}
+    a = {p.player_id:p for p in first.result.players}
+    b = {p.player_id:p for p in second.result.players}
+    assert b[base_id] == a[base_id]
+    assert b[added] == a[added]
+    assert not any(p.locked for p in second.result.players)
+    assert len({p.player_id for p in second.result.players}) == 32
+
+    second_step = RunWorldKeepStep(
+        seed=second.request.seed,
+        keep_from_seed=second.request.keep_from_seed,
+        keep_from_preview_fingerprint=second.request.keep_from_preview_fingerprint,
+        keep_player_ids=second.request.keep_player_ids,
+    )
+    third_req = keep_request(
+        second, [base_id, added], seed=805,
+        keep_history=[*history, second_step],
+    )
+    third = preview(third_req)
+    assert third == preview(third_req)
+    c = {p.player_id: p for p in third.result.players}
+    assert c[base_id] == b[base_id] and c[added] == b[added]
+    assert third.result.summary.locked_players == 0
+    adopted = RunWorldInitialWorldService(service()).preview(
+        run_id="run-one", branch_id="branch-one",
+        request=RunWorldInitialWorldAdoptionRequest(
+            command_id="multi-keep-adopt", generation=third_req,
+            audit_label="Three repeatable Keep passes",
+            audit_reason="Keep original identities through repeated session rolls",
+            official_run=False, best_n=15, automatic_retirement_age=46,
+        ),
+    )
+    assert len(adopted.players) == 32
+    assert all(not p.locked_from_initial_pool for p in adopted.players)
+    assert {p.player_id for p in adopted.players} >= {base_id, added}
+
+
+def test_keep_lineage_rejects_forged_fingerprint_and_broken_ancestry():
+    from beta_engine.application.run_world_initial_pool_preview_service import (
+        RunWorldKeepStep,
+    )
+    base = preview(source_request())
+    first = preview(keep_request(base, [base.result.players[0].player_id]))
+    keep_id = first.result.players[0].player_id
+    step = RunWorldKeepStep(
+        seed=first.request.seed,
+        keep_from_seed=base.request.seed,
+        keep_from_preview_fingerprint="f" * 64,
+        keep_player_ids=first.request.keep_player_ids,
+    )
+    forged = keep_request(
+        first, [keep_id], seed=805, keep_history=[step],
+    )
+    with pytest.raises(ValueError, match="source preview is stale"):
+        preview(forged)
+    with pytest.raises(ValidationError, match="broken seed ancestry"):
+        keep_request(
+            first, [keep_id], seed=805, keep_history=[
+                step, RunWorldKeepStep(
+                    seed=804, keep_from_seed=810,
+                    keep_from_preview_fingerprint=first.preview_fingerprint,
+                    keep_player_ids=[keep_id],
+                )
+            ],
+        )
+    with pytest.raises(ValidationError, match="entire batch"):
+        keep_request(
+            first, [keep_id], seed=805, keep_history=[
+                step.model_copy(update={"keep_player_ids": sorted(
+                    p.player_id for p in base.result.players
+                )}),
+            ],
+        )
+
+
+def test_unmodified_one_pass_fingerprint_is_backwards_compatible():
+    origin = preview(source_request())
+    first_req = keep_request(origin, [origin.result.players[0].player_id])
+    assert "keep_history" not in first_req.fingerprint_payload()
+    assert first_req.fingerprint_payload() == {
+        key: value for key, value in first_req.model_dump(mode="json").items()
+        if key != "keep_history"
+    }
+    assert preview(first_req).preview_fingerprint == preview(first_req).preview_fingerprint

@@ -136,6 +136,14 @@ class RunWorldKeepStep(BaseModel):
         return self
 
 
+class RunWorldPreviewAutomaticField(BaseModel):
+    """Value-free Automatic reset resolved only against authenticated sources."""
+
+    model_config = ConfigDict(extra="forbid", strict=True, frozen=True)
+    player_id: str = Field(min_length=1, max_length=128)
+    field: EditableInitialField
+
+
 class RunWorldVerifiedSessionStep(BaseModel):
     """One authenticated session operation, never a browser-supplied player."""
 
@@ -146,6 +154,9 @@ class RunWorldVerifiedSessionStep(BaseModel):
     seed: int
     keep_player_ids: list[str] = Field(default_factory=list)
     field_locks: list[RunWorldPreviewFieldLock] = Field(default_factory=list, max_length=2000)
+    automatic_fields: list[RunWorldPreviewAutomaticField] = Field(
+        default_factory=list, max_length=2000,
+    )
 
     @model_validator(mode="after")
     def validate_step(self) -> "RunWorldVerifiedSessionStep":
@@ -158,6 +169,13 @@ class RunWorldVerifiedSessionStep(BaseModel):
         identities = [(lock.player_id, lock.field) for lock in self.field_locks]
         if identities != sorted(set(identities)):
             raise ValueError("Session step field locks must be sorted and unique")
+        automatic = [(item.player_id, item.field) for item in self.automatic_fields]
+        if automatic != sorted(set(automatic)):
+            raise ValueError("Session Automatic fields must be sorted and unique")
+        if set(automatic) & set(identities):
+            raise ValueError("Session Automatic cannot also lock the same field")
+        if self.kind == "keep" and automatic:
+            raise ValueError("Session Keep cannot perform implicit Automatic edits")
         return self
 
 
@@ -286,6 +304,11 @@ class RunWorldInitialPoolPreviewRequest(BaseModel):
             payload.pop("session_origin_fingerprint", None)
         if not self.session_steps:
             payload.pop("session_steps", None)
+        else:
+            # Old V2 fingerprints did not contain automatic_fields.
+            for step in payload["session_steps"]:
+                if not step.get("automatic_fields"):
+                    step.pop("automatic_fields", None)
         return payload
 
 
@@ -531,6 +554,117 @@ class RunWorldInitialPoolPreviewService:
             _preserved_players=preserved,
         ).result
 
+    @staticmethod
+    def _source_fields(player: InitialPoolGeneratedPlayer) -> dict[str, int]:
+        return {
+            "current_ability": player.current_ability,
+            "potential_ability": player.potential_ability,
+            **{
+                "attributes." + key: getattr(player.attributes, key)
+                for key in (
+                    "technique", "movement", "physical", "mental",
+                    "consistency", "clutch", "recovery",
+                )
+            },
+        }
+
+    def _legacy_automatic_baselines(
+        self, *, run_id: str, branch_id: str,
+        original: RunWorldInitialPoolPreviewRequest,
+    ) -> dict[str, dict[str, int]]:
+        """Trace each sampled profile through old authenticated Keep history."""
+        lineage = []
+        cursor: RunWorldInitialPoolPreviewRequest | None = original
+        while cursor is not None:
+            lineage.append(cursor)
+            cursor = self._legacy_keep_source(cursor)
+        bases: dict[str, dict[str, int]] = {}
+        previous: InitialPoolResult | None = None
+        for stage in reversed(lineage):
+            authentic = self.preview(
+                run_id=run_id, branch_id=branch_id, request=stage,
+            )
+            prior = {} if previous is None else {
+                p.player_id: p for p in previous.players
+            }
+            selected = set(stage.keep_player_ids)
+            if selected - set(prior):
+                raise ValueError("Automatic source Keep lineage has missing identities")
+            preserved = [
+                prior[pid].model_copy(update={"locked": True})
+                for pid in stage.keep_player_ids
+            ]
+            core = self._session_stage_core(
+                run_id=run_id, branch_id=branch_id, original=stage,
+                seed=stage.seed, preserved=preserved,
+            )
+            bases = {
+                player.player_id: (
+                    bases[player.player_id] if player.player_id in selected
+                    else self._source_fields(player)
+                )
+                for player in core.players
+            }
+            if {p.player_id for p in authentic.result.players} != set(bases):
+                raise ValueError("Automatic source baseline does not match reviewed cohort")
+            previous = authentic.result
+        return bases
+
+    @staticmethod
+    def _apply_automatic_fields(
+        result: InitialPoolResult,
+        automatic: list[RunWorldPreviewAutomaticField],
+        baselines: dict[str, dict[str, int]],
+        *, generator: InitialPlayerPoolGenerator, season: str, seed: int,
+    ) -> InitialPoolResult:
+        if not automatic:
+            return result
+        grouped: dict[str, list[RunWorldPreviewAutomaticField]] = {}
+        for item in automatic:
+            grouped.setdefault(item.player_id, []).append(item)
+        available = {p.player_id for p in result.players}
+        if set(grouped) - available:
+            raise ValueError("Session Automatic refers to an absent player identity")
+        updated = []
+        for player in result.players:
+            resets = grouped.get(player.player_id)
+            if not resets:
+                updated.append(player)
+                continue
+            if player.player_id not in baselines:
+                raise ValueError("Session Automatic has no authenticated source baseline")
+            values = player.model_dump(mode="python")
+            attrs = player.attributes.model_dump(mode="python")
+            for item in resets:
+                original = baselines[player.player_id][item.field]
+                if item.field.startswith("attributes."):
+                    attrs[item.field.split(".", 1)[1]] = original
+                else:
+                    values[item.field] = original
+            values["attributes"] = attrs
+            values["generation_fingerprint"] = canonical_hash({
+                "source_fingerprint": player.generation_fingerprint,
+                "session_automatic_fields": [
+                    {"field": item.field} for item in resets
+                ],
+            })
+            try:
+                updated.append(InitialPoolGeneratedPlayer.model_validate(values))
+            except ValidationError as exc:
+                raise ValueError(
+                    f"Conflicting Automatic fields for {player.player_id}: "
+                    f"{exc.errors()[0]['msg']}"
+                ) from exc
+        return result.model_copy(update={
+            "players": updated,
+            "summary": generator._summarize(updated),
+            "metadata": result.metadata.model_copy(update={
+                "generation_fingerprint": generator._fingerprint(
+                    updated, season=season, seed=seed,
+                ),
+            }),
+        })
+
     def _preview_verified_session(
         self, *, run_id: str, branch_id: str,
         request: RunWorldInitialPoolPreviewRequest,
@@ -568,6 +702,12 @@ class RunWorldInitialPoolPreviewService:
             package_id=request.world_package_id,
         )
         generator = InitialPlayerPoolGenerator(identity_config=generation.identity_config)
+        baselines = (
+            self._legacy_automatic_baselines(
+                run_id=run_id, branch_id=branch_id, original=original,
+            ) if any(step.automatic_fields for step in request.session_steps)
+            else None
+        )
         for index, step in enumerate(request.session_steps):
             if previous.preview_fingerprint != step.source_preview_fingerprint:
                 raise ValueError("Versioned session operation has stale or forged source fingerprint")
@@ -599,8 +739,21 @@ class RunWorldInitialPoolPreviewService:
                     run_id=run_id, branch_id=branch_id, original=original,
                     seed=step.seed, preserved=preserved,
                 )
+                if baselines is not None:
+                    baselines = {
+                        player.player_id: (
+                            baselines[player.player_id]
+                            if player.player_id in step.keep_player_ids
+                            else self._source_fields(player)
+                        )
+                        for player in core.players
+                    }
+            before_edits = self._apply_automatic_fields(
+                core, step.automatic_fields, baselines or {},
+                generator=generator, season=request.season, seed=step.seed,
+            )
             result = _apply_preview_field_locks(
-                core, step.field_locks, season=request.season,
+                before_edits, step.field_locks, season=request.season,
                 seed=step.seed, generator=generator,
             )
             partial_request = request.model_copy(update={

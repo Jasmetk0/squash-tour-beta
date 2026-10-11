@@ -8,7 +8,8 @@ import { PackagesHomePage, PackagesListPage, PackageWorldDetailPage } from './Pa
 
 const api=vi.hoisted(()=>({
   listWorldPackages:vi.fn(),getWorldPackage:vi.fn(),getWorldPackageCountries:vi.fn(),
-  getWorldPackageGeography:vi.fn(),getWorldPackageValidation:vi.fn()
+  getWorldPackageGeography:vi.fn(),getWorldPackageValidation:vi.fn(),
+  ApiError: class ApiError extends Error { status = 500 }
 }))
 vi.mock('../../api/client',()=>api)
 const world={
@@ -58,7 +59,7 @@ describe('source-backed Packages frontend',()=>{
     expect(screen.queryByText('Demo World')).not.toBeInTheDocument()
     expect(screen.getByText('Empty World')).toBeInTheDocument()
     await userEvent.selectOptions(screen.getByRole('combobox',{name:'Package origin'}),'custom')
-    expect(screen.getByText(/Žádný registrovaný/)).toBeInTheDocument()
+    expect(screen.getByText(/Žádný evidovaný balíček/)).toBeInTheDocument()
   })
   it('does not list Country-less World packages under Countries or any hybrid',async()=>{
     mount('/admin/packages/category/countries')

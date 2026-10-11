@@ -36,7 +36,8 @@ from beta_engine.application.initial_world import (
 )
 from beta_engine.domain.rankings.official import OfficialRankingPolicy
 from beta_engine.domain.players.lifecycle import PlayerLifecyclePolicy
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
+from beta_engine.application.run_world_initial_pool_preview_service import RunWorldPreviewFieldLock
 from beta_engine.api.schemas import (
     CustomInitialPoolPlayerCreateRequest,
     InitialPoolGenerateRequest,
@@ -456,6 +457,186 @@ def adopt_run_world_initial_world(
                 "message": str(exc),
             },
         ) from exc
+
+
+# These are saved *candidate reviews*, not Branch Working Draft state and
+# never a way around the authoritative InitialWorld adoption command.
+class RunGenerationProposalSave(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+
+    proposal_id: str = Field(pattern=r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
+    label: str = Field(min_length=1, max_length=160)
+    saved_revision_id: str = Field(min_length=1, max_length=128)
+    draft_version: int = Field(ge=0)
+    package_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    preview_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    source_seed: int
+    next_seed: int
+    selected_keep_ids: list[str] = Field(default_factory=list, max_length=2000)
+    pending_field_locks: list[RunWorldPreviewFieldLock] = Field(default_factory=list, max_length=2000)
+    request: RunWorldInitialWorldAdoptionRequest
+
+    @model_validator(mode="after")
+    def validate_pending_review(self) -> "RunGenerationProposalSave":
+        if not self.label.strip():
+            raise ValueError("Saved proposal label must not be blank")
+        keep = self.selected_keep_ids
+        if keep != sorted(set(keep)) or any(not player_id or len(player_id)>128 for player_id in keep):
+            raise ValueError("Saved proposal Keep IDs must be unique and sorted")
+        locks = [(lock.player_id, lock.field) for lock in self.pending_field_locks]
+        if locks != sorted(set(locks)):
+            raise ValueError("Saved proposal field locks must be unique and sorted")
+        # source_seed is the editable form's original seed, not a Keep lineage
+        # segment: field-only regenerations may precede any Keep pass.
+        # The actual entire Keep history is validated by the production
+        # RunWorldInitialPoolPreviewRequest and preview service, not by this
+        # UI state metadata.
+        return self
+
+
+def _generation_proposal_storage(runtime: ApiRuntime):
+    from beta_engine.infrastructure.db import generation_proposals
+    return generation_proposals, runtime.repository._session_factory
+
+
+def _assert_generator_proposal_owner(runtime: ApiRuntime, run_id: str, branch_id: str) -> None:
+    run = runtime.repository.get_run_container(run_id=run_id)
+    branch = runtime.repository.get_run_branch(branch_id=branch_id)
+    if (run is None or run.storage_kind != "custom_local" or run.read_only
+        or branch is None or branch.run_id != run_id
+        or branch.read_only or branch.status != "active"):
+        raise ValueError("Saved player proposal Run/Branch is missing or read-only")
+
+
+@router.post(
+    "/runs/{run_id}/branches/{branch_id}/initial-world/generation-proposals",
+    status_code=201,
+)
+def save_run_generation_proposal(
+    run_id: str, branch_id: str,
+    payload: RunGenerationProposalSave,
+    package_service: RunPackageService = Depends(get_run_package_service),
+    preview_service: RunWorldInitialWorldService = Depends(get_run_world_initial_world_service),
+    runtime: ApiRuntime = Depends(get_runtime),
+):
+    try:
+        _assert_generator_proposal_owner(runtime, run_id, branch_id)
+        _assert_reviewed_generation_context(
+            runtime=runtime, package_service=package_service,
+            run_id=run_id, branch_id=branch_id,
+            expected_head=payload.saved_revision_id,
+            expected_draft_version=payload.draft_version,
+            expected_package_fingerprint=payload.package_fingerprint,
+        )
+        if runtime.repository.get_initial_world(run_id=run_id, branch_id=branch_id):
+            raise ValueError("InitialWorld already exists; proposal editing is closed")
+        state = preview_service.preview(
+            run_id=run_id, branch_id=branch_id, request=payload.request,
+        )
+        if state.fingerprint != payload.preview_fingerprint:
+            raise ValueError("Saved proposal preview is stale; exact source no longer matches")
+        known = {player.player_id for player in state.players}
+        if any(player_id not in known for player_id in payload.selected_keep_ids):
+            raise ValueError("Saved proposal Keep references players absent from review")
+        if any(lock.player_id not in known for lock in payload.pending_field_locks):
+            raise ValueError("Saved proposal field edit references players absent from review")
+        data = {
+            "schema_version": "run_generation_proposal.v1",
+            "run_id": run_id, "branch_id": branch_id,
+            "proposal_id": payload.proposal_id, "label": payload.label.strip(),
+            "saved_revision_id": payload.saved_revision_id,
+            "draft_version": payload.draft_version,
+            "package_fingerprint": payload.package_fingerprint,
+            "preview_fingerprint": state.fingerprint,
+            "source_seed": payload.source_seed,
+            "next_seed": payload.next_seed,
+            "selected_keep_ids": payload.selected_keep_ids,
+            "pending_field_locks": [lock.model_dump(mode="json") for lock in payload.pending_field_locks],
+            "request": payload.request.model_dump(mode="json"),
+            "preview": {
+                "preview_only": True,
+                "state": state.model_dump(mode="json"),
+                "fingerprint": state.fingerprint,
+            },
+        }
+        storage, sessions = _generation_proposal_storage(runtime)
+        return storage.save_proposal(sessions, data=data)
+    except (ValueError, KeyError) as exc:
+        raise HTTPException(
+            status_code=409, detail={"code": "generation_proposal_conflict", "message": str(exc)},
+        ) from exc
+
+
+@router.get("/runs/{run_id}/branches/{branch_id}/initial-world/generation-proposals")
+def list_run_generation_proposals(
+    run_id: str, branch_id: str, runtime: ApiRuntime = Depends(get_runtime),
+):
+    try:
+        _assert_generator_proposal_owner(runtime, run_id, branch_id)
+        storage, sessions = _generation_proposal_storage(runtime)
+        return {"proposals": storage.list_proposals(sessions, run_id=run_id, branch_id=branch_id)}
+    except (ValueError, KeyError) as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+
+@router.get("/runs/{run_id}/branches/{branch_id}/initial-world/generation-proposals/{proposal_id}")
+def read_run_generation_proposal(
+    run_id: str, branch_id: str, proposal_id: str,
+    package_service: RunPackageService = Depends(get_run_package_service),
+    runtime: ApiRuntime = Depends(get_runtime),
+):
+    try:
+        _assert_generator_proposal_owner(runtime, run_id, branch_id)
+        storage, sessions = _generation_proposal_storage(runtime)
+        data = storage.get_proposal(
+            sessions, run_id=run_id, branch_id=branch_id, proposal_id=proposal_id,
+        )
+        if data is None:
+            raise HTTPException(status_code=404, detail="Saved generation proposal not found")
+        _assert_reviewed_generation_context(
+            runtime=runtime, package_service=package_service,
+            run_id=run_id, branch_id=branch_id,
+            expected_head=data["saved_revision_id"],
+            expected_draft_version=data["draft_version"],
+            expected_package_fingerprint=data["package_fingerprint"],
+        )
+        if runtime.repository.get_initial_world(run_id=run_id, branch_id=branch_id):
+            raise ValueError("InitialWorld already exists; saved proposal may not be reopened for adoption")
+        from beta_engine.application.initial_world import InitialWorldState
+        # JSON-mode validation supports strict tuple-backed nested records.
+        import json
+        reviewed = InitialWorldState.model_validate_json(
+            json.dumps(data["preview"]["state"], ensure_ascii=False)
+        )
+        request = RunWorldInitialWorldAdoptionRequest.model_validate(data["request"])
+        if (reviewed.fingerprint != data["preview_fingerprint"]
+            or reviewed.adopted_by_command_id != request.command_id
+            or reviewed.adoption_request_fingerprint != request.fingerprint_for_scope(
+                run_id=run_id, branch_id=branch_id,
+            ) or reviewed.world_package_id != request.generation.world_package_id):
+            raise ValueError("Saved proposal reviewed preview provenance is corrupt")
+        return data  # no preview service call / no regeneration on read
+    except (ValueError, KeyError) as exc:
+        raise HTTPException(
+            status_code=409, detail={"code": "generation_proposal_stale", "message": str(exc)},
+        ) from exc
+
+
+@router.delete("/runs/{run_id}/branches/{branch_id}/initial-world/generation-proposals/{proposal_id}",
+               status_code=204)
+def delete_run_generation_proposal(
+    run_id: str, branch_id: str, proposal_id: str,
+    runtime: ApiRuntime = Depends(get_runtime),
+):
+    try:
+        _assert_generator_proposal_owner(runtime, run_id, branch_id)
+        storage, sessions = _generation_proposal_storage(runtime)
+        if not storage.delete_proposal(
+            sessions, run_id=run_id, branch_id=branch_id, proposal_id=proposal_id,
+        ):
+            raise HTTPException(status_code=404, detail="Saved generation proposal not found")
+    except (ValueError, KeyError) as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
 
 
 @router.get("/runs/{run_id}/branches/{branch_id}/initial-world")

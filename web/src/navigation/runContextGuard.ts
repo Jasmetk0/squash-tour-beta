@@ -6,6 +6,22 @@
 type ContextKind = 'Run' | 'Branch'
 type ApprovedLink = { runId: string; branchId: string; href: string }
 let approvedLink: ApprovedLink | null = null
+let approvedNavigation: string | null = null
+
+/** A selector already received its own decision; the router must not ask twice. */
+export function allowConfirmedAdminNavigation(destination: string): void {
+  approvedNavigation = destination
+}
+
+/** One exact path/query/hash may skip the router prompt, never another target. */
+export function consumeApprovedAdminNavigation(destination: string): boolean {
+  if (approvedNavigation !== destination) {
+    approvedNavigation = null
+    return false
+  }
+  approvedNavigation = null
+  return true
+}
 
 export function hasUnsavedRunChanges(): boolean {
   return document.querySelector('.app-shell--admin')?.getAttribute('data-run-form-edited') === 'true'

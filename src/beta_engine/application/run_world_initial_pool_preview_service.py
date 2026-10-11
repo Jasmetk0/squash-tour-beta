@@ -572,6 +572,15 @@ class RunWorldInitialPoolPreviewService:
                 if step.seed != previous.request.seed:
                     raise ValueError("Session field edit cannot change seed")
             else:
+                expected_locks = [
+                    lock for lock in previous.request.field_locks
+                    if lock.player_id in step.keep_player_ids
+                ]
+                if step.field_locks != expected_locks:
+                    raise ValueError(
+                        "Session Keep cannot silently alter existing field locks; "
+                        "apply an authenticated field edit first"
+                    )
                 if step.seed == previous.request.seed:
                     raise ValueError("Session Keep requires a new seed")
                 if not 0 < len(step.keep_player_ids) < request.target_pool_size:

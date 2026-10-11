@@ -278,7 +278,7 @@ export function WorldPackageApplyPage():JSX.Element {
       {pendingSave&&!saveAllowed&&!draft.isFetching&&!state.isFetching&&<p role="alert" className="error">
         {cs?'Save je zablokován: aktuální draft, otisk nebo Saved Head již nesouhlasí. Znovu načti a prohlédni stav.':
           'Save blocked: current draft, fingerprint or saved head no longer matches. Refresh and review state.'}
-      </p>
+      </p>}
       <p><Link to={'/admin/runs/'+encodeURIComponent(runId)+'?branch='+encodeURIComponent(branchId)}>{cs?'Otevřít cílový Run':'Open target Run'} →</Link></p>
     </section>}
     </section>

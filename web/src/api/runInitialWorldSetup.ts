@@ -1,4 +1,11 @@
 /** Production Run-owned generated InitialWorld request/review contracts. */
+export type RunWorldKeepHistoryStep = {
+  seed: number
+  keep_from_seed: number
+  keep_from_preview_fingerprint: string
+  keep_player_ids: string[]
+}
+
 export type GeneratedPlayerFieldKey =
   | 'current_ability' | 'potential_ability'
   | 'attributes.technique' | 'attributes.movement' | 'attributes.physical'
@@ -36,6 +43,7 @@ export type RunInitialWorldGeneration = {
   keep_from_seed?: number | null
   keep_from_preview_fingerprint?: string | null
   keep_player_ids?: string[]
+  keep_history?: RunWorldKeepHistoryStep[]
   field_locks?: RunWorldPreviewFieldLock[]
 }
 
@@ -208,6 +216,8 @@ export function verifiedInitialWorldPreview(
   if (min != null && (!Number.isInteger(min) || min < 15 || min > 45)) return false
   if (max != null && (!Number.isInteger(max) || max < 15 || max > 45)) return false
   if (min != null && max != null && min > max) return false
+  if (!Number.isInteger(request.generation.target_pool_size) ||
+      request.generation.target_pool_size < 1 || request.generation.target_pool_size > 2000) return false
   const fieldLocks = request.generation.field_locks ?? []
   if (!Array.isArray(fieldLocks) || fieldLocks.length > 2000 ||
       fieldLocks.some(lock => !lock || !lock.player_id ||
@@ -218,6 +228,22 @@ export function verifiedInitialWorldPreview(
       new Set(fieldLocks.map(lock => lock.player_id + ':' + lock.field)).size !== fieldLocks.length)
     return false
   const kept = request.generation.keep_player_ids ?? []
+  const history = request.generation.keep_history ?? []
+  if (!Array.isArray(history) || history.length > 16) return false
+  if (history.length && (!kept.length ||
+      history[history.length - 1].seed !== request.generation.keep_from_seed)) return false
+  for (let i = 0; i < history.length; i++) {
+    const step = history[i]
+    if (!step || !Number.isSafeInteger(step.seed) ||
+        !Number.isSafeInteger(step.keep_from_seed) ||
+        step.seed === step.keep_from_seed ||
+        (i > 0 && step.keep_from_seed !== history[i - 1].seed) ||
+        !/^[0-9a-f]{64}$/.test(step.keep_from_preview_fingerprint) ||
+        !Array.isArray(step.keep_player_ids) || !step.keep_player_ids.length ||
+        step.keep_player_ids.length >= request.generation.target_pool_size ||
+        step.keep_player_ids.some(id => typeof id !== 'string' || !id || id.length > 128) ||
+        step.keep_player_ids.join('|') !== [...new Set(step.keep_player_ids)].sort().join('|')) return false
+  }
   if (kept.length > 0) {
     if (!Number.isSafeInteger(request.generation.keep_from_seed) ||
         request.generation.keep_from_seed === request.generation.seed ||
@@ -245,7 +271,7 @@ export function verifiedInitialWorldPreview(
     /^[a-f0-9]{64}$/.test(state.world_generation_content_fingerprint) &&
     /^[a-f0-9]{64}$/.test(state.run_world_pool_preview_fingerprint) &&
     Array.isArray(players) && players.length === request.generation.target_pool_size &&
-    new Set(players.map(p=>p.player_id)).size === players.length &&
+    new Set(players.map(p => p.player_id)).size === players.length &&
     fieldLocks.every(lock => {
       const player = players.find(p=>p.player_id === lock.player_id)
       const value = player && (lock.field.startsWith('attributes.')

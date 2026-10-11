@@ -221,9 +221,22 @@ def setup_run(page, base_url: str, artifacts: Path) -> str:
     expect(page.get_by_text("Kept: 1 / 64", exact=False)).to_be_visible()
     page.get_by_label("Session Keep regeneration seed").fill("4202")
     click("Regenerate remaining – new preview")
-    expect(page.get_by_text("One verified session Keep regeneration completed", exact=False)).to_be_visible()
+    expect(page.get_by_text("Verified session Keep regenerations: 1", exact=False)).to_be_visible()
     expect(inspector.get_by_role("status")).to_contain_text("Showing 64 / 64")
-    assert kept_player_text in inspector.inner_text(), "Kept source player was not preserved"
+    assert kept_player_text in inspector.inner_text(), "First Keep source player was not preserved"
+    # Grow the Keep selection and reroll once more from the authoritative
+    # *previous* reviewed preview. Both identities must survive unchanged.
+    additional_checkbox = inspector.locator('input[type="checkbox"]:not(:checked)').first
+    additional_id = additional_checkbox.get_attribute("aria-label").removeprefix("Keep ")
+    additional_text = additional_checkbox.locator("xpath=ancestor::tr").inner_text()
+    additional_checkbox.check()
+    page.get_by_label("Session Keep regeneration seed").fill("4203")
+    click("Regenerate remaining – new preview")
+    expect(page.get_by_text("Verified session Keep regenerations: 2", exact=False)).to_be_visible()
+    assert kept_player_text in inspector.inner_text(), "First Keep player disappeared on second reroll"
+    assert additional_id in inspector.inner_text() and additional_text in inspector.inner_text(), (
+        "Additional Keep player changed or disappeared on second reroll"
+    )
     check("Approve InitialWorld adoption")
     click("Adopt generated players")
     check("Approve InitialWorld revision save")

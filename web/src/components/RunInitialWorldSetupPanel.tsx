@@ -90,7 +90,7 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
     existingQuery.data.branch_id === branchId ? existingQuery.data : null
   const unexpectedExistingError = existingQuery.error && !isApiNotFound(existingQuery.error)
   const validParameters = Number.isSafeInteger(seed) && Number.isInteger(poolSize) &&
-    poolSize >= 1 && poolSize <= 128 && Number.isInteger(bestN) && bestN >= 1 &&
+    poolSize >= 1 && poolSize <= 1000 && Number.isInteger(bestN) && bestN >= 1 &&
     auditReason.trim().length >= 1 && auditReason.trim().length <= 1000
   const snapshotFingerprint = packageQuery.data?.fingerprint ?? null
   const optionsQuery = useQuery({
@@ -170,8 +170,6 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
     draft?.base_saved_revision_id === head && draft?.status === 'clean' &&
     review.request.generation.world_package_id === selectedWorldId &&
     reviewBaseSeed === seed &&
-    (review.request.generation.keep_from_seed == null ||
-      review.request.generation.seed === rerollSeed) &&
     review.request.generation.target_pool_size === poolSize &&
     (review.request.generation.country_code ?? '') === countryCode &&
     (review.request.generation.geographic_region ?? '') === region &&
@@ -197,11 +195,12 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
     ))
     setApproved(false)
   }
-  const canKeepPreview = Boolean(reviewMatches && review &&
-    review.request.generation.keep_from_seed == null && canPreview)
+  const sessionSteps = (review?.request.generation.keep_history?.length ?? 0) +
+    (review?.request.generation.keep_from_seed == null ? 0 : 1)
+  const canKeepPreview = Boolean(reviewMatches && review && canPreview && sessionSteps < 17)
   const canRegenerate = canKeepPreview &&
     keptIds.length > 0 && keptIds.length < poolSize &&
-    Number.isSafeInteger(rerollSeed) && rerollSeed !== seed
+    Number.isSafeInteger(rerollSeed) && rerollSeed !== review?.request.generation.seed
 
   const regenerateAction = useMutation({
     mutationFn: async () => {
@@ -211,12 +210,22 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
       const retained = [...new Set(keptIds)].sort()
       if (retained.length !== keptIds.length || retained.some(id => !sourceIds.has(id)))
         throw new Error('Session Keep contains unknown or duplicate source players.')
+      const previous = review.request.generation
+      const history = previous.keep_from_seed == null
+        ? []
+        : [...(previous.keep_history ?? []), {
+            seed: previous.seed,
+            keep_from_seed: previous.keep_from_seed,
+            keep_from_preview_fingerprint: previous.keep_from_preview_fingerprint!,
+            keep_player_ids: previous.keep_player_ids ?? []
+          }]
       const request: RunInitialWorldAdoption = {
         ...review.request,
         command_id: `admin-initial-world-${crypto.randomUUID()}`,
         generation: {
-          ...review.request.generation,
+          ...previous,
           seed: rerollSeed,
+          ...(history.length ? { keep_history: history } : {}),
           keep_from_seed: review.request.generation.seed,
           keep_from_preview_fingerprint: review.preview.state.run_world_pool_preview_fingerprint,
           keep_player_ids: retained
@@ -238,12 +247,14 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
           throw new Error('A Keep player changed in the regenerated preview.')
       }
       return { runId, branchId, head, sourceFingerprint: snapshotFingerprint,
-        draftVersion: draft.draft_version, request, preview }
+        draftVersion: draft.draft_version, request, preview, retained }
     },
     onSuccess: value => {
-      setReview(value); setKeptIds([]); setApproved(false)
-      setPendingFieldLocks(orderedPreviewFieldLocks(value.request.generation.field_locks ?? [])); setNotice(
-        'Regenerated only the remaining players. Review the full batch, then explicitly Adopt and Save.'
+      setReview(value); setKeptIds(value.retained)
+      setPendingFieldLocks(orderedPreviewFieldLocks(value.request.generation.field_locks ?? []))
+      setRerollSeed(value.request.generation.seed + 1)
+      setApproved(false); setNotice(
+        'Regenerated the remaining players. Keep selections remain available for another pass; Adopt and Save are separate.'
       )
     }
   })
@@ -374,18 +385,20 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
     }
   })
 
-  const canAdopt = reviewMatches && approved && !locksDirty &&
-    !fieldPreviewAction.isPending && keptIds.length === 0 &&
+  const appliedKeep = review?.request.generation.keep_player_ids ?? []
+  const pendingKeepChange = keptIds.join('|') !== appliedKeep.join('|')
+  const canAdopt = reviewMatches && approved && !pendingKeepChange && !locksDirty &&
+    !fieldPreviewAction.isPending &&
     !regenerateAction.isPending && !adoptAction.isPending && !previewAction.isPending
   const viewedPlayers = review?.preview.state.players ?? []
 
   return <SectionCard title={cs ? 'Generovat hráče — první úplná dávka' : 'Generate first-season players'}>
     <p className="status">{cs
-      ? 'První funkční dávka 1–128 hráčů pro sezónu 2000/01. Používá pouze uložený World Package dané branche. Náhled nic nezapisuje; potvrzení připraví InitialWorld a teprve ruční Save vytváří Saved Revision.'
-      : 'First supported complete batch (1–128 players) for season 2000/01. Uses the saved Run-owned World Package only. Preview never writes; confirmation stages InitialWorld, then manual Save creates a Saved Revision.'}</p>
+      ? 'První funkční dávka 1–1000 hráčů pro sezónu 2000/01. Používá pouze uložený World Package dané branche. Náhled nic nezapisuje; potvrzení připraví InitialWorld a teprve ruční Save vytváří Saved Revision.'
+      : 'First supported complete batch (1–1000 players) for season 2000/01. Uses the saved Run-owned World Package only. Preview never writes; confirmation stages InitialWorld, then manual Save creates a Saved Revision.'}</p>
     <p className="status">{cs
-      ? 'Závazné podmínky země, regionu a věku platí pro všechny hráče dávky. Prázdná pole zachovávají automatické rozdělení. Skupiny, kvóty a individuální úpravy zatím nejsou podporované.'
-      : 'Hard country, region and age conditions apply to every player. Blank conditions preserve automatic allocation. Groups, quotas and individual editing are not supported yet.'}</p>
+      ? 'Závazné podmínky země, regionu a věku platí pro všechny hráče dávky. Prázdná pole zachovávají automatické rozdělení. Skupiny a kvóty zatím nejsou podporované; editor podporuje devět zdrojových schopností (1–99).'
+      : 'Hard country, region and age conditions apply to every player. Blank conditions preserve automatic allocation. Groups and quotas are not supported yet; the preview editor supports nine source abilities (1–99).'}</p>
     {existing && <p role="status">InitialWorld exists: {existing.players.length} players from {existing.world_package_id}; seed {existing.bootstrap_seed}. Existing players cannot be silently regenerated or overwritten.</p>}
     {unexpectedExistingError && <p role="alert" className="error">Cannot verify whether this Run already has InitialWorld: {formatApiError(existingQuery.error)}</p>}
     {packageQuery.isError && <p role="alert" className="error">Run World state unavailable: {formatApiError(packageQuery.error)}</p>}
@@ -464,8 +477,8 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
       : 'Age at Week 1 of 2000/01. Age bounds condition the existing career-stage weights, not nationality-based innate potential.'}</p>
     <label>Seed <input aria-label="Player generation seed" type="number" value={seed}
       onChange={event => setSeed(Number(event.target.value))} /></label>
-    <label>Number of players (1–128) <input aria-label="Number of generated players" type="number"
-      min={1} max={128} value={poolSize} onChange={event => setPoolSize(Number(event.target.value))} /></label>
+    <label>Number of players (1–1000) <input aria-label="Number of generated players" type="number"
+      min={1} max={1000} value={poolSize} onChange={event => setPoolSize(Number(event.target.value))} /></label>
     <label>First-season ranking Best N <input aria-label="First-season ranking Best N" type="number"
       min={1} value={bestN} onChange={event => setBestN(Number(event.target.value))} /></label>
     <label>Audit reason <input aria-label="InitialWorld audit reason" maxLength={1000}
@@ -540,7 +553,7 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
         {keptIds.length === poolSize && <p role="alert">{cs
           ? 'Ponechání všech hráčů nenechává nic k regeneraci.'
           : 'Keeping every player leaves nothing to regenerate.'}</p>}
-        {rerollSeed === seed && <p role="alert">{cs
+        {rerollSeed === review.request.generation.seed && <p role="alert">{cs
           ? 'Pro regeneraci je potřeba jiný seed.'
           : 'A different seed is required for regeneration.'}</p>}
         <button type="button" disabled={!canRegenerate || regenerateAction.isPending ||
@@ -549,13 +562,13 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
           {regenerateAction.isPending ? (cs ? 'Regeneruji…' : 'Regenerating…')
             : (cs ? 'Regenerovat ostatní – nový náhled' : 'Regenerate remaining – new preview')}
         </button>
-        {keptIds.length > 0 && <p className="status">{cs
+        {pendingKeepChange && <p className="status">{cs
           ? 'Keep výběr dosud nic nemění. Nejprve spusť regeneraci, pak potvrď nový celý náhled.'
           : 'Keep selection alone changes nothing. Regenerate first, then confirm the entire new preview.'}</p>}
       </section>}
-      {review.request.generation.keep_from_seed != null && <p className="status">
-        {cs ? 'Jedna regenerace s Keep proběhla. Ponechaní hráči nemají trvalý zámek. Další relace vyžaduje nový základní náhled.'
-          : 'One verified session Keep regeneration completed. No permanent player locks were created; generate a new base preview to begin another session.'}
+      {sessionSteps > 0 && <p className="status">
+        {cs ? `Počet ověřených regenerací v relaci: ${sessionSteps}. Keep je dočasný, bez trvalých zámků.`
+          : `Verified session Keep regenerations: ${sessionSteps}. Keep is temporary, not a permanent player lock.`}
       </p>}
       {regenerateAction.error && <p role="alert" className="error">
         {cs ? 'Regenerace selhala' : 'Regeneration failed'}: {formatApiError(regenerateAction.error)}

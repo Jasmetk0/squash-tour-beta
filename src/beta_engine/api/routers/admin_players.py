@@ -315,7 +315,9 @@ class RunWorldGenerationOptions(BaseModel):
     run_package_fingerprint: str
     world_package_id: str
     countries: tuple[RunWorldGenerationCountryOption, ...]
-    regions: tuple[str, ...]
+    regions: tuple[str, ...]  # Legacy combined choices for older clients
+    geographic_regions: tuple[str, ...]
+    travel_regions: tuple[str, ...]
 
 
 @router.get(
@@ -365,6 +367,8 @@ def get_run_world_generation_options(
             run_package_fingerprint=expected_package_fingerprint,
             world_package_id=world_package_id,
             countries=countries, regions=regions,
+            geographic_regions=tuple(sorted({c.region for c in countries})),
+            travel_regions=tuple(sorted({c.travel_region for c in countries})),
         )
     except (ValueError, KeyError, TypeError) as exc:
         raise HTTPException(

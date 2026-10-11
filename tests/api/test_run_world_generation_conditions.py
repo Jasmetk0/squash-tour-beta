@@ -58,6 +58,8 @@ def test_generation_options_read_only_and_bound_to_saved_revision(monkeypatch):
         "run-a", "branch-a", "head-a")
     assert [c.code for c in result.countries] == ["CZE", "SVK", "USA"]
     assert result.regions == ("CENTRAL_EUROPE", "EUROPE", "NORTH_AMERICA")
+    assert result.geographic_regions == ("EUROPE", "NORTH_AMERICA")
+    assert result.travel_regions == ("CENTRAL_EUROPE", "NORTH_AMERICA")
     assert result.run_package_fingerprint == SHA
 
 
@@ -121,3 +123,93 @@ def test_compatible_conditions_reach_the_existing_production_generator(monkeypat
     assert called[0]["region"] == "CENTRAL_EUROPE"
     assert called[0]["target_pool_size"] == 30 and called[0]["seed"] == 4201
     assert called[0]["dry_run"] is True
+
+
+@pytest.mark.parametrize("kind,label,expected", [
+    ("geographic_region", "EUROPE", ["CZE", "SVK"]),
+    ("travel_region", "CENTRAL_EUROPE", ["CZE", "SVK"]),
+])
+def test_typed_region_filters_production_candidates(monkeypatch, kind, label, expected):
+    seen = []
+    class Spy:
+        def __init__(self, *, identity_config):
+            pass
+        def generate(self, **kwargs):
+            seen.append([country.code for country in kwargs["countries"]])
+            raise RuntimeError("scoped production generator")
+    monkeypatch.setattr(preview_module, "InitialPlayerPoolGenerator", Spy)
+    request = RunWorldInitialPoolPreviewRequest(
+        world_package_id="saved-earth", seed=42, target_pool_size=4,
+        **{kind: label},
+    )
+    with pytest.raises(RuntimeError, match="scoped production generator"):
+        RunWorldInitialPoolPreviewService(FakePackages(), FakeAdapter()).preview(
+            run_id="run-a", branch_id="branch-a", request=request,
+        )
+    assert seen == [expected]
+
+
+def test_same_label_geographic_travel_collision_and_legacy_replay(monkeypatch):
+    countries = (
+        _country("CZE", "Czechia", "EUROPE", "SHARED"),
+        _country("USA", "United States", "SHARED", "NORTH_AMERICA"),
+    )
+    class CollisionAdapter(FakeAdapter):
+        def project_countries(self, state, *, package_id):
+            return Obj(countries=countries)
+    seen = []
+    class Spy:
+        def __init__(self, *, identity_config):
+            pass
+        def generate(self, **kwargs):
+            seen.append([country.code for country in kwargs["countries"]])
+            raise RuntimeError("scoped production generator")
+    monkeypatch.setattr(preview_module, "InitialPlayerPoolGenerator", Spy)
+    service = RunWorldInitialPoolPreviewService(FakePackages(), CollisionAdapter())
+    for kind, wanted in (("geographic_region", ["USA"]), ("travel_region", ["CZE"])):
+        request = RunWorldInitialPoolPreviewRequest(
+            world_package_id="saved-earth", seed=2, target_pool_size=2,
+            **{kind: "SHARED"},
+        )
+        with pytest.raises(RuntimeError, match="scoped production generator"):
+            service.preview(run_id="run-a", branch_id="branch-a", request=request)
+        assert seen[-1] == wanted
+    # The original region field must keep its historical OR semantics.
+    from beta_engine.domain.players.initial_pool import InitialPlayerPoolGenerator
+    assert [c.code for c in InitialPlayerPoolGenerator()._filter_countries(
+        list(countries), country_code=None, region="SHARED",
+    )] == ["CZE", "USA"]
+    with pytest.raises(ValueError, match="Conflicting generation conditions"):
+        service.preview(run_id="run-a", branch_id="branch-a", request=(
+            RunWorldInitialPoolPreviewRequest(
+                world_package_id="saved-earth", seed=2, target_pool_size=2,
+                country_code="CZE", geographic_region="SHARED",
+            )
+        ))
+
+
+def test_legacy_request_fingerprint_excludes_new_unspecified_fields():
+    from beta_engine.domain.run_packages import canonical_hash
+    from beta_engine.application.run_world_initial_world_service import (
+        RunWorldInitialWorldAdoptionRequest,
+    )
+    request = RunWorldInitialPoolPreviewRequest(
+        world_package_id="saved-earth", season="2000/2001",
+        seed=17, target_pool_size=2, region="SHARED",
+    )
+    legacy = request.model_dump(mode="json")
+    for optional in ("geographic_region", "travel_region"):
+        legacy.pop(optional, None)
+    assert request.fingerprint_payload() == legacy
+    command = RunWorldInitialWorldAdoptionRequest(
+        command_id="keep-legacy", generation=request,
+        audit_label="Legacy", audit_reason="Replay compatibility",
+        official_run=False, best_n=15,
+    )
+    old_payload = command.model_dump(mode="json")
+    old_payload["generation"] = legacy
+    expected = canonical_hash({"run_id": "run-a", "branch_id": "branch-a", **old_payload})
+    assert command.fingerprint_for_scope(run_id="run-a", branch_id="branch-a") == expected
+    new = request.model_copy(update={"geographic_region": "EUROPE"})
+    assert new.fingerprint_payload()["geographic_region"] == "EUROPE"
+    assert new.fingerprint_payload() != legacy

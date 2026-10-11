@@ -166,6 +166,10 @@ def setup_run(page, base_url: str, artifacts: Path) -> str:
     region_condition.select_option(index=1)
     expect(region_condition).not_to_have_value("")
     region_condition.select_option("")
+    travel_condition = page.get_by_label("Player generation travel region")
+    travel_condition.select_option(index=1)
+    expect(travel_condition).not_to_have_value("")
+    travel_condition.select_option("")
     sport_country.select_option("")
     expect(sport_country).to_have_value("")
     # Age constraints are hard inputs; verify both and restore unfiltered baseline.

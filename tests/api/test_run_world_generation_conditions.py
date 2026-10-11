@@ -198,8 +198,9 @@ def test_legacy_request_fingerprint_excludes_new_unspecified_fields():
         seed=17, target_pool_size=2, region="SHARED",
     )
     legacy = request.model_dump(mode="json")
-    legacy.pop("geographic_region")
-    legacy.pop("travel_region")
+    for optional in ("geographic_region", "travel_region", "keep_from_seed",
+                     "keep_from_preview_fingerprint", "keep_player_ids"):
+        legacy.pop(optional, None)
     assert request.fingerprint_payload() == legacy
     command = RunWorldInitialWorldAdoptionRequest(
         command_id="keep-legacy", generation=request,

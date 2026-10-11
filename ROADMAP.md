@@ -1,4 +1,32 @@
-# Active frontend implementation order — 11 October 2026 / Master v77
+# Active frontend implementation order — 11 October 2026 / Master v78
+
+Verified buuk `55a2e415d5d76b27017c5667280c1d5a7647fc33`, merge #1373.
+See [v78 audit](docs/PRE_ALPHA_FRONTEND_CHECKPOINT_V78_2026_10_11.md).
+Target design is separate from implementation and hosted green slice checks.
+
+1. Integrate #1374's verified one-pass Keep delta into fresh buuk; it currently
+   exists only in an intermediate branch. Require ordinary PR base=buuk.
+2. Separate Region/Travel Region conditions with collision regression and compatibility.
+3. Support ≥1,000 first-cohort players through complete review/adoption/Save/restart,
+   canonical Players pagination/readback and preserved ranking/tournament behavior.
+4. Implement versioned generation proposal/session: repeated Keep, individual
+   editing/field locks, temporary country+serial names, exact proposal save/reopen
+   distinct from presets/Add/manual Run Save, and approved standalone page layout.
+5. Add simultaneous partial conditions within one group, explicit quotas and automatic
+   remainder when total is explicit, with full-batch constraint validation. Preserve
+   OPEN Automatic-total and arbitrary nested population-group mechanics.
+6. Continue presets/older-player shared development, actual attribute/OVR migration,
+   general existing-pool additions and time-correct future Admin layer incrementally.
+7. Build owned country/intake/population/rating editors and versioned rating interpolation.
+   Population nearest-year behavior remains unchanged; never edit built-in sources.
+
+Preserve broader pre-alpha acceptance/season/full-Run goals and no-future-leak safeguards.
+Player/Hybrid schema, World Overview and precise calibration are not silently decided.
+User merges. Refresh actual buuk/open PRs before each coherent vertical slice.
+
+## Earlier roadmap entries — superseded dated history
+
+# Historical frontend implementation order — 11 October 2026 / Master v77
 
 Verified base: buuk `9fb8c519b203d91fbd35d9981090c79fd474143a`, merge #1365.
 This is scoped PR/code/hosted-CI review evidence, not a release gate.

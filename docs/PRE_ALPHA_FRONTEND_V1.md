@@ -1,7 +1,7 @@
 # Pre-alpha frontend V1 — approved shell, Runs and Packages decisions
 
 Decision dates: 10–11 October 2026. Status: **approved product design; not implementation evidence**.
-Authority: Master v77 §§27.6, 27.9, 27.17–27.19, 9.4–9.5 and 31.30–31.32; newer explicit user decisions prevail.
+Authority: Master v78 §§27.6, 27.9, 27.17–27.20, 9.4–9.6 and 31.30–31.33; newer explicit user decisions prevail.
 Older illustrative route trees are not an alternative source of authority.
 
 ## Appearance and context
@@ -133,7 +133,7 @@ CI/browser evidence must identify the actual source and covered scope; mocks are
 
 **[ROZHODNUTO PRO PRE-ALPHA]** Dávkový country-rating editor má matici vybraných zemí × šest ratingů a výběr roku/období. Lze měnit jednotlivé buňky nebo použít hodnotu na explicitně vybranou množinu. Ukazuje před/po diff včetně časového/generačního dopadu. Interpolace a jednostranné použití nejbližšího známého ratingu se řídí 5.3/v77, explicitní editace dopočítaného roku vytvoří kotvu. Import/validace zachovávají škálu a historii.
 
-**[OTEVŘENO]** Podrobná World Overview stránka nebyla schválena. Přesné škály varování, matematika distribucí, numerické defaulty poměrů a algoritmy vývoje se budou kalibrovat na funkčních nástrojích. Doplňování nezadaného zbytku a překryv skupin viz 9.4; Player/hybrid Package schema zůstává podle 4.9 otevřené. Nový frontendový souhlas neslouží k domýšlení těchto pravidel.
+**[OTEVŘENO]** Podrobná World Overview stránka nebyla schválena. Přesné škály varování, matematika distribucí, numerické defaulty poměrů a algoritmy vývoje se budou kalibrovat na funkčních nástrojích. Doplnění při explicitním celkovém počtu a současné podmínky v téže skupině jsou rozhodnuté v 9.6; další otevřené případy jsou uvedené tam. Player/hybrid Package schema zůstává podle 4.9 otevřené. Nový frontendový souhlas neslouží k domýšlení těchto pravidel.
 
 
 ## 9.4 Jednotné generování a podmínky — schválený pre-alpha kontrakt v77
@@ -154,7 +154,7 @@ CI/browser evidence must identify the actual source and covered scope; mocks are
 
 **[ROZHODNUTO PRO PRE-ALPHA]** Staršímu generovanému hráči engine dopočítá zjednodušený vývoj do požadovaného věku: nejprve talentové předpoklady, vývojový typ a individuální vlastnosti, potom zjednodušenou aplikaci stejného vývojového modelu jako v normální simulaci. Zachová manuální podmínky a označí nepravděpodobné kombinace. Jde o označenou generační předhistorii, nikoliv důkaz odehraných zápasů, titulů, rankingové pozice nebo celých minulých sezon. Předstartovní výsledkový podklad vzniká pouze ve výslovně zvolené odpovídající variantě 9.1; plná rekurzivní simulace minulosti není povinná. Přesné křivky, startovní stavy a kalibrace zůstávají otevřené.
 
-**[OTEVŘENO — DOSUD NESCHVÁLENO]** Automatické doplnění nezadaného zbytku při celkovém počtu a podmínkách jen pro část dávky. Příklad 100 celkem, přesně 20 CZE a 10 SVK, zbývajících 70 podle světa: uživatel odpověď výslovně odložil. Rovněž není dohodnuta sémantika překrývajících se/vnořených skupin a jejich započítání. Tato verze žádný z těchto mechanismů neuzavírá; implementace může použít explicitně úplně určenou dávku, ne vymyslet zbytek.
+**[AKTUALIZOVÁNO v78]** Automatické doplnění při explicitním celkovém počtu a současné podmínky pro část téže skupiny jsou nyní rozhodnuté v 9.6. Otevřené zůstávají Automatic total s částečnými přesnými kvótami a obecné vnořené/překrývající se populační skupiny nad tento schválený případ.
 
 ## 9.5 Budoucí profily — výslovná opt-in vrstva Adminu v77
 
@@ -168,3 +168,23 @@ CI/browser evidence must identify the actual source and covered scope; mocks are
 Country rating history contract:
 
 **[ROZHODNUTO PRO PRE-ALPHA v77]** Chybějící rok každého ze šesti country ratingů se uvnitř dvou nejbližších známých časových bodů dopočítá lineární interpolací. Pro roky `y0 < y < y1` platí `v(y) = v0 + (v1 − v0) × (y − y0)/(y1 − y0)`. Například `1990: 4,0` a `2000: 6,0` dávají `1995: 5,0`. Mimo známý interval se použije nejbližší známá hodnota, bez extrapolovaného trendu. UI a provenance odliší explicitní vstup, interpolaci i jednostranný fallback a uvedou zdrojové roky/hodnoty. Ruční zadání v dopočítaném roce vytvoří nový explicitní kotvící bod. Rozhodnutí platí pro ratingy, nikoliv populační historii: populace nadále používá nejbližší dostupný rok podle 5.1. Autorské ratingy zůstávají `1–10` s nejvýše jedním desetinným místem; konkrétní numerická reprezentace a zaokrouhlení odvozeného mezivýsledku vyžadují explicitní verzovaný technický kontrakt, nikoliv tiché zaokrouhlení vstupu. Staré uložené snapshoty a replay se nepřepisují.
+
+## Generation refinements — approved v78
+
+## 9.6 Doplňky jednotného generátoru — rozhodnutí v78
+
+**[ROZHODNUTO PRO PRE-ALPHA]** `Přidat podmínku pro část hráčů` může zadat více současně platných podmínek uvnitř stejné dávky/skupiny. Jeden hráč může splňovat více z nich a do celkového počtu hráčů se započítá jednou. Příklad: 20 českých hráčů, přesně 2 s potenciálem S a přesně 5 leváků; některý z těchto dvou může být zároveň jedním z pěti leváků. Nejde automaticky o 27 hráčů ani o disjunktní podskupiny. Náhled ukazuje, kteří hráči plní kterou podmínku; nemožná společná kombinace vrátí konkrétní konflikt. Toto rozhodnutí neuzavírá libovolně hluboký strom vnořených skupin ani sémantiku několika nezávisle zadaných překrývajících se populačních skupin.
+
+**[ROZHODNUTO PRO PRE-ALPHA]** Je-li celkový počet výslovně zadaný a podmínky určují jen část dávky, engine automaticky doplní zbývající hráče podle cílového světa a platných společných podmínek. Příklad: celkem 100, přesně 20 CZE a přesně 10 SVK v celé dávce → 70 zbývajících hráčů z ostatních způsobilých zemí. Doplnění nesmí přidat další CZE/SVK a porušit přesné celkové kvóty. UI ukazuje `100 celkem · 30 výslovně určených · 70 automaticky`. U překrývajících se podmínek se nesčítají jejich počty bez znalosti společných členů. Pokud zbývající způsobilá populace neexistuje nebo jsou kvóty rozporné, vznikne konflikt, nikoliv tichá změna zadání.
+
+**[OTEVŘENO]** Odvození celkového počtu při kombinaci částečných přesných kvót a celkového počtu ponechaného na Automatic nebylo tímto potvrzením rozhodnuto. Konkrétní společný solver, algoritmus podmíněné distribuce a numerická kalibrace zůstávají implementačním/kalibračním úkolem v mezích schváleného chování. UI nemá předstírat podporu dosud nepodporovaných podmínek.
+
+**[ROZHODNUTO — DOČASNÝ DEFAULT PRO VÝVOJ PRE-ALPHA]** Nově generovaní hráči se zatím pojmenovávají názvem země a pořadovým číslem generování, například `Česko 1`, `Česko 2`, `Slovensko 1`. Číslování je nezávislé na řazení tabulky a navazuje při další dávce; Ponechat nezmění jméno již ponechaného hráče. Jde o dočasnou konvenci, která se může změnit ještě před vydáním pre-alpha. Nyní se nevyvíjejí ani nerešeršují realistické osobní jmenné databáze. Zobrazované jméno nenahrazuje stabilní `player_id`. Technická serializace do existujících jmenných polí, scope čítače, kolize a deterministické větvení se musí explicitně dokumentovat a ověřit; tento souhlas nepředepisuje nový globální identitní registr ani nepřepisuje importovaná/existující jména.
+
+**[ROZHODNUTO PRO PRE-ALPHA]** V generačním náhledu lze u konkrétního hráče zamknout jednotlivé vlastnosti a atributy, například ručně zadanou výšku 185 cm, a regenerovat zbytek jeho profilu. Zamčená pole jsou viditelně označena a lze je jednotlivě odemknout/vrátit na Automatic. Zůstávají zachovány závazné podmínky, konzistence profilu i přesné počty. Konflikt se zobrazí a vyžaduje výslovnou opravu; engine pole tiše neodemkne ani nepřepíše. Odlišují se (a) zamčené pole náhledu, (b) Ponechat celý hráčský profil v session a (c) trvalý Locked Player. První dvě volby chrání generační návrh, nikoliv atributy po zbytek kariéry v běžné simulaci.
+
+**[ROZHODNUTO PRO PRE-ALPHA]** Nedokončený generační návrh lze uložit a později otevřít se stejnými konkrétními hráči, podmínkami, seedem, celými ponechanými profily i jednotlivými zamčenými poli, včetně provenance cílového Runu/branche, času, vstupů a modelu. Otevření uloženého návrhu samo znovu negeneruje hráče. Uložit návrh nepřidává hráče do Runu; explicitní `Přidat do Runu` a běžný ruční Save jsou samostatné kroky. Změněný cílový svět/branch/HEAD vyvolá upozornění a novou validaci před přidáním, nikoliv tichou regeneraci. Návrh s konkrétními výsledky je odlišný od pojmenované předvolby, která uchovává zadání. Technické úložiště může využít kompatibilní existující draft/session mechanismus; tímto není schváleno Player/Hybrid Package schema.
+
+## 27.20 Stránka generování — schválené rozložení v78
+
+**[ROZHODNUTO PRO PRE-ALPHA]** Generátor je samostatná stránka. Vlevo má sbalitelný panel společných podmínek, skupin a předvoleb, vpravo shrnutí, konkrétní varování a hráčskou tabulku. Sbalení podmínek rozšíří prostor tabulky. Klik na hráče otevře postranní editor se zachováním pozice a kontextu seznamu; podporované individuální hodnoty a zámky se řídí 9.6. Hlavní akce jsou `Generovat`, `Uložit návrh` a `Přidat do Runu`, se zřetelným rozlišením následného ručního Save. Nezavádí se World/Custom rozdělení ani modální průvodce. Rozložení musí být použitelné i pro velkou dávku; současný počáteční limit 128 není produktový limit.

@@ -1,6 +1,39 @@
 # Current implementation and next action
 
-## Active frontend checkpoint v77 — verified 11 October 2026
+## Active frontend checkpoint v78 — verified 11 October 2026
+
+- Actual buuk `55a2e415d5d76b27017c5667280c1d5a7647fc33`, merge #1373.
+- #1367 navigation/World Apply protections, #1368 canonical Saved Branch Players,
+  #1369 unified first-cohort generator, #1370 country/region, #1371 first-week ages
+  and #1373 full-cohort inspector are present.
+- #1372 was merged into a feature branch; #1373 restored it. **#1374 is also merged
+  into an intermediate branch and remains absent from this buuk.** Its green
+  final feature HEAD is `368f7198a91775dc98c26b8a0f470e20eccffeec`.
+  Do not count whole-player Keep as integrated.
+- All returned final-head workflows for #1367–1374 completed/success. Review read
+  patches/current code/branch comparison and selected hosted real-browser logs;
+  no fresh local runtime/release gate or screenshot inspection was performed.
+- Region generation options/predicate combine geographic Region and Travel Region.
+  Separate typed semantics and test cross-layer same-label collisions.
+- Initial generator/adoption is first season only, UI ≤128; target ≥1,000 and
+  general generation are not done. Present-only Players age/OVR and prepared
+  profile projection are incomplete; source 1–99 ability is not canonical OVR.
+- Master v78 adds approved simultaneous partial constraints, explicit-total
+  automatic remainder preserving exact quotas, temporary country+serial names,
+  field/attribute preview locks, resumable exact proposals and page layout.
+  Automatic total with partial exact quotas/general nested population groups,
+  Player/Hybrid schema and precise numerical calibration remain OPEN.
+- Next: integrate #1374 into fresh buuk; fix geography; prove ≥1,000 full initial
+  review→adoption→Save→restart; then proposal/session, repeated Keep, field locks,
+  saved proposals/layout, exact constraints/remainder and subsequent World editors.
+  User merges every PR; verify actual buuk after merge, not just a merged badge.
+- Detail: [v78 audit](docs/PRE_ALPHA_FRONTEND_CHECKPOINT_V78_2026_10_11.md).
+  Product authority: Master §§9.6, 27.20, 31.33 and frontend V1. This is neither
+  backend completeness nor realism/release certification.
+
+## Earlier dated implementation notices
+
+## Historical frontend checkpoint v77 (superseded above) — verified 11 October 2026
 
 - Reviewed buuk `9fb8c519b203d91fbd35d9981090c79fd474143a`, merge #1365.
   #1360–1365 are all merged; every returned final feature-head Fast CI and applicable

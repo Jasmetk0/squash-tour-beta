@@ -471,6 +471,7 @@ class RunGenerationProposalSave(BaseModel):
     package_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
     preview_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
     source_seed: int
+    next_seed: int
     selected_keep_ids: list[str] = Field(default_factory=list, max_length=2000)
     pending_field_locks: list[RunWorldPreviewFieldLock] = Field(default_factory=list, max_length=2000)
     request: RunWorldInitialWorldAdoptionRequest
@@ -546,6 +547,7 @@ def save_run_generation_proposal(
             "package_fingerprint": payload.package_fingerprint,
             "preview_fingerprint": state.fingerprint,
             "source_seed": payload.source_seed,
+            "next_seed": payload.next_seed,
             "selected_keep_ids": payload.selected_keep_ids,
             "pending_field_locks": [lock.model_dump(mode="json") for lock in payload.pending_field_locks],
             "request": payload.request.model_dump(mode="json"),

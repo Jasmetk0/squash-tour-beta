@@ -162,7 +162,7 @@ def setup_run(page, base_url: str, artifacts: Path) -> str:
     # Wait for immutable saved World options and select a real source country.
     sport_country.select_option(index=1)
     assert sport_country.input_value(), "Country choice was not loaded from the saved World"
-    region_condition = page.get_by_label("Player generation region")
+    region_condition = page.get_by_label("Player generation geographic region")
     region_condition.select_option(index=1)
     expect(region_condition).not_to_have_value("")
     region_condition.select_option("")

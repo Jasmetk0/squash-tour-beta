@@ -45,6 +45,7 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
   const [poolSize, setPoolSize] = useState(64)
   const [countryCode, setCountryCode] = useState('')
   const [region, setRegion] = useState('')
+  const [travelRegion, setTravelRegion] = useState('')
   const [minAge, setMinAge] = useState('')
   const [maxAge, setMaxAge] = useState('')
   const [bestN, setBestN] = useState(15)
@@ -99,7 +100,7 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
       draft.draft_version, snapshotFingerprint, selectedWorldId)
     ? optionsQuery.data : null
   const conditionConflict = optionsQuery.isSuccess
-    ? generatorConditionConflict(countryCode, region, options)
+    ? generatorConditionConflict(countryCode, '', options, region, travelRegion)
     : null
   const ageConflict = ageConditionConflict(minAge, maxAge)
   const canPreview = editable && worldIds.length > 0 && validParameters &&
@@ -114,7 +115,7 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
     setApproved(false)
     setSaveApproved(false)
     setNotice('')
-  }, [runId, branchId, head, sourceId, seed, poolSize, countryCode, region, minAge, maxAge, bestN, auditReason])
+  }, [runId, branchId, head, sourceId, seed, poolSize, countryCode, region, travelRegion, minAge, maxAge, bestN, auditReason])
 
   const previewAction = useMutation({
     mutationFn: async () => {
@@ -127,7 +128,8 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
           season: '2000/2001',
           seed, target_pool_size: poolSize,
           ...(countryCode ? { country_code: countryCode } : {}),
-          ...(region ? { region } : {}),
+          ...(region ? { geographic_region: region } : {}),
+          ...(travelRegion ? { travel_region: travelRegion } : {}),
           ...(minAge ? { min_age: Number(minAge) } : {}),
           ...(maxAge ? { max_age: Number(maxAge) } : {})
         },
@@ -153,7 +155,8 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
     review.request.generation.world_package_id === selectedWorldId &&
     review.request.generation.seed === seed && review.request.generation.target_pool_size === poolSize &&
     (review.request.generation.country_code ?? '') === countryCode &&
-    (review.request.generation.region ?? '') === region &&
+    (review.request.generation.geographic_region ?? '') === region &&
+    (review.request.generation.travel_region ?? '') === travelRegion &&
     String(review.request.generation.min_age ?? '') === minAge &&
     String(review.request.generation.max_age ?? '') === maxAge &&
     Boolean(options) && !conditionConflict && !ageConflict &&
@@ -270,7 +273,7 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
     {draft && draft.status !== 'clean' && !pendingSave && <p className="status">Save or resolve existing Working Draft changes before generating new players.</p>}
     <label>Run-owned World{' '}
       <select aria-label="Run World for player generation" value={selectedWorldId}
-        onChange={event => { setSourceId(event.target.value); setCountryCode(''); setRegion('') }}>
+        onChange={event => { setSourceId(event.target.value); setCountryCode(''); setRegion(''); setTravelRegion('') }}>
         {worldIds.map(id => <option key={id} value={id}>{id}</option>)}
       </select>
     </label>
@@ -283,11 +286,19 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
             <option key={country.code} value={country.code}>{country.code} — {country.name}</option>)}
         </select>
       </label>
-      <label>{cs ? 'Region' : 'Region'}
-        <select aria-label="Player generation region" value={region}
+      <label>{cs ? 'Geografický region' : 'Geographic Region'}
+        <select aria-label="Player generation geographic region" value={region}
           disabled={!options} onChange={event => setRegion(event.target.value)}>
           <option value="">{cs ? 'Automaticky podle světa' : 'Automatic from World'}</option>
-          {(options?.regions ?? []).map(item =>
+          {(options?.geographic_regions ?? [...new Set(options?.countries.map(c => c.region) ?? [])].sort()).map(item =>
+            <option key={item} value={item}>{item}</option>)}
+        </select>
+      </label>
+      <label>{cs ? 'Cestovní region' : 'Travel Region'}
+        <select aria-label="Player generation travel region" value={travelRegion}
+          disabled={!options} onChange={event => setTravelRegion(event.target.value)}>
+          <option value="">{cs ? 'Automaticky podle světa' : 'Automatic from World'}</option>
+          {(options?.travel_regions ?? [...new Set(options?.countries.map(c => c.travel_region) ?? [])].sort()).map(item =>
             <option key={item} value={item}>{item}</option>)}
         </select>
       </label>
@@ -303,7 +314,8 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
     {conditionConflict && <p role="alert" className="error">{cs ? 'Rozpor podmínek' : 'Condition conflict'}: {conditionConflict}</p>}
     {options && !conditionConflict && <p className="status">
       {cs ? 'Závazný výběr' : 'Hard selection'}: {countryCode || (cs ? 'všechny země' : 'all countries')} ·
-      {' '}{region || (cs ? 'všechny regiony' : 'all regions')}.
+      {' '}{region || (cs ? 'všechny geografické regiony' : 'all geographic regions')} ·
+      {' '}{travelRegion || (cs ? 'všechny cestovní regiony' : 'all travel regions')}.
       {' '}{cs ? 'Nevybrané vlastnosti zůstanou přirozeně proměnlivé.' : 'Unconstrained attributes remain naturally variable.'}
     </p>}
     <div className="form-grid" aria-label="Hard first-season age conditions">
@@ -344,12 +356,15 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
       <p>{cs ? 'Svět' : 'World'}: {review.request.generation.world_package_id} · Seed: {review.request.generation.seed} · First-season Best {review.request.best_n} · Draft v{review.draftVersion}</p>
       <p>{cs ? 'Použité závazné podmínky' : 'Reviewed hard conditions'}:
         {' '}{countryCode || (cs ? 'země automaticky' : 'country automatic')} ·
-        {' '}{region || (cs ? 'region automaticky' : 'region automatic')} ·
+        {' '}{region || (cs ? 'geografický region automaticky' : 'geographic region automatic')} ·
+        {' '}{travelRegion || (cs ? 'cestovní region automaticky' : 'travel region automatic')} ·
         {' '}{minAge || '15'}–{maxAge || '45'} {cs ? 'let' : 'years'}.</p>
       {options && <p className="status">{cs ? 'Kontrola splnění' : 'Fulfilment'}:
         {' '}{viewedPlayers.every(player => (!countryCode || player.country_code === countryCode) &&
           (!region || options.countries.some(country => country.code === player.country_code &&
-            (country.region === region || country.travel_region === region))) &&
+            country.region === region)) &&
+          (!travelRegion || options.countries.some(country => country.code === player.country_code &&
+            country.travel_region === travelRegion)) &&
           (!minAge || player.age_years_at_season_start >= Number(minAge)) &&
           (!maxAge || player.age_years_at_season_start <= Number(maxAge)))
           ? (cs ? 'Všichni hráči splňují závazné podmínky.' : 'Every player satisfies the hard conditions.')

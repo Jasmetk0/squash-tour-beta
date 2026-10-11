@@ -1,3 +1,11 @@
+# Candidate — individual first-cohort preview field editor (11 October 2026)
+
+- A standalone PR based on actual `buuk f251c05d96b10215adc9595d0781648762c3ebc6` implements per-player, per-field **preview-only** locks for the nine available numeric source-model fields: `current_ability`, `potential_ability` and seven `attributes.*` (all 1–99). These are explicitly **not** canonical 57 attributes, canonical OVR 0–200, height or weight. Unsupported fields are visible as unavailable, never invented.
+- The Admin player list opens a fixed-position right-side editor without changing the filtered list/scroll. Each supported field can be locked to an explicit number or set back to Automatic, with a visible lock badge. Unapplied editor changes block Adopt. Server recomputes a new complete preview under the saved World and rejects missing player identities and incompatible current/potential/hidden-ceiling constraints as concrete conflicts; no partial silent unlock.
+- Server uses validated Pydantic field lock DTOs, sorted unique IDs/field names and model revalidation; output updates provenance and cohort fingerprint, `manual_override` and public source attributes, and explicitly strips any persistent `locked` state. The downstream InitialWorld conversion carries edited attributes, but `locked_from_initial_pool=False`; future career development is not fixed by preview locks. Empty locks are omitted from old fingerprint payloads.
+- Focused regression and Chromium tournament/SQLite continuation are part of the PR. Candidate only until checks green, merge and actual buuk verification. #1378 and #1379 remained open at start; this slice is intentionally independent and will need reconciling if newer PRs integrate.
+- Next slices still required: repeatable Keep combined with individual lock changes, saved exact generation proposals, canonical physical/57-field model, grouping/quotas, and approved page layout. The temporary limitation on unsupported model fields is not silently treated as full v78 completion.
+
 # Integration candidate — Keep restoration to actual buuk (11 October 2026)
 
 - A new PR based on `buuk` `8805e9549e947bd87331d9bc40275b1759639e43` proposes the exact eight-file session Keep delta from #1374; the original #1374 was merged into an intermediate branch. **Candidate, not yet integrated into buuk.**

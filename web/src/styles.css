@@ -2237,3 +2237,23 @@ textarea:focus-visible {
     grid-template-columns: 65px minmax(0, 1fr);
   }
 }
+
+/* Registry-backed Packages hub, rows and tabbed World source details */
+.package-index-categories{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:.85rem;margin:1.2rem 0}
+.app-shell--admin a.package-index-category{display:flex;flex-direction:column;gap:.5rem;padding:1rem;border:1px solid #354967;background:#192a43;border-radius:12px;text-decoration:none;color:#d9e7ff}
+.package-index-category h3{margin:0}.package-index-category p{flex:1;margin:0;color:#a9bed7}
+.package-index-filters{display:flex;gap:.8rem;flex-wrap:wrap;margin:1rem 0}.package-index-filters label{flex:1;min-width:180px}
+.package-index-filters input,.package-index-filters select{display:block;width:100%}
+.package-index-list,.package-index-countries,.package-index-checks{list-style:none;padding:0}
+.package-index-row{background:#192a43;border:1px solid #354967;border-radius:12px;display:flex;justify-content:space-between;align-items:center;gap:1rem;padding:1rem;margin:.65rem 0}
+.package-index-row p{margin:.4rem 0}.package-index-tags{display:flex;gap:.35rem;flex-wrap:wrap;margin-top:.4rem}
+.package-index-tags span{padding:.2rem .55rem;background:#293f5d;border-radius:999px;font-size:.82rem}
+.package-index-tabs{display:flex;border-bottom:1px solid #425676;gap:.3rem;margin:1rem 0}
+.app-shell--admin .package-index-tabs button{background:#1c2f4c;border-radius:7px 7px 0 0}
+.app-shell--admin .package-index-tabs button[aria-current=page]{background:#365e97;border-bottom:3px solid #9bc7ff}
+.package-index-detail{background:#19283f;border:1px solid #354967;padding:1.15rem;border-radius:12px;overflow-wrap:anywhere}
+.package-index-detail dl{display:grid;grid-template-columns:155px minmax(0,1fr);gap:.6rem}
+.package-index-detail dt{color:#b1c9e6}.package-index-detail dd{margin:0;overflow-wrap:anywhere}
+.package-index-countries{max-height:560px;overflow:auto}.package-index-countries li{display:flex;justify-content:space-between;gap:1rem;padding:.55rem;border-bottom:1px solid #344c6b}
+.package-index-checks li{background:#233955;padding:.7rem;margin:.6rem 0;border-left:3px solid #8bb3ee}
+@media(max-width:660px){.package-index-row,.package-index-countries li{flex-direction:column;align-items:flex-start}.package-index-detail dl{grid-template-columns:1fr}}

@@ -9,7 +9,7 @@ import { EventsPage } from './pages/EventsPage'
 import { FinalsPage } from './pages/FinalsPage'
 import { FinalsQualificationDetailPage } from './pages/FinalsQualificationDetailPage'
 import { FinalsResultDetailPage } from './pages/FinalsResultDetailPage'
-import { PackagesHomePage } from './pages/admin/PackagesHomePage'
+import { PackagesHomePage, PackagesListPage, PackageWorldDetailPage } from './pages/admin/PackagesHomePage'
 import { TestLabHomePage } from './pages/admin/TestLabHomePage'
 import { RunManagementPage } from './pages/RunManagementPage'
 import {
@@ -127,6 +127,9 @@ export default function App(): JSX.Element {
 
         <Route path="admin" element={<AdminHomePage />} />
         <Route path="admin/packages" element={<PackagesHomePage />} />
+        <Route path="admin/packages/all" element={<PackagesListPage />} />
+        <Route path="admin/packages/category/:categoryId" element={<PackagesListPage />} />
+        <Route path="admin/packages/world/:worldId" element={<PackageWorldDetailPage />} />
         <Route path="admin/labs" element={<TestLabHomePage />} />
         <Route path="admin/world" element={<AdminWorldPage />} />
         <Route path="admin/world/library" element={<WorldLibraryPage />} />

@@ -1,3 +1,9 @@
+# Integration candidate — Keep restoration to actual buuk (11 October 2026)
+
+- A new PR based on `buuk` `8805e9549e947bd87331d9bc40275b1759639e43` proposes the exact eight-file session Keep delta from #1374; the original #1374 was merged into an intermediate branch. **Candidate, not yet integrated into buuk.**
+- The server replays the original saved-World preview with its seed/fingerprint, validates whole-player identity, rerolls only the remainder, strips session Keep locks, and keeps explicit Adopt and manual Save separate. Choosing Keep alone never changes a Run.
+- Scope remains **one** changed-seed Keep regeneration per original preview, not repeatable Keep, attribute locks, saved proposal sessions, or cohorts >= 1,000. Focused deterministic tests and production browser smoke are included; only successful new-PR final-head checks justify merge readiness.
+
 # Current implementation and next action
 
 ## Active frontend checkpoint v78 — verified 11 October 2026

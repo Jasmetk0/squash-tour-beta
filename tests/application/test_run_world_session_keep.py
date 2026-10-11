@@ -260,6 +260,6 @@ def test_unmodified_one_pass_fingerprint_is_backwards_compatible():
     assert "keep_history" not in first_req.fingerprint_payload()
     assert first_req.fingerprint_payload() == {
         key: value for key, value in first_req.model_dump(mode="json").items()
-        if key != "keep_history"
+        if key not in ("keep_history", "geographic_region", "travel_region")
     }
     assert preview(first_req).preview_fingerprint == preview(first_req).preview_fingerprint

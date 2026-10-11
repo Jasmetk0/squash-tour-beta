@@ -1,4 +1,11 @@
 /** Production Run-owned generated InitialWorld request/review contracts. */
+export type RunWorldKeepHistoryStep = {
+  seed: number
+  keep_from_seed: number
+  keep_from_preview_fingerprint: string
+  keep_player_ids: string[]
+}
+
 export type RunInitialWorldGeneration = {
   world_package_id: string
   season: '2000/2001'
@@ -13,6 +20,7 @@ export type RunInitialWorldGeneration = {
   keep_from_seed?: number | null
   keep_from_preview_fingerprint?: string | null
   keep_player_ids?: string[]
+  keep_history?: RunWorldKeepHistoryStep[]
 }
 
 export type RunWorldGenerationCountry = {
@@ -184,6 +192,22 @@ export function verifiedInitialWorldPreview(
   if (max != null && (!Number.isInteger(max) || max < 15 || max > 45)) return false
   if (min != null && max != null && min > max) return false
   const kept = request.generation.keep_player_ids ?? []
+  const history = request.generation.keep_history ?? []
+  if (!Array.isArray(history) || history.length > 16) return false
+  if (history.length && (!kept.length ||
+      history[history.length - 1].seed !== request.generation.keep_from_seed)) return false
+  for (let i = 0; i < history.length; i++) {
+    const step = history[i]
+    if (!step || !Number.isSafeInteger(step.seed) ||
+        !Number.isSafeInteger(step.keep_from_seed) ||
+        step.seed === step.keep_from_seed ||
+        (i > 0 && step.keep_from_seed !== history[i - 1].seed) ||
+        !/^[0-9a-f]{64}$/.test(step.keep_from_preview_fingerprint) ||
+        !Array.isArray(step.keep_player_ids) || !step.keep_player_ids.length ||
+        step.keep_player_ids.length >= request.generation.target_pool_size ||
+        step.keep_player_ids.some(id => typeof id !== 'string' || !id || id.length > 128) ||
+        step.keep_player_ids.join('|') !== [...new Set(step.keep_player_ids)].sort().join('|')) return false
+  }
   if (kept.length > 0) {
     if (!Number.isSafeInteger(request.generation.keep_from_seed) ||
         request.generation.keep_from_seed === request.generation.seed ||

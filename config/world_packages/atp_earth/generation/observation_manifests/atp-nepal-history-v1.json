@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-nepal-history-v1",
+  "source_id": "itf-nepal-profile",
+  "relative_path": "observations/normalized/atp_nepal_history_v1.json",
+  "sha256": "4e04642f1d0c2c2b16909f35eb2ca8982594f295faac99661627dbcb2ce1ac60",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

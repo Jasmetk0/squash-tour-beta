@@ -1,0 +1,261 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "fifa-earth-country-history-nor-fin-hrv-svn.v1",
+  "world_id": "fifa_earth",
+  "data_cutoff": "2026-10-03",
+  "countries": [
+    "NOR",
+    "FIN",
+    "HRV",
+    "SVN"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "principles": [
+    "Structural observations are temporally gated; 2006 and 2023 global FIFA datasets are never cited before their observation years.",
+    "Croatia and Slovenia before independence are modelled as current-territory football within Yugoslav governance; Yugoslavia-wide counts or results are not inherited.",
+    "The 1991–1993 successor-association transition is an explicit discontinuity, not a smooth interpolation.",
+    "High club density raises organised-access evidence without automatically raising competition quality.",
+    "Professional-player/club density informs ecosystem depth only; held-out rankings and title outcomes are not tuning inputs."
+  ],
+  "observed_context": {
+    "NOR": {
+      "big_count_2006_all_players_per_1000": 116.5,
+      "big_count_2006_registered_per_1000": 75.6,
+      "big_count_2006_clubs_per_million": 690.5,
+      "professional_2023_players_per_million": 76.1,
+      "professional_2023_clubs_per_million": 5.8
+    },
+    "FIN": {
+      "big_count_2006_all_players_per_1000": 68.9,
+      "big_count_2006_registered_per_1000": 28.2,
+      "big_count_2006_clubs_per_million": 239.3,
+      "professional_2023_players_per_million": 55.5,
+      "professional_2023_clubs_per_million": 2.1
+    },
+    "HRV": {
+      "big_count_2006_all_players_per_1000": 84,
+      "big_count_2006_registered_per_1000": 25.4,
+      "big_count_2006_clubs_per_million": 339.2,
+      "professional_2023_players_per_million": 304.9,
+      "professional_2023_clubs_per_million": 9.8
+    },
+    "SVN": {
+      "big_count_2006_all_players_per_1000": 58.4,
+      "big_count_2006_registered_per_1000": 15.3,
+      "big_count_2006_clubs_per_million": 169.7,
+      "professional_2023_players_per_million": 127.9,
+      "professional_2023_clubs_per_million": 4.7
+    }
+  },
+  "anchor_values": {
+    "NOR": {
+      "1955": [
+        7.9,
+        7.8,
+        7.6,
+        7.8,
+        7.5,
+        8.5
+      ],
+      "2006": [
+        8.9,
+        9.6,
+        8.7,
+        8.4,
+        8.5,
+        9.1
+      ],
+      "2023": [
+        8.9,
+        9.5,
+        8.9,
+        8.6,
+        8.7,
+        9.2
+      ],
+      "2026": [
+        8.9,
+        9.5,
+        9,
+        8.6,
+        8.8,
+        9.2
+      ]
+    },
+    "FIN": {
+      "1955": [
+        7.4,
+        7.1,
+        7.2,
+        7.4,
+        7.1,
+        8.2
+      ],
+      "2006": [
+        8.2,
+        8.5,
+        8.1,
+        8,
+        8,
+        8.8
+      ],
+      "2023": [
+        8.2,
+        8.5,
+        8.4,
+        8.2,
+        8.3,
+        8.9
+      ],
+      "2026": [
+        8.2,
+        8.5,
+        8.7,
+        8.2,
+        8.6,
+        8.9
+      ]
+    },
+    "HRV": {
+      "1955": [
+        7.7,
+        6.9,
+        7.1,
+        7.8,
+        7,
+        8.3
+      ],
+      "1990": [
+        8,
+        7.3,
+        7.6,
+        8.2,
+        7.4,
+        8.7
+      ],
+      "1991": [
+        8,
+        7.2,
+        7.4,
+        7.8,
+        6.9,
+        8.7
+      ],
+      "1992": [
+        8,
+        7.3,
+        7.5,
+        8,
+        7.2,
+        8.8
+      ],
+      "1993": [
+        8.1,
+        7.4,
+        7.6,
+        8.2,
+        7.5,
+        8.8
+      ],
+      "2006": [
+        8.4,
+        8.4,
+        8.6,
+        8.8,
+        8.8,
+        9
+      ],
+      "2023": [
+        8.5,
+        8.4,
+        9,
+        9.2,
+        9.1,
+        9.2
+      ],
+      "2026": [
+        8.5,
+        8.4,
+        9.1,
+        9.2,
+        9.1,
+        9.2
+      ]
+    },
+    "SVN": {
+      "1955": [
+        7,
+        6.6,
+        7,
+        7.3,
+        6.9,
+        8
+      ],
+      "1990": [
+        7.3,
+        6.9,
+        7.4,
+        7.6,
+        7.2,
+        8.4
+      ],
+      "1991": [
+        7.3,
+        6.8,
+        7.2,
+        7.3,
+        6.8,
+        8.4
+      ],
+      "1992": [
+        7.4,
+        6.9,
+        7.3,
+        7.6,
+        7.1,
+        8.5
+      ],
+      "1993": [
+        7.4,
+        7,
+        7.4,
+        7.8,
+        7.4,
+        8.5
+      ],
+      "2006": [
+        7.8,
+        7.7,
+        8.1,
+        8.2,
+        8.2,
+        8.7
+      ],
+      "2023": [
+        7.8,
+        7.7,
+        8.4,
+        8.6,
+        8.5,
+        8.9
+      ],
+      "2026": [
+        7.8,
+        7.7,
+        8.5,
+        8.6,
+        8.6,
+        8.9
+      ]
+    }
+  },
+  "evidence_sources": [
+    "uefa-norway-profile",
+    "uefa-finland-profile",
+    "uefa-croatia-profile",
+    "uefa-slovenia-profile",
+    "fifa-big-count-2006",
+    "fifa-professional-2023"
+  ],
+  "heldout_ranking_used": false
+}

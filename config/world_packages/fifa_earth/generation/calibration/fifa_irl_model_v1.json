@@ -1,0 +1,68 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "fifa-earth-irl-model.v1",
+  "world_id": "fifa_earth",
+  "data_cutoff": "2026-10-03",
+  "countries": [
+    "IRL"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "principles": [
+    "The 1921 FAI foundation and 1922 league/cup structure establish long institutional and competition continuity.",
+    "FIFA Big Count 2006 is gated to 2006+ and supports a notably broad registered/club base without being treated as elite quality.",
+    "The 2007 National Sports Campus headquarters is an infrastructure/development signal only from 2007.",
+    "FIFA Professional Football Report 2023 is gated to 2023+ for professional-depth context.",
+    "No international tournament result or ranking is used as a calibration target."
+  ],
+  "anchor_values": {
+    "IRL": {
+      "1955": [
+        7,
+        6.8,
+        6.9,
+        6.9,
+        6.7,
+        8.2
+      ],
+      "2006": [
+        7.8,
+        8.4,
+        7.8,
+        7.5,
+        7.3,
+        8.7
+      ],
+      "2007": [
+        7.8,
+        8.4,
+        8,
+        7.5,
+        7.5,
+        8.7
+      ],
+      "2023": [
+        7.8,
+        8.4,
+        8.1,
+        7.6,
+        7.5,
+        8.8
+      ],
+      "2026": [
+        7.9,
+        8.4,
+        8.1,
+        7.6,
+        7.6,
+        8.8
+      ]
+    }
+  },
+  "evidence_sources": [
+    "uefa-ireland-profile",
+    "uefa-ireland-headquarters-2007",
+    "fifa-big-count-2006",
+    "fifa-professional-2023"
+  ],
+  "heldout_ranking_used": false
+}

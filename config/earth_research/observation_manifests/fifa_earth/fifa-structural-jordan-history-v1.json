@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-jordan-history-v1",
+  "source_id": "fifa-competitive-balance-2020-irq-jor",
+  "relative_path": "observations/normalized/structural/fifa_structural_jordan_history_v1.json",
+  "sha256": "1dc50af723d6720f8c3d9b8946a6dd2ce3b4d274f9cd29722c2453fa54eb0e0a",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

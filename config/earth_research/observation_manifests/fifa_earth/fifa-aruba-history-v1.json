@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-aruba-history-v1",
+  "source_id": "fifa-aruba-member-context-2026",
+  "relative_path": "observations/normalized/structural/fifa_aruba_history_v1.json",
+  "sha256": "70427c19c2dcb19637741cecdef5f7e8532f4ee1b7afbbce4e5f0047c3e25668",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

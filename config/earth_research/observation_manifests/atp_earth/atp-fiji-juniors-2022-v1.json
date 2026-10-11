@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-fiji-juniors-2022-v1",
+  "source_id": "itf-fiji-juniors-2022",
+  "relative_path": "observations/normalized/atp_fiji_juniors_2022_v1.json",
+  "sha256": "d9b032a7d104bfbe3b9755d1749a99fee328e16a0ac30704caf04a9157fc7f88",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

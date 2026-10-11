@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-uefa-poland-profile-v1",
+  "source_id": "uefa-poland-profile",
+  "relative_path": "observations/normalized/structural/fifa_structural_uefa_poland_profile_v1.json",
+  "sha256": "69c50837fe21caa3cee56ff3ecc330b32392d0e3345ce78526481cae768dccf6",
+  "record_count": 4,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

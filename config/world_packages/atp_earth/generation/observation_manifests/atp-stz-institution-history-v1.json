@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-stz-institution-history-v1",
+  "source_id": "stz-institution-history",
+  "relative_path": "observations/normalized/atp-stz-institution-history-v1.json",
+  "sha256": "92b5e6caead5994b69c9b8bc08eed3ee8001ca863bf9dd66a11e677df3c36836",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

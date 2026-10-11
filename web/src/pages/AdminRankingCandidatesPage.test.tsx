@@ -1,0 +1,211 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import type { RankingCandidateHistory } from '../api/rankingCandidates'
+import { MemoryRouter, Route, Routes, Link } from 'react-router-dom'
+import { beforeEach, expect, it, vi } from 'vitest'
+import { getRankingCandidates, getRankingCandidateSources, getRankingCandidateInputs } from '../api/client'
+import { AdminRankingCandidatesPage } from './AdminRankingCandidatesPage'
+vi.mock('../api/client', async (importOriginal) => ({ ...await importOriginal<typeof import('../api/client')>(), getRankingCandidates: vi.fn(), getRankingCandidateSources: vi.fn(), getRankingCandidateInputs: vi.fn() }))
+const fetchHistory = vi.mocked(getRankingCandidates)
+function show(suffix = '') {
+  render(<QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}><MemoryRouter initialEntries={['/admin/runs/run/branches/branch/ranking-candidates' + suffix]}><Link to="/admin/runs/run/branches/other/ranking-candidates/0/2">Other Branch</Link><Routes><Route path="/admin/runs/:runId/branches/:branchId/ranking-candidates" element={<AdminRankingCandidatesPage />} /><Route path="/admin/runs/:runId/branches/:branchId/ranking-candidates/:seasonIndex/:week" element={<AdminRankingCandidatesPage />} /></Routes></MemoryRouter></QueryClientProvider>)
+}
+beforeEach(() => {
+  vi.resetAllMocks()
+  fetchHistory.mockResolvedValue({ run_id: 'run', branch_id: 'branch', publication_status: 'candidate_only', candidates: [] })
+})
+it('shows an empty scoped history', async () => {
+  show()
+  expect(await screen.findByText('No ranking candidates have been prepared for this Branch.')).toBeInTheDocument()
+  expect(fetchHistory).toHaveBeenCalledWith('run', 'branch')
+})
+it('does not substitute a missing week', async () => {
+  show('/0/2')
+  expect(await screen.findByRole('alert')).toHaveTextContent('No candidate is stored for this week.')
+})
+it('rejects invalid coordinates without fetching', () => {
+  show('/50/62')
+  expect(screen.getByRole('alert')).toHaveTextContent('Invalid season or week.')
+  expect(fetchHistory).not.toHaveBeenCalled()
+})
+
+const populated: RankingCandidateHistory = {
+  run_id: 'run', branch_id: 'branch', publication_status: 'candidate_only', candidates: [{
+    publication_status: 'candidate_only', fingerprint: 'hash', command_ids: ['command-1'],
+    snapshot: { run_id: 'run', branch_id: 'branch', week: { season_index: 0, week: 2 }, policy: { policy_id: 'policy-1', best_n: 15 }, rows: [{ rank: 1, player_id: 'player-a', points: 120, counted_results: [{ edition_id: 'edition-1', qualification_points: 20, main_points: 100, completed_week: { season_index: 0, week: 1 }, first_publication_week: { season_index: 0, week: 2 }, validity_weeks: 61 }] }] },
+  }],
+}
+it('opens a week, counted awards and provenance through read-only controls', async () => {
+  fetchHistory.mockResolvedValue(populated)
+  show()
+  await userEvent.click(await screen.findByRole('link', { name: '2000/01 · Week 2' }))
+  expect(await screen.findByText('player-a')).toBeInTheDocument()
+  expect(screen.getByText('120')).toBeInTheDocument()
+  await userEvent.click(screen.getByText('1 counted results for player-a'))
+  expect(screen.getByText('edition-1')).toBeVisible()
+  expect(screen.getByText(/20 qualification \+ 100 main/)).toBeVisible()
+  await userEvent.click(screen.getByText('Technical provenance'))
+  expect(screen.getByText('Commands: command-1')).toBeVisible()
+  expect(screen.queryByRole('button', { name: /publish|save|simulate/i })).not.toBeInTheDocument()
+})
+it('hides the previous branch while the next scope loads', async () => {
+  fetchHistory.mockResolvedValueOnce(populated)
+  show('/0/2')
+  expect(await screen.findByText('player-a')).toBeInTheDocument()
+  fetchHistory.mockImplementation(() => new Promise(() => {}))
+  await userEvent.click(screen.getByRole('link', { name: 'Other Branch' }))
+  expect(screen.getByRole('status')).toHaveTextContent('Loading ranking history')
+  expect(screen.queryByText('player-a')).not.toBeInTheDocument()
+  expect(fetchHistory).toHaveBeenLastCalledWith('run', 'other')
+})
+it('reports load failures and retries successfully', async () => {
+  fetchHistory.mockRejectedValueOnce(new Error('History unavailable'))
+  show()
+  expect(await screen.findByRole('alert')).toHaveTextContent('History unavailable')
+  await userEvent.click(screen.getByRole('button', { name: 'Retry loading' }))
+  expect(await screen.findByText('No ranking candidates have been prepared for this Branch.')).toBeInTheDocument()
+})
+it('does not show another stored week instead of the requested week', async () => {
+  fetchHistory.mockResolvedValue(populated)
+  show('/0/3')
+  expect(await screen.findByRole('alert')).toHaveTextContent('No candidate is stored for this week.')
+  expect(screen.queryByText('player-a')).not.toBeInTheDocument()
+})
+
+const fetchSources = vi.mocked(getRankingCandidateSources)
+it('loads historical sources on demand and displays uncounted results', async () => {
+  fetchHistory.mockResolvedValue(populated)
+  fetchSources.mockResolvedValue({
+    run_id: 'run', branch_id: 'branch', week: { season_index: 0, week: 2 },
+    publication_status: 'candidate_only', candidate_fingerprint: 'hash',
+    sources: [{ fingerprint: 'source-version', counted: false, version: {
+      run_id: 'run', branch_id: 'branch', effective_week: { season_index: 0, week: 2 }, previous_fingerprint: 'prior-version',
+      result: { edition_id: 'source-edition', player_id: 'player-a', source_fingerprint: 'award-hash', qualification_points: 0, main_points: 20, first_publication_week: { season_index: 0, week: 2 }, validity_weeks: 61, ranked: false, completed_week: {season_index:0,week:1}, terminal_status: 'completed' },
+    } }],
+  })
+  show('/0/2')
+  const load = await screen.findByRole('button', { name: 'Load source results' })
+  expect(fetchSources).not.toHaveBeenCalled()
+  await userEvent.click(load)
+  expect(await screen.findByText(/Not counted in this candidate/)).toBeVisible()
+  expect(fetchSources).toHaveBeenCalledWith('run', 'branch', 0, 2)
+  await userEvent.click(screen.getByText('Source provenance'))
+  expect(screen.getByText(/Previous version: prior-version/)).toBeVisible()
+  await userEvent.click(screen.getByRole('link', { name: 'Other Branch' }))
+  expect(screen.queryByText(/Previous version: prior-version/)).not.toBeInTheDocument()
+})
+it('keeps the candidate visible when source loading fails and supports retry', async () => {
+  fetchHistory.mockResolvedValue(populated)
+  fetchSources.mockRejectedValueOnce(new Error('Sources unavailable')).mockResolvedValue({
+    run_id: 'run', branch_id: 'branch', week: { season_index: 0, week: 2 }, publication_status: 'candidate_only', candidate_fingerprint: 'hash', sources: [],
+  })
+  show('/0/2')
+  await userEvent.click(await screen.findByRole('button', { name: 'Load source results' }))
+  expect(await screen.findByRole('alert')).toHaveTextContent('Sources unavailable')
+  expect(screen.getByText('player-a')).toBeVisible()
+  await userEvent.click(screen.getByRole('button', { name: 'Retry source results' }))
+  expect(await screen.findByText('No source results at this boundary.')).toBeVisible()
+})
+it('rejects sources linked to a different candidate', async () => {
+  fetchHistory.mockResolvedValue(populated)
+  fetchSources.mockResolvedValue({ run_id: 'run', branch_id: 'branch', week: { season_index: 0, week: 2 }, publication_status: 'candidate_only', candidate_fingerprint: 'different', sources: [] })
+  show('/0/2')
+  await userEvent.click(await screen.findByRole('button', { name: 'Load source results' }))
+  expect(await screen.findByRole('alert')).toHaveTextContent('Source history does not match this candidate.')
+})
+
+const fetchInputs = vi.mocked(getRankingCandidateInputs)
+it('inspects frozen inputs on demand including players outside the ranking', async () => {
+  fetchHistory.mockResolvedValue(populated)
+  fetchInputs.mockResolvedValue({ run_id: 'run', branch_id: 'branch', week: { season_index: 0, week: 2 }, candidate_fingerprint: 'hash', publication_status: 'candidate_only', verification_status: 'complete_manifest', manifest: {
+    players: [{ player_id: 'nr-player', tie_break_token: 'frozen-token', tour_entry_week: { season_index: 0, week: 2 }, retired: false }], results: [],
+  } })
+  show('/0/2')
+  const button = await screen.findByRole('button', { name: 'Inspect stored inputs' })
+  expect(fetchInputs).not.toHaveBeenCalled()
+  await userEvent.click(button)
+  expect(await screen.findByText('nr-player')).toBeVisible()
+  expect(fetchInputs).toHaveBeenCalledWith('run', 'branch', 0, 2)
+  await userEvent.click(screen.getByText('Stored tie-break token'))
+  expect(screen.getByText('frozen-token')).toBeVisible()
+  expect(screen.getByText('No result inputs were supplied.')).toBeVisible()
+  await userEvent.click(screen.getByRole('link', { name: 'Other Branch' }))
+  expect(screen.queryByText('frozen-token')).not.toBeInTheDocument()
+})
+it('distinguishes legacy missing inputs from a verified empty manifest', async () => {
+  fetchHistory.mockResolvedValue(populated)
+  fetchInputs.mockResolvedValue({ run_id: 'run', branch_id: 'branch', week: { season_index: 0, week: 2 }, candidate_fingerprint: 'hash', publication_status: 'candidate_only', verification_status: 'legacy_without_manifest', manifest: null })
+  show('/0/2')
+  await userEvent.click(await screen.findByRole('button', { name: 'Inspect stored inputs' }))
+  expect(await screen.findByText(/Legacy candidate: complete calculation inputs were not stored/)).toBeVisible()
+  expect(screen.queryByText('The stored roster is empty.')).not.toBeInTheDocument()
+})
+it('rejects mismatched input candidates and allows retry', async () => {
+  fetchHistory.mockResolvedValue(populated)
+  const empty = { run_id: 'run', branch_id: 'branch', week: { season_index: 0, week: 2 }, candidate_fingerprint: 'wrong', publication_status: 'candidate_only' as const, verification_status: 'complete_manifest' as const, manifest: { players: [], results: [] } }
+  fetchInputs.mockResolvedValueOnce(empty).mockResolvedValue({ ...empty, candidate_fingerprint: 'hash' })
+  show('/0/2')
+  await userEvent.click(await screen.findByRole('button', { name: 'Inspect stored inputs' }))
+  expect(await screen.findByRole('alert')).toHaveTextContent('Stored inputs do not match this candidate.')
+  expect(screen.getByText('player-a')).toBeVisible()
+  await userEvent.click(screen.getByRole('button', { name: 'Retry stored inputs' }))
+  expect(await screen.findByText('The stored roster is empty.')).toBeVisible()
+})
+
+it('shows verified tie reasons with historical completion weeks', async () => {
+  fetchHistory.mockResolvedValue(populated)
+  vi.mocked(getRankingCandidateInputs).mockResolvedValue({ run_id:'run', branch_id:'branch', week:{season_index:0,week:2}, candidate_fingerprint:'hash', publication_status:'candidate_only', verification_status:'complete_manifest', manifest:{players:[],results:[]}, tie_explanations:[{
+    higher_player_id:'player-a',lower_player_id:'player-b',higher_rank:1,lower_rank:2,points:120,reason:'completion_age',result_slot:2,higher_value:61,lower_value:60,
+  }] })
+  show('/0/2')
+  await userEvent.click(await screen.findByRole('button',{name:'Inspect stored inputs'}))
+  expect(await screen.findByText(/player-a precedes 2. player-b at 120 points/)).toHaveTextContent('Newer completion at result slot 2: 2001/02 · Week 1 versus 2000/01 · Week 61')
+})
+
+it('shows mandatory zero slots separately from tournament awards', async () => {
+  const data = structuredClone(populated)
+  data.candidates[0].snapshot.rows[0].disciplinary_zeros = [{zero_id:'sanction-1',run_id:'run',branch_id:'branch',player_id:'player-a',source_fingerprint:'source',effective_week:{season_index:0,week:2},duration_weeks:3}]
+  fetchHistory.mockResolvedValue(data)
+  show('/0/2')
+  await userEvent.click(await screen.findByText('1 active disciplinary zeros'))
+  expect(screen.getByText('14 tournament result slots available.')).toBeVisible()
+  expect(screen.getByText('sanction-1: effective 2000/01 · Week 2 for 3 weeks.')).toBeVisible()
+})
+
+it('shows historical decision versions and their impact at the candidate week', async () => {
+  fetchHistory.mockResolvedValue(populated)
+  const zero = {zero_id:'zero-a',run_id:'run',branch_id:'branch',player_id:'player-a',source_fingerprint:'decision',effective_week:{season_index:0,week:1},duration_weeks:3}
+  fetchInputs.mockResolvedValue({run_id:'run',branch_id:'branch',week:{season_index:0,week:2},candidate_fingerprint:'hash',publication_status:'candidate_only',verification_status:'complete_manifest',manifest:{players:[],results:[],zeros_from_history:true},zero_history_status:'verified_stored_history',zero_sources:[
+    {fingerprint:'initial-version',impact:'superseded',version:{effective_week:{season_index:0,week:1},previous_fingerprint:null,zero}},
+    {fingerprint:'corrected-version',impact:'expired',version:{effective_week:{season_index:0,week:2},previous_fingerprint:'initial-version',zero:{...zero,duration_weeks:1}}},
+  ]})
+  show('/0/2')
+  await userEvent.click(await screen.findByRole('button',{name:'Inspect stored inputs'}))
+  expect(await screen.findByText(/Verified against the stored decisions effective by this ranking week/)).toBeVisible()
+  expect(screen.getByText('Replaced by a later version at this boundary.')).toBeVisible()
+  expect(screen.getByText('Expired at this boundary.')).toBeVisible()
+  expect(screen.getByText(/Version effective 2000\/01 · Week 2/)).toHaveTextContent('Original start 2000/01 · Week 1 · Duration 1 weeks')
+  await userEvent.click(screen.getAllByText('Decision provenance')[1])
+  expect(screen.getByText('Previous version: initial-version')).toBeVisible()
+})
+
+it.each(['caller_resolved', 'verified_stored_history'] as const)('distinguishes %s from unavailable decision history', async status => {
+  fetchHistory.mockResolvedValue(populated)
+  fetchInputs.mockResolvedValue({run_id:'run',branch_id:'branch',week:{season_index:0,week:2},candidate_fingerprint:'hash',publication_status:'candidate_only',verification_status:'complete_manifest',manifest:{players:[],results:[]},zero_history_status:status,zero_sources:[]})
+  show('/0/2')
+  await userEvent.click(await screen.findByRole('button',{name:'Inspect stored inputs'}))
+  expect(await screen.findByText(status === 'caller_resolved' ? /Zeros were supplied by the caller/ : 'No zero decisions were effective by this week.')).toBeVisible()
+  expect(screen.queryByText('Decision history verification is unavailable from this server.')).not.toBeInTheDocument()
+})
+
+it('shows the recorded preparation operator and reason', async () => {
+  fetchHistory.mockResolvedValue(populated)
+  fetchInputs.mockResolvedValue({run_id:'run',branch_id:'branch',week:{season_index:0,week:2},candidate_fingerprint:'hash',publication_status:'candidate_only',verification_status:'complete_manifest',manifest:{players:[],results:[]},command_audits:[{command_id:'reviewed-command',audit:{actor_label:'Declared operator',reason:'Reviewed correction'}}]})
+  show('/0/2')
+  await userEvent.click(await screen.findByRole('button',{name:'Inspect stored inputs'}))
+  expect(await screen.findByText('Declared operator')).toBeVisible()
+  expect(screen.getByText(/Reviewed correction/)).toBeVisible()
+  await userEvent.click(screen.getByText('Preparation command'))
+  expect(screen.getByText('reviewed-command')).toBeVisible()
+})

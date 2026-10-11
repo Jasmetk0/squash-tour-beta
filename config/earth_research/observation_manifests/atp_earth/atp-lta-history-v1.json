@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-lta-history-v1",
+  "source_id": "lta-history",
+  "relative_path": "observations/normalized/atp-lta-history-v1.json",
+  "sha256": "d1aa044d4593035f9d4ffdfee3d40d9354720e4f840dbea0384844b0f99cb0aa",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-hmd-sgs-project-assumptions-v1",
+  "source_id": "hmd-sgs-atp-project-assumptions",
+  "relative_path": "observations/normalized/atp_hmd_sgs_project_assumptions_v1.json",
+  "sha256": "80e9c3cbcdf567fe5d205ecfdfdd7ae8e266132144e7b49015a07c226f9bbec2",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-hmd-sgs-batch-2026-10-07"
+}

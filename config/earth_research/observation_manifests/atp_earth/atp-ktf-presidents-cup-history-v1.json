@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-ktf-presidents-cup-history-v1",
+  "source_id": "ktf-presidents-cup-history",
+  "relative_path": "observations/normalized/atp-ktf-presidents-cup-history-v1.json",
+  "sha256": "8076eae961c37bba19c3f8c648644ee67329588bc3a78abb3f2bf075f60ff114",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

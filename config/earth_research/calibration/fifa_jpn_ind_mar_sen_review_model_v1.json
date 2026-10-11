@@ -1,0 +1,32 @@
+{
+  "schema_version": "fifa_earth_reviewed_country_batch.v1",
+  "model_id": "fifa-earth-reviewed-country-history-jpn-ind-mar-sen.v1",
+  "created_on": "2026-10-04",
+  "countries": [
+    "JPN",
+    "IND",
+    "MAR",
+    "SEN"
+  ],
+  "coverage": {
+    "from": 1955,
+    "to": 2026,
+    "attributes": 6
+  },
+  "rating_scale": "country_ratings_1_10.v2",
+  "method": "Reviewed reuse of prototype trajectories, re-grounded on exact canonical normalized observations. Values remain derived game estimates.",
+  "evidence_rules": [
+    "Big Count mixed-sex participation is used primarily for popularity/access and is not a universal strength score.",
+    "Professional player/club evidence is competition/ecosystem context and is not a direct elite-support measurement.",
+    "Structural academy/training/youth evidence can inform development and elite support but programme launches are not treated as realised outcomes.",
+    "Outcome rankings are not promoted into automatic rating inputs in this batch.",
+    "Court count remains outside pre-alpha.",
+    "Sparse periods remain low confidence rather than receiving fabricated neutral evidence."
+  ],
+  "country_notes": {
+    "JPN": "JFA history provides institutional, league, training-centre and professionalisation anchors; Big Count 2006 and FIFA Professional 2023 provide quantitative cross-sections.",
+    "IND": "Large absolute 2006 participation is separated from low organised density; modern academy/grassroots/Forward/accreditation observations support development without assuming reform targets were achieved.",
+    "MAR": "The Mohammed VI Academy timing conflict is intentionally unresolved: normalized FIFA observations state both 2009 establishment and 2019 opening. Both remain cited and modern development/support confidence is bounded.",
+    "SEN": "The 1955 period is a low-confidence pre-independence backcast; federation, academy, professional-league, youth-pathway, Big Count and professional-club observations support the modern trajectory."
+  }
+}

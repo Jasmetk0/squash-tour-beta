@@ -1,0 +1,44 @@
+{
+  "schema_version": "earth_source_observations.v2",
+  "dataset_id": "atp-fpt-u12-camp-2025-v1",
+  "source_id": "fpt-u12-camp-2025",
+  "source_url": "https://www.tenis.pt/noticias/juvenis/estagio-de-sub-12-no-jamor/",
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05",
+  "scope": "2025 federation-run national U12 selection/training camp at Jamor.",
+  "limitations": "One selected-age camp demonstrates development structure but not the complete national player pathway.",
+  "observations": [
+    {
+      "observation_id": "atp-fpt-u12-camp-2025-v1#prt-u12-national-camp-2025",
+      "source_id": "fpt-u12-camp-2025",
+      "source_entity": "Federação Portuguesa de Ténis",
+      "earth_country_code": "PRT",
+      "historical_entity": null,
+      "observation_year": 2025,
+      "period_start_year": null,
+      "period_end_year": null,
+      "measurement_type": "national_junior_training_camp",
+      "sex_scope": "mixed",
+      "age_scope": "U12",
+      "competition_scope": null,
+      "numeric_value": null,
+      "text_value": "The federation's national U12 selectors called boys and girls from clubs across Portugal to a training and observation camp at the Jamor tennis complex.",
+      "unit": "statement",
+      "collection_method": "official_narrative",
+      "coverage_scope": "national",
+      "comparability_group": null,
+      "cross_country_comparable": false,
+      "is_direct_observation": true,
+      "is_statistically_modelled": false,
+      "territory_mapping_method": "direct_earth_country",
+      "territory_weight": null,
+      "source_page": null,
+      "source_locator": null,
+      "definition_notes": "Direct current development-pathway evidence.",
+      "quality_flags": [
+        "programme_capacity_not_outcome"
+      ]
+    }
+  ]
+}

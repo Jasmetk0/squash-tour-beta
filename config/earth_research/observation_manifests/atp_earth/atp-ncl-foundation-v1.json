@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-ncl-foundation-v1",
+  "source_id": "ncl-tennis-registry-1933",
+  "relative_path": "observations/normalized/atp_ncl_foundation_v1.json",
+  "sha256": "4aa4ffccf156a7beef0a962aac936915b093d4dd1ac5851ac74acae91c2c0ec6",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

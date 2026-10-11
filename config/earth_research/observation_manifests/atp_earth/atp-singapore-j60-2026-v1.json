@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-singapore-j60-2026-v1",
+  "source_id": "itf-singapore-j60-2026",
+  "relative_path": "observations/normalized/atp_singapore_j60_2026_v1.json",
+  "sha256": "1ea344eef08dfdfc9b49c096dbb61f31fcf10a936132ceca3407c172db7433ed",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

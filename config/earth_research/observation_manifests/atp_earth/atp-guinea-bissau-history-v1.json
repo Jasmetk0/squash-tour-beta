@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-guinea-bissau-history-v1",
+  "source_id": "itf-guinea-bissau-return-to-play-2020",
+  "relative_path": "observations/normalized/atp_guinea_bissau_history_v1.json",
+  "sha256": "b60c6a5841c8568889a6cb1dc1b7c23b23176ec10e64c4ae006cb570a755afc7",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

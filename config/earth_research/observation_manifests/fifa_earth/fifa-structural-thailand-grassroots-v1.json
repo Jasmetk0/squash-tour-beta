@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-thailand-grassroots-v1",
+  "source_id": "afc-thailand-grassroots-2022",
+  "relative_path": "observations/normalized/structural/fifa_structural_thailand_grassroots_v1.json",
+  "sha256": "63fb20e40a31006b7dc67da80aaa955fb3b65d22ebe5d7ae8e5995e790481de8",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-fifa-forward-new-caledonia-v1",
+  "source_id": "fifa-forward-new-caledonia-impact",
+  "relative_path": "observations/normalized/structural/fifa_structural_fifa_forward_new_caledonia_v1.json",
+  "sha256": "4445b05125733a3e6448a8a051d7590981c89728efcb359bbb5c2aea8aedf1a3",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-04"
+}

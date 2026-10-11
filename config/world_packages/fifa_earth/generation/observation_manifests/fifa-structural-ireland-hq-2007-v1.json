@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-ireland-hq-2007-v1",
+  "source_id": "uefa-ireland-headquarters-2007",
+  "relative_path": "observations/normalized/structural/fifa_structural_ireland_hq_2007_v1.json",
+  "sha256": "87a1718c7e839697bd8cd005d706f73ff5921d09929f7e6b5cd897ea2e434ece",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

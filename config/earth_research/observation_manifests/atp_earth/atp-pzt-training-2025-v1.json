@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-pzt-training-2025-v1",
+  "source_id": "pzt-training-2025",
+  "relative_path": "observations/normalized/atp-pzt-training-2025-v1.json",
+  "sha256": "e655728e065bb4b2833fc114da75eb5524c1a5368bc8caa06039dfb0f364b5b9",
+  "record_count": 4,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

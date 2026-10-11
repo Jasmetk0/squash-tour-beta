@@ -1,0 +1,33 @@
+{
+  "schema_version": "fifa_earth_reviewed_country_batch.v1",
+  "model_id": "fifa-earth-heldout-history-bra-deu-isl-smr.v1",
+  "created_on": "2026-10-04",
+  "countries": [
+    "BRA",
+    "DEU",
+    "ISL",
+    "SMR"
+  ],
+  "coverage": {
+    "from": 1955,
+    "to": 2026,
+    "attributes": 6
+  },
+  "rating_scale": "country_ratings_1_10.v2",
+  "held_out_validation_policy": "These four countries were excluded from calibration fitting. Their FIFA 2023 ranking observations remain validation-only and never appear in rating provenance.",
+  "method": "Canonical authoring from structural history, Big Count 2006 and FIFA Professional 2023 where available, with low-confidence historical backcasts and deterministic annual interpolation.",
+  "evidence_rules": [
+    "No held-out FIFA ranking observation may be referenced by a country rating.",
+    "Big Count primarily informs popularity/access and is population-context evidence, not a universal strength score.",
+    "Professional 2023 player/club counts inform competition and elite ecosystem context, not development or direct support quality by themselves.",
+    "San Marino's missing professional-report fields remain missing and are never converted to zero.",
+    "Germany before 1991 explicitly under-covers the former GDR rather than inventing a full current-territory history.",
+    "Small population is not penalised in access; Iceland and San Marino can have very high access with materially lower competition depth."
+  ],
+  "country_notes": {
+    "BRA": "World-leading football environment with very high popularity/tradition and strong competition/development, but access remains below the densest European microstate systems.",
+    "DEU": "Near-world-leading access, tradition, development and elite support; pre-reunification evidence is explicitly partial-current-territory.",
+    "ISL": "High participation/access and strong small-country pathways, with competition depth bounded by population scale.",
+    "SMR": "High local access/tradition and long institutional continuity, but shallow competition depth; professional-report absence is treated as unknown."
+  }
+}

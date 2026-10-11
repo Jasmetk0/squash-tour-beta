@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-chad-history-v1",
+  "source_id": "itf-chad-return-to-play-2020",
+  "relative_path": "observations/normalized/atp_chad_history_v1.json",
+  "sha256": "2b064715195f26f9e480a4759e044dea7afa655f196b9b6279e0cc740a2e915b",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

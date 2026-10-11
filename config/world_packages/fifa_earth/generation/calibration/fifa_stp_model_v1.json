@@ -1,0 +1,73 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "fifa-earth-stp-model.v1",
+  "world_id": "fifa_earth",
+  "data_cutoff": "2026-10-03",
+  "countries": [
+    "STP"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "evidence_rules": [
+    "Association creation 1975 and FIFA/CAF affiliation 1986 are separately gated.",
+    "Big Count 2006 enters only from 2006.",
+    "No checked-in Professional 2023 player/club observations exist, so none are inferred.",
+    "No ranking or event outcome is mechanically converted to a rating."
+  ],
+  "anchor_values": {
+    "STP": {
+      "1955": [
+        3.1,
+        2.7,
+        2.8,
+        2.8,
+        2.5,
+        3
+      ],
+      "1975": [
+        4.5,
+        3.9,
+        4.1,
+        4.2,
+        3.8,
+        4.5
+      ],
+      "1986": [
+        5,
+        4.4,
+        4.6,
+        4.7,
+        4.3,
+        5
+      ],
+      "2006": [
+        5.5,
+        4.9,
+        5.1,
+        5.2,
+        4.8,
+        5.5
+      ],
+      "2023": [
+        5.6,
+        5,
+        5.2,
+        5.3,
+        4.9,
+        5.6
+      ],
+      "2026": [
+        5.7,
+        5.1,
+        5.3,
+        5.4,
+        5,
+        5.7
+      ]
+    }
+  },
+  "evidence_sources": [
+    "caf-sao-tome-and-principe-profile",
+    "fifa-big-count-2006"
+  ],
+  "heldout_ranking_used": false
+}

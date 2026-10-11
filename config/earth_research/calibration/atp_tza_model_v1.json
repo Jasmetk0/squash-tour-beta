@@ -1,0 +1,65 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "atp-earth-tza-model.v1",
+  "world_id": "atp_earth",
+  "data_cutoff": "2026-10-04",
+  "countries": [
+    "TZA"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "evidence_rules": [
+    "No verified tennis foundation date is available in this batch, so 1955–2014 use a deliberately low-confidence pre-documented baseline derived only from later confirmed association existence.",
+    "ITF association status enters only in 2015.",
+    "World Team Cup pathway evidence enters only in 2025 and is not converted mechanically from results.",
+    "Missing historical participation counts are not zero-filled."
+  ],
+  "anchor_values": {
+    "TZA": {
+      "1955": [
+        3.8,
+        3.4,
+        3.4,
+        3.3,
+        3.1,
+        4.8
+      ],
+      "2000": [
+        4.2,
+        3.8,
+        3.9,
+        3.8,
+        3.5,
+        5.2
+      ],
+      "2015": [
+        4.6,
+        4.2,
+        4.3,
+        4.2,
+        4,
+        5.6
+      ],
+      "2025": [
+        5.1,
+        4.6,
+        4.9,
+        5.2,
+        4.7,
+        5.9
+      ],
+      "2026": [
+        5.2,
+        4.7,
+        5,
+        5.3,
+        4.8,
+        6
+      ]
+    }
+  },
+  "evidence_sources": [
+    "itf-tanzania-membership-2015",
+    "itf-tanzania-world-team-cup-2025"
+  ],
+  "heldout_ranking_used": false
+}

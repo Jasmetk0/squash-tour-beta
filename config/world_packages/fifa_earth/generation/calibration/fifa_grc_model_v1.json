@@ -1,0 +1,83 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "fifa-earth-grc-model.v1",
+  "world_id": "fifa_earth",
+  "data_cutoff": "2026-10-03",
+  "countries": [
+    "GRC"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "principles": [
+    "HFF institutional and hosting milestones are chronology context, not direct annual quality measurements.",
+    "FIFA Big Count 2006 evidence is gated from 2006 and used mainly for participation/access context.",
+    "FIFA Professional Football Report 2023 evidence is gated from 2023 and does not backcast the modern professional ecosystem.",
+    "Major-event hosting supports organisational/elite context but trophies and rankings are not calibration targets.",
+    "9+ remains reserved for world-leading dimensions and is not reached by this Greece evidence set."
+  ],
+  "anchor_values": {
+    "GRC": {
+      "1955": [
+        6.6,
+        6.2,
+        6.3,
+        6.7,
+        6.3,
+        8.4
+      ],
+      "1971": [
+        6.9,
+        6.5,
+        6.6,
+        7,
+        6.7,
+        8.6
+      ],
+      "1983": [
+        7.2,
+        6.8,
+        6.9,
+        7.3,
+        7,
+        8.7
+      ],
+      "2006": [
+        8.2,
+        8.3,
+        7.8,
+        8,
+        7.8,
+        8.9
+      ],
+      "2007": [
+        8.2,
+        8.3,
+        7.9,
+        8.1,
+        7.9,
+        8.9
+      ],
+      "2023": [
+        8.1,
+        8,
+        7.8,
+        8.1,
+        7.8,
+        8.9
+      ],
+      "2026": [
+        8.1,
+        8,
+        7.9,
+        8.1,
+        7.9,
+        8.9
+      ]
+    }
+  },
+  "evidence_sources": [
+    "hff-history",
+    "fifa-big-count-2006",
+    "fifa-professional-2023"
+  ],
+  "heldout_ranking_used": false
+}

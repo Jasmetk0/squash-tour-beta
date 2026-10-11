@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-ita-overview-v1",
+  "source_id": "ita-overview",
+  "relative_path": "observations/normalized/atp-ita-overview-v1.json",
+  "sha256": "85b9fa2bfca1ebc0eaf21c6b5a5a6ab26f8b6274d7ee60da14cb607a72d15a20",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

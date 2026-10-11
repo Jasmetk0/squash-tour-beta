@@ -1,0 +1,74 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "fifa-earth-pse-model.v1",
+  "world_id": "fifa_earth",
+  "data_cutoff": "2026-10-03",
+  "countries": [
+    "PSE"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "evidence_rules": [
+    "Pre-1998 values are territorial Earth backcasts and do not imply modern PFA institutional continuity.",
+    "FIFA membership enters from 1998; Big Count from 2006; FIFA Forward infrastructure from 2019; AFC grassroots evidence from 2024; FIFA Arena evidence from 2026.",
+    "No rankings or match outcomes are calibration targets."
+  ],
+  "anchor_values": {
+    "PSE": {
+      "1955": [
+        4.8,
+        4.1,
+        4.2,
+        4.1,
+        3.9,
+        5
+      ],
+      "1998": [
+        5.8,
+        4.9,
+        5.1,
+        5.2,
+        4.8,
+        5.9
+      ],
+      "2006": [
+        6.3,
+        5.4,
+        5.6,
+        5.7,
+        5.2,
+        6.3
+      ],
+      "2019": [
+        6.7,
+        6,
+        6.2,
+        6.1,
+        5.8,
+        6.7
+      ],
+      "2024": [
+        6.9,
+        6.2,
+        6.5,
+        6.2,
+        6,
+        6.9
+      ],
+      "2026": [
+        6.9,
+        6.3,
+        6.5,
+        6.2,
+        6,
+        6.9
+      ]
+    }
+  },
+  "evidence_sources": [
+    "fifa-palestine-forward-2019",
+    "fifa-big-count-2006",
+    "afc-palestine-grassroots-review-2024",
+    "fifa-palestine-arenas-2026"
+  ],
+  "heldout_ranking_used": false
+}

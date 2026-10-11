@@ -1,0 +1,67 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "atp-earth-sgp-model.v1",
+  "world_id": "atp_earth",
+  "data_cutoff": "2026-10-04",
+  "countries": [
+    "SGP"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "evidence_rules": [
+    "The 1928 association foundation establishes deep institutional history but does not imply high national scale.",
+    "Historical state context is preserved through colonial Singapore, the Malaysia period and independence in 1965 without changing the local association identity mechanically.",
+    "The 2021 Junior Tennis Initiative signal is gated to 2021 and is not a total-participation count.",
+    "The 2026 J60 at Kallang Tennis Hub supports current junior competition/development infrastructure only.",
+    "No player rankings or tournament outcomes are calibration targets."
+  ],
+  "anchor_values": {
+    "SGP": {
+      "1955": [
+        5.5,
+        5.3,
+        5,
+        5.2,
+        4.9,
+        7
+      ],
+      "1963": [
+        5.6,
+        5.4,
+        5.1,
+        5.3,
+        5,
+        7.1
+      ],
+      "1965": [
+        5.7,
+        5.4,
+        5.1,
+        5.3,
+        5,
+        7.2
+      ],
+      "2021": [
+        6.7,
+        6.5,
+        6.8,
+        6.4,
+        6.6,
+        7.7
+      ],
+      "2026": [
+        7,
+        6.9,
+        7.2,
+        6.9,
+        7,
+        7.8
+      ]
+    }
+  },
+  "evidence_sources": [
+    "itf-singapore-pakistan-foundation-2015",
+    "itf-jti-guidance-2022",
+    "itf-singapore-j60-2026"
+  ],
+  "heldout_ranking_used": false
+}

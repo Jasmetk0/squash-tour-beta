@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-fct-history-v1",
+  "source_id": "fct-history",
+  "relative_path": "observations/normalized/atp-fct-history-v1.json",
+  "sha256": "78b575d234969b4e32f640646255378fa07467f2e7820d305d80cf3780d32a34",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-cuba-history-v1",
+  "source_id": "fifa-cuba-member-context-2026",
+  "relative_path": "observations/normalized/structural/fifa_cuba_history_v1.json",
+  "sha256": "5eeb2f4142e8ed4ecaa21d4d726408eb837e9300d925b23abbd92bbfc2083f44",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

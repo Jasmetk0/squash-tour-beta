@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-honduras-history-v1",
+  "source_id": "fifa-honduras-member-context-2026",
+  "relative_path": "observations/normalized/structural/fifa_honduras_history_v1.json",
+  "sha256": "4a1ba0b55e6a7749c40fb2a8d968254ab0b9056400970c9f1d583bb19b45757f",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

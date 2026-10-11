@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-kta-network-2026-v1",
+  "source_id": "kta-network-2026",
+  "relative_path": "observations/normalized/atp-kta-network-2026-v1.json",
+  "sha256": "f39a438695f2003b65dbe6099b52d1b36c5bc2eadc3321012021bd541998af9d",
+  "record_count": 3,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

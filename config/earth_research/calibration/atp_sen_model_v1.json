@@ -1,0 +1,86 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "atp-earth-sen-model.v1",
+  "world_id": "atp_earth",
+  "data_cutoff": "2026-10-04",
+  "countries": [
+    "SEN"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "evidence_rules": [
+    "Pre-independence/current-territory tennis is anchored only by retrospective evidence that a federation and organised tennis existed under expatriate control; it is low-confidence.",
+    "The 1975 governance transition and club-school programme are gated to 1975.",
+    "The documented 1985–2001 decline is represented as a real downward structural phase rather than smoothed away.",
+    "The 2022 FFT cooperation protocol supports development capacity only from 2022.",
+    "The 2025 Davis Cup Africa Group III promotion is used as evidence of active competition structure, not as an outcome-based rating target.",
+    "The 2026 ITF association listing confirms current institutional continuity only.",
+    "No ranking or title outcome is used as a calibration target; 9+ remains world-leading."
+  ],
+  "anchor_values": {
+    "SEN": {
+      "1955": [
+        3.8,
+        3.8,
+        3.4,
+        3.5,
+        3.3,
+        5.2
+      ],
+      "1975": [
+        5.2,
+        5,
+        5.5,
+        5.2,
+        5.3,
+        6.2
+      ],
+      "1985": [
+        5.8,
+        5.6,
+        6,
+        5.8,
+        5.8,
+        6.7
+      ],
+      "2001": [
+        4.8,
+        4.8,
+        4.7,
+        4.7,
+        4.6,
+        6.6
+      ],
+      "2022": [
+        5.3,
+        5.2,
+        5.5,
+        5,
+        5.3,
+        6.8
+      ],
+      "2025": [
+        5.8,
+        5.5,
+        5.7,
+        5.8,
+        5.6,
+        6.9
+      ],
+      "2026": [
+        5.9,
+        5.6,
+        5.8,
+        5.9,
+        5.7,
+        7
+      ]
+    }
+  },
+  "evidence_sources": [
+    "ird-senegal-tennis-development",
+    "fft-senegal-cooperation-2022",
+    "davis-cup-senegal-2025",
+    "itf-senegal-member-2026"
+  ],
+  "heldout_ranking_used": false
+}

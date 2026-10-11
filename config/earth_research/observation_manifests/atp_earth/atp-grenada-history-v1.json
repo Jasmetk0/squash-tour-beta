@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-grenada-history-v1",
+  "source_id": "itf-grenada-profile",
+  "relative_path": "observations/normalized/atp_grenada_history_v1.json",
+  "sha256": "e6bcdcead6bca3fde57eeccebf6422f9e470425b1b7d87ebf04077df4b134e08",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

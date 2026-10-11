@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-uefa-ukraine-profile-v1",
+  "source_id": "uefa-ukraine-profile",
+  "relative_path": "observations/normalized/structural/fifa_structural_uefa_ukraine_profile_v1.json",
+  "sha256": "247a2b32772aa3e8eba45893c84bd1cc35db35150846e9b3d1142d3a6e2ca64e",
+  "record_count": 4,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

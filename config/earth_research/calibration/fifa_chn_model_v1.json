@@ -1,0 +1,86 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "fifa-earth-chn-model.v1",
+  "world_id": "fifa_earth",
+  "data_cutoff": "2026-10-03",
+  "countries": [
+    "CHN"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "principles": [
+    "Modern CFA foundation is anchored to 3 January 1955 and the nationwide cup structure to 1956.",
+    "FIFA Big Count 2006 is gated to 2006+; its very large all-player estimate is not mechanically translated into professional or elite quality.",
+    "AFC grassroots Silver (2018), Gold (2024), Elite Youth two-star (2024) and three-star (2026) accreditations are time-gated development signals.",
+    "FIFA Professional Football Report 2023 is gated to 2023+ for professional-ecosystem context.",
+    "No FIFA ranking or tournament result is used as a calibration target; all dimensions remain below 9.0."
+  ],
+  "anchor_values": {
+    "CHN": {
+      "1955": [
+        6.2,
+        5.7,
+        5.8,
+        6,
+        5.8,
+        6.5
+      ],
+      "1956": [
+        6.4,
+        5.9,
+        6,
+        6.2,
+        6,
+        6.6
+      ],
+      "2006": [
+        8.6,
+        7.7,
+        7.4,
+        7.3,
+        7.2,
+        8
+      ],
+      "2018": [
+        8.7,
+        7.9,
+        8,
+        7.5,
+        7.6,
+        8.2
+      ],
+      "2023": [
+        8.7,
+        8,
+        8.2,
+        7.9,
+        8,
+        8.3
+      ],
+      "2024": [
+        8.8,
+        8.2,
+        8.5,
+        8,
+        8.2,
+        8.3
+      ],
+      "2026": [
+        8.8,
+        8.3,
+        8.8,
+        8.1,
+        8.5,
+        8.4
+      ]
+    }
+  },
+  "evidence_sources": [
+    "cfa-founded-1955",
+    "cfa-cup-history-1956",
+    "afc-china-grassroots-2024",
+    "afc-china-youth-2026",
+    "fifa-big-count-2006",
+    "fifa-professional-2023"
+  ],
+  "heldout_ranking_used": false
+}

@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-oetv-itf-wtt-2025-v1",
+  "source_id": "oetv-itf-wtt-2025",
+  "relative_path": "observations/normalized/atp-oetv-itf-wtt-2025-v1.json",
+  "sha256": "4abd56a55aef0b6afafde9f5d6e24ab10a1b10671afb82f5fef0b3bf0705b35f",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

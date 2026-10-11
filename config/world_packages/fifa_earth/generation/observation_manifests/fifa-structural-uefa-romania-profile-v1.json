@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-uefa-romania-profile-v1",
+  "source_id": "uefa-romania-profile",
+  "relative_path": "observations/normalized/structural/fifa_structural_uefa_romania_profile_v1.json",
+  "sha256": "eb35d22586bf6ed5ad7bfef69c2cd5f2707dc11a0cff9fa8942f97b12f430606",
+  "record_count": 6,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

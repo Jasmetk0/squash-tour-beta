@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-flk-iot-project-assumptions-v1",
+  "source_id": "flk-iot-fifa-project-assumptions",
+  "relative_path": "observations/normalized/fifa_flk_iot_project_assumptions_v1.json",
+  "sha256": "fa1a25c7dfa790c1f963e4e187b4017a5457620d85a7ddfcb58525663e9b2dd0",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-flk-iot-batch-2026-10-07"
+}

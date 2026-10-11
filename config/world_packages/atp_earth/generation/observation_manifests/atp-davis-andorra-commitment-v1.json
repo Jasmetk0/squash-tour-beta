@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-davis-andorra-commitment-v1",
+  "source_id": "and-mne-davis-andorra-commitment",
+  "relative_path": "observations/normalized/atp_davis_andorra_commitment_v1.json",
+  "sha256": "b75bb1ba283d76724f6689d4e6beba934759d886f536359dacf392d3e48200c0",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-and-mne-batch-2026-10-07"
+}

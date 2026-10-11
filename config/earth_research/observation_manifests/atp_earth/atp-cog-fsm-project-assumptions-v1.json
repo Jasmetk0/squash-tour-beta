@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-cog-fsm-project-assumptions-v1",
+  "source_id": "cog-fsm-atp-project-assumptions",
+  "relative_path": "observations/normalized/atp_cog_fsm_project_assumptions_v1.json",
+  "sha256": "87b95ae2f8f837c344d844db43eb2cbc881e8b2863bf92f4a8997a145bd62037",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-cog-fsm-batch-2026-10-07"
+}

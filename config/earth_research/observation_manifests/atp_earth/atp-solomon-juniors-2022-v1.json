@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-solomon-juniors-2022-v1",
+  "source_id": "itf-pacific-juniors-2022",
+  "relative_path": "observations/normalized/atp_solomon_juniors_2022_v1.json",
+  "sha256": "6c01a6c396de585e8eb30711678e11af69cff1a208b1bccee212a69d9a28a6b1",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-itf-affiliated-associations-2015-v1",
+  "source_id": "itf-affiliated-associations-2015",
+  "relative_path": "observations/normalized/atp_itf_affiliated_associations_2015_v1.json",
+  "sha256": "f4e0196d4996d77d8a5d7112ece7005e733fb4e12b9053f34eea092ddbe7a4b9",
+  "record_count": 4,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-07"
+}

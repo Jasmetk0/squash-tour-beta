@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-caf-profile-v1",
+  "source_id": "caf-cod-caf-central-african-republic",
+  "relative_path": "observations/normalized/fifa_caf_profile_v1.json",
+  "sha256": "9c737f7aa9bc8088eeb311cfb75002a44851003f73bc059c44d32da9ed50827c",
+  "record_count": 3,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-caf-cod-batch-2026-10-07"
+}

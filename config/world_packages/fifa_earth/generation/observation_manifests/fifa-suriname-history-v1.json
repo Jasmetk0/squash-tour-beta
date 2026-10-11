@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-suriname-history-v1",
+  "source_id": "fifa-suriname-member-context-2026",
+  "relative_path": "observations/normalized/structural/fifa_suriname_history_v1.json",
+  "sha256": "340bf4e19b18c5363cba0383c22ad5c1ec4500e998c8b646186daa48d79d2133",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

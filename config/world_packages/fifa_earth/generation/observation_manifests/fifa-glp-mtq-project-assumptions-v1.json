@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-glp-mtq-project-assumptions-v1",
+  "source_id": "glp-mtq-fifa-project-assumptions",
+  "relative_path": "observations/normalized/fifa_glp_mtq_project_assumptions_v1.json",
+  "sha256": "64095766932df5c827c8339c77974970814829b395d7bcfe5dbbc02c2bae8326",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-glp-mtq-batch-2026-10-07"
+}

@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-rus-kir-tennis-structure-v1",
+  "source_id": "rus-kir-itf-tennis-structure",
+  "relative_path": "observations/normalized/atp_rus_kir_tennis_structure_v1.json",
+  "sha256": "7927e40cccf43d6a24169d3c1fcc06542999c34926c002112e357f06f76dbeac",
+  "record_count": 3,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-rus-kir-batch-2026-10-07"
+}

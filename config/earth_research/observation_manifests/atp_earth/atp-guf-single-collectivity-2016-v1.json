@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-guf-single-collectivity-2016-v1",
+  "source_id": "guf-single-collectivity-2016",
+  "relative_path": "observations/normalized/atp_guf_reu_guf_single_collectivity_2016_v1.json",
+  "sha256": "297d4ce336b85efca989e3af8c3d2d11bac31daedf466db7e1adc8ef895c6a86",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-guf-reu-batch-2026-10-07"
+}

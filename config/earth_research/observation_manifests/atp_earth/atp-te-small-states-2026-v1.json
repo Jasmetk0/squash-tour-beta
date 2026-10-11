@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-te-small-states-2026-v1",
+  "source_id": "and-mne-te-small-states-2026",
+  "relative_path": "observations/normalized/atp_te_small_states_2026_v1.json",
+  "sha256": "ef5dc1e0eaba11ae0b00b07e18ee80992c429fbb32d529108117b22210a5e911",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-and-mne-batch-2026-10-07"
+}

@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-uzbekistan-history-v1",
+  "source_id": "fifa-uzbekistan-member-context-2026",
+  "relative_path": "observations/normalized/structural/fifa_uzbekistan_history_v1.json",
+  "sha256": "5ae081af4f6eb6b9d0682e886fb4320d2573e9fd0f677bb68d3ac9f7a3444ae3",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-palestine-arenas-2026-v1",
+  "source_id": "fifa-palestine-arenas-2026",
+  "relative_path": "observations/normalized/structural/fifa_palestine_arenas_2026_v1.json",
+  "sha256": "165efc48b6232f2354ced970eaee45175b1ab927ce4a180a1887cc128efe2bc1",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

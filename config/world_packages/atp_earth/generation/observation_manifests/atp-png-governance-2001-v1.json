@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-png-governance-2001-v1",
+  "source_id": "png-tennis-constitution-2001",
+  "relative_path": "observations/normalized/atp_png_governance_2001_v1.json",
+  "sha256": "64b6d7d3dfc08ded14b27e2dd9571129169c5a2a87f93e9a635af712479ff404",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-fct-interligas-sites-2025-v1",
+  "source_id": "fct-interligas-sites-2025",
+  "relative_path": "observations/normalized/atp-fct-interligas-sites-2025-v1.json",
+  "sha256": "4bb2fc37acc796114c931608648253c420c1f97446317ff1e4017f785e2ce585",
+  "record_count": 3,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

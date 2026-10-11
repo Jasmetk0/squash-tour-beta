@@ -1,0 +1,77 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "atp-earth-png-model.v1",
+  "world_id": "atp_earth",
+  "data_cutoff": "2026-10-04",
+  "countries": [
+    "PNG"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "evidence_rules": [
+    "1955–1962 is an explicitly low-confidence pre-association baseline derived only from the ITF-recorded 1963 foundation year.",
+    "The 1963 association foundation and inaugural South Pacific Games lawn-tennis participation are separately represented.",
+    "The 2001 constitution supports federation capacity for clubs, rankings, tournaments and teams only from 2001 onward.",
+    "The 2022 Pacific junior pathway and 2026 OTF profile are current-era signals and are never backcast.",
+    "No event result or ranking is a calibration target; long institutional age does not imply high national scale."
+  ],
+  "anchor_values": {
+    "PNG": {
+      "1955": [
+        2.8,
+        2.5,
+        2.2,
+        2.2,
+        2.1,
+        2.5
+      ],
+      "1963": [
+        4,
+        3.7,
+        3.5,
+        3.8,
+        3.5,
+        4.5
+      ],
+      "1975": [
+        4.2,
+        3.9,
+        3.7,
+        4,
+        3.7,
+        4.8
+      ],
+      "2001": [
+        4.8,
+        4.7,
+        4.9,
+        4.7,
+        4.8,
+        5.5
+      ],
+      "2022": [
+        5.3,
+        5.1,
+        5.5,
+        5.3,
+        5.4,
+        5.9
+      ],
+      "2026": [
+        5.4,
+        5.3,
+        5.6,
+        5.4,
+        5.5,
+        6
+      ]
+    }
+  },
+  "evidence_sources": [
+    "itf-png-foundation-2015",
+    "png-olympic-pacific-games-1963",
+    "png-tennis-constitution-2001",
+    "itf-pacific-juniors-2022",
+    "otf-png-current-2026"
+  ],
+  "heldout_ranking_used": false
+}

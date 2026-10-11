@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-ala-ata-project-assumptions-v1",
+  "source_id": "ala-ata-fifa-project-assumptions",
+  "relative_path": "observations/normalized/fifa_ala_ata_project_assumptions_v1.json",
+  "sha256": "ed7bf09553dbfa5e570845c33d425c7dad4da6c392f29063be253f8ce61d775d",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-ala-ata-batch-2026-10-07"
+}

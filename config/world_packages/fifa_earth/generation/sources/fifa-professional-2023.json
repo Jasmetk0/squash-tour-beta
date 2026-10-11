@@ -1,0 +1,7 @@
+{
+  "title": "FIFA Professional Football Report 2023",
+  "url": "https://digitalhub.fifa.com/m/2a5dc95026d9cf8a/original/FIFA-Professional-Football-Report-2023.pdf",
+  "accessed_on": "2026-10-03",
+  "scope": "2023 men’s professional football; national association coverage and definitions.",
+  "limitations": "Two canonical normalized v2 datasets preserve non-null men's professional-player and professional-club counts from all 211 national pages. Missing values remain missing. Extracted national sums differ from FIFA's published global headline and are not altered. Page 38 has a KUWAIT/Kyrgyzstan identity anomaly and must not be auto-mapped."
+}

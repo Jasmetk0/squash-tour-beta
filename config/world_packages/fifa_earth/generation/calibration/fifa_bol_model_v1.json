@@ -1,0 +1,58 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "fifa-earth-bol-model.v1",
+  "world_id": "fifa_earth",
+  "data_cutoff": "2026-10-03",
+  "countries": [
+    "BOL"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "evidence_rules": [
+    "1955-2005 values are a low-confidence project-authored baseline.",
+    "FIFA Big Count enters from 2006.",
+    "FIFA Professional 2023 players and clubs enter from 2023 only as professional ecosystem context.",
+    "Current FIFA membership is context only and is not backdated."
+  ],
+  "anchor_values": {
+    "BOL": {
+      "1955": [
+        4.8,
+        4.2,
+        4.4,
+        4.6,
+        4.1,
+        4.9
+      ],
+      "2006": [
+        6.6,
+        6,
+        6.2,
+        6.5,
+        5.8,
+        6.6
+      ],
+      "2023": [
+        6.8,
+        6.2,
+        6.4,
+        6.7,
+        6,
+        6.8
+      ],
+      "2026": [
+        6.8,
+        6.2,
+        6.4,
+        6.7,
+        6,
+        6.8
+      ]
+    }
+  },
+  "evidence_sources": [
+    "fifa-bolivia-member-context-2026",
+    "fifa-big-count-2006",
+    "fifa-professional-2023"
+  ],
+  "heldout_ranking_used": false
+}

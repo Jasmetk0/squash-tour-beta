@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-luxembourg-history-v1",
+  "source_id": "itf-luxembourg-profile",
+  "relative_path": "observations/normalized/atp_luxembourg_history_v1.json",
+  "sha256": "ccfca81df696ee5a81b9041d3b8a16c727ef1646fd6b1ce179fa367294c5036c",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

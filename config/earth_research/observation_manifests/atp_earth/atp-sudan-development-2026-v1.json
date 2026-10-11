@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-sudan-development-2026-v1",
+  "source_id": "itf-sudan-development-eligibility-2026",
+  "relative_path": "observations/normalized/atp_sudan_development_2026_v1.json",
+  "sha256": "74723457d2eb11e2aa1ff3730acca1eb25e544a9eef8ba05cac6bbbf31ccf908",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

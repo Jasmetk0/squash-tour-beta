@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-tls-som-tennis-structure-v1",
+  "source_id": "tls-som-itf-tennis-structure",
+  "relative_path": "observations/normalized/atp_tls_som_tennis_structure_v1.json",
+  "sha256": "1677ad18a2a97cc8a432143160a920dfa129b7f21e5b07ae20ca0c51fa8a19fd",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-tls-som-batch-2026-10-07"
+}

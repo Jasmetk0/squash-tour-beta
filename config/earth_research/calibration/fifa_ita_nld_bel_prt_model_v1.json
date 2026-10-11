@@ -1,0 +1,170 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "fifa-earth-country-history-ita-nld-bel-prt.v1",
+  "world_id": "fifa_earth",
+  "data_cutoff": "2026-10-03",
+  "countries": [
+    "ITA",
+    "NLD",
+    "BEL",
+    "PRT"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "principles": [
+    "9.0+ remains reserved for world-leading evidence on the relevant dimension; ecosystem size alone is not sufficient.",
+    "FIFA Big Count 2006 is mixed-sex and source definitions vary; it informs popularity/access and only weak structural context elsewhere.",
+    "FIFA Professional Football Report 2023 informs professional competition/development/support ecosystem scale, not results, popularity or direct programme quality.",
+    "Pre-2006 values are explicitly low-confidence backcasts from the first direct checkpoint rather than fabricated annual observations.",
+    "No held-out ranking, trophy count or tournament-result series is used for tuning."
+  ],
+  "anchor_years": [
+    1955,
+    2006,
+    2023,
+    2026
+  ],
+  "anchor_values": {
+    "ITA": {
+      "1955": [
+        8.2,
+        7.5,
+        7.8,
+        8.2,
+        7.7,
+        8.4
+      ],
+      "2006": [
+        9,
+        8.9,
+        8.8,
+        8.8,
+        8.7,
+        9
+      ],
+      "2023": [
+        9,
+        8.9,
+        9,
+        8.9,
+        9,
+        9.1
+      ],
+      "2026": [
+        9,
+        8.9,
+        9.1,
+        8.8,
+        9,
+        9.1
+      ]
+    },
+    "NLD": {
+      "1955": [
+        8,
+        7.8,
+        7.8,
+        8,
+        7.7,
+        8.2
+      ],
+      "2006": [
+        8.8,
+        9.4,
+        8.8,
+        8.6,
+        8.6,
+        8.9
+      ],
+      "2023": [
+        8.8,
+        9.3,
+        9,
+        8.7,
+        8.9,
+        9
+      ],
+      "2026": [
+        8.8,
+        9.3,
+        9.1,
+        8.7,
+        8.9,
+        9
+      ]
+    },
+    "BEL": {
+      "1955": [
+        7.6,
+        7.4,
+        7.5,
+        7.8,
+        7.5,
+        8.1
+      ],
+      "2006": [
+        8.4,
+        8.8,
+        8.5,
+        8.4,
+        8.4,
+        8.8
+      ],
+      "2023": [
+        8.5,
+        8.7,
+        8.8,
+        8.6,
+        8.7,
+        8.9
+      ],
+      "2026": [
+        8.5,
+        8.7,
+        8.9,
+        8.6,
+        8.8,
+        8.9
+      ]
+    },
+    "PRT": {
+      "1955": [
+        7.5,
+        6.9,
+        7.2,
+        7.6,
+        7.2,
+        8
+      ],
+      "2006": [
+        8.8,
+        8.1,
+        8.6,
+        8.7,
+        8.5,
+        8.8
+      ],
+      "2023": [
+        8.9,
+        8.2,
+        9,
+        8.9,
+        9,
+        9
+      ],
+      "2026": [
+        8.9,
+        8.3,
+        9.1,
+        8.9,
+        9.1,
+        9
+      ]
+    }
+  },
+  "interpolation": "Piecewise linear between authored calibration anchors; one-decimal rounding.",
+  "evidence_sources": [
+    "fifa-big-count-2006",
+    "fifa-professional-2023"
+  ],
+  "heldout_ranking_used": false
+}

@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-zambia-reinstatement-2025-v1",
+  "source_id": "itf-zambia-reinstatement-2025",
+  "relative_path": "observations/normalized/atp_zambia_reinstatement_2025_v1.json",
+  "sha256": "fb2c74456848171eb44d5e6a36eb83ef350ee3a4cb902b89538c281e07e86452",
+  "record_count": 3,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

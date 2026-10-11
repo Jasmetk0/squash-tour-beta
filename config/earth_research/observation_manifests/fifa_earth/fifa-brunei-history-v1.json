@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-brunei-history-v1",
+  "source_id": "fifa-brunei-member-context-2026",
+  "relative_path": "observations/normalized/structural/fifa_brunei_history_v1.json",
+  "sha256": "415b6487650c739a58ffbb79b0611d8c10cf2d7c99659d30023fff474acd4cb7",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

@@ -1,0 +1,44 @@
+{
+  "schema_version": "earth_source_observations.v2",
+  "dataset_id": "atp-guf-single-collectivity-2016-v1",
+  "source_id": "guf-single-collectivity-2016",
+  "source_url": "https://www.vie-publique.fr/fiches/20148-quel-est-le-statut-de-la-guyane-et-de-la-martinique",
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-guf-reu-batch-2026-10-07",
+  "scope": "Guyane single territorial collectivity status from 2016.",
+  "limitations": "Administrative identity context only; not sports evidence.",
+  "observations": [
+    {
+      "observation_id": "atp-guf-single-collectivity-2016-v1#guf-single-collectivity-2016",
+      "source_id": "guf-single-collectivity-2016",
+      "source_entity": "Vie-publique — status of Guyane",
+      "earth_country_code": "GUF",
+      "historical_entity": "Territorial Collectivity of Guyane",
+      "observation_year": 2016,
+      "period_start_year": null,
+      "period_end_year": null,
+      "measurement_type": "structural_event",
+      "sex_scope": "not_applicable",
+      "age_scope": null,
+      "competition_scope": null,
+      "numeric_value": null,
+      "text_value": "Guyane is a single territorial collectivity exercising departmental and regional powers from 2016.",
+      "unit": "event",
+      "collection_method": "official_narrative",
+      "coverage_scope": "territory",
+      "comparability_group": null,
+      "cross_country_comparable": false,
+      "is_direct_observation": true,
+      "is_statistically_modelled": false,
+      "territory_mapping_method": null,
+      "territory_weight": null,
+      "source_page": null,
+      "source_locator": null,
+      "definition_notes": "Administrative transition only; not sports evidence.",
+      "quality_flags": [
+        "administrative_status_not_sports_measurement"
+      ]
+    }
+  ]
+}

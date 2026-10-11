@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-btf-sport-for-all-2025-v1",
+  "source_id": "btf-sport-for-all-2025",
+  "relative_path": "observations/normalized/atp-btf-sport-for-all-2025-v1.json",
+  "sha256": "643e56e730631a58ff178282bdc3430c722f539350051a9ca701ac9103273e3e",
+  "record_count": 3,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

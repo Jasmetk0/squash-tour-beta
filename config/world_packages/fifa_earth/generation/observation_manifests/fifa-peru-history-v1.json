@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-peru-history-v1",
+  "source_id": "fifa-peru-member-context-2026",
+  "relative_path": "observations/normalized/structural/fifa_peru_history_v1.json",
+  "sha256": "8e6b66cec64df680b409dcd6c178368285b1f7bb2effb5b97c72d20026efc04d",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

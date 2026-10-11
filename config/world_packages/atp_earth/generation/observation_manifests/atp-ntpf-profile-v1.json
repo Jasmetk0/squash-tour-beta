@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-ntpf-profile-v1",
+  "source_id": "ntpf-history-profile",
+  "relative_path": "observations/normalized/atp-ntpf-profile-v1.json",
+  "sha256": "3cde60aa0317653150836d66c7c5b4cccba8d6b06adac9a09013a38ed69ee998",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

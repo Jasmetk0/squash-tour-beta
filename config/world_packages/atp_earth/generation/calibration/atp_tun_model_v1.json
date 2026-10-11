@@ -1,0 +1,49 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "atp-earth-tun-model.v1",
+  "world_id": "atp_earth",
+  "data_cutoff": "2026-10-04",
+  "countries": [
+    "TUN"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "evidence_rules": [
+    "Sparse pre-2024 history remains low confidence.",
+    "ITF Bronze NTC recognition enters from 2024.",
+    "2026 development eligibility is capacity/opportunity context only."
+  ],
+  "anchor_values": {
+    "TUN": {
+      "1955": [
+        3.5,
+        3.2,
+        3.3,
+        3.2,
+        3.1,
+        4
+      ],
+      "2024": [
+        6.2,
+        5.8,
+        6.5,
+        5.8,
+        6.4,
+        6.8
+      ],
+      "2026": [
+        6.4,
+        6,
+        6.7,
+        6,
+        6.6,
+        6.9
+      ]
+    }
+  },
+  "evidence_sources": [
+    "itf-tunisia-profile",
+    "itf-tunisia-national-training-centre-2024",
+    "itf-tunisia-development-eligibility-2026"
+  ],
+  "heldout_ranking_used": false
+}

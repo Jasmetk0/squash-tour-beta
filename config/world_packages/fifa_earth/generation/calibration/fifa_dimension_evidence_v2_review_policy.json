@@ -1,0 +1,56 @@
+{
+  "schema_version": "fifa_dimension_evidence_review_policy.v1",
+  "review_id": "fifa-dimension-evidence-v2-review-2026-10-04",
+  "baseline_model_id": "fifa-dimension-evidence-v1",
+  "candidate_model_id": "fifa-dimension-evidence-v2",
+  "prototype_review_set": "fifa_earth_prototype_anchors_v2",
+  "status": "reviewed_provisional",
+  "recipe_policy": {
+    "squash_access@2006": {
+      "decision": "retain_provisional",
+      "max_mean_absolute_delta": 1,
+      "max_review_count": 2,
+      "canonical_authoring_allowed": false,
+      "blockers": [
+        "India and USA remain >=1.5 points below the prototype review rating.",
+        "Big Count registration/club definitions vary by association."
+      ]
+    },
+    "competition_quality@2023": {
+      "decision": "quantitative_review_passed",
+      "max_mean_absolute_delta": 1,
+      "max_review_count": 1,
+      "max_maximum_absolute_delta": 2,
+      "canonical_authoring_allowed": false,
+      "blockers": [
+        "Nine-country prototype is not an independent validation set.",
+        "Professional counts do not directly measure league quality or results.",
+        "Held-out structural/context validation is still required."
+      ]
+    },
+    "elite_support@2023": {
+      "decision": "context_required",
+      "max_mean_absolute_delta": 1.1,
+      "max_review_count": 1,
+      "canonical_authoring_allowed": false,
+      "blockers": [
+        "South Africa remains a >=1.5-point review outlier.",
+        "The candidate remains systematically below the prototype on the review set.",
+        "Funding, technical-centre, medical/science and federation support evidence is not yet represented in the quantitative recipe."
+      ]
+    }
+  },
+  "regression_requirements": {
+    "competition_quality_v2_mad_improvement_vs_v1_minimum": 1.5,
+    "elite_support_v2_mad_improvement_vs_v1_minimum": 1.5,
+    "competition_quality_v2_review_count_maximum": 1,
+    "elite_support_v2_review_count_maximum": 1
+  },
+  "safeguards": [
+    "Review pass is not canonical rating approval.",
+    "Do not tune V2 weights further against the same nine-country prototype merely to reduce residual error.",
+    "Popularity remains unsupported in V2 until independent cultural/audience evidence exists.",
+    "Development quality and tradition remain unsupported by the current quantitative model.",
+    "Held-out structural evidence must remain excluded from weight fitting."
+  ]
+}

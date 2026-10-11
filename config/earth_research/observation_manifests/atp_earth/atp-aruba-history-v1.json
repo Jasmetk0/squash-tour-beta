@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-aruba-history-v1",
+  "source_id": "itf-aruba-profile",
+  "relative_path": "observations/normalized/atp_aruba_history_v1.json",
+  "sha256": "ce0efaddb8e98d3ee108b41f6992f1d939549c91c59dec5422afe5c80c5154ac",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

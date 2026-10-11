@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-malaysia-ntc-2024-v1",
+  "source_id": "fifa-malaysia-ntc-2024",
+  "relative_path": "observations/normalized/structural/fifa_structural_malaysia_ntc_2024_v1.json",
+  "sha256": "6816e055ff59e98f3335918cd75f95f04afa45b95777ae36407ad9c25ff04e14",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

@@ -1,0 +1,376 @@
+{
+  "schema_version": "match_input_snapshot.v9",
+  "match_id": "match-one",
+  "simulation_seed": 777,
+  "match_engine_version": "match_engine_v9",
+  "effective_match_format": {
+    "schema_version": "effective_match_format.v1",
+    "format": {
+      "best_of": 5,
+      "games_to": 11,
+      "win_by": 2
+    },
+    "source_scope": "official_default",
+    "source_key": "official:individual-match",
+    "snapshot_hash_algorithm": "sha256",
+    "snapshot_hash": "603a75e710e036b8fe01a7a9d39d1c3d3a97f3c25996a24371cfefe9ddc52557"
+  },
+  "effective_match_timing": {
+    "schema_version": "effective_match_timing.v1",
+    "nominal_game_break_seconds": 120.0,
+    "player_restart_profiles": [
+      {
+        "player_id": "A",
+        "serve_tendency": "NATURAL",
+        "return_tendency": "NATURAL"
+      },
+      {
+        "player_id": "B",
+        "serve_tendency": "NATURAL",
+        "return_tendency": "NATURAL"
+      }
+    ],
+    "between_rally_calibration_profile": "pre_alpha_men_v1",
+    "source_scope": "official_default",
+    "source_key": "official:match-timing",
+    "snapshot_hash_algorithm": "sha256",
+    "snapshot_hash": "d3affe2b49c14c1ced751f1a09ad051cffdf87fad2902d8c9630aa6395116852"
+  },
+  "effective_match_stamina": {
+    "schema_version": "effective_match_stamina.v3",
+    "calibration_version": "pre_alpha_physical_v4",
+    "player_profiles": [
+      {
+        "player_id": "A",
+        "initial_readiness_factor": 1.0,
+        "bars": [
+          {
+            "dimension": "EXPLOSIVE",
+            "capacity": 92.8,
+            "workload_cost_factor": 0.97,
+            "recovery_per_second": 0.0549
+          },
+          {
+            "dimension": "RALLY",
+            "capacity": 92.8,
+            "workload_cost_factor": 0.952,
+            "recovery_per_second": 0.039
+          },
+          {
+            "dimension": "MATCH",
+            "capacity": 92.8,
+            "workload_cost_factor": 0.4792,
+            "recovery_per_second": 0.0206
+          }
+        ]
+      },
+      {
+        "player_id": "B",
+        "initial_readiness_factor": 1.0,
+        "bars": [
+          {
+            "dimension": "EXPLOSIVE",
+            "capacity": 91.45,
+            "workload_cost_factor": 0.9775,
+            "recovery_per_second": 0.0539
+          },
+          {
+            "dimension": "RALLY",
+            "capacity": 91.45,
+            "workload_cost_factor": 0.958,
+            "recovery_per_second": 0.0382
+          },
+          {
+            "dimension": "MATCH",
+            "capacity": 91.45,
+            "workload_cost_factor": 0.4828,
+            "recovery_per_second": 0.0202
+          }
+        ]
+      }
+    ],
+    "outcome_effect_applied": true,
+    "pre_rally_effort_applied": true,
+    "within_rally_effort_applied": true,
+    "unsupported_components": [
+      "within_rally_explosive_recovery",
+      "carried_reserves_between_matches",
+      "injury_specific_cost_profiles"
+    ]
+  },
+  "rally_calibration_profile": {
+    "schema_version": "rally_calibration_profile.v1",
+    "calibration_version": "pre_alpha_control_v1",
+    "cohort_profile": "elite_men",
+    "maximum_control_segments": 24,
+    "opening_terminal_probability": 0.075,
+    "base_segment_closure_probability": 0.14,
+    "early_closure_growth_per_segment": 0.012,
+    "late_closure_starts_after_segment": 10,
+    "late_closure_growth_per_segment": 0.045,
+    "fast_segment_shot_cdf": [
+      0.12,
+      0.6,
+      0.89,
+      0.975
+    ],
+    "balanced_segment_shot_cdf": [
+      0.1,
+      0.54,
+      0.86,
+      0.97
+    ],
+    "patient_segment_shot_cdf": [
+      0.06,
+      0.38,
+      0.76,
+      0.94
+    ],
+    "fast_seconds_per_shot_range": [
+      0.72,
+      0.98
+    ],
+    "balanced_seconds_per_shot_range": [
+      0.94,
+      1.24
+    ],
+    "patient_seconds_per_shot_range": [
+      1.14,
+      1.48
+    ],
+    "opening_elapsed_seconds_range": [
+      1.05,
+      1.7
+    ],
+    "serve_fault_elapsed_seconds_range": [
+      0.48,
+      0.82
+    ],
+    "terminal_elapsed_seconds_range": [
+      0.45,
+      0.85
+    ],
+    "stay_transition_weight": 0.58,
+    "local_transition_weight": 0.185,
+    "significant_break_weight": 0.022,
+    "direct_reversal_weight": 0.0015,
+    "transition_direction_log_weight": 0.38,
+    "final_control_logit_weight": 0.42,
+    "mean_control_logit_weight": 0.18,
+    "pressure_workload_per_control_step": 0.075,
+    "controlled_workload_relief_per_step": 0.035,
+    "low_reserve_effort_change_probability": 0.42,
+    "strong_pressure_effort_change_probability": 0.28,
+    "tactical_effort_change_probability": 0.035
+  },
+  "effective_match_gameplans": {
+    "schema_version": "effective_match_gameplans.v1",
+    "calibration_version": "pre_alpha_gameplan_v1",
+    "natural_style_profiles": [
+      {
+        "player_id": "A",
+        "source_play_style": "tempo-controller",
+        "axes": {
+          "risk": 0.45436383,
+          "tempo": 0.34325013,
+          "court_positioning": 0.41727504,
+          "variation": 0.76723601
+        },
+        "adaptability_proxy": 0.84848485,
+        "familiarity_baseline": 0.87336073,
+        "profile_seed": "120567412635632440280278579667212524955",
+        "profile_source": "legacy_style_materialization_v1"
+      },
+      {
+        "player_id": "B",
+        "source_play_style": "tempo-controller",
+        "axes": {
+          "risk": 0.43037523,
+          "tempo": 0.31271959,
+          "court_positioning": 0.42145315,
+          "variation": 0.80028475
+        },
+        "adaptability_proxy": 0.81818182,
+        "familiarity_baseline": 0.78305946,
+        "profile_seed": "70416234448359494956072295538152166383",
+        "profile_source": "legacy_style_materialization_v1"
+      }
+    ],
+    "initial_gameplans": [
+      {
+        "player_id": "A",
+        "revision": 1,
+        "selected_before_rally_index": 1,
+        "strategy": "COUNTER_ESTIMATE",
+        "intended_mechanism": "DISRUPT_ESTIMATED_PATTERN",
+        "time_horizon": "GAME_PHASE",
+        "axes": {
+          "risk": 0.49149695,
+          "tempo": 0.48538715,
+          "court_positioning": 0.45649039,
+          "variation": 0.66074763
+        },
+        "style_familiarity": 0.84627957,
+        "base_execution_factor": 0.91825861,
+        "confidence": 0.76511431,
+        "reassessment_after_rallies": 7,
+        "anticipated_payoff_after_rallies": 5,
+        "opponent_estimate": {
+          "opponent_player_id": "B",
+          "estimated_axes": {
+            "risk": 0.48093842,
+            "tempo": 0.41782975,
+            "court_positioning": 0.38404757,
+            "variation": 0.82455536
+          },
+          "confidence": 0.69636364,
+          "mean_absolute_error": 0.05433738
+        },
+        "selection_seed": "29650333138688644066710519512932611598",
+        "source": "PLAYER_AI_PRE_ALPHA_V1"
+      },
+      {
+        "player_id": "B",
+        "revision": 1,
+        "selected_before_rally_index": 1,
+        "strategy": "DELAYED_PAYOFF",
+        "intended_mechanism": "EXTEND_PHYSICAL_TEST",
+        "time_horizon": "MATCH_LONG",
+        "axes": {
+          "risk": 0.34533308,
+          "tempo": 0.25580462,
+          "court_positioning": 0.35570646,
+          "variation": 0.84188475
+        },
+        "style_familiarity": 0.76186864,
+        "base_execution_factor": 0.88103029,
+        "confidence": 0.76823656,
+        "reassessment_after_rallies": 9,
+        "anticipated_payoff_after_rallies": 12,
+        "opponent_estimate": {
+          "opponent_player_id": "A",
+          "estimated_axes": {
+            "risk": 0.42292741,
+            "tempo": 0.33240669,
+            "court_positioning": 0.39279024,
+            "variation": 0.74458986
+          },
+          "confidence": 0.68363636,
+          "mean_absolute_error": 0.0223527
+        },
+        "selection_seed": "208470565862144543037131791774053222374",
+        "source": "PLAYER_AI_PRE_ALPHA_V1"
+      }
+    ],
+    "four_axis_execution_applied": true,
+    "imperfect_opponent_estimates_applied": true,
+    "in_match_reassessment_applied": true,
+    "unsupported_components": [
+      "persistent_authored_style_profiles",
+      "match_preparation",
+      "scouting_history_and_memory",
+      "mental_bar_execution_coupling"
+    ]
+  },
+  "effective_rally_rules": {
+    "schema_version": "effective_rally_rules.v1",
+    "ruleset_version": "world_squash_singles_2025_v1_2_2",
+    "resolver_version": "pre_alpha_rules_v1",
+    "calibration_version": "pre_alpha_rule_situations_v1",
+    "interference_probability": 0.04,
+    "ball_hit_probability": 0.004,
+    "external_interruption_probability": 0.001,
+    "max_consecutive_replays": 8,
+    "unsupported_components": [
+      "referee_errors_and_reviews",
+      "conduct_escalation",
+      "health_stops",
+      "procedural_stops",
+      "long_suspension_and_rescheduling",
+      "shot_geometry"
+    ]
+  },
+  "context": {
+    "match_id": "match-one",
+    "player_a": {
+      "player": {
+        "player_id": "A",
+        "name": "A",
+        "age": 27,
+        "birth_year": null,
+        "birth_year_week": null,
+        "nationality": "TST",
+        "technique": 84,
+        "movement": 84,
+        "physical": 84,
+        "mental": 84,
+        "consistency": 84,
+        "clutch": 84,
+        "recovery": 84,
+        "play_style": "tempo-controller",
+        "archetype": "all-court tactician",
+        "hidden_career_traits": {
+          "potential_ceiling": 90,
+          "growth_curve": "balanced",
+          "professionalism": 0.7,
+          "ambition": 0.7,
+          "travel_tolerance": 0.7,
+          "schedule_aggression": 0.6,
+          "injury_proneness": 0.2,
+          "resilience": 0.8
+        }
+      },
+      "form_modifier": 0.0,
+      "fatigue_modifier": 0.0,
+      "health_modifier": 0.0,
+      "travel_modifier": 0.0
+    },
+    "player_b": {
+      "player": {
+        "player_id": "B",
+        "name": "B",
+        "age": 27,
+        "birth_year": null,
+        "birth_year_week": null,
+        "nationality": "TST",
+        "technique": 81,
+        "movement": 81,
+        "physical": 81,
+        "mental": 81,
+        "consistency": 81,
+        "clutch": 81,
+        "recovery": 81,
+        "play_style": "tempo-controller",
+        "archetype": "all-court tactician",
+        "hidden_career_traits": {
+          "potential_ceiling": 90,
+          "growth_curve": "balanced",
+          "professionalism": 0.7,
+          "ambition": 0.7,
+          "travel_tolerance": 0.7,
+          "schedule_aggression": 0.6,
+          "injury_proneness": 0.2,
+          "resilience": 0.8
+        }
+      },
+      "form_modifier": 0.0,
+      "fatigue_modifier": 0.0,
+      "health_modifier": 0.0,
+      "travel_modifier": 0.0
+    },
+    "best_of": 5,
+    "games_to": 11,
+    "win_by": 2,
+    "upset_variance": 0.12,
+    "retirement_rule": {
+      "enabled": false,
+      "retired_player_id": null,
+      "trigger": "EXPLICIT_SET_START",
+      "set_number": null,
+      "probability": 0.0
+    }
+  },
+  "unsupported_future_inputs": [],
+  "snapshot_hash_algorithm": "sha256",
+  "snapshot_hash": "94b83f69eb5519b06e9a046b492a2039f1e6575fb7053033acf946ee923d73c1"
+}

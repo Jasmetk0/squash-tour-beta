@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-aus-national-academy-2010-v1",
+  "source_id": "tennis-australia-national-academy-2010",
+  "relative_path": "observations/normalized/atp-aus-national-academy-2010-v1.json",
+  "sha256": "0cefe1651aa7aba9ea7bdd69ebef124a6d408e408dd5da8f67152b5df2675f22",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-04"
+}

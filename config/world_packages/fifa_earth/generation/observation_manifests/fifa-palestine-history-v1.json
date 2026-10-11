@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-palestine-history-v1",
+  "source_id": "fifa-palestine-forward-2019",
+  "relative_path": "observations/normalized/structural/fifa_palestine_history_v1.json",
+  "sha256": "af31eaeb49d065e02799dff9e0d6ea732ac2ed6fa8c5aac2b320c6099ffacb43",
+  "record_count": 3,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

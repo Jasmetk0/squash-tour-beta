@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-bes-sxm-project-assumptions-v1",
+  "source_id": "bes-sxm-fifa-project-assumptions",
+  "relative_path": "observations/normalized/fifa_bes_sxm_project_assumptions_v1.json",
+  "sha256": "771298e74d5a44a253a3dd882ea4a2576b89b4b66e5c7d08f3499ac9f9271987",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-bes-sxm-batch-2026-10-07"
+}

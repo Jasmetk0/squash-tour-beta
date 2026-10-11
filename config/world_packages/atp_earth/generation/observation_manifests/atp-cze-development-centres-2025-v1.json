@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-cze-development-centres-2025-v1",
+  "source_id": "cts-youth-centres-2025",
+  "relative_path": "observations/normalized/atp_cze_development_centres_2025_v1.json",
+  "sha256": "a69662c88a127e56d0e4f3901e066ddcd8b27ad85f9ff867696cfc876220c0f7",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual normalization from Czech Tennis Association youth-support criteria"
+}

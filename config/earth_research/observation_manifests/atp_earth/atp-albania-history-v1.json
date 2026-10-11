@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-albania-history-v1",
+  "source_id": "itf-albania-profile",
+  "relative_path": "observations/normalized/atp_albania_history_v1.json",
+  "sha256": "eb2faccf9e0eec2d1440150c58f1e607a81297cc0bc8ab0fec1a74b342cedfc0",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

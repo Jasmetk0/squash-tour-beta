@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-myanmar-history-v1",
+  "source_id": "itf-myanmar-profile",
+  "relative_path": "observations/normalized/atp_myanmar_history_v1.json",
+  "sha256": "ab69e0661c4b13b08a818e2258dd54fecdd78c3c4a810bb182b63ed4e9bfa631",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

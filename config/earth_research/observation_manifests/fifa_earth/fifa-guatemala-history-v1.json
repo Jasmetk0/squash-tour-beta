@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-guatemala-history-v1",
+  "source_id": "fifa-guatemala-member-context-2026",
+  "relative_path": "observations/normalized/structural/fifa_guatemala_history_v1.json",
+  "sha256": "ac106aa5b8c14013a7a4618febeeb6348546c0e98c0226cd5b8d65a40f36e2d2",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

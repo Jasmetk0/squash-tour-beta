@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-msr-overseas-territory-2002-v1",
+  "source_id": "msr-overseas-territory-2002",
+  "relative_path": "observations/normalized/atp_msr_overseas_territory_2002_v1.json",
+  "sha256": "b3116e05c184181e7881d98c3a9df99f3dee6d801803275b41c3917e966ce6c9",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-shn-msr-batch-2026-10-07"
+}

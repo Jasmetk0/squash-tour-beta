@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-ghana-current-v1",
+  "source_id": "gtf-current-2024-2026",
+  "relative_path": "observations/normalized/atp_ghana_current_v1.json",
+  "sha256": "edcae756ff342fbfa00f0aa448897d2c88a7c1fe7094db834b837279431511df",
+  "record_count": 3,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

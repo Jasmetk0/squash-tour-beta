@@ -1,0 +1,57 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "atp-earth-mwi-model.v1",
+  "world_id": "atp_earth",
+  "data_cutoff": "2026-10-04",
+  "countries": [
+    "MWI"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "evidence_rules": [
+    "No verified tennis foundation date is asserted; pre-2020 years use a low-confidence baseline derived only from later confirmed activity.",
+    "ITF 2020 activity evidence is used only from 2020.",
+    "ITF development eligibility enters only in 2026 and is opportunity/capacity context rather than realised programme outcome.",
+    "Missing participation or event data is not zero-filled."
+  ],
+  "anchor_values": {
+    "MWI": {
+      "1955": [
+        3.5,
+        3.1,
+        3.1,
+        3,
+        2.8,
+        4.2
+      ],
+      "2000": [
+        4,
+        3.5,
+        3.7,
+        3.6,
+        3.3,
+        4.7
+      ],
+      "2020": [
+        4.3,
+        3.9,
+        4,
+        3.9,
+        3.6,
+        5
+      ],
+      "2026": [
+        4.7,
+        4.2,
+        4.5,
+        4.2,
+        4.1,
+        5.3
+      ]
+    }
+  },
+  "evidence_sources": [
+    "itf-malawi-return-to-play-2020",
+    "itf-malawi-development-eligibility-2026"
+  ],
+  "heldout_ranking_used": false
+}

@@ -1,0 +1,62 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "fifa-earth-blm-reviewed-structure.v1",
+  "world_id": "fifa_earth",
+  "countries": [
+    "BLM"
+  ],
+  "data_cutoff": "2026-10-03",
+  "rating_scale": "country_ratings_1_10.v2",
+  "attribute_order": [
+    "squash_popularity",
+    "squash_access",
+    "development_quality",
+    "competition_quality",
+    "elite_support",
+    "squash_tradition"
+  ],
+  "anchor_values": {
+    "BLM": {
+      "1955": [
+        2,
+        2.2,
+        1.8,
+        1.6,
+        1.6,
+        1.9
+      ],
+      "1980": [
+        2.4,
+        2.6,
+        2.2,
+        1.9,
+        1.9,
+        2.3
+      ],
+      "2000": [
+        2.8,
+        3,
+        2.5,
+        2.2,
+        2.1,
+        2.6
+      ],
+      "2026": [
+        3,
+        3.2,
+        2.7,
+        2.4,
+        2.2,
+        2.8
+      ]
+    }
+  },
+  "selection": "Piecewise-constant authored periods; identity changes in 2007 but legal status is not used as a sports-performance input.",
+  "limitations": [
+    "All numeric ratings are project estimates with low confidence, not source measurements.",
+    "Guadeloupe- and France-wide sports evidence is not inherited automatically into the local island identity.",
+    "No football federation membership or organised competition is inferred.",
+    "The 2007 legal-status change is represented as identity context only, not as evidence of sports participation or quality.",
+    "No rankings, titles or athlete outcomes are used to fit ratings."
+  ]
+}

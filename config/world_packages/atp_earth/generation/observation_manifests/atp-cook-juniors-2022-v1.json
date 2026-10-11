@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-cook-juniors-2022-v1",
+  "source_id": "itf-cook-juniors-2022",
+  "relative_path": "observations/normalized/atp_cook_juniors_2022_v1.json",
+  "sha256": "d0eae82885925d8739b9cef3d2016acb6b891fc5c04972d41541f47b643fb043",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

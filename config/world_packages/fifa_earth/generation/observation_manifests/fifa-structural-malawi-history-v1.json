@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-malawi-history-v1",
+  "source_id": "caf-malawi-profile",
+  "relative_path": "observations/normalized/structural/fifa_structural_malawi_history_v1.json",
+  "sha256": "4dc668531c17028bccbf23ca830e3b65374e568d580eee6ac1d4592e5ff61d33",
+  "record_count": 3,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

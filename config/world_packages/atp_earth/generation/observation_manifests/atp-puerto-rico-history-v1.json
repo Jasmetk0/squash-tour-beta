@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-puerto-rico-history-v1",
+  "source_id": "itf-puerto-rico-profile",
+  "relative_path": "observations/normalized/atp_puerto_rico_history_v1.json",
+  "sha256": "52fbee426cc7702950c755a389d2523ef32a52b8b3ae2dd2c03b341fa486716b",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

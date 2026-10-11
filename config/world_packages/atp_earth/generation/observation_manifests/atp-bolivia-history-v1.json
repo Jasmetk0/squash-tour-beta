@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-bolivia-history-v1",
+  "source_id": "itf-bolivia-profile",
+  "relative_path": "observations/normalized/atp_bolivia_history_v1.json",
+  "sha256": "7508b6f053eeb307f8ae00393848c74afa8c9b22f443e449e8d755a53dcde6c6",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

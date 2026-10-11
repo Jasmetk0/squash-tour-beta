@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-png-foundation-v1",
+  "source_id": "itf-png-foundation-2015",
+  "relative_path": "observations/normalized/atp_png_foundation_v1.json",
+  "sha256": "af8c9ca1876867e1ef9e3013abe4c4106197f88a0eb16d5b921d89358827503e",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

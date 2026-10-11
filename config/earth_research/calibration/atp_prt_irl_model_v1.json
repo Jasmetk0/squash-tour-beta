@@ -1,0 +1,23 @@
+{
+  "schema_version": "atp_earth_reviewed_country_batch.v1",
+  "model_id": "atp-earth-prt-irl-model.v1",
+  "created_on": "2026-10-05",
+  "countries": [
+    "PRT",
+    "IRL"
+  ],
+  "coverage": {
+    "from": 1955,
+    "to": 2026,
+    "attributes": 6
+  },
+  "rating_scale": "country_ratings_1_10.v2",
+  "method": "Country-specific piecewise histories combining long institutional tradition with temporally gated participation, competition and player-pathway evidence.",
+  "evidence_rules": [
+    "Portugal broad practitioner estimates remain distinct from registered membership.",
+    "Tennis Ireland all-island evidence is explicitly partial/overbroad for Earth IRL and never represented as Republic-only measurement.",
+    "Modern junior/performance programmes are not backcast before their dates.",
+    "Competition quality uses competition structures and pathways, not direct star-player peak conversion.",
+    "No held-out validation ranking is used for tuning."
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-saint-lucia-history-v1",
+  "source_id": "fifa-saint-lucia-member-context-2026",
+  "relative_path": "observations/normalized/structural/fifa_saint_lucia_history_v1.json",
+  "sha256": "c1522e071d9cc44a71a67e9ae41ad6380fc2f18bda8c4f7d7416cf13febf5bfa",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

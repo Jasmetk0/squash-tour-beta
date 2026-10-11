@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-myt-spm-status-history-v1",
+  "source_id": "myt-spm-status-history",
+  "relative_path": "observations/normalized/atp_myt_spm_status_history_v1.json",
+  "sha256": "de8cb0475bb2ba8140bcf4cbdcce43b9c6c4935d5a015c3fc5226aa7bfd051e7",
+  "record_count": 6,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-myt-spm-batch-2026-10-07"
+}

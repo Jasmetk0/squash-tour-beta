@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-mnp-nfk-project-assumptions-v1",
+  "source_id": "mnp-nfk-atp-project-assumptions",
+  "relative_path": "observations/normalized/atp_mnp_nfk_project_assumptions_v1.json",
+  "sha256": "ff18b7274aa61b00a4c563b51edb5bdfc0c67f508d4cb682d81907ea261eff9e",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-mnp-nfk-batch-2026-10-07"
+}

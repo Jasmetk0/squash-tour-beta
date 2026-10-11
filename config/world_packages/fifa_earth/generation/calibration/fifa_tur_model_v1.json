@@ -1,0 +1,91 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "fifa-earth-tur-model.v1",
+  "world_id": "fifa_earth",
+  "data_cutoff": "2026-10-03",
+  "countries": [
+    "TUR"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "principles": [
+    "TFF foundation/FIFA entry (1923) and professionalism (1951) provide pre-1955 structural context.",
+    "Nationwide professional league (1959), UEFA membership (1962), federation autonomy (1988) and national-team centre (2014) are separate structural steps.",
+    "FIFA Big Count 2006 and Professional Football Report 2023 are strictly gated to their observation years.",
+    "Historical club/national-team results are not calibration targets; professional depth is represented through structural and FIFA report evidence.",
+    "9+ remains reserved for world-leading dimensions."
+  ],
+  "anchor_values": {
+    "TUR": {
+      "1955": [
+        7.2,
+        6.8,
+        7,
+        7.2,
+        6.9,
+        8.1
+      ],
+      "1959": [
+        7.5,
+        7.2,
+        7.2,
+        7.6,
+        7.2,
+        8.2
+      ],
+      "1962": [
+        7.6,
+        7.3,
+        7.3,
+        7.7,
+        7.4,
+        8.3
+      ],
+      "1988": [
+        7.9,
+        7.7,
+        7.7,
+        8,
+        7.8,
+        8.6
+      ],
+      "2006": [
+        8.2,
+        8.2,
+        8,
+        8.3,
+        8.1,
+        8.7
+      ],
+      "2014": [
+        8.3,
+        8.3,
+        8.3,
+        8.4,
+        8.4,
+        8.8
+      ],
+      "2023": [
+        8.5,
+        8.5,
+        8.5,
+        8.7,
+        8.6,
+        8.8
+      ],
+      "2026": [
+        8.5,
+        8.5,
+        8.5,
+        8.7,
+        8.6,
+        8.8
+      ]
+    }
+  },
+  "evidence_sources": [
+    "uefa-turkiye-profile",
+    "fifa-big-count-2006",
+    "fifa-professional-2023"
+  ],
+  "heldout_ranking_used": false
+}

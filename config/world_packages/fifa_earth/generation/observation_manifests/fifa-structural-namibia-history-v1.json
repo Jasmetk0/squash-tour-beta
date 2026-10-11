@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-namibia-history-v1",
+  "source_id": "caf-namibia-profile",
+  "relative_path": "observations/normalized/structural/fifa_structural_namibia_history_v1.json",
+  "sha256": "2f02b3b9dba97ffcd152551b0310a857146c92586d6e71e99bceba077635eadb",
+  "record_count": 3,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

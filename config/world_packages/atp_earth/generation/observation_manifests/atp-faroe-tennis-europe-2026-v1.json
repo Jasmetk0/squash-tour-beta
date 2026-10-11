@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-faroe-tennis-europe-2026-v1",
+  "source_id": "tennis-europe-faroe-2026",
+  "relative_path": "observations/normalized/atp_faroe_tennis_europe_2026_v1.json",
+  "sha256": "7dfc5be1e944f43e28f6f850847fd0053594c3cd565b799ded7a16c4e203e820",
+  "record_count": 3,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

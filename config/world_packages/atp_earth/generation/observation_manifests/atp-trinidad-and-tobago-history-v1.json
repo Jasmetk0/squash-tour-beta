@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-trinidad-and-tobago-history-v1",
+  "source_id": "itf-trinidad-tobago-profile",
+  "relative_path": "observations/normalized/atp_trinidad_and_tobago_history_v1.json",
+  "sha256": "e3fdac7e426693915335c7bb7cf2c19add3668a62ac64d4709c4dadfce0ab48a",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

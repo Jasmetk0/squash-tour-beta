@@ -1,0 +1,131 @@
+"""API route registration."""
+
+from fastapi import APIRouter
+
+from beta_engine.api.routers.admin_ranking_candidates import router as admin_ranking_candidates_router
+from beta_engine.api.routers.admin_week_transitions import router as admin_week_transitions_router
+from beta_engine.api.routers.admin_authoritative_simulation import router as admin_authoritative_simulation_router
+from beta_engine.api.routers.admin_tournament_entry_fields import router as admin_tournament_entry_fields_router
+from beta_engine.api.routers.admin_tournament_ranking_snapshots import router as admin_tournament_ranking_snapshots_router
+from beta_engine.api.routers.admin_tournament_wild_cards import router as admin_tournament_wild_cards_router
+from beta_engine.api.routers.admin_tournament_draw_authority import router as admin_tournament_draw_authority_router
+from beta_engine.api.routers.admin_tournament_preparation import router as admin_tournament_preparation_router
+from beta_engine.api.routers.admin_tournament_formats import router as admin_tournament_formats_router
+from beta_engine.api.routers.admin_tournament_draw_process import router as admin_tournament_draw_process_router
+from beta_engine.api.routers.admin_player_prize_money import router as admin_player_prize_money_router
+from beta_engine.api.routers.admin_finals_race import router as admin_finals_race_router
+from beta_engine.api.routers.admin_finals_participants import router as admin_finals_participants_router
+
+from beta_engine.api.routers.admin_draws import router as admin_draws_router
+from beta_engine.api.routers.admin_entries import router as admin_entries_router
+from beta_engine.api.routers.admin_events import router as admin_events_router
+from beta_engine.api.routers.admin_lifecycle import router as admin_lifecycle_router
+from beta_engine.api.routers.admin_matches import router as admin_matches_router
+from beta_engine.api.routers.admin_match_test_lab import router as admin_match_test_lab_router
+from beta_engine.api.routers.admin_player_test_lab import router as admin_player_test_lab_router
+from beta_engine.api.routers.admin_tournament_test_lab import router as admin_tournament_test_lab_router
+from beta_engine.api.routers.admin_results import router as admin_results_router
+from beta_engine.api.routers.admin_weeks import router as admin_weeks_router
+from beta_engine.api.routers.admin_players import router as admin_players_router
+from beta_engine.api.routers.admin_player_health import router as admin_player_health_router
+from beta_engine.api.routers.admin_points import router as admin_points_router
+from beta_engine.api.routers.admin_seasons import router as admin_seasons_router
+from beta_engine.api.routers.admin_categories import router as admin_categories_router
+from beta_engine.api.routers.admin_tournaments import router as admin_tournaments_router
+from beta_engine.api.routers.admin_tour_seasons_validation import router as admin_tour_seasons_validation_router
+from beta_engine.api.routers.admin_run_branches import router as admin_run_branches_router
+from beta_engine.api.routers.admin_run_packages import router as admin_run_packages_router
+from beta_engine.api.routers.admin_run_home import router as admin_run_home_router
+from beta_engine.api.routers.config import router as config_router
+from beta_engine.api.routers.countries import router as countries_router
+from beta_engine.api.routers.health import router as health_router
+from beta_engine.api.routers.history import router as history_router
+from beta_engine.api.routers.point_breakdowns import router as point_breakdowns_router
+from beta_engine.api.routers.runs import router as runs_router
+from beta_engine.api.routers.run_containers import router as run_containers_router
+from beta_engine.api.routers.run_branches import router as run_branches_router
+from beta_engine.api.routers.branch_checkpoints import router as branch_checkpoints_router
+from beta_engine.api.routers.branch_states import router as branch_states_router
+from beta_engine.api.routers.rankings import router as rankings_router
+from beta_engine.api.routers.ranking_snapshots import router as ranking_snapshots_router
+from beta_engine.api.routers.sim import router as sim_router
+from beta_engine.api.routers.tournament_templates import router as tournament_templates_router
+from beta_engine.api.routers.world_talent_preview import router as world_talent_preview_router
+from beta_engine.api.routers.world_manual_player_overrides import router as world_manual_player_overrides_router
+from beta_engine.api.routers.world_package import router as world_package_router
+from beta_engine.api.routers.world_packages import router as world_packages_router
+from beta_engine.api.routers.viewer_run_context import router as viewer_run_context_router
+from beta_engine.api.routers.viewer_calendars import router as viewer_calendars_router
+from beta_engine.api.routers.viewer_people import router as viewer_people_router
+from beta_engine.api.routers.viewer_rankings import router as viewer_rankings_router
+from beta_engine.api.routers.viewer_finals_race import router as viewer_finals_race_router
+from beta_engine.api.routers.viewer_tournament_entry_fields import router as viewer_tournament_entry_fields_router
+from beta_engine.api.routers.viewer_tournament_draws import router as viewer_tournament_draws_router
+from beta_engine.api.routers.viewer_tournament_wild_cards import router as viewer_tournament_wild_cards_router
+from beta_engine.api.routers.viewer_tournament_results import router as viewer_tournament_results_router
+from beta_engine.api.routers.viewer_tournament_history import router as viewer_tournament_history_router
+from beta_engine.api.routers.prospects import router as prospects_router
+
+router = APIRouter()
+router.include_router(admin_authoritative_simulation_router)
+router.include_router(admin_tournament_entry_fields_router)
+router.include_router(admin_tournament_ranking_snapshots_router)
+router.include_router(admin_tournament_wild_cards_router)
+router.include_router(admin_tournament_draw_authority_router)
+router.include_router(admin_tournament_preparation_router)
+router.include_router(admin_tournament_formats_router)
+router.include_router(admin_tournament_draw_process_router)
+router.include_router(admin_player_prize_money_router)
+router.include_router(admin_finals_race_router)
+router.include_router(admin_finals_participants_router)
+router.include_router(admin_ranking_candidates_router)
+router.include_router(admin_week_transitions_router)
+router.include_router(health_router)
+router.include_router(config_router)
+router.include_router(admin_players_router)
+router.include_router(admin_player_health_router)
+router.include_router(admin_points_router)
+router.include_router(admin_entries_router)
+router.include_router(admin_events_router)
+router.include_router(admin_lifecycle_router)
+router.include_router(admin_draws_router)
+router.include_router(admin_matches_router)
+router.include_router(admin_match_test_lab_router)
+router.include_router(admin_player_test_lab_router)
+router.include_router(admin_tournament_test_lab_router)
+router.include_router(admin_results_router)
+router.include_router(admin_weeks_router)
+router.include_router(admin_seasons_router)
+router.include_router(admin_categories_router)
+router.include_router(admin_tournaments_router)
+router.include_router(admin_tour_seasons_validation_router)
+router.include_router(admin_run_branches_router)
+router.include_router(admin_run_packages_router)
+router.include_router(admin_run_home_router)
+router.include_router(countries_router)
+router.include_router(tournament_templates_router)
+router.include_router(runs_router)
+router.include_router(run_containers_router)
+router.include_router(run_branches_router)
+router.include_router(branch_checkpoints_router)
+router.include_router(branch_states_router)
+router.include_router(rankings_router)
+router.include_router(ranking_snapshots_router)
+router.include_router(point_breakdowns_router)
+router.include_router(sim_router)
+router.include_router(history_router)
+router.include_router(world_talent_preview_router)
+router.include_router(world_manual_player_overrides_router)
+router.include_router(world_package_router)
+router.include_router(world_packages_router)
+router.include_router(viewer_run_context_router)
+router.include_router(viewer_calendars_router)
+router.include_router(viewer_people_router)
+router.include_router(viewer_rankings_router)
+router.include_router(viewer_finals_race_router)
+router.include_router(viewer_tournament_entry_fields_router)
+router.include_router(viewer_tournament_draws_router)
+router.include_router(viewer_tournament_wild_cards_router)
+router.include_router(viewer_tournament_results_router)
+router.include_router(viewer_tournament_history_router)
+router.include_router(prospects_router)

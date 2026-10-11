@@ -1,0 +1,49 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "fifa-earth-mmr-model.v1",
+  "world_id": "fifa_earth",
+  "data_cutoff": "2026-10-03",
+  "countries": [
+    "MMR"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "evidence_rules": [
+    "1955-2005 values are a low-confidence project-authored baseline.",
+    "Big Count enters from 2006.",
+    "Professional 2023 missing fields remain missing.",
+    "Current FIFA membership is context only."
+  ],
+  "anchor_values": {
+    "MMR": {
+      "1955": [
+        4.2,
+        3.8,
+        3.9,
+        3.9,
+        3.7,
+        4.4
+      ],
+      "2006": [
+        6.1,
+        5.4,
+        5.6,
+        5.7,
+        5.3,
+        6
+      ],
+      "2026": [
+        6.4,
+        5.7,
+        5.9,
+        6,
+        5.6,
+        6.3
+      ]
+    }
+  },
+  "evidence_sources": [
+    "fifa-myanmar-member-context-2026",
+    "fifa-big-count-2006"
+  ],
+  "heldout_ranking_used": false
+}

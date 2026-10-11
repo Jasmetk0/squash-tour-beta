@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-grenada-history-v1",
+  "source_id": "fifa-grenada-member-context-2026",
+  "relative_path": "observations/normalized/structural/fifa_grenada_history_v1.json",
+  "sha256": "e609aa5ac4d77f4ea19a7985c98b55444b68f189d6f5e34477ce2032358d5d94",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-ofc-cook-islands-profile-v1",
+  "source_id": "ofc-cook-islands-profile",
+  "relative_path": "observations/normalized/structural/fifa_structural_ofc_cook_islands_profile_v1.json",
+  "sha256": "3e3bc8495855de37035b1702a56b5f8bac107c327a9ae0f2531f6416756bac4a",
+  "record_count": 3,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-04"
+}

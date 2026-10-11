@@ -1,0 +1,57 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "atp-earth-com-model.v1",
+  "world_id": "atp_earth",
+  "data_cutoff": "2026-10-04",
+  "countries": [
+    "COM"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "evidence_rules": [
+    "No verified tennis foundation date is asserted; pre-2020 years use a low-confidence baseline.",
+    "ITF 2020 restricted-play status enters only in 2020 and is activity context, not performance.",
+    "2026 development eligibility enters only in 2026.",
+    "No ranking or event outcome is mechanically converted to a rating."
+  ],
+  "anchor_values": {
+    "COM": {
+      "1955": [
+        2.9,
+        2.6,
+        2.7,
+        2.6,
+        2.4,
+        3.3
+      ],
+      "2000": [
+        3.7,
+        3.3,
+        3.5,
+        3.5,
+        3.2,
+        4.2
+      ],
+      "2020": [
+        4.2,
+        3.8,
+        4,
+        4,
+        3.7,
+        4.8
+      ],
+      "2026": [
+        4.7,
+        4.3,
+        4.5,
+        4.5,
+        4.2,
+        5.3
+      ]
+    }
+  },
+  "evidence_sources": [
+    "itf-comoros-return-to-play-2020",
+    "itf-comoros-development-eligibility-2026"
+  ],
+  "heldout_ranking_used": false
+}

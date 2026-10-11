@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-cote-divoire-history-v1",
+  "source_id": "caf-cote-divoire-profile",
+  "relative_path": "observations/normalized/structural/fifa_structural_cote_divoire_history_v1.json",
+  "sha256": "799890142614ce1f3aba6c466fbd41a1455d2a1b2f31c0b393d5bdf3ff3b6e5a",
+  "record_count": 4,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

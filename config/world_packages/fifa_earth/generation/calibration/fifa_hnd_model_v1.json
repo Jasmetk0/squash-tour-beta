@@ -1,0 +1,58 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "fifa-earth-hnd-model.v1",
+  "world_id": "fifa_earth",
+  "data_cutoff": "2026-10-03",
+  "countries": [
+    "HND"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "evidence_rules": [
+    "1955-2005 values are a low-confidence project-authored baseline.",
+    "FIFA Big Count enters from 2006.",
+    "FIFA Professional 2023 players and clubs enter from 2023 only as professional ecosystem context.",
+    "Current FIFA membership is context only and is not backdated."
+  ],
+  "anchor_values": {
+    "HND": {
+      "1955": [
+        4,
+        3.5,
+        3.7,
+        3.8,
+        3.4,
+        4.2
+      ],
+      "2006": [
+        6,
+        5.4,
+        5.6,
+        5.8,
+        5.2,
+        6
+      ],
+      "2023": [
+        6.2,
+        5.6,
+        5.8,
+        6,
+        5.4,
+        6.2
+      ],
+      "2026": [
+        6.2,
+        5.6,
+        5.8,
+        6,
+        5.4,
+        6.2
+      ]
+    }
+  },
+  "evidence_sources": [
+    "fifa-honduras-member-context-2026",
+    "fifa-big-count-2006",
+    "fifa-professional-2023"
+  ],
+  "heldout_ranking_used": false
+}

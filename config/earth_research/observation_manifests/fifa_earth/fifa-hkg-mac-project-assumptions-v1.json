@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-hkg-mac-project-assumptions-v1",
+  "source_id": "hkg-mac-fifa-project-assumptions",
+  "relative_path": "observations/normalized/fifa_hkg_mac_project_assumptions_v1.json",
+  "sha256": "d98ec25a5ce9bba20a07bc04739221ff5a5dff5158e5ff98c4b22cb547d8e79b",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-hkg-mac-batch-2026-10-07"
+}

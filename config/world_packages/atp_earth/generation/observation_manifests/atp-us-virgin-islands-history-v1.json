@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-us-virgin-islands-history-v1",
+  "source_id": "itf-us-virgin-islands-profile",
+  "relative_path": "observations/normalized/atp_us_virgin_islands_history_v1.json",
+  "sha256": "9f728be9b91906add061663c1cf634d7628dfd8326eca004f2963c85135f98be",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

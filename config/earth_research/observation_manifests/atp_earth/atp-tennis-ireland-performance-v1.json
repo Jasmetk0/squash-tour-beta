@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-tennis-ireland-performance-v1",
+  "source_id": "tennis-ireland-performance",
+  "relative_path": "observations/normalized/atp-tennis-ireland-performance-v1.json",
+  "sha256": "682bc6c781a9eed816c1064c7a40c2d13cb28ab79570d5d8951387917d62a7e3",
+  "record_count": 3,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

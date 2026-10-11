@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-american-samoa-history-v1",
+  "source_id": "american-samoa-government-asta-40-2025",
+  "relative_path": "observations/normalized/atp_american_samoa_history_v1.json",
+  "sha256": "c328d6ddde05153d0b77246480cbf9aed2771a448e6ead7683c3bd8ef37b26e7",
+  "record_count": 3,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

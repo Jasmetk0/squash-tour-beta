@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-rus-kir-project-assumptions-v1",
+  "source_id": "rus-kir-atp-project-assumptions",
+  "relative_path": "observations/normalized/atp_rus_kir_project_assumptions_v1.json",
+  "sha256": "38e113ad108808fba2d708677b6ffda4b05962c8f64ba232675ca853cf0e3bc0",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-rus-kir-batch-2026-10-07"
+}

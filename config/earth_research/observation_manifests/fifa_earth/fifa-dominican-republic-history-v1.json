@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-dominican-republic-history-v1",
+  "source_id": "fifa-dominican-republic-member-context-2026",
+  "relative_path": "observations/normalized/structural/fifa_dominican_republic_history_v1.json",
+  "sha256": "13dcd7278cb99d472ea059150a1ff426cc34db9f5cd752380845f48695f3452b",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

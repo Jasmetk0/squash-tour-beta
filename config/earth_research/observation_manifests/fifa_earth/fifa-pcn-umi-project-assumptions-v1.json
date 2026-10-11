@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-pcn-umi-project-assumptions-v1",
+  "source_id": "pcn-umi-fifa-project-assumptions",
+  "relative_path": "observations/normalized/fifa_pcn_umi_project_assumptions_v1.json",
+  "sha256": "bd47b216da39691a9639be7fbef37eda6af9096697325fc566ac3a792ac7d459",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-pcn-umi-batch-2026-10-07"
+}

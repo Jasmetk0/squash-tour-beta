@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-facr-rfa-2015-v1",
+  "source_id": "facr-rfa-2015",
+  "relative_path": "observations/normalized/structural/fifa_structural_facr_rfa_2015_v1.json",
+  "sha256": "0a997e5ac58d227258d53e51232d690fb9c9022e7656f1e32ab29f5ccb805e61",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": "aa48ab28872008467eedb7601a7d7f0246490a54779b88bd51303e501d31cf1c",
+  "generated_by": "scripts/normalize_fifa_structural_events.py"
+}

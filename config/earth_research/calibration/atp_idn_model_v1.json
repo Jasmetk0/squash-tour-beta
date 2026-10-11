@@ -1,0 +1,92 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "atp-earth-idn-model.v1",
+  "world_id": "atp_earth",
+  "data_cutoff": "2026-10-04",
+  "countries": [
+    "IDN"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "evidence_rules": [
+    "PELTI's 1935 foundation is pre-1955 institutional context and supports tradition without implying modern system depth.",
+    "The ITF Junior Tennis Initiative is gated to 2019; its programme-specific participant count is not treated as total national tennis participation.",
+    "2021 coach-education recognition is a development-capacity signal and 2023 W25 hosting is a competition-infrastructure signal.",
+    "Current ITF membership is gated to 2025.",
+    "No player ranking, tournament result or title is a calibration target."
+  ],
+  "anchor_values": {
+    "IDN": {
+      "1955": [
+        5.2,
+        4.8,
+        4.8,
+        5,
+        4.6,
+        6.8
+      ],
+      "1990": [
+        5.8,
+        5.3,
+        5.4,
+        5.5,
+        5.2,
+        7.2
+      ],
+      "2019": [
+        6.3,
+        5.9,
+        6.5,
+        6.1,
+        6.2,
+        7.5
+      ],
+      "2020": [
+        6.5,
+        6.1,
+        6.8,
+        6.1,
+        6.4,
+        7.5
+      ],
+      "2021": [
+        6.6,
+        6.2,
+        7,
+        6.2,
+        6.6,
+        7.6
+      ],
+      "2023": [
+        6.7,
+        6.3,
+        7.1,
+        6.7,
+        6.9,
+        7.6
+      ],
+      "2025": [
+        6.8,
+        6.4,
+        7.1,
+        6.8,
+        6.9,
+        7.7
+      ],
+      "2026": [
+        6.8,
+        6.4,
+        7.1,
+        6.8,
+        6.9,
+        7.7
+      ]
+    }
+  },
+  "evidence_sources": [
+    "pelti-history",
+    "itf-indonesia-jti-2021",
+    "itf-indonesia-w25-2023",
+    "itf-indonesia-current-2025"
+  ],
+  "heldout_ranking_used": false
+}

@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-vanuatu-kindy-2014-v1",
+  "source_id": "vanuatu-kindy-tennis-2014",
+  "relative_path": "observations/normalized/atp_vanuatu_kindy_2014_v1.json",
+  "sha256": "a0d22a075b813addb4afb12bd5e4386831e92021f11d8a9d6ba2811249e1121a",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

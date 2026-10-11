@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-armenia-history-v1",
+  "source_id": "fifa-armenia-member-context-2026",
+  "relative_path": "observations/normalized/structural/fifa_armenia_history_v1.json",
+  "sha256": "405de7eb0c0c97c8f49afa538b4db3d406f30c088db0f4f737733db812404f59",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

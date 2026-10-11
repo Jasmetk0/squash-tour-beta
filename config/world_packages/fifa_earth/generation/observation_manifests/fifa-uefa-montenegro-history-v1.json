@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-uefa-montenegro-history-v1",
+  "source_id": "and-mne-uefa-montenegro-history",
+  "relative_path": "observations/normalized/fifa_uefa_montenegro_history_v1.json",
+  "sha256": "75bb49f29f41e748adeca05fca9d2e00b846c335e8c529a0c87fb78e8d99b157",
+  "record_count": 5,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-and-mne-batch-2026-10-07"
+}

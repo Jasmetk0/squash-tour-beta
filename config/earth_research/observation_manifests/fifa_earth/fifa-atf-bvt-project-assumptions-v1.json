@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-atf-bvt-project-assumptions-v1",
+  "source_id": "atf-bvt-fifa-project-assumptions",
+  "relative_path": "observations/normalized/fifa_atf_bvt_project_assumptions_v1.json",
+  "sha256": "2464aa6b895bfdfc9d1c0e93f5326152f332e430c14a932f738d292958684050",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-atf-bvt-batch-2026-10-07"
+}

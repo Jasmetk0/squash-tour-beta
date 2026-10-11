@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-fetech-jti-2025-v1",
+  "source_id": "fetech-jti-2025",
+  "relative_path": "observations/normalized/atp-fetech-jti-2025-v1.json",
+  "sha256": "be274d42c1bbc80cb53b7b35049d732f0fffeb1933bfd2e6ade3e0e135f08ec2",
+  "record_count": 3,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

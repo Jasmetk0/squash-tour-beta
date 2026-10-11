@@ -1,0 +1,23 @@
+{
+  "schema_version": "atp_earth_reviewed_country_batch.v1",
+  "model_id": "atp-earth-hun-rou-model.v1",
+  "created_on": "2026-10-05",
+  "countries": [
+    "HUN",
+    "ROU"
+  ],
+  "coverage": {
+    "from": 1955,
+    "to": 2026,
+    "attributes": 6
+  },
+  "rating_scale": "country_ratings_1_10.v2",
+  "method": "Country-specific piecewise annual histories using institutional tradition plus temporally gated training, coaching and competition-system evidence.",
+  "evidence_rules": [
+    "Pre-1955 institutional and competition history may anchor tradition but is not treated as measured 1955 participation.",
+    "Modern national-centre, coaching and player-support structures are not backcast before their source years.",
+    "Competition quality is based on organised competition opportunity and system structure, not a direct conversion of famous-player results.",
+    "Historical state names are preserved where materially different from the current country name.",
+    "No held-out validation ranking is used to tune authored values."
+  ]
+}

@@ -1,0 +1,75 @@
+{
+  "season": 2027,
+  "events": [
+    {
+      "event_id": "ev_2027_w01_qatar_platinum",
+      "season": 2027,
+      "week": 1,
+      "template_id": "wt_platinum_32",
+      "start_day": "MONDAY",
+      "region": "MIDDLE_EAST",
+      "host_country": "QAT",
+      "is_world_tour": true,
+      "is_elite_tour": false,
+      "cluster_id": "cluster_me_01",
+      "travel_group": "middle_east_opening",
+      "status": "scheduled"
+    },
+    {
+      "event_id": "ev_2027_w01_malaysia_major",
+      "season": 2027,
+      "week": 1,
+      "template_id": "elite_major_32",
+      "start_day": "MONDAY",
+      "region": "ASIA",
+      "host_country": "MAS",
+      "is_world_tour": false,
+      "is_elite_tour": true,
+      "cluster_id": "cluster_asia_01",
+      "travel_group": "asia_opening",
+      "status": "scheduled"
+    },
+    {
+      "event_id": "ev_2027_w03_england_gold",
+      "season": 2027,
+      "week": 3,
+      "template_id": "wt_gold_24",
+      "start_day": "MONDAY",
+      "region": "EUROPE",
+      "host_country": "ENG",
+      "is_world_tour": true,
+      "is_elite_tour": false,
+      "cluster_id": "cluster_eu_01",
+      "travel_group": "europe_spring",
+      "status": "scheduled"
+    },
+    {
+      "event_id": "ev_2027_w03_usa_challenger",
+      "season": 2027,
+      "week": 3,
+      "template_id": "elite_challenger_24",
+      "start_day": "WEDNESDAY",
+      "region": "AMERICAS",
+      "host_country": "USA",
+      "is_world_tour": false,
+      "is_elite_tour": true,
+      "cluster_id": "cluster_amer_01",
+      "travel_group": "americas_spring",
+      "status": "scheduled"
+    },
+    {
+      "event_id": "ev_2027_w06_england_gold_repeat",
+      "season": 2027,
+      "week": 6,
+      "template_id": "wt_gold_24",
+      "start_day": "MONDAY",
+      "region": "EUROPE",
+      "host_country": "ENG",
+      "is_world_tour": true,
+      "is_elite_tour": false,
+      "cluster_id": "cluster_eu_02",
+      "travel_group": "europe_late_spring",
+      "status": "scheduled"
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-kuwait-history-v1",
+  "source_id": "itf-kuwait-profile",
+  "relative_path": "observations/normalized/atp_kuwait_history_v1.json",
+  "sha256": "588360f16b168ceda8b76ef869919929e8aef12cacf5ef668d5f22da5a061721",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

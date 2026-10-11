@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-hmd-sgs-territory-context-2026-v1",
+  "source_id": "hmd-sgs-territory-context-2026",
+  "relative_path": "observations/normalized/fifa_hmd_sgs_territory_context_2026_v1.json",
+  "sha256": "ada42c0b68006ffd42d30c3997c3335d382af2834ae0792fcde120bcdaacf712",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-hmd-sgs-batch-2026-10-07"
+}

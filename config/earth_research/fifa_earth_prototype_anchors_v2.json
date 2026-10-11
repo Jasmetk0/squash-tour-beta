@@ -1,0 +1,2056 @@
+{
+  "schema_version": "fifa_earth_anchor_prototype.v2",
+  "world_id": "fifa_earth",
+  "data_cutoff": "2026-10-04",
+  "note": "Calibration prototype only. Ratings are project-authored game estimates, not direct historical measurements and not canonical FIFA Earth data.",
+  "sources": {
+    "jfa-history": {
+      "title": "Japan Football Association — History",
+      "url": "https://jfa.jp/eng/about_jfa/history/",
+      "accessed_on": "2026-10-04",
+      "scope": "JFA institutional, competition and professionalisation milestones.",
+      "limitations": "Milestones do not directly measure the six ratings."
+    },
+    "aiff-history": {
+      "title": "All India Football Federation — History",
+      "url": "https://www.the-aiff.com/history",
+      "accessed_on": "2026-10-04",
+      "scope": "Indian federation and national competition history.",
+      "limitations": "Institutional history is stronger evidence for tradition/competition than national popularity/access."
+    },
+    "frmf-history": {
+      "title": "Royal Moroccan Football Federation — History of Moroccan football",
+      "url": "https://frmf.ma/fr/histoire-du-football-marocain",
+      "accessed_on": "2026-10-04",
+      "scope": "Moroccan league and federation history.",
+      "limitations": "Does not provide a complete annual participation series."
+    },
+    "fifa-morocco-development": {
+      "title": "FIFA — Talent Development Scheme gains new ground in Morocco",
+      "url": "https://inside.fifa.com/advancing-football/news/talent-development-scheme-gains-new-ground-in-morocco",
+      "accessed_on": "2026-10-04",
+      "scope": "Modern academy and technical-development evidence.",
+      "limitations": "Primarily modern elite/development evidence. This Inside FIFA source states a 2019 opening of the Mohammed VI Football Academy, while other FIFA articles state establishment/unveiling in 2009; preserve the conflict explicitly."
+    },
+    "caf-south-africa": {
+      "title": "CAF — South Africa member association",
+      "url": "https://www.cafonline.com/inside-caf/member-associations/south-africa/",
+      "accessed_on": "2026-10-04",
+      "scope": "South African association history and modern affiliation context.",
+      "limitations": "Association milestones alone do not quantify apartheid-era domestic participation."
+    },
+    "fifa-south-africa-history": {
+      "title": "FIFA historical publication — South African football and international exclusion",
+      "url": "https://img.fifa.com/image/upload/ghd0g4e9zyk5pbithtcg.pdf",
+      "accessed_on": "2026-10-04",
+      "scope": "Suspension/expulsion, domestic structures and readmission context.",
+      "limitations": "Historical narrative; numeric ratings remain model estimates."
+    },
+    "uefa-faroe-history": {
+      "title": "UEFA — Faroe Islands association history",
+      "url": "https://www.uefa.com/nationalassociations/fro/",
+      "accessed_on": "2026-10-04",
+      "scope": "Club, competition, association, artificial-turf and UEFA/FIFA history.",
+      "limitations": "Sparse annual quantitative participation/development measures."
+    },
+    "ussoccer-timeline": {
+      "title": "U.S. Soccer — Historical timeline",
+      "url": "https://www.ussoccer.com/history/timeline",
+      "accessed_on": "2026-10-04",
+      "scope": "Federation, competitions, professional-league and major-event history.",
+      "limitations": "Chronology is not a quantitative popularity/access series."
+    },
+    "ussoccer-training-center": {
+      "title": "U.S. Soccer — National Training Center groundbreaking",
+      "url": "https://www.ussoccer.com/stories/2024/04/us-soccer-breaks-ground-on-the-arthur-m-blank-us-soccer-national-training-center",
+      "accessed_on": "2026-10-04",
+      "scope": "Modern high-performance and development infrastructure.",
+      "limitations": "Modern evidence only; cannot be backcast."
+    },
+    "aiff-isl-grassroots-2014": {
+      "title": "AIFF — Hero Indian Super League to kick off Grassroots Programme in Kolkata",
+      "url": "https://nt.the-aiff.com/article/hero-indian-super-league-to-kick-off-grassroots-programme-in-kolkata",
+      "accessed_on": "2026-10-04",
+      "scope": "2014 ISL-linked grassroots development structure and club development staffing.",
+      "limitations": "Programme launch evidence, not proof of nationwide implementation quality."
+    },
+    "fifa-india-forward-2019": {
+      "title": "FIFA — Forward reaches new heights in India fostering technical capacity building",
+      "url": "https://inside.fifa.com/en/advancing-football/fifa-forward/news/fifa-forward-reaches-new-heights-in-india-fostering-technical-capacity-building",
+      "accessed_on": "2026-10-04",
+      "scope": "2018-2019 State Development Project, youth competitions and capacity building.",
+      "limitations": "Programme evidence is stronger for institutional/development direction than for national participation outcomes."
+    },
+    "aiff-academy-accreditation-2023": {
+      "title": "AIFF — Academy Accreditation Rules and Regulations 2023-24",
+      "url": "https://www.the-aiff.com/index.php/article/aiff-announces-academy-accreditation-rules-and-regulations-2023-24",
+      "accessed_on": "2026-10-04",
+      "scope": "2023 nine-tier academy accreditation and youth-development system.",
+      "limitations": "Regulatory framework does not by itself measure realised academy quality."
+    },
+    "aiff-vision-2047-2023": {
+      "title": "AIFF — Vision 2047, December 2023",
+      "url": "https://www.the-aiff.com/media/uploads/2023/12/Vision-2047-December-2023.pdf",
+      "accessed_on": "2026-10-04",
+      "scope": "Contemporary AIFF diagnosis, youth pathways, academy and infrastructure goals.",
+      "limitations": "Contains targets and self-assessment; future targets are not treated as achieved observations."
+    },
+    "fifa-india-impact-current": {
+      "title": "FIFA — India association Forward impact",
+      "url": "https://inside.fifa.com/en/associations/IND/impact",
+      "accessed_on": "2026-10-04",
+      "scope": "Current FIFA Forward investment mix for India, including infrastructure, grassroots and player development.",
+      "limitations": "Current programme investment is not a historical participation series and funding does not map directly to ratings."
+    },
+    "fifa-morocco-worldcup-history-2026": {
+      "title": "FIFA — Morocco at the FIFA World Cup: Team profile and history",
+      "url": "https://www.fifa.com/en/tournaments/mens/worldcup/canadamexicousa2026/articles/morocco-team-profile-history",
+      "accessed_on": "2026-10-04",
+      "scope": "Official FIFA summary of Morocco's World Cup participation history including 1970, 1986, 1994 and 1998.",
+      "limitations": "Tournament results are used only as competition/tradition evidence, not as direct participation/access/development measurements."
+    },
+    "ussoccer-worldcup-bid-1988": {
+      "title": "U.S. Soccer — The Bid That Changed Everything",
+      "url": "https://www.ussoccer.com/stories/2026/05/usmnt/26-moments-usa-wins-1994-fifa-world-cup-bid",
+      "accessed_on": "2026-10-04",
+      "scope": "1988 award of the 1994 FIFA World Cup and requirement to establish a top-flight professional league.",
+      "limitations": "Hosting award/condition is institutional and elite-support evidence, not a direct measure of mass participation."
+    },
+    "ussoccer-history-framework": {
+      "title": "U.S. Soccer — History",
+      "url": "https://www.ussoccer.com/history",
+      "accessed_on": "2026-10-04",
+      "scope": "2003 National Training Center and federation player-development framework.",
+      "limitations": "Federation narrative; does not directly quantify national access or popularity."
+    },
+    "ussoccer-development-academy-2007": {
+      "title": "U.S. Soccer — Development Academy history",
+      "url": "https://www.ussoccer.com/mnt-travel-roster/2017/10/five-things-to-know-about-the-us-soccer-development-academy",
+      "accessed_on": "2026-10-04",
+      "scope": "Development Academy launched in 2007 to improve elite youth player-development environments.",
+      "limitations": "Elite youth development evidence; not a mass-participation measure."
+    },
+    "ussoccer-national-development-center-2018": {
+      "title": "U.S. Soccer — National Development Center grand opening",
+      "url": "https://www.ussoccer.com/stories/2018/05/ribbon-cutting-ceremony-marks-grand-opening-of-national-development-center",
+      "accessed_on": "2026-10-04",
+      "scope": "2018 coaching education, sports medicine and high-performance development facility.",
+      "limitations": "Elite/development infrastructure evidence only."
+    },
+    "uefa-czechia-history": {
+      "title": "UEFA — Developing football in Czechia",
+      "url": "https://www.uefa.com/news-media/news/0282-1830fd7e681b-d29c43b082a6-1000--developing-football-in-czechia/",
+      "accessed_on": "2026-10-04",
+      "scope": "Czech football association roots, Czech/Czechoslovak timeline, post-1993 competition and development context.",
+      "limitations": "Czechoslovak national-team results are not duplicated as Czech territorial observations; only localisable/inherited tradition context is used."
+    },
+    "facr-league-1960": {
+      "title": "FAČR — Czechoslovak first league statistics 1960/61",
+      "url": "https://statistiky1ligy.fotbal.cz/sezona/1960-1961/ligova-kola/1867",
+      "accessed_on": "2026-10-04",
+      "scope": "Official league table and attendance showing Czech- and Slovak-territory clubs competing in the shared Czechoslovak top flight.",
+      "limitations": "One league-season snapshot; not a complete measure of access/development and not a national-team observation."
+    },
+    "facr-rfa-2015": {
+      "title": "FAČR — First Regional Football Academy opened in Plzeň",
+      "url": "https://www.fotbal.cz/facr/video-foto-regionalni-fotbalove-akademie-slavnostni-otevreni-v-plzni/a1405",
+      "accessed_on": "2026-10-04",
+      "scope": "2015 launch of the FAČR regional academy model for U14/U15 talent development.",
+      "limitations": "Elite youth-development evidence, not a national participation measure."
+    },
+    "uefa-czechia-hattrick-2014": {
+      "title": "UEFA HatTrick Review 2004–2014 — Czech Republic",
+      "url": "https://www.uefa.com/MultimediaFiles/Download/uefaorg/HatTrick/02/18/45/95/2184595_DOWNLOAD.pdf",
+      "accessed_on": "2026-10-04",
+      "scope": "Czech association HQ/education centre, regionalised player registration and development infrastructure.",
+      "limitations": "Programme/infrastructure evidence rather than direct performance measurement."
+    },
+    "sfz-history-1938": {
+      "title": "Slovak Football Association — 1938 foundation history",
+      "url": "https://old.futbalsfz.sk/slovensko/zaujimavosti/novinka/pred-75-rokmi-4-novembra-1938-bol-zalozeny-slovensky-futbalovy-svaez-sfs.html",
+      "accessed_on": "2026-10-04",
+      "scope": "1938 Slovak association, independent 1939–45 period and continuity narrative into modern SFZ.",
+      "limitations": "Historical narrative; later Czechoslovak national totals/results are not automatically Slovak observations."
+    },
+    "uefa-slovakia-history": {
+      "title": "UEFA — Developing football in Slovakia",
+      "url": "https://www.uefa.com/nationalassociations/svk/",
+      "accessed_on": "2026-10-04",
+      "scope": "Slovak association timeline, 1969 Slovan European title, 1993/94 international affiliation and modern development strategy.",
+      "limitations": "Results are primarily competition/tradition evidence."
+    },
+    "uefa-slovakia-hattrick": {
+      "title": "UEFA — Developing football in Slovakia, HatTrick infrastructure",
+      "url": "https://www.uefa.com/news-media/news/025b-0ee5404d32d3-509db714df92-1000--developing-football-in-slovakia/",
+      "accessed_on": "2026-10-04",
+      "scope": "2018–22 youth/grassroots strategy, School Cup participation, 14 artificial pitches and national training centres.",
+      "limitations": "Programme evidence is period-specific and must not be backcast."
+    },
+    "uefa-slovakia-hattrick-review": {
+      "title": "UEFA HatTrick Review 2004–2014 — Slovakia",
+      "url": "https://www.uefa.com/MultimediaFiles/Download/uefaorg/HatTrick/02/18/45/84/2184584_DOWNLOAD.pdf",
+      "accessed_on": "2026-10-04",
+      "scope": "100 mini-pitches, ten full-size artificial pitches and grassroots/access infrastructure in Slovakia.",
+      "limitations": "Infrastructure evidence does not directly measure elite competition quality."
+    },
+    "uefa-slovan-1969": {
+      "title": "UEFA — Slovan Bratislava 1969 Cup Winners' Cup context",
+      "url": "https://www.uefa.com/news-media/news/020b-0f887c2b60d3-78f9b88a805c-1000--slovakia-mourns-zlocha/",
+      "accessed_on": "2026-10-04",
+      "scope": "Geographically attributable Slovak club evidence: Spartak Trnava 1968 domestic title, Slovan Bratislava 1969 European Cup Winners' Cup and 1970 domestic title.",
+      "limitations": "Elite club results are competition/tradition evidence, not mass-access measurement."
+    },
+    "fifa-big-count-2006": {
+      "title": "FIFA Big Count 2006 — All Players (archived original table)",
+      "url": "https://web.archive.org/web/20160304131953/http://www.fifa.com/worldfootball/bigcount/allplayers.html",
+      "accessed_on": "2026-10-03",
+      "scope": "208 original table rows, association totals, registered/unregistered players, clubs and officials; raw facts in observations/fifa_big_count_2006.csv.",
+      "limitations": "This All Players table is not men-only. Association identities do not equal the Earth ISO country catalogue. Missing data must not be read as zero. Single survey year cannot substantiate an annual 1955–2026 history."
+    },
+    "fifa-professional-2023": {
+      "title": "FIFA Professional Football Report 2023",
+      "url": "https://digitalhub.fifa.com/m/2a5dc95026d9cf8a/original/FIFA-Professional-Football-Report-2023.pdf",
+      "accessed_on": "2026-10-03",
+      "scope": "2023 men’s professional football; national association coverage and definitions.",
+      "limitations": "211 national pages extracted in observations/fifa_professional_2023.json. Page 38 has conflicting country identity; national sums disagree with the global headline. Unreconciled, not usable as automatic rating anchors. Employment counts are not total participation or direct measurements of the six country attributes."
+    },
+    "fifa-senegal-youth-2020": {
+      "title": "FIFA Forward paves way for youth competitions in Senegal",
+      "url": "https://inside.fifa.com/advancing-football/news/fifa-forward-paves-way-for-youth-competitions-in-senegal",
+      "accessed_on": "2026-10-04",
+      "scope": "2020 introduction of national U15/U17/U20 youth competition pathways across Senegal's regions.",
+      "limitations": "Programme-launch evidence; supports a structural development/competition-pathway anchor but is not a direct national participation or quality measurement."
+    },
+    "fifa-morocco-academy-2009": {
+      "title": "FIFA — Morocco football academy history (2009 establishment)",
+      "url": "https://www.fifa.com/en/tournaments/womens/womensworldcup/australia-new-zealand2023/articles/morocco-womens-world-cup-team-2023-atlas-lionesses-france-preview",
+      "accessed_on": "2026-10-04",
+      "scope": "FIFA article stating Mohammed VI Football Academy was established in 2009.",
+      "limitations": "Other FIFA/Inside FIFA articles describe a 2019 opening of the Mohammed VI Football Academy. The conflict is preserved explicitly; 2009 is only a provisional prototype anchor pending reconciliation of whether the sources refer to different establishment/opening phases."
+    },
+    "caf-senegal-member": {
+      "title": "CAF — Senegal member association",
+      "url": "https://www.cafonline.com/inside-caf/member-associations/senegal/",
+      "accessed_on": "2026-10-04",
+      "scope": "Official CAF association record: FSF created in 1960 and affiliated to FIFA and CAF in 1964.",
+      "limitations": "Association dates are institutional anchors only; they do not directly measure popularity, access, development or competition quality."
+    },
+    "caf-senegal-afcon-history": {
+      "title": "CAF — AFCON 2025 media guide, Senegal historical record",
+      "url": "https://www.cafonline.com/media/05ebfeih/ultimate-media-guide-afcon25.pdf",
+      "accessed_on": "2026-10-04",
+      "scope": "Official AFCON historical record including Senegal in 1965, 1968, 1986 and 1990.",
+      "limitations": "National-team tournament results inform competition/tradition only and must not be converted directly into mass participation or access ratings."
+    },
+    "caf-afcon-1992-host": {
+      "title": "CAF — How AFCON evolved",
+      "url": "https://www.cafonline.com/afcon2025/news/how-the-totalenergies-caf-africa-cup-of-nations-has-evolved/",
+      "accessed_on": "2026-10-04",
+      "scope": "Official CAF history confirming Senegal hosted the expanded 12-team AFCON finals in 1992.",
+      "limitations": "Hosting is mainly an elite-support/infrastructure and competition-environment anchor, not direct evidence of national access or development quality."
+    },
+    "fifa-senegal-generation-foot-2000": {
+      "title": "FIFA — Fatma Samoura and Senegalese football look to the future in Dakar",
+      "url": "https://inside.fifa.com/en/news/fatma-samoura-and-senegalese-football-look-to-the-future-in-dakar",
+      "accessed_on": "2026-10-04",
+      "scope": "Official FIFA account stating Génération Foot was founded in 2000 and documenting its training infrastructure and player-development role.",
+      "limitations": "Academy evidence is strong for elite development but does not represent nationwide access or participation."
+    },
+    "fifa-senegal-worldcup-2002": {
+      "title": "FIFA — Senegal World Cup history",
+      "url": "https://www.fifa.com/en/tournaments/mens/worldcup/canadamexicousa2026/articles/senegal-team-profile-history",
+      "accessed_on": "2026-10-04",
+      "scope": "Official FIFA history of Senegal's 2002 World Cup quarter-final run and its institutional legacy.",
+      "limitations": "Tournament performance is competition/tradition evidence; the later institutional legacy must not be backdated before 2002."
+    },
+    "caf-senegal-academies-league": {
+      "title": "CAF — Football academies supply Senegal's den",
+      "url": "https://www.cafonline.com/afcon2025/news/football-academies-supply-senegal-s-den/",
+      "accessed_on": "2026-10-04",
+      "scope": "Official CAF account: Génération Foot founded in 2000, Diambars in 2003, professional league launched in 2009, and academy-trained players represented strongly in the national team.",
+      "limitations": "Academy success is evidence for development pathways; league launch is competition/elite-support evidence. Neither directly measures mass participation."
+    }
+  },
+  "countries": {
+    "CZE": {
+      "reference_year": 2026,
+      "historical_periods": [
+        {
+          "from": 1955,
+          "to": 1992,
+          "historical_entity": "Czechoslovakia — Czech lands",
+          "territory_mapping_note": "Current Czech territory inside Czechoslovakia. Only geographically attributable Czech club/institution evidence and explicitly inherited tradition context are used; Czechoslovak national totals/results are not duplicated."
+        },
+        {
+          "from": 1993,
+          "to": 2026,
+          "historical_entity": "Czech Republic / Czechia",
+          "territory_mapping_note": "Independent Czech association period after the 1 January 1993 split; post-split evidence is Czech-specific."
+        }
+      ],
+      "anchors": {
+        "1955": {
+          "confidence": "low",
+          "source_ids": [
+            "uefa-czechia-history"
+          ],
+          "rationale": "Czech lands enter 1955 with clubs and association roots dating to the 1890s/1901 and a mature place inside the Czechoslovak football system.",
+          "ratings": {
+            "squash_popularity": 7.8,
+            "squash_access": 7.4,
+            "development_quality": 6.2,
+            "competition_quality": 6.8,
+            "elite_support": 6.2,
+            "squash_tradition": 8.4
+          }
+        },
+        "1960": {
+          "confidence": "medium",
+          "source_ids": [
+            "facr-league-1960",
+            "uefa-czechia-history"
+          ],
+          "rationale": "Official shared-league data show a deep top division with multiple Czech-territory clubs and substantial attendances; this is localisable competition evidence, not a duplicated national-team result.",
+          "ratings": {
+            "squash_popularity": 7.9,
+            "squash_access": 7.5,
+            "development_quality": 6.3,
+            "competition_quality": 7,
+            "elite_support": 6.3,
+            "squash_tradition": 8.5
+          }
+        },
+        "1975": {
+          "confidence": "low",
+          "source_ids": [
+            "uefa-czechia-history"
+          ],
+          "rationale": "Low-confidence continuity checkpoint for the Czech territorial club/institution ecosystem inside Czechoslovakia; no full Czechoslovak national-team score is inherited.",
+          "ratings": {
+            "squash_popularity": 8,
+            "squash_access": 7.8,
+            "development_quality": 6.6,
+            "competition_quality": 7.1,
+            "elite_support": 6.5,
+            "squash_tradition": 8.7
+          }
+        },
+        "1992": {
+          "confidence": "low",
+          "source_ids": [
+            "uefa-czechia-history"
+          ],
+          "rationale": "Final predecessor-period checkpoint for the Czech territorial ecosystem immediately before the split; national predecessor totals are deliberately not copied.",
+          "ratings": {
+            "squash_popularity": 7.9,
+            "squash_access": 8.1,
+            "development_quality": 6.6,
+            "competition_quality": 7,
+            "elite_support": 6.4,
+            "squash_tradition": 8.8
+          }
+        },
+        "1993": {
+          "confidence": "medium",
+          "source_ids": [
+            "uefa-czechia-history"
+          ],
+          "rationale": "Political/association split is a structural transition: tradition remains locally continuous while independent governance and competition are rebuilt on Czech-specific institutions.",
+          "ratings": {
+            "squash_popularity": 7.9,
+            "squash_access": 8,
+            "development_quality": 6.4,
+            "competition_quality": 6.6,
+            "elite_support": 6,
+            "squash_tradition": 8.8
+          }
+        },
+        "1996": {
+          "confidence": "medium",
+          "source_ids": [
+            "uefa-czechia-history"
+          ],
+          "rationale": "EURO 1996 runner-up is used mainly as contemporary competition evidence for the independent Czech system.",
+          "ratings": {
+            "squash_popularity": 8.2,
+            "squash_access": 8.1,
+            "development_quality": 6.6,
+            "competition_quality": 7.8,
+            "elite_support": 6.4,
+            "squash_tradition": 8.9
+          }
+        },
+        "2002": {
+          "confidence": "medium",
+          "source_ids": [
+            "uefa-czechia-history"
+          ],
+          "rationale": "European U21 title provides development-output evidence in addition to strong senior competition quality.",
+          "ratings": {
+            "squash_popularity": 8.1,
+            "squash_access": 8.4,
+            "development_quality": 7.4,
+            "competition_quality": 7.8,
+            "elite_support": 6.7,
+            "squash_tradition": 9
+          }
+        },
+        "2006": {
+          "confidence": "medium",
+          "source_ids": [
+            "fifa-big-count-2006",
+            "uefa-czechia-history"
+          ],
+          "rationale": "FIFA Big Count 2006 shows an exceptionally dense Czech organised-football footprint after population normalisation. It calibrates popularity/access directly; the remaining dimensions stay close to the surrounding Czech development/competition anchors rather than being inferred from participation.",
+          "ratings": {
+            "squash_popularity": 8,
+            "squash_access": 8.6,
+            "development_quality": 7.6,
+            "competition_quality": 7.6,
+            "elite_support": 6.7,
+            "squash_tradition": 9
+          }
+        },
+        "2007": {
+          "confidence": "medium",
+          "source_ids": [
+            "uefa-czechia-history"
+          ],
+          "rationale": "FIFA U20 silver is used as youth-development validation rather than mass-access evidence.",
+          "ratings": {
+            "squash_popularity": 8,
+            "squash_access": 8.6,
+            "development_quality": 7.6,
+            "competition_quality": 7.5,
+            "elite_support": 6.7,
+            "squash_tradition": 9
+          }
+        },
+        "2014": {
+          "confidence": "medium",
+          "source_ids": [
+            "uefa-czechia-hattrick-2014"
+          ],
+          "rationale": "HatTrick-era registration decentralisation and association education/development infrastructure improve access and institutional support.",
+          "ratings": {
+            "squash_popularity": 7.8,
+            "squash_access": 8.7,
+            "development_quality": 7.5,
+            "competition_quality": 7.2,
+            "elite_support": 7,
+            "squash_tradition": 9
+          }
+        },
+        "2015": {
+          "confidence": "medium",
+          "source_ids": [
+            "facr-rfa-2015"
+          ],
+          "rationale": "Launch of the regional academy model is a specific youth-development pathway breakpoint.",
+          "ratings": {
+            "squash_popularity": 7.8,
+            "squash_access": 8.7,
+            "development_quality": 7.8,
+            "competition_quality": 7.2,
+            "elite_support": 7.1,
+            "squash_tradition": 9
+          }
+        },
+        "2021": {
+          "confidence": "medium",
+          "source_ids": [
+            "uefa-czechia-history"
+          ],
+          "rationale": "UEFA documents a broad FAČR strategic programme, membership digitisation, youth-coach infrastructure and a 360,000-member target; targets are not treated as achieved observations.",
+          "ratings": {
+            "squash_popularity": 7.8,
+            "squash_access": 8.8,
+            "development_quality": 7.9,
+            "competition_quality": 7.2,
+            "elite_support": 7.2,
+            "squash_tradition": 9.1
+          }
+        },
+        "2026": {
+          "confidence": "low",
+          "source_ids": [
+            "uefa-czechia-history",
+            "facr-rfa-2015"
+          ],
+          "rationale": "Partial-2026 estimate preserves deep Czech tradition and established development infrastructure without assuming unverified strategic targets were fully achieved.",
+          "ratings": {
+            "squash_popularity": 7.8,
+            "squash_access": 8.8,
+            "development_quality": 8,
+            "competition_quality": 7.3,
+            "elite_support": 7.3,
+            "squash_tradition": 9.1
+          }
+        }
+      }
+    },
+    "FRO": {
+      "historical_entity": "Faroe Islands",
+      "territory_mapping_note": "Faroe Islands are their own football-association territory, separate from Denmark for sporting observations.",
+      "reference_year": 2026,
+      "anchors": {
+        "1955": {
+          "confidence": "medium",
+          "source_ids": [
+            "uefa-faroe-history"
+          ],
+          "rationale": "Official championship exists and cup begins in 1955, but climate/facility constraints limit access/elite structures.",
+          "ratings": {
+            "squash_popularity": 7.5,
+            "squash_access": 3.5,
+            "development_quality": 3,
+            "competition_quality": 3.2,
+            "elite_support": 2.5,
+            "squash_tradition": 6.6
+          }
+        },
+        "1965": {
+          "confidence": "low",
+          "source_ids": [
+            "uefa-faroe-history"
+          ],
+          "rationale": "Low-confidence continuity checkpoint inside a long stable domestic-football period; no new international status or infrastructure break is claimed.",
+          "ratings": {
+            "squash_popularity": 7.5,
+            "squash_access": 3.6,
+            "development_quality": 3.1,
+            "competition_quality": 3.3,
+            "elite_support": 2.7,
+            "squash_tradition": 6.8
+          }
+        },
+        "1979": {
+          "confidence": "medium",
+          "source_ids": [
+            "uefa-faroe-history"
+          ],
+          "rationale": "Independent association formalises governance over an already established football culture.",
+          "ratings": {
+            "squash_popularity": 7.6,
+            "squash_access": 3.8,
+            "development_quality": 3.2,
+            "competition_quality": 3.6,
+            "elite_support": 3.2,
+            "squash_tradition": 7.2
+          }
+        },
+        "1986": {
+          "confidence": "medium",
+          "source_ids": [
+            "uefa-faroe-history"
+          ],
+          "rationale": "Artificial-turf introduction is concentrated mainly in access/development; popularity changes only modestly because football was already culturally embedded.",
+          "ratings": {
+            "squash_popularity": 7.8,
+            "squash_access": 8.2,
+            "development_quality": 4.2,
+            "competition_quality": 4,
+            "elite_support": 3.5,
+            "squash_tradition": 7.5
+          }
+        },
+        "1990": {
+          "confidence": "medium",
+          "source_ids": [
+            "uefa-faroe-history"
+          ],
+          "rationale": "FIFA/UEFA accession raises international competition access and elite institutional demands; popularity changes only gradually rather than jumping with affiliation.",
+          "ratings": {
+            "squash_popularity": 7.9,
+            "squash_access": 8.6,
+            "development_quality": 4.3,
+            "competition_quality": 4.8,
+            "elite_support": 4.5,
+            "squash_tradition": 7.7
+          }
+        },
+        "1999": {
+          "confidence": "medium",
+          "source_ids": [
+            "uefa-faroe-history"
+          ],
+          "rationale": "National-stadium era adds elite competition infrastructure while football popularity remains high and gradually rising.",
+          "ratings": {
+            "squash_popularity": 8.4,
+            "squash_access": 9,
+            "development_quality": 4.8,
+            "competition_quality": 5,
+            "elite_support": 5.2,
+            "squash_tradition": 7.9
+          }
+        },
+        "2006": {
+          "confidence": "medium",
+          "source_ids": [
+            "fifa-big-count-2006",
+            "uefa-faroe-history"
+          ],
+          "rationale": "Big Count reports extraordinary per-capita participation, registration and club density in the Faroe Islands. Access/popularity are therefore calibrated near the top of the scale; tiny absolute population still limits elite depth and competition quality.",
+          "ratings": {
+            "squash_popularity": 9.2,
+            "squash_access": 9.5,
+            "development_quality": 5.1,
+            "competition_quality": 5.2,
+            "elite_support": 5.4,
+            "squash_tradition": 8
+          }
+        },
+        "2010": {
+          "confidence": "low",
+          "source_ids": [
+            "uefa-faroe-history"
+          ],
+          "rationale": "Intermediate modern checkpoint prevents a single 1999–2026 interpolation span.",
+          "ratings": {
+            "squash_popularity": 9.2,
+            "squash_access": 9.5,
+            "development_quality": 5.3,
+            "competition_quality": 5.3,
+            "elite_support": 5.5,
+            "squash_tradition": 8.1
+          }
+        },
+        "2026": {
+          "confidence": "low",
+          "source_ids": [
+            "uefa-faroe-history"
+          ],
+          "rationale": "Partial-2026 estimate: high per-capita cultural embedding/access but limited elite depth from tiny population.",
+          "ratings": {
+            "squash_popularity": 9.3,
+            "squash_access": 9.6,
+            "development_quality": 5.8,
+            "competition_quality": 5.5,
+            "elite_support": 5.8,
+            "squash_tradition": 8.4
+          }
+        }
+      }
+    },
+    "IND": {
+      "historical_entity": "India",
+      "territory_mapping_note": "India is treated as a continuous association territory for prototype ratings; partition-era history predates the 1955 start.",
+      "reference_year": 2026,
+      "anchors": {
+        "1955": {
+          "confidence": "low",
+          "source_ids": [
+            "aiff-history"
+          ],
+          "rationale": "AIFF/FIFA/AFC structures already exist, but national access/development evidence is sparse and football is regionally uneven.",
+          "ratings": {
+            "squash_popularity": 5.2,
+            "squash_access": 3.8,
+            "development_quality": 3.8,
+            "competition_quality": 4.5,
+            "elite_support": 3.8,
+            "squash_tradition": 6.5
+          }
+        },
+        "1962": {
+          "confidence": "low",
+          "source_ids": [
+            "aiff-history"
+          ],
+          "rationale": "1962 is a competition/tradition checkpoint from AIFF's historical record; competitive success is not used as mass-access evidence.",
+          "ratings": {
+            "squash_popularity": 5.3,
+            "squash_access": 3.8,
+            "development_quality": 4,
+            "competition_quality": 5.2,
+            "elite_support": 4,
+            "squash_tradition": 6.6
+          }
+        },
+        "1977": {
+          "confidence": "low",
+          "source_ids": [
+            "aiff-history"
+          ],
+          "rationale": "Federation Cup adds a national competition anchor without implying nationwide dominance.",
+          "ratings": {
+            "squash_popularity": 5.2,
+            "squash_access": 3.9,
+            "development_quality": 3.9,
+            "competition_quality": 4.9,
+            "elite_support": 4,
+            "squash_tradition": 6.7
+          }
+        },
+        "1996": {
+          "confidence": "medium",
+          "source_ids": [
+            "aiff-history"
+          ],
+          "rationale": "National Football League creates a stronger nationwide senior competition and elite-support structure.",
+          "ratings": {
+            "squash_popularity": 5.1,
+            "squash_access": 4.1,
+            "development_quality": 4.2,
+            "competition_quality": 5.4,
+            "elite_support": 4.6,
+            "squash_tradition": 6.9
+          }
+        },
+        "2006": {
+          "confidence": "medium",
+          "source_ids": [
+            "fifa-big-count-2006",
+            "aiff-history"
+          ],
+          "rationale": "Big Count shows a very large absolute player population but very low registered-player and club density after population normalisation. Popularity/access therefore remain moderate-to-limited despite India's scale; other dimensions follow the nearby national-league/development anchors.",
+          "ratings": {
+            "squash_popularity": 5.2,
+            "squash_access": 4.3,
+            "development_quality": 4.5,
+            "competition_quality": 5.6,
+            "elite_support": 4.8,
+            "squash_tradition": 7.1
+          }
+        },
+        "2007": {
+          "confidence": "medium",
+          "source_ids": [
+            "aiff-history"
+          ],
+          "rationale": "I-League launch/rebrand strengthens nationwide senior competition and professional structure.",
+          "ratings": {
+            "squash_popularity": 5.2,
+            "squash_access": 4.3,
+            "development_quality": 4.5,
+            "competition_quality": 5.7,
+            "elite_support": 4.9,
+            "squash_tradition": 7.1
+          }
+        },
+        "2010": {
+          "confidence": "medium",
+          "source_ids": [
+            "aiff-history"
+          ],
+          "rationale": "AIFF Arrows is an explicit federation-led developmental-team intervention; effect is concentrated in development rather than popularity.",
+          "ratings": {
+            "squash_popularity": 5.2,
+            "squash_access": 4.4,
+            "development_quality": 4.7,
+            "competition_quality": 5.7,
+            "elite_support": 5,
+            "squash_tradition": 7.2
+          }
+        },
+        "2012": {
+          "confidence": "medium",
+          "source_ids": [
+            "aiff-history"
+          ],
+          "rationale": "First AIFF Regional Academy is a direct development-pathway anchor.",
+          "ratings": {
+            "squash_popularity": 5.3,
+            "squash_access": 4.5,
+            "development_quality": 5.1,
+            "competition_quality": 5.8,
+            "elite_support": 5.2,
+            "squash_tradition": 7.2
+          }
+        },
+        "2014": {
+          "confidence": "medium",
+          "source_ids": [
+            "aiff-history",
+            "aiff-isl-grassroots-2014"
+          ],
+          "rationale": "ISL launch and its mandated grassroots programme are a competition/visibility/elite-support break with some access-development spillover.",
+          "ratings": {
+            "squash_popularity": 5.7,
+            "squash_access": 4.9,
+            "development_quality": 5.3,
+            "competition_quality": 6.1,
+            "elite_support": 5.8,
+            "squash_tradition": 7.3
+          }
+        },
+        "2019": {
+          "confidence": "medium",
+          "source_ids": [
+            "fifa-india-forward-2019"
+          ],
+          "rationale": "FIFA Forward State Development Project and youth/capacity-building work support broader institutional development beyond the top league.",
+          "ratings": {
+            "squash_popularity": 5.8,
+            "squash_access": 5.2,
+            "development_quality": 5.7,
+            "competition_quality": 6,
+            "elite_support": 6.2,
+            "squash_tradition": 7.4
+          }
+        },
+        "2023": {
+          "confidence": "medium",
+          "source_ids": [
+            "aiff-academy-accreditation-2023",
+            "aiff-vision-2047-2023"
+          ],
+          "rationale": "Nine-tier academy accreditation and Vision 2047 reforms strengthen the formal youth-development framework while AIFF still reports major participation/infrastructure gaps.",
+          "ratings": {
+            "squash_popularity": 5.8,
+            "squash_access": 5.3,
+            "development_quality": 6.1,
+            "competition_quality": 6,
+            "elite_support": 6.3,
+            "squash_tradition": 7.5
+          }
+        },
+        "2026": {
+          "confidence": "low",
+          "source_ids": [
+            "fifa-india-impact-current",
+            "aiff-vision-2047-2023"
+          ],
+          "rationale": "Partial-2026 estimate uses current investment/programme evidence but does not assume that 2023 targets were fully achieved.",
+          "ratings": {
+            "squash_popularity": 5.9,
+            "squash_access": 5.5,
+            "development_quality": 6.2,
+            "competition_quality": 6,
+            "elite_support": 6.4,
+            "squash_tradition": 7.6
+          }
+        }
+      }
+    },
+    "JPN": {
+      "historical_entity": "Japan",
+      "territory_mapping_note": "Japan remains the same football-association territory across this prototype period.",
+      "reference_year": 2026,
+      "anchors": {
+        "1955": {
+          "confidence": "medium",
+          "source_ids": [
+            "jfa-history"
+          ],
+          "rationale": "Established JFA/FIFA/AFC structure before 1955; organised national football but pre-professional domestic environment.",
+          "ratings": {
+            "squash_popularity": 4.6,
+            "squash_access": 4.1,
+            "development_quality": 4,
+            "competition_quality": 4,
+            "elite_support": 3.8,
+            "squash_tradition": 5.8
+          }
+        },
+        "1965": {
+          "confidence": "medium",
+          "source_ids": [
+            "jfa-history"
+          ],
+          "rationale": "Japan Soccer League launch primarily strengthens national competition and elite organisation.",
+          "ratings": {
+            "squash_popularity": 4.7,
+            "squash_access": 4.1,
+            "development_quality": 4.1,
+            "competition_quality": 4.9,
+            "elite_support": 4.2,
+            "squash_tradition": 6
+          }
+        },
+        "1977": {
+          "confidence": "medium",
+          "source_ids": [
+            "jfa-history"
+          ],
+          "rationale": "National Training Centre is primarily a development and elite-support breakpoint.",
+          "ratings": {
+            "squash_popularity": 4.8,
+            "squash_access": 4.2,
+            "development_quality": 5.1,
+            "competition_quality": 5,
+            "elite_support": 5,
+            "squash_tradition": 6.2
+          }
+        },
+        "1986": {
+          "confidence": "medium",
+          "source_ids": [
+            "jfa-history"
+          ],
+          "rationale": "Limited professional-player licensing advances elite/professional structure without a mass-access step change.",
+          "ratings": {
+            "squash_popularity": 4.9,
+            "squash_access": 4.3,
+            "development_quality": 5.2,
+            "competition_quality": 5.4,
+            "elite_support": 5.5,
+            "squash_tradition": 6.4
+          }
+        },
+        "1991": {
+          "confidence": "medium",
+          "source_ids": [
+            "jfa-history"
+          ],
+          "rationale": "The J.League was established as a legal professional-league corporation in 1991; this is a pre-launch professionalisation anchor, distinct from the 1993 competition launch.",
+          "ratings": {
+            "squash_popularity": 5.5,
+            "squash_access": 4.6,
+            "development_quality": 5.5,
+            "competition_quality": 5.9,
+            "elite_support": 6.1,
+            "squash_tradition": 6.6
+          }
+        },
+        "1993": {
+          "confidence": "medium",
+          "source_ids": [
+            "jfa-history"
+          ],
+          "rationale": "J.League launch is a genuinely systemic professionalisation/visibility break.",
+          "ratings": {
+            "squash_popularity": 6.5,
+            "squash_access": 5,
+            "development_quality": 5.8,
+            "competition_quality": 6.5,
+            "elite_support": 6.8,
+            "squash_tradition": 6.7
+          }
+        },
+        "1998": {
+          "confidence": "medium",
+          "source_ids": [
+            "jfa-history"
+          ],
+          "rationale": "First men's World Cup appearance is used mainly as contemporary competitive/development validation.",
+          "ratings": {
+            "squash_popularity": 6.8,
+            "squash_access": 5.3,
+            "development_quality": 6.4,
+            "competition_quality": 7.2,
+            "elite_support": 6.9,
+            "squash_tradition": 6.9
+          }
+        },
+        "2002": {
+          "confidence": "medium",
+          "source_ids": [
+            "jfa-history"
+          ],
+          "rationale": "World Cup co-hosting adds visibility and elite capacity; competition quality is not forced upward solely by hosting.",
+          "ratings": {
+            "squash_popularity": 7.5,
+            "squash_access": 5.7,
+            "development_quality": 6.8,
+            "competition_quality": 7.1,
+            "elite_support": 7.5,
+            "squash_tradition": 7.1
+          }
+        },
+        "2006": {
+          "confidence": "medium",
+          "source_ids": [
+            "fifa-big-count-2006",
+            "jfa-history"
+          ],
+          "rationale": "Big Count provides a moderate organised-participation/access checkpoint for Japan. The professional J.League and national development system justify stronger development/competition ratings than the mass-access metrics alone.",
+          "ratings": {
+            "squash_popularity": 7.3,
+            "squash_access": 5.9,
+            "development_quality": 7.1,
+            "competition_quality": 7.4,
+            "elite_support": 7.5,
+            "squash_tradition": 7.3
+          }
+        },
+        "2010": {
+          "confidence": "medium",
+          "source_ids": [
+            "jfa-history"
+          ],
+          "rationale": "Mature professional and development system; popularity is allowed to move independently of performance.",
+          "ratings": {
+            "squash_popularity": 7,
+            "squash_access": 6,
+            "development_quality": 7.4,
+            "competition_quality": 7.7,
+            "elite_support": 7.4,
+            "squash_tradition": 7.4
+          }
+        },
+        "2020": {
+          "confidence": "medium",
+          "source_ids": [
+            "jfa-history"
+          ],
+          "rationale": "Contemporary mature academy/coaching pathway with slower access and tradition movement.",
+          "ratings": {
+            "squash_popularity": 6.8,
+            "squash_access": 6.3,
+            "development_quality": 8,
+            "competition_quality": 7.8,
+            "elite_support": 7.8,
+            "squash_tradition": 7.7
+          }
+        },
+        "2026": {
+          "confidence": "medium",
+          "source_ids": [
+            "jfa-history"
+          ],
+          "rationale": "Partial-2026 current-environment estimate, not a complete-year measurement.",
+          "ratings": {
+            "squash_popularity": 7,
+            "squash_access": 6.5,
+            "development_quality": 8.3,
+            "competition_quality": 8,
+            "elite_support": 8.1,
+            "squash_tradition": 7.9
+          }
+        }
+      }
+    },
+    "MAR": {
+      "historical_entity": "Morocco",
+      "territory_mapping_note": "Pre-independence Moroccan league history is retained as local tradition; 1956 federation consolidation is an explicit structural anchor.",
+      "reference_year": 2026,
+      "anchors": {
+        "1955": {
+          "confidence": "low",
+          "source_ids": [
+            "frmf-history"
+          ],
+          "rationale": "Pre-independence organised league and club history supports strong tradition/popularity before FRMF creation.",
+          "ratings": {
+            "squash_popularity": 7.6,
+            "squash_access": 5.2,
+            "development_quality": 4.5,
+            "competition_quality": 5,
+            "elite_support": 4,
+            "squash_tradition": 6.5
+          }
+        },
+        "1956": {
+          "confidence": "medium",
+          "source_ids": [
+            "frmf-history"
+          ],
+          "rationale": "FRMF formation and national championship consolidation mainly affect competition/governance.",
+          "ratings": {
+            "squash_popularity": 7.6,
+            "squash_access": 5.2,
+            "development_quality": 4.5,
+            "competition_quality": 5.4,
+            "elite_support": 4.8,
+            "squash_tradition": 6.6
+          }
+        },
+        "1960": {
+          "confidence": "medium",
+          "source_ids": [
+            "frmf-history"
+          ],
+          "rationale": "FIFA affiliation primarily improves international access and institutional integration.",
+          "ratings": {
+            "squash_popularity": 7.6,
+            "squash_access": 5.2,
+            "development_quality": 4.5,
+            "competition_quality": 5.6,
+            "elite_support": 5,
+            "squash_tradition": 6.7
+          }
+        },
+        "1970": {
+          "confidence": "low",
+          "source_ids": [
+            "frmf-history",
+            "fifa-morocco-worldcup-history-2026"
+          ],
+          "rationale": "First World Cup appearance is a competition/tradition checkpoint only; it does not imply a mass-access or development-system step change.",
+          "ratings": {
+            "squash_popularity": 7.6,
+            "squash_access": 5.3,
+            "development_quality": 4.7,
+            "competition_quality": 5.9,
+            "elite_support": 5.1,
+            "squash_tradition": 6.8
+          }
+        },
+        "1986": {
+          "confidence": "low",
+          "source_ids": [
+            "frmf-history"
+          ],
+          "rationale": "Intermediate competition/tradition checkpoint prevents one 49-year interpolation; tournament evidence is not used as mass-access evidence.",
+          "ratings": {
+            "squash_popularity": 7.7,
+            "squash_access": 5.4,
+            "development_quality": 5,
+            "competition_quality": 6.4,
+            "elite_support": 5.4,
+            "squash_tradition": 7
+          }
+        },
+        "1998": {
+          "confidence": "low",
+          "source_ids": [
+            "frmf-history",
+            "fifa-morocco-worldcup-history-2026"
+          ],
+          "rationale": "France 1998 provides a second competition/tradition checkpoint between the 1986 generation and the 2009 academy-era development break.",
+          "ratings": {
+            "squash_popularity": 7.8,
+            "squash_access": 5.5,
+            "development_quality": 5.2,
+            "competition_quality": 6.6,
+            "elite_support": 5.6,
+            "squash_tradition": 7.3
+          }
+        },
+        "2006": {
+          "confidence": "medium",
+          "source_ids": [
+            "fifa-big-count-2006",
+            "frmf-history"
+          ],
+          "rationale": "Big Count shows strong overall football participation in Morocco but only moderate registered-player and club density. The 2006 checkpoint therefore keeps popularity high while organised access remains materially below the densest European/microstate prototype cases.",
+          "ratings": {
+            "squash_popularity": 7.8,
+            "squash_access": 5.7,
+            "development_quality": 6.1,
+            "competition_quality": 6.5,
+            "elite_support": 6.3,
+            "squash_tradition": 7.4
+          }
+        },
+        "2009": {
+          "confidence": "low",
+          "source_ids": [
+            "fifa-morocco-academy-2009",
+            "frmf-history",
+            "fifa-morocco-development"
+          ],
+          "rationale": "Provisional structural anchor for the Mohammed VI Academy development phase. FIFA sources conflict between establishment/unveiling in 2009 and an opening in 2019, so the timing remains explicitly unresolved.",
+          "ratings": {
+            "squash_popularity": 7.8,
+            "squash_access": 5.6,
+            "development_quality": 6.4,
+            "competition_quality": 6.5,
+            "elite_support": 6.6,
+            "squash_tradition": 7.4
+          }
+        },
+        "2020": {
+          "confidence": "medium",
+          "source_ids": [
+            "fifa-morocco-development"
+          ],
+          "rationale": "Expanded academy, technical and infrastructure network strongly affects development/elite support.",
+          "ratings": {
+            "squash_popularity": 8,
+            "squash_access": 6.2,
+            "development_quality": 7.7,
+            "competition_quality": 7.2,
+            "elite_support": 7.8,
+            "squash_tradition": 7.7
+          }
+        },
+        "2026": {
+          "confidence": "medium",
+          "source_ids": [
+            "fifa-morocco-development"
+          ],
+          "rationale": "Partial-2026 mature-system estimate; recent results validate but do not retroactively cause earlier development ratings.",
+          "ratings": {
+            "squash_popularity": 8.2,
+            "squash_access": 6.6,
+            "development_quality": 8.5,
+            "competition_quality": 8,
+            "elite_support": 8.5,
+            "squash_tradition": 7.9
+          }
+        }
+      }
+    },
+    "SEN": {
+      "name": "Senegal",
+      "historical_entity": "Senegal",
+      "territory_mapping_note": "1955 is a low-confidence pre-independence backcast context; 1960 federation creation and 1964 FIFA/CAF integration are explicit anchors.",
+      "anchors": {
+        "1955": {
+          "confidence": "low",
+          "source_ids": [
+            "caf-senegal-member",
+            "caf-senegal-afcon-history"
+          ],
+          "rationale": "Low-confidence pre-independence backcast. The modern federation was not created until 1960, while Senegal reached the AFCON finals soon after independence. No direct 1955 participation measurement is claimed.",
+          "ratings": {
+            "squash_popularity": 6,
+            "squash_access": 4.2,
+            "development_quality": 3.8,
+            "competition_quality": 4.2,
+            "elite_support": 3.6,
+            "squash_tradition": 5.5
+          }
+        },
+        "1960": {
+          "confidence": "high",
+          "source_ids": [
+            "caf-senegal-member"
+          ],
+          "rationale": "CAF records the creation of the Senegalese Football Federation in 1960. This is an institutional anchor, not a claim that football itself began in 1960.",
+          "ratings": {
+            "squash_popularity": 6.2,
+            "squash_access": 4.4,
+            "development_quality": 4.2,
+            "competition_quality": 4.5,
+            "elite_support": 4,
+            "squash_tradition": 5.8
+          }
+        },
+        "1964": {
+          "confidence": "high",
+          "source_ids": [
+            "caf-senegal-member"
+          ],
+          "rationale": "CAF records FIFA and CAF affiliation in 1964, improving international competition access and formal institutional integration without resetting domestic tradition.",
+          "ratings": {
+            "squash_popularity": 6.3,
+            "squash_access": 4.5,
+            "development_quality": 4.3,
+            "competition_quality": 4.8,
+            "elite_support": 4.3,
+            "squash_tradition": 6
+          }
+        },
+        "1968": {
+          "confidence": "high",
+          "source_ids": [
+            "caf-senegal-afcon-history"
+          ],
+          "rationale": "A second early AFCON finals appearance provides competition/tradition evidence while mass access and development remain only modestly changed.",
+          "ratings": {
+            "squash_popularity": 6.4,
+            "squash_access": 4.6,
+            "development_quality": 4.4,
+            "competition_quality": 5.1,
+            "elite_support": 4.4,
+            "squash_tradition": 6.1
+          }
+        },
+        "1986": {
+          "confidence": "high",
+          "source_ids": [
+            "caf-senegal-afcon-history"
+          ],
+          "rationale": "Senegal returned to the AFCON finals in 1986 and defeated hosts Egypt in the opening match. This is primarily a competition-quality checkpoint after a long finals absence.",
+          "ratings": {
+            "squash_popularity": 6.6,
+            "squash_access": 4.8,
+            "development_quality": 4.6,
+            "competition_quality": 5.4,
+            "elite_support": 4.5,
+            "squash_tradition": 6.4
+          }
+        },
+        "1990": {
+          "confidence": "high",
+          "source_ids": [
+            "caf-senegal-afcon-history"
+          ],
+          "rationale": "Fourth place at AFCON 1990 supports a stronger competitive phase without implying a simultaneous nationwide development/access leap.",
+          "ratings": {
+            "squash_popularity": 6.8,
+            "squash_access": 4.9,
+            "development_quality": 4.8,
+            "competition_quality": 5.8,
+            "elite_support": 4.7,
+            "squash_tradition": 6.6
+          }
+        },
+        "1992": {
+          "confidence": "high",
+          "source_ids": [
+            "caf-afcon-1992-host"
+          ],
+          "rationale": "Hosting the expanded 1992 AFCON is an elite-support and competition-environment anchor; it does not by itself imply maximum development or participation.",
+          "ratings": {
+            "squash_popularity": 7.1,
+            "squash_access": 5.1,
+            "development_quality": 4.9,
+            "competition_quality": 5.7,
+            "elite_support": 5.2,
+            "squash_tradition": 6.8
+          }
+        },
+        "2000": {
+          "confidence": "high",
+          "source_ids": [
+            "fifa-senegal-generation-foot-2000",
+            "caf-senegal-academies-league"
+          ],
+          "rationale": "Génération Foot was founded in 2000, marking a clear modern academy/development-pathway anchor rather than a mass-access shock.",
+          "ratings": {
+            "squash_popularity": 7.2,
+            "squash_access": 5.2,
+            "development_quality": 5.3,
+            "competition_quality": 5.8,
+            "elite_support": 5.3,
+            "squash_tradition": 6.9
+          }
+        },
+        "2002": {
+          "confidence": "high",
+          "source_ids": [
+            "fifa-senegal-worldcup-2002"
+          ],
+          "rationale": "Senegal reached the World Cup quarter-finals on debut in 2002. The sharp change is concentrated in competition quality and visibility, not retrospectively applied to development or access.",
+          "ratings": {
+            "squash_popularity": 7.8,
+            "squash_access": 5.3,
+            "development_quality": 5.5,
+            "competition_quality": 6.9,
+            "elite_support": 5.6,
+            "squash_tradition": 7.1
+          }
+        },
+        "2003": {
+          "confidence": "high",
+          "source_ids": [
+            "caf-senegal-academies-league",
+            "fifa-senegal-worldcup-2002"
+          ],
+          "rationale": "Diambars was founded in 2003, while FIFA describes a post-2002 institutional legacy. This anchor raises development and elite-support capacity more than popularity.",
+          "ratings": {
+            "squash_popularity": 7.8,
+            "squash_access": 5.4,
+            "development_quality": 6,
+            "competition_quality": 6.9,
+            "elite_support": 5.8,
+            "squash_tradition": 7.1
+          }
+        },
+        "2006": {
+          "confidence": "high",
+          "source_ids": [
+            "fifa-big-count-2006",
+            "fifa-senegal-generation-foot-2000",
+            "caf-senegal-academies-league"
+          ],
+          "rationale": "FIFA Big Count shows strong participation and registered-player density after population normalisation, while academy evidence supports a stronger development environment. Popularity/access are calibrated comparatively; Big Count is not men-only and is not treated as a direct quality score.",
+          "ratings": {
+            "squash_popularity": 8,
+            "squash_access": 6.4,
+            "development_quality": 6.4,
+            "competition_quality": 6.9,
+            "elite_support": 6.1,
+            "squash_tradition": 7.3
+          }
+        },
+        "2009": {
+          "confidence": "high",
+          "source_ids": [
+            "caf-senegal-academies-league"
+          ],
+          "rationale": "CAF records the launch of Senegal's professional league in 2009. This primarily raises domestic competition structure and elite support while academy development continues separately.",
+          "ratings": {
+            "squash_popularity": 8,
+            "squash_access": 6.5,
+            "development_quality": 6.6,
+            "competition_quality": 7.3,
+            "elite_support": 6.7,
+            "squash_tradition": 7.4
+          }
+        },
+        "2020": {
+          "confidence": "high",
+          "source_ids": [
+            "fifa-senegal-youth-2020"
+          ],
+          "rationale": "National U15/U17/U20 youth leagues are introduced across all 14 regions, materially strengthening development and competition pathways.",
+          "ratings": {
+            "squash_popularity": 8.3,
+            "squash_access": 6.8,
+            "development_quality": 7.4,
+            "competition_quality": 7.2,
+            "elite_support": 6.8,
+            "squash_tradition": 7.8
+          }
+        },
+        "2023": {
+          "confidence": "high",
+          "source_ids": [
+            "fifa-professional-2023",
+            "fifa-senegal-youth-2020"
+          ],
+          "rationale": "Youth pathway remains active; FIFA professional report lists 18 professional clubs while missing player count is treated as unknown, not zero.",
+          "ratings": {
+            "squash_popularity": 8.4,
+            "squash_access": 7,
+            "development_quality": 7.8,
+            "competition_quality": 7.7,
+            "elite_support": 7.2,
+            "squash_tradition": 8
+          }
+        },
+        "2026": {
+          "confidence": "medium",
+          "source_ids": [
+            "fifa-senegal-youth-2020"
+          ],
+          "rationale": "Partial-2026 estimate carries forward documented pathway improvements with bounded gains.",
+          "ratings": {
+            "squash_popularity": 8.5,
+            "squash_access": 7.2,
+            "development_quality": 8,
+            "competition_quality": 7.9,
+            "elite_support": 7.5,
+            "squash_tradition": 8.2
+          }
+        }
+      },
+      "reference_year": 2026
+    },
+    "SVK": {
+      "reference_year": 2026,
+      "historical_periods": [
+        {
+          "from": 1955,
+          "to": 1992,
+          "historical_entity": "Czechoslovakia — Slovak lands",
+          "territory_mapping_note": "Current Slovak territory inside Czechoslovakia. Slovak clubs, regional competitions and institutions may inform this series; Czechoslovak national totals/results are not copied into Slovakia."
+        },
+        {
+          "from": 1993,
+          "to": 2026,
+          "historical_entity": "Slovakia",
+          "territory_mapping_note": "Independent Slovak association period after the 1 January 1993 split; modern ratings use Slovak-specific evidence."
+        }
+      ],
+      "anchors": {
+        "1955": {
+          "confidence": "low",
+          "source_ids": [
+            "sfz-history-1938",
+            "uefa-slovakia-history"
+          ],
+          "rationale": "Slovak football has its own 1938 association/1939–45 league history and enters 1955 as an established regional ecosystem inside Czechoslovakia.",
+          "ratings": {
+            "squash_popularity": 7.4,
+            "squash_access": 6.8,
+            "development_quality": 5.8,
+            "competition_quality": 6.2,
+            "elite_support": 5.7,
+            "squash_tradition": 7.8
+          }
+        },
+        "1960": {
+          "confidence": "medium",
+          "source_ids": [
+            "facr-league-1960",
+            "sfz-history-1938"
+          ],
+          "rationale": "Official shared-league evidence shows multiple Slovak-territory clubs at the top level, supporting local competition depth without duplicating Czechoslovak national observations.",
+          "ratings": {
+            "squash_popularity": 7.5,
+            "squash_access": 7,
+            "development_quality": 5.9,
+            "competition_quality": 6.4,
+            "elite_support": 5.8,
+            "squash_tradition": 7.9
+          }
+        },
+        "1969": {
+          "confidence": "medium",
+          "source_ids": [
+            "uefa-slovan-1969",
+            "uefa-slovakia-history"
+          ],
+          "rationale": "Slovan Bratislava's 1969 Cup Winners' Cup title is geographically attributable elite-club competition/tradition evidence for the Slovak territorial ecosystem.",
+          "ratings": {
+            "squash_popularity": 7.7,
+            "squash_access": 7.2,
+            "development_quality": 6.1,
+            "competition_quality": 7,
+            "elite_support": 6.1,
+            "squash_tradition": 8.1
+          }
+        },
+        "1987": {
+          "confidence": "low",
+          "source_ids": [
+            "uefa-slovakia-history",
+            "sfz-history-1938"
+          ],
+          "rationale": "Low-confidence continuity checkpoint for a mature Slovak club/competition ecosystem inside Czechoslovakia; no predecessor national-team total is inherited.",
+          "ratings": {
+            "squash_popularity": 7.7,
+            "squash_access": 7.5,
+            "development_quality": 6.2,
+            "competition_quality": 6.8,
+            "elite_support": 6,
+            "squash_tradition": 8.3
+          }
+        },
+        "1992": {
+          "confidence": "low",
+          "source_ids": [
+            "uefa-slovakia-history"
+          ],
+          "rationale": "Final predecessor-period checkpoint immediately before the split, built from Slovak-local continuity rather than a duplicated Czechoslovak aggregate.",
+          "ratings": {
+            "squash_popularity": 7.6,
+            "squash_access": 7.6,
+            "development_quality": 6.2,
+            "competition_quality": 6.6,
+            "elite_support": 6,
+            "squash_tradition": 8.4
+          }
+        },
+        "1993": {
+          "confidence": "medium",
+          "source_ids": [
+            "uefa-slovakia-history"
+          ],
+          "rationale": "Independent SFZ/league transition begins; local tradition persists while independent elite governance and competition are re-established.",
+          "ratings": {
+            "squash_popularity": 7.6,
+            "squash_access": 7.4,
+            "development_quality": 6,
+            "competition_quality": 6.2,
+            "elite_support": 5.7,
+            "squash_tradition": 8.4
+          }
+        },
+        "1994": {
+          "confidence": "medium",
+          "source_ids": [
+            "uefa-slovakia-history"
+          ],
+          "rationale": "FIFA admission completes early international-institution integration of the independent Slovak association.",
+          "ratings": {
+            "squash_popularity": 7.6,
+            "squash_access": 7.4,
+            "development_quality": 6,
+            "competition_quality": 6.3,
+            "elite_support": 5.8,
+            "squash_tradition": 8.4
+          }
+        },
+        "2004": {
+          "confidence": "medium",
+          "source_ids": [
+            "uefa-slovakia-hattrick-review"
+          ],
+          "rationale": "HatTrick-era grassroots and facility investment begins a measurable access/infrastructure improvement phase.",
+          "ratings": {
+            "squash_popularity": 7.5,
+            "squash_access": 8.4,
+            "development_quality": 6.2,
+            "competition_quality": 6.2,
+            "elite_support": 6.1,
+            "squash_tradition": 8.5
+          }
+        },
+        "2006": {
+          "confidence": "medium",
+          "source_ids": [
+            "fifa-big-count-2006",
+            "uefa-slovakia-hattrick-review",
+            "uefa-slovakia-history"
+          ],
+          "rationale": "Big Count shows very high registered-player and club density in Slovakia after population normalisation. Access is recalibrated into the strong/world-leading band, while competition/development remain tied to separate Slovak evidence.",
+          "ratings": {
+            "squash_popularity": 7.7,
+            "squash_access": 8.8,
+            "development_quality": 6.3,
+            "competition_quality": 6.5,
+            "elite_support": 6.2,
+            "squash_tradition": 8.5
+          }
+        },
+        "2010": {
+          "confidence": "medium",
+          "source_ids": [
+            "uefa-slovakia-history",
+            "uefa-slovakia-hattrick-review"
+          ],
+          "rationale": "First independent World Cup qualification validates competition progress while HatTrick investment supports access/development separately.",
+          "ratings": {
+            "squash_popularity": 7.8,
+            "squash_access": 8.8,
+            "development_quality": 6.6,
+            "competition_quality": 7,
+            "elite_support": 6.4,
+            "squash_tradition": 8.6
+          }
+        },
+        "2014": {
+          "confidence": "medium",
+          "source_ids": [
+            "uefa-slovakia-hattrick-review"
+          ],
+          "rationale": "By the end of the first HatTrick decade, 100 mini-pitches and ten full-size artificial pitches provide strong direct access/infrastructure evidence.",
+          "ratings": {
+            "squash_popularity": 7.8,
+            "squash_access": 8.9,
+            "development_quality": 7,
+            "competition_quality": 6.8,
+            "elite_support": 6.8,
+            "squash_tradition": 8.6
+          }
+        },
+        "2018": {
+          "confidence": "medium",
+          "source_ids": [
+            "uefa-slovakia-hattrick",
+            "uefa-slovakia-history"
+          ],
+          "rationale": "2018–22 strategy explicitly prioritises youth, grassroots and infrastructure; national training centres and regional pitches strengthen development/elite support.",
+          "ratings": {
+            "squash_popularity": 7.8,
+            "squash_access": 8.9,
+            "development_quality": 7.3,
+            "competition_quality": 6.9,
+            "elite_support": 7,
+            "squash_tradition": 8.7
+          }
+        },
+        "2021": {
+          "confidence": "medium",
+          "source_ids": [
+            "uefa-slovakia-hattrick"
+          ],
+          "rationale": "VAR implementation period and continued national/regional infrastructure reflect maturing competition administration and elite support.",
+          "ratings": {
+            "squash_popularity": 7.8,
+            "squash_access": 8.9,
+            "development_quality": 7.3,
+            "competition_quality": 7,
+            "elite_support": 7.1,
+            "squash_tradition": 8.7
+          }
+        },
+        "2026": {
+          "confidence": "low",
+          "source_ids": [
+            "uefa-slovakia-history",
+            "uefa-slovakia-hattrick"
+          ],
+          "rationale": "Partial-2026 estimate: established football culture with broad modern infrastructure and solid development/competition systems.",
+          "ratings": {
+            "squash_popularity": 7.9,
+            "squash_access": 8.9,
+            "development_quality": 7.5,
+            "competition_quality": 7,
+            "elite_support": 7.2,
+            "squash_tradition": 8.8
+          }
+        }
+      }
+    },
+    "USA": {
+      "historical_entity": "United States",
+      "territory_mapping_note": "Association territory is continuous; league collapses/relaunches are explicit competition/elite-support breaks.",
+      "reference_year": 2026,
+      "anchors": {
+        "1955": {
+          "confidence": "low",
+          "source_ids": [
+            "ussoccer-timeline"
+          ],
+          "rationale": "Long federation history but football remains a relatively minor national sport and elite league structure is shallow.",
+          "ratings": {
+            "squash_popularity": 2.5,
+            "squash_access": 3,
+            "development_quality": 2.8,
+            "competition_quality": 3.2,
+            "elite_support": 3,
+            "squash_tradition": 5.6
+          }
+        },
+        "1968": {
+          "confidence": "low",
+          "source_ids": [
+            "ussoccer-timeline"
+          ],
+          "rationale": "NASL-era national professional competition primarily raises competition and elite support.",
+          "ratings": {
+            "squash_popularity": 3,
+            "squash_access": 3.3,
+            "development_quality": 3,
+            "competition_quality": 4.2,
+            "elite_support": 3.8,
+            "squash_tradition": 5.8
+          }
+        },
+        "1984": {
+          "confidence": "low",
+          "source_ids": [
+            "ussoccer-timeline"
+          ],
+          "rationale": "NASL collapse lowers professional competition/elite support while grassroots access/tradition do not reset.",
+          "ratings": {
+            "squash_popularity": 3.8,
+            "squash_access": 4.8,
+            "development_quality": 3.8,
+            "competition_quality": 3.4,
+            "elite_support": 3.1,
+            "squash_tradition": 6.1
+          }
+        },
+        "1988": {
+          "confidence": "medium",
+          "source_ids": [
+            "ussoccer-timeline",
+            "ussoccer-worldcup-bid-1988"
+          ],
+          "rationale": "FIFA awarded the United States the 1994 World Cup with a requirement to establish a top-flight professional league; this primarily raises institutional commitment and future elite support.",
+          "ratings": {
+            "squash_popularity": 4,
+            "squash_access": 5,
+            "development_quality": 3.9,
+            "competition_quality": 3.5,
+            "elite_support": 3.8,
+            "squash_tradition": 6.2
+          }
+        },
+        "1990": {
+          "confidence": "medium",
+          "source_ids": [
+            "ussoccer-timeline"
+          ],
+          "rationale": "The men's national team returned to the World Cup after 40 years and APSL formed from WSL/ASL; competition/elite structures improve without implying a mass-access jump.",
+          "ratings": {
+            "squash_popularity": 4.2,
+            "squash_access": 5.2,
+            "development_quality": 4,
+            "competition_quality": 4,
+            "elite_support": 4.1,
+            "squash_tradition": 6.3
+          }
+        },
+        "1993": {
+          "confidence": "medium",
+          "source_ids": [
+            "ussoccer-timeline"
+          ],
+          "rationale": "U.S. Soccer's Strategic Summit, World Cup dress rehearsal and formal MLS plans mark broad preparation for a durable national professional ecosystem.",
+          "ratings": {
+            "squash_popularity": 4.6,
+            "squash_access": 6.1,
+            "development_quality": 4.4,
+            "competition_quality": 4.3,
+            "elite_support": 5.1,
+            "squash_tradition": 6.5
+          }
+        },
+        "1994": {
+          "confidence": "medium",
+          "source_ids": [
+            "ussoccer-timeline"
+          ],
+          "rationale": "World Cup hosting and participation growth create a broad visibility/access/elite-investment anchor.",
+          "ratings": {
+            "squash_popularity": 5,
+            "squash_access": 6.8,
+            "development_quality": 4.8,
+            "competition_quality": 4.5,
+            "elite_support": 5.4,
+            "squash_tradition": 6.6
+          }
+        },
+        "1996": {
+          "confidence": "medium",
+          "source_ids": [
+            "ussoccer-timeline"
+          ],
+          "rationale": "MLS launch restores a durable national professional-league pathway.",
+          "ratings": {
+            "squash_popularity": 5.2,
+            "squash_access": 6.9,
+            "development_quality": 5.1,
+            "competition_quality": 5.4,
+            "elite_support": 5.8,
+            "squash_tradition": 6.7
+          }
+        },
+        "2002": {
+          "confidence": "medium",
+          "source_ids": [
+            "ussoccer-timeline"
+          ],
+          "rationale": "Professional and national-team pathways mature; results validate competition rather than retroactively causing development.",
+          "ratings": {
+            "squash_popularity": 5.6,
+            "squash_access": 7.2,
+            "development_quality": 5.9,
+            "competition_quality": 6.2,
+            "elite_support": 6.4,
+            "squash_tradition": 6.9
+          }
+        },
+        "2003": {
+          "confidence": "medium",
+          "source_ids": [
+            "ussoccer-history-framework",
+            "ussoccer-timeline"
+          ],
+          "rationale": "The National Training Center opened in Carson, giving federation player-development activity a dedicated home; effect is concentrated in development/elite support.",
+          "ratings": {
+            "squash_popularity": 5.6,
+            "squash_access": 7.2,
+            "development_quality": 6,
+            "competition_quality": 6.2,
+            "elite_support": 6.7,
+            "squash_tradition": 6.9
+          }
+        },
+        "2006": {
+          "confidence": "medium",
+          "source_ids": [
+            "fifa-big-count-2006",
+            "ussoccer-timeline",
+            "ussoccer-history-framework"
+          ],
+          "rationale": "Big Count shows a very large and broad participation base with solid registration and club density. Access is strong, while football's relative cultural popularity and elite competition quality remain lower than the participation totals alone would imply.",
+          "ratings": {
+            "squash_popularity": 5.8,
+            "squash_access": 7.4,
+            "development_quality": 6.4,
+            "competition_quality": 6.3,
+            "elite_support": 6.8,
+            "squash_tradition": 7
+          }
+        },
+        "2007": {
+          "confidence": "medium",
+          "source_ids": [
+            "ussoccer-development-academy-2007"
+          ],
+          "rationale": "The men's Development Academy launched after a review of elite youth development, creating national standards for everyday player-development environments.",
+          "ratings": {
+            "squash_popularity": 5.8,
+            "squash_access": 7.4,
+            "development_quality": 6.5,
+            "competition_quality": 6.3,
+            "elite_support": 6.8,
+            "squash_tradition": 7
+          }
+        },
+        "2010": {
+          "confidence": "medium",
+          "source_ids": [
+            "ussoccer-timeline"
+          ],
+          "rationale": "Broad youth/access base and stable professional structure coexist with sub-dominant national cultural popularity.",
+          "ratings": {
+            "squash_popularity": 6,
+            "squash_access": 7.6,
+            "development_quality": 6.4,
+            "competition_quality": 6.5,
+            "elite_support": 6.8,
+            "squash_tradition": 7.1
+          }
+        },
+        "2018": {
+          "confidence": "medium",
+          "source_ids": [
+            "ussoccer-development-academy-2007",
+            "ussoccer-national-development-center-2018"
+          ],
+          "rationale": "The mature Development Academy pathway and 2018 National Development Center strengthen coach education, high performance and elite-development infrastructure.",
+          "ratings": {
+            "squash_popularity": 6.3,
+            "squash_access": 7.8,
+            "development_quality": 7.1,
+            "competition_quality": 6.9,
+            "elite_support": 7.4,
+            "squash_tradition": 7.3
+          }
+        },
+        "2024": {
+          "confidence": "medium",
+          "source_ids": [
+            "ussoccer-timeline",
+            "ussoccer-training-center"
+          ],
+          "rationale": "Professional expansion and national training-centre investment strengthen development/elite support.",
+          "ratings": {
+            "squash_popularity": 6.5,
+            "squash_access": 8,
+            "development_quality": 7.3,
+            "competition_quality": 7.2,
+            "elite_support": 7.8,
+            "squash_tradition": 7.5
+          }
+        },
+        "2026": {
+          "confidence": "medium",
+          "source_ids": [
+            "ussoccer-timeline",
+            "ussoccer-training-center"
+          ],
+          "rationale": "Partial-2026 current-environment estimate after the 2026 hosting cycle.",
+          "ratings": {
+            "squash_popularity": 7,
+            "squash_access": 8.1,
+            "development_quality": 7.5,
+            "competition_quality": 7.4,
+            "elite_support": 8,
+            "squash_tradition": 7.6
+          }
+        }
+      }
+    },
+    "ZAF": {
+      "historical_entity": "South Africa",
+      "territory_mapping_note": "Apartheid-era international exclusion is an institutional/competition-access disruption, not absence of domestic football.",
+      "reference_year": 2026,
+      "anchors": {
+        "1955": {
+          "confidence": "low",
+          "source_ids": [
+            "fifa-south-africa-history",
+            "caf-south-africa"
+          ],
+          "rationale": "Substantial football culture exists, but racially fragmented governance/access constrains the system.",
+          "ratings": {
+            "squash_popularity": 8.2,
+            "squash_access": 4,
+            "development_quality": 4.5,
+            "competition_quality": 5.5,
+            "elite_support": 4,
+            "squash_tradition": 7
+          }
+        },
+        "1961": {
+          "confidence": "medium",
+          "source_ids": [
+            "fifa-south-africa-history"
+          ],
+          "rationale": "International exclusion sharply reduces competition access and elite institutional support without erasing popularity/tradition.",
+          "ratings": {
+            "squash_popularity": 8.2,
+            "squash_access": 3.8,
+            "development_quality": 4.2,
+            "competition_quality": 4.5,
+            "elite_support": 3,
+            "squash_tradition": 7.1
+          }
+        },
+        "1978": {
+          "confidence": "low",
+          "source_ids": [
+            "fifa-south-africa-history"
+          ],
+          "rationale": "Increasingly multiracial top-flight structures support some domestic recovery during continued isolation.",
+          "ratings": {
+            "squash_popularity": 8.3,
+            "squash_access": 4.5,
+            "development_quality": 4.5,
+            "competition_quality": 5.2,
+            "elite_support": 3.5,
+            "squash_tradition": 7.4
+          }
+        },
+        "1991": {
+          "confidence": "medium",
+          "source_ids": [
+            "caf-south-africa",
+            "fifa-south-africa-history"
+          ],
+          "rationale": "Unified SAFA formation is a governance structural transition.",
+          "ratings": {
+            "squash_popularity": 8.3,
+            "squash_access": 5,
+            "development_quality": 5,
+            "competition_quality": 5.4,
+            "elite_support": 5.4,
+            "squash_tradition": 7.7
+          }
+        },
+        "1992": {
+          "confidence": "medium",
+          "source_ids": [
+            "caf-south-africa",
+            "fifa-south-africa-history"
+          ],
+          "rationale": "FIFA/CAF readmission restores international competition access.",
+          "ratings": {
+            "squash_popularity": 8.3,
+            "squash_access": 5.1,
+            "development_quality": 5,
+            "competition_quality": 5.9,
+            "elite_support": 5.7,
+            "squash_tradition": 7.7
+          }
+        },
+        "1996": {
+          "confidence": "medium",
+          "source_ids": [
+            "caf-south-africa",
+            "fifa-south-africa-history"
+          ],
+          "rationale": "Post-readmission performance validates a stronger contemporary competition environment.",
+          "ratings": {
+            "squash_popularity": 8.5,
+            "squash_access": 5.5,
+            "development_quality": 5.4,
+            "competition_quality": 7,
+            "elite_support": 6.2,
+            "squash_tradition": 7.9
+          }
+        },
+        "2006": {
+          "confidence": "medium",
+          "source_ids": [
+            "fifa-big-count-2006",
+            "caf-south-africa",
+            "fifa-south-africa-history"
+          ],
+          "rationale": "Big Count shows high participation and registration density in South Africa, but club density and known inequality/geographic barriers keep organised access below the Czech/Slovak/Faroese prototype cases. Popularity remains very high.",
+          "ratings": {
+            "squash_popularity": 8.6,
+            "squash_access": 7,
+            "development_quality": 5.8,
+            "competition_quality": 6.7,
+            "elite_support": 7.1,
+            "squash_tradition": 8.1
+          }
+        },
+        "2010": {
+          "confidence": "medium",
+          "source_ids": [
+            "caf-south-africa"
+          ],
+          "rationale": "World Cup hosting period supports elite/infrastructure capacity while access remains unequal.",
+          "ratings": {
+            "squash_popularity": 8.6,
+            "squash_access": 7.1,
+            "development_quality": 6,
+            "competition_quality": 6.6,
+            "elite_support": 7.5,
+            "squash_tradition": 8.2
+          }
+        },
+        "2026": {
+          "confidence": "low",
+          "source_ids": [
+            "caf-south-africa"
+          ],
+          "rationale": "Partial-2026 estimate: deep tradition/popularity with solid but non-world-leading current system.",
+          "ratings": {
+            "squash_popularity": 8.2,
+            "squash_access": 6.8,
+            "development_quality": 6.4,
+            "competition_quality": 6.4,
+            "elite_support": 6.8,
+            "squash_tradition": 8.4
+          }
+        }
+      }
+    }
+  }
+}

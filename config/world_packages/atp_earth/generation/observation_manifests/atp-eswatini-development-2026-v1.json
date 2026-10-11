@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-eswatini-development-2026-v1",
+  "source_id": "itf-eswatini-development-eligibility-2026",
+  "relative_path": "observations/normalized/atp_eswatini_development_2026_v1.json",
+  "sha256": "5fae448d27a5cb6f705416a2b33354257dfead50371d0c184d31dc4999b8bc55",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

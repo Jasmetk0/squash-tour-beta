@@ -1,0 +1,63 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "fifa-earth-sdn-model.v1",
+  "world_id": "fifa_earth",
+  "data_cutoff": "2026-10-03",
+  "countries": [
+    "SDN"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "evidence_rules": [
+    "CAF creation (1936) and FIFA affiliation (1948) predate the game window; CAF affiliation is gated to 1957.",
+    "Sudan evidence is not duplicated into South Sudan after partition.",
+    "No ranking or match outcome is mechanically converted into a rating."
+  ],
+  "anchor_values": {
+    "SDN": {
+      "1955": [
+        6.1,
+        5.4,
+        5.6,
+        5.7,
+        5.2,
+        6.7
+      ],
+      "1957": [
+        6.4,
+        5.7,
+        5.9,
+        6.1,
+        5.6,
+        7
+      ],
+      "2006": [
+        7,
+        6.2,
+        6.4,
+        6.6,
+        6,
+        7.5
+      ],
+      "2011": [
+        6.8,
+        6,
+        6.2,
+        6.4,
+        5.8,
+        7.4
+      ],
+      "2026": [
+        6.6,
+        5.8,
+        6,
+        6.2,
+        5.6,
+        7.3
+      ]
+    }
+  },
+  "evidence_sources": [
+    "caf-sudan-profile"
+  ],
+  "heldout_ranking_used": false
+}

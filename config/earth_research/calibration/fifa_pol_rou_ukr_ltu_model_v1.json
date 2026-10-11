@@ -1,0 +1,255 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "fifa-earth-country-history-pol-rou-ukr-ltu.v1",
+  "world_id": "fifa_earth",
+  "data_cutoff": "2026-10-03",
+  "countries": [
+    "POL",
+    "ROU",
+    "UKR",
+    "LTU"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "principles": [
+    "Structural chronology is temporally gated and never converted mechanically into ratings.",
+    "Ukraine and Lithuania do not inherit USSR-wide counts, professional ecosystem or outcomes during Soviet governance.",
+    "Ukraine 2023–2026 preserves contemporary operating disruption in access/development/support rather than assuming its pre-2022 trajectory continued unchanged.",
+    "Big Count definition anomalies reduce confidence instead of forcing a score.",
+    "No held-out rankings, trophy counts or tournament outcomes are calibration inputs."
+  ],
+  "anchor_values": {
+    "POL": {
+      "1955": [
+        7.7,
+        7.1,
+        7.5,
+        8.1,
+        7.5,
+        8.5
+      ],
+      "2006": [
+        8.6,
+        8.7,
+        8.5,
+        8.6,
+        8.5,
+        8.9
+      ],
+      "2012": [
+        8.6,
+        8.7,
+        8.6,
+        8.6,
+        8.8,
+        8.9
+      ],
+      "2023": [
+        8.7,
+        8.7,
+        8.9,
+        8.8,
+        8.9,
+        9
+      ],
+      "2026": [
+        8.7,
+        8.7,
+        9,
+        8.8,
+        8.9,
+        9
+      ]
+    },
+    "ROU": {
+      "1955": [
+        7.8,
+        7,
+        7.4,
+        8,
+        7.4,
+        8.5
+      ],
+      "1957": [
+        7.8,
+        7,
+        7.5,
+        8,
+        7.5,
+        8.5
+      ],
+      "1990": [
+        8.1,
+        7.4,
+        8,
+        8.4,
+        8,
+        8.8
+      ],
+      "2006": [
+        8.3,
+        7.8,
+        8.3,
+        8.5,
+        8.4,
+        8.9
+      ],
+      "2023": [
+        8.3,
+        7.8,
+        8.6,
+        8.6,
+        8.7,
+        9
+      ],
+      "2026": [
+        8.3,
+        7.9,
+        8.7,
+        8.6,
+        8.8,
+        9
+      ]
+    },
+    "UKR": {
+      "1955": [
+        7.8,
+        6.9,
+        7.8,
+        8.2,
+        7.4,
+        8.4
+      ],
+      "1990": [
+        8,
+        7.2,
+        8.2,
+        8.5,
+        7.8,
+        8.7
+      ],
+      "1991": [
+        8,
+        7.1,
+        7.9,
+        8,
+        7.1,
+        8.7
+      ],
+      "1992": [
+        8.1,
+        7.3,
+        8,
+        8.3,
+        7.5,
+        8.8
+      ],
+      "2006": [
+        8.7,
+        7.8,
+        8.6,
+        8.8,
+        8.6,
+        9
+      ],
+      "2022": [
+        8.7,
+        7.9,
+        8.8,
+        8.9,
+        8.8,
+        9.1
+      ],
+      "2023": [
+        8.5,
+        7.5,
+        8.5,
+        8.7,
+        8.4,
+        9.1
+      ],
+      "2026": [
+        8.5,
+        7.6,
+        8.6,
+        8.7,
+        8.5,
+        9.1
+      ]
+    },
+    "LTU": {
+      "1955": [
+        6.5,
+        6,
+        6.4,
+        6.8,
+        6.1,
+        7.8
+      ],
+      "1989": [
+        6.8,
+        6.2,
+        6.8,
+        7,
+        6.4,
+        8.1
+      ],
+      "1990": [
+        6.8,
+        6.1,
+        6.6,
+        6.7,
+        6.1,
+        8.1
+      ],
+      "1991": [
+        6.9,
+        6.2,
+        6.7,
+        6.9,
+        6.4,
+        8.2
+      ],
+      "1992": [
+        6.9,
+        6.3,
+        6.8,
+        7.1,
+        6.6,
+        8.2
+      ],
+      "2006": [
+        7.3,
+        7,
+        7.6,
+        7.7,
+        7.6,
+        8.5
+      ],
+      "2023": [
+        7.3,
+        7,
+        7.9,
+        8,
+        7.9,
+        8.7
+      ],
+      "2026": [
+        7.3,
+        7,
+        8,
+        8,
+        8,
+        8.7
+      ]
+    }
+  },
+  "evidence_sources": [
+    "uefa-poland-profile",
+    "uefa-romania-profile",
+    "uefa-ukraine-profile",
+    "uefa-lithuania-profile",
+    "fifa-big-count-2006",
+    "fifa-professional-2023"
+  ],
+  "heldout_ranking_used": false
+}

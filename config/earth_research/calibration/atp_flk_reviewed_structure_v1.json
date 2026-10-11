@@ -1,0 +1,63 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "atp-earth-flk-reviewed-structure.v1",
+  "world_id": "atp_earth",
+  "countries": [
+    "FLK"
+  ],
+  "data_cutoff": "2026-10-04",
+  "rating_scale": "country_ratings_1_10.v2",
+  "attribute_order": [
+    "squash_popularity",
+    "squash_access",
+    "development_quality",
+    "competition_quality",
+    "elite_support",
+    "squash_tradition"
+  ],
+  "anchor_values": {
+    "FLK": {
+      "1955": [
+        3,
+        3.2,
+        2.8,
+        2.4,
+        2.3,
+        3
+      ],
+      "1982": [
+        3.3,
+        3.5,
+        3,
+        2.6,
+        2.5,
+        3.2
+      ],
+      "2002": [
+        3.7,
+        3.9,
+        3.4,
+        3,
+        2.8,
+        3.6
+      ],
+      "2026": [
+        3.9,
+        4.1,
+        3.5,
+        3.1,
+        2.9,
+        3.8
+      ]
+    }
+  },
+  "selection": "Piecewise-constant authored periods; territorial and constitutional events are identity context only and local ratings do not inherit UK-wide sports evidence.",
+  "limitations": [
+    "All numeric ratings are project estimates with low confidence, not source measurements.",
+    "UK-wide sports evidence is not inherited automatically.",
+    "No tennis federation membership or organised competition is inferred.",
+    "Territorial, constitutional and treaty events are context only, not sports-performance evidence.",
+    "For IOT, the 2025 UK-Mauritius treaty is not applied as a sovereignty transition before entry into force.",
+    "No rankings, titles or athlete outcomes are used to fit ratings."
+  ]
+}

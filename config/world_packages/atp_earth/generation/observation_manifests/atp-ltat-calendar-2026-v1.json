@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-ltat-calendar-2026-v1",
+  "source_id": "ltat-calendar-2026",
+  "relative_path": "observations/normalized/atp-ltat-calendar-2026-v1.json",
+  "sha256": "66972126dcd2b348d26c7546e98d652af004199ddc42e6f6e3eaa9f7f45ff1f9",
+  "record_count": 5,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

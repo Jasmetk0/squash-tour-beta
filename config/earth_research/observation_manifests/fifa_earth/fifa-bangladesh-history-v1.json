@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-bangladesh-history-v1",
+  "source_id": "fifa-bangladesh-member-context-2026",
+  "relative_path": "observations/normalized/structural/fifa_bangladesh_history_v1.json",
+  "sha256": "a13d9bb5c9271f481a10e967de62a130da280f7b86d8f0e953d40b556d3e3c10",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

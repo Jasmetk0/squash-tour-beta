@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-niu-self-government-1974-v1",
+  "source_id": "niu-self-government-1974",
+  "relative_path": "observations/normalized/fifa_niu_self_government_1974_v1.json",
+  "sha256": "b89fb776df2083369b7912bf8cd9cd3fcd224dfa82f0329b6b431e52cf801e24",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-niu-tkl-batch-2026-10-07"
+}

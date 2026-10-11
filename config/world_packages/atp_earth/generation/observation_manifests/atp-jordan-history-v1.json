@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-jordan-history-v1",
+  "source_id": "itf-jordan-profile",
+  "relative_path": "observations/normalized/atp_jordan_history_v1.json",
+  "sha256": "463fdbe5947ad9bfe119a198aed4b73a741ea5ce11e9dc6aef62bb145e340aff",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

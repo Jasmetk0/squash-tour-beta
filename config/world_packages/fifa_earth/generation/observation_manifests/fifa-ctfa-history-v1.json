@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-ctfa-history-v1",
+  "source_id": "twn-prk-ctfa-history",
+  "relative_path": "observations/normalized/fifa_ctfa_history_v1.json",
+  "sha256": "80fe68a18ac7002bcc93c22d62d74e6beae0a8abee1d1a69f09a7ecf635ee223",
+  "record_count": 4,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-twn-prk-batch-2026-10-07"
+}

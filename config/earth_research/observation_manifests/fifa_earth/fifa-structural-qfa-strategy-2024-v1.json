@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-qfa-strategy-2024-v1",
+  "source_id": "qfa-strategy-2024",
+  "relative_path": "observations/normalized/structural/fifa_structural_qfa_strategy_2024_v1.json",
+  "sha256": "b07f63e4aff46c3bda167320076e75702dcfae93567b42a86b7e12967abdf37d",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

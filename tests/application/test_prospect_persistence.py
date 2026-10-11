@@ -1,0 +1,541 @@
+from __future__ import annotations
+
+import hashlib
+import json
+
+import pytest
+from sqlalchemy import text
+
+from beta_engine.infrastructure.db import DatabaseSettings, SimulationRunInfo, create_session_factory, create_sqlite_engine
+from beta_engine.infrastructure.db.repositories import RunProspectRecord, SimulationPersistenceRepository, deterministic_prospect_id
+from beta_engine.application.season_models import SeasonState
+from beta_engine.domain.players.lifecycle import (
+    PlayerLifecycleIdentity,
+    PlayerLifecycleWeekState,
+)
+from beta_engine.domain.rankings.official import RankingWeek
+from beta_engine.domain.players.prospect_sporting_profile import ProspectSportingProfile
+from beta_engine.domain.players.talent_models import TalentQualityBand
+from beta_engine.domain.players.talent_quality_policy import (
+    normalized_talent_quality_weights,
+    talent_quality_band_from_seed,
+)
+from beta_engine.infrastructure.db.player_lifecycle_state import put_lifecycle
+
+
+def _repository(tmp_path):
+    engine = create_sqlite_engine(DatabaseSettings(url=f"sqlite:///{tmp_path / 'runs.db'}"))
+    session_factory = create_session_factory(engine)
+    repository = SimulationPersistenceRepository(engine=engine, session_factory=session_factory)
+    repository.bootstrap_schema()
+    return repository, engine
+
+
+def _record(**overrides) -> RunProspectRecord:
+    data = dict(
+        prospect_id=deterministic_prospect_id(run_id="run-p", world_id="official_fax_world", season_start_year=2027, season_week=3, country_code="EGY", local_sequence=1, profile_version="prospect_profile_v1", cohort_policy_version="intake_volume_v1"),
+        run_id="run-p", world_id="official_fax_world", season_start_year=2027, season_label="2027/2028", season_week=3,
+        calendar_year=2027, year_week=10, birth_year=2012, birth_year_week=10, age=15, country_code="EGY", country_name="Egypt",
+        status="prospect", source_type="weekly_15yo_cohort", cohort_policy_version="intake_volume_v1", profile_version="prospect_profile_v1",
+        first_name=None, last_name=None, display_name="EGY Prospect 0001", short_name=None,
+        identity_seed="identity-seed", profile_seed="profile-seed", development_seed="development-seed", potential_seed="potential-seed", trait_seed="trait-seed",
+        profile_json={"identity_schema": "sparse"}, development_json={"curve_hint": "unset"}, potential_json={"reserved": True}, trait_json={"future_traits": []},
+    )
+    data.update(overrides)
+    return RunProspectRecord(**data)
+
+
+def test_bootstrap_creates_run_prospects_table(tmp_path):
+    _, engine = _repository(tmp_path)
+    with engine.connect() as connection:
+        tables = {row[0] for row in connection.execute(text("SELECT name FROM sqlite_master WHERE type='table'"))}
+    assert "run_prospects" in tables
+
+
+def test_insert_list_get_filter_and_json_round_trip(tmp_path):
+    repository, _ = _repository(tmp_path)
+    record = _record()
+    repository.upsert_run_prospects([record])
+    assert repository.list_run_prospects(run_id="missing") == []
+    assert repository.list_run_prospects(run_id="run-p") == [record]
+    assert repository.get_run_prospect(run_id="run-p", prospect_id=record.prospect_id) == record
+    assert repository.list_run_prospects(run_id="run-p", country_code="egy") == [record]
+    assert repository.list_run_prospects(run_id="run-p", season_week=3) == [record]
+    assert repository.list_run_prospects(run_id="run-p", season_week=4) == []
+    assert repository.list_run_prospects(run_id="run-p")[0].profile_json == {"identity_schema": "sparse"}
+
+
+def test_upsert_is_idempotent_and_does_not_mutate_active_state_or_rankings(tmp_path):
+    repository, _ = _repository(tmp_path)
+    state = SeasonState(season=2027, ordered_events=[], next_event_index=0)
+    repository.upsert_simulation_run(SimulationRunInfo(run_id="run-p", season=2027, seed=1))
+    repository.save_season_state(run_id="run-p", state=state)
+    before_state = repository.load_season_state(run_id="run-p")
+    record = _record()
+    repository.upsert_run_prospects([record])
+    repository.upsert_run_prospects([record])
+    assert repository.list_run_prospects(run_id="run-p") == [record]
+    assert repository.load_season_state(run_id="run-p") == before_state
+    assert repository.list_generated_player_provenance(run_id="run-p") == []
+    assert repository.count_ranking_snapshots(run_id="run-p") == 0
+    assert repository.count_race_snapshots(run_id="run-p") == 0
+
+
+def _activate_prospect(
+    repository: SimulationPersistenceRepository,
+    record: RunProspectRecord,
+) -> None:
+    week = RankingWeek(
+        season_index=record.season_start_year - 2000,
+        week=record.season_week,
+    )
+    with repository._session_factory.begin() as session:
+        put_lifecycle(
+            session,
+            PlayerLifecycleWeekState(
+                run_id=record.run_id,
+                branch_id="branch",
+                week=week,
+                players=(
+                    PlayerLifecycleIdentity(
+                        player_id=record.prospect_id,
+                        birth_year=record.birth_year,
+                        birth_year_week=record.birth_year_week,
+                        tie_break_token="a" * 64,
+                        tie_break_provenance="activated prospect immutability test",
+                        tour_entry_week=None,
+                        age=record.age,
+                        status="active",
+                        retirement_effective_week=None,
+                        origin=(
+                            f"run_prospect:{record.source_type}:"
+                            f"{record.profile_version}"
+                        ),
+                    ),
+                ),
+                source_initial_world_fingerprint="prospect-immutability-test",
+            ),
+        )
+
+
+def test_repository_rejects_mutating_or_deleting_activated_prospect_metadata(tmp_path):
+    repository, _ = _repository(tmp_path)
+    record = _record()
+    repository.upsert_run_prospects([record])
+    _activate_prospect(repository, record)
+
+    with pytest.raises(ValueError, match="metadata is immutable"):
+        repository.upsert_run_prospects(
+            [
+                RunProspectRecord(
+                    **(record.__dict__ | {"display_name": "Changed after visibility"})
+                )
+            ]
+        )
+
+    with pytest.raises(ValueError, match="metadata is immutable"):
+        repository.delete_run_prospects_by_ids(
+            run_id=record.run_id,
+            prospect_ids=[record.prospect_id],
+        )
+
+    assert repository.get_run_prospect(
+        run_id=record.run_id,
+        prospect_id=record.prospect_id,
+    ) == record
+
+
+def test_deterministic_prospect_id_is_stable_and_input_sensitive():
+    kwargs = dict(run_id="run", world_id="official_fax_world", season_start_year=2027, season_week=1, country_code="EGY", local_sequence=1, profile_version="v1", cohort_policy_version="c1")
+    assert deterministic_prospect_id(**kwargs) == deterministic_prospect_id(**kwargs)
+    assert deterministic_prospect_id(**kwargs) != deterministic_prospect_id(**(kwargs | {"local_sequence": 2}))
+
+from beta_engine.application.run_prospect_materialization_service import (
+    COHORT_POLICY_VERSION,
+    PROFILE_VERSION,
+    RunProspectMaterializationConflictError,
+    RunProspectMaterializationService,
+)
+from beta_engine.application.run_weekly_intake_cohort_preview_service import RunWeeklyIntakeCohortPreviewService
+from beta_engine.application.season_registry_service import SeasonRegistryService
+from beta_engine.application.world_package_countries_service import WorldPackageCountriesService
+from beta_engine.application.world_package_registry_service import WorldPackageRegistryService
+from beta_engine.application.countries_service import CountriesConfigService
+from beta_engine.application.manual_player_overrides_service import ManualPlayerOverridesService
+
+
+def _materialization_service(repository: SimulationPersistenceRepository) -> RunProspectMaterializationService:
+    preview = RunWeeklyIntakeCohortPreviewService(
+        repository=repository,
+        countries_service=WorldPackageCountriesService(registry_service=WorldPackageRegistryService(countries_service=CountriesConfigService(), manual_overrides_service=ManualPlayerOverridesService())),
+        season_registry=SeasonRegistryService(),
+    )
+    return RunProspectMaterializationService(repository=repository, preview_service=preview)
+
+
+def _materialize(service: RunProspectMaterializationService, **kwargs):
+    preview_kwargs = {
+        key: value
+        for key, value in kwargs.items()
+        if key in {"run_id", "base_annual_intake_target", "season_growth_rate", "country_code", "region"}
+    }
+    preview = service.preview_service.preview_season(**preview_kwargs)
+    return service.materialize_15yo_cohort(
+        **kwargs,
+        expected_review_fingerprint=preview.review_fingerprint,
+    )
+
+
+@pytest.mark.pr_critical
+def test_materialize_15yo_cohort_generates_deterministic_records_and_canonical_profiles(tmp_path):
+    repository, _ = _repository(tmp_path)
+    repository.upsert_simulation_run(SimulationRunInfo(run_id="run-m", season=2027, seed=1))
+    service = _materialization_service(repository)
+
+    result = _materialize(service, run_id="run-m", base_annual_intake_target=4, country_code="GER")
+
+    assert result.requested_prospect_count == result.annual_target
+    assert result.created_count == result.annual_target
+    records = repository.list_run_prospects(run_id="run-m", country_code="GER", season_start_year=2027, limit=None)
+    assert len(records) == result.annual_target
+    first = records[0]
+    assert first.prospect_id == deterministic_prospect_id(run_id="run-m", world_id="official_fax_world", season_start_year=2027, season_week=first.season_week, country_code="GER", local_sequence=1, profile_version=PROFILE_VERSION, cohort_policy_version=COHORT_POLICY_VERSION)
+    assert first.age == 15
+    assert first.status == "prospect"
+    assert first.source_type == "weekly_15yo_cohort"
+    assert first.display_name.startswith("GER Prospect ")
+    assert all([first.identity_seed, first.profile_seed, first.development_seed, first.potential_seed, first.trait_seed])
+    canonical = ProspectSportingProfile.model_validate(
+        first.profile_json["canonical_sporting_profile"]
+    )
+    assert first.profile_json["canonical_sporting_profile_fingerprint"] == canonical.fingerprint
+    assert len(canonical.attributes) == 57
+    assert first.development_json["development_timing"] == canonical.development_timing
+    assert first.development_json["sporting_profile_fingerprint"] == canonical.fingerprint
+    assert first.potential_json["potential_ovr"] == canonical.potential_ovr
+    assert first.potential_json["rolled_potential_ovr"] == canonical.rolled_potential_ovr
+    assert first.potential_json["effective_potential_floor_ovr"] == canonical.effective_potential_floor_ovr
+    assert first.potential_json["potential_floor_applied"] == canonical.potential_floor_applied
+    assert first.potential_json["potential_identity"] == canonical.potential_identity
+    assert first.potential_json["sporting_profile_fingerprint"] == canonical.fingerprint
+    assert first.trait_json["reserved_for_future_traits"] is True
+    assert "reserved_for_future_attributes" not in first.profile_json
+    assert "reserved_for_future_development" not in first.development_json
+    assert "reserved_for_future_potential" not in first.potential_json
+    assert first.profile_seed not in json.dumps(first.profile_json, sort_keys=True)
+    assert first.profile_json["materialization_policy"]["sporting_profile_policy_id"]
+    assert first.profile_json["materialization_policy"]["sporting_profile_policy_fingerprint"]
+    assert first.profile_json["cohort_forecast"]["schema_version"] == "talent_intake_cohort_forecast.v1"
+    assert first.profile_json["cohort_forecast"]["forecast_fingerprint"]
+    assert first.profile_json["cohort_forecast"]["total_weekly_target"] == result.requested_prospect_count
+    assert first.potential_json["talent_quality"]["policy_fingerprint"]
+    assert first.potential_json["talent_quality"]["result_fingerprint"]
+
+    expected_band = talent_quality_band_from_seed(first.potential_seed)
+    summary = service.summarize_materialized_talent(
+        run_id="run-m",
+        season_start_year=2027,
+    )
+    assert summary.total_materialized == result.annual_target
+    assert sum(summary.generated_band_counts.values()) == result.annual_target
+    assert summary.generated_band_counts[expected_band.value] >= 1
+    assert summary.quality_weights == {
+        band.value: weight
+        for band, weight in normalized_talent_quality_weights().items()
+    }
+    assert sum(summary.expected_band_counts.values()) == pytest.approx(result.annual_target)
+    ger_summary = next(item for item in summary.countries if item.country_code == "GER")
+    assert ger_summary.materialized_count == result.annual_target
+    assert sum(ger_summary.generated_band_counts.values()) == result.annual_target
+    assert sum(ger_summary.expected_band_counts.values()) == pytest.approx(result.annual_target)
+
+    assert summary.forecast_source == "stored_pre_generation_v1"
+    assert summary.forecast_fingerprint == first.profile_json["cohort_forecast"]["forecast_fingerprint"]
+    assert summary.forecast_total == result.requested_prospect_count
+    assert summary.cohort_state == "complete"
+    assert ger_summary.forecast_count == result.requested_prospect_count
+
+
+def test_materialize_15yo_cohort_is_idempotent_and_detects_conflicts(tmp_path):
+    repository, _ = _repository(tmp_path)
+    repository.upsert_simulation_run(SimulationRunInfo(run_id="run-i", season=2027, seed=1))
+    service = _materialization_service(repository)
+
+    first = _materialize(service, run_id="run-i", base_annual_intake_target=2, country_code="GER")
+    second = _materialize(service, run_id="run-i", base_annual_intake_target=2, country_code="GER")
+    assert first.created_count == first.annual_target
+    assert second.created_count == 0
+    assert second.skipped_count == first.annual_target
+    assert second.already_materialized is True
+
+    record = repository.list_run_prospects(run_id="run-i", country_code="GER", limit=None)[0]
+    repository.upsert_run_prospects([RunProspectRecord(**(record.__dict__ | {"display_name": "Tampered Prospect"}))])
+    try:
+        _materialize(service, run_id="run-i", base_annual_intake_target=2, country_code="GER")
+    except RunProspectMaterializationConflictError as exc:
+        assert exc.conflicts == [record.prospect_id]
+    else:
+        raise AssertionError("expected conflict")
+    repaired = _materialize(service, run_id="run-i", base_annual_intake_target=2, country_code="GER", overwrite=True)
+    assert repaired.conflict_count == 1
+    assert repository.get_run_prospect(run_id="run-i", prospect_id=record.prospect_id).display_name != "Tampered Prospect"
+
+
+def test_materialization_overwrite_cannot_rewrite_activated_prospect(tmp_path):
+    repository, engine = _repository(tmp_path)
+    repository.upsert_simulation_run(
+        SimulationRunInfo(run_id="run-activated", season=2027, seed=1)
+    )
+    service = _materialization_service(repository)
+    _materialize(service, 
+        run_id="run-activated",
+        base_annual_intake_target=2,
+        country_code="GER",
+    )
+    record = repository.list_run_prospects(
+        run_id="run-activated",
+        country_code="GER",
+        limit=None,
+    )[0]
+    _activate_prospect(repository, record)
+
+    # Simulate external corruption/policy drift below the repository contract.
+    with engine.begin() as connection:
+        connection.execute(
+            text(
+                "UPDATE run_prospects SET display_name=:name "
+                "WHERE run_id=:run_id AND prospect_id=:prospect_id"
+            ),
+            {
+                "name": "Changed after visibility",
+                "run_id": record.run_id,
+                "prospect_id": record.prospect_id,
+            },
+        )
+
+    with pytest.raises(RunProspectMaterializationConflictError) as exc:
+        _materialize(service, 
+            run_id="run-activated",
+            base_annual_intake_target=2,
+            country_code="GER",
+            overwrite=True,
+        )
+    assert exc.value.conflicts == [record.prospect_id]
+    assert (
+        repository.get_run_prospect(
+            run_id=record.run_id,
+            prospect_id=record.prospect_id,
+        ).display_name
+        == "Changed after visibility"
+    )
+
+
+def test_materialization_policy_conflict_removes_only_stale_scope_records_on_overwrite(tmp_path):
+    repository, _ = _repository(tmp_path)
+    repository.upsert_simulation_run(SimulationRunInfo(run_id="run-policy", season=2027, seed=1))
+    service = _materialization_service(repository)
+
+    _materialize(service, 
+        run_id="run-policy",
+        base_annual_intake_target=2,
+        country_code="GER",
+    )
+    unrelated = _materialize(service, 
+        run_id="run-policy",
+        base_annual_intake_target=2,
+        country_code="BOG",
+    )
+    future_season_record = RunProspectRecord(
+        **(
+            repository.list_run_prospects(run_id="run-policy", country_code="BOG", limit=None)[0].__dict__
+            | {"prospect_id": "future-season-prospect", "season_start_year": 2028}
+        )
+    )
+    repository.upsert_run_prospects([future_season_record])
+
+    try:
+        _materialize(service, 
+            run_id="run-policy",
+            base_annual_intake_target=4,
+            country_code="GER",
+        )
+    except RunProspectMaterializationConflictError as exc:
+        assert exc.conflicts
+    else:
+        raise AssertionError("expected policy scope conflict")
+
+    overwritten = _materialize(service, 
+        run_id="run-policy",
+        base_annual_intake_target=4,
+        country_code="GER",
+        overwrite=True,
+    )
+    ger_records = repository.list_run_prospects(
+        run_id="run-policy",
+        country_code="GER",
+        season_start_year=2027,
+        limit=None,
+    )
+    assert overwritten.conflict_count > 0
+    assert len(ger_records) == overwritten.requested_prospect_count
+    assert {record.prospect_id for record in ger_records}.isdisjoint(
+        {record.prospect_id for record in repository.list_run_prospects(run_id="run-policy", country_code="BOG", season_start_year=2027, limit=None)}
+    )
+    assert unrelated.requested_prospect_count == repository.count_run_prospects(
+        run_id="run-policy",
+        country_code="BOG",
+        season_start_year=2027,
+    )
+    assert repository.get_run_prospect(run_id="run-policy", prospect_id="future-season-prospect") == future_season_record
+    assert "materialization_policy" in ger_records[0].profile_json
+    assert ger_records[0].profile_json["materialization_policy"]["policy_fingerprint"]
+
+
+def test_materialized_talent_summary_is_stable_and_preserves_global_rarity_authority(tmp_path):
+    repository, _ = _repository(tmp_path)
+    repository.upsert_simulation_run(
+        SimulationRunInfo(run_id="run-band-summary", season=2027, seed=7)
+    )
+    service = _materialization_service(repository)
+    _materialize(service, 
+        run_id="run-band-summary",
+        base_annual_intake_target=120,
+    )
+
+    first = service.summarize_materialized_talent(run_id="run-band-summary")
+    second = service.summarize_materialized_talent(run_id="run-band-summary")
+
+    assert first == second
+    assert first.total_materialized > 0
+    assert set(first.generated_band_counts) == {band.value for band in TalentQualityBand}
+    assert sum(first.generated_band_counts.values()) == first.total_materialized
+    assert sum(first.expected_band_counts.values()) == pytest.approx(first.total_materialized)
+    assert sum(country.materialized_count for country in first.countries) == first.total_materialized
+    assert all(
+        sum(country.generated_band_counts.values()) == country.materialized_count
+        for country in first.countries
+    )
+
+
+@pytest.mark.pr_critical
+def test_materialized_quality_history_does_not_drift_when_current_defaults_change(tmp_path, monkeypatch):
+    from beta_engine.domain.players import talent_quality_policy as policy_module
+
+    repository, _ = _repository(tmp_path)
+    repository.upsert_simulation_run(SimulationRunInfo(run_id="run-history", season=2027, seed=1))
+    service = _materialization_service(repository)
+    _materialize(service, run_id="run-history", base_annual_intake_target=12, country_code="GER")
+
+    before_records = repository.list_run_prospects(run_id="run-history", season_start_year=2027, limit=None)
+    before_bands = [
+        policy_module.resolve_persisted_talent_quality(
+            potential_seed=record.potential_seed,
+            potential_json=record.potential_json,
+            cohort_policy_version=record.cohort_policy_version,
+            profile_version=record.profile_version,
+        )[0].value
+        for record in before_records
+    ]
+    before_summary = service.summarize_materialized_talent(run_id="run-history", season_start_year=2027)
+
+    monkeypatch.setattr(
+        policy_module,
+        "PROVISIONAL_TALENT_QUALITY_WEIGHTS",
+        {
+            band: (1.0 if band.value == "generational_talent" else 0.0)
+            for band in TalentQualityBand
+        },
+    )
+
+    after_records = repository.list_run_prospects(run_id="run-history", season_start_year=2027, limit=None)
+    after_bands = [
+        policy_module.resolve_persisted_talent_quality(
+            potential_seed=record.potential_seed,
+            potential_json=record.potential_json,
+            cohort_policy_version=record.cohort_policy_version,
+            profile_version=record.profile_version,
+        )[0].value
+        for record in after_records
+    ]
+    after_summary = service.summarize_materialized_talent(run_id="run-history", season_start_year=2027)
+
+    assert after_bands == before_bands
+    assert after_summary.quality_policy_fingerprint == before_summary.quality_policy_fingerprint
+    assert after_summary.quality_weights == before_summary.quality_weights
+    assert after_summary.generated_band_counts == before_summary.generated_band_counts
+
+
+@pytest.mark.pr_critical
+def test_materialization_rejects_stale_review_before_any_write(tmp_path):
+    repository, _ = _repository(tmp_path)
+    repository.upsert_simulation_run(SimulationRunInfo(run_id="run-stale", season=2027, seed=1))
+    service = _materialization_service(repository)
+    reviewed = service.preview_service.preview_season(
+        run_id="run-stale", base_annual_intake_target=2, country_code="GER"
+    )
+
+    with pytest.raises(ValueError, match="stale|different Run"):
+        service.materialize_15yo_cohort(
+            run_id="run-stale",
+            base_annual_intake_target=3,
+            country_code="GER",
+            expected_review_fingerprint=reviewed.review_fingerprint,
+        )
+
+    assert repository.count_run_prospects(run_id="run-stale") == 0
+
+
+@pytest.mark.pr_critical
+def test_intake_summary_retains_zero_output_countries_and_pre_generation_expectation(tmp_path):
+    repository, _ = _repository(tmp_path)
+    repository.upsert_simulation_run(SimulationRunInfo(run_id="run-zero-country", season=2027, seed=1))
+    service = _materialization_service(repository)
+
+    _materialize(service, run_id="run-zero-country", base_annual_intake_target=1)
+    records = repository.list_run_prospects(
+        run_id="run-zero-country",
+        season_start_year=2027,
+        limit=None,
+    )
+    assert records
+    forecast = dict(records[0].profile_json["cohort_forecast"])
+    forecast["countries"] = [
+        *forecast["countries"],
+        {
+            "country_code": "ZZZ",
+            "country_name": "Zero Output",
+            "forecast_count": 0,
+            "expected_band_counts": {
+                band.value: 0.0 for band in TalentQualityBand
+            },
+        },
+    ]
+    fingerprint_payload = {
+        key: value for key, value in forecast.items() if key != "forecast_fingerprint"
+    }
+    forecast["forecast_fingerprint"] = hashlib.sha256(
+        json.dumps(fingerprint_payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+    ).hexdigest()
+    repository.upsert_run_prospects([
+        RunProspectRecord(
+            **(
+                record.__dict__
+                | {
+                    "profile_json": record.profile_json
+                    | {"cohort_forecast": forecast}
+                }
+            )
+        )
+        for record in records
+    ])
+
+    summary = service.summarize_materialized_talent(
+        run_id="run-zero-country",
+        season_start_year=2027,
+    )
+
+    zero_rows = [row for row in summary.countries if row.country_code == "ZZZ"]
+    assert zero_rows
+    assert all(row.materialized_count == 0 for row in zero_rows)
+    assert all(sum(row.expected_band_counts.values()) == pytest.approx(0.0) for row in zero_rows)
+    assert all(sum(row.generated_band_counts.values()) == 0 for row in zero_rows)

@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-tennis-nz-pathway-2025-v1",
+  "source_id": "tennis-nz-athlete-pathway",
+  "relative_path": "observations/normalized/atp-tennis-nz-pathway-2025-v1.json",
+  "sha256": "e00ebfeecbd245be442e533e9d7b5693eb5d257d5ce49562d8214e8d3b56c748",
+  "record_count": 3,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

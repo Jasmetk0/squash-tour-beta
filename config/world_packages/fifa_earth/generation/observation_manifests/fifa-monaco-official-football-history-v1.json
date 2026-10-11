@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-monaco-official-football-history-v1",
+  "source_id": "mco-xkx-monaco-official-football-history",
+  "relative_path": "observations/normalized/fifa_monaco_official_football_history_v1.json",
+  "sha256": "509f33ee322cc7ba745d8b2dcd92fe85e9531d888a4cdfa196abe95b63763997",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-mco-xkx-batch-2026-10-07"
+}

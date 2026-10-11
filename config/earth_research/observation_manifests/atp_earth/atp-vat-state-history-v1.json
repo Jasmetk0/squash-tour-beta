@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-vat-state-history-v1",
+  "source_id": "vat-state-history",
+  "relative_path": "observations/normalized/atp_vat_state_history_v1.json",
+  "sha256": "4f05774b81baa35180629b5fb598a27e606bedaa856c8b1204ace19c6ce599ef",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-final4-batch-2026-10-07"
+}

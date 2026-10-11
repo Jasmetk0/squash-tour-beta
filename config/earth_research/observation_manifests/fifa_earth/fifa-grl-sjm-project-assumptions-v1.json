@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-grl-sjm-project-assumptions-v1",
+  "source_id": "grl-sjm-fifa-project-assumptions",
+  "relative_path": "observations/normalized/fifa_grl_sjm_project_assumptions_v1.json",
+  "sha256": "24de0b6e2c1c01effa7edd92e0d09a011972a9497546af0233bcab105b39bba0",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-grl-sjm-batch-2026-10-07"
+}

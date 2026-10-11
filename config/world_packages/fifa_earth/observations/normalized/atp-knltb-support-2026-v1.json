@@ -1,0 +1,45 @@
+{
+  "schema_version": "earth_source_observations.v2",
+  "dataset_id": "atp-knltb-support-2026-v1",
+  "source_id": "knltb-support-2026",
+  "source_url": "https://www.knltb.nl/nieuws/2026/09/bijdrage-nederlandse-loterij-helpt-tennis-en-padel-verder-ontwikkelen/",
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05",
+  "scope": "Netherlands current development/support investment.",
+  "limitations": "Funding/support covers tennis and padel jointly.",
+  "observations": [
+    {
+      "observation_id": "atp-knltb-support-2026-v1#ned-talent-support-2026",
+      "source_id": "knltb-support-2026",
+      "source_entity": "Netherlands",
+      "earth_country_code": "NED",
+      "historical_entity": null,
+      "observation_year": 2026,
+      "period_start_year": null,
+      "period_end_year": null,
+      "measurement_type": "national_talent_and_top_sport_support",
+      "sex_scope": "mixed",
+      "age_scope": null,
+      "competition_scope": null,
+      "numeric_value": null,
+      "text_value": "KNLTB invests in top-sport and talent-development programmes and supports more than 1,600 providers.",
+      "unit": "program",
+      "collection_method": "official_narrative",
+      "coverage_scope": "national",
+      "comparability_group": null,
+      "cross_country_comparable": false,
+      "is_direct_observation": true,
+      "is_statistically_modelled": false,
+      "territory_mapping_method": "direct_earth_country",
+      "territory_weight": null,
+      "source_page": null,
+      "source_locator": null,
+      "definition_notes": "Current development/support capacity, not outcome.",
+      "quality_flags": [
+        "combined_tennis_padel",
+        "programme_capacity_not_outcome"
+      ]
+    }
+  ]
+}

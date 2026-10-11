@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-fetech-national-minors-2026-v1",
+  "source_id": "fetech-national-minors-2026",
+  "relative_path": "observations/normalized/atp-fetech-national-minors-2026-v1.json",
+  "sha256": "b9645ce1a3164a78378833680a8367be60815decbe241ea0469d8d669e761565",
+  "record_count": 3,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

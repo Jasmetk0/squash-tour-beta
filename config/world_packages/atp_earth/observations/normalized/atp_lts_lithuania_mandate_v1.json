@@ -1,0 +1,46 @@
+{
+  "schema_version": "earth_source_observations.v2",
+  "dataset_id": "atp-lts-lithuania-mandate-v1",
+  "source_id": "lts-lithuania-statutes",
+  "source_url": "https://tennis.lt/wp-content/uploads/2018/07/LTS-%C4%AEstatai-2022-m.-gruod%C5%BEio-8-d..pdf",
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05",
+  "scope": "Official LTS national federation mandate and development/competition responsibilities.",
+  "limitations": "Governance mandate/capacity evidence, not measured participation or development outcomes.",
+  "observations": [
+    {
+      "observation_id": "atp-lts-lithuania-mandate-v1#ltu-national-federation-mandate-2022",
+      "source_id": "lts-lithuania-statutes",
+      "source_entity": "Lietuvos teniso sąjunga",
+      "earth_country_code": "LTU",
+      "historical_entity": "Lithuania",
+      "observation_year": 2022,
+      "period_start_year": null,
+      "period_end_year": null,
+      "measurement_type": "national_federation_mandate",
+      "sex_scope": "not_applicable",
+      "age_scope": null,
+      "competition_scope": "sport_system_structure",
+      "numeric_value": null,
+      "text_value": "LTS statutes define national responsibility for tennis development, championships, national teams and international representation.",
+      "unit": "event",
+      "collection_method": "official_narrative",
+      "coverage_scope": "association",
+      "comparability_group": "national_federation_mandate",
+      "cross_country_comparable": false,
+      "is_direct_observation": true,
+      "is_statistically_modelled": false,
+      "territory_mapping_method": "explicit_reviewed_event_to_earth",
+      "territory_weight": null,
+      "source_page": null,
+      "source_locator": "Official source timeline — 2022",
+      "definition_notes": "Structural chronology evidence; event existence is not a direct 1–10 rating.",
+      "quality_flags": [
+        "supports_development_quality",
+        "supports_competition_quality",
+        "supports_elite_support"
+      ]
+    }
+  ]
+}

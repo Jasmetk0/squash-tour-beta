@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-sri-lanka-history-v1",
+  "source_id": "itf-sri-lanka-profile",
+  "relative_path": "observations/normalized/atp_sri_lanka_history_v1.json",
+  "sha256": "057ba10c38d1197153a5f748c25674fe1c9df9538dcea5eb6af60124fc25d4d0",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

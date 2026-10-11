@@ -1,0 +1,91 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "fifa-earth-are-model.v1",
+  "world_id": "fifa_earth",
+  "data_cutoff": "2026-10-03",
+  "countries": [
+    "ARE"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "principles": [
+    "Years 1955–1970 are a deliberately low-confidence pre-national-federation baseline for current UAE territory, derived from the official 1971 federation date.",
+    "Federation formation (1971), FIFA membership (1972) and AFC/Arab membership (1974) are separately time-gated.",
+    "FIFA Big Count 2006 and Professional Football Report 2023 are used only from their observation years.",
+    "Professional-player depth is kept distinct from national club count and mass participation.",
+    "No ranking or tournament outcome is used as a calibration target."
+  ],
+  "anchor_values": {
+    "ARE": {
+      "1955": [
+        2.3,
+        2,
+        2,
+        1.9,
+        1.8,
+        2
+      ],
+      "1970": [
+        3,
+        2.7,
+        2.6,
+        2.5,
+        2.4,
+        2.8
+      ],
+      "1971": [
+        4.6,
+        4.2,
+        4.4,
+        4.2,
+        4.3,
+        4.8
+      ],
+      "1972": [
+        4.8,
+        4.4,
+        4.6,
+        4.5,
+        4.6,
+        5
+      ],
+      "1974": [
+        5.1,
+        4.7,
+        4.9,
+        5,
+        5,
+        5.3
+      ],
+      "2006": [
+        6.3,
+        6.4,
+        6.5,
+        6.7,
+        6.6,
+        7
+      ],
+      "2023": [
+        7.1,
+        7.2,
+        7.4,
+        7.7,
+        7.7,
+        7.6
+      ],
+      "2026": [
+        7.1,
+        7.2,
+        7.4,
+        7.7,
+        7.7,
+        7.6
+      ]
+    }
+  },
+  "evidence_sources": [
+    "uaefa-history",
+    "fifa-big-count-2006",
+    "fifa-professional-2023"
+  ],
+  "heldout_ranking_used": false
+}

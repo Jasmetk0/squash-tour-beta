@@ -1,0 +1,64 @@
+{
+  "schema_version": "earth_source_identity_overrides.v1",
+  "source_id": "fifa-professional-2023",
+  "direct": {
+    "BOLIVIA": "BOL",
+    "BRITISH VIRGIN ISLANDS": "VGB",
+    "BRUNEI DARUSSALAM": "BRN",
+    "BUTHAN": "BTN",
+    "CABO VERDE ISLANDS": "CPV",
+    "CHINA PR": "CHN",
+    "CHINESE TAIPEI": "TWN",
+    "CONGO": "COG",
+    "CONGO DR": "COD",
+    "CÔTE D'IVOIRE": "CIV",
+    "CURAÇAO": "CUW",
+    "CZECH REPUBLIC": "CZE",
+    "ESWATINI": "SWZ",
+    "IR IRAN": "IRN",
+    "KOREA DPR": "PRK",
+    "KOREA REPUBLIC": "KOR",
+    "KOSOVO": "XKX",
+    "LAOS": "LAO",
+    "MACAU": "MAC",
+    "MOLDOVA": "MDA",
+    "NORTH MACEDONIA": "MKD",
+    "PALESTINE": "PSE",
+    "PUERTO RICO": "PRI",
+    "REPUBLIC OF IRELAND": "IRL",
+    "RUSSIA": "RUS",
+    "ST KITTS AND NEVIS": "KNA",
+    "ST LUCIA": "LCA",
+    "ST VINCENT AND THE GRENADINES": "VCT",
+    "SYRIA": "SYR",
+    "TAHITI": "PYF",
+    "TANZANIA": "TZA",
+    "TIMOR-LESTE": "TLS",
+    "TÜRKIYE": "TUR",
+    "TURKS AND CAICOS ISLANDS": "TCA",
+    "UNITED ARAB EMIRATES": "ARE",
+    "USA": "USA",
+    "US VIRGIN ISLANDS": "VIR",
+    "VENEZUELA": "VEN",
+    "VIETNAM": "VNM"
+  },
+  "aggregate_groups": {
+    "GBR": {
+      "source_associations": [
+        "ENGLAND",
+        "SCOTLAND",
+        "WALES",
+        "NORTHERN IRELAND"
+      ],
+      "numeric_policy": "null_if_any_member_missing_preserve_known_partial_sum",
+      "reason": "The Earth catalogue represents the United Kingdom as GBR, while FIFA reports the four home associations separately. Professional counts are aggregated only when all four association values are present; otherwise the Earth-level value remains null and only the known partial sum is retained."
+    }
+  },
+  "manual_review_pages": {
+    "38": {
+      "expected_association": "KUWAIT",
+      "candidate_earth_code": "KGZ",
+      "reason": "The source labels page 38 as KUWAIT but shows Kyrgyzstan flag/emblem. The extracted counts are preserved as an unresolved page-level observation and are not joined automatically to either KWT or KGZ."
+    }
+  }
+}

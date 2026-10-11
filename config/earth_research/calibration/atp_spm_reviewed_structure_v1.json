@@ -1,0 +1,70 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "atp-earth-spm-reviewed-structure.v1",
+  "world_id": "atp_earth",
+  "countries": [
+    "SPM"
+  ],
+  "data_cutoff": "2026-10-04",
+  "rating_scale": "country_ratings_1_10.v2",
+  "attribute_order": [
+    "squash_popularity",
+    "squash_access",
+    "development_quality",
+    "competition_quality",
+    "elite_support",
+    "squash_tradition"
+  ],
+  "anchor_values": {
+    "SPM": {
+      "1955": [
+        2.3,
+        2.5,
+        2.1,
+        1.8,
+        1.7,
+        2.2
+      ],
+      "1976": [
+        2.6,
+        2.8,
+        2.3,
+        2,
+        1.9,
+        2.5
+      ],
+      "1985": [
+        2.9,
+        3.1,
+        2.6,
+        2.2,
+        2.1,
+        2.8
+      ],
+      "2003": [
+        3.2,
+        3.4,
+        2.8,
+        2.4,
+        2.2,
+        3
+      ],
+      "2026": [
+        3.3,
+        3.5,
+        2.9,
+        2.5,
+        2.3,
+        3.1
+      ]
+    }
+  },
+  "selection": "Piecewise-constant authored periods; legal-status changes are identity context only and local ratings do not inherit France-wide sports evidence.",
+  "limitations": [
+    "All numeric ratings are project estimates with low confidence, not source measurements.",
+    "France-wide sports evidence is not inherited automatically.",
+    "No tennis federation membership or organised competition is inferred.",
+    "Administrative transitions are context only, not sports-performance evidence.",
+    "No rankings, titles or athlete outcomes are used to fit ratings."
+  ]
+}

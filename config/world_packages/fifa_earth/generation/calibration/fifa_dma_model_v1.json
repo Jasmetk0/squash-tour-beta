@@ -1,0 +1,58 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "fifa-earth-dma-model.v1",
+  "world_id": "fifa_earth",
+  "data_cutoff": "2026-10-03",
+  "countries": [
+    "DMA"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "evidence_rules": [
+    "1955-2005 values are a low-confidence project-authored baseline.",
+    "FIFA Big Count enters from 2006.",
+    "FIFA Professional 2023 player field is null; the non-null club field enters from 2023 only as professional ecosystem context.",
+    "Current FIFA membership is context only and is not backdated."
+  ],
+  "anchor_values": {
+    "DMA": {
+      "1955": [
+        2.9,
+        2.6,
+        2.7,
+        2.8,
+        2.5,
+        3.1
+      ],
+      "2006": [
+        4.2,
+        3.8,
+        3.9,
+        4,
+        3.6,
+        4.4
+      ],
+      "2023": [
+        4.4,
+        4,
+        4.1,
+        4.2,
+        3.8,
+        4.6
+      ],
+      "2026": [
+        4.4,
+        4,
+        4.1,
+        4.2,
+        3.8,
+        4.6
+      ]
+    }
+  },
+  "evidence_sources": [
+    "fifa-dominica-member-context-2026",
+    "fifa-big-count-2006",
+    "fifa-professional-2023"
+  ],
+  "heldout_ranking_used": false
+}

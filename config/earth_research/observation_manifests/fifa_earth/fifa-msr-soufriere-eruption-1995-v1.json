@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-msr-soufriere-eruption-1995-v1",
+  "source_id": "msr-soufriere-eruption-1995",
+  "relative_path": "observations/normalized/fifa_msr_soufriere_eruption_1995_v1.json",
+  "sha256": "9668ea0d753cf7de00af752aeb8cdebaa11d5dfc3f5dd2eb895e53411992aa85",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-shn-msr-batch-2026-10-07"
+}

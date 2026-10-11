@@ -1,0 +1,57 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "atp-earth-dji-model.v1",
+  "world_id": "atp_earth",
+  "data_cutoff": "2026-10-04",
+  "countries": [
+    "DJI"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "evidence_rules": [
+    "No verified tennis foundation date is asserted; pre-2020 years use a low-confidence baseline.",
+    "ITF 2020 closure status enters only in 2020 and is activity context, not performance.",
+    "2026 development eligibility enters only in 2026.",
+    "No ranking or event outcome is mechanically converted to a rating."
+  ],
+  "anchor_values": {
+    "DJI": {
+      "1955": [
+        2.8,
+        2.5,
+        2.6,
+        2.5,
+        2.4,
+        3.2
+      ],
+      "2000": [
+        3.6,
+        3.2,
+        3.4,
+        3.4,
+        3.1,
+        4.1
+      ],
+      "2020": [
+        4,
+        3.6,
+        3.8,
+        3.8,
+        3.5,
+        4.6
+      ],
+      "2026": [
+        4.5,
+        4.1,
+        4.3,
+        4.3,
+        4,
+        5.1
+      ]
+    }
+  },
+  "evidence_sources": [
+    "itf-djibouti-return-to-play-2020",
+    "itf-djibouti-development-eligibility-2026"
+  ],
+  "heldout_ranking_used": false
+}

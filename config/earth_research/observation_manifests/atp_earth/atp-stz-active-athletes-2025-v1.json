@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-stz-active-athletes-2025-v1",
+  "source_id": "stz-active-athletes-2025",
+  "relative_path": "observations/normalized/atp-stz-active-athletes-2025-v1.json",
+  "sha256": "3bdd95dd6f534aa0fd1fc0111f6aa9d9bcafe9efc1099a368ee14edabd0a8026",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

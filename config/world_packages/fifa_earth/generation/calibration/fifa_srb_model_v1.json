@@ -1,0 +1,83 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "fifa-earth-srb-model.v1",
+  "world_id": "fifa_earth",
+  "data_cutoff": "2026-10-03",
+  "countries": [
+    "SRB"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "principles": [
+    "Pre-2006 ratings describe current Serbia territory inside Yugoslav/Serbia-and-Montenegro governance and do not inherit predecessor-state population, participation or outcomes wholesale.",
+    "FSS lineage and state transitions are chronology context, not direct annual quality measurements.",
+    "FIFA Big Count 2006 is used only from 2006 onward for participation/access context.",
+    "FIFA Professional Football Report 2023 is used only from 2023 onward for professional-ecosystem context.",
+    "No ranking or title outcome is used as a calibration target; 9+ remains reserved for world-leading dimensions."
+  ],
+  "anchor_values": {
+    "SRB": {
+      "1955": [
+        7,
+        6.5,
+        6.8,
+        7.2,
+        6.8,
+        8.5
+      ],
+      "1991": [
+        7.6,
+        7,
+        7.4,
+        7.8,
+        7.4,
+        8.8
+      ],
+      "1992": [
+        7.4,
+        6.8,
+        7.1,
+        7.5,
+        7.1,
+        8.8
+      ],
+      "2003": [
+        7.6,
+        7,
+        7.4,
+        7.7,
+        7.4,
+        8.9
+      ],
+      "2006": [
+        7.9,
+        7.6,
+        7.8,
+        8,
+        7.8,
+        8.9
+      ],
+      "2023": [
+        8.1,
+        7.9,
+        8.2,
+        8.3,
+        8.2,
+        8.9
+      ],
+      "2026": [
+        8.1,
+        7.9,
+        8.2,
+        8.3,
+        8.2,
+        8.9
+      ]
+    }
+  },
+  "evidence_sources": [
+    "fss-history",
+    "fifa-big-count-2006",
+    "fifa-professional-2023"
+  ],
+  "heldout_ranking_used": false
+}

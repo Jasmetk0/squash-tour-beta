@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-tennis-canada-ntc-v1",
+  "source_id": "tennis-canada-ntc",
+  "relative_path": "observations/normalized/atp-tennis-canada-ntc-v1.json",
+  "sha256": "acea1819231d96fda8d781c101eeea72138b04b3a32340a08efccb4d6409aab5",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

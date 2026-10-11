@@ -1,0 +1,1497 @@
+{
+  "schema_version": "earth_source_observations.v1",
+  "source_id": "fifa-professional-2023",
+  "source_url": "https://digitalhub.fifa.com/m/2a5dc95026d9cf8a/original/FIFA-Professional-Football-Report-2023.pdf",
+  "source_sha256": "fb15135da80e3cf395cadf1b2fcd2762f52268292cebc5e86957115b260c0e71",
+  "edition": 2023,
+  "scope": "Men's professional football. Associations, not ISO countries. Missing is null, not zero.",
+  "review_status": "extracted_not_reconciled",
+  "published_global_totals": {
+    "professional_players": 128694,
+    "professional_clubs": 3986
+  },
+  "extracted_national_sums": {
+    "professional_players": 129388,
+    "professional_clubs": 3997
+  },
+  "limitations": "National-page sums differ from the published global headline. Preserve both; reconcile before calibration. Counts describe employment and do not directly measure six game attributes.",
+  "observations": [
+    {
+      "association": "AFGHANISTAN",
+      "pdf_page": 18,
+      "professional_players": null,
+      "professional_clubs": 12,
+      "identity_note": null
+    },
+    {
+      "association": "AUSTRALIA",
+      "pdf_page": 19,
+      "professional_players": 1597,
+      "professional_clubs": 12,
+      "identity_note": null
+    },
+    {
+      "association": "BAHRAIN",
+      "pdf_page": 20,
+      "professional_players": null,
+      "professional_clubs": 24,
+      "identity_note": null
+    },
+    {
+      "association": "BANGLADESH",
+      "pdf_page": 21,
+      "professional_players": 368,
+      "professional_clubs": 11,
+      "identity_note": null
+    },
+    {
+      "association": "BUTHAN",
+      "pdf_page": 22,
+      "professional_players": null,
+      "professional_clubs": null,
+      "identity_note": null
+    },
+    {
+      "association": "BRUNEI DARUSSALAM",
+      "pdf_page": 23,
+      "professional_players": null,
+      "professional_clubs": null,
+      "identity_note": null
+    },
+    {
+      "association": "CAMBODIA",
+      "pdf_page": 24,
+      "professional_players": 614,
+      "professional_clubs": 20,
+      "identity_note": null
+    },
+    {
+      "association": "CHINA PR",
+      "pdf_page": 25,
+      "professional_players": 1586,
+      "professional_clubs": 48,
+      "identity_note": null
+    },
+    {
+      "association": "CHINESE TAIPEI",
+      "pdf_page": 26,
+      "professional_players": null,
+      "professional_clubs": null,
+      "identity_note": null
+    },
+    {
+      "association": "GUAM",
+      "pdf_page": 27,
+      "professional_players": null,
+      "professional_clubs": null,
+      "identity_note": null
+    },
+    {
+      "association": "HONG KONG",
+      "pdf_page": 28,
+      "professional_players": 288,
+      "professional_clubs": 11,
+      "identity_note": null
+    },
+    {
+      "association": "INDIA",
+      "pdf_page": 29,
+      "professional_players": 1506,
+      "professional_clubs": 42,
+      "identity_note": null
+    },
+    {
+      "association": "INDONESIA",
+      "pdf_page": 30,
+      "professional_players": 1464,
+      "professional_clubs": 46,
+      "identity_note": null
+    },
+    {
+      "association": "IR IRAN",
+      "pdf_page": 31,
+      "professional_players": 1800,
+      "professional_clubs": 16,
+      "identity_note": null
+    },
+    {
+      "association": "IRAQ",
+      "pdf_page": 32,
+      "professional_players": null,
+      "professional_clubs": 20,
+      "identity_note": null
+    },
+    {
+      "association": "JAPAN",
+      "pdf_page": 33,
+      "professional_players": 2126,
+      "professional_clubs": 60,
+      "identity_note": null
+    },
+    {
+      "association": "JORDAN",
+      "pdf_page": 34,
+      "professional_players": null,
+      "professional_clubs": 12,
+      "identity_note": null
+    },
+    {
+      "association": "KOREA DPR",
+      "pdf_page": 35,
+      "professional_players": null,
+      "professional_clubs": null,
+      "identity_note": null
+    },
+    {
+      "association": "KOREA REPUBLIC",
+      "pdf_page": 36,
+      "professional_players": 780,
+      "professional_clubs": 25,
+      "identity_note": null
+    },
+    {
+      "association": "KUWAIT",
+      "pdf_page": 37,
+      "professional_players": 451,
+      "professional_clubs": 25,
+      "identity_note": null
+    },
+    {
+      "association": "KUWAIT",
+      "pdf_page": 38,
+      "professional_players": 275,
+      "professional_clubs": 10,
+      "identity_note": "Source labels this page KUWAIT but shows Kyrgyzstan flag/emblem; unresolved, do not join automatically."
+    },
+    {
+      "association": "LAOS",
+      "pdf_page": 39,
+      "professional_players": null,
+      "professional_clubs": null,
+      "identity_note": null
+    },
+    {
+      "association": "LEBANON",
+      "pdf_page": 40,
+      "professional_players": null,
+      "professional_clubs": null,
+      "identity_note": null
+    },
+    {
+      "association": "MACAU",
+      "pdf_page": 41,
+      "professional_players": null,
+      "professional_clubs": null,
+      "identity_note": null
+    },
+    {
+      "association": "MALAYSIA",
+      "pdf_page": 42,
+      "professional_players": 782,
+      "professional_clubs": 14,
+      "identity_note": null
+    },
+    {
+      "association": "MALDIVES",
+      "pdf_page": 43,
+      "professional_players": null,
+      "professional_clubs": null,
+      "identity_note": null
+    },
+    {
+      "association": "MONGOLIA",
+      "pdf_page": 44,
+      "professional_players": 264,
+      "professional_clubs": 10,
+      "identity_note": null
+    },
+    {
+      "association": "MYANMAR",
+      "pdf_page": 45,
+      "professional_players": 336,
+      "professional_clubs": 12,
+      "identity_note": null
+    },
+    {
+      "association": "NEPAL",
+      "pdf_page": 46,
+      "professional_players": null,
+      "professional_clubs": null,
+      "identity_note": null
+    },
+    {
+      "association": "OMAN",
+      "pdf_page": 47,
+      "professional_players": null,
+      "professional_clubs": 14,
+      "identity_note": null
+    },
+    {
+      "association": "PAKISTAN",
+      "pdf_page": 48,
+      "professional_players": null,
+      "professional_clubs": null,
+      "identity_note": null
+    },
+    {
+      "association": "PALESTINE",
+      "pdf_page": 49,
+      "professional_players": 207,
+      "professional_clubs": 12,
+      "identity_note": null
+    },
+    {
+      "association": "PHILIPPINES",
+      "pdf_page": 50,
+      "professional_players": 136,
+      "professional_clubs": 7,
+      "identity_note": null
+    },
+    {
+      "association": "QATAR",
+      "pdf_page": 51,
+      "professional_players": 430,
+      "professional_clubs": 12,
+      "identity_note": null
+    },
+    {
+      "association": "SAUDI ARABIA",
+      "pdf_page": 52,
+      "professional_players": 1505,
+      "professional_clubs": 108,
+      "identity_note": null
+    },
+    {
+      "association": "SINGAPORE",
+      "pdf_page": 53,
+      "professional_players": 220,
+      "professional_clubs": 6,
+      "identity_note": null
+    },
+    {
+      "association": "SRI LANKA",
+      "pdf_page": 54,
+      "professional_players": null,
+      "professional_clubs": null,
+      "identity_note": null
+    },
+    {
+      "association": "SYRIA",
+      "pdf_page": 55,
+      "professional_players": null,
+      "professional_clubs": 12,
+      "identity_note": null
+    },
+    {
+      "association": "TAJIKISTAN",
+      "pdf_page": 56,
+      "professional_players": 227,
+      "professional_clubs": 10,
+      "identity_note": null
+    },
+    {
+      "association": "THAILAND",
+      "pdf_page": 57,
+      "professional_players": 1338,
+      "professional_clubs": 110,
+      "identity_note": null
+    },
+    {
+      "association": "TIMOR-LESTE",
+      "pdf_page": 58,
+      "professional_players": null,
+      "professional_clubs": null,
+      "identity_note": null
+    },
+    {
+      "association": "TURKMENISTAN",
+      "pdf_page": 59,
+      "professional_players": null,
+      "professional_clubs": 8,
+      "identity_note": null
+    },
+    {
+      "association": "UNITED ARAB EMIRATES",
+      "pdf_page": 60,
+      "professional_players": 1338,
+      "professional_clubs": 14,
+      "identity_note": null
+    },
+    {
+      "association": "UZBEKISTAN",
+      "pdf_page": 61,
+      "professional_players": 611,
+      "professional_clubs": 25,
+      "identity_note": null
+    },
+    {
+      "association": "VIETNAM",
+      "pdf_page": 62,
+      "professional_players": 611,
+      "professional_clubs": 24,
+      "identity_note": null
+    },
+    {
+      "association": "YEMEN",
+      "pdf_page": 63,
+      "professional_players": null,
+      "professional_clubs": null,
+      "identity_note": null
+    },
+    {
+      "association": "ALGERIA",
+      "pdf_page": 70,
+      "professional_players": 549,
+      "professional_clubs": 32,
+      "identity_note": null
+    },
+    {
+      "association": "ANGOLA",
+      "pdf_page": 71,
+      "professional_players": 550,
+      "professional_clubs": 16,
+      "identity_note": null
+    },
+    {
+      "association": "BENIN",
+      "pdf_page": 72,
+      "professional_players": null,
+      "professional_clubs": 36,
+      "identity_note": null
+    },
+    {
+      "association": "BOTSWANA",
+      "pdf_page": 73,
+      "professional_players": 400,
+      "professional_clubs": 16,
+      "identity_note": null
+    },
+    {
+      "association": "BURKINA FASO",
+      "pdf_page": 74,
+      "professional_players": null,
+      "professional_clubs": null,
+      "identity_note": null
+    },
+    {
+      "association": "BURUNDI",
+      "pdf_page": 75,
+      "professional_players": null,
+      "professional_clubs": null,
+      "identity_note": null
+    },
+    {
+      "association": "CABO VERDE ISLANDS",
+      "pdf_page": 76,
+      "professional_players": null,
+      "professional_clubs": null,
+      "identity_note": null
+    },
+    {
+      "association": "CAMEROON",
+      "pdf_page": 77,
+      "professional_players": 1225,
+      "professional_clubs": 35,
+      "identity_note": null
+    },
+    {
+      "association": "CENTRAL AFRICAN REPUBLIC",
+      "pdf_page": 78,
+      "professional_players": null,
+      "professional_clubs": null,
+      "identity_note": null
+    },
+    {
+      "association": "CHAD",
+      "pdf_page": 79,
+      "professional_players": null,
+      "professional_clubs": null,
+      "identity_note": null
+    },
+    {
+      "association": "COMOROS",
+      "pdf_page": 80,
+      "professional_players": null,
+      "professional_clubs": null,
+      "identity_note": null
+    },
+    {
+      "association": "CONGO",
+      "pdf_page": 81,
+      "professional_players": null,
+      "professional_clubs": null,
+      "identity_note": null
+    },
+    {
+      "association": "CONGO DR",
+      "pdf_page": 82,
+      "professional_players": 800,
+      "professional_clubs": 5,
+      "identity_note": null
+    },
+    {
+      "association": "CÔTE D'IVOIRE",
+      "pdf_page": 83,
+      "professional_players": null,
+      "professional_clubs": 16,
+      "identity_note": null
+    },
+    {
+      "association": "DJIBOUTI",
+      "pdf_page": 84,
+      "professional_players": null,
+      "professional_clubs": null,
+      "identity_note": null
+    },
+    {
+      "association": "EGYPT",
+      "pdf_page": 85,
+      "professional_players": 642,
+      "professional_clubs": 18,
+      "identity_note": null
+    },
+    {
+      "association": "EQUATORIAL GUINEA",
+      "pdf_page": 86,
+      "professional_players": null,
+      "professional_clubs": null,
+      "identity_note": null
+    },
+    {
+      "association": "ERITREA",
+      "pdf_page": 87,
+      "professional_players": null,
+      "professional_clubs": null,
+      "identity_note": null
+    },
+    {
+      "association": "ESWATINI",
+      "pdf_page": 88,
+      "professional_players": null,
+      "professional_clubs": null,
+      "identity_note": null
+    },
+    {
+      "association": "ETHIOPIA",
+      "pdf_page": 89,
+      "professional_players": 517,
+      "professional_clubs": 16,
+      "identity_note": null
+    },
+    {
+      "association": "GABON",
+      "pdf_page": 90,
+      "professional_players": null,
+      "professional_clubs": 24,
+      "identity_note": null
+    },
+    {
+      "association": "GAMBIA",
+      "pdf_page": 91,
+      "professional_players": null,
+      "professional_clubs": null,
+      "identity_note": null
+    },
+    {
+      "association": "GHANA",
+      "pdf_page": 92,
+      "professional_players": 704,
+      "professional_clubs": 18,
+      "identity_note": null
+    },
+    {
+      "association": "GUINEA",
+      "pdf_page": 93,
+      "professional_players": null,
+      "professional_clubs": 28,
+      "identity_note": null
+    },
+    {
+      "association": "GUINEA-BISSAU",
+      "pdf_page": 94,
+      "professional_players": null,
+      "professional_clubs": 16,
+      "identity_note": null
+    },
+    {
+      "association": "KENYA",
+      "pdf_page": 95,
+      "professional_players": null,
+      "professional_clubs": 18,
+      "identity_note": null
+    },
+    {
+      "association": "LESOTHO",
+      "pdf_page": 96,
+      "professional_players": null,
+      "professional_clubs": null,
+      "identity_note": null
+    },
+    {
+      "association": "LIBERIA",
+      "pdf_page": 97,
+      "professional_players": null,
+      "professional_clubs": null,
+      "identity_note": null
+    },
+    {
+      "association": "LIBYA",
+      "pdf_page": 98,
+      "professional_players": null,
+      "professional_clubs": null,
+      "identity_note": null
+    },
+    {
+      "association": "MADAGASCAR",
+      "pdf_page": 99,
+      "professional_players": null,
+      "professional_clubs": null,
+      "identity_note": null
+    },
+    {
+      "association": "MALAWI",
+      "pdf_page": 100,
+      "professional_players": null,
+      "professional_clubs": null,
+      "identity_note": null
+    },
+    {
+      "association": "MALI",
+      "pdf_page": 101,
+      "professional_players": null,
+      "professional_clubs": 16,
+      "identity_note": null
+    },
+    {
+      "association": "MAURITANIA",
+      "pdf_page": 102,
+      "professional_players": null,
+      "professional_clubs": null,
+      "identity_note": null
+    },
+    {
+      "association": "MAURITIUS",
+      "pdf_page": 103,
+      "professional_players": null,
+      "professional_clubs": 10,
+      "identity_note": null
+    },
+    {
+      "association": "MOROCCO",
+      "pdf_page": 104,
+      "professional_players": null,
+      "professional_clubs": 32,
+      "identity_note": null
+    },
+    {
+      "association": "MOZAMBIQUE",
+      "pdf_page": 105,
+      "professional_players": 360,
+      "professional_clubs": 12,
+      "identity_note": null
+    },
+    {
+      "association": "NAMIBIA",
+      "pdf_page": 106,
+      "professional_players": null,
+      "professional_clubs": 16,
+      "identity_note": null
+    },
+    {
+      "association": "NIGER",
+      "pdf_page": 107,
+      "professional_players": null,
+      "professional_clubs": null,
+      "identity_note": null
+    },
+    {
+      "association": "NIGERIA",
+      "pdf_page": 108,
+      "professional_players": 790,
+      "professional_clubs": 20,
+      "identity_note": null
+    },
+    {
+      "association": "RWANDA",
+      "pdf_page": 109,
+      "professional_players": null,
+      "professional_clubs": null,
+      "identity_note": null
+    },
+    {
+      "association": "SÃO TOMÉ AND PRÍNCIPE",
+      "pdf_page": 110,
+      "professional_players": null,
+      "professional_clubs": null,
+      "identity_note": null
+    },
+    {
+      "association": "SENEGAL",
+      "pdf_page": 111,
+      "professional_players": null,
+      "professional_clubs": 18,
+      "identity_note": null
+    },
+    {
+      "association": "SEYCHELLES",
+      "pdf_page": 112,
+      "professional_players": null,
+      "professional_clubs": null,
+      "identity_note": null
+    },
+    {
+      "association": "SIERRA LEONE",
+      "pdf_page": 113,
+      "professional_players": null,
+      "professional_clubs": null,
+      "identity_note": null
+    },
+    {
+      "association": "SOMALIA",
+      "pdf_page": 114,
+      "professional_players": null,
+      "professional_clubs": null,
+      "identity_note": null
+    },
+    {
+      "association": "SOUTH AFRICA",
+      "pdf_page": 115,
+      "professional_players": 541,
+      "professional_clubs": 16,
+      "identity_note": null
+    },
+    {
+      "association": "SOUTH SUDAN",
+      "pdf_page": 116,
+      "professional_players": null,
+      "professional_clubs": null,
+      "identity_note": null
+    },
+    {
+      "association": "SUDAN",
+      "pdf_page": 117,
+      "professional_players": null,
+      "professional_clubs": null,
+      "identity_note": null
+    },
+    {
+      "association": "TANZANIA",
+      "pdf_page": 118,
+      "professional_players": null,
+      "professional_clubs": 16,
+      "identity_note": null
+    },
+    {
+      "association": "TOGO",
+      "pdf_page": 119,
+      "professional_players": null,
+      "professional_clubs": null,
+      "identity_note": null
+    },
+    {
+      "association": "TUNISIA",
+      "pdf_page": 120,
+      "professional_players": null,
+      "professional_clubs": 40,
+      "identity_note": null
+    },
+    {
+      "association": "UGANDA",
+      "pdf_page": 121,
+      "professional_players": 991,
+      "professional_clubs": 31,
+      "identity_note": null
+    },
+    {
+      "association": "ZAMBIA",
+      "pdf_page": 122,
+      "professional_players": null,
+      "professional_clubs": 18,
+      "identity_note": null
+    },
+    {
+      "association": "ZIMBABWE",
+      "pdf_page": 123,
+      "professional_players": 416,
+      "professional_clubs": 18,
+      "identity_note": null
+    },
+    {
+      "association": "ANGUILLA",
+      "pdf_page": 130,
+      "professional_players": null,
+      "professional_clubs": null,
+      "identity_note": null
+    },
+    {
+      "association": "ANTIGUA AND BARBUDA",
+      "pdf_page": 131,
+      "professional_players": null,
+      "professional_clubs": null,
+      "identity_note": null
+    },
+    {
+      "association": "ARUBA",
+      "pdf_page": 132,
+      "professional_players": null,
+      "professional_clubs": null,
+      "identity_note": null
+    },
+    {
+      "association": "BAHAMAS",
+      "pdf_page": 133,
+      "professional_players": null,
+      "professional_clubs": null,
+      "identity_note": null
+    },
+    {
+      "association": "BARBADOS",
+      "pdf_page": 134,
+      "professional_players": null,
+      "professional_clubs": null,
+      "identity_note": null
+    },
+    {
+      "association": "BELIZE",
+      "pdf_page": 135,
+      "professional_players": 260,
+      "professional_clubs": 8,
+      "identity_note": null
+    },
+    {
+      "association": "BERMUDA",
+      "pdf_page": 136,
+      "professional_players": null,
+      "professional_clubs": null,
+      "identity_note": null
+    },
+    {
+      "association": "BRITISH VIRGIN ISLANDS",
+      "pdf_page": 137,
+      "professional_players": null,
+      "professional_clubs": null,
+      "identity_note": null
+    },
+    {
+      "association": "CANADA",
+      "pdf_page": 138,
+      "professional_players": 189,
+      "professional_clubs": 8,
+      "identity_note": null
+    },
+    {
+      "association": "CAYMAN ISLANDS",
+      "pdf_page": 139,
+      "professional_players": null,
+      "professional_clubs": null,
+      "identity_note": null
+    },
+    {
+      "association": "COSTA RICA",
+      "pdf_page": 140,
+      "professional_players": 818,
+      "professional_clubs": 30,
+      "identity_note": null
+    },
+    {
+      "association": "CUBA",
+      "pdf_page": 141,
+      "professional_players": null,
+      "professional_clubs": null,
+      "identity_note": null
+    },
+    {
+      "association": "CURAÇAO",
+      "pdf_page": 142,
+      "professional_players": null,
+      "professional_clubs": null,
+      "identity_note": null
+    },
+    {
+      "association": "DOMINICA",
+      "pdf_page": 143,
+      "professional_players": null,
+      "professional_clubs": 34,
+      "identity_note": null
+    },
+    {
+      "association": "DOMINICAN REPUBLIC",
+      "pdf_page": 144,
+      "professional_players": 300,
+      "professional_clubs": 9,
+      "identity_note": null
+    },
+    {
+      "association": "EL SALVADOR",
+      "pdf_page": 145,
+      "professional_players": 1700,
+      "professional_clubs": 68,
+      "identity_note": null
+    },
+    {
+      "association": "GRENADA",
+      "pdf_page": 146,
+      "professional_players": null,
+      "professional_clubs": null,
+      "identity_note": null
+    },
+    {
+      "association": "GUATEMALA",
+      "pdf_page": 147,
+      "professional_players": 945,
+      "professional_clubs": 72,
+      "identity_note": null
+    },
+    {
+      "association": "GUYANA",
+      "pdf_page": 148,
+      "professional_players": null,
+      "professional_clubs": null,
+      "identity_note": null
+    },
+    {
+      "association": "HAITI",
+      "pdf_page": 149,
+      "professional_players": 720,
+      "professional_clubs": null,
+      "identity_note": null
+    },
+    {
+      "association": "HONDURAS",
+      "pdf_page": 150,
+      "professional_players": 328,
+      "professional_clubs": 10,
+      "identity_note": null
+    },
+    {
+      "association": "JAMAICA",
+      "pdf_page": 151,
+      "professional_players": 447,
+      "professional_clubs": 14,
+      "identity_note": null
+    },
+    {
+      "association": "MEXICO",
+      "pdf_page": 152,
+      "professional_players": 9464,
+      "professional_clubs": 244,
+      "identity_note": null
+    },
+    {
+      "association": "MONTSERRAT",
+      "pdf_page": 153,
+      "professional_players": null,
+      "professional_clubs": null,
+      "identity_note": null
+    },
+    {
+      "association": "NICARAGUA",
+      "pdf_page": 154,
+      "professional_players": 263,
+      "professional_clubs": 10,
+      "identity_note": null
+    },
+    {
+      "association": "PANAMA",
+      "pdf_page": 155,
+      "professional_players": 396,
+      "professional_clubs": 12,
+      "identity_note": null
+    },
+    {
+      "association": "PUERTO RICO",
+      "pdf_page": 156,
+      "professional_players": null,
+      "professional_clubs": 6,
+      "identity_note": null
+    },
+    {
+      "association": "ST KITTS AND NEVIS",
+      "pdf_page": 157,
+      "professional_players": null,
+      "professional_clubs": null,
+      "identity_note": null
+    },
+    {
+      "association": "ST LUCIA",
+      "pdf_page": 158,
+      "professional_players": null,
+      "professional_clubs": null,
+      "identity_note": null
+    },
+    {
+      "association": "ST VINCENT AND THE GRENADINES",
+      "pdf_page": 159,
+      "professional_players": null,
+      "professional_clubs": null,
+      "identity_note": null
+    },
+    {
+      "association": "SURINAME",
+      "pdf_page": 160,
+      "professional_players": null,
+      "professional_clubs": 10,
+      "identity_note": null
+    },
+    {
+      "association": "TRINIDAD AND TOBAGO",
+      "pdf_page": 161,
+      "professional_players": null,
+      "professional_clubs": 12,
+      "identity_note": null
+    },
+    {
+      "association": "TURKS AND CAICOS ISLANDS",
+      "pdf_page": 162,
+      "professional_players": null,
+      "professional_clubs": null,
+      "identity_note": null
+    },
+    {
+      "association": "US VIRGIN ISLANDS",
+      "pdf_page": 163,
+      "professional_players": null,
+      "professional_clubs": null,
+      "identity_note": null
+    },
+    {
+      "association": "USA",
+      "pdf_page": 164,
+      "professional_players": 2791,
+      "professional_clubs": 101,
+      "identity_note": null
+    },
+    {
+      "association": "ARGENTINA",
+      "pdf_page": 171,
+      "professional_players": 3613,
+      "professional_clubs": 118,
+      "identity_note": null
+    },
+    {
+      "association": "BOLIVIA",
+      "pdf_page": 172,
+      "professional_players": 563,
+      "professional_clubs": 17,
+      "identity_note": null
+    },
+    {
+      "association": "BRAZIL",
+      "pdf_page": 173,
+      "professional_players": 2123,
+      "professional_clubs": 60,
+      "identity_note": null
+    },
+    {
+      "association": "CHILE",
+      "pdf_page": 174,
+      "professional_players": 1350,
+      "professional_clubs": 46,
+      "identity_note": null
+    },
+    {
+      "association": "COLOMBIA",
+      "pdf_page": 175,
+      "professional_players": 1163,
+      "professional_clubs": 36,
+      "identity_note": null
+    },
+    {
+      "association": "ECUADOR",
+      "pdf_page": 176,
+      "professional_players": 897,
+      "professional_clubs": 26,
+      "identity_note": null
+    },
+    {
+      "association": "PARAGUAY",
+      "pdf_page": 177,
+      "professional_players": 492,
+      "professional_clubs": 12,
+      "identity_note": null
+    },
+    {
+      "association": "PERU",
+      "pdf_page": 178,
+      "professional_players": 555,
+      "professional_clubs": 33,
+      "identity_note": null
+    },
+    {
+      "association": "URUGUAY",
+      "pdf_page": 179,
+      "professional_players": 516,
+      "professional_clubs": 30,
+      "identity_note": null
+    },
+    {
+      "association": "VENEZUELA",
+      "pdf_page": 180,
+      "professional_players": 505,
+      "professional_clubs": 31,
+      "identity_note": null
+    },
+    {
+      "association": "AMERICAN SAMOA",
+      "pdf_page": 187,
+      "professional_players": null,
+      "professional_clubs": null,
+      "identity_note": null
+    },
+    {
+      "association": "COOK ISLANDS",
+      "pdf_page": 188,
+      "professional_players": null,
+      "professional_clubs": null,
+      "identity_note": null
+    },
+    {
+      "association": "FIJI",
+      "pdf_page": 189,
+      "professional_players": 307,
+      "professional_clubs": 10,
+      "identity_note": null
+    },
+    {
+      "association": "NEW CALEDONIA",
+      "pdf_page": 190,
+      "professional_players": null,
+      "professional_clubs": null,
+      "identity_note": null
+    },
+    {
+      "association": "NEW ZEALAND",
+      "pdf_page": 191,
+      "professional_players": 963,
+      "professional_clubs": 32,
+      "identity_note": null
+    },
+    {
+      "association": "PAPUA NEW GUINEA",
+      "pdf_page": 192,
+      "professional_players": null,
+      "professional_clubs": null,
+      "identity_note": null
+    },
+    {
+      "association": "SAMOA",
+      "pdf_page": 193,
+      "professional_players": null,
+      "professional_clubs": null,
+      "identity_note": null
+    },
+    {
+      "association": "SOLOMON ISLANDS",
+      "pdf_page": 194,
+      "professional_players": null,
+      "professional_clubs": null,
+      "identity_note": null
+    },
+    {
+      "association": "TAHITI",
+      "pdf_page": 195,
+      "professional_players": null,
+      "professional_clubs": null,
+      "identity_note": null
+    },
+    {
+      "association": "TONGA",
+      "pdf_page": 196,
+      "professional_players": null,
+      "professional_clubs": null,
+      "identity_note": null
+    },
+    {
+      "association": "VANUATU",
+      "pdf_page": 197,
+      "professional_players": null,
+      "professional_clubs": null,
+      "identity_note": null
+    },
+    {
+      "association": "ALBANIA",
+      "pdf_page": 204,
+      "professional_players": 869,
+      "professional_clubs": 22,
+      "identity_note": null
+    },
+    {
+      "association": "ANDORRA",
+      "pdf_page": 205,
+      "professional_players": 170,
+      "professional_clubs": null,
+      "identity_note": null
+    },
+    {
+      "association": "ARMENIA",
+      "pdf_page": 206,
+      "professional_players": 637,
+      "professional_clubs": 17,
+      "identity_note": null
+    },
+    {
+      "association": "AUSTRIA",
+      "pdf_page": 207,
+      "professional_players": 814,
+      "professional_clubs": 28,
+      "identity_note": null
+    },
+    {
+      "association": "AZERBAIJAN",
+      "pdf_page": 208,
+      "professional_players": 630,
+      "professional_clubs": 25,
+      "identity_note": null
+    },
+    {
+      "association": "BELARUS",
+      "pdf_page": 209,
+      "professional_players": 1534,
+      "professional_clubs": 32,
+      "identity_note": null
+    },
+    {
+      "association": "BELGIUM",
+      "pdf_page": 210,
+      "professional_players": 1491,
+      "professional_clubs": 28,
+      "identity_note": null
+    },
+    {
+      "association": "BOSNIA AND HERZEGOVINA",
+      "pdf_page": 211,
+      "professional_players": 387,
+      "professional_clubs": 12,
+      "identity_note": null
+    },
+    {
+      "association": "BULGARIA",
+      "pdf_page": 212,
+      "professional_players": 711,
+      "professional_clubs": 32,
+      "identity_note": null
+    },
+    {
+      "association": "CROATIA",
+      "pdf_page": 213,
+      "professional_players": 1188,
+      "professional_clubs": 38,
+      "identity_note": null
+    },
+    {
+      "association": "CYPRUS",
+      "pdf_page": 214,
+      "professional_players": 511,
+      "professional_clubs": 14,
+      "identity_note": null
+    },
+    {
+      "association": "CZECH REPUBLIC",
+      "pdf_page": 215,
+      "professional_players": 2959,
+      "professional_clubs": 30,
+      "identity_note": null
+    },
+    {
+      "association": "DENMARK",
+      "pdf_page": 216,
+      "professional_players": 673,
+      "professional_clubs": 24,
+      "identity_note": null
+    },
+    {
+      "association": "ENGLAND",
+      "pdf_page": 217,
+      "professional_players": 5582,
+      "professional_clubs": 92,
+      "identity_note": null
+    },
+    {
+      "association": "ESTONIA",
+      "pdf_page": 218,
+      "professional_players": 347,
+      "professional_clubs": 10,
+      "identity_note": null
+    },
+    {
+      "association": "FAROE ISLANDS",
+      "pdf_page": 219,
+      "professional_players": null,
+      "professional_clubs": null,
+      "identity_note": null
+    },
+    {
+      "association": "FINLAND",
+      "pdf_page": 220,
+      "professional_players": 311,
+      "professional_clubs": 12,
+      "identity_note": null
+    },
+    {
+      "association": "FRANCE",
+      "pdf_page": 221,
+      "professional_players": 2906,
+      "professional_clubs": 47,
+      "identity_note": null
+    },
+    {
+      "association": "GEORGIA",
+      "pdf_page": 222,
+      "professional_players": 533,
+      "professional_clubs": 20,
+      "identity_note": null
+    },
+    {
+      "association": "GERMANY",
+      "pdf_page": 223,
+      "professional_players": 1562,
+      "professional_clubs": 56,
+      "identity_note": null
+    },
+    {
+      "association": "GIBRALTAR",
+      "pdf_page": 224,
+      "professional_players": null,
+      "professional_clubs": null,
+      "identity_note": null
+    },
+    {
+      "association": "GREECE",
+      "pdf_page": 225,
+      "professional_players": 1086,
+      "professional_clubs": 39,
+      "identity_note": null
+    },
+    {
+      "association": "HUNGARY",
+      "pdf_page": 226,
+      "professional_players": 1055,
+      "professional_clubs": 30,
+      "identity_note": null
+    },
+    {
+      "association": "ICELAND",
+      "pdf_page": 227,
+      "professional_players": 330,
+      "professional_clubs": 12,
+      "identity_note": null
+    },
+    {
+      "association": "ISRAEL",
+      "pdf_page": 228,
+      "professional_players": 818,
+      "professional_clubs": 30,
+      "identity_note": null
+    },
+    {
+      "association": "ITALY",
+      "pdf_page": 229,
+      "professional_players": 3101,
+      "professional_clubs": 98,
+      "identity_note": null
+    },
+    {
+      "association": "KAZAKHSTAN",
+      "pdf_page": 230,
+      "professional_players": 1195,
+      "professional_clubs": 32,
+      "identity_note": null
+    },
+    {
+      "association": "KOSOVO",
+      "pdf_page": 231,
+      "professional_players": null,
+      "professional_clubs": null,
+      "identity_note": null
+    },
+    {
+      "association": "LATVIA",
+      "pdf_page": 232,
+      "professional_players": 200,
+      "professional_clubs": 10,
+      "identity_note": null
+    },
+    {
+      "association": "LIECHTENSTEIN",
+      "pdf_page": 233,
+      "professional_players": 25,
+      "professional_clubs": 1,
+      "identity_note": null
+    },
+    {
+      "association": "LITHUANIA",
+      "pdf_page": 234,
+      "professional_players": 288,
+      "professional_clubs": 10,
+      "identity_note": null
+    },
+    {
+      "association": "LUXEMBOURG",
+      "pdf_page": 235,
+      "professional_players": null,
+      "professional_clubs": null,
+      "identity_note": null
+    },
+    {
+      "association": "MALTA",
+      "pdf_page": 236,
+      "professional_players": 530,
+      "professional_clubs": 30,
+      "identity_note": null
+    },
+    {
+      "association": "MOLDOVA",
+      "pdf_page": 237,
+      "professional_players": 180,
+      "professional_clubs": 8,
+      "identity_note": null
+    },
+    {
+      "association": "MONTENEGRO",
+      "pdf_page": 238,
+      "professional_players": 296,
+      "professional_clubs": 10,
+      "identity_note": null
+    },
+    {
+      "association": "NETHERLANDS",
+      "pdf_page": 239,
+      "professional_players": 1150,
+      "professional_clubs": 34,
+      "identity_note": null
+    },
+    {
+      "association": "NORTH MACEDONIA",
+      "pdf_page": 240,
+      "professional_players": 256,
+      "professional_clubs": 12,
+      "identity_note": null
+    },
+    {
+      "association": "NORTHERN IRELAND",
+      "pdf_page": 241,
+      "professional_players": null,
+      "professional_clubs": null,
+      "identity_note": null
+    },
+    {
+      "association": "NORWAY",
+      "pdf_page": 242,
+      "professional_players": 420,
+      "professional_clubs": 32,
+      "identity_note": null
+    },
+    {
+      "association": "POLAND",
+      "pdf_page": 243,
+      "professional_players": 1710,
+      "professional_clubs": 54,
+      "identity_note": null
+    },
+    {
+      "association": "PORTUGAL",
+      "pdf_page": 244,
+      "professional_players": 2074,
+      "professional_clubs": 36,
+      "identity_note": null
+    },
+    {
+      "association": "REPUBLIC OF IRELAND",
+      "pdf_page": 245,
+      "professional_players": 326,
+      "professional_clubs": 10,
+      "identity_note": null
+    },
+    {
+      "association": "ROMANIA",
+      "pdf_page": 246,
+      "professional_players": 531,
+      "professional_clubs": 36,
+      "identity_note": null
+    },
+    {
+      "association": "RUSSIA",
+      "pdf_page": 247,
+      "professional_players": 3633,
+      "professional_clubs": 54,
+      "identity_note": null
+    },
+    {
+      "association": "SAN MARINO",
+      "pdf_page": 248,
+      "professional_players": null,
+      "professional_clubs": null,
+      "identity_note": null
+    },
+    {
+      "association": "SCOTLAND",
+      "pdf_page": 249,
+      "professional_players": 4796,
+      "professional_clubs": 77,
+      "identity_note": null
+    },
+    {
+      "association": "SERBIA",
+      "pdf_page": 250,
+      "professional_players": 972,
+      "professional_clubs": 32,
+      "identity_note": null
+    },
+    {
+      "association": "SLOVAKIA",
+      "pdf_page": 251,
+      "professional_players": 907,
+      "professional_clubs": 28,
+      "identity_note": null
+    },
+    {
+      "association": "SLOVENIA",
+      "pdf_page": 252,
+      "professional_players": 271,
+      "professional_clubs": 10,
+      "identity_note": null
+    },
+    {
+      "association": "SPAIN",
+      "pdf_page": 253,
+      "professional_players": 8560,
+      "professional_clubs": 41,
+      "identity_note": null
+    },
+    {
+      "association": "SWEDEN",
+      "pdf_page": 254,
+      "professional_players": 3092,
+      "professional_clubs": 32,
+      "identity_note": null
+    },
+    {
+      "association": "SWITZERLAND",
+      "pdf_page": 255,
+      "professional_players": 1140,
+      "professional_clubs": 22,
+      "identity_note": null
+    },
+    {
+      "association": "TÜRKIYE",
+      "pdf_page": 256,
+      "professional_players": 3917,
+      "professional_clubs": 136,
+      "identity_note": null
+    },
+    {
+      "association": "UKRAINE",
+      "pdf_page": 257,
+      "professional_players": 1288,
+      "professional_clubs": 42,
+      "identity_note": null
+    },
+    {
+      "association": "WALES",
+      "pdf_page": 258,
+      "professional_players": 413,
+      "professional_clubs": 12,
+      "identity_note": null
+    }
+  ]
+}

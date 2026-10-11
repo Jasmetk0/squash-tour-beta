@@ -1,0 +1,75 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "atp-earth-pyf-reviewed-structure.v1",
+  "world_id": "atp_earth",
+  "countries": [
+    "PYF"
+  ],
+  "data_cutoff": "2026-10-04",
+  "rating_scale": "country_ratings_1_10.v2",
+  "attribute_order": [
+    "squash_popularity",
+    "squash_access",
+    "development_quality",
+    "competition_quality",
+    "elite_support",
+    "squash_tradition"
+  ],
+  "anchor_values": {
+    "PYF": {
+      "1955": [
+        2.5,
+        2.2,
+        2,
+        1.8,
+        1.8,
+        2.3
+      ],
+      "1957": [
+        2.8,
+        2.5,
+        2.2,
+        2,
+        2,
+        2.5
+      ],
+      "2000": [
+        5,
+        5.3,
+        4.6,
+        4,
+        4.2,
+        4.8
+      ],
+      "2020": [
+        5.4,
+        5.7,
+        5,
+        4.3,
+        4.5,
+        5.1
+      ],
+      "2026": [
+        5.8,
+        6,
+        5.3,
+        4.6,
+        4.8,
+        5.4
+      ]
+    }
+  },
+  "selection": "Retrospective piecewise-linear reconstruction between explicit project-authored numeric anchors; structural observations remain time-gated to their evidence years.",
+  "limitations": [
+    "All numeric ratings are project estimates with low confidence, not source measurements.",
+    "2020 ITF activity status and 2026 association evidence provide structural context only.",
+    "No rankings, titles or athlete results are used to fit ratings.",
+    "2026 is partial through the bundle cutoff, not a forecast.",
+    "Linear interpolation is a transparent project-authored reconstruction between sparse numeric anchors, not a measured annual sporting trajectory."
+  ],
+  "construction": {
+    "kind": "explicit_anchor_linear_interpolation",
+    "description": "Annual project estimates are linearly interpolated between the existing explicit numeric calibration anchors and rounded to one decimal. Numeric anchors remain project-authored estimates; source observations stay time-gated to their actual evidence years, and future numeric anchors are used only for retrospective reconstruction.",
+    "rounding": "one_decimal"
+  }
+}

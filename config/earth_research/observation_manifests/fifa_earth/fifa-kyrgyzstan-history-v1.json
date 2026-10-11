@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-kyrgyzstan-history-v1",
+  "source_id": "fifa-kyrgyzstan-member-context-2026",
+  "relative_path": "observations/normalized/structural/fifa_kyrgyzstan_history_v1.json",
+  "sha256": "f722777af50acd8a28a943cca0fef7bed725fa8a2eda5b1f49f83d817838d0c8",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-rfef-ciudad-futbol-v1",
+  "source_id": "rfef-ciudad-futbol",
+  "relative_path": "observations/normalized/structural/fifa_structural_rfef_ciudad_futbol_v1.json",
+  "sha256": "14694f311510df3d9202e0f9410613e262c4454e2c3e57ed0954bf9098891e94",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

@@ -1,0 +1,200 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "fifa-earth-country-history-aut-dnk-swe-che.v1",
+  "world_id": "fifa_earth",
+  "data_cutoff": "2026-10-03",
+  "countries": [
+    "AUT",
+    "DNK",
+    "SWE",
+    "CHE"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "principles": [
+    "Use population-normalised interpretation of the same canonical 2006 and 2023 FIFA source families to preserve cross-country comparability.",
+    "High club density can raise organised access without automatically raising competition quality.",
+    "High professional-player density can strengthen competition/elite ecosystem context without becoming a direct quality or ranking score.",
+    "Every pre-2006 annual value remains low-confidence because the first direct checkpoint is 2006.",
+    "No held-out rankings, title counts or tournament outcomes are used for tuning."
+  ],
+  "observed_context": {
+    "AUT": {
+      "big_count_2006_all_players_per_1000": 116.964,
+      "big_count_2006_registered_per_1000": 72.103,
+      "big_count_2006_clubs_per_million": 279.447,
+      "professional_2023_players_per_million": 89.152,
+      "professional_2023_clubs_per_million": 3.067
+    },
+    "DNK": {
+      "big_count_2006_all_players_per_1000": 94.04,
+      "big_count_2006_registered_per_1000": 55.418,
+      "big_count_2006_clubs_per_million": 438.259,
+      "professional_2023_players_per_million": 113.145,
+      "professional_2023_clubs_per_million": 4.035
+    },
+    "SWE": {
+      "big_count_2006_all_players_per_1000": 110.889,
+      "big_count_2006_registered_per_1000": 60.892,
+      "big_count_2006_clubs_per_million": 466.488,
+      "professional_2023_players_per_million": 293.039,
+      "professional_2023_clubs_per_million": 3.033
+    },
+    "CHE": {
+      "big_count_2006_all_players_per_1000": 76.446,
+      "big_count_2006_registered_per_1000": 31.116,
+      "big_count_2006_clubs_per_million": 241.492,
+      "professional_2023_players_per_million": 128.515,
+      "professional_2023_clubs_per_million": 2.48
+    }
+  },
+  "anchor_years": [
+    1955,
+    2006,
+    2023,
+    2026
+  ],
+  "anchor_values": {
+    "AUT": {
+      "1955": [
+        7.8,
+        7.4,
+        7.5,
+        7.8,
+        7.4,
+        8.2
+      ],
+      "2006": [
+        8.7,
+        9,
+        8.6,
+        8.4,
+        8.4,
+        8.8
+      ],
+      "2023": [
+        8.7,
+        8.9,
+        8.8,
+        8.6,
+        8.7,
+        8.9
+      ],
+      "2026": [
+        8.7,
+        8.9,
+        8.9,
+        8.6,
+        8.8,
+        8.9
+      ]
+    },
+    "DNK": {
+      "1955": [
+        7.8,
+        7.6,
+        7.6,
+        7.9,
+        7.5,
+        8.2
+      ],
+      "2006": [
+        8.6,
+        9.3,
+        8.7,
+        8.5,
+        8.5,
+        8.8
+      ],
+      "2023": [
+        8.6,
+        9.2,
+        8.9,
+        8.7,
+        8.8,
+        8.9
+      ],
+      "2026": [
+        8.6,
+        9.2,
+        9,
+        8.7,
+        8.9,
+        8.9
+      ]
+    },
+    "SWE": {
+      "1955": [
+        8,
+        7.7,
+        7.8,
+        8.2,
+        7.8,
+        8.4
+      ],
+      "2006": [
+        8.8,
+        9.4,
+        8.9,
+        8.7,
+        8.8,
+        9
+      ],
+      "2023": [
+        8.8,
+        9.3,
+        9.2,
+        9,
+        9,
+        9.1
+      ],
+      "2026": [
+        8.8,
+        9.3,
+        9.2,
+        9,
+        9.1,
+        9.1
+      ]
+    },
+    "CHE": {
+      "1955": [
+        7.6,
+        7.3,
+        7.5,
+        7.8,
+        7.5,
+        8.1
+      ],
+      "2006": [
+        8.3,
+        8.7,
+        8.6,
+        8.5,
+        8.5,
+        8.7
+      ],
+      "2023": [
+        8.3,
+        8.7,
+        8.9,
+        8.8,
+        8.9,
+        8.9
+      ],
+      "2026": [
+        8.3,
+        8.7,
+        8.9,
+        8.8,
+        8.9,
+        8.9
+      ]
+    }
+  },
+  "interpolation": "Piecewise linear between authored anchors; one-decimal rounding.",
+  "evidence_sources": [
+    "fifa-big-count-2006",
+    "fifa-professional-2023"
+  ],
+  "heldout_ranking_used": false
+}

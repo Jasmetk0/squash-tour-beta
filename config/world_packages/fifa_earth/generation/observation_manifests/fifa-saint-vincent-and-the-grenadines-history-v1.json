@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-saint-vincent-and-the-grenadines-history-v1",
+  "source_id": "fifa-saint-vincent-and-the-grenadines-member-context-2026",
+  "relative_path": "observations/normalized/structural/fifa_saint_vincent_and_the_grenadines_history_v1.json",
+  "sha256": "8a76588fd769df63accc941167985897b5689cd24cb5a135d4fefdccf71676d4",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

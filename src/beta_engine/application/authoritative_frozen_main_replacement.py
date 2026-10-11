@@ -1,0 +1,499 @@
+"""One source-driven command for Main Draw replacement after Main Draw Freeze."""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+import hashlib
+from typing import Literal
+
+from pydantic import Field, model_validator
+
+from beta_engine.domain.rankings.official import FrozenInput, RankingWeek
+from beta_engine.domain.tournaments.replacement_source_authority import (
+    TournamentReplacementSource,
+    TournamentReplacementSourceAuthority,
+)
+from beta_engine.infrastructure.db.tournament_draw_authority import (
+    TournamentDrawAuthorityStore,
+)
+from beta_engine.infrastructure.db.tournament_draw_revision import (
+    TournamentDrawRevisionConflict,
+    TournamentDrawRevisionStore,
+)
+from beta_engine.infrastructure.db.tournament_replacement_source_authority import (
+    TournamentReplacementSourceAuthorityStore,
+)
+from beta_engine.infrastructure.db.tournament_walkover_authority import (
+    TournamentWalkoverAuthorityStore,
+)
+
+
+class AuthoritativeFrozenMainReplacementConflict(ValueError):
+    pass
+
+
+class AuthoritativeFrozenMainReplacementRequest(FrozenInput):
+    withdrawn_player_id: str = Field(min_length=1)
+    unavailable_player_ids: tuple[str, ...] = ()
+
+    @model_validator(mode="after")
+    def validate_unavailable(self):
+        if self.unavailable_player_ids != tuple(sorted(set(self.unavailable_player_ids))):
+            raise ValueError(
+                "Frozen Main replacement unavailable player IDs must be canonical and unique"
+            )
+        if self.withdrawn_player_id in self.unavailable_player_ids:
+            raise ValueError(
+                "Withdrawn player must not also be listed as an unavailable replacement"
+            )
+        return self
+
+
+class AuthoritativeFrozenMainReplacementCommitCommand(
+    AuthoritativeFrozenMainReplacementRequest
+):
+    command_id: str = Field(min_length=1, max_length=128)
+    run_id: str = Field(min_length=1)
+    branch_id: str = Field(min_length=1)
+    event_id: str = Field(min_length=1)
+    expected_source_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    main_process_window_ordinal: int = Field(ge=1)
+    qualification_process_window_ordinal: int | None = Field(default=None, ge=1)
+    repair_draw_seed: int | None = None
+
+
+class AuthoritativeFrozenMainReplacementPreview(FrozenInput):
+    schema_version: Literal["authoritative_frozen_main_replacement_preview.v1"] = (
+        "authoritative_frozen_main_replacement_preview.v1"
+    )
+    run_id: str
+    branch_id: str
+    event_id: str
+    withdrawn_player_id: str
+    source: TournamentReplacementSource
+    selected_player_id: str | None = None
+    physical_slot_index: int
+    cutoff_status: str
+    source_authority_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    source_authority: TournamentReplacementSourceAuthority
+    commit_mode: Literal["draw_revision", "walkover_handoff"]
+
+
+@dataclass(frozen=True)
+class AuthoritativeFrozenMainReplacementResult:
+    source: TournamentReplacementSource
+    source_authority: TournamentReplacementSourceAuthority | None
+    draw_revisions: tuple[object, ...] = ()
+    walkover_result: object | None = None
+
+
+def _child_command_id(
+    command_id: str,
+    suffix: str,
+    *,
+    reviewed_source_fingerprint: str | None = None,
+) -> str:
+    if not command_id or len(command_id) > 128:
+        raise ValueError("Replacement orchestration requires a valid command ID")
+    if reviewed_source_fingerprint is None:
+        candidate = f"{command_id}:{suffix}"
+        if len(candidate) <= 128:
+            return candidate
+        digest = hashlib.sha256(candidate.encode()).hexdigest()[:12]
+        room = 128 - len(suffix) - len(digest) - 2
+        return f"{command_id[:room]}:{suffix}:{digest}"
+
+    candidate = (
+        f"{command_id}:{suffix}:review:{reviewed_source_fingerprint}"
+    )
+    digest = hashlib.sha256(candidate.encode()).hexdigest()[:32]
+    stable_suffix = f"{suffix}:review:{digest}"
+    room = 128 - len(stable_suffix) - 1
+    return f"{command_id[:room]}:{stable_suffix}"
+
+
+class AuthoritativeFrozenMainReplacement:
+    """Dispatch one frozen-Main vacancy through the canonical source chain."""
+
+    def __init__(self, session):
+        self.session = session
+
+    def preview(
+        self,
+        *,
+        run_id: str,
+        branch_id: str,
+        event_id: str,
+        withdrawn_player_id: str,
+        unavailable_player_ids: tuple[str, ...] = (),
+    ) -> AuthoritativeFrozenMainReplacementPreview:
+        source = TournamentReplacementSourceAuthorityStore(self.session).resolve(
+            run_id=run_id,
+            branch_id=branch_id,
+            event_id=event_id,
+            withdrawn_player_id=withdrawn_player_id,
+            unavailable_player_ids=tuple(sorted(set(unavailable_player_ids))),
+        )
+        return AuthoritativeFrozenMainReplacementPreview(
+            run_id=run_id,
+            branch_id=branch_id,
+            event_id=event_id,
+            withdrawn_player_id=withdrawn_player_id,
+            source=source.source,
+            selected_player_id=source.selected_player_id,
+            physical_slot_index=source.physical_slot_index,
+            cutoff_status=source.replacement_cutoff_authority.status,
+            source_authority_fingerprint=source.fingerprint,
+            source_authority=source,
+            commit_mode=(
+                "walkover_handoff"
+                if source.source == "walkover"
+                else "draw_revision"
+            ),
+        )
+
+    def _retry_from_history(
+        self,
+        *,
+        run_id: str,
+        branch_id: str,
+        event_id: str,
+        command_id: str,
+        expected_source_fingerprint: str | None = None,
+    ) -> AuthoritativeFrozenMainReplacementResult | None:
+        history = TournamentDrawRevisionStore(self.session).history(
+            run_id=run_id,
+            branch_id=branch_id,
+            event_id=event_id,
+        )
+        by_command = {item.command_id: item for item in history}
+        rwc = by_command.get(_child_command_id(
+            command_id,
+            "rwc",
+            reviewed_source_fingerprint=expected_source_fingerprint,
+        ))
+        if rwc is not None:
+            return AuthoritativeFrozenMainReplacementResult(
+                source="reserve_wild_card",
+                source_authority=None,
+                draw_revisions=(rwc,),
+            )
+        q = by_command.get(_child_command_id(
+            command_id,
+            "q",
+            reviewed_source_fingerprint=expected_source_fingerprint,
+        ))
+        if q is not None:
+            return AuthoritativeFrozenMainReplacementResult(
+                source="qualification_promotion",
+                source_authority=q.replacement_source_authority,
+                draw_revisions=(q,),
+            )
+        fallback = by_command.get(_child_command_id(
+            command_id,
+            "fallback",
+            reviewed_source_fingerprint=expected_source_fingerprint,
+        ))
+        if fallback is not None:
+            authority = fallback.replacement_source_authority
+            if authority is None:
+                raise ValueError(
+                    "Persisted replacement fallback lacks source authority"
+                )
+            return AuthoritativeFrozenMainReplacementResult(
+                source=authority.source,
+                source_authority=authority,
+                draw_revisions=(fallback,),
+            )
+        vacancy = by_command.get(_child_command_id(
+            command_id,
+            "ll-vacancy",
+            reviewed_source_fingerprint=expected_source_fingerprint,
+        ))
+        fill = by_command.get(_child_command_id(
+            command_id,
+            "ll-fill",
+            reviewed_source_fingerprint=expected_source_fingerprint,
+        ))
+        if fill is not None:
+            revisions = tuple(
+                item for item in (vacancy, fill) if item is not None
+            )
+            return AuthoritativeFrozenMainReplacementResult(
+                source="lucky_loser",
+                source_authority=(
+                    vacancy.replacement_source_authority
+                    if vacancy is not None
+                    else None
+                ),
+                draw_revisions=revisions,
+            )
+        if vacancy is not None:
+            return AuthoritativeFrozenMainReplacementResult(
+                source="lucky_loser_pending",
+                source_authority=vacancy.replacement_source_authority,
+                draw_revisions=(vacancy,),
+            )
+        return None
+
+    def execute(
+        self,
+        *,
+        run_id: str,
+        branch_id: str,
+        event_id: str,
+        command_id: str,
+        withdrawn_player_id: str,
+        main_process_window_ordinal: int,
+        qualification_process_window_ordinal: int | None = None,
+        repair_draw_seed: int | None = None,
+        unavailable_player_ids: tuple[str, ...] = (),
+        expected_source_fingerprint: str | None = None,
+        walkover_week: RankingWeek | None = None,
+        walkover_slot_id: str | None = None,
+        walkover_group_id: str | None = None,
+    ) -> AuthoritativeFrozenMainReplacementResult:
+        retry = self._retry_from_history(
+            run_id=run_id,
+            branch_id=branch_id,
+            event_id=event_id,
+            command_id=command_id,
+            expected_source_fingerprint=expected_source_fingerprint,
+        )
+        if retry is not None:
+            return retry
+
+        source = TournamentReplacementSourceAuthorityStore(self.session).resolve(
+            run_id=run_id,
+            branch_id=branch_id,
+            event_id=event_id,
+            withdrawn_player_id=withdrawn_player_id,
+            unavailable_player_ids=tuple(sorted(set(unavailable_player_ids))),
+        )
+        if (
+            expected_source_fingerprint is not None
+            and source.fingerprint != expected_source_fingerprint
+        ):
+            raise AuthoritativeFrozenMainReplacementConflict(
+                "Frozen Main replacement source changed since preview"
+            )
+        draw = TournamentDrawAuthorityStore(self.session).get(
+            run_id=run_id,
+            branch_id=branch_id,
+            event_id=event_id,
+        )
+        if draw is None:
+            raise AuthoritativeFrozenMainReplacementConflict(
+                "Replacement orchestration requires canonical active Draw"
+            )
+        target = draw.main.slots[source.physical_slot_index - 1]
+        q_winner_evidence = source.qualification_winner_evidence
+        if q_winner_evidence is not None:
+            if (
+                target.entrant_kind != "qualifier_placeholder"
+                or target.placeholder_id != q_winner_evidence.section_id
+                or target.player_id is not None
+            ):
+                raise AuthoritativeFrozenMainReplacementConflict(
+                    "Replacement source target no longer matches linked Main Q slot"
+                )
+        elif target.player_id != withdrawn_player_id:
+            raise AuthoritativeFrozenMainReplacementConflict(
+                "Replacement source target no longer matches active Main slot"
+            )
+
+        revisions = TournamentDrawRevisionStore(self.session)
+
+        if source.source == "walkover":
+            if (
+                walkover_week is None
+                or walkover_slot_id is None
+                or walkover_group_id is None
+            ):
+                raise AuthoritativeFrozenMainReplacementConflict(
+                    "W/O source requires authoritative week, slot and group target"
+                )
+            result = TournamentWalkoverAuthorityStore(self.session).commit(
+                run_id=run_id,
+                branch_id=branch_id,
+                week=walkover_week,
+                event_id=event_id,
+                command_id=_child_command_id(
+                    command_id,
+                    "wo",
+                    reviewed_source_fingerprint=expected_source_fingerprint,
+                ),
+                withdrawn_player_id=withdrawn_player_id,
+                slot_id=walkover_slot_id,
+                group_id=walkover_group_id,
+            )
+            return AuthoritativeFrozenMainReplacementResult(
+                source=source.source,
+                source_authority=source,
+                walkover_result=result,
+            )
+
+        if source.source == "reserve_wild_card":
+            selected = source.selected_player_id
+            q_players = {
+                slot.player_id
+                for bracket in draw.qualification_brackets
+                for slot in bracket.slots
+                if slot.player_id is not None
+            }
+            cross_q = selected in q_players
+            revision = revisions.draw_frozen_wild_card_withdrawal(
+                run_id=run_id,
+                branch_id=branch_id,
+                event_id=event_id,
+                command_id=_child_command_id(
+                    command_id,
+                    "rwc",
+                    reviewed_source_fingerprint=expected_source_fingerprint,
+                ),
+                withdrawn_player_id=withdrawn_player_id,
+                main_process_window_ordinal=main_process_window_ordinal,
+                qualification_process_window_ordinal=(
+                    qualification_process_window_ordinal if cross_q else None
+                ),
+                repair_draw_seed=repair_draw_seed if cross_q else None,
+                unavailable_reserve_player_ids=tuple(
+                    sorted(set(unavailable_player_ids))
+                ),
+            )
+            authority = revision.wild_card_repair_authority
+            if (
+                authority is None
+                or authority.replacement_player_id != source.selected_player_id
+            ):
+                raise AuthoritativeFrozenMainReplacementConflict(
+                    "RWC mutation selected a different source player"
+                )
+            return AuthoritativeFrozenMainReplacementResult(
+                source=source.source,
+                source_authority=source,
+                draw_revisions=(revision,),
+            )
+
+        if source.source == "qualification_promotion":
+            selected = source.selected_player_id
+            if selected is None:
+                raise AuthoritativeFrozenMainReplacementConflict(
+                    "Q-promotion source lacks selected player"
+                )
+            q_players = {
+                slot.player_id
+                for bracket in draw.qualification_brackets
+                for slot in bracket.slots
+                if slot.player_id is not None
+            }
+            selected_from_q = selected in q_players
+            revision = revisions.apply_source_bound_pre_q_promotion(
+                run_id=run_id,
+                branch_id=branch_id,
+                event_id=event_id,
+                command_id=_child_command_id(
+                    command_id,
+                    "q",
+                    reviewed_source_fingerprint=expected_source_fingerprint,
+                ),
+                main_process_window_ordinal=main_process_window_ordinal,
+                qualification_process_window_ordinal=(
+                    qualification_process_window_ordinal
+                    if selected_from_q
+                    else None
+                ),
+                repair_draw_seed=(
+                    repair_draw_seed if selected_from_q else None
+                ),
+                replacement_source_authority=source,
+            )
+            promoted = revision.successor_draw.main.slots[
+                source.physical_slot_index - 1
+            ]
+            if (
+                promoted.player_id != selected
+                or promoted.entry_status is not None
+            ):
+                raise AuthoritativeFrozenMainReplacementConflict(
+                    "Q-promotion mutation selected a different source player"
+                )
+            return AuthoritativeFrozenMainReplacementResult(
+                source=source.source,
+                source_authority=source,
+                draw_revisions=(revision,),
+            )
+
+        if source.source in {"lucky_loser_pending", "lucky_loser"}:
+            vacancy = revisions.draw_frozen_lucky_loser_vacancy(
+                run_id=run_id,
+                branch_id=branch_id,
+                event_id=event_id,
+                command_id=_child_command_id(
+                    command_id,
+                    "ll-vacancy",
+                    reviewed_source_fingerprint=expected_source_fingerprint,
+                ),
+                withdrawn_player_id=withdrawn_player_id,
+                main_process_window_ordinal=main_process_window_ordinal,
+                replacement_source_authority=(
+                    source if target.entry_status == "wild_card" else None
+                ),
+            )
+            if source.source == "lucky_loser_pending":
+                return AuthoritativeFrozenMainReplacementResult(
+                    source=source.source,
+                    source_authority=source,
+                    draw_revisions=(vacancy,),
+                )
+            fill = revisions.fill_next_frozen_lucky_loser(
+                run_id=run_id,
+                branch_id=branch_id,
+                event_id=event_id,
+                command_id=_child_command_id(
+                    command_id,
+                    "ll-fill",
+                    reviewed_source_fingerprint=expected_source_fingerprint,
+                ),
+                main_process_window_ordinal=main_process_window_ordinal,
+                unavailable_player_ids=tuple(
+                    sorted(set(unavailable_player_ids))
+                ),
+            )
+            authority = fill.lucky_loser_fill_authority
+            if (
+                authority is None
+                or authority.selected_candidate.player_id
+                != source.selected_player_id
+            ):
+                raise AuthoritativeFrozenMainReplacementConflict(
+                    "Lucky Loser fill selected a different source player"
+                )
+            return AuthoritativeFrozenMainReplacementResult(
+                source=source.source,
+                source_authority=source,
+                draw_revisions=(vacancy, fill),
+            )
+
+        if source.source in {"external_reserve", "bye"}:
+            revision = revisions.apply_frozen_ordinary_fallback(
+                run_id=run_id,
+                branch_id=branch_id,
+                event_id=event_id,
+                command_id=_child_command_id(
+                    command_id,
+                    "fallback",
+                    reviewed_source_fingerprint=expected_source_fingerprint,
+                ),
+                main_process_window_ordinal=main_process_window_ordinal,
+                replacement_source_authority=source,
+            )
+            return AuthoritativeFrozenMainReplacementResult(
+                source=source.source,
+                source_authority=source,
+                draw_revisions=(revision,),
+            )
+
+        raise AuthoritativeFrozenMainReplacementConflict(
+            f"Unsupported replacement source: {source.source}"
+        )

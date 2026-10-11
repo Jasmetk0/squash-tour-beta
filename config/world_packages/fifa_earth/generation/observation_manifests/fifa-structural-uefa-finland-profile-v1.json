@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-uefa-finland-profile-v1",
+  "source_id": "uefa-finland-profile",
+  "relative_path": "observations/normalized/structural/fifa_structural_uefa_finland_profile_v1.json",
+  "sha256": "2cfd4b07703d092baa12f99f22891c207bc844c7400e20e62f7ddf4a0595c2a6",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

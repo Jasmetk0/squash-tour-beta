@@ -1,0 +1,77 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "atp-earth-pak-model.v1",
+  "world_id": "atp_earth",
+  "data_cutoff": "2026-10-04",
+  "countries": [
+    "PAK"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "evidence_rules": [
+    "The ITF 1947 foundation listing and PTF 1948 operational-start statement are retained as an explicit one-year source conflict rather than harmonized.",
+    "Both pre-1955 institutional observations support tradition but do not determine later development quality.",
+    "Coach-education bronze recognition is gated to 2020; JTI activity and the first CBI course are gated to 2021.",
+    "The 2025 Islamabad Challenger supports professional competition infrastructure only from 2025.",
+    "No rankings, titles or match outcomes are calibration targets."
+  ],
+  "anchor_values": {
+    "PAK": {
+      "1955": [
+        5.5,
+        5,
+        5.2,
+        5.4,
+        5,
+        7
+      ],
+      "1990": [
+        5.8,
+        5.3,
+        5.5,
+        5.7,
+        5.4,
+        7.2
+      ],
+      "2020": [
+        6.3,
+        5.8,
+        6.5,
+        6.1,
+        6.3,
+        7.5
+      ],
+      "2021": [
+        6.5,
+        6,
+        6.8,
+        6.2,
+        6.5,
+        7.5
+      ],
+      "2025": [
+        6.8,
+        6.3,
+        6.9,
+        6.8,
+        6.8,
+        7.6
+      ],
+      "2026": [
+        6.8,
+        6.3,
+        6.9,
+        6.8,
+        6.8,
+        7.6
+      ]
+    }
+  },
+  "evidence_sources": [
+    "itf-singapore-pakistan-foundation-2015",
+    "ptf-history",
+    "itf-jti-guidance-2022",
+    "ptf-coach-development-2021",
+    "itf-pakistan-challenger-2025"
+  ],
+  "heldout_ranking_used": false
+}

@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-davis-cup-fra-gbr-arg-jpn-v1",
+  "source_id": "davis-cup-previous-champions",
+  "relative_path": "observations/normalized/atp-davis-cup-fra-gbr-arg-jpn-v1.json",
+  "sha256": "78fb8d2c55f605d8cb50325ff7c856ccbbbe7d94a391c0b72fc1d1b08903fe05",
+  "record_count": 21,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

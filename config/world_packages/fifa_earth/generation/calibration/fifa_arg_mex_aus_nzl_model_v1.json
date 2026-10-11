@@ -1,0 +1,33 @@
+{
+  "schema_version": "fifa_earth_reviewed_country_batch.v1",
+  "model_id": "fifa-earth-country-history-arg-mex-aus-nzl.v1",
+  "created_on": "2026-10-04",
+  "countries": [
+    "ARG",
+    "MEX",
+    "AUS",
+    "NZL"
+  ],
+  "coverage": {
+    "from": 1955,
+    "to": 2026,
+    "attributes": 6
+  },
+  "rating_scale": "country_ratings_1_10.v2",
+  "storage": "country/source/observation-manifest shards",
+  "method": "Country-authored derived estimates combining newly normalized official structural history with existing Big Count 2006 and FIFA Professional 2023 evidence.",
+  "evidence_rules": [
+    "Federation age and historical event count never directly determine a 1–10 score.",
+    "Big Count primarily anchors popularity/access; absolute participation alone does not imply cultural dominance.",
+    "Professional 2023 player/club counts inform competition and elite ecosystem depth, not development/support quality by themselves.",
+    "Australia preserves governance/league/confederation transitions rather than smoothing across them.",
+    "Mexico World Cup hosting is bounded elite-support/infrastructure evidence, not a permanent maximum.",
+    "New Zealand post-2010 grants support access/development/support context but are programme evidence, not guaranteed outcomes."
+  ],
+  "country_notes": {
+    "ARG": "Mature organised and professional football predating 1955, with high but non-maximal access and world-leading competition/tradition bands.",
+    "MEX": "Very large football culture and professional ecosystem; access stays below popularity because Big Count registration/club signals are mixed.",
+    "AUS": "High modern access with lower cultural popularity than football-dominant countries; 1960-63 governance disruption and 2004-06 competition transitions are explicit.",
+    "NZL": "Long institutional tradition and high modern access, but football remains secondary to rugby and absolute competition depth is limited."
+  }
+}

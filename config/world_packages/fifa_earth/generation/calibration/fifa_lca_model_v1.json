@@ -1,0 +1,57 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "fifa-earth-lca-model.v1",
+  "world_id": "fifa_earth",
+  "data_cutoff": "2026-10-03",
+  "countries": [
+    "LCA"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "evidence_rules": [
+    "1955-2005 values are a low-confidence project-authored baseline.",
+    "FIFA Big Count enters from 2006.",
+    "FIFA Professional 2023 player and club fields are null and remain missing.",
+    "Current FIFA membership is context only and is not backdated."
+  ],
+  "anchor_values": {
+    "LCA": {
+      "1955": [
+        3.2,
+        2.9,
+        3,
+        3.1,
+        2.8,
+        3.4
+      ],
+      "2006": [
+        4.7,
+        4.2,
+        4.4,
+        4.5,
+        4,
+        4.9
+      ],
+      "2023": [
+        4.8,
+        4.3,
+        4.5,
+        4.6,
+        4.1,
+        5
+      ],
+      "2026": [
+        4.8,
+        4.3,
+        4.5,
+        4.6,
+        4.1,
+        5
+      ]
+    }
+  },
+  "evidence_sources": [
+    "fifa-saint-lucia-member-context-2026",
+    "fifa-big-count-2006"
+  ],
+  "heldout_ranking_used": false
+}

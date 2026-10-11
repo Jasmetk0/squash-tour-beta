@@ -1,0 +1,24 @@
+{
+  "schema_version": "atp_earth_reviewed_country_batch.v1",
+  "model_id": "atp-earth-col-mex-model.v1",
+  "created_on": "2026-10-05",
+  "countries": [
+    "COL",
+    "MEX"
+  ],
+  "coverage": {
+    "from": 1955,
+    "to": 2026,
+    "attributes": 6
+  },
+  "rating_scale": "country_ratings_1_10.v2",
+  "method": "Country-specific piecewise annual histories grounded in federation history and temporally gated current development/competition structures.",
+  "evidence_rules": [
+    "Colombia's 1932 federation history anchors institutional continuity; 2025 Interligas/training-site and 2026 affiliation/child-circuit evidence is not backcast.",
+    "Mexico's 1894 club history and 1963 FMT foundation anchor tradition; current affiliation, association and national junior-circuit data is gated to 2025/2026.",
+    "Affiliation and event-participation counts are not treated as total tennis participation.",
+    "Competition quality uses organised competition opportunity and system depth rather than direct conversion of star-player results.",
+    "Approximate and stage-specific counts keep their scope limitations in provenance.",
+    "No held-out validation ranking is used for tuning."
+  ]
+}

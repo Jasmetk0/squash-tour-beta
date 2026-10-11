@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-iraq-development-2026-v1",
+  "source_id": "itf-iraq-development-eligibility-2026",
+  "relative_path": "observations/normalized/atp_iraq_development_2026_v1.json",
+  "sha256": "f9967297cf5f26932ad5ddde57ac8aed7604ef7661d503058807b1d1ebd21807",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

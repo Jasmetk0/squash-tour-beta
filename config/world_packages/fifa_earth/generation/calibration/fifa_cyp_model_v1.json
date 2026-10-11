@@ -1,0 +1,75 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "fifa-earth-cyp-model.v1",
+  "world_id": "fifa_earth",
+  "data_cutoff": "2026-10-03",
+  "countries": [
+    "CYP"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "principles": [
+    "CFA foundation (1934) and FIFA membership (1948) provide pre-1955 institutional depth; the 1960 state transition and 1962 UEFA membership are represented separately.",
+    "FIFA Big Count 2006 and Professional Football Report 2023 are strictly gated to their observation years.",
+    "The CFA's current domestic club/division structure is used only in 2026.",
+    "Competition results are not calibration targets.",
+    "9+ remains world-leading."
+  ],
+  "anchor_values": {
+    "CYP": {
+      "1955": [
+        5.6,
+        5.1,
+        5.3,
+        5.4,
+        5.2,
+        7
+      ],
+      "1960": [
+        5.8,
+        5.3,
+        5.5,
+        5.5,
+        5.4,
+        7.2
+      ],
+      "1962": [
+        6,
+        5.5,
+        5.7,
+        5.9,
+        5.7,
+        7.4
+      ],
+      "2006": [
+        6.7,
+        6.4,
+        6.5,
+        6.7,
+        6.4,
+        7.8
+      ],
+      "2023": [
+        6.8,
+        6.6,
+        6.8,
+        7,
+        6.8,
+        7.9
+      ],
+      "2026": [
+        6.9,
+        6.8,
+        6.9,
+        7,
+        6.9,
+        8
+      ]
+    }
+  },
+  "evidence_sources": [
+    "cfa-cyprus-history",
+    "fifa-big-count-2006",
+    "fifa-professional-2023"
+  ],
+  "heldout_ranking_used": false
+}

@@ -1,0 +1,10 @@
+{
+  "schema_version": "world_package_countries_index.v1",
+  "dataset_status": "official_fax_world_phase_7b",
+  "country_codes": [
+    "BOG",
+    "GER",
+    "HUN",
+    "POL"
+  ]
+}

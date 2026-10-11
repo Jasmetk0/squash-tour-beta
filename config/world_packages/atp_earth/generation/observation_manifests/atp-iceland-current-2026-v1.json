@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-iceland-current-2026-v1",
+  "source_id": "tennis-is-current-2026",
+  "relative_path": "observations/normalized/atp_iceland_current_2026_v1.json",
+  "sha256": "ff9e7b61ec048ae054be6bfc1e05d307ff1a33f65efe9f9a50ae2af6c40a23f2",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

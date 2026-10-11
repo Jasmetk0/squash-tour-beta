@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-fft-dtn-history-v1",
+  "source_id": "fft-dtn-history",
+  "relative_path": "observations/normalized/atp-fft-dtn-history-v1.json",
+  "sha256": "e2373f8fb09781f17f636fe88296f4b2c195e6ca495b3851d78d69c744be66b3",
+  "record_count": 3,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

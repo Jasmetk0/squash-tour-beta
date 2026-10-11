@@ -1,0 +1,107 @@
+"""Validated request for atomic ranking preparation, not full week advancement."""
+
+import hashlib
+import json
+
+from pydantic import Field, model_validator, model_serializer
+
+from beta_engine.domain.rankings.zero_history import RankingZeroVersion
+from beta_engine.domain.rankings.command_audit import RankingCommandAudit
+from beta_engine.application.ranking_zero_batch import validate_zero_batch, canonicalize_zero_batch
+
+from beta_engine.application.official_ranking_transition import RankingTransitionContext
+from beta_engine.application.ranking_tournament_ingestion import (
+    TournamentRankingBinding,
+)
+from beta_engine.domain.rankings.official import FrozenInput
+from beta_engine.domain.rankings.result_history import RankingResultVersion
+
+
+class RankingWeekCommand(FrozenInput):
+    command_id: str = Field(min_length=1, max_length=128)
+    context: RankingTransitionContext
+    tournaments: tuple[TournamentRankingBinding, ...]
+    corrections: tuple[RankingResultVersion, ...] = ()
+
+    zero_versions: tuple[RankingZeroVersion, ...] = ()
+    audit: RankingCommandAudit | None = None
+    authority_fingerprint: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
+
+    @model_serializer(mode="wrap")
+    def serialize_command(self, handler):
+        payload = handler(self)
+        if self.audit is None:
+            payload.pop("audit", None)
+        if self.authority_fingerprint is None:
+            payload.pop("authority_fingerprint", None)
+        if not self.zero_versions:
+            payload.pop("zero_versions", None)
+        return payload
+
+    @model_validator(mode="after")
+    def validate_batch(self):
+        context = self.context
+        validate_zero_batch(self.zero_versions, context)
+        if (
+            not context.run_id
+            or not context.branch_id
+            or context.target_week.ordinal != context.completed_week.ordinal + 1
+        ):
+            raise ValueError(
+                "Ranking command requires a scoped consecutive week boundary"
+            )
+        editions = [t.edition_id for t in self.tournaments]
+        events = [t.event_id for t in self.tournaments]
+        if len(set(editions)) != len(editions) or len(set(events)) != len(events):
+            raise ValueError("Duplicate tournament in ranking command")
+        for tournament in self.tournaments:
+            if (tournament.run_id, tournament.branch_id) != (
+                context.run_id,
+                context.branch_id,
+            ):
+                raise ValueError("Tournament and ranking command scope mismatch")
+            if (
+                tournament.first_publication_week != context.target_week
+                or tournament.completed_week.ordinal > context.completed_week.ordinal
+            ):
+                raise ValueError("Tournament lies outside ranking command boundary")
+        keys = [(v.result.edition_id, v.result.player_id) for v in self.corrections]
+        if len(set(keys)) != len(keys):
+            raise ValueError("Duplicate result correction in ranking command")
+        for correction in self.corrections:
+            if (correction.run_id, correction.branch_id) != (
+                context.run_id, context.branch_id
+            ):
+                raise ValueError("Correction and ranking command scope mismatch")
+            if (
+                correction.effective_week != context.target_week
+                or correction.result.first_publication_week is None
+                or correction.result.first_publication_week.ordinal
+                >= context.target_week.ordinal
+                or correction.previous_fingerprint is None
+            ):
+                raise ValueError("Correction must update an earlier result at the target boundary")
+            if correction.result.edition_id in editions:
+                raise ValueError("Cannot ingest and correct the same Edition in one command")
+        return self
+
+    @property
+    def canonical_request_json(self) -> str:
+        payload = self.model_dump(mode="json")
+        canonicalize_zero_batch(payload)
+        if payload["corrections"]:
+            payload["corrections"].sort(
+                key=lambda v: (v["result"]["edition_id"], v["result"]["player_id"])
+            )
+        else:
+            # Preserve receipt compatibility with commands persisted before corrections.
+            del payload["corrections"]
+        if "disciplinary_zeros" in payload["context"]:
+            payload["context"]["disciplinary_zeros"].sort(key=lambda z: z["zero_id"])
+        payload["context"]["players"].sort(key=lambda p: p["player_id"])
+        payload["tournaments"].sort(key=lambda t: t["edition_id"])
+        return json.dumps(payload, sort_keys=True, separators=(",", ":"))
+
+    @property
+    def fingerprint(self) -> str:
+        return hashlib.sha256(self.canonical_request_json.encode()).hexdigest()

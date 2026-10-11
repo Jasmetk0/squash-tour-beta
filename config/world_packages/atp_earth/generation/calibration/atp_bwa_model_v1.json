@@ -1,0 +1,58 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "atp-earth-bwa-model.v1",
+  "world_id": "atp_earth",
+  "data_cutoff": "2026-10-04",
+  "countries": [
+    "BWA"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "evidence_rules": [
+    "No verified foundation date is asserted; pre-2020 years use a low-confidence baseline derived only from later confirmed activity.",
+    "ITF 2020 activity evidence enters only in 2020.",
+    "2026 development eligibility and Gaborone professional/junior hosting enter only in 2026.",
+    "Event results are not rating targets."
+  ],
+  "anchor_values": {
+    "BWA": {
+      "1955": [
+        3.8,
+        3.4,
+        3.5,
+        3.4,
+        3.1,
+        4.5
+      ],
+      "2000": [
+        4.6,
+        4.1,
+        4.4,
+        4.3,
+        4,
+        5.2
+      ],
+      "2020": [
+        5,
+        4.6,
+        4.8,
+        4.8,
+        4.4,
+        5.6
+      ],
+      "2026": [
+        5.8,
+        5.4,
+        5.7,
+        6,
+        5.6,
+        6
+      ]
+    }
+  },
+  "evidence_sources": [
+    "itf-botswana-return-to-play-2020",
+    "itf-botswana-development-eligibility-2026",
+    "itf-botswana-events-2026"
+  ],
+  "heldout_ranking_used": false
+}

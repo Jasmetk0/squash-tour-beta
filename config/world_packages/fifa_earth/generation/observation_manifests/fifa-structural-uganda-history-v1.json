@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-uganda-history-v1",
+  "source_id": "caf-uganda-profile",
+  "relative_path": "observations/normalized/structural/fifa_structural_uganda_history_v1.json",
+  "sha256": "04c1959102f141bca5afcfd82291d5d3eb532d54cd834825f069212544c36caa",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

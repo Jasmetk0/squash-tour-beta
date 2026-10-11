@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-malaysia-calendar-2026-v1",
+  "source_id": "ltam-calendar-2026",
+  "relative_path": "observations/normalized/atp_malaysia_calendar_2026_v1.json",
+  "sha256": "9c76521356501c3598623baff46d111a84a96edcc082f394a4c02e272c89a41c",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

@@ -1,0 +1,44 @@
+{
+  "schema_version": "earth_source_observations.v2",
+  "dataset_id": "atp-stz-leagues-2026-v1",
+  "source_id": "stz-leagues-2026",
+  "source_url": "https://www.stz.sk/soubory/liga_rozpis_2026.pdf",
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05",
+  "scope": "2026 national first- and second-division team competition structure.",
+  "limitations": "League structure demonstrates organised competition availability rather than total player participation.",
+  "observations": [
+    {
+      "observation_id": "atp-stz-leagues-2026-v1#svk-national-leagues-2026",
+      "source_id": "stz-leagues-2026",
+      "source_entity": "Slovenský tenisový zväz",
+      "earth_country_code": "SVK",
+      "historical_entity": null,
+      "observation_year": 2026,
+      "period_start_year": null,
+      "period_end_year": null,
+      "measurement_type": "national_team_league_structure",
+      "sex_scope": "male",
+      "age_scope": "senior",
+      "competition_scope": "national team leagues",
+      "numeric_value": null,
+      "text_value": "STZ directly administers the 2026 first and second national leagues, with men's first-league groups and lower-division competition played through participating clubs.",
+      "unit": "statement",
+      "collection_method": "official_narrative",
+      "coverage_scope": "national",
+      "comparability_group": null,
+      "cross_country_comparable": false,
+      "is_direct_observation": true,
+      "is_statistically_modelled": false,
+      "territory_mapping_method": "direct_earth_country",
+      "territory_weight": null,
+      "source_page": null,
+      "source_locator": null,
+      "definition_notes": "STZ directly administers the 2026 first and second national leagues, with men's first-league groups and lower-division competition played through participating clubs.",
+      "quality_flags": [
+        "current_competition_structure"
+      ]
+    }
+  ]
+}

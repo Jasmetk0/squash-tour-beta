@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-fifa-new-caledonia-history-v1",
+  "source_id": "fifa-new-caledonia-history-2019",
+  "relative_path": "observations/normalized/structural/fifa_structural_fifa_new_caledonia_history_v1.json",
+  "sha256": "3b8c9354843cd1186752b0664adc23d7ef3501db2f3ad5d97bc9a58ae922c1ed",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-04"
+}

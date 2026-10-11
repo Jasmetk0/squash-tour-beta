@@ -1,0 +1,49 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "fifa-earth-arm-model.v1",
+  "world_id": "fifa_earth",
+  "data_cutoff": "2026-10-03",
+  "countries": [
+    "ARM"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "evidence_rules": [
+    "1955-2005 values are a low-confidence project-authored baseline.",
+    "FIFA Big Count enters from 2006.",
+    "Professional 2023 has no retained row for this country; no 2023 values are invented.",
+    "Current FIFA membership is context only."
+  ],
+  "anchor_values": {
+    "ARM": {
+      "1955": [
+        3.5,
+        3.1,
+        3.2,
+        3.2,
+        3,
+        3.7
+      ],
+      "2006": [
+        5.4,
+        4.7,
+        4.9,
+        5,
+        4.6,
+        5.3
+      ],
+      "2026": [
+        5.7,
+        5,
+        5.2,
+        5.3,
+        4.9,
+        5.6
+      ]
+    }
+  },
+  "evidence_sources": [
+    "fifa-armenia-member-context-2026",
+    "fifa-big-count-2006"
+  ],
+  "heldout_ranking_used": false
+}

@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-fft-profile-2026-v1",
+  "source_id": "fft-profile-current",
+  "relative_path": "observations/normalized/atp-fft-profile-2026-v1.json",
+  "sha256": "e302d3e3766aa918132b7903f0d62ef5de967c8a859dea60ec4bad6abb389ece",
+  "record_count": 4,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

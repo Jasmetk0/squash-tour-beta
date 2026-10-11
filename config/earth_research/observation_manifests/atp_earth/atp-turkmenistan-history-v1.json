@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-turkmenistan-history-v1",
+  "source_id": "itf-turkmenistan-profile",
+  "relative_path": "observations/normalized/atp_turkmenistan_history_v1.json",
+  "sha256": "ef084c6f0c76ed99222dd1691142e26075ccaedcef3f95d3691fee0466a1d582",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

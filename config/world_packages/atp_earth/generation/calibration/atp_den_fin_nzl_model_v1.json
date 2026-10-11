@@ -1,0 +1,24 @@
+{
+  "schema_version": "atp_earth_reviewed_country_batch.v1",
+  "model_id": "atp-earth-den-fin-nzl-model.v1",
+  "created_on": "2026-10-05",
+  "countries": [
+    "DEN",
+    "FIN",
+    "NZL"
+  ],
+  "coverage": {
+    "from": 1955,
+    "to": 2026,
+    "attributes": 6
+  },
+  "rating_scale": "country_ratings_1_10.v2",
+  "method": "Country-specific piecewise annual histories using federation history, participation/access scale, competition structure and development/support evidence with strict temporal gating.",
+  "evidence_rules": [
+    "Mixed-sex federation/member facts describe the environment and are never relabelled as male-only participation.",
+    "Modern programme and membership facts are not backcast before their observation years.",
+    "Competition quality is grounded in competition structures/pathways where available, not directly copied from one player's peak.",
+    "Missing facts are represented by lower-confidence authored estimates, not zeros.",
+    "No held-out validation ranking is used to tune authored values."
+  ]
+}

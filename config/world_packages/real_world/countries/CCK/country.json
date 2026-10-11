@@ -1,0 +1,7 @@
+{
+  "schema_version": "world_package_country.v1",
+  "code": "CCK",
+  "name": "Cocos (Keeling) Islands",
+  "flag_asset": null,
+  "notes": "Gameplay fallback: Australia curve; territory anchor; not a separate UN WPP series."
+}

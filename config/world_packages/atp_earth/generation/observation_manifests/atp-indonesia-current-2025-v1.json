@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-indonesia-current-2025-v1",
+  "source_id": "itf-indonesia-current-2025",
+  "relative_path": "observations/normalized/atp_indonesia_current_2025_v1.json",
+  "sha256": "a07c4115a9d1a23878f1954f20f586520ca823c1518f6d06dff34308465d21af",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-syria-history-v1",
+  "source_id": "treccani-syria-football-2002",
+  "relative_path": "observations/normalized/structural/fifa_structural_syria_history_v1.json",
+  "sha256": "72d41259ee1715a4286159802fa906947f51cac98d57cbbbd2f44bc5bb67bfd6",
+  "record_count": 3,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

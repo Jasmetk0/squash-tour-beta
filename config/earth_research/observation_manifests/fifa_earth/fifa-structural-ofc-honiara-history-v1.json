@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-ofc-honiara-history-v1",
+  "source_id": "ofc-honiara-history",
+  "relative_path": "observations/normalized/structural/fifa_structural_ofc_honiara_history_v1.json",
+  "sha256": "382296aa65c7a2f7b22a5ae6cb2b263ffa46f8bc20b7771e68e6c01e3d8be07f",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-04"
+}

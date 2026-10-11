@@ -1,0 +1,59 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "fifa-earth-col-model.v1",
+  "world_id": "fifa_earth",
+  "data_cutoff": "2026-10-03",
+  "countries": [
+    "COL"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "principles": [
+    "FCF foundation in 1924 establishes deep institutional continuity but does not directly set annual playing quality.",
+    "FIFA Big Count 2006 is gated to 2006+ and informs participation/access without mechanically determining professional quality.",
+    "FIFA Professional Football Report 2023 is gated to 2023+ for professional ecosystem depth.",
+    "National-team rankings, World Cup and continental results are not calibration targets.",
+    "9+ remains reserved for world-leading dimensions."
+  ],
+  "anchor_values": {
+    "COL": {
+      "1955": [
+        7.5,
+        6.8,
+        7.2,
+        7.5,
+        7,
+        8.4
+      ],
+      "2006": [
+        8.6,
+        8.2,
+        8.2,
+        8.4,
+        8,
+        8.8
+      ],
+      "2023": [
+        8.6,
+        8.3,
+        8.5,
+        8.7,
+        8.4,
+        8.9
+      ],
+      "2026": [
+        8.6,
+        8.4,
+        8.5,
+        8.7,
+        8.4,
+        8.9
+      ]
+    }
+  },
+  "evidence_sources": [
+    "fcf-centenary-1924",
+    "fifa-big-count-2006",
+    "fifa-professional-2023"
+  ],
+  "heldout_ranking_used": false
+}

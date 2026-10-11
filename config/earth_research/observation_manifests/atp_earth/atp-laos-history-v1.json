@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-laos-history-v1",
+  "source_id": "itf-laos-profile",
+  "relative_path": "observations/normalized/atp_laos_history_v1.json",
+  "sha256": "ab7782306a4be5a2f1a64478afcb5fe308e4b91ac32255e5755e2960a7dd4da7",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

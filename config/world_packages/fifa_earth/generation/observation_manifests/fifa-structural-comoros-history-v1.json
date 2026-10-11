@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-comoros-history-v1",
+  "source_id": "caf-comoros-profile",
+  "relative_path": "observations/normalized/structural/fifa_structural_comoros_history_v1.json",
+  "sha256": "45f6075e2a74465c0516887da748cbca3a148e441cb8ea0c249471def7150675",
+  "record_count": 4,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

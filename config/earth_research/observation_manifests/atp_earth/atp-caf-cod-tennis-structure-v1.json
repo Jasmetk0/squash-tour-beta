@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-caf-cod-tennis-structure-v1",
+  "source_id": "caf-cod-itf-2026-associations",
+  "relative_path": "observations/normalized/atp_caf_cod_tennis_structure_v1.json",
+  "sha256": "975879f72e5644a509d74cac5eb7d4d2a62199f520697cedc64d35a84ae19132",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-caf-cod-batch-2026-10-07"
+}

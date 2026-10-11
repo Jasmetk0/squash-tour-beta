@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-laos-history-v1",
+  "source_id": "fifa-laos-member-context-2026",
+  "relative_path": "observations/normalized/structural/fifa_laos_history_v1.json",
+  "sha256": "1aefc8ea8dc1de872ba46eda371ab810cfd20c45d85dd580cc3834f133ae36da",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

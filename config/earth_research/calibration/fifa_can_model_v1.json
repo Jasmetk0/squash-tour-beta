@@ -1,0 +1,111 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "fifa-earth-can-model.v1",
+  "world_id": "fifa_earth",
+  "data_cutoff": "2026-10-03",
+  "countries": [
+    "CAN"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "principles": [
+    "Official structural milestones define chronology but are not direct annual quality measurements.",
+    "FIFA Big Count 2006 evidence is gated from 2006 and is used primarily for participation/access context.",
+    "FIFA Professional Football Report 2023 evidence is gated from 2023 and does not backcast the modern professional ecosystem.",
+    "The 2008 LTPD, 2013 EXCEL pathway, 2015 infrastructure legacy and 2019 Canadian Premier League are represented as distinct structural steps.",
+    "Current 2026 participation and club-network facts are current-only and do not rewrite earlier years.",
+    "No ranking or title outcome is used as a calibration target; 9+ remains reserved for world-leading system dimensions."
+  ],
+  "anchor_values": {
+    "CAN": {
+      "1955": [
+        4.1,
+        4.4,
+        3.8,
+        4,
+        4,
+        6.6
+      ],
+      "1967": [
+        4.4,
+        4.8,
+        4,
+        4.6,
+        4.3,
+        6.9
+      ],
+      "1986": [
+        5.2,
+        5.4,
+        5.2,
+        5.1,
+        5.1,
+        7.3
+      ],
+      "2006": [
+        6.8,
+        7.8,
+        6.3,
+        6.2,
+        6.5,
+        7.8
+      ],
+      "2008": [
+        7,
+        7.9,
+        6.8,
+        6.7,
+        6.9,
+        7.9
+      ],
+      "2013": [
+        7.5,
+        8,
+        7.5,
+        7.1,
+        7.4,
+        8.1
+      ],
+      "2015": [
+        8,
+        8.2,
+        8,
+        7.5,
+        7.8,
+        8.3
+      ],
+      "2019": [
+        8.1,
+        8.3,
+        8.2,
+        8,
+        8.1,
+        8.5
+      ],
+      "2023": [
+        8.3,
+        8.4,
+        8.3,
+        8.1,
+        8.2,
+        8.6
+      ],
+      "2026": [
+        8.6,
+        8.7,
+        8.5,
+        8.3,
+        8.4,
+        8.7
+      ]
+    }
+  },
+  "evidence_sources": [
+    "canada-soccer-history-timeline",
+    "canada-soccer-development-legacy",
+    "canada-soccer-2015-legacy",
+    "canada-soccer-about-2026",
+    "fifa-big-count-2006",
+    "fifa-professional-2023"
+  ],
+  "heldout_ranking_used": false
+}

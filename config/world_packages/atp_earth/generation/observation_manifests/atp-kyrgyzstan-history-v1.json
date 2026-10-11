@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-kyrgyzstan-history-v1",
+  "source_id": "itf-kyrgyzstan-profile",
+  "relative_path": "observations/normalized/atp_kyrgyzstan_history_v1.json",
+  "sha256": "36c99ca4b19215abb3ead20ae51fccbbdc3d48eada22c823ba1a846364d9954f",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

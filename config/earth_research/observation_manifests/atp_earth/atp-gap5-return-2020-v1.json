@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-gap5-return-2020-v1",
+  "source_id": "atp-gap5-itf-return-2020",
+  "relative_path": "observations/normalized/atp_gap5_return_2020_v1.json",
+  "sha256": "92a62ad5d9de804419ab48fe7934696a89a556bbb369c841cd66aabf40ea272c",
+  "record_count": 5,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-atp-gap5-2026-10-07"
+}

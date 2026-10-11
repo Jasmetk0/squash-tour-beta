@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-iran-history-v1",
+  "source_id": "afc-iran-bid-2027",
+  "relative_path": "observations/normalized/structural/fifa_iran_history_v1.json",
+  "sha256": "3d65ca47ea2615e8890f3a7c1dff2fb4ddc2a3972a2204701ac977c8adc67873",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

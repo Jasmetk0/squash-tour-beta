@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-knltb-history-v1",
+  "source_id": "knltb-history-2022",
+  "relative_path": "observations/normalized/atp-knltb-history-v1.json",
+  "sha256": "7fecadb0de420c4322e3cc50359873ca20986e22437342005780e9ab2f13c8aa",
+  "record_count": 3,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

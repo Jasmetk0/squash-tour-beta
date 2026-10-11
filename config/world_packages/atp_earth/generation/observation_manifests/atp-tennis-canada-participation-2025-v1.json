@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-tennis-canada-participation-2025-v1",
+  "source_id": "tennis-canada-participation-2025",
+  "relative_path": "observations/normalized/atp-tennis-canada-participation-2025-v1.json",
+  "sha256": "87061248a9af50ad973506005db1a7ebd616528e136304f56006edeb48fc2f53",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

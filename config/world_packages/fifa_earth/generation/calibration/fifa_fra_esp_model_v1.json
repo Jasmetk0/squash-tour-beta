@@ -1,0 +1,31 @@
+{
+  "schema_version": "fifa_earth_reviewed_country_batch.v1",
+  "model_id": "fifa-earth-country-history-fra-esp.v1",
+  "created_on": "2026-10-05",
+  "countries": [
+    "FRA",
+    "ESP"
+  ],
+  "coverage": {
+    "from": 1955,
+    "to": 2026,
+    "attributes": 6
+  },
+  "rating_scale": "country_ratings_1_10.v2",
+  "storage": "country/source/observation-manifest shards",
+  "method": "Dimension-specific piecewise annual estimates using official structural history plus existing FIFA Big Count 2006 and FIFA Professional Football Report 2023 observations with strict temporal gating.",
+  "evidence_rules": [
+    "A 9.0+ score means world-leading for that dimension; it is not awarded merely because a federation, centre or programme exists.",
+    "Confidence describes the authored rating estimate, not confidence that the cited official fact exists.",
+    "Big Count 2006 anchors popularity/access only and retains its mixed-sex and cross-country-definition limitations.",
+    "Professional 2023 player/club counts inform competition and elite-ecosystem depth; they do not directly measure development quality.",
+    "France's DTN, INF and Clairefontaine milestones are development/elite-support evidence from their dated years only.",
+    "Spain's Ciudad del Fútbol is elite/development capacity evidence, not nationwide public access evidence.",
+    "The 2026 RFEF talent process is programme-capacity evidence and is not treated as a measured development outcome.",
+    "No held-out validation ranking is used for score tuning."
+  ],
+  "country_notes": {
+    "FRA": "Deep pre-1955 institutional/professional continuity, strong 2006 participation footprint and unusually rich long-run technical-development evidence support high modern ratings, while direct popularity/access data remains sparse after 2006.",
+    "ESP": "Long federation continuity, large 2006 participation footprint, a deep 2023 professional ecosystem and modern national training/talent infrastructure support a strong modern profile; historical development and competition estimates remain lower confidence where direct period evidence is sparse."
+  }
+}

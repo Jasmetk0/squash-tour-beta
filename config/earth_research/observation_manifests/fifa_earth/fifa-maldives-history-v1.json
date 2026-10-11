@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-maldives-history-v1",
+  "source_id": "fifa-maldives-member-context-2026",
+  "relative_path": "observations/normalized/structural/fifa_maldives_history_v1.json",
+  "sha256": "aeec29967bf7cafb0f136a93791cd7bb3ecbe68ff400bca4b1476276b0a7ef6d",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

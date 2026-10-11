@@ -1,0 +1,1378 @@
+from beta_engine.application.season_builder_candidate_identity import (
+    build_candidate_identity,
+    build_create_only_apply_audit_metadata_preview,
+    build_candidate_identity_contract,
+    build_candidate_identity_fingerprint,
+    build_candidate_identity_overview,
+    build_candidate_identity_review_reference,
+    build_future_apply_request_validation_preview,
+    build_future_apply_reference_contract,
+    build_create_only_apply_execution_preflight_preview,
+    build_disabled_execution_contract_summary,
+    build_final_guarded_apply_readiness_checklist,
+    build_future_apply_execution_boundary_contract,
+    build_future_apply_execution_decision_summary,
+    build_guarded_apply_execution_gate_specification,
+    build_candidate_identity_summary,
+    sanitize_candidate_identity_part,
+)
+
+
+def test_sanitize_candidate_identity_part_cases() -> None:
+    assert sanitize_candidate_identity_part(None) == "unknown"
+    assert sanitize_candidate_identity_part("") == "unknown"
+    assert sanitize_candidate_identity_part("  ") == "unknown"
+    assert sanitize_candidate_identity_part("Default MSA Template Preview") == "default_msa_template_preview"
+    assert sanitize_candidate_identity_part("Slot-01 WT Gold!") == "slot_01_wt_gold"
+    assert sanitize_candidate_identity_part("///") == "unknown"
+
+
+def test_build_candidate_identity_is_deterministic_and_sanitized() -> None:
+    kwargs = {
+        "source_template_id": "Default MSA Template Preview",
+        "source_slot_id": "Slot-01 WT Gold!",
+        "season_week_start": 7,
+        "target_season_label": "2002 / 2003",
+        "source_type": "Season Template",
+        "event_name": "World's Event #1",
+        "category": "WT Gold+",
+        "source_template_ref": "Ref/Alpha",
+    }
+    candidate_id_a, candidate_identity_key_a = build_candidate_identity(**kwargs)
+    candidate_id_b, candidate_identity_key_b = build_candidate_identity(**kwargs)
+
+    assert candidate_id_a == candidate_id_b
+    assert candidate_identity_key_a == candidate_identity_key_b
+    assert candidate_id_a.startswith("cand_")
+    assert " " not in candidate_id_a
+    assert " " not in candidate_identity_key_a
+    for key_name in [
+        "target_season=",
+        "source_type=",
+        "source_template_id=",
+        "source_slot_id=",
+        "season_week_start=",
+        "event_name=",
+        "category=",
+        "source_template_ref=",
+    ]:
+        assert key_name in candidate_identity_key_a
+
+
+def test_build_candidate_identity_changes_with_meaningful_inputs() -> None:
+    baseline = build_candidate_identity(
+        source_template_id="default_msa_template_preview",
+        source_slot_id="slot_1",
+        season_week_start=3,
+        target_season_label="2002/2003",
+        source_type="season_template",
+        event_name="World A",
+        category="PLATINUM",
+        source_template_ref="wt_a",
+    )
+    changed_slot = build_candidate_identity(
+        source_template_id="default_msa_template_preview",
+        source_slot_id="slot_2",
+        season_week_start=3,
+        target_season_label="2002/2003",
+        source_type="season_template",
+        event_name="World A",
+        category="PLATINUM",
+        source_template_ref="wt_a",
+    )
+    changed_week = build_candidate_identity(
+        source_template_id="default_msa_template_preview",
+        source_slot_id="slot_1",
+        season_week_start=4,
+        target_season_label="2002/2003",
+        source_type="season_template",
+        event_name="World A",
+        category="PLATINUM",
+        source_template_ref="wt_a",
+    )
+
+    assert baseline != changed_slot
+    assert baseline != changed_week
+
+
+def test_build_candidate_identity_summary_empty() -> None:
+    summary = build_candidate_identity_summary([])
+    assert summary["candidate_count"] == 0
+    assert summary["candidate_ids"] == []
+    assert summary["candidate_identity_keys"] == []
+    assert summary["duplicate_candidate_ids"] == []
+    assert summary["duplicate_candidate_identity_keys"] == []
+    assert summary["read_only"] is True
+    assert summary["mutation_permitted"] is False
+
+
+def test_build_candidate_identity_summary_detects_duplicates_once_sorted() -> None:
+    summary = build_candidate_identity_summary(
+        [
+            {"candidate_id": "cand_b", "candidate_identity_key": "key_z"},
+            {"candidate_id": "cand_a", "candidate_identity_key": "key_a"},
+            {"candidate_id": "cand_b", "candidate_identity_key": "key_z"},
+            {"candidate_id": "cand_a", "candidate_identity_key": "key_a"},
+            {"candidate_id": "", "candidate_identity_key": ""},
+        ]
+    )
+    assert summary["duplicate_candidate_ids"] == ["cand_a", "cand_b"]
+    assert summary["duplicate_candidate_identity_keys"] == ["key_a", "key_z"]
+
+
+def test_build_candidate_identity_contract_safe_when_non_empty_without_duplicates() -> None:
+    summary = {
+        "candidate_count": 2,
+        "duplicate_candidate_ids": [],
+        "duplicate_candidate_identity_keys": [],
+    }
+    contract = build_candidate_identity_contract(summary)
+    assert contract["safe_for_future_reference"] is True
+    assert contract["has_duplicate_candidate_ids"] is False
+    assert contract["has_duplicate_candidate_identity_keys"] is False
+    assert contract["key_components"] == [
+        "target_season",
+        "source_type",
+        "source_template_id",
+        "source_slot_id",
+        "season_week_start",
+        "event_name",
+        "category",
+        "source_template_ref",
+    ]
+    assert contract["read_only"] is True
+    assert contract["mutation_permitted"] is False
+
+
+def test_build_candidate_identity_contract_unsafe_when_duplicates_exist() -> None:
+    summary = {
+        "candidate_count": 2,
+        "duplicate_candidate_ids": ["cand_a"],
+        "duplicate_candidate_identity_keys": [],
+    }
+    contract = build_candidate_identity_contract(summary)
+    assert contract["safe_for_future_reference"] is False
+    assert contract["has_duplicate_candidate_ids"] is True
+    assert "duplicates" in str(contract["message"]).lower()
+
+
+def test_build_candidate_identity_contract_unsafe_when_no_candidates() -> None:
+    summary = build_candidate_identity_summary([])
+    contract = build_candidate_identity_contract(summary)
+    assert contract["safe_for_future_reference"] is False
+    assert "no candidates" in str(contract["message"]).lower()
+
+
+def test_candidate_identity_contract_is_read_only_and_not_permission_grant() -> None:
+    summary = {
+        "candidate_count": 1,
+        "duplicate_candidate_ids": [],
+        "duplicate_candidate_identity_keys": [],
+    }
+    contract = build_candidate_identity_contract(summary)
+
+    # safe_for_future_reference means IDs can be referenced later, not that mutation is allowed.
+    assert contract["safe_for_future_reference"] is True
+    assert contract["read_only"] is True
+    assert contract["mutation_permitted"] is False
+    assert "safe for future reference" in str(contract["message"]).lower()
+
+
+def test_build_candidate_identity_contract_message_branches_are_stable() -> None:
+    safe_contract = build_candidate_identity_contract(
+        {
+            "candidate_count": 1,
+            "duplicate_candidate_ids": [],
+            "duplicate_candidate_identity_keys": [],
+        }
+    )
+    duplicate_contract = build_candidate_identity_contract(
+        {
+            "candidate_count": 2,
+            "duplicate_candidate_ids": ["cand_a"],
+            "duplicate_candidate_identity_keys": [],
+        }
+    )
+    no_candidates_contract = build_candidate_identity_contract(
+        {
+            "candidate_count": 0,
+            "duplicate_candidate_ids": [],
+            "duplicate_candidate_identity_keys": [],
+        }
+    )
+
+    assert "safe for future reference" in str(safe_contract["message"]).lower()
+    assert "duplicates" in str(duplicate_contract["message"]).lower()
+    assert "no candidates" in str(no_candidates_contract["message"]).lower()
+
+
+def test_build_candidate_identity_overview_safe() -> None:
+    summary = {"candidate_count": 2}
+    contract = {
+        "candidate_count": 2,
+        "safe_for_future_reference": True,
+        "has_duplicate_candidate_ids": False,
+        "has_duplicate_candidate_identity_keys": False,
+        "identity_source": "season_template_slot",
+        "id_strategy": "sanitized_template_slot_week",
+        "key_strategy": "pipe_joined_sanitized_components",
+    }
+    overview = build_candidate_identity_overview(summary, contract)
+    assert overview["available"] is True
+    assert overview["safe_for_future_reference"] is True
+    assert overview["candidate_count"] == 2
+    assert overview["mutation_permitted"] is False
+
+
+def test_build_candidate_identity_overview_duplicate_unsafe() -> None:
+    overview = build_candidate_identity_overview(
+        {"candidate_count": 1},
+        {
+            "candidate_count": 1,
+            "safe_for_future_reference": False,
+            "has_duplicate_candidate_ids": True,
+            "has_duplicate_candidate_identity_keys": False,
+            "identity_source": "season_template_slot",
+            "id_strategy": "sanitized_template_slot_week",
+            "key_strategy": "pipe_joined_sanitized_components",
+        },
+    )
+    assert overview["available"] is True
+    assert overview["safe_for_future_reference"] is False
+    assert overview["has_duplicate_candidate_ids"] is True
+    assert "duplicate" in str(overview["message"]).lower()
+
+
+def test_build_candidate_identity_overview_no_candidates() -> None:
+    overview = build_candidate_identity_overview({"candidate_count": 0}, {"candidate_count": 0})
+    assert overview["available"] is False
+    assert overview["candidate_count"] == 0
+    assert overview["safe_for_future_reference"] is False
+    assert "no candidates" in str(overview["message"]).lower()
+
+
+def test_build_candidate_identity_overview_malformed_values_defaults_safely() -> None:
+    overview = build_candidate_identity_overview(
+        {"candidate_count": "bad"},
+        {
+            "candidate_count": -1,
+            "safe_for_future_reference": "yes",
+            "has_duplicate_candidate_ids": 1,
+            "has_duplicate_candidate_identity_keys": None,
+            "identity_source": "",
+            "id_strategy": "   ",
+            "key_strategy": None,
+        },
+    )
+    assert overview["available"] is False
+    assert overview["candidate_count"] == 0
+    assert overview["safe_for_future_reference"] is False
+    assert overview["has_duplicate_candidate_ids"] is False
+    assert overview["has_duplicate_candidate_identity_keys"] is False
+    assert overview["identity_source"] == "n/a"
+    assert overview["id_strategy"] == "n/a"
+    assert overview["key_strategy"] == "n/a"
+
+
+def test_build_candidate_identity_fingerprint_is_deterministic() -> None:
+    summary = {
+        "candidate_count": 2,
+        "candidate_ids": ["cand_a", "cand_b"],
+        "candidate_identity_keys": ["k_a", "k_b"],
+    }
+    contract = {"safe_for_future_reference": True}
+
+    first = build_candidate_identity_fingerprint(
+        target_season_label="2035/2036",
+        source_type="season_template",
+        source_template_id="default_msa_template_preview",
+        candidate_identity_summary=summary,
+        candidate_identity_contract=contract,
+    )
+    second = build_candidate_identity_fingerprint(
+        target_season_label="2035/2036",
+        source_type="season_template",
+        source_template_id="default_msa_template_preview",
+        candidate_identity_summary=summary,
+        candidate_identity_contract=contract,
+    )
+
+    assert first == second
+    assert isinstance(first["fingerprint"], str) and first["fingerprint"]
+
+
+def test_build_candidate_identity_fingerprint_changes_with_identity_set() -> None:
+    contract = {"safe_for_future_reference": True}
+    base = build_candidate_identity_fingerprint(
+        target_season_label="2035/2036",
+        source_type="season_template",
+        source_template_id="default",
+        candidate_identity_summary={
+            "candidate_count": 1,
+            "candidate_ids": ["cand_a"],
+            "candidate_identity_keys": ["k_a"],
+        },
+        candidate_identity_contract=contract,
+    )
+    changed_ids = build_candidate_identity_fingerprint(
+        target_season_label="2035/2036",
+        source_type="season_template",
+        source_template_id="default",
+        candidate_identity_summary={
+            "candidate_count": 1,
+            "candidate_ids": ["cand_b"],
+            "candidate_identity_keys": ["k_a"],
+        },
+        candidate_identity_contract=contract,
+    )
+    changed_keys = build_candidate_identity_fingerprint(
+        target_season_label="2035/2036",
+        source_type="season_template",
+        source_template_id="default",
+        candidate_identity_summary={
+            "candidate_count": 1,
+            "candidate_ids": ["cand_a"],
+            "candidate_identity_keys": ["k_b"],
+        },
+        candidate_identity_contract=contract,
+    )
+
+    assert base["fingerprint"] != changed_ids["fingerprint"]
+    assert base["fingerprint"] != changed_keys["fingerprint"]
+
+
+def test_build_candidate_identity_fingerprint_handles_malformed_summary_safely() -> None:
+    fingerprint = build_candidate_identity_fingerprint(
+        target_season_label="2035/2036",
+        source_type="season_template",
+        source_template_id="default",
+        candidate_identity_summary={
+            "candidate_count": "bad",
+            "candidate_ids": ["cand_a", 1],
+            "candidate_identity_keys": "bad",
+        },
+        candidate_identity_contract={"safe_for_future_reference": "bad"},
+    )
+
+    assert fingerprint["candidate_ids"] == []
+    assert fingerprint["candidate_identity_keys"] == []
+    assert fingerprint["candidate_count"] == 0
+    assert fingerprint["safe_for_future_reference"] is False
+
+
+def test_build_candidate_identity_review_reference_can_reference_when_safe_and_non_empty() -> None:
+    review_reference = build_candidate_identity_review_reference(
+        {
+            "fingerprint": "abc123",
+            "candidate_count": 3,
+            "safe_for_future_reference": True,
+        }
+    )
+
+    assert review_reference["reference_id"] == "abc123"
+    assert review_reference["can_reference_future_apply"] is True
+    assert review_reference["mutation_permitted"] is False
+
+
+def test_build_candidate_identity_review_reference_cannot_reference_when_empty_or_unsafe() -> None:
+    no_candidates = build_candidate_identity_review_reference(
+        {
+            "fingerprint": "abc123",
+            "candidate_count": 0,
+            "safe_for_future_reference": True,
+        }
+    )
+    unsafe = build_candidate_identity_review_reference(
+        {
+            "fingerprint": "abc123",
+            "candidate_count": 2,
+            "safe_for_future_reference": False,
+        }
+    )
+
+    assert no_candidates["can_reference_future_apply"] is False
+    assert unsafe["can_reference_future_apply"] is False
+
+
+def test_future_apply_reference_contract_resolved_referenceable_case() -> None:
+    contract = build_future_apply_reference_contract(
+        candidate_identity_fingerprint={"fingerprint": "fp_abc"},
+        candidate_identity_review_reference={
+            "reference_type": "candidate_identity_set",
+            "reference_id": "fp_abc",
+            "can_reference_future_apply": True,
+        },
+        identity_readiness={"future_command_reference": {"can_reference_future_command": True}},
+    )
+    assert contract["available"] is True
+    assert contract["candidate_identity_set_referenceable"] is True
+    assert contract["main_future_command_reference_ready"] is True
+    assert contract["apply_execution_enabled"] is False
+    assert contract["create_only_apply_required"] is True
+    assert contract["read_only"] is True
+    assert contract["mutation_permitted"] is False
+    assert isinstance(contract["message"], str) and contract["message"]
+
+
+def test_future_apply_reference_contract_blocked_non_referenceable_case() -> None:
+    contract = build_future_apply_reference_contract(
+        candidate_identity_fingerprint={"fingerprint": ""},
+        candidate_identity_review_reference={
+            "reference_type": "candidate_identity_set",
+            "reference_id": "",
+            "can_reference_future_apply": False,
+        },
+        identity_readiness={"future_command_reference": {"can_reference_future_command": False}},
+    )
+    assert contract["available"] is False
+    assert contract["candidate_identity_set_referenceable"] is False
+    assert contract["main_future_command_reference_ready"] is False
+    assert contract["apply_execution_enabled"] is False
+    assert contract["create_only_apply_required"] is True
+    assert contract["read_only"] is True
+    assert contract["mutation_permitted"] is False
+    assert isinstance(contract["message"], str) and contract["message"]
+
+
+def test_future_apply_reference_contract_main_future_command_readiness_parity() -> None:
+    ready_contract = build_future_apply_reference_contract(
+        candidate_identity_fingerprint={"fingerprint": "fp_ready"},
+        candidate_identity_review_reference={
+            "reference_type": "candidate_identity_set",
+            "reference_id": "fp_ready",
+            "can_reference_future_apply": True,
+        },
+        identity_readiness={"future_command_reference": {"can_reference_future_command": True}},
+    )
+    blocked_contract = build_future_apply_reference_contract(
+        candidate_identity_fingerprint={"fingerprint": "fp_blocked"},
+        candidate_identity_review_reference={
+            "reference_type": "candidate_identity_set",
+            "reference_id": "fp_blocked",
+            "can_reference_future_apply": True,
+        },
+        identity_readiness={"future_command_reference": {"can_reference_future_command": False}},
+    )
+
+    assert ready_contract["main_future_command_reference_ready"] is True
+    assert blocked_contract["main_future_command_reference_ready"] is False
+
+
+def test_future_apply_request_validation_preview_matching_referenceable_contract() -> None:
+    preview = build_future_apply_request_validation_preview(
+        requested_candidate_identity_reference_id="fp_abc",
+        requested_candidate_identity_fingerprint="fp_abc",
+        requested_candidate_identity_reference_type="candidate_identity_set",
+        future_apply_reference_contract={
+            "available": True,
+            "candidate_identity_reference_id": "fp_abc",
+            "candidate_identity_fingerprint": "fp_abc",
+            "candidate_identity_reference_type": "candidate_identity_set",
+            "candidate_identity_set_referenceable": True,
+        },
+    )
+    assert preview["available"] is True
+    assert preview["reference_id_matches"] is True
+    assert preview["fingerprint_matches"] is True
+    assert preview["reference_type_matches"] is True
+    assert preview["contract_referenceable"] is True
+    assert preview["apply_execution_enabled"] is False
+    assert preview["read_only"] is True
+    assert preview["mutation_permitted"] is False
+
+
+def test_future_apply_request_validation_available_does_not_enable_apply_execution() -> None:
+    preview = build_future_apply_request_validation_preview(
+        requested_candidate_identity_reference_id="fp_abc",
+        requested_candidate_identity_fingerprint="fp_abc",
+        requested_candidate_identity_reference_type="candidate_identity_set",
+        future_apply_reference_contract={
+            "available": True,
+            "candidate_identity_reference_id": "fp_abc",
+            "candidate_identity_fingerprint": "fp_abc",
+            "candidate_identity_reference_type": "candidate_identity_set",
+            "candidate_identity_set_referenceable": True,
+        },
+    )
+    assert preview["available"] is True
+    assert preview["apply_execution_enabled"] is False
+    assert preview["read_only"] is True
+    assert preview["mutation_permitted"] is False
+    assert "validation-only" in str(preview["message"]).lower()
+    assert "does not execute apply" in str(preview["message"]).lower()
+
+
+def test_future_apply_request_validation_preview_mismatched_values() -> None:
+    preview = build_future_apply_request_validation_preview(
+        requested_candidate_identity_reference_id="wrong_id",
+        requested_candidate_identity_fingerprint="wrong_fp",
+        requested_candidate_identity_reference_type="wrong_type",
+        future_apply_reference_contract={
+            "available": True,
+            "candidate_identity_reference_id": "fp_abc",
+            "candidate_identity_fingerprint": "fp_abc",
+            "candidate_identity_reference_type": "candidate_identity_set",
+            "candidate_identity_set_referenceable": True,
+        },
+    )
+    assert preview["available"] is False
+    assert preview["reference_id_matches"] is False
+    assert preview["fingerprint_matches"] is False
+    assert preview["reference_type_matches"] is False
+    assert preview["apply_execution_enabled"] is False
+    assert preview["read_only"] is True
+    assert preview["mutation_permitted"] is False
+
+
+def test_future_apply_request_validation_preview_missing_request_values() -> None:
+    preview = build_future_apply_request_validation_preview(
+        requested_candidate_identity_reference_id=None,
+        requested_candidate_identity_fingerprint="",
+        requested_candidate_identity_reference_type=None,
+        future_apply_reference_contract={
+            "available": True,
+            "candidate_identity_reference_id": "fp_abc",
+            "candidate_identity_fingerprint": "fp_abc",
+            "candidate_identity_reference_type": "candidate_identity_set",
+            "candidate_identity_set_referenceable": True,
+        },
+    )
+    assert preview["available"] is False
+    assert preview["requested_candidate_identity_reference_id"] == ""
+    assert preview["requested_candidate_identity_fingerprint"] == ""
+    assert preview["requested_candidate_identity_reference_type"] == ""
+    assert preview["reference_id_matches"] is False
+    assert preview["fingerprint_matches"] is False
+    assert preview["reference_type_matches"] is False
+    assert preview["apply_execution_enabled"] is False
+    assert preview["read_only"] is True
+    assert preview["mutation_permitted"] is False
+
+
+def test_future_apply_request_validation_preview_matching_values_blocked_contract() -> None:
+    preview = build_future_apply_request_validation_preview(
+        requested_candidate_identity_reference_id="fp_abc",
+        requested_candidate_identity_fingerprint="fp_abc",
+        requested_candidate_identity_reference_type="candidate_identity_set",
+        future_apply_reference_contract={
+            "available": False,
+            "candidate_identity_reference_id": "fp_abc",
+            "candidate_identity_fingerprint": "fp_abc",
+            "candidate_identity_reference_type": "candidate_identity_set",
+            "candidate_identity_set_referenceable": False,
+        },
+    )
+    assert preview["reference_id_matches"] is True
+    assert preview["fingerprint_matches"] is True
+    assert preview["reference_type_matches"] is True
+    assert preview["contract_referenceable"] is False
+    assert preview["available"] is False
+    assert preview["apply_execution_enabled"] is False
+    assert preview["read_only"] is True
+    assert preview["mutation_permitted"] is False
+
+
+def test_future_apply_request_validation_preview_malformed_contract_values() -> None:
+    preview = build_future_apply_request_validation_preview(
+        requested_candidate_identity_reference_id="fp_abc",
+        requested_candidate_identity_fingerprint="fp_abc",
+        requested_candidate_identity_reference_type="candidate_identity_set",
+        future_apply_reference_contract={
+            "available": "yes",
+            "candidate_identity_reference_id": 123,
+            "candidate_identity_fingerprint": None,
+            "candidate_identity_reference_type": {},
+        },
+    )
+    assert preview["expected_candidate_identity_reference_id"] == ""
+    assert preview["expected_candidate_identity_fingerprint"] == ""
+    assert preview["expected_candidate_identity_reference_type"] == ""
+    assert preview["contract_referenceable"] is False
+    assert preview["available"] is False
+
+
+def test_create_only_apply_execution_preflight_available_does_not_authorize_execution() -> None:
+    preview = build_create_only_apply_execution_preflight_preview(
+        future_apply_reference_contract={"available": True},
+        future_apply_request_validation_preview={
+            "available": True,
+            "reference_id_matches": True,
+            "fingerprint_matches": True,
+            "reference_type_matches": True,
+        },
+        identity_readiness={"future_command_reference": {"can_reference_future_command": True}},
+        target_absent=True,
+        create_only_scope_confirmed=True,
+        audit_metadata_present=True,
+    )
+    assert preview["available"] is True
+    assert preview["all_known_preconditions_met"] is True
+    assert preview["execution_enabled"] is False
+    assert preview["can_execute"] is False
+    assert preview["read_only"] is True
+    assert preview["mutation_permitted"] is False
+    message = str(preview["message"]).lower()
+    assert "disabled" in message
+    assert "preview" in message
+    assert "does not execute apply" in message
+    assert "permit mutation" in message
+
+
+def test_create_only_apply_execution_preflight_preview_missing_target_absent() -> None:
+    preview = build_create_only_apply_execution_preflight_preview(
+        future_apply_reference_contract={"available": True},
+        future_apply_request_validation_preview={
+            "available": True,
+            "reference_id_matches": True,
+            "fingerprint_matches": True,
+            "reference_type_matches": True,
+        },
+        identity_readiness={"future_command_reference": {"can_reference_future_command": True}},
+        target_absent=False,
+        create_only_scope_confirmed=True,
+        audit_metadata_present=True,
+    )
+    assert preview["available"] is False
+    assert preview["all_known_preconditions_met"] is False
+    assert preview["execution_enabled"] is False
+    assert preview["can_execute"] is False
+
+
+def test_create_only_apply_execution_preflight_preview_validation_unavailable() -> None:
+    preview = build_create_only_apply_execution_preflight_preview(
+        future_apply_reference_contract={"available": True},
+        future_apply_request_validation_preview={
+            "available": False,
+            "reference_id_matches": True,
+            "fingerprint_matches": True,
+            "reference_type_matches": True,
+        },
+        identity_readiness={"future_command_reference": {"can_reference_future_command": True}},
+        target_absent=True,
+        create_only_scope_confirmed=True,
+        audit_metadata_present=True,
+    )
+    assert preview["available"] is False
+    assert preview["all_known_preconditions_met"] is False
+
+
+def test_create_only_apply_execution_preflight_preview_incomplete_identity_match_flags() -> None:
+    preview = build_create_only_apply_execution_preflight_preview(
+        future_apply_reference_contract={"available": True},
+        future_apply_request_validation_preview={
+            "available": True,
+            "reference_id_matches": True,
+            "fingerprint_matches": False,
+            "reference_type_matches": True,
+        },
+        identity_readiness={"future_command_reference": {"can_reference_future_command": True}},
+        target_absent=True,
+        create_only_scope_confirmed=True,
+        audit_metadata_present=True,
+    )
+    assert preview["candidate_identity_reference_matches"] is False
+    assert preview["all_known_preconditions_met"] is False
+
+
+def test_create_only_apply_execution_preflight_preview_malformed_inputs_default_safely() -> None:
+    preview = build_create_only_apply_execution_preflight_preview(
+        future_apply_reference_contract={"available": "yes"},
+        future_apply_request_validation_preview={
+            "available": "yes",
+            "reference_id_matches": 1,
+            "fingerprint_matches": object(),
+            "reference_type_matches": None,
+        },
+        identity_readiness={"future_command_reference": {"can_reference_future_command": "true"}},
+        target_absent="yes",
+        create_only_scope_confirmed=1,
+        audit_metadata_present=None,
+    )
+    assert preview["target_absent"] is False
+    assert preview["create_only_scope_confirmed"] is False
+    assert preview["audit_metadata_present"] is False
+    assert preview["future_apply_reference_contract_available"] is False
+    assert preview["future_apply_request_validation_available"] is False
+    assert preview["candidate_identity_reference_matches"] is False
+    assert preview["main_future_command_reference_ready"] is False
+    assert preview["available"] is False
+    assert preview["execution_enabled"] is False
+    assert preview["mutation_permitted"] is False
+
+
+def test_create_only_apply_audit_metadata_preview_complete_matching_values() -> None:
+    required_confirmation_phrase = "I ACKNOWLEDGE CREATE-ONLY APPLY IS DISABLED"
+    preview = build_create_only_apply_audit_metadata_preview(
+        requested_by="local-admin-preview",
+        audit_reason="create-only calendar command",
+        explicit_confirmation=required_confirmation_phrase,
+        mutation_scope="create_only",
+        required_confirmation_phrase=required_confirmation_phrase,
+    )
+    assert preview["available"] is True
+    assert preview["preview_type"] == "create_only_apply_audit_metadata_preview"
+    assert preview["requested_by_present"] is True
+    assert preview["audit_reason_present"] is True
+    assert preview["explicit_confirmation_present"] is True
+    assert preview["explicit_confirmation_matches"] is True
+    assert preview["mutation_scope_present"] is True
+    assert preview["mutation_scope_matches"] is True
+    assert preview["all_required_audit_metadata_present"] is True
+    assert preview["execution_enabled"] is False
+    assert preview["can_execute"] is False
+    assert preview["read_only"] is True
+    assert preview["mutation_permitted"] is False
+    message = str(preview["message"]).lower()
+    assert "preview" in message
+    assert "does not execute apply" in message
+
+
+def test_create_only_apply_audit_metadata_preview_missing_requested_by() -> None:
+    required_confirmation_phrase = "I ACKNOWLEDGE CREATE-ONLY APPLY IS DISABLED"
+    preview = build_create_only_apply_audit_metadata_preview(
+        requested_by="",
+        audit_reason="create-only calendar command",
+        explicit_confirmation=required_confirmation_phrase,
+        mutation_scope="create_only",
+        required_confirmation_phrase=required_confirmation_phrase,
+    )
+    assert preview["requested_by_present"] is False
+    assert preview["available"] is False
+    assert preview["all_required_audit_metadata_present"] is False
+    assert preview["execution_enabled"] is False
+    assert preview["can_execute"] is False
+
+
+def test_create_only_apply_audit_metadata_preview_wrong_explicit_confirmation() -> None:
+    preview = build_create_only_apply_audit_metadata_preview(
+        requested_by="local-admin-preview",
+        audit_reason="create-only calendar command",
+        explicit_confirmation="I ACKNOWLEDGE APPLY",
+        mutation_scope="create_only",
+        required_confirmation_phrase="I ACKNOWLEDGE CREATE-ONLY APPLY IS DISABLED",
+    )
+    assert preview["explicit_confirmation_present"] is True
+    assert preview["explicit_confirmation_matches"] is False
+    assert preview["available"] is False
+    assert preview["all_required_audit_metadata_present"] is False
+
+
+def test_create_only_apply_audit_metadata_preview_wrong_mutation_scope() -> None:
+    required_confirmation_phrase = "I ACKNOWLEDGE CREATE-ONLY APPLY IS DISABLED"
+    preview = build_create_only_apply_audit_metadata_preview(
+        requested_by="local-admin-preview",
+        audit_reason="create-only calendar command",
+        explicit_confirmation=required_confirmation_phrase,
+        mutation_scope="merge_preview",
+        required_confirmation_phrase=required_confirmation_phrase,
+    )
+    assert preview["mutation_scope_present"] is True
+    assert preview["mutation_scope_matches"] is False
+    assert preview["available"] is False
+    assert preview["all_required_audit_metadata_present"] is False
+
+
+def test_create_only_apply_audit_metadata_preview_whitespace_normalization() -> None:
+    required_confirmation_phrase = "I ACKNOWLEDGE CREATE-ONLY APPLY IS DISABLED"
+    preview = build_create_only_apply_audit_metadata_preview(
+        requested_by="  local-admin-preview  ",
+        audit_reason="  create-only calendar command  ",
+        explicit_confirmation=f"  {required_confirmation_phrase}  ",
+        mutation_scope="  create_only  ",
+        required_confirmation_phrase=required_confirmation_phrase,
+    )
+    assert preview["requested_by_present"] is True
+    assert preview["audit_reason_present"] is True
+    assert preview["explicit_confirmation_present"] is True
+    assert preview["explicit_confirmation_matches"] is True
+    assert preview["mutation_scope_present"] is True
+    assert preview["mutation_scope_matches"] is True
+    assert preview["all_required_audit_metadata_present"] is True
+    assert preview["available"] is True
+
+
+def test_create_only_apply_audit_metadata_preview_none_and_empty_values_are_safe() -> None:
+    required_confirmation_phrase = "I ACKNOWLEDGE CREATE-ONLY APPLY IS DISABLED"
+    preview = build_create_only_apply_audit_metadata_preview(
+        requested_by=None,
+        audit_reason="",
+        explicit_confirmation=None,
+        mutation_scope="",
+        required_confirmation_phrase=required_confirmation_phrase,
+    )
+    assert preview["requested_by_present"] is False
+    assert preview["audit_reason_present"] is False
+    assert preview["explicit_confirmation_present"] is False
+    assert preview["explicit_confirmation_matches"] is False
+    assert preview["mutation_scope_present"] is False
+    assert preview["mutation_scope_matches"] is False
+    assert preview["all_required_audit_metadata_present"] is False
+    assert preview["available"] is False
+    assert preview["execution_enabled"] is False
+    assert preview["can_execute"] is False
+
+
+def test_disabled_execution_contract_summary_all_layers_available_and_coherent() -> None:
+    summary = build_disabled_execution_contract_summary(
+        future_apply_reference_contract={"available": True},
+        future_apply_request_validation_preview={
+            "available": True,
+            "reference_id_matches": True,
+            "fingerprint_matches": True,
+            "reference_type_matches": True,
+        },
+        create_only_apply_audit_metadata_preview={"available": True, "all_required_audit_metadata_present": True},
+        create_only_apply_execution_preflight_preview={"available": True, "all_known_preconditions_met": True},
+    )
+    assert summary["available"] is True
+    assert summary["all_preview_layers_available"] is True
+    assert summary["identity_reference_matches"] is True
+    assert summary["audit_metadata_complete"] is True
+    assert summary["all_known_preconditions_met"] is True
+    assert summary["execution_enabled"] is False
+    assert summary["can_execute"] is False
+    assert summary["read_only"] is True
+    assert summary["mutation_permitted"] is False
+    message = str(summary["message"]).lower()
+    assert "disabled" in message
+    assert "read-only" in message
+    assert "does not execute apply" in message
+
+
+def test_disabled_execution_contract_summary_missing_audit_metadata() -> None:
+    summary = build_disabled_execution_contract_summary(
+        future_apply_reference_contract={"available": True},
+        future_apply_request_validation_preview={
+            "available": True,
+            "reference_id_matches": True,
+            "fingerprint_matches": True,
+            "reference_type_matches": True,
+        },
+        create_only_apply_audit_metadata_preview={"available": False, "all_required_audit_metadata_present": False},
+        create_only_apply_execution_preflight_preview={"available": True, "all_known_preconditions_met": True},
+    )
+    assert summary["audit_metadata_available"] is False
+    assert summary["audit_metadata_complete"] is False
+    assert summary["all_preview_layers_available"] is False
+    assert summary["available"] is False
+    assert summary["execution_enabled"] is False
+    assert summary["can_execute"] is False
+
+
+def test_disabled_execution_contract_summary_identity_mismatch() -> None:
+    summary = build_disabled_execution_contract_summary(
+        future_apply_reference_contract={"available": True},
+        future_apply_request_validation_preview={
+            "available": False,
+            "reference_id_matches": True,
+            "fingerprint_matches": False,
+            "reference_type_matches": True,
+        },
+        create_only_apply_audit_metadata_preview={"available": True, "all_required_audit_metadata_present": True},
+        create_only_apply_execution_preflight_preview={"available": True, "all_known_preconditions_met": True},
+    )
+    assert summary["identity_reference_matches"] is False
+    assert summary["all_preview_layers_available"] is False
+    assert summary["available"] is False
+    assert summary["execution_enabled"] is False
+    assert summary["can_execute"] is False
+
+
+def test_disabled_execution_contract_summary_preflight_unavailable() -> None:
+    summary = build_disabled_execution_contract_summary(
+        future_apply_reference_contract={"available": True},
+        future_apply_request_validation_preview={
+            "available": True,
+            "reference_id_matches": True,
+            "fingerprint_matches": True,
+            "reference_type_matches": True,
+        },
+        create_only_apply_audit_metadata_preview={"available": True, "all_required_audit_metadata_present": True},
+        create_only_apply_execution_preflight_preview={"available": False, "all_known_preconditions_met": False},
+    )
+    assert summary["execution_preflight_available"] is False
+    assert summary["all_known_preconditions_met"] is False
+    assert summary["all_preview_layers_available"] is False
+    assert summary["available"] is False
+    assert summary["execution_enabled"] is False
+    assert summary["can_execute"] is False
+
+
+def test_disabled_execution_contract_summary_malformed_inputs_default_safely() -> None:
+    summary = build_disabled_execution_contract_summary(
+        future_apply_reference_contract={"available": "yes"},
+        future_apply_request_validation_preview={
+            "available": 1,
+            "reference_id_matches": "true",
+            "fingerprint_matches": None,
+            "reference_type_matches": [],
+        },
+        create_only_apply_audit_metadata_preview={"available": "true", "all_required_audit_metadata_present": "true"},
+        create_only_apply_execution_preflight_preview={"available": "true", "all_known_preconditions_met": "true"},
+    )
+    assert summary["future_apply_reference_contract_available"] is False
+    assert summary["future_apply_request_validation_available"] is False
+    assert summary["audit_metadata_available"] is False
+    assert summary["execution_preflight_available"] is False
+    assert summary["identity_reference_matches"] is False
+    assert summary["audit_metadata_complete"] is False
+    assert summary["all_known_preconditions_met"] is False
+    assert summary["all_preview_layers_available"] is False
+    assert summary["available"] is False
+    assert summary["execution_enabled"] is False
+    assert summary["can_execute"] is False
+    assert summary["mutation_permitted"] is False
+
+
+def test_final_guarded_apply_readiness_checklist_all_checks_passed() -> None:
+    checklist = build_final_guarded_apply_readiness_checklist(
+        disabled_execution_contract_summary={
+            "available": True,
+            "all_preview_layers_available": True,
+            "all_known_preconditions_met": True,
+            "execution_enabled": False,
+            "can_execute": False,
+            "mutation_permitted": False,
+        },
+        endpoint_enabled=False,
+        endpoint_can_execute=False,
+        endpoint_can_mutate=False,
+    )
+    assert checklist["available"] is True
+    assert checklist["all_readiness_checks_passed"] is True
+    assert checklist["endpoint_disabled"] is True
+    assert checklist["endpoint_execution_disabled"] is True
+    assert checklist["endpoint_mutation_disabled"] is True
+    assert checklist["summary_available"] is True
+    assert checklist["summary_all_preview_layers_available"] is True
+    assert checklist["summary_all_known_preconditions_met"] is True
+    assert checklist["summary_execution_disabled"] is True
+    assert checklist["summary_mutation_disabled"] is True
+    assert checklist["execution_enabled"] is False
+    assert checklist["can_execute"] is False
+    assert checklist["read_only"] is True
+    assert checklist["mutation_permitted"] is False
+    msg = str(checklist["message"]).lower()
+    assert "disabled" in msg
+    assert "read-only" in msg
+    assert "does not execute apply" in msg
+    assert ("does not mutate" in msg) or ("or mutate state" in msg)
+
+
+def test_final_guarded_apply_readiness_checklist_endpoint_enabled_fails() -> None:
+    checklist = build_final_guarded_apply_readiness_checklist(
+        disabled_execution_contract_summary={
+            "available": True,
+            "all_preview_layers_available": True,
+            "all_known_preconditions_met": True,
+            "execution_enabled": False,
+            "can_execute": False,
+            "mutation_permitted": False,
+        },
+        endpoint_enabled=True,
+        endpoint_can_execute=False,
+        endpoint_can_mutate=False,
+    )
+    assert checklist["endpoint_disabled"] is False
+    assert checklist["all_readiness_checks_passed"] is False
+    assert checklist["available"] is False
+    assert checklist["execution_enabled"] is False
+    assert checklist["can_execute"] is False
+
+
+def test_final_guarded_apply_readiness_checklist_endpoint_can_execute_fails() -> None:
+    checklist = build_final_guarded_apply_readiness_checklist(
+        disabled_execution_contract_summary={
+            "available": True,
+            "all_preview_layers_available": True,
+            "all_known_preconditions_met": True,
+            "execution_enabled": False,
+            "can_execute": False,
+            "mutation_permitted": False,
+        },
+        endpoint_enabled=False,
+        endpoint_can_execute=True,
+        endpoint_can_mutate=False,
+    )
+    assert checklist["endpoint_execution_disabled"] is False
+    assert checklist["all_readiness_checks_passed"] is False
+    assert checklist["available"] is False
+    assert checklist["execution_enabled"] is False
+    assert checklist["can_execute"] is False
+
+
+def test_final_guarded_apply_readiness_checklist_summary_execution_enabled_fails() -> None:
+    checklist = build_final_guarded_apply_readiness_checklist(
+        disabled_execution_contract_summary={
+            "available": True,
+            "all_preview_layers_available": True,
+            "all_known_preconditions_met": True,
+            "execution_enabled": True,
+            "can_execute": False,
+            "mutation_permitted": False,
+        },
+        endpoint_enabled=False,
+        endpoint_can_execute=False,
+        endpoint_can_mutate=False,
+    )
+    assert checklist["summary_execution_disabled"] is False
+    assert checklist["all_readiness_checks_passed"] is False
+    assert checklist["available"] is False
+    assert checklist["execution_enabled"] is False
+    assert checklist["can_execute"] is False
+
+
+def test_final_guarded_apply_readiness_checklist_summary_mutation_enabled_fails() -> None:
+    checklist = build_final_guarded_apply_readiness_checklist(
+        disabled_execution_contract_summary={
+            "available": True,
+            "all_preview_layers_available": True,
+            "all_known_preconditions_met": True,
+            "execution_enabled": False,
+            "can_execute": False,
+            "mutation_permitted": True,
+        },
+        endpoint_enabled=False,
+        endpoint_can_execute=False,
+        endpoint_can_mutate=False,
+    )
+    assert checklist["summary_mutation_disabled"] is False
+    assert checklist["all_readiness_checks_passed"] is False
+    assert checklist["available"] is False
+    assert checklist["mutation_permitted"] is False
+
+
+def test_final_guarded_apply_readiness_checklist_malformed_summary_defaults_safely() -> None:
+    checklist = build_final_guarded_apply_readiness_checklist(
+        disabled_execution_contract_summary={
+            "available": "yes",
+            "all_preview_layers_available": 1,
+            "all_known_preconditions_met": None,
+            "execution_enabled": "false",
+            "can_execute": [],
+            "mutation_permitted": "no",
+        },
+        endpoint_enabled=False,
+        endpoint_can_execute=False,
+        endpoint_can_mutate=False,
+    )
+    assert checklist["summary_available"] is False
+    assert checklist["summary_all_preview_layers_available"] is False
+    assert checklist["summary_all_known_preconditions_met"] is False
+    assert checklist["summary_execution_disabled"] is False
+    assert checklist["summary_mutation_disabled"] is False
+    assert checklist["all_readiness_checks_passed"] is False
+    assert checklist["available"] is False
+    assert checklist["execution_enabled"] is False
+    assert checklist["can_execute"] is False
+    assert checklist["read_only"] is True
+    assert checklist["mutation_permitted"] is False
+
+
+def test_guarded_apply_execution_gate_specification_complete() -> None:
+    specification = build_guarded_apply_execution_gate_specification(
+        final_guarded_apply_readiness_checklist={"available": True, "all_readiness_checks_passed": True},
+        required_confirmation_phrase="I understand this will create a new season calendar.",
+        required_mutation_scope="create_only",
+        allowed_source_type="season_template",
+        allowed_overwrite_policy="none",
+    )
+    assert specification["available"] is True
+    assert specification["gate_specification_complete"] is True
+    assert specification["final_checklist_available"] is True
+    assert specification["final_readiness_checks_passed"] is True
+    assert specification["requires_target_absent"] is True
+    assert specification["requires_create_only_scope"] is True
+    assert specification["requires_audit_metadata"] is True
+    assert specification["requires_identity_reference_match"] is True
+    assert specification["requires_summary_execution_disabled"] is True
+    assert specification["requires_endpoint_disabled_before_execution"] is True
+    assert specification["execution_enabled"] is False
+    assert specification["can_execute"] is False
+    assert specification["read_only"] is True
+    assert specification["mutation_permitted"] is False
+    msg = str(specification["message"]).lower()
+    assert "disabled" in msg
+    assert "read-only" in msg
+    assert "does not execute apply" in msg
+    assert ("does not mutate" in msg) or ("mutate state" in msg)
+
+
+def test_guarded_apply_execution_gate_specification_final_checklist_unavailable() -> None:
+    specification = build_guarded_apply_execution_gate_specification(
+        final_guarded_apply_readiness_checklist={"available": False, "all_readiness_checks_passed": True},
+        required_confirmation_phrase="I understand this will create a new season calendar.",
+    )
+    assert specification["final_checklist_available"] is False
+    assert specification["gate_specification_complete"] is False
+    assert specification["available"] is False
+    assert specification["execution_enabled"] is False
+    assert specification["can_execute"] is False
+    assert specification["mutation_permitted"] is False
+
+
+def test_guarded_apply_execution_gate_specification_readiness_not_passed() -> None:
+    specification = build_guarded_apply_execution_gate_specification(
+        final_guarded_apply_readiness_checklist={"available": True, "all_readiness_checks_passed": False},
+        required_confirmation_phrase="I understand this will create a new season calendar.",
+    )
+    assert specification["final_readiness_checks_passed"] is False
+    assert specification["gate_specification_complete"] is False
+    assert specification["available"] is False
+    assert specification["execution_enabled"] is False
+    assert specification["can_execute"] is False
+    assert specification["mutation_permitted"] is False
+
+
+def test_guarded_apply_execution_gate_specification_missing_confirmation_phrase() -> None:
+    specification = build_guarded_apply_execution_gate_specification(
+        final_guarded_apply_readiness_checklist={"available": True, "all_readiness_checks_passed": True},
+        required_confirmation_phrase="",
+    )
+    assert specification["required_confirmation_phrase"] == ""
+    assert specification["gate_specification_complete"] is False
+    assert specification["available"] is False
+    assert specification["execution_enabled"] is False
+    assert specification["can_execute"] is False
+    assert specification["mutation_permitted"] is False
+
+
+def test_guarded_apply_execution_gate_specification_malformed_checklist_defaults_safely() -> None:
+    specification = build_guarded_apply_execution_gate_specification(
+        final_guarded_apply_readiness_checklist={"available": "yes", "all_readiness_checks_passed": "true"},
+        required_confirmation_phrase="I understand this will create a new season calendar.",
+    )
+    assert specification["final_checklist_available"] is False
+    assert specification["final_readiness_checks_passed"] is False
+    assert specification["gate_specification_complete"] is False
+    assert specification["available"] is False
+    assert specification["execution_enabled"] is False
+    assert specification["can_execute"] is False
+    assert specification["read_only"] is True
+    assert specification["mutation_permitted"] is False
+
+
+def test_future_apply_execution_boundary_contract_intact_with_complete_gate_specification() -> None:
+    contract = build_future_apply_execution_boundary_contract(
+        guarded_apply_execution_gate_specification={
+            "available": True,
+            "gate_specification_complete": True,
+        },
+        actual_execution_endpoint_exists=False,
+        actual_execution_wiring_enabled=False,
+        mutation_path_enabled=False,
+    )
+    assert contract["available"] is True
+    assert contract["contract_type"] == "future_apply_execution_boundary_contract"
+    assert contract["gate_specification_available"] is True
+    assert contract["gate_specification_complete"] is True
+    assert contract["preview_stack_only"] is True
+    assert contract["execution_boundary_intact"] is True
+    assert contract["requires_separate_execution_phase"] is True
+    assert contract["requires_separate_endpoint_wiring"] is True
+    assert contract["requires_separate_mutation_audit"] is True
+    assert contract["execution_enabled"] is False
+    assert contract["can_execute"] is False
+    assert contract["read_only"] is True
+    assert contract["mutation_permitted"] is False
+    msg = str(contract["message"]).lower()
+    assert "disabled" in msg
+    assert "read-only" in msg
+    assert "does not execute apply" in msg
+    assert ("does not mutate" in msg) or ("mutate state" in msg)
+
+
+def test_future_apply_execution_boundary_contract_gate_specification_incomplete() -> None:
+    contract = build_future_apply_execution_boundary_contract(
+        guarded_apply_execution_gate_specification={
+            "available": True,
+            "gate_specification_complete": False,
+        },
+    )
+    assert contract["gate_specification_available"] is True
+    assert contract["gate_specification_complete"] is False
+    assert contract["execution_boundary_intact"] is False
+    assert contract["available"] is False
+    assert contract["execution_enabled"] is False
+    assert contract["can_execute"] is False
+
+
+def test_future_apply_execution_boundary_contract_fails_when_actual_execution_endpoint_exists() -> None:
+    contract = build_future_apply_execution_boundary_contract(
+        guarded_apply_execution_gate_specification={
+            "available": True,
+            "gate_specification_complete": True,
+        },
+        actual_execution_endpoint_exists=True,
+    )
+    assert contract["actual_execution_endpoint_exists"] is True
+    assert contract["preview_stack_only"] is False
+    assert contract["execution_boundary_intact"] is False
+    assert contract["available"] is False
+    assert contract["execution_enabled"] is False
+    assert contract["can_execute"] is False
+
+
+def test_future_apply_execution_boundary_contract_fails_when_actual_execution_wiring_enabled() -> None:
+    contract = build_future_apply_execution_boundary_contract(
+        guarded_apply_execution_gate_specification={
+            "available": True,
+            "gate_specification_complete": True,
+        },
+        actual_execution_wiring_enabled=True,
+    )
+    assert contract["actual_execution_wiring_enabled"] is True
+    assert contract["preview_stack_only"] is False
+    assert contract["execution_boundary_intact"] is False
+    assert contract["available"] is False
+    assert contract["execution_enabled"] is False
+    assert contract["can_execute"] is False
+
+
+def test_future_apply_execution_boundary_contract_fails_when_mutation_path_enabled() -> None:
+    contract = build_future_apply_execution_boundary_contract(
+        guarded_apply_execution_gate_specification={
+            "available": True,
+            "gate_specification_complete": True,
+        },
+        mutation_path_enabled=True,
+    )
+    assert contract["mutation_path_enabled"] is True
+    assert contract["preview_stack_only"] is False
+    assert contract["execution_boundary_intact"] is False
+    assert contract["available"] is False
+    assert contract["execution_enabled"] is False
+    assert contract["can_execute"] is False
+    assert contract["mutation_permitted"] is False
+
+
+def test_future_apply_execution_boundary_contract_malformed_gate_specification_defaults_safely() -> None:
+    contract = build_future_apply_execution_boundary_contract(
+        guarded_apply_execution_gate_specification={
+            "available": "yes",
+            "gate_specification_complete": "true",
+        },
+    )
+    assert contract["gate_specification_available"] is False
+    assert contract["gate_specification_complete"] is False
+    assert contract["execution_boundary_intact"] is False
+    assert contract["available"] is False
+    assert contract["execution_enabled"] is False
+    assert contract["can_execute"] is False
+    assert contract["read_only"] is True
+    assert contract["mutation_permitted"] is False
+
+
+def test_future_apply_execution_decision_summary_may_be_considered_but_not_authorized() -> None:
+    summary = build_future_apply_execution_decision_summary(
+        future_apply_execution_boundary_contract={
+            "available": True,
+            "execution_boundary_intact": True,
+            "preview_stack_only": True,
+        },
+        manual_validation_only=True,
+        separate_execution_phase_required=True,
+        operator_review_required=True,
+    )
+    assert summary["available"] is True
+    assert summary["summary_type"] == "future_apply_execution_decision_summary"
+    assert summary["boundary_contract_available"] is True
+    assert summary["execution_boundary_intact"] is True
+    assert summary["preview_stack_only"] is True
+    assert summary["manual_validation_only"] is True
+    assert summary["separate_execution_phase_required"] is True
+    assert summary["operator_review_required"] is True
+    assert summary["future_execution_phase_may_be_considered"] is True
+    assert summary["execution_authorized"] is False
+    assert summary["execution_enabled"] is False
+    assert summary["can_execute"] is False
+    assert summary["read_only"] is True
+    assert summary["mutation_permitted"] is False
+    msg = str(summary["message"]).lower()
+    assert "disabled" in msg
+    assert "read-only" in msg
+    assert "does not execute apply" in msg
+    assert ("does not mutate" in msg) or ("mutate state" in msg)
+    assert ("does not authorize" in msg) or ("no authorization" in msg)
+
+
+def test_future_apply_execution_decision_summary_boundary_contract_unavailable() -> None:
+    summary = build_future_apply_execution_decision_summary(
+        future_apply_execution_boundary_contract={
+            "available": False,
+            "execution_boundary_intact": True,
+            "preview_stack_only": True,
+        },
+    )
+    assert summary["boundary_contract_available"] is False
+    assert summary["future_execution_phase_may_be_considered"] is False
+    assert summary["available"] is False
+    assert summary["execution_enabled"] is False
+    assert summary["can_execute"] is False
+    assert summary["mutation_permitted"] is False
+
+
+def test_future_apply_execution_decision_summary_boundary_not_intact() -> None:
+    summary = build_future_apply_execution_decision_summary(
+        future_apply_execution_boundary_contract={
+            "available": True,
+            "execution_boundary_intact": False,
+            "preview_stack_only": True,
+        },
+    )
+    assert summary["execution_boundary_intact"] is False
+    assert summary["future_execution_phase_may_be_considered"] is False
+    assert summary["available"] is False
+    assert summary["execution_enabled"] is False
+    assert summary["can_execute"] is False
+
+
+def test_future_apply_execution_decision_summary_preview_stack_not_only_preview() -> None:
+    summary = build_future_apply_execution_decision_summary(
+        future_apply_execution_boundary_contract={
+            "available": True,
+            "execution_boundary_intact": True,
+            "preview_stack_only": False,
+        },
+    )
+    assert summary["preview_stack_only"] is False
+    assert summary["future_execution_phase_may_be_considered"] is False
+    assert summary["available"] is False
+    assert summary["execution_enabled"] is False
+    assert summary["can_execute"] is False
+
+
+def test_future_apply_execution_decision_summary_manual_validation_only_false() -> None:
+    summary = build_future_apply_execution_decision_summary(
+        future_apply_execution_boundary_contract={
+            "available": True,
+            "execution_boundary_intact": True,
+            "preview_stack_only": True,
+        },
+        manual_validation_only=False,
+    )
+    assert summary["manual_validation_only"] is False
+    assert summary["future_execution_phase_may_be_considered"] is False
+    assert summary["available"] is False
+    assert summary["execution_enabled"] is False
+    assert summary["can_execute"] is False
+
+
+def test_future_apply_execution_decision_summary_malformed_boundary_fields_default_safely() -> None:
+    summary = build_future_apply_execution_decision_summary(
+        future_apply_execution_boundary_contract={
+            "available": "yes",
+            "execution_boundary_intact": "true",
+            "preview_stack_only": "true",
+        },
+    )
+    assert summary["boundary_contract_available"] is False
+    assert summary["execution_boundary_intact"] is False
+    assert summary["preview_stack_only"] is False
+    assert summary["future_execution_phase_may_be_considered"] is False
+    assert summary["available"] is False
+    assert summary["execution_authorized"] is False
+    assert summary["execution_enabled"] is False
+    assert summary["can_execute"] is False
+    assert summary["read_only"] is True
+    assert summary["mutation_permitted"] is False

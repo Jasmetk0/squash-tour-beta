@@ -1,0 +1,595 @@
+"""Dependency wiring for FastAPI routers."""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+from pathlib import Path
+from uuid import uuid4
+
+from fastapi import Request
+
+from beta_engine.application.api_services import SimulationApiService
+from beta_engine.application.config_validation_service import ConfigValidationService
+from beta_engine.application.category_service import CategoryService
+from beta_engine.application.calendar_template_service import CalendarTemplateService
+from beta_engine.application.calendar_package_run_adapter import CalendarPackageRunAdapter
+from beta_engine.application.countries_service import CountriesConfigService
+from beta_engine.application.initial_player_pool_service import InitialPlayerPoolService
+from beta_engine.application.planning_calendar_apply_audit_service import PlanningCalendarApplyAuditService
+from beta_engine.application.planning_calendar_apply_template_service import PlanningCalendarApplyBackupService, PlanningCalendarApplyTemplateCommandService
+from beta_engine.application.planning_season_calendar_service import PlanningSeasonCalendarService
+from beta_engine.application.season_player_bootstrap_service import InitialPoolSeasonBootstrapService
+from beta_engine.application.season_calendar_service import SeasonCalendarService
+from beta_engine.application.season_category_points_service import SeasonCategoryPointsService
+from beta_engine.application.season_builder_apply_audit_service import SeasonBuilderApplyAuditService
+from beta_engine.application.season_entry_list_service import SeasonEntryListService
+from beta_engine.application.season_draw_service import SeasonDrawService
+from beta_engine.application.season_match_service import SeasonMatchService
+from beta_engine.application.season_event_results_service import SeasonEventResultsService
+from beta_engine.application.season_event_lifecycle_service import SeasonEventLifecycleService
+from beta_engine.application.season_event_simulation_service import SeasonEventSimulationService
+from beta_engine.application.season_week_simulation_preflight_service import SeasonWeekSimulationPreflightService
+from beta_engine.application.season_week_recovery_service import SeasonWeekRecoveryService
+from beta_engine.application.season_readiness_service import SeasonReadinessService
+from beta_engine.application.season_range_preflight_service import SeasonRangePreflightService
+from beta_engine.application.season_point_awards_service import SeasonPointAwardsService
+from beta_engine.application.season_point_breakdown_service import SeasonPointBreakdownService
+from beta_engine.application.season_ranking_table_service import SeasonRankingTableService
+from beta_engine.application.season_ranking_snapshot_service import SeasonRankingSnapshotService
+from beta_engine.application.season_registry_service import SeasonRegistryService
+from beta_engine.application.season_template_service import SeasonTemplateService
+from beta_engine.application.tournament_master_service import TournamentMasterService
+from beta_engine.application.tour_seasons_validation_service import TourSeasonsValidationService
+from beta_engine.application.manual_player_overrides_service import ManualPlayerOverridesService
+from beta_engine.application.tournament_templates_service import TournamentTemplatesConfigService
+from beta_engine.application.world_package_service import WorldPackageService
+from beta_engine.application.world_package_clone_service import WorldPackageCloneService
+from beta_engine.application.world_package_countries_service import WorldPackageCountriesService
+from beta_engine.application.world_package_effective_population_service import WorldPackageEffectivePopulationService
+from beta_engine.application.world_package_registry_service import WorldPackageRegistryService
+from beta_engine.application.world_package_run_adapter import WorldPackageRunAdapter
+from beta_engine.application.world_package_validation_service import WorldPackageValidationService
+from beta_engine.application.world_package_weekly_intake_preview_service import WorldPackageWeeklyIntakePreviewService
+from beta_engine.application.run_weekly_intake_cohort_preview_service import RunWeeklyIntakeCohortPreviewService
+from beta_engine.application.run_prospect_materialization_service import RunProspectMaterializationService
+from beta_engine.application.run_container_creation_service import (
+    RunContainerCreationService,
+)
+from beta_engine.application.run_branch_creation_service import (
+    RunBranchCreationService,
+)
+from beta_engine.application.run_saved_revision_history_service import (
+    RunSavedRevisionHistoryService,
+)
+from beta_engine.application.run_saved_revision_recovery_activity_service import (
+    RunSavedRevisionRecoveryActivityService,
+)
+from beta_engine.application.run_saved_revision_restore_service import (
+    RunSavedRevisionRestoreService,
+)
+from beta_engine.application.run_working_draft_service import (
+    RunWorkingDraftService,
+)
+from beta_engine.application.run_package_service import RunPackageService
+from beta_engine.application.run_world_initial_pool_preview_service import RunWorldInitialPoolPreviewService
+from beta_engine.application.run_world_initial_world_service import RunWorldInitialWorldService
+from beta_engine.application.world_talent_preview_service import WorldTalentPreviewService
+from beta_engine.application.talent_calibration_service import TalentCalibrationService
+from beta_engine.application.match_test_lab_service import MatchTestLabService
+from beta_engine.application.player_test_lab_service import PlayerTestLabService
+from beta_engine.application.tournament_test_lab_service import TournamentTestLabService
+from beta_engine.application.pre_alpha_fax_reference_materialization import (
+    PreAlphaFaxReferenceMaterializationService,
+)
+from beta_engine.application.pre_alpha_fax_acceptance_calendar_source import (
+    PreAlphaFaxAcceptanceCalendarSource,
+)
+from beta_engine.infrastructure.config import load_settings
+from beta_engine.infrastructure.db import DatabaseSettings, SimulationPersistenceRepository, create_session_factory, create_sqlite_engine
+
+
+@dataclass(slots=True)
+class ApiRuntime:
+    repository: SimulationPersistenceRepository
+
+
+def build_runtime(*, database_url: str | None = None) -> ApiRuntime:
+    settings = load_settings()
+    effective_database_url = database_url or settings.database.url
+
+    engine = create_sqlite_engine(DatabaseSettings(url=effective_database_url))
+    session_factory = create_session_factory(engine)
+    repository = SimulationPersistenceRepository(engine=engine, session_factory=session_factory)
+    repository.bootstrap_schema()
+    return ApiRuntime(repository=repository)
+
+
+def get_runtime(request: Request) -> ApiRuntime:
+    return request.app.state.runtime
+
+
+def get_run_package_service(request: Request) -> RunPackageService:
+    return RunPackageService(repository=get_runtime(request).repository)
+
+
+def get_calendar_package_run_adapter(request: Request) -> CalendarPackageRunAdapter:
+    return CalendarPackageRunAdapter(
+        calendar_service=get_season_calendar_service(request)
+    )
+
+
+def get_run_world_initial_pool_preview_service(
+    request: Request,
+) -> RunWorldInitialPoolPreviewService:
+    return RunWorldInitialPoolPreviewService(
+        package_service=get_run_package_service(request),
+        world_adapter=get_world_package_run_adapter(request),
+    )
+
+
+def get_run_world_initial_world_service(request: Request) -> RunWorldInitialWorldService:
+    return RunWorldInitialWorldService(
+        preview_service=get_run_world_initial_pool_preview_service(request)
+    )
+
+
+def get_pre_alpha_fax_reference_materialization_service(
+    request: Request,
+) -> PreAlphaFaxReferenceMaterializationService:
+    runtime = get_runtime(request)
+    return PreAlphaFaxReferenceMaterializationService(
+        repository=runtime.repository,
+        id_factory=_new_product_entity_id,
+        world_adapter=get_world_package_run_adapter(request),
+        calendar_adapter=PreAlphaFaxAcceptanceCalendarSource(
+            template_service=get_tournament_templates_config_service(request),
+            calendar_validation_service=get_season_calendar_service(request),
+        ),
+        initial_world_service=get_run_world_initial_world_service(request),
+    )
+
+
+def get_simulation_api_service(request: Request) -> SimulationApiService:
+    runtime = get_runtime(request)
+    return SimulationApiService(
+        repository=runtime.repository,
+        manual_overrides_service=get_manual_player_overrides_service(request),
+        countries_service=get_countries_config_service(request),
+        world_package_registry_service=get_world_package_registry_service(request),
+    )
+
+
+def _new_product_entity_id(kind: str) -> str:
+    """Generate persistence identity outside all deterministic simulation RNGs."""
+
+    return f"{kind}-{uuid4().hex}"
+
+
+def get_run_container_creation_service(request: Request) -> RunContainerCreationService:
+    runtime = get_runtime(request)
+    return RunContainerCreationService(
+        repository=runtime.repository,
+        id_factory=_new_product_entity_id,
+    )
+
+
+def get_run_branch_creation_service(request: Request) -> RunBranchCreationService:
+    runtime = get_runtime(request)
+    return RunBranchCreationService(
+        repository=runtime.repository,
+        id_factory=_new_product_entity_id,
+    )
+
+
+def get_run_working_draft_service(request: Request) -> RunWorkingDraftService:
+    runtime = get_runtime(request)
+    return RunWorkingDraftService(
+        repository=runtime.repository,
+        id_factory=_new_product_entity_id,
+    )
+
+
+def get_run_saved_revision_history_service(
+    request: Request,
+) -> RunSavedRevisionHistoryService:
+    runtime = get_runtime(request)
+    return RunSavedRevisionHistoryService(repository=runtime.repository)
+
+
+def get_run_saved_revision_recovery_activity_service(
+    request: Request,
+) -> RunSavedRevisionRecoveryActivityService:
+    runtime = get_runtime(request)
+    return RunSavedRevisionRecoveryActivityService(repository=runtime.repository)
+
+
+def get_run_saved_revision_restore_service(
+    request: Request,
+) -> RunSavedRevisionRestoreService:
+    runtime = get_runtime(request)
+    return RunSavedRevisionRestoreService(
+        repository=runtime.repository,
+        id_factory=_new_product_entity_id,
+    )
+
+
+def get_config_validation_service(_: Request) -> ConfigValidationService:
+    return ConfigValidationService()
+
+
+def get_countries_config_service(request: Request) -> CountriesConfigService:
+    configured_path = getattr(request.app.state, "countries_config_path", None)
+    if configured_path is None:
+        return CountriesConfigService()
+    return CountriesConfigService(config_path=configured_path)
+
+
+def get_tournament_templates_config_service(request: Request) -> TournamentTemplatesConfigService:
+    configured_path = getattr(request.app.state, "tournament_templates_config_path", None)
+    calendar_dir = getattr(request.app.state, "calendar_config_dir", None)
+    if configured_path is None and calendar_dir is None:
+        return TournamentTemplatesConfigService()
+    kwargs = {}
+    if configured_path is not None:
+        kwargs["config_path"] = configured_path
+    if calendar_dir is not None:
+        kwargs["calendar_dir"] = calendar_dir
+    return TournamentTemplatesConfigService(**kwargs)
+
+
+def get_category_service(request: Request) -> CategoryService:
+    return CategoryService(template_service=get_tournament_templates_config_service(request))
+
+
+def get_calendar_template_service(request: Request) -> CalendarTemplateService:
+    configured_path = getattr(request.app.state, "calendar_templates_registry_path", None)
+    if configured_path is None:
+        return CalendarTemplateService()
+    return CalendarTemplateService(registry_path=configured_path)
+
+
+def get_world_talent_preview_service(request: Request) -> WorldTalentPreviewService:
+    return WorldTalentPreviewService(countries_service=get_countries_config_service(request))
+
+
+def get_talent_calibration_service() -> TalentCalibrationService:
+    return TalentCalibrationService()
+
+
+def get_match_test_lab_service(request: Request) -> MatchTestLabService:
+    runtime = get_runtime(request)
+    return MatchTestLabService(
+        session_factory=runtime.repository._session_factory,
+        id_factory=_new_product_entity_id,
+        repository=runtime.repository,
+    )
+
+
+def get_player_test_lab_service() -> PlayerTestLabService:
+    return PlayerTestLabService()
+
+
+def get_initial_population_comparison_service(request: Request):
+    from beta_engine.application.initial_population_comparison_service import (
+        InitialPopulationComparisonService,
+    )
+    return InitialPopulationComparisonService(
+        adapter=get_world_package_run_adapter(request),
+        session_factory=get_runtime(request).repository._session_factory,
+    )
+
+
+def get_tournament_test_lab_service(request: Request) -> TournamentTestLabService:
+    runtime = get_runtime(request)
+    return TournamentTestLabService(
+        session_factory=runtime.repository._session_factory,
+        id_factory=_new_product_entity_id,
+        repository=runtime.repository,
+    )
+
+
+def get_manual_player_overrides_service(request: Request) -> ManualPlayerOverridesService:
+    configured_path = getattr(request.app.state, "manual_player_overrides_config_path", None)
+    if configured_path is None:
+        return ManualPlayerOverridesService()
+    return ManualPlayerOverridesService(config_path=configured_path)
+
+
+def get_initial_player_pool_service(request: Request) -> InitialPlayerPoolService:
+    configured_path = getattr(request.app.state, "initial_player_pool_config_path", None)
+    kwargs = {"countries_service": get_countries_config_service(request)}
+    if configured_path is not None:
+        kwargs["config_path"] = configured_path
+    return InitialPlayerPoolService(**kwargs)
+
+
+def get_initial_pool_season_bootstrap_service(request: Request) -> InitialPoolSeasonBootstrapService:
+    configured_path = getattr(request.app.state, "season_active_players_config_path", None)
+    kwargs = {"initial_pool_service": get_initial_player_pool_service(request)}
+    if configured_path is not None:
+        kwargs["active_players_path"] = configured_path
+    return InitialPoolSeasonBootstrapService(**kwargs)
+
+
+def get_planning_season_calendar_service(request: Request) -> PlanningSeasonCalendarService:
+    configured_path = getattr(request.app.state, "planning_season_calendar_registry_path", None)
+    if configured_path is None:
+        return PlanningSeasonCalendarService()
+    return PlanningSeasonCalendarService(registry_path=configured_path)
+
+
+def get_planning_calendar_apply_audit_service(request: Request) -> PlanningCalendarApplyAuditService:
+    configured_path = getattr(request.app.state, "planning_calendar_apply_audit_log_path", None)
+    if configured_path is not None:
+        return PlanningCalendarApplyAuditService(audit_log_path=configured_path)
+    planning_registry_path = getattr(request.app.state, "planning_season_calendar_registry_path", None)
+    return PlanningCalendarApplyAuditService.for_planning_registry_path(planning_registry_path)
+
+
+def get_planning_calendar_apply_backup_service(request: Request) -> PlanningCalendarApplyBackupService:
+    configured_dir = getattr(request.app.state, "planning_calendar_apply_backup_dir", None)
+    if configured_dir is not None:
+        return PlanningCalendarApplyBackupService(backup_dir=configured_dir)
+    planning_registry_path = getattr(request.app.state, "planning_season_calendar_registry_path", None)
+    return PlanningCalendarApplyBackupService.for_planning_registry_path(planning_registry_path)
+
+
+def get_planning_calendar_apply_template_service(request: Request) -> PlanningCalendarApplyTemplateCommandService:
+    return PlanningCalendarApplyTemplateCommandService(
+        template_service=get_calendar_template_service(request),
+        planning_calendar_service=get_planning_season_calendar_service(request),
+        audit_service=get_planning_calendar_apply_audit_service(request),
+        backup_service=get_planning_calendar_apply_backup_service(request),
+    )
+
+
+def get_season_calendar_service(request: Request) -> SeasonCalendarService:
+    configured_path = getattr(request.app.state, "season_calendar_registry_path", None)
+    kwargs = {"template_service": get_tournament_templates_config_service(request), "category_points_service": get_season_category_points_service(request)}
+    if configured_path is not None:
+        kwargs["calendar_registry_path"] = configured_path
+    return SeasonCalendarService(**kwargs)
+
+
+def get_season_category_points_service(request: Request) -> SeasonCategoryPointsService:
+    kwargs = {"template_service": get_tournament_templates_config_service(request)}
+    configured_path = getattr(request.app.state, "season_category_points_registry_path", None)
+    baseline_path = getattr(request.app.state, "points_config_path", None)
+    if configured_path is not None:
+        kwargs["registry_path"] = configured_path
+    if baseline_path is not None:
+        kwargs["baseline_points_path"] = baseline_path
+    return SeasonCategoryPointsService(**kwargs)
+
+
+def get_season_builder_apply_audit_service(request: Request) -> SeasonBuilderApplyAuditService:
+    configured_path = getattr(request.app.state, "season_builder_apply_audit_log_path", None)
+    if configured_path is not None:
+        return SeasonBuilderApplyAuditService(audit_log_path=configured_path)
+    calendar_registry_path = getattr(request.app.state, "season_calendar_registry_path", None)
+    return SeasonBuilderApplyAuditService.for_calendar_registry_path(calendar_registry_path)
+
+
+def get_season_template_service(request: Request) -> SeasonTemplateService:
+    return SeasonTemplateService(template_service=get_tournament_templates_config_service(request))
+
+
+def get_tournament_master_service(request: Request) -> TournamentMasterService:
+    return TournamentMasterService(template_service=get_tournament_templates_config_service(request))
+
+
+def get_season_entry_list_service(request: Request) -> SeasonEntryListService:
+    configured_path = getattr(request.app.state, "season_entry_lists_registry_path", None)
+    entry_tuning_path = getattr(request.app.state, "entry_tuning_config_path", None)
+    kwargs = {
+        "active_players_service": get_initial_pool_season_bootstrap_service(request),
+        "calendar_service": get_season_calendar_service(request),
+        "countries_service": get_countries_config_service(request),
+    }
+    if configured_path is not None:
+        kwargs["entry_lists_path"] = configured_path
+    if entry_tuning_path is not None:
+        kwargs["entry_tuning_path"] = entry_tuning_path
+    return SeasonEntryListService(**kwargs)
+
+
+def get_season_draw_service(request: Request) -> SeasonDrawService:
+    configured_path = getattr(request.app.state, "season_draws_registry_path", None)
+    kwargs = {
+        "entry_list_service": get_season_entry_list_service(request),
+        "calendar_service": get_season_calendar_service(request),
+    }
+    if configured_path is not None:
+        kwargs["draws_path"] = configured_path
+    return SeasonDrawService(**kwargs)
+
+
+def get_world_package_service(request: Request) -> WorldPackageService:
+    return WorldPackageService(
+        countries_service=get_countries_config_service(request),
+        manual_overrides_service=get_manual_player_overrides_service(request),
+    )
+
+
+def get_world_package_registry_service(request: Request) -> WorldPackageRegistryService:
+    configured_world_packages_root = getattr(request.app.state, "world_packages_root", None)
+    kwargs = {
+        "countries_service": get_countries_config_service(request),
+        "manual_overrides_service": get_manual_player_overrides_service(request),
+    }
+    if configured_world_packages_root is not None:
+        kwargs["world_packages_root"] = Path(configured_world_packages_root)
+    return WorldPackageRegistryService(**kwargs)
+
+
+def get_world_package_run_adapter(request: Request) -> WorldPackageRunAdapter:
+    return WorldPackageRunAdapter(
+        registry_service=get_world_package_registry_service(request)
+    )
+
+
+def get_world_package_validation_service(request: Request) -> WorldPackageValidationService:
+    return WorldPackageValidationService(registry_service=get_world_package_registry_service(request))
+
+
+def get_world_package_countries_service(request: Request) -> WorldPackageCountriesService:
+    return WorldPackageCountriesService(registry_service=get_world_package_registry_service(request))
+
+
+def get_world_package_effective_population_service(request: Request) -> WorldPackageEffectivePopulationService:
+    return WorldPackageEffectivePopulationService(countries_service=get_world_package_countries_service(request))
+
+
+def get_world_package_weekly_intake_preview_service(request: Request) -> WorldPackageWeeklyIntakePreviewService:
+    return WorldPackageWeeklyIntakePreviewService(countries_service=get_world_package_countries_service(request))
+
+
+def get_run_weekly_intake_cohort_preview_service(request: Request) -> RunWeeklyIntakeCohortPreviewService:
+    return RunWeeklyIntakeCohortPreviewService(
+        repository=get_runtime(request).repository,
+        countries_service=get_world_package_countries_service(request),
+        season_registry=get_season_registry_service(request),
+    )
+
+
+def get_run_prospect_materialization_service(request: Request) -> RunProspectMaterializationService:
+    return RunProspectMaterializationService(
+        repository=get_runtime(request).repository,
+        preview_service=get_run_weekly_intake_cohort_preview_service(request),
+    )
+
+
+def get_world_package_clone_service(request: Request) -> WorldPackageCloneService:
+    registry_service = get_world_package_registry_service(request)
+    return WorldPackageCloneService(
+        registry_service=registry_service,
+        validation_service=WorldPackageValidationService(registry_service=registry_service),
+    )
+
+
+def get_season_match_service(request: Request) -> SeasonMatchService:
+    configured_path = getattr(request.app.state, "season_matches_registry_path", None)
+    kwargs = {
+        "draw_service": get_season_draw_service(request),
+        "active_players_service": get_initial_pool_season_bootstrap_service(request),
+    }
+    if configured_path is not None:
+        kwargs["matches_path"] = configured_path
+    return SeasonMatchService(**kwargs)
+
+
+def get_season_event_results_service(request: Request) -> SeasonEventResultsService:
+    configured_path = getattr(request.app.state, "season_event_results_registry_path", None)
+    kwargs = {
+        "match_service": get_season_match_service(request),
+        "draw_service": get_season_draw_service(request),
+        "calendar_service": get_season_calendar_service(request),
+    }
+    if configured_path is not None:
+        kwargs["results_path"] = configured_path
+    return SeasonEventResultsService(**kwargs)
+
+
+def get_season_point_awards_service(request: Request) -> SeasonPointAwardsService:
+    configured_path = getattr(request.app.state, "season_point_awards_registry_path", None)
+    points_config_path = getattr(request.app.state, "points_config_path", None)
+    kwargs = {
+        "result_service": get_season_event_results_service(request),
+        "active_players_service": get_initial_pool_season_bootstrap_service(request),
+        "calendar_service": get_season_calendar_service(request),
+        "template_service": get_tournament_templates_config_service(request),
+    }
+    if configured_path is not None:
+        kwargs["awards_path"] = configured_path
+    if points_config_path is not None:
+        kwargs["points_config_path"] = points_config_path
+    return SeasonPointAwardsService(**kwargs)
+
+
+def get_season_ranking_table_service(request: Request) -> SeasonRankingTableService:
+    return SeasonRankingTableService(active_players_service=get_initial_pool_season_bootstrap_service(request))
+
+
+def get_season_ranking_snapshot_service(request: Request) -> SeasonRankingSnapshotService:
+    configured_path = getattr(request.app.state, "season_ranking_snapshots_registry_path", None)
+    kwargs = {
+        "ranking_table_service": get_season_ranking_table_service(request),
+        "calendar_service": get_season_calendar_service(request),
+        "point_awards_service": get_season_point_awards_service(request),
+    }
+    if configured_path is not None:
+        kwargs["snapshots_path"] = configured_path
+    return SeasonRankingSnapshotService(**kwargs)
+
+
+def get_season_event_lifecycle_service(request: Request) -> SeasonEventLifecycleService:
+    return SeasonEventLifecycleService(
+        calendar_service=get_season_calendar_service(request),
+        entry_list_service=get_season_entry_list_service(request),
+        draw_service=get_season_draw_service(request),
+        match_service=get_season_match_service(request),
+        result_service=get_season_event_results_service(request),
+        point_awards_service=get_season_point_awards_service(request),
+        ranking_snapshot_service=get_season_ranking_snapshot_service(request),
+    )
+
+
+def get_season_event_simulation_service(request: Request) -> SeasonEventSimulationService:
+    return SeasonEventSimulationService(
+        lifecycle_service=get_season_event_lifecycle_service(request),
+        entry_list_service=get_season_entry_list_service(request),
+        draw_service=get_season_draw_service(request),
+        match_service=get_season_match_service(request),
+        result_service=get_season_event_results_service(request),
+        point_awards_service=get_season_point_awards_service(request),
+        ranking_snapshot_service=get_season_ranking_snapshot_service(request),
+    )
+
+
+def get_season_week_simulation_preflight_service(request: Request) -> SeasonWeekSimulationPreflightService:
+    return SeasonWeekSimulationPreflightService(
+        calendar_service=get_season_calendar_service(request),
+        lifecycle_service=get_season_event_lifecycle_service(request),
+        event_simulation_service=get_season_event_simulation_service(request),
+        ranking_snapshot_service=get_season_ranking_snapshot_service(request),
+    )
+
+
+def get_season_week_recovery_service(request: Request) -> SeasonWeekRecoveryService:
+    return SeasonWeekRecoveryService(
+        preflight_service=get_season_week_simulation_preflight_service(request),
+        lifecycle_service=get_season_event_lifecycle_service(request),
+        ranking_snapshot_service=get_season_ranking_snapshot_service(request),
+    )
+
+
+def get_season_readiness_service(request: Request) -> SeasonReadinessService:
+    return SeasonReadinessService(
+        recovery_service=get_season_week_recovery_service(request),
+        calendar_service=get_season_calendar_service(request),
+    )
+
+
+def get_season_range_preflight_service(request: Request) -> SeasonRangePreflightService:
+    return SeasonRangePreflightService(readiness_service=get_season_readiness_service(request))
+
+
+def get_season_point_breakdown_service(request: Request) -> SeasonPointBreakdownService:
+    return SeasonPointBreakdownService(
+        point_awards_service=get_season_point_awards_service(request),
+        active_players_service=get_initial_pool_season_bootstrap_service(request),
+        calendar_service=get_season_calendar_service(request),
+    )
+
+
+def get_season_registry_service(_: Request) -> SeasonRegistryService:
+    return SeasonRegistryService()
+
+
+def get_tour_seasons_validation_service(request: Request) -> TourSeasonsValidationService:
+    return TourSeasonsValidationService(
+        registry_service=SeasonRegistryService(),
+        category_service=get_category_service(request),
+        tournament_service=get_tournament_master_service(request),
+        season_template_service=get_season_template_service(request),
+    )

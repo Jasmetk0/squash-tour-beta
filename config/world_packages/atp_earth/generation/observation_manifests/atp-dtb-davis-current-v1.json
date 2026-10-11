@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-dtb-davis-current-v1",
+  "source_id": "dtb-davis-cup-team",
+  "relative_path": "observations/normalized/atp_dtb_davis_current_v1.json",
+  "sha256": "ac944fe0c885e0f637b2ec946dc040b75bb996aada700c5dc751f61e9831eab1",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual normalization from current DTB Davis Cup team page"
+}

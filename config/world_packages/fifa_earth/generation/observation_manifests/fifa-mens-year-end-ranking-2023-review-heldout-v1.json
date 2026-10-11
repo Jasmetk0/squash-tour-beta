@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-mens-year-end-ranking-2023-review-heldout-v1",
+  "source_id": "fifa-mens-ranking-year-end-2023-review-heldout",
+  "relative_path": "observations/normalized/fifa_mens_year_end_ranking_2023_review_heldout_v1.json",
+  "sha256": "0c1dd57c57235157e6dda57dec1853ab66ef94aecc32f6258b211aa5764eeb26",
+  "record_count": 13,
+  "source_document_sha256": null,
+  "input_artifact_sha256": "624594f149c32b3380e98480d3354383706bf5185c210b7daf519e9efeef996f",
+  "generated_by": "scripts/normalize_fifa_mens_ranking_2023.py"
+}

@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-frmt-committee-history-v1",
+  "source_id": "frmt-committee-history",
+  "relative_path": "observations/normalized/atp_frmt_committee_history_v1.json",
+  "sha256": "a2da0c998b22e32774455a94cd59989644ea320b50a8ad3d710485660f0c640c",
+  "record_count": 4,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

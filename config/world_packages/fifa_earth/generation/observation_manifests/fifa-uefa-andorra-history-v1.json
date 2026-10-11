@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-uefa-andorra-history-v1",
+  "source_id": "and-mne-uefa-andorra-history",
+  "relative_path": "observations/normalized/fifa_uefa_andorra_history_v1.json",
+  "sha256": "b56823c72893a0da46ff72b0df5521c1956c3f14c4850da64dd4de3355ad28df",
+  "record_count": 6,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-and-mne-batch-2026-10-07"
+}

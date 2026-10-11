@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-costa-rica-history-v1",
+  "source_id": "itf-costa-rica-profile",
+  "relative_path": "observations/normalized/atp_costa_rica_history_v1.json",
+  "sha256": "f4e441e346e994e18388cdd82b78c92189e44af7279b4e360c4d1fd31d353d74",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

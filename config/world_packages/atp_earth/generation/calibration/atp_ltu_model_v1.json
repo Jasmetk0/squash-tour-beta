@@ -1,0 +1,32 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "atp-earth-ltu-model.v1",
+  "world_id": "atp_earth",
+  "data_cutoff": "2026-10-04",
+  "countries": ["LTU"],
+  "rating_scale": "country_ratings_1_10.v2",
+  "evidence_rules": [
+    "Pre-independence current-territory Lithuanian tennis does not inherit USSR-wide player counts or outcomes.",
+    "Lithuanian biographical and institutional evidence is partial and therefore does not justify high confidence for national scale.",
+    "The 1959 federation presidium, 1995 LTS establishment and 2022 federation mandate are gated to their documented years.",
+    "Current federation structure is not backcast into earlier decades.",
+    "9+ remains world-leading and is not reached by this evidence set."
+  ],
+  "anchor_values": {
+    "LTU": {
+      "1955": [4.5, 4.1, 4.4, 4.6, 4.0, 7.0],
+      "1959": [4.6, 4.2, 4.5, 4.7, 4.2, 7.1],
+      "1989": [5.0, 4.5, 5.0, 5.2, 4.6, 7.6],
+      "1990": [5.0, 4.5, 4.9, 5.0, 4.4, 7.6],
+      "1995": [5.2, 4.7, 5.2, 5.3, 5.0, 7.8],
+      "2022": [6.0, 5.7, 6.3, 6.4, 6.2, 8.2],
+      "2026": [6.1, 5.8, 6.5, 6.6, 6.4, 8.3]
+    }
+  },
+  "evidence_sources": [
+    "lts-lithuania-history-2023",
+    "lts-lithuania-financial-2024",
+    "lts-lithuania-statutes"
+  ],
+  "heldout_ranking_used": false
+}

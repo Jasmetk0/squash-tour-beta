@@ -1,0 +1,30 @@
+{
+  "schema_version": "fifa_competition_outcome_review_policy.v1",
+  "policy_id": "fifa-competition-outcome-review-v1",
+  "audit_schema_version": "fifa_competition_outcome_validation.v1",
+  "competition_recipe": "competition_quality@2023",
+  "review": {
+    "minimum_numeric_country_count": 6,
+    "minimum_spearman_score_vs_better_rank": 0.6,
+    "minimum_pairwise_concordance_rate": 0.7
+  },
+  "held_out_validation": {
+    "minimum_numeric_country_count": 3,
+    "minimum_spearman_score_vs_better_rank": 0.5,
+    "minimum_pairwise_concordance_rate": 0.6666
+  },
+  "decisions": {
+    "both_pass": "independent_outcome_supportive",
+    "review_pass_heldout_fail": "heldout_not_supportive",
+    "review_fail": "review_outcome_not_supportive"
+  },
+  "safeguards": [
+    "Ranking outcomes are validation-only and must never be added to V2 model components or fitting targets.",
+    "Thresholds are fixed before reading the review decision output and must not be retuned merely to obtain a pass.",
+    "Held-out countries remain fit_allowed=false.",
+    "A supportive outcome decision does not authorize canonical country-rating authoring.",
+    "Senior national-team ranking is an indirect outcome for domestic competition quality and must be combined with domestic/context evidence before canonical promotion.",
+    "San Marino remains a valid held-out outcome with a missing V2 competition score and is excluded from numeric threshold counts rather than treated as zero."
+  ],
+  "canonical_authoring_allowed": false
+}

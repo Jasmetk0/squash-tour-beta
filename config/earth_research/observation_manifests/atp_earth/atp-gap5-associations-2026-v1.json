@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-gap5-associations-2026-v1",
+  "source_id": "atp-gap5-itf-constitution-2026",
+  "relative_path": "observations/normalized/atp_gap5_associations_2026_v1.json",
+  "sha256": "ee2257459887534c8ed5ed7ee9930dea0b978ef3a7580bc8b741bf473fb273aa",
+  "record_count": 5,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-atp-gap5-2026-10-07"
+}

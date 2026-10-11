@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-afa-history-v1",
+  "source_id": "afa-history",
+  "relative_path": "observations/normalized/structural/fifa_structural_afa_history_v1.json",
+  "sha256": "927483e98a28efec517308b2c4c57fae67061650f64bc2be94182e2d5783b348",
+  "record_count": 4,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-04"
+}

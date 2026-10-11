@@ -1,0 +1,44 @@
+{
+  "schema_version": "earth_source_observations.v2",
+  "dataset_id": "atp-btf-calendar-framework-2026-v1",
+  "source_id": "btf-calendar-framework-2026",
+  "source_url": "https://bgtennis.bg/fls/Pismo2026.pdf",
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05",
+  "scope": "2026 domestic tournament, ranking and team-championship administration.",
+  "limitations": "Competition administration framework demonstrates organised availability rather than total participation.",
+  "observations": [
+    {
+      "observation_id": "atp-btf-calendar-framework-2026-v1#bgr-national-regional-calendar-2026",
+      "source_id": "btf-calendar-framework-2026",
+      "source_entity": "Bulgarian Tennis Federation",
+      "earth_country_code": "BGR",
+      "historical_entity": null,
+      "observation_year": 2026,
+      "period_start_year": null,
+      "period_end_year": null,
+      "measurement_type": "competition_calendar_system",
+      "sex_scope": "mixed",
+      "age_scope": null,
+      "competition_scope": "national and regional competitions",
+      "numeric_value": null,
+      "text_value": "BTF requires all 2026 national and regional tournament entries through its online system and administers state team championships through clubs.",
+      "unit": "statement",
+      "collection_method": "official_narrative",
+      "coverage_scope": "national",
+      "comparability_group": null,
+      "cross_country_comparable": false,
+      "is_direct_observation": true,
+      "is_statistically_modelled": false,
+      "territory_mapping_method": "direct_earth_country",
+      "territory_weight": null,
+      "source_page": null,
+      "source_locator": null,
+      "definition_notes": "BTF requires all 2026 national and regional tournament entries through its online system and administers state team championships through clubs.",
+      "quality_flags": [
+        "current_competition_structure"
+      ]
+    }
+  ]
+}

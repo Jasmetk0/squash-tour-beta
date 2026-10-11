@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-uefa-latvia-profile-v1",
+  "source_id": "uefa-latvia-profile",
+  "relative_path": "observations/normalized/structural/fifa_structural_uefa_latvia_profile_v1.json",
+  "sha256": "a73fb1d19c66bbc9e908aefb299824e36c6c51720cfb1fe17825515d1da58f54",
+  "record_count": 5,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

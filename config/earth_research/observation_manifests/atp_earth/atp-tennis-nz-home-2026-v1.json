@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-tennis-nz-home-2026-v1",
+  "source_id": "tennis-nz-home-2026",
+  "relative_path": "observations/normalized/atp-tennis-nz-home-2026-v1.json",
+  "sha256": "404dda1b64fdf358052f3f5e8eba6edcb9c18ad2b17630cc0d4597c2c7c8fdc2",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

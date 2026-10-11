@@ -1,0 +1,42 @@
+{
+  "schema_version": "earth_source_observations.v2",
+  "dataset_id": "fifa-kiribati-ofc-2026-v1",
+  "source_id": "rus-kir-ofc-kiribati-2026",
+  "source_url": "https://www.oceaniafootball.com/a-new-chapter-for-football-in-kiribati-begins-with-ofc-visit/",
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-rus-kir-batch-2026-10-07",
+  "scope": "Kiribati; current OFC associate-member football context only.",
+  "limitations": "Structural context only; numeric six-attribute ratings remain project-authored low-confidence estimates.",
+  "observations": [
+    {
+      "observation_id": "fifa-kiribati-ofc-2026-v1#kir-ofc-associate-2026",
+      "source_id": "rus-kir-ofc-kiribati-2026",
+      "source_entity": "Oceania Football Confederation / Kiribati Islands Football Federation",
+      "earth_country_code": "KIR",
+      "historical_entity": "Kiribati",
+      "observation_year": 2026,
+      "period_start_year": null,
+      "period_end_year": null,
+      "measurement_type": "structural_event",
+      "sex_scope": "not_applicable",
+      "age_scope": null,
+      "competition_scope": null,
+      "numeric_value": null,
+      "text_value": "OFC describes Kiribati as an Associate Member and records a 2026 technical-development visit. This does not imply FIFA membership.",
+      "unit": "event",
+      "collection_method": "official_narrative",
+      "coverage_scope": "territory",
+      "comparability_group": null,
+      "cross_country_comparable": false,
+      "is_direct_observation": true,
+      "is_statistically_modelled": false,
+      "territory_mapping_method": null,
+      "territory_weight": null,
+      "source_page": null,
+      "source_locator": null,
+      "definition_notes": "Structural sporting context only; not a direct measurement of the six game ratings.",
+      "quality_flags": []
+    }
+  ]
+}

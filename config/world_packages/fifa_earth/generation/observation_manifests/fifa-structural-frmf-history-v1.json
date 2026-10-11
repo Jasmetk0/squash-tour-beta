@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-frmf-history-v1",
+  "source_id": "frmf-history",
+  "relative_path": "observations/normalized/structural/fifa_structural_frmf_history_v1.json",
+  "sha256": "6c152033515593fc538fbd05c950d514da005372bf4cea92e5f733ffedfb19c9",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": "aa48ab28872008467eedb7601a7d7f0246490a54779b88bd51303e501d31cf1c",
+  "generated_by": "scripts/normalize_fifa_structural_events.py"
+}

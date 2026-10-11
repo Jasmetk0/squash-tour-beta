@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-fft-senegal-cooperation-2022-v1",
+  "source_id": "fft-senegal-cooperation-2022",
+  "relative_path": "observations/normalized/atp_fft_senegal_cooperation_2022_v1.json",
+  "sha256": "eb464402b5bcbfdb880dbe702778edf0a6ee812b4a08011365c2214d5ca4ba51",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

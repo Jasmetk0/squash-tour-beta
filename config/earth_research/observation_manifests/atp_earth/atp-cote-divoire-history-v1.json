@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-cote-divoire-history-v1",
+  "source_id": "fit-cote-divoire-history",
+  "relative_path": "observations/normalized/atp_cote_divoire_history_v1.json",
+  "sha256": "93c78ea1361c1503131e0be720c6f8503152bb66148673e9044be96f31a69316",
+  "record_count": 5,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

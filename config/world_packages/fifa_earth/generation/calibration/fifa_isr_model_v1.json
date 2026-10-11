@@ -1,0 +1,83 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "fifa-earth-isr-model.v1",
+  "world_id": "fifa_earth",
+  "data_cutoff": "2026-10-03",
+  "countries": [
+    "ISR"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "principles": [
+    "The 1928/1929 association and FIFA milestones are pre-1955 institutional context; the 1948 state transition is preserved explicitly.",
+    "AFC admission in 1956, exit in 1974 and UEFA full membership in 1994 are distinct competition-governance phases.",
+    "FIFA Big Count 2006 and Professional Football Report 2023 are strictly gated to their observation years.",
+    "No ranking, World Cup or confederation tournament outcome is used as a calibration target.",
+    "9+ remains world-leading and is not reached by this evidence set."
+  ],
+  "anchor_values": {
+    "ISR": {
+      "1955": [
+        5.9,
+        5.4,
+        5.6,
+        5.8,
+        5.7,
+        7.5
+      ],
+      "1956": [
+        6,
+        5.5,
+        5.7,
+        6,
+        5.9,
+        7.6
+      ],
+      "1974": [
+        6.2,
+        5.7,
+        5.9,
+        5.6,
+        5.6,
+        7.8
+      ],
+      "1994": [
+        6.7,
+        6.2,
+        6.5,
+        6.5,
+        6.5,
+        8
+      ],
+      "2006": [
+        7,
+        6.8,
+        6.9,
+        6.8,
+        6.8,
+        8.1
+      ],
+      "2023": [
+        7.2,
+        7,
+        7.2,
+        7.1,
+        7.1,
+        8.2
+      ],
+      "2026": [
+        7.3,
+        7.1,
+        7.2,
+        7.1,
+        7.2,
+        8.2
+      ]
+    }
+  },
+  "evidence_sources": [
+    "uefa-israel-profile",
+    "fifa-big-count-2006",
+    "fifa-professional-2023"
+  ],
+  "heldout_ranking_used": false
+}

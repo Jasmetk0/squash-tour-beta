@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-fiji-current-2026-v1",
+  "source_id": "fasanoc-tennis-fiji-2026",
+  "relative_path": "observations/normalized/atp_fiji_current_2026_v1.json",
+  "sha256": "9995995329cdd6410fbbc9cd2d298c0d2396b3e67dbf0e8e24ff9d58ce2abc60",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

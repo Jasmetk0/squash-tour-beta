@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-fct-child-circuit-2026-v1",
+  "source_id": "fct-child-circuit-2026",
+  "relative_path": "observations/normalized/atp-fct-child-circuit-2026-v1.json",
+  "sha256": "f1396b74944b27dec2cf9c67d395fb105754e9227d6b697e9ebffc6446b05d95",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-burkina-faso-history-v1",
+  "source_id": "caf-burkina-faso-profile",
+  "relative_path": "observations/normalized/structural/fifa_structural_burkina_faso_history_v1.json",
+  "sha256": "b430f5ae0336376c77316e38bd353b7db6fc0cceceea5c3636ab7c60e89ddccd",
+  "record_count": 4,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

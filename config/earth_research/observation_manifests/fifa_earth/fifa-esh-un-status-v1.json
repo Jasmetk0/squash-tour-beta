@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-esh-un-status-v1",
+  "source_id": "esh-un-status",
+  "relative_path": "observations/normalized/fifa_esh_un_status_v1.json",
+  "sha256": "f6a155dc17c66eb59770d2a1bee70f3746ed0af8c3fc7753c2f5f837f9c61c5e",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-final4-batch-2026-10-07"
+}

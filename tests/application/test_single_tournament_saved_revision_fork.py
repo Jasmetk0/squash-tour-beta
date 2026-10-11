@@ -1,0 +1,1312 @@
+"""Real HTTP/SQLite single-tournament Saved Revision fork acceptance.
+
+The fixture uses the same Run-owned World, Calendar, Admin reviewed submissions,
+Draw, full rally engine and canonical point authorities as the full-season gate.
+It deliberately stops after Week 1 so Fast CI never runs all 61 weeks.
+"""
+
+from __future__ import annotations
+
+import pytest
+from sqlalchemy import func, select, text
+
+import beta_engine.infrastructure.db.repositories as repository_module
+from beta_engine.infrastructure.db.models import RunBranchModel
+
+from beta_engine.api.deps import get_season_match_service, get_season_point_awards_service
+from beta_engine.world_packages import OFFICIAL_FAX_WORLD_ID
+from beta_engine.application.season_draw_service import SeasonDrawsRegistry
+from beta_engine.application.season_event_results_service import SeasonEventResultsRegistry
+from beta_engine.application.season_point_awards_service import SeasonPointAwardsRegistry
+from beta_engine.infrastructure.db.ranking_revision_state import capture_ranking_revision_state
+from beta_engine.infrastructure.db.models import (
+    AuthoritativeWeekTransitionReceiptModel,
+    AuthoritativeWorldEventModel,
+)
+from tests.api.test_initial_world_ranking_integration import _post_headers
+from tests.api.test_saved_revision_history_api import ApiServer, _create_run, _request
+from tests.support.world_packages import copy_builtin_world_packages
+from test_official_run_full_season_acceptance import (
+    _server_state,
+    _remove_week_two_source_fixture,
+    _ForbiddenLegacyBackend,
+    _save_initial_world,
+    _prepare_initial_ranking,
+    _save_ranking,
+    _roots,
+)
+from test_earth_world_package_run_integration import _advance_empty_week
+
+
+
+def _reviewed_real_entry_field(
+    field_root: str,
+    *,
+    event_id: str,
+    expected_players: tuple[str, ...],
+    command_id: str,
+    main_size: int,
+) -> tuple[dict, dict]:
+    """Production HTTP/SQLite reviewed field: no preview write, stale CAS, reopen.
+
+    All four existing scenarios invoke this helper, so multiple week/event paths
+    cannot silently bypass the new Admin-reviewed field authority.
+    """
+    capacity = {
+        "main_draw_size": main_size,
+        "qualification_draw_size": 0,
+        "qualifier_spots": 0,
+        "wild_card_slots": 0,
+        "bye_slots": 0,
+    }
+    status, candidate = _request(
+        "POST", field_root + "/from-valid-submissions/preview",
+        {"capacity": capacity},
+    )
+    assert status == 200, candidate
+    assert candidate["preview_only"] is True
+    assert candidate["event_id"] == event_id
+    assert len(candidate["field_fingerprint"]) == 64
+    assert set(candidate["field"]["direct_main_player_ids"]) == set(expected_players)
+    assert candidate["field"]["qualification_player_ids"] == []
+    assert candidate["field"]["below_qualification_cut_player_ids"] == []
+
+    # The preview and rejected CAS must not persist a single Entry Field row.
+    assert _request("GET", field_root)[0] == 404
+    status, stale = _request(
+        "POST", field_root + "/from-valid-submissions/reviewed",
+        {
+            "command_id": command_id + "-stale",
+            "capacity": capacity,
+            "expected_field_fingerprint": "0" * 64,
+        },
+    )
+    assert status == 409, stale
+    assert _request("GET", field_root)[0] == 404
+
+    status, committed = _request(
+        "POST", field_root + "/from-valid-submissions/reviewed",
+        {
+            "command_id": command_id,
+            "capacity": capacity,
+            "expected_field_fingerprint": candidate["field_fingerprint"],
+        },
+    )
+    assert status == 201, committed
+    assert set(committed["direct_main_player_ids"]) == set(expected_players)
+    status, stored = _request("GET", field_root)
+    assert status == 200, stored
+    assert stored["field_fingerprint"] == candidate["field_fingerprint"]
+    assert stored["field_sequence"] == 1
+    assert set(stored["direct_main_player_ids"]) == set(expected_players)
+    assert _request(
+        "POST", field_root + "/from-valid-submissions/preview",
+        {"capacity": capacity},
+    )[0] == 409
+    return committed, stored
+
+
+
+def _complete_second_standard_tournament(
+    server: ApiServer,
+    *,
+    run_id: str,
+    branch_id: str,
+    event_id: str,
+    players: tuple[str, ...],
+    revision: str,
+) -> str:
+    """Use actual Week-2 Admin, Draw, Slot and rally production endpoints."""
+    ranking_root, _, sim_root = _roots(server, run_id, branch_id)
+    base = f"{server.base_url}/admin/runs/{run_id}/branches/{branch_id}"
+    tournament_root = f"{base}/tournaments/{event_id}"
+    week = {"season_index": 0, "week": 2}
+    status, authority = _request(
+        "POST",
+        tournament_root + "/ranking-snapshot-authority",
+        {
+            "command_id": "second-week-tournament-ranking-snapshot",
+            "ranking_week": week,
+        },
+    )
+    assert status == 201, authority
+    assert authority["event_id"] == event_id
+
+    decisions = [
+        {"event_id": event_id, "player_id": player_id, "target": "MAIN"}
+        for player_id in sorted(players)
+    ]
+    status, entry = _request(
+        "POST",
+        sim_root + "/entry-decision-slot/review",
+        {
+            "command_id": "second-week-reviewed-entry-intents",
+            "expected_week": week,
+            "expected_revision_id": revision,
+            "decision_slot_ordinal": 1,
+            "operator_label": "Two-week fork acceptance Admin",
+            "reason": "Explicitly validate Week-2 tournament entries",
+            "reviews": decisions,
+        },
+    )
+    assert status == 201, entry
+    position = _request("GET", sim_root + "/position")[1]
+    assert position["current_week"] == week
+    status, validated = _request(
+        "POST", sim_root + "/entry-decision-slot/validation/review",
+        {
+            "command_id": "second-week-application-validation",
+            "expected_week": week,
+            "expected_revision_id": revision,
+            "expected_position_fingerprint": position["position_fingerprint"],
+            "decision_slot_ordinal": 1,
+            "expected_entry_slot_fingerprint": entry["slot_fingerprint"],
+            "operator_label": "Two-week fork acceptance Admin",
+            "reason": "Audit explicit Week-2 tournament entry eligibility",
+            "reviews": [
+                {
+                    "event_id": decision["event_id"],
+                    "player_id": decision["player_id"],
+                    "outcome": "valid",
+                    "reasons": [],
+                }
+                for decision in entry["authority"]["decisions"]
+            ],
+        },
+    )
+    assert status == 201, validated
+    assert validated["valid_submission_count"] == len(players)
+
+    field_root = tournament_root + "/entry-field"
+    field, field_state = _reviewed_real_entry_field(
+        field_root,
+        event_id=event_id,
+        expected_players=players,
+        command_id="second-week-reviewed-main-entry-field",
+        main_size=len(players),
+    )
+    draw_root = tournament_root + "/draw"
+    status, draw_input = _request(
+        "POST", draw_root + "/commit-input",
+        {
+            "command_id": "second-week-frozen-draw-input",
+            "run_id": run_id, "branch_id": branch_id, "event_id": event_id,
+            "expected_field_fingerprint": field_state["field_fingerprint"],
+            "draw_seed": 200002,
+        },
+    )
+    assert status == 200, draw_input
+    status, draw = _request(
+        "POST", draw_root + "/generate",
+        {
+            "command_id": "second-week-generate-canonical-draw",
+            "run_id": run_id, "branch_id": branch_id, "event_id": event_id,
+            "expected_draw_input_fingerprint": draw_input["draw_input_fingerprint"],
+        },
+    )
+    assert status == 200, draw
+    assert draw["initial_draw_generated"] is True
+    preflight = _request("GET", sim_root + "/week-schedule/preflight")[1]
+    assert preflight["canonical_preparation_ready"] is True, preflight
+    assert preflight["event_ids"] == [event_id]
+    status, proposed = _request("GET", sim_root + "/week-schedule/proposal")
+    assert status == 200, proposed
+    status, adopted = _request(
+        "POST", sim_root + "/week-schedule/adopt-proposal",
+        {
+            "request_id": "second-week-frozen-schedule",
+            "expected_week": proposed["schedule"]["week"],
+            "expected_schedule_fingerprint": proposed["schedule_fingerprint"],
+            "expected_position_fingerprint": proposed["position_fingerprint"],
+        },
+    )
+    assert status == 201, adopted
+
+    request = {
+        "command_id": "second-week-next-week-with-tournament",
+        "operator_label": "Two-week fork acceptance Admin",
+        "audit_reason": "Complete reviewed second real tournament and Week Transition",
+    }
+    status, preview = _request(
+        "POST", sim_root + "/next-week/preview", request,
+    )
+    assert status == 200, preview
+    assert preview["target_slot_ordinals"]
+    status, completed = _request(
+        "POST", sim_root + "/simulate-next-week",
+        {
+            **request,
+            "expected_week": preview["week"],
+            "expected_position_fingerprint": preview["expected_position_fingerprint"],
+            "expected_revision_id": preview["expected_revision_id"],
+            "expected_preview_fingerprint": preview["preview_fingerprint"],
+        },
+    )
+    assert status == 201, completed
+    assert completed["status"] == "complete"
+    assert completed["target_week"] == {"season_index": 0, "week": 3}
+    assert _request("GET", sim_root + "/position")[1]["current_week"] == {
+        "season_index": 0, "week": 3
+    }
+    return _save_ranking(None, ranking_root)
+
+
+
+def _stage_parallel_event_input(
+    server: ApiServer,
+    first_event_id: str,
+    *,
+    preserve_week_two: bool = False,
+) -> str:
+    """Adapt only isolated source inputs *before* Run Package adoption.
+
+    For three-tournament acceptance, clone the Week-2 fixture to an independent
+    Week-1 event and retain the Week-2 source. The production HTTP endpoints
+    create every Run-owned Draw, match, result, ranking and Saved Revision.
+    """
+    matches = server.app.dependency_overrides[get_season_match_service]()
+    awards = server.app.dependency_overrides[get_season_point_awards_service]()
+    registry = matches._load_registry()
+    original = next(
+        item for item in registry.matches_by_event_id.values()
+        if item.season_week == 2 and item.event_id != first_event_id
+    )
+    second = original.model_copy(deep=True) if preserve_week_two else original
+    original_event_id = second.event_id
+    if preserve_week_two:
+        second.event_id = f"{original_event_id}-parallel"
+        second.metadata.event_id = second.event_id
+        ids = {
+            match.match_id: f"{match.match_id}-parallel"
+            for match in second.qualification_matches + second.main_draw_matches
+        }
+        for match in second.qualification_matches + second.main_draw_matches:
+            match.match_id = ids[match.match_id]
+            if match.winner_to_match_id:
+                match.winner_to_match_id = ids[match.winner_to_match_id]
+            match.event_id = second.event_id
+    second.season_week = 1
+    registry.matches_by_event_id[second.event_id] = second
+    matches._save_registry(registry)
+
+    calendars = awards.calendar_service._load_registry()
+    events = calendars.calendars_by_season["2000/2001"].events
+    original_event = next(
+        item for item in events if item.event_id == original_event_id
+    )
+    parallel = (
+        original_event.model_copy(deep=True)
+        if preserve_week_two else original_event
+    )
+    parallel.event_id = second.event_id
+    parallel.season_week = parallel.start_season_week = parallel.end_season_week = 1
+    if preserve_week_two:
+        events.insert(0, parallel)
+    awards.calendar_service._save_registry(calendars)
+    return second.event_id
+
+
+def _prepare_parallel_canonical_draw(
+    *, base_url: str, run_id: str, branch_id: str,
+    event_id: str, players: tuple[str, ...],
+):
+    root = f"{base_url}/admin/runs/{run_id}/branches/{branch_id}/tournaments/{event_id}"
+    field_root = root + "/entry-field"
+    field, stored = _reviewed_real_entry_field(
+        field_root,
+        event_id=event_id,
+        expected_players=players,
+        command_id="parallel-week-one-field",
+        main_size=4,
+    )
+    draw_root = root + "/draw"
+    status, frozen = _request("POST", draw_root + "/commit-input", {
+        "command_id": "parallel-week-one-draw-input",
+        "run_id": run_id, "branch_id": branch_id, "event_id": event_id,
+        "expected_field_fingerprint": stored["field_fingerprint"], "draw_seed": 202611,
+    })
+    assert status == 200, frozen
+    status, generated = _request("POST", draw_root + "/generate", {
+        "command_id": "parallel-week-one-generate-draw",
+        "run_id": run_id, "branch_id": branch_id, "event_id": event_id,
+        "expected_draw_input_fingerprint": frozen["draw_input_fingerprint"],
+    })
+    assert status == 200, generated
+    assert generated["initial_draw_generated"] is True
+
+
+@pytest.mark.pr_critical
+@pytest.mark.parametrize(
+    "scenario", ["single", "two_weeks", "same_week", "three_mixed"]
+)
+def test_single_completed_run_owned_tournament_fork_reopen_and_continue(
+    tmp_path, monkeypatch, scenario,
+):
+    server, week_one_package = _server_state(tmp_path)
+    two_tournaments = scenario in {"two_weeks", "three_mixed"}
+    same_week = scenario in {"same_week", "three_mixed"}
+    parallel_event = None
+    if scenario == "single":
+        _remove_week_two_source_fixture(server)
+    elif same_week:
+        parallel_event = _stage_parallel_event_input(
+            server,
+            week_one_package.event_id,
+            preserve_week_two=scenario == "three_mixed",
+        )
+    db_path = tmp_path / "api.sqlite"
+    world_packages_root = copy_builtin_world_packages(tmp_path / "world-packages")
+    server.app.state.world_packages_root = world_packages_root
+
+    matches = server.app.dependency_overrides[get_season_match_service]()
+    awards = server.app.dependency_overrides[get_season_point_awards_service]()
+    server.app.state.season_calendar_registry_path = (
+        awards.calendar_service.calendar_registry_path
+    )
+    participant_ids = tuple(
+        dict.fromkeys(
+            player_id
+            for match in sorted(
+                (
+                    item
+                    for item in week_one_package.main_draw_matches
+                    if item.round_number == 1
+                ),
+                key=lambda item: item.bracket_position,
+            )
+            for player_id in (match.top_player_id, match.bottom_player_id)
+        )
+    )
+    assert len(participant_ids) == 4
+
+    first_match_evidence = None
+
+    full_review = {
+        "command_id": "official-full-simulation-parent",
+        "operator_label": "Official Run acceptance admin",
+        "audit_reason": (
+            "Advance the reviewed canonical Run through explicit season "
+            "and final-closure boundaries"
+        ),
+    }
+
+    with server:
+        run_id, branch_id, revision = _create_run(
+            server,
+            display_name="Official Run whole-season acceptance",
+        )
+
+        package_root = (
+            f"{server.base_url}/admin/runs/{run_id}/branches/{branch_id}/packages"
+        )
+        source_world_root = (
+            package_root + f"/source-world/{OFFICIAL_FAX_WORLD_ID}"
+        )
+        status, package_preview = _request(
+            "POST", source_world_root + "/preview"
+        )
+        assert status == 200, package_preview
+        status, applied_world = _request(
+            "POST",
+            source_world_root + "/confirm",
+            {
+                "command_id": "official-full-season-apply-world",
+                "expected_head_revision_id": package_preview[
+                    "saved_head_revision_id"
+                ],
+                "expected_draft_version": package_preview["draft_version"],
+                "expected_state_fingerprint": package_preview[
+                    "current_state_fingerprint"
+                ],
+                "expected_preview_fingerprint": package_preview[
+                    "preview_fingerprint"
+                ],
+                "conflict_resolutions": {},
+            },
+        )
+        assert status == 200, applied_world
+
+        # Package application is its own reviewed Working Draft change. Save it
+        # before adopting InitialWorld so the later component-only Save remains
+        # narrow and cannot accidentally persist unrelated pending Package edits.
+        save_url = (
+            f"{server.base_url}/run-containers/{run_id}/branches/{branch_id}"
+            "/working-draft/save"
+        )
+        status, saved_package = _request(
+            "POST",
+            save_url,
+            {"expected_draft_version": applied_world["draft_version"]},
+        )
+        assert status == 201, saved_package
+        revision = saved_package["saved_revision"]["revision_id"]
+
+        source_calendar_root = package_root + "/source-calendar/2000-2001"
+        status, calendar_preview = _request(
+            "POST",
+            source_calendar_root + "/preview",
+        )
+        assert status == 200, calendar_preview
+        assert calendar_preview["document"]["package_type"] == "Calendar"
+        assert (
+            calendar_preview["document"]["package_id"]
+            == "calendar-2000-2001"
+        )
+        status, applied_calendar = _request(
+            "POST",
+            source_calendar_root + "/confirm",
+            {
+                "command_id": "official-full-season-apply-calendar",
+                "expected_head_revision_id": calendar_preview[
+                    "saved_head_revision_id"
+                ],
+                "expected_draft_version": calendar_preview["draft_version"],
+                "expected_state_fingerprint": calendar_preview[
+                    "current_state_fingerprint"
+                ],
+                "expected_preview_fingerprint": calendar_preview[
+                    "preview_fingerprint"
+                ],
+                "conflict_resolutions": {},
+            },
+        )
+        assert status == 200, applied_calendar
+
+        status, calendar_projection = _request(
+            "GET",
+            package_root + "/calendar/calendar-2000-2001",
+        )
+        assert status == 200, calendar_projection
+        assert calendar_projection["season"] == "2000/2001"
+        assert week_one_package.event_id in {
+            event["event_id"]
+            for event in calendar_projection["calendar"]["events"]
+        }
+
+        status, saved_calendar = _request(
+            "POST",
+            save_url,
+            {"expected_draft_version": applied_calendar["draft_version"]},
+        )
+        assert status == 201, saved_calendar
+        revision = saved_calendar["saved_revision"]["revision_id"]
+
+        world_root = (
+            f"{server.base_url}/admin/players/runs/{run_id}/branches/{branch_id}"
+            "/initial-world"
+        )
+        generation = {
+            "world_package_id": OFFICIAL_FAX_WORLD_ID,
+            "season": "2000/2001",
+            "seed": 200001,
+            "target_pool_size": len(participant_ids) * (2 if same_week else 1),
+        }
+        adoption = {
+            "command_id": "official-full-season-adopt-world",
+            "generation": generation,
+            "audit_label": "Official Run acceptance admin",
+            "audit_reason": (
+                "Adopt Run-owned Official FAX World generated players for Master §31.3"
+            ),
+            "official_run": True,
+        }
+        status, world_preview = _request(
+            "POST",
+            world_root + "/world-package/preview",
+            adoption,
+        )
+        assert status == 200, world_preview
+        assert world_preview["state"]["source_kind"] == "run_world_generated_pool.v1"
+        assert world_preview["state"]["world_package_id"] == OFFICIAL_FAX_WORLD_ID
+        assert world_preview["state"]["policies"] == [
+            {
+                "policy_id": "msa-official-2000-01",
+                "best_n": 15,
+                "tie_break_version": "result_profile_age_previous_token.v1",
+            }
+        ]
+        generated_ids = tuple(
+            sorted(player["player_id"] for player in world_preview["state"]["players"])
+        )
+        assert len(generated_ids) == len(participant_ids) * (
+            2 if same_week else 1
+        )
+        primary_players = (
+            generated_ids[:len(participant_ids)] if same_week else generated_ids
+        )
+        parallel_players = generated_ids[len(participant_ids):] if same_week else ()
+
+        status, adopted = _post_headers(
+            world_root + "/world-package",
+            adoption,
+            {
+                "X-Initial-World-Preview-Fingerprint": world_preview[
+                    "fingerprint"
+                ]
+            },
+        )
+        assert status == 201, adopted
+        assert {player["player_id"] for player in adopted["players"]} == set(
+            generated_ids
+        )
+        assert adopted["run_world_pool_preview_fingerprint"] == world_preview[
+            "state"
+        ]["run_world_pool_preview_fingerprint"]
+        revision = _save_initial_world(world_root)
+
+        ranking_root, transition_root, sim_root = _roots(
+            server, run_id, branch_id
+        )
+        initial_ranking_fingerprint = _prepare_initial_ranking(ranking_root)
+        revision = _save_ranking(None, ranking_root)
+        status, published_initial = _request(
+            "POST",
+            ranking_root + "/publish-initial",
+            {
+                "expected_ranking_fingerprint": initial_ranking_fingerprint,
+            },
+        )
+        assert status == 201, published_initial
+        assert published_initial["week"] == {
+            "season_index": 0,
+            "week": 1,
+        }
+        assert (
+            published_initial["ranking_fingerprint"]
+            == initial_ranking_fingerprint
+        )
+        assert published_initial["exact_retry"] is False
+
+        status, published_retry = _request(
+            "POST",
+            ranking_root + "/publish-initial",
+            {
+                "expected_ranking_fingerprint": initial_ranking_fingerprint,
+            },
+        )
+        assert status == 201, published_retry
+        assert published_retry["ranking_fingerprint"] == initial_ranking_fingerprint
+        assert published_retry["exact_retry"] is True
+
+        event_id = week_one_package.event_id
+        tournament_root = (
+            f"{server.base_url}/admin/runs/{run_id}/branches/{branch_id}"
+            f"/tournaments/{event_id}"
+        )
+        ranking_authority_root = tournament_root + "/ranking-snapshot-authority"
+        status, available_rankings = _request(
+            "GET", ranking_authority_root + "/available"
+        )
+        assert status == 200, available_rankings
+        assert available_rankings["source"] == "published_official_rankings.v1"
+        assert available_rankings["publication_count"] == 1
+        assert available_rankings["publications"] == [
+            {
+                "ranking_week": {"season_index": 0, "week": 1},
+                "snapshot_fingerprint": initial_ranking_fingerprint,
+                "ranked_row_count": 0,
+                "policy_id": "msa-official-2000-01",
+                "best_n": 15,
+            }
+        ]
+        status, tournament_ranking = _request(
+            "POST",
+            ranking_authority_root,
+            {
+                "command_id": "official-week-1-ranking-authority",
+                "ranking_week": {"season_index": 0, "week": 1},
+            },
+        )
+        assert status == 201, tournament_ranking
+        assert tournament_ranking["event_id"] == event_id
+        assert tournament_ranking["ranking_week"] == {
+            "season_index": 0,
+            "week": 1,
+        }
+
+        if same_week:
+            status, parallel_authority = _request(
+                "POST",
+                (
+                    f"{server.base_url}/admin/runs/{run_id}/branches/"
+                    f"{branch_id}/tournaments/{parallel_event}/ranking-snapshot-authority"
+                ),
+                {
+                    "command_id": "parallel-week-one-ranking-authority",
+                    "ranking_week": {"season_index": 0, "week": 1},
+                },
+            )
+            assert status == 201, parallel_authority
+            assert parallel_authority["event_id"] == parallel_event
+
+        explicit_entry_reviews = [
+            {
+                "event_id": event_id,
+                "player_id": player_id,
+                "target": "MAIN",
+            }
+            for player_id in sorted(primary_players)
+        ]
+        if same_week:
+            explicit_entry_reviews.extend(
+                {"event_id": parallel_event, "player_id": player_id, "target": "MAIN"}
+                for player_id in sorted(parallel_players)
+            )
+            explicit_entry_reviews.sort(
+                key=lambda review: (
+                    review["event_id"], review["player_id"], review["target"]
+                )
+            )
+        status, entry_slot = _request(
+            "POST",
+            sim_root + "/entry-decision-slot/review",
+            {
+                "command_id": "official-week-1-entry-slot",
+                "expected_week": {"season_index": 0, "week": 1},
+                "expected_revision_id": revision,
+                "decision_slot_ordinal": 1,
+                "operator_label": "Official Run acceptance admin",
+                "reason": "Review Week-1 tournament application intents",
+                "reviews": explicit_entry_reviews,
+            },
+        )
+        assert status == 201, entry_slot
+        assert entry_slot["decision_mode"] == "explicit_admin_review.v1"
+        assert entry_slot["decision_count"] == len(explicit_entry_reviews)
+        assert {
+            decision["player_id"]
+            for decision in entry_slot["authority"]["decisions"]
+        } == set(generated_ids)
+
+        status, entry_position = _request("GET", sim_root + "/position")
+        assert status == 200, entry_position
+        assert entry_position["current_slot_kind"] == "entry"
+        assert entry_position["slot_ordinal"] == 1
+
+        reviews = [
+            {
+                "event_id": decision["event_id"],
+                "player_id": decision["player_id"],
+                "outcome": "valid",
+                "reasons": [],
+            }
+            for decision in sorted(
+                entry_slot["authority"]["decisions"],
+                key=lambda item: (item["event_id"], item["player_id"]),
+            )
+        ]
+        status, validated_entry = _request(
+            "POST",
+            sim_root + "/entry-decision-slot/validation/review",
+            {
+                "command_id": "official-week-1-entry-validation",
+                "expected_week": entry_slot["week"],
+                "expected_revision_id": revision,
+                "expected_position_fingerprint": entry_position[
+                    "position_fingerprint"
+                ],
+                "decision_slot_ordinal": 1,
+                "expected_entry_slot_fingerprint": entry_slot[
+                    "slot_fingerprint"
+                ],
+                "operator_label": "Official Run acceptance admin",
+                "reason": "Review Week-1 Run-owned Entry decisions",
+                "reviews": reviews,
+            },
+        )
+        assert status == 201, validated_entry
+        assert validated_entry["valid_submission_count"] == len(explicit_entry_reviews)
+
+        entry_field_root = tournament_root + "/entry-field"
+        entry_field, entry_field_state = _reviewed_real_entry_field(
+            entry_field_root,
+            event_id=event_id,
+            expected_players=primary_players,
+            command_id="official-week-1-entry-field",
+            main_size=4,
+        )
+        if same_week:
+            _prepare_parallel_canonical_draw(
+                base_url=server.base_url,
+                run_id=run_id,
+                branch_id=branch_id,
+                event_id=parallel_event,
+                players=parallel_players,
+            )
+
+        # Week Schedule readiness must already see the Run-owned Calendar event before
+        # any Draw exists. The canonical preparation state, not MatchPackage/Draw
+        # existence, owns the blocker and next action.
+        status, schedule_before_draw_input = _request(
+            "GET",
+            sim_root + "/week-schedule/preflight",
+        )
+        assert status == 200, schedule_before_draw_input
+        assert set(schedule_before_draw_input["event_ids"]) == (
+            {event_id, parallel_event} if same_week else {event_id}
+        )
+        if same_week:
+            assert schedule_before_draw_input["group_ids"]
+        else:
+            assert schedule_before_draw_input["group_ids"] == []
+        assert schedule_before_draw_input["schedule_required"] is True
+        assert schedule_before_draw_input["canonical_preparation_ready"] is False
+        assert schedule_before_draw_input["can_propose_schedule"] is False
+        assert schedule_before_draw_input["blockers"] == [
+            f"{event_id}:draw_input_ready"
+        ]
+        assert (
+            next(
+                x["phase"]
+                for x in schedule_before_draw_input["canonical_preparation"]["tournaments"]
+                if x["event_id"] == event_id
+            )
+            == "draw_input_ready"
+        )
+        status, blocked_schedule_proposal = _request(
+            "GET",
+            sim_root + "/week-schedule/proposal",
+        )
+        assert status == 409, blocked_schedule_proposal
+        assert "canonical tournament preparation draw_ready" in str(
+            blocked_schedule_proposal
+        )
+
+        draw_root = tournament_root + "/draw"
+        status, draw_input = _request(
+            "POST",
+            draw_root + "/commit-input",
+            {
+                "command_id": "official-week-1-draw-input",
+                "run_id": run_id,
+                "branch_id": branch_id,
+                "event_id": event_id,
+                "expected_field_fingerprint": entry_field_state["field_fingerprint"],
+                "draw_seed": 200001,
+            },
+        )
+        assert status == 200, draw_input
+        assert draw_input["draw_input_committed"] is True
+
+        status, schedule_before_draw_generation = _request(
+            "GET",
+            sim_root + "/week-schedule/preflight",
+        )
+        assert status == 200, schedule_before_draw_generation
+        assert schedule_before_draw_generation["canonical_preparation_ready"] is False
+        assert schedule_before_draw_generation["blockers"] == [
+            f"{event_id}:draw_generation_ready"
+        ]
+        assert (
+            next(
+                x["next_required_action"]
+                for x in schedule_before_draw_generation["canonical_preparation"]["tournaments"]
+                if x["event_id"] == event_id
+            )
+            == "generate_draw"
+        )
+
+        status, generated_draw = _request(
+            "POST",
+            draw_root + "/generate",
+            {
+                "command_id": "official-week-1-generate-draw",
+                "run_id": run_id,
+                "branch_id": branch_id,
+                "event_id": event_id,
+                "expected_draw_input_fingerprint": draw_input[
+                    "draw_input_fingerprint"
+                ],
+            },
+        )
+        assert status == 200, generated_draw
+        assert generated_draw["initial_draw_generated"] is True
+
+        status, draw_authority = _request("GET", draw_root + "/effective-authority")
+        assert status == 200, draw_authority
+        assert draw_authority["event_id"] == event_id
+        assert {
+            slot["player_id"]
+            for slot in draw_authority["main"]["slots"]
+            if slot["entrant_kind"] == "player"
+        } == set(primary_players)
+
+        preparation_root = tournament_root + "/preparation"
+        status, preparation_ready = _request("GET", preparation_root)
+        assert status == 200, preparation_ready
+        assert preparation_ready["phase"] == "draw_ready"
+        assert preparation_ready["next_required_action"] == "none"
+        assert preparation_ready["ready_for_match_schedule"] is True
+        assert preparation_ready["authority_source"] == (
+            "run_owned_db_authorities.v1"
+        )
+        assert (
+            preparation_ready["effective_draw_fingerprint"]
+            == generated_draw["draw_authority_fingerprint"]
+        )
+
+        # Destroy the live legacy Calendar source after the Run-owned Calendar and
+        # Draw exist. Tournament adoption, point-authority freezing, empty-week proof
+        # and whole-season simulation must now replay only from Run-owned evidence.
+        legacy_calendars = awards.calendar_service._load_registry()
+        legacy_calendars.calendars_by_season.clear()
+        awards.calendar_service._save_registry(legacy_calendars)
+
+        # Destroy every remaining file-backed tournament result/draw/award source and
+        # replace service references with exploding sentinels. From this point the
+        # canonical Package/Draw Run must close, rank and transition using DB-owned
+        # authorities only.
+        matches.draw_service._save_registry(SeasonDrawsRegistry())
+        awards.result_service._save_registry(SeasonEventResultsRegistry())
+        awards._save_registry(SeasonPointAwardsRegistry())
+        awards.result_service = _ForbiddenLegacyBackend("result")
+        awards.template_service = _ForbiddenLegacyBackend("template")
+        awards.points_config_path = tmp_path / "forbidden-legacy-points.json"
+
+        status, preparation_after_legacy_removal = _request(
+            "GET", preparation_root
+        )
+        assert status == 200, preparation_after_legacy_removal
+        assert preparation_after_legacy_removal == preparation_ready
+
+        # Remove the old Week-1 MatchPackage source completely. From this point the
+        # authoritative driver must derive its compatibility MatchPackage from the
+        # Run-owned canonical Draw + Run-owned Calendar or the acceptance will fail.
+        match_registry = matches._load_registry()
+        match_registry.matches_by_event_id.pop(event_id, None)
+        if same_week:
+            match_registry.matches_by_event_id.pop(parallel_event, None)
+        matches._save_registry(match_registry)
+        assert event_id not in matches._load_registry().matches_by_event_id
+
+        status, schedule_preflight = _request(
+            "GET",
+            sim_root + "/week-schedule/preflight",
+        )
+        assert status == 200, schedule_preflight
+        assert schedule_preflight["canonical_preparation_ready"] is True
+        assert schedule_preflight["can_propose_schedule"] is True
+        assert schedule_preflight["blockers"] == []
+        assert (
+            set(schedule_preflight["canonical_preparation"]["event_ids"])
+            == ({event_id, parallel_event} if same_week else {event_id})
+        )
+        assert (
+            next(
+                x["phase"]
+                for x in schedule_preflight["canonical_preparation"]["tournaments"]
+                if x["event_id"] == event_id
+            )
+            == "draw_ready"
+        )
+        assert (
+            next(
+                x["effective_draw_fingerprint"]
+                for x in schedule_preflight["canonical_preparation"]["tournaments"]
+                if x["event_id"] == event_id
+            )
+            == generated_draw["draw_authority_fingerprint"]
+        )
+        assert (
+            schedule_preflight["canonical_preparation"]["authority_source"]
+            == "run_owned_db_authorities.v1"
+        )
+        assert len(schedule_preflight["preflight_fingerprint"]) == 64
+
+        status, proposed = _request(
+            "GET",
+            sim_root + "/week-schedule/proposal",
+        )
+        assert status == 200, proposed
+        assert proposed["canonical_preparation"] == schedule_preflight[
+            "canonical_preparation"
+        ]
+        status, adopted_schedule = _request(
+            "POST",
+            sim_root + "/week-schedule/adopt-proposal",
+            {
+                "request_id": "official-full-season-week-1-schedule",
+                "expected_week": proposed["schedule"]["week"],
+                "expected_schedule_fingerprint": proposed[
+                    "schedule_fingerprint"
+                ],
+                "expected_position_fingerprint": proposed[
+                    "position_fingerprint"
+                ],
+            },
+        )
+        assert status == 201, adopted_schedule
+
+        status, position = _request("GET", sim_root + "/position")
+        assert status == 200, position
+        assert position["current_week"] == {
+            "season_index": 0,
+            "week": 1,
+        }
+
+        if scenario == "single":
+            # Exercise actual PR #1341 sporting command separately from the
+            # full-Week runner, then PR #1342's real Save/reload boundary.
+            assert position["current_slot_kind"] == "match", position
+            assert position["eligible_match_ids"], position
+            group_id = position["eligible_match_ids"][0]
+            status, frozen_match = _request(
+                "GET", sim_root + f"/match-reconstruction/state?group_id={group_id}",
+            )
+            assert status == 200, frozen_match
+            assert frozen_match["event_id"] == event_id
+            assert frozen_match["group_id"] == group_id
+            assert frozen_match["expected_revision_id"] == revision
+            assert {frozen_match["player_a_id"], frozen_match["player_b_id"]} <= set(
+                primary_players
+            )
+
+            command = {
+                "command_id": "first-real-reviewed-squash-match",
+                "run_id": run_id,
+                "branch_id": branch_id,
+                "expected_week": position["current_week"],
+                "expected_position_fingerprint": position["position_fingerprint"],
+                "expected_revision_id": revision,
+                "group_id": group_id,
+            }
+            status, after_match = _request(
+                "POST", sim_root + "/simulate-next-match", command,
+            )
+            assert status == 200, after_match
+            assert after_match["position_fingerprint"] != position["position_fingerprint"]
+            assert _request(
+                "POST", sim_root + "/simulate-next-match", command
+            ) == (200, after_match)  # same command is an exact retry, not a second result
+
+            status, replays = _request("GET", sim_root + "/match-replays?limit=50")
+            assert status == 200, replays
+            assert replays["read_only"] is True
+            matches_after_first = [
+                match for match in replays["matches"]
+                if match["group_id"] == group_id
+            ]
+            assert len(matches_after_first) == 1, replays
+            real_match = matches_after_first[0]
+            assert real_match["replay_available"] is True
+            assert len(real_match["result_fingerprint"]) == 64
+            assert real_match["total_rallies"] > 0
+            assert {
+                real_match["winner_player_id"], real_match["loser_player_id"]
+            } == {frozen_match["player_a_id"], frozen_match["player_b_id"]}
+            status, context = _request(
+                "GET",
+                sim_root + f"/match-replay/context?group_id={group_id}",
+            )
+            assert status == 200, context
+            assert context["verified"] is True
+            assert context["rng_rerun"] is False
+            assert context["replay_source"] == "stored_authoritative_events"
+            assert context["result_fingerprint"] == real_match["result_fingerprint"]
+            assert context["match_id"] == frozen_match["match_id"]
+            first_match_evidence = {
+                "group_id": group_id,
+                "match_id": real_match["match_id"],
+                "winner": real_match["winner_player_id"],
+                "result_fingerprint": real_match["result_fingerprint"],
+            }
+
+            status, save_preview = _request("GET", sim_root + "/save/preview")
+            assert status == 200, save_preview
+            assert save_preview["can_save"] is True
+            assert save_preview["has_unsaved_changes"] is True
+            assert save_preview["saved_head_revision_id"] == revision
+            status, saved = _request(
+                "POST", sim_root + "/save",
+                {
+                    "expected_draft_version": save_preview["draft_version"],
+                    "expected_simulation_fingerprint": save_preview[
+                        "simulation_fingerprint"
+                    ],
+                },
+            )
+            assert status == 201, saved
+            assert saved["saved_revision"]["parent_revision_id"] == revision
+            revision = saved["saved_revision"]["revision_id"]
+            assert saved["working_draft"]["base_saved_revision_id"] == revision
+            assert saved["working_draft"]["status"] == "clean"
+            status, saved_preview_again = _request(
+                "GET", sim_root + "/save/preview",
+            )
+            assert status == 200, saved_preview_again
+            assert saved_preview_again["can_save"] is False
+            assert saved_preview_again["saved_head_revision_id"] == revision
+
+        review = {
+            "command_id": "one-tournament-week-one-next-week",
+            "operator_label": "Run-owned tournament fork acceptance admin",
+            "audit_reason": "Complete all reviewed Week-1 real tournament matches",
+        }
+        status, week_preview = _request(
+            "POST", sim_root + "/next-week/preview", review,
+        )
+        assert status == 200, week_preview
+        assert week_preview["target_slot_ordinals"]
+        week_command = {
+            **review,
+            "expected_week": week_preview["week"],
+            "expected_position_fingerprint": week_preview["expected_position_fingerprint"],
+            "expected_revision_id": week_preview["expected_revision_id"],
+            "expected_preview_fingerprint": week_preview["preview_fingerprint"],
+        }
+        status, completed = _request(
+            "POST", sim_root + "/simulate-next-week", week_command,
+        )
+        assert status == 201, completed
+        assert completed["status"] == "complete"
+        assert completed["completed_week"] == {"season_index": 0, "week": 1}
+        assert completed["target_week"] == {"season_index": 0, "week": 2}
+        revision = _save_ranking(None, ranking_root)
+        assert _request("GET", sim_root + "/position")[1]["current_week"] == {
+            "season_index": 0, "week": 2
+        }
+
+        if two_tournaments:
+            # The second Calendar event is part of the same authoritative
+            # Run-owned Package, not invented or inserted by direct SQL.
+            status, calendar_week_two = _request(
+                "GET", package_root + "/calendar/calendar-2000-2001",
+            )
+            assert status == 200, calendar_week_two
+            week_two_events = [
+                event for event in calendar_week_two["calendar"]["events"]
+                if event["season_week"] == 2
+            ]
+            assert len(week_two_events) == 1
+            revision = _complete_second_standard_tournament(
+                server,
+                run_id=run_id,
+                branch_id=branch_id,
+                event_id=week_two_events[0]["event_id"],
+                players=primary_players,
+                revision=revision,
+            )
+
+    fork_week = 3 if two_tournaments else 2
+    count_tournaments = 1 + int(same_week) + int(two_tournaments)
+    count_transitions = 1 + int(two_tournaments)
+
+    # Restart the actual API with the same persisted SQLite database. No mock
+    # ranking, results, Slot ledger or manually populated SQL is used here.
+    reopened = ApiServer(database_url=f"sqlite:///{db_path}")
+    reopened.app.dependency_overrides[get_season_match_service] = lambda: matches
+    reopened.app.dependency_overrides[get_season_point_awards_service] = lambda: awards
+    with reopened:
+        source_sim_root = (
+            f"{reopened.base_url}/admin/runs/{run_id}/branches/{branch_id}"
+            "/authoritative-simulation"
+        )
+        source_position = _request("GET", source_sim_root + "/position")[1]
+        assert source_position["current_week"] == {
+            "season_index": 0, "week": fork_week
+        }
+        if first_match_evidence is not None:
+            # New HTTP server, same file-backed SQLite: no result recomputation.
+            status, reopen_replays = _request(
+                "GET", source_sim_root + "/match-replays?limit=100",
+            )
+            assert status == 200, reopen_replays
+            exact = [
+                row for row in reopen_replays["matches"]
+                if row["group_id"] == first_match_evidence["group_id"]
+            ]
+            assert len(exact) == 1
+            assert exact[0]["match_id"] == first_match_evidence["match_id"]
+            assert exact[0]["winner_player_id"] == first_match_evidence["winner"]
+            assert (
+                exact[0]["result_fingerprint"]
+                == first_match_evidence["result_fingerprint"]
+            )
+            status, persisted_context = _request(
+                "GET",
+                source_sim_root + "/match-replay/context?group_id="
+                + first_match_evidence["group_id"],
+            )
+            assert status == 200, persisted_context
+            assert persisted_context["verified"] is True
+            assert (
+                persisted_context["result_fingerprint"]
+                == first_match_evidence["result_fingerprint"]
+            )
+        repository = reopened.app.state.runtime.repository
+        with repository._session_factory.begin() as session:
+            session.execute(text("BEGIN"))
+            original_ranking = capture_ranking_revision_state(
+                session, run_id=run_id, branch_id=branch_id
+            )
+            assert len(original_ranking.tournament_sources) == count_tournaments
+            original_tournaments = {
+                source.binding.edition_id: source
+                for source in original_ranking.tournament_sources
+            }
+            assert len(original_tournaments) == count_tournaments
+            assert len({
+                source.binding.completed_week.ordinal
+                for source in original_tournaments.values()
+            }) == count_transitions
+            assert all(
+                source.canonical_result is not None
+                and source.canonical_awards is not None
+                and source.canonical_result.matches
+                and source.canonical_result.champion_player_id
+                for source in original_tournaments.values()
+            )
+            original_tournament = original_ranking.tournament_sources[0]
+            assert len(original_ranking.authoritative_transition_state["receipts"]) == count_transitions
+
+        # Force failure during the real SQLite installer. Every staged ranking,
+        # player, Branch and audit row must roll back together.
+        fork_url = f"{reopened.base_url}/run-containers/{run_id}/branches"
+        with repository._session_factory.begin() as session:
+            session.execute(text("BEGIN"))
+            rollback_counts_before = tuple(
+                session.scalar(
+                    select(func.count()).select_from(model).where(model.run_id == run_id)
+                )
+                for model in (
+                    RunBranchModel,
+                    AuthoritativeWeekTransitionReceiptModel,
+                    AuthoritativeWorldEventModel,
+                )
+            )
+        original_install = repository_module.install_remapped_week_transition_audit
+
+        def reject_install(*args, **kwargs):
+            raise ValueError("injected atomic tournament audit installation failure")
+
+        monkeypatch.setattr(
+            repository_module, "install_remapped_week_transition_audit",
+            reject_install,
+        )
+        try:
+            rejected_status, rejected = _request(
+                "POST", fork_url,
+                {
+                    "source_branch_id": branch_id,
+                    "source_saved_revision_id": revision,
+                    "display_name": "Rejected tournament fork",
+                },
+            )
+            assert rejected_status == 409, rejected
+        finally:
+            monkeypatch.setattr(
+                repository_module, "install_remapped_week_transition_audit",
+                original_install,
+            )
+        with repository._session_factory.begin() as session:
+            session.execute(text("BEGIN"))
+            assert session.scalars(
+                select(RunBranchModel).where(
+                    RunBranchModel.run_id == run_id,
+                    RunBranchModel.display_name == "Rejected tournament fork",
+                )
+            ).all() == []
+            assert capture_ranking_revision_state(
+                session, run_id=run_id, branch_id=branch_id
+            ).fingerprint == original_ranking.fingerprint
+            rollback_counts_after = tuple(
+                session.scalar(
+                    select(func.count()).select_from(model).where(model.run_id == run_id)
+                )
+                for model in (
+                    RunBranchModel,
+                    AuthoritativeWeekTransitionReceiptModel,
+                    AuthoritativeWorldEventModel,
+                )
+            )
+            assert rollback_counts_after == rollback_counts_before
+
+        status, fork = _request(
+            "POST",
+            f"{reopened.base_url}/run-containers/{run_id}/branches",
+            {
+                "source_branch_id": branch_id,
+                "source_saved_revision_id": revision,
+                "display_name": "One completed standard tournament fork",
+            },
+        )
+        assert status == 201, fork
+        target_branch_id = fork["branch_id"]
+        assert target_branch_id != branch_id
+        assert fork["saved_head_revision_id"] != revision
+
+        with repository._session_factory.begin() as session:
+            session.execute(text("BEGIN"))
+            target_ranking = capture_ranking_revision_state(
+                session, run_id=run_id, branch_id=target_branch_id
+            )
+            assert len(target_ranking.tournament_sources) == count_tournaments
+            target_tournaments = {
+                source.binding.edition_id: source
+                for source in target_ranking.tournament_sources
+            }
+            assert set(target_tournaments) == set(original_tournaments)
+            for edition_id, source in original_tournaments.items():
+                target_source = target_tournaments[edition_id]
+                assert target_source.binding.branch_id == target_branch_id
+                assert target_source.canonical_result.branch_id == target_branch_id
+                assert target_source.canonical_awards.branch_id == target_branch_id
+                assert (
+                    target_source.canonical_result.champion_player_id
+                    == source.canonical_result.champion_player_id
+                )
+                assert (
+                    target_source.canonical_result.matches
+                    == source.canonical_result.matches
+                )
+                assert (
+                    target_source.binding.expected_result_fingerprint
+                    != source.binding.expected_result_fingerprint
+                )
+                assert (
+                    target_source.binding.expected_award_fingerprint
+                    != source.binding.expected_award_fingerprint
+                )
+            assert target_ranking.entries[-1].snapshot.rows != ()
+            assert (
+                target_ranking.entries[-1].snapshot.fingerprint
+                != original_ranking.entries[-1].snapshot.fingerprint
+            )
+            for model in (
+                AuthoritativeWeekTransitionReceiptModel,
+                AuthoritativeWorldEventModel,
+            ):
+                assert len(session.scalars(select(model).where(
+                    model.run_id == run_id, model.branch_id == target_branch_id
+                )).all()) == count_transitions
+
+        target_sim_root = (
+            f"{reopened.base_url}/admin/runs/{run_id}/branches/{target_branch_id}"
+            "/authoritative-simulation"
+        )
+        assert _request("GET", target_sim_root + "/position")[1][
+            "current_week"
+        ] == {"season_index": 0, "week": fork_week}
+
+        continuation_revision = _advance_empty_week(
+            reopened,
+            run_id=run_id,
+            branch_id=target_branch_id,
+            revision=fork["saved_head_revision_id"],
+            week=fork_week,
+        )
+        assert continuation_revision != fork["saved_head_revision_id"]
+        assert _request("GET", target_sim_root + "/position")[1][
+            "current_week"
+        ] == {"season_index": 0, "week": fork_week + 1}
+        assert _request("GET", source_sim_root + "/position")[1] == source_position
+
+        with repository._session_factory.begin() as session:
+            session.execute(text("BEGIN"))
+            assert capture_ranking_revision_state(
+                session, run_id=run_id, branch_id=branch_id
+            ).fingerprint == original_ranking.fingerprint
+            target = capture_ranking_revision_state(
+                session, run_id=run_id, branch_id=target_branch_id
+            )
+            assert len(target.authoritative_transition_state["receipts"]) == count_transitions + 1

@@ -1,0 +1,1784 @@
+"""SQLAlchemy persistence models for deterministic simulation history."""
+
+from __future__ import annotations
+
+from sqlalchemy import CheckConstraint, Index, Integer, String, Text, UniqueConstraint, text
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+
+from beta_engine.infrastructure.db.checkpoint_boundaries import (
+    BRANCH_CHECKPOINT_KIND_EVENT_COMPLETED,
+    BRANCH_CHECKPOINT_KIND_INITIAL,
+    BRANCH_CHECKPOINT_KIND_WEEK_COMPLETED,
+)
+from beta_engine.domain.run_revisions import (
+    PRE_RESTORE_CHECKPOINT_KIND,
+    CLEAN_WORKING_DRAFT_STATUS,
+    CONTENT_HASH_ALGORITHM,
+    DIRTY_WORKING_DRAFT_STATUS,
+    INITIAL_SAVED_REVISION_KIND,
+)
+
+
+class Base(DeclarativeBase):
+    """Declarative SQLAlchemy base for persistence tables."""
+
+
+class RankingRestoreCheckpointModel(Base):
+    """Immutable predecessor and target hashes for an internal ranking restore."""
+
+    __tablename__ = "ranking_restore_checkpoints"
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    command_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    before_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    before_payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+    target_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+
+
+class OfficialRankingCommandModel(Base):
+    """Idempotency receipt for an internal ranking preparation command."""
+
+    __tablename__ = "official_ranking_commands"
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    command_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    request_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    target_ordinal: Mapped[int] = mapped_column(Integer, nullable=False)
+    snapshot_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    request_payload_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+    input_manifest_version: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    input_manifest_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+
+
+class OfficialRankingCandidateModel(Base):
+    """Append-only calculation history; not a Viewer publication marker."""
+
+    __tablename__ = "official_ranking_candidates"
+    __table_args__ = (
+        CheckConstraint("week_ordinal >= 0 AND week_ordinal < 3050", name="ck_official_candidate_week"),
+    )
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    week_ordinal: Mapped[int] = mapped_column(Integer, primary_key=True)
+    fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+class SeasonClosingRankingModel(Base):
+    """Immutable archived ranking for one completed Run/Branch season."""
+
+    __tablename__ = "season_closing_rankings"
+    __table_args__ = (
+        CheckConstraint(
+            "season_index >= 0 AND season_index < 50",
+            name="ck_season_closing_ranking_season",
+        ),
+        CheckConstraint(
+            "completed_ordinal >= 60 AND completed_ordinal < 3050",
+            name="ck_season_closing_ranking_week",
+        ),
+    )
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    season_index: Mapped[int] = mapped_column(Integer, primary_key=True)
+    completed_ordinal: Mapped[int] = mapped_column(Integer, nullable=False)
+    fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+class OfficialRankingResultVersionModel(Base):
+    """Immutable source revisions for scoped historical ranking calculation."""
+
+    __tablename__ = "official_ranking_result_versions"
+    __table_args__ = (
+        CheckConstraint("effective_ordinal >= 0 AND effective_ordinal < 3050", name="ck_ranking_result_week"),
+    )
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    edition_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    player_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    effective_ordinal: Mapped[int] = mapped_column(Integer, primary_key=True)
+    fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+class OfficialRankingZeroVersionModel(Base):
+    """Immutable source revisions for scoped historical ranking calculation."""
+
+    __tablename__ = "official_ranking_zero_versions"
+    __table_args__ = (
+        CheckConstraint("effective_ordinal >= 0 AND effective_ordinal < 3050", name="ck_ranking_zero_week"),
+    )
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    zero_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    effective_ordinal: Mapped[int] = mapped_column(Integer, primary_key=True)
+    fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+class OwnedTournamentRankingSourceModel(Base):
+    """Immutable adopted tournament evidence owned by one Run/Branch."""
+
+    __tablename__ = "owned_tournament_ranking_sources"
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    edition_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    event_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    source_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    adopted_by_command_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+class RankingTransitionAuthorityModel(Base):
+    """Immutable historically effective ranking boundary inputs."""
+    __tablename__ = "ranking_transition_authorities"
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    target_ordinal: Mapped[int] = mapped_column(Integer, primary_key=True)
+    fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+class AuthoritativeWorldStateModel(Base):
+    """Current clock and published ranking head for one canonical timeline."""
+
+    __tablename__ = "authoritative_world_states"
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    current_ordinal: Mapped[int] = mapped_column(Integer, nullable=False)
+    ranking_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+
+
+class PublishedOfficialRankingModel(Base):
+    """Immutable Official Ranking publication, distinct from a candidate."""
+
+    __tablename__ = "published_official_rankings"
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    week_ordinal: Mapped[int] = mapped_column(Integer, primary_key=True)
+    snapshot_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+class TournamentRankingSnapshotAuthorityModel(Base):
+    """Immutable event binding to one published Official Ranking snapshot."""
+
+    __tablename__ = "tournament_ranking_snapshot_authorities"
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    event_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    ranking_week_ordinal: Mapped[int] = mapped_column(Integer, nullable=False)
+    ranking_snapshot_fingerprint: Mapped[str] = mapped_column(
+        String(64), nullable=False
+    )
+    authority_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    adopted_by_command_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+class TournamentWildCardAuthorityModel(Base):
+    """Immutable canonical WC/RWC resolution for one Run/Branch/Event."""
+
+    __tablename__ = "tournament_wild_card_authorities"
+    __table_args__ = (
+        UniqueConstraint(
+            "run_id",
+            "branch_id",
+            "command_id",
+            name="uq_tournament_wild_card_authority_command",
+        ),
+    )
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    event_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    command_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    request_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    authority_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    entry_field_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    field_sequence: Mapped[int] = mapped_column(Integer, nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+class TournamentGroupRulesPolicyModel(Base):
+    """Immutable Run/Branch group-rules policy version effective from one season."""
+
+    __tablename__ = "tournament_group_rules_policies"
+    __table_args__ = (
+        UniqueConstraint(
+            "run_id",
+            "branch_id",
+            "command_id",
+            name="uq_tournament_group_rules_policy_command",
+        ),
+    )
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    effective_from_season_index: Mapped[int] = mapped_column(
+        Integer, primary_key=True
+    )
+    command_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    authority_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+class TournamentFormatAuthorityModel(Base):
+    """Immutable effective Tournament Edition format bound to Entry Field."""
+
+    __tablename__ = "tournament_format_authorities"
+    __table_args__ = (
+        UniqueConstraint(
+            "run_id",
+            "branch_id",
+            "command_id",
+            name="uq_tournament_format_authority_command",
+        ),
+    )
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    event_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    command_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    request_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    authority_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    entry_field_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    group_rules_policy_fingerprint: Mapped[str | None] = mapped_column(
+        String(64), nullable=True
+    )
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+class TournamentTopologyAuthorityModel(Base):
+    """Immutable canonical topology derived from Format and Entry authorities."""
+
+    __tablename__ = "tournament_topology_authorities"
+    __table_args__ = (
+        UniqueConstraint(
+            "run_id",
+            "branch_id",
+            "command_id",
+            name="uq_tournament_topology_authority_command",
+        ),
+    )
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    event_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    command_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    request_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    authority_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    format_authority_fingerprint: Mapped[str] = mapped_column(
+        String(64), nullable=False
+    )
+    entry_field_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+class TournamentGroupMatchScheduleAuthorityModel(Base):
+    """Immutable group match contracts plus conflict-free Match Day chronology."""
+
+    __tablename__ = "tournament_group_match_schedule_authorities"
+    __table_args__ = (
+        UniqueConstraint(
+            "run_id",
+            "branch_id",
+            "command_id",
+            name="uq_tournament_group_match_schedule_command",
+        ),
+    )
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    event_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    command_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    request_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    authority_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    format_authority_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    topology_authority_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+class TournamentGroupTieResolutionAuthorityModel(Base):
+    """Immutable audited Admin ordering for one exact unresolved group tie."""
+
+    __tablename__ = "tournament_group_tie_resolution_authorities"
+    __table_args__ = (
+        UniqueConstraint(
+            "run_id",
+            "branch_id",
+            "command_id",
+            name="uq_tournament_group_tie_resolution_command",
+        ),
+    )
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    event_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    case_fingerprint: Mapped[str] = mapped_column(String(64), primary_key=True)
+    command_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    request_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    authority_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    group_match_schedule_fingerprint: Mapped[str] = mapped_column(
+        String(64), nullable=False
+    )
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+class TournamentGroupStandingsAuthorityModel(Base):
+    """Immutable final group-table order derived from canonical match receipts."""
+
+    __tablename__ = "tournament_group_standings_authorities"
+    __table_args__ = (
+        UniqueConstraint(
+            "run_id",
+            "branch_id",
+            "command_id",
+            name="uq_tournament_group_standings_command",
+        ),
+    )
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    event_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    command_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    request_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    authority_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    group_match_schedule_fingerprint: Mapped[str] = mapped_column(
+        String(64), nullable=False
+    )
+    group_rules_policy_fingerprint: Mapped[str] = mapped_column(
+        String(64), nullable=False
+    )
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+class TournamentHybridKnockoutEntrantsAuthorityModel(Base):
+    """Immutable first-round hybrid knockout entrants from final group positions."""
+
+    __tablename__ = "tournament_hybrid_knockout_entrants_authorities"
+    __table_args__ = (
+        UniqueConstraint(
+            "run_id",
+            "branch_id",
+            "command_id",
+            name="uq_tournament_hybrid_knockout_entrants_command",
+        ),
+    )
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    event_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    command_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    request_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    authority_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    topology_authority_fingerprint: Mapped[str] = mapped_column(
+        String(64), nullable=False
+    )
+    group_standings_authority_fingerprint: Mapped[str] = mapped_column(
+        String(64), nullable=False
+    )
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+class TournamentHybridKnockoutBracketAuthorityModel(Base):
+    """Immutable complete elimination tree materialized from hybrid entrants."""
+
+    __tablename__ = "tournament_hybrid_knockout_bracket_authorities"
+    __table_args__ = (
+        UniqueConstraint(
+            "run_id",
+            "branch_id",
+            "command_id",
+            name="uq_tournament_hybrid_knockout_bracket_command",
+        ),
+    )
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    event_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    command_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    request_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    authority_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    entrants_authority_fingerprint: Mapped[str] = mapped_column(
+        String(64), nullable=False
+    )
+    terminal_match_id: Mapped[str] = mapped_column(String(256), nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+class TournamentHybridRankingPolicyAuthorityModel(Base):
+    """Immutable explicit phase-ranking configuration for one hybrid event."""
+
+    __tablename__ = "tournament_hybrid_ranking_policy_authorities"
+    __table_args__ = (
+        UniqueConstraint(
+            "run_id",
+            "branch_id",
+            "command_id",
+            name="uq_tournament_hybrid_ranking_policy_command",
+        ),
+    )
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    event_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    command_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    request_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    authority_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+class TournamentPureGroupsRankingPolicyAuthorityModel(Base):
+    """Immutable ranking policy for one pure single-group Tournament Edition."""
+
+    __tablename__ = "tournament_pure_groups_ranking_policy_authorities"
+    __table_args__ = (
+        UniqueConstraint(
+            "run_id",
+            "branch_id",
+            "command_id",
+            name="uq_tournament_pure_groups_ranking_policy_command",
+        ),
+    )
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    event_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    command_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    request_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    authority_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+class TournamentDrawInputAuthorityModel(Base):
+    """Immutable Run/Branch/Event commitment of canonical pre-draw inputs."""
+
+    __tablename__ = "tournament_draw_input_authorities"
+    __table_args__ = (
+        UniqueConstraint(
+            "run_id",
+            "branch_id",
+            "command_id",
+            name="uq_tournament_draw_input_command",
+        ),
+    )
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    event_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    command_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    request_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    authority_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    ranking_authority_fingerprint: Mapped[str] = mapped_column(
+        String(64), nullable=False
+    )
+    entry_field_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    field_sequence: Mapped[int] = mapped_column(Integer, nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+class TournamentDrawAuthorityModel(Base):
+    """Immutable canonical Run/Branch/Event Qualification/Main bracket package."""
+
+    __tablename__ = "tournament_draw_authorities"
+    __table_args__ = (
+        UniqueConstraint(
+            "run_id",
+            "branch_id",
+            "command_id",
+            name="uq_tournament_draw_authority_command",
+        ),
+    )
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    event_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    command_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    request_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    authority_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    draw_input_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+class TournamentDrawRevisionModel(Base):
+    """Append-only canonical Tournament Draw repair revision."""
+
+    __tablename__ = "tournament_draw_revisions"
+    __table_args__ = (
+        UniqueConstraint(
+            "run_id",
+            "branch_id",
+            "command_id",
+            name="uq_tournament_draw_revision_command",
+        ),
+    )
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    event_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    sequence: Mapped[int] = mapped_column(Integer, primary_key=True)
+    command_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    request_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    revision_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    predecessor_draw_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    successor_draw_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+class TournamentDrawProcessAuthorityModel(Base):
+    """Immutable Qualification/Main Draw process-window configuration."""
+
+    __tablename__ = "tournament_draw_process_authorities"
+    __table_args__ = (
+        UniqueConstraint(
+            "run_id",
+            "branch_id",
+            "command_id",
+            name="uq_tournament_draw_process_authority_command",
+        ),
+    )
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    event_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    command_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    request_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    authority_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    draw_authority_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+class AuthoritativeWeekTransitionReceiptModel(Base):
+    """Idempotency receipt for the transaction-owning Week Transition."""
+
+    __tablename__ = "authoritative_week_transition_receipts"
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    command_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    request_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    request_payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+    result_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+class AuthoritativeWorldEventModel(Base):
+    """Canonical World Event emitted only by a completed Week or Season Transition."""
+
+    __tablename__ = "authoritative_world_events"
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    command_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    week_ordinal: Mapped[int] = mapped_column(Integer, nullable=False)
+    event_kind: Mapped[str] = mapped_column(String(64), nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+class InitialWorldStateModel(Base):
+    """Current independent initial-world snapshot owned by one Run/Branch."""
+    __tablename__ = "initial_world_states"
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+class PlayerLifecycleWeekStateModel(Base):
+    """Immutable Run/Branch-owned lifecycle snapshot at one FAX week."""
+    __tablename__ = "player_lifecycle_week_states"
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    week_ordinal: Mapped[int] = mapped_column(Integer, primary_key=True)
+    fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+class PlayerTourEntryTriggerModel(Base):
+    """Immutable first formal Tour-entry trigger for one player on one Branch."""
+
+    __tablename__ = "player_tour_entry_triggers"
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    player_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    trigger_week_ordinal: Mapped[int] = mapped_column(Integer, nullable=False)
+    decision_slot_ordinal: Mapped[int] = mapped_column(Integer, nullable=False)
+    fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+class TournamentApplicationSubmissionAuthorityModel(Base):
+    """Immutable valid MSA Tour tournament application submission authority."""
+
+    __tablename__ = "tournament_application_submission_authorities"
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    application_id: Mapped[str] = mapped_column(String(256), primary_key=True)
+    event_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    player_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    submission_week_ordinal: Mapped[int] = mapped_column(Integer, nullable=False)
+    decision_slot_ordinal: Mapped[int] = mapped_column(Integer, nullable=False)
+    fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+class RunEntryDecisionSlotAuthorityModel(Base):
+    """Immutable Run/Branch authority for one global entry-decision slot."""
+
+    __tablename__ = "run_entry_decision_slot_authorities"
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    week_ordinal: Mapped[int] = mapped_column(Integer, primary_key=True)
+    decision_slot_ordinal: Mapped[int] = mapped_column(Integer, primary_key=True)
+    fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+class ResolvedApplicationValidationSlotModel(Base):
+    """Immutable complete validation result for one global entry-decision slot."""
+
+    __tablename__ = "resolved_application_validation_slots"
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    week_ordinal: Mapped[int] = mapped_column(Integer, primary_key=True)
+    decision_slot_ordinal: Mapped[int] = mapped_column(Integer, primary_key=True)
+    source_slot_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+class WeekTournamentLockAuthorityModel(Base):
+    """Immutable explicit Admin Week Tournament Lock for one Run/Branch week."""
+
+    __tablename__ = "week_tournament_lock_authorities"
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    week_ordinal: Mapped[int] = mapped_column(Integer, primary_key=True)
+    command_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    request_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    authority_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+class DefinitiveWildCardAssignmentAuthorityModel(Base):
+    """Immutable definitive WC/RWC assignment authority."""
+
+    __tablename__ = "definitive_wild_card_assignment_authorities"
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    assignment_id: Mapped[str] = mapped_column(String(256), primary_key=True)
+    event_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    player_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    wildcard_index: Mapped[int] = mapped_column(Integer, nullable=False)
+    assignment_week_ordinal: Mapped[int] = mapped_column(Integer, nullable=False)
+    decision_slot_ordinal: Mapped[int] = mapped_column(Integer, nullable=False)
+    fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+class PlayerHealthWeekStateModel(Base):
+    """Immutable Run/Branch-owned canonical health snapshot at one FAX week."""
+
+    __tablename__ = "player_health_week_states"
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    week_ordinal: Mapped[int] = mapped_column(Integer, primary_key=True)
+    fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+class PlayerHealthAdminEditReceiptModel(Base):
+    """Immutable audit receipt for one explicit Admin Health correction."""
+
+    __tablename__ = "player_health_admin_edit_receipts"
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    command_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    week_ordinal: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
+    player_id: Mapped[str] = mapped_column(String(160), nullable=False, index=True)
+    request_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    before_state_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    after_state_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[str] = mapped_column(
+        String(32), nullable=False, server_default=text("CURRENT_TIMESTAMP")
+    )
+
+
+class PlayerSportingWeekStateModel(Base):
+    """Immutable Run/Branch-owned canonical sporting snapshot at one FAX week."""
+    __tablename__ = "player_sporting_week_states"
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    week_ordinal: Mapped[int] = mapped_column(Integer, primary_key=True)
+    fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+
+class CompletedWeekSportingContextModel(Base):
+    """Explicit Run/Branch-owned completed-week sporting evidence projection."""
+    __tablename__ = "completed_week_sporting_contexts"
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    week_ordinal: Mapped[int] = mapped_column(Integer, primary_key=True)
+    fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+class TournamentEntryFieldVersionModel(Base):
+    """Append-only canonical tournament field derived from one ranking snapshot."""
+
+    __tablename__ = "tournament_entry_field_versions"
+    __table_args__ = (
+        UniqueConstraint(
+            "run_id",
+            "branch_id",
+            "command_id",
+            name="uq_tournament_entry_field_command",
+        ),
+        UniqueConstraint(
+            "run_id",
+            "branch_id",
+            "event_id",
+            "field_fingerprint",
+            name="uq_tournament_entry_field_fingerprint",
+        ),
+    )
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    event_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    sequence: Mapped[int] = mapped_column(Integer, primary_key=True)
+    command_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    request_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    field_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    predecessor_fingerprint: Mapped[str | None] = mapped_column(
+        String(64), nullable=True
+    )
+    ranking_authority_fingerprint: Mapped[str] = mapped_column(
+        String(64), nullable=False
+    )
+    applications_fingerprint: Mapped[str] = mapped_column(
+        String(64), nullable=False
+    )
+    applications_json: Mapped[str] = mapped_column(Text, nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+class MatchLabSessionModel(Base):
+    """Global editable Match Test Lab session, intentionally outside all Run/Branch scope."""
+
+    __tablename__ = "match_lab_sessions"
+    session_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    display_name: Mapped[str] = mapped_column(String(160), nullable=False)
+    version: Mapped[int] = mapped_column(Integer, nullable=False)
+    fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    source_kind: Mapped[str] = mapped_column(String(32), nullable=False)
+    source_reference: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    source_fingerprint: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+class PlayerLabPopulationSessionModel(Base):
+    """Immutable global Player Lab result, outside every Run and Branch."""
+
+    __tablename__ = "player_lab_population_sessions"
+    session_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+class TournamentLabSessionModel(Base):
+    """Global editable Tournament Test Lab session, intentionally outside all Run/Branch scope."""
+
+    __tablename__ = "tournament_lab_sessions"
+    session_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    display_name: Mapped[str] = mapped_column(String(160), nullable=False)
+    version: Mapped[int] = mapped_column(Integer, nullable=False)
+    fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    source_kind: Mapped[str] = mapped_column(String(32), nullable=False)
+    source_reference: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    source_fingerprint: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+class RunTournamentLabDraftModel(Base):
+    """Run-owned reviewed Tournament Lab draft proposal for one event."""
+
+    __tablename__ = "run_tournament_lab_drafts"
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    event_id: Mapped[str] = mapped_column(String(160), primary_key=True)
+    version: Mapped[int] = mapped_column(Integer, nullable=False)
+    fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    source_session_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    source_session_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    source_scenario_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    source_preview_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    candidate_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+class RunTournamentLabDraftApplicationReceiptModel(Base):
+    """Idempotent reviewed Lab-to-Run draft application receipt."""
+
+    __tablename__ = "run_tournament_lab_draft_application_receipts"
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    command_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    request_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    result_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+class StandaloneMatchWorkspaceModel(Base):
+    """Mutable Run/Branch authoring state for the no-calendar pre-alpha match flow."""
+
+    __tablename__ = "standalone_match_workspaces"
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    version: Mapped[int] = mapped_column(Integer, nullable=False)
+    fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+class SimulationSlotModel(Base):
+    """Immutable plan plus evolving completion head for one global slot."""
+    __tablename__ = "simulation_slots"
+    __table_args__ = (
+        UniqueConstraint(
+            "run_id", "branch_id", "week_ordinal", "slot_ordinal",
+            name="uq_simulation_slot_global_ordinal",
+        ),
+    )
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    week_ordinal: Mapped[int] = mapped_column(Integer, primary_key=True)
+    slot_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    slot_ordinal: Mapped[int] = mapped_column(Integer, nullable=False)
+    plan_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    slot_start_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    status: Mapped[str] = mapped_column(String(32), nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+    slot_start_checkpoint_json: Mapped[str] = mapped_column(Text, nullable=False)
+    terminal_checkpoint_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+
+class SimulationEventGroupModel(Base):
+    """Atomic match/result/effect receipt; exists only after group commit."""
+    __tablename__ = "simulation_event_groups"
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    week_ordinal: Mapped[int] = mapped_column(Integer, primary_key=True)
+    slot_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    group_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    command_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    match_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    match_input_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    result_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+class AuthoritativeLiveMatchModel(Base):
+    """Frozen Simulation Slot authority for one resumable competitive match."""
+
+    __tablename__ = "authoritative_live_matches"
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    week_ordinal: Mapped[int] = mapped_column(Integer, primary_key=True)
+    slot_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    group_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    match_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    authoritative_input_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    authoritative_input_json: Mapped[str] = mapped_column(Text, nullable=False)
+    execution_command_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    effects_policy_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+class LiveMatchWorkingModel(Base):
+    """Durable current state for one in-progress authoritative competitive match."""
+
+    __tablename__ = "live_match_working_states"
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    week_ordinal: Mapped[int] = mapped_column(Integer, primary_key=True)
+    slot_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    group_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    match_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    working_input_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    working_input_json: Mapped[str] = mapped_column(Text, nullable=False)
+    state_fingerprint: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    working_state_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+    status: Mapped[str] = mapped_column(String(32), nullable=False)
+    final_result_fingerprint: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    final_result_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+
+class LiveMatchReturnPointModel(Base):
+    """Temporary resumable working-state return point for one live match."""
+
+    __tablename__ = "live_match_return_points"
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    week_ordinal: Mapped[int] = mapped_column(Integer, primary_key=True)
+    slot_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    group_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    return_point_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    source_command_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    kind: Mapped[str] = mapped_column(String(32), nullable=False)
+    state_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    working_state_json: Mapped[str] = mapped_column(Text, nullable=False)
+    created_from_rally_index: Mapped[int] = mapped_column(Integer, nullable=False)
+    created_from_set_number: Mapped[int] = mapped_column(Integer, nullable=False)
+    created_from_games_a: Mapped[int] = mapped_column(Integer, nullable=False)
+    created_from_games_b: Mapped[int] = mapped_column(Integer, nullable=False)
+    status: Mapped[str] = mapped_column(String(32), nullable=False, default="available")
+    metadata_json: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
+
+
+class LiveMatchAlternativePathModel(Base):
+    """Archived temporary working path captured before restoring a return point."""
+
+    __tablename__ = "live_match_alternative_paths"
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    week_ordinal: Mapped[int] = mapped_column(Integer, primary_key=True)
+    slot_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    group_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    alternative_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    return_point_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    state_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    working_state_json: Mapped[str] = mapped_column(Text, nullable=False)
+    archived_rally_index: Mapped[int] = mapped_column(Integer, nullable=False)
+    archived_set_number: Mapped[int] = mapped_column(Integer, nullable=False)
+    archived_games_a: Mapped[int] = mapped_column(Integer, nullable=False)
+    archived_games_b: Mapped[int] = mapped_column(Integer, nullable=False)
+    metadata_json: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
+
+
+class LiveMatchCompletedAlternativeModel(Base):
+    """Completed temporary match result displaced by restoring a return point."""
+
+    __tablename__ = "live_match_completed_alternatives"
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    week_ordinal: Mapped[int] = mapped_column(Integer, primary_key=True)
+    slot_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    group_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    alternative_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    return_point_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    final_result_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    final_result_json: Mapped[str] = mapped_column(Text, nullable=False)
+    metadata_json: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
+
+
+class LiveMatchRallyCommandModel(Base):
+    """Idempotency receipt for one persisted live Simulate Next Rally command."""
+
+    __tablename__ = "live_match_rally_commands"
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    week_ordinal: Mapped[int] = mapped_column(Integer, primary_key=True)
+    slot_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    group_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    command_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    request_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    response_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+class AuthoritativeSimulationCommandModel(Base):
+    """Idempotency/audit receipt for a Run/Branch simulation-driver mutation."""
+
+    __tablename__ = "authoritative_simulation_commands"
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    command_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    request_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    status: Mapped[str] = mapped_column(String(32), nullable=False)
+    result_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+class AdoptedTournamentAuthorityModel(Base):
+    """Immutable Run/Branch tournament package frozen at authoritative adoption."""
+
+    __tablename__ = "adopted_tournament_authorities"
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    week_ordinal: Mapped[int] = mapped_column(Integer, primary_key=True)
+    event_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    authority_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    package_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+class WeekSimulationScheduleModel(Base):
+    """Immutable adopted cross-event global-slot schedule authority."""
+
+    __tablename__ = "week_simulation_schedules"
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    week_ordinal: Mapped[int] = mapped_column(Integer, primary_key=True)
+    request_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    request_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    schedule_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+class SimulationRunModel(Base):
+    __tablename__ = "simulation_runs"
+
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    season: Mapped[int] = mapped_column(Integer, nullable=False)
+    seed: Mapped[int] = mapped_column(Integer, nullable=False)
+    config_version: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    config_fingerprint: Mapped[str | None] = mapped_column(String(256), nullable=True)
+    world_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    world_generation_fingerprint: Mapped[str | None] = mapped_column(String(256), nullable=True)
+    parent_run_id: Mapped[str | None] = mapped_column(String(128), nullable=True, index=True)
+    source_type: Mapped[str] = mapped_column(String(32), nullable=False, default="fresh_seed")
+    source_rollover_run_id: Mapped[str | None] = mapped_column(String(128), nullable=True, index=True)
+    source_rollover_from_season: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    source_rollover_to_season: Mapped[int | None] = mapped_column(Integer, nullable=True)
+
+
+class RunContainerModel(Base):
+    """Product-level save/world container; distinct from legacy season attempts."""
+
+    __tablename__ = "runs"
+    __table_args__ = (
+        CheckConstraint("storage_kind IN ('built_in', 'custom_local')", name="ck_runs_storage_kind"),
+        Index(
+            "uq_runs_display_name",
+            "display_name",
+            unique=True,
+            sqlite_where=text("display_name IS NOT NULL"),
+        ),
+    )
+
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    display_name: Mapped[str | None] = mapped_column(String(256), nullable=True)
+    storage_kind: Mapped[str] = mapped_column(String(32), nullable=False, default="built_in")
+    read_only: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    # A canonical Run may be created before any World Package is attached.
+    # Existing legacy-backed Runs continue to persist their immutable world id.
+    world_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    world_package_fingerprint: Mapped[str | None] = mapped_column(String(256), nullable=True)
+    config_version: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    config_fingerprint: Mapped[str | None] = mapped_column(String(256), nullable=True)
+    global_seed: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    timeline_start_season: Mapped[int] = mapped_column(Integer, nullable=False)
+    timeline_end_season: Mapped[int] = mapped_column(Integer, nullable=False)
+    official_branch_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    # Compatibility default for historical/direct DB construction. Canonical new
+    # Run creation explicitly persists product lifecycle status "working".
+    status: Mapped[str] = mapped_column(String(32), nullable=False, default="active")
+    metadata_json: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
+
+
+class LegacySimulationRunMappingModel(Base):
+    """One-to-one compatibility mapping from legacy season attempts to Runs."""
+
+    __tablename__ = "legacy_simulation_run_mappings"
+
+    simulation_run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    run_id: Mapped[str] = mapped_column(String(128), nullable=False, unique=True, index=True)
+    mapping_kind: Mapped[str] = mapped_column(String(64), nullable=False, default="legacy_single_attempt")
+    metadata_json: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
+
+
+class RunBranchModel(Base):
+    """Metadata for a timeline inside a product-level Run."""
+
+    __tablename__ = "run_branches"
+    __table_args__ = (
+        Index(
+            "uq_run_branches_run_display_name",
+            "run_id",
+            "display_name",
+            unique=True,
+        ),
+    )
+
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    run_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    display_name: Mapped[str] = mapped_column(String(256), nullable=False)
+    status: Mapped[str] = mapped_column(String(32), nullable=False, default="active")
+    read_only: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    branch_seed: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    forked_from_branch_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    forked_from_checkpoint_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    forked_from_saved_revision_id: Mapped[str | None] = mapped_column(
+        String(128), nullable=True, index=True
+    )
+    saved_head_revision_id: Mapped[str | None] = mapped_column(String(128), nullable=True, index=True)
+    head_checkpoint_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    legacy_simulation_run_id: Mapped[str | None] = mapped_column(String(128), nullable=True, unique=True, index=True)
+    metadata_json: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
+
+
+class BranchSavedRevisionModel(Base):
+    """Immutable user-visible Saved Revision of one Run Branch."""
+
+    __tablename__ = "branch_saved_revisions"
+    __table_args__ = (
+        UniqueConstraint(
+            "branch_id", "sequence", name="uq_branch_saved_revisions_branch_sequence"
+        ),
+        CheckConstraint("sequence >= 1", name="ck_branch_saved_revisions_sequence"),
+        CheckConstraint(
+            f"content_hash_algorithm = '{CONTENT_HASH_ALGORITHM}'",
+            name="ck_branch_saved_revisions_sha256",
+        ),
+        Index(
+            "uq_branch_saved_revisions_one_initial_per_branch",
+            "branch_id",
+            unique=True,
+            sqlite_where=text(f"kind = '{INITIAL_SAVED_REVISION_KIND}'"),
+        ),
+    )
+
+    revision_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    run_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    branch_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    sequence: Mapped[int] = mapped_column(Integer, nullable=False)
+    parent_revision_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    kind: Mapped[str] = mapped_column(String(64), nullable=False)
+    payload_schema_version: Mapped[str] = mapped_column(String(64), nullable=False)
+    content_hash_algorithm: Mapped[str] = mapped_column(
+        String(16), nullable=False, default=CONTENT_HASH_ALGORITHM
+    )
+    content_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+    change_summary_json: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[str] = mapped_column(
+        String(32), nullable=False, server_default=text("CURRENT_TIMESTAMP")
+    )
+
+
+class RunPackageStateModel(Base):
+    """Sole live, Branch-owned canonical Package snapshot."""
+    __tablename__ = "run_package_states"
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+class RunPackageIdentityAllocatorModel(Base):
+    """Run-wide monotonic ID high-water mark; IDs are never recycled."""
+    __tablename__ = "run_package_identity_allocators"
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    next_run_local_id: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+
+
+class RunPackageApplicationReceiptModel(Base):
+    """Immutable command receipt and Package provenance evidence."""
+    __tablename__ = "run_package_application_receipts"
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    command_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    request_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    result_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+class BranchWorkingDraftModel(Base):
+    """Current mutable draft based on a Branch's last Saved Revision."""
+
+    __tablename__ = "branch_working_drafts"
+    __table_args__ = (
+        UniqueConstraint("branch_id", name="uq_branch_working_drafts_branch"),
+        CheckConstraint(
+            f"status IN ('{CLEAN_WORKING_DRAFT_STATUS}', "
+            f"'{DIRTY_WORKING_DRAFT_STATUS}')",
+            name="ck_branch_working_drafts_status",
+        ),
+        CheckConstraint("change_count >= 0", name="ck_branch_working_drafts_change_count"),
+        CheckConstraint("draft_version >= 0", name="ck_branch_working_drafts_version"),
+    )
+
+    draft_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    run_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    branch_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    base_revision_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    status: Mapped[str] = mapped_column(
+        String(32), nullable=False, default=CLEAN_WORKING_DRAFT_STATUS
+    )
+    change_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    draft_version: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    draft_schema_version: Mapped[str] = mapped_column(String(64), nullable=False)
+    changes_json: Mapped[str] = mapped_column(Text, nullable=False, default="[]")
+    updated_at: Mapped[str] = mapped_column(
+        String(32), nullable=False, server_default=text("CURRENT_TIMESTAMP")
+    )
+
+
+class BranchRevisionAuditEventModel(Base):
+    """Append-only product audit event emitted by a revision-changing command."""
+
+    __tablename__ = "branch_revision_audit_events"
+    __table_args__ = (
+        UniqueConstraint(
+            "saved_revision_id",
+            name="uq_branch_revision_audit_events_saved_revision",
+        ),
+    )
+
+    audit_event_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    run_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    branch_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    saved_revision_id: Mapped[str] = mapped_column(
+        String(128), nullable=False, index=True
+    )
+    event_kind: Mapped[str] = mapped_column(String(64), nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[str] = mapped_column(
+        String(32), nullable=False, server_default=text("CURRENT_TIMESTAMP")
+    )
+
+
+class BranchSavedRevisionCheckpointModel(Base):
+    """Immutable bookmark of the exact Saved Revision state before restore."""
+
+    __tablename__ = "branch_saved_revision_checkpoints"
+    __table_args__ = (
+        UniqueConstraint(
+            "restore_saved_revision_id",
+            name="uq_branch_saved_revision_checkpoints_restore_revision",
+        ),
+        CheckConstraint(
+            f"kind = '{PRE_RESTORE_CHECKPOINT_KIND}'",
+            name="ck_branch_saved_revision_checkpoints_kind",
+        ),
+        CheckConstraint(
+            f"content_hash_algorithm = '{CONTENT_HASH_ALGORITHM}'",
+            name="ck_branch_saved_revision_checkpoints_sha256",
+        ),
+        CheckConstraint(
+            "draft_version >= 0",
+            name="ck_branch_saved_revision_checkpoints_draft_version",
+        ),
+    )
+
+    checkpoint_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    run_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    branch_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    saved_revision_id: Mapped[str] = mapped_column(
+        String(128), nullable=False, index=True
+    )
+    target_saved_revision_id: Mapped[str] = mapped_column(
+        String(128), nullable=False, index=True
+    )
+    restore_saved_revision_id: Mapped[str] = mapped_column(
+        String(128), nullable=False, index=True
+    )
+    kind: Mapped[str] = mapped_column(String(64), nullable=False)
+    draft_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    draft_version: Mapped[int] = mapped_column(Integer, nullable=False)
+    viewer_branch_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    content_hash_algorithm: Mapped[str] = mapped_column(
+        String(16), nullable=False, default=CONTENT_HASH_ALGORITHM
+    )
+    content_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    created_at: Mapped[str] = mapped_column(
+        String(32), nullable=False, server_default=text("CURRENT_TIMESTAMP")
+    )
+
+
+class BranchStateModel(Base):
+    """Mutable branch-head metadata; not a simulation state source."""
+
+    __tablename__ = "branch_states"
+
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    run_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    head_checkpoint_id: Mapped[str | None] = mapped_column(String(128), nullable=True, index=True)
+    current_season: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    current_week: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    current_event_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    current_event_sequence: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    state_schema_version: Mapped[str] = mapped_column(String(64), nullable=False, default="branch_state_v1")
+    status: Mapped[str] = mapped_column(String(32), nullable=False, default="active")
+    metadata_json: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
+
+
+class BranchCheckpointModel(Base):
+    """Immutable, capture-only checkpoint for a product Run branch."""
+
+    __tablename__ = "branch_checkpoints"
+    __table_args__ = (
+        UniqueConstraint("branch_id", "sequence", name="uq_branch_checkpoints_branch_sequence"),
+        UniqueConstraint("branch_id", "command_id", name="uq_branch_checkpoints_branch_command"),
+        CheckConstraint("content_hash_algorithm = 'sha256'", name="ck_branch_checkpoints_sha256"),
+        Index(
+            "uq_branch_checkpoints_one_initial_per_branch",
+            "branch_id",
+            unique=True,
+            sqlite_where=text(f"kind = '{BRANCH_CHECKPOINT_KIND_INITIAL}'"),
+        ),
+        Index(
+            "uq_branch_checkpoints_one_event_completed_per_branch_event_sequence",
+            "branch_id",
+            "event_sequence",
+            unique=True,
+            sqlite_where=text(f"kind = '{BRANCH_CHECKPOINT_KIND_EVENT_COMPLETED}'"),
+        ),
+        Index(
+            "uq_branch_checkpoints_one_week_completed_per_branch_season_week",
+            "branch_id",
+            "season",
+            "week",
+            unique=True,
+            sqlite_where=text(f"kind = '{BRANCH_CHECKPOINT_KIND_WEEK_COMPLETED}'"),
+        ),
+    )
+
+    checkpoint_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    run_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    branch_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    parent_checkpoint_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    sequence: Mapped[int] = mapped_column(Integer, nullable=False)
+    kind: Mapped[str] = mapped_column(String(64), nullable=False)
+    season: Mapped[int] = mapped_column(Integer, nullable=False)
+    week: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    event_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    event_sequence: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    command_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    command_kind: Mapped[str] = mapped_column(String(64), nullable=False)
+    command_boundary: Mapped[str] = mapped_column(String(64), nullable=False)
+    config_version: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    config_fingerprint: Mapped[str | None] = mapped_column(String(256), nullable=True)
+    world_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    world_fingerprint: Mapped[str | None] = mapped_column(String(256), nullable=True)
+    global_seed: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    branch_seed: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    seed_namespace_json: Mapped[str] = mapped_column(Text, nullable=False)
+    payload_schema_version: Mapped[str] = mapped_column(String(64), nullable=False)
+    content_hash_algorithm: Mapped[str] = mapped_column(String(16), nullable=False, default="sha256")
+    content_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+class BranchForkCommandModel(Base):
+    """Durable idempotency record for one atomic internal Branch fork."""
+
+    __tablename__ = "branch_fork_commands"
+
+    command_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    product_run_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    request_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    source_branch_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    source_checkpoint_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    target_branch_id: Mapped[str] = mapped_column(String(128), nullable=False, unique=True)
+    target_legacy_simulation_run_id: Mapped[str] = mapped_column(String(128), nullable=False, unique=True)
+    result_branch_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    result_checkpoint_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    result_legacy_simulation_run_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    metadata_json: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
+    created_at: Mapped[str] = mapped_column(String(32), nullable=False, server_default=text("CURRENT_TIMESTAMP"))
+
+
+class BranchSimulationCommandModel(Base):
+    """Completed, idempotent Branch simulation command journal."""
+    __tablename__ = "branch_simulation_commands"
+    __table_args__ = (UniqueConstraint("branch_id", "previous_head_checkpoint_id", name="uq_branch_simulation_commands_branch_previous_head"),)
+    command_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    product_run_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    branch_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    action_kind: Mapped[str] = mapped_column(String(64), nullable=False)
+    expected_head_checkpoint_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    previous_head_checkpoint_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    resulting_head_checkpoint_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    legacy_simulation_run_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    request_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    result_json: Mapped[str] = mapped_column(Text, nullable=False)
+    audit_reason: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[str] = mapped_column(String(32), nullable=False, server_default=text("CURRENT_TIMESTAMP"))
+
+
+class OfficialBranchSelectionCommandModel(Base):
+    """Durable idempotency and audit record for official Branch selection."""
+
+    __tablename__ = "official_branch_selection_commands"
+
+    command_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    product_run_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    request_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    expected_previous_official_branch_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    target_branch_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    result_previous_official_branch_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    result_official_branch_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    audit_reason: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[str] = mapped_column(String(32), nullable=False, server_default=text("CURRENT_TIMESTAMP"))
+
+
+class SeasonStateModel(Base):
+    __tablename__ = "season_state"
+
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    season: Mapped[int] = mapped_column(Integer, nullable=False)
+    next_event_index: Mapped[int] = mapped_column(Integer, nullable=False)
+    ordered_events_json: Mapped[str] = mapped_column(Text, nullable=False)
+    completed_event_ids_json: Mapped[str] = mapped_column(Text, nullable=False)
+    ranking_snapshot_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+    race_snapshot_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+    active_tournament_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+
+class CompletedEventModel(Base):
+    __tablename__ = "completed_events"
+    __table_args__ = (UniqueConstraint("run_id", "event_sequence", name="uq_completed_events_run_sequence"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    run_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    event_sequence: Mapped[int] = mapped_column(Integer, nullable=False)
+    event_id: Mapped[str] = mapped_column(String(128), nullable=False)
+
+
+class CompletedEventMetadataModel(Base):
+    __tablename__ = "completed_event_metadata"
+    __table_args__ = (UniqueConstraint("run_id", "event_id", name="uq_completed_event_metadata_run_event"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    run_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    event_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    season: Mapped[int] = mapped_column(Integer, nullable=False)
+    week: Mapped[int] = mapped_column(Integer, nullable=False)
+    template_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    tournament_result_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+class CompletedTournamentInputModel(Base):
+    __tablename__ = "completed_tournament_inputs"
+    __table_args__ = (UniqueConstraint("run_id", "event_id", name="uq_completed_tournament_input_run_event"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    run_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    event_sequence: Mapped[int] = mapped_column(Integer, nullable=False)
+    event_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+class RankingSnapshotModel(Base):
+    __tablename__ = "ranking_snapshots"
+    __table_args__ = (UniqueConstraint("run_id", "snapshot_sequence", name="uq_ranking_snapshots_run_sequence"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    run_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    snapshot_sequence: Mapped[int] = mapped_column(Integer, nullable=False)
+    snapshot_kind: Mapped[str] = mapped_column(String(32), nullable=False)
+    source_event_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    as_of_season: Mapped[int] = mapped_column(Integer, nullable=False)
+    as_of_week: Mapped[int] = mapped_column(Integer, nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+class RaceSnapshotModel(Base):
+    __tablename__ = "race_snapshots"
+    __table_args__ = (UniqueConstraint("run_id", "snapshot_sequence", name="uq_race_snapshots_run_sequence"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    run_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    snapshot_sequence: Mapped[int] = mapped_column(Integer, nullable=False)
+    snapshot_kind: Mapped[str] = mapped_column(String(32), nullable=False)
+    source_event_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    as_of_season: Mapped[int] = mapped_column(Integer, nullable=False)
+    as_of_week: Mapped[int] = mapped_column(Integer, nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+
+class WorldTourFinalsRaceConfigurationModel(Base):
+    """Immutable per-Run/Branch/season World Tour Finals Race configuration."""
+
+    __tablename__ = "world_tour_finals_race_configurations"
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    target_season_index: Mapped[int] = mapped_column(Integer, primary_key=True)
+    configuration_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    adopted_by_command_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+class WorldTourFinalsRaceSnapshotModel(Base):
+    """Immutable Race snapshot bound to one stored seasonal configuration."""
+
+    __tablename__ = "world_tour_finals_race_snapshots"
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    target_season_index: Mapped[int] = mapped_column(Integer, primary_key=True)
+    snapshot_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    configuration_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    input_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    cutoff_week_ordinal: Mapped[int] = mapped_column(Integer, nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+
+class WorldTourFinalsParticipantSelectionConfigurationModel(Base):
+    """Immutable per-Run/Branch/season Finals participant-selection configuration."""
+
+    __tablename__ = "world_tour_finals_participant_selection_configurations"
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    target_season_index: Mapped[int] = mapped_column(Integer, primary_key=True)
+    configuration_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    race_snapshot_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    adopted_by_command_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+class WorldTourFinalsParticipantSelectionSnapshotModel(Base):
+    """Immutable selected Finals field and Race-only entry seeding."""
+
+    __tablename__ = "world_tour_finals_participant_selection_snapshots"
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    target_season_index: Mapped[int] = mapped_column(Integer, primary_key=True)
+    snapshot_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    configuration_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    race_snapshot_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+class WorldTourFinalsEffectiveParticipantStateModel(Base):
+    """Append-only effective Finals field lineage."""
+
+    __tablename__ = "world_tour_finals_effective_participant_states"
+    __table_args__ = (
+        UniqueConstraint(
+            "run_id",
+            "branch_id",
+            "target_season_index",
+            "finals_event_id",
+            "sequence",
+            name="uq_finals_effective_state_scope_sequence",
+        ),
+        UniqueConstraint(
+            "run_id",
+            "branch_id",
+            "target_season_index",
+            "finals_event_id",
+            "command_id",
+            name="uq_finals_effective_state_scope_command",
+        ),
+    )
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    run_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    branch_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    target_season_index: Mapped[int] = mapped_column(Integer, nullable=False)
+    finals_event_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    sequence: Mapped[int] = mapped_column(Integer, nullable=False)
+    state_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False, unique=True)
+    predecessor_fingerprint: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    command_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+class WorldTourFinalsReplacementAuthorityModel(Base):
+    """Append-only preview/decision history for Finals Race vacancies."""
+
+    __tablename__ = "world_tour_finals_replacement_authorities"
+    __table_args__ = (
+        UniqueConstraint(
+            "run_id",
+            "branch_id",
+            "target_season_index",
+            "finals_event_id",
+            "vacancy_id",
+            "sequence",
+            name="uq_finals_replacement_scope_sequence",
+        ),
+        UniqueConstraint(
+            "run_id",
+            "branch_id",
+            "target_season_index",
+            "finals_event_id",
+            "vacancy_id",
+            "command_id",
+            name="uq_finals_replacement_scope_command",
+        ),
+    )
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    run_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    branch_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    target_season_index: Mapped[int] = mapped_column(Integer, nullable=False)
+    finals_event_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    vacancy_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    sequence: Mapped[int] = mapped_column(Integer, nullable=False)
+    authority_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False, unique=True)
+    predecessor_fingerprint: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    command_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+class FinalsQualificationModel(Base):
+    __tablename__ = "finals_qualification"
+    __table_args__ = (UniqueConstraint("run_id", "season", name="uq_finals_qualification_run_season"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    run_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    season: Mapped[int] = mapped_column(Integer, nullable=False)
+    source_as_of_season: Mapped[int] = mapped_column(Integer, nullable=False)
+    source_as_of_week: Mapped[int] = mapped_column(Integer, nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+class FinalsResultModel(Base):
+    __tablename__ = "finals_results"
+    __table_args__ = (UniqueConstraint("run_id", "season", name="uq_finals_results_run_season"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    run_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    season: Mapped[int] = mapped_column(Integer, nullable=False)
+    event_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    source_as_of_season: Mapped[int] = mapped_column(Integer, nullable=False)
+    source_as_of_week: Mapped[int] = mapped_column(Integer, nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+class SeasonRolloverModel(Base):
+    __tablename__ = "season_rollovers"
+    __table_args__ = (UniqueConstraint("run_id", "to_season", name="uq_season_rollovers_run_to_season"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    run_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    from_season: Mapped[int] = mapped_column(Integer, nullable=False)
+    to_season: Mapped[int] = mapped_column(Integer, nullable=False)
+    transitioned_players: Mapped[int] = mapped_column(Integer, nullable=False)
+    metadata_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+class PlayerSeasonTransitionModel(Base):
+    __tablename__ = "player_season_transitions"
+    __table_args__ = (
+        UniqueConstraint(
+            "run_id",
+            "to_season",
+            "player_id",
+            name="uq_player_season_transitions_run_to_season_player",
+        ),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    run_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    from_season: Mapped[int] = mapped_column(Integer, nullable=False)
+    to_season: Mapped[int] = mapped_column(Integer, nullable=False)
+    player_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+class NextSeasonPlayerModel(Base):
+    __tablename__ = "next_season_players"
+    __table_args__ = (
+        UniqueConstraint(
+            "run_id",
+            "to_season",
+            "player_id",
+            name="uq_next_season_players_run_to_season_player",
+        ),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    run_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    from_season: Mapped[int] = mapped_column(Integer, nullable=False)
+    to_season: Mapped[int] = mapped_column(Integer, nullable=False)
+    player_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+class AdminActionModel(Base):
+    __tablename__ = "admin_actions"
+    __table_args__ = (UniqueConstraint("run_id", "event_id", "action_sequence", name="uq_admin_actions_run_event_sequence"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    run_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    event_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    action_sequence: Mapped[int] = mapped_column(Integer, nullable=False)
+    action_kind: Mapped[str] = mapped_column(String(64), nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+class RunTalentPlanModel(Base):
+    __tablename__ = "run_talent_plans"
+    __table_args__ = (UniqueConstraint("run_id", "season", name="uq_run_talent_plan_run_season"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    run_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    season: Mapped[int] = mapped_column(Integer, nullable=False)
+    seed: Mapped[int] = mapped_column(Integer, nullable=False)
+    total_talents: Mapped[int] = mapped_column(Integer, nullable=False)
+    dataset_status: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    config_version: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    config_fingerprint: Mapped[str | None] = mapped_column(String(256), nullable=True)
+
+
+class RunTalentCountryAllocationModel(Base):
+    __tablename__ = "run_talent_country_allocations"
+    __table_args__ = (
+        UniqueConstraint(
+            "run_id",
+            "season",
+            "country_code",
+            name="uq_run_talent_country_allocation_run_season_country",
+        ),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    run_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    season: Mapped[int] = mapped_column(Integer, nullable=False)
+    country_code: Mapped[str] = mapped_column(String(8), nullable=False)
+    planned_count: Mapped[int] = mapped_column(Integer, nullable=False)
+    quality_weights_json: Mapped[str] = mapped_column(Text, nullable=False)
+    actual_band_counts_json: Mapped[str] = mapped_column(Text, nullable=False)
+    bias_profile_json: Mapped[str] = mapped_column(Text, nullable=False)
+    dampener_json: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
+
+
+class RunProspectModel(Base):
+    __tablename__ = "run_prospects"
+    __table_args__ = (UniqueConstraint("run_id", "prospect_id", name="uq_run_prospects_run_prospect"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    prospect_id: Mapped[str] = mapped_column(String(160), nullable=False)
+    run_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    world_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    season_start_year: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
+    season_label: Mapped[str] = mapped_column(String(32), nullable=False)
+    season_week: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
+    calendar_year: Mapped[int] = mapped_column(Integer, nullable=False)
+    year_week: Mapped[int] = mapped_column(Integer, nullable=False)
+    birth_year: Mapped[int] = mapped_column(Integer, nullable=False)
+    birth_year_week: Mapped[int] = mapped_column(Integer, nullable=False)
+    age: Mapped[int] = mapped_column(Integer, nullable=False)
+    country_code: Mapped[str] = mapped_column(String(8), nullable=False, index=True)
+    country_name: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    status: Mapped[str] = mapped_column(String(32), nullable=False, default="prospect")
+    source_type: Mapped[str] = mapped_column(String(64), nullable=False, default="weekly_15yo_cohort")
+    cohort_policy_version: Mapped[str] = mapped_column(String(64), nullable=False)
+    profile_version: Mapped[str] = mapped_column(String(64), nullable=False)
+    first_name: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    last_name: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    display_name: Mapped[str] = mapped_column(String(256), nullable=False)
+    short_name: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    identity_seed: Mapped[str] = mapped_column(String(128), nullable=False)
+    profile_seed: Mapped[str] = mapped_column(String(128), nullable=False)
+    development_seed: Mapped[str] = mapped_column(String(128), nullable=False)
+    potential_seed: Mapped[str] = mapped_column(String(128), nullable=False)
+    trait_seed: Mapped[str] = mapped_column(String(128), nullable=False)
+    profile_json: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
+    development_json: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
+    potential_json: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
+    trait_json: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
+
+
+class RunGeneratedPlayerProvenanceModel(Base):
+    __tablename__ = "run_generated_player_provenance"
+    __table_args__ = (
+        UniqueConstraint(
+            "run_id",
+            "season",
+            "player_id",
+            name="uq_run_generated_player_provenance_run_season_player",
+        ),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    run_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    season: Mapped[int] = mapped_column(Integer, nullable=False)
+    player_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    country_code: Mapped[str] = mapped_column(String(8), nullable=False)
+    talent_sequence: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    talent_seed_value: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    quality_band: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    is_top_band: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    source_type: Mapped[str] = mapped_column(String(32), nullable=False, default="planner_generated")
+    override_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    origin_source_type: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    origin_quality_band: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    origin_override_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    origin_season: Mapped[int | None] = mapped_column(Integer, nullable=True)

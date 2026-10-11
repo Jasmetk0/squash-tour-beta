@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-sao-tome-and-principe-history-v1",
+  "source_id": "itf-sao-tome-and-principe-development-eligibility-2026",
+  "relative_path": "observations/normalized/atp_sao_tome_and_principe_history_v1.json",
+  "sha256": "441d68b3ef4b0c1121de9b51019aeaf645f5bc6d2ec55eb0a198ecdbc6d52b69",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

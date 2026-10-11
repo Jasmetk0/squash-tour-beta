@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-san-marino-history-v1",
+  "source_id": "fst-san-marino-history",
+  "relative_path": "observations/normalized/atp_san_marino_history_v1.json",
+  "sha256": "f26e06ae33ba892556334d6d81d531845a45e0cc0cdfdfbed81b119676b83c7b",
+  "record_count": 7,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

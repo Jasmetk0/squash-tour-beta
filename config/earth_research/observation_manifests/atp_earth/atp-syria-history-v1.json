@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-syria-history-v1",
+  "source_id": "itf-syria-profile",
+  "relative_path": "observations/normalized/atp_syria_history_v1.json",
+  "sha256": "b6000014270b63439eead9fc530116a03382815152c0be4c7e6f217ee32c23c2",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

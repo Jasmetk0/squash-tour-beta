@@ -1,0 +1,10 @@
+{
+  "schema_version": "regions.v1",
+  "regions": [
+    { "code": "AFRICA", "name": "Africa", "continent_code": "AFR" },
+    { "code": "AMERICAS", "name": "Americas", "continent_code": null },
+    { "code": "ASIA", "name": "Asia", "continent_code": "ASI" },
+    { "code": "EUROPE", "name": "Europe", "continent_code": "EUR" },
+    { "code": "MENA", "name": "MENA", "continent_code": null }
+  ]
+}

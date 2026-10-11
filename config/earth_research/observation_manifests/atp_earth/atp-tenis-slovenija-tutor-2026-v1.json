@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-tenis-slovenija-tutor-2026-v1",
+  "source_id": "tenis-slovenija-tutor-2026",
+  "relative_path": "observations/normalized/atp-tenis-slovenija-tutor-2026-v1.json",
+  "sha256": "cb508062588b8c2a48a4d7e268fc0fee8f28bde7b1b1db9d5d0b0f19d7fd7d38",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

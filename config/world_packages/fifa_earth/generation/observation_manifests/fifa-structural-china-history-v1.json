@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-china-history-v1",
+  "source_id": "cfa-founded-1955",
+  "relative_path": "observations/normalized/structural/fifa_structural_china_history_v1.json",
+  "sha256": "ee4be79bc563ab245c22ad433f1e953f6ec513dec22d371532e031b2f5c8f883",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

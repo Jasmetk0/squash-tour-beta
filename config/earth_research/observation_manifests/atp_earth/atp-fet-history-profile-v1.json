@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-fet-history-profile-v1",
+  "source_id": "fet-history-profile",
+  "relative_path": "observations/normalized/atp-fet-history-profile-v1.json",
+  "sha256": "3bcd392cc52da5168bf6baa7237b77628b836c002db9b78a01e811fdce2a836e",
+  "record_count": 4,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-niu-tkl-project-assumptions-v1",
+  "source_id": "niu-tkl-fifa-project-assumptions",
+  "relative_path": "observations/normalized/fifa_niu_tkl_project_assumptions_v1.json",
+  "sha256": "05840d0557c5ec80a936b36e34c31a998950f208ad0ba8e1833f0c7352522a89",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-niu-tkl-batch-2026-10-07"
+}

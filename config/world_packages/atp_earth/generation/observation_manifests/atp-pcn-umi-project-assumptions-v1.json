@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-pcn-umi-project-assumptions-v1",
+  "source_id": "pcn-umi-atp-project-assumptions",
+  "relative_path": "observations/normalized/atp_pcn_umi_project_assumptions_v1.json",
+  "sha256": "da74780c7ea1406e9f3225bef45e8ab91a92ab09418e32fc44a41b918f05be58",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-pcn-umi-batch-2026-10-07"
+}

@@ -1,0 +1,7 @@
+{
+  "schema_version": "world_package_country.v1",
+  "code": "SGS",
+  "name": "South Georgia",
+  "flag_asset": null,
+  "notes": "Gameplay fallback: United Kingdom curve; research personnel anchor; not a separate UN WPP series."
+}

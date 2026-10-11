@@ -1,0 +1,30 @@
+{
+  "schema_version": "fifa_earth_reviewed_country_batch.v1",
+  "model_id": "fifa-earth-country-history-asm-pyf-ncl.v1",
+  "created_on": "2026-10-04",
+  "countries": [
+    "ASM",
+    "PYF",
+    "NCL"
+  ],
+  "coverage": {
+    "from": 1955,
+    "to": 2026,
+    "attributes": 6
+  },
+  "rating_scale": "country_ratings_1_10.v2",
+  "method": "Association-aware country/territory histories combining official OFC/FIFA structural evidence with Big Count 2006 and modern FIFA development support.",
+  "evidence_rules": [
+    "Tahiti football observations map to Earth code PYF and never inherit metropolitan France evidence.",
+    "New Caledonia football observations map to NCL and never inherit metropolitan France evidence.",
+    "American Samoa football governance is independent of United States political sovereignty in the sporting evidence layer.",
+    "American Samoa's 2005–07 normalisation is a real governance discontinuity, not smooth interpolation.",
+    "Big Count 2006 primarily anchors popularity/access; no Professional 2023 rows means modern competition/support remain conservative rather than zero.",
+    "Tahiti's 2023 pitch and 2025 Talent Academy, and New Caledonia's current Forward support, are modern anchors only and are never backcast."
+  ],
+  "country_notes": {
+    "ASM": "Youth-focused football with meaningful participation access, but limited elite/competition depth and an explicit 2005–07 governance break.",
+    "PYF": "Tahiti/French Polynesia has high participation and cultural popularity with strong recent development investment; all football evidence remains association-specific to PYF.",
+    "NCL": "New Caledonia has federation and league history from 1928, later FIFA/OFC membership in 2004, and strong modern support investment without importing France-level evidence."
+  }
+}

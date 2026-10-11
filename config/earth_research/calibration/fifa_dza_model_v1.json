@@ -1,0 +1,82 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "fifa-earth-dza-model.v1",
+  "world_id": "fifa_earth",
+  "data_cutoff": "2026-10-03",
+  "countries": [
+    "DZA"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "evidence_rules": [
+    "Pre-1962 values are explicit territorial estimates; the association is gated to 1962, FIFA to 1963 and CAF to 1964.",
+    "Big Count 2006 enters only from 2006; large participation does not become a universal quality score.",
+    "Professional 2023 player and club counts enter only from 2023 as professional-ecosystem evidence.",
+    "No ranking, tournament result or match outcome is mechanically converted into a rating."
+  ],
+  "anchor_values": {
+    "DZA": {
+      "1955": [
+        5.7,
+        5.1,
+        5,
+        5.1,
+        4.8,
+        5.8
+      ],
+      "1962": [
+        6.5,
+        5.8,
+        5.8,
+        6,
+        5.6,
+        6.5
+      ],
+      "1963": [
+        6.8,
+        6,
+        6.1,
+        6.3,
+        5.9,
+        6.8
+      ],
+      "1964": [
+        7,
+        6.2,
+        6.3,
+        6.5,
+        6.1,
+        7
+      ],
+      "2006": [
+        8.2,
+        7.1,
+        7.4,
+        7.7,
+        7.2,
+        8.2
+      ],
+      "2023": [
+        8.4,
+        7.3,
+        7.7,
+        8,
+        7.7,
+        8.5
+      ],
+      "2026": [
+        8.5,
+        7.4,
+        7.8,
+        8.1,
+        7.8,
+        8.6
+      ]
+    }
+  },
+  "evidence_sources": [
+    "caf-algeria-profile",
+    "fifa-big-count-2006",
+    "fifa-professional-2023"
+  ],
+  "heldout_ranking_used": false
+}

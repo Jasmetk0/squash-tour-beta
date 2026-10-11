@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-swiss-tennis-development-2025-v1",
+  "source_id": "swiss-tennis-development-2025",
+  "relative_path": "observations/normalized/atp-swiss-tennis-development-2025-v1.json",
+  "sha256": "d4c3bb23f0be571a44841522603c0ac04ff1efd571712efe6148f51ec4336fcd",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

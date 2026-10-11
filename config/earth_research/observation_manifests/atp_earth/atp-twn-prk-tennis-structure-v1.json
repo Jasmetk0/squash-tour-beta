@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-twn-prk-tennis-structure-v1",
+  "source_id": "twn-prk-itf-tennis-structure",
+  "relative_path": "observations/normalized/atp_twn_prk_tennis_structure_v1.json",
+  "sha256": "a4dcec691f2339fe21fbe073ef44acf221ddbe9778f72851104bdefb62d409f2",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-twn-prk-batch-2026-10-07"
+}

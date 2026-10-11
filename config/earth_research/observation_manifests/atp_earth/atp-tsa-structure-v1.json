@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-tsa-structure-v1",
+  "source_id": "tsa-structure",
+  "relative_path": "observations/normalized/atp-tsa-structure-v1.json",
+  "sha256": "24b483d60d150e904a79d09c3da8051cbf52c34a94366e652abff3563ec02f91",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

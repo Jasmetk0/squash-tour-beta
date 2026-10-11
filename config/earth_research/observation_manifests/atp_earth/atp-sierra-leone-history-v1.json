@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-sierra-leone-history-v1",
+  "source_id": "itf-sierra-leone-return-to-play-2020",
+  "relative_path": "observations/normalized/atp_sierra_leone_history_v1.json",
+  "sha256": "832ba224fa3e0afbee50e69b17d77c6cb61b782244986f9df0efea22ce628fd9",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

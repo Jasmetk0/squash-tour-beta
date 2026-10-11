@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-ofc-tahiti-profile-v1",
+  "source_id": "ofc-tahiti-profile",
+  "relative_path": "observations/normalized/structural/fifa_structural_ofc_tahiti_profile_v1.json",
+  "sha256": "37825520878bd8d9bdf561a68f5f8dd3e2f39c67416ac809ef7847cf3bd54976",
+  "record_count": 3,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-04"
+}

@@ -1,0 +1,2216 @@
+"""Request/response DTOs for simulation API endpoints."""
+
+from __future__ import annotations
+
+from typing import Literal
+
+from pydantic import BaseModel, ConfigDict, Field
+from pydantic import StrictInt, field_validator, model_validator
+
+from beta_engine.application.finals_models import FinalsSimulationResult
+from beta_engine.application.run_bootstrap_models import (
+    BootstrapNextSeasonRequest,
+    BootstrapNextSeasonResponse,
+    RunLineageRecord,
+    RunSourceSummary,
+)
+from beta_engine.application.rollover_models import (
+    NextSeasonPlayerRecord,
+    PersistedPlayerTransition,
+    SeasonRolloverResponse,
+    SeasonRolloverSummaryResponse,
+)
+from beta_engine.application.season_models import RaceSnapshot, RankingSnapshot, SeasonState, SimulationStepResult
+from beta_engine.domain.finals import FinalsQualificationResult, FinalsResult
+from beta_engine.domain.run_branches import normalize_branch_display_name
+from beta_engine.domain.timezone_areas import TimezoneArea
+from beta_engine.domain.players.initial_pool import CustomInitialPoolPlayerCreate, InitialPoolPlayerUpdate
+from beta_engine.domain.run_containers import normalize_run_display_name
+
+
+class HealthResponse(BaseModel):
+    status: Literal["ok"]
+
+
+class SeasonBootstrapRequest(BaseModel):
+    source_season: str = Field(default="2000/2001", min_length=4, max_length=32)
+    seed: int = 12345
+    dry_run: bool = True
+    overwrite_existing: bool = False
+
+    @field_validator("source_season")
+    @classmethod
+    def trim_source_season(cls, value: str) -> str:
+        trimmed = value.strip()
+        if not trimmed:
+            raise ValueError("source_season is required")
+        return trimmed
+
+
+class CreateRunRequest(BaseModel):
+    run_id: str = Field(min_length=1, max_length=128)
+    seed: int
+    season: int = Field(ge=1900)
+    config_version: str | None = Field(default=None, max_length=128)
+    config_fingerprint: str | None = Field(default=None, max_length=256)
+    world_id: str | None = Field(default=None, min_length=1, max_length=128)
+
+
+class RunSummaryResponse(BaseModel):
+    run_id: str
+    season: int
+    seed: int
+    config_version: str | None = None
+    config_fingerprint: str | None = None
+    world_id: str
+    next_event_index: int
+    total_events: int
+    completed_event_ids: list[str] = Field(default_factory=list)
+
+
+class RunStatusSummaryProgressResponse(BaseModel):
+    next_event_index: int
+    total_events: int
+    completed_event_count: int
+
+
+class RunStatusSummaryFinalsResponse(BaseModel):
+    qualification_available: bool
+    result_available: bool
+
+
+class RunStatusSummaryRolloverResponse(BaseModel):
+    latest_to_season: int
+    transitioned_players: int
+
+
+class RunStatusSummarySourceResponse(BaseModel):
+    source_type: Literal["fresh_seed", "rollover_bootstrap"]
+    parent_run_id: str | None = None
+
+
+class RunStatusSummaryLineageResponse(BaseModel):
+    child_run_count: int
+
+
+class RunStatusSummaryHistoryCountsResponse(BaseModel):
+    events: int
+    ranking_snapshots: int
+    race_snapshots: int
+
+
+class RunStatusSummaryResponse(BaseModel):
+    run_id: str
+    season: int
+    seed: int
+    progress: RunStatusSummaryProgressResponse
+    finals: RunStatusSummaryFinalsResponse
+    rollover: RunStatusSummaryRolloverResponse | None = None
+    source: RunStatusSummarySourceResponse | None = None
+    lineage: RunStatusSummaryLineageResponse
+    history_counts: RunStatusSummaryHistoryCountsResponse
+
+
+class RunIndexSummaryProgressResponse(BaseModel):
+    next_event_index: int
+    total_events: int
+    completed_event_count: int
+
+
+class RunIndexSummaryResponse(BaseModel):
+    run_id: str
+    season: int
+    seed: int
+    progress: RunIndexSummaryProgressResponse
+    source_type: Literal["fresh_seed", "rollover_bootstrap"]
+    parent_run_id: str | None = None
+    child_run_count: int
+    world_id: str
+
+
+class RunIndexResponse(BaseModel):
+    runs: list[RunIndexSummaryResponse] = Field(default_factory=list)
+
+
+class CreateRunContainerRequest(BaseModel):
+    """The sole user input required for a canonical empty pre-alpha Run."""
+
+    display_name: str = Field(min_length=1, max_length=256)
+
+    @field_validator("display_name", mode="before")
+    @classmethod
+    def normalize_display_name(cls, value: object) -> str:
+        if not isinstance(value, str):
+            raise ValueError("display_name must be a string")
+        return normalize_run_display_name(value)
+
+
+class RunContainerResponse(BaseModel):
+    run_id: str
+    display_name: str | None = None
+    storage_kind: Literal["built_in", "custom_local"]
+    read_only: bool
+    world_id: str | None = None
+    world_package_fingerprint: str | None = None
+    config_version: str | None = None
+    config_fingerprint: str | None = None
+    global_seed: int | None = None
+    timeline_start_season: int
+    timeline_end_season: int
+    viewer_branch_id: str | None = None
+    # Transitional response compatibility only. New consumers use
+    # viewer_branch_id; the persistence rename can happen independently.
+    official_branch_id: str | None = Field(default=None, deprecated=True)
+    status: str
+    metadata_json: dict[str, object] = Field(default_factory=dict)
+    mapped_simulation_run_count: int
+
+
+class RunContainerListResponse(BaseModel):
+    run_containers: list[RunContainerResponse] = Field(default_factory=list)
+
+
+class CreateRunBranchRequest(BaseModel):
+    """Create a timeline from one immutable Saved Revision."""
+
+    source_branch_id: str = Field(min_length=1, max_length=128)
+    source_saved_revision_id: str = Field(min_length=1, max_length=128)
+    display_name: str | None = Field(default=None, min_length=1, max_length=256)
+
+    @field_validator("display_name", mode="before")
+    @classmethod
+    def normalize_display_name(cls, value: object) -> str | None:
+        if value is None:
+            return None
+        if not isinstance(value, str):
+            raise ValueError("display_name must be a string")
+        return normalize_branch_display_name(value)
+
+
+class RunBranchResponse(BaseModel):
+    branch_id: str
+    run_id: str
+    display_name: str
+    status: str
+    read_only: bool
+    branch_seed: int | None = None
+    forked_from_branch_id: str | None = None
+    forked_from_checkpoint_id: str | None = None
+    forked_from_saved_revision_id: str | None = None
+    saved_head_revision_id: str | None = None
+    head_checkpoint_id: str | None = None
+    legacy_simulation_run_id: str | None = None
+    metadata_json: dict[str, object] = Field(default_factory=dict)
+    is_viewer_branch: bool
+    is_official: bool
+
+
+class StageViewerBranchRequest(BaseModel):
+    viewer_branch_id: str = Field(min_length=1, max_length=128)
+    expected_draft_version: int = Field(ge=0)
+
+
+class SaveWorkingDraftRequest(BaseModel):
+    expected_draft_version: int = Field(ge=0)
+
+
+class ViewerBranchWorkingDraftResponse(BaseModel):
+    run_id: str
+    branch_id: str
+    draft_id: str
+    base_saved_revision_id: str
+    saved_viewer_branch_id: str
+    proposed_viewer_branch_id: str
+    current_viewer_branch_id: str
+    status: Literal["clean", "dirty"]
+    change_count: int
+    draft_version: int
+    can_save: bool
+
+
+class SavedRevisionResponse(BaseModel):
+    revision_id: str
+    sequence: int
+    parent_revision_id: str | None = None
+    kind: str
+    payload_schema_version: str
+    content_hash_algorithm: str
+    content_hash: str
+    change_summary: dict[str, object]
+
+
+class SavedRevisionHistoryEntryResponse(BaseModel):
+    revision_id: str
+    revision_branch_id: str
+    sequence: int
+    parent_revision_id: str | None = None
+    kind: str
+    payload_schema_version: str
+    content_hash_algorithm: str
+    content_hash: str
+    change_summary: dict[str, object]
+    created_at: str | None = None
+    is_shared_revision: bool
+    is_branch_head: bool
+
+
+class SavedRevisionHistoryDetailResponse(SavedRevisionHistoryEntryResponse):
+    run_id: str
+    branch_id: str
+    payload: dict[str, object]
+
+
+class SavedRevisionHistoryListResponse(BaseModel):
+    run_id: str
+    branch_id: str
+    saved_head_revision_id: str
+    saved_revisions: list[SavedRevisionHistoryEntryResponse] = Field(
+        default_factory=list
+    )
+
+
+class SavedRevisionHistoryPageResponse(SavedRevisionHistoryListResponse):
+    total_count: int
+    has_more_older: bool
+    next_before_sequence: int | None = None
+
+
+class SavedRevisionComponentComparisonResponse(BaseModel):
+    component_key: str
+    status: Literal["added", "removed", "changed", "unchanged"]
+    before_fingerprint: str | None = None
+    after_fingerprint: str | None = None
+
+
+class SavedRevisionComparisonResponse(BaseModel):
+    run_id: str
+    branch_id: str
+    saved_head_revision_id: str
+    from_revision: SavedRevisionHistoryEntryResponse
+    to_revision: SavedRevisionHistoryEntryResponse
+    run_changes: dict[str, dict[str, object | None]]
+    branch_changes: dict[str, dict[str, object | None]]
+    components: list[SavedRevisionComponentComparisonResponse] = Field(
+        default_factory=list
+    )
+
+
+class SavedRevisionRecoveryCheckpointResponse(BaseModel):
+    checkpoint_id: str
+    run_id: str
+    branch_id: str
+    saved_revision_id: str
+    target_saved_revision_id: str
+    restore_saved_revision_id: str
+    kind: Literal["pre_restore_saved_revision"]
+    draft_id: str
+    draft_version: int
+    viewer_branch_id: str
+    content_hash_algorithm: str
+    content_hash: str
+    created_at: str | None = None
+
+
+class SavedRevisionAuditEventResponse(BaseModel):
+    audit_event_id: str
+    run_id: str
+    branch_id: str
+    saved_revision_id: str
+    event_kind: str
+    payload: dict[str, object]
+    created_at: str | None = None
+
+
+class SavedRevisionRecoveryActivityResponse(BaseModel):
+    run_id: str
+    branch_id: str
+    saved_head_revision_id: str
+    safety_checkpoints: list[SavedRevisionRecoveryCheckpointResponse] = Field(
+        default_factory=list
+    )
+    audit_events: list[SavedRevisionAuditEventResponse] = Field(default_factory=list)
+
+
+class RestoreSavedRevisionRequest(BaseModel):
+    expected_head_saved_revision_id: str = Field(min_length=1, max_length=128)
+    expected_draft_version: int = Field(ge=0)
+    expected_current_viewer_branch_id: str = Field(min_length=1, max_length=128)
+    explicit_confirmation: bool
+
+
+class SavedRevisionRestorePreflightBlockerResponse(BaseModel):
+    code: str
+    message: str
+
+
+class SavedRevisionRestorePreflightResponse(BaseModel):
+    run_id: str
+    branch_id: str
+    target_saved_revision_id: str
+    saved_head_revision_id: str
+    draft_version: int
+    current_viewer_branch_id: str
+    target_viewer_branch_id: str | None = None
+    can_restore: bool
+    blockers: list[SavedRevisionRestorePreflightBlockerResponse] = Field(
+        default_factory=list
+    )
+
+
+class SavedRevisionRestoreCheckpointResponse(BaseModel):
+    checkpoint_id: str
+    saved_revision_id: str
+    target_saved_revision_id: str
+    restore_saved_revision_id: str
+    kind: Literal["pre_restore_saved_revision"]
+    draft_id: str
+    draft_version: int
+    viewer_branch_id: str
+    content_hash_algorithm: str
+    content_hash: str
+
+
+class RestoreSavedRevisionResponse(BaseModel):
+    run_id: str
+    branch_id: str
+    previous_saved_head_revision_id: str
+    target_saved_revision_id: str
+    previous_viewer_branch_id: str
+    viewer_branch_id: str
+    safety_checkpoint: SavedRevisionRestoreCheckpointResponse
+    saved_revision: SavedRevisionResponse
+    working_draft: ViewerBranchWorkingDraftResponse
+    audit_event_id: str
+
+
+class SaveWorkingDraftResponse(BaseModel):
+    run_id: str
+    branch_id: str
+    previous_viewer_branch_id: str
+    viewer_branch_id: str
+    saved_revision: SavedRevisionResponse
+    working_draft: ViewerBranchWorkingDraftResponse
+    audit_event_id: str
+
+
+class RunBranchListResponse(BaseModel):
+    run_branches: list[RunBranchResponse] = Field(default_factory=list)
+
+
+class AdminForkRunBranchRequest(BaseModel):
+    source_branch_id: str = Field(min_length=1, max_length=128)
+    source_checkpoint_id: str = Field(min_length=1, max_length=128)
+    target_branch_id: str = Field(min_length=1, max_length=128)
+    target_branch_display_name: str = Field(min_length=1, max_length=256)
+    target_legacy_simulation_run_id: str = Field(min_length=1, max_length=128)
+    target_branch_seed: int
+    command_id: str = Field(min_length=1, max_length=128)
+
+
+class AdminForkRunBranchResponse(BaseModel):
+    product_run_id: str
+    source_branch_id: str
+    source_checkpoint_id: str
+    target_branch_id: str
+    target_legacy_simulation_run_id: str
+    target_checkpoint_id: str
+    target_branch_seed: int
+    source_inventory_hash: str
+    normalized_clone_equivalence_hash: str
+    request_fingerprint: str
+    idempotent_replay: bool
+    created_mapping: bool
+    official_branch_changed: bool
+
+
+class AdminSetOfficialRunBranchRequest(BaseModel):
+    expected_current_official_branch_id: str | None = Field(default=None, max_length=128)
+    command_id: str = Field(min_length=1, max_length=128)
+    audit_reason: str = Field(min_length=1, max_length=2000)
+    explicit_confirmation: bool
+
+
+class AdminSetOfficialRunBranchResponse(BaseModel):
+    product_run_id: str
+    previous_official_branch_id: str | None = None
+    official_branch_id: str | None = None
+    target_branch_id: str
+    changed: bool
+    idempotent_replay: bool
+    request_fingerprint: str
+
+
+class AdminBranchSimulateNextMatchRequest(BaseModel):
+    expected_head_checkpoint_id: str = Field(min_length=1, max_length=128)
+    command_id: str = Field(min_length=1, max_length=128)
+    audit_reason: str = Field(min_length=1, max_length=2000)
+    explicit_confirmation: bool
+
+
+class AdminBranchSimulateNextMatchResponse(BaseModel):
+    product_run_id: str; branch_id: str; legacy_simulation_run_id: str; command_id: str
+    request_fingerprint: str; idempotent_replay: bool; previous_head_checkpoint_id: str; new_head_checkpoint_id: str
+    previous_season: int; previous_week: int | None = None; previous_event_id: str | None = None; previous_event_sequence: int | None = None
+    current_season: int; current_week: int | None = None; current_event_id: str | None = None; current_event_sequence: int | None = None
+    official_branch_changed: bool; simulation_result: dict[str, object]
+
+class AdminBranchSimulateNextRoundRequest(AdminBranchSimulateNextMatchRequest):
+    pass
+
+class AdminBranchSimulateNextRoundResponse(AdminBranchSimulateNextMatchResponse):
+    pass
+
+class AdminBranchSimulateNextWeekRequest(AdminBranchSimulateNextMatchRequest):
+    pass
+
+class AdminBranchSimulateNextWeekResponse(AdminBranchSimulateNextMatchResponse):
+    pass
+
+class AdminBranchSimulateNextTournamentRequest(AdminBranchSimulateNextMatchRequest):
+    pass
+
+class AdminBranchSimulateNextTournamentResponse(AdminBranchSimulateNextMatchResponse):
+    pass
+
+class AdminBranchSimulateFullSeasonRequest(AdminBranchSimulateNextMatchRequest):
+    pass
+
+class AdminBranchSimulateFullSeasonResponse(AdminBranchSimulateNextMatchResponse):
+    pass
+
+class AdminBranchSimulateWorldTourFinalsRequest(AdminBranchSimulateNextMatchRequest):
+    pass
+
+class AdminBranchSimulateWorldTourFinalsResponse(BaseModel):
+    product_run_id: str; branch_id: str; legacy_simulation_run_id: str; command_id: str
+    request_fingerprint: str; idempotent_replay: bool; previous_head_checkpoint_id: str; new_head_checkpoint_id: str
+    previous_season: int; previous_week: int | None = None; previous_event_id: str | None = None; previous_event_sequence: int | None = None
+    current_season: int; current_week: int | None = None; current_event_id: str | None = None; current_event_sequence: int | None = None
+    official_branch_changed: bool
+    finals: FinalsSimulationResult
+
+
+class BranchStateResponse(BaseModel):
+    branch_id: str; run_id: str; head_checkpoint_id: str | None = None
+    current_season: int | None = None; current_week: int | None = None
+    current_event_id: str | None = None; current_event_sequence: int | None = None
+    state_schema_version: str; status: str
+    metadata_json: dict[str, object] = Field(default_factory=dict)
+
+class BranchStateListResponse(BaseModel):
+    branch_states: list[BranchStateResponse] = Field(default_factory=list)
+
+class BranchCheckpointResponse(BaseModel):
+    checkpoint_id: str; run_id: str; branch_id: str; parent_checkpoint_id: str | None = None; sequence: int; kind: str; season: int
+    week: int | None = None; event_id: str | None = None; event_sequence: int | None = None; command_id: str; command_kind: str; command_boundary: str
+    config_version: str | None = None; config_fingerprint: str | None = None; world_id: str; world_fingerprint: str | None = None
+    global_seed: int | None = None; branch_seed: int | None = None; seed_namespace: dict[str, object] = Field(default_factory=dict)
+    payload_schema_version: str; content_hash_algorithm: str; content_hash: str; payload: dict[str, object] = Field(default_factory=dict)
+
+class BranchCheckpointListResponse(BaseModel):
+    branch_checkpoints: list[BranchCheckpointResponse] = Field(default_factory=list)
+
+class HistoricalBranchSeasonStateResponse(BaseModel):
+    product_run_id: str; branch_id: str; checkpoint_id: str; checkpoint_sequence: int; checkpoint_kind: str
+    checkpoint_content_hash: str; payload_schema_version: str; checkpoint_season: int; checkpoint_week: int | None = None
+    checkpoint_event_id: str | None = None; checkpoint_event_sequence: int | None = None; season_state: SeasonState
+
+class CaptureInitialBranchCheckpointRequest(BaseModel):
+    simulation_run_id: str
+    command_id: str | None = None
+
+
+class CaptureSeasonRolloverBranchCheckpointRequest(BaseModel):
+    simulation_run_id: str
+    from_season: int | None = None
+    to_season: int | None = None
+    command_id: str | None = None
+
+
+class CaptureBootstrapStartBranchCheckpointRequest(BaseModel):
+    simulation_run_id: str
+    source_run_id: str | None = None
+    from_season: int | None = None
+    to_season: int | None = None
+    command_id: str | None = None
+
+
+class CaptureCurrentBranchCheckpointRequest(BaseModel):
+    simulation_run_id: str
+    command_id: str | None = None
+
+
+class CaptureCompletedEventBranchCheckpointRequest(BaseModel):
+    simulation_run_id: str
+    event_id: str | None = None
+    event_sequence: int | None = None
+    command_id: str | None = None
+
+class CaptureCompletedWeekBranchCheckpointRequest(BaseModel):
+    simulation_run_id: str
+    week: int
+    command_id: str | None = None
+
+class CaptureAdminActionBranchCheckpointRequest(BaseModel):
+    simulation_run_id: str
+    action_id: str | None = None
+    action_sequence: int | None = None
+    command_id: str | None = None
+
+
+
+class RunProspectResponse(BaseModel):
+    prospect_id: str
+    run_id: str
+    world_id: str
+    season_start_year: int
+    season_label: str
+    season_week: int
+    calendar_year: int
+    year_week: int
+    birth_year: int
+    birth_year_week: int
+    age: int
+    country_code: str
+    country_name: str | None = None
+    status: Literal["prospect"]
+    source_type: Literal["weekly_15yo_cohort"]
+    cohort_policy_version: str
+    profile_version: str
+    first_name: str | None = None
+    last_name: str | None = None
+    display_name: str
+    short_name: str | None = None
+    identity_seed: str
+    profile_seed: str
+    development_seed: str
+    potential_seed: str
+    trait_seed: str
+    quality_band: str
+    profile_json: dict[str, object] = Field(default_factory=dict)
+    development_json: dict[str, object] = Field(default_factory=dict)
+    potential_json: dict[str, object] = Field(default_factory=dict)
+    trait_json: dict[str, object] = Field(default_factory=dict)
+
+
+class RunProspectListResponse(BaseModel):
+    run_id: str
+    total: int
+    limit: int
+    offset: int
+    prospects: list[RunProspectResponse] = Field(default_factory=list)
+
+
+class MaterializedRunProspectTalentCountrySummaryResponse(BaseModel):
+    country_code: str
+    country_name: str | None = None
+    forecast_count: int
+    materialized_count: int
+    expected_band_counts: dict[str, float] = Field(default_factory=dict)
+    generated_band_counts: dict[str, int] = Field(default_factory=dict)
+
+
+class MaterializedRunProspectTalentSummaryResponse(BaseModel):
+    run_id: str
+    season_start_year: int
+    forecast_source: str
+    forecast_fingerprint: str | None = None
+    cohort_state: str
+    forecast_total: int
+    total_materialized: int
+    quality_policy_id: str
+    quality_policy_fingerprint: str
+    quality_weights: dict[str, float] = Field(default_factory=dict)
+    expected_band_counts: dict[str, float] = Field(default_factory=dict)
+    generated_band_counts: dict[str, int] = Field(default_factory=dict)
+    countries: list[MaterializedRunProspectTalentCountrySummaryResponse] = Field(default_factory=list)
+
+
+class MaterializeRunProspectsRequest(BaseModel):
+    base_annual_intake_target: int = Field(default=200, ge=0)
+    season_growth_rate: float = Field(default=0.015, ge=0.0, le=0.10)
+    country_code: str | None = None
+    region: str | None = None
+    overwrite: bool = False
+    expected_review_fingerprint: str = Field(min_length=64, max_length=64)
+
+
+class MaterializeRunProspectsCountryTotalResponse(BaseModel):
+    country_code: str
+    country_name: str | None = None
+    materialized_count: int
+
+
+class MaterializeRunProspectsWeekTotalResponse(BaseModel):
+    season_week: int
+    materialized_count: int
+
+
+class MaterializeRunProspectsResponse(BaseModel):
+    run_id: str
+    world_id: str
+    season: str
+    season_start_year: int
+    annual_target: int
+    requested_prospect_count: int
+    created_count: int
+    existing_count: int
+    skipped_count: int
+    conflict_count: int
+    total_persisted_for_scope: int
+    weeks_materialized: list[MaterializeRunProspectsWeekTotalResponse] = Field(default_factory=list)
+    country_totals: list[MaterializeRunProspectsCountryTotalResponse] = Field(default_factory=list)
+    already_materialized: bool
+    message: str
+
+class RunWeeklyIntakeCohortCountryAllocationResponse(BaseModel):
+    country_code: str
+    country_name: str | None = None
+    allocated_count: int
+    allocation_weight: float
+    allocation_share: float
+    effective_population: int | float
+    population_source_type: str
+    population_source_year: int | None = None
+    is_population_estimated: bool
+
+
+class RunWeeklyIntakeCohortSeasonWeekResponse(BaseModel):
+    season_week: int
+    target_intake_count: int
+    total_allocated: int
+    week_weight: float
+    calendar_year: int
+    year_week: int
+    birth_year: int
+    birth_year_week: int
+    allocations: list[RunWeeklyIntakeCohortCountryAllocationResponse] = Field(default_factory=list)
+
+
+class RunWeeklyIntakeCohortCountryTotalResponse(BaseModel):
+    country_code: str
+    country_name: str | None = None
+    allocated_count: int
+
+
+class RunWeeklyIntakeCohortSeasonPreviewResponse(BaseModel):
+    run_id: str
+    world_id: str
+    world_name: str | None = None
+    season: str
+    season_start_year: int
+    season_index: int
+    base_annual_intake_target: int
+    season_growth_rate: float
+    season_variation_multiplier: float
+    annual_target: int
+    total_weekly_target: int
+    review_fingerprint: str
+    weeks: list[RunWeeklyIntakeCohortSeasonWeekResponse] = Field(default_factory=list)
+    country_totals: list[RunWeeklyIntakeCohortCountryTotalResponse] = Field(default_factory=list)
+
+
+class RunWorldStatusResponse(BaseModel):
+    run_id: str
+    world_id: str
+    source_type: Literal["fresh_seed", "rollover_bootstrap"]
+    stored_world_generation_fingerprint: str | None = None
+    current_world_generation_fingerprint: str
+    is_stale: bool
+    rebuild_supported: bool
+    message: str
+
+
+class WorldPackageStorageResponse(BaseModel):
+    package_root_path: str
+    world_metadata_path: str
+    countries_root_path: str
+    countries_index_path: str
+    geography_root_path: str
+    continents_path: str
+    regions_path: str
+    travel_regions_path: str
+    timezone_areas_path: str
+
+
+class WorldPackageSummaryResponse(BaseModel):
+    world_id: str
+    name: str
+    description: str
+    type: Literal["official", "custom"]
+    status: Literal["active", "archived"]
+    source: Literal["canonical_config", "built_in", "custom_config"]
+    editable: bool
+    deletable: bool
+    archivable: bool
+    version: str
+    fingerprint: str
+    country_count: int
+    continent_count: int
+    region_count: int
+    travel_region_count: int
+    timezone_area_count: int
+    used_by_run_count: int | None = None
+    validation_status: Literal["valid", "unknown"]
+    storage: WorldPackageStorageResponse
+
+
+class WorldPackageDetailResponse(WorldPackageSummaryResponse):
+    pass
+
+
+class WorldPackageListResponse(BaseModel):
+    packages: list[WorldPackageSummaryResponse] = Field(default_factory=list)
+
+
+class WorldPackageCountriesResponse(BaseModel):
+    world_id: str
+    world_name: str
+    type: Literal["official", "custom"]
+    source: Literal["canonical_config", "built_in", "custom_config"]
+    read_only: bool
+    country_count: int
+    source_path: str
+    countries: list[CountryResponse] = Field(default_factory=list)
+
+
+class WorldPackageContinentResponse(BaseModel):
+    code: str
+    name: str
+
+
+class WorldPackageRegionResponse(BaseModel):
+    code: str
+    name: str
+    continent_code: str | None = None
+
+
+class WorldPackageTravelRegionResponse(BaseModel):
+    code: str
+    name: str
+    description: str | None = None
+
+
+class WorldPackageTimezoneAreaResponse(BaseModel):
+    code: str
+    name: str
+    position: int
+
+
+class WorldPackageTimezoneAreasUpdateRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    timezone_areas: list[TimezoneArea]
+    expected_package_fingerprint: str
+
+
+class WorldPackageGeographyResponse(BaseModel):
+    world_id: str
+    continents: list[WorldPackageContinentResponse]
+    regions: list[WorldPackageRegionResponse]
+    travel_regions: list[WorldPackageTravelRegionResponse]
+    timezone_areas: list[WorldPackageTimezoneAreaResponse]
+    timezone_areas_authored: bool
+
+
+class WorldPackageCountryDetailResponse(BaseModel):
+    package: WorldPackageSummaryResponse
+    country: CountryResponse
+    region: WorldPackageRegionResponse | None = None
+    continent: WorldPackageContinentResponse | None = None
+    travel_region: WorldPackageTravelRegionResponse | None = None
+    source_path: str
+
+
+class WorldPackageCountryUpdateRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    name: str = Field(min_length=1)
+    notes: str | None = None
+    area_km2: int | None = Field(gt=0)
+    region: str = Field(min_length=1)
+    travel_region: str | None = None
+    wealth_support: int = Field(ge=1, le=5)
+    squash_popularity: int = Field(ge=1, le=5)
+    squash_tradition: int = Field(ge=1, le=5)
+    system_quality: int = Field(ge=1, le=5)
+    competition_density: float = Field(ge=1.0, le=5.0)
+    federation_quality: float = Field(ge=1.0, le=5.0)
+    court_count: int | None = Field(ge=0)
+    style_dna: dict[str, float]
+    expected_package_fingerprint: str | None = None
+
+
+class WorldPackageCountryPopulationUpdateRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    values_by_year: dict[int, StrictInt]
+    expected_package_fingerprint: str | None = None
+
+    @field_validator("values_by_year")
+    @classmethod
+    def validate_population(cls, value: dict[int, int]) -> dict[int, int]:
+        if 2020 not in value:
+            raise ValueError("values_by_year must contain default year 2020")
+        if any(year < 1955 or year > 2050 for year in value):
+            raise ValueError("population years must be between 1955 and 2050")
+        if any(isinstance(population, bool) or population <= 0 for population in value.values()):
+            raise ValueError("population values must be positive integers")
+        return value
+
+
+class WorldPackageCountryCreateRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    code: str = Field(pattern=r"^[A-Z]{3}$")
+    name: str = Field(min_length=1)
+    notes: str | None = None
+    area_km2: int | None = Field(gt=0)
+    region: str = Field(min_length=1)
+    travel_region: str | None = None
+    wealth_support: int = Field(ge=1, le=5)
+    squash_popularity: int = Field(ge=1, le=5)
+    squash_tradition: int = Field(ge=1, le=5)
+    system_quality: int = Field(ge=1, le=5)
+    competition_density: float = Field(ge=1.0, le=5.0)
+    federation_quality: float = Field(ge=1.0, le=5.0)
+    court_count: int | None = Field(ge=0)
+    style_dna: dict[str, float]
+    population_by_year: dict[int, StrictInt]
+    expected_package_fingerprint: str
+
+    @field_validator("population_by_year")
+    @classmethod
+    def validate_population(cls, value: dict[int, int]) -> dict[int, int]:
+        if 2020 not in value:
+            raise ValueError("population_by_year must contain default year 2020")
+        if any(year < 1955 or year > 2050 for year in value):
+            raise ValueError("population years must be between 1955 and 2050")
+        if any(isinstance(population, bool) or population <= 0 for population in value.values()):
+            raise ValueError("population values must be positive integers")
+        return value
+
+
+class WeeklyIntakeCountryAllocationResponse(BaseModel):
+    country_code: str
+    allocated_count: int
+    allocation_weight: float
+    allocation_share: float
+    effective_population: int | float
+    population_source_type: str
+    population_source_year: int | None = None
+    is_population_estimated: bool
+
+
+class WeeklyIntakePreviewResponse(BaseModel):
+    world_id: str
+    world_name: str | None = None
+    season: str
+    season_start_year: int
+    season_week: int
+    calendar_year: int
+    year_week: int
+    birth_year: int
+    birth_year_week: int
+    intake_age: int
+    target_intake_count: int
+    total_allocated: int
+    allocations: list[WeeklyIntakeCountryAllocationResponse] = Field(default_factory=list)
+
+
+class WeeklyIntakeSeasonScheduleWeekResponse(BaseModel):
+    season_week: int
+    target_intake_count: int
+    week_weight: float
+    calendar_year: int
+    year_week: int
+    birth_year: int
+    birth_year_week: int
+
+
+class WeeklyIntakeSeasonSchedulePreviewResponse(BaseModel):
+    world_id: str
+    world_name: str | None = None
+    season: str
+    season_start_year: int
+    season_index: int
+    base_annual_intake_target: int
+    season_growth_rate: float
+    season_variation_multiplier: float
+    annual_target: int
+    total_weekly_target: int
+    weeks: list[WeeklyIntakeSeasonScheduleWeekResponse] = Field(default_factory=list)
+
+
+class WorldPackageCountryEffectivePopulationResponse(BaseModel):
+    world_id: str
+    world_name: str
+    type: Literal["official", "custom"]
+    source: Literal["canonical_config", "built_in", "custom_config"]
+    read_only: bool
+    source_path: str
+    country_code: str
+    country_name: str
+    requested_year: int
+    effective_population: int
+    source_year: int | None = None
+    source_type: Literal["exact_population_year", "nearest_population_year", "default_population", "legacy_population"]
+    is_estimated: bool
+    default_population_year: int | None = None
+    default_population: int | None = None
+    legacy_population: int
+    population_by_year_count: int
+    usable_population_by_year_count: int
+
+class WorldPackageValidationCheckResponse(BaseModel):
+    code: str
+    severity: Literal["info", "warning", "error"]
+    status: Literal["passed", "warning", "failed"]
+    message: str
+    path: str | None = None
+    field: str | None = None
+
+
+class WorldPackageValidationResponse(BaseModel):
+    world_id: str
+    status: Literal["valid", "warnings", "errors"]
+    error_count: int
+    warning_count: int
+    info_count: int
+    checks: list[WorldPackageValidationCheckResponse] = Field(default_factory=list)
+
+
+class WorldPackageCountryUpdateResponse(BaseModel):
+    country_detail: WorldPackageCountryDetailResponse
+    package: WorldPackageSummaryResponse
+    validation: WorldPackageValidationResponse
+
+
+class WorldPackageCountryDeleteResponse(BaseModel):
+    deleted_country_code: str
+    package: WorldPackageSummaryResponse
+    validation: WorldPackageValidationResponse
+
+
+class WorldPackageCloneRequest(BaseModel):
+    new_world_id: str = Field(min_length=1)
+    name: str = Field(min_length=1)
+    description: str | None = None
+    dry_run: bool = True
+
+
+class WorldPackageCloneErrorResponse(BaseModel):
+    field: str | None = None
+    message: str
+
+
+class WorldPackageCloneResponse(BaseModel):
+    ok: bool
+    dry_run: bool
+    source_world_id: str
+    new_world_id: str
+    target_path: str
+    created_files: list[str] = Field(default_factory=list)
+    package: WorldPackageDetailResponse | None = None
+    validation: WorldPackageValidationResponse | None = None
+    errors: list[WorldPackageCloneErrorResponse] = Field(default_factory=list)
+
+
+class RunTalentPlanCountryAllocationResponse(BaseModel):
+    country_code: str
+    planned_count: int
+    quality_weights: dict[str, float]
+    actual_band_counts: dict[str, int]
+    bias_profile: dict[str, float]
+    dampener: dict[str, object] = Field(default_factory=dict)
+
+
+class RunTalentPlanSummaryResponse(BaseModel):
+    run_id: str
+    season: int
+    seed: int
+    total_talents: int
+    dataset_status: str | None = None
+    config_version: str | None = None
+    config_fingerprint: str | None = None
+    countries: list[RunTalentPlanCountryAllocationResponse] = Field(default_factory=list)
+
+
+class GeneratedPlayerProvenanceResponse(BaseModel):
+    run_id: str
+    season: int
+    player_id: str
+    country_code: str
+    talent_sequence: int | None = None
+    talent_seed_value: int | None = None
+    quality_band: str | None = None
+    is_top_band: bool
+    source_type: Literal["rollover_carried", "planner_generated", "manual_override"]
+    override_id: str | None = None
+    origin_source_type: Literal["planner_generated", "manual_override"] | None = None
+    origin_quality_band: str | None = None
+    origin_override_id: str | None = None
+    origin_season: int | None = None
+
+
+class GeneratedPlayerProvenanceListResponse(BaseModel):
+    run_id: str
+    players: list[GeneratedPlayerProvenanceResponse] = Field(default_factory=list)
+
+
+class RunPlayerListItemResponse(BaseModel):
+    player_id: str
+    name: str
+    country_code: str
+    age: int
+    birth_year: int | None = None
+    birth_year_week: int | None = None
+    source_type: Literal["rollover_carried", "planner_generated", "manual_override"]
+    override_id: str | None = None
+    quality_band: str | None = None
+    is_top_band: bool
+    origin_source_type: Literal["planner_generated", "manual_override"] | None = None
+    origin_quality_band: str | None = None
+    origin_override_id: str | None = None
+    origin_season: int | None = None
+    technique: int
+    movement: int
+    physical: int
+    mental: int
+    overall: int
+
+
+class RunPlayersListResponse(BaseModel):
+    run_id: str
+    total: int
+    limit: int
+    offset: int
+    players: list[RunPlayerListItemResponse] = Field(default_factory=list)
+
+
+class RunPlayerHiddenTraitSummaryResponse(BaseModel):
+    potential_ceiling: int
+    growth_curve: str
+    professionalism: float
+    ambition: float
+    travel_tolerance: float
+    schedule_aggression: float
+    injury_proneness: float
+    resilience: float
+
+
+class RunPlayerDetailResponse(BaseModel):
+    player_id: str
+    name: str
+    country_code: str
+    age: int
+    birth_year: int | None = None
+    birth_year_week: int | None = None
+    play_style: str
+    archetype: str
+    technique: int
+    movement: int
+    physical: int
+    mental: int
+    consistency: int
+    clutch: int
+    recovery: int
+    overall: int
+    hidden_traits: RunPlayerHiddenTraitSummaryResponse
+    source_type: Literal["rollover_carried", "planner_generated", "manual_override"]
+    quality_band: str | None = None
+    is_top_band: bool
+    override_id: str | None = None
+    origin_source_type: Literal["planner_generated", "manual_override"] | None = None
+    origin_quality_band: str | None = None
+    origin_override_id: str | None = None
+    origin_season: int | None = None
+    talent_seed_value: int | None = None
+    talent_sequence: int | None = None
+
+
+class PlayerCareerHistoryEntryResponse(BaseModel):
+    run_id: str
+    season: int
+    age: int
+    overall: int
+    technique: int
+    movement: int
+    physical: int
+    mental: int
+    source_type: Literal["rollover_carried", "planner_generated", "manual_override"] | None = None
+    quality_band: str | None = None
+    is_top_band: bool | None = None
+    origin_source_type: Literal["planner_generated", "manual_override"] | None = None
+    origin_quality_band: str | None = None
+    origin_override_id: str | None = None
+    origin_season: int | None = None
+
+
+class PlayerCareerHistoryResponse(BaseModel):
+    requested_run_id: str
+    player_id: str
+    player_name: str | None = None
+    country_code: str | None = None
+    entries: list[PlayerCareerHistoryEntryResponse] = Field(default_factory=list)
+
+
+class PlayerCareerSeasonPerformanceEntryResponse(BaseModel):
+    run_id: str
+    season: int
+    ranking_position: int | None = None
+    race_position: int | None = None
+    tournaments_played: int
+    titles: int
+    finals: int
+    semifinals: int
+    quarterfinals: int
+    wins: int
+    losses: int
+
+
+class PlayerCareerPerformanceResponse(BaseModel):
+    requested_run_id: str
+    player_id: str
+    player_name: str | None = None
+    country_code: str | None = None
+    entries: list[PlayerCareerSeasonPerformanceEntryResponse] = Field(default_factory=list)
+
+
+class PlayerTournamentResultEntryResponse(BaseModel):
+    run_id: str
+    season: int
+    week: int | None = None
+    event_sequence: int
+    event_id: str
+    event_name: str | None = None
+    event_category: str | None = None
+    template_id: str | None = None
+    finish: str | None = None
+    is_title: bool
+    wins: int
+    losses: int
+    ranking_points_awarded: int | None = None
+
+
+class PlayerTournamentResultsTimelineResponse(BaseModel):
+    requested_run_id: str
+    player_id: str
+    player_name: str | None = None
+    country_code: str | None = None
+    entries: list[PlayerTournamentResultEntryResponse] = Field(default_factory=list)
+
+
+class RunNationSummaryItemResponse(BaseModel):
+    country_code: str
+    country_name: str | None = None
+    total_players: int
+    average_overall: float
+    average_age: float
+    top_band_count: int
+    manual_override_count: int
+    planner_generated_count: int
+    rollover_carried_count: int
+    top_player_id: str | None = None
+    top_player_name: str | None = None
+    top_player_overall: int | None = None
+
+
+class RunNationsSummaryResponse(BaseModel):
+    run_id: str
+    total: int
+    limit: int
+    offset: int
+    nations: list[RunNationSummaryItemResponse] = Field(default_factory=list)
+
+
+class RunNationAverageVisibleStatsResponse(BaseModel):
+    technique: float
+    movement: float
+    physical: float
+    mental: float
+
+
+class RunNationBandDistributionItemResponse(BaseModel):
+    band: str
+    count: int
+
+
+class RunNationTopPlayerItemResponse(BaseModel):
+    player_id: str
+    name: str
+    age: int
+    overall: int
+    source_type: Literal["rollover_carried", "planner_generated", "manual_override"]
+    quality_band: str | None = None
+    is_top_band: bool
+
+
+class RunNationDetailResponse(BaseModel):
+    run_id: str
+    country_code: str
+    country_name: str | None = None
+    total_players: int
+    average_overall: float
+    average_age: float
+    top_band_count: int
+    manual_override_count: int
+    planner_generated_count: int
+    rollover_carried_count: int
+    average_visible_stats: RunNationAverageVisibleStatsResponse
+    source_mix: dict[str, int]
+    band_distribution: list[RunNationBandDistributionItemResponse] = Field(default_factory=list)
+    origin_band_distribution: list[RunNationBandDistributionItemResponse] = Field(default_factory=list)
+    top_players: list[RunNationTopPlayerItemResponse] = Field(default_factory=list)
+
+
+class ManualPlayerAttributeOverridesRequest(BaseModel):
+    technique: int | None = Field(default=None, ge=20, le=99)
+    movement: int | None = Field(default=None, ge=20, le=99)
+    physical: int | None = Field(default=None, ge=20, le=99)
+    mental: int | None = Field(default=None, ge=20, le=99)
+    consistency: int | None = Field(default=None, ge=20, le=99)
+    clutch: int | None = Field(default=None, ge=20, le=99)
+    recovery: int | None = Field(default=None, ge=20, le=99)
+
+
+class ManualPlayerHiddenTraitOverridesRequest(BaseModel):
+    potential_ceiling: int | None = Field(default=None, ge=55, le=99)
+    growth_curve: str | None = None
+    professionalism: float | None = Field(default=None, ge=0.0, le=1.0)
+    ambition: float | None = Field(default=None, ge=0.0, le=1.0)
+    travel_tolerance: float | None = Field(default=None, ge=0.0, le=1.0)
+    schedule_aggression: float | None = Field(default=None, ge=0.0, le=1.0)
+    injury_proneness: float | None = Field(default=None, ge=0.0, le=1.0)
+    resilience: float | None = Field(default=None, ge=0.0, le=1.0)
+
+
+class ManualPlayerOverrideRequest(BaseModel):
+    override_id: str = Field(min_length=1, max_length=128)
+    season: int = Field(ge=1900)
+    country_code: str = Field(min_length=3, max_length=3)
+    player_name: str = Field(min_length=1, max_length=128)
+    player_slug: str | None = Field(default=None, min_length=1, max_length=64)
+    player_id: str | None = Field(default=None, min_length=1, max_length=128)
+    age: int = Field(ge=15, le=45)
+    profile_tier: Literal["strong", "elite", "special", "generational"]
+    quality_band_override: str | None = None
+    attribute_overrides: ManualPlayerAttributeOverridesRequest | None = None
+    hidden_trait_overrides: ManualPlayerHiddenTraitOverridesRequest | None = None
+    is_exceptional: bool = False
+    enabled: bool = True
+    notes: str | None = Field(default=None, max_length=512)
+
+
+class ManualPlayerOverrideResponse(ManualPlayerOverrideRequest):
+    pass
+
+
+class ManualPlayerOverridesListResponse(BaseModel):
+    overrides: list[ManualPlayerOverrideResponse] = Field(default_factory=list)
+
+
+class ManualPlayerOverridesImportRequest(BaseModel):
+    csv_text: str = Field(min_length=1)
+    dry_run: bool = False
+
+
+class ManualPlayerOverridesImportErrorResponse(BaseModel):
+    row_number: int | None = None
+    field: str | None = None
+    message: str
+
+
+class ManualPlayerOverridesImportSummaryResponse(BaseModel):
+    total_records: int
+    new_records: int
+    updated_records: int
+    unchanged_records: int
+
+
+class ManualPlayerOverridesImportResponse(BaseModel):
+    ok: bool
+    dry_run: bool
+    summary: ManualPlayerOverridesImportSummaryResponse
+    errors: list[ManualPlayerOverridesImportErrorResponse] = Field(default_factory=list)
+
+
+
+
+class WorldPackageImportRequest(BaseModel):
+    package_text: str = Field(min_length=1)
+    dry_run: bool = False
+
+
+class WorldPackageImportErrorResponse(BaseModel):
+    field: str | None = None
+    message: str
+
+
+class WorldPackageImportSummaryResponse(BaseModel):
+    total_records: int
+    new_records: int
+    updated_records: int
+    unchanged_records: int
+
+
+class WorldPackageImportResponse(BaseModel):
+    ok: bool
+    dry_run: bool
+    countries_summary: WorldPackageImportSummaryResponse
+    manual_overrides_summary: WorldPackageImportSummaryResponse
+    errors: list[WorldPackageImportErrorResponse] = Field(default_factory=list)
+
+class SimulateResponse(BaseModel):
+    mode: str
+    run: RunSummaryResponse
+    step: SimulationStepResult
+
+
+class EventRecordResponse(BaseModel):
+    event_sequence: int
+    event_id: str
+    season: int | None = None
+    week: int | None = None
+    template_id: str | None = None
+    tournament_result: dict[str, object] | None = None
+
+
+class EventListResponse(BaseModel):
+    run_id: str
+    events: list[EventRecordResponse] = Field(default_factory=list)
+
+
+class RunActivityItemResponse(BaseModel):
+    kind: str
+    sequence: int | None = None
+    label: str
+    season: int | None = None
+    week: int | None = None
+    event_id: str | None = None
+    snapshot_sequence: int | None = None
+    source_event_id: str | None = None
+    related_run_id: str | None = None
+
+
+class WildcardAssignmentRequest(BaseModel):
+    slot_index: int = Field(ge=1)
+    player_id: str = Field(min_length=1)
+
+
+class WildcardAssignRequest(BaseModel):
+    assignments: list[WildcardAssignmentRequest] = Field(min_length=1)
+
+
+class WildcardSlotResponse(BaseModel):
+    slot_index: int
+    entry_id: str
+    assigned_player_id: str | None = None
+
+
+class WildcardStateApiResponse(BaseModel):
+    run_id: str
+    event_id: str
+    eligible: bool
+    eligibility_reason: str | None = None
+    total_slots: int
+    slots: list[WildcardSlotResponse] = Field(default_factory=list)
+
+
+class WildcardCandidateResponse(BaseModel):
+    player_id: str
+    player_name: str
+    country_code: str
+    country_name: str | None = None
+    source: Literal["main_draw_waitlist", "qualification_waitlist", "non_applicant_pool"]
+    source_priority: int | None = None
+    entry_score: float | None = None
+
+
+class WildcardCandidatesApiResponse(BaseModel):
+    run_id: str
+    event_id: str
+    candidates: list[WildcardCandidateResponse] = Field(default_factory=list)
+
+
+class WildcardActionAssignmentSummaryResponse(BaseModel):
+    slot_index: int
+    player_id: str
+
+
+class WildcardActionHistoryItemResponse(BaseModel):
+    action_sequence: int
+    action_kind: str
+    event_id: str
+    assignment_payload_summary: list[WildcardActionAssignmentSummaryResponse] = Field(default_factory=list)
+
+
+class WildcardActionHistoryApiResponse(BaseModel):
+    run_id: str
+    event_id: str
+    actions: list[WildcardActionHistoryItemResponse] = Field(default_factory=list)
+
+
+class PreDrawWithdrawalRequest(BaseModel):
+    withdrawn_player_id: str = Field(min_length=1)
+
+
+class PreDrawWithdrawablePlayerResponse(BaseModel):
+    player_id: str
+    player_name: str
+    country_code: str
+    country_name: str | None = None
+    entry_id: str
+    acceptance_status: str
+
+
+class PreDrawWithdrawalStateApiResponse(BaseModel):
+    run_id: str
+    event_id: str
+    eligible: bool
+    eligibility_reason: str | None = None
+    withdrawable_main_draw_players: list[PreDrawWithdrawablePlayerResponse] = Field(default_factory=list)
+
+
+class PreDrawWithdrawalResultApiResponse(BaseModel):
+    run_id: str
+    event_id: str
+    withdrawn_player_id: str
+    replacement_player_id: str
+    replacement_source: Literal["main_draw_waitlist", "qualification_waitlist"]
+    withdrawn_entry_id: str
+    replacement_entry_id: str
+    eligible: bool
+    eligibility_reason: str | None = None
+
+
+class PreDrawWithdrawalActionHistoryItemResponse(BaseModel):
+    action_sequence: int
+    action_kind: str
+    event_id: str
+    withdrawn_player_id: str
+    replacement_player_id: str
+    replacement_source: Literal["main_draw_waitlist", "qualification_waitlist"]
+    withdrawn_entry_id: str
+    replacement_entry_id: str
+    notes: str | None = None
+
+
+class PreDrawWithdrawalActionHistoryApiResponse(BaseModel):
+    run_id: str
+    event_id: str
+    actions: list[PreDrawWithdrawalActionHistoryItemResponse] = Field(default_factory=list)
+
+
+class LateReplacementRequest(BaseModel):
+    withdrawn_player_id: str = Field(min_length=1)
+
+
+class LateReplacementCandidateResponse(BaseModel):
+    candidate_slot_index: int
+    player_id: str
+    player_name: str
+    country_code: str
+    country_name: str | None = None
+    source: Literal["main_draw_waitlist", "qualification_waitlist"]
+    source_priority: int | None = None
+    ranking_priority: int | None = None
+    entry_id: str
+
+
+class LateReplacementCandidatesApiResponse(BaseModel):
+    run_id: str
+    event_id: str
+    candidates: list[LateReplacementCandidateResponse] = Field(default_factory=list)
+
+
+class LateReplacementStateApiResponse(BaseModel):
+    run_id: str
+    event_id: str
+    eligible: bool
+    eligibility_reason: str | None = None
+    replaceable_main_draw_players: list[PreDrawWithdrawablePlayerResponse] = Field(default_factory=list)
+    remaining_capacity: int
+
+
+class LateReplacementResultApiResponse(BaseModel):
+    run_id: str
+    event_id: str
+    withdrawn_player_id: str
+    replacement_player_id: str
+    replacement_source: Literal["main_draw_waitlist", "qualification_waitlist"]
+    withdrawn_entry_id: str
+    replacement_entry_id: str
+    candidate_slot_index: int | None = None
+    eligible: bool
+    eligibility_reason: str | None = None
+    remaining_capacity: int
+
+
+class LateReplacementActionHistoryItemResponse(BaseModel):
+    action_sequence: int
+    action_kind: str
+    event_id: str
+    withdrawn_player_id: str
+    replacement_player_id: str
+    replacement_source: Literal["main_draw_waitlist", "qualification_waitlist"]
+    withdrawn_entry_id: str
+    replacement_entry_id: str
+    candidate_slot_index: int | None = None
+    notes: str | None = None
+
+
+class LateReplacementActionHistoryApiResponse(BaseModel):
+    run_id: str
+    event_id: str
+    actions: list[LateReplacementActionHistoryItemResponse] = Field(default_factory=list)
+
+
+class RunActivityResponse(BaseModel):
+    run_id: str
+    items: list[RunActivityItemResponse] = Field(default_factory=list)
+
+
+class RankingSnapshotRecordResponse(BaseModel):
+    snapshot_sequence: int
+    snapshot_kind: str
+    source_event_id: str | None = None
+    payload: RankingSnapshot
+
+
+class RankingSnapshotListResponse(BaseModel):
+    run_id: str
+    snapshots: list[RankingSnapshotRecordResponse] = Field(default_factory=list)
+
+
+class RaceSnapshotRecordResponse(BaseModel):
+    snapshot_sequence: int
+    snapshot_kind: str
+    source_event_id: str | None = None
+    payload: RaceSnapshot
+
+
+class RaceSnapshotListResponse(BaseModel):
+    run_id: str
+    snapshots: list[RaceSnapshotRecordResponse] = Field(default_factory=list)
+
+
+class SeasonStateResponse(BaseModel):
+    run: RunSummaryResponse
+    season_state: SeasonState
+
+
+class FinalsQualificationResponse(BaseModel):
+    run_id: str
+    season: int
+    source_as_of_season: int
+    source_as_of_week: int
+    qualification: FinalsQualificationResult
+
+
+class FinalsResultResponse(BaseModel):
+    run_id: str
+    season: int
+    event_id: str
+    source_as_of_season: int
+    source_as_of_week: int
+    result: FinalsResult
+
+
+class FinalsSimulationResponse(BaseModel):
+    mode: Literal["simulate_world_tour_finals"]
+    run: RunSummaryResponse
+    finals: FinalsSimulationResult
+
+
+class FinalsSummaryApiResponse(BaseModel):
+    run_id: str
+    season: int
+    qualification: FinalsQualificationResponse | None = None
+    result: FinalsResultResponse | None = None
+
+
+class SeasonRolloverExecutionResponse(BaseModel):
+    run: RunSummaryResponse
+    rollover: SeasonRolloverResponse
+
+
+class SeasonRolloverSummaryApiResponse(BaseModel):
+    rollover: SeasonRolloverSummaryResponse
+
+
+class NextSeasonPlayersResponse(BaseModel):
+    run_id: str
+    to_season: int
+    players: list[NextSeasonPlayerRecord] = Field(default_factory=list)
+
+
+class PlayerTransitionsResponse(BaseModel):
+    run_id: str
+    to_season: int
+    transitions: list[PersistedPlayerTransition] = Field(default_factory=list)
+
+
+class BootstrapNextSeasonApiResponse(BaseModel):
+    run: RunSummaryResponse
+    bootstrap: BootstrapNextSeasonResponse
+
+
+class RunLineageApiResponse(BaseModel):
+    lineage: RunLineageRecord
+
+
+class RunSourceApiResponse(BaseModel):
+    source: RunSourceSummary
+
+
+class ConfigValidationIssueResponse(BaseModel):
+    severity: Literal["warning", "error"]
+    domain: str
+    check_id: str
+    source: str
+    message: str
+    location: str | None = None
+
+
+class ConfigDomainValidationResponse(BaseModel):
+    domain: str
+    source: str
+    valid: bool
+    warnings: list[ConfigValidationIssueResponse] = Field(default_factory=list)
+    errors: list[ConfigValidationIssueResponse] = Field(default_factory=list)
+
+
+class ConfigValidationResponse(BaseModel):
+    valid: bool
+    warnings: list[ConfigValidationIssueResponse] = Field(default_factory=list)
+    errors: list[ConfigValidationIssueResponse] = Field(default_factory=list)
+    domains: list[ConfigDomainValidationResponse] = Field(default_factory=list)
+
+
+class CountryUpsertRequest(BaseModel):
+    code: str = Field(min_length=3, max_length=3)
+    name: str = Field(min_length=1)
+    flag_asset: str | None = None
+    region: str = Field(min_length=1)
+    population: int = Field(gt=0)
+    area_km2: int | None = Field(default=None, gt=0)
+    default_population_year: int | None = Field(default=None)
+    default_population: int | None = Field(default=None, gt=0)
+    population_by_year: dict[int, int | None] | None = None
+    wealth_support: int = Field(ge=1, le=5)
+    squash_popularity: int = Field(ge=1, le=5)
+    squash_tradition: int = Field(ge=1, le=5)
+    system_quality: int = Field(ge=1, le=5)
+    competition_density: float | None = Field(default=None, ge=1.0, le=5.0)
+    federation_quality: float | None = Field(default=None, ge=1.0, le=5.0)
+    court_count: int | None = Field(default=None, ge=0)
+    travel_region: str | None = None
+    notes: str | None = None
+    style_dna: dict[str, float] = Field(default_factory=dict)
+
+    @field_validator("code")
+    @classmethod
+    def normalize_code(cls, value: str) -> str:
+        normalized = value.strip().upper()
+        if len(normalized) != 3:
+            raise ValueError("code must be exactly 3 characters")
+        return normalized
+
+    @field_validator("name", "region")
+    @classmethod
+    def non_empty_trimmed(cls, value: str) -> str:
+        normalized = value.strip()
+        if not normalized:
+            raise ValueError("must be non-empty")
+        return normalized
+
+    @field_validator("default_population_year")
+    @classmethod
+    def validate_default_population_year(cls, value: int | None) -> int | None:
+        if value is None:
+            return None
+        if value != 2020:
+            raise ValueError("default_population_year must be 2020 when provided")
+        return value
+
+    @field_validator("population_by_year")
+    @classmethod
+    def validate_population_by_year(cls, value: dict[int, int | None] | None) -> dict[int, int | None] | None:
+        if value is None:
+            return None
+        normalized: dict[int, int | None] = {}
+        for year, population in value.items():
+            year_int = int(year)
+            if not 1955 <= year_int <= 2050:
+                raise ValueError("population_by_year years must be between 1955 and 2050")
+            if population is not None and population <= 0:
+                raise ValueError("population_by_year values must be positive integers or null")
+            normalized[year_int] = population
+        return normalized
+
+    @field_validator("flag_asset")
+    @classmethod
+    def normalize_flag_asset(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        normalized = value.strip()
+        return normalized or None
+
+
+class CountryResponse(BaseModel):
+    code: str
+    name: str
+    flag_asset: str | None = None
+    region: str
+    population: int
+    area_km2: int | None = None
+    default_population_year: int | None = None
+    default_population: int | None = None
+    population_by_year: dict[int, int | None] | None = None
+    wealth_support: int
+    squash_popularity: int
+    squash_tradition: int
+    system_quality: int
+    competition_density: float
+    federation_quality: float
+    court_count: int | None = None
+    travel_region: str | None = None
+    notes: str | None = None
+    style_dna: dict[str, float] = Field(default_factory=dict)
+
+
+class CountriesListResponse(BaseModel):
+    countries: list[CountryResponse] = Field(default_factory=list)
+
+
+class CountriesMetadataResponse(BaseModel):
+    dataset_status: str | None = None
+    country_count: int
+    source_path: str
+
+
+class CountriesDatasetResponse(BaseModel):
+    dataset_status: str | None = None
+    countries: list[CountryResponse] = Field(default_factory=list)
+
+
+class CountriesImportRequest(BaseModel):
+    csv_text: str = Field(min_length=1)
+    dry_run: bool = False
+
+
+class CountriesImportErrorResponse(BaseModel):
+    row_number: int | None = None
+    field: str | None = None
+    message: str
+
+
+class CountriesImportSummaryResponse(BaseModel):
+    total_records: int
+    new_records: int
+    updated_records: int
+    unchanged_records: int
+
+
+class CountriesImportResponse(BaseModel):
+    ok: bool
+    dry_run: bool
+    summary: CountriesImportSummaryResponse
+    errors: list[CountriesImportErrorResponse] = Field(default_factory=list)
+
+
+class CountryTalentYearPreviewResponse(BaseModel):
+    country_code: str
+    country_name: str
+    planned_count: int
+    quality_weights: dict[str, float]
+    expected_band_counts: dict[str, float]
+    actual_band_counts: dict[str, int]
+    expected_elite_talents: float
+    expected_tour_talents: float
+    expected_pro_depth: float
+    elite_talents: int
+    tour_talents: int
+    pro_depth: int
+    bias_profile: dict[str, float]
+    dampener: dict[str, object] = Field(default_factory=dict)
+
+
+class TalentClassYearPreviewResponse(BaseModel):
+    year: int
+    seed: int
+    dataset_status: str | None = None
+    country_count: int
+    source_path: str
+    total_talents: int
+    countries: list[CountryTalentYearPreviewResponse] = Field(default_factory=list)
+
+
+class CountryTalentSummaryResponse(BaseModel):
+    country_code: str
+    country_name: str
+    total_planned_talents: int
+    average_talents_per_year: float
+    total_elite_count: int
+    total_special_count: int
+    total_generational_count: int
+    total_elite_talents: int
+    total_tour_talents: int
+    total_pro_depth: int
+    average_elite_talents_per_year: float
+    average_tour_talents_per_year: float
+    average_pro_depth_per_year: float
+    average_top_band_rate: float
+
+
+class TalentClassSummaryResponse(BaseModel):
+    year_start: int
+    years: int
+    seed: int
+    dataset_status: str | None = None
+    country_count: int
+    source_path: str
+    total_talents_across_span: int
+    average_total_talents_per_year: float
+    global_band_totals: dict[str, int]
+    global_elite_talents: int
+    global_tour_talents: int
+    global_pro_depth: int
+    countries: list[CountryTalentSummaryResponse] = Field(default_factory=list)
+
+
+class LuckyLoserRulesResponse(BaseModel):
+    enabled: bool = True
+    max_spots: int = Field(ge=0)
+    replacement_window: str = "pre_main_draw_round_1"
+
+
+class TournamentPointDistributionResponse(BaseModel):
+    winner: int = Field(ge=0)
+    finalist: int = Field(ge=0)
+    semifinalist: int = Field(ge=0)
+    quarterfinalist: int = Field(ge=0)
+    round_of_16: int = Field(default=0, ge=0)
+    round_of_32: int = Field(default=0, ge=0)
+
+
+class TournamentTemplateUpsertRequest(BaseModel):
+    template_id: str = Field(min_length=3)
+    tour_level: Literal["WORLD_TOUR", "ELITE_TOUR"]
+    category: str = Field(min_length=1)
+    event_name: str = Field(min_length=1)
+    region: str = Field(min_length=1)
+    host_country: str = Field(min_length=3, max_length=3)
+    main_draw_size: int = Field(gt=0)
+    qualification_draw_size: int = Field(ge=0)
+    seeds_count: int = Field(ge=0)
+    qualifier_spots: int = Field(ge=0)
+    wild_cards: int = Field(ge=0)
+    byes: int = Field(ge=0)
+    lucky_loser_rules: LuckyLoserRulesResponse
+    point_distribution_ref: str | None = None
+    point_distribution: TournamentPointDistributionResponse | None = None
+    event_duration_days: int = Field(gt=0)
+    qualification_duration_days: int = Field(ge=0)
+    preferred_week_type: str | None = None
+    seasonal_grouping: str | None = None
+    prize_money: int = Field(default=0, ge=0)
+    prize_money_currency: str | None = Field(default=None, min_length=3, max_length=3)
+    prize_money_table: dict[str, int | None] = Field(default_factory=dict)
+    prestige: float = Field(default=0.0, ge=0)
+    duration_in_season_weeks: int = Field(default=1, ge=1)
+    host_requirements: dict[str, object] = Field(default_factory=dict)
+    category_specific_rules: dict[str, object] = Field(default_factory=dict)
+    notes: str | None = None
+    active: bool = True
+
+    @field_validator("template_id", "category", "event_name", "region")
+    @classmethod
+    def non_empty_trimmed_template_text(cls, value: str) -> str:
+        normalized = value.strip()
+        if not normalized:
+            raise ValueError("must be non-empty")
+        return normalized
+
+    @field_validator("host_country")
+    @classmethod
+    def normalize_host_country(cls, value: str) -> str:
+        normalized = value.strip().upper()
+        if len(normalized) != 3:
+            raise ValueError("host_country must be exactly 3 characters")
+        return normalized
+
+
+class TournamentTemplateResponse(TournamentTemplateUpsertRequest):
+    pass
+
+
+class TournamentTemplatesListResponse(BaseModel):
+    templates: list[TournamentTemplateResponse] = Field(default_factory=list)
+
+
+class TournamentTemplatesMetadataResponse(BaseModel):
+    template_count: int
+    source_path: str
+    referenced_by_calendar: bool
+    referenced_template_ids: list[str] = Field(default_factory=list)
+
+
+class TournamentTemplatesDatasetResponse(BaseModel):
+    templates: list[TournamentTemplateResponse] = Field(default_factory=list)
+
+
+class TournamentTemplatesImportRequest(BaseModel):
+    dataset: dict[str, object]
+    dry_run: bool = False
+
+
+class TournamentTemplatesValidationIssueResponse(BaseModel):
+    field: str | None = None
+    message: str
+
+
+class TournamentTemplatesImportResponse(BaseModel):
+    ok: bool
+    dry_run: bool
+    template_count: int
+    errors: list[TournamentTemplatesValidationIssueResponse] = Field(default_factory=list)
+
+
+
+
+class CustomInitialPoolPlayerCreateRequest(CustomInitialPoolPlayerCreate):
+    pass
+
+
+class InitialPoolPlayerUpdateRequest(InitialPoolPlayerUpdate):
+    pass
+
+class InitialPoolGenerateRequest(BaseModel):
+    season: str = Field(default="2000/2001", min_length=4, max_length=16)
+    seed: int
+    target_pool_size: int | None = Field(default=128, ge=1, le=2000)
+    dry_run: bool = True
+
+
+class InitialPoolRegenerateRequest(BaseModel):
+    season: str = Field(default="2000/2001", min_length=4, max_length=16)
+    seed: int
+    target_pool_size: int | None = Field(default=None, ge=1, le=2000)
+    country_code: str | None = Field(default=None, min_length=3, max_length=3)
+    region: str | None = None
+    dry_run: bool = True
+
+    @field_validator("country_code")
+    @classmethod
+    def normalize_country_code(cls, value: str | None) -> str | None:
+        return value.upper() if value else value
+
+
+class CalibrationDistributionResponse(BaseModel):
+    minimum: int | None
+    maximum: int | None
+    mean: float | None
+    p10: float | None
+    p25: float | None
+    p50: float | None
+    p75: float | None
+    p90: float | None
+
+
+class CalibrationHistogramBinResponse(BaseModel):
+    lower: int
+    upper: int
+    count: int
+
+
+class TalentCalibrationBandResponse(BaseModel):
+    band: str
+    configured_rarity_weight: float
+    generated_count: int
+    generated_share: float
+    expected_count: float
+    generated_minus_expected: float
+    current_ovr: CalibrationDistributionResponse
+    potential_ovr: CalibrationDistributionResponse
+    development_timing_counts: dict[str, int]
+    potential_histogram: list[CalibrationHistogramBinResponse]
+
+
+class TalentCalibrationResponse(BaseModel):
+    seed: int
+    sample_count: int
+    quality_policy_id: str
+    quality_policy_fingerprint: str
+    sporting_profile_policy_id: str
+    sporting_profile_policy_fingerprint: str
+    baseline_potential_min: int
+    baseline_potential_max: int
+    current_ovr: CalibrationDistributionResponse
+    potential_ovr: CalibrationDistributionResponse
+    bands: list[TalentCalibrationBandResponse]
+
+
+class CandidatePotentialRangeRequest(BaseModel):
+    potential_min: StrictInt = Field(ge=0, le=200)
+    potential_max: StrictInt = Field(ge=0, le=200)
+
+    @field_validator("potential_max")
+    @classmethod
+    def range_is_not_inverted(cls, value: int, info):
+        minimum = info.data.get("potential_min")
+        if minimum is not None and minimum > value:
+            raise ValueError("potential_min must be less than or equal to potential_max")
+        return value
+
+
+class CandidateRangesRequest(BaseModel):
+    solid_prospect: CandidatePotentialRangeRequest
+    strong_prospect: CandidatePotentialRangeRequest
+    elite_prospect: CandidatePotentialRangeRequest
+    special_prospect: CandidatePotentialRangeRequest
+    generational_talent: CandidatePotentialRangeRequest
+
+
+class TalentCalibrationCompareRequest(BaseModel):
+    seed: StrictInt
+    sample_count: StrictInt = Field(ge=1, le=50_000)
+    candidate_ranges: CandidateRangesRequest
+
+
+class CalibrationDeltaResponse(BaseModel):
+    minimum: int | None
+    maximum: int | None
+    mean: float | None
+    p10: float | None
+    p50: float | None
+    p90: float | None
+    increased: int
+    unchanged: int
+    decreased: int
+
+
+class TalentCalibrationBandComparisonResponse(BaseModel):
+    band: str
+    generated_count: int
+    expected_count: float
+    generated_share: float
+    configured_rarity_weight: float
+    candidate_range: CandidatePotentialRangeRequest
+    baseline_potential_ovr: CalibrationDistributionResponse
+    candidate_potential_ovr: CalibrationDistributionResponse
+    delta: CalibrationDeltaResponse
+    baseline_histogram: list[CalibrationHistogramBinResponse]
+    candidate_histogram: list[CalibrationHistogramBinResponse]
+
+
+class TalentCalibrationGlobalComparisonResponse(BaseModel):
+    baseline_potential_ovr: CalibrationDistributionResponse
+    candidate_potential_ovr: CalibrationDistributionResponse
+    delta: CalibrationDeltaResponse
+
+
+class TalentCalibrationOverlapResponse(BaseModel):
+    lower_band: str
+    upper_band: str
+    baseline: float | None
+    candidate: float | None
+
+
+class TalentCalibrationCompareResponse(BaseModel):
+    seed: int
+    sample_count: int
+    baseline_policy_id: str
+    baseline_policy_fingerprint: str
+    candidate_sandbox_configuration_fingerprint: str
+    quality_policy_id: str
+    quality_policy_fingerprint: str
+    bands: list[TalentCalibrationBandComparisonResponse]
+    global_comparison: TalentCalibrationGlobalComparisonResponse
+    adjacent_overlaps: list[TalentCalibrationOverlapResponse]
+
+
+class TalentCalibrationMultiSeedRequest(BaseModel):
+    seed_start: StrictInt
+    seed_count: StrictInt = Field(ge=1, le=100)
+    sample_count_per_seed: StrictInt = Field(ge=1, le=50_000)
+    candidate_ranges: CandidateRangesRequest
+
+    @model_validator(mode="after")
+    def within_total_sample_budget(self):
+        if self.seed_count * self.sample_count_per_seed > 250_000:
+            raise ValueError("total generated samples must not exceed 250000")
+        return self
+
+
+class CalibrationVariabilityResponse(BaseModel):
+    minimum: float | None
+    maximum: float | None
+    mean: float | None
+    standard_deviation: float | None
+
+
+class TalentCalibrationBandRobustnessResponse(BaseModel):
+    band: str
+    total_generated_samples: int
+    seeds_with_samples: int
+    seeds_without_samples: int
+    candidate_median: CalibrationVariabilityResponse
+    candidate_mean: CalibrationVariabilityResponse
+    generated_count: CalibrationVariabilityResponse
+
+
+class TalentCalibrationOverlapRobustnessResponse(BaseModel):
+    lower_band: str
+    upper_band: str
+    baseline_pooled: float | None
+    candidate_pooled: float | None
+    baseline_per_seed: CalibrationVariabilityResponse
+    candidate_per_seed: CalibrationVariabilityResponse
+    missing_seed_count: int
+
+
+class TalentCalibrationSeedResponse(BaseModel):
+    seed: int
+    total_samples: int
+    generated_counts: dict[str, int]
+    baseline_potential_median: float | None
+    candidate_potential_median: float | None
+    median_delta: float | None
+    adjacent_candidate_overlaps: dict[str, float | None]
+
+
+class TalentCalibrationMultiSeedResponse(BaseModel):
+    seed_start: int
+    seed_count: int
+    sample_count_per_seed: int
+    total_sample_count: int
+    seeds: list[int]
+    quality_policy_id: str
+    quality_policy_fingerprint: str
+    baseline_policy_id: str
+    baseline_policy_fingerprint: str
+    candidate_sandbox_configuration_fingerprint: str
+    pooled_global_comparison: TalentCalibrationGlobalComparisonResponse
+    pooled_bands: list[TalentCalibrationBandComparisonResponse]
+    band_robustness: list[TalentCalibrationBandRobustnessResponse]
+    overlap_robustness: list[TalentCalibrationOverlapRobustnessResponse]
+    per_seed: list[TalentCalibrationSeedResponse]
+
+class ViewerOfficialRunContextResponse(BaseModel):
+    product_run_id: str
+    product_run_display_name: str
+    product_run_status: str
+    product_run_storage_kind: str
+    product_run_read_only: bool
+    official_branch_id: str
+    official_branch_display_name: str
+    official_branch_status: str
+    official_branch_read_only: bool
+    official_branch_seed: int | None = None
+    saved_head_revision_id: str
+    legacy_simulation_run_id: str | None = None
+    head_checkpoint_id: str | None = None
+    head_checkpoint_kind: str | None = None
+    current_season: int | None = None
+    current_week: int | None = None
+    current_event_id: str | None = None
+    current_event_sequence: int | None = None
+    resolution_version: str

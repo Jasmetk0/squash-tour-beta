@@ -1,0 +1,62 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "fifa-earth-tkl-reviewed-structure.v1",
+  "world_id": "fifa_earth",
+  "countries": [
+    "TKL"
+  ],
+  "data_cutoff": "2026-10-03",
+  "rating_scale": "country_ratings_1_10.v2",
+  "attribute_order": [
+    "squash_popularity",
+    "squash_access",
+    "development_quality",
+    "competition_quality",
+    "elite_support",
+    "squash_tradition"
+  ],
+  "anchor_values": {
+    "TKL": {
+      "1955": [
+        1.3,
+        1.4,
+        1.2,
+        1.1,
+        1,
+        1.3
+      ],
+      "1976": [
+        1.5,
+        1.6,
+        1.3,
+        1.1,
+        1.1,
+        1.4
+      ],
+      "2000": [
+        1.8,
+        1.9,
+        1.5,
+        1.2,
+        1.2,
+        1.7
+      ],
+      "2026": [
+        1.9,
+        2,
+        1.6,
+        1.3,
+        1.2,
+        1.8
+      ]
+    }
+  },
+  "selection": "Piecewise-constant authored periods; constitutional/territorial status is identity context only and local ratings do not inherit New Zealand-wide sports evidence.",
+  "limitations": [
+    "All numeric ratings are project estimates with low confidence, not source measurements.",
+    "New Zealand-wide sports evidence is not inherited automatically.",
+    "No football federation membership or organised competition is inferred.",
+    "Constitutional or territorial status is context only, not sports-performance evidence.",
+    "No rankings, titles or athlete outcomes are used to fit ratings."
+  ]
+}

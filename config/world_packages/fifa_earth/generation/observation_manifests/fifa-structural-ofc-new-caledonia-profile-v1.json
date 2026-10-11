@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-ofc-new-caledonia-profile-v1",
+  "source_id": "ofc-new-caledonia-profile",
+  "relative_path": "observations/normalized/structural/fifa_structural_ofc_new_caledonia_profile_v1.json",
+  "sha256": "96da6cb63ccfbe9c1b1aedc25f5147af07a86fecf4fefefc18684da4e3ddfa45",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-04"
+}

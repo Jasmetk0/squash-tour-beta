@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-ktf-infrastructure-2026-v1",
+  "source_id": "ktf-world-tennis-day-2026",
+  "relative_path": "observations/normalized/atp-ktf-infrastructure-2026-v1.json",
+  "sha256": "4befaa468b7dfd501de3c1324d9fee8e5242877bf3ff12f0cc036f0243e8d3aa",
+  "record_count": 3,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

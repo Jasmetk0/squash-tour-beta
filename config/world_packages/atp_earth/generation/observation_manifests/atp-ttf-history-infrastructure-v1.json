@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-ttf-history-infrastructure-v1",
+  "source_id": "ttf-history-infrastructure",
+  "relative_path": "observations/normalized/atp-ttf-history-infrastructure-v1.json",
+  "sha256": "7722a4dc41945e3a5024eec87004d3c21e86fda03a5a98e024b2cde170a33fcb",
+  "record_count": 3,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

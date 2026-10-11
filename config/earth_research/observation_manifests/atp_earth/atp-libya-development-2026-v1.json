@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-libya-development-2026-v1",
+  "source_id": "itf-libya-development-eligibility-2026",
+  "relative_path": "observations/normalized/atp_libya_development_2026_v1.json",
+  "sha256": "dfee04e3f91d438f71d1e34c52ade475bbf9a48905600231a82c59a03b81da5d",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

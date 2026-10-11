@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-china-tennis-2025-review-v1",
+  "source_id": "china-tennis-2025-review",
+  "relative_path": "observations/normalized/atp-china-tennis-2025-review-v1.json",
+  "sha256": "e79bb21a201d47b7922509d6450f3cf40fe3f932e16736157764dfc1881feec7",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

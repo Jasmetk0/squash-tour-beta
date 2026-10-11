@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-botswana-development-2026-v1",
+  "source_id": "itf-botswana-development-eligibility-2026",
+  "relative_path": "observations/normalized/atp_botswana_development_2026_v1.json",
+  "sha256": "ff9438f3ca480b44123c8922dcd210f5e6e51564d874e8ee5b200ce902c213aa",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

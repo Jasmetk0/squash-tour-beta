@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-ofc-american-samoa-profile-v1",
+  "source_id": "ofc-american-samoa-profile",
+  "relative_path": "observations/normalized/structural/fifa_structural_ofc_american_samoa_profile_v1.json",
+  "sha256": "1f5aeb943366bad1538a09806edb75b4f64d50d979d658b36f8151e2f7099520",
+  "record_count": 4,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-04"
+}

@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-china-ctj-2024-v1",
+  "source_id": "china-ctj-2024",
+  "relative_path": "observations/normalized/atp-china-ctj-2024-v1.json",
+  "sha256": "5815c229bac9d6ee6625c39d9e47d7e1a5125635f223d12554b3dff699da5ea2",
+  "record_count": 3,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

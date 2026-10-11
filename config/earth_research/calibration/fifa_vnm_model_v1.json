@@ -1,0 +1,49 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "fifa-earth-vnm-model.v1",
+  "world_id": "fifa_earth",
+  "data_cutoff": "2026-10-03",
+  "countries": [
+    "VNM"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "evidence_rules": [
+    "1955-2005 values are a low-confidence project-authored baseline.",
+    "FIFA Big Count enters from 2006.",
+    "Professional 2023 has no retained row for this country; no 2023 values are invented.",
+    "Current FIFA membership is context only."
+  ],
+  "anchor_values": {
+    "VNM": {
+      "1955": [
+        4.6,
+        4.2,
+        4.3,
+        4.3,
+        4.1,
+        4.8
+      ],
+      "2006": [
+        6.5,
+        5.8,
+        6,
+        6.1,
+        5.7,
+        6.4
+      ],
+      "2026": [
+        6.8,
+        6.1,
+        6.3,
+        6.4,
+        6,
+        6.7
+      ]
+    }
+  },
+  "evidence_sources": [
+    "fifa-vietnam-member-context-2026",
+    "fifa-big-count-2006"
+  ],
+  "heldout_ranking_used": false
+}

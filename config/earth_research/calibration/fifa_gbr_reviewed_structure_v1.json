@@ -1,0 +1,53 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "fifa-earth-gbr-reviewed-structure.v1",
+  "world_id": "fifa_earth",
+  "countries": [
+    "GBR"
+  ],
+  "data_cutoff": "2026-10-03",
+  "rating_scale": "country_ratings_1_10.v2",
+  "attribute_order": [
+    "squash_popularity",
+    "squash_access",
+    "development_quality",
+    "competition_quality",
+    "elite_support",
+    "squash_tradition"
+  ],
+  "anchor_values": {
+    "GBR": {
+      "1955": [
+        9.4,
+        8.5,
+        8.7,
+        9.4,
+        8.4,
+        10
+      ],
+      "1992": [
+        9.6,
+        9,
+        9,
+        9.5,
+        9,
+        10
+      ],
+      "2026": [
+        10,
+        9.8,
+        9.8,
+        10,
+        9.8,
+        10
+      ]
+    }
+  },
+  "selection": "Piecewise-constant authored periods; no hidden interpolation and no observation enters before its evidence year.",
+  "limitations": [
+    "All numeric ratings are project estimates with low confidence, not source measurements.",
+    "GBR is an Earth-package UK aggregate and no single FIFA GBR membership is asserted.",
+    "No rankings, titles or match outcomes are used to fit ratings.",
+    "2026 is partial through the bundle cutoff, not a forecast."
+  ]
+}

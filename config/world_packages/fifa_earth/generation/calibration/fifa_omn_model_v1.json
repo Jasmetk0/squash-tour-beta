@@ -1,0 +1,100 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "fifa-earth-omn-model.v1",
+  "world_id": "fifa_earth",
+  "data_cutoff": "2026-10-03",
+  "countries": [
+    "OMN"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "principles": [
+    "The 1942 first club is pre-1955 local structural context; a national federation is not backcast before 1978.",
+    "The 1972 Sultan's Cup, its 1974 expansion, 1978 OFA/FIFA step, 1980 AFC membership and 1983 re-establishment are separate milestones.",
+    "FIFA Big Count 2006 is gated to 2006 and Professional 2023 evidence is used only where a published Oman observation exists.",
+    "The current 44-club OFA network is a 2026-only access/development signal.",
+    "No rankings, titles or match results are calibration targets."
+  ],
+  "anchor_values": {
+    "OMN": {
+      "1955": [
+        3.5,
+        3.2,
+        3.1,
+        3.2,
+        3,
+        5
+      ],
+      "1972": [
+        4.8,
+        4.6,
+        4.3,
+        4.8,
+        4.3,
+        5.8
+      ],
+      "1974": [
+        5.2,
+        5.2,
+        4.6,
+        5.3,
+        4.7,
+        6
+      ],
+      "1978": [
+        5.6,
+        5.4,
+        5,
+        5.6,
+        5.3,
+        6.3
+      ],
+      "1980": [
+        5.8,
+        5.6,
+        5.2,
+        5.9,
+        5.5,
+        6.5
+      ],
+      "1983": [
+        5.9,
+        5.7,
+        5.5,
+        6,
+        5.7,
+        6.6
+      ],
+      "2006": [
+        6.4,
+        6.2,
+        6.2,
+        6.4,
+        6.2,
+        7
+      ],
+      "2023": [
+        6.7,
+        6.5,
+        6.5,
+        6.8,
+        6.6,
+        7.2
+      ],
+      "2026": [
+        6.8,
+        6.9,
+        6.6,
+        6.8,
+        6.6,
+        7.3
+      ]
+    }
+  },
+  "evidence_sources": [
+    "ofa-overview",
+    "ofa-sultan-cup",
+    "fifa-big-count-2006",
+    "fifa-professional-2023"
+  ],
+  "heldout_ranking_used": false
+}

@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-cbt-coach-registry-2026-v1",
+  "source_id": "cbt-coach-registry-2026",
+  "relative_path": "observations/normalized/atp-cbt-coach-registry-2026-v1.json",
+  "sha256": "db24086450dd799065f1816d69f15c590e1b592b2545bc519e3d6702befbc81a",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

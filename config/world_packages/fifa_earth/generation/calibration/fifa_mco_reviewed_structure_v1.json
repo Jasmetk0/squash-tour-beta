@@ -1,0 +1,62 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "fifa-earth-mco-reviewed-structure.v1",
+  "world_id": "fifa_earth",
+  "countries": [
+    "MCO"
+  ],
+  "data_cutoff": "2026-10-03",
+  "rating_scale": "country_ratings_1_10.v2",
+  "attribute_order": [
+    "squash_popularity",
+    "squash_access",
+    "development_quality",
+    "competition_quality",
+    "elite_support",
+    "squash_tradition"
+  ],
+  "anchor_values": {
+    "MCO": {
+      "1955": [
+        5.4,
+        4.8,
+        4.6,
+        4.2,
+        3.9,
+        5.4
+      ],
+      "2000": [
+        6,
+        5.4,
+        5.2,
+        4.8,
+        4.5,
+        6
+      ],
+      "2011": [
+        6.2,
+        5.7,
+        5.5,
+        5,
+        4.8,
+        6.2
+      ],
+      "2026": [
+        6.4,
+        6,
+        5.8,
+        5.3,
+        5.1,
+        6.4
+      ]
+    }
+  },
+  "selection": "Piecewise-constant authored periods; no hidden interpolation and no observation enters before its event year.",
+  "limitations": [
+    "All numbers are project estimates with low confidence, not source measurements.",
+    "Structural events establish context but cannot identify all six numeric dimensions; cross-country calibration is outstanding.",
+    "Early priors are registered separately from independent federation observations.",
+    "No rankings, titles or athlete results are used to fit ratings.",
+    "2026 is partial through the bundle cutoff, not a forecast."
+  ]
+}

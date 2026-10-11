@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-rfef-institutional-v1",
+  "source_id": "rfef-institutional",
+  "relative_path": "observations/normalized/structural/fifa_structural_rfef_institutional_v1.json",
+  "sha256": "639d46cb3ab2ccd7c27163a348399f1bd9a748945b8052aa5871cf7d9c9f8a96",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

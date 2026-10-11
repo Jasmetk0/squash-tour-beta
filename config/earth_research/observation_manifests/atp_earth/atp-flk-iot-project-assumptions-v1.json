@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-flk-iot-project-assumptions-v1",
+  "source_id": "flk-iot-atp-project-assumptions",
+  "relative_path": "observations/normalized/atp_flk_iot_project_assumptions_v1.json",
+  "sha256": "91b244ee7db870ad78293141baeb72ed99821e13d9ed5a1f3f48eb8fc2c4a7c0",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-flk-iot-batch-2026-10-07"
+}

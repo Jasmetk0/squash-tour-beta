@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-pakistan-coach-development-v1",
+  "source_id": "ptf-coach-development-2021",
+  "relative_path": "observations/normalized/atp_pakistan_coach_development_v1.json",
+  "sha256": "12f25224f65e755dce072ac589714855976977bd26a2f6359d7d6c28b5413f81",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

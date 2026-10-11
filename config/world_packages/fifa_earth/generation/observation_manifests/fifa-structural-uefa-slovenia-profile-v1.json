@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-uefa-slovenia-profile-v1",
+  "source_id": "uefa-slovenia-profile",
+  "relative_path": "observations/normalized/structural/fifa_structural_uefa_slovenia_profile_v1.json",
+  "sha256": "bf095716f340d5295fb14fc8d6e81e32a7114eb5f1d0cd29a80b3fb6b30bd798",
+  "record_count": 5,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

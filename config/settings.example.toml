@@ -1,0 +1,11 @@
+# Copy this file to config/settings.toml and adjust as needed.
+
+[app]
+name = "Squash Tour Beta Engine"
+environment = "development"
+
+[database]
+url = "sqlite:///./beta_engine.db"
+
+[simulation]
+seed = 42

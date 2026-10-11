@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-azerbaijan-history-v1",
+  "source_id": "itf-azerbaijan-profile",
+  "relative_path": "observations/normalized/atp_azerbaijan_history_v1.json",
+  "sha256": "525111585d2c48d4ccc8b2511e6d9983af32ed6c34486ab634b51b83ce367a24",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

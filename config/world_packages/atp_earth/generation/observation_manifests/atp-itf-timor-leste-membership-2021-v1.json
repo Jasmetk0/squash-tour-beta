@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-itf-timor-leste-membership-2021-v1",
+  "source_id": "itf-timor-leste-membership-2022",
+  "relative_path": "observations/normalized/atp_itf_timor_leste_membership_2021_v1.json",
+  "sha256": "b9396f305015aeffc7de0e1495e80e67e1ee50fdc7169344d7c4fe3640e9e1b9",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-07"
+}

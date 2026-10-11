@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-pakistan-challenger-2025-v1",
+  "source_id": "itf-pakistan-challenger-2025",
+  "relative_path": "observations/normalized/atp_pakistan_challenger_2025_v1.json",
+  "sha256": "f4fbc3c30e18f3d0a691d2249c263f3df3497c6b31c4d55ceb45305b8e3a0fe7",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-lie-gib-project-assumptions-v1",
+  "source_id": "lie-gib-atp-project-assumptions",
+  "relative_path": "observations/normalized/atp_lie_gib_project_assumptions_v1.json",
+  "sha256": "a9d715a99483761d7eabd4c4d067e8c69f35f9bf593580f49e368456786d57b9",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-lie-gib-batch-2026-10-07"
+}

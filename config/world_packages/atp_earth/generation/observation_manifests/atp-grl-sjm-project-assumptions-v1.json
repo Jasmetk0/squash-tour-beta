@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-grl-sjm-project-assumptions-v1",
+  "source_id": "grl-sjm-atp-project-assumptions",
+  "relative_path": "observations/normalized/atp_grl_sjm_project_assumptions_v1.json",
+  "sha256": "976052070c4096b686551421eb3bc917c2df138a5f987ef4c7ca2eed9e62ce6c",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-grl-sjm-batch-2026-10-07"
+}

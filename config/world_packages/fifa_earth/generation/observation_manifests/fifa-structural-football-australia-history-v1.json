@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-football-australia-history-v1",
+  "source_id": "football-australia-history",
+  "relative_path": "observations/normalized/structural/fifa_structural_football_australia_history_v1.json",
+  "sha256": "b8b6e44e0626f221de176e65adc20b3d7222579b432ed4a1fb97fa5d78e67e0e",
+  "record_count": 8,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-04"
+}

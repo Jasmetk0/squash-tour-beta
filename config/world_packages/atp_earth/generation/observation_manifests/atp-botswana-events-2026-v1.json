@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-botswana-events-2026-v1",
+  "source_id": "itf-botswana-events-2026",
+  "relative_path": "observations/normalized/atp_botswana_events_2026_v1.json",
+  "sha256": "71cd9d277e7b41c0cc4f19685b2c855ea4c2ee5d6509342d948056488e66b191",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

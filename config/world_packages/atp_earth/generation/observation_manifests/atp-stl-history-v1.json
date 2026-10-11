@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-stl-history-v1",
+  "source_id": "stl-history",
+  "relative_path": "observations/normalized/atp-stl-history-v1.json",
+  "sha256": "febc202a74f3d802a8c3815f1bd87232af5fbc2243b0e7262857d5c6fc5397ed",
+  "record_count": 3,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

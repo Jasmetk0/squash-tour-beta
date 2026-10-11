@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-bangladesh-history-v1",
+  "source_id": "itf-bangladesh-profile",
+  "relative_path": "observations/normalized/atp_bangladesh_history_v1.json",
+  "sha256": "0689041b33d3ac243394e2408fbd7d583a4de9f02bcf5c636ad3cff2ddfda20f",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

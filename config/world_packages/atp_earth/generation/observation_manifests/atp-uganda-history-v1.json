@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-uganda-history-v1",
+  "source_id": "uganda-sport-policy-history-secondary",
+  "relative_path": "observations/normalized/atp_uganda_history_v1.json",
+  "sha256": "3f7b44ebc9c111490867f6d7f0b1df8d6564db6fa915267ad626909defd001d9",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

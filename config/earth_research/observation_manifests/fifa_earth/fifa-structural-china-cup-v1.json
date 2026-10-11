@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-china-cup-v1",
+  "source_id": "cfa-cup-history-1956",
+  "relative_path": "observations/normalized/structural/fifa_structural_china_cup_v1.json",
+  "sha256": "83348ede3a886af7878d834d89bf9543581c3ec6b8cf3addb8516937d9541b86",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-frt-u10-national-2025-v1",
+  "source_id": "frt-u10-national-2025",
+  "relative_path": "observations/normalized/atp-frt-u10-national-2025-v1.json",
+  "sha256": "0d60fde464c43e70cf46ba09f71dfa9814bd91a1a5cd08ab75be5ab82e591942",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-belarus-history-v1",
+  "source_id": "itf-belarus-profile",
+  "relative_path": "observations/normalized/atp_belarus_history_v1.json",
+  "sha256": "e17de74ea77eecd5058e9bd8241d4317a1b74ab81fc12f9757e20204b9bedcb7",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

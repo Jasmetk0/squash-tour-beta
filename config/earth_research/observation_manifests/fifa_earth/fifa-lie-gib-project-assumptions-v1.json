@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-lie-gib-project-assumptions-v1",
+  "source_id": "lie-gib-fifa-project-assumptions",
+  "relative_path": "observations/normalized/fifa_lie_gib_project_assumptions_v1.json",
+  "sha256": "dc2f79f05fbdebf4fd4a7c0c862bf87a8f95932f182304d6688c974644479cb4",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-lie-gib-batch-2026-10-07"
+}

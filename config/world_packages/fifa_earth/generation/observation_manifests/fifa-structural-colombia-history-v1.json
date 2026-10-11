@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-colombia-history-v1",
+  "source_id": "fcf-centenary-1924",
+  "relative_path": "observations/normalized/structural/fifa_structural_colombia_history_v1.json",
+  "sha256": "725703aaab95278a18602305339cc0370b86bbfe7962e8565f8afa92b5558a61",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

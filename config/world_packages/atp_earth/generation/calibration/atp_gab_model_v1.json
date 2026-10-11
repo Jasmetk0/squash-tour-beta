@@ -1,0 +1,57 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "atp-earth-gab-model.v1",
+  "world_id": "atp_earth",
+  "data_cutoff": "2026-10-04",
+  "countries": [
+    "GAB"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "evidence_rules": [
+    "No verified foundation date is asserted; pre-2020 years use a low-confidence baseline derived only from later confirmed national tennis context.",
+    "ITF 2020 closure status enters only in 2020 and is not treated as performance.",
+    "2026 development eligibility enters only in 2026.",
+    "Event results are not rating targets."
+  ],
+  "anchor_values": {
+    "GAB": {
+      "1955": [
+        3.2,
+        2.9,
+        3,
+        2.9,
+        2.7,
+        3.6
+      ],
+      "2000": [
+        4,
+        3.6,
+        3.8,
+        3.8,
+        3.5,
+        4.6
+      ],
+      "2020": [
+        4.4,
+        4,
+        4.2,
+        4.2,
+        3.9,
+        5
+      ],
+      "2026": [
+        4.9,
+        4.5,
+        4.7,
+        4.7,
+        4.4,
+        5.5
+      ]
+    }
+  },
+  "evidence_sources": [
+    "itf-gabon-return-to-play-2020",
+    "itf-gabon-development-eligibility-2026"
+  ],
+  "heldout_ranking_used": false
+}

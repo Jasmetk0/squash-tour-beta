@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-malta-history-v1",
+  "source_id": "fifa-malta-member-context-2026",
+  "relative_path": "observations/normalized/structural/fifa_malta_history_v1.json",
+  "sha256": "e689890711c3de63deb9d0d9667892ba805b71430dd0712053dfc8c73c2d9203",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

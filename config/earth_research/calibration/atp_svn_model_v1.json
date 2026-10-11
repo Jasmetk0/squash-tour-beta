@@ -1,0 +1,22 @@
+{
+  "schema_version": "atp_earth_reviewed_country_batch.v1",
+  "model_id": "atp-earth-svn-model.v1",
+  "created_on": "2026-10-05",
+  "countries": [
+    "SVN"
+  ],
+  "coverage": {
+    "from": 1955,
+    "to": 2026,
+    "attributes": 6
+  },
+  "rating_scale": "country_ratings_1_10.v2",
+  "method": "Piecewise annual history using pre-1955 Slovenian tennis/federation tradition plus post-independence federation continuity, current registered scale, professional-tournament pathway and coach-development evidence.",
+  "evidence_rules": [
+    "Pre-independence Slovenian tennis history supports tradition/context without pretending Slovenia was an independent state before 1991.",
+    "Current member, competitor and club counts are not backcast.",
+    "Professional-event hosting informs competition opportunity/pathway capacity, not participation.",
+    "Tutor programme evidence informs development quality, not measured player outcomes.",
+    "No held-out validation ranking is used for tuning."
+  ]
+}

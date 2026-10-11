@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-luxembourg-history-v1",
+  "source_id": "fifa-luxembourg-member-context-2026",
+  "relative_path": "observations/normalized/structural/fifa_luxembourg_history_v1.json",
+  "sha256": "404695e07e7e85478108e1421a0f58f48f274b563671ab90a38091ac22ef15f2",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

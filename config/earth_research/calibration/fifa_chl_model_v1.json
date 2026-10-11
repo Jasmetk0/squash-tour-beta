@@ -1,0 +1,60 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "fifa-earth-chl-model.v1",
+  "world_id": "fifa_earth",
+  "data_cutoff": "2026-10-03",
+  "countries": [
+    "CHL"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "principles": [
+    "The 1895 association origin, 1913/1914 FIFA affiliation and 1916 CONMEBOL co-founding establish institutional depth but are not direct annual quality measurements.",
+    "FIFA Big Count 2006 is gated to 2006+ and used primarily for participation/access context.",
+    "FIFA Professional Football Report 2023 is gated to 2023+ for professional-ecosystem context.",
+    "The renovated 2026 high-performance complex is current-only development/access/elite-support evidence and is not backcast.",
+    "National-team rankings, World Cup finishes and continental titles are not calibration targets; 9+ remains world-leading."
+  ],
+  "anchor_values": {
+    "CHL": {
+      "1955": [
+        7.2,
+        6.7,
+        6.8,
+        7.2,
+        7,
+        8.7
+      ],
+      "2006": [
+        8.5,
+        8.6,
+        8,
+        8.1,
+        8,
+        8.9
+      ],
+      "2023": [
+        8.4,
+        8.4,
+        8.3,
+        8.4,
+        8.2,
+        8.9
+      ],
+      "2026": [
+        8.5,
+        8.5,
+        8.6,
+        8.4,
+        8.5,
+        8.9
+      ]
+    }
+  },
+  "evidence_sources": [
+    "fifa-chile-125-history",
+    "anfp-chile-forward-2026",
+    "fifa-big-count-2006",
+    "fifa-professional-2023"
+  ],
+  "heldout_ranking_used": false
+}

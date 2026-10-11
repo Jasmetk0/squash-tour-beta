@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-dominica-history-v1",
+  "source_id": "itf-dominica-profile",
+  "relative_path": "observations/normalized/atp_dominica_history_v1.json",
+  "sha256": "c8a49f14a4f759fc0a7f0b0198bc1340c4429323de8e64160ec163c03edab4b3",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

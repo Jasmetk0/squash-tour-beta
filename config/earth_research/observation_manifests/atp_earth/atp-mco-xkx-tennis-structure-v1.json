@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-mco-xkx-tennis-structure-v1",
+  "source_id": "mco-xkx-itf-tennis-structure",
+  "relative_path": "observations/normalized/atp_mco_xkx_tennis_structure_v1.json",
+  "sha256": "f863a895861df6fe2037a32de9c96752618faacd1346e2722677ec3dfe10e7fa",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-mco-xkx-batch-2026-10-07"
+}

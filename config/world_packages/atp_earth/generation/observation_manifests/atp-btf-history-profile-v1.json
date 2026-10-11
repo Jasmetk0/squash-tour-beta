@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-btf-history-profile-v1",
+  "source_id": "btf-history-profile",
+  "relative_path": "observations/normalized/atp-btf-history-profile-v1.json",
+  "sha256": "13fd13ad72154332837d44b93f0bb849de193c8ea4aa2d8884a9aa11024bcb5e",
+  "record_count": 7,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

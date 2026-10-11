@@ -1,0 +1,25 @@
+{
+  "world_id": "fifa_earth",
+  "coverage_complete": true,
+  "required_years": {
+    "from": 1955,
+    "to": 2026
+  },
+  "required_country_count": 250,
+  "required_rating_count": 108000,
+  "authored_rating_count": 108000,
+  "missing_countries": [],
+  "unexpected_countries": [],
+  "missing_years": {},
+  "methods": {
+    "derived_estimate": 108000
+  },
+  "confidence": {
+    "low": 85046,
+    "medium": 22954
+  },
+  "observation_dataset_count": 318,
+  "observation_record_count": 2081,
+  "data_cutoff": "2026-10-03",
+  "realism_validated": false
+}

@@ -1,0 +1,57 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "fifa-earth-cub-model.v1",
+  "world_id": "fifa_earth",
+  "data_cutoff": "2026-10-03",
+  "countries": [
+    "CUB"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "evidence_rules": [
+    "1955-2005 values are a low-confidence project-authored baseline.",
+    "FIFA Big Count enters from 2006.",
+    "FIFA Professional 2023 player and club fields are null and remain missing.",
+    "Current FIFA membership is context only and is not backdated."
+  ],
+  "anchor_values": {
+    "CUB": {
+      "1955": [
+        5.4,
+        4.8,
+        5.1,
+        5.4,
+        4.8,
+        5.6
+      ],
+      "2006": [
+        6.7,
+        6,
+        6.3,
+        6.5,
+        5.8,
+        6.8
+      ],
+      "2023": [
+        6.6,
+        5.9,
+        6.2,
+        6.4,
+        5.7,
+        6.9
+      ],
+      "2026": [
+        6.6,
+        5.9,
+        6.2,
+        6.4,
+        5.7,
+        6.9
+      ]
+    }
+  },
+  "evidence_sources": [
+    "fifa-cuba-member-context-2026",
+    "fifa-big-count-2006"
+  ],
+  "heldout_ranking_used": false
+}

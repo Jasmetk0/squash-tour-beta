@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-hkg-mac-project-assumptions-v1",
+  "source_id": "hkg-mac-atp-project-assumptions",
+  "relative_path": "observations/normalized/atp_hkg_mac_project_assumptions_v1.json",
+  "sha256": "cf570edbcfa47324e2d1b79a73f44bb249bf96a3c1cdf0a045126a7f6baaadf1",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-hkg-mac-batch-2026-10-07"
+}

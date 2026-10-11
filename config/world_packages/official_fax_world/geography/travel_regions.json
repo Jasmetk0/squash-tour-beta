@@ -1,0 +1,10 @@
+{
+  "schema_version": "travel_regions.v1",
+  "travel_regions": [
+    { "code": "AFRICA", "name": "Africa", "description": "Initial travel region derived from current country data." },
+    { "code": "AMERICAS", "name": "Americas", "description": "Initial travel region derived from current country data." },
+    { "code": "ASIA", "name": "Asia", "description": "Initial travel region derived from current country data." },
+    { "code": "EUROPE", "name": "Europe", "description": "Initial travel region derived from current country data." },
+    { "code": "MENA", "name": "MENA", "description": "Initial travel region derived from current country data." }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-myt-spm-project-assumptions-v1",
+  "source_id": "myt-spm-fifa-project-assumptions",
+  "relative_path": "observations/normalized/fifa_myt_spm_project_assumptions_v1.json",
+  "sha256": "855e9a8e9d71c1da15b8afa1ae4f231a49a525c93b1793422ab6bab54296aced",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-myt-spm-batch-2026-10-07"
+}

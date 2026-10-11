@@ -1,0 +1,126 @@
+{
+  "schema_version": "fifa_dimension_evidence_model.v1",
+  "model_id": "fifa-dimension-evidence-v1",
+  "rating_scale": "country_ratings_1_10.v2",
+  "status": "provisional_calibration",
+  "percentile_transfer_curve": [
+    {
+      "percentile": 0,
+      "score": 1.5
+    },
+    {
+      "percentile": 5,
+      "score": 2.5
+    },
+    {
+      "percentile": 15,
+      "score": 3.5
+    },
+    {
+      "percentile": 30,
+      "score": 4.5
+    },
+    {
+      "percentile": 50,
+      "score": 5.5
+    },
+    {
+      "percentile": 70,
+      "score": 6.5
+    },
+    {
+      "percentile": 85,
+      "score": 7.5
+    },
+    {
+      "percentile": 95,
+      "score": 8.5
+    },
+    {
+      "percentile": 99,
+      "score": 9.3
+    },
+    {
+      "percentile": 100,
+      "score": 9.7
+    }
+  ],
+  "recipes": {
+    "squash_popularity@2006": {
+      "attribute": "squash_popularity",
+      "year": 2006,
+      "confidence": "low",
+      "require_all_components": true,
+      "components": [
+        {
+          "signal_id": "participation_intensity_2006",
+          "weight": 1
+        }
+      ],
+      "rationale": "Population-normalised all-player participation is direct empirical evidence for football participation/popularity, but the FIFA Big Count extract is mixed-sex and includes unregistered/casual participation; this is therefore evidence-strength calibration, not a complete popularity rating."
+    },
+    "squash_access@2006": {
+      "attribute": "squash_access",
+      "year": 2006,
+      "confidence": "low",
+      "require_all_components": true,
+      "components": [
+        {
+          "signal_id": "registered_intensity_2006",
+          "weight": 0.65
+        },
+        {
+          "signal_id": "club_footprint_2006",
+          "weight": 0.35
+        }
+      ],
+      "rationale": "Registered-player intensity is the primary organised-access proxy and club footprint is a secondary structural-access proxy. Association registration/club definitions vary, so the score remains provisional evidence rather than a final access rating."
+    },
+    "competition_quality@2023": {
+      "attribute": "competition_quality",
+      "year": 2023,
+      "confidence": "low",
+      "require_all_components": true,
+      "components": [
+        {
+          "signal_id": "professional_player_density_2023",
+          "weight": 0.65
+        },
+        {
+          "signal_id": "professional_club_density_2023",
+          "weight": 0.35
+        }
+      ],
+      "rationale": "Professional-player and club density measure professional ecosystem depth, which informs competition quality, but they do not measure results, league quality or opponent strength directly."
+    },
+    "elite_support@2023": {
+      "attribute": "elite_support",
+      "year": 2023,
+      "confidence": "low",
+      "require_all_components": true,
+      "components": [
+        {
+          "signal_id": "professional_player_density_2023",
+          "weight": 0.45
+        },
+        {
+          "signal_id": "professional_club_density_2023",
+          "weight": 0.55
+        }
+      ],
+      "rationale": "Professional employment and club infrastructure are observable proxies for elite-support capacity, but they do not directly measure funding, medical/science provision, travel or federation technical quality."
+    }
+  },
+  "unsupported_attributes": {
+    "development_quality": "No canonical normalized source in the current slice directly measures coaching, academies, talent identification or youth pathway quality.",
+    "squash_tradition": "A 2006/2023 cross-sectional signal cannot measure long-term institutional/cultural continuity."
+  },
+  "safeguards": [
+    "Evidence score is not a canonical country rating.",
+    "No recipe may use a signal outside its declared primary dimensions without an explicit model revision.",
+    "Missing required components produce a missing evidence score; missing is never zero.",
+    "Scores are rounded to one decimal only after component weighting.",
+    "No score is extrapolated beyond the declared percentile transfer curve.",
+    "A future canonical rating must combine this quantitative evidence with independent historical/context evidence and explicit observation provenance."
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-dtb-structure-2026-v1",
+  "source_id": "dtb-overview-current",
+  "relative_path": "observations/normalized/atp_dtb_structure_2026_v1.json",
+  "sha256": "a32668258036f9239cfaa732a9af2e0be25c001284c482878eb38037962804f7",
+  "record_count": 3,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual normalization from current DTB federation overview"
+}

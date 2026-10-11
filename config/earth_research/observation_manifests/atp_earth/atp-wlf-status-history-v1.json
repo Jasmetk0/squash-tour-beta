@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-wlf-status-history-v1",
+  "source_id": "wlf-status-history",
+  "relative_path": "observations/normalized/atp_wlf_status_history_v1.json",
+  "sha256": "17aef3924131fcda2d5b4c1e3f8330a1d4cb5385f3e21002bedbf903d2e8199f",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-final4-batch-2026-10-07"
+}

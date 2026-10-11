@@ -1,0 +1,83 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "fifa-earth-bgr-model.v1",
+  "world_id": "fifa_earth",
+  "data_cutoff": "2026-10-03",
+  "countries": [
+    "BGR"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "principles": [
+    "The 1923 federation, 1924 FIFA membership, 1937 national league and 1954 UEFA membership establish structural depth but are not direct annual quality measurements.",
+    "The 2016 House of Football is gated to 2016 as infrastructure/development context.",
+    "FIFA Big Count 2006 is gated to 2006+ and used mainly for participation/access context.",
+    "FIFA Professional Football Report 2023 is gated to 2023+ for professional-ecosystem context.",
+    "Historic team/player achievements and rankings are not calibration targets; 9+ remains reserved for world-leading dimensions."
+  ],
+  "anchor_values": {
+    "BGR": {
+      "1955": [
+        7,
+        6.6,
+        6.8,
+        7.2,
+        6.9,
+        8.4
+      ],
+      "1989": [
+        7.4,
+        7,
+        7.2,
+        7.5,
+        7.2,
+        8.7
+      ],
+      "1990": [
+        7.3,
+        6.9,
+        7.1,
+        7.4,
+        7.1,
+        8.7
+      ],
+      "2006": [
+        7.4,
+        7.5,
+        7.4,
+        7.6,
+        7.4,
+        8.7
+      ],
+      "2016": [
+        7.5,
+        7.7,
+        7.8,
+        7.7,
+        7.7,
+        8.8
+      ],
+      "2023": [
+        7.6,
+        7.7,
+        7.8,
+        7.9,
+        7.7,
+        8.8
+      ],
+      "2026": [
+        7.6,
+        7.8,
+        7.9,
+        7.9,
+        7.8,
+        8.8
+      ]
+    }
+  },
+  "evidence_sources": [
+    "uefa-bulgaria-profile",
+    "fifa-big-count-2006",
+    "fifa-professional-2023"
+  ],
+  "heldout_ranking_used": false
+}

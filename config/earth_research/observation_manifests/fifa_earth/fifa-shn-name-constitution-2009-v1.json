@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-shn-name-constitution-2009-v1",
+  "source_id": "shn-name-constitution-2009",
+  "relative_path": "observations/normalized/fifa_shn_name_constitution_2009_v1.json",
+  "sha256": "bb4cb564f6dee824bf2830667af67801fd7a9be58c659f20e3e0423dcc99418f",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-shn-msr-batch-2026-10-07"
+}

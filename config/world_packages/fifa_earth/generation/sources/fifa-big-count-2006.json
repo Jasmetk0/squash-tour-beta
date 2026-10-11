@@ -1,0 +1,7 @@
+{
+  "title": "FIFA Big Count 2006 — All Players (archived original table)",
+  "url": "https://web.archive.org/web/20160304131953/http://www.fifa.com/worldfootball/bigcount/allplayers.html",
+  "accessed_on": "2026-10-03",
+  "scope": "208 original table rows, association totals, registered/unregistered players, clubs and officials; raw facts in observations/fifa_big_count_2006.csv.",
+  "limitations": "Checked-in normalized observation v2 datasets preserve the 2006 all-player, registered, unregistered, club and officials fields without treating missing cells as zero. The legacy extract is mixed-sex, does not retain per-cell direct/statistically-processed flags, and field definitions are not assumed globally identical. Earth identity reconciliation remains a separate reviewed layer."
+}

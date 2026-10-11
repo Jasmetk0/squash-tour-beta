@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-pakistan-history-v1",
+  "source_id": "ptf-history",
+  "relative_path": "observations/normalized/atp_pakistan_history_v1.json",
+  "sha256": "d55e5ec4501225bf9d33198188088c222f3efda54d1f738f3fb3f44b7190769e",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

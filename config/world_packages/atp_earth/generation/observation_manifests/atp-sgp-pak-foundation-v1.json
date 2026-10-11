@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-sgp-pak-foundation-v1",
+  "source_id": "itf-singapore-pakistan-foundation-2015",
+  "relative_path": "observations/normalized/atp_sgp_pak_foundation_v1.json",
+  "sha256": "8308f5cd68821a134518e0c195f3d586c770b0bc98f4c34a8b233030cd959207",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

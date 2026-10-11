@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-utf-history-development-v1",
+  "source_id": "utf-development-retrospective-2018",
+  "relative_path": "observations/normalized/atp_utf_history_development_v1.json",
+  "sha256": "f6cf10f91e33c25ea5681e4f0df9b49e2bd16b96888c1f4cc9a009043a3413e0",
+  "record_count": 3,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

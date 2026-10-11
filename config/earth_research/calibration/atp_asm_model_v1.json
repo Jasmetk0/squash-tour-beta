@@ -1,0 +1,76 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "atp-earth-asm-model.v1",
+  "world_id": "atp_earth",
+  "data_cutoff": "2026-10-04",
+  "countries": [
+    "ASM"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "evidence_rules": [
+    "1955–1984 is an explicit low-confidence pre-association baseline derived from the American Samoa Government's statement that ASTA celebrated 40 years in 2025.",
+    "The 1985 foundation year is derived from that official 40-year anniversary and is not treated as a direct participation count.",
+    "2019 Pacific Games participation and 2025 Pacific Nations Cup hosting establish active regional competition structure but results are not rating targets.",
+    "Current OTF membership and AO Pathway participation are gated to 2026.",
+    "Small-territory institutional activity is not treated as world-leading national scale."
+  ],
+  "anchor_values": {
+    "ASM": {
+      "1955": [
+        1.7,
+        1.5,
+        1.4,
+        1.4,
+        1.3,
+        1.8
+      ],
+      "1984": [
+        2.3,
+        2.1,
+        1.9,
+        1.9,
+        1.8,
+        2.4
+      ],
+      "1985": [
+        3.2,
+        2.9,
+        3,
+        2.8,
+        2.9,
+        3.5
+      ],
+      "2019": [
+        4.3,
+        3.9,
+        4.1,
+        4.2,
+        3.9,
+        4.5
+      ],
+      "2025": [
+        5.1,
+        4.8,
+        4.9,
+        5,
+        4.8,
+        5.1
+      ],
+      "2026": [
+        5.4,
+        5,
+        5.3,
+        5.1,
+        5.2,
+        5.3
+      ]
+    }
+  },
+  "evidence_sources": [
+    "american-samoa-government-asta-40-2025",
+    "otf-american-samoa-current-2026",
+    "otf-pacific-games-2019",
+    "otf-aopp-2026"
+  ],
+  "heldout_ranking_used": false
+}

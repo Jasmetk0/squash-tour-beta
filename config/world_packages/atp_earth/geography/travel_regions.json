@@ -1,0 +1,35 @@
+{
+  "schema_version": "travel_regions.v1",
+  "travel_regions": [
+    {
+      "code": "AFR",
+      "name": "Africa",
+      "description": "Real-world continent travel group."
+    },
+    {
+      "code": "AME",
+      "name": "Americas",
+      "description": "Real-world continent travel group."
+    },
+    {
+      "code": "ASI",
+      "name": "Asia",
+      "description": "Real-world continent travel group."
+    },
+    {
+      "code": "EUR",
+      "name": "Europe",
+      "description": "Real-world continent travel group."
+    },
+    {
+      "code": "OCE",
+      "name": "Oceania",
+      "description": "Real-world continent travel group."
+    },
+    {
+      "code": "ANT",
+      "name": "Antarctica",
+      "description": "Real-world continent travel group."
+    }
+  ]
+}

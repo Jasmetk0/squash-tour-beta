@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-pzt-funding-2026-v1",
+  "source_id": "pzt-funding-2026",
+  "relative_path": "observations/normalized/atp-pzt-funding-2026-v1.json",
+  "sha256": "523bf9e22e525b5b1ceb16be516747757354d208f9b0d2ad684a481dd7ac71d2",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

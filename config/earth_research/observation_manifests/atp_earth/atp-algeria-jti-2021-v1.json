@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-algeria-jti-2021-v1",
+  "source_id": "itf-jti-active-2021",
+  "relative_path": "observations/normalized/atp_algeria_jti_2021_v1.json",
+  "sha256": "d4e6a3589c796163862af894ab248533b3ac607d072b46b76d062944a5cddc4e",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

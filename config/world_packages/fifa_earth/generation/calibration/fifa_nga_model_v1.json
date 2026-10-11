@@ -1,0 +1,74 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "fifa-earth-nga-model.v1",
+  "world_id": "fifa_earth",
+  "data_cutoff": "2026-10-03",
+  "countries": [
+    "NGA"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "evidence_rules": [
+    "The 1945 association creation gives pre-1955 institutional continuity; CAF 1957 and FIFA 1960 are separately time-gated.",
+    "FIFA Big Count 2006 is used only from 2006; Nigeria's very large all-player count is not a universal strength score.",
+    "FIFA Professional Football Report 2023 enters only from 2023 as professional ecosystem evidence.",
+    "No rankings or tournament outcomes are calibration targets; popularity and elite ecosystem remain separate dimensions."
+  ],
+  "anchor_values": {
+    "NGA": {
+      "1955": [
+        6.5,
+        5.5,
+        5.8,
+        5.8,
+        5.5,
+        6.8
+      ],
+      "1957": [
+        6.7,
+        5.7,
+        6,
+        6,
+        5.8,
+        7
+      ],
+      "1960": [
+        7,
+        6,
+        6.3,
+        6.4,
+        6.1,
+        7.2
+      ],
+      "2006": [
+        9,
+        7,
+        7.5,
+        7.8,
+        7.2,
+        8.3
+      ],
+      "2023": [
+        9.1,
+        7.1,
+        7.8,
+        8,
+        7.6,
+        8.5
+      ],
+      "2026": [
+        9.2,
+        7.2,
+        7.9,
+        8,
+        7.7,
+        8.6
+      ]
+    }
+  },
+  "evidence_sources": [
+    "caf-nigeria-profile",
+    "fifa-big-count-2006",
+    "fifa-professional-2023"
+  ],
+  "heldout_ranking_used": false
+}

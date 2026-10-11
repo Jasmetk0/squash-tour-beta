@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-armenia-history-v1",
+  "source_id": "itf-armenia-profile",
+  "relative_path": "observations/normalized/atp_armenia_history_v1.json",
+  "sha256": "ff3cf57428af5b31a8e6dbc0f7338162df599129f22aa4a848030fdcf6667425",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

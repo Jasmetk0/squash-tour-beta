@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-fpt-junior-national-2025-v1",
+  "source_id": "fpt-junior-national-2025",
+  "relative_path": "observations/normalized/atp-fpt-junior-national-2025-v1.json",
+  "sha256": "f6aafae4fcb5cbeaa14e3e27bc810710ba53bdb1368e19873efafa41c1ecfced",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

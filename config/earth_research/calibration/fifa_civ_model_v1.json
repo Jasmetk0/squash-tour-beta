@@ -1,0 +1,74 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "fifa-earth-civ-model.v1",
+  "world_id": "fifa_earth",
+  "data_cutoff": "2026-10-03",
+  "countries": [
+    "CIV"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "evidence_rules": [
+    "Pre-1960 values are explicit territorial estimates; association/CAF evidence is gated to 1960 and FIFA affiliation to 1964.",
+    "Big Count 2006 enters only from 2006.",
+    "Professional 2023 contains a club count for Cote d'Ivoire but no checked-in professional-player count; the missing value is not inferred or zero-filled.",
+    "No ranking, tournament result or match outcome is mechanically converted into a rating."
+  ],
+  "anchor_values": {
+    "CIV": {
+      "1955": [
+        4.8,
+        4.3,
+        4.2,
+        4.3,
+        4,
+        4.7
+      ],
+      "1960": [
+        6,
+        5.2,
+        5.4,
+        5.6,
+        5.2,
+        6
+      ],
+      "1964": [
+        6.5,
+        5.6,
+        5.8,
+        6.1,
+        5.6,
+        6.5
+      ],
+      "2006": [
+        7.7,
+        6.4,
+        6.9,
+        7.3,
+        6.7,
+        7.7
+      ],
+      "2023": [
+        8,
+        6.6,
+        7.2,
+        7.7,
+        7.2,
+        8
+      ],
+      "2026": [
+        8.1,
+        6.7,
+        7.3,
+        7.8,
+        7.3,
+        8.1
+      ]
+    }
+  },
+  "evidence_sources": [
+    "caf-cote-divoire-profile",
+    "fifa-big-count-2006",
+    "fifa-professional-2023"
+  ],
+  "heldout_ranking_used": false
+}

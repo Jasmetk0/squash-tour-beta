@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-cog-fsm-tennis-structure-v1",
+  "source_id": "cog-fsm-itf-tennis-structure",
+  "relative_path": "observations/normalized/atp_cog_fsm_tennis_structure_v1.json",
+  "sha256": "212e6b513cea5c46a8aca5ff4b6a6dadb946331bcdc9c689e2707a3020a9dadb",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-cog-fsm-batch-2026-10-07"
+}

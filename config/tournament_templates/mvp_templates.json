@@ -1,0 +1,107 @@
+{
+  "templates": [
+    {
+      "template_id": "wt_platinum_32",
+      "tour_level": "WORLD_TOUR",
+      "category": "PLATINUM",
+      "event_name": "World Tour Platinum",
+      "region": "MIDDLE_EAST",
+      "host_country": "QAT",
+      "main_draw_size": 32,
+      "qualification_draw_size": 24,
+      "seeds_count": 8,
+      "qualifier_spots": 4,
+      "wild_cards": 2,
+      "byes": 0,
+      "lucky_loser_rules": {
+        "enabled": true,
+        "max_spots": 2,
+        "replacement_window": "pre_main_draw_round_1"
+      },
+      "point_distribution_ref": "world_tour_platinum",
+      "event_duration_days": 6,
+      "qualification_duration_days": 2,
+      "preferred_week_type": "peak_window",
+      "seasonal_grouping": "middle_east_swing"
+    },
+    {
+      "template_id": "wt_gold_24",
+      "tour_level": "WORLD_TOUR",
+      "category": "GOLD",
+      "event_name": "World Tour Gold",
+      "region": "EUROPE",
+      "host_country": "ENG",
+      "main_draw_size": 24,
+      "qualification_draw_size": 16,
+      "seeds_count": 8,
+      "qualifier_spots": 4,
+      "wild_cards": 2,
+      "byes": 8,
+      "lucky_loser_rules": {
+        "enabled": true,
+        "max_spots": 2,
+        "replacement_window": "pre_main_draw_round_1"
+      },
+      "point_distribution_ref": "world_tour_gold",
+      "event_duration_days": 6,
+      "qualification_duration_days": 2,
+      "preferred_week_type": "standard",
+      "seasonal_grouping": "europe_spring"
+    },
+    {
+      "template_id": "elite_major_32",
+      "tour_level": "ELITE_TOUR",
+      "category": "ELITE_MAJOR",
+      "event_name": "Elite Tour Major",
+      "region": "ASIA",
+      "host_country": "MAS",
+      "main_draw_size": 32,
+      "qualification_draw_size": 16,
+      "seeds_count": 8,
+      "qualifier_spots": 4,
+      "wild_cards": 4,
+      "byes": 0,
+      "lucky_loser_rules": {
+        "enabled": true,
+        "max_spots": 2,
+        "replacement_window": "pre_main_draw_round_1"
+      },
+      "point_distribution": {
+        "winner": 1250,
+        "finalist": 825,
+        "semifinalist": 500,
+        "quarterfinalist": 260,
+        "round_of_16": 135,
+        "round_of_32": 70
+      },
+      "event_duration_days": 6,
+      "qualification_duration_days": 2,
+      "preferred_week_type": "regional_cluster",
+      "seasonal_grouping": "asia_double_header"
+    },
+    {
+      "template_id": "elite_challenger_24",
+      "tour_level": "ELITE_TOUR",
+      "category": "ELITE_CHALLENGER",
+      "event_name": "Elite Tour Challenger",
+      "region": "AMERICAS",
+      "host_country": "USA",
+      "main_draw_size": 24,
+      "qualification_draw_size": 16,
+      "seeds_count": 8,
+      "qualifier_spots": 4,
+      "wild_cards": 2,
+      "byes": 8,
+      "lucky_loser_rules": {
+        "enabled": true,
+        "max_spots": 2,
+        "replacement_window": "pre_main_draw_round_1"
+      },
+      "point_distribution_ref": "elite_challenger",
+      "event_duration_days": 5,
+      "qualification_duration_days": 2,
+      "preferred_week_type": "standard",
+      "seasonal_grouping": "americas_swing"
+    }
+  ]
+}

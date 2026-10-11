@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-ofc-tonga-profile-v1",
+  "source_id": "ofc-tonga-profile",
+  "relative_path": "observations/normalized/fifa-structural-ofc-tonga-profile-v1.json",
+  "sha256": "b7b96e5c4c8e1b8baeef4607b9c37dbe912b1694e9dc3f566406697743bc9ffc",
+  "record_count": 5,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-04"
+}

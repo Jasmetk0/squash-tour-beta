@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-rfef-talent-development-2026-v1",
+  "source_id": "rfef-talent-development-2026",
+  "relative_path": "observations/normalized/structural/fifa_structural_rfef_talent_development_2026_v1.json",
+  "sha256": "cf844eb27a3b904c909d52ab7a444c0a478254dd925fb394cc51284f76e43de9",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

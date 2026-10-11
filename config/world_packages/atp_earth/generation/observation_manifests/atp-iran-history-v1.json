@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-iran-history-v1",
+  "source_id": "itf-iran-profile",
+  "relative_path": "observations/normalized/atp_iran_history_v1.json",
+  "sha256": "3a2a9abd8b33f3853a84421f38ccafd73dcbd6ecfe411d4f282c40f0606dd4e0",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

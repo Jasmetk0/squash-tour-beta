@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-msr-soufriere-eruption-1995-v1",
+  "source_id": "msr-soufriere-eruption-1995",
+  "relative_path": "observations/normalized/atp_msr_soufriere_eruption_1995_v1.json",
+  "sha256": "4a47afec9948a1a7dc7f254830dff559a7b5333bcfd9a0e8a8d5cb8b1a5fff39",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-shn-msr-batch-2026-10-07"
+}

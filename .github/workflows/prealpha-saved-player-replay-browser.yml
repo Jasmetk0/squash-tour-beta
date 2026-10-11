@@ -1,0 +1,77 @@
+name: Pre-alpha Saved Player Replay Browser
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/prealpha-saved-player-replay-browser.yml'
+      - 'scripts/admin_first_tournament_smoke.py'
+      - 'scripts/saved_player_replay_browser_checks.py'
+      - 'src/beta_engine/application/saved_player_match_detail.py'
+      - 'src/beta_engine/application/saved_player_match_history.py'
+      - 'src/beta_engine/api/routers/admin_run_home.py'
+      - 'web/src/pages/SavedPlayerIdentityPage.tsx'
+      - 'web/src/pages/SavedPlayerMatchesPanel.tsx'
+      - 'web/src/pages/SavedPlayerMatchDetailPage.tsx'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  browser:
+    name: Real saved tournament replay after restart
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: pyproject.toml
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: Install engine and Playwright
+        run: python -m pip install -e . playwright
+      - name: Install frontend
+        run: npm --prefix web ci
+      - name: Prepare Chromium
+        run: |
+          if [ -x /usr/bin/google-chrome ]; then
+            echo "CHROME_BIN=/usr/bin/google-chrome" >> "$GITHUB_ENV"
+          else
+            python -m playwright install --with-deps chromium
+            echo "CHROME_BIN=$(python -c 'from playwright.sync_api import sync_playwright; p=sync_playwright().start(); print(p.chromium.executable_path); p.stop()')" >> "$GITHUB_ENV"
+          fi
+      - name: Start Vite against disposable backend port
+        run: |
+          VITE_API_BASE_URL=http://127.0.0.1:8013 npm --prefix web run dev -- --host 127.0.0.1 --port 5173 --strictPort > "$RUNNER_TEMP/saved-replay-vite.log" 2>&1 &
+          for attempt in $(seq 1 90); do
+            if curl --fail --silent http://127.0.0.1:5173/ > /dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat "$RUNNER_TEMP/saved-replay-vite.log"
+          exit 1
+      - name: Real browser tournament Save, replay and backend restart
+        run: |
+          python scripts/admin_first_tournament_smoke.py \
+            --acceptance "$RUNNER_TEMP/saved-replay-run" \
+            --port 8013 \
+            --saved-replay-only \
+            --saved-replay-fork \
+            --base-url http://127.0.0.1:5173 \
+            --chromium "$CHROME_BIN"
+      - name: Preserve browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: saved-player-replay-browser-${{ github.run_id }}
+          path: |
+            ${{ runner.temp }}/saved-replay-run/artifacts/
+            ${{ runner.temp }}/saved-replay-run/server.log
+            ${{ runner.temp }}/saved-replay-vite.log
+          if-no-files-found: warn
+          retention-days: 14

@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-gambia-history-v1",
+  "source_id": "itf-gambia-return-to-play-2020",
+  "relative_path": "observations/normalized/atp_gambia_history_v1.json",
+  "sha256": "87519ba748cde879edee1b0b80f889e82be5d7ab425ccdbc5ace3cf68a7a4ce3",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

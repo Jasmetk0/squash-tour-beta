@@ -1,0 +1,334 @@
+"""Application boundary for manual product Working Draft saves."""
+
+from __future__ import annotations
+
+from collections.abc import Callable
+from dataclasses import dataclass
+
+from beta_engine.infrastructure.db import (
+    SimulationPersistenceRepository,
+    ViewerBranchSaveResult,
+    ViewerBranchWorkingDraftRecord,
+)
+from beta_engine.infrastructure.db.run_package_state import (
+    get_run_package_state,
+    load_saved_run_package_state,
+)
+from beta_engine.infrastructure.db.run_tournament_lab_draft_state import (
+    capture_run_tournament_lab_draft_state,
+    load_saved_run_tournament_lab_drafts,
+)
+from beta_engine.infrastructure.db.player_health_state import (
+    PLAYER_HEALTH_COMPONENT_KEY,
+    health_component,
+)
+
+EntityIdFactory = Callable[[str], str]
+
+
+class WorkingDraftIdentityError(ValueError):
+    """Raised when an injected identity factory returns an unusable id."""
+
+
+def _validated_entity_id(value: str, *, kind: str) -> str:
+    if not isinstance(value, str) or not value.strip():
+        raise WorkingDraftIdentityError(f"{kind} id factory returned a blank id")
+    normalized = value.strip()
+    if len(normalized) > 128:
+        raise WorkingDraftIdentityError(
+            f"{kind} id must contain at most 128 characters"
+        )
+    return normalized
+
+
+@dataclass(slots=True)
+class RunWorkingDraftService:
+    """Stage one logical change and commit the complete Save boundary."""
+
+    repository: SimulationPersistenceRepository
+    id_factory: EntityIdFactory
+
+    def get_viewer_branch_draft(
+        self, *, run_id: str, branch_id: str
+    ) -> ViewerBranchWorkingDraftRecord:
+        return self.repository.get_viewer_branch_working_draft(
+            run_id=run_id, branch_id=branch_id
+        )
+
+    def stage_viewer_branch(
+        self,
+        *,
+        run_id: str,
+        branch_id: str,
+        viewer_branch_id: str,
+        expected_draft_version: int,
+    ) -> ViewerBranchWorkingDraftRecord:
+        return self.repository.stage_viewer_branch_selection(
+            run_id=run_id,
+            branch_id=branch_id,
+            viewer_branch_id=viewer_branch_id,
+            expected_draft_version=expected_draft_version,
+        )
+
+    def save(
+        self,
+        *,
+        run_id: str,
+        branch_id: str,
+        expected_draft_version: int,
+    ) -> ViewerBranchSaveResult:
+        revision_id = _validated_entity_id(
+            self.id_factory("saved-revision"), kind="saved revision"
+        )
+        audit_event_id = _validated_entity_id(
+            self.id_factory("revision-audit-event"), kind="revision audit event"
+        )
+        draft = self.get_viewer_branch_draft(run_id=run_id, branch_id=branch_id)
+        expected_package_fingerprint = None
+        expected_lab_draft_fingerprint = None
+        expected_health_fingerprint = None
+        if draft.proposed_viewer_branch_id == draft.saved_viewer_branch_id:
+            with self.repository._session_factory() as session:
+                package_state = get_run_package_state(
+                    session, run_id=run_id, branch_id=branch_id
+                )
+                lab_draft_state = capture_run_tournament_lab_draft_state(
+                    session, run_id=run_id, branch_id=branch_id
+                )
+                saved_revision = self.repository.get_branch_saved_revision(
+                    revision_id=draft.base_saved_revision_id
+                )
+                saved_package_state = load_saved_run_package_state(
+                    saved_revision.payload, run_id=run_id, branch_id=branch_id
+                )
+                saved_lab_draft_state = load_saved_run_tournament_lab_drafts(
+                    saved_revision.payload, run_id=run_id, branch_id=branch_id
+                )
+                current_health_component = health_component(
+                    session, run_id=run_id, branch_id=branch_id
+                )
+                saved_health_component = saved_revision.payload.get("content", {}).get(
+                    PLAYER_HEALTH_COMPONENT_KEY
+                )
+                package_changed = (
+                    package_state.fingerprint if package_state else None
+                ) != (
+                    saved_package_state.fingerprint if saved_package_state else None
+                )
+                lab_draft_changed = (
+                    lab_draft_state.fingerprint if lab_draft_state else None
+                ) != (
+                    saved_lab_draft_state.fingerprint if saved_lab_draft_state else None
+                )
+                health_changed = current_health_component != saved_health_component
+                changed_component_count = sum(
+                    int(changed)
+                    for changed in (
+                        package_changed,
+                        lab_draft_changed,
+                        health_changed,
+                    )
+                )
+                if changed_component_count > 1:
+                    raise ValueError(
+                        "Working Draft contains multiple independently saved component changes"
+                    )
+                if package_changed:
+                    expected_package_fingerprint = (
+                        package_state.fingerprint if package_state else None
+                    )
+                elif lab_draft_changed:
+                    expected_lab_draft_fingerprint = (
+                        lab_draft_state.fingerprint if lab_draft_state else None
+                    )
+                elif health_changed:
+                    if current_health_component is None:
+                        raise ValueError(
+                            "Working Draft cannot save removal of canonical Player Health"
+                        )
+                    expected_health_fingerprint = current_health_component["fingerprint"]
+        return self.repository.save_viewer_branch_selection_atomically(
+            run_id=run_id,
+            branch_id=branch_id,
+            expected_draft_version=expected_draft_version,
+            expected_run_package_fingerprint=expected_package_fingerprint,
+            expected_run_tournament_lab_draft_fingerprint=expected_lab_draft_fingerprint,
+            expected_player_health_fingerprint=expected_health_fingerprint,
+            revision_id=revision_id,
+            audit_event_id=audit_event_id,
+        )
+
+    def save_ranking(
+        self,
+        *,
+        run_id: str,
+        branch_id: str,
+        expected_draft_version: int,
+        expected_ranking_fingerprint: str,
+    ) -> ViewerBranchSaveResult:
+        if (
+            not isinstance(expected_ranking_fingerprint, str)
+            or len(expected_ranking_fingerprint) != 64
+            or any(c not in "0123456789abcdef" for c in expected_ranking_fingerprint)
+        ):
+            raise ValueError("Expected ranking fingerprint must be SHA-256")
+        return self.repository.save_viewer_branch_selection_atomically(
+            run_id=run_id,
+            branch_id=branch_id,
+            expected_draft_version=expected_draft_version,
+            expected_ranking_fingerprint=expected_ranking_fingerprint,
+            revision_id=_validated_entity_id(
+                self.id_factory("saved-revision"), kind="saved revision"
+            ),
+            audit_event_id=_validated_entity_id(
+                self.id_factory("revision-audit-event"), kind="revision audit event"
+            ),
+        )
+
+    def save_initial_world(
+        self,
+        *,
+        run_id: str,
+        branch_id: str,
+        expected_draft_version: int,
+        expected_initial_world_fingerprint: str,
+    ) -> ViewerBranchSaveResult:
+        if (
+            not isinstance(expected_initial_world_fingerprint, str)
+            or len(expected_initial_world_fingerprint) != 64
+        ):
+            raise ValueError("Expected initial-world fingerprint must be SHA-256")
+        return self.repository.save_viewer_branch_selection_atomically(
+            run_id=run_id,
+            branch_id=branch_id,
+            expected_draft_version=expected_draft_version,
+            expected_initial_world_fingerprint=expected_initial_world_fingerprint,
+            revision_id=_validated_entity_id(
+                self.id_factory("saved-revision"), kind="saved revision"
+            ),
+            audit_event_id=_validated_entity_id(
+                self.id_factory("revision-audit-event"), kind="revision audit event"
+            ),
+        )
+
+    def save_run_prospect_source(
+        self,
+        *,
+        run_id: str,
+        branch_id: str,
+        expected_draft_version: int,
+        expected_run_prospect_source_fingerprint: str,
+    ) -> ViewerBranchSaveResult:
+        if (
+            not isinstance(expected_run_prospect_source_fingerprint, str)
+            or len(expected_run_prospect_source_fingerprint) != 64
+            or any(
+                c not in "0123456789abcdef"
+                for c in expected_run_prospect_source_fingerprint
+            )
+        ):
+            raise ValueError("Expected Run prospect source fingerprint must be SHA-256")
+        return self.repository.save_viewer_branch_selection_atomically(
+            run_id=run_id,
+            branch_id=branch_id,
+            expected_draft_version=expected_draft_version,
+            expected_run_prospect_source_fingerprint=(
+                expected_run_prospect_source_fingerprint
+            ),
+            revision_id=_validated_entity_id(
+                self.id_factory("saved-revision"), kind="saved revision"
+            ),
+            audit_event_id=_validated_entity_id(
+                self.id_factory("revision-audit-event"), kind="revision audit event"
+            ),
+        )
+
+    def save_tournament_lab_drafts(
+        self,
+        *,
+        run_id: str,
+        branch_id: str,
+        expected_draft_version: int,
+        expected_tournament_lab_draft_fingerprint: str,
+    ) -> ViewerBranchSaveResult:
+        if (
+            not isinstance(expected_tournament_lab_draft_fingerprint, str)
+            or len(expected_tournament_lab_draft_fingerprint) != 64
+            or any(
+                c not in "0123456789abcdef"
+                for c in expected_tournament_lab_draft_fingerprint
+            )
+        ):
+            raise ValueError(
+                "Expected Tournament Lab Run draft fingerprint must be SHA-256"
+            )
+        return self.repository.save_viewer_branch_selection_atomically(
+            run_id=run_id,
+            branch_id=branch_id,
+            expected_draft_version=expected_draft_version,
+            expected_run_tournament_lab_draft_fingerprint=(
+                expected_tournament_lab_draft_fingerprint
+            ),
+            revision_id=_validated_entity_id(
+                self.id_factory("saved-revision"), kind="saved revision"
+            ),
+            audit_event_id=_validated_entity_id(
+                self.id_factory("revision-audit-event"), kind="revision audit event"
+            ),
+        )
+
+    def save_player_health(
+        self,
+        *,
+        run_id: str,
+        branch_id: str,
+        expected_draft_version: int,
+        expected_player_health_fingerprint: str,
+    ) -> ViewerBranchSaveResult:
+        if (
+            not isinstance(expected_player_health_fingerprint, str)
+            or len(expected_player_health_fingerprint) != 64
+            or any(
+                c not in "0123456789abcdef"
+                for c in expected_player_health_fingerprint
+            )
+        ):
+            raise ValueError("Expected Player Health fingerprint must be SHA-256")
+        return self.repository.save_viewer_branch_selection_atomically(
+            run_id=run_id,
+            branch_id=branch_id,
+            expected_draft_version=expected_draft_version,
+            expected_player_health_fingerprint=expected_player_health_fingerprint,
+            revision_id=_validated_entity_id(
+                self.id_factory("saved-revision"), kind="saved revision"
+            ),
+            audit_event_id=_validated_entity_id(
+                self.id_factory("revision-audit-event"), kind="revision audit event"
+            ),
+        )
+
+    def save_simulation(
+        self,
+        *,
+        run_id: str,
+        branch_id: str,
+        expected_draft_version: int,
+        expected_simulation_fingerprint: str,
+    ) -> ViewerBranchSaveResult:
+        if (
+            not isinstance(expected_simulation_fingerprint, str)
+            or len(expected_simulation_fingerprint) != 64
+        ):
+            raise ValueError("Expected simulation fingerprint must be SHA-256")
+        return self.repository.save_viewer_branch_selection_atomically(
+            run_id=run_id,
+            branch_id=branch_id,
+            expected_draft_version=expected_draft_version,
+            expected_simulation_fingerprint=expected_simulation_fingerprint,
+            revision_id=_validated_entity_id(
+                self.id_factory("saved-revision"), kind="saved revision"
+            ),
+            audit_event_id=_validated_entity_id(
+                self.id_factory("revision-audit-event"), kind="revision audit event"
+            ),
+        )

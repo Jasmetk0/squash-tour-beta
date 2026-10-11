@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-tanzania-history-v1",
+  "source_id": "caf-tanzania-profile",
+  "relative_path": "observations/normalized/structural/fifa_structural_tanzania_history_v1.json",
+  "sha256": "7f7985b8e1db0b7956524a038ead8284533f80cd9fee98c50ac1110b9c55ea9d",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

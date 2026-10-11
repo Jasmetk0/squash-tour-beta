@@ -1,0 +1,82 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "fifa-earth-gha-model.v1",
+  "world_id": "fifa_earth",
+  "data_cutoff": "2026-10-03",
+  "countries": [
+    "GHA"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "evidence_rules": [
+    "CAF's Ghana page contains a 1956 CAF-affiliation / 1957 creation chronology anomaly; both source facts are retained and the rating remains low-confidence around that boundary.",
+    "FIFA Big Count 2006 is used only from 2006 and primarily for popularity/access/development context.",
+    "FIFA Professional Football Report 2023 enters only from 2023 and supports professional ecosystem dimensions rather than team/player outcomes.",
+    "No tournament results or rankings are calibration targets; 9+ remains exceptional/world-leading."
+  ],
+  "anchor_values": {
+    "GHA": {
+      "1955": [
+        6.2,
+        5.4,
+        5.4,
+        5.7,
+        5.2,
+        6
+      ],
+      "1956": [
+        6.3,
+        5.5,
+        5.5,
+        5.8,
+        5.3,
+        6.1
+      ],
+      "1957": [
+        6.6,
+        5.8,
+        5.9,
+        6.1,
+        5.8,
+        6.5
+      ],
+      "1958": [
+        6.8,
+        6,
+        6.1,
+        6.4,
+        6,
+        6.7
+      ],
+      "2006": [
+        8.5,
+        7.2,
+        7.5,
+        7.8,
+        7.2,
+        8.4
+      ],
+      "2023": [
+        8.7,
+        7.3,
+        7.8,
+        8.1,
+        7.7,
+        8.7
+      ],
+      "2026": [
+        8.8,
+        7.4,
+        7.9,
+        8.1,
+        7.8,
+        8.8
+      ]
+    }
+  },
+  "evidence_sources": [
+    "caf-ghana-profile",
+    "fifa-big-count-2006",
+    "fifa-professional-2023"
+  ],
+  "heldout_ranking_used": false
+}

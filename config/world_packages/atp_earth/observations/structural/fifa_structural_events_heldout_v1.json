@@ -1,0 +1,260 @@
+{
+  "schema_version": "fifa_structural_event_seed.v1",
+  "seed_role": "held_out_validation",
+  "scope": "Held-out structural football evidence for Germany, Brazil, Iceland and San Marino. These countries are validation cases and must not be used to tune transfer weights or percentile curves.",
+  "safeguards": [
+    "Held-out events may validate calibration behaviour but must not be used to fit or tune the calibration model.",
+    "Event year must be explicitly supported by the cited official source.",
+    "Structural events are source facts, not ratings or numeric effect sizes.",
+    "Dimension tags identify plausible evidence relevance only.",
+    "Pre-1955 events retain their historical year and may inform tradition review without being rewritten as 1955 observations."
+  ],
+  "events": [
+    {
+      "event_id": "de-dfb-foundation-1900",
+      "earth_country_code": "DEU",
+      "source_id": "dfb-history",
+      "source_entity": "Deutscher Fußball-Bund",
+      "observation_year": 1900,
+      "event_type": "institutional_foundation",
+      "description": "The German Football Association (DFB) is founded in Leipzig on 28 January 1900.",
+      "dimension_tags": [
+        "squash_tradition",
+        "elite_support"
+      ],
+      "quality_flags": [
+        "pre_game_start_history",
+        "held_out_validation_country"
+      ],
+      "source_locator": "DFB history timeline — 1900 foundation"
+    },
+    {
+      "event_id": "de-first-championship-1903",
+      "earth_country_code": "DEU",
+      "source_id": "dfb-history",
+      "source_entity": "German football",
+      "observation_year": 1903,
+      "event_type": "competition_launch",
+      "description": "The first German national football championship is held in 1903.",
+      "dimension_tags": [
+        "squash_tradition",
+        "competition_quality"
+      ],
+      "quality_flags": [
+        "pre_game_start_history",
+        "held_out_validation_country"
+      ],
+      "source_locator": "DFB history timeline — first championship 1903"
+    },
+    {
+      "event_id": "de-dfb-campus-2022",
+      "earth_country_code": "DEU",
+      "source_id": "dfb-campus-2022",
+      "source_entity": "Deutscher Fußball-Bund",
+      "observation_year": 2022,
+      "event_type": "training_centre_opening",
+      "description": "The DFB Campus becomes the association's home in 2022, bringing administration, sport and science together and giving the DFB its first own sporting infrastructure.",
+      "dimension_tags": [
+        "development_quality",
+        "elite_support"
+      ],
+      "quality_flags": [
+        "held_out_validation_country"
+      ],
+      "source_locator": "DFB Campus — home of DFB since June 2022"
+    },
+    {
+      "event_id": "br-cbf-foundation-1914",
+      "earth_country_code": "BRA",
+      "source_id": "cbf-history-1914",
+      "source_entity": "Confederação Brasileira de Futebol predecessor",
+      "observation_year": 1914,
+      "event_type": "institutional_foundation",
+      "description": "The Brazilian national football governing body is founded on 8 June 1914 as the Federação Brasileira de Sports, predecessor of the modern CBF.",
+      "dimension_tags": [
+        "squash_tradition",
+        "elite_support"
+      ],
+      "quality_flags": [
+        "pre_game_start_history",
+        "held_out_validation_country"
+      ],
+      "source_locator": "CBF 110-year history — foundation 8 June 1914"
+    },
+    {
+      "event_id": "br-granja-comary-1987",
+      "earth_country_code": "BRA",
+      "source_id": "cbf-granja-comary-history",
+      "source_entity": "CBF / Granja Comary",
+      "observation_year": 1987,
+      "event_type": "training_centre_milestone",
+      "description": "Granja Comary is used by the Brazil national team as its training centre from 1987.",
+      "dimension_tags": [
+        "development_quality",
+        "elite_support"
+      ],
+      "quality_flags": [
+        "held_out_validation_country"
+      ],
+      "source_locator": "CBF Granja Comary history — national team use since 1987"
+    },
+    {
+      "event_id": "br-tds-workshop-2026",
+      "earth_country_code": "BRA",
+      "source_id": "cbf-tds-2026",
+      "source_entity": "CBF / FIFA Talent Development Scheme",
+      "observation_year": 2026,
+      "event_type": "development_programme_milestone",
+      "description": "CBF, FIFA and CBF Academy hold a Talent Development Scheme workshop at Granja Comary integrating coaches and staff across Brazil's male youth and senior national-team categories.",
+      "dimension_tags": [
+        "development_quality",
+        "elite_support"
+      ],
+      "quality_flags": [
+        "held_out_validation_country",
+        "programme_event_not_outcome",
+        "partial_2026_evidence"
+      ],
+      "source_locator": "CBF TDS workshop at Granja Comary, April 2026"
+    },
+    {
+      "event_id": "is-national-championship-1912",
+      "earth_country_code": "ISL",
+      "source_id": "uefa-iceland-history",
+      "source_entity": "Icelandic football",
+      "observation_year": 1912,
+      "event_type": "competition_launch",
+      "description": "A national football championship is established in Iceland in 1912 under the Icelandic Sports Federation.",
+      "dimension_tags": [
+        "squash_tradition",
+        "competition_quality"
+      ],
+      "quality_flags": [
+        "pre_game_start_history",
+        "held_out_validation_country"
+      ],
+      "source_locator": "UEFA Iceland timeline — national championship 1912"
+    },
+    {
+      "event_id": "is-ksi-foundation-1947",
+      "earth_country_code": "ISL",
+      "source_id": "uefa-iceland-history",
+      "source_entity": "Football Association of Iceland (KSÍ)",
+      "observation_year": 1947,
+      "event_type": "institutional_foundation",
+      "description": "The Football Association of Iceland (KSÍ) is founded and affiliates to FIFA in 1947.",
+      "dimension_tags": [
+        "squash_tradition",
+        "elite_support"
+      ],
+      "quality_flags": [
+        "pre_game_start_history",
+        "held_out_validation_country"
+      ],
+      "source_locator": "UEFA Iceland timeline — KSÍ foundation/FIFA affiliation 1947"
+    },
+    {
+      "event_id": "sm-first-club-1928",
+      "earth_country_code": "SMR",
+      "source_id": "uefa-san-marino-history",
+      "source_entity": "San Marino football",
+      "observation_year": 1928,
+      "event_type": "club_foundation_milestone",
+      "description": "AC Libertas, San Marino's first football club, is founded in 1928.",
+      "dimension_tags": [
+        "squash_tradition"
+      ],
+      "quality_flags": [
+        "pre_game_start_history",
+        "held_out_validation_country"
+      ],
+      "source_locator": "UEFA San Marino timeline — first club 1928"
+    },
+    {
+      "event_id": "sm-fsgc-foundation-1931",
+      "earth_country_code": "SMR",
+      "source_id": "uefa-san-marino-history",
+      "source_entity": "San Marino Football Federation (FSGC)",
+      "observation_year": 1931,
+      "event_type": "institutional_foundation",
+      "description": "The San Marino Football Federation (FSGC) is founded in 1931.",
+      "dimension_tags": [
+        "squash_tradition",
+        "elite_support"
+      ],
+      "quality_flags": [
+        "pre_game_start_history",
+        "held_out_validation_country"
+      ],
+      "source_locator": "UEFA San Marino timeline — FSGC founded 1931"
+    },
+    {
+      "event_id": "sm-first-official-competition-1937",
+      "earth_country_code": "SMR",
+      "source_id": "uefa-san-marino-history",
+      "source_entity": "San Marino football",
+      "observation_year": 1937,
+      "event_type": "competition_launch",
+      "description": "San Marino's first official football competition, the Coppa Titano, begins in 1937.",
+      "dimension_tags": [
+        "squash_tradition",
+        "competition_quality"
+      ],
+      "quality_flags": [
+        "pre_game_start_history",
+        "held_out_validation_country"
+      ],
+      "source_locator": "UEFA San Marino timeline — Coppa Titano 1937"
+    },
+    {
+      "event_id": "sm-youth-academy-1963",
+      "earth_country_code": "SMR",
+      "source_id": "uefa-san-marino-history",
+      "source_entity": "San Marino Football Federation (FSGC)",
+      "observation_year": 1963,
+      "event_type": "development_pathway_launch",
+      "description": "FSGC establishes the Nucleo Addestramento Giovani Calciatori, San Marino's first youth football academy.",
+      "dimension_tags": [
+        "development_quality",
+        "elite_support"
+      ],
+      "quality_flags": [
+        "held_out_validation_country"
+      ],
+      "source_locator": "UEFA San Marino timeline — first youth academy 1963"
+    },
+    {
+      "event_id": "sm-league-launch-1985",
+      "earth_country_code": "SMR",
+      "source_id": "uefa-san-marino-history",
+      "source_entity": "San Marino football",
+      "observation_year": 1985,
+      "event_type": "competition_launch",
+      "description": "San Marino's first league competition launches in 1985.",
+      "dimension_tags": [
+        "squash_tradition",
+        "competition_quality"
+      ],
+      "quality_flags": [
+        "held_out_validation_country"
+      ],
+      "source_locator": "UEFA San Marino timeline — league competition 1985"
+    },
+    {
+      "event_id": "sm-casa-del-calcio-2008",
+      "earth_country_code": "SMR",
+      "source_id": "uefa-san-marino-history",
+      "source_entity": "San Marino Football Federation (FSGC)",
+      "observation_year": 2008,
+      "event_type": "infrastructure_milestone",
+      "description": "FSGC opens its Casa del Calcio headquarters in 2008 with UEFA HatTrick support.",
+      "dimension_tags": [
+        "elite_support"
+      ],
+      "quality_flags": [
+        "held_out_validation_country"
+      ],
+      "source_locator": "UEFA San Marino timeline / HatTrick support — Casa del Calcio 2008"
+    }
+  ]
+}

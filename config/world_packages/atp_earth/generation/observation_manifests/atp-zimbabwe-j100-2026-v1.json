@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-zimbabwe-j100-2026-v1",
+  "source_id": "itf-zimbabwe-j100-2026",
+  "relative_path": "observations/normalized/atp_zimbabwe_j100_2026_v1.json",
+  "sha256": "b45e3cabeef2be5806aefd155252c8692d5870c3a4ba5db3f5bb4f9e6c3b5fa0",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

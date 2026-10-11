@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-djibouti-history-v1",
+  "source_id": "itf-djibouti-return-to-play-2020",
+  "relative_path": "observations/normalized/atp_djibouti_history_v1.json",
+  "sha256": "1c542d6c6374c39c775a45c683b704ae924634186e7e90f0a06d4c3859c6a736",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

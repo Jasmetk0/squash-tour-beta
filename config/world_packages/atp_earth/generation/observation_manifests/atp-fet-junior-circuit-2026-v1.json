@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-fet-junior-circuit-2026-v1",
+  "source_id": "fet-junior-circuit-2026",
+  "relative_path": "observations/normalized/atp-fet-junior-circuit-2026-v1.json",
+  "sha256": "23619c75d32ed600a191c249688cbf296624379f4dc87d6af81ed2e53c41b9d0",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

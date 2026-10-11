@@ -1,0 +1,49 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "fifa-earth-lka-model.v1",
+  "world_id": "fifa_earth",
+  "data_cutoff": "2026-10-03",
+  "countries": [
+    "LKA"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "evidence_rules": [
+    "1955-2005 values are a low-confidence project-authored baseline.",
+    "Big Count enters from 2006.",
+    "Professional 2023 null fields remain missing.",
+    "Current FIFA membership is context only."
+  ],
+  "anchor_values": {
+    "LKA": {
+      "1955": [
+        4.9,
+        4.4,
+        4.6,
+        4.6,
+        4.2,
+        5.1
+      ],
+      "2006": [
+        6.2,
+        5.5,
+        5.8,
+        5.9,
+        5.4,
+        6.1
+      ],
+      "2026": [
+        6.4,
+        5.7,
+        6,
+        6.1,
+        5.6,
+        6.3
+      ]
+    }
+  },
+  "evidence_sources": [
+    "fifa-sri-lanka-member-context-2026",
+    "fifa-big-count-2006"
+  ],
+  "heldout_ranking_used": false
+}

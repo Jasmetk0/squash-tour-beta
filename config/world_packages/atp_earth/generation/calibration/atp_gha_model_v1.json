@@ -1,0 +1,58 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "atp-earth-gha-model.v1",
+  "world_id": "atp_earth",
+  "data_cutoff": "2026-10-04",
+  "countries": [
+    "GHA"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "evidence_rules": [
+    "Pre-1955 organised-tennis context comes from a secondary reproduction of a historical report, so numerical ratings remain low-confidence.",
+    "The 2024 GTF junior/development evidence enters only from 2024.",
+    "The 2026 Davis Cup pathway and World Tennis Masters hosting enter only from 2026.",
+    "Programme/event existence is capacity evidence, not a direct player-outcome or participation-strength score."
+  ],
+  "anchor_values": {
+    "GHA": {
+      "1955": [
+        4,
+        3.6,
+        3.7,
+        3.7,
+        3.4,
+        6.2
+      ],
+      "2000": [
+        4.5,
+        4.1,
+        4.2,
+        4.2,
+        3.9,
+        6.5
+      ],
+      "2024": [
+        5.1,
+        4.7,
+        5.3,
+        5,
+        5,
+        6.7
+      ],
+      "2026": [
+        5.5,
+        5.1,
+        5.7,
+        5.8,
+        5.5,
+        6.9
+      ]
+    }
+  },
+  "evidence_sources": [
+    "ghana-sports-report-1952-secondary",
+    "gtf-current-2024-2026",
+    "itf-ghana-masters-2026"
+  ],
+  "heldout_ranking_used": false
+}

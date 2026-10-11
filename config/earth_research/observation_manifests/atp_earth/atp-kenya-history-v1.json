@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-kenya-history-v1",
+  "source_id": "tennis-kenya-centenary-secondary",
+  "relative_path": "observations/normalized/atp_kenya_history_v1.json",
+  "sha256": "5226d6462fb81b624e5521513f073101edab9b894a9eb2b06edbaa448356f464",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

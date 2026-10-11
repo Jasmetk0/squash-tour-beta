@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-lesotho-history-v1",
+  "source_id": "itf-lesotho-return-to-play-2020",
+  "relative_path": "observations/normalized/atp_lesotho_history_v1.json",
+  "sha256": "39fdc42cbcb3eaac46243a5bccd85da7dfe6b187ef931eda2d3b388327bec481",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

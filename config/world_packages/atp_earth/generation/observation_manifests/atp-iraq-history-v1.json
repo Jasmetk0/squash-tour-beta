@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-iraq-history-v1",
+  "source_id": "itf-iraq-profile",
+  "relative_path": "observations/normalized/atp_iraq_history_v1.json",
+  "sha256": "3b0366a9f2812585b0d2e18a88d1cbf0ad2c54f15d7bcd37056dc8b5e1dd31af",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-jamaica-history-v1",
+  "source_id": "fifa-jamaica-member-context-2026",
+  "relative_path": "observations/normalized/structural/fifa_jamaica_history_v1.json",
+  "sha256": "0424a12fdd719209001c44633457a9769eafb74aa46bcef171dc7499fc4594bd",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

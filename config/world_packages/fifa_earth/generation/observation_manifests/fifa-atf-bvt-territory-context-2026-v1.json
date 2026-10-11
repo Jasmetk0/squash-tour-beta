@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-atf-bvt-territory-context-2026-v1",
+  "source_id": "atf-bvt-territory-context-2026",
+  "relative_path": "observations/normalized/fifa_atf_bvt_territory_context_2026_v1.json",
+  "sha256": "b801caf9871c3db18d5577512192b0c1630a90f29295986e2a223167da4e7c76",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-atf-bvt-batch-2026-10-07"
+}

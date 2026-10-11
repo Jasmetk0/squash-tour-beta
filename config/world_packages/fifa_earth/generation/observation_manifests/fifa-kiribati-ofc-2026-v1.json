@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-kiribati-ofc-2026-v1",
+  "source_id": "rus-kir-ofc-kiribati-2026",
+  "relative_path": "observations/normalized/fifa_kiribati_ofc_2026_v1.json",
+  "sha256": "9086da3fcc85f3df4136b0ea8b9f673ea354a4482405825b0a2e2406c101103a",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-rus-kir-batch-2026-10-07"
+}

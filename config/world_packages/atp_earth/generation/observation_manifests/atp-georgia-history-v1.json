@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-georgia-history-v1",
+  "source_id": "itf-georgia-profile",
+  "relative_path": "observations/normalized/atp_georgia_history_v1.json",
+  "sha256": "f9b6a56b91a9ec57f6003f8b1a944935900f03c7a81d533f83226337c2124106",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

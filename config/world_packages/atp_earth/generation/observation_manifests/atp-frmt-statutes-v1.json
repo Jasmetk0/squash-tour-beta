@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-frmt-statutes-v1",
+  "source_id": "frmt-statutes-2018",
+  "relative_path": "observations/normalized/atp_frmt_statutes_v1.json",
+  "sha256": "caa14aa47712740a53ef286f892f6fa6ebfb868836edc7cd770a1c2eea1baea2",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

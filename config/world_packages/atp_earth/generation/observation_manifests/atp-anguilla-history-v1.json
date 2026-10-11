@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-anguilla-history-v1",
+  "source_id": "itf-anguilla-profile",
+  "relative_path": "observations/normalized/atp_anguilla_history_v1.json",
+  "sha256": "32e6fb08608eb4de113e3ead87c00f9d63fb04bdb0c1f8fae6293acbda17553d",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

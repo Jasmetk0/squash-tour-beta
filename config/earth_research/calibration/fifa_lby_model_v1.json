@@ -1,0 +1,65 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "fifa-earth-lby-model.v1",
+  "world_id": "fifa_earth",
+  "data_cutoff": "2026-10-03",
+  "countries": [
+    "LBY"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "evidence_rules": [
+    "Pre-1962 is low-confidence territorial context.",
+    "Federation creation 1962 and FIFA affiliation 1964 are time-gated.",
+    "Big Count enters only from 2006.",
+    "No missing Professional 2023 values are inferred."
+  ],
+  "anchor_values": {
+    "LBY": {
+      "1955": [
+        4.2,
+        3.8,
+        3.8,
+        3.9,
+        3.6,
+        4.4
+      ],
+      "1962": [
+        5.5,
+        4.8,
+        5,
+        5.2,
+        4.8,
+        5.7
+      ],
+      "1964": [
+        5.9,
+        5.1,
+        5.3,
+        5.5,
+        5.1,
+        6
+      ],
+      "2006": [
+        6.8,
+        5.8,
+        6.1,
+        6.4,
+        5.8,
+        6.8
+      ],
+      "2026": [
+        6.4,
+        5.4,
+        5.5,
+        5.6,
+        5.1,
+        6.8
+      ]
+    }
+  },
+  "evidence_sources": [
+    "caf-libya-profile",
+    "fifa-big-count-2006"
+  ],
+  "heldout_ranking_used": false
+}

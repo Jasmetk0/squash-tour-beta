@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-egypt-league-2024-v1",
+  "source_id": "etf-league-2024",
+  "relative_path": "observations/normalized/atp_egypt_league_2024_v1.json",
+  "sha256": "0680eb713f16f85b1d4cc319216d91396bf0971fe91e2d94937fd2129b9afe46",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

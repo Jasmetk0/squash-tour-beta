@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-pcn-umi-territory-context-2026-v1",
+  "source_id": "pcn-umi-territory-context-2026",
+  "relative_path": "observations/normalized/fifa_pcn_umi_territory_context_2026_v1.json",
+  "sha256": "07fc5fb9a84a35e45df12c52200a0a1efaf159ab19c3734d33c686038026d335",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-pcn-umi-batch-2026-10-07"
+}

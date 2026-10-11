@@ -1,0 +1,44 @@
+{
+  "schema_version": "earth_source_observations.v2",
+  "dataset_id": "fifa-msr-constitution-2010-v1",
+  "source_id": "msr-constitution-2010",
+  "source_url": "https://www.legislation.gov.uk/uksi/2010/2474/made/data.xht?view=snippet&wrap=true",
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-shn-msr-batch-2026-10-07",
+  "scope": "MSR; structural identity/context event.",
+  "limitations": "Structural identity/disaster context only; not direct sports evidence.",
+  "observations": [
+    {
+      "observation_id": "fifa-msr-constitution-2010-v1#msr-constitution-2010",
+      "source_id": "msr-constitution-2010",
+      "source_entity": "msr-constitution-2010",
+      "earth_country_code": "MSR",
+      "historical_entity": "Montserrat (British Overseas Territory)",
+      "observation_year": 2010,
+      "period_start_year": null,
+      "period_end_year": null,
+      "measurement_type": "structural_event",
+      "sex_scope": "not_applicable",
+      "age_scope": null,
+      "competition_scope": null,
+      "numeric_value": null,
+      "text_value": "The Montserrat Constitution Order 2010 established a new Constitution replacing the 1989 constitutional arrangements.",
+      "unit": "event",
+      "collection_method": "official_narrative",
+      "coverage_scope": "territory",
+      "comparability_group": null,
+      "cross_country_comparable": false,
+      "is_direct_observation": true,
+      "is_statistically_modelled": false,
+      "territory_mapping_method": null,
+      "territory_weight": null,
+      "source_page": null,
+      "source_locator": "Explanatory Note",
+      "definition_notes": "Structural context only; not direct sports evidence.",
+      "quality_flags": [
+        "constitutional_status_not_sports_measurement"
+      ]
+    }
+  ]
+}

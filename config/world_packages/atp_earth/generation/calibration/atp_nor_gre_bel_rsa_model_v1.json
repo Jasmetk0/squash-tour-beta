@@ -1,0 +1,26 @@
+{
+  "schema_version": "atp_earth_reviewed_country_batch.v1",
+  "model_id": "atp-earth-nor-gre-bel-rsa-model.v1",
+  "created_on": "2026-10-05",
+  "countries": [
+    "NOR",
+    "GRE",
+    "BEL",
+    "ZAF"
+  ],
+  "coverage": {
+    "from": 1955,
+    "to": 2026,
+    "attributes": 6
+  },
+  "rating_scale": "country_ratings_1_10.v2",
+  "method": "Country-specific piecewise anchor histories using institutional/access/development evidence separately from male elite competition outcomes.",
+  "evidence_rules": [
+    "Ruud, Tsitsipas, Goffin and Anderson outcomes inform competition/tradition only.",
+    "Norwegian 2022 club scale is tennis/padel combined and the 2023 inclusion fund is an access intervention, not participation.",
+    "Belgian 2026 scale is Flanders-only and tennis/padel combined; it is partial Earth BEL evidence.",
+    "South African modern development centres/provincial structure are not backcast and do not erase uneven access.",
+    "Secondary South African 1891 history is used only for broad tradition context.",
+    "No held-out validation ranking is used to tune authored values."
+  ]
+}

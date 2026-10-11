@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-davis-cup-usa-aus-esp-srb-v1",
+  "source_id": "davis-cup-previous-champions",
+  "relative_path": "observations/normalized/atp-davis-cup-usa-aus-esp-srb-v1.json",
+  "sha256": "14d96b8de90034ead316f1c2d49c7497d893e75d57b8241ea1a6efe1dc009067",
+  "record_count": 25,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-04"
+}

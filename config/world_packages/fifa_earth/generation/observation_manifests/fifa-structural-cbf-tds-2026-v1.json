@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-cbf-tds-2026-v1",
+  "source_id": "cbf-tds-2026",
+  "relative_path": "observations/normalized/structural/fifa_structural_cbf_tds_2026_v1.json",
+  "sha256": "a552e55d6d3214a68b5794fb21df725267df2b68856ab6fd1ff7bd147403da12",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": "695b29b9552a8fb59133db25ec8948951a78217a9a1c049734c73ad79b75f665",
+  "generated_by": "scripts/normalize_fifa_structural_events.py"
+}

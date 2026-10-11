@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-zimbabwe-history-v1",
+  "source_id": "caf-zimbabwe-profile",
+  "relative_path": "observations/normalized/structural/fifa_structural_zimbabwe_history_v1.json",
+  "sha256": "559a72fe28c21b67c36a4d3ce9348dccecb4366c9ada7d8089c973c6bfc2103c",
+  "record_count": 3,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

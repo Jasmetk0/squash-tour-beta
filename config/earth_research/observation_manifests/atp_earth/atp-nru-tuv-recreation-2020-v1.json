@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-nru-tuv-recreation-2020-v1",
+  "source_id": "nru-tuv-itf-recreation-2020",
+  "relative_path": "observations/normalized/atp_nru_tuv_recreation_2020_v1.json",
+  "sha256": "584110a7cc12af91aed789d511235e6e32649ea63987d95af7c09bfe94a960a5",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-nru-tuv-batch-2026-10-07"
+}

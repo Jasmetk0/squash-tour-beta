@@ -1,0 +1,91 @@
+"""Read-only canonical Viewer Official Ranking surface."""
+
+from __future__ import annotations
+
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, HTTPException, status
+
+from beta_engine.api.deps import ApiRuntime, get_runtime
+from beta_engine.application.viewer_official_ranking_read_model import (
+    ViewerOfficialRanking,
+    ViewerOfficialRankingHistory,
+    resolve_viewer_official_ranking,
+    resolve_viewer_official_ranking_at,
+    resolve_viewer_official_ranking_history,
+)
+from beta_engine.infrastructure.db import (
+    ViewerOfficialRunContextConflictError,
+    ViewerOfficialRunContextNotFoundError,
+)
+
+router = APIRouter(tags=["viewer-rankings"])
+
+
+@router.get(
+    "/viewer/runs/{product_run_id:path}/rankings/current",
+    response_model=ViewerOfficialRanking,
+)
+def get_viewer_current_official_ranking(
+    product_run_id: str,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+) -> ViewerOfficialRanking:
+    try:
+        snapshot = runtime.repository.get_viewer_saved_revision_snapshot(
+            product_run_id=product_run_id
+        )
+        return resolve_viewer_official_ranking(snapshot.ranking)
+    except ViewerOfficialRunContextNotFoundError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    except (ViewerOfficialRunContextConflictError, ValueError) as exc:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail={"code": "viewer_official_ranking_unavailable", "message": str(exc)},
+        ) from exc
+
+
+@router.get(
+    "/viewer/runs/{product_run_id:path}/rankings/history",
+    response_model=ViewerOfficialRankingHistory,
+)
+def get_viewer_official_ranking_history(
+    product_run_id: str,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+) -> ViewerOfficialRankingHistory:
+    try:
+        snapshot = runtime.repository.get_viewer_saved_revision_snapshot(
+            product_run_id=product_run_id
+        )
+        return resolve_viewer_official_ranking_history(snapshot.ranking)
+    except ViewerOfficialRunContextNotFoundError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    except (ViewerOfficialRunContextConflictError, ValueError) as exc:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail={"code": "viewer_official_ranking_unavailable", "message": str(exc)},
+        ) from exc
+
+
+@router.get(
+    "/viewer/runs/{product_run_id:path}/rankings/history/{week_ordinal}",
+    response_model=ViewerOfficialRanking,
+)
+def get_viewer_official_ranking_detail(
+    product_run_id: str,
+    week_ordinal: int,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+) -> ViewerOfficialRanking:
+    try:
+        snapshot = runtime.repository.get_viewer_saved_revision_snapshot(
+            product_run_id=product_run_id
+        )
+        return resolve_viewer_official_ranking_at(
+            snapshot.ranking, week_ordinal=week_ordinal
+        )
+    except ViewerOfficialRunContextNotFoundError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    except (ViewerOfficialRunContextConflictError, ValueError) as exc:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail={"code": "viewer_official_ranking_unavailable", "message": str(exc)},
+        ) from exc

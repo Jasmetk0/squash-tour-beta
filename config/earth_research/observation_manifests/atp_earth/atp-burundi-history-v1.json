@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-burundi-history-v1",
+  "source_id": "itf-burundi-return-to-play-2020",
+  "relative_path": "observations/normalized/atp_burundi_history_v1.json",
+  "sha256": "0e815512463af11679514f4f3d51a94779a25a60b9357fa2a41db756dbccb3e7",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

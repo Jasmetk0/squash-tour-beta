@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-hts-profile-v1",
+  "source_id": "hts-about",
+  "relative_path": "observations/normalized/atp-hts-profile-v1.json",
+  "sha256": "11d4a88af54b4cd337f39bef79b208d4eb1989827f3318dc709b3c49afa8a0c1",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

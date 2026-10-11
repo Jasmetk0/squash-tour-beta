@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-hkfa-history-v1",
+  "source_id": "hkg-mac-hkfa-history",
+  "relative_path": "observations/normalized/fifa_hkfa_history_v1.json",
+  "sha256": "b705a8e2134edd913ba583838cf2f85e649d6ba5c7293e9d30074146768d2adc",
+  "record_count": 3,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-hkg-mac-batch-2026-10-07"
+}

@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-ita-youth-calendar-2026-v1",
+  "source_id": "ita-youth-calendar-2026",
+  "relative_path": "observations/normalized/atp-ita-youth-calendar-2026-v1.json",
+  "sha256": "5b275efd6c6990272f094f5830f5762f30a156312c23483120090a1cbc86051a",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

@@ -1,0 +1,45 @@
+{
+  "schema_version": "earth_source_observations.v2",
+  "dataset_id": "atp-aus-court-hire-2024-v1",
+  "source_id": "tennis-australia-court-hire-2024",
+  "source_url": "https://www.tennis.com.au/fan-zone/news/2024/10/23/aussie-tennis-hits-one-million-hours-of-court-hire-as-participation-soars",
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-04",
+  "scope": "Tennis Australia 2024 nationwide booking-use milestone.",
+  "limitations": "Booking hours are not unique players and apply only to the modern period.",
+  "observations": [
+    {
+      "observation_id": "atp-aus-court-hire-2024-v1#aus-booking-hours-2024",
+      "source_id": "tennis-australia-court-hire-2024",
+      "source_entity": "AUS",
+      "earth_country_code": "AUS",
+      "historical_entity": null,
+      "observation_year": 2024,
+      "period_start_year": null,
+      "period_end_year": null,
+      "measurement_type": "court_booking_hours",
+      "sex_scope": "mixed",
+      "age_scope": null,
+      "competition_scope": null,
+      "numeric_value": 1000000,
+      "text_value": null,
+      "unit": "hours_booked_minimum",
+      "collection_method": "official_narrative",
+      "coverage_scope": "national",
+      "comparability_group": null,
+      "cross_country_comparable": false,
+      "is_direct_observation": true,
+      "is_statistically_modelled": false,
+      "territory_mapping_method": "direct_earth_country",
+      "territory_weight": null,
+      "source_page": null,
+      "source_locator": null,
+      "definition_notes": "Tennis Australia reported more than one million hours of tennis court bookings nationwide in just over twelve months. The source describes broad public use, including families and players across age groups; it does not support male-only or senior-only scoping.",
+      "quality_flags": [
+        "aggregate_booking_use_not_unique_players",
+        "broad_public_use"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,712 @@
+{
+  "schema_version": "fifa_structural_event_seed.v1",
+  "scope": "Curated, source-backed structural football events for the nine-country FIFA Earth review set. Events are source facts, not ratings or effect sizes.",
+  "safeguards": [
+    "Event year must be explicitly supported by the cited source or by an explicitly labelled source conflict.",
+    "A structural event does not imply a numeric rating change.",
+    "Dimension tags identify plausible relevance only; they are not weights.",
+    "Conflicting official source dates are preserved as separate observations.",
+    "Pre-1955 events may inform tradition at the 1955 game start but are never copied as 1955 observations."
+  ],
+  "events": [
+    {
+      "event_id": "cze-association-roots-1901",
+      "earth_country_code": "CZE",
+      "source_id": "uefa-czechia-history",
+      "source_entity": "Czech football association",
+      "observation_year": 1901,
+      "event_type": "institutional_foundation",
+      "description": "Czech football association roots are established in 1901.",
+      "dimension_tags": [
+        "squash_tradition"
+      ],
+      "quality_flags": [
+        "pre_game_start_history"
+      ],
+      "source_locator": "association history timeline"
+    },
+    {
+      "event_id": "cze-independent-transition-1993",
+      "earth_country_code": "CZE",
+      "source_id": "uefa-czechia-history",
+      "source_entity": "Czech football association",
+      "observation_year": 1993,
+      "event_type": "governance_transition",
+      "description": "Independent Czech football governance and competition begin after the Czechoslovak split.",
+      "dimension_tags": [
+        "squash_tradition",
+        "competition_quality",
+        "elite_support"
+      ],
+      "quality_flags": [
+        "historical_entity_transition"
+      ],
+      "source_locator": "post-Czechoslovakia association timeline"
+    },
+    {
+      "event_id": "cze-regional-academy-2015",
+      "earth_country_code": "CZE",
+      "source_id": "facr-rfa-2015",
+      "source_entity": "FAČR",
+      "observation_year": 2015,
+      "event_type": "development_pathway_launch",
+      "description": "FAČR opens the first Regional Football Academy in Plzeň for U14/U15 talent development.",
+      "dimension_tags": [
+        "development_quality",
+        "elite_support"
+      ],
+      "quality_flags": [],
+      "source_locator": "first Regional Football Academy opening"
+    },
+    {
+      "event_id": "fro-first-club-1892",
+      "earth_country_code": "FRO",
+      "source_id": "uefa-faroe-history",
+      "source_entity": "Faroe Islands football",
+      "observation_year": 1892,
+      "event_type": "club_foundation_milestone",
+      "description": "Tvoroyrar Boltfelag TB, the Faroe Islands' first club, is established.",
+      "dimension_tags": [
+        "squash_tradition"
+      ],
+      "quality_flags": [
+        "pre_game_start_history"
+      ],
+      "source_locator": "UEFA association timeline 1892"
+    },
+    {
+      "event_id": "fro-official-championship-1942",
+      "earth_country_code": "FRO",
+      "source_id": "uefa-faroe-history",
+      "source_entity": "Faroe Islands football",
+      "observation_year": 1942,
+      "event_type": "competition_launch",
+      "description": "The first official Faroese national championship takes place.",
+      "dimension_tags": [
+        "squash_tradition",
+        "competition_quality"
+      ],
+      "quality_flags": [
+        "pre_game_start_history"
+      ],
+      "source_locator": "UEFA association timeline 1942"
+    },
+    {
+      "event_id": "fro-association-1979",
+      "earth_country_code": "FRO",
+      "source_id": "uefa-faroe-history",
+      "source_entity": "Faroe Islands Football Association",
+      "observation_year": 1979,
+      "event_type": "institutional_foundation",
+      "description": "The independent Faroe Islands Football Association is established.",
+      "dimension_tags": [
+        "squash_tradition",
+        "elite_support"
+      ],
+      "quality_flags": [],
+      "source_locator": "UEFA association timeline 1979"
+    },
+    {
+      "event_id": "fro-artificial-turf-1986",
+      "earth_country_code": "FRO",
+      "source_id": "uefa-faroe-history",
+      "source_entity": "Faroe Islands football",
+      "observation_year": 1986,
+      "event_type": "infrastructure_milestone",
+      "description": "Artificial-turf development creates a major football-access and training infrastructure breakpoint in the Faroe Islands.",
+      "dimension_tags": [
+        "squash_access",
+        "development_quality"
+      ],
+      "quality_flags": [
+        "event_scope_national_context"
+      ],
+      "source_locator": "UEFA association history artificial-turf timeline"
+    },
+    {
+      "event_id": "ind-aiff-1937",
+      "earth_country_code": "IND",
+      "source_id": "aiff-history",
+      "source_entity": "All India Football Federation",
+      "observation_year": 1937,
+      "event_type": "institutional_foundation",
+      "description": "The All India Football Federation is formed.",
+      "dimension_tags": [
+        "squash_tradition",
+        "elite_support"
+      ],
+      "quality_flags": [
+        "pre_game_start_history"
+      ],
+      "source_locator": "AIFF history 1937"
+    },
+    {
+      "event_id": "ind-federation-cup-1977",
+      "earth_country_code": "IND",
+      "source_id": "aiff-history",
+      "source_entity": "All India Football Federation",
+      "observation_year": 1977,
+      "event_type": "competition_launch",
+      "description": "The Federation Cup begins as a national competition.",
+      "dimension_tags": [
+        "squash_tradition",
+        "competition_quality"
+      ],
+      "quality_flags": [],
+      "source_locator": "AIFF history Federation Cup"
+    },
+    {
+      "event_id": "ind-national-football-league-1996",
+      "earth_country_code": "IND",
+      "source_id": "aiff-history",
+      "source_entity": "All India Football Federation",
+      "observation_year": 1996,
+      "event_type": "competition_launch",
+      "description": "The National Football League begins, creating a stronger nationwide senior competition structure.",
+      "dimension_tags": [
+        "competition_quality",
+        "elite_support"
+      ],
+      "quality_flags": [],
+      "source_locator": "AIFF history National Football League"
+    },
+    {
+      "event_id": "ind-regional-academy-2012",
+      "earth_country_code": "IND",
+      "source_id": "aiff-history",
+      "source_entity": "All India Football Federation",
+      "observation_year": 2012,
+      "event_type": "development_pathway_launch",
+      "description": "AIFF launches its first Regional Academy as a federation-led youth development pathway.",
+      "dimension_tags": [
+        "development_quality",
+        "elite_support"
+      ],
+      "quality_flags": [],
+      "source_locator": "AIFF history Regional Academy"
+    },
+    {
+      "event_id": "ind-isl-grassroots-2014",
+      "earth_country_code": "IND",
+      "source_id": "aiff-isl-grassroots-2014",
+      "source_entity": "AIFF / Indian Super League",
+      "observation_year": 2014,
+      "event_type": "grassroots_programme_launch",
+      "description": "The Indian Super League launches a linked grassroots programme with club development staffing.",
+      "dimension_tags": [
+        "squash_access",
+        "development_quality"
+      ],
+      "quality_flags": [
+        "programme_launch_not_outcome"
+      ],
+      "source_locator": "AIFF ISL grassroots programme launch"
+    },
+    {
+      "event_id": "ind-state-development-2019",
+      "earth_country_code": "IND",
+      "source_id": "fifa-india-forward-2019",
+      "source_entity": "AIFF / FIFA Forward",
+      "observation_year": 2019,
+      "event_type": "development_programme_launch",
+      "description": "FIFA Forward-backed State Development Project and technical capacity-building work expand youth and institutional development activity.",
+      "dimension_tags": [
+        "development_quality",
+        "elite_support"
+      ],
+      "quality_flags": [
+        "programme_evidence"
+      ],
+      "source_locator": "FIFA Forward India 2018-2019 project"
+    },
+    {
+      "event_id": "ind-academy-accreditation-2023",
+      "earth_country_code": "IND",
+      "source_id": "aiff-academy-accreditation-2023",
+      "source_entity": "All India Football Federation",
+      "observation_year": 2023,
+      "event_type": "development_framework_launch",
+      "description": "AIFF introduces a nine-tier academy accreditation framework for the 2023-24 season.",
+      "dimension_tags": [
+        "development_quality",
+        "elite_support"
+      ],
+      "quality_flags": [
+        "regulatory_framework_not_outcome"
+      ],
+      "source_locator": "AIFF Academy Accreditation Rules 2023-24"
+    },
+    {
+      "event_id": "jpn-jfa-1921",
+      "earth_country_code": "JPN",
+      "source_id": "jfa-history",
+      "source_entity": "Japan Football Association",
+      "observation_year": 1921,
+      "event_type": "institutional_foundation",
+      "description": "The Japan Football Association is established.",
+      "dimension_tags": [
+        "squash_tradition",
+        "elite_support"
+      ],
+      "quality_flags": [
+        "pre_game_start_history"
+      ],
+      "source_locator": "JFA history 1921"
+    },
+    {
+      "event_id": "jpn-jsl-1965",
+      "earth_country_code": "JPN",
+      "source_id": "jfa-history",
+      "source_entity": "Japan football",
+      "observation_year": 1965,
+      "event_type": "competition_launch",
+      "description": "The Japan Soccer League starts as the first national league.",
+      "dimension_tags": [
+        "competition_quality",
+        "squash_tradition"
+      ],
+      "quality_flags": [],
+      "source_locator": "JFA history 1965"
+    },
+    {
+      "event_id": "jpn-training-centre-1977",
+      "earth_country_code": "JPN",
+      "source_id": "jfa-history",
+      "source_entity": "Japan Football Association",
+      "observation_year": 1977,
+      "event_type": "training_centre_opening",
+      "description": "A National Training Centre opens for elite training and development.",
+      "dimension_tags": [
+        "development_quality",
+        "elite_support"
+      ],
+      "quality_flags": [],
+      "source_locator": "JFA history 1977"
+    },
+    {
+      "event_id": "jpn-pro-licensing-1986",
+      "earth_country_code": "JPN",
+      "source_id": "jfa-history",
+      "source_entity": "Japan football",
+      "observation_year": 1986,
+      "event_type": "professionalisation_milestone",
+      "description": "Limited professional-player licensing is introduced.",
+      "dimension_tags": [
+        "competition_quality",
+        "elite_support"
+      ],
+      "quality_flags": [],
+      "source_locator": "JFA history 1986"
+    },
+    {
+      "event_id": "jpn-jleague-entity-1991",
+      "earth_country_code": "JPN",
+      "source_id": "jfa-history",
+      "source_entity": "J.League",
+      "observation_year": 1991,
+      "event_type": "professionalisation_milestone",
+      "description": "The J.League is established as a legal professional-league entity.",
+      "dimension_tags": [
+        "competition_quality",
+        "elite_support"
+      ],
+      "quality_flags": [],
+      "source_locator": "JFA history 1991"
+    },
+    {
+      "event_id": "jpn-jleague-launch-1993",
+      "earth_country_code": "JPN",
+      "source_id": "jfa-history",
+      "source_entity": "J.League",
+      "observation_year": 1993,
+      "event_type": "competition_launch",
+      "description": "J.League competition launches.",
+      "dimension_tags": [
+        "competition_quality",
+        "elite_support",
+        "squash_tradition"
+      ],
+      "quality_flags": [],
+      "source_locator": "JFA history 1993"
+    },
+    {
+      "event_id": "mar-ligue-du-maroc-1916",
+      "earth_country_code": "MAR",
+      "source_id": "frmf-history",
+      "source_entity": "Moroccan football",
+      "observation_year": 1916,
+      "event_type": "competition_launch",
+      "description": "Ligue du Maroc begins organised league competition before independence.",
+      "dimension_tags": [
+        "squash_tradition",
+        "competition_quality"
+      ],
+      "quality_flags": [
+        "pre_game_start_history",
+        "pre_independence_history"
+      ],
+      "source_locator": "FRMF history Ligue du Maroc"
+    },
+    {
+      "event_id": "mar-frmf-1956",
+      "earth_country_code": "MAR",
+      "source_id": "frmf-history",
+      "source_entity": "Royal Moroccan Football Federation",
+      "observation_year": 1956,
+      "event_type": "institutional_foundation",
+      "description": "FRMF is formed after independence and the national championship is consolidated.",
+      "dimension_tags": [
+        "squash_tradition",
+        "competition_quality",
+        "elite_support"
+      ],
+      "quality_flags": [
+        "post_independence_transition"
+      ],
+      "source_locator": "FRMF history 1956"
+    },
+    {
+      "event_id": "mar-academy-established-2009",
+      "earth_country_code": "MAR",
+      "source_id": "fifa-morocco-academy-2009",
+      "source_entity": "Mohammed VI Football Academy",
+      "observation_year": 2009,
+      "event_type": "academy_milestone",
+      "description": "One FIFA source states that the Mohammed VI Football Academy was established in 2009.",
+      "dimension_tags": [
+        "development_quality",
+        "elite_support"
+      ],
+      "quality_flags": [
+        "source_timing_conflict"
+      ],
+      "conflict_group": "mar-mohammed-vi-academy-timing",
+      "source_locator": "FIFA article stating 2009 establishment"
+    },
+    {
+      "event_id": "mar-academy-opening-2019",
+      "earth_country_code": "MAR",
+      "source_id": "fifa-morocco-development",
+      "source_entity": "Mohammed VI Football Academy",
+      "observation_year": 2019,
+      "event_type": "academy_milestone",
+      "description": "Another FIFA source describes the Mohammed VI Football Academy as opening in 2019.",
+      "dimension_tags": [
+        "development_quality",
+        "elite_support"
+      ],
+      "quality_flags": [
+        "source_timing_conflict"
+      ],
+      "conflict_group": "mar-mohammed-vi-academy-timing",
+      "source_locator": "Inside FIFA TDS article stating 2019 opening"
+    },
+    {
+      "event_id": "sen-federation-1960",
+      "earth_country_code": "SEN",
+      "source_id": "caf-senegal-member",
+      "source_entity": "Senegalese Football Federation",
+      "observation_year": 1960,
+      "event_type": "institutional_foundation",
+      "description": "The Senegalese Football Federation is created.",
+      "dimension_tags": [
+        "squash_tradition",
+        "elite_support"
+      ],
+      "quality_flags": [],
+      "source_locator": "CAF member association record"
+    },
+    {
+      "event_id": "sen-generation-foot-2000",
+      "earth_country_code": "SEN",
+      "source_id": "fifa-senegal-generation-foot-2000",
+      "source_entity": "Génération Foot",
+      "observation_year": 2000,
+      "event_type": "academy_foundation",
+      "description": "Génération Foot is founded as a modern player-development academy.",
+      "dimension_tags": [
+        "development_quality",
+        "elite_support"
+      ],
+      "quality_flags": [],
+      "source_locator": "FIFA account of Génération Foot"
+    },
+    {
+      "event_id": "sen-diambars-2003",
+      "earth_country_code": "SEN",
+      "source_id": "caf-senegal-academies-league",
+      "source_entity": "Diambars",
+      "observation_year": 2003,
+      "event_type": "academy_foundation",
+      "description": "Diambars is founded, adding another major academy pathway.",
+      "dimension_tags": [
+        "development_quality",
+        "elite_support"
+      ],
+      "quality_flags": [],
+      "source_locator": "CAF academies history"
+    },
+    {
+      "event_id": "sen-pro-league-2009",
+      "earth_country_code": "SEN",
+      "source_id": "caf-senegal-academies-league",
+      "source_entity": "Senegal professional league",
+      "observation_year": 2009,
+      "event_type": "competition_launch",
+      "description": "Senegal launches its professional league.",
+      "dimension_tags": [
+        "competition_quality",
+        "elite_support"
+      ],
+      "quality_flags": [],
+      "source_locator": "CAF academies/professional league history"
+    },
+    {
+      "event_id": "sen-youth-leagues-2020",
+      "earth_country_code": "SEN",
+      "source_id": "fifa-senegal-youth-2020",
+      "source_entity": "Senegalese Football Federation",
+      "observation_year": 2020,
+      "event_type": "development_pathway_launch",
+      "description": "National U15, U17 and U20 youth leagues are introduced across Senegal's regions with FIFA Forward support.",
+      "dimension_tags": [
+        "development_quality",
+        "competition_quality"
+      ],
+      "quality_flags": [
+        "programme_launch_not_outcome"
+      ],
+      "source_locator": "FIFA Forward youth competitions Senegal"
+    },
+    {
+      "event_id": "svk-association-1938",
+      "earth_country_code": "SVK",
+      "source_id": "sfz-history-1938",
+      "source_entity": "Slovak Football Association predecessor",
+      "observation_year": 1938,
+      "event_type": "institutional_foundation",
+      "description": "A Slovak football association is founded in 1938.",
+      "dimension_tags": [
+        "squash_tradition"
+      ],
+      "quality_flags": [
+        "pre_game_start_history",
+        "historical_entity_context"
+      ],
+      "source_locator": "SFZ 1938 foundation history"
+    },
+    {
+      "event_id": "svk-hattrick-infrastructure-2014",
+      "earth_country_code": "SVK",
+      "source_id": "uefa-slovakia-hattrick-review",
+      "source_entity": "Slovak football infrastructure",
+      "observation_year": 2014,
+      "event_type": "infrastructure_milestone",
+      "description": "By the end of the first HatTrick decade Slovakia has 100 mini-pitches and ten full-size artificial pitches supported by the programme.",
+      "dimension_tags": [
+        "squash_access",
+        "development_quality"
+      ],
+      "quality_flags": [
+        "programme_period_summary"
+      ],
+      "source_locator": "UEFA HatTrick Review 2004-2014"
+    },
+    {
+      "event_id": "svk-development-strategy-2018",
+      "earth_country_code": "SVK",
+      "source_id": "uefa-slovakia-hattrick",
+      "source_entity": "Slovak Football Association",
+      "observation_year": 2018,
+      "event_type": "development_strategy_launch",
+      "description": "The 2018-22 strategy explicitly prioritises youth, grassroots and infrastructure, alongside national training-centre and regional-pitch development.",
+      "dimension_tags": [
+        "development_quality",
+        "elite_support",
+        "squash_access"
+      ],
+      "quality_flags": [
+        "strategy_launch_not_outcome"
+      ],
+      "source_locator": "UEFA Developing football in Slovakia"
+    },
+    {
+      "event_id": "usa-federation-1913",
+      "earth_country_code": "USA",
+      "source_id": "ussoccer-timeline",
+      "source_entity": "U.S. Soccer",
+      "observation_year": 1913,
+      "event_type": "institutional_foundation",
+      "description": "The national football federation that became U.S. Soccer is established.",
+      "dimension_tags": [
+        "squash_tradition",
+        "elite_support"
+      ],
+      "quality_flags": [
+        "pre_game_start_history"
+      ],
+      "source_locator": "U.S. Soccer historical timeline"
+    },
+    {
+      "event_id": "usa-nasl-1968",
+      "earth_country_code": "USA",
+      "source_id": "ussoccer-timeline",
+      "source_entity": "North American Soccer League",
+      "observation_year": 1968,
+      "event_type": "competition_launch",
+      "description": "The NASL era establishes a national professional competition structure.",
+      "dimension_tags": [
+        "competition_quality",
+        "elite_support"
+      ],
+      "quality_flags": [],
+      "source_locator": "U.S. Soccer timeline NASL era"
+    },
+    {
+      "event_id": "usa-nasl-collapse-1984",
+      "earth_country_code": "USA",
+      "source_id": "ussoccer-timeline",
+      "source_entity": "North American Soccer League",
+      "observation_year": 1984,
+      "event_type": "competition_discontinuity",
+      "description": "The NASL collapses, reducing national professional competition and elite-support continuity.",
+      "dimension_tags": [
+        "competition_quality",
+        "elite_support"
+      ],
+      "quality_flags": [
+        "negative_structural_break"
+      ],
+      "source_locator": "U.S. Soccer timeline NASL collapse"
+    },
+    {
+      "event_id": "usa-mls-1996",
+      "earth_country_code": "USA",
+      "source_id": "ussoccer-timeline",
+      "source_entity": "Major League Soccer",
+      "observation_year": 1996,
+      "event_type": "competition_launch",
+      "description": "Major League Soccer begins play, restoring a durable national top-flight professional league.",
+      "dimension_tags": [
+        "competition_quality",
+        "elite_support"
+      ],
+      "quality_flags": [],
+      "source_locator": "U.S. Soccer timeline MLS launch"
+    },
+    {
+      "event_id": "usa-national-training-center-2003",
+      "earth_country_code": "USA",
+      "source_id": "ussoccer-history-framework",
+      "source_entity": "U.S. Soccer",
+      "observation_year": 2003,
+      "event_type": "training_centre_opening",
+      "description": "U.S. Soccer opens a National Training Center in Carson for federation player-development activity.",
+      "dimension_tags": [
+        "development_quality",
+        "elite_support"
+      ],
+      "quality_flags": [],
+      "source_locator": "U.S. Soccer history National Training Center"
+    },
+    {
+      "event_id": "usa-development-academy-2007",
+      "earth_country_code": "USA",
+      "source_id": "ussoccer-development-academy-2007",
+      "source_entity": "U.S. Soccer Development Academy",
+      "observation_year": 2007,
+      "event_type": "development_pathway_launch",
+      "description": "The U.S. Soccer Development Academy launches to raise standards in elite youth development environments.",
+      "dimension_tags": [
+        "development_quality",
+        "elite_support"
+      ],
+      "quality_flags": [],
+      "source_locator": "U.S. Soccer Development Academy history"
+    },
+    {
+      "event_id": "usa-national-development-center-2018",
+      "earth_country_code": "USA",
+      "source_id": "ussoccer-national-development-center-2018",
+      "source_entity": "U.S. Soccer",
+      "observation_year": 2018,
+      "event_type": "training_centre_opening",
+      "description": "A National Development Center opens with coaching education, sports medicine and high-performance functions.",
+      "dimension_tags": [
+        "development_quality",
+        "elite_support"
+      ],
+      "quality_flags": [],
+      "source_locator": "U.S. Soccer National Development Center opening"
+    },
+    {
+      "event_id": "usa-training-center-groundbreaking-2024",
+      "earth_country_code": "USA",
+      "source_id": "ussoccer-training-center",
+      "source_entity": "U.S. Soccer",
+      "observation_year": 2024,
+      "event_type": "infrastructure_project_start",
+      "description": "U.S. Soccer breaks ground on a new national training center focused on high-performance and development infrastructure.",
+      "dimension_tags": [
+        "development_quality",
+        "elite_support"
+      ],
+      "quality_flags": [
+        "project_start_not_completed_outcome"
+      ],
+      "source_locator": "U.S. Soccer training center groundbreaking"
+    },
+    {
+      "event_id": "zaf-international-exclusion-1961",
+      "earth_country_code": "ZAF",
+      "source_id": "fifa-south-africa-history",
+      "source_entity": "South African football",
+      "observation_year": 1961,
+      "event_type": "governance_discontinuity",
+      "description": "Apartheid-era international exclusion creates a major break in international competition access and unified football governance.",
+      "dimension_tags": [
+        "competition_quality",
+        "elite_support"
+      ],
+      "quality_flags": [
+        "historical_governance_break"
+      ],
+      "source_locator": "FIFA historical publication apartheid-era exclusion"
+    },
+    {
+      "event_id": "zaf-safa-1991",
+      "earth_country_code": "ZAF",
+      "source_id": "caf-south-africa",
+      "source_entity": "South African Football Association",
+      "observation_year": 1991,
+      "event_type": "governance_transition",
+      "description": "Modern SAFA is formed through unification of previously divided football bodies.",
+      "dimension_tags": [
+        "squash_tradition",
+        "development_quality",
+        "elite_support"
+      ],
+      "quality_flags": [
+        "structural_transition"
+      ],
+      "source_locator": "CAF South Africa association history"
+    },
+    {
+      "event_id": "zaf-readmission-1992",
+      "earth_country_code": "ZAF",
+      "source_id": "caf-south-africa",
+      "source_entity": "South African Football Association",
+      "observation_year": 1992,
+      "event_type": "international_reintegration",
+      "description": "South Africa returns to FIFA/CAF competition after apartheid-era exclusion.",
+      "dimension_tags": [
+        "competition_quality",
+        "elite_support"
+      ],
+      "quality_flags": [
+        "structural_transition"
+      ],
+      "source_locator": "CAF South Africa association record"
+    }
+  ]
+}

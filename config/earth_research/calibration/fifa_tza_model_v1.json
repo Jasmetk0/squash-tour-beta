@@ -1,0 +1,66 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "fifa-earth-tza-model.v1",
+  "world_id": "fifa_earth",
+  "data_cutoff": "2026-10-03",
+  "countries": [
+    "TZA"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "evidence_rules": [
+    "The 1930 association gives pre-1955 institutional continuity; FIFA/CAF membership enters only from 1964.",
+    "Big Count 2006 enters only from 2006.",
+    "Professional 2023 has a Tanzania club observation but no checked-in player observation; missing player data is not inferred.",
+    "No ranking or result is a calibration target."
+  ],
+  "anchor_values": {
+    "TZA": {
+      "1955": [
+        5.5,
+        4.7,
+        4.9,
+        4.8,
+        4.5,
+        6.3
+      ],
+      "1964": [
+        6,
+        5.2,
+        5.4,
+        5.5,
+        5.1,
+        6.7
+      ],
+      "2006": [
+        6.8,
+        6,
+        6.1,
+        6.4,
+        5.9,
+        7
+      ],
+      "2023": [
+        7,
+        6.2,
+        6.4,
+        6.6,
+        6.1,
+        7.2
+      ],
+      "2026": [
+        7.1,
+        6.3,
+        6.5,
+        6.7,
+        6.2,
+        7.3
+      ]
+    }
+  },
+  "evidence_sources": [
+    "caf-tanzania-profile",
+    "fifa-big-count-2006",
+    "fifa-professional-2023"
+  ],
+  "heldout_ranking_used": false
+}

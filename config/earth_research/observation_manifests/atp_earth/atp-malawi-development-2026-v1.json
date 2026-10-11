@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-malawi-development-2026-v1",
+  "source_id": "itf-malawi-development-eligibility-2026",
+  "relative_path": "observations/normalized/atp_malawi_development_2026_v1.json",
+  "sha256": "905f1fc3f0b745adb9fb133eb595ebb0cec77419f3612030634e45cfcaad33b5",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

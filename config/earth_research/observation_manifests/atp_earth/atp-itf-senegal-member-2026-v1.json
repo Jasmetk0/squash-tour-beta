@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-itf-senegal-member-2026-v1",
+  "source_id": "itf-senegal-member-2026",
+  "relative_path": "observations/normalized/atp_itf_senegal_member_2026_v1.json",
+  "sha256": "70b6b368510d77d11e63a686538f93289078b594ab9375f1a1433ae95925b33b",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-ita-davis-history-v1",
+  "source_id": "ita-davis-history",
+  "relative_path": "observations/normalized/atp-ita-davis-history-v1.json",
+  "sha256": "177b42d33181e9d65944843bd17f9f2c55f7badc688ff39daab47fe54a73a48d",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-cog-profile-v1",
+  "source_id": "cog-fsm-caf-congo",
+  "relative_path": "observations/normalized/fifa_cog_profile_v1.json",
+  "sha256": "5783e6c2092a17d7e2fed009e1e01fb3f5e81df8ce6eb98d29eb9b2b2ce7bbdb",
+  "record_count": 3,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-cog-fsm-batch-2026-10-07"
+}

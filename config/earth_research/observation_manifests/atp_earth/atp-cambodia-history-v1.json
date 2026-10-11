@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-cambodia-history-v1",
+  "source_id": "itf-cambodia-profile",
+  "relative_path": "observations/normalized/atp_cambodia_history_v1.json",
+  "sha256": "7a4bcaa4b45c3f3d69ee7e35b67dc976ff730ae3c4fc38389fc448025ad95175",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

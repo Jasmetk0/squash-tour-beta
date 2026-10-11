@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-big-count-2006-clubs-v2",
+  "source_id": "fifa-big-count-2006",
+  "relative_path": "observations/normalized/fifa_big_count_2006_clubs_v2.json",
+  "sha256": "ba4b13fb49850ecf25b42f7e058366ba27e6894fc0ca1f5c40a7ad80af3fe5f6",
+  "record_count": 206,
+  "source_document_sha256": null,
+  "input_artifact_sha256": "00bb138d03f6cbfed6f909311f44fc5fc8643ad4338e6be17f3f0305a35a6944",
+  "generated_by": "scripts/normalize_fifa_big_count_2006.py"
+}

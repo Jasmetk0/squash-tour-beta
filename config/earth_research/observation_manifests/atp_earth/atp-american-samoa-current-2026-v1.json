@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-american-samoa-current-2026-v1",
+  "source_id": "otf-american-samoa-current-2026",
+  "relative_path": "observations/normalized/atp_american_samoa_current_2026_v1.json",
+  "sha256": "10c5112ffd1798f73ef472d3b9d2dc48e1480621427b7c43dd5172883666ad27",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

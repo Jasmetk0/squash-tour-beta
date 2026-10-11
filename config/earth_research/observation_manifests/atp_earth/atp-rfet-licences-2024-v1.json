@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-rfet-licences-2024-v1",
+  "source_id": "rfet-licences-2024",
+  "relative_path": "observations/normalized/atp-rfet-licences-2024-v1.json",
+  "sha256": "ecf99193a07b466b73379d561e1f04635abe4b9c3f1e9039f28aad54b177989d",
+  "record_count": 3,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-04"
+}

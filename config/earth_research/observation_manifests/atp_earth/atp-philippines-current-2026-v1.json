@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-philippines-current-2026-v1",
+  "source_id": "itf-philippines-current-2026",
+  "relative_path": "observations/normalized/atp_philippines_current_2026_v1.json",
+  "sha256": "430746795d22e3124a350678d70ec87b04ad16c453947034f0c89f278ddb553a",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-iot-creation-1965-v1",
+  "source_id": "iot-creation-1965",
+  "relative_path": "observations/normalized/fifa_iot_creation_1965_v1.json",
+  "sha256": "d6c4074b9155debaf241b6cefed197e8700cff8139b680c022a214493dfe8ffd",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-flk-iot-batch-2026-10-07"
+}

@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-ntpf-inclusion-2023-v1",
+  "source_id": "ntpf-inclusion-2023",
+  "relative_path": "observations/normalized/atp-ntpf-inclusion-2023-v1.json",
+  "sha256": "c04b2b0ff90f0571f536630c3c6550aa176b1662ba556a13156b011c1ea985f3",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

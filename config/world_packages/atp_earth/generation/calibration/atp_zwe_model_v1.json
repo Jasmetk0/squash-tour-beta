@@ -1,0 +1,58 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "atp-earth-zwe-model.v1",
+  "world_id": "atp_earth",
+  "data_cutoff": "2026-10-04",
+  "countries": [
+    "ZWE"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "evidence_rules": [
+    "No verified tennis foundation date is asserted; pre-2020 years use a low-confidence baseline derived only from later confirmed activity.",
+    "ITF 2020 activity evidence is used only from 2020.",
+    "ITF development eligibility and J100 Harare hosting enter only in 2026.",
+    "Draw results and individual outcomes are not rating targets."
+  ],
+  "anchor_values": {
+    "ZWE": {
+      "1955": [
+        4.3,
+        3.8,
+        3.9,
+        3.9,
+        3.6,
+        5.4
+      ],
+      "2000": [
+        5,
+        4.4,
+        4.7,
+        4.7,
+        4.3,
+        6
+      ],
+      "2020": [
+        5.3,
+        4.8,
+        5,
+        5,
+        4.6,
+        6.3
+      ],
+      "2026": [
+        5.9,
+        5.4,
+        5.7,
+        6,
+        5.5,
+        6.6
+      ]
+    }
+  },
+  "evidence_sources": [
+    "itf-zimbabwe-return-to-play-2020",
+    "itf-zimbabwe-development-eligibility-2026",
+    "itf-zimbabwe-j100-2026"
+  ],
+  "heldout_ranking_used": false
+}

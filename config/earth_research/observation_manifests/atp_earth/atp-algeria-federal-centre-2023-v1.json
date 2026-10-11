@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-algeria-federal-centre-2023-v1",
+  "source_id": "fat-algeria-federal-centre-2023",
+  "relative_path": "observations/normalized/atp_algeria_federal_centre_2023_v1.json",
+  "sha256": "96f5bc32d97630788c387f38cfc8bb0dfee50d095d9caa4f38270ab8ef321686",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-uganda-development-2025-v1",
+  "source_id": "itf-uganda-development-2025",
+  "relative_path": "observations/normalized/atp_uganda_development_2025_v1.json",
+  "sha256": "e08e77f77ccfa9c39a3180775f112ee6f73f205e7d5911b02326f78a756fccca",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

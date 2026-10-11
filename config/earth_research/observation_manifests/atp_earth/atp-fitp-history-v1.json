@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-fitp-history-v1",
+  "source_id": "fitp-history",
+  "relative_path": "observations/normalized/atp-fitp-history-v1.json",
+  "sha256": "1f483e80f774d6154239214f261661bff1e4018a3af46cb16987d6f741274db0",
+  "record_count": 4,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

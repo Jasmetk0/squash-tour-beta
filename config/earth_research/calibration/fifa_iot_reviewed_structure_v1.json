@@ -1,0 +1,71 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "fifa-earth-iot-reviewed-structure.v1",
+  "world_id": "fifa_earth",
+  "countries": [
+    "IOT"
+  ],
+  "data_cutoff": "2026-10-03",
+  "rating_scale": "country_ratings_1_10.v2",
+  "attribute_order": [
+    "squash_popularity",
+    "squash_access",
+    "development_quality",
+    "competition_quality",
+    "elite_support",
+    "squash_tradition"
+  ],
+  "anchor_values": {
+    "IOT": {
+      "1955": [
+        1.3,
+        1.4,
+        1.2,
+        1.1,
+        1,
+        1.2
+      ],
+      "1965": [
+        1.4,
+        1.5,
+        1.3,
+        1.1,
+        1.1,
+        1.3
+      ],
+      "1976": [
+        1.3,
+        1.4,
+        1.2,
+        1.1,
+        1,
+        1.2
+      ],
+      "2000": [
+        1.4,
+        1.5,
+        1.3,
+        1.1,
+        1.1,
+        1.3
+      ],
+      "2026": [
+        1.5,
+        1.6,
+        1.3,
+        1.1,
+        1.1,
+        1.4
+      ]
+    }
+  },
+  "selection": "Piecewise-constant authored periods; territorial and constitutional events are identity context only and local ratings do not inherit UK-wide sports evidence.",
+  "limitations": [
+    "All numeric ratings are project estimates with low confidence, not source measurements.",
+    "UK-wide sports evidence is not inherited automatically.",
+    "No football federation membership or organised competition is inferred.",
+    "Territorial, constitutional and treaty events are context only, not sports-performance evidence.",
+    "For IOT, the 2025 UK-Mauritius treaty is not applied as a sovereignty transition before entry into force.",
+    "No rankings, titles or athlete outcomes are used to fit ratings."
+  ]
+}

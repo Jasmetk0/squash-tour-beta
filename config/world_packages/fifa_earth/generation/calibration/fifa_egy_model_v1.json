@@ -1,0 +1,76 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "fifa-earth-egy-model.v1",
+  "world_id": "fifa_earth",
+  "data_cutoff": "2026-10-03",
+  "countries": [
+    "EGY"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "principles": [
+    "EFA creation (1921) and FIFA affiliation (1923) establish deep pre-1955 institutional continuity.",
+    "CAF affiliation is gated to 1957 and used as competition/institutional context only.",
+    "FIFA Big Count 2006 is gated to 2006+; very large all-player participation does not mechanically imply elite quality.",
+    "The new EFA headquarters is a 2021-only infrastructure signal and FIFA Professional 2023 is gated to 2023+.",
+    "No rankings or tournament titles are calibration targets; 9+ remains world-leading."
+  ],
+  "anchor_values": {
+    "EGY": {
+      "1955": [
+        7.6,
+        7,
+        7.4,
+        7.7,
+        7.3,
+        8.5
+      ],
+      "1957": [
+        7.7,
+        7.1,
+        7.5,
+        7.8,
+        7.5,
+        8.6
+      ],
+      "2006": [
+        8.5,
+        7.7,
+        8,
+        8.3,
+        8,
+        8.9
+      ],
+      "2021": [
+        8.6,
+        7.9,
+        8.3,
+        8.4,
+        8.3,
+        8.9
+      ],
+      "2023": [
+        8.6,
+        7.9,
+        8.4,
+        8.5,
+        8.4,
+        8.9
+      ],
+      "2026": [
+        8.7,
+        8,
+        8.4,
+        8.5,
+        8.5,
+        8.9
+      ]
+    }
+  },
+  "evidence_sources": [
+    "caf-egypt-profile",
+    "fifa-egypt-hq-2021",
+    "fifa-big-count-2006",
+    "fifa-professional-2023"
+  ],
+  "heldout_ranking_used": false
+}

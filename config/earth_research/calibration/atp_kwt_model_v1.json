@@ -1,0 +1,40 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "atp-earth-kwt-model.v1",
+  "world_id": "atp_earth",
+  "data_cutoff": "2026-10-04",
+  "countries": [
+    "KWT"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "evidence_rules": [
+    "1955-2025 remains a low-confidence project-authored baseline.",
+    "Current ITF membership context is not backdated.",
+    "Kuwait is not inferred to have 2026 development eligibility when absent from the checked ITF eligibility list.",
+    "Authored baseline does not imply statistical modelling."
+  ],
+  "anchor_values": {
+    "KWT": {
+      "1955": [
+        3.7,
+        3.4,
+        3.5,
+        3.4,
+        3.3,
+        3.9
+      ],
+      "2026": [
+        5.9,
+        5.5,
+        5.6,
+        5.4,
+        5.3,
+        6.1
+      ]
+    }
+  },
+  "evidence_sources": [
+    "itf-kuwait-profile"
+  ],
+  "heldout_ranking_used": false
+}

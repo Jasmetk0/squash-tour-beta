@@ -1,0 +1,45 @@
+{
+  "schema_version": "earth_source_observations.v2",
+  "dataset_id": "atp-lts-lithuania-governance-v1",
+  "source_id": "lts-lithuania-financial-2024",
+  "source_url": "https://tennis.lt/wp-content/uploads/2025/12/2024-m.-finansini%C5%B3-ataskait%C5%B3-rinkinys.pdf",
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05",
+  "scope": "Official LTS legal and national-coordination context.",
+  "limitations": "Institutional/legal evidence; not direct participation or player-quality measurement.",
+  "observations": [
+    {
+      "observation_id": "atp-lts-lithuania-governance-v1#ltu-lts-established-1995",
+      "source_id": "lts-lithuania-financial-2024",
+      "source_entity": "Lietuvos teniso sąjunga",
+      "earth_country_code": "LTU",
+      "historical_entity": "Lithuania",
+      "observation_year": 1995,
+      "period_start_year": null,
+      "period_end_year": null,
+      "measurement_type": "institutional_reorganisation",
+      "sex_scope": "not_applicable",
+      "age_scope": null,
+      "competition_scope": "sport_system_structure",
+      "numeric_value": null,
+      "text_value": "The current Lithuanian Tennis Union association was established on 8 September 1995.",
+      "unit": "event",
+      "collection_method": "official_narrative",
+      "coverage_scope": "association",
+      "comparability_group": "institutional_reorganisation",
+      "cross_country_comparable": false,
+      "is_direct_observation": true,
+      "is_statistically_modelled": false,
+      "territory_mapping_method": "explicit_reviewed_event_to_earth",
+      "territory_weight": null,
+      "source_page": null,
+      "source_locator": "Official source timeline — 1995",
+      "definition_notes": "Structural chronology evidence; event existence is not a direct 1–10 rating.",
+      "quality_flags": [
+        "supports_squash_tradition",
+        "supports_elite_support"
+      ]
+    }
+  ]
+}

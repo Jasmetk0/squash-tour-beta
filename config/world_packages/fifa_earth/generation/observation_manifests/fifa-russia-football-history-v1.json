@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-russia-football-history-v1",
+  "source_id": "rus-kir-uefa-russia-history",
+  "relative_path": "observations/normalized/fifa_russia_football_history_v1.json",
+  "sha256": "e0813f1e1004d09f5bdba46b401ba8c81a0e91babc1f2b411d73e59a84026295",
+  "record_count": 4,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-rus-kir-batch-2026-10-07"
+}

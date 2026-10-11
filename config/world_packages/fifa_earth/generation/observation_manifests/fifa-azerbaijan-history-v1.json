@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-azerbaijan-history-v1",
+  "source_id": "fifa-azerbaijan-member-context-2026",
+  "relative_path": "observations/normalized/structural/fifa_azerbaijan_history_v1.json",
+  "sha256": "3b7b346e0b4df034d877b93a8c1429dfc02981163f943e1ead5f3f48b7af4ae3",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

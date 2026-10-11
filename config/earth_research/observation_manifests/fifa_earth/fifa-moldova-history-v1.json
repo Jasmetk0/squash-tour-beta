@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-moldova-history-v1",
+  "source_id": "fifa-moldova-member-context-2026",
+  "relative_path": "observations/normalized/structural/fifa_moldova_history_v1.json",
+  "sha256": "79d0a421bd54fb51c74ef9557d40d051ab37ec372983233887e82097691b9e7c",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

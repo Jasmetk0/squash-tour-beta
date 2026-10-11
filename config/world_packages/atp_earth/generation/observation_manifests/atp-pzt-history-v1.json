@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-pzt-history-v1",
+  "source_id": "pzt-history",
+  "relative_path": "observations/normalized/atp-pzt-history-v1.json",
+  "sha256": "bc9e051ca3a3b384a30f964e63b9038ab891857f9b978a91dd6539b62c6981db",
+  "record_count": 3,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

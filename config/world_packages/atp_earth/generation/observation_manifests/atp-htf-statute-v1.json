@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-htf-statute-v1",
+  "source_id": "htf-statute-2016",
+  "relative_path": "observations/normalized/atp-htf-statute-v1.json",
+  "sha256": "849f8de2336813b7876e7f4bce2ab1ebcb960287faef25c52043eb3d42d21ef7",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

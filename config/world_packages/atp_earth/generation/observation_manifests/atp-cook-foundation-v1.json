@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-cook-foundation-v1",
+  "source_id": "itf-cook-foundation-2023",
+  "relative_path": "observations/normalized/atp_cook_foundation_v1.json",
+  "sha256": "a5977d7b3060b6cc8332c2ad3cce5e940fa73ba736ccef290209f5535f643b59",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

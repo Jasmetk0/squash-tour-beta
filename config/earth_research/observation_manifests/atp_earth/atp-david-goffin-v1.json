@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-david-goffin-v1",
+  "source_id": "atp-david-goffin",
+  "relative_path": "observations/normalized/atp-david-goffin-v1.json",
+  "sha256": "c2e3861cd7363f133f8d1ce089421badf5d9810d2ef3cce2d1b21ad1e4e7e68a",
+  "record_count": 3,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

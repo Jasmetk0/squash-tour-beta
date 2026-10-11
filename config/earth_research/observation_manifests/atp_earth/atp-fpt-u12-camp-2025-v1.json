@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-fpt-u12-camp-2025-v1",
+  "source_id": "fpt-u12-camp-2025",
+  "relative_path": "observations/normalized/atp-fpt-u12-camp-2025-v1.json",
+  "sha256": "64aa5d600bbd8959be81b49ddaab3a32b510bb55aaa140784dd399479dcc5579",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

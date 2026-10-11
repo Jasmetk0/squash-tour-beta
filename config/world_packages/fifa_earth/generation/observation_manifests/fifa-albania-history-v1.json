@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-albania-history-v1",
+  "source_id": "fifa-albania-member-context-2026",
+  "relative_path": "observations/normalized/structural/fifa_albania_history_v1.json",
+  "sha256": "0d4110387ae772026910082de2e369c8abfee819a0e75ed7a22a6ab7b1fccb3f",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

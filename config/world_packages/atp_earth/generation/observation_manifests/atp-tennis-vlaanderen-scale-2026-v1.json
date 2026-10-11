@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-tennis-vlaanderen-scale-2026-v1",
+  "source_id": "tennis-vlaanderen-scale-2026",
+  "relative_path": "observations/normalized/atp-tennis-vlaanderen-scale-2026-v1.json",
+  "sha256": "0406e64f364b50a0bbc9c64919b440798f5f32bf353fc66600268e8c0abe7034",
+  "record_count": 3,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

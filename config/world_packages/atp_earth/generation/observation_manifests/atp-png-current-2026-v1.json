@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-png-current-2026-v1",
+  "source_id": "otf-png-current-2026",
+  "relative_path": "observations/normalized/atp_png_current_2026_v1.json",
+  "sha256": "dc1caed9dcbe407d5cf126a70a5ee16fb14db2ccff332729a30519e5ab1391e1",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

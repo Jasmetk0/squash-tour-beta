@@ -1,0 +1,258 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "fifa-earth-reviewed-country-history-cze-svk.v1",
+  "world_id": "fifa_earth",
+  "countries": [
+    "CZE",
+    "SVK"
+  ],
+  "data_cutoff": "2026-10-03",
+  "rating_scale": "country_ratings_1_10.v2",
+  "attribute_order": [
+    "squash_popularity",
+    "squash_access",
+    "development_quality",
+    "competition_quality",
+    "elite_support",
+    "squash_tradition"
+  ],
+  "origin": {
+    "source_file": "config/earth_research/fifa_earth_prototype_anchors_v2.json",
+    "materializer": "scripts/materialize_fifa_earth_prototype.py",
+    "reviewed_use": "The canonical CZE/SVK histories reuse the reviewed prototype trajectories after re-grounding every annual rating on canonical normalized observations."
+  },
+  "construction": {
+    "kind": "manual_anchor_linear_interpolation",
+    "description": "Values at listed anchors are project-authored estimates. Years between adjacent anchors are linearly interpolated per attribute and rounded to one decimal using the prototype materializer. The 1993 state split is an explicit anchor, so it is not smoothed across.",
+    "exactness_check": "All 864 stored CZE/SVK FIFA Earth values (2 countries × 72 years × 6 attributes) match this anchor/interpolation procedure exactly.",
+    "not_a_scientific_fit": true
+  },
+  "anchor_values": {
+    "CZE": {
+      "1955": [
+        7.8,
+        7.4,
+        6.2,
+        6.8,
+        6.2,
+        8.4
+      ],
+      "1960": [
+        7.9,
+        7.5,
+        6.3,
+        7,
+        6.3,
+        8.5
+      ],
+      "1975": [
+        8,
+        7.8,
+        6.6,
+        7.1,
+        6.5,
+        8.7
+      ],
+      "1992": [
+        7.9,
+        8.1,
+        6.6,
+        7,
+        6.4,
+        8.8
+      ],
+      "1993": [
+        7.9,
+        8,
+        6.4,
+        6.6,
+        6,
+        8.8
+      ],
+      "1996": [
+        8.2,
+        8.1,
+        6.6,
+        7.8,
+        6.4,
+        8.9
+      ],
+      "2002": [
+        8.1,
+        8.4,
+        7.4,
+        7.8,
+        6.7,
+        9
+      ],
+      "2006": [
+        8,
+        8.6,
+        7.6,
+        7.6,
+        6.7,
+        9
+      ],
+      "2007": [
+        8,
+        8.6,
+        7.6,
+        7.5,
+        6.7,
+        9
+      ],
+      "2014": [
+        7.8,
+        8.7,
+        7.5,
+        7.2,
+        7,
+        9
+      ],
+      "2015": [
+        7.8,
+        8.7,
+        7.8,
+        7.2,
+        7.1,
+        9
+      ],
+      "2021": [
+        7.8,
+        8.8,
+        7.9,
+        7.2,
+        7.2,
+        9.1
+      ],
+      "2026": [
+        7.8,
+        8.8,
+        8,
+        7.3,
+        7.3,
+        9.1
+      ]
+    },
+    "SVK": {
+      "1955": [
+        7.4,
+        6.8,
+        5.8,
+        6.2,
+        5.7,
+        7.8
+      ],
+      "1960": [
+        7.5,
+        7,
+        5.9,
+        6.4,
+        5.8,
+        7.9
+      ],
+      "1969": [
+        7.7,
+        7.2,
+        6.1,
+        7,
+        6.1,
+        8.1
+      ],
+      "1987": [
+        7.7,
+        7.5,
+        6.2,
+        6.8,
+        6,
+        8.3
+      ],
+      "1992": [
+        7.6,
+        7.6,
+        6.2,
+        6.6,
+        6,
+        8.4
+      ],
+      "1993": [
+        7.6,
+        7.4,
+        6,
+        6.2,
+        5.7,
+        8.4
+      ],
+      "1994": [
+        7.6,
+        7.4,
+        6,
+        6.3,
+        5.8,
+        8.4
+      ],
+      "2004": [
+        7.5,
+        8.4,
+        6.2,
+        6.2,
+        6.1,
+        8.5
+      ],
+      "2006": [
+        7.7,
+        8.8,
+        6.3,
+        6.5,
+        6.2,
+        8.5
+      ],
+      "2010": [
+        7.8,
+        8.8,
+        6.6,
+        7,
+        6.4,
+        8.6
+      ],
+      "2014": [
+        7.8,
+        8.9,
+        7,
+        6.8,
+        6.8,
+        8.6
+      ],
+      "2018": [
+        7.8,
+        8.9,
+        7.3,
+        6.9,
+        7,
+        8.7
+      ],
+      "2021": [
+        7.8,
+        8.9,
+        7.3,
+        7,
+        7.1,
+        8.7
+      ],
+      "2026": [
+        7.9,
+        8.9,
+        7.5,
+        7,
+        7.2,
+        8.8
+      ]
+    }
+  },
+  "limitations": [
+    "The numeric anchors are manually reviewed game estimates, not measurements and not a fitted scientific model.",
+    "Normalized football observations constrain provenance and historical interpretation; they do not mechanically determine the numeric scale.",
+    "Czechoslovak national aggregates are not duplicated into both successor countries.",
+    "The 2026 values represent the recorded data cutoff, not knowledge of a complete future calendar year."
+  ]
+}

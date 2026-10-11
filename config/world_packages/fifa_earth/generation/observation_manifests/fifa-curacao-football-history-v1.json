@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-curacao-football-history-v1",
+  "source_id": "gum-cuw-curacao-football-history",
+  "relative_path": "observations/normalized/fifa_curacao_football_history_v1.json",
+  "sha256": "0f345d603144c9f37d54c67d7f329e5e7dc48178c3b53dbddf1638d8d19a284f",
+  "record_count": 3,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-gum-cuw-batch-2026-10-07"
+}

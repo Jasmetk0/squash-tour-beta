@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-malaysia-history-v1",
+  "source_id": "ltam-history",
+  "relative_path": "observations/normalized/atp_malaysia_history_v1.json",
+  "sha256": "c0b7272a2e40009dfa747fedf35c6e8c5ec8b3a09a0700838af4139003dda557",
+  "record_count": 4,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

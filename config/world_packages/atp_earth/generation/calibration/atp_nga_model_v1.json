@@ -1,0 +1,58 @@
+{
+  "schema_version": "earth_country_calibration_model.v1",
+  "calibration_model_id": "atp-earth-nga-model.v1",
+  "world_id": "atp_earth",
+  "data_cutoff": "2026-10-04",
+  "countries": [
+    "NGA"
+  ],
+  "rating_scale": "country_ratings_1_10.v2",
+  "evidence_rules": [
+    "The 1895 club and 1954 association dates are secondary-source historical anchors and keep early numerical confidence low.",
+    "World Tennis's 2025 retrospective is used only from 2025 for development/competition pathway capacity.",
+    "The M25 Lagos event enters only in 2026 as professional competition-opportunity evidence.",
+    "Historic and current outcomes are not mechanically converted into ratings; 9+ remains world-leading."
+  ],
+  "anchor_values": {
+    "NGA": {
+      "1955": [
+        4.5,
+        4,
+        4.1,
+        4.3,
+        3.9,
+        6.5
+      ],
+      "2000": [
+        5.3,
+        4.8,
+        5,
+        5.2,
+        4.8,
+        7
+      ],
+      "2025": [
+        5.8,
+        5.2,
+        5.8,
+        5.9,
+        5.6,
+        7.2
+      ],
+      "2026": [
+        5.9,
+        5.3,
+        5.9,
+        6.2,
+        5.7,
+        7.3
+      ]
+    }
+  },
+  "evidence_sources": [
+    "nigeria-tennis-history-secondary",
+    "itf-nigeria-governance-2025",
+    "itf-m25-lagos-2026"
+  ],
+  "heldout_ranking_used": false
+}

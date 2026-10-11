@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-frmt-current-mandate-v1",
+  "source_id": "cnom-frmt-profile",
+  "relative_path": "observations/normalized/atp_frmt_current_mandate_v1.json",
+  "sha256": "50d874343176eb9ae2f014ea33af3064c7b1c036a562b33f39972313a247a2fe",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

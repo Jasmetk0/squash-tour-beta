@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-cbt-profile-v1",
+  "source_id": "cbt-profile",
+  "relative_path": "observations/normalized/atp-cbt-profile-v1.json",
+  "sha256": "e828ed778ad74ad4a0a1c66fe5fdbec1db1d5e0402a8191e2c54460195d618af",
+  "record_count": 3,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

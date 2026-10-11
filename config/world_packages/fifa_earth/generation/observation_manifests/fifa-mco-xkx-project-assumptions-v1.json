@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-mco-xkx-project-assumptions-v1",
+  "source_id": "mco-xkx-fifa-project-assumptions",
+  "relative_path": "observations/normalized/fifa_mco_xkx_project_assumptions_v1.json",
+  "sha256": "476a6d3d3358868e9f83f35e8af089939ffe2c7c19f76dd5b8ffebb09ae4cb6f",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "reviewed-mco-xkx-batch-2026-10-07"
+}

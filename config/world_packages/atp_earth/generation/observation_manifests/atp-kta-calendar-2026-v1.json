@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-kta-calendar-2026-v1",
+  "source_id": "kta-calendar-2026",
+  "relative_path": "observations/normalized/atp-kta-calendar-2026-v1.json",
+  "sha256": "5f892dbf9d2063b6b70ca63e257ff848253ee80507d88e61be6b4272fe5708b9",
+  "record_count": 3,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

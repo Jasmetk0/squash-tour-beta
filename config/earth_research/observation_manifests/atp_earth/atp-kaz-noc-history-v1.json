@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-kaz-noc-history-v1",
+  "source_id": "kaz-noc-tennis-history",
+  "relative_path": "observations/normalized/atp-kaz-noc-history-v1.json",
+  "sha256": "d8556536bf683c0fb5e1ef23044fb7c22d898f8a3eb7ca8b0b94721ed0d0508d",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

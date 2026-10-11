@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-ofc-fiji-referees-v1",
+  "source_id": "ofc-fiji-referees-history",
+  "relative_path": "observations/normalized/structural/fifa_structural_ofc_fiji_referees_v1.json",
+  "sha256": "d98f3d20c26b91b81d7ac39fe3bc0abc06777076bdd91d02b052281b1522e130",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-04"
+}

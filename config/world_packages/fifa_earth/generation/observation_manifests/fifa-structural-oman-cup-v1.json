@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-oman-cup-v1",
+  "source_id": "ofa-sultan-cup",
+  "relative_path": "observations/normalized/structural/fifa_structural_oman_cup_v1.json",
+  "sha256": "c16afe152bd4b8f5dd16abdc5f094f208f9f09b64478605aba40480ffd591363",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-05"
+}

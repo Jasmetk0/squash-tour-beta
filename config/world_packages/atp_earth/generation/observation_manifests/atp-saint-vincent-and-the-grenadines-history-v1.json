@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "atp-saint-vincent-and-the-grenadines-history-v1",
+  "source_id": "itf-saint-vincent-and-the-grenadines-profile",
+  "relative_path": "observations/normalized/atp_saint_vincent_and_the_grenadines_history_v1.json",
+  "sha256": "c6c4a03cab20fdcf6d047a8b8482b04334652d44d84d33db6351b63eb6722834",
+  "record_count": 2,
+  "source_document_sha256": null,
+  "input_artifact_sha256": null,
+  "generated_by": "manual-normalization-2026-10-06"
+}

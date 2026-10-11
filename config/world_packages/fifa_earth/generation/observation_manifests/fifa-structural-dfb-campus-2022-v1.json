@@ -1,0 +1,11 @@
+{
+  "schema_version": "earth_source_observations_manifest.v1",
+  "dataset_id": "fifa-structural-dfb-campus-2022-v1",
+  "source_id": "dfb-campus-2022",
+  "relative_path": "observations/normalized/structural/fifa_structural_dfb_campus_2022_v1.json",
+  "sha256": "033915844a676ae4f7675d5c43525ff48283d32cda068c97ce1daf83a39f9517",
+  "record_count": 1,
+  "source_document_sha256": null,
+  "input_artifact_sha256": "695b29b9552a8fb59133db25ec8948951a78217a9a1c049734c73ad79b75f665",
+  "generated_by": "scripts/normalize_fifa_structural_events.py"
+}

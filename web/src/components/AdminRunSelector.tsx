@@ -5,6 +5,7 @@ import { listRunContainers } from '../api/client'
 import type { RunContainer } from '../api/types'
 import { adminRunSwitchTarget } from '../navigation/adminRunSwitchTarget'
 import { formatApiError } from '../utils/apiErrors'
+import { confirmAdminContextChange } from '../navigation/runContextGuard'
 
 type AdminRunSelectorProps = {
   pathname: string
@@ -34,8 +35,8 @@ export function AdminRunSelector({ pathname, runId }: AdminRunSelectorProps): JS
           aria-label="Admin active Run"
           value={runId}
           onChange={event => {
-            if (document.querySelector('.app-shell--admin')?.getAttribute('data-run-form-edited') === 'true'
-              && !window.confirm('You have edited a Run form. Save or discard those edits before switching Runs. Continue?')) {
+            if (event.target.value === runId) return
+            if (!confirmAdminContextChange('Run')) {
               event.currentTarget.value = runId
               return
             }

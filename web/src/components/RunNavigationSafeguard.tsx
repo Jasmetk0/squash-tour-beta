@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { getBranchWorkingDraft } from '../api/client'
 import { useAdminBranch } from '../admin/AdminBranchContext'
+import { allowConfirmedBranchLink } from '../navigation/runContextGuard'
 
 export const RUN_NAVIGATION_SAVED = 'run-navigation-saved'
 
@@ -123,6 +124,7 @@ export function RunNavigationSafeguard({ runId }: { runId: string }): null {
         event.stopImmediatePropagation()
         return
       }
+      allowConfirmedBranchLink(runId, destination)
       for (const control of controls) baselines.set(control, controlValue(control))
       controls.clear()
       sync()

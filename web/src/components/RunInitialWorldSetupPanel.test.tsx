@@ -356,6 +356,43 @@ describe('Run-owned first-season player setup', () => {
     expect(api.saveRunOwnedInitialWorld).not.toHaveBeenCalled()
   })
 
+  it('edits an individual source field only after server review and never autosaves',async()=>{
+    render()
+    await userEvent.clear(screen.getByRole('spinbutton',{name:'Number of generated players'}))
+    await userEvent.type(screen.getByRole('spinbutton',{name:'Number of generated players'}),'2')
+    await userEvent.click(await screen.findByRole('button',{name:'Preview generated players'}))
+    await userEvent.click(screen.getByRole('button',{name:'Edit generated player p-1'}))
+    expect(screen.getByRole('region',{name:'Generated player field editor'})).toBeInTheDocument()
+    const ability=screen.getByRole('spinbutton',{name:'Preview field current_ability'})
+    await userEvent.clear(ability)
+    await userEvent.type(ability,'78')
+    await userEvent.click(screen.getByRole('button',{name:'Lock preview field current_ability'}))
+    expect(screen.getByText(/Pending field locks must be previewed/)).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('checkbox',{name:'Approve InitialWorld adoption'}))
+    expect(screen.getByRole('button',{name:'Adopt generated players'})).toBeDisabled()
+    api.previewRunOwnedInitialWorld.mockImplementationOnce(async (
+      _run:string,_branch:string,request:Parameters<typeof buildState>[0]
+    )=>{
+      reviewedState={...buildState(request),players:[
+        {...players[0],current_ability:78,attributes:{technique:55}},
+        {...players[1]}
+      ]}
+      return {preview_only:true,state:reviewedState,fingerprint:sha('f')}
+    })
+    await userEvent.click(screen.getByRole('button',{name:'Apply field locks to preview'}))
+    await waitFor(()=>expect(api.previewRunOwnedInitialWorld).toHaveBeenCalledTimes(2))
+    expect(api.previewRunOwnedInitialWorld.mock.calls[1][2].generation.field_locks).toEqual([
+      {player_id:'p-1',field:'current_ability',value:78}
+    ])
+    expect(await screen.findByRole('button',{name:'Edit generated player p-1'})).toBeInTheDocument()
+    expect(api.adoptRunOwnedInitialWorld).not.toHaveBeenCalled()
+    expect(api.saveRunOwnedInitialWorld).not.toHaveBeenCalled()
+    await userEvent.click(screen.getByRole('button',{name:'Edit generated player p-1'}))
+    expect(screen.getByRole('button',{name:'Automatic preview field current_ability'})).toBeEnabled()
+    await userEvent.click(screen.getByRole('button',{name:'Automatic preview field current_ability'}))
+    expect(screen.getByRole('button',{name:'Adopt generated players'})).toBeDisabled()
+  })
+
   it('selects session Keep without changing original review, then previews a real-source-bound reroll',async()=>{
     render()
     await userEvent.clear(screen.getByRole('spinbutton',{name:'Number of generated players'}))

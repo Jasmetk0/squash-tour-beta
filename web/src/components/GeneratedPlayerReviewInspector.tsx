@@ -60,6 +60,7 @@ export function summariseGeneratedPlayers(players: RunInitialWorldPlayer[]): Gen
 }
 
 type SortKey = 'name' | 'country' | 'age' | 'current' | 'potential'
+const REVIEW_PAGE_SIZE = 50
 
 /**
  * Product rule: sort/search/display filters are read-only inspection,
@@ -78,6 +79,7 @@ export function GeneratedPlayerReviewInspector({ players, locale = 'en', keepIds
   const [country, setCountry] = useState('')
   const [tier, setTier] = useState('')
   const [sort, setSort] = useState<SortKey>('name')
+  const [page, setPage] = useState(0)
   const [allCountries, setAllCountries] = useState(false)
   const summary = useMemo(() => summariseGeneratedPlayers(players), [players])
   const visible = useMemo(() => {
@@ -95,6 +97,11 @@ export function GeneratedPlayerReviewInspector({ players, locale = 'en', keepIds
       return a.name.localeCompare(b.name) || a.player_id.localeCompare(b.player_id)
     })
   }, [players, search, country, tier, sort])
+  // Paginate only the visible table. Statistics, Keep, and adoption remain
+  // bound to the entire verified preview (never the current page).
+  const pageCount = Math.max(1, Math.ceil(visible.length / REVIEW_PAGE_SIZE))
+  const activePage = Math.min(page, pageCount - 1)
+  const displayed = visible.slice(activePage * REVIEW_PAGE_SIZE, (activePage + 1) * REVIEW_PAGE_SIZE)
   const number = (value: number | null) => value == null ? '—' : String(value)
   const renderGroup = (group: Group, max: number): JSX.Element => (
     <div className="generated-review-bar" key={group.label}>
@@ -143,12 +150,12 @@ export function GeneratedPlayerReviewInspector({ players, locale = 'en', keepIds
     <div className="form-grid generated-review-filters" aria-label="Player review display filters">
       <label>{cs ? 'Hledání v náhledu' : 'Search preview'}
         <input aria-label="Search generated player preview" value={search}
-          onChange={e => setSearch(e.target.value)}
+          onChange={e => { setSearch(e.target.value); setPage(0) }}
           placeholder={cs ? 'Jméno nebo ID' : 'Name or player ID'} />
       </label>
       <label>{cs ? 'Filtrovat zemi' : 'Filter country'}
         <select aria-label="Filter generated player country" value={country}
-          onChange={e => setCountry(e.target.value)}>
+          onChange={e => { setCountry(e.target.value); setPage(0) }}>
           <option value="">{cs ? 'Všechny země' : 'All countries'}</option>
           {summary.countries.map(g => <option key={g.label} value={g.label}>
             {g.label} ({g.count})
@@ -157,7 +164,7 @@ export function GeneratedPlayerReviewInspector({ players, locale = 'en', keepIds
       </label>
       <label>{cs ? 'Filtrovat potenciál' : 'Filter potential tier'}
         <select aria-label="Filter generated player potential" value={tier}
-          onChange={e => setTier(e.target.value)}>
+          onChange={e => { setTier(e.target.value); setPage(0) }}>
           <option value="">{cs ? 'Všechny třídy' : 'All tiers'}</option>
           {summary.potentialTiers.map(g => <option key={g.label} value={g.label}>
             {g.label} ({g.count})
@@ -166,7 +173,7 @@ export function GeneratedPlayerReviewInspector({ players, locale = 'en', keepIds
       </label>
       <label>{cs ? 'Seřadit' : 'Sort'}
         <select aria-label="Sort generated player preview" value={sort}
-          onChange={e => setSort(e.target.value as SortKey)}>
+          onChange={e => { setSort(e.target.value as SortKey); setPage(0) }}>
           <option value="name">{cs ? 'Jméno' : 'Name'}</option>
           <option value="country">{cs ? 'Země' : 'Country'}</option>
           <option value="age">{cs ? 'Věk vzestupně' : 'Age ascending'}</option>
@@ -188,7 +195,7 @@ export function GeneratedPlayerReviewInspector({ players, locale = 'en', keepIds
         <thead><tr>{onKeepChange && <th>{cs ? 'Ponechat' : 'Keep'}</th>}<th>{cs ? 'Hráč' : 'Player'}</th><th>{cs ? 'Země' : 'Country'}</th>
           <th>{cs ? 'Věk' : 'Age'}</th><th>{cs ? 'Aktuální / potenciál (1–99)' : 'Current / potential (1–99)'}</th>
           <th>{cs ? 'Třída' : 'Tier'}</th></tr></thead>
-        <tbody>{visible.map(player => <tr key={player.player_id}>
+        <tbody>{displayed.map(player => <tr key={player.player_id}>
           {onKeepChange && <td><input type="checkbox"
             aria-label={'Keep ' + player.player_id} checked={keepIds.includes(player.player_id)}
             onChange={e => onKeepChange(player.player_id, e.target.checked)} /></td>}
@@ -203,10 +210,23 @@ export function GeneratedPlayerReviewInspector({ players, locale = 'en', keepIds
         </tr>)}</tbody>
       </table>
     </div>
+    <nav className="actions" aria-label="Generated preview pagination">
+      <button type="button" disabled={activePage === 0}
+        onClick={() => setPage(value => Math.max(0, value - 1))}>
+        {cs ? '← Předchozí stránka' : '← Previous preview page'}
+      </button>
+      <span>{cs ? 'Strana' : 'Page'} {activePage + 1} / {pageCount} ·
+        {' '}{cs ? 'Na stránce' : 'On page'} {displayed.length} ·
+        {' '}{cs ? 'Po filtrování' : 'Matching'} {visible.length} / {summary.total}</span>
+      <button type="button" disabled={activePage + 1 >= pageCount}
+        onClick={() => setPage(value => Math.min(pageCount - 1, value + 1))}>
+        {cs ? 'Další stránka →' : 'Next preview page →'}
+      </button>
+    </nav>
     {visible.length === 0 && <p>{cs ? 'Žádný hráč neodpovídá filtrům. Celá dávka je stále připravena k posouzení.' :
       'No preview player matches the display filters; the reviewed cohort has not been changed.'}</p>}
     {(search || country || tier || sort !== 'name') && <button type="button" onClick={() => {
-      setSearch(''); setCountry(''); setTier(''); setSort('name')
+      setSearch(''); setCountry(''); setTier(''); setSort('name'); setPage(0)
     }}>{cs ? 'Vymazat filtry zobrazení' : 'Clear display filters'}</button>}
   </section>
 }

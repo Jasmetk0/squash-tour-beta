@@ -136,7 +136,7 @@ export function EventsPage(): JSX.Element {
         <div className="grid">
           <label>
             Week
-            <select aria-label="Filter events by week" value={weekFilter} onChange={(event) => setWeekFilter(event.target.value)}>
+            <select data-run-navigation-readonly aria-label="Filter events by week" value={weekFilter} onChange={(event) => setWeekFilter(event.target.value)}>
               <option value="">All weeks</option>
               {weekOptions.map((week) => (
                 <option key={week} value={week}>
@@ -147,7 +147,7 @@ export function EventsPage(): JSX.Element {
           </label>
           <label>
             Category
-            <select
+            <select data-run-navigation-readonly
               aria-label="Filter events by category"
               value={categoryFilter}
               onChange={(event) => setCategoryFilter(event.target.value)}
@@ -162,7 +162,7 @@ export function EventsPage(): JSX.Element {
           </label>
           <label>
             Event/template text
-            <input
+            <input data-run-navigation-readonly
               aria-label="Filter events by event or template"
               value={textFilter}
               onChange={(event) => setTextFilter(event.target.value)}

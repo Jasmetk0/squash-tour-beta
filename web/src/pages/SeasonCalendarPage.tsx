@@ -113,7 +113,7 @@ export function SeasonCalendarPage(): JSX.Element {
         <div className="grid">
           <label>
             Week
-            <select aria-label="Filter by week" value={weekFilter} onChange={(event) => setWeekFilter(event.target.value)}>
+            <select data-run-navigation-readonly aria-label="Filter by week" value={weekFilter} onChange={(event) => setWeekFilter(event.target.value)}>
               <option value="">All weeks</option>
               {weekOptions.map((week) => (
                 <option key={week} value={String(week)}>
@@ -124,7 +124,7 @@ export function SeasonCalendarPage(): JSX.Element {
           </label>
           <label>
             Category
-            <select aria-label="Filter by category" value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value)}>
+            <select data-run-navigation-readonly aria-label="Filter by category" value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value)}>
               <option value="">All categories</option>
               {categoryOptions.map((category) => (
                 <option key={category} value={category}>
@@ -135,7 +135,7 @@ export function SeasonCalendarPage(): JSX.Element {
           </label>
           <label>
             Event/template text
-            <input
+            <input data-run-navigation-readonly
               aria-label="Filter by event or template"
               value={textFilter}
               onChange={(event) => setTextFilter(event.target.value)}

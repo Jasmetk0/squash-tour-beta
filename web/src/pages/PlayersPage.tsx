@@ -65,15 +65,15 @@ export function PlayersPage(): JSX.Element {
         <div className="form-grid">
           <label>
             Search (name / ID)
-            <input value={search} onChange={(event) => setSearch(event.target.value)} />
+            <input data-run-navigation-readonly value={search} onChange={(event) => setSearch(event.target.value)} />
           </label>
           <label>
             Country code
-            <input value={countryCode} onChange={(event) => setCountryCode(event.target.value)} maxLength={3} />
+            <input data-run-navigation-readonly value={countryCode} onChange={(event) => setCountryCode(event.target.value)} maxLength={3} />
           </label>
           <label>
             Source type
-            <select value={sourceType} onChange={(event) => setSourceType(event.target.value)}>
+            <select data-run-navigation-readonly value={sourceType} onChange={(event) => setSourceType(event.target.value)}>
               {SOURCE_OPTIONS.map((value) => (
                 <option key={value} value={value}>
                   {value || 'all'}
@@ -83,11 +83,11 @@ export function PlayersPage(): JSX.Element {
           </label>
           <label>
             Min age
-            <input type="number" value={minAge} onChange={(event) => setMinAge(event.target.value)} min={15} max={60} />
+            <input data-run-navigation-readonly type="number" value={minAge} onChange={(event) => setMinAge(event.target.value)} min={15} max={60} />
           </label>
           <label>
             Max age
-            <input type="number" value={maxAge} onChange={(event) => setMaxAge(event.target.value)} min={15} max={60} />
+            <input data-run-navigation-readonly type="number" value={maxAge} onChange={(event) => setMaxAge(event.target.value)} min={15} max={60} />
           </label>
         </div>
       </SectionCard>

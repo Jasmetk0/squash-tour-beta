@@ -1,6 +1,6 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { MemoryRouter, Route, Routes } from 'react-router-dom'
+import { Link, MemoryRouter, Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { SavedPlayerMatchDetailPage } from './SavedPlayerMatchDetailPage'
 import { LanguageProvider } from '../i18n/LanguageContext'
@@ -9,20 +9,29 @@ const api = vi.hoisted(() => ({
   getSavedPlayerMatchDetail: vi.fn(), getSavedHomePlayerIdentities: vi.fn(),
 }))
 vi.mock('../api/client', () => api)
+const branchContext = vi.hoisted(() => ({
+  current: { run_id: 'run', branch_id: 'branch', saved_head_revision_id: 'rev' }
+}))
 vi.mock('../admin/AdminBranchContext', () => ({
-  useAdminBranch: () => ({ selectedBranch: {
-    run_id: 'run', branch_id: 'branch', saved_head_revision_id: 'rev'
-  }, isLoading: false, error: null }),
+  useAdminBranch: () => ({ selectedBranch: branchContext.current, isLoading: false, error: null }),
 }))
 vi.mock('../admin/AdminTimeContext', () => ({ useAdminTime: () => ({ mode: 'present' }) }))
 
 function mount() {
   const cache = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } })
-  return render(<QueryClientProvider client={cache}><LanguageProvider><MemoryRouter
+  const tree = () => <QueryClientProvider client={cache}><LanguageProvider><MemoryRouter
     initialEntries={['/admin/runs/run/people/A/matches/event/final']}>
+    <nav aria-label="Replay scope test navigation">
+      <Link to="/admin/runs/run/people/A/matches/event/short">Switch match</Link>
+      <Link to="/admin/runs/run/people/A/matches/second/final">Switch event</Link>
+      <Link to="/admin/runs/run/people/B/matches/event/final">Switch player</Link>
+      <Link to="/admin/runs/other-run/people/A/matches/event/final">Switch Run</Link>
+    </nav>
     <Routes><Route path="/admin/runs/:runId/people/:playerId/matches/:eventId/:matchId"
       element={<SavedPlayerMatchDetailPage />} /></Routes>
-  </MemoryRouter></LanguageProvider></QueryClientProvider>)
+  </MemoryRouter></LanguageProvider></QueryClientProvider>
+  const rendered = render(tree())
+  return { ...rendered, refreshBranch: () => rendered.rerender(tree()) }
 }
 
 function result(overrides: Record<string, unknown> = {}) {
@@ -48,6 +57,7 @@ function result(overrides: Record<string, unknown> = {}) {
 describe('canonical saved match detail', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    branchContext.current = { run_id: 'run', branch_id: 'branch', saved_head_revision_id: 'rev' }
     api.getSavedPlayerMatchDetail.mockResolvedValue(result())
     api.getSavedHomePlayerIdentities.mockImplementation(async (_r: string, _b: string, ids: string[]) => ({
       run_id: 'run', branch_id: 'branch', saved_revision_id: 'rev',
@@ -77,5 +87,114 @@ describe('canonical saved match detail', () => {
     mount()
     expect(await screen.findByRole('alert')).toHaveTextContent('Detail neodpovídá vybrané uložené revizi.')
     expect(screen.queryByText('Championship')).not.toBeInTheDocument()
+  })
+})
+
+
+function useLongMatchFixture(): void {
+  api.getSavedPlayerMatchDetail.mockImplementation(async (
+    runId: string, branchId: string, playerId: string,
+    eventId: string, matchId: string, offset: number, limit: number
+  ) => {
+    const total = runId !== 'run' || branchId !== 'branch' ||
+      branchContext.current.saved_head_revision_id !== 'rev' ||
+      matchId === 'short' || eventId === 'second' || playerId === 'B' ? 2 : 30
+    const original = result()
+    return result({
+      run_id: runId, branch_id: branchId,
+      saved_revision_id: branchContext.current.saved_head_revision_id,
+      player_id: playerId, offset, limit, total_rallies: total,
+      has_more: offset + limit < total,
+      match: { ...original.match, event_id: eventId, match_id: matchId },
+      rallies: Array.from({ length: Math.max(0, Math.min(limit, total - offset)) }, (_, i) => {
+        const index = offset + i + 1
+        return {
+          rally_index: index, set_number: 1, server_player_id: playerId,
+          winner_player_id: playerId, score_a_before: index - 1,
+          score_b_before: 0, score_a_after: index, score_b_after: 0,
+          sets_a_after: 0, sets_b_after: 0, set_complete: false, match_complete: false
+        }
+      })
+    })
+  })
+  api.getSavedHomePlayerIdentities.mockImplementation(async (
+    runId: string, branchId: string, ids: string[]
+  ) => ({
+    run_id: runId, branch_id: branchId,
+    saved_revision_id: branchContext.current.saved_head_revision_id,
+    requested_ids: ids, players: ids.map(id => ({ player_id: id, display_name: id }))
+  }))
+}
+async function seekSecondPage(): Promise<void> {
+  expect(await screen.findByText(/1\/30/)).toBeInTheDocument()
+  for (let i = 0; i < 25; i++) {
+    fireEvent.click(screen.getByRole('button', { name: 'Další výměna →' }))
+  }
+  await waitFor(() => expect(screen.getByText(/26\/30/)).toBeInTheDocument())
+  expect(api.getSavedPlayerMatchDetail).toHaveBeenCalledWith(
+    'run', 'branch', 'A', 'event', 'final', 25, 25
+  )
+}
+
+describe('replay identity cursor isolation', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    branchContext.current = { run_id: 'run', branch_id: 'branch', saved_head_revision_id: 'rev' }
+    useLongMatchFixture()
+  })
+
+  it.each([
+    ['Switch match', 'run', 'branch', 'A', 'event', 'short'],
+    ['Switch event', 'run', 'branch', 'A', 'second', 'final'],
+    ['Switch player', 'run', 'branch', 'B', 'event', 'final'],
+  ])('resets a page-2 cursor on %s with no stale page-2 request', async (
+    link, runId, branchId, playerId, eventId, matchId
+  ) => {
+    mount()
+    await seekSecondPage()
+    fireEvent.click(screen.getByRole('link', { name: link }))
+    await waitFor(() => expect(screen.getByText(/1\/2/)).toBeInTheDocument())
+    expect(screen.queryByText(/V tomto úseku není výměna/)).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '← Předchozí výměna' })).toBeDisabled()
+    expect(api.getSavedPlayerMatchDetail).toHaveBeenCalledWith(
+      runId, branchId, playerId, eventId, matchId, 0, 25
+    )
+    expect(api.getSavedPlayerMatchDetail).not.toHaveBeenCalledWith(
+      runId, branchId, playerId, eventId, matchId, 25, 25
+    )
+  })
+
+  it('resets at first render when a new Run is selected, not after the old offset is fetched', async () => {
+    mount()
+    await seekSecondPage()
+    branchContext.current = { run_id: 'other-run', branch_id: 'other-branch', saved_head_revision_id: 'other-rev' }
+    fireEvent.click(screen.getByRole('link', { name: 'Switch Run' }))
+    await waitFor(() => expect(screen.getByText(/1\/2/)).toBeInTheDocument())
+    expect(api.getSavedPlayerMatchDetail).toHaveBeenCalledWith(
+      'other-run', 'other-branch', 'A', 'event', 'final', 0, 25
+    )
+    expect(api.getSavedPlayerMatchDetail).not.toHaveBeenCalledWith(
+      'other-run', 'other-branch', 'A', 'event', 'final', 25, 25
+    )
+  })
+
+  it.each([
+    ['Branch', 'branch-next', 'rev-next'],
+    ['Saved Revision', 'branch', 'rev-next'],
+  ])('remounts and begins at first rally when %s changes without navigating', async (
+    _label, nextBranch, nextHead
+  ) => {
+    const view = mount()
+    await seekSecondPage()
+    branchContext.current = { run_id: 'run', branch_id: nextBranch, saved_head_revision_id: nextHead }
+    await act(async () => { view.refreshBranch() })
+    await waitFor(() => expect(screen.getByText(/1\/2/)).toBeInTheDocument())
+    expect(api.getSavedPlayerMatchDetail).toHaveBeenCalledWith(
+      'run', nextBranch, 'A', 'event', 'final', 0, 25
+    )
+    expect(api.getSavedPlayerMatchDetail).not.toHaveBeenCalledWith(
+      'run', nextBranch, 'A', 'event', 'final', 25, 25
+    )
+    expect(screen.getByRole('button', { name: '← Předchozí výměna' })).toBeDisabled()
   })
 })

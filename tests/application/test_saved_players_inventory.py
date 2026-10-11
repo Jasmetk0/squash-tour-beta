@@ -50,18 +50,20 @@ def test_filters_and_shared_source_are_restricted_to_saved_records():
     result = _query(
         initial_world=_world(rows=[_player("first", "Adam Current"), _player("second", "Adam Retired", status="retired")]),
         prospect_source=_source(rows=rows), ranking=None,
-        search="Prospect", country_code="SVK", status_filter="prepared",
+        search="Prospect", country_code="SVK", status_filter="prepared", include_prepared=True,
     )
     assert [p.player_id for p in result.players] == ["future1"]
     assert result.players[0].identity_source == "run_prospect"
     assert result.players[0].status == "prepared"
     assert result.total == 1
+    hidden = _query(initial_world=None, prospect_source=_source(rows=rows), ranking=None)
+    assert hidden.players == () and hidden.total == 0 and not hidden.include_prepared
 
 
 def test_duplicate_identity_and_cross_branch_fail_closed():
     rows=[{"prospect_id":"p1","display_name":"Conflict","country_code":"CZE","status":"prepared"}]
     with pytest.raises(ValueError, match="Duplicate"):
-        _query(initial_world=_world(rows=[_player("p1","Existing")]), prospect_source=_source(rows=rows), ranking=None)
+        _query(initial_world=_world(rows=[_player("p1","Existing")]), prospect_source=_source(rows=rows), ranking=None, include_prepared=True)
     with pytest.raises(ValueError, match="another Branch"):
         _query(initial_world=_world(branch="foreign"), prospect_source=None, ranking=None)
     with pytest.raises(ValueError, match="another Run"):

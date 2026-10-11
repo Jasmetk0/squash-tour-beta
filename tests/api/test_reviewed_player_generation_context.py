@@ -16,7 +16,7 @@ class FakeRepo:
                           status="active", saved_head_revision_id="head-a")
         saved = Obj(revision_id="head-a", run_id="run-a",
                     branch_id="branch-a", payload={"content": {}})
-        draft = Obj(base_saved_revision_id="head-a", draft_version=3, status="clean")
+        draft = Obj(base_revision_id="head-a", draft_version=3, status="clean")
         self.state = Obj(run_id="run-a", branch_id="branch-a",
                          saved_revision=saved, working_draft=draft)
 

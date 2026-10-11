@@ -183,6 +183,8 @@ export function verifiedInitialWorldPreview(
   if (min != null && (!Number.isInteger(min) || min < 15 || min > 45)) return false
   if (max != null && (!Number.isInteger(max) || max < 15 || max > 45)) return false
   if (min != null && max != null && min > max) return false
+  if (!Number.isInteger(request.generation.target_pool_size) ||
+      request.generation.target_pool_size < 1 || request.generation.target_pool_size > 2000) return false
   const kept = request.generation.keep_player_ids ?? []
   if (kept.length > 0) {
     if (!Number.isSafeInteger(request.generation.keep_from_seed) ||
@@ -211,6 +213,7 @@ export function verifiedInitialWorldPreview(
     /^[a-f0-9]{64}$/.test(state.world_generation_content_fingerprint) &&
     /^[a-f0-9]{64}$/.test(state.run_world_pool_preview_fingerprint) &&
     Array.isArray(players) && players.length === request.generation.target_pool_size &&
+    new Set(players.map(p => p.player_id)).size === players.length &&
     players.every(player => typeof player.player_id === 'string' && player.player_id.length > 0 &&
       typeof player.name === 'string' && typeof player.country_code === 'string' &&
       (!request.generation.country_code ||

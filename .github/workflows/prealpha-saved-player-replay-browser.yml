@@ -1,5 +1,11 @@
 name: Pre-alpha Saved Player Replay Browser
 
+# A new commit supersedes the same PR's old browser acceptance run.
+# Explicit workflow_dispatch/release checks are never cancelled.
+concurrency:
+  group: ${{ github.workflow }}-pr-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 on:
   pull_request:
     paths:

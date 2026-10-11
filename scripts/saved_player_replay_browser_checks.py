@@ -101,28 +101,27 @@ def verify_materialized_branch_fork_replay(page, run_url, artifacts, port, sourc
     source_branch = source["branch_id"]
     before = get("/run-branches/" + quote(source_branch, safe=""))
     assert before["run_id"] == run_id
+    assert before["saved_head_revision_id"] == source["saved_revision_id"]
     if fork_id is None:
-        fork_id = "browser-replay-fork"
+        # Product-Run Saved Revision fork, not the legacy SimulationRun
+        # checkpoint fork (this canonical Run has no legacy checkpoint).
         payload = dict(
             source_branch_id=source_branch,
-            source_checkpoint_id=before["head_checkpoint_id"],
-            target_branch_id=fork_id,
-            target_branch_display_name="Independent replay fork",
-            target_legacy_simulation_run_id="browser-replay-fork-legacy",
-            target_branch_seed=83741,
-            command_id="browser-replay-fork-first",
+            source_saved_revision_id=source["saved_revision_id"],
+            display_name="Independent saved replay timeline",
         )
         reply = page.request.post(
-            api + "/admin/runs/" + quote(run_id, safe="") + "/branches/fork",
+            api + "/run-containers/" + quote(run_id, safe="") + "/branches",
             data=payload, timeout=120000,
         )
-        assert reply.status == 200, ("Atomic fork rejected canonical source",
+        assert reply.status == 201, ("Saved Revision fork rejected canonical source",
                                      reply.status, reply.text()[:1800])
-        receipt = reply.json()
-        assert receipt["target_branch_id"] == fork_id
-        assert receipt["source_branch_id"] == source_branch
-        assert receipt["official_branch_changed"] is False
-        assert receipt["idempotent_replay"] is False
+        created = reply.json()
+        assert created["run_id"] == run_id
+        assert created["forked_from_branch_id"] == source_branch
+        assert created["forked_from_saved_revision_id"] == source["saved_revision_id"]
+        fork_id = created["branch_id"]
+        assert fork_id and fork_id != source_branch
     fork = get("/run-branches/" + quote(fork_id, safe=""))
     assert fork["branch_id"] == fork_id and fork["run_id"] == run_id
     assert fork["saved_head_revision_id"], fork

@@ -136,7 +136,7 @@ describe('preview field lock verification',()=>{
       [{...locks[0],field:'attributes.height'}],
       [{...locks[0],value:185}]
     ]) {
-      const candidate={...edit,generation:{...edit.generation,field_locks:malformed}}
+      const candidate={...edit,generation:{...edit.generation,field_locks:malformed}} as unknown as RunInitialWorldAdoption
       expect(verifiedInitialWorldPreview(result,'r1','b1',candidate,options)).toBe(false)
     }
   })

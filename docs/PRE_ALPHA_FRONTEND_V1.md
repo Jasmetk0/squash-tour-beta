@@ -1,7 +1,7 @@
-# Pre-alpha frontend V1 — approved shell, Runs and Packages decisions
+# Pre-alpha frontend V1 — approved Admin workflows
 
 Decision dates: 10–11 October 2026. Status: **approved product design; not implementation evidence**.
-Authority: Master v78 §§27.6, 27.9, 27.17–27.20, 9.4–9.6 and 31.30–31.33; newer explicit user decisions prevail.
+Authority: Master v79 §§27.6, 27.9, 27.17–27.21, 9.4–9.7 and 31.30–31.34; newer explicit user decisions prevail.
 Older illustrative route trees are not an alternative source of authority.
 
 ## Appearance and context
@@ -133,7 +133,7 @@ CI/browser evidence must identify the actual source and covered scope; mocks are
 
 **[ROZHODNUTO PRO PRE-ALPHA]** Dávkový country-rating editor má matici vybraných zemí × šest ratingů a výběr roku/období. Lze měnit jednotlivé buňky nebo použít hodnotu na explicitně vybranou množinu. Ukazuje před/po diff včetně časového/generačního dopadu. Interpolace a jednostranné použití nejbližšího známého ratingu se řídí 5.3/v77, explicitní editace dopočítaného roku vytvoří kotvu. Import/validace zachovávají škálu a historii.
 
-**[OTEVŘENO]** Podrobná World Overview stránka nebyla schválena. Přesné škály varování, matematika distribucí, numerické defaulty poměrů a algoritmy vývoje se budou kalibrovat na funkčních nástrojích. Doplnění při explicitním celkovém počtu a současné podmínky v téže skupině jsou rozhodnuté v 9.6; další otevřené případy jsou uvedené tam. Player/hybrid Package schema zůstává podle 4.9 otevřené. Nový frontendový souhlas neslouží k domýšlení těchto pravidel.
+**[AKTUALIZOVÁNO v79]** Konkrétní stručný World přehled je nyní schválen v 27.21. Přesné škály varování, matematika distribucí, numerické defaulty poměrů a algoritmy vývoje se budou kalibrovat na funkčních nástrojích. Doplnění při explicitním celkovém počtu a současné podmínky v téže skupině jsou rozhodnuté v 9.6; další otevřené případy jsou uvedené tam. Player/hybrid Package schema zůstává podle 4.9 otevřené. Nový frontendový souhlas neslouží k domýšlení těchto pravidel.
 
 
 ## 9.4 Jednotné generování a podmínky — schválený pre-alpha kontrakt v77
@@ -188,3 +188,43 @@ Country rating history contract:
 ## 27.20 Stránka generování — schválené rozložení v78
 
 **[ROZHODNUTO PRO PRE-ALPHA]** Generátor je samostatná stránka. Vlevo má sbalitelný panel společných podmínek, skupin a předvoleb, vpravo shrnutí, konkrétní varování a hráčskou tabulku. Sbalení podmínek rozšíří prostor tabulky. Klik na hráče otevře postranní editor se zachováním pozice a kontextu seznamu; podporované individuální hodnoty a zámky se řídí 9.6. Hlavní akce jsou `Generovat`, `Uložit návrh` a `Přidat do Runu`, se zřetelným rozlišením následného ručního Save. Nezavádí se World/Custom rozdělení ani modální průvodce. Rozložení musí být použitelné i pro velkou dávku; současný počáteční limit 128 není produktový limit.
+
+## Approved generator selection and downstream Admin pages — v79
+
+## 9.7 Práce s celou dávkou a výběrem — rozhodnutí v79
+
+**[ROZHODNUTO PRO PRE-ALPHA]** Hráčská tabulka generačního náhledu nabízí volbu sloupců a pamatuje uživatelovu volbu. Cílový základ je jméno, země, věk, OVR, Potential OVR, vývojový typ a session Ponechat; další dostupné sloupce zahrnují rukovost, výšku a konkrétní atributy. Ručně upravené/zamčené hodnoty mají rozpoznatelný indikátor s rozpisem po kliknutí. Jde o hodnoty skutečného modelu: legacy schopnost 1–99 se nesmí přeznačit na kanonický OVR 0–200 a chybějící vlastnosti se nevymýšlejí. Klik na hráče otevře existující postranní editor a zachová filtry, stránku a pozici seznamu. Počet na stránce, počet odpovídající filtrům a celková dávka jsou odlišeny.
+
+**[ROZHODNUTO PRO PRE-ALPHA]** Hromadná úprava náhledu pracuje s explicitním výběrem hráčů. `Vybrat zobrazené` a `Vybrat všechny odpovídající filtru` jsou odlišné akce s počty; filtrace není sama výběrem. Pro podporovaná pole lze hromadně nastavit hodnotu, vrátit ji na Automatic a zamknout/odemknout. Před potvrzením je viditelná množina zasažených hráčů, před/po a dostupné odvozené dopady. Zachovají se závazné podmínky, přesné kvóty a konzistence profilů; konflikt vyžaduje výslovnou opravu. Celá potvrzená hromadná operace je jeden krok Undo v generační session. Nejde o rollback již uloženého Runu ani přepis historie.
+
+**[ROZHODNUTO PRO PRE-ALPHA]** Přidání nabízí explicitní `Přidat celou dávku` a `Přidat vybrané hráče`, vždy s přesným počtem a konkrétní množinou v potvrzení. Pouhá stránka/filtr neurčuje přidávané hráče. Nevybraný zbytek zůstává v návrhu. Pokud výběr neplní závazné počty/podmínky původní dávky, uživatel musí před přidáním výslovně upravit zadání tohoto dílčího přidání a znovu je validovat; původní kvóty se nesmějí tiše ignorovat. Přidání zachovává stabilní identity a ochranu proti duplicitnímu přidání; náhled ani výběr sám Run nemění. Výslovné přidání vytvoří Working Draft změnu, běžný ruční Save následuje samostatně. Dílčí přidání není automatickým potvrzením připravenosti celého počátečního světa ke všem simulačním operacím.
+
+**[IMPLEMENTAČNÍ HRANICE]** Schválený cíl je obecný. Současná první-cohort implementace přidává pouze celý InitialWorld a není tímto zápisem změněna na obecný append ani na částečné nahrazení autoritativního světa. Rozšiřující transakční kontrakt musí být verzovaný, zdokumentovaný a ověřený; nerozhoduje nové sportovní mechaniky.
+
+## 27.21 Navazující Admin stránky — schválený frontendový kontrakt v79
+
+**[ROZHODNUTO PRO PRE-ALPHA — GENERÁTOR]** Volitelné sloupce, indikace ručních zásahů, explicitní vícenásobný výběr, hromadný před/po diff a Undo i přidání celé dávky/vybraných profilů se řídí 9.7. Session Ponechat, výběr pro hromadnou akci a výběr pro přidání mají odlišný význam. Nevzniká druhý World/Custom generátor.
+
+**[ROZHODNUTO PRO PRE-ALPHA — WORLD]** Hlavní stránka World začne stručným přehledem: identita světa, zvolený rok, původní balíček a Runové úpravy; tři kompaktní souhrny počtu zemí, světové populace a zemí s neúplnými daty. Pod nimi je vyhledatelná tabulka zemí s dostupnými populačními/ratingovými údaji pro zvolený rok a odkazem do detailu. Talent Preview zůstává samostatnou stránkou/záložkou. Neúplný populační součet musí být označen jako neúplný, nikoliv vydáván za úplnou světovou populaci. Počet zemí s mezerami je informativní a nenahrazuje operation-scoped validaci. Toto rozhodnutí nahrazuje staré OPEN pouze pro tento konkrétní přehled, nikoliv pro nevyřešené matematické ukazatele síly světa.
+
+**[ROZHODNUTO PRO PRE-ALPHA — COUNTRY DETAIL]** Samostatný profil země rozšiřuje 27.19 na šest záložek: `Přehled / Overview`, `Populace / Population`, `Atributy země / Country Attributes`, `Hráči a talenty / Players & Talent`, `Rekordy / Records`, `Turnaje / Tournaments`. Hlavička zachová zemi a zvolený rok. Přehled ukazuje skutečné základní údaje včetně odlišných Region, Travel Region a Timezone Area; populační a ratingové grafy/tabulky/editory zachovají provenance explicitní/interpolované/fallback hodnoty a pravidla 5.1/5.3. Hráči a talenty odliší skutečné hráče, očekávání, intake a případnou opt-in budoucí vrstvu. Návrat do seznamu zachová jeho filtry a pozici.
+
+**[ROZHODNUTO PRO PRE-ALPHA — COUNTRY RECORDS]** Rekordy čerpají ze skutečné historie a odkazují na hráče, hodnotu a čas/výsledek, kde je to dostupné. Nejlepší dosažený ranking, tituly nebo výhry jsou příklady zobrazení, nikoliv tímto stanovený úplný katalog nebo nové výpočtové formule. Sportovní rekord země respektuje historickou reprezentaci při daném výsledku a již platná pravidla 10.3 a 21.3; původ hráče a dnešní reprezentace se nezaměňují. Nedostupná historie není smyšlený rekord.
+
+**[ROZHODNUTO PRO PRE-ALPHA — COUNTRY TOURNAMENTS]** Turnaje země výchozí zobrazí aktuální sezonu. Sezonní oddíly dovolí scroll do minulosti a v Adminu i do již skutečně naplánované budoucnosti; `Aktuální sezona` vrátí na dnešní sezonu. Budoucí plán není budoucí výsledek a prohlížení neposouvá simulaci. Umístění země se čte z konkrétní Edition, protože místo série se může mezi ročníky měnit. Klik vede do společného detailu turnajové Edition.
+
+**[ROZHODNUTO PRO PRE-ALPHA — RUN CALENDAR]** Kalendář výchozí používá kompaktní weekový přehled 61 Season Weeks s turnajovými termíny/stavy, souběžné turnaje vedle sebe. Lze přepnout na běžný vyhledatelný/řaditelný seznam. Filtry zahrnují Tour, kategorii a zemi; klik otevírá Edition. Čtení kalendáře nemění globální simulační osu ani nevytváří výsledky.
+
+**[ROZHODNUTO PRO PRE-ALPHA — TOURNAMENT EDITION]** Samostatná stránka má hlavičku s názvem, sezonou, místem a stavem; záložky `Přehled / Overview`, `Přihlášky a účastníci / Entries & Participants`, `Pavouk/skupiny / Draw & Groups`, `Program a zápasy / Schedule & Matches`, `Výsledky / Results`, `Nastavení / Settings`. Přehled ukáže skutečný stav a další požadovaný krok; účastníci přihlášky, kvalifikanty, WC, rezervy a dostupná zdůvodnění; formátový pohled pavouk/skupiny; program odehrané i plánované zápasy; výsledky skutečné umístění/body; nastavení pravidla, velikosti a organizační okna. Návrat zachová pozici kalendáře.
+
+**[ROZHODNUTO PRO PRE-ALPHA — QUALIFICATION / MAIN]** Přepínač `Hlavní soutěž / Kvalifikace` patří **pouze do Pavouk/skupiny**. Ve všech ostatních relevantních záložkách jsou obě části na jedné stránce: hlavní soutěž první a výraznější, kvalifikace níže. Tlačítka `Hlavní soutěž` a `Kvalifikace` jsou odkazy pro posun na daný oddíl a zůstávají při scrollování dostupná; nejsou filtrem ani druhými záložkami. Společné informace o Edition se neduplikují, odlišná nastavení jsou ve svých oddílech. Bez kvalifikace se nepotřebné ovládání nezobrazuje. Jde o jednu Edition se společnou historií a skutečnými kvalifikačními postupy, nikoliv dva nesouvisející turnaje.
+
+**[ROZHODNUTO PRO PRE-ALPHA — MATCH DETAIL]** Klik na zápas otevře samostatnou stránku `Přehled / Overview`, `Statistiky / Statistics`, `Průběh a Replay / Course & Replay`. Přehled ukáže hráče, skóre, dostupný předzápasový stav a důvod případného nestandardního ukončení. Statistiky a průběh čerpají ze skutečně uložených dat. Návrat zachová kontext původního turnaje/seznamu.
+
+**[ROZHODNUTO PRO PRE-ALPHA — REPLAY]** Nahoře jsou hráči, skóre při aktuálním kurzoru, game a dostupný čas; vlevo chronologický seznam rally/událostí s kliknutím pro posun, vpravo vedle sebe dostupné historické stavy obou hráčů. Fyzické/mentální ukazatele čtou skutečné zaznamenané dimenze a nerozhodují dosud otevřenou mechaniku či počet mentálních barů. Ovládání zahrnuje předchozí/další rally, skok na game, přehrát/pozastavit a rychlost; detail rally je rozbalitelný. Replay pouze čte uloženou historii, nedopočítává novou simulaci ani chybějící stavy podle dnešního modelu. Animace kurtu/úderů zůstává pozdější verzí.
+
+**[ROZHODNUTO PRO PRE-ALPHA — SIMULATION]** Hlavní konzole má ovládání dalšího zápasu, dalšího slotu, dokončení weeku a simulace do vybraného dostupného časového bodu; režimy automaticky/se zásahy a tlačítko nastavení zastavování. Chronologicky ukáže další zápasy/organizační přechody, průběh a poslední dokončené události s odkazy. Při rozhodovací pauze zobrazí důvod, možnosti a dostupné doporučení enginu. Cílové rychlé akce zachovávají nejbližší nevyřešený slot, souběžnost, explicitní Week/Season Transition a všechny skutečné blokátory podle kapitol 6 a 31.27. Změna přehrávacího UI není sportovní autorita.
+
+**[ROZHODNUTO PRO PRE-ALPHA — RANKINGS]** Stránka má `Official Ranking` a `Finals Race`, každou s vlastními historicky platnými pravidly. Zobrazuje pořadí, posun oproti skutečnému předchozímu snapshotu, jméno, zemi a body; sezonu a rankingový week lze zvolit v dostupné uložené historii. Jméno otevře profil, **klik na body otevře postranní rozpis** započtených/nezapočtených výsledků, důvodů vyřazení a příslušné expirace, pokud ji daná pravidla mají. Neexistující předchozí snapshot neznamená nulový posun a budoucí nepřidělené body nejsou historie. Nevzniká nový bodový systém ani Live Ranking; ten zůstává mimo první pre-alpha.
+
+**[HRANICE CÍLE A IMPLEMENTACE]** Tato konkrétní UI rozhodnutí jsou závazným cílem pro pre-alpha. Neprohlašují současné produkční služby za úplné, nedomýšlejí Player/Hybrid Package schema, numerickou kalibraci, nové historické výsledky ani zbývající obecné submenu. Nepodporované hodnoty/operace mají být zřetelně nedostupné s důvodem.

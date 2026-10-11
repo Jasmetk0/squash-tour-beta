@@ -5,7 +5,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { getRunContainer, listRunBranches } from '../api/client'
 import type { RunBranch } from '../api/types'
 import { formatApiError } from '../utils/apiErrors'
-import { confirmAdminContextChange } from '../navigation/runContextGuard'
+import { allowConfirmedAdminNavigation, confirmAdminContextChange } from '../navigation/runContextGuard'
 
 export type AdminBranchContextValue = {
   runId: string
@@ -110,6 +110,7 @@ export function AdminBranchProvider({ runId, children }: { runId: string; childr
       params.set('branch', branchId)
       const nextHref = pathname + '?' + params.toString() + hash
       acceptedLocation.current = { runId, href: nextHref }
+      allowConfirmedAdminNavigation(nextHref)
       navigate(nextHref, { replace: true })
     }
     return true

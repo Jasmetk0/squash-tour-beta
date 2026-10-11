@@ -281,7 +281,7 @@ def _assert_reviewed_generation_context(
         branch.saved_head_revision_id != expected_head or
         saved.revision_id != expected_head or
         saved.run_id != run_id or saved.branch_id != branch_id or
-        draft.base_saved_revision_id != expected_head or
+        draft.base_revision_id != expected_head or
         draft.draft_version != expected_draft_version or draft.status != "clean"):
         raise ValueError("Player generation preview is stale: Run/Branch HEAD or Working Draft changed")
     current = package_service.get(run_id=run_id, branch_id=branch_id)

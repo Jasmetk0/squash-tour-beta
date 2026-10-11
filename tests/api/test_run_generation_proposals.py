@@ -148,3 +148,27 @@ def test_stale_and_corrupt_saved_proposal_fail_closed(tmp_path, monkeypatch):
             "run-one", "branch-one", "candidate-one",
             package_service=NS(), runtime=runtime,
         )
+
+
+def test_field_only_new_seed_proposal_keeps_original_form_seed_without_fake_keep_lineage():
+    payload, _ = _payload()
+    rerolled = payload.request.model_copy(update={
+        "generation": payload.request.generation.model_copy(update={"seed": 811}),
+    })
+    proposal = payload.model_copy(update={
+        "request": rerolled, "source_seed": 802, "next_seed": 812,
+    })
+    assert proposal.source_seed == 802
+    assert proposal.request.generation.seed == 811
+    # A Keep-based request, by contrast, must preserve the exact oldest source seed.
+    from beta_engine.application.run_world_initial_pool_preview_service import RunWorldKeepStep
+    keep_gen = rerolled.generation.model_copy(update={
+        "keep_from_seed": 810,
+        "keep_from_preview_fingerprint": "a"*64,
+        "keep_player_ids": ["player-1"],
+    })
+    with pytest.raises(ValueError, match="original seed"):
+        admin_players.RunGenerationProposalSave.model_validate({
+            **proposal.model_dump(mode="json"),
+            "request": rerolled.model_copy(update={"generation": keep_gen}).model_dump(mode="json"),
+        })

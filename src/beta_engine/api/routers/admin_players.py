@@ -487,7 +487,9 @@ class RunGenerationProposalSave(BaseModel):
         g = self.request.generation
         first = (g.keep_history[0].keep_from_seed if g.keep_history else
                  g.keep_from_seed if g.keep_from_seed is not None else g.seed)
-        if self.source_seed != first:
+        # A field-only re-roll has no Keep lineage; it may use a new final
+        # seed while the original editable form seed remains unchanged.
+        if g.keep_from_seed is not None and self.source_seed != first:
             raise ValueError("Saved proposal original seed does not match verified replay ancestry")
         return self
 

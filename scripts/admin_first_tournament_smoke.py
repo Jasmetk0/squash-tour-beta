@@ -436,6 +436,7 @@ def run_acceptance(root: Path, *, port: int, base_url: str, chromium: str):
                 entry_count = page.smoke_entry_decision_count
                 match_options = finish_tournament(page, artifacts)
                 ranking_rows = verify_viewer(page, run_url, artifacts)
+                saved_match = verify_saved_player_replay(page, run_url, artifacts, port)
                 context.tracing.stop(path=str(artifacts / "before-restart.zip"))
                 context.close()
                 process.terminate()
@@ -445,6 +446,8 @@ def run_acceptance(root: Path, *, port: int, base_url: str, chromium: str):
                 assert (
                     verify_viewer(page, run_url, artifacts, "reopened-") == ranking_rows
                 )
+                reopened_match = verify_saved_player_replay(page, run_url, artifacts, port, prefix="reopened-")
+                assert reopened_match == saved_match, "Saved replay changed across restart"
                 page.goto(run_url + "/simulate")
                 browser_settle(page)
                 replay = page.get_by_label(
@@ -491,6 +494,8 @@ def run_acceptance(root: Path, *, port: int, base_url: str, chromium: str):
                             "run_url": run_url,
                             "real_entry_decisions": entry_count,
                             "matches": match_options,
+                            "saved_player_replay": saved_match,
+                            "reopened_saved_replay_equal": reopened_match == saved_match,
                             "week2_ranking_rows": ranking_rows,
                             "browser_errors": errors,
                             "restart": "fresh browser context after terminated/restarted production backend",

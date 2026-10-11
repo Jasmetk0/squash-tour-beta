@@ -186,15 +186,19 @@ describe('replay identity cursor isolation', () => {
   ) => {
     const view = mount()
     await seekSecondPage()
+    // Saved Revision intentionally isn't an API parameter: compare ONLY requests
+    // issued after changing scope, not page-2 requests from the previous revision.
+    const previousCallCount = api.getSavedPlayerMatchDetail.mock.calls.length
     branchContext.current = { run_id: 'run', branch_id: nextBranch, saved_head_revision_id: nextHead }
     await act(async () => { view.refreshBranch() })
     await waitFor(() => expect(screen.getByText(/1\/2/)).toBeInTheDocument())
-    expect(api.getSavedPlayerMatchDetail).toHaveBeenCalledWith(
+    const newScopeCalls = api.getSavedPlayerMatchDetail.mock.calls.slice(previousCallCount)
+    expect(newScopeCalls).toContainEqual([
       'run', nextBranch, 'A', 'event', 'final', 0, 25
-    )
-    expect(api.getSavedPlayerMatchDetail).not.toHaveBeenCalledWith(
+    ])
+    expect(newScopeCalls).not.toContainEqual([
       'run', nextBranch, 'A', 'event', 'final', 25, 25
-    )
+    ])
     expect(screen.getByRole('button', { name: '← Předchozí výměna' })).toBeDisabled()
   })
 })

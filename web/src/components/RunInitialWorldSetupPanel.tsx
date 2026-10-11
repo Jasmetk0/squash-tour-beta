@@ -12,9 +12,9 @@ import {
 } from '../api/client'
 import type { RunBranch, RunContainer } from '../api/types'
 import {
-  ageConditionConflict, generatorConditionConflict, runOwnedWorldIds, verifiedGenerationOptions, verifiedInitialWorldPreview,
+  ageConditionConflict, countryQuotaConflict, generatorConditionConflict, runOwnedWorldIds, verifiedGenerationOptions, verifiedInitialWorldPreview,
   orderedPreviewFieldLocks,
-  type GeneratedPlayerFieldKey, type RunWorldPreviewFieldLock,
+  type GeneratedPlayerFieldKey, type RunWorldExactCountryQuota, type RunWorldPreviewFieldLock,
   type RunInitialWorldAdoption, type RunInitialWorldPreview,
   type RunSavedGenerationProposal
 } from '../api/runInitialWorldSetup'
@@ -50,6 +50,7 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
   const [seed, setSeed] = useState(20261009)
   const [poolSize, setPoolSize] = useState(64)
   const [countryCode, setCountryCode] = useState('')
+  const [countryQuotas, setCountryQuotas] = useState<RunWorldExactCountryQuota[]>([])
   const [region, setRegion] = useState('')
   const [travelRegion, setTravelRegion] = useState('')
   const [minAge, setMinAge] = useState('')
@@ -123,8 +124,13 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
     ? generatorConditionConflict(countryCode, '', options, region, travelRegion)
     : null
   const ageConflict = ageConditionConflict(minAge, maxAge)
+  const quotaConflict = countryQuotaConflict(countryQuotas, poolSize, options, countryCode, region, travelRegion)
+  const eligibleQuotaCountries = (options?.countries ?? []).filter(c =>
+    (!countryCode || c.code === countryCode) && (!region || c.region === region) &&
+    (!travelRegion || c.travel_region === travelRegion))
+  const fixedQuotaTotal = countryQuotas.reduce((sum,q) => sum + q.count,0)
   const canPreview = editable && worldIds.length > 0 && validParameters &&
-    packageQuery.isSuccess && Boolean(options) && !conditionConflict && !ageConflict &&
+    packageQuery.isSuccess && Boolean(options) && !conditionConflict && !ageConflict && !quotaConflict &&
     draft?.base_saved_revision_id === head &&
     draft.status === 'clean' && !existing && existingQuery.isSuccess === false &&
     isApiNotFound(existingQuery.error) && !pendingSave
@@ -139,7 +145,7 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
     setApproved(false)
     setSaveApproved(false)
     setNotice('')
-  }, [runId, branchId, head, sourceId, seed, poolSize, countryCode, region, travelRegion, minAge, maxAge, bestN, auditReason])
+  }, [runId, branchId, head, sourceId, seed, poolSize, countryCode, countryQuotas, region, travelRegion, minAge, maxAge, bestN, auditReason])
 
   const previewAction = useMutation({
     mutationFn: async () => {
@@ -152,6 +158,7 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
           season: '2000/2001',
           seed, target_pool_size: poolSize,
           ...(countryCode ? { country_code: countryCode } : {}),
+          ...(countryQuotas.length ? { country_quotas: countryQuotas } : {}),
           ...(region ? { geographic_region: region } : {}),
           ...(travelRegion ? { travel_region: travelRegion } : {}),
           ...(minAge ? { min_age: Number(minAge) } : {}),
@@ -184,11 +191,12 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
     reviewBaseSeed === seed &&
     review.request.generation.target_pool_size === poolSize &&
     (review.request.generation.country_code ?? '') === countryCode &&
+    JSON.stringify(review.request.generation.country_quotas ?? []) === JSON.stringify(countryQuotas) &&
     (review.request.generation.geographic_region ?? '') === region &&
     (review.request.generation.travel_region ?? '') === travelRegion &&
     String(review.request.generation.min_age ?? '') === minAge &&
     String(review.request.generation.max_age ?? '') === maxAge &&
-    Boolean(options) && !conditionConflict && !ageConflict &&
+    Boolean(options) && !conditionConflict && !ageConflict && !quotaConflict &&
     review.request.best_n === bestN && review.request.audit_reason === auditReason.trim() &&
     !existing && isApiNotFound(existingQuery.error))
 
@@ -452,6 +460,7 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
       setSourceId(generation.world_package_id)
       setSeed(data.source_seed); setPoolSize(generation.target_pool_size)
       setCountryCode(generation.country_code ?? '')
+      setCountryQuotas(generation.country_quotas ?? [])
       setRegion(generation.geographic_region ?? '')
       setTravelRegion(generation.travel_region ?? '')
       setMinAge(String(generation.min_age ?? ''))
@@ -470,6 +479,7 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
     if (selectedWorldId !== generation.world_package_id || seed !== data.source_seed ||
         poolSize !== generation.target_pool_size ||
         countryCode !== (generation.country_code ?? '') ||
+        JSON.stringify(countryQuotas) !== JSON.stringify(generation.country_quotas ?? []) ||
         region !== (generation.geographic_region ?? '') ||
         travelRegion !== (generation.travel_region ?? '') ||
         minAge !== String(generation.min_age ?? '') ||
@@ -496,7 +506,7 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
     setNotice('Exact saved review restored from SQLite without regenerating. Adopt and Run Save remain separate.')
     setRestoringProposal(null)
   }, [restoringProposal, canPreview, draft, snapshotFingerprint, options,
-      selectedWorldId, seed, poolSize, countryCode, region, travelRegion,
+      selectedWorldId, seed, poolSize, countryCode, countryQuotas, region, travelRegion,
       minAge, maxAge, bestN, auditReason, runId, branchId, head])
 
   const proposalDeleteAction = useMutation({
@@ -523,8 +533,8 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
       ? 'První funkční dávka 1–1000 hráčů pro sezónu 2000/01. Používá pouze uložený World Package dané branche. Náhled nic nezapisuje; potvrzení připraví InitialWorld a teprve ruční Save vytváří Saved Revision.'
       : 'First supported complete batch (1–1000 players) for season 2000/01. Uses the saved Run-owned World Package only. Preview never writes; confirmation stages InitialWorld, then manual Save creates a Saved Revision.'}</p>
     <p className="status">{cs
-      ? 'Závazné podmínky země, regionu a věku platí pro všechny hráče dávky. Prázdná pole zachovávají automatické rozdělení. Skupiny a kvóty zatím nejsou podporované; editor podporuje devět zdrojových schopností (1–99).'
-      : 'Hard country, region and age conditions apply to every player. Blank conditions preserve automatic allocation. Groups and quotas are not supported yet; the preview editor supports nine source abilities (1–99).'}</p>
+      ? 'Závazné podmínky země, regionu a věku platí pro všechny hráče dávky. Prázdná pole zachovávají automatické rozdělení. Přesné kvóty zemí a automatické doplnění jsou podporované; překrývající se skupiny zatím ne.'
+      : 'Hard country, region and age conditions apply to every player. Blank conditions preserve automatic allocation. Exact country quotas and the non-quota remainder are supported; overlapping groups are not yet supported.'}</p>
     {existing && <p role="status">InitialWorld exists: {existing.players.length} players from {existing.world_package_id}; seed {existing.bootstrap_seed}. Existing players cannot be silently regenerated or overwritten.</p>}
     {unexpectedExistingError && <p role="alert" className="error">Cannot verify whether this Run already has InitialWorld: {formatApiError(existingQuery.error)}</p>}
     {packageQuery.isError && <p role="alert" className="error">Run World state unavailable: {formatApiError(packageQuery.error)}</p>}
@@ -538,7 +548,7 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
     {draft && draft.status !== 'clean' && !pendingSave && <p className="status">Save or resolve existing Working Draft changes before generating new players.</p>}
     <label>Run-owned World{' '}
       <select aria-label="Run World for player generation" value={selectedWorldId}
-        onChange={event => { setSourceId(event.target.value); setCountryCode(''); setRegion(''); setTravelRegion('') }}>
+        onChange={event => { setSourceId(event.target.value); setCountryCode(''); setCountryQuotas([]); setRegion(''); setTravelRegion('') }}>
         {worldIds.map(id => <option key={id} value={id}>{id}</option>)}
       </select>
     </label>
@@ -605,6 +615,54 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
       onChange={event => setSeed(Number(event.target.value))} /></label>
     <label>Number of players (1–1000) <input aria-label="Number of generated players" type="number"
       min={1} max={1000} value={poolSize} onChange={event => setPoolSize(Number(event.target.value))} /></label>
+    <section aria-label="Exact country quotas" className="section-subtle">
+      <h4>{cs ? 'Přesné počty zemí' : 'Exact country quotas'}</h4>
+      <p className="status">{cs
+        ? 'Kvóty platí v celé dávce, nikoli jako další hráči. Zbytek tvoří jiné způsobilé země. Kvóta 0 vyloučí zemi.'
+        : 'Whole-batch quotas, not extra players. Only other eligible countries fill the remainder. Zero excludes a country.'}</p>
+      {countryQuotas.map(quota => <div key={quota.country_code} className="form-grid">
+        <label>{cs ? 'Země kvóty' : 'Quota country'}
+          <select aria-label={`Quota country ${quota.country_code}`} value={quota.country_code}
+            onChange={e => setCountryQuotas(current => current.map(item =>
+              item.country_code === quota.country_code
+                ? { ...item, country_code: e.target.value } : item
+            ).sort((a,b) => a.country_code.localeCompare(b.country_code)))}>
+            {eligibleQuotaCountries.filter(c => c.code === quota.country_code ||
+              !countryQuotas.some(item => item.country_code === c.code))
+              .map(c => <option key={c.code} value={c.code}>{c.code} — {c.name}</option>)}
+          </select>
+        </label>
+        <label>{cs ? 'Přesně hráčů' : 'Exact players'}
+          <input type="number" min={0} max={poolSize} step={1}
+            aria-label={`Exact quota ${quota.country_code}`} value={quota.count}
+            onChange={e => setCountryQuotas(current => current.map(item =>
+              item.country_code === quota.country_code
+                ? { ...item, count: Number(e.target.value) } : item))} />
+        </label>
+        <button type="button" aria-label={`Remove country quota ${quota.country_code}`}
+          onClick={() => setCountryQuotas(current =>
+            current.filter(item => item.country_code !== quota.country_code))}>
+          {cs ? 'Odebrat' : 'Remove'}
+        </button>
+      </div>)}
+      <button type="button" aria-label="Add country quota"
+        disabled={!options || eligibleQuotaCountries.every(c => countryQuotas.some(q => q.country_code === c.code))}
+        onClick={() => {
+          const next = eligibleQuotaCountries.find(c => !countryQuotas.some(q => q.country_code === c.code))
+          if (next) setCountryQuotas(current => [...current, {
+            country_code: next.code, count: 0
+          }].sort((a,b) => a.country_code.localeCompare(b.country_code)))
+        }}>
+        {cs ? 'Přidat kvótu země' : 'Add country quota'}
+      </button>
+      <p className="status" aria-label="Country quota summary">
+        {poolSize} {cs ? 'celkem' : 'total'} · {fixedQuotaTotal} {cs ? 'přesně určeno' : 'exact'} ·
+        {' '}{poolSize - fixedQuotaTotal} {cs ? 'automaticky' : 'automatic'}
+      </p>
+      {quotaConflict && <p role="alert" className="error">
+        {cs ? 'Rozpor kvót' : 'Country quota conflict'}: {quotaConflict}
+      </p>
+    </section>
     <label>First-season ranking Best N <input aria-label="First-season ranking Best N" type="number"
       min={1} value={bestN} onChange={event => setBestN(Number(event.target.value))} /></label>
     <label>Audit reason <input aria-label="InitialWorld audit reason" maxLength={1000}

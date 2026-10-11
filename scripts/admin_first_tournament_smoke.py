@@ -158,8 +158,10 @@ def setup_run(page, base_url: str, artifacts: Path) -> str:
     # Test both controls, restore Automatic, then keep the established
     # world-distributed tournament/replay acceptance baseline unchanged.
     sport_country = page.get_by_label("Player generation sport country")
-    sport_country.select_option("CZE")
-    expect(sport_country).to_have_value("CZE")
+    # The world used by this acceptance is fictional: never assume CZE exists.
+    # Wait for immutable saved World options and select a real source country.
+    sport_country.select_option(index=1)
+    assert sport_country.input_value(), "Country choice was not loaded from the saved World"
     region_condition = page.get_by_label("Player generation region")
     region_condition.select_option(index=1)
     expect(region_condition).not_to_have_value("")

@@ -146,15 +146,6 @@ class RunWorldVerifiedSessionStep(BaseModel):
     seed: int
     keep_player_ids: list[str] = Field(default_factory=list)
     field_locks: list[RunWorldPreviewFieldLock] = Field(default_factory=list, max_length=2000)
-    # Opt-in v2. The exact original legacy request and its fingerprint anchor
-    # an append-only sequence of authenticated Keep/edit operations. The old
-    # request and historical hash bytes remain completely unchanged.
-    session_schema_version: Literal["run_world_generation_session.v2"] | None = None
-    session_origin_request: RunWorldInitialPoolPreviewRequest | None = None
-    session_origin_fingerprint: str | None = Field(
-        default=None, pattern=r"^[0-9a-f]{64}$"
-    )
-    session_steps: list[RunWorldVerifiedSessionStep] = Field(default_factory=list, max_length=48)
 
     @model_validator(mode="after")
     def validate_step(self) -> "RunWorldVerifiedSessionStep":
@@ -206,6 +197,15 @@ class RunWorldInitialPoolPreviewRequest(BaseModel):
     keep_player_ids: list[str] = Field(default_factory=list)
     keep_history: list[RunWorldKeepStep] = Field(default_factory=list, max_length=16)
     field_locks: list[RunWorldPreviewFieldLock] = Field(default_factory=list, max_length=2000)
+    # Opt-in v2. The exact original legacy request and its fingerprint anchor
+    # an append-only sequence of authenticated Keep/edit operations. The old
+    # request and historical hash bytes remain completely unchanged.
+    session_schema_version: Literal["run_world_generation_session.v2"] | None = None
+    session_origin_request: RunWorldInitialPoolPreviewRequest | None = None
+    session_origin_fingerprint: str | None = Field(
+        default=None, pattern=r"^[0-9a-f]{64}$"
+    )
+    session_steps: list[RunWorldVerifiedSessionStep] = Field(default_factory=list, max_length=48)
 
     @model_validator(mode="after")
     def validate_age_range(self) -> "RunWorldInitialPoolPreviewRequest":
@@ -564,7 +564,6 @@ class RunWorldInitialPoolPreviewService:
             package_id=request.world_package_id,
         )
         generator = InitialPlayerPoolGenerator(identity_config=generation.identity_config)
-        last_keep_ids = list(original.keep_player_ids)
         for index, step in enumerate(request.session_steps):
             if previous.preview_fingerprint != step.source_preview_fingerprint:
                 raise ValueError("Versioned session operation has stale or forged source fingerprint")
@@ -596,7 +595,6 @@ class RunWorldInitialPoolPreviewService:
                     run_id=run_id, branch_id=branch_id, original=original,
                     seed=step.seed, preserved=preserved,
                 )
-                last_keep_ids = list(step.keep_player_ids)
             result = _apply_preview_field_locks(
                 core, step.field_locks, season=request.season,
                 seed=step.seed, generator=generator,

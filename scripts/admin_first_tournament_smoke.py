@@ -4,6 +4,8 @@ import json
 import shutil
 from pathlib import Path
 
+from saved_player_replay_browser_checks import verify_saved_player_replay
+
 import uvicorn
 
 from beta_engine.application.season_calendar_service import SeasonCalendarService

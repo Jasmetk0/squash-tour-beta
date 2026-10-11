@@ -5,6 +5,7 @@ on:
     paths:
       - '.github/workflows/prealpha-saved-player-replay-browser.yml'
       - 'scripts/admin_first_tournament_smoke.py'
+      - 'scripts/saved_player_replay_browser_checks.py'
       - 'src/beta_engine/application/saved_player_match_detail.py'
       - 'src/beta_engine/application/saved_player_match_history.py'
       - 'src/beta_engine/api/routers/admin_run_home.py'

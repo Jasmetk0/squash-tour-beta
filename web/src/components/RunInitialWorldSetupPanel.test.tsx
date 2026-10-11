@@ -172,6 +172,11 @@ describe('Run-owned first-season player setup', () => {
     ))
     expect(await screen.findByText('Jan A')).toBeInTheDocument()
     expect(screen.getByText('Lukas B')).toBeInTheDocument()
+    // The inspector is read-only: displaying one player must not change the reviewed
+    // two-player adoption request, Saved HEAD, or preview fingerprint.
+    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Filter generated player country' }), 'CZE')
+    expect(screen.getByText(/Showing 1 \/ 2/)).toBeInTheDocument()
+    expect(screen.getByText(/Display filters never change the reviewed cohort/)).toBeInTheDocument()
     expect(api.adoptRunOwnedInitialWorld).not.toHaveBeenCalled()
     await userEvent.click(screen.getByRole('checkbox', { name: 'Approve InitialWorld adoption' }))
     await userEvent.click(screen.getByRole('button', { name: 'Adopt generated players' }))

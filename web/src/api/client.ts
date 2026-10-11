@@ -4182,3 +4182,42 @@ export async function getSavedPlayerMatchHistory(
   }
   return data
 }
+
+/** Saved canonical match result + optional archived replay frames (no live fallback). */
+export async function getSavedPlayerMatchDetail(
+  runId: string, branchId: string, playerId: string, eventId: string, matchId: string,
+  offset = 0, limit = 25
+): Promise<import('./types').SavedPlayerMatchDetail> {
+  if ([playerId, eventId, matchId].some(id => !id || id.length > 128 || id.trim() !== id) ||
+    !Number.isInteger(offset) || offset < 0 ||
+    !Number.isInteger(limit) || limit < 1 || limit > 25) {
+    throw new Error('Invalid saved match detail request.')
+  }
+  const query = new URLSearchParams({ offset: String(offset), limit: String(limit) })
+  const data = await request<import('./types').SavedPlayerMatchDetail>(
+    `/admin/runs/${encodeURIComponent(runId)}/branches/${encodeURIComponent(branchId)}/player-profiles/${encodeURIComponent(playerId)}/matches/${encodeURIComponent(eventId)}/${encodeURIComponent(matchId)}?${query}`
+  )
+  if (data.schema_version !== 'saved_player_match_detail.v1' ||
+    data.run_id !== runId || data.branch_id !== branchId || data.player_id !== playerId ||
+    !data.saved_revision_id?.trim() || data.source !== 'selected_branch_saved_revision' ||
+    data.match?.event_id !== eventId || data.match?.match_id !== matchId ||
+    data.offset !== offset || data.limit !== limit ||
+    ![data.winner_player_id, data.loser_player_id].includes(playerId) ||
+    data.winner_player_id === data.loser_player_id ||
+    !['available', 'unavailable'].includes(data.replay_status) ||
+    !Array.isArray(data.rallies) || data.rallies.length > limit ||
+    !Number.isInteger(data.total_rallies) || data.total_rallies < 0 ||
+    typeof data.has_more !== 'boolean' ||
+    data.has_more !== (data.replay_status === 'available' && offset + limit < data.total_rallies) ||
+    (data.replay_status === 'unavailable' && (data.total_rallies !== 0 ||
+      data.rallies.length > 0 || data.player_a_id !== null || data.player_b_id !== null)) ||
+    (data.replay_status === 'available' && (!data.player_a_id || !data.player_b_id ||
+      data.player_a_id === data.player_b_id || (offset < data.total_rallies &&
+        data.rallies.length !== Math.min(limit, data.total_rallies - offset)))) ||
+    data.rallies.some((r, i) => r.rally_index !== offset + i + 1 ||
+      r.set_number < 1 || !r.server_player_id || r.score_a_before < 0 ||
+      r.score_b_before < 0 || r.score_a_after < 0 || r.score_b_after < 0)) {
+    throw new Error('Saved replay is not consistent with the selected Branch match.')
+  }
+  return data
+}

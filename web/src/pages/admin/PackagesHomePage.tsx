@@ -47,7 +47,7 @@ export function PackagesHomePage():JSX.Element {
   const {language}=useLanguage(), cs=language==='cs', {query,items}=Inventory()
   return <section className="panel package-index">
     <div className="page-intro"><h2>{cs?'Balíčky':'Packages'}</h2>
-      <p className="subtitle">{cs?'Rozcestník skutečných zdrojových dat, bez aktivního Runu.':'Source content categories, without an active Run.'}</p></div>
+      <p className="subtitle">{cs?'Rozcestník ověřených zdrojových dat, bez aktivního Runu.':'Verified source content categories, without an active Run.'}</p></div>
     <p><Link className="button-link" to="/admin/packages/all">{cs?'Všechny balíčky':'All packages'} →</Link></p>
     {query.isPending && <p role="status">{cs?'Načítám registry…':'Loading registry…'}</p>}
     {query.isError && <p className="error" role="alert">{formatApiError(query.error)}</p>}
@@ -59,7 +59,7 @@ export function PackagesHomePage():JSX.Element {
           : cat==='players'
             ? (cs?'Payload zatím není schválen.':'Payload not yet specified.')
             : (cs?'Otevřít seznam této kategorie.':'Browse this category.')}</p>
-        <small className="status">{query.isSuccess ? inCategory(items,cat).length+(cs?' registrovaných':' registered') : (cs?'Nedostupné':'Unavailable')}</small>
+        <small className="status">{(cat==='world'||cat==='countries') && query.isSuccess ? inCategory(items,cat).length+(cs?' registrovaných':' registered') : (cs?'Registr zatím není dostupný':'Registry not available')}</small>
       </Link>)}</div>
     <SourceNote />
   </section>
@@ -88,9 +88,9 @@ export function PackagesListPage():JSX.Element {
     </div>
     {query.isPending && <p role="status">{cs?'Načítám…':'Loading…'}</p>}
     {query.isError && <p role="alert" className="error">{formatApiError(query.error)}</p>}
-    {query.isSuccess && <><p className="status">{shown.length} / {members.length}</p>
+    {query.isSuccess && <><p className="status">{cat==='all'||cat==='world'||cat==='countries'?shown.length+' / '+members.length:(cs?'Samostatný registr této kategorie zatím není dostupný.':'No independent registry for this category yet.')}</p>
       {shown.length ? <ul className="package-index-list">{shown.map(item=><PackageRow key={item.key} item={item}/>)}</ul>
-      : <p>{cs?'Žádný registrovaný balíček v této kategorii nebo filtru.':'No registered packages match this category or filter.'}</p>}</>}
+      : <p>{cat==='all'||cat==='world'||cat==='countries' ? (cs?'Žádný evidovaný balíček neodpovídá filtru.':'No indexed packages match this filter.') : (cs?'Z této kategorie zatím nemáme ověřený inventář balíčků.':'A verified package inventory for this category is not yet available.')}</p>}</>}
     {cat!=='all' && <SourceNote category={cat} />}
   </section>
 }

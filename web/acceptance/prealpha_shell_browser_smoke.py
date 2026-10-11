@@ -99,7 +99,7 @@ def main() -> None:
             worlds_response = page.request.get(args.api_url + "/world/packages")
             assert worlds_response.ok, worlds_response.text()
             worlds = worlds_response.json()["packages"]
-            assert page.locator(".package-index-row").count() == len({w["world_id"] for w in worlds})
+            expect(page.locator(".package-index-row")).to_have_count(len({w["world_id"] for w in worlds}))
             if worlds:
                 world = worlds[0]
                 page.locator(".package-index-row").filter(has_text=world["name"]).first.get_by_role("link", name="Details").click()
@@ -111,7 +111,8 @@ def main() -> None:
                 evidence["world_package_detail"] = world["world_id"]
             page.goto(base + "/admin/packages/category/hybrid")
             expect(page.get_by_role("heading", name="Hybrid", exact=True)).to_be_visible()
-            assert page.locator(".package-index-row").count() == 0
+            expect(page.get_by_text("No independent registry for this category yet.")).to_be_visible()
+            expect(page.locator(".package-index-row")).to_have_count(0)
             evidence["packages_registered"] = len({w["world_id"] for w in worlds})
 
             page.goto(base + "/admin/runs/new")

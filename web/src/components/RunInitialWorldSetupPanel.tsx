@@ -15,6 +15,7 @@ import {
 } from '../api/runInitialWorldSetup'
 import { formatApiError, isApiNotFound } from '../utils/apiErrors'
 import { SectionCard } from './RunScopedUi'
+import { GeneratedPlayerReviewInspector } from './GeneratedPlayerReviewInspector'
 
 type ReviewedWorld = {
   runId: string
@@ -248,10 +249,6 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
 
   const canAdopt = reviewMatches && approved && !adoptAction.isPending && !previewAction.isPending
   const viewedPlayers = review?.preview.state.players ?? []
-  const distribution = Object.entries(viewedPlayers.reduce<Record<string, number>>((result, player) => {
-    result[player.country_code] = (result[player.country_code] ?? 0) + 1
-    return result
-  }, {})).sort((a, b) => b[1] - a[1]).slice(0, 8)
 
   return <SectionCard title={cs ? 'Generovat hráče — první úplná dávka' : 'Generate first-season players'}>
     <p className="status">{cs
@@ -359,19 +356,8 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
           : (cs ? 'Konflikt! Někteří hráči nesplňují podmínky.' : 'Conflict! Some players fail hard conditions.')}
       </p>}
       <p>{cs ? 'Model' : 'Model'}: <code>{review.preview.state.source_kind}</code> · {cs ? 'Otisk náhledu' : 'Preview fingerprint'}: <code>{review.preview.fingerprint.slice(0, 20)}…</code></p>
-      <p>Largest nationality groups: {distribution.map(([country, count]) => `${country} ${count}`).join(' · ')}</p>
-      <div className="table-responsive"><table>
-        <thead><tr><th>{cs ? 'Hráč' : 'Player'}</th><th>{cs ? 'Země' : 'Country'}</th>
-          <th>{cs ? 'Věk na začátku sezóny' : 'First-season age'}</th>
-          <th>{cs ? 'Aktuální / potenciál (zdrojová škála)' : 'Current / potential (source scale)'}</th></tr></thead>
-        <tbody>{viewedPlayers.map(player =>
-          <tr key={player.player_id}><td>{player.name}<small> · {player.player_id}</small></td>
-            <td>{player.country_code}</td><td>{player.age_years_at_season_start}</td>
-            <td>{player.current_ability} / {player.potential_ability}</td></tr>
-        )}</tbody>
-      </table></div>
-      <p className="status">{cs ? 'V náhledu je kompletní skutečná dávka' : 'Full actual batch is reviewable'}: {viewedPlayers.length}.</p>
-      <p className="status">{cs ? 'Aktuální schopnosti 1–99 nejsou canonical 0–200 OVR. Žádné falešné historické zápasy nebo ranking se nevytvářejí.' : 'Current 1–99 abilities are not canonical 0–200 OVR. No fictional past matches or rankings are generated.'}</p>
+      <GeneratedPlayerReviewInspector key={review.preview.fingerprint} players={viewedPlayers} locale={locale} />
+
       {!reviewMatches && <p role="alert" className="error">Review expired: selected Run, Branch, World, revision or generation inputs changed.</p>}
       <label><input type="checkbox" aria-label="Approve InitialWorld adoption" checked={approved}
         onChange={event => setApproved(event.target.checked)} /> Adopt this exact generated InitialWorld to the current Branch.</label>

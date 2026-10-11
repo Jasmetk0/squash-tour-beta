@@ -154,6 +154,18 @@ def setup_run(page, base_url: str, artifacts: Path) -> str:
         print("BROWSER: copied and saved", kind, flush=True)
     page.get_by_role("link", name="Generate players →").click()
     expect(page.get_by_role("heading", name="Generate players")).to_be_visible()
+    # The Run-owned saved World provides real country/region choices.
+    # Test both controls, restore Automatic, then keep the established
+    # world-distributed tournament/replay acceptance baseline unchanged.
+    sport_country = page.get_by_label("Player generation sport country")
+    sport_country.select_option("CZE")
+    expect(sport_country).to_have_value("CZE")
+    region_condition = page.get_by_label("Player generation region")
+    region_condition.select_option(index=1)
+    expect(region_condition).not_to_have_value("")
+    region_condition.select_option("")
+    sport_country.select_option("")
+    expect(sport_country).to_have_value("")
     page.get_by_label("Number of generated players").fill("64")
     page.get_by_label("Player generation seed").fill("4201")
     page.get_by_label("InitialWorld audit reason").fill(

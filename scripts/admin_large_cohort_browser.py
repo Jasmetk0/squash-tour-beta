@@ -65,6 +65,9 @@ def acceptance(root: Path, *, port: int, base_url: str, chromium: str):
 
     def inventory(page, run_url):
         page.goto(run_url + "/players")
+        # A new browser context after restart defaults to Czech; pin the
+        # acceptance language explicitly instead of assuming session storage.
+        page.get_by_role("combobox", name="Language / Jazyk").select_option("en")
         status = page.get_by_role("status").filter(has_text="Total matching players")
         expect(status).to_contain_text("1,000")
         ids = []

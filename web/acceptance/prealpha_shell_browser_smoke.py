@@ -221,9 +221,21 @@ def main() -> None:
 
             # Read-only Run exploration is not an unsaved edit, including filters.
             page.goto(base + "/admin/runs/" + run_id + "/players")
-            expect(page.get_by_role("heading", name="Run Players Explorer")).to_be_visible()
-            page.get_by_role("textbox", name="Search (name / ID)").fill("browser-filter-only")
-            page.get_by_role("spinbutton", name="Min age").fill("20")
+            expect(page.get_by_role("heading", name="Players", exact=True)).to_be_visible()
+            # Verify a genuinely empty Saved Revision, not legacy Run roster.
+            expected_head = page.request.get(args.api_url + "/run-containers/" + run_id)
+            assert expected_head.ok, expected_head.text()
+            saved = page.request.get(
+                args.api_url + "/admin/runs/" + run_id + "/branches/"
+                + created_branch["branch_id"] + "/saved-players"
+            )
+            assert saved.ok and saved.json()["total"] == 0, saved.text()
+            assert saved.json()["branch_id"] == created_branch["branch_id"]
+            assert saved.json()["source"] == "selected_branch_saved_revision"
+            page.get_by_role("textbox", name="Player search").fill("browser-filter-only")
+            page.get_by_role("textbox", name="Player country").fill("CZE")
+            expect(page.get_by_text("No players in this saved scope or filter.", exact=False)).to_be_visible()
+            evidence["canonical_saved_players_empty_no_legacy_fallback"] = True
             assert page.locator(".app-shell--admin").get_attribute("data-run-form-edited") is None
             page.get_by_role("link", name="Squash Engine global Home").click()
             expect(page.get_by_role("heading", name="Squash Engine Home")).to_be_visible()

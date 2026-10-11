@@ -179,8 +179,9 @@ describe('Run-owned first-season player setup', () => {
     }]})
     api.loadRunGenerationProposal.mockResolvedValue(stored)
     render()
+    await screen.findByRole('option',{name:/My test proposal/})
     await userEvent.selectOptions(
-      await screen.findByRole('combobox',{name:'Select saved generation proposal'}),
+      screen.getByRole('combobox',{name:'Select saved generation proposal'}),
       'proposal-1'
     )
     await userEvent.click(screen.getByRole('button',{name:'Open saved proposal'}))

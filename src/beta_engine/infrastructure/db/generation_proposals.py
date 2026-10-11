@@ -77,13 +77,18 @@ def list_proposals(
                 RunGenerationProposalModel.branch_id == branch_id,
             ).order_by(RunGenerationProposalModel.label, RunGenerationProposalModel.proposal_id)
         ).scalars().all()
-        return [
-            {key: _decode(row)[key] for key in (
-                "proposal_id", "label", "saved_revision_id",
-                "draft_version", "package_fingerprint", "preview_fingerprint",
-            )}
-            for row in rows
-        ]
+        # Check each saved full cohort once, not six times for six metadata
+        # columns. A 1000-player snapshot can be several MB.
+        summaries = []
+        for row in rows:
+            data = _decode(row)
+            summaries.append({
+                key: data[key] for key in (
+                    "proposal_id", "label", "saved_revision_id",
+                    "draft_version", "package_fingerprint", "preview_fingerprint",
+                )
+            })
+        return summaries
 
 
 def get_proposal(

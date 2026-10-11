@@ -19,7 +19,7 @@ export function RunSimulationPage(): JSX.Element {
   const { runId = '' } = useParams()
   const [searchParams] = useSearchParams()
   const queryClient = useQueryClient()
-  const { selectedBranchId, selectedBranch, viewerBranchId, branches, isLoading: branchesLoading, selectBranch } = useAdminBranch()
+  const { selectedBranchId, selectedBranch, viewerBranchId, branches, isLoading: branchesLoading } = useAdminBranch()
   const requestedBranchId = searchParams.get('branch')?.trim() ?? ''
   const requestedBranch = requestedBranchId ? branches.find(branch => branch.branch_id === requestedBranchId) ?? null : null
   const requestedBranchInvalid = Boolean(requestedBranchId && !branchesLoading && !requestedBranch)
@@ -35,10 +35,6 @@ export function RunSimulationPage(): JSX.Element {
   const [result, setResult] = useState<AdminBranchExecutionResponse | null>(null)
   const currentContextRef = useRef({ runId, branchId: executionBranchId })
   currentContextRef.current = { runId, branchId: executionBranchId }
-
-  useEffect(() => {
-    if (requestedBranch && selectedBranchId !== requestedBranch.branch_id) selectBranch(requestedBranch.branch_id)
-  }, [requestedBranch, selectedBranchId, selectBranch])
 
   const runQuery = useQuery({ queryKey: ['admin-run-container', runId], queryFn: () => getRunContainer(runId), enabled: Boolean(runId), retry: false })
   const stateQuery = useQuery({ queryKey: adminBranchStateQueryKey(runId, executionBranchId), queryFn: () => getBranchState(executionBranchId!), enabled: Boolean(runId && executionBranchId), retry: false })

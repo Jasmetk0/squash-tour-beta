@@ -1,3 +1,44 @@
+# Current implementation and next action
+
+## Active frontend checkpoint v77 — verified 11 October 2026
+
+- Reviewed buuk `9fb8c519b203d91fbd35d9981090c79fd474143a`, merge #1365.
+  #1360–1365 are all merged; every returned final feature-head Fast CI and applicable
+  Shell/Saved Replay Browser workflow is completed/success.
+- Canonical Runs expansion/sidebar fixes, source-backed World/Countries catalog,
+  World detail, selective whole-entity apply with exact server diff and fingerprints,
+  manual Save, replay cursor reset and improved local/server dirty checks now exist.
+- Review read PR patches, current relevant code and hosted production browser logs
+  #1362/#1365. It did not rerun local runtime/full release tests or visually inspect
+  screenshots. Do not interpret hosted green checks as complete pre-alpha.
+- Confirmed code/test finding: declined imperative ?branch= navigation leaves URL
+  pointing at requested Branch while provider retains old selection; invalid Branch
+  query clears selection before guard. General programmatic/back-forward navigation
+  and global World Apply unsaved target context need protection.
+- Canonical Players gap: legacy Explorer queries omit Branch/time/head; saved
+  /people profiles correctly validate Branch/head and explicitly support present
+  time only. Unify canonical list/profile reads before adding generation.
+- Package boundary: actual inventory is World/Countries only; other registered
+  source types, Player/Hybrid schemas and arbitrary field-level apply are incomplete.
+- Master v77 records approved Players/profile/generator/World design, optional
+  prepared-future Admin layer and country-rating interpolation. It does not claim
+  these target editors/generator are implemented. Automatic batch-remainder fill,
+  overlapping/nested group accounting and Player/hybrid schema remain OPEN.
+- Next order: (1) navigation/Apply safeguards, (2) canonical scoped Players table and
+  profile tabs, (3) minimal unified Generate preview/commit using actual kernels and
+  snapshots, then incremental conditions/preview editing/World pages.
+  Refresh buuk/open PRs before each slice; user owns merge.
+- Detailed findings and exact feature-head workflow evidence:
+  [v77 frontend audit](docs/PRE_ALPHA_FRONTEND_CHECKPOINT_V77_2026_10_11.md).
+  Product contract: Master 5.3, 9.4–9.5, 27.19, 31.32 and
+  [frontend V1](docs/PRE_ALPHA_FRONTEND_V1.md).
+
+## Historical implementation notices below
+
+The following candidate/pending labels are dated notices, not the current PR state.
+The active audited checkpoint above supersedes older next-step and gap summaries;
+their original evidence remains preserved.
+
 ## 11 October 2026 — Packages catalog and detail candidate (PR awaiting verification)
 
 - Baseline merged #1360: 5dda12813c72e4e7abac77f1591f23feaa742252.

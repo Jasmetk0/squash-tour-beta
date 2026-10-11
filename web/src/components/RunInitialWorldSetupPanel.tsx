@@ -5,12 +5,12 @@ import { Link } from 'react-router-dom'
 
 import {
   adoptRunOwnedInitialWorld, getBranchWorkingDraft, getRunOwnedInitialWorld,
-  getRunPackageState, previewRunInitialWorldSave, previewRunOwnedInitialWorld,
+  getRunPackageState, getRunWorldGenerationOptions, previewRunInitialWorldSave, previewRunOwnedInitialWorld,
   saveRunOwnedInitialWorld
 } from '../api/client'
 import type { RunBranch, RunContainer } from '../api/types'
 import {
-  runOwnedWorldIds, verifiedInitialWorldPreview,
+  generatorConditionConflict, runOwnedWorldIds, verifiedGenerationOptions, verifiedInitialWorldPreview,
   type RunInitialWorldAdoption, type RunInitialWorldPreview
 } from '../api/runInitialWorldSetup'
 import { formatApiError, isApiNotFound } from '../utils/apiErrors'
@@ -42,6 +42,8 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
   const [sourceId, setSourceId] = useState('')
   const [seed, setSeed] = useState(20261009)
   const [poolSize, setPoolSize] = useState(64)
+  const [countryCode, setCountryCode] = useState('')
+  const [region, setRegion] = useState('')
   const [bestN, setBestN] = useState(15)
   const [auditReason, setAuditReason] = useState('Create the first-season player population from the reviewed Run-owned World snapshot.')
   const [review, setReview] = useState<ReviewedWorld | null>(null)
@@ -79,8 +81,26 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
     poolSize >= 1 && poolSize <= 128 && Number.isInteger(bestN) && bestN >= 1 &&
     auditReason.trim().length >= 1 && auditReason.trim().length <= 1000
   const snapshotFingerprint = packageQuery.data?.fingerprint ?? null
+  const optionsQuery = useQuery({
+    queryKey: ['run-world-generation-options', runId, branchId, head, draft?.draft_version,
+      snapshotFingerprint, selectedWorldId],
+    queryFn: () => getRunWorldGenerationOptions(
+      runId, branchId, selectedWorldId, head, draft!.draft_version, snapshotFingerprint!
+    ),
+    enabled: editable && Boolean(selectedWorldId && snapshotFingerprint && draft &&
+      draft.status === 'clean' && draft.base_saved_revision_id === head && !existing),
+    retry: false,
+  })
+  const options = optionsQuery.data && draft && snapshotFingerprint &&
+    verifiedGenerationOptions(optionsQuery.data, runId, branchId, head,
+      draft.draft_version, snapshotFingerprint, selectedWorldId)
+    ? optionsQuery.data : null
+  const conditionConflict = optionsQuery.isSuccess
+    ? generatorConditionConflict(countryCode, region, options)
+    : null
   const canPreview = editable && worldIds.length > 0 && validParameters &&
-    packageQuery.isSuccess && draft?.base_saved_revision_id === head &&
+    packageQuery.isSuccess && Boolean(options) && !conditionConflict &&
+    draft?.base_saved_revision_id === head &&
     draft.status === 'clean' && !existing && existingQuery.isSuccess === false &&
     isApiNotFound(existingQuery.error) && !pendingSave
 
@@ -90,7 +110,7 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
     setApproved(false)
     setSaveApproved(false)
     setNotice('')
-  }, [runId, branchId, head, sourceId, seed, poolSize, bestN, auditReason])
+  }, [runId, branchId, head, sourceId, seed, poolSize, countryCode, region, bestN, auditReason])
 
   const previewAction = useMutation({
     mutationFn: async () => {
@@ -101,7 +121,9 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
         generation: {
           world_package_id: selectedWorldId,
           season: '2000/2001',
-          seed, target_pool_size: poolSize
+          seed, target_pool_size: poolSize,
+          ...(countryCode ? { country_code: countryCode } : {}),
+          ...(region ? { region } : {})
         },
         audit_label: 'Run Admin first-season player setup',
         audit_reason: auditReason.trim(),
@@ -110,7 +132,7 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
         automatic_retirement_age: 46
       }
       const preview = await previewRunOwnedInitialWorld(runId, branchId, request)
-      if (!verifiedInitialWorldPreview(preview, runId, branchId, request))
+      if (!verifiedInitialWorldPreview(preview, runId, branchId, request, options))
         throw new Error('InitialWorld preview is inconsistent with the requested World, Run, Branch or policy.')
       return { runId, branchId, head, sourceFingerprint: snapshotFingerprint,
         draftVersion: draft.draft_version, request, preview }
@@ -124,6 +146,8 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
     draft?.base_saved_revision_id === head && draft?.status === 'clean' &&
     review.request.generation.world_package_id === selectedWorldId &&
     review.request.generation.seed === seed && review.request.generation.target_pool_size === poolSize &&
+    (review.request.generation.country_code ?? '') === countryCode &&
+    (review.request.generation.region ?? '') === region && Boolean(options) && !conditionConflict &&
     review.request.best_n === bestN && review.request.audit_reason === auditReason.trim() &&
     !existing && isApiNotFound(existingQuery.error))
 
@@ -226,8 +250,8 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
       ? 'První funkční dávka 1–128 hráčů pro sezónu 2000/01. Používá pouze uložený World Package dané branche. Náhled nic nezapisuje; potvrzení připraví InitialWorld a teprve ruční Save vytváří Saved Revision.'
       : 'First supported complete batch (1–128 players) for season 2000/01. Uses the saved Run-owned World Package only. Preview never writes; confirmation stages InitialWorld, then manual Save creates a Saved Revision.'}</p>
     <p className="status">{cs
-      ? 'Podmínky, skupiny, úpravy jednotlivců a generování do rozehrané sezóny v tomto prvním řezu nejsou podporované. Počet musí být celá výslovně určená dávka.'
-      : 'Conditions, groups, individual editing and mid-season generation are not supported in this first slice. The count always specifies the entire batch.'}</p>
+      ? 'Závazné podmínky země a regionu platí pro všechny hráče dávky. Automaticky podle světa zachovává běžnou distribuci. Skupiny, kvóty, individuální úpravy a generování do rozehrané sezóny zatím nejsou podporované.'
+      : 'Hard country and region conditions apply to every player in the batch. Automatic World defaults preserve natural allocation. Groups, quotas, individual editing and mid-season generation are not supported yet.'}</p>
     {existing && <p role="status">InitialWorld exists: {existing.players.length} players from {existing.world_package_id}; seed {existing.bootstrap_seed}. Existing players cannot be silently regenerated or overwritten.</p>}
     {unexpectedExistingError && <p role="alert" className="error">Cannot verify whether this Run already has InitialWorld: {formatApiError(existingQuery.error)}</p>}
     {packageQuery.isError && <p role="alert" className="error">Run World state unavailable: {formatApiError(packageQuery.error)}</p>}
@@ -241,10 +265,42 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
     {draft && draft.status !== 'clean' && !pendingSave && <p className="status">Save or resolve existing Working Draft changes before generating new players.</p>}
     <label>Run-owned World{' '}
       <select aria-label="Run World for player generation" value={selectedWorldId}
-        onChange={event => setSourceId(event.target.value)}>
+        onChange={event => { setSourceId(event.target.value); setCountryCode(''); setRegion('') }}>
         {worldIds.map(id => <option key={id} value={id}>{id}</option>)}
       </select>
     </label>
+    <div className="form-grid" aria-label="Hard player generation conditions">
+      <label>{cs ? 'Sportovní země' : 'Sport country'}
+        <select aria-label="Player generation sport country" value={countryCode}
+          disabled={!options} onChange={event => setCountryCode(event.target.value)}>
+          <option value="">{cs ? 'Automaticky podle světa' : 'Automatic from World'}</option>
+          {(options?.countries ?? []).map(country =>
+            <option key={country.code} value={country.code}>{country.code} — {country.name}</option>)}
+        </select>
+      </label>
+      <label>{cs ? 'Region' : 'Region'}
+        <select aria-label="Player generation region" value={region}
+          disabled={!options} onChange={event => setRegion(event.target.value)}>
+          <option value="">{cs ? 'Automaticky podle světa' : 'Automatic from World'}</option>
+          {(options?.regions ?? []).map(item =>
+            <option key={item} value={item}>{item}</option>)}
+        </select>
+      </label>
+    </div>
+    {optionsQuery.isPending && editable && selectedWorldId && !existing &&
+      <p role="status">{cs ? 'Ověřuji země a regiony uloženého světa…' : 'Checking saved World countries and regions…'}</p>}
+    {optionsQuery.error && <p role="alert" className="error">
+      {cs ? 'Podmínky uloženého světa nelze ověřit' : 'Saved World conditions unavailable'}: {formatApiError(optionsQuery.error)}
+    </p>}
+    {optionsQuery.isSuccess && !options && <p role="alert" className="error">
+      {cs ? 'Odpověď podmínek nepatří této branchi, revizi nebo světu.' : 'World condition response does not match this Branch, revision or World.'}
+    </p>}
+    {conditionConflict && <p role="alert" className="error">{cs ? 'Rozpor podmínek' : 'Condition conflict'}: {conditionConflict}</p>}
+    {options && !conditionConflict && <p className="status">
+      {cs ? 'Závazný výběr' : 'Hard selection'}: {countryCode || (cs ? 'všechny země' : 'all countries')} ·
+      {' '}{region || (cs ? 'všechny regiony' : 'all regions')}.
+      {' '}{cs ? 'Nevybrané vlastnosti zůstanou přirozeně proměnlivé.' : 'Unconstrained attributes remain naturally variable.'}
+    </p>}
     <label>Seed <input aria-label="Player generation seed" type="number" value={seed}
       onChange={event => setSeed(Number(event.target.value))} /></label>
     <label>Number of players (1–128) <input aria-label="Number of generated players" type="number"
@@ -263,6 +319,16 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
       <h4>Review {viewedPlayers.length} players</h4>
       <p>Run: {review.runId} · Branch: {review.branchId} · Saved HEAD: <code>{review.head}</code></p>
       <p>{cs ? 'Svět' : 'World'}: {review.request.generation.world_package_id} · Seed: {review.request.generation.seed} · First-season Best {review.request.best_n} · Draft v{review.draftVersion}</p>
+      <p>{cs ? 'Použité závazné podmínky' : 'Reviewed hard conditions'}:
+        {' '}{countryCode || (cs ? 'země automaticky' : 'country automatic')} ·
+        {' '}{region || (cs ? 'region automaticky' : 'region automatic')}.</p>
+      {options && <p className="status">{cs ? 'Kontrola splnění' : 'Fulfilment'}:
+        {' '}{viewedPlayers.every(player => (!countryCode || player.country_code === countryCode) &&
+          (!region || options.countries.some(country => country.code === player.country_code &&
+            (country.region === region || country.travel_region === region))))
+          ? (cs ? 'Všichni hráči splňují závazné podmínky.' : 'Every player satisfies the hard conditions.')
+          : (cs ? 'Konflikt! Někteří hráči nesplňují podmínky.' : 'Conflict! Some players fail hard conditions.')}
+      </p>}
       <p>{cs ? 'Model' : 'Model'}: <code>{review.preview.state.source_kind}</code> · {cs ? 'Otisk náhledu' : 'Preview fingerprint'}: <code>{review.preview.fingerprint.slice(0, 20)}…</code></p>
       <p>Largest nationality groups: {distribution.map(([country, count]) => `${country} ${count}`).join(' · ')}</p>
       <div className="table-responsive"><table>

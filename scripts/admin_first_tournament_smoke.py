@@ -134,6 +134,9 @@ def setup_run(page, base_url: str, artifacts: Path) -> str:
     page.get_by_label("Unique Run name").fill("Browser Tournament Acceptance")
     click("Create isolated Run")
     page.get_by_role("heading", name="World and Calendar copies", exact=True).wait_for()
+    # The production shell is bilingual; this acceptance intentionally tests
+    # English labels for the complete Run → Players/Generate → Save journey.
+    page.get_by_role("combobox", name="Language / Jazyk").select_option("en")
     run_url = page.url
     (artifacts / "run-url.txt").write_text(run_url)
     for kind in ("world", "calendar"):

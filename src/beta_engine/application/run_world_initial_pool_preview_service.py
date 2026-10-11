@@ -32,7 +32,7 @@ class RunWorldInitialPoolPreviewRequest(BaseModel):
     keep_from_preview_fingerprint: str | None = Field(
         default=None, pattern=r"^[0-9a-f]{64}$"
     )
-    keep_player_ids: tuple[str, ...] = ()
+    keep_player_ids: list[str] = Field(default_factory=list)
 
     @model_validator(mode="after")
     def validate_age_range(self) -> "RunWorldInitialPoolPreviewRequest":
@@ -46,7 +46,7 @@ class RunWorldInitialPoolPreviewRequest(BaseModel):
                 raise ValueError("Session Keep regeneration seed must differ from the source seed")
             if not 0 < len(self.keep_player_ids) < self.target_pool_size:
                 raise ValueError("Session Keep must preserve a nonempty proper subset of the preview")
-            if tuple(sorted(set(self.keep_player_ids))) != self.keep_player_ids:
+            if sorted(set(self.keep_player_ids)) != self.keep_player_ids:
                 raise ValueError("Session Keep player IDs must be sorted, unique and nonempty")
             if any(not player_id or len(player_id) > 128 for player_id in self.keep_player_ids):
                 raise ValueError("Session Keep player IDs are invalid")
@@ -136,7 +136,7 @@ class RunWorldInitialPoolPreviewService:
                 "seed": request.keep_from_seed,
                 "keep_from_seed": None,
                 "keep_from_preview_fingerprint": None,
-                "keep_player_ids": (),
+                "keep_player_ids": [],
             })
             original = self.preview(
                 run_id=run_id, branch_id=branch_id, request=original_request,

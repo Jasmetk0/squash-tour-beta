@@ -5,6 +5,8 @@ import { Link } from 'react-router-dom'
 
 import {
   adoptRunOwnedInitialWorld, getBranchWorkingDraft, getRunOwnedInitialWorld,
+  getRunGenerationProposals, saveRunGenerationProposal, loadRunGenerationProposal,
+  deleteRunGenerationProposal,
   getRunPackageState, getRunWorldGenerationOptions, previewRunInitialWorldSave, previewRunOwnedInitialWorld,
   saveRunOwnedInitialWorld
 } from '../api/client'
@@ -13,7 +15,8 @@ import {
   ageConditionConflict, generatorConditionConflict, runOwnedWorldIds, verifiedGenerationOptions, verifiedInitialWorldPreview,
   orderedPreviewFieldLocks,
   type GeneratedPlayerFieldKey, type RunWorldPreviewFieldLock,
-  type RunInitialWorldAdoption, type RunInitialWorldPreview
+  type RunInitialWorldAdoption, type RunInitialWorldPreview,
+  type RunSavedGenerationProposal
 } from '../api/runInitialWorldSetup'
 import { formatApiError, isApiNotFound } from '../utils/apiErrors'
 import { SectionCard } from './RunScopedUi'
@@ -63,6 +66,9 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
   const [pendingSave, setPendingSave] = useState<PendingSave | null>(null)
   const [saveApproved, setSaveApproved] = useState(false)
   const [notice, setNotice] = useState('')
+  const [proposalName, setProposalName] = useState('Generation proposal')
+  const [selectedProposalId, setSelectedProposalId] = useState('')
+  const [restoringProposal, setRestoringProposal] = useState<RunSavedGenerationProposal | null>(null)
 
   const packageQuery = useQuery({
     queryKey: ['run-package-state', runId, branchId],
@@ -80,6 +86,12 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
     queryKey: ['run-owned-initial-world', runId, branchId],
     queryFn: () => getRunOwnedInitialWorld(runId, branchId),
     enabled: Boolean(branchId),
+    retry: false
+  })
+  const proposalQuery = useQuery({
+    queryKey: ['generation-proposals', runId, branchId],
+    queryFn: () => getRunGenerationProposals(runId, branchId),
+    enabled: Boolean(branchId && editable),
     retry: false
   })
   const worldIds = runOwnedWorldIds(packageQuery.data?.state)
@@ -385,6 +397,120 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
     }
   })
 
+  const proposalSaveAction = useMutation({
+    mutationFn: async () => {
+      if (!review || !reviewMatches || !canPreview ||
+          !proposalName.trim() || proposalName.trim().length > 160 ||
+          !Number.isSafeInteger(rerollSeed))
+        throw new Error('A verified reviewed cohort and a valid proposal name are required.')
+      const data = await saveRunGenerationProposal(runId, branchId, {
+        proposal_id: crypto.randomUUID(),
+        label: proposalName.trim(),
+        saved_revision_id: review.head,
+        draft_version: review.draftVersion,
+        package_fingerprint: review.sourceFingerprint,
+        preview_fingerprint: review.preview.fingerprint,
+        source_seed: reviewBaseSeed!,
+        next_seed: rerollSeed,
+        selected_keep_ids: [...keptIds].sort(),
+        pending_field_locks: orderedPreviewFieldLocks(pendingFieldLocks),
+        request: review.request
+      })
+      if (data.run_id !== runId || data.branch_id !== branchId ||
+          data.preview_fingerprint !== review.preview.fingerprint ||
+          data.saved_revision_id !== review.head)
+        throw new Error('The saved proposal confirmation does not match the reviewed source.')
+      return data
+    },
+    onSuccess: data => {
+      setSelectedProposalId(data.proposal_id)
+      setNotice('Generation proposal saved separately; no InitialWorld Adopt or Run Save occurred.')
+      void queryClient.invalidateQueries({queryKey:['generation-proposals',runId,branchId]})
+    }
+  })
+
+  const proposalLoadAction = useMutation({
+    mutationFn: async () => {
+      if (!selectedProposalId || !canPreview || !draft || !snapshotFingerprint)
+        throw new Error('Select a proposal in the current writable Run/Branch.')
+      const data = await loadRunGenerationProposal(runId, branchId, selectedProposalId)
+      if (data.run_id !== runId || data.branch_id !== branchId ||
+          data.saved_revision_id !== head ||
+          data.draft_version !== draft.draft_version ||
+          data.package_fingerprint !== snapshotFingerprint ||
+          data.preview_fingerprint !== data.preview.fingerprint ||
+          data.preview.state.run_id !== runId || data.preview.state.branch_id !== branchId ||
+          data.request.generation.world_package_id !== data.preview.state.world_package_id)
+        throw new Error('Saved proposal belongs to an outdated or different Run/Branch/World.')
+      return data
+    },
+    onSuccess: data => {
+      // Inputs change first. The restoration effect below runs only after the
+      // matching exact saved World/conditions/options are available.
+      const generation = data.request.generation
+      setRestoringProposal(data)
+      setSourceId(generation.world_package_id)
+      setSeed(data.source_seed); setPoolSize(generation.target_pool_size)
+      setCountryCode(generation.country_code ?? '')
+      setRegion(generation.geographic_region ?? '')
+      setTravelRegion(generation.travel_region ?? '')
+      setMinAge(String(generation.min_age ?? ''))
+      setMaxAge(String(generation.max_age ?? ''))
+      setBestN(data.request.best_n ?? 15)
+      setAuditReason(data.request.audit_reason)
+      setApproved(false)
+    }
+  })
+
+  useEffect(()=>{
+    if (!restoringProposal || !canPreview || !draft || !snapshotFingerprint || !options)
+      return
+    const data=restoringProposal
+    const generation=data.request.generation
+    if (selectedWorldId !== generation.world_package_id || seed !== data.source_seed ||
+        poolSize !== generation.target_pool_size ||
+        countryCode !== (generation.country_code ?? '') ||
+        region !== (generation.geographic_region ?? '') ||
+        travelRegion !== (generation.travel_region ?? '') ||
+        minAge !== String(generation.min_age ?? '') ||
+        maxAge !== String(generation.max_age ?? '') ||
+        bestN !== data.request.best_n || auditReason !== data.request.audit_reason)
+      return
+    if (!verifiedInitialWorldPreview(
+      data.preview, runId, branchId, data.request, options,
+    )) {
+      setNotice('Saved proposal validation failed; the saved review was not restored.')
+      setRestoringProposal(null)
+      return
+    }
+    setReview({
+      runId, branchId, head, sourceFingerprint:snapshotFingerprint,
+      draftVersion:draft.draft_version, request:data.request, preview:data.preview
+    })
+    setReviewBaseSeed(data.source_seed)
+    setKeptIds(data.selected_keep_ids)
+    setPendingFieldLocks(orderedPreviewFieldLocks(data.pending_field_locks))
+    setRerollSeed(data.next_seed)
+    setSelectedPlayerId(null)
+    setApproved(false)
+    setNotice('Exact saved review restored from SQLite without regenerating. Adopt and Run Save remain separate.')
+    setRestoringProposal(null)
+  }, [restoringProposal, canPreview, draft, snapshotFingerprint, options,
+      selectedWorldId, seed, poolSize, countryCode, region, travelRegion,
+      minAge, maxAge, bestN, auditReason, runId, branchId, head])
+
+  const proposalDeleteAction = useMutation({
+    mutationFn: async () => {
+      if (!selectedProposalId || !editable) throw new Error('Select a saved proposal first.')
+      await deleteRunGenerationProposal(runId, branchId, selectedProposalId)
+    },
+    onSuccess: () => {
+      setSelectedProposalId('')
+      setNotice('Only the saved proposal was deleted; Run and players were unchanged.')
+      void queryClient.invalidateQueries({queryKey:['generation-proposals',runId,branchId]})
+    }
+  })
+
   const appliedKeep = review?.request.generation.keep_player_ids ?? []
   const pendingKeepChange = keptIds.join('|') !== appliedKeep.join('|')
   const canAdopt = reviewMatches && approved && !pendingKeepChange && !locksDirty &&
@@ -490,6 +616,46 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
       {previewAction.isPending ? (cs ? 'Generuji náhled…' : 'Generating preview…') : (cs ? 'Generovat – zobrazit náhled' : 'Preview generated players')}
     </button>
     {previewAction.error && <p role="alert" className="error">Preview failed: {formatApiError(previewAction.error)}</p>}
+    <section aria-label="Saved player generation proposals" className="section-subtle">
+      <h4>{cs ? 'Uložené generační návrhy' : 'Saved generation proposals'}</h4>
+      <p className="status">{cs
+        ? 'Uloží celý náhled i rozpracované Keep a zámky do SQLite. Obnovení nic znovu negeneruje a nemění Run. Přijetí a uložení hráčů se potvrzuje zvlášť.'
+        : 'Save the entire reviewed cohort plus pending Keep/field locks to SQLite. Reopening does not regenerate or modify Run. Adopt and Run Save remain separate.'}</p>
+      <label>{cs ? 'Název návrhu' : 'Proposal name'}
+        <input aria-label="Generation proposal name" maxLength={160}
+          value={proposalName} onChange={e=>setProposalName(e.target.value)} />
+      </label>
+      <button type="button"
+        disabled={!reviewMatches || !canPreview || !proposalName.trim() ||
+          !Number.isSafeInteger(rerollSeed) ||
+          proposalSaveAction.isPending || proposalLoadAction.isPending}
+        onClick={()=>proposalSaveAction.mutate()}>
+        {proposalSaveAction.isPending ? 'Saving proposal…' : 'Save generation proposal'}
+      </button>
+      <label>{cs ? 'Existující návrhy' : 'Saved proposals'}
+        <select aria-label="Select saved generation proposal"
+          value={selectedProposalId} onChange={e=>setSelectedProposalId(e.target.value)}>
+          <option value="">— {cs?'Vyber návrh':'Select proposal'} —</option>
+          {(proposalQuery.data?.proposals ?? []).map(p=>
+            <option key={p.proposal_id} value={p.proposal_id}>
+              {p.label} · {p.preview_fingerprint.slice(0,10)}
+            </option>
+          )}
+        </select>
+      </label>
+      <button type="button" disabled={!selectedProposalId || !canPreview || proposalLoadAction.isPending}
+        onClick={()=>proposalLoadAction.mutate()}>
+        {proposalLoadAction.isPending ? 'Restoring…' : 'Open saved proposal'}
+      </button>
+      <button type="button" disabled={!selectedProposalId || !editable || proposalDeleteAction.isPending}
+        onClick={()=>proposalDeleteAction.mutate()}>Delete saved proposal</button>
+      {restoringProposal && <p role="status">Restoring reviewed proposal conditions…</p>}
+      {proposalQuery.isError && <p role="alert">Saved proposals unavailable: {formatApiError(proposalQuery.error)}</p>}
+      {proposalSaveAction.error && <p role="alert">Proposal Save failed: {formatApiError(proposalSaveAction.error)}</p>}
+      {proposalLoadAction.error && <p role="alert">Proposal Restore failed: {formatApiError(proposalLoadAction.error)}</p>}
+      {proposalDeleteAction.error && <p role="alert">Proposal Delete failed: {formatApiError(proposalDeleteAction.error)}</p>}
+    </section>
+
     {review && <section aria-label="Generated player review">
       <h4>Review {viewedPlayers.length} players</h4>
       <p>Run: {review.runId} · Branch: {review.branchId} · Saved HEAD: <code>{review.head}</code></p>

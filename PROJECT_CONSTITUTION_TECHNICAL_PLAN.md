@@ -4,7 +4,7 @@
 
 **Repository status:** subordinate repository-facing product/technical distillation; the full canonical Master is authoritative.
 **Master authority:** [`SQUASH_ENGINE_MASTER_VISION.md`](SQUASH_ENGINE_MASTER_VISION.md), with its current version declared inside. See `CURRENT_STATE.md` for implemented evidence.
-**Latest selected synchronization:** Master v76, approved pre-alpha frontend decisions of 10–11 October 2026; see `docs/PRE_ALPHA_FRONTEND_V1.md`. This is target design, not implementation evidence.
+**Latest selected synchronization:** Master v77, approved pre-alpha frontend decisions of 10–11 October 2026; see `docs/PRE_ALPHA_FRONTEND_V1.md`. This is target design, not implementation evidence.
 **Synchronization rule:** this shorter repository distillation may lag details in the Master. It preserves still-valid earlier canon and records selected later decisions; synchronization must be additive unless the Master explicitly supersedes an older rule.
 
 > This constitution is a repository-facing distillation, not a lossless copy of the full Master Vision. A specified target does **not** imply that the repository already implements it. When a task depends on detail not stated here, use the latest audited Master or an explicit newer user decision rather than inventing the missing rule.
@@ -828,3 +828,7 @@ Implementation work must:
 # 25. Product definition in one sentence
 
 **Squash Engine is a long-term deterministic manager and simulator of the men's professional FAX squash world, capable of generating and evolving countries, players, tournaments, matches, rankings and decades of history, safely branching alternative timelines, reconstructing constrained historical matches, and presenting the result through a powerful Admin workspace and historically faithful read-only Viewer websites led by MSA.**
+
+## Selected newer pre-alpha decisions — Master v77
+
+Master §§5.3, 9.4–9.5, 27.19 and 31.32 are authoritative for the unified player generator, shared/group binding conditions, explicit preview/commit and session Keep, distribution probability versus exact quotas, generation presets, simplified development prehistory, Players/profile UI and World editors. The optional Admin prepared-future-profile layer supersedes any blanket Admin age-15 visibility prohibition; activation and Viewer/player-AI knowledge still begin only at the applicable reveal. Six country ratings interpolate inside bracketing known years and use nearest-known outside, with explicit provenance; population nearest-year behavior is unchanged. Automatic completion of unassigned batch remainder, overlapping/nested-group counting, Player/hybrid schema and precise numerical calibration remain OPEN. This synchronization records target design, not completed implementation.

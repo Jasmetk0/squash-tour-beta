@@ -1,3 +1,28 @@
+# Active frontend implementation order — 11 October 2026 / Master v77
+
+Verified base: buuk `9fb8c519b203d91fbd35d9981090c79fd474143a`, merge #1365.
+This is scoped PR/code/hosted-CI review evidence, not a release gate.
+See [v77 audit](docs/PRE_ALPHA_FRONTEND_CHECKPOINT_V77_2026_10_11.md).
+
+1. Repair rejected Branch deep-link URL/context mismatch, invalid-link draft protection,
+   general programmatic/history navigation and global World Apply unsaved-target safeguards.
+2. Replace the Run-only legacy Players Explorer as canonical navigation with verified
+   Branch/revision/time reads and the approved three-tab profile; preserve saved replay.
+3. Connect unified Generate preview → explicit confirm → Working Draft → manual Save
+   with production generation kernels and exact input/seed/model/context provenance.
+   Begin with fully specified batches; unassigned-remainder and overlapping groups are OPEN.
+4. Add supported conditions, editable preview/Keep, summaries/presets and older-player
+   generation prehistory incrementally; no invented prior matches or ranking.
+5. Build country/intake/population/rating editors on owned Run data, versioned rating
+   interpolation and explicit opt-in prepared future Admin layer with public/AI leak tests.
+
+Existing World selective apply is whole-entity only; other package registries and
+field-level selection need separate slices. Player/hybrid serialization remains open.
+Preserve wider pre-alpha acceptance/season/full-Run goals; do not declare full backend,
+realism or release from this frontend checkpoint. User merges; refresh buuk each time.
+
+## Earlier roadmap entries — dated history
+
 # Squash Engine roadmap
 
 ## Earth packages — technical integration complete candidate, 7 October 2026

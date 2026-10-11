@@ -559,3 +559,7 @@ Do not silently finalize:
 Older proposals in this file — Master Run/Sandbox terminology, global World hub assumptions, fixed navigation trees and illustrative formulas — are not automatically current decisions.
 
 For product decisions, consult `PROJECT_CONSTITUTION_TECHNICAL_PLAN.md` first.
+
+## Newer approved pre-alpha Players/World contract — Master v77
+
+The canonical target is Master §§5.3, 9.4–9.5, 27.19 and 31.32, distilled in `PRE_ALPHA_FRONTEND_V1.md`. One unified generator, shared/group binding conditions, inspectable preview, session Keep versus permanent lock, older-player generation prehistory and opt-in prepared future Admin profiles are approved. Players lists/profiles are Branch/time scoped. The default age-15 reveal and public/AI knowledge boundary remain; only explicit Admin future-layer visibility is new. Linear interpolation concerns six country ratings only; population retains nearest-year fallback. Automatic unassigned-remainder completion and overlapping-group counting remain OPEN. These are design targets, not shipped UI or resolved Player Package schema.

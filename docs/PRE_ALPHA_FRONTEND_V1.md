@@ -1,7 +1,7 @@
 # Pre-alpha frontend V1 — approved shell, Runs and Packages decisions
 
 Decision dates: 10–11 October 2026. Status: **approved product design; not implementation evidence**.
-Authority: Master v76 §§27.6, 27.9, 27.17–27.18 and 31.30–31.31; newer explicit user decisions prevail.
+Authority: Master v77 §§27.6, 27.9, 27.17–27.19, 9.4–9.5 and 31.30–31.32; newer explicit user decisions prevail.
 Older illustrative route trees are not an alternative source of authority.
 
 ## Appearance and context
@@ -114,3 +114,57 @@ Full Viewer, Live Ranking, advanced Forecast/Markets, deep training, mobile and 
 Do not add backend sporting decisions, mutate sources or manufacture dashboard values to satisfy this layout.
 Preserve creation → packages → players → calendar/entries/draw/match → ranking → Save/reopen/Replay.
 CI/browser evidence must identify the actual source and covered scope; mocks are not production integration.
+
+## Players, generation and World — approved v77
+
+## 27.19 Players, generátor a World — schválený frontendový kontrakt v77
+
+**[ROZHODNUTO PRO PRE-ALPHA]** Run → Players používá tabulku: jméno s odkazem na samostatný profil, sportovní země, věk ve zvoleném čase, status, OVR, Potential OVR a Ranking/NR. Nahoře jsou hledání, filtry a `Vytvořit hráče / Generovat / Import`. Další sloupce a uložené pohledy jsou volitelné. Seznam i profil respektují vybranou branch a čas; nedostupná historie se nevyplní současnými daty.
+
+**[ROZHODNUTO PRO PRE-ALPHA]** Profil je samostatná stránka se záložkami `Přehled / Overview`, `Atributy / Attributes`, `Kariéra a výsledky / Career & Results`. Přehled obsahuje základní údaje, ranking, OVR/potenciál, stav a dostupné plánované účasti; Atributy skupiny hodnot a dostupný vývoj; Kariéra zápasy, turnaje, umístění a rankingovou historii se sezonními filtry. Jméno, země, věk a status zůstávají v hlavičce. Základ je čtecí pohled, editace se otevírá explicitně. Akce zahrnují `Upravit` a `Otevřít v Player Test Labu` v podporovaném rozsahu.
+
+**[ROZHODNUTO PRO PRE-ALPHA]** Generátor je jediný postup podle 9.4, nikoliv dvě World/Custom stránky. Obsahuje společné podmínky, volitelné skupiny, vyhledatelné další podmínky, viditelné výjimky, shrnutí a upravitelný náhled s Ponechat/regenerací. Schválené možnosti jsou produktovým cílem; placeholder nebo legacy pool není jejich implementací.
+
+**[ROZHODNUTO PRO PRE-ALPHA]** `World → Talent Preview & Intake` má hlavní tabulku všech zemí včetně nulových skutečných výstupů, hledání a filtry. Časový ročník je sezona dosažení 15 let, ročník narození je také uveden. Sloupce: země, nezávislý očekávaný počet, skutečně zpřístupněný počet k zvolenému weeku, očekávané/skutečné zastoupení potenciálu, průběžný/uzavřený stav. Klik otevře zemi a její skutečně zpřístupněné hráče. Průběžný intake je výslovně neúplný. Volitelná budoucí vrstva podle 9.5 je odlišena od realizace, nikdy není vydávána za již vzniklý intake.
+
+**[ROZHODNUTO PRO PRE-ALPHA]** `World → Countries` je tabulka a samostatný profil. Sloupce: vlajka/název, region, populace ve zvoleném roce, zpřístupnění hráči podle země původu a odděleně podle současné sportovní reprezentace. Šest ratingů lze přidat jako volitelné sloupce. Hledání/filtry, Přidat zemi a Import. Profil má `Přehled`, `Populace`, `Sportovní prostředí`, `Talenty a hráči`. Trvalý ručně zadaný country-strength rating nevzniká.
+
+**[ROZHODNUTO PRO PRE-ALPHA]** Population editor používá graf nad tabulkou roků, výběr intervalu, jednotlivé editace, vložení řádků/import a dávkový před/po diff s dopadem na generování. Chybějící rok a nejbližší použitý populační rok jsou zřetelné; dopočítaná/nahrazená hodnota se nevydává za explicitně zadanou. Existující hráči se zpětně nepřepíší, předpřipravené dotčené profily se označí.
+
+**[ROZHODNUTO PRO PRE-ALPHA]** Dávkový country-rating editor má matici vybraných zemí × šest ratingů a výběr roku/období. Lze měnit jednotlivé buňky nebo použít hodnotu na explicitně vybranou množinu. Ukazuje před/po diff včetně časového/generačního dopadu. Interpolace a jednostranné použití nejbližšího známého ratingu se řídí 5.3/v77, explicitní editace dopočítaného roku vytvoří kotvu. Import/validace zachovávají škálu a historii.
+
+**[OTEVŘENO]** Podrobná World Overview stránka nebyla schválena. Přesné škály varování, matematika distribucí, numerické defaulty poměrů a algoritmy vývoje se budou kalibrovat na funkčních nástrojích. Doplňování nezadaného zbytku a překryv skupin viz 9.4; Player/hybrid Package schema zůstává podle 4.9 otevřené. Nový frontendový souhlas neslouží k domýšlení těchto pravidel.
+
+
+## 9.4 Jednotné generování a podmínky — schválený pre-alpha kontrakt v77
+
+**[ROZHODNUTO PRO PRE-ALPHA]** Jedno tlačítko `Generovat / Generate` otevírá jeden generátor. Bez zásahů pracuje podle světa; zadávané podmínky postupně omezují jeho výsledek. Neexistují dvě oddělené volby World/Custom. Každé nastavení lze vrátit na `Automaticky podle světa`. Přirozený automatický roční intake pokračuje při simulaci bez nutnosti ručního schvalování každého ročníku; ruční generační náhled je jiný workflow.
+
+**[ROZHODNUTO PRO PRE-ALPHA]** Podmínky jsou závazné. Proveditelné neobvyklé zadání dostane vysvětlené varování realističnosti; nemožné nebo rozporné zadání vrátí konkrétní konflikt. Engine podmínky tiše neignoruje, nenahrazuje jinými hodnotami ani nepředstírá statistický důkaz přirozené distribuce z ručně vynucených výsledků. Ostatní vlastnosti mají dál individuální variabilitu a společně konzistentní vztahy.
+
+**[ROZHODNUTO PRO PRE-ALPHA]** Společné podmínky platí pro celou dávku; volitelné `Přidat skupinu` vytvoří skupinu, která je dědí. Rozpor skupinové a společné podmínky je viditelný; uživatel může vědomě vytvořit explicitní výjimku pro skupinu. V základu jsou počet, země/region, věk nebo ročník narození, potenciál a vývojový typ; `Přidat další podmínku` dovolí vyhledat podporovanou vlastnost a zadat pevnou hodnotu či rozsah, například atribut, výšku, hmotnost nebo rukovost. Podmínka OVR je cíl dosažený konzistentními atributy, nikoliv nezávisle napsaná druhá pravda o hráči.
+
+**[ROZHODNUTO PRO PRE-ALPHA]** Interval má výchozí přirozenou podmíněnou distribuci modelu, nikoliv automaticky rovnoměrnou. U konkrétní podmínky lze výslovně zvolit rovnoměrné rozdělení či vlastní poměry. Vlastní poměry rozlišují `Pravděpodobnost` a `Přesné zastoupení`: 20 % leváků ve 100 hráčích znamená v prvním režimu náhodný výsledek, ve druhém přesně 20. Jednotlivé podmínky mohou tyto volby kombinovat. Pokud přesný poměr nemá celočíselné řešení, například 3 hráči 50:50, engine nabídne proveditelné počty k výslovnému potvrzení; nezaokrouhlí zadání tiše. Matematika společného vzorkování a kalibrace vztahů/distribucí zůstává otevřená.
+
+**[ROZHODNUTO PRO PRE-ALPHA]** Nejprve vznikne náhled; Run se změní až výslovným přidáním/potvrzením, potom se použije běžný ruční Save. V náhledu lze ponechat hráče, přegenerovat vybrané nebo zbytek a jednotlivce upravit. Zachovají se závazné podmínky a počty. Konfliktní úprava vyžaduje opravu hráče nebo podmínky. `Ponechat v náhledu` chrání hráče jen při dalších pokusech této session a není trvalý `Locked Player`.
+
+**[ROZHODNUTO PRO PRE-ALPHA]** Náhled obsahuje hráčskou tabulku a shrnutí podle zemí, věku, OVR/potenciálu a vývojových typů, splnění podmínek a konkrétní vysvětlená varování. Přepíná se celá dávka/jednotlivá skupina; klik na souhrnnou položku filtruje tabulku. Tam, kde model poskytuje nezávislé očekávání, je oddělené od realizace. Vynucené hodnoty jsou označené, nikoliv vydávané za přirozenou frekvenci. Náhled/commit zůstávají navázané na konkrétní Run, branch, čas, vstupy, model a seed s provenance a ochranou proti zastaralému náhledu.
+
+**[ROZHODNUTO PRO PRE-ALPHA]** Volitelné jednoduché pojmenované předvolby uchovávají společné/skupinové podmínky, explicitní hodnoty a volby Automatic. Automatické hodnoty se vyhodnotí v cílovém světě a čase, takže stejné zadání lze porovnat mezi FAX/FIFA/ATP. Přesné zopakování výsledku vyžaduje uložené konkrétní vstupy, seed a verzi modelu; předvolba sama není totožný světový snapshot. Toto rozhodnutí neuzavírá Player Package schema.
+
+**[ROZHODNUTO PRO PRE-ALPHA]** Staršímu generovanému hráči engine dopočítá zjednodušený vývoj do požadovaného věku: nejprve talentové předpoklady, vývojový typ a individuální vlastnosti, potom zjednodušenou aplikaci stejného vývojového modelu jako v normální simulaci. Zachová manuální podmínky a označí nepravděpodobné kombinace. Jde o označenou generační předhistorii, nikoliv důkaz odehraných zápasů, titulů, rankingové pozice nebo celých minulých sezon. Předstartovní výsledkový podklad vzniká pouze ve výslovně zvolené odpovídající variantě 9.1; plná rekurzivní simulace minulosti není povinná. Přesné křivky, startovní stavy a kalibrace zůstávají otevřené.
+
+**[OTEVŘENO — DOSUD NESCHVÁLENO]** Automatické doplnění nezadaného zbytku při celkovém počtu a podmínkách jen pro část dávky. Příklad 100 celkem, přesně 20 CZE a 10 SVK, zbývajících 70 podle světa: uživatel odpověď výslovně odložil. Rovněž není dohodnuta sémantika překrývajících se/vnořených skupin a jejich započítání. Tato verze žádný z těchto mechanismů neuzavírá; implementace může použít explicitně úplně určenou dávku, ne vymyslet zbytek.
+
+## 9.5 Budoucí profily — výslovná opt-in vrstva Adminu v77
+
+**[ROZHODNUTO PRO PRE-ALPHA; NOVĚJŠÍ VÝJIMKA Z v70]** Běžný seznam Players nadále výchozí zobrazuje pouze časově zpřístupněné hráče. Admin může zapnout `Zobrazit budoucí hráče` a uvidí všechny již skutečně vygenerované budoucí profily v dané branchi, i před 15. narozeninami nebo před narozením. Není tím povinné předgenerování všech 50 sezon ani generování dosud neexistujících dat při pouhém čtení.
+
+**[ROZHODNUTO PRO PRE-ALPHA]** Rozlišují se `Budoucí profil — ještě nenarozen`, `Budoucí prospect — ještě nezpřístupněn` a běžný Prospect/Tour stav po zpřístupnění. Profil ukáže datum/rok-week narození, plánované zpřístupnění, původ a skutečně dostupná generační data. Nenarozený hráč nedostane smyšlený současný OVR, únavu, výsledky ani jistou budoucí kariéru. Předpřipravené hodnoty pro 15 let jsou výslovně označené svým budoucím časem. Aktivace do světa zůstává na otevření týdne 15. narozenin před prvními sloty; opt-in viditelnost toto datum neposouvá.
+
+**[ROZHODNUTO PRO PRE-ALPHA]** Viewer, hráčská AI a veřejné projekce nesmí před zpřístupněním znát budoucí profily. Připravená budoucí vrstva nesmí být započítaná jako skutečný průběžný intake, dnešní populace hráčů nebo historie. Změna světa či generační konfigurace označí dotčené předpřipravené profily a nabídne explicitní regeneraci; neproběhne tichá retroaktivní změna existujících hráčů ani skryté vynucení nekompatibilní budoucnosti.
+
+
+Country rating history contract:
+
+**[ROZHODNUTO PRO PRE-ALPHA v77]** Chybějící rok každého ze šesti country ratingů se uvnitř dvou nejbližších známých časových bodů dopočítá lineární interpolací. Pro roky `y0 < y < y1` platí `v(y) = v0 + (v1 − v0) × (y − y0)/(y1 − y0)`. Například `1990: 4,0` a `2000: 6,0` dávají `1995: 5,0`. Mimo známý interval se použije nejbližší známá hodnota, bez extrapolovaného trendu. UI a provenance odliší explicitní vstup, interpolaci i jednostranný fallback a uvedou zdrojové roky/hodnoty. Ruční zadání v dopočítaném roce vytvoří nový explicitní kotvící bod. Rozhodnutí platí pro ratingy, nikoliv populační historii: populace nadále používá nejbližší dostupný rok podle 5.1. Autorské ratingy zůstávají `1–10` s nejvýše jedním desetinným místem; konkrétní numerická reprezentace a zaokrouhlení odvozeného mezivýsledku vyžadují explicitní verzovaný technický kontrakt, nikoliv tiché zaokrouhlení vstupu. Staré uložené snapshoty a replay se nepřepisují.

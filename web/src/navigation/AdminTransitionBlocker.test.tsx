@@ -19,8 +19,8 @@ function Harness(): JSX.Element {
     <button onClick={() => navigate(-1)}>Back</button>
     <button onClick={() => navigate(1)}>Forward</button>
     <button onClick={() => {
-      allowConfirmedAdminNavigation('/next')
-      navigate('/next')
+      allowConfirmedAdminNavigation('/approved')
+      navigate('/approved')
     }}>Preapproved next</button>
   </div>
 }
@@ -69,6 +69,7 @@ describe('data-router Admin blocker',()=>{
     expect(confirm).not.toHaveBeenCalled()
     fireEvent.click(screen.getByRole('button',{name:'Toggle dirty'}))
     fireEvent.click(screen.getByRole('button',{name:'Preapproved next'}))
+    await waitFor(()=>expect(screen.getByLabelText('Current route')).toHaveTextContent('/approved'))
     expect(confirm).not.toHaveBeenCalled()
   })
 })

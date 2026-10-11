@@ -183,6 +183,14 @@ def setup_run(page, base_url: str, artifacts: Path) -> str:
         "Disposable real browser acceptance"
     )
     click("Preview generated players")
+    inspector = page.locator(".generated-review-inspector")
+    expect(inspector.get_by_role("heading", name="Entire batch overview")).to_be_visible()
+    expect(inspector.get_by_role("status")).to_contain_text("Showing 64 / 64")
+    # UI review filters must not affect the 64 players submitted to confirmed Save.
+    inspector.get_by_label("Filter generated player country").select_option(index=1)
+    expect(inspector.get_by_role("status")).to_contain_text("Display filters never change")
+    inspector.get_by_role("button", name="Clear display filters").click()
+    expect(inspector.get_by_role("status")).to_contain_text("Showing 64 / 64")
     check("Approve InitialWorld adoption")
     click("Adopt generated players")
     check("Approve InitialWorld revision save")

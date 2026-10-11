@@ -458,7 +458,7 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
       </p>}
       {regenerateAction.error && <p role="alert" className="error">
         {cs ? 'Regenerace selhala' : 'Regeneration failed'}: {formatApiError(regenerateAction.error)}
-      </p>
+      </p>}
 
       {!reviewMatches && <p role="alert" className="error">Review expired: selected Run, Branch, World, revision or generation inputs changed.</p>}
       <label><input type="checkbox" aria-label="Approve InitialWorld adoption" checked={approved}

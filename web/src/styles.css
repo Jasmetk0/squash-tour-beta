@@ -2212,3 +2212,20 @@ textarea:focus-visible {
 .run-home-ranking__movement[data-movement="down"] { color: #ff9e9e; }
 .run-home-ranking__movement[data-movement="entered"] { color: #83b8ff; }
 .run-home-ranking__movement[data-movement="exited"] { color: #a6a7b2; }
+
+/* Canonical Runs inventory: the simulation legacy browser lives on its own route. */
+.runs-canonical-toolbar { display:flex; align-items:end; justify-content:space-between; gap:1rem; flex-wrap:wrap; margin:1.2rem 0; }
+.runs-canonical-toolbar label { flex:1; max-width:470px; }
+.runs-canonical-toolbar input { display:block; width:100%; margin-top:.35rem; }
+.runs-canonical-list { padding:0; margin:0; list-style:none; display:grid; gap:.85rem; }
+.runs-canonical-row { background:#18263e; border:1px solid #344b6b; padding:1rem 1.2rem; border-radius:13px; }
+.runs-canonical-row__top { display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap; }
+.runs-canonical-row__identity { display:grid; gap:.25rem; overflow-wrap:anywhere; }
+.runs-canonical-row__identity > strong { font-size:1.12rem; }
+.runs-canonical-row__actions { display:flex; align-items:center; gap:.9rem; flex-wrap:wrap; }
+.runs-canonical-branches { border-top:1px solid #344b6b; margin-top:1rem; padding-top:.8rem; }
+.runs-canonical-branch { display:flex; justify-content:space-between; align-items:center; gap:1rem; padding:.6rem .15rem; border-bottom:1px solid #283b55; }
+.runs-canonical-branch > div { display:flex; align-items:center; gap:.75rem; flex-wrap:wrap; }
+.runs-canonical-branch .button-link { padding:.45rem .9rem; }
+.runs-legacy-entry { border-top:1px solid #30435c; margin-top:2rem; padding-top:1rem; }
+@media (max-width:600px) { .runs-canonical-branch { align-items:flex-start; flex-direction:column; } }

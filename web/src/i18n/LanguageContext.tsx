@@ -39,6 +39,22 @@ const words: Record<string, { cs: string; en: string }> = {
   'No Runs yet': { cs: 'Zatím neexistují žádné uložené Runy.', en: 'No saved Runs yet.' },
   'World packages': { cs: 'World balíčky', en: 'World packages' },
   'Saved Runs': { cs: 'Uložené Runy', en: 'Saved Runs' },
+  'Countries': { cs: 'Země', en: 'Countries' },
+  'World Generation': { cs: 'Generování světa', en: 'World Generation' },
+  'Player list': { cs: 'Seznam hráčů', en: 'Player list' },
+  'Talent Intake': { cs: 'Příchod talentů', en: 'Talent Intake' },
+  'Season Calendar': { cs: 'Sezonní kalendář', en: 'Season Calendar' },
+  'World Tour Finals': { cs: 'Finálový turnaj', en: 'World Tour Finals' },
+  'Season Rollover': { cs: 'Přechod sezony', en: 'Season Rollover' },
+  'Ranking Snapshots': { cs: 'Snímky žebříčku', en: 'Ranking Snapshots' },
+  'Race Snapshots': { cs: 'Snímky Race', en: 'Race Snapshots' },
+  'Simulation controls': { cs: 'Ovládání simulace', en: 'Simulation controls' },
+  'Run diagnostics': { cs: 'Diagnostika Runu', en: 'Run diagnostics' },
+  'Branches & revisions': { cs: 'Větve a revize', en: 'Branches & revisions' },
+  'Bootstrap / Lineage': { cs: 'Inicializace a návaznosti', en: 'Bootstrap / Lineage' },
+  'Season Chain': { cs: 'Řetězec sezon', en: 'Season Chain' },
+  'Activity': { cs: 'Aktivita', en: 'Activity' },
+  'Events': { cs: 'Události', en: 'Events' },
   'Not implemented': { cs: 'Zatím neimplementováno', en: 'Not implemented' }
 }
 

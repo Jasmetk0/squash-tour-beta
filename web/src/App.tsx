@@ -70,6 +70,7 @@ import { RunSimulationPage } from './pages/RunSimulationPage'
 import { AdminRankingCandidatesPage } from './pages/AdminRankingCandidatesPage'
 import { AdminRunBranchesPage } from './pages/AdminRunBranchesPage'
 import { RunsPage } from './pages/RunsPage'
+import { LegacyRunsPage } from './pages/LegacyRunsPage'
 import { PlannedEventDetailPage } from './pages/PlannedEventDetailPage'
 import { PlayersPage } from './pages/PlayersPage'
 import { PlayerCareerPage } from './pages/PlayerCareerPage'
@@ -164,6 +165,7 @@ export default function App(): JSX.Element {
         <Route path="admin/labs/match" element={<MatchTestLabPage />} />
         <Route path="admin/labs/player" element={<PlayerTestLabPage />} />
         <Route path="admin/labs/tournament" element={<TournamentTestLabPage />} />
+        <Route path="admin/legacy-runs" element={<LegacyRunsPage />} />
         <Route path="admin/runs/new" element={<RunCreatePage />} />
         <Route path="admin/runs" element={<RunsPage />} />
         <Route path="admin/runs/:runId" element={<RunPage />} />

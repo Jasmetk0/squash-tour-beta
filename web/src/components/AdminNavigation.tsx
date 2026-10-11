@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import { globalAdminNav, globalAdminBottomNav, runAdminNavFor, runAdminBottomNavFor } from '../navigation/adminNavigation'
 import type { AdminNavItem } from '../navigation/adminNavigation'
@@ -7,7 +7,20 @@ import { useLanguage } from '../i18n/LanguageContext'
 
 type AdminNavigationProps = { scope: AdminScope }
 
+const COLLAPSED_KEY = 'squash-engine-sidebar-collapsed-v1'
+const PINNED_KEY = 'squash-engine-sidebar-pinned-v1'
+
+function readPreference(key: string, fallback: boolean): boolean {
+  try {
+    const value = localStorage.getItem(key)
+    return value === null ? fallback : value === 'true'
+  } catch {
+    return fallback
+  }
+}
+
 function isItemActive(path: string, item: AdminNavItem, root: string): boolean {
+  if (item.label === 'Players' && (path.startsWith(root + '/people/') || path.startsWith(root + '/players/'))) return true
   if (item.to === root) return path === root || path === root + '/'
   return path === item.to || path.startsWith(item.to + '/') ||
     (item.children?.some(child => path === child.to || path.startsWith(child.to + '/')) ?? false)
@@ -16,8 +29,10 @@ function isItemActive(path: string, item: AdminNavItem, root: string): boolean {
 export function AdminNavigation({ scope }: AdminNavigationProps): JSX.Element {
   const { t, language } = useLanguage()
   const { pathname } = useLocation()
-  const [collapsed, setCollapsed] = useState(false)
-  const [pinned, setPinned] = useState(true)
+  const [collapsed, setCollapsed] = useState(() => readPreference(COLLAPSED_KEY, false))
+  const [pinned, setPinned] = useState(() => readPreference(PINNED_KEY, true))
+  useEffect(() => { try { localStorage.setItem(COLLAPSED_KEY, String(collapsed)) } catch { /* unavailable storage */ } }, [collapsed])
+  useEffect(() => { try { localStorage.setItem(PINNED_KEY, String(pinned)) } catch { /* unavailable storage */ } }, [pinned])
   const [openCategory, setOpenCategory] = useState<string | null>(null)
   const isRun = scope.kind === 'run'
   const root = isRun ? '/admin/runs/' + encodeURIComponent(scope.runId) : '/admin'
@@ -40,7 +55,7 @@ export function AdminNavigation({ scope }: AdminNavigationProps): JSX.Element {
       </div>
       {item.children && expanded && <div className="side-nav__children">
         {item.children.map(child => <NavLink key={child.to} to={child.to}
-          className={pathname === child.to ? 'active' : ''} end={true}>{child.label}</NavLink>)}
+          className={pathname === child.to ? 'active' : ''} end={true}>{t(child.label)}</NavLink>)}
       </div>}
     </div>
   })

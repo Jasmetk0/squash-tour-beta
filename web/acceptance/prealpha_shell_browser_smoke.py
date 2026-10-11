@@ -215,6 +215,37 @@ def main() -> None:
             evidence["run_management"] = True
             page.screenshot(path=str(artifacts / "03-run-management.png"), full_page=True)
 
+            # Selectively apply exactly one real World source entity into the
+            # alternative Branch, then Save; unselected entities never appear.
+            assert worlds, "This acceptance requires a real World source registry"
+            world_id = worlds[0]["world_id"]
+            page.goto(base + "/admin/packages/world/" + world_id)
+            page.get_by_role("link", name="Apply to Run — select contents").click()
+            expect(page.get_by_role("heading", name="Apply World Package to Run")).to_be_visible()
+            page.get_by_role("combobox", name="Target Run").select_option(run_id)
+            page.get_by_role("combobox", name="Target Branch").select_option(created_branch["branch_id"])
+            checkboxes = page.locator(".package-apply-items input[type=checkbox]")
+            expect(checkboxes.first).to_be_visible()
+            checkboxes.first.check()
+            expect(page.get_by_text("1 selected", exact=False)).to_be_visible()
+            expect(page.locator(".package-apply-diff")).to_have_count(1)
+            page.get_by_role("checkbox", name="I reviewed the exact selection, changes and target Branch.").check()
+            page.get_by_role("button", name="Confirm into Working Draft").click()
+            expect(page.get_by_text("Content staged in Working Draft", exact=False)).to_be_visible()
+            state_url = (
+                args.api_url + "/admin/runs/" + run_id + "/branches/"
+                + created_branch["branch_id"] + "/packages"
+            )
+            staged = page.request.get(state_url)
+            assert staged.ok and len(staged.json()["state"]["entities"]) == 1, staged.text()
+            page.get_by_role("button", name="Save revision").click()
+            expect(page.get_by_text("New Saved Revision saved.")).to_be_visible()
+            page.reload()
+            persisted = page.request.get(state_url)
+            assert persisted.ok and persisted.json()["fingerprint"] == staged.json()["fingerprint"]
+            evidence["selective_world_saved_one_entity"] = world_id
+            page.screenshot(path=str(artifacts / "04-selective-world-saved.png"), full_page=True)
+
             page.get_by_role("link", name="Squash Engine global Home").click()
             expect(page.get_by_role("heading", name="Squash Engine Home")).to_be_visible()
             assert page.get_by_role("combobox", name="Admin active Run").count() == 0

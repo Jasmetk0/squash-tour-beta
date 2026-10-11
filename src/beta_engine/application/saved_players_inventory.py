@@ -42,6 +42,7 @@ class SavedPlayersInventory(BaseModel):
     search: str
     country_code: str
     status_filter: str
+    include_prepared: bool = False
     offset: int = Field(ge=0)
     limit: int = Field(ge=1, le=100)
     total: int = Field(ge=0)
@@ -55,6 +56,7 @@ def resolve_saved_players_inventory(
     prospect_source: RunProspectSourceSnapshot | None,
     ranking: RankingRevisionState | None,
     search: str = "", country_code: str = "", status_filter: str = "",
+    include_prepared: bool = False,
     offset: int = 0, limit: int = 50,
 ) -> SavedPlayersInventory:
     if not 0 <= offset or not 1 <= limit <= 100:
@@ -113,7 +115,9 @@ def resolve_saved_players_inventory(
         for player in initial_world.players:
             identity(player_id=player.player_id, name=player.name, country=player.country_code,
                      source="initial_world", status=player.active_status)
-    if prospect_source is not None:
+    # Existing saved prospect sources can include pre-reveal/future cohorts.
+    # Admin must opt in before enumerating them; default inventory is present-safe.
+    if prospect_source is not None and include_prepared:
         for record in prospect_source.records:
             identity(player_id=record.get("prospect_id"), name=record.get("display_name"),
                      country=record.get("country_code"), source="run_prospect",
@@ -129,7 +133,7 @@ def resolve_saved_players_inventory(
     return SavedPlayersInventory(
         run_id=run_id, branch_id=branch_id, saved_revision_id=saved_revision_id,
         search=search, country_code=country_code, status_filter=status_filter,
-        offset=offset, limit=limit, total=len(matching),
+        include_prepared=include_prepared, offset=offset, limit=limit, total=len(matching),
         has_more=offset + limit < len(matching),
         ranking_week_ordinal=week_ordinal, players=tuple(matching[offset:offset + limit]),
     )

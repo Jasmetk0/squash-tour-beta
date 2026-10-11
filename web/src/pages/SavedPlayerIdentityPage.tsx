@@ -115,6 +115,6 @@ export function SavedPlayerIdentityPage(): JSX.Element {
         </>}
       </>}
     <p><Link to={'/admin/runs/' + encodeURIComponent(runId) + '/players'}>{cs ? '← Zpět na Hráče' : '← Back to Players'}</Link></p>
-    <Link to={'/admin/runs/' + encodeURIComponent(runId)}>{cs ? 'Domů do Runu' : 'Run Home'}</Link>
+    <Link to={'/admin/runs/' + encodeURIComponent(runId)}>{cs ? '← Domů do Runu' : '← Back to Run Home'}</Link>
   </section>
 }

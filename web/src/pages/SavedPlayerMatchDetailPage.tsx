@@ -10,7 +10,22 @@ import { formatApiError } from '../utils/apiErrors'
 
 const PAGE = 25
 
+/**
+ * Route params and the authoritative Branch Saved Revision together define a replay.
+ * Keying the actual cursor-owning component forces index=0 *during the first render*
+ * of a different replay, before a pageOffset 25/50/... fetch can ever be issued.
+ * This deliberately does not change the independently keyed matches list panel.
+ */
 export function SavedPlayerMatchDetailPage(): JSX.Element {
+  const { runId = '', playerId = '', eventId = '', matchId = '' } = useParams()
+  const { selectedBranch } = useAdminBranch()
+  const branchId = selectedBranch?.run_id === runId ? selectedBranch.branch_id : null
+  const savedHead = branchId ? selectedBranch?.saved_head_revision_id ?? null : null
+  const replayIdentity = JSON.stringify([runId, branchId, savedHead, playerId, eventId, matchId])
+  return <SavedPlayerMatchReplay key={replayIdentity} />
+}
+
+function SavedPlayerMatchReplay(): JSX.Element {
   const { runId = '', playerId = '', eventId = '', matchId = '' } = useParams()
   const { language } = useLanguage()
   const cs = language === 'cs'

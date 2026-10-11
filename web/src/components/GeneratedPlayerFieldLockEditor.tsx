@@ -21,7 +21,7 @@ function observed(player: RunInitialWorldPlayer, field: GeneratedPlayerFieldKey)
   return player.attributes?.[field.split('.')[1]]
 }
 export function GeneratedPlayerFieldLockEditor({
-  player, locks, onChange, onApply, onRegenerate, onClose, busy, disabled, dirty, error, seed
+  player, locks, onChange, onApply, onRegenerate, onClose, busy, disabled, regenerateDisabled = false, dirty, error, seed
 }: {
   player: RunInitialWorldPlayer
   locks: RunWorldPreviewFieldLock[]
@@ -31,6 +31,7 @@ export function GeneratedPlayerFieldLockEditor({
   onClose: () => void
   busy: boolean
   disabled: boolean
+  regenerateDisabled?: boolean
   dirty: boolean
   error?: string | null
   seed: number
@@ -92,7 +93,7 @@ export function GeneratedPlayerFieldLockEditor({
     <div className="actions">
       <button type="button" disabled={!dirty || busy || disabled}
         onClick={onApply}>Apply field locks to preview</button>
-      <button type="button" disabled={dirty || busy || disabled || !locks.length}
+      <button type="button" disabled={dirty || busy || disabled || regenerateDisabled || !locks.length}
         onClick={onRegenerate} title="Use the next seed; missing identities or incompatible values return a conflict">
         Regenerate other fields · seed {seed}
       </button>

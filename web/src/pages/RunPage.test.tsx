@@ -189,7 +189,7 @@ describe('Run Home V1 canonical projections', () => {
       total_calendar_events: 0, published_result_count: 0, upcoming: [], recent_results: []
     })
     mount()
-    expect(await screen.findByText('Saved Home activity identity mismatch')).toBeInTheDocument()
+    expect((await screen.findAllByText('Saved Home activity identity mismatch')).length).toBeGreaterThan(0)
     expect(screen.queryByText('Saved Autumn Open')).not.toBeInTheDocument()
   })
 

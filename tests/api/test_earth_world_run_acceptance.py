@@ -176,6 +176,36 @@ def _materialize_product_run(
     )
     assert len(pool.result.players) == INITIAL_POOL_SIZE
     assert pool.result.metadata.target_pool_size == INITIAL_POOL_SIZE
+
+    # Both real Earth packages must honour hard geography restrictions in the
+    # same production generator (never the global or toy initial-player path).
+    cze = next(country for country in projection.countries if country.code == "CZE")
+    hard_request = RunWorldInitialPoolPreviewRequest(
+        world_package_id=world_id, season="2000/2001",
+        seed=INITIAL_POOL_SEED, target_pool_size=30,
+        country_code="CZE", region=cze.region,
+    )
+    hard_preview = pool_service.preview(
+        run_id=run_id, branch_id=branch_id, request=hard_request,
+    )
+    assert len(hard_preview.result.players) == 30
+    assert {player.country_code for player in hard_preview.result.players} == {"CZE"}
+    assert hard_preview.result.metadata.country_code == "CZE"
+    assert hard_preview.result.metadata.region == cze.region
+    assert hard_preview.preview_fingerprint == pool_service.preview(
+        run_id=run_id, branch_id=branch_id, request=hard_request,
+    ).preview_fingerprint
+    incompatible = next(
+        country.region for country in projection.countries
+        if country.region != cze.region and
+        country.effective_travel_region != cze.region
+    )
+    with pytest.raises(ValueError, match="Conflicting generation conditions"):
+        pool_service.preview(
+            run_id=run_id, branch_id=branch_id,
+            request=hard_request.model_copy(update={"region": incompatible}),
+        )
+
     assert (
         pool.result.metadata.population_weighting
         == "effective_population_birth_year_aggregate"

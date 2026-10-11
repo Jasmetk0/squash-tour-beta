@@ -13,6 +13,26 @@ from beta_engine.domain.players.initial_pool import InitialPlayerPoolGenerator, 
 from beta_engine.domain.run_packages import canonical_hash
 
 
+class RunWorldKeepStep(BaseModel):
+    """One prior, reproducible Keep pass. No player data is trusted from client."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid", strict=True)
+    seed: int
+    keep_from_seed: int
+    keep_from_preview_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    keep_player_ids: list[str] = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def valid_lineage_step(self) -> "RunWorldKeepStep":
+        if self.seed == self.keep_from_seed:
+            raise ValueError("Keep history step requires a changed seed")
+        if self.keep_player_ids != sorted(set(self.keep_player_ids)):
+            raise ValueError("Keep history requires sorted unique player IDs")
+        if any(not value or len(value) > 128 for value in self.keep_player_ids):
+            raise ValueError("Keep history contains invalid player IDs")
+        return self
+
+
 class RunWorldInitialPoolPreviewRequest(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True)
 
@@ -28,13 +48,14 @@ class RunWorldInitialPoolPreviewRequest(BaseModel):
     travel_region: str | None = Field(default=None, min_length=1)
     min_age: int | None = Field(default=None, ge=15, le=45)
     max_age: int | None = Field(default=None, ge=15, le=45)
-    # Session-only one-pass Keep. Server regenerates the ORIGINAL source preview;
-    # no client-provided player objects or persistent player locks are trusted.
+    # Session-only Keep. Each prior pass is reproducibly replayed from the
+    # saved World, never from browser-supplied player values or permanent locks.
     keep_from_seed: int | None = None
     keep_from_preview_fingerprint: str | None = Field(
         default=None, pattern=r"^[0-9a-f]{64}$"
     )
     keep_player_ids: list[str] = Field(default_factory=list)
+    keep_history: list[RunWorldKeepStep] = Field(default_factory=list, max_length=16)
 
     @model_validator(mode="after")
     def validate_age_range(self) -> "RunWorldInitialPoolPreviewRequest":
@@ -52,6 +73,18 @@ class RunWorldInitialPoolPreviewRequest(BaseModel):
                 raise ValueError("Session Keep player IDs must be sorted, unique and nonempty")
             if any(not player_id or len(player_id) > 128 for player_id in self.keep_player_ids):
                 raise ValueError("Session Keep player IDs are invalid")
+        if self.keep_history:
+            if self.keep_from_seed is None:
+                raise ValueError("Keep history requires an active final Keep pass")
+            previous_seed = self.keep_history[0].keep_from_seed
+            for step in self.keep_history:
+                if step.keep_from_seed != previous_seed:
+                    raise ValueError("Keep history has broken seed ancestry")
+                if len(step.keep_player_ids) >= self.target_pool_size:
+                    raise ValueError("Keep history cannot preserve the entire batch")
+                previous_seed = step.seed
+            if previous_seed != self.keep_from_seed:
+                raise ValueError("Keep history does not lead to the reviewed source seed")
         return self
 
     def fingerprint_payload(self) -> dict:
@@ -65,6 +98,8 @@ class RunWorldInitialPoolPreviewRequest(BaseModel):
             payload.pop("geographic_region", None)
         if payload.get("travel_region") is None:
             payload.pop("travel_region", None)
+        if not payload.get("keep_history"):
+            payload.pop("keep_history", None)  # original and one-pass digests unchanged
         return payload
 
 
@@ -166,12 +201,23 @@ class RunWorldInitialPoolPreviewService:
         if request.keep_from_seed is not None:
             # Rebuild the exact original preview against the current Run/Branch
             # World source, instead of trusting snapshots supplied by the browser.
-            original_request = request.model_copy(update={
-                "seed": request.keep_from_seed,
-                "keep_from_seed": None,
-                "keep_from_preview_fingerprint": None,
-                "keep_player_ids": [],
-            })
+            if request.keep_history:
+                previous = request.keep_history[-1]
+                original_request = request.model_copy(update={
+                    "seed": previous.seed,
+                    "keep_from_seed": previous.keep_from_seed,
+                    "keep_from_preview_fingerprint": previous.keep_from_preview_fingerprint,
+                    "keep_player_ids": list(previous.keep_player_ids),
+                    "keep_history": request.keep_history[:-1],
+                })
+            else:
+                original_request = request.model_copy(update={
+                    "seed": request.keep_from_seed,
+                    "keep_from_seed": None,
+                    "keep_from_preview_fingerprint": None,
+                    "keep_player_ids": [],
+                    "keep_history": [],
+                })
             original = self.preview(
                 run_id=run_id, branch_id=branch_id, request=original_request,
             )
@@ -200,8 +246,8 @@ class RunWorldInitialPoolPreviewService:
             dry_run=True,
         )
         if preserved:
-            # Keep is limited to the current preview session. Never turn it into
-            # a permanent player Lock when InitialWorld is adopted/saved.
+            # Repeatable Keep is only for the preview session. Never turn it
+            # into a permanent player Lock in adopted/saved InitialWorld.
             unlocked_players = [
                 player.model_copy(update={"locked": False})
                 for player in result.players

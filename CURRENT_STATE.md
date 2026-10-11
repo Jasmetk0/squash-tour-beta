@@ -6,6 +6,15 @@
 - This is a **candidate, not evidence of passing hosted checks or actual merge** until green final-head workflows confirm it. No post-2000/01 generation, attribute locks, arbitrary nested quotas or calibrated OVR implied.
 - Previous #1376 was truly merged in buuk. #1377 typed geography was still open when this candidate was branched; verify both separate PRs against actual buuk after merges, never just the badge.
 
+# Candidate: repeatable authenticated session Keep (11 October 2026)
+
+- Standalone PR on actual `buuk` `f251c05d96b10215adc9595d0781648762c3ebc6` supports repeated **Keep → Regenerate** in the same 2000/01 generator review. This entry describes proposed changes only; not yet merged or CI-approved.
+- Each request carries exact original seed/World/geographic conditions plus the sequence of prior Keep source seeds, fingerprints and IDs. Server reconstructs every earlier preview from the current Run-owned World and refuses forged/stale lineage, foreign IDs and broken seed ancestry. Historical requests without the new `keep_history` field preserve their previous hash/replay contract.
+- UI preserves checked Keep across passes; additional player Keep can be selected or deselected, and adoption is blocked only when a pending selection differs from the last reviewed regeneration. Future career development remains unlocked: every generated preview and adopted InitialWorld removes temporary Keep locks.
+- Bounded request history: at most 16 recorded prior Keep steps (up to 17 verified changes in a session), to cap replay work. This is a technical V1 limit, not a persistent player-lock policy. The initial generator still has no field-level attribute edit/lock or saved generation proposal.
+- Scope is wholly separate from #1378, which was green but not merged when work started. Both branches touch the generator review UI/API. After the user merges #1378, reconcile and verify this PR's latest HEAD against actual `buuk`.
+- Focused deterministic backend/frontend coverage includes multi-step replay, Keep identity, tampered fingerprints, historical hashes, no permanent locks; production Chromium full tournament + SQLite saved replay after backend restart checks two Keep passes. A successful hosted run is required before claiming this PR merge-ready.
+
 # Integration candidate — Keep restoration to actual buuk (11 October 2026)
 
 - A new PR based on `buuk` `8805e9549e947bd87331d9bc40275b1759639e43` proposes the exact eight-file session Keep delta from #1374; the original #1374 was merged into an intermediate branch. **Candidate, not yet integrated into buuk.**

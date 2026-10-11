@@ -3566,6 +3566,27 @@ function sourcePackageRoot(runId: string, branchId: string, kind: import('./runP
   return `/admin/runs/${encodeURIComponent(runId)}/branches/${encodeURIComponent(branchId)}/packages/source-${kind}/${encodeURIComponent(sourceId)}`
 }
 
+
+export function previewWorldSelection(
+  runId: string, branchId: string, worldId: string,
+  payload: import('./worldSelection').WorldSelectionRequest
+): Promise<import('./worldSelection').WorldSelectionPreview> {
+  return request(
+    sourcePackageRoot(runId, branchId, 'world', worldId) + '/selection-preview',
+    { method: 'POST', body: JSON.stringify(payload) }
+  )
+}
+
+export function confirmWorldSelection(
+  runId: string, branchId: string, worldId: string,
+  payload: import('./worldSelection').WorldSelectionConfirm
+): Promise<import('./runPackageSetup').RunSourcePackageApplied> {
+  return request(
+    sourcePackageRoot(runId, branchId, 'world', worldId) + '/selection-confirm',
+    { method: 'POST', body: JSON.stringify(payload) }
+  )
+}
+
 export function previewRunSourcePackage(
   runId: string, branchId: string,
   kind: import('./runPackageSetup').RunSourcePackageKind, sourceId: string

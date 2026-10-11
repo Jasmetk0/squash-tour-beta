@@ -176,6 +176,9 @@ def _materialize_product_run(
     )
     assert len(pool.result.players) == INITIAL_POOL_SIZE
     assert pool.result.metadata.target_pool_size == INITIAL_POOL_SIZE
+    assert len({p.player_id for p in pool.result.players}) == INITIAL_POOL_SIZE
+    assert all(p.generation_source == 'initial_pool' for p in pool.result.players)
+    assert all(p.generation_fingerprint for p in pool.result.players)
 
     # Both real Earth packages must honour hard geography restrictions in the
     # same production generator (never the global or toy initial-player path).
@@ -236,6 +239,10 @@ def _materialize_product_run(
     assert len(preview_world.players) == INITIAL_POOL_SIZE
     assert preview_world.world_package_id == world_id
     assert preview_world.source_kind == "run_world_generated_pool.v1"
+    assert len({p.player_id for p in preview_world.players}) == INITIAL_POOL_SIZE
+    assert {p.player_id for p in preview_world.players} == {
+        p.player_id for p in pool.result.players
+    }
 
     adopted = repository.adopt_initial_world(
         preview_world,
@@ -340,6 +347,24 @@ def test_both_earth_packages_drive_1000_player_product_runs_save_reopen_and_fork
         )
         assert loaded_world is not None
         assert len(loaded_world.players) == INITIAL_POOL_SIZE
+        assert len({p.player_id for p in loaded_world.players}) == INITIAL_POOL_SIZE
+        assert {p.source_pool_player_id for p in loaded_world.players} == {
+            p.player_id for p in result['pool'].result.players
+        }
+        assert all(p.source_generation_fingerprint for p in loaded_world.players)
+        # The canonical Saved HEAD inventory must enumerate the same cohort,
+        # without the legacy Explorer or a process-local in-memory snapshot.
+        from beta_engine.application.saved_players_inventory import resolve_saved_players_inventory
+        pages = [resolve_saved_players_inventory(
+            run_id=run_id, branch_id=branch_id,
+            saved_revision_id=result['saved_revision_id'],
+            initial_world=loaded_world, prospect_source=None, ranking=None,
+            offset=offset, limit=100,
+        ) for offset in range(0, INITIAL_POOL_SIZE, 100)]
+        assert all(page.total == INITIAL_POOL_SIZE for page in pages)
+        canonical_ids = [p.player_id for page in pages for p in page.players]
+        assert len(canonical_ids) == len(set(canonical_ids)) == INITIAL_POOL_SIZE
+        assert set(canonical_ids) == {p.player_id for p in loaded_world.players}
         assert loaded_world.world_package_id == world_id
         assert loaded_world.world_country_content_fingerprint == result[
             "world_country_content_fingerprint"

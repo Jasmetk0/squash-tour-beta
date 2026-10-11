@@ -48,3 +48,30 @@ this as canonical source model or full session Undo.
 
 Focused backend/frontend tests are the PR gate. Full season/release/realism
 certification remains governed by `docs/PRE_ALPHA_TEST_POLICY.md`.
+
+
+## Historical Automatic extension after #1385
+
+A V2 `edit` operation may now include sorted unique, **value-free**
+`automatic_fields: [{player_id, field}]`. The production server reconstructs
+the player's originally sampled value from the saved World and authenticated
+legacy Keep ancestry, including profiles edited before two or more Keep steps.
+No browser-supplied player or numeric reset value is authoritative.
+
+The reset changes only the requested field and its provenance fingerprint.
+Every other kept identity and profile field stays intact; any resulting
+current/potential/hidden-ceiling conflict fails closed. The automatic source
+baseline survives later V2 edits and Keep operations, while a removed
+field-lock no longer becomes a permanent player/career lock.
+
+Absent or empty `automatic_fields` are **omitted from fingerprint payload**
+for existing V2 sessions; old saved V2 and legacy generation fingerprints do
+not change. Concurrent Automatic + Lock for the same player/field, implicit
+Automatic within Keep, duplicates, missing IDs, forged step digests and changed
+hard constraints are rejected.
+
+`scripts/admin_first_tournament_smoke.py` now verifies a real backend/browser
+round trip: manual legacy edit → Keep ×2 → restored proposal → V2 edit →
+historical Automatic → saved proposal/reload → Adopt → manual Save, followed by
+the existing tournament/replay recovery. Tests are scoped acceptance, not a
+full 50-season release or numerical-calibration certificate.

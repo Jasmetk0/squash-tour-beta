@@ -1,3 +1,10 @@
+# Candidate — exact country quotas with automatic remainder (11 October 2026)
+
+- Fresh `buuk 77caff6677c416c0a0661aca799de8da5f03fc79` after #1382: first-season Run-owned Generate now accepts optional exact **whole-batch** country counts under an explicit total. The existing deterministic saved-World population weighting fills only countries without explicit quotas; a zero quota excludes that country. Quota identities are disjoint, not a claim to solve overlapping potential/handedness groups.
+- Backend validates unique sorted codes, hard country/region eligibility, sum ≤ total, Keep profiles under all exact country ceilings, and feasible automatic remainder. Preview, adopted InitialWorld and saved generation proposals preserve immutable input/fingerprint scope. Absent quotas preserve historical generation and fingerprint behavior.
+- Admin has exact country/count rows and total / assigned / automatic summary, verifies returned full-cohort counts and invalidates stale preview when quotas change. A real Chromium/SQLite cohort test exercises 1000 players with 20+10 fixed/970 automatic through Adopt/Save/ranking/restart, plus focused backend/frontend regressions.
+- Candidate until all latest-head relevant hosted checks pass **and** the owner merges. No Automatic total, arbitrary overlapping groups, canonical 57-field/0–200 calibration or future-season generation is claimed. See `docs/PRE_ALPHA_EXACT_COUNTRY_QUOTAS_2026_10_11.md`.
+
 # Candidate — persistent Run generation proposals (11 October 2026)
 
 - New candidate branch based on verified `buuk e8364879be908fe9964fc04671848cfc1df4e8ba` after merges #1379 and #1380. The first proposal slice saves an **immutable exact generated review** and its pending Keep/field-lock selections to an independent `run_generation_proposals` SQLite table, scoped by Run/Branch/proposal ID. Up to 12 separate proposals per Branch; save is explicit, duplicate ID accepts identical bytes only, delete explicit. No working-draft mutation, InitialWorld Adopt, Saved Revision Save or Viewer publication occurs from proposal operations.

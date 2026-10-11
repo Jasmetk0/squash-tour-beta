@@ -215,6 +215,12 @@ def main() -> None:
             evidence["run_management"] = True
             page.screenshot(path=str(artifacts / "03-run-management.png"), full_page=True)
 
+            # Original dirty-navigation safeguard assertion must run while still
+            # inside the Run, before this new global Package workflow begins.
+            page.get_by_role("link", name="Squash Engine global Home").click()
+            expect(page.get_by_role("heading", name="Squash Engine Home")).to_be_visible()
+            assert dialogs, "Leaving a Run must activate the navigation safeguard"
+
             # Selectively apply exactly one real World source entity into the
             # alternative Branch, then Save; unselected entities never appear.
             assert worlds, "This acceptance requires a real World source registry"
@@ -251,7 +257,6 @@ def main() -> None:
             assert page.get_by_role("combobox", name="Admin active Run").count() == 0
             assert page.get_by_role("combobox", name="Admin active Branch").count() == 0
             expect(page.get_by_text("Prealpha Shell Browser Run")).to_be_visible()
-            assert dialogs, "Leaving a Run must activate the navigation safeguard"
             evidence["returned_global_and_explicit_recent_run"] = True
 
             page.get_by_role("link", name="Open Run →").first.click()

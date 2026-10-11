@@ -117,8 +117,10 @@ describe('large first-cohort review',()=>{
     expect(screen.getByText(/Page 2 \/ 20/)).toBeInTheDocument()
     expect(screen.queryByRole('checkbox',{name:'Keep p-0001'})).not.toBeInTheDocument()
     expect(screen.getByText(/Session-only Keep: 1 \/ 1000/)).toBeInTheDocument()
-    await userEvent.click(screen.getByRole('checkbox',{name:'Keep p-0051'}))
-    expect(onKeepChange).toHaveBeenCalledWith('p-0051',true)
+    const nextBox=within(table).getAllByRole('checkbox')[0]
+    const nextId=nextBox.getAttribute('aria-label')!.replace('Keep ','')
+    await userEvent.click(nextBox)
+    expect(onKeepChange).toHaveBeenCalledWith(nextId,true)
     await userEvent.type(screen.getByRole('textbox',{name:'Search generated player preview'}),'Czechia 1000')
     expect(screen.getByText(/Page 1 \/ 1/)).toBeInTheDocument()
     expect(screen.getByRole('status')).toHaveTextContent('Showing 1 / 1000')

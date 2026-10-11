@@ -601,8 +601,7 @@ def read_run_generation_proposal(
         if runtime.repository.get_initial_world(run_id=run_id, branch_id=branch_id):
             raise ValueError("InitialWorld already exists; saved proposal may not be reopened for adoption")
         from beta_engine.application.initial_world import InitialWorldState
-        from beta_engine.domain.run_packages import canonical_hash
-        reviewed = InitialWorldState.model_validate(data["preview"]["state"])
+        # JSON-mode validation preserves the strict tuple-backed nested player\n        # records when restoring the exact persisted JSON payload.\n        import json\n        reviewed = InitialWorldState.model_validate_json(\n            json.dumps(data["preview"]["state"], ensure_ascii=False)\n        )
         request = RunWorldInitialWorldAdoptionRequest.model_validate(data["request"])
         if (reviewed.fingerprint != data["preview_fingerprint"]
             or reviewed.adopted_by_command_id != request.command_id

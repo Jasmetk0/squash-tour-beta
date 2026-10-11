@@ -1,5 +1,35 @@
 # Current implementation and next action
 
+## Frontend checkpoint and next action — verified 11 October 2026
+
+- Audited `buuk` at `1f6bc2f1cfbf42e0b26b4dcb557864d2600e4ad3`, merged #1358.
+- #1347 documentation is merged; #1348–1352 and #1354–1358 implement/test the dark
+  Admin shell, neutral global Home, canonical Run Home and saved sporting activity,
+  player profiles/history and archived replay. #1353 was closed unmerged as a duplicate.
+- All hosted workflow runs returned on those ten final feature HEADs are completed
+  success. Latest #1358 Chromium/production FastAPI/SQLite evidence covers tournament
+  Save, replay pagination, materialized Branch fork, source preservation and restart;
+  it does not prove post-fork divergent evolution. This review did not rerun local
+  runtime/full release tests or newly inspect screenshots.
+- New Master v76 product decisions: compact Branch expansion in Runs; Packages category
+  hub with All packages; true multi-content membership without duplicate identities;
+  Overview/Contents/Validation detail; separate Run/Branch target + partial-selection
+  + exact before/after preview/apply workflow. This is design, not shipped functionality.
+- Concrete current gaps: Runs still has a large legacy browser; Packages is a basic hub;
+  sidebar pin/collapse is not durable; submenu labels stay English; canonical
+  `/people/...` routes do not activate Players; dirty guard is conservative rather
+  than an aggregate saved-state contract; match replay cursor scope changes need testing.
+- Next frontend work: (1) canonical Runs and related navigation corrections,
+  (2) supported Packages hub/lists/detail, (3) actual selective preview/apply of an
+  existing supported type with stale-preview protection and manual Save. Preserve
+  canonical Run/Branch/HEAD, source read-only rules, stored history and deterministic
+  engines; do not invent Player/hybrid schema or calibrate sporting models.
+- Full implementation/CI evidence and boundaries:
+  [frontend checkpoint](docs/PRE_ALPHA_FRONTEND_CHECKPOINT_2026_10_11.md).
+  Approved UX: [frontend contract](docs/PRE_ALPHA_FRONTEND_V1.md), Master 27.18/31.31.
+  All older evidence below remains dated history, not the latest implementation HEAD.
+
+
 ## Earth initial-population comparison — verified candidate PR (10 Oct 2026)
 
 - Base `buuk` verified at `320bd1fa` (merge #1345); GitHub PR search found no open PR.

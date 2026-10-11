@@ -4,7 +4,7 @@
 
 **Repository status:** subordinate repository-facing product/technical distillation; the full canonical Master is authoritative.
 **Master authority:** [`SQUASH_ENGINE_MASTER_VISION.md`](SQUASH_ENGINE_MASTER_VISION.md), with its current version declared inside. See `CURRENT_STATE.md` for implemented evidence.
-**Latest selected synchronization:** Master v75, approved pre-alpha frontend decisions of 10 October 2026; see `docs/PRE_ALPHA_FRONTEND_V1.md`. This is target design, not implementation evidence.
+**Latest selected synchronization:** Master v76, approved pre-alpha frontend decisions of 10–11 October 2026; see `docs/PRE_ALPHA_FRONTEND_V1.md`. This is target design, not implementation evidence.
 **Synchronization rule:** this shorter repository distillation may lag details in the Master. It preserves still-valid earlier canon and records selected later decisions; synchronization must be additive unless the Master explicitly supersedes an older rule.
 
 > This constitution is a repository-facing distillation, not a lossless copy of the full Master Vision. A specified target does **not** imply that the repository already implements it. When a task depends on detail not stated here, use the latest audited Master or an explicit newer user decision rather than inventing the missing rule.
@@ -199,6 +199,8 @@ Distinct Run actions include:
 
 Quick Run switcher is for a small current/favorite/recent set plus entry to All Runs; destructive or complex management belongs on the full Runs page.
 
+**[DECIDED FOR PRE-ALPHA v76]** Runs rows may expand a compact list of actual Branch names, supported season/week and Open. Full management remains in Run → History & Branches. Quick-open defaults and other row details are not settled by this approval.
+
 ## 4.4 Built-in Runs and Match Test Lab
 
 **[DECIDED]** Normal user Runs are local.
@@ -301,6 +303,11 @@ Official defaults:
 **[DECIDED FOR PRE-ALPHA v75]** Packages include players as Player Package scope. Exact payload/schema, temporal basis, identity/dependencies and Setup composition remain open; see `docs/PRE_ALPHA_FRONTEND_V1.md`. Other future types and base/import distinctions are not silently canonized.
 
 ## 7.2 Global Packages area
+
+**[DECIDED FOR PRE-ALPHA v76]** Packages opens on a category hub with a separate All packages entry. Multi-content/hybrid packages appear in each actual content category and in Hybrid, without duplicate identities in All packages. References alone are not contained data. Existing Package schemas remain authoritative; navigation categories do not define new serialization formats.
+
+**[DECIDED FOR PRE-ALPHA v76]** Package detail starts on Overview, with Contents and Validation tabs. Apply to Run uses a separate target Run/Branch, contents/selection and before/after preview workflow. Partial selection includes supported contents and values; preview shows exact old/new values and conflicts, distinguishes selected/excluded changes, recomputes validation and rejects stale reviewed inputs. Preserve unselected content, protected sources, independent Run copies, manual Save and audit. Player/hybrid payload and unresolved identity/conflict contracts remain open.
+
 
 **[DECIDED]** Source World and Category Packages have global Admin pages outside all Runs. UI must clearly distinguish source authoring from Run snapshot editing.
 

@@ -1,7 +1,7 @@
-# Pre-alpha frontend V1 — approved shell and Home decisions
+# Pre-alpha frontend V1 — approved shell, Runs and Packages decisions
 
-Decision date: 10 October 2026. Status: **approved product design; not implementation evidence**.
-Authority: Master v75 §§27.6, 27.9, 27.17 and 31.30; newer explicit user decisions prevail.
+Decision dates: 10–11 October 2026. Status: **approved product design; not implementation evidence**.
+Authority: Master v76 §§27.6, 27.9, 27.17–27.18 and 31.30–31.31; newer explicit user decisions prevail.
 Older illustrative route trees are not an alternative source of authority.
 
 ## Appearance and context
@@ -73,10 +73,43 @@ Exact payload/schema, temporal basis, supported identity mapping/dependencies an
 Reuse preview, validation, provenance, built-in read-only protection and independent Run-copy principles.
 Approval does not authorize copying fictional career history, silent identity merge or treating an unimplemented editor as complete.
 
+## Runs and Package navigation — approved 11 October 2026
+
+Runs uses wide rows. A simple expandable section lists actual Branch names, their supported season/week positions and Open actions.
+Full Branch creation, maps, histories, comparisons and restore belong to Run → History & Branches.
+Do not imply one shared simulation week for a multi-Branch Run or promote a Main/Official Branch.
+Exact row metrics and the quick-open default are not settled by this simple-expansion approval.
+
+Packages opens as a category hub, not a mandatory combined list.
+Clicking a category opens its own list; All packages opens one searchable/filterable inventory.
+Use supported types/content categories; do not replace existing World/Category/Series/Calendar/Setup schemas with the illustrative UI labels.
+A genuinely multi-content package appears in Hybrid and every category whose data it contains, but only once in All packages.
+A dependency/reference does not by itself count as contained data. Navigation classification does not settle Player/hybrid serialization.
+
+Package detail starts on Overview and has:
+- Overview: name, description, version, provenance, actual content summary.
+- Contents: supported object-type sections, lists and item details.
+- Validation: errors, missing dependencies and warnings, linked to affected items.
+
+Supported actions: Apply to Run, Copy and Export; custom sources may be edited.
+Built-in source editing normally creates an editable copy and preserves protected originals.
+
+Apply to Run is a separate page with:
+1. Target Run and Branch, or entry to create a new Run.
+2. Contents and supported selection.
+3. Before → after preview, conflicts/warnings and explicit confirmation.
+
+The user can choose only part of the content and supported changes/values.
+Recompute the exact diff and validation after selection changes; distinguish selected and excluded changes.
+Confirmation is bound to the exact target, source version and reviewed selection; stale inputs require a new preview.
+Unselected contents remain unchanged. No silent overwrites/deletion or identity merges.
+Preserve existing Working Draft, manual Save, audit/provenance and independent-copy rules.
+This approves the UI contract, not unresolved dependency mapping, conflict priorities, Player careers or payload schemas.
+
 ## Implementation sequencing and unchanged boundaries
 
 Build the shell and two Home pages first, reusing canonical Product Run context and functioning routes.
-This document does not settle every submenu, player/tournament detail, form or package serialization field.
+This document does not settle every submenu, player/tournament detail, form or package serialization field. Current implementation/review evidence is separately recorded in PRE_ALPHA_FRONTEND_CHECKPOINT_2026_10_11.md.
 Full Viewer, Live Ranking, advanced Forecast/Markets, deep training, mobile and court/shot animation retain their earlier deferred status.
 Do not add backend sporting decisions, mutate sources or manufacture dashboard values to satisfy this layout.
 Preserve creation → packages → players → calendar/entries/draw/match → ranking → Save/reopen/Replay.

@@ -134,9 +134,8 @@ export function PackageWorldDetailPage():JSX.Element {
         <h3>{cs?'Skutečně obsažené části':'Actual contents'}</h3>
         <p>{pkg.country_count} countries · {pkg.continent_count} continents · {pkg.region_count} regions · {pkg.travel_region_count} travel regions · {pkg.timezone_area_count} timezone areas</p>
         <p><Link to={source}>{pkg.editable?(cs?'Upravit zdroj':'Edit custom source'):(cs?'Vytvořit vlastní kopii':'Create custom copy')} →</Link></p>
-        <p className="status">{cs
-          ? 'Selektivní Použít v Runu a export konkrétního zdroje nejsou na této stránce ještě podporované. Existující přenos celého World zdroje je ve Správě Runu.'
-          : 'Selective Apply to Run and this source-specific export are not yet supported here. Existing whole-World setup is available in Run Management.'}</p>
+        <p><Link to={'/admin/packages/world/'+encodeURIComponent(worldId)+'/apply'}>{cs?'Použít v Runu — vybrat obsah':'Apply to Run — select contents'} →</Link></p>
+        <p className="status">{cs?'Selektivní import funguje pro World entity; export tohoto konkrétního zdroje zatím není hotový.':'Selective import supports World entities; source-specific export is not yet available.'}</p>
         <Link to="/admin/runs">{cs?'Vybrat Run':'Choose Run'} →</Link>
       </article>}
       {active==='contents'&&<article className="package-index-detail">

@@ -484,13 +484,11 @@ class RunGenerationProposalSave(BaseModel):
         locks = [(lock.player_id, lock.field) for lock in self.pending_field_locks]
         if locks != sorted(set(locks)):
             raise ValueError("Saved proposal field locks must be unique and sorted")
-        g = self.request.generation
-        first = (g.keep_history[0].keep_from_seed if g.keep_history else
-                 g.keep_from_seed if g.keep_from_seed is not None else g.seed)
-        # A field-only re-roll has no Keep lineage; it may use a new final
-        # seed while the original editable form seed remains unchanged.
-        if g.keep_from_seed is not None and self.source_seed != first:
-            raise ValueError("Saved proposal original seed does not match verified replay ancestry")
+        # source_seed is the editable form's original seed, not a Keep lineage
+        # segment: field-only regenerations may precede any Keep pass.
+        # The actual entire Keep history is validated by the production
+        # RunWorldInitialPoolPreviewRequest and preview service, not by this
+        # UI state metadata.
         return self
 
 

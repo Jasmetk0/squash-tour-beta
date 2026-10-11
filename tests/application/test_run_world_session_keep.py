@@ -23,7 +23,8 @@ class Packages:
 
 class Adapter:
     def project_countries(self, state, *, package_id):
-        assert package_id == "saved-world"
+        if package_id != "saved-world":
+            raise ValueError(f"World '{package_id}' not found")
         return NS(
             countries=[
                 country("BOG", population=12_000_000, system=3, popularity=3, tradition=3),

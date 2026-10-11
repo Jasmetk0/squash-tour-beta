@@ -17,6 +17,10 @@ const api = vi.hoisted(() => {
     getRunOwnedInitialWorld: vi.fn(),
     getRunWorldGenerationOptions: vi.fn(),
     previewRunOwnedInitialWorld: vi.fn(),
+    getRunGenerationProposals: vi.fn(),
+    saveRunGenerationProposal: vi.fn(),
+    loadRunGenerationProposal: vi.fn(),
+    deleteRunGenerationProposal: vi.fn(),
     adoptRunOwnedInitialWorld: vi.fn(),
     previewRunInitialWorldSave: vi.fn(),
     saveRunOwnedInitialWorld: vi.fn()
@@ -75,6 +79,7 @@ beforeEach(() => {
   vi.clearAllMocks()
   adopted = false; draftVersion = 0; saved = false
   reviewedState = {}
+  api.getRunGenerationProposals.mockResolvedValue({proposals:[]})
   api.getRunPackageState.mockResolvedValue({
     state: { run_id: 'first-run', branch_id: 'timeline-1',
       package_versions: [
@@ -139,6 +144,55 @@ function render(overrideRun: RunContainer = run, overrideBranch: RunBranch | nul
 }
 
 describe('Run-owned first-season player setup', () => {
+  it('persists a reviewed unadopted proposal and restores exactly without regenerating',async()=>{
+    const view=render()
+    await userEvent.clear(screen.getByRole('spinbutton',{name:'Number of generated players'}))
+    await userEvent.type(screen.getByRole('spinbutton',{name:'Number of generated players'}),'2')
+    await userEvent.click(await screen.findByRole('button',{name:'Preview generated players'}))
+    await userEvent.click(screen.getByRole('checkbox',{name:'Keep p-1'}))
+    await userEvent.clear(screen.getByRole('textbox',{name:'Generation proposal name'}))
+    await userEvent.type(screen.getByRole('textbox',{name:'Generation proposal name'}),'My test proposal')
+    const request=api.previewRunOwnedInitialWorld.mock.calls[0][2]
+    const stored={
+      schema_version:'run_generation_proposal.v1',run_id:'first-run',
+      branch_id:'timeline-1',proposal_id:'proposal-1',label:'My test proposal',
+      saved_revision_id:'revision-1',draft_version:0,
+      package_fingerprint:sha('e'),preview_fingerprint:sha('f'),
+      source_seed:20261009,next_seed:20261010,selected_keep_ids:['p-1'],
+      pending_field_locks:[],request,
+      preview:{preview_only:true,state:buildState(request),fingerprint:sha('f')}
+    }
+    api.saveRunGenerationProposal.mockResolvedValue(stored)
+    await userEvent.click(screen.getByRole('button',{name:'Save generation proposal'}))
+    await waitFor(()=>expect(api.saveRunGenerationProposal).toHaveBeenCalledWith(
+      'first-run','timeline-1',expect.objectContaining({
+        source_seed:20261009,selected_keep_ids:['p-1'],next_seed:20261010,
+        preview_fingerprint:sha('f')
+      })
+    ))
+    expect(api.adoptRunOwnedInitialWorld).not.toHaveBeenCalled()
+    expect(api.saveRunOwnedInitialWorld).not.toHaveBeenCalled()
+    view.unmount()
+    api.getRunGenerationProposals.mockResolvedValue({proposals:[{
+      proposal_id:'proposal-1',label:'My test proposal',saved_revision_id:'revision-1',
+      draft_version:0,package_fingerprint:sha('e'),preview_fingerprint:sha('f')
+    }]})
+    api.loadRunGenerationProposal.mockResolvedValue(stored)
+    render()
+    await userEvent.selectOptions(
+      await screen.findByRole('combobox',{name:'Select saved generation proposal'}),
+      'proposal-1'
+    )
+    await userEvent.click(screen.getByRole('button',{name:'Open saved proposal'}))
+    expect(await screen.findByText(/Exact saved review restored from SQLite/)).toBeInTheDocument()
+    expect(screen.getByRole('checkbox',{name:'Keep p-1'})).toBeChecked()
+    expect(screen.getByText('Review 2 players')).toBeInTheDocument()
+    expect(screen.getByRole('button',{name:'Adopt generated players'})).toBeDisabled()
+    expect(api.previewRunOwnedInitialWorld).toHaveBeenCalledTimes(1)
+    expect(api.adoptRunOwnedInitialWorld).not.toHaveBeenCalled()
+    expect(api.saveRunOwnedInitialWorld).not.toHaveBeenCalled()
+  })
+
   it('recovers an unsaved component after reload with a clean generic Draft', async () => {
     adopted = true
     reviewedState = buildState({ command_id: 'existing', generation: { world_package_id: 'fifa_earth', seed: 7 }, best_n: 15 })

@@ -341,6 +341,61 @@ def test_unmodified_one_pass_fingerprint_is_backwards_compatible():
     assert "keep_history" not in first_req.fingerprint_payload()
     assert first_req.fingerprint_payload() == {
         key: value for key, value in first_req.model_dump(mode="json").items()
-        if key not in ("keep_history", "geographic_region", "travel_region")
+        if key not in ("keep_history", "field_locks", "geographic_region", "travel_region")
     }
     assert preview(first_req).preview_fingerprint == preview(first_req).preview_fingerprint
+
+
+def test_repeatable_keep_preserves_edited_profile_and_source_fingerprint():
+    """Never hash an already preserved field lock again during authenticated Keep."""
+    from beta_engine.application.run_world_initial_pool_preview_service import (
+        RunWorldKeepStep, RunWorldPreviewFieldLock,
+    )
+    unedited = preview(source_request())
+    player = unedited.result.players[0]
+    value = 99 if player.attributes.technique != 99 else 98
+    edited_request = RunWorldInitialPoolPreviewRequest.model_validate({
+        **source_request().model_dump(mode="json"),
+        "field_locks": [{
+            "player_id": player.player_id,
+            "field": "attributes.technique",
+            "value": value,
+        }],
+    })
+    edited = preview(edited_request)
+    original = next(p for p in edited.result.players if p.player_id == player.player_id)
+    assert original.manual_override and original.attributes.technique == value
+    first_request = keep_request(edited, [player.player_id], seed=803)
+    first = preview(first_request)
+    saved = next(p for p in first.result.players if p.player_id == player.player_id)
+    assert saved == original
+
+    history = [RunWorldKeepStep(
+        seed=first_request.seed,
+        keep_from_seed=first_request.keep_from_seed,
+        keep_from_preview_fingerprint=first_request.keep_from_preview_fingerprint,
+        keep_player_ids=first_request.keep_player_ids,
+    )]
+    second_request = keep_request(
+        first, [player.player_id], seed=804, keep_history=history,
+    )
+    second = preview(second_request)
+    kept = next(p for p in second.result.players if p.player_id == player.player_id)
+    assert kept == original
+    assert kept.generation_fingerprint == original.generation_fingerprint
+    assert not kept.locked
+    assert second == preview(second_request)
+    adopted = RunWorldInitialWorldService(service()).preview(
+        run_id="run-one", branch_id="branch-one",
+        request=RunWorldInitialWorldAdoptionRequest(
+            command_id="kept-locked-fields",
+            generation=second_request,
+            audit_label="Kept source fields",
+            audit_reason="Preserve manually authored source values and provenance",
+            official_run=False, best_n=15, automatic_retirement_age=46,
+        ),
+    )
+    restored = next(p for p in adopted.players if p.player_id == player.player_id)
+    assert restored.source_generation_fingerprint == original.generation_fingerprint
+    assert restored.attributes.technique == value
+    assert restored.locked_from_initial_pool is False

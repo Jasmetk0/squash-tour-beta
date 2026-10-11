@@ -65,9 +65,11 @@ type SortKey = 'name' | 'country' | 'age' | 'current' | 'potential'
  * Product rule: sort/search/display filters are read-only inspection,
  * not group constraints and not a session Keep/Lock action.
  */
-export function GeneratedPlayerReviewInspector({ players, locale = 'en' }: {
+export function GeneratedPlayerReviewInspector({ players, locale = 'en', keepIds = [], onKeepChange }: {
   players: RunInitialWorldPlayer[]
   locale?: 'cs' | 'en'
+  keepIds?: string[]
+  onKeepChange?: (playerId: string, checked: boolean) => void
 }): JSX.Element {
   const cs = locale === 'cs'
   const [search, setSearch] = useState('')
@@ -171,15 +173,23 @@ export function GeneratedPlayerReviewInspector({ players, locale = 'en' }: {
         </select>
       </label>
     </div>
+    {onKeepChange && <p className="status">
+      {cs ? 'Keep pro tuto relaci' : 'Session-only Keep'}: {keepIds.length} / {summary.total}.
+      {' '}{cs ? 'Výběr sám nic nemění; při regeneraci zachová vybrané hráče přesně podle produkčního náhledu. Keep není trvalý Lock.' :
+        'Selecting Keep changes no players until regeneration. Selected players are preserved from the verified preview, not permanently locked.'}
+    </p>}
     <p role="status">{cs ? 'Zobrazeno' : 'Showing'} {visible.length} / {summary.total}.
       {' '}{cs ? 'Filtry mění pouze zobrazení. Potvrzení vždy použije celou dávku.' :
         'Display filters never change the reviewed cohort. Confirm always adopts the whole batch.'}</p>
     <div className="table-responsive" role="region" aria-label="Complete generated player preview">
       <table>
-        <thead><tr><th>{cs ? 'Hráč' : 'Player'}</th><th>{cs ? 'Země' : 'Country'}</th>
+        <thead><tr>{onKeepChange && <th>{cs ? 'Ponechat' : 'Keep'}</th>}<th>{cs ? 'Hráč' : 'Player'}</th><th>{cs ? 'Země' : 'Country'}</th>
           <th>{cs ? 'Věk' : 'Age'}</th><th>{cs ? 'Aktuální / potenciál (1–99)' : 'Current / potential (1–99)'}</th>
           <th>{cs ? 'Třída' : 'Tier'}</th></tr></thead>
         <tbody>{visible.map(player => <tr key={player.player_id}>
+          {onKeepChange && <td><input type="checkbox"
+            aria-label={'Keep ' + player.player_id} checked={keepIds.includes(player.player_id)}
+            onChange={e => onKeepChange(player.player_id, e.target.checked)} /></td>}
           <td>{player.name}<small> · {player.player_id}</small></td>
           <td>{player.country_code}</td><td>{player.age_years_at_season_start}</td>
           <td>{player.current_ability} / {player.potential_ability}</td>

@@ -51,6 +51,8 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
   const [auditReason, setAuditReason] = useState('Create the first-season player population from the reviewed Run-owned World snapshot.')
   const [review, setReview] = useState<ReviewedWorld | null>(null)
   const [approved, setApproved] = useState(false)
+  const [keptIds, setKeptIds] = useState<string[]>([])
+  const [rerollSeed, setRerollSeed] = useState(20261010)
   const [pendingSave, setPendingSave] = useState<PendingSave | null>(null)
   const [saveApproved, setSaveApproved] = useState(false)
   const [notice, setNotice] = useState('')
@@ -110,6 +112,7 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
 
   useEffect(() => {
     setReview(null)
+    setKeptIds([])
     setPendingSave(null)
     setApproved(false)
     setSaveApproved(false)
@@ -143,7 +146,10 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
       return { runId, branchId, head, sourceFingerprint: snapshotFingerprint,
         draftVersion: draft.draft_version, request, preview }
     },
-    onSuccess: value => { setReview(value); setApproved(false); setNotice('') }
+    onSuccess: value => {
+      setReview(value); setKeptIds([]); setRerollSeed(seed + 1)
+      setApproved(false); setNotice('')
+    }
   })
   const reviewMatches = Boolean(review && review.runId === runId &&
     review.branchId === branchId && review.head === head &&
@@ -151,7 +157,10 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
     review.draftVersion === draft?.draft_version &&
     draft?.base_saved_revision_id === head && draft?.status === 'clean' &&
     review.request.generation.world_package_id === selectedWorldId &&
-    review.request.generation.seed === seed && review.request.generation.target_pool_size === poolSize &&
+    (review.request.generation.keep_from_seed ?? review.request.generation.seed) === seed &&
+    (review.request.generation.keep_from_seed == null ||
+      review.request.generation.seed === rerollSeed) &&
+    review.request.generation.target_pool_size === poolSize &&
     (review.request.generation.country_code ?? '') === countryCode &&
     (review.request.generation.region ?? '') === region &&
     String(review.request.generation.min_age ?? '') === minAge &&
@@ -159,6 +168,56 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
     Boolean(options) && !conditionConflict && !ageConflict &&
     review.request.best_n === bestN && review.request.audit_reason === auditReason.trim() &&
     !existing && isApiNotFound(existingQuery.error))
+
+  const canKeepPreview = Boolean(reviewMatches && review &&
+    review.request.generation.keep_from_seed == null && canPreview)
+  const canRegenerate = canKeepPreview &&
+    keptIds.length > 0 && keptIds.length < poolSize &&
+    Number.isSafeInteger(rerollSeed) && rerollSeed !== seed
+
+  const regenerateAction = useMutation({
+    mutationFn: async () => {
+      if (!canRegenerate || !review || !draft || !snapshotFingerprint)
+        throw new Error('Verified source preview, Keep selection and new seed are required.')
+      const sourceIds = new Set(review.preview.state.players.map(p => p.player_id))
+      const retained = [...new Set(keptIds)].sort()
+      if (retained.length !== keptIds.length || retained.some(id => !sourceIds.has(id)))
+        throw new Error('Session Keep contains unknown or duplicate source players.')
+      const request: RunInitialWorldAdoption = {
+        ...review.request,
+        command_id: `admin-initial-world-${crypto.randomUUID()}`,
+        generation: {
+          ...review.request.generation,
+          seed: rerollSeed,
+          keep_from_seed: review.request.generation.seed,
+          keep_from_preview_fingerprint: review.preview.state.run_world_pool_preview_fingerprint,
+          keep_player_ids: retained
+        },
+      }
+      const preview = await previewRunOwnedInitialWorld(runId, branchId, request)
+      if (!verifiedInitialWorldPreview(preview, runId, branchId, request, options))
+        throw new Error('Regenerated preview is inconsistent with the exact reviewed source.')
+      const original = new Map(review.preview.state.players.map(p => [p.player_id, p]))
+      for (const id of retained) {
+        const before = original.get(id)
+        const after = preview.state.players.find(p => p.player_id === id)
+        if (!before || !after || before.name !== after.name ||
+          before.country_code !== after.country_code ||
+          before.age_years_at_season_start !== after.age_years_at_season_start ||
+          before.current_ability !== after.current_ability ||
+          before.potential_ability !== after.potential_ability ||
+          before.potential_tier !== after.potential_tier)
+          throw new Error('A Keep player changed in the regenerated preview.')
+      }
+      return { runId, branchId, head, sourceFingerprint: snapshotFingerprint,
+        draftVersion: draft.draft_version, request, preview }
+    },
+    onSuccess: value => {
+      setReview(value); setKeptIds([]); setApproved(false); setNotice(
+        'Regenerated only the remaining players. Review the full batch, then explicitly Adopt and Save.'
+      )
+    }
+  })
 
   const adoptAction = useMutation({
     mutationFn: async (current: ReviewedWorld) => {
@@ -247,7 +306,8 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
     }
   })
 
-  const canAdopt = reviewMatches && approved && !adoptAction.isPending && !previewAction.isPending
+  const canAdopt = reviewMatches && approved && keptIds.length === 0 &&
+    !regenerateAction.isPending && !adoptAction.isPending && !previewAction.isPending
   const viewedPlayers = review?.preview.state.players ?? []
 
   return <SectionCard title={cs ? 'Generovat hráče — první úplná dávka' : 'Generate first-season players'}>
@@ -333,7 +393,8 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
     <label>Audit reason <input aria-label="InitialWorld audit reason" maxLength={1000}
       value={auditReason} onChange={event => setAuditReason(event.target.value)} /></label>
     <p className="status">Lifecycle retirement-age input: 46 (current first-season policy). No player talent calibration is changed.</p>
-    <button type="button" disabled={!canPreview || previewAction.isPending || adoptAction.isPending || saveAction.isPending}
+    <button type="button" disabled={!canPreview || previewAction.isPending || regenerateAction.isPending ||
+        adoptAction.isPending || saveAction.isPending}
       onClick={() => { setReview(null); setApproved(false); previewAction.mutate() }}>
       {previewAction.isPending ? (cs ? 'Generuji náhled…' : 'Generating preview…') : (cs ? 'Generovat – zobrazit náhled' : 'Preview generated players')}
     </button>
@@ -356,7 +417,48 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
           : (cs ? 'Konflikt! Někteří hráči nesplňují podmínky.' : 'Conflict! Some players fail hard conditions.')}
       </p>}
       <p>{cs ? 'Model' : 'Model'}: <code>{review.preview.state.source_kind}</code> · {cs ? 'Otisk náhledu' : 'Preview fingerprint'}: <code>{review.preview.fingerprint.slice(0, 20)}…</code></p>
-      <GeneratedPlayerReviewInspector key={review.preview.fingerprint} players={viewedPlayers} locale={locale} />
+      <GeneratedPlayerReviewInspector key={review.preview.fingerprint} players={viewedPlayers} locale={locale}
+        keepIds={keptIds}
+        onKeepChange={canKeepPreview ? (id, checked) => {
+          setKeptIds(current => checked
+            ? [...new Set([...current, id])].sort()
+            : current.filter(item => item !== id))
+          setApproved(false)
+        } : undefined} />
+      {canKeepPreview && <section aria-label="Session Keep regeneration">
+        <h5>{cs ? 'Keep vybraných a regenerace ostatních' : 'Keep selected, regenerate remaining'}</h5>
+        <p className="status">{cs
+          ? 'Vyber Keep u hráčů v tabulce a zadej jiný seed. Server znovu ověří původní náhled a přegeneruje ostatní bez zápisu do Runu. Keep není trvalý Lock.'
+          : 'Mark Keep on preview players and supply a different seed. The server verifies the original preview and regenerates the remaining players without writing to the Run. Keep is not a permanent Lock.'}</p>
+        <label>{cs ? 'Nový seed' : 'New regeneration seed'}
+          <input type="number" aria-label="Session Keep regeneration seed" value={rerollSeed}
+            onChange={e => setRerollSeed(Number(e.target.value))} />
+        </label>
+        <p>{cs ? 'Ponecháno' : 'Kept'}: {keptIds.length} / {poolSize} ·
+          {' '}{cs ? 'K regeneraci' : 'Regenerate'}: {poolSize - keptIds.length}</p>
+        {keptIds.length === poolSize && <p role="alert">{cs
+          ? 'Ponechání všech hráčů nenechává nic k regeneraci.'
+          : 'Keeping every player leaves nothing to regenerate.'}</p>}
+        {rerollSeed === seed && <p role="alert">{cs
+          ? 'Pro regeneraci je potřeba jiný seed.'
+          : 'A different seed is required for regeneration.'}</p>}
+        <button type="button" disabled={!canRegenerate || regenerateAction.isPending ||
+          adoptAction.isPending || previewAction.isPending}
+          onClick={() => regenerateAction.mutate()}>
+          {regenerateAction.isPending ? (cs ? 'Regeneruji…' : 'Regenerating…')
+            : (cs ? 'Regenerovat ostatní – nový náhled' : 'Regenerate remaining – new preview')}
+        </button>
+        {keptIds.length > 0 && <p className="status">{cs
+          ? 'Keep výběr dosud nic nemění. Nejprve spusť regeneraci, pak potvrď nový celý náhled.'
+          : 'Keep selection alone changes nothing. Regenerate first, then confirm the entire new preview.'}</p>}
+      </section>}
+      {review.request.generation.keep_from_seed != null && <p className="status">
+        {cs ? 'Jedna regenerace s Keep proběhla. Ponechaní hráči nemají trvalý zámek. Další relace vyžaduje nový základní náhled.'
+          : 'One verified session Keep regeneration completed. No permanent player locks were created; generate a new base preview to begin another session.'}
+      </p>}
+      {regenerateAction.error && <p role="alert" className="error">
+        {cs ? 'Regenerace selhala' : 'Regeneration failed'}: {formatApiError(regenerateAction.error)}
+      </p>}
 
       {!reviewMatches && <p role="alert" className="error">Review expired: selected Run, Branch, World, revision or generation inputs changed.</p>}
       <label><input type="checkbox" aria-label="Approve InitialWorld adoption" checked={approved}

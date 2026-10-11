@@ -326,4 +326,56 @@ describe('Run-owned first-season player setup', () => {
     expect(api.adoptRunOwnedInitialWorld).not.toHaveBeenCalled()
   })
 
+  it('selects session Keep without changing original review, then previews a real-source-bound reroll',async()=>{
+    render()
+    await userEvent.clear(screen.getByRole('spinbutton',{name:'Number of generated players'}))
+    await userEvent.type(screen.getByRole('spinbutton',{name:'Number of generated players'}),'2')
+    await userEvent.click(await screen.findByRole('button',{name:'Preview generated players'}))
+    expect(await screen.findByRole('checkbox',{name:'Keep p-1'})).toBeInTheDocument()
+    expect(api.adoptRunOwnedInitialWorld).not.toHaveBeenCalled()
+    await userEvent.click(screen.getByRole('checkbox',{name:'Keep p-1'}))
+    expect(screen.getByText(/Selecting Keep changes no players until regeneration/)).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('checkbox',{name:'Approve InitialWorld adoption'}))
+    expect(screen.getByRole('button',{name:'Adopt generated players'})).toBeDisabled()
+    await userEvent.click(screen.getByRole('button',{name:'Regenerate remaining – new preview'}))
+    await waitFor(()=>expect(api.previewRunOwnedInitialWorld).toHaveBeenCalledTimes(2))
+    const second=api.previewRunOwnedInitialWorld.mock.calls[1][2]
+    expect(second.generation).toEqual(expect.objectContaining({
+      seed:20261010,keep_from_seed:20261009,
+      keep_from_preview_fingerprint:sha('d'),keep_player_ids:['p-1'],
+      target_pool_size:2
+    }))
+    expect(await screen.findByText(/One verified session Keep regeneration completed/)).toBeInTheDocument()
+    expect(screen.queryByRole('checkbox',{name:'Keep p-1'})).not.toBeInTheDocument()
+    expect(screen.getByText(/Showing 2 \/ 2/)).toBeInTheDocument()
+    expect(api.adoptRunOwnedInitialWorld).not.toHaveBeenCalled()
+    await userEvent.click(screen.getByRole('checkbox',{name:'Approve InitialWorld adoption'}))
+    await userEvent.click(screen.getByRole('button',{name:'Adopt generated players'}))
+    await waitFor(()=>expect(api.adoptRunOwnedInitialWorld).toHaveBeenCalledWith(
+      'first-run','timeline-1',expect.objectContaining({
+        generation:expect.objectContaining({keep_player_ids:['p-1'],seed:20261010})
+      }),sha('f'),{head:'revision-1',draftVersion:0,packageFingerprint:sha('e')}
+    ))
+    expect(api.saveRunOwnedInitialWorld).not.toHaveBeenCalled()
+  })
+
+  it('blocks Keep of all players and reroll with the same seed',async()=>{
+    render()
+    await userEvent.clear(screen.getByRole('spinbutton',{name:'Number of generated players'}))
+    await userEvent.type(screen.getByRole('spinbutton',{name:'Number of generated players'}),'2')
+    await userEvent.click(await screen.findByRole('button',{name:'Preview generated players'}))
+    await userEvent.click(await screen.findByRole('checkbox',{name:'Keep p-1'}))
+    await userEvent.click(screen.getByRole('checkbox',{name:'Keep p-2'}))
+    expect(screen.getByRole('button',{name:'Regenerate remaining – new preview'})).toBeDisabled()
+    expect(screen.getByText(/Keeping every player leaves nothing to regenerate/)).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('checkbox',{name:'Keep p-2'}))
+    const seed=screen.getByRole('spinbutton',{name:'Session Keep regeneration seed'})
+    await userEvent.clear(seed)
+    await userEvent.type(seed,'20261009')
+    expect(screen.getByText(/A different seed is required/)).toBeInTheDocument()
+    expect(screen.getByRole('button',{name:'Regenerate remaining – new preview'})).toBeDisabled()
+    expect(api.previewRunOwnedInitialWorld).toHaveBeenCalledTimes(1)
+    expect(api.adoptRunOwnedInitialWorld).not.toHaveBeenCalled()
+  })
+
 })

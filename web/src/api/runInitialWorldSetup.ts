@@ -8,6 +8,9 @@ export type RunInitialWorldGeneration = {
   region?: string | null
   min_age?: number | null
   max_age?: number | null
+  keep_from_seed?: number | null
+  keep_from_preview_fingerprint?: string | null
+  keep_player_ids?: string[]
 }
 
 export type RunWorldGenerationCountry = {
@@ -157,6 +160,21 @@ export function verifiedInitialWorldPreview(
   if (min != null && (!Number.isInteger(min) || min < 15 || min > 45)) return false
   if (max != null && (!Number.isInteger(max) || max < 15 || max > 45)) return false
   if (min != null && max != null && min > max) return false
+  const kept = request.generation.keep_player_ids ?? []
+  if (kept.length > 0) {
+    if (!Number.isSafeInteger(request.generation.keep_from_seed) ||
+        request.generation.keep_from_seed === request.generation.seed ||
+        !/^[0-9a-f]{64}$/.test(request.generation.keep_from_preview_fingerprint ?? '') ||
+        kept.length >= request.generation.target_pool_size ||
+        kept.some(id => typeof id !== 'string' || !id) ||
+        kept.join('|') !== [...new Set(kept)].sort().join('|') ||
+        !Array.isArray(players) ||
+        !kept.every(id => players.some(player => player.player_id === id)))
+      return false
+  } else if (request.generation.keep_from_seed != null ||
+             request.generation.keep_from_preview_fingerprint != null) {
+    return false
+  }
   return value?.preview_only === true &&
     /^[a-f0-9]{64}$/.test(value.fingerprint) &&
     state?.run_id === runId && state?.branch_id === branchId &&

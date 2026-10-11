@@ -1,3 +1,11 @@
+## 11 October 2026 — Packages catalog and detail candidate (PR awaiting verification)
+
+- Baseline merged #1360: 5dda12813c72e4e7abac77f1591f23feaa742252.
+- Category hub, deduplicated All packages list, category membership based only on registered owned World content. No fabricated Player/Hybrid packages or template identity.
+- Actual World detail has Overview, Contents and Validation (registered provenance, country/geography records, real validation checks, verified country links).
+- Existing source copy/editor remains connected. Selective Apply to Run, per-source export and unimplemented package schemas are explicitly unavailable; use existing full-source Run Management until a separate safe PR.
+- Not a release declaration. Required latest-head CI/browser checks pending.
+
 ## 11 October 2026 — canonical Runs inventory implementation candidate (PR pending)
 
 - Branch starts at merge #1359 (`a9c305f50248b8446409095571faeb1f4ec6ecf7`).

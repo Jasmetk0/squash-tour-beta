@@ -90,6 +90,30 @@ def main() -> None:
             assert page.get_by_role("combobox", name="Language / Jazyk").input_value() == "en"
             evidence["language_persisted"] = "en"
 
+            # Browse actual registered World packages, never synthetic hybrids.
+            page.goto(base + "/admin/packages")
+            expect(page.get_by_role("heading", name="Packages", exact=True)).to_be_visible()
+            assert page.get_by_role("combobox", name="Admin active Run").count() == 0
+            page.get_by_role("link", name="All packages").click()
+            expect(page.get_by_role("heading", name="All packages", exact=True)).to_be_visible()
+            worlds_response = page.request.get(args.api_url + "/world/packages")
+            assert worlds_response.ok, worlds_response.text()
+            worlds = worlds_response.json()["packages"]
+            assert page.locator(".package-index-row").count() == len({w["world_id"] for w in worlds})
+            if worlds:
+                world = worlds[0]
+                page.locator(".package-index-row").filter(has_text=world["name"]).first.get_by_role("link", name="Details").click()
+                expect(page.get_by_role("heading", name=world["name"])).to_be_visible()
+                page.get_by_role("button", name="Contents").click()
+                expect(page.get_by_role("heading", name="Countries", exact=False)).to_be_visible()
+                page.get_by_role("button", name="Validation").click()
+                expect(page.get_by_role("heading", name="Actual validation results")).to_be_visible()
+                evidence["world_package_detail"] = world["world_id"]
+            page.goto(base + "/admin/packages/category/hybrid")
+            expect(page.get_by_role("heading", name="Hybrid", exact=True)).to_be_visible()
+            assert page.locator(".package-index-row").count() == 0
+            evidence["packages_registered"] = len({w["world_id"] for w in worlds})
+
             page.goto(base + "/admin/runs/new")
             expect(page.get_by_role("heading", name="Create test Run")).to_be_visible()
             page.get_by_label("Unique Run name").fill("Prealpha Shell Browser Run")

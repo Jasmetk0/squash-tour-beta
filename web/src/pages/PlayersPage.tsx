@@ -76,6 +76,12 @@ export function PlayersPage(): JSX.Element {
         {!savedHead && !isLoading && !error && <p role="alert">{cs
           ? 'Chybí ověřená Saved Revision. Seznam nelze načíst.'
           : 'No verified Saved Revision. Inventory is unavailable.'}</p>}
+        <div className="actions">
+          <Link to={`/admin/runs/${encodeURIComponent(runId)}/players/generate`}>
+            {cs ? 'Generovat' : 'Generate'} →
+          </Link>
+          <span className="status">{cs ? 'Vytvořit hráče a Import: zatím nejsou připojeny ke canonical Working Draftu' : 'Create and Import: not yet connected to canonical Working Draft'}</span>
+        </div>
         <section aria-label="Saved player filters">
           <h3>{cs ? 'Hledání a filtry' : 'Search and filters'}</h3>
           <div className="form-grid">

@@ -134,6 +134,9 @@ def setup_run(page, base_url: str, artifacts: Path) -> str:
     page.get_by_label("Unique Run name").fill("Browser Tournament Acceptance")
     click("Create isolated Run")
     page.get_by_role("heading", name="World and Calendar copies", exact=True).wait_for()
+    # The production shell is bilingual; this acceptance intentionally tests
+    # English labels for the complete Run → Players/Generate → Save journey.
+    page.get_by_role("combobox", name="Language / Jazyk").select_option("en")
     run_url = page.url
     (artifacts / "run-url.txt").write_text(run_url)
     for kind in ("world", "calendar"):
@@ -149,6 +152,8 @@ def setup_run(page, base_url: str, artifacts: Path) -> str:
             page.get_by_text("Current Run copy: Present. Draft: clean.", exact=False)
         ).to_be_visible()
         print("BROWSER: copied and saved", kind, flush=True)
+    page.get_by_role("link", name="Generate players →").click()
+    expect(page.get_by_role("heading", name="Generate players")).to_be_visible()
     page.get_by_label("Number of generated players").fill("64")
     page.get_by_label("Player generation seed").fill("4201")
     page.get_by_label("InitialWorld audit reason").fill(
@@ -164,6 +169,7 @@ def setup_run(page, base_url: str, artifacts: Path) -> str:
     ).to_be_visible()
     browser_settle(page)
     print("BROWSER: generated, adopted and saved 64 players", flush=True)
+    page.goto(run_url)
     page.get_by_label("Initial ranking audit reason").fill(
         "Initial Week 1 browser acceptance"
     )

@@ -17,7 +17,6 @@ import { useAdminBranch } from '../admin/AdminBranchContext'
 import { useAdminTime } from '../admin/AdminTimeContext'
 import { CurrentContextStrip, MetadataList, SectionCard } from '../components/RunScopedUi'
 import { RunPackageSetupPanel } from '../components/RunPackageSetupPanel'
-import { RunInitialWorldSetupPanel } from '../components/RunInitialWorldSetupPanel'
 import { RunInitialRankingSetupPanel } from '../components/RunInitialRankingSetupPanel'
 import { RunInitialRankingPublicationPanel } from '../components/RunInitialRankingPublicationPanel'
 import { RunFirstTournamentPanel } from '../components/RunFirstTournamentPanel'
@@ -401,7 +400,7 @@ export function RunPage(): JSX.Element {
         ? 'Existující nástroje k přípravě hráčů, rankingu a prvního turnaje. Ruční Save a potvrzovací kroky se nemění.'
         : 'Existing player, ranking and first-tournament preparation. Manual Save and confirmations are unchanged.'}</p>
       <RunPackageSetupPanel run={run!} branch={selectedBranch} />
-      <RunInitialWorldSetupPanel run={run!} branch={selectedBranch} />
+      <p><Link to={base + '/players/generate'}>{language === 'cs' ? 'Generovat hráče →' : 'Generate players →'}</Link></p>
       <RunInitialRankingSetupPanel run={run!} branch={selectedBranch} />
       <RunInitialRankingPublicationPanel run={run!} branch={selectedBranch} />
       <RunFirstTournamentPanel run={run!} branch={selectedBranch} />

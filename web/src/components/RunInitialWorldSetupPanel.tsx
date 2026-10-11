@@ -1,6 +1,7 @@
 import { acknowledgeSavedRunForm } from './RunNavigationSafeguard'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 
 import {
   adoptRunOwnedInitialWorld, getBranchWorkingDraft, getRunOwnedInitialWorld,
@@ -27,9 +28,10 @@ type ReviewedWorld = {
 
 type PendingSave = { runId: string; branchId: string; head: string; fingerprint: string }
 
-export function RunInitialWorldSetupPanel({ run, branch }: {
-  run: RunContainer; branch: RunBranch | null
+export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
+  run: RunContainer; branch: RunBranch | null; locale?: 'cs' | 'en'
 }): JSX.Element {
+  const cs = locale === 'cs'
   const queryClient = useQueryClient()
   const runId = run.run_id
   const branchId = branch?.run_id === runId ? branch.branch_id : ''
@@ -39,7 +41,7 @@ export function RunInitialWorldSetupPanel({ run, branch }: {
     Boolean(branchId && head && branch?.status === 'active' && !branch.read_only)
   const [sourceId, setSourceId] = useState('')
   const [seed, setSeed] = useState(20261009)
-  const [poolSize, setPoolSize] = useState(1000)
+  const [poolSize, setPoolSize] = useState(64)
   const [bestN, setBestN] = useState(15)
   const [auditReason, setAuditReason] = useState('Create the first-season player population from the reviewed Run-owned World snapshot.')
   const [review, setReview] = useState<ReviewedWorld | null>(null)
@@ -74,7 +76,7 @@ export function RunInitialWorldSetupPanel({ run, branch }: {
     existingQuery.data.branch_id === branchId ? existingQuery.data : null
   const unexpectedExistingError = existingQuery.error && !isApiNotFound(existingQuery.error)
   const validParameters = Number.isSafeInteger(seed) && Number.isInteger(poolSize) &&
-    poolSize >= 1 && poolSize <= 2000 && Number.isInteger(bestN) && bestN >= 1 &&
+    poolSize >= 1 && poolSize <= 128 && Number.isInteger(bestN) && bestN >= 1 &&
     auditReason.trim().length >= 1 && auditReason.trim().length <= 1000
   const snapshotFingerprint = packageQuery.data?.fingerprint ?? null
   const canPreview = editable && worldIds.length > 0 && validParameters &&
@@ -128,7 +130,9 @@ export function RunInitialWorldSetupPanel({ run, branch }: {
   const adoptAction = useMutation({
     mutationFn: async (current: ReviewedWorld) => {
       const result = await adoptRunOwnedInitialWorld(
-        current.runId, current.branchId, current.request, current.preview.fingerprint
+        current.runId, current.branchId, current.request, current.preview.fingerprint,
+        { head: current.head, draftVersion: current.draftVersion,
+          packageFingerprint: current.sourceFingerprint }
       )
       if (result.run_id !== current.runId || result.branch_id !== current.branchId ||
         result.adopted_by_command_id !== current.request.command_id ||
@@ -217,13 +221,23 @@ export function RunInitialWorldSetupPanel({ run, branch }: {
     return result
   }, {})).sort((a, b) => b[1] - a[1]).slice(0, 8)
 
-  return <SectionCard title="Generate first-season players">
-    <p className="status">Runs use a detached World Package snapshot. Preview generates real deterministic players for 2000/01 without touching the global Initial Pool. Adopt creates a Run/Branch-owned InitialWorld; Save makes it an immutable revision.</p>
+  return <SectionCard title={cs ? 'Generovat hráče — první úplná dávka' : 'Generate first-season players'}>
+    <p className="status">{cs
+      ? 'První funkční dávka 1–128 hráčů pro sezónu 2000/01. Používá pouze uložený World Package dané branche. Náhled nic nezapisuje; potvrzení připraví InitialWorld a teprve ruční Save vytváří Saved Revision.'
+      : 'First supported complete batch (1–128 players) for season 2000/01. Uses the saved Run-owned World Package only. Preview never writes; confirmation stages InitialWorld, then manual Save creates a Saved Revision.'}</p>
+    <p className="status">{cs
+      ? 'Podmínky, skupiny, úpravy jednotlivců a generování do rozehrané sezóny v tomto prvním řezu nejsou podporované. Počet musí být celá výslovně určená dávka.'
+      : 'Conditions, groups, individual editing and mid-season generation are not supported in this first slice. The count always specifies the entire batch.'}</p>
     {existing && <p role="status">InitialWorld exists: {existing.players.length} players from {existing.world_package_id}; seed {existing.bootstrap_seed}. Existing players cannot be silently regenerated or overwritten.</p>}
     {unexpectedExistingError && <p role="alert" className="error">Cannot verify whether this Run already has InitialWorld: {formatApiError(existingQuery.error)}</p>}
     {packageQuery.isError && <p role="alert" className="error">Run World state unavailable: {formatApiError(packageQuery.error)}</p>}
     {draftQuery.isError && <p role="alert" className="error">Working Draft unavailable: {formatApiError(draftQuery.error)}</p>}
-    {!existing && worldIds.length === 0 && <p>First copy and save a World Package with country and player-generation identity data above.</p>}
+    {!existing && worldIds.length === 0 && <p>{cs
+      ? 'Nejprve musíš zkopírovat World Package do Runu a ručně jej uložit.'
+      : 'First copy a World Package into the Run and manually Save its revision.'}
+      {' '}<Link to={'/admin/runs/' + encodeURIComponent(runId) + '/manage'}>
+        {cs ? 'Otevřít správu Runu →' : 'Open Run Management →'}
+      </Link></p>}
     {draft && draft.status !== 'clean' && !pendingSave && <p className="status">Save or resolve existing Working Draft changes before generating new players.</p>}
     <label>Run-owned World{' '}
       <select aria-label="Run World for player generation" value={selectedWorldId}
@@ -233,8 +247,8 @@ export function RunInitialWorldSetupPanel({ run, branch }: {
     </label>
     <label>Seed <input aria-label="Player generation seed" type="number" value={seed}
       onChange={event => setSeed(Number(event.target.value))} /></label>
-    <label>Number of players (1–2000) <input aria-label="Number of generated players" type="number"
-      min={1} max={2000} value={poolSize} onChange={event => setPoolSize(Number(event.target.value))} /></label>
+    <label>Number of players (1–128) <input aria-label="Number of generated players" type="number"
+      min={1} max={128} value={poolSize} onChange={event => setPoolSize(Number(event.target.value))} /></label>
     <label>First-season ranking Best N <input aria-label="First-season ranking Best N" type="number"
       min={1} value={bestN} onChange={event => setBestN(Number(event.target.value))} /></label>
     <label>Audit reason <input aria-label="InitialWorld audit reason" maxLength={1000}
@@ -242,25 +256,32 @@ export function RunInitialWorldSetupPanel({ run, branch }: {
     <p className="status">Lifecycle retirement-age input: 46 (current first-season policy). No player talent calibration is changed.</p>
     <button type="button" disabled={!canPreview || previewAction.isPending || adoptAction.isPending || saveAction.isPending}
       onClick={() => { setReview(null); setApproved(false); previewAction.mutate() }}>
-      {previewAction.isPending ? 'Generating preview…' : 'Preview generated players'}
+      {previewAction.isPending ? (cs ? 'Generuji náhled…' : 'Generating preview…') : (cs ? 'Generovat – zobrazit náhled' : 'Preview generated players')}
     </button>
     {previewAction.error && <p role="alert" className="error">Preview failed: {formatApiError(previewAction.error)}</p>}
     {review && <section aria-label="Generated player review">
       <h4>Review {viewedPlayers.length} players</h4>
-      <p>World: {review.request.generation.world_package_id} · Seed: {review.request.generation.seed} · First-season Best {review.request.best_n}</p>
+      <p>Run: {review.runId} · Branch: {review.branchId} · Saved HEAD: <code>{review.head}</code></p>
+      <p>{cs ? 'Svět' : 'World'}: {review.request.generation.world_package_id} · Seed: {review.request.generation.seed} · First-season Best {review.request.best_n} · Draft v{review.draftVersion}</p>
+      <p>{cs ? 'Model' : 'Model'}: <code>{review.preview.state.source_kind}</code> · {cs ? 'Otisk náhledu' : 'Preview fingerprint'}: <code>{review.preview.fingerprint.slice(0, 20)}…</code></p>
       <p>Largest nationality groups: {distribution.map(([country, count]) => `${country} ${count}`).join(' · ')}</p>
-      <table><thead><tr><th>Player</th><th>Country</th><th>Age</th><th>Current / potential</th></tr></thead>
-        <tbody>{viewedPlayers.slice(0, 12).map(player =>
-          <tr key={player.player_id}><td>{player.name}</td><td>{player.country_code}</td>
-            <td>{player.age_years_at_season_start}</td>
+      <div className="table-responsive"><table>
+        <thead><tr><th>{cs ? 'Hráč' : 'Player'}</th><th>{cs ? 'Země' : 'Country'}</th>
+          <th>{cs ? 'Věk na začátku sezóny' : 'First-season age'}</th>
+          <th>{cs ? 'Aktuální / potenciál (zdrojová škála)' : 'Current / potential (source scale)'}</th></tr></thead>
+        <tbody>{viewedPlayers.map(player =>
+          <tr key={player.player_id}><td>{player.name}<small> · {player.player_id}</small></td>
+            <td>{player.country_code}</td><td>{player.age_years_at_season_start}</td>
             <td>{player.current_ability} / {player.potential_ability}</td></tr>
-        )}</tbody></table>
-      <p className="status">Showing the first {Math.min(12, viewedPlayers.length)} canonical IDs. All {viewedPlayers.length} players are included when adopted.</p>
+        )}</tbody>
+      </table></div>
+      <p className="status">{cs ? 'V náhledu je kompletní skutečná dávka' : 'Full actual batch is reviewable'}: {viewedPlayers.length}.</p>
+      <p className="status">{cs ? 'Aktuální schopnosti 1–99 nejsou canonical 0–200 OVR. Žádné falešné historické zápasy nebo ranking se nevytvářejí.' : 'Current 1–99 abilities are not canonical 0–200 OVR. No fictional past matches or rankings are generated.'}</p>
       {!reviewMatches && <p role="alert" className="error">Review expired: selected Run, Branch, World, revision or generation inputs changed.</p>}
       <label><input type="checkbox" aria-label="Approve InitialWorld adoption" checked={approved}
         onChange={event => setApproved(event.target.checked)} /> Adopt this exact generated InitialWorld to the current Branch.</label>
       <button type="button" disabled={!canAdopt} onClick={() => review && adoptAction.mutate(review)}>
-        {adoptAction.isPending ? 'Adopting players…' : 'Adopt generated players'}
+        {adoptAction.isPending ? (cs ? 'Připravuji dávku…' : 'Staging players…') : (cs ? 'Potvrdit a připravit Working Draft' : 'Adopt generated players')}
       </button>
     </section>}
     {adoptAction.error && <p role="alert" className="error">Adoption failed: {formatApiError(adoptAction.error)}</p>}
@@ -272,14 +293,14 @@ export function RunInitialWorldSetupPanel({ run, branch }: {
       })}>Review existing InitialWorld save</button>
     </section>}
     {pendingSave && <section aria-label="Save InitialWorld revision">
-      <p>Players are owned by the Run, but their new Saved Revision has not yet been confirmed.</p>
+      <p>{cs ? 'Hráči jsou připraveni v Run-owned InitialWorld. Saved Revision vznikne až výslovným uložením.' : 'Players are staged in Run-owned InitialWorld. Saved Revision is only created by an explicit Save.'}</p>
       {savePreviewQuery.error && <p role="alert" className="error">Save preflight failed: {formatApiError(savePreviewQuery.error)}</p>}
       {!saveReady && !savePreviewQuery.isLoading && <p role="alert" className="error">The saved head, Draft or InitialWorld fingerprint does not match. Refresh before saving.</p>}
       <label><input type="checkbox" aria-label="Approve InitialWorld revision save" checked={saveApproved}
         onChange={event => setSaveApproved(event.target.checked)} /> Create the immutable Saved Revision.</label>
       <button type="button" disabled={!saveReady || !saveApproved || saveAction.isPending}
         onClick={() => saveAction.mutate()}>
-        {saveAction.isPending ? 'Saving InitialWorld…' : 'Save InitialWorld revision'}
+        {saveAction.isPending ? (cs ? 'Ukládám revizi…' : 'Saving InitialWorld…') : (cs ? 'Ruční Save nové revize' : 'Save InitialWorld revision')}
       </button>
     </section>}
     {saveAction.error && <p role="alert" className="error">Save failed: {formatApiError(saveAction.error)}</p>}

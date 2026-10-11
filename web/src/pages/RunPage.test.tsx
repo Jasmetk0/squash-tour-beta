@@ -19,7 +19,6 @@ const api = vi.hoisted(() => ({
 }))
 vi.mock('../api/client', () => api)
 vi.mock('../components/RunPackageSetupPanel', () => ({ RunPackageSetupPanel: () => <p>World and Calendar copies</p> }))
-vi.mock('../components/RunInitialWorldSetupPanel', () => ({ RunInitialWorldSetupPanel: () => <p>Player setup</p> }))
 vi.mock('../components/RunInitialRankingSetupPanel', () => ({ RunInitialRankingSetupPanel: () => <p>Ranking setup</p> }))
 vi.mock('../components/RunInitialRankingPublicationPanel', () => ({ RunInitialRankingPublicationPanel: () => <p>Ranking publication</p> }))
 vi.mock('../components/RunFirstTournamentPanel', () => ({ RunFirstTournamentPanel: () => <p>First tournament setup</p> }))
@@ -103,6 +102,7 @@ describe('Run Home V1 canonical projections', () => {
     expect(screen.getByRole('img', { name: '61 týdnů' }).children).toHaveLength(61)
     expect(screen.getByText('Hratelné zápasy: 2')).toBeInTheDocument()
     expect(screen.getByText('World and Calendar copies')).toBeInTheDocument()
+    expect(screen.getByRole('link',{name:'Generovat hráče →'})).toHaveAttribute('href','/admin/runs/'+runId+'/players/generate')
     expect(api.getRunContainer).toHaveBeenCalledWith(runId)
   })
 
@@ -189,7 +189,7 @@ describe('Run Home V1 canonical projections', () => {
       total_calendar_events: 0, published_result_count: 0, upcoming: [], recent_results: []
     })
     mount()
-    expect(await screen.findByText('Saved Home activity identity mismatch')).toBeInTheDocument()
+    expect((await screen.findAllByText('Saved Home activity identity mismatch')).length).toBeGreaterThan(0)
     expect(screen.queryByText('Saved Autumn Open')).not.toBeInTheDocument()
   })
 

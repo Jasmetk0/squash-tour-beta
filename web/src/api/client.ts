@@ -3630,11 +3630,19 @@ export function previewRunOwnedInitialWorld(
 export function adoptRunOwnedInitialWorld(
   runId: string, branchId: string,
   payload: import('./runInitialWorldSetup').RunInitialWorldAdoption,
-  expectedFingerprint: string
+  expectedFingerprint: string,
+  reviewed?: { head: string; draftVersion: number; packageFingerprint: string }
 ): Promise<import('./runInitialWorldSetup').RunInitialWorldState> {
   return request(`${runInitialWorldRoot(runId, branchId)}/world-package`, {
     method: 'POST',
-    headers: { 'X-Initial-World-Preview-Fingerprint': expectedFingerprint },
+    headers: {
+      'X-Initial-World-Preview-Fingerprint': expectedFingerprint,
+      ...(reviewed ? {
+        'X-Expected-Saved-Revision-Id': reviewed.head,
+        'X-Expected-Draft-Version': String(reviewed.draftVersion),
+        'X-Expected-Run-Package-Fingerprint': reviewed.packageFingerprint
+      } : {})
+    },
     body: JSON.stringify(payload)
   })
 }

@@ -161,7 +161,8 @@ describe('Run-owned first-season player setup', () => {
     await userEvent.click(screen.getByRole('checkbox', { name: 'Approve InitialWorld adoption' }))
     await userEvent.click(screen.getByRole('button', { name: 'Adopt generated players' }))
     await waitFor(() => expect(api.adoptRunOwnedInitialWorld).toHaveBeenCalledWith(
-      'first-run', 'timeline-1', expect.objectContaining({ command_id: expect.any(String) }), sha('f')
+      'first-run', 'timeline-1', expect.objectContaining({ command_id: expect.any(String) }), sha('f'),
+      { head: 'revision-1', draftVersion: 0, packageFingerprint: sha('e') }
     ))
     expect(api.saveRunOwnedInitialWorld).not.toHaveBeenCalled()
     await userEvent.click(await screen.findByRole('checkbox', { name: 'Approve InitialWorld revision save' }))

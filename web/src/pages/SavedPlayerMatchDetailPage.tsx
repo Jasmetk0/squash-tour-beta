@@ -38,10 +38,12 @@ export function SavedPlayerMatchDetailPage(): JSX.Element {
     queryFn: () => getSavedHomePlayerIdentities(runId, branchId!, ids),
     enabled: ready && ids.length === 2 && ids[0] !== ids[1], retry: false,
   })
-  const names = namesQuery.data?.saved_revision_id === savedHead &&
-    namesQuery.data.run_id === runId && namesQuery.data.branch_id === branchId &&
-    namesQuery.data.requested_ids.join('|') === ids.join('|')
-    ? Object.fromEntries(namesQuery.data.players.map(p => [p.player_id, p.display_name]))
+  const namesData = namesQuery.data
+  const names = namesData && savedHead &&
+    namesData.saved_revision_id === savedHead &&
+    namesData.run_id === runId && namesData.branch_id === branchId &&
+    namesData.requested_ids.join('|') === ids.join('|')
+    ? Object.fromEntries(namesData.players.map(p => [p.player_id, p.display_name]))
     : {}
   const frame = data?.rallies.find(r => r.rally_index === index + 1)
   const playerName = (id: string | null | undefined): string => id ? (names[id] || id) : '—'

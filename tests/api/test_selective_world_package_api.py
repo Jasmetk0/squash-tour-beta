@@ -113,3 +113,39 @@ def test_selection_preview_rejects_unknown_labels_and_unreviewed_conflict_resolu
             "conflict_resolutions": {"other/identity": "use_source"},
         })[0] == 409
         assert _request("GET", base)[1]["state"] is None
+
+
+@pytest.mark.pr_critical
+def test_changed_world_source_invalidates_exact_selected_preview(tmp_path):
+    from beta_engine.infrastructure.world_package_storage import WorldPackageCountryStore
+
+    url = f"sqlite:///{tmp_path / 'stale-source.db'}"
+    world_root = copy_builtin_world_packages(tmp_path / "worlds")
+    server = ApiServer(database_url=url)
+    server.app.state.world_packages_root = world_root
+    with server:
+        status, run = _request("POST", f"{server.base_url}/run-containers", {"display_name": "Stale selective source"})
+        assert status == 201, run
+        run_id, branch_id = run["run_id"], run["viewer_branch_id"]
+        root = f"{server.base_url}/admin/runs/{quote(run_id, safe='')}/branches/{quote(branch_id, safe='')}/packages"
+        source = root + f"/source-world/{OFFICIAL_FAX_WORLD_ID}"
+        status, discovery = _request("POST", source + "/selection-preview", {"selected_entities": []})
+        assert status == 200
+        country = next(item["label"] for item in discovery["available"] if item["scope"] == "countries")
+        status, preview = _request("POST", source + "/selection-preview", {"selected_entities": [country]})
+        assert status == 200 and preview["can_confirm"] is True
+        store = WorldPackageCountryStore(world_root / OFFICIAL_FAX_WORLD_ID)
+        record = next(item for item in store.load_config().countries if item.code == country.split("/")[-1])
+        store.replace_country(record.model_copy(update={"notes": "source changed after preview"}))
+        result = _request("POST", source + "/selection-confirm", {
+            "command_id": "reject-stale-source",
+            "selected_entities": [country],
+            "conflict_resolutions": {},
+            "expected_head_revision_id": preview["saved_head_revision_id"],
+            "expected_draft_version": preview["draft_version"],
+            "expected_state_fingerprint": preview["current_state_fingerprint"],
+            "expected_preview_fingerprint": preview["preview_fingerprint"],
+            "expected_selection_fingerprint": preview["selection_fingerprint"],
+        })
+        assert result[0] == 409, result
+        assert _request("GET", root)[1]["state"] is None

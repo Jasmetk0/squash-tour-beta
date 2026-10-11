@@ -16,7 +16,7 @@ from beta_engine.application.run_package_service import (
     RunPackageService,
 )
 from beta_engine.application.world_package_run_adapter import WorldPackageRunAdapter
-from beta_engine.domain.run_packages import CanonicalPackageDocument
+from beta_engine.domain.run_packages import CanonicalPackageDocument, canonical_hash, entity_content_fingerprint
 
 router = APIRouter(
     prefix="/admin/runs/{run_id}/branches/{branch_id}/packages",
@@ -203,8 +203,6 @@ def _review_world_selection(preview, state, request: WorldSelectionRequest) -> d
     The existing package service remains authoritative for atomic confirm, local
     identity allocation, receipts, draft staging and saved-head concurrency.
     """
-    from beta_engine.domain.run_packages import canonical_hash
-
     doc = preview.document
     available = {
         f"{doc.package_id}/{entity.source_entity_id}": entity
@@ -238,7 +236,7 @@ def _review_world_selection(preview, state, request: WorldSelectionRequest) -> d
         status = ("keep_run" if strategy == "keep_run" else
                   "add" if old is None else
                   "unchanged" if old.content_fingerprint ==
-                  __import__("beta_engine.domain.run_packages", fromlist=["entity_content_fingerprint"]).entity_content_fingerprint(
+                  entity_content_fingerprint(
                       entity_kind=entity.entity_kind,
                       entity_schema_version=entity.entity_schema_version,
                       scope=entity.scope,

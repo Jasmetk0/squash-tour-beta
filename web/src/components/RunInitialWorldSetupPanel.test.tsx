@@ -574,6 +574,9 @@ describe('Run-owned first-season player setup', () => {
     await waitFor(()=>expect(api.previewRunOwnedInitialWorld).toHaveBeenCalledTimes(5))
     const automatic=api.previewRunOwnedInitialWorld.mock.calls[4][2]
     expect(automatic.generation.field_locks).toEqual([])
+    expect(automatic.generation.session_steps[1].automatic_fields).toEqual([
+      {player_id:'p-1',field:'current_ability'}
+    ])
     expect(automatic.generation.session_steps).toHaveLength(2)
     expect(automatic.generation.session_steps[1].kind).toBe('edit')
     expect(api.saveRunOwnedInitialWorld).not.toHaveBeenCalled()

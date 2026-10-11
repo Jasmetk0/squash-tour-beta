@@ -58,8 +58,23 @@ def verify_saved_player_replay(page, run_url, artifacts, port, prefix="", expect
                      "/branches/not-this-branch/"), status=404)
     get(scope + "/matches/unpublished/" + quote(match_id, safe=""), status=404)
 
+    # The same real persisted Saved Revision must contain this player in the
+    # canonical inventory; no legacy Run-level roster can satisfy this check.
+    roster_scope = ("/admin/runs/" + quote(run_id, safe="") + "/branches/" +
+                    quote(branch_id, safe="") + "/saved-players")
+    roster = get(roster_scope + "?search=" + quote(player_id, safe=""))
+    assert roster["saved_revision_id"] == career["saved_revision_id"], roster
+    assert roster["source"] == "selected_branch_saved_revision" and roster["time_context"] == "present"
+    assert any(row["player_id"] == player_id for row in roster["players"]), roster
+
     player_route = "/admin/runs/" + quote(run_id, safe="") + "/people/" + quote(player_id, safe="")
     match_route = player_route + "/matches/" + quote(event_id, safe="") + "/" + quote(match_id, safe="")
+    page.goto(base + "/admin/runs/" + quote(run_id, safe="") + "/players")
+    if expected_branch_id:
+        page.get_by_role("combobox", name="Admin active Branch").select_option(expected_branch_id)
+    page.get_by_role("combobox", name="Language / Jazyk").select_option("en")
+    page.get_by_role("textbox", name="Player search").fill(player_id)
+    expect(page.locator('a[href="' + player_route + '"]')).to_have_count(1)
     page.goto(base + player_route)
     if expected_branch_id:
         page.get_by_role("combobox", name="Admin active Branch").select_option(expected_branch_id)

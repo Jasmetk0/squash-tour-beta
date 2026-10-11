@@ -1,3 +1,4 @@
+import { acknowledgeSavedRunForm } from './RunNavigationSafeguard'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 
@@ -195,7 +196,8 @@ export function RunInitialRankingSetupPanel({ run, branch }: {
       )
     },
     onSuccess: async () => {
-      setWaitingSave(null); setSaveApproved(false)
+      setWaitingSave(null)
+      acknowledgeSavedRunForm(runId, branchId); setSaveApproved(false)
       setNotice('The initial ranking candidate is saved in immutable Branch history, but it has not been published to Viewer.')
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['run-branches', runId] }),

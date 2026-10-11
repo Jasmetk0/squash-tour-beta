@@ -1,3 +1,4 @@
+import { acknowledgeSavedRunForm } from './RunNavigationSafeguard'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 
@@ -197,6 +198,7 @@ export function RunInitialWorldSetupPanel({ run, branch }: {
     },
     onSuccess: async () => {
       setPendingSave(null); setSaveApproved(false)
+      acknowledgeSavedRunForm(runId, branchId)
       setNotice('First-season InitialWorld is saved and recoverable. Next: derive the initial ranking.')
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['run-branches', runId] }),

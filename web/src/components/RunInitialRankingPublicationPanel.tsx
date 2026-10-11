@@ -1,3 +1,4 @@
+import { acknowledgeSavedRunForm } from './RunNavigationSafeguard'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 
@@ -157,6 +158,7 @@ export function RunInitialRankingPublicationPanel({ run, branch }: {
       ),
     onSuccess: async () => {
       setSaveReview(null)
+      acknowledgeSavedRunForm(runId, branchId)
       setSaveApproved(false)
       setPublishedHere(null)
       setNotice(isViewerBranch

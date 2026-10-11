@@ -1,3 +1,4 @@
+import { acknowledgeSavedRunForm } from './RunNavigationSafeguard'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 
@@ -164,6 +165,7 @@ export function RunPackageSetupPanel({ run, branch }: {
       return result
     },
     onSuccess: async saved => {
+      acknowledgeSavedRunForm(runId, branchId)
       setPendingSave(null)
       setSaveApproved(false)
       setNotice('Saved Revision created. Reopen this Run to inspect the same independent Package snapshot.')

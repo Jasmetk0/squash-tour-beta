@@ -54,7 +54,7 @@ export function SavedPlayerMatchesPanel({ runId, branchId, savedHead, playerId, 
         {' '}{data.career_played_wins} W / {data.career_played_losses} L
         {' · '}{data.career_walkovers} {cs ? 'kontumací' : 'walkovers'}</p>
       <label htmlFor="saved-player-season">{cs ? 'Sezóna' : 'Season'}{' '}</label>
-      <select id="saved-player-season" aria-label={cs ? 'Sezóna zápasů' : 'Match season'}
+      <select data-run-navigation-readonly id="saved-player-season" aria-label={cs ? 'Sezóna zápasů' : 'Match season'}
         value={season} onChange={event => { setSeason(event.target.value); setPage(0) }}>
         <option value="all">{cs ? 'Všechny sezóny' : 'All seasons'}</option>
         {data.available_seasons.map(index => <option key={index} value={String(index)}>{seasonText(index)}</option>)}

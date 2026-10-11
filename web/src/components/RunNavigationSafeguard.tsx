@@ -71,6 +71,7 @@ export function RunNavigationSafeguard({ runId }: { runId: string }): null {
     draft.base_saved_revision_id === savedHead && draft.status === 'dirty'
   )
   const serverDirtyRef = useRef(serverDirty)
+  const localDirtyRef = useRef(false)
   serverDirtyRef.current = serverDirty
 
   useEffect(() => {
@@ -87,6 +88,7 @@ export function RunNavigationSafeguard({ runId }: { runId: string }): null {
       return controls.size > 0 || serverDirtyRef.current
     }
     function sync(): void {
+      localDirtyRef.current = controls.size > 0
       if (unsaved()) shell?.setAttribute('data-run-form-edited', 'true')
       else shell?.removeAttribute('data-run-form-edited')
     }
@@ -121,6 +123,7 @@ export function RunNavigationSafeguard({ runId }: { runId: string }): null {
         event.stopImmediatePropagation()
         return
       }
+      for (const control of controls) baselines.set(control, controlValue(control))
       controls.clear()
       sync()
     }
@@ -157,9 +160,8 @@ export function RunNavigationSafeguard({ runId }: { runId: string }): null {
   // Refresh the shell flag when the backend draft is refetched or saved.
   useEffect(() => {
     const shell = document.querySelector('.app-shell--admin')
-    if (serverDirty) shell?.setAttribute('data-run-form-edited', 'true')
-    // Only the edit listener can safely clear local evidence. A clean server
-    // response must not erase an independently changed form.
+    if (serverDirty || localDirtyRef.current) shell?.setAttribute('data-run-form-edited', 'true')
+    else shell?.removeAttribute('data-run-form-edited')
   }, [serverDirty])
   return null
 }

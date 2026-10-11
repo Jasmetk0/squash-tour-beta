@@ -130,7 +130,7 @@ export function generatorConditionConflict(
 /** Frontend preflight mirrors backend bounds; blank = unconstrained. */
 export function ageConditionConflict(minAge: string, maxAge: string): string | null {
   const valid = (value: string): boolean =>
-    value === '' || (/^\\d+$/.test(value) &&
+    value === '' || (/^[0-9]+$/.test(value) &&
       Number.isSafeInteger(Number(value)) && Number(value) >= 15 && Number(value) <= 45)
   if (!valid(minAge) || !valid(maxAge))
     return 'Age conditions must be whole years between 15 and 45.'

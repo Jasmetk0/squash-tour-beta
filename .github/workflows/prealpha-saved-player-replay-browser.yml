@@ -60,6 +60,7 @@ jobs:
           python scripts/admin_first_tournament_smoke.py \
             --acceptance "$RUNNER_TEMP/saved-replay-run" \
             --port 8013 \
+            --saved-replay-only \
             --base-url http://127.0.0.1:5173 \
             --chromium "$CHROME_BIN"
       - name: Preserve browser evidence

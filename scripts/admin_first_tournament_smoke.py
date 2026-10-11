@@ -360,7 +360,7 @@ def verify_viewer(page, run_url, artifacts: Path, prefix=""):
     return rows
 
 
-def run_acceptance(root: Path, *, port: int, base_url: str, chromium: str):
+def run_acceptance(root: Path, *, port: int, base_url: str, chromium: str, saved_replay_only: bool = False):
     from saved_player_replay_browser_checks import verify_saved_player_replay
     """Own the disposable backend process, restart it, and reopen a fresh browser."""
     import socket
@@ -458,6 +458,23 @@ def run_acceptance(root: Path, *, port: int, base_url: str, chromium: str):
                 )
                 reopened_match = verify_saved_player_replay(page, run_url, artifacts, port, prefix="reopened-")
                 assert reopened_match == saved_match, "Saved replay changed across restart"
+                if saved_replay_only:
+                    # This dedicated acceptance ends after actual replay and
+                    # backend restart. The pre-existing Next Week continuation
+                    # belongs to the separate full tournament smoke workflow.
+                    assert not errors, errors
+                    (artifacts / "evidence.json").write_text(
+                        json.dumps({
+                            "run_url": run_url,
+                            "entry_decisions": entry_count,
+                            "authoritative_matches": match_options,
+                            "saved_player_replay": saved_match,
+                            "reopened_replay_equal": True,
+                            "browser_errors": errors,
+                        }, indent=2)
+                    )
+                    print("SAVED PLAYER REPLAY BROWSER ACCEPTANCE PASSED", flush=True)
+                    return
                 page.goto(run_url + "/simulate")
                 browser_settle(page)
                 replay = page.get_by_label(
@@ -540,6 +557,7 @@ if __name__ == "__main__":
     parser.add_argument("--port", type=int, default=8001)
     parser.add_argument("--base-url", default="http://127.0.0.1:5173")
     parser.add_argument("--chromium", default="/usr/bin/chromium")
+    parser.add_argument("--saved-replay-only", action="store_true")
     args = parser.parse_args()
     if args.serve:
         uvicorn.run(
@@ -554,4 +572,5 @@ if __name__ == "__main__":
             port=args.port,
             base_url=args.base_url,
             chromium=args.chromium,
+            saved_replay_only=args.saved_replay_only,
         )

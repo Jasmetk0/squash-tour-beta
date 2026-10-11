@@ -188,6 +188,7 @@ def setup_run(page, base_url: str, artifacts: Path) -> str:
     page.get_by_role(
         "link", name="Open first Run-owned tournament preparation", exact=True
     ).click()
+    assert "/calendar/" in page.url, ("Tournament preparation navigation was blocked", page.url, page.smoke_dialogs)
     page.get_by_label("Published Official Ranking", exact=True).select_option(index=1)
     click("Adopt selected Official Ranking")
     click("Preview real Entry decisions")
@@ -359,7 +360,8 @@ def verify_viewer(page, run_url, artifacts: Path, prefix=""):
     return rows
 
 
-def run_acceptance(root: Path, *, port: int, base_url: str, chromium: str):
+def run_acceptance(root: Path, *, port: int, base_url: str, chromium: str, saved_replay_only: bool = False):
+    from saved_player_replay_browser_checks import verify_saved_player_replay
     """Own the disposable backend process, restart it, and reopen a fresh browser."""
     import socket
     import subprocess
@@ -413,6 +415,14 @@ def run_acceptance(root: Path, *, port: int, base_url: str, chromium: str):
         page.on("request", lambda r: page.smoke_pending_requests.add(r))
         page.on("requestfinished", lambda r: page.smoke_pending_requests.discard(r))
         page.on("requestfailed", lambda r: page.smoke_pending_requests.discard(r))
+        # The current Admin shell guards navigation with a native confirmation.
+        # Chromium dismisses dialogs without a handler and silently cancels
+        # the user click, so explicitly accept the real navigation prompt.
+        page.smoke_dialogs = []
+        def accept_dialog(dialog):
+            page.smoke_dialogs.append(dialog.message)
+            dialog.accept()
+        page.on("dialog", accept_dialog)
         page.on("pageerror", lambda e: errors.append(str(e)))
         page.on(
             "response",
@@ -436,6 +446,7 @@ def run_acceptance(root: Path, *, port: int, base_url: str, chromium: str):
                 entry_count = page.smoke_entry_decision_count
                 match_options = finish_tournament(page, artifacts)
                 ranking_rows = verify_viewer(page, run_url, artifacts)
+                saved_match = verify_saved_player_replay(page, run_url, artifacts, port)
                 context.tracing.stop(path=str(artifacts / "before-restart.zip"))
                 context.close()
                 process.terminate()
@@ -445,6 +456,25 @@ def run_acceptance(root: Path, *, port: int, base_url: str, chromium: str):
                 assert (
                     verify_viewer(page, run_url, artifacts, "reopened-") == ranking_rows
                 )
+                reopened_match = verify_saved_player_replay(page, run_url, artifacts, port, prefix="reopened-")
+                assert reopened_match == saved_match, "Saved replay changed across restart"
+                if saved_replay_only:
+                    # This dedicated acceptance ends after actual replay and
+                    # backend restart. The pre-existing Next Week continuation
+                    # belongs to the separate full tournament smoke workflow.
+                    assert not errors, errors
+                    (artifacts / "evidence.json").write_text(
+                        json.dumps({
+                            "run_url": run_url,
+                            "entry_decisions": entry_count,
+                            "authoritative_matches": match_options,
+                            "saved_player_replay": saved_match,
+                            "reopened_replay_equal": True,
+                            "browser_errors": errors,
+                        }, indent=2)
+                    )
+                    print("SAVED PLAYER REPLAY BROWSER ACCEPTANCE PASSED", flush=True)
+                    return
                 page.goto(run_url + "/simulate")
                 browser_settle(page)
                 replay = page.get_by_label(
@@ -491,6 +521,8 @@ def run_acceptance(root: Path, *, port: int, base_url: str, chromium: str):
                             "run_url": run_url,
                             "real_entry_decisions": entry_count,
                             "matches": match_options,
+                            "saved_player_replay": saved_match,
+                            "reopened_saved_replay_equal": reopened_match == saved_match,
                             "week2_ranking_rows": ranking_rows,
                             "browser_errors": errors,
                             "restart": "fresh browser context after terminated/restarted production backend",
@@ -525,6 +557,7 @@ if __name__ == "__main__":
     parser.add_argument("--port", type=int, default=8001)
     parser.add_argument("--base-url", default="http://127.0.0.1:5173")
     parser.add_argument("--chromium", default="/usr/bin/chromium")
+    parser.add_argument("--saved-replay-only", action="store_true")
     args = parser.parse_args()
     if args.serve:
         uvicorn.run(
@@ -539,4 +572,5 @@ if __name__ == "__main__":
             port=args.port,
             base_url=args.base_url,
             chromium=args.chromium,
+            saved_replay_only=args.saved_replay_only,
         )

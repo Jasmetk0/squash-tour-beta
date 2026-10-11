@@ -313,12 +313,17 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
       const needsVersioned = versioned || previous.keep_from_seed != null
       if (regenerate && needsVersioned)
         throw new Error('After Keep, apply edits then regenerate using Session Keep.')
+      const automaticFields = approvedFieldLocks
+        .filter(locked => !nextLocks.some(next =>
+          locked.player_id === next.player_id && locked.field === next.field))
+        .map(locked => ({player_id: locked.player_id, field: locked.field}))
       const step = {
         kind: 'edit' as const,
         seed: previous.seed,
         source_preview_fingerprint: review.preview.state.run_world_pool_preview_fingerprint,
         keep_player_ids: [],
-        field_locks: nextLocks
+        field_locks: nextLocks,
+        ...(automaticFields.length ? {automatic_fields: automaticFields} : {})
       }
       const generation = needsVersioned ? {
         ...previous, field_locks: nextLocks,

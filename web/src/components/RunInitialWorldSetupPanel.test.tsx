@@ -654,6 +654,90 @@ describe('Run-owned first-season player setup', () => {
     expect(api.saveRunOwnedInitialWorld).not.toHaveBeenCalled()
   })
 
+  it('bulk-selects independently of Keep, stages before/after, server verifies and one-step Undo restores old preview',async()=>{
+    api.previewRunOwnedInitialWorld.mockImplementation(async (_run:string,_branch:string,
+      request:{command_id:string;generation:{world_package_id:string;seed:number;
+        field_locks?:{player_id:string;field:string;value:number}[]};best_n:number}) => {
+      const baseline=buildState(request)
+      const locks=request.generation.field_locks??[]
+      return {
+        preview_only:true,
+        state:{...baseline,players:players.map(p=>{
+          const field=locks.find(lock=>lock.player_id===p.player_id && lock.field==='current_ability')
+          return field ? {...p,current_ability:field.value} : p
+        })},
+        fingerprint:locks.length?sha('a'):sha('f')
+      }
+    })
+    render()
+    await userEvent.clear(screen.getByRole('spinbutton',{name:'Number of generated players'}))
+    await userEvent.type(screen.getByRole('spinbutton',{name:'Number of generated players'}),'2')
+    await userEvent.click(await screen.findByRole('button',{name:'Preview generated players'}))
+    expect(await screen.findByText('Review 2 players')).toBeInTheDocument()
+    expect(screen.getByRole('checkbox',{name:'Keep p-1'})).not.toBeChecked()
+    await userEvent.click(screen.getByRole('checkbox',{name:'Select for bulk action p-1'}))
+    await userEvent.click(screen.getByRole('checkbox',{name:'Select for bulk action p-2'}))
+    expect(screen.getByRole('status',{name:'Bulk selection count'})).toHaveTextContent('Action selection: 2 / 2')
+    expect(screen.getByRole('checkbox',{name:'Keep p-1'})).not.toBeChecked()
+    await userEvent.selectOptions(screen.getByRole('combobox',{name:'Bulk source field'}),'current_ability')
+    await userEvent.type(screen.getByRole('spinbutton',{name:'Bulk new source value'}),'71')
+    const plan=screen.getByLabelText('Bulk before after preview')
+    expect(plan).toHaveTextContent('changed 2')
+    await userEvent.click(screen.getByText(/Review exact before\/after values/))
+    expect(plan).toHaveTextContent('80')
+    expect(plan).toHaveTextContent('70')
+    expect(plan).toHaveTextContent('71')
+    expect(api.previewRunOwnedInitialWorld).toHaveBeenCalledTimes(1)
+    await userEvent.click(screen.getByRole('button',{name:'Stage reviewed bulk locks (no Run write)'}))
+    expect(screen.getByText(/Bulk locks are staged locally/)).toBeInTheDocument()
+    expect(screen.getByRole('combobox',{name:'Bulk source field'})).toBeDisabled()
+    expect(screen.getByRole('spinbutton',{name:'Bulk new source value'})).toBeDisabled()
+    expect(screen.getByRole('checkbox',{name:'Select for bulk action p-1'})).toBeDisabled()
+    expect(screen.getByRole('button',{name:'Adopt generated players'})).toBeDisabled()
+    expect(api.previewRunOwnedInitialWorld).toHaveBeenCalledTimes(1)
+    await userEvent.click(screen.getByRole('button',{name:'Verify staged bulk changes on server'}))
+    await waitFor(()=>expect(api.previewRunOwnedInitialWorld).toHaveBeenCalledTimes(2))
+    expect(await screen.findByText(/Bulk changes verified by server preview/)).toBeInTheDocument()
+    const verifiedRequest=api.previewRunOwnedInitialWorld.mock.calls[1][2]
+    expect(verifiedRequest.generation.field_locks).toEqual([
+      {player_id:'p-1',field:'current_ability',value:71},
+      {player_id:'p-2',field:'current_ability',value:71}
+    ])
+    expect(screen.getByRole('button',{name:'Undo last verified bulk preview'})).toBeEnabled()
+    await userEvent.click(screen.getByRole('button',{name:'Undo last verified bulk preview'}))
+    expect(await screen.findByText(/One-step session Undo restored/)).toBeInTheDocument()
+    expect(screen.getByRole('button',{name:'Undo last verified bulk preview'})).toBeDisabled()
+    expect(screen.getByRole('button',{name:'Adopt generated players'})).toBeDisabled()
+    expect(api.previewRunOwnedInitialWorld).toHaveBeenCalledTimes(2)
+    expect(api.adoptRunOwnedInitialWorld).not.toHaveBeenCalled()
+    expect(api.saveRunOwnedInitialWorld).not.toHaveBeenCalled()
+  })
+
+  it('bulk action refuses impossible ability edits before any backend request and preserves Keep',async()=>{
+    // Use real source-model bounds for this adversarial case; the generic
+    // frontend fixture intentionally uses future canonical-like potentials.
+    api.previewRunOwnedInitialWorld.mockImplementation(async (_run:string,_branch:string,
+      request:{command_id:string;generation:{world_package_id:string;seed:number};best_n:number})=>({
+      preview_only:true,
+      state:{...buildState(request),players:players.map(p=>({...p,potential_ability:90}))},
+      fingerprint:sha('f')
+    }))
+    render()
+    await userEvent.clear(screen.getByRole('spinbutton',{name:'Number of generated players'}))
+    await userEvent.type(screen.getByRole('spinbutton',{name:'Number of generated players'}),'2')
+    await userEvent.click(await screen.findByRole('button',{name:'Preview generated players'}))
+    expect(await screen.findByText('Review 2 players')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('checkbox',{name:'Select for bulk action p-1'}))
+    await userEvent.selectOptions(screen.getByRole('combobox',{name:'Bulk source field'}),'potential_ability')
+    await userEvent.type(screen.getByRole('spinbutton',{name:'Bulk new source value'}),'1')
+    expect(screen.getByRole('region',{name:'Bulk preview field changes'}))
+      .toHaveTextContent(/Bulk preview conflict: Field value conflicts/)
+    expect(screen.getByRole('button',{name:'Stage reviewed bulk locks (no Run write)'})).toBeDisabled()
+    expect(api.previewRunOwnedInitialWorld).toHaveBeenCalledTimes(1)
+    expect(screen.getByRole('checkbox',{name:'Keep p-1'})).not.toBeChecked()
+    expect(screen.getByRole('button',{name:'Adopt generated players'})).toBeDisabled()
+  })
+
   it('blocks Keep of all players and reroll with the same seed',async()=>{
     render()
     await userEvent.clear(screen.getByRole('spinbutton',{name:'Number of generated players'}))

@@ -13,7 +13,7 @@ import {
 import type { RunBranch, RunContainer } from '../api/types'
 import {
   ageConditionConflict, countryQuotaConflict, generatorConditionConflict, runOwnedWorldIds, verifiedGenerationOptions, verifiedInitialWorldPreview,
-  orderedPreviewFieldLocks,
+  orderedPreviewFieldLocks, PREVIEW_FIELD_KEYS,
   type GeneratedPlayerFieldKey, type RunWorldExactCountryQuota, type RunWorldPreviewFieldLock,
   type RunInitialWorldAdoption, type RunInitialWorldPreview,
   type RunSavedGenerationProposal, type RunGenerationProposalInspection,
@@ -23,6 +23,7 @@ import { formatApiError, isApiNotFound } from '../utils/apiErrors'
 import { SectionCard } from './RunScopedUi'
 import { GeneratedPlayerReviewInspector } from './GeneratedPlayerReviewInspector'
 import { GeneratedPlayerFieldLockEditor } from './GeneratedPlayerFieldLockEditor'
+import { prepareGeneratedBulkPlan, type GeneratedBulkPlan } from './generatedBulkPreview'
 
 type ReviewedWorld = {
   runId: string
@@ -65,6 +66,11 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
   const [rerollSeed, setRerollSeed] = useState(20261010)
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null)
   const [pendingFieldLocks, setPendingFieldLocks] = useState<RunWorldPreviewFieldLock[]>([])
+  const [bulkSelectedIds, setBulkSelectedIds] = useState<string[]>([])
+  const [bulkField, setBulkField] = useState<GeneratedPlayerFieldKey>('attributes.technique')
+  const [bulkValue, setBulkValue] = useState('')
+  const [bulkStagedFingerprint, setBulkStagedFingerprint] = useState<string | null>(null)
+  const [bulkUndo, setBulkUndo] = useState<{previous: ReviewedWorld; appliedFingerprint: string} | null>(null)
   const [pendingSave, setPendingSave] = useState<PendingSave | null>(null)
   const [saveApproved, setSaveApproved] = useState(false)
   const [notice, setNotice] = useState('')
@@ -144,6 +150,7 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
     setReviewBaseSeed(null)
     setKeptIds([])
     setPendingFieldLocks([])
+    setBulkSelectedIds([]); setBulkStagedFingerprint(null); setBulkUndo(null)
     setSelectedPlayerId(null)
     setPendingSave(null)
     setApproved(false)
@@ -183,6 +190,7 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
     },
     onSuccess: value => {
       setReview(value); setReviewBaseSeed(seed); setKeptIds([]); setRerollSeed(seed + 1)
+      setBulkSelectedIds([]); setBulkStagedFingerprint(null); setBulkUndo(null)
       setPendingFieldLocks([]); setSelectedPlayerId(null)
       setApproved(false); setNotice('')
     }
@@ -222,8 +230,35 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
         : [...current.filter(lock => !(lock.player_id === selectedPlayerId && lock.field === field)),
           { player_id: selectedPlayerId, field, value }]
     ))
-    setApproved(false)
+    setApproved(false); setBulkUndo(null); setBulkStagedFingerprint(null)
   }
+  // Action selection is not the Keep selection or the current display filter.
+  // It is valid only within one exact reviewed preview fingerprint.
+  useEffect(() => {
+    setBulkSelectedIds([])
+    setBulkStagedFingerprint(null)
+    // A successful bulk server preview is an Undo boundary. Keep its verified
+    // predecessor even though the current fingerprint necessarily changes.
+  }, [review?.preview.fingerprint, runId, branchId, head])
+
+  let bulkPlan: GeneratedBulkPlan | null = null
+  let bulkError: string | null = null
+  if (bulkSelectedIds.length && reviewMatches && review) {
+    if (!/^[0-9]+$/.test(bulkValue)) bulkError = 'Enter a whole-number source value from 1 to 99.'
+    else {
+      try {
+        bulkPlan = prepareGeneratedBulkPlan(
+          review.preview.state.players, bulkSelectedIds,
+          bulkField, Number(bulkValue), approvedFieldLocks
+        )
+      } catch (error) {
+        bulkError = error instanceof Error ? error.message : String(error)
+      }
+    }
+  }
+  const canStageBulk = Boolean(bulkPlan?.changes.length && fieldEditingEnabled &&
+    !locksDirty && !keepSelectionDirty && !bulkStagedFingerprint)
+
   const sessionSteps = (review?.request.generation.keep_history?.length ?? 0) +
     (review?.request.generation.keep_from_seed == null ? 0 : 1) +
     (review?.request.generation.session_steps?.filter(step=>step.kind==='keep').length ?? 0)
@@ -293,6 +328,7 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
     },
     onSuccess: value => {
       setReview(value); setKeptIds(value.retained)
+      setBulkSelectedIds([]); setBulkStagedFingerprint(null); setBulkUndo(null)
       setPendingFieldLocks(orderedPreviewFieldLocks(value.request.generation.field_locks ?? []))
       setRerollSeed(value.request.generation.seed + 1)
       setApproved(false); setNotice(
@@ -304,7 +340,10 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
   // No field value supplied by the browser is authoritative until the server
   // returns a fresh exact preview. A failed edit leaves the prior review intact.
   const fieldPreviewAction = useMutation({
-    mutationFn: async (regenerate: boolean) => {
+    mutationFn: async ({regenerate, bulk = false}: {regenerate: boolean; bulk?: boolean}) => {
+      if (bulk && (!bulkStagedFingerprint ||
+          review?.preview.fingerprint !== bulkStagedFingerprint || !locksDirty))
+        throw new Error('Bulk changes must be staged from this exact verified preview.')
       if (!fieldEditingEnabled || !review || !draft || !snapshotFingerprint ||
           keepSelectionDirty)
         throw new Error('Apply or revert pending Keep selection before editing source fields.')
@@ -351,16 +390,22 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
       if (!verifiedInitialWorldPreview(preview, runId, branchId, request, options))
         throw new Error('Server preview does not match all verified locked values or generation scope.')
       return { runId, branchId, head, sourceFingerprint: snapshotFingerprint,
-        draftVersion: draft.draft_version, request, preview, regenerate }
+        draftVersion: draft.draft_version, request, preview, regenerate,
+        bulk, undoPrevious: bulk ? review : null }
     },
     onSuccess: value => {
       setReview(value)
       setPendingFieldLocks(orderedPreviewFieldLocks(value.request.generation.field_locks ?? []))
+      setBulkUndo(value.bulk && value.undoPrevious
+        ? {previous:value.undoPrevious, appliedFingerprint:value.preview.fingerprint} : null)
+      setBulkStagedFingerprint(null); setBulkSelectedIds([])
       setApproved(false)
       if (value.regenerate) setRerollSeed(value.request.generation.seed + 1)
       setNotice(value.regenerate
         ? 'Unlocked source fields regenerated; locked values were verified. Review before Adopt and Save.'
-        : 'Field locks applied to the exact server preview; Run remains unchanged.')
+        : value.bulk
+          ? 'Bulk changes verified by server preview. Run unchanged; one session Undo is available.'
+          : 'Field locks applied to the exact server preview; Run remains unchanged.')
     }
   })
 
@@ -930,6 +975,9 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
         verifiedFieldLocks={review.request.generation.field_locks ?? []}
         pendingFieldLocks={pendingFieldLocks}
         selectedPlayerId={selectedPlayerId}
+        bulkSelectedIds={bulkSelectedIds}
+        bulkSelectionDisabled={Boolean(bulkStagedFingerprint)}
+        onBulkSelectionChange={reviewMatches ? setBulkSelectedIds : undefined}
         onSelectPlayer={fieldEditingEnabled ? setSelectedPlayerId : undefined}
         keepIds={keptIds}
         onKeepChange={canKeepPreview ? (id, checked) => {
@@ -938,14 +986,95 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
             : current.filter(item => item !== id))
           setApproved(false)
         } : undefined} />
+      <section aria-label="Bulk preview field changes" className="section-subtle">
+        <h5>{cs ? 'Hromadné úpravy vybraných hráčů' : 'Bulk changes for selected players'}</h5>
+        <p className="status">{cs
+          ? 'Hromadný výběr je nezávislý na Keep. Žádná hodnota se nezmění bez nového serverového náhledu, výslovného Adopt a ručního Save.'
+          : 'Action selection is independent of Keep. No field becomes verified until a fresh server preview; Adopt and manual Save remain separate.'}</p>
+        <div className="form-grid">
+          <label>{cs ? 'Zdrojový atribut' : 'Source field'}
+            <select aria-label="Bulk source field" value={bulkField}
+              disabled={Boolean(bulkStagedFingerprint)}
+              onChange={event=>setBulkField(event.target.value as GeneratedPlayerFieldKey)}>
+              {PREVIEW_FIELD_KEYS.map(field=>
+                <option key={field} value={field}>{field} (1–99)</option>)}
+            </select>
+          </label>
+          <label>{cs ? 'Nová hodnota' : 'New value'}
+            <input aria-label="Bulk new source value" type="number" min={1} max={99} step={1}
+              disabled={Boolean(bulkStagedFingerprint)}
+              value={bulkValue}
+              onChange={event=>setBulkValue(event.target.value)} />
+          </label>
+        </div>
+        {bulkError && <p role="alert">Bulk preview conflict: {bulkError}</p>}
+        {bulkPlan && <div aria-label="Bulk before after preview">
+          <p role="status">Action selection {bulkPlan.selectedCount} ·
+            {' '}changed {bulkPlan.changes.length} · unchanged {bulkPlan.unchangedCount}.
+            {' '}This is a local before/after proposal, not accepted player values.</p>
+          <details>
+            <summary>Review exact before/after values · {bulkPlan.changes.length} changed players</summary>
+            <div className="table-responsive"><table>
+              <thead><tr><th>Player ID</th><th>Player</th><th>Before</th><th>After</th></tr></thead>
+              <tbody>{bulkPlan.changes.map(change=><tr key={change.playerId}>
+                <td>{change.playerId}</td><td>{change.name}</td>
+                <td>{change.before}</td><td>{change.after}</td>
+              </tr>)}</tbody>
+            </table></div>
+          </details>
+        </div>}
+        <div className="actions">
+          <button type="button" disabled={!canStageBulk || fieldPreviewAction.isPending ||
+            regenerateAction.isPending || adoptAction.isPending}
+            onClick={()=>{
+              if (!bulkPlan || !canStageBulk || !review) return
+              setPendingFieldLocks(bulkPlan.nextLocks)
+              setBulkStagedFingerprint(review.preview.fingerprint)
+              setBulkUndo(null); setApproved(false); setSelectedPlayerId(null)
+            }}>Stage reviewed bulk locks (no Run write)</button>
+          <button type="button" disabled={!bulkStagedFingerprint ||
+            review.preview.fingerprint !== bulkStagedFingerprint ||
+            !fieldEditingEnabled || !locksDirty || keepSelectionDirty ||
+            fieldPreviewAction.isPending || regenerateAction.isPending}
+            onClick={()=>fieldPreviewAction.mutate({regenerate:false,bulk:true})}>
+            {fieldPreviewAction.isPending ? 'Verifying bulk preview…' :
+              'Verify staged bulk changes on server'}
+          </button>
+          <button type="button" disabled={!bulkStagedFingerprint || fieldPreviewAction.isPending}
+            onClick={()=>{
+              setPendingFieldLocks(approvedFieldLocks)
+              setBulkStagedFingerprint(null);setApproved(false)
+            }}>Discard staged bulk edits</button>
+          <button type="button" disabled={!bulkUndo || !reviewMatches || !canPreview ||
+            locksDirty || keepSelectionDirty || fieldPreviewAction.isPending ||
+            regenerateAction.isPending || adoptAction.isPending ||
+            bulkUndo.appliedFingerprint !== review.preview.fingerprint ||
+            bulkUndo.previous.head !== head ||
+            bulkUndo.previous.draftVersion !== draft?.draft_version ||
+            bulkUndo.previous.sourceFingerprint !== snapshotFingerprint}
+            onClick={()=>{
+              if (!bulkUndo) return
+              const previous=bulkUndo.previous
+              setReview(previous)
+              setPendingFieldLocks(orderedPreviewFieldLocks(
+                previous.request.generation.field_locks ?? []))
+              setBulkUndo(null);setBulkStagedFingerprint(null)
+              setBulkSelectedIds([]);setSelectedPlayerId(null);setApproved(false)
+              setNotice('One-step session Undo restored the preceding verified preview; no Run write.')
+            }}>Undo last verified bulk preview</button>
+        </div>
+        {bulkStagedFingerprint && <p role="alert">
+          Bulk locks are staged locally and block Adopt until freshly verified on the server.
+        </p>}
+      </section>
       {selectedPlayerId && viewedPlayers.some(p=>p.player_id===selectedPlayerId) &&
         <GeneratedPlayerFieldLockEditor
           key={selectedPlayerId + ':' + review.preview.fingerprint}
           player={viewedPlayers.find(p=>p.player_id===selectedPlayerId)!}
           locks={pendingFieldLocks}
           onChange={onPreviewFieldChange}
-          onApply={()=>fieldPreviewAction.mutate(false)}
-          onRegenerate={()=>fieldPreviewAction.mutate(true)}
+          onApply={()=>fieldPreviewAction.mutate({regenerate:false})}
+          onRegenerate={()=>fieldPreviewAction.mutate({regenerate:true})}
            regenerateDisabled={review.request.generation.session_schema_version ===
              'run_world_generation_session.v2' || review.request.generation.keep_from_seed != null}
           onClose={()=>setSelectedPlayerId(null)}

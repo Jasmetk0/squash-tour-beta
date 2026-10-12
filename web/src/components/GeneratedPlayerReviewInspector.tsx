@@ -145,7 +145,8 @@ function columnValue(player: RunInitialWorldPlayer, id: PlayerReviewColumn): str
  * not group constraints and not a session Keep/Lock action.
  */
 export function GeneratedPlayerReviewInspector({ players, locale = 'en', keepIds = [], onKeepChange,
-  onSelectPlayer, selectedPlayerId, verifiedFieldLocks = [], pendingFieldLocks = [] }: {
+  onSelectPlayer, selectedPlayerId, verifiedFieldLocks = [], pendingFieldLocks = [],
+  bulkSelectedIds = [], onBulkSelectionChange, bulkSelectionDisabled = false }: {
   players: RunInitialWorldPlayer[]
   locale?: 'cs' | 'en'
   keepIds?: string[]
@@ -156,6 +157,10 @@ export function GeneratedPlayerReviewInspector({ players, locale = 'en', keepIds
   verifiedFieldLocks?: RunWorldPreviewFieldLock[]
   /** Local unsubmitted edits: visually pending and NEVER an adopted value. */
   pendingFieldLocks?: RunWorldPreviewFieldLock[]
+  /** Action selection is separate from session Keep and display filters. */
+  bulkSelectedIds?: string[]
+  onBulkSelectionChange?: (playerIds: string[]) => void
+  bulkSelectionDisabled?: boolean
 }): JSX.Element {
   const cs = locale === 'cs'
   const [search, setSearch] = useState('')
@@ -233,6 +238,16 @@ export function GeneratedPlayerReviewInspector({ players, locale = 'en', keepIds
   const pageCount = Math.max(1, Math.ceil(visible.length / REVIEW_PAGE_SIZE))
   const activePage = Math.min(page, pageCount - 1)
   const displayed = visible.slice(activePage * REVIEW_PAGE_SIZE, (activePage + 1) * REVIEW_PAGE_SIZE)
+  const selected = useMemo(() => new Set(bulkSelectedIds), [bulkSelectedIds])
+  const changeBulkSelection = (ids: string[], checked: boolean) => {
+    if (!onBulkSelectionChange || bulkSelectionDisabled) return
+    const all = new Set(bulkSelectedIds)
+    for (const id of ids) {
+      if (checked) all.add(id)
+      else all.delete(id)
+    }
+    onBulkSelectionChange([...all].sort())
+  }
   const number = (value: number | null) => value == null ? '—' : String(value)
   const renderGroup = (group: Group, max: number): JSX.Element => (
     <div className="generated-review-bar" key={group.label}>
@@ -318,6 +333,32 @@ export function GeneratedPlayerReviewInspector({ players, locale = 'en', keepIds
       {' '}{cs ? 'Výběr sám nic nemění; při regeneraci zachová vybrané hráče přesně podle produkčního náhledu. Keep není trvalý Lock.' :
         'Selecting Keep changes no players until regeneration. Selected players are preserved from the verified preview, not permanently locked.'}
     </p>}
+    {onBulkSelectionChange && <section className="generated-review-action-selection"
+      aria-label="Generated player bulk action selection">
+      <p role="status" aria-label="Bulk selection count">
+        {cs ? 'Vybráno pro hromadnou akci' : 'Action selection'}: {bulkSelectedIds.length} / {summary.total}.
+        {' '}{cs ? 'Výběr neprovádí Keep, editaci ani Adopt.' :
+          'Action selection never performs Keep, an edit or Adopt.'}
+      </p>
+      <div className="actions">
+        <button type="button" disabled={!displayed.length || bulkSelectionDisabled}
+          onClick={() => changeBulkSelection(displayed.map(p => p.player_id), true)}>
+          {cs ? 'Vybrat stránku' : 'Select current page'}
+        </button>
+        <button type="button" disabled={!visible.length || bulkSelectionDisabled}
+          onClick={() => changeBulkSelection(visible.map(p => p.player_id), true)}>
+          {cs ? 'Vybrat odpovídající filtrům' : 'Select all matching filters'}
+        </button>
+        <button type="button" disabled={bulkSelectionDisabled || !displayed.some(p => selected.has(p.player_id))}
+          onClick={() => changeBulkSelection(displayed.map(p => p.player_id), false)}>
+          {cs ? 'Odebrat výběr na stránce' : 'Deselect current page'}
+        </button>
+        <button type="button" disabled={bulkSelectionDisabled || !bulkSelectedIds.length}
+          onClick={() => onBulkSelectionChange([])}>
+          {cs ? 'Zrušit výběr' : 'Clear action selection'}
+        </button>
+      </div>
+    </section>}
     <details className="generated-review-columns" aria-label="Generated preview columns">
       <summary>{cs ? 'Nastavit sloupce' : 'Choose table columns'} · {visibleColumns.length}</summary>
       <p className="status">{cs
@@ -340,10 +381,16 @@ export function GeneratedPlayerReviewInspector({ players, locale = 'en', keepIds
         'Display filters never change the reviewed cohort. Confirm always adopts the whole batch.'}</p>
     <div className="table-responsive" role="region" aria-label="Complete generated player preview">
       <table>
-        <thead><tr>{onKeepChange && <th scope="col">{cs ? 'Ponechat' : 'Keep'}</th>}
+        <thead><tr>{onBulkSelectionChange && <th scope="col">{cs ? 'Hromadně' : 'Action'}</th>}
+          {onKeepChange && <th scope="col">{cs ? 'Ponechat' : 'Keep'}</th>}
           {visibleColumns.map(id => <th key={id} scope="col">{columnLabel(id, cs)}</th>)}
         </tr></thead>
         <tbody>{displayed.map(player => <tr key={player.player_id}>
+          {onBulkSelectionChange && <td><input type="checkbox"
+            aria-label={'Select for bulk action ' + player.player_id}
+            checked={selected.has(player.player_id)}
+            disabled={bulkSelectionDisabled}
+            onChange={event => changeBulkSelection([player.player_id], event.target.checked)} /></td>}
           {onKeepChange && <td><input type="checkbox"
             aria-label={'Keep ' + player.player_id} checked={keepIds.includes(player.player_id)}
             onChange={e => onKeepChange(player.player_id, e.target.checked)} /></td>}

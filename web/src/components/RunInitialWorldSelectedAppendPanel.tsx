@@ -18,7 +18,7 @@ type Candidate = {request: SelectedInitialWorldAppendRequest; preview: SelectedI
 
 export function RunInitialWorldSelectedAppendPanel({
   runId, branchId, head, draftVersion, packageFingerprint, current,
-  enabled
+  currentFingerprint, enabled
 }: {
   runId: string
   branchId: string
@@ -26,6 +26,7 @@ export function RunInitialWorldSelectedAppendPanel({
   draftVersion: number
   packageFingerprint: string
   current: RunInitialWorldState
+  currentFingerprint: string
   enabled: boolean
 }): JSX.Element {
   const queryClient = useQueryClient()
@@ -140,10 +141,8 @@ export function RunInitialWorldSelectedAppendPanel({
       void queryClient.invalidateQueries({queryKey:['run-owned-initial-world',runId,branchId]})
     }
   })
-  // The parent supplies the audited saved state fingerprint through the read
-  // endpoint's provenance; the pure TS type models it explicitly below.
-  const currentFingerprint=current.fingerprint??''
-  const unreviewed=Boolean(selectedIds.length && candidate)
+  // The parent provides the exact stored InitialWorld fingerprint from the
+  // authoritative save-preflight endpoint, not from an unsaved UI projection.
   return <section className="section-subtle" aria-label="Add selected generated players">
     <h4>Add selected players to saved InitialWorld</h4>
     <p className="status">

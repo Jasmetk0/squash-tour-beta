@@ -56,4 +56,24 @@ describe('Saved country tournament editions',()=>{
     entities.push({...event})
     expect(()=>projectCountryTournaments(f,'run-a','branch-a','CZE')).toThrow(/duplicate/)
   })
+  it('rejects cross-package event identity reuse even across seasons and different hosts',()=>{
+    const f=calendar()
+    const rows=f.state!.entities as Record<string,unknown>[]
+    const first=rows.find(e=>e.entity_kind==='calendar.event.v1'&&
+      e.source_package_id==='calendar-2000-2001')!
+    const second=rows.find(e=>e.entity_kind==='calendar.event.v1'&&
+      e.source_package_id==='calendar-2001-2002')!
+    const duplicateId=(first.payload as Record<string,unknown>).event_id as string
+    second.source_entity_id=duplicateId
+    ;(second.payload as Record<string,unknown>).event_id=duplicateId
+    ;(second.payload as Record<string,unknown>).host_country='USA'
+    const before=JSON.stringify(f)
+    expect(()=>projectCountryTournaments(f,'run-a','branch-a','CZE'))
+      .toThrow('Saved Calendar contains duplicate tournament event identity: '+duplicateId)
+    // Full identity validation precedes any selected host-country filtering.
+    expect(()=>projectCountryTournaments(f,'run-a','branch-a','USA'))
+      .toThrow('Saved Calendar contains duplicate tournament event identity: '+duplicateId)
+    expect(JSON.stringify(f)).toBe(before)
+  })
+
 })

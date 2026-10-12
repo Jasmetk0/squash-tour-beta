@@ -67,6 +67,46 @@ export type RunSavedGenerationProposal = {
   preview: RunInitialWorldPreview
 }
 
+/** Historical inspection is not an Adopt approval. No preview regeneration on GET. */
+export type RunGenerationProposalInspection = {
+  schema_version: 'run_generation_proposal_inspection.v1'
+  historical_only: true
+  proposal: RunSavedGenerationProposal
+  context: {
+    saved_revision_id: string
+    draft_version: number
+    draft_status: string
+    package_fingerprint: string | null
+    head_matches: boolean
+    draft_matches: boolean
+    package_matches: boolean
+    initial_world_exists: boolean
+    revalidation_required: boolean
+  }
+}
+
+export type RunGenerationProposalRevalidation = {
+  schema_version: 'run_generation_proposal_revalidation.v1'
+  preview_only: true
+  proposal_id: string
+  original_preview_fingerprint: string
+  current_context: {
+    saved_revision_id: string
+    draft_version: number
+    package_fingerprint: string
+  }
+  request: RunInitialWorldAdoption
+  preview: RunInitialWorldPreview
+  comparison: {
+    old_count: number
+    new_count: number
+    added_identities: number
+    removed_identities: number
+    changed_profiles: number
+    unchanged_profiles: number
+  }
+}
+
 export type RunSavedGenerationProposalSummary = Pick<
   RunSavedGenerationProposal,
   'proposal_id' | 'label' | 'saved_revision_id' | 'draft_version' |

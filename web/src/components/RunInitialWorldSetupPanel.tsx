@@ -96,7 +96,7 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
   const proposalQuery = useQuery({
     queryKey: ['generation-proposals', runId, branchId],
     queryFn: () => getRunGenerationProposals(runId, branchId),
-    enabled: Boolean(branchId && editable),
+    enabled: Boolean(branchId && run.storage_kind === 'custom_local'),
     retry: false
   })
   const worldIds = runOwnedWorldIds(packageQuery.data?.state)
@@ -502,7 +502,7 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
       return response
     },
     onSuccess: data => {
-      setInspection(data); setRevalidated(null); setApproved(false)
+      setInspection(data); setRevalidated(null); setReview(null); setApproved(false)
       setNotice('Historical proposal opened read-only. No generation, Adopt or Save performed.')
     }
   })

@@ -15,6 +15,7 @@ from urllib.request import urlopen
 from playwright.sync_api import expect, sync_playwright
 
 from admin_first_tournament_smoke import browser_click, browser_settle
+from admin_world_country_checks import package_source_digest, verify_positive_world_country
 
 
 def acceptance(root: Path, *, port: int, base_url: str, chromium: str):
@@ -27,6 +28,8 @@ def acceptance(root: Path, *, port: int, base_url: str, chromium: str):
     artifacts.mkdir()
     server_log = (root / "server.log").open("w")
     errors = []
+    world_source = Path("config/world_packages/official_fax_world")
+    world_source_initial_digest = package_source_digest(world_source)
 
     def start():
         proc = subprocess.Popen(
@@ -110,8 +113,16 @@ def acceptance(root: Path, *, port: int, base_url: str, chromium: str):
                 expect(page.get_by_text(
                     "Current Run copy: Present. Draft: clean.", exact=False
                 )).to_be_visible()
+                # Read actual applied Run World after explicit Save.
+                world_fingerprint, _, _ = verify_positive_world_country(
+                    page, run_url=run_url, api_url=f"http://127.0.0.1:{port}",
+                    country_code="BOG", expected_fingerprint=None,
+                    expected_player_ids=None,
+                )
+                assert package_source_digest(world_source) == world_source_initial_digest
+                page.goto(run_url + "/players/generate")
 
-                page.get_by_role("link", name="Generate players →").click()
+                expect(page.get_by_role("heading", name="Generate players")).to_be_visible()
                 expect(page.get_by_role("heading", name="Generate players")).to_be_visible()
                 page.get_by_label("Number of generated players").fill("1000")
                 page.get_by_label("Player generation seed").fill("4207")
@@ -156,6 +167,22 @@ def acceptance(root: Path, *, port: int, base_url: str, chromium: str):
                 page.get_by_label("Approve InitialWorld revision save").check()
                 browser_click(page, "Save InitialWorld revision")
                 expect(page.get_by_text("InitialWorld exists: 1000 players", exact=False)).to_be_visible()
+                roster_country = max(countries, key=lambda c: (countries[c], c))
+                assert countries[roster_country] > 25, "Country paging needs >25 saved players"
+                roster_expected = sorted(
+                    p["player_id"] for p in reviewed["state"]["players"]
+                    if p["country_code"] == roster_country
+                )
+                # Actual canonical Saved HEAD country API (25 per page), real UI,
+                # profile deep-link and opt-in future-player visibility.
+                saved_world_fingerprint, country_player_ids, _ = verify_positive_world_country(
+                    page, run_url=run_url, api_url=f"http://127.0.0.1:{port}",
+                    country_code=roster_country, expected_fingerprint=world_fingerprint,
+                    expected_player_ids=roster_expected,
+                )
+                assert saved_world_fingerprint == world_fingerprint
+                assert country_player_ids == roster_expected
+                assert package_source_digest(world_source) == world_source_initial_digest
                 before = inventory(page, run_url)
                 # The existing full ranking workflow exercises the production
                 # ranking boundary against all 1,000 saved players.
@@ -185,6 +212,14 @@ def acceptance(root: Path, *, port: int, base_url: str, chromium: str):
                 context, page = open_page(browser)
                 after = inventory(page, run_url)
                 assert after == before_ranked, "Saved player identities/order changed after restart"
+                restarted_world_fingerprint, restarted_country_ids, _ = verify_positive_world_country(
+                    page, run_url=run_url, api_url=f"http://127.0.0.1:{port}",
+                    country_code=roster_country, expected_fingerprint=world_fingerprint,
+                    expected_player_ids=roster_expected,
+                )
+                assert restarted_world_fingerprint == world_fingerprint
+                assert restarted_country_ids == country_player_ids
+                assert package_source_digest(world_source) == world_source_initial_digest
                 assert not errors, errors
                 (artifacts / "evidence.json").write_text(json.dumps({
                     "count": len(after), "unique": len(set(after)),
@@ -192,6 +227,13 @@ def acceptance(root: Path, *, port: int, base_url: str, chromium: str):
                     "automatic_remainder": 970,
                     "canonical_saved_inventory": True, "ranking_published": True,
                     "reopened_after_backend_restart": True,
+                    "positive_world_country_browser": True,
+                    "country_saved_roster_code": roster_country,
+                    "country_saved_roster_count": len(roster_expected),
+                    "country_saved_roster_exact_api_paging": True,
+                    "country_saved_roster_persisted_restart": True,
+                    "country_saved_profile_link": True,
+                    "run_world_and_source_read_only": True,
                     "same_player_ids_and_order": True, "errors": errors,
                     "run_url": run_url,
                 }, indent=2))

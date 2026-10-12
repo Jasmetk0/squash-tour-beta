@@ -844,7 +844,7 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
       </label>
       <button type="button" disabled={!selectedProposalId || !canPreview || proposalLoadAction.isPending}
         onClick={()=>proposalLoadAction.mutate()}>
-        {proposalLoadAction.isPending ? 'Restoring…' : 'Open current proposal'}
+        {proposalLoadAction.isPending ? 'Restoring…' : 'Open saved proposal'}
       </button>
       <button type="button"
         disabled={!selectedProposalId || inspectProposalAction.isPending || !branchId}

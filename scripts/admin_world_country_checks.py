@@ -32,8 +32,11 @@ def verify_positive_world_country(
     run_id = run_url.split("/admin/runs/", 1)[1].split("/", 1)[0].split("?", 1)[0]
     assert run_id, run_url
     page.goto(run_url)
-    branch_id = page.get_by_role("combobox", name="Admin active Branch").input_value()
-    assert branch_id
+    branch_control = page.get_by_role("combobox", name="Admin active Branch")
+    expect(branch_control).to_be_visible()
+    expect(branch_control).not_to_have_value("")
+    branch_id = branch_control.input_value()
+    assert branch_id, "Branch must load before an authoritative historical read"
 
     def get_saved_head() -> str:
         response = page.request.get(api_url + "/run-branches", params={"run_id": run_id})

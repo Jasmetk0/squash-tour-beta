@@ -199,7 +199,11 @@ class RunWorldSelectedInitialWorldAppendRequest(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True)
     command_id: str = Field(min_length=1, max_length=128)
     generation: RunWorldInitialWorldAdoptionRequest
-    selected_player_ids: tuple[str, ...] = Field(min_length=1, max_length=1000)
+    # JSON arrays are the HTTP wire representation of this immutable ID tuple.
+    # Relax only the collection container, never the sorted/unique member rule.
+    selected_player_ids: tuple[str, ...] = Field(
+        min_length=1, max_length=1000, strict=False
+    )
     audit_label: str = Field(min_length=1, max_length=160)
     audit_reason: str = Field(min_length=1, max_length=1000)
 

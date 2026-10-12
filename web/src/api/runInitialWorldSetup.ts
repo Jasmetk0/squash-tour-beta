@@ -89,6 +89,8 @@ export type RunInitialWorldGeneration = {
   world_package_id: string
   season: '2000/2001'
   seed: number
+  /** V79 temporary display naming; omitted in historical requests. */
+  naming_policy?: 'country_serial.v1' | null
   target_pool_size: number
   country_code?: string | null
   region?: string | null // Legacy geographic OR travel condition

@@ -1,4 +1,33 @@
-# Active next steps — 12 October 2026 / after #1404 (Master v79)
+# Active dependency path — Master v80 / after #1414 (12 October 2026)
+
+Verified base `buuk 4a58192cd4f8bb7d4f9d71c76a870ec6ce3baae4`.
+#1405–1414 are merged and green on final feature HEAD; do not redo their slices.
+See [audit](docs/PRE_ALPHA_FRONTEND_CHECKPOINT_V80_2026_10_12.md) and
+[complete implementation task](docs/PRE_ALPHA_NEXT_CHATGPT_TASK_V80_2026_10_12.md).
+
+1. Repair A80-01 cross-package Calendar event identity drift.
+2. Connect real Run Calendar → shared Edition with exact Branch/revision/season
+   ownership and supported multi-season/history navigation; actual lifecycle/results.
+3. Complete v80 Country Records range semantics, thematic brief rows, tied holders
+   and side detail over already verified published data.
+4. History & Branches map/table/side revision detail, separate inspect vs activation,
+   actual read-only A/B Compare; keep canonical restore/draft guards.
+5. Simulation stop-rule panel and actual decision commands, then measured isolated
+   AI-choice diagnostics/background estimates/history. Never fabricate probabilities
+   or make simultaneous decisions depend on click order.
+6. Remaining pre-alpha foundations: time-correct roster/checkpoint bindings,
+   country editors/intake/groups, canonical attributes/OVR, general additions and
+   broader sequential Week/Season/full-Run acceptance. Empirical calibration later
+   against functioning tests, not unverified score adjustments.
+
+Master v80 contains targets; the audit records only demonstrated implementation.
+A docs checkpoint is not an internal application release. Full regression/release
+gates remain separate. User merges every PR; one coherent cut per PR, fresh base
+and every required final-head check green before merge handoff.
+
+## Historical dependency queues — retained for provenance
+
+# Historical next steps — 12 October 2026 / after #1404 (Master v79)
 
 Verified `buuk 5419189c52bfb222c59e40b0ffa05e39d2a7176f` (#1404) with no open PRs at start of this work. #1397–1404 integrated Week-2 predecessor checks, Add Selected protections, generator layout/localization, bulk Automatic, Run World, Country History and Saved HEAD country roster. **Do not redo those slices.**
 

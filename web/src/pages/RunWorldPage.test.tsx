@@ -6,9 +6,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { RunWorldPage } from './RunWorldPage'
 import { worldFixture } from './runWorldFixture'
 
-const api=vi.hoisted(()=>({getRunPackageState:vi.fn()}))
+const api=vi.hoisted(()=>({getRunPackageState:vi.fn(),getSavedPlayersInventory:vi.fn()}))
 const context=vi.hoisted(()=>({
-  branch:{run_id:'run-a',branch_id:'branch-a',display_name:'Timeline 1'},
+  branch:{run_id:'run-a',branch_id:'branch-a',saved_head_revision_id:'head-a',display_name:'Timeline 1'},
   time:{mode:'present',isLoading:false,error:null},
   language:'en'
 }))
@@ -33,13 +33,36 @@ function mountWorld(path:string):{refresh:()=>void} {
   return {refresh:()=>mounted.rerender(wrap())}
 }
 
+type CountryFilters={
+  search:string;country_code:string;status_filter:string;include_prepared:boolean
+  offset:number;limit:number
+}
+function savedCountryResponse(filters:CountryFilters,head='head-a'){
+  return {
+    schema_version:'saved_players_inventory.v1',
+    run_id:'run-a',branch_id:'branch-a',saved_revision_id:head,
+    source:'selected_branch_saved_revision',time_context:'present',
+    ranking_week_ordinal:null,...filters,
+    total:26,has_more:filters.offset+filters.limit<26,
+    players:[{
+      player_id:filters.offset===0?'cze-p1':'cze-p26',
+      display_name:filters.offset===0?'Czech Player One':'Czech Player Twenty Six',
+      country_code:'CZE',identity_source:'initial_world',
+      status:'active',age:21,ovr:73,potential_ovr:90,
+      ranking_status:'unpublished',rank:null
+    }]
+  }
+}
+
 describe('Run-owned World overview navigation',()=>{
   beforeEach(()=>{
     vi.clearAllMocks()
     context.branch.run_id='run-a'
+    context.branch.saved_head_revision_id='head-a'
     context.time.mode='present'
     context.language='en'
     api.getRunPackageState.mockResolvedValue(worldFixture())
+    api.getSavedPlayersInventory.mockImplementation(async (_run:string,_branch:string,head:string,filters:CountryFilters)=>savedCountryResponse(filters,head))
   })
   it('displays incomplete population, filters copied countries and links into six-tab detail preserving year/search',async()=>{
     mountWorld('/admin/runs/run-a/world?year=2000')
@@ -127,6 +150,51 @@ describe('Run-owned World overview navigation',()=>{
     expect(screen.getByRole('alert')).toHaveTextContent('Historical checkpoint selected')
     expect(screen.queryByText('Saved FIFA Earth')).not.toBeInTheDocument()
     expect(api.getRunPackageState).toHaveBeenCalledTimes(1)
+  })
+
+
+  it('reads actual country roster only from selected immutable Saved HEAD and allows server paging',async()=>{
+    mountWorld('/admin/runs/run-a/world/countries/CZE?tab=players&year=2020')
+    expect(await screen.findByRole('heading',{name:'Saved country players'})).toBeInTheDocument()
+    expect(screen.getByLabelText('Run World canonical country players')).toHaveTextContent(
+      'NOT a historical roster for World year 2020'
+    )
+    expect(await screen.findByRole('link',{name:'Czech Player One'})).toHaveAttribute(
+      'href','/admin/runs/run-a/people/cze-p1'
+    )
+    expect(api.getSavedPlayersInventory).toHaveBeenCalledWith(
+      'run-a','branch-a','head-a',expect.objectContaining({
+        country_code:'CZE',include_prepared:false,offset:0,limit:25
+      })
+    )
+    await userEvent.click(screen.getByRole('button',{name:'Next →'}))
+    expect(await screen.findByRole('link',{name:'Czech Player Twenty Six'})).toBeInTheDocument()
+    expect(api.getSavedPlayersInventory).toHaveBeenLastCalledWith(
+      'run-a','branch-a','head-a',expect.objectContaining({offset:25,country_code:'CZE'})
+    )
+    await userEvent.click(screen.getByRole('checkbox',{name:/Explicitly include saved prepared prospects/}))
+    await waitFor(()=>expect(api.getSavedPlayersInventory).toHaveBeenLastCalledWith(
+      'run-a','branch-a','head-a',expect.objectContaining({offset:0,include_prepared:true})
+    ))
+    expect(screen.getByRole('link',{name:'Czech Player One'})).toBeInTheDocument()
+  })
+  it('fails closed on foreign country or foreign Saved HEAD response without leaking a player link',async()=>{
+    api.getSavedPlayersInventory.mockImplementation(async(_r:string,_b:string,_h:string,f:CountryFilters)=>({
+      ...savedCountryResponse(f,'other-head'),
+      players:[{...savedCountryResponse(f).players[0],country_code:'USA',display_name:'Foreign Player'}]
+    }))
+    mountWorld('/admin/runs/run-a/world/countries/CZE?tab=players')
+    expect(await screen.findByRole('alert')).toHaveTextContent('Response scope does not match')
+    expect(screen.queryByRole('link',{name:'Foreign Player'})).not.toBeInTheDocument()
+    expect(screen.queryByRole('table',{name:'Saved country roster'})).not.toBeInTheDocument()
+  })
+  it('does not call players API or use legacy players without a Saved HEAD',async()=>{
+    context.branch.saved_head_revision_id=''
+    mountWorld('/admin/runs/run-a/world/countries/CZE?tab=players')
+    expect(await screen.findByRole('heading',{name:'Saved country players'})).toBeInTheDocument()
+    expect(screen.getByRole('alert')).toHaveTextContent('No authoritative Saved Revision')
+    expect(api.getSavedPlayersInventory).not.toHaveBeenCalled()
+    expect(screen.queryByRole('table',{name:'Saved country roster'})).not.toBeInTheDocument()
   })
 
   it('blocks present-only data at historical checkpoint without any current snapshot request',()=>{

@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from datetime import date
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP
 from typing import Annotated, Literal
 
 from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, model_validator
@@ -14,6 +15,17 @@ GAME_ATTRIBUTE_NAMES = (
 )
 RATING_SCALE_V2 = "country_ratings_1_10.v2"
 LEGACY_RATING_SCALE = "country_ratings_1_5.v1"
+RATING_RESOLUTION_LINEAR_V3 = "country_rating_resolution.linear_v3"
+EFFECTIVE_RATING_STEP = Decimal("0.0001")
+
+
+@dataclass(frozen=True, slots=True)
+class EffectiveCountryRating:
+    value: float
+    kind: Literal["exact", "interpolated", "fallback"]
+    source_years: tuple[int, ...]
+    source_values: tuple[float, ...]
+
 
 
 def validate_rating_v2(value: object) -> float:
@@ -123,6 +135,39 @@ class CountryRatingHistory(BaseModel):
             raise ValueError("requested country-rating year must be an integer in 1954–2050")
         source_year = min(self.years, key=lambda item: (abs(item - year), item))
         return source_year, self.years[source_year]
+
+    def resolve_effective(self, year: int) -> dict[str, EffectiveCountryRating]:
+        """Explicit v3: Decimal interpolation and half-up four-place results.
+
+        Legacy resolve() remains nearest-year for existing saved requests/replay.
+        """
+        if isinstance(year, bool) or not isinstance(year, int) or not 1954 <= year <= 2050:
+            raise ValueError("requested country-rating year must be an integer in 1954–2050")
+        years = sorted(self.years)
+        if year in self.years:
+            sources, kind = (year,), "exact"
+        elif year < years[0]:
+            sources, kind = (years[0],), "fallback"
+        elif year > years[-1]:
+            sources, kind = (years[-1],), "fallback"
+        else:
+            left = max(y for y in years if y < year)
+            right = min(y for y in years if y > year)
+            sources, kind = (left, right), "interpolated"
+        output: dict[str, EffectiveCountryRating] = {}
+        for name in GAME_ATTRIBUTE_NAMES:
+            values = tuple(self.years[y].ratings[name].value for y in sources)
+            if len(sources) == 2:
+                left, right = sources
+                exact = (Decimal(str(values[0])) * (right - year)
+                         + Decimal(str(values[1])) * (year - left)) / (right - left)
+                value = float(exact.quantize(EFFECTIVE_RATING_STEP, rounding=ROUND_HALF_UP))
+            else:
+                value = values[0]
+            output[name] = EffectiveCountryRating(
+                value=value, kind=kind, source_years=sources, source_values=values
+            )
+        return output
 
     @property
     def missing_earth_years(self) -> list[int]:

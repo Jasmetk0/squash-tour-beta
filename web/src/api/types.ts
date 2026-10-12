@@ -8620,3 +8620,18 @@ export type SavedPlayerMatchDetail = {
   has_more: boolean
   rallies: SavedMatchRallyFrame[]
 }
+
+/** Read-only canonical published results by hosting and player nationality. */
+export type RunCountryRecordResult = {
+  event_id:string;event_name:string;season:string;season_week:number;host_country:string
+  champion_player_id:string;champion_name:string;champion_country:string
+  finalist_player_id:string;finalist_name:string;finalist_country:string
+}
+export type RunCountryRecords = {
+  schema_version:'run_country_records.v1'
+  run_id:string;branch_id:string;revision_branch_id:string;saved_revision_id:string
+  source:'reachable_saved_revision';country_code:string;calendar_status:'empty'|'ready'
+  published_result_count:number;country_titles:number;country_finalists:number
+  hosted_published_results:number
+  player_results:RunCountryRecordResult[];hosted_results:RunCountryRecordResult[]
+}

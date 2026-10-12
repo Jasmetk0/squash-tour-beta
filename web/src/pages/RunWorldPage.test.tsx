@@ -7,7 +7,7 @@ import { RunWorldPage } from './RunWorldPage'
 import { worldFixture } from './runWorldFixture'
 
 const api=vi.hoisted(()=>({getRunPackageState:vi.fn(),getSavedPlayersInventory:vi.fn(),
-  getSavedRevision:vi.fn(),listSavedRevisionHistory:vi.fn()}))
+  getSavedRevision:vi.fn(),listSavedRevisionHistory:vi.fn(),getRunCountryRecords:vi.fn()}))
 const context=vi.hoisted(()=>({
   branch:{run_id:'run-a',branch_id:'branch-a',saved_head_revision_id:'head-a',display_name:'Timeline 1'},
   time:{mode:'present',isLoading:false,error:null},
@@ -335,6 +335,68 @@ describe('Run-owned World overview navigation',()=>{
     expect(await screen.findByLabelText('Country Run-owned tournaments'))
       .toHaveTextContent('No Saved Revision is available')
     expect(api.getSavedRevision).not.toHaveBeenCalled()
+  })
+
+
+  it('shows canonical Country Records with separate hosted and player nationality results',async()=>{
+    api.getRunCountryRecords.mockResolvedValue({
+      schema_version:'run_country_records.v1',source:'reachable_saved_revision',
+      run_id:'run-a',branch_id:'branch-a',revision_branch_id:'branch-a',
+      saved_revision_id:'head-a',country_code:'CZE',calendar_status:'ready',
+      published_result_count:2,country_titles:1,country_finalists:1,
+      hosted_published_results:1,
+      player_results:[{
+        event_id:'away',event_name:'Away Championship',season:'2000/2001',
+        season_week:3,host_country:'EGY',champion_player_id:'P1',
+        champion_name:'Czech Champion',champion_country:'CZE',
+        finalist_player_id:'P2',finalist_name:'Egypt Finalist',finalist_country:'EGY',
+      }],
+      hosted_results:[{
+        event_id:'home',event_name:'Prague Open',season:'2000/2001',
+        season_week:4,host_country:'CZE',champion_player_id:'P2',
+        champion_name:'Egypt Champion',champion_country:'EGY',
+        finalist_player_id:'P1',finalist_name:'Czech Finalist',finalist_country:'CZE',
+      }]
+    })
+    mountWorld('/admin/runs/run-a/world/countries/CZE?tab=records&year=2020')
+    const records=await screen.findByLabelText('Country published records')
+    await waitFor(()=>expect(within(records).getByLabelText('Country verified record totals')).toHaveTextContent('1'))
+    expect(within(records).getByRole('table',{name:'Country player published results'}))
+      .toHaveTextContent('Away Championship')
+    expect(within(records).getByRole('table',{name:'Country hosted published results'}))
+      .toHaveTextContent('Prague Open')
+    expect(api.getRunCountryRecords).toHaveBeenCalledWith('run-a','branch-a','CZE','head-a')
+    expect(within(records).getByRole('link',{name:'Czech Champion'})).toHaveAttribute(
+      'href','/admin/runs/run-a/people/P1')
+  })
+  it('reads historical Country Records from explicit revision and blocks present profile links',async()=>{
+    api.getRunCountryRecords.mockResolvedValue({
+      schema_version:'run_country_records.v1',source:'reachable_saved_revision',
+      run_id:'run-a',branch_id:'branch-a',revision_branch_id:'branch-a',
+      saved_revision_id:'rev-old',country_code:'CZE',calendar_status:'ready',
+      published_result_count:1,country_titles:1,country_finalists:0,
+      hosted_published_results:0,
+      player_results:[{
+        event_id:'past',event_name:'Archived Open',season:'2000/2001',
+        season_week:1,host_country:'EGY',champion_player_id:'P1',
+        champion_name:'Former Champion',champion_country:'CZE',
+        finalist_player_id:'P2',finalist_name:'Opponent',finalist_country:'EGY',
+      }],hosted_results:[]
+    })
+    mountWorld('/admin/runs/run-a/world/countries/CZE?tab=records&revision=rev-old')
+    const records=await screen.findByLabelText('Country published records')
+    await waitFor(()=>expect(records).toHaveTextContent('Former Champion'))
+    expect(records).toHaveTextContent('Historical revision')
+    expect(within(records).queryByRole('link',{name:'Former Champion'})).not.toBeInTheDocument()
+    expect(api.getRunCountryRecords).toHaveBeenCalledWith('run-a','branch-a','CZE','rev-old')
+    expect(api.getRunPackageState).not.toHaveBeenCalled()
+  })
+  it('fails closed without a Saved HEAD and does not call Country Records API',async()=>{
+    context.branch.saved_head_revision_id=''
+    mountWorld('/admin/runs/run-a/world/countries/CZE?tab=records')
+    const records=await screen.findByLabelText('Country published records')
+    expect(records).toHaveTextContent('No authoritative Saved Revision')
+    expect(api.getRunCountryRecords).not.toHaveBeenCalled()
   })
 
 })

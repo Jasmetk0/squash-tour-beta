@@ -78,11 +78,11 @@ def put_lifecycle(
     return installed
 
 
-def bootstrap_lifecycle(
-    session: Session,
+def derive_bootstrap_lifecycle(
     world: InitialWorldState,
     policy: PlayerLifecyclePolicy | None = None,
-):
+) -> PlayerLifecycleWeekState:
+    """Pure Week-1 projection used for pristine-source checks and installation."""
     week = RankingWeek(season_index=0, week=1)
     world_fingerprint = world.fingerprint
     players = []
@@ -117,17 +117,22 @@ def bootstrap_lifecycle(
                 origin=f"initial_world:{world_fingerprint}",
             )
         )
-    return put_lifecycle(
-        session,
-        PlayerLifecycleWeekState(
-            run_id=world.run_id,
-            branch_id=world.branch_id,
-            week=week,
-            players=tuple(players),
-            source_initial_world_fingerprint=world_fingerprint,
-            policy=policy or PlayerLifecycleWeekState.model_fields["policy"].default,
-        ),
+    return PlayerLifecycleWeekState(
+        run_id=world.run_id,
+        branch_id=world.branch_id,
+        week=week,
+        players=tuple(players),
+        source_initial_world_fingerprint=world_fingerprint,
+        policy=policy or PlayerLifecycleWeekState.model_fields["policy"].default,
     )
+
+
+def bootstrap_lifecycle(
+    session: Session,
+    world: InitialWorldState,
+    policy: PlayerLifecyclePolicy | None = None,
+):
+    return put_lifecycle(session, derive_bootstrap_lifecycle(world, policy))
 
 
 def target_week_prospect_rows(

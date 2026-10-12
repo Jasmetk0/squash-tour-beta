@@ -6,7 +6,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { RunWorldPage } from './RunWorldPage'
 import { worldFixture } from './runWorldFixture'
 
-const api=vi.hoisted(()=>({getRunPackageState:vi.fn(),getSavedPlayersInventory:vi.fn()}))
+const api=vi.hoisted(()=>({getRunPackageState:vi.fn(),getSavedPlayersInventory:vi.fn(),
+  getSavedRevision:vi.fn(),listSavedRevisionHistory:vi.fn()}))
 const context=vi.hoisted(()=>({
   branch:{run_id:'run-a',branch_id:'branch-a',saved_head_revision_id:'head-a',display_name:'Timeline 1'},
   time:{mode:'present',isLoading:false,error:null},
@@ -54,6 +55,26 @@ function savedCountryResponse(filters:CountryFilters,head='head-a'){
   }
 }
 
+function historicalDetail(
+  revisionId:string,name:string,origin='branch-a',selected='branch-a',missing=false
+){
+  const f=worldFixture()
+  if(f.state){
+    f.state.branch_id=origin
+    const country=(f.state.entities as Record<string,unknown>[])[1].payload as Record<string,unknown>
+    country.name=name
+  }
+  return {
+    run_id:'run-a',branch_id:selected,revision_id:revisionId,
+    revision_branch_id:origin,is_shared_revision:origin!==selected,
+    payload_schema_version:'run_saved_revision_v1',
+    payload:{
+      run:{run_id:'run-a'},branch:{branch_id:origin},
+      content:missing?{}:{run_package_state:{fingerprint:f.fingerprint,state:f.state}}
+    }
+  }
+}
+
 describe('Run-owned World overview navigation',()=>{
   beforeEach(()=>{
     vi.clearAllMocks()
@@ -62,6 +83,14 @@ describe('Run-owned World overview navigation',()=>{
     context.time.mode='present'
     context.language='en'
     api.getRunPackageState.mockResolvedValue(worldFixture())
+    api.listSavedRevisionHistory.mockImplementation(async (run:string,branch:string)=>({
+      run_id:run,branch_id:branch,saved_head_revision_id:context.branch.saved_head_revision_id,
+      saved_revisions:['rev-old','rev-new','rev-shared'].map((id,i)=>({
+        revision_id:id,sequence:i+1,is_shared_revision:false,revision_branch_id:branch,
+        is_branch_head:false
+      })),total_count:3,has_more_older:false,next_before_sequence:null
+    }))
+    api.getSavedRevision.mockImplementation(async (_r:string,b:string,id:string)=>historicalDetail(id,'Old Czechia','branch-a',b))
     api.getSavedPlayersInventory.mockImplementation(async (_run:string,_branch:string,head:string,filters:CountryFilters)=>savedCountryResponse(filters,head))
   })
   it('displays incomplete population, filters copied countries and links into six-tab detail preserving year/search',async()=>{
@@ -209,4 +238,56 @@ describe('Run-owned World overview navigation',()=>{
     expect(screen.getByRole('alert')).toHaveTextContent('Select a valid Branch')
     expect(api.getRunPackageState).not.toHaveBeenCalled()
   })
+  it('reads two distinct persisted World revisions, not current Saved HEAD or current World',async()=>{
+    api.getSavedRevision.mockImplementation(async(_r:string,b:string,id:string)=>
+      historicalDetail(id,id==='rev-old'?'Old Czechia':'New Czechia','branch-a',b))
+    mountWorld('/admin/runs/run-a/world?year=2000&revision=rev-old')
+    const table=await screen.findByRole('table',{name:'Run World countries'})
+    expect(table).toHaveTextContent('Old Czechia')
+    expect(table).not.toHaveTextContent('New Czechia')
+    expect(screen.getByText(/Origin Branch/)).toHaveTextContent('branch-a')
+    expect(api.getRunPackageState).not.toHaveBeenCalled()
+    await userEvent.selectOptions(screen.getByRole('combobox',{name:'World Saved Revision'}),'rev-new')
+    await waitFor(()=>expect(screen.getByRole('table',{name:'Run World countries'})).toHaveTextContent('New Czechia'))
+    expect(screen.getByRole('table',{name:'Run World countries'})).not.toHaveTextContent('Old Czechia')
+    expect(api.getSavedRevision).toHaveBeenCalledWith('run-a','branch-a','rev-new')
+    expect(api.getRunPackageState).not.toHaveBeenCalled()
+  })
+  it('reads a shared ancestor through selected Branch reachability without rewriting owner',async()=>{
+    context.branch.branch_id='branch-b'
+    context.branch.saved_head_revision_id='head-b'
+    api.getSavedRevision.mockResolvedValue(historicalDetail('rev-shared','Shared Historical Czechia','branch-a','branch-b'))
+    mountWorld('/admin/runs/run-a/world?revision=rev-shared')
+    expect(await screen.findByRole('table',{name:'Run World countries'})).toHaveTextContent('Shared Historical Czechia')
+    expect(screen.getByText(/Origin Branch/)).toHaveTextContent('branch-a')
+    expect(screen.getByText(/shared ancestor/)).toBeInTheDocument()
+    expect(api.getSavedRevision).toHaveBeenCalledWith('run-a','branch-b','rev-shared')
+    expect(api.getRunPackageState).not.toHaveBeenCalled()
+  })
+  it('disables current Saved HEAD players in historical country detail',async()=>{
+    mountWorld('/admin/runs/run-a/world/countries/CZE?revision=rev-old&tab=players&year=2005')
+    expect(await screen.findByRole('heading',{name:'Historical player roster'})).toBeInTheDocument()
+    expect(screen.getByLabelText('Historical country roster unavailable')).toHaveTextContent(
+      'Current saved players are never substituted'
+    )
+    expect(api.getSavedPlayersInventory).not.toHaveBeenCalled()
+    expect(api.getRunPackageState).not.toHaveBeenCalled()
+  })
+  it('reports a missing historical World component or unreachable revision without fallback',async()=>{
+    api.getSavedRevision.mockResolvedValue(historicalDetail('rev-old','Invisible','branch-a','branch-a',true))
+    mountWorld('/admin/runs/run-a/world?revision=rev-old')
+    expect(await screen.findByRole('alert')).toHaveTextContent('has no saved Run World component')
+    expect(screen.queryByRole('table',{name:'Run World countries'})).not.toBeInTheDocument()
+    expect(api.getRunPackageState).not.toHaveBeenCalled()
+  })
+  it('hides even cached historical World immediately when simulation checkpoint is selected',async()=>{
+    const view=mountWorld('/admin/runs/run-a/world?revision=rev-old')
+    expect(await screen.findByRole('table',{name:'Run World countries'})).toHaveTextContent('Old Czechia')
+    context.time.mode='checkpoint'
+    view.refresh()
+    expect(screen.getByRole('alert')).toHaveTextContent('Simulation checkpoint')
+    expect(screen.queryByRole('table',{name:'Run World countries'})).not.toBeInTheDocument()
+    expect(api.getRunPackageState).not.toHaveBeenCalled()
+  })
+
 })

@@ -234,3 +234,42 @@ def test_modified_but_validly_checksummed_week_one_health_cannot_be_erased(tmp_p
     with pytest.raises(ValueError,match="non-bootstrap edits"):
         _install(repo,rid,bid,initial,amended,saved)
     assert repo.get_initial_world(run_id=rid,branch_id=bid)==initial
+
+
+def test_http_json_selected_ids_are_arrays_but_authenticate_as_distinct_tuples(
+    tmp_path, monkeypatch
+):
+    """Regression from real Chromium: strict Python tuple rejected valid JSON array."""
+    import json
+    from beta_engine.api.routers.admin_players import (
+        SelectedInitialWorldAppendScopedRequest,
+    )
+    repo, rid, bid, old, candidate, request, appended, saved = _prepared(
+        tmp_path, monkeypatch
+    )
+    wire = {
+        "append": request.model_dump(mode="json"),
+        "expected_head": saved.saved_revision.revision_id,
+        "expected_draft_version": saved.working_draft.draft_version,
+        "expected_package_fingerprint": SHA,
+        "expected_initial_world_fingerprint": old.fingerprint,
+    }
+    assert isinstance(wire["append"]["selected_player_ids"], list)
+    parsed = SelectedInitialWorldAppendScopedRequest.model_validate_json(
+        json.dumps(wire)
+    )
+    assert parsed.append.selected_player_ids == request.selected_player_ids
+    assert isinstance(parsed.append.selected_player_ids, tuple)
+    assert compose_selected_initial_world_append(
+        old, candidate, parsed.append
+    ).fingerprint == appended.fingerprint
+    for wrong in (
+        [request.selected_player_ids[0], request.selected_player_ids[0]],
+        list(reversed(request.selected_player_ids)),
+        [],
+    ):
+        wire["append"]["selected_player_ids"] = wrong
+        with pytest.raises(ValidationError):
+            SelectedInitialWorldAppendScopedRequest.model_validate_json(
+                json.dumps(wire)
+            )

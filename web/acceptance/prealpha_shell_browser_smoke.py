@@ -261,7 +261,14 @@ def main() -> None:
             # The Branch dropdown is an imperative context change: cancelling
             # keeps both its selected Branch and the edited source values.
             branch_selector = page.get_by_role("combobox", name="Admin active Branch")
+            # The Run/Branch provider hydrates asynchronously after a direct
+            # browser navigation. Do not capture an empty loading selection as
+            # the authoritative initial Branch for the cancel/approve guard.
+            expect(branch_selector).not_to_have_value("")
             initial_branch = branch_selector.input_value()
+            assert initial_branch in {
+                source_branch["branch_id"], created_branch["branch_id"]
+            }, initial_branch
             requested_branch = (
                 created_branch["branch_id"]
                 if initial_branch != created_branch["branch_id"]

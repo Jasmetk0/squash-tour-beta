@@ -131,12 +131,12 @@ def acceptance(root: Path, *, port: int, base_url: str, chromium: str):
                 # Exercise the real new full-cohort exact quota path, not a mock
                 # or weighted best-effort distribution. Remaining 970 must
                 # come from countries other than the two fixed countries.
-                browser_click(page, "Add country quota")
+                page.get_by_role("button", name="Add country quota").click()
                 quota_section = page.get_by_role("region", name="Exact country quotas")
                 rows = quota_section.locator(".form-grid")
                 first = rows.nth(0).locator("select").input_value()
                 page.get_by_label(f"Exact quota {first}").fill("20")
-                browser_click(page, "Add country quota")
+                page.get_by_role("button", name="Add country quota").click()
                 second = rows.nth(1).locator("select").input_value()
                 assert first != second, "Quota editor must select distinct countries"
                 page.get_by_label(f"Exact quota {second}").fill("10")

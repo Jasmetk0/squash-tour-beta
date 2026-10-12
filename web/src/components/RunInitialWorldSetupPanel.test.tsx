@@ -261,7 +261,7 @@ describe('Run-owned first-season player setup', () => {
     await waitFor(() => expect(api.previewRunOwnedInitialWorld).toHaveBeenCalledWith(
       'first-run', 'timeline-1',
       expect.objectContaining({
-        generation: { world_package_id: 'fifa_earth', season: '2000/2001', seed: 20261009, target_pool_size: 2 },
+        generation: { world_package_id: 'fifa_earth', season: '2000/2001', seed: 20261009, target_pool_size: 2, naming_policy: 'country_serial.v1' },
         official_run: false, best_n: 15, automatic_retirement_age: 46
       })
     ))

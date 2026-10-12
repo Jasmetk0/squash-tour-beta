@@ -6,7 +6,7 @@ import { Link } from 'react-router-dom'
 import {
   adoptRunOwnedInitialWorld, getBranchWorkingDraft, getRunOwnedInitialWorld,
   getRunGenerationProposals, saveRunGenerationProposal, loadRunGenerationProposal,
-  deleteRunGenerationProposal,
+  inspectRunGenerationProposal, revalidateRunGenerationProposal, deleteRunGenerationProposal,
   getRunPackageState, getRunWorldGenerationOptions, previewRunInitialWorldSave, previewRunOwnedInitialWorld,
   saveRunOwnedInitialWorld
 } from '../api/client'
@@ -16,7 +16,8 @@ import {
   orderedPreviewFieldLocks,
   type GeneratedPlayerFieldKey, type RunWorldExactCountryQuota, type RunWorldPreviewFieldLock,
   type RunInitialWorldAdoption, type RunInitialWorldPreview,
-  type RunSavedGenerationProposal
+  type RunSavedGenerationProposal, type RunGenerationProposalInspection,
+  type RunGenerationProposalRevalidation
 } from '../api/runInitialWorldSetup'
 import { formatApiError, isApiNotFound } from '../utils/apiErrors'
 import { SectionCard } from './RunScopedUi'
@@ -70,6 +71,9 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
   const [proposalName, setProposalName] = useState('Generation proposal')
   const [selectedProposalId, setSelectedProposalId] = useState('')
   const [restoringProposal, setRestoringProposal] = useState<RunSavedGenerationProposal | null>(null)
+  const [restoringRevalidated, setRestoringRevalidated] = useState(false)
+  const [inspection, setInspection] = useState<RunGenerationProposalInspection | null>(null)
+  const [revalidated, setRevalidated] = useState<RunGenerationProposalRevalidation | null>(null)
 
   const packageQuery = useQuery({
     queryKey: ['run-package-state', runId, branchId],
@@ -92,7 +96,7 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
   const proposalQuery = useQuery({
     queryKey: ['generation-proposals', runId, branchId],
     queryFn: () => getRunGenerationProposals(runId, branchId),
-    enabled: Boolean(branchId && editable),
+    enabled: Boolean(branchId && run.storage_kind === 'custom_local'),
     retry: false
   })
   const worldIds = runOwnedWorldIds(packageQuery.data?.state)
@@ -478,6 +482,100 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
     }
   })
 
+  // Historical inspection is intentionally separate from Open/Adopt. It
+  // works when current HEAD, Working Draft or the World snapshot has changed.
+  const inspectProposalAction = useMutation({
+    mutationFn: async () => {
+      if (!selectedProposalId || !branchId)
+        throw new Error('Select a proposal from this Run/Branch for inspection.')
+      const response = await inspectRunGenerationProposal(runId, branchId, selectedProposalId)
+      const saved = response.proposal
+      if (response.schema_version !== 'run_generation_proposal_inspection.v1' ||
+          response.historical_only !== true ||
+          saved.run_id !== runId || saved.branch_id !== branchId ||
+          saved.proposal_id !== selectedProposalId ||
+          saved.preview_fingerprint !== saved.preview.fingerprint ||
+          saved.preview.state.run_id !== runId || saved.preview.state.branch_id !== branchId ||
+          saved.request.generation.world_package_id !== saved.preview.state.world_package_id ||
+          saved.preview.state.players.length !== saved.request.generation.target_pool_size)
+        throw new Error('Historical proposal inspection returned inconsistent Run/Branch data.')
+      return response
+    },
+    onSuccess: data => {
+      setInspection(data); setRevalidated(null); setReview(null); setApproved(false)
+      setNotice('Historical proposal opened read-only. No generation, Adopt or Save performed.')
+    }
+  })
+
+  const revalidateProposalAction = useMutation({
+    mutationFn: async () => {
+      if (!inspection || inspection.proposal.proposal_id !== selectedProposalId ||
+          !editable || !draft || draft.status !== 'clean' || !snapshotFingerprint ||
+          existing || pendingSave)
+        throw new Error('Revalidation needs the same owned Branch with a clean, writable Saved HEAD.')
+      const current = {saved_revision_id: head, draft_version: draft.draft_version,
+        package_fingerprint: snapshotFingerprint}
+      const response = await revalidateRunGenerationProposal(runId, branchId,
+        selectedProposalId, {
+          expected_head: current.saved_revision_id,
+          expected_draft_version: current.draft_version,
+          expected_package_fingerprint: current.package_fingerprint
+        })
+      if (response.schema_version !== 'run_generation_proposal_revalidation.v1' ||
+          response.preview_only !== true || response.proposal_id !== selectedProposalId ||
+          response.original_preview_fingerprint !== inspection.proposal.preview_fingerprint ||
+          JSON.stringify(response.request) !== JSON.stringify(inspection.proposal.request) ||
+          response.current_context.saved_revision_id !== current.saved_revision_id ||
+          response.current_context.draft_version !== current.draft_version ||
+          response.current_context.package_fingerprint !== current.package_fingerprint ||
+          response.preview.state.run_id !== runId || response.preview.state.branch_id !== branchId ||
+          !/^[a-f0-9]{64}$/.test(response.preview.fingerprint))
+        throw new Error('Current-target revalidation returned unexpected provenance.')
+      return response
+    },
+    onSuccess: data => {
+      setRevalidated(data); setApproved(false)
+      setNotice('Fresh server preview available for comparison. Explicitly select it before Adopt.')
+    }
+  })
+
+  const useRevalidatedProposal = () => {
+    if (!inspection || !revalidated || !canPreview || !draft || !snapshotFingerprint ||
+        selectedProposalId !== inspection.proposal.proposal_id ||
+        revalidated.proposal_id !== selectedProposalId ||
+        revalidated.current_context.saved_revision_id !== head ||
+        revalidated.current_context.draft_version !== draft.draft_version ||
+        revalidated.current_context.package_fingerprint !== snapshotFingerprint)
+      return
+    setRestoringRevalidated(true)
+    setRestoringProposal({
+      ...inspection.proposal,
+      saved_revision_id: head,
+      draft_version: draft.draft_version,
+      package_fingerprint: snapshotFingerprint,
+      preview_fingerprint: revalidated.preview.fingerprint,
+      request: revalidated.request,
+      preview: revalidated.preview,
+    })
+    const generation = revalidated.request.generation
+    setSourceId(generation.world_package_id)
+    setSeed(inspection.proposal.source_seed)
+    setPoolSize(generation.target_pool_size)
+    setCountryCode(generation.country_code ?? '')
+    setCountryQuotas(generation.country_quotas ?? [])
+    setRegion(generation.geographic_region ?? '')
+    setTravelRegion(generation.travel_region ?? '')
+    setMinAge(String(generation.min_age ?? ''))
+    setMaxAge(String(generation.max_age ?? ''))
+    setBestN(revalidated.request.best_n)
+    setAuditReason(revalidated.request.audit_reason)
+    setApproved(false)
+  }
+
+  useEffect(() => {
+    setInspection(null); setRevalidated(null)
+  }, [runId, branchId, head, snapshotFingerprint, draft?.draft_version, selectedProposalId])
+
   const proposalLoadAction = useMutation({
     mutationFn: async () => {
       if (!selectedProposalId || !canPreview || !draft || !snapshotFingerprint)
@@ -544,8 +642,11 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
     setRerollSeed(data.next_seed)
     setSelectedPlayerId(null)
     setApproved(false)
-    setNotice('Exact saved review restored from SQLite without regenerating. Adopt and Run Save remain separate.')
+    setNotice(restoringRevalidated
+      ? 'Explicitly revalidated preview selected. Review and approve before Adopt; manual Save remains separate.'
+      : 'Exact saved review restored from SQLite without regenerating. Adopt and Run Save remain separate.')
     setRestoringProposal(null)
+    setRestoringRevalidated(false)
   }, [restoringProposal, canPreview, draft, snapshotFingerprint, options,
       selectedWorldId, seed, poolSize, countryCode, countryQuotas, region, travelRegion,
       minAge, maxAge, bestN, auditReason, runId, branchId, head])
@@ -745,12 +846,61 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
         onClick={()=>proposalLoadAction.mutate()}>
         {proposalLoadAction.isPending ? 'Restoring…' : 'Open saved proposal'}
       </button>
+      <button type="button"
+        disabled={!selectedProposalId || inspectProposalAction.isPending || !branchId}
+        onClick={()=>inspectProposalAction.mutate()}>
+        {inspectProposalAction.isPending ? 'Inspecting…' : 'Inspect historical proposal (read-only)'}
+      </button>
       <button type="button" disabled={!selectedProposalId || !editable || proposalDeleteAction.isPending}
         onClick={()=>proposalDeleteAction.mutate()}>Delete saved proposal</button>
       {restoringProposal && <p role="status">Restoring reviewed proposal conditions…</p>}
       {proposalQuery.isError && <p role="alert">Saved proposals unavailable: {formatApiError(proposalQuery.error)}</p>}
       {proposalSaveAction.error && <p role="alert">Proposal Save failed: {formatApiError(proposalSaveAction.error)}</p>}
       {proposalLoadAction.error && <p role="alert">Proposal Restore failed: {formatApiError(proposalLoadAction.error)}</p>}
+      {inspectProposalAction.error && <p role="alert">Historical inspection failed: {formatApiError(inspectProposalAction.error)}</p>}
+      {revalidateProposalAction.error && <p role="alert">Proposal revalidation failed: {formatApiError(revalidateProposalAction.error)}</p>}
+      {inspection && inspection.proposal.proposal_id === selectedProposalId && <section
+        aria-label="Historical generation proposal inspection">
+        <h5>Historical snapshot · {inspection.proposal.label}</h5>
+        <p role="status">Read-only saved cohort from {inspection.proposal.saved_revision_id},
+          Draft v{inspection.proposal.draft_version}, World {inspection.proposal.request.generation.world_package_id}.
+          Original preview <code>{inspection.proposal.preview_fingerprint.slice(0, 16)}…</code>.
+          No regeneration performed.</p>
+        <p>{inspection.context.head_matches ? 'HEAD matches' : 'Saved HEAD changed'} ·
+          {' '}{inspection.context.draft_matches ? 'Draft matches and clean' : 'Draft changed or dirty'} ·
+          {' '}{inspection.context.package_matches ? 'World snapshot matches' : 'World snapshot changed'} ·
+          {' '}{inspection.context.initial_world_exists ? 'InitialWorld already exists' : 'No InitialWorld adopted'}</p>
+        {inspection.context.revalidation_required && <p role="alert">
+          Historical snapshot is not authorized for current-target Adopt. An explicit
+          new server verification is required; the stored proposal will not be modified.
+        </p>}
+        <GeneratedPlayerReviewInspector
+          key={'historical-' + inspection.proposal.preview_fingerprint}
+          players={inspection.proposal.preview.state.players} locale={locale} />
+        <button type="button" disabled={!editable || !draft || draft.status !== 'clean' ||
+            !snapshotFingerprint || Boolean(existing) || Boolean(pendingSave) ||
+            revalidateProposalAction.isPending}
+          onClick={()=>revalidateProposalAction.mutate()}>
+          {revalidateProposalAction.isPending ? 'Revalidating current target…' :
+            'Revalidate against current Run (new preview)'}
+        </button>
+        {revalidated && revalidated.proposal_id === selectedProposalId && <section
+          aria-label="Revalidated generation proposal comparison">
+          <h5>Fresh result versus saved historical snapshot</h5>
+          <p>Old {revalidated.comparison.old_count}, new {revalidated.comparison.new_count} ·
+            {' '}added {revalidated.comparison.added_identities} ·
+            {' '}removed {revalidated.comparison.removed_identities} ·
+            {' '}changed profiles {revalidated.comparison.changed_profiles} ·
+            {' '}unchanged {revalidated.comparison.unchanged_profiles}.</p>
+          <p>New preview <code>{revalidated.preview.fingerprint.slice(0, 16)}…</code>.
+            Revalidation itself does not approve adoption or write any Run state.</p>
+          <button type="button" disabled={!canPreview ||
+              revalidated.current_context.saved_revision_id !== head ||
+              revalidated.current_context.draft_version !== draft?.draft_version ||
+              revalidated.current_context.package_fingerprint !== snapshotFingerprint}
+            onClick={useRevalidatedProposal}>Use revalidated preview for review</button>
+        </section>}
+      </section>}
       {proposalDeleteAction.error && <p role="alert">Proposal Delete failed: {formatApiError(proposalDeleteAction.error)}</p>}
     </section>
 

@@ -3687,6 +3687,23 @@ export function loadRunGenerationProposal(
   return request(`${runInitialWorldRoot(runId, branchId)}/generation-proposals/${encodeURIComponent(proposalId)}`)
 }
 
+/** Read only the exact historical bytes, even when Saved HEAD/World moved. */
+export function inspectRunGenerationProposal(
+  runId: string, branchId: string, proposalId: string
+): Promise<import('./runInitialWorldSetup').RunGenerationProposalInspection> {
+  return request(`${runInitialWorldRoot(runId, branchId)}/generation-proposals/${encodeURIComponent(proposalId)}/inspection`)
+}
+
+/** Explicit production rerun against the current, still-clean Run/Branch. No Adopt. */
+export function revalidateRunGenerationProposal(
+  runId: string, branchId: string, proposalId: string,
+  context: { expected_head: string; expected_draft_version: number; expected_package_fingerprint: string }
+): Promise<import('./runInitialWorldSetup').RunGenerationProposalRevalidation> {
+  return request(`${runInitialWorldRoot(runId, branchId)}/generation-proposals/${encodeURIComponent(proposalId)}/revalidate`, {
+    method: 'POST', body: JSON.stringify(context)
+  })
+}
+
 export function deleteRunGenerationProposal(
   runId: string, branchId: string, proposalId: string
 ): Promise<void> {

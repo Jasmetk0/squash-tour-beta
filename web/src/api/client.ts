@@ -3665,6 +3665,29 @@ export function adoptRunOwnedInitialWorld(
   })
 }
 
+/** Strict selected-append review; does not mutate an existing InitialWorld. */
+export function previewSelectedInitialWorldAppend(
+  runId: string, branchId: string,
+  payload: import('./runInitialWorldSetup').SelectedInitialWorldAppendRequest
+): Promise<import('./runInitialWorldSetup').SelectedInitialWorldAppendPreview> {
+  return request(`${runInitialWorldRoot(runId, branchId)}/selected-append/preview`, {
+    method: 'POST', body: JSON.stringify(payload)
+  })
+}
+
+/** Commit only the exact selected append reviewed fingerprint. No implicit Saved Revision. */
+export function commitSelectedInitialWorldAppend(
+  runId: string, branchId: string,
+  payload: import('./runInitialWorldSetup').SelectedInitialWorldAppendRequest,
+  expectedFingerprint: string
+): Promise<import('./runInitialWorldSetup').RunInitialWorldState> {
+  return request(`${runInitialWorldRoot(runId, branchId)}/selected-append`, {
+    method: 'POST',
+    headers: {'X-Expected-Selected-Append-Fingerprint': expectedFingerprint},
+    body: JSON.stringify(payload)
+  })
+}
+
 /** Non-authoritative, Run/Branch-scoped saved generation reviews. */
 export function getRunGenerationProposals(
   runId: string, branchId: string

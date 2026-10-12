@@ -1522,6 +1522,66 @@ class SimulationPersistenceRepository:
             bootstrap_health(session, installed)
             return installed
 
+    def append_selected_initial_world(
+        self, *, appended, expected_initial_world_fingerprint: str,
+        expected_saved_head: str, expected_draft_version: int,
+        expected_package_fingerprint: str,
+    ):
+        """Atomic, no-overwrite subset append before any ranking/sporting progress."""
+        from beta_engine.infrastructure.db.run_package_state import get_run_package_state
+        from beta_engine.infrastructure.db.selected_initial_world_append import (
+            replace_pristine_initial_world_for_selected_append,
+        )
+        run_id, branch_id = appended.run_id, appended.branch_id
+        with self._session_factory.begin() as session:
+            session.execute(text("BEGIN IMMEDIATE"))
+            run = session.get(RunContainerModel, run_id)
+            branch = session.get(RunBranchModel, branch_id)
+            if (
+                run is None or branch is None or branch.run_id != run_id or
+                run.storage_kind != "custom_local" or run.read_only or
+                branch.read_only or branch.status != "active"
+            ):
+                raise ValueError("Selected append requires a writable custom Run/Branch")
+            state = self._validated_branch_revision_state_in_session(
+                session=session, branch=branch
+            )
+            draft = state.working_draft
+            if (branch.saved_head_revision_id != expected_saved_head or
+                state.saved_revision.revision_id != expected_saved_head or
+                state.saved_revision.run_id != run_id or
+                state.saved_revision.branch_id != branch_id or
+                draft.base_revision_id != expected_saved_head or
+                draft.draft_version != expected_draft_version or
+                draft.status != CLEAN_WORKING_DRAFT_STATUS):
+                raise ValueError("Selected append HEAD/Draft changed since preview")
+            current_packages = get_run_package_state(
+                session, run_id=run_id, branch_id=branch_id
+            )
+            saved_packages = load_saved_run_package_state(
+                state.saved_revision.payload, run_id=run_id, branch_id=branch_id
+            )
+            if (current_packages is None or saved_packages is None or
+                current_packages.fingerprint != expected_package_fingerprint or
+                saved_packages.fingerprint != expected_package_fingerprint):
+                raise ValueError("Selected append World Package changed since preview")
+            original = get_initial_world(
+                session, run_id=run_id, branch_id=branch_id
+            )
+            saved = load_saved_initial_world(
+                state.saved_revision.payload, run_id=run_id, branch_id=branch_id
+            )
+            if (original is None or saved is None or
+                original.fingerprint != expected_initial_world_fingerprint or
+                saved.fingerprint != expected_initial_world_fingerprint):
+                raise ValueError("Selected append requires an exactly saved InitialWorld")
+            if (len(appended.selected_appends) != len(original.selected_appends)+1 or
+                appended.selected_appends[:-1] != original.selected_appends):
+                raise ValueError("Selected append lineage changed since preview")
+            return replace_pristine_initial_world_for_selected_append(
+                session, previous=original, appended=appended
+            )
+
     def preview_derived_ranking_transition_authority(
         self,
         *,

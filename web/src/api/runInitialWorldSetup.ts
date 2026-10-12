@@ -233,7 +233,35 @@ export type RunInitialWorldState = {
   world_generation_content_fingerprint: string
   run_world_pool_preview_fingerprint: string
   players: RunInitialWorldPlayer[]
+  selected_appends?: {
+    command_id: string
+    source_preview_fingerprint: string
+    selected_player_ids: string[]
+    audit_label: string
+    audit_reason: string
+  }[]
   policies: { policy_id: string; best_n: number }[]
+}
+
+export type SelectedInitialWorldAppendRequest = {
+  append: {
+    command_id: string
+    generation: RunInitialWorldAdoption
+    selected_player_ids: string[]
+    audit_label: string
+    audit_reason: string
+  }
+  expected_head: string
+  expected_draft_version: number
+  expected_package_fingerprint: string
+  expected_initial_world_fingerprint: string
+}
+
+export type SelectedInitialWorldAppendPreview = {
+  preview_only: true
+  fingerprint: string
+  state: RunInitialWorldState
+  added_count: number
 }
 
 export type RunInitialWorldPreview = {

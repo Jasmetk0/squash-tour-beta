@@ -26,10 +26,13 @@ from beta_engine.application.run_world_initial_pool_preview_service import (
 from beta_engine.application.run_world_initial_world_service import (
     RunWorldInitialWorldAdoptionRequest,
     RunWorldInitialWorldService,
+    RunWorldSelectedInitialWorldAppendRequest,
+    compose_selected_initial_world_append,
 )
 from beta_engine.application.run_working_draft_service import RunWorkingDraftService
 from beta_engine.application.world_package_run_adapter import WorldPackageRunAdapter
 from beta_engine.infrastructure.db.run_package_state import load_saved_run_package_state
+from beta_engine.infrastructure.db.initial_world_state import load_saved_initial_world
 from beta_engine.application.initial_world import (
     InitialWorldAdoptionRequest,
     InitialWorldState,
@@ -457,6 +460,102 @@ def adopt_run_world_initial_world(
                 "message": str(exc),
             },
         ) from exc
+
+
+# A separate, bounded subset append. It never uses the whole-pool Adopt path,
+# and changes nothing until the explicit commit with an exact preview fingerprint.
+class SelectedInitialWorldAppendScopedRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+    append: RunWorldSelectedInitialWorldAppendRequest
+    expected_head: str = Field(min_length=1, max_length=128)
+    expected_draft_version: int = Field(ge=0)
+    expected_package_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    expected_initial_world_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+
+
+def _preview_selected_initial_world_append(
+    *, run_id: str, branch_id: str,
+    payload: SelectedInitialWorldAppendScopedRequest,
+    runtime: ApiRuntime,
+    package_service: RunPackageService,
+    service: RunWorldInitialWorldService,
+) -> InitialWorldState:
+    _assert_reviewed_generation_context(
+        runtime=runtime, package_service=package_service,
+        run_id=run_id, branch_id=branch_id,
+        expected_head=payload.expected_head,
+        expected_draft_version=payload.expected_draft_version,
+        expected_package_fingerprint=payload.expected_package_fingerprint,
+    )
+    repository = runtime.repository
+    current = repository.get_initial_world(run_id=run_id, branch_id=branch_id)
+    revision = repository.get_branch_revision_state(branch_id=branch_id)
+    saved = load_saved_initial_world(
+        revision.saved_revision.payload, run_id=run_id, branch_id=branch_id
+    )
+    if (current is None or saved is None or
+        current.fingerprint != payload.expected_initial_world_fingerprint or
+        saved.fingerprint != payload.expected_initial_world_fingerprint):
+        raise ValueError("Selected append requires the exact saved InitialWorld fingerprint")
+    generated = service.preview(
+        run_id=run_id, branch_id=branch_id, request=payload.append.generation
+    )
+    return compose_selected_initial_world_append(current, generated, payload.append)
+
+
+@router.post("/runs/{run_id}/branches/{branch_id}/initial-world/selected-append/preview")
+def preview_selected_initial_world_append(
+    run_id: str, branch_id: str,
+    payload: SelectedInitialWorldAppendScopedRequest,
+    runtime: ApiRuntime = Depends(get_runtime),
+    package_service: RunPackageService = Depends(get_run_package_service),
+    service: RunWorldInitialWorldService = Depends(get_run_world_initial_world_service),
+):
+    try:
+        candidate = _preview_selected_initial_world_append(
+            run_id=run_id, branch_id=branch_id, payload=payload,
+            runtime=runtime, package_service=package_service, service=service
+        )
+        return {"preview_only": True, "fingerprint": candidate.fingerprint,
+                "state": candidate, "added_count": len(payload.append.selected_player_ids)}
+    except (KeyError, ValueError) as exc:
+        raise HTTPException(status_code=409, detail={
+            "code": "selected_initial_world_append_preview_conflict",
+            "message": str(exc),
+        }) from exc
+
+
+@router.post("/runs/{run_id}/branches/{branch_id}/initial-world/selected-append",
+             status_code=201)
+def commit_selected_initial_world_append(
+    run_id: str, branch_id: str,
+    payload: SelectedInitialWorldAppendScopedRequest,
+    expected: str = Header(
+        alias="X-Expected-Selected-Append-Fingerprint", pattern=r"^[0-9a-f]{64}$"
+    ),
+    runtime: ApiRuntime = Depends(get_runtime),
+    package_service: RunPackageService = Depends(get_run_package_service),
+    service: RunWorldInitialWorldService = Depends(get_run_world_initial_world_service),
+):
+    try:
+        candidate = _preview_selected_initial_world_append(
+            run_id=run_id, branch_id=branch_id, payload=payload,
+            runtime=runtime, package_service=package_service, service=service
+        )
+        if candidate.fingerprint != expected:
+            raise ValueError("Selected append proposal changed since reviewed preview")
+        return runtime.repository.append_selected_initial_world(
+            appended=candidate,
+            expected_initial_world_fingerprint=payload.expected_initial_world_fingerprint,
+            expected_saved_head=payload.expected_head,
+            expected_draft_version=payload.expected_draft_version,
+            expected_package_fingerprint=payload.expected_package_fingerprint,
+        )
+    except (KeyError, ValueError) as exc:
+        raise HTTPException(status_code=409, detail={
+            "code": "selected_initial_world_append_conflict",
+            "message": str(exc),
+        }) from exc
 
 
 # These are saved *candidate reviews*, not Branch Working Draft state and

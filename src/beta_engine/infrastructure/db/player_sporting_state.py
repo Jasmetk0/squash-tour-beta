@@ -284,8 +284,8 @@ def _legacy_group_value(player, group: str) -> int:
     }[group]
 
 
-def bootstrap_sporting(session, world, policy: PlayerDevelopmentPolicy | None = None):
-    """Project only the already-owned InitialWorld through an explicit legacy adapter."""
+def derive_bootstrap_sporting(world, policy: PlayerDevelopmentPolicy | None = None):
+    """Pure deterministic projection of only the Run-owned source player facts."""
     policy = policy or PlayerDevelopmentPolicy()
     players = []
     for player in world.players:
@@ -344,21 +344,23 @@ def bootstrap_sporting(session, world, policy: PlayerDevelopmentPolicy | None = 
                 long_term_fatigue=policy.bootstrap_policy.default_fatigue,
             )
         )
-    return put_sporting(
-        session,
-        PlayerSportingWeekState(
-            run_id=world.run_id,
-            branch_id=world.branch_id,
-            week=RankingWeek(season_index=0, week=1),
-            players=tuple(sorted(players, key=lambda p: p.player_id)),
-            effective_development_policy=policy,
-            completed_context_fingerprint="bootstrap:not-a-completed-week",
-            source_initial_world_fingerprint=world.fingerprint,
-            stage_provenance=(
-                f"{policy.bootstrap_policy.policy_id}:{policy.bootstrap_policy.provenance}"
-            ),
+    return PlayerSportingWeekState(
+        run_id=world.run_id,
+        branch_id=world.branch_id,
+        week=RankingWeek(season_index=0, week=1),
+        players=tuple(sorted(players, key=lambda p: p.player_id)),
+        effective_development_policy=policy,
+        completed_context_fingerprint="bootstrap:not-a-completed-week",
+        source_initial_world_fingerprint=world.fingerprint,
+        stage_provenance=(
+            f"{policy.bootstrap_policy.policy_id}:{policy.bootstrap_policy.provenance}"
         ),
     )
+
+
+def bootstrap_sporting(session, world, policy: PlayerDevelopmentPolicy | None = None):
+    """Project only the already-owned InitialWorld through an explicit legacy adapter."""
+    return put_sporting(session, derive_bootstrap_sporting(world, policy))
 
 
 def stage_sporting_transition(

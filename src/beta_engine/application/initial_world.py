@@ -13,6 +13,23 @@ from beta_engine.domain.rankings.official import OfficialRankingPolicy
 from beta_engine.domain.rankings.official import OfficialRankingPlayer, RankingWeek
 
 
+class InitialWorldSelectedAppend(BaseModel):
+    """Immutable audited source provenance for one additional selected cohort."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid", strict=True)
+    command_id: str = Field(min_length=1, max_length=128)
+    source_preview_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    selected_player_ids: tuple[str, ...] = Field(min_length=1, max_length=1000)
+    audit_label: str = Field(min_length=1, max_length=160)
+    audit_reason: str = Field(min_length=1, max_length=1000)
+
+    @model_validator(mode="after")
+    def validate_selected_ids(self) -> "InitialWorldSelectedAppend":
+        if list(self.selected_player_ids) != sorted(set(self.selected_player_ids)):
+            raise ValueError("Selected append player IDs must be sorted and distinct")
+        return self
+
+
 class InitialWorldState(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid", strict=True)
     schema_version: Literal["initial_world_state.v1"] = "initial_world_state.v1"
@@ -46,6 +63,9 @@ class InitialWorldState(BaseModel):
     audit_label: str = Field(min_length=1, max_length=160)
     audit_reason: str = Field(min_length=1, max_length=1000)
     adoption_request_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    # Optional, explicit V79 lineage. Older immutable payload fingerprints stay
+    # unchanged by excluding the empty default in the fingerprint calculation.
+    selected_appends: tuple[InitialWorldSelectedAppend, ...] = ()
 
     @model_validator(mode="after")
     def validate_complete_state(self) -> "InitialWorldState":
@@ -61,6 +81,15 @@ class InitialWorldState(BaseModel):
             raise ValueError(
                 "Initial world requires active players for its first season"
             )
+        known_ids = set(ids)
+        append_commands = [event.command_id for event in self.selected_appends]
+        if len(append_commands) != len(set(append_commands)):
+            raise ValueError("Selected append command IDs must be unique")
+        appended_ids = [pid for event in self.selected_appends for pid in event.selected_player_ids]
+        if len(appended_ids) != len(set(appended_ids)) or not set(appended_ids).issubset(known_ids):
+            raise ValueError("Selected append lineage requires distinct existing player identities")
+        if self.selected_appends and self.source_kind != "run_world_generated_pool.v1":
+            raise ValueError("Selected append lineage requires a Run-owned generated InitialWorld")
         policy_ids = [policy.policy_id for policy in self.policies]
         if policy_ids != sorted(set(policy_ids)):
             raise ValueError("Ranking policies must have unique canonical identities")
@@ -94,10 +123,11 @@ class InitialWorldState(BaseModel):
 
     @property
     def fingerprint(self) -> str:
+        payload = self.model_dump(mode="json")
+        if not self.selected_appends:
+            payload.pop("selected_appends", None)
         return hashlib.sha256(
-            json.dumps(
-                self.model_dump(mode="json"), sort_keys=True, separators=(",", ":")
-            ).encode()
+            json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()
         ).hexdigest()
 
 

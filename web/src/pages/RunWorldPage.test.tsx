@@ -79,6 +79,7 @@ describe('Run-owned World overview navigation',()=>{
   beforeEach(()=>{
     vi.clearAllMocks()
     context.branch.run_id='run-a'
+    context.branch.branch_id='branch-a'
     context.branch.saved_head_revision_id='head-a'
     context.time.mode='present'
     context.language='en'

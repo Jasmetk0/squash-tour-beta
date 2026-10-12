@@ -377,6 +377,36 @@ describe('Run-owned World overview navigation',()=>{
     expect(panel).not.toHaveTextContent('USA')
     expect(api.getSavedRevision).toHaveBeenCalledWith('run-a','branch-a','head-a')
   })
+
+  it('shows a localized fail-closed error instead of duplicate saved tournament rows',async()=>{
+    const f=worldFixture()
+    const versions=f.state!.package_versions as Record<string,unknown>[]
+    const entities=f.state!.entities as Record<string,unknown>[]
+    for(const [packageId,season,host] of [
+      ['calendar-first','2000/2001','CZE'],['calendar-second','2001/2002','USA']
+    ] as const){
+      versions.push({package_id:packageId,package_type:'Calendar'})
+      entities.push({source_package_id:packageId,source_entity_id:'calendar.metadata',
+        entity_kind:'calendar.metadata.v1',payload:{season}})
+      entities.push({source_package_id:packageId,source_entity_id:'same-event',
+        entity_kind:'calendar.event.v1',payload:{event_id:'same-event',season,
+          season_week:8,event_name:'Ambiguous Open',host_country:host,status:'planned'}})
+    }
+    api.getSavedRevision.mockResolvedValue({
+      ...historicalDetail('head-a','Saved Czechia'),
+      payload:{run:{run_id:'run-a'},branch:{branch_id:'branch-a'},content:{
+        run_package_state:{fingerprint:f.fingerprint,state:f.state}}}
+    })
+    context.language='cs'
+    mountWorld('/admin/runs/run-a/world/countries/CZE?tab=tournaments')
+    const panel=await screen.findByLabelText('Country Run-owned tournaments')
+    expect(await within(panel).findByRole('alert')).toHaveTextContent(
+      'Nejednoznačný uložený kalendář: více balíčků používá stejné ID turnaje: same-event')
+    expect(within(panel).queryByRole('table')).not.toBeInTheDocument()
+    expect(within(panel).queryByText('Ambiguous Open')).not.toBeInTheDocument()
+    expect(api.getSavedRevision).toHaveBeenCalledWith('run-a','branch-a','head-a')
+  })
+
   it('does not substitute present saved HEAD or mutable World for a historical Calendar',async()=>{
     mountWorld('/admin/runs/run-a/world/countries/CZE?tab=tournaments&revision=rev-old')
     expect(await screen.findByLabelText('Country Run-owned tournaments')).toHaveTextContent(

@@ -242,3 +242,65 @@ describe('V79 configurable, browser-only inspection columns', () => {
       .querySelectorAll('tbody tr')).toHaveLength(50)
   })
 })
+
+describe('independent bulk action selection',()=>{
+  it('selects current page and filtered players without toggling Keep or changing any source rows',async()=>{
+    const original=JSON.stringify(players)
+    const onKeepChange=vi.fn()
+    const onBulkSelectionChange=vi.fn()
+    const view=render(<GeneratedPlayerReviewInspector players={players}
+      keepIds={['p-5']} onKeepChange={onKeepChange}
+      bulkSelectedIds={[]} onBulkSelectionChange={onBulkSelectionChange}/>)
+    expect(screen.getByRole('status',{name:'Bulk selection count'})).toHaveTextContent('Action selection: 0 / 8')
+    expect(screen.getByRole('checkbox',{name:'Keep p-5'})).toBeChecked()
+    await userEvent.selectOptions(screen.getByRole('combobox',{name:'Filter generated player country'}),'CZE')
+    await userEvent.click(screen.getByRole('button',{name:'Select all matching filters'}))
+    expect(onBulkSelectionChange).toHaveBeenCalledWith(['p-3','p-5'])
+    view.rerender(<GeneratedPlayerReviewInspector players={players}
+      keepIds={['p-5']} onKeepChange={onKeepChange}
+      bulkSelectedIds={['p-3','p-5']} onBulkSelectionChange={onBulkSelectionChange}/>)
+    expect(screen.getByRole('checkbox',{name:'Select for bulk action p-3'})).toBeChecked()
+    expect(screen.getByRole('checkbox',{name:'Select for bulk action p-5'})).toBeChecked()
+    expect(screen.getByRole('checkbox',{name:'Keep p-5'})).toBeChecked()
+    await userEvent.click(screen.getByRole('checkbox',{name:'Select for bulk action p-3'}))
+    expect(onBulkSelectionChange).toHaveBeenLastCalledWith(['p-5'])
+    expect(onKeepChange).not.toHaveBeenCalled()
+    expect(JSON.stringify(players)).toBe(original)
+  })
+
+  it('selects across 50-player pages and clears action selection without changing session Keep',async()=>{
+    const cohort:RunInitialWorldPlayer[]=Array.from({length:120},(_,i)=>({
+      player_id:'p-'+String(i).padStart(3,'0'), name:'Player '+String(i).padStart(3,'0'),
+      country_code:i%2?'USA':'CZE',age_years_at_season_start:21,
+      current_ability:60,potential_ability:72,potential_tier:'B'
+    }))
+    const onBulkSelectionChange=vi.fn()
+    const onKeepChange=vi.fn()
+    const view=render(<GeneratedPlayerReviewInspector players={cohort}
+      keepIds={['p-000']} onKeepChange={onKeepChange}
+      bulkSelectedIds={[]} onBulkSelectionChange={onBulkSelectionChange}/>)
+    await userEvent.click(screen.getByRole('button',{name:'Select current page'}))
+    const first=onBulkSelectionChange.mock.lastCall![0] as string[]
+    expect(first).toHaveLength(50)
+    view.rerender(<GeneratedPlayerReviewInspector players={cohort}
+      keepIds={['p-000']} onKeepChange={onKeepChange}
+      bulkSelectedIds={first} onBulkSelectionChange={onBulkSelectionChange}/>)
+    await userEvent.click(screen.getByRole('button',{name:'Next preview page →'}))
+    await userEvent.click(screen.getByRole('button',{name:'Select current page'}))
+    const hundred=onBulkSelectionChange.mock.lastCall![0] as string[]
+    expect(hundred).toHaveLength(100)
+    expect(new Set(hundred).size).toBe(100)
+    view.rerender(<GeneratedPlayerReviewInspector players={cohort}
+      keepIds={['p-000']} onKeepChange={onKeepChange}
+      bulkSelectedIds={hundred} onBulkSelectionChange={onBulkSelectionChange}/>)
+    expect(screen.getByRole('status',{name:'Bulk selection count'})).toHaveTextContent('100 / 120')
+    await userEvent.click(screen.getByRole('button',{name:'Deselect current page'}))
+    expect(onBulkSelectionChange.mock.lastCall![0]).toHaveLength(50)
+    await userEvent.click(screen.getByRole('button',{name:'Clear action selection'}))
+    expect(onBulkSelectionChange).toHaveBeenLastCalledWith([])
+    expect(onKeepChange).not.toHaveBeenCalled()
+    expect(screen.queryByRole('checkbox',{name:'Keep p-000'})).not.toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button',{name:'← Previous preview page'}))
+    expect(screen.getByRole('checkbox',{name:'Keep p-000'})).toBeChecked()
+  })
+})

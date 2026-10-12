@@ -18,8 +18,8 @@ describe('authoritative-bound bulk field planning', () => {
       'attributes.technique',66,beforeLocks)
     expect(result).toMatchObject({selectedCount:2,unchangedCount:0,field:'attributes.technique'})
     expect(result.changes).toEqual([
-      {playerId:'p1',name:'A',before:64,after:66},
-      {playerId:'p2',name:'B',before:44,after:66}
+      {playerId:'p1',name:'A',before:64,after:66,beforeLocked:false,afterLocked:true},
+      {playerId:'p2',name:'B',before:44,after:66,beforeLocked:false,afterLocked:true}
     ])
     expect(result.nextLocks).toEqual([
       {player_id:'p1',field:'attributes.movement',value:60},
@@ -29,11 +29,39 @@ describe('authoritative-bound bulk field planning', () => {
     expect(JSON.stringify(players)).toBe(original)
     expect(beforeLocks).toEqual([{player_id:'p1',field:'attributes.movement',value:60}])
   })
-  it('detects no-ops and keeps all other reviewed fields untouched', () => {
+  it('treats the same unlocked value as a new lock, separately from a numeric edit', () => {
     const result=prepareGeneratedBulkPlan(players,['p1','p2'],'current_ability',70,[])
-    expect(result.unchangedCount).toBe(1)
-    expect(result.changes).toEqual([{playerId:'p2',name:'B',before:63,after:70}])
-    expect(result.nextLocks).toEqual([{player_id:'p2',field:'current_ability',value:70}])
+    expect(result.unchangedCount).toBe(0)
+    expect(result.changes).toEqual([
+      {playerId:'p1',name:'A',before:70,after:70,beforeLocked:false,afterLocked:true},
+      {playerId:'p2',name:'B',before:63,after:70,beforeLocked:false,afterLocked:true}
+    ])
+    expect(result.nextLocks).toEqual([
+      {player_id:'p1',field:'current_ability',value:70},
+      {player_id:'p2',field:'current_ability',value:70}
+    ])
+  })
+  it('distinguishes existing identical locks, new same-value locks and real changes', () => {
+    const source=players.map(p=>({...p,attributes:{...p.attributes,technique:64}}))
+    const verified=[
+      {player_id:'p1',field:'attributes.technique' as const,value:64},
+      {player_id:'p1',field:'attributes.movement' as const,value:60}
+    ]
+    const pristine=JSON.stringify(source), locksBefore=JSON.stringify(verified)
+    const plan=prepareGeneratedBulkPlan(source,['p2','p1'],'attributes.technique',64,verified)
+    expect(plan.unchangedCount).toBe(1)
+    expect(plan.changes).toEqual([
+      {playerId:'p2',name:'B',before:64,after:64,beforeLocked:false,afterLocked:true}
+    ])
+    expect(plan.nextLocks).toEqual([
+      verified[1],verified[0],{player_id:'p2',field:'attributes.technique',value:64}
+    ])
+    expect(JSON.stringify(source)).toBe(pristine)
+    expect(JSON.stringify(verified)).toBe(locksBefore)
+    const trueNoOp=prepareGeneratedBulkPlan(source,['p1'],'attributes.technique',64,verified)
+    expect(trueNoOp.changes).toEqual([])
+    expect(trueNoOp.unchangedCount).toBe(1)
+    expect(trueNoOp.nextLocks).toEqual([verified[1],verified[0]])
   })
   it('fails closed for unsupported fields, invalid values, duplicate, missing and oversized selections', () => {
     for(const n of [0,100,-1,5.5,NaN]) {
@@ -49,6 +77,10 @@ describe('authoritative-bound bulk field planning', () => {
     expect(()=>prepareGeneratedBulkPlan(players,['p1'],'attributes.physical',60,[])).toThrow()
     expect(()=>prepareGeneratedBulkPlan(players,['p1'],'current_ability',89,[])).toThrow(/conflicts/)
     expect(()=>prepareGeneratedBulkPlan(players,['p1'],'potential_ability',40,[])).toThrow(/conflicts/)
+    const duplicate=[{player_id:'p1',field:'attributes.technique' as const,value:64},
+      {player_id:'p1',field:'attributes.technique' as const,value:64}]
+    expect(()=>prepareGeneratedBulkPlan(players,['p1'],'attributes.technique',64,duplicate))
+      .toThrow(/Duplicate/)
   })
 })
 
@@ -62,7 +94,7 @@ describe('bulk Automatic unlock planning', () => {
     const original=JSON.stringify(players), evidence=JSON.stringify(locks)
     const plan=prepareGeneratedBulkAutomaticPlan(players,['p2'],'attributes.technique',locks)
     expect(plan).toMatchObject({mode:'automatic',selectedCount:1,unchangedCount:0})
-    expect(plan.changes).toEqual([{playerId:'p2',name:'B',before:44,after:null}])
+    expect(plan.changes).toEqual([{playerId:'p2',name:'B',before:44,after:null,beforeLocked:true,afterLocked:false}])
     expect(plan.nextLocks).toEqual([locks[1], locks[0]])
     expect(JSON.stringify(players)).toBe(original)
     expect(JSON.stringify(locks)).toBe(evidence)

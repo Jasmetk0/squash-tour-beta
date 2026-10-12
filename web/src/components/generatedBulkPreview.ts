@@ -9,6 +9,8 @@ export type GeneratedBulkChange = {
   name: string
   before: number
   after: number | null
+  beforeLocked: boolean
+  afterLocked: boolean
 }
 
 export type GeneratedBulkPlan = {
@@ -42,6 +44,8 @@ export function prepareGeneratedBulkPlan(
   if (playersById.size !== players.length)
     throw new Error('Review contains duplicate player identities.')
   const changes: GeneratedBulkChange[] = []
+  if (new Set(verifiedLocks.map(lock => lock.player_id + '|' + lock.field)).size !== verifiedLocks.length)
+    throw new Error('Duplicate verified field locks must not be silently replaced.')
   for (const id of [...ids].sort()) {
     const player = playersById.get(id)
     if (!player) throw new Error('Selected identity is not in the current verified preview.')
@@ -52,7 +56,12 @@ export function prepareGeneratedBulkPlan(
     if ((field === 'current_ability' && value > player.potential_ability + 4) ||
         (field === 'potential_ability' && player.current_ability > value + 4))
       throw new Error(`Field value conflicts with current/potential ability for ${id}.`)
-    if (before !== value) changes.push({playerId:id, name:player.name, before:before!, after:value})
+    const priorLock = verifiedLocks.find(lock => lock.player_id === id && lock.field === field)
+    // Same number without a lock is a real edit: provenance and future rerolls change.
+    // Only the same numeric value with an already identical lock is a no-op.
+    if (before !== value || !priorLock || priorLock.value !== value)
+      changes.push({playerId:id, name:player.name, before:before!, after:value,
+        beforeLocked: Boolean(priorLock), afterLocked: true})
   }
   const nextLocks = orderedPreviewFieldLocks([
     ...verifiedLocks.filter(lock => !changes.some(c =>
@@ -101,7 +110,8 @@ export function prepareGeneratedBulkAutomaticPlan(
     const player = playersById.get(lock.player_id)!
     return {
       playerId: player.player_id, name: player.name,
-      before: observed(player, field)!, after: null
+      before: observed(player, field)!, after: null,
+      beforeLocked: true, afterLocked: false
     }
   }).sort((a, b) => a.playerId.localeCompare(b.playerId))
   const nextLocks = orderedPreviewFieldLocks(verifiedLocks.filter(lock =>

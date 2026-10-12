@@ -1,3 +1,16 @@
+# Active next steps — 12 October 2026 / after #1404 (Master v79)
+
+Verified `buuk 5419189c52bfb222c59e40b0ffa05e39d2a7176f` (#1404) with no open PRs at start of this work. #1397–1404 integrated Week-2 predecessor checks, Add Selected protections, generator layout/localization, bulk Automatic, Run World, Country History and Saved HEAD country roster. **Do not redo those slices.**
+
+1. **Current candidate:** fix same-number bulk locking: a new lock is not a no-op when the number is unchanged. Keep independent number/lock diffs, local Stage → production server verification → Adopt → manual Save and one-step session Undo. See `docs/PRE_ALPHA_BULK_LOCK_IDENTITY_2026_10_12.md`.
+2. Next: versioned country-rating interpolation with explicit evidence and historical replay compatibility; population continues to resolve by nearest available year.
+3. Real positive World/country Chromium+SQLite read/Save/generation/restart workflow, then historical Saved Revision World reads and actual country Editions/Tournaments in separate PRs.
+4. Preserve broader approved work: canonical 57 attributes/OVR, general intake/groups, ratings calibration, full simulation/50 seasons and independent release gates.
+
+Historical roadmap checkpoints below are dated evidence and intentionally retained, not today's next-action queue.
+
+---
+
 # Active next steps — 12 October 2026 / Master v79
 
 Verified base `buuk 744c4093a65125b7d760a99846e146621661fffc` (#1396). #1385–1396 delivered the authenticated Keep/Automatic, inspection, names, columns, bulk selection, protected selected InitialWorld append and production Week-2 continuation slices. These are implementation evidence, not full pre-alpha acceptance.

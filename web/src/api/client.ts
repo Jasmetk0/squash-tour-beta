@@ -4484,3 +4484,59 @@ export async function getCountrySavedMatchRecords(
     throw new Error('Country matches differ from the selected exact Saved Revision or filters')
   return data
 }
+
+/** Exact-revision player leaderboard; validate rank order, scope and page before display. */
+export async function getCountryPlayerStandings(
+  runId:string,branchId:string,countryCode:string,revisionId:string,
+  offset=0,limit=25
+):Promise<import('./types').CountryPlayerStandings>{
+  if(!runId||!branchId||!revisionId.trim()||!/^[A-Z]{3}$/.test(countryCode)||
+    !Number.isSafeInteger(offset)||offset<0||
+    !Number.isSafeInteger(limit)||limit<1||limit>50)
+    throw new Error('Country player leaderboard request scope or page is invalid')
+  const params=new URLSearchParams({
+    revision_id:revisionId,offset:String(offset),limit:String(limit)
+  })
+  const data=await request<import('./types').CountryPlayerStandings>(
+    '/admin/runs/'+encodeURIComponent(runId)+'/branches/'+encodeURIComponent(branchId)+
+    '/country-player-standings/'+encodeURIComponent(countryCode)+'?'+params.toString()
+  )
+  const positive=(v:number)=>Number.isSafeInteger(v)&&v>=0
+  const score=(p:import('./types').CountryPlayerStanding)=>[
+    -p.titles,-p.final_appearances,-p.played_wins,p.played_losses,p.player_id
+  ] as const
+  const compare=(a:import('./types').CountryPlayerStanding,
+    b:import('./types').CountryPlayerStanding)=>{
+    const x=score(a),y=score(b)
+    for(let i=0;i<4;i++){
+      if(x[i]!==y[i])return (x[i] as number)-(y[i] as number)
+    }
+    return String(x[4]).localeCompare(String(y[4]),'en')
+  }
+  const rows=data.players
+  const counts=[data.published_event_count,data.country_titles,
+    data.country_runner_up_finishes,data.country_played_wins,
+    data.country_played_losses,data.country_walkover_wins,
+    data.country_walkover_losses,data.total_players]
+  if(data.schema_version!=='country_player_standings.v1'||
+    data.source!=='reachable_saved_revision'||data.run_id!==runId||
+    data.branch_id!==branchId||data.saved_revision_id!==revisionId||
+    !data.revision_branch_id||data.country_code!==countryCode||
+    !['empty','ready'].includes(data.calendar_status)||
+    counts.some(x=>!positive(x))||data.offset!==offset||data.limit!==limit||
+    !Array.isArray(rows)||
+    rows.length!==Math.max(0,Math.min(limit,data.total_players-offset))||
+    data.has_more!==(offset+limit<data.total_players)||
+    new Set(rows.map(p=>p.player_id)).size!==rows.length||
+    rows.some((p,i)=>p.position!==offset+i+1||!p.player_id||!p.player_name||
+      p.country_code!==countryCode||
+      [p.titles,p.runner_up_finishes,p.final_appearances,p.played_wins,
+        p.played_losses,p.walkover_wins,p.walkover_losses].some(x=>!positive(x))||
+      p.final_appearances!==p.titles+p.runner_up_finishes||
+      p.titles>data.country_titles||p.runner_up_finishes>data.country_runner_up_finishes||
+      p.played_wins>data.country_played_wins||p.played_losses>data.country_played_losses||
+      p.walkover_wins>data.country_walkover_wins||p.walkover_losses>data.country_walkover_losses||
+      (i>0&&compare(rows[i-1],p)>0)))
+    throw new Error('Country player leaderboard differs from selected Saved Revision or order')
+  return data
+}

@@ -8,7 +8,7 @@ import { worldFixture } from './runWorldFixture'
 
 const api=vi.hoisted(()=>({getRunPackageState:vi.fn(),getSavedPlayersInventory:vi.fn(),
   getSavedRevision:vi.fn(),listSavedRevisionHistory:vi.fn(),getRunCountryRecords:vi.fn(),
-  getCountrySavedMatchRecords:vi.fn(),ApiError:class extends Error{}}))
+  getCountrySavedMatchRecords:vi.fn(),getCountryPlayerStandings:vi.fn(),ApiError:class extends Error{}}))
 const context=vi.hoisted(()=>({
   branch:{run_id:'run-a',branch_id:'branch-a',saved_head_revision_id:'head-a',display_name:'Timeline 1'},
   time:{mode:'present',isLoading:false,error:null},
@@ -110,6 +110,22 @@ function matchRow(id:string,options:{
   }
 }
 
+
+function standing(playerId:string,position:number,titles=0){
+  return {player_id:playerId,player_name:'Player '+playerId,
+    country_code:'CZE',position,titles,runner_up_finishes:0,final_appearances:titles,
+    played_wins:2,played_losses:1,walkover_wins:0,walkover_losses:0}
+}
+function savedStandings(rev:string,offset=0,limit=25,players:ReturnType<typeof standing>[]=[],total=players.length){
+  return {schema_version:'country_player_standings.v1',source:'reachable_saved_revision',
+    run_id:'run-a',branch_id:'branch-a',revision_branch_id:'branch-a',
+    saved_revision_id:rev,country_code:'CZE',calendar_status:'ready',
+    published_event_count:1,country_titles:1,country_runner_up_finishes:0,
+    country_played_wins:2,country_played_losses:1,
+    country_walkover_wins:0,country_walkover_losses:0,
+    total_players:total,offset,limit,has_more:offset+limit<total,players}
+}
+
 describe('Run-owned World overview navigation',()=>{
   beforeEach(()=>{
     vi.clearAllMocks()
@@ -119,6 +135,9 @@ describe('Run-owned World overview navigation',()=>{
     context.time.mode='present'
     context.language='en'
     api.getRunPackageState.mockResolvedValue(worldFixture())
+    api.getCountryPlayerStandings.mockImplementation(async (
+      _run:string,_branch:string,_country:string,rev:string,offset=0,limit=25
+    )=>savedStandings(rev,offset,limit))
     api.getCountrySavedMatchRecords.mockImplementation(async (_run:string,_branch:string,_country:string,
       rev:string,opts:Parameters<typeof savedMatchResult>[1])=>savedMatchResult(rev,opts))
     api.listSavedRevisionHistory.mockImplementation(async (run:string,branch:string)=>({
@@ -532,6 +551,65 @@ describe('Run-owned World overview navigation',()=>{
     await waitFor(()=>expect(within(panel).getByRole('alert'))
       .toHaveTextContent('invalid national identity'))
     expect(within(panel).queryByLabelText('Country saved match totals')).not.toBeInTheDocument()
+  })
+
+
+  it('shows real Saved HEAD player standings and a safe current profile link',async()=>{
+    api.getCountryPlayerStandings.mockImplementation(async (_r:string,_b:string,_c:string,
+      rev:string,offset=0,limit=25)=>savedStandings(rev,offset,limit,[
+        standing('P1',1,1),standing('P2',2,0)
+      ],2))
+    mountWorld('/admin/runs/run-a/world/countries/CZE?tab=records')
+    const panel=await screen.findByLabelText('Country canonical player standings')
+    const table=await within(panel).findByRole('table',{name:'Country player standings table'})
+    expect(table).toHaveTextContent('Player P1')
+    expect(table).toHaveTextContent('Player P2')
+    expect(within(table).getByRole('link',{name:'Player P1'})).toHaveAttribute(
+      'href','/admin/runs/run-a/people/P1')
+    expect(api.getCountryPlayerStandings).toHaveBeenCalledWith(
+      'run-a','branch-a','CZE','head-a',0,25)
+    expect(panel).toHaveTextContent('not Official Ranking points')
+    expect(within(table).getAllByRole('row')).toHaveLength(3)
+  })
+  it('paginates country player standings by exact Saved Revision, never first 25 matches',async()=>{
+    api.getCountryPlayerStandings.mockImplementation(async (_r:string,_b:string,_c:string,
+      rev:string,offset=0,limit=25)=>{
+      const rows=Array.from({length:Math.max(0,Math.min(limit,26-offset))},(_,i)=>
+        standing('P'+String(offset+i).padStart(2,'0'),offset+i+1))
+      return savedStandings(rev,offset,limit,rows,26)
+    })
+    mountWorld('/admin/runs/run-a/world/countries/CZE?tab=records')
+    const panel=await screen.findByLabelText('Country canonical player standings')
+    await waitFor(()=>expect(within(panel).getByRole('table',{name:'Country player standings table'}))
+      .toHaveTextContent('Player P00'))
+    expect(within(panel).getByLabelText('Country player standings pagination'))
+      .toHaveTextContent('Page 1 / 2')
+    await userEvent.click(within(panel).getByRole('button',{name:'Next →'}))
+    await waitFor(()=>expect(api.getCountryPlayerStandings).toHaveBeenCalledWith(
+      'run-a','branch-a','CZE','head-a',25,25))
+    await waitFor(()=>expect(within(panel).getByRole('table',{name:'Country player standings table'}))
+      .toHaveTextContent('Player P25'))
+    expect(within(panel).getByLabelText('Country player standings pagination'))
+      .toHaveTextContent('Page 2 / 2')
+  })
+  it('uses a historical player standing revision without present profile links',async()=>{
+    api.getCountryPlayerStandings.mockImplementation(async (_r:string,_b:string,_c:string,
+      rev:string,offset=0,limit=25)=>savedStandings(rev,offset,limit,[standing('P1',1,1)],1))
+    mountWorld('/admin/runs/run-a/world/countries/CZE?tab=records&revision=rev-old')
+    const panel=await screen.findByLabelText('Country canonical player standings')
+    await waitFor(()=>expect(within(panel).getByRole('table',{name:'Country player standings table'}))
+      .toHaveTextContent('Player P1'))
+    expect(api.getCountryPlayerStandings).toHaveBeenCalledWith(
+      'run-a','branch-a','CZE','rev-old',0,25)
+    expect(within(panel).queryByRole('link',{name:'Player P1'})).not.toBeInTheDocument()
+    expect(api.getRunPackageState).not.toHaveBeenCalled()
+  })
+  it('does not request country player standings without a saved revision',async()=>{
+    context.branch.saved_head_revision_id=''
+    mountWorld('/admin/runs/run-a/world/countries/CZE?tab=records')
+    const panel=await screen.findByLabelText('Country canonical player standings')
+    expect(panel).toHaveTextContent('No Saved Revision')
+    expect(api.getCountryPlayerStandings).not.toHaveBeenCalled()
   })
 
 })

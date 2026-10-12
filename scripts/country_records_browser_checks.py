@@ -96,6 +96,32 @@ def verify_country_saved_records(
     assert titles["country_titles"] == int(nationality[official["champion_player_id"]] == code)
     assert titles["country_finalists"] == 1
 
+    # Verify a country-player ranking from the complete canonical event and
+    # every true match, rather than from a paginated UI page.
+    leaderboard_route = base_scope + "/country-player-standings/" + enc(code)
+    leaders = get(leaderboard_route + "?revision_id=" + enc(head_id))
+    assert leaders["schema_version"] == "country_player_standings.v1"
+    assert leaders["saved_revision_id"] == head_id and leaders["country_code"] == code
+    assert leaders["country_titles"] == titles["country_titles"]
+    assert leaders["country_runner_up_finishes"] == titles["country_finalists"]
+    assert leaders["country_played_wins"] == wins
+    assert leaders["country_played_losses"] == losses
+    own_players = {pid for pid in participants if nationality[pid] == code}
+    assert {p["player_id"] for p in leaders["players"]} == own_players
+    assert leaders["total_players"] == len(own_players) and not leaders["has_more"]
+    assert sum(p["titles"] for p in leaders["players"]) == titles["country_titles"]
+    assert sum(p["runner_up_finishes"] for p in leaders["players"]) == 1
+    assert sum(p["played_wins"] for p in leaders["players"]) == wins
+    assert sum(p["played_losses"] for p in leaders["players"]) == losses
+    assert [p["position"] for p in leaders["players"]] == list(range(1,len(own_players)+1))
+    assert all(p["final_appearances"] == p["titles"] + p["runner_up_finishes"]
+               for p in leaders["players"])
+    # The champion may be foreign; the selected finalist always belongs here.
+    finalist = next(p for p in leaders["players"]
+                    if p["player_id"] == official["finalist_player_id"])
+    assert finalist["runner_up_finishes"] == 1
+    assert get(leaderboard_route + "?revision_id=wrong-id", 404) is None
+
     # Server filtering must run on all verified rows BEFORE paging.
     def filtered(**kw):
         args = {"revision_id": head_id, "offset": 0, "limit": 25, **kw}
@@ -161,6 +187,11 @@ def verify_country_saved_records(
     assert code in country.inner_text()
     summary = page.get_by_label("Country published records")
     expect(summary.get_by_label("Country verified record totals")).to_be_visible()
+    leader_panel = page.get_by_label("Country canonical player standings")
+    leader_table = leader_panel.get_by_role("table", name="Country player standings table")
+    expect(leader_table.locator("tbody tr")).to_have_count(len(own_players))
+    for item in leaders["players"]:
+        assert item["player_name"] in leader_table.inner_text()
     match_panel = page.get_by_label("Country saved match records")
     table = match_panel.get_by_role("table", name="Country canonical saved matches")
     expect(table.locator("tbody tr")).to_have_count(len(relevant))
@@ -189,6 +220,13 @@ def verify_country_saved_records(
     # A selected historical World revision must show empty VERIFIABLE records,
     # without borrowing the current saved results or player-profile links.
     page.goto(path + "&revision=" + enc(historical_id))
+    old_leaders = get(leaderboard_route + "?revision_id=" + enc(historical_id))
+    assert old_leaders["total_players"] == 0 and not old_leaders["players"]
+    old_leader_panel = page.get_by_label("Country canonical player standings")
+    expect(old_leader_panel.get_by_text(
+        "No player has a published tournament finish or match in this revision."
+    )).to_be_visible()
+    assert old_leader_panel.get_by_role("link").count() == 0
     old_panel = page.get_by_label("Country saved match records")
     expect(old_panel.get_by_text("No saved matches match these filters in the selected revision.")).to_be_visible()
     assert historical_id in old_panel.inner_text()
@@ -202,6 +240,11 @@ def verify_country_saved_records(
         "country_code": code, "historical_revision_id": historical_id,
         "country_played_wins": wins, "country_played_losses": losses,
         "published_event_count": matches["published_event_count"],
+        "country_player_standings": [
+            (p["position"],p["player_id"],p["titles"],p["runner_up_finishes"],
+             p["played_wins"],p["played_losses"])
+            for p in leaders["players"]
+        ],
         "match_scorelines": sorted((m["match_id"], m["scoreline"]) for m in saved_rows.values()),
         "historical_results_empty": True,
         "saved_head_unchanged": True,

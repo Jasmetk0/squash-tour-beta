@@ -72,7 +72,7 @@ class CountrySavedMatchRecords(BaseModel):
     matches: tuple[CountrySavedMatch, ...]
 
 
-def resolve_country_saved_match_records(
+def collect_country_saved_match_records(
     *, run_id: str, selected_branch_id: str, revision_branch_id: str,
     saved_revision_id: str, country_code: str,
     packages: RunPackageState | None, ranking: RankingRevisionState | None,
@@ -82,7 +82,7 @@ def resolve_country_saved_match_records(
     season_index: int | None = None,
     result_kind: Literal["all", "played", "walkover"] = "all",
     outcome: Literal["all", "win", "loss"] = "all",
-) -> CountrySavedMatchRecords:
+) -> tuple[CountrySavedMatchRecords, tuple[CountrySavedMatch, ...]]:
     if len(country_code) != 3 or not country_code.isalpha() or country_code != country_code.upper():
         raise ValueError("Country match records requires uppercase ISO-like country code")
     if not all((run_id, selected_branch_id, revision_branch_id, saved_revision_id)):
@@ -211,4 +211,27 @@ def resolve_country_saved_match_records(
         filtered_match_count=len(filtered), offset=offset, limit=limit,
         has_more=offset + limit < len(filtered),
         matches=filtered[offset:offset + limit],
+    ), own
+
+
+def resolve_country_saved_match_records(
+    *, run_id: str, selected_branch_id: str, revision_branch_id: str,
+    saved_revision_id: str, country_code: str,
+    packages: RunPackageState | None, ranking: RankingRevisionState | None,
+    initial_world: InitialWorldState | None,
+    prospect_source: RunProspectSourceSnapshot | None,
+    offset: int = 0, limit: int = 25,
+    season_index: int | None = None,
+    result_kind: Literal["all", "played", "walkover"] = "all",
+    outcome: Literal["all", "win", "loss"] = "all",
+) -> CountrySavedMatchRecords:
+    """Public paginated read-model, with the source evidence never exposed."""
+    response, _all_rows = collect_country_saved_match_records(
+        run_id=run_id, selected_branch_id=selected_branch_id,
+        revision_branch_id=revision_branch_id, saved_revision_id=saved_revision_id,
+        country_code=country_code, packages=packages, ranking=ranking,
+        initial_world=initial_world, prospect_source=prospect_source,
+        offset=offset, limit=limit, season_index=season_index,
+        result_kind=result_kind, outcome=outcome,
     )
+    return response

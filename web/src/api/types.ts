@@ -8658,3 +8658,20 @@ export type CountrySavedMatchRecords = {
   result_kind:CountryMatchResultKind;outcome:CountryMatchOutcome;filtered_match_count:number
   offset:number;limit:number;has_more:boolean;matches:CountrySavedMatch[]
 }
+
+/** Published canonical Saved Revision evidence, not Official Ranking points. */
+export type CountryPlayerStanding = {
+  position:number;player_id:string;player_name:string;country_code:string
+  titles:number;runner_up_finishes:number;final_appearances:number
+  played_wins:number;played_losses:number;walkover_wins:number;walkover_losses:number
+}
+export type CountryPlayerStandings = {
+  schema_version:'country_player_standings.v1';source:'reachable_saved_revision'
+  run_id:string;branch_id:string;revision_branch_id:string;saved_revision_id:string
+  country_code:string;calendar_status:'empty'|'ready';published_event_count:number
+  country_titles:number;country_runner_up_finishes:number
+  country_played_wins:number;country_played_losses:number
+  country_walkover_wins:number;country_walkover_losses:number
+  total_players:number;offset:number;limit:number;has_more:boolean
+  players:CountryPlayerStanding[]
+}

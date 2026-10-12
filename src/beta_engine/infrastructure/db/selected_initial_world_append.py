@@ -22,6 +22,12 @@ from beta_engine.infrastructure.db.models import (
     PlayerHealthWeekStateModel, OfficialRankingCandidateModel, PublishedOfficialRankingModel,
     AuthoritativeWorldStateModel, AuthoritativeWorldEventModel,
     AuthoritativeWeekTransitionReceiptModel,
+    # A saved first-season InitialWorld is no longer pristine once any of
+    # these historical entry, ranking, match or Admin Health receipts exist.
+    CompletedWeekSportingContextModel, PlayerHealthAdminEditReceiptModel,
+    PlayerTourEntryTriggerModel, OfficialRankingResultVersionModel,
+    OfficialRankingZeroVersionModel, TournamentRankingSnapshotAuthorityModel,
+    OwnedTournamentRankingSourceModel,
 )
 
 
@@ -53,9 +59,18 @@ def replace_pristine_initial_world_for_selected_append(
     if not incumbent.keys() <= updated.keys() or any(updated[k] != v for k,v in incumbent.items()):
         raise ValueError("Selected append cannot mutate any existing player")
 
-    for model in (OfficialRankingCandidateModel, PublishedOfficialRankingModel,
-                  AuthoritativeWorldStateModel, AuthoritativeWorldEventModel,
-                  AuthoritativeWeekTransitionReceiptModel):
+    # A successful entry, ranking-source, Week-1 Health correction or completed
+    # sporting context is historical evidence even if the current Week-1 payload
+    # happens to match a pristine bootstrap after another operation. Do not erase
+    # such authority by replacing the opening population.
+    for model in (
+        OfficialRankingCandidateModel, PublishedOfficialRankingModel,
+        OfficialRankingResultVersionModel, OfficialRankingZeroVersionModel,
+        TournamentRankingSnapshotAuthorityModel, OwnedTournamentRankingSourceModel,
+        AuthoritativeWorldStateModel, AuthoritativeWorldEventModel,
+        AuthoritativeWeekTransitionReceiptModel, CompletedWeekSportingContextModel,
+        PlayerHealthAdminEditReceiptModel, PlayerTourEntryTriggerModel,
+    ):
         if _has_scoped_row(session, model, run_id, branch_id):
             raise ValueError("Selected append is closed after ranking or sporting activity")
     for model in (PlayerLifecycleWeekStateModel, PlayerSportingWeekStateModel,

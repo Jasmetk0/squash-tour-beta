@@ -825,6 +825,7 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
         pendingFieldLocks={pendingFieldLocks}
         selectedPlayerId={selectedPlayerId}
         bulkSelectedIds={bulkSelectedIds}
+        bulkSelectionDisabled={Boolean(bulkStagedFingerprint)}
         onBulkSelectionChange={reviewMatches ? setBulkSelectedIds : undefined}
         onSelectPlayer={fieldEditingEnabled ? setSelectedPlayerId : undefined}
         keepIds={keptIds}
@@ -842,6 +843,7 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
         <div className="form-grid">
           <label>{cs ? 'Zdrojový atribut' : 'Source field'}
             <select aria-label="Bulk source field" value={bulkField}
+              disabled={Boolean(bulkStagedFingerprint)}
               onChange={event=>setBulkField(event.target.value as GeneratedPlayerFieldKey)}>
               {PREVIEW_FIELD_KEYS.map(field=>
                 <option key={field} value={field}>{field} (1–99)</option>)}
@@ -849,6 +851,7 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
           </label>
           <label>{cs ? 'Nová hodnota' : 'New value'}
             <input aria-label="Bulk new source value" type="number" min={1} max={99} step={1}
+              disabled={Boolean(bulkStagedFingerprint)}
               value={bulkValue}
               onChange={event=>setBulkValue(event.target.value)} />
           </label>

@@ -146,6 +146,14 @@ function render(overrideRun: RunContainer = run, overrideBranch: RunBranch | nul
 }
 
 describe('Run-owned first-season player setup', () => {
+  it('shows Czech proposal controls on the generator page without adopting', async () => {
+    renderWithRoute(<RunInitialWorldSetupPanel run={run} branch={branch} locale="cs"/>, '/admin/runs/first-run')
+    expect(screen.getByRole('button',{name:'Uložit generační návrh'})).toBeInTheDocument()
+    expect(screen.getByRole('button',{name:'Zobrazit historický návrh (jen pro čtení)'})).toBeInTheDocument()
+    expect(screen.getByRole('spinbutton',{name:'Number of generated players'})).toBeInTheDocument()
+    expect(api.adoptRunOwnedInitialWorld).not.toHaveBeenCalled()
+  })
+
   it('lays out collapsible supported conditions beside a review area without making a Run write', async () => {
     render()
     const workspace = screen.getByLabelText('Player generator workspace')

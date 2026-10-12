@@ -24,6 +24,7 @@ import { SectionCard } from './RunScopedUi'
 import { GeneratedPlayerReviewInspector } from './GeneratedPlayerReviewInspector'
 import { GeneratedPlayerFieldLockEditor } from './GeneratedPlayerFieldLockEditor'
 import { RunInitialWorldSelectedAppendPanel } from './RunInitialWorldSelectedAppendPanel'
+import { playerGeneratorCopy } from './playerGeneratorCopy'
 import { prepareGeneratedBulkPlan, type GeneratedBulkPlan } from './generatedBulkPreview'
 
 type ReviewedWorld = {
@@ -42,6 +43,7 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
   run: RunContainer; branch: RunBranch | null; locale?: 'cs' | 'en'
 }): JSX.Element {
   const cs = locale === 'cs'
+  const tr = (english: string) => playerGeneratorCopy(locale, english)
   const queryClient = useQueryClient()
   const runId = run.run_id
   const branchId = branch?.run_id === runId ? branch.branch_id : ''
@@ -723,7 +725,7 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
     <p className="status">{cs
       ? 'Závazné podmínky země, regionu a věku platí pro všechny hráče dávky. Prázdná pole zachovávají automatické rozdělení. Přesné kvóty zemí a automatické doplnění jsou podporované; překrývající se skupiny zatím ne.'
       : 'Hard country, region and age conditions apply to every player. Blank conditions preserve automatic allocation. Exact country quotas and the non-quota remainder are supported; overlapping groups are not yet supported.'}</p>
-    {existing && <p role="status">InitialWorld exists: {existing.players.length} players from {existing.world_package_id}; seed {existing.bootstrap_seed}. Existing players cannot be silently regenerated or overwritten.</p>}
+    {existing && <p role="status">{cs ? 'InitialWorld obsahuje' : 'InitialWorld exists:'} {existing.players.length} {cs ? 'hráčů ze světa' : 'players from'} {existing.world_package_id}; seed {existing.bootstrap_seed}. {cs ? 'Stávající hráči se bez potvrzení nepřegenerují ani nepřepíší.' : 'Existing players cannot be silently regenerated or overwritten.'}</p>}
     {unexpectedExistingError && <p role="alert" className="error">Cannot verify whether this Run already has InitialWorld: {formatApiError(existingQuery.error)}</p>}
     {packageQuery.isError && <p role="alert" className="error">Run World state unavailable: {formatApiError(packageQuery.error)}</p>}
     {draftQuery.isError && <p role="alert" className="error">Working Draft unavailable: {formatApiError(draftQuery.error)}</p>}
@@ -740,7 +742,7 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
           <span>{cs ? ' · rozbalit / sbalit' : ' · expand / collapse'}</span>
         </summary>
         <div className="generator-conditions-body">
-    <label>Run-owned World{' '}
+    <label>{tr('Run-owned World')}{' '}
       <select aria-label="Run World for player generation" value={selectedWorldId}
         onChange={event => { setSourceId(event.target.value); setCountryCode(''); setCountryQuotas([]); setRegion(''); setTravelRegion('') }}>
         {worldIds.map(id => <option key={id} value={id}>{id}</option>)}
@@ -807,7 +809,7 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
       : 'Age at Week 1 of 2000/01. Age bounds condition the existing career-stage weights, not nationality-based innate potential.'}</p>
     <label>Seed <input aria-label="Player generation seed" type="number" value={seed}
       onChange={event => setSeed(Number(event.target.value))} /></label>
-    <label>Number of players (1–1000) <input aria-label="Number of generated players" type="number"
+    <label>{tr('Number of players (1–1000)')}{' '}<input aria-label="Number of generated players" type="number"
       min={1} max={1000} value={poolSize} onChange={event => setPoolSize(Number(event.target.value))} /></label>
     <section aria-label="Exact country quotas" className="section-subtle">
       <h4>{cs ? 'Přesné počty zemí' : 'Exact country quotas'}</h4>
@@ -857,9 +859,9 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
         {cs ? 'Rozpor kvót' : 'Country quota conflict'}: {quotaConflict}
       </p>}
     </section>
-    <label>First-season ranking Best N <input aria-label="First-season ranking Best N" type="number"
+    <label>{tr('First-season ranking Best N')}{' '}<input aria-label="First-season ranking Best N" type="number"
       min={1} value={bestN} onChange={event => setBestN(Number(event.target.value))} /></label>
-    <label>Audit reason <input aria-label="InitialWorld audit reason" maxLength={1000}
+    <label>{tr('Audit reason')}{' '}<input aria-label="InitialWorld audit reason" maxLength={1000}
       value={auditReason} onChange={event => setAuditReason(event.target.value)} /></label>
     <p className="status">Lifecycle retirement-age input: 46 (current first-season policy). No player talent calibration is changed.</p>
     <button type="button" disabled={!canPreview || previewAction.isPending || regenerateAction.isPending ||
@@ -898,7 +900,7 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
       draftVersion={draft.draft_version}
       packageFingerprint={snapshotFingerprint}
       currentFingerprint={savePreflight.initial_world_fingerprint}
-      current={existing}
+      current={existing} locale={locale}
       enabled={editable && draft.status === 'clean' &&
         draft.base_saved_revision_id === head &&
         savePreflight.has_unsaved_changes === false &&
@@ -918,7 +920,7 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
           !Number.isSafeInteger(rerollSeed) ||
           proposalSaveAction.isPending || proposalLoadAction.isPending}
         onClick={()=>proposalSaveAction.mutate()}>
-        {proposalSaveAction.isPending ? 'Saving proposal…' : 'Save generation proposal'}
+        {proposalSaveAction.isPending ? tr('Saving proposal…') : tr('Save generation proposal')}
       </button>
       <label>{cs ? 'Existující návrhy' : 'Saved proposals'}
         <select aria-label="Select saved generation proposal"
@@ -933,35 +935,34 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
       </label>
       <button type="button" disabled={!selectedProposalId || !canPreview || proposalLoadAction.isPending}
         onClick={()=>proposalLoadAction.mutate()}>
-        {proposalLoadAction.isPending ? 'Restoring…' : 'Open saved proposal'}
+        {proposalLoadAction.isPending ? tr('Restoring…') : tr('Open saved proposal')}
       </button>
       <button type="button"
         disabled={!selectedProposalId || inspectProposalAction.isPending || !branchId}
         onClick={()=>inspectProposalAction.mutate()}>
-        {inspectProposalAction.isPending ? 'Inspecting…' : 'Inspect historical proposal (read-only)'}
+        {inspectProposalAction.isPending ? tr('Inspecting…') : tr('Inspect historical proposal (read-only)')}
       </button>
       <button type="button" disabled={!selectedProposalId || !editable || proposalDeleteAction.isPending}
-        onClick={()=>proposalDeleteAction.mutate()}>Delete saved proposal</button>
-      {restoringProposal && <p role="status">Restoring reviewed proposal conditions…</p>}
-      {proposalQuery.isError && <p role="alert">Saved proposals unavailable: {formatApiError(proposalQuery.error)}</p>}
-      {proposalSaveAction.error && <p role="alert">Proposal Save failed: {formatApiError(proposalSaveAction.error)}</p>}
-      {proposalLoadAction.error && <p role="alert">Proposal Restore failed: {formatApiError(proposalLoadAction.error)}</p>}
-      {inspectProposalAction.error && <p role="alert">Historical inspection failed: {formatApiError(inspectProposalAction.error)}</p>}
-      {revalidateProposalAction.error && <p role="alert">Proposal revalidation failed: {formatApiError(revalidateProposalAction.error)}</p>}
+        onClick={()=>proposalDeleteAction.mutate()}>{tr('Delete saved proposal')}</button>
+      {restoringProposal && <p role="status">{tr('Restoring reviewed proposal conditions…')}</p>}
+      {proposalQuery.isError && <p role="alert">{tr('Saved proposals unavailable:')} {formatApiError(proposalQuery.error)}</p>}
+      {proposalSaveAction.error && <p role="alert">{tr('Proposal Save failed:')} {formatApiError(proposalSaveAction.error)}</p>}
+      {proposalLoadAction.error && <p role="alert">{tr('Proposal Restore failed:')} {formatApiError(proposalLoadAction.error)}</p>}
+      {inspectProposalAction.error && <p role="alert">{tr('Historical inspection failed:')} {formatApiError(inspectProposalAction.error)}</p>}
+      {revalidateProposalAction.error && <p role="alert">{tr('Proposal revalidation failed:')} {formatApiError(revalidateProposalAction.error)}</p>}
       {inspection && inspection.proposal.proposal_id === selectedProposalId && <section
         aria-label="Historical generation proposal inspection">
-        <h5>Historical snapshot · {inspection.proposal.label}</h5>
-        <p role="status">Read-only saved cohort from {inspection.proposal.saved_revision_id},
+        <h5>{tr('Historical snapshot')} · {inspection.proposal.label}</h5>
+        <p role="status">{tr('Read-only saved cohort from')} {inspection.proposal.saved_revision_id},
           Draft v{inspection.proposal.draft_version}, World {inspection.proposal.request.generation.world_package_id}.
-          Original preview <code>{inspection.proposal.preview_fingerprint.slice(0, 16)}…</code>.
-          No regeneration performed.</p>
-        <p>{inspection.context.head_matches ? 'HEAD matches' : 'Saved HEAD changed'} ·
-          {' '}{inspection.context.draft_matches ? 'Draft matches and clean' : 'Draft changed or dirty'} ·
-          {' '}{inspection.context.package_matches ? 'World snapshot matches' : 'World snapshot changed'} ·
-          {' '}{inspection.context.initial_world_exists ? 'InitialWorld already exists' : 'No InitialWorld adopted'}</p>
+          {tr('Original preview')} <code>{inspection.proposal.preview_fingerprint.slice(0, 16)}…</code>.
+          {tr('No regeneration performed.')}</p>
+        <p>{inspection.context.head_matches ? tr('HEAD matches') : tr('Saved HEAD changed')} ·
+          {' '}{inspection.context.draft_matches ? tr('Draft matches and clean') : tr('Draft changed or dirty')} ·
+          {' '}{inspection.context.package_matches ? tr('World snapshot matches') : tr('World snapshot changed')} ·
+          {' '}{inspection.context.initial_world_exists ? tr('InitialWorld already exists') : tr('No InitialWorld adopted')}</p>
         {inspection.context.revalidation_required && <p role="alert">
-          Historical snapshot is not authorized for current-target Adopt. An explicit
-          new server verification is required; the stored proposal will not be modified.
+          {cs ? 'Historický snímek nelze přímo převzít do aktuálního Runu. Je nutné nové ověření serverem; uložený návrh se nezmění.' : 'Historical snapshot is not authorized for current-target Adopt. An explicit new server verification is required; the stored proposal will not be modified.'}
         </p>}
         <GeneratedPlayerReviewInspector
           key={'historical-' + inspection.proposal.preview_fingerprint}
@@ -970,31 +971,31 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
             !snapshotFingerprint || Boolean(existing) || Boolean(pendingSave) ||
             revalidateProposalAction.isPending}
           onClick={()=>revalidateProposalAction.mutate()}>
-          {revalidateProposalAction.isPending ? 'Revalidating current target…' :
-            'Revalidate against current Run (new preview)'}
+          {revalidateProposalAction.isPending ? tr('Revalidating current target…') :
+            tr('Revalidate against current Run (new preview)')}
         </button>
         {revalidated && revalidated.proposal_id === selectedProposalId && <section
           aria-label="Revalidated generation proposal comparison">
-          <h5>Fresh result versus saved historical snapshot</h5>
-          <p>Old {revalidated.comparison.old_count}, new {revalidated.comparison.new_count} ·
-            {' '}added {revalidated.comparison.added_identities} ·
-            {' '}removed {revalidated.comparison.removed_identities} ·
-            {' '}changed profiles {revalidated.comparison.changed_profiles} ·
-            {' '}unchanged {revalidated.comparison.unchanged_profiles}.</p>
-          <p>New preview <code>{revalidated.preview.fingerprint.slice(0, 16)}…</code>.
-            Revalidation itself does not approve adoption or write any Run state.</p>
+          <h5>{tr('Fresh result versus saved historical snapshot')}</h5>
+          <p>{tr('Old')} {revalidated.comparison.old_count}, {tr('new')} {revalidated.comparison.new_count} ·
+            {' '}{tr('added')} {revalidated.comparison.added_identities} ·
+            {' '}{tr('removed')} {revalidated.comparison.removed_identities} ·
+            {' '}{tr('changed profiles')} {revalidated.comparison.changed_profiles} ·
+            {' '}{tr('unchanged')} {revalidated.comparison.unchanged_profiles}.</p>
+          <p>{tr('New preview')} <code>{revalidated.preview.fingerprint.slice(0, 16)}…</code>.
+            {cs ? 'Opětovné ověření nepovoluje převzetí ani nic nezapisuje do Runu.' : 'Revalidation itself does not approve adoption or write any Run state.'}</p>
           <button type="button" disabled={!canPreview ||
               revalidated.current_context.saved_revision_id !== head ||
               revalidated.current_context.draft_version !== draft?.draft_version ||
               revalidated.current_context.package_fingerprint !== snapshotFingerprint}
-            onClick={useRevalidatedProposal}>Use revalidated preview for review</button>
+            onClick={useRevalidatedProposal}>{tr('Use revalidated preview for review')}</button>
         </section>}
       </section>}
-      {proposalDeleteAction.error && <p role="alert">Proposal Delete failed: {formatApiError(proposalDeleteAction.error)}</p>}
+      {proposalDeleteAction.error && <p role="alert">{tr('Proposal Delete failed:')} {formatApiError(proposalDeleteAction.error)}</p>}
     </section>
 
     {review && <section aria-label="Generated player review">
-      <h4>Review {viewedPlayers.length} players</h4>
+      <h4>{tr('Review')} {viewedPlayers.length} {tr('players')}</h4>
       <p>Run: {review.runId} · Branch: {review.branchId} · Saved HEAD: <code>{review.head}</code></p>
       <p>{cs ? 'Svět' : 'World'}: {review.request.generation.world_package_id} · Seed: {review.request.generation.seed} · First-season Best {review.request.best_n} · Draft v{review.draftVersion}</p>
       <p>{cs ? 'Použité závazné podmínky' : 'Reviewed hard conditions'}:
@@ -1050,15 +1051,15 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
               onChange={event=>setBulkValue(event.target.value)} />
           </label>
         </div>
-        {bulkError && <p role="alert">Bulk preview conflict: {bulkError}</p>}
+        {bulkError && <p role="alert">{tr('Bulk preview conflict:')} {bulkError}</p>}
         {bulkPlan && <div aria-label="Bulk before after preview">
-          <p role="status">Action selection {bulkPlan.selectedCount} ·
-            {' '}changed {bulkPlan.changes.length} · unchanged {bulkPlan.unchangedCount}.
-            {' '}This is a local before/after proposal, not accepted player values.</p>
+          <p role="status">{tr('Action selection')} {bulkPlan.selectedCount} ·
+            {' '}{tr('changed')} {bulkPlan.changes.length} · {tr('unchanged')} {bulkPlan.unchangedCount}.
+            {' '}{cs ? 'Jde pouze o místní návrh změn před/po, nikoli potvrzené hodnoty hráčů.' : 'This is a local before/after proposal, not accepted player values.'}</p>
           <details>
-            <summary>Review exact before/after values · {bulkPlan.changes.length} changed players</summary>
+            <summary>{tr('Review exact before/after values')} · {bulkPlan.changes.length} {tr('changed profiles')}</summary>
             <div className="table-responsive"><table>
-              <thead><tr><th>Player ID</th><th>Player</th><th>Before</th><th>After</th></tr></thead>
+              <thead><tr><th>{tr('Player ID')}</th><th>{tr('Player')}</th><th>{tr('Before')}</th><th>{tr('After')}</th></tr></thead>
               <tbody>{bulkPlan.changes.map(change=><tr key={change.playerId}>
                 <td>{change.playerId}</td><td>{change.name}</td>
                 <td>{change.before}</td><td>{change.after}</td>
@@ -1074,20 +1075,20 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
               setPendingFieldLocks(bulkPlan.nextLocks)
               setBulkStagedFingerprint(review.preview.fingerprint)
               setBulkUndo(null); setApproved(false); setSelectedPlayerId(null)
-            }}>Stage reviewed bulk locks (no Run write)</button>
+            }}>{tr('Stage reviewed bulk locks (no Run write)')}</button>
           <button type="button" disabled={!bulkStagedFingerprint ||
             review.preview.fingerprint !== bulkStagedFingerprint ||
             !fieldEditingEnabled || !locksDirty || keepSelectionDirty ||
             fieldPreviewAction.isPending || regenerateAction.isPending}
             onClick={()=>fieldPreviewAction.mutate({regenerate:false,bulk:true})}>
-            {fieldPreviewAction.isPending ? 'Verifying bulk preview…' :
-              'Verify staged bulk changes on server'}
+            {fieldPreviewAction.isPending ? tr('Verifying bulk preview…') :
+              tr('Verify staged bulk changes on server')}
           </button>
           <button type="button" disabled={!bulkStagedFingerprint || fieldPreviewAction.isPending}
             onClick={()=>{
               setPendingFieldLocks(approvedFieldLocks)
               setBulkStagedFingerprint(null);setApproved(false)
-            }}>Discard staged bulk edits</button>
+            }}>{tr('Discard staged bulk edits')}</button>
           <button type="button" disabled={!bulkUndo || !reviewMatches || !canPreview ||
             locksDirty || keepSelectionDirty || fieldPreviewAction.isPending ||
             regenerateAction.isPending || adoptAction.isPending ||
@@ -1103,12 +1104,10 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
                 previous.request.generation.field_locks ?? []))
               setBulkUndo(null);setBulkStagedFingerprint(null)
               setBulkSelectedIds([]);setSelectedPlayerId(null);setApproved(false)
-              setNotice('One-step session Undo restored the preceding verified preview; no Run write.')
-            }}>Undo last verified bulk preview</button>
+              setNotice(cs ? 'Vrácen předchozí ověřený náhled; do Runu se nic nezapsalo.' : 'One-step session Undo restored the preceding verified preview; no Run write.')
+            }}>{tr('Undo last verified bulk preview')}</button>
         </div>
-        {bulkStagedFingerprint && <p role="alert">
-          Bulk locks are staged locally and block Adopt until freshly verified on the server.
-        </p>}
+        {bulkStagedFingerprint && <p role="alert">{tr('Bulk locks are staged locally and block Adopt until freshly verified on the server.')}</p>}
       </section>
       {selectedPlayerId && viewedPlayers.some(p=>p.player_id===selectedPlayerId) &&
         <GeneratedPlayerFieldLockEditor
@@ -1129,7 +1128,7 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
           seed={rerollSeed}
         />}
       {fieldPreviewAction.error && !selectedPlayerId &&
-        <p role="alert">Field edit conflict: {formatApiError(fieldPreviewAction.error)}</p>}
+        <p role="alert">{tr('Field edit conflict:')} {formatApiError(fieldPreviewAction.error)}</p>}
       {canKeepPreview && <section aria-label="Session Keep regeneration">
         <h5>{cs ? 'Keep vybraných a regenerace ostatních' : 'Keep selected, regenerate remaining'}</h5>
         <p className="status">{cs
@@ -1165,33 +1164,33 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
         {cs ? 'Regenerace selhala' : 'Regeneration failed'}: {formatApiError(regenerateAction.error)}
       </p>}
 
-      {!reviewMatches && <p role="alert" className="error">Review expired: selected Run, Branch, World, revision or generation inputs changed.</p>}
+      {!reviewMatches && <p role="alert" className="error">{tr('Review expired: selected Run, Branch, World, revision or generation inputs changed.')}</p>}
       <label><input type="checkbox" aria-label="Approve InitialWorld adoption" checked={approved}
-        onChange={event => setApproved(event.target.checked)} /> Adopt this exact generated InitialWorld to the current Branch.</label>
+        onChange={event => setApproved(event.target.checked)} /> {tr('Adopt this exact generated InitialWorld to the current Branch.')}</label>
       <button type="button" disabled={!canAdopt} onClick={() => review && adoptAction.mutate(review)}>
         {adoptAction.isPending ? (cs ? 'Připravuji dávku…' : 'Staging players…') : (cs ? 'Potvrdit a připravit Working Draft' : 'Adopt generated players')}
       </button>
     </section>}
-    {adoptAction.error && <p role="alert" className="error">Adoption failed: {formatApiError(adoptAction.error)}</p>}
+    {adoptAction.error && <p role="alert" className="error">{tr('Adoption failed:')} {formatApiError(adoptAction.error)}</p>}
     {canResume && <section aria-label="Recover InitialWorld save">
-      <p role="status">This Branch contains an adopted InitialWorld with unsaved changes. Confirm its Saved Revision without regenerating players.</p>
-      <p>{existing?.players.length} existing players from {existing?.world_package_id}. Source seed: {existing?.bootstrap_seed}.</p>
+      <p role="status">{cs ? 'V této branchi je převzatý InitialWorld s neuloženými změnami. Potvrď uložení revize bez nového generování.' : 'This Branch contains an adopted InitialWorld with unsaved changes. Confirm its Saved Revision without regenerating players.'}</p>
+      <p>{existing?.players.length} {cs ? 'stávajících hráčů ze světa' : 'existing players from'} {existing?.world_package_id}. {cs ? 'Zdrojový seed' : 'Source seed'}: {existing?.bootstrap_seed}.</p>
       <button type="button" onClick={() => savePreflight && setPendingSave({
         runId, branchId, head, fingerprint: savePreflight.initial_world_fingerprint
-      })}>Review existing InitialWorld save</button>
+      })}>{tr('Review existing InitialWorld save')}</button>
     </section>}
     {pendingSave && <section aria-label="Save InitialWorld revision">
       <p>{cs ? 'Hráči jsou připraveni v Run-owned InitialWorld. Saved Revision vznikne až výslovným uložením.' : 'Players are staged in Run-owned InitialWorld. Saved Revision is only created by an explicit Save.'}</p>
-      {savePreviewQuery.error && <p role="alert" className="error">Save preflight failed: {formatApiError(savePreviewQuery.error)}</p>}
-      {!saveReady && !savePreviewQuery.isLoading && <p role="alert" className="error">The saved head, Draft or InitialWorld fingerprint does not match. Refresh before saving.</p>}
+      {savePreviewQuery.error && <p role="alert" className="error">{tr('Save preflight failed:')} {formatApiError(savePreviewQuery.error)}</p>}
+      {!saveReady && !savePreviewQuery.isLoading && <p role="alert" className="error">{cs ? 'Uložený HEAD, pracovní návrh nebo otisk InitialWorld nesouhlasí. Před uložením obnov údaje.' : 'The saved head, Draft or InitialWorld fingerprint does not match. Refresh before saving.'}</p>}
       <label><input type="checkbox" aria-label="Approve InitialWorld revision save" checked={saveApproved}
-        onChange={event => setSaveApproved(event.target.checked)} /> Create the immutable Saved Revision.</label>
+        onChange={event => setSaveApproved(event.target.checked)} /> {tr('Create the immutable Saved Revision.')}</label>
       <button type="button" disabled={!saveReady || !saveApproved || saveAction.isPending}
         onClick={() => saveAction.mutate()}>
         {saveAction.isPending ? (cs ? 'Ukládám revizi…' : 'Saving InitialWorld…') : (cs ? 'Ruční Save nové revize' : 'Save InitialWorld revision')}
       </button>
     </section>}
-    {saveAction.error && <p role="alert" className="error">Save failed: {formatApiError(saveAction.error)}</p>}
+    {saveAction.error && <p role="alert" className="error">{tr('Save failed:')} {formatApiError(saveAction.error)}</p>}
     {notice && <p role="status">{notice}</p>}
       </div>
     </div>

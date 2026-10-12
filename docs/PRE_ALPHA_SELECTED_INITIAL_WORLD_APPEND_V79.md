@@ -74,3 +74,17 @@ existing whole-cohort Adopt command.
 - Existing 1,000-player browser path remains regression for the original
   whole-cohort Adopt + Save. New append is not claimed as a full-season or
   calibrated-realism acceptance gate.
+
+
+## 12 October 2026 — progress-aware read-only preflight (candidate)
+
+Selected append preflight now invokes the **same** historical-activity and pristine
+Week-1 eligibility validator as transactional commit. Published/candidate rankings,
+sporting/ranking receipts, health edits, later-week projections, and non-bootstrap
+changes return a specific 409 **before** a selected-append proposal is approved.
+The source cohort preview remains independently read-only. The commit still repeats
+the guard inside `BEGIN IMMEDIATE`, including when new history appears after a
+successful preview. Browser acceptance expects the preflight 409 and no enabled
+commit approval after ranking; focused SQLite regression injects a ranking between
+the route's second preflight and the transaction. This check is **not** a general
+in-season player-add permission. Release gates remain separate.

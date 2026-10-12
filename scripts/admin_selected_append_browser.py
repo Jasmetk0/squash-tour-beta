@@ -334,27 +334,22 @@ def acceptance(root: Path, *, port: int, base_url: str, chromium: str):
                 expect(panel.get_by_text(
                     "Selected: 1. Conflicting IDs: 0."
                 )).to_be_visible()
-                # Reading an append proposal remains allowed, but changing the
-                # World after publication cannot pass the atomic COMMIT guard.
+                # A source cohort is still inspectable, but Add Selected itself
+                # must now fail during read-only preflight, BEFORE approval.
                 with page.expect_response(lambda r:
                     r.url.endswith("/selected-append/preview") and
-                    r.request.method == "POST" and r.status == 200) as resp:
-                    browser_click(page, "Verify selected addition on server (no write)")
-                reviewed_after_ranking = resp.value.json()
-                assert reviewed_after_ranking["preview_only"]
-                assert reviewed_after_ranking["added_count"] == 1
-                assert full_database_digest(root / "browser.sqlite") == before_denied_digest
-                panel.get_by_label("Approve selected InitialWorld append").check()
-                with page.expect_response(lambda r:
-                    r.url.endswith("/selected-append") and
                     r.request.method == "POST" and r.status == 409) as resp:
-                    browser_click(page, "Commit selected players (Save separately)")
+                    browser_click(page, "Verify selected addition on server (no write)")
                 denied = resp.value.json()
-                assert denied["detail"]["code"] == "selected_initial_world_append_conflict"
+                assert denied["detail"]["code"] == "selected_initial_world_append_preview_conflict"
                 assert "ranking or sporting activity" in denied["detail"]["message"]
                 expect(panel.get_by_text(
-                    "Append conflict:", exact=False
+                    "Selected append preview failed:", exact=False
                 )).to_be_visible()
+                expect(panel.get_by_label("Approve selected InitialWorld append")).to_have_count(0)
+                expect(panel.get_by_role(
+                    "button", name="Commit selected players (Save separately)"
+                )).to_have_count(0)
                 assert full_database_digest(root / "browser.sqlite") == before_denied_digest, (
                     "409 after published ranking mutated persisted SQL history"
                 )
@@ -378,7 +373,7 @@ def acceptance(root: Path, *, port: int, base_url: str, chromium: str):
                     "saved_after_backend_restart": True,
                     "saved_revision_history_unchanged": True,
                     "published_ranking_exists": published > 0,
-                    "post_ranking_append_conflict_409": True,
+                    "post_ranking_preflight_conflict_409": True,
                     "post_ranking_source_and_preview_read_only": True,
                     "post_ranking_sql_digest_unchanged": True,
                     "selected_player_ids": selected,

@@ -497,6 +497,13 @@ def _preview_selected_initial_world_append(
         current.fingerprint != payload.expected_initial_world_fingerprint or
         saved.fingerprint != payload.expected_initial_world_fingerprint):
         raise ValueError("Selected append requires the exact saved InitialWorld fingerprint")
+    # Preflight checks the same authoritative history/projection guard as commit.
+    # This is only a read; commit repeats the guard under BEGIN IMMEDIATE.
+    from beta_engine.infrastructure.db.selected_initial_world_append import (
+        require_pristine_initial_world_append_eligible,
+    )
+    with repository._session_factory() as session:
+        require_pristine_initial_world_append_eligible(session, previous=current)
     generated = service.preview(
         run_id=run_id, branch_id=branch_id, request=payload.append.generation
     )

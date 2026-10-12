@@ -159,7 +159,7 @@ describe('Run-owned World overview navigation',()=>{
     api.getRunPackageState.mockResolvedValue(fixture)
     mountWorld('/admin/runs/run-a/world/countries/CZE?year=2019&tab=ratings&q=cze')
     expect(await screen.findByRole('heading',{name:'History of six country ratings'})).toBeInTheDocument()
-    expect(screen.getByLabelText('Country rating history')).toHaveTextContent('Nearest authored year: 2020')
+    expect(screen.getByLabelText('Country rating history')).toHaveTextContent('Fallback authored year: 2020')
     expect(screen.getByRole('table',{name:'Authored country rating years'})).toHaveTextContent('2020')
     await userEvent.selectOptions(screen.getByRole('combobox',{name:'Country rating trend field'}),'elite_support')
     expect(screen.getByRole('table',{name:'Authored country rating years'})).toHaveTextContent('7.2')
@@ -177,7 +177,7 @@ describe('Run-owned World overview navigation',()=>{
     expect(api.getRunPackageState).toHaveBeenCalledTimes(1)
     context.time.mode='checkpoint'
     view.refresh()
-    expect(screen.getByRole('alert')).toHaveTextContent('Historical checkpoint selected')
+    expect(screen.getByRole('alert')).toHaveTextContent('Simulation checkpoint')
     expect(screen.queryByText('Saved FIFA Earth')).not.toBeInTheDocument()
     expect(api.getRunPackageState).toHaveBeenCalledTimes(1)
   })
@@ -230,7 +230,7 @@ describe('Run-owned World overview navigation',()=>{
   it('blocks present-only data at historical checkpoint without any current snapshot request',()=>{
     context.time.mode='checkpoint'
     mountWorld('/admin/runs/run-a/world')
-    expect(screen.getByRole('alert')).toHaveTextContent('Historical checkpoint selected')
+    expect(screen.getByRole('alert')).toHaveTextContent('Simulation checkpoint')
     expect(api.getRunPackageState).not.toHaveBeenCalled()
   })
   it('does not leak a foreign branch into World',()=>{

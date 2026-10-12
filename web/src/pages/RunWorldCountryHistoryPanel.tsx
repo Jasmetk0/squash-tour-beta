@@ -90,21 +90,32 @@ export function RunWorldCountryHistoryPanel({history,country,tab,cs,language,yea
   const anchors=history.ratingAnchors
   const points=anchors.map(a=>({year:a.year,value:a.ratings[field].value}))
   const max=Math.max(1,...points.map(p=>p.value))
+  const effective=country.ratings.squash_popularity
   const nearest=history.selectedRatingSourceYear===null?null:anchors.find(a=>a.year===history.selectedRatingSourceYear)
   return <section className="section-subtle" aria-label="Country rating history">
     <h4>{cs?'Historie šesti ratingů':'History of six country ratings'}</h4>
     <p>{cs?'Škála':'Scale'}: 1–{country.ratingScale}. {cs?'Zvolený rok':'Selected year'}: {history.selectedYear}
-      {nearest && history.selectedYear!==nearest.year && <> · {cs?'Nejbližší doložený rok':'Nearest authored year'}: <strong>{nearest.year}</strong></>}
+      {effective.kind==='interpolated' && <> · {cs?'Interpolace mezi doloženými roky':'Interpolation between authored years'}: <strong>{effective.sourceYears.join('–')}</strong></>}
+      {effective.kind==='fallback' && nearest && <> · {cs?'Použitý doložený rok':'Fallback authored year'}: <strong>{nearest.year}</strong></>}
     </p>
     <div className="table-responsive"><table aria-label="Country rating snapshot"><thead><tr>
       <th>{cs?'Atribut':'Attribute'}</th><th>{cs?'Hodnota':'Value'}</th>
       <th>{cs?'Původ':'Provenance'}</th>
     </tr></thead><tbody>{worldRatingKeys.map(key=><tr key={key}>
       <td>{names[key][cs?'cs':'en']}</td><td>{country.ratings[key].value??'—'}</td>
-      <td>{country.ratings[key].provenance}{country.ratings[key].sourceYear===null?'':' · '+country.ratings[key].sourceYear}
-        {nearest && <EvidenceDetails value={nearest.ratings[key]} cs={cs}/>}
+      <td>{country.ratings[key].provenance}
+        {country.ratings[key].sourceYears.length>0 && <> · {country.ratings[key].sourceYears.map((y,i)=>
+          y+' ('+country.ratings[key].sourceValues[i]+')').join(' → ')}</>}
+        {country.ratings[key].sourceYears.map(y=>{
+          const anchor=anchors.find(a=>a.year===y)
+          return anchor?<EvidenceDetails key={y} value={anchor.ratings[key]} cs={cs}/>:null
+        })}
       </td>
     </tr>)}</tbody></table></div>
+    {worldRatingKeys.some(key=>country.ratings[key].kind!=='exact') &&
+      <p role="status">{cs
+        ? 'Interpolace, fallback ani starší scalar nejsou dalším doloženým pozorováním pro zvolený rok. Dostupné číslo samo neznamená úplnou historii.'
+        : 'Interpolated, fallback and legacy scalar values are not authored observations for the selected year. An available number alone does not establish complete history.'}</p>}
     {anchors.length>0?<>
       <p className="status">{cs?'Historicky doložených roků':'Authored rating years'}: {anchors.length}.
         {' '}{cs?'Roky mimo uloženou historii se nevydávají za nové doložené body.':'Unstored years are not represented as new authored rating observations.'}</p>

@@ -45,6 +45,17 @@ describe('Run World authored country history',()=>{
       anchorYears:[2000]
     })
   })
+  it('keeps authored rating anchors distinct from a versioned interpolated view',()=>{
+    const f=withV2()
+    const c=(f.state!.entities as Record<string,unknown>[])[1].payload as Record<string,unknown>
+    c.rating_resolution_version='country_rating_resolution.linear_v3'
+    const original=JSON.stringify(f)
+    const h=projectRunWorldCountryHistory(f,'run-a','branch-a','CZE',2010)!
+    expect(h.ratingAnchors.map(x=>x.year)).toEqual([2000,2020])
+    expect(h.selectedRatingSourceYear).toBeNull()
+    expect(h.selectedPopulation).toEqual({value:10250000,kind:'nearest',sourceYear:2000})
+    expect(JSON.stringify(f)).toBe(original)
+  })
   it('does not invent rated years beyond the evidence cutoff or derive historical scalar values',()=>{
     const h=projectRunWorldCountryHistory(withV2(),'run-a','branch-a','CZE',2050)!
     expect(h.selectedRatingSourceYear).toBe(2020)

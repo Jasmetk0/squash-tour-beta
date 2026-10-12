@@ -9,7 +9,7 @@ from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, field_valida
 
 
 from beta_engine.domain.countries.rating_history import (
-    CountryRatingHistory, GAME_ATTRIBUTE_NAMES, LEGACY_RATING_SCALE, RATING_SCALE_V2, validate_rating_v2,
+    CountryRatingHistory, GAME_ATTRIBUTE_NAMES, LEGACY_RATING_SCALE, RATING_SCALE_V2, RATING_RESOLUTION_LINEAR_V3, validate_rating_v2,
 )
 
 def _validate_country_rating(value: Any) -> float:
@@ -69,6 +69,8 @@ class Country(BaseModel):
     rating_scale: Literal["country_ratings_1_5.v1", "country_ratings_1_10.v2"] = LEGACY_RATING_SCALE
     rating_history: CountryRatingHistory | None = None
     rating_effective_year: int | None = None
+    # Missing marker means persisted v2 nearest-year semantics.
+    rating_resolution_version: Literal['country_rating_resolution.linear_v3'] | None = None
 
     # The scale is explicit; a missing version always means legacy 1..5.
     squash_popularity: VersionedCountrySimFactor
@@ -81,22 +83,39 @@ class Country(BaseModel):
     @field_validator(*GAME_ATTRIBUTE_NAMES)
     @classmethod
     def validate_scaled_field(cls, value: float, info) -> float:
-        validator = validate_rating_v2 if info.data.get("rating_scale") == RATING_SCALE_V2 else _validate_country_rating
-        return validator(value)
+        if info.data.get("rating_scale") == RATING_SCALE_V2:
+            if (info.data.get("rating_resolution_version") == RATING_RESOLUTION_LINEAR_V3
+                    and info.data.get("rating_effective_year") is not None):
+                return _validate_versioned_rating(value)
+            return validate_rating_v2(value)
+        return _validate_country_rating(value)
 
     @model_validator(mode="after")
     def validate_rating_version(self) -> Self:
+        if self.rating_resolution_version is not None and (
+            self.rating_scale != RATING_SCALE_V2 or self.rating_history is None
+        ):
+            raise ValueError("linear rating resolver requires source-evidenced 1..10 history")
         validator = validate_rating_v2 if self.rating_scale == RATING_SCALE_V2 else _validate_country_rating
         for name in GAME_ATTRIBUTE_NAMES:
-            validator(getattr(self, name))
+            if (self.rating_resolution_version == RATING_RESOLUTION_LINEAR_V3
+                    and self.rating_effective_year is not None):
+                _validate_versioned_rating(getattr(self, name))
+            else:
+                validator(getattr(self, name))
         if self.rating_scale == RATING_SCALE_V2 and self.court_count is not None:
             raise ValueError("Court Count is deferred beyond pre-alpha in new-scale countries")
         if self.rating_history is not None:
             if self.rating_scale != RATING_SCALE_V2:
                 raise ValueError("historical ratings require the explicit 1..10 scale")
             year = self.rating_effective_year if self.rating_effective_year is not None else self.rating_history.reference_year
-            _, entry = self.rating_history.resolve(year)
-            if any(getattr(self, name) != entry.ratings[name].value for name in GAME_ATTRIBUTE_NAMES):
+            if self.rating_resolution_version == RATING_RESOLUTION_LINEAR_V3:
+                effective = self.rating_history.resolve_effective(year)
+                expected = {name: effective[name].value for name in GAME_ATTRIBUTE_NAMES}
+            else:
+                _, entry = self.rating_history.resolve(year)
+                expected = {name: entry.ratings[name].value for name in GAME_ATTRIBUTE_NAMES}
+            if any(getattr(self, name) != expected[name] for name in GAME_ATTRIBUTE_NAMES):
                 raise ValueError("scalar ratings must match the selected history year")
         elif self.rating_effective_year is not None:
             raise ValueError("effective rating year requires a history")
@@ -105,7 +124,9 @@ class Country(BaseModel):
     @model_serializer(mode="wrap")
     def serialize_rating_version(self, handler):
         payload = handler(self)
-        # Exact legacy payloads remain unchanged, including their snapshot hashes.
+        # Old, unmarked snapshot hashes must not silently change.
+        if self.rating_resolution_version is None:
+            payload.pop("rating_resolution_version", None)
         if self.rating_scale == LEGACY_RATING_SCALE:
             for name in ("rating_scale", "rating_history", "rating_effective_year"):
                 payload.pop(name, None)
@@ -114,12 +135,13 @@ class Country(BaseModel):
     def at_rating_year(self, year: int) -> Self:
         if self.rating_history is None:
             return self
-        _, entry = self.rating_history.resolve(year)
-        # Values come from the already validated history, not untrusted input.
-        return self.model_copy(update={
-            **{name: entry.ratings[name].value for name in GAME_ATTRIBUTE_NAMES},
-            "rating_effective_year": year,
-        })
+        if self.rating_resolution_version == RATING_RESOLUTION_LINEAR_V3:
+            effective = self.rating_history.resolve_effective(year)
+            values = {name: effective[name].value for name in GAME_ATTRIBUTE_NAMES}
+        else:
+            _, entry = self.rating_history.resolve(year)
+            values = {name: entry.ratings[name].value for name in GAME_ATTRIBUTE_NAMES}
+        return self.model_copy(update={**values, "rating_effective_year": year})
 
     @property
     def rating_maximum(self) -> int:

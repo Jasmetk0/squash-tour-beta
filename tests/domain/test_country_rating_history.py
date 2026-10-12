@@ -12,7 +12,7 @@ pytestmark = pytest.mark.pr_critical
 from pydantic import ValidationError
 
 from beta_engine.domain.countries import Country, CountryTalentModel, CountriesConfig
-from beta_engine.domain.countries.rating_history import CountryRatingHistory, GAME_ATTRIBUTE_NAMES, RATING_SCALE_V2
+from beta_engine.domain.countries.rating_history import CountryRatingHistory, GAME_ATTRIBUTE_NAMES, RATING_SCALE_V2, RATING_RESOLUTION_LINEAR_V3
 from beta_engine.infrastructure.world_package_storage import WorldPackageCountryStore
 from beta_engine.application.earth_package_builder import (
     EarthResearchBundle,
@@ -143,6 +143,7 @@ class CountryRatingHistoryTests(unittest.TestCase):
         self.assertNotIn("rating_scale", c.model_dump())
         self.assertNotIn("rating_history", c.model_dump())
         self.assertNotIn("rating_effective_year", c.model_dump())
+        self.assertNotIn("rating_resolution_version", c.model_dump())
         self.assertEqual(c.competition_quality_norm, 0.9375)
         self.assertEqual(CountryTalentModel().participation_factor(c), 0.36)
         self.assertIs(c.at_rating_year(2000), c)
@@ -174,6 +175,38 @@ class CountryRatingHistoryTests(unittest.TestCase):
         self.assertEqual(h.resolve(1954)[0], 1955)
         self.assertEqual(h.resolve(2013)[0], 2000)
         self.assertEqual(original.at_rating_year(2050).rating_effective_year, 2050)
+
+    def test_linear_v3_preserves_legacy_v2_and_derives_exact_evidence(self):
+        h = history({1990: 4, 2000: 6})
+        self.assertEqual(h.resolve(1995)[0], 1990)
+        old = country(h)
+        self.assertEqual(old.at_rating_year(1995).squash_popularity, 4)
+        self.assertNotIn("rating_resolution_version", old.model_dump(mode="json"))
+        rating = h.resolve_effective(1995)["squash_popularity"]
+        self.assertEqual((rating.value,rating.kind,rating.source_years,rating.source_values),
+                         (5,"interpolated",(1990,2000),(4,6)))
+        versioned = country(h,rating_resolution_version=RATING_RESOLUTION_LINEAR_V3)
+        for year,expected in [(1990,4),(1991,4.2),(1992,4.4),(1995,5),
+                              (1999,5.8),(2000,6),(1954,4),(2050,6)]:
+            with self.subTest(year=year):
+                effective = versioned.at_rating_year(year)
+                self.assertEqual(effective.squash_popularity,expected)
+                self.assertEqual(Country.model_validate(effective.model_dump(mode="json")),effective)
+        self.assertEqual(h.years[1990].ratings["squash_access"].value,4)
+        self.assertEqual(h.resolve_effective(1954)["squash_access"].kind,"fallback")
+        self.assertEqual(h.resolve_effective(1990)["squash_access"].kind,"exact")
+
+    def test_v3_nonuniform_rounding_and_single_point(self):
+        h = history({1990:4,1993:6})
+        self.assertEqual(h.resolve_effective(1991)["squash_popularity"].value,4.6667)
+        resolved = country(h,rating_resolution_version=RATING_RESOLUTION_LINEAR_V3).at_rating_year(1991)
+        self.assertEqual(Country.model_validate(resolved.model_dump(mode="json")).squash_popularity,4.6667)
+        single = history({2000:7.3})
+        self.assertEqual(single.resolve_effective(2000)["squash_access"].kind,"exact")
+        self.assertEqual(single.resolve_effective(2050)["squash_access"].value,7.3)
+        self.assertEqual(single.resolve_effective(1980)["squash_access"].value,7.3)
+        with self.assertRaises(ValidationError):
+            country(rating_resolution_version=RATING_RESOLUTION_LINEAR_V3)
 
     def test_missing_attributes_are_rejected_not_filled(self):
         raw = history({1955: 3}).model_dump()

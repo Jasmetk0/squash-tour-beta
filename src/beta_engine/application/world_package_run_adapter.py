@@ -14,6 +14,7 @@ from beta_engine.application.world_package_registry_service import (
     WorldPackageRegistryService,
 )
 from beta_engine.domain.countries import CountriesConfig, Country
+from beta_engine.domain.countries.rating_history import RATING_RESOLUTION_LINEAR_V3
 from beta_engine.domain.run_packages import (
     CanonicalPackageDocument,
     PackageEntity,
@@ -148,7 +149,11 @@ class WorldPackageRunAdapter:
                 entity_kind=WORLD_COUNTRY_ENTITY_KIND,
                 entity_schema_version=1,
                 scope=WORLD_COUNTRY_SCOPE,
-                payload=country.model_dump(mode="json"),
+                payload={
+                    **country.model_dump(mode="json"),
+                    **({"rating_resolution_version": RATING_RESOLUTION_LINEAR_V3}
+                       if country.rating_history is not None else {}),
+                },
             )
             for country in countries
         )

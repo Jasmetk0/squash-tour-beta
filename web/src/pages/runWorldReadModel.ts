@@ -32,6 +32,9 @@ export type WorldPopulation = {
 export type WorldRating = {
   value:number|null
   sourceYear:number|null
+  sourceYears:number[]
+  sourceValues:number[]
+  kind:'exact'|'interpolated'|'fallback'|'legacy'|'missing'
   provenance:string
 }
 export type RunWorldCountry = {
@@ -70,29 +73,71 @@ export function worldCountryPopulation(country:UnknownRecord,year:number):WorldP
   if(legacy!=null) return {value:legacy,kind:'legacy',sourceYear:null}
   return {value:null,kind:'missing',sourceYear:null}
 }
+const LINEAR_RESOLVER_V3='country_rating_resolution.linear_v3'
+/** Authored tenths interpolate using integer arithmetic, exact half-up to 4 places. */
+function ratingInterpolation(left:{year:number;value:number},right:{year:number;value:number},year:number):number {
+  const span=right.year-left.year
+  const numerator=Math.round(left.value*10)*(right.year-year)+Math.round(right.value*10)*(year-left.year)
+  return Math.floor((2*numerator*1000+span)/(2*span))/10000
+}
 function countryRatings(country:UnknownRecord,year:number):
   {ratings:Record<WorldRatingKey,WorldRating>;scale:5|10} {
-  const scale=country.rating_scale === 'country_ratings_1_10.v2' ? 10 : 5
+  const scale=country.rating_scale==='country_ratings_1_10.v2'?10:5
+  const resolver=country.rating_resolution_version
+  if(resolver!=null&&resolver!==LINEAR_RESOLVER_V3)
+    throw new Error('Unsupported persisted country rating resolver version')
   const history=record(country.rating_history)
+  if(resolver===LINEAR_RESOLVER_V3&&
+    (scale!==10||!history||history.schema_version!=='country_rating_history.v2'))
+    throw new Error('Linear rating resolver requires versioned source evidence')
   const years=record(history?.years)
-  const known=Object.entries(years??{}).map(([key,value])=>({year:Number(key), entry:record(value)}))
+  const known=Object.entries(years??{}).map(([key,value])=>({year:Number(key),entry:record(value)}))
     .filter((p):p is {year:number;entry:UnknownRecord}=>Number.isSafeInteger(p.year)&&p.entry!=null)
-    .sort((a,b)=>Math.abs(a.year-year)-Math.abs(b.year-year)||a.year-b.year)
-  const resolved=known[0]
-  const evidence=record(resolved?.entry.ratings)
+    .sort((a,b)=>a.year-b.year)
   const ratings={} as Record<WorldRatingKey,WorldRating>
   for(const key of ratingKeys) {
-    const detail=record(evidence?.[key])
-    const fromHistory=nonnegativeNumber(detail?.value)
-    const direct=nonnegativeNumber(country[key])
-    const value=resolved?fromHistory:direct
-    ratings[key]={
-      value:value!=null && value>=1 && value<=scale?value:null,
-      sourceYear:resolved?.year??null,
-      provenance:resolved
-        ? (resolved.year===year?string(detail?.method)??'historical':'nearest historical')
-        : 'legacy scalar — no year attribution'
+    const points=known.map(({year:sourceYear,entry})=>({
+      year:sourceYear,value:nonnegativeNumber(record(record(entry.ratings)?.[key])?.value)
+    })).filter((p):p is {year:number;value:number}=>p.value!==null&&p.value>=1&&p.value<=scale)
+    const sourced=(point:{year:number;value:number},kind:WorldRating['kind']):WorldRating=>({
+      value:point.value,sourceYear:point.year,sourceYears:[point.year],
+      sourceValues:[point.value],kind,
+      provenance:kind==='exact'?'authored historical observation':
+        resolver===LINEAR_RESOLVER_V3?'one-sided historical fallback':'legacy v2 nearest historical'
+    })
+    if(resolver===LINEAR_RESOLVER_V3&&points.length){
+      const exact=points.find(p=>p.year===year)
+      if(exact){ratings[key]=sourced(exact,'exact');continue}
+      const left=[...points].reverse().find(p=>p.year<year)
+      const right=points.find(p=>p.year>year)
+      if(left&&right){
+        ratings[key]={
+          value:ratingInterpolation(left,right,year),sourceYear:null,
+          sourceYears:[left.year,right.year],sourceValues:[left.value,right.value],
+          kind:'interpolated',
+          provenance:`linear interpolation: ${left.year} (${left.value}) → ${right.year} (${right.value})`
+        }
+      }else ratings[key]=sourced(left??right!,'fallback')
+      continue
     }
+    if(history&&known.length){
+      // Old v2 snapshots continue to use the nearest authored YEAR for every field.
+      const nearest=known.reduce((best,p)=>
+        Math.abs(p.year-year)<Math.abs(best.year-year)||
+        (Math.abs(p.year-year)===Math.abs(best.year-year)&&p.year<best.year)?p:best)
+      const value=nonnegativeNumber(record(record(nearest.entry.ratings)?.[key])?.value)
+      ratings[key]=value!==null&&value>=1&&value<=scale
+        ?sourced({year:nearest.year,value},nearest.year===year?'exact':'fallback')
+        :{value:null,sourceYear:null,sourceYears:[],sourceValues:[],kind:'missing',
+           provenance:'missing historical rating'}
+      continue
+    }
+    const direct=nonnegativeNumber(country[key])
+    ratings[key]=direct!==null&&direct>=1&&direct<=scale
+      ?{value:direct,sourceYear:null,sourceYears:[],sourceValues:[],kind:'legacy',
+         provenance:'legacy scalar — no year attribution'}
+      :{value:null,sourceYear:null,sourceYears:[],sourceValues:[],kind:'missing',
+         provenance:'rating unavailable'}
   }
   return {ratings,scale}
 }
@@ -138,7 +183,8 @@ export function projectRunWorld(
       code,name:string(c.name)??code,region:string(c.region),
       travelRegion:string(c.travel_region),timezoneArea:string(c.timezone_area),
       areaKm2:nonnegativeNumber(c.area_km2),population,ratings,ratingScale:scale,
-      incomplete:population.kind!=='exact'||missingRating,
+      incomplete:population.kind!=='exact'||missingRating||
+        ratingKeys.some(key=>ratings[key].kind!=='exact'),
       manual:e.provenance==='manual',notes:string(c.notes)
     } satisfies RunWorldCountry
   }).sort((a,b)=>a.name.localeCompare(b.name)||a.code.localeCompare(b.code))

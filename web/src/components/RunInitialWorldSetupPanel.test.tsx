@@ -160,6 +160,7 @@ describe('Run-owned first-season player setup', () => {
       'first-run', 'timeline-1', expect.objectContaining({
         generation: expect.objectContaining({
           country_quotas: [{country_code:'CZE',count:1}],
+          naming_policy:'country_serial.v1',
           target_pool_size:2
         })
       })

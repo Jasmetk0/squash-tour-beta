@@ -36,6 +36,7 @@ from beta_engine.api.routers.admin_tour_seasons_validation import router as admi
 from beta_engine.api.routers.admin_run_branches import router as admin_run_branches_router
 from beta_engine.api.routers.admin_run_packages import router as admin_run_packages_router
 from beta_engine.api.routers.admin_run_home import router as admin_run_home_router
+from beta_engine.api.routers.admin_country_match_records import router as admin_country_match_records_router
 from beta_engine.api.routers.config import router as config_router
 from beta_engine.api.routers.countries import router as countries_router
 from beta_engine.api.routers.health import router as health_router
@@ -102,6 +103,7 @@ router.include_router(admin_tour_seasons_validation_router)
 router.include_router(admin_run_branches_router)
 router.include_router(admin_run_packages_router)
 router.include_router(admin_run_home_router)
+router.include_router(admin_country_match_records_router)
 router.include_router(countries_router)
 router.include_router(tournament_templates_router)
 router.include_router(runs_router)

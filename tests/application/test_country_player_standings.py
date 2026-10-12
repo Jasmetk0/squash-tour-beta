@@ -70,7 +70,7 @@ def test_national_derby_each_side_counts_one_win_and_one_loss(monkeypatch):
 
 def test_entire_saved_career_not_only_first_25_matches(monkeypatch):
     # 36 matches, 30 distinct players, all tied without title/finishes.
-    matches=[match(f"P{i:02d}", f"P{(i+1)%30:02d}") for i in range(36)]
+    matches=[match(f"P{i%30:02d}", f"P{(i+1)%30:02d}") for i in range(36)]
     attach(monkeypatch,[],matches,published=1)
     first=read(limit=25)
     assert first.total_players==30 and first.has_more

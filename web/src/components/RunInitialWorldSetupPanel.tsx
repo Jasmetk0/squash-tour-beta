@@ -724,18 +724,6 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
       ? 'Závazné podmínky země, regionu a věku platí pro všechny hráče dávky. Prázdná pole zachovávají automatické rozdělení. Přesné kvóty zemí a automatické doplnění jsou podporované; překrývající se skupiny zatím ne.'
       : 'Hard country, region and age conditions apply to every player. Blank conditions preserve automatic allocation. Exact country quotas and the non-quota remainder are supported; overlapping groups are not yet supported.'}</p>
     {existing && <p role="status">InitialWorld exists: {existing.players.length} players from {existing.world_package_id}; seed {existing.bootstrap_seed}. Existing players cannot be silently regenerated or overwritten.</p>}
-    {existing && savePreflight && draft && snapshotFingerprint && <RunInitialWorldSelectedAppendPanel
-      key={runId+':'+branchId+':'+head}
-      runId={runId} branchId={branchId} head={head}
-      draftVersion={draft.draft_version}
-      packageFingerprint={snapshotFingerprint}
-      currentFingerprint={savePreflight.initial_world_fingerprint}
-      current={existing}
-      enabled={editable && draft.status === 'clean' &&
-        draft.base_saved_revision_id === head &&
-        savePreflight.has_unsaved_changes === false &&
-        !pendingSave}
-    />}
     {unexpectedExistingError && <p role="alert" className="error">Cannot verify whether this Run already has InitialWorld: {formatApiError(existingQuery.error)}</p>}
     {packageQuery.isError && <p role="alert" className="error">Run World state unavailable: {formatApiError(packageQuery.error)}</p>}
     {draftQuery.isError && <p role="alert" className="error">Working Draft unavailable: {formatApiError(draftQuery.error)}</p>}
@@ -746,6 +734,12 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
         {cs ? 'Otevřít správu Runu →' : 'Open Run Management →'}
       </Link></p>}
     {draft && draft.status !== 'clean' && !pendingSave && <p className="status">Save or resolve existing Working Draft changes before generating new players.</p>}
+    <div className="generator-workspace" aria-label="Player generator workspace">
+      <details className="generator-conditions" open>
+        <summary>{cs ? 'Podmínky generování' : 'Generation conditions'}
+          <span>{cs ? ' · rozbalit / sbalit' : ' · expand / collapse'}</span>
+        </summary>
+        <div className="generator-conditions-body">
     <label>Run-owned World{' '}
       <select aria-label="Run World for player generation" value={selectedWorldId}
         onChange={event => { setSourceId(event.target.value); setCountryCode(''); setCountryQuotas([]); setRegion(''); setTravelRegion('') }}>
@@ -874,6 +868,42 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
       {previewAction.isPending ? (cs ? 'Generuji náhled…' : 'Generating preview…') : (cs ? 'Generovat – zobrazit náhled' : 'Preview generated players')}
     </button>
     {previewAction.error && <p role="alert" className="error">Preview failed: {formatApiError(previewAction.error)}</p>}
+        </div>
+      </details>
+      <div className="generator-results" aria-label="Generator results and review">
+        <header className="generator-review-header">
+          <h4>{cs ? 'Návrh a další kroky' : 'Review and next steps'}</h4>
+          <p role="status">{review
+            ? (cs ? `Ověřený návrh: ${viewedPlayers.length} hráčů. Run se náhledem nezměnil.`
+              : `Verified proposal: ${viewedPlayers.length} players. Preview made no Run changes.`)
+            : existing
+              ? (cs ? `Počáteční svět: ${existing.players.length} hráčů.`
+                : `Opening world: ${existing.players.length} players.`)
+              : (cs ? 'Nejprve nastav podmínky a vygeneruj náhled.'
+                : 'Set conditions and generate a preview first.')}</p>
+          <p className="status">{cs
+            ? 'Postup: Generovat → zkontrolovat hráče → potvrdit přidání → samostatně ručně uložit revizi. Uložit návrh neznamená přidat hráče.'
+            : 'Workflow: Generate → review players → confirm addition → manually Save the revision. Saving a proposal does not add players.'}</p>
+          {(conditionConflict || ageConflict || quotaConflict) && <p className="status">
+            {cs ? 'Před pokračováním oprav rozporné podmínky v levém panelu.'
+              : 'Resolve conflicting conditions in the left panel before continuing.'}
+          </p>}
+          {existing && <p className="status">{cs
+            ? 'Přidat vybrané funguje jen před prvním rankingem a sportovní aktivitou; nejedná se o přidávání během sezóny.'
+            : 'Add Selected is available only before ranking and sporting activity; this is not in-season player creation.'}</p>}
+        </header>
+    {existing && savePreflight && draft && snapshotFingerprint && <RunInitialWorldSelectedAppendPanel
+      key={runId+':'+branchId+':'+head}
+      runId={runId} branchId={branchId} head={head}
+      draftVersion={draft.draft_version}
+      packageFingerprint={snapshotFingerprint}
+      currentFingerprint={savePreflight.initial_world_fingerprint}
+      current={existing}
+      enabled={editable && draft.status === 'clean' &&
+        draft.base_saved_revision_id === head &&
+        savePreflight.has_unsaved_changes === false &&
+        !pendingSave}
+    />}
     <section aria-label="Saved player generation proposals" className="section-subtle">
       <h4>{cs ? 'Uložené generační návrhy' : 'Saved generation proposals'}</h4>
       <p className="status">{cs
@@ -1163,5 +1193,7 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
     </section>}
     {saveAction.error && <p role="alert" className="error">Save failed: {formatApiError(saveAction.error)}</p>}
     {notice && <p role="status">{notice}</p>}
+      </div>
+    </div>
   </SectionCard>
 }

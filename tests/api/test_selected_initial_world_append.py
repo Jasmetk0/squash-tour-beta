@@ -43,6 +43,10 @@ def _prepared(tmp_path, monkeypatch):
                         lambda *a, **kw: NS(fingerprint=SHA))
     monkeypatch.setattr(package_state, "get_run_package_state",
                         lambda *a, **kw: NS(fingerprint=SHA))
+    # This isolated transaction test has no actual World Package fixture;
+    # only the target CAS is stubbed, never persist a fabricated Package state.
+    monkeypatch.setattr(repos, "capture_saved_run_package_state",
+                        lambda *a, **kw: None)
     ids = _id_factory()
     created = RunContainerCreationService(repo, ids).create_empty_run(
         display_name="Selected append SQLite proof"

@@ -399,6 +399,71 @@ def main() -> None:
             assert page.locator(".app-shell--admin").get_attribute("data-run-form-edited") is None
             evidence["world_partial_saved_copy_fails_closed"] = True
 
+            # Positive immutable Saved Revision World read, independent of
+            # the earlier intentionally partial-world negative test.
+            assert any(item["world_id"] == "official_fax_world" for item in worlds)
+            page.goto(base + "/admin/runs/new")
+            page.get_by_label("Unique Run name").fill("Historical World Browser Acceptance")
+            page.get_by_role("button", name="Create isolated Run").click()
+            expect(page.get_by_role("heading", name="World and Calendar copies")).to_be_visible()
+            history_url = page.url.split("?", 1)[0]
+            history_run = history_url.split("/admin/runs/", 1)[1].split("/", 1)[0]
+            branch_api = args.api_url + "/run-branches"
+            original = page.request.get(branch_api, params={"run_id": history_run})
+            assert original.ok, original.text()
+            old_head = original.json()["run_branches"][0]["saved_head_revision_id"]
+            history_branch = original.json()["run_branches"][0]["branch_id"]
+            assert old_head and history_branch
+
+            page.get_by_label("Source kind").select_option("world")
+            page.get_by_label("World source").select_option("official_fax_world")
+            page.get_by_role("button", name="Preview copy").click()
+            page.get_by_label("Confirm source copy").check()
+            page.get_by_role("button", name="Confirm copy to Working Draft").click()
+            page.get_by_label("Confirm save revision").check()
+            page.get_by_role("button", name="Save copied packages").click()
+            expect(page.get_by_text(
+                "Current Run copy: Present. Draft: clean.", exact=False
+            )).to_be_visible()
+            saved = page.request.get(branch_api, params={"run_id": history_run})
+            assert saved.ok, saved.text()
+            newer_head = saved.json()["run_branches"][0]["saved_head_revision_id"]
+            assert newer_head and newer_head != old_head
+            state_url2 = (args.api_url + "/admin/runs/" + history_run
+                          + "/branches/" + history_branch + "/packages")
+            saved_state = page.request.get(state_url2)
+            assert saved_state.ok and saved_state.json()["state"], saved_state.text()
+            world_hash = saved_state.json()["fingerprint"]
+            codes = [e["source_entity_id"] for e in saved_state.json()["state"]["entities"]
+                     if e["entity_kind"] == "world.country.v1"]
+            assert codes, "Copied full World has no real countries"
+            page.goto(history_url + "/world?year=2000")
+            expect(page.get_by_role("table", name="Run World countries")).to_be_visible()
+            page.get_by_role("combobox", name="World Saved Revision").select_option(newer_head)
+            expect(page.get_by_role("table", name="Run World countries")).to_be_visible()
+            page.goto(history_url + "/world/countries/" + codes[0]
+                      + "?year=2010&tab=players&revision=" + newer_head)
+            expect(page.get_by_role("region", name="Historical country roster unavailable")).to_be_visible()
+            assert page.get_by_role("table", name="Saved country roster").count() == 0
+            page.goto(history_url + "/world?year=2000&revision=" + old_head)
+            expect(page.get_by_role("alert").filter(
+                has_text="The selected Saved Revision has no saved Run World component"
+            )).to_be_visible()
+            assert page.get_by_role("table", name="Run World countries").count() == 0
+            page.get_by_role("combobox", name="World Saved Revision").select_option(newer_head)
+            expect(page.get_by_role("table", name="Run World countries")).to_be_visible()
+            after_read = page.request.get(state_url2)
+            assert after_read.ok and after_read.json()["fingerprint"] == world_hash
+            after_head = page.request.get(branch_api, params={"run_id": history_run})
+            assert after_head.ok
+            assert after_head.json()["run_branches"][0]["saved_head_revision_id"] == newer_head
+            evidence["historical_saved_world_browser"] = {
+                "run_id": history_run, "country_code": codes[0],
+                "old_revision_without_world": old_head, "world_revision": newer_head,
+                "no_current_world_or_players_fallback": True,
+                "world_and_saved_head_unchanged_on_read": True,
+            }
+
             page.get_by_role("link", name="Squash Engine global Home").click()
             expect(page.get_by_role("heading", name="Squash Engine Home")).to_be_visible()
             assert page.get_by_role("combobox", name="Admin active Run").count() == 0

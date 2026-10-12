@@ -927,6 +927,8 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
       </p>}
       <p>{cs ? 'Model' : 'Model'}: <code>{review.preview.state.source_kind}</code> · {cs ? 'Otisk náhledu' : 'Preview fingerprint'}: <code>{review.preview.fingerprint.slice(0, 20)}…</code></p>
       <GeneratedPlayerReviewInspector key={review.preview.fingerprint} players={viewedPlayers} locale={locale}
+        verifiedFieldLocks={review.request.generation.field_locks ?? []}
+        pendingFieldLocks={pendingFieldLocks}
         selectedPlayerId={selectedPlayerId}
         onSelectPlayer={fieldEditingEnabled ? setSelectedPlayerId : undefined}
         keepIds={keptIds}

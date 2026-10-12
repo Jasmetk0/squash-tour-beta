@@ -1,6 +1,6 @@
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import {
   GeneratedPlayerReviewInspector, summariseGeneratedPlayers
@@ -17,6 +17,8 @@ const players: RunInitialWorldPlayer[] = [
   {player_id:'p-7',name:'Gus',country_code:'POL',age_years_at_season_start:20,current_ability:63,potential_ability:77,potential_tier:'C',career_stage:'developing'},
   {player_id:'p-8',name:'Hugo',country_code:'HUN',age_years_at_season_start:28,current_ability:66,potential_ability:78,potential_tier:'C',career_stage:'prime'}
 ]
+
+beforeEach(() => window.localStorage.clear())
 
 describe('immutable generated cohort inspection',()=>{
   it('summarises the actual entire first-week cohort with exact deterministic counts',()=>{
@@ -126,5 +128,117 @@ describe('large first-cohort review',()=>{
     expect(screen.getByRole('status')).toHaveTextContent('Showing 1 / 1000')
     expect(within(table).getAllByRole('row')).toHaveLength(2)
     expect(JSON.stringify(cohort)).toBe(before)
+  })
+})
+
+describe('V79 configurable, browser-only inspection columns', () => {
+  it('defaults to real source columns and never fabricates unsupported attributes', async () => {
+    render(<GeneratedPlayerReviewInspector players={players}/>)
+    const table=screen.getByRole('region',{name:'Complete generated player preview'})
+    expect(within(table).getByRole('columnheader',{name:'Player'})).toBeInTheDocument()
+    expect(within(table).getByRole('columnheader',{name:'Current ability (1–99)'})).toBeInTheDocument()
+    expect(within(table).getByRole('columnheader',{name:'Potential (1–99)'})).toBeInTheDocument()
+    expect(within(table).getByRole('columnheader',{name:'Career stage'})).toBeInTheDocument()
+    expect(within(table).queryByRole('columnheader',{name:/OVR|Height|Handedness/})).not.toBeInTheDocument()
+    await userEvent.click(screen.getByText(/Choose table columns/))
+    expect(screen.queryByRole('checkbox',{name:'Show column attributes.technique'})).not.toBeInTheDocument()
+    expect(screen.queryByRole('checkbox',{name:'Show column attributes.recovery'})).not.toBeInTheDocument()
+    expect(screen.getByRole('checkbox',{name:'Show column current'})).toBeChecked()
+    expect(screen.getByRole('checkbox',{name:'Show column potential'})).toBeChecked()
+  })
+
+  it('remembers chosen real columns over inspector remount without changing player data or Keep', async () => {
+    const snapshot=JSON.stringify(players)
+    const onKeepChange=vi.fn()
+    const first=render(<GeneratedPlayerReviewInspector players={players}
+      keepIds={['p-5']} onKeepChange={onKeepChange}/>)
+    await userEvent.click(screen.getByText(/Choose table columns/))
+    await userEvent.click(screen.getByRole('checkbox',{name:'Show column country'}))
+    await userEvent.click(screen.getByRole('checkbox',{name:'Show column potential'}))
+    await userEvent.click(screen.getByRole('checkbox',{name:'Show column stage'}))
+    expect(screen.queryByRole('columnheader',{name:'Country'})).not.toBeInTheDocument()
+    expect(screen.queryByRole('columnheader',{name:'Potential (1–99)'})).not.toBeInTheDocument()
+    expect(screen.queryByRole('columnheader',{name:'Career stage'})).not.toBeInTheDocument()
+    expect(screen.getByRole('checkbox',{name:'Keep p-5'})).toBeChecked()
+    expect(onKeepChange).not.toHaveBeenCalled()
+    expect(JSON.stringify(players)).toBe(snapshot)
+    first.unmount()
+    render(<GeneratedPlayerReviewInspector players={players}
+      keepIds={['p-5']} onKeepChange={onKeepChange}/>)
+    const table=screen.getByRole('region',{name:'Complete generated player preview'})
+    expect(within(table).getByRole('columnheader',{name:'Player'})).toBeInTheDocument()
+    expect(within(table).queryByRole('columnheader',{name:'Country'})).not.toBeInTheDocument()
+    expect(within(table).queryByRole('columnheader',{name:'Potential (1–99)'})).not.toBeInTheDocument()
+    expect(within(table).getAllByRole('row')).toHaveLength(9)
+    expect(screen.getByRole('status')).toHaveTextContent('Showing 8 / 8')
+    expect(onKeepChange).not.toHaveBeenCalled()
+    await userEvent.click(screen.getByText(/Choose table columns/))
+    await userEvent.click(screen.getByRole('button',{name:'Reset default columns'}))
+    expect(within(table).getByRole('columnheader',{name:'Country'})).toBeInTheDocument()
+    expect(JSON.stringify(players)).toBe(snapshot)
+  })
+
+  it('distinguishes verified server locks and unsubmitted changes without claiming a pending value as preview fact', async () => {
+    const cohort=players.map(p=>p.player_id==='p-5'
+      ? {...p,attributes:{technique:76,movement:62}} : p)
+    const onKeepChange=vi.fn()
+    const onSelectPlayer=vi.fn()
+    render(<GeneratedPlayerReviewInspector players={cohort} keepIds={[]}
+      onKeepChange={onKeepChange} onSelectPlayer={onSelectPlayer}
+      verifiedFieldLocks={[
+        {player_id:'p-5',field:'current_ability',value:70},
+        {player_id:'p-5',field:'attributes.technique',value:76}
+      ]}
+      pendingFieldLocks={[
+        {player_id:'p-5',field:'current_ability',value:70},
+        {player_id:'p-5',field:'attributes.technique',value:82}
+      ]} />)
+    const mark=screen.getByLabelText('Verified field lock p-5 current_ability')
+    expect(mark).toHaveTextContent('✎')
+    const details=screen.getByLabelText('Field edit details p-5')
+    await userEvent.click(within(details).getByText(/Fields/))
+    expect(within(details).getByText(/verified 76 · pending 82/)).toBeInTheDocument()
+    await userEvent.click(screen.getByText(/Choose table columns/))
+    await userEvent.click(screen.getByRole('checkbox',{name:'Show column attributes.technique'}))
+    expect(screen.getByLabelText('Pending field edit p-5 attributes.technique')).toBeInTheDocument()
+    const row=screen.getByRole('row',{name:/Eli/})
+    const cells=within(row).getAllByRole('cell')
+    const techniqueCell=cells[cells.length - 1]
+    expect(techniqueCell).toHaveTextContent('76')
+    expect(techniqueCell).not.toHaveTextContent(/^82/)
+    expect(techniqueCell).toHaveTextContent('pending')
+    expect(onKeepChange).not.toHaveBeenCalled()
+    expect(onSelectPlayer).not.toHaveBeenCalled()
+  })
+
+  it('ignores unsupported or damaged browser preferences and keeps player identity visible', () => {
+    window.localStorage.setItem('squash-engine:generated-player-columns:v1',
+      JSON.stringify(['attributes.fake','height','potential','country','potential']))
+    const first=render(<GeneratedPlayerReviewInspector players={players}/>)
+    expect(screen.getByRole('columnheader',{name:'Player'})).toBeInTheDocument()
+    expect(screen.getByRole('columnheader',{name:'Country'})).toBeInTheDocument()
+    expect(screen.getByRole('columnheader',{name:'Potential (1–99)'})).toBeInTheDocument()
+    expect(screen.queryByRole('columnheader',{name:'Height'})).not.toBeInTheDocument()
+    first.unmount()
+    window.localStorage.setItem('squash-engine:generated-player-columns:v1','{invalid')
+    render(<GeneratedPlayerReviewInspector players={players}/>)
+    expect(screen.getByRole('columnheader',{name:'Current ability (1–99)'})).toBeInTheDocument()
+  })
+
+  it('keeps 1000-player pagination and current page while toggling a column', async () => {
+    const cohort: RunInitialWorldPlayer[]=Array.from({length:1000},(_,i)=>({
+      player_id:'p-'+String(i+1).padStart(4,'0'),name:'Country '+(i+1),
+      country_code:'CZE',age_years_at_season_start:20,
+      current_ability:60,potential_ability:70,potential_tier:'A'
+    }))
+    render(<GeneratedPlayerReviewInspector players={cohort}/>)
+    await userEvent.click(screen.getByRole('button',{name:'Next preview page →'}))
+    expect(screen.getByText(/Page 2 \/ 20/)).toBeInTheDocument()
+    await userEvent.click(screen.getByText(/Choose table columns/))
+    await userEvent.click(screen.getByRole('checkbox',{name:'Show column age'}))
+    expect(screen.getByText(/Page 2 \/ 20/)).toBeInTheDocument()
+    expect(screen.getByRole('status')).toHaveTextContent('Showing 1000 / 1000')
+    expect(screen.getByRole('region',{name:'Complete generated player preview'})
+      .querySelectorAll('tbody tr')).toHaveLength(50)
   })
 })

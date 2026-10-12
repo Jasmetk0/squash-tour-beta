@@ -4,12 +4,13 @@
 import { useQuery } from '@tanstack/react-query'
 import { useMemo } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
-import { getRunPackageState } from '../api/client'
+import { getRunPackageState, getSavedRevision, listSavedRevisionHistory } from '../api/client'
 import { useAdminBranch } from '../admin/AdminBranchContext'
 import { useAdminTime } from '../admin/AdminTimeContext'
 import { useLanguage } from '../i18n/LanguageContext'
 import { formatApiError } from '../utils/apiErrors'
 import { projectRunWorld, worldRatingKeys } from './runWorldReadModel'
+import { historicalRunWorldSnapshot } from './runWorldSavedRevision'
 import { projectRunWorldCountryHistory } from './runWorldCountryHistory'
 import type { RunWorldCountryHistory } from './runWorldCountryHistory'
 import { RunWorldCountryHistoryPanel } from './RunWorldCountryHistoryPanel'
@@ -40,8 +41,8 @@ function countryUrl(runId:string,code:string,params:URLSearchParams):string {
 function TabLink({active,to,label}:{active:boolean;to:string;label:string}):JSX.Element {
   return <Link aria-current={active?'page':undefined} to={to}>{label}</Link>
 }
-function CountryDetail({runId,branchId,savedHead,country,world,params,cs,language,selectedWorldYear,history,historyError}:{
-  runId:string;branchId:string;savedHead:string|null;country:RunWorldCountry;world:RunWorldOverview;
+function CountryDetail({runId,branchId,savedHead,historicalRevisionId,country,world,params,cs,language,selectedWorldYear,history,historyError}:{
+  runId:string;branchId:string;savedHead:string|null;historicalRevisionId:string|null;country:RunWorldCountry;world:RunWorldOverview;
   params:URLSearchParams;cs:boolean;language:string;selectedWorldYear:number
   history:RunWorldCountryHistory|null;historyError:string|null
 }):JSX.Element {
@@ -95,12 +96,21 @@ function CountryDetail({runId,branchId,savedHead,country,world,params,cs,languag
       />}
     {(active==='population'||active==='ratings')&&!history&&
       <p role="alert">{historyError??(cs?'Historické podklady této země nejsou dostupné.':'Country history source is unavailable.')}</p>}
-    {active==='players'&&<RunWorldCountrySavedPlayers
-      key={runId+':'+branchId+':'+(savedHead??'none')+':'+country.code}
-      runId={runId} branchId={branchId} savedHead={savedHead}
-      countryCode={country.code} selectedWorldYear={selectedWorldYear}
-      language={language==='cs'?'cs':'en'}
-    />}
+    {active==='players'&&(historicalRevisionId
+      ? <section className="section-subtle" aria-label="Historical country roster unavailable">
+          <h4>{cs?'Historický soupis hráčů':'Historical player roster'}</h4>
+          <p role="status">{cs
+            ? 'Tato stránka zobrazuje historický World ze Saved Revision '+historicalRevisionId+
+              '. Autoritativní historický soupis hráčů této revize zde zatím není připojen. Současní hráči se nikdy nepoužijí jako náhrada.'
+            : 'This page shows the World stored in Saved Revision '+historicalRevisionId+
+              '. An authoritative player roster for that revision is not yet connected. Current saved players are never substituted.'}</p>
+        </section>
+      : <RunWorldCountrySavedPlayers
+          key={runId+':'+branchId+':'+(savedHead??'none')+':'+country.code}
+          runId={runId} branchId={branchId} savedHead={savedHead}
+          countryCode={country.code} selectedWorldYear={selectedWorldYear}
+          language={language==='cs'?'cs':'en'}
+        />)}
     {(active==='records'||active==='tournaments')&&<section className="section-subtle">
       <h4>{labels[available.indexOf(active)]}</h4>
       <p role="status">{cs?'Pro tento Run, branch a rok ještě není připojený autoritativní historický read-model. Žádné výsledky ani rekordy se nedopočítávají z aktuálních dat.':'No authoritative historical read model is connected for this Run, Branch and year. Results and records are never invented from current data.'}</p>
@@ -117,23 +127,51 @@ export function RunWorldPage():JSX.Element {
   const year=queryYear(params)
   const search=params.get('q')??''
   const branchId=selectedBranch?.run_id===runId?selectedBranch.branch_id:null
+  // The data year is NOT a simulation checkpoint and a selected Saved Revision
+  // is NOT the mutable current Saved HEAD. Keep all three contexts separate.
+  const selectedRevisionId=params.get('revision')?.trim()??''
+  const historicalRevision=selectedRevisionId.length>0
   const allowed=Boolean(runId&&branchId&&time.mode==='present'&&!time.isLoading&&!time.error&&!branchLoading&&!branchError)
   const q=useQuery({
     queryKey:['run-world-current-packages',runId,branchId],
     queryFn:()=>getRunPackageState(runId,branchId!),
+    enabled:allowed&&!historicalRevision,
+    retry:false
+  })
+  const historyList=useQuery({
+    queryKey:['run-world-reachable-saved-revisions',runId,branchId,selectedBranch?.saved_head_revision_id],
+    queryFn:()=>listSavedRevisionHistory(runId,branchId!,{limit:200}),
     enabled:allowed,
     retry:false
   })
+  const historyListMatches=Boolean(historyList.data&&historyList.data.run_id===runId&&
+    historyList.data.branch_id===branchId&&
+    historyList.data.saved_head_revision_id===selectedBranch?.saved_head_revision_id)
+  const revision=useQuery({
+    queryKey:['run-world-exact-saved-revision',runId,branchId,selectedRevisionId],
+    queryFn:()=>getSavedRevision(runId,branchId!,selectedRevisionId),
+    enabled:allowed&&historicalRevision,
+    retry:false
+  })
+  const savedSource=useMemo(()=>{
+    if(!allowed||!historicalRevision||!revision.data||!branchId)
+      return {source:null,error:null}
+    try {return {source:historicalRunWorldSnapshot(revision.data,runId,branchId,selectedRevisionId),error:null}}
+    catch(error){return {source:null,error:formatApiError(error)}}
+  },[allowed,historicalRevision,revision.data,runId,branchId,selectedRevisionId])
+  const readState=historicalRevision?savedSource.source?.response:q.data
+  const sourceBranchId=historicalRevision?savedSource.source?.revisionBranchId:branchId
+  const readEnabled=Boolean(allowed&&readState&&sourceBranchId)
   const projection=useMemo(()=>{
-    if(!allowed||!q.data||!branchId)return {world:null,error:null}
-    try {return {world:projectRunWorld(q.data,runId,branchId,year),error:null}}
+    if(!readEnabled||!readState||!sourceBranchId)return {world:null,error:null}
+    try {return {world:projectRunWorld(readState,runId,sourceBranchId,year),error:null}}
     catch(error){return {world:null,error:formatApiError(error)}}
-  },[allowed,q.data,runId,branchId,year])
+  },[readEnabled,readState,runId,sourceBranchId,year])
   const historyProjection=useMemo(()=>{
-    if(!allowed||!q.data||!branchId||!countryCode)return {history:null,error:null}
-    try {return {history:projectRunWorldCountryHistory(q.data,runId,branchId,countryCode,year),error:null}}
+    if(!readEnabled||!readState||!sourceBranchId||!countryCode)return {history:null,error:null}
+    try {return {history:projectRunWorldCountryHistory(readState,runId,sourceBranchId,countryCode,year),error:null}}
     catch(error){return {history:null,error:formatApiError(error)}}
-  },[allowed,q.data,runId,branchId,countryCode,year])
+  },[readEnabled,readState,runId,sourceBranchId,countryCode,year])
   const world=projection.world
   const visible=world?.countries.filter(c=>[c.code,c.name,c.region??''].some(v=>
     v.toLocaleLowerCase().includes(search.trim().toLocaleLowerCase())))??[]
@@ -148,28 +186,63 @@ export function RunWorldPage():JSX.Element {
       <p className="eyebrow">PRODUCT RUN · WORLD</p>
       <h2>{cs?'Svět Runu':'Run World'}</h2>
       <p className="subtitle">{cs
-        ? 'Jediným zdrojem je kopie World Package v právě vybrané branchi. Náhled nic nezapisuje.'
-        : 'This view uses only the World Package copy stored in the selected Branch. All reads are non-mutating.'}</p>
+        ? 'Čti současný Run World nebo přesně vybranou uloženou revizi. Datový rok, čas simulace a Saved Revision jsou oddělené.'
+        : 'Read the current Run-owned World or an exact reachable Saved Revision. Reads never write; data year, simulation time and Saved Revision are separate.'}</p>
     </div>
     {branchError&&<p role="alert">{branchError}</p>}
     {time.error&&<p role="alert">{time.error}</p>}
     {time.mode!=='present'&&<p role="alert">{cs
-      ? 'Vybrán historický checkpoint. Aktuální World snapshot se nesmí vydávat za historická data. Přejdi na současný čas.'
-      : 'Historical checkpoint selected. Current World data must not impersonate historical facts. Select the present time.'}</p>}
+      ? 'Historický simulační checkpoint '+(time.viewCheckpointId??'—')+' zatím nemá ověřené propojení na konkrétní Saved Revision World. Žádná dnešní ani jiná uložená data se nenahrazují.'
+      : 'Simulation checkpoint '+(time.viewCheckpointId??'—')+' has no verified mapping to an exact Saved Revision World snapshot. No present or unrelated revision is substituted.'}</p>}
     {!branchLoading&&!branchId&&<p role="alert">{cs?'Vyber platnou branch tohoto Runu.':'Select a valid Branch of this Run.'}</p>}
-    {allowed&&q.isPending&&<p role="status">{cs?'Načítám World snapshot…':'Loading Run World snapshot…'}</p>}
-    {q.error&&<p role="alert">{formatApiError(q.error)}</p>}
+    {allowed&&<div className="section-subtle" aria-label="Run World saved revision selector">
+      <label>{cs?'Zdroj World snapshotu (Saved Revision)':'World snapshot source (Saved Revision)'}
+        <select aria-label="World Saved Revision" value={selectedRevisionId}
+          onChange={e=>changeParam('revision',e.target.value)}>
+          <option value="">{cs?'Současný stav Runu (může obsahovat neuložené změny)':'Current Run state (may include unsaved changes)'}</option>
+          {historyListMatches&&[...historyList.data!.saved_revisions].reverse().map(item=>
+            <option key={item.revision_id} value={item.revision_id}>
+              #{item.sequence} · {item.revision_id} {item.is_shared_revision?'· shared':''}
+            </option>)}
+          {historicalRevision&&(!historyListMatches||!historyList.data!.saved_revisions.some(x=>x.revision_id===selectedRevisionId))&&
+            <option value={selectedRevisionId}>{cs?'Požadovaná revize':'Requested revision'}: {selectedRevisionId}</option>}
+        </select>
+      </label>
+      <p className="status">{cs?'Čas simulace':'Simulation time'}: {cs?'současnost':'present'}
+        {' · '}{cs?'Rok dat':'Data year'}: {year}
+        {' · '}{cs?'Uložená revize':'Saved Revision'}: {historicalRevision?selectedRevisionId:(cs?'živý stav':'live state')}
+      </p>
+      {historyListMatches&&historyList.data!.has_more_older&&<p className="status">{cs
+        ? 'Nabídka obsahuje nejnovějších 200 revizí. Starší dostupnou revizi lze otevřít přímým parametrem revision.'
+        : 'Selector shows the newest 200 revisions. Older reachable revisions can be opened by an exact revision URL parameter.'}</p>}
+      {historyList.isSuccess&&!historyListMatches&&<p role="alert">{cs
+        ? 'Historie revizí nesouhlasí s vybraným Runem, branchí nebo Saved HEAD.'
+        : 'Revision list does not match selected Run, Branch or Saved HEAD.'}</p>}
+    </div>}
+    {allowed&&!historicalRevision&&q.isPending&&<p role="status">{cs?'Načítám současný World snapshot…':'Loading current World snapshot…'}</p>}
+    {allowed&&historicalRevision&&revision.isPending&&<p role="status">{cs?'Načítám vybranou historickou revizi…':'Loading exact Saved Revision…'}</p>}
+    {allowed&&!historicalRevision&&q.error&&<p role="alert">{formatApiError(q.error)}</p>}
+    {allowed&&historicalRevision&&revision.error&&<p role="alert">{cs
+      ? 'Vybraná revize není v historii této branche dostupná: ':'Requested revision is unavailable or unreachable from this Branch: '}{formatApiError(revision.error)}</p>}
+    {savedSource.error&&<p role="alert">{savedSource.error}</p>}
     {projection.error&&<p role="alert">{projection.error}</p>}
-    {allowed&&q.isSuccess&&!world&&!projection.error&&<section className="section-subtle">
+    {allowed&&historicalRevision&&savedSource.source&&!savedSource.source.response&&<p role="alert">{cs
+      ? 'Vybraná Saved Revision neobsahuje uloženou komponentu Run World. Současný World se nepoužije.'
+      : 'The selected Saved Revision has no saved Run World component. Current World is not substituted.'}</p>}
+    {allowed&&!historicalRevision&&q.isSuccess&&!world&&!projection.error&&<section className="section-subtle">
       <h3>{cs?'World zatím není přiřazen':'No World assigned yet'}</h3>
       <p>{cs?'Tato branch neobsahuje uložené země světového balíčku. Nejde o svět s nulovou populací.':'This Branch has no Run-owned World countries yet; this is not a zero-population world.'}</p>
       <Link to="/admin/packages">{cs?'Otevřít balíčky':'Open Packages'} →</Link>
     </section>}
+    {allowed&&historicalRevision&&savedSource.source?.response&&!world&&!projection.error&&<p role="alert">{cs
+      ? 'Tato uložená revize nemá kompletní World Package. Neukazuje se žádná současná náhrada.'
+      : 'This Saved Revision has no complete World Package. No current fallback is displayed.'}</p>}
     {world&&<div>
       <div className="run-world-overview-header">
         <div><strong>{world.worldName}</strong> <code>{world.worldId}</code>
           <p className="status">{cs?'Zdrojový balíček':'Source Package'}: {world.sourceLabel} · v{world.sourceVersion} · {cs?'Ruční Runové country záznamy':'Manual Run country entities'}: {world.manualCountryCount}</p>
-          <p className="status">{cs?'Branch':'Branch'}: {selectedBranch?.display_name??branchId} · {cs?'Otisk Run snapshotu':'Run snapshot fingerprint'}: <code>{world.stateFingerprint.slice(0,14)}…</code></p></div>
+          <p className="status">{cs?'Branch':'Branch'}: {selectedBranch?.display_name??branchId} · {cs?'Otisk Run snapshotu':'Run snapshot fingerprint'}: <code>{world.stateFingerprint.slice(0,14)}…</code></p>
+          {historicalRevision&&<p className="status">Saved Revision: <code>{selectedRevisionId}</code> · {cs?'Původní branch':'Origin Branch'}: <code>{savedSource.source?.revisionBranchId??'—'}</code>{savedSource.source?.isShared?' · shared ancestor':''}</p>}</div>
         <label>{cs?'Rok dat':'Data year'}
           <select aria-label="World data year" value={year} onChange={e=>changeParam('year',e.target.value)}>
             {Array.from({length:96},(_,i)=>1955+i).map(y=><option key={y} value={y}>{y}</option>)}
@@ -177,7 +250,8 @@ export function RunWorldPage():JSX.Element {
         </label>
       </div>
       {countryCode ? (country?<CountryDetail runId={runId} branchId={branchId!}
-          savedHead={selectedBranch?.saved_head_revision_id??null}
+          savedHead={historicalRevision?null:selectedBranch?.saved_head_revision_id??null}
+          historicalRevisionId={historicalRevision?selectedRevisionId:null}
           country={country} world={world} params={params} cs={cs} language={language}
           selectedWorldYear={year}
           history={historyProjection.history} historyError={historyProjection.error}/>

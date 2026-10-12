@@ -12,6 +12,7 @@ on:
       - '.github/workflows/prealpha-saved-player-replay-browser.yml'
       - 'scripts/admin_first_tournament_smoke.py'
       - 'scripts/saved_player_replay_browser_checks.py'
+      - 'scripts/country_records_browser_checks.py'
       - 'src/beta_engine/application/saved_player_match_detail.py'
       - 'src/beta_engine/application/saved_player_match_history.py'
       - 'src/beta_engine/api/routers/admin_run_home.py'
@@ -68,6 +69,7 @@ jobs:
             --port 8013 \
             --saved-replay-only \
             --saved-replay-fork \
+            --country-records \
             --base-url http://127.0.0.1:5173 \
             --chromium "$CHROME_BIN"
       - name: Preserve browser evidence

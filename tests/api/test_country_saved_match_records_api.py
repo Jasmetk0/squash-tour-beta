@@ -49,3 +49,39 @@ def test_exact_saved_match_records_empty_reachability_and_restart(tmp_path):
         assert _request("GET",url(server,run,branch,rev,extra="&outcome=draw"))[0]==422
     with ApiServer(database_url=db) as reopened:
         assert _request("GET",url(reopened,run,branch,rev))==(200,empty)
+
+
+def test_country_match_history_distinguishes_real_saved_calendar_from_pre_save_history(tmp_path):
+    """Old Saved Revision remains frozen while newly saved Calendar has no results."""
+    from itertools import count
+    from beta_engine.application.run_working_draft_service import RunWorkingDraftService
+    from beta_engine.infrastructure.db.run_package_state import put_run_package_state
+    from tests.application.test_viewer_tournament_history_read_model import _state
+
+    db=f"sqlite:///{tmp_path / 'match-records-history.sqlite'}"
+    with ApiServer(database_url=db) as server:
+        run,branch,first_rev=_create_run(server,display_name="Country match records actual history")
+        repository=server.app.state.runtime.repository
+        first=_request("GET",url(server,run,branch,first_rev))
+        assert first[0]==200 and first[1]["calendar_status"]=="empty"
+        with repository._session_factory.begin() as session:
+            put_run_package_state(session,_state(run_id=run,branch_id=branch))
+        # The working Run Calendar is NOT an immutable tournament publication.
+        assert _request("GET",url(server,run,branch,first_rev))==first
+        ids=count(1)
+        service=RunWorkingDraftService(repository,lambda kind:f"{kind}-country-{next(ids)}")
+        draft=service.get_viewer_branch_draft(run_id=run,branch_id=branch)
+        service.save(run_id=run,branch_id=branch,expected_draft_version=draft.draft_version)
+        current_branch=_request("GET",f"{server.base_url}/run-branches/{branch}")[1]
+        saved_rev=current_branch["saved_head_revision_id"]
+        assert saved_rev!=first_rev
+        status,current=_request("GET",url(server,run,branch,saved_rev))
+        assert status==200,current
+        assert current["calendar_status"]=="ready"
+        assert current["published_event_count"]==0 and current["total_played_matches"]==0
+        assert current["country_match_count"]==0 and current["matches"]==[]
+        assert _request("GET",url(server,run,branch,first_rev))==first
+        assert _request("GET",f"{server.base_url}/run-branches/{branch}")[1]["saved_head_revision_id"]==saved_rev
+    with ApiServer(database_url=db) as reopened:
+        assert _request("GET",url(reopened,run,branch,first_rev))==first
+        assert _request("GET",url(reopened,run,branch,saved_rev))==(200,current)

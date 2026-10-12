@@ -25,12 +25,17 @@ const newPlayers=[...currentPlayers,
     age_years_at_season_start:24,current_ability:58,potential_ability:75,
     potential_tier:'B',career_stage:'developing',attributes:{technique:52}}
 ]
-const current={
-  run_id:'run-one',branch_id:'branch-one',world_package_id:'fifa_earth',
-  adoption_request_fingerprint:SHA('a'),bootstrap_seed:802,
+const current: RunInitialWorldState = {
+  run_id:'run-one',branch_id:'branch-one',season:'2000/2001',
+  source_kind:'run_world_generated_pool.v1',world_package_id:'fifa_earth',
+  bootstrap_seed:802, adopted_by_command_id:'initial-adopt',
+  adoption_request_fingerprint:SHA('a'),
+  world_country_content_fingerprint:SHA('c'),
+  world_generation_content_fingerprint:SHA('d'),
+  run_world_pool_preview_fingerprint:SHA('f'),
   players:currentPlayers,policies:[{policy_id:'msa-official-2000-01',best_n:15}],
   selected_appends:[]
-} as RunInitialWorldState
+}
 
 const props={
   runId:'run-one',branchId:'branch-one',head:'head-1',draftVersion:3,

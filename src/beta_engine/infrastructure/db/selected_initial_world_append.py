@@ -15,7 +15,8 @@ from beta_engine.infrastructure.db.player_health_state import get_health, bootst
 from beta_engine.infrastructure.db.models import (
     InitialWorldStateModel, PlayerLifecycleWeekStateModel, PlayerSportingWeekStateModel,
     PlayerHealthWeekStateModel, OfficialRankingCandidateModel, PublishedOfficialRankingModel,
-    AuthoritativeWorldStateModel, CompletedEventModel,
+    AuthoritativeWorldStateModel, AuthoritativeWorldEventModel,
+    AuthoritativeWeekTransitionReceiptModel,
 )
 
 
@@ -48,7 +49,8 @@ def replace_pristine_initial_world_for_selected_append(
         raise ValueError("Selected append cannot mutate any existing player")
 
     for model in (OfficialRankingCandidateModel, PublishedOfficialRankingModel,
-                  AuthoritativeWorldStateModel, CompletedEventModel):
+                  AuthoritativeWorldStateModel, AuthoritativeWorldEventModel,
+                  AuthoritativeWeekTransitionReceiptModel):
         if _has_scoped_row(session, model, run_id, branch_id):
             raise ValueError("Selected append is closed after ranking or sporting activity")
     for model in (PlayerLifecycleWeekStateModel, PlayerSportingWeekStateModel,

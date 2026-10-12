@@ -91,7 +91,7 @@ function CountryDetail({runId,country,world,params,cs,language}:{
       <div className="table-responsive"><table><thead><tr>
         <th>{cs?'Atribut':'Attribute'}</th><th>{cs?'Hodnota':'Value'}</th><th>{cs?'Zdroj':'Source'}</th>
       </tr></thead><tbody>{worldRatingKeys.map(key=><tr key={key}>
-        <td>{key.replaceAll('_',' ')}</td><td>{country.ratings[key].value??'—'}</td>
+        <td>{key.replace(/_/g,' ')}</td><td>{country.ratings[key].value??'—'}</td>
         <td>{country.ratings[key].provenance}{country.ratings[key].sourceYear==null?'':' · '+country.ratings[key].sourceYear}</td>
       </tr>)}</tbody></table></div>
     </section>}

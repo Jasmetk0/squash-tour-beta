@@ -10,11 +10,12 @@ describe('approved pre-alpha navigation', () => {
     const items = runAdminNavFor('run-a')
     expect(items.map(item => item.label)).toEqual(['Home', 'World', 'Players', 'Tour', 'Rankings & Analytics', 'Simulation', 'History & Branches'])
     expect(items.map(item => item.to)).toEqual([
-      '/admin/runs/run-a', '/admin/runs/run-a/nations', '/admin/runs/run-a/players',
+      '/admin/runs/run-a', '/admin/runs/run-a/world', '/admin/runs/run-a/players',
       '/admin/runs/run-a/calendar', '/admin/runs/run-a/snapshots/ranking',
       '/admin/runs/run-a/simulate', '/admin/runs/run-a/branches'
     ])
     expect(runAdminBottomNavFor('run-a')[0].to).toBe('/admin/runs/run-a/manage')
+    expect(items[1].children?.[0]).toEqual({to:'/admin/runs/run-a/world',label:'World overview'})
     expect(items.find(item => item.label === 'Tour')?.children?.some(item => item.to.endsWith('/finals'))).toBe(true)
   })
 })

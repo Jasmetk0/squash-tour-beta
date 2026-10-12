@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { renderWithRoute } from '../test/testUtils'
 import { RunWorldPage } from './RunWorldPage'
-import { worldFixture } from './runWorldReadModel.test'
+import { worldFixture } from './runWorldFixture'
 
 const api=vi.hoisted(()=>({getRunPackageState:vi.fn()}))
 const context=vi.hoisted(()=>({

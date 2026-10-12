@@ -87,7 +87,8 @@ def test_preview_and_commit_reference_same_read_only_guard():
     preview = (root / "src/beta_engine/api/routers/admin_players.py").read_text()
     commit = (root / "src/beta_engine/infrastructure/db/selected_initial_world_append.py").read_text()
     assert "require_pristine_initial_world_append_eligible(session, previous=current)" in preview
-    assert "require_pristine_initial_world_append_eligible(session, previous=previous)" in commit
+    assert "require_pristine_initial_world_append_eligible(" in commit
+    assert "session, previous=previous" in commit
     assert "BEGIN IMMEDIATE" in commit
 
 

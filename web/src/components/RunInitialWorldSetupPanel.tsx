@@ -23,6 +23,7 @@ import { formatApiError, isApiNotFound } from '../utils/apiErrors'
 import { SectionCard } from './RunScopedUi'
 import { GeneratedPlayerReviewInspector } from './GeneratedPlayerReviewInspector'
 import { GeneratedPlayerFieldLockEditor } from './GeneratedPlayerFieldLockEditor'
+import { RunInitialWorldSelectedAppendPanel } from './RunInitialWorldSelectedAppendPanel'
 import { prepareGeneratedBulkPlan, type GeneratedBulkPlan } from './generatedBulkPreview'
 
 type ReviewedWorld = {
@@ -723,6 +724,18 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
       ? 'Závazné podmínky země, regionu a věku platí pro všechny hráče dávky. Prázdná pole zachovávají automatické rozdělení. Přesné kvóty zemí a automatické doplnění jsou podporované; překrývající se skupiny zatím ne.'
       : 'Hard country, region and age conditions apply to every player. Blank conditions preserve automatic allocation. Exact country quotas and the non-quota remainder are supported; overlapping groups are not yet supported.'}</p>
     {existing && <p role="status">InitialWorld exists: {existing.players.length} players from {existing.world_package_id}; seed {existing.bootstrap_seed}. Existing players cannot be silently regenerated or overwritten.</p>}
+    {existing && savePreflight && draft && snapshotFingerprint && <RunInitialWorldSelectedAppendPanel
+      key={runId+':'+branchId+':'+head}
+      runId={runId} branchId={branchId} head={head}
+      draftVersion={draft.draft_version}
+      packageFingerprint={snapshotFingerprint}
+      currentFingerprint={savePreflight.initial_world_fingerprint}
+      current={existing}
+      enabled={editable && draft.status === 'clean' &&
+        draft.base_saved_revision_id === head &&
+        savePreflight.has_unsaved_changes === false &&
+        !pendingSave}
+    />}
     {unexpectedExistingError && <p role="alert" className="error">Cannot verify whether this Run already has InitialWorld: {formatApiError(existingQuery.error)}</p>}
     {packageQuery.isError && <p role="alert" className="error">Run World state unavailable: {formatApiError(packageQuery.error)}</p>}
     {draftQuery.isError && <p role="alert" className="error">Working Draft unavailable: {formatApiError(draftQuery.error)}</p>}

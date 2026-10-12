@@ -38,13 +38,15 @@ def setup(monkeypatch, events, result_matches):
     monkeypatch.setattr(model,"resolve_viewer_tournament_result",result)
 
 
-def read(*, offset=0, limit=25, packages=None, initial=None, ranking=None):
+def read(*, offset=0, limit=25, packages=None, initial=None, ranking=None,
+         season_index=None, result_kind="all", outcome="all"):
     return model.resolve_country_saved_match_records(
         run_id="run", selected_branch_id="fork", revision_branch_id="branch",
         saved_revision_id="old-revision", country_code="CZE",
         packages=packages if packages is not None else RunPackageState(run_id="run",branch_id="branch"),
         ranking=ranking, initial_world=initial if initial is not None else _world(),
         prospect_source=None, offset=offset, limit=limit,
+        season_index=season_index, result_kind=result_kind, outcome=outcome,
     )
 
 
@@ -110,3 +112,38 @@ def test_empty_source_paging_and_foreign_branch_guard():
                 entries=(),sources=(),tournament_sources=()),
             initial_world=None,prospect_source=None,limit=0,
         )
+
+
+def test_filters_apply_to_full_saved_set_before_pagination(monkeypatch):
+    setup(monkeypatch, [event("away", "EGY"), event("home", "CZE")], {
+        "away": (
+            match("a1", "P1", "P2"),
+            match("a2", "P2", "P1", "W/O"),
+        ),
+        "home": (match("h1", "P2", "P1"),),
+    })
+    all = read(limit=1)
+    assert all.filtered_match_count == 3
+    assert all.country_match_count == 3
+    assert all.available_seasons == (0,)
+    assert all.has_more
+    # "Played loss" selects the most recent match; global totals stay unchanged.
+    played_loss = read(result_kind="played", outcome="loss", limit=1)
+    assert played_loss.filtered_match_count == 1
+    assert [item.match_id for item in played_loss.matches] == ["h1"]
+    assert (played_loss.country_played_wins, played_loss.country_played_losses) == (1, 1)
+    assert played_loss.country_match_count == 3
+    walkover_loss = read(result_kind="walkover", outcome="loss", limit=1)
+    assert walkover_loss.filtered_match_count == 1
+    assert walkover_loss.matches[0].match_id == "a2"
+    win = read(result_kind="played", outcome="win", limit=1)
+    assert win.filtered_match_count == 1 and win.matches[0].match_id == "a1"
+    missing_season = read(season_index=1)
+    assert missing_season.filtered_match_count == 0
+    assert missing_season.available_seasons == (0,)
+    assert missing_season.country_match_count == 3
+    assert missing_season.matches == () and not missing_season.has_more
+    with pytest.raises(ValueError, match="season filter"):
+        read(season_index=50)
+    with pytest.raises(ValueError, match="result filter"):
+        read(result_kind="bye")

@@ -27,11 +27,25 @@ def test_exact_saved_match_records_empty_reachability_and_restart(tmp_path):
         assert empty["country_played_wins"]==empty["country_played_losses"]==0
         assert empty["country_walkover_wins"]==empty["country_walkover_losses"]==0
         assert empty["matches"]==[] and empty["has_more"] is False
+        assert empty["available_seasons"]==[]
+        assert empty["season_index"] is None
+        assert empty["result_kind"]=="all" and empty["outcome"]=="all"
+        assert empty["filtered_match_count"]==0
+        status,filtered=_request("GET",url(server,run,branch,rev,
+            extra="&season_index=2&result_kind=walkover&outcome=loss&offset=5"))
+        assert status==200,filtered
+        assert filtered["season_index"]==2
+        assert filtered["result_kind"]=="walkover" and filtered["outcome"]=="loss"
+        assert filtered["offset"]==5 and filtered["filtered_match_count"]==0
+        assert empty["country_match_count"]==filtered["country_match_count"]
         assert _request("GET",url(server,run,branch,"wrong-id"))[0]==404
         assert _request("GET",url(server,run,branch,foreign_rev))[0]==404
         assert _request("GET",url(server,foreign,fb,rev))[0]==404
         assert _request("GET",url(server,run,fb,rev))[0]==404
         assert _request("GET",url(server,run,branch,rev,"cze"))[0]==422
         assert _request("GET",url(server,run,branch,rev,extra="&limit=51"))[0]==422
+        assert _request("GET",url(server,run,branch,rev,extra="&season_index=50"))[0]==422
+        assert _request("GET",url(server,run,branch,rev,extra="&result_kind=bye"))[0]==422
+        assert _request("GET",url(server,run,branch,rev,extra="&outcome=draw"))[0]==422
     with ApiServer(database_url=db) as reopened:
         assert _request("GET",url(reopened,run,branch,rev))==(200,empty)

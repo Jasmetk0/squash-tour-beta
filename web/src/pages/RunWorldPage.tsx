@@ -13,6 +13,7 @@ import { projectRunWorld, worldRatingKeys } from './runWorldReadModel'
 import { projectRunWorldCountryHistory } from './runWorldCountryHistory'
 import type { RunWorldCountryHistory } from './runWorldCountryHistory'
 import { RunWorldCountryHistoryPanel } from './RunWorldCountryHistoryPanel'
+import { RunWorldCountrySavedPlayers } from './RunWorldCountrySavedPlayers'
 import type { RunWorldCountry, RunWorldOverview, WorldPopulation } from './runWorldReadModel'
 
 const startYear=2000
@@ -39,8 +40,8 @@ function countryUrl(runId:string,code:string,params:URLSearchParams):string {
 function TabLink({active,to,label}:{active:boolean;to:string;label:string}):JSX.Element {
   return <Link aria-current={active?'page':undefined} to={to}>{label}</Link>
 }
-function CountryDetail({runId,country,world,params,cs,language,history,historyError}:{
-  runId:string;country:RunWorldCountry;world:RunWorldOverview;
+function CountryDetail({runId,branchId,savedHead,country,world,params,cs,language,history,historyError}:{
+  runId:string;branchId:string;savedHead:string|null;country:RunWorldCountry;world:RunWorldOverview;
   params:URLSearchParams;cs:boolean;language:string
   history:RunWorldCountryHistory|null;historyError:string|null
 }):JSX.Element {
@@ -94,11 +95,12 @@ function CountryDetail({runId,country,world,params,cs,language,history,historyEr
       />}
     {(active==='population'||active==='ratings')&&!history&&
       <p role="alert">{historyError??(cs?'Historické podklady této země nejsou dostupné.':'Country history source is unavailable.')}</p>}
-    {active==='players'&&<section className="section-subtle">
-      <h4>{cs?'Hráči a talenty':'Players & Talent'}</h4>
-      <p>{cs?'V tomto řezu není připojený časově věrný seznam hráčů země; očekávání není skutečný intake.':'A historically scoped country roster is not yet connected here; expected intake is not an actual roster.'}</p>
-      <Link to={'/admin/runs/'+encodeURIComponent(runId)+'/players'}>{cs?'Otevřít hráče Runu':'Open Run players'} →</Link>
-    </section>}
+    {active==='players'&&<RunWorldCountrySavedPlayers
+      key={runId+':'+branchId+':'+(savedHead??'none')+':'+country.code}
+      runId={runId} branchId={branchId} savedHead={savedHead}
+      countryCode={country.code} selectedWorldYear={Number(params.get('year')??startYear)}
+      language={language==='cs'?'cs':'en'}
+    />}
     {(active==='records'||active==='tournaments')&&<section className="section-subtle">
       <h4>{labels[available.indexOf(active)]}</h4>
       <p role="status">{cs?'Pro tento Run, branch a rok ještě není připojený autoritativní historický read-model. Žádné výsledky ani rekordy se nedopočítávají z aktuálních dat.':'No authoritative historical read model is connected for this Run, Branch and year. Results and records are never invented from current data.'}</p>
@@ -174,7 +176,9 @@ export function RunWorldPage():JSX.Element {
           </select>
         </label>
       </div>
-      {countryCode ? (country?<CountryDetail runId={runId} country={country} world={world} params={params} cs={cs} language={language}
+      {countryCode ? (country?<CountryDetail runId={runId} branchId={branchId!}
+          savedHead={selectedBranch?.saved_head_revision_id??null}
+          country={country} world={world} params={params} cs={cs} language={language}
           history={historyProjection.history} historyError={historyProjection.error}/>
         :<p role="alert">{cs?'Země v tomto Run World neexistuje.':'Country does not exist in this Run World.'} <Link to={'/admin/runs/'+encodeURIComponent(runId)+'/world'}>{cs?'Zpět':'Back'}</Link></p>)
         :<>

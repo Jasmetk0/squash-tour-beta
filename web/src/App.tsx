@@ -75,6 +75,7 @@ import { LegacyRunsPage } from './pages/LegacyRunsPage'
 import { PlannedEventDetailPage } from './pages/PlannedEventDetailPage'
 import { PlayersPage } from './pages/PlayersPage'
 import { RunPlayerGeneratorPage } from './pages/RunPlayerGeneratorPage'
+import { RunWorldPage } from './pages/RunWorldPage'
 import { LegacyRunPlayersExplorerPage } from './pages/LegacyRunPlayersExplorerPage'
 import { PlayerCareerPage } from './pages/PlayerCareerPage'
 import { SavedPlayerIdentityPage } from './pages/SavedPlayerIdentityPage'
@@ -186,6 +187,8 @@ export default function App(): JSX.Element {
         <Route path="admin/runs/:runId/weeks/:week" element={<WeekDetailPage />} />
         <Route path="admin/runs/:runId/calendar/:eventId" element={<PlannedEventDetailPage />} />
         <Route path="admin/runs/:runId/activity" element={<ActivityPage />} />
+        <Route path="admin/runs/:runId/world" element={<RunWorldPage />} />
+        <Route path="admin/runs/:runId/world/countries/:countryCode" element={<RunWorldPage />} />
         <Route path="admin/runs/:runId/players" element={<PlayersPage />} />
         <Route path="admin/runs/:runId/players/generate" element={<RunPlayerGeneratorPage />} />
         <Route path="admin/runs/:runId/players/legacy" element={<LegacyRunPlayersExplorerPage />} />

@@ -18,8 +18,9 @@ export function runAdminNavFor(runId: string): AdminNavItem[] {
   const base = '/admin/runs/' + encodeURIComponent(runId)
   return [
     { to: base, label: 'Home' },
-    { to: base + '/nations', label: 'World', children: [
-      { to: base + '/nations', label: 'Countries' },
+    { to: base + '/world', label: 'World', children: [
+      { to: base + '/world', label: 'World overview' },
+      { to: base + '/nations', label: 'Country strength diagnostics' },
       { to: base + '/world-generation', label: 'World Generation' }
     ] },
     { to: base + '/players', label: 'Players', children: [

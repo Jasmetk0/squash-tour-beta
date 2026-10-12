@@ -162,16 +162,32 @@ def test_preflight_success_then_ranking_commit_rechecks_atomically(
     )
     preview = admin_players.preview_selected_initial_world_append(**args)
     assert preview["fingerprint"] == appended.fingerprint
-    with repo._session_factory.begin() as session:
-        session.add(PublishedOfficialRankingModel(
-            run_id=run_id, branch_id=branch_id, week_ordinal=0,
-            snapshot_fingerprint=SHA, payload_json="{}",
-        ))
-    baseline = _database_digest(tmp_path / "selected-append.sqlite")
+    # Inject ranking publication only AFTER commit's second preflight has
+    # succeeded, immediately before the repository's BEGIN IMMEDIATE.
+    # The repository must catch the race again inside that transaction.
+    original_commit = repo.append_selected_initial_world
+    baseline_after_publication = []
+
+    def concurrent_publication_then_commit(**kwargs):
+        with repo._session_factory.begin() as session:
+            session.add(PublishedOfficialRankingModel(
+                run_id=run_id, branch_id=branch_id, week_ordinal=0,
+                snapshot_fingerprint=SHA, payload_json="{}",
+            ))
+        baseline_after_publication.append(
+            _database_digest(tmp_path / "selected-append.sqlite")
+        )
+        return original_commit(**kwargs)
+
+    monkeypatch.setattr(
+        repo, "append_selected_initial_world", concurrent_publication_then_commit
+    )
     with pytest.raises(HTTPException) as conflict:
         admin_players.commit_selected_initial_world_append(
             **args, expected=preview["fingerprint"]
         )
+    assert len(baseline_after_publication) == 1
+    baseline = baseline_after_publication[0]
     assert conflict.value.status_code == 409
     assert _database_digest(tmp_path / "selected-append.sqlite") == baseline
     assert repo.get_initial_world(run_id=run_id, branch_id=branch_id) == initial

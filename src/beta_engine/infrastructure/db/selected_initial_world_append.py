@@ -41,7 +41,7 @@ def _has_scoped_row(session: Session, model: type, run_id: str, branch_id: str, 
 
 def require_pristine_initial_world_append_eligible(
     session: Session, *, previous: InitialWorldState
-) -> None:
+) -> tuple:
     """Read-only authoritative eligibility check, shared by preview and commit.
 
     The committing caller must run this again inside BEGIN IMMEDIATE.
@@ -103,6 +103,7 @@ def require_pristine_initial_world_append_eligible(
         health.fingerprint != expected_health.fingerprint
     ):
         raise ValueError("Week-1 player evidence has non-bootstrap edits; append is closed")
+    return lifecycle, sporting, health
 
 
 
@@ -126,7 +127,10 @@ def replace_pristine_initial_world_for_selected_append(
     if not incumbent.keys() <= updated.keys() or any(updated[k] != v for k,v in incumbent.items()):
         raise ValueError("Selected append cannot mutate any existing player")
 
-    require_pristine_initial_world_append_eligible(session, previous=previous)
+    lifecycle, sporting, health = require_pristine_initial_world_append_eligible(
+        session, previous=previous
+    )
+    week = RankingWeek(season_index=0, week=1)
 
     # All of these mutations occur inside the same SQLite BEGIN IMMEDIATE.
     session.delete(session.get(PlayerLifecycleWeekStateModel,(run_id,branch_id,week.ordinal)))

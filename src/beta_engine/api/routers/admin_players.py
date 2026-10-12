@@ -622,6 +622,187 @@ def read_run_generation_proposal(
         ) from exc
 
 
+
+def _read_historical_generation_proposal(
+    *, runtime: ApiRuntime, run_id: str, branch_id: str, proposal_id: str,
+) -> tuple[dict, RunWorldInitialWorldAdoptionRequest, InitialWorldState]:
+    """Verify the stored immutable bytes without consulting the current World.
+
+    This historical read must not regenerate, alter a proposal, or promote it
+    to an Adopt-able review. Run/Branch ownership is still mandatory.
+    """
+    repository = runtime.repository
+    run = repository.get_run_container(run_id=run_id)
+    branch = repository.get_run_branch(branch_id=branch_id)
+    if (run is None or run.storage_kind != "custom_local" or
+        branch is None or branch.run_id != run_id):
+        raise ValueError("Historical proposal Run/Branch ownership is invalid")
+    storage, sessions = _generation_proposal_storage(runtime)
+    data = storage.get_proposal(
+        sessions, run_id=run_id, branch_id=branch_id, proposal_id=proposal_id,
+    )
+    if data is None:
+        raise KeyError("Saved generation proposal not found")
+    import json
+    request = RunWorldInitialWorldAdoptionRequest.model_validate(data["request"])
+    state = InitialWorldState.model_validate_json(
+        json.dumps(data["preview"]["state"], ensure_ascii=False)
+    )
+    if (data["schema_version"] != "run_generation_proposal.v1" or
+        data["run_id"] != run_id or data["branch_id"] != branch_id or
+        data["proposal_id"] != proposal_id or
+        data["preview"]["preview_only"] is not True or
+        state.run_id != run_id or state.branch_id != branch_id or
+        state.fingerprint != data["preview_fingerprint"] or
+        data["preview"]["fingerprint"] != data["preview_fingerprint"] or
+        state.adopted_by_command_id != request.command_id or
+        state.adoption_request_fingerprint != request.fingerprint_for_scope(
+            run_id=run_id, branch_id=branch_id,
+        ) or state.world_package_id != request.generation.world_package_id or
+        state.bootstrap_seed != request.generation.seed or
+        len(state.players) != request.generation.target_pool_size):
+        raise ValueError("Historical proposal source or preview provenance is invalid")
+    return data, request, state
+
+
+@router.get(
+    "/runs/{run_id}/branches/{branch_id}/initial-world/generation-proposals/{proposal_id}/inspection"
+)
+def inspect_run_generation_proposal(
+    run_id: str, branch_id: str, proposal_id: str,
+    package_service: RunPackageService = Depends(get_run_package_service),
+    runtime: ApiRuntime = Depends(get_runtime),
+):
+    """Read-only historical snapshot and present-day drift flags, no RNG calls."""
+    try:
+        data, _, _ = _read_historical_generation_proposal(
+            runtime=runtime, run_id=run_id, branch_id=branch_id,
+            proposal_id=proposal_id,
+        )
+        repository = runtime.repository
+        branch = repository.get_run_branch(branch_id=branch_id)
+        revisions = repository.get_branch_revision_state(branch_id=branch_id)
+        current = package_service.get(run_id=run_id, branch_id=branch_id)
+        current_head = branch.saved_head_revision_id
+        draft = revisions.working_draft
+        current_fingerprint = current.fingerprint if current is not None else None
+        head_match = (
+            current_head == data["saved_revision_id"] and
+            revisions.saved_revision.revision_id == current_head
+        )
+        draft_match = (
+            draft.draft_version == data["draft_version"] and
+            draft.base_revision_id == current_head and draft.status == "clean"
+        )
+        package_match = current_fingerprint == data["package_fingerprint"]
+        initial_world_exists = repository.get_initial_world(
+            run_id=run_id, branch_id=branch_id,
+        ) is not None
+        return {
+            "schema_version": "run_generation_proposal_inspection.v1",
+            "historical_only": True,
+            "proposal": data,
+            "context": {
+                "saved_revision_id": current_head,
+                "draft_version": draft.draft_version,
+                "draft_status": draft.status,
+                "package_fingerprint": current_fingerprint,
+                "head_matches": head_match,
+                "draft_matches": draft_match,
+                "package_matches": package_match,
+                "initial_world_exists": initial_world_exists,
+                "revalidation_required": (
+                    not head_match or not draft_match or not package_match
+                    or initial_world_exists
+                ),
+            },
+        }
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except (ValueError, TypeError, AttributeError) as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={"code": "generation_proposal_inspection_conflict", "message": str(exc)},
+        ) from exc
+
+
+class RunGenerationProposalRevalidation(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True, frozen=True)
+    expected_head: str = Field(min_length=1, max_length=128)
+    expected_draft_version: int = Field(ge=0)
+    expected_package_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+
+
+@router.post(
+    "/runs/{run_id}/branches/{branch_id}/initial-world/generation-proposals/{proposal_id}/revalidate"
+)
+def revalidate_run_generation_proposal(
+    run_id: str, branch_id: str, proposal_id: str,
+    payload: RunGenerationProposalRevalidation,
+    package_service: RunPackageService = Depends(get_run_package_service),
+    preview_service: RunWorldInitialWorldService = Depends(get_run_world_initial_world_service),
+    runtime: ApiRuntime = Depends(get_runtime),
+):
+    """Explicit fresh preview; NEVER rewrites the stored candidate or adopts."""
+    try:
+        _assert_generator_proposal_owner(runtime, run_id, branch_id)
+        data, request, old = _read_historical_generation_proposal(
+            runtime=runtime, run_id=run_id, branch_id=branch_id,
+            proposal_id=proposal_id,
+        )
+        _assert_reviewed_generation_context(
+            runtime=runtime, package_service=package_service,
+            run_id=run_id, branch_id=branch_id,
+            expected_head=payload.expected_head,
+            expected_draft_version=payload.expected_draft_version,
+            expected_package_fingerprint=payload.expected_package_fingerprint,
+        )
+        if runtime.repository.get_initial_world(run_id=run_id, branch_id=branch_id):
+            raise ValueError("Existing InitialWorld blocks proposal revalidation")
+        refreshed = preview_service.preview(
+            run_id=run_id, branch_id=branch_id, request=request,
+        )
+        old_players = {player.player_id: player for player in old.players}
+        new_players = {player.player_id: player for player in refreshed.players}
+        common = old_players.keys() & new_players.keys()
+        changed = sum(
+            old_players[pid].model_dump(mode="json") !=
+            new_players[pid].model_dump(mode="json") for pid in common
+        )
+        return {
+            "schema_version": "run_generation_proposal_revalidation.v1",
+            "preview_only": True,
+            "proposal_id": proposal_id,
+            "original_preview_fingerprint": data["preview_fingerprint"],
+            "current_context": {
+                "saved_revision_id": payload.expected_head,
+                "draft_version": payload.expected_draft_version,
+                "package_fingerprint": payload.expected_package_fingerprint,
+            },
+            "request": request.model_dump(mode="json"),
+            "preview": {
+                "preview_only": True,
+                "state": refreshed.model_dump(mode="json"),
+                "fingerprint": refreshed.fingerprint,
+            },
+            "comparison": {
+                "old_count": len(old_players),
+                "new_count": len(new_players),
+                "added_identities": len(new_players.keys() - old_players.keys()),
+                "removed_identities": len(old_players.keys() - new_players.keys()),
+                "changed_profiles": changed,
+                "unchanged_profiles": len(common) - changed,
+            },
+        }
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except (ValueError, TypeError, AttributeError) as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={"code": "generation_proposal_revalidation_conflict", "message": str(exc)},
+        ) from exc
+
+
 @router.delete("/runs/{run_id}/branches/{branch_id}/initial-world/generation-proposals/{proposal_id}",
                status_code=204)
 def delete_run_generation_proposal(

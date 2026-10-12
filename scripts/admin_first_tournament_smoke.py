@@ -189,12 +189,12 @@ def setup_run(page, base_url: str, artifacts: Path) -> str:
     click("Preview generated players")
     inspector = page.locator(".generated-review-inspector")
     expect(inspector.get_by_role("heading", name="Entire batch overview")).to_be_visible()
-    expect(inspector.get_by_role("status")).to_contain_text("Showing 64 / 64")
+    expect(inspector.get_by_role("status").filter(has_text="Showing ")).to_contain_text("Showing 64 / 64")
     # UI review filters must not affect the 64 players submitted to confirmed Save.
     inspector.get_by_label("Filter generated player country").select_option(index=1)
-    expect(inspector.get_by_role("status")).to_contain_text("Display filters never change")
+    expect(inspector.get_by_role("status").filter(has_text="Showing ")).to_contain_text("Display filters never change")
     inspector.get_by_role("button", name="Clear display filters").click()
-    expect(inspector.get_by_role("status")).to_contain_text("Showing 64 / 64")
+    expect(inspector.get_by_role("status").filter(has_text="Showing ")).to_contain_text("Showing 64 / 64")
     # Edit one authentic source attribute through the player side panel.
     # Apply performs a fresh backend preview, not a Run/DB write.
     first_player_button = inspector.locator('button[aria-label^="Edit generated player "]').first
@@ -212,12 +212,12 @@ def setup_run(page, base_url: str, artifacts: Path) -> str:
     editor = page.get_by_role("region", name="Generated player field editor")
     expect(editor.get_by_role("spinbutton", name="Preview field attributes.technique")).to_have_value(str(changed))
     editor.get_by_role("button", name="Close").click()
-    expect(inspector.get_by_role("status")).to_contain_text("Showing 64 / 64")
+    expect(inspector.get_by_role("status").filter(has_text="Showing ")).to_contain_text("Showing 64 / 64")
     # Keep the manually edited player, regenerate 63 others on production API.
     # Field locks from preview are session-only and not permanent career locks.
     kept_row = inspector.locator("tbody tr").first
     kept_player_text = kept_row.locator("td").nth(1).inner_text()
-    kept_player_id = kept_row.locator('input[type="checkbox"]').get_attribute(
+    kept_player_id = kept_row.locator('input[aria-label^="Keep "]').get_attribute(
         "aria-label"
     ).removeprefix("Keep ")
     # Read the player-name button rather than the whole table cell, which
@@ -228,16 +228,16 @@ def setup_run(page, base_url: str, artifacts: Path) -> str:
     assert kept_display_name.endswith(
         f" {int(kept_player_id.rsplit('-', 1)[-1])}"
     ), "Generated display name did not follow country + serial naming"
-    kept_row.locator('input[type="checkbox"]').check()
+    kept_row.locator('input[aria-label^="Keep "]').check()
     expect(page.get_by_text("Kept: 1 / 64", exact=False)).to_be_visible()
     page.get_by_label("Session Keep regeneration seed").fill("4202")
     click("Regenerate remaining – new preview")
     expect(page.get_by_text("Verified session Keep regenerations: 1", exact=False)).to_be_visible()
-    expect(inspector.get_by_role("status")).to_contain_text("Showing 64 / 64")
+    expect(inspector.get_by_role("status").filter(has_text="Showing ")).to_contain_text("Showing 64 / 64")
     assert kept_player_text in inspector.inner_text(), "First Keep source player was not preserved"
     # Grow the Keep selection and reroll once more from the authoritative
     # *previous* reviewed preview. Both identities must survive unchanged.
-    additional_checkbox = inspector.locator('input[type="checkbox"]:not(:checked)').first
+    additional_checkbox = inspector.locator('input[aria-label^="Keep "]:not(:checked)').first
     additional_id = additional_checkbox.get_attribute("aria-label").removeprefix("Keep ")
     additional_text = additional_checkbox.locator("xpath=ancestor::tr").inner_text()
     additional_checkbox.check()
@@ -259,7 +259,7 @@ def setup_run(page, base_url: str, artifacts: Path) -> str:
     click("Open saved proposal")
     expect(page.get_by_text("Exact saved review restored from SQLite", exact=False)).to_be_visible()
     expect(page.get_by_text("Verified session Keep regenerations: 2", exact=False)).to_be_visible()
-    expect(inspector.get_by_role("status")).to_contain_text("Showing 64 / 64")
+    expect(inspector.get_by_role("status").filter(has_text="Showing ")).to_contain_text("Showing 64 / 64")
     assert kept_player_text in inspector.inner_text(), "Restored saved proposal lost Keep identity"
     # Real browser + production Python + SQLite: modify an inherited manual
     # value after two Keep passes, then restore its genuinely sampled value.

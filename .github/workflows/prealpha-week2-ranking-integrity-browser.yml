@@ -1,0 +1,72 @@
+name: Pre-alpha Week 2 Ranking Integrity Browser
+
+# Focused production browser release evidence, not every PR's Fast CI.
+concurrency:
+  group: ${{ github.workflow }}-pr-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/prealpha-week2-ranking-integrity-browser.yml'
+      - 'scripts/admin_week2_integrity_browser.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  week2-integrity:
+    name: 64-player Week 1 ranking to Week 2, SQLite integrity and restart
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: pyproject.toml
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: Install engine and browser driver
+        run: python -m pip install -e . playwright
+      - name: Install frontend
+        run: npm --prefix web ci
+      - name: Prepare Chromium
+        run: |
+          if [ -x /usr/bin/google-chrome ]; then
+            echo "CHROME_BIN=/usr/bin/google-chrome" >> "$GITHUB_ENV"
+          else
+            python -m playwright install --with-deps chromium
+            echo "CHROME_BIN=$(python -c 'from playwright.sync_api import sync_playwright; p=sync_playwright().start(); print(p.chromium.executable_path); p.stop()')" >> "$GITHUB_ENV"
+          fi
+      - name: Start Vite against isolated production API
+        run: |
+          VITE_API_BASE_URL=http://127.0.0.1:8022 npm --prefix web run dev -- --host 127.0.0.1 --port 5173 --strictPort > "$RUNNER_TEMP/week2-integrity-vite.log" 2>&1 &
+          for attempt in $(seq 1 90); do
+            if curl --fail --silent http://127.0.0.1:5173/ > /dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat "$RUNNER_TEMP/week2-integrity-vite.log"
+          exit 1
+      - name: Real Week 1 initial ranking, three matches, Saved Week 2 and restart
+        run: |
+          python scripts/admin_week2_integrity_browser.py \
+            --acceptance "$RUNNER_TEMP/week2-integrity-run" \
+            --port 8022 --base-url http://127.0.0.1:5173 \
+            --chromium "$CHROME_BIN"
+      - name: Preserve Playwright trace, SQL evidence and logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: week2-integrity-browser-${{ github.run_id }}
+          path: |
+            ${{ runner.temp }}/week2-integrity-run/artifacts/
+            ${{ runner.temp }}/week2-integrity-run/server.log
+            ${{ runner.temp }}/week2-integrity-vite.log
+          if-no-files-found: warn
+          retention-days: 14

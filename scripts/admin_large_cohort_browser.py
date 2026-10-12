@@ -14,7 +14,11 @@ from urllib.request import urlopen
 
 from playwright.sync_api import expect, sync_playwright
 
-from admin_first_tournament_smoke import browser_click, browser_settle
+# The World/country route may leave background queries active. Assert each
+# action's own UI/API result instead of waiting for global network quietness,
+# which can hang even after a successful production response.
+def browser_click(page, name):
+    page.get_by_role("button", name=name, exact=True).click()
 from admin_world_country_checks import package_source_digest, verify_positive_world_country
 
 
@@ -122,7 +126,6 @@ def acceptance(root: Path, *, port: int, base_url: str, chromium: str):
                 assert package_source_digest(world_source) == world_source_initial_digest
                 page.goto(run_url + "/players/generate")
 
-                expect(page.get_by_role("heading", name="Generate players")).to_be_visible()
                 expect(page.get_by_role("heading", name="Generate players")).to_be_visible()
                 page.get_by_label("Number of generated players").fill("1000")
                 page.get_by_label("Player generation seed").fill("4207")

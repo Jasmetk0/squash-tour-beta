@@ -9,9 +9,14 @@ from sqlalchemy.orm import Session
 from beta_engine.application.initial_world import InitialWorldState
 from beta_engine.domain.rankings.official import RankingWeek
 from beta_engine.infrastructure.db.initial_world_state import get_initial_world
-from beta_engine.infrastructure.db.player_lifecycle_state import get_lifecycle, bootstrap_lifecycle
-from beta_engine.infrastructure.db.player_sporting_state import get_sporting, bootstrap_sporting
+from beta_engine.infrastructure.db.player_lifecycle_state import (
+    get_lifecycle, bootstrap_lifecycle, derive_bootstrap_lifecycle,
+)
+from beta_engine.infrastructure.db.player_sporting_state import (
+    get_sporting, bootstrap_sporting, derive_bootstrap_sporting,
+)
 from beta_engine.infrastructure.db.player_health_state import get_health, bootstrap_health
+from beta_engine.domain.players.health import bootstrap_health_state
 from beta_engine.infrastructure.db.models import (
     InitialWorldStateModel, PlayerLifecycleWeekStateModel, PlayerSportingWeekStateModel,
     PlayerHealthWeekStateModel, OfficialRankingCandidateModel, PublishedOfficialRankingModel,
@@ -76,6 +81,24 @@ def replace_pristine_initial_world_for_selected_append(
         any(p.origin != f"initial_world:{previous.fingerprint}" for p in lifecycle.players)
     ):
         raise ValueError("Week-1 evidence changed or does not match the saved InitialWorld")
+
+    # Reject validly checksummed but already edited Week-1 player records:
+    # a roster/fingerprint-source comparison alone would silently erase them.
+    expected_health = bootstrap_health_state(
+        run_id=run_id, branch_id=branch_id,
+        source_initial_world_fingerprint=previous.fingerprint,
+        player_ids=tuple(p.player_id for p in previous.players),
+    )
+    if (
+        lifecycle.fingerprint != derive_bootstrap_lifecycle(
+            previous, lifecycle.policy
+        ).fingerprint or
+        sporting.fingerprint != derive_bootstrap_sporting(
+            previous, sporting.effective_development_policy
+        ).fingerprint or
+        health.fingerprint != expected_health.fingerprint
+    ):
+        raise ValueError("Week-1 player evidence has non-bootstrap edits; append is closed")
 
     # All of these mutations occur inside the same SQLite BEGIN IMMEDIATE.
     session.delete(session.get(PlayerLifecycleWeekStateModel,(run_id,branch_id,week.ordinal)))

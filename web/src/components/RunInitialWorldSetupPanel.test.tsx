@@ -269,7 +269,7 @@ describe('Run-owned first-season player setup', () => {
       proposal_id:'older',original_preview_fingerprint:sha('f'),
       current_context:{saved_revision_id:'revision-1',draft_version:0,
         package_fingerprint:sha('e')},
-      request,preview:{preview_only:true,state:buildState(request),fingerprint:sha('g')},
+      request,preview:{preview_only:true,state:buildState(request),fingerprint:sha('a')},
       comparison:{old_count:2,new_count:2,added_identities:0,removed_identities:0,
         changed_profiles:1,unchanged_profiles:1}
     })

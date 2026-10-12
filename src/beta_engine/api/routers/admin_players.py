@@ -499,6 +499,15 @@ def _generation_proposal_storage(runtime: ApiRuntime):
     return generation_proposals, runtime.repository._session_factory
 
 
+def _assert_historical_proposal_reader(runtime: ApiRuntime, run_id: str, branch_id: str) -> None:
+    """Scope-only authorization for archived proposal reads, not writes."""
+    run = runtime.repository.get_run_container(run_id=run_id)
+    branch = runtime.repository.get_run_branch(branch_id=branch_id)
+    if (run is None or run.storage_kind != "custom_local" or
+        branch is None or branch.run_id != run_id):
+        raise ValueError("Historical proposal Run/Branch ownership is invalid")
+
+
 def _assert_generator_proposal_owner(runtime: ApiRuntime, run_id: str, branch_id: str) -> None:
     run = runtime.repository.get_run_container(run_id=run_id)
     branch = runtime.repository.get_run_branch(branch_id=branch_id)
@@ -572,7 +581,7 @@ def list_run_generation_proposals(
     run_id: str, branch_id: str, runtime: ApiRuntime = Depends(get_runtime),
 ):
     try:
-        _assert_generator_proposal_owner(runtime, run_id, branch_id)
+        _assert_historical_proposal_reader(runtime, run_id, branch_id)
         storage, sessions = _generation_proposal_storage(runtime)
         return {"proposals": storage.list_proposals(sessions, run_id=run_id, branch_id=branch_id)}
     except (ValueError, KeyError) as exc:
@@ -631,12 +640,7 @@ def _read_historical_generation_proposal(
     This historical read must not regenerate, alter a proposal, or promote it
     to an Adopt-able review. Run/Branch ownership is still mandatory.
     """
-    repository = runtime.repository
-    run = repository.get_run_container(run_id=run_id)
-    branch = repository.get_run_branch(branch_id=branch_id)
-    if (run is None or run.storage_kind != "custom_local" or
-        branch is None or branch.run_id != run_id):
-        raise ValueError("Historical proposal Run/Branch ownership is invalid")
+    _assert_historical_proposal_reader(runtime, run_id, branch_id)
     storage, sessions = _generation_proposal_storage(runtime)
     data = storage.get_proposal(
         sessions, run_id=run_id, branch_id=branch_id, proposal_id=proposal_id,

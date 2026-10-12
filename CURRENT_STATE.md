@@ -1,3 +1,20 @@
+# A80-01 candidate — cross-package Calendar event identity (12 October 2026)
+
+Implementation branch `fix/a80-01-calendar-global-event-identity-20261012` (base `buuk adb8e1e89e7a5cf2e678e452258605dd1079511a`).
+This is a **candidate, not a merged feature**. Country Tournaments now
+rejects duplicate `event_id` over all Calendar Package copies before country
+filtering, matching the canonical Viewer Tournament History identity contract.
+Distinct events from different packages and seasons remain valid. Ambiguous
+Saved Calendar data fails closed with a CS/EN UI alert, rather than showing
+duplicate Editions. Focused frontend projection and Run World UI regressions
+cover cross-package/cross-season and different-host collisions. Applicable
+frontend test/build checks on final PR HEAD must pass before merge handoff.
+
+Next after merge: Run → Tour → Calendar → shared Edition exact saved
+Run/Branch/revision/season read contracts, then connected frontend/browser flow.
+
+---
+
 # Active audited state — Master v80 / 12 October 2026
 
 Audit base: `buuk 4a58192cd4f8bb7d4f9d71c76a870ec6ce3baae4`, merged #1414.

@@ -146,6 +146,26 @@ function render(overrideRun: RunContainer = run, overrideBranch: RunBranch | nul
 }
 
 describe('Run-owned first-season player setup', () => {
+  it('lays out collapsible supported conditions beside a review area without making a Run write', async () => {
+    render()
+    const workspace = screen.getByLabelText('Player generator workspace')
+    expect(workspace).toBeInTheDocument()
+    expect(screen.getByLabelText('Generator results and review')).toHaveTextContent(
+      'Saving a proposal does not add players.'
+    )
+    const summary = screen.getByText('Generation conditions')
+    const details = summary.closest('details')
+    expect(details).not.toBeNull()
+    expect(details).toHaveAttribute('open')
+    await userEvent.click(summary)
+    expect(details).not.toHaveAttribute('open')
+    await userEvent.click(summary)
+    expect(details).toHaveAttribute('open')
+    expect(screen.getByRole('spinbutton', {name: 'Number of generated players'})).toBeInTheDocument()
+    expect(api.adoptRunOwnedInitialWorld).not.toHaveBeenCalled()
+    expect(api.saveRunOwnedInitialWorld).not.toHaveBeenCalled()
+  })
+
   it('previews exact whole-batch country quotas with an automatic remainder and no implicit Save', async () => {
     render()
     await userEvent.clear(screen.getByRole('spinbutton', {name:'Number of generated players'}))

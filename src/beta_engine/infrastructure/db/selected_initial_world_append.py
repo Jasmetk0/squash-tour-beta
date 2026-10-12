@@ -39,26 +39,15 @@ def _has_scoped_row(session: Session, model: type, run_id: str, branch_id: str, 
     return session.scalars(statement.limit(1)).first() is not None
 
 
-def replace_pristine_initial_world_for_selected_append(
-    session: Session, *, previous: InitialWorldState, appended: InitialWorldState
-) -> InitialWorldState:
-    """Verify untouched Week 1 and install a complete consistent new projection.
+def require_pristine_initial_world_append_eligible(
+    session: Session, *, previous: InitialWorldState
+) -> None:
+    """Read-only authoritative eligibility check, shared by preview and commit.
 
-    Caller owns BEGIN IMMEDIATE, Saved HEAD/Draft/World and old-state CAS checks.
-    Failures roll back every table together. No historical Saved Revision is edited.
+    The committing caller must run this again inside BEGIN IMMEDIATE.
     """
-    if (previous.run_id, previous.branch_id) != (appended.run_id, appended.branch_id):
-        raise ValueError("Selected append ownership mismatch")
     run_id, branch_id = previous.run_id, previous.branch_id
-    row = session.get(InitialWorldStateModel, (run_id, branch_id))
-    original = get_initial_world(session, run_id=run_id, branch_id=branch_id)
-    if row is None or original is None or original.fingerprint != previous.fingerprint:
-        raise ValueError("Original InitialWorld changed before append")
     incumbent = {p.player_id: p for p in previous.players}
-    updated = {p.player_id: p for p in appended.players}
-    if not incumbent.keys() <= updated.keys() or any(updated[k] != v for k,v in incumbent.items()):
-        raise ValueError("Selected append cannot mutate any existing player")
-
     # A successful entry, ranking-source, Week-1 Health correction or completed
     # sporting context is historical evidence even if the current Week-1 payload
     # happens to match a pristine bootstrap after another operation. Do not erase
@@ -114,6 +103,30 @@ def replace_pristine_initial_world_for_selected_append(
         health.fingerprint != expected_health.fingerprint
     ):
         raise ValueError("Week-1 player evidence has non-bootstrap edits; append is closed")
+
+
+
+def replace_pristine_initial_world_for_selected_append(
+    session: Session, *, previous: InitialWorldState, appended: InitialWorldState
+) -> InitialWorldState:
+    """Verify untouched Week 1 and install a complete consistent new projection.
+
+    Caller owns BEGIN IMMEDIATE, Saved HEAD/Draft/World and old-state CAS checks.
+    Failures roll back every table together. No historical Saved Revision is edited.
+    """
+    if (previous.run_id, previous.branch_id) != (appended.run_id, appended.branch_id):
+        raise ValueError("Selected append ownership mismatch")
+    run_id, branch_id = previous.run_id, previous.branch_id
+    row = session.get(InitialWorldStateModel, (run_id, branch_id))
+    original = get_initial_world(session, run_id=run_id, branch_id=branch_id)
+    if row is None or original is None or original.fingerprint != previous.fingerprint:
+        raise ValueError("Original InitialWorld changed before append")
+    incumbent = {p.player_id: p for p in previous.players}
+    updated = {p.player_id: p for p in appended.players}
+    if not incumbent.keys() <= updated.keys() or any(updated[k] != v for k,v in incumbent.items()):
+        raise ValueError("Selected append cannot mutate any existing player")
+
+    require_pristine_initial_world_append_eligible(session, previous=previous)
 
     # All of these mutations occur inside the same SQLite BEGIN IMMEDIATE.
     session.delete(session.get(PlayerLifecycleWeekStateModel,(run_id,branch_id,week.ordinal)))

@@ -1076,16 +1076,23 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
             {' '}{bulkMode === 'automatic'
               ? (cs ? 'k odemknutí' : 'to unlock')
               : tr('changed')} {bulkPlan.changes.length} · {tr('unchanged')} {bulkPlan.unchangedCount}.
+            {bulkMode === 'value' && <> {' · '}{cs ? 'změny čísel' : 'numeric changes'} {' '}
+              {bulkPlan.changes.filter(change => change.before !== change.after).length} ·
+              {' '}{cs ? 'nové zámky' : 'new locks'} {' '}
+              {bulkPlan.changes.filter(change => !change.beforeLocked && change.afterLocked).length}.</>}
             {' '}{cs ? 'Jde pouze o místní návrh změn před/po, nikoli potvrzené hodnoty hráčů.' : 'This is a local before/after proposal, not accepted player values.'}</p>
           <details>
             <summary>{tr('Review exact before/after values')} · {bulkPlan.changes.length} {tr('changed profiles')}</summary>
             <div className="table-responsive"><table>
-              <thead><tr><th>{tr('Player ID')}</th><th>{tr('Player')}</th><th>{tr('Before')}</th><th>{tr('After')}</th></tr></thead>
+              <thead><tr><th>{tr('Player ID')}</th><th>{tr('Player')}</th><th>{tr('Before')}</th><th>{cs ? 'Zámek před' : 'Lock before'}</th><th>{tr('After')}</th><th>{cs ? 'Zámek po' : 'Lock after'}</th></tr></thead>
               <tbody>{bulkPlan.changes.map(change=><tr key={change.playerId}>
                 <td>{change.playerId}</td><td>{change.name}</td>
-                <td>{change.before}</td><td>{change.after == null
+                <td>{change.before}</td>
+                <td>{change.beforeLocked ? (cs ? 'Zamčeno' : 'Locked') : 'Automatic'}</td>
+                <td>{change.after == null
                   ? (cs ? 'Automaticky – určí server' : 'Automatic – server decides')
                   : change.after}</td>
+                <td>{change.afterLocked ? (cs ? 'Zamčeno' : 'Locked') : 'Automatic'}</td>
               </tr>)}</tbody>
             </table></div>
           </details>

@@ -795,6 +795,57 @@ describe('Run-owned first-season player setup', () => {
     expect(api.saveRunOwnedInitialWorld).not.toHaveBeenCalled()
   })
 
+  it('stages a same-value new lock with existing locked/no-op peer, verifies and supports Undo',async()=>{
+    api.previewRunOwnedInitialWorld.mockImplementation(async (_run:string,_branch:string,
+      request:{command_id:string;generation:{world_package_id:string;seed:number;
+        field_locks?:{player_id:string;field:string;value:number}[]};best_n:number}) => {
+      const locks=request.generation.field_locks??[]
+      return {preview_only:true,
+        state:{...buildState(request),players:players.map(p=>({...p,current_ability:80}))},
+        fingerprint:locks.length===0?sha('f'):locks.length===1?sha('a'):sha('b')}
+    })
+    render()
+    await userEvent.clear(screen.getByRole('spinbutton',{name:'Number of generated players'}))
+    await userEvent.type(screen.getByRole('spinbutton',{name:'Number of generated players'}),'2')
+    await userEvent.click(await screen.findByRole('button',{name:'Preview generated players'}))
+    await userEvent.click(screen.getByRole('checkbox',{name:'Select for bulk action p-1'}))
+    await userEvent.selectOptions(screen.getByRole('combobox',{name:'Bulk source field'}),'current_ability')
+    await userEvent.type(screen.getByRole('spinbutton',{name:'Bulk new source value'}),'80')
+    expect(screen.getByLabelText('Bulk before after preview')).toHaveTextContent('numeric changes 0')
+    expect(screen.getByLabelText('Bulk before after preview')).toHaveTextContent('new locks 1')
+    await userEvent.click(screen.getByRole('button',{name:'Stage reviewed bulk locks (no Run write)'}))
+    expect(screen.getByRole('button',{name:'Adopt generated players'})).toBeDisabled()
+    await userEvent.click(screen.getByRole('button',{name:'Verify staged bulk changes on server'}))
+    await waitFor(()=>expect(api.previewRunOwnedInitialWorld).toHaveBeenCalledTimes(2))
+    expect(api.previewRunOwnedInitialWorld.mock.calls[1][2].generation.field_locks)
+      .toEqual([{player_id:'p-1',field:'current_ability',value:80}])
+    await userEvent.click(screen.getByRole('checkbox',{name:'Select for bulk action p-1'}))
+    await userEvent.click(screen.getByRole('checkbox',{name:'Select for bulk action p-2'}))
+    const plan=screen.getByLabelText('Bulk before after preview')
+    expect(plan).toHaveTextContent('changed 1')
+    expect(plan).toHaveTextContent('unchanged 1')
+    expect(plan).toHaveTextContent('numeric changes 0')
+    expect(plan).toHaveTextContent('new locks 1')
+    await userEvent.click(screen.getByText(/Review exact before\/after values/))
+    expect(plan).toHaveTextContent('Lock before')
+    expect(plan).toHaveTextContent('Lock after')
+    expect(api.previewRunOwnedInitialWorld).toHaveBeenCalledTimes(2)
+    await userEvent.click(screen.getByRole('button',{name:'Stage reviewed bulk locks (no Run write)'}))
+    await userEvent.click(screen.getByRole('button',{name:'Verify staged bulk changes on server'}))
+    await waitFor(()=>expect(api.previewRunOwnedInitialWorld).toHaveBeenCalledTimes(3))
+    expect(api.previewRunOwnedInitialWorld.mock.calls[2][2].generation.field_locks).toEqual([
+      {player_id:'p-1',field:'current_ability',value:80},
+      {player_id:'p-2',field:'current_ability',value:80}
+    ])
+    await userEvent.click(screen.getByRole('button',{name:'Undo last verified bulk preview'}))
+    expect(await screen.findByText(/One-step session Undo restored/)).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('checkbox',{name:'Select for bulk action p-1'}))
+    await userEvent.click(screen.getByRole('checkbox',{name:'Select for bulk action p-2'}))
+    expect(screen.getByLabelText('Bulk before after preview')).toHaveTextContent('changed 1')
+    expect(api.adoptRunOwnedInitialWorld).not.toHaveBeenCalled()
+    expect(api.saveRunOwnedInitialWorld).not.toHaveBeenCalled()
+  })
+
   it('bulk action refuses impossible ability edits before any backend request and preserves Keep',async()=>{
     // Use real source-model bounds for this adversarial case; the generic
     // frontend fixture intentionally uses future canonical-like potentials.

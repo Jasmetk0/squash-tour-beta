@@ -20,6 +20,8 @@ const api = vi.hoisted(() => {
     getRunGenerationProposals: vi.fn(),
     saveRunGenerationProposal: vi.fn(),
     loadRunGenerationProposal: vi.fn(),
+    inspectRunGenerationProposal: vi.fn(),
+    revalidateRunGenerationProposal: vi.fn(),
     deleteRunGenerationProposal: vi.fn(),
     adoptRunOwnedInitialWorld: vi.fn(),
     previewRunInitialWorldSave: vi.fn(),
@@ -229,6 +231,75 @@ describe('Run-owned first-season player setup', () => {
     expect(api.previewRunOwnedInitialWorld).toHaveBeenCalledTimes(1)
     expect(api.adoptRunOwnedInitialWorld).not.toHaveBeenCalled()
     expect(api.saveRunOwnedInitialWorld).not.toHaveBeenCalled()
+  })
+
+  it('inspects stale HEAD/World without generation, then requires explicit revalidation and review',async()=>{
+    const request={
+      command_id:'historical-review',generation:{
+        world_package_id:'fifa_earth',season:'2000/2001' as const,
+        seed:20261009,target_pool_size:2
+      },
+      audit_label:'History',audit_reason:'Review old candidate',
+      official_run:false as const,best_n:15,automatic_retirement_age:46 as const
+    }
+    const stored={
+      schema_version:'run_generation_proposal.v1',run_id:'first-run',
+      branch_id:'timeline-1',proposal_id:'older',label:'Historical cohort',
+      saved_revision_id:'revision-old',draft_version:3,
+      package_fingerprint:sha('x'),preview_fingerprint:sha('f'),
+      source_seed:20261009,next_seed:20261010,selected_keep_ids:[],
+      pending_field_locks:[],request,
+      preview:{preview_only:true,state:buildState(request),fingerprint:sha('f')}
+    }
+    api.getRunGenerationProposals.mockResolvedValue({proposals:[{
+      proposal_id:'older',label:'Historical cohort',saved_revision_id:'revision-old',
+      draft_version:3,package_fingerprint:sha('x'),preview_fingerprint:sha('f')
+    }]})
+    api.inspectRunGenerationProposal.mockResolvedValue({
+      schema_version:'run_generation_proposal_inspection.v1',historical_only:true,
+      proposal:stored,
+      context:{
+        saved_revision_id:'revision-1',draft_version:0,draft_status:'clean',
+        package_fingerprint:sha('e'),head_matches:false,draft_matches:false,
+        package_matches:false,initial_world_exists:false,revalidation_required:true
+      }
+    })
+    api.revalidateRunGenerationProposal.mockResolvedValue({
+      schema_version:'run_generation_proposal_revalidation.v1',preview_only:true,
+      proposal_id:'older',original_preview_fingerprint:sha('f'),
+      current_context:{saved_revision_id:'revision-1',draft_version:0,
+        package_fingerprint:sha('e')},
+      request,preview:{preview_only:true,state:buildState(request),fingerprint:sha('g')},
+      comparison:{old_count:2,new_count:2,added_identities:0,removed_identities:0,
+        changed_profiles:1,unchanged_profiles:1}
+    })
+    render()
+    await screen.findByRole('option',{name:/Historical cohort/})
+    await userEvent.selectOptions(
+      screen.getByRole('combobox',{name:'Select saved generation proposal'}),'older'
+    )
+    await userEvent.click(screen.getByRole('button',{name:'Inspect historical proposal (read-only)'}))
+    expect(await screen.findByRole('region',{name:'Historical generation proposal inspection'})).toBeInTheDocument()
+    expect(screen.getByText(/Historical snapshot is not authorized/)).toBeInTheDocument()
+    expect(screen.getByText(/Saved HEAD changed/)).toBeInTheDocument()
+    expect(api.previewRunOwnedInitialWorld).not.toHaveBeenCalled()
+    expect(api.adoptRunOwnedInitialWorld).not.toHaveBeenCalled()
+    await userEvent.click(screen.getByRole('button',{name:'Revalidate against current Run (new preview)'}))
+    await waitFor(()=>expect(api.revalidateRunGenerationProposal).toHaveBeenCalledWith(
+      'first-run','timeline-1','older',{
+        expected_head:'revision-1',expected_draft_version:0,
+        expected_package_fingerprint:sha('e')
+      }
+    ))
+    expect(screen.getByText(/changed profiles 1/)).toBeInTheDocument()
+    expect(screen.queryByRole('button',{name:'Adopt generated players'})).not.toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button',{name:'Use revalidated preview for review'}))
+    expect(await screen.findByText(/Explicitly revalidated preview selected/)).toBeInTheDocument()
+    expect(screen.getByText('Review 2 players')).toBeInTheDocument()
+    expect(screen.getByRole('button',{name:'Adopt generated players'})).toBeDisabled()
+    expect(api.adoptRunOwnedInitialWorld).not.toHaveBeenCalled()
+    expect(api.saveRunOwnedInitialWorld).not.toHaveBeenCalled()
+    expect(api.previewRunOwnedInitialWorld).not.toHaveBeenCalled()
   })
 
   it('recovers an unsaved component after reload with a clean generic Draft', async () => {

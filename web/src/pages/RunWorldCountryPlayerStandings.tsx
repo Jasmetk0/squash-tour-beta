@@ -1,0 +1,92 @@
+/** Evidence-only player standings over the complete exact Saved Revision. */
+import {useState} from 'react'
+import {useQuery} from '@tanstack/react-query'
+import {Link} from 'react-router-dom'
+import {getCountryPlayerStandings} from '../api/client'
+import type {CountryPlayerStandings} from '../api/types'
+import {formatApiError} from '../utils/apiErrors'
+
+const PAGE_SIZE=25
+type Props={runId:string;branchId:string;countryCode:string;
+  savedRevisionId:string|null;historical:boolean;cs:boolean}
+
+export function RunWorldCountryPlayerStandings({
+  runId,branchId,countryCode,savedRevisionId,historical,cs
+}:Props):JSX.Element{
+  const [page,setPage]=useState(0)
+  const offset=page*PAGE_SIZE
+  const enabled=Boolean(runId&&branchId&&countryCode&&savedRevisionId)
+  const query=useQuery({
+    queryKey:['country-player-standings',runId,branchId,countryCode,savedRevisionId,offset],
+    queryFn:()=>getCountryPlayerStandings(
+      runId,branchId,countryCode,savedRevisionId!,offset,PAGE_SIZE),
+    enabled,retry:false
+  })
+  const result:CountryPlayerStandings|null=query.data?.run_id===runId&&
+    query.data.branch_id===branchId&&query.data.country_code===countryCode&&
+    query.data.saved_revision_id===savedRevisionId&&
+    query.data.offset===offset&&query.data.limit===PAGE_SIZE?query.data:null
+  const format=(n:number)=>n.toLocaleString(cs?'cs-CZ':'en-US')
+  return <section className="section-subtle" aria-label="Country canonical player standings">
+    <h4>{cs?'Nejúspěšnější hráči země':'Country player standings'}</h4>
+    <p className="status">{cs?
+      'Pořadí: tituly, účasti ve finále, odehrané výhry, nejméně odehraných proher, ID. Jde o statistické pořadí, ne oficiální žebříček ani body.':
+      'Ordered by titles, final appearances, played wins, fewest played losses, and ID. This is an evidence-based list, not Official Ranking points.'}</p>
+    {!savedRevisionId&&<p role="alert">{cs?
+      'Žádná uložená revize — pořadí nelze ověřit.':
+      'No Saved Revision — player standings are unavailable.'}</p>}
+    {enabled&&query.isPending&&<p role="status">{cs?'Načítám ověřené pořadí…':
+      'Loading verified player standings…'}</p>}
+    {enabled&&query.error&&<p role="alert">{formatApiError(query.error)}</p>}
+    {enabled&&query.isSuccess&&!result&&<p role="alert">{cs?
+      'Zdroj pořadí neodpovídá požadované uložené revizi.':
+      'Leaderboard evidence differs from the requested Saved Revision.'}</p>}
+    {result&&<>
+      <p role="status">{cs?'Hráči s publikovaným výsledkem nebo zápasem':
+        'Players with a published finish or actual match'}:
+        {' '}<strong>{format(result.total_players)}</strong>
+        {' '}· Saved Revision: <code>{result.saved_revision_id}</code>
+        {' '}· {cs?'Původní branch':'Origin Branch'}: <code>{result.revision_branch_id}</code>
+      </p>
+      {result.players.length>0?
+        <div className="table-responsive">
+          <table aria-label="Country player standings table">
+            <thead><tr>
+              <th>#</th><th>{cs?'Hráč':'Player'}</th>
+              <th>{cs?'Tituly':'Titles'}</th>
+              <th>{cs?'Finále':'Finals'}</th>
+              <th>{cs?'Druhá místa':'Runner-up'}</th>
+              <th>{cs?'Odehrané V':'Played W'}</th>
+              <th>{cs?'Odehrané P':'Played L'}</th>
+              <th>{cs?'Kontumace V/P':'W/O W/L'}</th>
+            </tr></thead>
+            <tbody>{result.players.map(player=><tr key={player.player_id}>
+              <td>{format(player.position)}</td>
+              <td>{historical?<>{player.player_name} <small>· {player.player_id}</small></>:
+                <Link to={'/admin/runs/'+encodeURIComponent(runId)+'/people/'+
+                  encodeURIComponent(player.player_id)}>{player.player_name}</Link>}</td>
+              <td>{format(player.titles)}</td>
+              <td>{format(player.final_appearances)}</td>
+              <td>{format(player.runner_up_finishes)}</td>
+              <td>{format(player.played_wins)}</td>
+              <td>{format(player.played_losses)}</td>
+              <td>{format(player.walkover_wins)} / {format(player.walkover_losses)}</td>
+            </tr>)}</tbody>
+          </table>
+        </div>:<p role="status">{cs?
+          'V této revizi zatím žádný hráč nemá publikovaný turnajový výsledek ani zápas.':
+          'No player has a published tournament finish or match in this revision.'}</p>}
+      <div className="actions" aria-label="Country player standings pagination">
+        <button type="button" disabled={page===0}
+          onClick={()=>setPage(p=>Math.max(0,p-1))}>
+          {cs?'← Předchozí':'← Previous'}</button>
+        <span>{cs?'Strana':'Page'} {page+1} / {Math.max(1,Math.ceil(result.total_players/PAGE_SIZE))}</span>
+        <button type="button" disabled={!result.has_more} onClick={()=>setPage(p=>p+1)}>
+          {cs?'Další →':'Next →'}</button>
+      </div>
+    </>}
+    <p className="status">{cs?
+      'BYE nejsou zápasy; kontumace nejsou odehrané výhry. Historická revize nikdy neodkazuje na současné profily.':
+      'BYEs are not matches; walkovers are not played wins. Historical revisions never link to present player profiles.'}</p>
+  </section>
+}

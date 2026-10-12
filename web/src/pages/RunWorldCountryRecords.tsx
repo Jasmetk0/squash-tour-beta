@@ -2,6 +2,7 @@ import {useQuery} from '@tanstack/react-query'
 import {Link} from 'react-router-dom'
 import {getRunCountryRecords} from '../api/client'
 import {RunWorldCountryMatchRecords} from './RunWorldCountryMatchRecords'
+import {RunWorldCountryPlayerStandings} from './RunWorldCountryPlayerStandings'
 import type {RunCountryRecordResult,RunCountryRecords} from '../api/types'
 import {formatApiError} from '../utils/apiErrors'
 
@@ -81,6 +82,10 @@ export function RunWorldCountryRecords({
         'Neodehrané turnaje, stav „completed“ v kalendáři ani odhadované výsledky se nezapočítávají.':
         'Unplayed events, calendar-only completed statuses and hypothetical results are not counted.'}</p>
     </>}
+    <RunWorldCountryPlayerStandings
+      key={['players',runId,branchId,countryCode,savedRevisionId??'none'].join(':')}
+      runId={runId} branchId={branchId} countryCode={countryCode}
+      savedRevisionId={savedRevisionId} historical={historical} cs={cs}/>
     <RunWorldCountryMatchRecords
       key={[runId,branchId,countryCode,savedRevisionId??'none'].join(':')}
       runId={runId} branchId={branchId} countryCode={countryCode}

@@ -8,6 +8,8 @@ type Props={
 }
 export function RunWorldCountryTournaments({runId,branchId,countryCode,sourceRevision,historical,
   currentSeason,currentWeek,model,loading,error,cs}:Props):JSX.Element{
+  const duplicatePrefix='Saved Calendar contains duplicate tournament event identity: '
+  const duplicateId=error?.startsWith(duplicatePrefix)?error.slice(duplicatePrefix.length):null
   const now=historical?null:calendarSeasonIndex(currentSeason)
   const grouped=new Map<number,CountryTournamentEdition[]>()
   for(const e of model?.editions??[])grouped.set(e.seasonIndex,[...(grouped.get(e.seasonIndex)??[]),e])
@@ -26,7 +28,10 @@ export function RunWorldCountryTournaments({runId,branchId,countryCode,sourceRev
       'Historická revize: neotevíráme současný detail turnaje.':
       'Historical revision: present-day event details are not linked.'}</p>}
     {loading&&<p role="status">{cs?'Načítám uložený kalendář…':'Loading Saved Calendar…'}</p>}
-    {error&&<p role="alert">{error}</p>}
+    {error&&<p role="alert">{duplicateId!==null
+      ?(cs?'Nejednoznačný uložený kalendář: více balíčků používá stejné ID turnaje: ':
+        'Ambiguous Saved Calendar: multiple packages reuse the tournament event ID: ')+duplicateId
+      :error}</p>}
     {!loading&&!error&&!model&&<p role="alert">{cs?
       'Uložený kalendář není dostupný. Neuložená data se nepoužijí.':
       'Saved Calendar is unavailable. Unsaved data is not substituted.'}</p>}

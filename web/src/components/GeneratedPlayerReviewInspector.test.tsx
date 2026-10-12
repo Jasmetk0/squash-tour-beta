@@ -202,7 +202,8 @@ describe('V79 configurable, browser-only inspection columns', () => {
     await userEvent.click(screen.getByRole('checkbox',{name:'Show column attributes.technique'}))
     expect(screen.getByLabelText('Pending field edit p-5 attributes.technique')).toBeInTheDocument()
     const row=screen.getByRole('row',{name:/Eli/})
-    const techniqueCell=within(row).getAllByRole('cell').at(-1)
+    const cells=within(row).getAllByRole('cell')
+    const techniqueCell=cells[cells.length - 1]
     expect(techniqueCell).toHaveTextContent('76')
     expect(techniqueCell).not.toHaveTextContent(/^82/)
     expect(techniqueCell).toHaveTextContent('pending')

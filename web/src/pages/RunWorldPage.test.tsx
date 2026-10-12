@@ -7,7 +7,8 @@ import { RunWorldPage } from './RunWorldPage'
 import { worldFixture } from './runWorldFixture'
 
 const api=vi.hoisted(()=>({getRunPackageState:vi.fn(),getSavedPlayersInventory:vi.fn(),
-  getSavedRevision:vi.fn(),listSavedRevisionHistory:vi.fn(),getRunCountryRecords:vi.fn()}))
+  getSavedRevision:vi.fn(),listSavedRevisionHistory:vi.fn(),getRunCountryRecords:vi.fn(),
+  getCountrySavedMatchRecords:vi.fn(),ApiError:class extends Error{}}))
 const context=vi.hoisted(()=>({
   branch:{run_id:'run-a',branch_id:'branch-a',saved_head_revision_id:'head-a',display_name:'Timeline 1'},
   time:{mode:'present',isLoading:false,error:null},
@@ -75,6 +76,40 @@ function historicalDetail(
   }
 }
 
+
+function savedMatchResult(revision:string,opts:{
+  seasonIndex:number|null;resultKind:string;outcome:string;offset:number;limit:number
+},rows:Record<string,unknown>[]=[] ,total=rows.length){
+  return {
+    schema_version:'country_saved_match_records.v1',source:'reachable_saved_revision',
+    run_id:'run-a',branch_id:'branch-a',revision_branch_id:'branch-a',
+    saved_revision_id:revision,country_code:'CZE',calendar_status:'ready',
+    published_event_count:2,total_played_matches:30,total_walkovers:4,
+    country_played_wins:18,country_played_losses:12,
+    country_walkover_wins:2,country_walkover_losses:2,
+    hosted_played_matches:6,hosted_walkovers:1,country_match_count:34,
+    available_seasons:[0,1],
+    season_index:opts.seasonIndex,result_kind:opts.resultKind,outcome:opts.outcome,
+    filtered_match_count:total,offset:opts.offset,limit:opts.limit,
+    has_more:opts.offset+opts.limit<total,matches:rows
+  }
+}
+function matchRow(id:string,options:{
+  season?:string;completion?:string;winnerCountry?:string;loserCountry?:string
+}={}){
+  return {
+    event_id:'event-'+id,event_name:'Open '+id,
+    season:options.season??'2000/2001',season_week:9,match_id:id,
+    draw_type:'main',round_number:2,
+    winner_player_id:'winner-'+id,winner_name:'Winner '+id,
+    winner_country:options.winnerCountry??'CZE',
+    loser_player_id:'loser-'+id,loser_name:'Loser '+id,
+    loser_country:options.loserCountry??'EGY',host_country:'USA',
+    completion:options.completion??'played',
+    scoreline:options.completion==='walkover'?'W/O':'11-8, 11-9, 11-7'
+  }
+}
+
 describe('Run-owned World overview navigation',()=>{
   beforeEach(()=>{
     vi.clearAllMocks()
@@ -84,6 +119,8 @@ describe('Run-owned World overview navigation',()=>{
     context.time.mode='present'
     context.language='en'
     api.getRunPackageState.mockResolvedValue(worldFixture())
+    api.getCountrySavedMatchRecords.mockImplementation(async (_run:string,_branch:string,_country:string,
+      rev:string,opts:Parameters<typeof savedMatchResult>[1])=>savedMatchResult(rev,opts))
     api.listSavedRevisionHistory.mockImplementation(async (run:string,branch:string)=>({
       run_id:run,branch_id:branch,saved_head_revision_id:context.branch.saved_head_revision_id,
       saved_revisions:['rev-old','rev-new','rev-shared'].map((id,i)=>({
@@ -397,6 +434,104 @@ describe('Run-owned World overview navigation',()=>{
     const records=await screen.findByLabelText('Country published records')
     expect(records).toHaveTextContent('No authoritative Saved Revision')
     expect(api.getRunCountryRecords).not.toHaveBeenCalled()
+  })
+
+
+  it('renders match stats from exact Saved HEAD and server-filters season, completion and outcome',async()=>{
+    api.getCountrySavedMatchRecords.mockImplementation(async (_r:string,_b:string,_c:string,
+      rev:string,opts:Parameters<typeof savedMatchResult>[1])=>{
+      const row=matchRow('filtered',{
+        season:opts.seasonIndex===1?'2001/2002':'2000/2001',
+        completion:opts.resultKind==='walkover'?'walkover':'played',
+        winnerCountry:opts.outcome==='loss'?'EGY':'CZE',
+        loserCountry:opts.outcome==='loss'?'CZE':'EGY'
+      })
+      return savedMatchResult(rev,opts,[row],1)
+    })
+    mountWorld('/admin/runs/run-a/world/countries/CZE?tab=records')
+    const panel=await screen.findByLabelText('Country saved match records')
+    await waitFor(()=>expect(within(panel).getByRole('table',{name:'Country canonical saved matches'}))
+      .toHaveTextContent('Open filtered'))
+    expect(panel).toHaveTextContent('18')
+    expect(api.getCountrySavedMatchRecords).toHaveBeenCalledWith(
+      'run-a','branch-a','CZE','head-a',{
+        seasonIndex:null,resultKind:'all',outcome:'all',offset:0,limit:25
+      })
+    await userEvent.selectOptions(within(panel).getByRole('combobox',{name:'Country match season'}),'1')
+    await waitFor(()=>expect(api.getCountrySavedMatchRecords).toHaveBeenCalledWith(
+      'run-a','branch-a','CZE','head-a',{
+        seasonIndex:1,resultKind:'all',outcome:'all',offset:0,limit:25
+      }))
+    await userEvent.selectOptions(within(panel).getByRole('combobox',{name:'Country match completion'}),'walkover')
+    await userEvent.selectOptions(within(panel).getByRole('combobox',{name:'Country match outcome'}),'loss')
+    await waitFor(()=>expect(api.getCountrySavedMatchRecords).toHaveBeenCalledWith(
+      'run-a','branch-a','CZE','head-a',{
+        seasonIndex:1,resultKind:'walkover',outcome:'loss',offset:0,limit:25
+      }))
+    await waitFor(()=>expect(within(panel).getByRole('table',{name:'Country canonical saved matches'}))
+      .toHaveTextContent('2001/2002'))
+    expect(panel).toHaveTextContent('Walkover')
+    expect(panel).toHaveTextContent('18')
+    expect(within(panel).getByRole('link',{name:'Match filtered'})).toHaveAttribute(
+      'href','/admin/runs/run-a/people/winner-filtered/matches/event-filtered/filtered')
+  })
+  it('paginates matches server-side and resets to first page when a filter changes',async()=>{
+    api.getCountrySavedMatchRecords.mockImplementation(async (_r:string,_b:string,_c:string,
+      rev:string,opts:Parameters<typeof savedMatchResult>[1])=>{
+      const count=opts.outcome==='win'?1:26
+      const rows=Array.from({length:Math.max(0,Math.min(opts.limit,count-opts.offset))},(_,i)=>
+        matchRow('m'+(opts.offset+i)))
+      return savedMatchResult(rev,opts,rows,count)
+    })
+    mountWorld('/admin/runs/run-a/world/countries/CZE?tab=records')
+    const panel=await screen.findByLabelText('Country saved match records')
+    await waitFor(()=>expect(within(panel).getByRole('table',{name:'Country canonical saved matches'}))
+      .toHaveTextContent('Open m0'))
+    expect(within(panel).getByLabelText('Country match pagination')).toHaveTextContent('Page 1 / 2')
+    await userEvent.click(within(panel).getByRole('button',{name:'Next →'}))
+    await waitFor(()=>expect(api.getCountrySavedMatchRecords).toHaveBeenCalledWith(
+      'run-a','branch-a','CZE','head-a',{
+        seasonIndex:null,resultKind:'all',outcome:'all',offset:25,limit:25
+      }))
+    await waitFor(()=>expect(within(panel).getByRole('table',{name:'Country canonical saved matches'}))
+      .toHaveTextContent('Open m25'))
+    await userEvent.selectOptions(within(panel).getByRole('combobox',{name:'Country match outcome'}),'win')
+    await waitFor(()=>expect(api.getCountrySavedMatchRecords).toHaveBeenCalledWith(
+      'run-a','branch-a','CZE','head-a',{
+        seasonIndex:null,resultKind:'all',outcome:'win',offset:0,limit:25
+      }))
+    await waitFor(()=>expect(within(panel).getByLabelText('Country match pagination'))
+      .toHaveTextContent('Page 1 / 1'))
+  })
+  it('uses historical Saved Revision for matches without present links or current source leaks',async()=>{
+    api.getCountrySavedMatchRecords.mockImplementation(async (_r:string,_b:string,_c:string,
+      rev:string,opts:Parameters<typeof savedMatchResult>[1])=>
+      savedMatchResult(rev,opts,[matchRow('historic')],1))
+    mountWorld('/admin/runs/run-a/world/countries/CZE?tab=records&revision=rev-old')
+    const panel=await screen.findByLabelText('Country saved match records')
+    await waitFor(()=>expect(panel).toHaveTextContent('Open historic'))
+    expect(api.getCountrySavedMatchRecords).toHaveBeenCalledWith(
+      'run-a','branch-a','CZE','rev-old',{
+        seasonIndex:null,resultKind:'all',outcome:'all',offset:0,limit:25
+      })
+    expect(within(panel).queryByRole('link',{name:'Match historic'})).not.toBeInTheDocument()
+    expect(within(panel).queryByRole('link',{name:'Winner historic'})).not.toBeInTheDocument()
+    expect(api.getRunPackageState).not.toHaveBeenCalled()
+  })
+  it('never requests saved matches without an authoritative Saved Revision',async()=>{
+    context.branch.saved_head_revision_id=''
+    mountWorld('/admin/runs/run-a/world/countries/CZE?tab=records')
+    const panel=await screen.findByLabelText('Country saved match records')
+    expect(panel).toHaveTextContent('No Saved Revision')
+    expect(api.getCountrySavedMatchRecords).not.toHaveBeenCalled()
+  })
+  it('reports inaccessible match source instead of displaying made-up zeros',async()=>{
+    api.getCountrySavedMatchRecords.mockRejectedValue(new Error('409 invalid national identity'))
+    mountWorld('/admin/runs/run-a/world/countries/CZE?tab=records')
+    const panel=await screen.findByLabelText('Country saved match records')
+    await waitFor(()=>expect(within(panel).getByRole('alert'))
+      .toHaveTextContent('invalid national identity'))
+    expect(within(panel).queryByLabelText('Country saved match totals')).not.toBeInTheDocument()
   })
 
 })

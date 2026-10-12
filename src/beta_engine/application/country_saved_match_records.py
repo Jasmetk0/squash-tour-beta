@@ -59,6 +59,13 @@ class CountrySavedMatchRecords(BaseModel):
     hosted_played_matches: int = Field(ge=0)
     hosted_walkovers: int = Field(ge=0)
     country_match_count: int = Field(ge=0)
+    # Filters are applied server-side AFTER every canonical result is validated,
+    # and BEFORE paging; lifetime totals above are always unfiltered.
+    available_seasons: tuple[int, ...]
+    season_index: int | None = Field(default=None, ge=0, le=49)
+    result_kind: Literal["all", "played", "walkover"] = "all"
+    outcome: Literal["all", "win", "loss"] = "all"
+    filtered_match_count: int = Field(ge=0)
     offset: int = Field(ge=0)
     limit: int = Field(ge=1, le=50)
     has_more: bool
@@ -72,6 +79,9 @@ def resolve_country_saved_match_records(
     initial_world: InitialWorldState | None,
     prospect_source: RunProspectSourceSnapshot | None,
     offset: int = 0, limit: int = 25,
+    season_index: int | None = None,
+    result_kind: Literal["all", "played", "walkover"] = "all",
+    outcome: Literal["all", "win", "loss"] = "all",
 ) -> CountrySavedMatchRecords:
     if len(country_code) != 3 or not country_code.isalpha() or country_code != country_code.upper():
         raise ValueError("Country match records requires uppercase ISO-like country code")
@@ -79,6 +89,10 @@ def resolve_country_saved_match_records(
         raise ValueError("Country match records requires exact Run/Branch/Revision")
     if offset < 0 or not 1 <= limit <= 50:
         raise ValueError("Country match records cursor is invalid")
+    if season_index is not None and (not isinstance(season_index, int) or not 0 <= season_index <= 49):
+        raise ValueError("Country match records season filter is invalid")
+    if result_kind not in ("all", "played", "walkover") or outcome not in ("all", "win", "loss"):
+        raise ValueError("Country match records result filter is invalid")
     if packages is not None and (packages.run_id, packages.branch_id) != (run_id, revision_branch_id):
         raise ValueError("Saved Calendar belongs to a foreign Run/Branch")
     if ranking is not None and (ranking.run_id, ranking.branch_id) != (run_id, revision_branch_id):
@@ -169,6 +183,15 @@ def resolve_country_saved_match_records(
         x.event_id, x.round_number, x.match_id), reverse=True)
     own = tuple(row for row in matches if
         row.winner_country == country_code or row.loser_country == country_code)
+    # Work with the complete verified result set. Filtering just a 25-row page
+    # would silently make season/results searches incomplete.
+    filtered = tuple(row for row in own if
+        (season_index is None or _season_index(row.season) == season_index)
+        and (result_kind == "all" or row.completion == result_kind)
+        and (outcome == "all" or (
+            row.winner_country == country_code if outcome == "win"
+            else row.loser_country == country_code
+        )))
     return CountrySavedMatchRecords(
         run_id=run_id, branch_id=selected_branch_id, revision_branch_id=revision_branch_id,
         saved_revision_id=saved_revision_id, country_code=country_code,
@@ -182,7 +205,10 @@ def resolve_country_saved_match_records(
         country_walkover_losses=sum(x.completion == "walkover" and x.loser_country == country_code for x in own),
         hosted_played_matches=sum(x.completion == "played" and x.host_country == country_code for x in matches),
         hosted_walkovers=sum(x.completion == "walkover" and x.host_country == country_code for x in matches),
-        country_match_count=len(own), offset=offset, limit=limit,
-        has_more=offset + limit < len(own),
-        matches=own[offset:offset + limit],
+        country_match_count=len(own),
+        available_seasons=tuple(sorted({_season_index(row.season) for row in own})),
+        season_index=season_index, result_kind=result_kind, outcome=outcome,
+        filtered_match_count=len(filtered), offset=offset, limit=limit,
+        has_more=offset + limit < len(filtered),
+        matches=filtered[offset:offset + limit],
     )

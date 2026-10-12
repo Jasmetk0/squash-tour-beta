@@ -1,5 +1,5 @@
 """Exact Saved Revision Country Match Records, read-only and Branch-reachable."""
-from typing import Annotated
+from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
@@ -30,6 +30,9 @@ def get_country_match_records(
     revision_id: str = Query(min_length=1, max_length=128),
     offset: int = Query(default=0, ge=0),
     limit: int = Query(default=25, ge=1, le=50),
+    season_index: int | None = Query(default=None, ge=0, le=49),
+    result_kind: Literal["all", "played", "walkover"] = Query(default="all"),
+    outcome: Literal["all", "win", "loss"] = Query(default="all"),
 ) -> CountrySavedMatchRecords:
     if not country_code.isalpha() or not country_code.isupper() or len(country_code) != 3:
         raise HTTPException(status_code=422, detail="Country code must be three uppercase letters")
@@ -56,7 +59,8 @@ def get_country_match_records(
                 payload, run_id=run_id, branch_id=origin,
             ),
             prospect_source=load_saved_run_prospect_source(payload, run_id=run_id),
-            offset=offset, limit=limit,
+            offset=offset, limit=limit, season_index=season_index,
+            result_kind=result_kind, outcome=outcome,
         )
     except SavedRevisionHistoryNotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc

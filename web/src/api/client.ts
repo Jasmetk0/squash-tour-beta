@@ -4417,3 +4417,70 @@ export async function getRunCountryRecords(
     throw new Error('Country Records scope or published result evidence is invalid')
   return data
 }
+
+/** Filters and paging are applied by the Saved Revision backend before slicing rows. */
+export async function getCountrySavedMatchRecords(
+  runId:string,branchId:string,countryCode:string,revisionId:string,
+  opts:{seasonIndex:number|null;resultKind:import('./types').CountryMatchResultKind;
+    outcome:import('./types').CountryMatchOutcome;offset:number;limit:number}
+):Promise<import('./types').CountrySavedMatchRecords>{
+  if(!runId||!branchId||!revisionId.trim()||!/^[A-Z]{3}$/.test(countryCode)||
+    (opts.seasonIndex!==null&&(!Number.isInteger(opts.seasonIndex)||opts.seasonIndex<0||opts.seasonIndex>49))||
+    !['all','played','walkover'].includes(opts.resultKind)||
+    !['all','win','loss'].includes(opts.outcome)||
+    !Number.isSafeInteger(opts.offset)||opts.offset<0||
+    !Number.isSafeInteger(opts.limit)||opts.limit<1||opts.limit>50)
+    throw new Error('Country saved match request scope and filters are invalid')
+  const args=new URLSearchParams({
+    revision_id:revisionId,offset:String(opts.offset),limit:String(opts.limit),
+    result_kind:opts.resultKind,outcome:opts.outcome
+  })
+  if(opts.seasonIndex!==null)args.set('season_index',String(opts.seasonIndex))
+  const data=await request<import('./types').CountrySavedMatchRecords>(
+    '/admin/runs/'+encodeURIComponent(runId)+'/branches/'+encodeURIComponent(branchId)+
+    '/country-match-records/'+encodeURIComponent(countryCode)+'?'+args.toString()
+  )
+  const validCount=(n:number)=>Number.isSafeInteger(n)&&n>=0
+  const validCountry=(c:string)=>/^[A-Z]{3}$/.test(c)
+  const validMatch=(m:import('./types').CountrySavedMatch)=>Boolean(
+    m.event_id&&m.event_name&&m.season&&m.match_id&&m.scoreline.trim()&&
+    m.winner_player_id&&m.winner_name&&m.loser_player_id&&m.loser_name&&
+    m.winner_player_id!==m.loser_player_id&&validCountry(m.winner_country)&&
+    validCountry(m.loser_country)&&validCountry(m.host_country)&&
+    (m.winner_country===countryCode||m.loser_country===countryCode)&&
+    ['qualification','main','group','knockout'].includes(m.draw_type)&&
+    ['played','walkover'].includes(m.completion)&&
+    Number.isInteger(m.round_number)&&m.round_number>=1&&
+    Number.isInteger(m.season_week)&&m.season_week>=1&&m.season_week<=61&&
+    (opts.seasonIndex===null||m.season.startsWith(String(opts.seasonIndex+2000)+'/'))&&
+    (opts.resultKind==='all'||m.completion===opts.resultKind)&&
+    (opts.outcome==='all'||(opts.outcome==='win'?m.winner_country:m.loser_country)===countryCode))
+  const seasonOk=Array.isArray(data.available_seasons)&&
+    data.available_seasons.every((s,i)=>Number.isInteger(s)&&s>=0&&s<=49&&
+      (i===0||s>data.available_seasons[i-1]))
+  const counts=[data.published_event_count,data.total_played_matches,data.total_walkovers,
+    data.country_played_wins,data.country_played_losses,data.country_walkover_wins,
+    data.country_walkover_losses,data.hosted_played_matches,data.hosted_walkovers,
+    data.country_match_count,data.filtered_match_count]
+  if(data.schema_version!=='country_saved_match_records.v1'||
+    data.source!=='reachable_saved_revision'||data.run_id!==runId||
+    data.branch_id!==branchId||!data.revision_branch_id||
+    data.saved_revision_id!==revisionId||data.country_code!==countryCode||
+    !['empty','ready'].includes(data.calendar_status)||
+    data.season_index!==opts.seasonIndex||data.result_kind!==opts.resultKind||
+    data.outcome!==opts.outcome||data.offset!==opts.offset||data.limit!==opts.limit||
+    counts.some(n=>!validCount(n))||data.filtered_match_count>data.country_match_count||
+    data.country_played_wins>data.total_played_matches||
+    data.country_played_losses>data.total_played_matches||
+    data.country_walkover_wins>data.total_walkovers||
+    data.country_walkover_losses>data.total_walkovers||
+    data.hosted_played_matches>data.total_played_matches||
+    data.hosted_walkovers>data.total_walkovers||
+    !seasonOk||!Array.isArray(data.matches)||data.matches.length>opts.limit||
+    data.matches.length!==Math.max(0,Math.min(opts.limit,data.filtered_match_count-opts.offset))||
+    data.matches.some(m=>!validMatch(m))||
+    new Set(data.matches.map(m=>m.event_id+'\\0'+m.match_id)).size!==data.matches.length||
+    data.has_more!==(opts.offset+opts.limit<data.filtered_match_count))
+    throw new Error('Country matches differ from the selected exact Saved Revision or filters')
+  return data
+}

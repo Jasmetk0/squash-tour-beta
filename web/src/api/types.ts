@@ -8635,3 +8635,26 @@ export type RunCountryRecords = {
   hosted_published_results:number
   player_results:RunCountryRecordResult[];hosted_results:RunCountryRecordResult[]
 }
+
+/** Canonical played matches of players of a country, one exact reachable Saved Revision. */
+export type CountrySavedMatch = {
+  event_id:string;event_name:string;season:string;season_week:number;match_id:string
+  draw_type:'qualification'|'main'|'group'|'knockout';round_number:number
+  winner_player_id:string;winner_name:string;winner_country:string
+  loser_player_id:string;loser_name:string;loser_country:string;host_country:string
+  completion:'played'|'walkover';scoreline:string
+}
+export type CountryMatchResultKind = 'all'|'played'|'walkover'
+export type CountryMatchOutcome = 'all'|'win'|'loss'
+export type CountrySavedMatchRecords = {
+  schema_version:'country_saved_match_records.v1';source:'reachable_saved_revision'
+  run_id:string;branch_id:string;revision_branch_id:string;saved_revision_id:string
+  country_code:string;calendar_status:'empty'|'ready'
+  published_event_count:number;total_played_matches:number;total_walkovers:number
+  country_played_wins:number;country_played_losses:number
+  country_walkover_wins:number;country_walkover_losses:number
+  hosted_played_matches:number;hosted_walkovers:number;country_match_count:number
+  available_seasons:number[];season_index:number|null
+  result_kind:CountryMatchResultKind;outcome:CountryMatchOutcome;filtered_match_count:number
+  offset:number;limit:number;has_more:boolean;matches:CountrySavedMatch[]
+}

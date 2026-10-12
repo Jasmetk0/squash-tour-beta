@@ -11,6 +11,7 @@ from beta_engine.application.run_package_service import RunPackageService
 from beta_engine.application.world_package_run_adapter import WorldPackageRunAdapter
 from beta_engine.domain.players.initial_pool import (
     InitialPlayerPoolGenerator, InitialPoolResult, InitialPoolGeneratedPlayer,
+    InitialPoolNamingPolicy,
 )
 from beta_engine.domain.run_packages import canonical_hash
 
@@ -197,6 +198,8 @@ class RunWorldInitialPoolPreviewRequest(BaseModel):
     )
     season: str = Field(default="2000/2001", min_length=4, max_length=32)
     seed: int
+    # Opt-in preserves old request fingerprints and archived proposal replay.
+    naming_policy: InitialPoolNamingPolicy | None = None
     target_pool_size: int = Field(default=128, ge=1, le=2000)
     country_code: str | None = Field(default=None, min_length=3, max_length=3)
     region: str | None = Field(default=None, min_length=1)  # Legacy OR predicate
@@ -284,6 +287,8 @@ class RunWorldInitialPoolPreviewRequest(BaseModel):
         already stored by the current buuk production preview.
         """
         payload = self.model_dump(mode="json")
+        if self.naming_policy is None:
+            payload.pop("naming_policy", None)  # old request bytes unchanged
         if payload.get("geographic_region") is None:
             payload.pop("geographic_region", None)
         if payload.get("travel_region") is None:
@@ -465,6 +470,7 @@ class RunWorldInitialPoolPreviewService:
                 {quota.country_code: quota.count for quota in request.country_quotas}
                 if request.country_quotas else None
             ),
+            naming_policy=request.naming_policy,
             dry_run=True,
         )
         if preserved:

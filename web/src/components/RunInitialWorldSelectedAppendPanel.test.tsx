@@ -78,6 +78,22 @@ beforeEach(()=>{
 })
 
 describe('saved InitialWorld Add Selected',()=>{
+  it('shows Czech Add Selected labels without changing the saved provenance', async () => {
+    renderWithRoute(<RunInitialWorldSelectedAppendPanel {...props} locale="cs"/>, '/admin/runs/run-one')
+    expect(screen.getByText('Přidat vybrané hráče do uloženého InitialWorld')).toBeInTheDocument()
+    expect(screen.getByRole('button',{name:'Zobrazit zdrojové hráče (jen pro čtení)'})).toBeInTheDocument()
+    await userEvent.clear(screen.getByRole('spinbutton',{name:'Velikost zdrojové dávky k přidání'}))
+    await userEvent.type(screen.getByRole('spinbutton',{name:'Velikost zdrojové dávky k přidání'}),'3')
+    await userEvent.click(screen.getByRole('button',{name:'Zobrazit zdrojové hráče (jen pro čtení)'}))
+    expect(await screen.findByText(/Zdrojový návrh: 3 hráčů/)).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('checkbox',{name:'Select for bulk action P-2000-BOG-0002'}))
+    await userEvent.click(screen.getByRole('button',{name:'Ověřit výběr na serveru (bez zápisu)'}))
+    await waitFor(()=>expect(api.previewSelectedInitialWorldAppend).toHaveBeenCalledTimes(1))
+    const request=api.previewSelectedInitialWorldAppend.mock.calls[0][2]
+    expect(request.append.audit_label).toBe('Add reviewed players')
+    expect(api.commitSelectedInitialWorldAppend).not.toHaveBeenCalled()
+  })
+
   it('selects only new identities, server reviews and commits with exact fingerprint',async()=>{
     renderWithRoute(<RunInitialWorldSelectedAppendPanel {...props}/>, '/admin/runs/run-one')
     await userEvent.clear(screen.getByRole('spinbutton',{name:'Selected append source size'}))

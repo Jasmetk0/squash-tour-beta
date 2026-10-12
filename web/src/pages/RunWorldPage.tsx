@@ -40,7 +40,7 @@ function countryUrl(runId:string,code:string,params:URLSearchParams):string {
 function TabLink({active,to,label}:{active:boolean;to:string;label:string}):JSX.Element {
   return <Link aria-current={active?'page':undefined} to={to}>{label}</Link>
 }
-function CountryDetail({runId,branchId,savedHead,country,world,params,cs,language,history,historyError}:{
+function CountryDetail({runId,branchId,savedHead,country,world,params,cs,language,selectedWorldYear,history,historyError}:{
   runId:string;branchId:string;savedHead:string|null;country:RunWorldCountry;world:RunWorldOverview;
   params:URLSearchParams;cs:boolean;language:string;selectedWorldYear:number
   history:RunWorldCountryHistory|null;historyError:string|null

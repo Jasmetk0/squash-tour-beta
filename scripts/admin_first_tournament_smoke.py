@@ -220,6 +220,11 @@ def setup_run(page, base_url: str, artifacts: Path) -> str:
     kept_player_id = kept_row.locator('input[type="checkbox"]').get_attribute(
         "aria-label"
     ).removeprefix("Keep ")
+    # V79: the Run-owned source country name is followed by the stable
+    # country-local serial. Table sort/pagination does not assign numbers.
+    assert kept_player_text.endswith(
+        f" {int(kept_player_id.rsplit('-', 1)[-1])}"
+    ), "Generated display name did not follow country + serial naming"
     kept_row.locator('input[type="checkbox"]').check()
     expect(page.get_by_text("Kept: 1 / 64", exact=False)).to_be_visible()
     page.get_by_label("Session Keep regeneration seed").fill("4202")

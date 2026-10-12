@@ -217,6 +217,9 @@ def setup_run(page, base_url: str, artifacts: Path) -> str:
     # Field locks from preview are session-only and not permanent career locks.
     kept_row = inspector.locator("tbody tr").first
     kept_player_text = kept_row.locator("td").nth(1).inner_text()
+    kept_player_id = kept_row.locator('input[type="checkbox"]').get_attribute(
+        "aria-label"
+    ).removeprefix("Keep ")
     kept_row.locator('input[type="checkbox"]').check()
     expect(page.get_by_text("Kept: 1 / 64", exact=False)).to_be_visible()
     page.get_by_label("Session Keep regeneration seed").fill("4202")
@@ -250,6 +253,47 @@ def setup_run(page, base_url: str, artifacts: Path) -> str:
     expect(page.get_by_text("Verified session Keep regenerations: 2", exact=False)).to_be_visible()
     expect(inspector.get_by_role("status")).to_contain_text("Showing 64 / 64")
     assert kept_player_text in inspector.inner_text(), "Restored saved proposal lost Keep identity"
+    # Real browser + production Python + SQLite: modify an inherited manual
+    # value after two Keep passes, then restore its genuinely sampled value.
+    kept_editor_button = inspector.get_by_role(
+        "button", name=f"Edit generated player {kept_player_id}",
+    )
+    kept_editor_button.click()
+    editor = page.get_by_role("region", name="Generated player field editor")
+    technique = editor.get_by_role("spinbutton", name="Preview field attributes.technique")
+    expect(technique).to_have_value(str(changed))
+    later = changed + 1 if changed < 99 else changed - 1
+    technique.fill(str(later))
+    editor.get_by_role("button", name="Lock preview field attributes.technique").click()
+    expect(page.get_by_role("button", name="Adopt generated players")).to_be_disabled()
+    click("Apply field locks to preview")
+    editor = page.get_by_role("region", name="Generated player field editor")
+    expect(editor.get_by_role("spinbutton", name="Preview field attributes.technique")).to_have_value(str(later))
+    editor.get_by_role("button", name="Automatic preview field attributes.technique").click()
+    expect(page.get_by_role("button", name="Adopt generated players")).to_be_disabled()
+    click("Apply field locks to preview")
+    editor = page.get_by_role("region", name="Generated player field editor")
+    # Must be pre-edit sampled source, not the value manually kept twice.
+    expect(editor.get_by_role("spinbutton", name="Preview field attributes.technique")).to_have_value(str(previous))
+    editor.get_by_role("button", name="Close").click()
+    page.get_by_label("Generation proposal name").fill("Historical Automatic V2")
+    click("Save generation proposal")
+    expect(page.get_by_text("Generation proposal saved separately", exact=False)).to_be_visible()
+    page.reload()
+    browser_settle(page)
+    proposal_option = page.get_by_label("Select saved generation proposal").locator(
+        "option"
+    ).filter(has_text="Historical Automatic V2")
+    proposal_id = proposal_option.get_attribute("value")
+    page.get_by_label("Select saved generation proposal").select_option(proposal_id)
+    click("Open saved proposal")
+    expect(page.get_by_text("Exact saved review restored from SQLite", exact=False)).to_be_visible()
+    inspector = page.locator(".generated-review-inspector")
+    inspector.get_by_role("button", name=f"Edit generated player {kept_player_id}").click()
+    restored_editor = page.get_by_role("region", name="Generated player field editor")
+    expect(restored_editor.get_by_role("spinbutton", name="Preview field attributes.technique")).to_have_value(str(previous))
+    restored_editor.get_by_role("button", name="Close").click()
+    print("BROWSER: authenticated edit and historic Automatic after two Keep passes restored from SQLite", flush=True)
     check("Approve InitialWorld adoption")
     click("Adopt generated players")
     check("Approve InitialWorld revision save")

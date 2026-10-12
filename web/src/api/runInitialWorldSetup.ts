@@ -13,12 +13,18 @@ export type GeneratedPlayerFieldKey =
   | 'attributes.recovery'
 
 /** Append-only, fingerprint-anchored edits and Keep steps (v2 opt-in). */
+export type RunWorldPreviewAutomaticField = {
+  player_id: string
+  field: GeneratedPlayerFieldKey
+}
+
 export type RunWorldVerifiedSessionStep = {
   kind: 'edit' | 'keep'
   source_preview_fingerprint: string
   seed: number
   keep_player_ids: string[]
   field_locks: RunWorldPreviewFieldLock[]
+  automatic_fields?: RunWorldPreviewAutomaticField[]
 }
 
 export type RunWorldExactCountryQuota = {
@@ -326,7 +332,19 @@ export function verifiedInitialWorldPreview(
       session.session_origin_fingerprint ?? ''
     ) || !sessionSteps.length || sessionSteps.length > 48 ||
        sessionSteps.filter(step => step.kind === 'keep').length > 17) return false
-    if (sessionSteps.some((step, index) =>
+    if (sessionSteps.some(step => {
+      const automatic = step.automatic_fields ?? []
+      return !Array.isArray(automatic) || automatic.length > 2000 ||
+        automatic.some(item => !item || typeof item.player_id !== 'string' ||
+          !item.player_id || item.player_id.length > 128 ||
+          !PREVIEW_FIELD_KEYS.includes(item.field)) ||
+        JSON.stringify(automatic) !== JSON.stringify(
+          [...automatic].sort((a,b)=>a.player_id.localeCompare(b.player_id) ||
+            a.field.localeCompare(b.field))) ||
+        new Set(automatic.map(item=>item.player_id+':'+item.field)).size !== automatic.length ||
+        automatic.some(item=>step.field_locks.some(lock=>
+          lock.player_id === item.player_id && lock.field === item.field)) ||
+        (step.kind === 'keep' && automatic.length > 0) ||
       (step.kind !== 'edit' && step.kind !== 'keep') ||
       !/^[0-9a-f]{64}$/.test(step.source_preview_fingerprint) ||
       !Number.isSafeInteger(step.seed) ||
@@ -337,7 +355,7 @@ export function verifiedInitialWorldPreview(
       step.field_locks.length > 2000 ||
       JSON.stringify(step.field_locks) !== JSON.stringify(orderedPreviewFieldLocks(step.field_locks)) ||
       new Set(step.field_locks.map(lock=>lock.player_id+':'+lock.field)).size !== step.field_locks.length
-    )) return false
+    })) return false
     const last = sessionSteps[sessionSteps.length-1]
     if (last.seed !== session.seed ||
       JSON.stringify(last.field_locks) !== JSON.stringify(fieldLocks)) return false

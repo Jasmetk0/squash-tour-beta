@@ -89,3 +89,91 @@ def test_preview_and_commit_reference_same_read_only_guard():
     assert "require_pristine_initial_world_append_eligible(session, previous=current)" in preview
     assert "require_pristine_initial_world_append_eligible(session, previous=previous)" in commit
     assert "BEGIN IMMEDIATE" in commit
+
+
+def test_http_preview_rejects_published_ranking_before_generating(
+    tmp_path, monkeypatch
+):
+    from types import SimpleNamespace as NS
+    from fastapi import HTTPException
+    from beta_engine.api.routers import admin_players
+    repo, run_id, branch_id, initial, _, command, _, saved = _prepared(
+        tmp_path, monkeypatch
+    )
+    with repo._session_factory.begin() as session:
+        session.add(PublishedOfficialRankingModel(
+            run_id=run_id, branch_id=branch_id, week_ordinal=0,
+            snapshot_fingerprint=SHA, payload_json="{}",
+        ))
+    monkeypatch.setattr(
+        admin_players, "_assert_reviewed_generation_context", lambda **kwargs: None
+    )
+    request = admin_players.SelectedInitialWorldAppendScopedRequest(
+        append=command,
+        expected_head=saved.saved_revision.revision_id,
+        expected_draft_version=saved.working_draft.draft_version,
+        expected_package_fingerprint=SHA,
+        expected_initial_world_fingerprint=initial.fingerprint,
+    )
+
+    class MustNotGenerate:
+        def preview(self, **kwargs):
+            raise AssertionError("Blocked preflight must not generate a new pool")
+
+    baseline = _database_digest(tmp_path / "selected-append.sqlite")
+    with pytest.raises(HTTPException) as conflict:
+        admin_players.preview_selected_initial_world_append(
+            run_id=run_id, branch_id=branch_id, payload=request,
+            runtime=NS(repository=repo), package_service=NS(),
+            service=MustNotGenerate(),
+        )
+    assert conflict.value.status_code == 409
+    assert "ranking or sporting activity" in conflict.value.detail["message"]
+    assert _database_digest(tmp_path / "selected-append.sqlite") == baseline
+
+
+def test_preflight_success_then_ranking_commit_rechecks_atomically(
+    tmp_path, monkeypatch
+):
+    from types import SimpleNamespace as NS
+    from fastapi import HTTPException
+    from beta_engine.api.routers import admin_players
+    from beta_engine.application.run_world_initial_world_service import (
+        RunWorldInitialWorldService,
+    )
+    from tests.application.test_run_world_session_keep import service
+    repo, run_id, branch_id, initial, _, command, appended, saved = _prepared(
+        tmp_path, monkeypatch
+    )
+    monkeypatch.setattr(
+        admin_players, "_assert_reviewed_generation_context", lambda **kwargs: None
+    )
+    request = admin_players.SelectedInitialWorldAppendScopedRequest(
+        append=command,
+        expected_head=saved.saved_revision.revision_id,
+        expected_draft_version=saved.working_draft.draft_version,
+        expected_package_fingerprint=SHA,
+        expected_initial_world_fingerprint=initial.fingerprint,
+    )
+    args = dict(
+        run_id=run_id, branch_id=branch_id, payload=request,
+        runtime=NS(repository=repo), package_service=NS(),
+        service=RunWorldInitialWorldService(service()),
+    )
+    preview = admin_players.preview_selected_initial_world_append(**args)
+    assert preview["fingerprint"] == appended.fingerprint
+    with repo._session_factory.begin() as session:
+        session.add(PublishedOfficialRankingModel(
+            run_id=run_id, branch_id=branch_id, week_ordinal=0,
+            snapshot_fingerprint=SHA, payload_json="{}",
+        ))
+    baseline = _database_digest(tmp_path / "selected-append.sqlite")
+    with pytest.raises(HTTPException) as conflict:
+        admin_players.commit_selected_initial_world_append(
+            **args, expected=preview["fingerprint"]
+        )
+    assert conflict.value.status_code == 409
+    assert _database_digest(tmp_path / "selected-append.sqlite") == baseline
+    assert repo.get_initial_world(run_id=run_id, branch_id=branch_id) == initial
+    assert (repo.get_branch_revision_state(branch_id=branch_id)
+            .saved_revision.revision_id == saved.saved_revision.revision_id)

@@ -1,0 +1,75 @@
+name: Pre-alpha Selected Append Browser
+
+# The expensive browser gate runs only when its implementation or scenario changes.
+# PR pushes supersede older attempts; manual release gates are unaffected.
+concurrency:
+  group: ${{ github.workflow }}-pr-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/prealpha-selected-append-browser.yml'
+      - 'scripts/admin_selected_append_browser.py'
+      - 'web/src/components/RunInitialWorldSelectedAppendPanel.tsx'
+      - 'src/beta_engine/infrastructure/db/selected_initial_world_append.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  selected-append:
+    name: Real Add Selected, SQLite Save, history and backend restart
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: pyproject.toml
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: Install engine and Playwright
+        run: python -m pip install -e . playwright
+      - name: Install frontend
+        run: npm --prefix web ci
+      - name: Prepare Chromium
+        run: |
+          if [ -x /usr/bin/google-chrome ]; then
+            echo "CHROME_BIN=/usr/bin/google-chrome" >> "$GITHUB_ENV"
+          else
+            python -m playwright install --with-deps chromium
+            echo "CHROME_BIN=$(python -c 'from playwright.sync_api import sync_playwright; p=sync_playwright().start(); print(p.chromium.executable_path); p.stop()')" >> "$GITHUB_ENV"
+          fi
+      - name: Start Vite against isolated production backend
+        run: |
+          VITE_API_BASE_URL=http://127.0.0.1:8020 npm --prefix web run dev -- --host 127.0.0.1 --port 5173 --strictPort > "$RUNNER_TEMP/append-vite.log" 2>&1 &
+          for attempt in $(seq 1 90); do
+            if curl --fail --silent http://127.0.0.1:5173/ > /dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat "$RUNNER_TEMP/append-vite.log"
+          exit 1
+      - name: Real Add Selected, SQL history and restart
+        run: |
+          python scripts/admin_selected_append_browser.py \
+            --acceptance "$RUNNER_TEMP/selected-append-run" \
+            --port 8020 --base-url http://127.0.0.1:5173 \
+            --chromium "$CHROME_BIN"
+      - name: Preserve real browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: selected-append-browser-${{ github.run_id }}
+          path: |
+            ${{ runner.temp }}/selected-append-run/artifacts/
+            ${{ runner.temp }}/selected-append-run/server.log
+            ${{ runner.temp }}/append-vite.log
+          if-no-files-found: warn
+          retention-days: 14

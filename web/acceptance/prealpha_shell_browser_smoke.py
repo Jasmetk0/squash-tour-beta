@@ -315,6 +315,16 @@ def main() -> None:
             assert len(dialogs) == before + 2, dialogs
             evidence["run_history_cancel_accept"] = True
 
+            # World route must truthfully report missing World on the genuinely
+            # empty, saved source Branch, with no simulated countries.
+            page.goto(base + "/admin/runs/" + run_id
+                      + "/world?branch=" + source_branch["branch_id"])
+            expect(page.get_by_role("heading", name="Run World")).to_be_visible()
+            expect(page.get_by_role("heading", name="No World assigned yet")).to_be_visible()
+            assert page.get_by_role("table", name="Run World countries").count() == 0
+            assert page.locator(".app-shell--admin").get_attribute("data-run-form-edited") is None
+            evidence["world_empty_run_no_fake_countries"] = True
+
             # Selectively apply exactly one real World source entity into the
             # alternative Branch, then Save; unselected entities never appear.
             assert worlds, "This acceptance requires a real World source registry"
@@ -373,6 +383,21 @@ def main() -> None:
             evidence["selective_world_saved_one_entity"] = world_id
             evidence["global_apply_guard_and_draft_recovery"] = True
             page.screenshot(path=str(artifacts / "04-selective-world-saved.png"), full_page=True)
+
+            # An intentionally partial copied World (only one source entity)
+            # must not masquerade as a complete country roster. This is a
+            # genuinely saved partial Run-owned copy, not a mocked API response.
+            page.goto(base + "/admin/runs/" + run_id
+                      + "/world?branch=" + created_branch["branch_id"])
+            expect(page.get_by_role("heading", name="Run World")).to_be_visible()
+            expect(page.get_by_role("alert").filter(
+                has_text="Run World metadata is incomplete"
+            ).or_(page.get_by_role("alert").filter(
+                has_text="Run World contains no materialized countries"
+            ))).to_be_visible()
+            assert page.get_by_role("table", name="Run World countries").count() == 0
+            assert page.locator(".app-shell--admin").get_attribute("data-run-form-edited") is None
+            evidence["world_partial_saved_copy_fails_closed"] = True
 
             page.get_by_role("link", name="Squash Engine global Home").click()
             expect(page.get_by_role("heading", name="Squash Engine Home")).to_be_visible()

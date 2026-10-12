@@ -42,7 +42,7 @@ function TabLink({active,to,label}:{active:boolean;to:string;label:string}):JSX.
 }
 function CountryDetail({runId,branchId,savedHead,country,world,params,cs,language,history,historyError}:{
   runId:string;branchId:string;savedHead:string|null;country:RunWorldCountry;world:RunWorldOverview;
-  params:URLSearchParams;cs:boolean;language:string
+  params:URLSearchParams;cs:boolean;language:string;selectedWorldYear:number
   history:RunWorldCountryHistory|null;historyError:string|null
 }):JSX.Element {
   const available=['overview','population','ratings','players','records','tournaments']
@@ -98,7 +98,7 @@ function CountryDetail({runId,branchId,savedHead,country,world,params,cs,languag
     {active==='players'&&<RunWorldCountrySavedPlayers
       key={runId+':'+branchId+':'+(savedHead??'none')+':'+country.code}
       runId={runId} branchId={branchId} savedHead={savedHead}
-      countryCode={country.code} selectedWorldYear={Number(params.get('year')??startYear)}
+      countryCode={country.code} selectedWorldYear={selectedWorldYear}
       language={language==='cs'?'cs':'en'}
     />}
     {(active==='records'||active==='tournaments')&&<section className="section-subtle">
@@ -179,6 +179,7 @@ export function RunWorldPage():JSX.Element {
       {countryCode ? (country?<CountryDetail runId={runId} branchId={branchId!}
           savedHead={selectedBranch?.saved_head_revision_id??null}
           country={country} world={world} params={params} cs={cs} language={language}
+          selectedWorldYear={year}
           history={historyProjection.history} historyError={historyProjection.error}/>
         :<p role="alert">{cs?'Země v tomto Run World neexistuje.':'Country does not exist in this Run World.'} <Link to={'/admin/runs/'+encodeURIComponent(runId)+'/world'}>{cs?'Zpět':'Back'}</Link></p>)
         :<>

@@ -1,3 +1,21 @@
+# 12 October 2026 — Country Saved HEAD players + World browser candidate
+
+Base `buuk 12e018ec2c41e29548ce51425b3d1c8e6081fd71`, merged #1403.
+The candidate connects the Country → Players & Talent tab to the **present-time
+canonical Saved Players inventory** of the selected Branch and immutable Saved
+Revision. Country code is a mandatory server-side filter, with strict response
+identity checking, 25-player server pagination, no guessed country roster,
+no default exposure of saved prepared/future prospects, and direct links to
+canonical saved player profiles. Selected World data year is explicitly
+distinguished from the present Saved HEAD player chronology. An unavailable
+owning Saved HEAD and inherited foreign HEAD remain fail-closed.
+World-specific real Chromium/SQLite shell smoke adds empty-world and partial
+Saved World read-negative flows without inventing country data or adding another
+unrelated CI workflow. No country historical player roster, future talent
+sampling, backend authority, world edit or sporting simulation added.
+
+## Prior dated checkpoint — preserved
+
 # 12 October 2026 — Run World Country History candidate (not merged)
 
 Base: `buuk a01585fe3ed47291fafd57c203a3b1f32f65a1d0`, merged #1402.

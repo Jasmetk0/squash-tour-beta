@@ -37,7 +37,7 @@ def _fixture():
                 "week": {"season_index": 0, "week": week + 1},
                 "source_initial_world_fingerprint": source,
                 "predecessor_fingerprint": None if week == 0 else "1" * 64,
-                "players": profiles,
+                "players": deepcopy(profiles),
             },
         }
     projections = {
@@ -64,10 +64,10 @@ def _fixture():
         "projections": {key: {0: value[0]} for key, value in projections.items()},
     }
     after = deepcopy(before)
-    after["revisions"] = [revision1, revision2]
+    after["revisions"] = [deepcopy(revision1), deepcopy(revision2)]
     after["published"][1] = {"payload_json": "week2 rank", "snapshot_fingerprint": "3" * 64}
     after["clock"][0]["current_ordinal"] = 1
-    after["projections"] = projections
+    after["projections"] = deepcopy(projections)
     return before, after
 
 

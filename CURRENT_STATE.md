@@ -1,3 +1,12 @@
+# Week-2 integrity comparator correction — 12 October 2026 (candidate, not yet merged)
+
+Baseline: actual `buuk 744c4093a65125b7d760a99846e146621661fffc`, merge #1396; no open PRs returned at inspection.
+This candidate checks Week-2 lifecycle, sporting and health `predecessor_fingerprint` against the persisted Week-1 projection fingerprint, and the Week-1/Week-2 world-clock ranking pointer against the respective published ranking fingerprint. It does not alter sporting logic or production persistence.
+
+**Verification boundary:** Pure comparator regressions and production Chromium/SQLite acceptance require execution on the candidate HEAD; a source edit alone is not a passing test or release gate. Keep the PR unmerged until these pass, including the actual browser flow and restart. Subsequent approved slices: initial Add Selected preflight/commit guard alignment, generator layout/localization, bulk Automatic/locks, Run World overview and country detail. The approved Master v79 remains target authority; canonical 57 attributes, 0–200 OVR and in-season intake remain unimplemented.
+
+## Prior dated checkpoint — preserved
+
 # Active audited checkpoint — Master v79 / 11 October 2026
 
 Actual buuk: `d1090495f3771e97995b94a6f1d119e7218a816b`, merge #1383.

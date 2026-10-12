@@ -60,13 +60,14 @@ def _fixture():
         "players": profiles, "revisions": [revision1],
         "published": {0: {"payload_json": "initial-rank", "snapshot_fingerprint": source}},
         "candidates": {0: {"payload_json": "candidate", "fingerprint": source}},
-        "clock": [{"current_ordinal": 0}],
+        "clock": [{"current_ordinal": 0, "ranking_fingerprint": source}],
         "projections": {key: {0: value[0]} for key, value in projections.items()},
     }
     after = deepcopy(before)
     after["revisions"] = [deepcopy(revision1), deepcopy(revision2)]
     after["published"][1] = {"payload_json": "week2 rank", "snapshot_fingerprint": "3" * 64}
     after["clock"][0]["current_ordinal"] = 1
+    after["clock"][0]["ranking_fingerprint"] = "3" * 64
     after["projections"] = deepcopy(projections)
     return before, after
 
@@ -105,6 +106,27 @@ def test_week2_comparator_rejects_stale_or_damaged_historical_authority(corrupti
         after["revisions"].pop()
     else:
         after["clock"][0]["current_ordinal"] = 0
+    with pytest.raises(AssertionError):
+        _pure_comparator()(before, after)
+
+
+@pytest.mark.parametrize("table", (
+    "player_lifecycle_week_states",
+    "player_sporting_week_states",
+    "player_health_week_states",
+))
+def test_week2_rejects_nonempty_incorrect_predecessor_per_projection(table):
+    before, after = _fixture()
+    after["projections"][table][1]["state"]["predecessor_fingerprint"] = "f" * 64
+    with pytest.raises(AssertionError):
+        _pure_comparator()(before, after)
+
+
+@pytest.mark.parametrize("week", (0, 1))
+def test_week2_rejects_world_clock_ranking_mismatch(week):
+    before, after = _fixture()
+    target = before if week == 0 else after
+    target["clock"][0]["ranking_fingerprint"] = "f" * 64
     with pytest.raises(AssertionError):
         _pure_comparator()(before, after)
 

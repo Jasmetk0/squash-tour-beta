@@ -112,8 +112,8 @@ describe('Run-owned World overview navigation',()=>{
     expect(screen.getByRole('table',{name:'Authored country rating years'})).toHaveTextContent('7.2')
     const details=screen.getAllByText('Value provenance details')
     await userEvent.click(details[0])
-    expect(screen.getByText('source-v2')).toBeInTheDocument()
-    expect(screen.getByText('source-v2#row1')).toBeInTheDocument()
+    expect(screen.getAllByText('source-v2').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('source-v2#row1').length).toBeGreaterThan(0)
     expect(screen.getByRole('link',{name:/Back to countries/})).toHaveAttribute(
       'href','/admin/runs/run-a/world?year=2019&q=cze')
   })

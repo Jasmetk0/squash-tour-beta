@@ -39,7 +39,7 @@ function countryUrl(runId:string,code:string,params:URLSearchParams):string {
 function TabLink({active,to,label}:{active:boolean;to:string;label:string}):JSX.Element {
   return <Link aria-current={active?'page':undefined} to={to}>{label}</Link>
 }
-function CountryDetail({runId,country,world,params,cs,language}:{
+function CountryDetail({runId,country,world,params,cs,language,history,historyError}:{
   runId:string;country:RunWorldCountry;world:RunWorldOverview;
   params:URLSearchParams;cs:boolean;language:string
   history:RunWorldCountryHistory|null;historyError:string|null

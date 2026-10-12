@@ -291,4 +291,50 @@ describe('Run-owned World overview navigation',()=>{
     expect(api.getRunPackageState).not.toHaveBeenCalled()
   })
 
+
+  it('shows saved hosted Editions from immutable HEAD, never template country or mutable draft',async()=>{
+    const fixture=worldFixture()
+    const entities=fixture.state!.entities as Record<string,unknown>[]
+    ;(fixture.state!.package_versions as Record<string,unknown>[]).push({
+      package_id:'calendar-2000-2001',package_type:'Calendar'
+    })
+    entities.push(
+      {source_package_id:'calendar-2000-2001',source_entity_id:'calendar.metadata',
+        entity_kind:'calendar.metadata.v1',payload:{season:'2000/2001'}},
+      {source_package_id:'calendar-2000-2001',source_entity_id:'edition-1',
+        entity_kind:'calendar.event.v1',payload:{event_id:'edition-1',
+          season:'2000/2001',season_week:5,event_name:'Brno World Open',
+          host_country:'CZE',host_city:'Brno',status:'planned',
+          template_snapshot:{host_country:'USA'}}}
+    )
+    api.getSavedRevision.mockResolvedValue({
+      ...historicalDetail('head-a','Saved Czechia'),
+      payload:{run:{run_id:'run-a'},branch:{branch_id:'branch-a'},content:{
+        run_package_state:{fingerprint:fixture.fingerprint,state:fixture.state}}}
+    })
+    mountWorld('/admin/runs/run-a/world/countries/CZE?tab=tournaments&year=2020')
+    expect(await screen.findByRole('table',{name:'Country tournament editions 2000/2001'}))
+      .toHaveTextContent('Brno World Open')
+    const panel=screen.getByLabelText('Country Run-owned tournaments')
+    expect(panel).toHaveTextContent('head-a')
+    expect(panel).toHaveTextContent('Brno (CZE)')
+    expect(panel).not.toHaveTextContent('USA')
+    expect(api.getSavedRevision).toHaveBeenCalledWith('run-a','branch-a','head-a')
+  })
+  it('does not substitute present saved HEAD or mutable World for a historical Calendar',async()=>{
+    mountWorld('/admin/runs/run-a/world/countries/CZE?tab=tournaments&revision=rev-old')
+    expect(await screen.findByLabelText('Country Run-owned tournaments')).toHaveTextContent(
+      'This saved revision has no Calendar Package')
+    expect(api.getRunPackageState).not.toHaveBeenCalled()
+    expect(api.getSavedRevision).toHaveBeenCalledWith('run-a','branch-a','rev-old')
+    expect(screen.queryByRole('link',{name:'Brno World Open'})).not.toBeInTheDocument()
+  })
+  it('reports absent Saved HEAD for tournaments without borrowing unsaved packages',async()=>{
+    context.branch.saved_head_revision_id=''
+    mountWorld('/admin/runs/run-a/world/countries/CZE?tab=tournaments')
+    expect(await screen.findByLabelText('Country Run-owned tournaments'))
+      .toHaveTextContent('No Saved Revision is available')
+    expect(api.getSavedRevision).not.toHaveBeenCalled()
+  })
+
 })

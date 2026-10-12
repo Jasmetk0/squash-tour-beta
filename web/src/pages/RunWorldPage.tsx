@@ -15,6 +15,9 @@ import { projectRunWorldCountryHistory } from './runWorldCountryHistory'
 import type { RunWorldCountryHistory } from './runWorldCountryHistory'
 import { RunWorldCountryHistoryPanel } from './RunWorldCountryHistoryPanel'
 import { RunWorldCountrySavedPlayers } from './RunWorldCountrySavedPlayers'
+import { RunWorldCountryTournaments } from './RunWorldCountryTournaments'
+import { projectCountryTournaments } from './runWorldCountryTournaments'
+import type { CountryTournaments } from './runWorldCountryTournaments'
 import type { RunWorldCountry, RunWorldOverview, WorldPopulation } from './runWorldReadModel'
 
 const startYear=2000
@@ -41,10 +44,12 @@ function countryUrl(runId:string,code:string,params:URLSearchParams):string {
 function TabLink({active,to,label}:{active:boolean;to:string;label:string}):JSX.Element {
   return <Link aria-current={active?'page':undefined} to={to}>{label}</Link>
 }
-function CountryDetail({runId,branchId,savedHead,historicalRevisionId,country,world,params,cs,language,selectedWorldYear,history,historyError}:{
+function CountryDetail({runId,branchId,savedHead,historicalRevisionId,country,world,params,cs,language,selectedWorldYear,history,historyError,tournaments,tournamentsError,tournamentsPending,tournamentSourceRevision,presentSeason,presentWeek}:{
   runId:string;branchId:string;savedHead:string|null;historicalRevisionId:string|null;country:RunWorldCountry;world:RunWorldOverview;
   params:URLSearchParams;cs:boolean;language:string;selectedWorldYear:number
   history:RunWorldCountryHistory|null;historyError:string|null
+  tournaments:CountryTournaments|null;tournamentsError:string|null;tournamentsPending:boolean
+  tournamentSourceRevision:string|null;presentSeason:number|null;presentWeek:number|null
 }):JSX.Element {
   const available=['overview','population','ratings','players','records','tournaments']
   const labels=cs?['Přehled','Populace','Atributy země','Hráči a talenty','Rekordy','Turnaje']:
@@ -111,7 +116,12 @@ function CountryDetail({runId,branchId,savedHead,historicalRevisionId,country,wo
           countryCode={country.code} selectedWorldYear={selectedWorldYear}
           language={language==='cs'?'cs':'en'}
         />)}
-    {(active==='records'||active==='tournaments')&&<section className="section-subtle">
+    {active==='tournaments'&&<RunWorldCountryTournaments
+      runId={runId} branchId={branchId} countryCode={country.code}
+      sourceRevision={tournamentSourceRevision} historical={historicalRevisionId!==null}
+      currentSeason={presentSeason} currentWeek={presentWeek}
+      model={tournaments} loading={tournamentsPending} error={tournamentsError} cs={cs}/>}
+    {active==='records'&&<section className="section-subtle">
       <h4>{labels[available.indexOf(active)]}</h4>
       <p role="status">{cs?'Pro tento Run, branch a rok ještě není připojený autoritativní historický read-model. Žádné výsledky ani rekordy se nedopočítávají z aktuálních dat.':'No authoritative historical read model is connected for this Run, Branch and year. Results and records are never invented from current data.'}</p>
     </section>}
@@ -159,6 +169,37 @@ export function RunWorldPage():JSX.Element {
     try {return {source:historicalRunWorldSnapshot(revision.data,runId,branchId,selectedRevisionId),error:null}}
     catch(error){return {source:null,error:formatApiError(error)}}
   },[allowed,historicalRevision,revision.data,runId,branchId,selectedRevisionId])
+  // The present World can include unsaved edits. Calendar reads are always from
+  // immutable Saved HEAD (or the explicitly selected historical Saved Revision).
+  const tournamentTab=Boolean(countryCode&&params.get('tab')==='tournaments')
+  const tournamentSourceRevision=historicalRevision?selectedRevisionId:
+    (selectedBranch?.saved_head_revision_id??'')
+  const calendarRevision=useQuery({
+    queryKey:['run-world-saved-calendar',runId,branchId,tournamentSourceRevision],
+    queryFn:()=>getSavedRevision(runId,branchId!,tournamentSourceRevision),
+    enabled:allowed&&tournamentTab&&!historicalRevision&&Boolean(tournamentSourceRevision),
+    retry:false
+  })
+  const calendarSource=useMemo(()=>{
+    if(!allowed||!tournamentTab||!branchId)return {read:null,error:null}
+    if(historicalRevision)return {read:savedSource.source,error:savedSource.error}
+    if(!calendarRevision.data||!tournamentSourceRevision)return {read:null,error:null}
+    try{return {read:historicalRunWorldSnapshot(calendarRevision.data,runId,branchId,tournamentSourceRevision),error:null}}
+    catch(error){return {read:null,error:formatApiError(error)}}
+  },[allowed,tournamentTab,branchId,historicalRevision,savedSource.source,savedSource.error,
+    calendarRevision.data,tournamentSourceRevision,runId])
+  const tournamentProjection=useMemo(()=>{
+    if(!allowed||!tournamentTab||!countryCode||!calendarSource.read?.response)
+      return {model:null,error:null}
+    try{return {model:projectCountryTournaments(calendarSource.read.response,runId,
+      calendarSource.read.revisionBranchId,countryCode),error:null}}
+    catch(error){return {model:null,error:formatApiError(error)}}
+  },[allowed,tournamentTab,countryCode,calendarSource.read,runId])
+  const tournamentsPending=Boolean(allowed&&tournamentTab&&tournamentSourceRevision&&
+    (historicalRevision?revision.isPending:calendarRevision.isPending))
+  const tournamentsError=calendarSource.error||tournamentProjection.error||
+    (!tournamentSourceRevision?(cs?'Žádná uložená revize.':'No Saved Revision is available.'):
+      calendarRevision.error&&!historicalRevision?formatApiError(calendarRevision.error):null)
   const readState=historicalRevision?savedSource.source?.response:q.data
   const sourceBranchId=historicalRevision?savedSource.source?.revisionBranchId:branchId
   const readEnabled=Boolean(allowed&&readState&&sourceBranchId)
@@ -254,7 +295,10 @@ export function RunWorldPage():JSX.Element {
           historicalRevisionId={historicalRevision?selectedRevisionId:null}
           country={country} world={world} params={params} cs={cs} language={language}
           selectedWorldYear={year}
-          history={historyProjection.history} historyError={historyProjection.error}/>
+          history={historyProjection.history} historyError={historyProjection.error}
+          tournaments={tournamentProjection.model} tournamentsError={tournamentsError}
+          tournamentsPending={tournamentsPending} tournamentSourceRevision={tournamentSourceRevision||null}
+          presentSeason={time.presentSeason} presentWeek={time.presentWeek}/>
         :<p role="alert">{cs?'Země v tomto Run World neexistuje.':'Country does not exist in this Run World.'} <Link to={'/admin/runs/'+encodeURIComponent(runId)+'/world'}>{cs?'Zpět':'Back'}</Link></p>)
         :<>
         <div className="run-world-metrics" aria-label="World summary metrics">

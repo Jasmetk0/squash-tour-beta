@@ -63,7 +63,7 @@ describe('bulk Automatic unlock planning', () => {
     const plan=prepareGeneratedBulkAutomaticPlan(players,['p2'],'attributes.technique',locks)
     expect(plan).toMatchObject({mode:'automatic',selectedCount:1,unchangedCount:0})
     expect(plan.changes).toEqual([{playerId:'p2',name:'B',before:44,after:null}])
-    expect(plan.nextLocks).toEqual(locks.slice(0,2))
+    expect(plan.nextLocks).toEqual([locks[1], locks[0]])
     expect(JSON.stringify(players)).toBe(original)
     expect(JSON.stringify(locks)).toBe(evidence)
   })
@@ -71,7 +71,7 @@ describe('bulk Automatic unlock planning', () => {
     const plan=prepareGeneratedBulkAutomaticPlan(players,['p1','p2'],'current_ability',locks)
     expect(plan.changes).toEqual([])
     expect(plan.unchangedCount).toBe(2)
-    expect(plan.nextLocks).toEqual(locks)
+    expect(plan.nextLocks).toEqual([locks[1], locks[0], locks[2]])
   })
   it('fails closed on missing, duplicate, oversized or unsupported selection', () => {
     for(const ids of [[],['p1','p1'],['unknown'],Array.from({length:1001},()=> 'p1')])

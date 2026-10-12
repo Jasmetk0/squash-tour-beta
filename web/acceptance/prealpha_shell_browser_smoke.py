@@ -254,6 +254,9 @@ def main() -> None:
             # Actual unsaved source form values must still guard the Run exit.
             page.goto(base + "/admin/runs/" + run_id + "/manage")
             expect(page.get_by_role("heading", name="Run Management")).to_be_visible()
+            # The navigation guard is bound to the asynchronously selected Branch.
+            # Await hydration before generating local unsaved-form evidence.
+            expect(page.get_by_role("combobox", name="Admin active Branch")).not_to_have_value("")
             page.get_by_role("combobox", name="Source kind").select_option("calendar")
             page.get_by_role("textbox", name="Calendar source season").fill("2008-2009")
             expect(page.locator(".app-shell--admin")).to_have_attribute("data-run-form-edited", "true")

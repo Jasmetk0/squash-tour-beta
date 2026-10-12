@@ -6,6 +6,7 @@ never mock API, browser input, fingerprint validation or SQL persistence.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import socket
 import sqlite3
@@ -45,6 +46,17 @@ def database_snapshot(db: Path) -> dict:
     return {"revisions": revisions, "world": json.loads(worlds[0]["payload_json"]),
             "world_fingerprint": worlds[0]["fingerprint"], "week_one": week_one,
             "run_id": run_id, "branch_id": branch_id}
+
+
+def full_database_digest(db: Path) -> str:
+    """Catch ANY accidental SQL mutation, not just changed InitialWorld bytes.
+
+    Include Saved Revision lineage, ranking, Week-1 projections and audit rows.
+    The transient SQLite connection does not mutate the database.
+    """
+    with sqlite3.connect(db) as connection:
+        content = "\n".join(connection.iterdump())
+    return hashlib.sha256(content.encode("utf-8")).hexdigest()
 
 
 def validate_week_one(snapshot: dict):
@@ -258,6 +270,102 @@ def acceptance(root: Path, *, port: int, base_url: str, chromium: str):
                 assert after["revisions"] == saved["revisions"]
                 assert after["world"] == saved["world"]
                 assert after["week_one"] == saved["week_one"]
+
+                # POST-RANKING SAFETY — publish the INITIAL official ranking
+                # through real Admin UI, explicitly save the published head.
+                # Selected Add must now fail before any existing SQL row changes.
+                page.goto(run_url)
+                browser_settle(page)
+                page.get_by_label("Initial ranking audit reason").fill(
+                    "F79-09 post-ranking Add Selected must be denied"
+                )
+                browser_click(page, "Preview initial ranking")
+                page.get_by_label("Approve initial ranking preparation").check()
+                browser_click(page, "Confirm initial ranking")
+                page.get_by_label("Approve initial ranking save").check()
+                browser_click(page, "Save initial ranking revision")
+                browser_click(page, "Review initial publication")
+                page.get_by_label("Approve initial publication").check()
+                browser_click(page, "Publish initial ranking")
+                browser_click(page, "Review unsaved published ranking state")
+                page.get_by_label("Approve published ranking revision save").check()
+                browser_click(page, "Save published ranking revision")
+                expect(page.get_by_text(
+                    "Viewer readback verified:", exact=False
+                )).to_be_visible()
+                with sqlite3.connect(root / "browser.sqlite") as db:
+                    published = db.execute(
+                        "SELECT COUNT(*) FROM published_official_rankings "
+                        "WHERE run_id=? AND branch_id=?",
+                        (after["run_id"], after["branch_id"]),
+                    ).fetchone()[0]
+                    assert published > 0, "A real published Official Ranking is required"
+
+                ranked = database_snapshot(root / "browser.sqlite")
+                validate_week_one(ranked)
+                before_denied_digest = full_database_digest(root / "browser.sqlite")
+                assert len(ranked["world"]["players"]) == 34
+
+                # The UI can still inspect a new read-only cohort, but it MUST
+                # not persist a third additional player once ranking exists.
+                page.goto(generate_url)
+                browser_settle(page)
+                page.get_by_role("combobox", name="Language / Jazyk").select_option("en")
+                expect(page.get_by_text(
+                    "InitialWorld exists: 34 players", exact=False
+                )).to_be_visible()
+                panel = page.get_by_role(
+                    "region", name="Add selected generated players"
+                )
+                panel.get_by_label("Selected append source size").fill("200")
+                panel.get_by_label("Selected append source seed").fill("45601")
+                with page.expect_response(lambda r:
+                    r.url.endswith("/world-package/preview")
+                    and r.request.method == "POST" and r.status == 200) as resp:
+                    browser_click(page, "Preview source players (read-only)")
+                assert len(resp.value.json()["state"]["players"]) == 200
+                assert full_database_digest(root / "browser.sqlite") == before_denied_digest
+
+                third = next(pid for pid in novel if pid not in selected)
+                panel.get_by_label("Search generated player preview").fill(third)
+                panel.get_by_role(
+                    "checkbox", name="Select for bulk action " + third
+                ).check()
+                expect(panel.get_by_text(
+                    "Selected: 1. Conflicting IDs: 0."
+                )).to_be_visible()
+                # Reading an append proposal remains allowed, but changing the
+                # World after publication cannot pass the atomic COMMIT guard.
+                with page.expect_response(lambda r:
+                    r.url.endswith("/selected-append/preview") and
+                    r.request.method == "POST" and r.status == 200) as resp:
+                    browser_click(page, "Verify selected addition on server (no write)")
+                reviewed_after_ranking = resp.value.json()
+                assert reviewed_after_ranking["preview_only"]
+                assert reviewed_after_ranking["added_count"] == 1
+                assert full_database_digest(root / "browser.sqlite") == before_denied_digest
+                panel.get_by_label("Approve selected InitialWorld append").check()
+                with page.expect_response(lambda r:
+                    r.url.endswith("/selected-append") and
+                    r.request.method == "POST" and r.status == 409) as resp:
+                    browser_click(page, "Commit selected players (Save separately)")
+                denied = resp.value.json()
+                assert denied["detail"]["code"] == "selected_initial_world_append_conflict"
+                assert "ranking or sporting activity" in denied["detail"]["message"]
+                expect(panel.get_by_text(
+                    "Append conflict:", exact=False
+                )).to_be_visible()
+                assert full_database_digest(root / "browser.sqlite") == before_denied_digest, (
+                    "409 after published ranking mutated persisted SQL history"
+                )
+                assert database_snapshot(root / "browser.sqlite") == ranked, (
+                    "409 after published ranking changed original players / Week-1"
+                )
+                page.screenshot(
+                    path=str(artifacts / "post-ranking-append-denied.png"),
+                    full_page=True,
+                )
+
                 assert not errors, errors
                 (artifacts / "evidence.json").write_text(json.dumps({
                     "initial_count": 32, "selected_added_count": 2, "saved_count": 34,
@@ -269,10 +377,14 @@ def acceptance(root: Path, *, port: int, base_url: str, chromium: str):
                     "collision_blocked_before_request": True,
                     "saved_after_backend_restart": True,
                     "saved_revision_history_unchanged": True,
+                    "published_ranking_exists": published > 0,
+                    "post_ranking_append_conflict_409": True,
+                    "post_ranking_source_and_preview_read_only": True,
+                    "post_ranking_sql_digest_unchanged": True,
                     "selected_player_ids": selected,
                     "run_url": run_url, "browser_errors": errors
                 }, indent=2))
-                print("SELECTED-APPEND BROWSER/SQLITE RESTART ACCEPTANCE PASSED", flush=True)
+                print("SELECTED-APPEND BROWSER/SQLITE RESTART AND POST-RANKING DENIAL PASSED", flush=True)
             except Exception:
                 if page is not None:
                     page.screenshot(path=str(artifacts / "failure.png"), full_page=True)

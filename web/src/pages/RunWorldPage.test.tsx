@@ -84,10 +84,40 @@ describe('Run-owned World overview navigation',()=>{
     mountWorld('/admin/runs/run-a/world/countries/CZE?year=2000&tab=ratings')
     const panel=await screen.findByLabelText('Country rating history')
     expect(panel).toHaveTextContent('History of six country ratings')
-    expect(screen.getAllByText('Legacy scalar — no year attribution').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('legacy scalar — no year attribution').length).toBeGreaterThan(0)
     expect(screen.getByText(/No source-evidenced rating timeline exists/)).toBeInTheDocument()
     expect(screen.queryByRole('table',{name:'Authored country rating years'})).not.toBeInTheDocument()
   })
+
+  it('shows source-evidenced V2 rating trend, source IDs, and selected-year fallback provenance',async()=>{
+    const fixture=worldFixture()
+    const row=(fixture.state!.entities as Record<string,unknown>[])[1].payload as Record<string,unknown>
+    row.rating_scale='country_ratings_1_10.v2'
+    const keys=['squash_popularity','squash_access','development_quality',
+      'competition_quality','elite_support','squash_tradition']
+    const evidence=Object.fromEntries(keys.map(key=>[key,{
+      value:key==='elite_support'?7.2:6.4,method:'sourced_estimate',
+      confidence:'high',source_ids:['source-v2'],
+      observation_ids:['source-v2#row1'],rationale:'Independent evidence',
+      anchor_years:[2020]
+    }]))
+    row.rating_history={reference_year:2020,data_cutoff:'2026-01-01',
+      years:{'2020':{historical_entity:'Czechia',territory_mapping_note:'Same boundaries',ratings:evidence}}}
+    api.getRunPackageState.mockResolvedValue(fixture)
+    mountWorld('/admin/runs/run-a/world/countries/CZE?year=2019&tab=ratings&q=cze')
+    expect(await screen.findByRole('heading',{name:'History of six country ratings'})).toBeInTheDocument()
+    expect(screen.getByLabelText('Country rating history')).toHaveTextContent('Nearest authored year: 2020')
+    expect(screen.getByRole('table',{name:'Authored country rating years'})).toHaveTextContent('2020')
+    await userEvent.selectOptions(screen.getByRole('combobox',{name:'Country rating trend field'}),'elite_support')
+    expect(screen.getByRole('table',{name:'Authored country rating years'})).toHaveTextContent('7.2')
+    const details=screen.getAllByText('Value provenance details')
+    await userEvent.click(details[0])
+    expect(screen.getByText('source-v2')).toBeInTheDocument()
+    expect(screen.getByText('source-v2#row1')).toBeInTheDocument()
+    expect(screen.getByRole('link',{name:/Back to countries/})).toHaveAttribute(
+      'href','/admin/runs/run-a/world?year=2019&q=cze')
+  })
+
   it('hides even cached present World facts as soon as a historical checkpoint becomes selected',async()=>{
     const view=mountWorld('/admin/runs/run-a/world')
     expect(await screen.findByText('Saved FIFA Earth')).toBeInTheDocument()

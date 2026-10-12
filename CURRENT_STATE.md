@@ -1,3 +1,25 @@
+# 12 October 2026 — Run World overview candidate, not yet merged
+
+Actual parent `buuk 5ce1e9db75bfe73f80c5b2b816a509fcac1a2e91` integrates #1401.
+This candidate routes Run → World into the **Run-owned**, Branch-scoped copy of
+World Package state rather than reading mutable global Package Library.
+It provides compact country count, explicitly **incomplete** world population
+when any country uses a nearest/default/legacy fallback, count of countries
+with population/rating gaps, year selection, search, and country detail links.
+The six approved country tabs exist; Overview, Population, and Country Ratings
+show available supported copy-backed facts/provenance. Player/talent, records
+and tournaments show their honest unsupported historical-state boundary.
+Historical checkpoint selection fails closed (does not silently show current
+World as historical). No import/save/country edit is part of this read-only PR.
+Supported year range 1955–2050 follows current country-model year coverage.
+Backend, SQL and simulation authority unchanged.
+
+Required before merge: scoped Vitest navigation/read projection/UI tests, frontend
+build, browser checks that GitHub schedules for the changed frontend, and
+a distinct negative-source/identity check. Full pre-alpha release gate is separate.
+
+## Prior dated checkpoint — preserved
+
 # 12 October 2026 — bulk Automatic candidate (not yet merged)
 
 Actual parent `buuk 727485895086725a4ca62642d3e447e4ebaf65d4` includes merged #1398, #1399 and #1400.

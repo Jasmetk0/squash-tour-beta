@@ -2343,3 +2343,27 @@ textarea:focus-visible {
   .generator-conditions-body>.form-grid{grid-template-columns:repeat(auto-fit,minmax(180px,1fr))}
 }
 @media(max-width:560px){.generator-conditions-body,.generator-results{padding:.7rem}.generator-review-header{padding:.7rem}}
+
+/* Read-only Run-owned World: compact metrics, searchable countries, persistent tabs. */
+.run-world-overview-header{display:flex;gap:1rem;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;margin:1rem 0}
+.run-world-overview-header>div{min-width:0;overflow-wrap:anywhere}
+.run-world-overview-header>div>strong{font-size:1.18rem}
+.run-world-overview-header label{min-width:130px;display:grid;gap:.3rem}
+.run-world-overview-header select{width:100%}
+.run-world-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.7rem;margin:1rem 0}
+.run-world-metrics>div{padding:1rem;min-width:0;border:1px solid #3b5575;border-radius:10px;background:#1e3451;display:flex;flex-direction:column;gap:.35rem}
+.run-world-metrics>div>span{color:#c5d6ec;font-size:.85rem}
+.run-world-metrics>div>strong{font-size:1.38rem;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.run-world-metrics small{color:#bbcee5}
+.run-world-country-toolbar{display:flex;align-items:end;gap:1rem;justify-content:space-between;margin:1.25rem 0 .75rem}
+.run-world-country-toolbar label{max-width:420px;flex:1;min-width:180px;display:grid;gap:.3rem}
+.run-world-country-toolbar input{width:100%}
+.run-world-page .table-responsive{max-width:100%;overflow-x:auto}
+.run-world-page th,.run-world-page td{vertical-align:top}
+.run-world-tabs{display:flex;gap:.4rem;flex-wrap:wrap;margin:1.2rem 0;border-bottom:1px solid #425676;padding-bottom:.45rem}
+.run-world-tabs a{display:block;text-decoration:none;padding:.55rem .7rem;border-radius:7px;background:#213954;color:#d9e9ff}
+.run-world-tabs a[aria-current="page"]{background:#426a9a;box-shadow:inset 0 -3px #add2ff}
+.run-world-detail-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem}
+.run-world-detail-grid dl{display:grid;grid-template-columns:minmax(90px,140px) minmax(0,1fr);gap:.65rem}
+.run-world-detail-grid dt{color:#b6cde8}.run-world-detail-grid dd{margin:0;overflow-wrap:anywhere}
+@media(max-width:750px){.run-world-metrics,.run-world-detail-grid{grid-template-columns:minmax(0,1fr)}}

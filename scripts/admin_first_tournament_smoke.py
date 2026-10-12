@@ -217,7 +217,7 @@ def setup_run(page, base_url: str, artifacts: Path) -> str:
     # Field locks from preview are session-only and not permanent career locks.
     kept_row = inspector.locator("tbody tr").first
     kept_player_text = kept_row.locator("td").nth(1).inner_text()
-    kept_player_id = kept_row.locator('input[type="checkbox"]').get_attribute(
+    kept_player_id = kept_row.locator('input[aria-label^="Keep "]').get_attribute(
         "aria-label"
     ).removeprefix("Keep ")
     # Read the player-name button rather than the whole table cell, which
@@ -228,7 +228,7 @@ def setup_run(page, base_url: str, artifacts: Path) -> str:
     assert kept_display_name.endswith(
         f" {int(kept_player_id.rsplit('-', 1)[-1])}"
     ), "Generated display name did not follow country + serial naming"
-    kept_row.locator('input[type="checkbox"]').check()
+    kept_row.locator('input[aria-label^="Keep "]').check()
     expect(page.get_by_text("Kept: 1 / 64", exact=False)).to_be_visible()
     page.get_by_label("Session Keep regeneration seed").fill("4202")
     click("Regenerate remaining – new preview")
@@ -237,7 +237,7 @@ def setup_run(page, base_url: str, artifacts: Path) -> str:
     assert kept_player_text in inspector.inner_text(), "First Keep source player was not preserved"
     # Grow the Keep selection and reroll once more from the authoritative
     # *previous* reviewed preview. Both identities must survive unchanged.
-    additional_checkbox = inspector.locator('input[type="checkbox"]:not(:checked)').first
+    additional_checkbox = inspector.locator('input[aria-label^="Keep "]:not(:checked)').first
     additional_id = additional_checkbox.get_attribute("aria-label").removeprefix("Keep ")
     additional_text = additional_checkbox.locator("xpath=ancestor::tr").inner_text()
     additional_checkbox.check()

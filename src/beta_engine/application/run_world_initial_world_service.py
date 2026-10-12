@@ -7,7 +7,7 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from beta_engine.application.initial_world import InitialWorldState
+from beta_engine.application.initial_world import InitialWorldState, InitialWorldSelectedAppend
 from beta_engine.application.run_world_initial_pool_preview_service import (
     RunWorldInitialPoolPreviewRequest,
     RunWorldInitialPoolPreviewService,
@@ -189,3 +189,72 @@ class RunWorldInitialWorldService:
             bootstrap_seed=bootstrap_seed,
             bootstrap_id=bootstrap_id,
         )
+
+
+class RunWorldSelectedInitialWorldAppendRequest(BaseModel):
+    """Reviewed append command: specific identities from a *fresh* production preview.
+
+    This is NOT the full-cohort InitialWorld Adopt command.
+    """
+    model_config = ConfigDict(extra="forbid", strict=True)
+    command_id: str = Field(min_length=1, max_length=128)
+    generation: RunWorldInitialWorldAdoptionRequest
+    selected_player_ids: tuple[str, ...] = Field(min_length=1, max_length=1000)
+    audit_label: str = Field(min_length=1, max_length=160)
+    audit_reason: str = Field(min_length=1, max_length=1000)
+
+    @model_validator(mode="after")
+    def validate_ids(self) -> "RunWorldSelectedInitialWorldAppendRequest":
+        if list(self.selected_player_ids) != sorted(set(self.selected_player_ids)):
+            raise ValueError("Selected append player IDs must be sorted, nonempty and unique")
+        return self
+
+
+def compose_selected_initial_world_append(
+    current: InitialWorldState,
+    generated: InitialWorldState,
+    command: RunWorldSelectedInitialWorldAppendRequest,
+) -> InitialWorldState:
+    """Pure, fail-closed candidate composition. No Run mutation or new player JSON trusted."""
+    if (current.run_id, current.branch_id) != (generated.run_id, generated.branch_id):
+        raise ValueError("Selected generation belongs to a different Run/Branch")
+    if current.source_kind != "run_world_generated_pool.v1" or (
+        generated.source_kind != "run_world_generated_pool.v1"
+    ):
+        raise ValueError("Selected append requires generated Run-owned InitialWorld sources")
+    if (current.world_package_id != generated.world_package_id or
+        current.world_country_content_fingerprint != generated.world_country_content_fingerprint or
+        current.world_generation_content_fingerprint != generated.world_generation_content_fingerprint):
+        raise ValueError("Selected generation World differs from the existing saved World")
+    if generated.run_world_pool_preview_fingerprint is None:
+        raise ValueError("Selected generation has no verified pool provenance")
+    if any(record.command_id == command.command_id for record in current.selected_appends):
+        raise ValueError("Selected append command ID is already recorded")
+    source_players = {p.player_id: p for p in generated.players}
+    existing_players = {p.player_id: p for p in current.players}
+    if len(source_players) != len(generated.players):
+        raise ValueError("Candidate source has duplicate player identities")
+    for player_id in command.selected_player_ids:
+        if player_id not in source_players:
+            raise ValueError(f"Selected player {player_id} is absent from the verified source")
+        if player_id in existing_players:
+            raise ValueError(f"Selected player {player_id} already exists in InitialWorld")
+    if len(current.players) + len(command.selected_player_ids) > 2000:
+        raise ValueError("Selected append exceeds the current 2,000-player InitialWorld limit")
+    selected = (source_players[pid] for pid in command.selected_player_ids)
+    combined = tuple(sorted((*current.players, *selected), key=lambda p: p.player_id))
+    provenance = InitialWorldSelectedAppend(
+        command_id=command.command_id,
+        source_preview_fingerprint=generated.run_world_pool_preview_fingerprint,
+        selected_player_ids=command.selected_player_ids,
+        audit_label=command.audit_label,
+        audit_reason=command.audit_reason,
+    )
+    # Preserve the original adoption/policy source and every incumbent player
+    # byte-for-byte. Additional source batches have explicit append provenance.
+    return InitialWorldState.model_validate_json(
+        current.model_copy(update={
+            "players": combined,
+            "selected_appends": (*current.selected_appends, provenance),
+        }).model_dump_json()
+    )

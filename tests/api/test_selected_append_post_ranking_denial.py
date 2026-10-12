@@ -59,3 +59,33 @@ def test_browser_script_has_real_published_ranking_then_commit_409_assertion():
     assert "full_database_digest" in source
     assert "post_ranking_sql_digest_unchanged" in source
     assert "post-ranking-append-denied.png" in source
+
+
+def test_preflight_shared_eligibility_rejects_post_ranking_without_sql_writes(
+    tmp_path, monkeypatch
+):
+    from beta_engine.infrastructure.db.selected_initial_world_append import (
+        require_pristine_initial_world_append_eligible,
+    )
+    repo, run_id, branch_id, initial, _, _, _, _ = _prepared(tmp_path, monkeypatch)
+    with repo._session_factory.begin() as session:
+        session.add(PublishedOfficialRankingModel(
+            run_id=run_id, branch_id=branch_id, week_ordinal=0,
+            snapshot_fingerprint=SHA, payload_json="{}",
+        ))
+    filename = tmp_path / "selected-append.sqlite"
+    baseline = _database_digest(filename)
+    with repo._session_factory() as session:
+        with pytest.raises(ValueError, match="ranking or sporting activity"):
+            require_pristine_initial_world_append_eligible(session, previous=initial)
+    assert _database_digest(filename) == baseline
+
+
+def test_preview_and_commit_reference_same_read_only_guard():
+    from pathlib import Path
+    root = Path(__file__).resolve().parents[2]
+    preview = (root / "src/beta_engine/api/routers/admin_players.py").read_text()
+    commit = (root / "src/beta_engine/infrastructure/db/selected_initial_world_append.py").read_text()
+    assert "require_pristine_initial_world_append_eligible(session, previous=current)" in preview
+    assert "require_pristine_initial_world_append_eligible(session, previous=previous)" in commit
+    assert "BEGIN IMMEDIATE" in commit

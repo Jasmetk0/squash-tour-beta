@@ -25,6 +25,8 @@ CareerStage = Literal[
 ]
 PotentialTier = Literal["S", "A", "B", "C", "D"]
 GenerationSource = Literal["initial_pool", "annual_intake", "manual", "imported"]
+# Naming is explicit: legacy persisted requests must remain bit-for-bit replayable.
+InitialPoolNamingPolicy = Literal["country_serial.v1"]
 InitialPoolAuditAction = Literal[
     "create_custom_player",
     "update_player",
@@ -464,8 +466,11 @@ class InitialPlayerPoolGenerator:
         max_age: int | None = None,
         existing_locked_players: list[InitialPoolGeneratedPlayer] | None = None,
         country_quotas: dict[str, int] | None = None,
+        naming_policy: InitialPoolNamingPolicy | None = None,
         dry_run: bool = True,
     ) -> InitialPoolResult:
+        if naming_policy not in (None, "country_serial.v1"):
+            raise ValueError("Unsupported initial-pool naming policy")
         if min_age is not None or max_age is not None:
             lower = 15 if min_age is None else min_age
             upper = 45 if max_age is None else max_age
@@ -573,6 +578,7 @@ class InitialPlayerPoolGenerator:
                         self._generate_player(
                             country=country, season=season, seed=seed, sequence=sequence,
                             min_age=min_age, max_age=max_age,
+                            naming_policy=naming_policy,
                         )
                     )
                     generated_for_country += 1
@@ -781,6 +787,7 @@ class InitialPlayerPoolGenerator:
     def _generate_player(
         self, *, country: Country, season: str, seed: int, sequence: int,
         min_age: int | None = None, max_age: int | None = None,
+        naming_policy: InitialPoolNamingPolicy | None = None,
     ) -> InitialPoolGeneratedPlayer:
         rng = DeterministicRng(seed).branch(
             SeedScope.SEASON, "initial_pool", season, country.code, sequence
@@ -861,7 +868,13 @@ class InitialPlayerPoolGenerator:
             resilience=self._clamp01(rng.uniform(0.22, 0.90)),
         )
         player_id = f"P-{season_start_year}-{country.code}-{sequence:04d}"
-        name = self._name(rng, country, sequence)
+        # Preserve the legacy identity RNG draws even for the opt-in naming
+        # convention. Unrelated traits, birth data and replay remain stable.
+        legacy_name = self._name(rng, country, sequence)
+        name = (
+            f"{country.name} {sequence}"
+            if naming_policy == "country_serial.v1" else legacy_name
+        )
         birth_rng = rng.branch(SeedScope.SEASON, "fax_birth_year_week")
         birth_week = birth_rng.randint(
             1, DEFAULT_WEEKS_PER_CALENDAR_YEAR

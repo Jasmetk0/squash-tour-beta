@@ -220,6 +220,14 @@ def setup_run(page, base_url: str, artifacts: Path) -> str:
     kept_player_id = kept_row.locator('input[type="checkbox"]').get_attribute(
         "aria-label"
     ).removeprefix("Keep ")
+    # Read the player-name button rather than the whole table cell, which
+    # deliberately also contains the small-print stable player ID.
+    kept_display_name = kept_row.locator(
+        'button[aria-label^="Edit generated player "]'
+    ).inner_text()
+    assert kept_display_name.endswith(
+        f" {int(kept_player_id.rsplit('-', 1)[-1])}"
+    ), "Generated display name did not follow country + serial naming"
     kept_row.locator('input[type="checkbox"]').check()
     expect(page.get_by_text("Kept: 1 / 64", exact=False)).to_be_visible()
     page.get_by_label("Session Keep regeneration seed").fill("4202")

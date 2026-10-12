@@ -1,3 +1,23 @@
+# 12 October 2026 — Run World Country History candidate (not merged)
+
+Base: `buuk a01585fe3ed47291fafd57c203a3b1f32f65a1d0`, merged #1402.
+The next scoped frontend slice adds source-evidenced country histories into existing
+Run → World → Country → Population and Country Attributes tabs. All raw
+years/ratings/methods/source IDs come **only** from the selected Branch's
+Run-owned World Package country entities. Population chart shows explicitly
+authored years only, preserves explicit null anchors and separately labels
+nearest/default/legacy fallbacks. Six source-country ratings have independent
+evidence (method, confidence, source/observation IDs, anchors, rationale) when
+V2 history exists. A year click preserves search/selected tab, remains read-only,
+and never turns future or missing historical years into fabricated observations.
+Legacy scalar ratings **never** become an invented history. Historical checkpoint
+selection now suppresses even cached present-time World data.
+Only supported year range 1955–2050; no country editor or mutation.
+Gates: focused frontend tests/build, scoped browser smoke, green exact HEAD,
+plus a negative persisted data/provenance case. No pre-alpha release claim.
+
+## Prior dated checkpoint — preserved
+
 # 12 October 2026 — Run World overview candidate, not yet merged
 
 Actual parent `buuk 5ce1e9db75bfe73f80c5b2b816a509fcac1a2e91` integrates #1401.

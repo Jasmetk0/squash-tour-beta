@@ -19,15 +19,18 @@ vi.mock('../admin/AdminBranchContext',()=>({
 vi.mock('../admin/AdminTimeContext',()=>({useAdminTime:()=>context.time}))
 vi.mock('../i18n/LanguageContext',()=>({useLanguage:()=>({language:context.language})}))
 
-function mountWorld(path:string):void {
-  render(<QueryClientProvider client={new QueryClient({defaultOptions:{queries:{retry:false}}})}>
+function mountWorld(path:string):{refresh:()=>void} {
+  const client=new QueryClient({defaultOptions:{queries:{retry:false}}})
+  const wrap=()=> <QueryClientProvider client={client}>
     <MemoryRouter initialEntries={[path]}>
       <Routes>
         <Route path="/admin/runs/:runId/world" element={<RunWorldPage/>}/>
         <Route path="/admin/runs/:runId/world/countries/:countryCode" element={<RunWorldPage/>}/>
       </Routes>
     </MemoryRouter>
-  </QueryClientProvider>)
+  </QueryClientProvider>
+  const mounted=render(wrap())
+  return {refresh:()=>mounted.rerender(wrap())}
 }
 
 describe('Run-owned World overview navigation',()=>{
@@ -62,6 +65,40 @@ describe('Run-owned World overview navigation',()=>{
     )
     expect(api.getRunPackageState).toHaveBeenCalledTimes(1)
   })
+
+  it('shows only authored population anchors and preserves tab/filter when inspecting another year',async()=>{
+    mountWorld('/admin/runs/run-a/world/countries/CZE?year=2010&tab=population&q=cz')
+    expect(await screen.findByRole('heading',{name:'Population history'})).toBeInTheDocument()
+    expect(screen.getByLabelText('Country population history')).toHaveTextContent('Nearest authored year')
+    const years=screen.getByRole('table',{name:'Authored population timeline'})
+    expect(years).toHaveTextContent('2000')
+    expect(years).toHaveTextContent('2020')
+    expect(years).not.toHaveTextContent('2010')
+    await userEvent.click(screen.getByRole('link',{name:'2020'}))
+    expect(screen.getByLabelText('Country population history')).toHaveTextContent('Selected year: 2020')
+    expect(screen.getByRole('link',{name:/Back to countries/})).toHaveAttribute(
+      'href','/admin/runs/run-a/world?year=2020&q=cz'
+    )
+  })
+  it('shows six country rating evidence rows without fabricating legacy yearly rating history',async()=>{
+    mountWorld('/admin/runs/run-a/world/countries/CZE?year=2000&tab=ratings')
+    const panel=await screen.findByLabelText('Country rating history')
+    expect(panel).toHaveTextContent('History of six country ratings')
+    expect(screen.getAllByText('Legacy scalar — no year attribution').length).toBeGreaterThan(0)
+    expect(screen.getByText(/No source-evidenced rating timeline exists/)).toBeInTheDocument()
+    expect(screen.queryByRole('table',{name:'Authored country rating years'})).not.toBeInTheDocument()
+  })
+  it('hides even cached present World facts as soon as a historical checkpoint becomes selected',async()=>{
+    const view=mountWorld('/admin/runs/run-a/world')
+    expect(await screen.findByText('Saved FIFA Earth')).toBeInTheDocument()
+    expect(api.getRunPackageState).toHaveBeenCalledTimes(1)
+    context.time.mode='checkpoint'
+    view.refresh()
+    expect(screen.getByRole('alert')).toHaveTextContent('Historical checkpoint selected')
+    expect(screen.queryByText('Saved FIFA Earth')).not.toBeInTheDocument()
+    expect(api.getRunPackageState).toHaveBeenCalledTimes(1)
+  })
+
   it('blocks present-only data at historical checkpoint without any current snapshot request',()=>{
     context.time.mode='checkpoint'
     mountWorld('/admin/runs/run-a/world')

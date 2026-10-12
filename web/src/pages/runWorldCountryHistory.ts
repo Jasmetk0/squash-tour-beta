@@ -15,7 +15,7 @@ function text(value:unknown):string|null {
   return typeof value==='string'&&value.trim()?value:null
 }
 function yearNumber(value:string):number|null {
-  if(!/^(19[5-9][0-9]|20[0-4][0-9]|2050)$/.test(value))return null
+  if(!/^(19(5[5-9]|[6-9][0-9])|20([0-4][0-9]|50))$/.test(value))return null
   return Number(value)
 }
 function popValue(value:unknown):number|null {

@@ -2367,3 +2367,29 @@ textarea:focus-visible {
 .run-world-detail-grid dl{display:grid;grid-template-columns:minmax(90px,140px) minmax(0,1fr);gap:.65rem}
 .run-world-detail-grid dt{color:#b6cde8}.run-world-detail-grid dd{margin:0;overflow-wrap:anywhere}
 @media(max-width:750px){.run-world-metrics,.run-world-detail-grid{grid-template-columns:minmax(0,1fr)}}
+
+
+/* Authored points are visually distinct from runtime population/rating fallbacks. */
+.run-world-selected-value{font-size:1.03rem;line-height:1.6}
+.run-world-selected-value strong{font-variant-numeric:tabular-nums}
+.run-world-anchor-chart{
+  display:flex;align-items:flex-end;gap:.5rem;max-width:100%;overflow-x:auto;
+  height:180px;padding:.8rem .75rem 0;margin:1rem 0;background:#172b44;
+  border:1px solid #385273;border-radius:10px
+}
+.run-world-anchor-chart>a{
+  min-width:35px;flex:0 0 35px;height:100%;display:flex;flex-direction:column;
+  gap:.3rem;align-items:center;justify-content:flex-end;text-decoration:none;color:#d1e6ff
+}
+.run-world-anchor-chart .run-world-anchor-bar{
+  display:block;width:100%;max-width:27px;background:#7ab1ed;
+  border-radius:5px 5px 0 0;min-height:6px
+}
+.run-world-anchor-chart>a:hover .run-world-anchor-bar{background:#add4ff}
+.run-world-anchor-chart small{font-size:.73rem;white-space:nowrap}
+.run-world-evidence{max-width:360px;margin:.45rem 0}
+.run-world-evidence>summary{cursor:pointer;text-decoration:underline;text-underline-offset:.17rem}
+.run-world-evidence dl{display:grid;grid-template-columns:minmax(90px,120px) minmax(0,1fr);gap:.4rem;margin:.6rem 0}
+.run-world-evidence dt{color:#b7cfed}
+.run-world-evidence dd{margin:0;overflow-wrap:anywhere}
+.run-world-page td .run-world-evidence{font-size:.82rem}

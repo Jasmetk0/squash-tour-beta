@@ -146,7 +146,7 @@ function columnValue(player: RunInitialWorldPlayer, id: PlayerReviewColumn): str
  */
 export function GeneratedPlayerReviewInspector({ players, locale = 'en', keepIds = [], onKeepChange,
   onSelectPlayer, selectedPlayerId, verifiedFieldLocks = [], pendingFieldLocks = [],
-  bulkSelectedIds = [], onBulkSelectionChange }: {
+  bulkSelectedIds = [], onBulkSelectionChange, bulkSelectionDisabled = false }: {
   players: RunInitialWorldPlayer[]
   locale?: 'cs' | 'en'
   keepIds?: string[]
@@ -160,6 +160,7 @@ export function GeneratedPlayerReviewInspector({ players, locale = 'en', keepIds
   /** Action selection is separate from session Keep and display filters. */
   bulkSelectedIds?: string[]
   onBulkSelectionChange?: (playerIds: string[]) => void
+  bulkSelectionDisabled?: boolean
 }): JSX.Element {
   const cs = locale === 'cs'
   const [search, setSearch] = useState('')
@@ -239,7 +240,7 @@ export function GeneratedPlayerReviewInspector({ players, locale = 'en', keepIds
   const displayed = visible.slice(activePage * REVIEW_PAGE_SIZE, (activePage + 1) * REVIEW_PAGE_SIZE)
   const selected = useMemo(() => new Set(bulkSelectedIds), [bulkSelectedIds])
   const changeBulkSelection = (ids: string[], checked: boolean) => {
-    if (!onBulkSelectionChange) return
+    if (!onBulkSelectionChange || bulkSelectionDisabled) return
     const all = new Set(bulkSelectedIds)
     for (const id of ids) {
       if (checked) all.add(id)
@@ -340,19 +341,19 @@ export function GeneratedPlayerReviewInspector({ players, locale = 'en', keepIds
           'Action selection never performs Keep, an edit or Adopt.'}
       </p>
       <div className="actions">
-        <button type="button" disabled={!displayed.length}
+        <button type="button" disabled={!displayed.length || bulkSelectionDisabled}
           onClick={() => changeBulkSelection(displayed.map(p => p.player_id), true)}>
           {cs ? 'Vybrat stránku' : 'Select current page'}
         </button>
-        <button type="button" disabled={!visible.length}
+        <button type="button" disabled={!visible.length || bulkSelectionDisabled}
           onClick={() => changeBulkSelection(visible.map(p => p.player_id), true)}>
           {cs ? 'Vybrat odpovídající filtrům' : 'Select all matching filters'}
         </button>
-        <button type="button" disabled={!displayed.some(p => selected.has(p.player_id))}
+        <button type="button" disabled={bulkSelectionDisabled || !displayed.some(p => selected.has(p.player_id))}
           onClick={() => changeBulkSelection(displayed.map(p => p.player_id), false)}>
           {cs ? 'Odebrat výběr na stránce' : 'Deselect current page'}
         </button>
-        <button type="button" disabled={!bulkSelectedIds.length}
+        <button type="button" disabled={bulkSelectionDisabled || !bulkSelectedIds.length}
           onClick={() => onBulkSelectionChange([])}>
           {cs ? 'Zrušit výběr' : 'Clear action selection'}
         </button>
@@ -388,6 +389,7 @@ export function GeneratedPlayerReviewInspector({ players, locale = 'en', keepIds
           {onBulkSelectionChange && <td><input type="checkbox"
             aria-label={'Select for bulk action ' + player.player_id}
             checked={selected.has(player.player_id)}
+            disabled={bulkSelectionDisabled}
             onChange={event => changeBulkSelection([player.player_id], event.target.checked)} /></td>}
           {onKeepChange && <td><input type="checkbox"
             aria-label={'Keep ' + player.player_id} checked={keepIds.includes(player.player_id)}

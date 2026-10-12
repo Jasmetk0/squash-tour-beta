@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { prepareGeneratedBulkPlan } from './generatedBulkPreview'
+import { prepareGeneratedBulkPlan, prepareGeneratedBulkAutomaticPlan } from './generatedBulkPreview'
 import type { RunInitialWorldPlayer } from '../api/runInitialWorldSetup'
 
 const players: RunInitialWorldPlayer[] = [
@@ -49,5 +49,38 @@ describe('authoritative-bound bulk field planning', () => {
     expect(()=>prepareGeneratedBulkPlan(players,['p1'],'attributes.physical',60,[])).toThrow()
     expect(()=>prepareGeneratedBulkPlan(players,['p1'],'current_ability',89,[])).toThrow(/conflicts/)
     expect(()=>prepareGeneratedBulkPlan(players,['p1'],'potential_ability',40,[])).toThrow(/conflicts/)
+  })
+})
+
+describe('bulk Automatic unlock planning', () => {
+  const locks = [
+    {player_id:'p1',field:'attributes.technique' as const,value:65},
+    {player_id:'p1',field:'attributes.movement' as const,value:60},
+    {player_id:'p2',field:'attributes.technique' as const,value:45}
+  ]
+  it('removes only selected field locks and never invents an automatic numeric value', () => {
+    const original=JSON.stringify(players), evidence=JSON.stringify(locks)
+    const plan=prepareGeneratedBulkAutomaticPlan(players,['p2'],'attributes.technique',locks)
+    expect(plan).toMatchObject({mode:'automatic',selectedCount:1,unchangedCount:0})
+    expect(plan.changes).toEqual([{playerId:'p2',name:'B',before:44,after:null}])
+    expect(plan.nextLocks).toEqual(locks.slice(0,2))
+    expect(JSON.stringify(players)).toBe(original)
+    expect(JSON.stringify(locks)).toBe(evidence)
+  })
+  it('reports selected already-Automatic fields as no-ops and preserves all others', () => {
+    const plan=prepareGeneratedBulkAutomaticPlan(players,['p1','p2'],'current_ability',locks)
+    expect(plan.changes).toEqual([])
+    expect(plan.unchangedCount).toBe(2)
+    expect(plan.nextLocks).toEqual(locks)
+  })
+  it('fails closed on missing, duplicate, oversized or unsupported selection', () => {
+    for(const ids of [[],['p1','p1'],['unknown'],Array.from({length:1001},()=> 'p1')])
+      expect(()=>prepareGeneratedBulkAutomaticPlan(players,ids,'attributes.technique',locks)).toThrow()
+    expect(()=>prepareGeneratedBulkAutomaticPlan(players,['p1'],'height' as never,locks)).toThrow()
+    expect(()=>prepareGeneratedBulkAutomaticPlan([...players,players[0]],['p1'],
+      'attributes.technique',locks)).toThrow()
+    const duplicate=[...locks,locks[0]]
+    expect(()=>prepareGeneratedBulkAutomaticPlan(players,['p1'],
+      'attributes.technique',duplicate)).toThrow(/Duplicate/)
   })
 })

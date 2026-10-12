@@ -1,3 +1,18 @@
+# 12 October 2026 — bulk Automatic candidate (not yet merged)
+
+Actual parent `buuk 727485895086725a4ca62642d3e447e4ebaf65d4` includes merged #1398, #1399 and #1400.
+The candidate adds a read-only **bulk Automatic** unlock planner on the already
+reviewed first-season player preview. It removes only selected player+field
+locks, preserves unrelated locks, and shows "Automatic — server decides" rather
+than inventing regenerated numeric values. The existing explicit Stage →
+production server preview → Adopt → manual Save boundaries remain authoritative.
+One-session bulk Undo is preserved; invalid/empty/no-op unlocks cannot be staged.
+Nine legacy source-model fields are supported, **not** canonical 57 attributes.
+Required gates: focused Vitest + frontend build, real 1,000-player browser
+and Add Selected browser on final PR HEAD. This is no pre-alpha release.
+
+## Prior dated checkpoint — preserved
+
 # Week-2 integrity comparator correction — 12 October 2026 (candidate, not yet merged)
 
 Baseline: actual `buuk 744c4093a65125b7d760a99846e146621661fffc`, merge #1396; no open PRs returned at inspection.

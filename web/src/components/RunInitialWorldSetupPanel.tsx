@@ -529,7 +529,7 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
           response.current_context.draft_version !== current.draft_version ||
           response.current_context.package_fingerprint !== current.package_fingerprint ||
           response.preview.state.run_id !== runId || response.preview.state.branch_id !== branchId ||
-          response.preview.fingerprint.length !== 64)
+          !/^[a-f0-9]{64}$/.test(response.preview.fingerprint))
         throw new Error('Current-target revalidation returned unexpected provenance.')
       return response
     },

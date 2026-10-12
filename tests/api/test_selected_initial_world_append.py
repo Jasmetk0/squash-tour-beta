@@ -179,3 +179,58 @@ def test_old_initial_world_fingerprint_does_not_change_when_append_history_absen
         json.dumps(old_raw,sort_keys=True,separators=(",",":")).encode()
     ).hexdigest()
     assert new.fingerprint != old.fingerprint
+
+
+def test_direct_preview_and_explicit_commit_use_same_production_generation_and_sqlite(tmp_path, monkeypatch):
+    from beta_engine.api.routers import admin_players
+    repo, rid, bid, initial, larger, cmd, appended, saved = _prepared(tmp_path, monkeypatch)
+    # This isolated DB test stubs the World-Package lookup, not the production
+    # player service nor the repository's atomic Run/Draft/InitialWorld CAS.
+    monkeypatch.setattr(admin_players, "_assert_reviewed_generation_context",
+                        lambda **kw: None)
+    context = admin_players.SelectedInitialWorldAppendScopedRequest(
+        append=cmd,
+        expected_head=saved.saved_revision.revision_id,
+        expected_draft_version=saved.working_draft.draft_version,
+        expected_package_fingerprint=SHA,
+        expected_initial_world_fingerprint=initial.fingerprint,
+    )
+    args=dict(
+        run_id=rid, branch_id=bid, payload=context, runtime=NS(repository=repo),
+        package_service=NS(), service=RunWorldInitialWorldService(service()),
+    )
+    candidate = admin_players.preview_selected_initial_world_append(**args)
+    assert candidate["preview_only"] and candidate["fingerprint"]==appended.fingerprint
+    assert repo.get_initial_world(run_id=rid,branch_id=bid)==initial
+    from fastapi import HTTPException
+    with pytest.raises(HTTPException) as wrong:
+        admin_players.commit_selected_initial_world_append(
+            **args, expected="b"*64
+        )
+    assert wrong.value.status_code==409
+    assert repo.get_initial_world(run_id=rid,branch_id=bid)==initial
+    accepted=admin_players.commit_selected_initial_world_append(
+        **args, expected=candidate["fingerprint"]
+    )
+    assert accepted==appended
+    with pytest.raises(HTTPException) as second:
+        admin_players.commit_selected_initial_world_append(
+            **args,expected=candidate["fingerprint"]
+        )
+    assert second.value.status_code==409
+
+
+def test_modified_but_validly_checksummed_week_one_health_cannot_be_erased(tmp_path, monkeypatch):
+    repo, rid, bid, initial, _, _, amended, saved = _prepared(tmp_path, monkeypatch)
+    with repo._session_factory.begin() as session:
+        week=RankingWeek(season_index=0,week=1)
+        current=get_health(session,run_id=rid,branch_id=bid,week=week)
+        assert current
+        modified=current.model_copy(update={"stage_provenance":"legitimate-week1-admin-health-change"})
+        row=session.get(PlayerHealthWeekStateModel,(rid,bid,0))
+        assert row
+        row.payload_json=modified.model_dump_json()
+        row.fingerprint=modified.fingerprint
+    with pytest.raises(ValueError,match="non-bootstrap edits"):
+        _install(repo,rid,bid,initial,amended,saved)
+    assert repo.get_initial_world(run_id=rid,branch_id=bid)==initial

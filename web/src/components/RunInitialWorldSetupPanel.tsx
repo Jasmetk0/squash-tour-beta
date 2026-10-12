@@ -157,6 +157,7 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
           world_package_id: selectedWorldId,
           season: '2000/2001',
           seed, target_pool_size: poolSize,
+          naming_policy: 'country_serial.v1',
           ...(countryCode ? { country_code: countryCode } : {}),
           ...(countryQuotas.length ? { country_quotas: countryQuotas } : {}),
           ...(region ? { geographic_region: region } : {}),

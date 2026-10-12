@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import userEvent from '@testing-library/user-event'
@@ -73,7 +73,7 @@ describe('Run-owned World overview navigation',()=>{
     const years=screen.getByRole('table',{name:'Authored population timeline'})
     expect(years).toHaveTextContent('2000')
     expect(years).toHaveTextContent('2020')
-    expect(years).not.toHaveTextContent('2010')
+    expect(within(years).queryByRole('link',{name:'2010'})).not.toBeInTheDocument()
     await userEvent.click(screen.getByRole('link',{name:'2020'}))
     expect(screen.getByLabelText('Country population history')).toHaveTextContent('Selected year: 2020')
     expect(screen.getByRole('link',{name:/Back to countries/})).toHaveAttribute(

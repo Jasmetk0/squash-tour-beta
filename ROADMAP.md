@@ -1,3 +1,17 @@
+# Active next steps — 12 October 2026 / Master v79
+
+Verified base `buuk 744c4093a65125b7d760a99846e146621661fffc` (#1396). #1385–1396 delivered the authenticated Keep/Automatic, inspection, names, columns, bulk selection, protected selected InitialWorld append and production Week-2 continuation slices. These are implementation evidence, not full pre-alpha acceptance.
+
+1. **Candidate fix:** validate actual Week-1 persisted lifecycle/sporting/health fingerprint lineage from Week 2, and world-clock correspondence to published Week-1/Week-2 rankings. Run comparator regressions and production Chromium/SQLite Week-2/restart acceptance before merge.
+2. Add Selected: align preflight with ranking/sporting progress blockers and keep transactional recheck, including a stale-preview race regression.
+3. Approved standalone generator UI: conditions/sidebar editor/summary/table, explicit action boundaries, both languages, 1,000-player browser acceptance.
+4. Bulk Automatic plus independent lock/unlock semantics with authenticated provenance, before/after preview, Keep and Undo.
+5. Run-owned World summary and subsequent six-tab country detail; do not substitute global package or legacy diagnostics.
+
+Avoid pretending the current nine 1–99 source fields are canonical attributes/OVR. General in-season additions, intake, realism and full release gates remain future work.
+
+## Prior roadmap checkpoint — preserved
+
 # Active frontend implementation order — 11 October 2026 / Master v79
 
 Verified buuk `d1090495f3771e97995b94a6f1d119e7218a816b`, merge #1383.

@@ -7,6 +7,10 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from beta_engine.api.deps import ApiRuntime, get_runtime
+from beta_engine.api.deps import get_run_saved_revision_history_service
+from beta_engine.application.run_saved_revision_history_service import RunSavedRevisionHistoryService
+from beta_engine.infrastructure.db import SavedRevisionHistoryNotFoundError, SavedRevisionHistoryConflictError
+from beta_engine.application.run_country_records_read_model import RunCountryRecords, resolve_run_country_records
 from beta_engine.application.saved_player_match_detail import (SavedPlayerMatchDetail, resolve_saved_player_match_detail)
 from beta_engine.infrastructure.db.simulation_slot_state import load_saved_simulation_slot_component
 from beta_engine.application.saved_player_profile import (SavedPlayerProfile, resolve_saved_player_profile)
@@ -380,3 +384,50 @@ def get_saved_home_player_identities(
             status_code=409,
             detail={"code": "run_home_player_identity_unavailable", "message": str(exc)},
         ) from exc
+
+
+@router.get("/country-records/{country_code}", response_model=RunCountryRecords)
+def inspect_run_country_records(
+    run_id: str,
+    branch_id: str,
+    country_code: str,
+    revision_id: str = Query(min_length=1, max_length=128),
+    service: RunSavedRevisionHistoryService = Depends(get_run_saved_revision_history_service),
+) -> RunCountryRecords:
+    """Exact reachable revision only; never consult current live state or Viewer.
+
+    The revision detail service validates reachability from the requested Branch,
+    including shared ancestors. Component loaders use the ORIGINAL source Branch.
+    """
+    if len(country_code) != 3 or not country_code.isalpha() or not country_code.isupper():
+        raise HTTPException(status_code=422, detail="Invalid country code")
+    try:
+        detail = service.get_revision(
+            run_id=run_id, branch_id=branch_id, revision_id=revision_id,
+        )
+        revision = detail.saved_revision
+        origin = revision.branch_id
+        payload = revision.payload
+        return resolve_run_country_records(
+            run_id=run_id, selected_branch_id=branch_id,
+            revision_branch_id=origin, saved_revision_id=revision.revision_id,
+            country_code=country_code,
+            packages=load_saved_run_package_state(
+                payload, run_id=run_id, branch_id=origin,
+            ),
+            ranking=load_saved_ranking_component(
+                payload, run_id=run_id, branch_id=origin,
+            ),
+            initial_world=load_saved_initial_world(
+                payload, run_id=run_id, branch_id=origin,
+            ),
+            prospect_source=load_saved_run_prospect_source(
+                payload, run_id=run_id,
+            ),
+        )
+    except SavedRevisionHistoryNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except (SavedRevisionHistoryConflictError, ValueError, KeyError, TypeError) as exc:
+        raise HTTPException(status_code=409, detail={
+            "code": "run_country_records_unavailable", "message": str(exc)
+        }) from exc

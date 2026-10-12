@@ -4385,3 +4385,35 @@ export async function getSavedPlayerMatchDetail(
   }
   return data
 }
+
+/** Country Records never use live Package drafts, Viewer, or a different Saved HEAD. */
+export async function getRunCountryRecords(
+  runId:string,branchId:string,countryCode:string,revisionId:string
+):Promise<import('./types').RunCountryRecords>{
+  if(!/^[A-Z]{3}$/.test(countryCode)||!revisionId.trim())
+    throw new Error('Country Records requires a country and an exact Saved Revision')
+  const data=await request<import('./types').RunCountryRecords>(
+    '/admin/runs/'+encodeURIComponent(runId)+'/branches/'+encodeURIComponent(branchId)+
+    '/country-records/'+encodeURIComponent(countryCode)+'?revision_id='+encodeURIComponent(revisionId)
+  )
+  const good=(row:import('./types').RunCountryRecordResult)=>Boolean(
+    row.event_id&&row.event_name&&row.season&&row.host_country&&
+    row.champion_player_id&&row.champion_name&&/^[A-Z]{3}$/.test(row.champion_country)&&
+    row.finalist_player_id&&row.finalist_name&&/^[A-Z]{3}$/.test(row.finalist_country)&&
+    Number.isInteger(row.season_week)&&row.season_week>=1&&row.season_week<=61)
+  if(data.schema_version!=='run_country_records.v1'||data.source!=='reachable_saved_revision'||
+    data.run_id!==runId||data.branch_id!==branchId||
+    data.saved_revision_id!==revisionId||!data.revision_branch_id||
+    data.country_code!==countryCode||!['empty','ready'].includes(data.calendar_status)||
+    ![data.published_result_count,data.country_titles,data.country_finalists,
+      data.hosted_published_results].every(n=>Number.isSafeInteger(n)&&n>=0)||
+    !Array.isArray(data.player_results)||!Array.isArray(data.hosted_results)||
+    data.country_titles>data.player_results.length||
+    data.country_finalists>data.player_results.length||
+    data.hosted_published_results!==data.hosted_results.length||
+    data.player_results.some(x=>!good(x)||
+      (x.champion_country!==countryCode&&x.finalist_country!==countryCode))||
+    data.hosted_results.some(x=>!good(x)||x.host_country!==countryCode))
+    throw new Error('Country Records scope or published result evidence is invalid')
+  return data
+}

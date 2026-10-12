@@ -16,6 +16,7 @@ import type { RunWorldCountryHistory } from './runWorldCountryHistory'
 import { RunWorldCountryHistoryPanel } from './RunWorldCountryHistoryPanel'
 import { RunWorldCountrySavedPlayers } from './RunWorldCountrySavedPlayers'
 import { RunWorldCountryTournaments } from './RunWorldCountryTournaments'
+import { RunWorldCountryRecords } from './RunWorldCountryRecords'
 import { projectCountryTournaments } from './runWorldCountryTournaments'
 import type { CountryTournaments } from './runWorldCountryTournaments'
 import type { RunWorldCountry, RunWorldOverview, WorldPopulation } from './runWorldReadModel'
@@ -121,10 +122,11 @@ function CountryDetail({runId,branchId,savedHead,historicalRevisionId,country,wo
       sourceRevision={tournamentSourceRevision} historical={historicalRevisionId!==null}
       currentSeason={presentSeason} currentWeek={presentWeek}
       model={tournaments} loading={tournamentsPending} error={tournamentsError} cs={cs}/>}
-    {active==='records'&&<section className="section-subtle">
-      <h4>{labels[available.indexOf(active)]}</h4>
-      <p role="status">{cs?'Pro tento Run, branch a rok ještě není připojený autoritativní historický read-model. Žádné výsledky ani rekordy se nedopočítávají z aktuálních dat.':'No authoritative historical read model is connected for this Run, Branch and year. Results and records are never invented from current data.'}</p>
-    </section>}
+    {active==='records'&&<RunWorldCountryRecords
+      runId={runId} branchId={branchId} countryCode={country.code}
+      savedRevisionId={historicalRevisionId??savedHead}
+      historical={historicalRevisionId!==null} cs={cs}/>}
+
   </section>
 }
 export function RunWorldPage():JSX.Element {

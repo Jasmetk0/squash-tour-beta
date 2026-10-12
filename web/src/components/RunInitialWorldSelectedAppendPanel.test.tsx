@@ -74,7 +74,7 @@ beforeEach(()=>{
 
 describe('saved InitialWorld Add Selected',()=>{
   it('selects only new identities, server reviews and commits with exact fingerprint',async()=>{
-    renderWithRoute(<RunInitialWorldSelectedAppendPanel {...props}/>)
+    renderWithRoute(<RunInitialWorldSelectedAppendPanel {...props}/>, '/admin/runs/run-one')
     await userEvent.clear(screen.getByRole('spinbutton',{name:'Selected append source size'}))
     await userEvent.type(screen.getByRole('spinbutton',{name:'Selected append source size'}),'3')
     await userEvent.click(screen.getByRole('button',{name:'Preview source players (read-only)'}))
@@ -98,7 +98,7 @@ describe('saved InitialWorld Add Selected',()=>{
   })
 
   it('detects existing IDs before server preview and never attempts commit',async()=>{
-    renderWithRoute(<RunInitialWorldSelectedAppendPanel {...props}/>)
+    renderWithRoute(<RunInitialWorldSelectedAppendPanel {...props}/>, '/admin/runs/run-one')
     await userEvent.clear(screen.getByRole('spinbutton',{name:'Selected append source size'}))
     await userEvent.type(screen.getByRole('spinbutton',{name:'Selected append source size'}),'3')
     await userEvent.click(screen.getByRole('button',{name:'Preview source players (read-only)'}))
@@ -111,7 +111,7 @@ describe('saved InitialWorld Add Selected',()=>{
   })
 
   it('is disabled while the current InitialWorld is unsaved',async()=>{
-    renderWithRoute(<RunInitialWorldSelectedAppendPanel {...props} enabled={false}/>)
+    renderWithRoute(<RunInitialWorldSelectedAppendPanel {...props} enabled={false}/>, '/admin/runs/run-one')
     expect(screen.getByRole('button',{name:'Preview source players (read-only)'})).toBeDisabled()
     expect(screen.getByText(/First finish the pending Save/)).toBeInTheDocument()
     expect(api.previewRunOwnedInitialWorld).not.toHaveBeenCalled()

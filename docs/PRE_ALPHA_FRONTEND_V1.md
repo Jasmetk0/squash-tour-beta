@@ -1,7 +1,7 @@
 # Pre-alpha frontend V1 — approved Admin workflows
 
 Decision dates: 10–11 October 2026. Status: **approved product design; not implementation evidence**.
-Authority: Master v79 §§27.6, 27.9, 27.17–27.21, 9.4–9.7 and 31.30–31.34; newer explicit user decisions prevail.
+Authority: Master v80 §§27.6, 27.9, 27.17–27.22, 17.6.1–17.6.2, 9.4–9.7 and 31.30–31.35; newer explicit user decisions prevail.
 Older illustrative route trees are not an alternative source of authority.
 
 ## Appearance and context
@@ -228,3 +228,17 @@ Country rating history contract:
 **[ROZHODNUTO PRO PRE-ALPHA — RANKINGS]** Stránka má `Official Ranking` a `Finals Race`, každou s vlastními historicky platnými pravidly. Zobrazuje pořadí, posun oproti skutečnému předchozímu snapshotu, jméno, zemi a body; sezonu a rankingový week lze zvolit v dostupné uložené historii. Jméno otevře profil, **klik na body otevře postranní rozpis** započtených/nezapočtených výsledků, důvodů vyřazení a příslušné expirace, pokud ji daná pravidla mají. Neexistující předchozí snapshot neznamená nulový posun a budoucí nepřidělené body nejsou historie. Nevzniká nový bodový systém ani Live Ranking; ten zůstává mimo první pre-alpha.
 
 **[HRANICE CÍLE A IMPLEMENTACE]** Tato konkrétní UI rozhodnutí jsou závazným cílem pro pre-alpha. Neprohlašují současné produkční služby za úplné, nedomýšlejí Player/Hybrid Package schema, numerickou kalibraci, nové historické výsledky ani zbývající obecné submenu. Nepodporované hodnoty/operace mají být zřetelně nedostupné s důvodem.
+
+## Selected frontend decisions — Master v80 (12 October 2026)
+
+Master §§27.22 and 31.35 add approved pre-alpha target behavior; §35.37 and the v80 checkpoint contain implementation evidence, not a release certificate.
+
+- Country Records: thematic groups, brief rows, side detail with actual value/time/source links and all tied holders. Whole history / Season / Custom period (season+week bounds), default through the viewed simulation time; show scope in list/detail and preserve filters/scroll. World data year is a different axis. Record examples do not finalize the catalog/formulas.
+- History & Branches: map above the selected branch's actual Saved Revision table. Inspection does not activate an Admin Branch. Saved Revision side detail separates inspect / create branch / compare / confirmed restore. Compare is a separate read-only A/B page with Differences only / All and actual supported difference details; deferred comparison levels remain deferred.
+- Simulation stop settings: side panel with master intervention switch and several individually editable/enabled rules, matching any active rule (OR across rules). Multiple matching rules for one decision point yield one pause with every matching reason.
+- Decision choice: manual choice or original authoritative AI choice, followed by Apply and continue to original target/next pause, or Apply and remain paused to inspect. This is not automatic Run Save and does not reroll the AI choice.
+- Diagnostic AI-choice percentages should appear automatically where supported, measured for performance and allowed to update in the background while the panel remains usable. Show progress, percentages beside choices and an expandable estimate detail (sample count, duration, uncertainty). Repeated evaluation uses the exact frozen decision inputs and information legitimately known to that internal AI, isolated diagnostic RNG and model provenance; it cannot advance/mutate the Run or consume/reseed sporting RNG. Deterministic choices may honestly be 100%.
+- Red/orange/green estimate-quality labels reflect sampling precision, not empirical realism or blocking validation. Convergence of unrounded estimates, uncertainty and independent verification govern stopping; time/sample limits, user stop and applying the decision also terminate. A missed precision target stays visibly incomplete. Refine estimate may continue over the same context.
+- Exact statistical methodology, adaptive-stopping coverage, counts/minima/thresholds and performance calibration remain for implementation/tests; 10/20 million were examples, not mandatory limits. Unsupported estimates remain honestly unavailable or existing relative scores, not invented percentages.
+- Decision history stores the then-available estimate/status and actual AI/Admin choice without retroactive replacement. An optional admin note is separate from AI reasons and has no simulation effect.
+- The user skipped the question about a list of multiple waiting decisions: do not turn it into approved behavior. Preserve all existing pre-slot snapshot/simultaneity semantics; presenting decisions sequentially must not make same-slot inputs order-dependent.

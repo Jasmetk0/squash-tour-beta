@@ -1,3 +1,41 @@
+# Active audited state — Master v80 / 12 October 2026
+
+Audit base: `buuk 4a58192cd4f8bb7d4f9d71c76a870ec6ce3baae4`, merged #1414.
+[Complete scoped review](docs/PRE_ALPHA_FRONTEND_CHECKPOINT_V80_2026_10_12.md).
+[Next implementation task](docs/PRE_ALPHA_NEXT_CHATGPT_TASK_V80_2026_10_12.md).
+Master target additions: §§27.22 and 31.35; implementation evidence: §35.37.
+
+#1405–1414 are all integrated; applicable final feature HEAD checks are success,
+and their commits are ancestors of this buuk. No open implementation PR at recheck.
+Same-value bulk locks and versioned interpolation are repaired. Exact reachable
+Saved World, actual saved country tournament/result/match/player-summary views
+and real Chromium/API/SQLite restart acceptance exist. Existing #1385–1404 flows,
+including Week-2 lineage/clock and pristine pre-ranking append guards, remain.
+This is a scoped integration audit, not a full-suite/release/realism certificate.
+
+**Reproduced active bug A80-01:** country tournament UI accepts duplicate event_id
+across two Calendar packages; canonical backend rejects that identity ambiguity.
+Next: fix this guard, then shared Run Calendar/Edition scoped multi-season reads,
+v80 Country Records intervals/side detail/ties, History/Compare UI, supported
+Simulation stop policy and real isolated AI diagnostic estimates.
+
+**Still incomplete:** historical country player roster; simulation checkpoint →
+Saved Revision linkage; Edition links beyond present season 0; derived authoritative
+lifecycle beyond calendar labels; v80 record periods/detail; canonical 57 attributes/
+OVR; general in-season player addition/intake/groups; World editors; full season,
+Season Transition/50-season acceptance and realism calibration. Master approval
+does not imply those services exist.
+
+**Skipped decision:** no approval for a queue/list of multiple waiting decisions.
+Same-slot pre-snapshot and non-order-dependence remain unchanged. Diagnostic
+AI-estimate sample counts, statistical methodology/coverage, thresholds and
+performance are for implementation/testing, not fixed product numerical canon.
+
+The entries below are preserved dated history. Candidate/not-merged labels apply
+to their original date; they are not the active next-action queue.
+
+---
+
 # 12 October 2026 — Country Saved HEAD players + World browser candidate
 
 Base `buuk 12e018ec2c41e29548ce51425b3d1c8e6081fd71`, merged #1403.

@@ -639,6 +639,14 @@ describe('Run-owned first-season player setup', () => {
   })
 
   it('bulk action refuses impossible ability edits before any backend request and preserves Keep',async()=>{
+    // Use real source-model bounds for this adversarial case; the generic
+    // frontend fixture intentionally uses future canonical-like potentials.
+    api.previewRunOwnedInitialWorld.mockImplementation(async (_run:string,_branch:string,
+      request:{command_id:string;generation:{world_package_id:string;seed:number};best_n:number})=>({
+      preview_only:true,
+      state:{...buildState(request),players:players.map(p=>({...p,potential_ability:90}))},
+      fingerprint:sha('f')
+    }))
     render()
     await userEvent.clear(screen.getByRole('spinbutton',{name:'Number of generated players'}))
     await userEvent.type(screen.getByRole('spinbutton',{name:'Number of generated players'}),'2')

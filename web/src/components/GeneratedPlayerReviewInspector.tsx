@@ -359,8 +359,8 @@ export function GeneratedPlayerReviewInspector({ players, locale = 'en', keepIds
                   aria-label={'Field edit details ' + player.player_id}>
                   <summary>✎ {cs ? 'Pole' : 'Fields'}</summary>
                   {[...new Set([
-                    ...verifiedByPlayer.get(player.player_id)?.keys() ?? [],
-                    ...pendingByPlayer.get(player.player_id)?.keys() ?? []
+                    ...(verifiedByPlayer.get(player.player_id)?.keys() ?? []),
+                    ...(pendingByPlayer.get(player.player_id)?.keys() ?? [])
                   ])].sort().map(field => <div key={field}>
                     <code>{field}</code>: {verifiedByPlayer.get(player.player_id)?.has(field)
                       ? `verified ${verifiedByPlayer.get(player.player_id)?.get(field)}`

@@ -42,6 +42,10 @@ jobs:
               - 'config/player_generation/**'
               - 'config/earth_research/**'
               - 'scripts/**'
+              # These acceptance-only scripts own their real Chromium/SQLite gate,
+              # not backend's pr_critical selector (which selects no tests for them).
+              - '!scripts/admin_large_cohort_browser.py'
+              - '!scripts/admin_world_country_checks.py'
               - 'src/**'
               - 'tests/**'
               - 'pyproject.toml'
@@ -63,6 +67,8 @@ jobs:
               - 'config/world_packages/**'
               - 'config/player_generation/**'
               - 'scripts/**'
+              - '!scripts/admin_large_cohort_browser.py'
+              - '!scripts/admin_world_country_checks.py'
               - 'src/**'
               - 'tests/**'
               - '!tests/application/test_earth_seed_progress.py'

@@ -10,6 +10,9 @@ import { useAdminTime } from '../admin/AdminTimeContext'
 import { useLanguage } from '../i18n/LanguageContext'
 import { formatApiError } from '../utils/apiErrors'
 import { projectRunWorld, worldRatingKeys } from './runWorldReadModel'
+import { projectRunWorldCountryHistory } from './runWorldCountryHistory'
+import type { RunWorldCountryHistory } from './runWorldCountryHistory'
+import { RunWorldCountryHistoryPanel } from './RunWorldCountryHistoryPanel'
 import type { RunWorldCountry, RunWorldOverview, WorldPopulation } from './runWorldReadModel'
 
 const startYear=2000
@@ -36,9 +39,10 @@ function countryUrl(runId:string,code:string,params:URLSearchParams):string {
 function TabLink({active,to,label}:{active:boolean;to:string;label:string}):JSX.Element {
   return <Link aria-current={active?'page':undefined} to={to}>{label}</Link>
 }
-function CountryDetail({runId,country,world,params,cs,language}:{
+function CountryDetail({runId,country,world,params,cs,language,history,historyError}:{
   runId:string;country:RunWorldCountry;world:RunWorldOverview;
   params:URLSearchParams;cs:boolean;language:string
+  history:RunWorldCountryHistory|null;historyError:string|null
 }):JSX.Element {
   const available=['overview','population','ratings','players','records','tournaments']
   const labels=cs?['Přehled','Populace','Atributy země','Hráči a talenty','Rekordy','Turnaje']:
@@ -48,6 +52,11 @@ function CountryDetail({runId,country,world,params,cs,language}:{
   const linked=(tab:string)=>{
     const next=new URLSearchParams(params)
     next.set('tab',tab)
+    return countryUrl(runId,country.code,next)
+  }
+  const yearLink=(year:number)=>{
+    const next=new URLSearchParams(params)
+    next.set('year',String(year))
     return countryUrl(runId,country.code,next)
   }
   const returnParams=new URLSearchParams(params)
@@ -78,23 +87,13 @@ function CountryDetail({runId,country,world,params,cs,language}:{
         <p>{cs?'Dostupné detaily jsou v záložkách Populace a Atributy země.':'See Population and Country Attributes for available data and provenance.'}</p>
       </section>
     </div>}
-    {active==='population'&&<section className="section-subtle">
-      <h4>{cs?'Populace pro zvolený rok':'Population for selected year'}</h4>
-      <p>{country.population.value==null?'—':formatCount(country.population.value,language)}</p>
-      <p role="status">{populationLabel(country.population,cs)}.
-        {country.population.kind!=='exact'&&' '+(cs?'Jde o fallback/odhad, nikoli potvrzenou populaci zvoleného roku.':'This is fallback/estimated data, not verified population for the selected year.')}</p>
-      <p>{cs?'Editace historické populace a grafy budou navazující implementace; zobrazení nic nezapisuje.':'Historical population editing and charts are separate follow-up work. This view never writes.'}</p>
-    </section>}
-    {active==='ratings'&&<section className="section-subtle">
-      <h4>{cs?'Šest ratingů země':'Six country ratings'}</h4>
-      <p>{cs?'Použitá škála':'Scale'}: 1–{country.ratingScale}. {cs?'Zdroj roku a metoda jsou vypsány u každé hodnoty.':'Source year and method appear beside each value.'}</p>
-      <div className="table-responsive"><table><thead><tr>
-        <th>{cs?'Atribut':'Attribute'}</th><th>{cs?'Hodnota':'Value'}</th><th>{cs?'Zdroj':'Source'}</th>
-      </tr></thead><tbody>{worldRatingKeys.map(key=><tr key={key}>
-        <td>{key.replace(/_/g,' ')}</td><td>{country.ratings[key].value??'—'}</td>
-        <td>{country.ratings[key].provenance}{country.ratings[key].sourceYear==null?'':' · '+country.ratings[key].sourceYear}</td>
-      </tr>)}</tbody></table></div>
-    </section>}
+    {(active==='population'||active==='ratings')&&history&&
+      <RunWorldCountryHistoryPanel
+        key={country.code} country={country} history={history}
+        tab={active} cs={cs} language={language} yearLink={yearLink}
+      />}
+    {(active==='population'||active==='ratings')&&!history&&
+      <p role="alert">{historyError??(cs?'Historické podklady této země nejsou dostupné.':'Country history source is unavailable.')}</p>}
     {active==='players'&&<section className="section-subtle">
       <h4>{cs?'Hráči a talenty':'Players & Talent'}</h4>
       <p>{cs?'V tomto řezu není připojený časově věrný seznam hráčů země; očekávání není skutečný intake.':'A historically scoped country roster is not yet connected here; expected intake is not an actual roster.'}</p>
@@ -124,10 +123,15 @@ export function RunWorldPage():JSX.Element {
     retry:false
   })
   const projection=useMemo(()=>{
-    if(!q.data||!branchId)return {world:null,error:null}
+    if(!allowed||!q.data||!branchId)return {world:null,error:null}
     try {return {world:projectRunWorld(q.data,runId,branchId,year),error:null}}
     catch(error){return {world:null,error:formatApiError(error)}}
-  },[q.data,runId,branchId,year])
+  },[allowed,q.data,runId,branchId,year])
+  const historyProjection=useMemo(()=>{
+    if(!allowed||!q.data||!branchId||!countryCode)return {history:null,error:null}
+    try {return {history:projectRunWorldCountryHistory(q.data,runId,branchId,countryCode,year),error:null}}
+    catch(error){return {history:null,error:formatApiError(error)}}
+  },[allowed,q.data,runId,branchId,countryCode,year])
   const world=projection.world
   const visible=world?.countries.filter(c=>[c.code,c.name,c.region??''].some(v=>
     v.toLocaleLowerCase().includes(search.trim().toLocaleLowerCase())))??[]
@@ -170,7 +174,8 @@ export function RunWorldPage():JSX.Element {
           </select>
         </label>
       </div>
-      {countryCode ? (country?<CountryDetail runId={runId} country={country} world={world} params={params} cs={cs} language={language}/>
+      {countryCode ? (country?<CountryDetail runId={runId} country={country} world={world} params={params} cs={cs} language={language}
+          history={historyProjection.history} historyError={historyProjection.error}/>
         :<p role="alert">{cs?'Země v tomto Run World neexistuje.':'Country does not exist in this Run World.'} <Link to={'/admin/runs/'+encodeURIComponent(runId)+'/world'}>{cs?'Zpět':'Back'}</Link></p>)
         :<>
         <div className="run-world-metrics" aria-label="World summary metrics">

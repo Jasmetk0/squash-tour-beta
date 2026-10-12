@@ -8,12 +8,13 @@ export type GeneratedBulkChange = {
   playerId: string
   name: string
   before: number
-  after: number
+  after: number | null
 }
 
 export type GeneratedBulkPlan = {
   selectedCount: number
   unchangedCount: number
+  mode: 'value' | 'automatic'
   field: GeneratedPlayerFieldKey
   changes: GeneratedBulkChange[]
   nextLocks: RunWorldPreviewFieldLock[]
@@ -64,6 +65,49 @@ export function prepareGeneratedBulkPlan(
   return {
     selectedCount: ids.length,
     unchangedCount: ids.length - changes.length,
-    field, changes, nextLocks
+    mode: 'value', field, changes, nextLocks
+  }
+}
+
+
+/** Only removes verified field locks of the selected players. The resulting
+ * automatic numeric values are UNKNOWN until production preview has replayed
+ * the request; null is a presentation-only pending automatic target.
+ */
+export function prepareGeneratedBulkAutomaticPlan(
+  players: RunInitialWorldPlayer[], ids: string[], field: GeneratedPlayerFieldKey,
+  verifiedLocks: RunWorldPreviewFieldLock[]
+): GeneratedBulkPlan {
+  if (!PREVIEW_FIELD_KEYS.includes(field))
+    throw new Error('Bulk Automatic supports only the nine real numeric source-model fields.')
+  if (!ids.length || ids.length > 1000 || new Set(ids).size !== ids.length)
+    throw new Error('Choose 1–1000 distinct players for the action.')
+  const playersById = new Map(players.map(player => [player.player_id, player]))
+  if (playersById.size !== players.length)
+    throw new Error('Review contains duplicate player identities.')
+  const selected = new Set(ids)
+  for (const id of selected) {
+    const player = playersById.get(id)
+    if (!player) throw new Error('Selected identity is not in the current verified preview.')
+    const value = observed(player, field)
+    if (!Number.isSafeInteger(value) || value! < 1 || value! > 99)
+      throw new Error(`Selected player ${id} has no supported numeric ${field} value.`)
+  }
+  const affected = verifiedLocks.filter(lock =>
+    selected.has(lock.player_id) && lock.field === field)
+  if (new Set(affected.map(lock => lock.player_id)).size !== affected.length)
+    throw new Error('Duplicate selected field locks must not be silently discarded.')
+  const changes: GeneratedBulkChange[] = affected.map(lock => {
+    const player = playersById.get(lock.player_id)!
+    return {
+      playerId: player.player_id, name: player.name,
+      before: observed(player, field)!, after: null
+    }
+  }).sort((a, b) => a.playerId.localeCompare(b.playerId))
+  const nextLocks = orderedPreviewFieldLocks(verifiedLocks.filter(lock =>
+    !(selected.has(lock.player_id) && lock.field === field)))
+  return {
+    selectedCount: ids.length, unchangedCount: ids.length - changes.length,
+    mode: 'automatic', field, changes, nextLocks
   }
 }

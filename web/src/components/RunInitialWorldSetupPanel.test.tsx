@@ -682,6 +682,60 @@ describe('Run-owned first-season player setup', () => {
     expect(api.saveRunOwnedInitialWorld).not.toHaveBeenCalled()
   })
 
+  it('bulk Automatic unlocks only selected verified field locks, then server verifies and Undo restores',async()=>{
+    api.previewRunOwnedInitialWorld.mockImplementation(async (_run:string,_branch:string,
+      request:{command_id:string;generation:{world_package_id:string;seed:number;
+        field_locks?:{player_id:string;field:string;value:number}[]};best_n:number}) => {
+      const locks=request.generation.field_locks??[]
+      return {
+        preview_only:true,
+        state:{...buildState(request),players:players.map(p=>{
+          const match=locks.find(lock=>lock.player_id===p.player_id && lock.field==='current_ability')
+          return match?{...p,current_ability:match.value}:p
+        })},
+        fingerprint:locks.length?sha('a'):sha('f')
+      }
+    })
+    render()
+    await userEvent.clear(screen.getByRole('spinbutton',{name:'Number of generated players'}))
+    await userEvent.type(screen.getByRole('spinbutton',{name:'Number of generated players'}),'2')
+    await userEvent.click(await screen.findByRole('button',{name:'Preview generated players'}))
+    await userEvent.click(screen.getByRole('checkbox',{name:'Select for bulk action p-1'}))
+    await userEvent.selectOptions(screen.getByRole('combobox',{name:'Bulk source field'}),'current_ability')
+    await userEvent.selectOptions(screen.getByRole('combobox',{name:'Bulk operation mode'}),'automatic')
+    expect(screen.queryByRole('spinbutton',{name:'Bulk new source value'})).not.toBeInTheDocument()
+    expect(screen.getByRole('button',{name:'Stage bulk Automatic (no Run write)'})).toBeDisabled()
+    expect(api.previewRunOwnedInitialWorld).toHaveBeenCalledTimes(1)
+    await userEvent.selectOptions(screen.getByRole('combobox',{name:'Bulk operation mode'}),'value')
+    await userEvent.type(screen.getByRole('spinbutton',{name:'Bulk new source value'}),'78')
+    await userEvent.click(screen.getByRole('button',{name:'Stage reviewed bulk locks (no Run write)'}))
+    await userEvent.click(screen.getByRole('button',{name:'Verify staged bulk changes on server'}))
+    await waitFor(()=>expect(api.previewRunOwnedInitialWorld).toHaveBeenCalledTimes(2))
+    expect(api.previewRunOwnedInitialWorld.mock.calls[1][2].generation.field_locks).toEqual([
+      {player_id:'p-1',field:'current_ability',value:78}
+    ])
+    expect(screen.getByRole('button',{name:'Undo last verified bulk preview'})).toBeEnabled()
+    // Select again: action selection is reset at the new verified fingerprint.
+    await userEvent.click(screen.getByRole('checkbox',{name:'Select for bulk action p-1'}))
+    await userEvent.selectOptions(screen.getByRole('combobox',{name:'Bulk operation mode'}),'automatic')
+    const plan=screen.getByLabelText('Bulk before after preview')
+    expect(plan).toHaveTextContent('to unlock 1')
+    await userEvent.click(screen.getByText(/Review exact before\/after values/))
+    expect(plan).toHaveTextContent('Automatic – server decides')
+    await userEvent.click(screen.getByRole('button',{name:'Stage bulk Automatic (no Run write)'}))
+    expect(screen.getByText(/Automatic unlocks are staged/)).toBeInTheDocument()
+    expect(screen.getByRole('button',{name:'Adopt generated players'})).toBeDisabled()
+    expect(api.previewRunOwnedInitialWorld).toHaveBeenCalledTimes(2)
+    await userEvent.click(screen.getByRole('button',{name:'Verify Automatic on server'}))
+    await waitFor(()=>expect(api.previewRunOwnedInitialWorld).toHaveBeenCalledTimes(3))
+    expect(api.previewRunOwnedInitialWorld.mock.calls[2][2].generation.field_locks).toEqual([])
+    expect(screen.getByRole('button',{name:'Undo last verified bulk preview'})).toBeEnabled()
+    await userEvent.click(screen.getByRole('button',{name:'Undo last verified bulk preview'}))
+    expect(await screen.findByText(/One-step session Undo restored/)).toBeInTheDocument()
+    expect(api.adoptRunOwnedInitialWorld).not.toHaveBeenCalled()
+    expect(api.saveRunOwnedInitialWorld).not.toHaveBeenCalled()
+  })
+
   it('bulk-selects independently of Keep, stages before/after, server verifies and one-step Undo restores old preview',async()=>{
     api.previewRunOwnedInitialWorld.mockImplementation(async (_run:string,_branch:string,
       request:{command_id:string;generation:{world_package_id:string;seed:number;

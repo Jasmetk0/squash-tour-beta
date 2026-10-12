@@ -25,7 +25,9 @@ import { GeneratedPlayerReviewInspector } from './GeneratedPlayerReviewInspector
 import { GeneratedPlayerFieldLockEditor } from './GeneratedPlayerFieldLockEditor'
 import { RunInitialWorldSelectedAppendPanel } from './RunInitialWorldSelectedAppendPanel'
 import { playerGeneratorCopy } from './playerGeneratorCopy'
-import { prepareGeneratedBulkPlan, type GeneratedBulkPlan } from './generatedBulkPreview'
+import {
+  prepareGeneratedBulkPlan, prepareGeneratedBulkAutomaticPlan, type GeneratedBulkPlan
+} from './generatedBulkPreview'
 
 type ReviewedWorld = {
   runId: string
@@ -71,6 +73,7 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
   const [pendingFieldLocks, setPendingFieldLocks] = useState<RunWorldPreviewFieldLock[]>([])
   const [bulkSelectedIds, setBulkSelectedIds] = useState<string[]>([])
   const [bulkField, setBulkField] = useState<GeneratedPlayerFieldKey>('attributes.technique')
+  const [bulkMode, setBulkMode] = useState<'value'|'automatic'>('value')
   const [bulkValue, setBulkValue] = useState('')
   const [bulkStagedFingerprint, setBulkStagedFingerprint] = useState<string | null>(null)
   const [bulkUndo, setBulkUndo] = useState<{previous: ReviewedWorld; appliedFingerprint: string} | null>(null)
@@ -247,13 +250,18 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
   let bulkPlan: GeneratedBulkPlan | null = null
   let bulkError: string | null = null
   if (bulkSelectedIds.length && reviewMatches && review) {
-    if (!/^[0-9]+$/.test(bulkValue)) bulkError = 'Enter a whole-number source value from 1 to 99.'
+    if (bulkMode === 'value' && !/^[0-9]+$/.test(bulkValue))
+      bulkError = 'Enter a whole-number source value from 1 to 99.'
     else {
       try {
-        bulkPlan = prepareGeneratedBulkPlan(
-          review.preview.state.players, bulkSelectedIds,
-          bulkField, Number(bulkValue), approvedFieldLocks
-        )
+        bulkPlan = bulkMode === 'automatic'
+          ? prepareGeneratedBulkAutomaticPlan(
+            review.preview.state.players, bulkSelectedIds, bulkField, approvedFieldLocks
+          )
+          : prepareGeneratedBulkPlan(
+            review.preview.state.players, bulkSelectedIds,
+            bulkField, Number(bulkValue), approvedFieldLocks
+          )
       } catch (error) {
         bulkError = error instanceof Error ? error.message : String(error)
       }
@@ -1036,6 +1044,14 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
           ? 'Hromadný výběr je nezávislý na Keep. Žádná hodnota se nezmění bez nového serverového náhledu, výslovného Adopt a ručního Save.'
           : 'Action selection is independent of Keep. No field becomes verified until a fresh server preview; Adopt and manual Save remain separate.'}</p>
         <div className="form-grid">
+          <label>{cs ? 'Hromadná operace' : 'Bulk operation'}
+            <select aria-label="Bulk operation mode" value={bulkMode}
+              disabled={Boolean(bulkStagedFingerprint)}
+              onChange={event=>setBulkMode(event.target.value as 'value'|'automatic')}>
+              <option value="value">{cs ? 'Nastavit hodnotu a zamknout' : 'Set value and lock'}</option>
+              <option value="automatic">{cs ? 'Automaticky podle modelu (odemknout)' : 'Automatic from model (unlock)'}</option>
+            </select>
+          </label>
           <label>{cs ? 'Zdrojový atribut' : 'Source field'}
             <select aria-label="Bulk source field" value={bulkField}
               disabled={Boolean(bulkStagedFingerprint)}
@@ -1044,17 +1060,22 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
                 <option key={field} value={field}>{field} (1–99)</option>)}
             </select>
           </label>
-          <label>{cs ? 'Nová hodnota' : 'New value'}
+          {bulkMode === 'value' && <label>{cs ? 'Nová hodnota' : 'New value'}
             <input aria-label="Bulk new source value" type="number" min={1} max={99} step={1}
               disabled={Boolean(bulkStagedFingerprint)}
               value={bulkValue}
               onChange={event=>setBulkValue(event.target.value)} />
-          </label>
+          </label>}
         </div>
+        {bulkMode === 'automatic' && <p className="status">{cs
+          ? 'Automatic odebere jen zámky vybraného atributu u označených hráčů. Výsledná čísla určí až nový ověřený serverový náhled; bez serveru je nelze předpovědět.'
+          : 'Automatic removes only selected players’ locks on this field. Final numeric values are unknown until the server replays and verifies the new preview.'}</p>}
         {bulkError && <p role="alert">{tr('Bulk preview conflict:')} {bulkError}</p>}
         {bulkPlan && <div aria-label="Bulk before after preview">
           <p role="status">{tr('Action selection')} {bulkPlan.selectedCount} ·
-            {' '}{tr('changed')} {bulkPlan.changes.length} · {tr('unchanged')} {bulkPlan.unchangedCount}.
+            {' '}{bulkMode === 'automatic'
+              ? (cs ? 'k odemknutí' : 'to unlock')
+              : tr('changed')} {bulkPlan.changes.length} · {tr('unchanged')} {bulkPlan.unchangedCount}.
             {' '}{cs ? 'Jde pouze o místní návrh změn před/po, nikoli potvrzené hodnoty hráčů.' : 'This is a local before/after proposal, not accepted player values.'}</p>
           <details>
             <summary>{tr('Review exact before/after values')} · {bulkPlan.changes.length} {tr('changed profiles')}</summary>
@@ -1062,7 +1083,9 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
               <thead><tr><th>{tr('Player ID')}</th><th>{tr('Player')}</th><th>{tr('Before')}</th><th>{tr('After')}</th></tr></thead>
               <tbody>{bulkPlan.changes.map(change=><tr key={change.playerId}>
                 <td>{change.playerId}</td><td>{change.name}</td>
-                <td>{change.before}</td><td>{change.after}</td>
+                <td>{change.before}</td><td>{change.after == null
+                  ? (cs ? 'Automaticky – určí server' : 'Automatic – server decides')
+                  : change.after}</td>
               </tr>)}</tbody>
             </table></div>
           </details>
@@ -1075,14 +1098,18 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
               setPendingFieldLocks(bulkPlan.nextLocks)
               setBulkStagedFingerprint(review.preview.fingerprint)
               setBulkUndo(null); setApproved(false); setSelectedPlayerId(null)
-            }}>{tr('Stage reviewed bulk locks (no Run write)')}</button>
+            }}>{bulkMode === 'automatic'
+              ? (cs ? 'Připravit odemknutí (bez zápisu)' : 'Stage bulk Automatic (no Run write)')
+              : tr('Stage reviewed bulk locks (no Run write)')}</button>
           <button type="button" disabled={!bulkStagedFingerprint ||
             review.preview.fingerprint !== bulkStagedFingerprint ||
             !fieldEditingEnabled || !locksDirty || keepSelectionDirty ||
             fieldPreviewAction.isPending || regenerateAction.isPending}
             onClick={()=>fieldPreviewAction.mutate({regenerate:false,bulk:true})}>
             {fieldPreviewAction.isPending ? tr('Verifying bulk preview…') :
-              tr('Verify staged bulk changes on server')}
+              bulkMode === 'automatic'
+                ? (cs ? 'Ověřit Automatic na serveru' : 'Verify Automatic on server')
+                : tr('Verify staged bulk changes on server')}
           </button>
           <button type="button" disabled={!bulkStagedFingerprint || fieldPreviewAction.isPending}
             onClick={()=>{
@@ -1107,7 +1134,9 @@ export function RunInitialWorldSetupPanel({ run, branch, locale = 'en' }: {
               setNotice(cs ? 'Vrácen předchozí ověřený náhled; do Runu se nic nezapsalo.' : 'One-step session Undo restored the preceding verified preview; no Run write.')
             }}>{tr('Undo last verified bulk preview')}</button>
         </div>
-        {bulkStagedFingerprint && <p role="alert">{tr('Bulk locks are staged locally and block Adopt until freshly verified on the server.')}</p>}
+        {bulkStagedFingerprint && <p role="alert">{bulkMode === 'automatic'
+          ? (cs ? 'Odemknutí je jen připravené. Převzetí je blokované do nového ověření serverem.' : 'Automatic unlocks are staged, not applied. Adopt remains blocked until server verification.')
+          : tr('Bulk locks are staged locally and block Adopt until freshly verified on the server.')}</p>}
       </section>
       {selectedPlayerId && viewedPlayers.some(p=>p.player_id===selectedPlayerId) &&
         <GeneratedPlayerFieldLockEditor

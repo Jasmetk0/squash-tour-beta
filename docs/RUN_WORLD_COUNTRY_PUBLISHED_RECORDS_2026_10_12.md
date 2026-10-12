@@ -9,7 +9,7 @@ For each published result, both champion and finalist IDs must have fully resolv
 
 ## Display semantics
 * `country_titles`: number of canonical published finals won by a player with this country code.
-* `country_finalists`: number of published tournament finalist (runner-up) results featuring a player from this country.
+* `country_finalists`: number of published tournament runner-up finishes featuring a player from this country.
 * `hosted_published_results`: number of published tournament results where the actual edition `host_country` equals this country code, regardless of winner's nationality.
 * `player_results`: published championship finals with this country's champion **or** runner-up.
 * `hosted_results`: published championship finals held in this country (may have foreign champion and finalist).

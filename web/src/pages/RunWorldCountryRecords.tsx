@@ -60,7 +60,7 @@ export function RunWorldCountryRecords({
       <div className="run-world-metrics" aria-label="Country verified record totals">
         <div><span>{cs?'Tituly hráčů země':'Country player titles'}</span>
           <strong>{format(data.country_titles)}</strong></div>
-        <div><span>{cs?'Finálové účasti':'Country player finals'}</span>
+        <div><span>{cs?'Druhá místa ve finále':'Country runner-up finishes'}</span>
           <strong>{format(data.country_finalists)}</strong></div>
         <div><span>{cs?'Publikované domácí výsledky':'Published hosted results'}</span>
           <strong>{format(data.hosted_published_results)}</strong></div>

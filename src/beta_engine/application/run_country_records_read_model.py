@@ -112,7 +112,7 @@ def resolve_run_country_records(
         champion = identities[item.champion_player_id]
         finalist = identities[item.finalist_player_id]
         complete.append(CountryRecordResult(
-            event_id=item.event_id, event_name=item.event_name,
+            event_id=item.event_id, event_name=item.event_name or item.event_id,
             season=item.season, season_week=item.season_week,
             host_country=item.host_country,
             champion_player_id=champion.player_id, champion_name=champion.display_name,

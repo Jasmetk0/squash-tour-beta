@@ -114,7 +114,14 @@ def verify_transition(before: dict, after: dict) -> dict:
         "Week-2 progress edited initial ranking candidate"
     )
     assert after["published"].get(1), "Week-2 published ranking is required"
+    assert len(before["clock"]) == 1 and before["clock"][0]["current_ordinal"] == 0
+    assert before["clock"][0]["ranking_fingerprint"] == before["published"][0]["snapshot_fingerprint"], (
+        "Week-1 world clock does not reference its published ranking"
+    )
     assert len(after["clock"]) == 1 and after["clock"][0]["current_ordinal"] == 1
+    assert after["clock"][0]["ranking_fingerprint"] == after["published"][1]["snapshot_fingerprint"], (
+        "Week-2 world clock does not reference its published ranking"
+    )
 
     roster_sizes = {}
     for table, weeks in after["projections"].items():
@@ -132,8 +139,8 @@ def verify_transition(before: dict, after: dict) -> dict:
             table, "invented player identity"
         )
         assert new_ids == old_ids, (table, "unexpected player identity loss")
-        assert week_two["state"]["predecessor_fingerprint"], (
-            table, "Week-2 projection has no predecessor evidence"
+        assert week_two["state"]["predecessor_fingerprint"] == week_one["fingerprint"], (
+            table, "Week-2 projection does not reference the persisted Week-1 fingerprint"
         )
         roster_sizes[table] = len(new_ids)
     assert roster_sizes["player_lifecycle_week_states"] == 64

@@ -125,6 +125,9 @@ def acceptance(
                 browser_click(page, "Preview actual Entry Field")
                 page.get_by_label("Approve reviewed Entry Field", exact=True).check()
                 browser_click(page, "Commit reviewed Entry Field")
+                prepared_event_url = page.url
+                assert "/calendar/" in prepared_event_url
+
 
                 # This is the missing real Admin UI journey: no direct writes
                 # for Group Rules, Format, Topology or Group Match Schedule.
@@ -318,6 +321,25 @@ def acceptance(
                     assert saved(old_rev) == before
                     assert saved(revision) == expected, (
                         "Simulating six real matches rewrote pre-result Saved Revision"
+                    )
+                    # Reopen the real Run-owned tournament in Present mode.
+                    # Read its immutable final groups through the new Admin panel,
+                    # not a synthetic result, a mock API or today's ranking.
+                    page.goto(prepared_event_url)
+                    table = page.get_by_role(
+                        "table", name="Canonical group 1 standings"
+                    )
+                    expect(table).to_be_visible()
+                    expect(table.locator("tbody tr")).to_have_count(4)
+                    expect(page.get_by_label(
+                        "Canonical completed group standings"
+                    )).to_contain_text("Frozen authority:")
+                    assert page.get_by_role(
+                        "button", name="Generate canonical group standings"
+                    ).count() == 0, "Frozen authority must not offer a duplicate generation"
+                    page.screenshot(
+                        path=str(artifacts / "04-admin-frozen-group-table.png"),
+                        full_page=True,
                     )
                     final_browser_read(page, completed["revision"])
                     print("GROUP BROWSER: six real matches + immutable final standings saved",

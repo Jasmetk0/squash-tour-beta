@@ -44,6 +44,9 @@ const api = vi.hoisted(() => ({
   createTournamentEntryFieldFromValidSubmissions: vi.fn(),
   createTournamentEntryFieldFromFinalsSelection: vi.fn(),
   generateTournamentGroupMatchSchedule: vi.fn(),
+  getAdminCompletedGroupStandings: vi.fn(),
+  generateAdminCompletedGroupStandings: vi.fn(),
+  getAdminGroupTieResolutionState: vi.fn(),
   commitCanonicalPreDrawWithdrawal: vi.fn(),
   getCanonicalTournamentDrawState: vi.fn(),
   getCanonicalTournamentDrawAuthority: vi.fn(),
@@ -97,6 +100,12 @@ function renderAt(route: string): void {
 describe('PlannedEventDetailPage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    api.getAdminCompletedGroupStandings.mockRejectedValue(new api.ApiError('Standings not frozen', 404))
+    api.getAdminGroupTieResolutionState.mockResolvedValue({
+      schema_version: 'tournament_group_tie_resolution_state.v1',
+      run_id:'run-a',branch_id:'branch-a',event_id:'E1',
+      unresolved_case:null,resolutions:[]
+    })
     adminTime.viewed.mockImplementation(presentView)
     api.getRunContainer.mockResolvedValue({
       run_id: 'run-a', storage_kind: 'custom_local',

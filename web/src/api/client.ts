@@ -4649,3 +4649,44 @@ export async function generateAdminGroupTopology(
     throw new Error('Group Topology generation returned an unrelated authority.')
   return data
 }
+
+export async function getAdminCompletedGroupStandings(
+  runId: string, branchId: string, eventId: string
+): Promise<import('./tournamentGroupStandings').CompletedGroupStandings> {
+  const data = await request<import('./tournamentGroupStandings').CompletedGroupStandings>(
+    '/admin/runs/' + encodeURIComponent(runId) + '/branches/' + encodeURIComponent(branchId)
+      + '/tournaments/' + encodeURIComponent(eventId) + '/group-standings'
+  )
+  const { isScopedCompletedGroupStandings } = await import('./tournamentGroupStandings')
+  if (!isScopedCompletedGroupStandings(data, runId, branchId, eventId))
+    throw new Error('Final Group Standings do not match the selected Run, Branch, Event and source authority.')
+  return data
+}
+
+export async function generateAdminCompletedGroupStandings(
+  runId: string, branchId: string, eventId: string, commandId: string
+): Promise<import('./tournamentGroupStandings').CompletedGroupStandings> {
+  const data = await request<import('./tournamentGroupStandings').CompletedGroupStandings>(
+    '/admin/runs/' + encodeURIComponent(runId) + '/branches/' + encodeURIComponent(branchId)
+      + '/tournaments/' + encodeURIComponent(eventId) + '/group-standings/generate',
+    { method: 'POST', body: JSON.stringify({ command_id: commandId }) }
+  )
+  const { isScopedCompletedGroupStandings } = await import('./tournamentGroupStandings')
+  if (!isScopedCompletedGroupStandings(data, runId, branchId, eventId)
+    || data.generated_by_command_id !== commandId)
+    throw new Error('Completed Group Standings generation returned an unrelated frozen authority.')
+  return data
+}
+
+export async function getAdminGroupTieResolutionState(
+  runId: string, branchId: string, eventId: string
+): Promise<import('./tournamentGroupStandings').GroupStandingsTieState> {
+  const data = await request<import('./tournamentGroupStandings').GroupStandingsTieState>(
+    '/admin/runs/' + encodeURIComponent(runId) + '/branches/' + encodeURIComponent(branchId)
+      + '/tournaments/' + encodeURIComponent(eventId) + '/group-standings/tie-resolution'
+  )
+  const { isScopedGroupTieState } = await import('./tournamentGroupStandings')
+  if (!isScopedGroupTieState(data, runId, branchId, eventId))
+    throw new Error('Group tie case does not belong to the selected Run, Branch and Event.')
+  return data
+}

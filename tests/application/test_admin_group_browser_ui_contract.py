@@ -57,3 +57,16 @@ def test_group_setup_authorities_have_no_direct_http_post_bypass():
             continue
         path = ast.unparse(node.args[1]) if len(node.args) > 1 else ""
         assert not any(endpoint in path for endpoint in AUTHORITY_WRITE_PATHS), path
+
+
+def test_real_group_browser_reads_the_frozen_table_in_admin_after_sporting_save():
+    """The dedicated Chromium check must re-open the real saved group context."""
+    tree = ast.parse(SCRIPT.read_text(encoding="utf-8"))
+    names = {
+        node.value
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Constant) and isinstance(node.value, str)
+    }
+    assert "Canonical group 1 standings" in names
+    assert "Generate canonical group standings" in names
+    assert "Canonical completed group standings" in names

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { isScopedCompletedGroupStandings, isScopedGroupTieState } from './tournamentGroupStandings'
+import { isScopedCompletedGroupStandings, isScopedGroupTieState, isExactGroupTieResolution } from './tournamentGroupStandings'
 
 const sha = 'a'.repeat(64)
 const make = () => ({
@@ -40,7 +40,8 @@ describe('canonical group standings response scope', () => {
 
   it('never mistakes missing or unresolved tie evidence for a completed table', () => {
     const state = {schema_version: 'tournament_group_tie_resolution_state.v1',
-      run_id:'r', branch_id:'b', event_id:'e', unresolved_case:{
+      run_id:'r', branch_id:'b', event_id:'e', unresolved_case_fingerprint: sha,
+      unresolved_case:{
         group_index:1,reason:'unresolved',player_ids:['A','B']
       },resolutions:[]}
     expect(isScopedGroupTieState(state,'r','b','e')).toBe(true)
@@ -48,4 +49,32 @@ describe('canonical group standings response scope', () => {
     expect(isScopedGroupTieState({...state,branch_id:'foreign'},'r','b','e')).toBe(false)
     expect(isScopedGroupTieState({...state,unresolved_case:{...state.unresolved_case,player_ids:['A','A']}},'r','b','e')).toBe(false)
   })
+  it('rejects a fabricated, absent or mismatched server-side tie fingerprint', () => {
+    const tie = {schema_version: 'tournament_group_tie_resolution_state.v1',
+      run_id:'r', branch_id:'b', event_id:'e', unresolved_case_fingerprint:sha,
+      unresolved_case:{group_index:1,reason:'unresolved',player_ids:['A','B']},
+      resolutions:[]}
+    expect(isScopedGroupTieState(tie, 'r', 'b', 'e')).toBe(true)
+    expect(isScopedGroupTieState({...tie, unresolved_case_fingerprint:undefined}, 'r','b','e')).toBe(false)
+    expect(isScopedGroupTieState({...tie, unresolved_case_fingerprint:'not-a-sha'}, 'r','b','e')).toBe(false)
+    expect(isScopedGroupTieState({...tie, unresolved_case:{...tie.unresolved_case,player_ids:['B','A']}}, 'r','b','e')).toBe(false)
+  })
+
+  it('validates the exact resolution response and refuses mismatched order or operator reason', () => {
+    const payload = {command_id:'review-1',case_fingerprint:sha,
+      ordered_player_ids:['B','A'],admin_reason:'Reviewed evidence'}
+    const response = {schema_version:'tournament_group_tie_resolution_authority.v1',
+      run_id:'r',branch_id:'b',event_id:'e',
+      resolved_by_command_id:'review-1',authority_fingerprint:sha,
+      group_match_schedule_fingerprint:sha,
+      decision:{case:{group_index:1,reason:'tied',player_ids:['A','B']},
+        ordered_player_ids:['B','A'],admin_reason:'Reviewed evidence'}}
+    expect(isExactGroupTieResolution(response,'r','b','e',['A','B'],payload)).toBe(true)
+    expect(isExactGroupTieResolution({...response,event_id:'foreign'},'r','b','e',['A','B'],payload)).toBe(false)
+    expect(isExactGroupTieResolution({...response,decision:{...response.decision,
+      ordered_player_ids:['A','B']}},'r','b','e',['A','B'],payload)).toBe(false)
+    expect(isExactGroupTieResolution({...response,decision:{...response.decision,
+      admin_reason:'silently changed'}},'r','b','e',['A','B'],payload)).toBe(false)
+  })
+
 })

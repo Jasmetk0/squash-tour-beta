@@ -163,6 +163,7 @@ def acceptance(
                 assert preparation["format_kind"] == "groups"
                 assert preparation["next_required_action"] == "generate_tournament_topology"
 
+                expect(page.get_by_label("Group Topology seed")).to_have_value("137")
                 page.get_by_label("Confirm immutable group Topology").check()
                 browser_click(page, "Generate group Topology")
                 expect(page.get_by_role(

@@ -1,5 +1,5 @@
 import {describe,it,expect} from 'vitest'
-import {matchesSavedTourContext,validSavedTourCalendar,validSavedTourEdition} from './savedTour'
+import {matchesSavedTourContext,validSavedTourCalendar,validSavedTourEdition,validSavedTourMatchDetail} from './savedTour'
 import type {SavedTourCalendar,SavedTourEdition,SavedTourEvent} from './savedTour'
 const event:SavedTourEvent={event_id:'open',season:'2002/2003',season_week:12,
   event_name:'Open',template_id:'tpl',category:'DIAMOND',tour_level:'WORLD',
@@ -15,6 +15,34 @@ const edition:SavedTourEdition={schema_version:'run_saved_tour_edition.v1',
   saved_revision_id:'rev',season_index:2,edition:event,published_result:null,
   lifecycle_status:'unavailable'}
 describe('strict Saved Tour response identity',()=>{
+  it('rejects stale, foreign and forged archived match pages',()=>{
+    const data={
+      schema_version:'run_saved_tour_match_detail.v1' as const,
+      source:'reachable_saved_revision' as const,
+      run_id:'r',branch_id:'b',revision_branch_id:'original',
+      saved_revision_id:'rev',season_index:2,event_id:'open',match_id:'final',
+      match:{match_id:'final',draw_type:'main',round_number:2,
+        bracket_position:1,winner_player_id:'A',loser_player_id:'B',scoreline:'3-2'},
+      replay_status:'available' as const,player_a_id:'A',player_b_id:'B',
+      offset:0,limit:25,total_rallies:1,has_more:false,
+      rallies:[{rally_index:1,set_number:1,server_player_id:'A',
+        winner_player_id:'A',score_a_before:0,score_b_before:0,score_a_after:1,
+        score_b_after:0,sets_a_after:0,sets_b_after:0,
+        set_complete:false,match_complete:true}]
+    }
+    const valid=(v:typeof data)=>validSavedTourMatchDetail(v,'r','b','rev',2,'open','final',0,25)
+    expect(valid(data)).toBe(true)
+    expect(valid({...data,saved_revision_id:'new-head'})).toBe(false)
+    expect(valid({...data,branch_id:'foreign'})).toBe(false)
+    expect(valid({...data,event_id:'other'})).toBe(false)
+    expect(valid({...data,match:{...data.match,match_id:'unrelated'}})).toBe(false)
+    expect(valid({...data,replay_status:'unavailable'})).toBe(false)
+    expect(valid({...data,rallies:[{...data.rallies[0],rally_index:26}]})).toBe(false)
+    expect(valid({...data,has_more:true})).toBe(false)
+    expect(valid({...data,player_a_id:'unknown'})).toBe(false)
+    expect(valid({...data,offset:25})).toBe(false)
+  })
+
   it('validates explicit Run/selected Branch/revision/season and original ancestry owner',()=>{
     expect(validSavedTourCalendar(calendar,'r','b','rev',2)).toBe(true)
     expect(matchesSavedTourContext(edition,'r','b','rev',2)).toBe(true)

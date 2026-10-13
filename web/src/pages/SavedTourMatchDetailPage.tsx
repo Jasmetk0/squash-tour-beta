@@ -3,6 +3,7 @@ import {useState} from 'react'
 import {useQuery} from '@tanstack/react-query'
 import {Link,useParams,useSearchParams} from 'react-router-dom'
 import {getSavedTourMatchDetail} from '../api/client'
+import {validSavedTourMatchDetail} from '../api/savedTour'
 import {useAdminBranch} from '../admin/AdminBranchContext'
 import {useAdminTime} from '../admin/AdminTimeContext'
 import {useLanguage} from '../i18n/LanguageContext'
@@ -39,7 +40,13 @@ function HistoricalMatchReplay():JSX.Element{
     queryFn:()=>getSavedTourMatchDetail(runId,branch!,revision!,season!,eventId,matchId,offset,PAGE),
     enabled:ready,retry:false,
   })
-  const data=q.data
+  // Disabling a query does not clear React Query's previous cached data.
+  // Never render historical sporting authority outside its verified time/context,
+  // nor accept a response belonging to a different immutable revision or page.
+  const data=ready&&!q.isPending&&!q.error&&q.data&&validSavedTourMatchDetail(
+    q.data,runId,branch!,revision!,season!,eventId,matchId,offset,PAGE
+  )?q.data:null
+  const invalid=Boolean(ready&&!q.isPending&&!q.error&&q.data&&!data)
   const frame=data?.rallies.find(r=>r.rally_index===index+1)
   const parentParams=new URLSearchParams(params)
   const tab=parentParams.get('tab')==='schedule'?'schedule':'results'
@@ -63,7 +70,10 @@ function HistoricalMatchReplay():JSX.Element{
         (cs?'Chybí přesný Run, Branch, Saved Revision nebo sezona.':
           'Exact Run, Branch, Saved Revision or season is missing.'))}</p>}
     {ready&&q.isPending&&<p role="status">{cs?'Načítám ověřený zápas…':'Loading canonical match…'}</p>}
-    {q.error&&<p role="alert">{formatApiError(q.error)}</p>}
+    {ready&&q.error&&<p role="alert">{formatApiError(q.error)}</p>}
+    {invalid&&<p role="alert">{cs?
+      'Archivovaný zápas neodpovídá vybrané Run/Branch/revizi nebo stránce výměn.':
+      'Archived match does not match the selected Run/Branch/revision or rally page.'}</p>}
     {data&&<><div className="run-home-status-block">
       <p>{cs?'Turnaj':'Edition'}: <code>{eventId}</code> · {cs?'Zápas':'Match'}: <code>{matchId}</code></p>
       <h3>{data.match.winner_player_id} – {data.match.loser_player_id}</h3>

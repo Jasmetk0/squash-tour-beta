@@ -9,14 +9,15 @@ import type {SavedTourMatchDetail} from '../api/savedTour'
 const api=vi.hoisted(()=>({getSavedTourMatchDetail:vi.fn()}))
 const state=vi.hoisted(()=>({
   branch:{run_id:'run-a',branch_id:'branch-a',saved_head_revision_id:'new-head'},
-  mode:'present',language:'en'
+  mode:'present',timeLoading:false,timeError:null as string|null,
+  branchLoading:false,branchError:null as string|null,language:'en'
 }))
 vi.mock('../api/client',()=>api)
 vi.mock('../admin/AdminBranchContext',()=>({useAdminBranch:()=>({
-  selectedBranch:state.branch,isLoading:false,error:null
+  selectedBranch:state.branch,isLoading:state.branchLoading,error:state.branchError
 })}))
 vi.mock('../admin/AdminTimeContext',()=>({useAdminTime:()=>({
-  mode:state.mode,isLoading:false,error:null
+  mode:state.mode,isLoading:state.timeLoading,error:state.timeError
 })}))
 vi.mock('../i18n/LanguageContext',()=>({useLanguage:()=>({language:state.language})}))
 const url='/admin/runs/run-a/tour/calendar/event-x/matches/final'
@@ -41,16 +42,20 @@ function fixture(offset:number):SavedTourMatchDetail{
 }
 function mount(path=url){
   const client=new QueryClient({defaultOptions:{queries:{retry:false}}})
-  return render(<QueryClientProvider client={client}>
+  const ui=()=> <QueryClientProvider client={client}>
     <MemoryRouter initialEntries={[path]}><Routes>
       <Route path="/admin/runs/:runId/tour/calendar/:eventId/matches/:matchId"
         element={<SavedTourMatchDetailPage/>}/>
     </Routes></MemoryRouter>
-  </QueryClientProvider>)
+  </QueryClientProvider>
+  const view=render(ui())
+  return {...view,refresh:()=>view.rerender(ui())}
 }
 describe('exact historical Edition match replay',()=>{
   beforeEach(()=>{
     vi.clearAllMocks();state.mode='present';state.language='en'
+    state.timeLoading=false;state.timeError=null
+    state.branchLoading=false;state.branchError=null
     state.branch.branch_id='branch-a';state.branch.run_id='run-a'
     api.getSavedTourMatchDetail.mockImplementation((
       _run:string,_branch:string,_rev:string,_season:number,
@@ -82,6 +87,41 @@ describe('exact historical Edition match replay',()=>{
     mount()
     expect(await screen.findByText(/No verified rally archive exists/)).toBeInTheDocument()
     expect(screen.getByText('3-2')).toBeInTheDocument()
+    expect(screen.queryByRole('button',{name:'Next rally →'})).not.toBeInTheDocument()
+  })
+  it('hides a loaded replay on checkpoint, loading and failed context without remount',async()=>{
+    const view=mount()
+    expect(await screen.findByText('Rally 1/30')).toBeInTheDocument()
+    expect(screen.getByRole('button',{name:'Next rally →'})).toBeInTheDocument()
+    const calls=api.getSavedTourMatchDetail.mock.calls.length
+    state.mode='checkpoint';view.refresh()
+    expect(screen.getByRole('alert')).toHaveTextContent('Checkpoint is not bound')
+    expect(screen.queryByText('Rally 1/30')).not.toBeInTheDocument()
+    expect(screen.queryByText('3-2')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button',{name:'Next rally →'})).not.toBeInTheDocument()
+    expect(api.getSavedTourMatchDetail).toHaveBeenCalledTimes(calls)
+    state.mode='present';state.timeLoading=true;view.refresh()
+    expect(screen.queryByText('Rally 1/30')).not.toBeInTheDocument()
+    state.timeLoading=false;state.timeError='Time context unavailable';view.refresh()
+    expect(screen.getByRole('alert')).toHaveTextContent('Time context unavailable')
+    expect(screen.queryByRole('button',{name:'Next rally →'})).not.toBeInTheDocument()
+    state.timeError=null;state.branchLoading=true;view.refresh()
+    expect(screen.queryByText('3-2')).not.toBeInTheDocument()
+    state.branchLoading=false;state.branchError='Branch context unavailable';view.refresh()
+    expect(screen.getByRole('alert')).toHaveTextContent('Branch context unavailable')
+    expect(screen.queryByText('Rally 1/30')).not.toBeInTheDocument()
+    state.branchError=null;view.refresh()
+    expect(await screen.findByText('Rally 1/30')).toBeInTheDocument()
+  })
+  it('rejects foreign saved revision and mismatched cached rally offset',async()=>{
+    api.getSavedTourMatchDetail.mockResolvedValueOnce({...fixture(0),saved_revision_id:'foreign'})
+    const view=mount()
+    expect(await screen.findByRole('alert')).toHaveTextContent('does not match')
+    expect(screen.queryByText('3-2')).not.toBeInTheDocument()
+    view.unmount()
+    api.getSavedTourMatchDetail.mockResolvedValueOnce({...fixture(25),offset:25})
+    mount()
+    expect(await screen.findByRole('alert')).toHaveTextContent('does not match')
     expect(screen.queryByRole('button',{name:'Next rally →'})).not.toBeInTheDocument()
   })
   it('never requests current saved HEAD for missing revision or checkpoint',()=>{

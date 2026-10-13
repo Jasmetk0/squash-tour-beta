@@ -9,9 +9,6 @@ from __future__ import annotations
 
 from urllib.parse import quote
 
-from playwright.sync_api import expect
-
-from admin_first_tournament_smoke import browser_click, browser_settle
 
 
 def play_group_and_save(
@@ -19,6 +16,11 @@ def play_group_and_save(
     root_scope: str, event_scope: str, old_revision: str,
     original_match_ids: set[str], page, run_url: str, event_url: str, artifacts,
 ) -> dict:
+    # The fast backend suite imports this module without installing Playwright.
+    # Load browser-only dependencies only in the real Chromium execution.
+    from playwright.sync_api import expect
+    from admin_first_tournament_smoke import browser_click, browser_settle
+
     simulation = root_scope + "/authoritative-simulation"
 
     def check_schedule():

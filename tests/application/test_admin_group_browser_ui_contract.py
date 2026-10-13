@@ -109,3 +109,44 @@ def test_group_match_days_final_table_and_save_are_exercised_through_real_ui():
             continue
         source = ast.unparse(node.args[1])
         assert not any(endpoint in source for endpoint in forbidden), source
+
+
+def test_real_completed_group_browser_saves_and_restarts_before_final_table():
+    """A completed group must survive a *real* intermediate Save and restart.
+
+    The fast guard supplements, but does not replace, production Chromium
+    against a file-backed SQLite run.
+    """
+    tree = ast.parse(COMPLETION.read_text(encoding="utf-8"))
+    clicks = sorted(
+        (node.lineno, node.args[1].value)
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Name)
+        and node.func.id == "browser_click"
+        and len(node.args) >= 2
+        and isinstance(node.args[1], ast.Constant)
+        and isinstance(node.args[1].value, str)
+    )
+    save_lines = [line for line, label in clicks
+                  if label == "Save authoritative simulation"]
+    publish_lines = [line for line, label in clicks
+                     if label == "Generate canonical group standings"]
+    restarts = [
+        node.lineno for node in ast.walk(tree)
+        if isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Name)
+        and node.func.id == "restart_backend"
+    ]
+    assert len(save_lines) == 2, "One Save before and one after final table"
+    assert len(publish_lines) == 1
+    assert len(restarts) == 1
+    assert save_lines[0] < restarts[0] < publish_lines[0] < save_lines[1]
+
+    constants = {
+        node.value for node in ast.walk(tree)
+        if isinstance(node, ast.Constant) and isinstance(node.value, str)
+    }
+    assert "Saved pending group tie decisions" in constants
+    assert "Saved group standings" in constants
+    assert "04-reopened-intermediate-no-final-table.png" in constants

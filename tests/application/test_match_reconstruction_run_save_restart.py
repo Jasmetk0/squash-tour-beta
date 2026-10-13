@@ -69,7 +69,7 @@ def test_reconstruction_real_match_saved_revision_and_sqlite_reopen(tmp_path):
         status, target = _request(
             "GET", sim + "/match-reconstruction/state?group_id=" + group_id,
         )
-        assert status == 200
+        assert status == 200, target
         assert target["group_id"] == group_id
         assert target["expected_revision_id"] == ancestor
         assert target["player_a_id"] != target["player_b_id"]

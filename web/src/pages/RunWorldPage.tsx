@@ -125,7 +125,8 @@ function CountryDetail({runId,branchId,savedHead,historicalRevisionId,country,wo
     {active==='records'&&<RunWorldCountryRecords
       runId={runId} branchId={branchId} countryCode={country.code}
       savedRevisionId={historicalRevisionId??savedHead}
-      historical={historicalRevisionId!==null} cs={cs}/>}
+      historical={historicalRevisionId!==null} cs={cs}
+      presentSeason={presentSeason} presentWeek={presentWeek}/>}
 
   </section>
 }

@@ -172,7 +172,7 @@ export function RunWorldCountryRecords({
             <td>{records.hosted.length}</td><td>{countryCode}</td>
             <td><button type="button" onClick={()=>setDetail('hosted')}>{cs?'Podklady':'Evidence'}</button></td></tr>
         </tbody></table></div>
-      {detail&&<aside className="section-subtle" aria-label="Country record detail">
+      {detail&&<aside className="section-subtle country-record-detail-panel" aria-label="Country record detail">
         <div className="actions"><h5>{selectedTitle}</h5>
           <button type="button" onClick={()=>setDetail(null)}>{cs?'Zavřít detail':'Close detail'}</button>
         </div>

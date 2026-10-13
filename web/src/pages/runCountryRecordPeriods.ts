@@ -25,7 +25,7 @@ export function selectedSportPoint(season:unknown,week:unknown):SportPoint|null{
 export function parsePeriod(params:URLSearchParams,through:SportPoint):CountryPeriodRequest|null{
   if(!validPoint(through))return null
   const mode=params.get('rperiod')??'whole'
-  if(!['whole','season','custom'].includes(mode))return null
+  if(mode!=='whole'&&mode!=='season'&&mode!=='custom')return null
   const value=(key:string,fallback:number,max:number)=>{
     const raw=params.get(key)
     if(raw===null)return fallback

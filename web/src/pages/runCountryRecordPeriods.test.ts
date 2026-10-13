@@ -1,5 +1,5 @@
 import {describe,expect,it} from 'vitest'
-import {parsePeriod,projectCountryPeriod,selectedSportPoint,sportLabel} from './runCountryRecordPeriods'
+import {lastEvidencedCountryPoint,parsePeriod,projectCountryPeriod,selectedSportPoint,sportLabel} from './runCountryRecordPeriods'
 import type {RunCountryRecordResult,RunCountryRecords} from '../api/types'
 
 const event=(id:string,season:string,week:number,champion:string,finalist:string,host='CZE'):
@@ -46,6 +46,16 @@ describe('Master v80 Country Records sport periods and tied holders',()=>{
     expect(view.athletes.map(x=>x.event_id)).toEqual(['late','early'])
     expect(view.champions.map(x=>[x.id,x.count])).toEqual([['P1',1],['P2',1]])
     expect(view.finalists.map(x=>[x.id,x.count])).toEqual([['P1',2],['P2',2]])
+  })
+  it('uses only latest canonical published source as conservative ceiling when Branch clock is absent',()=>{
+    const source=data()
+    expect(lastEvidencedCountryPoint(source)).toEqual({season:2,week:10})
+    const limited=parsePeriod(new URLSearchParams('year=2050'),
+      lastEvidencedCountryPoint(source)!)!
+    expect(projectCountryPeriod(source,'CZE',limited).titles).toBe(4)
+    expect(lastEvidencedCountryPoint({...source,player_results:[],hosted_results:[]})).toBeNull()
+    const corrupt={...source,player_results:[{...source.player_results[0],season:'2050/2051'}]}
+    expect(()=>lastEvidencedCountryPoint(corrupt)).toThrow(/unsupported sport time/)
   })
   it('does not pretend a future season or backwards period is available',()=>{
     const through={season:2,week:3}

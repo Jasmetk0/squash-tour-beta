@@ -1,3 +1,22 @@
+# Saved Edition group Match Day chronology — candidate 13 October 2026
+
+After merged #1421, adds a *read-only* canonical group schedule sourced
+from the same exact reachable Saved Revision, original owner Branch and
+restore-grade validated Format/Topology/Group Schedule. A fresh deterministic
+builder replay must equal the persisted schedule. Exposes real group number,
+players, Match Day, order, BO3/BO5 and published-result Match links only.
+No calendar dates, fake results, invented groups, Admin/Viewer state fallback,
+or newly created sports rules. Knockout/qualification behavior is unchanged.
+
+Focused Python authority tests and CS/EN response/render tests included.
+The real chromium acceptance currently covers conventional knockout; it
+does NOT prove a real completed hybrid group run. See
+`docs/SAVED_EDITION_GROUP_SCHEDULE_V1.md`. Candidate only until final
+HEAD checks green; user alone merges. Next: Saved group standings and
+tie-break evidence + real group browser fixture.
+
+---
+
 # Exact Saved Edition match detail + archived replay candidate — 13 October 2026
 
 Built on merged #1420 / buuk 25d9b53b8159403b80dae9d830ff856a6ab78915:

@@ -310,13 +310,15 @@ def acceptance(
                                     full_page=True)
 
                 if complete_groups:
-                    print("GROUP BROWSER: simulating all six scheduled competitive matches",
+                    print("GROUP BROWSER: playing all six matches via Simulation UI and clicking final-table generation",
                           flush=True)
                     completed = play_group_and_save(
                         request, run_id=run_id, branch_id=branch_id,
                         event_id=EVENT_ID, root_scope=root_scope,
                         event_scope=event_scope, old_revision=revision,
                         original_match_ids={m["match_id"] for m in schedule["matches"]},
+                        page=page, run_url=run_url,
+                        event_url=prepared_event_url, artifacts=artifacts,
                     )
                     assert saved(old_rev) == before
                     assert saved(revision) == expected, (
@@ -373,6 +375,12 @@ def acceptance(
                     "real_group_results_simulated": completed is not None,
                     "played_group_match_count": (
                         completed["matches_simulated"] if completed else 0
+                    ),
+                    "group_match_day_execution": (
+                        "three_reviewed_browser_UI_clicks" if completed else "not_executed"
+                    ),
+                    "final_group_table_generation": (
+                        "explicit_Admin_UI_confirmation_and_click" if completed else "not_executed"
                     ),
                     "completed_revision_id": (
                         completed["revision"] if completed else None

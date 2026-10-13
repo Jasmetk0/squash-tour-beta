@@ -14,6 +14,7 @@ import pytest
 pytestmark = pytest.mark.pr_critical
 
 SCRIPT = Path(__file__).resolve().parents[2] / "scripts" / "admin_saved_group_browser_smoke.py"
+COMPLETION = Path(__file__).resolve().parents[2] / "scripts" / "saved_completed_group_browser_checks.py"
 REQUIRED_CLICKS = {
     "Choose pure round-robin groups",
     "Adopt season Group Rules",
@@ -70,3 +71,41 @@ def test_real_group_browser_reads_the_frozen_table_in_admin_after_sporting_save(
     assert "Canonical group 1 standings" in names
     assert "Generate canonical group standings" in names
     assert "Canonical completed group standings" in names
+
+def test_group_match_days_final_table_and_save_are_exercised_through_real_ui():
+    """All three previously API-only user actions must be real browser clicks."""
+    tree = ast.parse(COMPLETION.read_text(encoding="utf-8"))
+    names = {
+        node.args[1].value
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Name)
+        and node.func.id == "browser_click"
+        and len(node.args) >= 2
+        and isinstance(node.args[1], ast.Constant)
+        and isinstance(node.args[1].value, str)
+    }
+    assert {
+        "Review authoritative Next Match Day",
+        "Simulate reviewed authoritative Match Day",
+        "Generate canonical group standings",
+        "Save authoritative simulation",
+        "Commit audited group tie decision",
+    } <= names
+
+    forbidden = (
+        "/simulate-next-match-day",
+        "/group-standings/generate",
+        "/group-standings/tie-resolution",
+        "/save",
+    )
+    for node in ast.walk(tree):
+        if (not isinstance(node, ast.Call)
+            or not isinstance(node.func, ast.Name)
+            or node.func.id != "request"
+            or len(node.args) < 2
+            or not isinstance(node.args[0], ast.Constant)
+            or node.args[0].value != "POST"):
+            continue
+        source = ast.unparse(node.args[1])
+        assert not any(endpoint in source for endpoint in forbidden), source

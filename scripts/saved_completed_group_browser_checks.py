@@ -10,11 +10,17 @@ from __future__ import annotations
 from urllib.parse import quote
 
 
+
 def play_group_and_save(
     request, *, run_id: str, branch_id: str, event_id: str,
     root_scope: str, event_scope: str, old_revision: str,
-    original_match_ids: set[str],
+    original_match_ids: set[str], page, run_url: str, event_url: str, artifacts,
 ) -> dict:
+    # The fast backend suite imports this module without installing Playwright.
+    # Load browser-only dependencies only in the real Chromium execution.
+    from playwright.sync_api import expect
+    from admin_first_tournament_smoke import browser_click, browser_settle
+
     simulation = root_scope + "/authoritative-simulation"
 
     def check_schedule():
@@ -45,73 +51,101 @@ def play_group_and_save(
     assert preflight["current_week"] == {"season_index": 0, "week": 1}
     assert preflight["current_slot_kind"] in {"entry", "match"}, preflight
 
-    # Pure Group tournaments cannot call "Simulate Next Tournament" before
-    # the ranking source has been explicitly closed. Execute each authentic
-    # Match Day first; Group Standings consumes those exact result receipts.
+    # The prior acceptance used direct POSTs here. Execute the *actual* Admin
+    # Simulation UI instead. No result is inserted, mocked or reconstructed.
+    page.goto(run_url + "/simulate?branch=" + quote(branch_id, safe=""))
+    page.get_by_role("combobox", name="Language / Jazyk").select_option("en")
     played = []
     day_ordinals = []
     for day in range(1, 4):
         preview = request("GET", simulation + "/next-match-day/preview")
         assert preview["match_day_ordinal"] == day, preview
         assert preview["target_slot_ordinals"], preview
-        command = {
-            "command_id": f"real-browser-group-match-day-{day}",
-            "expected_week": preview["week"],
-            "expected_position_fingerprint": preview["expected_position_fingerprint"],
-            "expected_revision_id": preview["expected_revision_id"],
-        }
-        outcome = request("POST", simulation + "/simulate-next-match-day",
-                          command, 201)
-        assert outcome["match_day_ordinal"] == day
-        assert outcome["completed_slot_count"] == len(preview["target_slot_ordinals"])
-        assert request("POST", simulation + "/simulate-next-match-day",
-                       command, 201) == outcome
-        played.append(outcome)
+        expect(page.get_by_role(
+            "button", name="Review authoritative Next Match Day"
+        )).to_be_enabled()
+        browser_click(page, "Review authoritative Next Match Day")
+        expect(page.get_by_role(
+            "heading", name=f"Reviewed canonical Match Day {day}"
+        )).to_be_visible()
+        expect(page.get_by_label("Reviewed authoritative Match Day").locator("li")).to_have_count(
+            len(preview["target_slot_ordinals"])
+        )
+        page.get_by_label("Confirm authoritative simulation").check()
+        browser_click(page, "Simulate reviewed authoritative Match Day")
+        # The mutation invalidates the position and Save preview; settle before
+        # asking the server for its next authoritative state.
+        browser_settle(page)
+        following = request("GET", simulation + "/position")
+        assert following["position_fingerprint"] != preview["expected_position_fingerprint"], (
+            "Browser Match Day click did not advance canonical position", day, following
+        )
+        played.append(day)
         day_ordinals.extend(preview["target_slot_ordinals"])
+        page.screenshot(path=str(artifacts / f"03-simulation-group-day-{day}.png"), full_page=True)
     assert len(day_ordinals) == len(set(day_ordinals)) == 6
-    assert len(played) == 3
+    assert played == [1, 2, 3]
 
-    # Group Standings is frozen by the actual receipt builder. If the official
-    # rules cannot break a tie, the browser acceptance performs an explicit
-    # separately audited Admin decision for the exact unresolved case.
+    # Complete standings only via the real Planned Event panel. Genuine ties,
+    # when encountered, require explicit player ordering and an audited reason.
+    # This ordinary group run does NOT deterministically manufacture a tie.
+    page.goto(event_url)
+    page.get_by_role("combobox", name="Language / Jazyk").select_option("en")
     tie_audit = []
     for attempt in range(5):
         tie_state = request("GET", event_scope + "/group-standings/tie-resolution")
         case = tie_state["unresolved_case"]
         if case is None:
             break
-        decision = request("POST", event_scope + "/group-standings/tie-resolution", {
-            "command_id": f"real-group-admin-tie-{attempt}",
-            "case_fingerprint": case["fingerprint"] if "fingerprint" in case
-                else _case_fingerprint(case),
-            "ordered_player_ids": case["player_ids"],
-            "admin_reason": (
-                "Explicit operator acceptance decision: maintain canonical "
-                "player ID order for the otherwise unresolved evidence."
-            ),
-        }, 201)
-        tie_audit.append(decision)
+        editor = page.get_by_role("group", name="Explicit group tie decision")
+        expect(editor).to_be_visible()
+        initial_ids = case["player_ids"]
+        assert len(initial_ids) >= 2, case
+        editor.get_by_role("button", name=f"Move {initial_ids[0]} down").click()
+        editor.get_by_label("Admin tie decision reason").fill(
+            "Reviewed exact canonical tie evidence in the production Admin; "
+            "operator deliberately swapped the top two unresolved players."
+        )
+        editor.get_by_label(
+            "Confirm this exact player order and recorded audit reason"
+        ).check()
+        browser_click(page, "Commit audited group tie decision")
+        browser_settle(page)
+        after = request("GET", event_scope + "/group-standings/tie-resolution")
+        assert len(after["resolutions"]) == len(tie_state["resolutions"]) + 1, after
+        tie_audit.append(after["resolutions"][-1])
     else:
         raise AssertionError("More than five unresolved Admin tie cases")
 
-    completed = request("POST", event_scope + "/group-standings/generate", {
-        "command_id": "real-browser-completed-group-standings",
-    }, 201)
-    assert completed["groups"], completed
+    button = page.get_by_role("button", name="Generate canonical group standings")
+    expect(button).to_be_disabled()
+    page.get_by_label("Confirm generation from all completed canonical group matches").check()
+    expect(button).to_be_enabled()
+    browser_click(page, "Generate canonical group standings")
+    table = page.get_by_role("table", name="Canonical group 1 standings")
+    expect(table).to_be_visible()
+    expect(table.locator("tbody tr")).to_have_count(4)
+    assert page.get_by_role("button", name="Generate canonical group standings").count() == 0
+    completed = request("GET", event_scope + "/group-standings")
     assert len(completed["groups"]) == 1
     ranking = completed["groups"][0]["rows"]
     assert_real_played_group_table(ranking, check_schedule()["matches"])
+    page.screenshot(path=str(artifacts / "04-clicked-real-group-standings.png"), full_page=True)
 
     save_preview = request("GET", simulation + "/save/preview")
     assert save_preview["can_save"] is True, save_preview
     assert save_preview["has_unsaved_changes"] is True
     assert save_preview["saved_head_revision_id"] == old_revision
-    saved_result = request("POST", simulation + "/save", {
-        "expected_draft_version": save_preview["draft_version"],
-        "expected_simulation_fingerprint": save_preview["simulation_fingerprint"],
-    }, 201)
-    final_revision = saved_result["saved_revision"]["revision_id"]
+    page.goto(run_url + "/simulate?branch=" + quote(branch_id, safe=""))
+    page.get_by_role("combobox", name="Language / Jazyk").select_option("en")
+    expect(page.get_by_role("button", name="Save authoritative simulation")).to_be_enabled()
+    browser_click(page, "Save authoritative simulation")
+    current_branches = request("GET", "/run-branches?run_id=" + quote(run_id, safe=""))
+    current = next(item for item in current_branches["run_branches"]
+                   if item["branch_id"] == branch_id)
+    final_revision = current["saved_head_revision_id"]
     assert final_revision != old_revision
+    expect(page.get_by_text(f"Saved as revision {final_revision}.")).to_be_visible()
 
     path = root_scope + "/tour/editions/" + quote(event_id, safe="")
     final = request("GET", path + "?revision_id="

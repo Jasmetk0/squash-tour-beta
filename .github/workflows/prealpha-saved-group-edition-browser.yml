@@ -17,6 +17,17 @@ on:
       - 'scripts/saved_completed_group_browser_checks.py'
       - 'scripts/admin_first_tournament_smoke.py'
       - 'web/src/pages/SavedTourEditionPage.tsx'
+      # Production controls exercised by this acceptance (not unrelated Admin pages).
+      - 'web/src/pages/PlannedEventDetailPage.tsx'
+      - 'web/src/pages/RunSimulationPage.tsx'
+      - 'web/src/pages/AuthoritativeSimulationPanel.tsx'
+      - 'web/src/components/GroupFormatSetupPanel.tsx'
+      - 'web/src/components/CompletedGroupStandingsPanel.tsx'
+      - 'web/src/components/GroupTieResolutionEditor.tsx'
+      - 'web/src/api/tournamentGroupFormats.ts'
+      - 'web/src/api/tournamentGroupStandings.ts'
+      - 'src/beta_engine/api/routers/admin_authoritative_simulation.py'
+      - 'src/beta_engine/api/routers/admin_tournament_formats.py'
       - 'src/beta_engine/application/run_saved_tour_group_schedule.py'
       - 'src/beta_engine/application/run_saved_tour_group_standings.py'
   workflow_dispatch:

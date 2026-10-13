@@ -539,7 +539,7 @@ describe('Run-owned World overview navigation',()=>{
     })
     mountWorld('/admin/runs/run-a/world/countries/CZE?tab=records&year=2050&q=keep')
     const panel=await screen.findByLabelText('Country published records')
-    const totals=within(panel).getByLabelText('Country verified record totals')
+    const totals=await within(panel).findByLabelText('Country verified record totals')
     expect(totals).toHaveTextContent('3')
     await userEvent.click(within(panel).getAllByRole('button',{name:'Evidence'})[0])
     const detail=within(panel).getByLabelText('Country record detail')

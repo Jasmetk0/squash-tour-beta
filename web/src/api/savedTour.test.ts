@@ -15,6 +15,26 @@ const edition:SavedTourEdition={schema_version:'run_saved_tour_edition.v1',
   saved_revision_id:'rev',season_index:2,edition:event,published_result:null,
   lifecycle_status:'unavailable'}
 describe('strict Saved Tour response identity',()=>{
+  it('accepts validated saved group chronology and rejects foreign, repeated or forged pairs',()=>{
+    const source={
+      schema_version:'run_saved_tour_group_schedule.v1' as const,
+      source:'saved_tournament_group_match_schedule_authority.v1' as const,
+      run_id:'r',revision_branch_id:'original',event_id:'open',
+      authority_fingerprint:'d'.repeat(64),
+      group_count:1,group_size:2,match_day_count:1,
+      matches:[{match_id:'g1',group_index:1,match_day_ordinal:1,
+        match_order:1,top_player_id:'A',bottom_player_id:'B',best_of:3 as const}]
+    }
+    const model={...edition,group_schedule:source}
+    expect(validSavedTourEdition(model,'r','b','rev',2,'open')).toBe(true)
+    expect(validSavedTourEdition({...model,group_schedule:{...source,revision_branch_id:'b'}},'r','b','rev',2,'open')).toBe(false)
+    expect(validSavedTourEdition({...model,group_schedule:{...source,authority_fingerprint:'stale'}},'r','b','rev',2,'open')).toBe(false)
+    expect(validSavedTourEdition({...model,group_schedule:{...source,matches:[
+      {...source.matches[0],top_player_id:'A',bottom_player_id:'A'}]}},'r','b','rev',2,'open')).toBe(false)
+    expect(validSavedTourEdition({...model,group_schedule:{...source,matches:[
+      {...source.matches[0],group_index:2}]}},'r','b','rev',2,'open')).toBe(false)
+  })
+
   it('rejects stale, foreign and forged archived match pages',()=>{
     const data:SavedTourMatchDetail={
       schema_version:'run_saved_tour_match_detail.v1',

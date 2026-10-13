@@ -48,6 +48,48 @@ function mount(path='/admin/runs/run-a/tour/calendar/event-x?branch=branch-a&rev
   </QueryClientProvider>)
 }
 describe('Saved Edition detail',()=>{
+  it('shows canonical final group ranks, W/O evidence and exact Admin audit reason',async()=>{
+    const source=fixture(false)
+    source.group_schedule={
+      schema_version:'run_saved_tour_group_schedule.v1',
+      source:'saved_tournament_group_match_schedule_authority.v1',
+      run_id:'run-a',revision_branch_id:'ancestor',event_id:'event-x',
+      authority_fingerprint:'b'.repeat(64),group_count:1,group_size:2,
+      match_day_count:1,matches:[{
+        match_id:'group-one',group_index:1,match_day_ordinal:1,match_order:1,
+        top_player_id:'P1',bottom_player_id:'P2',best_of:3
+      }]
+    }
+    const row=(pos:number,player_id:string,points:number,wo:number)=>({
+      position:pos,player_id,wins:pos===1?1:0,losses:pos===1?0:1,
+      group_points:points,played_matches:0,walkovers_received:wo,
+      walkovers_conceded:pos===2?1:0,games_won:0,games_lost:0,
+      points_won:0,points_lost:0
+    })
+    source.group_standings={
+      schema_version:'run_saved_tour_group_standings.v1',
+      source:'saved_tournament_group_standings_authority',
+      run_id:'run-a',revision_branch_id:'ancestor',event_id:'event-x',
+      authority_fingerprint:'c'.repeat(64),
+      group_schedule_fingerprint:'b'.repeat(64),
+      groups:[{group_index:1,rows:[row(1,'P1',4,1),row(2,'P2',0,0)]}],
+      tie_decisions:[{group_index:1,case_fingerprint:'d'.repeat(64),
+        ordered_player_ids:['P1','P2'],admin_reason:'Evidence reviewed.'}]
+    }
+    api.getSavedTourEdition.mockResolvedValue(source)
+    mount()
+    expect(await screen.findByRole('heading',{name:'Brno Open'})).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button',{name:'Results'}))
+    const table=screen.getByRole('table',{name:'Saved group 1 standings'})
+    expect(within(table).getByText('P1')).toBeInTheDocument()
+    expect(within(table).getByText('P2')).toBeInTheDocument()
+    expect(within(table).getByText('4')).toBeInTheDocument()
+    const evidence=screen.getByLabelText('Saved group tie decisions')
+    expect(within(evidence).getByText(/Evidence reviewed/)).toBeInTheDocument()
+    expect(screen.getByText(/Saved final tables/)).toBeInTheDocument()
+    expect(screen.getByText(/not published in this revision/)).toBeInTheDocument()
+  })
+
   it('renders genuine group Match Days and links only canonically published results',async()=>{
     const source=fixture(false)
     source.group_schedule={

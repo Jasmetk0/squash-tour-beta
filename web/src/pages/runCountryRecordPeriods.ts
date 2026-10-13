@@ -44,6 +44,21 @@ export function parsePeriod(params:URLSearchParams,through:SportPoint):CountryPe
   if(ordinal(from)>ordinal(to)||ordinal(from)>ordinal(through))return null
   return {mode,season,from,to:ordinal(to)>ordinal(through)?through:to}
 }
+
+/** Last observed canonical published Country event; a conservative evidence
+ * ceiling only, NEVER an asserted Run simulation clock. Nothing is synthesized
+ * from Calendar plans, current World or another Saved Revision. */
+export function lastEvidencedCountryPoint(source:RunCountryRecords):SportPoint|null{
+  let last:SportPoint|null=null
+  for(const row of [...source.player_results,...source.hosted_results]){
+    const season=calendarSeasonIndex(row.season)
+    const next=season===null?null:{season,week:row.season_week}
+    if(!next||!validPoint(next))throw Error('Country published source has unsupported sport time')
+    if(last===null||ordinal(next)>ordinal(last))last=next
+  }
+  return last
+}
+
 export type CountryPeriodStats={
   from:SportPoint;to:SportPoint
   athletes:RunCountryRecordResult[];hosted:RunCountryRecordResult[]

@@ -92,8 +92,18 @@ describe('real Admin group preparation',()=>{
     fireEvent.click(screen.getByLabelText('Confirm immutable group Topology'))
     fireEvent.click(send)
     await waitFor(()=>expect(api.generateAdminGroupTopology).toHaveBeenCalledWith(
-      'run-a','branch-a','event-1','admin-ui-group-topology-event-1'
+      'run-a','branch-a','event-1','admin-ui-group-topology-event-1',137
     ))
+  })
+  it('refuses missing and fractional topology seeds instead of sending ambiguous authority',async()=>{
+    mount('topology')
+    await screen.findByRole('button',{name:'Generate group Topology'})
+    fireEvent.click(screen.getByLabelText('Confirm immutable group Topology'))
+    const button=screen.getByRole('button',{name:'Generate group Topology'})
+    fireEvent.change(screen.getByLabelText('Group Topology seed'),{target:{value:'1.5'}})
+    expect(button).toBeDisabled()
+    fireEvent.change(screen.getByLabelText('Group Topology seed'),{target:{value:'137'}})
+    expect(button).toBeEnabled()
   })
   it('rejects corrupted or ambiguous numeric fields rather than silently rounding',()=>{
     expect(proposedPureGroups('2','2',4,'cmd').group_count).toBe(2)

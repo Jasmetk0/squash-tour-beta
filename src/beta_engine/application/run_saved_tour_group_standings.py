@@ -171,3 +171,49 @@ def resolve_saved_tour_group_standings(
             d.case.group_index, d.case.fingerprint,
         ))),
     )
+
+
+def resolve_saved_tour_pending_group_ties(
+    component: dict | None, *, run_id: str, branch_id: str,
+    event_id: str, group_schedule: RunSavedTourGroupSchedule | None,
+) -> tuple[SavedGroupTieDecision, ...]:
+    """Read audited saved *intermediate* decisions, never a sporting table.
+
+    A tie resolution is its own immutable decision authority. It may have
+    been saved before the separately confirmed final Group Standings command.
+    Reuse the same strict validation as the finished table's read model;
+    historical revisions must not be silently repaired or inferred.
+    """
+    if component is None:
+        return ()
+    rows = [
+        row for row in component.get("group_tie_resolutions", ())
+        if row.get("event_id") == event_id
+    ]
+    if not rows:
+        return ()
+    # Raises for missing/stale Schedule, foreign scope, duplicate or corrupt
+    # decision authority even when no finished group standings exist.
+    final = resolve_saved_tour_group_standings(
+        component, run_id=run_id, branch_id=branch_id,
+        event_id=event_id, group_schedule=group_schedule,
+    )
+    if final is not None:
+        return ()  # Once frozen, audited decisions belong to final standings.
+    return tuple(
+        SavedGroupTieDecision(
+            group_index=authority.case.group_index,
+            case_fingerprint=authority.case.fingerprint,
+            ordered_player_ids=authority.decision.ordered_player_ids,
+            admin_reason=authority.decision.admin_reason,
+        )
+        for authority in sorted(
+            (
+                TournamentGroupTieResolutionAuthority.model_validate_json(
+                    row["payload_json"]
+                )
+                for row in rows
+            ),
+            key=lambda value: (value.case.group_index, value.case.fingerprint),
+        )
+    )

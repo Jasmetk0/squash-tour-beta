@@ -15,6 +15,41 @@ const edition:SavedTourEdition={schema_version:'run_saved_tour_edition.v1',
   saved_revision_id:'rev',season_index:2,edition:event,published_result:null,
   lifecycle_status:'unavailable'}
 describe('strict Saved Tour response identity',()=>{
+  it('accepts only exact pending audited group ties before final standings exist',()=>{
+    const schedule={
+      schema_version:'run_saved_tour_group_schedule.v1' as const,
+      source:'saved_tournament_group_match_schedule_authority.v1' as const,
+      run_id:'r',revision_branch_id:'original',event_id:'open',
+      authority_fingerprint:'b'.repeat(64),group_count:1,group_size:3,match_day_count:3,
+      matches:[
+        {match_id:'ab',group_index:1,match_day_ordinal:1,match_order:1,
+          top_player_id:'A',bottom_player_id:'B',best_of:3 as const},
+        {match_id:'ac',group_index:1,match_day_ordinal:2,match_order:1,
+          top_player_id:'A',bottom_player_id:'C',best_of:3 as const},
+        {match_id:'bc',group_index:1,match_day_ordinal:3,match_order:1,
+          top_player_id:'B',bottom_player_id:'C',best_of:3 as const}
+      ]
+    }
+    const decision={group_index:1,case_fingerprint:'a'.repeat(64),
+      ordered_player_ids:['C','A','B'],admin_reason:'Review of tied sporting criteria.'}
+    const valid=(decisions:typeof decision[])=>
+      validSavedTourEdition({...edition,group_schedule:schedule,
+        group_standings:null,pending_group_tie_decisions:decisions},'r','b','rev',2,'open')
+    expect(valid([decision])).toBe(true)
+    expect(valid([])).toBe(true)
+    expect(valid([{...decision,ordered_player_ids:['C','A','A']}])).toBe(false)
+    expect(valid([{...decision,ordered_player_ids:['C','not-in-group']}])).toBe(false)
+    expect(valid([{...decision,group_index:2}])).toBe(false)
+    expect(valid([{...decision,case_fingerprint:'stale'}])).toBe(false)
+    expect(valid([{...decision,admin_reason:' '}])).toBe(false)
+    expect(valid([decision,decision])).toBe(false)
+    expect(validSavedTourEdition({...edition,pending_group_tie_decisions:[decision]},
+      'r','b','rev',2,'open')).toBe(false)
+    expect(validSavedTourEdition({...edition,group_schedule:schedule,
+      pending_group_tie_decisions:[decision],revision_branch_id:'foreign'},
+      'r','b','rev',2,'open')).toBe(false)
+  })
+
   it('accepts frozen group table points and explicit tie audit only in its original branch',()=>{
     const schedule={
       schema_version:'run_saved_tour_group_schedule.v1' as const,

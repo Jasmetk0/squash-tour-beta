@@ -3,7 +3,7 @@ import pytest
 from types import SimpleNamespace
 
 from beta_engine.application.run_saved_tour_group_standings import (
-    resolve_saved_tour_group_standings,
+    resolve_saved_tour_group_standings, resolve_saved_tour_pending_group_ties,
 )
 from beta_engine.application.run_saved_tour_group_schedule import RunSavedTourGroupSchedule
 from beta_engine.infrastructure.db.simulation_slot_state import _validate_group_standings_rows_shape
@@ -224,3 +224,44 @@ def test_saved_simulation_slot_snapshot_accepts_valid_audited_tie_before_final_t
             standings_rows=(), tie_resolution_rows=(tie,),
             group_match_schedules=(foreign_schedule,), result_groups=(),
         )
+
+
+def test_pending_group_audit_from_saved_revision_is_visible_without_final_ranks():
+    component, schedule = _base(with_tie=True)
+    tie = component["group_tie_resolutions"][0]
+    previous = {"group_tie_resolutions": [tie]}
+    pending = resolve_saved_tour_pending_group_ties(
+        previous, run_id="run", branch_id="branch", event_id="event",
+        group_schedule=schedule,
+    )
+    assert len(pending) == 1
+    assert pending[0].ordered_player_ids == ("C", "A", "B")
+    assert pending[0].admin_reason == "Exact evidence manually reviewed."
+    assert pending[0].case_fingerprint == tie["case_fingerprint"]
+    assert _read(previous, schedule) is None
+    assert resolve_saved_tour_pending_group_ties(
+        component, run_id="run", branch_id="branch", event_id="event",
+        group_schedule=schedule,
+    ) == ()
+    assert resolve_saved_tour_pending_group_ties(
+        previous, run_id="run", branch_id="branch", event_id="other",
+        group_schedule=schedule,
+    ) == ()
+
+
+def test_pending_group_audit_never_exposes_foreign_corrupt_or_duplicate_data():
+    component, schedule = _base(with_tie=True)
+    tie = component["group_tie_resolutions"][0]
+    def pending(rows, saved_schedule=schedule):
+        return resolve_saved_tour_pending_group_ties(
+            {"group_tie_resolutions": rows}, run_id="run",
+            branch_id="branch", event_id="event", group_schedule=saved_schedule,
+        )
+    with pytest.raises(ValueError, match="another Run/Branch"):
+        pending([{**tie, "branch_id": "other"}])
+    with pytest.raises(ValueError, match="audit identity"):
+        pending([{**tie, "case_fingerprint": "0" * 64}])
+    with pytest.raises(ValueError, match="duplicated"):
+        pending([tie, tie])
+    with pytest.raises(ValueError, match="Match Schedule"):
+        pending([tie], None)

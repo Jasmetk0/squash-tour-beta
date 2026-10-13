@@ -14,6 +14,8 @@ import pytest
 from sqlalchemy import select
 
 from beta_engine.api.deps import get_season_match_service, get_season_point_awards_service
+from beta_engine.infrastructure.db.initial_world_state import get_initial_world
+from beta_engine.infrastructure.db.player_health_state import bootstrap_health
 from beta_engine.infrastructure.db.models import SimulationEventGroupModel
 from tests.api.test_saved_revision_history_api import ApiServer, _create_run, _request
 from test_authoritative_simulation_api import _server_state, _install_owned_state
@@ -58,6 +60,16 @@ def test_reconstruction_real_match_saved_revision_and_sqlite_reopen(tmp_path):
             server, display_name="Review natural squash match then Save",
         )
         week = _install_owned_state(server, package, run_id, branch_id)
+        # Current Simulation Slots legitimately require the frozen Health V1
+        # input in addition to world, lifecycle and sporting state. Bootstrap
+        # from the *same* canonical owned initial world; no fake health records.
+        with server.app.state.runtime.repository._session_factory.begin() as session:
+            world = get_initial_world(
+                session, run_id=run_id, branch_id=branch_id,
+            )
+            assert world is not None
+            health = bootstrap_health(session, world)
+            assert health.source_initial_world_fingerprint == world.fingerprint
         sim = (
             f"{server.base_url}/admin/runs/{run_id}/branches/{branch_id}"
             "/authoritative-simulation"

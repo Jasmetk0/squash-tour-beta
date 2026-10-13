@@ -120,7 +120,15 @@ def play_group_and_save(
     assert final_group is not None, final
     assert final_group["authority_fingerprint"] == completed["authority_fingerprint"]
     assert len(final_group["groups"]) == 1
-    assert final_group["groups"][0]["rows"] == ranking
+    # Public Edition v1 intentionally projects sporting columns only; the
+    # canonical internal authority carries additional provenance fields.
+    frozen_rows = final_group["groups"][0]["rows"]
+    assert len(frozen_rows) == len(ranking) == 4
+    for source, projected in zip(ranking, frozen_rows):
+        assert all(source[name] == value for name, value in projected.items()), (
+            "Saved Edition sporting table differs from frozen canonical source",
+            source, projected,
+        )
     assert len(final_group["tie_decisions"]) == len(tie_audit)
     assert final["group_schedule"]["authority_fingerprint"] == (
         check_schedule()["authority_fingerprint"]

@@ -1,3 +1,15 @@
+# Active pre-alpha sequence — 13 October 2026
+
+Verified starting point: #1431–1441 merged, `buuk` `f2bcf5876fe3d909edf4d911ddc4a5ff27a6d458`, no open PR during audit.
+
+1. **Current candidate — World → Country → exact Saved Tour Edition → genuine archived match (if published) → return to Country.** Selected Run, Branch, Saved Revision, season and event remain immutable; future plans are plans and old mutable Calendar detail is not reused.
+2. **Next — Country Records per Master v80.** Whole history/season/custom sports week intervals, displayed simulation-time upper limit, aggregate full supported evidence before pagination, thematic rows and evidence panel, safe historical links.
+3. **Then — History & Branches with reachable revision map and independent read-only Compare A/B.** Unsettled compare granularity remains open.
+
+Remaining pre-alpha acceptance: full cyclic-tie browser decision, hybrid group→knockout, ranking closure, full release regression and season continuity. Historical roadmap entries below are retained as dated evidence, not current open task ordering.
+
+---
+
 # Real Admin pure-group Format/Topology preparation — integration update 13 October 2026
 
 The Run-owned Planned Event Admin screen now exposes explicit Group Rules adoption,

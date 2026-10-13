@@ -1,0 +1,80 @@
+name: Pre-alpha Saved Group Edition Browser
+
+# Dedicated disposable Run group-source acceptance. The existing Saved Player
+# Replay browser remains unchanged; do not rerun the whole knockout smoke on
+# every unrelated PR. This browser proves real pre-result group Schedule
+# persistence, NOT completed group standings or the simulated hybrid closure.
+concurrency:
+  group: ${{ github.workflow }}-pr-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/prealpha-saved-group-edition-browser.yml'
+      - 'scripts/admin_saved_group_browser_smoke.py'
+      - 'scripts/admin_first_tournament_smoke.py'
+      - 'web/src/pages/SavedTourEditionPage.tsx'
+      - 'src/beta_engine/application/run_saved_tour_group_schedule.py'
+      - 'src/beta_engine/application/run_saved_tour_group_standings.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  saved-group:
+    name: Actual group Run/Save/Edition after SQLite restart
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: pyproject.toml
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: Install engine and Playwright
+        run: python -m pip install -e . playwright
+      - name: Install frontend
+        run: npm --prefix web ci
+      - name: Prepare Chromium
+        run: |
+          if [ -x /usr/bin/google-chrome ]; then
+            echo "CHROME_BIN=/usr/bin/google-chrome" >> "$GITHUB_ENV"
+          else
+            python -m playwright install --with-deps chromium
+            echo "CHROME_BIN=$(python -c 'from playwright.sync_api import sync_playwright; p=sync_playwright().start(); print(p.chromium.executable_path); p.stop()')" >> "$GITHUB_ENV"
+          fi
+      - name: Start Vite against dedicated disposable backend port
+        run: |
+          VITE_API_BASE_URL=http://127.0.0.1:8014 npm --prefix web run dev -- --host 127.0.0.1 --port 5173 --strictPort > "$RUNNER_TEMP/group-vite.log" 2>&1 &
+          for attempt in $(seq 1 90); do
+            if curl --fail --silent http://127.0.0.1:5173/ > /dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat "$RUNNER_TEMP/group-vite.log"
+          exit 1
+      - name: Real group field, format, topology, schedule, Save and historical Edition
+        run: |
+          python scripts/admin_saved_group_browser_smoke.py \
+            --acceptance "$RUNNER_TEMP/saved-group-run" \
+            --port 8014 \
+            --base-url http://127.0.0.1:5173 \
+            --chromium "$CHROME_BIN"
+      - name: Preserve real group browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: saved-group-browser-${{ github.run_id }}
+          path: |
+            ${{ runner.temp }}/saved-group-run/artifacts/
+            ${{ runner.temp }}/saved-group-run/server.log
+            ${{ runner.temp }}/group-vite.log
+          if-no-files-found: warn
+          retention-days: 14

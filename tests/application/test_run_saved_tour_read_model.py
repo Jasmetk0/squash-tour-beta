@@ -106,3 +106,46 @@ def test_duplicate_cross_package_events_keep_canonical_rejection():
         resolve_run_saved_tour_calendar(**_args(collision, season_index=0))
     with pytest.raises(ValueError, match="duplicate event identity"):
         resolve_run_saved_tour_calendar(**_args(collision, season_index=2))
+
+
+def test_saved_edition_entry_draw_absence_and_foreign_source_fail_closed():
+    saved = _state()
+    none = resolve_run_saved_tour_edition(
+        **_args(saved), event_id="event", simulation_slots=None,
+    )
+    assert none.entry_field is None and none.draw is None
+    assert none.published_result is None
+
+    foreign = {"entry_fields": [{
+        "run_id": "run", "branch_id": "foreign", "event_id": "event",
+    }]}
+    with pytest.raises(ValueError, match="another Run/Branch"):
+        resolve_run_saved_tour_edition(
+            **_args(saved), event_id="event", simulation_slots=foreign,
+        )
+
+    orphan_draw = {"draw_authorities": [{
+        "run_id": "run", "branch_id": "branch", "event_id": "event",
+    }]}
+    with pytest.raises(ValueError, match="no saved Entry Field"):
+        resolve_run_saved_tour_edition(
+            **_args(saved), event_id="event", simulation_slots=orphan_draw,
+        )
+
+    orphan_revision = {"draw_revisions": [{
+        "run_id": "run", "branch_id": "branch", "event_id": "event",
+    }]}
+    with pytest.raises(ValueError, match="no original draw"):
+        resolve_run_saved_tour_edition(
+            **_args(saved), event_id="event", simulation_slots=orphan_revision,
+        )
+
+    # Filtering by exact event never allows unrelated Entry/Draw rows to appear
+    # as an Edition's own authority.
+    other = {"entry_fields": [{
+        "run_id": "run", "branch_id": "foreign", "event_id": "other-event",
+    }]}
+    clean = resolve_run_saved_tour_edition(
+        **_args(saved), event_id="event", simulation_slots=other,
+    )
+    assert clean.entry_field is None and clean.draw is None

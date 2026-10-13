@@ -18,6 +18,9 @@ from beta_engine.application.viewer_tournament_result_read_model import (
 )
 from beta_engine.domain.rankings.revision_state import RankingRevisionState
 from beta_engine.domain.run_packages import RunPackageState
+from beta_engine.application.run_saved_tour_group_schedule import (
+    RunSavedTourGroupSchedule, resolve_saved_tour_group_schedule,
+)
 from beta_engine.application.run_saved_tour_match_schedule import (
     RunSavedTourMatchSchedule, resolve_saved_tour_match_schedule,
 )
@@ -61,6 +64,7 @@ class RunSavedTourEdition(BaseModel):
     entry_field: ViewerTournamentEntryField | None = None
     draw: ViewerTournamentDraw | None = None
     match_schedule: RunSavedTourMatchSchedule | None = None
+    group_schedule: RunSavedTourGroupSchedule | None = None
     # Calendar status is planning data, not a separate lifecycle authority.
     lifecycle_status: Literal["unavailable"] = "unavailable"
 
@@ -214,9 +218,14 @@ def resolve_run_saved_tour_edition(
         event_id=event_id, season_index=season_index,
         season_week=item.season_week,
     )
+    group_schedule = resolve_saved_tour_group_schedule(
+        simulation_slots, run_id=run_id, branch_id=revision_branch_id,
+        event_id=event_id, published_result=published,
+    )
     return RunSavedTourEdition(
         run_id=run_id, branch_id=selected_branch_id,
         revision_branch_id=revision_branch_id, saved_revision_id=saved_revision_id,
         season_index=season_index, edition=item, published_result=published,
         entry_field=entry_field, draw=draw, match_schedule=match_schedule,
+        group_schedule=group_schedule,
     )

@@ -187,6 +187,44 @@ def verify_country_saved_records(
     assert code in country.inner_text()
     summary = page.get_by_label("Country published records")
     expect(summary.get_by_label("Country verified record totals")).to_be_visible()
+    # Real sport-time Country Records v80 tournament evidence uses the complete
+    # Saved Revision, and follows its original immutable Edition source.
+    period = summary.get_by_role("combobox", name="Country record period")
+    expect(summary.get_by_label("Country sporting record interval")).to_be_visible()
+    period.select_option("season")
+    summary.get_by_role("combobox", name="Country record season").select_option("0")
+    assert "2000/2001" in summary.get_by_label("Country sporting record interval").inner_text()
+    results_table = summary.get_by_role("table", name="Country player published results")
+    expect(results_table.locator("tbody tr")).to_have_count(len(titles["player_results"]))
+    summary.get_by_role("button", name="Evidence").nth(1).click()
+    details = summary.get_by_label("Country record detail")
+    expect(details).to_be_visible()
+    edition_link = details.locator(
+        'a[href*="/tour/calendar/' + enc(event_id) + '"]'
+    ).first
+    expect(edition_link).to_be_visible()
+    edition_link.click()
+    expect(page.get_by_role("heading", name="Browser Acceptance Cup")).to_be_visible()
+    assert "revision=" + enc(head_id) in page.url
+    assert "season=0" in page.url
+    page.get_by_role("link", name="Back to country tournaments").click()
+    expect(page.get_by_label("Country published records")).to_be_visible()
+    assert "rperiod=season" in page.url
+    assert "rseason=0" in page.url
+    assert "tab=records" in page.url
+    assert "#country-record-finals" in page.url
+    period = page.get_by_role("combobox", name="Country record period")
+    period.select_option("custom")
+    page.get_by_role("combobox", name="Country record rfromSeason").select_option("0")
+    page.get_by_role("combobox", name="Country record rfromWeek").select_option("1")
+    page.get_by_role("combobox", name="Country record rtoSeason").select_option("0")
+    page.get_by_role("combobox", name="Country record rtoWeek").select_option("1")
+    expect(page.get_by_role("table", name="Country player published results")).to_be_visible()
+    period.select_option("whole")
+    page.get_by_role("combobox", name="Language / Jazyk").select_option("cs")
+    expect(page.get_by_label("Country sporting record interval")).to_be_visible()
+    page.get_by_role("combobox", name="Language / Jazyk").select_option("en")
+
     leader_panel = page.get_by_label("Country canonical player standings")
     leader_table = leader_panel.get_by_role("table", name="Country player standings table")
     expect(leader_table.locator("tbody tr")).to_have_count(len(own_players))

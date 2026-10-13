@@ -15,6 +15,44 @@ const edition:SavedTourEdition={schema_version:'run_saved_tour_edition.v1',
   saved_revision_id:'rev',season_index:2,edition:event,published_result:null,
   lifecycle_status:'unavailable'}
 describe('strict Saved Tour response identity',()=>{
+  it('accepts frozen group table points and explicit tie audit only in its original branch',()=>{
+    const schedule={
+      schema_version:'run_saved_tour_group_schedule.v1' as const,
+      source:'saved_tournament_group_match_schedule_authority.v1' as const,
+      run_id:'r',revision_branch_id:'original',event_id:'open',
+      authority_fingerprint:'b'.repeat(64),
+      group_count:1,group_size:2,match_day_count:1,
+      matches:[{match_id:'g1',group_index:1,match_day_ordinal:1,match_order:1,
+        top_player_id:'A',bottom_player_id:'B',best_of:3 as const}]
+    }
+    const player=(position:number,player_id:string)=>({
+      position,player_id,wins:1,losses:0,group_points:4,
+      played_matches:1,walkovers_received:0,walkovers_conceded:0,
+      games_won:2,games_lost:0,points_won:22,points_lost:8
+    })
+    const standings={
+      schema_version:'run_saved_tour_group_standings.v1' as const,
+      source:'saved_tournament_group_standings_authority' as const,
+      run_id:'r',revision_branch_id:'original',event_id:'open',
+      authority_fingerprint:'c'.repeat(64),
+      group_schedule_fingerprint:schedule.authority_fingerprint,
+      groups:[{group_index:1,rows:[player(1,'A'),player(2,'B')]}],
+      tie_decisions:[{group_index:1,case_fingerprint:'d'.repeat(64),
+        ordered_player_ids:['A','B'],admin_reason:'Audited final table'}]
+    }
+    const valid=(x:typeof standings)=>validSavedTourEdition({
+      ...edition,group_schedule:schedule,group_standings:x
+    },'r','b','rev',2,'open')
+    expect(valid(standings)).toBe(true)
+    expect(valid({...standings,revision_branch_id:'b'})).toBe(false)
+    expect(valid({...standings,group_schedule_fingerprint:'a'.repeat(64)})).toBe(false)
+    expect(valid({...standings,groups:[{group_index:1,rows:[player(1,'A'),player(2,'A')]}]})).toBe(false)
+    expect(valid({...standings,groups:[{group_index:1,rows:[player(1,'A'),player(3,'B')]}]})).toBe(false)
+    expect(valid({...standings,groups:[{group_index:1,rows:[{...player(1,'A'),group_points:-1},player(2,'B')]}]})).toBe(false)
+    expect(valid({...standings,tie_decisions:[{...standings.tie_decisions[0],admin_reason:' ' }]})).toBe(false)
+    expect(validSavedTourEdition({...edition,group_standings:standings},'r','b','rev',2,'open')).toBe(false)
+  })
+
   it('accepts validated saved group chronology and rejects foreign, repeated or forged pairs',()=>{
     const source={
       schema_version:'run_saved_tour_group_schedule.v1' as const,

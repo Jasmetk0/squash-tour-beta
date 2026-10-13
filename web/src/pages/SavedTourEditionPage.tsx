@@ -42,6 +42,7 @@ export function SavedTourEditionPage():JSX.Element {
   const entry=model?.entry_field,draw=model?.draw
   const schedule=model?.match_schedule
   const groupSchedule=model?.group_schedule
+  const groupStandings=model?.group_standings
   const plannedMain=schedule?.slots.filter(slot=>slot.draw_phase!=='qualification')??[]
   const plannedQualification=schedule?.slots.filter(slot=>slot.draw_phase==='qualification')??[]
   const matches=result?.matches??[]
@@ -84,6 +85,38 @@ export function SavedTourEditionPage():JSX.Element {
       })}</tbody></table></div>:
     <p>{cs?'Pro tuto část nejsou uložené zápasové sloty.':
       'No saved Match Day slots for this phase.'}</p>
+  const groupStandingsTables=groupStandings&&<section aria-label="Saved group standings">
+    <h4>{cs?'Konečné tabulky skupin':'Final group standings'}</h4>
+    <p role="status">{cs?'Uložené výsledkové tabulky — pořadí a statistiky z kanonické autority.':
+      'Saved final tables — ranks and statistics from canonical authority.'}
+      {' · '}{cs?'Auditovaná rozhodnutí':'Audited decisions'}: {groupStandings.tie_decisions.length}</p>
+    <div className="grid">
+      {groupStandings.groups.map(group=><section className="section-subtle" key={group.group_index}>
+        <h5>{cs?'Skupina':'Group'} {group.group_index}</h5>
+        <div className="table-responsive"><table aria-label={'Saved group '+group.group_index+' standings'}>
+          <thead><tr><th>#</th><th>{cs?'Hráč':'Player'}</th>
+            <th>W</th><th>L</th><th>{cs?'Body':'Points'}</th>
+            <th>{cs?'Odehráno':'Played'}</th><th>W/O +</th><th>W/O −</th>
+            <th>{cs?'Sety +/−':'Games +/−'}</th><th>{cs?'Míče +/−':'Ball points +/−'}</th>
+          </tr></thead>
+          <tbody>{group.rows.map(r=><tr key={r.player_id}>
+            <td>{r.position}</td><td>{r.player_id}</td>
+            <td>{r.wins}</td><td>{r.losses}</td><td><strong>{r.group_points}</strong></td>
+            <td>{r.played_matches}</td><td>{r.walkovers_received}</td><td>{r.walkovers_conceded}</td>
+            <td>{r.games_won}/{r.games_lost}</td><td>{r.points_won}/{r.points_lost}</td>
+          </tr>)}</tbody>
+        </table></div>
+      </section>)}
+    </div>
+    {groupStandings.tie_decisions.length>0&&<section aria-label="Saved group tie decisions">
+      <h5>{cs?'Auditovaná rozhodnutí při rovnosti':'Audited tie decisions'}</h5>
+      {groupStandings.tie_decisions.map(d=><p key={d.case_fingerprint}>
+        {cs?'Skupina':'Group'} {d.group_index}: {d.ordered_player_ids.join(' → ')}
+        {' · '}{cs?'Důvod Admina':'Admin reason'}: {d.admin_reason}
+        {' · '}<code>{d.case_fingerprint.slice(0,12)}</code>
+      </p>)}
+    </section>}
+  </section>
   const groupScheduleTable=groupSchedule&&<section aria-label="Saved group Match Day schedule">
     <h5>{cs?'Autentický skupinový rozpis':'Authentic group Match Day schedule'}</h5>
     <p role="status">{cs?'Uložené skupiny':'Saved groups'}: {groupSchedule.group_count}
@@ -213,6 +246,7 @@ export function SavedTourEditionPage():JSX.Element {
               'Published result evidence only, not a schedule.'}</p>{matchTable(qualification)}</>}</section></>}
       </section>}
       {tab==='results'&&<section><h3>{labels[4]}</h3>
+        {groupStandingsTables}
         {!result?<p>{cs?'Kanonické výsledky nejsou v této revizi publikovány.':
           'Canonical results are not published in this revision.'}</p>:<>
           <a href="#saved-results-main">{cs?'Hlavní část':'Main'}</a>

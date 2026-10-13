@@ -67,6 +67,19 @@ export type SavedTourGroupSchedule = {
   group_count:number;group_size:number;match_day_count:number
   matches:SavedTourGroupMatch[]
 }
+export type SavedTourGroupTableRow = {
+  position:number;player_id:string;wins:number;losses:number;group_points:number
+  played_matches:number;walkovers_received:number;walkovers_conceded:number
+  games_won:number;games_lost:number;points_won:number;points_lost:number
+}
+export type SavedTourGroupStandings = {
+  schema_version:'run_saved_tour_group_standings.v1'
+  source:'saved_tournament_group_standings_authority'
+  run_id:string;revision_branch_id:string;event_id:string
+  authority_fingerprint:string;group_schedule_fingerprint:string
+  groups:Array<{group_index:number;rows:SavedTourGroupTableRow[]}>
+  tie_decisions:Array<{group_index:number;case_fingerprint:string;ordered_player_ids:string[];admin_reason:string}>
+}
 export type SavedTourEdition = {
   schema_version:'run_saved_tour_edition.v1';source:'reachable_saved_revision'
   run_id:string;branch_id:string;revision_branch_id:string
@@ -75,6 +88,7 @@ export type SavedTourEdition = {
   entry_field?:SavedTourEntryField|null;draw?:SavedTourDraw|null
   match_schedule?:SavedTourMatchSchedule|null
   group_schedule?:SavedTourGroupSchedule|null
+  group_standings?:SavedTourGroupStandings|null
   lifecycle_status:'unavailable'
 }
 
@@ -196,6 +210,50 @@ export function validSavedTourEdition(
         ||bracket.slots.some(slot=>slot.slot_index<1||slot.slot_index>bracket.bracket_size
           ||(slot.entrant_kind==='player'?!slot.player_id:slot.player_id!==null)))
         return false
+    }
+  }
+  const standings=payload.group_standings
+  if(standings){
+    if(!payload.group_schedule
+      ||standings.schema_version!=='run_saved_tour_group_standings.v1'
+      ||standings.source!=='saved_tournament_group_standings_authority'
+      ||standings.run_id!==runId
+      ||standings.revision_branch_id!==payload.revision_branch_id
+      ||standings.event_id!==eventId
+      ||!/^[0-9a-f]{64}$/.test(standings.authority_fingerprint)
+      ||standings.group_schedule_fingerprint!==payload.group_schedule.authority_fingerprint
+      ||!Array.isArray(standings.groups)
+      ||standings.groups.length!==payload.group_schedule.group_count
+      ||!Array.isArray(standings.tie_decisions))return false
+    const members=new Set<string>()
+    for(let i=0;i<standings.groups.length;i++){
+      const group=standings.groups[i]
+      if(group.group_index!==i+1||!Array.isArray(group.rows)
+        ||group.rows.length!==payload.group_schedule.group_size)return false
+      for(let j=0;j<group.rows.length;j++){
+        const row=group.rows[j]
+        if(row.position!==j+1||!row.player_id||members.has(row.player_id)
+          ||(['wins','losses','group_points','played_matches','walkovers_received',
+            'walkovers_conceded','games_won','games_lost','points_won','points_lost'] as const)
+            .some(key=>{const n=row[key];return !Number.isInteger(n)||n<0}))
+          return false
+        members.add(row.player_id)
+      }
+    }
+    const cases=new Set<string>()
+    for(const decision of standings.tie_decisions){
+      if(!Number.isInteger(decision.group_index)||decision.group_index<1
+        ||decision.group_index>standings.groups.length
+        ||!/^[0-9a-f]{64}$/.test(decision.case_fingerprint)
+        ||cases.has(decision.case_fingerprint)
+        ||!decision.admin_reason?.trim()
+        ||!Array.isArray(decision.ordered_player_ids)
+        ||decision.ordered_player_ids.length<2
+        ||new Set(decision.ordered_player_ids).size!==decision.ordered_player_ids.length
+        ||decision.ordered_player_ids.some(id=>
+          !standings.groups[decision.group_index-1].rows.some(r=>r.player_id===id))
+      )return false
+      cases.add(decision.case_fingerprint)
     }
   }
   const groupsSchedule=payload.group_schedule

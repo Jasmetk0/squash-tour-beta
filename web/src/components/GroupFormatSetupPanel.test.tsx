@@ -150,8 +150,9 @@ describe('real Admin group preparation',()=>{
     fireEvent.change(screen.getByLabelText('Group Topology seed'),{target:{value:'123'}})
     expect(send).toBeDisabled()
     fireEvent.change(screen.getByLabelText('Group Topology seed'),{target:{value:'137'}})
-    // The confirmation applies to exact values; restore requires a new deliberate check.
-    // A value-only snapshot would re-validate the previous 137 approval here.
+    // Returning to a prior value cannot resurrect an old approval.
+    expect(send).toBeDisabled()
+    fireEvent.click(screen.getByLabelText('Confirm immutable group Topology'))
     expect(send).toBeEnabled()
   })
   it('provides translated Czech labels and validation errors',async()=>{

@@ -4690,3 +4690,20 @@ export async function getAdminGroupTieResolutionState(
     throw new Error('Group tie case does not belong to the selected Run, Branch and Event.')
   return data
 }
+
+/** Commit one explicitly reviewed ordering of the server's exact unresolved case. */
+export async function resolveAdminGroupStandingsTie(
+  runId: string, branchId: string, eventId: string,
+  casePlayers: string[],
+  payload: import('./tournamentGroupStandings').GroupTieResolutionPayload
+): Promise<import('./tournamentGroupStandings').GroupTieResolutionAuthority> {
+  const data = await request<import('./tournamentGroupStandings').GroupTieResolutionAuthority>(
+    '/admin/runs/' + encodeURIComponent(runId) + '/branches/' + encodeURIComponent(branchId)
+      + '/tournaments/' + encodeURIComponent(eventId) + '/group-standings/tie-resolution',
+    { method: 'POST', body: JSON.stringify(payload) }
+  )
+  const { isExactGroupTieResolution } = await import('./tournamentGroupStandings')
+  if (!isExactGroupTieResolution(data, runId, branchId, eventId, casePlayers, payload))
+    throw new Error('Group tie-resolution authority does not match this Run, Branch, Event and explicit ordered case.')
+  return data
+}

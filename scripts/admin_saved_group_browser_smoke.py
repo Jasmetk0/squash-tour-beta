@@ -342,7 +342,7 @@ def acceptance(
                     "run_id": run_id, "branch_id": branch_id,
                     "old_revision_id": old_rev, "saved_revision_id": revision,
                     "group_schedule_fingerprint": group["authority_fingerprint"],
-                    "format_kind": format_["format_kind"],
+                    "format_kind": preparation["format_kind"],
                     "group_match_count": len(group["matches"]),
                     "match_day_count": group["match_day_count"],
                     "group_standings_status": (

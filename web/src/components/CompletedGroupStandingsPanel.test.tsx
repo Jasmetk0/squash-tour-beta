@@ -3,6 +3,8 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { CompletedGroupStandingsPanel } from './CompletedGroupStandingsPanel'
+const locale=vi.hoisted(()=>({current:'en' as 'cs'|'en'}))
+vi.mock('../i18n/LanguageContext',()=>({useLanguage:()=>({language:locale.current})}))
 
 const api = vi.hoisted(() => ({
   getAdminCompletedGroupStandings: vi.fn(),
@@ -40,6 +42,7 @@ function mount(enabled = true) {
 describe('completed real group standings Admin', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    locale.current='en'
     api.getAdminCompletedGroupStandings.mockRejectedValue(new api.ApiError('Not found',404))
     api.getAdminGroupTieResolutionState.mockResolvedValue(emptyTie)
     api.generateAdminCompletedGroupStandings.mockResolvedValue(ready)
@@ -79,6 +82,13 @@ describe('completed real group standings Admin', () => {
     mount()
     expect(await screen.findByRole('table',{name:'Canonical group 1 standings'})).toBeInTheDocument()
     expect(screen.queryByRole('button',{name:'Generate canonical group standings'})).not.toBeInTheDocument()
+  })
+  it('offers Czech standalone confirmation, result and table labels',async()=>{
+    locale.current='cs'
+    api.getAdminCompletedGroupStandings.mockResolvedValue(ready)
+    mount()
+    expect(await screen.findByRole('table',{name:'Konečná tabulka skupiny 1'})).toBeInTheDocument()
+    expect(screen.getByText(/Tato tabulka není uloženou revizí/)).toBeInTheDocument()
   })
   it('does not query or write without a verified writable context',()=>{
     mount(false)

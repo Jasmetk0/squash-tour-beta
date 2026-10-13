@@ -3,6 +3,8 @@ import {fireEvent,render,screen,waitFor} from '@testing-library/react'
 import {QueryClient,QueryClientProvider} from '@tanstack/react-query'
 import {GroupFormatSetupPanel} from './GroupFormatSetupPanel'
 import {proposedPureGroups} from '../api/tournamentGroupFormats'
+const locale=vi.hoisted(()=>({current:'en' as 'en'|'cs'}))
+vi.mock('../i18n/LanguageContext',()=>({useLanguage:()=>({language:locale.current})}))
 
 const api=vi.hoisted(()=>({
   getAdminGroupRules:vi.fn(),adoptAdminGroupRules:vi.fn(),
@@ -30,6 +32,7 @@ function mount(step:'format'|'topology'='format',override:Partial<{
 describe('real Admin group preparation',()=>{
   beforeEach(()=>{
     vi.clearAllMocks()
+    locale.current='en'
     api.getAdminGroupRules.mockResolvedValue(state(effective))
     api.adoptAdminGroupRules.mockResolvedValue(effective)
     api.configureAdminPureGroups.mockResolvedValue({
@@ -88,6 +91,7 @@ describe('real Admin group preparation',()=>{
   it('freezes real group Topology only after an explicit Admin confirmation',async()=>{
     mount('topology')
     const send=await screen.findByRole('button',{name:'Generate group Topology'})
+    await screen.findByText(/Frozen season group rules: BO3/)
     expect(send).toBeDisabled()
     fireEvent.click(screen.getByLabelText('Confirm immutable group Topology'))
     fireEvent.click(send)
@@ -98,12 +102,69 @@ describe('real Admin group preparation',()=>{
   it('refuses missing and fractional topology seeds instead of sending ambiguous authority',async()=>{
     mount('topology')
     await screen.findByRole('button',{name:'Generate group Topology'})
+    await screen.findByText(/Frozen season group rules: BO3/)
     fireEvent.click(screen.getByLabelText('Confirm immutable group Topology'))
     const button=screen.getByRole('button',{name:'Generate group Topology'})
     fireEvent.change(screen.getByLabelText('Group Topology seed'),{target:{value:'1.5'}})
     expect(button).toBeDisabled()
     fireEvent.change(screen.getByLabelText('Group Topology seed'),{target:{value:'137'}})
+    expect(button).toBeDisabled()
+    fireEvent.click(screen.getByLabelText('Confirm immutable group Topology'))
     expect(button).toBeEnabled()
+  })
+  it('revokes Format approval when exact 1×4 changes to 2×2, even though both are valid',async()=>{
+    mount()
+    await screen.findByText(/Frozen season group rules/)
+    const send=screen.getByRole('button',{name:'Configure pure-groups Format'})
+    fireEvent.click(screen.getByLabelText('Confirm immutable pure-groups Format'))
+    expect(send).toBeEnabled()
+    fireEvent.change(screen.getByLabelText('Group count'),{target:{value:'2'}})
+    fireEvent.change(screen.getByLabelText('Players per group'),{target:{value:'2'}})
+    expect(send).toBeDisabled()
+    expect(screen.getByLabelText('Confirm immutable pure-groups Format')).not.toBeChecked()
+    fireEvent.click(send)
+    expect(api.configureAdminPureGroups).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByLabelText('Confirm immutable pure-groups Format'))
+    fireEvent.click(send)
+    await waitFor(()=>expect(api.configureAdminPureGroups).toHaveBeenCalledTimes(1))
+    expect(api.configureAdminPureGroups.mock.calls[0][3]).toMatchObject({group_count:2,group_size:2})
+  })
+  it('revokes BO3/BO5 season Rules approval upon changes and requires reconfirmation',async()=>{
+    api.getAdminGroupRules.mockResolvedValue(state(null))
+    mount()
+    const send=await screen.findByRole('button',{name:'Adopt season Group Rules'})
+    fireEvent.click(screen.getByLabelText('Confirm immutable season Group Rules'))
+    expect(send).toBeEnabled()
+    fireEvent.change(screen.getByLabelText('Season group-match format'),{target:{value:'3'}})
+    expect(send).toBeDisabled()
+    expect(screen.getByLabelText('Confirm immutable season Group Rules')).not.toBeChecked()
+    fireEvent.click(send)
+    expect(api.adoptAdminGroupRules).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByLabelText('Confirm immutable season Group Rules'))
+    fireEvent.click(send)
+    await waitFor(()=>expect(api.adoptAdminGroupRules).toHaveBeenCalledWith(
+      'run-a','branch-a',0,3,'admin-ui-group-rules-branch-a-0-bo3'))
+  })
+  it('revokes topology approval after seed change, including return to old seed',async()=>{
+    mount('topology')
+    const send=await screen.findByRole('button',{name:'Generate group Topology'})
+    await screen.findByText(/Frozen season group rules: BO3/)
+    fireEvent.click(screen.getByLabelText('Confirm immutable group Topology'))
+    fireEvent.change(screen.getByLabelText('Group Topology seed'),{target:{value:'123'}})
+    expect(send).toBeDisabled()
+    fireEvent.change(screen.getByLabelText('Group Topology seed'),{target:{value:'137'}})
+    // Returning to a prior value cannot resurrect an old approval.
+    expect(send).toBeDisabled()
+    fireEvent.click(screen.getByLabelText('Confirm immutable group Topology'))
+    expect(send).toBeEnabled()
+  })
+  it('provides translated Czech labels and validation errors',async()=>{
+    locale.current='cs'
+    mount()
+    await screen.findByText(/Potvrzená skupinová pravidla sezony/)
+    expect(screen.getByRole('button',{name:'Nastavit čisté skupiny'})).toBeDisabled()
+    fireEvent.change(screen.getByLabelText('Počet skupin'),{target:{value:'2'}})
+    expect(screen.getByRole('alert')).toHaveTextContent('Počet skupin × hráči ve skupině')
   })
   it('rejects corrupted or ambiguous numeric fields rather than silently rounding',()=>{
     expect(proposedPureGroups('2','2',4,'cmd').group_count).toBe(2)

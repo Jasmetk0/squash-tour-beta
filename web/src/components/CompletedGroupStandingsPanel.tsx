@@ -9,6 +9,7 @@ import {
 import { newCommandId } from '../admin/branchSimulation'
 import { GroupTieResolutionEditor } from './GroupTieResolutionEditor'
 import { formatApiError, isApiNotFound } from '../utils/apiErrors'
+import { useLanguage } from '../i18n/LanguageContext'
 
 type Props = { runId: string; branchId: string; eventId: string; enabled: boolean }
 
@@ -20,6 +21,7 @@ export function CompletedGroupStandingsPanel({
   runId, branchId, eventId, enabled,
 }: Props): JSX.Element {
   const client = useQueryClient()
+  const {language}=useLanguage(),cs=language==='cs'
   const [confirmed, setConfirmed] = useState(false)
   const [commandId, setCommandId] = useState(() => newCommandId())
   const key = ['admin-completed-group-standings', runId, branchId, eventId]
@@ -58,24 +60,22 @@ export function CompletedGroupStandingsPanel({
     setCommandId(newCommandId())
   }, [runId, branchId, eventId])
 
-  return <section className="panel" aria-label="Canonical completed group standings">
-    <h3>Completed group standings</h3>
-    <p>
-      This is a final, immutable table derived from authoritative played match
-      results and explicit tie decisions, never an estimate from the Match Schedule.
-    </p>
-    {standings.isPending && enabled ? <p role="status">Loading frozen group tables…</p> : null}
+  return <section className="panel" aria-label={cs?'Potvrzené konečné tabulky skupin':'Canonical completed group standings'}>
+    <h3>{cs?'Konečné tabulky skupin':'Completed group standings'}</h3>
+    <p>{cs?'Neměnná konečná tabulka vzniká jen z odehraných autoritativních zápasů a výslovného rozhodnutí shod, nikoli z odhadu podle rozpisu.':
+      'This is a final, immutable table derived from authoritative played match results and explicit tie decisions, never an estimate from the Match Schedule.'}</p>
+    {standings.isPending && enabled ? <p role="status">{cs?'Načítám potvrzené tabulky skupin…':'Loading frozen group tables…'}</p> : null}
     {standings.error && !absent ? (
-      <p role="alert">Frozen Group Standings could not be verified: {formatApiError(standings.error)}</p>
+      <p role="alert">{cs?'Tabulky skupin nebylo možné ověřit: ':'Frozen Group Standings could not be verified: '}{formatApiError(standings.error)}</p>
     ) : null}
     {standings.data ? (
       <>
-        <p role="status">Frozen authority: <code>{standings.data.authority_fingerprint}</code></p>
+        <p role="status">{cs?'Potvrzená autorita':'Frozen authority'}: <code>{standings.data.authority_fingerprint}</code></p>
         {standings.data.groups.map(group => (
           <div key={group.group_index}>
-            <h4>Group {group.group_index}</h4>
-            <table aria-label={`Canonical group ${group.group_index} standings`}>
-              <thead><tr><th>Pos.</th><th>Player ID</th><th>W</th><th>L</th><th>Group pts</th><th>Games</th><th>Points</th></tr></thead>
+            <h4>{cs?'Skupina':'Group'} {group.group_index}</h4>
+            <table aria-label={cs?`Konečná tabulka skupiny ${group.group_index}`:`Canonical group ${group.group_index} standings`}>
+              <thead><tr><th>{cs?'Poř.':'Pos.'}</th><th>{cs?'ID hráče':'Player ID'}</th><th>{cs?'V':'W'}</th><th>{cs?'P':'L'}</th><th>{cs?'Body skupiny':'Group pts'}</th><th>{cs?'Sety':'Games'}</th><th>{cs?'Míče':'Points'}</th></tr></thead>
               <tbody>{group.rows.map(row => (
                 <tr key={row.player_id}>
                   <td>{row.position}</td>
@@ -88,20 +88,23 @@ export function CompletedGroupStandingsPanel({
             </table>
           </div>
         ))}
-        <p className="status">This table is not a Saved Revision until Simulation Save succeeds.</p>
+        <p className="status">{cs?'Tato tabulka není uloženou revizí, dokud neproběhne úspěšné Simulation Save.':
+        'This table is not a Saved Revision until Simulation Save succeeds.'}</p>
       </>
     ) : null}
     {absent && !standings.data ? (
       <div className="grid">
-        <p role="status">No completed group-table authority is stored. The Match Schedule alone is not a result.</p>
+        <p role="status">{cs?'Není uložena žádná konečná tabulka skupin. Samotný rozpis není výsledkem.':
+          'No completed group-table authority is stored. The Match Schedule alone is not a result.'}</p>
         <p><Link to={`/admin/runs/${encodeURIComponent(runId)}/simulate?branch=${encodeURIComponent(branchId)}`}>
-          Open authoritative Simulation to play all group Match Days
+          {cs?'Otevřít autoritativní simulaci a odehrát všechna kola skupin':'Open authoritative Simulation to play all group Match Days'}
         </Link></p>
         {unresolved ? <>
           <p role="alert">
-            Group {unresolved.group_index} has an unresolved tie among
+            {cs?'Skupina':'Group'} {unresolved.group_index}{cs?' má nerozhodnou shodu hráčů':' has an unresolved tie among'}
             {' '}{unresolved.player_ids.join(', ')} ({unresolved.reason}).
-            An explicit audited Admin ordering is required; no automatic ordering is permitted.
+            {cs?'Je nutné výslovně a auditovatelně určit pořadí; automatické rozhodnutí není povoleno.':
+              'An explicit audited Admin ordering is required; no automatic ordering is permitted.'}
           </p>
           <GroupTieResolutionEditor
             key={[runId, branchId, eventId, tieState.data?.unresolved_case_fingerprint].join(':')}
@@ -119,20 +122,22 @@ export function CompletedGroupStandingsPanel({
         </> : null}
         {tieState.error && !isApiNotFound(tieState.error) &&
           (tieState.error as { status?: number }).status !== 409 ? (
-          <p role="alert">Tie-resolution status unavailable: {formatApiError(tieState.error)}</p>
+          <p role="alert">{cs?'Stav řešení shody není dostupný: ':'Tie-resolution status unavailable: '}{formatApiError(tieState.error)}</p>
         ) : null}
         <label><input type="checkbox" checked={confirmed}
+          aria-label={cs?'Potvrdit generování ze všech odehraných zápasů skupin':'Confirm generation from all completed canonical group matches'}
           onChange={e => setConfirmed(e.target.checked)}/>
-          Confirm generation from all completed canonical group matches
+          {cs?'Potvrdit generování ze všech odehraných zápasů skupin':
+            'Confirm generation from all completed canonical group matches'}
         </label>
         <button type="button"
           disabled={!confirmed || !enabled || Boolean(unresolved) || generate.isPending ||
             !tieState.isSuccess || tieState.data?.unresolved_case !== null}
           onClick={() => generate.mutate()}>
-          Generate canonical group standings
+          {cs?'Vytvořit konečné tabulky skupin':'Generate canonical group standings'}
         </button>
-        {generate.error ? <p role="alert">Group Standings generation blocked:
-          {' '}{formatApiError(generate.error)}</p> : null}
+        {generate.error ? <p role="alert">{cs?'Vytvoření tabulek skupin bylo zablokováno: ':
+          'Group Standings generation blocked: '}{formatApiError(generate.error)}</p> : null}
       </div>
     ) : null}
   </section>

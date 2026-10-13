@@ -5,6 +5,7 @@ import { resolveAdminGroupStandingsTie } from '../api/client'
 import type { GroupStandingsTieState } from '../api/tournamentGroupStandings'
 import { newCommandId } from '../admin/branchSimulation'
 import { formatApiError } from '../utils/apiErrors'
+import { useLanguage } from '../i18n/LanguageContext'
 
 type Props = {
   runId: string
@@ -19,6 +20,7 @@ type Props = {
 export function GroupTieResolutionEditor({
   runId, branchId, eventId, tieState, enabled, onResolution,
 }: Props): JSX.Element | null {
+  const {language}=useLanguage(),cs=language==='cs'
   const tie = tieState.unresolved_case
   const fingerprint = tieState.unresolved_case_fingerprint
   const [order, setOrder] = useState<string[]>(() => [...(tie?.player_ids ?? [])])
@@ -74,48 +76,47 @@ export function GroupTieResolutionEditor({
     setApproved(false)
   }
 
-  return <div className="grid" role="group" aria-label="Explicit group tie decision">
-    <h4>Review unresolved Group {tie.group_index} ordering</h4>
-    <p>
-      The sporting tie-break criteria could not resolve this order ({tie.reason}).
-      Move each exact participant into your intended final order. The initial
-      list is only a review proposal, not a generated tie-break decision.
-    </p>
-    <p>Case fingerprint: <code>{fingerprint ?? 'Missing'}</code></p>
-    <ol aria-label="Proposed tie order">
+  return <div className="grid" role="group" aria-label={cs?'Výslovné rozhodnutí shody ve skupině':'Explicit group tie decision'}>
+    <h4>{cs?'Prověřit nerozhodné pořadí ve skupině':'Review unresolved Group'} {tie.group_index}{cs?'':' ordering'}</h4>
+    <p>{cs?'Sportovní kritéria nedokázala rozhodnout pořadí':'The sporting tie-break criteria could not resolve this order'} ({tie.reason}).
+      {cs?' Přesuň hráče do zamýšleného konečného pořadí. Výchozí seznam je pouze návrh k prověření, nikoli automatické rozhodnutí.':
+      ' Move each exact participant into your intended final order. The initial list is only a review proposal, not a generated tie-break decision.'}</p>
+    <p>{cs?'Otisk případu':'Case fingerprint'}: <code>{fingerprint ?? (cs?'Chybí':'Missing')}</code></p>
+    <ol aria-label={cs?'Navržené pořadí při shodě':'Proposed tie order'}>
       {order.map((id, index) => <li key={id}>
         <code>{id}</code>{' '}
-        <button type="button" aria-label={`Move ${id} up`}
+        <button type="button" aria-label={cs?`Posunout hráče ${id} nahoru`:`Move ${id} up`}
           onClick={() => move(index, -1)} disabled={!enabled || mutation.isPending || index === 0}>
           ↑
         </button>{' '}
-        <button type="button" aria-label={`Move ${id} down`}
+        <button type="button" aria-label={cs?`Posunout hráče ${id} dolů`:`Move ${id} down`}
           onClick={() => move(index, 1)} disabled={!enabled || mutation.isPending || index === order.length - 1}>
           ↓
         </button>
       </li>)}
     </ol>
-    <label>Admin tie decision reason
-      <textarea aria-label="Admin tie decision reason" rows={3} maxLength={1000}
+    <label>{cs?'Auditní důvod rozhodnutí shody':'Admin tie decision reason'}
+      <textarea aria-label={cs?'Auditní důvod rozhodnutí shody':'Admin tie decision reason'} rows={3} maxLength={1000}
         value={reason} onChange={e => { setReason(e.target.value); setApproved(false) }}
         disabled={!enabled || mutation.isPending}/>
     </label>
     <label><input type="checkbox" checked={approved}
+      aria-label={cs?'Potvrdit přesné pořadí hráčů a auditní důvod':'Confirm this exact player order and recorded audit reason'}
       onChange={e => setApproved(e.target.checked)}
       disabled={!enabled || mutation.isPending || !validOrder || !validReason || !validFingerprint}/>
-      Confirm this exact player order and recorded audit reason
+      {cs?'Potvrdit přesné pořadí hráčů a auditní důvod':'Confirm this exact player order and recorded audit reason'}
     </label>
     <button type="button" onClick={() => mutation.mutate()}
       disabled={!enabled || !validOrder || !validReason || !validFingerprint ||
         !approved || mutation.isPending}>
-      Commit audited group tie decision
+      {cs?'Uložit auditované rozhodnutí shody':'Commit audited group tie decision'}
     </button>
-    {mutation.isPending ? <p role="status">Recording exact tie decision…</p> : null}
-    {mutation.isSuccess ? <p role="status">
-      Tie decision recorded. Rechecking the next unresolved case before final table generation.
-    </p> : null}
+    {mutation.isPending ? <p role="status">{cs?'Ukládám přesné rozhodnutí shody…':'Recording exact tie decision…'}</p> : null}
+    {mutation.isSuccess ? <p role="status">{cs?'Rozhodnutí bylo zaznamenáno. Před vytvořením konečné tabulky se znovu ověří další nerozhodná shoda.':
+      'Tie decision recorded. Rechecking the next unresolved case before final table generation.'}</p> : null}
     {mutation.error ? <p role="alert">
-      Group tie decision not committed: {formatApiError(mutation.error)}. Recheck the live case before retrying.
+      {cs?'Rozhodnutí shody nebylo uloženo: ':'Group tie decision not committed: '}{formatApiError(mutation.error)}.
+      {cs?' Před dalším pokusem znovu ověř aktuální případ.':' Recheck the live case before retrying.'}
     </p> : null}
   </div>
 }

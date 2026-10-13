@@ -96,6 +96,30 @@ describe('Saved Edition detail',()=>{
     expect(api.getSavedTourEdition).not.toHaveBeenCalled()
   })
 
+  it('displays saved global Match Day order and only canonically published scores',async()=>{
+    const item=fixture(true)
+    item.match_schedule={
+      schema_version:'run_saved_tour_match_schedule.v1',source:'saved_week_simulation_schedule.v2',
+      run_id:'run-a',revision_branch_id:'ancestor',event_id:'event-x',
+      season_index:2,season_week:5,week_schedule_fingerprint:'b'.repeat(64),
+      slots:[
+        {global_slot_ordinal:1,match_day_ordinal:1,match_order:1,draw_phase:'main',
+          round_number:2,group_id:'g1',match_id:'final'},
+        {global_slot_ordinal:3,match_day_ordinal:2,match_order:1,draw_phase:'qualification',
+          round_number:1,group_id:'g3',match_id:null},
+      ]
+    }
+    api.getSavedTourEdition.mockResolvedValue(item)
+    mount()
+    expect(await screen.findByRole('heading',{name:'Brno Open'})).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button',{name:'Schedule & matches'}))
+    expect(screen.getByText('Authentic Saved Week Simulation Schedule v2.',{exact:false})).toBeInTheDocument()
+    const sections=screen.getByRole('table',{name:'Saved Match Day order'})
+    expect(within(sections).getByText('P1 · 3-0')).toBeInTheDocument()
+    expect(screen.getByText('No saved match plan')).toBeInTheDocument()
+    expect(screen.getByText(/Match Day is an ordinal, not a date/)).toBeInTheDocument()
+    expect(screen.queryByText('Q1 · 3-1')).not.toBeInTheDocument()
+  })
   it('shows actual saved Entry partitions and first-round positions without inventing match times',async()=>{
     const source=fixture(true)
     source.entry_field={

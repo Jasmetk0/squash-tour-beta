@@ -95,4 +95,42 @@ describe('Saved Edition detail',()=>{
     expect(screen.getByRole('alert')).toHaveTextContent('Checkpoint is not mapped')
     expect(api.getSavedTourEdition).not.toHaveBeenCalled()
   })
+
+  it('shows actual saved Entry partitions and first-round positions without inventing match times',async()=>{
+    const source=fixture(true)
+    source.entry_field={
+      schema_version:'viewer_tournament_entry_field.v1',product_run_id:'run-a',
+      viewer_branch_id:'ancestor',event_id:'event-x',field_sequence:2,
+      mode:'pre_draw_repair',main_draw_capacity:4,active_main_entrant_count:2,
+      effective_main_bye_count:2,direct_main_player_ids:['P1','P2'],
+      qualification_player_ids:[],alternate_player_ids:['A1'],withdrawn_player_ids:['W1']
+    }
+    const slot=(index:number,id:string|null)=>({slot_index:index,
+      entrant_kind:(id?'player':'bye') as 'player'|'bye',
+      player_id:id,placeholder_id:null,seed_number:index===1?1:null,entry_status:null})
+    source.draw={
+      schema_version:'viewer_tournament_draw.v1',product_run_id:'run-a',
+      viewer_branch_id:'ancestor',event_id:'event-x',revision_count:0,
+      main:{draw_type:'main',section_id:null,bracket_size:4,
+        slots:[slot(1,'P1'),slot(2,null),slot(3,'P2'),slot(4,null)]},
+      qualification_sections:[]
+    }
+    api.getSavedTourEdition.mockResolvedValue(source)
+    mount()
+    expect(await screen.findByRole('heading',{name:'Brno Open'})).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button',{name:'Entries & participants'}))
+    expect(screen.getByText(/Authentic saved Entry Field, version:/)).toBeInTheDocument()
+    expect(screen.getByRole('heading',{name:'Direct Main entrants (2)'})).toBeInTheDocument()
+    expect(screen.getByRole('heading',{name:'Alternates (1)'})).toBeInTheDocument()
+    expect(screen.getByText('W1')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button',{name:'Draw / groups'}))
+    const bracket=screen.getByRole('table',{name:'Saved draw main'})
+    expect(within(bracket).getAllByRole('row')).toHaveLength(5)
+    expect(within(bracket).getAllByText('BYE')).toHaveLength(2)
+    expect(within(bracket).getByText('P1')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button',{name:'Qualification'}))
+    expect(screen.getByText('No saved qualification bracket is available.')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button',{name:'Schedule & matches'}))
+    expect(screen.getByText(/Match start times are never inferred/)).toBeInTheDocument()
+  })
 })

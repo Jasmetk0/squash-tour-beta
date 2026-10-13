@@ -1,3 +1,21 @@
+# Exact Saved Edition Match Day schedule candidate — 13 October 2026
+
+PR candidate on merged #1419 / buuk f1b37b73b2e93eb81f4ee7dd95938daa3bd18362:
+read-only exact Saved Revision `WeekSimulationSchedule.v2` event-bound
+Match Day order, global slots, phase and round. Optional Match ID comes
+only from the same saved Simulation Slot Plan; published scorelines are
+joined only through actual canonical result Match IDs. Legacy v1 has no
+honest Event/Match Day binding and stays unavailable. Date/hour/court
+are never guessed. Preserves filters/Back and original historical Branch.
+Includes strict application/frontend regression and actual Chromium SQLite
+restart gate. See `docs/SAVED_EDITION_MATCH_DAY_SCHEDULE_V1.md`.
+
+Candidate only until all checks green on final HEAD. Next: explicit
+historical Slot match/replay links or group-format schedule authority;
+avoid extending unsupported chronology.
+
+---
+
 # Saved Edition genuine Entry Field + Draw candidate — 13 October 2026
 
 Backend and frontend addition on current merged #1418/buuk: exact Selected

@@ -55,6 +55,25 @@ def verify_saved_tour_calendar(page, run_url: str, artifacts, port: int, source:
     assert field["direct_main_player_ids"], field
     assert draw["main"]["slots"] and draw["main"]["bracket_size"] == len(draw["main"]["slots"])
     assert any(slot["player_id"] == source["player_id"] for slot in draw["main"]["slots"])
+    saved_schedule = result["match_schedule"]
+    assert saved_schedule is not None, ("Canonical real Match Day schedule missing", result)
+    assert saved_schedule["source"] == "saved_week_simulation_schedule.v2"
+    assert saved_schedule["run_id"] == run_id
+    assert saved_schedule["revision_branch_id"] == branch_id
+    assert saved_schedule["season_index"] == 0
+    assert saved_schedule["season_week"] == edition["season_week"]
+    assert saved_schedule["event_id"] == event_id
+    assert saved_schedule["slots"] and all(
+        slot["global_slot_ordinal"] > 0 and slot["match_day_ordinal"] > 0
+        and slot["match_order"] > 0 and slot["round_number"] > 0
+        for slot in saved_schedule["slots"]
+    )
+    match_ids = {m["match_id"] for m in result["published_result"]["matches"]}
+    assert source["match_id"] in match_ids
+    assert any(slot["match_id"] == source["match_id"] for slot in saved_schedule["slots"])
+    assert all(slot["match_id"] is None or slot["match_id"] in match_ids
+               for slot in saved_schedule["slots"])
+
 
     get(scope + "/tour/calendar?revision_id=foreign&season_index=0", status=404)
     get(scope + "/tour/editions/" + enc(event_id) + "?revision_id=" + enc(revision_id)
@@ -79,6 +98,8 @@ def verify_saved_tour_calendar(page, run_url: str, artifacts, port: int, source:
     page.get_by_role("button", name="Results").click()
     assert source["scoreline"] in page.locator("#saved-results-main").inner_text()
     page.get_by_role("button", name="Schedule & matches").click()
+    expect(page.get_by_text("Authentic Saved Week Simulation Schedule v2.", exact=False)).to_be_visible()
+    expect(page.get_by_role("table", name="Saved Match Day order").first).to_be_visible()
     assert source["scoreline"] in page.locator("#saved-schedule-main").inner_text()
     page.get_by_role("button", name="Draw / groups").click()
     expect(page.get_by_role("table", name="Saved draw main")).to_be_visible()
@@ -116,6 +137,8 @@ def verify_saved_tour_calendar(page, run_url: str, artifacts, port: int, source:
         "event_id": event_id, "published_matches": len(result["published_result"]["matches"]),
         "season_index": 0, "week_count": 61, "older_saved_revision_without_result": bool(older),
         "filters_and_return": True, "six_tabs": True,
+        "real_saved_match_day_slot_count": len(saved_schedule["slots"]),
+        "real_saved_match_day_fingerprint": saved_schedule["week_schedule_fingerprint"],
     }
     if expected is not None:
         assert proof == expected, (proof, expected)

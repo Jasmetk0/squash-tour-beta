@@ -44,12 +44,25 @@ export type SavedTourDraw = {
   product_run_id:string;viewer_branch_id:string;event_id:string;revision_count:number
   main:SavedTourDrawBracket;qualification_sections:SavedTourDrawBracket[]
 }
+export type SavedTourScheduledMatch = {
+  global_slot_ordinal:number;match_day_ordinal:number;match_order:number
+  draw_phase:'qualification'|'main'|'group';round_number:number
+  group_id:string;match_id:string|null
+}
+export type SavedTourMatchSchedule = {
+  schema_version:'run_saved_tour_match_schedule.v1'
+  source:'saved_week_simulation_schedule.v2'
+  run_id:string;revision_branch_id:string;event_id:string
+  season_index:number;season_week:number;week_schedule_fingerprint:string
+  slots:SavedTourScheduledMatch[]
+}
 export type SavedTourEdition = {
   schema_version:'run_saved_tour_edition.v1';source:'reachable_saved_revision'
   run_id:string;branch_id:string;revision_branch_id:string
   saved_revision_id:string;season_index:number
   edition:SavedTourEvent;published_result:SavedTourResult|null
   entry_field?:SavedTourEntryField|null;draw?:SavedTourDraw|null
+  match_schedule?:SavedTourMatchSchedule|null
   lifecycle_status:'unavailable'
 }
 
@@ -123,6 +136,27 @@ export function validSavedTourEdition(
         ||bracket.slots.some(slot=>slot.slot_index<1||slot.slot_index>bracket.bracket_size
           ||(slot.entrant_kind==='player'?!slot.player_id:slot.player_id!==null)))
         return false
+    }
+  }
+  const schedule=payload.match_schedule
+  if(schedule){
+    if(schedule.schema_version!=='run_saved_tour_match_schedule.v1'
+      ||schedule.source!=='saved_week_simulation_schedule.v2'
+      ||schedule.run_id!==runId||schedule.revision_branch_id!==payload.revision_branch_id
+      ||schedule.event_id!==eventId||schedule.season_index!==seasonIndex
+      ||schedule.season_week!==payload.edition.season_week
+      ||!Array.isArray(schedule.slots)
+      ||!/^[0-9a-f]{64}$/.test(schedule.week_schedule_fingerprint))return false
+    const groups=new Set<string>(),ordinals=new Set<number>()
+    for(const slot of schedule.slots){
+      if(!slot.group_id||groups.has(slot.group_id)||ordinals.has(slot.global_slot_ordinal)
+        ||!Number.isInteger(slot.global_slot_ordinal)||slot.global_slot_ordinal<1
+        ||!Number.isInteger(slot.match_day_ordinal)||slot.match_day_ordinal<1
+        ||!Number.isInteger(slot.match_order)||slot.match_order<1
+        ||!Number.isInteger(slot.round_number)||slot.round_number<1
+        ||!['main','qualification','group'].includes(slot.draw_phase)
+        ||(slot.match_id!==null&&!slot.match_id))return false
+      groups.add(slot.group_id);ordinals.add(slot.global_slot_ordinal)
     }
   }
   return true

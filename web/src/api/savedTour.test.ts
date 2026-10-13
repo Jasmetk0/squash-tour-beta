@@ -36,6 +36,23 @@ describe('strict Saved Tour response identity',()=>{
     expect(validSavedTourEdition({...edition,saved_revision_id:'today'},'r','b','rev',2,'open')).toBe(false)
   })
 
+  it('refuses forged Match Day ordering and foreign historical schedule scope',()=>{
+    const match={global_slot_ordinal:2,match_day_ordinal:1,match_order:2,
+      draw_phase:'main' as const,round_number:1,group_id:'g2',match_id:'m2'}
+    const schedule={
+      schema_version:'run_saved_tour_match_schedule.v1' as const,
+      source:'saved_week_simulation_schedule.v2' as const,
+      run_id:'r',revision_branch_id:'original',event_id:'open',
+      season_index:2,season_week:12,week_schedule_fingerprint:'a'.repeat(64),slots:[match]
+    }
+    const inScope={...edition,match_schedule:schedule}
+    expect(validSavedTourEdition(inScope,'r','b','rev',2,'open')).toBe(true)
+    expect(validSavedTourEdition({...edition,match_schedule:{...schedule,run_id:'foreign'}},'r','b','rev',2,'open')).toBe(false)
+    expect(validSavedTourEdition({...edition,match_schedule:{...schedule,season_week:11}},'r','b','rev',2,'open')).toBe(false)
+    expect(validSavedTourEdition({...edition,match_schedule:{...schedule,slots:[match,{...match}]}},'r','b','rev',2,'open')).toBe(false)
+    expect(validSavedTourEdition({...edition,match_schedule:{...schedule,week_schedule_fingerprint:'tampered'}},'r','b','rev',2,'open')).toBe(false)
+    expect(validSavedTourEdition({...edition,match_schedule:{...schedule,slots:[{...match,match_day_ordinal:0}]}},'r','b','rev',2,'open')).toBe(false)
+  })
   it('rejects foreign Entry/Draw authorities and inconsistent first-round slots',()=>{
     const fields={schema_version:'viewer_tournament_entry_field.v1' as const,
       product_run_id:'r',viewer_branch_id:'original',event_id:'open',

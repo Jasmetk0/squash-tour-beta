@@ -128,8 +128,20 @@ def test_real_completed_group_browser_saves_and_restarts_before_final_table():
         and isinstance(node.args[1], ast.Constant)
         and isinstance(node.args[1].value, str)
     )
-    save_lines = [line for line, label in clicks
-                  if label == "Save authoritative simulation"]
+    # The first Save waits for the actual enabled control and confirmed
+    # revision; it must not rely on an unrelated global AJAX-idle heuristic.
+    direct_save_clicks = [
+        node.lineno for node in ast.walk(tree)
+        if isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Attribute)
+        and node.func.attr == "click"
+        and isinstance(node.func.value, ast.Name)
+        and node.func.value.id == "save_button"
+    ]
+    save_lines = sorted(
+        [line for line, label in clicks
+         if label == "Save authoritative simulation"] + direct_save_clicks
+    )
     publish_lines = [line for line, label in clicks
                      if label == "Generate canonical group standings"]
     restarts = [

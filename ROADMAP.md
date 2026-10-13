@@ -2,7 +2,7 @@
 
 Starting point: `buuk` `3a1d18cadd300593a93166d9e46acd33b7c58965`, #1442 merged.
 
-1. **Current PR candidate:** Country Records v80 tournament achievements scoped to Whole history / Season / Custom sport season-week ranges, exact immutable Saved Revision, all tied title/final holders and evidenced Edition detail; use displayed simulation upper bound. Legacy match/player standings remain explicitly separate lifetime tables.
+1. **Current PR candidate:** Country Records v80 tournament achievements scoped to Whole history / Season / Custom sport season-week ranges, exact immutable Saved Revision, all tied title/final holders and evidenced Edition detail; use displayed simulation upper bound, or a visibly labeled conservative latest-published-evidence ceiling if the Branch clock is absent (never pretend it is the simulation point). Legacy match/player standings remain explicitly separate lifetime tables.
 2. **Next:** extend authoritative Country records/match aggregation and holder/evidence detail across all supported sport periods **before pagination**. No invented ranking records or new sporting formulas.
 3. **Then:** History & Branches reachable revision map and read-only Compare A/B. Exact comparison detail levels remain open.
 

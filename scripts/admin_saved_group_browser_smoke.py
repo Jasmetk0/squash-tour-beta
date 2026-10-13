@@ -310,8 +310,17 @@ def acceptance(
                                     full_page=True)
 
                 if complete_groups:
-                    print("GROUP BROWSER: playing all six matches via Simulation UI and clicking final-table generation",
+                    print("GROUP BROWSER: playing six real matches; intermediate Save/restart before final standings",
                           flush=True)
+
+                    def restart_intermediate_backend():
+                        # Kill the actual service and start a clean process
+                        # against its existing file-backed SQLite database.
+                        nonlocal process
+                        process.terminate()
+                        process.wait(timeout=20)
+                        process = start()
+
                     completed = play_group_and_save(
                         request, run_id=run_id, branch_id=branch_id,
                         event_id=EVENT_ID, root_scope=root_scope,
@@ -319,7 +328,13 @@ def acceptance(
                         original_match_ids={m["match_id"] for m in schedule["matches"]},
                         page=page, run_url=run_url,
                         event_url=prepared_event_url, artifacts=artifacts,
+                        restart_backend=restart_intermediate_backend,
                     )
+                    assert completed["intermediate_backend_restart"] is True
+                    assert saved(completed["intermediate_revision"]) == (
+                        completed["intermediate_edition"]
+                    ), "Intermediate saved revision mutated after final generation"
+                    assert completed["intermediate_edition"]["group_standings"] is None
                     assert saved(old_rev) == before
                     assert saved(revision) == expected, (
                         "Simulating six real matches rewrote pre-result Saved Revision"
@@ -344,7 +359,7 @@ def acceptance(
                         full_page=True,
                     )
                     final_browser_read(page, completed["revision"])
-                    print("GROUP BROWSER: six real matches + immutable final standings saved",
+                    print("GROUP BROWSER: six real matches + intermediate Save/restart + final standings saved",
                           flush=True)
 
                 context.tracing.stop(path=str(artifacts / "before-restart.zip"))
@@ -360,6 +375,9 @@ def acceptance(
                     assert saved(completed["revision"]) == completed["edition"], (
                         "Final saved group standings changed after SQLite restart"
                     )
+                    assert saved(completed["intermediate_revision"]) == (
+                        completed["intermediate_edition"]
+                    ), "Intermediate saved group history changed after final restart"
                     final_browser_read(page, completed["revision"], prefix="reopened-")
                 assert browser_errors == [], browser_errors
                 (artifacts / "group-evidence.json").write_text(json.dumps({
@@ -384,6 +402,12 @@ def acceptance(
                     ),
                     "completed_revision_id": (
                         completed["revision"] if completed else None
+                    ),
+                    "intermediate_pre_standings_revision_id": (
+                        completed["intermediate_revision"] if completed else None
+                    ),
+                    "intermediate_save_restarted_before_standings": (
+                        completed["intermediate_backend_restart"] if completed else False
                     ),
                     "admin_tie_decisions": (
                         completed["group_tie_decision_count"] if completed else 0

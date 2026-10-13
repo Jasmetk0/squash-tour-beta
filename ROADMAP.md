@@ -1,3 +1,21 @@
+# Run Tour scoped Saved Calendar / Edition read candidate — 13 October 2026
+
+PR candidate based on `buuk 4117b5633ef8798435dd5ac6b86343cb600152b4`;
+A80-01/#1416 is merged. New exact revision-scoped backend contracts
+`/tour/calendar` and `/tour/editions/{event_id}` request Run, Branch,
+Saved Revision and season (0–49). Full canonical Calendar event uniqueness,
+original shared-ancestor owner, immutable published-only results and
+non-authoritative Calendar lifecycle labels are protected. Includes real
+FastAPI/SQLite/restart and focused application regression tests.
+See `docs/RUN_TOUR_SAVED_CALENDAR_EDITION_READ_V1.md`. Candidate only
+until green final-HEAD checks and manual user merge.
+
+**Next:** React Run → Tour 61-week grid/list, season and Saved Revision
+context, then shared Edition six tabs from actual authorities. Do not make
+unsupported historical links to present Admin state.
+
+---
+
 # A80-01 implementation candidate — 12 October 2026
 
 On `fix/a80-01-calendar-global-event-identity-20261012` (base `buuk adb8e1e89e7a5cf2e678e452258605dd1079511a`),

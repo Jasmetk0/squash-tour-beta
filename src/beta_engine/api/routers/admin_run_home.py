@@ -11,6 +11,10 @@ from beta_engine.api.deps import get_run_saved_revision_history_service
 from beta_engine.application.run_saved_revision_history_service import RunSavedRevisionHistoryService
 from beta_engine.infrastructure.db import SavedRevisionHistoryNotFoundError, SavedRevisionHistoryConflictError
 from beta_engine.application.run_country_records_read_model import RunCountryRecords, resolve_run_country_records
+from beta_engine.application.run_saved_tour_read_model import (
+    RunSavedTourCalendar, RunSavedTourEdition,
+    resolve_run_saved_tour_calendar, resolve_run_saved_tour_edition,
+)
 from beta_engine.application.saved_player_match_detail import (SavedPlayerMatchDetail, resolve_saved_player_match_detail)
 from beta_engine.infrastructure.db.simulation_slot_state import load_saved_simulation_slot_component
 from beta_engine.application.saved_player_profile import (SavedPlayerProfile, resolve_saved_player_profile)
@@ -430,4 +434,83 @@ def inspect_run_country_records(
     except (SavedRevisionHistoryConflictError, ValueError, KeyError, TypeError) as exc:
         raise HTTPException(status_code=409, detail={
             "code": "run_country_records_unavailable", "message": str(exc)
+        }) from exc
+
+
+def _saved_tour_revision_context(
+    *, run_id: str, branch_id: str, revision_id: str,
+    service: RunSavedRevisionHistoryService,
+) -> dict:
+    """Reuse the validated, fully reachable Saved Revision authority.
+
+    Shared pre-fork ancestors must load components using their original owner,
+    never silently remap historical tournament/result binding identities.
+    """
+    detail = service.get_revision(
+        run_id=run_id, branch_id=branch_id, revision_id=revision_id,
+    )
+    saved = detail.saved_revision
+    origin = saved.branch_id
+    return dict(
+        run_id=run_id, selected_branch_id=branch_id,
+        revision_branch_id=origin, saved_revision_id=saved.revision_id,
+        packages=load_saved_run_package_state(
+            saved.payload, run_id=run_id, branch_id=origin,
+        ),
+        ranking=load_saved_ranking_component(
+            saved.payload, run_id=run_id, branch_id=origin,
+        ),
+    )
+
+
+@router.get("/tour/calendar", response_model=RunSavedTourCalendar)
+def inspect_run_saved_tour_calendar(
+    run_id: str,
+    branch_id: str,
+    revision_id: str = Query(min_length=1, max_length=128),
+    season_index: int = Query(ge=0, le=49),
+    service: RunSavedRevisionHistoryService = Depends(get_run_saved_revision_history_service),
+) -> RunSavedTourCalendar:
+    """Read exactly one saved season; no Working Draft/current-time fallback."""
+    try:
+        context = _saved_tour_revision_context(
+            run_id=run_id, branch_id=branch_id,
+            revision_id=revision_id, service=service,
+        )
+        return resolve_run_saved_tour_calendar(
+            **context, season_index=season_index,
+        )
+    except SavedRevisionHistoryNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except (SavedRevisionHistoryConflictError, ValueError, KeyError, TypeError) as exc:
+        raise HTTPException(status_code=409, detail={
+            "code": "run_saved_tour_calendar_unavailable", "message": str(exc),
+        }) from exc
+
+
+@router.get("/tour/editions/{event_id}", response_model=RunSavedTourEdition)
+def inspect_run_saved_tour_edition(
+    run_id: str,
+    branch_id: str,
+    event_id: str,
+    revision_id: str = Query(min_length=1, max_length=128),
+    season_index: int = Query(ge=0, le=49),
+    service: RunSavedRevisionHistoryService = Depends(get_run_saved_revision_history_service),
+) -> RunSavedTourEdition:
+    """Resolve saved Edition and independently authoritative published result."""
+    try:
+        context = _saved_tour_revision_context(
+            run_id=run_id, branch_id=branch_id,
+            revision_id=revision_id, service=service,
+        )
+        return resolve_run_saved_tour_edition(
+            **context, season_index=season_index, event_id=event_id,
+        )
+    except SavedRevisionHistoryNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except (SavedRevisionHistoryConflictError, ValueError, TypeError) as exc:
+        raise HTTPException(status_code=409, detail={
+            "code": "run_saved_tour_edition_unavailable", "message": str(exc),
         }) from exc

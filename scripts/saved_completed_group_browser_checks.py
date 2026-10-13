@@ -138,7 +138,13 @@ def play_group_and_save(
     assert save_preview["saved_head_revision_id"] == old_revision
     page.goto(run_url + "/simulate?branch=" + quote(branch_id, safe=""))
     page.get_by_role("combobox", name="Language / Jazyk").select_option("en")
-    expect(page.get_by_role("button", name="Save authoritative simulation")).to_be_enabled()
+    # A cold React mount first renders 'Loading authoritative sporting
+    # state…'. Wait for the real scoped queries to settle rather than treating
+    # that transient loading UI as an absent Save action.
+    browser_settle(page)
+    expect(page.get_by_role(
+        "button", name="Save authoritative simulation"
+    )).to_be_enabled(timeout=30000)
     browser_click(page, "Save authoritative simulation")
     current_branches = request("GET", "/run-branches?run_id=" + quote(run_id, safe=""))
     current = next(item for item in current_branches["run_branches"]

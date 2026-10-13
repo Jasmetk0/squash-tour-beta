@@ -1,10 +1,12 @@
 """Read-only frozen standings: points, W/O, provenance and audited tie reasons."""
 import pytest
+from types import SimpleNamespace
 
 from beta_engine.application.run_saved_tour_group_standings import (
     resolve_saved_tour_group_standings,
 )
 from beta_engine.application.run_saved_tour_group_schedule import RunSavedTourGroupSchedule
+from beta_engine.infrastructure.db.simulation_slot_state import _validate_group_standings_rows_shape
 from beta_engine.domain.tournaments.group_standings_authority import (
     TournamentGroupStandingsBuilder, TournamentGroupStandingsUnresolvedTie,
     TournamentGroupTieResolutionDecision,
@@ -147,5 +149,78 @@ def test_stale_foreign_missing_or_duplicate_authority_fails_closed():
         }]}, schedule)
     with pytest.raises(ValueError, match="duplicated"):
         _read({**component, "group_tie_resolutions": [tie, tie]}, schedule)
-    with pytest.raises(ValueError, match="lack group standings"):
-        _read({"group_tie_resolutions": [tie]}, schedule)
+    # An intermediate Saved Revision may have an audited decision but not
+    # yet the explicit completed Group Standings generation.
+    assert _read({"group_tie_resolutions": [tie]}, schedule) is None
+
+
+def test_intermediate_saved_audited_tie_is_valid_without_publishing_any_table():
+    component, schedule = _base(with_tie=True)
+    tie = component["group_tie_resolutions"][0]
+    intermediate = {"group_tie_resolutions": [tie]}
+    assert _read(intermediate, schedule) is None
+    assert resolve_saved_tour_group_standings(
+        intermediate, run_id="run", branch_id="branch",
+        event_id="other-event", group_schedule=schedule,
+    ) is None
+
+    # The next independently saved Revision may explicitly include frozen
+    # standings; only then may the exact reviewed order be projected.
+    completed = _read(component, schedule)
+    assert completed is not None
+    assert [row.player_id for row in completed.groups[0].rows] == ["C", "A", "B"]
+    assert completed.tie_decisions[0].case_fingerprint == tie["case_fingerprint"]
+
+
+@pytest.mark.parametrize("modified, error", [
+    ({"branch_id": "foreign"}, "another Run/Branch"),
+    ({"command_id": "spoofed"}, "audit identity"),
+    ({"authority_fingerprint": "0" * 64}, "audit identity"),
+    ({"case_fingerprint": "0" * 64}, "audit identity"),
+    ({"group_match_schedule_fingerprint": "0" * 64}, "audit identity"),
+])
+def test_intermediate_saved_tie_rejects_foreign_or_corrupt_authority(modified, error):
+    component, schedule = _base(with_tie=True)
+    tie = component["group_tie_resolutions"][0]
+    with pytest.raises(ValueError, match=error):
+        _read({"group_tie_resolutions": [{**tie, **modified}]}, schedule)
+
+
+def test_intermediate_saved_tie_needs_schedule_and_unique_case():
+    component, schedule = _base(with_tie=True)
+    tie = component["group_tie_resolutions"][0]
+    intermediate = {"group_tie_resolutions": [tie]}
+    with pytest.raises(ValueError, match="Match Schedule"):
+        _read(intermediate, None)
+    with pytest.raises(ValueError, match="duplicated"):
+        _read({"group_tie_resolutions": [tie, tie]}, schedule)
+    assert _read({}, schedule) is None
+
+
+def test_saved_simulation_slot_snapshot_accepts_valid_audited_tie_before_final_table():
+    # Exercise the same restore-grade structural validator used at Simulation
+    # Save time, with a real deterministic domain tie authority. No published
+    # table exists at this legitimate save boundary.
+    component, _ = _base(with_tie=True)
+    scheduled = schedule_three()
+    tie = SimpleNamespace(**component["group_tie_resolutions"][0])
+    schedule_row = SimpleNamespace(
+        event_id="event", payload_json=scheduled.model_dump_json(),
+    )
+    _validate_group_standings_rows_shape(
+        standings_rows=(), tie_resolution_rows=(tie,),
+        group_match_schedules=(schedule_row,), result_groups=(),
+    )
+
+    # A Saved Slot referencing another schedule is never tolerated, even
+    # while the final standings are legitimately absent.
+    foreign_schedule = SimpleNamespace(
+        event_id="event", payload_json=schedule_three().model_copy(
+            update={"generated_by_command_id": "other-schedule"}
+        ).model_dump_json(),
+    )
+    with pytest.raises(ValueError, match="current Match Schedule"):
+        _validate_group_standings_rows_shape(
+            standings_rows=(), tie_resolution_rows=(tie,),
+            group_match_schedules=(foreign_schedule,), result_groups=(),
+        )

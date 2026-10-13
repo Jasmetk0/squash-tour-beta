@@ -5,7 +5,7 @@ import {getRunCountryRecords} from '../api/client'
 import {RunWorldCountryMatchRecords} from './RunWorldCountryMatchRecords'
 import {RunWorldCountryPlayerStandings} from './RunWorldCountryPlayerStandings'
 import {calendarSeasonIndex} from './runWorldCountryTournaments'
-import {parsePeriod,projectCountryPeriod,selectedSportPoint,sportLabel} from './runCountryRecordPeriods'
+import {lastEvidencedCountryPoint,parsePeriod,projectCountryPeriod,selectedSportPoint,sportLabel} from './runCountryRecordPeriods'
 import type {CountryPeriodMode,CountryPeriodStats,CountryRecordLeader} from './runCountryRecordPeriods'
 import type {RunCountryRecordResult,RunCountryRecords} from '../api/types'
 import {formatApiError} from '../utils/apiErrors'
@@ -19,12 +19,11 @@ export function RunWorldCountryRecords({
 }:Props):JSX.Element{
   const [params,setParams]=useSearchParams()
   const [detail,setDetail]=useState<Detail>(null)
-  const through=selectedSportPoint(presentSeason,presentWeek)
-  const request=through?parsePeriod(params,through):null
+  const displayedThrough=selectedSportPoint(presentSeason,presentWeek)
   const query=useQuery({
     queryKey:['run-world-country-records',runId,branchId,countryCode,savedRevisionId],
     queryFn:()=>getRunCountryRecords(runId,branchId,countryCode,savedRevisionId!),
-    enabled:Boolean(runId&&branchId&&countryCode&&savedRevisionId&&request),
+    enabled:Boolean(runId&&branchId&&countryCode&&savedRevisionId),
     retry:false
   })
   const data:RunCountryRecords|null=query.data?.run_id===runId&&
@@ -32,6 +31,15 @@ export function RunWorldCountryRecords({
     query.data.saved_revision_id===savedRevisionId?query.data:null
   let records:CountryPeriodStats|null=null
   let periodError:string|null=null
+  let lastEvidence:ReturnType<typeof lastEvidencedCountryPoint>=null
+  if(data){
+    try{lastEvidence=lastEvidencedCountryPoint(data)}
+    catch(e){periodError=formatApiError(e)}
+  }
+  // An authentic published result supplies a narrower evidence ceiling only
+  // when this Branch lacks an authoritative simulation clock. Never call it a clock.
+  const through=displayedThrough??lastEvidence
+  const request=through&&!periodError?parsePeriod(params,through):null
   if(data&&request){
     try{records=projectCountryPeriod(data,countryCode,request)}
     catch(e){periodError=formatApiError(e)}
@@ -130,20 +138,25 @@ export function RunWorldCountryRecords({
             </select></label>
         })}</div>}
     </div>
-    {!through&&<p role="alert">{cs?
-      'Simulační čas zvolené Branch není dostupný; hranici rekordů nelze ověřit. Rok geografických dat jej nenahrazuje.':
-      'Selected Branch simulation point is unavailable. Country data year is not a sporting time bound.'}</p>}
+    {!displayedThrough&&lastEvidence&&<p role="status">{cs?
+      'Simulační čas není dostupný. Rozsah je omezen nejpozdějším doloženým publikovaným výsledkem této Saved Revision, nikoli odhadovaným časem Branch.':
+      'Simulation clock is unavailable. This view is bounded by the latest canonical published result in this Saved Revision, NOT a guessed Branch simulation point.'}</p>}
+    {!through&&!query.isPending&&<p role="alert">{cs?
+      'Simulační čas ani doložený čas výsledku nejsou dostupné. Rok geografických dat jej nenahrazuje.':
+      'Neither a simulation point nor a dated published result is available. Country data year is not a sporting time bound.'}</p>}
     {through&&!request&&<p role="alert">{cs?
       'Neplatný nebo budoucí interval sportovní historie. Upravte hranice období.':
       'Invalid or future sporting history interval. Adjust period boundaries.'}</p>}
     {request&&<p className="status" aria-label="Country sporting record interval">
       {cs?'Sportovní období':'Sporting period'}: {sportLabel(request.from)} → {sportLabel(request.to)}
-      {' · '}{cs?'Horní mez zobrazené simulace':'Displayed simulation upper bound'}:
+      {' · '}{displayedThrough?
+         (cs?'Horní mez zobrazené simulace':'Displayed simulation upper bound'):
+         (cs?'Nejpozdější doložený výsledek':'Latest evidenced published result')}:
       {' '}{sportLabel(through!)}</p>}
     {!savedRevisionId&&<p role="alert">{cs?
       'Žádná autoritativní uložená revize — rekordy nelze ověřit.':
       'No authoritative Saved Revision — records are unavailable.'}</p>}
-    {savedRevisionId&&request&&query.isPending&&<p role="status">{cs?'Načítám publikované výsledky…':
+    {savedRevisionId&&query.isPending&&<p role="status">{cs?'Načítám publikované výsledky…':
       'Loading published results…'}</p>}
     {query.error&&<p role="alert">{formatApiError(query.error)}</p>}
     {query.isSuccess&&!data&&<p role="alert">{cs?'Nesouhlasí zdroj rekordů.':'Records scope mismatch.'}</p>}

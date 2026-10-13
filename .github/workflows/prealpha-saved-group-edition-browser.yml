@@ -79,6 +79,7 @@ jobs:
             --acceptance "$RUNNER_TEMP/saved-group-run" \
             --port 8014 \
             --complete-groups \
+            --reconstruct-one-group-match \
             --base-url http://127.0.0.1:5173 \
             --chromium "$CHROME_BIN"
       - name: Preserve real group browser evidence

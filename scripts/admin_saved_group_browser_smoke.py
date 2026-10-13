@@ -32,6 +32,7 @@ EVENT_ID = "EVT-2000-W01-browser_cup"
 def acceptance(
     root: Path, *, port: int, base_url: str, chromium: str,
     complete_groups: bool = False,
+    reconstruct_one_group_match: bool = False,
 ) -> None:
     if (root / "browser.sqlite").exists():
         raise ValueError("Saved group browser acceptance requires a fresh SQLite database")
@@ -329,8 +330,10 @@ def acceptance(
                         page=page, run_url=run_url,
                         event_url=prepared_event_url, artifacts=artifacts,
                         restart_backend=restart_intermediate_backend,
+                        reconstruct_one_group_match=reconstruct_one_group_match,
                     )
                     assert completed["intermediate_backend_restart"] is True
+                    assert bool(completed["reconstructed_group_match"]) == reconstruct_one_group_match
                     assert saved(completed["intermediate_revision"]) == (
                         completed["intermediate_edition"]
                     ), "Intermediate saved revision mutated after final generation"
@@ -412,6 +415,9 @@ def acceptance(
                     "admin_tie_decisions": (
                         completed["group_tie_decision_count"] if completed else 0
                     ),
+                    "real_group_match_reconstruction": (
+                        completed["reconstructed_group_match"] if completed else None
+                    ),
                     "unchanged_after_restart": True,
                     "browser_errors": browser_errors,
                 }, indent=2))
@@ -445,7 +451,11 @@ if __name__ == "__main__":
     parser.add_argument("--chromium", default="/usr/bin/chromium")
     parser.add_argument("--complete-groups", action="store_true",
                         help="Actually simulate all six group matches, freeze standings, Save, replay after restart")
+    parser.add_argument("--reconstruct-one-group-match", action="store_true",
+                        help="Review/commit one natural MatchEngine candidate as a real canonical group Slot before Match Day 3")
     args = parser.parse_args()
+    if args.reconstruct_one_group_match and not args.complete_groups:
+        parser.error("--reconstruct-one-group-match requires --complete-groups")
     if args.serve:
         uvicorn.run(
             create_smoke_app(args.serve.resolve()),
@@ -456,4 +466,5 @@ if __name__ == "__main__":
             args.acceptance.resolve(), port=args.port,
             base_url=args.base_url, chromium=args.chromium,
             complete_groups=args.complete_groups,
+            reconstruct_one_group_match=args.reconstruct_one_group_match,
         )

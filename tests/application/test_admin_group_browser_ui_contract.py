@@ -183,3 +183,53 @@ def test_real_completed_group_browser_saves_and_restarts_before_final_table():
     assert "Saved pending group tie decisions" in constants
     assert "Saved group standings" in constants
     assert "04-reopened-intermediate-no-final-table.png" in constants
+
+
+def test_real_group_browser_reconstruction_commits_authentic_match_and_replays_after_restart():
+    """The workflow must prove reconstructed *Run-owned* group receipts in SQLite.
+
+    Reconstruction uses production HTTP; the remaining reviewed Match Days,
+    Admin table generation and both Saves still use genuine Chromium controls.
+    """
+    completion = COMPLETION.read_text(encoding="utf-8")
+    smoke = SCRIPT.read_text(encoding="utf-8")
+    workflow = (
+        Path(__file__).resolve().parents[2]
+        / ".github/workflows/prealpha-saved-group-edition-browser.yml"
+    ).read_text(encoding="utf-8")
+    assert "--reconstruct-one-group-match" in workflow
+    assert "reconstruct_one_group_match=args.reconstruct_one_group_match" in smoke
+    assert "reconstruct_one_group_match=reconstruct_one_group_match" in smoke
+
+    tree = ast.parse(completion)
+    paths = {
+        node.value for node in ast.walk(tree)
+        if isinstance(node, ast.Constant) and isinstance(node.value, str)
+    }
+    assert "/match-reconstruction/state?group_id=" in paths
+    assert "/match-reconstruction/preview" in paths
+    assert "/match-reconstruction/commit" in paths
+    assert "/match-replays?limit=50" in paths
+    assert "/match-replay/context?group_id=" in paths
+    assert "stored_authoritative_events" in paths
+    assert "match-reconstruction/preview" not in {
+        node.args[1].value
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Call) and isinstance(node.func, ast.Name)
+        and node.func.id == "browser_click"
+        and len(node.args) > 1 and isinstance(node.args[1], ast.Constant)
+    }
+    commits = [
+        node for node in ast.walk(tree)
+        if isinstance(node, ast.Call) and isinstance(node.func, ast.Name)
+        and node.func.id == "request"
+        and len(node.args) >= 2
+        and isinstance(node.args[0], ast.Constant)
+        and node.args[0].value == "POST"
+        and isinstance(node.args[1], ast.BinOp)
+        and isinstance(node.args[1].right, ast.Constant)
+        and node.args[1].right.value == "/match-reconstruction/commit"
+    ]
+    assert len(commits) == 2, "One commit and an exact idempotent retry"
+    assert "check_reconstructed_match()" in completion
+    assert "day_ordinals.append(before_reconstruction[\"slot_ordinal\"])" in completion

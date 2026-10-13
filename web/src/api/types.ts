@@ -1361,6 +1361,8 @@ export type CanonicalTournamentPreparationState = {
     | 'none'
   blockers: string[]
   format_authority_ready?: boolean
+  draw_input_ready?: boolean
+  draw_ready?: boolean
   format_kind?: 'knockout' | 'groups' | 'groups_knockout' | null
   format_authority_fingerprint?: string | null
   format_group_rules_policy_fingerprint?: string | null

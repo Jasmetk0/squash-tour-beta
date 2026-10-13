@@ -43,6 +43,7 @@ export function GroupFormatSetupPanel({
   })
   const scope=JSON.stringify([runId,branchId,eventId,seasonIndex,entrantCount,
     hasQualification,hasByes,step])
+  useEffect(()=>{setConfirmRules(null);setConfirmFormat(null);setConfirmTopology(null)},[scope])
   const rulesScope=JSON.stringify([scope,bestOf])
   const formatScope=JSON.stringify([scope,groupCount,groupSize,
     rules.data?.effective?.authority_fingerprint??null])
@@ -103,7 +104,7 @@ export function GroupFormatSetupPanel({
     </p>:step==='format'&&enabled&&!rules.isPending&&<div className="grid">
       <label>{cs?'Délka skupinových zápasů':'Season group-match format'}
         <select aria-label={cs?'Délka skupinových zápasů':'Season group-match format'} value={bestOf}
-          disabled={rulesMutation.isPending} onChange={e=>setBestOf(Number(e.target.value) as 3|5)}>
+          disabled={rulesMutation.isPending} onChange={e=>{setBestOf(Number(e.target.value) as 3|5);setConfirmRules(null)}}>
           <option value={3}>BO3</option><option value={5}>BO5</option>
         </select>
       </label>
@@ -120,11 +121,11 @@ export function GroupFormatSetupPanel({
     {!frozen&&<div className="grid">
       <label>{cs?'Počet skupin':'Group count'}
         <input aria-label={cs?'Počet skupin':'Group count'} type="number" min="1" max="64" step="1"
-          disabled={formatMutation.isPending} value={groupCount} onChange={e=>setGroupCount(e.target.value)}/>
+          disabled={formatMutation.isPending} value={groupCount} onChange={e=>{setGroupCount(e.target.value);setConfirmFormat(null)}}/>
       </label>
       <label>{cs?'Hráčů ve skupině':'Players per group'}
         <input aria-label={cs?'Hráčů ve skupině':'Players per group'} type="number" min="2" max="128" step="1"
-          disabled={formatMutation.isPending} value={groupSize} onChange={e=>setGroupSize(e.target.value)}/>
+          disabled={formatMutation.isPending} value={groupSize} onChange={e=>{setGroupSize(e.target.value);setConfirmFormat(null)}}/>
       </label>
       <p>{cs?'Pouze skupiny každý s každým. Počet skupin × hráčů ve skupině musí odpovídat potvrzeným přímým účastníkům. Nasazování a hybridní pavouk vyžadují samostatné schválené ovládání.':
         'Pure round-robin only. Group count × players per group must match frozen direct entrants. Explicitly seeded groups and hybrid knockout require a separate approved crossing/placement UI.'}</p>
@@ -150,7 +151,7 @@ export function GroupFormatSetupPanel({
       <label>{cs?'Seed topologie skupin':'Group Topology seed'}
         <input aria-label={cs?'Seed topologie skupin':'Group Topology seed'} type="number" min="0" max="2147483647"
           step="1" disabled={topologyMutation.isPending} value={topologySeed}
-          onChange={e=>setTopologySeed(e.target.value)}/>
+          onChange={e=>{setTopologySeed(e.target.value);setConfirmTopology(null)}}/>
       </label>
       {!validTopologySeed&&<p role="alert">{cs?'Seed topologie musí být celé číslo od 0 do 2147483647.':
         'Topology seed must be a whole number from 0 to 2147483647.'}</p>}

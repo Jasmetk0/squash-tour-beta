@@ -221,9 +221,11 @@ def play_group_and_save(
     expect(button).to_be_disabled()
     page.get_by_label("Confirm generation from all completed canonical group matches").check()
     expect(button).to_be_enabled()
-    browser_click(page, "Generate canonical group standings")
+    # The committed standings may invalidate auxiliary long-lived queries.
+    # Assert the exact authority table appears instead of global network idle.
+    button.click()
     table = page.get_by_role("table", name="Canonical group 1 standings")
-    expect(table).to_be_visible()
+    expect(table).to_be_visible(timeout=30000)
     expect(table.locator("tbody tr")).to_have_count(4)
     assert page.get_by_role("button", name="Generate canonical group standings").count() == 0
     completed = request("GET", event_scope + "/group-standings")
@@ -241,11 +243,14 @@ def play_group_and_save(
     # A cold React mount first renders 'Loading authoritative sporting
     # state…'. Wait for the real scoped queries to settle rather than treating
     # that transient loading UI as an absent Save action.
-    browser_settle(page)
-    expect(page.get_by_role(
+    final_save_button = page.get_by_role(
         "button", name="Save authoritative simulation"
-    )).to_be_enabled(timeout=30000)
-    browser_click(page, "Save authoritative simulation")
+    )
+    expect(final_save_button).to_be_enabled(timeout=30000)
+    final_save_button.click()
+    expect(page.get_by_text(
+        "Saved as revision", exact=False
+    )).to_be_visible(timeout=30000)
     current_branches = request("GET", "/run-branches?run_id=" + quote(run_id, safe=""))
     current = next(item for item in current_branches["run_branches"]
                    if item["branch_id"] == branch_id)

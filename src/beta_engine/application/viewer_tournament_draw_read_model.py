@@ -87,6 +87,9 @@ def resolve_viewer_tournament_draw(
         main=_project_bracket(effective.main),
         qualification_sections=tuple(
             _project_bracket(bracket)
-            for bracket in effective.qualification_brackets
+            for bracket in (
+                (effective.qualification,) if effective.qualification is not None
+                else effective.qualification_brackets
+            )
         ),
     )

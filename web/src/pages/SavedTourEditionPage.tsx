@@ -7,6 +7,7 @@ import {useAdminBranch} from '../admin/AdminBranchContext'
 import {useAdminTime} from '../admin/AdminTimeContext'
 import {useLanguage} from '../i18n/LanguageContext'
 import {formatApiError} from '../utils/apiErrors'
+import type {SavedTourDrawBracket} from '../api/savedTour'
 
 type Tab='overview'|'entries'|'draw'|'schedule'|'results'|'settings'
 const tabs:Tab[]=['overview','entries','draw','schedule','results','settings']
@@ -38,6 +39,7 @@ export function SavedTourEditionPage():JSX.Element {
   const labels=cs?['Přehled','Přihlášky a účastníci','Pavouk / skupiny','Program a zápasy','Výsledky','Nastavení']:
     ['Overview','Entries & participants','Draw / groups','Schedule & matches','Results','Settings']
   const e=model?.edition,result=model?.published_result
+  const entry=model?.entry_field,draw=model?.draw
   const matches=result?.matches??[]
   const main=matches.filter(m=>m.draw_type!=='qualification')
   const qualification=matches.filter(m=>m.draw_type==='qualification')
@@ -51,6 +53,22 @@ export function SavedTourEditionPage():JSX.Element {
     <p>{cs?'Nejsou dostupné doložené zápasy.':'No evidenced matches available.'}</p>
   const statusMissing=cs?'Tento zdroj neobsahuje úplnou historickou autoritu pro tento oddíl.':
     'A complete historical authority for this section is unavailable in this source.'
+  const fieldList=(label:string,ids:string[])=><section key={label} className="section-subtle">
+    <h4>{label} ({ids.length})</h4>
+    {ids.length?<ol>{ids.map(id=><li key={id}>{id}</li>)}</ol>:<p>—</p>}
+  </section>
+  const bracketView=(bracket:SavedTourDrawBracket)=><section key={bracket.section_id??bracket.draw_type}>
+    <h4>{bracket.section_id??(cs?'Hlavní pavouk':'Main draw')} · {bracket.bracket_size}
+      {' '}{cs?'pozic':'slots'}</h4>
+    <div className="table-responsive"><table aria-label={'Saved draw '+(bracket.section_id??bracket.draw_type)}>
+      <thead><tr><th>{cs?'Pozice':'Slot'}</th><th>{cs?'Účastník / pozice':'Entrant / placeholder'}</th>
+        <th>{cs?'Nasazení':'Seed'}</th><th>{cs?'Vstup':'Entry'}</th></tr></thead>
+      <tbody>{[...bracket.slots].sort((a,b)=>a.slot_index-b.slot_index).map(slot=><tr key={slot.slot_index}>
+        <td>{slot.slot_index}</td><td>{slot.player_id??slot.placeholder_id??(slot.entrant_kind==='bye'?'BYE':'—')}</td>
+        <td>{slot.seed_number??'—'}</td>
+        <td>{slot.entry_status??(slot.entrant_kind==='player'?'direct':slot.entrant_kind)}</td>
+      </tr>)}</tbody></table></div>
+  </section>
   return <section className="panel">
     <Link to={returnTo}>← {cs?'Zpět na kalendář':'Back to calendar'}</Link>
     <div className="page-intro"><p className="eyebrow">RUN → TOUR → EDITION</p>
@@ -83,19 +101,36 @@ export function SavedTourEditionPage():JSX.Element {
           'No canonical result was published in this revision.'}</p>}
       </section>}
       {tab==='entries'&&<section><h3>{labels[1]}</h3>
-        <p>{statusMissing}</p>
-        {result&&<><p>{cs?'Doložení účastníci z publikovaného výsledku (nikoli historické přihlášky):':
-          'Evidenced participants from published results (not an Entry Field snapshot):'}</p>
+        {entry?<><p role="status">{cs?'Skutečné uložené Entry Field, pořadí / revize:':
+          'Authentic saved Entry Field, version:'} {entry.field_sequence} · {entry.mode}
+          {' · '}{cs?'Kapacita hlavního pavouku':'Main capacity'}: {entry.main_draw_capacity}
+          {' · '}BYE: {entry.effective_main_bye_count}</p>
+          <div className="grid">
+            {fieldList(cs?'Hlavní účastníci':'Direct Main entrants',entry.direct_main_player_ids)}
+            {fieldList(cs?'Kvalifikace':'Qualification entrants',entry.qualification_player_ids)}
+            {fieldList(cs?'Náhradníci':'Alternates',entry.alternate_player_ids)}
+            {fieldList(cs?'Odstoupení':'Withdrawn',entry.withdrawn_player_ids)}
+          </div></>:<p role="status">{cs?'Historický Entry Field pro tuto uloženou revizi není dostupný.':
+            'No saved Entry Field exists in this revision.'}</p>}
+        {result&&<><h4>{cs?'Doložení hráči z výsledkové autority':'Players evidenced by published results'}</h4>
+          <p>{cs?'Výsledková evidence není náhradou za seznam přihlášek.':
+            'Published result evidence does not substitute for the Entry Field.'}</p>
           <ul>{result.players.map(p=><li key={p.player_id}>{p.player_id} · {p.reached_stage}</li>)}</ul></>}
       </section>}
       {tab==='draw'&&<section><h3>{labels[2]}</h3>
-        <p>{statusMissing} {cs?'Dostupné jsou pouze publikované zápasy.':
-          'Only published matches are shown.'}</p>
+        <p>{cs?'První kolo je z uložené Draw authority. Výsledky zápasů jsou oddělená evidence.':
+          'First-round slots come from saved Draw authority. Match results are separate evidence.'}</p>
         <div className="grid"><button type="button" aria-pressed={phase==='main'}
           onClick={()=>setPhase('main')}>{cs?'Hlavní část':'Main'}</button>
           <button type="button" aria-pressed={phase==='qualification'}
           onClick={()=>setPhase('qualification')}>{cs?'Kvalifikace':'Qualification'}</button></div>
-        {matchTable(phase==='main'?main:qualification)}
+        {draw?(phase==='main'?bracketView(draw.main):draw.qualification_sections.length?
+          draw.qualification_sections.map(bracketView):<p>{cs?'Uložený kvalifikační pavouk není dostupný.':
+            'No saved qualification bracket is available.'}</p>):
+          <p role="status">{cs?'V této revizi není uložená Draw authority.':
+            'No saved Draw authority exists in this revision.'}</p>}
+        {result&&<><h4>{cs?'Publikované výsledky zápasů':'Published match results'}</h4>
+          {matchTable(phase==='main'?main:qualification)}</>}
       </section>}
       {tab==='schedule'&&<section><h3>{labels[3]}</h3>
         <p>{statusMissing} {cs?'Časy zápasů se z výsledků neodvozují.':

@@ -1,3 +1,19 @@
+# Saved Edition genuine Entry Field + Draw candidate — 13 October 2026
+
+Backend and frontend addition on current merged #1418/buuk: exact Selected
+Branch/reachable immutable Saved Revision, original source Branch,
+canonical saved Entry Field/Draw (including v1 Qualification), actual
+first-round slot positions and seeds/placeholder/BYE; all phases remain
+separate from published results and no schedule/lifecycle is inferred.
+Foreign/orphan sporting authority fails closed. Tests cover scoped
+application/TS/UI and an authentic Run SQLite→Chromium→restart journey.
+
+Status: candidate only; review/merge depends on all checks at final HEAD.
+Details: `docs/SAVED_EDITION_ENTRY_DRAW_V1.md`.
+Next: historical schedule and recorded match slot read, not guessed.
+
+---
+
 # Saved Tour Calendar → Edition UI and real browser candidate — 13 October 2026
 
 Backend PR #1417 is merged into buuk. PR #1418 adds the real 61-week

@@ -23,11 +23,33 @@ export type SavedTourResult = {
   players:Array<{player_id:string;draw_type:string;reached_stage:string;wins:number;losses:number}>
   matches:Array<{match_id:string;draw_type:string;round_number:number;bracket_position:number;winner_player_id:string;loser_player_id:string|null;scoreline:string}>
 }
+export type SavedTourEntryField = {
+  schema_version:'viewer_tournament_entry_field.v1'
+  product_run_id:string;viewer_branch_id:string;event_id:string
+  field_sequence:number;mode:'initial'|'pre_draw_repair'
+  main_draw_capacity:number;active_main_entrant_count:number;effective_main_bye_count:number
+  direct_main_player_ids:string[];qualification_player_ids:string[]
+  alternate_player_ids:string[];withdrawn_player_ids:string[]
+}
+export type SavedTourDrawSlot = {
+  slot_index:number;entrant_kind:'player'|'qualifier_placeholder'|'lucky_loser_placeholder'|'bye'
+  player_id:string|null;placeholder_id:string|null;seed_number:number|null
+  entry_status:'wild_card'|'lucky_loser'|null
+}
+export type SavedTourDrawBracket = {
+  draw_type:'main'|'qualification';section_id:string|null;bracket_size:number;slots:SavedTourDrawSlot[]
+}
+export type SavedTourDraw = {
+  schema_version:'viewer_tournament_draw.v1'
+  product_run_id:string;viewer_branch_id:string;event_id:string;revision_count:number
+  main:SavedTourDrawBracket;qualification_sections:SavedTourDrawBracket[]
+}
 export type SavedTourEdition = {
   schema_version:'run_saved_tour_edition.v1';source:'reachable_saved_revision'
   run_id:string;branch_id:string;revision_branch_id:string
   saved_revision_id:string;season_index:number
   edition:SavedTourEvent;published_result:SavedTourResult|null
+  entry_field?:SavedTourEntryField|null;draw?:SavedTourDraw|null
   lifecycle_status:'unavailable'
 }
 
@@ -69,10 +91,39 @@ export function validSavedTourEdition(
     ||payload.edition.event_id!==eventId
     ||payload.lifecycle_status!=='unavailable')return false
   const result=payload.published_result
-  return result===null?!payload.edition.result_published:
+  const published=result===null?!payload.edition.result_published:
     payload.edition.result_published &&
     result.event_id===eventId&&result.product_run_id===runId
     &&result.viewer_branch_id===payload.revision_branch_id
     &&result.completed_season_index===seasonIndex
     &&result.completed_week===payload.edition.season_week
+  if(!published)return false
+  const entry=payload.entry_field,draw=payload.draw
+  const owned=(value:{product_run_id:string;viewer_branch_id:string;event_id:string})=>
+    value.product_run_id===runId&&value.viewer_branch_id===payload.revision_branch_id
+      &&value.event_id===eventId
+  if(entry){
+    if(entry.schema_version!=='viewer_tournament_entry_field.v1'||!owned(entry)
+      ||!Array.isArray(entry.direct_main_player_ids)
+      ||!Array.isArray(entry.qualification_player_ids)
+      ||!Array.isArray(entry.alternate_player_ids)
+      ||!Array.isArray(entry.withdrawn_player_ids))return false
+    const active=[...entry.direct_main_player_ids,...entry.qualification_player_ids,
+      ...entry.alternate_player_ids]
+    if(new Set(active).size!==active.length
+      ||entry.withdrawn_player_ids.some(id=>active.includes(id)))return false
+  }
+  if(draw){
+    if(!entry||draw.schema_version!=='viewer_tournament_draw.v1'||!owned(draw)
+      ||!Array.isArray(draw.qualification_sections))return false
+    const brackets=[draw.main,...draw.qualification_sections]
+    for(const bracket of brackets){
+      if(!Array.isArray(bracket.slots)||bracket.slots.length!==bracket.bracket_size
+        ||new Set(bracket.slots.map(slot=>slot.slot_index)).size!==bracket.bracket_size
+        ||bracket.slots.some(slot=>slot.slot_index<1||slot.slot_index>bracket.bracket_size
+          ||(slot.entrant_kind==='player'?!slot.player_id:slot.player_id!==null)))
+        return false
+    }
+  }
+  return true
 }

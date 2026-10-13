@@ -43,6 +43,19 @@ def verify_saved_tour_calendar(page, run_url: str, artifacts, port: int, source:
     assert result["published_result"]["champion_player_id"] == source["player_id"]
     assert any(m["match_id"] == source["match_id"] and m["scoreline"] == source["scoreline"]
                for m in result["published_result"]["matches"])
+    # The same saved snapshot also carries the canonical accepted entrant field
+    # and the original/effective first-round draw, never the live Viewer HEAD.
+    field = result["entry_field"]
+    draw = result["draw"]
+    assert field is not None and draw is not None, result
+    for item in (field, draw):
+        assert item["product_run_id"] == run_id
+        assert item["viewer_branch_id"] == branch_id
+        assert item["event_id"] == event_id
+    assert field["direct_main_player_ids"], field
+    assert draw["main"]["slots"] and draw["main"]["bracket_size"] == len(draw["main"]["slots"])
+    assert any(slot["player_id"] == source["player_id"] for slot in draw["main"]["slots"])
+
     get(scope + "/tour/calendar?revision_id=foreign&season_index=0", status=404)
     get(scope + "/tour/editions/" + enc(event_id) + "?revision_id=" + enc(revision_id)
         + "&season_index=2", status=404)
@@ -68,11 +81,15 @@ def verify_saved_tour_calendar(page, run_url: str, artifacts, port: int, source:
     page.get_by_role("button", name="Schedule & matches").click()
     assert source["scoreline"] in page.locator("#saved-schedule-main").inner_text()
     page.get_by_role("button", name="Draw / groups").click()
+    expect(page.get_by_role("table", name="Saved draw main")).to_be_visible()
+    assert source["player_id"] in page.get_by_role("table", name="Saved draw main").inner_text()
     page.get_by_role("button", name="Qualification").click()
     expect(page.get_by_text("No evidenced matches available.")).to_be_visible()
     page.get_by_role("button", name="Main").click()
     assert source["scoreline"] in page.locator("main").inner_text()
     page.get_by_role("button", name="Entries & participants").click()
+    expect(page.get_by_text("Authentic saved Entry Field, version:", exact=False)).to_be_visible()
+    expect(page.get_by_text("Direct Main entrants", exact=False)).to_be_visible()
     expect(page.get_by_text(source["player_id"], exact=False).first).to_be_visible()
     page.get_by_role("button", name="Settings").click()
     expect(page.get_by_text("Saved Edition parameters", exact=False)).to_be_visible()

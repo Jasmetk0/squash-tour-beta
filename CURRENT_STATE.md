@@ -1,3 +1,20 @@
+# Real Group Save → historical Edition browser acceptance (phase 1) — 13 Oct 2026
+
+After #1423 merged / buuk 3c7d6340cb85d0441f1bbed261185188c64c3da8.
+Dedicated true production Run acceptance through real generated field,
+HTTP Group Rules/Format/Topology/Schedule commands, Working Draft Save,
+immutable earlier revision, exact historical Edition in Chromium, SQLite
+backend restart and read equality. One 4-player BO3 round robin produces
+six frozen pairings over three Match Days.
+
+This is intentionally **pre-result** E2E. It checks absent Standings before
+playing; it does not pretend to cover completed group/hybrid standings or
+simulate six group matches. Phase 2 remains the next required sporting/browser
+acceptance. Details: docs/REAL_SAVED_GROUP_BROWSER_PHASE1_2026_10_13.md.
+Candidate only until actual CI green on final HEAD; user alone merges.
+
+---
+
 # Historical Saved Edition group standings candidate — 13 October 2026
 
 After merged #1422 / current buuk df68749c97cf25513a0a5ee5fa5d01dd9b31edeb.

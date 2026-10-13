@@ -7,7 +7,7 @@ import {useAdminBranch} from '../admin/AdminBranchContext'
 import {useAdminTime} from '../admin/AdminTimeContext'
 import {useLanguage} from '../i18n/LanguageContext'
 import {formatApiError} from '../utils/apiErrors'
-import type {SavedTourDrawBracket} from '../api/savedTour'
+import type {SavedTourDrawBracket,SavedTourScheduledMatch} from '../api/savedTour'
 
 type Tab='overview'|'entries'|'draw'|'schedule'|'results'|'settings'
 const tabs:Tab[]=['overview','entries','draw','schedule','results','settings']
@@ -40,6 +40,9 @@ export function SavedTourEditionPage():JSX.Element {
     ['Overview','Entries & participants','Draw / groups','Schedule & matches','Results','Settings']
   const e=model?.edition,result=model?.published_result
   const entry=model?.entry_field,draw=model?.draw
+  const schedule=model?.match_schedule
+  const plannedMain=schedule?.slots.filter(slot=>slot.draw_phase!=='qualification')??[]
+  const plannedQualification=schedule?.slots.filter(slot=>slot.draw_phase==='qualification')??[]
   const matches=result?.matches??[]
   const main=matches.filter(m=>m.draw_type!=='qualification')
   const qualification=matches.filter(m=>m.draw_type==='qualification')
@@ -51,6 +54,23 @@ export function SavedTourEditionPage():JSX.Element {
       <th>{cs?'Poražený':'Loser'}</th><th>{cs?'Skóre':'Score'}</th>
     </tr></thead><tbody>{group.map(matchRow)}</tbody></table></div>:
     <p>{cs?'Nejsou dostupné doložené zápasy.':'No evidenced matches available.'}</p>
+  const scheduledTable=(slots:SavedTourScheduledMatch[])=>slots.length?
+    <div className="table-responsive"><table aria-label="Saved Match Day order">
+      <thead><tr><th>{cs?'Den':'Match Day'}</th><th>{cs?'Pořadí':'Order'}</th>
+        <th>{cs?'Globální slot':'Global slot'}</th><th>{cs?'Fáze':'Phase'}</th>
+        <th>{cs?'Kolo':'Round'}</th><th>{cs?'Zápas':'Match ID'}</th>
+        <th>{cs?'Doložený výsledek':'Published result'}</th></tr></thead>
+      <tbody>{slots.map(slot=>{
+        const published=slot.match_id?matches.find(m=>m.match_id===slot.match_id):undefined
+        return <tr key={slot.global_slot_ordinal}>
+          <td>{slot.match_day_ordinal}</td><td>{slot.match_order}</td>
+          <td>{slot.global_slot_ordinal}</td><td>{slot.draw_phase}</td><td>{slot.round_number}</td>
+          <td>{slot.match_id??(cs?'Plán zápasu není uložen':'No saved match plan')}</td>
+          <td>{published?published.winner_player_id+' · '+published.scoreline:'—'}</td>
+        </tr>
+      })}</tbody></table></div>:
+    <p>{cs?'Pro tuto část nejsou uložené zápasové sloty.':
+      'No saved Match Day slots for this phase.'}</p>
   const statusMissing=cs?'Tento zdroj neobsahuje úplnou historickou autoritu pro tento oddíl.':
     'A complete historical authority for this section is unavailable in this source.'
   const fieldList=(label:string,ids:string[])=><section key={label} className="section-subtle">
@@ -133,12 +153,21 @@ export function SavedTourEditionPage():JSX.Element {
           {matchTable(phase==='main'?main:qualification)}</>}
       </section>}
       {tab==='schedule'&&<section><h3>{labels[3]}</h3>
-        <p>{statusMissing} {cs?'Časy zápasů se z výsledků neodvozují.':
-          'Match start times are never inferred from results.'}</p>
-        {result&&<><a href="#saved-schedule-main">{cs?'Hlavní část':'Main'}</a>
+        <p>{cs?'Časy zápasů se z výsledků neodvozují. Den zápasu je pořadové číslo, nikoli datum.':
+          'Match start times are never inferred from results. Match Day is an ordinal, not a date.'}</p>
+        {schedule?<p role="status">{cs?'Skutečný uložený rozpis Week Simulation Schedule v2.':
+          'Authentic Saved Week Simulation Schedule v2.'} · {cs?'Sloty':'Slots'}: {schedule.slots.length}
+          {' · '}{cs?'Zdroj':'Source'}: {schedule.source}</p>:
+          <p role="status">{cs?'Uložený rozpis Match Day pro tuto edici není dostupný.':
+            'An event-bound Saved Match Day schedule is unavailable for this Edition.'}</p>}
+        {(schedule||result)&&<><a href="#saved-schedule-main">{cs?'Hlavní část':'Main'}</a>
           {' · '}<a href="#saved-schedule-qualification">{cs?'Kvalifikace':'Qualification'}</a>
-          <section id="saved-schedule-main"><h4>{cs?'Hlavní část':'Main'}</h4>{matchTable(main)}</section>
-          <section id="saved-schedule-qualification"><h4>{cs?'Kvalifikace':'Qualification'}</h4>{matchTable(qualification)}</section></>}
+          <section id="saved-schedule-main"><h4>{cs?'Hlavní část':'Main'}</h4>
+            {schedule?scheduledTable(plannedMain):<><p>{cs?'Pouze výsledková evidence, nikoli rozpis.':
+              'Published result evidence only, not a schedule.'}</p>{matchTable(main)}</>}</section>
+          <section id="saved-schedule-qualification"><h4>{cs?'Kvalifikace':'Qualification'}</h4>
+            {schedule?scheduledTable(plannedQualification):<><p>{cs?'Pouze výsledková evidence, nikoli rozpis.':
+              'Published result evidence only, not a schedule.'}</p>{matchTable(qualification)}</>}</section></>}
       </section>}
       {tab==='results'&&<section><h3>{labels[4]}</h3>
         {!result?<p>{cs?'Kanonické výsledky nejsou v této revizi publikovány.':

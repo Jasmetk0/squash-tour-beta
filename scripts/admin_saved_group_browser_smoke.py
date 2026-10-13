@@ -24,11 +24,15 @@ from playwright.sync_api import expect, sync_playwright
 from admin_first_tournament_smoke import (
     browser_click, browser_settle, create_smoke_app, setup_run,
 )
+from saved_completed_group_browser_checks import play_group_and_save
 
 EVENT_ID = "EVT-2000-W01-browser_cup"
 
 
-def acceptance(root: Path, *, port: int, base_url: str, chromium: str) -> None:
+def acceptance(
+    root: Path, *, port: int, base_url: str, chromium: str,
+    complete_groups: bool = False,
+) -> None:
     if (root / "browser.sqlite").exists():
         raise ValueError("Saved group browser acceptance requires a fresh SQLite database")
     with socket.socket() as sock:
@@ -252,6 +256,44 @@ def acceptance(root: Path, *, port: int, base_url: str, chromium: str) -> None:
                     assert "revision=" + quote(revision, safe="") in page.url
 
                 browser_read(page)
+                completed = None
+
+                def final_browser_read(page, final_revision, prefix=""):
+                    query = (f"?branch={quote(branch_id, safe='')}"
+                             f"&revision={quote(final_revision, safe='')}&season=0")
+                    page.goto(run_url + "/tour/calendar/" +
+                              quote(EVENT_ID, safe="") + query)
+                    page.get_by_role("combobox", name="Language / Jazyk").select_option("en")
+                    expect(page.get_by_role("heading", name="Browser Acceptance Cup")).to_be_visible()
+                    page.get_by_role("button", name="Results").click()
+                    section = page.get_by_label("Saved group standings")
+                    expect(section).to_be_visible()
+                    table = page.get_by_role("table", name="Saved group 1 standings")
+                    expect(table.locator("tbody tr")).to_have_count(4)
+                    expect(section.get_by_text(
+                        "Saved final tables", exact=False,
+                    )).to_be_visible()
+                    assert "revision=" + quote(final_revision, safe="") in page.url
+                    page.screenshot(path=str(artifacts / f"{prefix}completed-group-edition.png"),
+                                    full_page=True)
+
+                if complete_groups:
+                    print("GROUP BROWSER: simulating all six scheduled competitive matches",
+                          flush=True)
+                    completed = play_group_and_save(
+                        request, run_id=run_id, branch_id=branch_id,
+                        event_id=EVENT_ID, root_scope=root_scope,
+                        event_scope=event_scope, old_revision=revision,
+                        original_match_ids={m["match_id"] for m in schedule["matches"]},
+                    )
+                    assert saved(old_rev) == before
+                    assert saved(revision) == expected, (
+                        "Simulating six real matches rewrote pre-result Saved Revision"
+                    )
+                    final_browser_read(page, completed["revision"])
+                    print("GROUP BROWSER: six real matches + immutable final standings saved",
+                          flush=True)
+
                 context.tracing.stop(path=str(artifacts / "before-restart.zip"))
                 context.close()
                 process.terminate()
@@ -261,6 +303,11 @@ def acceptance(root: Path, *, port: int, base_url: str, chromium: str) -> None:
                 assert saved(revision) == expected
                 assert saved(old_rev) == before
                 browser_read(page, prefix="reopened-")
+                if completed is not None:
+                    assert saved(completed["revision"]) == completed["edition"], (
+                        "Final saved group standings changed after SQLite restart"
+                    )
+                    final_browser_read(page, completed["revision"], prefix="reopened-")
                 assert browser_errors == [], browser_errors
                 (artifacts / "group-evidence.json").write_text(json.dumps({
                     "run_id": run_id, "branch_id": branch_id,
@@ -269,12 +316,28 @@ def acceptance(root: Path, *, port: int, base_url: str, chromium: str) -> None:
                     "format_kind": format_["format_kind"],
                     "group_match_count": len(group["matches"]),
                     "match_day_count": group["match_day_count"],
-                    "group_standings_status": "not_yet_authoritative",
-                    "real_group_results_simulated": False,
+                    "group_standings_status": (
+                        "frozen_from_six_real_matches" if completed else "not_yet_authoritative"
+                    ),
+                    "real_group_results_simulated": completed is not None,
+                    "played_group_match_count": (
+                        completed["matches_simulated"] if completed else 0
+                    ),
+                    "completed_revision_id": (
+                        completed["revision"] if completed else None
+                    ),
+                    "admin_tie_decisions": (
+                        completed["group_tie_decision_count"] if completed else 0
+                    ),
                     "unchanged_after_restart": True,
                     "browser_errors": browser_errors,
                 }, indent=2))
-                print("REAL SAVED GROUP PRE-RESULT BROWSER ACCEPTANCE PASSED", flush=True)
+                print(
+                    "REAL SAVED GROUP COMPLETED BROWSER ACCEPTANCE PASSED"
+                    if completed else
+                    "REAL SAVED GROUP PRE-RESULT BROWSER ACCEPTANCE PASSED",
+                    flush=True,
+                )
             except Exception:
                 page.screenshot(path=str(artifacts / "failure.png"), full_page=True)
                 (artifacts / "failure.txt").write_text(page.locator("body").inner_text())
@@ -297,6 +360,8 @@ if __name__ == "__main__":
     parser.add_argument("--port", type=int, default=8014)
     parser.add_argument("--base-url", default="http://127.0.0.1:5173")
     parser.add_argument("--chromium", default="/usr/bin/chromium")
+    parser.add_argument("--complete-groups", action="store_true",
+                        help="Actually simulate all six group matches, freeze standings, Save, replay after restart")
     args = parser.parse_args()
     if args.serve:
         uvicorn.run(
@@ -307,4 +372,5 @@ if __name__ == "__main__":
         acceptance(
             args.acceptance.resolve(), port=args.port,
             base_url=args.base_url, chromium=args.chromium,
+            complete_groups=args.complete_groups,
         )

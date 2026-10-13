@@ -1,16 +1,34 @@
-# Real Admin pure-group Format/Topology preparation — candidate 13 October 2026
+# Real Admin pure-group Format/Topology preparation — integration update 13 October 2026
 
-On actual merged #1423 baseline, a previously missing browser-workflow blocker
-is now addressed: the Run-owned Planned Event page shows real production
-commands for immutable season Group Rules, pure round-robin Format and group
-Topology (each explicitly confirmed, with exact branch/event/season and
-participant partition checks). Existing generated Group Match Schedule handoff
-then becomes reachable without manual API writes. No fabricated crossings,
-BYEs, match results or historical revisions. Full actual group/hybrid browser
-simulation+Save+SQLite restart is **not yet verified** and remains the next
-integration gate. See docs/ADMIN_PURE_GROUP_FORMAT_SETUP_V1.md.
+The Run-owned Planned Event Admin screen now exposes explicit Group Rules adoption,
+pure round-robin Format configuration and group Topology generation with exact
+Run/Branch/event/season authority checks and frozen Entry Field partition validation.
+The existing Group Match Schedule workflow follows those explicit operations.
+There are no invented BYEs, seed crossings, matches or automatic saves.
 
-Status: candidate pending final HEAD CI; merge belongs to the user.
+The separately merged #1426 proves real production group matches, frozen Saved
+Edition standings and SQLite restart in Chromium. Browser-driven Format/Topology
+setup through the *entire* sporting workflow remains an additional acceptance
+gate; hybrid knockout and ranking closure remain unproven.
+See `docs/ADMIN_PURE_GROUP_FORMAT_SETUP_V1.md`.
+
+Integration: resolved documentation overlap with merged #1426 and #1427;
+new code remains gated by final-head CI before user merge.
+
+---
+
+# Real Saved Group completion browser acceptance (phase 2) — candidate 13 Oct 2026
+
+After #1424 merged, extends the real Chromium+SQLite Run group workflow:
+canonical Week Schedule adoption → real six-match tournament simulation →
+final frozen group standings → later immutable Saved Revision → historical
+Edition Results before/after server restart. Previous pre-result Save remains
+unchanged. Exact HTTP sporting commands, not synthetic receipts, own results.
+Dedicated browser workflow reuses the initial group bootstrap to control CI
+cost. No UI overlap with open #1425. Full hybrid knockout/ranking closure
+is a separate unclaimed phase. See
+`docs/REAL_SAVED_GROUP_BROWSER_PHASE2_2026_10_13.md`.
+Candidate: do not merge until real browser and Fast CI pass final HEAD.
 
 ---
 

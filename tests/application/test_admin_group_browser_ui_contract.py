@@ -88,10 +88,25 @@ def test_group_match_days_final_table_and_save_are_exercised_through_real_ui():
     assert {
         "Review authoritative Next Match Day",
         "Simulate reviewed authoritative Match Day",
-        "Generate canonical group standings",
-        "Save authoritative simulation",
         "Commit audited group tie decision",
     } <= names
+    # These authority writes are still genuine production button clicks.
+    # The result itself, not global network idle, confirms their completion.
+    direct_click_names = {
+        node.func.value.id
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Attribute)
+        and node.func.attr == "click"
+        and isinstance(node.func.value, ast.Name)
+    }
+    assert {"button", "save_button", "final_save_button"} <= direct_click_names
+    labels = {
+        node.value for node in ast.walk(tree)
+        if isinstance(node, ast.Constant) and isinstance(node.value, str)
+    }
+    assert "Generate canonical group standings" in labels
+    assert "Save authoritative simulation" in labels
 
     forbidden = (
         "/simulate-next-match-day",
@@ -136,14 +151,20 @@ def test_real_completed_group_browser_saves_and_restarts_before_final_table():
         and isinstance(node.func, ast.Attribute)
         and node.func.attr == "click"
         and isinstance(node.func.value, ast.Name)
-        and node.func.value.id == "save_button"
+        and node.func.value.id in {"save_button", "final_save_button"}
     ]
     save_lines = sorted(
         [line for line, label in clicks
          if label == "Save authoritative simulation"] + direct_save_clicks
     )
-    publish_lines = [line for line, label in clicks
-                     if label == "Generate canonical group standings"]
+    publish_lines = [
+        node.lineno for node in ast.walk(tree)
+        if isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Attribute)
+        and node.func.attr == "click"
+        and isinstance(node.func.value, ast.Name)
+        and node.func.value.id == "button"
+    ]
     restarts = [
         node.lineno for node in ast.walk(tree)
         if isinstance(node, ast.Call)

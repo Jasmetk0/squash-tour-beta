@@ -54,7 +54,7 @@ export function SavedTourEditionPage():JSX.Element {
   }
   const matchRow=(m:typeof matches[number])=><tr key={m.match_id}><td>{m.round_number}</td>
     <td>{m.winner_player_id}</td><td>{m.loser_player_id??'—'}</td>
-    <td>{m.scoreline}{m.loser_player_id&&<>
+    <td><span>{m.scoreline}</span>{m.loser_player_id&&<>
       {' · '}<Link to={matchHref(m.match_id,tab==='schedule'?'schedule':'results')}>
         {cs?'Detail zápasu':'Match detail'}</Link>
     </>}</td></tr>

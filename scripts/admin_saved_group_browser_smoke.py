@@ -126,33 +126,57 @@ def acceptance(
                 page.get_by_label("Approve reviewed Entry Field", exact=True).check()
                 browser_click(page, "Commit reviewed Entry Field")
 
+                # This is the missing real Admin UI journey: no direct writes
+                # for Group Rules, Format, Topology or Group Match Schedule.
+                # Default knockout navigation remains available until Admin
+                # explicitly opts into pure round-robin groups.
+                browser_click(page, "Choose pure round-robin groups")
+                group_setup = page.get_by_label("Group Format setup")
+                expect(group_setup).to_be_visible()
+                expect(group_setup).to_contain_text("Frozen direct entrants: 4")
+                expect(group_setup.get_by_role(
+                    "button", name="Configure pure-groups Format"
+                )).to_be_disabled()
+
+                group_setup.get_by_label("Season group-match format").select_option("3")
+                group_setup.get_by_label(
+                    "Confirm immutable season Group Rules"
+                ).check()
+                browser_click(page, "Adopt season Group Rules")
+                expect(group_setup).to_contain_text("Frozen season group rules: BO3")
                 policy = request(
-                    "POST", root_scope + "/tournament-group-rules/versions",
-                    {"command_id": "browser-group-rules",
-                     "effective_from_season_index": 0,
-                     "default_match_best_of": 3}, 201,
+                    "GET", root_scope + "/tournament-group-rules?target_season_index=0",
                 )
-                assert policy["default_match_best_of"] == 3
-                format_ = request(
-                    "POST", event_scope + "/format/configure",
-                    {"command_id": "browser-group-format",
-                     "format_kind": "groups", "group_count": 1,
-                     "group_size": 4, "seeded_slots_per_group": 0,
-                     "group_seed_placements": [], "advancing_per_group": 0,
-                     "knockout_crossings": []}, 201,
-                )
-                assert format_["format_kind"] == "groups"
-                assert format_["group_configuration"]["group_size"] == 4
-                topology = request(
-                    "POST", event_scope + "/format/topology/generate",
-                    {"command_id": "browser-group-topology",
-                     "topology_seed": 137}, 201,
-                )
-                assert len(topology["group_matches"]) == 6
-                schedule = request(
-                    "POST", event_scope + "/format/group-match-schedule/generate",
-                    {"command_id": "browser-group-match-days"}, 201,
-                )
+                assert policy["effective"]["default_match_best_of"] == 3
+                assert policy["run_id"] == run_id
+                assert policy["branch_id"] == branch_id
+
+                # Intentional confirmation; no sneaky API setup or fixture player IDs.
+                expect(group_setup.get_by_label("Group count")).to_have_value("1")
+                expect(group_setup.get_by_label("Players per group")).to_have_value("4")
+                group_setup.get_by_label("Confirm immutable pure-groups Format").check()
+                browser_click(page, "Configure pure-groups Format")
+                expect(page.get_by_role(
+                    "button", name="Generate group Topology"
+                )).to_be_visible()
+                preparation = request("GET", event_scope + "/preparation")
+                assert preparation["format_kind"] == "groups"
+                assert preparation["next_required_action"] == "generate_tournament_topology"
+
+                page.get_by_label("Confirm immutable group Topology").check()
+                browser_click(page, "Generate group Topology")
+                expect(page.get_by_role(
+                    "button", name="Generate group Match Schedule"
+                )).to_be_visible()
+                preparation = request("GET", event_scope + "/preparation")
+                assert preparation["next_required_action"] == "prepare_group_match_schedule"
+                browser_click(page, "Generate group Match Schedule")
+
+                preparation = request("GET", event_scope + "/preparation")
+                assert preparation["phase"] == "group_match_execution_ready"
+                assert preparation["group_match_count"] == 6
+                assert preparation["group_match_day_count"] == 3
+                schedule = request("GET", event_scope + "/format/group-match-schedule")
                 assert schedule["group_count"] == 1
                 assert schedule["group_size"] == 4
                 assert schedule["match_day_count"] == 3
@@ -160,7 +184,11 @@ def acceptance(
                 assert len({m["match_id"] for m in schedule["matches"]}) == 6
                 assert all(m["effective_match_format"]["format"]["best_of"] == 3
                            for m in schedule["matches"])
-                print("GROUP BROWSER: real Entry, Format, Topology and Match Days committed",
+                page.screenshot(
+                    path=str(artifacts / "02-real-group-format-browser.png"),
+                    full_page=True,
+                )
+                print("GROUP BROWSER: real Admin UI committed BO3 Rules, pure Format, Topology and six Match Days",
                       flush=True)
 
                 def saved(revision):

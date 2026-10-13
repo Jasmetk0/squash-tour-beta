@@ -48,6 +48,41 @@ function mount(path='/admin/runs/run-a/tour/calendar/event-x?branch=branch-a&rev
   </QueryClientProvider>)
 }
 describe('Saved Edition detail',()=>{
+  it('shows saved pending tie audit without inventing final group standings',async()=>{
+    const source=fixture(false)
+    source.group_schedule={
+      schema_version:'run_saved_tour_group_schedule.v1',
+      source:'saved_tournament_group_match_schedule_authority.v1',
+      run_id:'run-a',revision_branch_id:'ancestor',event_id:'event-x',
+      authority_fingerprint:'b'.repeat(64),
+      group_count:1,group_size:3,match_day_count:3,
+      matches:[
+        {match_id:'ab',group_index:1,match_day_ordinal:1,match_order:1,
+          top_player_id:'A',bottom_player_id:'B',best_of:3},
+        {match_id:'ac',group_index:1,match_day_ordinal:2,match_order:1,
+          top_player_id:'A',bottom_player_id:'C',best_of:3},
+        {match_id:'bc',group_index:1,match_day_ordinal:3,match_order:1,
+          top_player_id:'B',bottom_player_id:'C',best_of:3}
+      ]
+    }
+    source.group_standings=null
+    source.pending_group_tie_decisions=[{
+      group_index:1,case_fingerprint:'a'.repeat(64),
+      ordered_player_ids:['C','A','B'],admin_reason:'Reviewed three-way cycle.'
+    }]
+    api.getSavedTourEdition.mockResolvedValue(source)
+    mount()
+    expect(await screen.findByRole('heading',{name:'Brno Open'})).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button',{name:'Results'}))
+    const audit=screen.getByLabelText('Saved pending group tie decisions')
+    expect(within(audit).getByText(/Reviewed three-way cycle/)).toBeInTheDocument()
+    expect(within(audit).getByText(/C → A → B/)).toBeInTheDocument()
+    expect(within(audit).getByText(/not a published group table/)).toBeInTheDocument()
+    expect(screen.queryByRole('table',{name:'Saved group 1 standings'})).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('Saved group standings')).not.toBeInTheDocument()
+    expect(screen.getByText(/not published in this revision/)).toBeInTheDocument()
+  })
+
   it('shows canonical final group ranks, W/O evidence and exact Admin audit reason',async()=>{
     const source=fixture(false)
     source.group_schedule={

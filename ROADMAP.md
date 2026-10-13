@@ -1,3 +1,18 @@
+# Real Saved Group completion browser acceptance (phase 2) — candidate 13 Oct 2026
+
+After #1424 merged, extends the real Chromium+SQLite Run group workflow:
+canonical Week Schedule adoption → real six-match tournament simulation →
+final frozen group standings → later immutable Saved Revision → historical
+Edition Results before/after server restart. Previous pre-result Save remains
+unchanged. Exact HTTP sporting commands, not synthetic receipts, own results.
+Dedicated browser workflow reuses the initial group bootstrap to control CI
+cost. No UI overlap with open #1425. Full hybrid knockout/ranking closure
+is a separate unclaimed phase. See
+`docs/REAL_SAVED_GROUP_BROWSER_PHASE2_2026_10_13.md`.
+Candidate: do not merge until real browser and Fast CI pass final HEAD.
+
+---
+
 # Real Group Save → historical Edition browser acceptance (phase 1) — 13 Oct 2026
 
 After #1423 merged / buuk 3c7d6340cb85d0441f1bbed261185188c64c3da8.

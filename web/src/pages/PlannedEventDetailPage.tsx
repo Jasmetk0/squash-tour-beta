@@ -1242,7 +1242,7 @@ export function PlannedEventDetailPage(): JSX.Element {
                 <>
                   <p className="status">
                     Group Match authority and Match Day chronology are frozen.
-                    Play their real Simulation Slots before generating immutable final tables.
+                    These frozen group matches are ready for canonical Simulation Slot execution.\n                    Play their real matches before generating immutable final tables.
                     Hybrid knockout closure remains a separate sporting authority.
                   </p>
                   {verifiedCalendarScope &&

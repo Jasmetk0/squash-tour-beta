@@ -87,24 +87,22 @@ def test_exact_saved_edition_match_result_and_missing_replay_survive_restart(tmp
         assert _request("GET", _url(server, run, branch, saved_revision).split("&season_index=")[0])[0] == 422
         assert _request("GET", _url(server, run, branch, saved_revision, season=50))[0] == 422
 
-        # Access to an immutable shared ancestor belongs to its ORIGINAL source.
+        # The synthetic ranking fixture is intentionally NOT forgeable into a
+        # new fork: its tournament source is not command-owned. Fork the earlier
+        # safely materializable Calendar snapshot and prove the later published
+        # result is not copied backwards into its shared historical ancestor.
         id_factory = iter(("edition-fork", "edition-fork-draft", "edition-fork-root"))
         RunBranchCreationService(
             repository=repo, id_factory=lambda _kind: next(id_factory),
         ).create_from_saved_revision(
             run_id=run, source_branch_id=branch,
-            source_saved_revision_id=saved_revision,
+            source_saved_revision_id=earlier_revision,
         )
-        fork_status, fork = _request(
-            "GET", _url(server, run, "edition-fork", saved_revision)
-        )
-        assert fork_status == 200, fork
-        assert fork["branch_id"] == "edition-fork"
-        assert fork["revision_branch_id"] == branch
-        assert fork["match"] == match["match"]
+        assert _request("GET", _url(server, run, "edition-fork", earlier_revision))[0] == 404
+        assert _request("GET", _url(server, run, "edition-fork", saved_revision))[0] == 404
         assert _request("GET", _url(server, run, branch, saved_revision)) == (200, match)
 
     with ApiServer(database_url=db) as reopened:
         assert _request("GET", _url(reopened, run, branch, saved_revision)) == (200, match)
-        assert _request("GET", _url(reopened, run, "edition-fork", saved_revision)) == (200, fork)
+        assert _request("GET", _url(reopened, run, "edition-fork", earlier_revision))[0] == 404
         assert _request("GET", _url(reopened, run, branch, earlier_revision))[0] == 404

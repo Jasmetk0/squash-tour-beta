@@ -3,6 +3,8 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { GroupTieResolutionEditor } from './GroupTieResolutionEditor'
 import type { GroupStandingsTieState } from '../api/tournamentGroupStandings'
+const locale=vi.hoisted(()=>({current:'en' as 'cs'|'en'}))
+vi.mock('../i18n/LanguageContext',()=>({useLanguage:()=>({language:locale.current})}))
 
 const api = vi.hoisted(() => ({
   resolveAdminGroupStandingsTie: vi.fn(),
@@ -35,6 +37,7 @@ function mount(state: GroupStandingsTieState = caseState, enabled = true) {
 describe('Run Admin exact group tie decision', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    locale.current='en'
     api.resolveAdminGroupStandingsTie.mockResolvedValue({authority_fingerprint:'b'.repeat(64)})
   })
 
@@ -93,6 +96,16 @@ describe('Run Admin exact group tie decision', () => {
     expect(api.resolveAdminGroupStandingsTie).not.toHaveBeenCalled()
   })
 
+  it('exposes Czech accessible controls, confirmation and audit reason',async()=>{
+    locale.current='cs'
+    mount()
+    expect(screen.getByRole('group',{name:'Výslovné rozhodnutí shody ve skupině'})).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button',{name:'Posunout hráče A dolů'}))
+    fireEvent.change(screen.getByLabelText('Auditní důvod rozhodnutí shody'),{target:{value:'Ověřeno správcem'}})
+    fireEvent.click(screen.getByLabelText('Potvrdit přesné pořadí hráčů a auditní důvod'))
+    fireEvent.click(screen.getByRole('button',{name:'Uložit auditované rozhodnutí shody'}))
+    await waitFor(()=>expect(api.resolveAdminGroupStandingsTie).toHaveBeenCalledTimes(1))
+  })
   it('surfaces a stale-case conflict and clears confirmation without persisting a guessed order', async () => {
     api.resolveAdminGroupStandingsTie.mockRejectedValue(new api.ApiError('Case changed',409))
     const {onResolution} = mount()

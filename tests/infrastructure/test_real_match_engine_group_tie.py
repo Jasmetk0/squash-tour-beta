@@ -1,7 +1,7 @@
 """Real MatchEngine cyclic Group Tie -> audited SQLite decision -> final table.
 
 Unlike other tie authority fixtures, every score/game/rally in this test comes
-from MatchEngine.simulate. This is a *controlled seed-symmetric integration
+from MatchEngine.simulate. This is a *bounded deterministic seed-search
 fixture*, NOT a claim that normal production Run auto-seeding creates a tie
 or that the Chromium UI has yet completed a genuine cyclic tie.
 """
@@ -48,11 +48,12 @@ pytestmark = pytest.mark.pr_critical
 def _engine_cyclic_receipts():
     """Three complete squash matches, played rather than invented.
 
-    All players have identical sporting attributes. Reusing one deterministic
-    RNG stream *in the test only* and rotating the Player A/Player B seat
-    produces equal genuine game/point ratios with a cyclic winner graph.
-    Identical seeds are deliberate controlled fixture inputs, not the
-    distinct identity-derived seeds used by production Run Simulation.
+    All players have identical sporting attributes. The bounded test seed
+    search selects only complete naturally played matches whose true game and
+    ball-point totals satisfy an exact cyclic tie. It does not edit any sport
+    output or rerun a selected match with changed scoreboard data. The
+    distinct identity-derived seeds in normal Run Simulation are not controlled
+    this way.
     """
     frozen = schedule()
     players = {
@@ -66,26 +67,60 @@ def _engine_cyclic_receipts():
         ("A-C", "C", "A"),
         ("B-C", "B", "C"),
     )
+    # For a three-player cycle, three genuine 2-0 results with an equal
+    # (winner ball points, loser ball points) signature give each player exactly
+    # one win, one loss, two games won/lost and identical 22+k/k+22 totals.
+    # Select complete *actual* MatchEngine results; do not construct their games.
+    # A fixed scan order makes failures reproducible after engine changes.
+    natural = {match_id: {} for match_id, _, _ in pairings}
+    results = None
+    selected_seeds = None
+    for seed in range(1, 161):
+        for match_id, left, right in pairings:
+            desired_winner = {"A-B": "A", "A-C": "C", "B-C": "B"}[match_id]
+            result = MatchEngine(rng=DeterministicRng(seed)).simulate(
+                MatchContext(
+                    match_id=match_id,
+                    player_a=players[left],
+                    player_b=players[right],
+                    best_of=3,
+                    games_to=11,
+                    win_by=2,
+                ),
+            )
+            if result.termination_reason != MatchTerminationReason.COMPLETED:
+                continue
+            if result.winner_player_id != desired_winner or len(result.sets) != 2:
+                continue
+            score = (
+                sum(item.winner_games for item in result.sets),
+                sum(item.loser_games for item in result.sets),
+            )
+            natural[match_id].setdefault(score, (seed, result))
+
+        shared_scores = (set(natural["A-B"]) & set(natural["A-C"])
+                         & set(natural["B-C"]))
+        if shared_scores:
+            chosen = min(shared_scores)
+            results = [natural[match_id][chosen][1] for match_id, _, _ in pairings]
+            selected_seeds = tuple(
+                natural[match_id][chosen][0] for match_id, _, _ in pairings
+            )
+            break
+    assert results is not None, (
+        "160 bounded natural MatchEngine seeds did not yield a genuine exact "
+        "three-player cyclic tie; inspect player model or engine changes"
+    )
+    assert selected_seeds is not None
     receipts = []
-    results = []
-    for match_id, left, right in pairings:
-        result = MatchEngine(rng=DeterministicRng(20261013)).simulate(
-            MatchContext(
-                match_id=match_id,
-                player_a=players[left],
-                player_b=players[right],
-                best_of=3,
-                games_to=11,
-                win_by=2,
-            ),
-        )
+    for (match_id, _, _), result in zip(pairings, results, strict=True):
         assert result.termination_reason == MatchTerminationReason.COMPLETED
         assert result.rally_log is not None
         assert len(result.rally_log.events) > 0
         assert result.rally_log.scoring_rallies == sum(
             item.winner_games + item.loser_games for item in result.sets
         )
-        assert len(result.sets) in (2, 3)
+        assert len(result.sets) == 2
         frozen_match = next(m for m in frozen.matches if m.match_id == match_id)
         result_fp = hashlib.sha256(json.dumps(
             result.model_dump(mode="json"), sort_keys=True, separators=(",", ":"),
@@ -95,7 +130,6 @@ def _engine_cyclic_receipts():
             result=result,
             result_fingerprint=result_fp,
         ))
-        results.append(result)
 
     # This assertion guards against the test ceasing to be a genuine exact tie
     # after an intentional MatchEngine semantics/version change.

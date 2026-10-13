@@ -1,3 +1,20 @@
+# Real Group Save → historical Edition browser acceptance (phase 1) — 13 Oct 2026
+
+After #1423 merged / buuk 3c7d6340cb85d0441f1bbed261185188c64c3da8.
+Dedicated true production Run acceptance through real generated field,
+HTTP Group Rules/Format/Topology/Schedule commands, authoritative Simulation Save,
+immutable earlier revision, exact historical Edition in Chromium, SQLite
+backend restart and read equality. One 4-player BO3 round robin produces
+six frozen pairings over three Match Days.
+
+This is intentionally **pre-result** E2E. It checks absent Standings before
+playing; it does not pretend to cover completed group/hybrid standings or
+simulate six group matches. Phase 2 remains the next required sporting/browser
+acceptance. Details: docs/REAL_SAVED_GROUP_BROWSER_PHASE1_2026_10_13.md.
+Candidate only until actual CI green on final HEAD; user alone merges.
+
+---
+
 # Historical Saved Edition group standings candidate — 13 October 2026
 
 After merged #1422 / current buuk df68749c97cf25513a0a5ee5fa5d01dd9b31edeb.
@@ -2915,7 +2932,7 @@ introducing a parallel simulation path.
   partial Run proposal behind.
 - The proposal is intentionally not Tournament Ranking/Entry/WC/Draw/Result authority and cannot
   bypass those production provenance chains.
-- Normal Working Draft Save captures the proposal component into an immutable Saved Revision;
+- Normal authoritative Simulation Save captures the proposal component into an immutable Saved Revision;
   restore and materialized Branch fork preserve/remap the component with target-owned fingerprints.
 - Ordinary/final Season Transition revision writers preserve the component as well.
 - Tournament Lab Inspect/Run remains isolated; only the explicit Apply action stages Run state.
@@ -6274,7 +6291,7 @@ alongside Ranking/Simulation/WC components, and `viewer_tournament_history.v1` p
 saved Calendar Packages into one deterministic multi-season tournament history.
 
 - Calendar Package state is read from the exact immutable Saved Revision; live Package changes
-  are invisible until ordinary Working Draft Save;
+  are invisible until ordinary authoritative Simulation Save;
 - canonical Tournament Results are joined only from the same Saved Ranking component and are
   invisible until Ranking Save;
 - the list exposes public schedule/geometry metadata plus result publication, champion and

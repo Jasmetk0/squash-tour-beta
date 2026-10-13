@@ -18,6 +18,12 @@ from beta_engine.application.viewer_tournament_result_read_model import (
 )
 from beta_engine.domain.rankings.revision_state import RankingRevisionState
 from beta_engine.domain.run_packages import RunPackageState
+from beta_engine.application.viewer_tournament_entry_field_read_model import (
+    ViewerTournamentEntryField, resolve_viewer_tournament_entry_field,
+)
+from beta_engine.application.viewer_tournament_draw_read_model import (
+    ViewerTournamentDraw, resolve_viewer_tournament_draw,
+)
 
 
 class RunSavedTourCalendar(BaseModel):
@@ -49,6 +55,8 @@ class RunSavedTourEdition(BaseModel):
     season_index: int = Field(ge=0, le=49)
     edition: ViewerTournamentHistoryItem
     published_result: ViewerTournamentResult | None
+    entry_field: ViewerTournamentEntryField | None = None
+    draw: ViewerTournamentDraw | None = None
     # Calendar status is planning data, not a separate lifecycle authority.
     lifecycle_status: Literal["unavailable"] = "unavailable"
 
@@ -130,6 +138,7 @@ def resolve_run_saved_tour_edition(
     *, run_id: str, selected_branch_id: str, revision_branch_id: str,
     saved_revision_id: str, season_index: int, event_id: str,
     packages: RunPackageState | None, ranking: RankingRevisionState | None,
+    simulation_slots: dict | None = None,
 ) -> RunSavedTourEdition:
     if not event_id or event_id.strip() != event_id or len(event_id) > 128:
         raise ValueError("Saved Tour Edition requires a valid event ID")
@@ -157,8 +166,48 @@ def resolve_run_saved_tour_edition(
             or published.completed_week != item.season_week
         ):
             raise ValueError("Published Tournament Result differs from saved Edition time")
+    # Optional historical Slot evidence: no Entry or Draw is a truthful absence,
+    # but mismatched or corrupted available authority must fail closed.
+    entry_field: ViewerTournamentEntryField | None = None
+    draw: ViewerTournamentDraw | None = None
+    if simulation_slots is not None:
+        def scoped_rows(key: str) -> list[dict]:
+            rows = [
+                row for row in simulation_slots.get(key, ())
+                if row.get("event_id") == event_id
+            ]
+            if any(
+                (row.get("run_id"), row.get("branch_id")) !=
+                (run_id, revision_branch_id) for row in rows
+            ):
+                raise ValueError("Saved Edition sporting authority belongs to another Run/Branch")
+            return rows
+
+        fields = scoped_rows("entry_fields")
+        draws = scoped_rows("draw_authorities")
+        revisions = scoped_rows("draw_revisions")
+        if revisions and not draws:
+            raise ValueError("Saved Edition Draw revisions have no original draw")
+        if draws and not fields:
+            raise ValueError("Saved Edition Draw has no saved Entry Field")
+        if fields:
+            entry_field = resolve_viewer_tournament_entry_field(
+                simulation_slots, run_id=run_id,
+                branch_id=revision_branch_id, event_id=event_id,
+            )
+        if draws:
+            draw = resolve_viewer_tournament_draw(
+                simulation_slots, run_id=run_id,
+                branch_id=revision_branch_id, event_id=event_id,
+            )
+        for authority in (entry_field, draw):
+            if authority is not None and (
+                authority.product_run_id, authority.viewer_branch_id, authority.event_id
+            ) != (run_id, revision_branch_id, event_id):
+                raise ValueError("Saved Edition Entry/Draw projection scope mismatch")
     return RunSavedTourEdition(
         run_id=run_id, branch_id=selected_branch_id,
         revision_branch_id=revision_branch_id, saved_revision_id=saved_revision_id,
         season_index=season_index, edition=item, published_result=published,
+        entry_field=entry_field, draw=draw,
     )

@@ -56,6 +56,17 @@ export type SavedTourMatchSchedule = {
   season_index:number;season_week:number;week_schedule_fingerprint:string
   slots:SavedTourScheduledMatch[]
 }
+export type SavedTourGroupMatch = {
+  match_id:string;group_index:number;match_day_ordinal:number;match_order:number
+  top_player_id:string;bottom_player_id:string;best_of:3|5
+}
+export type SavedTourGroupSchedule = {
+  schema_version:'run_saved_tour_group_schedule.v1'
+  source:'saved_tournament_group_match_schedule_authority.v1'
+  run_id:string;revision_branch_id:string;event_id:string;authority_fingerprint:string
+  group_count:number;group_size:number;match_day_count:number
+  matches:SavedTourGroupMatch[]
+}
 export type SavedTourEdition = {
   schema_version:'run_saved_tour_edition.v1';source:'reachable_saved_revision'
   run_id:string;branch_id:string;revision_branch_id:string
@@ -63,6 +74,7 @@ export type SavedTourEdition = {
   edition:SavedTourEvent;published_result:SavedTourResult|null
   entry_field?:SavedTourEntryField|null;draw?:SavedTourDraw|null
   match_schedule?:SavedTourMatchSchedule|null
+  group_schedule?:SavedTourGroupSchedule|null
   lifecycle_status:'unavailable'
 }
 
@@ -185,6 +197,41 @@ export function validSavedTourEdition(
           ||(slot.entrant_kind==='player'?!slot.player_id:slot.player_id!==null)))
         return false
     }
+  }
+  const groupsSchedule=payload.group_schedule
+  if(groupsSchedule){
+    if(groupsSchedule.schema_version!=='run_saved_tour_group_schedule.v1'
+      ||groupsSchedule.source!=='saved_tournament_group_match_schedule_authority.v1'
+      ||groupsSchedule.run_id!==runId
+      ||groupsSchedule.revision_branch_id!==payload.revision_branch_id
+      ||groupsSchedule.event_id!==eventId
+      ||!/^[0-9a-f]{64}$/.test(groupsSchedule.authority_fingerprint)
+      ||!Number.isInteger(groupsSchedule.group_count)||groupsSchedule.group_count<1
+      ||!Number.isInteger(groupsSchedule.group_size)||groupsSchedule.group_size<2
+      ||!Number.isInteger(groupsSchedule.match_day_count)||groupsSchedule.match_day_count<1
+      ||!Array.isArray(groupsSchedule.matches)
+      ||groupsSchedule.matches.length!==groupsSchedule.group_count
+        *groupsSchedule.group_size*(groupsSchedule.group_size-1)/2)
+      return false
+    const matchIds=new Set<string>(),pairs=new Set<string>()
+    for(const m of groupsSchedule.matches){
+      const pair=m.group_index+':'+[m.top_player_id,m.bottom_player_id].sort().join('|')
+      if(!m.match_id||matchIds.has(m.match_id)
+        ||!Number.isInteger(m.group_index)||m.group_index<1||m.group_index>groupsSchedule.group_count
+        ||!Number.isInteger(m.match_day_ordinal)||m.match_day_ordinal<1
+        ||m.match_day_ordinal>groupsSchedule.match_day_count
+        ||!Number.isInteger(m.match_order)||m.match_order<1
+        ||!m.top_player_id||!m.bottom_player_id||m.top_player_id===m.bottom_player_id
+        ||pairs.has(pair)||![3,5].includes(m.best_of))return false
+      matchIds.add(m.match_id);pairs.add(pair)
+    }
+    const canonicalGroup=result?.matches.filter(m=>m.draw_type==='group')??[]
+    if(canonicalGroup.some(m=>{
+      const scheduled=groupsSchedule.matches.find(item=>item.match_id===m.match_id)
+      return !scheduled||(m.loser_player_id!==null&&
+        !((m.winner_player_id===scheduled.top_player_id&&m.loser_player_id===scheduled.bottom_player_id)
+          ||(m.winner_player_id===scheduled.bottom_player_id&&m.loser_player_id===scheduled.top_player_id)))
+    }))return false
   }
   const schedule=payload.match_schedule
   if(schedule){

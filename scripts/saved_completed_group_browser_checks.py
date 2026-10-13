@@ -42,7 +42,7 @@ def play_group_and_save(
     assert adopted["schedule_fingerprint"] == proposed["schedule_fingerprint"]
 
     preflight = request("GET", simulation + "/position")
-    assert preflight["week"] == {"season_index": 0, "week": 1}
+    assert preflight["current_week"] == {"season_index": 0, "week": 1}
     assert preflight["current_slot_kind"] in {"entry", "match"}, preflight
 
     # Tournament horizon is selected by the engine, never by a synthetic list.

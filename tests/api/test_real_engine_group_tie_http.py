@@ -26,6 +26,9 @@ from beta_engine.application.run_saved_tour_group_standings import (
     resolve_saved_tour_group_standings, resolve_saved_tour_pending_group_ties,
 )
 from tests.infrastructure.test_real_match_engine_group_tie import _engine_cyclic_receipts
+from tests.infrastructure.real_four_player_cyclic_tie_evidence import (
+    _generate_four_player_cyclic_receipts,
+)
 from tests.api.test_saved_revision_history_api import ApiServer, _create_run, _request
 
 pytestmark = pytest.mark.pr_critical
@@ -57,12 +60,19 @@ def _saved_table_row(row):
     }
 
 
+@pytest.mark.parametrize("group_size", (3, 4))
 def test_real_engine_cyclic_tie_http_audit_and_finalization_survive_restart(
-    tmp_path, monkeypatch,
+    tmp_path, monkeypatch, group_size,
 ):
     # A bounded, deterministic search produces real BO3 MatchEngine scores,
     # point totals and rally logs, not synthetic win/scoreline receipts.
-    initial_schedule, receipts, real_case = _engine_cyclic_receipts()
+    initial_schedule, receipts, real_case = (
+        _engine_cyclic_receipts()
+        if group_size == 3
+        else _generate_four_player_cyclic_receipts()
+    )
+    assert initial_schedule.group_size == group_size
+    assert len(receipts) == (3 if group_size == 3 else 6)
     assert real_case.player_ids == ("A", "B", "C")
 
     # The runtime-created Run/Branch IDs are different on every test execution.
@@ -185,7 +195,7 @@ def test_real_engine_cyclic_tie_http_audit_and_finalization_survive_restart(
         archived_schedule = RunSavedTourGroupSchedule(
             run_id=run_id, revision_branch_id=branch_id,
             event_id=event_id, authority_fingerprint=frozen_schedule.fingerprint,
-            group_count=1, group_size=3, match_day_count=3, matches=(),
+            group_count=1, group_size=group_size, match_day_count=3, matches=(),
         )
         assert resolve_saved_tour_group_standings(
             interim_component, run_id=run_id, branch_id=branch_id,
@@ -215,9 +225,9 @@ def test_real_engine_cyclic_tie_http_audit_and_finalization_survive_restart(
             "POST", prefix + "/generate", {"command_id": "after-audited-http"}
         )
         assert status == 201, final
-        assert [r["player_id"] for r in final["groups"][0]["rows"]] == [
-            "C", "A", "B"
-        ]
+        assert [r["player_id"] for r in final["groups"][0]["rows"]] == (
+            ["C", "A", "B"] + (["D"] if group_size == 4 else [])
+        )
         assert final["admin_tie_resolutions"][0]["case"] == real_case.model_dump(mode="json")
         assert final["admin_tie_resolutions"][0]["admin_reason"] == reason
         status, same = _request(
@@ -263,9 +273,9 @@ def test_real_engine_cyclic_tie_http_audit_and_finalization_survive_restart(
         assert projected is not None
         assert projected.authority_fingerprint == final["authority_fingerprint"]
         assert len(projected.tie_decisions) == 1
-        assert [r.player_id for r in projected.groups[0].rows] == [
-            "C", "A", "B"
-        ]
+        assert [r.player_id for r in projected.groups[0].rows] == (
+            ["C", "A", "B"] + (["D"] if group_size == 4 else [])
+        )
         assert resolve_saved_tour_pending_group_ties(
             final_component, run_id=run_id, branch_id=branch_id,
             event_id=event_id, group_schedule=archived_schedule,

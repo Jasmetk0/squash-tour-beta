@@ -440,6 +440,7 @@ def inspect_run_country_records(
 def _saved_tour_revision_context(
     *, run_id: str, branch_id: str, revision_id: str,
     service: RunSavedRevisionHistoryService,
+    include_slots: bool = False,
 ) -> dict:
     """Reuse the validated, fully reachable Saved Revision authority.
 
@@ -451,7 +452,7 @@ def _saved_tour_revision_context(
     )
     saved = detail.saved_revision
     origin = saved.branch_id
-    return dict(
+    context = dict(
         run_id=run_id, selected_branch_id=branch_id,
         revision_branch_id=origin, saved_revision_id=saved.revision_id,
         packages=load_saved_run_package_state(
@@ -461,6 +462,13 @@ def _saved_tour_revision_context(
             saved.payload, run_id=run_id, branch_id=origin,
         ),
     )
+    if include_slots:
+        # Read the same immutable Saved Revision payload as the Calendar/Ranking.
+        # Never consult the mutable live Simulation Slot or official Viewer HEAD.
+        context["simulation_slots"] = load_saved_simulation_slot_component(
+            saved.payload, run_id=run_id, branch_id=origin,
+        )
+    return context
 
 
 @router.get("/tour/calendar", response_model=RunSavedTourCalendar)
@@ -501,7 +509,7 @@ def inspect_run_saved_tour_edition(
     try:
         context = _saved_tour_revision_context(
             run_id=run_id, branch_id=branch_id,
-            revision_id=revision_id, service=service,
+            revision_id=revision_id, service=service, include_slots=True,
         )
         return resolve_run_saved_tour_edition(
             **context, season_index=season_index, event_id=event_id,

@@ -977,10 +977,13 @@ export function PlannedEventDetailPage(): JSX.Element {
     if (action === 'configure_tournament_format' || action === 'generate_tournament_topology') {
       const calendarSeason = canonicalCalendar?.calendar.events
         .find(e => e.event_id === eventId)?.season
-      const calendarSeasonIndex = calendarSeason &&
+      const calendarYear = typeof calendarSeason === 'number' ? calendarSeason :
+        typeof calendarSeason === 'string' &&
         new RegExp('^20[0-9]{2}/20[0-9]{2}$').test(calendarSeason)
-        ? Number(calendarSeason.slice(0, 4)) - 2000
-        : null
+          ? Number(calendarSeason.slice(0, 4)) : null
+      const calendarSeasonIndex = calendarYear !== null &&
+        Number.isInteger(calendarYear) && calendarYear >= 2000 && calendarYear <= 2049
+          ? calendarYear - 2000 : null
       const groupSeasonIndex = canonicalPreparationQuery.data?.entry_source_target_season_index
         ?? calendarSeasonIndex
       return <GroupFormatSetupPanel

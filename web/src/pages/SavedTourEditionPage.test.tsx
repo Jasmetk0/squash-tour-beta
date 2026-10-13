@@ -48,6 +48,31 @@ function mount(path='/admin/runs/run-a/tour/calendar/event-x?branch=branch-a&rev
   </QueryClientProvider>)
 }
 describe('Saved Edition detail',()=>{
+  it('renders genuine group Match Days and links only canonically published results',async()=>{
+    const source=fixture(false)
+    source.group_schedule={
+      schema_version:'run_saved_tour_group_schedule.v1',
+      source:'saved_tournament_group_match_schedule_authority.v1',
+      run_id:'run-a',revision_branch_id:'ancestor',event_id:'event-x',
+      authority_fingerprint:'b'.repeat(64),group_count:1,group_size:2,
+      match_day_count:1,matches:[{
+        match_id:'group-1',group_index:1,match_day_ordinal:1,
+        match_order:1,top_player_id:'P1',bottom_player_id:'P2',best_of:3
+      }]
+    }
+    api.getSavedTourEdition.mockResolvedValue(source)
+    mount()
+    expect(await screen.findByRole('heading',{name:'Brno Open'})).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button',{name:'Schedule & matches'}))
+    const group=screen.getByRole('table',{name:'Saved group matches'})
+    expect(within(group).getByText('P1 – P2')).toBeInTheDocument()
+    expect(within(group).getByText('BO3')).toBeInTheDocument()
+    expect(within(group).getByText('Not canonically published')).toBeInTheDocument()
+    expect(within(group).queryByRole('link',{name:'Match detail'})).not.toBeInTheDocument()
+    expect(screen.getByText(/Days are ordinal, not calendar dates/)).toBeInTheDocument()
+    expect(screen.queryByRole('button',{name:'Qualification'})).not.toBeInTheDocument()
+  })
+
   beforeEach(()=>{
     vi.clearAllMocks();context.time.mode='present';context.language='en'
     context.branch.run_id='run-a';context.branch.branch_id='branch-a'

@@ -45,6 +45,7 @@ import {
   SummaryPills
 } from '../components/RunScopedUi'
 import {GroupFormatSetupPanel} from '../components/GroupFormatSetupPanel'
+import { useLanguage } from '../i18n/LanguageContext'
 import { CompletedGroupStandingsPanel } from '../components/CompletedGroupStandingsPanel'
 import { canOfferPureGroupSetup } from './groupFormatAvailability'
 import { formatApiError, isApiNotFound } from '../utils/apiErrors'
@@ -66,6 +67,7 @@ import type {
 
 export function PlannedEventDetailPage(): JSX.Element {
   const { runId = '', eventId = '' } = useParams()
+  const {language}=useLanguage(),cs=language==='cs'
   const [searchParams] = useSearchParams()
   const requestedBranchId = searchParams.get('branch')
   const requestedCalendarId = searchParams.get('calendar')
@@ -1008,26 +1010,25 @@ export function PlannedEventDetailPage(): JSX.Element {
     if (action === 'prepare_group_match_schedule') {
       return (
         <div className="grid">
-          <p className="status">
-            Canonical group assignment and every round-robin pairing are frozen.
-            Materialize the immutable group Match + Match Day schedule from that topology.
-          </p>
+          <p className="status">{cs?'Potvrzeno přiřazení hráčů do skupin i všechny dvojice každý s každým. Z této topologie vytvoř neměnný rozpis zápasů a zápasových dnů.':
+            'Canonical group assignment and every round-robin pairing are frozen. Materialize the immutable group Match + Match Day schedule from that topology.'}</p>
           <button
             type="button"
             onClick={() => groupMatchScheduleMutation.mutate()}
             disabled={groupMatchScheduleMutation.isPending}
           >
-            Generate group Match Schedule
+            {cs?'Vytvořit rozpis skupinových zápasů':'Generate group Match Schedule'}
           </button>
           {groupMatchScheduleMutation.error ? (
             <p className="error">
-              Group Match Schedule generation failed: {formatApiError(groupMatchScheduleMutation.error)}
+              {cs?'Vytvoření rozpisu skupin selhalo: ':'Group Match Schedule generation failed: '}{formatApiError(groupMatchScheduleMutation.error)}
             </p>
           ) : null}
           {groupMatchScheduleMutation.data ? (
             <p className="status">
-              Frozen {groupMatchScheduleMutation.data.matches.length} group matches across{' '}
-              {groupMatchScheduleMutation.data.match_day_count} Match Days.
+              {cs?'Potvrzeno':'Frozen'} {groupMatchScheduleMutation.data.matches.length}
+              {' '}{cs?'skupinových zápasů ve':'group matches across'}{' '}
+              {groupMatchScheduleMutation.data.match_day_count} {cs?'zápasových dnech.':'Match Days.'}
             </p>
           ) : null}
         </div>
@@ -1215,15 +1216,13 @@ export function PlannedEventDetailPage(): JSX.Element {
                 canonicalPreparationQuery.data,
                 Boolean(canonicalEntryFieldQuery.data)
               ) ? (
-                <div className="grid" aria-label="Optional group tournament Format">
-                  <p>
-                    Continue to the normal knockout Draw Input, or explicitly select
-                    pure round-robin groups before a Draw or Format is frozen.
-                    No implicit Save or fabricated sporting result.
-                  </p>
+                <div className="grid" aria-label={cs?'Volitelné nastavení skupinového turnaje':'Optional group tournament Format'}>
+                  <p>{cs?'Můžeš pokračovat běžným vyřazovacím pavoukem, nebo ještě před potvrzením pavouku či formátu výslovně zvolit čisté skupiny každý s každým. Žádné automatické Save ani vymyšlené výsledky.':
+                    'Continue to the normal knockout Draw Input, or explicitly select pure round-robin groups before a Draw or Format is frozen. No implicit Save or fabricated sporting result.'}</p>
                   <button type="button" aria-expanded={showOptionalGroupSetup}
                     onClick={() => setShowOptionalGroupSetup(value => !value)}>
-                    {showOptionalGroupSetup ? 'Close pure group setup' : 'Choose pure round-robin groups'}
+                    {showOptionalGroupSetup?(cs?'Zavřít nastavení skupin':'Close pure group setup'):
+                      (cs?'Zvolit skupiny každý s každým':'Choose pure round-robin groups')}
                   </button>
                   {showOptionalGroupSetup ? (
                     <GroupFormatSetupPanel
@@ -1240,11 +1239,8 @@ export function PlannedEventDetailPage(): JSX.Element {
               ) : null}
               {canonicalPreparationQuery.data.phase === 'group_match_execution_ready' ? (
                 <>
-                  <p className="status">
-                    Group Match authority and Match Day chronology are frozen.
-                    These frozen group matches are ready for canonical Simulation Slot execution.\n                    Play their real matches before generating immutable final tables.
-                    Hybrid knockout closure remains a separate sporting authority.
-                  </p>
+                  <p className="status">{cs?'Skupinové zápasy a pořadí zápasových dnů jsou potvrzené. Nyní je lze odehrát ve skutečné simulaci. Konečné tabulky vytvoř až po odehrání zápasů; uzavření hybridního pavouku je samostatný krok.':
+                    'Group Match authority and Match Day chronology are frozen. These frozen group matches are ready for canonical Simulation Slot execution. Play their real matches before generating immutable final tables. Hybrid knockout closure remains a separate sporting authority.'}</p>
                   {verifiedCalendarScope &&
                    canonicalPreparationQuery.data.format_kind === 'groups' ? (
                     <CompletedGroupStandingsPanel

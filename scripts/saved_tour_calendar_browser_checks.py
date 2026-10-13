@@ -92,7 +92,7 @@ def verify_saved_tour_calendar(page, run_url: str, artifacts, port: int, source:
     assert later_rallies["rallies"][0]["rally_index"] == 26
     assert later_rallies["saved_revision_id"] == revision_id
     get(match_path.replace("/branches/" + enc(branch_id) + "/",
-                           "/branches/foreign-branch/"), status=404)
+                           "/branches/foreign-branch/") + params, status=404)
     get(match_path + "?revision_id=not-reachable&season_index=0", status=404)
     get(scope + "/tour/editions/" + enc(event_id)
         + "/matches/foreign-match" + params, status=404)

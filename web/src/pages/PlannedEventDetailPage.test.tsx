@@ -60,6 +60,10 @@ const api = vi.hoisted(() => ({
   commitCanonicalFrozenMainReplacement: vi.fn(),
 }))
 const adminTime = vi.hoisted(() => ({ viewed: vi.fn() }))
+const locale = vi.hoisted(() => ({ current: 'en' as 'en' | 'cs' }))
+vi.mock('../i18n/LanguageContext', () => ({
+  useLanguage: () => ({ language: locale.current })
+}))
 
 vi.mock('../api/client', () => api)
 vi.mock('../admin/useAdminViewedSeasonState', () => ({ useAdminViewedSeasonState: adminTime.viewed }))
@@ -100,6 +104,7 @@ function renderAt(route: string): void {
 describe('PlannedEventDetailPage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    locale.current = 'en'
     api.getAdminCompletedGroupStandings.mockRejectedValue(new api.ApiError('Standings not frozen', 404))
     api.getAdminGroupTieResolutionState.mockResolvedValue({
       schema_version: 'tournament_group_tie_resolution_state.v1',

@@ -1,3 +1,21 @@
+# Exact Saved Edition match detail + archived replay candidate — 13 October 2026
+
+Built on merged #1420 / buuk 25d9b53b8159403b80dae9d830ff856a6ab78915:
+New read-only exact Saved Revision Edition match detail API/route.
+Matches come from canonical published result only, rally replay only from
+same immutable Saved Slot group (original source Branch, not current HEAD).
+Pagination max 25 preserved across resume; no synthetic match or rally.
+Edition Results and Schedule link only actually played canonical Match IDs
+with Back preserving filters/tab/revision. Real Chromium/SQLite/restart
+acceptance proves rally #26; application/API/frontend guard tests added.
+
+Candidate only until green final HEAD; user alone merges.
+Detailed contract: `docs/SAVED_EDITION_MATCH_REPLAY_V1.md`.
+Next: conditionally expose trustworthy historical player match links and
+event-specific group schedules; never infer absent replay or time.
+
+---
+
 # Exact Saved Edition Match Day schedule candidate — 13 October 2026
 
 PR candidate on merged #1419 / buuk f1b37b73b2e93eb81f4ee7dd95938daa3bd18362:

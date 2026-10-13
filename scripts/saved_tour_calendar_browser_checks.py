@@ -73,6 +73,31 @@ def verify_saved_tour_calendar(page, run_url: str, artifacts, port: int, source:
     assert any(slot["match_id"] == source["match_id"] for slot in saved_schedule["slots"])
     assert all(slot["match_id"] is None or slot["match_id"] in match_ids
                for slot in saved_schedule["slots"])
+    # The historical Edition match endpoint is NOT the current player HEAD.
+    # It must read exactly this Saved Revision and a real archived rally log.
+    match_path = (scope + "/tour/editions/" + enc(event_id)
+                  + "/matches/" + enc(source["match_id"]))
+    match_query = params + "&offset=0&limit=25"
+    archived = get(match_path + match_query)
+    assert archived["schema_version"] == "run_saved_tour_match_detail.v1"
+    assert archived["source"] == "reachable_saved_revision"
+    assert archived["branch_id"] == archived["revision_branch_id"] == branch_id
+    assert archived["saved_revision_id"] == revision_id
+    assert archived["match"]["match_id"] == source["match_id"]
+    assert archived["match"]["scoreline"] == source["scoreline"]
+    assert archived["replay_status"] == "available", ("Rally archive missing", archived)
+    assert archived["total_rallies"] > 25 and archived["has_more"]
+    assert len(archived["rallies"]) == 25
+    later_rallies = get(match_path + params + "&offset=25&limit=25")
+    assert later_rallies["rallies"][0]["rally_index"] == 26
+    assert later_rallies["saved_revision_id"] == revision_id
+    get(match_path.replace("/branches/" + enc(branch_id) + "/",
+                           "/branches/foreign-branch/") + params, status=404)
+    get(match_path + "?revision_id=not-reachable&season_index=0", status=404)
+    get(scope + "/tour/editions/" + enc(event_id)
+        + "/matches/foreign-match" + params, status=404)
+    get(match_path + "?revision_id=" + enc(revision_id) + "&season_index=2", status=404)
+
 
 
     get(scope + "/tour/calendar?revision_id=foreign&season_index=0", status=404)
@@ -96,6 +121,25 @@ def verify_saved_tour_calendar(page, run_url: str, artifacts, port: int, source:
     assert "revision=" + enc(revision_id) in page.url
     expect(page.get_by_role("navigation", name="Edition sections").get_by_role("button")).to_have_count(6)
     page.get_by_role("button", name="Results").click()
+    assert source["scoreline"] in page.locator("#saved-results-main").inner_text()
+    # Click the exact match rather than using the present-time player profile.
+    played_link = page.locator(
+        'a[href*="/matches/' + enc(source["match_id"]) + '"]'
+    ).first
+    expect(played_link).to_be_visible()
+    played_link.click()
+    expect(page.get_by_role("heading", name="Historical match detail")).to_be_visible()
+    expect(page.get_by_text("Archived rallies:", exact=False)).to_be_visible()
+    expect(page.get_by_text("Rally 1/", exact=False)).to_be_visible()
+    page.get_by_role("button", name="Next rally →").click()
+    expect(page.get_by_text("Rally 2/", exact=False)).to_be_visible()
+    for _ in range(24):
+        page.get_by_role("button", name="Next rally →").click()
+    expect(page.get_by_text("Rally 26/", exact=False)).to_be_visible()
+    assert "revision=" + enc(revision_id) in page.url
+    page.screenshot(path=str(artifacts / f"{prefix}saved-tour-match-replay.png"), full_page=True)
+    page.get_by_role("link", name="Back to Edition results").click()
+    expect(page.get_by_role("heading", name=edition["event_name"])).to_be_visible()
     assert source["scoreline"] in page.locator("#saved-results-main").inner_text()
     page.get_by_role("button", name="Schedule & matches").click()
     expect(page.get_by_text("Authentic Saved Week Simulation Schedule v2.", exact=False)).to_be_visible()
@@ -139,6 +183,8 @@ def verify_saved_tour_calendar(page, run_url: str, artifacts, port: int, source:
         "filters_and_return": True, "six_tabs": True,
         "real_saved_match_day_slot_count": len(saved_schedule["slots"]),
         "real_saved_match_day_fingerprint": saved_schedule["week_schedule_fingerprint"],
+        "replay_total_rallies": archived["total_rallies"],
+        "historical_match_replay_revision": archived["saved_revision_id"],
     }
     if expected is not None:
         assert proof == expected, (proof, expected)

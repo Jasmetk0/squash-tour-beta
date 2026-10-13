@@ -66,6 +66,54 @@ export type SavedTourEdition = {
   lifecycle_status:'unavailable'
 }
 
+export type SavedTourRallyFrame = {
+  rally_index:number;set_number:number;server_player_id:string;winner_player_id:string|null
+  score_a_before:number;score_b_before:number;score_a_after:number;score_b_after:number
+  sets_a_after:number;sets_b_after:number;set_complete:boolean;match_complete:boolean
+}
+export type SavedTourMatchDetail = {
+  schema_version:'run_saved_tour_match_detail.v1'
+  source:'reachable_saved_revision'
+  run_id:string;branch_id:string;revision_branch_id:string
+  saved_revision_id:string;season_index:number;event_id:string;match_id:string
+  match:SavedTourResult['matches'][number]
+  replay_status:'available'|'unavailable';player_a_id:string|null;player_b_id:string|null
+  offset:number;limit:number;total_rallies:number;has_more:boolean
+  rallies:SavedTourRallyFrame[]
+}
+/** Exact selected branch and original revision-owner validation for historical match pages. */
+export function validSavedTourMatchDetail(
+  data:SavedTourMatchDetail,runId:string,branchId:string,revisionId:string,
+  seasonIndex:number,eventId:string,matchId:string,offset:number,limit:number
+):boolean{
+  if(data.schema_version!=='run_saved_tour_match_detail.v1'
+    ||data.source!=='reachable_saved_revision'
+    ||data.run_id!==runId||data.branch_id!==branchId
+    ||!data.revision_branch_id||data.saved_revision_id!==revisionId
+    ||data.season_index!==seasonIndex||data.event_id!==eventId
+    ||data.match_id!==matchId||data.match?.match_id!==matchId
+    ||!data.match.winner_player_id||!data.match.loser_player_id
+    ||data.match.winner_player_id===data.match.loser_player_id
+    ||data.offset!==offset||data.limit!==limit
+    ||!Number.isInteger(data.total_rallies)||data.total_rallies<0
+    ||!Array.isArray(data.rallies)||data.rallies.length>limit
+    ||!['available','unavailable'].includes(data.replay_status)
+    ||data.has_more!==(data.replay_status==='available'&&offset+limit<data.total_rallies))
+    return false
+  if(data.replay_status==='unavailable')
+    return data.total_rallies===0&&data.rallies.length===0&&!data.player_a_id&&!data.player_b_id
+  if(!data.player_a_id||!data.player_b_id||data.player_a_id===data.player_b_id
+    ||new Set([data.player_a_id,data.player_b_id,data.match.winner_player_id,data.match.loser_player_id]).size!==2
+    ||data.total_rallies===0
+    ||data.rallies.length!==Math.max(0,Math.min(limit,data.total_rallies-offset)))
+    return false
+  return data.rallies.every((frame,i)=>
+    frame.rally_index===offset+i+1&&frame.set_number>=1&&
+    [data.player_a_id,data.player_b_id].includes(frame.server_player_id)&&
+    (frame.winner_player_id===null||[data.player_a_id,data.player_b_id].includes(frame.winner_player_id))
+  )
+}
+
 /** Fail closed before displaying data from stale caches or cross-Branch responses. */
 export function matchesSavedTourContext(
   payload:SavedTourCalendar|SavedTourEdition,

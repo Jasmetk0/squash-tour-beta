@@ -46,8 +46,18 @@ export function SavedTourEditionPage():JSX.Element {
   const matches=result?.matches??[]
   const main=matches.filter(m=>m.draw_type!=='qualification')
   const qualification=matches.filter(m=>m.draw_type==='qualification')
+  const matchHref=(matchId:string,sourceTab:'schedule'|'results')=>{
+    const q=new URLSearchParams(params)
+    q.set('tab',sourceTab)
+    return '/admin/runs/'+encodeURIComponent(runId)+'/tour/calendar/'
+      +encodeURIComponent(eventId)+'/matches/'+encodeURIComponent(matchId)+'?'+q.toString()
+  }
   const matchRow=(m:typeof matches[number])=><tr key={m.match_id}><td>{m.round_number}</td>
-    <td>{m.winner_player_id}</td><td>{m.loser_player_id??'—'}</td><td>{m.scoreline}</td></tr>
+    <td>{m.winner_player_id}</td><td>{m.loser_player_id??'—'}</td>
+    <td><span>{m.scoreline}</span>{m.loser_player_id&&<>
+      {' · '}<Link to={matchHref(m.match_id,tab==='schedule'?'schedule':'results')}>
+        {cs?'Detail zápasu':'Match detail'}</Link>
+    </>}</td></tr>
   const matchTable=(group:typeof matches)=>group.length?
     <div className="table-responsive"><table><thead><tr>
       <th>{cs?'Kolo':'Round'}</th><th>{cs?'Vítěz':'Winner'}</th>
@@ -65,7 +75,9 @@ export function SavedTourEditionPage():JSX.Element {
         return <tr key={slot.global_slot_ordinal}>
           <td>{slot.match_day_ordinal}</td><td>{slot.match_order}</td>
           <td>{slot.global_slot_ordinal}</td><td>{slot.draw_phase}</td><td>{slot.round_number}</td>
-          <td>{slot.match_id??(cs?'Plán zápasu není uložen':'No saved match plan')}</td>
+          <td>{slot.match_id&&published?.loser_player_id?
+            <Link to={matchHref(slot.match_id,'schedule')}>{slot.match_id}</Link>:
+            (slot.match_id??(cs?'Plán zápasu není uložen':'No saved match plan'))}</td>
           <td>{published?published.winner_player_id+' · '+published.scoreline:'—'}</td>
         </tr>
       })}</tbody></table></div>:

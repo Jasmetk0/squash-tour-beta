@@ -4556,3 +4556,27 @@ export function getSavedTourEdition(
   const params=new URLSearchParams({revision_id:revisionId,season_index:String(seasonIndex)})
   return request(prefix+'/tour/editions/'+encodeURIComponent(eventId)+'?'+params.toString())
 }
+
+/** Reachable, immutable Saved Revision Edition match; never the current player Saved HEAD. */
+export async function getSavedTourMatchDetail(
+  runId:string,branchId:string,revisionId:string,seasonIndex:number,
+  eventId:string,matchId:string,offset=0,limit=25
+):Promise<import('./savedTour').SavedTourMatchDetail>{
+  if([runId,branchId,revisionId,eventId,matchId].some(id=>!id||id.length>128||id.trim()!==id)
+    ||!Number.isInteger(seasonIndex)||seasonIndex<0||seasonIndex>49
+    ||!Number.isInteger(offset)||offset<0
+    ||!Number.isInteger(limit)||limit<1||limit>25){
+    throw new Error('Invalid historical Edition match request.')
+  }
+  const q=new URLSearchParams({revision_id:revisionId,season_index:String(seasonIndex),
+    offset:String(offset),limit:String(limit)})
+  const data=await request<import('./savedTour').SavedTourMatchDetail>(
+    '/admin/runs/'+encodeURIComponent(runId)+'/branches/'+encodeURIComponent(branchId)
+      +'/tour/editions/'+encodeURIComponent(eventId)+'/matches/'+encodeURIComponent(matchId)
+      +'?'+q.toString()
+  )
+  const {validSavedTourMatchDetail}=await import('./savedTour')
+  if(!validSavedTourMatchDetail(data,runId,branchId,revisionId,seasonIndex,eventId,matchId,offset,limit))
+    throw new Error('Historical Edition match does not match the selected Saved Revision.')
+  return data
+}

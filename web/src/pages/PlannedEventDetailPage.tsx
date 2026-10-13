@@ -45,6 +45,7 @@ import {
   SummaryPills
 } from '../components/RunScopedUi'
 import {GroupFormatSetupPanel} from '../components/GroupFormatSetupPanel'
+import { canOfferPureGroupSetup } from './groupFormatAvailability'
 import { formatApiError, isApiNotFound } from '../utils/apiErrors'
 import { isRunCalendarProjection } from '../api/runFirstTournament'
 import { verifiedRunCalendarHandoff } from '../api/runCalendarHandoff'
@@ -77,6 +78,7 @@ export function PlannedEventDetailPage(): JSX.Element {
   const [canonicalWildcardPreview, setCanonicalWildcardPreview] =
     useState<CanonicalWildCardPreview | null>(null)
   const [rankingPublicationSelection, setRankingPublicationSelection] = useState('')
+  const [showOptionalGroupSetup, setShowOptionalGroupSetup] = useState(false)
   const [entryMainDrawSize, setEntryMainDrawSize] = useState('')
   const [entryQualificationDrawSize, setEntryQualificationDrawSize] = useState('0')
   const [entryQualifierSpots, setEntryQualifierSpots] = useState('0')
@@ -959,6 +961,23 @@ export function PlannedEventDetailPage(): JSX.Element {
     canonicalWildcardReason
   ])
 
+  useEffect(() => {
+    setShowOptionalGroupSetup(false)
+  }, [runId, activeBranchId, eventId])
+
+  function groupSeasonIndex(): number | null {
+    const calendarSeason = canonicalCalendar?.calendar.events
+      .find(e => e.event_id === eventId)?.season
+    const calendarYear = typeof calendarSeason === 'number' ? calendarSeason :
+      typeof calendarSeason === 'string' &&
+      new RegExp('^20[0-9]{2}/20[0-9]{2}$').test(calendarSeason)
+        ? Number(calendarSeason.slice(0, 4)) : null
+    const calendarSeasonIndex = calendarYear !== null &&
+      Number.isInteger(calendarYear) && calendarYear >= 2000 && calendarYear <= 2049
+        ? calendarYear - 2000 : null
+    return canonicalPreparationQuery.data?.entry_source_target_season_index ?? calendarSeasonIndex
+  }
+
   function preparationActionHandoff(): JSX.Element | null {
     const action = canonicalPreparationQuery.data?.next_required_action
     if (!action || action === 'none') return null
@@ -975,21 +994,10 @@ export function PlannedEventDetailPage(): JSX.Element {
       return <p><a href="#canonical-draw-authority">Open canonical Draw generation</a></p>
     }
     if (action === 'configure_tournament_format' || action === 'generate_tournament_topology') {
-      const calendarSeason = canonicalCalendar?.calendar.events
-        .find(e => e.event_id === eventId)?.season
-      const calendarYear = typeof calendarSeason === 'number' ? calendarSeason :
-        typeof calendarSeason === 'string' &&
-        new RegExp('^20[0-9]{2}/20[0-9]{2}$').test(calendarSeason)
-          ? Number(calendarSeason.slice(0, 4)) : null
-      const calendarSeasonIndex = calendarYear !== null &&
-        Number.isInteger(calendarYear) && calendarYear >= 2000 && calendarYear <= 2049
-          ? calendarYear - 2000 : null
-      const groupSeasonIndex = canonicalPreparationQuery.data?.entry_source_target_season_index
-        ?? calendarSeasonIndex
       return <GroupFormatSetupPanel
         key={[runId,activeBranchId,eventId,action].join(':')}
         runId={runId} branchId={activeBranchId} eventId={eventId}
-        seasonIndex={groupSeasonIndex}
+        seasonIndex={groupSeasonIndex()}
         entrantCount={canonicalEntryFieldQuery.data?.direct_main_player_ids.length ?? 0}
         hasQualification={Boolean(canonicalEntryFieldQuery.data?.qualification_player_ids.length)}
         hasByes={Boolean(canonicalEntryFieldQuery.data?.effective_main_bye_count)}
@@ -1202,6 +1210,33 @@ export function PlannedEventDetailPage(): JSX.Element {
                 ]}
               />
               {preparationActionHandoff()}
+              {canOfferPureGroupSetup(
+                canonicalPreparationQuery.data,
+                Boolean(canonicalEntryFieldQuery.data)
+              ) ? (
+                <div className="grid" aria-label="Optional group tournament Format">
+                  <p>
+                    Continue to the normal knockout Draw Input, or explicitly select
+                    pure round-robin groups before a Draw or Format is frozen.
+                    No implicit Save or fabricated sporting result.
+                  </p>
+                  <button type="button" aria-expanded={showOptionalGroupSetup}
+                    onClick={() => setShowOptionalGroupSetup(value => !value)}>
+                    {showOptionalGroupSetup ? 'Close pure group setup' : 'Choose pure round-robin groups'}
+                  </button>
+                  {showOptionalGroupSetup ? (
+                    <GroupFormatSetupPanel
+                      key={[runId, activeBranchId, eventId, 'optional-groups'].join(':')}
+                      runId={runId} branchId={activeBranchId} eventId={eventId}
+                      seasonIndex={groupSeasonIndex()}
+                      entrantCount={canonicalEntryFieldQuery.data?.direct_main_player_ids.length ?? 0}
+                      hasQualification={Boolean(canonicalEntryFieldQuery.data?.qualification_player_ids.length)}
+                      hasByes={Boolean(canonicalEntryFieldQuery.data?.effective_main_bye_count)}
+                      step="format"
+                    />
+                  ) : null}
+                </div>
+              ) : null}
               {canonicalPreparationQuery.data.phase === 'group_match_execution_ready' ? (
                 <p className="status">
                   Group Match authority and conflict-free Match Day chronology are frozen.

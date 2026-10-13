@@ -27,6 +27,9 @@ export function GroupFormatSetupPanel({
   const [confirmRules,setConfirmRules]=useState(false)
   const [confirmFormat,setConfirmFormat]=useState(false)
   const [confirmTopology,setConfirmTopology]=useState(false)
+  const [topologySeed,setTopologySeed]=useState('137')
+  const validTopologySeed=/^(0|[1-9][0-9]*)$/.test(topologySeed)
+    &&Number.isSafeInteger(Number(topologySeed))&&Number(topologySeed)<=2147483647
   const seasonValid=seasonIndex!==null&&Number.isInteger(seasonIndex)
     &&seasonIndex>=0&&seasonIndex<=49
   const enabled=Boolean(runId&&branchId&&eventId&&seasonValid)
@@ -56,6 +59,7 @@ export function GroupFormatSetupPanel({
   const topologyMutation=useMutation({
     mutationFn:()=>generateAdminGroupTopology(
       runId,branchId,eventId,('admin-ui-group-topology-'+eventId).slice(0,128),
+      Number(topologySeed),
     ),
     onSuccess:async()=>{setConfirmTopology(false);await invalidate()}
   })
@@ -122,10 +126,15 @@ export function GroupFormatSetupPanel({
     {frozen&&<div className="grid">
       <p>Format is frozen. Generate the authoritative participant assignment and
         complete round-robin topology without inventing group placements.</p>
+      <label>Group Topology seed
+        <input aria-label="Group Topology seed" type="number" min="0" max="2147483647"
+          step="1" value={topologySeed} onChange={e=>setTopologySeed(e.target.value)}/>
+      </label>
+      {!validTopologySeed&&<p role="alert">Topology seed must be a whole number from 0 to 2147483647.</p>}
       <label><input type="checkbox" checked={confirmTopology}
         onChange={e=>setConfirmTopology(e.target.checked)}/>
         Confirm immutable group Topology</label>
-      <button type="button" disabled={!enabled||!confirmTopology||topologyMutation.isPending}
+      <button type="button" disabled={!enabled||!confirmTopology||!validTopologySeed||topologyMutation.isPending}
         onClick={()=>topologyMutation.mutate()}>Generate group Topology</button>
       {topologyMutation.error&&<p role="alert">{formatApiError(topologyMutation.error)}</p>}
     </div>}

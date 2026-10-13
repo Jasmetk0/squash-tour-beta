@@ -166,6 +166,45 @@ def verify_saved_tour_calendar(page, run_url: str, artifacts, port: int, source:
     assert "country=" + enc(edition["host_country"]) in page.url
     assert "revision=" + enc(revision_id) in page.url
 
+    # New production Country -> immutable Edition -> real archived Match -> Country
+    # navigation, using the SAME SQLite-backed Run, not a mocked browser API.
+    # This disposable test Cup has a host in its copied FAX World (GER).
+    assert edition["host_country"] == "GER", edition
+    country_path = (f"/admin/runs/{enc(run_id)}/world/countries/{enc(edition['host_country'])}"
+                    "?tab=tournaments&year=2020&q=retain-me")
+    page.goto(base + country_path)
+    country_panel = page.get_by_role("region", name="Run World country detail")
+    expect(country_panel).to_be_visible()
+    editions_table = country_panel.get_by_role(
+        "table", name="Country tournament editions 2000/2001")
+    expect(editions_table.get_by_role("link", name=edition["event_name"])).to_be_visible()
+    editions_table.get_by_role("link", name=edition["event_name"]).click()
+    expect(page.get_by_role("heading", name=edition["event_name"])).to_be_visible()
+    assert "branch=" + enc(branch_id) in page.url
+    assert "revision=" + enc(revision_id) in page.url
+    assert "season=0" in page.url
+    page.get_by_role("button", name="Results").click()
+    exact_match = page.locator('a[href*="/matches/' + enc(source["match_id"]) + '"]').first
+    expect(exact_match).to_be_visible()
+    exact_match.click()
+    expect(page.get_by_role("heading", name="Historical match detail")).to_be_visible()
+    expect(page.get_by_text("Archived rallies:", exact=False)).to_be_visible()
+    page.get_by_role("link", name="Back to Edition results").click()
+    expect(page.get_by_role("heading", name=edition["event_name"])).to_be_visible()
+    page.get_by_role("link", name="Back to country tournaments").click()
+    expect(country_panel.get_by_role(
+        "table", name="Country tournament editions 2000/2001")).to_be_visible()
+    assert "tab=tournaments" in page.url and "year=2020" in page.url
+    assert "q=retain-me" in page.url
+    assert "#country-edition-0-" in page.url
+    page.get_by_role("combobox", name="Language / Jazyk").select_option("cs")
+    expect(country_panel.get_by_role(
+        "link", name=edition["event_name"])).to_be_visible()
+    page.screenshot(path=str(artifacts / f"{prefix}country-edition-match-return.png"),
+                    full_page=True)
+    page.get_by_role("combobox", name="Language / Jazyk").select_option("en")
+    page.goto(base + route)
+
     # A historical earlier Saved Revision must not inherit a later result.
     history = get(f"/run-containers/{enc(run_id)}/branches/{enc(branch_id)}/saved-revisions")
     older = [r["revision_id"] for r in history["saved_revisions"]

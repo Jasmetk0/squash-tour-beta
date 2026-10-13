@@ -169,6 +169,25 @@ describe('Saved Edition detail',()=>{
     await userEvent.click(screen.getByRole('button',{name:'Results'}))
     expect(screen.getByText(/not published in this revision/)).toBeInTheDocument()
   })
+  it('returns to exact historical country filters, year and row in both languages',async()=>{
+    context.language='cs'
+    const from='/admin/runs/run-a/world/countries/CZE?tab=tournaments&year=2020&q=cze&revision=rev-old#country-edition-2-event-x'
+    mount('/admin/runs/run-a/tour/calendar/event-x?branch=branch-a&revision=rev-old&season=2&fromCountry='+
+      encodeURIComponent(from))
+    expect(await screen.findByRole('heading',{name:'Brno Open'})).toBeInTheDocument()
+    expect(screen.getByRole('link',{name:/Zpět na turnaje země/})).toHaveAttribute('href',from)
+    await userEvent.click(screen.getByRole('button',{name:'Výsledky'}))
+    expect(screen.getByRole('link',{name:/Zpět na turnaje země/})).toHaveAttribute('href',from)
+    expect(api.getSavedTourEdition).toHaveBeenCalledWith('run-a','branch-a','rev-old',2,'event-x')
+  })
+  it('rejects cross-revision return paths, retaining calendar fallback',async()=>{
+    const from='/admin/runs/run-a/world/countries/CZE?tab=tournaments&revision=wrong'
+    mount('/admin/runs/run-a/tour/calendar/event-x?branch=branch-a&revision=rev-old&season=2&fromCountry='+
+      encodeURIComponent(from))
+    expect(await screen.findByRole('heading',{name:'Brno Open'})).toBeInTheDocument()
+    expect(screen.queryByRole('link',{name:/Back to country tournaments/})).not.toBeInTheDocument()
+    expect(screen.getByRole('link',{name:/Back to calendar/})).toBeInTheDocument()
+  })
   it('shows real saved results in Main then Qualification; draw-only phase switch',async()=>{
     api.getSavedTourEdition.mockResolvedValue(fixture(true))
     mount()

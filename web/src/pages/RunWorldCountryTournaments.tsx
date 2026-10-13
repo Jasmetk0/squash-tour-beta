@@ -1,13 +1,23 @@
-import {Link} from 'react-router-dom'
-import {calendarSeasonIndex} from './runWorldCountryTournaments'
+import {useEffect} from 'react'
+import {Link,useLocation} from 'react-router-dom'
+import {calendarSeasonIndex,countryEditionAnchor,savedCountryEditionHref} from './runWorldCountryTournaments'
 import type {CountryTournamentEdition,CountryTournaments} from './runWorldCountryTournaments'
 type Props={
   runId:string;branchId:string;countryCode:string;sourceRevision:string|null;historical:boolean
   currentSeason:number|null;currentWeek:number|null;model:CountryTournaments|null
-  loading:boolean;error:string|null;cs:boolean
+  loading:boolean;error:string|null;cs:boolean;countryParams:URLSearchParams
 }
 export function RunWorldCountryTournaments({runId,branchId,countryCode,sourceRevision,historical,
-  currentSeason,currentWeek,model,loading,error,cs}:Props):JSX.Element{
+  currentSeason,currentWeek,model,loading,error,cs,countryParams}:Props):JSX.Element{
+  const location=useLocation()
+  useEffect(()=>{
+    if(!model||!location.hash)return
+    try {
+      const id=decodeURIComponent(location.hash.slice(1))
+      if(id.startsWith('country-edition-'))
+        document.getElementById(id)?.scrollIntoView?.({block:'center'})
+    } catch { /* A malformed fragment never changes the selected data. */ }
+  },[model,location.hash])
   const duplicatePrefix='Saved Calendar contains duplicate tournament event identity: '
   const duplicateId=error?.startsWith(duplicatePrefix)?error.slice(duplicatePrefix.length):null
   const now=historical?null:calendarSeasonIndex(currentSeason)
@@ -25,8 +35,8 @@ export function RunWorldCountryTournaments({runId,branchId,countryCode,sourceRev
       {' '}<code>{sourceRevision??'—'}</code>
       {model&&<> · <code>{model.fingerprint.slice(0,14)}…</code></>}</p>
     {historical&&<p role="status">{cs?
-      'Historická revize: neotevíráme současný detail turnaje.':
-      'Historical revision: present-day event details are not linked.'}</p>}
+      'Historická revize: odkazy vedou pouze na neměnnou uloženou edici, nikoli do současného editoru.':
+      'Historical revision: links open immutable Saved Editions, never the live editor.'}</p>}
     {loading&&<p role="status">{cs?'Načítám uložený kalendář…':'Loading Saved Calendar…'}</p>}
     {error&&<p role="alert">{duplicateId!==null
       ?(cs?'Nejednoznačný uložený kalendář: více balíčků používá stejné ID turnaje: ':
@@ -56,12 +66,9 @@ export function RunWorldCountryTournaments({runId,branchId,countryCode,sourceRev
           <th>{cs?'Město':'City'}</th><th>{cs?'Kategorie':'Category'}</th>
           <th>{cs?'Stav kalendáře':'Calendar status'}</th></tr></thead>
         <tbody>{grouped.get(n)!.map(e=>{
-          // Existing canonical detail validates only 2000/2001, and only a present Branch.
-          const linked=!historical&&n===now&&n===0
-          const url='/admin/runs/'+encodeURIComponent(runId)+'/calendar/'+encodeURIComponent(e.eventId)+
-            '?branch='+encodeURIComponent(branchId)+'&calendar='+encodeURIComponent(e.packageId)
-          return <tr key={e.key}><td>{e.week}{n===now&&currentWeek===e.week?' · now':''}</td>
-            <td>{linked?<Link to={url}>{e.name}</Link>:e.name} <small>· {e.eventId}</small></td>
+          const url=savedCountryEditionHref(runId,branchId,sourceRevision,countryCode,countryParams,e)
+          return <tr key={e.key} id={countryEditionAnchor(e)}><td>{e.week}{n===now&&currentWeek===e.week?' · now':''}</td>
+            <td>{url?<Link to={url}>{e.name}</Link>:e.name} <small>· {e.eventId}</small></td>
             <td>{e.city??'—'} ({e.hostCountry})</td>
             <td>{e.category??'—'}{e.tourLevel?' · '+e.tourLevel:''}</td>
             <td>{statuses[e.status]}</td></tr>
@@ -69,7 +76,7 @@ export function RunWorldCountryTournaments({runId,branchId,countryCode,sourceRev
       </table></div>
     </section>)}
     {model&&model.editions.length>0&&<p className="status">{cs?
-      'Stav kalendáře není důkazem výsledku ani vítěze. Detail je dostupný jen pro podporovanou současnou sezónu.':
-      'Calendar status is not evidence of results or winners. Live details are linked only for the supported current season.'}</p>}
+      'Stav kalendáře není důkazem výsledku ani vítěze. Odkazy vedou do historického čtecího detailu; editor zůstává oddělený.':
+      'Calendar status is not proof of results or winners. Links open immutable read-only Editions, not the current editor.'}</p>}
   </section>
 }

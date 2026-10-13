@@ -121,7 +121,7 @@ function CountryDetail({runId,branchId,savedHead,historicalRevisionId,country,wo
       runId={runId} branchId={branchId} countryCode={country.code}
       sourceRevision={tournamentSourceRevision} historical={historicalRevisionId!==null}
       currentSeason={presentSeason} currentWeek={presentWeek}
-      model={tournaments} loading={tournamentsPending} error={tournamentsError} cs={cs}/>}
+      model={tournaments} loading={tournamentsPending} error={tournamentsError} cs={cs} countryParams={params}/>}
     {active==='records'&&<RunWorldCountryRecords
       runId={runId} branchId={branchId} countryCode={country.code}
       savedRevisionId={historicalRevisionId??savedHead}

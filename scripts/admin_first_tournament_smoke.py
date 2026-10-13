@@ -33,7 +33,9 @@ def create_smoke_app(root: Path):
         "category": "PLATINUM",
         "event_name": "Browser Acceptance Cup",
         "region": "EUROPE",
-        "host_country": "CZE",
+        # Keep the disposable tournament host inside the actual copied FAX World,
+        # enabling a real Country -> Saved Edition browser journey.
+        "host_country": "GER",
         "main_draw_size": 4,
         "qualification_draw_size": 0,
         "seeds_count": 2,

@@ -100,6 +100,20 @@ def test_saved_calendar_multi_season_immutable_shared_ancestor_and_restart(tmp_p
         assert ancestor[1]["branch_id"] == "tour-fork"
         assert ancestor[1]["revision_branch_id"] == branch
         assert ancestor[1]["editions"] == later[1]["editions"]
+        # Country links must request Edition through the SELECTED fork, while
+        # canonical Saved Tour retains original pre-fork sporting ownership.
+        shared_edition = _request(
+            "GET", _url(server, run, "tour-fork", saved_rev, season=2, event_id="event"),
+        )
+        assert shared_edition[0] == 200, shared_edition
+        assert shared_edition[1]["branch_id"] == "tour-fork"
+        assert shared_edition[1]["revision_branch_id"] == branch
+        assert shared_edition[1]["saved_revision_id"] == saved_rev
+        assert shared_edition[1]["edition"]["event_id"] == "event"
+        assert shared_edition[1]["published_result"] is None
+        assert _request(
+            "GET", _url(server, run, "tour-fork", saved_rev, season=0, event_id="event"),
+        )[0] == 404
         assert _request("GET", _url(server, run, branch, empty_rev)) == empty
 
     with ApiServer(database_url=db) as reopened:

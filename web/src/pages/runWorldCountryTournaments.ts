@@ -62,3 +62,39 @@ export function projectCountryTournaments(response:RunPackageStateResponse,runId
     editions:editions.sort((a,b)=>a.seasonIndex-b.seasonIndex||a.week-b.week||
       a.eventId.localeCompare(b.eventId)||a.packageId.localeCompare(b.packageId))}
 }
+
+/** Immutable link to a Saved Edition, including a validated path back to its country row. */
+export function countryEditionAnchor(e:CountryTournamentEdition):string {
+  return 'country-edition-'+e.seasonIndex+'-'+encodeURIComponent(e.eventId)
+}
+export function savedCountryEditionHref(
+  runId:string,branchId:string,revision:string|null,countryCode:string,
+  countryParams:URLSearchParams,e:CountryTournamentEdition
+):string|null {
+  if(!runId||!branchId||!revision||revision.trim()!==revision||
+    !/^[A-Z]{3}$/.test(countryCode)||!e.eventId||e.seasonIndex<0||e.seasonIndex>=50)
+    return null
+  const original=new URLSearchParams(countryParams)
+  original.set('tab','tournaments')
+  const fromCountry='/admin/runs/'+encodeURIComponent(runId)+'/world/countries/'+
+    encodeURIComponent(countryCode)+'?'+original.toString()+'#'+
+    encodeURIComponent(countryEditionAnchor(e))
+  const editionParams=new URLSearchParams({branch:branchId,revision,
+    season:String(e.seasonIndex),fromCountry})
+  return '/admin/runs/'+encodeURIComponent(runId)+'/tour/calendar/'+
+    encodeURIComponent(e.eventId)+'?'+editionParams.toString()
+}
+/** Only same-Run country detail can be used as a return link; never arbitrary URL. */
+export function verifiedCountryReturn(raw:string|null,runId:string,revision:string|null):string|null {
+  if(!raw||!raw.startsWith('/')||raw.startsWith('//')||!runId||!revision)return null
+  try {
+    const u=new URL(raw,'https://squash-engine.invalid')
+    const prefix='/admin/runs/'+encodeURIComponent(runId)+'/world/countries/'
+    if(u.origin!=='https://squash-engine.invalid'||!u.pathname.startsWith(prefix)||
+      !/^[A-Z]{3}$/.test(decodeURIComponent(u.pathname.slice(prefix.length)))||
+      u.searchParams.get('tab')!=='tournaments')return null
+    const originRevision=u.searchParams.get('revision')
+    if(originRevision!==null&&originRevision!==revision)return null
+    return u.pathname+u.search+u.hash
+  } catch {return null}
+}

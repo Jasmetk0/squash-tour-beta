@@ -8,6 +8,7 @@ import {useAdminTime} from '../admin/AdminTimeContext'
 import {useLanguage} from '../i18n/LanguageContext'
 import {formatApiError} from '../utils/apiErrors'
 import type {SavedTourDrawBracket,SavedTourScheduledMatch} from '../api/savedTour'
+import {verifiedCountryReturn} from './runWorldCountryTournaments'
 
 type Tab='overview'|'entries'|'draw'|'schedule'|'results'|'settings'
 const tabs:Tab[]=['overview','entries','draw','schedule','results','settings']
@@ -36,6 +37,7 @@ export function SavedTourEditionPage():JSX.Element {
   }
   const back=new URLSearchParams(params);back.delete('tab')
   const returnTo='/admin/runs/'+encodeURIComponent(runId)+'/tour/calendar?'+back.toString()
+  const returnCountry=verifiedCountryReturn(params.get('fromCountry'),runId,revision)
   const labels=cs?['Přehled','Přihlášky a účastníci','Pavouk / skupiny','Program a zápasy','Výsledky','Nastavení']:
     ['Overview','Entries & participants','Draw / groups','Schedule & matches','Results','Settings']
   const e=model?.edition,result=model?.published_result
@@ -177,6 +179,8 @@ export function SavedTourEditionPage():JSX.Element {
       </tr>)}</tbody></table></div>
   </section>
   return <section className="panel">
+    {returnCountry&&<p><Link to={returnCountry}>
+      ← {cs?'Zpět na turnaje země':'Back to country tournaments'}</Link></p>}
     <Link to={returnTo}>← {cs?'Zpět na kalendář':'Back to calendar'}</Link>
     <div className="page-intro"><p className="eyebrow">RUN → TOUR → EDITION</p>
       <h2>{e?.event_name??(cs?'Detail edice':'Edition detail')}</h2>

@@ -1,6 +1,6 @@
 import {describe,expect,it} from 'vitest'
 import {worldFixture} from './runWorldFixture'
-import {calendarSeasonIndex,projectCountryTournaments} from './runWorldCountryTournaments'
+import {calendarSeasonIndex,projectCountryTournaments,savedCountryEditionHref,verifiedCountryReturn,countryEditionAnchor} from './runWorldCountryTournaments'
 function calendar(host='CZE'){
   const f=worldFixture()
   const versions=f.state!.package_versions as Record<string,unknown>[]
@@ -74,6 +74,34 @@ describe('Saved country tournament editions',()=>{
     expect(()=>projectCountryTournaments(f,'run-a','branch-a','USA'))
       .toThrow('Saved Calendar contains duplicate tournament event identity: '+duplicateId)
     expect(JSON.stringify(f)).toBe(before)
+  })
+
+  it('pins season 2 future Edition to exact selected Branch, Saved Revision and country filters',()=>{
+    const e={key:'p:evt',packageId:'p',eventId:'evt',name:'Future',season:'2002/2003',
+      seasonIndex:2,week:41,city:null,hostCountry:'CZE',category:null,tourLevel:null,
+      status:'planned' as const}
+    const params=new URLSearchParams('tab=tournaments&year=2020&q=cz&search=abc&revision=old')
+    const url=savedCountryEditionHref('run-a','branch-b','old','CZE',params,e)!
+    const parsed=new URL(url,'https://test.invalid')
+    expect(parsed.pathname).toBe('/admin/runs/run-a/tour/calendar/evt')
+    expect(parsed.searchParams.get('branch')).toBe('branch-b')
+    expect(parsed.searchParams.get('revision')).toBe('old')
+    expect(parsed.searchParams.get('season')).toBe('2')
+    const origin=parsed.searchParams.get('fromCountry')
+    expect(verifiedCountryReturn(origin,'run-a','old')).toBe(origin)
+    expect(origin).toContain('year=2020&q=cz&search=abc&revision=old')
+    expect(origin).toContain(encodeURIComponent(countryEditionAnchor(e)))
+    expect(savedCountryEditionHref('run-a','branch-b',null,'CZE',params,e)).toBeNull()
+    expect(savedCountryEditionHref('run-a','branch-b','old','CZE',params,{...e,seasonIndex:50})).toBeNull()
+  })
+  it('rejects foreign, external and cross-revision country returns',()=>{
+    for(const value of ['https://evil.invalid/a','//evil.invalid/a',
+      '/admin/runs/other/world/countries/CZE?tab=tournaments',
+      '/admin/runs/run-a/world/countries/CZE?tab=tournaments&revision=wrong',
+      '/admin/runs/run-a/world/countries/CZE?tab=players',
+      '/admin/runs/run-a/world/countries/CZE/extra?tab=tournaments']){
+      expect(verifiedCountryReturn(value,'run-a','old')).toBeNull()
+    }
   })
 
 })

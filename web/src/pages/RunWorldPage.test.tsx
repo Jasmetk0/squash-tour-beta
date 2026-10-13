@@ -375,9 +375,51 @@ describe('Run-owned World overview navigation',()=>{
     expect(panel).toHaveTextContent('head-a')
     expect(panel).toHaveTextContent('Brno (CZE)')
     expect(panel).not.toHaveTextContent('USA')
+    const url=new URL(within(panel).getByRole('link',{name:'Brno World Open'})
+      .getAttribute('href')!,'https://test.invalid')
+    expect(url.pathname).toBe('/admin/runs/run-a/tour/calendar/edition-1')
+    expect(url.searchParams.get('branch')).toBe('branch-a')
+    expect(url.searchParams.get('revision')).toBe('head-a')
+    expect(url.searchParams.get('season')).toBe('0')
+    expect(url.searchParams.get('fromCountry')).toContain('tab=tournaments&year=2020')
     expect(api.getSavedRevision).toHaveBeenCalledWith('run-a','branch-a','head-a')
   })
 
+  it('links second-season historical shared-ancestor Edition through selected Branch',async()=>{
+    context.branch.branch_id='branch-b'
+    context.branch.saved_head_revision_id='head-b'
+    const f=worldFixture()
+    const entities=f.state!.entities as Record<string,unknown>[]
+    ;(f.state!.package_versions as Record<string,unknown>[]).push({
+      package_id:'calendar-2002-2003',package_type:'Calendar'})
+    entities.push(
+      {source_package_id:'calendar-2002-2003',source_entity_id:'calendar.metadata',
+        entity_kind:'calendar.metadata.v1',payload:{season:'2002/2003'}},
+      {source_package_id:'calendar-2002-2003',source_entity_id:'old-event',
+        entity_kind:'calendar.event.v1',payload:{event_id:'old-event',
+          season:'2002/2003',season_week:8,event_name:'Shared Future Open',
+          host_country:'CZE',status:'planned'}}
+    )
+    api.getSavedRevision.mockResolvedValue({
+      ...historicalDetail('rev-shared','Old Czechia','branch-a','branch-b'),
+      payload:{run:{run_id:'run-a'},branch:{branch_id:'branch-a'},content:{
+        run_package_state:{fingerprint:f.fingerprint,state:f.state}}}
+    })
+    context.language='cs'
+    mountWorld('/admin/runs/run-a/world/countries/CZE?tab=tournaments&revision=rev-shared&year=2030&q=old')
+    const table=await screen.findByRole('table',{name:'Country tournament editions 2002/2003'})
+    const href=within(table).getByRole('link',{name:'Shared Future Open'}).getAttribute('href')!
+    const url=new URL(href,'https://test.invalid')
+    expect(url.pathname).toBe('/admin/runs/run-a/tour/calendar/old-event')
+    expect(url.searchParams.get('branch')).toBe('branch-b')
+    expect(url.searchParams.get('revision')).toBe('rev-shared')
+    expect(url.searchParams.get('season')).toBe('2')
+    expect(url.searchParams.get('fromCountry')).toContain('revision=rev-shared&year=2030&q=old')
+    expect(screen.getByLabelText('Country Run-owned tournaments')).toHaveTextContent(
+      'neměnnou uloženou edici')
+    expect(api.getSavedRevision).toHaveBeenCalledWith('run-a','branch-b','rev-shared')
+    expect(api.getRunPackageState).not.toHaveBeenCalled()
+  })
   it('shows a localized fail-closed error instead of duplicate saved tournament rows',async()=>{
     const f=worldFixture()
     const versions=f.state!.package_versions as Record<string,unknown>[]

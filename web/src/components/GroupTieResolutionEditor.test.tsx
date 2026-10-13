@@ -42,9 +42,9 @@ describe('Run Admin exact group tie decision', () => {
     const { onResolution } = mount()
     const commit = screen.getByRole('button',{name:'Commit audited group tie decision'})
     expect(commit).toBeDisabled()
-    expect(screen.getByRole('list',{name:'Proposed tie order'}).textContent).toContain('ABC')
+    expect(screen.getAllByRole('listitem').map(item => item.querySelector('code')?.textContent)).toEqual(['A','B','C'])
     fireEvent.click(screen.getByRole('button',{name:'Move A down'}))
-    expect(screen.getByRole('list',{name:'Proposed tie order'}).textContent).toMatch(/B.*A.*C/)
+    expect(screen.getAllByRole('listitem').map(item => item.querySelector('code')?.textContent)).toEqual(['B','A','C'])
     expect(commit).toBeDisabled()
     fireEvent.change(screen.getByLabelText('Admin tie decision reason'), {
       target:{value:'Reviewed tied athletes and approved this exact order.'}

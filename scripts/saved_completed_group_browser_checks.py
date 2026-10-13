@@ -15,7 +15,7 @@ def play_group_and_save(
     request, *, run_id: str, branch_id: str, event_id: str,
     root_scope: str, event_scope: str, old_revision: str,
     original_match_ids: set[str], page, run_url: str, event_url: str, artifacts,
-    restart_backend,
+    restart_backend, reconstruct_one_group_match: bool = False,
 ) -> dict:
     # The fast backend suite imports this module without installing Playwright.
     # Load browser-only dependencies only in the real Chromium execution.
@@ -58,7 +58,69 @@ def play_group_and_save(
     page.get_by_role("combobox", name="Language / Jazyk").select_option("en")
     played = []
     day_ordinals = []
+    reconstruction_evidence = None
     for day in range(1, 4):
+        if day == 3 and reconstruct_one_group_match:
+            # This is a genuine Run-owned group Slot. A reviewed candidate is
+            # generated from the real MatchEngine, committed via the production
+            # HTTP mutation, and must count as ONE of the six canonical matches.
+            # Unlike a synthetic result fixture, the full rally log and
+            # authoritative Slot receipt remain stored and replayable.
+            before_reconstruction = request("GET", simulation + "/position")
+            assert before_reconstruction["current_slot_kind"] == "match"
+            group_id = before_reconstruction["eligible_match_ids"][0]
+            upcoming = request("GET", simulation + "/next-match-day/preview")
+            assert upcoming["match_day_ordinal"] == 3
+            assert before_reconstruction["slot_ordinal"] in upcoming["target_slot_ordinals"]
+            target = request(
+                "GET", simulation + "/match-reconstruction/state?group_id="
+                + quote(group_id, safe=""),
+            )
+            assert target["group_id"] == group_id
+            assert target["expected_revision_id"] == old_revision
+            review = {
+                "expected_week": before_reconstruction["current_week"],
+                "expected_position_fingerprint": before_reconstruction["position_fingerprint"],
+                "expected_revision_id": old_revision,
+                "group_id": group_id,
+                "candidate_count": 1,
+                "constraints": {"winner_player_id": target["player_a_id"]},
+            }
+            # Production preview runs a bounded natural seed search in a
+            # rollback-only transaction; no scoring override is supported.
+            candidate_preview = request(
+                "POST", simulation + "/match-reconstruction/preview", review,
+            )
+            assert candidate_preview["candidate_count_found"] == 1
+            candidate = candidate_preview["candidates"][0]
+            assert candidate["detail"]["rally_log"]["events"]
+            assert candidate["winner_player_id"] == target["player_a_id"]
+            command = {
+                **review,
+                "command_id": "real-group-reviewed-match-3",
+                "expected_preview_fingerprint": candidate_preview["preview_fingerprint"],
+                "selected_candidate_fingerprint": candidate["candidate_fingerprint"],
+                "operator_label": "Real group browser acceptance",
+                "audit_reason": "Reviewed natural MatchEngine result in the original group Match Day.",
+            }
+            committed = request(
+                "POST", simulation + "/match-reconstruction/commit", command, 201,
+            )
+            assert committed["result_fingerprint"] == candidate["result_fingerprint"]
+            assert committed["candidate_fingerprint"] == candidate["candidate_fingerprint"]
+            assert request(
+                "POST", simulation + "/match-reconstruction/commit", command, 201,
+            ) == committed
+            reconstruction_evidence = {
+                "group_id": group_id,
+                "match_id": target["match_id"],
+                "result_fingerprint": committed["result_fingerprint"],
+                "candidate_fingerprint": committed["candidate_fingerprint"],
+                "audit_reason": command["audit_reason"],
+            }
+            day_ordinals.append(before_reconstruction["slot_ordinal"])
+            following = request("GET", simulation + "/position")
+            assert following["position_fingerprint"] != before_reconstruction["position_fingerprint"]
         preview = request("GET", simulation + "/next-match-day/preview")
         assert preview["match_day_ordinal"] == day, preview
         assert preview["target_slot_ordinals"], preview
@@ -86,6 +148,31 @@ def play_group_and_save(
         page.screenshot(path=str(artifacts / f"03-simulation-group-day-{day}.png"), full_page=True)
     assert len(day_ordinals) == len(set(day_ordinals)) == 6
     assert played == [1, 2, 3]
+
+    def check_reconstructed_match():
+        if reconstruction_evidence is None:
+            return
+        matching = request("GET", simulation + "/match-replays?limit=50")
+        assert matching["read_only"] is True
+        rows = [
+            row for row in matching["matches"]
+            if row["group_id"] == reconstruction_evidence["group_id"]
+        ]
+        assert len(rows) == 1, rows
+        row = rows[0]
+        assert row["match_id"] == reconstruction_evidence["match_id"]
+        assert row["result_fingerprint"] == reconstruction_evidence["result_fingerprint"]
+        assert row["replay_available"] and row["total_rallies"] > 0
+        context = request(
+            "GET", simulation + "/match-replay/context?group_id="
+            + quote(reconstruction_evidence["group_id"], safe=""),
+        )
+        assert context["verified"] is True
+        assert context["rng_rerun"] is False
+        assert context["replay_source"] == "stored_authoritative_events"
+        assert context["result_fingerprint"] == reconstruction_evidence["result_fingerprint"]
+
+    check_reconstructed_match()
 
     # Complete standings only via the real Planned Event panel. Genuine ties,
     # when encountered, require explicit player ordering and an audited reason.
@@ -197,6 +284,7 @@ def play_group_and_save(
     assert restored == intermediate, (
         "Intermediate saved group history changed after SQLite backend restart"
     )
+    check_reconstructed_match()
     page.reload()
     page.get_by_role("button", name="Results").click() if (
         page.get_by_role("button", name="Results").get_attribute("aria-current")
@@ -291,6 +379,7 @@ def play_group_and_save(
         "played": played,
         "group_tie_decision_count": len(tie_audit),
         "matches_simulated": 6,
+        "reconstructed_group_match": reconstruction_evidence,
     }
 
 

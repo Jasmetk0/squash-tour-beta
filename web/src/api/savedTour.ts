@@ -80,6 +80,9 @@ export type SavedTourGroupStandings = {
   groups:Array<{group_index:number;rows:SavedTourGroupTableRow[]}>
   tie_decisions:Array<{group_index:number;case_fingerprint:string;ordered_player_ids:string[];admin_reason:string}>
 }
+export type SavedTourPendingTieDecision = {
+  group_index:number;case_fingerprint:string;ordered_player_ids:string[];admin_reason:string
+}
 export type SavedTourEdition = {
   schema_version:'run_saved_tour_edition.v1';source:'reachable_saved_revision'
   run_id:string;branch_id:string;revision_branch_id:string
@@ -89,6 +92,7 @@ export type SavedTourEdition = {
   match_schedule?:SavedTourMatchSchedule|null
   group_schedule?:SavedTourGroupSchedule|null
   group_standings?:SavedTourGroupStandings|null
+  pending_group_tie_decisions?:SavedTourPendingTieDecision[]
   lifecycle_status:'unavailable'
 }
 
@@ -299,6 +303,30 @@ export function validSavedTourEdition(
         !((m.winner_player_id===scheduled.top_player_id&&m.loser_player_id===scheduled.bottom_player_id)
           ||(m.winner_player_id===scheduled.bottom_player_id&&m.loser_player_id===scheduled.top_player_id)))
     }))return false
+  }
+  // Audited intermediate decisions are not a final rank or a match result.
+  // Read only if the original Saved Edition has a frozen group schedule and
+  // does not already have completed canonical standings.
+  const pending=payload.pending_group_tie_decisions
+  if(pending!==undefined){
+    if(!Array.isArray(pending)||
+      (pending.length>0&&(!groupsSchedule||standings)))return false
+    const cases=new Set<string>()
+    for(const d of pending){
+      if(!Number.isInteger(d.group_index)||!groupsSchedule
+        ||d.group_index<1||d.group_index>groupsSchedule.group_count
+        ||!/^[0-9a-f]{64}$/.test(d.case_fingerprint)
+        ||cases.has(d.case_fingerprint)||!d.admin_reason?.trim()
+        ||!Array.isArray(d.ordered_player_ids)||d.ordered_player_ids.length<2
+        ||d.ordered_player_ids.length>groupsSchedule.group_size
+        ||new Set(d.ordered_player_ids).size!==d.ordered_player_ids.length)
+        return false
+      const members=new Set(groupsSchedule.matches
+        .filter(m=>m.group_index===d.group_index)
+        .flatMap(m=>[m.top_player_id,m.bottom_player_id]))
+      if(d.ordered_player_ids.some(id=>!id||!members.has(id)))return false
+      cases.add(d.case_fingerprint)
+    }
   }
   const schedule=payload.match_schedule
   if(schedule){

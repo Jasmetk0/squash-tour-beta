@@ -11,7 +11,7 @@ const api=vi.hoisted(()=>({getRunPackageState:vi.fn(),getSavedPlayersInventory:v
   getCountrySavedMatchRecords:vi.fn(),getCountryPlayerStandings:vi.fn(),ApiError:class extends Error{}}))
 const context=vi.hoisted(()=>({
   branch:{run_id:'run-a',branch_id:'branch-a',saved_head_revision_id:'head-a',display_name:'Timeline 1'},
-  time:{mode:'present',isLoading:false,error:null,presentSeason:0,presentWeek:61},
+  time:{mode:'present',isLoading:false,error:null,presentSeason:0 as number|null,presentWeek:61 as number|null},
   language:'en'
 }))
 vi.mock('../api/client',()=>api)

@@ -114,7 +114,7 @@ describe('Saved Edition detail',()=>{
     expect(await screen.findByRole('heading',{name:'Brno Open'})).toBeInTheDocument()
     await userEvent.click(screen.getByRole('button',{name:'Schedule & matches'}))
     expect(screen.getByText('Authentic Saved Week Simulation Schedule v2.',{exact:false})).toBeInTheDocument()
-    const sections=screen.getByRole('table',{name:'Saved Match Day order'})
+    const sections=screen.getAllByRole('table',{name:'Saved Match Day order'})[0]
     expect(within(sections).getByText('P1 · 3-0')).toBeInTheDocument()
     expect(screen.getByText('No saved match plan')).toBeInTheDocument()
     expect(screen.getByText(/Match Day is an ordinal, not a date/)).toBeInTheDocument()

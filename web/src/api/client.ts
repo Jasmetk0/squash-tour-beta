@@ -4540,3 +4540,19 @@ export async function getCountryPlayerStandings(
     throw new Error('Country player leaderboard differs from selected Saved Revision or order')
   return data
 }
+
+/** Immutable, Branch-reachable Saved Revision Tour reads (never Working Draft). */
+export function getSavedTourCalendar(
+  runId:string,branchId:string,revisionId:string,seasonIndex:number
+):Promise<import('./savedTour').SavedTourCalendar>{
+  const prefix='/admin/runs/'+encodeURIComponent(runId)+'/branches/'+encodeURIComponent(branchId)
+  const params=new URLSearchParams({revision_id:revisionId,season_index:String(seasonIndex)})
+  return request(prefix+'/tour/calendar?'+params.toString())
+}
+export function getSavedTourEdition(
+  runId:string,branchId:string,revisionId:string,seasonIndex:number,eventId:string
+):Promise<import('./savedTour').SavedTourEdition>{
+  const prefix='/admin/runs/'+encodeURIComponent(runId)+'/branches/'+encodeURIComponent(branchId)
+  const params=new URLSearchParams({revision_id:revisionId,season_index:String(seasonIndex)})
+  return request(prefix+'/tour/editions/'+encodeURIComponent(eventId)+'?'+params.toString())
+}

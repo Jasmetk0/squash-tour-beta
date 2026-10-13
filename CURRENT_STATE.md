@@ -1,3 +1,18 @@
+# Saved Tour Calendar → Edition UI and real browser candidate — 13 October 2026
+
+Backend PR #1417 is merged into buuk. PR #1418 adds the real 61-week
+read-only Run Tour Calendar, six-section Edition detail, exact Saved Revision
+context and Run/Branch response guards. Reuses the saved replay Chromium+SQLite
+restart acceptance for Calendar → Edition navigation, pre-result history,
+filter/back continuity and six-tab published sport evidence. Legacy Calendar
+and Active Admin draft navigation remain untouched.
+
+Frontend candidate is not ready until frontend Vitest, Vite build and real
+browser restart checks pass at final HEAD. Only the user merges.
+Next: expand Entries/Draw/Schedule with real historical authorities.
+
+---
+
 # Run Tour scoped Saved Calendar / Edition read candidate — 13 October 2026
 
 PR candidate based on `buuk 4117b5633ef8798435dd5ac6b86343cb600152b4`;

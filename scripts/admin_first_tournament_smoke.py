@@ -508,9 +508,10 @@ def verify_viewer(page, run_url, artifacts: Path, prefix=""):
     return rows
 
 
-def run_acceptance(root: Path, *, port: int, base_url: str, chromium: str, saved_replay_only: bool = False, saved_replay_fork: bool = False, country_records: bool = False):
+def run_acceptance(root: Path, *, port: int, base_url: str, chromium: str, saved_replay_only: bool = False, saved_replay_fork: bool = False, country_records: bool = False, saved_tour: bool = False):
     from saved_player_replay_browser_checks import verify_saved_player_replay, verify_materialized_branch_fork_replay
     from country_records_browser_checks import verify_country_saved_records
+    from saved_tour_calendar_browser_checks import verify_saved_tour_calendar
     if country_records and not saved_replay_only:
         raise ValueError("Country Records acceptance uses the saved-replay-only restart flow")
     """Own the disposable backend process, restart it, and reopen a fresh browser."""
@@ -598,6 +599,9 @@ def run_acceptance(root: Path, *, port: int, base_url: str, chromium: str, saved
                 match_options = finish_tournament(page, artifacts)
                 ranking_rows = verify_viewer(page, run_url, artifacts)
                 saved_match = verify_saved_player_replay(page, run_url, artifacts, port)
+                tour_proof = verify_saved_tour_calendar(
+                    page, run_url, artifacts, port, saved_match,
+                ) if saved_tour else None
                 country_proof = verify_country_saved_records(
                     page, run_url, artifacts, port, saved_match,
                 ) if country_records else None
@@ -615,6 +619,11 @@ def run_acceptance(root: Path, *, port: int, base_url: str, chromium: str, saved
                 reopened_fork = verify_materialized_branch_fork_replay(page, run_url, artifacts, port, saved_match, fork_id=fork_match["target_branch_id"], prefix="reopened-") if saved_replay_fork else None
                 if saved_replay_fork: assert reopened_fork == fork_match, "Forked replay changed after restart"
                 assert reopened_match == saved_match, "Saved replay changed across restart"
+                reopened_tour = verify_saved_tour_calendar(
+                    page, run_url, artifacts, port, saved_match,
+                    prefix="reopened-", expected=tour_proof,
+                ) if saved_tour else None
+                if saved_tour: assert reopened_tour == tour_proof, "Saved Tour changed after restart"
                 reopened_country = verify_country_saved_records(
                     page, run_url, artifacts, port, saved_match,
                     prefix="reopened-", expected=country_proof,
@@ -633,6 +642,8 @@ def run_acceptance(root: Path, *, port: int, base_url: str, chromium: str, saved
                             "authoritative_matches": match_options,
                             "saved_player_replay": saved_match,
                             "saved_branch_fork": fork_match,
+                            "saved_tour_calendar_and_edition": tour_proof,
+                            "saved_tour_equal_after_restart": reopened_tour == tour_proof if saved_tour else None,
                             "country_saved_records": country_proof,
                             "country_saved_records_equal_after_restart": reopened_country == country_proof if country_records else None,
                             "fork_equal_after_restart": fork_match == reopened_fork if saved_replay_fork else None,
@@ -727,6 +738,7 @@ if __name__ == "__main__":
     parser.add_argument("--saved-replay-only", action="store_true")
     parser.add_argument("--saved-replay-fork", action="store_true")
     parser.add_argument("--country-records", action="store_true")
+    parser.add_argument("--saved-tour", action="store_true")
     args = parser.parse_args()
     if args.serve:
         uvicorn.run(
@@ -744,4 +756,5 @@ if __name__ == "__main__":
             saved_replay_only=args.saved_replay_only,
             saved_replay_fork=args.saved_replay_fork,
             country_records=args.country_records,
+            saved_tour=args.saved_tour,
         )

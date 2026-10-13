@@ -44,6 +44,7 @@ const words: Record<string, { cs: string; en: string }> = {
   'Player list': { cs: 'Seznam hráčů', en: 'Player list' },
   'Talent Intake': { cs: 'Příchod talentů', en: 'Talent Intake' },
   'Season Calendar': { cs: 'Sezonní kalendář', en: 'Season Calendar' },
+  'Saved Tour Calendar': { cs: 'Uložený kalendář Tour', en: 'Saved Tour Calendar' },
   'World Tour Finals': { cs: 'Finálový turnaj', en: 'World Tour Finals' },
   'Season Rollover': { cs: 'Přechod sezony', en: 'Season Rollover' },
   'Ranking Snapshots': { cs: 'Snímky žebříčku', en: 'Ranking Snapshots' },

@@ -41,6 +41,7 @@ export function SavedTourEditionPage():JSX.Element {
   const e=model?.edition,result=model?.published_result
   const entry=model?.entry_field,draw=model?.draw
   const schedule=model?.match_schedule
+  const groupSchedule=model?.group_schedule
   const plannedMain=schedule?.slots.filter(slot=>slot.draw_phase!=='qualification')??[]
   const plannedQualification=schedule?.slots.filter(slot=>slot.draw_phase==='qualification')??[]
   const matches=result?.matches??[]
@@ -83,6 +84,34 @@ export function SavedTourEditionPage():JSX.Element {
       })}</tbody></table></div>:
     <p>{cs?'Pro tuto část nejsou uložené zápasové sloty.':
       'No saved Match Day slots for this phase.'}</p>
+  const groupScheduleTable=groupSchedule&&<section aria-label="Saved group Match Day schedule">
+    <h5>{cs?'Autentický skupinový rozpis':'Authentic group Match Day schedule'}</h5>
+    <p role="status">{cs?'Uložené skupiny':'Saved groups'}: {groupSchedule.group_count}
+      {' · '}{cs?'Velikost skupiny':'Group size'}: {groupSchedule.group_size}
+      {' · '}Match Days: {groupSchedule.match_day_count}
+      {' · '}{cs?'Toto jsou pořadová čísla, nikoliv kalendářní datum nebo hodina.':
+        'Days are ordinal, not calendar dates or clock times.'}</p>
+    <div className="table-responsive">
+      <table aria-label="Saved group matches">
+        <thead><tr><th>{cs?'Skupina':'Group'}</th><th>Match Day</th>
+          <th>{cs?'Pořadí':'Order'}</th><th>{cs?'Hráči':'Players'}</th>
+          <th>{cs?'Formát':'Format'}</th><th>{cs?'Výsledek / detail':'Result / detail'}</th>
+        </tr></thead>
+        <tbody>{groupSchedule.matches.map(g=>{
+          const published=matches.find(m=>m.match_id===g.match_id&&m.draw_type==='group')
+          return <tr key={g.match_id}><td>{g.group_index}</td>
+            <td>{g.match_day_ordinal}</td><td>{g.match_order}</td>
+            <td>{g.top_player_id} – {g.bottom_player_id}</td>
+            <td>BO{g.best_of}</td>
+            <td>{published?<>{published.scoreline}{' · '}
+              {published.loser_player_id&&<Link to={matchHref(g.match_id,'schedule')}>
+                {cs?'Detail zápasu':'Match detail'}</Link>}</>:
+              <span>{cs?'Bez kanonického výsledku':'Not canonically published'}</span>}</td>
+          </tr>
+        })}</tbody>
+      </table>
+    </div>
+  </section>
   const statusMissing=cs?'Tento zdroj neobsahuje úplnou historickou autoritu pro tento oddíl.':
     'A complete historical authority for this section is unavailable in this source.'
   const fieldList=(label:string,ids:string[])=><section key={label} className="section-subtle">
@@ -170,13 +199,15 @@ export function SavedTourEditionPage():JSX.Element {
         {schedule?<p role="status">{cs?'Skutečný uložený rozpis Week Simulation Schedule v2.':
           'Authentic Saved Week Simulation Schedule v2.'} · {cs?'Sloty':'Slots'}: {schedule.slots.length}
           {' · '}{cs?'Zdroj':'Source'}: {schedule.source}</p>:
-          <p role="status">{cs?'Uložený rozpis Match Day pro tuto edici není dostupný.':
-            'An event-bound Saved Match Day schedule is unavailable for this Edition.'}</p>}
-        {(schedule||result)&&<><a href="#saved-schedule-main">{cs?'Hlavní část':'Main'}</a>
+          !groupSchedule?<p role="status">{cs?'Uložený rozpis Match Day pro tuto edici není dostupný.':
+            'An event-bound Saved Match Day schedule is unavailable for this Edition.'}</p>:null}
+        {(schedule||result||groupSchedule)&&<><a href="#saved-schedule-main">{cs?'Hlavní část':'Main'}</a>
           {' · '}<a href="#saved-schedule-qualification">{cs?'Kvalifikace':'Qualification'}</a>
           <section id="saved-schedule-main"><h4>{cs?'Hlavní část':'Main'}</h4>
-            {schedule?scheduledTable(plannedMain):<><p>{cs?'Pouze výsledková evidence, nikoli rozpis.':
-              'Published result evidence only, not a schedule.'}</p>{matchTable(main)}</>}</section>
+            {groupScheduleTable}
+            {schedule?scheduledTable(plannedMain):result?<><p>{cs?'Publikovaná výsledková evidence, nezávislá na rozpisu.':
+              'Published results are independent of a scheduled Match Day.'}</p>
+              {matchTable(main)}</>:!groupSchedule?<p>{statusMissing}</p>:null}</section>
           <section id="saved-schedule-qualification"><h4>{cs?'Kvalifikace':'Qualification'}</h4>
             {schedule?scheduledTable(plannedQualification):<><p>{cs?'Pouze výsledková evidence, nikoli rozpis.':
               'Published result evidence only, not a schedule.'}</p>{matchTable(qualification)}</>}</section></>}

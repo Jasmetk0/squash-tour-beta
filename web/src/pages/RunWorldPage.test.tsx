@@ -541,7 +541,7 @@ describe('Run-owned World overview navigation',()=>{
     const panel=await screen.findByLabelText('Country published records')
     const totals=within(panel).getByLabelText('Country verified record totals')
     expect(totals).toHaveTextContent('3')
-    await userEvent.click(within(panel).getByRole('button',{name:'Evidence'}).at(0)!)
+    await userEvent.click(within(panel).getAllByRole('button',{name:'Evidence'})[0])
     const detail=within(panel).getByLabelText('Country record detail')
     expect(detail).toHaveTextContent('Player One')
     expect(detail).toHaveTextContent('2000/2001')

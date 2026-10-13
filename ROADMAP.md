@@ -1,3 +1,22 @@
+# Real Admin pure-group Format/Topology preparation — integration update 13 October 2026
+
+The Run-owned Planned Event Admin screen now exposes explicit Group Rules adoption,
+pure round-robin Format configuration and group Topology generation with exact
+Run/Branch/event/season authority checks and frozen Entry Field partition validation.
+The existing Group Match Schedule workflow follows those explicit operations.
+There are no invented BYEs, seed crossings, matches or automatic saves.
+
+The separately merged #1426 proves real production group matches, frozen Saved
+Edition standings and SQLite restart in Chromium. Browser-driven Format/Topology
+setup through the *entire* sporting workflow remains an additional acceptance
+gate; hybrid knockout and ranking closure remain unproven.
+See `docs/ADMIN_PURE_GROUP_FORMAT_SETUP_V1.md`.
+
+Integration: resolved documentation overlap with merged #1426 and #1427;
+new code remains gated by final-head CI before user merge.
+
+---
+
 # Real Saved Group completion browser acceptance (phase 2) — candidate 13 Oct 2026
 
 After #1424 merged, extends the real Chromium+SQLite Run group workflow:

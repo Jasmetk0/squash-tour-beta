@@ -44,6 +44,7 @@ import {
   SectionCard,
   SummaryPills
 } from '../components/RunScopedUi'
+import {GroupFormatSetupPanel} from '../components/GroupFormatSetupPanel'
 import { formatApiError, isApiNotFound } from '../utils/apiErrors'
 import { isRunCalendarProjection } from '../api/runFirstTournament'
 import { verifiedRunCalendarHandoff } from '../api/runCalendarHandoff'
@@ -973,11 +974,27 @@ export function PlannedEventDetailPage(): JSX.Element {
     if (action === 'generate_draw') {
       return <p><a href="#canonical-draw-authority">Open canonical Draw generation</a></p>
     }
-    if (action === 'configure_tournament_format') {
-      return <p className="status">The selected Finals field is frozen. A configured Tournament Format authority is required before Draw generation; classic Draw Input is intentionally unavailable here.</p>
-    }
-    if (action === 'generate_tournament_topology') {
-      return <p className="status">Tournament Format is frozen. Generate the canonical Tournament Topology from the explicit group seed placements / crossing configuration before any group-match chronology is created.</p>
+    if (action === 'configure_tournament_format' || action === 'generate_tournament_topology') {
+      const calendarSeason = canonicalCalendar?.calendar.events
+        .find(e => e.event_id === eventId)?.season
+      const calendarYear = typeof calendarSeason === 'number' ? calendarSeason :
+        typeof calendarSeason === 'string' &&
+        new RegExp('^20[0-9]{2}/20[0-9]{2}$').test(calendarSeason)
+          ? Number(calendarSeason.slice(0, 4)) : null
+      const calendarSeasonIndex = calendarYear !== null &&
+        Number.isInteger(calendarYear) && calendarYear >= 2000 && calendarYear <= 2049
+          ? calendarYear - 2000 : null
+      const groupSeasonIndex = canonicalPreparationQuery.data?.entry_source_target_season_index
+        ?? calendarSeasonIndex
+      return <GroupFormatSetupPanel
+        key={[runId,activeBranchId,eventId,action].join(':')}
+        runId={runId} branchId={activeBranchId} eventId={eventId}
+        seasonIndex={groupSeasonIndex}
+        entrantCount={canonicalEntryFieldQuery.data?.direct_main_player_ids.length ?? 0}
+        hasQualification={Boolean(canonicalEntryFieldQuery.data?.qualification_player_ids.length)}
+        hasByes={Boolean(canonicalEntryFieldQuery.data?.effective_main_bye_count)}
+        step={action === 'configure_tournament_format' ? 'format' : 'topology'}
+      />
     }
     if (action === 'prepare_group_match_schedule') {
       return (

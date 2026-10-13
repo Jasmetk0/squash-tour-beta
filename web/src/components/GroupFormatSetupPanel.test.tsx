@@ -91,6 +91,7 @@ describe('real Admin group preparation',()=>{
   it('freezes real group Topology only after an explicit Admin confirmation',async()=>{
     mount('topology')
     const send=await screen.findByRole('button',{name:'Generate group Topology'})
+    await screen.findByText(/Frozen season group rules: BO3/)
     expect(send).toBeDisabled()
     fireEvent.click(screen.getByLabelText('Confirm immutable group Topology'))
     fireEvent.click(send)
@@ -101,6 +102,7 @@ describe('real Admin group preparation',()=>{
   it('refuses missing and fractional topology seeds instead of sending ambiguous authority',async()=>{
     mount('topology')
     await screen.findByRole('button',{name:'Generate group Topology'})
+    await screen.findByText(/Frozen season group rules: BO3/)
     fireEvent.click(screen.getByLabelText('Confirm immutable group Topology'))
     const button=screen.getByRole('button',{name:'Generate group Topology'})
     fireEvent.change(screen.getByLabelText('Group Topology seed'),{target:{value:'1.5'}})
@@ -146,6 +148,7 @@ describe('real Admin group preparation',()=>{
   it('revokes topology approval after seed change, including return to old seed',async()=>{
     mount('topology')
     const send=await screen.findByRole('button',{name:'Generate group Topology'})
+    await screen.findByText(/Frozen season group rules: BO3/)
     fireEvent.click(screen.getByLabelText('Confirm immutable group Topology'))
     fireEvent.change(screen.getByLabelText('Group Topology seed'),{target:{value:'123'}})
     expect(send).toBeDisabled()

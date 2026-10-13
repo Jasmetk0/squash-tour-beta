@@ -2,7 +2,7 @@
 
 After #1423 merged / buuk 3c7d6340cb85d0441f1bbed261185188c64c3da8.
 Dedicated true production Run acceptance through real generated field,
-HTTP Group Rules/Format/Topology/Schedule commands, Working Draft Save,
+HTTP Group Rules/Format/Topology/Schedule commands, authoritative Simulation Save,
 immutable earlier revision, exact historical Edition in Chromium, SQLite
 backend restart and read equality. One 4-player BO3 round robin produces
 six frozen pairings over three Match Days.

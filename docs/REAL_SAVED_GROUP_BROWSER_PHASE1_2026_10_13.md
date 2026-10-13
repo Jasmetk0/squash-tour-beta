@@ -16,7 +16,7 @@ pretend to complete or simulate every round-robin match.
   canonical Format-bound Topology, and freeze all six round-robin matches over
   three conflict-free Match Days.
 - All these are persisted in the Run's ordinary SQLite authority tables,
-  then saved through the standard Working Draft Save endpoint to an immutable
+  then saved through the standard fingerprint-locked authoritative Simulation Save endpoint to an immutable
   Saved Revision. The older revision must not change even though commands were
   already committed in live Run state.
 - The existing production historical `/tour/editions/{event}` endpoint must

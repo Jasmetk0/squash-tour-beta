@@ -63,7 +63,7 @@ describe('exact historical Edition match replay',()=>{
     expect(api.getSavedTourMatchDetail).toHaveBeenCalledWith(
       'run-a','branch-a','old-rev',2,'event-x','final',0,25
     )
-    expect(screen.getByText('Rally 1/30')).toBeInTheDocument()
+    expect(await screen.findByText('Rally 1/30')).toBeInTheDocument()
     const back=screen.getByRole('link',{name:'Back to Edition results'})
     expect(back).toHaveAttribute('href',expect.stringContaining('revision=old-rev'))
     expect(back).toHaveAttribute('href',expect.stringContaining('country=CZE'))

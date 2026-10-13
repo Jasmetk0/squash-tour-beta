@@ -115,6 +115,31 @@ describe('strict Saved Tour response identity',()=>{
     expect(validSavedTourCalendar({...calendar,editions:[{...event,season_week:62}]},'r','b','rev',2)).toBe(false)
     expect(validSavedTourCalendar({...calendar,editions:[{...event,season:'2000/2001'}]},'r','b','rev',2)).toBe(false)
   })
+  it('accepts both supported season spellings for empty and populated calendars',()=>{
+    const short={...event,season:'2002/03'}
+    const populated={...calendar,editions:[short]}
+    expect(validSavedTourCalendar(populated,'r','b','rev',2)).toBe(true)
+    expect(validSavedTourCalendar({...populated,season:'2002/03'},'r','b','rev',2)).toBe(true)
+    const empty={...calendar,calendar_status:'empty' as const,edition_count:0,editions:[]}
+    expect(validSavedTourCalendar(empty,'r','b','rev',2)).toBe(true)
+    expect(validSavedTourCalendar({...empty,season:'2002/03'},'r','b','rev',2)).toBe(true)
+    // Last supported season checks the century-correct compact label, too.
+    const last={...calendar,season_index:49,season:'2049/2050',
+      editions:[{...event,season:'2049/50'}]}
+    expect(validSavedTourCalendar(last,'r','b','rev',49)).toBe(true)
+  })
+  it('rejects malformed, wrong-year and wrong-request calendar seasons even when empty',()=>{
+    const empty={...calendar,calendar_status:'empty' as const,edition_count:0,editions:[]}
+    for(const invalid of ['2001/2002','2002/04','2002/2004','2002/3','2002/2103',
+      '2050/2051','2002/03 ', '2002/2003/04']){
+      expect(validSavedTourCalendar({...empty,season:invalid},'r','b','rev',2)).toBe(false)
+      expect(validSavedTourCalendar({...calendar,editions:[{...event,season:invalid}]},
+        'r','b','rev',2)).toBe(false)
+    }
+    expect(validSavedTourCalendar(calendar,'r','b','rev',3)).toBe(false)
+    expect(validSavedTourCalendar({...empty,season_index:3},'r','b','rev',3)).toBe(false)
+    expect(validSavedTourCalendar({...empty,season_index:50},'r','b','rev',50)).toBe(false)
+  })
   it('does not infer a result from a calendar completed status',()=>{
     expect(validSavedTourEdition(edition,'r','b','rev',2,'open')).toBe(true)
     expect(validSavedTourEdition({...edition,edition:{...event,result_published:true}},'r','b','rev',2,'open')).toBe(false)

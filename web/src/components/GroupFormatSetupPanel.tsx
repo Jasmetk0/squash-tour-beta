@@ -1,5 +1,5 @@
 /** Actual production Admin operations required before a group-format Run is simulatable. */
-import {useState} from 'react'
+import {useEffect,useState} from 'react'
 import {useMutation,useQuery,useQueryClient} from '@tanstack/react-query'
 import {
   getAdminGroupRules,adoptAdminGroupRules,configureAdminPureGroups,
@@ -22,6 +22,7 @@ export function GroupFormatSetupPanel({
   const client=useQueryClient()
   const [groupCount,setGroupCount]=useState('1')
   const [groupSize,setGroupSize]=useState(String(entrantCount||''))
+  useEffect(()=>{setGroupSize(entrantCount ? String(entrantCount) : '')},[entrantCount,runId,branchId,eventId])
   const [bestOf,setBestOf]=useState<3|5>(5)
   const [confirmRules,setConfirmRules]=useState(false)
   const [confirmFormat,setConfirmFormat]=useState(false)

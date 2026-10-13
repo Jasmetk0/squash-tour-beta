@@ -70,3 +70,29 @@ def test_absent_calendar_is_empty_only_when_no_published_sporting_source():
             saved_revision_id="rev",country_code="cze",
             packages=None,ranking=None,initial_world=None,prospect_source=None,
         )
+
+
+def test_saved_tournament_evidence_is_full_cross_season_source_before_ui_periods(monkeypatch):
+    """The v80 UI must be able to aggregate every canonical source row, not 25/page."""
+    first=edition("old","EGY","P1","P2")
+    first.season="2000/2001"
+    first.season_week=61
+    second=edition("new","CZE","P1","P2")
+    second.season="2001/2002"
+    second.season_week=1
+    planned=edition("plan","CZE",None,None,False)
+    planned.season="2002/2003"
+    monkeypatch.setattr(model,"resolve_viewer_tournament_history",lambda **_:
+        SimpleNamespace(tournaments=(second,planned,first)))
+    from beta_engine.domain.run_packages import RunPackageState
+    result=model.resolve_run_country_records(
+        run_id="run",selected_branch_id="fork",revision_branch_id="branch",
+        saved_revision_id="ancestor",country_code="CZE",
+        packages=RunPackageState(run_id="run",branch_id="branch"),
+        ranking=None,initial_world=_world(),prospect_source=None,
+    )
+    assert [(x.event_id,x.season,x.season_week) for x in result.player_results]==[
+        ("old","2000/2001",61),("new","2001/2002",1)]
+    assert result.country_titles==2 and result.hosted_published_results==1
+    assert result.revision_branch_id=="branch" and result.branch_id=="fork"
+    assert not any(x.event_id=="plan" for x in result.player_results+result.hosted_results)

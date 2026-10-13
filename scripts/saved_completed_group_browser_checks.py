@@ -45,24 +45,31 @@ def play_group_and_save(
     assert preflight["current_week"] == {"season_index": 0, "week": 1}
     assert preflight["current_slot_kind"] in {"entry", "match"}, preflight
 
-    # Tournament horizon is selected by the engine, never by a synthetic list.
-    preview = request("GET", simulation + "/next-tournament/preview")
-    assert preview["event_id"] == event_id, preview
-    assert preview["horizon_slot_ordinals"], preview
-    played = request("POST", simulation + "/simulate-next-tournament", {
-        "command_id": "real-browser-completed-group-tournament",
-        "expected_week": preview["week"],
-        "expected_position_fingerprint": preview["expected_position_fingerprint"],
-        "expected_revision_id": preview["expected_revision_id"],
-    }, 201)
-    assert played["event_id"] == event_id
-    assert played["completed_slot_count"] == len(preview["horizon_slot_ordinals"])
-    assert request("POST", simulation + "/simulate-next-tournament", {
-        "command_id": "real-browser-completed-group-tournament",
-        "expected_week": preview["week"],
-        "expected_position_fingerprint": preview["expected_position_fingerprint"],
-        "expected_revision_id": preview["expected_revision_id"],
-    }, 201) == played
+    # Pure Group tournaments cannot call "Simulate Next Tournament" before
+    # the ranking source has been explicitly closed. Execute each authentic
+    # Match Day first; Group Standings consumes those exact result receipts.
+    played = []
+    day_ordinals = []
+    for day in range(1, 4):
+        preview = request("GET", simulation + "/next-match-day/preview")
+        assert preview["match_day_ordinal"] == day, preview
+        assert preview["target_slot_ordinals"], preview
+        command = {
+            "command_id": f"real-browser-group-match-day-{day}",
+            "expected_week": preview["week"],
+            "expected_position_fingerprint": preview["expected_position_fingerprint"],
+            "expected_revision_id": preview["expected_revision_id"],
+        }
+        outcome = request("POST", simulation + "/simulate-next-match-day",
+                          command, 201)
+        assert outcome["match_day_ordinal"] == day
+        assert outcome["completed_slot_count"] == len(preview["target_slot_ordinals"])
+        assert request("POST", simulation + "/simulate-next-match-day",
+                       command, 201) == outcome
+        played.append(outcome)
+        day_ordinals.extend(preview["target_slot_ordinals"])
+    assert len(day_ordinals) == len(set(day_ordinals)) == 6
+    assert len(played) == 3
 
     # Group Standings is frozen by the actual receipt builder. If the official
     # rules cannot break a tie, the browser acceptance performs an explicit

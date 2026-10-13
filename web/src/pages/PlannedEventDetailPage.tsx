@@ -45,6 +45,7 @@ import {
   SummaryPills
 } from '../components/RunScopedUi'
 import {GroupFormatSetupPanel} from '../components/GroupFormatSetupPanel'
+import { CompletedGroupStandingsPanel } from '../components/CompletedGroupStandingsPanel'
 import { canOfferPureGroupSetup } from './groupFormatAvailability'
 import { formatApiError, isApiNotFound } from '../utils/apiErrors'
 import { isRunCalendarProjection } from '../api/runFirstTournament'
@@ -1238,11 +1239,21 @@ export function PlannedEventDetailPage(): JSX.Element {
                 </div>
               ) : null}
               {canonicalPreparationQuery.data.phase === 'group_match_execution_ready' ? (
-                <p className="status">
-                  Group Match authority and conflict-free Match Day chronology are frozen.
-                  These frozen group matches are ready for canonical Simulation Slot execution.
-                  Standings, W/O table effects and hybrid knockout resolution remain a later explicit authority.
-                </p>
+                <>
+                  <p className="status">
+                    Group Match authority and Match Day chronology are frozen.
+                    Play their real Simulation Slots before generating immutable final tables.
+                    Hybrid knockout closure remains a separate sporting authority.
+                  </p>
+                  {verifiedCalendarScope &&
+                   canonicalPreparationQuery.data.format_kind === 'groups' ? (
+                    <CompletedGroupStandingsPanel
+                      key={['completed-group-standings',runId,activeBranchId,eventId].join(':')}
+                      runId={runId} branchId={activeBranchId} eventId={eventId}
+                      enabled={!viewed.historical && verifiedCalendarScope}
+                    />
+                  ) : null}
+                </>
               ) : null}
               {canonicalPreparationQuery.data.next_required_action === 'adopt_ranking_snapshot' ? (
                 <div className="grid">

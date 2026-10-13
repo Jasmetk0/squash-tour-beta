@@ -977,7 +977,1223 @@ export function PlannedEventDetailPage(): JSX.Element {
     if (action === 'configure_tournament_format' || action === 'generate_tournament_topology') {
       const calendarSeason = canonicalCalendar?.calendar.events
         .find(e => e.event_id === eventId)?.season
-      const calendarSeasonIndex = calendarSeason && /^20[0-9]{2}\\/20[0-9]{2}$/.test(calendarSeason)
+      const calendarSeasonIndex = calendarSeason && new RegExp('^20[0-9]{2}/20[0-9]{2}
+        ? Number(calendarSeason.slice(0, 4)) - 2000
+        : null
+      const groupSeasonIndex = canonicalPreparationQuery.data?.entry_source_target_season_index
+        ?? calendarSeasonIndex
+      return <GroupFormatSetupPanel
+        key={[runId,activeBranchId,eventId,action].join(':')}
+        runId={runId} branchId={activeBranchId} eventId={eventId}
+        seasonIndex={groupSeasonIndex}
+        entrantCount={canonicalEntryFieldQuery.data?.direct_main_player_ids.length ?? 0}
+        hasQualification={Boolean(canonicalEntryFieldQuery.data?.qualification_player_ids.length)}
+        hasByes={Boolean(canonicalEntryFieldQuery.data?.effective_main_bye_count)}
+        step={action === 'configure_tournament_format' ? 'format' : 'topology'}
+      />
+    }
+    if (action === 'prepare_group_match_schedule') {
+      return (
+        <div className="grid">
+          <p className="status">
+            Canonical group assignment and every round-robin pairing are frozen.
+            Materialize the immutable group Match + Match Day schedule from that topology.
+          </p>
+          <button
+            type="button"
+            onClick={() => groupMatchScheduleMutation.mutate()}
+            disabled={groupMatchScheduleMutation.isPending}
+          >
+            Generate group Match Schedule
+          </button>
+          {groupMatchScheduleMutation.error ? (
+            <p className="error">
+              Group Match Schedule generation failed: {formatApiError(groupMatchScheduleMutation.error)}
+            </p>
+          ) : null}
+          {groupMatchScheduleMutation.data ? (
+            <p className="status">
+              Frozen {groupMatchScheduleMutation.data.matches.length} group matches across{' '}
+              {groupMatchScheduleMutation.data.match_day_count} Match Days.
+            </p>
+          ) : null}
+        </div>
+      )
+    }
+    return null
+  }
+
+  if (handoffMismatch) {
+    return (
+      <section className="panel" aria-label="Planned event Branch handoff blocked">
+        <h1>Branch selection required</h1>
+        <p role="alert">
+          This planned event link requires Run {runId} and Branch {requestedBranchId || '(missing)'}
+          in Present mode. Select that exact Admin Branch in the header and return to Present
+          before reviewing or changing tournament authorities. No tournament action is available here.
+        </p>
+        <Link to={`/admin/runs/${encodeURIComponent(runId)}/simulate?branch=${encodeURIComponent(requestedBranchId ?? '')}`}>
+          Inspect requested simulation Branch
+        </Link>
+      </section>
+    )
+  }
+
+  if (viewed.historical && viewed.unavailable) return <section className="panel"><h1>Historical calendar is not available for this checkpoint.</h1><p>Checkpoint: {viewed.time?.viewCheckpointId}</p><button onClick={() => viewed.time?.selectPresent()}>Return to Present</button> <Link to={`/admin/runs/${encodeURIComponent(runId)}`}>Open Run Home</Link></section>
+  if (viewed.historical && viewed.failed) return <section className="panel"><h1>Failed to load historical calendar state.</h1><p>Checkpoint: {viewed.time?.viewCheckpointId}</p><button onClick={() => viewed.time?.selectPresent()}>Return to Present</button> <Link to={`/admin/runs/${encodeURIComponent(runId)}`}>Open Run Home</Link></section>
+  if (viewed.historical && viewed.query.isLoading) return <section className="panel"><p className="status">Loading historical planned event...</p></section>
+
+  return (
+    <section className="panel">
+      <RunScopedHeader
+        title="Planned event detail"
+        runId={runId}
+        subtitle="Read-only inspection route for a single event in this season's ordered plan."
+      />
+
+      <CurrentContextStrip
+        items={[
+          { label: 'Run', value: runId || 'unknown' },
+          { label: 'Time', value: viewed.historical ? 'Past' : 'Present' },
+          { label: 'Season', value: seasonState?.season ?? '—' },
+          { label: 'Planned event', value: eventId || 'unknown' }
+        ]}
+      />
+
+      <SectionCard title="Navigation and context">
+        <p>
+          <Link to={`/runs/${runId}/calendar`}>Back to Season Calendar</Link>
+          {' · '}
+          {plannedEvent ? <Link to={`/runs/${runId}/weeks/${plannedEvent.week}`}>Open week detail</Link> : <span>Week detail unavailable</span>}
+          {' · '}
+          <Link to={`/runs/${runId}`}>Back to Run Detail</Link>
+          {' · '}
+          {!viewed.historical ? <Link to={`/runs/${runId}/events`}>Open Events history</Link> : <span>Persisted historical event detail is not available in this phase.</span>}
+        </p>
+        {plannedEvent ? (
+          <p>
+            Previous:{' '}
+            {previousEvent ? (
+              <Link to={`/runs/${runId}/calendar/${encodeURIComponent(previousEvent.event_id)}`}>{previousEvent.event_id}</Link>
+            ) : (
+              <span>None</span>
+            )}{' '}
+            · Next:{' '}
+            {nextEvent ? (
+              <Link to={`/runs/${runId}/calendar/${encodeURIComponent(nextEvent.event_id)}`}>{nextEvent.event_id}</Link>
+            ) : (
+              <span>None</span>
+            )}
+          </p>
+        ) : null}
+      </SectionCard>
+
+      <SectionCard title="Planned event summary">
+        {runQuery.isLoading ? <p className="status">Loading planned event...</p> : null}
+        {runQuery.error && !canonicalSeasonState ? <p className="error">Failed to load run season state: {formatApiError(runQuery.error)}</p> : null}
+        {eventId && seasonState && !plannedEvent ? (
+          <EmptyState message={`Event ${eventId} is not present in this run's ordered season plan.`} />
+        ) : null}
+        {!eventId ? <EmptyState message="No planned event ID was provided in the URL." /> : null}
+
+        {plannedEvent ? (
+          <>
+            <SummaryPills
+              items={[
+                { label: 'Status', value: status ?? '—' },
+                { label: 'Plan index', value: plannedEventIndex },
+                { label: 'Plan size', value: orderedEvents.length }
+              ]}
+            />
+            <CompactSummaryCard
+              items={[
+                { label: 'Event ID', value: plannedEvent.event_id },
+                { label: 'Season', value: plannedEvent.season },
+                { label: 'Week', value: plannedEvent.week },
+                { label: 'Tour', value: plannedEvent.tour },
+                { label: 'Category', value: plannedEvent.category },
+                { label: 'Template', value: plannedEvent.template_id }
+              ]}
+            />
+          </>
+        ) : null}
+      </SectionCard>
+
+      {plannedEvent ? (
+        <SectionCard title="Season position and neighbors">
+          <MetadataList
+            items={[
+              { label: 'Position', value: `${plannedEventIndex + 1} of ${orderedEvents.length}` },
+              { label: 'Previous event', value: previousEvent?.event_id ?? 'None' },
+              { label: 'Next event', value: nextEvent?.event_id ?? 'None' },
+              { label: 'Current next_event_index', value: nextEventIndex }
+            ]}
+          />
+        </SectionCard>
+      ) : null}
+
+      {plannedEvent ? (
+        <SectionCard title="Status and persisted history">
+          <MetadataList
+            items={[
+              { label: 'Planned status', value: status ?? '—' },
+              { label: 'Completed in season state', value: completedEventIds.has(plannedEvent.event_id) ? 'Yes' : 'No' },
+              { label: 'Persisted event record', value: viewed.historical ? 'Not available in this historical slice' : hasPersistedHistory ? 'Available' : 'Not available' }
+            ]}
+          />
+          {!viewed.historical && status === 'Completed' && hasPersistedHistory ? (
+            <p>
+              <Link to={`/runs/${runId}/events/${encodeURIComponent(plannedEvent.event_id)}`}>
+                Inspect persisted event detail for {plannedEvent.event_id}
+              </Link>
+            </p>
+          ) : null}
+        </SectionCard>
+      ) : null}
+
+      {canonicalCalendarRequested && (canonicalRunQuery.error || canonicalBranchesQuery.error) ?
+        <p role="alert" className="error">Run-owned Calendar Saved Head scope could not be verified: {formatApiError(canonicalRunQuery.error ?? canonicalBranchesQuery.error)}</p> : null}
+      {canonicalCalendarRequested &&
+        canonicalRunQuery.isSuccess && canonicalBranchesQuery.isSuccess &&
+        (!canonicalSavedHeadScope || (canonicalCalendarDraftQuery.isSuccess && !verifiedCalendarScope)) ?
+        <p role="alert" className="error">This Calendar link no longer matches an active writable Product Run Branch with a clean Working Draft based on its current Saved Revision. Reopen the tournament from Run Home after saving or selecting the right Branch.</p> : null}
+      {canonicalCalendarRequested && canonicalCalendarDraftQuery.error ?
+        <p role="alert" className="error">Canonical Working Draft unavailable: {formatApiError(canonicalCalendarDraftQuery.error)}</p> : null}
+      {canonicalCalendarRequested && calendarPackageQuery.error ?
+        <p role="alert" className="error">Canonical Run Package unavailable: {formatApiError(calendarPackageQuery.error)}</p> : null}
+      {canonicalCalendarRequested && canonicalCalendarQuery.error ?
+        <p role="alert" className="error">Run-owned Calendar unavailable: {formatApiError(canonicalCalendarQuery.error)}</p> : null}
+      {canonicalCalendarRequested && canonicalCalendarQuery.isSuccess && !canonicalCalendar ?
+        <p role="alert" className="error">Run-owned Calendar scope or Package fingerprint does not match the selected Run and Branch.</p> : null}
+      {canonicalSeasonState && plannedEvent ?
+        <p role="status">Using the validated Run-owned Calendar snapshot for this canonical Product Run. Legacy Simulation Run history is absent; canonical tournament authorities below remain independent.</p> : null}
+      {eventsQuery.error && !canonicalSeasonState ? <p className="error">Failed to load persisted events: {formatApiError(eventsQuery.error)}</p> : null}
+
+      {plannedEvent && !viewed.historical && activeBranchId ? (
+        <SectionCard title="Canonical tournament preparation">
+          <p className="status">
+            One Run-owned readiness view across Ranking Snapshot, Entry Field, WC/RWC, Draw Input and Draw authority.
+          </p>
+          {canonicalPreparationQuery.isLoading ? <p className="status">Loading canonical tournament preparation...</p> : null}
+          {canonicalPreparationQuery.error ? (
+            <p className="error">Failed to load canonical tournament preparation: {formatApiError(canonicalPreparationQuery.error)}</p>
+          ) : null}
+          {canonicalPreparationQuery.data ? (
+            <>
+              <SummaryPills
+                items={[
+                  { label: 'Phase', value: canonicalPreparationQuery.data.phase },
+                  { label: 'Next action', value: canonicalPreparationQuery.data.next_required_action },
+                  { label: 'Schedule ready', value: canonicalPreparationQuery.data.ready_for_match_schedule ? 'Yes' : 'No' }
+                ]}
+              />
+              <MetadataList
+                items={[
+                  { label: 'Authority source', value: canonicalPreparationQuery.data.authority_source },
+                  { label: 'Entry source', value: canonicalPreparationQuery.data.entry_source_kind ?? 'Not resolved' },
+                  { label: 'Group matches', value: canonicalPreparationQuery.data.group_match_count ?? 0 },
+                  { label: 'Group Match Days', value: canonicalPreparationQuery.data.group_match_day_count ?? 0 },
+                  { label: 'Effective Draw', value: canonicalPreparationQuery.data.effective_draw_fingerprint ?? 'Not generated' },
+                  { label: 'Blockers', value: canonicalPreparationQuery.data.blockers.join(', ') || 'None' }
+                ]}
+              />
+              {preparationActionHandoff()}
+              {canonicalPreparationQuery.data.phase === 'group_match_execution_ready' ? (
+                <p className="status">
+                  Group Match authority and conflict-free Match Day chronology are frozen.
+                  These frozen group matches are ready for canonical Simulation Slot execution.
+                  Standings, W/O table effects and hybrid knockout resolution remain a later explicit authority.
+                </p>
+              ) : null}
+              {canonicalPreparationQuery.data.next_required_action === 'adopt_ranking_snapshot' ? (
+                <div className="grid">
+                  <h4>Adopt Tournament Ranking Snapshot</h4>
+                  <p className="status">Select one already-published Official Ranking explicitly. Planned Event does not guess which publication should become tournament authority.</p>
+                  {rankingPublicationOptionsQuery.isLoading ? <p className="status">Loading published Official Rankings...</p> : null}
+                  {rankingPublicationOptionsQuery.error ? <p className="error">Published Official Rankings could not be loaded: {formatApiError(rankingPublicationOptionsQuery.error)}</p> : null}
+                  {rankingPublicationOptionsQuery.data?.publication_count === 0 ? <p className="status">No published Official Ranking is available for this Branch.</p> : null}
+                  <label>
+                    Published Official Ranking
+                    <select aria-label="Published Official Ranking" value={rankingPublicationSelection} onChange={(event) => setRankingPublicationSelection(event.target.value)}>
+                      <option value="">Select publication</option>
+                      {(rankingPublicationOptionsQuery.data?.publications ?? []).map((publication) => {
+                        const value = `${publication.ranking_week.season_index}:${publication.ranking_week.week}`
+                        return <option key={value} value={value}>Season index {publication.ranking_week.season_index} · Week {publication.ranking_week.week} · {publication.ranked_row_count} players · Best {publication.best_n}</option>
+                      })}
+                    </select>
+                  </label>
+                  <button type="button" onClick={() => rankingSnapshotAdoptMutation.mutate()} disabled={rankingSnapshotAdoptMutation.isPending || !rankingPublicationSelection}>Adopt selected Official Ranking</button>
+                  {rankingSnapshotAdoptMutation.error ? <p className="error">Ranking Snapshot adoption failed: {formatApiError(rankingSnapshotAdoptMutation.error)}</p> : null}
+                  {rankingSnapshotAdoptMutation.data ? <p className="status">Tournament Ranking Snapshot authority adopted for season index {rankingSnapshotAdoptMutation.data.ranking_week.season_index}, week {rankingSnapshotAdoptMutation.data.ranking_week.week}.</p> : null}
+                </div>
+              ) : null}
+              {canonicalPreparationQuery.data.next_required_action === 'build_entry_field' &&
+              canonicalPreparationQuery.data.entry_source_kind === 'finals_participant_selection' ? (
+                <div className="grid">
+                  <h4>Materialize Finals Entry Field</h4>
+                  <p className="status">
+                    Build the shared Tournament Entry Field directly from the immutable Finals participant-selection snapshot.
+                    No Official Ranking, application list, Qualification field, Wild Card slot or bracket geometry is invented.
+                  </p>
+                  <SummaryPills items={[
+                    { label: 'Source', value: 'Finals participant selection' },
+                    { label: 'Season index', value: canonicalPreparationQuery.data.entry_source_target_season_index ?? 'Unknown' },
+                    { label: 'Selected players', value: canonicalPreparationQuery.data.entry_seed_order_player_ids?.length ?? 0 }
+                  ]} />
+                  <button
+                    type="button"
+                    onClick={() => finalsEntryFieldCreateMutation.mutate()}
+                    disabled={
+                      finalsEntryFieldCreateMutation.isPending ||
+                      canonicalPreparationQuery.data.entry_source_target_season_index == null
+                    }
+                  >
+                    Build Entry Field from Finals selection
+                  </button>
+                  {finalsEntryFieldCreateMutation.error ? (
+                    <p className="error">Finals Entry Field creation failed: {formatApiError(finalsEntryFieldCreateMutation.error)}</p>
+                  ) : null}
+                  {finalsEntryFieldCreateMutation.data ? (
+                    <p className="status">Canonical Finals participant field is now stored in shared Tournament Entry Field authority.</p>
+                  ) : null}
+                </div>
+              ) : null}
+              {canonicalPreparationQuery.data.next_required_action === 'build_entry_field' &&
+              canonicalPreparationQuery.data.entry_source_kind !== 'finals_participant_selection' &&
+              !canonicalSeasonState ? (
+                <div className="grid">
+                  <h4>Build canonical Entry Field</h4>
+                  <p className="status">Build only from persisted valid submissions. Capacity remains explicit at commit time.</p>
+                  <SummaryPills items={[
+                    { label: 'Valid submissions', value: canonicalPreparationQuery.data.valid_submission_count ?? 0 },
+                    { label: 'Main submissions', value: canonicalPreparationQuery.data.valid_main_submission_count ?? 0 },
+                    { label: 'Qualification submissions', value: canonicalPreparationQuery.data.valid_qualification_submission_count ?? 0 }
+                  ]} />
+                  {(canonicalPreparationQuery.data.valid_submission_count ?? 0) === 0 ? (
+                    <div className="grid">
+                      <p className="status">No canonical valid submissions are persisted for this event yet. Entry Field creation would currently have no application evidence.</p>
+                      <Link to={`/admin/runs/${encodeURIComponent(runId)}/simulate?branch=${encodeURIComponent(activeBranchId)}`}>
+                        Open this Branch in authoritative Simulation / Entry validation
+                      </Link>
+                    </div>
+                  ) : null}
+                  {canonicalPreparationQuery.data.entry_capacity_suggestion ? (
+                    <p className="status">
+                      Prefilled from frozen Run-owned Calendar Package {canonicalPreparationQuery.data.entry_capacity_suggestion.source_package_id}
+                      {' '}v{canonicalPreparationQuery.data.entry_capacity_suggestion.source_package_version}. Review before commit.
+                    </p>
+                  ) : (
+                    <p className="status">No canonical Run-owned Calendar capacity suggestion is available; enter capacity explicitly.</p>
+                  )}
+                  <label>Main Draw capacity<input aria-label="Entry Main Draw capacity" type="number" value={entryMainDrawSize} onChange={(event) => setEntryMainDrawSize(event.target.value)} /></label>
+                  <label>Qualification Draw capacity<input aria-label="Entry Qualification Draw capacity" type="number" min={0} value={entryQualificationDrawSize} onChange={(event) => setEntryQualificationDrawSize(event.target.value)} /></label>
+                  <label>Qualifier spots<input aria-label="Entry qualifier spots" type="number" min={0} value={entryQualifierSpots} onChange={(event) => setEntryQualifierSpots(event.target.value)} /></label>
+                  <label>Wild Card slots<input aria-label="Entry Wild Card slots" type="number" min={0} value={entryWildCardSlots} onChange={(event) => setEntryWildCardSlots(event.target.value)} /></label>
+                  <label>Explicit BYE slots<input aria-label="Entry BYE slots" type="number" min={0} value={entryByeSlots} onChange={(event) => setEntryByeSlots(event.target.value)} /></label>
+                  <button type="button" onClick={() => entryFieldCreateMutation.mutate()} disabled={entryFieldCreateMutation.isPending}>Build Entry Field from valid submissions</button>
+                  {entryFieldCreateMutation.error ? <p className="error">Entry Field creation failed: {formatApiError(entryFieldCreateMutation.error)}</p> : null}
+                  {entryFieldCreateMutation.data ? <p className="status">Canonical Entry Field created from persisted valid submissions.</p> : null}
+                </div>
+              ) : null}
+            </>
+          ) : null}
+        </SectionCard>
+      ) : null}
+
+      {canonicalSeasonState && plannedEvent && !viewed.historical && activeBranchId &&
+        canonicalPreparationQuery.data?.run_id === runId &&
+        canonicalPreparationQuery.data.branch_id === activeBranchId &&
+        canonicalPreparationQuery.data.event_id === eventId &&
+        canonicalPreparationQuery.data.authority_source === 'run_owned_db_authorities.v1' &&
+        <RunReviewedEntryFieldPanel runId={runId} branchId={activeBranchId} eventId={eventId} />}
+      {canonicalSeasonState && plannedEvent && !viewed.historical && activeBranchId &&
+        canonicalPreparationQuery.data?.run_id === runId &&
+        canonicalPreparationQuery.data.branch_id === activeBranchId &&
+        canonicalPreparationQuery.data.event_id === eventId &&
+        canonicalPreparationQuery.data.authority_source === 'run_owned_db_authorities.v1' &&
+        <RunFirstDrawPanel runId={runId} branchId={activeBranchId} eventId={eventId} />}
+      {canonicalSeasonState && plannedEvent && !viewed.historical && activeBranchId &&
+        canonicalPreparationQuery.data?.run_id === runId &&
+        canonicalPreparationQuery.data.branch_id === activeBranchId &&
+        canonicalPreparationQuery.data.event_id === eventId &&
+        canonicalPreparationQuery.data.authority_source === 'run_owned_db_authorities.v1' &&
+        <RunWeekMatchCheckpointPanel runId={runId} branchId={activeBranchId} eventId={eventId} />}
+      {canonicalSeasonState && plannedEvent && !viewed.historical && activeBranchId &&
+        canonicalPreparationQuery.data?.run_id === runId &&
+        canonicalPreparationQuery.data.branch_id === activeBranchId &&
+        canonicalPreparationQuery.data.event_id === eventId &&
+        canonicalPreparationQuery.data.authority_source === 'run_owned_db_authorities.v1' &&
+        <RunFirstMatchPanel runId={runId} branchId={activeBranchId} eventId={eventId} />}
+      {canonicalSeasonState && plannedEvent && !viewed.historical && activeBranchId &&
+        canonicalPreparationQuery.data?.run_id === runId &&
+        canonicalPreparationQuery.data.branch_id === activeBranchId &&
+        canonicalPreparationQuery.data.event_id === eventId &&
+        canonicalPreparationQuery.data.authority_source === 'run_owned_db_authorities.v1' &&
+        <RunCurrentEntryFreezePanel runId={runId} branchId={activeBranchId} eventId={eventId} />}
+      {canonicalSeasonState && plannedEvent && !viewed.historical && activeBranchId &&
+        canonicalPreparationQuery.data?.run_id === runId &&
+        canonicalPreparationQuery.data.branch_id === activeBranchId &&
+        canonicalPreparationQuery.data.event_id === eventId &&
+        canonicalPreparationQuery.data.authority_source === 'run_owned_db_authorities.v1' &&
+        <RunTournamentEntryReviewPanel runId={runId} branchId={activeBranchId} eventId={eventId} />}
+      {plannedEvent && !viewed.historical && activeBranchId && finalsReplacementVisible ? (
+        <div id="finals-race-replacement">
+          <SectionCard title="World Tour Finals Race replacement">
+            <p className="status">
+              A confirmed Finals withdrawal is filled only from the frozen Race order.
+              Direct-entry status never transfers, and every Decline / Accept decision is append-only.
+            </p>
+            {finalsEffectiveStateQuery.isLoading ? (
+              <p className="status">Loading effective Finals participant field...</p>
+            ) : null}
+            {finalsEffectiveStateQuery.error ? (
+              <p className="error">
+                Effective Finals participant state could not be loaded: {formatApiError(finalsEffectiveStateQuery.error)}
+              </p>
+            ) : null}
+            {finalsEffectiveStateQuery.data?.state ? (
+              <>
+                <SummaryPills
+                  items={[
+                    { label: 'Confirmed', value: finalsEffectiveStateQuery.data.state.participants.length },
+                    { label: 'Withdrawn lineage', value: finalsEffectiveStateQuery.data.state.withdrawn_player_ids.length },
+                    { label: 'Season index', value: finalsEffectiveStateQuery.data.state.target_season_index }
+                  ]}
+                />
+                <div className="table-wrap">
+                  <table aria-label="Effective World Tour Finals participants">
+                    <thead>
+                      <tr><th>Seed</th><th>Player</th><th>Race</th><th>Race points</th><th>Entry source</th></tr>
+                    </thead>
+                    <tbody>
+                      {finalsEffectiveStateQuery.data.state.participants.map((player) => (
+                        <tr key={player.player_id}>
+                          <td>{player.seed}</td>
+                          <td>{player.player_id}</td>
+                          <td>#{player.race_rank}</td>
+                          <td>{player.race_points}</td>
+                          <td>
+                            {player.qualification_source}
+                            {player.direct_entry_event_ids.length
+                              ? ` · ${player.direct_entry_event_ids.join(', ')}`
+                              : ''}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
+            ) : (
+              <p className="status">
+                The immutable initial Finals selection is still current. A replacement preview will
+                materialize the first effective-state version without editing that initial snapshot.
+              </p>
+            )}
+
+            <div className="grid">
+              <label>
+                Confirmed Finals participant to withdraw
+                <select
+                  aria-label="Finals participant to withdraw"
+                  value={finalsReplacementWithdrawnPlayerId}
+                  onChange={(event) => setFinalsReplacementWithdrawnPlayerId(event.target.value)}
+                >
+                  <option value="">Select player</option>
+                  {finalsReplacementPlayerIds.map((playerId) => (
+                    <option key={playerId} value={playerId}>{playerId}</option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                Withdrawal reason
+                <textarea
+                  aria-label="Finals withdrawal reason"
+                  value={finalsReplacementReason}
+                  onChange={(event) => setFinalsReplacementReason(event.target.value)}
+                />
+              </label>
+              <button
+                type="button"
+                onClick={() => finalsReplacementPreviewMutation.mutate()}
+                disabled={
+                  finalsReplacementPreviewMutation.isPending ||
+                  !finalsReplacementWithdrawnPlayerId ||
+                  !finalsReplacementReason.trim()
+                }
+              >
+                Offer next frozen-Race candidate
+              </button>
+              {finalsReplacementPreviewMutation.error ? (
+                <p className="error">
+                  Finals replacement preview failed: {formatApiError(finalsReplacementPreviewMutation.error)}
+                </p>
+              ) : null}
+            </div>
+
+            {finalsReplacementPreview ? (
+              <div className="grid">
+                <SummaryPills
+                  items={[
+                    { label: 'Vacancy', value: finalsReplacementPreview.authority.withdrawn_player_id },
+                    { label: 'Status', value: finalsReplacementPreview.authority.status },
+                    {
+                      label: 'Offered candidate',
+                      value: finalsReplacementPreview.authority.offered_candidate_player_id ?? 'None'
+                    },
+                    {
+                      label: 'Race rank',
+                      value: finalsReplacementPreview.authority.offered_candidate_race_rank ?? '—'
+                    }
+                  ]}
+                />
+                {finalsReplacementPreview.authority.decisions.length ? (
+                  <ul aria-label="Finals replacement decisions">
+                    {finalsReplacementPreview.authority.decisions.map((decision) => (
+                      <li key={decision.decision_id}>
+                        Race #{decision.race_rank} · {decision.player_id} · {decision.decision}
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+                {finalsReplacementPreview.authority.status === 'exhausted' ? (
+                  <p className="status">
+                    Frozen Race reserve order is exhausted. The vacancy remains an explicit blocker.
+                  </p>
+                ) : null}
+                {finalsReplacementPreview.authority.status === 'awaiting_decision' ? (
+                  <>
+                    {canonicalDrawStateQuery.data?.initial_draw_generated ? (
+                      <>
+                        <p className="status">
+                          The Draw already exists. Acceptance must identify the current Main process
+                          window so the server chooses full redraw, seed cascade or Draw-Freeze exact-slot repair.
+                        </p>
+                        <label>
+                          Main process window ordinal
+                          <input
+                            aria-label="Finals replacement Main process window"
+                            type="number"
+                            min={1}
+                            max={canonicalDrawProcessQuery.data?.main?.process_window_count ?? undefined}
+                            value={finalsReplacementMainWindow}
+                            onChange={(event) => setFinalsReplacementMainWindow(event.target.value)}
+                          />
+                        </label>
+                        <label>
+                          Repair Draw seed (required only for full-redraw phase)
+                          <input
+                            aria-label="Finals replacement repair Draw seed"
+                            type="number"
+                            value={finalsReplacementRepairSeed}
+                            onChange={(event) => setFinalsReplacementRepairSeed(event.target.value)}
+                          />
+                        </label>
+                      </>
+                    ) : null}
+                    <p>
+                      <button
+                        type="button"
+                        onClick={() => finalsReplacementDecisionMutation.mutate('decline')}
+                        disabled={finalsReplacementDecisionMutation.isPending}
+                      >
+                        Decline candidate
+                      </button>{' '}
+                      <button
+                        type="button"
+                        onClick={() => finalsReplacementDecisionMutation.mutate('accept')}
+                        disabled={finalsReplacementDecisionMutation.isPending}
+                      >
+                        Accept candidate
+                      </button>
+                    </p>
+                  </>
+                ) : null}
+                {finalsReplacementPreview.authority.status === 'accepted' ? (
+                  <>
+                    <p className="status">
+                      Replacement accepted. Effective participant state, Entry Field and any required
+                      canonical Draw revision are now bound to this decision.
+                    </p>
+                    {canonicalDrawRevisionHistoryQuery.data?.revisions.length ? (
+                      <MetadataList
+                        items={[
+                          {
+                            label: 'Latest Draw revision',
+                            value: canonicalDrawRevisionHistoryQuery.data.revisions[
+                              canonicalDrawRevisionHistoryQuery.data.revisions.length - 1
+                            ].sequence
+                          },
+                          {
+                            label: 'Repair kind',
+                            value: canonicalDrawRevisionHistoryQuery.data.revisions[
+                              canonicalDrawRevisionHistoryQuery.data.revisions.length - 1
+                            ].repair_kind
+                          },
+                          {
+                            label: 'Effective Draw',
+                            value: canonicalDrawRevisionHistoryQuery.data.effective_draw_fingerprint
+                          }
+                        ]}
+                      />
+                    ) : null}
+                  </>
+                ) : null}
+                {finalsReplacementDecisionMutation.error ? (
+                  <p className="error">
+                    Finals replacement decision failed: {formatApiError(finalsReplacementDecisionMutation.error)}
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
+
+            <p className="status">
+              If the player has already started the first REAL match, reserve replacement is blocked.
+              The existing canonical W/O workflow in authoritative Simulation owns the progression instead;
+              BYEs do not close this cutoff.
+            </p>
+          </SectionCard>
+        </div>
+      ) : null}
+
+      {plannedEvent && !viewed.historical && activeBranchId ? (
+        <div id="canonical-main-draw-preflight">
+        <SectionCard title="Canonical Main Draw preflight">
+          {canonicalEntryFieldQuery.isLoading ? <p className="status">Loading canonical Main Draw geometry...</p> : null}
+          {canonicalEntryFieldUnavailable ? (
+            <p className="status">Canonical Tournament Entry Field is not available for this event yet.</p>
+          ) : null}
+          {canonicalEntryFieldQuery.error && !canonicalEntryFieldUnavailable ? (
+            <p className="error">
+              Failed to load canonical Main Draw preflight: {formatApiError(canonicalEntryFieldQuery.error)}
+            </p>
+          ) : null}
+          {canonicalEntryFieldQuery.data ? (
+            <>
+              <MetadataList
+                items={[
+                  { label: 'Active Branch', value: canonicalEntryFieldQuery.data.branch_id },
+                  { label: 'Field version', value: canonicalEntryFieldQuery.data.field_sequence },
+                  { label: 'Bracket capacity', value: canonicalEntryFieldQuery.data.main_draw_capacity },
+                  { label: 'Current entrants', value: canonicalEntryFieldQuery.data.active_main_entrant_count },
+                  { label: 'Effective BYEs', value: canonicalEntryFieldQuery.data.effective_main_bye_count },
+                  {
+                    label: 'Draw Input',
+                    value: canonicalEntryFieldQuery.data.draw_input_committed ? 'Committed' : 'Not committed'
+                  }
+                ]}
+              />
+              {canonicalEntryFieldQuery.data.main_diagnostics.length > 0 ? (
+                <ul aria-label="Main Draw warnings">
+                  {canonicalEntryFieldQuery.data.main_diagnostics.map((diagnostic) => (
+                    <li key={diagnostic.code}>
+                      <strong>{diagnostic.message}</strong>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="status">No Main Draw geometry warnings.</p>
+              )}
+              <div className="grid">
+                <label>
+                  Canonical Entry Field player to withdraw
+                  <select
+                    value={canonicalPreDrawWithdrawnPlayerId}
+                    onChange={(event) => setCanonicalPreDrawWithdrawnPlayerId(event.target.value)}
+                    disabled={canonicalEntryFieldQuery.data.pre_draw_repair_locked_by_draw_input}
+                  >
+                    <option value="">Select player</option>
+                    {canonicalEntryFieldQuery.data.direct_main_player_ids.length > 0 ? (
+                      <optgroup label="Main">
+                        {canonicalEntryFieldQuery.data.direct_main_player_ids.map((playerId) => (
+                          <option key={`main-${playerId}`} value={playerId}>
+                            Main · {playerId}
+                          </option>
+                        ))}
+                      </optgroup>
+                    ) : null}
+                    {canonicalEntryFieldQuery.data.qualification_player_ids.length > 0 ? (
+                      <optgroup label="Qualification">
+                        {canonicalEntryFieldQuery.data.qualification_player_ids.map((playerId) => (
+                          <option key={`qualification-${playerId}`} value={playerId}>
+                            Qualification · {playerId}
+                          </option>
+                        ))}
+                      </optgroup>
+                    ) : null}
+                  </select>
+                </label>
+                <p className="status">
+                  Commit is bound to field fingerprint {canonicalEntryFieldQuery.data.field_fingerprint}. The server
+                  rebalances Main/Qualification from the frozen Tournament Ranking Snapshot.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => canonicalPreDrawWithdrawalMutation.mutate()}
+                  disabled={
+                    canonicalPreDrawWithdrawalMutation.isPending ||
+                    canonicalEntryFieldQuery.data.pre_draw_repair_locked_by_draw_input ||
+                    !canonicalPreDrawWithdrawnPlayerId
+                  }
+                >
+                  Commit canonical pre-draw withdrawal
+                </button>
+                {canonicalEntryFieldQuery.data.pre_draw_repair_locked_by_draw_input ? (
+                  <p className="status">Pre-draw repair is locked because canonical Draw Input is already committed.</p>
+                ) : null}
+                {canonicalPreDrawWithdrawalMutation.error ? (
+                  <p className="error">
+                    Canonical pre-draw withdrawal failed: {formatApiError(canonicalPreDrawWithdrawalMutation.error)}
+                  </p>
+                ) : null}
+                {canonicalPreDrawWithdrawalMutation.data ? (
+                  <p className="status">
+                    Canonical field advanced to version {canonicalPreDrawWithdrawalMutation.data.field_sequence}. Withdrew{' '}
+                    {canonicalPreDrawWithdrawalMutation.data.newly_withdrawn_player_ids.join(', ') || '—'}; promoted to Main{' '}
+                    {canonicalPreDrawWithdrawalMutation.data.promoted_to_main_player_ids.join(', ') || 'none'}; Qualification backfill{' '}
+                    {canonicalPreDrawWithdrawalMutation.data.qualification_backfill_player_ids.join(', ') || 'none'}.
+                  </p>
+                ) : null}
+              </div>
+            </>
+          ) : null}
+        </SectionCard>
+        </div>
+      ) : null}
+
+      {plannedEvent && !viewed.historical && activeBranchId ? (
+        <div id="canonical-draw-authority">
+        <SectionCard title="Canonical Tournament Draw authority">
+          {canonicalDrawStateQuery.isLoading ? <p className="status">Loading canonical Draw authority state...</p> : null}
+          {canonicalDrawStateUnavailable ? (
+            <p className="status">Canonical Tournament Entry Field is not available for this event yet.</p>
+          ) : null}
+          {canonicalDrawStateQuery.error && !canonicalDrawStateUnavailable ? (
+            <p className="error">Failed to load canonical Draw state: {formatApiError(canonicalDrawStateQuery.error)}</p>
+          ) : null}
+          {canonicalDrawStateQuery.data ? (
+            <>
+              <MetadataList
+                items={[
+                  { label: 'Draw Input', value: canonicalDrawStateQuery.data.draw_input_committed ? 'Committed' : 'Not committed' },
+                  { label: 'Initial Draw', value: canonicalDrawStateQuery.data.initial_draw_generated ? 'Generated / immutable' : 'Not generated' },
+                  { label: 'Main seed count', value: canonicalDrawStateQuery.data.main_seed_count ?? 'Derived on commit' },
+                  { label: 'Qualification seed count', value: canonicalDrawStateQuery.data.qualification_seed_count ?? 'Derived on commit' },
+                  { label: 'Frozen draw seed', value: canonicalDrawStateQuery.data.draw_seed ?? '—' },
+                  { label: 'Algorithm', value: canonicalDrawStateQuery.data.draw_algorithm_version ?? '—' }
+                ]}
+              />
+              {!canonicalSeasonState && !canonicalDrawStateQuery.data.draw_input_committed ? (
+                <div className="grid">
+                  <label>
+                    Technical draw seed
+                    <input
+                      aria-label="Technical draw seed"
+                      type="number"
+                      value={canonicalDrawSeed}
+                      onChange={(event) => setCanonicalDrawSeed(Number(event.target.value))}
+                    />
+                  </label>
+                  <p className="status">
+                    The seed freezes deterministic replay only. Bracket capacity, BYEs and seed counts remain Master-derived.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => canonicalDrawInputMutation.mutate()}
+                    disabled={
+                      canonicalDrawInputMutation.isPending ||
+                      !canonicalEntryFieldQuery.data ||
+                      !Number.isSafeInteger(canonicalDrawSeed)
+                    }
+                  >
+                    Commit canonical Draw Input
+                  </button>
+                </div>
+              ) : null}
+              {!canonicalSeasonState && canonicalDrawStateQuery.data.draw_input_committed && !canonicalDrawStateQuery.data.initial_draw_generated ? (
+                <button
+                  type="button"
+                  onClick={() => canonicalDrawGenerateMutation.mutate()}
+                  disabled={canonicalDrawGenerateMutation.isPending || !canonicalDrawStateQuery.data.draw_input_fingerprint}
+                >
+                  Generate canonical initial Draw
+                </button>
+              ) : null}
+              {canonicalDrawStateQuery.data.initial_draw_generated ? (
+                <p className="status">Initial canonical Draw is frozen. Later changes use append-only Draw revision authorities.</p>
+              ) : null}
+              {canonicalDrawInputMutation.error ? (
+                <p className="error">Draw Input commitment failed: {formatApiError(canonicalDrawInputMutation.error)}</p>
+              ) : null}
+              {canonicalDrawGenerateMutation.error ? (
+                <p className="error">Draw generation failed: {formatApiError(canonicalDrawGenerateMutation.error)}</p>
+              ) : null}
+            </>
+          ) : null}
+
+          {canonicalDrawStateQuery.data?.initial_draw_generated ? (
+            <>
+              <h4>Draw process windows</h4>
+              {canonicalDrawProcessQuery.isLoading ? <p className="status">Loading Draw process authority...</p> : null}
+              {canonicalDrawProcessQuery.error ? (
+                <p className="error">Failed to load Draw process authority: {formatApiError(canonicalDrawProcessQuery.error)}</p>
+              ) : null}
+              {canonicalDrawProcessQuery.data ? (
+                canonicalDrawProcessQuery.data.configured ? (
+                  <MetadataList
+                    items={[
+                      { label: 'Process authority', value: 'Configured / immutable' },
+                      { label: 'Main windows', value: canonicalDrawProcessQuery.data.main?.process_window_count ?? '—' },
+                      { label: 'Main Redraw Cutoff', value: canonicalDrawProcessQuery.data.main?.redraw_cutoff_window_ordinal ?? '—' },
+                      { label: 'Main Draw Freeze', value: canonicalDrawProcessQuery.data.main?.draw_freeze_window_ordinal ?? '—' },
+                      {
+                        label: 'Qualification windows',
+                        value: canonicalDrawProcessQuery.data.qualification?.process_window_count ?? 'Not applicable'
+                      },
+                      {
+                        label: 'Qualification Redraw Cutoff',
+                        value: canonicalDrawProcessQuery.data.qualification?.redraw_cutoff_window_ordinal ?? '—'
+                      },
+                      {
+                        label: 'Qualification Draw Freeze',
+                        value: canonicalDrawProcessQuery.data.qualification?.draw_freeze_window_ordinal ?? '—'
+                      }
+                    ]}
+                  />
+                ) : (
+                  <div className="grid">
+                    <p className="status">
+                      Master fixes the penultimate window as Redraw Cutoff and the final window as Draw Freeze. The total counts stay explicit configuration.
+                    </p>
+                    <label>
+                      Main process windows
+                      <input
+                        aria-label="Main process windows"
+                        type="number"
+                        min={2}
+                        value={mainProcessWindowCount}
+                        onChange={(event) => setMainProcessWindowCount(event.target.value)}
+                      />
+                    </label>
+                    {canonicalDrawProcessQuery.data.has_qualification ? (
+                      <label>
+                        Qualification process windows
+                        <input
+                          aria-label="Qualification process windows"
+                          type="number"
+                          min={2}
+                          value={qualificationProcessWindowCount}
+                          onChange={(event) => setQualificationProcessWindowCount(event.target.value)}
+                        />
+                      </label>
+                    ) : null}
+                    <button
+                      type="button"
+                      onClick={() => canonicalDrawProcessMutation.mutate()}
+                      disabled={!canConfigureDrawProcess || canonicalDrawProcessMutation.isPending}
+                    >
+                      Configure canonical Draw process
+                    </button>
+                  </div>
+                )
+              ) : null}
+              {canonicalDrawProcessMutation.error ? (
+                <p className="error">Draw process configuration failed: {formatApiError(canonicalDrawProcessMutation.error)}</p>
+              ) : null}
+
+              <h4>Frozen Main replacement</h4>
+              <p className="status">
+                Preview the Master source-priority chain from the current effective Draw. Commit is bound to the reviewed source fingerprint; post-cutoff W/O remains owned by canonical Simulation.
+              </p>
+              {canonicalDrawProcessQuery.data?.configured && displayedCanonicalDrawAuthority ? (
+                <div className="grid">
+                  <label>
+                    Withdrawn Main player
+                    <select
+                      aria-label="Frozen Main withdrawn player"
+                      value={frozenReplacementWithdrawnPlayerId}
+                      onChange={(event) => setFrozenReplacementWithdrawnPlayerId(event.target.value)}
+                      disabled={frozenReplacementPreviewMutation.isPending || frozenReplacementCommitMutation.isPending}
+                    >
+                      {frozenReplacementMainPlayers.map((playerId) => (
+                        <option key={playerId} value={playerId}>{playerId}</option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    Unavailable replacement player IDs
+                    <input
+                      aria-label="Frozen Main unavailable players"
+                      value={frozenReplacementUnavailableInput}
+                      onChange={(event) => setFrozenReplacementUnavailableInput(event.target.value)}
+                      placeholder="P001, P002"
+                      disabled={frozenReplacementPreviewMutation.isPending || frozenReplacementCommitMutation.isPending}
+                    />
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => frozenReplacementPreviewMutation.mutate()}
+                    disabled={
+                      !frozenReplacementWithdrawnPlayerId ||
+                      frozenReplacementPreviewMutation.isPending ||
+                      frozenReplacementCommitMutation.isPending
+                    }
+                  >
+                    Preview frozen Main replacement
+                  </button>
+                </div>
+              ) : (
+                <p className="status">Configure Draw process authority before frozen Main replacement review.</p>
+              )}
+              {frozenReplacementPreviewMutation.error ? (
+                <p className="error">
+                  Frozen Main replacement preview failed: {formatApiError(frozenReplacementPreviewMutation.error)}
+                </p>
+              ) : null}
+              {frozenReplacementPreview ? (
+                <>
+                  <MetadataList
+                    items={[
+                      { label: 'Replacement source', value: frozenReplacementPreview.source },
+                      { label: 'Selected player', value: frozenReplacementPreview.selected_player_id ?? 'None' },
+                      { label: 'Physical Main slot', value: frozenReplacementPreview.physical_slot_index },
+                      { label: 'Player cutoff', value: frozenReplacementPreview.cutoff_status },
+                      { label: 'Source fingerprint', value: frozenReplacementPreview.source_authority_fingerprint }
+                    ]}
+                  />
+                  {frozenReplacementPreview.commit_mode === 'walkover_handoff' ? (
+                    <p className="status">
+                      Replacement cutoff has passed. Do not rewrite the Draw; complete the next consuming match through canonical post-cutoff W/O in Simulation.
+                    </p>
+                  ) : (
+                    <div className="grid">
+                      {canonicalDrawProcessQuery.data?.has_qualification ? (
+                        <label>
+                          Current Qualification process window
+                          <input
+                            aria-label="Frozen Main Qualification process window"
+                            type="number"
+                            min={1}
+                            max={canonicalDrawProcessQuery.data.qualification?.process_window_count ?? undefined}
+                            value={frozenReplacementQualificationWindow}
+                            onChange={(event) => setFrozenReplacementQualificationWindow(event.target.value)}
+                            disabled={frozenReplacementCommitMutation.isPending}
+                          />
+                        </label>
+                      ) : null}
+                      <label>
+                        Repair draw seed (only when the selected Q repair phase requires redraw)
+                        <input
+                          aria-label="Frozen Main repair draw seed"
+                          type="number"
+                          value={frozenReplacementRepairSeed}
+                          onChange={(event) => setFrozenReplacementRepairSeed(event.target.value)}
+                          disabled={frozenReplacementCommitMutation.isPending}
+                        />
+                      </label>
+                      <p className="status">
+                        Main process window is fixed to configured Draw Freeze #{canonicalDrawProcessQuery.data?.main?.draw_freeze_window_ordinal ?? '—'} for this frozen-Main command.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => frozenReplacementCommitMutation.mutate()}
+                        disabled={frozenReplacementCommitMutation.isPending}
+                      >
+                        Commit reviewed frozen Main replacement
+                      </button>
+                    </div>
+                  )}
+                </>
+              ) : null}
+              {frozenReplacementCommitMutation.data ? (
+                <p className="status">
+                  Canonical replacement committed via {frozenReplacementCommitMutation.data.source}; Draw revision(s): {frozenReplacementCommitMutation.data.draw_revision_sequences.join(', ') || 'none'}.
+                </p>
+              ) : null}
+              {frozenReplacementCommitMutation.error ? (
+                <p className="error">
+                  Frozen Main replacement commit failed: {formatApiError(frozenReplacementCommitMutation.error)}
+                </p>
+              ) : null}
+
+              <h4>Effective Draw and append-only history</h4>
+              {canonicalDrawRevisionHistoryQuery.isLoading ? <p className="status">Loading Draw revision history...</p> : null}
+              {canonicalDrawRevisionHistoryQuery.error ? (
+                <p className="error">Failed to load Draw revision history: {formatApiError(canonicalDrawRevisionHistoryQuery.error)}</p>
+              ) : null}
+              {canonicalDrawRevisionHistoryQuery.data ? (
+                <>
+                  <MetadataList
+                    items={[
+                      { label: 'Revision count', value: canonicalDrawRevisionCount },
+                      { label: 'Initial Draw fingerprint', value: canonicalDrawRevisionHistoryQuery.data.initial_draw_fingerprint },
+                      { label: 'Effective Draw fingerprint', value: canonicalDrawRevisionHistoryQuery.data.effective_draw_fingerprint },
+                      {
+                        label: 'Displayed bracket',
+                        value: canonicalDrawRevisionCount > 0 ? 'Latest effective successor Draw' : 'Initial Draw (no revisions)'
+                      }
+                    ]}
+                  />
+                  {canonicalDrawRevisionCount > 0 ? (
+                    <ol aria-label="Canonical Draw revision history">
+                      {canonicalDrawRevisionHistoryQuery.data.revisions.map((revision) => (
+                        <li key={revision.sequence}>
+                          #{revision.sequence} · {revision.repair_kind} · {revision.affected_draw_types.join(' + ')}
+                          {revision.withdrawn_player_ids.length > 0
+                            ? ` · withdrawn ${revision.withdrawn_player_ids.join(', ')}`
+                            : ''}
+                          {revision.main_process_window_ordinal != null
+                            ? ` · Main window ${revision.main_process_window_ordinal}`
+                            : ''}
+                          {revision.qualification_process_window_ordinal != null
+                            ? ` · Q window ${revision.qualification_process_window_ordinal}`
+                            : ''}
+                        </li>
+                      ))}
+                    </ol>
+                  ) : (
+                    <p className="status">No append-only Draw revisions. Effective Draw equals the immutable initial Draw.</p>
+                  )}
+                </>
+              ) : null}
+            </>
+          ) : null}
+
+          {canonicalDrawAuthorityQuery.isLoading || canonicalEffectiveDrawAuthorityQuery.isLoading ? (
+            <p className="status">Loading canonical initial/effective bracket...</p>
+          ) : null}
+          {canonicalDrawAuthorityQuery.error ? (
+            <p className="error">Failed to load initial canonical Draw authority: {formatApiError(canonicalDrawAuthorityQuery.error)}</p>
+          ) : null}
+          {canonicalEffectiveDrawAuthorityQuery.error ? (
+            <p className="error">Failed to load effective canonical Draw authority: {formatApiError(canonicalEffectiveDrawAuthorityQuery.error)}</p>
+          ) : null}
+          {!canonicalSeasonState && displayedCanonicalDrawAuthority ? (
+            <>
+              <SummaryPills
+                items={[
+                  { label: 'Main slots', value: displayedCanonicalDrawAuthority.main.bracket_size },
+                  { label: 'Main BYEs', value: displayedCanonicalDrawAuthority.main.bye_slot_indexes.length },
+                  { label: 'Q sections', value: canonicalQualificationBrackets.length },
+                  { label: 'Algorithm', value: displayedCanonicalDrawAuthority.algorithm_version }
+                ]}
+              />
+              <div className="table-wrap">
+                <table aria-label="Canonical Main Draw slots">
+                  <thead>
+                    <tr><th>Slot</th><th>Idealized</th><th>Entrant</th><th>Seed</th><th>Status</th></tr>
+                  </thead>
+                  <tbody>
+                    {displayedCanonicalDrawAuthority.main.slots.map((slot) => (
+                      <tr key={slot.slot_index}>
+                        <td>{slot.slot_index}</td>
+                        <td>{slot.idealized_slot_number ?? '—'}</td>
+                        <td>{slot.player_id ?? slot.placeholder_id ?? 'BYE'}</td>
+                        <td>{slot.seed_number ?? '—'}</td>
+                        <td>{slot.entry_status ?? slot.entrant_kind}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              {canonicalQualificationBrackets.map((bracket) => (
+                <div key={bracket.section_id ?? 'qualification'}>
+                  <h4>{bracket.section_id ?? 'Qualification'}</h4>
+                  <div className="table-wrap">
+                    <table aria-label={`Canonical ${bracket.section_id ?? 'Qualification'} slots`}>
+                      <thead>
+                        <tr><th>Slot</th><th>Idealized</th><th>Entrant</th><th>Seed</th></tr>
+                      </thead>
+                      <tbody>
+                        {bracket.slots.map((slot) => (
+                          <tr key={slot.slot_index}>
+                            <td>{slot.slot_index}</td>
+                            <td>{slot.idealized_slot_number ?? '—'}</td>
+                            <td>{slot.player_id ?? slot.placeholder_id ?? 'BYE'}</td>
+                            <td>{slot.seed_number ?? '—'}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              ))}
+            </>
+          ) : null}
+        </SectionCard>
+        </div>
+      ) : null}
+
+      {plannedEvent && !viewed.historical ? (
+        <div id="canonical-wc-review">
+        <SectionCard title="Canonical WC/RWC review">
+          <p className="status">
+            WC eligibility and construction of the RWC order are still intentionally open in the Master.
+            This pre-alpha control therefore records an explicit Admin-reviewed nomination/order; the
+            server owns the frozen Entry Field, Direct Acceptance release, global Simulation Slot,
+            definitive assignments and Tour-entry effects.
+          </p>
+          {canonicalWildcardStateQuery.isLoading ? <p className="status">Loading canonical WC state...</p> : null}
+          {canonicalWildcardStateQuery.error ? (
+            <p className="error">
+              Failed to load canonical WC state: {formatApiError(canonicalWildcardStateQuery.error)}
+            </p>
+          ) : null}
+          {canonicalWildcardStateQuery.data?.authority ? (
+            <>
+              <MetadataList
+                items={[
+                  { label: 'Authority', value: canonicalWildcardStateQuery.data.authority.schema_version },
+                  {
+                    label: 'Global slot',
+                    value: canonicalWildcardStateQuery.data.authority.decision_slot_ordinal ?? 'Historical / none'
+                  },
+                  {
+                    label: 'Selection policy',
+                    value: canonicalWildcardStateQuery.data.authority.selection_policy_id ?? 'Historical'
+                  },
+                  {
+                    label: 'Reviewed by',
+                    value: canonicalWildcardStateQuery.data.authority.operator_label ?? 'Historical'
+                  }
+                ]}
+              />
+              <ul>
+                {canonicalWildcardStateQuery.data.authority.slots.map((slot) => (
+                  <li key={slot.wildcard_index}>
+                    WC {slot.wildcard_index}: {slot.active_player_id ?? 'Unfilled'} · {slot.source}
+                    {slot.reserve_ordinal ? ` · RWC #${slot.reserve_ordinal}` : ''}
+                    {slot.released_because_direct_acceptance ? ' · original holder became Direct' : ''}
+                  </li>
+                ))}
+              </ul>
+              <p className="status">
+                Definitive assignments: {canonicalWildcardStateQuery.data.definitive_assignments.length}
+              </p>
+            </>
+          ) : (
+            <>
+              <label>
+                Original WC slot nominations
+                <input
+                  aria-label="Original WC slot nominations"
+                  value={canonicalWildcardOriginalInput}
+                  onChange={(event) => setCanonicalWildcardOriginalInput(event.target.value)}
+                  placeholder="P17, -, P42"
+                />
+              </label>
+              <p className="status">
+                Comma-separated in physical WC-slot order. Use “-” for an intentionally unfilled slot.
+                The server rejects the review if the count differs from the frozen Entry Field capacity.
+              </p>
+              <label>
+                RWC order
+                <input
+                  aria-label="RWC order"
+                  value={canonicalWildcardReserveInput}
+                  onChange={(event) => setCanonicalWildcardReserveInput(event.target.value)}
+                  placeholder="P88, P91, P104"
+                />
+              </label>
+              <label>
+                Explicitly unavailable WC players
+                <input
+                  aria-label="Unavailable WC players"
+                  value={canonicalWildcardUnavailableInput}
+                  onChange={(event) => setCanonicalWildcardUnavailableInput(event.target.value)}
+                  placeholder="P91, P120"
+                />
+              </label>
+              <label>
+                WC review operator
+                <input
+                  aria-label="WC review operator"
+                  value={canonicalWildcardOperator}
+                  onChange={(event) => setCanonicalWildcardOperator(event.target.value)}
+                />
+              </label>
+              <label>
+                WC review audit reason
+                <textarea
+                  aria-label="WC review audit reason"
+                  value={canonicalWildcardReason}
+                  onChange={(event) => setCanonicalWildcardReason(event.target.value)}
+                />
+              </label>
+              <p>
+                <button
+                  type="button"
+                  disabled={
+                    canonicalWildcardPreviewMutation.isPending ||
+                    canonicalEntryFieldQuery.data?.draw_input_committed === true
+                  }
+                  onClick={() => canonicalWildcardPreviewMutation.mutate()}
+                >
+                  Preview canonical WC/RWC review
+                </button>
+              </p>
+              {canonicalWildcardPreviewMutation.error ? (
+                <p className="error">
+                  WC preview failed: {formatApiError(canonicalWildcardPreviewMutation.error)}
+                </p>
+              ) : null}
+              {canonicalWildcardPreview ? (
+                <>
+                  <MetadataList
+                    items={[
+                      {
+                        label: 'Derived FAX week',
+                        value: `S${canonicalWildcardPreview.week.season_index + 1} W${canonicalWildcardPreview.week.week}`
+                      },
+                      { label: 'Derived global slot', value: canonicalWildcardPreview.decision_slot_ordinal },
+                      {
+                        label: 'Entry Field',
+                        value: `#${canonicalWildcardPreview.field_sequence} · ${canonicalWildcardPreview.entry_field_fingerprint.slice(0, 12)}…`
+                      },
+                      {
+                        label: 'New first Tour-entry sources',
+                        value: canonicalWildcardPreview.first_tour_entry_source_player_ids.join(', ') || 'None'
+                      }
+                    ]}
+                  />
+                  <ul>
+                    {canonicalWildcardPreview.authority.slots.map((slot) => (
+                      <li key={slot.wildcard_index}>
+                        WC {slot.wildcard_index}: {slot.active_player_id ?? 'Unfilled'} · {slot.source}
+                        {slot.reserve_ordinal ? ` · RWC #${slot.reserve_ordinal}` : ''}
+                        {slot.released_because_direct_acceptance ? ' · original holder released after Direct Acceptance' : ''}
+                      </li>
+                    ))}
+                  </ul>
+                  <button
+                    type="button"
+                    disabled={canonicalWildcardCommitMutation.isPending}
+                    onClick={() => canonicalWildcardCommitMutation.mutate()}
+                  >
+                    Commit reviewed canonical WC/RWC authority
+                  </button>
+                </>
+              ) : null}
+              {canonicalWildcardCommitMutation.error ? (
+                <p className="error">
+                  WC commit failed: {formatApiError(canonicalWildcardCommitMutation.error)}
+                </p>
+              ) : null}
+              {canonicalWildcardCommitMutation.data ? (
+                <p className="status">
+                  Canonical WC authority {canonicalWildcardCommitMutation.data.adoption === 'exact_retry' ? 'reused' : 'committed'}
+                  {' '}at global slot {canonicalWildcardCommitMutation.data.decision_slot_ordinal}.
+                </p>
+              ) : null}
+            </>
+          )}
+        </SectionCard>
+        </div>
+      ) : null}
+    </section>
+  )
+}
+).test(calendarSeason)
         ? Number(calendarSeason.slice(0, 4)) - 2000
         : null
       const groupSeasonIndex = canonicalPreparationQuery.data?.entry_source_target_season_index

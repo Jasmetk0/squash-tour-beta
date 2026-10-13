@@ -1,3 +1,19 @@
+# Real Admin pure-group Format/Topology preparation — candidate 13 October 2026
+
+On actual merged #1423 baseline, a previously missing browser-workflow blocker
+is now addressed: the Run-owned Planned Event page shows real production
+commands for immutable season Group Rules, pure round-robin Format and group
+Topology (each explicitly confirmed, with exact branch/event/season and
+participant partition checks). Existing generated Group Match Schedule handoff
+then becomes reachable without manual API writes. No fabricated crossings,
+BYEs, match results or historical revisions. Full actual group/hybrid browser
+simulation+Save+SQLite restart is **not yet verified** and remains the next
+integration gate. See docs/ADMIN_PURE_GROUP_FORMAT_SETUP_V1.md.
+
+Status: candidate pending final HEAD CI; merge belongs to the user.
+
+---
+
 # Real Group Save → historical Edition browser acceptance (phase 1) — 13 Oct 2026
 
 After #1423 merged / buuk 3c7d6340cb85d0441f1bbed261185188c64c3da8.

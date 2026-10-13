@@ -35,4 +35,26 @@ describe('strict Saved Tour response identity',()=>{
     expect(validSavedTourEdition(edition,'r','b','rev',2,'other')).toBe(false)
     expect(validSavedTourEdition({...edition,saved_revision_id:'today'},'r','b','rev',2,'open')).toBe(false)
   })
+
+  it('rejects foreign Entry/Draw authorities and inconsistent first-round slots',()=>{
+    const fields={schema_version:'viewer_tournament_entry_field.v1' as const,
+      product_run_id:'r',viewer_branch_id:'original',event_id:'open',
+      field_sequence:1,mode:'initial' as const,main_draw_capacity:2,
+      active_main_entrant_count:2,effective_main_bye_count:0,
+      direct_main_player_ids:['A','B'],qualification_player_ids:[],
+      alternate_player_ids:[],withdrawn_player_ids:[]}
+    const slots=[{slot_index:1,entrant_kind:'player' as const,player_id:'A',
+      placeholder_id:null,seed_number:1,entry_status:null},
+      {slot_index:2,entrant_kind:'player' as const,player_id:'B',
+      placeholder_id:null,seed_number:2,entry_status:null}]
+    const draw={schema_version:'viewer_tournament_draw.v1' as const,
+      product_run_id:'r',viewer_branch_id:'original',event_id:'open',
+      revision_count:0,main:{draw_type:'main' as const,section_id:null,
+        bracket_size:2,slots},qualification_sections:[]}
+    expect(validSavedTourEdition({...edition,entry_field:fields,draw},'r','b','rev',2,'open')).toBe(true)
+    expect(validSavedTourEdition({...edition,entry_field:{...fields,viewer_branch_id:'b'},draw},'r','b','rev',2,'open')).toBe(false)
+    expect(validSavedTourEdition({...edition,entry_field:fields,draw:{...draw,event_id:'foreign'}},'r','b','rev',2,'open')).toBe(false)
+    expect(validSavedTourEdition({...edition,entry_field:fields,draw:{...draw,main:{...draw.main,slots:[slots[0],slots[0]]}}},'r','b','rev',2,'open')).toBe(false)
+    expect(validSavedTourEdition({...edition,draw},'r','b','rev',2,'open')).toBe(false)
+  })
 })

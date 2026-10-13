@@ -7,6 +7,7 @@ import {
   getAdminGroupTieResolutionState,
 } from '../api/client'
 import { newCommandId } from '../admin/branchSimulation'
+import { GroupTieResolutionEditor } from './GroupTieResolutionEditor'
 import { formatApiError, isApiNotFound } from '../utils/apiErrors'
 
 type Props = { runId: string; branchId: string; eventId: string; enabled: boolean }
@@ -96,11 +97,26 @@ export function CompletedGroupStandingsPanel({
         <p><Link to={`/admin/runs/${encodeURIComponent(runId)}/simulate?branch=${encodeURIComponent(branchId)}`}>
           Open authoritative Simulation to play all group Match Days
         </Link></p>
-        {unresolved ? <p role="alert">
-          Group {unresolved.group_index} has an unresolved tie among
-          {' '}{unresolved.player_ids.join(', ')} ({unresolved.reason}).
-          An explicit audited Admin ordering is required; no automatic ordering is permitted.
-        </p> : null}
+        {unresolved ? <>
+          <p role="alert">
+            Group {unresolved.group_index} has an unresolved tie among
+            {' '}{unresolved.player_ids.join(', ')} ({unresolved.reason}).
+            An explicit audited Admin ordering is required; no automatic ordering is permitted.
+          </p>
+          <GroupTieResolutionEditor
+            key={[runId, branchId, eventId, tieState.data?.unresolved_case_fingerprint].join(':')}
+            runId={runId} branchId={branchId} eventId={eventId}
+            tieState={tieState.data!}
+            enabled={enabled && absent}
+            onResolution={async () => {
+              setConfirmed(false)
+              await Promise.all([
+                client.invalidateQueries({ queryKey: ['admin-group-tie-resolution', runId, branchId, eventId] }),
+                client.invalidateQueries({ queryKey: ['admin-completed-group-standings', runId, branchId, eventId] }),
+              ])
+            }}
+          />
+        </> : null}
         {tieState.error && !isApiNotFound(tieState.error) &&
           (tieState.error as { status?: number }).status !== 409 ? (
           <p role="alert">Tie-resolution status unavailable: {formatApiError(tieState.error)}</p>
@@ -111,7 +127,7 @@ export function CompletedGroupStandingsPanel({
         </label>
         <button type="button"
           disabled={!confirmed || !enabled || Boolean(unresolved) || generate.isPending ||
-            (tieState.isPending && !tieState.isError)}
+            !tieState.isSuccess || tieState.data?.unresolved_case !== null}
           onClick={() => generate.mutate()}>
           Generate canonical group standings
         </button>

@@ -233,9 +233,9 @@ export function validSavedTourEdition(
       for(let j=0;j<group.rows.length;j++){
         const row=group.rows[j]
         if(row.position!==j+1||!row.player_id||members.has(row.player_id)
-          ||['wins','losses','group_points','played_matches','walkovers_received',
-            'walkovers_conceded','games_won','games_lost','points_won','points_lost']
-            .some(key=>{const n=row[key as keyof SavedTourGroupTableRow];return !Number.isInteger(n)||n<0}))
+          ||(['wins','losses','group_points','played_matches','walkovers_received',
+            'walkovers_conceded','games_won','games_lost','points_won','points_lost'] as const)
+            .some(key=>{const n=row[key];return !Number.isInteger(n)||n<0}))
           return false
         members.add(row.player_id)
       }

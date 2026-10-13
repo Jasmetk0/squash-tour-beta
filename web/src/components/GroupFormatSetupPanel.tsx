@@ -28,7 +28,7 @@ export function GroupFormatSetupPanel({
   const [confirmFormat,setConfirmFormat]=useState(false)
   const [confirmTopology,setConfirmTopology]=useState(false)
   const [topologySeed,setTopologySeed]=useState('137')
-  const validTopologySeed=/^(0|[1-9]\\d*)$/.test(topologySeed)
+  const validTopologySeed=/^(0|[1-9][0-9]*)$/.test(topologySeed)
     &&Number.isSafeInteger(Number(topologySeed))&&Number(topologySeed)<=2147483647
   const seasonValid=seasonIndex!==null&&Number.isInteger(seasonIndex)
     &&seasonIndex>=0&&seasonIndex<=49

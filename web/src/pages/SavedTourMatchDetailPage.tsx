@@ -47,7 +47,8 @@ function HistoricalMatchReplay():JSX.Element{
   const back='/admin/runs/'+encodeURIComponent(runId)+'/tour/calendar/'
     +encodeURIComponent(eventId)+'?'+parentParams.toString()
   return <section className="panel">
-    <Link to={back}>← {cs?'Zpět na výsledky edice':'Back to Edition results'}</Link>
+    <Link to={back} aria-label={cs?'Zpět na výsledky edice':'Back to Edition results'}>
+      ← {cs?'Zpět na výsledky edice':'Back to Edition results'}</Link>
     <div className="page-intro"><p className="eyebrow">RUN → TOUR → EDITION → MATCH</p>
       <h2>{cs?'Historický detail zápasu':'Historical match detail'}</h2>
       <p>{cs?'Pouze výsledek a případný archiv výměn z přesné Saved Revision.':

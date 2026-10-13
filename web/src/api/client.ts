@@ -4635,12 +4635,12 @@ export async function configureAdminPureGroups(
   return data
 }
 export async function generateAdminGroupTopology(
-  runId:string,branchId:string,eventId:string,commandId:string
+  runId:string,branchId:string,eventId:string,commandId:string,topologySeed:number
 ):Promise<import('./tournamentGroupFormats').TournamentGroupTopologyAuthority>{
   const data=await request<import('./tournamentGroupFormats').TournamentGroupTopologyAuthority>(
     '/admin/runs/'+encodeURIComponent(runId)+'/branches/'+encodeURIComponent(branchId)
     +'/tournaments/'+encodeURIComponent(eventId)+'/format/topology/generate',{
-      method:'POST',body:JSON.stringify({command_id:commandId,topology_seed:null})
+      method:'POST',body:JSON.stringify({command_id:commandId,topology_seed:topologySeed})
     })
   if(data.schema_version!=='tournament_topology_authority.v1'
     ||data.run_id!==runId||data.branch_id!==branchId||data.event_id!==eventId

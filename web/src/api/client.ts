@@ -4580,3 +4580,72 @@ export async function getSavedTourMatchDetail(
     throw new Error('Historical Edition match does not match the selected Saved Revision.')
   return data
 }
+
+/** Real Admin season group rules — immutable once adopted. */
+export async function getAdminGroupRules(
+  runId:string,branchId:string,seasonIndex:number
+):Promise<import('./tournamentGroupFormats').TournamentGroupRulesState>{
+  const data=await request<import('./tournamentGroupFormats').TournamentGroupRulesState>(
+    '/admin/runs/'+encodeURIComponent(runId)+'/branches/'+encodeURIComponent(branchId)
+    +'/tournament-group-rules?target_season_index='+seasonIndex
+  )
+  if(data.schema_version!=='tournament_group_rules_state.v1'||data.run_id!==runId
+    ||data.branch_id!==branchId||data.target_season_index!==seasonIndex
+    ||(data.effective!==null&&(data.effective.run_id!==runId||data.effective.branch_id!==branchId
+      ||data.effective.effective_from_season_index>seasonIndex
+      ||![3,5].includes(data.effective.default_match_best_of))))
+    throw new Error('Group Rules read does not match the active Run/Branch/season.')
+  return data
+}
+export async function adoptAdminGroupRules(
+  runId:string,branchId:string,seasonIndex:number,bestOf:3|5,commandId:string
+):Promise<import('./tournamentGroupFormats').TournamentGroupRulesState['effective']>{
+  const data=await request<NonNullable<import('./tournamentGroupFormats').TournamentGroupRulesState['effective']>>(
+    '/admin/runs/'+encodeURIComponent(runId)+'/branches/'+encodeURIComponent(branchId)
+    +'/tournament-group-rules/versions',{
+      method:'POST',body:JSON.stringify({
+        command_id:commandId,effective_from_season_index:seasonIndex,
+        default_match_best_of:bestOf,
+      })
+    })
+  if(data.schema_version!=='tournament_group_rules_policy.v1'
+    ||data.run_id!==runId||data.branch_id!==branchId
+    ||data.effective_from_season_index!==seasonIndex
+    ||data.default_match_best_of!==bestOf
+    ||!/^[0-9a-f]{64}$/.test(data.authority_fingerprint))
+    throw new Error('Group Rules adoption returned the wrong authority.')
+  return data
+}
+export async function configureAdminPureGroups(
+  runId:string,branchId:string,eventId:string,
+  payload:import('./tournamentGroupFormats').GroupSetupPayload
+):Promise<import('./tournamentGroupFormats').TournamentGroupFormatAuthority>{
+  const data=await request<import('./tournamentGroupFormats').TournamentGroupFormatAuthority>(
+    '/admin/runs/'+encodeURIComponent(runId)+'/branches/'+encodeURIComponent(branchId)
+    +'/tournaments/'+encodeURIComponent(eventId)+'/format/configure',{
+      method:'POST',body:JSON.stringify(payload)
+    })
+  if(data.schema_version!=='tournament_format_authority.v1'||data.run_id!==runId
+    ||data.branch_id!==branchId||data.event_id!==eventId
+    ||data.configured_by_command_id!==payload.command_id
+    ||data.format_kind!=='groups'
+    ||data.group_configuration?.group_count!==payload.group_count
+    ||data.group_configuration.group_size!==payload.group_size)
+    throw new Error('Frozen group Format response has an unexpected scope or configuration.')
+  return data
+}
+export async function generateAdminGroupTopology(
+  runId:string,branchId:string,eventId:string,commandId:string
+):Promise<import('./tournamentGroupFormats').TournamentGroupTopologyAuthority>{
+  const data=await request<import('./tournamentGroupFormats').TournamentGroupTopologyAuthority>(
+    '/admin/runs/'+encodeURIComponent(runId)+'/branches/'+encodeURIComponent(branchId)
+    +'/tournaments/'+encodeURIComponent(eventId)+'/format/topology/generate',{
+      method:'POST',body:JSON.stringify({command_id:commandId,topology_seed:null})
+    })
+  if(data.schema_version!=='tournament_topology_authority.v1'
+    ||data.run_id!==runId||data.branch_id!==branchId||data.event_id!==eventId
+    ||data.format_kind!=='groups'||data.generated_by_command_id!==commandId
+    ||!/^[0-9a-f]{64}$/.test(data.format_authority_fingerprint))
+    throw new Error('Group Topology generation returned an unrelated authority.')
+  return data
+}

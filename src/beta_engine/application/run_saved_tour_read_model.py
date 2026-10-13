@@ -18,6 +18,9 @@ from beta_engine.application.viewer_tournament_result_read_model import (
 )
 from beta_engine.domain.rankings.revision_state import RankingRevisionState
 from beta_engine.domain.run_packages import RunPackageState
+from beta_engine.application.run_saved_tour_match_schedule import (
+    RunSavedTourMatchSchedule, resolve_saved_tour_match_schedule,
+)
 from beta_engine.application.viewer_tournament_entry_field_read_model import (
     ViewerTournamentEntryField, resolve_viewer_tournament_entry_field,
 )
@@ -57,6 +60,7 @@ class RunSavedTourEdition(BaseModel):
     published_result: ViewerTournamentResult | None
     entry_field: ViewerTournamentEntryField | None = None
     draw: ViewerTournamentDraw | None = None
+    match_schedule: RunSavedTourMatchSchedule | None = None
     # Calendar status is planning data, not a separate lifecycle authority.
     lifecycle_status: Literal["unavailable"] = "unavailable"
 
@@ -205,9 +209,14 @@ def resolve_run_saved_tour_edition(
                 authority.product_run_id, authority.viewer_branch_id, authority.event_id
             ) != (run_id, revision_branch_id, event_id):
                 raise ValueError("Saved Edition Entry/Draw projection scope mismatch")
+    match_schedule = resolve_saved_tour_match_schedule(
+        simulation_slots, run_id=run_id, branch_id=revision_branch_id,
+        event_id=event_id, season_index=season_index,
+        season_week=item.season_week,
+    )
     return RunSavedTourEdition(
         run_id=run_id, branch_id=selected_branch_id,
         revision_branch_id=revision_branch_id, saved_revision_id=saved_revision_id,
         season_index=season_index, edition=item, published_result=published,
-        entry_field=entry_field, draw=draw,
+        entry_field=entry_field, draw=draw, match_schedule=match_schedule,
     )

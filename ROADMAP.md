@@ -1,3 +1,21 @@
+# Historical Saved Edition group standings candidate — 13 October 2026
+
+After merged #1422 / current buuk df68749c97cf25513a0a5ee5fa5d01dd9b31edeb.
+Only from same exact reachable immutable Saved Revision/original owning Branch:
+complete canonical group standings built from saved result receipts and validated
+by existing restore-grade component logic, plus tied Admin resolution decisions
+with preserved case, ordering and original audit reasons. Results tab now shows
+final table ranks, group points, wins/losses, W/O, games and points ratios.
+No invented table, implicit Admin decisions or current Viewer HEAD fallback.
+
+Focused Python application and frontend CS/EN guard/render tests provided,
+baseline Chromium/SQLite restart protects classic flow, *not* a full hybrid
+browser acceptance. See docs/SAVED_EDITION_GROUP_STANDINGS_V1.md.
+Candidate until all final HEAD checks green; only user merges.
+Next: real hybrid group Save→Edition→restart browser fixture, then Country Records.
+
+---
+
 # Saved Edition group Match Day chronology — candidate 13 October 2026
 
 After merged #1421, adds a *read-only* canonical group schedule sourced

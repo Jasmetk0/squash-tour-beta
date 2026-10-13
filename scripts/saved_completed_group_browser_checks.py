@@ -127,11 +127,17 @@ def play_group_and_save(
     assert intermediate_preview["saved_head_revision_id"] == old_revision
     page.goto(run_url + "/simulate?branch=" + quote(branch_id, safe=""))
     page.get_by_role("combobox", name="Language / Jazyk").select_option("en")
-    browser_settle(page)
-    expect(page.get_by_role(
+    # Some read-only Replay/diagnostics queries can remain in-flight while the
+    # production Save action is already ready. Synchronize on the exact real
+    # control and confirmed revision, not a global network-idle heuristic.
+    save_button = page.get_by_role(
         "button", name="Save authoritative simulation"
-    )).to_be_enabled(timeout=30000)
-    browser_click(page, "Save authoritative simulation")
+    )
+    expect(save_button).to_be_enabled(timeout=30000)
+    save_button.click()
+    expect(page.get_by_text(
+        "Saved as revision", exact=False
+    )).to_be_visible(timeout=30000)
     current = request("GET", "/run-branches?run_id=" + quote(run_id, safe=""))
     branch = next(item for item in current["run_branches"]
                   if item["branch_id"] == branch_id)

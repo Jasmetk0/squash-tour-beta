@@ -563,14 +563,47 @@ describe('Run-owned World overview navigation',()=>{
     expect(api.getRunCountryRecords).toHaveBeenCalledTimes(1)
     expect(panel).toHaveTextContent('independent lifetime scope')
   })
-  it('does not label missing simulation position or geography year as verified sport-time scope',async()=>{
+  it('does not label a missing simulation clock or geography year as verified sport time',async()=>{
     context.time.presentSeason=null
     context.time.presentWeek=null
+    api.getRunCountryRecords.mockResolvedValue({
+      schema_version:'run_country_records.v1',source:'reachable_saved_revision',
+      run_id:'run-a',branch_id:'branch-a',revision_branch_id:'branch-a',
+      saved_revision_id:'head-a',country_code:'CZE',calendar_status:'empty',
+      published_result_count:0,country_titles:0,country_finalists:0,
+      hosted_published_results:0,player_results:[],hosted_results:[]
+    })
     mountWorld('/admin/runs/run-a/world/countries/CZE?tab=records&year=2020')
     const panel=await screen.findByLabelText('Country published records')
-    expect(within(panel).getByRole('alert')).toHaveTextContent('Country data year is not a sporting time')
+    await waitFor(()=>expect(within(panel).getByRole('alert'))
+      .toHaveTextContent('Country data year is not a sporting time'))
     expect(within(panel).queryByLabelText('Country verified record totals')).not.toBeInTheDocument()
-    expect(api.getRunCountryRecords).not.toHaveBeenCalled()
+    expect(api.getRunCountryRecords).toHaveBeenCalledWith('run-a','branch-a','CZE','head-a')
+  })
+  it('uses latest canonical Country final as explicitly labeled evidence ceiling, never a fake simulation week',async()=>{
+    context.time.presentSeason=null
+    context.time.presentWeek=null
+    api.getRunCountryRecords.mockResolvedValue({
+      schema_version:'run_country_records.v1',source:'reachable_saved_revision',
+      run_id:'run-a',branch_id:'branch-a',revision_branch_id:'branch-a',
+      saved_revision_id:'head-a',country_code:'CZE',calendar_status:'ready',
+      published_result_count:1,country_titles:0,country_finalists:1,
+      hosted_published_results:0,
+      player_results:[{event_id:'done',event_name:'Verified Final',season:'2001/2002',
+        season_week:9,host_country:'USA',champion_player_id:'P9',champion_name:'Visitor',
+        champion_country:'USA',finalist_player_id:'P1',finalist_name:'Czech Player',
+        finalist_country:'CZE'}],hosted_results:[]
+    })
+    mountWorld('/admin/runs/run-a/world/countries/CZE?tab=records&year=2050')
+    const panel=await screen.findByLabelText('Country published records')
+    await within(panel).findByLabelText('Country verified record totals')
+    expect(panel).toHaveTextContent('NOT a guessed Branch simulation point')
+    expect(within(panel).getByLabelText('Country sporting record interval'))
+      .toHaveTextContent('Latest evidenced published result')
+    expect(within(panel).getByLabelText('Country sporting record interval'))
+      .toHaveTextContent('2001/2002 · Week 9')
+    expect(within(panel).getByRole('table',{name:'Country player published results'}))
+      .toHaveTextContent('Verified Final')
   })
   it('reads historical Country Records from explicit revision and blocks present profile links',async()=>{
     api.getRunCountryRecords.mockResolvedValue({

@@ -46,9 +46,8 @@ def test_missing_match_unpublished_event_and_bad_cursor_are_rejected():
         )
     for values in ({"offset": -1}, {"limit": 26}, {"match_id": " "}):
         with pytest.raises(ValueError):
-            detail.resolve_run_saved_tour_match_detail(
-                _edition(), match_id="final", saved_slots=None, **values,
-            )
+            request = {"match_id": "final", "saved_slots": None} | values
+            detail.resolve_run_saved_tour_match_detail(_edition(), **request)
 
 
 def test_real_archived_rallies_page_by_original_saved_branch(monkeypatch):

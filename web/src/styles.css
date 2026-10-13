@@ -2393,3 +2393,13 @@ textarea:focus-visible {
 .run-world-evidence dt{color:#b7cfed}
 .run-world-evidence dd{margin:0;overflow-wrap:anywhere}
 .run-world-page td .run-world-evidence{font-size:.82rem}
+
+/* Saved Run Tour: compact 61-week season, simultaneous Editions, exact read-only context. */
+.saved-tour-week-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(185px,1fr));gap:10px;margin:16px 0}
+.saved-tour-week-grid .section-subtle{padding:10px 12px;min-width:0;margin:0;overflow-wrap:anywhere}
+.saved-tour-week-grid h4{font-size:.93rem;margin:0 0 8px}
+.saved-tour-week-grid p{margin:6px 0;font-size:.9rem}
+.saved-tour-week-grid small{display:block;opacity:.75;line-height:1.4}
+.saved-tour-edition-tabs{display:flex;flex-wrap:wrap;gap:7px;margin:16px 0}
+.saved-tour-edition-tabs button[aria-current="page"]{font-weight:750;border-color:var(--accent,#61b8c6)}
+@media(max-width:650px){.saved-tour-week-grid{grid-template-columns:repeat(auto-fill,minmax(145px,1fr))}}

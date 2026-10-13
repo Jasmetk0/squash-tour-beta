@@ -73,6 +73,8 @@ import { AdminRunBranchesPage } from './pages/AdminRunBranchesPage'
 import { RunsPage } from './pages/RunsPage'
 import { LegacyRunsPage } from './pages/LegacyRunsPage'
 import { PlannedEventDetailPage } from './pages/PlannedEventDetailPage'
+import { SavedTourCalendarPage } from './pages/SavedTourCalendarPage'
+import { SavedTourEditionPage } from './pages/SavedTourEditionPage'
 import { PlayersPage } from './pages/PlayersPage'
 import { RunPlayerGeneratorPage } from './pages/RunPlayerGeneratorPage'
 import { RunWorldPage } from './pages/RunWorldPage'
@@ -184,6 +186,8 @@ export default function App(): JSX.Element {
         <Route path="admin/runs/:runId/branches" element={<AdminRunBranchesPage />} />
         <Route path="admin/runs/:runId/events" element={<EventsPage />} />
         <Route path="admin/runs/:runId/calendar" element={<SeasonCalendarPage />} />
+        <Route path="admin/runs/:runId/tour/calendar" element={<SavedTourCalendarPage />} />
+        <Route path="admin/runs/:runId/tour/calendar/:eventId" element={<SavedTourEditionPage />} />
         <Route path="admin/runs/:runId/weeks/:week" element={<WeekDetailPage />} />
         <Route path="admin/runs/:runId/calendar/:eventId" element={<PlannedEventDetailPage />} />
         <Route path="admin/runs/:runId/activity" element={<ActivityPage />} />

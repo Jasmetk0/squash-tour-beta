@@ -28,6 +28,7 @@ export function runAdminNavFor(runId: string): AdminNavItem[] {
       { to: base + '/players/intake', label: 'Talent Intake' }
     ] },
     { to: base + '/calendar', label: 'Tour', children: [
+      { to: base + '/tour/calendar', label: 'Saved Tour Calendar' },
       { to: base + '/calendar', label: 'Season Calendar' },
       { to: base + '/finals', label: 'World Tour Finals' },
       { to: base + '/rollover', label: 'Season Rollover' }

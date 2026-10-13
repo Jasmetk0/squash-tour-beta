@@ -154,18 +154,27 @@ export function matchesSavedTourContext(
     && (payload.schema_version==='run_saved_tour_calendar.v1'
       || payload.schema_version==='run_saved_tour_edition.v1')
 }
+/** Both canonical calendar seasons (2000/2001) and stored edition seasons
+ * (2000/01) identify the same sporting season, independent of World data years. */
+function isSavedTourSeason(value:string,seasonIndex:number):boolean{
+  if(!Number.isInteger(seasonIndex)||seasonIndex<0||seasonIndex>=50)return false
+  const first=2000+seasonIndex,second=first+1
+  return value===`${first}/${second}`
+    ||value===`${first}/${String(second%100).padStart(2,'0')}`
+}
 export function validSavedTourCalendar(
   payload:SavedTourCalendar,runId:string,branchId:string,revisionId:string,seasonIndex:number
 ):boolean{
   if(!matchesSavedTourContext(payload,runId,branchId,revisionId,seasonIndex)
     ||payload.schema_version!=='run_saved_tour_calendar.v1'
+    ||!isSavedTourSeason(payload.season,seasonIndex)
     ||payload.week_count!==61||!Array.isArray(payload.editions)
     ||payload.edition_count!==payload.editions.length)return false
   const seen=new Set<string>()
   return payload.editions.every(e=>{
     if(!e.event_id||seen.has(e.event_id)
       ||!Number.isInteger(e.season_week)||e.season_week<1||e.season_week>61
-      ||e.season!==payload.season)return false
+      ||!isSavedTourSeason(e.season,seasonIndex))return false
     seen.add(e.event_id)
     return true
   })

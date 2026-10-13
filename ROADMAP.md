@@ -1,3 +1,18 @@
+# A80-01 implementation candidate — 12 October 2026
+
+On `fix/a80-01-calendar-global-event-identity-20261012` (base `buuk adb8e1e89e7a5cf2e678e452258605dd1079511a`),
+the Country Tournaments Saved Calendar projection rejects cross-package
+`event_id` collisions including cross-season/different-host duplicates,
+and the UI fails closed with a localized identity error. The existing
+distinct-edition multi-season behavior is retained. This remains a candidate
+until the user merges the green final-head PR.
+
+**Next coherent slice:** scoped Saved Revision Calendar/Edition read contract,
+followed by shared Run Calendar → Edition navigation and Chromium verification.
+Preserve historical identity, do not substitute present data.
+
+---
+
 # Active dependency path — Master v80 / after #1414 (12 October 2026)
 
 Verified base `buuk 4a58192cd4f8bb7d4f9d71c76a870ec6ce3baae4`.

@@ -28,7 +28,7 @@ export function projectCountryTournaments(response:RunPackageStateResponse,runId
     !Array.isArray(state.entities)||!Array.isArray(state.package_versions))
     throw new Error('Saved Calendar Run Package component is incomplete')
   const packages=state.package_versions.map(obj).filter((x):x is R=>x!==null&&x.package_type==='Calendar')
-  const ids=new Set<string>(),editions:CountryTournamentEdition[]=[]
+  const ids=new Set<string>(),eventIds=new Set<string>(),editions:CountryTournamentEdition[]=[]
   for(const version of packages){
     const id=str(version.package_id)
     if(!id||ids.has(id))throw new Error('Duplicate or missing Saved Calendar package identity')
@@ -39,17 +39,18 @@ export function projectCountryTournaments(response:RunPackageStateResponse,runId
       throw new Error('Saved Calendar metadata identity is incomplete')
     const season=str(obj(metas[0].payload)?.season),index=calendarSeasonIndex(season)
     if(!season||index===null)throw new Error('Saved Calendar metadata has unsupported season')
-    const seen=new Set<string>()
     for(const e of rows.filter(x=>x.entity_kind==='calendar.event.v1')){
       const p=obj(e.payload),eventId=str(p?.event_id),host=str(p?.host_country)
       const status=p?.status??'planned',week=p?.season_week
-      if(!eventId||e.source_entity_id!==eventId||seen.has(eventId)||
+      if(!eventId||e.source_entity_id!==eventId||
         String(p?.season)!==season||calendarSeasonIndex(p?.season)!==index||
         !host||!/^[A-Z]{3}$/.test(host)||
         typeof week!=='number'||!Number.isInteger(week)||week<1||week>61||
         typeof status!=='string'||!statuses.has(status))
         throw new Error('Saved Calendar contains invalid or duplicate tournament edition')
-      seen.add(eventId)
+      if(eventIds.has(eventId))
+        throw new Error('Saved Calendar contains duplicate tournament event identity: '+eventId)
+      eventIds.add(eventId)
       if(host!==countryCode)continue
       editions.push({key:id+':'+eventId,packageId:id,eventId,
         name:str(p?.event_name)??eventId,season,seasonIndex:index,week,

@@ -248,6 +248,9 @@ class TournamentGroupTieResolutionState(BaseModel):
     branch_id: str
     event_id: str
     unresolved_case: TournamentGroupStandingsTieCase | None
+    unresolved_case_fingerprint: str | None = Field(
+        default=None, pattern=r"^[0-9a-f]{64}$"
+    )
     resolutions: tuple[TournamentGroupTieResolutionResponse, ...]
 
 
@@ -684,6 +687,9 @@ def inspect_group_tie_resolution(
                 branch_id=branch_id,
                 event_id=event_id,
                 unresolved_case=unresolved,
+                unresolved_case_fingerprint=(
+                    unresolved.fingerprint if unresolved is not None else None
+                ),
                 resolutions=tuple(
                     TournamentGroupTieResolutionResponse.from_authority(value)
                     for value in resolutions

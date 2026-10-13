@@ -32,6 +32,8 @@ export type GroupStandingsTieState = {
   branch_id: string
   event_id: string
   unresolved_case: { group_index: number; reason: string; player_ids: string[] } | null
+  /** Server-computed SHA-256 of the exact case, never calculated from guessed UI data. */
+  unresolved_case_fingerprint?: string | null
   resolutions: unknown[]
 }
 
@@ -81,11 +83,61 @@ export function isScopedGroupTieState(
   if (state.schema_version !== 'tournament_group_tie_resolution_state.v1' ||
     state.run_id !== runId || state.branch_id !== branchId || state.event_id !== eventId ||
     !Array.isArray(state.resolutions)) return false
-  if (state.unresolved_case === null) return true
+  if (state.unresolved_case === null) {
+    return state.unresolved_case_fingerprint == null
+  }
   const value = state.unresolved_case
-  return Boolean(value && Number.isInteger(value.group_index) && value.group_index >= 1 &&
+  return Boolean(hexSha(state.unresolved_case_fingerprint) &&
+    value && Number.isInteger(value.group_index) && value.group_index >= 1 &&
     typeof value.reason === 'string' && value.reason &&
     Array.isArray(value.player_ids) && value.player_ids.length >= 2 &&
     value.player_ids.every(id => typeof id === 'string' && id.length > 0) &&
-    new Set(value.player_ids).size === value.player_ids.length)
+    new Set(value.player_ids).size === value.player_ids.length &&
+    value.player_ids.every((id, i) => i === 0 || value.player_ids[i - 1] < id))
 }
+
+export type GroupTieResolutionAuthority = {
+  schema_version: 'tournament_group_tie_resolution_authority.v1'
+  run_id: string
+  branch_id: string
+  event_id: string
+  resolved_by_command_id: string
+  authority_fingerprint: string
+  group_match_schedule_fingerprint: string
+  decision: {
+    case: { group_index: number; reason: string; player_ids: string[] }
+    ordered_player_ids: string[]
+    admin_reason: string
+  }
+}
+
+export type GroupTieResolutionPayload = {
+  command_id: string
+  case_fingerprint: string
+  ordered_player_ids: string[]
+  admin_reason: string
+}
+
+/** A stale or mismatched tie decision must never look like a successful submission. */
+export function isExactGroupTieResolution(
+  data: unknown, runId: string, branchId: string, eventId: string,
+  casePlayers: string[], payload: GroupTieResolutionPayload
+): data is GroupTieResolutionAuthority {
+  if (!data || typeof data !== 'object') return false
+  const d = data as Partial<GroupTieResolutionAuthority>
+  if (d.schema_version !== 'tournament_group_tie_resolution_authority.v1' ||
+    d.run_id !== runId || d.branch_id !== branchId || d.event_id !== eventId ||
+    !hexSha(d.authority_fingerprint) || !hexSha(d.group_match_schedule_fingerprint) ||
+    d.resolved_by_command_id !== payload.command_id || !d.decision) return false
+  const { case: tieCase, ordered_player_ids: order, admin_reason: reason } = d.decision
+  if (!tieCase || !Array.isArray(tieCase.player_ids) || !Array.isArray(order) ||
+    typeof reason !== 'string' || reason !== payload.admin_reason ||
+    !Array.isArray(payload.ordered_player_ids) || !hexSha(payload.case_fingerprint)) return false
+  return tieCase.player_ids.length === casePlayers.length &&
+    tieCase.player_ids.every((id, i) => id === casePlayers[i]) &&
+    order.length === casePlayers.length &&
+    order.every((id, i) => id === payload.ordered_player_ids[i]) &&
+    new Set(order).size === casePlayers.length &&
+    order.every(id => casePlayers.includes(id))
+}
+

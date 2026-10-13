@@ -1,3 +1,13 @@
+# Active integration baseline — 13 October 2026 (after #1441)
+
+Verified `buuk` at start: `f2bcf5876fe3d909edf4d911ddc4a5ff27a6d458`; #1431–1441 merged and no PR open. Existing read-only Saved Calendar/Edition, real published matches, group schedule/standings and explicit group tie audit remain integrated. A true browser end-to-end tie decision, completed hybrid tournament and ranking closure remain **unclosed integration gaps**; the real HTTP/SQLite cyclic-tie test does not replace the browser gate.
+
+**Current feature candidate (not merged):** Country → immutable Saved Edition across supported seasons, historical and shared pre-fork revisions, exact selected Branch and season/event identity, and country return. Only the existing Tour Saved API is used. World data year differs from sporting season and Saved Revision.
+
+**Next after user merge:** Country Records v80 scoped sport-time filters, full evidence aggregation before paging, tied holders and evidence detail; then History & Branches / read-only Compare. The older dated entries below document their original implementation candidates and do not override these active priorities.
+
+---
+
 # Real Admin pure-group Format/Topology preparation — integration update 13 October 2026
 
 The Run-owned Planned Event Admin screen now exposes explicit Group Rules adoption,

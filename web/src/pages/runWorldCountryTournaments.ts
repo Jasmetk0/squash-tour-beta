@@ -92,7 +92,7 @@ export function verifiedCountryReturn(raw:string|null,runId:string,revision:stri
     const prefix='/admin/runs/'+encodeURIComponent(runId)+'/world/countries/'
     if(u.origin!=='https://squash-engine.invalid'||!u.pathname.startsWith(prefix)||
       !/^[A-Z]{3}$/.test(decodeURIComponent(u.pathname.slice(prefix.length)))||
-      u.searchParams.get('tab')!=='tournaments')return null
+      !['tournaments','records'].includes(u.searchParams.get('tab')??''))return null
     const originRevision=u.searchParams.get('revision')
     if(originRevision!==null&&originRevision!==revision)return null
     return u.pathname+u.search+u.hash

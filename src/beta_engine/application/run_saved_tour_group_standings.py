@@ -85,36 +85,16 @@ def resolve_saved_tour_group_standings(
         row for row in component.get("group_tie_resolutions", ())
         if row.get("event_id") == event_id
     ]
-    if not rows:
-        if tie_rows:
-            raise ValueError("Saved group tie decisions lack group standings")
-        return None
-    if len(rows) != 1:
+    if len(rows) > 1:
         raise ValueError("Ambiguous saved group standings authority")
+    if not rows and not tie_rows:
+        return None
     if group_schedule is None:
-        raise ValueError("Saved group standings lack their saved group Match Schedule")
-    row = rows[0]
-    if (row.get("run_id"), row.get("branch_id")) != (run_id, branch_id):
-        raise ValueError("Saved group standings belong to another Run/Branch")
-    standings = TournamentGroupStandingsAuthority.model_validate_json(row["payload_json"])
-    if (
-        (standings.run_id, standings.branch_id, standings.event_id,
-         standings.generated_by_command_id, standings.fingerprint,
-         standings.group_match_schedule_fingerprint,
-         standings.group_rules_policy_fingerprint)
-        != (run_id, branch_id, event_id, row.get("command_id"),
-            row.get("authority_fingerprint"),
-            row.get("group_match_schedule_fingerprint"),
-            row.get("group_rules_policy_fingerprint"))
-        or standings.group_match_schedule_fingerprint
-        != group_schedule.authority_fingerprint
-        or len(standings.groups) != group_schedule.group_count
-        or any(len(group.rows) != group_schedule.group_size for group in standings.groups)
-    ):
-        raise ValueError("Saved group standings authority provenance is corrupt")
+        raise ValueError("Saved group authorities lack their saved group Match Schedule")
 
-    # Decisions are never inferred from final position. Show audited source
-    # decisions only when they are exactly included in the saved standings.
+    # A legitimate Saved Revision can stop after an audited tie decision
+    # *before* final standings exist. Validate that independent authority
+    # against the saved schedule even though there is no table to project.
     decisions = []
     for tie_row in tie_rows:
         if (tie_row.get("run_id"), tie_row.get("branch_id")) != (run_id, branch_id):
@@ -136,6 +116,33 @@ def resolve_saved_tour_group_standings(
         decisions.append(authority)
     if len({item.case.fingerprint for item in decisions}) != len(decisions):
         raise ValueError("Saved group tie case is duplicated")
+
+    if not rows:
+        # Never invent a published result from a saved pending tie decision.
+        # Final tables are projected only from the later frozen authority.
+        return None
+
+    row = rows[0]
+    if (row.get("run_id"), row.get("branch_id")) != (run_id, branch_id):
+        raise ValueError("Saved group standings belong to another Run/Branch")
+    standings = TournamentGroupStandingsAuthority.model_validate_json(row["payload_json"])
+    if (
+        (standings.run_id, standings.branch_id, standings.event_id,
+         standings.generated_by_command_id, standings.fingerprint,
+         standings.group_match_schedule_fingerprint,
+         standings.group_rules_policy_fingerprint)
+        != (run_id, branch_id, event_id, row.get("command_id"),
+            row.get("authority_fingerprint"),
+            row.get("group_match_schedule_fingerprint"),
+            row.get("group_rules_policy_fingerprint"))
+        or standings.group_match_schedule_fingerprint
+        != group_schedule.authority_fingerprint
+        or len(standings.groups) != group_schedule.group_count
+        or any(len(group.rows) != group_schedule.group_size for group in standings.groups)
+    ):
+        raise ValueError("Saved group standings authority provenance is corrupt")
+
+    # Only publish audited decisions when frozen standings include them.
     if standings.schema_version == "tournament_group_standings_authority.v1":
         if decisions:
             raise ValueError("Legacy standings cannot carry Admin tie decisions")

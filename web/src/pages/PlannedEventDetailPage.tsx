@@ -977,7 +977,7 @@ export function PlannedEventDetailPage(): JSX.Element {
     if (action === 'configure_tournament_format' || action === 'generate_tournament_topology') {
       const calendarSeason = canonicalCalendar?.calendar.events
         .find(e => e.event_id === eventId)?.season
-      const calendarSeasonIndex = calendarSeason && /^20\\d{2}\\/20\\d{2}$/.test(calendarSeason)
+      const calendarSeasonIndex = calendarSeason && /^20[0-9]{2}\\/20[0-9]{2}$/.test(calendarSeason)
         ? Number(calendarSeason.slice(0, 4)) - 2000
         : null
       const groupSeasonIndex = canonicalPreparationQuery.data?.entry_source_target_season_index

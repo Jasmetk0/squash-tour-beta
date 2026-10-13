@@ -171,10 +171,21 @@ def acceptance(root: Path, *, port: int, base_url: str, chromium: str) -> None:
                 assert before["group_schedule"] is None
                 assert before["group_standings"] is None
 
-                working = request("GET", run_scope + "/working-draft")
+                # Group Format/Topology/Match Days are *Simulation Slot*
+                # authorities, not changes to Viewer-Branch selection. Use the
+                # existing fingerprint-locked authoritative Simulation Save,
+                # never fabricate a dirty Working Draft to force a generic Save.
+                simulation_scope = root_scope + "/authoritative-simulation"
+                preview = request("GET", simulation_scope + "/save/preview")
+                assert preview["can_save"], preview
+                assert preview["has_unsaved_changes"] is True
+                assert preview["saved_head_revision_id"] == old_rev
+                fingerprint = preview["simulation_fingerprint"]
+                assert isinstance(fingerprint, str) and len(fingerprint) == 64
                 saved_result = request(
-                    "POST", run_scope + "/working-draft/save",
-                    {"expected_draft_version": working["draft_version"]}, 201,
+                    "POST", simulation_scope + "/save",
+                    {"expected_draft_version": preview["draft_version"],
+                     "expected_simulation_fingerprint": fingerprint}, 201,
                 )
                 revision = saved_result["saved_revision"]["revision_id"]
                 assert revision != old_rev

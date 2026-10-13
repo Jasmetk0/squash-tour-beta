@@ -11,6 +11,9 @@ from beta_engine.api.deps import get_run_saved_revision_history_service
 from beta_engine.application.run_saved_revision_history_service import RunSavedRevisionHistoryService
 from beta_engine.infrastructure.db import SavedRevisionHistoryNotFoundError, SavedRevisionHistoryConflictError
 from beta_engine.application.run_country_records_read_model import RunCountryRecords, resolve_run_country_records
+from beta_engine.application.run_saved_tour_match_detail import (
+    RunSavedTourMatchDetail, resolve_run_saved_tour_match_detail,
+)
 from beta_engine.application.run_saved_tour_read_model import (
     RunSavedTourCalendar, RunSavedTourEdition,
     resolve_run_saved_tour_calendar, resolve_run_saved_tour_edition,
@@ -521,4 +524,48 @@ def inspect_run_saved_tour_edition(
     except (SavedRevisionHistoryConflictError, ValueError, TypeError) as exc:
         raise HTTPException(status_code=409, detail={
             "code": "run_saved_tour_edition_unavailable", "message": str(exc),
+        }) from exc
+
+
+@router.get(
+    "/tour/editions/{event_id}/matches/{match_id}",
+    response_model=RunSavedTourMatchDetail,
+)
+def inspect_run_saved_tour_match_detail(
+    run_id: str,
+    branch_id: str,
+    event_id: str,
+    match_id: str,
+    revision_id: str = Query(min_length=1, max_length=128),
+    season_index: int = Query(ge=0, le=49),
+    offset: int = Query(default=0, ge=0),
+    limit: int = Query(default=25, ge=1, le=25),
+    service: RunSavedRevisionHistoryService = Depends(get_run_saved_revision_history_service),
+) -> RunSavedTourMatchDetail:
+    """One canonical historical match; replay only if frozen group evidence exists.
+
+    Unlike the player-profile Match route, this does not use current Saved HEAD.
+    """
+    if any(not identity or len(identity) > 128 or identity.strip() != identity
+           for identity in (event_id, match_id)):
+        raise HTTPException(status_code=422, detail="Invalid historical match identity")
+    try:
+        context = _saved_tour_revision_context(
+            run_id=run_id, branch_id=branch_id,
+            revision_id=revision_id, service=service, include_slots=True,
+        )
+        edition = resolve_run_saved_tour_edition(
+            **context, season_index=season_index, event_id=event_id,
+        )
+        return resolve_run_saved_tour_match_detail(
+            edition, match_id=match_id,
+            saved_slots=context["simulation_slots"], offset=offset, limit=limit,
+        )
+    except SavedRevisionHistoryNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except (SavedRevisionHistoryConflictError, ValueError, TypeError) as exc:
+        raise HTTPException(status_code=409, detail={
+            "code": "run_saved_tour_match_detail_unavailable", "message": str(exc),
         }) from exc

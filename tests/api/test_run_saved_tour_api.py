@@ -165,3 +165,34 @@ def test_saved_edition_published_results_are_real_not_calendar_status(tmp_path):
         assert _request(
             "GET", _url(reopened, run, branch, post_result_rev, event_id="event"),
         ) == after
+
+
+def test_readonly_ui_navigation_query_contract(tmp_path):
+    """Browser route query uses one immutable revision across seasons and URLs."""
+    db = f"sqlite:///{tmp_path / 'saved-tour-ui-query.sqlite'}"
+    with ApiServer(database_url=db) as server:
+        run, branch, initial = _create_run(
+            server, display_name="Saved Tour browser URL contract",
+        )
+        scope = f"{server.base_url}/admin/runs/{quote(run, safe='')}/branches/{quote(branch, safe='')}"
+        saved = _request("GET", scope + "/tour/calendar?revision_id=" + quote(initial, safe="") + "&season_index=0")
+        assert saved[0] == 200
+        assert saved[1]["schema_version"] == "run_saved_tour_calendar.v1"
+        assert saved[1]["saved_revision_id"] == initial
+        assert saved[1]["season_index"] == 0 and saved[1]["week_count"] == 61
+        assert saved[1]["edition_count"] == 0
+
+        other_season = _request("GET", scope + "/tour/calendar?revision_id=" + quote(initial, safe="") + "&season_index=49")
+        assert other_season[0] == 200 and other_season[1]["season_index"] == 49
+        assert other_season[1]["saved_revision_id"] == initial
+        assert other_season[1]["editions"] == []
+
+        assert _request("GET", scope + "/tour/calendar?season_index=0")[0] == 422
+        assert _request("GET", scope + "/tour/calendar?revision_id=" + quote(initial, safe=""))[0] == 422
+        assert _request("GET", scope + "/tour/calendar?revision_id=nonexistent&season_index=0")[0] == 404
+        assert _request("GET", scope + "/tour/editions/unknown?revision_id=" + quote(initial, safe="") + "&season_index=0")[0] == 404
+
+        # An unsaved Calendar copy must never be imported into this pinned URL.
+        with server.app.state.runtime.repository._session_factory.begin() as session:
+            put_run_package_state(session, _state(run_id=run, branch_id=branch))
+        assert _request("GET", scope + "/tour/calendar?revision_id=" + quote(initial, safe="") + "&season_index=0") == saved

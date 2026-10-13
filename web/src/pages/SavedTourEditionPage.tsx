@@ -43,6 +43,7 @@ export function SavedTourEditionPage():JSX.Element {
   const schedule=model?.match_schedule
   const groupSchedule=model?.group_schedule
   const groupStandings=model?.group_standings
+  const pendingTieDecisions=model?.pending_group_tie_decisions??[]
   const plannedMain=schedule?.slots.filter(slot=>slot.draw_phase!=='qualification')??[]
   const plannedQualification=schedule?.slots.filter(slot=>slot.draw_phase==='qualification')??[]
   const matches=result?.matches??[]
@@ -117,6 +118,18 @@ export function SavedTourEditionPage():JSX.Element {
       </p>)}
     </section>}
   </section>
+  const pendingTiePanel=!groupStandings&&pendingTieDecisions.length>0&&
+    <section aria-label="Saved pending group tie decisions">
+      <h4>{cs?'Uložená rozhodnutí shod — čeká na konečnou tabulku':
+        'Saved tie decisions — final standings pending'}</h4>
+      <p role="status">{cs?'Tato historická revize obsahuje auditované rozhodnutí pořadí, ale konečné skupinové tabulky dosud nebyly vytvořeny. Pořadí níže není publikovaná výsledková tabulka.':
+        'This historical revision records an audited player ordering, but canonical final group standings have not yet been generated. The reviewed order below is not a published group table.'}</p>
+      <ol>{pendingTieDecisions.map(d=><li key={d.case_fingerprint}>
+        {cs?'Skupina':'Group'} {d.group_index}: {d.ordered_player_ids.join(' → ')}
+        {' · '}{cs?'Důvod Admina':'Admin reason'}: {d.admin_reason}
+        {' · '}<code>{d.case_fingerprint.slice(0,12)}</code>
+      </li>)}</ol>
+    </section>
   const groupScheduleTable=groupSchedule&&<section aria-label="Saved group Match Day schedule">
     <h5>{cs?'Autentický skupinový rozpis':'Authentic group Match Day schedule'}</h5>
     <p role="status">{cs?'Uložené skupiny':'Saved groups'}: {groupSchedule.group_count}
@@ -247,6 +260,7 @@ export function SavedTourEditionPage():JSX.Element {
       </section>}
       {tab==='results'&&<section><h3>{labels[4]}</h3>
         {groupStandingsTables}
+        {pendingTiePanel}
         {!result?<p>{cs?'Kanonické výsledky nejsou v této revizi publikovány.':
           'Canonical results are not published in this revision.'}</p>:<>
           <a href="#saved-results-main">{cs?'Hlavní část':'Main'}</a>

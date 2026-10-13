@@ -88,7 +88,7 @@ def test_saved_calendar_multi_season_immutable_shared_ancestor_and_restart(tmp_p
 
         # A selected fork can read its shared original ancestor without changing
         # the original Calendar or claiming ownership of the source result.
-        identifiers = iter(("tour-fork", "tour-fork-draft"))
+        identifiers = iter(("tour-fork", "tour-fork-draft", "tour-fork-root"))
         RunBranchCreationService(
             repository=repo, id_factory=lambda _kind: next(identifiers),
         ).create_from_saved_revision(

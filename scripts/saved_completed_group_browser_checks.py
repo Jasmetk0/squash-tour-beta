@@ -157,9 +157,9 @@ def play_group_and_save(
     pending = intermediate["pending_group_tie_decisions"]
     assert len(pending) == len(tie_audit)
     for decision, frozen in zip(tie_audit, pending):
-        assert frozen["case_fingerprint"] == decision["case"]["fingerprint"] if (
-            isinstance(decision["case"], dict) and "fingerprint" in decision["case"]
-        ) else _case_fingerprint(decision["case"])
+        assert frozen["case_fingerprint"] == _case_fingerprint(
+            decision["decision"]["case"]
+        )
         assert frozen["admin_reason"] == decision["decision"]["admin_reason"]
         assert frozen["ordered_player_ids"] == decision["decision"]["ordered_player_ids"]
 

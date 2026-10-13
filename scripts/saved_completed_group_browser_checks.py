@@ -93,17 +93,7 @@ def play_group_and_save(
     assert completed["groups"], completed
     assert len(completed["groups"]) == 1
     ranking = completed["groups"][0]["rows"]
-    assert len(ranking) == 4
-    assert {r["player_id"] for r in ranking} == {
-        p for match in check_schedule()["matches"]
-        for p in (match["top_player_id"], match["bottom_player_id"])
-    }
-    assert [r["position"] for r in ranking] == [1, 2, 3, 4]
-    assert sum(r["wins"] for r in ranking) == 6
-    assert sum(r["losses"] for r in ranking) == 6
-    assert sum(r["played_matches"] for r in ranking) == 12
-    assert sum(r["walkovers_received"] for r in ranking) == 0
-    assert sum(r["walkovers_conceded"] for r in ranking) == 0
+    assert_real_played_group_table(ranking, check_schedule()["matches"])
 
     save_preview = request("GET", simulation + "/save/preview")
     assert save_preview["can_save"] is True, save_preview
@@ -147,3 +137,23 @@ def _case_fingerprint(case: dict) -> str:
         TournamentGroupStandingsTieCase,
     )
     return TournamentGroupStandingsTieCase.model_validate(case).fingerprint
+
+
+
+def assert_real_played_group_table(ranking: list[dict], scheduled: list[dict]) -> None:
+    """All six saved matches must have produced real two-sided played receipts."""
+    assert len(scheduled) == 6
+    assert len(ranking) == 4
+    participants = {
+        p for match in scheduled
+        for p in (match["top_player_id"], match["bottom_player_id"])
+    }
+    assert len(participants) == 4
+    assert {r["player_id"] for r in ranking} == participants
+    assert [r["position"] for r in ranking] == [1, 2, 3, 4]
+    assert sum(r["wins"] for r in ranking) == 6, "Six real group wins are required"
+    assert sum(r["losses"] for r in ranking) == 6, "Six real group losses are required"
+    assert sum(r["played_matches"] for r in ranking) == 12
+    assert sum(r["walkovers_received"] for r in ranking) == 0
+    assert sum(r["walkovers_conceded"] for r in ranking) == 0
+    assert all(r["group_points"] >= 0 for r in ranking)

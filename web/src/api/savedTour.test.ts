@@ -1,6 +1,6 @@
 import {describe,it,expect} from 'vitest'
 import {matchesSavedTourContext,validSavedTourCalendar,validSavedTourEdition,validSavedTourMatchDetail} from './savedTour'
-import type {SavedTourCalendar,SavedTourEdition,SavedTourEvent} from './savedTour'
+import type {SavedTourCalendar,SavedTourEdition,SavedTourEvent,SavedTourMatchDetail} from './savedTour'
 const event:SavedTourEvent={event_id:'open',season:'2002/2003',season_week:12,
   event_name:'Open',template_id:'tpl',category:'DIAMOND',tour_level:'WORLD',
   host_country:'CZE',host_city:'Brno',region:'EUROPE',main_draw_size:16,
@@ -16,8 +16,8 @@ const edition:SavedTourEdition={schema_version:'run_saved_tour_edition.v1',
   lifecycle_status:'unavailable'}
 describe('strict Saved Tour response identity',()=>{
   it('rejects stale, foreign and forged archived match pages',()=>{
-    const data={
-      schema_version:'run_saved_tour_match_detail.v1' as const,
+    const data:SavedTourMatchDetail={
+      schema_version:'run_saved_tour_match_detail.v1',
       source:'reachable_saved_revision' as const,
       run_id:'r',branch_id:'b',revision_branch_id:'original',
       saved_revision_id:'rev',season_index:2,event_id:'open',match_id:'final',
@@ -30,7 +30,7 @@ describe('strict Saved Tour response identity',()=>{
         score_b_after:0,sets_a_after:0,sets_b_after:0,
         set_complete:false,match_complete:true}]
     }
-    const valid=(v:typeof data)=>validSavedTourMatchDetail(v,'r','b','rev',2,'open','final',0,25)
+    const valid=(v:SavedTourMatchDetail)=>validSavedTourMatchDetail(v,'r','b','rev',2,'open','final',0,25)
     expect(valid(data)).toBe(true)
     expect(valid({...data,saved_revision_id:'new-head'})).toBe(false)
     expect(valid({...data,branch_id:'foreign'})).toBe(false)

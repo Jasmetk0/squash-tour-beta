@@ -47,6 +47,7 @@ import {
 import {GroupFormatSetupPanel} from '../components/GroupFormatSetupPanel'
 import { useLanguage } from '../i18n/LanguageContext'
 import { CompletedGroupStandingsPanel } from '../components/CompletedGroupStandingsPanel'
+import { HybridKnockoutProgressionPanel } from '../components/HybridKnockoutProgressionPanel'
 import { canOfferPureGroupSetup } from './groupFormatAvailability'
 import { formatApiError, isApiNotFound } from '../utils/apiErrors'
 import { isRunCalendarProjection } from '../api/runFirstTournament'
@@ -1256,6 +1257,14 @@ export function PlannedEventDetailPage(): JSX.Element {
                    ['groups','groups_knockout'].includes(canonicalPreparationQuery.data.format_kind??'') ? (
                     <CompletedGroupStandingsPanel
                       key={['completed-group-standings',runId,activeBranchId,eventId].join(':')}
+                      runId={runId} branchId={activeBranchId} eventId={eventId}
+                      enabled={!viewed.historical && verifiedCalendarScope}
+                    />
+                  ) : null}
+                  {verifiedCalendarScope &&
+                   canonicalPreparationQuery.data.format_kind === 'groups_knockout' ? (
+                    <HybridKnockoutProgressionPanel
+                      key={['hybrid-knockout-progression',runId,activeBranchId,eventId].join(':')}
                       runId={runId} branchId={activeBranchId} eventId={eventId}
                       enabled={!viewed.historical && verifiedCalendarScope}
                     />

@@ -293,6 +293,8 @@ export function AuthoritativeSimulationPanel({
     useState<{commandId:string; action:'pause'|'resume'} | null>(null)
   const [fullSimulationControlOperator, setFullSimulationControlOperator] = useState('')
   const [fullSimulationControlReason, setFullSimulationControlReason] = useState('')
+  // Keep one request identity across HTTP retries; rotate only for a new intent.
+  const [fullSimulationControlCommandId, setFullSimulationControlCommandId] = useState(newCommandId)
   const [fullSimulationAbandonTarget, setFullSimulationAbandonTarget] =
     useState<string | null>(null)
   const [fullSimulationAbandonOperator, setFullSimulationAbandonOperator] =
@@ -1804,6 +1806,7 @@ export function AuthoritativeSimulationPanel({
         throw new Error('A control operation requires an operator and audit reason.')
       }
       return controlAuthoritativeFullSimulation(runId, branchId, {
+        control_command_id: fullSimulationControlCommandId,
         target_command_id: fullSimulationControlTarget.commandId,
         action: fullSimulationControlTarget.action,
         operator_label: fullSimulationControlOperator.trim(),
@@ -1814,6 +1817,7 @@ export function AuthoritativeSimulationPanel({
       setFullSimulationControlTarget(null)
       setFullSimulationControlOperator('')
       setFullSimulationControlReason('')
+      setFullSimulationControlCommandId(newCommandId())
       await Promise.all([
         queryClient.invalidateQueries({queryKey:['authoritative-full-simulation-pending',runId,branchId]}),
         queryClient.invalidateQueries({queryKey:['authoritative-full-simulation-history',runId,branchId]}),
@@ -3271,6 +3275,7 @@ export function AuthoritativeSimulationPanel({
                     )}
                     {operation.control_state !== 'pause_requested' && (
                       <button type="button" onClick={() => {
+                        setFullSimulationControlCommandId(newCommandId())
                         setFullSimulationControlTarget({
                           commandId:operation.command.command_id,
                           action:operation.control_state === 'paused' ? 'resume' : 'pause'
@@ -3306,6 +3311,7 @@ export function AuthoritativeSimulationPanel({
                     výsledky a neprovádí Save. / The same parent retains its target.
                   </p>
                   <p><code>{fullSimulationControlTarget.commandId}</code></p>
+                  <p className="status">Control request ID: <code>{fullSimulationControlCommandId}</code>. If the response is lost, retrying reuses this exact ID and cannot duplicate the audit event.</p>
                   <label>Operátor / Operator
                     <input aria-label="Full Simulation control operator"
                       value={fullSimulationControlOperator} maxLength={128}
@@ -3327,8 +3333,10 @@ export function AuthoritativeSimulationPanel({
                       ? 'Požádat o pauzu / Request pause'
                       : 'Povolit pokračování / Resume same parent'}
                   </button>
-                  <button type="button" onClick={()=>setFullSimulationControlTarget(null)}
-                    disabled={fullSimulationControlMutation.isPending}>Zrušit / Cancel</button>
+                  <button type="button" onClick={() => {
+                    setFullSimulationControlTarget(null)
+                    setFullSimulationControlCommandId(newCommandId())
+                  }} disabled={fullSimulationControlMutation.isPending}>Zrušit / Cancel</button>
                   {fullSimulationControlMutation.error && <p role="alert" className="error">
                     {formatApiError(fullSimulationControlMutation.error)}
                   </p>}

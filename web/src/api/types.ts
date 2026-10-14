@@ -2226,6 +2226,7 @@ export type AuthoritativeFullSimulationPendingCollection = {
 }
 
 export type AuthoritativeFullSimulationControlPayload = {
+  control_command_id: string
   target_command_id: string
   action: 'pause' | 'resume'
   operator_label: string
@@ -2237,6 +2238,9 @@ export type AuthoritativeFullSimulationControlResult = {
   run_id: string
   branch_id: string
   target_command_id: string
+  control_command_id: string
+  observed_control_state: 'running' | 'pause_requested' | 'paused'
+  replayed: boolean
   action: 'pause' | 'resume'
   control_state: 'running' | 'pause_requested' | 'paused'
   committed_child_work_persists: true

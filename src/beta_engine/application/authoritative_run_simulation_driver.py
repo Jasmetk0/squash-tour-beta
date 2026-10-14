@@ -529,8 +529,9 @@ class AuthoritativeFullSimulationAbandonCommand(FrozenInput):
 
 
 class AuthoritativeFullSimulationControlCommand(FrozenInput):
-    """Audited control of exactly one pending Full Simulation parent."""
+    """Idempotent audited control of exactly one pending Full Simulation parent."""
 
+    control_command_id: str = Field(min_length=1, max_length=128)
     target_command_id: str = Field(min_length=1, max_length=128)
     run_id: str
     branch_id: str
@@ -6415,7 +6416,7 @@ class AuthoritativeRunSimulationDriver:
     def control_full_simulation(
         self, command: AuthoritativeFullSimulationControlCommand
     ) -> dict:
-        """Ask the existing parent to pause, or explicitly authorize its resume."""
+        """Idempotently pause/resume a durable parent using one audited control ID."""
         key = (command.run_id, command.branch_id, command.target_command_id)
         with self.factory.begin() as session:
             session.execute(text("BEGIN IMMEDIATE"))
@@ -6429,6 +6430,44 @@ class AuthoritativeRunSimulationDriver:
             state = frozen.get("control_state", "running")
             if state not in ("running", "pause_requested", "paused"):
                 raise ValueError("Full Simulation control state is corrupt")
+            events = frozen.get("control_events", [])
+            if not isinstance(events, list) or not all(
+                isinstance(event, dict) for event in events
+            ):
+                raise ValueError("Full Simulation control audit events are corrupt")
+            prior = [
+                event for event in events
+                if event.get("command_id") == command.control_command_id
+            ]
+            if len(prior) > 1:
+                raise ValueError("Duplicate Full Simulation control audit identity")
+            if prior:
+                original = prior[0]
+                if (
+                    original.get("action") != command.action
+                    or original.get("operator_label") != command.operator_label
+                    or original.get("audit_reason") != command.audit_reason
+                    or original.get("state") not in (
+                        "pause_requested", "running"
+                    )
+                ):
+                    raise ValueError(
+                        "Full Simulation control ID was reused with different input"
+                    )
+                # This is the receipt for the original command, not a new
+                # transition. The present parent state may have advanced.
+                return {
+                    "schema_version": "authoritative_full_simulation_control_result.v1",
+                    "run_id": command.run_id,
+                    "branch_id": command.branch_id,
+                    "target_command_id": command.target_command_id,
+                    "control_command_id": command.control_command_id,
+                    "action": command.action,
+                    "control_state": original["state"],
+                    "observed_control_state": state,
+                    "replayed": True,
+                    "committed_child_work_persists": True,
+                }
             if command.action == "pause":
                 if state != "running":
                     raise ValueError("Full Simulation already has a pause request")
@@ -6438,19 +6477,27 @@ class AuthoritativeRunSimulationDriver:
                     raise ValueError("Full Simulation resume requires acknowledged pause")
                 state = "running"
             frozen["control_state"] = state
-            frozen.setdefault("control_events", []).append({
-                "action": command.action, "state": state,
+            events.append({
+                "command_id": command.control_command_id,
+                "action": command.action,
+                "state": state,
                 "operator_label": command.operator_label,
                 "audit_reason": command.audit_reason,
             })
+            frozen["control_events"] = events
             receipt.result_json = json.dumps(
                 frozen, sort_keys=True, separators=(",", ":")
             )
             return {
                 "schema_version": "authoritative_full_simulation_control_result.v1",
-                "run_id": command.run_id, "branch_id": command.branch_id,
+                "run_id": command.run_id,
+                "branch_id": command.branch_id,
                 "target_command_id": command.target_command_id,
-                "action": command.action, "control_state": state,
+                "control_command_id": command.control_command_id,
+                "action": command.action,
+                "control_state": state,
+                "observed_control_state": state,
+                "replayed": False,
                 "committed_child_work_persists": True,
             }
 

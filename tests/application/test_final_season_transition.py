@@ -1080,6 +1080,7 @@ def test_full_simulation_pause_and_resume_preserve_same_parent_and_child_receipt
 
     def control(action, actor):
         return AuthoritativeFullSimulationControlCommand(
+            control_command_id=f"control-{action}-{actor}",
             target_command_id=command.command_id,
             run_id="run", branch_id="branch", action=action,
             operator_label=actor, audit_reason="Explicit reviewed operator control",
@@ -1087,14 +1088,25 @@ def test_full_simulation_pause_and_resume_preserve_same_parent_and_child_receipt
     with pytest.raises(ValueError, match="pending parent"):
         driver.control_full_simulation(
             AuthoritativeFullSimulationControlCommand(
+                control_command_id="control-missing",
                 target_command_id="missing", run_id="run", branch_id="branch",
                 action="pause", operator_label="Admin", audit_reason="Safe pause",
             )
         )
     with pytest.raises(ValueError, match="acknowledged pause"):
         driver.control_full_simulation(control("resume", "Admin"))
-    requested = driver.control_full_simulation(control("pause", "Admin"))
+    pause_request = control("pause", "Admin")
+    requested = driver.control_full_simulation(pause_request)
     assert requested["control_state"] == "pause_requested"
+    assert requested["replayed"] is False
+    assert requested["control_command_id"] == pause_request.control_command_id
+    assert driver.control_full_simulation(pause_request) == {
+        **requested, "replayed": True,
+    }
+    with pytest.raises(ValueError, match="reused with different input"):
+        driver.control_full_simulation(
+            pause_request.model_copy(update={"audit_reason": "Different intent"})
+        )
     assert requested["committed_child_work_persists"] is True
     pending = driver.inspect_pending_full_simulations(
         run_id="run", branch_id="branch"
@@ -1107,7 +1119,19 @@ def test_full_simulation_pause_and_resume_preserve_same_parent_and_child_receipt
         run_id="run", branch_id="branch"
     )["operations"][0]["control_state"] == "paused"
     assert driver.simulate_full_simulation(command)["checkpoint"] == "operator_paused"
-    assert driver.control_full_simulation(control("resume", "Operator"))["control_state"] == "running"
+    resume_request = control("resume", "Operator")
+    resumed = driver.control_full_simulation(resume_request)
+    assert resumed["control_state"] == "running"
+    assert resumed["replayed"] is False
+    assert driver.control_full_simulation(resume_request) == {
+        **resumed, "replayed": True,
+    }
+    # A delayed duplicate of the *original* pause is historical replay only.
+    # It cannot change the currently resumed parent.
+    old_pause = driver.control_full_simulation(pause_request)
+    assert old_pause["control_state"] == "pause_requested"
+    assert old_pause["observed_control_state"] == "running"
+    assert old_pause["replayed"] is True
     continued = driver.simulate_full_simulation(command)
     assert continued["checkpoint"] == "final_run_closure_review_required"
     assert continued["final_completed_week_count"] == 1
@@ -1188,6 +1212,7 @@ def test_active_full_simulation_pause_fences_next_writer_and_acknowledges(
     try:
         response = admin.control_full_simulation(
             AuthoritativeFullSimulationControlCommand(
+                control_command_id="concurrent-pause-id",
                 target_command_id=command.command_id,
                 run_id="run", branch_id="branch", action="pause",
                 operator_label="Admin", audit_reason="Safe concurrent pause",

@@ -3372,7 +3372,7 @@ describe('AuthoritativeSimulationPanel', () => {
   })
 
 
-  it('requests server-authoritative pause with an explicit reason and retains exact parent', async () => {
+  it('retries an unanswered pause with the same audited control ID and parent', async () => {
     api.inspectAuthoritativeWeekSchedule.mockResolvedValue({
       ...scheduleInspection,
       schedule: proposal.schedule,
@@ -3404,9 +3404,11 @@ describe('AuthoritativeSimulationPanel', () => {
         final_completed_weeks: [], final_completed_week_count: 0
       }]
     })
-    api.controlAuthoritativeFullSimulation.mockResolvedValue({
+    api.controlAuthoritativeFullSimulation.mockRejectedValueOnce(new Error('Network answer was lost')).mockResolvedValue({
       schema_version: 'authoritative_full_simulation_control_result.v1',
       run_id: 'run-a', branch_id: 'branch-a',
+      control_command_id: 'server-echo', replayed: false,
+      observed_control_state: 'pause_requested',
       target_command_id: 'full-parent-control',
       action: 'pause', control_state: 'pause_requested',
       committed_child_work_persists: true
@@ -3419,14 +3421,20 @@ describe('AuthoritativeSimulationPanel', () => {
     await userEvent.type(screen.getByLabelText('Full Simulation control operator'), 'Commissioner')
     await userEvent.type(screen.getByLabelText('Full Simulation control audit reason'), 'Wait for safe boundary')
     await userEvent.click(screen.getByRole('button', {name: 'Požádat o pauzu / Request pause'}))
-    await waitFor(() => expect(api.controlAuthoritativeFullSimulation).toHaveBeenCalledWith(
-      'run-a', 'branch-a', {
-        target_command_id: 'full-parent-control',
-        action: 'pause',
-        operator_label: 'Commissioner',
-        audit_reason: 'Wait for safe boundary'
-      }
-    ))
+    await waitFor(() => expect(api.controlAuthoritativeFullSimulation).toHaveBeenCalledTimes(1))
+    expect(await screen.findByText('Network answer was lost')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', {name: 'Požádat o pauzu / Request pause'}))
+    await waitFor(() => expect(api.controlAuthoritativeFullSimulation).toHaveBeenCalledTimes(2))
+    const first = api.controlAuthoritativeFullSimulation.mock.calls[0][2]
+    const second = api.controlAuthoritativeFullSimulation.mock.calls[1][2]
+    expect(first).toEqual({
+      control_command_id: expect.any(String),
+      target_command_id: 'full-parent-control',
+      action: 'pause',
+      operator_label: 'Commissioner',
+      audit_reason: 'Wait for safe boundary'
+    })
+    expect(second).toEqual(first)
     expect(api.simulateAuthoritativeFullSimulation).not.toHaveBeenCalled()
     expect(api.saveAuthoritativeSimulation).not.toHaveBeenCalled()
   })

@@ -2334,7 +2334,10 @@ export async function controlAuthoritativeFullSimulation(
   if (
     data.schema_version !== 'authoritative_full_simulation_control_result.v1' ||
     data.target_command_id !== payload.target_command_id ||
+    data.control_command_id !== payload.control_command_id ||
     data.action !== payload.action ||
+    typeof data.replayed !== 'boolean' ||
+    !['running', 'pause_requested', 'paused'].includes(data.observed_control_state) ||
     data.committed_child_work_persists !== true ||
     !['running', 'pause_requested', 'paused'].includes(data.control_state) ||
     (payload.action === 'pause' && data.control_state !== 'pause_requested') ||

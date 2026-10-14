@@ -53,8 +53,7 @@ export function SavedMatchComparePanel({
     {compared?.availability==='published'&&<>
       <p className="status">{T("Published evidence A:")} <code>{a.revision_id}</code>
         {' '}({a.revision_branch_id}) → B: <code>{b.revision_id}</code>
-        {' '}({b.revision_branch_id}). Match identity is exact Match ID,
-        not inferred from opponents or bracket slots.</p>
+        {' '}({b.revision_branch_id}). {T('Match identity is exact Match ID, not inferred from opponents or bracket slots.')}</p>
       <div className="run-world-metrics" aria-label={T("Compare published Saved match totals")}>
         {statuses.map(s=><div key={s}><span>{T(s)}</span><strong>{compared.counts[s]}</strong></div>)}
       </div>
@@ -83,10 +82,10 @@ export function SavedMatchComparePanel({
         </table>
       </div>}
       {selected&&<div className="section-subtle" aria-label={T("Exact published match A B detail")}>
-        <div className="actions"><h5>Saved Match ID · <code>{selected.matchId}</code></h5>
+        <div className="actions"><h5>{T('Saved Match ID ·')} <code>{selected.matchId}</code></h5>
           <button type="button" onClick={()=>setInspected(null)}>{T("Close match evidence")}</button></div>
-        <p>Status: <strong>{T(selected.status)}</strong>;
-          exact changed fields: {selected.changedFields.join(', ')||T("Whole published match record")}</p>
+        <p>{T('Status:')} <strong>{T(selected.status)}</strong>;
+          {T('exact changed fields:')} {selected.changedFields.join(', ')||T("Whole published match record")}</p>
         <div className="saved-compare-before-after">
           <section><h5>{T("State A · original published match")}</h5>
             <pre className="json-block">{pretty(selected.a,language)}</pre></section>

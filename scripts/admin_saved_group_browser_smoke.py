@@ -54,7 +54,9 @@ def acceptance(
             + (["--cyclic-tie-fixture"] if cyclic_tie_browser else []),
             stdout=server_log, stderr=server_log,
         )
-        for _ in range(180):
+        # Real 6-match MatchEngine tie input search can take longer than the
+        # ordinary browser backend startup, especially on shared CI runners.
+        for _ in range(1800 if cyclic_tie_browser else 180):
             if process.poll() is not None:
                 raise RuntimeError("Group acceptance backend stopped; inspect server.log")
             try:

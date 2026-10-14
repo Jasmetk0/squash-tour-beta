@@ -8,6 +8,7 @@ import { LanguageProvider } from '../i18n/LanguageContext'
 import { RunsPage } from './RunsPage'
 
 const api = vi.hoisted(() => ({
+  ApiError: class ApiError extends Error {},
   listRunContainers: vi.fn(), listRunBranches: vi.fn(), listBranchStates: vi.fn(),
   getGlobalFullSimulationOperations: vi.fn()
 }))

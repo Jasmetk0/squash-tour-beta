@@ -41,6 +41,7 @@ def acceptance(
     cyclic_tie_browser: bool = False,
     hybrid_preparation: bool = False,
     hybrid_progression: bool = False,
+    hybrid_multiround: bool = False,
 ) -> None:
     if (root / "browser.sqlite").exists():
         raise ValueError("Saved group browser acceptance requires a fresh SQLite database")
@@ -176,8 +177,13 @@ def acceptance(
                     "2" if hybrid_preparation else "4"
                 )
                 if hybrid_preparation:
+                    if hybrid_multiround:
+                        group_setup.get_by_label("Advancers per group").fill("2")
                     group_setup.get_by_label("Hybrid match 1 top source").select_option("1:1")
                     group_setup.get_by_label("Hybrid match 1 bottom source").select_option("2:1")
+                    if hybrid_multiround:
+                        group_setup.get_by_label("Hybrid match 2 top source").select_option("1:2")
+                        group_setup.get_by_label("Hybrid match 2 bottom source").select_option("2:2")
                     group_setup.get_by_label("Confirm exact hybrid Format and crossings").check()
                 else:
                     group_setup.get_by_label("Confirm immutable pure-groups Format").check()
@@ -194,12 +200,21 @@ def acceptance(
                     hybrid_format = request("GET", event_scope + "/format")
                     group_configuration = hybrid_format["group_configuration"]
                     assert hybrid_format["format_kind"] == "groups_knockout"
-                    assert group_configuration["advancing_per_group"] == 1
-                    assert group_configuration["knockout_crossings"] == [{
+                    assert group_configuration["advancing_per_group"] == (
+                        2 if hybrid_multiround else 1
+                    )
+                    expected_crossings = [{
                         "match_index": 1,
                         "top": {"group_index": 1, "finishing_position": 1},
                         "bottom": {"group_index": 2, "finishing_position": 1},
                     }]
+                    if hybrid_multiround:
+                        expected_crossings.append({
+                            "match_index": 2,
+                            "top": {"group_index": 1, "finishing_position": 2},
+                            "bottom": {"group_index": 2, "finishing_position": 2},
+                        })
+                    assert group_configuration["knockout_crossings"] == expected_crossings
                 assert preparation["next_required_action"] == "generate_tournament_topology"
 
                 expect(page.get_by_label("Group Topology seed")).to_have_value("137")
@@ -357,7 +372,7 @@ def acceptance(
                 completed = None
                 hybrid_result = None
                 hybrid_ranking = None
-                if hybrid_progression:
+                if hybrid_progression or hybrid_multiround:
                     hybrid_result = play_and_freeze_hybrid(
                         request=request,page=page,run_id=run_id,branch_id=branch_id,
                         event_id=EVENT_ID,run_url=run_url,
@@ -365,6 +380,7 @@ def acceptance(
                         event_scope=event_scope,
                         original_match_ids={m["match_id"] for m in schedule["matches"]},
                         initial_revision=revision,artifacts=artifacts,
+                        knockout_rounds=2 if hybrid_multiround else 1,
                     )
                     assert saved(hybrid_result["completed_saved_revision"]) == (
                         hybrid_result["archived_edition"]
@@ -375,8 +391,10 @@ def acceptance(
                         hybrid=hybrid_result,artifacts=artifacts,
                     )
                     assert saved(revision) == expected
-                    print("HYBRID BROWSER: two real group games, final, reviewed explicit Ranking "
-                          "policy and closed Ranked source, Saved Edition after restart",flush=True)
+                    print("HYBRID BROWSER: two real group games, "
+                          + ("two semifinals and final" if hybrid_multiround else "one final")
+                          + ", explicit Ranking policy, canonical closure, "
+                          + "Week-2 publication, Saved revision/restart", flush=True)
 
                 def final_browser_read(page, final_revision, prefix=""):
                     query = (f"?branch={quote(branch_id, safe='')}"
@@ -490,6 +508,10 @@ def acceptance(
                         hybrid_result["ranking_closure"]
                     )
                     replay = request("GET",root_scope+"/authoritative-simulation/match-replays?limit=50")
+                    assert len(replay["matches"]) == 2 + hybrid_result["real_knockout_matches"]
+                    for match_id, expected_replay in hybrid_result["all_knockout_replays"].items():
+                        assert [m for m in replay["matches"] if m["match_id"] == match_id] == [expected_replay]
+                        assert request("GET", root_scope + "/authoritative-simulation/match-replay/context?group_id=" + quote(match_id, safe="")) == hybrid_result["all_knockout_contexts"][match_id]
                     final_matches = [m for m in replay["matches"]
                                      if m["match_id"] == hybrid_result["bracket_authority"]["terminal_match_id"]]
                     assert final_matches == [hybrid_result["frozen_final_replay"]], (
@@ -607,6 +629,8 @@ if __name__ == "__main__":
                         help="Serve ONLY: install exact-scope genuine MatchEngine test inputs")
     parser.add_argument("--hybrid-progression", action="store_true",
                         help="Play two real hybrid group matches and knockout final, freeze authorities, Save and restart")
+    parser.add_argument("--hybrid-multiround", action="store_true",
+                        help="Two actual group matches, two semifinal MatchEngine games, winner-fed final, ranked Save/restart")
     parser.add_argument("--hybrid-preparation", action="store_true",
                         help="Browser verifies explicitly configured hybrid plus Saved Edition after SQLite restart")
     parser.add_argument("--complete-groups", action="store_true",
@@ -614,10 +638,12 @@ if __name__ == "__main__":
     parser.add_argument("--reconstruct-one-group-match", action="store_true",
                         help="Review/commit one natural MatchEngine candidate as a real canonical group Slot before Match Day 3")
     args = parser.parse_args()
-    if (args.hybrid_preparation or args.hybrid_progression) and (
+    if (args.hybrid_preparation or args.hybrid_progression or args.hybrid_multiround) and (
         args.complete_groups or args.reconstruct_one_group_match or args.cyclic_tie_browser
     ):
         parser.error("--hybrid-preparation is a frozen preparation and Save test, not completed hybrid closure")
+    if args.hybrid_multiround and (args.hybrid_progression or args.hybrid_preparation):
+        parser.error("--hybrid-multiround is a standalone fully verified multi-round scenario")
     if args.cyclic_tie_browser and (args.complete_groups or args.reconstruct_one_group_match):
         parser.error("--cyclic-tie-browser cannot also simulate normal Run Match Days")
     if args.reconstruct_one_group_match and not args.complete_groups:
@@ -636,6 +662,7 @@ if __name__ == "__main__":
             complete_groups=args.complete_groups,
             reconstruct_one_group_match=args.reconstruct_one_group_match,
             cyclic_tie_browser=args.cyclic_tie_browser,
-            hybrid_preparation=args.hybrid_preparation or args.hybrid_progression,
+            hybrid_preparation=args.hybrid_preparation or args.hybrid_progression or args.hybrid_multiround,
             hybrid_progression=args.hybrid_progression,
+            hybrid_multiround=args.hybrid_multiround,
         )

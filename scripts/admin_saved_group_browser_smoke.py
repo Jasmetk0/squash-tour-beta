@@ -368,8 +368,8 @@ def acceptance(
                         hybrid_result["archived_edition"]
                     )
                     assert saved(revision) == expected
-                    print("HYBRID BROWSER: two authentic MatchEngine group games, final standings, "
-                          "actual entrants and bracket, explicit Save",flush=True)
+                    print("HYBRID BROWSER: two real group games, final, reviewed explicit Ranking "
+                          "policy and closed Ranked source, Saved Edition after restart",flush=True)
 
                 def final_browser_read(page, final_revision, prefix=""):
                     query = (f"?branch={quote(branch_id, safe='')}"
@@ -467,6 +467,12 @@ def acceptance(
                     assert request("GET",event_scope+"/hybrid-knockout-bracket") == (
                         hybrid_result["bracket_authority"]
                     )
+                    assert request("GET",event_scope+"/hybrid-ranking-policy") == (
+                        hybrid_result["ranking_policy_authority"]
+                    )
+                    assert request("GET",event_scope+"/hybrid-ranking-close") == (
+                        hybrid_result["ranking_closure"]
+                    )
                     replay = request("GET",root_scope+"/authoritative-simulation/match-replays?limit=50")
                     final_matches = [m for m in replay["matches"]
                                      if m["match_id"] == hybrid_result["bracket_authority"]["terminal_match_id"]]
@@ -534,10 +540,14 @@ def acceptance(
                         "played_match_days":hybrid_result["real_match_days"],
                         "knockout_champion":hybrid_result["frozen_final_replay"]["winner_player_id"],
                         "knockout_result_fingerprint":hybrid_result["frozen_final_replay"]["result_fingerprint"],
+                        "ranking_policy_fingerprint":hybrid_result["ranking_policy_authority"]["authority_fingerprint"],
+                        "ranking_source_fingerprint":hybrid_result["ranking_closure"]["source_fingerprint"],
+                        "ranking_award_fingerprint":hybrid_result["ranking_closure"]["award_fingerprint"],
+                        "total_ranking_points":hybrid_result["ranking_closure"]["total_ranking_points"],
                         "group_authority_fingerprint":hybrid_result["group_authority"]["authority_fingerprint"],
                         "entrants_authority_fingerprint":hybrid_result["entrants_authority"]["authority_fingerprint"],
                         "bracket_authority_fingerprint":hybrid_result["bracket_authority"]["authority_fingerprint"],
-                        "result_published":False,
+                        "result_published":hybrid_result["result_published"],
                     } if hybrid_result else None),
                     "unchanged_after_restart": True,
                     "browser_errors": browser_errors,

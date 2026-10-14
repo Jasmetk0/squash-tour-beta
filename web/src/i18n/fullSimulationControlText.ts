@@ -14,6 +14,7 @@ const czech: Readonly<Record<string, string>> = {
   'Authorize resume': 'Povolit pokračování',
   'Request safe pause': 'Pozastavit bezpečně',
   'Stop simulation': 'Ukončit simulaci',
+  'Stop Full Simulation': 'Ukončení Full Simulation',
   'Stop original simulation': 'Ukončit původní simulaci',
   'Confirm permanent stop': 'Potvrzuji ukončení této simulace; dokončené výsledky zůstanou zachované a Save je ruční.',
   'Stopping permanently prevents resuming this parent. The current committed child results persist. No automatic Save.': 'Ukončení trvale znemožní pokračovat v tomto původním příkazu. Potvrzené výsledky zůstanou zachované. Save se neprovede automaticky.',

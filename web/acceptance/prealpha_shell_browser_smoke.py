@@ -460,6 +460,10 @@ def main() -> None:
                 + source_branch["saved_head_revision_id"] + "&b="
                 + new_compare_head
             )
+            compare_admin_branch_before = page.get_by_role(
+                "combobox", name="Admin active Branch"
+            ).input_value()
+            assert compare_admin_branch_before, "Compare must not run before Admin context hydrates"
             selection = page.get_by_label("Compare Saved Revision selection")
             expect(selection.get_by_role("combobox", name="Compare state A")).to_have_value(
                 source_branch["saved_head_revision_id"]
@@ -489,7 +493,7 @@ def main() -> None:
             ) == new_compare_head
             assert page.get_by_role(
                 "combobox", name="Admin active Branch"
-            ).input_value() == active_before
+            ).input_value() == compare_admin_branch_before
             evidence["history_saved_compare_ab_read_only"] = True
             page.screenshot(path=str(artifacts / "02c-saved-compare-ab.png"), full_page=True)
 

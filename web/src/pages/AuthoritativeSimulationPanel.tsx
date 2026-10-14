@@ -4823,7 +4823,7 @@ export function AuthoritativeSimulationPanel({
                       ? C('Full Simulation paused at a safe transaction boundary.')
                       : fullSimulationProgress.checkpoint === 'operator_target_reached'
                         ? C('Full Simulation reached its weekly target. No implicit Save.')
-                        : `Full Simulation stopped at ${fullSimulationProgress.checkpoint}.`}
+                        : `Full Simulation paused at ${fullSimulationProgress.checkpoint}.`}
                     {fullSimulationProgress.current_week
                       ? ` ${C('Current')} S${fullSimulationProgress.current_week.season_index} W${fullSimulationProgress.current_week.week}.`
                       : ''}

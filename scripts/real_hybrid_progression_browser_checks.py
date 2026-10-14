@@ -12,6 +12,7 @@ def play_and_freeze_hybrid(
     *, request, page, run_id: str, branch_id: str, event_id: str,
     run_url: str, event_url: str, root_scope: str, event_scope: str,
     original_match_ids: set[str], initial_revision: str, artifacts,
+    knockout_rounds: int = 1,
 ) -> dict:
     from playwright.sync_api import expect
     from admin_first_tournament_smoke import browser_click, browser_settle
@@ -20,8 +21,10 @@ def play_and_freeze_hybrid(
     simulation = root_scope + "/authoritative-simulation"
     frozen = request("GET", event_scope + "/format")
     assert frozen["format_kind"] == "groups_knockout"
-    assert frozen["group_configuration"]["advancing_per_group"] == 1
-    assert len(frozen["group_configuration"]["knockout_crossings"]) == 1
+    assert knockout_rounds in (1, 2)
+    first_round_count = 1 << (knockout_rounds - 1)
+    assert frozen["group_configuration"]["advancing_per_group"] == first_round_count
+    assert len(frozen["group_configuration"]["knockout_crossings"]) == first_round_count
     request("GET", event_scope + "/hybrid-knockout-entrants", status=404)
     request("GET", event_scope + "/hybrid-knockout-bracket", status=404)
     # Must be impossible before any real group match results.
@@ -91,14 +94,23 @@ def play_and_freeze_hybrid(
     assert entrants["group_standings_authority_fingerprint"] == (
         standing["authority_fingerprint"]
     )
-    assert len(entrants["first_round_matches"]) == 1
-    only_match = entrants["first_round_matches"][0]
-    assert (only_match["top_source"], only_match["bottom_source"]) == (
-        {"group_index": 1, "finishing_position": 1},
-        {"group_index": 2, "finishing_position": 1},
+    first_round = entrants["first_round_matches"]
+    assert len(first_round) == first_round_count
+    expected_sources = (
+        ((1, 1), (2, 1)),
+        *((((1, 2), (2, 2)),) if knockout_rounds == 2 else ()),
     )
-    assert only_match["top_player_id"] == standing["groups"][0]["rows"][0]["player_id"]
-    assert only_match["bottom_player_id"] == standing["groups"][1]["rows"][0]["player_id"]
+    actual_players = set()
+    for match, (top, bottom) in zip(first_round, expected_sources, strict=True):
+        assert (match["top_source"], match["bottom_source"]) == (
+            {"group_index": top[0], "finishing_position": top[1]},
+            {"group_index": bottom[0], "finishing_position": bottom[1]},
+        )
+        top_id = standing["groups"][top[0] - 1]["rows"][top[1] - 1]["player_id"]
+        bottom_id = standing["groups"][bottom[0] - 1]["rows"][bottom[1] - 1]["player_id"]
+        assert (match["top_player_id"], match["bottom_player_id"]) == (top_id, bottom_id)
+        actual_players.update((top_id, bottom_id))
+    assert len(actual_players) == first_round_count * 2
 
     create_bracket = region.get_by_role(
         "button", name="Generate frozen knockout bracket"
@@ -111,72 +123,114 @@ def play_and_freeze_hybrid(
     expect(bracket_table).to_be_visible(timeout=30000)
     bracket = request("GET", event_scope + "/hybrid-knockout-bracket")
     assert bracket["entrants_authority_fingerprint"] == entrants["authority_fingerprint"]
-    assert bracket["entrant_count"] == 2 and bracket["round_count"] == 1
-    assert bracket["terminal_match_id"] == only_match["match_id"]
-    assert bracket["matches"][0]["participant_sources"] == [
-        "player:" + only_match["top_player_id"],
-        "player:" + only_match["bottom_player_id"],
-    ]
+    assert bracket["entrant_count"] == first_round_count * 2
+    assert bracket["round_count"] == knockout_rounds
+    assert len(bracket["matches"]) == first_round_count * 2 - 1
+    for match, first in zip(bracket["matches"][:first_round_count], first_round, strict=True):
+        assert match["match_id"] == first["match_id"]
+        assert match["participant_sources"] == [
+            "player:" + first["top_player_id"],
+            "player:" + first["bottom_player_id"],
+        ]
+    if knockout_rounds == 2:
+        assert bracket["matches"][-1]["participant_sources"] == [
+            "winner:" + first_round[0]["match_id"],
+            "winner:" + first_round[1]["match_id"],
+        ]
+        assert bracket["terminal_match_id"] not in {
+            match["match_id"] for match in first_round
+        }
+    else:
+        assert bracket["terminal_match_id"] == first_round[0]["match_id"]
     page.screenshot(path=str(artifacts / "hybrid-04-reviewed-actual-entrants-bracket.png"),
                     full_page=True)
 
-    # An immutable first-round bracket is a *plan*, not the finished sporting
-    # result. The existing Run driver must now dynamically extend the canonical
-    # Week Schedule, preserving the group Match Day and its result receipts.
-    pending_position = request("GET", simulation + "/position")
-    assert pending_position["current_slot_kind"] == "match", pending_position
-    assert bracket["terminal_match_id"] in pending_position["eligible_match_ids"]
-    knockout_preview = request("GET", simulation + "/next-match-day/preview")
-    assert knockout_preview["match_day_ordinal"] == 2, knockout_preview
-    assert len(knockout_preview["target_slot_ordinals"]) == 1
-    assert pending_position["slot_ordinal"] in knockout_preview["target_slot_ordinals"]
+    # A frozen bracket is an immutable plan. The canonical simulation extends
+    # its Week Schedule by *one real Match Day per knockout round*; no final
+    # is eligible until both semi-final winner receipts have been committed.
     before_replay = request("GET", simulation + "/match-replays?limit=50")
-    assert len([m for m in before_replay["matches"]
-                if m["match_id"] == bracket["terminal_match_id"]]) == 0, (
-        "Knockout result must not exist before an actual MatchEngine execution"
-    )
-    page.goto(run_url + "/simulate?branch=" + quote(branch_id, safe=""))
-    page.get_by_role("combobox", name="Language / Jazyk").select_option("en")
-    from playwright.sync_api import expect
-    # Cold React mounts can still be requesting canonical Position/branch state
-    # after the protected HTTP preview has already succeeded. Synchronize on
-    # the actual actionable control rather than an arbitrary network-idle delay.
-    expect(page.get_by_role(
-        "button", name="Review authoritative Next Match Day"
-    )).to_be_enabled(timeout=30000)
-    browser_click(page, "Review authoritative Next Match Day")
-    expect(page.get_by_role(
-        "heading", name="Reviewed canonical Match Day 2"
-    )).to_be_visible()
-    page.get_by_label("Confirm authoritative simulation").check()
-    browser_click(page, "Simulate reviewed authoritative Match Day")
-    browser_settle(page)
+    assert len(before_replay["matches"]) == 2
+    knockout_results = {}
+    contexts = {}
+    for round_number in range(1, knockout_rounds + 1):
+        round_matches = [
+            match for match in bracket["matches"]
+            if match["round_number"] == round_number
+        ]
+        assert len(round_matches) == first_round_count // (2 ** (round_number - 1))
+        pending_position = request("GET", simulation + "/position")
+        assert pending_position["current_slot_kind"] == "match", pending_position
+        assert round_matches[0]["match_id"] in pending_position["eligible_match_ids"]
+        knockout_preview = request("GET", simulation + "/next-match-day/preview")
+        assert knockout_preview["match_day_ordinal"] == round_number + 1, knockout_preview
+        assert len(knockout_preview["target_slot_ordinals"]) == len(round_matches)
+        assert pending_position["slot_ordinal"] in knockout_preview["target_slot_ordinals"]
+        before_round = request("GET", simulation + "/match-replays?limit=50")
+        assert not any(
+            item["match_id"] in {match["match_id"] for match in round_matches}
+            for item in before_round["matches"]
+        ), "Future knockout receipts must not exist until their real Match Day"
+        page.goto(run_url + "/simulate?branch=" + quote(branch_id, safe=""))
+        page.get_by_role("combobox", name="Language / Jazyk").select_option("en")
+        expect(page.get_by_role(
+            "button", name="Review authoritative Next Match Day"
+        )).to_be_enabled(timeout=30000)
+        page.get_by_role("button", name="Review authoritative Next Match Day").click()
+        expect(page.get_by_role(
+            "heading", name=f"Reviewed canonical Match Day {round_number + 1}"
+        )).to_be_visible(timeout=30000)
+        page.get_by_label("Confirm authoritative simulation").check()
+        page.get_by_role("button", name="Simulate reviewed authoritative Match Day").click()
+        expect(page.get_by_role(
+            "button", name="Simulate reviewed authoritative Match Day"
+        )).to_have_count(0, timeout=30000)
+        after_round = request("GET", simulation + "/match-replays?limit=50")
+        assert after_round["read_only"] is True
+        assert len(after_round["matches"]) == 2 + sum(
+            first_round_count // (2 ** r) for r in range(round_number)
+        )
+        for match in round_matches:
+            found = [item for item in after_round["matches"]
+                     if item["match_id"] == match["match_id"]]
+            assert len(found) == 1, ("Knockout Match ID must execute once", match)
+            result = found[0]
+            if round_number == 1:
+                expected_participants = {
+                    source.removeprefix("player:")
+                    for source in match["participant_sources"]
+                }
+            else:
+                expected_participants = {
+                    knockout_results[source.removeprefix("winner:")]["winner_player_id"]
+                    for source in match["participant_sources"]
+                }
+            assert {result["winner_player_id"], result["loser_player_id"]} == (
+                expected_participants
+            ), "Knockout winner feeders must resolve only from actual stored results"
+            assert len(result["result_fingerprint"]) == 64
+            assert result["replay_available"] and result["total_rallies"] > 0
+            knockout_results[match["match_id"]] = result
+            context = request(
+                "GET", simulation + "/match-replay/context?group_id="
+                + quote(match["match_id"], safe=""),
+            )
+            assert context["verified"] is True and context["rng_rerun"] is False
+            assert context["replay_source"] == "stored_authoritative_events"
+            assert context["result_fingerprint"] == result["result_fingerprint"]
+            assert context["event_id"] == event_id
+            contexts[match["match_id"]] = context
+        # No dependent match may appear in replay before its own real slot.
+        if round_number < knockout_rounds:
+            assert bracket["terminal_match_id"] not in {
+                replay["match_id"] for replay in after_round["matches"]
+            }
 
-    replay_list = request("GET", simulation + "/match-replays?limit=50")
-    assert replay_list["read_only"] is True
-    assert len(replay_list["matches"]) == 3
-    finals = [
-        item for item in replay_list["matches"]
-        if item["match_id"] == bracket["terminal_match_id"]
-    ]
-    assert len(finals) == 1
-    final = finals[0]
-    expected_finalists = {only_match["top_player_id"], only_match["bottom_player_id"]}
-    assert {final["winner_player_id"], final["loser_player_id"]} == expected_finalists
-    assert len(final["result_fingerprint"]) == 64
-    assert final["replay_available"] and final["total_rallies"] > 0
-    final_context = request(
-        "GET",simulation + "/match-replay/context?group_id="
-        + quote(bracket["terminal_match_id"],safe=""),
-    )
-    assert final_context["verified"] is True
-    assert final_context["rng_rerun"] is False
-    assert final_context["replay_source"] == "stored_authoritative_events"
-    assert final_context["result_fingerprint"] == final["result_fingerprint"]
-    assert final_context["event_id"] == event_id
-    # No second click may silently replay the terminal or fabricate a winner.
+    final = knockout_results[bracket["terminal_match_id"]]
+    final_context = contexts[bracket["terminal_match_id"]]
     remaining = request("GET", simulation + "/position")
-    assert bracket["terminal_match_id"] not in remaining["eligible_match_ids"]
+    assert not ({match["match_id"] for match in bracket["matches"]} & set(
+        remaining["eligible_match_ids"]
+    )), "No completed knockout slot may become replay-eligible"
     page.screenshot(path=str(artifacts / "hybrid-05-real-knockout-final-replay.png"),
                     full_page=True)
 

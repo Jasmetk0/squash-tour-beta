@@ -272,3 +272,166 @@ def test_http_versioned_target_change_during_real_sport_reaches_safe_week_bounda
         status, repeated_execution = _request("POST", url + "/simulate-full-simulation", command)
         assert status == 201 and repeated_execution["status"] == "target_reached"
         assert snapshot(factory, flow["run_id"], flow["branch_id"]) == after
+
+
+@pytest.mark.pr_critical
+@pytest.mark.parametrize("start,unit,count,expected", [
+    ((0, 61), "weeks", 1, (1, 1)),
+    ((2, 61), "weeks", 3, (3, 3)),
+    ((2, 17), "seasons", 1, (3, 17)),
+    ((48, 61), "seasons", 1, (49, 61)),
+    ((49, 60), "weeks", 1, (49, 61)),
+])
+def test_relative_target_pure_cross_season_chronology(start, unit, count, expected):
+    from beta_engine.application.authoritative_run_simulation_driver import (
+        AuthoritativeRunSimulationDriver, AuthoritativeFullSimulationRelativeTarget,
+    )
+    from beta_engine.domain.rankings.official import RankingWeek
+
+    current = RankingWeek(season_index=start[0], week=start[1])
+    relative = AuthoritativeFullSimulationRelativeTarget(unit=unit, count=count)
+    target = AuthoritativeRunSimulationDriver._resolve_relative_full_target(current, relative)
+    assert (target.season_index, target.week) == expected
+
+
+@pytest.mark.pr_critical
+@pytest.mark.parametrize("unit,count", [
+    ("weeks", 1), ("seasons", 1)
+])
+def test_relative_target_rejects_end_of_run(unit, count):
+    from beta_engine.application.authoritative_run_simulation_driver import (
+        AuthoritativeRunSimulationDriver, AuthoritativeFullSimulationRelativeTarget,
+    )
+    from beta_engine.domain.rankings.official import RankingWeek
+
+    current = RankingWeek(season_index=49, week=61)
+    with pytest.raises(ValueError, match="exceeds the last Run week"):
+        AuthoritativeRunSimulationDriver._resolve_relative_full_target(
+            current, AuthoritativeFullSimulationRelativeTarget(unit=unit, count=count)
+        )
+
+
+@pytest.mark.pr_critical
+def test_relative_target_input_contract_is_exclusive_and_strict():
+    from pydantic import ValidationError
+    from beta_engine.application.authoritative_run_simulation_driver import (
+        AuthoritativeFullSimulationRetargetCommand,
+    )
+
+    base = {
+        "control_command_id": "new-target", "target_command_id": "parent",
+        "run_id": "run", "branch_id": "branch",
+        "operator_label": "Operator", "audit_reason": "Exact relative request",
+    }
+    for invalid in [
+        {}, {"target_week": {"season_index": 2, "week": 3},
+             "relative_target": {"unit": "weeks", "count": 1}},
+        {"relative_target": {"unit": "weeks", "count": 0}},
+        {"relative_target": {"unit": "weeks", "count": -1}},
+        {"relative_target": {"unit": "seasons", "count": 50}},
+        {"relative_target": {"unit": "weeks", "count": 3051}},
+        {"relative_target": {"unit": "weeks", "count": "1"}},
+        {"relative_target": {"unit": "seasons", "count": True}},
+        {"relative_target": {"unit": "months", "count": 1}},
+    ]:
+        with pytest.raises(ValidationError):
+            AuthoritativeFullSimulationRetargetCommand.model_validate(base | invalid)
+
+
+@pytest.mark.pr_critical
+def test_http_relative_full_target_real_sport_audit_and_safe_terminal_replay(tmp_path, monkeypatch):
+    """Real HTTP/SQLite: convert increments exactly once, then preserve evidence."""
+    server, factory, gate = make_server(tmp_path)
+    monkeypatch.setattr(routes, "_driver", gate.driver)
+    with server, ThreadPoolExecutor(max_workers=1) as pool:
+        flow = initialize(server, tmp_path)
+        url = server.base_url + flow["scope"]
+        command = reviewed_command(server, flow, command_id="relative-parent")
+        original = snapshot(factory, flow["run_id"], flow["branch_id"])
+        gate.arm()
+        invocation = pool.submit(_request, "POST", url + "/simulate-full-simulation", command)
+        try:
+            assert gate.reached.wait(timeout=40)
+            before = snapshot(factory, flow["run_id"], flow["branch_id"])
+            assert before["groups"]
+            status, actual = _request("GET", url + "/position")
+            assert status == 200, actual
+            base_week = actual["current_week"]
+            ordinal = base_week["season_index"] * 61 + base_week["week"] - 1
+            next_week = {"season_index": (ordinal+1)//61, "week": (ordinal+1)%61+1}
+            next_season = {"season_index": (ordinal+61)//61, "week": (ordinal+61)%61+1}
+            relative = {
+                "control_command_id": "relative-week-one",
+                "target_command_id": command["command_id"],
+                "relative_target": {"unit": "weeks", "count": 1},
+                "operator_label": "Operator",
+                "audit_reason": "Advance exactly one week from SQLite current time",
+            }
+            status, first = _request("POST", url + "/full-simulation/target", relative)
+            assert status == 200 and first["requested_target_week"] == next_week, first
+            assert first["requested_relative_target"] == {"unit": "weeks", "count": 1}
+            assert first["resolved_from_week"] == base_week
+            status, lost = _request("POST", url + "/full-simulation/target", relative)
+            assert status == 200 and lost["replayed"] is True
+            assert lost["requested_target_week"] == first["requested_target_week"]
+            assert lost["applied_revision"] == 1
+            change = relative | {
+                "control_command_id": "relative-season-one",
+                "relative_target": {"unit": "seasons", "count": 1},
+                "audit_reason": "Move to the same week next season",
+            }
+            status, second = _request("POST", url + "/full-simulation/target", change)
+            assert status == 200 and second["requested_target_week"] == next_season, second
+            assert second["applied_revision"] == second["target_revision"] == 2
+            status, old = _request("POST", url + "/full-simulation/target", relative)
+            assert status == 200 and old["replayed"] is True
+            assert old["effective_target_week"] == next_season
+            assert old["requested_target_week"] == next_week
+            for modification in [
+                {"relative_target": {"unit": "weeks", "count": 2}},
+                {"relative_target": {"unit": "seasons", "count": 1}},
+                {"target_week": next_week, "relative_target": None},
+            ]:
+                assert _request("POST", url + "/full-simulation/target",
+                    relative | modification)[0] == 409
+            bad = relative | {"control_command_id": "invalid-bounds",
+                             "relative_target": {"unit": "weeks", "count": 3050}}
+            assert _request("POST", url + "/full-simulation/target", bad)[0] == 409
+            assert _request("POST", url + "/full-simulation/target",
+                relative | {"control_command_id": "invalid-shape",
+                            "target_week": next_week})[0] == 422
+            status, global_state = _request(
+                "GET", server.base_url + "/run-containers/full-simulation/operations"
+            )
+            assert status == 200, global_state
+            assert global_state["operations"][0]["effective_target_week"] == next_season
+            assert global_state["operations"][0]["target_revision"] == 2
+            close = relative | {
+                "control_command_id": "close-current-boundary",
+                "relative_target": None,
+                "target_week": base_week,
+                "audit_reason": "Close once current week is reached",
+            }
+            status, close_result = _request("POST", url + "/full-simulation/target", close)
+            assert status == 200 and close_result["target_revision"] == 3, close_result
+        finally:
+            gate.release.set()
+        status, terminal = invocation.result(timeout=40)
+        assert status == 201 and terminal["status"] == "target_reached", terminal
+        assert terminal["target_revision"] == 3
+        after = snapshot(factory, flow["run_id"], flow["branch_id"])
+        assert after["groups"] == before["groups"]
+        assert after["slots"] == before["slots"]
+        assert after["saved"] == original["saved"]
+        assert after["saved_head"] == original["saved_head"]
+        parent = after["commands"][command["command_id"]]
+        assert parent["status"] == "target_reached"
+        assert parent["fingerprint"] == before["commands"][command["command_id"]]["fingerprint"]
+        assert [e.get("relative_target") for e in parent["result"]["target_events"]] == [
+            {"unit": "weeks", "count": 1}, {"unit": "seasons", "count": 1}, None
+        ]
+        status, replay_after_terminal = _request("POST", url + "/full-simulation/target", relative)
+        assert status == 200 and replay_after_terminal["replayed"] is True
+        assert replay_after_terminal["requested_target_week"] == next_week
+        assert replay_after_terminal["effective_target_week"] == base_week
+        assert snapshot(factory, flow["run_id"], flow["branch_id"]) == after

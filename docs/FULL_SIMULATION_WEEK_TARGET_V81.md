@@ -29,3 +29,28 @@ implicit Save. Further work requires a new, separately reviewed operation.
 Evidence is limited to targeted production FastAPI/SQLite and React/client
 tests plus required CI. No claim of precise in-week target, server-owned
 autonomous worker, a full 50-season simulation, or complete pre-alpha.
+
+## Relative target extension
+
+The same `POST /full-simulation/target` accepts **exactly one** of
+`{"target_week":{"season_index":2,"week":20}}` (legacy absolute mode)
+or `{"relative_target":{"unit":"weeks","count":5}}` /
+`{"relative_target":{"unit":"seasons","count":1}}`. A strict positive
+integer count is required; seasons permit at most 49 and weeks at most
+3050. The operation rejects counts crossing the final 2049/50 Week 61.
+
+The server resolves relative requests from **the actual current week while
+holding the SQLite immediate writer lock**, never from the browser's cached
+Position or from the previous effective target. A season means 61 weeks;
+the week-of-season is preserved through rollover. `target_events` preserve
+both the original relative request and its durable applied-at-week anchor
+alongside the immutable resolved week. Replaying the same control ID returns
+the original anchor/resolution (even after later retargeting or terminal
+closure); a changed count or unit under that ID is rejected. Global receipt
+inspection rejects corrupt relative provenance and arithmetic. The original
+Full Simulation command/review still never changes. Stop and Save semantics
+are unchanged.
+
+This extension still only targets arrival at the **start of a week**. Event
+and intra-week targets, autonomous background worker/reconnect, and release
+acceptance remain outside this slice.

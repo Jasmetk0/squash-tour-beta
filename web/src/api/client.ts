@@ -2419,6 +2419,23 @@ export async function retargetAuthoritativeFullSimulation(
   verifyAuthoritativeSimulationScope(runId, branchId, data)
   const week = (w: {season_index:number; week:number}) =>
     w.season_index * 61 + w.week
+  const relative = payload.relative_target
+  const validRelative = relative !== undefined &&
+    (relative.unit === 'weeks' || relative.unit === 'seasons') &&
+    Number.isSafeInteger(relative.count) &&
+    relative.count >= 1 &&
+    relative.count <= (relative.unit === 'seasons' ? 49 : 3050)
+  const validRequest = relative === undefined
+    ? payload.target_week !== undefined &&
+      data.requested_relative_target == null &&
+      week(data.requested_target_week) === week(payload.target_week)
+    : validRelative &&
+      data.requested_relative_target?.unit === relative.unit &&
+      data.requested_relative_target?.count === relative.count &&
+      data.resolved_from_week != null &&
+      isBoundedFullSimulationWeek(data.resolved_from_week) &&
+      week(data.requested_target_week) === week(data.resolved_from_week) +
+        relative.count * (relative.unit === 'seasons' ? 61 : 1)
   if (
     data.schema_version !== 'authoritative_full_simulation_target_result.v1' ||
     data.control_command_id !== payload.control_command_id ||
@@ -2426,7 +2443,7 @@ export async function retargetAuthoritativeFullSimulation(
     !isBoundedFullSimulationWeek(data.effective_target_week) ||
     !isBoundedFullSimulationWeek(data.original_final_week) ||
     !isBoundedFullSimulationWeek(data.requested_target_week) ||
-    week(data.requested_target_week) !== week(payload.target_week) ||
+    !validRequest ||
     data.original_final_week.season_index !== 49 ||
     data.original_final_week.week !== 61 ||
     !Number.isSafeInteger(data.applied_revision) || data.applied_revision < 1 ||

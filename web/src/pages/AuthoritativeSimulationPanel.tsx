@@ -305,6 +305,9 @@ export function AuthoritativeSimulationPanel({
   const [fullSimulationTargetCommandId, setFullSimulationTargetCommandId] = useState(newCommandId)
   const [fullSimulationTargetSeason, setFullSimulationTargetSeason] = useState('0')
   const [fullSimulationTargetWeek, setFullSimulationTargetWeek] = useState('1')
+  const [fullSimulationTargetMode, setFullSimulationTargetMode] =
+    useState<'absolute'|'weeks'|'seasons'>('absolute')
+  const [fullSimulationTargetCount, setFullSimulationTargetCount] = useState('1')
   const [fullSimulationTargetOperator, setFullSimulationTargetOperator] = useState('')
   const [fullSimulationTargetReason, setFullSimulationTargetReason] = useState('')
   const [fullSimulationAbandonTarget, setFullSimulationAbandonTarget] =
@@ -1859,16 +1862,23 @@ export function AuthoritativeSimulationPanel({
   const fullSimulationTargetMutation = useMutation({
     mutationFn: () => {
       if (!fullSimulationTargetSelection) throw new Error('Select original Full Simulation.')
-      return retargetAuthoritativeFullSimulation(runId, branchId, {
+      const common = {
         control_command_id: fullSimulationTargetCommandId,
         target_command_id: fullSimulationTargetSelection,
-        target_week: {
-          season_index: Number(fullSimulationTargetSeason),
-          week: Number(fullSimulationTargetWeek)
-        },
         operator_label: fullSimulationTargetOperator.trim(),
         audit_reason: fullSimulationTargetReason.trim()
-      })
+      }
+      return retargetAuthoritativeFullSimulation(runId, branchId,
+        fullSimulationTargetMode === 'absolute'
+          ? {...common, target_week: {
+              season_index: Number(fullSimulationTargetSeason),
+              week: Number(fullSimulationTargetWeek)
+            }}
+          : {...common, relative_target: {
+              unit: fullSimulationTargetMode,
+              count: Number(fullSimulationTargetCount)
+            }}
+      )
     },
     onSuccess: async () => {
       setFullSimulationTargetSelection(null)
@@ -3345,6 +3355,8 @@ export function AuthoritativeSimulationPanel({
                     <button type="button" onClick={() => {
                       setFullSimulationTargetSelection(operation.command.command_id)
                       setFullSimulationTargetCommandId(newCommandId())
+                      setFullSimulationTargetMode('absolute')
+                      setFullSimulationTargetCount('1')
                       setFullSimulationTargetSeason(String((operation.effective_target_week ?? operation.review.final_week).season_index))
                       setFullSimulationTargetWeek(String((operation.effective_target_week ?? operation.review.final_week).week))
                       setFullSimulationTargetOperator('')
@@ -3382,15 +3394,35 @@ export function AuthoritativeSimulationPanel({
               {fullSimulationTargetSelection && (
                 <div role="group" aria-label={C('Change Full Simulation week target')}>
                   <p className="status">{C('The new target is the START of the selected week (season index 0 = 2000/01). Already committed work is never undone; if that week is in progress, the next safe boundary stops further work. Original command and Saved Revisions remain unchanged.')}</p>
+                  <p className="status">{C('Relative targets are resolved from the actual current week on the server when applied, not from a potentially stale browser view. One season is exactly 61 weeks.')}</p>
                   <p><code>{fullSimulationTargetSelection}</code> · {C('Control request ID:')} <code>{fullSimulationTargetCommandId}</code></p>
-                  <label>{C('Target season index (0–49)')}
-                    <input type="number" aria-label={C('Target season index (0–49)')} min={0} max={49} step={1}
-                      value={fullSimulationTargetSeason} onChange={e => setFullSimulationTargetSeason(e.target.value)}/>
+                  <label>{C('Target type')}
+                    <select aria-label={C('Target type')} value={fullSimulationTargetMode}
+                      onChange={e => setFullSimulationTargetMode(e.target.value as 'absolute'|'weeks'|'seasons')}>
+                      <option value="absolute">{C('Absolute season/week')}</option>
+                      <option value="weeks">{C('After N weeks')}</option>
+                      <option value="seasons">{C('After N seasons')}</option>
+                    </select>
                   </label>
-                  <label>{C('Target week (1–61)')}
-                    <input type="number" aria-label={C('Target week (1–61)')} min={1} max={61} step={1}
-                      value={fullSimulationTargetWeek} onChange={e => setFullSimulationTargetWeek(e.target.value)}/>
-                  </label>
+                  {fullSimulationTargetMode === 'absolute' ? (
+                    <>
+                      <label>{C('Target season index (0–49)')}
+                        <input type="number" aria-label={C('Target season index (0–49)')} min={0} max={49} step={1}
+                          value={fullSimulationTargetSeason} onChange={e => setFullSimulationTargetSeason(e.target.value)}/>
+                      </label>
+                      <label>{C('Target week (1–61)')}
+                        <input type="number" aria-label={C('Target week (1–61)')} min={1} max={61} step={1}
+                          value={fullSimulationTargetWeek} onChange={e => setFullSimulationTargetWeek(e.target.value)}/>
+                      </label>
+                    </>
+                  ) : (
+                    <label>{C('Relative target count')}
+                      <input type="number" aria-label={C('Relative target count')} min={1}
+                        max={fullSimulationTargetMode === 'seasons' ? 49 : 3050}
+                        step={1} value={fullSimulationTargetCount}
+                        onChange={e => setFullSimulationTargetCount(e.target.value)}/>
+                    </label>
+                  )}
                   <label>{C('Operator')}
                     <input aria-label={C('Target change operator')} maxLength={128}
                       value={fullSimulationTargetOperator} onChange={e=>setFullSimulationTargetOperator(e.target.value)}/>
@@ -3400,10 +3432,18 @@ export function AuthoritativeSimulationPanel({
                       value={fullSimulationTargetReason} onChange={e=>setFullSimulationTargetReason(e.target.value)}/>
                   </label>
                   <button type="button" disabled={
-                    !Number.isInteger(Number(fullSimulationTargetSeason)) ||
-                    !Number.isInteger(Number(fullSimulationTargetWeek)) ||
-                    Number(fullSimulationTargetSeason)<0 || Number(fullSimulationTargetSeason)>49 ||
-                    Number(fullSimulationTargetWeek)<1 || Number(fullSimulationTargetWeek)>61 ||
+                    (fullSimulationTargetMode === 'absolute' ? (
+                      fullSimulationTargetSeason.trim() === '' || fullSimulationTargetWeek.trim() === '' ||
+                      !Number.isInteger(Number(fullSimulationTargetSeason)) ||
+                      !Number.isInteger(Number(fullSimulationTargetWeek)) ||
+                      Number(fullSimulationTargetSeason)<0 || Number(fullSimulationTargetSeason)>49 ||
+                      Number(fullSimulationTargetWeek)<1 || Number(fullSimulationTargetWeek)>61
+                    ) : (
+                      fullSimulationTargetCount.trim() === '' ||
+                      !Number.isSafeInteger(Number(fullSimulationTargetCount)) ||
+                      Number(fullSimulationTargetCount)<1 ||
+                      Number(fullSimulationTargetCount)>(fullSimulationTargetMode === 'seasons' ? 49 : 3050)
+                    )) ||
                     !fullSimulationTargetOperator.trim() || !fullSimulationTargetReason.trim() ||
                     fullSimulationTargetMutation.isPending
                   } onClick={()=>fullSimulationTargetMutation.mutate()}>

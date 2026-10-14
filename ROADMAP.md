@@ -1,3 +1,9 @@
+# Active integration: relative Full Simulation target control (14 October 2026)
+
+After verified merge #1467, implement `N weeks` and `N seasons` as strictly positive, bounded **relative week-arrival** increments, resolved transactionally from real current server time and persisted as replay-safe provenance. Share original Full Simulation parent, writer fence and manual Save. Verify API input rejection, lost-response idempotency, cross-season arithmetic, strict upper bound, global Task Center integrity, CS/EN Admin and browser flows. Final-head CI is a hard merge gate. Further work: precise in-week/event targets and independent server task lifecycle. Historical roadmap follows.
+
+---
+
 # Active integration queue — weekly target boundary (14 October 2026)
 
 After merged #1466, this candidate introduces the first versioned **start-of-week** effective target on the same original Full Simulation parent. Retargeting is a separate audited command, not a mutation of original reviewed intent. It must fence sport at a SQLite safe writer boundary, preserve all committed child outputs and not Save. Test against production HTTP, client validators, CS/EN component UI and CI before merge. This first cut only covers exact week-arrival boundaries; mid-week/relative/event targets from Master v81 remain future focused slices. Next: extended target types and native browser proof, then true server task lifecycle/reconnect, monitoring/stop rules and presets. Earlier roadmap entries remain intact.

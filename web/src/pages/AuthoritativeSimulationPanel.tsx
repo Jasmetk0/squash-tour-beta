@@ -55,6 +55,7 @@ import {
   getAuthoritativeFullSimulationHistory,
   getAuthoritativeFullSimulationParentDetail,
   abandonAuthoritativeFullSimulation,
+  controlAuthoritativeFullSimulation,
   inspectAuthoritativeMatchReconstruction,
   previewAuthoritativeMatchReconstruction,
   commitAuthoritativeMatchReconstruction,
@@ -288,6 +289,10 @@ export function AuthoritativeSimulationPanel({
     useState<AuthoritativeFullSimulationPreview | null>(null)
   const [fullSimulationProgress, setFullSimulationProgress] =
     useState<AuthoritativeFullSimulationProgress | null>(null)
+  const [fullSimulationControlTarget, setFullSimulationControlTarget] =
+    useState<{commandId:string; action:'pause'|'resume'} | null>(null)
+  const [fullSimulationControlOperator, setFullSimulationControlOperator] = useState('')
+  const [fullSimulationControlReason, setFullSimulationControlReason] = useState('')
   const [fullSimulationAbandonTarget, setFullSimulationAbandonTarget] =
     useState<string | null>(null)
   const [fullSimulationAbandonOperator, setFullSimulationAbandonOperator] =
@@ -1790,6 +1795,53 @@ export function AuthoritativeSimulationPanel({
     }
   })
 
+  const fullSimulationControlMutation = useMutation({
+    mutationFn: () => {
+      if (!fullSimulationControlTarget) {
+        throw new Error('Choose the exact Full Simulation parent to control.')
+      }
+      if (!fullSimulationControlOperator.trim() || !fullSimulationControlReason.trim()) {
+        throw new Error('A control operation requires an operator and audit reason.')
+      }
+      return controlAuthoritativeFullSimulation(runId, branchId, {
+        target_command_id: fullSimulationControlTarget.commandId,
+        action: fullSimulationControlTarget.action,
+        operator_label: fullSimulationControlOperator.trim(),
+        audit_reason: fullSimulationControlReason.trim()
+      })
+    },
+    onSuccess: async () => {
+      setFullSimulationControlTarget(null)
+      setFullSimulationControlOperator('')
+      setFullSimulationControlReason('')
+      await Promise.all([
+        queryClient.invalidateQueries({queryKey:['authoritative-full-simulation-pending',runId,branchId]}),
+        queryClient.invalidateQueries({queryKey:['authoritative-full-simulation-history',runId,branchId]}),
+        queryClient.invalidateQueries({queryKey:['authoritative-full-simulation-parent-detail',runId,branchId]})
+      ])
+    },
+    onError: async () => {
+      await queryClient.invalidateQueries({
+        queryKey:['authoritative-full-simulation-pending',runId,branchId]
+      })
+    }
+  })
+
+  const acknowledgeFullSimulationPauseMutation = useMutation({
+    mutationFn: (operation:AuthoritativeFullSimulationPendingOperation) =>
+      // The original parent is already frozen with pause_requested; its driver
+      // must acknowledge before any sporting writer can commit. This does not
+      // create another Full Simulation or change the reviewed target.
+      simulateAuthoritativeFullSimulation(runId,branchId,operation.command),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({queryKey:['authoritative-full-simulation-pending',runId,branchId]}),
+        queryClient.invalidateQueries({queryKey:['authoritative-full-simulation-history',runId,branchId]}),
+        refreshCanonicalSimulation()
+      ])
+    }
+  })
+
   const fullSimulationAbandonMutation = useMutation({
     mutationFn: () => {
       if (!fullSimulationAbandonTarget) {
@@ -3198,13 +3250,39 @@ export function AuthoritativeSimulationPanel({
                     {' · '}S{operation.review.start_week.season_index} W
                     {operation.review.start_week.week}
                     {' · '}{operation.completed_season_count} completed season(s)
+                    {' · '}{operation.control_state === 'pause_requested'
+                      ? 'Pozastavuji… / Pausing…'
+                      : operation.control_state === 'paused'
+                        ? 'Pozastaveno / Paused'
+                        : 'Rodičovský příkaz čeká nebo běží / Pending parent'}
                     <button
                       type="button"
                       onClick={() => resumePendingFullSimulation(operation)}
-                      disabled={actionPending}
+                      disabled={actionPending || operation.control_state !== 'running'}
                     >
                       Resume this Full Simulation
                     </button>
+                    {operation.control_state === 'pause_requested' && (
+                      <button type="button" onClick={() =>
+                        acknowledgeFullSimulationPauseMutation.mutate(operation)
+                      } disabled={acknowledgeFullSimulationPauseMutation.isPending}>
+                        Ověřit bezpečné pozastavení / Acknowledge safe pause
+                      </button>
+                    )}
+                    {operation.control_state !== 'pause_requested' && (
+                      <button type="button" onClick={() => {
+                        setFullSimulationControlTarget({
+                          commandId:operation.command.command_id,
+                          action:operation.control_state === 'paused' ? 'resume' : 'pause'
+                        })
+                        setFullSimulationControlOperator('')
+                        setFullSimulationControlReason('')
+                      }} disabled={fullSimulationControlMutation.isPending}>
+                        {operation.control_state === 'paused'
+                          ? 'Povolit pokračování / Authorize resume'
+                          : 'Pozastavit bezpečně / Request safe pause'}
+                      </button>
+                    )}
                     <button
                       type="button"
                       onClick={() => {
@@ -3220,6 +3298,45 @@ export function AuthoritativeSimulationPanel({
                   </li>
                 ))}
               </ol>
+              {fullSimulationControlTarget && (
+                <div role="group" aria-label="Full Simulation pause or resume">
+                  <p className="status">
+                    Změna se týká jen tohoto Run/Branch a původního příkazu.
+                    Pauza čeká na bezpečnou hranici transakce; nevrací uložené
+                    výsledky a neprovádí Save. / The same parent retains its target.
+                  </p>
+                  <p><code>{fullSimulationControlTarget.commandId}</code></p>
+                  <label>Operátor / Operator
+                    <input aria-label="Full Simulation control operator"
+                      value={fullSimulationControlOperator} maxLength={128}
+                      onChange={event=>setFullSimulationControlOperator(event.target.value)}
+                      disabled={fullSimulationControlMutation.isPending}/>
+                  </label>
+                  <label>Důvod / Audit reason
+                    <textarea aria-label="Full Simulation control audit reason"
+                      value={fullSimulationControlReason} maxLength={2000}
+                      onChange={event=>setFullSimulationControlReason(event.target.value)}
+                      disabled={fullSimulationControlMutation.isPending}/>
+                  </label>
+                  <button type="button"
+                    disabled={!fullSimulationControlOperator.trim()||
+                      !fullSimulationControlReason.trim()||
+                      fullSimulationControlMutation.isPending}
+                    onClick={()=>fullSimulationControlMutation.mutate()}>
+                    {fullSimulationControlTarget.action === 'pause'
+                      ? 'Požádat o pauzu / Request pause'
+                      : 'Povolit pokračování / Resume same parent'}
+                  </button>
+                  <button type="button" onClick={()=>setFullSimulationControlTarget(null)}
+                    disabled={fullSimulationControlMutation.isPending}>Zrušit / Cancel</button>
+                  {fullSimulationControlMutation.error && <p role="alert" className="error">
+                    {formatApiError(fullSimulationControlMutation.error)}
+                  </p>}
+                </div>
+              )}
+              {acknowledgeFullSimulationPauseMutation.error && <p role="alert" className="error">
+                {formatApiError(acknowledgeFullSimulationPauseMutation.error)}
+              </p>}
               {fullSimulationAbandonTarget ? (
                 <div role="group" aria-label="Abandon Full Simulation">
                   <p role="alert" className="error">

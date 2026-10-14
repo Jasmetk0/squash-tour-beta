@@ -54,6 +54,7 @@ from beta_engine.infrastructure.db.live_match_state import PersistedLiveMatchSto
 from beta_engine.infrastructure.db.full_simulation_execution_guard import (
     ACTIVE_FULL_SIMULATION_GUARD,
     FullSimulationExecutionGuard,
+    FullSimulationPauseRequested,
 )
 from beta_engine.application.ordinary_season_transition import (
     OrdinarySeasonTransitionCommand,
@@ -525,6 +526,26 @@ class AuthoritativeFullSimulationAbandonCommand(FrozenInput):
         object.__setattr__(self, "audit_reason", reason)
         return self
 
+
+
+class AuthoritativeFullSimulationControlCommand(FrozenInput):
+    """Audited control of exactly one pending Full Simulation parent."""
+
+    target_command_id: str = Field(min_length=1, max_length=128)
+    run_id: str
+    branch_id: str
+    action: Literal["pause", "resume"]
+    operator_label: str = Field(min_length=1, max_length=128)
+    audit_reason: str = Field(min_length=1, max_length=2000)
+
+    @model_validator(mode="after")
+    def trim_control_audit(self):
+        operator, reason = self.operator_label.strip(), self.audit_reason.strip()
+        if not operator or not reason:
+            raise ValueError("Full Simulation control requires operator and reason")
+        object.__setattr__(self, "operator_label", operator)
+        object.__setattr__(self, "audit_reason", reason)
+        return self
 
 
 class MatchReconstructionGameScore(FrozenInput):
@@ -6135,6 +6156,7 @@ class AuthoritativeRunSimulationDriver:
                     {
                         "command": command.model_dump(mode="json"),
                         "review": parsed_review,
+                        "control_state": frozen.get("control_state", "running"),
                         "completed_seasons": list(
                             frozen.get("completed_seasons", [])
                         ),
@@ -6390,6 +6412,83 @@ class AuthoritativeRunSimulationDriver:
                 "abandonment": None,
             }
 
+    def control_full_simulation(
+        self, command: AuthoritativeFullSimulationControlCommand
+    ) -> dict:
+        """Ask the existing parent to pause, or explicitly authorize its resume."""
+        key = (command.run_id, command.branch_id, command.target_command_id)
+        with self.factory.begin() as session:
+            session.execute(text("BEGIN IMMEDIATE"))
+            self._require_writable_scope(session, command.run_id, command.branch_id)
+            receipt = session.get(AuthoritativeSimulationCommandModel, key)
+            if receipt is None or receipt.status != "pending":
+                raise ValueError("Full Simulation control requires a pending parent")
+            frozen = json.loads(receipt.result_json)
+            if frozen.get("schema_version") != "authoritative_full_simulation_operation.v1":
+                raise ValueError("Full Simulation control target is not a parent")
+            state = frozen.get("control_state", "running")
+            if state not in ("running", "pause_requested", "paused"):
+                raise ValueError("Full Simulation control state is corrupt")
+            if command.action == "pause":
+                if state != "running":
+                    raise ValueError("Full Simulation already has a pause request")
+                state = "pause_requested"
+            else:
+                if state != "paused":
+                    raise ValueError("Full Simulation resume requires acknowledged pause")
+                state = "running"
+            frozen["control_state"] = state
+            frozen.setdefault("control_events", []).append({
+                "action": command.action, "state": state,
+                "operator_label": command.operator_label,
+                "audit_reason": command.audit_reason,
+            })
+            receipt.result_json = json.dumps(
+                frozen, sort_keys=True, separators=(",", ":")
+            )
+            return {
+                "schema_version": "authoritative_full_simulation_control_result.v1",
+                "run_id": command.run_id, "branch_id": command.branch_id,
+                "target_command_id": command.target_command_id,
+                "action": command.action, "control_state": state,
+                "committed_child_work_persists": True,
+            }
+
+    def _acknowledge_full_simulation_pause(
+        self, *, command: AuthoritativeFullSimulationCommand,
+        request_fp: str, key: tuple[str, str, str],
+    ) -> dict:
+        """Acknowledge only after the active child transaction has safely exited."""
+        with self.factory.begin() as session:
+            session.execute(text("BEGIN IMMEDIATE"))
+            receipt = session.get(AuthoritativeSimulationCommandModel, key)
+            if (
+                receipt is None or receipt.status != "pending"
+                or receipt.request_fingerprint != request_fp
+            ):
+                raise ValueError("Full Simulation pause lost its pending parent")
+            frozen = json.loads(receipt.result_json)
+            if frozen.get("control_state") not in ("pause_requested", "paused"):
+                raise ValueError("Full Simulation pause request was cancelled")
+            frozen["control_state"] = "paused"
+            receipt.result_json = json.dumps(
+                frozen, sort_keys=True, separators=(",", ":")
+            )
+            session.flush()
+        with self.factory() as session:
+            position = self._position(
+                session, command.run_id, command.branch_id,
+                allow_missing_schedule=True,
+            )
+        return self._full_progress_payload(
+            command=command, frozen=frozen, checkpoint="operator_paused",
+            detail=(
+                "Full Simulation paused at a safe transaction boundary; "
+                "committed child work persists. Resume the same parent after "
+                "an explicit control resume. No implicit Save."
+            ), position=position,
+        )
+
     def abandon_full_simulation(
         self, command: AuthoritativeFullSimulationAbandonCommand
     ) -> dict:
@@ -6612,14 +6711,33 @@ class AuthoritativeRunSimulationDriver:
                 ),
             )
         )
+        paused = False
         try:
-            return self._simulate_full_simulation_guarded(
-                command=command,
-                request_fp=request_fp,
-                key=key,
+            result = self._simulate_full_simulation_guarded(
+                command=command, request_fp=request_fp, key=key,
             )
+        except FullSimulationPauseRequested:
+            paused = True
+            result = None
         finally:
             ACTIVE_FULL_SIMULATION_GUARD.reset(guard_token)
+        if paused:
+            return self._acknowledge_full_simulation_pause(
+                command=command, request_fp=request_fp, key=key,
+            )
+        if result.get("schema_version") == "authoritative_full_simulation_progress.v1":
+            with self.factory() as session:
+                receipt = session.get(AuthoritativeSimulationCommandModel, key)
+                pending_pause = (
+                    receipt is not None and receipt.status == "pending"
+                    and json.loads(receipt.result_json).get("control_state")
+                    == "pause_requested"
+                )
+            if pending_pause:
+                return self._acknowledge_full_simulation_pause(
+                    command=command, request_fp=request_fp, key=key,
+                )
+        return result
 
     def _simulate_full_simulation_guarded(
         self,
@@ -6647,6 +6765,8 @@ class AuthoritativeRunSimulationDriver:
                         "Full Simulation command receipt has an invalid status"
                     )
                 frozen = json.loads(receipt.result_json)
+                if frozen.get("control_state", "running") in ("pause_requested", "paused"):
+                    raise FullSimulationPauseRequested("Full Simulation pause requested")
                 completed = self._branch_final_closure_evidence(
                     session,
                     run_id=command.run_id,
@@ -6765,6 +6885,8 @@ class AuthoritativeRunSimulationDriver:
                     "final_week": plan["final_week"],
                     "initial_saved_revision_id": command.expected_revision_id,
                     "completed_seasons": [],
+                    "control_state": "running",
+                    "control_events": [],
                     "season_children": {},
                     "final_completed_weeks": [],
                     "final_week_children": {},
@@ -6797,6 +6919,8 @@ class AuthoritativeRunSimulationDriver:
                 if parent.status == "complete":
                     return json.loads(parent.result_json)
                 frozen = json.loads(parent.result_json)
+                if frozen.get("control_state", "running") in ("pause_requested", "paused"):
+                    raise FullSimulationPauseRequested("Full Simulation pause requested")
                 branch_completed = self._branch_final_closure_evidence(
                     session,
                     run_id=command.run_id,

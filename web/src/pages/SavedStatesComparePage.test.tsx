@@ -6,7 +6,7 @@ import {SavedStatesComparePage} from './SavedStatesComparePage'
 
 const api=vi.hoisted(()=>({
   listRunBranches:vi.fn(),listSavedRevisionHistory:vi.fn(),
-  compareSavedRevisions:vi.fn(),getSavedRevision:vi.fn()
+  compareSavedRevisions:vi.fn(),getSavedRevision:vi.fn(),getSavedTourCalendar:vi.fn()
 }))
 vi.mock('../api/client',()=>api)
 
@@ -49,6 +49,13 @@ beforeEach(()=>{
   api.listSavedRevisionHistory.mockImplementation(async (_run:string,branch:string)=>
     history(branch))
   api.compareSavedRevisions.mockResolvedValue(diff())
+  api.getSavedTourCalendar.mockImplementation(async (_run:string,branch:string,revision:string,season:number)=>({
+    schema_version:'run_saved_tour_calendar.v1',source:'reachable_saved_revision',
+    run_id:'run-a',branch_id:branch,revision_branch_id:revision==='old'?'parent-branch':'fork',
+    saved_revision_id:revision,season_index:season,
+    season:(2000+season)+'/'+(2001+season),week_count:61,
+    calendar_status:'empty',edition_count:0,editions:[]
+  }))
   api.getSavedRevision.mockImplementation(async (_run:string,branch:string,rev:string)=>({
     ...((rev==='old')?first:second),branch_id:branch,run_id:'run-a',
     payload:{content:{example:'immutable'}}
@@ -115,6 +122,65 @@ describe('Dedicated read-only Compare States A/B',()=>{
     open()
     expect(await screen.findByText(/identity\/content hashes disagree/)).toBeInTheDocument()
     expect(screen.queryByRole('table',{name:'Saved State A B comparison table'}))
+      .not.toBeInTheDocument()
+  })
+  it('shows true season-specific Edition field edits, added events and side evidence from two Saved A/B states',async()=>{
+    const event=(event_id:string,season_week:number,extra:Record<string,unknown>={})=>({
+      event_id,season:'2000/2001',season_week,event_name:event_id+' Cup',
+      template_id:'template',category:'Bronze',tour_level:'World Tour',
+      host_country:'CZE',host_city:'Brno',region:'Europe',
+      main_draw_size:8,qualification_draw_size:0,seeds_count:2,qualifier_spots:0,
+      wild_cards:0,byes:0,ranking_status:'unpublished',result_published:false,
+      champion_player_id:null,finalist_player_id:null,...extra
+    })
+    api.getSavedTourCalendar.mockImplementation(async (_run:string,branch:string,
+      rev:string,season:number)=>{
+      const events=rev==='old'?[
+        event('Kept',9),event('Moved',61,{host_country:'USA'})]:
+        [event('Kept',9),event('Moved',1,{host_country:'CZE'}),event('Added',12)]
+      return {
+        schema_version:'run_saved_tour_calendar.v1',source:'reachable_saved_revision',
+        run_id:'run-a',branch_id:branch,revision_branch_id:rev==='old'?'parent-branch':'fork',
+        saved_revision_id:rev,season_index:season,season:'2000/2001',week_count:61,
+        calendar_status:'ready',edition_count:events.length,editions:events
+      }
+    })
+    open()
+    const section=await screen.findByLabelText('Compare saved season Editions')
+    const stats=await within(section).findByLabelText('Compare saved Edition totals')
+    expect(stats).toHaveTextContent('1')
+    const table=within(section).getByRole('table',{name:'Compared Saved Edition changes'})
+    expect(table).toHaveTextContent('Added Cup')
+    expect(table).toHaveTextContent('Moved Cup')
+    expect(table).not.toHaveTextContent('Kept Cup')
+    await userEvent.click(within(section).getByRole('button',{name:'Inspect Saved Edition Moved'}))
+    const drawer=screen.getByLabelText('Saved Edition A B detail')
+    expect(drawer).toHaveTextContent('season_week, host_country')
+    expect(drawer).toHaveTextContent('"USA"')
+    expect(drawer).toHaveTextContent('"CZE"')
+    expect(drawer).toHaveTextContent('parent-branch')
+    await userEvent.click(within(drawer).getByRole('button',{name:'Close Edition comparison'}))
+    await userEvent.selectOptions(within(section).getByLabelText('Compare Edition display filter'),'all')
+    expect(within(section).getByRole('table',{name:'Compared Saved Edition changes'}))
+      .toHaveTextContent('Kept Cup')
+    await userEvent.selectOptions(within(section).getByLabelText('Compare Edition season'),'1')
+    expect(api.getSavedTourCalendar).toHaveBeenCalledWith('run-a','fork','old',1)
+    expect(api.getSavedTourCalendar).toHaveBeenCalledWith('run-a','fork','new',1)
+    expect(api.compareSavedRevisions).toHaveBeenCalledTimes(1)
+  })
+  it('fails closed when State B calendar comes from the wrong original owner',async()=>{
+    api.getSavedTourCalendar.mockImplementation(async (_run:string,branch:string,
+      rev:string,season:number)=>({
+        schema_version:'run_saved_tour_calendar.v1',source:'reachable_saved_revision',
+        run_id:'run-a',branch_id:branch,revision_branch_id:'foreign',
+        saved_revision_id:rev,season_index:season,
+        season:(2000+season)+'/'+(2001+season),week_count:61,
+        calendar_status:'empty',edition_count:0,editions:[]
+      }))
+    open()
+    expect(await screen.findByText(/Saved Edition identity, source Branch or calendar evidence is inconsistent/))
+      .toBeInTheDocument()
+    expect(screen.queryByRole('table',{name:'Compared Saved Edition changes'}))
       .not.toBeInTheDocument()
   })
   it('can load an older ancestor before comparing the URL-selected A/B',async()=>{

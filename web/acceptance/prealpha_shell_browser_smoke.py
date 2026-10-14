@@ -476,6 +476,50 @@ def main() -> None:
             expect(compared_panel.get_by_label("Compare Saved Revision totals")).to_be_visible()
             assert compared_data["run_id"] == run_id
             assert source_branch["branch_id"] in compared_panel.inner_text()
+            # Independent Season/Edition A/B rows are obtained from each
+            # immutable Saved Calendar, not inferred from calendar component hashes.
+            canonical_a = page.request.get(
+                args.api_url + "/admin/runs/" + run_id + "/branches/"
+                + created_branch["branch_id"] + "/tour/calendar",
+                params={"revision_id": source_branch["saved_head_revision_id"], "season_index": 0},
+            )
+            canonical_b = page.request.get(
+                args.api_url + "/admin/runs/" + run_id + "/branches/"
+                + created_branch["branch_id"] + "/tour/calendar",
+                params={"revision_id": new_compare_head, "season_index": 0},
+            )
+            assert canonical_a.ok and canonical_b.ok, (
+                canonical_a.text(), canonical_b.text()
+            )
+            calendars = [canonical_a.json(), canonical_b.json()]
+            assert calendars[0]["saved_revision_id"] == source_branch["saved_head_revision_id"]
+            assert calendars[0]["revision_branch_id"] == source_branch["branch_id"]
+            assert calendars[1]["saved_revision_id"] == new_compare_head
+            assert calendars[1]["revision_branch_id"] == created_branch["branch_id"]
+            edition_compare = page.get_by_label("Compare saved season Editions")
+            expect(edition_compare.get_by_label("Compare saved Edition totals")).to_be_visible()
+            assert all(calendar["season_index"] == 0 for calendar in calendars)
+            assert all(calendar["edition_count"] == len(calendar["editions"]) for calendar in calendars)
+            assert "parent" not in edition_compare.get_by_role(
+                "combobox", name="Compare Edition season"
+            ).input_value()
+            edition_compare.get_by_role(
+                "combobox", name="Compare Edition display filter"
+            ).select_option("all")
+            # The compared Run is intentionally empty of tournament packages:
+            # both real snapshots must report 0, not made-up differences.
+            assert sum(calendar["edition_count"] for calendar in calendars) == 0
+            expect(edition_compare.get_by_text(
+                "No Saved Editions exist in either selected revision for this season."
+            )).to_be_visible()
+            edition_compare.get_by_role(
+                "combobox", name="Compare Edition season"
+            ).select_option("1")
+            expect(edition_compare.get_by_label("Compare saved Edition totals")).to_be_visible()
+            edition_compare.get_by_role(
+                "combobox", name="Compare Edition season"
+            ).select_option("0")
+            evidence["compare_saved_calendar_ab_exact_owner_and_empty_season"] = True
             compared_panel.get_by_role("combobox", name="Compare display filter").select_option("all")
             compared_panel.get_by_role("button", name="Inspect state A read-only").click()
             detail = page.get_by_label("Compare read-only detail")

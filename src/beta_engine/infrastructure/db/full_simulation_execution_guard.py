@@ -89,6 +89,10 @@ def _pause_before_full_simulation_writer(
         raise ValueError("Full Simulation execution guard fingerprint mismatch")
     if row[1] == "abandoned":
         raise ValueError("Full Simulation parent abandoned; execution is fenced")
+    if row[1] == "complete":
+        # After explicit final Run closure the parent performs read-only
+        # reconciliation; existing before_flush still fences new ORM writes.
+        return
     if row[1] != "pending":
         raise ValueError("Full Simulation execution guard found an invalid status")
     import json

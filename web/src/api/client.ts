@@ -4750,6 +4750,60 @@ export async function generateAdminGroupTopology(
   return data
 }
 
+/** No implicit qualification or seeding: exact canonical standings are mandatory. */
+export async function getAdminHybridKnockoutEntrants(
+  runId:string,branchId:string,eventId:string,
+  standings:import('./tournamentGroupStandings').CompletedGroupStandings,
+):Promise<import('./tournamentHybridKnockout').HybridKnockoutEntrants>{
+  const data=await request<import('./tournamentHybridKnockout').HybridKnockoutEntrants>(
+    '/admin/runs/'+encodeURIComponent(runId)+'/branches/'+encodeURIComponent(branchId)
+    +'/tournaments/'+encodeURIComponent(eventId)+'/hybrid-knockout-entrants')
+  const {exactHybridEntrants}=await import('./tournamentHybridKnockout')
+  if(!exactHybridEntrants(data,runId,branchId,eventId,standings))
+    throw new Error('Hybrid Knockout Entrants do not match exact frozen final Group Standings.')
+  return data
+}
+export async function generateAdminHybridKnockoutEntrants(
+  runId:string,branchId:string,eventId:string,
+  standings:import('./tournamentGroupStandings').CompletedGroupStandings,commandId:string,
+):Promise<import('./tournamentHybridKnockout').HybridKnockoutEntrants>{
+  const data=await request<import('./tournamentHybridKnockout').HybridKnockoutEntrants>(
+    '/admin/runs/'+encodeURIComponent(runId)+'/branches/'+encodeURIComponent(branchId)
+    +'/tournaments/'+encodeURIComponent(eventId)+'/hybrid-knockout-entrants/generate',{
+      method:'POST',body:JSON.stringify({command_id:commandId}),
+    })
+  const {exactHybridEntrants}=await import('./tournamentHybridKnockout')
+  if(!exactHybridEntrants(data,runId,branchId,eventId,standings,commandId))
+    throw new Error('Generated Hybrid Knockout Entrants do not match reviewed group positions.')
+  return data
+}
+export async function getAdminHybridKnockoutBracket(
+  runId:string,branchId:string,eventId:string,
+  entrants:import('./tournamentHybridKnockout').HybridKnockoutEntrants,
+):Promise<import('./tournamentHybridKnockout').HybridKnockoutBracket>{
+  const data=await request<import('./tournamentHybridKnockout').HybridKnockoutBracket>(
+    '/admin/runs/'+encodeURIComponent(runId)+'/branches/'+encodeURIComponent(branchId)
+    +'/tournaments/'+encodeURIComponent(eventId)+'/hybrid-knockout-bracket')
+  const {exactHybridBracket}=await import('./tournamentHybridKnockout')
+  if(!exactHybridBracket(data,runId,branchId,eventId,entrants))
+    throw new Error('Frozen Hybrid Knockout Bracket differs from immutable source entrants.')
+  return data
+}
+export async function generateAdminHybridKnockoutBracket(
+  runId:string,branchId:string,eventId:string,
+  entrants:import('./tournamentHybridKnockout').HybridKnockoutEntrants,commandId:string,
+):Promise<import('./tournamentHybridKnockout').HybridKnockoutBracket>{
+  const data=await request<import('./tournamentHybridKnockout').HybridKnockoutBracket>(
+    '/admin/runs/'+encodeURIComponent(runId)+'/branches/'+encodeURIComponent(branchId)
+    +'/tournaments/'+encodeURIComponent(eventId)+'/hybrid-knockout-bracket/generate',{
+      method:'POST',body:JSON.stringify({command_id:commandId}),
+    })
+  const {exactHybridBracket}=await import('./tournamentHybridKnockout')
+  if(!exactHybridBracket(data,runId,branchId,eventId,entrants,commandId))
+    throw new Error('Generated Hybrid Knockout Bracket does not replay from approved entrants.')
+  return data
+}
+
 export async function getAdminCompletedGroupStandings(
   runId: string, branchId: string, eventId: string
 ): Promise<import('./tournamentGroupStandings').CompletedGroupStandings> {

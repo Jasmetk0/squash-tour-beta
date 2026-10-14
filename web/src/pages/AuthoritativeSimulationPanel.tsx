@@ -3305,6 +3305,9 @@ export function AuthoritativeSimulationPanel({
                     {' · '}S{operation.review.start_week.season_index} W
                     {operation.review.start_week.week}
                     {' · '}{operation.completed_season_count} {C('completed season(s)')}
+                    {' · '}{C('Original target')} S{operation.review.final_week.season_index} W{operation.review.final_week.week}
+                    {' · '}{C('Effective target')} S{(operation.effective_target_week ?? operation.review.final_week).season_index} W{(operation.effective_target_week ?? operation.review.final_week).week}
+                    {' · '}{C('Target revision')} {operation.target_revision ?? 0}
                     {' · '}{operation.control_state === 'pause_requested'
                       ? C('Pausing…')
                       : operation.control_state === 'paused'

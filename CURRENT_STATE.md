@@ -1,3 +1,13 @@
+# Active implementation — 13 October 2026 (after merged #1442)
+
+Verified starting `buuk`: `3a1d18cadd300593a93166d9e46acd33b7c58965`; #1442 merged and no PR open. Country → exact historical Saved Edition → archived match → country return is integrated.
+
+**Candidate only, not yet merged:** Country Records tournament-achievement period UI for whole saved history, selected sport season or inclusive season/week custom bounds, capped by displayed Branch simulation point; if the Branch clock is unavailable, strictly by the latest dated canonical published result in the same Saved Revision, explicitly labeled as an evidence ceiling rather than simulation time. Period evidence is aggregated from the full immutable Saved Country Records response, not a paged subset. Explicit tied title/final-appearance holders, source Edition links pinned to the same Saved Revision, CS/EN detail and reversible country return. Unsupported simulation point or period is blocked rather than replaced by geography year. Existing lifetime player standings/match panel remain independent and visibly labeled, not falsely presented as period-scoped. This does not implement ranking records or exhaustive match record catalogue.
+
+**Remaining gates:** real browser cyclic tie end-to-end, hybrid knockout and ranking closure, full pre-alpha release coverage. Next after user merge: expand canonical Country match/record aggregates to the chosen sport interval with complete source-detail evidence, then History & Branches/Compare. Dated notes below are historical.
+
+---
+
 # Active integration baseline — 13 October 2026 (after #1441)
 
 Verified `buuk` at start: `f2bcf5876fe3d909edf4d911ddc4a5ff27a6d458`; #1431–1441 merged and no PR open. Existing read-only Saved Calendar/Edition, real published matches, group schedule/standings and explicit group tie audit remain integrated. A true browser end-to-end tie decision, completed hybrid tournament and ranking closure remain **unclosed integration gaps**; the real HTTP/SQLite cyclic-tie test does not replace the browser gate.

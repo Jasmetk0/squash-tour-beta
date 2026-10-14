@@ -1,3 +1,15 @@
+# Active pre-alpha queue — 13 October 2026 (after #1442)
+
+Starting point: `buuk` `3a1d18cadd300593a93166d9e46acd33b7c58965`, #1442 merged.
+
+1. **Current PR candidate:** Country Records v80 tournament achievements scoped to Whole history / Season / Custom sport season-week ranges, exact immutable Saved Revision, all tied title/final holders and evidenced Edition detail; use displayed simulation upper bound, or a visibly labeled conservative latest-published-evidence ceiling if the Branch clock is absent (never pretend it is the simulation point). Legacy match/player standings remain explicitly separate lifetime tables.
+2. **Next:** extend authoritative Country records/match aggregation and holder/evidence detail across all supported sport periods **before pagination**. No invented ranking records or new sporting formulas.
+3. **Then:** History & Branches reachable revision map and read-only Compare A/B. Exact comparison detail levels remain open.
+
+Release acceptance still requires true browser cyclic-tie decision, hybrid group-to-knockout, ranking closure, full season/50-season and checkpoint suites. Dated older sections below are not the current task list.
+
+---
+
 # Active pre-alpha sequence — 13 October 2026
 
 Verified starting point: #1431–1441 merged, `buuk` `f2bcf5876fe3d909edf4d911ddc4a5ff27a6d458`, no open PR during audit.

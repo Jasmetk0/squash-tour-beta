@@ -11,7 +11,7 @@ const api=vi.hoisted(()=>({getRunPackageState:vi.fn(),getSavedPlayersInventory:v
   getCountrySavedMatchRecords:vi.fn(),getCountryPlayerStandings:vi.fn(),ApiError:class extends Error{}}))
 const context=vi.hoisted(()=>({
   branch:{run_id:'run-a',branch_id:'branch-a',saved_head_revision_id:'head-a',display_name:'Timeline 1'},
-  time:{mode:'present',isLoading:false,error:null},
+  time:{mode:'present',isLoading:false,error:null,presentSeason:0 as number|null,presentWeek:61 as number|null},
   language:'en'
 }))
 vi.mock('../api/client',()=>api)
@@ -133,6 +133,8 @@ describe('Run-owned World overview navigation',()=>{
     context.branch.branch_id='branch-a'
     context.branch.saved_head_revision_id='head-a'
     context.time.mode='present'
+    context.time.presentSeason=0
+    context.time.presentWeek=61
     context.language='en'
     api.getRunPackageState.mockResolvedValue(worldFixture())
     api.getCountryPlayerStandings.mockImplementation(async (
@@ -496,6 +498,112 @@ describe('Run-owned World overview navigation',()=>{
     expect(api.getRunCountryRecords).toHaveBeenCalledWith('run-a','branch-a','CZE','head-a')
     expect(within(records).getByRole('link',{name:'Czech Champion'})).toHaveAttribute(
       'href','/admin/runs/run-a/people/P1')
+  })
+  it('filters verified published records by sporting season and reveals tied-holder evidence',async()=>{
+    context.time.presentSeason=2
+    context.time.presentWeek=1
+    api.getRunCountryRecords.mockResolvedValue({
+      schema_version:'run_country_records.v1',source:'reachable_saved_revision',
+      run_id:'run-a',branch_id:'branch-a',revision_branch_id:'branch-a',
+      saved_revision_id:'head-a',country_code:'CZE',calendar_status:'ready',
+      published_result_count:3,country_titles:3,country_finalists:0,
+      hosted_published_results:3,
+      player_results:[
+        {event_id:'old',event_name:'Old Open',season:'2000/2001',season_week:4,
+          host_country:'CZE',champion_player_id:'P1',champion_name:'Player One',
+          champion_country:'CZE',finalist_player_id:'P9',finalist_name:'Foreign',
+          finalist_country:'USA'},
+        {event_id:'last',event_name:'Last Season',season:'2001/2002',season_week:61,
+          host_country:'CZE',champion_player_id:'P2',champion_name:'Player Two',
+          champion_country:'CZE',finalist_player_id:'P9',finalist_name:'Foreign',
+          finalist_country:'USA'},
+        {event_id:'early',event_name:'Early Open',season:'2002/2003',season_week:1,
+          host_country:'CZE',champion_player_id:'P1',champion_name:'Player One',
+          champion_country:'CZE',finalist_player_id:'P9',finalist_name:'Foreign',
+          finalist_country:'USA'},
+      ],
+      hosted_results:[
+        {event_id:'old',event_name:'Old Open',season:'2000/2001',season_week:4,
+          host_country:'CZE',champion_player_id:'P1',champion_name:'Player One',
+          champion_country:'CZE',finalist_player_id:'P9',finalist_name:'Foreign',
+          finalist_country:'USA'},
+        {event_id:'last',event_name:'Last Season',season:'2001/2002',season_week:61,
+          host_country:'CZE',champion_player_id:'P2',champion_name:'Player Two',
+          champion_country:'CZE',finalist_player_id:'P9',finalist_name:'Foreign',
+          finalist_country:'USA'},
+        {event_id:'early',event_name:'Early Open',season:'2002/2003',season_week:1,
+          host_country:'CZE',champion_player_id:'P1',champion_name:'Player One',
+          champion_country:'CZE',finalist_player_id:'P9',finalist_name:'Foreign',
+          finalist_country:'USA'},
+      ]
+    })
+    mountWorld('/admin/runs/run-a/world/countries/CZE?tab=records&year=2050&q=keep')
+    const panel=await screen.findByLabelText('Country published records')
+    const totals=await within(panel).findByLabelText('Country verified record totals')
+    expect(totals).toHaveTextContent('3')
+    await userEvent.click(within(panel).getAllByRole('button',{name:'Evidence'})[0])
+    const detail=within(panel).getByLabelText('Country record detail')
+    expect(detail).toHaveTextContent('Player One')
+    expect(detail).toHaveTextContent('2000/2001')
+    const href=within(detail).getByRole('link',{name:'Old Open'}).getAttribute('href')!
+    const parsed=new URL(href,'https://test.invalid')
+    expect(parsed.pathname).toBe('/admin/runs/run-a/tour/calendar/old')
+    expect(parsed.searchParams.get('season')).toBe('0')
+    expect(parsed.searchParams.get('revision')).toBe('head-a')
+    expect(parsed.searchParams.get('fromCountry')).toContain('year=2050&q=keep')
+    await userEvent.click(within(detail).getByRole('button',{name:'Close detail'}))
+    await userEvent.selectOptions(within(panel).getByRole('combobox',{name:'Country record period'}),'season')
+    await userEvent.selectOptions(within(panel).getByRole('combobox',{name:'Country record season'}),'1')
+    expect(within(panel).getByRole('table',{name:'Country player published results'}))
+      .toHaveTextContent('Last Season')
+    expect(within(panel).getByRole('table',{name:'Country player published results'}))
+      .not.toHaveTextContent('Old Open')
+    expect(within(panel).getByLabelText('Country sporting record interval'))
+      .toHaveTextContent('2001/2002 · Week 1')
+    expect(api.getRunCountryRecords).toHaveBeenCalledTimes(1)
+    expect(panel).toHaveTextContent('independent lifetime scope')
+  })
+  it('does not label a missing simulation clock or geography year as verified sport time',async()=>{
+    context.time.presentSeason=null
+    context.time.presentWeek=null
+    api.getRunCountryRecords.mockResolvedValue({
+      schema_version:'run_country_records.v1',source:'reachable_saved_revision',
+      run_id:'run-a',branch_id:'branch-a',revision_branch_id:'branch-a',
+      saved_revision_id:'head-a',country_code:'CZE',calendar_status:'empty',
+      published_result_count:0,country_titles:0,country_finalists:0,
+      hosted_published_results:0,player_results:[],hosted_results:[]
+    })
+    mountWorld('/admin/runs/run-a/world/countries/CZE?tab=records&year=2020')
+    const panel=await screen.findByLabelText('Country published records')
+    await waitFor(()=>expect(within(panel).getByRole('alert'))
+      .toHaveTextContent('Country data year is not a sporting time'))
+    expect(within(panel).queryByLabelText('Country verified record totals')).not.toBeInTheDocument()
+    expect(api.getRunCountryRecords).toHaveBeenCalledWith('run-a','branch-a','CZE','head-a')
+  })
+  it('uses latest canonical Country final as explicitly labeled evidence ceiling, never a fake simulation week',async()=>{
+    context.time.presentSeason=null
+    context.time.presentWeek=null
+    api.getRunCountryRecords.mockResolvedValue({
+      schema_version:'run_country_records.v1',source:'reachable_saved_revision',
+      run_id:'run-a',branch_id:'branch-a',revision_branch_id:'branch-a',
+      saved_revision_id:'head-a',country_code:'CZE',calendar_status:'ready',
+      published_result_count:1,country_titles:0,country_finalists:1,
+      hosted_published_results:0,
+      player_results:[{event_id:'done',event_name:'Verified Final',season:'2001/2002',
+        season_week:9,host_country:'USA',champion_player_id:'P9',champion_name:'Visitor',
+        champion_country:'USA',finalist_player_id:'P1',finalist_name:'Czech Player',
+        finalist_country:'CZE'}],hosted_results:[]
+    })
+    mountWorld('/admin/runs/run-a/world/countries/CZE?tab=records&year=2050')
+    const panel=await screen.findByLabelText('Country published records')
+    await within(panel).findByLabelText('Country verified record totals')
+    expect(panel).toHaveTextContent('NOT a guessed Branch simulation point')
+    expect(within(panel).getByLabelText('Country sporting record interval'))
+      .toHaveTextContent('Latest evidenced published result')
+    expect(within(panel).getByLabelText('Country sporting record interval'))
+      .toHaveTextContent('2001/2002 · Week 9')
+    expect(within(panel).getByRole('table',{name:'Country player published results'}))
+      .toHaveTextContent('Verified Final')
   })
   it('reads historical Country Records from explicit revision and blocks present profile links',async()=>{
     api.getRunCountryRecords.mockResolvedValue({

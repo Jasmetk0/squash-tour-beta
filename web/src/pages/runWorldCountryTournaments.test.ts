@@ -94,6 +94,13 @@ describe('Saved country tournament editions',()=>{
     expect(savedCountryEditionHref('run-a','branch-b',null,'CZE',params,e)).toBeNull()
     expect(savedCountryEditionHref('run-a','branch-b','old','CZE',params,{...e,seasonIndex:50})).toBeNull()
   })
+  it('allows only a same-revision country Records return for published Edition evidence',()=>{
+    const same='/admin/runs/run-a/world/countries/CZE?tab=records&revision=old&rperiod=custom#country-record-finals'
+    expect(verifiedCountryReturn(same,'run-a','old')).toBe(same)
+    expect(verifiedCountryReturn(same,'run-a','new')).toBeNull()
+    expect(verifiedCountryReturn(
+      '/admin/runs/run-a/world/countries/CZE?tab=players&revision=old','run-a','old')).toBeNull()
+  })
   it('rejects foreign, external and cross-revision country returns',()=>{
     for(const value of ['https://evil.invalid/a','//evil.invalid/a',
       '/admin/runs/other/world/countries/CZE?tab=tournaments',

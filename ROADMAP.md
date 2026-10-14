@@ -1,3 +1,15 @@
+# Active pre-alpha — History & Branches first slice (14 October 2026)
+
+Starting base: `buuk` `cf3945cf5ebbca12805e338c73bfcc18fb300d03`, #1444 merged.
+
+1. **Current candidate:** real, read-only Branch lineage map atop reachable Saved Revisions history table, original shared ancestor owner/parent and wall-clock save time; select only the branch to inspect; revision opens side detail with existing separate safe actions.
+2. **Next:** independent Compare States A/B with exact read-only selection, supported saved component differences, differences-only/all switch; no restore or Branch activation via Compare.
+3. **Then:** expand grounded history detail and real Browser acceptance, cyclic group tie, completed hybrid ranking closure, and all full-release suites. Do not infer missing sport time or entire history before all older pages are loaded.
+
+Past dated sections follow as historical implementation notes.
+
+---
+
 # Active pre-alpha queue — 14 October 2026 (after merged #1443)
 
 Verified starting `buuk`: `b1c6a4ec09c91d704134dfe955f5f10e03ba32ef`; #1443 merged.

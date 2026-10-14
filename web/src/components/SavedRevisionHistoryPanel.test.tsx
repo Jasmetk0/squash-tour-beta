@@ -216,6 +216,59 @@ beforeEach(() => {
 })
 
 describe('SavedRevisionHistoryPanel', () => {
+
+  it('uses Branch map to browse shared Saved Revision tables without changing active Viewer',async()=>{
+    const fork:RunBranch={...branch,branch_id:'fork-two',display_name:'Timeline 2',
+      forked_from_branch_id:branch.branch_id,
+      forked_from_saved_revision_id:'revision-one',
+      saved_head_revision_id:'fork-head',is_viewer_branch:false}
+    const forkHistory={...history,branch_id:fork.branch_id,saved_head_revision_id:'fork-head',
+      saved_revisions:[
+        {...revisions[0],revision_branch_id:branch.branch_id,is_shared_revision:true,
+          is_branch_head:false},
+        {...revisions[1],revision_id:'fork-head',sequence:3,parent_revision_id:'revision-one',
+          revision_branch_id:fork.branch_id,is_shared_revision:false,is_branch_head:true,
+          change_summary:{summary:'Branched from a saved ancestor'}}
+      ]}
+    api.listSavedRevisionHistory.mockImplementation(async (_runId:string,branchId:string)=>
+      branchId===fork.branch_id?forkHistory:history)
+    api.getSavedRevisionRecoveryActivity.mockImplementation(async (_runId:string,branchId:string)=>({
+      run_id:run.run_id,branch_id:branchId,
+      saved_head_revision_id:branchId===fork.branch_id?'fork-head':'revision-two',
+      safety_checkpoints:[],audit_events:[]
+    }))
+    api.getSavedRevision.mockImplementation(async (_runId:string,branchId:string,id:string)=>({
+      ...(id==='revision-one'?forkHistory.saved_revisions[0]:forkHistory.saved_revisions[1]),
+      revision_id:id,run_id:run.run_id,branch_id:branchId,
+      payload:{run:{run_id:run.run_id},branch:{branch_id:branch.branch_id},content:{}}
+    }))
+    renderPanel({branches:[branch,fork]})
+    const map=await screen.findByLabelText('Saved Branch lineage map')
+    expect(map).toHaveTextContent('Saved fork from')
+    expect(map).toHaveTextContent('revision-one')
+    expect(screen.getByRole('table',{name:'Saved Revision history table'}))
+      .toHaveTextContent('Changed Viewer Branch')
+    await userEvent.click(screen.getByRole('button',{name:'View Branch Timeline 2'}))
+    await waitFor(()=>expect(api.listSavedRevisionHistory).toHaveBeenCalledWith(
+      run.run_id,fork.branch_id,expect.objectContaining({limit:50})))
+    const table=screen.getByRole('table',{name:'Saved Revision history table'})
+    expect(table).toHaveTextContent('Branched from a saved ancestor')
+    expect(table).toHaveTextContent('Shared ancestor')
+    expect(table).toHaveTextContent('2026-08-30 10:00:00')
+    expect(table).toHaveTextContent('revision-one')
+    await userEvent.click(screen.getByRole('button',{name:/Revision 1:/}))
+    const detailPanel=await screen.findByLabelText('Saved Revision read-only preview')
+    expect(detailPanel).toHaveTextContent('revision-one')
+    expect(detailPanel).toHaveTextContent('Read-only preview')
+    expect(api.getSavedRevision).toHaveBeenCalledWith(run.run_id,fork.branch_id,'revision-one')
+    expect(api.createRunBranchFromSavedRevision).not.toHaveBeenCalled()
+    expect(api.restoreSavedRevision).not.toHaveBeenCalled()
+    await userEvent.click(screen.getByRole('button',{name:'Close detail'}))
+    expect(screen.queryByLabelText('Saved Revision read-only preview')).not.toBeInTheDocument()
+    expect(screen.getByRole('button',{name:'View Branch Timeline 2'}))
+      .toHaveAttribute('aria-pressed','true')
+  })
+
   it('opens a checkpoint recovery source read-only and shows its matching audit event', async () => {
     const restoredRevision = {
       revision_id: 'revision-three',

@@ -58,6 +58,7 @@ const api = vi.hoisted(() => ({
   getPendingAuthoritativeFullSimulations: vi.fn(),
   getAuthoritativeFullSimulationHistory: vi.fn(),
   getAuthoritativeFullSimulationParentDetail: vi.fn(),
+  controlAuthoritativeFullSimulation: vi.fn(),
   abandonAuthoritativeFullSimulation: vi.fn(),
   inspectAuthoritativeMatchReconstruction: vi.fn(),
   previewAuthoritativeMatchReconstruction: vi.fn(),
@@ -3285,6 +3286,7 @@ describe('AuthoritativeSimulationPanel', () => {
       branch_id: 'branch-a',
       operations: [
         {
+          control_state: 'running',
           command: {
             command_id: 'full-parent-reload',
             operator_label: 'Original operator',
@@ -3369,6 +3371,103 @@ describe('AuthoritativeSimulationPanel', () => {
     )
   })
 
+
+  it('requests server-authoritative pause with an explicit reason and retains exact parent', async () => {
+    api.getPendingAuthoritativeFullSimulations.mockResolvedValue({
+      schema_version: 'authoritative_full_simulation_pending_collection.v1',
+      run_id: 'run-a', branch_id: 'branch-a',
+      legacy_pending_count: 0,
+      operations: [{
+        control_state: 'running',
+        command: {
+          command_id: 'full-parent-control',
+          operator_label: 'Original',
+          audit_reason: 'Original reviewed target',
+          expected_start_week: fullSimulationPreview.start_week,
+          expected_position_fingerprint: fullSimulationPreview.expected_position_fingerprint,
+          expected_revision_id: fullSimulationPreview.expected_revision_id,
+          expected_preview_fingerprint: fullSimulationPreview.preview_fingerprint
+        },
+        review: fullSimulationPreview,
+        completed_seasons: [2], completed_season_count: 1,
+        final_completed_weeks: [], final_completed_week_count: 0
+      }]
+    })
+    api.controlAuthoritativeFullSimulation.mockResolvedValue({
+      schema_version: 'authoritative_full_simulation_control_result.v1',
+      run_id: 'run-a', branch_id: 'branch-a',
+      target_command_id: 'full-parent-control',
+      action: 'pause', control_state: 'pause_requested',
+      committed_child_work_persists: true
+    })
+    renderPanel()
+    await userEvent.click(await screen.findByRole('button', {
+      name: 'Pozastavit bezpečně / Request safe pause'
+    }))
+    expect(screen.getByRole('group', {name: 'Full Simulation pause or resume'})).toBeInTheDocument()
+    await userEvent.type(screen.getByLabelText('Full Simulation control operator'), 'Commissioner')
+    await userEvent.type(screen.getByLabelText('Full Simulation control audit reason'), 'Wait for safe boundary')
+    await userEvent.click(screen.getByRole('button', {name: 'Požádat o pauzu / Request pause'}))
+    await waitFor(() => expect(api.controlAuthoritativeFullSimulation).toHaveBeenCalledWith(
+      'run-a', 'branch-a', {
+        target_command_id: 'full-parent-control',
+        action: 'pause',
+        operator_label: 'Commissioner',
+        audit_reason: 'Wait for safe boundary'
+      }
+    ))
+    expect(api.simulateAuthoritativeFullSimulation).not.toHaveBeenCalled()
+    expect(api.saveAuthoritativeSimulation).not.toHaveBeenCalled()
+  })
+
+  it('requires explicit server authorization before resuming a paused parent', async () => {
+    api.getPendingAuthoritativeFullSimulations.mockResolvedValue({
+      schema_version: 'authoritative_full_simulation_pending_collection.v1',
+      run_id: 'run-a', branch_id: 'branch-a', legacy_pending_count: 0,
+      operations: [{
+        control_state: 'paused',
+        command: {
+          command_id: 'full-parent-paused',
+          operator_label: 'Original', audit_reason: 'Original reviewed target',
+          expected_start_week: fullSimulationPreview.start_week,
+          expected_position_fingerprint: fullSimulationPreview.expected_position_fingerprint,
+          expected_revision_id: fullSimulationPreview.expected_revision_id,
+          expected_preview_fingerprint: fullSimulationPreview.preview_fingerprint
+        },
+        review: fullSimulationPreview,
+        completed_seasons: [], completed_season_count: 0,
+        final_completed_weeks: [], final_completed_week_count: 0
+      }]
+    })
+    api.controlAuthoritativeFullSimulation.mockResolvedValue({
+      schema_version: 'authoritative_full_simulation_control_result.v1',
+      run_id: 'run-a', branch_id: 'branch-a',
+      target_command_id: 'full-parent-paused',
+      action: 'resume', control_state: 'running',
+      committed_child_work_persists: true
+    })
+    renderPanel()
+    const pendingList = await screen.findByRole('list', {
+      name: 'Resumable Full Simulation parents'
+    })
+    expect(pendingList).toHaveTextContent('Pozastaveno / Paused')
+    expect(screen.getByRole('button', {name:'Resume this Full Simulation'})).toBeDisabled()
+    await userEvent.click(screen.getByRole('button', {
+      name: 'Povolit pokračování / Authorize resume'
+    }))
+    await userEvent.type(screen.getByLabelText('Full Simulation control operator'), 'Commissioner')
+    await userEvent.type(screen.getByLabelText('Full Simulation control audit reason'), 'Continue reviewed target')
+    await userEvent.click(screen.getByRole('button', {name:'Povolit pokračování / Resume same parent'}))
+    await waitFor(() => expect(api.controlAuthoritativeFullSimulation).toHaveBeenCalledWith(
+      'run-a', 'branch-a', expect.objectContaining({
+        target_command_id: 'full-parent-paused',
+        action: 'resume',
+        audit_reason: 'Continue reviewed target'
+      })
+    ))
+    expect(api.simulateAuthoritativeFullSimulation).not.toHaveBeenCalled()
+  })
+
   it('restores a durable pending Full Simulation parent after page state loss', async () => {
     api.inspectAuthoritativeWeekSchedule.mockResolvedValue({
       ...scheduleInspection,
@@ -3387,6 +3486,7 @@ describe('AuthoritativeSimulationPanel', () => {
       branch_id: 'branch-a',
       operations: [
         {
+          control_state: 'running',
           command: {
             command_id: 'full-parent-reload',
             operator_label: 'Commissioner',

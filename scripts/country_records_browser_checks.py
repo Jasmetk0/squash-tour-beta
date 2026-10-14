@@ -207,7 +207,7 @@ def verify_country_saved_records(
     expect(page.get_by_role("heading", name="Browser Acceptance Cup")).to_be_visible()
     assert "revision=" + enc(head_id) in page.url
     assert "season=0" in page.url
-    page.get_by_role("link", name="Back to country tournaments").click()
+    page.get_by_role("link", name="Back to country records").click()
     expect(page.get_by_label("Country published records")).to_be_visible()
     assert "rperiod=season" in page.url
     assert "rseason=0" in page.url
@@ -221,6 +221,66 @@ def verify_country_saved_records(
     page.get_by_role("combobox", name="Country record rtoWeek").select_option("1")
     expect(page.get_by_role("table", name="Country player published results")).to_be_visible()
     period.select_option("whole")
+
+    # New v80 Country period MATCH records: independently recompute each
+    # player's played-only totals from the real canonical published matches.
+    match_record_route = base_scope + "/country-match-record-highlights/" + enc(code)
+    match_period_args = ("?revision_id=" + enc(head_id) +
+                         "&from_season=0&from_week=1&to_season=0&to_week=61")
+    match_highlights = get(match_record_route + match_period_args)
+    assert match_highlights["saved_revision_id"] == head_id
+    assert match_highlights["revision_branch_id"] == branch_id
+    assert match_highlights["period_country_matches"] == len(relevant)
+    assert match_highlights["period_played_matches"] == len(relevant)
+    assert match_highlights["period_walkovers"] == 0
+    expected_wins, expected_appearances = {}, {}
+    for match in relevant.values():
+        assert match["loser_player_id"] is not None
+        winner_id, loser_id = match["winner_player_id"], match["loser_player_id"]
+        if nationality[winner_id] == code:
+            expected_wins[winner_id] = expected_wins.get(winner_id, 0) + 1
+            expected_appearances[winner_id] = expected_appearances.get(winner_id, 0) + 1
+        if nationality[loser_id] == code:
+            expected_appearances[loser_id] = expected_appearances.get(loser_id, 0) + 1
+    expected_by_kind = {"played_wins": expected_wins, "played_matches": expected_appearances}
+    for record in match_highlights["records"]:
+        points = expected_by_kind[record["key"]]
+        maximum = max(points.values(), default=0)
+        assert record["value"] == maximum
+        assert {p["player_id"] for p in record["holders"]} == {
+            pid for pid, count in points.items() if count == maximum and maximum > 0
+        }
+
+    match_records_panel = page.get_by_label("Country period match highlights")
+    expect(match_records_panel.get_by_role(
+        "table", name="Country period match record leaders")).to_be_visible()
+    match_records_panel.get_by_role("button", name="Open evidence").first.click()
+    record_detail = match_records_panel.get_by_label("Country match record detail")
+    expect(record_detail).to_be_visible()
+    actual_evidence = get(match_record_route + match_period_args +
+                          "&record_key=played_wins&offset=0&limit=25")
+    assert actual_evidence["evidence_count"] == len(actual_evidence["evidence"])
+    assert actual_evidence["evidence_count"] == sum(
+        expected_wins[pid] for pid in expected_wins
+        if pid in {h["player_id"] for h in match_highlights["records"][0]["holders"]}
+    )
+    expect(record_detail.get_by_role(
+        "table", name="Country match record source matches")).to_be_visible()
+    source_match_link = record_detail.get_by_role("link").first
+    source_match_link.click()
+    expect(page.get_by_role("heading", name="Historical match detail")).to_be_visible()
+    assert "revision=" + enc(head_id) in page.url
+    assert "fromCountry=" in page.url
+    page.get_by_role("link", name="Back to Edition results").click()
+    expect(page.get_by_role("heading", name="Browser Acceptance Cup")).to_be_visible()
+    page.get_by_role("link", name="Back to country records").click()
+    expect(page.get_by_label("Country period match highlights")).to_be_visible()
+    assert "tab=records" in page.url
+    assert "#country-match-record-played_wins" in page.url
+    assert get("/run-branches/" + enc(branch_id))["saved_head_revision_id"] == head_id
+    page.screenshot(path=str(artifacts / f"{prefix}09b-country-period-match-record-evidence.png"),
+                    full_page=True)
+
     page.get_by_role("combobox", name="Language / Jazyk").select_option("cs")
     expect(page.get_by_label("Country sporting record interval")).to_be_visible()
     page.get_by_role("combobox", name="Language / Jazyk").select_option("en")

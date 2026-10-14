@@ -180,7 +180,9 @@ export function SavedTourEditionPage():JSX.Element {
   </section>
   return <section className="panel">
     {returnCountry&&<p><Link to={returnCountry}>
-      ← {cs?'Zpět na turnaje země':'Back to country tournaments'}</Link></p>}
+      ← {new URL(returnCountry,'https://squash-engine.invalid').searchParams.get('tab')==='records'?
+        (cs?'Zpět na rekordy země':'Back to country records'):
+        (cs?'Zpět na turnaje země':'Back to country tournaments')}</Link></p>}
     <Link to={returnTo}>← {cs?'Zpět na kalendář':'Back to calendar'}</Link>
     <div className="page-intro"><p className="eyebrow">RUN → TOUR → EDITION</p>
       <h2>{e?.event_name??(cs?'Detail edice':'Edition detail')}</h2>

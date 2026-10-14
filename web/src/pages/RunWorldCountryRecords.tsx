@@ -1,18 +1,19 @@
 import {useState} from 'react'
 import {useQuery} from '@tanstack/react-query'
 import {Link,useSearchParams} from 'react-router-dom'
-import {getRunCountryRecords} from '../api/client'
+import {getRunCountryRecords,getCountrySavedMatchRecords} from '../api/client'
 import {RunWorldCountryMatchRecords} from './RunWorldCountryMatchRecords'
+import {RunWorldCountryMatchHighlights} from './RunWorldCountryMatchHighlights'
 import {RunWorldCountryPlayerStandings} from './RunWorldCountryPlayerStandings'
 import {calendarSeasonIndex} from './runWorldCountryTournaments'
 import {lastEvidencedCountryPoint,parsePeriod,projectCountryPeriod,selectedSportPoint,sportLabel} from './runCountryRecordPeriods'
 import type {CountryPeriodMode,CountryPeriodStats,CountryRecordLeader} from './runCountryRecordPeriods'
-import type {RunCountryRecordResult,RunCountryRecords} from '../api/types'
+import type {RunCountryRecordResult,RunCountryRecords,CountryMatchRecordKey} from '../api/types'
 import {formatApiError} from '../utils/apiErrors'
 
 type Props={runId:string;branchId:string;countryCode:string;savedRevisionId:string|null
   historical:boolean;cs:boolean;presentSeason:number|null;presentWeek:number|null}
-type Detail='titles'|'finals'|'hosted'|null
+type Detail='titles'|'finals'|'hosted'|'match-played_wins'|'match-played_matches'|null
 
 export function RunWorldCountryRecords({
   runId,branchId,countryCode,savedRevisionId,historical,cs,presentSeason,presentWeek
@@ -20,6 +21,16 @@ export function RunWorldCountryRecords({
   const [params,setParams]=useSearchParams()
   const [detail,setDetail]=useState<Detail>(null)
   const displayedThrough=selectedSportPoint(presentSeason,presentWeek)
+  // Shared with the existing lifetime table. The latest national match may
+  // follow the latest national final; missing Run clock must not hide it.
+  const matchTime=useQuery({
+    queryKey:['run-world-country-saved-matches',runId,branchId,countryCode,
+      savedRevisionId,null,'all','all',0],
+    queryFn:()=>getCountrySavedMatchRecords(runId,branchId,countryCode,savedRevisionId!,
+      {seasonIndex:null,resultKind:'all',outcome:'all',offset:0,limit:25}),
+    enabled:!displayedThrough&&Boolean(savedRevisionId),
+    retry:false,
+  })
   const query=useQuery({
     queryKey:['run-world-country-records',runId,branchId,countryCode,savedRevisionId],
     queryFn:()=>getRunCountryRecords(runId,branchId,countryCode,savedRevisionId!),
@@ -38,7 +49,14 @@ export function RunWorldCountryRecords({
   }
   // An authentic published result supplies a narrower evidence ceiling only
   // when this Branch lacks an authoritative simulation clock. Never call it a clock.
-  const through=displayedThrough??lastEvidence
+  const newestMatch=matchTime.data?.saved_revision_id===savedRevisionId&&
+    matchTime.data.run_id===runId&&matchTime.data.branch_id===branchId&&
+    matchTime.data.country_code===countryCode?matchTime.data.matches[0]:undefined
+  const matchPoint=newestMatch?selectedSportPoint(newestMatch.season,newestMatch.season_week):null
+  const through=displayedThrough??(!matchTime.isPending&&!matchTime.error?
+    (lastEvidence&&matchPoint?
+      (lastEvidence.season*61+lastEvidence.week>=matchPoint.season*61+matchPoint.week?
+        lastEvidence:matchPoint):lastEvidence??matchPoint):null)
   const request=through&&!periodError?parsePeriod(params,through):null
   if(data&&request){
     try{records=projectCountryPeriod(data,countryCode,request)}
@@ -138,10 +156,11 @@ export function RunWorldCountryRecords({
             </select></label>
         })}</div>}
     </div>
-    {!displayedThrough&&lastEvidence&&<p role="status">{cs?
+    {!displayedThrough&&through&&<p role="status">{cs?
       'Simulační čas není dostupný. Rozsah je omezen nejpozdějším doloženým publikovaným výsledkem této Saved Revision, nikoli odhadovaným časem Branch.':
       'Simulation clock is unavailable. This view is bounded by the latest canonical published result in this Saved Revision, NOT a guessed Branch simulation point.'}</p>}
-    {!through&&!query.isPending&&<p role="alert">{cs?
+    {!displayedThrough&&matchTime.error&&<p role="alert">{formatApiError(matchTime.error)}</p>}
+    {!through&&!query.isPending&&!matchTime.isPending&&<p role="alert">{cs?
       'Simulační čas ani doložený čas výsledku nejsou dostupné. Rok geografických dat jej nenahrazuje.':
       'Neither a simulation point nor a dated published result is available. Country data year is not a sporting time bound.'}</p>}
     {through&&!request&&<p role="alert">{cs?
@@ -151,7 +170,7 @@ export function RunWorldCountryRecords({
       {cs?'Sportovní období':'Sporting period'}: {sportLabel(request.from)} → {sportLabel(request.to)}
       {' · '}{displayedThrough?
          (cs?'Horní mez zobrazené simulace':'Displayed simulation upper bound'):
-         (cs?'Nejpozdější doložený výsledek':'Latest evidenced published result')}:
+         (cs?'Nejpozdější doložený výsledek či zápas':'Latest evidenced published result or match')}:
       {' '}{sportLabel(through!)}</p>}
     {!savedRevisionId&&<p role="alert">{cs?
       'Žádná autoritativní uložená revize — rekordy nelze ověřit.':
@@ -185,7 +204,7 @@ export function RunWorldCountryRecords({
             <td>{records.hosted.length}</td><td>{countryCode}</td>
             <td><button type="button" onClick={()=>setDetail('hosted')}>{cs?'Podklady':'Evidence'}</button></td></tr>
         </tbody></table></div>
-      {detail&&<aside className="section-subtle country-record-detail-panel" aria-label="Country record detail">
+      {detail&&!detail.startsWith('match-')&&<aside className="section-subtle country-record-detail-panel" aria-label="Country record detail">
         <div className="actions"><h5>{selectedTitle}</h5>
           <button type="button" onClick={()=>setDetail(null)}>{cs?'Zavřít detail':'Close detail'}</button>
         </div>
@@ -212,6 +231,14 @@ export function RunWorldCountryRecords({
         'Neodehrané turnaje, stav „completed“ v kalendáři ani odhadované výsledky se nezapočítávají.':
         'Unplayed editions, calendar-only completed statuses and hypothetical results are excluded.'}</p>
     </section>}
+    {records&&request&&savedRevisionId&&<RunWorldCountryMatchHighlights
+      key={[runId,branchId,countryCode,savedRevisionId,
+        request.from.season,request.from.week,request.to.season,request.to.week].join(':')}
+      runId={runId} branchId={branchId} countryCode={countryCode} revision={savedRevisionId}
+      request={request} cs={cs}
+      selected={detail?.startsWith('match-')?
+        detail.slice(6) as CountryMatchRecordKey:null}
+      onSelect={kind=>setDetail(('match-'+kind) as Detail)} onClose={()=>setDetail(null)}/>}
     <h5>{cs?'Samostatné celoživotní statistiky (vlastní filtry)':'Separate lifetime statistics (own filters)'}</h5>
     <p className="status">{cs?
       'Žebříček hráčů a zápasové statistiky níže mají vlastní celoživotní rozsah a zatím se neřídí výše vybraným obdobím. Nejde o Official Ranking.':

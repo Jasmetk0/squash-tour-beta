@@ -4485,6 +4485,81 @@ export async function getCountrySavedMatchRecords(
   return data
 }
 
+/** Aggregates a whole immutable sporting period before paging holder evidence. */
+export async function getCountryMatchRecordHighlights(
+  runId:string,branchId:string,countryCode:string,revisionId:string,
+  opts:{fromSeason:number;fromWeek:number;toSeason:number;toWeek:number;
+    recordKey:import('./types').CountryMatchRecordKey|null;offset:number;limit:number}
+):Promise<import('./types').CountryMatchRecordHighlights>{
+  const season=(n:number)=>Number.isInteger(n)&&n>=0&&n<=49
+  const week=(n:number)=>Number.isInteger(n)&&n>=1&&n<=61
+  if(!runId||!branchId||!revisionId.trim()||!/^[A-Z]{3}$/.test(countryCode)||
+    !season(opts.fromSeason)||!season(opts.toSeason)||
+    !week(opts.fromWeek)||!week(opts.toWeek)||
+    opts.fromSeason*61+opts.fromWeek>opts.toSeason*61+opts.toWeek||
+    (opts.recordKey!==null&&!['played_wins','played_matches'].includes(opts.recordKey))||
+    !Number.isSafeInteger(opts.offset)||opts.offset<0||
+    !Number.isSafeInteger(opts.limit)||opts.limit<1||opts.limit>50)
+    throw Error('Country match record scope, period or evidence cursor is invalid')
+  const q=new URLSearchParams({
+    revision_id:revisionId,from_season:String(opts.fromSeason),from_week:String(opts.fromWeek),
+    to_season:String(opts.toSeason),to_week:String(opts.toWeek),
+    offset:String(opts.offset),limit:String(opts.limit),
+  })
+  if(opts.recordKey)q.set('record_key',opts.recordKey)
+  const data=await request<import('./types').CountryMatchRecordHighlights>(
+    '/admin/runs/'+encodeURIComponent(runId)+'/branches/'+encodeURIComponent(branchId)+
+    '/country-match-record-highlights/'+encodeURIComponent(countryCode)+'?'+q.toString())
+  const keys=['played_wins','played_matches'] as const
+  const positive=(n:number)=>Number.isSafeInteger(n)&&n>=0
+  const recordValid=(r:import('./types').CountryMatchRecordSummary)=>Boolean(
+    keys.includes(r.key)&&positive(r.value)&&Array.isArray(r.holders)&&
+    r.holders.every(x=>x.player_id&&x.player_name&&x.value===r.value&&r.value>0)&&
+    (r.value>0||r.holders.length===0)&&
+    (r.value===0||r.holders.length>0)&&
+    new Set(r.holders.map(x=>x.player_id)).size===r.holders.length)
+  const evidenceValid=(m:import('./types').CountrySavedMatch)=>Boolean(
+    m.event_id&&m.match_id&&m.event_name&&m.scoreline&&
+    m.winner_player_id&&m.winner_name&&m.loser_player_id&&m.loser_name&&
+    m.winner_country&&m.loser_country&&m.host_country&&
+    m.completion==='played'&&(m.winner_country===countryCode||m.loser_country===countryCode)&&
+    m.season_week>=1&&m.season_week<=61&&
+    Number.isInteger(m.round_number)&&m.round_number>=1&&
+    (()=>{const match=/^(20\d{2})\/(20\d{2})$/.exec(m.season)
+      if(!match||Number(match[2])!==Number(match[1])+1)return false
+      const n=Number(match[1])-2000,time=n*61+m.season_week
+      return n>=0&&n<50&&time>=opts.fromSeason*61+opts.fromWeek&&
+        time<=opts.toSeason*61+opts.toWeek})())
+  const selected=data.records.find(x=>x.key===opts.recordKey)
+  const holders=new Set(selected?.holders.map(x=>x.player_id)??[])
+  if(data.schema_version!=='country_match_record_highlights.v1'||
+    data.source!=='reachable_saved_revision'||data.run_id!==runId||
+    data.branch_id!==branchId||!data.revision_branch_id||
+    data.saved_revision_id!==revisionId||data.country_code!==countryCode||
+    data.from_season!==opts.fromSeason||data.from_week!==opts.fromWeek||
+    data.to_season!==opts.toSeason||data.to_week!==opts.toWeek||
+    data.selected_record!==opts.recordKey||data.offset!==opts.offset||
+    data.limit!==opts.limit||
+    ![data.period_country_matches,data.period_played_matches,data.period_walkovers,
+      data.evidence_count].every(positive)||
+    data.period_country_matches!==data.period_played_matches+data.period_walkovers||
+    !Array.isArray(data.records)||data.records.length!==2||
+    data.records.some((rec,i)=>rec.key!==keys[i]||!recordValid(rec))||
+    !Array.isArray(data.evidence)||data.evidence.length>
+      Math.min(opts.limit,Math.max(0,data.evidence_count-opts.offset))||
+    data.evidence.length!==Math.max(0,Math.min(opts.limit,data.evidence_count-opts.offset))||
+    data.has_more!==(opts.offset+opts.limit<data.evidence_count)||
+    (opts.recordKey===null&&(data.evidence_count!==0||data.evidence.length!==0))||
+    data.evidence.some(m=>!evidenceValid(m)||
+      !(opts.recordKey==='played_wins'?
+        m.winner_country===countryCode&&holders.has(m.winner_player_id):
+        holders.has(m.winner_player_id)&&m.winner_country===countryCode||
+        holders.has(m.loser_player_id)&&m.loser_country===countryCode))||
+    new Set(data.evidence.map(m=>m.event_id+'\0'+m.match_id)).size!==data.evidence.length)
+    throw Error('Country match record evidence differs from selected Saved Revision and period')
+  return data
+}
+
 /** Exact-revision player leaderboard; validate rank order, scope and page before display. */
 export async function getCountryPlayerStandings(
   runId:string,branchId:string,countryCode:string,revisionId:string,

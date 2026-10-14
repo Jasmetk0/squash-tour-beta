@@ -8,7 +8,8 @@ import { worldFixture } from './runWorldFixture'
 
 const api=vi.hoisted(()=>({getRunPackageState:vi.fn(),getSavedPlayersInventory:vi.fn(),
   getSavedRevision:vi.fn(),listSavedRevisionHistory:vi.fn(),getRunCountryRecords:vi.fn(),
-  getCountrySavedMatchRecords:vi.fn(),getCountryPlayerStandings:vi.fn(),ApiError:class extends Error{}}))
+  getCountrySavedMatchRecords:vi.fn(),getCountryPlayerStandings:vi.fn(),
+  getCountryMatchRecordHighlights:vi.fn(),ApiError:class extends Error{}}))
 const context=vi.hoisted(()=>({
   branch:{run_id:'run-a',branch_id:'branch-a',saved_head_revision_id:'head-a',display_name:'Timeline 1'},
   time:{mode:'present',isLoading:false,error:null,presentSeason:0 as number|null,presentWeek:61 as number|null},
@@ -142,6 +143,31 @@ describe('Run-owned World overview navigation',()=>{
     )=>savedStandings(rev,offset,limit))
     api.getCountrySavedMatchRecords.mockImplementation(async (_run:string,_branch:string,_country:string,
       rev:string,opts:Parameters<typeof savedMatchResult>[1])=>savedMatchResult(rev,opts))
+    api.getCountryMatchRecordHighlights.mockImplementation(async (
+      _run:string,_branch:string,_country:string,rev:string,opts:{
+        fromSeason:number;fromWeek:number;toSeason:number;toWeek:number;
+        recordKey:string|null;offset:number;limit:number
+      })=>{
+      const rows=[matchRow('real-1'),matchRow('real-2',{winnerCountry:'EGY',loserCountry:'CZE'})]
+      const evidence=opts.recordKey===null?[]:rows.slice(opts.offset,opts.offset+opts.limit)
+      return {
+        schema_version:'country_match_record_highlights.v1',source:'reachable_saved_revision',
+        run_id:'run-a',branch_id:'branch-a',revision_branch_id:'branch-a',
+        saved_revision_id:rev,country_code:'CZE',
+        from_season:opts.fromSeason,from_week:opts.fromWeek,
+        to_season:opts.toSeason,to_week:opts.toWeek,
+        period_country_matches:2,period_played_matches:2,period_walkovers:0,
+        records:[
+          {key:'played_wins',value:1,holders:[
+            {player_id:'winner-real-1',player_name:'Winner real-1',value:1}]},
+          {key:'played_matches',value:1,holders:[
+            {player_id:'winner-real-1',player_name:'Winner real-1',value:1},
+            {player_id:'loser-real-2',player_name:'Loser real-2',value:1}]}],
+        selected_record:opts.recordKey,evidence_count:opts.recordKey===null?0:2,
+        offset:opts.offset,limit:opts.limit,
+        has_more:opts.recordKey!==null&&opts.offset+opts.limit<2,evidence
+      }
+    })
     api.listSavedRevisionHistory.mockImplementation(async (run:string,branch:string)=>({
       run_id:run,branch_id:branch,saved_head_revision_id:context.branch.saved_head_revision_id,
       saved_revisions:['rev-old','rev-new','rev-shared'].map((id,i)=>({
@@ -604,6 +630,53 @@ describe('Run-owned World overview navigation',()=>{
       .toHaveTextContent('2001/2002 · Week 9')
     expect(within(panel).getByRole('table',{name:'Country player published results'}))
       .toHaveTextContent('Verified Final')
+  })
+  it('shows same sport period match leaders, tied holders, safe historical match evidence and pager',async()=>{
+    context.time.presentSeason=0
+    context.time.presentWeek=61
+    api.getRunCountryRecords.mockResolvedValue({
+      schema_version:'run_country_records.v1',source:'reachable_saved_revision',
+      run_id:'run-a',branch_id:'branch-a',revision_branch_id:'branch-a',
+      saved_revision_id:'rev-old',country_code:'CZE',calendar_status:'ready',
+      published_result_count:1,country_titles:1,country_finalists:0,
+      hosted_published_results:1,
+      player_results:[{event_id:'real-1',event_name:'Open real-1',
+        season:'2000/2001',season_week:9,host_country:'CZE',
+        champion_player_id:'winner-real-1',champion_name:'Winner real-1',champion_country:'CZE',
+        finalist_player_id:'loser-real-1',finalist_name:'Loser real-1',finalist_country:'EGY'}],
+      hosted_results:[{event_id:'real-1',event_name:'Open real-1',
+        season:'2000/2001',season_week:9,host_country:'CZE',
+        champion_player_id:'winner-real-1',champion_name:'Winner real-1',champion_country:'CZE',
+        finalist_player_id:'loser-real-1',finalist_name:'Loser real-1',finalist_country:'EGY'}]
+    })
+    mountWorld('/admin/runs/run-a/world/countries/CZE?tab=records&revision=rev-old&year=2030&rperiod=season&rseason=0')
+    const panel=await screen.findByLabelText('Country published records')
+    const achievements=await within(panel).findByLabelText('Country period match highlights')
+    expect(await within(achievements).findByRole('table',{name:'Country period match record leaders'}))
+      .toHaveTextContent('Most played wins')
+    expect(achievements).toHaveTextContent('Winner real-1, Loser real-2')
+    await userEvent.click(within(achievements).getAllByRole('button',{name:'Open evidence'})[1])
+    const detail=await within(achievements).findByLabelText('Country match record detail')
+    expect(detail).toHaveTextContent('All tied holders')
+    expect(detail).toHaveTextContent('rev-old')
+    expect(await within(detail).findByRole('table',{name:'Country match record source matches'}))
+      .toHaveTextContent('Open real-1')
+    const href=within(detail).getAllByRole('link')[0].getAttribute('href')!
+    const u=new URL(href,'https://test.invalid')
+    expect(u.pathname).toBe('/admin/runs/run-a/tour/calendar/event-real-1/matches/real-1')
+    expect(u.searchParams.get('revision')).toBe('rev-old')
+    expect(u.searchParams.get('branch')).toBe('branch-a')
+    expect(u.searchParams.get('season')).toBe('0')
+    expect(u.searchParams.get('fromCountry')).toContain('rperiod=season')
+    expect(u.searchParams.get('fromCountry')).toContain('year=2030')
+    await userEvent.click(within(detail).getByRole('button',{name:'Close detail'}))
+    expect(within(achievements).queryByLabelText('Country match record detail')).not.toBeInTheDocument()
+    expect(within(panel).getByRole('combobox',{name:'Country record period'}))
+      .toHaveValue('season')
+    expect(api.getCountryMatchRecordHighlights).toHaveBeenCalledWith(
+      'run-a','branch-a','CZE','rev-old',expect.objectContaining({
+        fromSeason:0,fromWeek:1,toSeason:0,toWeek:61,recordKey:'played_matches'
+      }))
   })
   it('reads historical Country Records from explicit revision and blocks present profile links',async()=>{
     api.getRunCountryRecords.mockResolvedValue({

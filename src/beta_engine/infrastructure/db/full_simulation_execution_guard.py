@@ -17,6 +17,7 @@ class FullSimulationExecutionGuard:
     branch_id: str
     command_id: str
     request_fingerprint: str
+    execution_lease_token: str | None = None
     before_transaction_check: Callable[[], None] | None = None
 
 
@@ -29,12 +30,27 @@ ACTIVE_FULL_SIMULATION_GUARD: ContextVar[
 ] = ContextVar("active_full_simulation_execution_guard", default=None)
 
 
+def _verify_invocation_lease(connection, token: str | None) -> None:
+    if token is None:
+        return
+    row = connection.exec_driver_sql(
+        "SELECT owner_token FROM full_simulation_execution_leases "
+        "WHERE lease_scope = 'all_runs'"
+    ).first()
+    if row is None or row[0] != token:
+        raise ValueError(
+            "Full Simulation execution lease ownership was lost; "
+            "stale child work is fenced"
+        )
+
+
 def require_pending_full_simulation_guard(session: Session) -> None:
     """Require the active parent to remain pending inside the caller transaction."""
 
     guard = ACTIVE_FULL_SIMULATION_GUARD.get()
     if guard is None:
         return
+    _verify_invocation_lease(session.connection(), guard.execution_lease_token)
     row = session.connection().exec_driver_sql(
         "SELECT request_fingerprint, status, result_json "
         "FROM authoritative_simulation_commands "
@@ -74,6 +90,7 @@ def _pause_before_full_simulation_writer(
         return
     if guard.before_transaction_check is not None:
         guard.before_transaction_check()
+    _verify_invocation_lease(connection, guard.execution_lease_token)
     # SQLite reserves the writer lock at BEGIN IMMEDIATE: checking the durable
     # parent immediately before it fences ORM flushes AND direct SQL writers.
     # Another control request cannot commit while the child holds this lock.

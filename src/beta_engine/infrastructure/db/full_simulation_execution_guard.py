@@ -82,6 +82,19 @@ def _fence_full_simulation_flush(session, flush_context, instances) -> None:
     require_pending_full_simulation_guard(session)
 
 
+@event.listens_for(Session, "before_commit")
+def _fence_full_simulation_commit(session: Session) -> None:
+    """Recheck the invocation on commit, including direct-SQL-only transactions.
+
+    A long-running child may outlive a previously valid lease after its
+    BEGIN IMMEDIATE / last ORM flush. A final check blocks that transaction
+    from committing after expiry, even if no ORM flush was needed.
+    """
+    guard = ACTIVE_FULL_SIMULATION_GUARD.get()
+    if guard is not None:
+        _verify_invocation_lease(session.connection(), guard.execution_lease_token)
+
+
 @event.listens_for(Engine, "before_cursor_execute")
 def _pause_before_full_simulation_writer(
     connection, cursor, statement, parameters, context, executemany

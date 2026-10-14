@@ -1,0 +1,84 @@
+name: Pre-alpha Two-Round Hybrid Championship Browser
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/prealpha-hybrid-multiround-browser.yml'
+      - 'scripts/admin_saved_group_browser_smoke.py'
+      - 'tests/application/test_hybrid_knockout_execution.py'
+      - 'web/src/pages/PlannedEventDetailPage.tsx'
+      - 'web/src/components/GroupFormatSetupPanel.tsx'
+      - 'web/src/api/tournamentGroupFormats.ts'
+      - 'web/src/api/client.ts'
+      - 'web/src/components/HybridKnockoutProgressionPanel.tsx'
+      - 'web/src/api/tournamentHybridKnockout.ts'
+      - 'web/src/api/tournamentHybridRanking.ts'
+      - 'web/src/components/HybridRankingClosurePanel.tsx'
+      - 'src/beta_engine/api/routers/admin_tournament_formats.py'
+      - 'scripts/real_hybrid_progression_browser_checks.py'
+      - 'scripts/real_hybrid_first_ranking_week_browser_checks.py'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-pr-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+jobs:
+  hybrid-multiround:
+    name: Two semifinals and winner-fed final / Official Week 2 / SQLite restart
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: pyproject.toml
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: Install production engine and Chromium driver
+        run: python -m pip install -e . playwright
+      - name: Install frontend
+        run: npm --prefix web ci
+      - name: Prepare Chromium
+        run: |
+          if [ -x /usr/bin/google-chrome ]; then
+            echo "CHROME_BIN=/usr/bin/google-chrome" >> "$GITHUB_ENV"
+          else
+            python -m playwright install --with-deps chromium
+            echo "CHROME_BIN=$(python -c 'from playwright.sync_api import sync_playwright; p=sync_playwright().start(); print(p.chromium.executable_path); p.stop()')" >> "$GITHUB_ENV"
+          fi
+      - name: Start frontend pointing at disposable FastAPI
+        run: |
+          VITE_API_BASE_URL=http://127.0.0.1:8019 npm --prefix web run dev -- --host 127.0.0.1 --port 5173 --strictPort > "$RUNNER_TEMP/hybrid-vite.log" 2>&1 &
+          for attempt in $(seq 1 90); do
+            if curl --fail --silent http://127.0.0.1:5173/ > /dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat "$RUNNER_TEMP/hybrid-vite.log"
+          exit 1
+      - name: Real two-semifinal MatchEngine tournament, winner-fed final, Official Week-2 and restart
+        run: |
+          python scripts/admin_saved_group_browser_smoke.py \
+            --acceptance "$RUNNER_TEMP/hybrid-multiround-run" \
+            --port 8019 \
+            --hybrid-multiround \
+            --base-url http://127.0.0.1:5173 \
+            --chromium "$CHROME_BIN"
+      - name: Preserve screenshots and process restart evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hybrid-multiround-browser-${{ github.run_id }}
+          path: |
+            ${{ runner.temp }}/hybrid-multiround-run/artifacts/
+            ${{ runner.temp }}/hybrid-multiround-run/server.log
+            ${{ runner.temp }}/hybrid-vite.log
+          if-no-files-found: warn
+          retention-days: 14

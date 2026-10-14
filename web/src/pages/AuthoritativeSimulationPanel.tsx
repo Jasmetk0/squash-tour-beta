@@ -4821,7 +4821,9 @@ export function AuthoritativeSimulationPanel({
                     className={fullSimulationProgress.checkpoint === 'operator_paused' ? 'status' : 'error'}>
                     {fullSimulationProgress.checkpoint === 'operator_paused'
                       ? C('Full Simulation paused at a safe transaction boundary.')
-                      : `Full Simulation paused at ${fullSimulationProgress.checkpoint}.`}
+                      : fullSimulationProgress.checkpoint === 'operator_target_reached'
+                        ? C('Full Simulation reached its weekly target. No implicit Save.')
+                        : `Full Simulation stopped at ${fullSimulationProgress.checkpoint}.`}
                     {fullSimulationProgress.current_week
                       ? ` ${C('Current')} S${fullSimulationProgress.current_week.season_index} W${fullSimulationProgress.current_week.week}.`
                       : ''}
@@ -4866,7 +4868,9 @@ export function AuthoritativeSimulationPanel({
                   <p className="status">
                     {fullSimulationProgress.checkpoint === 'operator_paused'
                       ? C('Authorize resume, then prepare and confirm continuation of the original command. Completed child results persist. Save remains explicit.')
-                      : fullSimulationCheckpointGuidance(fullSimulationProgress.checkpoint)}
+                      : fullSimulationProgress.checkpoint === 'operator_target_reached'
+                        ? C('Target reached; the original command is terminal. Start a separately reviewed operation to continue. Save remains manual.')
+                        : fullSimulationCheckpointGuidance(fullSimulationProgress.checkpoint)}
                   </p>
                   <p className="status">
                     Do not discard this Full Simulation review while you intend to

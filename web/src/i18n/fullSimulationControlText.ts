@@ -14,6 +14,8 @@ const czech: Readonly<Record<string, string>> = {
   'Authorize resume': 'Povolit pokračování',
   'Request safe pause': 'Pozastavit bezpečně',
   'Stop simulation': 'Ukončit simulaci',
+  'Full Simulation reached its weekly target. No implicit Save.': 'Full Simulation dosáhla cílového týdne. Save je stále ruční.',
+  'Target reached; the original command is terminal. Start a separately reviewed operation to continue. Save remains manual.': 'Cíl dosažen; původní příkaz je definitivně uzavřen. Pro pokračování připrav novou samostatně potvrzenou simulaci. Save je ruční.',
   'Change week target': 'Změnit cílový týden',
   'Change Full Simulation week target': 'Změnit cílový týden Full Simulation',
   'The new target is the START of the selected week (season index 0 = 2000/01). No sport from that week will be simulated by this parent. Original command and Saved Revisions remain unchanged.': 'Novým cílem je ZAČÁTEK vybraného týdne (index sezony 0 = 2000/01). Tento původní příkaz už nebude simulovat sport z tohoto týdne. Původní zadání ani uložené revize se nemění.',

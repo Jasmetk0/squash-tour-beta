@@ -191,3 +191,80 @@ def test_http_operator_stop_during_work_or_pause_is_terminal_and_replay_safe(
         assert snapshot(factory, flow["run_id"], flow["branch_id"]) == after
         rejected = stop | {"control_command_id": "stop-again"}
         assert _request("POST", url + "/full-simulation/control", rejected)[0] == 409
+
+
+@pytest.mark.pr_critical
+def test_http_versioned_target_change_during_real_sport_reaches_safe_week_boundary(
+    tmp_path, monkeypatch,
+):
+    """A changed target fences new work but never rewrites original intent."""
+    server, factory, gate = make_server(tmp_path)
+    monkeypatch.setattr(routes, "_driver", gate.driver)
+    with server, ThreadPoolExecutor(max_workers=1) as pool:
+        flow = initialize(server, tmp_path)
+        command = reviewed_command(server, flow, command_id="original-retarget")
+        url = server.base_url + flow["scope"]
+        original = snapshot(factory, flow["run_id"], flow["branch_id"])
+        gate.arm()
+        invocation = pool.submit(_request, "POST", url + "/simulate-full-simulation", command)
+        try:
+            assert gate.reached.wait(timeout=40)
+            before = snapshot(factory, flow["run_id"], flow["branch_id"])
+            assert before["groups"], "At least one genuine sporting child must already exist"
+            status, pos = _request("GET", url + "/position")
+            assert status == 200, pos
+            current_week = pos["current_week"]
+            target = {
+                "control_command_id": "new-week-boundary",
+                "target_command_id": command["command_id"],
+                "target_week": current_week,
+                "operator_label": "Commissioner",
+                "audit_reason": "Stop at already-reached safe week arrival",
+            }
+            reset = target | {
+                "control_command_id": "original-target-reset",
+                "target_week": {"season_index": 49, "week": 61},
+                "audit_reason": "Keep original closure available",
+            }
+            status, first = _request("POST", url + "/full-simulation/target", reset)
+            assert status == 200 and first["target_revision"] == 1, first
+            status, changed = _request("POST", url + "/full-simulation/target", target)
+            assert status == 200 and changed["target_revision"] == 2, changed
+            assert changed["original_final_week"] == {"season_index": 49, "week": 61}
+            assert changed["effective_target_week"] == current_week
+            status, lost_response = _request("POST", url + "/full-simulation/target", target)
+            assert status == 200 and lost_response["replayed"] is True, lost_response
+            assert lost_response["applied_revision"] == 2
+            status, historical_retry = _request("POST", url + "/full-simulation/target", reset)
+            assert status == 200 and historical_retry["replayed"] is True
+            assert historical_retry["effective_target_week"] == current_week
+            assert _request("POST", url + "/full-simulation/target",
+                target | {"audit_reason": "Conflicting reuse"})[0] == 409
+            assert _request("POST", url + "/full-simulation/target",
+                target | {"control_command_id": "invalid-week",
+                          "target_week": {"season_index": 0, "week": 62}})[0] == 422
+            assert _request("POST", server.base_url + flow["other_scope"] + "/full-simulation/target",
+                target)[0] == 409
+        finally:
+            gate.release.set()
+        status, finished = invocation.result(timeout=40)
+        assert status == 201 and finished["status"] == "target_reached", finished
+        assert finished["checkpoint"] == "operator_target_reached"
+        assert finished["effective_target_week"] == current_week
+        assert finished["target_revision"] == 2
+        after = snapshot(factory, flow["run_id"], flow["branch_id"])
+        assert after["groups"] == before["groups"]
+        assert after["slots"] == before["slots"]
+        assert after["saved"] == original["saved"]
+        assert after["saved_head"] == original["saved_head"]
+        parent = after["commands"][command["command_id"]]
+        assert parent["status"] == "target_reached"
+        assert parent["fingerprint"] == before["commands"][command["command_id"]]["fingerprint"]
+        assert len(parent["result"]["target_events"]) == 2
+        assert parent["result"]["review"]["final_week"] == {"season_index": 49, "week": 61}
+        assert _request("GET", url + "/full-simulation/pending")[1]["operations"] == []
+        assert _request("GET", url + "/full-simulation/history")[1]["items"][0]["status"] == "target_reached"
+        assert _request("POST", url + "/full-simulation/target", target)[0] == 409
+        status, repeated_execution = _request("POST", url + "/simulate-full-simulation", command)
+        assert status == 201 and repeated_execution["status"] == "target_reached"
+        assert snapshot(factory, flow["run_id"], flow["branch_id"]) == after

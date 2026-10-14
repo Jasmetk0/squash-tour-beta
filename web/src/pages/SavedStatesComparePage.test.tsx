@@ -296,6 +296,9 @@ describe('Dedicated read-only Compare States A/B',()=>{
     expect(within(results).getByLabelText('Tabulka porovnání uložených stavů A/B'))
       .toHaveTextContent('změněno')
     expect(api.compareSavedRevisions).toHaveBeenCalledWith('run-a','fork','old','new')
+    await userEvent.click(within(results).getByRole('button',{name:'Prohlédnout stav A jen pro čtení'}))
+    expect(await screen.findByText('Zdrojová větev:')).toBeInTheDocument()
+    expect(screen.queryByText('Source Branch:')).not.toBeInTheDocument()
   })
 
 })

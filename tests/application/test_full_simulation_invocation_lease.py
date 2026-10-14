@@ -1,6 +1,7 @@
 """Cross-process global Full Simulation execution lease and stale-writer fencing."""
 
 import json
+import time
 from concurrent.futures import ThreadPoolExecutor
 
 import pytest
@@ -112,7 +113,7 @@ def test_renewal_extends_only_current_lease_and_release_is_idempotent(independen
     with second.begin() as session:
         session.execute(text("BEGIN IMMEDIATE"))
         lease = session.get(FullSimulationExecutionLeaseModel, LEASE_SCOPE)
-        lease.expires_at_unix = 0
+        lease.expires_at_unix = int(time.time()) + 30
     assert renew_invocation_lease(first, token=token) is True
     with second() as session:
         assert session.get(FullSimulationExecutionLeaseModel, LEASE_SCOPE).expires_at_unix > 0

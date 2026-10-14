@@ -77,8 +77,8 @@ def renew_invocation_lease(
         if lease is None or lease.owner_token != token:
             return False
         now = int(time.time())
-        # Expiration alone does not change ownership. If another claimant
-        # reclaimed this row, the token comparison above fails closed.
+        if lease.expires_at_unix <= now:
+            return False  # An expired invocation must explicitly acquire a new lease.
         lease.expires_at_unix = now + LEASE_SECONDS
         session.flush()
     return True
@@ -134,7 +134,8 @@ def require_invocation_lease_owner(
 ) -> None:
     """Fence a stale execution inside the sporting child writer transaction."""
     lease = session.get(FullSimulationExecutionLeaseModel, LEASE_SCOPE)
-    if lease is None or lease.owner_token != token:
+    if (lease is None or lease.owner_token != token
+            or lease.expires_at_unix <= int(time.time())):
         raise ValueError(
             "Full Simulation execution lease ownership was lost; "
             "stale child work is fenced"

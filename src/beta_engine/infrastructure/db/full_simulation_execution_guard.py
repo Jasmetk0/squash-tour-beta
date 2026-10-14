@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from contextvars import ContextVar
 from dataclasses import dataclass
+import time
 from typing import Callable
 
 from sqlalchemy import event
@@ -34,10 +35,10 @@ def _verify_invocation_lease(connection, token: str | None) -> None:
     if token is None:
         return
     row = connection.exec_driver_sql(
-        "SELECT owner_token FROM full_simulation_execution_leases "
+        "SELECT owner_token, expires_at_unix FROM full_simulation_execution_leases "
         "WHERE lease_scope = 'all_runs'"
     ).first()
-    if row is None or row[0] != token:
+    if row is None or row[0] != token or row[1] <= int(time.time()):
         raise ValueError(
             "Full Simulation execution lease ownership was lost; "
             "stale child work is fenced"

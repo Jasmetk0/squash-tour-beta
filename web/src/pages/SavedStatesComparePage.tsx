@@ -9,6 +9,7 @@ import type {SavedRevisionHistoryEntry} from '../api/types'
 import {formatApiError} from '../utils/apiErrors'
 import {projectSavedStateComparison,validateReachableCompareHistory} from './savedCompareStates'
 import type {CompareRow} from './savedCompareStates'
+import {SavedEditionCompareSection} from './SavedEditionCompareSection'
 
 type Detail={type:'row';id:string}|{type:'state';side:'a'|'b'}|null
 const pretty=(v:unknown)=>v===undefined?'Not provided':JSON.stringify(v,null,2)??String(v)
@@ -200,6 +201,9 @@ export function SavedStatesComparePage():JSX.Element{
           where field-level evidence is unavailable.</p>
       </>}
     </section>}
+    {compared&&a&&b&&<SavedEditionCompareSection
+      key={[runId,branchId,a.revision_id,b.revision_id].join(':')}
+      runId={runId} branchId={branchId} a={a} b={b}/>}
     {detail&&compared&&<aside className="saved-revision-detail-drawer" aria-label="Compare read-only detail">
       <div className="saved-revision-detail-drawer__heading">
         <strong>{detail.type==='state'?'Exact Saved Revision state':

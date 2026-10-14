@@ -34,6 +34,7 @@ const czech:Readonly<Record<string,string>> = {
   "Saved at": "Uloženo",
   "Actual change summary": "Skutečný souhrn změn",
   "Source Branch": "Zdrojová větev",
+  "Source Branch:": "Zdrojová větev:",
   "Parent": "Předek",
   "Reachability": "Dosažitelnost",
   "Revision": "Revize",

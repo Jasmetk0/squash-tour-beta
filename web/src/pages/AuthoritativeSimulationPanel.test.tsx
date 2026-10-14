@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ComponentProps } from 'react'
 
 import { AuthoritativeSimulationPanel } from './AuthoritativeSimulationPanel'
+import { LanguageProvider } from '../i18n/LanguageContext'
 
 const api = vi.hoisted(() => ({
   getAuthoritativeSimulationPosition: vi.fn(),
@@ -641,10 +642,12 @@ const rankingAuthorityPreview = {
   }
 }
 
-function renderPanel(props: Partial<ComponentProps<typeof AuthoritativeSimulationPanel>> = {}) {
+function renderPanel(props: Partial<ComponentProps<typeof AuthoritativeSimulationPanel>> = {}, language: 'en' | 'cs' = 'en') {
+  localStorage.setItem('squash-engine-language-v1', language)
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return render(
     <QueryClientProvider client={client}>
+      <LanguageProvider>
       <AuthoritativeSimulationPanel
         runId="run-a"
         branchId="branch-a"
@@ -652,6 +655,7 @@ function renderPanel(props: Partial<ComponentProps<typeof AuthoritativeSimulatio
         blockedReason={null}
         {...props}
       />
+      </LanguageProvider>
     </QueryClientProvider>
   )
 }
@@ -3372,7 +3376,7 @@ describe('AuthoritativeSimulationPanel', () => {
   })
 
 
-  it('retries an unanswered pause with the same audited control ID and parent', async () => {
+  it.each(['en', 'cs'] as const)('retries an unanswered pause with the same audited control ID and parent (%s)', async (language) => {
     api.inspectAuthoritativeWeekSchedule.mockResolvedValue({
       ...scheduleInspection,
       schedule: proposal.schedule,
@@ -3413,17 +3417,17 @@ describe('AuthoritativeSimulationPanel', () => {
       action: 'pause', control_state: 'pause_requested',
       committed_child_work_persists: true
     })
-    renderPanel()
+    renderPanel({}, language)
     await userEvent.click(await screen.findByRole('button', {
-      name: 'Pozastavit bezpečně / Request safe pause'
+      name: language === 'cs' ? 'Pozastavit bezpečně' : 'Request safe pause'
     }))
-    expect(screen.getByRole('group', {name: 'Full Simulation pause or resume'})).toBeInTheDocument()
-    await userEvent.type(screen.getByLabelText('Full Simulation control operator'), 'Commissioner')
-    await userEvent.type(screen.getByLabelText('Full Simulation control audit reason'), 'Wait for safe boundary')
-    await userEvent.click(screen.getByRole('button', {name: 'Požádat o pauzu / Request pause'}))
+    expect(screen.getByRole('group', {name: language === 'cs' ? 'Pozastavení nebo pokračování Full Simulation' : 'Full Simulation pause or resume'})).toBeInTheDocument()
+    await userEvent.type(screen.getByLabelText(language === 'cs' ? 'Operátor ovládání Full Simulation' : 'Full Simulation control operator'), 'Commissioner')
+    await userEvent.type(screen.getByLabelText(language === 'cs' ? 'Důvod ovládání Full Simulation do auditu' : 'Full Simulation control audit reason'), 'Wait for safe boundary')
+    await userEvent.click(screen.getByRole('button', {name: language === 'cs' ? 'Požádat o pauzu' : 'Request pause'}))
     await waitFor(() => expect(api.controlAuthoritativeFullSimulation).toHaveBeenCalledTimes(1))
     expect(await screen.findByText('Network answer was lost')).toBeInTheDocument()
-    await userEvent.click(screen.getByRole('button', {name: 'Požádat o pauzu / Request pause'}))
+    await userEvent.click(screen.getByRole('button', {name: language === 'cs' ? 'Požádat o pauzu' : 'Request pause'}))
     await waitFor(() => expect(api.controlAuthoritativeFullSimulation).toHaveBeenCalledTimes(2))
     const first = api.controlAuthoritativeFullSimulation.mock.calls[0][2]
     const second = api.controlAuthoritativeFullSimulation.mock.calls[1][2]
@@ -3439,7 +3443,7 @@ describe('AuthoritativeSimulationPanel', () => {
     expect(api.saveAuthoritativeSimulation).not.toHaveBeenCalled()
   })
 
-  it('requires explicit server authorization before resuming a paused parent', async () => {
+  it.each(['en', 'cs'] as const)('requires explicit server authorization before resuming a paused parent (%s)', async (language) => {
     api.inspectAuthoritativeWeekSchedule.mockResolvedValue({
       ...scheduleInspection,
       schedule: proposal.schedule,
@@ -3476,18 +3480,18 @@ describe('AuthoritativeSimulationPanel', () => {
       action: 'resume', control_state: 'running',
       committed_child_work_persists: true
     })
-    renderPanel()
+    renderPanel({}, language)
     const pendingList = await screen.findByRole('list', {
-      name: 'Resumable Full Simulation parents'
+      name: language === 'cs' ? 'Obnovitelné původní příkazy Full Simulation' : 'Resumable Full Simulation parents'
     })
-    expect(pendingList).toHaveTextContent('Pozastaveno / Paused')
-    expect(screen.getByRole('button', {name:'Resume this Full Simulation'})).toBeDisabled()
+    expect(pendingList).toHaveTextContent(language === 'cs' ? 'Pozastaveno' : 'Paused')
+    expect(screen.getByRole('button', {name:language === 'cs' ? 'Připravit pokračování stejné Full Simulation' : 'Resume this Full Simulation'})).toBeDisabled()
     await userEvent.click(screen.getByRole('button', {
-      name: 'Povolit pokračování / Authorize resume'
+      name: language === 'cs' ? 'Povolit pokračování' : 'Authorize resume'
     }))
-    await userEvent.type(screen.getByLabelText('Full Simulation control operator'), 'Commissioner')
-    await userEvent.type(screen.getByLabelText('Full Simulation control audit reason'), 'Continue reviewed target')
-    await userEvent.click(screen.getByRole('button', {name:'Povolit pokračování / Resume same parent'}))
+    await userEvent.type(screen.getByLabelText(language === 'cs' ? 'Operátor ovládání Full Simulation' : 'Full Simulation control operator'), 'Commissioner')
+    await userEvent.type(screen.getByLabelText(language === 'cs' ? 'Důvod ovládání Full Simulation do auditu' : 'Full Simulation control audit reason'), 'Continue reviewed target')
+    await userEvent.click(screen.getByRole('button', {name:language === 'cs' ? 'Povolit pokračování původního příkazu' : 'Resume same parent'}))
     await waitFor(() => expect(api.controlAuthoritativeFullSimulation).toHaveBeenCalledWith(
       'run-a', 'branch-a', expect.objectContaining({
         target_command_id: 'full-parent-paused',
@@ -3496,6 +3500,43 @@ describe('AuthoritativeSimulationPanel', () => {
       })
     ))
     expect(api.simulateAuthoritativeFullSimulation).not.toHaveBeenCalled()
+  })
+
+  it.each(['en', 'cs'] as const)('acknowledges a requested pause using the immutable original parent (%s)', async (language) => {
+    api.inspectAuthoritativeWeekSchedule.mockResolvedValue({
+      ...scheduleInspection, schedule: proposal.schedule,
+      schedule_fingerprint: proposal.schedule_fingerprint
+    })
+    api.inspectAuthoritativeWeekSchedulePreflight.mockResolvedValue({
+      ...schedulePreflight, schedule_already_adopted: true,
+      blockers: ['week_schedule_already_adopted'], can_propose_schedule: false
+    })
+    const command = {
+      command_id: 'original-acknowledged-parent', operator_label: 'Original',
+      audit_reason: 'Original reviewed scope',
+      expected_start_week: fullSimulationPreview.start_week,
+      expected_position_fingerprint: fullSimulationPreview.expected_position_fingerprint,
+      expected_revision_id: fullSimulationPreview.expected_revision_id,
+      expected_preview_fingerprint: fullSimulationPreview.preview_fingerprint
+    }
+    api.getPendingAuthoritativeFullSimulations.mockResolvedValue({
+      schema_version: 'authoritative_full_simulation_pending_collection.v1',
+      run_id: 'run-a', branch_id: 'branch-a', legacy_pending_count: 0,
+      operations: [{ control_state: 'pause_requested', command,
+        review: fullSimulationPreview, completed_seasons: [], completed_season_count: 0,
+        final_completed_weeks: [], final_completed_week_count: 0 }]
+    })
+    api.simulateAuthoritativeFullSimulation.mockResolvedValue({checkpoint: 'operator_paused'})
+    renderPanel({}, language)
+    const parents = await screen.findByRole('list', {name: language === 'cs'
+      ? 'Obnovitelné původní příkazy Full Simulation' : 'Resumable Full Simulation parents'})
+    expect(parents).toHaveTextContent(language === 'cs' ? 'Pozastavuji…' : 'Pausing…')
+    await userEvent.click(within(parents).getByRole('button', {name: language === 'cs'
+      ? 'Ověřit bezpečné pozastavení' : 'Acknowledge safe pause'}))
+    await waitFor(() => expect(api.simulateAuthoritativeFullSimulation).toHaveBeenCalledWith(
+      'run-a', 'branch-a', command))
+    expect(api.controlAuthoritativeFullSimulation).not.toHaveBeenCalled()
+    expect(api.saveAuthoritativeSimulation).not.toHaveBeenCalled()
   })
 
   it('restores a durable pending Full Simulation parent after page state loss', async () => {

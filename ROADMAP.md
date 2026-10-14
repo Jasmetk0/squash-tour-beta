@@ -1,3 +1,11 @@
+# Active pre-alpha integration queue — verified controls, 14 October 2026
+
+Verified baseline `buuk` `a5482935006728f9de04bec2261b7301aaa9ddc6` (merge #1464), no open PR at start. **Current integration candidate, not merged:** production HTTP/SQLite plus native Chromium pause during actual MatchEngine work, safe acknowledgement, dropped-response idempotent retry, fresh-page Task Center navigation and explicit continuation of the same parent. Three real matches complete; a second deliberate pause bounds the proof. Original sporting results/owners/RNG/pre-slot snapshots and immutable Saved Revisions persist without Save. Expiry/takeover reject stale writers; another Run is denied before new work. CS/EN controls and History source-Branch translation are verified. [Evidence and limits](docs/FULL_SIMULATION_PAUSE_RESUME_V81.md).
+
+**Next PR:** versioned effective Full Simulation target changes and safe termination using explicit idempotent controls without rewriting the original command fingerprint. **Afterward:** autonomous server task lifecycle, active-tab/process reconnect and audit of other simulation entrypoints before claiming complete global serialization; tracking/stop rules/presets remain separate v81 slices. Local targeted tests/browser/build pass; final-head Fast CI and the dedicated controls browser gate are required for merge. Complete pre-alpha/50-season release gates remain outstanding. Preserve the dated historical roadmap below.
+
+---
+
 # Active pre-alpha integration queue — global Full Simulation controls, 14 October 2026
 
 Verified baseline `buuk` `71100cf57ef2f730ef419c5741b482fcb817724b` (merge #1463), no open PR at start. **Current candidate (not yet merged):** make the existing Task Center trustworthy through strict parent/progress/original-target validation and read-only SQLite invocation-lease projection with CS/EN evidence; confirm via focused SQLite API, TS validator and component tests. An unexpired lease proves fenced invocation ownership, not verified worker liveness. Never expose the token.

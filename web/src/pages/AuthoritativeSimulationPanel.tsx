@@ -1,5 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
+import { useLanguage } from '../i18n/LanguageContext'
+import { fullSimulationControlText } from '../i18n/fullSimulationControlText'
 
 import {
   adoptAuthoritativeWeekScheduleProposal,
@@ -221,6 +223,8 @@ export function AuthoritativeSimulationPanel({
   savedRevisionId,
   blockedReason
 }: Props): JSX.Element {
+  const { language } = useLanguage()
+  const C = (text: string): string => fullSimulationControlText(language, text)
   const queryClient = useQueryClient()
   const enabled = Boolean(runId && branchId && savedRevisionId && !blockedReason)
   const [selectedGroupId, setSelectedGroupId] = useState('')
@@ -3242,35 +3246,34 @@ export function AuthoritativeSimulationPanel({
           </label>
           {pendingFullSimulationQuery.data?.operations.length ? (
             <div>
-              <h5>Resumable Full Simulation parents</h5>
+              <h5>{C('Resumable Full Simulation parents')}</h5>
               <p className="status">
-                These durable parents survived page/process state loss. Resume the
-                exact parent instead of creating a new Full Simulation command.
+                {C('These durable parents survived page/process state loss. Resume the exact parent instead of creating a new Full Simulation command.')}
               </p>
-              <ol aria-label="Resumable Full Simulation parents">
+              <ol aria-label={C('Resumable Full Simulation parents')}>
                 {pendingFullSimulationQuery.data.operations.map((operation) => (
                   <li key={operation.command.command_id}>
                     <code>{operation.command.command_id}</code>
                     {' · '}S{operation.review.start_week.season_index} W
                     {operation.review.start_week.week}
-                    {' · '}{operation.completed_season_count} completed season(s)
+                    {' · '}{operation.completed_season_count} {C('completed season(s)')}
                     {' · '}{operation.control_state === 'pause_requested'
-                      ? 'Pozastavuji… / Pausing…'
+                      ? C('Pausing…')
                       : operation.control_state === 'paused'
-                        ? 'Pozastaveno / Paused'
-                        : 'Rodičovský příkaz čeká nebo běží / Pending parent'}
+                        ? C('Paused')
+                        : C('Authorized – invocation activity unverified')}
                     <button
                       type="button"
                       onClick={() => resumePendingFullSimulation(operation)}
                       disabled={actionPending || operation.control_state !== 'running'}
                     >
-                      Resume this Full Simulation
+                      {C('Resume this Full Simulation')}
                     </button>
                     {operation.control_state === 'pause_requested' && (
                       <button type="button" onClick={() =>
                         acknowledgeFullSimulationPauseMutation.mutate(operation)
                       } disabled={acknowledgeFullSimulationPauseMutation.isPending}>
-                        Ověřit bezpečné pozastavení / Acknowledge safe pause
+                        {C('Acknowledge safe pause')}
                       </button>
                     )}
                     {operation.control_state !== 'pause_requested' && (
@@ -3284,8 +3287,8 @@ export function AuthoritativeSimulationPanel({
                         setFullSimulationControlReason('')
                       }} disabled={fullSimulationControlMutation.isPending}>
                         {operation.control_state === 'paused'
-                          ? 'Povolit pokračování / Authorize resume'
-                          : 'Pozastavit bezpečně / Request safe pause'}
+                          ? C('Authorize resume')
+                          : C('Request safe pause')}
                       </button>
                     )}
                     <button
@@ -3304,22 +3307,20 @@ export function AuthoritativeSimulationPanel({
                 ))}
               </ol>
               {fullSimulationControlTarget && (
-                <div role="group" aria-label="Full Simulation pause or resume">
+                <div role="group" aria-label={C('Full Simulation pause or resume')}>
                   <p className="status">
-                    Změna se týká jen tohoto Run/Branch a původního příkazu.
-                    Pauza čeká na bezpečnou hranici transakce; nevrací uložené
-                    výsledky a neprovádí Save. / The same parent retains its target.
+                    {C('This controls the original command in this Run and Branch. Pause is acknowledged at a safe transaction boundary. Completed child results and the original target persist. No implicit Save.')}
                   </p>
                   <p><code>{fullSimulationControlTarget.commandId}</code></p>
-                  <p className="status">Control request ID: <code>{fullSimulationControlCommandId}</code>. If the response is lost, retrying reuses this exact ID and cannot duplicate the audit event.</p>
-                  <label>Operátor / Operator
-                    <input aria-label="Full Simulation control operator"
+                  <p className="status">{C('Control request ID:')} <code>{fullSimulationControlCommandId}</code>. {C('If the response is lost, retrying reuses this exact ID and cannot duplicate the audit event.')}</p>
+                  <label>{C('Operator')}
+                    <input aria-label={C('Full Simulation control operator')}
                       value={fullSimulationControlOperator} maxLength={128}
                       onChange={event=>setFullSimulationControlOperator(event.target.value)}
                       disabled={fullSimulationControlMutation.isPending}/>
                   </label>
-                  <label>Důvod / Audit reason
-                    <textarea aria-label="Full Simulation control audit reason"
+                  <label>{C('Audit reason')}
+                    <textarea aria-label={C('Full Simulation control audit reason')}
                       value={fullSimulationControlReason} maxLength={2000}
                       onChange={event=>setFullSimulationControlReason(event.target.value)}
                       disabled={fullSimulationControlMutation.isPending}/>
@@ -3330,13 +3331,13 @@ export function AuthoritativeSimulationPanel({
                       fullSimulationControlMutation.isPending}
                     onClick={()=>fullSimulationControlMutation.mutate()}>
                     {fullSimulationControlTarget.action === 'pause'
-                      ? 'Požádat o pauzu / Request pause'
-                      : 'Povolit pokračování / Resume same parent'}
+                      ? C('Request pause')
+                      : C('Resume same parent')}
                   </button>
                   <button type="button" onClick={() => {
                     setFullSimulationControlTarget(null)
                     setFullSimulationControlCommandId(newCommandId())
-                  }} disabled={fullSimulationControlMutation.isPending}>Zrušit / Cancel</button>
+                  }} disabled={fullSimulationControlMutation.isPending}>{C('Cancel')}</button>
                   {fullSimulationControlMutation.error && <p role="alert" className="error">
                     {formatApiError(fullSimulationControlMutation.error)}
                   </p>}
@@ -4691,13 +4692,16 @@ export function AuthoritativeSimulationPanel({
               </p>
               {fullSimulationProgress ? (
                 <>
-                  <p role="alert" className="error">
-                    Full Simulation paused at {fullSimulationProgress.checkpoint}.
+                  <p role={fullSimulationProgress.checkpoint === 'operator_paused' ? 'status' : 'alert'}
+                    className={fullSimulationProgress.checkpoint === 'operator_paused' ? 'status' : 'error'}>
+                    {fullSimulationProgress.checkpoint === 'operator_paused'
+                      ? C('Full Simulation paused at a safe transaction boundary.')
+                      : `Full Simulation paused at ${fullSimulationProgress.checkpoint}.`}
                     {fullSimulationProgress.current_week
-                      ? ` Current S${fullSimulationProgress.current_week.season_index} W${fullSimulationProgress.current_week.week}.`
+                      ? ` ${C('Current')} S${fullSimulationProgress.current_week.season_index} W${fullSimulationProgress.current_week.week}.`
                       : ''}
                     {fullSimulationProgress.blockers.length
-                      ? ` Resolve: ${fullSimulationProgress.blockers.join(', ')}.`
+                      ? ` ${C('Resolve')}: ${fullSimulationProgress.blockers.join(', ')}.`
                       : ''}
                   </p>
                   <MetadataList
@@ -4735,16 +4739,16 @@ export function AuthoritativeSimulationPanel({
                     />
                   </label>
                   <p className="status">
-                    {fullSimulationCheckpointGuidance(
-                      fullSimulationProgress.checkpoint
-                    )}
+                    {fullSimulationProgress.checkpoint === 'operator_paused'
+                      ? C('Authorize resume, then prepare and confirm continuation of the original command. Completed child results persist. Save remains explicit.')
+                      : fullSimulationCheckpointGuidance(fullSimulationProgress.checkpoint)}
                   </p>
                   <p className="status">
                     Do not discard this Full Simulation review while you intend to
                     resume it: the frozen parent Command ID is the durable retry
                     identity for already-completed child work.
                   </p>
-                  {fullSimulationProgress.detail ? (
+                  {fullSimulationProgress.detail && fullSimulationProgress.checkpoint !== 'operator_paused' ? (
                     <p className="status">{fullSimulationProgress.detail}</p>
                   ) : null}
                 </>

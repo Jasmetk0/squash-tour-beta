@@ -1,12 +1,15 @@
-"""Read-only global inventory of durable Full Simulation parents.
+"""Read-only, validated global view of durable Full Simulation parents.
 
-A receipt describes committed progress and authorization state, NOT a live worker
-or a recoverable background task. This projection never starts or resumes work.
+A pending parent is not a worker. A SQLite invocation lease is evidence only of
+unexpired, fenced invocation ownership, never a process-health guarantee.
+This projection is one read-only database snapshot; it cannot renew a lease,
+resume simulation, change a parent, or Save a revision.
 """
 
 from __future__ import annotations
 
 import json
+import time
 
 from sqlalchemy import select
 
@@ -14,18 +17,99 @@ from beta_engine.application.authoritative_run_simulation_driver import (
     AuthoritativeFullSimulationCommand,
 )
 from beta_engine.domain.simulation_slots import fingerprint
+from beta_engine.infrastructure.db.full_simulation_invocation_lease import LEASE_SCOPE
 from beta_engine.infrastructure.db.models import (
     AuthoritativeSimulationCommandModel,
+    FullSimulationExecutionLeaseModel,
     RunBranchModel,
     RunContainerModel,
 )
 
 
+def _week(value: object, *, label: str) -> dict[str, int]:
+    """Do not let Pydantic integer coercion hide invalid stored JSON evidence."""
+    if (
+        not isinstance(value, dict)
+        or set(value) != {"season_index", "week"}
+        or type(value["season_index"]) is not int
+        or type(value["week"]) is not int
+        or not 0 <= value["season_index"] < 50
+        or not 1 <= value["week"] <= 61
+    ):
+        raise ValueError(f"Pending Full Simulation {label} is corrupt")
+    return value
+
+
+def _progress(frozen: dict, *, start: dict, final: dict) -> tuple[int, int]:
+    seasons = frozen.get("completed_seasons", [])
+    weeks = frozen.get("final_completed_weeks", [])
+    if not isinstance(seasons, list) or not isinstance(weeks, list):
+        raise ValueError("Pending Full Simulation progress is corrupt")
+    if any(type(item) is not int for item in seasons):
+        raise ValueError("Pending Full Simulation completed seasons are corrupt")
+    # Every completed season is an actual transition, chronologically following
+    # the original start; season 49 is closed separately by final Run closure.
+    if seasons != list(range(start["season_index"], start["season_index"] + len(seasons))):
+        raise ValueError("Pending Full Simulation completed seasons are not consecutive")
+    if any(season < 0 or season >= 49 for season in seasons):
+        raise ValueError("Pending Full Simulation completed seasons exceed the Run")
+    first_week = start["week"] if start["season_index"] == 49 else 1
+    expected_weeks = list(range(first_week, first_week + len(weeks)))
+    observed_weeks = [
+        _week(item, label="final completed week") for item in weeks
+    ]
+    if (
+        any(item["season_index"] != 49 for item in observed_weeks)
+        or [item["week"] for item in observed_weeks] != expected_weeks
+        or (weeks and len(seasons) != 49 - start["season_index"])
+    ):
+        raise ValueError("Pending Full Simulation final weeks are not consecutive")
+    # These counts are normally absent in the parent; if present they must
+    # never conflict with the actual validated evidence.
+    if (
+        ("completed_season_count" in frozen and (
+            type(frozen["completed_season_count"]) is not int
+            or frozen["completed_season_count"] != len(seasons)
+        ))
+        or ("final_completed_week_count" in frozen and (
+            type(frozen["final_completed_week_count"]) is not int
+            or frozen["final_completed_week_count"] != len(weeks)
+        ))
+    ):
+        raise ValueError("Pending Full Simulation progress counts are corrupt")
+    if final != {"season_index": 49, "week": 61}:
+        raise ValueError("Pending Full Simulation original final Run target is corrupt")
+    return len(seasons), len(weeks)
+
+
+def _lease_evidence(lease, *, run_id: str, branch_id: str,
+                    command_id: str, now: int) -> tuple[str, int | None]:
+    if lease is None:
+        return "absent", None
+    if not lease.run_id or not lease.branch_id or not lease.command_id:
+        raise ValueError("Full Simulation execution lease identity is corrupt")
+    if type(lease.expires_at_unix) is not int or lease.expires_at_unix < 0:
+        raise ValueError("Full Simulation execution lease expiry is corrupt")
+    matching = (
+        lease.run_id == run_id
+        and lease.branch_id == branch_id
+        and lease.command_id == command_id
+    )
+    active = lease.expires_at_unix > now
+    return (
+        ("matching_active" if active else "matching_expired")
+        if matching else ("other_active" if active else "other_expired"),
+        lease.expires_at_unix,
+    )
+
+
 def inspect_global_full_simulation_operations(factory) -> dict:
-    """List exact pending parents across Run/Branch within one read transaction."""
+    """Project all parents and the one current lease in a single read session."""
     items: list[dict] = []
     legacy_count = 0
+    now = int(time.time())
     with factory() as session:
+        # All database observations use the same SQLite read transaction.
         receipts = session.scalars(
             select(AuthoritativeSimulationCommandModel)
             .where(AuthoritativeSimulationCommandModel.status == "pending")
@@ -35,6 +119,8 @@ def inspect_global_full_simulation_operations(factory) -> dict:
                 AuthoritativeSimulationCommandModel.command_id,
             )
         ).all()
+        lease = session.get(FullSimulationExecutionLeaseModel, LEASE_SCOPE)
+        seen_scope: set[tuple[str, str]] = set()
         for receipt in receipts:
             try:
                 frozen = json.loads(receipt.result_json)
@@ -61,15 +147,28 @@ def inspect_global_full_simulation_operations(factory) -> dict:
                 command.run_id != receipt.run_id
                 or command.branch_id != receipt.branch_id
                 or command.command_id != receipt.command_id
+                or frozen.get("run_id", receipt.run_id) != receipt.run_id
+                or frozen.get("branch_id", receipt.branch_id) != receipt.branch_id
+                or frozen.get("initial_saved_revision_id", command.expected_revision_id)
+                != command.expected_revision_id
             ):
                 raise ValueError("Pending Full Simulation parent identity is corrupt")
+            scope = (receipt.run_id, receipt.branch_id)
+            if scope in seen_scope:
+                raise ValueError("Duplicate pending Full Simulation parent scope")
+            seen_scope.add(scope)
             if receipt.request_fingerprint != fingerprint({
                 "mode": "full_simulation",
                 "command": command.model_dump(mode="json"),
             }):
                 raise ValueError("Pending Full Simulation parent fingerprint is corrupt")
             review = frozen["review"]
-            if not isinstance(review, dict) or (
+            start = command.expected_start_week.model_dump(mode="json")
+            if not isinstance(review, dict):
+                raise ValueError("Pending Full Simulation reviewed scope is corrupt")
+            reviewed_start = _week(review.get("start_week"), label="reviewed start week")
+            reviewed_final = _week(review.get("final_week"), label="reviewed final week")
+            if (
                 review.get("schema_version") != "authoritative_full_simulation_preview.v1"
                 or review.get("run_id") != receipt.run_id
                 or review.get("branch_id") != receipt.branch_id
@@ -77,18 +176,23 @@ def inspect_global_full_simulation_operations(factory) -> dict:
                 or review.get("expected_position_fingerprint")
                 != command.expected_position_fingerprint
                 or review.get("expected_revision_id") != command.expected_revision_id
-                or review.get("start_week")
-                != command.expected_start_week.model_dump(mode="json")
-                or not isinstance(review.get("final_week"), dict)
+                or reviewed_start != start
+                or ("start_week" in frozen and
+                    _week(frozen["start_week"], label="stored start week") != start)
+                or ("final_week" in frozen and
+                    _week(frozen["final_week"], label="stored final week") != reviewed_final)
             ):
                 raise ValueError("Pending Full Simulation reviewed scope is corrupt")
             state = frozen.get("control_state", "running")
             if state not in {"running", "pause_requested", "paused"}:
                 raise ValueError("Pending Full Simulation control state is corrupt")
-            seasons = frozen.get("completed_seasons", [])
-            weeks = frozen.get("final_completed_weeks", [])
-            if not isinstance(seasons, list) or not isinstance(weeks, list):
-                raise ValueError("Pending Full Simulation progress is corrupt")
+            season_count, week_count = _progress(
+                frozen, start=start, final=reviewed_final
+            )
+            lease_state, expires_at = _lease_evidence(
+                lease, run_id=receipt.run_id, branch_id=receipt.branch_id,
+                command_id=receipt.command_id, now=now,
+            )
             items.append({
                 "run_id": receipt.run_id,
                 "run_name": run.display_name or receipt.run_id,
@@ -100,12 +204,14 @@ def inspect_global_full_simulation_operations(factory) -> dict:
                 "branch_read_only": bool(branch.read_only),
                 "command_id": receipt.command_id,
                 "control_state": state,
-                "start_week": review["start_week"],
-                "final_week": review["final_week"],
-                "completed_season_count": len(seasons),
-                "final_completed_week_count": len(weeks),
+                "start_week": start,
+                "final_week": reviewed_final,
+                "completed_season_count": season_count,
+                "final_completed_week_count": week_count,
                 "review_fingerprint": review["preview_fingerprint"],
                 "worker_activity": "unknown",
+                "lease_state": lease_state,
+                "lease_expires_at_unix": expires_at,
             })
     return {
         "schema_version": "global_full_simulation_operations.v1",

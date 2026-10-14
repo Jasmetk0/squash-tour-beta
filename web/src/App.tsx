@@ -2,6 +2,7 @@ import { Navigate, Route, Routes, useParams } from 'react-router-dom'
 import { ViewerProductRunRouteBoundary } from './viewer/ViewerProductRunRouteContext'
 
 import { Layout } from './components/Layout'
+import { GlobalSimulationTaskCenterPage } from './pages/GlobalSimulationTaskCenterPage'
 import { BootstrapLineagePage } from './pages/BootstrapLineagePage'
 import { ActivityPage } from './pages/ActivityPage'
 import { EventDetailPage } from './pages/EventDetailPage'
@@ -178,6 +179,7 @@ export default function App(): JSX.Element {
         <Route path="admin/labs/player" element={<PlayerTestLabPage />} />
         <Route path="admin/labs/tournament" element={<TournamentTestLabPage />} />
         <Route path="admin/legacy-runs" element={<LegacyRunsPage />} />
+        <Route path="admin/operations" element={<GlobalSimulationTaskCenterPage />} />
         <Route path="admin/runs/new" element={<RunCreatePage />} />
         <Route path="admin/runs" element={<RunsPage />} />
         <Route path="admin/runs/:runId" element={<RunPage />} />

@@ -6,6 +6,8 @@ const STORAGE_KEY = 'squash-engine-language-v1'
 const words: Record<string, { cs: string; en: string }> = {
   'Home': { cs: 'Domů', en: 'Home' },
   'Runs': { cs: 'Runy', en: 'Runs' },
+  'Run inventory': { cs: 'Přehled Runů', en: 'Run inventory' },
+  'Simulation Task Center': { cs: 'Centrum simulací', en: 'Simulation Task Center' },
   'Packages': { cs: 'Balíčky', en: 'Packages' },
   'Test Lab': { cs: 'Testovací laboratoř', en: 'Test Lab' },
   'Settings': { cs: 'Nastavení aplikace', en: 'Application settings' },

@@ -23,7 +23,11 @@ class FullSimulationExecutionGuard:
 
 
 class FullSimulationPauseRequested(Exception):
-    """Cooperative stop before a child writer flush; its transaction rolls back."""
+    """Cooperative pause before a child writer flush; its transaction rolls back."""
+
+
+class FullSimulationStopped(Exception):
+    """A terminal stop was committed at a safe SQLite writer boundary."""
 
 
 ACTIVE_FULL_SIMULATION_GUARD: ContextVar[
@@ -62,6 +66,8 @@ def require_pending_full_simulation_guard(session: Session) -> None:
         return
     if row[0] != guard.request_fingerprint:
         raise ValueError("Full Simulation execution guard fingerprint mismatch")
+    if row[1] == "stopped":
+        raise FullSimulationStopped("Full Simulation operator stop committed")
     if row[1] == "abandoned":
         raise ValueError(
             "Full Simulation parent has an invalid status: abandoned; "
@@ -118,6 +124,8 @@ def _pause_before_full_simulation_writer(
         return  # The first parent creation has not been committed yet.
     if row[0] != guard.request_fingerprint:
         raise ValueError("Full Simulation execution guard fingerprint mismatch")
+    if row[1] == "stopped":
+        raise FullSimulationStopped("Full Simulation operator stop committed")
     if row[1] == "abandoned":
         raise ValueError("Full Simulation parent has an invalid status: abandoned; execution is fenced")
     if row[1] == "complete":
@@ -156,6 +164,8 @@ def _fence_full_simulation_after_sqlite_writer_lock(
     ).first()
     if row is None:
         return  # A new parent receipt may be created in this transaction.
+    if row[1] == "stopped":
+        raise FullSimulationStopped("Full Simulation operator stop committed")
     if row[0] != guard.request_fingerprint or row[1] == "abandoned":
         raise ValueError("Full Simulation parent ownership was revoked")
     if row[1] not in ("pending", "complete"):

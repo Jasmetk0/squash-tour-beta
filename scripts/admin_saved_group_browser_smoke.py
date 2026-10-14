@@ -26,6 +26,7 @@ from admin_first_tournament_smoke import (
 )
 from saved_completed_group_browser_checks import play_group_and_save
 from real_hybrid_progression_browser_checks import play_and_freeze_hybrid
+from real_hybrid_first_ranking_week_browser_checks import publish_first_hybrid_official_week
 from real_group_cyclic_tie_browser_checks import (
     exercise_real_cyclic_browser, install_real_match_engine_cyclic_fixture,
 )
@@ -355,6 +356,7 @@ def acceptance(
                 browser_read(page)
                 completed = None
                 hybrid_result = None
+                hybrid_ranking = None
                 if hybrid_progression:
                     hybrid_result = play_and_freeze_hybrid(
                         request=request,page=page,run_id=run_id,branch_id=branch_id,
@@ -366,6 +368,11 @@ def acceptance(
                     )
                     assert saved(hybrid_result["completed_saved_revision"]) == (
                         hybrid_result["archived_edition"]
+                    )
+                    hybrid_ranking = publish_first_hybrid_official_week(
+                        request=request,page=page,run_id=run_id,branch_id=branch_id,
+                        run_url=run_url,root_scope=root_scope,event_id=EVENT_ID,
+                        hybrid=hybrid_result,artifacts=artifacts,
                     )
                     assert saved(revision) == expected
                     print("HYBRID BROWSER: two real group games, final, reviewed explicit Ranking "
@@ -455,6 +462,15 @@ def acceptance(
                 assert saved(old_rev) == before
                 browser_read(page, prefix="reopened-")
                 if hybrid_result is not None:
+                    assert hybrid_ranking is not None
+                    viewer = "/viewer/runs/" + quote(run_id, safe="") + "/rankings"
+                    assert request("GET", viewer + "/current") == hybrid_ranking["official_week_2"]
+                    assert request("GET", viewer + "/history") == hybrid_ranking["ranking_history"]
+                    assert request("GET", viewer + "/history/0") == hybrid_ranking["historical_week_1"]
+                    assert request("GET", viewer + "/history/1") == hybrid_ranking["official_week_2"]
+                    assert request("GET", root_scope + "/authoritative-simulation/position")["current_week"] == {"season_index": 0, "week": 2}
+                    after_branches = request("GET", "/run-branches?run_id=" + quote(run_id, safe=""))["run_branches"]
+                    assert next(item for item in after_branches if item["branch_id"] == branch_id)["saved_head_revision_id"] == hybrid_ranking["saved_week_2_revision"]
                     assert saved(hybrid_result["completed_saved_revision"]) == (
                         hybrid_result["archived_edition"]
                     ), "Saved hybrid group revision changed after SQLite restart"
@@ -548,6 +564,11 @@ def acceptance(
                         "entrants_authority_fingerprint":hybrid_result["entrants_authority"]["authority_fingerprint"],
                         "bracket_authority_fingerprint":hybrid_result["bracket_authority"]["authority_fingerprint"],
                         "result_published":hybrid_result["result_published"],
+                        "official_ranking_week_2_published":hybrid_ranking is not None,
+                        "official_week_2_fingerprint":hybrid_ranking["expected_ranking_fingerprint"] if hybrid_ranking else None,
+                        "official_week_2_saved_revision":hybrid_ranking["saved_week_2_revision"] if hybrid_ranking else None,
+                        "official_week_2_total_delta":sum(hybrid_ranking["composed_ranking_deltas"].values()) if hybrid_ranking else None,
+                        "official_week_2_publication_count":hybrid_ranking["ranking_history"]["publication_count"] if hybrid_ranking else None,
                     } if hybrid_result else None),
                     "unchanged_after_restart": True,
                     "browser_errors": browser_errors,

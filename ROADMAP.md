@@ -1,3 +1,11 @@
+# Active integration queue — audited terminal stop slice (14 October 2026)
+
+After merged #1465, the new candidate adds idempotent terminal `stop` to the real Full Simulation parent. Control is serialized at a SQLite safe child boundary, fences later child writes, preserves all committed sporting results, snapshots and unchanged Saved Revisions, and never performs an implicit Save. CS/EN Admin confirmation and active/history status are explicit; focused HTTP tests exercise in-flight and paused cases and retries. This **does not** implement effective target changes, autonomous processing, browser restart recovery or full pre-alpha release; green final-HEAD checks are necessary before merge.
+
+**Next PR:** versioned effective target updates, validation against real current Position, preserved immutable original intent, bounded execution toward the new target and explicit stop-rule separation. Then true server-side task lifecycle and reconnect. Keep older dated roadmap snapshots intact.
+
+---
+
 # Active pre-alpha integration queue — verified controls, 14 October 2026
 
 Verified baseline `buuk` `a5482935006728f9de04bec2261b7301aaa9ddc6` (merge #1464), no open PR at start. **Current integration candidate, not merged:** production HTTP/SQLite plus native Chromium pause during actual MatchEngine work, safe acknowledgement, dropped-response idempotent retry, fresh-page Task Center navigation and explicit continuation of the same parent. Three real matches complete; a second deliberate pause bounds the proof. Original sporting results/owners/RNG/pre-slot snapshots and immutable Saved Revisions persist without Save. Expiry/takeover reject stale writers; another Run is denied before new work. CS/EN controls and History source-Branch translation are verified. [Evidence and limits](docs/FULL_SIMULATION_PAUSE_RESUME_V81.md).

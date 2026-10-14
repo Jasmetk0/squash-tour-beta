@@ -6826,6 +6826,10 @@ class AuthoritativeRunSimulationDriver:
             if stopped:
                 return self._stopped_full_simulation_progress(command, key, request_fp)
             if paused:
+                with self.factory() as session:
+                    terminal = session.get(AuthoritativeSimulationCommandModel, key)
+                    if terminal is not None and terminal.status == "stopped":
+                        return self._stopped_full_simulation_progress(command, key, request_fp)
                 return self._acknowledge_full_simulation_pause(
                     command=command, request_fp=request_fp, key=key,
                     lease_token=lease_token,
@@ -6838,6 +6842,10 @@ class AuthoritativeRunSimulationDriver:
                         and json.loads(receipt.result_json).get("control_state")
                         == "pause_requested"
                     )
+                with self.factory() as session:
+                    receipt = session.get(AuthoritativeSimulationCommandModel, key)
+                    if receipt is not None and receipt.status == "stopped":
+                        return self._stopped_full_simulation_progress(command, key, request_fp)
                 if pending_pause:
                     return self._acknowledge_full_simulation_pause(
                         command=command, request_fp=request_fp, key=key,

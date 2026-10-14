@@ -25,6 +25,9 @@ from admin_first_tournament_smoke import (
     browser_click, browser_settle, create_smoke_app, setup_run,
 )
 from saved_completed_group_browser_checks import play_group_and_save
+from real_group_cyclic_tie_browser_checks import (
+    exercise_real_cyclic_browser, install_real_match_engine_cyclic_fixture,
+)
 
 EVENT_ID = "EVT-2000-W01-browser_cup"
 
@@ -33,6 +36,7 @@ def acceptance(
     root: Path, *, port: int, base_url: str, chromium: str,
     complete_groups: bool = False,
     reconstruct_one_group_match: bool = False,
+    cyclic_tie_browser: bool = False,
 ) -> None:
     if (root / "browser.sqlite").exists():
         raise ValueError("Saved group browser acceptance requires a fresh SQLite database")
@@ -46,7 +50,8 @@ def acceptance(
 
     def start():
         process = subprocess.Popen(
-            [sys.executable, __file__, "--serve", str(root), "--port", str(port)],
+            [sys.executable, __file__, "--serve", str(root), "--port", str(port)]
+            + (["--cyclic-tie-fixture"] if cyclic_tie_browser else []),
             stdout=server_log, stderr=server_log,
         )
         for _ in range(180):
@@ -195,6 +200,34 @@ def acceptance(
                 )
                 print("GROUP BROWSER: real Admin UI committed BO3 Rules, pure Format, Topology and six Match Days",
                       flush=True)
+
+                if cyclic_tie_browser:
+                    # This test uses six real independently selected MatchEngine
+                    # results via isolated fixture input adapters; it does NOT
+                    # claim those scores arose from this Run's Match-Day RNG.
+                    def restart_cyclic_backend():
+                        nonlocal process
+                        process.terminate()
+                        process.wait(timeout=20)
+                        process = start()
+
+                    evidence = exercise_real_cyclic_browser(
+                        request=request, page=page,
+                        event_url=prepared_event_url, event_scope=event_scope,
+                        artifacts=artifacts, root=root, run_id=run_id,
+                        branch_id=branch_id, event_id=EVENT_ID,
+                        restart_backend=restart_cyclic_backend,
+                    )
+                    assert browser_errors == [], browser_errors
+                    (artifacts / "cyclic-tie-evidence.json").write_text(
+                        json.dumps(evidence, indent=2)
+                    )
+                    print(
+                        "REAL CYCLIC MATCHENGINE TIE BROWSER / HTTP / SQLITE PASSED "
+                        "(isolated test input adapters, not a Run Match-Day)",
+                        flush=True,
+                    )
+                    return
 
                 def saved(revision):
                     return request(
@@ -449,14 +482,22 @@ if __name__ == "__main__":
     parser.add_argument("--port", type=int, default=8014)
     parser.add_argument("--base-url", default="http://127.0.0.1:5173")
     parser.add_argument("--chromium", default="/usr/bin/chromium")
+    parser.add_argument("--cyclic-tie-browser", action="store_true",
+                        help="Chromium UI decision on six natural cyclic MatchEngine test-input receipts")
+    parser.add_argument("--cyclic-tie-fixture", action="store_true",
+                        help="Serve ONLY: install exact-scope genuine MatchEngine test inputs")
     parser.add_argument("--complete-groups", action="store_true",
                         help="Actually simulate all six group matches, freeze standings, Save, replay after restart")
     parser.add_argument("--reconstruct-one-group-match", action="store_true",
                         help="Review/commit one natural MatchEngine candidate as a real canonical group Slot before Match Day 3")
     args = parser.parse_args()
+    if args.cyclic_tie_browser and (args.complete_groups or args.reconstruct_one_group_match):
+        parser.error("--cyclic-tie-browser cannot also simulate normal Run Match Days")
     if args.reconstruct_one_group_match and not args.complete_groups:
         parser.error("--reconstruct-one-group-match requires --complete-groups")
     if args.serve:
+        if args.cyclic_tie_fixture:
+            install_real_match_engine_cyclic_fixture(args.serve.resolve())
         uvicorn.run(
             create_smoke_app(args.serve.resolve()),
             host="127.0.0.1", port=args.port, log_level="warning",
@@ -467,4 +508,5 @@ if __name__ == "__main__":
             base_url=args.base_url, chromium=args.chromium,
             complete_groups=args.complete_groups,
             reconstruct_one_group_match=args.reconstruct_one_group_match,
+            cyclic_tie_browser=args.cyclic_tie_browser,
         )

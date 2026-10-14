@@ -1,3 +1,15 @@
+# Active pre-alpha — published Saved match evidence A/B (14 October 2026)
+
+Verified base `buuk` `282b14ab57d9dadf286c7213133fd630e113bfef`; #1447 merged, no open PR.
+
+1. **Current candidate:** extend existing exact Same-Branch Saved Revision A/B, calendar and Edition comparison with on-demand **real published match-record differences** inside the common Edition's read-only inspector. Validate both original owners and full Edition snapshots; compare published Match ID, winner, loser, scoreline, draw phase, round and bracket position only. Clearly decline comparisons when either result is unpublished or the Edition exists on just one side.
+2. **Next:** true separate historical player/ranking entity comparisons only if complete comparable Saved authority is available, or move to missing sporting pre-alpha release gates; do not invent match results from plans or component fingerprints.
+3. **Acceptance:** focused frontend and independent pure-model checks, applicable browser CI on final PR HEAD; full real cyclic tie and hybrid group→knockout+ranking closure browser gates still required for pre-alpha release.
+
+Older sections below are dated history, not current release proof.
+
+---
+
 # Active pre-alpha — Saved Edition A/B entity comparison (14 October 2026)
 
 Verified base `buuk` `d6fb6407659684225b28c75ac9dcc693e1073e9f`, #1446 merged.

@@ -6,7 +6,8 @@ import {SavedStatesComparePage} from './SavedStatesComparePage'
 
 const api=vi.hoisted(()=>({
   listRunBranches:vi.fn(),listSavedRevisionHistory:vi.fn(),
-  compareSavedRevisions:vi.fn(),getSavedRevision:vi.fn(),getSavedTourCalendar:vi.fn()
+  compareSavedRevisions:vi.fn(),getSavedRevision:vi.fn(),getSavedTourCalendar:vi.fn(),
+  getSavedTourEdition:vi.fn()
 }))
 vi.mock('../api/client',()=>api)
 
@@ -56,6 +57,17 @@ beforeEach(()=>{
     season:(2000+season)+'/'+(2001+season),week_count:61,
     calendar_status:'empty',edition_count:0,editions:[]
   }))
+  api.getSavedTourEdition.mockImplementation(async (run:string,branch:string,
+    rev:string,season:number,eventId:string)=>{
+    const calendar=await api.getSavedTourCalendar(run,branch,rev,season)
+    const edition=calendar.editions.find((item:{event_id:string})=>item.event_id===eventId)
+    return {
+      schema_version:'run_saved_tour_edition.v1',source:'reachable_saved_revision',
+      run_id:run,branch_id:branch,revision_branch_id:rev==='old'?'parent-branch':'fork',
+      saved_revision_id:rev,season_index:season,edition,
+      published_result:null,lifecycle_status:'unavailable'
+    }
+  })
   api.getSavedRevision.mockImplementation(async (_run:string,branch:string,rev:string)=>({
     ...((rev==='old')?first:second),branch_id:branch,run_id:'run-a',
     payload:{content:{example:'immutable'}}
@@ -167,6 +179,74 @@ describe('Dedicated read-only Compare States A/B',()=>{
     expect(api.getSavedTourCalendar).toHaveBeenCalledWith('run-a','fork','old',1)
     expect(api.getSavedTourCalendar).toHaveBeenCalledWith('run-a','fork','new',1)
     expect(api.compareSavedRevisions).toHaveBeenCalledTimes(1)
+  })
+  it('loads exact published match A/B changes only on inspecting a real common Edition',async()=>{
+    const edition={
+      event_id:'Cup',season:'2000/2001',season_week:9,event_name:'Test Cup',
+      template_id:'template',category:'Bronze',tour_level:'World Tour',
+      host_country:'CZE',host_city:'Brno',region:'Europe',
+      main_draw_size:4,qualification_draw_size:0,seeds_count:2,
+      qualifier_spots:0,wild_cards:0,byes:0,ranking_status:'published',
+      result_published:true,champion_player_id:'p1',finalist_player_id:'p2'
+    }
+    api.getSavedTourCalendar.mockImplementation(async (_run:string,branch:string,
+      rev:string,season:number)=>({
+      schema_version:'run_saved_tour_calendar.v1',source:'reachable_saved_revision',
+      run_id:'run-a',branch_id:branch,
+      revision_branch_id:rev==='old'?'parent-branch':'fork',
+      saved_revision_id:rev,season_index:season,season:'2000/2001',
+      week_count:61,calendar_status:'ready',edition_count:1,editions:[edition]
+    }))
+    api.getSavedTourEdition.mockImplementation(async (_run:string,branch:string,
+      rev:string,season:number)=>({
+      schema_version:'run_saved_tour_edition.v1',source:'reachable_saved_revision',
+      run_id:'run-a',branch_id:branch,
+      revision_branch_id:rev==='old'?'parent-branch':'fork',
+      saved_revision_id:rev,season_index:season,edition,
+      published_result:{
+        schema_version:'viewer_tournament_result.v1',product_run_id:'run-a',
+        viewer_branch_id:rev==='old'?'parent-branch':'fork',
+        event_id:'Cup',completed_season_index:0,completed_week:9,
+        champion_player_id:'p1',finalist_player_id:'p2',
+        qualification_winner_ids:[],players:[],
+        matches:rev==='old'?[
+          {match_id:'same',draw_type:'main',round_number:1,bracket_position:1,
+            winner_player_id:'p1',loser_player_id:'p2',scoreline:'3-0'},
+          {match_id:'changed',draw_type:'main',round_number:1,bracket_position:2,
+            winner_player_id:'p1',loser_player_id:'p2',scoreline:'3-1'}
+        ]:[
+          {match_id:'same',draw_type:'main',round_number:1,bracket_position:1,
+            winner_player_id:'p1',loser_player_id:'p2',scoreline:'3-0'},
+          {match_id:'changed',draw_type:'main',round_number:1,bracket_position:2,
+            winner_player_id:'p2',loser_player_id:'p1',scoreline:'3-2'},
+          {match_id:'added',draw_type:'main',round_number:2,bracket_position:1,
+            winner_player_id:'p1',loser_player_id:'p2',scoreline:'3-1'}
+        ]
+      },
+      lifecycle_status:'unavailable'
+    }))
+    open()
+    const section=await screen.findByLabelText('Compare saved season Editions')
+    await within(section).findByLabelText('Compare saved Edition totals')
+    expect(api.getSavedTourEdition).not.toHaveBeenCalled()
+    await userEvent.selectOptions(within(section).getByLabelText('Compare Edition display filter'),'all')
+    await userEvent.click(within(section).getByRole('button',{name:'Inspect Saved Edition Cup'}))
+    const panel=await screen.findByLabelText('Compare exact published Saved matches')
+    const table=await within(panel).findByRole('table',{name:'Compared published Saved matches'})
+    expect(table).toHaveTextContent('changed')
+    expect(table).toHaveTextContent('3-1 → 3-2')
+    expect(table).toHaveTextContent('added')
+    expect(table).not.toHaveTextContent('same')
+    expect(api.getSavedTourEdition).toHaveBeenCalledWith('run-a','fork','old',0,'Cup')
+    expect(api.getSavedTourEdition).toHaveBeenCalledWith('run-a','fork','new',0,'Cup')
+    await userEvent.click(within(panel).getByRole('button',{name:'Inspect published match changed'}))
+    const matchDetail=within(panel).getByLabelText('Exact published match A B detail')
+    expect(matchDetail).toHaveTextContent('"p1"')
+    expect(matchDetail).toHaveTextContent('"p2"')
+    await userEvent.click(within(matchDetail).getByRole('button',{name:'Close match evidence'}))
+    await userEvent.selectOptions(within(panel).getByLabelText('Compare published match display filter'),'all')
+    expect(within(panel).getByRole('table',{name:'Compared published Saved matches'}))
+      .toHaveTextContent('same')
   })
   it('fails closed when State B calendar comes from the wrong original owner',async()=>{
     api.getSavedTourCalendar.mockImplementation(async (_run:string,branch:string,

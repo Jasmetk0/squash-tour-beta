@@ -8,6 +8,7 @@ import type {SavedRevisionHistoryEntry} from '../api/types'
 import {formatApiError} from '../utils/apiErrors'
 import {compareSavedSeasonEditions} from './savedEditionCompare'
 import type {SavedEditionDiff,SavedEditionDiffStatus} from './savedEditionCompare'
+import {SavedMatchComparePanel} from './SavedMatchComparePanel'
 
 type Props={runId:string;branchId:string;a:SavedRevisionHistoryEntry;b:SavedRevisionHistoryEntry}
 const statuses:SavedEditionDiffStatus[]=['added','removed','changed','unchanged']
@@ -118,8 +119,14 @@ export function SavedEditionCompareSection({runId,branchId,a,b}:Props):JSX.Eleme
         <section><h5>B · After · actual Saved Edition</h5>
           <pre className="json-block">{show(selected.b)}</pre></section>
       </div>
-      <p className="status">This is canonical calendar evidence for the selected Saved Revisions;
-        detailed archived Match and player changes require separately supported evidence.</p>
+      {selected.a&&selected.b&&<SavedMatchComparePanel
+        key={[a.revision_id,b.revision_id,seasonIndex,selected.eventId].join(':')}
+        runId={runId} branchId={branchId} seasonIndex={seasonIndex}
+        eventId={selected.eventId} a={a} b={b}
+        calendarA={selected.a} calendarB={selected.b}/>}
+      {(!selected.a||!selected.b)&&<p className="status">
+        This Edition exists in only one selected Saved Revision.
+        There is no second published Edition to compare match results against.</p>}
     </aside>}
   </section>
 }

@@ -2224,6 +2224,9 @@ export type GlobalFullSimulationOperation = {
   final_completed_week_count: number
   review_fingerprint: string
   worker_activity: 'unknown'
+  // A lease proves only fenced invocation ownership, not worker health.
+  lease_state: 'absent' | 'matching_active' | 'matching_expired' | 'other_active' | 'other_expired'
+  lease_expires_at_unix: number | null
 }
 
 export type GlobalFullSimulationOperations = {

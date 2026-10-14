@@ -40,7 +40,14 @@ const copy = {
     finalWeeks: 'Dokončené týdny poslední sezony',
     from: 'Původní začátek',
     target: 'Původní cíl',
-    worker: 'Stav serverového procesu: neznámý',
+    worker: 'Skutečná aktivita workeru není potvrzena',
+    lease: {
+      absent: 'Bez aktuální execution lease',
+      matching_active: 'Platná lease této simulace (nikoli potvrzení zdraví procesu)',
+      matching_expired: 'Expirovaná lease této simulace',
+      other_active: 'Globální lease aktuálně drží jiná simulace',
+      other_expired: 'Uložená expirovaná lease patří jiné simulaci'
+    },
     readonly: 'Jen pro čtení; možnost pokračovat musí ověřit cílový Run a větev.',
     inspect: 'Otevřít detail a ovládání',
     runs: 'Otevřít seznam Runů'
@@ -73,7 +80,14 @@ const copy = {
     finalWeeks: 'Completed final-season weeks',
     from: 'Original start',
     target: 'Original target',
-    worker: 'Server worker activity: unknown',
+    worker: 'Actual worker activity is unverified',
+    lease: {
+      absent: 'No current execution lease',
+      matching_active: 'Unexpired lease for this simulation (not a process-health guarantee)',
+      matching_expired: 'Expired lease for this simulation',
+      other_active: 'Another simulation currently holds the global lease',
+      other_expired: 'A different simulation owns the stored expired lease'
+    },
     readonly: 'Read-only: the exact Run and Branch must confirm whether resume is available.',
     inspect: 'Open detail and controls',
     runs: 'Open Runs inventory'
@@ -156,7 +170,7 @@ export function GlobalSimulationTaskCenterPage(): JSX.Element {
                   <span><b>{text.from}:</b> S{operation.start_week.season_index} W{operation.start_week.week}</span>
                   <span><b>{text.target}:</b> S{operation.final_week.season_index} W{operation.final_week.week}</span>
                 </div>
-                <p className="status">{text.worker}</p>
+                <p className="status">{text.worker} · {text.lease[operation.lease_state]}</p>
                 {(operation.run_read_only || operation.branch_read_only || operation.branch_status !== 'active')
                   && <p className="status">{text.readonly}</p>}
                 <Link className="button-link"

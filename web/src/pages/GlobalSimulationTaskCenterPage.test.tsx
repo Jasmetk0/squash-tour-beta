@@ -28,7 +28,8 @@ const example = {
       start_week: {season_index: 3, week: 11},
       final_week: {season_index: 49, week: 61},
       completed_season_count: 5, final_completed_week_count: 1,
-      review_fingerprint: 'a'.repeat(64), worker_activity: 'unknown'
+      review_fingerprint: 'a'.repeat(64), worker_activity: 'unknown',
+      lease_state: 'absent', lease_expires_at_unix: null
     },
     {
       run_id: 'run-beta', run_name: 'Beta world',
@@ -39,7 +40,8 @@ const example = {
       start_week: {season_index: 4, week: 7},
       final_week: {season_index: 49, week: 61},
       completed_season_count: 4, final_completed_week_count: 0,
-      review_fingerprint: 'b'.repeat(64), worker_activity: 'unknown'
+      review_fingerprint: 'b'.repeat(64), worker_activity: 'unknown',
+      lease_state: 'matching_active', lease_expires_at_unix: 2000000000
     },
     {
       run_id: 'run-gamma', run_name: 'Gamma world',
@@ -50,7 +52,8 @@ const example = {
       start_week: {season_index: 2, week: 8},
       final_week: {season_index: 49, week: 61},
       completed_season_count: 1, final_completed_week_count: 0,
-      review_fingerprint: 'c'.repeat(64), worker_activity: 'unknown'
+      review_fingerprint: 'c'.repeat(64), worker_activity: 'unknown',
+      lease_state: 'matching_expired', lease_expires_at_unix: 1000000000
     }
   ]
 }
@@ -78,7 +81,10 @@ describe('global Full Simulation Task Center', () => {
     expect(screen.getByText(/Obnovitelné záznamy:/)).toHaveTextContent('3')
     expect(screen.getByText(/Starší záznamy bez ověřitelného příkazu/)).toHaveTextContent('1')
     expect(screen.getByText(/Jde o uložené záznamy postupu/)).toBeInTheDocument()
-    expect(within(list).getAllByText('Stav serverového procesu: neznámý')).toHaveLength(3)
+    expect(within(list).getAllByText(/Skutečná aktivita workeru není potvrzena/)).toHaveLength(3)
+    expect(within(list).getByText(/Platná lease této simulace/)).toBeInTheDocument()
+    expect(within(list).getByText(/Expirovaná lease této simulace/)).toBeInTheDocument()
+    expect(within(list).getByText(/Bez aktuální execution lease/)).toBeInTheDocument()
     const alpha = within(list).getByText('Alfa svět / A timeline').closest('li')!
     expect(within(alpha).getByText('Dokončené sezony:').parentElement).toHaveTextContent('5')
     expect(within(alpha).getByText('Dokončené týdny poslední sezony:').parentElement).toHaveTextContent('1')

@@ -1,3 +1,11 @@
+# Active pre-alpha integration queue — global Full Simulation controls, 14 October 2026
+
+Verified baseline `buuk` `71100cf57ef2f730ef419c5741b482fcb817724b` (merge #1463), no open PR at start. **Current candidate (not yet merged):** make the existing Task Center trustworthy through strict parent/progress/original-target validation and read-only SQLite invocation-lease projection with CS/EN evidence; confirm via focused SQLite API, TS validator and component tests. An unexpired lease proves fenced invocation ownership, not verified worker liveness. Never expose the token.
+
+**Next:** genuine HTTP/SQLite plus Chromium pause → acknowledgement → lost-response idempotent retry → Task Center return → same-parent resume; reject competing Run work and stale owner writes; verify explicit Save-only Saved Revision. **Then:** versioned effective target change and safe termination, true server task lifecycle and reconnect, followed by tracking/stop rules/Run presets. Audit other simulation entrypoints before advertising global serialization. No release/full-suite claim from focused PR CI; preserve dated historical roadmap below.
+
+---
+
 # Active pre-alpha roadmap — v81 checkpoint, 14 October 2026
 
 Verified integration: `bf928bfcd3e9848c15762ac66860039b53bedaef`, #1453. Product canon and completion evidence remain separate.

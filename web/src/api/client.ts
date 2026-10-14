@@ -2289,39 +2289,76 @@ export async function getAuthoritativeFullSimulationHistory(
   return data
 }
 
+function isBoundedFullSimulationWeek(value: unknown): boolean {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false
+  const week = value as Record<string, unknown>
+  return Object.keys(week).length === 2 &&
+    Number.isInteger(week.season_index) && (week.season_index as number) >= 0 &&
+    (week.season_index as number) <= 49 &&
+    Number.isInteger(week.week) && (week.week as number) >= 1 &&
+    (week.week as number) <= 61
+}
+
 export async function getGlobalFullSimulationOperations(): Promise<GlobalFullSimulationOperations> {
   const data = await request<GlobalFullSimulationOperations>(
     '/run-containers/full-simulation/operations'
   )
   if (
-    data.schema_version !== 'global_full_simulation_operations.v1' ||
+    !data || data.schema_version !== 'global_full_simulation_operations.v1' ||
     data.visibility !== 'durable_receipts_only' ||
     !Array.isArray(data.operations) ||
+    !Number.isSafeInteger(data.pending_count) ||
     data.pending_count !== data.operations.length ||
-    !Number.isInteger(data.legacy_pending_count) ||
+    !Number.isSafeInteger(data.legacy_pending_count) ||
     data.legacy_pending_count < 0
   ) {
     throw new Error('Global Full Simulation receipt inventory is invalid.')
   }
   const seen = new Set<string>()
+  const seenParentScopes = new Set<string>()
   for (const operation of data.operations) {
     const key = JSON.stringify([operation.run_id, operation.branch_id, operation.command_id])
+    const scope = JSON.stringify([operation.run_id, operation.branch_id])
+    const validStart = isBoundedFullSimulationWeek(operation.start_week)
+    const validFinal = isBoundedFullSimulationWeek(operation.final_week) &&
+      operation.final_week.season_index === 49 && operation.final_week.week === 61
+    const validLease = [
+      'absent', 'matching_active', 'matching_expired', 'other_active', 'other_expired'
+    ].includes(operation.lease_state) &&
+      (operation.lease_state === 'absent'
+        ? operation.lease_expires_at_unix === null
+        : Number.isSafeInteger(operation.lease_expires_at_unix) &&
+          (operation.lease_expires_at_unix as number) >= 0)
+    const maxSeasons = validStart ? 49 - operation.start_week.season_index : 0
+    const firstFinalWeek = validStart && operation.start_week.season_index === 49
+      ? operation.start_week.week : 1
     if (
-      !operation.run_id || !operation.branch_id || !operation.command_id ||
-      !operation.run_name || !operation.branch_name ||
-      seen.has(key) ||
+      !operation || typeof operation.run_id !== 'string' || !operation.run_id ||
+      typeof operation.branch_id !== 'string' || !operation.branch_id ||
+      typeof operation.command_id !== 'string' || !operation.command_id ||
+      typeof operation.run_name !== 'string' || !operation.run_name ||
+      typeof operation.branch_name !== 'string' || !operation.branch_name ||
+      typeof operation.run_status !== 'string' ||
+      typeof operation.branch_status !== 'string' ||
+      typeof operation.run_read_only !== 'boolean' ||
+      typeof operation.branch_read_only !== 'boolean' ||
+      seen.has(key) || seenParentScopes.has(scope) ||
       !['running', 'pause_requested', 'paused'].includes(operation.control_state) ||
       operation.worker_activity !== 'unknown' ||
-      !Number.isInteger(operation.completed_season_count) ||
+      !Number.isSafeInteger(operation.completed_season_count) ||
       operation.completed_season_count < 0 ||
-      !Number.isInteger(operation.final_completed_week_count) ||
+      operation.completed_season_count > maxSeasons ||
+      !Number.isSafeInteger(operation.final_completed_week_count) ||
       operation.final_completed_week_count < 0 ||
-      !operation.start_week || !operation.final_week ||
+      operation.final_completed_week_count > 62 - firstFinalWeek ||
+      !validStart || !validFinal || !validLease ||
+      typeof operation.review_fingerprint !== 'string' ||
       !/^[a-f0-9]{64}$/.test(operation.review_fingerprint)
     ) {
       throw new Error('Global Full Simulation parent evidence is invalid.')
     }
     seen.add(key)
+    seenParentScopes.add(scope)
   }
   return data
 }

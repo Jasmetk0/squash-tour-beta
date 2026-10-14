@@ -2,6 +2,8 @@
 
 import json
 
+from beta_engine.application import global_full_simulation_operations as inventory_module
+
 import pytest
 
 from beta_engine.application.authoritative_run_simulation_driver import (
@@ -16,7 +18,8 @@ from beta_engine.infrastructure.db.engine import (
     DatabaseSettings, create_session_factory, create_sqlite_engine,
 )
 from beta_engine.infrastructure.db.models import (
-    AuthoritativeSimulationCommandModel, Base, RunBranchModel, RunContainerModel,
+    AuthoritativeSimulationCommandModel, Base, FullSimulationExecutionLeaseModel,
+    RunBranchModel, RunContainerModel,
 )
 
 
@@ -164,3 +167,126 @@ def test_global_inventory_counts_legacy_without_claiming_recoverability(factory)
     assert result["pending_count"] == 0
     assert result["legacy_pending_count"] == 1
     assert result["operations"] == []
+
+
+def _scope(factory, *, run_id="run", branch_id="branch", command_id="parent"):
+    with factory.begin() as session:
+        session.add(RunContainerModel(
+            run_id=run_id, display_name="Test Run",
+            storage_kind="custom_local", read_only=0,
+            timeline_start_season=2000, timeline_end_season=2049,
+            official_branch_id=branch_id, status="working",
+        ))
+        session.add(RunBranchModel(
+            run_id=run_id, branch_id=branch_id,
+            display_name="Timeline 1", status="active", read_only=0,
+        ))
+        session.add(_parent(run_id, branch_id, command_id, "running"))
+
+
+@pytest.mark.pr_critical
+@pytest.mark.parametrize("mutate", [
+    lambda p: p["review"].update(final_week={"season_index": 99, "week": 999}),
+    lambda p: p["review"].update(final_week={"season_index": 48, "week": 61}),
+    lambda p: p["review"].update(start_week={"season_index": 1, "week": 62}),
+    lambda p: p.update(run_id="foreign-run"),
+    lambda p: p.update(final_week={"season_index": 2, "week": 61}),
+    lambda p: p.update(completed_seasons=[1, 1]),
+    lambda p: p.update(completed_seasons=[1, 3]),
+    lambda p: p.update(completed_seasons=[True]),
+    lambda p: p.update(completed_seasons=list(range(1, 50))),
+    lambda p: p.update(completed_season_count=999),
+    lambda p: p.update(final_completed_weeks=[{"season_index": 99, "week": 1}]),
+    lambda p: p.update(final_completed_weeks=[
+        {"season_index": 49, "week": 1},
+        {"season_index": 49, "week": 1},
+    ]),
+    lambda p: p.update(final_completed_weeks=[{"season_index": 49, "week": 62}]),
+])
+def test_global_inventory_rejects_malformed_progress_without_writing(factory, mutate):
+    _scope(factory)
+    with factory.begin() as session:
+        row = session.get(AuthoritativeSimulationCommandModel, ("run", "branch", "parent"))
+        payload = json.loads(row.result_json)
+        mutate(payload)
+        row.result_json = json.dumps(payload)
+    with factory() as session:
+        original = session.get(
+            AuthoritativeSimulationCommandModel, ("run", "branch", "parent")
+        ).result_json
+    with pytest.raises(ValueError):
+        inspect_global_full_simulation_operations(factory)
+    with factory() as session:
+        assert session.get(
+            AuthoritativeSimulationCommandModel, ("run", "branch", "parent")
+        ).result_json == original
+
+
+@pytest.mark.pr_critical
+def test_global_inventory_validates_chronological_final_week_progress(factory):
+    _scope(factory)
+    with factory.begin() as session:
+        row = session.get(AuthoritativeSimulationCommandModel, ("run", "branch", "parent"))
+        payload = json.loads(row.result_json)
+        payload["completed_seasons"] = list(range(1, 49))
+        payload["final_completed_weeks"] = [
+            {"season_index": 49, "week": week} for week in range(1, 4)
+        ]
+        row.result_json = json.dumps(payload)
+    snapshot = inspect_global_full_simulation_operations(factory)
+    assert snapshot["operations"][0]["completed_season_count"] == 48
+    assert snapshot["operations"][0]["final_completed_week_count"] == 3
+    with factory.begin() as session:
+        row = session.get(AuthoritativeSimulationCommandModel, ("run", "branch", "parent"))
+        payload = json.loads(row.result_json)
+        payload["final_completed_weeks"][1]["week"] = 3
+        row.result_json = json.dumps(payload)
+    with pytest.raises(ValueError, match="final weeks"):
+        inspect_global_full_simulation_operations(factory)
+
+
+@pytest.mark.pr_critical
+def test_global_inventory_lease_is_read_only_and_not_worker_health(factory, monkeypatch):
+    _scope(factory)
+    monkeypatch.setattr(inventory_module.time, "time", lambda: 1000)
+    snapshot = inspect_global_full_simulation_operations(factory)
+    assert snapshot["operations"][0]["lease_state"] == "absent"
+    with factory.begin() as session:
+        session.add(FullSimulationExecutionLeaseModel(
+            lease_scope="all_runs", owner_token="INTERNAL-SECRET",
+            run_id="run", branch_id="branch", command_id="parent",
+            expires_at_unix=1100,
+        ))
+    with factory() as session:
+        prior = session.get(AuthoritativeSimulationCommandModel, ("run", "branch", "parent")).result_json
+    active = inspect_global_full_simulation_operations(factory)["operations"][0]
+    assert active["lease_state"] == "matching_active"
+    assert active["lease_expires_at_unix"] == 1100
+    assert active["worker_activity"] == "unknown"
+    assert "INTERNAL-SECRET" not in json.dumps(active)
+    monkeypatch.setattr(inventory_module.time, "time", lambda: 1200)
+    expired = inspect_global_full_simulation_operations(factory)["operations"][0]
+    assert expired["lease_state"] == "matching_expired"
+    with factory.begin() as session:
+        lease = session.get(FullSimulationExecutionLeaseModel, "all_runs")
+        lease.run_id = "other-run"
+        lease.command_id = "other-parent"
+        lease.expires_at_unix = 1300
+    other = inspect_global_full_simulation_operations(factory)["operations"][0]
+    assert other["lease_state"] == "other_active"
+    with factory() as session:
+        lease = session.get(FullSimulationExecutionLeaseModel, "all_runs")
+        assert lease.owner_token == "INTERNAL-SECRET"
+        assert lease.expires_at_unix == 1300
+        assert session.get(
+            AuthoritativeSimulationCommandModel, ("run", "branch", "parent")
+        ).result_json == prior
+
+
+@pytest.mark.pr_critical
+def test_global_inventory_rejects_two_pending_parents_in_same_branch(factory):
+    _scope(factory)
+    with factory.begin() as session:
+        session.add(_parent("run", "branch", "second-parent", "paused"))
+    with pytest.raises(ValueError, match="Duplicate pending Full Simulation"):
+        inspect_global_full_simulation_operations(factory)

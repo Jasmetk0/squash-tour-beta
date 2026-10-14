@@ -287,8 +287,8 @@ describe('Dedicated read-only Compare States A/B',()=>{
     locale.current='cs'
     open()
     const selection=await screen.findByLabelText('Výběr uložených revizí pro porovnání')
-    expect(within(selection).getByLabelText('Větev porovnání')).toHaveValue('fork')
-    expect(within(selection).getByLabelText('Porovnat stav A')).toHaveValue('old')
+    expect(await within(selection).findByLabelText('Větev porovnání')).toHaveValue('fork')
+    await waitFor(()=>expect(within(selection).getByLabelText('Porovnat stav A')).toHaveValue('old'))
     expect(within(selection).getByLabelText('Porovnat stav B')).toHaveValue('new')
     expect(screen.getByText('Porovnání uložených stavů A/B')).toBeInTheDocument()
     const results=await screen.findByLabelText('Výsledky porovnání uložených revizí')

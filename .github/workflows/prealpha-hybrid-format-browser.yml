@@ -1,4 +1,4 @@
-name: Pre-alpha Hybrid Format Browser
+name: Pre-alpha Hybrid Progression Browser
 on:
   pull_request:
     paths:
@@ -8,6 +8,9 @@ on:
       - 'web/src/components/GroupFormatSetupPanel.tsx'
       - 'web/src/api/tournamentGroupFormats.ts'
       - 'web/src/api/client.ts'
+      - 'web/src/components/HybridKnockoutProgressionPanel.tsx'
+      - 'web/src/api/tournamentHybridKnockout.ts'
+      - 'scripts/real_hybrid_progression_browser_checks.py'
   workflow_dispatch:
 
 concurrency:
@@ -19,7 +22,7 @@ permissions:
 
 jobs:
   hybrid-format:
-    name: Real hybrid crossing / Topology / Save / SQLite restart
+    name: Real hybrid groups / entrants / bracket / SQLite restart
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -55,12 +58,12 @@ jobs:
           done
           cat "$RUNNER_TEMP/hybrid-vite.log"
           exit 1
-      - name: Real hybrid format, explicit crossing, frozen topology, Saved Edition
+      - name: Real group MatchEngine results then frozen hybrid entrants, bracket and Save
         run: |
           python scripts/admin_saved_group_browser_smoke.py \
             --acceptance "$RUNNER_TEMP/hybrid-format-run" \
             --port 8014 \
-            --hybrid-preparation \
+            --hybrid-progression \
             --base-url http://127.0.0.1:5173 \
             --chromium "$CHROME_BIN"
       - name: Preserve screenshots and process restart evidence

@@ -1,3 +1,12 @@
+# Active pre-alpha — real Hybrid Group → Knockout handoff (14 October 2026)
+
+Base: `buuk` `1ea108fe329a90b2bd535dbc5e6077635dda0314`, after merged #1450.
+
+1. **Current PR:** actual completed Group Standings → authoritative position-specific Entrants → immutable complete Knockout Bracket, via two explicitly confirmed Admin mutations. Exact Run/Branch/Event, source fingerprints, sporting group position lookup and winner-source tree validation. Browser verifies real two-group Match Day and SQLite Saved/restart; no mocked match results.
+2. **Next PR(s):** simulate all genuine knockout slots through canonical Week Schedule, configure hybrid ranking policy, and close real champion/finalist/phase ranking source with persisted published Saved Edition. No simulated knockout victory in advance.
+3. **Release gates:** natural Run-produced cyclic tie across matches+history, 50-season continuity, comprehensive full pre-alpha suite and release QA.
+
+---
 # Active pre-alpha — explicit hybrid group-format path (14 October 2026)
 
 Base after merged #1449: `6844ebdd15464d173274783849be98138646cbc2`.

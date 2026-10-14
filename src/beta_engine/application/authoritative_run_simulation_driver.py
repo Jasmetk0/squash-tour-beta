@@ -51,6 +51,10 @@ from beta_engine.application.final_season_transition import (
     commit_final_season_transition,
 )
 from beta_engine.infrastructure.db.live_match_state import PersistedLiveMatchStore
+from beta_engine.infrastructure.db.full_simulation_invocation_lease import (
+    full_simulation_invocation_lease,
+    require_invocation_lease_owner,
+)
 from beta_engine.infrastructure.db.full_simulation_execution_guard import (
     ACTIVE_FULL_SIMULATION_GUARD,
     FullSimulationExecutionGuard,
@@ -6504,10 +6508,13 @@ class AuthoritativeRunSimulationDriver:
     def _acknowledge_full_simulation_pause(
         self, *, command: AuthoritativeFullSimulationCommand,
         request_fp: str, key: tuple[str, str, str],
+        lease_token: str | None = None,
     ) -> dict:
         """Acknowledge only after the active child transaction has safely exited."""
         with self.factory.begin() as session:
             session.execute(text("BEGIN IMMEDIATE"))
+            if lease_token is not None:
+                require_invocation_lease_owner(session, token=lease_token)
             receipt = session.get(AuthoritativeSimulationCommandModel, key)
             if (
                 receipt is None or receipt.status != "pending"
@@ -6739,52 +6746,64 @@ class AuthoritativeRunSimulationDriver:
     ) -> dict:
         """Progress the current Run to final 2049/50 closure through canonical children."""
 
-        request_fp = fingerprint(
-            {
-                "mode": "full_simulation",
-                "command": command.model_dump(mode="json"),
-            }
-        )
-        key = (command.run_id, command.branch_id, command.command_id)
+        # Lease is held only for the real invocation, never for a durable
+        # pending parent sitting idle between HTTP requests.
+        with full_simulation_invocation_lease(
+            self.factory,
+            run_id=command.run_id,
+            branch_id=command.branch_id,
+            command_id=command.command_id,
+        ) as lease_token:
+            request_fp = fingerprint(
+                {
+                    "mode": "full_simulation",
+                    "command": command.model_dump(mode="json"),
+                }
+            )
+            key = (command.run_id, command.branch_id, command.command_id)
 
-        guard_token = ACTIVE_FULL_SIMULATION_GUARD.set(
-            FullSimulationExecutionGuard(
-                run_id=command.run_id,
-                branch_id=command.branch_id,
-                command_id=command.command_id,
-                request_fingerprint=request_fp,
-                before_transaction_check=(
-                    self.full_simulation_before_transaction_check
-                ),
-            )
-        )
-        paused = False
-        try:
-            result = self._simulate_full_simulation_guarded(
-                command=command, request_fp=request_fp, key=key,
-            )
-        except FullSimulationPauseRequested:
-            paused = True
-            result = None
-        finally:
-            ACTIVE_FULL_SIMULATION_GUARD.reset(guard_token)
-        if paused:
-            return self._acknowledge_full_simulation_pause(
-                command=command, request_fp=request_fp, key=key,
-            )
-        if result.get("schema_version") == "authoritative_full_simulation_progress.v1":
-            with self.factory() as session:
-                receipt = session.get(AuthoritativeSimulationCommandModel, key)
-                pending_pause = (
-                    receipt is not None and receipt.status == "pending"
-                    and json.loads(receipt.result_json).get("control_state")
-                    == "pause_requested"
+            guard_token = ACTIVE_FULL_SIMULATION_GUARD.set(
+                FullSimulationExecutionGuard(
+                    run_id=command.run_id,
+                    branch_id=command.branch_id,
+                    command_id=command.command_id,
+                    request_fingerprint=request_fp,
+                    execution_lease_token=lease_token,
+                    before_transaction_check=(
+                        self.full_simulation_before_transaction_check
+                    ),
                 )
-            if pending_pause:
-                return self._acknowledge_full_simulation_pause(
+            )
+            paused = False
+            try:
+                result = self._simulate_full_simulation_guarded(
                     command=command, request_fp=request_fp, key=key,
                 )
-        return result
+            except FullSimulationPauseRequested:
+                paused = True
+                result = None
+            finally:
+                ACTIVE_FULL_SIMULATION_GUARD.reset(guard_token)
+            if paused:
+                return self._acknowledge_full_simulation_pause(
+                    command=command, request_fp=request_fp, key=key,
+                    lease_token=lease_token,
+                )
+            if result.get("schema_version") == "authoritative_full_simulation_progress.v1":
+                with self.factory() as session:
+                    receipt = session.get(AuthoritativeSimulationCommandModel, key)
+                    pending_pause = (
+                        receipt is not None and receipt.status == "pending"
+                        and json.loads(receipt.result_json).get("control_state")
+                        == "pause_requested"
+                    )
+                if pending_pause:
+                    return self._acknowledge_full_simulation_pause(
+                        command=command, request_fp=request_fp, key=key,
+                        lease_token=lease_token,
+                    )
+            return result
+
 
     def _simulate_full_simulation_guarded(
         self,

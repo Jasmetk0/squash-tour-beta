@@ -999,6 +999,23 @@ class AuthoritativeSimulationCommandModel(Base):
     result_json: Mapped[str] = mapped_column(Text, nullable=False)
 
 
+class FullSimulationExecutionLeaseModel(Base):
+    """One cross-process, invocation-owned Full Simulation writer lease per DB.
+
+    This row is not a durable parent receipt or evidence of an autonomous worker.
+    Its lease token fences old invocations if a crashed owner is reclaimed.
+    """
+
+    __tablename__ = "full_simulation_execution_leases"
+
+    lease_scope: Mapped[str] = mapped_column(String(32), primary_key=True)
+    owner_token: Mapped[str] = mapped_column(String(64), nullable=False)
+    run_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    branch_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    command_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    expires_at_unix: Mapped[int] = mapped_column(Integer, nullable=False)
+
+
 class AdoptedTournamentAuthorityModel(Base):
     """Immutable Run/Branch tournament package frozen at authoritative adoption."""
 

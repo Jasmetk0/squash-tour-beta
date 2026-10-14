@@ -70,9 +70,29 @@ def _pause_before_full_simulation_writer(
     connection, cursor, statement, parameters, context, executemany
 ) -> None:
     guard = ACTIVE_FULL_SIMULATION_GUARD.get()
-    if (
-        guard is not None
-        and guard.before_transaction_check is not None
-        and statement.strip().upper() == "BEGIN IMMEDIATE"
-    ):
+    if guard is None or statement.strip().upper() != "BEGIN IMMEDIATE":
+        return
+    if guard.before_transaction_check is not None:
         guard.before_transaction_check()
+    # SQLite reserves the writer lock at BEGIN IMMEDIATE: checking the durable
+    # parent immediately before it fences ORM flushes AND direct SQL writers.
+    # Another control request cannot commit while the child holds this lock.
+    row = connection.exec_driver_sql(
+        "SELECT request_fingerprint, status, result_json "
+        "FROM authoritative_simulation_commands "
+        "WHERE run_id = ? AND branch_id = ? AND command_id = ?",
+        (guard.run_id, guard.branch_id, guard.command_id),
+    ).first()
+    if row is None:
+        return  # The first parent creation has not been committed yet.
+    if row[0] != guard.request_fingerprint:
+        raise ValueError("Full Simulation execution guard fingerprint mismatch")
+    if row[1] == "abandoned":
+        raise ValueError("Full Simulation parent abandoned; execution is fenced")
+    if row[1] != "pending":
+        raise ValueError("Full Simulation execution guard found an invalid status")
+    import json
+    if json.loads(row[2]).get("control_state", "running") in (
+        "pause_requested", "paused"
+    ):
+        raise FullSimulationPauseRequested("Full Simulation pause requested before writer transaction")

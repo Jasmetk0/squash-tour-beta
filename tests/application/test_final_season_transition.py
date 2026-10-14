@@ -1085,7 +1085,7 @@ def test_full_simulation_pause_and_resume_preserve_same_parent_and_child_receipt
             run_id="run", branch_id="branch", action=action,
             operator_label=actor, audit_reason="Explicit reviewed operator control",
         )
-    with pytest.raises(ValueError, match="pending parent"):
+    with pytest.raises(ValueError, match="pending or stopped parent"):
         driver.control_full_simulation(
             AuthoritativeFullSimulationControlCommand(
                 control_command_id="control-missing",

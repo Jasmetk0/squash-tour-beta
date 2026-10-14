@@ -7,6 +7,8 @@ compatibility reader; legacy producer files are not execution state.
 
 from __future__ import annotations
 
+from beta_engine.application.full_simulation_summary import capture_terminal_summary, stored_terminal_summary
+
 import hashlib
 import json
 from dataclasses import dataclass, replace
@@ -6653,6 +6655,10 @@ class AuthoritativeRunSimulationDriver:
                 "audit_reason": command.audit_reason,
             })
             frozen["control_events"] = events
+            if state == "stopped":
+                frozen["terminal_summary"] = capture_terminal_summary(
+                    session, receipt, frozen, self._position(
+                        session, command.run_id, command.branch_id, allow_missing_schedule=True))
             receipt.result_json = json.dumps(
                 frozen, sort_keys=True, separators=(",", ":")
             )
@@ -6720,10 +6726,10 @@ class AuthoritativeRunSimulationDriver:
             frozen = json.loads(receipt.result_json)
             if frozen.get("control_state") != "stopped":
                 raise ValueError("Full Simulation terminal control is inconsistent")
-            position = self._position(
-                session, command.run_id, command.branch_id,
-                allow_missing_schedule=True,
-            )
+            summary = stored_terminal_summary(receipt, frozen)
+            position = (AuthoritativeSimulationPosition.model_validate_json(json.dumps(summary["position"]))
+                if summary is not None else self._position(
+                    session, command.run_id, command.branch_id, allow_missing_schedule=True))
             progress = self._full_progress_payload(
                 command=command, frozen=frozen, checkpoint="operator_stopped",
                 detail="Stopped safely; committed child work persists. No implicit Save.",
@@ -6760,8 +6766,11 @@ class AuthoritativeRunSimulationDriver:
                 frozen["target_reached_week"] = position.current_week.model_dump(mode="json")
                 frozen["control_state"] = "target_reached"
                 receipt.status = "target_reached"
+                frozen["terminal_summary"] = capture_terminal_summary(session, receipt, frozen, position)
                 receipt.result_json = json.dumps(frozen, sort_keys=True, separators=(",", ":"))
-            position = self._position(session, command.run_id, command.branch_id, allow_missing_schedule=True)
+            summary = stored_terminal_summary(receipt, frozen)
+            position = (AuthoritativeSimulationPosition.model_validate_json(json.dumps(summary["position"]))
+                if summary is not None else self._position(session, command.run_id, command.branch_id, allow_missing_schedule=True))
             response = self._full_progress_payload(
                 command=command, frozen=frozen, position=position,
                 checkpoint="operator_target_reached",

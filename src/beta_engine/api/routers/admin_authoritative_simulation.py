@@ -1583,6 +1583,21 @@ def simulate_next_season(
         ) from exc
 
 
+@router.get("/full-simulation/parents/{command_id}/summary")
+def inspect_full_simulation_terminal_summary(
+    run_id: str, branch_id: str, command_id: str,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+):
+    from beta_engine.application.full_simulation_summary import inspect_terminal_summary
+    try:
+        return inspect_terminal_summary(runtime.repository._session_factory,
+            run_id=run_id, branch_id=branch_id, command_id=command_id)
+    except (KeyError, TypeError, ValueError) as exc:
+        raise HTTPException(status_code=409, detail={
+            "code": "full_simulation_summary_conflict", "message": str(exc),
+        }) from exc
+
+
 @router.get("/full-simulation/parents/{command_id}")
 def inspect_full_simulation_parent(
     run_id: str,

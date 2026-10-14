@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { useLanguage } from '../i18n/LanguageContext'
 import { fullSimulationControlText } from '../i18n/fullSimulationControlText'
+import { FullSimulationSummary } from '../components/FullSimulationSummary'
 
 import {
   adoptAuthoritativeWeekScheduleProposal,
@@ -3640,6 +3641,8 @@ export function AuthoritativeSimulationPanel({
               {fullSimulationParentDetailQuery.data ? (
                 <div role="group" aria-label="Full Simulation parent detail">
                   <h6>Full Simulation parent detail</h6>
+                  <FullSimulationSummary runId={runId} branchId={branchId}
+                    commandId={fullSimulationParentDetailQuery.data.command_id} />
                   <MetadataList
                     items={[
                       {

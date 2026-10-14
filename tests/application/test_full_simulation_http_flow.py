@@ -162,7 +162,9 @@ def test_http_operator_stop_during_work_or_pause_is_terminal_and_replay_safe(
                 "action": "stop", "operator_label": "Operator",
                 "audit_reason": "Stop after safely committed child",
             }
-            assert _request("POST", url + "/full-simulation/control", stop)[1]["control_state"] == "stopped"
+            status, stopped_control = _request("POST", url + "/full-simulation/control", stop)
+            assert status == 200, stopped_control
+            assert stopped_control["control_state"] == "stopped"
             status, replay = _request("POST", url + "/full-simulation/control", stop)
             assert status == 200 and replay["replayed"] is True
             assert replay["observed_control_state"] == "stopped"

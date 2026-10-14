@@ -1,3 +1,13 @@
+# Active integration candidate — frozen terminal summaries, 14 October 2026
+
+Verified base `buuk` `e271ef07` (merge #1468), no open PR at start. #1465–1468 are merged: safe Stop, weekly arrival targets and relative week/season targets are implemented. **New candidate, not merged / not a release:** new Stop and reached-week operations atomically preserve a fingerprinted terminal summary and exact Position. History detail reads actual start/end, original/effective target, reason, child-command count, terminal Saved Revision and validated tournament winners owned by the original child-command graph. Subsequent explicit Save/Branch work cannot rewrite the summary or terminal retry's endpoint. Unrecorded historical endpoints remain unavailable; no current-state fallback.
+
+Evidence: [terminal summary v81](docs/FULL_SIMULATION_TERMINAL_SUMMARY_V81.md). 60 focused backend tests, 64 focused React/client tests, build/compile/diff and native CS/EN Chromium pass locally. Native proof finishes three real matches **and** their canonical source closure before Stop; it does not infer a completed tournament from match receipts alone. Saved Revisions remain unchanged without Save. All triggered final-head CI gates must pass before merge handoff. Earlier candidate labels below are historical snapshots.
+
+**Next:** event/intra-week targets or independent server task lifecycle/reconnect. Ranking movement, watched events, notifications and older/final-Run closure summaries without captured evidence are explicitly unavailable. Browser polling is not a worker; full season/50-season/release acceptance remains outstanding. Master decisions and original sporting owners/RNG/snapshots are preserved.
+
+---
+
 # Relative Full Simulation targets — integration candidate (14 October 2026)
 
 Verified `buuk` `3b28ccf3d1561ddf682cf364edb76d71048a19ee`, merged #1467, no open PR at baseline. **Candidate only, not merged:** extend the proven, versioned absolute Full Simulation target command with positive integer relative increments in **weeks** or **61-week seasons**. Resolve against actual current week in the same SQLite writer-locked transaction, preserve original intent and immutable target request/resolution/audit events, reject beyond final Run week, preserve exact replay across later target changes and terminal state. CS/EN Admin and TypeScript client tests, HTTP/SQLite regression and Chromium proof must pass on final HEAD. No actual server-owned background task, event stop-rule, intra-week point or complete pre-alpha release. Historical notes below remain dated.

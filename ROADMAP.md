@@ -1,3 +1,11 @@
+# Active integration queue — frozen terminal summaries, 14 October 2026
+
+Verified `buuk` `e271ef07`, merge #1468; no open PR at start. Safe Stop, absolute weekly targets and relative week/season increments are already merged. **Current candidate:** atomically capture safe-Stop/reached-week summary with actual endpoint and command-owned completed tournament winners; display stored evidence in CS/EN History detail. Fix terminal retry drifting to a later Branch Position. Confirm real HTTP/SQLite, later explicit Save, corruption/wrong-scope denial and native Chromium; no implicit Save or invented historical fallback. [Evidence](docs/FULL_SIMULATION_TERMINAL_SUMMARY_V81.md).
+
+**Next PR:** event/intra-week target boundaries or the independent server task lifecycle/reconnect slice, retaining immutable original command and versioned effective target. Ranking/watched-event/notification summary extensions require historical authorities. Final 50-season closure summaries without captured evidence remain unavailable, as do complete season/50-season release claims. All triggered final-head CI gates must pass before merge handoff. Historical roadmap below remains intact.
+
+---
+
 # Active integration: relative Full Simulation target control (14 October 2026)
 
 After verified merge #1467, implement `N weeks` and `N seasons` as strictly positive, bounded **relative week-arrival** increments, resolved transactionally from real current server time and persisted as replay-safe provenance. Share original Full Simulation parent, writer fence and manual Save. Verify API input rejection, lost-response idempotency, cross-season arithmetic, strict upper bound, global Task Center integrity, CS/EN Admin and browser flows. Final-head CI is a hard merge gate. Further work: precise in-week/event targets and independent server task lifecycle. Historical roadmap follows.

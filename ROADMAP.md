@@ -1,3 +1,15 @@
+# Active pre-alpha queue — 14 October 2026 (after merged #1443)
+
+Verified starting `buuk`: `b1c6a4ec09c91d704134dfe955f5f10e03ba32ef`; #1443 merged.
+
+1. **Current candidate:** Country period Match Records for actual played wins and played appearances; complete canonical Saved evidence aggregated before pagination, all tied holders, historic match source detail, exact season/week, Branch and revision-safe return, Chromium/SQLite replay.
+2. **Next:** expand only evidence-backed record categories when sporting comparison is determined; improve historical Country player context where supported. Avoid inventing ranking points, generic streak records, future results or a full 50-season acceptance claim.
+3. **Then:** History & Branches revision map, independent read-only Compare A/B, and mandatory true end-to-end pre-alpha hybrid/tie/ranking/release validation.
+
+Older dated sections below remain historical.
+
+---
+
 # Active pre-alpha queue — 13 October 2026 (after #1442)
 
 Starting point: `buuk` `3a1d18cadd300593a93166d9e46acd33b7c58965`, #1442 merged.

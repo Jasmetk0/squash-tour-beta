@@ -201,6 +201,8 @@ import type {
   AuthoritativeFullSimulationExecution,
   AuthoritativeFullSimulationPendingCollection,
   AuthoritativeFullSimulationAbandonPayload,
+  AuthoritativeFullSimulationControlPayload,
+  AuthoritativeFullSimulationControlResult,
   AuthoritativeFullSimulationAbandonResult,
   AuthoritativeFullSimulationHistory,
   AuthoritativeFullSimulationParentDetail,
@@ -2302,6 +2304,7 @@ export async function getPendingAuthoritativeFullSimulations(
   }
   for (const operation of data.operations) {
     if (
+      !['running', 'pause_requested', 'paused'].includes(operation.control_state) ||
       operation.command.expected_preview_fingerprint !==
         operation.review.preview_fingerprint ||
       operation.command.expected_position_fingerprint !==
@@ -2314,6 +2317,30 @@ export async function getPendingAuthoritativeFullSimulations(
     ) {
       throw new Error('Pending Full Simulation operation is invalid.')
     }
+  }
+  return data
+}
+
+export async function controlAuthoritativeFullSimulation(
+  runId: string,
+  branchId: string,
+  payload: AuthoritativeFullSimulationControlPayload
+): Promise<AuthoritativeFullSimulationControlResult> {
+  const data = await request<AuthoritativeFullSimulationControlResult>(
+    authoritativeSimulationRoot(runId, branchId) + '/full-simulation/control',
+    { method: 'POST', body: JSON.stringify(payload) }
+  )
+  verifyAuthoritativeSimulationScope(runId, branchId, data)
+  if (
+    data.schema_version !== 'authoritative_full_simulation_control_result.v1' ||
+    data.target_command_id !== payload.target_command_id ||
+    data.action !== payload.action ||
+    data.committed_child_work_persists !== true ||
+    !['running', 'pause_requested', 'paused'].includes(data.control_state) ||
+    (payload.action === 'pause' && data.control_state !== 'pause_requested') ||
+    (payload.action === 'resume' && data.control_state !== 'running')
+  ) {
+    throw new Error('Full Simulation control response is invalid.')
   }
   return data
 }

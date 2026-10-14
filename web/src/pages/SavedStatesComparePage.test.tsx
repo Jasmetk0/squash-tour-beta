@@ -60,7 +60,7 @@ describe('Dedicated read-only Compare States A/B',()=>{
     open()
     const selection=await screen.findByLabelText('Compare Saved Revision selection')
     expect(await within(selection).findByLabelText('Compare Branch')).toHaveValue('fork')
-    expect(within(selection).getByLabelText('Compare state A')).toHaveValue('old')
+    await waitFor(()=>expect(within(selection).getByLabelText('Compare state A')).toHaveValue('old'))
     expect(within(selection).getByLabelText('Compare state B')).toHaveValue('new')
     const results=await screen.findByLabelText('Compare Saved Revision results')
     const table=await within(results).findByRole('table',{name:'Saved State A B comparison table'})

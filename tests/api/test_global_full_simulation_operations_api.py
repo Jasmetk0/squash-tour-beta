@@ -3,7 +3,14 @@
 import json
 
 import pytest
-from fastapi.testclient import TestClient
+from contextlib import contextmanager
+from threading import Thread
+import socket
+import time
+from urllib.error import HTTPError
+from urllib.request import urlopen
+
+import uvicorn
 
 from beta_engine.application.authoritative_run_simulation_driver import (
     AuthoritativeFullSimulationCommand,
@@ -18,6 +25,50 @@ from beta_engine.infrastructure.db.models import (
     RunBranchModel, RunContainerModel,
 )
 from beta_engine.main import create_app
+
+
+class _Response:
+    def __init__(self, status_code: int, text: str):
+        self.status_code = status_code
+        self.text = text
+
+    def json(self):
+        return json.loads(self.text)
+
+
+def _get(base_url: str, path: str) -> _Response:
+    try:
+        with urlopen(base_url + path, timeout=10) as response:
+            return _Response(response.status, response.read().decode("utf-8"))
+    except HTTPError as exc:
+        return _Response(exc.code, exc.read().decode("utf-8"))
+
+
+@contextmanager
+def _server(app):
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as probe:
+        probe.bind(("127.0.0.1", 0))
+        port = probe.getsockname()[1]
+    base = f"http://127.0.0.1:{port}"
+    server = uvicorn.Server(uvicorn.Config(
+        app, host="127.0.0.1", port=port, log_level="error"
+    ))
+    thread = Thread(target=server.run, daemon=True)
+    thread.start()
+    try:
+        deadline = time.monotonic() + 10
+        while True:
+            try:
+                _get(base, "/health")
+                break
+            except OSError:
+                if time.monotonic() >= deadline:
+                    raise RuntimeError("Task Center HTTP test server did not start")
+                time.sleep(0.05)
+        yield base
+    finally:
+        server.should_exit = True
+        thread.join(timeout=10)
 
 
 @pytest.mark.pr_critical
@@ -81,8 +132,8 @@ def test_task_center_http_sqlite_inventory_is_read_only_and_conflicts_on_corrupt
         ))
 
     try:
-        with TestClient(app) as client:
-            first = client.get("/run-containers/full-simulation/operations")
+        with _server(app) as base_url:
+            first = _get(base_url, "/run-containers/full-simulation/operations")
             assert first.status_code == 200, first.text
             response = first.json()
             operation = response["operations"][0]
@@ -92,7 +143,7 @@ def test_task_center_http_sqlite_inventory_is_read_only_and_conflicts_on_corrupt
             assert operation["final_completed_week_count"] == 2
             assert operation["worker_activity"] == "unknown"
             assert "NEVER-SEND-TO-UI" not in first.text
-            second = client.get("/run-containers/full-simulation/operations")
+            second = _get(base_url, "/run-containers/full-simulation/operations")
             assert second.json() == response
             with factory() as session:
                 parent = session.get(
@@ -109,7 +160,7 @@ def test_task_center_http_sqlite_inventory_is_read_only_and_conflicts_on_corrupt
                 corrupted = json.loads(parent.result_json)
                 corrupted["review"]["final_week"] = {"season_index": 99, "week": 999}
                 parent.result_json = json.dumps(corrupted)
-            failed = client.get("/run-containers/full-simulation/operations")
+            failed = _get(base_url, "/run-containers/full-simulation/operations")
             assert failed.status_code == 409
             assert failed.json()["detail"]["code"] == (
                 "global_full_simulation_operations_conflict"

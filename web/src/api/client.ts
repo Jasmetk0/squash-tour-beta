@@ -2487,7 +2487,9 @@ export async function simulateAuthoritativeFullSimulation(
   verifyAuthoritativeSimulationScope(runId, branchId, data)
   if (data.schema_version === 'authoritative_full_simulation_progress.v1') {
     if (
-      data.status !== 'blocked' ||
+      !['blocked', 'stopped'].includes(data.status) ||
+      (data.status === 'stopped' && data.checkpoint !== 'operator_stopped') ||
+      (data.status === 'blocked' && data.checkpoint === 'operator_stopped') ||
       data.completed_season_count !== data.completed_seasons.length ||
       data.final_completed_week_count !== data.final_completed_weeks.length
     ) {

@@ -9,6 +9,7 @@ from beta_engine.application.authoritative_run_simulation_driver import (
     AuthoritativeFullSimulationCommand,
     AuthoritativeFullSimulationPreviewRequest,
     AuthoritativeFullSimulationAbandonCommand,
+    AuthoritativeFullSimulationControlCommand,
     AuthoritativeRunSimulationDriver,
     AuthoritativeSimulationPosition,
 )
@@ -1035,3 +1036,178 @@ def test_atomic_final_season_writer_rolls_back_everything_after_partial_failure(
         assert session.get(BranchSavedRevisionModel, "revision-final") is None
         assert session.get(BranchRevisionAuditEventModel, "audit-final") is None
         assert session.scalars(select(SeasonClosingRankingModel)).all() == []
+
+
+@pytest.mark.pr_critical
+def test_full_simulation_pause_and_resume_preserve_same_parent_and_child_receipts(
+    database, monkeypatch,
+):
+    """Server pause is durable, acknowledges a safe boundary and never autosaves."""
+    _patch_saved_revision_captures(monkeypatch)
+    with database.begin() as session:
+        _install_final_boundary(session)
+    position = AuthoritativeSimulationPosition(
+        run_id="run", branch_id="branch", current_week=FINAL_WEEK,
+        current_slot_id=None, slot_ordinal=None, unresolved_group_ids=(),
+        eligible_match_ids=(), blocked_match_ids=(),
+        current_slot_complete=True, supported_tournament_complete=True,
+        week_ready_for_transition=True,
+        transition_blockers=("season_transition_required",),
+        terminal_sporting_fingerprint="d" * 64,
+        position_fingerprint="e" * 64,
+    )
+    monkeypatch.setattr(
+        AuthoritativeRunSimulationDriver,
+        "_position",
+        lambda self, session, run_id, branch_id, allow_missing_schedule=False: position,
+    )
+    driver = AuthoritativeRunSimulationDriver(database, None, None)
+    request = AuthoritativeFullSimulationPreviewRequest(
+        command_id="pause-parent", run_id="run", branch_id="branch",
+        operator_label="Original", audit_reason="Review 50-season remainder",
+    )
+    preview = driver.preview_full_simulation(request)
+    command = AuthoritativeFullSimulationCommand(
+        **request.model_dump(mode="json"),
+        expected_start_week=FINAL_WEEK,
+        expected_position_fingerprint=preview["expected_position_fingerprint"],
+        expected_revision_id=preview["expected_revision_id"],
+        expected_preview_fingerprint=preview["preview_fingerprint"],
+    )
+    initial = driver.simulate_full_simulation(command)
+    assert initial["checkpoint"] == "final_run_closure_review_required"
+    assert initial["final_completed_week_count"] == 1
+
+    def control(action, actor):
+        return AuthoritativeFullSimulationControlCommand(
+            target_command_id=command.command_id,
+            run_id="run", branch_id="branch", action=action,
+            operator_label=actor, audit_reason="Explicit reviewed operator control",
+        )
+    with pytest.raises(ValueError, match="pending parent"):
+        driver.control_full_simulation(
+            AuthoritativeFullSimulationControlCommand(
+                target_command_id="missing", run_id="run", branch_id="branch",
+                action="pause", operator_label="Admin", audit_reason="Safe pause",
+            )
+        )
+    with pytest.raises(ValueError, match="acknowledged pause"):
+        driver.control_full_simulation(control("resume", "Admin"))
+    requested = driver.control_full_simulation(control("pause", "Admin"))
+    assert requested["control_state"] == "pause_requested"
+    assert requested["committed_child_work_persists"] is True
+    pending = driver.inspect_pending_full_simulations(
+        run_id="run", branch_id="branch"
+    )
+    assert pending["operations"][0]["control_state"] == "pause_requested"
+    paused = driver.simulate_full_simulation(command)
+    assert paused["checkpoint"] == "operator_paused"
+    assert paused["final_completed_week_count"] == 1
+    assert driver.inspect_pending_full_simulations(
+        run_id="run", branch_id="branch"
+    )["operations"][0]["control_state"] == "paused"
+    assert driver.simulate_full_simulation(command)["checkpoint"] == "operator_paused"
+    assert driver.control_full_simulation(control("resume", "Operator"))["control_state"] == "running"
+    continued = driver.simulate_full_simulation(command)
+    assert continued["checkpoint"] == "final_run_closure_review_required"
+    assert continued["final_completed_week_count"] == 1
+    with database() as session:
+        receipt = session.get(
+            AuthoritativeSimulationCommandModel,
+            ("run", "branch", command.command_id),
+        )
+        assert receipt.status == "pending"
+        payload = json.loads(receipt.result_json)
+        assert payload["control_state"] == "running"
+        assert len(payload["final_completed_weeks"]) == 1
+        assert [event["action"] for event in payload["control_events"]] == [
+            "pause", "resume",
+        ]
+        branch = session.get(RunBranchModel, "branch")
+        assert branch.saved_head_revision_id == "revision-before-final"
+
+
+@pytest.mark.pr_critical
+def test_active_full_simulation_pause_fences_next_writer_and_acknowledges(
+    database, monkeypatch,
+):
+    """Pause in a separate request cannot commit a half-executed child."""
+    _patch_saved_revision_captures(monkeypatch)
+    with database.begin() as session:
+        _install_final_boundary(session)
+    position = AuthoritativeSimulationPosition(
+        run_id="run", branch_id="branch", current_week=FINAL_WEEK,
+        current_slot_id=None, slot_ordinal=None, unresolved_group_ids=(),
+        eligible_match_ids=(), blocked_match_ids=(),
+        current_slot_complete=True, supported_tournament_complete=True,
+        week_ready_for_transition=True,
+        transition_blockers=("season_transition_required",),
+        terminal_sporting_fingerprint="d" * 64,
+        position_fingerprint="e" * 64,
+    )
+    monkeypatch.setattr(
+        AuthoritativeRunSimulationDriver,
+        "_position",
+        lambda self, session, run_id, branch_id, allow_missing_schedule=False: position,
+    )
+    admin = AuthoritativeRunSimulationDriver(database, None, None)
+    request = AuthoritativeFullSimulationPreviewRequest(
+        command_id="active-pause-parent", run_id="run", branch_id="branch",
+        operator_label="Worker", audit_reason="Actual pause checkpoint",
+    )
+    preview = admin.preview_full_simulation(request)
+    command = AuthoritativeFullSimulationCommand(
+        **request.model_dump(mode="json"),
+        expected_start_week=FINAL_WEEK,
+        expected_position_fingerprint=preview["expected_position_fingerprint"],
+        expected_revision_id=preview["expected_revision_id"],
+        expected_preview_fingerprint=preview["preview_fingerprint"],
+    )
+    created, release = threading.Event(), threading.Event()
+    checks = 0
+    def block_second_writer():
+        nonlocal checks
+        checks += 1
+        if checks == 2:
+            created.set()
+            assert release.wait(timeout=15)
+
+    worker = AuthoritativeRunSimulationDriver(
+        database, None, None,
+        full_simulation_before_transaction_check=block_second_writer,
+    )
+    results, failures = [], []
+    def execute():
+        try:
+            results.append(worker.simulate_full_simulation(command))
+        except BaseException as exc:
+            failures.append(exc)
+    thread = threading.Thread(target=execute)
+    thread.start()
+    assert created.wait(timeout=15)
+    try:
+        response = admin.control_full_simulation(
+            AuthoritativeFullSimulationControlCommand(
+                target_command_id=command.command_id,
+                run_id="run", branch_id="branch", action="pause",
+                operator_label="Admin", audit_reason="Safe concurrent pause",
+            )
+        )
+        assert response["control_state"] == "pause_requested"
+    finally:
+        release.set()
+    thread.join(timeout=15)
+    assert not thread.is_alive()
+    assert failures == []
+    assert len(results) == 1 and results[0]["checkpoint"] == "operator_paused"
+    with database() as session:
+        parent = session.get(
+            AuthoritativeSimulationCommandModel,
+            ("run", "branch", command.command_id),
+        )
+        frozen = json.loads(parent.result_json)
+        assert parent.status == "pending"
+        assert frozen["control_state"] == "paused"
+        assert frozen["final_completed_weeks"] == []
+        assert frozen["season_children"] == {}
+        assert session.get(RunBranchModel, "branch").saved_head_revision_id == "revision-before-final"

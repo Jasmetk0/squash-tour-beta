@@ -6187,6 +6187,8 @@ class AuthoritativeRunSimulationDriver:
                         "command": command.model_dump(mode="json"),
                         "review": parsed_review,
                         "control_state": frozen.get("control_state", "running"),
+                        "effective_target_week": frozen.get("effective_target_week", frozen["final_week"]),
+                        "target_revision": frozen.get("target_revision", 0),
                         "completed_seasons": list(
                             frozen.get("completed_seasons", [])
                         ),
@@ -6259,6 +6261,8 @@ class AuthoritativeRunSimulationDriver:
                             "status": receipt.status,
                             "start_week": start_week,
                             "final_week": final_week,
+                            "effective_target_week": payload.get("effective_target_week", final_week),
+                            "target_revision": payload.get("target_revision", 0),
                             "completed_seasons": list(
                                 payload.get("completed_seasons", [])
                             ),

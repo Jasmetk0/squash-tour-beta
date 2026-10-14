@@ -183,6 +183,29 @@ def inspect_global_full_simulation_operations(factory) -> dict:
                     _week(frozen["final_week"], label="stored final week") != reviewed_final)
             ):
                 raise ValueError("Pending Full Simulation reviewed scope is corrupt")
+            target_revision = frozen.get("target_revision", 0)
+            target_events = frozen.get("target_events", [])
+            target = _week(frozen.get("effective_target_week", reviewed_final), label="effective target week")
+            if (
+                type(target_revision) is not int
+                or target_revision < 0
+                or not isinstance(target_events, list)
+                or len(target_events) != target_revision
+                or not all(isinstance(item, dict) for item in target_events)
+                or (target_revision == 0 and target != reviewed_final)
+                or (target_revision > 0 and target_events[-1].get("target_week") != target)
+                or target["season_index"] * 61 + target["week"] <
+                    start["season_index"] * 61 + start["week"]
+                or len({item.get("command_id") for item in target_events}) != len(target_events)
+                or any(
+                    event.get("revision") != index
+                    or not isinstance(event.get("command_id"), str)
+                    or not event["command_id"]
+                    or _week(event.get("target_week"), label="target audit week") != event["target_week"]
+                    for index, event in enumerate(target_events, 1)
+                )
+            ):
+                raise ValueError("Pending Full Simulation effective target audit is corrupt")
             state = frozen.get("control_state", "running")
             if state not in {"running", "pause_requested", "paused"}:
                 raise ValueError("Pending Full Simulation control state is corrupt")
@@ -206,6 +229,8 @@ def inspect_global_full_simulation_operations(factory) -> dict:
                 "control_state": state,
                 "start_week": start,
                 "final_week": reviewed_final,
+                "effective_target_week": target,
+                "target_revision": target_revision,
                 "completed_season_count": season_count,
                 "final_completed_week_count": week_count,
                 "review_fingerprint": review["preview_fingerprint"],

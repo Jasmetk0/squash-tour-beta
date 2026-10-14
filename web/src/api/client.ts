@@ -204,6 +204,8 @@ import type {
   AuthoritativeFullSimulationAbandonPayload,
   AuthoritativeFullSimulationControlPayload,
   AuthoritativeFullSimulationControlResult,
+  AuthoritativeFullSimulationRetargetPayload,
+  AuthoritativeFullSimulationRetargetResult,
   AuthoritativeFullSimulationAbandonResult,
   AuthoritativeFullSimulationHistory,
   AuthoritativeFullSimulationParentDetail,
@@ -2322,6 +2324,12 @@ export async function getGlobalFullSimulationOperations(): Promise<GlobalFullSim
     const validStart = isBoundedFullSimulationWeek(operation.start_week)
     const validFinal = isBoundedFullSimulationWeek(operation.final_week) &&
       operation.final_week.season_index === 49 && operation.final_week.week === 61
+    const target = operation.effective_target_week ?? operation.final_week
+    const validTarget = isBoundedFullSimulationWeek(target) &&
+      (!validStart || target.season_index * 61 + target.week >=
+        operation.start_week.season_index * 61 + operation.start_week.week) &&
+      (operation.target_revision === undefined ||
+        (Number.isSafeInteger(operation.target_revision) && operation.target_revision >= 0))
     const validLease = [
       'absent', 'matching_active', 'matching_expired', 'other_active', 'other_expired'
     ].includes(operation.lease_state) &&
@@ -2351,7 +2359,7 @@ export async function getGlobalFullSimulationOperations(): Promise<GlobalFullSim
       !Number.isSafeInteger(operation.final_completed_week_count) ||
       operation.final_completed_week_count < 0 ||
       operation.final_completed_week_count > 62 - firstFinalWeek ||
-      !validStart || !validFinal || !validLease ||
+      !validStart || !validFinal || !validTarget || !validLease ||
       typeof operation.review_fingerprint !== 'string' ||
       !/^[a-f0-9]{64}$/.test(operation.review_fingerprint)
     ) {
@@ -2388,10 +2396,46 @@ export async function getPendingAuthoritativeFullSimulations(
         operation.review.expected_revision_id ||
       operation.completed_season_count !== operation.completed_seasons.length ||
       operation.final_completed_week_count !==
-        operation.final_completed_weeks.length
+        operation.final_completed_weeks.length ||
+      (operation.effective_target_week !== undefined && !isBoundedFullSimulationWeek(operation.effective_target_week)) ||
+      (operation.target_revision !== undefined &&
+        (!Number.isSafeInteger(operation.target_revision) || operation.target_revision < 0))
     ) {
       throw new Error('Pending Full Simulation operation is invalid.')
     }
+  }
+  return data
+}
+
+export async function retargetAuthoritativeFullSimulation(
+  runId: string,
+  branchId: string,
+  payload: AuthoritativeFullSimulationRetargetPayload
+): Promise<AuthoritativeFullSimulationRetargetResult> {
+  const data = await request<AuthoritativeFullSimulationRetargetResult>(
+    authoritativeSimulationRoot(runId, branchId) + '/full-simulation/target',
+    { method: 'POST', body: JSON.stringify(payload) }
+  )
+  verifyAuthoritativeSimulationScope(runId, branchId, data)
+  const week = (w: {season_index:number; week:number}) =>
+    w.season_index * 61 + w.week
+  if (
+    data.schema_version !== 'authoritative_full_simulation_target_result.v1' ||
+    data.control_command_id !== payload.control_command_id ||
+    data.target_command_id !== payload.target_command_id ||
+    !isBoundedFullSimulationWeek(data.effective_target_week) ||
+    !isBoundedFullSimulationWeek(data.original_final_week) ||
+    !isBoundedFullSimulationWeek(data.requested_target_week) ||
+    week(data.requested_target_week) !== week(payload.target_week) ||
+    data.original_final_week.season_index !== 49 ||
+    data.original_final_week.week !== 61 ||
+    !Number.isSafeInteger(data.applied_revision) || data.applied_revision < 1 ||
+    !Number.isSafeInteger(data.target_revision) ||
+    data.target_revision < data.applied_revision ||
+    typeof data.replayed !== 'boolean' ||
+    data.committed_child_work_persists !== true
+  ) {
+    throw new Error('Full Simulation target revision response is invalid.')
   }
   return data
 }
@@ -2487,9 +2531,12 @@ export async function simulateAuthoritativeFullSimulation(
   verifyAuthoritativeSimulationScope(runId, branchId, data)
   if (data.schema_version === 'authoritative_full_simulation_progress.v1') {
     if (
-      !['blocked', 'stopped'].includes(data.status) ||
+      !['blocked', 'stopped', 'target_reached'].includes(data.status) ||
       (data.status === 'stopped' && data.checkpoint !== 'operator_stopped') ||
-      (data.status === 'blocked' && data.checkpoint === 'operator_stopped') ||
+      (data.status === 'target_reached' && data.checkpoint !== 'operator_target_reached') ||
+      (data.status === 'blocked' && ['operator_stopped','operator_target_reached'].includes(data.checkpoint)) ||
+      (data.effective_target_week !== undefined && !isBoundedFullSimulationWeek(data.effective_target_week)) ||
+      (data.target_revision !== undefined && (!Number.isSafeInteger(data.target_revision) || data.target_revision < 0)) ||
       data.completed_season_count !== data.completed_seasons.length ||
       data.final_completed_week_count !== data.final_completed_weeks.length
     ) {

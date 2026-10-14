@@ -4709,8 +4709,33 @@ export async function configureAdminPureGroups(
     throw new Error('Frozen group Format response has an unexpected scope or configuration.')
   return data
 }
+/** Immutable hybrid Format submission: inspect every explicit crossing and scope
+ * before treating the production response as the adopted authority. */
+export async function configureAdminHybridGroups(
+  runId:string,branchId:string,eventId:string,
+  payload:import('./tournamentGroupFormats').HybridGroupSetupPayload
+):Promise<import('./tournamentGroupFormats').TournamentGroupFormatAuthority>{
+  const data=await request<import('./tournamentGroupFormats').TournamentGroupFormatAuthority>(
+    '/admin/runs/'+encodeURIComponent(runId)+'/branches/'+encodeURIComponent(branchId)
+    +'/tournaments/'+encodeURIComponent(eventId)+'/format/configure',{
+      method:'POST',body:JSON.stringify(payload)
+    })
+  const g=data.group_configuration
+  if(data.schema_version!=='tournament_format_authority.v1'
+    ||data.run_id!==runId||data.branch_id!==branchId||data.event_id!==eventId
+    ||data.configured_by_command_id!==payload.command_id
+    ||data.format_kind!=='groups_knockout'
+    ||!g||g.group_count!==payload.group_count||g.group_size!==payload.group_size
+    ||g.advancing_per_group!==payload.advancing_per_group
+    ||g.seeded_slots_per_group!==0
+    ||!Array.isArray(g.knockout_crossings)
+    ||JSON.stringify(g.knockout_crossings)!==JSON.stringify(payload.knockout_crossings))
+    throw new Error('Hybrid Format response differs from the reviewed immutable crossing configuration.')
+  return data
+}
 export async function generateAdminGroupTopology(
-  runId:string,branchId:string,eventId:string,commandId:string,topologySeed:number
+  runId:string,branchId:string,eventId:string,commandId:string,topologySeed:number,
+  formatKind:'groups'|'groups_knockout'='groups'
 ):Promise<import('./tournamentGroupFormats').TournamentGroupTopologyAuthority>{
   const data=await request<import('./tournamentGroupFormats').TournamentGroupTopologyAuthority>(
     '/admin/runs/'+encodeURIComponent(runId)+'/branches/'+encodeURIComponent(branchId)
@@ -4719,7 +4744,7 @@ export async function generateAdminGroupTopology(
     })
   if(data.schema_version!=='tournament_topology_authority.v1'
     ||data.run_id!==runId||data.branch_id!==branchId||data.event_id!==eventId
-    ||data.format_kind!=='groups'||data.generated_by_command_id!==commandId
+    ||data.format_kind!==formatKind||data.generated_by_command_id!==commandId
     ||!/^[0-9a-f]{64}$/.test(data.format_authority_fingerprint))
     throw new Error('Group Topology generation returned an unrelated authority.')
   return data

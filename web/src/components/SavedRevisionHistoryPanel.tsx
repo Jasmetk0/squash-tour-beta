@@ -1,5 +1,6 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 
 import {
   compareSavedRevisions,
@@ -380,6 +381,10 @@ export function SavedRevisionHistoryPanel({
         Opening a Saved Revision is always read-only. No Branch, Working Draft, or Viewer state
         changes until a separate action is explicitly submitted.
       </p>
+      <p><Link to={'/admin/runs/'+encodeURIComponent(runId)+'/branches/compare?'+
+        new URLSearchParams({branch:branchId,...(selectedRevisionId?{b:selectedRevisionId}:{})}).toString()}>
+        Open Compare States A/B · Samostatné porovnání uložených stavů
+      </Link></p>
       <SavedBranchMap
         runId={runId} branches={branches} selectedBranchId={branchId}
         viewerBranchId={run.viewer_branch_id??null}
@@ -502,6 +507,11 @@ export function SavedRevisionHistoryPanel({
 
                 <section aria-label="Saved Revision comparison">
                   <h4>Compare revisions</h4>
+                  <p><Link to={'/admin/runs/'+encodeURIComponent(runId)+'/branches/compare?'+
+                    new URLSearchParams({branch:branchId,
+                      b:selectedRevisionId,...(comparisonRevisionId?{a:comparisonRevisionId}:{})}).toString()}>
+                    Open these states on the dedicated Compare A/B page
+                  </Link></p>
                   <label>
                     Compare from
                     <select

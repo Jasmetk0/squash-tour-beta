@@ -70,6 +70,7 @@ import { RunCreatePage } from './pages/RunCreatePage'
 import { RunSimulationPage } from './pages/RunSimulationPage'
 import { AdminRankingCandidatesPage } from './pages/AdminRankingCandidatesPage'
 import { AdminRunBranchesPage } from './pages/AdminRunBranchesPage'
+import { SavedStatesComparePage } from './pages/SavedStatesComparePage'
 import { RunsPage } from './pages/RunsPage'
 import { LegacyRunsPage } from './pages/LegacyRunsPage'
 import { PlannedEventDetailPage } from './pages/PlannedEventDetailPage'
@@ -184,6 +185,7 @@ export default function App(): JSX.Element {
         <Route path="admin/runs/:runId/simulate" element={<RunSimulationPage />} />
         <Route path="admin/runs/:runId/branches/:branchId/ranking-candidates" element={<AdminRankingCandidatesPage />} />
         <Route path="admin/runs/:runId/branches/:branchId/ranking-candidates/:seasonIndex/:week" element={<AdminRankingCandidatesPage />} />
+        <Route path="admin/runs/:runId/branches/compare" element={<SavedStatesComparePage />} />
         <Route path="admin/runs/:runId/branches" element={<AdminRunBranchesPage />} />
         <Route path="admin/runs/:runId/events" element={<EventsPage />} />
         <Route path="admin/runs/:runId/calendar" element={<SeasonCalendarPage />} />

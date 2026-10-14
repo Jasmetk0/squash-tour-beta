@@ -8,6 +8,10 @@ const api=vi.hoisted(()=>({
   getAdminCompletedGroupStandings:vi.fn(),
   getAdminHybridKnockoutEntrants:vi.fn(),generateAdminHybridKnockoutEntrants:vi.fn(),
   getAdminHybridKnockoutBracket:vi.fn(),generateAdminHybridKnockoutBracket:vi.fn(),
+  ApiError:class ApiError extends Error{
+    status:number
+    constructor(message:string,status:number){super(message);this.status=status}
+  },
 }))
 vi.mock('../api/client',()=>api)
 const sha='a'.repeat(64),id='b'.repeat(64),br='c'.repeat(64)

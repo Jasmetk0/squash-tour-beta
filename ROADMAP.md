@@ -1,3 +1,12 @@
+# Active pre-alpha — explicit hybrid group-format path (14 October 2026)
+
+Base after merged #1449: `6844ebdd15464d173274783849be98138646cbc2`.
+
+1. **Current candidate:** real Admin setup for immutable `groups_knockout` format and user-selected exhaustive group-position crossings, BO3/BO5 effective Group Rules, confirmed topology and exact HTTP scope guards. Retain pure-group path.
+2. **Next:** real browser + SQLite hybrid chain through actual Group/Knockout sporting receipts, canonical point-award/ranking and immutable Save; no staged outcome shortcuts. Expose Entrants/Bracket/Policy and Close UI in justified separate vertical slices.
+3. **Other release gates:** Run-owned reproducible cyclic tie under identity-derived natural Match Days, comprehensive 50-season Run and pre-alpha full release suite.
+
+---
 # Active pre-alpha — authentic cyclic tie Admin Chromium/SQLite (14 October 2026)
 
 Base `buuk` `f35913eb4aceff5bce31166280d95b6804949589`; #1448 merged.

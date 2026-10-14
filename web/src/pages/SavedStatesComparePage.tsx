@@ -94,9 +94,7 @@ export function SavedStatesComparePage():JSX.Element{
     </header>
     <section className="panel" aria-label={T("Compare Saved Revision selection")}>
       <h3>{T("States A → B")}</h3>
-      <p className="status">Run: <code>{runId}</code> · Both states must be reachable through
-        the same selected Branch. Cross-Branch Compare is not supported by this Saved API.
-        Saved timestamps are not simulation positions.</p>
+      <p className="status">{T('Run:')} <code>{runId}</code> {T('· Both states must be reachable through the same selected Branch. Cross-Branch Compare is not supported by this Saved API. Saved timestamps are not simulation positions.')}</p>
       {branchesQuery.isPending&&<p role="status">{T("Loading Run Branches…")}</p>}
       {branchesQuery.error&&<p role="alert">{formatApiError(branchesQuery.error)}</p>}
       {branchesQuery.isSuccess&&!validBranches&&<p role="alert">
@@ -130,7 +128,7 @@ export function SavedStatesComparePage():JSX.Element{
       {historyQuery.error&&<p role="alert">{formatApiError(historyQuery.error)}</p>}
       {historyQuery.isSuccess&&selectedBranch&&!history&&<p role="alert">
         {T("Invalid reachable Saved Revision history; Compare disabled.")}</p>}
-      {history&&<p className="status">Loaded {history.entries.length} {T('reachable revisions.')}
+      {history&&<p className="status">{T('Loaded')} {history.entries.length} {T('reachable revisions.')}
         {' '}{historyQuery.hasNextPage?T("Older pages remain unloaded; Compare only loaded revisions."):
           T("All reachable Saved Revisions loaded.")}
       </p>}
@@ -147,8 +145,8 @@ export function SavedStatesComparePage():JSX.Element{
       </p>}
       {history&&requestedA&&requestedA===requestedB&&<p role="alert">
         {T("Select two different Saved Revisions to compare.")}</p>}
-      <p className="status">{T("Browsing Branch:")} <code>{branchId||'—'}</code>.
-        This is not an Admin Branch activation.</p>
+      <p className="status">{T('Browsing Branch:')} <code>{branchId||'—'}</code>.
+        {T('This is not an Admin Branch activation.')}</p>
     </section>
     {canCompare&&<section className="panel" aria-label={T("Compare Saved Revision results")}>
       <div className="actions">
@@ -167,7 +165,7 @@ export function SavedStatesComparePage():JSX.Element{
         {T("Comparison identity/content hashes disagree with the selected states.")}</p>}
       {compared&&<>
         <p className="status">{T("State A:")} <code>{a!.revision_id}</code> →
-          State B: <code>{b!.revision_id}</code> · exact original source Branches:
+          {T('State B:')} <code>{b!.revision_id}</code> · {T('exact original source Branches:')}
           {' '}<code>{a!.revision_branch_id}</code> / <code>{b!.revision_branch_id}</code></p>
         <div className="run-world-metrics" aria-label={T("Compare Saved Revision totals")}>
           <div><span>{T("Changed fields/components")}</span><strong>{compared.changed}</strong></div>
@@ -213,7 +211,7 @@ export function SavedStatesComparePage():JSX.Element{
       </div>
       {detail.type==='row'&&selectedRow&&<>
         <h4>{selectedRow.section} · {selectedRow.key}</h4>
-        <p>Status: <strong>{T(selectedRow.status)}</strong></p>
+        <p>{T('Status:')} <strong>{T(selectedRow.status)}</strong></p>
         <div className="saved-compare-before-after">
           <section><h5>{T("State A · Before")}</h5>
             <pre className="json-block">{pretty(selectedRow.before,language)}</pre></section>
@@ -224,13 +222,13 @@ export function SavedStatesComparePage():JSX.Element{
           {T("These are exact component fingerprints, NOT reconstructed player, match or ranking details.")}</p>}
       </>}
       {detail.type==='state'&&<>
-        <h4>State {detail.side.toUpperCase()} · <code>{stateEntry?.revision_id}</code></h4>
+        <h4>{T('State')} {detail.side.toUpperCase()} · <code>{stateEntry?.revision_id}</code></h4>
         {stateQuery.isPending&&<p role="status">{T("Loading immutable Saved Revision…")}</p>}
         {stateQuery.error&&<p role="alert">{formatApiError(stateQuery.error)}</p>}
         {stateQuery.isSuccess&&!state&&<p role="alert">
           {T("Read-only Saved Revision identity or hash does not match selected state.")}</p>}
         {state&&<>
-          <p>Source Branch: <code>{state.revision_branch_id}</code></p>
+          <p>{T('Source Branch:')} <code>{state.revision_branch_id}</code></p>
           <p>{T("Parent:")} <code>{state.parent_revision_id??'Root'}</code></p>
           <p>{T("Saved at:")} {state.created_at??T("Unavailable")}</p>
           <p>{T("Hash:")} <code>{state.content_hash_algorithm}:{state.content_hash}</code></p>

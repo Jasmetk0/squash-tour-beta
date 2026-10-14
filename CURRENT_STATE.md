@@ -1,3 +1,12 @@
+# Active candidate — 14 October 2026, actual Hybrid Group → Knockout authority (after merged #1450)
+
+Starting `buuk` `1ea108fe329a90b2bd535dbc5e6077635dda0314`; #1450 merged and no open PR at task start.
+
+**Candidate, NOT MERGED:** Run-owned Admin hybrid progression after real group Match Days. UI requires immutable completed Group Standings before independently confirming post-group Entrants and immutable standard winner-feeder Bracket. Every HTTP response is scope-validated against actual Group Standings position/player rows and downstream knockout source fingerprints; missing/corrupt evidence is not inferred. Real Chromium pre-alpha acceptance now runs two genuine group MatchEngine games via Simulation, freezes both group standings tables, confirms first-round players and bracket using existing production HTTP/SQLite, makes explicit Simulation Save, preserves prior revision and validates replay after backend restart. No fake sporting score, match outcome, or future knockout winner. Detailed source/limits: `docs/ADMIN_HYBRID_GROUP_TO_BRACKET_V1_2026_10_14.md`.
+
+**Remaining:** actual knockout Match Days, champion, authoritative hybrid ranking policy / Result and points closure, Saved Edition replay; complete 50-season release suites and genuine Run-native cyclic tie where naturally reproducible. Historical dated candidate headings below may describe merged work.
+
+---
 # Active candidate — 14 October 2026, hybrid Group→Knockout Admin setup (after merged #1449)
 
 Base `buuk`: `6844ebdd15464d173274783849be98138646cbc2`. #1449 merged, no open PR at task start.

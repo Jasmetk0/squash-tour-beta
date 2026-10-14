@@ -1,5 +1,6 @@
 import {useMutation,useQuery,useQueryClient} from '@tanstack/react-query'
 import {useEffect,useState} from 'react'
+import {Link} from 'react-router-dom'
 import {
   generateAdminHybridKnockoutEntrants,generateAdminHybridKnockoutBracket,
   getAdminCompletedGroupStandings,getAdminHybridKnockoutEntrants,
@@ -142,8 +143,11 @@ export function HybridKnockoutProgressionPanel({
               <td><code>{m.participant_sources[1]}</code></td>
             </tr>)}</tbody>
           </table>
-          <p className="status">{cs?'Pavouk ještě neobsahuje odehrané zápasy ani přidělené rankingové body. Pro uložení revize použij Simulation Save.':
-            'Bracket generation does not play knockout matches or award ranking points. Use explicit Simulation Save to archive the new authorities.'}</p>
+          <p className="status">{cs?'Pavouk je připraven na skutečné vyřazovací zápasy v simulaci. Potvrď příští zápasový den, nikoli automatického vítěze. Po odehrání ulož revizi pomocí Simulation Save. Rankingové body ještě nejsou přiděleny.':
+            'The frozen bracket is ready for real knockout Match Days. Review and simulate the next canonical Match Day; no winner is inferred. Save the completed matches via Simulation Save. Ranking points remain unawarded.'}</p>
+          {valid&&<p><Link to={`/admin/runs/${encodeURIComponent(runId)}/simulate?branch=${encodeURIComponent(branchId)}`}>
+            {cs?'Odehrát skutečný vyřazovací zápas v Simulaci':'Play the real knockout Match Day in Simulation'}
+          </Link></p>}
         </>}
       </>}
     </>}

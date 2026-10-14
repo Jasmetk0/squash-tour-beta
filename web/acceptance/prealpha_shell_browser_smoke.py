@@ -208,6 +208,60 @@ def main() -> None:
             evidence["history_lineage_browser_read_only"] = True
             page.screenshot(path=str(artifacts / "02b-history-lineage.png"), full_page=True)
 
+            # Dedicated master-v80 read-only Compare States A/B, reusing the
+            # existing REST comparison and both exact reachable Saved identities.
+            compared_before = page.request.get(
+                args.api_url + "/run-containers/" + run_id + "/branches/"
+                + created_branch["branch_id"] + "/saved-revisions/compare",
+                params={
+                    "from_revision_id": source_branch["saved_head_revision_id"],
+                    "to_revision_id": created_branch["saved_head_revision_id"],
+                },
+            )
+            assert compared_before.ok, compared_before.text()
+            compared_data = compared_before.json()
+            assert compared_data["branch_id"] == created_branch["branch_id"]
+            assert compared_data["from_revision"]["revision_id"] == source_branch["saved_head_revision_id"]
+            assert compared_data["to_revision"]["revision_id"] == created_branch["saved_head_revision_id"]
+            page.goto(
+                base + "/admin/runs/" + run_id + "/branches/compare?branch="
+                + created_branch["branch_id"] + "&a="
+                + source_branch["saved_head_revision_id"] + "&b="
+                + created_branch["saved_head_revision_id"]
+            )
+            selection = page.get_by_label("Compare Saved Revision selection")
+            expect(selection.get_by_role("combobox", name="Compare state A")).to_have_value(
+                source_branch["saved_head_revision_id"]
+            )
+            expect(selection.get_by_role("combobox", name="Compare state B")).to_have_value(
+                created_branch["saved_head_revision_id"]
+            )
+            compared_panel = page.get_by_label("Compare Saved Revision results")
+            expect(compared_panel.get_by_label("Compare Saved Revision totals")).to_be_visible()
+            assert compared_data["run_id"] == run_id
+            assert source_branch["branch_id"] in compared_panel.inner_text()
+            compared_panel.get_by_role("combobox", name="Compare display filter").select_option("all")
+            compared_panel.get_by_role("button", name="Inspect state A read-only").click()
+            detail = page.get_by_label("Compare read-only detail")
+            expect(detail).to_be_visible()
+            expect(detail.get_by_text("hash", exact=False).first).to_be_visible()
+            assert source_branch["saved_head_revision_id"] in detail.inner_text()
+            detail.get_by_role("button", name="Close Compare detail").click()
+            expect(detail).to_have_count(0)
+            unchanged_branch = page.request.get(
+                args.api_url + "/run-branches", params={"run_id": run_id}
+            )
+            assert unchanged_branch.ok
+            assert next(
+                b["saved_head_revision_id"] for b in unchanged_branch.json()["run_branches"]
+                if b["branch_id"] == created_branch["branch_id"]
+            ) == created_branch["saved_head_revision_id"]
+            assert page.get_by_role(
+                "combobox", name="Admin active Branch"
+            ).input_value() == active_before
+            evidence["history_saved_compare_ab_read_only"] = True
+            page.screenshot(path=str(artifacts / "02c-saved-compare-ab.png"), full_page=True)
+
             # Exercise actual API-backed Runs expansion and cross-page Admin Branch selection.
             page.goto(base + "/admin/runs")
             expect(page.get_by_role("heading", name="Runs", exact=True)).to_be_visible()

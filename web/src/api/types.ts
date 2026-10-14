@@ -2080,7 +2080,7 @@ export type AuthoritativeSeasonCommandPayload =
 
 export type AuthoritativeSeasonProgress = {
   schema_version: 'authoritative_season_progress.v1'
-  status: 'blocked' | 'stopped'
+  status: 'blocked'
   run_id: string
   branch_id: string
   start_week: AuthoritativeRankingWeek
@@ -2158,7 +2158,7 @@ export type AuthoritativeFullSimulationCommandPayload =
 
 export type AuthoritativeFullSimulationProgress = {
   schema_version: 'authoritative_full_simulation_progress.v1'
-  status: 'blocked'
+  status: 'blocked' | 'stopped'
   run_id: string
   branch_id: string
   start_week: AuthoritativeRankingWeek

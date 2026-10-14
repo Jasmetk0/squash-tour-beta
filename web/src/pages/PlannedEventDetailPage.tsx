@@ -82,6 +82,7 @@ export function PlannedEventDetailPage(): JSX.Element {
     useState<CanonicalWildCardPreview | null>(null)
   const [rankingPublicationSelection, setRankingPublicationSelection] = useState('')
   const [showOptionalGroupSetup, setShowOptionalGroupSetup] = useState(false)
+  const [optionalGroupKind,setOptionalGroupKind]=useState<'groups'|'groups_knockout'>('groups')
   const [entryMainDrawSize, setEntryMainDrawSize] = useState('')
   const [entryQualificationDrawSize, setEntryQualificationDrawSize] = useState('0')
   const [entryQualifierSpots, setEntryQualifierSpots] = useState('0')
@@ -966,6 +967,7 @@ export function PlannedEventDetailPage(): JSX.Element {
 
   useEffect(() => {
     setShowOptionalGroupSetup(false)
+    setOptionalGroupKind('groups')
   }, [runId, activeBranchId, eventId])
 
   function groupSeasonIndex(): number | null {
@@ -1005,6 +1007,8 @@ export function PlannedEventDetailPage(): JSX.Element {
         hasQualification={Boolean(canonicalEntryFieldQuery.data?.qualification_player_ids.length)}
         hasByes={Boolean(canonicalEntryFieldQuery.data?.effective_main_bye_count)}
         step={action === 'configure_tournament_format' ? 'format' : 'topology'}
+        kind={canonicalPreparationQuery.data?.format_kind==='groups_knockout'?
+          'groups_knockout':'groups'}
       />
     }
     if (action === 'prepare_group_match_schedule') {
@@ -1218,21 +1222,28 @@ export function PlannedEventDetailPage(): JSX.Element {
               ) ? (
                 <div className="grid" aria-label={cs?'Volitelné nastavení skupinového turnaje':'Optional group tournament Format'}>
                   <p>{cs?'Můžeš pokračovat běžným vyřazovacím pavoukem, nebo ještě před potvrzením pavouku či formátu výslovně zvolit čisté skupiny každý s každým. Žádné automatické Save ani vymyšlené výsledky.':
-                    'Continue to the normal knockout Draw Input, or explicitly select pure round-robin groups before a Draw or Format is frozen. No implicit Save or fabricated sporting result.'}</p>
-                  <button type="button" aria-expanded={showOptionalGroupSetup}
-                    onClick={() => setShowOptionalGroupSetup(value => !value)}>
-                    {showOptionalGroupSetup?(cs?'Zavřít nastavení skupin':'Close pure group setup'):
-                      (cs?'Zvolit skupiny každý s každým':'Choose pure round-robin groups')}
-                  </button>
+                    'Continue with standard knockout, or explicitly choose pure groups or groups + knockout before a Draw or Format is frozen. Hybrid crossings require deliberate placement.'}</p>
+                  <div className="actions">
+                    <button type="button" aria-expanded={showOptionalGroupSetup&&optionalGroupKind==='groups'}
+                      onClick={()=>{setOptionalGroupKind('groups');setShowOptionalGroupSetup(
+                        !(showOptionalGroupSetup&&optionalGroupKind==='groups'))}}>
+                      {cs?'Zvolit čisté skupiny':'Choose pure round-robin groups'}
+                    </button>
+                    <button type="button" aria-expanded={showOptionalGroupSetup&&optionalGroupKind==='groups_knockout'}
+                      onClick={()=>{setOptionalGroupKind('groups_knockout');setShowOptionalGroupSetup(
+                        !(showOptionalGroupSetup&&optionalGroupKind==='groups_knockout'))}}>
+                      {cs?'Zvolit skupiny + pavouk':'Choose groups + knockout'}
+                    </button>
+                  </div>
                   {showOptionalGroupSetup ? (
                     <GroupFormatSetupPanel
-                      key={[runId, activeBranchId, eventId, 'optional-groups'].join(':')}
+                      key={[runId, activeBranchId, eventId, optionalGroupKind].join(':')}
                       runId={runId} branchId={activeBranchId} eventId={eventId}
                       seasonIndex={groupSeasonIndex()}
                       entrantCount={canonicalEntryFieldQuery.data?.direct_main_player_ids.length ?? 0}
                       hasQualification={Boolean(canonicalEntryFieldQuery.data?.qualification_player_ids.length)}
                       hasByes={Boolean(canonicalEntryFieldQuery.data?.effective_main_bye_count)}
-                      step="format"
+                      step="format" kind={optionalGroupKind}
                     />
                   ) : null}
                 </div>
@@ -1242,7 +1253,7 @@ export function PlannedEventDetailPage(): JSX.Element {
                   <p className="status">{cs?'Skupinové zápasy a pořadí zápasových dnů jsou potvrzené. Nyní je lze odehrát ve skutečné simulaci. Konečné tabulky vytvoř až po odehrání zápasů; uzavření hybridního pavouku je samostatný krok.':
                     'Group Match authority and Match Day chronology are frozen. These frozen group matches are ready for canonical Simulation Slot execution. Play their real matches before generating immutable final tables. Hybrid knockout closure remains a separate sporting authority.'}</p>
                   {verifiedCalendarScope &&
-                   canonicalPreparationQuery.data.format_kind === 'groups' ? (
+                   ['groups','groups_knockout'].includes(canonicalPreparationQuery.data.format_kind??'') ? (
                     <CompletedGroupStandingsPanel
                       key={['completed-group-standings',runId,activeBranchId,eventId].join(':')}
                       runId={runId} branchId={activeBranchId} eventId={eventId}

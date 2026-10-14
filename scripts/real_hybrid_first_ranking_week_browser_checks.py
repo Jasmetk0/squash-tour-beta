@@ -37,7 +37,7 @@ def publish_first_hybrid_official_week(
     expected_points = {
         p["player_id"]:
             p["played_group_wins"] * explicit_policy["played_group_win_points"]
-            + finish_points[p["knockout_reached_stage"]]
+            + finish_points.get(p["knockout_reached_stage"], 0)
         for p in result["players"]
     }
     assert result["champion_player_id"] == champion_id

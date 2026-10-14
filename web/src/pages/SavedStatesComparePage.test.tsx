@@ -59,7 +59,7 @@ describe('Dedicated read-only Compare States A/B',()=>{
   it('loads explicit same-Branch A/B and filters without mutating any Run state',async()=>{
     open()
     const selection=await screen.findByLabelText('Compare Saved Revision selection')
-    expect(within(selection).getByLabelText('Compare Branch')).toHaveValue('fork')
+    expect(await within(selection).findByLabelText('Compare Branch')).toHaveValue('fork')
     expect(within(selection).getByLabelText('Compare state A')).toHaveValue('old')
     expect(within(selection).getByLabelText('Compare state B')).toHaveValue('new')
     const results=await screen.findByLabelText('Compare Saved Revision results')

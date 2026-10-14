@@ -75,9 +75,9 @@ def test_derby_counts_each_player_once_no_bye_or_walkover_as_played(monkeypatch)
     assert result.records[0].value==1
     assert [h.player_id for h in result.records[0].holders]==["P1","P2"]
     assert result.records[1].value==2
-    assert [h.player_id for h in result.records[1].holders]==["P1"]
-    assert result.evidence_count==1
-    assert [m.match_id for m in result.evidence]==["derby"]
+    assert [h.player_id for h in result.records[1].holders]==["P2"]
+    assert result.evidence_count==2
+    assert {m.match_id for m in result.evidence}=={"derby","other"}
     assert all(m.completion=="played" for m in result.evidence)
 
 

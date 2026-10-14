@@ -138,9 +138,12 @@ def play_and_freeze_hybrid(
     page.goto(run_url + "/simulate?branch=" + quote(branch_id, safe=""))
     page.get_by_role("combobox", name="Language / Jazyk").select_option("en")
     from playwright.sync_api import expect
+    # Cold React mounts can still be requesting canonical Position/branch state
+    # after the protected HTTP preview has already succeeded. Synchronize on
+    # the actual actionable control rather than an arbitrary network-idle delay.
     expect(page.get_by_role(
         "button", name="Review authoritative Next Match Day"
-    )).to_be_enabled()
+    )).to_be_enabled(timeout=30000)
     browser_click(page, "Review authoritative Next Match Day")
     expect(page.get_by_role(
         "heading", name="Reviewed canonical Match Day 2"

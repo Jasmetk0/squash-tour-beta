@@ -3373,6 +3373,17 @@ describe('AuthoritativeSimulationPanel', () => {
 
 
   it('requests server-authoritative pause with an explicit reason and retains exact parent', async () => {
+    api.inspectAuthoritativeWeekSchedule.mockResolvedValue({
+      ...scheduleInspection,
+      schedule: proposal.schedule,
+      schedule_fingerprint: proposal.schedule_fingerprint
+    })
+    api.inspectAuthoritativeWeekSchedulePreflight.mockResolvedValue({
+      ...schedulePreflight,
+      schedule_already_adopted: true,
+      blockers: ['week_schedule_already_adopted'],
+      can_propose_schedule: false
+    })
     api.getPendingAuthoritativeFullSimulations.mockResolvedValue({
       schema_version: 'authoritative_full_simulation_pending_collection.v1',
       run_id: 'run-a', branch_id: 'branch-a',
@@ -3421,6 +3432,17 @@ describe('AuthoritativeSimulationPanel', () => {
   })
 
   it('requires explicit server authorization before resuming a paused parent', async () => {
+    api.inspectAuthoritativeWeekSchedule.mockResolvedValue({
+      ...scheduleInspection,
+      schedule: proposal.schedule,
+      schedule_fingerprint: proposal.schedule_fingerprint
+    })
+    api.inspectAuthoritativeWeekSchedulePreflight.mockResolvedValue({
+      ...schedulePreflight,
+      schedule_already_adopted: true,
+      blockers: ['week_schedule_already_adopted'],
+      can_propose_schedule: false
+    })
     api.getPendingAuthoritativeFullSimulations.mockResolvedValue({
       schema_version: 'authoritative_full_simulation_pending_collection.v1',
       run_id: 'run-a', branch_id: 'branch-a', legacy_pending_count: 0,

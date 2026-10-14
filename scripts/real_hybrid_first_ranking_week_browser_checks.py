@@ -25,8 +25,34 @@ def publish_first_hybrid_official_week(
         group["rows"][0]["player_id"]
         for group in hybrid["group_authority"]["groups"]
     }
-    assert group_winners == {champion_id, finalist_id}
-    assert source["total_ranking_points"] == 180
+    result = hybrid["archived_edition"]["published_result"]
+    explicit_policy = hybrid["ranking_policy_authority"]
+    finish_points = dict(explicit_policy["knockout_stage_points"])
+    assert len(result["players"]) == 4
+    assert {p["player_id"] for p in result["players"]} == {
+        row["player_id"]
+        for group in hybrid["group_authority"]["groups"]
+        for row in group["rows"]
+    }
+    expected_points = {
+        p["player_id"]:
+            p["played_group_wins"] * explicit_policy["played_group_win_points"]
+            + finish_points[p["knockout_reached_stage"]]
+        for p in result["players"]
+    }
+    assert result["champion_player_id"] == champion_id
+    assert result["finalist_player_id"] == finalist_id
+    assert sum(expected_points.values()) == source["total_ranking_points"]
+    assert source["total_ranking_points"] in (180, 240)
+    if hybrid["bracket_authority"]["round_count"] == 1:
+        assert group_winners == {champion_id, finalist_id}
+        assert expected_points[champion_id] == 110
+        assert expected_points[finalist_id] == 70
+    else:
+        assert hybrid["bracket_authority"]["round_count"] == 2
+        assert sorted(p["knockout_reached_stage"] for p in result["players"]) == [
+            "champion", "finalist", "semifinal", "semifinal"
+        ]
 
     # Closing a real tournament at zero-based ordinal 0 cannot publish an
     # Official Ranking immediately: the result's first eligible ordinal is 1.
@@ -134,12 +160,14 @@ def publish_first_hybrid_official_week(
         pid: new_points.get(pid, 0) - old_points.get(pid, 0)
         for pid in old_points.keys() | new_points.keys()
     }
-    assert deltas[champion_id] == 110, deltas
-    assert deltas[finalist_id] == 70, deltas
+    for player_id, points in expected_points.items():
+        assert deltas.get(player_id) == points, (player_id, points, deltas)
     assert all(delta == 0 for pid, delta in deltas.items()
-               if pid not in (champion_id, finalist_id))
+               if pid not in expected_points)
     assert sum(deltas.values()) == source["total_ranking_points"]
-    assert len([delta for delta in deltas.values() if delta > 0]) == 2
+    assert len([delta for delta in deltas.values() if delta > 0]) == (
+        4 if hybrid["bracket_authority"]["round_count"] == 2 else 2
+    )
     page.screenshot(
         path=str(artifacts / "hybrid-07-published-official-week2.png"),
         full_page=True,

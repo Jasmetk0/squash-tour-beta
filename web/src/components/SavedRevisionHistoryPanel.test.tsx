@@ -251,8 +251,8 @@ describe('SavedRevisionHistoryPanel', () => {
     await userEvent.click(screen.getByRole('button',{name:'View Branch Timeline 2'}))
     await waitFor(()=>expect(api.listSavedRevisionHistory).toHaveBeenCalledWith(
       run.run_id,fork.branch_id,expect.objectContaining({limit:50})))
-    const table=screen.getByRole('table',{name:'Saved Revision history table'})
-    expect(table).toHaveTextContent('Branched from a saved ancestor')
+    const table=await screen.findByRole('table',{name:'Saved Revision history table'})
+    await waitFor(()=>expect(table).toHaveTextContent('Branched from a saved ancestor'))
     expect(table).toHaveTextContent('Shared ancestor')
     expect(table).toHaveTextContent('2026-08-30 10:00:00')
     expect(table).toHaveTextContent('revision-one')

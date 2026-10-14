@@ -8,7 +8,7 @@ vi.mock('../i18n/LanguageContext',()=>({useLanguage:()=>({language:locale.curren
 
 const api=vi.hoisted(()=>({
   getAdminGroupRules:vi.fn(),adoptAdminGroupRules:vi.fn(),
-  configureAdminPureGroups:vi.fn(),generateAdminGroupTopology:vi.fn(),
+  configureAdminPureGroups:vi.fn(),configureAdminHybridGroups:vi.fn(),generateAdminGroupTopology:vi.fn(),
 }))
 vi.mock('../api/client',()=>api)
 const scope={runId:'run-a',branchId:'branch-a',eventId:'event-1',
@@ -23,6 +23,7 @@ const state=(policy:typeof effective|null)=>({
 function mount(step:'format'|'topology'='format',override:Partial<{
   runId:string;branchId:string;eventId:string;seasonIndex:number|null
   entrantCount:number;hasQualification:boolean;hasByes:boolean
+  kind:'groups'|'groups_knockout'
 }>={}){
   const client=new QueryClient({defaultOptions:{queries:{retry:false}}})
   return render(<QueryClientProvider client={client}>
@@ -174,5 +175,17 @@ describe('real Admin group preparation',()=>{
     ] as Array<[string,string,number]>){
       expect(()=>proposedPureGroups(groups,players,entrants,'cmd')).toThrow()
     }
+  })
+  it('explains hybrid knockout crossings in Czech, not pure-group-only setup',async()=>{
+    locale.current='cs'
+    mount('format',{kind:'groups_knockout'})
+    await screen.findByText(/Potvrzená skupinová pravidla sezony/)
+    expect(screen.getByText(/Skupiny \+ vyřazovací pavouk: počet skupin/)).toBeInTheDocument()
+    expect(screen.getByText(/Urči počet postupujících/)).toBeInTheDocument()
+    expect(screen.queryByText(/Pouze skupiny každý s každým/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/samostatné schválené ovládání/)).not.toBeInTheDocument()
+    expect(screen.getByLabelText('Výslovné křížení hybridního pavouka')).toBeInTheDocument()
+    expect(screen.getByLabelText('Hybridní zápas 1, horní pozice')).toBeInTheDocument()
+    expect(api.configureAdminHybridGroups).not.toHaveBeenCalled()
   })
 })

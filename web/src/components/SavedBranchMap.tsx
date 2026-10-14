@@ -1,6 +1,7 @@
 /** View-only Run Branch lineage. Never infer Saved links from checkpoints or
  * Saved Revision timestamps; every rendered connection is explicit metadata. */
 import type {RunBranch} from '../api/types'
+import {useLanguage} from '../i18n/LanguageContext'
 
 export type BranchMapNode={
   branch:RunBranch;depth:number;
@@ -64,15 +65,25 @@ type Props={
   onSelect:(branchId:string)=>void
 }
 export function SavedBranchMap({
-  runId,branches,selectedBranchId,viewerBranchId,officialBranchId,onSelect
+  runId,branches,selectedBranchId,onSelect
 }:Props):JSX.Element{
+  const {language}=useLanguage()
+  const L=(cs:string,en:string)=>language==='cs'?cs:en
   const model=buildSavedBranchMap(runId,branches)
-  return <section className="saved-branch-map" aria-label="Saved Branch lineage map">
-    <h4>Branch map · skutečné větvení</h4>
-    <p className="status">Read-only selection / Pouze výběr pro prohlížení. Clicking a Branch
-      does not activate it, switch Viewer, create a fork or restore a revision.</p>
-    {model.error&&<p role="alert">{model.error}</p>}
-    {!model.error&&model.nodes.length===0&&<p role="status">No Run Branches are saved.</p>}
+  const translatedErrors:Record<string,string>={
+    'Branch map Run scope or Branch identity is inconsistent':'Nesouhlasí rozsah Runu nebo identita větví.',
+    'Branch fork lineage contains a cycle':'Historie větvení obsahuje cyklus.',
+    'Branch fork lineage points to itself':'Větev odkazuje sama na sebe.',
+    'Branch lineage traversal is incomplete':'Historii větvení nelze úplně projít.',
+  }
+  return <section className="saved-branch-map" aria-label={L("Mapa historie větví","Saved Branch lineage map")}>
+    <h4>{L('Mapa větví · skutečné návaznosti','Branch map · recorded lineage')}</h4>
+    <p className="status">{L(
+      'Pouze prohlížení. Výběr větve ji neaktivuje, nepřepíná veřejné zobrazení, nevytváří odbočku ani neobnovuje revizi.',
+      'Read-only selection. Choosing a branch does not activate it, change public viewing, create a fork or restore a revision.'
+    )}</p>
+    {model.error&&<p role="alert">{language==='cs'?translatedErrors[model.error]??model.error:model.error}</p>}
+    {!model.error&&model.nodes.length===0&&<p role="status">{L('Nejsou uloženy žádné větve Runu.','No Run Branches are saved.')}</p>}
     {!model.error&&<div className="saved-branch-map__lanes" role="list">
       {model.nodes.map(({branch,depth,connection,parentId})=>
         <div key={branch.branch_id} role="listitem" className="saved-branch-map__lane"
@@ -80,26 +91,24 @@ export function SavedBranchMap({
           <span className="saved-branch-map__connector" aria-hidden="true">
             {depth>0?'↳':'●'}</span>
           <button type="button" className="saved-branch-map__branch"
-            aria-label={'View Branch '+branch.display_name}
+            aria-label={L('Zobrazit větev ','View Branch ')+branch.display_name}
             aria-pressed={branch.branch_id===selectedBranchId}
             onClick={()=>onSelect(branch.branch_id)}>
             <strong>{branch.display_name}</strong>
             <small><code>{branch.branch_id}</code></small>
             <span className="status">
-              {branch.branch_id===viewerBranchId?'Viewer · ':''}
-              {branch.branch_id===officialBranchId?'Official · ':''}
-              {branch.branch_id===selectedBranchId?'Viewing · ':''}
-              {branch.read_only?'Read-only':branch.status}
+              {branch.branch_id===selectedBranchId?L('Prohlížená · ','Viewing · '):''}
+              {branch.read_only?L('Jen pro čtení','Read-only'):branch.status}
             </span>
-            {connection==='saved_revision'&&<small>Saved fork from{' '}
-              <code>{parentId}</code> at <code>{branch.forked_from_saved_revision_id}</code></small>}
-            {connection==='checkpoint'&&<small>Legacy checkpoint fork from{' '}
-              <code>{parentId}</code> at <code>{branch.forked_from_checkpoint_id}</code>
-              {' '}· not a Saved Revision relation</small>}
-            {connection==='unresolved'&&<small>Unverified / missing Saved parent relationship
+            {connection==='saved_revision'&&<small>{L('Uložená odbočka z','Saved fork from')}{' '}
+              <code>{parentId}</code> {L('na revizi','at revision')}{' '}<code>{branch.forked_from_saved_revision_id}</code></small>}
+            {connection==='checkpoint'&&<small>{L('Starší odbočka z checkpointu větve','Legacy checkpoint fork from')}{' '}
+              <code>{parentId}</code> {L('v','at')}{' '}<code>{branch.forked_from_checkpoint_id}</code>
+              {' '}· {L('nejde o vazbu Saved Revision','not a Saved Revision relation')}</small>}
+            {connection==='unresolved'&&<small>{L('Neověřená nebo chybějící vazba na uloženého předka','Unverified or missing Saved parent relationship')}
               {branch.forked_from_branch_id&&<> · <code>{branch.forked_from_branch_id}</code></>}</small>}
-            {connection==='root'&&<small>Root / no recorded fork parent</small>}
-            <small>Saved HEAD: <code>{branch.saved_head_revision_id??'not exposed'}</code></small>
+            {connection==='root'&&<small>{L('Kořenová větev / bez zaznamenaného předka','Root / no recorded fork parent')}</small>}
+            <small>{L('Uložený HEAD','Saved HEAD')}: <code>{branch.saved_head_revision_id??L('nezveřejněn','not exposed')}</code></small>
           </button>
         </div>
       )}

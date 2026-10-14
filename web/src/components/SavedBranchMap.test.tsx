@@ -3,6 +3,8 @@ import {render,screen,within} from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type {RunBranch} from '../api/types'
 import {SavedBranchMap,buildSavedBranchMap} from './SavedBranchMap'
+const locale=vi.hoisted(()=>({current:'en' as 'en'|'cs'}))
+vi.mock('../i18n/LanguageContext',()=>({useLanguage:()=>({language:locale.current})}))
 
 function branch(id:string,source:string|null=null,rev:string|null=null,checkpoint:string|null=null):RunBranch{
   return {run_id:'run-a',branch_id:id,display_name:id,status:'active',
@@ -34,6 +36,7 @@ describe('Read-only Saved Branch lineage',()=>{
     expect(buildSavedBranchMap('run-a',[branch('a','a','rev1')]).error).toMatch(/itself/)
   })
   it('selects a view branch without activating or restoring any Run state',async()=>{
+    locale.current='en'
     const select=vi.fn()
     render(<SavedBranchMap runId="run-a" branches={[branch('root'),branch('fork','root','ancestor')]}
       selectedBranchId="root" viewerBranchId="fork" officialBranchId="root"
@@ -44,12 +47,22 @@ describe('Read-only Saved Branch lineage',()=>{
     const alternative=within(map).getByRole('button',{name:'View Branch fork'})
     expect(selected).toHaveAttribute('aria-pressed','true')
     expect(alternative).toHaveAttribute('aria-pressed','false')
-    expect(alternative).toHaveTextContent('Viewer')
+    expect(alternative).not.toHaveTextContent('Viewer')
     expect(alternative).toHaveTextContent('ancestor')
-    expect(selected).toHaveTextContent('Official')
+    expect(selected).not.toHaveTextContent('Official')
     await userEvent.click(alternative)
     expect(select).toHaveBeenCalledOnce()
     expect(select).toHaveBeenCalledWith('fork')
     expect(selected).toHaveAttribute('aria-pressed','true')
+  })
+  it('has fully Czech map guidance and no privileged badges',()=>{
+    locale.current='cs'
+    render(<SavedBranchMap runId="run-a" branches={[branch('root'),branch('fork','root','ancestor')]}
+      selectedBranchId="root" viewerBranchId="fork" officialBranchId="root" onSelect={vi.fn()}/>)
+    const map=screen.getByLabelText('Mapa historie větví')
+    expect(within(map).getByText(/Pouze prohlížení/)).toBeInTheDocument()
+    expect(within(map).getByRole('button',{name:'Zobrazit větev root'})).toHaveTextContent('Prohlížená')
+    expect(map).not.toHaveTextContent('Official')
+    expect(map).not.toHaveTextContent('Viewer')
   })
 })

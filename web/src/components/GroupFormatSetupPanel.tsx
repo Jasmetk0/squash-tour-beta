@@ -111,6 +111,14 @@ export function GroupFormatSetupPanel({
     'Use positive whole group counts and sizes.':'Zadej kladné celé počty skupin a hráčů.',
     'Group count × group size must equal the frozen direct entrants, with no BYEs.':
       'Počet skupin × hráči ve skupině se musí rovnat počtu potvrzených přímých účastníků, bez BYE.',
+    'Hybrid group counts, size and advancers must be positive whole numbers.':'Počet skupin, velikost skupiny a postupující musí být kladná celá čísla.',
+    'Hybrid groups must exactly partition frozen direct entrants.':'Hybridní skupiny musí přesně rozdělit potvrzené přímé účastníky.',
+    'Advancers cannot exceed the players in each group.':'Počet postupujících nesmí překročit počet hráčů ve skupině.',
+    'Hybrid knockout field must contain 2, 4, 8 … 128 players.':'Do pavouka musí postoupit 2, 4, 8 až 128 hráčů.',
+    'One explicit crossing is required for each first-round match.':'Pro každý zápas prvního kola je nutné výslovně určit dvojici.',
+    'Choose every advancing group position explicitly.':'Výslovně vyber každou postupovou pozici ze skupin.',
+    'Each valid advancing position must be used exactly once.':'Každá platná postupová pozice se musí použít přesně jednou.',
+    'Every advancing group position must be paired once.':'Každá postupová pozice musí být přiřazena právě jednou.',
   } as Record<string,string>)[validation]??validation:validation
   const missing=hasQualification||hasByes
   const frozen=step==='topology'
@@ -118,15 +126,15 @@ export function GroupFormatSetupPanel({
     <h3>{frozen?(cs?'Vytvořit uloženou topologii skupin':'Generate frozen group Topology'):
     (hybrid?(cs?'Nastavit skupiny + vyřazovací pavouk':'Configure groups + knockout Format'):
       (cs?'Nastavit formát skupin každý s každým':'Configure round-robin group Format'))}</h3>
-    <p>{cs?'Použij výhradně ověřené účastníky tohoto Runu a Branch. Každý krok ukládá sportovní autoritu. Bez automatického nasazení, hybridního křížení, vymyšlených kvalifikantů nebo živých dat místo historie.':
+    <p>{cs?(hybrid?'Použij potvrzené účastníky této větve. Skupiny a postupové pozice propojíš s vyřazovacím pavoukem výslovně zvoleným křížením. Nic se automaticky nenasazuje ani neodvozuje z ID hráčů.':'Použij potvrzené účastníky této větve. Každý krok ukládá autoritativní nastavení skupin; žádné nasazení ani kvalifikanti se nedoplňují automaticky.'):
     'Use canonical entry players from this Run and Branch. Every operation freezes a sporting authority. Crossings are explicitly selected from completed group positions, never inferred from player IDs.'}</p>
     <p className="status">{cs?'Potvrzení přímí účastníci':'Frozen direct entrants'}: {entrantCount}
       {' · '}{cs?'Sezona':'Season'}: {seasonValid?seasonIndex!+1:(cs?'nedostupná':'unavailable')}
       {' · '}Run: <code>{runId}</code> · Branch: <code>{branchId}</code></p>
     {!seasonValid&&<p role="alert">{cs?'Nelze ověřit sezonu turnaje; skupinová pravidla nelze převzít.':
     'Cannot prove the event season; group rules cannot be adopted.'}</p>}
-    {missing&&<p role="alert">{cs?'Čisté skupiny nesmějí obsahovat kvalifikaci, rezervovaná místa kvalifikantů ani BYE. Nejprve oprav pole účastníků.':
-    'Pure groups require no Qualification, qualifier reservations or effective BYEs. Fix the Entry Field before configuring groups.'}</p>}
+    {missing&&<p role="alert">{cs?'Skupinový ani hybridní formát nesmí obsahovat kvalifikaci, rezervovaná místa kvalifikantů ani BYE. Nejprve oprav pole účastníků.':
+    'Group and hybrid formats require no Qualification, qualifier reservations or effective BYEs. Fix the Entry Field first.'}</p>}
     {rules.error&&<p role="alert">{cs?'Načtení pravidel skupin selhalo: ':'Group Rules loading failed: '}{formatApiError(rules.error)}</p>}
     {rules.isPending&&enabled&&<p role="status">{cs?'Načítám platná skupinová pravidla…':'Loading effective season Group Rules…'}</p>}
     {rules.data?.effective?<p role="status">
@@ -159,9 +167,7 @@ export function GroupFormatSetupPanel({
         <input aria-label={cs?'Hráčů ve skupině':'Players per group'} type="number" min="2" max="128" step="1"
           disabled={formatMutation.isPending} value={groupSize} onChange={e=>{setGroupSize(e.target.value);setCrossings([]);setConfirmFormat(null)}}/>
       </label>
-      <p>{cs?'Pouze skupiny každý s každým. Počet skupin × hráčů ve skupině musí odpovídat potvrzeným přímým účastníkům. Nasazování a hybridní pavouk vyžadují samostatné schválené ovládání.':
-        hybrid?'Every qualifying group position must be explicitly paired once. No inferred seeding, winners, or automatic crossing.':
-        'Pure round-robin only. Group count × players per group must match frozen direct entrants. Explicitly seeded groups require separate setup.'}</p>
+      <p>{hybrid?(cs?'Skupiny + vyřazovací pavouk: počet skupin × hráčů ve skupině musí odpovídat potvrzeným účastníkům. Urči počet postupujících a každou dvojici prvního kola pomocí ovládání níže. Žádné automatické křížení ani nasazení.':'Groups + knockout: group count × size must equal frozen direct entrants. Choose advancers and each first-round pairing below. No automatic crossing or seeding.'):(cs?'Pouze skupiny každý s každým: počet skupin × hráčů ve skupině musí odpovídat potvrzeným přímým účastníkům.':'Pure round-robin only. Group count × players per group must match frozen direct entrants. Explicitly seeded groups require separate setup.')}</p>
       {hybrid&&<>
         <label>{cs?'Postupujících z každé skupiny':'Advancers per group'}
           <input aria-label={cs?'Postupujících z každé skupiny':'Advancers per group'}
@@ -169,13 +175,13 @@ export function GroupFormatSetupPanel({
             disabled={formatMutation.isPending} value={advancers}
             onChange={e=>{setAdvancers(e.target.value);setCrossings([]);setConfirmFormat(null)}}/>
         </label>
-        {choices.length>0&&<section aria-label="Explicit hybrid knockout crossings">
+        {choices.length>0&&<section aria-label={cs?'Výslovné křížení hybridního pavouka':'Explicit hybrid knockout crossings'}>
           <h4>{cs?'První kolo pavouka':'First knockout round'} · {choices.length} {cs?'zápasů':'matches'}</h4>
           {choices.map((choice,i)=><div className="actions" key={i}>
             <strong>{cs?'Zápas':'Match'} {i+1}</strong>
             {(['top','bottom'] as const).map(side=><label key={side}>
               {side==='top'?(cs?'Horní pozice':'Top source'):(cs?'Dolní pozice':'Bottom source')}
-              <select aria-label={`Hybrid match ${i+1} ${side} source`}
+              <select aria-label={cs?`Hybridní zápas ${i+1}, ${side==='top'?'horní':'dolní'} pozice`:`Hybrid match ${i+1} ${side} source`}
                 value={choice[side]} disabled={formatMutation.isPending}
                 onChange={e=>revise(i,side,e.target.value)}>
                 <option value="">{cs?'Vyber skupinu / místo':'Select group / position'}</option>

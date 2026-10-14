@@ -73,5 +73,10 @@ def test_real_hybrid_progression_browser_is_real_match_day_and_explicit_admin_on
     assert 'match-replays?limit=50' in browser
     assert 'final["winner_player_id"], final["loser_player_id"]' in browser
     assert 'result_published":False' in browser
+    assert '"Freeze hybrid ranking points policy"' in browser
+    assert '"Close real hybrid tournament ranking source"' in browser
+    assert 'closure["total_ranking_points"] == 180' in browser
+    assert 'archived["published_result"] is not None' in browser
+    assert '"/hybrid-ranking-close"' in shell
     assert 'frozen_final_context' in shell
     assert 'real_knockout_matches' in shell

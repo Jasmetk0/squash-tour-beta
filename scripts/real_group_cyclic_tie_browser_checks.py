@@ -100,9 +100,12 @@ def exercise_real_cyclic_browser(
         "GET", event_scope + "/format/group-match-schedule",
     )
     assert len(actual_schedule["matches"]) == 6
-    assert {m["match_id"] for m in actual_schedule["matches"]} != {
-        m["match_id"] for m in case["source_match_results"]
-    }, "Fixture must never masquerade as normal Run Match-Day evidence"
+    # Source case evidence is serialized as canonical tuples, not match dicts.
+    # Compare against the six stable IDs of the standalone authentic fixture.
+    fixture_match_ids = {"A-D", "B-C", "A-C", "B-D", "A-B", "C-D"}
+    assert {m["match_id"] for m in actual_schedule["matches"]} != (
+        fixture_match_ids
+    ), "Fixture must never masquerade as normal Run Match-Day evidence"
 
     editor = page.get_by_role("group", name="Explicit group tie decision")
     expect(editor).to_be_visible(timeout=30000)

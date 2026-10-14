@@ -1,0 +1,82 @@
+name: Pre-alpha Real Cyclic Tie Browser
+
+# Real six-match MatchEngine evidence is injected only as test schedule/result
+# inputs, into an isolated disposable API process. All Admin HTTP mutations,
+# audit, case CAS, SQL persistence and browser controls are production.
+# It is NOT a normal Run Match-Day outcome/seed or Saved Revision acceptance.
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/prealpha-real-cyclic-tie-browser.yml'
+      - 'scripts/real_group_cyclic_tie_browser_checks.py'
+      - 'scripts/admin_saved_group_browser_smoke.py'
+      - 'web/src/components/GroupTieResolutionEditor.tsx'
+      - 'web/src/components/CompletedGroupStandingsPanel.tsx'
+      - 'src/beta_engine/infrastructure/db/tournament_group_tie_resolution_authority.py'
+      - 'src/beta_engine/infrastructure/db/tournament_group_standings_authority.py'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-pr-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+jobs:
+  cyclic-tie:
+    name: Genuine MatchEngine tie / Admin Chromium / SQLite restart
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: pyproject.toml
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: Install production engine and Chromium driver
+        run: python -m pip install -e . playwright pytest
+      - name: Install frontend
+        run: npm --prefix web ci
+      - name: Prepare Chromium
+        run: |
+          if [ -x /usr/bin/google-chrome ]; then
+            echo "CHROME_BIN=/usr/bin/google-chrome" >> "$GITHUB_ENV"
+          else
+            python -m playwright install --with-deps chromium
+            echo "CHROME_BIN=$(python -c 'from playwright.sync_api import sync_playwright; p=sync_playwright().start(); print(p.chromium.executable_path); p.stop()')" >> "$GITHUB_ENV"
+          fi
+      - name: Serve real Vite frontend against disposable FastAPI
+        run: |
+          VITE_API_BASE_URL=http://127.0.0.1:8014 npm --prefix web run dev -- --host 127.0.0.1 --port 5173 --strictPort > "$RUNNER_TEMP/cyclic-tie-vite.log" 2>&1 &
+          for attempt in $(seq 1 90); do
+            if curl --fail --silent http://127.0.0.1:5173/ > /dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat "$RUNNER_TEMP/cyclic-tie-vite.log"
+          exit 1
+      - name: Real Run-owned Admin tie decision on authentic MatchEngine source evidence
+        run: |
+          python scripts/admin_saved_group_browser_smoke.py \
+            --acceptance "$RUNNER_TEMP/real-cyclic-tie-run" \
+            --port 8014 \
+            --cyclic-tie-browser \
+            --base-url http://127.0.0.1:5173 \
+            --chromium "$CHROME_BIN"
+      - name: Preserve authentic cyclic-tie evidence and diagnostic traces
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: real-cyclic-tie-browser-${{ github.run_id }}
+          path: |
+            ${{ runner.temp }}/real-cyclic-tie-run/artifacts/
+            ${{ runner.temp }}/real-cyclic-tie-run/server.log
+            ${{ runner.temp }}/cyclic-tie-vite.log
+          if-no-files-found: warn
+          retention-days: 14

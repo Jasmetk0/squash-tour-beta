@@ -1,3 +1,15 @@
+# Active pre-alpha — authentic cyclic tie Admin Chromium/SQLite (14 October 2026)
+
+Base `buuk` `f35913eb4aceff5bce31166280d95b6804949589`; #1448 merged.
+
+1. **Current PR:** combine the previously separate real 4-player MatchEngine cyclic-score fixture + production tie HTTP/SQLite authority + real Run Admin browser, demonstrating deliberate audited decision C/A/B, stale 409 protection, explicitly generated final Group Standings, and two process restarts. Fixture schedule and score receipts are visibly labeled integration inputs, not normal Run Match-Day execution.
+2. **Next gap:** browser proof of actual Run identity-derived, normally simulated cyclic-tie schedule and Saved Revision, if the model produces a qualifying tie; no synthetic game results or automatic tie rule. Complete hybrid group→knockout closure and matching canonical ranking next.
+3. **Release gates:** pre-alpha full regression, full season/50-season continuity and multi-branch snapshots, actual historic replay, and integrated real browser acceptance beyond these focused PR checks.
+
+Historical roadmap sections below are older candidate notes.
+
+---
+
 # Active pre-alpha — published Saved match evidence A/B (14 October 2026)
 
 Verified base `buuk` `282b14ab57d9dadf286c7213133fd630e113bfef`; #1447 merged, no open PR.

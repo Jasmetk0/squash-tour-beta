@@ -76,7 +76,7 @@ describe('Dedicated read-only Compare States A/B',()=>{
     const drawer=screen.getByLabelText('Compare read-only detail')
     expect(drawer).toHaveTextContent('Canonical Saved change evidence')
     expect(within(drawer).getByText('"before"')).toBeInTheDocument()
-    expect(within(drawer).getByText('after')).toBeInTheDocument()
+    expect(within(drawer).getByText('"after"')).toBeInTheDocument()
     expect(drawer).toHaveTextContent('NOT reconstructed')
     await userEvent.click(within(drawer).getByRole('button',{name:'Close Compare detail'}))
     expect(screen.queryByLabelText('Compare read-only detail')).not.toBeInTheDocument()

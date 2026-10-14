@@ -24,6 +24,8 @@ const api = vi.hoisted(() => {
   }
 })
 
+const locale=vi.hoisted(()=>({current:'en' as 'en'|'cs'}))
+vi.mock('../i18n/LanguageContext',()=>({useLanguage:()=>({language:locale.current})}))
 vi.mock('../api/client', () => api)
 
 const run: RunContainer = {
@@ -141,6 +143,7 @@ function renderPanel(overrides?: { run?: RunContainer; branches?: RunBranch[] })
 }
 
 beforeEach(() => {
+  locale.current='en'
   vi.clearAllMocks()
   api.listSavedRevisionHistory.mockResolvedValue(history)
   api.getSavedRevisionRecoveryActivity.mockResolvedValue({
@@ -650,6 +653,17 @@ describe('SavedRevisionHistoryPanel', () => {
     expect(comparison).toHaveTextContent('viewer_branch_id')
     expect(comparison).toHaveTextContent('Changed components')
     expect(api.restoreSavedRevision).not.toHaveBeenCalled()
+  })
+
+  it('localizes the revision explorer in Czech without submitting write operations',async()=>{
+    locale.current='cs'
+    renderWithRoute(<SavedRevisionHistoryPanel runId={run.run_id} run={run}
+      branches={[branch]}/>, '/admin/runs/'+encodeURIComponent(run.run_id)+'/branches')
+    expect(await screen.findByText('Historie uložených revizí')).toBeInTheDocument()
+    expect(screen.getByLabelText('Větev historie uložených revizí')).toBeInTheDocument()
+    expect(screen.getByText('Otevřít samostatné porovnání uložených stavů A/B')).toBeInTheDocument()
+    expect(api.restoreSavedRevision).not.toHaveBeenCalled()
+    expect(api.createRunBranchFromSavedRevision).not.toHaveBeenCalled()
   })
 
 })

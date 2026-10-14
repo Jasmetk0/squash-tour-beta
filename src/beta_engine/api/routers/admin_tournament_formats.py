@@ -85,6 +85,9 @@ from beta_engine.infrastructure.db.tournament_hybrid_ranking_policy_authority im
     TournamentHybridRankingPolicyAuthorityConflict,
     TournamentHybridRankingPolicyAuthorityStore,
 )
+from beta_engine.infrastructure.db.owned_tournament_sources import (
+    OwnedTournamentRankingSourceStore,
+)
 from beta_engine.infrastructure.db.tournament_pure_groups_ranking_policy_authority import (
     TournamentPureGroupsRankingPolicyAuthorityConflict,
     TournamentPureGroupsRankingPolicyAuthorityStore,
@@ -934,6 +937,62 @@ def configure_hybrid_ranking_policy(
             status_code=409,
             detail={
                 "code": "tournament_hybrid_ranking_policy_conflict",
+                "message": str(exc),
+            },
+        ) from exc
+
+
+@router.get(
+    "/admin/runs/{run_id}/branches/{branch_id}/tournaments/{event_id}/hybrid-ranking-close",
+    response_model=TournamentHybridClosureResponse,
+)
+def inspect_hybrid_tournament_ranking_source(
+    run_id: str,
+    branch_id: str,
+    event_id: str,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+) -> TournamentHybridClosureResponse:
+    """Read the actual frozen hybrid source, never execute or re-close the tournament."""
+    try:
+        with runtime.repository._session_factory() as session:
+            source = OwnedTournamentRankingSourceStore(session).get(
+                run_id=run_id,
+                branch_id=branch_id,
+                edition_id=event_id,
+            )
+            if source is None:
+                raise HTTPException(
+                    status_code=404,
+                    detail="Completed Hybrid Tournament Ranking Source not found",
+                )
+            if (
+                source.binding.run_id != run_id
+                or source.binding.branch_id != branch_id
+                or source.binding.event_id != event_id
+                or source.canonical_result is None
+                or source.canonical_awards is None
+                or source.canonical_prize_awards is None
+                or source.canonical_result.hybrid_knockout_bracket_authority_fingerprint is None
+            ):
+                raise ValueError("Stored tournament source is not an exact closed hybrid result")
+            return TournamentHybridClosureResponse(
+                run_id=run_id,
+                branch_id=branch_id,
+                event_id=event_id,
+                source_fingerprint=source.fingerprint,
+                result_fingerprint=source.canonical_result.fingerprint,
+                award_fingerprint=source.canonical_awards.fingerprint,
+                prize_award_fingerprint=source.canonical_prize_awards.fingerprint,
+                prize_configuration_status=source.canonical_prize_awards.configuration_status,
+                total_ranking_points=source.canonical_awards.total_ranking_points,
+            )
+    except HTTPException:
+        raise
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "tournament_hybrid_closure_inspection_conflict",
                 "message": str(exc),
             },
         ) from exc

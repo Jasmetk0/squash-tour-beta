@@ -3334,11 +3334,11 @@ export function AuthoritativeSimulationPanel({
               </ol>
               {fullSimulationControlTarget && (
                 <div role="group" aria-label={fullSimulationControlTarget.action === 'stop' ? C('Stop Full Simulation') : C('Full Simulation pause or resume')}>
-                  <p className="status">
-                    {fullSimulationControlTarget.action === 'stop'
-                      ? C('Stopping permanently prevents resuming this parent. The current committed child results persist. No automatic Save.')
-                      : C('This controls the original command in this Run and Branch. Pause is acknowledged at a safe transaction boundary. Completed child results and the original target persist. No implicit Save.')}
-                  </p>
+                  {fullSimulationControlTarget.action !== 'stop' && (
+                    <p className="status">
+                      {C('This controls the original command in this Run and Branch. Pause is acknowledged at a safe transaction boundary. Completed child results and the original target persist. No implicit Save.')}
+                    </p>
+                  )}
                   <p><code>{fullSimulationControlTarget.commandId}</code></p>
                   {fullSimulationControlTarget.action === 'stop' && (
                     <>

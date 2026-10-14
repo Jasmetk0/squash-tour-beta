@@ -3,16 +3,17 @@ import {useQuery} from '@tanstack/react-query'
 import {Link,useSearchParams} from 'react-router-dom'
 import {getRunCountryRecords} from '../api/client'
 import {RunWorldCountryMatchRecords} from './RunWorldCountryMatchRecords'
+import {RunWorldCountryMatchHighlights} from './RunWorldCountryMatchHighlights'
 import {RunWorldCountryPlayerStandings} from './RunWorldCountryPlayerStandings'
 import {calendarSeasonIndex} from './runWorldCountryTournaments'
 import {lastEvidencedCountryPoint,parsePeriod,projectCountryPeriod,selectedSportPoint,sportLabel} from './runCountryRecordPeriods'
 import type {CountryPeriodMode,CountryPeriodStats,CountryRecordLeader} from './runCountryRecordPeriods'
-import type {RunCountryRecordResult,RunCountryRecords} from '../api/types'
+import type {RunCountryRecordResult,RunCountryRecords,CountryMatchRecordKey} from '../api/types'
 import {formatApiError} from '../utils/apiErrors'
 
 type Props={runId:string;branchId:string;countryCode:string;savedRevisionId:string|null
   historical:boolean;cs:boolean;presentSeason:number|null;presentWeek:number|null}
-type Detail='titles'|'finals'|'hosted'|null
+type Detail='titles'|'finals'|'hosted'|'match-played_wins'|'match-played_matches'|null
 
 export function RunWorldCountryRecords({
   runId,branchId,countryCode,savedRevisionId,historical,cs,presentSeason,presentWeek
@@ -185,7 +186,7 @@ export function RunWorldCountryRecords({
             <td>{records.hosted.length}</td><td>{countryCode}</td>
             <td><button type="button" onClick={()=>setDetail('hosted')}>{cs?'Podklady':'Evidence'}</button></td></tr>
         </tbody></table></div>
-      {detail&&<aside className="section-subtle country-record-detail-panel" aria-label="Country record detail">
+      {detail&&!detail.startsWith('match-')&&<aside className="section-subtle country-record-detail-panel" aria-label="Country record detail">
         <div className="actions"><h5>{selectedTitle}</h5>
           <button type="button" onClick={()=>setDetail(null)}>{cs?'Zavřít detail':'Close detail'}</button>
         </div>
@@ -212,6 +213,14 @@ export function RunWorldCountryRecords({
         'Neodehrané turnaje, stav „completed“ v kalendáři ani odhadované výsledky se nezapočítávají.':
         'Unplayed editions, calendar-only completed statuses and hypothetical results are excluded.'}</p>
     </section>}
+    {records&&request&&savedRevisionId&&<RunWorldCountryMatchHighlights
+      key={[runId,branchId,countryCode,savedRevisionId,
+        request.from.season,request.from.week,request.to.season,request.to.week].join(':')}
+      runId={runId} branchId={branchId} countryCode={countryCode} revision={savedRevisionId}
+      request={request} cs={cs}
+      selected={detail?.startsWith('match-')?
+        detail.slice(6) as CountryMatchRecordKey:null}
+      onSelect={kind=>setDetail(('match-'+kind) as Detail)} onClose={()=>setDetail(null)}/>}
     <h5>{cs?'Samostatné celoživotní statistiky (vlastní filtry)':'Separate lifetime statistics (own filters)'}</h5>
     <p className="status">{cs?
       'Žebříček hráčů a zápasové statistiky níže mají vlastní celoživotní rozsah a zatím se neřídí výše vybraným obdobím. Nejde o Official Ranking.':

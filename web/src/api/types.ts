@@ -2266,10 +2266,12 @@ export type AuthoritativeFullSimulationPendingCollection = {
 export type AuthoritativeFullSimulationRetargetPayload = {
   control_command_id: string
   target_command_id: string
-  target_week: AuthoritativeRankingWeek
   operator_label: string
   audit_reason: string
-}
+} & (
+  | {target_week: AuthoritativeRankingWeek; relative_target?: never}
+  | {relative_target: {unit:'weeks'|'seasons'; count:number}; target_week?: never}
+)
 
 export type AuthoritativeFullSimulationRetargetResult = {
   schema_version: 'authoritative_full_simulation_target_result.v1'
@@ -2278,6 +2280,8 @@ export type AuthoritativeFullSimulationRetargetResult = {
   target_command_id: string
   control_command_id: string
   requested_target_week: AuthoritativeRankingWeek
+  requested_relative_target?: {unit:'weeks'|'seasons';count:number} | null
+  resolved_from_week?: AuthoritativeRankingWeek | null
   effective_target_week: AuthoritativeRankingWeek
   original_final_week: AuthoritativeRankingWeek
   applied_revision: number

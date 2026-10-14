@@ -40,6 +40,35 @@ def _week(value: object, *, label: str) -> dict[str, int]:
     return value
 
 
+def _valid_target_event(event: dict, index: int) -> bool:
+    """Validate revision provenance without inventing an updated target."""
+    target = _week(event.get("target_week"), label="target audit week")
+    if (
+        event.get("revision") != index
+        or not isinstance(event.get("command_id"), str)
+        or not event["command_id"]
+        or event.get("target_week") != target
+    ):
+        return False
+    relative = event.get("relative_target")
+    if relative is None:
+        return "relative_target" not in event  # legacy absolute events
+    if (
+        not isinstance(relative, dict)
+        or set(relative) != {"unit", "count"}
+        or relative["unit"] not in ("weeks", "seasons")
+        or type(relative["count"]) is not int
+        or not 1 <= relative["count"] <= (49 if relative["unit"] == "seasons" else 3050)
+    ):
+        return False
+    origin = _week(event.get("applied_at_week"), label="relative target starting week")
+    origin_ordinal = origin["season_index"] * 61 + origin["week"] - 1
+    target_ordinal = target["season_index"] * 61 + target["week"] - 1
+    return target_ordinal == origin_ordinal + relative["count"] * (
+        61 if relative["unit"] == "seasons" else 1
+    )
+
+
 def _progress(frozen: dict, *, start: dict, final: dict) -> tuple[int, int]:
     seasons = frozen.get("completed_seasons", [])
     weeks = frozen.get("final_completed_weeks", [])
@@ -198,10 +227,7 @@ def inspect_global_full_simulation_operations(factory) -> dict:
                     start["season_index"] * 61 + start["week"]
                 or len({item.get("command_id") for item in target_events}) != len(target_events)
                 or any(
-                    event.get("revision") != index
-                    or not isinstance(event.get("command_id"), str)
-                    or not event["command_id"]
-                    or _week(event.get("target_week"), label="target audit week") != event["target_week"]
+                    not _valid_target_event(event, index)
                     for index, event in enumerate(target_events, 1)
                 )
             ):

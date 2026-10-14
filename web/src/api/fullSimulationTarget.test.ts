@@ -54,3 +54,61 @@ describe('Full Simulation target command transport and validation', () => {
       .rejects.toThrow()
   })
 })
+
+
+describe('relative week and season target response provenance', () => {
+  afterEach(() => vi.restoreAllMocks())
+
+  it.each([
+    ['weeks', 3, {season_index: 3, week: 2}],
+    ['seasons', 1, {season_index: 3, week: 60}],
+  ] as const)('resolves %s and preserves immutable control identity', async (unit, count, resolved) => {
+    const requestPayload = {
+      control_command_id: 'relative-target',
+      target_command_id: 'original-command',
+      relative_target: {unit, count},
+      operator_label: 'Operator',
+      audit_reason: 'Resolve on the server'
+    }
+    const output = {...response(),
+      control_command_id: 'relative-target',
+      requested_target_week: resolved,
+      requested_relative_target: {unit, count},
+      resolved_from_week: {season_index: 2, week: 60},
+      effective_target_week: resolved,
+    }
+    const mock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify(output), {
+      status: 200, headers: {'Content-Type': 'application/json'}
+    }))
+    await expect(retargetAuthoritativeFullSimulation('run/one', 'branch two', requestPayload))
+      .resolves.toMatchObject({requested_target_week: resolved, requested_relative_target: {unit, count}})
+    expect(mock).toHaveBeenCalledWith(expect.stringContaining('/full-simulation/target'),
+      expect.objectContaining({method: 'POST', body: JSON.stringify(requestPayload)}))
+  })
+
+  it.each([
+    ['incorrect source week', (v: any) => {v.resolved_from_week.week = 59}],
+    ['incorrect relative unit', (v: any) => {v.requested_relative_target.unit = 'seasons'}],
+    ['incorrect relative count', (v: any) => {v.requested_relative_target.count = 2}],
+    ['fabricated endpoint', (v: any) => {v.requested_target_week.week = 3}],
+    ['missing anchor', (v: any) => {delete v.resolved_from_week}],
+  ])('rejects %s', async (_label, corrupt) => {
+    const requestPayload = {
+      control_command_id: 'relative-target', target_command_id: 'original-command',
+      relative_target: {unit: 'weeks' as const, count: 3},
+      operator_label: 'Operator', audit_reason: 'Resolve on the server'
+    }
+    const output: any = {...response(),
+      control_command_id: 'relative-target',
+      requested_target_week: {season_index: 3, week: 2},
+      requested_relative_target: {unit: 'weeks', count: 3},
+      resolved_from_week: {season_index: 2, week: 60},
+    }
+    corrupt(output)
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify(output), {
+      status: 200, headers: {'Content-Type': 'application/json'}
+    }))
+    await expect(retargetAuthoritativeFullSimulation('run/one', 'branch two', requestPayload))
+      .rejects.toThrow('Full Simulation target revision response is invalid.')
+  })
+})

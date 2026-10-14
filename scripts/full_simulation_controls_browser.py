@@ -224,6 +224,47 @@ def acceptance(root, *, port, base_url, chromium):
                 assert restored_target["saved_head"] == paused["saved_head"]
                 assert restored_target["commands"][parent_id]["fingerprint"] == paused["commands"][parent_id]["fingerprint"]
                 assert len(restored_target["commands"][parent_id]["result"]["target_events"]) == 2
+                # Same production browser control supports a relative week
+                # increment resolved from the current SQLite world Position.
+                change.click()
+                page.get_by_label("Target type").select_option("weeks")
+                page.get_by_label("Relative target count").fill("1")
+                page.get_by_label("Target change operator").fill("Browser relative operator")
+                page.get_by_label("Target change audit reason").fill("Resolve one real week from the server")
+                with page.expect_response(lambda r: r.url.endswith("/full-simulation/target")) as relative_response:
+                    page.get_by_role("button", name="Apply week target", exact=True).click()
+                assert relative_response.value.status == 200, relative_response.value.text()
+                relative_applied = relative_response.value.json()
+                assert relative_applied["requested_relative_target"] == {"unit": "weeks", "count": 1}
+                assert relative_applied["resolved_from_week"] == actual
+                relative_ordinal = actual["season_index"] * 61 + actual["week"]
+                relative_target = {"season_index": relative_ordinal // 61,
+                                   "week": relative_ordinal % 61 + 1}
+                assert relative_applied["requested_target_week"] == relative_target
+                expect(page.get_by_role("list", name="Resumable Full Simulation parents")).to_contain_text(
+                    f"Effective target S{relative_target['season_index']} W{relative_target['week']}"
+                )
+                page.screenshot(path=str(artifacts / "relative-target-edited-en.png"), full_page=True)
+                change.click()
+                page.get_by_label("Target season index (0–49)").fill("49")
+                page.get_by_label("Target week (1–61)").fill("61")
+                page.get_by_label("Target change operator").fill("Browser relative operator")
+                page.get_by_label("Target change audit reason").fill("Restore original closure after relative target")
+                with page.expect_response(lambda r: r.url.endswith("/full-simulation/target")) as relative_reset:
+                    page.get_by_role("button", name="Apply week target", exact=True).click()
+                assert relative_reset.value.status == 200, relative_reset.value.text()
+                assert relative_reset.value.json()["effective_target_week"] == {
+                    "season_index": 49, "week": 61
+                }
+                after_relative = request("GET", evidence_url)
+                assert after_relative["saved_head"] == original["saved_head"]
+                assert after_relative["saved"] == original["saved"]
+                assert after_relative["groups"] == paused["groups"]
+                assert after_relative["slots"] == paused["slots"]
+                assert len(after_relative["commands"][parent_id]["result"]["target_events"]) == 4
+                assert after_relative["commands"][parent_id]["result"]["target_events"][2]["relative_target"] == {
+                    "unit": "weeks", "count": 1
+                }
                 # Reconnect in a new page through the global Task Center.
                 page.close()
                 page = context.new_page()

@@ -3583,6 +3583,73 @@ describe('AuthoritativeSimulationPanel', () => {
     expect(api.simulateAuthoritativeFullSimulation).not.toHaveBeenCalled()
   })
 
+
+  it.each(['en', 'cs'] as const)('offers relative season/week targets with server resolution and no Save (%s)', async (language) => {
+    api.inspectAuthoritativeWeekSchedule.mockResolvedValue({
+      ...scheduleInspection, schedule: proposal.schedule,
+      schedule_fingerprint: proposal.schedule_fingerprint
+    })
+    api.inspectAuthoritativeWeekSchedulePreflight.mockResolvedValue({
+      ...schedulePreflight, schedule_already_adopted: true,
+      blockers: ['week_schedule_already_adopted'], can_propose_schedule: false
+    })
+    api.getPendingAuthoritativeFullSimulations.mockResolvedValue({
+      schema_version: 'authoritative_full_simulation_pending_collection.v1',
+      run_id: 'run-a', branch_id: 'branch-a', legacy_pending_count: 0,
+      operations: [{
+        control_state: 'paused',
+        command: {
+          command_id: 'relative-parent', operator_label: 'Original',
+          audit_reason: 'Original reviewed scope',
+          expected_start_week: fullSimulationPreview.start_week,
+          expected_position_fingerprint: fullSimulationPreview.expected_position_fingerprint,
+          expected_revision_id: fullSimulationPreview.expected_revision_id,
+          expected_preview_fingerprint: fullSimulationPreview.preview_fingerprint
+        },
+        review: fullSimulationPreview,
+        completed_seasons: [], completed_season_count: 0,
+        final_completed_weeks: [], final_completed_week_count: 0
+      }]
+    })
+    api.retargetAuthoritativeFullSimulation.mockResolvedValue({
+      schema_version: 'authoritative_full_simulation_target_result.v1',
+      run_id:'run-a', branch_id:'branch-a', target_command_id:'relative-parent',
+      control_command_id:'echo', requested_target_week:{season_index:3,week:17},
+      requested_relative_target:{unit:'seasons',count:1},
+      resolved_from_week:{season_index:2,week:17},
+      effective_target_week:{season_index:3,week:17},
+      original_final_week:{season_index:49,week:61},
+      target_revision:1, applied_revision:1, replayed:false,
+      committed_child_work_persists:true
+    })
+    renderPanel({}, language)
+    await userEvent.click(await screen.findByRole('button', {
+      name:language === 'cs' ? 'Změnit cílový týden' : 'Change week target'
+    }))
+    const mode = screen.getByLabelText(language === 'cs' ? 'Typ cíle' : 'Target type')
+    await userEvent.selectOptions(mode, 'weeks')
+    const count = screen.getByLabelText(language === 'cs' ? 'Počet týdnů nebo sezon' : 'Relative target count')
+    await userEvent.clear(count)
+    await userEvent.type(count, '5')
+    await userEvent.selectOptions(mode, 'seasons')
+    await userEvent.clear(count)
+    await userEvent.type(count, '1')
+    await userEvent.type(screen.getByLabelText(language === 'cs' ? 'Operátor změny cíle' : 'Target change operator'), 'Commissioner')
+    await userEvent.type(screen.getByLabelText(language === 'cs' ? 'Důvod změny cíle do auditu' : 'Target change audit reason'), 'Extend by one season')
+    await userEvent.click(screen.getByRole('button', {
+      name:language === 'cs' ? 'Použít nový cílový týden' : 'Apply week target'
+    }))
+    await waitFor(() => expect(api.retargetAuthoritativeFullSimulation).toHaveBeenCalledWith(
+      'run-a', 'branch-a', {
+        control_command_id:expect.any(String),target_command_id:'relative-parent',
+        relative_target:{unit:'seasons',count:1},operator_label:'Commissioner',
+        audit_reason:'Extend by one season'
+      }
+    ))
+    expect(api.simulateAuthoritativeFullSimulation).not.toHaveBeenCalled()
+    expect(api.saveAuthoritativeSimulation).not.toHaveBeenCalled()
+  })
+
   it.each(['en', 'cs'] as const)('requires explicit confirmation to permanently stop the original parent (%s)', async (language) => {
     api.inspectAuthoritativeWeekSchedule.mockResolvedValue({
       ...scheduleInspection,

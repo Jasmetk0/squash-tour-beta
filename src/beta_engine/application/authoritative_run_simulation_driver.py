@@ -555,19 +555,35 @@ class AuthoritativeFullSimulationControlCommand(FrozenInput):
         return self
 
 
+class AuthoritativeFullSimulationRelativeTarget(FrozenInput):
+    """A relative time increment resolved atomically from the actual current week."""
+
+    unit: Literal["weeks", "seasons"]
+    count: int = Field(strict=True, ge=1, le=3050)
+
+    @model_validator(mode="after")
+    def valid_season_count(self):
+        if self.unit == "seasons" and self.count > 49:
+            raise ValueError("Relative seasons must be between 1 and 49")
+        return self
+
+
 class AuthoritativeFullSimulationRetargetCommand(FrozenInput):
-    """Explicit, versioned target: arrival at the start of a given week."""
+    """Exactly one absolute or relative target on the same durable parent."""
 
     control_command_id: str = Field(min_length=1, max_length=128)
     target_command_id: str = Field(min_length=1, max_length=128)
     run_id: str
     branch_id: str
-    target_week: RankingWeek
+    target_week: RankingWeek | None = None
+    relative_target: AuthoritativeFullSimulationRelativeTarget | None = None
     operator_label: str = Field(min_length=1, max_length=128)
     audit_reason: str = Field(min_length=1, max_length=2000)
 
     @model_validator(mode="after")
     def trim_audit(self):
+        if (self.target_week is None) == (self.relative_target is None):
+            raise ValueError("Provide exactly one absolute target_week or relative_target")
         operator, reason = self.operator_label.strip(), self.audit_reason.strip()
         if not operator or not reason:
             raise ValueError("Target change requires operator and audit reason")
@@ -6455,6 +6471,18 @@ class AuthoritativeRunSimulationDriver:
             frozen.get("effective_target_week", frozen["final_week"])
         )
 
+    @staticmethod
+    def _resolve_relative_full_target(
+        current: RankingWeek,
+        relative: AuthoritativeFullSimulationRelativeTarget,
+    ) -> RankingWeek:
+        """A season is 61 weeks, preserving week-of-season across a rollover."""
+        delta = relative.count * (61 if relative.unit == "seasons" else 1)
+        ordinal = current.ordinal + delta
+        if ordinal > FINAL_WEEK.ordinal:
+            raise ValueError("Relative Full Simulation target exceeds the last Run week")
+        return RankingWeek(season_index=ordinal // 61, week=ordinal % 61 + 1)
+
     def retarget_full_simulation(
         self, command: AuthoritativeFullSimulationRetargetCommand
     ) -> dict:
@@ -6479,10 +6507,20 @@ class AuthoritativeRunSimulationDriver:
             prior = [e for e in events if e.get("command_id") == command.control_command_id]
             if len(prior) > 1:
                 raise ValueError("Duplicate target change identity")
+            requested_relative = (
+                command.relative_target.model_dump(mode="json")
+                if command.relative_target is not None else None
+            )
             if prior:
                 event = prior[0]
+                # Never re-resolve a relative command on a lost HTTP response.
+                # Preserve backward replay compatibility for old absolute events.
                 if (
-                    event.get("target_week") != command.target_week.model_dump(mode="json")
+                    event.get("relative_target") != requested_relative
+                    or (
+                        command.target_week is not None
+                        and event.get("target_week") != command.target_week.model_dump(mode="json")
+                    )
                     or event.get("operator_label") != command.operator_label
                     or event.get("audit_reason") != command.audit_reason
                 ):
@@ -6495,16 +6533,22 @@ class AuthoritativeRunSimulationDriver:
                 if frozen.get("control_state", "running") not in ("running", "pause_requested", "paused"):
                     raise ValueError("Full Simulation is no longer controllable")
                 current = self._current_week(session, command.run_id, command.branch_id)
-                if not current.ordinal <= command.target_week.ordinal <= FINAL_WEEK.ordinal:
+                resolved = (
+                    self._resolve_relative_full_target(current, command.relative_target)
+                    if command.relative_target is not None else command.target_week
+                )
+                if resolved is None or not current.ordinal <= resolved.ordinal <= FINAL_WEEK.ordinal:
                     raise ValueError("Target must not precede current week or exceed final Run week")
                 event = {
                     "command_id": command.control_command_id,
-                    "target_week": command.target_week.model_dump(mode="json"),
+                    "target_week": resolved.model_dump(mode="json"),
                     "operator_label": command.operator_label,
                     "audit_reason": command.audit_reason,
                     "revision": len(events) + 1,
                     "applied_at_week": current.model_dump(mode="json"),
                 }
+                if requested_relative is not None:
+                    event["relative_target"] = requested_relative
                 events.append(event)
                 frozen["target_events"] = events
                 frozen["target_revision"] = event["revision"]
@@ -6517,6 +6561,8 @@ class AuthoritativeRunSimulationDriver:
                 "target_command_id": command.target_command_id,
                 "control_command_id": command.control_command_id,
                 "requested_target_week": event["target_week"],
+                "requested_relative_target": event.get("relative_target"),
+                "resolved_from_week": event.get("applied_at_week"),
                 "effective_target_week": self._effective_full_target(frozen).model_dump(mode="json"),
                 "original_final_week": frozen["final_week"],
                 "applied_revision": event["revision"],

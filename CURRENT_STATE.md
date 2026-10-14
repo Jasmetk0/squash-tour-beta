@@ -1,3 +1,13 @@
+# Active Country Match Records work — 14 October 2026
+
+Verified starting `buuk`: `b1c6a4ec09c91d704134dfe955f5f10e03ba32ef`, #1443 merged, no open PR. **Current candidate is not merged.**
+
+Country Records v80 follow-up: full immutable Saved Country match collector now yields read-only sporting-period record leaders for **most actually played wins** and **most actually played matches**. Both use only real published on-court matches, excluding W/O and BYE; same-country matches are two athlete appearances but one canonical match. All equal top holders are shown, and a selected category's genuinely played evidence is paginated *after* computing leaders from the full source. Selected Run/Branch/Saved Revision and original pre-fork branch owner are preserved. The exact Season+Week interval is passed from the already approved Country Records period switch. Match source links pin the original Saved Edition, real Match ID and return context. If the Branch has no simulation clock, the latest valid national played/WO match is considered alongside the last canonical national final/host in determining the conservative **evidence** ceiling, never a made-up Branch clock or FAX data year.
+
+Only these two unweighted played-match records are implemented; no invented ranking records, streak arithmetic, universal sports comparability or full multi-category history. Legacy Country match listing/leaderboard still have explicitly independent lifetime filters. The historic cyclic-tie browser, true completed hybrid knockout and ranking closure remain pre-alpha gaps. This section is candidate evidence until final HEAD tests pass and user merges; older notes below are date-stamped historical candidate claims.
+
+---
+
 # Active implementation — 13 October 2026 (after merged #1442)
 
 Verified starting `buuk`: `3a1d18cadd300593a93166d9e46acd33b7c58965`; #1442 merged and no PR open. Country → exact historical Saved Edition → archived match → country return is integrated.

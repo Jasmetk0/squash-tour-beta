@@ -9,6 +9,7 @@ import {
 import {newCommandId} from '../admin/branchSimulation'
 import {useLanguage} from '../i18n/LanguageContext'
 import {formatApiError,isApiNotFound} from '../utils/apiErrors'
+import {HybridRankingClosurePanel} from './HybridRankingClosurePanel'
 
 type Props={runId:string;branchId:string;eventId:string;enabled:boolean}
 
@@ -148,6 +149,9 @@ export function HybridKnockoutProgressionPanel({
           {valid&&<p><Link to={`/admin/runs/${encodeURIComponent(runId)}/simulate?branch=${encodeURIComponent(branchId)}`}>
             {cs?'Odehrát skutečný vyřazovací zápas v Simulaci':'Play the real knockout Match Day in Simulation'}
           </Link></p>}
+          <HybridRankingClosurePanel
+            runId={runId} branchId={branchId} eventId={eventId} enabled={valid}
+            bracket={bracket.data} standings={standings.data}/>
         </>}
       </>}
     </>}

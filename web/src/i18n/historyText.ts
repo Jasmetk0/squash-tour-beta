@@ -285,8 +285,6 @@ const czech:Readonly<Record<string,string>> = {
   "exact changed fields:": "přesně změněná pole:",
   "Whole published match record": "Celý publikovaný záznam zápasu",
   "Exact published match A B detail": "Přesný detail publikovaného zápasu A/B",
-  "Compare state A": "Porovnat stav A",
-  "Compare state B": "Porovnat stav B",
   "Loaded": "Načteno",
   "reachable revisions.": "dosažitelných revizí.",
   "Run:": "Run:",

@@ -13,7 +13,7 @@ from sqlalchemy import select
 from beta_engine.application.authoritative_run_simulation_driver import (
     AuthoritativeFullSimulationCommand,
 )
-from beta_engine.domain.fingerprint import fingerprint
+from beta_engine.domain.simulation_slots import fingerprint
 from beta_engine.infrastructure.db.models import (
     AuthoritativeSimulationCommandModel,
     RunBranchModel,

@@ -5,6 +5,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { AdminRunBranchesPage, simulationEligibility } from './AdminRunBranchesPage'
 import { renderWithRoute } from '../test/testUtils'
 
+// This legacy page test mounts the route without the application Layout/LanguageProvider.
+// Keep its existing English expectations; localized map behavior is tested separately.
+vi.mock('../i18n/LanguageContext', () => ({ useLanguage: () => ({ language: 'en' }) }))
+
 const api = vi.hoisted(() => { class ApiError extends Error { constructor(message: string, public status: number) { super(message) } }; return { ApiError, getRunContainer: vi.fn(), getRunPackageState: vi.fn(), getAuthoritativeSimulationPosition: vi.fn(), getPreAlphaFaxEntryValidationPolicyGate: vi.fn(), listRunBranches: vi.fn(), listBranchStates: vi.fn(), listBranchCheckpoints: vi.fn(), listSavedRevisionHistory: vi.fn(), getSavedRevisionRecoveryActivity: vi.fn(), getSavedRevision: vi.fn(), getBranchWorkingDraft: vi.fn(), createRunBranchFromSavedRevision: vi.fn(), restoreSavedRevision: vi.fn(), forkRunBranch: vi.fn(), makeOfficialRunBranch: vi.fn(), simulateNextMatchOnBranch: vi.fn(), simulateNextRoundOnBranch: vi.fn(), simulateNextWeekOnBranch: vi.fn(), simulateNextTournamentOnBranch: vi.fn(), simulateFullSeasonOnBranch: vi.fn(), simulateWorldTourFinalsOnBranch: vi.fn() } })
 vi.mock('../api/client', () => api)
 const run = { run_id: 'run-a', display_name: 'Admin Run', status: 'active', read_only: false, storage_kind: 'custom_local', official_branch_id: 'official' }

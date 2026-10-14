@@ -9,6 +9,8 @@ const api=vi.hoisted(()=>({
   compareSavedRevisions:vi.fn(),getSavedRevision:vi.fn(),getSavedTourCalendar:vi.fn(),
   getSavedTourEdition:vi.fn()
 }))
+const locale=vi.hoisted(()=>({current:'en' as 'en'|'cs'}))
+vi.mock('../i18n/LanguageContext',()=>({useLanguage:()=>({language:locale.current})}))
 vi.mock('../api/client',()=>api)
 
 const first={
@@ -42,6 +44,7 @@ function open(query='branch=fork&a=old&b=new'){
     '/admin/runs/run-a/branches/compare'+(query?'?'+query:''))
 }
 beforeEach(()=>{
+  locale.current='en'
   vi.clearAllMocks()
   api.listRunBranches.mockResolvedValue({run_branches:[
     {run_id:'run-a',branch_id:'fork',display_name:'Timeline 2'},
@@ -280,4 +283,19 @@ describe('Dedicated read-only Compare States A/B',()=>{
       limit:50,beforeSequence:1
     })
   })
+  it('switches History/Compare headings, controls and accessible names to Czech without mutations',async()=>{
+    locale.current='cs'
+    open()
+    const selection=await screen.findByLabelText('Výběr uložených revizí pro porovnání')
+    expect(await within(selection).findByLabelText('Větev porovnání')).toHaveValue('fork')
+    await waitFor(()=>expect(within(selection).getByLabelText('Porovnat stav A')).toHaveValue('old'))
+    expect(within(selection).getByLabelText('Porovnat stav B')).toHaveValue('new')
+    expect(screen.getByText('Porovnání uložených stavů A/B')).toBeInTheDocument()
+    const results=await screen.findByLabelText('Výsledky porovnání uložených revizí')
+    expect(within(results).getByLabelText('Filtr porovnání')).toHaveValue('differences')
+    expect(within(results).getByLabelText('Tabulka porovnání uložených stavů A/B'))
+      .toHaveTextContent('změněno')
+    expect(api.compareSavedRevisions).toHaveBeenCalledWith('run-a','fork','old','new')
+  })
+
 })

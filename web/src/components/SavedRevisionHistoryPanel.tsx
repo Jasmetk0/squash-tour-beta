@@ -21,6 +21,8 @@ import type {
 import { formatApiError } from '../utils/apiErrors'
 import { EmptyState, JsonPayloadBlock, MetadataList, SectionCard } from './RunScopedUi'
 import { SavedBranchMap } from './SavedBranchMap'
+import {useLanguage} from '../i18n/LanguageContext'
+import {historyText} from '../i18n/historyText'
 
 type ForkReview = {
   runId: string
@@ -56,6 +58,8 @@ export function SavedRevisionHistoryPanel({
   run,
   branches
 }: SavedRevisionHistoryPanelProps): JSX.Element {
+  const {language}=useLanguage()
+  const T=(english:string)=>historyText(english,language)
   const queryClient = useQueryClient()
   const [requestedBranchId, setRequestedBranchId] = useState('')
   const [selectedRevisionId, setSelectedRevisionId] = useState('')
@@ -243,7 +247,7 @@ export function SavedRevisionHistoryPanel({
       setTypedConfirmation('')
       setRestoreConfirmed(false)
       setRestoreNotice(
-        `Restore was not retried. The current state must be reviewed again. ${formatApiError(error)}`
+        `${T('Restore was not retried. The current state must be reviewed again.')} ${formatApiError(error)}`
       )
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['saved-revision-history', runId, branchId] }),
@@ -282,11 +286,11 @@ export function SavedRevisionHistoryPanel({
   const canConfirmFork = forkReviewStillCurrent && forkConfirmed && !createBranchMutation.isPending
 
   let restoreBlocker: string | null = null
-  if (!detailIdentityIsValid) restoreBlocker = 'Open a valid Saved Revision preview first.'
-  else if (!historyIdentityIsValid) restoreBlocker = 'Saved Revision history identity is inconsistent.'
-  else if (restorePreflightQuery.isLoading) restoreBlocker = 'Checking restore preflight...'
-  else if (restorePreflightQuery.error) restoreBlocker = `Restore preflight failed: ${formatApiError(restorePreflightQuery.error)}`
-  else if (!restorePreflightIdentityIsValid) restoreBlocker = 'Restore preflight identity is inconsistent.'
+  if (!detailIdentityIsValid) restoreBlocker = T('Open a valid Saved Revision preview first.')
+  else if (!historyIdentityIsValid) restoreBlocker = T('Saved Revision history identity is inconsistent.')
+  else if (restorePreflightQuery.isLoading) restoreBlocker = T('Checking restore preflight...')
+  else if (restorePreflightQuery.error) restoreBlocker = `${T('Restore preflight failed:')} ${formatApiError(restorePreflightQuery.error)}`
+  else if (!restorePreflightIdentityIsValid) restoreBlocker = T('Restore preflight identity is inconsistent.')
   else if (restorePreflight && !restorePreflight.can_restore) {
     restoreBlocker = restorePreflight.blockers.map((item) => item.message).join(' ')
   }
@@ -376,14 +380,13 @@ export function SavedRevisionHistoryPanel({
   }
 
   return (
-    <SectionCard title="Saved Revision history">
+    <SectionCard title={T("Saved Revision history")}>
       <p>
-        Opening a Saved Revision is always read-only. No Branch, Working Draft, or Viewer state
-        changes until a separate action is explicitly submitted.
+        {T("Opening a Saved Revision is always read-only. No Branch, Working Draft, or Viewer state changes until a separate action is explicitly submitted.")}
       </p>
       <p><Link to={'/admin/runs/'+encodeURIComponent(runId)+'/branches/compare?'+
         new URLSearchParams({branch:branchId,...(selectedRevisionId?{b:selectedRevisionId}:{})}).toString()}>
-        Open Compare States A/B · Samostatné porovnání uložených stavů
+        {T("Open Compare States A/B · Samostatné porovnání uložených stavů")}
       </Link></p>
       <SavedBranchMap
         runId={runId} branches={branches} selectedBranchId={branchId}
@@ -392,12 +395,12 @@ export function SavedRevisionHistoryPanel({
         onSelect={selectBranch}
       />
       {branches.length === 0 ? (
-        <EmptyState message="No Branch is available for Saved Revision history." />
+        <EmptyState message={T("No Branch is available for Saved Revision history.")} />
       ) : (
         <label>
-          History Branch
+          {T("History Branch")}
           <select
-            aria-label="Saved Revision history Branch"
+            aria-label={T("Saved Revision history Branch")}
             value={branchId}
             onChange={(event) => selectBranch(event.target.value)}
           >
@@ -410,26 +413,24 @@ export function SavedRevisionHistoryPanel({
         </label>
       )}
 
-      {historyQuery.isLoading && <p className="status">Loading Saved Revision history...</p>}
+      {historyQuery.isLoading && <p className="status">{T("Loading Saved Revision history...")}</p>}
       {historyQuery.error && (
-        <p className="error">Failed to load Saved Revision history: {formatApiError(historyQuery.error)}</p>
+        <p className="error">{T("Failed to load Saved Revision history:")} {formatApiError(historyQuery.error)}</p>
       )}
       {history && !historyIdentityIsValid && (
-        <p className="error">Saved Revision history returned a mismatched Run or Branch identity.</p>
+        <p className="error">{T("Saved Revision history returned a mismatched Run or Branch identity.")}</p>
       )}
       {historyIdentityIsValid && history?.saved_revisions.length === 0 && (
-        <EmptyState message="This Branch has no reachable Saved Revisions." />
+        <EmptyState message={T("This Branch has no reachable Saved Revisions.")} />
       )}
       {historyIdentityIsValid && history && history.saved_revisions.length > 0 && (
         <div className="saved-revision-layout">
-          <div className="table-responsive" aria-label="Reachable Saved Revisions table">
-            <p className="status">Reachable Saved Revision history, including shared ancestors.
-              Only loaded pages are shown; older entries can be loaded explicitly.
-              Saved at is wall-clock time, not sporting simulation time.</p>
-            <table aria-label="Saved Revision history table" className="saved-revision-table">
-              <thead><tr><th># / Revision</th><th>Saved at</th>
-                <th>Actual change summary</th><th>Source Branch</th>
-                <th>Parent</th><th>Reachability</th></tr></thead>
+          <div className="table-responsive" aria-label={T("Reachable Saved Revisions table")}>
+            <p className="status">{T("Reachable Saved Revision history, including shared ancestors. Only loaded pages are shown; older entries can be loaded explicitly. Saved at is wall-clock time, not sporting simulation time.")}</p>
+            <table aria-label={T("Saved Revision history table")} className="saved-revision-table">
+              <thead><tr><th>{T("# / Revision")}</th><th>{T("Saved at")}</th>
+                <th>{T("Actual change summary")}</th><th>{T("Source Branch")}</th>
+                <th>{T("Parent")}</th><th>{T("Reachability")}</th></tr></thead>
               <tbody>{history.saved_revisions.map((revision) => (
                 <tr key={revision.revision_id}
                   className={selectedRevisionId === revision.revision_id ? 'is-selected' : ''}>
@@ -438,18 +439,18 @@ export function SavedRevisionHistoryPanel({
                     aria-pressed={selectedRevisionId === revision.revision_id}
                     onClick={() => selectRevision(revision.revision_id)}>
                     <span className="history-list-item__title">
-                      Revision {revision.sequence}: {revision.kind}
+                      {T("Revision")} {revision.sequence}: {revision.kind}
                     </span>
                     <span className="history-list-item__meta"><code>{revision.revision_id}</code></span>
                   </button></td>
-                  <td>{revision.created_at??'Unavailable'}</td>
+                  <td>{revision.created_at??T("Unavailable")}</td>
                   <td>{typeof revision.change_summary.summary === 'string' &&
                     revision.change_summary.summary.trim() ?
                     revision.change_summary.summary : revision.kind}</td>
                   <td><code>{revision.revision_branch_id}</code></td>
-                  <td><code>{revision.parent_revision_id??'Root'}</code></td>
+                  <td><code>{revision.parent_revision_id??T("Root")}</code></td>
                   <td>{revision.is_branch_head?'HEAD · ':''}
-                    {revision.is_shared_revision?'Shared ancestor':'Own branch'}</td>
+                    {revision.is_shared_revision?T("Shared ancestor"):T("Own branch")}</td>
                 </tr>
               ))}</tbody>
             </table>
@@ -460,100 +461,100 @@ export function SavedRevisionHistoryPanel({
               disabled={historyQuery.isFetchingNextPage}
               onClick={() => historyQuery.fetchNextPage()}
             >
-              {historyQuery.isFetchingNextPage ? 'Loading older revisions...' : 'Load older revisions'}
+              {historyQuery.isFetchingNextPage ? T("Loading older revisions...") : T("Load older revisions")}
             </button>
           )}
 
           <div>
             {!selectedRevisionId && (
-              <EmptyState message="Select a Saved Revision to open its read-only preview." />
+              <EmptyState message={T("Select a Saved Revision to open its read-only preview.")} />
             )}
-            {detailQuery.isLoading && <p className="status">Loading read-only preview...</p>}
+            {detailQuery.isLoading && <p className="status">{T("Loading read-only preview...")}</p>}
             {detailQuery.error && (
-              <p className="error">Failed to load Saved Revision preview: {formatApiError(detailQuery.error)}</p>
+              <p className="error">{T("Failed to load Saved Revision preview:")} {formatApiError(detailQuery.error)}</p>
             )}
             {detail && !detailIdentityIsValid && (
-              <p className="error">The preview returned a mismatched Saved Revision identity.</p>
+              <p className="error">{T("The preview returned a mismatched Saved Revision identity.")}</p>
             )}
             {detailIdentityIsValid && detail && (
-              <article className="saved-revision-preview saved-revision-detail-drawer" aria-label="Saved Revision read-only preview">
+              <article className="saved-revision-preview saved-revision-detail-drawer" aria-label={T("Saved Revision read-only preview")}>
                 <div className="saved-revision-detail-drawer__heading">
-                  <strong>Saved Revision · read-only detail</strong>
-                  <button type="button" onClick={() => selectRevision('')}>Close detail</button>
+                  <strong>{T("Saved Revision · read-only detail")}</strong>
+                  <button type="button" onClick={() => selectRevision('')}>{T("Close detail")}</button>
                 </div>
-                <p className="status"><strong>Read-only preview</strong> · nothing has been changed.</p>
+                <p className="status"><strong>{T("Read-only preview")}</strong> · {T('nothing has been changed.')}</p>
                 <MetadataList
                   items={[
-                    { label: 'Revision', value: `${detail.sequence} · ${detail.revision_id}` },
-                    { label: 'Revision kind', value: detail.kind },
-                    { label: 'Parent revision', value: detail.parent_revision_id ?? 'None' },
-                    { label: 'Created', value: detail.created_at ?? '—' },
-                    { label: 'Current Branch head', value: history.saved_head_revision_id },
-                    { label: 'Shared history', value: detail.is_shared_revision ? 'Yes' : 'No' },
-                    { label: 'Content hash', value: `${detail.content_hash_algorithm}:${detail.content_hash}` },
-                    { label: 'Summary', value: revisionSummary(detail) }
+                    { label: T("Revision"), value: `${detail.sequence} · ${detail.revision_id}` },
+                    { label: T("Revision kind"), value: detail.kind },
+                    { label: T("Parent revision"), value: detail.parent_revision_id ?? T("None") },
+                    { label: T("Created"), value: detail.created_at ?? '—' },
+                    { label: T("Current Branch head"), value: history.saved_head_revision_id },
+                    { label: T("Shared history"), value: detail.is_shared_revision ? T("Yes") : T("No") },
+                    { label: T("Content hash"), value: `${detail.content_hash_algorithm}:${detail.content_hash}` },
+                    { label: T("Summary"), value: revisionSummary(detail) }
                   ]}
                 />
                 <JsonPayloadBlock
-                  title="Saved change summary"
-                  emptyText="No change summary is available."
+                  title={T("Saved change summary")}
+                  emptyText={T("No change summary is available.")}
                   payload={detail.change_summary}
                 />
                 <JsonPayloadBlock
-                  title="Saved Revision payload"
-                  emptyText="No Saved Revision payload is available."
+                  title={T("Saved Revision payload")}
+                  emptyText={T("No Saved Revision payload is available.")}
                   payload={detail.payload}
                 />
 
-                <section aria-label="Saved Revision comparison">
-                  <h4>Compare revisions</h4>
+                <section aria-label={T("Saved Revision comparison")}>
+                  <h4>{T("Compare revisions")}</h4>
                   <p><Link to={'/admin/runs/'+encodeURIComponent(runId)+'/branches/compare?'+
                     new URLSearchParams({branch:branchId,
                       b:selectedRevisionId,...(comparisonRevisionId?{a:comparisonRevisionId}:{})}).toString()}>
-                    Open these states on the dedicated Compare A/B page
+                    {T("Open these states on the dedicated Compare A/B page")}
                   </Link></p>
                   <label>
-                    Compare from
+                    {T("Compare from")}
                     <select
-                      aria-label="Compare selected revision with"
+                      aria-label={T("Compare selected revision with")}
                       value={comparisonRevisionId}
                       onChange={(event) => setComparisonRevisionId(event.target.value)}
                     >
-                      <option value="">Choose another loaded revision</option>
+                      <option value="">{T("Choose another loaded revision")}</option>
                       {history.saved_revisions
                         .filter((revision) => revision.revision_id !== selectedRevisionId)
                         .map((revision) => (
                           <option key={revision.revision_id} value={revision.revision_id}>
-                            Revision {revision.sequence}: {revision.kind}
+                            {T("Revision")} {revision.sequence}: {revision.kind}
                           </option>
                         ))}
                     </select>
                   </label>
                   {comparisonQuery.isLoading && (
-                    <p className="status">Comparing Saved Revisions...</p>
+                    <p className="status">{T("Comparing Saved Revisions...")}</p>
                   )}
                   {comparisonQuery.error && (
                     <p className="error">
-                      Failed to compare Saved Revisions: {formatApiError(comparisonQuery.error)}
+                      {T("Failed to compare Saved Revisions:")} {formatApiError(comparisonQuery.error)}
                     </p>
                   )}
                   {comparison && !comparisonIdentityIsValid && (
-                    <p className="error">Saved Revision comparison identity is inconsistent.</p>
+                    <p className="error">{T("Saved Revision comparison identity is inconsistent.")}</p>
                   )}
                   {comparisonIdentityIsValid && comparison && (
                     <div>
                       <MetadataList
                         items={[
                           {
-                            label: 'From',
+                            label: T("From"),
                             value: `Revision ${comparison.from_revision.sequence} · ${comparison.from_revision.revision_id}`
                           },
                           {
-                            label: 'To',
+                            label: T("To"),
                             value: `Revision ${comparison.to_revision.sequence} · ${comparison.to_revision.revision_id}`
                           },
                           {
-                            label: 'Changed components',
+                            label: T("Changed components"),
                             value: String(
                               comparison.components.filter((item) => item.status !== 'unchanged').length
                             )
@@ -561,22 +562,22 @@ export function SavedRevisionHistoryPanel({
                         ]}
                       />
                       <JsonPayloadBlock
-                        title="Run metadata changes"
-                        emptyText="No Run metadata changed."
+                        title={T("Run metadata changes")}
+                        emptyText={T("No Run metadata changed.")}
                         payload={comparison.run_changes}
                       />
                       <JsonPayloadBlock
-                        title="Branch metadata changes"
-                        emptyText="No Branch metadata changed."
+                        title={T("Branch metadata changes")}
+                        emptyText={T("No Branch metadata changed.")}
                         payload={comparison.branch_changes}
                       />
                       {comparison.components.length === 0 ? (
-                        <EmptyState message="Neither revision contains Saved Revision components." />
+                        <EmptyState message={T("Neither revision contains Saved Revision components.")} />
                       ) : (
-                        <ul aria-label="Saved Revision component comparison">
+                        <ul aria-label={T("Saved Revision component comparison")}>
                           {comparison.components.map((item) => (
                             <li key={item.component_key}>
-                              <strong>{item.component_key}</strong>: {item.status}
+                              <strong>{item.component_key}</strong>: {T(item.status)}
                             </li>
                           ))}
                         </ul>
@@ -593,18 +594,18 @@ export function SavedRevisionHistoryPanel({
                     }}
                   >
                     <label>
-                      New Branch name (optional)
+                      {T("New Branch name (optional)")}
                       <input
-                        aria-label="New Branch name from Saved Revision"
+                        aria-label={T("New Branch name from Saved Revision")}
                         value={newBranchName}
                         maxLength={256}
                         onChange={(event) => setNewBranchName(event.target.value)}
                       />
                     </label>
-                    <p className="status">A new Branch starts from this immutable revision. The original Branch and Viewer Branch remain unchanged.</p>
-                    {!forkReady && <p className="error">Branch creation requires a consistent Run, source Branch head, and Saved Revision preview. Refresh the history before creating.</p>}
+                    <p className="status">{T("A new Branch starts from this immutable revision. The original Branch and Viewer Branch remain unchanged.")}</p>
+                    {!forkReady && <p className="error">{T("Branch creation requires a consistent Run, source Branch head, and Saved Revision preview. Refresh the history before creating.")}</p>}
                     <button type="submit" disabled={!forkReady || createBranchMutation.isPending}>
-                      Review new Branch creation
+                      {T("Review new Branch creation")}
                     </button>
                   </form>
                   <div>
@@ -614,12 +615,12 @@ export function SavedRevisionHistoryPanel({
                       disabled={Boolean(restoreBlocker) || restoreMutation.isPending}
                       onClick={openRestoreReview}
                     >
-                      Restore current Branch from this revision
+                      {T("Restore current Branch from this revision")}
                     </button>
-                    {restoreBlocker && <p className="status">Restore unavailable: {restoreBlocker}</p>}
+                    {restoreBlocker && <p className="status">{T("Restore unavailable:")} {restoreBlocker}</p>}
                     {!restoreBlocker && (
                       <p className="status">
-                        The engine will create a separate recoverable checkpoint before restoring.
+                        {T("The engine will create a separate recoverable checkpoint before restoring.")}
                       </p>
                     )}
                   </div>
@@ -630,52 +631,51 @@ export function SavedRevisionHistoryPanel({
         </div>
       )}
 
-      <section aria-label="Saved Revision recovery activity">
-        <h4>Recovery activity</h4>
+      <section aria-label={T("Saved Revision recovery activity")}>
+        <h4>{T("Recovery activity")}</h4>
         <p>
-          Safety checkpoints and revision events are read-only. Opening a checkpoint only opens
-          its pre-restore Saved Revision; returning to it still requires the guarded restore review.
+          {T("Safety checkpoints and revision events are read-only. Opening a checkpoint only opens its pre-restore Saved Revision; returning to it still requires the guarded restore review.")}
         </p>
         {recoveryActivityQuery.isLoading && (
-          <p className="status">Loading recovery activity...</p>
+          <p className="status">{T("Loading recovery activity...")}</p>
         )}
         {recoveryActivityQuery.error && (
           <p className="error">
-            Failed to load recovery activity: {formatApiError(recoveryActivityQuery.error)}
+            {T("Failed to load recovery activity:")} {formatApiError(recoveryActivityQuery.error)}
           </p>
         )}
         {recoveryActivity && !recoveryActivityIdentityIsValid && (
           <p className="error">
-            Recovery activity returned mismatched or unreachable Run, Branch, or revision data.
+            {T("Recovery activity returned mismatched or unreachable Run, Branch, or revision data.")}
           </p>
         )}
         {recoveryActivityIdentityIsValid && recoveryActivity && (
           <>
-            <h5>Pre-restore safety checkpoints</h5>
+            <h5>{T("Pre-restore safety checkpoints")}</h5>
             {recoveryActivity.safety_checkpoints.length === 0 ? (
-              <EmptyState message="No pre-restore safety checkpoint has been created for this Branch." />
+              <EmptyState message={T("No pre-restore safety checkpoint has been created for this Branch.")} />
             ) : (
-              <ol className="history-list" aria-label="Pre-restore safety checkpoints">
+              <ol className="history-list" aria-label={T("Pre-restore safety checkpoints")}>
                 {[...recoveryActivity.safety_checkpoints].reverse().map((checkpoint) => (
                   <li key={checkpoint.checkpoint_id}>
                     <article>
                       <MetadataList
                         items={[
-                          { label: 'Checkpoint', value: checkpoint.checkpoint_id },
-                          { label: 'Created', value: checkpoint.created_at ?? '—' },
-                          { label: 'Pre-restore head', value: checkpoint.saved_revision_id },
-                          { label: 'Restore target', value: checkpoint.target_saved_revision_id },
-                          { label: 'Restore result', value: checkpoint.restore_saved_revision_id },
-                          { label: 'Reviewed Viewer Branch', value: checkpoint.viewer_branch_id },
-                          { label: 'Reviewed Draft', value: `${checkpoint.draft_id} · version ${checkpoint.draft_version}` },
-                          { label: 'Content hash', value: `${checkpoint.content_hash_algorithm}:${checkpoint.content_hash}` }
+                          { label: T("Checkpoint"), value: checkpoint.checkpoint_id },
+                          { label: T("Created"), value: checkpoint.created_at ?? '—' },
+                          { label: T("Pre-restore head"), value: checkpoint.saved_revision_id },
+                          { label: T("Restore target"), value: checkpoint.target_saved_revision_id },
+                          { label: T("Restore result"), value: checkpoint.restore_saved_revision_id },
+                          { label: T("Reviewed Viewer Branch"), value: checkpoint.viewer_branch_id },
+                          { label: T("Reviewed Draft"), value: `${checkpoint.draft_id} · version ${checkpoint.draft_version}` },
+                          { label: T("Content hash"), value: `${checkpoint.content_hash_algorithm}:${checkpoint.content_hash}` }
                         ]}
                       />
                       <button
                         type="button"
                         onClick={() => selectRevision(checkpoint.saved_revision_id)}
                       >
-                        Open checkpoint recovery source
+                        {T("Open checkpoint recovery source")}
                       </button>
                     </article>
                   </li>
@@ -683,25 +683,25 @@ export function SavedRevisionHistoryPanel({
               </ol>
             )}
 
-            <h5>Branch revision events</h5>
+            <h5>{T("Branch revision events")}</h5>
             {recoveryActivity.audit_events.length === 0 ? (
-              <EmptyState message="No revision Audit Event has been recorded for this Branch." />
+              <EmptyState message={T("No revision Audit Event has been recorded for this Branch.")} />
             ) : (
-              <ol className="history-list" aria-label="Branch revision Audit Events">
+              <ol className="history-list" aria-label={T("Branch revision Audit Events")}>
                 {[...recoveryActivity.audit_events].reverse().map((auditEvent) => (
                   <li key={auditEvent.audit_event_id}>
                     <article>
                       <MetadataList
                         items={[
-                          { label: 'Audit Event', value: auditEvent.audit_event_id },
-                          { label: 'Kind', value: auditEvent.event_kind },
-                          { label: 'Saved Revision', value: auditEvent.saved_revision_id },
-                          { label: 'Created', value: auditEvent.created_at ?? '—' }
+                          { label: T("Audit Event"), value: auditEvent.audit_event_id },
+                          { label: T("Kind"), value: auditEvent.event_kind },
+                          { label: T("Saved Revision"), value: auditEvent.saved_revision_id },
+                          { label: T("Created"), value: auditEvent.created_at ?? '—' }
                         ]}
                       />
                       <JsonPayloadBlock
-                        title="Audit Event payload"
-                        emptyText="No Audit Event payload is available."
+                        title={T("Audit Event payload")}
+                        emptyText={T("No Audit Event payload is available.")}
                         payload={auditEvent.payload}
                       />
                     </article>
@@ -715,37 +715,37 @@ export function SavedRevisionHistoryPanel({
 
       {forkReview && (
         <div className="restore-dialog-backdrop">
-          <section role="alertdialog" aria-modal="true" className="restore-dialog" aria-label="Review new Branch creation">
-            <h4>Review new Branch creation</h4>
-            <p>This creates a separate Branch from the saved history below. It does not rewind or modify the source Branch or switch the Viewer Branch.</p>
+          <section role="alertdialog" aria-modal="true" className="restore-dialog" aria-label={T("Review new Branch creation")}>
+            <h4>{T("Review new Branch creation")}</h4>
+            <p>{T("This creates a separate Branch from the saved history below. It does not rewind or modify the source Branch or switch the Viewer Branch.")}</p>
             <MetadataList items={[
-              { label: 'Run', value: forkReview.runId },
-              { label: 'Source Branch', value: `${forkReview.sourceBranchName} (${forkReview.sourceBranchId})` },
-              { label: 'Saved Revision', value: forkReview.sourceRevisionId },
-              { label: 'Revision content hash', value: forkReview.sourceRevisionHash },
-              { label: 'Reviewed source head', value: forkReview.sourceHeadRevisionId },
-              { label: 'New Branch name', value: forkReview.targetDisplayName ?? 'First unused Timeline N' },
-              { label: 'Viewer Branch stays', value: forkReview.viewerBranchId ?? 'None' }
+              { label: T("Run"), value: forkReview.runId },
+              { label: T("Source Branch"), value: `${forkReview.sourceBranchName} (${forkReview.sourceBranchId})` },
+              { label: T("Saved Revision"), value: forkReview.sourceRevisionId },
+              { label: T("Revision content hash"), value: forkReview.sourceRevisionHash },
+              { label: T("Reviewed source head"), value: forkReview.sourceHeadRevisionId },
+              { label: T("New Branch name"), value: forkReview.targetDisplayName ?? T("First unused Timeline N") },
+              { label: T("Viewer Branch stays"), value: forkReview.viewerBranchId ?? T("None") }
             ]} />
             {!forkReviewStillCurrent && (
-              <p className="error">The Branch, revision, Viewer Branch or proposed name changed. Close this review and inspect the latest history.</p>
+              <p className="error">{T("The Branch, revision, Viewer Branch or proposed name changed. Close this review and inspect the latest history.")}</p>
             )}
             <label>
               <input
                 type="checkbox"
-                aria-label="Confirm new Branch creation"
+                aria-label={T("Confirm new Branch creation")}
                 checked={forkConfirmed}
                 onChange={(event) => setForkConfirmed(event.target.checked)}
                 disabled={!forkReviewStillCurrent || createBranchMutation.isPending}
               />
-              I reviewed the exact source revision and understand this creates an independent Branch without changing the Viewer Branch.
+              {T('I reviewed the exact source revision and understand this creates an independent Branch without changing the Viewer Branch.')}
             </label>
             <div className="saved-revision-actions">
-              <button type="button" disabled={createBranchMutation.isPending} onClick={closeForkReview}>Cancel Branch creation</button>
+              <button type="button" disabled={createBranchMutation.isPending} onClick={closeForkReview}>{T("Cancel Branch creation")}</button>
               <button type="button" disabled={!canConfirmFork} onClick={() => {
                 if (forkReview && canConfirmFork) createBranchMutation.mutate(forkReview)
               }}>
-                {createBranchMutation.isPending ? 'Creating Branch...' : 'Confirm new Branch creation'}
+                {createBranchMutation.isPending ? T("Creating Branch...") : T("Confirm new Branch creation")}
               </button>
             </div>
           </section>
@@ -753,12 +753,12 @@ export function SavedRevisionHistoryPanel({
       )}
 
       {createBranchMutation.error && (
-        <p className="error">Branch creation result is uncertain; review the refreshed Branch list before retrying. {formatApiError(createBranchMutation.error)}</p>
+        <p className="error">{T("Branch creation result is uncertain; review the refreshed Branch list before retrying.")} {formatApiError(createBranchMutation.error)}</p>
       )}
       {createBranchMutation.data && (
-        <p className="status" aria-label="Saved Revision Branch result">
-          Created Branch {createBranchMutation.data.display_name} ({createBranchMutation.data.branch_id})
-          from Saved Revision {createBranchMutation.variables?.sourceRevisionId ?? 'the reviewed revision'}. The Viewer Branch was not changed.
+        <p className="status" aria-label={T("Saved Revision Branch result")}>
+          {T("Created Branch")} {createBranchMutation.data.display_name} ({createBranchMutation.data.branch_id})
+          {T('from Saved Revision')} {createBranchMutation.variables?.sourceRevisionId ?? T('the reviewed revision')}. {T('The Viewer Branch was not changed.')}
         </p>
       )}
       {restoreNotice && <p className="error">{restoreNotice}</p>}
@@ -772,30 +772,29 @@ export function SavedRevisionHistoryPanel({
             className="restore-dialog"
             aria-labelledby="restore-dialog-title"
           >
-            <h4 id="restore-dialog-title">Confirm Saved Revision restore</h4>
+            <h4 id="restore-dialog-title">{T("Confirm Saved Revision restore")}</h4>
             <p>
-              This will restore <strong>{branch.display_name}</strong> from Saved Revision{' '}
-              <strong>{detail.revision_id}</strong>. It will not delete later history. A separate
-              pre-restore checkpoint of head{' '}
-              <strong>{restoreReview.expectedHeadSavedRevisionId}</strong> will be created first.
+              {T('This will restore')} <strong>{branch.display_name}</strong> {T('from Saved Revision')}{' '}
+              <strong>{detail.revision_id}</strong>. {T('It will not delete later history. A separate pre-restore checkpoint of head')}{' '}
+              <strong>{restoreReview.expectedHeadSavedRevisionId}</strong> {T('will be created first.')}
             </p>
             <MetadataList
               items={[
-                { label: 'Reviewed head', value: restoreReview.expectedHeadSavedRevisionId },
-                { label: 'Reviewed Draft version', value: restoreReview.expectedDraftVersion },
-                { label: 'Reviewed Viewer Branch', value: restoreReview.expectedCurrentViewerBranchId },
-                { label: 'Restore target', value: detail.revision_id }
+                { label: T("Reviewed head"), value: restoreReview.expectedHeadSavedRevisionId },
+                { label: T("Reviewed Draft version"), value: restoreReview.expectedDraftVersion },
+                { label: T("Reviewed Viewer Branch"), value: restoreReview.expectedCurrentViewerBranchId },
+                { label: T("Restore target"), value: detail.revision_id }
               ]}
             />
             {!reviewStillCurrent && (
               <p className="error">
-                The reviewed state changed. Close this dialog and review the refreshed state.
+                {T("The reviewed state changed. Close this dialog and review the refreshed state.")}
               </p>
             )}
             <label>
-              Type <code>{restoreReview.confirmationPhrase}</code>
+              {T("Type")} <code>{restoreReview.confirmationPhrase}</code>
               <input
-                aria-label="Restore confirmation phrase"
+                aria-label={T("Restore confirmation phrase")}
                 autoComplete="off"
                 autoFocus
                 value={typedConfirmation}
@@ -804,17 +803,16 @@ export function SavedRevisionHistoryPanel({
             </label>
             <label className="checkbox-label">
               <input
-                aria-label="Confirm Saved Revision restore"
+                aria-label={T("Confirm Saved Revision restore")}
                 type="checkbox"
                 checked={restoreConfirmed}
                 onChange={(event) => setRestoreConfirmed(event.target.checked)}
               />
-              I understand that the current Branch state will be replaced by a new restore revision,
-              while the pre-restore state remains recoverable.
+              {T("I understand that the current Branch state will be replaced by a new restore revision, while the pre-restore state remains recoverable.")}
             </label>
             <div className="actions">
               <button type="button" className="button-ghost" onClick={closeRestoreReview}>
-                Cancel
+                {T("Cancel")}
               </button>
               <button
                 type="button"
@@ -822,7 +820,7 @@ export function SavedRevisionHistoryPanel({
                 disabled={!canSubmitRestore}
                 onClick={() => restoreReview && restoreMutation.mutate(restoreReview)}
               >
-                {restoreMutation.isPending ? 'Restoring...' : 'Confirm restore'}
+                {restoreMutation.isPending ? T("Restoring...") : T("Confirm restore")}
               </button>
             </div>
           </section>
@@ -833,11 +831,12 @@ export function SavedRevisionHistoryPanel({
 }
 
 function RestoreResult({ result }: { result: RestoreSavedRevisionResponse }): JSX.Element {
+  const {language}=useLanguage()
+  const T=(english:string)=>historyText(english,language)
   return (
-    <div className="status" aria-label="Saved Revision restore result">
-      Restore completed. New Saved Revision: {result.saved_revision.revision_id}; safety checkpoint:{' '}
-      {result.safety_checkpoint.checkpoint_id}; restored target: {result.target_saved_revision_id}; Viewer
-      Branch: {result.viewer_branch_id}. Later history remains preserved.
+    <div className="status" aria-label={T("Saved Revision restore result")}>
+      {T("Restore completed. New Saved Revision:")} {result.saved_revision.revision_id}; {T('safety checkpoint:')}{' '}
+      {result.safety_checkpoint.checkpoint_id}; {T('restored target:')} {result.target_saved_revision_id}; {T('Viewer Branch:')} {result.viewer_branch_id}. {T('Later history remains preserved.')}
     </div>
   )
 }

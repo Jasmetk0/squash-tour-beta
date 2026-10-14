@@ -59,6 +59,7 @@ from beta_engine.infrastructure.db.full_simulation_execution_guard import (
     ACTIVE_FULL_SIMULATION_GUARD,
     FullSimulationExecutionGuard,
     FullSimulationPauseRequested,
+    FullSimulationStopped,
 )
 from beta_engine.application.ordinary_season_transition import (
     OrdinarySeasonTransitionCommand,

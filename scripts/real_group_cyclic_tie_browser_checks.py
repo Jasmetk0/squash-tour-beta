@@ -19,6 +19,12 @@ def install_real_match_engine_cyclic_fixture(root: Path) -> None:
     The explicit scope file is created only after real Run/Branch/Event setup.
     Foreign Run, Branch and Event requests cannot borrow the test evidence.
     """
+    # A CLI script starts with scripts/ on sys.path; fixture tests live in the
+    # repository root and must take precedence over unrelated site packages.
+    import sys
+    repository_root = str(Path(__file__).resolve().parents[1])
+    if repository_root not in sys.path:
+        sys.path.insert(0, repository_root)
     from beta_engine.infrastructure.db import (
         tournament_group_standings_authority as standings_module,
         tournament_group_tie_resolution_authority as tie_module,

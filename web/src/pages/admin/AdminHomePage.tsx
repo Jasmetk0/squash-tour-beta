@@ -26,6 +26,7 @@ export function AdminHomePage(): JSX.Element {
     <div className="home-entry-grid">{entryCards.map(card => <Link className="home-entry" key={card.to} to={card.to}>
       <span className="eyebrow">{card.metric}</span><h3>{t(card.name)} ↗</h3><p>{card.summary}</p>
     </Link>)}</div>
+    <p><Link to="/admin/operations">{language === 'cs' ? 'Centrum simulací – rozpracované Full Simulation →' : 'Simulation Task Center – persisted Full Simulation →'}</Link></p>
     <section className="home-recent" aria-label="Saved Product Runs">
       <div className="home-recent__heading"><h3>{t('Saved Product Runs')}</h3><Link to="/admin/runs/new">{t('Create Run')} +</Link></div>
       {runs.isPending && <p role="status">{t('Loading')}</p>}

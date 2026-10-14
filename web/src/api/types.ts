@@ -2175,6 +2175,7 @@ export type AuthoritativeFullSimulationProgress = {
     | 'final_run_save_required'
     | 'final_run_closure_prerequisite'
     | 'final_run_closure_review_required'
+    | 'operator_paused'
   blockers: string[]
   detail: string | null
   position: AuthoritativeSimulationPosition | null
@@ -2207,6 +2208,7 @@ export type AuthoritativeFullSimulationExecution =
   | AuthoritativeFullSimulationResult
 
 export type AuthoritativeFullSimulationPendingOperation = {
+  control_state: 'running' | 'pause_requested' | 'paused'
   command: AuthoritativeFullSimulationCommandPayload
   review: AuthoritativeFullSimulationPreview
   completed_seasons: number[]
@@ -2221,6 +2223,23 @@ export type AuthoritativeFullSimulationPendingCollection = {
   branch_id: string
   operations: AuthoritativeFullSimulationPendingOperation[]
   legacy_pending_count: number
+}
+
+export type AuthoritativeFullSimulationControlPayload = {
+  target_command_id: string
+  action: 'pause' | 'resume'
+  operator_label: string
+  audit_reason: string
+}
+
+export type AuthoritativeFullSimulationControlResult = {
+  schema_version: 'authoritative_full_simulation_control_result.v1'
+  run_id: string
+  branch_id: string
+  target_command_id: string
+  action: 'pause' | 'resume'
+  control_state: 'running' | 'pause_requested' | 'paused'
+  committed_child_work_persists: true
 }
 
 export type AuthoritativeFullSimulationAbandonPayload = {

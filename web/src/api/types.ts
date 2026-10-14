@@ -8661,6 +8661,24 @@ export type CountrySavedMatchRecords = {
   offset:number;limit:number;has_more:boolean;matches:CountrySavedMatch[]
 }
 
+/** Master v80 national match RECORDS, distinct from lifetime match listings. */
+export type CountryMatchRecordKey='played_wins'|'played_matches'
+export type CountryMatchRecordHolder={player_id:string;player_name:string;value:number}
+export type CountryMatchRecordSummary={
+  key:CountryMatchRecordKey;value:number;holders:CountryMatchRecordHolder[]
+}
+export type CountryMatchRecordHighlights={
+  schema_version:'country_match_record_highlights.v1';source:'reachable_saved_revision'
+  run_id:string;branch_id:string;revision_branch_id:string;saved_revision_id:string
+  country_code:string
+  from_season:number;from_week:number;to_season:number;to_week:number
+  period_country_matches:number;period_played_matches:number;period_walkovers:number
+  records:CountryMatchRecordSummary[]
+  selected_record:CountryMatchRecordKey|null
+  evidence_count:number;offset:number;limit:number;has_more:boolean
+  evidence:CountrySavedMatch[]
+}
+
 /** Published canonical Saved Revision evidence, not Official Ranking points. */
 export type CountryPlayerStanding = {
   position:number;player_id:string;player_name:string;country_code:string

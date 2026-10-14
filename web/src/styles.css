@@ -2474,3 +2474,49 @@ textarea:focus-visible {
 .saved-compare-page .saved-revision-detail-drawer code{overflow-wrap:anywhere;white-space:normal}
 @media(max-width:860px){.saved-compare-selectors{grid-template-columns:1fr}}
 @media(max-width:570px){.saved-compare-before-after{grid-template-columns:1fr}}
+
+/* Read-only global Full Simulation task inventory, intentionally distinct from live workers. */
+.simulation-task-center__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.85rem;
+  margin: 1rem 0;
+}
+.simulation-task-center__toolbar label {
+  flex: 1 1 240px;
+  min-width: 0;
+  margin-bottom: 0;
+}
+.simulation-task-center__toolbar input,
+.simulation-task-center__toolbar select { width: 100%; box-sizing: border-box; }
+.simulation-task-center__toolbar button { flex: 0 0 auto; }
+.simulation-task-center__list {
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+.simulation-task-center__item {
+  min-width: 0;
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 1rem;
+}
+.simulation-task-center__heading {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+}
+.simulation-task-center__metadata {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 0.35rem 1rem;
+  margin-top: 0.75rem;
+  overflow-wrap: anywhere;
+}
+.simulation-task-center__item .button-link { margin-top: 0.5rem; }
+.app-header__tasks { font-size: 0.85rem; white-space: nowrap; }

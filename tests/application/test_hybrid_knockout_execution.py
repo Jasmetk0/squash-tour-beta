@@ -160,3 +160,48 @@ def test_hybrid_execution_schedule_rejects_v1_base_chronology():
             base_schedule=base,
             brackets=(bracket(),),
         )
+
+
+@pytest.mark.pr_critical
+def test_four_entrant_hybrid_matches_are_frozen_semifinals_followed_by_final():
+    """A real browser may execute feeders, not guess finalist IDs or reseed."""
+    from beta_engine.application.hybrid_tournament_closure import (
+        _knockout_loss_stage,
+        required_hybrid_knockout_stages,
+    )
+
+    frozen = bracket()
+    assert frozen.entrant_count == 4
+    assert frozen.round_count == 2
+    assert len(frozen.matches) == 3
+    assert _knockout_loss_stage(round_number=1, round_count=2) == "semifinal"
+    assert _knockout_loss_stage(round_number=2, round_count=2) == "finalist"
+    assert set(required_hybrid_knockout_stages(frozen)) == {
+        "champion", "finalist", "semifinal"
+    }
+    semifinal_ids = tuple(match.match_id for match in frozen.matches[:2])
+    assert frozen.matches[-1].participant_sources == tuple(
+        "winner:" + identifier for identifier in semifinal_ids
+    )
+    plans = project_hybrid_knockout_bracket_to_plans(frozen)
+    assert len({plan.match_id for plan in plans}) == 3
+    assert all(not source.startswith("player:")
+               for source in plans[-1].participant_sources)
+    base = base_schedule()
+    first = extend_week_schedule_with_hybrid_knockout(
+        base_schedule=base, brackets=(frozen,)
+    )
+    reopened = extend_week_schedule_with_hybrid_knockout(
+        base_schedule=base, brackets=(frozen,)
+    )
+    assert first == reopened
+    assert len(first.slots) == len(base.slots) + 3
+    semifinals = first.slots[-3:-1]
+    final = first.slots[-1]
+    assert tuple(slot.group_ids[0] for slot in semifinals) == semifinal_ids
+    assert all(slot.match_day_ordinal == semifinals[0].match_day_ordinal
+               for slot in semifinals)
+    assert final.match_day_ordinal == semifinals[0].match_day_ordinal + 1
+    assert final.group_ids == (frozen.terminal_match_id,)
+    assert len({slot.ordinal for slot in first.slots}) == len(first.slots)
+    assert first.slots[:len(base.slots)] == base.slots

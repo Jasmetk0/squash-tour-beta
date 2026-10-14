@@ -1,3 +1,15 @@
+# Active candidate — 14 October 2026, exact published Saved Match Compare (after merged #1447)
+
+Verified starting `buuk`: `282b14ab57d9dadf286c7213133fd630e113bfef`; #1447 merged, no open PR.
+
+**Current candidate, NOT MERGED:** extend the already merged Saved Tournament Edition A/B inspector with **on-demand read-only published match evidence**. For an Edition present in both selected calendars, independently load each exact reachable Saved Revision's authoritative Edition result; verify Run, selected Branch, original revision owner, season, event ID, entire calendar Edition snapshot and duplicate/invalid Match IDs. Compare published canonical Match IDs as added, removed, changed or unchanged, with exact winner, loser, draw phase, round, bracket position and scoreline fields, counts, filter and A/B evidence inspector. An unpublished result (on either side) is explicitly **not comparable**: it is not treated as proof that matches were absent or did not occur. Editions missing on one side are not compared. No mutable HEAD, ranking inference, cross-Branch comparisons, writes, Restore or new sporting formula.
+
+**Tests:** focused deterministic result comparison (published changes, original owner, mismatched Edition, duplicate/invalid IDs, absent publication) and real Compare-page React query flow. This does not claim rally-level comparison, unreported in-progress matches, a full sporting lifecycle, completed hybrid ranking closure or pre-alpha release. Required Fast CI and applicable browser checks must be green at final PR HEAD before merge handoff.
+
+Next: only other finer Saved entities with validated whole-state authoritative evidence, plus real cyclic tie browser and hybrid group→knockout ranking closure / internal release gates. Older dated candidate descriptions below remain historical context.
+
+---
+
 # Active candidate — 14 October 2026, saved Tournament Edition Compare A/B (after #1446)
 
 Verified starting `buuk`: `d6fb6407659684225b28c75ac9dcc693e1073e9f`; #1446 merged, no open PR.

@@ -37,6 +37,7 @@ def acceptance(
     complete_groups: bool = False,
     reconstruct_one_group_match: bool = False,
     cyclic_tie_browser: bool = False,
+    hybrid_preparation: bool = False,
 ) -> None:
     if (root / "browser.sqlite").exists():
         raise ValueError("Saved group browser acceptance requires a fresh SQLite database")
@@ -141,12 +142,14 @@ def acceptance(
                 # for Group Rules, Format, Topology or Group Match Schedule.
                 # Default knockout navigation remains available until Admin
                 # explicitly opts into pure round-robin groups.
-                browser_click(page, "Choose pure round-robin groups")
+                browser_click(page, "Choose groups + knockout" if hybrid_preparation
+                              else "Choose pure round-robin groups")
                 group_setup = page.get_by_label("Group Format setup")
                 expect(group_setup).to_be_visible()
                 expect(group_setup).to_contain_text("Frozen direct entrants: 4")
                 expect(group_setup.get_by_role(
-                    "button", name="Configure pure-groups Format"
+                    "button", name=("Configure groups + knockout Format" if hybrid_preparation
+                                    else "Configure pure-groups Format")
                 )).to_be_disabled()
 
                 group_setup.get_by_label("Season group-match format").select_option("3")
@@ -163,15 +166,37 @@ def acceptance(
                 assert policy["branch_id"] == branch_id
 
                 # Intentional confirmation; no sneaky API setup or fixture player IDs.
-                expect(group_setup.get_by_label("Group count")).to_have_value("1")
-                expect(group_setup.get_by_label("Players per group")).to_have_value("4")
-                group_setup.get_by_label("Confirm immutable pure-groups Format").check()
-                browser_click(page, "Configure pure-groups Format")
+                expect(group_setup.get_by_label("Group count")).to_have_value(
+                    "2" if hybrid_preparation else "1"
+                )
+                expect(group_setup.get_by_label("Players per group")).to_have_value(
+                    "2" if hybrid_preparation else "4"
+                )
+                if hybrid_preparation:
+                    group_setup.get_by_label("Hybrid match 1 top source").select_option("1:1")
+                    group_setup.get_by_label("Hybrid match 1 bottom source").select_option("2:1")
+                    group_setup.get_by_label("Confirm exact hybrid Format and crossings").check()
+                else:
+                    group_setup.get_by_label("Confirm immutable pure-groups Format").check()
+                browser_click(page, "Configure groups + knockout Format" if hybrid_preparation
+                              else "Configure pure-groups Format")
                 expect(page.get_by_role(
                     "button", name="Generate group Topology"
                 )).to_be_visible()
                 preparation = request("GET", event_scope + "/preparation")
-                assert preparation["format_kind"] == "groups"
+                assert preparation["format_kind"] == (
+                    "groups_knockout" if hybrid_preparation else "groups"
+                )
+                if hybrid_preparation:
+                    hybrid_format = request("GET", event_scope + "/format")
+                    group_configuration = hybrid_format["group_configuration"]
+                    assert hybrid_format["format_kind"] == "groups_knockout"
+                    assert group_configuration["advancing_per_group"] == 1
+                    assert group_configuration["knockout_crossings"] == [{
+                        "match_index": 1,
+                        "top": {"group_index": 1, "finishing_position": 1},
+                        "bottom": {"group_index": 2, "finishing_position": 1},
+                    }]
                 assert preparation["next_required_action"] == "generate_tournament_topology"
 
                 expect(page.get_by_label("Group Topology seed")).to_have_value("137")
@@ -186,14 +211,16 @@ def acceptance(
 
                 preparation = request("GET", event_scope + "/preparation")
                 assert preparation["phase"] == "group_match_execution_ready"
-                assert preparation["group_match_count"] == 6
-                assert preparation["group_match_day_count"] == 3
+                expected_matches = 2 if hybrid_preparation else 6
+                expected_days = 1 if hybrid_preparation else 3
+                assert preparation["group_match_count"] == expected_matches
+                assert preparation["group_match_day_count"] == expected_days
                 schedule = request("GET", event_scope + "/format/group-match-schedule")
-                assert schedule["group_count"] == 1
-                assert schedule["group_size"] == 4
-                assert schedule["match_day_count"] == 3
-                assert len(schedule["matches"]) == 6
-                assert len({m["match_id"] for m in schedule["matches"]}) == 6
+                assert schedule["group_count"] == (2 if hybrid_preparation else 1)
+                assert schedule["group_size"] == (2 if hybrid_preparation else 4)
+                assert schedule["match_day_count"] == expected_days
+                assert len(schedule["matches"]) == expected_matches
+                assert len({m["match_id"] for m in schedule["matches"]}) == expected_matches
                 assert all(m["effective_match_format"]["format"]["best_of"] == 3
                            for m in schedule["matches"])
                 page.screenshot(
@@ -272,9 +299,9 @@ def acceptance(
                     "saved_tournament_group_match_schedule_authority.v1"
                 )
                 assert group["authority_fingerprint"] == schedule["authority_fingerprint"]
-                assert len(group["matches"]) == 6
-                assert group["match_day_count"] == 3
-                assert group["group_size"] == 4
+                assert len(group["matches"]) == expected_matches
+                assert group["match_day_count"] == expected_days
+                assert group["group_size"] == (2 if hybrid_preparation else 4)
                 assert expected["group_standings"] is None, (
                     "A completed group table must not be invented before any real results"
                 )
@@ -302,14 +329,14 @@ def acceptance(
                         "table", name="Saved group matches",
                     )
                     expect(group_table).to_be_visible()
-                    expect(group_table.locator("tbody tr")).to_have_count(6)
+                    expect(group_table.locator("tbody tr")).to_have_count(expected_matches)
                     expect(page.get_by_text(
                         "Authentic group Match Day schedule",
                     )).to_be_visible()
-                    expect(group_table.get_by_text("BO3")).to_have_count(6)
+                    expect(group_table.get_by_text("BO3")).to_have_count(expected_matches)
                     expect(group_table.get_by_text(
                         "Not canonically published",
-                    )).to_have_count(6)
+                    )).to_have_count(expected_matches)
                     page.get_by_role("button", name="Results").click()
                     assert page.locator(
                         'section[aria-label="Saved group standings"]'
@@ -488,11 +515,17 @@ if __name__ == "__main__":
                         help="Chromium UI decision on six natural cyclic MatchEngine test-input receipts")
     parser.add_argument("--cyclic-tie-fixture", action="store_true",
                         help="Serve ONLY: install exact-scope genuine MatchEngine test inputs")
+    parser.add_argument("--hybrid-preparation", action="store_true",
+                        help="Browser verifies explicitly configured hybrid plus Saved Edition after SQLite restart")
     parser.add_argument("--complete-groups", action="store_true",
                         help="Actually simulate all six group matches, freeze standings, Save, replay after restart")
     parser.add_argument("--reconstruct-one-group-match", action="store_true",
                         help="Review/commit one natural MatchEngine candidate as a real canonical group Slot before Match Day 3")
     args = parser.parse_args()
+    if args.hybrid_preparation and (
+        args.complete_groups or args.reconstruct_one_group_match or args.cyclic_tie_browser
+    ):
+        parser.error("--hybrid-preparation is a frozen preparation and Save test, not completed hybrid closure")
     if args.cyclic_tie_browser and (args.complete_groups or args.reconstruct_one_group_match):
         parser.error("--cyclic-tie-browser cannot also simulate normal Run Match Days")
     if args.reconstruct_one_group_match and not args.complete_groups:
@@ -511,4 +544,5 @@ if __name__ == "__main__":
             complete_groups=args.complete_groups,
             reconstruct_one_group_match=args.reconstruct_one_group_match,
             cyclic_tie_browser=args.cyclic_tie_browser,
+            hybrid_preparation=args.hybrid_preparation,
         )

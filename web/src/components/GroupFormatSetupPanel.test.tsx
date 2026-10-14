@@ -96,7 +96,7 @@ describe('real Admin group preparation',()=>{
     fireEvent.click(screen.getByLabelText('Confirm immutable group Topology'))
     fireEvent.click(send)
     await waitFor(()=>expect(api.generateAdminGroupTopology).toHaveBeenCalledWith(
-      'run-a','branch-a','event-1','admin-ui-group-topology-event-1',137
+      'run-a','branch-a','event-1','admin-ui-group-topology-event-1',137,'groups'
     ))
   })
   it('refuses missing and fractional topology seeds instead of sending ambiguous authority',async()=>{

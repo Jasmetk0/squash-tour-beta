@@ -294,9 +294,10 @@ export function AuthoritativeSimulationPanel({
   const [fullSimulationProgress, setFullSimulationProgress] =
     useState<AuthoritativeFullSimulationProgress | null>(null)
   const [fullSimulationControlTarget, setFullSimulationControlTarget] =
-    useState<{commandId:string; action:'pause'|'resume'} | null>(null)
+    useState<{commandId:string; action:'pause'|'resume'|'stop'} | null>(null)
   const [fullSimulationControlOperator, setFullSimulationControlOperator] = useState('')
   const [fullSimulationControlReason, setFullSimulationControlReason] = useState('')
+  const [fullSimulationStopConfirmed, setFullSimulationStopConfirmed] = useState(false)
   // Keep one request identity across HTTP retries; rotate only for a new intent.
   const [fullSimulationControlCommandId, setFullSimulationControlCommandId] = useState(newCommandId)
   const [fullSimulationAbandonTarget, setFullSimulationAbandonTarget] =
@@ -1809,6 +1810,9 @@ export function AuthoritativeSimulationPanel({
       if (!fullSimulationControlOperator.trim() || !fullSimulationControlReason.trim()) {
         throw new Error('A control operation requires an operator and audit reason.')
       }
+      if (fullSimulationControlTarget.action === 'stop' && !fullSimulationStopConfirmed) {
+        throw new Error('Confirm permanent stop before ending the simulation.')
+      }
       return controlAuthoritativeFullSimulation(runId, branchId, {
         control_command_id: fullSimulationControlCommandId,
         target_command_id: fullSimulationControlTarget.commandId,
@@ -1817,16 +1821,26 @@ export function AuthoritativeSimulationPanel({
         audit_reason: fullSimulationControlReason.trim()
       })
     },
-    onSuccess: async () => {
+    onSuccess: async (response) => {
+      if (response.action === 'stop') {
+        setFullSimulationReview(null)
+        setFullSimulationProgress(null)
+        setConfirmed(false)
+        setFullSimulationCommandId(newCommandId())
+      }
       setFullSimulationControlTarget(null)
       setFullSimulationControlOperator('')
       setFullSimulationControlReason('')
+      setFullSimulationStopConfirmed(false)
       setFullSimulationControlCommandId(newCommandId())
       await Promise.all([
         queryClient.invalidateQueries({queryKey:['authoritative-full-simulation-pending',runId,branchId]}),
         queryClient.invalidateQueries({queryKey:['authoritative-full-simulation-history',runId,branchId]}),
         queryClient.invalidateQueries({queryKey:['authoritative-full-simulation-parent-detail',runId,branchId]})
       ])
+      if (response.action === 'stop') {
+        await refreshCanonicalSimulation()
+      }
     },
     onError: async () => {
       await queryClient.invalidateQueries({
@@ -3291,6 +3305,18 @@ export function AuthoritativeSimulationPanel({
                           : C('Request safe pause')}
                       </button>
                     )}
+                    <button type="button" onClick={() => {
+                      setFullSimulationControlCommandId(newCommandId())
+                      setFullSimulationControlTarget({
+                        commandId:operation.command.command_id,
+                        action:'stop'
+                      })
+                      setFullSimulationStopConfirmed(false)
+                      setFullSimulationControlOperator('')
+                      setFullSimulationControlReason('')
+                    }} disabled={fullSimulationControlMutation.isPending}>
+                      {C('Stop simulation')}
+                    </button>
                     <button
                       type="button"
                       onClick={() => {
@@ -3307,11 +3333,27 @@ export function AuthoritativeSimulationPanel({
                 ))}
               </ol>
               {fullSimulationControlTarget && (
-                <div role="group" aria-label={C('Full Simulation pause or resume')}>
-                  <p className="status">
-                    {C('This controls the original command in this Run and Branch. Pause is acknowledged at a safe transaction boundary. Completed child results and the original target persist. No implicit Save.')}
-                  </p>
+                <div role="group" aria-label={fullSimulationControlTarget.action === 'stop' ? C('Stop Full Simulation') : C('Full Simulation pause or resume')}>
+                  {fullSimulationControlTarget.action !== 'stop' && (
+                    <p className="status">
+                      {C('This controls the original command in this Run and Branch. Pause is acknowledged at a safe transaction boundary. Completed child results and the original target persist. No implicit Save.')}
+                    </p>
+                  )}
                   <p><code>{fullSimulationControlTarget.commandId}</code></p>
+                  {fullSimulationControlTarget.action === 'stop' && (
+                    <>
+                      <p role="alert" className="error">
+                        {C('Stopping permanently prevents resuming this parent. The current committed child results persist. No automatic Save.')}
+                      </p>
+                      <label>
+                        <input type="checkbox" aria-label={C('Confirm permanent stop')}
+                          checked={fullSimulationStopConfirmed}
+                          onChange={event => setFullSimulationStopConfirmed(event.target.checked)}
+                          disabled={fullSimulationControlMutation.isPending} />
+                        {' '}{C('Confirm permanent stop')}
+                      </label>
+                    </>
+                  )}
                   <p className="status">{C('Control request ID:')} <code>{fullSimulationControlCommandId}</code>. {C('If the response is lost, retrying reuses this exact ID and cannot duplicate the audit event.')}</p>
                   <label>{C('Operator')}
                     <input aria-label={C('Full Simulation control operator')}
@@ -3328,14 +3370,18 @@ export function AuthoritativeSimulationPanel({
                   <button type="button"
                     disabled={!fullSimulationControlOperator.trim()||
                       !fullSimulationControlReason.trim()||
+                      (fullSimulationControlTarget.action === 'stop' && !fullSimulationStopConfirmed)||
                       fullSimulationControlMutation.isPending}
                     onClick={()=>fullSimulationControlMutation.mutate()}>
                     {fullSimulationControlTarget.action === 'pause'
                       ? C('Request pause')
-                      : C('Resume same parent')}
+                      : fullSimulationControlTarget.action === 'stop'
+                        ? C('Stop original simulation')
+                        : C('Resume same parent')}
                   </button>
                   <button type="button" onClick={() => {
                     setFullSimulationControlTarget(null)
+                    setFullSimulationStopConfirmed(false)
                     setFullSimulationControlCommandId(newCommandId())
                   }} disabled={fullSimulationControlMutation.isPending}>{C('Cancel')}</button>
                   {fullSimulationControlMutation.error && <p role="alert" className="error">

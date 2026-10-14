@@ -3502,6 +3502,73 @@ describe('AuthoritativeSimulationPanel', () => {
     expect(api.simulateAuthoritativeFullSimulation).not.toHaveBeenCalled()
   })
 
+  it.each(['en', 'cs'] as const)('requires explicit confirmation to permanently stop the original parent (%s)', async (language) => {
+    api.inspectAuthoritativeWeekSchedule.mockResolvedValue({
+      ...scheduleInspection,
+      schedule: proposal.schedule,
+      schedule_fingerprint: proposal.schedule_fingerprint
+    })
+    api.inspectAuthoritativeWeekSchedulePreflight.mockResolvedValue({
+      ...schedulePreflight, schedule_already_adopted: true,
+      blockers: ['week_schedule_already_adopted'], can_propose_schedule: false
+    })
+    api.getPendingAuthoritativeFullSimulations.mockResolvedValue({
+      schema_version: 'authoritative_full_simulation_pending_collection.v1',
+      run_id: 'run-a', branch_id: 'branch-a', legacy_pending_count: 0,
+      operations: [{
+        control_state: 'paused',
+        command: {
+          command_id: 'parent-to-stop',
+          operator_label: 'Original', audit_reason: 'Original reviewed target',
+          expected_start_week: fullSimulationPreview.start_week,
+          expected_position_fingerprint: fullSimulationPreview.expected_position_fingerprint,
+          expected_revision_id: fullSimulationPreview.expected_revision_id,
+          expected_preview_fingerprint: fullSimulationPreview.preview_fingerprint
+        },
+        review: fullSimulationPreview,
+        completed_seasons: [], completed_season_count: 0,
+        final_completed_weeks: [], final_completed_week_count: 0
+      }]
+    })
+    api.controlAuthoritativeFullSimulation.mockResolvedValue({
+      schema_version: 'authoritative_full_simulation_control_result.v1',
+      run_id: 'run-a', branch_id: 'branch-a', target_command_id: 'parent-to-stop',
+      action: 'stop', control_state: 'stopped', observed_control_state: 'stopped',
+      control_command_id: 'server-id', replayed: false,
+      committed_child_work_persists: true
+    })
+    renderPanel({}, language)
+    await userEvent.click(await screen.findByRole('button', {
+      name: language === 'cs' ? 'Ukončit simulaci' : 'Stop simulation'
+    }))
+    const button = screen.getByRole('button', {
+      name: language === 'cs' ? 'Ukončit původní simulaci' : 'Stop original simulation'
+    })
+    expect(button).toBeDisabled()
+    await userEvent.type(screen.getByLabelText(
+      language === 'cs' ? 'Operátor ovládání Full Simulation' : 'Full Simulation control operator'
+    ), 'Commissioner')
+    await userEvent.type(screen.getByLabelText(
+      language === 'cs' ? 'Důvod ovládání Full Simulation do auditu' : 'Full Simulation control audit reason'
+    ), 'Stop the original parent')
+    expect(button).toBeDisabled()
+    await userEvent.click(screen.getByRole('checkbox', {
+      name: language === 'cs'
+        ? 'Potvrzuji ukončení této simulace; dokončené výsledky zůstanou zachované a Save je ruční.'
+        : 'Confirm permanent stop'
+    }))
+    await userEvent.click(button)
+    await waitFor(() => expect(api.controlAuthoritativeFullSimulation).toHaveBeenCalledWith(
+      'run-a', 'branch-a', expect.objectContaining({
+        control_command_id: expect.any(String), target_command_id: 'parent-to-stop',
+        action: 'stop', operator_label: 'Commissioner',
+        audit_reason: 'Stop the original parent'
+      })
+    ))
+    expect(api.saveAuthoritativeSimulation).not.toHaveBeenCalled()
+    expect(api.simulateAuthoritativeFullSimulation).not.toHaveBeenCalled()
+  })
+
   it.each(['en', 'cs'] as const)('acknowledges a requested pause using the immutable original parent (%s)', async (language) => {
     api.inspectAuthoritativeWeekSchedule.mockResolvedValue({
       ...scheduleInspection, schedule: proposal.schedule,

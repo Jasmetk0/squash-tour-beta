@@ -59,6 +59,7 @@ from beta_engine.infrastructure.db.full_simulation_execution_guard import (
     ACTIVE_FULL_SIMULATION_GUARD,
     FullSimulationExecutionGuard,
     FullSimulationPauseRequested,
+    FullSimulationStopped,
 )
 from beta_engine.application.ordinary_season_transition import (
     OrdinarySeasonTransitionCommand,
@@ -539,7 +540,7 @@ class AuthoritativeFullSimulationControlCommand(FrozenInput):
     target_command_id: str = Field(min_length=1, max_length=128)
     run_id: str
     branch_id: str
-    action: Literal["pause", "resume"]
+    action: Literal["pause", "resume", "stop"]
     operator_label: str = Field(min_length=1, max_length=128)
     audit_reason: str = Field(min_length=1, max_length=2000)
 
@@ -5254,6 +5255,8 @@ class AuthoritativeRunSimulationDriver:
                     raise ValueError("Week parent receipt disappeared")
                 if parent.status == "complete":
                     return json.loads(parent.result_json)
+                if parent.status == "stopped":
+                    raise FullSimulationStopped("Full Simulation was stopped")
                 frozen = json.loads(parent.result_json)
                 transition_payload = frozen.get("week_transition")
                 if transition_payload is None:
@@ -6426,13 +6429,13 @@ class AuthoritativeRunSimulationDriver:
             session.execute(text("BEGIN IMMEDIATE"))
             self._require_writable_scope(session, command.run_id, command.branch_id)
             receipt = session.get(AuthoritativeSimulationCommandModel, key)
-            if receipt is None or receipt.status != "pending":
-                raise ValueError("Full Simulation control requires a pending parent")
+            if receipt is None or receipt.status not in ("pending", "stopped"):
+                raise ValueError("Full Simulation control requires a pending or stopped parent")
             frozen = json.loads(receipt.result_json)
             if frozen.get("schema_version") != "authoritative_full_simulation_operation.v1":
                 raise ValueError("Full Simulation control target is not a parent")
             state = frozen.get("control_state", "running")
-            if state not in ("running", "pause_requested", "paused"):
+            if state not in ("running", "pause_requested", "paused", "stopped"):
                 raise ValueError("Full Simulation control state is corrupt")
             events = frozen.get("control_events", [])
             if not isinstance(events, list) or not all(
@@ -6452,7 +6455,7 @@ class AuthoritativeRunSimulationDriver:
                     or original.get("operator_label") != command.operator_label
                     or original.get("audit_reason") != command.audit_reason
                     or original.get("state") not in (
-                        "pause_requested", "running"
+                        "pause_requested", "running", "stopped"
                     )
                 ):
                     raise ValueError(
@@ -6472,14 +6475,21 @@ class AuthoritativeRunSimulationDriver:
                     "replayed": True,
                     "committed_child_work_persists": True,
                 }
+            if receipt.status == "stopped":
+                raise ValueError("Stopped Full Simulation cannot accept new controls")
             if command.action == "pause":
                 if state != "running":
                     raise ValueError("Full Simulation already has a pause request")
                 state = "pause_requested"
-            else:
+            elif command.action == "resume":
                 if state != "paused":
                     raise ValueError("Full Simulation resume requires acknowledged pause")
                 state = "running"
+            else:
+                # BEGIN IMMEDIATE waits for any in-flight child writer to finish.
+                # The next child is fenced; no partial result or automatic Save.
+                state = "stopped"
+                receipt.status = "stopped"
             frozen["control_state"] = state
             events.append({
                 "command_id": command.control_command_id,
@@ -6542,6 +6552,31 @@ class AuthoritativeRunSimulationDriver:
                 "an explicit control resume. No implicit Save."
             ), position=position,
         )
+
+    def _stopped_full_simulation_progress(
+        self, command: AuthoritativeFullSimulationCommand,
+        key: tuple[str, str, str], request_fp: str,
+    ) -> dict:
+        """Report terminal stop without mutating sporting results or Saved Revision."""
+        with self.factory() as session:
+            receipt = session.get(AuthoritativeSimulationCommandModel, key)
+            if (receipt is None or receipt.request_fingerprint != request_fp
+                    or receipt.status != "stopped"):
+                raise ValueError("Full Simulation stopped receipt missing or corrupt")
+            frozen = json.loads(receipt.result_json)
+            if frozen.get("control_state") != "stopped":
+                raise ValueError("Full Simulation terminal control is inconsistent")
+            position = self._position(
+                session, command.run_id, command.branch_id,
+                allow_missing_schedule=True,
+            )
+            progress = self._full_progress_payload(
+                command=command, frozen=frozen, checkpoint="operator_stopped",
+                detail="Stopped safely; committed child work persists. No implicit Save.",
+                position=position,
+            )
+            progress["status"] = "stopped"
+            return progress
 
     def abandon_full_simulation(
         self, command: AuthoritativeFullSimulationAbandonCommand
@@ -6775,6 +6810,7 @@ class AuthoritativeRunSimulationDriver:
                 )
             )
             paused = False
+            stopped = False
             try:
                 result = self._simulate_full_simulation_guarded(
                     command=command, request_fp=request_fp, key=key,
@@ -6782,9 +6818,18 @@ class AuthoritativeRunSimulationDriver:
             except FullSimulationPauseRequested:
                 paused = True
                 result = None
+            except FullSimulationStopped:
+                stopped = True
+                result = None
             finally:
                 ACTIVE_FULL_SIMULATION_GUARD.reset(guard_token)
+            if stopped:
+                return self._stopped_full_simulation_progress(command, key, request_fp)
             if paused:
+                with self.factory() as session:
+                    terminal = session.get(AuthoritativeSimulationCommandModel, key)
+                    if terminal is not None and terminal.status == "stopped":
+                        return self._stopped_full_simulation_progress(command, key, request_fp)
                 return self._acknowledge_full_simulation_pause(
                     command=command, request_fp=request_fp, key=key,
                     lease_token=lease_token,
@@ -6797,6 +6842,10 @@ class AuthoritativeRunSimulationDriver:
                         and json.loads(receipt.result_json).get("control_state")
                         == "pause_requested"
                     )
+                with self.factory() as session:
+                    receipt = session.get(AuthoritativeSimulationCommandModel, key)
+                    if receipt is not None and receipt.status == "stopped":
+                        return self._stopped_full_simulation_progress(command, key, request_fp)
                 if pending_pause:
                     return self._acknowledge_full_simulation_pause(
                         command=command, request_fp=request_fp, key=key,
@@ -6826,6 +6875,8 @@ class AuthoritativeRunSimulationDriver:
                     )
                 if receipt.status == "complete":
                     return json.loads(receipt.result_json)
+                if receipt.status == "stopped":
+                    raise FullSimulationStopped("Full Simulation was stopped")
                 if receipt.status != "pending":
                     raise ValueError(
                         "Full Simulation command receipt has an invalid status"

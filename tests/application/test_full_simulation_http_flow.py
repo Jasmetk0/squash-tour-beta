@@ -129,3 +129,65 @@ def test_http_expired_or_reclaimed_invocation_cannot_commit_next_sporting_child(
             with factory() as session:
                 lease = session.get(FullSimulationExecutionLeaseModel, "all_runs")
                 assert lease.owner_token == new_token and lease.run_id == flow["other_run"]
+
+
+@pytest.mark.pr_critical
+@pytest.mark.parametrize("pause_first", [False, True])
+def test_http_operator_stop_during_work_or_pause_is_terminal_and_replay_safe(
+    tmp_path, monkeypatch, pause_first,
+):
+    """Real HTTP + SQLite: stop never rolls back committed matches or auto-saves."""
+    server, factory, gate = make_server(tmp_path)
+    monkeypatch.setattr(routes, "_driver", gate.driver)
+    with server, ThreadPoolExecutor(max_workers=1) as pool:
+        flow = initialize(server, tmp_path)
+        command = reviewed_command(server, flow)
+        url = server.base_url + flow["scope"]
+        original = snapshot(factory, flow["run_id"], flow["branch_id"])
+        gate.arm()
+        invocation = pool.submit(_request, "POST", url + "/simulate-full-simulation", command)
+        try:
+            assert gate.reached.wait(timeout=40)
+            before = snapshot(factory, flow["run_id"], flow["branch_id"])
+            assert before["groups"], "At least one real MatchEngine child must commit"
+            if pause_first:
+                pause = {
+                    "control_command_id": "pause-before-stop", "target_command_id": command["command_id"],
+                    "action": "pause", "operator_label": "Operator",
+                    "audit_reason": "Exercise stop from pending pause",
+                }
+                assert _request("POST", url + "/full-simulation/control", pause)[0] == 200
+            stop = {
+                "control_command_id": "terminal-stop", "target_command_id": command["command_id"],
+                "action": "stop", "operator_label": "Operator",
+                "audit_reason": "Stop after safely committed child",
+            }
+            assert _request("POST", url + "/full-simulation/control", stop)[1]["control_state"] == "stopped"
+            status, replay = _request("POST", url + "/full-simulation/control", stop)
+            assert status == 200 and replay["replayed"] is True
+            assert replay["observed_control_state"] == "stopped"
+            different = stop | {"action": "resume"}
+            assert _request("POST", url + "/full-simulation/control", different)[0] == 409
+        finally:
+            gate.release.set()
+        status, stopped = invocation.result(timeout=40)
+        assert status == 201 and stopped["checkpoint"] == "operator_stopped", stopped
+        assert stopped["status"] == "stopped"
+        after = snapshot(factory, flow["run_id"], flow["branch_id"])
+        assert after["groups"] == before["groups"]
+        assert after["slots"] == before["slots"]
+        assert after["saved"] == original["saved"]
+        assert after["saved_head"] == original["saved_head"]
+        parent = after["commands"][command["command_id"]]
+        assert parent["status"] == "stopped"
+        assert parent["fingerprint"] == before["commands"][command["command_id"]]["fingerprint"]
+        assert [x["action"] for x in parent["result"]["control_events"]] == (
+            ["pause", "stop"] if pause_first else ["stop"]
+        )
+        assert _request("GET", url + "/full-simulation/pending")[1]["operations"] == []
+        assert _request("GET", url + "/full-simulation/history")[1]["items"][0]["status"] == "stopped"
+        status, retry = _request("POST", url + "/simulate-full-simulation", command)
+        assert status == 201 and retry["checkpoint"] == "operator_stopped"
+        assert snapshot(factory, flow["run_id"], flow["branch_id"]) == after
+        rejected = stop | {"control_command_id": "stop-again"}
+        assert _request("POST", url + "/full-simulation/control", rejected)[0] == 409

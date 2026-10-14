@@ -2158,7 +2158,7 @@ export type AuthoritativeFullSimulationCommandPayload =
 
 export type AuthoritativeFullSimulationProgress = {
   schema_version: 'authoritative_full_simulation_progress.v1'
-  status: 'blocked'
+  status: 'blocked' | 'stopped'
   run_id: string
   branch_id: string
   start_week: AuthoritativeRankingWeek
@@ -2176,6 +2176,7 @@ export type AuthoritativeFullSimulationProgress = {
     | 'final_run_closure_prerequisite'
     | 'final_run_closure_review_required'
     | 'operator_paused'
+    | 'operator_stopped'
   blockers: string[]
   detail: string | null
   position: AuthoritativeSimulationPosition | null
@@ -2258,7 +2259,7 @@ export type AuthoritativeFullSimulationPendingCollection = {
 export type AuthoritativeFullSimulationControlPayload = {
   control_command_id: string
   target_command_id: string
-  action: 'pause' | 'resume'
+  action: 'pause' | 'resume' | 'stop'
   operator_label: string
   audit_reason: string
 }
@@ -2269,10 +2270,10 @@ export type AuthoritativeFullSimulationControlResult = {
   branch_id: string
   target_command_id: string
   control_command_id: string
-  observed_control_state: 'running' | 'pause_requested' | 'paused'
+  observed_control_state: 'running' | 'pause_requested' | 'paused' | 'stopped'
   replayed: boolean
-  action: 'pause' | 'resume'
-  control_state: 'running' | 'pause_requested' | 'paused'
+  action: 'pause' | 'resume' | 'stop'
+  control_state: 'running' | 'pause_requested' | 'paused' | 'stopped'
   committed_child_work_persists: true
 }
 
@@ -2300,7 +2301,7 @@ export type AuthoritativeFullSimulationAbandonResult = {
 
 export type AuthoritativeFullSimulationHistoryItem = {
   command_id: string
-  status: 'pending' | 'abandoned' | 'complete'
+  status: 'pending' | 'abandoned' | 'stopped' | 'complete'
   start_week: AuthoritativeRankingWeek | null
   final_week: AuthoritativeRankingWeek | null
   completed_seasons: number[]

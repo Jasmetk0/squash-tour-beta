@@ -237,15 +237,43 @@ def acceptance(root, *, port, base_url, chromium):
                 assert continued["saved"] == original["saved"]
                 assert request("POST", simulation + "/simulate-full-simulation", command, status=201)
                 assert request("GET", evidence_url) == continued
+                # Exercise the new terminal stop through actual CS Admin controls.
+                page.goto(base_url + f"/admin/runs/{run_id}/simulate?branch={quote(branch_id, safe='')}")
+                stop_button = page.get_by_role("button", name="Ukončit simulaci", exact=True)
+                expect(stop_button).to_be_visible()
+                stop_button.click()
+                page.get_by_label("Operátor ovládání Full Simulation").fill("Browser stopping operator")
+                page.get_by_label("Důvod ovládání Full Simulation do auditu").fill("Finish controlled three-match evidence")
+                terminal = page.get_by_role("button", name="Ukončit původní simulaci", exact=True)
+                expect(terminal).to_be_disabled()
+                page.get_by_role("checkbox", name="Potvrzuji ukončení této simulace; dokončené výsledky zůstanou zachované a Save je ruční.").check()
+                with page.expect_response(lambda r: r.url.endswith("/full-simulation/control")) as stopped_response:
+                    terminal.click()
+                assert stopped_response.value.status == 200
+                assert stopped_response.value.json()["control_state"] == "stopped"
+                terminal_snapshot = request("GET", evidence_url)
+                assert terminal_snapshot["groups"] == continued["groups"]
+                assert terminal_snapshot["slots"] == continued["slots"]
+                assert terminal_snapshot["saved"] == original["saved"]
+                assert terminal_snapshot["saved_head"] == original["saved_head"]
+                assert terminal_snapshot["commands"][parent_id]["status"] == "stopped"
+                assert [event["action"] for event in terminal_snapshot["commands"][parent_id]["result"]["control_events"]] == [
+                    "pause", "resume", "pause", "stop"]
+                assert request("GET", simulation + "/full-simulation/pending")["operations"] == []
+                final_retry = request("POST", simulation + "/simulate-full-simulation", command, status=201)
+                assert final_retry["status"] == "stopped" and final_retry["checkpoint"] == "operator_stopped"
+                assert request("GET", evidence_url) == terminal_snapshot
+                page.screenshot(path=str(artifacts / "stopped-cs.png"), full_page=True)
                 assert errors == []
                 (artifacts / "evidence.json").write_text(json.dumps({
                     "run_id": run_id, "branch_id": branch_id, "parent_command": command,
                     "lost_control_request": lost[0], "replayed_control_response": replay,
                     "before": original, "paused": paused, "continued": continued,
+                    "stopped": terminal_snapshot, "terminal_retry": final_retry,
                     "competing_run_rejection": rejected, "browser_errors": errors,
                     "boundary": "Test-only gate before next SQLite writer; actual MatchEngine outputs, HTTP and browser controls",
                 }, indent=2))
-                print("REAL FULL SIMULATION PAUSE / LOST RESPONSE / TASK CENTER / SAME-PARENT RESUME PASSED", flush=True)
+                print("REAL FULL SIMULATION PAUSE / LOST RESPONSE / TASK CENTER / SAME-PARENT RESUME / SAFE STOP PASSED", flush=True)
             except Exception:
                 page.screenshot(path=str(artifacts / "failure.png"), full_page=True)
                 (artifacts / "failure.txt").write_text(page.locator("body").inner_text())

@@ -122,10 +122,18 @@ def publish_first_hybrid_official_week(
     assert [entry["week_ordinal"] for entry in historical["publications"]] == [1, 0]
     assert week_one == initial, "Week-1 historical publication was rewritten"
     assert published["best_n"] == initial["best_n"]
-    assert published["row_count"] == initial["row_count"] == 64
+    # The initial World generated 64 players, but published ranking membership
+    # follows Tour entry/retirement at each week. Never assume row counts stay
+    # constant across a genuine Week Transition.
+    assert published["row_count"] == len(published["rows"])
+    assert initial["row_count"] == len(initial["rows"])
     old_points = {row["player_id"]: row["points"] for row in initial["rows"]}
     new_points = {row["player_id"]: row["points"] for row in published["rows"]}
-    deltas = {pid: new_points[pid] - points for pid, points in old_points.items()}
+    assert champion_id in new_points and finalist_id in new_points
+    deltas = {
+        pid: new_points.get(pid, 0) - old_points.get(pid, 0)
+        for pid in old_points.keys() | new_points.keys()
+    }
     assert deltas[champion_id] == 110, deltas
     assert deltas[finalist_id] == 70, deltas
     assert all(delta == 0 for pid, delta in deltas.items()

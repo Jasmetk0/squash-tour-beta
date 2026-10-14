@@ -25,6 +25,7 @@ from admin_first_tournament_smoke import (
     browser_click, browser_settle, create_smoke_app, setup_run,
 )
 from saved_completed_group_browser_checks import play_group_and_save
+from real_hybrid_progression_browser_checks import play_and_freeze_hybrid
 from real_group_cyclic_tie_browser_checks import (
     exercise_real_cyclic_browser, install_real_match_engine_cyclic_fixture,
 )
@@ -38,6 +39,7 @@ def acceptance(
     reconstruct_one_group_match: bool = False,
     cyclic_tie_browser: bool = False,
     hybrid_preparation: bool = False,
+    hybrid_progression: bool = False,
 ) -> None:
     if (root / "browser.sqlite").exists():
         raise ValueError("Saved group browser acceptance requires a fresh SQLite database")
@@ -352,6 +354,22 @@ def acceptance(
 
                 browser_read(page)
                 completed = None
+                hybrid_result = None
+                if hybrid_progression:
+                    hybrid_result = play_and_freeze_hybrid(
+                        request=request,page=page,run_id=run_id,branch_id=branch_id,
+                        event_id=EVENT_ID,run_url=run_url,
+                        event_url=prepared_event_url,root_scope=root_scope,
+                        event_scope=event_scope,
+                        original_match_ids={m["match_id"] for m in schedule["matches"]},
+                        initial_revision=revision,artifacts=artifacts,
+                    )
+                    assert saved(hybrid_result["completed_saved_revision"]) == (
+                        hybrid_result["archived_edition"]
+                    )
+                    assert saved(revision) == expected
+                    print("HYBRID BROWSER: two authentic MatchEngine group games, final standings, "
+                          "actual entrants and bracket, explicit Save",flush=True)
 
                 def final_browser_read(page, final_revision, prefix=""):
                     query = (f"?branch={quote(branch_id, safe='')}"
@@ -436,6 +454,25 @@ def acceptance(
                 assert saved(revision) == expected
                 assert saved(old_rev) == before
                 browser_read(page, prefix="reopened-")
+                if hybrid_result is not None:
+                    assert saved(hybrid_result["completed_saved_revision"]) == (
+                        hybrid_result["archived_edition"]
+                    ), "Saved hybrid group revision changed after SQLite restart"
+                    assert request("GET",event_scope+"/group-standings") == (
+                        hybrid_result["group_authority"]
+                    )
+                    assert request("GET",event_scope+"/hybrid-knockout-entrants") == (
+                        hybrid_result["entrants_authority"]
+                    )
+                    assert request("GET",event_scope+"/hybrid-knockout-bracket") == (
+                        hybrid_result["bracket_authority"]
+                    )
+                    page.goto(prepared_event_url)
+                    expect(page.get_by_role(
+                        "table",name="Canonical hybrid knockout bracket"
+                    )).to_be_visible(timeout=30000)
+                    page.screenshot(path=str(artifacts/"hybrid-05-after-restart.png"),
+                                    full_page=True)
                 if completed is not None:
                     assert saved(completed["revision"]) == completed["edition"], (
                         "Final saved group standings changed after SQLite restart"
@@ -480,6 +517,15 @@ def acceptance(
                     "real_group_match_reconstruction": (
                         completed["reconstructed_group_match"] if completed else None
                     ),
+                    "hybrid_progression": ({
+                        "completed_revision":hybrid_result["completed_saved_revision"],
+                        "played_match_count":hybrid_result["real_group_matches"],
+                        "played_match_days":hybrid_result["real_match_days"],
+                        "group_authority_fingerprint":hybrid_result["group_authority"]["authority_fingerprint"],
+                        "entrants_authority_fingerprint":hybrid_result["entrants_authority"]["authority_fingerprint"],
+                        "bracket_authority_fingerprint":hybrid_result["bracket_authority"]["authority_fingerprint"],
+                        "result_published":False,
+                    } if hybrid_result else None),
                     "unchanged_after_restart": True,
                     "browser_errors": browser_errors,
                 }, indent=2))
@@ -515,6 +561,8 @@ if __name__ == "__main__":
                         help="Chromium UI decision on six natural cyclic MatchEngine test-input receipts")
     parser.add_argument("--cyclic-tie-fixture", action="store_true",
                         help="Serve ONLY: install exact-scope genuine MatchEngine test inputs")
+    parser.add_argument("--hybrid-progression", action="store_true",
+                        help="Play two genuine hybrid group matches, freeze standings, entrants, bracket, Save and restart")
     parser.add_argument("--hybrid-preparation", action="store_true",
                         help="Browser verifies explicitly configured hybrid plus Saved Edition after SQLite restart")
     parser.add_argument("--complete-groups", action="store_true",
@@ -522,7 +570,7 @@ if __name__ == "__main__":
     parser.add_argument("--reconstruct-one-group-match", action="store_true",
                         help="Review/commit one natural MatchEngine candidate as a real canonical group Slot before Match Day 3")
     args = parser.parse_args()
-    if args.hybrid_preparation and (
+    if (args.hybrid_preparation or args.hybrid_progression) and (
         args.complete_groups or args.reconstruct_one_group_match or args.cyclic_tie_browser
     ):
         parser.error("--hybrid-preparation is a frozen preparation and Save test, not completed hybrid closure")
@@ -544,5 +592,6 @@ if __name__ == "__main__":
             complete_groups=args.complete_groups,
             reconstruct_one_group_match=args.reconstruct_one_group_match,
             cyclic_tie_browser=args.cyclic_tie_browser,
-            hybrid_preparation=args.hybrid_preparation,
+            hybrid_preparation=args.hybrid_preparation or args.hybrid_progression,
+            hybrid_progression=args.hybrid_progression,
         )

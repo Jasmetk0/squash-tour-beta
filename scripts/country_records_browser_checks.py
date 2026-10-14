@@ -207,7 +207,7 @@ def verify_country_saved_records(
     expect(page.get_by_role("heading", name="Browser Acceptance Cup")).to_be_visible()
     assert "revision=" + enc(head_id) in page.url
     assert "season=0" in page.url
-    page.get_by_role("link", name="Back to country tournaments").click()
+    page.get_by_role("link", name="Back to country records").click()
     expect(page.get_by_label("Country published records")).to_be_visible()
     assert "rperiod=season" in page.url
     assert "rseason=0" in page.url

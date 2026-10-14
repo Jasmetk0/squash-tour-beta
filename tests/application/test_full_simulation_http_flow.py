@@ -264,7 +264,11 @@ def test_http_versioned_target_change_during_real_sport_reaches_safe_week_bounda
         assert parent["result"]["review"]["final_week"] == {"season_index": 49, "week": 61}
         assert _request("GET", url + "/full-simulation/pending")[1]["operations"] == []
         assert _request("GET", url + "/full-simulation/history")[1]["items"][0]["status"] == "target_reached"
-        assert _request("POST", url + "/full-simulation/target", target)[0] == 409
+        status, terminal_replay = _request("POST", url + "/full-simulation/target", target)
+        assert status == 200 and terminal_replay["replayed"] is True
+        assert terminal_replay["target_revision"] == 2
+        assert _request("POST", url + "/full-simulation/target",
+            target | {"control_command_id": "new-after-terminal"})[0] == 409
         status, repeated_execution = _request("POST", url + "/simulate-full-simulation", command)
         assert status == 201 and repeated_execution["status"] == "target_reached"
         assert snapshot(factory, flow["run_id"], flow["branch_id"]) == after

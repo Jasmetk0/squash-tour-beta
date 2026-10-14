@@ -3,14 +3,17 @@
 Scope: first *explicit absolute weekly* target form. This does not supersede
 Master v81 §27.23 (which additionally requires within-week, relative and
 event-based targets). The effective target means **arrival at the beginning of
-the specified season/week**. No sporting result of that week is implied.
+the specified season/week**. No sporting result of that week is implied. If the selected week is
+already current and contains committed matches, they stay committed; the
+next safe writer boundary prevents additional sport.
 Season indices are 0–49 (2000/01–2049/50), weeks 1–61.
 
 The original Full Simulation preview and command remain fixed at 2049/50
 Week 61. A different `target_week` is stored in the same durable parent as
 `effective_target_week`, `target_revision` and immutable `target_events`.
 Each request carries its own control command ID, operator and reason.
-Identical HTTP retries replay one event and do not roll back a later revision.
+Identical HTTP retries replay one event (even after terminal target closure)
+and do not roll back a later revision.
 A different request with an existing ID is rejected.
 
 A target may be changed while the parent is running, pause-requested or

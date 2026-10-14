@@ -18,7 +18,7 @@ const czech: Readonly<Record<string, string>> = {
   'Target reached; the original command is terminal. Start a separately reviewed operation to continue. Save remains manual.': 'Cíl dosažen; původní příkaz je definitivně uzavřen. Pro pokračování připrav novou samostatně potvrzenou simulaci. Save je ruční.',
   'Change week target': 'Změnit cílový týden',
   'Change Full Simulation week target': 'Změnit cílový týden Full Simulation',
-  'The new target is the START of the selected week (season index 0 = 2000/01). No sport from that week will be simulated by this parent. Original command and Saved Revisions remain unchanged.': 'Novým cílem je ZAČÁTEK vybraného týdne (index sezony 0 = 2000/01). Tento původní příkaz už nebude simulovat sport z tohoto týdne. Původní zadání ani uložené revize se nemění.',
+  'The new target is the START of the selected week (season index 0 = 2000/01). Already committed work is never undone; if that week is in progress, the next safe boundary stops further work. Original command and Saved Revisions remain unchanged.': 'Novým cílem je ZAČÁTEK vybraného týdne (index sezony 0 = 2000/01). Již potvrzené výsledky se nevrací zpět; pokud týden už probíhá, další práce se zastaví na nejbližší bezpečné hranici. Původní příkaz a uložené revize se nemění.',
   'Target season index (0–49)': 'Index cílové sezony (0–49)',
   'Target week (1–61)': 'Cílový týden (1–61)',
   'Target change operator': 'Operátor změny cíle',

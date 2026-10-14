@@ -6462,10 +6462,9 @@ class AuthoritativeRunSimulationDriver:
         key = (command.run_id, command.branch_id, command.target_command_id)
         with self.factory.begin() as session:
             session.execute(text("BEGIN IMMEDIATE"))
-            self._require_writable_scope(session, command.run_id, command.branch_id)
             receipt = session.get(AuthoritativeSimulationCommandModel, key)
-            if receipt is None or receipt.status != "pending":
-                raise ValueError("Target change requires a pending Full Simulation")
+            if receipt is None or receipt.status not in ("pending", "stopped", "target_reached"):
+                raise ValueError("Target change requires a Full Simulation parent")
             frozen = json.loads(receipt.result_json)
             if frozen.get("schema_version") != "authoritative_full_simulation_operation.v1":
                 raise ValueError("Target is not a Full Simulation parent")
@@ -6490,6 +6489,9 @@ class AuthoritativeRunSimulationDriver:
                     raise ValueError("Target command ID reused with different input")
                 replayed = True
             else:
+                if receipt.status != "pending":
+                    raise ValueError("Terminal Full Simulation cannot accept another target")
+                self._require_writable_scope(session, command.run_id, command.branch_id)
                 if frozen.get("control_state", "running") not in ("running", "pause_requested", "paused"):
                     raise ValueError("Full Simulation is no longer controllable")
                 current = self._current_week(session, command.run_id, command.branch_id)

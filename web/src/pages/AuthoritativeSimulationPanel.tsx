@@ -3378,7 +3378,7 @@ export function AuthoritativeSimulationPanel({
               </ol>
               {fullSimulationTargetSelection && (
                 <div role="group" aria-label={C('Change Full Simulation week target')}>
-                  <p className="status">{C('The new target is the START of the selected week (season index 0 = 2000/01). No sport from that week will be simulated by this parent. Original command and Saved Revisions remain unchanged.')}</p>
+                  <p className="status">{C('The new target is the START of the selected week (season index 0 = 2000/01). Already committed work is never undone; if that week is in progress, the next safe boundary stops further work. Original command and Saved Revisions remain unchanged.')}</p>
                   <p><code>{fullSimulationTargetSelection}</code> · {C('Control request ID:')} <code>{fullSimulationTargetCommandId}</code></p>
                   <label>{C('Target season index (0–49)')}
                     <input type="number" aria-label={C('Target season index (0–49)')} min={0} max={49} step={1}

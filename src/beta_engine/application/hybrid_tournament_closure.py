@@ -603,6 +603,23 @@ def _ranking_source_boundary(
     return None, completed_week.ordinal + 1
 
 
+def hybrid_completed_week_from_ordinal(ordinal: int) -> RankingWeek:
+    """Invert the zero-based RankingWeek.ordinal used by Run-owned match receipts.
+
+    Season 0, week 1 is ordinal **0**, not 1. This boundary also supports
+    season 49, week 61 (ordinal 3049) without inventing season 50.
+    """
+    if not isinstance(ordinal, int) or isinstance(ordinal, bool) or not 0 <= ordinal < 50 * 61:
+        raise ValueError("Hybrid Tournament completion week is outside Run range")
+    week = RankingWeek(
+        season_index=ordinal // 61,
+        week=ordinal % 61 + 1,
+    )
+    if week.ordinal != ordinal:
+        raise ValueError("Hybrid Tournament RankingWeek ordinal round-trip failed")
+    return week
+
+
 class TournamentHybridClosureService:
     """Freeze one hybrid tournament source after all bracket matches are complete."""
 
@@ -653,12 +670,7 @@ class TournamentHybridClosureService:
                 "Hybrid Tournament knockout receipts span multiple RankingWeeks"
             )
         ordinal = next(iter(week_ordinals))
-        if ordinal < 1 or ordinal > 50 * 61:
-            raise ValueError("Hybrid Tournament completion week is outside Run range")
-        completed_week = RankingWeek(
-            season_index=(ordinal - 1) // 61,
-            week=(ordinal - 1) % 61 + 1,
-        )
+        completed_week = hybrid_completed_week_from_ordinal(ordinal)
         return self.close(
             run_id=run_id,
             branch_id=branch_id,

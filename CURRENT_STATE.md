@@ -1,3 +1,12 @@
+# Active candidate — 14 October 2026: real hybrid Ranking closure (after merged #1452)
+
+Verified `buuk` `4e09869b44c5afd7518be8c0a07d53da85668290`, #1452 merged and no open PR at start.
+
+**New candidate, NOT MERGED:** real Admin entry of exact hybrid knockout phase ranking points and played-group-win value (no invented defaults), independent operator confirmations, immutable policy and canonical Ranking Source closure after a real stored knockout terminal replay. Side-effect-free GET for closed source supports refresh/restart with verified Result/Award/Prize fingerprint and total points. A dedicated real Chromium test plays two Group matches and a final, explicitly approves 10 + 100/60 *test-only* scoring, expects 180 total points and a genuinely published Saved Tournament Result, then verifies after SQLite restart. No automatic tour-wide points and no Walkover ranking reward inference. See `docs/ADMIN_HYBRID_RANKING_CLOSURE_BROWSER_2026_10_14.md`.
+
+**Next release blockers:** full multi-round hybrid acceptance, actual Official Ranking first-week publication/season rollover and 50-season scaling, historical fork/remap and global policy decisions.
+
+---
 # Active candidate — 14 October 2026, real hybrid knockout Match Day 2 (after merged #1451)
 
 Verified base `buuk` `1e1a34b27dd47420ec1846c5c9dcc555e23c39ce` and no open PR at start. **Candidate, NOT MERGED:** extend genuine Run-owned hybrid groups (two actual MatchEngine matches), completed canonical Standings, immutable Entrants/Bracket into **a real, operator-confirmed knockout final in canonical Simulation Match Day 2**. Verify exact two group-winner participants, authentic replay log and result fingerprint, explicit Save and identical SQLite replay after backend restart. Admin offers navigation from the frozen bracket to Simulation; no automatic champion/ranking points or fabricated match outcome. See `docs/REAL_HYBRID_KNOCKOUT_FINAL_BROWSER_2026_10_14.md`.

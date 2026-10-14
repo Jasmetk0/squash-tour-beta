@@ -180,9 +180,66 @@ def play_and_freeze_hybrid(
     page.screenshot(path=str(artifacts / "hybrid-05-real-knockout-final-replay.png"),
                     full_page=True)
 
-    # The real three sporting match receipts and frozen bracket are still
-    # authorities, not an automatic publication of unconfigured ranking points.
-    # Explicitly persist the Run against its immutable Saved revision identity.
+    # The two played Group games and final do NOT imply any ranking points.
+    # An operator must supply independent explicit values for group wins,
+    # champion and finalist, with no model or frontend numerical defaults.
+    request("GET", event_scope + "/hybrid-ranking-policy", status=404)
+    request("GET", event_scope + "/hybrid-ranking-close", status=404)
+    request("POST", event_scope + "/hybrid-ranking-close", {
+        "command_id": "premature-closure-without-ranking-policy",
+    }, status=409)
+    page.goto(event_url)
+    page.get_by_role("combobox", name="Language / Jazyk").select_option("en")
+    policy_panel = page.get_by_label("Hybrid tournament ranking closure")
+    expect(policy_panel).to_be_visible(timeout=30000)
+    configure_policy = policy_panel.get_by_role(
+        "button", name="Freeze hybrid ranking points policy"
+    )
+    expect(configure_policy).to_be_disabled()
+    policy_panel.get_by_label("Played group win points").fill("10")
+    policy_panel.get_by_label("Hybrid points for champion").fill("100")
+    policy_panel.get_by_label("Hybrid points for finalist").fill("60")
+    expect(configure_policy).to_be_disabled()
+    policy_panel.get_by_label("Confirm exact hybrid ranking point values").check()
+    expect(configure_policy).to_be_enabled()
+    configure_policy.click()
+    policy_table = policy_panel.get_by_role(
+        "table", name="Frozen hybrid ranking phase points"
+    )
+    expect(policy_table).to_be_visible(timeout=30000)
+    policy = request("GET", event_scope + "/hybrid-ranking-policy")
+    assert policy["played_group_win_points"] == 10
+    assert policy["knockout_stage_points"] == [
+        ["champion",100],["finalist",60]
+    ]
+    assert policy["composition_policy_id"] == (
+        "single_tournament_sum_group_plus_knockout_no_double_count.v1"
+    )
+    close_button = policy_panel.get_by_role(
+        "button", name="Close real hybrid tournament ranking source"
+    )
+    expect(close_button).to_be_disabled()
+    policy_panel.get_by_label(
+        "Confirm close from real hybrid match results"
+    ).check()
+    expect(close_button).to_be_enabled()
+    close_button.click()
+    expect(policy_panel.get_by_text(
+        "Canonical tournament source is frozen"
+    )).to_be_visible(timeout=30000)
+    closure = request("GET", event_scope + "/hybrid-ranking-close")
+    assert closure["total_ranking_points"] == 180, closure
+    assert all(len(closure[key])==64 for key in (
+        "source_fingerprint","result_fingerprint",
+        "award_fingerprint","prize_award_fingerprint"
+    ))
+    assert closure["source_fingerprint"] != closure["award_fingerprint"]
+    page.screenshot(
+        path=str(artifacts / "hybrid-06-reviewed-ranking-closure.png"),
+        full_page=True
+    )
+
+    # Explicitly persist canonical tournament/result/awards in a Saved Revision.
     preview = request("GET", simulation + "/save/preview")
     assert preview["can_save"] and preview["has_unsaved_changes"]
     assert preview["saved_head_revision_id"] == initial_revision
@@ -202,8 +259,16 @@ def play_and_freeze_hybrid(
     assert archived["group_standings"] is not None
     assert len(archived["group_standings"]["groups"]) == 2
     assert archived["group_standings"]["authority_fingerprint"] == standing["authority_fingerprint"]
-    # Knockout has not been played. Never fabricate a published winner or award.
-    assert archived["published_result"] is None
+    # The saved tournament is published *only after* the operator approved
+    # the full phase-policy and the backend closed from real receipts.
+    assert archived["published_result"] is not None
+    assert archived["published_result"]["champion_player_id"] == final["winner_player_id"]
+    assert archived["published_result"]["finalist_player_id"] == final["loser_player_id"]
+    saved_matches = archived["published_result"]["matches"]
+    assert len(saved_matches) == 3
+    assert any(m["match_id"] == bracket["terminal_match_id"]
+               and m["winner_player_id"] == final["winner_player_id"]
+               for m in saved_matches)
     return {
         "first_saved_revision":initial_revision,
         "completed_saved_revision":last_revision,
@@ -216,5 +281,7 @@ def play_and_freeze_hybrid(
         "real_match_days":2,
         "frozen_final_replay":final,
         "frozen_final_context":final_context,
-        "result_published":False,
+        "ranking_policy_authority":policy,
+        "ranking_closure":closure,
+        "result_published":True,
     }

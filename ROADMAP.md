@@ -1,3 +1,12 @@
+# Active pre-alpha — hybrid sporting/result/ranking closure (14 October 2026)
+
+Base `buuk` `4e09869b44c5afd7518be8c0a07d53da85668290`, after merged #1452.
+
+1. **Current candidate:** explicit per-Edition points after real group+knockout MatchEngine receipts, immutable policy, canonical Owner Ranking Source closure, published Saved Edition and all underlying authorities after SQLite restart. No numerical defaults or unapproved walkover rewards.
+2. **Next:** demonstrate Ranked Source in next eligible Official Ranking Week, longer 4+/8+ knockout round flow, rebuild/fork checks.
+3. **Release gates:** genuine Run-native cyclic three-way tie, 50-season FAX long acceptance and other QA.
+
+---
 # Active pre-alpha — genuine hybrid knockout execution (14 October 2026)
 
 Base `buuk` `1e1a34b27dd47420ec1846c5c9dcc555e23c39ce` after merged #1451.

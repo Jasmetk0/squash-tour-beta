@@ -200,6 +200,7 @@ import type {
   AuthoritativeFullSimulationCommandPayload,
   AuthoritativeFullSimulationExecution,
   AuthoritativeFullSimulationPendingCollection,
+  GlobalFullSimulationOperations,
   AuthoritativeFullSimulationAbandonPayload,
   AuthoritativeFullSimulationControlPayload,
   AuthoritativeFullSimulationControlResult,
@@ -2284,6 +2285,43 @@ export async function getAuthoritativeFullSimulationHistory(
     ) {
       throw new Error('Full Simulation history item is invalid.')
     }
+  }
+  return data
+}
+
+export async function getGlobalFullSimulationOperations(): Promise<GlobalFullSimulationOperations> {
+  const data = await request<GlobalFullSimulationOperations>(
+    '/run-containers/full-simulation/operations'
+  )
+  if (
+    data.schema_version !== 'global_full_simulation_operations.v1' ||
+    data.visibility !== 'durable_receipts_only' ||
+    !Array.isArray(data.operations) ||
+    data.pending_count !== data.operations.length ||
+    !Number.isInteger(data.legacy_pending_count) ||
+    data.legacy_pending_count < 0
+  ) {
+    throw new Error('Global Full Simulation receipt inventory is invalid.')
+  }
+  const seen = new Set<string>()
+  for (const operation of data.operations) {
+    const key = JSON.stringify([operation.run_id, operation.branch_id, operation.command_id])
+    if (
+      !operation.run_id || !operation.branch_id || !operation.command_id ||
+      !operation.run_name || !operation.branch_name ||
+      seen.has(key) ||
+      !['running', 'pause_requested', 'paused'].includes(operation.control_state) ||
+      operation.worker_activity !== 'unknown' ||
+      !Number.isInteger(operation.completed_season_count) ||
+      operation.completed_season_count < 0 ||
+      !Number.isInteger(operation.final_completed_week_count) ||
+      operation.final_completed_week_count < 0 ||
+      !operation.start_week || !operation.final_week ||
+      !/^[a-f0-9]{64}$/.test(operation.review_fingerprint)
+    ) {
+      throw new Error('Global Full Simulation parent evidence is invalid.')
+    }
+    seen.add(key)
   }
   return data
 }

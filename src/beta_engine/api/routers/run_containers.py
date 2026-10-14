@@ -6,6 +6,8 @@ Legacy ``/runs`` remains the season-attempt API in R1.
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from beta_engine.api.deps import (
+    ApiRuntime,
+    get_runtime,
     get_run_branch_creation_service,
     get_run_container_creation_service,
     get_run_saved_revision_history_service,
@@ -42,6 +44,9 @@ from beta_engine.api.schemas import (
     ViewerBranchWorkingDraftResponse,
 )
 from beta_engine.application.api_services import SimulationApiService
+from beta_engine.application.global_full_simulation_operations import (
+    inspect_global_full_simulation_operations,
+)
 from beta_engine.application.run_branch_creation_service import (
     RunBranchCreationService,
 )
@@ -462,6 +467,25 @@ def list_run_containers(
             _response(record) for record in service.repository.list_run_containers()
         ]
     )
+
+
+@router.get("/full-simulation/operations")
+def list_global_full_simulation_operations(
+    runtime: ApiRuntime = Depends(get_runtime),
+):
+    """Inspect persisted parent operations, not a live worker process."""
+    try:
+        return inspect_global_full_simulation_operations(
+            runtime.repository._session_factory
+        )
+    except (KeyError, TypeError, ValueError) as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "global_full_simulation_operations_conflict",
+                "message": str(exc),
+            },
+        ) from exc
 
 
 @router.post(

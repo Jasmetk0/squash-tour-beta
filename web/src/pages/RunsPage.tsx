@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 
-import { listBranchStates, listRunBranches, listRunContainers } from '../api/client'
+import { getGlobalFullSimulationOperations, listBranchStates, listRunBranches, listRunContainers } from '../api/client'
 import type { RunContainer } from '../api/types'
 import { useLanguage } from '../i18n/LanguageContext'
 import { rememberProductRun } from '../navigation/recentProductRuns'
@@ -19,7 +19,19 @@ const messages = {
     open: 'Otevřít', history: 'Historie a větve', missing: 'Čas není dostupný',
     noBranches: 'Run nemá dostupné větve.', branchError: 'Větve nejsou dostupné',
     legacy: 'Starší diagnostika simulačních Runů', legacyNote: 'Legacy výsledky jsou oddělené a nejsou kanonickými Product Run daty.',
-    viewer: 'Zobrazuje Viewer'
+    viewer: 'Zobrazuje Viewer',
+    operationsTitle: 'Rozpracované Full Simulation',
+    operationsNote: 'Údaje pocházejí z uložených serverových záznamů. Stav „Povoleno“ neprokazuje, že právě běží proces. Po návratu zkontroluj konkrétní Run a větev; simulace se sama nespouští.',
+    operationsEmpty: 'Žádná obnovitelná Full Simulation není uložená.',
+    operationsLoading: 'Načítám uložené simulace…',
+    operationsError: 'Přehled simulací není dostupný',
+    operationsLegacy: 'Starší záznamy bez ověřitelného příkazu k obnovení',
+    operationOpen: 'Otevřít ovládání',
+    operationProgress: 'Dokončené sezony',
+    operationFinalWeeks: 'Týdny poslední sezony',
+    operationTarget: 'Původní cíl',
+    operationWorker: 'Aktivita procesu nepotvrzena',
+    operationState: {running: 'Povoleno – proces neověřen', pause_requested: 'Čeká na bezpečné pozastavení', paused: 'Pozastaveno'}
   },
   en: {
     title: 'Runs', subtitle: 'Independent saved worlds and their actual Branches. Selecting a Branch changes Admin context only.',
@@ -30,7 +42,19 @@ const messages = {
     open: 'Open', history: 'History & Branches', missing: 'Time unavailable',
     noBranches: 'No Branches available for this Run.', branchError: 'Branches unavailable',
     legacy: 'Legacy Simulation Run diagnostics', legacyNote: 'Legacy results are separate from canonical Product Run data.',
-    viewer: 'Shown in Viewer'
+    viewer: 'Shown in Viewer',
+    operationsTitle: 'Pending Full Simulations',
+    operationsNote: 'This is persisted server evidence, not a live worker monitor. Authorized does not prove that a process is running. Reopen the exact Run and Branch to inspect it; nothing restarts automatically.',
+    operationsEmpty: 'No recoverable Full Simulation parent is stored.',
+    operationsLoading: 'Loading stored simulations…',
+    operationsError: 'Simulation inventory unavailable',
+    operationsLegacy: 'Legacy records without a verified resume command',
+    operationOpen: 'Open controls',
+    operationProgress: 'Completed seasons',
+    operationFinalWeeks: 'Final season weeks',
+    operationTarget: 'Original target',
+    operationWorker: 'Worker activity unknown',
+    operationState: {running: 'Authorized – worker unverified', pause_requested: 'Pause requested', paused: 'Paused'}
   }
 }
 
@@ -111,12 +135,55 @@ export function RunsPage(): JSX.Element {
     queryFn: listRunContainers,
     retry: false
   })
+  const operationsQuery = useQuery({
+    queryKey: ['global-full-simulation-operations'],
+    queryFn: getGlobalFullSimulationOperations,
+    retry: false,
+    refetchInterval: 10000
+  })
   const runs = useMemo(() => runsQuery.data?.run_containers.filter(run => (
     `${run.display_name ?? ''} ${run.run_id}`.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase())
   )) ?? [], [runsQuery.data, query])
 
   return <section className="panel runs-canonical">
     <div className="page-intro"><h2>{l.title}</h2><p className="subtitle">{l.subtitle}</p></div>
+    <section className="panel" aria-label={l.operationsTitle}>
+      <h3>{l.operationsTitle}</h3>
+      <p className="status">{l.operationsNote}</p>
+      {operationsQuery.isPending && <p role="status">{l.operationsLoading}</p>}
+      {operationsQuery.isError && <p role="alert" className="error">{l.operationsError}: {formatApiError(operationsQuery.error)}</p>}
+      {operationsQuery.isSuccess && operationsQuery.data.pending_count === 0 && (
+        <p className="status">{l.operationsEmpty}</p>
+      )}
+      {operationsQuery.isSuccess && operationsQuery.data.legacy_pending_count > 0 && (
+        <p className="status">{l.operationsLegacy}: {operationsQuery.data.legacy_pending_count}</p>
+      )}
+      {operationsQuery.isSuccess && operationsQuery.data.operations.length > 0 && (
+        <ul aria-label={l.operationsTitle}>
+          {operationsQuery.data.operations.map(operation => (
+            <li key={JSON.stringify([operation.run_id, operation.branch_id, operation.command_id])}>
+              <strong>{operation.run_name} · {operation.branch_name}</strong>
+              <p className="status">
+                {l.operationState[operation.control_state]} · {l.operationWorker}
+              </p>
+              <p className="status">
+                {l.operationProgress}: {operation.completed_season_count} · {l.operationFinalWeeks}: {operation.final_completed_week_count}
+                {' · '}{l.operationTarget}: S{operation.final_week.season_index} W{operation.final_week.week}
+              </p>
+              <small className="status">{operation.command_id} · {operation.run_id} / {operation.branch_id}</small>
+              {' '}
+              <Link
+                to={`/admin/runs/${encodeURIComponent(operation.run_id)}/simulate?branch=${encodeURIComponent(operation.branch_id)}`}
+                onClick={() => {
+                  writeLastRunId(operation.run_id)
+                  rememberProductRun(operation.run_id)
+                }}
+              >{l.operationOpen}</Link>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
     <div className="runs-canonical-toolbar">
       <label>{l.search}<input type="search" value={query} onChange={event => setQuery(event.target.value)} placeholder={l.placeholder} /></label>
       <Link className="button-link" to="/admin/runs/new">{l.create}</Link>

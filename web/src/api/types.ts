@@ -2207,6 +2207,33 @@ export type AuthoritativeFullSimulationExecution =
   | AuthoritativeFullSimulationProgress
   | AuthoritativeFullSimulationResult
 
+export type GlobalFullSimulationOperation = {
+  run_id: string
+  run_name: string
+  run_status: string
+  run_read_only: boolean
+  branch_id: string
+  branch_name: string
+  branch_status: string
+  branch_read_only: boolean
+  command_id: string
+  control_state: 'running' | 'pause_requested' | 'paused'
+  start_week: AuthoritativeRankingWeek
+  final_week: AuthoritativeRankingWeek
+  completed_season_count: number
+  final_completed_week_count: number
+  review_fingerprint: string
+  worker_activity: 'unknown'
+}
+
+export type GlobalFullSimulationOperations = {
+  schema_version: 'global_full_simulation_operations.v1'
+  visibility: 'durable_receipts_only'
+  operations: GlobalFullSimulationOperation[]
+  pending_count: number
+  legacy_pending_count: number
+}
+
 export type AuthoritativeFullSimulationPendingOperation = {
   control_state: 'running' | 'pause_requested' | 'paused'
   command: AuthoritativeFullSimulationCommandPayload

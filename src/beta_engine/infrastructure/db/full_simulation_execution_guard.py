@@ -117,3 +117,40 @@ def _pause_before_full_simulation_writer(
         "pause_requested", "paused"
     ):
         raise FullSimulationPauseRequested("Full Simulation pause requested before writer transaction")
+
+
+@event.listens_for(Engine, "after_cursor_execute")
+def _fence_full_simulation_after_sqlite_writer_lock(
+    connection, cursor, statement, parameters, context, executemany
+) -> None:
+    """Recheck *after* SQLite reserves the writer lock, closing the precheck race.
+
+    A concurrent owner can reclaim between before_cursor_execute and the
+    completion of BEGIN IMMEDIATE. Once the writer lock is held, another lease
+    claimant cannot commit an ownership change until this transaction exits.
+    """
+    guard = ACTIVE_FULL_SIMULATION_GUARD.get()
+    if guard is None or statement.strip().upper() != "BEGIN IMMEDIATE":
+        return
+    _verify_invocation_lease(connection, guard.execution_lease_token)
+    # This recheck also fences pause commands committed during BEGIN wait.
+    row = connection.exec_driver_sql(
+        "SELECT request_fingerprint, status, result_json "
+        "FROM authoritative_simulation_commands "
+        "WHERE run_id = ? AND branch_id = ? AND command_id = ?",
+        (guard.run_id, guard.branch_id, guard.command_id),
+    ).first()
+    if row is None:
+        return  # A new parent receipt may be created in this transaction.
+    if row[0] != guard.request_fingerprint or row[1] == "abandoned":
+        raise ValueError("Full Simulation parent ownership was revoked")
+    if row[1] not in ("pending", "complete"):
+        raise ValueError("Full Simulation parent is no longer executable")
+    if row[1] == "pending":
+        import json
+        if json.loads(row[2]).get("control_state", "running") in (
+            "pause_requested", "paused"
+        ):
+            raise FullSimulationPauseRequested(
+                "Full Simulation pause requested after writer lock acquisition"
+            )

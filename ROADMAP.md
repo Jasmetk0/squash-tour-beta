@@ -1,3 +1,21 @@
+# Active pre-alpha roadmap — v81 checkpoint, 14 October 2026
+
+Verified integration: `bf928bfcd3e9848c15762ac66860039b53bedaef`, #1453. Product canon and completion evidence remain separate.
+
+1. Fix current CS/EN History/Compare gaps, equal-Branch terminology and Czech hybrid help (A81-01–03).
+2. Close real hybrid → first eligible Official Ranking week → explicit publication/Save/restart, reusing canonical sources.
+3. Demonstrate at least two knockout rounds with actual winner-feeder MatchEngine results and exact awards/history.
+4. Implement approved v81 safe operation controls/server identity, global progress/reconnect and summary; then tracking, linked branch stop rules and Run presets in focused slices.
+5. Historical comparison/player detail, test case preparation and other decided Master scope; broad FAX season/rollover/50-season and complete internal-release gates. Do not replace these with seed-only fixture work.
+
+Already evidenced: historical Country Edition navigation, period records, lineage/history and same-Branch reachable A/B, real two-group/single-final hybrid closure and restart. Cross-Branch A/B and Run-native guaranteed cyclic tie/Save remain unproven. The new Lab A/B layout remains unconfirmed. Current implementation prompt: `docs/PRE_ALPHA_NEXT_CHATGPT_TASK_V81_2026_10_14.md`.
+
+---
+
+# Historical roadmap snapshots
+
+Earlier candidate headings and next-step lists below are dated history, not current merge status or proof of release completeness.
+
 # Active pre-alpha — hybrid sporting/result/ranking closure (14 October 2026)
 
 Base `buuk` `4e09869b44c5afd7518be8c0a07d53da85668290`, after merged #1452.

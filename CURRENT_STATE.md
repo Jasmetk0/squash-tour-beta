@@ -1,3 +1,21 @@
+# Current verified checkpoint — 14 October 2026, Master v81
+
+Integration HEAD: `bf928bfcd3e9848c15762ac66860039b53bedaef` (merge #1453). All #1442–1453 final feature heads are in this history; available final-head PR workflows succeeded. No open implementation PR at this audit. This documentation checkpoint adds product decisions, not application implementation.
+
+Implemented evidence: Country historical Edition navigation, period tournament/match records, History/Branch map and same-Branch reachable A/B with Edition/published-match differences; real two-group/single-final hybrid through explicit points, canonical closure, Saved Edition and SQLite restart.
+
+**Repair next:** A81-01 CS/EN History/Compare localization, A81-02 misleading Official/Viewer pre-alpha branch badges, A81-03 contradictory Czech hybrid help. Then real hybrid source into eligible Official Ranking week and multi-round knockout flow. New v81 operation controls/tracking/presets/notes are approved product scope, not proven implemented.
+
+**Limits:** cyclic tie Chromium uses genuine engine results through a test-only input adapter, not normal Run Match-Day/Save; A/B currently shares one selected branch's reachable lineage; wider historical/fork, season/50-season and full release gates remain. No full-suite or release claim from this audit.
+
+Read `docs/PRE_ALPHA_FRONTEND_CHECKPOINT_V81_2026_10_14.md` and next task `docs/PRE_ALPHA_NEXT_CHATGPT_TASK_V81_2026_10_14.md`. Product canon: Master §27.23/31.36; evidence §35.38; optional ChatGPT/Codex workflow §36.7.
+
+---
+
+# Historical implementation notes (superseded by the active checkpoint above)
+
+The following “candidate / NOT MERGED / next blocker” texts are preserved dated task snapshots. Their original headings do not describe current merge status; use the active checkpoint and fresh GitHub evidence.
+
 # Active candidate — 14 October 2026: real hybrid Ranking closure (after merged #1452)
 
 Verified `buuk` `4e09869b44c5afd7518be8c0a07d53da85668290`, #1452 merged and no open PR at start.

@@ -253,6 +253,8 @@ def play_and_freeze_hybrid(
     policy_panel.get_by_label("Played group win points").fill("10")
     policy_panel.get_by_label("Hybrid points for champion").fill("100")
     policy_panel.get_by_label("Hybrid points for finalist").fill("60")
+    if knockout_rounds == 2:
+        policy_panel.get_by_label("Hybrid points for semifinal").fill("30")
     expect(configure_policy).to_be_disabled()
     policy_panel.get_by_label("Confirm exact hybrid ranking point values").check()
     expect(configure_policy).to_be_enabled()
@@ -263,9 +265,11 @@ def play_and_freeze_hybrid(
     expect(policy_table).to_be_visible(timeout=30000)
     policy = request("GET", event_scope + "/hybrid-ranking-policy")
     assert policy["played_group_win_points"] == 10
-    assert policy["knockout_stage_points"] == [
-        ["champion",100],["finalist",60]
-    ]
+    assert policy["knockout_stage_points"] == (
+        [["champion", 100], ["finalist", 60], ["semifinal", 30]]
+        if knockout_rounds == 2
+        else [["champion", 100], ["finalist", 60]]
+    )
     assert policy["composition_policy_id"] == (
         "single_tournament_sum_group_plus_knockout_no_double_count.v1"
     )
@@ -282,7 +286,7 @@ def play_and_freeze_hybrid(
         "Canonical tournament source is frozen"
     )).to_be_visible(timeout=30000)
     closure = request("GET", event_scope + "/hybrid-ranking-close")
-    assert closure["total_ranking_points"] == 180, closure
+    assert closure["total_ranking_points"] == (240 if knockout_rounds == 2 else 180), closure
     assert all(len(closure[key])==64 for key in (
         "source_fingerprint","result_fingerprint",
         "award_fingerprint","prize_award_fingerprint"
@@ -319,7 +323,15 @@ def play_and_freeze_hybrid(
     assert archived["published_result"]["champion_player_id"] == final["winner_player_id"]
     assert archived["published_result"]["finalist_player_id"] == final["loser_player_id"]
     saved_matches = archived["published_result"]["matches"]
-    assert len(saved_matches) == 3
+    assert len(saved_matches) == 2 + (first_round_count * 2 - 1)
+    assert len({m["match_id"] for m in saved_matches}) == len(saved_matches)
+    assert {m["match_id"] for m in saved_matches if m["draw_type"] == "knockout"} == set(knockout_results)
+    for match in bracket["matches"]:
+        record = next(m for m in saved_matches if m["match_id"] == match["match_id"])
+        replay = knockout_results[match["match_id"]]
+        assert record["winner_player_id"] == replay["winner_player_id"]
+        assert record["loser_player_id"] == replay["loser_player_id"]
+        assert record["round_number"] == match["round_number"]
     assert any(m["match_id"] == bracket["terminal_match_id"]
                and m["winner_player_id"] == final["winner_player_id"]
                for m in saved_matches)
@@ -331,10 +343,12 @@ def play_and_freeze_hybrid(
         "entrants_authority":entrants,
         "bracket_authority":bracket,
         "real_group_matches":2,
-        "real_knockout_matches":1,
-        "real_match_days":2,
+        "real_knockout_matches":len(knockout_results),
+        "real_match_days":knockout_rounds + 1,
         "frozen_final_replay":final,
         "frozen_final_context":final_context,
+        "all_knockout_replays":knockout_results,
+        "all_knockout_contexts":contexts,
         "ranking_policy_authority":policy,
         "ranking_closure":closure,
         "result_published":True,

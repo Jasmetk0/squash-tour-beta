@@ -2,15 +2,17 @@
 
 ## Kompletní průběžná specifikace a registr rozhodnutí
 
-**Verze dokumentu:** 80
-**Aktualizováno:** 12. 10. 2026 – konsolidace Country Records/období, History & Branches/Compare, Simulation pauz a diagnostických AI odhadů; scoped audit po merge #1414
+**Verze dokumentu:** 81
+**Aktualizováno:** 14. 10. 2026 – konzole a ovládání simulace, sledování/předvolby, detaily zápasů, poznámky a AI testovací podklady; scoped audit po merge #1453
 **Účel dokumentu:** jediný průběžný zdroj pravdy pro to, co má Squash Engine být, co už je rozhodnuté, jakým směrem se projekt ubírá, co se musí teprve dořešit a – v oddělené evidenční vrstvě – co je prokazatelně naprogramované a sloučené.
 
 Tento dokument primárně popisuje zamýšlený produkt. Samotná přítomnost produktového pravidla neznamená, že už je naprogramované. Ověřený stav kódu se od verze 51 zapisuje výhradně do samostatné kapitoly 35; implementace sama nikdy nevytváří ani nemění produktový canon.
 
 **Historická rychlá orientace ve v65 (stav k 12. 9. 2026, nikoliv současný implementační HEAD):** sportovní registry zůstávají **411 pevných / 88 prozatímních / 69 širokých otevřených bodů** a brána **48 vyřešených / 109 otevřených ze 157 PAQ**. Toto vydání neuzavírá žádnou PAQ implementací. Ověřený `buuk` je `08a29074250675a61434ba58fb42a185474648d5` po merge PR #720. #689 včetně #690 už je v `buuk`; staré označení „otevřeno“ níže je evidence k vydání v64. Nový aktuální stav je v **35.29–35.31**, pracovní model v **kapitole 36**. Ranking preparation je rozvinutá, ale publikace a skutečný end-to-end svět nejsou dokončené.
 
-**Nová rozhodnutí v80:** Country Records mají tematické skupiny, postranní detail a období Celá historie / Sezona / Vlastní období; History & Branches mapu nad historií a Compare samostatnou stránku. Simulation má více nezávislých OR pravidel a dvě akce použití volby. Automatické průběžné odhady AI voleb mají izolovaný výpočet, nejistotu, ověřování, barvu přesnosti a pravdivou historickou evidenci s nepovinnou poznámkou admina. Přesné výpočty/práhy a kalibrace zůstávají k testování; přeskočený seznam čekajících rozhodnutí není schválený. Detail 27.22/31.35, skutečný implementační stav odděleně v 35.37 po #1414.
+**Nová rozhodnutí v81:** Schválené ovládání a souhrn simulace, průběžné prohlížení, cíle/pauza/ukončení, Runové sledování a branchové stop rules, předvolby, jeden běžící Run, browser reconnect, detail a předzápasové porovnání, Admin poznámky a explicitní testovací podklady jsou v §27.23/31.36. Nepotvrzený Lab A/B layout zůstává otevřený. Aktuální audit je v §35.38 a pracovní předání ChatGPT/Codex v §36.7.
+
+**Předchozí rozhodnutí v80:** Country Records mají tematické skupiny, postranní detail a období Celá historie / Sezona / Vlastní období; History & Branches mapu nad historií a Compare samostatnou stránku. Simulation má více nezávislých OR pravidel a dvě akce použití volby. Automatické průběžné odhady AI voleb mají izolovaný výpočet, nejistotu, ověřování, barvu přesnosti a pravdivou historickou evidenci s nepovinnou poznámkou admina. Přesné výpočty/práhy a kalibrace zůstávají k testování; přeskočený seznam čekajících rozhodnutí není schválený. Detail 27.22/31.35, skutečný implementační stav odděleně v 35.37 po #1414.
 
 **Nová produktová rozhodnutí v66:** první pre-alpha má funkční Admin včetně libovolného historického weeku; Viewer zůstává cílovou součástí produktu, ale není podmínkou této pre-alpha. `PAQ-118` a `PAQ-127` jsou uzavřené, `PAQ-120`, `PAQ-121` a `PAQ-150` jsou výslovně mimo první pre-alpha. Implementovaný stav vždy ověřit v `CURRENT_STATE.md` a v aktuálním kódu; historická implementační evidence níže končí stavem uvedeným u příslušného vydání.
 
@@ -3194,6 +3196,8 @@ Všechny tři navazují na přesný současný stav zápasu a krokový režim je
 
 ## 17.3 Potvrzení a průběh
 
+**[AKTUÁLNÍ PRE-ALPHA UX v81]** Běžnou bezpečnou pauzu, Pokračovat, změnu cíle, ukončení a souhrn zpřesňuje 27.23. Samostatná okamžitá mid-match pauza níže není totéž tlačítko; její starší kontrakt se nemaže.
+
 **[PROZATÍMNÍ]** Před větší simulací se zobrazí rozsah a potvrzení.
 
 **[ROZHODNUTO V PRINCIPU]** Delší simulace probíhá postupně a průběžně načítá svůj stav.
@@ -3247,6 +3251,8 @@ Draw seed nemusí být běžně viditelný. Je oddělený od náhodnosti Match E
 
 ## 17.5 Task Center a práce na pozadí
 
+**[ZPŘESNĚNÍ PRE-ALPHA v81]** Browserová karta se může zavřít, zatímco lokální engine pracuje dál. Reconnect, žádný automatický restart úlohy po zániku procesu a globální panel určují 27.23. Nativní tray/dialog níže je samostatná podoba aplikace, ne povinný browserový dialog.
+
 **[ROZHODNUTO]** Dlouhé simulace, importy, exporty a validace se zobrazují v centrálním `Task Centeru` se stavem, průběhem a výsledkem operace.
 
 **[ROZHODNUTO]** Během dlouhé simulace může uživatel:
@@ -3276,6 +3282,8 @@ Draw seed nemusí být běžně viditelný. Je oddělený od náhodnosti Match E
 **[ROZHODNUTO V PRINCIPU]** Po znovuotevření aplikace se Task Center napojí na stále běžící úlohu nebo ukáže její bezpečně zastavený výsledek. Pád či vypnutí počítače nemůže předstírat pokračování na pozadí: po dalším spuštění se použije poslední bezpečně zachovaný stav a obecný Recovery Draft workflow. Přesná podpora automatického pokračování jednotlivých typů úloh po restartu zůstává odložená.
 
 ## 17.6 Plánování Candidate Branches
+
+**[OMEZENÍ PRE-ALPHA v81]** V běžném Run ovládání současně běží nejvýše jedna autoritativní simulace, viz 27.23. Níže zachovaný obecný plán souběhu není povolením více současných Run úloh v pre-alphě; dávkové Lab testy jsou samostatný kontrakt.
 
 **[ROZHODNUTO]** Více kandidátních simulací lze spouštět těmito způsoby:
 
@@ -3308,7 +3316,7 @@ Admin volí jednoho či více hráčů, konkrétní turnaje, podporované typy r
 
 **[ROZHODNUTO – VÝJIMKA Z OBECNÉHO ČERVENÉHO BLOKU]** Realističnost používá stupňovaná žlutá/oranžová/červená varování; přesné prahy se kalibrují. Extrémně nerealistická, ale proveditelná volba je potvrditelná po výslovném upozornění s auditem. Technicky/fyzicky nemožná akce nadále blokuje pouze dotčenou operaci. UI musí odlišit překonatelné červené upozornění od nepřekonatelné validační chyby. Světová jednička v poli, kde je další nejlepší #500, zpravidla vyvolá silné varování, ale návrat po zranění či jiné skutečné okolnosti mohou jeho význam změnit.
 
-**[MIMO POVINNÝ ROZSAH PRE-ALPHA]** Přepínač pohledu hráče a úplného Adminu a kopírování AI rozhodovací situace z historie do Labu. Admin má pravdivý interní pohled, ale samotná AI a pořadí jejích návrhů stále používají jen oprávněné tehdejší informace. Tento odklad neruší již povinný globální Match/Tournament/Player Lab ani Run → Lab kopie jejich podporovaných scénářů.
+**[MIMO POVINNÝ ROZSAH PRE-ALPHA]** Přepínač pohledu hráče a úplného Adminu. **[NOVĚ ROZHODNUTO PRO PRE-ALPHA v81]** Podporovaná AI rozhodovací situace se připraví k prověření/kopii do odpovídajícího Labu podle 27.23; tím se nahrazuje dřívější odklad této konkrétní části. Admin má pravdivý interní pohled, ale samotná AI a pořadí jejích návrhů stále používají jen oprávněné tehdejší informace. Tento odklad neruší již povinný globální Match/Tournament/Player Lab ani Run → Lab kopie jejich podporovaných scénářů.
 
 ## 17.7 Podrobnost a výkon simulace
 
@@ -4288,7 +4296,7 @@ Možné sekce z předchozího návrhu:
 
 **[ROZHODNUTO]** Hráče, turnaje, Tournament Series, země, sezony, stránky a další podporované objekty lze označit hvězdičkou jako osobní oblíbené.
 
-**[ROZHODNUTO]** Jeden globální panel `Oblíbené` je dostupný ve Vieweru i Adminu a seskupuje položky podle Runů. Oblíbené položky jsou pouze navigační pomůckou a nijak neovlivňují simulaci.
+**[ROZHODNUTO]** Jeden globální panel `Oblíbené` je dostupný ve Vieweru i Adminu a seskupuje položky podle Runů. **[ZPŘESNĚNÍ PRE-ALPHA v81]** Admin hvězdičky navíc slouží sledování podle 27.23; samotné sledování nemění sportovní výpočet ani nezastavuje simulaci. Volitelné propojené stop rule mění pouze ovládání úlohy. Viewer nadále není součástí první pre-alpha.
 
 **[ROZHODNUTO]** Viewer i Admin automaticky vedou osobní seznam `Nedávno navštívené`. Lze z něj znovu otevřít nedávné objekty a jeho historii lze vymazat.
 
@@ -4493,6 +4501,8 @@ Další příklad: neúplná bodová tabulka Ranked Edition zablokuje její ozn�
 **[ODLOŽENO]** Úplná dependency matice objektů a simulačních rozsahů, pravidla propagace závažnosti a přesný UX lokálních i souhrnných validací.
 
 ## 25.5 Osobní Admin poznámky
+
+**[ZPŘESNĚNÍ PRE-ALPHA v81]** Jednoduché poznámky a explicitní zahrnutí do podkladů pro vývojovou AI popisuje 27.23. Herní AI je nepoužívá; zachovávají se níže určený scope, historie a statusy.
 
 **[ROZHODNUTO]** Admin umožňuje připojit čistě osobní poznámku prakticky ke kterémukoliv podporovanému objektu, například k:
 
@@ -5012,6 +5022,35 @@ Akce zahrnují použití v Runu, vytvoření kopie a export v podporovaném rozs
 **[ROZHODNUTO PRO PRE-ALPHA — HISTORICKÝ ZÁZNAM]** Historie rozhodnutí rozšiřuje 17.6.2 o tehdy dostupný procentuální odhad, stav/přesnost odhadu a skutečně použitou volbu s původem AI/Admin. Pokud odhad v okamžiku volby ještě nebyl hotový nebo nebyl dostupný, uloží se tento pravdivý stav, nikoliv zpětně domyšlená čísla. Novější model/starší kontext se zpětně nepřepočítá jako původní odhad. Ruční zásah může mít krátkou nepovinnou rozbalitelnou poznámku admina; je oddělená od důvodů hráčské AI a neovlivňuje simulaci.
 
 **[ZACHOVANÉ HRANICE]** Samostatná otázka o seznamu více čekajících rozhodnutí byla na žádost uživatele přeskočená a není tímto rozhodnuta. Nedochází ke změně společného pre-slot snapshotu ani simultaneity z 6.6 a 17.6.1; klikání/pauzy nesmějí učinit současná rozhodnutí pořadově závislá. Přesná matematika a katalogy zůstávají v dosavadních statusech. Tato sekce je produktový cíl, nikoliv tvrzení o hotové implementaci.
+
+
+## 27.23 Ovládání simulace, sledování a diagnostické podklady — schválený kontrakt v81 (14. 10. 2026)
+
+**[ROZHODNUTO PRO PRE-ALPHA — PRŮBĚH]** Simulation konzole ukazuje stručný přehled: aktuální sezonu/week a cílový bod, právě prováděnou činnost, poslední důležité události, pozastavení a nastavení stop rules. Podrobný průběh je rozbalitelný. Odhad zbývajícího času se ukáže jen při rozumné oporě ve skutečném měření, jinak nedostupnost; fiktivní čas/procento není náhrada. Důležitost událostí a výkon se kalibrují při testování.
+
+**[ROZHODNUTO PRO PRE-ALPHA — PROHLÍŽENÍ ZA BĚHU]** Za běhu lze procházet další stránky, jiné branche i Runy. Trvalý malý panel jasně ukazuje skutečný Run/Branch běžící úlohy, průběh, pozastavení a návrat na konzoli; prohlížený kontext není automaticky simulační kontext. Údaje simulované branche se obnovují po dokončených konzistentních krocích, nikoli z napůl použitých výsledků. Zásah do vstupů běžící simulace vyžaduje bezpečné pozastavení a znovuvalidování změny; platí zámky a společný pre-slot snapshot. Pauza kvůli rozhodnutí ukáže oznámení s akcí Přejít k rozhodnutí, bez vynucené navigace z rozečtené stránky.
+
+**[ROZHODNUTO PRO PRE-ALPHA — PAUZA, CÍL, UKONČENÍ]** Běžné Pozastavit dokončí nejbližší bezpečnou jednotku práce; mezitím ukazuje Pozastavuji… a nepovolí konfliktní editaci. Pokračovat zachová původní cíl a pojmenuje jej (např. Pokračovat do týdne 20). Za běhu i během pauzy lze Změnit cíl nebo Ukončit simulaci. Ukončení dokončí bezpečný krok, zruší další pokračování a zachová dosažené výsledky v rozpracovaném stavu; není rollback ani automatický Save. Nový cíl nesmí být před aktuálním bodem, validuje se proti skutečnému stavu při použití. Cíl lze zadat (a) konkrétní sezonou/weekem a podporovaným bodem uvnitř týdne, (b) relativním úsekem, např. o týden/sezonu, nebo (c) podporovanou událostí, např. před finále či po skončení turnaje. Stop rules mohou zastavit dříve bez ztráty cíle. Po případné změně kalendáře se nedostupný cílový bod nevymýšlí. Starší samostatné Pozastavit okamžitě uprostřed výpočtu v 17.3 se nesmí zaměnit s touto běžnou bezpečnou pauzou; tento checkpoint nemaže jeho dřívější kontrakt ani nerozhoduje jeho odložený technický formát.
+
+**[ROZHODNUTO PRO PRE-ALPHA — SOUHRN]** Po dokončení/ukončení je na Simulation stránce stručný souhrn: skutečný začátek a konec, dosažení cíle či důvod dřívějšího zastavení, dokončené turnaje a vítězové, významné doložené změny rankingu, důležité události sledovaných hráčů a upozornění/problémy s odkazy. Na jiné stránce přijde pouze oznámení Simulace dokončena — zobrazit souhrn. Souhrn není náhradou World Event/Audit/Notification logů. Save zůstává výslovně ruční.
+
+**[ROZHODNUTO PRO PRE-ALPHA — SLEDOVÁNÍ]** Hvězdička u hráče, turnaje a země/národnosti znamená sledování, dostupné z profilů i seznamů. Turnaj lze sledovat napříč ročníky; země zahrnuje reprezentující hráče. Vedle konkrétních objektů existují pravidla pro skupiny událostí (všechna finále, finále World Tour, zápasy reprezentantů země). Sekce Sledování sdružuje položky/pravidla s editací a individuálním vypnutím, podporuje filtrování sledovaných a upřednostnění jejich událostí v souhrnu. Událost odpovídající více pravidlům se neduplikuje. Hvězdička sama nepozastavuje ani nemění sportovní chování. Volitelné Zastavit před událostí vytváří propojené pravidlo téhož stop-rules systému; obě UI místa upravují tutéž autoritu. Stop rules mohou použít výběr Sledovaní hráči.
+
+**[ROZHODNUTO PRO PRE-ALPHA — SCOPE SLEDOVÁNÍ]** Sledování je společné pro celý Run napříč branchemi. Stop rules jsou samostatné pro každou branch; nová branch převezme počáteční nastavení ze zdrojové jako nezávislou kopii. Neexistující objekt v dané branchi pravidlo neuplatní. Runové sledování nepřenáší výsledky jiné branche, budoucí znalost ani sportovní preference AI. Navazuje na oblíbené z 23.8; nové sledovací funkce rozšiřují tamní navigační hvězdičku, nejde o nový sportovní model.
+
+**[ROZHODNUTO PRO PRE-ALPHA — PŘEDVOLBY]** Jednoduché pojmenované předvolby simulace se ukládají uvnitř Runu. Obsahují způsob zadání cíle a nastavení zastavování; výběr lze před spuštěním upravit. Samotný výběr nic nespustí. Relativní cíl se odvíjí od aktuálního času při spuštění. Předvolba není živé propojení nastavení všech branchí ani globální Saved View z 23.8.
+
+**[ROZHODNUTO PRO PRE-ALPHA — SOUBĚH A ŽIVOTNOST]** V aplikaci může současně běžet jedna autoritativní Run simulace. Při pokusu spustit ji jinde se nabídne nejprve bezpečné pozastavení původní; jiné Runy/branche lze prohlížet. Více souběžných Run simulací je pozdější rozsah. To neřeší samostatně dávkové laboratorní testy ani neruší pozdější Candidate scheduling z 7.6/17.6. Zavření browserové karty samo neukončí úlohu, pokud lokální engine dál běží; opětovné otevření se napojí na skutečný průběh, dokončení či čekající rozhodnutí. Po vypnutí/restartu enginu nebo počítače se simulace sama nerozběhne: UI ukáže skutečně dostupný obnovený stav a nabídne postup podle Recovery Draft kontraktu. Nesmí tvrdit pokračování po ztrátě procesu ani vydávat Recovery Draft za Saved Revision. Nativní zavírací dialog/tray z 17.5 není podmínkou samotného browserového zavření.
+
+**[ROZHODNUTO PRO PRE-ALPHA — DETAIL ZÁPASU]** Základní zobrazení ukáže výsledek a stručné údaje; klik otevře rychlý boční detail se skóre, dostupnými statistikami a uloženým záznamem, z něj lze přejít na celou stránku zápasu. Zavření zachová filtry a pozici seznamu. V tomto toku není vyžadován nový samostatný režim postupného odhalování výsledku. Neruší se historicky věrný read-only Replay již popsaný v 23.9; nic se znovu nesimuluje a animace jsou vzdálená budoucnost.
+
+**[ROZHODNUTO PRO PRE-ALPHA — POROVNAT HRÁČE ZE ZÁPASU]** Akce Porovnat hráče otevřená ze zápasu používá jejich skutečně uložený stav před tímto zápasem (dostupné atributy, forma, únava apod.). Aktuální stav lze zvolit až výslovným přepnutím; nedostupné historické pole se označí jako nedostupné, nesmí ho nahradit současná hodnota. Zachovává se přesný Run/Branch/historický zdroj. Rozsah, úrovně a metriky porovnání zůstávají k pozdějšímu testování.
+
+**[ROZHODNUTO PRO PRE-ALPHA — POZNÁMKY A AI]** Jednoduché editovatelné/smazatelné Admin poznámky u hráčů, turnajů a zápasů zachovají objekt, branch a čas vzniku. Nadále platí existující obecný scope, historie úprav a Active/Resolved z 25.5. Herní hráčská/turnajová AI je nepoužívá jako znalost, instrukci, tréninkový plán ani změnu osobnosti. Volba Zahrnout do podkladů pro AI testování dovolí přidat poznámku a kontext do explicitních nástrojů/exportu pro vývojovou AI (ChatGPT/Codex). Samotné napsání poznámky nic neposílá, neslibuje přístup externímu chatu a nespouští zásahy. Vývojová AI může hledat skutečné podklady, reprodukovat případ, připravit test nebo návrh opravy; poznámka není důkaz chyby ani oprávnění automaticky měnit Run či chráněné zdroje. Označení pro export nenahrazuje obecná přístupová oprávnění.
+
+**[ROZHODNUTO PRO PRE-ALPHA — PŘIPRAVIT K PROVĚŘENÍ]** U podporovaných zápasů a AI rozhodnutí je akce Připravit k prověření. Připraví skutečně dostupné vstupy, původní výsledek/volbu, efektivní nastavení, RNG/seed provenance, verzi enginu/modelu a přesný zdroj Run/Branch/čas/revize, doplnitelné poznámkou. Podklady lze otevřít v odpovídajícím podporovaném Labu nebo explicitně předat vývojové AI. Zdrojový Run se nemění. Chybějící vstupy, verze nebo jiná překážka přesné reprodukce se označí; stejný seed s jinými vstupy/verzí není záruka stejného výsledku. U AI rozhodnutí se zachová tehdejší oprávněný informační snapshot, nikoli dnešní vševědoucí Admin pohled. Tato novější volba přesouvá podporované AI rozhodovací podklady z dřívějšího odkladu v 17.6.2 do pre-alpha; nezavádí neodsouhlasené AI sportovní mechaniky.
+
+**[OTEVŘENO — NEPOTVRZENÝ POSLEDNÍ NÁVRH]** Návrh samostatného dvojpanelu Původní případ / Experimentální kopie v Test Labu a jeho konkrétní UX nebyl před žádostí o tento checkpoint potvrzen. Existující schválené kopírování scénářů a batch testování z 31.26 zůstává platné; nový layout se nesmí označit jako rozhodnutý. Také přeskočený seznam více čekajících rozhodnutí z 27.22 zůstává otevřený. Numerická kalibrace, definice významnosti událostí a přesná granularita nepodporovaných cílových bodů se nevymýšlejí.
 
 # 28. Přehled nyní pevně rozhodnutých základů
 
@@ -6113,6 +6152,15 @@ Toto rozhodnutí upřesňuje UX otevřené části PAQ-119, nikoliv celý katalo
 
 **[STATUS]** Kalibrace a statistická architektura odhadů, přesný katalog/formule rekordů a již odložené úrovně Compare se neuzavírají. Přeskočené zobrazení více čekajících rozhodnutí není schválené; simultaneita zůstává invariantem. Scoped audit PR #1385–1414 v 35.37 neprohlašuje pre-alpha release, úplnou regresi, celou sezonu/50 sezon ani realističnost. Zachovává všech 157 historických PAQ ID a nepřepočítává jejich registry.
 
+
+## 31.36 Konsolidace schváleného bloku v81 (14. 10. 2026)
+
+**[ROZHODNUTO PRO PRE-ALPHA]** §27.23 přidává stručnou konzoli a podrobný průběh, neblokující prohlížení s globálním panelem, bezpečnou pauzu/změnu cíle/ukončení, časové/relativní/událostní cíle, souhrn, sledování a propojené stop rules, Runové předvolby, nejvýše jednu běžící autoritativní Run simulaci, znovupřipojení k běžícímu lokálnímu enginu, detail zápasu a historické porovnání hráčů, Admin poznámky a podklady k prověření zápasů/AI voleb. Implementace a akceptace jsou samostatná osa; nové rozhodnutí neznamená hotový kód. Při prověřování chráněných GitHub balíčků/Official zdrojů se pracuje na kopii, pokud uživatel výslovně neschválil konkrétní zásah a jeho rizika.
+
+**[AKCEPTAČNÍ CÍL]** Ověřit pause/resume/change-target/stop bez druhého losování nebo částečných autoritativních výsledků; bezpečné čtení za běhu, kontext Run/Branch při navigaci a pravidla souběhu; návrat po zavření karty bez duplicitní úlohy a bez automatického startu po restartu procesu; scope sledování/stop rules/předvoleb, deduplikaci událostí; zachování filtrů v detailu; předzápasový snapshot bez current fallback; poznámky mimo herní AI a explicitní export; izolaci diagnostických podkladů od zdrojového Runu. Vše v CS/EN a bez implicitního Save. Rozsah konkrétního PR ověřovat cíleně podle test policy, úplnou pre-alpha bránu při vydání.
+
+**[NEUZAVŘENO]** Nový A/B Lab layout nebyl potvrzen; skipped queue, matematika AI odhadů, realističnost a úrovně porovnání zůstávají v předchozím stavu. Nepřepisují se historické PAQ počty ani se neuzavírají implementací.
+
 # 32. Procentuální audit stavu specifikace
 
 ## 32.1 Metodika
@@ -6870,6 +6918,21 @@ Všechny vrácené workflow běhy na uvedených final feature HEADech byly compl
 
 **Aktivní mezery:** A80-01; country rekordové intervaly/vlastní období, tematický seznam, postranní detail a shody z v80; společná multi-season/historical Edition navigace místo odkazu jen v sezoně 0 a authoritative lifecycle; historická country roster/checkpoint vazba; mapový History/Compare frontend; v80 stop rules/diagnostické odhady jsou cíl, nikoliv hotový engine. World/country editory, intake/skupiny, kanonické atributy, obecné přidání, sezonní/50-season akceptace a empirická realističnost nadále vyžadují práci. CURRENT_STATE/ROADMAP nové aktivní záhlaví odděluje tuto evidenci od zachovaných starých candidate textů.
 
+
+## 35.38 Integrační audit v81 — po #1453 (14. 10. 2026)
+
+Ověřený `buuk`: `bf928bfcd3e9848c15762ac66860039b53bedaef`, merge #1453. Nových 12 PR #1442–1453 je mergnutých; jejich finální feature HEADy jsou v historii tohoto commitu a dostupné finální PR CI běhy uspěly. Při kontrole nebylo otevřené implementační PR. Audit čte změny zdrojů a skutečnou CI evidenci, nenahrazuje plnou regresní/pre-alpha release bránu.
+
+- #1442: opravené Country → Saved Edition odkazy pro historické i nenulové sezony a návrat.
+- #1443–1444: období zemských rekordů, turnajové úspěchy a zápasové rekordy z úplných uložených podkladů, shodní držitelé a stránkovaný detail.
+- #1445–1448: mapa branchí a tabulka reachable historie, samostatná Compare stránka, skutečné A/B Edition a publikované zápasové rozdíly. Dosavadní backend porovnává dvě revize dosažitelné přes jednu zvolenou branch, nikoli dvě nezávislé branche.
+- #1449: skutečný browser/HTTP/SQLite průchod nerozhodnutou cyklickou shodou nad skutečnými MatchEngine výsledky dodanými testovým adaptérem. Není to důkaz běžného Run Match-Day RNG ani Saved Revision archivace tohoto případu.
+- #1450–1453: schválené křížení, skutečné skupinové zápasy, postupující, finále, explicitní ranking policy, canonical turnajový zdroj, publikovaná Saved Edition a restart. Akceptace je dvě skupiny po dvou → jeden finálový zápas; nikoli vícekolový pavouk ani následná Official Ranking publikace. Číselné body testu nejsou produktový default.
+- Zdrojově potvrzené nedodělky A81-01–03: neúplné CS/EN History/Compare texty, zavádějící Official/Viewer badge v pre-alpha mapě, neaktuální česká hybridní nápověda. A81-04: aktivní dokumentace zaměňovala již mergnuté změny za kandidáty; checkpoint opravuje aktivní záhlaví a zachovává datovanou historii.
+- Starší audit #1431–1441 již doložil opravy replay scope/sezony a confirmation, reálnou šestizápasovou skupinu s explicitními Save/restart kroky. Výslovné mezery v 35.37 se nyní čtou proti novější evidenci, nikoli jako trvale otevřená práce.
+
+Podrobná tabulka PR/HEAD/CI, důkazy a hranice: `docs/PRE_ALPHA_FRONTEND_CHECKPOINT_V81_2026_10_14.md`. Žádná aplikační implementace se tímto dokumentačním checkpointem nemění. Doporučené pořadí: opravit jazyk/terminologii → hybrid source do příštího oprávněného rankingu → více knockout kol → v81 konzole a ovládání nad skutečnou serverovou úlohou. Vše nové z 27.23 je zatím produktový kontrakt, nikoliv tvrzení o hotové funkčnosti.
+
 # 36. AI-Assisted Development / Development Operating Model
 
 **[ROZHODNUTO – PRACOVNÍ PROTOKOL, 12. 9. 2026]** Tato kapitola nahrazuje dřívější organizační instrukce, pokud jsou s ní v rozporu; nemění sportovní pravidla.
@@ -6911,3 +6974,11 @@ Přibližně po 5–10 významných PR nebo po velkém subsystému zvážit chec
 GitHub používat aktivně pro stav a historii. Context7 jen při závislosti správnosti na dokumentaci externí knihovny/API. Figma později pro cílený design; Linear zatím není paralelní source of truth. Nedostupný Codex Security neblokuje vývoj. Neslibovat dostupnost pluginu bez skutečného nástroje.
 
 Významné předání obsahuje: **Stav**, **Nejlepší další krok**, **Co mám udělat já** a při následné implementaci kompletní **Codex prompt**. Uživatel dostane jednu jasnou instrukci, ne pět technických variant. Pokud není nic potřeba, agent to řekne a pokračuje v autorizovaném úkolu. Merge provádí uživatel.
+
+
+## 36.7 ChatGPT a volitelné předání Codexu (14. 10. 2026)
+
+**[ROZHODNUTO — NOVĚJŠÍ PRACOVNÍ POKYN]** Pokračovací ChatGPT chat smí programovat přímo dostupnými nástroji nebo využít Codex; Codex není povinnou podmínkou. Před každým uceleným PR uvede, co půjde nově dělat, a dodá konkrétní kopírovatelný prompt pro implementační úkol spolu s doporučeným modelem Codexu a reasoning režimem i krátkým odůvodněním. Je-li implementace předána, stejný řez se neprogramuje souběžně dvakrát. Po dokončení uvede další řez. Nedostupné nástroje nebo neprovedené spuštění nesmí předstírat; může předat prompt uživateli.
+
+Model je pracovní doporučení, nikoli sportovní canon ani trvale pevná verze: ověřit dostupnost v uživatelově klientu a aktuální oficiální dokumentaci, volit podle složitosti a nákladů. Běžná implementace nemá automaticky vyžadovat nejdražší režim. Review a relevantní finální HEAD kontroly zůstávají povinné bez ohledu na použitý model. Merge provádí pouze uživatel.
+

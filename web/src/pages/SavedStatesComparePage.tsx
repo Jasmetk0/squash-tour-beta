@@ -7,14 +7,18 @@ import {
 } from '../api/client'
 import type {SavedRevisionHistoryEntry} from '../api/types'
 import {formatApiError} from '../utils/apiErrors'
+import {useLanguage} from '../i18n/LanguageContext'
+import {historyText} from '../i18n/historyText'
 import {projectSavedStateComparison,validateReachableCompareHistory} from './savedCompareStates'
 import type {CompareRow} from './savedCompareStates'
 import {SavedEditionCompareSection} from './SavedEditionCompareSection'
 
 type Detail={type:'row';id:string}|{type:'state';side:'a'|'b'}|null
-const pretty=(v:unknown)=>v===undefined?'Not provided':JSON.stringify(v,null,2)??String(v)
+const pretty=(v:unknown,language:'en'|'cs')=>v===undefined?historyText('Not provided',language):JSON.stringify(v,null,2)??String(v)
 
 export function SavedStatesComparePage():JSX.Element{
+  const {language}=useLanguage()
+  const T=(english:string)=>historyText(english,language)
   const {runId=''}=useParams()
   const [params,setParams]=useSearchParams()
   const [detail,setDetail]=useState<Detail>(null)
@@ -83,38 +87,37 @@ export function SavedStatesComparePage():JSX.Element{
   const back='/admin/runs/'+encodeURIComponent(runId)+'/branches'
   return <main className="saved-compare-page">
     <header className="page-intro">
-      <p className="eyebrow">RUN → HISTORY & BRANCHES → COMPARE</p>
-      <h2>Compare States A/B · Porovnání uložených stavů</h2>
-      <p>Read-only comparison of two explicit reachable Saved Revisions.
-        No Restore, Save, simulation, Viewer Branch or Working Draft changes.</p>
-      <Link to={back}>← Back to History & Branches</Link>
+      <p className="eyebrow">{T("RUN → HISTORY & BRANCHES → COMPARE")}</p>
+      <h2>{T("Compare States A/B · Porovnání uložených stavů")}</h2>
+      <p>{T("Read-only comparison of two explicit reachable Saved Revisions. No Restore, Save, simulation, Viewer Branch or Working Draft changes.")}</p>
+      <Link to={back}>{T("← Back to History & Branches")}</Link>
     </header>
-    <section className="panel" aria-label="Compare Saved Revision selection">
-      <h3>States A → B</h3>
+    <section className="panel" aria-label={T("Compare Saved Revision selection")}>
+      <h3>{T("States A → B")}</h3>
       <p className="status">Run: <code>{runId}</code> · Both states must be reachable through
         the same selected Branch. Cross-Branch Compare is not supported by this Saved API.
         Saved timestamps are not simulation positions.</p>
-      {branchesQuery.isPending&&<p role="status">Loading Run Branches…</p>}
+      {branchesQuery.isPending&&<p role="status">{T("Loading Run Branches…")}</p>}
       {branchesQuery.error&&<p role="alert">{formatApiError(branchesQuery.error)}</p>}
       {branchesQuery.isSuccess&&!validBranches&&<p role="alert">
-        Branch list has inconsistent Run identities.</p>}
+        {T("Branch list has inconsistent Run identities.")}</p>}
       {branchesQuery.isSuccess&&requestedBranch!==null&&!selectedBranch&&
-        <p role="alert">Selected Compare Branch does not belong to this Run.</p>}
-      {validBranches&&branches.length===0&&<p role="status">No saved Run Branch available.</p>}
+        <p role="alert">{T("Selected Compare Branch does not belong to this Run.")}</p>}
+      {validBranches&&branches.length===0&&<p role="status">{T("No saved Run Branch available.")}</p>}
       {validBranches&&selectedBranch&&<div className="saved-compare-selectors">
-        <label>Compare Branch
-          <select aria-label="Compare Branch" value={branchId}
+        <label>{T("Compare Branch")}
+          <select aria-label={T("Compare Branch")} value={branchId}
             onChange={event=>setBranch(event.target.value)}>
             {branches.map(b=><option key={b.branch_id} value={b.branch_id}>
               {b.display_name} ({b.branch_id})</option>)}
           </select>
         </label>
         {(['a','b'] as const).map(side=><label key={side}>
-          {side==='a'?'State A · Before':'State B · After'}
+          {side==='a'?T("State A · Before"):T("State B · After")}
           <select aria-label={'Compare state '+side.toUpperCase()}
             value={side==='a'?requestedA:requestedB}
             onChange={event=>change(side,event.target.value)}>
-            <option value="">Select a reachable Saved Revision</option>
+            <option value="">{T("Select a reachable Saved Revision")}</option>
             {(history?.entries??[]).map(rev=>
               <option key={rev.revision_id} value={rev.revision_id}>
                 #{rev.sequence} · {rev.kind} · {rev.revision_id}
@@ -123,121 +126,118 @@ export function SavedStatesComparePage():JSX.Element{
           </select>
         </label>)}
       </div>}
-      {historyQuery.isPending&&selectedBranch&&<p role="status">Loading reachable Saved Revisions…</p>}
+      {historyQuery.isPending&&selectedBranch&&<p role="status">{T("Loading reachable Saved Revisions…")}</p>}
       {historyQuery.error&&<p role="alert">{formatApiError(historyQuery.error)}</p>}
       {historyQuery.isSuccess&&selectedBranch&&!history&&<p role="alert">
-        Invalid reachable Saved Revision history; Compare disabled.</p>}
-      {history&&<p className="status">Loaded {history.entries.length} reachable revisions.
-        {' '}{historyQuery.hasNextPage?'Older pages remain unloaded; Compare only loaded revisions.':
-          'All reachable Saved Revisions loaded.'}
+        {T("Invalid reachable Saved Revision history; Compare disabled.")}</p>}
+      {history&&<p className="status">Loaded {history.entries.length} {T('reachable revisions.')}
+        {' '}{historyQuery.hasNextPage?T("Older pages remain unloaded; Compare only loaded revisions."):
+          T("All reachable Saved Revisions loaded.")}
       </p>}
       {historyQuery.hasNextPage&&history&&<button type="button"
         disabled={historyQuery.isFetchingNextPage}
         onClick={()=>historyQuery.fetchNextPage()}>
-        {historyQuery.isFetchingNextPage?'Loading older revisions…':'Load older revisions for Compare'}
+        {historyQuery.isFetchingNextPage?T("Loading older revisions…"):T("Load older revisions for Compare")}
       </button>}
-      {historyQuery.isFetchNextPageError&&<p role="alert">Unable to load older Saved Revisions.</p>}
+      {historyQuery.isFetchNextPageError&&<p role="alert">{T("Unable to load older Saved Revisions.")}</p>}
       {history&&(requestedA&&!a||requestedB&&!b)&&<p role="alert">
-        Requested state is not in the loaded reachable history.
-        {' '}{historyQuery.hasNextPage?'Load older revisions to verify its identity.':
-          'There is no matching reachable Saved Revision.'}
+        {T("Requested state is not in the loaded reachable history.")}
+        {' '}{historyQuery.hasNextPage?T("Load older revisions to verify its identity."):
+          T("There is no matching reachable Saved Revision.")}
       </p>}
       {history&&requestedA&&requestedA===requestedB&&<p role="alert">
-        Select two different Saved Revisions to compare.</p>}
-      <p className="status">Browsing Branch: <code>{branchId||'—'}</code>.
+        {T("Select two different Saved Revisions to compare.")}</p>}
+      <p className="status">{T("Browsing Branch:")} <code>{branchId||'—'}</code>.
         This is not an Admin Branch activation.</p>
     </section>
-    {canCompare&&<section className="panel" aria-label="Compare Saved Revision results">
+    {canCompare&&<section className="panel" aria-label={T("Compare Saved Revision results")}>
       <div className="actions">
-        <h3>Actual saved differences</h3>
-        <label>Show
-          <select aria-label="Compare display filter" value={view}
+        <h3>{T("Actual saved differences")}</h3>
+        <label>{T("Show")}
+          <select aria-label={T("Compare display filter")} value={view}
             onChange={event=>change('filter',event.target.value)}>
-            <option value="differences">Differences only · Jen rozdíly</option>
-            <option value="all">All · Vše</option>
+            <option value="differences">{T("Differences only · Jen rozdíly")}</option>
+            <option value="all">{T("All · Vše")}</option>
           </select>
         </label>
       </div>
-      {comparisonQuery.isPending&&<p role="status">Comparing canonical Saved Revisions…</p>}
+      {comparisonQuery.isPending&&<p role="status">{T("Comparing canonical Saved Revisions…")}</p>}
       {comparisonQuery.error&&<p role="alert">{formatApiError(comparisonQuery.error)}</p>}
       {comparisonQuery.isSuccess&&!compared&&<p role="alert">
-        Comparison identity/content hashes disagree with the selected states.</p>}
+        {T("Comparison identity/content hashes disagree with the selected states.")}</p>}
       {compared&&<>
-        <p className="status">State A: <code>{a!.revision_id}</code> →
+        <p className="status">{T("State A:")} <code>{a!.revision_id}</code> →
           State B: <code>{b!.revision_id}</code> · exact original source Branches:
           {' '}<code>{a!.revision_branch_id}</code> / <code>{b!.revision_branch_id}</code></p>
-        <div className="run-world-metrics" aria-label="Compare Saved Revision totals">
-          <div><span>Changed fields/components</span><strong>{compared.changed}</strong></div>
-          <div><span>Unchanged components</span><strong>{compared.unchanged}</strong></div>
-          <div><span>Run metadata fields</span><strong>{compared.runChanges}</strong></div>
-          <div><span>Branch metadata fields</span><strong>{compared.branchChanges}</strong></div>
-          <div><span>Snapshot components</span><strong>{compared.components}</strong></div>
+        <div className="run-world-metrics" aria-label={T("Compare Saved Revision totals")}>
+          <div><span>{T("Changed fields/components")}</span><strong>{compared.changed}</strong></div>
+          <div><span>{T("Unchanged components")}</span><strong>{compared.unchanged}</strong></div>
+          <div><span>{T("Run metadata fields")}</span><strong>{compared.runChanges}</strong></div>
+          <div><span>{T("Branch metadata fields")}</span><strong>{compared.branchChanges}</strong></div>
+          <div><span>{T("Snapshot components")}</span><strong>{compared.components}</strong></div>
         </div>
         <div className="actions">
           <button type="button" onClick={()=>setDetail({type:'state',side:'a'})}>
-            Inspect state A read-only</button>
+            {T("Inspect state A read-only")}</button>
           <button type="button" onClick={()=>setDetail({type:'state',side:'b'})}>
-            Inspect state B read-only</button>
+            {T("Inspect state B read-only")}</button>
         </div>
         {rows.length===0?<p role="status">{view==='differences'?
-          'No differences in the supported Saved Revision comparison scope.':
-          'Both Saved Revisions have no exposed comparable fields or components.'}</p>:
+          T("No differences in the supported Saved Revision comparison scope."):
+          T("Both Saved Revisions have no exposed comparable fields or components.")}</p>:
           <div className="table-responsive">
-            <table aria-label="Saved State A B comparison table" className="saved-compare-table">
-              <thead><tr><th>Section</th><th>Actual field / component</th>
-                <th>Status</th><th>Evidence</th></tr></thead>
+            <table aria-label={T("Saved State A B comparison table")} className="saved-compare-table">
+              <thead><tr><th>{T("Section")}</th><th>{T("Actual field / component")}</th>
+                <th>{T("Status")}</th><th>{T("Evidence")}</th></tr></thead>
               <tbody>{rows.map(row=><tr key={row.id}>
-                <td>{row.section==='run'?'Run metadata':row.section==='branch'?
-                  'Branch metadata':'Saved component'}</td>
+                <td>{row.section==='run'?T("Run metadata"):row.section==='branch'?
+                  T("Branch metadata"):T("Saved component")}</td>
                 <td><code>{row.key}</code></td>
-                <td>{row.status}</td>
+                <td>{T(row.status)}</td>
                 <td><button type="button" onClick={()=>open(row)}
-                  aria-label={'Inspect comparison '+row.id}>Inspect difference</button></td>
+                  aria-label={T('Inspect comparison')+' '+row.id}>{T("Inspect difference")}</button></td>
               </tr>)}</tbody>
             </table>
           </div>}
-        <p className="status">Components are compared by canonical Saved fingerprints;
-          no player, tournament, match, ranking or sporting-time difference is invented
-          where field-level evidence is unavailable.</p>
+        <p className="status">{T("Components are compared by canonical Saved fingerprints; no player, tournament, match, ranking or sporting-time difference is invented where field-level evidence is unavailable.")}</p>
       </>}
     </section>}
     {compared&&a&&b&&<SavedEditionCompareSection
       key={[runId,branchId,a.revision_id,b.revision_id].join(':')}
       runId={runId} branchId={branchId} a={a} b={b}/>}
-    {detail&&compared&&<aside className="saved-revision-detail-drawer" aria-label="Compare read-only detail">
+    {detail&&compared&&<aside className="saved-revision-detail-drawer" aria-label={T("Compare read-only detail")}>
       <div className="saved-revision-detail-drawer__heading">
-        <strong>{detail.type==='state'?'Exact Saved Revision state':
-          'Canonical Saved change evidence'}</strong>
-        <button type="button" onClick={close}>Close Compare detail</button>
+        <strong>{detail.type==='state'?T("Exact Saved Revision state"):
+          T("Canonical Saved change evidence")}</strong>
+        <button type="button" onClick={close}>{T("Close Compare detail")}</button>
       </div>
       {detail.type==='row'&&selectedRow&&<>
         <h4>{selectedRow.section} · {selectedRow.key}</h4>
-        <p>Status: <strong>{selectedRow.status}</strong></p>
+        <p>Status: <strong>{T(selectedRow.status)}</strong></p>
         <div className="saved-compare-before-after">
-          <section><h5>State A · Before</h5>
-            <pre className="json-block">{pretty(selectedRow.before)}</pre></section>
-          <section><h5>State B · After</h5>
-            <pre className="json-block">{pretty(selectedRow.after)}</pre></section>
+          <section><h5>{T("State A · Before")}</h5>
+            <pre className="json-block">{pretty(selectedRow.before,language)}</pre></section>
+          <section><h5>{T("State B · After")}</h5>
+            <pre className="json-block">{pretty(selectedRow.after,language)}</pre></section>
         </div>
         {selectedRow.section==='component'&&<p className="status">
-          These are exact component fingerprints, NOT reconstructed player,
-          match or ranking details.</p>}
+          {T("These are exact component fingerprints, NOT reconstructed player, match or ranking details.")}</p>}
       </>}
       {detail.type==='state'&&<>
         <h4>State {detail.side.toUpperCase()} · <code>{stateEntry?.revision_id}</code></h4>
-        {stateQuery.isPending&&<p role="status">Loading immutable Saved Revision…</p>}
+        {stateQuery.isPending&&<p role="status">{T("Loading immutable Saved Revision…")}</p>}
         {stateQuery.error&&<p role="alert">{formatApiError(stateQuery.error)}</p>}
         {stateQuery.isSuccess&&!state&&<p role="alert">
-          Read-only Saved Revision identity or hash does not match selected state.</p>}
+          {T("Read-only Saved Revision identity or hash does not match selected state.")}</p>}
         {state&&<>
           <p>Source Branch: <code>{state.revision_branch_id}</code></p>
-          <p>Parent: <code>{state.parent_revision_id??'Root'}</code></p>
-          <p>Saved at: {state.created_at??'Unavailable'}</p>
-          <p>Hash: <code>{state.content_hash_algorithm}:{state.content_hash}</code></p>
-          <h5>Actual Saved change summary</h5>
-          <pre className="json-block">{pretty(state.change_summary)}</pre>
-          <h5>Exact Saved payload · read-only</h5>
-          <pre className="json-block">{pretty(state.payload)}</pre>
+          <p>{T("Parent:")} <code>{state.parent_revision_id??'Root'}</code></p>
+          <p>{T("Saved at:")} {state.created_at??T("Unavailable")}</p>
+          <p>{T("Hash:")} <code>{state.content_hash_algorithm}:{state.content_hash}</code></p>
+          <h5>{T("Actual Saved change summary")}</h5>
+          <pre className="json-block">{pretty(state.change_summary,language)}</pre>
+          <h5>{T("Exact Saved payload · read-only")}</h5>
+          <pre className="json-block">{pretty(state.payload,language)}</pre>
         </>}
       </>}
     </aside>}

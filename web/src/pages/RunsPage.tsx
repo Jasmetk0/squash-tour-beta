@@ -147,6 +147,7 @@ export function RunsPage(): JSX.Element {
 
   return <section className="panel runs-canonical">
     <div className="page-intro"><h2>{l.title}</h2><p className="subtitle">{l.subtitle}</p></div>
+    <p><Link to="/admin/operations">{language === 'cs' ? 'Otevřít Centrum simulací s filtrováním a ruční aktualizací →' : 'Open Simulation Task Center with filters and refresh →'}</Link></p>
     <section className="panel" aria-label={l.operationsTitle}>
       <h3>{l.operationsTitle}</h3>
       <p className="status">{l.operationsNote}</p>

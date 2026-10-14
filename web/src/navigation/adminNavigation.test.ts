@@ -5,6 +5,9 @@ describe('approved pre-alpha navigation', () => {
   it('has exactly the approved four global sections and separate application settings', () => {
     expect(globalAdminNav.map(item => item.label)).toEqual(['Home', 'Runs', 'Packages', 'Test Lab'])
     expect(globalAdminBottomNav).toEqual([{ to: '/admin/settings', label: 'Settings' }])
+    expect(globalAdminNav[1].children).toContainEqual({
+      to: '/admin/operations', label: 'Simulation Task Center'
+    })
   })
   it('has seven Run categories, functional routes and separate Run Management', () => {
     const items = runAdminNavFor('run-a')

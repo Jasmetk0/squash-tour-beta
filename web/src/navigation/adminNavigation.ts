@@ -6,7 +6,10 @@ export type AdminNavItem = {
 
 export const globalAdminNav: AdminNavItem[] = [
   { to: '/admin', label: 'Home' },
-  { to: '/admin/runs', label: 'Runs' },
+  { to: '/admin/runs', label: 'Runs', children: [
+    { to: '/admin/runs', label: 'Run inventory' },
+    { to: '/admin/operations', label: 'Simulation Task Center' }
+  ] },
   { to: '/admin/packages', label: 'Packages' },
   { to: '/admin/labs', label: 'Test Lab' },
 ]

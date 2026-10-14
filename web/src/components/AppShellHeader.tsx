@@ -27,6 +27,9 @@ export function AppShellHeader({ mode, pathname, adminScope }: AppShellHeaderPro
         <AdminBranchSelector />
         <AdminTimeControl />
       </>}
+      {mode === 'admin' && <Link className="app-header__tasks" to="/admin/operations">
+        {language === 'cs' ? 'Centrum simulací' : 'Simulation tasks'}
+      </Link>}
       {mode === 'admin' && <label className="app-header__language">
         <span className="sr-only">Language / Jazyk</span>
         <select aria-label="Language / Jazyk" value={language} onChange={event => setLanguage(event.target.value === 'en' ? 'en' : 'cs')}>

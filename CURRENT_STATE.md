@@ -1,3 +1,10 @@
+# Active candidate — 14 October 2026, real hybrid knockout Match Day 2 (after merged #1451)
+
+Verified base `buuk` `1e1a34b27dd47420ec1846c5c9dcc555e23c39ce` and no open PR at start. **Candidate, NOT MERGED:** extend genuine Run-owned hybrid groups (two actual MatchEngine matches), completed canonical Standings, immutable Entrants/Bracket into **a real, operator-confirmed knockout final in canonical Simulation Match Day 2**. Verify exact two group-winner participants, authentic replay log and result fingerprint, explicit Save and identical SQLite replay after backend restart. Admin offers navigation from the frozen bracket to Simulation; no automatic champion/ranking points or fabricated match outcome. See `docs/REAL_HYBRID_KNOCKOUT_FINAL_BROWSER_2026_10_14.md`.
+
+**Next blocker:** configure actual hybrid phase Ranking policy and close authoritative tournament result/awards, then verify Saved Edition publication and replay; full multi-round hybrid and 50-season release acceptance follow.
+
+---
 # Active candidate — 14 October 2026, actual Hybrid Group → Knockout authority (after merged #1450)
 
 Starting `buuk` `1ea108fe329a90b2bd535dbc5e6077635dda0314`; #1450 merged and no open PR at task start.

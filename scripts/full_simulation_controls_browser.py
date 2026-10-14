@@ -182,6 +182,48 @@ def acceptance(root, *, port, base_url, chromium):
                 assert request("POST", simulation + "/simulate-full-simulation", command, status=201)["checkpoint"] == "operator_paused"
                 assert request("GET", evidence_url) == paused
                 page.screenshot(path=str(artifacts / "paused-en.png"), full_page=True)
+                # Real EN browser retarget on the same paused parent; restore
+                # original 49/61 closure before continuing this pause/resume flow.
+                actual = request("GET", simulation + "/position")["current_week"]
+                future_ordinal = actual["season_index"] * 61 + actual["week"]
+                assert future_ordinal < 49 * 61 + 60
+                requested_week = {
+                    "season_index": future_ordinal // 61,
+                    "week": future_ordinal % 61 + 1,
+                }
+                change = page.get_by_role("button", name="Change week target", exact=True)
+                expect(change).to_be_visible()
+                change.click()
+                page.get_by_label("Target season index (0–49)").fill(str(requested_week["season_index"]))
+                page.get_by_label("Target week (1–61)").fill(str(requested_week["week"]))
+                page.get_by_label("Target change operator").fill("Browser target operator")
+                page.get_by_label("Target change audit reason").fill("Validate future week target in native browser")
+                with page.expect_response(lambda r: r.url.endswith("/full-simulation/target")) as target_response:
+                    page.get_by_role("button", name="Apply week target", exact=True).click()
+                assert target_response.value.status == 200, target_response.value.text()
+                assert target_response.value.json()["effective_target_week"] == requested_week
+                expect(page.get_by_role("list", name="Resumable Full Simulation parents")).to_contain_text(
+                    f"Effective target S{requested_week['season_index']} W{requested_week['week']}"
+                )
+                page.screenshot(path=str(artifacts / "target-edited-en.png"), full_page=True)
+                change.click()
+                page.get_by_label("Target season index (0–49)").fill("49")
+                page.get_by_label("Target week (1–61)").fill("61")
+                page.get_by_label("Target change operator").fill("Browser target operator")
+                page.get_by_label("Target change audit reason").fill("Restore original finish for resume proof")
+                with page.expect_response(lambda r: r.url.endswith("/full-simulation/target")) as restored_response:
+                    page.get_by_role("button", name="Apply week target", exact=True).click()
+                assert restored_response.value.status == 200, restored_response.value.text()
+                assert restored_response.value.json()["effective_target_week"] == {
+                    "season_index": 49, "week": 61
+                }
+                restored_target = request("GET", evidence_url)
+                assert restored_target["groups"] == paused["groups"]
+                assert restored_target["slots"] == paused["slots"]
+                assert restored_target["saved"] == paused["saved"]
+                assert restored_target["saved_head"] == paused["saved_head"]
+                assert restored_target["commands"][parent_id]["fingerprint"] == paused["commands"][parent_id]["fingerprint"]
+                assert len(restored_target["commands"][parent_id]["result"]["target_events"]) == 2
                 # Reconnect in a new page through the global Task Center.
                 page.close()
                 page = context.new_page()

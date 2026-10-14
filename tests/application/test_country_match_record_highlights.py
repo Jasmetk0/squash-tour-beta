@@ -100,3 +100,15 @@ def test_identity_conflicts_fail_not_renamed_or_deduplicated(monkeypatch):
     rows[1]=rows[1].model_copy(update={"winner_name":"not P1"})
     with pytest.raises(ValueError,match="Ambiguous"):
         read(monkeypatch,rows)
+
+
+def test_full_57_match_aggregate_survives_three_evidence_pages(monkeypatch):
+    rows=[row(f"m-{i:03d}","2000/2001",1+(i%61),"P1",f"foreign-{i}") for i in range(57)]
+    first=read(monkeypatch,rows,key="played_wins",offset=0,limit=25)
+    middle=read(monkeypatch,rows,key="played_wins",offset=25,limit=25)
+    last=read(monkeypatch,rows,key="played_wins",offset=50,limit=25)
+    assert all(x.records[0].value==57 for x in (first,middle,last))
+    assert all(x.evidence_count==57 for x in (first,middle,last))
+    assert [len(x.evidence) for x in (first,middle,last)]==[25,25,7]
+    assert first.has_more and middle.has_more and not last.has_more
+    assert len({m.match_id for part in (first,middle,last) for m in part.evidence})==57

@@ -80,8 +80,8 @@ describe('global Full Simulation Task Center', () => {
     expect(screen.getByText(/Jde o uložené záznamy postupu/)).toBeInTheDocument()
     expect(within(list).getAllByText('Stav serverového procesu: neznámý')).toHaveLength(3)
     const alpha = within(list).getByText('Alfa svět / A timeline').closest('li')!
-    expect(within(alpha).getByText(/Dokončené sezony:/)).toHaveTextContent('5')
-    expect(within(alpha).getByText(/Dokončené týdny poslední sezony:/)).toHaveTextContent('1')
+    expect(within(alpha).getByText('Dokončené sezony:').parentElement).toHaveTextContent('5')
+    expect(within(alpha).getByText('Dokončené týdny poslední sezony:').parentElement).toHaveTextContent('1')
     expect(within(alpha).getByRole('link', {name: 'Otevřít detail a ovládání'})).toHaveAttribute(
       'href', '/admin/runs/run%2Falpha/simulate?branch=branch%20with%20space'
     )

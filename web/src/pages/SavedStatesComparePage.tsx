@@ -112,7 +112,7 @@ export function SavedStatesComparePage():JSX.Element{
         </label>
         {(['a','b'] as const).map(side=><label key={side}>
           {side==='a'?T("State A · Before"):T("State B · After")}
-          <select aria-label={'Compare state '+side.toUpperCase()}
+          <select aria-label={T('Compare state '+side.toUpperCase())}
             value={side==='a'?requestedA:requestedB}
             onChange={event=>change(side,event.target.value)}>
             <option value="">{T("Select a reachable Saved Revision")}</option>

@@ -1,3 +1,11 @@
+# Active integration candidate — global Full Simulation Task Center lease evidence (14 October 2026)
+
+Starting integration base: `buuk` `71100cf57ef2f730ef419c5741b482fcb817724b`, after merged #1463 and zero open PR at start. This is a **candidate pending final-head CI**, not a merged feature or pre-alpha release. The existing durable Full Simulation parent read model is being hardened to reject impossible original finish, invalid week ranges, corrupt/duplicated nonchronological progress and conflicting Run/Branch/command scope. The same read-only inventory now observes the existing global SQLite execution lease, labels matching active/expired and other-operation active/expired ownership separately and keeps worker health **unknown**. Valid lease ownership is not autonomous worker liveness. No owner token, renew, Save, new execution, or parent mutation is part of GET. CS/EN Task Center, global navigation and exact Run/Branch links stay intact. New targeted backend SQLite/API, client and component tests are scoped PR evidence only.
+
+**After this candidate:** true pause/resume across real HTTP/SQLite and browser user flow, idempotent lost-response retry, cross-Run lease denial, stale owner fencing and unchanged Saved Revision until explicit Save. Then v81 explicit target revisions and safe termination without rewriting the original command fingerprint. Complete pre-alpha release gates remain outstanding.
+
+---
+
 # Current verified checkpoint — 14 October 2026, Master v81
 
 Integration HEAD: `bf928bfcd3e9848c15762ac66860039b53bedaef` (merge #1453). All #1442–1453 final feature heads are in this history; available final-head PR workflows succeeded. No open implementation PR at this audit. This documentation checkpoint adds product decisions, not application implementation.

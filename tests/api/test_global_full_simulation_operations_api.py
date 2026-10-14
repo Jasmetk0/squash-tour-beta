@@ -21,7 +21,7 @@ from beta_engine.infrastructure.db.engine import (
     DatabaseSettings, create_session_factory, create_sqlite_engine,
 )
 from beta_engine.infrastructure.db.models import (
-    AuthoritativeSimulationCommandModel, FullSimulationExecutionLeaseModel,
+    AuthoritativeSimulationCommandModel, Base, FullSimulationExecutionLeaseModel,
     RunBranchModel, RunContainerModel,
 )
 from beta_engine.main import create_app
@@ -76,6 +76,7 @@ def test_task_center_http_sqlite_inventory_is_read_only_and_conflicts_on_corrupt
     url = f"sqlite:///{tmp_path / 'task-center-route.db'}"
     app = create_app(database_url=url)
     engine = create_sqlite_engine(DatabaseSettings(url=url))
+    Base.metadata.create_all(engine)
     factory = create_session_factory(engine)
     command = AuthoritativeFullSimulationCommand(
         command_id="parent", run_id="run", branch_id="branch",

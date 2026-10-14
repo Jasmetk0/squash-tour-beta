@@ -14,7 +14,6 @@ def publish_first_hybrid_official_week(
     root_scope: str, event_id: str, hybrid: dict, artifacts,
 ) -> dict:
     from playwright.sync_api import expect
-    from admin_first_tournament_smoke import browser_click, browser_settle
 
     viewer = "/viewer/runs/" + quote(run_id, safe="") + "/rankings"
     simulation = root_scope + "/authoritative-simulation"
@@ -57,13 +56,19 @@ def publish_first_hybrid_official_week(
     page.get_by_label("Authority reason", exact=True).fill(
         "First eligible Week-2 ranking from completed Run-owned hybrid source"
     )
-    browser_click(page, "Review derived Ranking Transition Authority")
+    page.get_by_role("button", name="Review derived Ranking Transition Authority", exact=True).click()
+    expect(page.get_by_role(
+        "button", name="Confirm reviewed Ranking Transition Authority", exact=True,
+    )).to_be_visible(timeout=30000)
     expect(page.get_by_text("Target roster")).to_be_visible()
-    browser_click(page, "Confirm reviewed Ranking Transition Authority")
+    page.get_by_role("button", name="Confirm reviewed Ranking Transition Authority", exact=True).click()
     expect(page.get_by_role(
         "button", name="Save Ranking Transition Authority",
     )).to_be_enabled(timeout=30000)
-    browser_click(page, "Save Ranking Transition Authority")
+    page.get_by_role("button", name="Save Ranking Transition Authority", exact=True).click()
+    expect(page.get_by_role(
+        "button", name="Save Ranking Transition Authority", exact=True,
+    )).to_have_count(0, timeout=30000)
 
     ready = request("GET", simulation + "/position")
     assert ready["week_ready_for_transition"], ready
@@ -86,18 +91,22 @@ def publish_first_hybrid_official_week(
 
     # A read-only preview must not publish the next week.
     assert request("GET", viewer + "/history") == original_history
-    browser_click(page, "Review derived Week Transition")
+    page.get_by_role("button", name="Review derived Week Transition", exact=True).click()
+    expect(page.get_by_role(
+        "button", name="Confirm reviewed Week Transition", exact=True,
+    )).to_be_visible(timeout=30000)
     expect(page.get_by_text("Tournament bindings")).to_be_visible()
-    browser_click(page, "Confirm reviewed Week Transition")
+    page.get_by_role("button", name="Confirm reviewed Week Transition", exact=True).click()
     expect(page.get_by_role(
         "button", name="Save transitioned week",
     )).to_be_enabled(timeout=30000)
-    browser_click(page, "Save transitioned week")
-    expect(page.get_by_text(
-        "Transitioned week saved. Canonical simulation can continue",
-        exact=False,
-    )).to_be_visible(timeout=30000)
-    browser_settle(page)
+    page.get_by_role("button", name="Save transitioned week", exact=True).click()
+    # On successful Save the component clears its committed/review state;
+    # unlike a network-idle heuristic, removal of the review-only Save action
+    # establishes that the exact confirmed Save finished.
+    expect(page.get_by_role(
+        "button", name="Save transitioned week", exact=True,
+    )).to_have_count(0, timeout=30000)
 
     # Read the actual public Saved Revision, not the unpublished candidate
     # or working-draft ranking. One player has one composed Edition result.

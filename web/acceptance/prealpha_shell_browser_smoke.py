@@ -168,6 +168,46 @@ def main() -> None:
             evidence["run_home_canonical_segments"] = [50, 61]
             page.screenshot(path=str(artifacts / "02-created-run.png"), full_page=True)
 
+            # History & Branches v80: real saved-revision fork, map SELECT is
+            # read-only and its reachable ancestor remains owned by source.
+            page.goto(base + "/admin/runs/" + run_id + "/branches")
+            lineage = page.get_by_label("Saved Branch lineage map")
+            expect(lineage).to_be_visible()
+            expect(lineage.get_by_role("button", name="View Branch Browser Alternative")).to_be_visible()
+            assert source_branch["saved_head_revision_id"] in lineage.inner_text()
+            expect(lineage.get_by_text("Saved fork from", exact=False)).to_be_visible()
+            active_before = page.get_by_role(
+                "combobox", name="Admin active Branch"
+            ).input_value()
+            lineage.get_by_role("button", name="View Branch Browser Alternative").click()
+            expect(page.get_by_role("table", name="Saved Revision history table")).to_be_visible()
+            table = page.get_by_role("table", name="Saved Revision history table")
+            expect(table.get_by_text(
+                source_branch["saved_head_revision_id"], exact=True
+            ).first).to_be_visible()
+            # The shared ancestor is visible as a genuine reachable revision,
+            # not rebound to the fork as original owner.
+            assert source_branch["branch_id"] in table.inner_text()
+            assert "Shared ancestor" in table.inner_text()
+            table.get_by_role("button", name="Revision", exact=False).first.click()
+            inspector = page.get_by_label("Saved Revision read-only preview")
+            expect(inspector).to_be_visible()
+            assert "Read-only preview" in inspector.inner_text()
+            inspector.get_by_role("button", name="Close detail").click()
+            expect(inspector).to_have_count(0)
+            assert page.get_by_role(
+                "combobox", name="Admin active Branch"
+            ).input_value() == active_before
+            after_map = page.request.get(
+                args.api_url + "/run-branches", params={"run_id": run_id}
+            )
+            assert after_map.ok
+            assert next(b["saved_head_revision_id"]
+                        for b in after_map.json()["run_branches"]
+                        if b["branch_id"] == source_branch["branch_id"]) == source_branch["saved_head_revision_id"]
+            evidence["history_lineage_browser_read_only"] = True
+            page.screenshot(path=str(artifacts / "02b-history-lineage.png"), full_page=True)
+
             # Exercise actual API-backed Runs expansion and cross-page Admin Branch selection.
             page.goto(base + "/admin/runs")
             expect(page.get_by_role("heading", name="Runs", exact=True)).to_be_visible()

@@ -19,6 +19,7 @@ import type {
 } from '../api/types'
 import { formatApiError } from '../utils/apiErrors'
 import { EmptyState, JsonPayloadBlock, MetadataList, SectionCard } from './RunScopedUi'
+import { SavedBranchMap } from './SavedBranchMap'
 
 type ForkReview = {
   runId: string
@@ -379,6 +380,12 @@ export function SavedRevisionHistoryPanel({
         Opening a Saved Revision is always read-only. No Branch, Working Draft, or Viewer state
         changes until a separate action is explicitly submitted.
       </p>
+      <SavedBranchMap
+        runId={runId} branches={branches} selectedBranchId={branchId}
+        viewerBranchId={run.viewer_branch_id??null}
+        officialBranchId={run.official_branch_id??null}
+        onSelect={selectBranch}
+      />
       {branches.length === 0 ? (
         <EmptyState message="No Branch is available for Saved Revision history." />
       ) : (
@@ -410,27 +417,38 @@ export function SavedRevisionHistoryPanel({
       )}
       {historyIdentityIsValid && history && history.saved_revisions.length > 0 && (
         <div className="saved-revision-layout">
-          <ol className="history-list" aria-label="Saved Revision history">
-            {history.saved_revisions.map((revision) => (
-              <li key={revision.revision_id}>
-                <button
-                  type="button"
-                  className={`history-list-item${selectedRevisionId === revision.revision_id ? ' is-selected' : ''}`}
-                  aria-pressed={selectedRevisionId === revision.revision_id}
-                  onClick={() => selectRevision(revision.revision_id)}
-                >
-                  <span className="history-list-item__title">
-                    Revision {revision.sequence}: {revision.kind}
-                  </span>
-                  <span className="history-list-item__meta">
-                    {revision.revision_id}
-                    {revision.is_branch_head ? ' · current head' : ''}
-                    {revision.is_shared_revision ? ' · shared history' : ''}
-                  </span>
-                </button>
-              </li>
-            ))}
-          </ol>
+          <div className="table-responsive" aria-label="Reachable Saved Revisions table">
+            <p className="status">Reachable Saved Revision history, including shared ancestors.
+              Only loaded pages are shown; older entries can be loaded explicitly.
+              Saved at is wall-clock time, not sporting simulation time.</p>
+            <table aria-label="Saved Revision history table" className="saved-revision-table">
+              <thead><tr><th># / Revision</th><th>Saved at</th>
+                <th>Actual change summary</th><th>Source Branch</th>
+                <th>Parent</th><th>Reachability</th></tr></thead>
+              <tbody>{history.saved_revisions.map((revision) => (
+                <tr key={revision.revision_id}
+                  className={selectedRevisionId === revision.revision_id ? 'is-selected' : ''}>
+                  <td><button type="button"
+                    className="history-list-item"
+                    aria-pressed={selectedRevisionId === revision.revision_id}
+                    onClick={() => selectRevision(revision.revision_id)}>
+                    <span className="history-list-item__title">
+                      Revision {revision.sequence}: {revision.kind}
+                    </span>
+                    <span className="history-list-item__meta"><code>{revision.revision_id}</code></span>
+                  </button></td>
+                  <td>{revision.created_at??'Unavailable'}</td>
+                  <td>{typeof revision.change_summary.summary === 'string' &&
+                    revision.change_summary.summary.trim() ?
+                    revision.change_summary.summary : revision.kind}</td>
+                  <td><code>{revision.revision_branch_id}</code></td>
+                  <td><code>{revision.parent_revision_id??'Root'}</code></td>
+                  <td>{revision.is_branch_head?'HEAD · ':''}
+                    {revision.is_shared_revision?'Shared ancestor':'Own branch'}</td>
+                </tr>
+              ))}</tbody>
+            </table>
+          </div>
           {historyQuery.hasNextPage && (
             <button
               type="button"
@@ -453,7 +471,11 @@ export function SavedRevisionHistoryPanel({
               <p className="error">The preview returned a mismatched Saved Revision identity.</p>
             )}
             {detailIdentityIsValid && detail && (
-              <article className="saved-revision-preview" aria-label="Saved Revision read-only preview">
+              <article className="saved-revision-preview saved-revision-detail-drawer" aria-label="Saved Revision read-only preview">
+                <div className="saved-revision-detail-drawer__heading">
+                  <strong>Saved Revision · read-only detail</strong>
+                  <button type="button" onClick={() => selectRevision('')}>Close detail</button>
+                </div>
                 <p className="status"><strong>Read-only preview</strong> · nothing has been changed.</p>
                 <MetadataList
                   items={[

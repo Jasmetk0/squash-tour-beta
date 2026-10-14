@@ -1,3 +1,13 @@
+# Active candidate — 14 October 2026, after merged #1444
+
+Verified `buuk` at start: `cf3945cf5ebbca12805e338c73bfcc18fb300d03`, #1444 merged and no other PR open.
+
+**Current PR candidate, not merged:** read-only History & Branches v80 overview of Run Branch lineage using actual `forked_from_branch_id`, exact `forked_from_saved_revision_id`, separately labeled legacy checkpoint forks and Saved HEAD. Clicking a Branch selects only which reachable revision history is browsed, with no activation of Viewer/Official Branch. Selected Branch's paginated reachable Saved Revisions appear in an explicit table with real parent ID, source/original Branch, HEAD/shared flags, timestamp (wall-clock only), and actual Saved `change_summary`. Existing read-only revision preview is now a side inspector; existing separate fork, compare, restore review/confirmation contracts are reused unchanged. Unavailable parent data/cycles fail closed rather than generating a fictional link. Incomplete pagination is explicitly marked and older revision pages load on request. This is an overview, **not** a finished independent Compare States page or a claim of complete simulated-time history.
+
+Next: dedicated read-only Compare A/B over two explicit reachable Saved states, then detailed supported history summaries; full pre-alpha group/hybrid tie, ranking closure and broad checkpoint/release acceptance remain separate.
+
+---
+
 # Active Country Match Records work — 14 October 2026
 
 Verified starting `buuk`: `b1c6a4ec09c91d704134dfe955f5f10e03ba32ef`, #1443 merged, no open PR. **Current candidate is not merged.**

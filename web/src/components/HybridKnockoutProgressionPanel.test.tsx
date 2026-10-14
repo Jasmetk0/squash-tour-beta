@@ -1,5 +1,6 @@
 import {QueryClient,QueryClientProvider} from '@tanstack/react-query'
 import {fireEvent,render,screen,waitFor} from '@testing-library/react'
+import {MemoryRouter} from 'react-router-dom'
 import {beforeEach,describe,expect,it,vi} from 'vitest'
 import {HybridKnockoutProgressionPanel} from './HybridKnockoutProgressionPanel'
 vi.mock('../i18n/LanguageContext',()=>({useLanguage:()=>({language:'en'})}))
@@ -31,7 +32,7 @@ const notFound=()=>Object.assign(new Error('Not found'),{status:404})
 function mount(enabled=true){
   const client=new QueryClient({defaultOptions:{queries:{retry:false}}})
   return render(<QueryClientProvider client={client}>
-    <HybridKnockoutProgressionPanel runId="r" branchId="b" eventId="e" enabled={enabled}/>
+    <MemoryRouter><HybridKnockoutProgressionPanel runId="r" branchId="b" eventId="e" enabled={enabled}/></MemoryRouter>
   </QueryClientProvider>)
 }
 beforeEach(()=>{
@@ -77,6 +78,8 @@ describe('real hybrid advancing players + knockout Admin',()=>{
     const frozen=await screen.findByRole('table',{name:'Canonical hybrid knockout bracket'})
     expect(frozen).toHaveTextContent('player:A')
     expect(frozen).toHaveTextContent('player:C')
+    expect(screen.getByRole('link',{name:'Play the real knockout Match Day in Simulation'}))
+      .toHaveAttribute('href','/admin/runs/r/simulate?branch=b')
   })
   it('never allows mutation from a historical or unverified branch',()=>{
     mount(false)

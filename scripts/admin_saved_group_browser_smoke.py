@@ -467,6 +467,16 @@ def acceptance(
                     assert request("GET",event_scope+"/hybrid-knockout-bracket") == (
                         hybrid_result["bracket_authority"]
                     )
+                    replay = request("GET",root_scope+"/authoritative-simulation/match-replays?limit=50")
+                    final_matches = [m for m in replay["matches"]
+                                     if m["match_id"] == hybrid_result["bracket_authority"]["terminal_match_id"]]
+                    assert final_matches == [hybrid_result["frozen_final_replay"]], (
+                        "Real played knockout final changed after SQLite backend restart"
+                    )
+                    assert request(
+                        "GET",root_scope+"/authoritative-simulation/match-replay/context?group_id="
+                        + quote(hybrid_result["bracket_authority"]["terminal_match_id"],safe="")
+                    ) == hybrid_result["frozen_final_context"]
                     page.goto(prepared_event_url)
                     expect(page.get_by_role(
                         "table",name="Canonical hybrid knockout bracket"
@@ -519,8 +529,11 @@ def acceptance(
                     ),
                     "hybrid_progression": ({
                         "completed_revision":hybrid_result["completed_saved_revision"],
-                        "played_match_count":hybrid_result["real_group_matches"],
+                        "played_group_match_count":hybrid_result["real_group_matches"],
+                        "played_knockout_match_count":hybrid_result["real_knockout_matches"],
                         "played_match_days":hybrid_result["real_match_days"],
+                        "knockout_champion":hybrid_result["frozen_final_replay"]["winner_player_id"],
+                        "knockout_result_fingerprint":hybrid_result["frozen_final_replay"]["result_fingerprint"],
                         "group_authority_fingerprint":hybrid_result["group_authority"]["authority_fingerprint"],
                         "entrants_authority_fingerprint":hybrid_result["entrants_authority"]["authority_fingerprint"],
                         "bracket_authority_fingerprint":hybrid_result["bracket_authority"]["authority_fingerprint"],
@@ -562,7 +575,7 @@ if __name__ == "__main__":
     parser.add_argument("--cyclic-tie-fixture", action="store_true",
                         help="Serve ONLY: install exact-scope genuine MatchEngine test inputs")
     parser.add_argument("--hybrid-progression", action="store_true",
-                        help="Play two genuine hybrid group matches, freeze standings, entrants, bracket, Save and restart")
+                        help="Play two real hybrid group matches and knockout final, freeze authorities, Save and restart")
     parser.add_argument("--hybrid-preparation", action="store_true",
                         help="Browser verifies explicitly configured hybrid plus Saved Edition after SQLite restart")
     parser.add_argument("--complete-groups", action="store_true",

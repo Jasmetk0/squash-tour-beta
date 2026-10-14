@@ -68,3 +68,10 @@ def test_real_hybrid_progression_browser_is_real_match_day_and_explicit_admin_on
     assert "real_hybrid_progression_browser_checks import play_and_freeze_hybrid" in shell
     assert '--hybrid-progression' in shell
     assert 'standings_authority_fingerprint' in browser
+    assert 'knockout_preview["match_day_ordinal"] == 2' in browser
+    assert 'browser_click(page, "Simulate reviewed authoritative Match Day")' in browser
+    assert 'match-replays?limit=50' in browser
+    assert 'final["winner_player_id"], final["loser_player_id"]' in browser
+    assert 'result_published":False' in browser
+    assert 'frozen_final_context' in shell
+    assert 'real_knockout_matches' in shell

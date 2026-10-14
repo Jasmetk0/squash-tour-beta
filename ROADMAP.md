@@ -1,3 +1,12 @@
+# Active pre-alpha — genuine hybrid knockout execution (14 October 2026)
+
+Base `buuk` `1e1a34b27dd47420ec1846c5c9dcc555e23c39ce` after merged #1451.
+
+1. **Current candidate:** actual Run-owned hybrid knockout Match Day 2 over frozen post-group winners, exact persisted MatchEngine winner and no-rerun rally replay, explicit Save and SQLite restart. Clear navigation from Admin bracket to actual Simulation. No phantom final result.
+2. **Next:** hybrid Ranking policy UI, phase awards, exact owned Tournament Result/Ranking closure and immutable Saved historical publication. Do not infer ranking points without reviewed policy.
+3. **Release:** multiple knockout rounds, actual Run-born cyclical tie, full 50-season simulation and pre-alpha release suite.
+
+---
 # Active pre-alpha — real Hybrid Group → Knockout handoff (14 October 2026)
 
 Base: `buuk` `1ea108fe329a90b2bd535dbc5e6077635dda0314`, after merged #1450.

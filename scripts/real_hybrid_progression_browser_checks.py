@@ -120,7 +120,68 @@ def play_and_freeze_hybrid(
     page.screenshot(path=str(artifacts / "hybrid-04-reviewed-actual-entrants-bracket.png"),
                     full_page=True)
 
-    # The actual two-group result and bracket are authorities, not an auto Save.
+    # An immutable first-round bracket is a *plan*, not the finished sporting
+    # result. The existing Run driver must now dynamically extend the canonical
+    # Week Schedule, preserving the group Match Day and its result receipts.
+    pending_position = request("GET", simulation + "/position")
+    assert pending_position["current_slot_kind"] == "match", pending_position
+    assert bracket["terminal_match_id"] in pending_position["eligible_match_ids"]
+    knockout_preview = request("GET", simulation + "/next-match-day/preview")
+    assert knockout_preview["match_day_ordinal"] == 2, knockout_preview
+    assert len(knockout_preview["target_slot_ordinals"]) == 1
+    assert pending_position["slot_ordinal"] in knockout_preview["target_slot_ordinals"]
+    before_replay = request("GET", simulation + "/match-replays?limit=50")
+    assert len([m for m in before_replay["matches"]
+                if m["match_id"] == bracket["terminal_match_id"]]) == 0, (
+        "Knockout result must not exist before an actual MatchEngine execution"
+    )
+    page.goto(run_url + "/simulate?branch=" + quote(branch_id, safe=""))
+    page.get_by_role("combobox", name="Language / Jazyk").select_option("en")
+    from playwright.sync_api import expect
+    # Cold React mounts can still be requesting canonical Position/branch state
+    # after the protected HTTP preview has already succeeded. Synchronize on
+    # the actual actionable control rather than an arbitrary network-idle delay.
+    expect(page.get_by_role(
+        "button", name="Review authoritative Next Match Day"
+    )).to_be_enabled(timeout=30000)
+    browser_click(page, "Review authoritative Next Match Day")
+    expect(page.get_by_role(
+        "heading", name="Reviewed canonical Match Day 2"
+    )).to_be_visible()
+    page.get_by_label("Confirm authoritative simulation").check()
+    browser_click(page, "Simulate reviewed authoritative Match Day")
+    browser_settle(page)
+
+    replay_list = request("GET", simulation + "/match-replays?limit=50")
+    assert replay_list["read_only"] is True
+    assert len(replay_list["matches"]) == 3
+    finals = [
+        item for item in replay_list["matches"]
+        if item["match_id"] == bracket["terminal_match_id"]
+    ]
+    assert len(finals) == 1
+    final = finals[0]
+    expected_finalists = {only_match["top_player_id"], only_match["bottom_player_id"]}
+    assert {final["winner_player_id"], final["loser_player_id"]} == expected_finalists
+    assert len(final["result_fingerprint"]) == 64
+    assert final["replay_available"] and final["total_rallies"] > 0
+    final_context = request(
+        "GET",simulation + "/match-replay/context?group_id="
+        + quote(bracket["terminal_match_id"],safe=""),
+    )
+    assert final_context["verified"] is True
+    assert final_context["rng_rerun"] is False
+    assert final_context["replay_source"] == "stored_authoritative_events"
+    assert final_context["result_fingerprint"] == final["result_fingerprint"]
+    assert final_context["event_id"] == event_id
+    # No second click may silently replay the terminal or fabricate a winner.
+    remaining = request("GET", simulation + "/position")
+    assert bracket["terminal_match_id"] not in remaining["eligible_match_ids"]
+    page.screenshot(path=str(artifacts / "hybrid-05-real-knockout-final-replay.png"),
+                    full_page=True)
+
+    # The real three sporting match receipts and frozen bracket are still
+    # authorities, not an automatic publication of unconfigured ranking points.
     # Explicitly persist the Run against its immutable Saved revision identity.
     preview = request("GET", simulation + "/save/preview")
     assert preview["can_save"] and preview["has_unsaved_changes"]
@@ -151,6 +212,9 @@ def play_and_freeze_hybrid(
         "entrants_authority":entrants,
         "bracket_authority":bracket,
         "real_group_matches":2,
-        "real_match_days":1,
+        "real_knockout_matches":1,
+        "real_match_days":2,
+        "frozen_final_replay":final,
+        "frozen_final_context":final_context,
         "result_published":False,
     }

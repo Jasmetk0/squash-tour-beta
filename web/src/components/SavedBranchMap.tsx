@@ -106,7 +106,7 @@ export function SavedBranchMap({
               <code>{parentId}</code> {L('v','at')}{' '}<code>{branch.forked_from_checkpoint_id}</code>
               {' '}· {L('nejde o vazbu Saved Revision','not a Saved Revision relation')}</small>}
             {connection==='unresolved'&&<small>{L('Neověřená nebo chybějící vazba na uloženého předka','Unverified or missing Saved parent relationship')}
-              {branch.forked_from_branch_id&&<> · <code>{branch.forked_from_branch_id}</code></>}</small>
+              {branch.forked_from_branch_id&&<> · <code>{branch.forked_from_branch_id}</code></>}</small>}
             {connection==='root'&&<small>{L('Kořenová větev / bez zaznamenaného předka','Root / no recorded fork parent')}</small>}
             <small>{L('Uložený HEAD','Saved HEAD')}: <code>{branch.saved_head_revision_id??L('nezveřejněn','not exposed')}</code></small>
           </button>

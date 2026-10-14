@@ -1,3 +1,13 @@
+# Active candidate — 14 October 2026, Compare States A/B (after merged #1445)
+
+Verified starting `buuk`: `2f05580f2992949e7751ec462a2e508800465e20`; #1445 merged and no open PR.
+
+**Current PR candidate, not merged:** a standalone read-only Run → History & Branches → Compare A/B page. Select one Run Branch without activating it and explicit two distinct reachable Saved Revisions A/B (including a shared ancestor); query the already-existing, provenance-validated Saved Revision comparison backend. Show summary counts, Run/Branch metadata before/after, real Saved component add/remove/change/unchanged *fingerprints*, filters Differences only / All, evidence detail, and exact read-only Saved Revision A/B payload inspection. The URL preserves Branch + A/B IDs and filter; older history pages are loaded on request and a revision outside loaded reachable history cannot be quietly substituted. Fail closed on response Run/Branch/revision IDs, original owner, hashes, parent and unknown/duplicate component statuses. Independent compare **across different Branch source contexts** and entity-by-entity player, match, ranking, season comparisons are **not implemented** by this existing API: never infer from component fingerprint changes. No Restore, no write/mutate commands, and no Viewer/Working Draft/Run activation in Compare. Real Chromium/FastAPI/SQLite fork comparison browser assertion accompanies focused frontend tests; this is not full pre-alpha release.
+
+Next: richer exact supported state differences only where backend authority exists, multi-branch Compare authorization if approved, then hybrid/registration/ranking closure and wider release gates. Older dated notes below describe historical candidates.
+
+---
+
 # Active candidate — 14 October 2026, after merged #1444
 
 Verified `buuk` at start: `cf3945cf5ebbca12805e338c73bfcc18fb300d03`, #1444 merged and no other PR open.

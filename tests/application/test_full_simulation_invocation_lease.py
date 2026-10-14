@@ -123,6 +123,47 @@ def test_renewal_extends_only_current_lease_and_release_is_idempotent(independen
 
 
 @pytest.mark.pr_critical
+def test_expired_lease_before_direct_sql_commit_rolls_back_all_writes(independent_factories):
+    """BEGIN IMMEDIATE alone is not enough if expiry happens before COMMIT.
+
+    Deliberately expire the lease *inside* an open writer transaction after its
+    direct SQL change. The commit hook must reject and roll back both writes;
+    no ORM flush is involved. This is a deterministic stand-in for wall-clock
+    expiration during a long child transaction.
+    """
+    first, second = independent_factories
+    with first.begin() as session:
+        session.execute(text(
+            "CREATE TABLE direct_sql_commit_probe (id INTEGER PRIMARY KEY)"
+        ))
+    token = acquire_invocation_lease(
+        first, run_id="run-a", branch_id="branch-one", command_id="parent-a",
+    )
+    guard_context = ACTIVE_FULL_SIMULATION_GUARD.set(FullSimulationExecutionGuard(
+        run_id="run-a", branch_id="branch-one", command_id="parent-a",
+        request_fingerprint="a" * 64, execution_lease_token=token,
+    ))
+    try:
+        with pytest.raises(ValueError, match="lease ownership was lost"):
+            with first.begin() as session:
+                session.execute(text("BEGIN IMMEDIATE"))
+                session.execute(text("INSERT INTO direct_sql_commit_probe (id) VALUES (1)"))
+                session.execute(text(
+                    "UPDATE full_simulation_execution_leases SET expires_at_unix = 0 "
+                    "WHERE lease_scope = :scope"
+                ), {"scope": LEASE_SCOPE})
+                # Deliberately no ORM flush / lease check before context commit.
+    finally:
+        ACTIVE_FULL_SIMULATION_GUARD.reset(guard_context)
+    with second() as session:
+        assert session.scalar(text("SELECT COUNT(*) FROM direct_sql_commit_probe")) == 0
+        lease = session.get(FullSimulationExecutionLeaseModel, LEASE_SCOPE)
+        assert lease is not None and lease.owner_token == token
+        assert lease.expires_at_unix > int(time.time())
+    release_invocation_lease(first, token=token)
+
+
+@pytest.mark.pr_critical
 def test_driver_does_not_hold_global_lease_after_exception(independent_factories, monkeypatch):
     first, second = independent_factories
     def failed_child(*args, **kwargs):

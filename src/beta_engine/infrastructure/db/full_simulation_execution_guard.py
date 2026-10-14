@@ -20,6 +20,10 @@ class FullSimulationExecutionGuard:
     before_transaction_check: Callable[[], None] | None = None
 
 
+class FullSimulationPauseRequested(Exception):
+    """Cooperative stop before a child writer flush; its transaction rolls back."""
+
+
 ACTIVE_FULL_SIMULATION_GUARD: ContextVar[
     FullSimulationExecutionGuard | None
 ] = ContextVar("active_full_simulation_execution_guard", default=None)
@@ -32,7 +36,7 @@ def require_pending_full_simulation_guard(session: Session) -> None:
     if guard is None:
         return
     row = session.connection().exec_driver_sql(
-        "SELECT request_fingerprint, status "
+        "SELECT request_fingerprint, status, result_json "
         "FROM authoritative_simulation_commands "
         "WHERE run_id = ? AND branch_id = ? AND command_id = ?",
         (guard.run_id, guard.branch_id, guard.command_id),
@@ -48,6 +52,12 @@ def require_pending_full_simulation_guard(session: Session) -> None:
         )
     if row[1] != "pending":
         raise ValueError("Full Simulation execution guard found an invalid status")
+    # A pause never truncates a MatchEngine/slot transaction: the next pending
+    # child flush is rolled back atomically and acknowledged by the parent.
+    import json
+    control = json.loads(row[2]).get("control_state", "running")
+    if control in ("pause_requested", "paused"):
+        raise FullSimulationPauseRequested("Full Simulation pause requested at safe transaction boundary")
 
 
 @event.listens_for(Session, "before_flush")

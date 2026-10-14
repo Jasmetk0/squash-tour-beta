@@ -196,8 +196,14 @@ def exercise_real_cyclic_browser(
     assert [r["player_id"] for r in final["groups"][0]["rows"]] == [
         "C", "A", "B", "D"
     ]
-    assert final["admin_tie_resolutions"][0]["authority_fingerprint"] == (
-        saved["authority_fingerprint"]
+    # The final authority embeds the audited *decision*, not the separate
+    # HTTP resolution authority row/fingerprint.
+    assert final["admin_tie_resolutions"][0]["case"] == saved["decision"]["case"]
+    assert final["admin_tie_resolutions"][0]["ordered_player_ids"] == [
+        "C", "A", "B"
+    ]
+    assert final["admin_tie_resolutions"][0]["admin_reason"] == (
+        saved["decision"]["admin_reason"]
     )
     page.screenshot(path=str(artifacts / "cyclic-03-frozen-standings.png"),
                     full_page=True)

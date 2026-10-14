@@ -482,7 +482,7 @@ export function SavedRevisionHistoryPanel({
                   <strong>{T("Saved Revision · read-only detail")}</strong>
                   <button type="button" onClick={() => selectRevision('')}>{T("Close detail")}</button>
                 </div>
-                <p className="status"><strong>{T("Read-only preview")}</strong> · nothing has been changed.</p>
+                <p className="status"><strong>{T("Read-only preview")}</strong> · {T('nothing has been changed.')}</p>
                 <MetadataList
                   items={[
                     { label: T("Revision"), value: `${detail.sequence} · ${detail.revision_id}` },
@@ -738,7 +738,7 @@ export function SavedRevisionHistoryPanel({
                 onChange={(event) => setForkConfirmed(event.target.checked)}
                 disabled={!forkReviewStillCurrent || createBranchMutation.isPending}
               />
-              I reviewed the exact source revision and understand this creates an independent Branch without changing the Viewer Branch.
+              {T('I reviewed the exact source revision and understand this creates an independent Branch without changing the Viewer Branch.')}
             </label>
             <div className="saved-revision-actions">
               <button type="button" disabled={createBranchMutation.isPending} onClick={closeForkReview}>{T("Cancel Branch creation")}</button>
@@ -758,7 +758,7 @@ export function SavedRevisionHistoryPanel({
       {createBranchMutation.data && (
         <p className="status" aria-label={T("Saved Revision Branch result")}>
           {T("Created Branch")} {createBranchMutation.data.display_name} ({createBranchMutation.data.branch_id})
-          from Saved Revision {createBranchMutation.variables?.sourceRevisionId ?? T("the reviewed revision")}. The Viewer Branch was not changed.
+          {T('from Saved Revision')} {createBranchMutation.variables?.sourceRevisionId ?? T('the reviewed revision')}. {T('The Viewer Branch was not changed.')}
         </p>
       )}
       {restoreNotice && <p className="error">{restoreNotice}</p>}
@@ -774,10 +774,9 @@ export function SavedRevisionHistoryPanel({
           >
             <h4 id="restore-dialog-title">{T("Confirm Saved Revision restore")}</h4>
             <p>
-              This will restore <strong>{branch.display_name}</strong> {T("from Saved Revision")}{' '}
-              <strong>{detail.revision_id}</strong>. It will not delete later history. A separate
-              pre-restore checkpoint of head{' '}
-              <strong>{restoreReview.expectedHeadSavedRevisionId}</strong> will be created first.
+              {T('This will restore')} <strong>{branch.display_name}</strong> {T('from Saved Revision')}{' '}
+              <strong>{detail.revision_id}</strong>. {T('It will not delete later history. A separate pre-restore checkpoint of head')}{' '}
+              <strong>{restoreReview.expectedHeadSavedRevisionId}</strong> {T('will be created first.')}
             </p>
             <MetadataList
               items={[
@@ -836,9 +835,8 @@ function RestoreResult({ result }: { result: RestoreSavedRevisionResponse }): JS
   const T=(english:string)=>historyText(english,language)
   return (
     <div className="status" aria-label={T("Saved Revision restore result")}>
-      {T("Restore completed. New Saved Revision:")} {result.saved_revision.revision_id}; safety checkpoint:{' '}
-      {result.safety_checkpoint.checkpoint_id}; restored target: {result.target_saved_revision_id}; Viewer
-      Branch: {result.viewer_branch_id}. Later history remains preserved.
+      {T("Restore completed. New Saved Revision:")} {result.saved_revision.revision_id}; {T('safety checkpoint:')}{' '}
+      {result.safety_checkpoint.checkpoint_id}; {T('restored target:')} {result.target_saved_revision_id}; {T('Viewer Branch:')} {result.viewer_branch_id}. {T('Later history remains preserved.')}
     </div>
   )
 }

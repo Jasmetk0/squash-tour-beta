@@ -102,7 +102,7 @@ export function proposedHybridGroups(
   }))
   if(seen.size!==total)throw new Error('Every advancing group position must be paired once.')
   return {
-    command_id,format_kind:'groups_knockout',group_count,group_size,
+    command_id:commandId,format_kind:'groups_knockout',group_count,group_size,
     seeded_slots_per_group:0,group_seed_placements:[],match_best_of_override:null,
     advancing_per_group,knockout_crossings
   }

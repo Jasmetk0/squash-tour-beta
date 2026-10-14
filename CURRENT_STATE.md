@@ -1,3 +1,15 @@
+# Active candidate — 14 October 2026, saved Tournament Edition Compare A/B (after #1446)
+
+Verified starting `buuk`: `d6fb6407659684225b28c75ac9dcc693e1073e9f`; #1446 merged, no open PR.
+
+**Current candidate, NOT MERGED:** extend the already-implemented separate read-only Compare States A/B page with *real season-specific saved Tournament Edition differences*. For an explicitly selected season (0–49), read both exact immutable Saved Calendars through the already validated reachable Run/Branch/Saved Revision A/B selection. Check source revision owner and content identity, then show distinct Editions added, removed, changed or unchanged by authoritative event ID. Changed fields use exact before/after Saved Calendar attributes (including host, week, draw capacities and published champion IDs), with a right-hand evidence inspector showing complete canonical Edition snapshots. The existing Difference/All filter on Saved components is independent of the new Edition filter. Never synthesize individual matches, career/ranking changes, missing results or simulation time from opaque fingerprints. Zero saved Editions is displayed honestly. The compare makes no Run, Viewer, Working Draft or Branch activation and is not a cross-Branch compare protocol.
+
+**Tests:** pure source-validated cross-revision event diff (change/add/remove/unchanged, shared ancestor source and corrupt scope) and frontend view plus Chromium/SQLite API-backed empty-run acceptance. This candidate is not full pre-alpha release, hybrid/ranking acceptance or exhaustive 50-season audit.
+
+Next: actual entity-level match/player/ranking diffs only when same exact provenance and authorised comparable contracts are established, plus true cyclic tie Chromium and hybrid ranking closure release gates. Older candidate reports below remain dated historical context.
+
+---
+
 # Active candidate — 14 October 2026, Compare States A/B (after merged #1445)
 
 Verified starting `buuk`: `2f05580f2992949e7751ec462a2e508800465e20`; #1445 merged and no open PR.

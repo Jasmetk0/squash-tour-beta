@@ -74,9 +74,9 @@ export function SavedEditionCompareSection({runId,branchId,a,b}:Props):JSX.Eleme
     {validSeason&&qA.isSuccess&&qB.isSuccess&&!compared&&<p role="alert">
       {T("Saved Edition identity, source Branch or calendar evidence is inconsistent. No tournament differences will be inferred.")}</p>}
     {compared&&<>
-      <p className="status">{T("Season")} {label} · Selected Branch <code>{branchId}</code>
-        {' · '}State A <code>{a.revision_id}</code> (source{' '}
-        <code>{compared.branchOwners.a}</code>) → State B <code>{b.revision_id}</code>
+      <p className="status">{T("Season")} {label} · {T('Selected Branch')} <code>{branchId}</code>
+        {' · '}State A <code>{a.revision_id}</code> ({T('source')}{' '}
+        <code>{compared.branchOwners.a}</code>) → {T('State')} B <code>{b.revision_id}</code>
         {' '}(source <code>{compared.branchOwners.b}</code>)
         {' · '}A: {qA.data!.calendar_status} / {qA.data!.edition_count} {T("saved Editions")}
         {' · '}B: {qB.data!.calendar_status} / {qB.data!.edition_count} {T("saved Editions")}</p>
@@ -108,11 +108,11 @@ export function SavedEditionCompareSection({runId,branchId,a,b}:Props):JSX.Eleme
         <button type="button" onClick={()=>setDetail(null)}>{T("Close Edition comparison")}</button>
       </div>
       <h4>{selected.name} · <code>{selected.eventId}</code></h4>
-      <p>Status: <strong>{T(selected.status)}</strong> · Changed:
+      <p>{T('Status:')} <strong>{T(selected.status)}</strong> · {T('Changed:')}
         {' '}{diff(selected)} · Season {label}</p>
-      <p>{T("State A:")} <code>{a.revision_id}</code> (original <code>{a.revision_branch_id}</code>)
+      <p>{T("State A:")} <code>{a.revision_id}</code> ({T('original')} <code>{a.revision_branch_id}</code>)
         {' '}→ State B: <code>{b.revision_id}</code>
-        {' '}(original <code>{b.revision_branch_id}</code>)</p>
+        {' '}({T('original')} <code>{b.revision_branch_id}</code>)</p>
       <div className="saved-compare-before-after">
         <section><h5>{T("A · Before · actual Saved Edition")}</h5>
           <pre className="json-block">{show(selected.a,language)}</pre></section>

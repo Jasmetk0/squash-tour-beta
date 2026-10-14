@@ -2412,11 +2412,12 @@ export async function controlAuthoritativeFullSimulation(
     data.control_command_id !== payload.control_command_id ||
     data.action !== payload.action ||
     typeof data.replayed !== 'boolean' ||
-    !['running', 'pause_requested', 'paused'].includes(data.observed_control_state) ||
+    !['running', 'pause_requested', 'paused', 'stopped'].includes(data.observed_control_state) ||
     data.committed_child_work_persists !== true ||
-    !['running', 'pause_requested', 'paused'].includes(data.control_state) ||
+    !['running', 'pause_requested', 'paused', 'stopped'].includes(data.control_state) ||
     (payload.action === 'pause' && data.control_state !== 'pause_requested') ||
-    (payload.action === 'resume' && data.control_state !== 'running')
+    (payload.action === 'resume' && data.control_state !== 'running') ||
+    (payload.action === 'stop' && data.control_state !== 'stopped')
   ) {
     throw new Error('Full Simulation control response is invalid.')
   }

@@ -1,3 +1,15 @@
+# Active pre-alpha — Separate Compare States A/B (14 October 2026)
+
+Base: `buuk` `2f05580f2992949e7751ec462a2e508800465e20`, #1445 merged.
+
+1. **Current candidate:** standalone read-only Compare A/B for two loaded, reachable, distinct Saved Revisions of one selected Branch. Differences only / All, actual metadata and component-fingerprint statuses, side detail and immutable state inspection, URL deep links, real browser validation, no mutation/restore.
+2. **Next:** support finer entity-level comparisons (players, tournaments, matches, ranking) only with authoritative matching Saved entities and agreed semantics; independent Branch A vs Branch B remains a separate API/lineage contract, not silently substituted.
+3. **Release gaps:** full real group tie decision in Chromium, completed hybrid group→knockout+ranking closure, broader release checklist and full regression. No claim that mocks or PR CI prove release.
+
+Older dated entries follow as history.
+
+---
+
 # Active pre-alpha — History & Branches first slice (14 October 2026)
 
 Starting base: `buuk` `cf3945cf5ebbca12805e338c73bfcc18fb300d03`, #1444 merged.

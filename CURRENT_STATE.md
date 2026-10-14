@@ -1,3 +1,12 @@
+# Active candidate — 14 October 2026, hybrid Group→Knockout Admin setup (after merged #1449)
+
+Base `buuk`: `6844ebdd15464d173274783849be98138646cbc2`. #1449 merged, no open PR at task start.
+
+**Current candidate, NOT MERGED:** real writable Planned Event Admin can explicitly choose `groups_knockout`, adopt the existing effective BO3/BO5 season policy, configure equal groups, advancement per group and every single first-round group-position crossing, then generate frozen topology and group schedule using existing production authority. No implied matching, player seeding, winner, random fallback or ranking. Exact scope/response checking and deliberate approval on changing inputs. Existing canonical completed group standings can be opened for hybrid format too. See `docs/ADMIN_HYBRID_GROUP_FORMAT_V1_2026_10_14.md`.
+
+**Next release blocker:** close **real** hybrid Group Match Days → frozen standings → Entrants → Bracket → Knockout Match Days → Result, policy, ranking sources → Saved Revision and SQLite restart. Existing pure-groups browser test and isolated genuine cyclic tie test do not prove this integration.
+
+---
 # Active candidate — 14 October 2026, real cyclic Group Tie Chromium (after #1448)
 
 Verified starting `buuk`: `f35913eb4aceff5bce31166280d95b6804949589`; #1448 merged, no open PR.

@@ -1,3 +1,15 @@
+# Active pre-alpha — Saved Edition A/B entity comparison (14 October 2026)
+
+Verified base `buuk` `d6fb6407659684225b28c75ac9dcc693e1073e9f`, #1446 merged.
+
+1. **Current candidate:** compare exact canonical Tournament Editions for any explicitly selected sporting season between two reachable Saved Revisions A/B, independently of fingerprint-only component Compare; safe no-write side detail and filter.
+2. **Next:** additional finer comparable entities only from complete authoritative immutable sources (matches, players, rankings where supported); never infer details from fingerprint differences or assume cross-Branch compare rights.
+3. **Release gates:** full Chromium cyclic-tie decision path, genuine hybrid group→knockout, ranking closure, broad checkpoint/season/50-season tests and internal release checks.
+
+Dated sections below record historical candidates, not live release proof.
+
+---
+
 # Active pre-alpha — Separate Compare States A/B (14 October 2026)
 
 Base: `buuk` `2f05580f2992949e7751ec462a2e508800465e20`, #1445 merged.

@@ -56,7 +56,7 @@ def test_hybrid_cannot_miss_or_reuse_advancers_or_allocate_odd_knockout():
         _hybrid_format(crossing=())
     with pytest.raises(ValueError, match="power of two"):
         _hybrid_format(group_count=3)
-    with pytest.raises(ValueError, match="exactly once"):
+    with pytest.raises(ValueError, match="non-advancing group position"):
         _hybrid_format(crossing=(TournamentGroupCrossingMatch(
             match_index=1, top=a, bottom=TournamentGroupCrossingSource(
                 group_index=1, finishing_position=2

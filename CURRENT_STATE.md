@@ -1,3 +1,15 @@
+# Active candidate — 14 October 2026, real cyclic Group Tie Chromium (after #1448)
+
+Verified starting `buuk`: `f35913eb4aceff5bce31166280d95b6804949589`; #1448 merged, no open PR.
+
+**Current candidate, NOT MERGED:** end-to-end *Admin tie-decision presentation and audit* over a genuine six-match BO3 MatchEngine cyclic tie in production Chromium/FastAPI/SQLite. The original four-player group Run, World/player generation, Event/Group setup and Match Schedule are created via actual browser UI. A strictly scoped **test-only input adapter** (not normal Run Match-Day execution) supplies six authentic separately seeded rally results selected by the bounded deterministic generator from #1441 to the production Group Standings/Tie store. The browser demonstrates actual blocking unresolved case, deliberate C/A/B reorder, nonempty reason and explicit confirmation, stale 409 denial, real SQLite decision persistence, backend restart, explicit final-table generation and immutable final table persisted after second restart.
+
+**Important limitation:** the selected six real MatchEngine receipts do NOT represent this Run's identity-derived ordinary Match-Day schedule, which remains unmodified. No synthetic HTTP sporting response is used, but this candidate is not a proof of normal Run cyclic Match-Day seeding, of Run Saved Revision/Edition archival, or of hybrid ranking closure. Those remain future gates. Browser workflow is opt-in, separate from existing genuine Run 6-match acceptance; details in docs/REAL_CYCLIC_GROUP_TIE_BROWSER_2026_10_14.md.
+
+Next: complete this missing *true Run-owned matching-score cyclic tie through ordinary Match-Day/Save* if reproducible without fabricated scoring; otherwise focus on genuinely complete hybrid group→knockout rank closure and full pre-alpha release suite.
+
+---
+
 # Active candidate — 14 October 2026, exact published Saved Match Compare (after merged #1447)
 
 Verified starting `buuk`: `282b14ab57d9dadf286c7213133fd630e113bfef`; #1447 merged, no open PR.

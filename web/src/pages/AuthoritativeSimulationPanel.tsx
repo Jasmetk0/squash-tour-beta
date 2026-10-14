@@ -58,6 +58,7 @@ import {
   getAuthoritativeFullSimulationParentDetail,
   abandonAuthoritativeFullSimulation,
   controlAuthoritativeFullSimulation,
+  retargetAuthoritativeFullSimulation,
   inspectAuthoritativeMatchReconstruction,
   previewAuthoritativeMatchReconstruction,
   commitAuthoritativeMatchReconstruction,
@@ -300,6 +301,12 @@ export function AuthoritativeSimulationPanel({
   const [fullSimulationStopConfirmed, setFullSimulationStopConfirmed] = useState(false)
   // Keep one request identity across HTTP retries; rotate only for a new intent.
   const [fullSimulationControlCommandId, setFullSimulationControlCommandId] = useState(newCommandId)
+  const [fullSimulationTargetSelection, setFullSimulationTargetSelection] = useState<string | null>(null)
+  const [fullSimulationTargetCommandId, setFullSimulationTargetCommandId] = useState(newCommandId)
+  const [fullSimulationTargetSeason, setFullSimulationTargetSeason] = useState('0')
+  const [fullSimulationTargetWeek, setFullSimulationTargetWeek] = useState('1')
+  const [fullSimulationTargetOperator, setFullSimulationTargetOperator] = useState('')
+  const [fullSimulationTargetReason, setFullSimulationTargetReason] = useState('')
   const [fullSimulationAbandonTarget, setFullSimulationAbandonTarget] =
     useState<string | null>(null)
   const [fullSimulationAbandonOperator, setFullSimulationAbandonOperator] =
@@ -1849,6 +1856,33 @@ export function AuthoritativeSimulationPanel({
     }
   })
 
+  const fullSimulationTargetMutation = useMutation({
+    mutationFn: () => {
+      if (!fullSimulationTargetSelection) throw new Error('Select original Full Simulation.')
+      return retargetAuthoritativeFullSimulation(runId, branchId, {
+        control_command_id: fullSimulationTargetCommandId,
+        target_command_id: fullSimulationTargetSelection,
+        target_week: {
+          season_index: Number(fullSimulationTargetSeason),
+          week: Number(fullSimulationTargetWeek)
+        },
+        operator_label: fullSimulationTargetOperator.trim(),
+        audit_reason: fullSimulationTargetReason.trim()
+      })
+    },
+    onSuccess: async () => {
+      setFullSimulationTargetSelection(null)
+      setFullSimulationTargetCommandId(newCommandId())
+      setFullSimulationTargetOperator('')
+      setFullSimulationTargetReason('')
+      await Promise.all([
+        queryClient.invalidateQueries({queryKey:['authoritative-full-simulation-pending',runId,branchId]}),
+        queryClient.invalidateQueries({queryKey:['authoritative-full-simulation-history',runId,branchId]}),
+        queryClient.invalidateQueries({queryKey:['authoritative-full-simulation-parent-detail',runId,branchId]})
+      ])
+    }
+  })
+
   const acknowledgeFullSimulationPauseMutation = useMutation({
     mutationFn: (operation:AuthoritativeFullSimulationPendingOperation) =>
       // The original parent is already frozen with pause_requested; its driver
@@ -3271,6 +3305,9 @@ export function AuthoritativeSimulationPanel({
                     {' · '}S{operation.review.start_week.season_index} W
                     {operation.review.start_week.week}
                     {' · '}{operation.completed_season_count} {C('completed season(s)')}
+                    {' · '}{C('Original target')} S{operation.review.final_week.season_index} W{operation.review.final_week.week}
+                    {' · '}{C('Effective target')} S{(operation.effective_target_week ?? operation.review.final_week).season_index} W{(operation.effective_target_week ?? operation.review.final_week).week}
+                    {' · '}{C('Target revision')} {operation.target_revision ?? 0}
                     {' · '}{operation.control_state === 'pause_requested'
                       ? C('Pausing…')
                       : operation.control_state === 'paused'
@@ -3306,6 +3343,16 @@ export function AuthoritativeSimulationPanel({
                       </button>
                     )}
                     <button type="button" onClick={() => {
+                      setFullSimulationTargetSelection(operation.command.command_id)
+                      setFullSimulationTargetCommandId(newCommandId())
+                      setFullSimulationTargetSeason(String((operation.effective_target_week ?? operation.review.final_week).season_index))
+                      setFullSimulationTargetWeek(String((operation.effective_target_week ?? operation.review.final_week).week))
+                      setFullSimulationTargetOperator('')
+                      setFullSimulationTargetReason('')
+                    }} disabled={fullSimulationTargetMutation.isPending}>
+                      {C('Change week target')}
+                    </button>
+                    <button type="button" onClick={() => {
                       setFullSimulationControlCommandId(newCommandId())
                       setFullSimulationControlTarget({
                         commandId:operation.command.command_id,
@@ -3332,6 +3379,41 @@ export function AuthoritativeSimulationPanel({
                   </li>
                 ))}
               </ol>
+              {fullSimulationTargetSelection && (
+                <div role="group" aria-label={C('Change Full Simulation week target')}>
+                  <p className="status">{C('The new target is the START of the selected week (season index 0 = 2000/01). Already committed work is never undone; if that week is in progress, the next safe boundary stops further work. Original command and Saved Revisions remain unchanged.')}</p>
+                  <p><code>{fullSimulationTargetSelection}</code> · {C('Control request ID:')} <code>{fullSimulationTargetCommandId}</code></p>
+                  <label>{C('Target season index (0–49)')}
+                    <input type="number" aria-label={C('Target season index (0–49)')} min={0} max={49} step={1}
+                      value={fullSimulationTargetSeason} onChange={e => setFullSimulationTargetSeason(e.target.value)}/>
+                  </label>
+                  <label>{C('Target week (1–61)')}
+                    <input type="number" aria-label={C('Target week (1–61)')} min={1} max={61} step={1}
+                      value={fullSimulationTargetWeek} onChange={e => setFullSimulationTargetWeek(e.target.value)}/>
+                  </label>
+                  <label>{C('Operator')}
+                    <input aria-label={C('Target change operator')} maxLength={128}
+                      value={fullSimulationTargetOperator} onChange={e=>setFullSimulationTargetOperator(e.target.value)}/>
+                  </label>
+                  <label>{C('Audit reason')}
+                    <textarea aria-label={C('Target change audit reason')} maxLength={2000}
+                      value={fullSimulationTargetReason} onChange={e=>setFullSimulationTargetReason(e.target.value)}/>
+                  </label>
+                  <button type="button" disabled={
+                    !Number.isInteger(Number(fullSimulationTargetSeason)) ||
+                    !Number.isInteger(Number(fullSimulationTargetWeek)) ||
+                    Number(fullSimulationTargetSeason)<0 || Number(fullSimulationTargetSeason)>49 ||
+                    Number(fullSimulationTargetWeek)<1 || Number(fullSimulationTargetWeek)>61 ||
+                    !fullSimulationTargetOperator.trim() || !fullSimulationTargetReason.trim() ||
+                    fullSimulationTargetMutation.isPending
+                  } onClick={()=>fullSimulationTargetMutation.mutate()}>
+                    {C('Apply week target')}
+                  </button>
+                  <button type="button" onClick={()=>setFullSimulationTargetSelection(null)}
+                    disabled={fullSimulationTargetMutation.isPending}>{C('Cancel')}</button>
+                  {fullSimulationTargetMutation.error && <p role="alert" className="error">{formatApiError(fullSimulationTargetMutation.error)}</p>}
+                </div>
+              )}
               {fullSimulationControlTarget && (
                 <div role="group" aria-label={fullSimulationControlTarget.action === 'stop' ? C('Stop Full Simulation') : C('Full Simulation pause or resume')}>
                   {fullSimulationControlTarget.action !== 'stop' && (
@@ -4742,7 +4824,9 @@ export function AuthoritativeSimulationPanel({
                     className={fullSimulationProgress.checkpoint === 'operator_paused' ? 'status' : 'error'}>
                     {fullSimulationProgress.checkpoint === 'operator_paused'
                       ? C('Full Simulation paused at a safe transaction boundary.')
-                      : `Full Simulation paused at ${fullSimulationProgress.checkpoint}.`}
+                      : fullSimulationProgress.checkpoint === 'operator_target_reached'
+                        ? C('Full Simulation reached its weekly target. No implicit Save.')
+                        : `Full Simulation paused at ${fullSimulationProgress.checkpoint}.`}
                     {fullSimulationProgress.current_week
                       ? ` ${C('Current')} S${fullSimulationProgress.current_week.season_index} W${fullSimulationProgress.current_week.week}.`
                       : ''}
@@ -4787,7 +4871,9 @@ export function AuthoritativeSimulationPanel({
                   <p className="status">
                     {fullSimulationProgress.checkpoint === 'operator_paused'
                       ? C('Authorize resume, then prepare and confirm continuation of the original command. Completed child results persist. Save remains explicit.')
-                      : fullSimulationCheckpointGuidance(fullSimulationProgress.checkpoint)}
+                      : fullSimulationProgress.checkpoint === 'operator_target_reached'
+                        ? C('Target reached; the original command is terminal. Start a separately reviewed operation to continue. Save remains manual.')
+                        : fullSimulationCheckpointGuidance(fullSimulationProgress.checkpoint)}
                   </p>
                   <p className="status">
                     Do not discard this Full Simulation review while you intend to

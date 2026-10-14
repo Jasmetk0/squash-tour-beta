@@ -74,3 +74,37 @@ describe('global Full Simulation client boundary', () => {
     }
   })
 })
+
+
+describe('global Full Simulation effective target evidence', () => {
+  afterEach(() => vi.restoreAllMocks())
+
+  it('accepts an explicit bounded target revision while showing the original closure', async () => {
+    const payload: any = example()
+    payload.operations[0].effective_target_week = {season_index: 5, week: 9}
+    payload.operations[0].target_revision = 3
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify(payload), {
+      status: 200, headers: {'Content-Type': 'application/json'}
+    }))
+    await expect(getGlobalFullSimulationOperations()).resolves.toMatchObject({
+      operations: [{effective_target_week: {season_index: 5, week: 9}, target_revision: 3}]
+    })
+  })
+
+  it.each([
+    ['week 0', {season_index: 5, week: 0}, 1],
+    ['season 50', {season_index: 50, week: 1}, 1],
+    ['before original start', {season_index: 3, week: 9}, 1],
+    ['negative target revision', {season_index: 5, week: 9}, -1],
+  ])('rejects malformed %s', async (_reason, week, revision) => {
+    const payload: any = example()
+    payload.operations[0].effective_target_week = week
+    payload.operations[0].target_revision = revision
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify(payload), {
+      status: 200, headers: {'Content-Type': 'application/json'}
+    }))
+    await expect(getGlobalFullSimulationOperations()).rejects.toThrow(
+      'Global Full Simulation parent evidence is invalid.'
+    )
+  })
+})

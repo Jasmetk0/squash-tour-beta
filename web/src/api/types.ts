@@ -2158,12 +2158,14 @@ export type AuthoritativeFullSimulationCommandPayload =
 
 export type AuthoritativeFullSimulationProgress = {
   schema_version: 'authoritative_full_simulation_progress.v1'
-  status: 'blocked' | 'stopped'
+  status: 'blocked' | 'stopped' | 'target_reached'
   run_id: string
   branch_id: string
   start_week: AuthoritativeRankingWeek
   current_week: AuthoritativeRankingWeek | null
   final_week: AuthoritativeRankingWeek
+  effective_target_week?: AuthoritativeRankingWeek
+  target_revision?: number
   completed_seasons: number[]
   completed_season_count: number
   final_completed_weeks: AuthoritativeRankingWeek[]
@@ -2177,6 +2179,7 @@ export type AuthoritativeFullSimulationProgress = {
     | 'final_run_closure_review_required'
     | 'operator_paused'
     | 'operator_stopped'
+    | 'operator_target_reached'
   blockers: string[]
   detail: string | null
   position: AuthoritativeSimulationPosition | null
@@ -2221,6 +2224,8 @@ export type GlobalFullSimulationOperation = {
   control_state: 'running' | 'pause_requested' | 'paused'
   start_week: AuthoritativeRankingWeek
   final_week: AuthoritativeRankingWeek
+  effective_target_week?: AuthoritativeRankingWeek
+  target_revision?: number
   completed_season_count: number
   final_completed_week_count: number
   review_fingerprint: string
@@ -2240,6 +2245,8 @@ export type GlobalFullSimulationOperations = {
 
 export type AuthoritativeFullSimulationPendingOperation = {
   control_state: 'running' | 'pause_requested' | 'paused'
+  effective_target_week?: AuthoritativeRankingWeek
+  target_revision?: number
   command: AuthoritativeFullSimulationCommandPayload
   review: AuthoritativeFullSimulationPreview
   completed_seasons: number[]
@@ -2254,6 +2261,29 @@ export type AuthoritativeFullSimulationPendingCollection = {
   branch_id: string
   operations: AuthoritativeFullSimulationPendingOperation[]
   legacy_pending_count: number
+}
+
+export type AuthoritativeFullSimulationRetargetPayload = {
+  control_command_id: string
+  target_command_id: string
+  target_week: AuthoritativeRankingWeek
+  operator_label: string
+  audit_reason: string
+}
+
+export type AuthoritativeFullSimulationRetargetResult = {
+  schema_version: 'authoritative_full_simulation_target_result.v1'
+  run_id: string
+  branch_id: string
+  target_command_id: string
+  control_command_id: string
+  requested_target_week: AuthoritativeRankingWeek
+  effective_target_week: AuthoritativeRankingWeek
+  original_final_week: AuthoritativeRankingWeek
+  applied_revision: number
+  target_revision: number
+  replayed: boolean
+  committed_child_work_persists: true
 }
 
 export type AuthoritativeFullSimulationControlPayload = {
@@ -2301,8 +2331,10 @@ export type AuthoritativeFullSimulationAbandonResult = {
 
 export type AuthoritativeFullSimulationHistoryItem = {
   command_id: string
-  status: 'pending' | 'abandoned' | 'stopped' | 'complete'
+  status: 'pending' | 'abandoned' | 'stopped' | 'target_reached' | 'complete'
   start_week: AuthoritativeRankingWeek | null
+  effective_target_week?: AuthoritativeRankingWeek
+  target_revision?: number
   final_week: AuthoritativeRankingWeek | null
   completed_seasons: number[]
   completed_season_count: number
@@ -2332,11 +2364,14 @@ export type AuthoritativeFullSimulationParentDetail = {
   run_id: string
   branch_id: string
   command_id: string
-  status: 'pending' | 'abandoned' | 'complete'
+  status: 'pending' | 'abandoned' | 'stopped' | 'target_reached' | 'complete'
   receipt_request_fingerprint: string
   start_week: AuthoritativeRankingWeek | null
   final_week: AuthoritativeRankingWeek | null
   initial_saved_revision_id: string | null
+  effective_target_week?: AuthoritativeRankingWeek
+  target_revision?: number
+  target_events?: {command_id:string; target_week:AuthoritativeRankingWeek; revision:number; operator_label:string; audit_reason:string; applied_at_week:AuthoritativeRankingWeek}[]
   completed_seasons: number[]
   final_completed_weeks: AuthoritativeRankingWeek[]
   season_child_command_ids: string[]

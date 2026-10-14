@@ -1,3 +1,9 @@
+# Active integration queue — weekly target boundary (14 October 2026)
+
+After merged #1466, this candidate introduces the first versioned **start-of-week** effective target on the same original Full Simulation parent. Retargeting is a separate audited command, not a mutation of original reviewed intent. It must fence sport at a SQLite safe writer boundary, preserve all committed child outputs and not Save. Test against production HTTP, client validators, CS/EN component UI and CI before merge. This first cut only covers exact week-arrival boundaries; mid-week/relative/event targets from Master v81 remain future focused slices. Next: extended target types and native browser proof, then true server task lifecycle/reconnect, monitoring/stop rules and presets. Earlier roadmap entries remain intact.
+
+---
+
 # Active integration queue — audited terminal stop slice (14 October 2026)
 
 After merged #1465, the new candidate adds idempotent terminal `stop` to the real Full Simulation parent. Control is serialized at a SQLite safe child boundary, fences later child writes, preserves all committed sporting results, snapshots and unchanged Saved Revisions, and never performs an implicit Save. CS/EN Admin confirmation and active/history status are explicit; focused HTTP tests exercise in-flight and paused cases and retries. The existing real Chromium pause/resume acceptance now concludes with a native Czech Stop click, terminal retry and unchanged SQLite receipts/Saved evidence. This **does not** implement effective target changes, autonomous processing, browser restart recovery or full pre-alpha release; green final-HEAD checks are necessary before merge.

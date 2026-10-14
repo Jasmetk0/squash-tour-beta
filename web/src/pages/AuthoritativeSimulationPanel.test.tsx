@@ -60,6 +60,7 @@ const api = vi.hoisted(() => ({
   getAuthoritativeFullSimulationHistory: vi.fn(),
   getAuthoritativeFullSimulationParentDetail: vi.fn(),
   controlAuthoritativeFullSimulation: vi.fn(),
+  retargetAuthoritativeFullSimulation: vi.fn(),
   abandonAuthoritativeFullSimulation: vi.fn(),
   inspectAuthoritativeMatchReconstruction: vi.fn(),
   previewAuthoritativeMatchReconstruction: vi.fn(),
@@ -3499,6 +3500,86 @@ describe('AuthoritativeSimulationPanel', () => {
         audit_reason: 'Continue reviewed target'
       })
     ))
+    expect(api.simulateAuthoritativeFullSimulation).not.toHaveBeenCalled()
+  })
+
+
+  it.each(['en', 'cs'] as const)('changes the week boundary target without starting sport or saving (%s)', async (language) => {
+    api.inspectAuthoritativeWeekSchedule.mockResolvedValue({
+      ...scheduleInspection, schedule: proposal.schedule,
+      schedule_fingerprint: proposal.schedule_fingerprint
+    })
+    api.inspectAuthoritativeWeekSchedulePreflight.mockResolvedValue({
+      ...schedulePreflight,
+      schedule_already_adopted: true,
+      blockers: ['week_schedule_already_adopted'],
+      can_propose_schedule: false
+    })
+    api.getPendingAuthoritativeFullSimulations.mockResolvedValue({
+      schema_version: 'authoritative_full_simulation_pending_collection.v1',
+      run_id: 'run-a', branch_id: 'branch-a', legacy_pending_count: 0,
+      operations: [{
+        control_state: 'paused',
+        command: {
+          command_id: 'target-parent',
+          operator_label: 'Original',
+          audit_reason: 'Original intent',
+          expected_start_week: fullSimulationPreview.start_week,
+          expected_position_fingerprint: fullSimulationPreview.expected_position_fingerprint,
+          expected_revision_id: fullSimulationPreview.expected_revision_id,
+          expected_preview_fingerprint: fullSimulationPreview.preview_fingerprint
+        },
+        review: fullSimulationPreview,
+        effective_target_week: {season_index: 49, week: 61},
+        target_revision: 0,
+        completed_seasons: [], completed_season_count: 0,
+        final_completed_weeks: [], final_completed_week_count: 0
+      }]
+    })
+    api.retargetAuthoritativeFullSimulation.mockRejectedValueOnce(new Error('Answer lost')).mockResolvedValue({
+      schema_version: 'authoritative_full_simulation_target_result.v1',
+      run_id: 'run-a', branch_id: 'branch-a',
+      target_command_id: 'target-parent', control_command_id: 'echo',
+      requested_target_week: {season_index: 2, week: 20},
+      effective_target_week: {season_index: 2, week: 20},
+      original_final_week: {season_index: 49, week: 61},
+      target_revision: 1, applied_revision: 1, replayed: true,
+      committed_child_work_persists: true
+    })
+    renderPanel({}, language)
+    await userEvent.click(await screen.findByRole('button', {
+      name: language === 'cs' ? 'Změnit cílový týden' : 'Change week target'
+    }))
+    expect(screen.getByRole('group', {
+      name: language === 'cs' ? 'Změnit cílový týden Full Simulation' : 'Change Full Simulation week target'
+    })).toBeInTheDocument()
+    const seasonInput = screen.getByLabelText(language === 'cs' ? 'Index cílové sezony (0–49)' : 'Target season index (0–49)')
+    const weekInput = screen.getByLabelText(language === 'cs' ? 'Cílový týden (1–61)' : 'Target week (1–61)')
+    await userEvent.clear(seasonInput)
+    await userEvent.type(seasonInput, '2')
+    await userEvent.clear(weekInput)
+    await userEvent.type(weekInput, '20')
+    await userEvent.type(screen.getByLabelText(language === 'cs' ? 'Operátor změny cíle' : 'Target change operator'), 'Operator')
+    await userEvent.type(screen.getByLabelText(language === 'cs' ? 'Důvod změny cíle do auditu' : 'Target change audit reason'), 'Shorter horizon')
+    const apply = screen.getByRole('button', {
+      name: language === 'cs' ? 'Použít nový cílový týden' : 'Apply week target'
+    })
+    await userEvent.click(apply)
+    await waitFor(() => expect(api.retargetAuthoritativeFullSimulation).toHaveBeenCalledTimes(1))
+    expect(await screen.findByText('Answer lost')).toBeInTheDocument()
+    await userEvent.click(apply)
+    await waitFor(() => expect(api.retargetAuthoritativeFullSimulation).toHaveBeenCalledTimes(2))
+    expect(api.retargetAuthoritativeFullSimulation.mock.calls[0][2]).toEqual(
+      api.retargetAuthoritativeFullSimulation.mock.calls[1][2]
+    )
+    expect(api.retargetAuthoritativeFullSimulation.mock.calls[0][2]).toEqual({
+      control_command_id: expect.any(String),
+      target_command_id: 'target-parent',
+      target_week: {season_index: 2, week: 20},
+      operator_label: 'Operator',
+      audit_reason: 'Shorter horizon'
+    })
+    expect(api.saveAuthoritativeSimulation).not.toHaveBeenCalled()
     expect(api.simulateAuthoritativeFullSimulation).not.toHaveBeenCalled()
   })
 

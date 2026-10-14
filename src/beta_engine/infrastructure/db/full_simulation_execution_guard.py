@@ -30,6 +30,10 @@ class FullSimulationStopped(Exception):
     """A terminal stop was committed at a safe SQLite writer boundary."""
 
 
+class FullSimulationTargetReached(Exception):
+    """The effective start-of-week target was reached at a writer boundary."""
+
+
 ACTIVE_FULL_SIMULATION_GUARD: ContextVar[
     FullSimulationExecutionGuard | None
 ] = ContextVar("active_full_simulation_execution_guard", default=None)
@@ -68,6 +72,8 @@ def require_pending_full_simulation_guard(session: Session) -> None:
         raise ValueError("Full Simulation execution guard fingerprint mismatch")
     if row[1] == "stopped":
         raise FullSimulationStopped("Full Simulation operator stop committed")
+    if row[1] == "target_reached":
+        raise FullSimulationTargetReached("Full Simulation effective target reached")
     if row[1] == "abandoned":
         raise ValueError(
             "Full Simulation parent has an invalid status: abandoned; "
@@ -126,6 +132,8 @@ def _pause_before_full_simulation_writer(
         raise ValueError("Full Simulation execution guard fingerprint mismatch")
     if row[1] == "stopped":
         raise FullSimulationStopped("Full Simulation operator stop committed")
+    if row[1] == "target_reached":
+        raise FullSimulationTargetReached("Full Simulation effective target reached")
     if row[1] == "abandoned":
         raise ValueError("Full Simulation parent has an invalid status: abandoned; execution is fenced")
     if row[1] == "complete":
@@ -166,15 +174,45 @@ def _fence_full_simulation_after_sqlite_writer_lock(
         return  # A new parent receipt may be created in this transaction.
     if row[1] == "stopped":
         raise FullSimulationStopped("Full Simulation operator stop committed")
+    if row[1] == "target_reached":
+        raise FullSimulationTargetReached("Full Simulation effective target reached")
     if row[0] != guard.request_fingerprint or row[1] == "abandoned":
         raise ValueError("Full Simulation parent ownership was revoked")
     if row[1] not in ("pending", "complete"):
         raise ValueError("Full Simulation parent is no longer executable")
     if row[1] == "pending":
         import json
-        if json.loads(row[2]).get("control_state", "running") in (
-            "pause_requested", "paused"
-        ):
+        frozen = json.loads(row[2])
+        if frozen.get("control_state", "running") in ("pause_requested", "paused"):
             raise FullSimulationPauseRequested(
                 "Full Simulation pause requested after writer lock acquisition"
             )
+        # Query AFTER BEGIN IMMEDIATE: target and world Position cannot move
+        # between this check and the following transaction's sporting writes.
+        if frozen.get("target_revision", 0) > 0:
+            target = frozen.get("effective_target_week")
+            if (
+                not isinstance(target, dict)
+                or type(target.get("season_index")) is not int
+                or type(target.get("week")) is not int
+                or not 0 <= target["season_index"] < 50
+                or not 1 <= target["week"] <= 61
+            ):
+                raise ValueError("Full Simulation target revision is corrupt")
+            ordinal = target["season_index"] * 61 + target["week"] - 1
+            if ordinal < 50 * 61 - 1:
+                current = connection.exec_driver_sql(
+                    "SELECT current_ordinal FROM authoritative_world_states "
+                    "WHERE run_id = ? AND branch_id = ?",
+                    (guard.run_id, guard.branch_id),
+                ).first()
+                if current is None:
+                    current = connection.exec_driver_sql(
+                        "SELECT MAX(week_ordinal) FROM player_sporting_week_states "
+                        "WHERE run_id = ? AND branch_id = ?",
+                        (guard.run_id, guard.branch_id),
+                    ).first()
+                if current is None or current[0] is None:
+                    raise ValueError("Cannot resolve target versus current week")
+                if current[0] >= ordinal:
+                    raise FullSimulationTargetReached("Effective weekly boundary reached")

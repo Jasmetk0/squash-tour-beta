@@ -60,6 +60,7 @@ from beta_engine.infrastructure.db.full_simulation_execution_guard import (
     FullSimulationExecutionGuard,
     FullSimulationPauseRequested,
     FullSimulationStopped,
+    FullSimulationTargetReached,
 )
 from beta_engine.application.ordinary_season_transition import (
     OrdinarySeasonTransitionCommand,
@@ -549,6 +550,27 @@ class AuthoritativeFullSimulationControlCommand(FrozenInput):
         operator, reason = self.operator_label.strip(), self.audit_reason.strip()
         if not operator or not reason:
             raise ValueError("Full Simulation control requires operator and reason")
+        object.__setattr__(self, "operator_label", operator)
+        object.__setattr__(self, "audit_reason", reason)
+        return self
+
+
+class AuthoritativeFullSimulationRetargetCommand(FrozenInput):
+    """Explicit, versioned target: arrival at the start of a given week."""
+
+    control_command_id: str = Field(min_length=1, max_length=128)
+    target_command_id: str = Field(min_length=1, max_length=128)
+    run_id: str
+    branch_id: str
+    target_week: RankingWeek
+    operator_label: str = Field(min_length=1, max_length=128)
+    audit_reason: str = Field(min_length=1, max_length=2000)
+
+    @model_validator(mode="after")
+    def trim_audit(self):
+        operator, reason = self.operator_label.strip(), self.audit_reason.strip()
+        if not operator or not reason:
+            raise ValueError("Target change requires operator and audit reason")
         object.__setattr__(self, "operator_label", operator)
         object.__setattr__(self, "audit_reason", reason)
         return self
@@ -6165,6 +6187,8 @@ class AuthoritativeRunSimulationDriver:
                         "command": command.model_dump(mode="json"),
                         "review": parsed_review,
                         "control_state": frozen.get("control_state", "running"),
+                        "effective_target_week": frozen.get("effective_target_week", frozen["final_week"]),
+                        "target_revision": frozen.get("target_revision", 0),
                         "completed_seasons": list(
                             frozen.get("completed_seasons", [])
                         ),
@@ -6237,6 +6261,8 @@ class AuthoritativeRunSimulationDriver:
                             "status": receipt.status,
                             "start_week": start_week,
                             "final_week": final_week,
+                            "effective_target_week": payload.get("effective_target_week", final_week),
+                            "target_revision": payload.get("target_revision", 0),
                             "completed_seasons": list(
                                 payload.get("completed_seasons", [])
                             ),
@@ -6356,6 +6382,9 @@ class AuthoritativeRunSimulationDriver:
                     "receipt_request_fingerprint": receipt.request_fingerprint,
                     "start_week": review.get("start_week", payload.get("start_week")),
                     "final_week": review.get("final_week", payload.get("final_week")),
+                    "effective_target_week": payload.get("effective_target_week", payload["final_week"]),
+                    "target_revision": payload.get("target_revision", 0),
+                    "target_events": payload.get("target_events", []),
                     "initial_saved_revision_id": payload.get(
                         "initial_saved_revision_id"
                     ),
@@ -6420,6 +6449,82 @@ class AuthoritativeRunSimulationDriver:
                 "abandonment": None,
             }
 
+    @staticmethod
+    def _effective_full_target(frozen: dict) -> RankingWeek:
+        return RankingWeek.model_validate(
+            frozen.get("effective_target_week", frozen["final_week"])
+        )
+
+    def retarget_full_simulation(
+        self, command: AuthoritativeFullSimulationRetargetCommand
+    ) -> dict:
+        """Change only effective target; original command and fingerprint stay frozen."""
+        key = (command.run_id, command.branch_id, command.target_command_id)
+        with self.factory.begin() as session:
+            session.execute(text("BEGIN IMMEDIATE"))
+            receipt = session.get(AuthoritativeSimulationCommandModel, key)
+            if receipt is None or receipt.status not in ("pending", "stopped", "target_reached"):
+                raise ValueError("Target change requires a Full Simulation parent")
+            frozen = json.loads(receipt.result_json)
+            if frozen.get("schema_version") != "authoritative_full_simulation_operation.v1":
+                raise ValueError("Target is not a Full Simulation parent")
+            events = frozen.get("target_events", [])
+            controls = frozen.get("control_events", [])
+            if not isinstance(events, list) or not isinstance(controls, list) or not all(
+                isinstance(item, dict) for item in events + controls
+            ):
+                raise ValueError("Full Simulation control audit is corrupt")
+            if any(e.get("command_id") == command.control_command_id for e in controls):
+                raise ValueError("Full Simulation control ID already exists")
+            prior = [e for e in events if e.get("command_id") == command.control_command_id]
+            if len(prior) > 1:
+                raise ValueError("Duplicate target change identity")
+            if prior:
+                event = prior[0]
+                if (
+                    event.get("target_week") != command.target_week.model_dump(mode="json")
+                    or event.get("operator_label") != command.operator_label
+                    or event.get("audit_reason") != command.audit_reason
+                ):
+                    raise ValueError("Target command ID reused with different input")
+                replayed = True
+            else:
+                if receipt.status != "pending":
+                    raise ValueError("Terminal Full Simulation cannot accept another target")
+                self._require_writable_scope(session, command.run_id, command.branch_id)
+                if frozen.get("control_state", "running") not in ("running", "pause_requested", "paused"):
+                    raise ValueError("Full Simulation is no longer controllable")
+                current = self._current_week(session, command.run_id, command.branch_id)
+                if not current.ordinal <= command.target_week.ordinal <= FINAL_WEEK.ordinal:
+                    raise ValueError("Target must not precede current week or exceed final Run week")
+                event = {
+                    "command_id": command.control_command_id,
+                    "target_week": command.target_week.model_dump(mode="json"),
+                    "operator_label": command.operator_label,
+                    "audit_reason": command.audit_reason,
+                    "revision": len(events) + 1,
+                    "applied_at_week": current.model_dump(mode="json"),
+                }
+                events.append(event)
+                frozen["target_events"] = events
+                frozen["target_revision"] = event["revision"]
+                frozen["effective_target_week"] = event["target_week"]
+                receipt.result_json = json.dumps(frozen, sort_keys=True, separators=(",", ":"))
+                replayed = False
+            return {
+                "schema_version": "authoritative_full_simulation_target_result.v1",
+                "run_id": command.run_id, "branch_id": command.branch_id,
+                "target_command_id": command.target_command_id,
+                "control_command_id": command.control_command_id,
+                "requested_target_week": event["target_week"],
+                "effective_target_week": self._effective_full_target(frozen).model_dump(mode="json"),
+                "original_final_week": frozen["final_week"],
+                "applied_revision": event["revision"],
+                "target_revision": frozen.get("target_revision", len(events)),
+                "replayed": replayed,
+                "committed_child_work_persists": True,
+            }
+
     def control_full_simulation(
         self, command: AuthoritativeFullSimulationControlCommand
     ) -> dict:
@@ -6448,6 +6553,9 @@ class AuthoritativeRunSimulationDriver:
             ]
             if len(prior) > 1:
                 raise ValueError("Duplicate Full Simulation control audit identity")
+            if any(e.get("command_id") == command.control_command_id
+                   for e in frozen.get("target_events", [])):
+                raise ValueError("Full Simulation target control ID already exists")
             if prior:
                 original = prior[0]
                 if (
@@ -6577,6 +6685,44 @@ class AuthoritativeRunSimulationDriver:
             )
             progress["status"] = "stopped"
             return progress
+
+    def _close_full_simulation_target(
+        self, command: AuthoritativeFullSimulationCommand,
+        key: tuple[str, str, str], request_fp: str, lease_token: str,
+    ) -> dict:
+        """Finalize a reached weekly boundary with no implicit Save."""
+        with self.factory.begin() as session:
+            session.execute(text("BEGIN IMMEDIATE"))
+            require_invocation_lease_owner(session, token=lease_token)
+            receipt = session.get(AuthoritativeSimulationCommandModel, key)
+            if receipt is None or receipt.request_fingerprint != request_fp:
+                raise ValueError("Full Simulation target parent is missing or corrupt")
+            frozen = json.loads(receipt.result_json)
+            if receipt.status != "target_reached":
+                if receipt.status != "pending" or frozen.get("control_state", "running") != "running":
+                    raise ValueError("Full Simulation target is no longer executable")
+                position = self._position(
+                    session, command.run_id, command.branch_id, allow_missing_schedule=True
+                )
+                target = self._effective_full_target(frozen)
+                if (
+                    frozen.get("target_revision", 0) < 1
+                    or target.ordinal >= FINAL_WEEK.ordinal
+                    or position.current_week.ordinal < target.ordinal
+                ):
+                    raise ValueError("Full Simulation target moved while closing; retry original command")
+                frozen["target_reached_week"] = position.current_week.model_dump(mode="json")
+                frozen["control_state"] = "target_reached"
+                receipt.status = "target_reached"
+                receipt.result_json = json.dumps(frozen, sort_keys=True, separators=(",", ":"))
+            position = self._position(session, command.run_id, command.branch_id, allow_missing_schedule=True)
+            response = self._full_progress_payload(
+                command=command, frozen=frozen, position=position,
+                checkpoint="operator_target_reached",
+                detail="Reached the start of the selected week; completed sport persists; no implicit Save.",
+            )
+            response["status"] = "target_reached"
+            return response
 
     def abandon_full_simulation(
         self, command: AuthoritativeFullSimulationAbandonCommand
@@ -6709,6 +6855,8 @@ class AuthoritativeRunSimulationDriver:
                 else None
             ),
             "final_week": frozen["final_week"],
+            "effective_target_week": frozen.get("effective_target_week", frozen["final_week"]),
+            "target_revision": frozen.get("target_revision", 0),
             "completed_seasons": list(frozen["completed_seasons"]),
             "completed_season_count": len(frozen["completed_seasons"]),
             "final_completed_weeks": list(frozen["final_completed_weeks"]),
@@ -6811,6 +6959,7 @@ class AuthoritativeRunSimulationDriver:
             )
             paused = False
             stopped = False
+            target_reached = False
             try:
                 result = self._simulate_full_simulation_guarded(
                     command=command, request_fp=request_fp, key=key,
@@ -6821,10 +6970,15 @@ class AuthoritativeRunSimulationDriver:
             except FullSimulationStopped:
                 stopped = True
                 result = None
+            except FullSimulationTargetReached:
+                target_reached = True
+                result = None
             finally:
                 ACTIVE_FULL_SIMULATION_GUARD.reset(guard_token)
             if stopped:
                 return self._stopped_full_simulation_progress(command, key, request_fp)
+            if target_reached:
+                return self._close_full_simulation_target(command, key, request_fp, lease_token)
             if paused:
                 with self.factory() as session:
                     terminal = session.get(AuthoritativeSimulationCommandModel, key)
@@ -6877,6 +7031,8 @@ class AuthoritativeRunSimulationDriver:
                     return json.loads(receipt.result_json)
                 if receipt.status == "stopped":
                     raise FullSimulationStopped("Full Simulation was stopped")
+                if receipt.status == "target_reached":
+                    raise FullSimulationTargetReached("Full Simulation target was already reached")
                 if receipt.status != "pending":
                     raise ValueError(
                         "Full Simulation command receipt has an invalid status"
@@ -7004,6 +7160,9 @@ class AuthoritativeRunSimulationDriver:
                     "completed_seasons": [],
                     "control_state": "running",
                     "control_events": [],
+                    "target_events": [],
+                    "target_revision": 0,
+                    "effective_target_week": plan["final_week"],
                     "season_children": {},
                     "final_completed_weeks": [],
                     "final_week_children": {},
@@ -7035,6 +7194,8 @@ class AuthoritativeRunSimulationDriver:
                     raise ValueError("Full Simulation parent receipt disappeared")
                 if parent.status == "complete":
                     return json.loads(parent.result_json)
+                if parent.status == "target_reached":
+                    raise FullSimulationTargetReached("Full Simulation target was already reached")
                 frozen = json.loads(parent.result_json)
                 if frozen.get("control_state", "running") in ("pause_requested", "paused"):
                     raise FullSimulationPauseRequested("Full Simulation pause requested")
@@ -7056,6 +7217,13 @@ class AuthoritativeRunSimulationDriver:
                             "Full Simulation lost its Saved Revision-backed Branch"
                         )
                     current_saved_revision_id = branch.saved_head_revision_id
+                    target = self._effective_full_target(frozen)
+                    if (
+                        frozen.get("target_revision", 0) > 0
+                        and target.ordinal < FINAL_WEEK.ordinal
+                        and position.current_week.ordinal >= target.ordinal
+                    ):
+                        raise FullSimulationTargetReached("Full Simulation target week reached")
 
             if branch_completed:
                 with self.factory.begin() as session:

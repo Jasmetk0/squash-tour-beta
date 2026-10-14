@@ -4804,6 +4804,61 @@ export async function generateAdminHybridKnockoutBracket(
   return data
 }
 
+/** The immutable event-specific phase policy; no implicit number or Walkover reward. */
+export async function getAdminHybridRankingPolicy(
+  runId:string,branchId:string,eventId:string,
+  bracket:import('./tournamentHybridKnockout').HybridKnockoutBracket
+):Promise<import('./tournamentHybridRanking').HybridRankingPolicy>{
+  const result=await request<import('./tournamentHybridRanking').HybridRankingPolicy>(
+    '/admin/runs/'+encodeURIComponent(runId)+'/branches/'+encodeURIComponent(branchId)
+    +'/tournaments/'+encodeURIComponent(eventId)+'/hybrid-ranking-policy'
+  )
+  const {exactHybridRankingPolicy}=await import('./tournamentHybridRanking')
+  if(!exactHybridRankingPolicy(result,runId,branchId,eventId,bracket))
+    throw new Error('Stored hybrid ranking policy is not an exact reviewed knockout stage policy.')
+  return result
+}
+export async function configureAdminHybridRankingPolicy(
+  runId:string,branchId:string,eventId:string,
+  bracket:import('./tournamentHybridKnockout').HybridKnockoutBracket,
+  payload:import('./tournamentHybridRanking').HybridRankingPayload,
+):Promise<import('./tournamentHybridRanking').HybridRankingPolicy>{
+  const result=await request<import('./tournamentHybridRanking').HybridRankingPolicy>(
+    '/admin/runs/'+encodeURIComponent(runId)+'/branches/'+encodeURIComponent(branchId)
+    +'/tournaments/'+encodeURIComponent(eventId)+'/hybrid-ranking-policy/configure',{
+      method:'POST',body:JSON.stringify(payload)
+    })
+  const {exactHybridRankingPolicy}=await import('./tournamentHybridRanking')
+  if(!exactHybridRankingPolicy(result,runId,branchId,eventId,bracket,payload))
+    throw new Error('Configured hybrid phase award policy differs from explicitly reviewed values.')
+  return result
+}
+export async function getAdminHybridRankingClosure(
+  runId:string,branchId:string,eventId:string,
+):Promise<import('./tournamentHybridRanking').HybridRankingClosure>{
+  const result=await request<import('./tournamentHybridRanking').HybridRankingClosure>(
+    '/admin/runs/'+encodeURIComponent(runId)+'/branches/'+encodeURIComponent(branchId)
+    +'/tournaments/'+encodeURIComponent(eventId)+'/hybrid-ranking-close'
+  )
+  const {exactHybridRankingClosure}=await import('./tournamentHybridRanking')
+  if(!exactHybridRankingClosure(result,runId,branchId,eventId))
+    throw new Error('Completed Hybrid Tournament Ranking source is corrupt or out of scope.')
+  return result
+}
+export async function closeAdminHybridRanking(
+  runId:string,branchId:string,eventId:string,commandId:string,
+):Promise<import('./tournamentHybridRanking').HybridRankingClosure>{
+  const result=await request<import('./tournamentHybridRanking').HybridRankingClosure>(
+    '/admin/runs/'+encodeURIComponent(runId)+'/branches/'+encodeURIComponent(branchId)
+    +'/tournaments/'+encodeURIComponent(eventId)+'/hybrid-ranking-close',{
+      method:'POST',body:JSON.stringify({command_id:commandId})
+    })
+  const {exactHybridRankingClosure}=await import('./tournamentHybridRanking')
+  if(!exactHybridRankingClosure(result,runId,branchId,eventId))
+    throw new Error('Completed Hybrid Tournament Ranking source is corrupt or out of scope.')
+  return result
+}
+
 export async function getAdminCompletedGroupStandings(
   runId: string, branchId: string, eventId: string
 ): Promise<import('./tournamentGroupStandings').CompletedGroupStandings> {

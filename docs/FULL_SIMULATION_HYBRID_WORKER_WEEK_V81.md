@@ -12,10 +12,8 @@ chooses Week 2 as the original task's target and explicitly resumes the same
 Task ID in the real English Task Center. The original server worker must
 perform audited Next Season → Next Week → authoritative Week Transition.
 Assertions check task `target_reached`, exact Week-2 current Position,
-published Official Ranking fingerprint matching the *independently reviewed*
-derived transition, exactly three unchanged MatchEngine receipts, preserved
-historic Week 1, one new Week-2 publication, and unchanged Saved Revision
-before the deliberate separate Admin Save. The existing hybrid browser journey
+world/authoritative week transition followed by a separately Saved public Official Ranking fingerprint matching the *independently reviewed* derived transition, exactly three unchanged MatchEngine receipts, preserved
+historic Week 1, public Viewer remaining at frozen Week 1 until an explicit Admin Save then one new Week-2 publication, and unchanged Saved Revision before that deliberate separate Save. The existing hybrid browser journey
 then independently checks real ranking points, immutable historical Edition
 and SQLite process restart.
 

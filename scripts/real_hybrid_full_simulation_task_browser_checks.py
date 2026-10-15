@@ -245,8 +245,6 @@ def resume_original_full_simulation_to_advance_real_hybrid_week(
     ranking policy already exist. Operator narrows target BEFORE crossing week.
     No fabricated match, no direct storage writes and no Week Transition UI.
     """
-    from playwright.sync_api import expect
-
     waiting = _task(request, simulation_scope, frozen["task_id"])
     assert waiting["state"] == "awaiting_operator", waiting
     assert waiting["checkpoint"] == frozen["checkpoint"]
@@ -278,6 +276,8 @@ def resume_original_full_simulation_to_advance_real_hybrid_week(
     assert request("GET",simulation_scope+"/position")["current_week"]==before_position["current_week"]
     assert request("GET",simulation_scope+"/match-replays?limit=50")==replay_before
     assert request("GET",simulation_scope+"/save/preview")["saved_head_revision_id"]==saved_head_before
+
+    from playwright.sync_api import expect
 
     operator_page=page.context.new_page()
     try:
@@ -314,15 +314,14 @@ def resume_original_full_simulation_to_advance_real_hybrid_week(
     advanced=request("GET",simulation_scope+"/position")
     assert advanced["current_week"]==target["target_week"],advanced
     assert request("GET",simulation_scope+"/match-replays?limit=50")==replay_before
-    # The authoritative worker's world transition publishes Official Week 2.
+    # The worker commits the world/ranking Week Transition, but Viewer is
+    # intentionally **Saved Revision backed**. Before the operator's separate
+    # Save, public Week 1 must remain identical. Publication to Viewer Week 2
+    # is asserted by publish_first_hybrid_official_week *after* explicit Save.
     viewer="/viewer/runs/"+quote(frozen["run_id"],safe="")+"/rankings"
-    week2=request("GET",viewer+"/current")
-    assert week2["week_ordinal"]==1 and week2["week"]==2,week2
-    assert week2["snapshot_fingerprint"]==expected_ranking_fingerprint
-    history=request("GET",viewer+"/history")
-    assert history["publication_count"]==before_history["publication_count"]+1
+    assert request("GET",viewer+"/current")==before_ranking
+    assert request("GET",viewer+"/history")==before_history
     assert request("GET",viewer+"/history/0")==before_ranking
-    assert request("GET",viewer+"/history/1")==week2
     assert request("GET",simulation_scope+"/save/preview")["saved_head_revision_id"]==saved_head_before
     proof={
         "original_task_id":frozen["task_id"],
@@ -332,9 +331,10 @@ def resume_original_full_simulation_to_advance_real_hybrid_week(
         "target_command_replayed":True,
         "worker_performed_week_transition":True,
         "real_match_engine_replay_count":3,
-        "ranking_week2_fingerprint":week2["snapshot_fingerprint"],
+        "expected_ranking_week2_fingerprint":expected_ranking_fingerprint,
         "human_did_not_click_week_transition":True,
         "saved_revision_unchanged_until_explicit_admin_save":True,
+        "public_viewer_stays_at_saved_week1_until_save":True,
     }
     (artifacts/"hybrid-worker-week-transition-proof.json").write_text(
         json.dumps(proof,indent=2)

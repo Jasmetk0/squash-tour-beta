@@ -1,6 +1,6 @@
 # Full Simulation native worker real hybrid Week-1→2 acceptance (PR candidate 2026-10-15)
 
-Following merged #1480, new independent `--hybrid-worker-transition` Chromium/SQLite run creates an original pending Full Simulation task before MatchEngine group matches, pauses for actual Admin group standings/knockout approvals, then human freezes actual hybrid ranking authority only. After explicit idempotent week-2 target and native Task Center resumption, the **worker** (not Run Admin UI) must publish the canonical Official Week-2 transition with identical ranking fingerprint, exact 3 real match receipts and frozen historical Week 1. A separate human Saved Revision remains manual. All final-head checks required green. No mock sport or bypass.
+Following merged #1480, new independent `--hybrid-worker-transition` Chromium/SQLite run creates an original pending Full Simulation task before MatchEngine group matches, pauses for actual Admin group standings/knockout approvals, then human freezes actual hybrid ranking authority only. After explicit idempotent week-2 target and native Task Center resumption, the **worker** (not Run Admin UI) must advance canonical world/Ranking Week 2, then *explicit Admin Save* publishes the identical Ranking fingerprint, exact 3 real match receipts and frozen historical Week 1. A separate human Saved Revision remains manual. All final-head checks required green. No mock sport or bypass.
 
 ---
 

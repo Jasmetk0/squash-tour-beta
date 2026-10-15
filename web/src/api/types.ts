@@ -2092,6 +2092,8 @@ export type AuthoritativeSeasonProgress = {
   checkpoint:
     | 'entry_process_required'
     | 'week_preparation_required'
+    | 'group_phase_review_required'
+    | 'group_postphase_review_required'
     | 'week_schedule_review_required'
     | 'week_transition_prerequisite'
     | 'week61_preparation_required'

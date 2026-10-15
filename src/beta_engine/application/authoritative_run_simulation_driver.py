@@ -441,6 +441,69 @@ class AuthoritativeWeekPreviewRequest(FrozenInput):
 
 
 
+class GroupPostphaseBoundaryRequired(ValueError):
+    """A Next Week preview cannot freeze unknown post-group sporting topology."""
+
+
+_GROUP_POSTPHASE_BLOCKERS = frozenset({
+    "group_standings_admin_resolution_required",
+    "group_standings_authority_required",
+    "hybrid_knockout_entrants_authority_required",
+    "hybrid_knockout_bracket_authority_required",
+    "hybrid_knockout_closure_required",
+})
+
+
+def classify_next_week_preparation_failure(
+    error: ValueError,
+    blockers: tuple[str, ...],
+) -> tuple[str, tuple[str, ...], str]:
+    """Only canonical known group boundaries get group-specific Admin guidance.
+
+    Unrelated failures preserve the original conservative week preparation path.
+    No receipt/approval/worker/Save mutation occurs in this classifier.
+    """
+    if isinstance(error, GroupPostphaseBoundaryRequired):
+        return (
+            "group_phase_review_required",
+            ("group_phase_review_required",),
+            (
+                "Finish the real group Match Days in Run Admin, resolve group "
+                "standings and freeze any required post-group knockout "
+                "entrants/bracket. Return to this original Full Simulation "
+                "task and explicitly resume it after the authorities exist. "
+                + str(error)
+            ),
+        )
+    group_blockers = tuple(b for b in blockers if b in _GROUP_POSTPHASE_BLOCKERS)
+    if (
+        str(error).startswith("Next Week preflight is blocked: ")
+        and group_blockers
+        and not any(
+            b not in _GROUP_POSTPHASE_BLOCKERS and b not in {
+                "pending_authoritative_groups",
+                "tournament_source_missing",
+                "terminal_sporting_checkpoint_missing",
+                "week_transition_sporting_preflight_failed",
+                "ranking_transition_authority_missing",
+            }
+            for b in blockers
+        )
+    ):
+        return (
+            "group_postphase_review_required",
+            group_blockers,
+            (
+                "Group results require explicit Run Admin standings, tie, "
+                "entrant, bracket or ranking source decisions before this "
+                "Next Week can be frozen. Keep this original Full Simulation "
+                "task; after those approvals explicitly resume it. "
+                + str(error)
+            ),
+        )
+    return "week_preparation_required", blockers, str(error)
+
+
 class AuthoritativeWeekExtensionApproval(FrozenInput):
     """Explicit, audit-linked same-parent append-only Next Week re-review."""
 
@@ -6069,13 +6132,16 @@ class AuthoritativeRunSimulationDriver:
                         try:
                             child_preview = self.preview_next_week(preview_request)
                         except ValueError as exc:
+                            checkpoint, blockers, detail = classify_next_week_preparation_failure(
+                                exc, tuple(position.transition_blockers)
+                            )
                             return self._season_progress_payload(
                                 command=command,
                                 frozen=frozen,
                                 position=position,
-                                checkpoint="week_preparation_required",
-                                blockers=tuple(position.transition_blockers),
-                                detail=str(exc),
+                                checkpoint=checkpoint,
+                                blockers=blockers,
+                                detail=detail,
                             )
                         child = AuthoritativeWeekCommand(
                             **preview_request.model_dump(mode="json"),
@@ -8118,12 +8184,15 @@ class AuthoritativeRunSimulationDriver:
                         try:
                             child_preview = self.preview_next_week(preview_request)
                         except ValueError as exc:
+                            checkpoint, blockers, detail = classify_next_week_preparation_failure(
+                                exc, tuple(position.transition_blockers)
+                            )
                             return self._full_progress_payload(
                                 command=command,
                                 frozen=frozen,
-                                checkpoint="week_preparation_required",
-                                blockers=tuple(position.transition_blockers),
-                                detail=str(exc),
+                                checkpoint=checkpoint,
+                                blockers=blockers,
+                                detail=detail,
                                 position=position,
                             )
                         child = AuthoritativeWeekCommand(
@@ -10659,7 +10728,7 @@ class AuthoritativeRunSimulationDriver:
                 ):
                     unresolved_post_group_topology.append(event.event_id)
             if unresolved_post_group_topology:
-                raise ValueError(
+                raise GroupPostphaseBoundaryRequired(
                     "Next Week cannot freeze across an unresolved group post-phase "
                     "topology boundary; finish the group phase and freeze its required "
                     "post-group authority first: "

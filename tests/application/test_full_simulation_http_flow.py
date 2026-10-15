@@ -496,3 +496,94 @@ def test_full_simulation_stale_frozen_week_requires_operator_review(
         assert inventory[0] == 200, inventory
         assert inventory[1]["tasks"][0]["state"] == "awaiting_operator"
         assert snapshot(factory, flow["run_id"], flow["branch_id"]) == after
+
+
+@pytest.mark.pr_critical
+def test_full_simulation_genuine_group_boundary_is_an_operator_checkpoint(
+    tmp_path, monkeypatch,
+):
+    """Real HTTP/SQLite task; inject only typed post-group preview refusal.
+
+    This tests lineage, task state, immutable sport and Saved Revision; the
+    eventual *real* hybrid knockout group fixture is a separate acceptance.
+    """
+    from beta_engine.application.authoritative_run_simulation_driver import (
+        AuthoritativeRunSimulationDriver, GroupPostphaseBoundaryRequired,
+        classify_next_week_preparation_failure,
+    )
+    from tests.application.test_full_simulation_server_tasks import wait_task
+
+    # No unrelated ValueError can be confused with a phase-specific review.
+    assert classify_next_week_preparation_failure(
+        ValueError("unrelated failure"), ("pending_authoritative_groups",),
+    )[0] == "week_preparation_required"
+    assert classify_next_week_preparation_failure(
+        GroupPostphaseBoundaryRequired("genuine group Match Day boundary"),
+        ("pending_authoritative_groups",),
+    )[0] == "group_phase_review_required"
+
+    server, factory, gate = make_server(tmp_path)
+    monkeypatch.setattr(routes, "_driver", gate.driver)
+    with server:
+        flow = initialize(server, tmp_path)
+        command = reviewed_command(server, flow, "group-boundary-operator")
+        before = snapshot(factory, flow["run_id"], flow["branch_id"])
+        url = server.base_url + flow["scope"]
+
+        def blocked_preview(self, request):
+            raise GroupPostphaseBoundaryRequired(
+                "Next Week cannot freeze across an unresolved group post-phase "
+                "topology boundary; finish the group phase"
+            )
+
+        monkeypatch.setattr(
+            AuthoritativeRunSimulationDriver, "preview_next_week",
+            blocked_preview,
+        )
+        status, started = _request(
+            "POST", url + "/full-simulation/tasks",
+            {"request_id": "group-boundary-task", "command": command},
+        )
+        assert status == 202, started
+        task = wait_task(
+            server, flow["scope"], started["task_id"],
+            {"awaiting_operator", "failed"},
+        )
+        assert task["state"] == "awaiting_operator", task
+        assert task["checkpoint"] == "group_phase_review_required"
+        assert task["progress"]["blockers"] == ["group_phase_review_required"]
+        assert "same" in task["progress"]["detail"] or "original" in task["progress"]["detail"]
+        assert task["error"] is None
+        after = snapshot(factory, flow["run_id"], flow["branch_id"])
+        assert after["groups"] == before["groups"]
+        assert after["slots"] == before["slots"]
+        assert after["saved"] == before["saved"]
+        assert after["saved_head"] == before["saved_head"]
+        assert after["commands"][command["command_id"]]["status"] == "pending"
+        status, task_center = _request(
+            "GET", server.base_url + "/run-containers/full-simulation/tasks"
+        )
+        assert status == 200, task_center
+        assert task_center["tasks"][0]["checkpoint"] == "group_phase_review_required"
+        assert snapshot(factory, flow["run_id"], flow["branch_id"]) == after
+
+
+@pytest.mark.pr_critical
+def test_group_boundary_classification_requires_specific_authority_evidence():
+    from beta_engine.application.authoritative_run_simulation_driver import (
+        classify_next_week_preparation_failure,
+    )
+
+    blocked = ValueError("Next Week preflight is blocked: group_standings_authority_required")
+    result = classify_next_week_preparation_failure(
+        blocked, ("group_standings_authority_required",)
+    )
+    assert result[0] == "group_postphase_review_required"
+    assert result[1] == ("group_standings_authority_required",)
+    assert "explicitly resume" in result[2]
+    assert classify_next_week_preparation_failure(
+        blocked, ("group_standings_authority_required", "entry_validation_pending"),
+    )[0] == "week_preparation_required"
+    assert classify_next_week_preparation_failure(
+        ValueError("some other failure"), ("group_standings_authority_required",),
+    )[0] == "week_preparation_required"

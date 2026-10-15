@@ -1,3 +1,9 @@
+# Full Simulation group-to-knockout explicit operator handoff — PR candidate, 15 October 2026
+
+Baseline `buuk` `4239f1333961aa33018aa25b18c27bf97f3675f8`; merged #1477. Adds typed group phase checkpoint emitted only from the Next Week unresolved post-group authority preflight and separately classifies verified standings/bracket blockers. The same Full Simulation parent remains pending, no results/Save/seed are auto-committed, and task center CS/EN explicitly tells the operator to complete genuine group Match Days, standings, entrants and bracket before a manual resume. Real HTTP/SQLite checkpoint with typed-error adapter, client tests and final-head CI are gates. Does not claim complete organic hybrid browser run. [Contract](docs/FULL_SIMULATION_GROUP_PHASE_HANDOFF_V81.md).
+
+---
+
 # Explicit approval of an appended Next Week knockout range — integration candidate, 15 October 2026
 
 Baseline `buuk` `139527a7eaadeb4cd6001a7c555fd8819078bce9`, merged #1476, no open PRs. Candidate adds a guarded, independently audited explicit approval of only proven append-only hybrid slots and allows a separately approved continuation of the original Full Simulation server task. Parent request fingerprint, committed child receipts, Saved Revision and sporting RNG are unchanged. Global lease, task/child lineage, CAS hashes, exact Position, and original completed prefix are checked inside SQLite writer lock. No automatic rebase, restart or Save. [Contract](docs/NEXT_WEEK_EXTENSION_APPROVAL_V81.md). Final-head CI and genuine end-to-end hybrid acceptance remain gates, not assumed results.

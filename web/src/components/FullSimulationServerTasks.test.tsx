@@ -122,4 +122,17 @@ describe('server task UI (mock HTTP)',()=>{
   expect(api.continueServerTask).not.toHaveBeenCalled()
  })
 
+ it.each(['cs','en'] as const)('guides unresolved real group phases without fabricating approvals (%s)',async language=>{
+  const task={...taskExample(),state:'awaiting_operator',
+    checkpoint:'group_phase_review_required',needs_operator_action:true,error:null}
+  api.getServerTasks.mockResolvedValue([task])
+  open(language,<FullSimulationServerTasks runId="run" branchId="branch"/>)
+  const match=language==='cs'?'skupinovou fázi':'unresolved group phase'
+  expect(await screen.findByText((_,node)=>node?.tagName==='P'&&Boolean(node.textContent?.includes(match)))).toBeVisible()
+  expect(screen.queryByLabelText(language==='cs'
+    ?'Kontrola změněného týdenního rozpisu'
+    :'Changed week schedule inspection')).toBeNull()
+  expect(api.continueServerTask).not.toHaveBeenCalled()
+ })
+
 })

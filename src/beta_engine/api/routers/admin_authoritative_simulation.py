@@ -1472,6 +1472,31 @@ def simulate_next_tournament(
         ) from exc
 
 
+@router.get("/next-week/extension-inspection")
+def inspect_next_week_extensions(
+    run_id: str,
+    branch_id: str,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+    matches: Annotated[SeasonMatchService, Depends(get_season_match_service)],
+    awards: Annotated[
+        SeasonPointAwardsService, Depends(get_season_point_awards_service)
+    ],
+):
+    """Read-only diagnostic evidence, not an extension approval."""
+    try:
+        return _driver(runtime, matches, awards).inspect_next_week_extension_candidates(
+            run_id=run_id, branch_id=branch_id
+        )
+    except (KeyError, TypeError, ValueError) as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "next_week_extension_inspection_conflict",
+                "message": str(exc),
+            },
+        ) from exc
+
+
 @router.post("/next-week/preview")
 def preview_next_week(
     run_id: str,

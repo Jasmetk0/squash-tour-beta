@@ -8,6 +8,7 @@ compatibility reader; legacy producer files are not execution state.
 from __future__ import annotations
 
 from beta_engine.application.full_simulation_summary import capture_terminal_summary, stored_terminal_summary
+from beta_engine.application.next_week_extension_inspection import inspect_frozen_next_week_extension
 
 import hashlib
 import json
@@ -5007,6 +5008,61 @@ class AuthoritativeRunSimulationDriver:
             )
             session.flush()
             return payload
+
+    def inspect_next_week_extension_candidates(self, *, run_id: str, branch_id: str) -> dict:
+        """Inspect pending frozen Next Week receipts; never repair/rebase them."""
+        with self.factory() as session:
+            position = self._position(
+                session, run_id, branch_id, allow_missing_schedule=True
+            )
+            week = position.current_week
+            base = self._schedule(session, run_id, branch_id, week)
+            current = self._execution_schedule(
+                session, run_id=run_id, branch_id=branch_id, week=week,
+                base_schedule=base,
+            )
+            hybrid_matches = {
+                (authority.event_id, match.match_id)
+                for _, authority in self._hybrid_knockout_brackets_for_week(
+                    session, run_id=run_id, branch_id=branch_id, week=week
+                )
+                for match in authority.matches
+            }
+            receipts = session.scalars(
+                select(AuthoritativeSimulationCommandModel).where(
+                    AuthoritativeSimulationCommandModel.run_id == run_id,
+                    AuthoritativeSimulationCommandModel.branch_id == branch_id,
+                    AuthoritativeSimulationCommandModel.status == "pending",
+                )
+            ).all()
+            items = []
+            for receipt in receipts:
+                try:
+                    frozen = json.loads(receipt.result_json)
+                except (ValueError, TypeError) as exc:
+                    raise ValueError("Invalid pending command receipt JSON") from exc
+                if not isinstance(frozen, dict):
+                    raise ValueError("Invalid pending command receipt payload")
+                if frozen.get("schema_version") != "authoritative_week_operation.v1":
+                    continue
+                result = inspect_frozen_next_week_extension(
+                    frozen, current, base, hybrid_matches
+                )
+                if frozen.get("week") != week.model_dump(mode="json"):
+                    result = {**result, "status": "blocked", "reason": "historical_week_not_current", "new_slots": []}
+                items.append({
+                    "command_id": receipt.command_id,
+                    "week": frozen["week"],
+                    **result,
+                })
+            items.sort(key=lambda item: item["command_id"])
+            return {
+                "schema_version": "next_week_extension_inspection.v1",
+                "run_id": run_id,
+                "branch_id": branch_id,
+                "read_only": True,
+                "items": items,
+            }
 
     def preview_next_week(self, request: AuthoritativeWeekPreviewRequest) -> dict:
         """Freeze the current week and its canonical transition prerequisites."""

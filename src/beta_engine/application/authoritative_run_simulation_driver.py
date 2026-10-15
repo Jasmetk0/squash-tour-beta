@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from beta_engine.application.run_calendar_read_authority import (
     resolve_saved_run_calendar, require_supported_full_simulation_calendar,
+    require_supported_legacy_sporting_calendar,
 )
 from beta_engine.application.full_simulation_summary import capture_terminal_summary, stored_terminal_summary
 from beta_engine.application.next_week_extension_inspection import inspect_frozen_next_week_extension
@@ -2575,6 +2576,10 @@ class AuthoritativeRunSimulationDriver:
     def _season_transition_preflight(
         self, session: Session, run_id: str, branch_id: str
     ) -> AuthoritativeSeasonTransitionPreflight:
+        run_calendar = require_supported_legacy_sporting_calendar(
+            session, run_id=run_id, branch_id=branch_id,
+            operation="Season Transition",
+        )
         position = self._position(session, run_id, branch_id)
         week = position.current_week
         branch = session.get(RunBranchModel, branch_id)
@@ -2588,7 +2593,7 @@ class AuthoritativeRunSimulationDriver:
             for item in position.transition_blockers
             if item != "season_transition_required"
         ]
-        if week.week != 61:
+        if week.week != run_calendar.weeks_per_year:
             blockers.append("not_at_season_boundary")
         if branch is None or draft is None or branch.run_id != run_id:
             blockers.append("run_branch_scope_missing")
@@ -2603,8 +2608,8 @@ class AuthoritativeRunSimulationDriver:
             ):
                 blockers.append("saved_revision_head_mismatch")
 
-        at_boundary = week.week == 61
-        final_season = at_boundary and week.season_index == 49
+        at_boundary = week.week == run_calendar.weeks_per_year
+        final_season = at_boundary and week.season_index == run_calendar.season_count - 1
         target_week = (
             RankingWeek(season_index=week.season_index + 1, week=1)
             if at_boundary and not final_season
@@ -5450,6 +5455,13 @@ class AuthoritativeRunSimulationDriver:
             session.execute(text("BEGIN IMMEDIATE"))
             self._require_writable_scope(session, command.run_id, command.branch_id)
             receipt = session.get(AuthoritativeSimulationCommandModel, key)
+            # Replay of an already completed historic receipt remains unchanged.
+            # All new or pending sport must match the currently saved Run clock.
+            if receipt is None or receipt.status != "complete":
+                require_supported_legacy_sporting_calendar(
+                    session, run_id=command.run_id, branch_id=command.branch_id,
+                    operation="Next Week",
+                )
             if receipt is not None:
                 if receipt.request_fingerprint != request_fp:
                     raise ValueError("Week command ID already has a different request")
@@ -5943,6 +5955,13 @@ class AuthoritativeRunSimulationDriver:
             session.execute(text("BEGIN IMMEDIATE"))
             self._require_writable_scope(session, command.run_id, command.branch_id)
             receipt = session.get(AuthoritativeSimulationCommandModel, key)
+            # Replay of an already completed historic receipt remains unchanged.
+            # All new or pending sport must match the currently saved Run clock.
+            if receipt is None or receipt.status != "complete":
+                require_supported_legacy_sporting_calendar(
+                    session, run_id=command.run_id, branch_id=command.branch_id,
+                    operation="Next Season",
+                )
             if receipt is not None:
                 if receipt.request_fingerprint != request_fp:
                     raise ValueError(
@@ -10616,9 +10635,13 @@ class AuthoritativeRunSimulationDriver:
         *,
         request: AuthoritativeWeekPreviewRequest,
     ) -> dict:
+        run_calendar = require_supported_legacy_sporting_calendar(
+            session, run_id=request.run_id, branch_id=request.branch_id,
+            operation="Next Week",
+        )
         position = self._position(session, request.run_id, request.branch_id)
         week = position.current_week
-        if week.week == 61:
+        if week.week == run_calendar.weeks_per_year:
             raise ValueError(
                 "Next Week stops at Week 61; canonical Season Transition is required"
             )
@@ -10816,6 +10839,10 @@ class AuthoritativeRunSimulationDriver:
         *,
         request: AuthoritativeSeasonPreviewRequest,
     ) -> dict:
+        run_calendar = require_supported_legacy_sporting_calendar(
+            session, run_id=request.run_id, branch_id=request.branch_id,
+            operation="Next Season",
+        )
         position = self._position(
             session,
             request.run_id,
@@ -10823,7 +10850,7 @@ class AuthoritativeRunSimulationDriver:
             allow_missing_schedule=True,
         )
         start_week = position.current_week
-        if start_week.season_index >= 49:
+        if start_week.season_index >= run_calendar.season_count - 1:
             raise ValueError(
                 "Next Season does not own final 2049/50 closure; use canonical final Season Transition"
             )
@@ -10850,7 +10877,7 @@ class AuthoritativeRunSimulationDriver:
 
         if position.current_slot_kind == "entry":
             initial_action = "blocked_entry_process"
-        elif start_week.week == 61:
+        elif start_week.week == run_calendar.weeks_per_year:
             initial_action = (
                 "finish_week_61_matches"
                 if position.current_slot_kind == "match"

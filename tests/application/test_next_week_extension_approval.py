@@ -160,9 +160,10 @@ def test_http_explicit_approval_atomic_audit_exact_replay_and_no_sport(tmp_path,
     monkeypatch.setattr(routes, "_driver", capture_driver)
     with server:
         flow = initialize(server, tmp_path)
-        cmd = AuthoritativeFullSimulationCommand.model_validate(
-            reviewed_command(server, flow, command_id="full-parent")
-        )
+        cmd = AuthoritativeFullSimulationCommand.model_validate({
+            **reviewed_command(server, flow, command_id="full-parent"),
+            "run_id": flow["run_id"], "branch_id": flow["branch_id"],
+        })
         driver = driver_ref["driver"]
         before = snapshot(factory, flow["run_id"], flow["branch_id"])
         week = cmd.expected_start_week

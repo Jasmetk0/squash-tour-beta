@@ -12,7 +12,7 @@ def play_and_freeze_hybrid(
     *, request, page, run_id: str, branch_id: str, event_id: str,
     run_url: str, event_url: str, root_scope: str, event_scope: str,
     original_match_ids: set[str], initial_revision: str, artifacts,
-    knockout_rounds: int = 1,
+    knockout_rounds: int = 1, on_group_schedule_adopted=None,
 ) -> dict:
     from playwright.sync_api import expect
     from admin_first_tournament_smoke import browser_click, browser_settle
@@ -41,6 +41,8 @@ def play_and_freeze_hybrid(
         "expected_position_fingerprint": proposal["position_fingerprint"],
     }, status=201)
     assert adopted["schedule_fingerprint"] == proposal["schedule_fingerprint"]
+    if on_group_schedule_adopted is not None:
+        on_group_schedule_adopted(adopted)
 
     day = request("GET", simulation + "/next-match-day/preview")
     assert day["match_day_ordinal"] == 1

@@ -119,7 +119,7 @@ def acceptance(
                     assert response.status == status, (
                         method, path, response.status, response.text()[:1600]
                     )
-                    return response.json() if status in (200, 201) else None
+                    return response.json() if status in (200, 201, 202) else None
 
                 branches = request(
                     "GET", "/run-branches?run_id=" + quote(run_id, safe=""),
@@ -372,7 +372,25 @@ def acceptance(
                 completed = None
                 hybrid_result = None
                 hybrid_ranking = None
+                hybrid_task_handoff = None
                 if hybrid_progression or hybrid_multiround:
+                    if hybrid_progression:
+                        from real_hybrid_full_simulation_task_browser_checks import (
+                            start_real_group_handoff_task,
+                            assert_handoff_task_still_pending,
+                        )
+
+                        def start_hybrid_task(adopted_schedule):
+                            nonlocal hybrid_task_handoff
+                            hybrid_task_handoff = start_real_group_handoff_task(
+                                request=request, page=page, run_url=run_url,
+                                run_id=run_id, branch_id=branch_id,
+                                simulation_scope=simulation_scope,
+                                schedule_fingerprint=adopted_schedule["schedule_fingerprint"],
+                                artifacts=artifacts,
+                            )
+                    else:
+                        start_hybrid_task = None
                     hybrid_result = play_and_freeze_hybrid(
                         request=request,page=page,run_id=run_id,branch_id=branch_id,
                         event_id=EVENT_ID,run_url=run_url,
@@ -381,7 +399,13 @@ def acceptance(
                         original_match_ids={m["match_id"] for m in schedule["matches"]},
                         initial_revision=revision,artifacts=artifacts,
                         knockout_rounds=2 if hybrid_multiround else 1,
+                        on_group_schedule_adopted=start_hybrid_task,
                     )
+                    if hybrid_task_handoff is not None:
+                        assert_handoff_task_still_pending(
+                            request=request, simulation_scope=simulation_scope,
+                            frozen=hybrid_task_handoff, artifacts=artifacts,
+                        )
                     assert saved(hybrid_result["completed_saved_revision"]) == (
                         hybrid_result["archived_edition"]
                     )
@@ -571,6 +595,7 @@ def acceptance(
                     "real_group_match_reconstruction": (
                         completed["reconstructed_group_match"] if completed else None
                     ),
+                    "hybrid_group_full_simulation_task":hybrid_task_handoff,
                     "hybrid_progression": ({
                         "completed_revision":hybrid_result["completed_saved_revision"],
                         "played_group_match_count":hybrid_result["real_group_matches"],

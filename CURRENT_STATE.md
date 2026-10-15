@@ -1,3 +1,9 @@
+# Real hybrid group-to-knockout handoff for a waiting Full Simulation — PR candidate, 15 October 2026
+
+`buuk` base `c0c8c82f5d676cc236033d3a94eea42a77ce3f4f` after merged #1478. The existing genuine Chromium+FastAPI+SQLite hybrid cup test now starts and inspects a real Full Simulation task *before* group Match Day; the task must wait with no sport, and the existing explicit two real group games + entrant/bracket + actual knockout final + ranking policy/Save/restart are reverified. Still waiting on human decisions at the end is intentional; explicit original-task resume through a week boundary remains another acceptance gate. [Proof](docs/FULL_SIMULATION_HYBRID_TASK_REAL_BROWSER_V81.md).
+
+---
+
 # Full Simulation group-to-knockout explicit operator handoff — PR candidate, 15 October 2026
 
 Baseline `buuk` `4239f1333961aa33018aa25b18c27bf97f3675f8`; merged #1477. Adds typed group phase checkpoint emitted only from the Next Week unresolved post-group authority preflight and separately classifies verified standings/bracket blockers. The same Full Simulation parent remains pending, no results/Save/seed are auto-committed, and task center CS/EN explicitly tells the operator to complete genuine group Match Days, standings, entrants and bracket before a manual resume. Real HTTP/SQLite checkpoint with typed-error adapter, client tests and final-head CI are gates. Does not claim complete organic hybrid browser run. [Contract](docs/FULL_SIMULATION_GROUP_PHASE_HANDOFF_V81.md).

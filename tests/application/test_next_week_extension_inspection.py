@@ -75,9 +75,8 @@ def test_frozen_children_corrupt_identity_or_transition_are_not_applicable():
 def test_reserved_ordinal_gap_not_claimed_safe():
     base,current,frozen=example()
     gapped=schedule(*base.slots,slot(4,"final",2,1,"main"))
-    assert inspect(frozen,gapped,base,{("hybrid","final")})["status"]=="append_only_proven"
-    # Only a gap among newly appended slots is blocked; this isolated extra
-    # integer may be a reserved Entry ordinal before the first new match.
+    assert inspect(frozen,gapped,base,{("hybrid","final")})["reason"]=="new_slots_cross_reserved_global_ordinals"
+    # Even the first new slot must not jump an unproven reserved Entry/WC ordinal.
     gapped_two=schedule(*base.slots,slot(3,"semi",2,1,"main"),slot(5,"final",3,1,"main"))
     assert inspect(frozen,gapped_two,base,{("hybrid","semi"),("hybrid","final")})["reason"]=="new_slots_cross_reserved_global_ordinals"
 

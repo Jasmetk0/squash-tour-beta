@@ -114,7 +114,12 @@ def inspect_frozen_next_week_extension(
         for s in new_slots
     ):
         return outcome("blocked", "new_slots_not_from_frozen_hybrid_bracket")
-    if [s.ordinal for s in new_slots] != list(range(new_slots[0].ordinal, new_slots[-1].ordinal + 1)):
+    if (
+        new_slots[0].ordinal != old_max + 1
+        or [s.ordinal for s in new_slots] != list(
+            range(new_slots[0].ordinal, new_slots[-1].ordinal + 1)
+        )
+    ):
         return outcome("blocked", "new_slots_cross_reserved_global_ordinals")
     return outcome("append_only_proven", "operator_re_review_still_required", [
         {

@@ -1,6 +1,7 @@
 import { acknowledgeSavedRunForm } from './RunNavigationSafeguard'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
+import { Link, useLocation } from 'react-router-dom'
 
 import {
   confirmRunSourcePackage, getBranchWorkingDraft, getRunPackageState,
@@ -29,8 +30,15 @@ type PendingSave = {
   previousHead: string
 }
 
+export function supportedCalendarSeason(value: string | null): string | null {
+  if (!value || !/^\d{4}-\d{4}$/.test(value)) return null
+  const first = Number(value.slice(0,4))
+  const last = Number(value.slice(5))
+  return first >= 2000 && first <= 2049 && last === first + 1 ? value : null
+}
+
 function seasonKey(value: string): boolean {
-  return /^\d{4}-\d{4}$/.test(value)
+  return supportedCalendarSeason(value) !== null
 }
 
 export function RunPackageSetupPanel({ run, branch }: {
@@ -38,20 +46,30 @@ export function RunPackageSetupPanel({ run, branch }: {
   branch: RunBranch | null
 }): JSX.Element {
   const queryClient = useQueryClient()
+  const {search} = useLocation()
+  const params = new URLSearchParams(search)
   const runId = run.run_id
   const branchId = branch?.run_id === runId ? branch.branch_id : ''
   const head = branch?.run_id === runId ? branch.saved_head_revision_id : null
+  // A valid exact-Branch deep link selects a season for inspection only. The
+  // preview, consent, copy and explicit Saved Revision remain separate.
+  const requestedCalendarSeason = branch?.branch_id===params.get('branch')
+    ? supportedCalendarSeason(params.get('calendarSeason')) : null
   const editable = !run.read_only && run.storage_kind === 'custom_local' &&
     (run.status === 'working' || run.status === 'active' || run.status === 'completed') &&
     Boolean(branchId && branch?.status === 'active' && !branch.read_only && head)
-  const [kind, setKind] = useState<RunSourcePackageKind>('world')
+  const [kind, setKind] = useState<RunSourcePackageKind>(requestedCalendarSeason?'calendar':'world')
   const [worldId, setWorldId] = useState('')
-  const [calendarSeason, setCalendarSeason] = useState('2000-2001')
+  const [calendarSeason, setCalendarSeason] = useState(requestedCalendarSeason??'2000-2001')
   const [review, setReview] = useState<Review | null>(null)
   const [approved, setApproved] = useState(false)
   const [pendingSave, setPendingSave] = useState<PendingSave | null>(null)
   const [saveApproved, setSaveApproved] = useState(false)
   const [notice, setNotice] = useState('')
+
+  useEffect(() => {
+    if(requestedCalendarSeason){setKind('calendar');setCalendarSeason(requestedCalendarSeason)}
+  }, [requestedCalendarSeason])
 
   useEffect(() => {
     setReview(null)
@@ -184,6 +202,7 @@ export function RunPackageSetupPanel({ run, branch }: {
     <p className="status">Use the existing Run/Branch Package authority. Preview is read-only, Confirm copies independent content to the Working Draft, and Save creates an immutable Saved Revision. Nothing is applied to the global source.</p>
     <p>Target: <strong>{run.display_name ?? 'Product Run'}</strong> · {branch?.display_name ?? 'No active timeline'}.</p>
     {!editable && <p role="alert" className="error">Select a writable Active Admin Branch with a Saved Revision. Protected Runs cannot import packages.</p>}
+    {requestedCalendarSeason&&<p role="status">Requested season: <strong>{requestedCalendarSeason}</strong>. Only a genuinely authored source Calendar can be previewed and copied. An absent source is not an empty week. <Link to={`/admin/seasons/build?season=${encodeURIComponent(requestedCalendarSeason.slice(0,4)+'/'+requestedCalendarSeason.slice(7))}`}>Open Season Builder to explicitly prepare its source</Link> before returning here to Preview, Confirm and Save.</p>}
     <label>Source kind{' '}
       <select aria-label="Source kind" value={kind} onChange={event => setKind(event.target.value as RunSourcePackageKind)}>
         <option value="world">World</option>

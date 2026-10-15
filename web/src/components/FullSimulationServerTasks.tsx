@@ -17,7 +17,7 @@ const copy={
   resume:'Explicitly resume server task',recover:'Explicitly recover server task',retry:'Retry same request',cancel:'Cancel retry and refresh',
   manual:'Operator action required. Resolve the checkpoint in Run Admin, then explicitly continue this task. Save is manual.',
   health:'Last worker heartbeat',recent:'Recently observed; work may be blocked',stale:'Stale; healthy execution is unconfirmed',inactive:'No valid worker ownership',
-  checkpoint:'Current operator checkpoint',lastCheckpoint:'Last recorded checkpoint (not a current blocker)',driverDetail:'Driver evidence',blockers:'Recorded blockers',currentBlockers:'Current blockers',open:'Open exact Run / Branch',original:'Original command',detail:'Stored terminal summary',
+  checkpoint:'Current operator checkpoint',lastCheckpoint:'Last recorded checkpoint (not a current blocker)',calendarPrep:'Review this season’s Calendar in Run Management',calendarPrepNote:'Review the actual blockers. Calendar source authoring, an explicit Run/Branch copy and Save are separate actions; never assume a missing Calendar means an empty week.',driverDetail:'Driver evidence',blockers:'Recorded blockers',currentBlockers:'Current blockers',open:'Open exact Run / Branch',original:'Original command',detail:'Stored terminal summary',
   ownership_unverified:'Another server instance owns the lease; inspect heartbeat and wait for release or expiry',queued:'Queued',active:'Executing on server',pause_requested:'Pausing at safe boundary',paused:'Safely paused',awaiting_operator:'Waiting for operator',
   stopped:'Stopped',target_reached:'Target reached',complete:'Complete',failed:'Failed; inspect before recovery',recoverable:'Interrupted; explicit recovery required',
   measured:'Stored Branch receipts in current week',slots:'Completed match slots',groups:'Committed match groups',advanced:'Week transitions since task start',
@@ -28,7 +28,7 @@ const copy={
   resume:'Výslovně pokračovat v serverové úloze',recover:'Výslovně obnovit serverovou úlohu',retry:'Zopakovat stejný požadavek',cancel:'Zrušit opakování a obnovit údaje',
   manual:'Je nutná akce operátora. Vyřešte checkpoint ve správě Runu a pak výslovně pokračujte v této úloze. Save zůstává ruční.',
   health:'Poslední odezva workeru',recent:'Nedávno zaznamenána; práce může být blokovaná',stale:'Zastaralá; zdravý běh není potvrzen',inactive:'Bez platného vlastnictví workeru',
-  checkpoint:'Aktuální checkpoint operátora',lastCheckpoint:'Poslední zaznamenaný checkpoint (není aktuální překážkou)',driverDetail:'Podklady serverového průchodu',blockers:'Zaznamenané překážky',currentBlockers:'Aktuální překážky',open:'Otevřít přesný Run / větev',original:'Původní příkaz',detail:'Uložený závěrečný souhrn',
+  checkpoint:'Aktuální checkpoint operátora',lastCheckpoint:'Poslední zaznamenaný checkpoint (není aktuální překážkou)',calendarPrep:'Prověřit kalendář aktuální sezony ve správě Runu',calendarPrepNote:'Řiďte se skutečnými blokacemi. Vytvoření zdrojového kalendáře, výslovné zkopírování do Runu/větve a Save jsou oddělené kroky; chybějící kalendář neznamená prázdný týden.',driverDetail:'Podklady serverového průchodu',blockers:'Zaznamenané překážky',currentBlockers:'Aktuální překážky',open:'Otevřít přesný Run / větev',original:'Původní příkaz',detail:'Uložený závěrečný souhrn',
   ownership_unverified:'Lease vlastní jiná instance serveru; zkontrolujte odezvu a vyčkejte na uvolnění nebo expiraci',queued:'Ve frontě',active:'Běží na serveru',pause_requested:'Pozastavuji na bezpečné hranici',paused:'Bezpečně pozastaveno',awaiting_operator:'Čeká na operátora',
   stopped:'Ukončeno',target_reached:'Cíl dosažen',complete:'Dokončeno',failed:'Chyba; před obnovou zkontrolujte stav',recoverable:'Přerušeno; nutná výslovná obnova',
   measured:'Uložené výsledkové záznamy větve v aktuálním týdnu',slots:'Dokončené zápasové sloty',groups:'Potvrzené zápasové skupiny',advanced:'Týdenních přechodů od začátku úlohy',
@@ -75,6 +75,15 @@ function storedDriverEvidence(task:ServerTask){
  }
 }
 
+// A navigation hint, never an authority to copy, approve or resume a task.
+// Derived from the canonical current week; the selected Branch is retained in the URL.
+export function taskCalendarHandoff(task:ServerTask):string|null{
+ if(task.state!=='awaiting_operator'||!['week_preparation_required','season_preparation_required','week61_preparation_required','final_week_preparation_required'].includes(task.checkpoint??'')||
+   !task.current_week)return null
+ const year=2000+task.current_week.season_index
+ const calendarSeason=`${year}-${year+1}`
+ return `/admin/runs/${encodeURIComponent(task.run_id)}/manage?branch=${encodeURIComponent(task.branch_id)}&calendarSeason=${calendarSeason}`
+}
 function TaskCard({task}:{task:ServerTask}){
  const {language}=useLanguage();const t=copy[language];const client=useQueryClient()
  const [operator,setOperator]=useState('');const [reason,setReason]=useState('');const [pending,setPending]=useState<ContinueTask|null>(null)
@@ -82,6 +91,7 @@ function TaskCard({task}:{task:ServerTask}){
  const currentCheckpoint=task.state==='awaiting_operator'||task.state==='paused'?task.checkpoint:null
  const requiresNewWeekReview=task.state==='awaiting_operator'&&currentCheckpoint==='week_schedule_review_required'
  const driver=storedDriverEvidence(task)
+ const calendarHandoff=taskCalendarHandoff(task)
  const isCurrentDriverBlocker=task.state==='awaiting_operator' && driver?.checkpoint===task.checkpoint
  const mutation=useMutation({mutationFn:(body:ContinueTask)=>continueServerTask(task,body),onSuccess:async()=>{
   setPending(null);setReason('');await client.invalidateQueries({queryKey:['server-simulation-tasks']});
@@ -107,6 +117,7 @@ function TaskCard({task}:{task:ServerTask}){
    {driver.checkpoint && driver.checkpoint!==currentCheckpoint&&<p>{t.lastCheckpoint}: <code>{driver.checkpoint}</code></p>}
   </details>}
   {task.error && <p role="alert">{task.error}</p>}
+  {calendarHandoff && <p><Link to={calendarHandoff}>{t.calendarPrep}</Link> · {t.calendarPrepNote}</p>}
   {task.needs_operator_action && <>{requiresNewWeekReview
    ? <p role="alert">{checkpointGuidance(task.checkpoint,language)}</p>
    : <><p>{t.manual}</p>{task.state==='awaiting_operator' && <p>{checkpointGuidance(currentCheckpoint,language)}</p>}

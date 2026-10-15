@@ -1,3 +1,13 @@
+# Active follow-on: exact 2001/02 Calendar operator handoff (15 October 2026)
+
+Verified base `buuk` `1cce2b5af2fd3843959f0c0658d846b3c839665c` after merged #1487; no open PR at start. Current focused slice builds explicit, read-only Task Center navigation for a real current `week_preparation_required` checkpoint into the *same Run/Branch* Run Management with correctly preselected 2001/02 Calendar. The original blocked parent remains immutable; Calendar source authoring, copy, Save and task Resume all require their existing separate approvals. See [exact scope and limits](docs/SECOND_SEASON_CALENDAR_OPERATOR_HANDOFF_V81.md).
+
+**Pending after this slice:** verify actual blocker detail from the real post-#1484 Week 1, then author a real new-season Calendar with multiple Tournament Editions, complete their MatchEngine fixtures, and advance the SAME nonterminal server task beyond a concrete next-week target. A navigation handoff is not that sports acceptance.
+
+**Historical headings below:** earlier dated "candidate"/"active" notes record contemporaneous status, not an unmerged PR queue.
+
+---
+
 # Current integration milestone — operator-useful Task Center (15 October 2026)
 
 Verified `buuk` baseline after merged #1486: `f4430ada8dae54f99e4bc27790e240d8ce268d18`. The previous #1484 boundary evidence establishes only a sparse three-match real hybrid Week 61 → Season Transition, not a complete sporting season.

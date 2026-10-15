@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 
 import { getSeasonCalendar, getSeasonCalendarValidation, getSeasonCalendarValidationIssueCodes, getSeasonRegistry, getSeasonTemplateSlotConflictCodes, getSeasonTemplateSlotConflicts, getSeasonTemplateSlotValidation, getSeasonTemplateSlotValidationIssueCodes, getSeasonTemplates, getTourSeasonsValidation, postSeasonBuilderApplyCommandContract, postSeasonBuilderApplyCreateOnlyCommand, postSeasonBuilderApplyCreateOnlyReadiness, postSeasonBuilderDryRunBuild, postSeasonBuilderPreflight, validateFutureApplyRequestPreview } from '../api/client'
 import { DetailList } from '../components/DetailUi'
@@ -73,10 +73,13 @@ import type { SourceType } from './SeasonBuilderPanels'
 import type { ApplyGuardChecklistItem, CreateOnlyApplyGuardSummaryItem, SeasonBuilderStatusSummaryItem } from './SeasonBuilderPanels'
 import type { SeasonBuilderApplyCommandContractRequest, SeasonBuilderApplyCreateOnlyCommandRequest, SeasonBuilderDryRunBuildRequest, SeasonBuilderFutureApplyRequestValidationPreviewResponse, SeasonBuilderPreflightRequest } from '../api/types'
 import { formatApiError } from '../utils/apiErrors'
+import { selectedBuilderSeason } from './seasonBuilderDeepLink'
 
 
 export function AdminSeasonBuilderPage(): JSX.Element {
 
+  const {search} = useLocation()
+  const requestedSeason = new URLSearchParams(search).get('season')
   const queryClient = useQueryClient()
   const REQUIRED_CONFIRMATION_PHRASE = 'I understand this will create a new season calendar.'
   const registryQuery = useQuery({ queryKey: ['season-registry'], queryFn: getSeasonRegistry, retry: false })
@@ -151,9 +154,12 @@ export function AdminSeasonBuilderPage(): JSX.Element {
 
   useEffect(() => {
     if (!selectedTargetSeasonLabel && registry?.seasons.length) {
-      setSelectedTargetSeasonLabel(registry.seasons[0].label)
+      // Only a literal available season in the canonical 50-year registry is
+      // accepted. Deep-link selection changes no Calendar or Run authority.
+      const requested = selectedBuilderSeason(requestedSeason, registry.seasons)
+      setSelectedTargetSeasonLabel(requested ?? registry.seasons[0].label)
     }
-  }, [registry, selectedTargetSeasonLabel])
+  }, [registry, requestedSeason, selectedTargetSeasonLabel])
 
   useEffect(() => {
     if (!selectedTemplateId && templates.length) {

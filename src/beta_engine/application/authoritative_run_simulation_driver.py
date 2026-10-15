@@ -7,6 +7,9 @@ compatibility reader; legacy producer files are not execution state.
 
 from __future__ import annotations
 
+from beta_engine.application.run_calendar_read_authority import (
+    resolve_saved_run_calendar, require_supported_full_simulation_calendar,
+)
 from beta_engine.application.full_simulation_summary import capture_terminal_summary, stored_terminal_summary
 from beta_engine.application.next_week_extension_inspection import inspect_frozen_next_week_extension
 
@@ -10893,6 +10896,17 @@ class AuthoritativeRunSimulationDriver:
         *,
         request: AuthoritativeFullSimulationPreviewRequest,
     ) -> dict:
+        # This is the actual Saved Run clock, not a global default or a UI hint.
+        # Legacy FAX executes unchanged; unsupported calendar execution is
+        # explicitly blocked before claiming an executable preview.
+        run_calendar = resolve_saved_run_calendar(
+            session, run_id=request.run_id, branch_id=request.branch_id,
+        )
+        require_supported_full_simulation_calendar(run_calendar)
+        run_final_week = RankingWeek(
+            season_index=run_calendar.season_count - 1,
+            week=run_calendar.weeks_per_year,
+        )
         position = self._position(
             session,
             request.run_id,
@@ -10900,7 +10914,7 @@ class AuthoritativeRunSimulationDriver:
             allow_missing_schedule=True,
         )
         start_week = position.current_week
-        if start_week.ordinal > FINAL_WEEK.ordinal:
+        if start_week.ordinal > run_final_week.ordinal:
             raise ValueError("Full Simulation current week is beyond the supported Run")
 
         run = session.get(RunContainerModel, request.run_id)
@@ -10941,7 +10955,7 @@ class AuthoritativeRunSimulationDriver:
 
         initial_action = (
             "final_season_range"
-            if start_week.season_index == FINAL_WEEK.season_index
+            if start_week.season_index == run_final_week.season_index
             else "next_season"
         )
         body = {
@@ -10949,12 +10963,12 @@ class AuthoritativeRunSimulationDriver:
             "run_id": request.run_id,
             "branch_id": request.branch_id,
             "start_week": start_week.model_dump(mode="json"),
-            "final_week": FINAL_WEEK.model_dump(mode="json"),
+            "final_week": run_final_week.model_dump(mode="json"),
             "remaining_weeks_including_current": (
-                FINAL_WEEK.ordinal - start_week.ordinal + 1
+                run_final_week.ordinal - start_week.ordinal + 1
             ),
             "remaining_seasons_including_current": (
-                FINAL_WEEK.season_index - start_week.season_index + 1
+                run_final_week.season_index - start_week.season_index + 1
             ),
             "initial_action": initial_action,
             "initial_transition_blockers": list(position.transition_blockers),

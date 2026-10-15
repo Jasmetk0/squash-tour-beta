@@ -18,7 +18,9 @@ const copy={
   health:'Last worker heartbeat',recent:'Recently observed; work may be blocked',stale:'Stale; healthy execution is unconfirmed',inactive:'No valid worker ownership',
   checkpoint:'Last checkpoint',open:'Open exact Run / Branch',original:'Original command',detail:'Stored terminal summary',
   ownership_unverified:'Another server instance owns the lease; inspect heartbeat and wait for release or expiry',queued:'Queued',active:'Executing on server',pause_requested:'Pausing at safe boundary',paused:'Safely paused',awaiting_operator:'Waiting for operator',
-  stopped:'Stopped',target_reached:'Target reached',complete:'Complete',failed:'Failed; inspect before recovery',recoverable:'Interrupted; explicit recovery required'},
+  stopped:'Stopped',target_reached:'Target reached',complete:'Complete',failed:'Failed; inspect before recovery',recoverable:'Interrupted; explicit recovery required',
+  measured:'Stored Branch receipts in current week',slots:'Completed match slots',groups:'Committed match groups',advanced:'Week transitions since task start',
+  frozen:'Historical end week, frozen at termination',unavailable:'Historical end week unavailable; not inferred from the current Branch'},
  cs:{title:'Serverové simulační úlohy',start:'Spustit jako serverovou úlohu',ack:'Serverová úloha přijata',refresh:'Obnovit údaje úloh',
   truth:'Server pokračuje i po zavření této stránky. Save a sezonní schválení zůstávají ruční. Po restartu serveru úlohu zkontrolujte a výslovně obnovte.',
   loading:'Načítám serverové úlohy…',empty:'V tomto kontextu nejsou serverové úlohy.',operator:'Operátor úlohy',reason:'Důvod akce úlohy',
@@ -27,7 +29,9 @@ const copy={
   health:'Poslední odezva workeru',recent:'Nedávno zaznamenána; práce může být blokovaná',stale:'Zastaralá; zdravý běh není potvrzen',inactive:'Bez platného vlastnictví workeru',
   checkpoint:'Poslední checkpoint',open:'Otevřít přesný Run / větev',original:'Původní příkaz',detail:'Uložený závěrečný souhrn',
   ownership_unverified:'Lease vlastní jiná instance serveru; zkontrolujte odezvu a vyčkejte na uvolnění nebo expiraci',queued:'Ve frontě',active:'Běží na serveru',pause_requested:'Pozastavuji na bezpečné hranici',paused:'Bezpečně pozastaveno',awaiting_operator:'Čeká na operátora',
-  stopped:'Ukončeno',target_reached:'Cíl dosažen',complete:'Dokončeno',failed:'Chyba; před obnovou zkontrolujte stav',recoverable:'Přerušeno; nutná výslovná obnova'}
+  stopped:'Ukončeno',target_reached:'Cíl dosažen',complete:'Dokončeno',failed:'Chyba; před obnovou zkontrolujte stav',recoverable:'Přerušeno; nutná výslovná obnova',
+  measured:'Uložené výsledkové záznamy větve v aktuálním týdnu',slots:'Dokončené zápasové sloty',groups:'Potvrzené zápasové skupiny',advanced:'Týdenních přechodů od začátku úlohy',
+  frozen:'Historický koncový týden uložený při ukončení',unavailable:'Historický koncový týden není dostupný; aktuální stav větve jej nenahrazuje'}
 } as const
 export function useServerTasks(run?:string,branch?:string,enabled=true){
  return useQuery({queryKey:['server-simulation-tasks',run??null,branch??null],queryFn:()=>getServerTasks(run,branch),retry:false,refetchInterval:2000,enabled})
@@ -70,6 +74,9 @@ function TaskCard({task}:{task:ServerTask}){
   <p>{t.health}: {t[task.heartbeat_health]}{task.heartbeat_unix>0 && <> · {new Date(task.heartbeat_unix*1000).toLocaleString(language)}</>}</p>
   {task.effective_boundary_target && <p><BoundaryDescription target={task.effective_boundary_target}/></p>}
   {task.current_week && <p>S{task.current_week.season_index} W{task.current_week.week}</p>}
+  <p>{task.progress_evidence.kind==='terminal_frozen'?t.frozen:task.progress_evidence.kind==='unavailable'?t.unavailable:t.measured}</p>
+  {task.progress_evidence.weeks_advanced_since_start!==null && <p>{t.advanced}: {task.progress_evidence.weeks_advanced_since_start}</p>}
+  {task.progress_evidence.kind==='live_branch' && <p>{t.slots}: {task.progress_evidence.completed_slot_receipts_this_week} · {t.groups}: {task.progress_evidence.committed_group_receipts_this_week}</p>}
   {task.checkpoint && <p>{t.checkpoint}: <code>{task.checkpoint}</code></p>}
   {task.error && <p role="alert">{task.error}</p>}
   {task.needs_operator_action && <><p>{t.manual}</p>{task.state==='awaiting_operator' && <p>{checkpointGuidance(task.checkpoint,language)}</p>}

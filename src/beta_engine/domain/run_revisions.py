@@ -6,6 +6,8 @@ import hashlib
 import json
 from copy import deepcopy
 
+from beta_engine.domain.calendar.run_calendar import RunCalendar
+
 INITIAL_SAVED_REVISION_SEQUENCE = 1
 INITIAL_SAVED_REVISION_KIND = "initial_run_creation"
 INITIAL_SAVED_REVISION_PAYLOAD_SCHEMA_VERSION = "empty_run_saved_revision_v1"
@@ -51,18 +53,32 @@ def initial_saved_revision_payload(
     branch_id: str,
     branch_display_name: str,
     branch_status: str,
+    run_calendar_metadata: dict[str, int | str] | None = None,
 ) -> dict[str, object]:
-    """Return the smallest complete restorable snapshot of an empty Run root."""
+    """Return the smallest complete restorable snapshot of an empty Run root.
+
+    Legacy callers with no calendar retain byte-for-byte old payload semantics.
+    Only a validated explicit calendar is included for new v82 Run creation.
+    """
+
+    run_snapshot: dict[str, object] = {
+        "run_id": run_id,
+        "display_name": display_name,
+        "status": run_status,
+        "timeline_start_season": timeline_start_season,
+        "timeline_end_season": timeline_end_season,
+        "viewer_branch_id": branch_id,
+    }
+    if run_calendar_metadata is not None:
+        calendar = RunCalendar.from_metadata(run_calendar_metadata)
+        if (calendar.start_year, calendar.start_year + calendar.season_count - 1) != (
+            timeline_start_season, timeline_end_season
+        ):
+            raise ValueError("Run calendar horizon disagrees with legacy timeline columns")
+        run_snapshot["run_calendar"] = calendar.to_metadata()
 
     return {
-        "run": {
-            "run_id": run_id,
-            "display_name": display_name,
-            "status": run_status,
-            "timeline_start_season": timeline_start_season,
-            "timeline_end_season": timeline_end_season,
-            "viewer_branch_id": branch_id,
-        },
+        "run": run_snapshot,
         "branch": {
             "branch_id": branch_id,
             "display_name": branch_display_name,

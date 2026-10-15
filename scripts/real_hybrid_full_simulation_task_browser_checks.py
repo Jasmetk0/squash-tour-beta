@@ -12,9 +12,6 @@ import json
 import time
 from urllib.parse import quote
 
-from playwright.sync_api import expect
-
-
 def _task(request, scope, task_id):
     result = request("GET", scope + "/full-simulation/tasks/" + quote(task_id, safe=""))
     assert len(result["tasks"]) == 1
@@ -25,6 +22,8 @@ def start_real_group_handoff_task(
     *, request, page, run_url, run_id, branch_id, simulation_scope,
     schedule_fingerprint, artifacts,
 ):
+    from playwright.sync_api import expect
+
     preview = request("POST", simulation_scope + "/full-simulation/preview", {
         "command_id": "real-hybrid-full-simulation-parent",
         "operator_label": "Real browser commissioner",

@@ -197,7 +197,7 @@ describe('server task UI (mock HTTP)',()=>{
    ?'Prověřit kalendář aktuální sezony ve správě Runu'
    :'Review this season’s Calendar in Run Management'})
   expect(link).toHaveAttribute('href','/admin/runs/run/manage?branch=branch&calendarSeason=2001-2002')
-  expect(screen.getByText(language==='cs'?/chybějící kalendář neznamená prázdný týden/:/absent Calendar means an empty week/)).toBeVisible()
+  expect(screen.getByText(language==='cs'?/chybějící kalendář neznamená prázdný týden/:/missing Calendar means an empty week/)).toBeVisible()
   expect(api.continueServerTask).not.toHaveBeenCalled()
  })
  it('does not suggest missing Calendar as cause when task has resumed or no preparation checkpoint',async()=>{

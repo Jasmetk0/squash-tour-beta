@@ -6,6 +6,10 @@ on:
       - 'scripts/full_simulation_controls_browser.py'
       - 'tests/support/full_simulation_http_flow.py'
       - 'tests/application/test_full_simulation_http_flow.py'
+      - 'tests/application/test_full_simulation_summary.py'
+      - 'src/beta_engine/application/full_simulation_summary.py'
+      - 'web/src/components/FullSimulationSummary.tsx'
+      - 'web/src/api/fullSimulationSummary.ts'
       - 'src/beta_engine/infrastructure/db/full_simulation_execution_guard.py'
       - 'src/beta_engine/infrastructure/db/full_simulation_invocation_lease.py'
       - 'src/beta_engine/application/authoritative_run_simulation_driver.py'
@@ -58,7 +62,7 @@ jobs:
           cat "$RUNNER_TEMP/controls-vite.log"
           exit 1
       - name: Verify production HTTP/SQLite controls and expired/reclaimed executor fencing
-        run: python -m pytest tests/application/test_full_simulation_http_flow.py tests/application/test_full_simulation_invocation_lease.py --maxfail=1
+        run: python -m pytest tests/application/test_full_simulation_http_flow.py tests/application/test_full_simulation_invocation_lease.py tests/application/test_full_simulation_summary.py --maxfail=1
       - name: Native Admin Full Simulation controls in Chromium
         run: |
           python scripts/full_simulation_controls_browser.py \

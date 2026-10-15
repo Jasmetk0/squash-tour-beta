@@ -6,6 +6,7 @@ import type { ComponentProps } from 'react'
 
 import { AuthoritativeSimulationPanel } from './AuthoritativeSimulationPanel'
 import { LanguageProvider } from '../i18n/LanguageContext'
+vi.mock('../components/FullSimulationSummary', () => ({FullSimulationSummary: () => null}))
 
 const api = vi.hoisted(() => ({
   getAuthoritativeSimulationPosition: vi.fn(),

@@ -21,6 +21,7 @@ from beta_engine.infrastructure.db.models import (
     AuthoritativeSimulationCommandModel, BranchSavedRevisionModel,
     FullSimulationExecutionLeaseModel, RunBranchModel, SimulationEventGroupModel,
     SimulationSlotModel,
+    OwnedTournamentRankingSourceModel,
 )
 
 
@@ -31,11 +32,12 @@ class TransactionGate:
         self.release = Event()
         self.armed = False
 
-    def arm(self, *, after_groups=0):
+    def arm(self, *, after_groups=0, after_sources=None):
         self.reached.clear()
         self.release.clear()
         self.armed = True
         self.minimum_groups = after_groups + 1
+        self.minimum_sources = 0 if after_sources is None else after_sources + 1
 
     def before_writer(self):
         guard = ACTIVE_FULL_SIMULATION_GUARD.get()
@@ -46,7 +48,11 @@ class TransactionGate:
                 SimulationEventGroupModel.run_id == guard.run_id,
                 SimulationEventGroupModel.branch_id == guard.branch_id,
             ))
-        if committed >= self.minimum_groups:
+            sources = session.scalar(select(func.count()).select_from(OwnedTournamentRankingSourceModel).where(
+                OwnedTournamentRankingSourceModel.run_id == guard.run_id,
+                OwnedTournamentRankingSourceModel.branch_id == guard.branch_id,
+            )) if self.minimum_sources else 0
+        if committed >= self.minimum_groups and sources >= self.minimum_sources:
             self.armed = False
             self.reached.set()
             if not self.release.wait(timeout=60):

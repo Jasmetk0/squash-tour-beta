@@ -38,9 +38,9 @@ def serve(root, port):
     routes._driver = gate.driver
 
     @app.post("/__test/full-simulation/gate/{action}")
-    def control_gate(action: str, after_groups: int = 0):
+    def control_gate(action: str, after_groups: int = 0, after_sources: int | None = None):
         if action == "arm":
-            gate.arm(after_groups=after_groups)
+            gate.arm(after_groups=after_groups, after_sources=after_sources)
         elif action == "release":
             gate.release.set()
         else:
@@ -59,6 +59,7 @@ def serve(root, port):
 
 
 def acceptance(root, *, port, base_url, chromium):
+    expect.set_options(timeout=30000)
     if (root / "browser.sqlite").exists():
         raise ValueError("Use a fresh disposable acceptance directory")
     with socket.socket() as probe:
@@ -292,7 +293,7 @@ def acceptance(root, *, port, base_url, chromium):
                 page.get_by_label("Confirm authoritative simulation").check()
                 # Bound the proof by a second genuine operator pause after all
                 # three matches, before the much larger remaining season work.
-                request("POST", "/__test/full-simulation/gate/arm?after_groups=2")
+                request("POST", "/__test/full-simulation/gate/arm?after_groups=2&after_sources=0")
                 with page.expect_response(lambda r: r.url.endswith("/simulate-full-simulation")) as resumed_response:
                     page.get_by_role("button", name="Simulate reviewed authoritative Full Simulation", exact=True).click()
                     for _ in range(300):
@@ -346,13 +347,34 @@ def acceptance(root, *, port, base_url, chromium):
                 final_retry = request("POST", simulation + "/simulate-full-simulation", command, status=201)
                 assert final_retry["status"] == "stopped" and final_retry["checkpoint"] == "operator_stopped"
                 assert request("GET", evidence_url) == terminal_snapshot
+                summary_path = simulation + "/full-simulation/parents/" + quote(parent_id, safe="") + "/summary"
+                terminal_summary = request("GET", summary_path)
+                assert terminal_summary["available"] is True
+                frozen_summary = terminal_summary["summary"]
+                assert frozen_summary["status"] == "stopped"
+                assert frozen_summary["end_week"] == final_retry["current_week"]
+                assert frozen_summary["initial_saved_revision_id"] == command["expected_revision_id"]
+                assert frozen_summary["terminal_saved_revision_id"] == original["saved_head"]
+                assert len(frozen_summary["completed_tournaments"]) == 1
+                final_match = next(g["payload"]["result"] for g in terminal_snapshot["groups"].values()
+                    if ":R2-N1" in g["payload"]["result"]["match_id"])
+                assert frozen_summary["completed_tournaments"][0]["champion_player_id"] == final_match["winner_player_id"]
+                page.get_by_role("button", name="Inspect parent", exact=True).click()
+                summary_panel = page.get_by_role("region", name="Uložený souhrn simulace")
+                expect(summary_panel).to_contain_text("Skutečný konec")
+                expect(summary_panel).to_contain_text(final_match["winner_player_id"])
                 page.screenshot(path=str(artifacts / "stopped-cs.png"), full_page=True)
+                page.get_by_role("combobox", name="Language / Jazyk").select_option("en")
+                expect(page.get_by_role("region", name="Stored simulation summary")).to_contain_text("Actual end")
+                assert request("GET", summary_path) == terminal_summary
+                assert request("GET", evidence_url) == terminal_snapshot
                 assert errors == []
                 (artifacts / "evidence.json").write_text(json.dumps({
                     "run_id": run_id, "branch_id": branch_id, "parent_command": command,
                     "lost_control_request": lost[0], "replayed_control_response": replay,
                     "before": original, "paused": paused, "continued": continued,
                     "stopped": terminal_snapshot, "terminal_retry": final_retry,
+                    "terminal_summary": terminal_summary,
                     "competing_run_rejection": rejected, "browser_errors": errors,
                     "boundary": "Test-only gate before next SQLite writer; actual MatchEngine outputs, HTTP and browser controls",
                 }, indent=2))

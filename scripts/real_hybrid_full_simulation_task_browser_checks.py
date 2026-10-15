@@ -341,3 +341,108 @@ def resume_original_full_simulation_to_advance_real_hybrid_week(
         json.dumps(proof,indent=2)
     )
     return proof
+
+
+def prove_next_real_hybrid_week_from_restarted_saved_run(
+    *, request, page, run_url, simulation_scope, frozen,
+    official_week_two, saved_week_two_revision, artifacts,
+):
+    """Second real server-owned Full Simulation on *same Run* after process restart.
+
+    First immutable parent legitimately reached its operator-defined Week-2
+    target, so cannot be extended or resumed. This is a *new*, auditably
+    distinct Full Simulation parent beginning at a Saved Week-2 Run state.
+    No fixture scores or synthetic published rankings.
+    """
+    assert frozen is not None and saved_week_two_revision
+    original=_task(request,simulation_scope,frozen["task_id"])
+    assert original["task_id"]==frozen["task_id"]
+    assert original["parent_command_id"]==frozen["parent_command_id"]
+    assert original["state"]=="target_reached",original
+    position=request("GET",simulation_scope+"/position")
+    assert position["current_week"]=={"season_index":0,"week":2},position
+    viewer="/viewer/runs/"+quote(frozen["run_id"],safe="")+"/rankings"
+    assert request("GET",viewer+"/current")==official_week_two
+    original_replays=request("GET",simulation_scope+"/match-replays?limit=50")
+    assert len(original_replays["matches"])==3
+    assert len({row["match_id"] for row in original_replays["matches"]})==3
+    saved_preview=request("GET",simulation_scope+"/save/preview")
+    assert saved_preview["saved_head_revision_id"]==saved_week_two_revision
+    assert saved_preview["has_unsaved_changes"] is False
+    assert saved_preview["can_save"] is False
+
+    proposed=request("POST",simulation_scope+"/full-simulation/preview",{
+        "command_id":"real-hybrid-second-full-parent-after-restart",
+        "operator_label":"Week 2 real continuation commissioner",
+        "audit_reason":"Verify following canonical weeks after genuine hybrid and SQLite restart",
+    })
+    assert proposed["start_week"]=={"season_index":0,"week":2},proposed
+    assert proposed["expected_revision_id"]==saved_week_two_revision
+    assert proposed["initial_action"]=="next_season"
+    command={
+        "command_id":"real-hybrid-second-full-parent-after-restart",
+        "run_id":frozen["run_id"],"branch_id":frozen["branch_id"],
+        "operator_label":"Week 2 real continuation commissioner",
+        "audit_reason":"Verify following canonical weeks after genuine hybrid and SQLite restart",
+        "expected_start_week":proposed["start_week"],
+        "expected_position_fingerprint":proposed["expected_position_fingerprint"],
+        "expected_revision_id":proposed["expected_revision_id"],
+        "expected_preview_fingerprint":proposed["preview_fingerprint"],
+    }
+    start={"request_id":"real-hybrid-second-start-after-process-restart","command":command}
+    acknowledgement=request("POST",simulation_scope+"/full-simulation/tasks",start,status=202)
+    assert acknowledgement["parent_command_id"]==command["command_id"]
+    assert acknowledgement["task_id"]!=frozen["task_id"]
+    assert request("POST",simulation_scope+"/full-simulation/tasks",start,status=202)==acknowledgement
+    deadline=time.monotonic()+150
+    task=None
+    while time.monotonic()<deadline:
+        task=_task(request,simulation_scope,acknowledgement["task_id"])
+        if task["state"] in ("target_reached","complete","failed","recoverable","awaiting_operator"):
+            break
+        time.sleep(.15)
+    else:
+        raise AssertionError("Second Full Simulation worker did not reach a canonical checkpoint")
+    assert task["state"] in ("awaiting_operator","target_reached","complete"),task
+    assert task["parent_command_id"]==command["command_id"]
+    assert task["original_command"]["command_id"]==command["command_id"]
+    later=request("GET",simulation_scope+"/position")
+    ordinal=later["current_week"]["season_index"]*61+later["current_week"]["week"]-1
+    assert ordinal>=2, (later,task)
+    assert request("GET",simulation_scope+"/match-replays?limit=50")==original_replays
+    assert request("GET",viewer+"/current")==official_week_two, (
+        "No separate Save: public Week-2 snapshot must stay unchanged"
+    )
+    assert request("GET",simulation_scope+"/save/preview")["saved_head_revision_id"]==saved_week_two_revision
+    assert _task(request,simulation_scope,frozen["task_id"])["state"]=="target_reached"
+
+    # Task Center supports the second, separate Run-owned parent without
+    # collapsing the original terminal record or silently changing sport.
+    from playwright.sync_api import expect
+    task_page=page.context.new_page()
+    try:
+        task_page.goto(run_url.rsplit("/admin/runs/",1)[0]+"/admin/operations")
+        task_page.get_by_role("combobox",name="Language / Jazyk").select_option("en")
+        region=task_page.get_by_role("region",name="Server simulation tasks")
+        expect(region).to_contain_text(acknowledgement["task_id"],timeout=30000)
+        expect(region).to_contain_text(frozen["task_id"],timeout=30000)
+        task_page.screenshot(path=str(artifacts/"hybrid-following-week-after-restart.png"),full_page=True)
+    finally:
+        task_page.close()
+    report={
+        "original_terminal_task":frozen["task_id"],
+        "second_full_simulation_task":acknowledgement["task_id"],
+        "second_parent":command["command_id"],
+        "start_week":proposed["start_week"],
+        "observed_week":later["current_week"],
+        "second_task_state":task["state"],
+        "second_task_checkpoint":task.get("checkpoint"),
+        "identical_real_match_engine_replays":True,
+        "saved_week2_revision_preserved":saved_week_two_revision,
+        "viewer_week2_unchanged_until_save":True,
+        "second_parent_is_distinct_from_terminal_original":True,
+    }
+    (artifacts/"hybrid-second-week-worker-after-restart.json").write_text(
+        json.dumps(report,indent=2)
+    )
+    return report

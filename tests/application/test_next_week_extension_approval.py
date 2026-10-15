@@ -232,6 +232,7 @@ def test_http_explicit_approval_atomic_audit_exact_replay_and_no_sport(tmp_path,
                     "mode":"full_simulation", "command":cmd.model_dump(mode="json")
                 }),
             )
+            session.flush()  # Materialize newly created parent before lookup.
             full_row = session.get(
                 AuthoritativeSimulationCommandModel,
                 (cmd.run_id, cmd.branch_id, cmd.command_id),

@@ -2500,11 +2500,40 @@ textarea:focus-visible {
 }
 .simulation-task-center__item {
   min-width: 0;
-  border: 1px solid #cbd5e1;
-  background: #f8fafc;
+  border: 1px solid #516b90;
+  background: #172841;
+  color: #e5edf8;
   border-radius: 12px;
   padding: 1rem;
 }
+.simulation-task-center__item .status { color: #b8c9de; }
+.simulation-task-center__item code { overflow-wrap: anywhere; }
+.simulation-task-center__item details { margin: 0.7rem 0; }
+.simulation-task-center__item summary { cursor: pointer; color: #d3e5fa; }
+.simulation-task-center__item a:not(.button-link) { color: #a6d4ff; }
+.server-simulation-tasks__list {
+  padding: 0;
+  margin: 0.75rem 0 1.25rem;
+  list-style: none;
+  display: grid;
+  gap: 0.85rem;
+}
+.server-simulation-tasks__item {
+  min-width: 0;
+  padding: 1rem;
+  background: #172841;
+  color: #e5edf8;
+  border: 1px solid #516b90;
+  border-radius: 12px;
+  overflow-wrap: anywhere;
+}
+.server-simulation-tasks__item code { overflow-wrap: anywhere; }
+.server-simulation-tasks__item details { margin: 0.6rem 0; }
+.server-simulation-tasks__item summary { cursor: pointer; color: #d3e5fa; }
+.server-simulation-tasks__item a { color: #a6d4ff; }
+.server-simulation-tasks__item button { margin: 0.25rem; }
+.server-simulation-tasks__item input { max-width: 100%; box-sizing: border-box; }
+.server-simulation-tasks__item [role="alert"] { color: #fecaca; }
 .simulation-task-center__heading {
   display: flex;
   align-items: baseline;

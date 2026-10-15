@@ -104,6 +104,33 @@ describe('week-extension consent is scoped to rendered evidence (mock HTTP)',()=
   expect(screen.queryByRole('button',{name:'Explicitly resume server task'})).toBeNull()
   expect(await screen.findByText(/Resuming the server task requires another separate confirmation/)).toBeVisible()
  })
+ it('cancelled uncertain request requires fresh consent with unchanged proof',async()=>{
+  localStorage.setItem('squash-engine-language-v1','en')
+  api.getNextWeekExtensionInspection.mockResolvedValue([candidate()])
+  api.approveNextWeekExtension.mockRejectedValueOnce(Error('offline'))
+   .mockResolvedValue({schema_version:'next_week_extension_approval.v1',task_revision:2,replayed:false})
+  mount()
+  await consent()
+  fireEvent.click(approval())
+  await screen.findByText('offline')
+  expect(api.approveNextWeekExtension).toHaveBeenCalledTimes(1)
+  const first=api.approveNextWeekExtension.mock.calls[0]
+  // Do not change the inspector proof, revision, Run or Branch.
+  fireEvent.click(screen.getByRole('button',{name:'Cancel request'}))
+  await waitFor(()=>expect(approval()).toBeDisabled())
+  expect(screen.getByLabelText(/I confirm that committed results/)).not.toBeChecked()
+  expect(screen.getByLabelText('Approving operator')).toHaveValue('')
+  expect(screen.getByLabelText('Approval reason')).toHaveValue('')
+  expect(api.approveNextWeekExtension).toHaveBeenCalledTimes(1)
+  await consent()
+  fireEvent.click(approval())
+  await waitFor(()=>expect(api.approveNextWeekExtension).toHaveBeenCalledTimes(2))
+  const second=api.approveNextWeekExtension.mock.calls[1]
+  expect(second[0]).toBe(first[0])
+  expect(second[1]).toBe(first[1])
+  expect(second[2]).toEqual({...first[2],control_command_id:second[2].control_command_id})
+  expect(second[2].control_command_id).not.toBe(first[2].control_command_id)
+ })
  it('cancelled uncertain request must be reapproved against current evidence',async()=>{
   localStorage.setItem('squash-engine-language-v1','en')
   api.getNextWeekExtensionInspection.mockResolvedValue([candidate()])

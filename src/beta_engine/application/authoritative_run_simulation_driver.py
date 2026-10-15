@@ -5566,11 +5566,11 @@ class AuthoritativeRunSimulationDriver:
                     session, run_id=command.run_id, branch_id=command.branch_id,
                     week=command.expected_week,
                 )
-                if (
-                    schedule_at_boundary is None
-                    or schedule_at_boundary.fingerprint
-                    != frozen_at_boundary["schedule_fingerprint"]
-                ):
+                current_fingerprint = (
+                    schedule_at_boundary.fingerprint
+                    if schedule_at_boundary is not None else None
+                )
+                if current_fingerprint != frozen_at_boundary["schedule_fingerprint"]:
                     raise ValueError("Week Schedule changed during Next Week")
 
         transition_payload = None

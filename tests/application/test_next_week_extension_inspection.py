@@ -80,3 +80,27 @@ def test_reserved_ordinal_gap_not_claimed_safe():
     # integer may be a reserved Entry ordinal before the first new match.
     gapped_two=schedule(*base.slots,slot(3,"semi",2,1,"main"),slot(5,"final",3,1,"main"))
     assert inspect(frozen,gapped_two,base,{("hybrid","semi"),("hybrid","final")})["reason"]=="new_slots_cross_reserved_global_ordinals"
+
+
+@pytest.mark.pr_critical
+def test_http_extension_inspection_is_read_only_on_real_run(tmp_path):
+    """Scoped production FastAPI/file-SQLite GET without fabricated sport."""
+    from tests.api.test_saved_revision_history_api import _request
+    from tests.support.full_simulation_http_flow import make_server, initialize, snapshot
+
+    server, factory, _gate = make_server(tmp_path)
+    with server:
+        flow = initialize(server, tmp_path)
+        before = snapshot(factory, flow["run_id"], flow["branch_id"])
+        status, result = _request(
+            "GET", server.base_url + flow["scope"] + "/next-week/extension-inspection"
+        )
+        assert status == 200, result
+        assert result == {
+            "schema_version": "next_week_extension_inspection.v1",
+            "run_id": flow["run_id"],
+            "branch_id": flow["branch_id"],
+            "read_only": True,
+            "items": [],
+        }
+        assert snapshot(factory, flow["run_id"], flow["branch_id"]) == before

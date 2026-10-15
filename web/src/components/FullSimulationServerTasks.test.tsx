@@ -6,6 +6,8 @@ import {LanguageProvider} from '../i18n/LanguageContext'
 import {FullSimulationServerTasks,StartServerTask} from './FullSimulationServerTasks'
 import {taskExample} from '../api/fullSimulationTasks.fixture'
 const api=vi.hoisted(()=>({getServerTasks:vi.fn(),startServerTask:vi.fn(),continueServerTask:vi.fn()}))
+const weekReview=vi.hoisted(()=>({getNextWeekExtensionInspection:vi.fn()}))
+vi.mock('../api/fullSimulationWeekReview',()=>weekReview)
 vi.mock('../api/fullSimulationTasks',async importOriginal=>({...await importOriginal<object>(),...api}))
 vi.mock('./FullSimulationSummary',()=>({FullSimulationSummary:()=>null}))
 function open(language:'cs'|'en',child:React.ReactNode){
@@ -68,6 +70,26 @@ describe('server task UI (mock HTTP)',()=>{
   expect(screen.queryByRole('button',{name:language==='cs'?'Výslovně pokračovat v serverové úloze':'Explicitly resume server task'})).toBeNull()
   expect(api.continueServerTask).not.toHaveBeenCalled()
   expect(screen.getByRole('link').getAttribute('href')).toContain('branch=branch')
+ })
+
+ it.each(['cs','en'] as const)('inspects frozen hybrid extension without approving or resuming (%s)',async language=>{
+  const stale={...taskExample(),state:'awaiting_operator',checkpoint:'week_schedule_review_required',
+    needs_operator_action:true,error:null}
+  api.getServerTasks.mockResolvedValue([stale])
+  weekReview.getNextWeekExtensionInspection.mockResolvedValue([{
+    command_id:'old-week-child',status:'append_only_proven',new_slots:[
+      {ordinal:4,group_id:'final',event_id:'event',round_number:1}
+    ]
+  }])
+  open(language,<FullSimulationServerTasks runId="run" branchId="branch"/>)
+  expect(await screen.findByText('old-week-child')).toBeVisible()
+  expect(screen.getByText(language==='cs'
+    ? /Nové knockout sloty: 4/
+    : /New knockout slots: 4/)).toBeVisible()
+  expect(weekReview.getNextWeekExtensionInspection).toHaveBeenCalledWith('run','branch')
+  expect(screen.queryByRole('button',{name:language==='cs'
+    ?'Výslovně pokračovat v serverové úloze':'Explicitly resume server task'})).toBeNull()
+  expect(api.continueServerTask).not.toHaveBeenCalled()
  })
 
 })

@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import pytest
 
+pytestmark = pytest.mark.pr_critical
+
 from beta_engine.domain.calendar.run_calendar import (
     CALENDAR_SCHEMA_VERSION,
     LEGACY_FAX_CALENDAR_SCHEMA_VERSION,

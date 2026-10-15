@@ -2,7 +2,7 @@ import { screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { RunPackageSetupPanel } from './RunPackageSetupPanel'
+import { RunPackageSetupPanel, supportedCalendarSeason } from './RunPackageSetupPanel'
 import type { RunBranch, RunContainer } from '../api/types'
 import { renderWithRoute } from '../test/testUtils'
 
@@ -82,8 +82,8 @@ beforeEach(() => {
   })
 })
 
-function render(overrideRun: RunContainer = run, overrideBranch: RunBranch | null = branch) {
-  return renderWithRoute(<RunPackageSetupPanel run={overrideRun} branch={overrideBranch} />, '/admin/runs/test-product-run')
+function render(overrideRun: RunContainer = run, overrideBranch: RunBranch | null = branch, route='/admin/runs/test-product-run') {
+  return renderWithRoute(<RunPackageSetupPanel run={overrideRun} branch={overrideBranch} />, route)
 }
 
 describe('canonical World / Calendar setup in Run Home', () => {
@@ -143,4 +143,39 @@ describe('canonical World / Calendar setup in Run Home', () => {
     expect(await screen.findByRole('button', { name: 'Preview copy' })).toBeDisabled()
     expect(screen.getByText(/Protected Runs cannot import packages/)).toBeInTheDocument()
   })
+  it('prefills exact Branch 2001/02 Calendar without copying or saving automatically',async()=>{
+    api.previewRunSourcePackage.mockResolvedValueOnce({
+      ...preview,document:{...preview.document,package_type:'Calendar',package_id:'calendar-2001-2002'}
+    })
+    render(run,branch,'/admin/runs/test-product-run/manage?branch=branch-a&calendarSeason=2001-2002')
+    expect(screen.getByRole('combobox',{name:'Source kind'})).toHaveValue('calendar')
+    expect(screen.getByRole('textbox',{name:'Calendar source season'})).toHaveValue('2001-2002')
+    expect(screen.getByText(/Only a genuinely authored source Calendar/)).toBeVisible()
+    expect(api.previewRunSourcePackage).not.toHaveBeenCalled()
+    expect(api.confirmRunSourcePackage).not.toHaveBeenCalled()
+    expect(api.saveRunPackageWorkingDraft).not.toHaveBeenCalled()
+    await userEvent.click(await screen.findByRole('button',{name:'Preview copy'}))
+    await waitFor(()=>expect(api.previewRunSourcePackage).toHaveBeenCalledWith(
+      'test-product-run','branch-a','calendar','2001-2002'
+    ))
+    expect(api.confirmRunSourcePackage).not.toHaveBeenCalled()
+  })
+  it('denies foreign Branch and malformed/out-of-range Calendar deep links',()=>{
+    for(const bad of [null,'1999-2000','2049-2051','2050-2051','2001-2001','2001-2003','2001-2002/evil']){
+      expect(supportedCalendarSeason(bad)).toBeNull()
+    }
+    expect(supportedCalendarSeason('2001-2002')).toBe('2001-2002')
+    render(run,branch,'/admin/runs/test-product-run/manage?branch=foreign&calendarSeason=2001-2002')
+    expect(screen.getByRole('combobox',{name:'Source kind'})).toHaveValue('world')
+    expect(api.previewRunSourcePackage).not.toHaveBeenCalled()
+  })
+  it('handles truly absent new-season source by refusing all writes',async()=>{
+    api.previewRunSourcePackage.mockRejectedValueOnce(new Error('Season calendar 2001/2002 was not found'))
+    render(run,branch,'/admin/runs/test-product-run/manage?branch=branch-a&calendarSeason=2001-2002')
+    await userEvent.click(await screen.findByRole('button',{name:'Preview copy'}))
+    expect(await screen.findByRole('alert')).toHaveTextContent('2001/2002')
+    expect(api.confirmRunSourcePackage).not.toHaveBeenCalled()
+    expect(api.saveRunPackageWorkingDraft).not.toHaveBeenCalled()
+  })
+
 })

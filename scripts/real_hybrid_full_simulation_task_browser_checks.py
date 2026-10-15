@@ -174,9 +174,7 @@ def resume_real_hybrid_task_at_explicit_week_two_target(
         ui.goto(run_url.rsplit("/admin/runs/", 1)[0] + "/admin/operations")
         ui.get_by_role("combobox", name="Language / Jazyk").select_option("en")
         tasks = ui.get_by_role("region", name="Server simulation tasks")
-        card = tasks.locator("li[data-task-id]").filter(
-            has=ui.locator(f'code:text-is("{frozen["task_id"]}")')
-        )
+        card = tasks.locator('li[data-task-id="'+frozen["task_id"]+'"]')
         expect(card).to_have_count(1, timeout=30000)
         expect(card.get_by_role("button",name="Explicitly resume server task")).to_be_visible()
         card.get_by_label("Task operator",exact=True).fill("Explicit hybrid task operator")
@@ -196,11 +194,7 @@ def resume_real_hybrid_task_at_explicit_week_two_target(
         assert finished["state"]=="target_reached", finished
         assert finished["parent_command_id"]==frozen["parent_command_id"]
         assert finished["original_command"]["command_id"]==frozen["parent_command_id"]
-        assert finished["effective_boundary_target"]["target_week"]==target["target_week"] if isinstance(
-            finished["effective_boundary_target"],dict
-        ) and "target_week" in finished["effective_boundary_target"] else (
-            finished["current_week"]==target["target_week"]
-        )
+        assert finished["current_week"]==target["target_week"]
         expect(card).to_contain_text("Target reached", timeout=30000)
         ui.screenshot(path=str(artifacts/"real-hybrid-original-task-target-reached.png"),full_page=True)
     finally:

@@ -8,6 +8,7 @@ from typing import Self
 from urllib import error, parse, request
 
 import uvicorn
+import pytest
 
 from beta_engine.main import create_app
 
@@ -215,3 +216,83 @@ def test_viewer_branch_draft_api_reports_missing_target_and_validation(
         status_code, draft = _request("GET", draft_url)
         assert status_code == 200
         assert draft["draft_version"] == 0
+
+
+@pytest.mark.pr_critical
+def test_real_http_run_calendar_is_durable_across_restart_save_and_fork(tmp_path) -> None:
+    database_url = f"sqlite:///{tmp_path / 'v82-calendar-api.db'}"
+    expected = {
+        "schema_version": "run_calendar.v1",
+        "weeks_per_year": 61,
+        "season_start_year_week": 37,
+        "start_year": 2000,
+        "season_count": 50,
+    }
+    with ApiServer(database_url=database_url) as server:
+        code, created = _request(
+            "POST", f"{server.base_url}/run-containers",
+            {"display_name": "Saved v82 Calendar"},
+        )
+        assert code == 201
+        assert created["metadata_json"]["run_calendar"] == expected
+        run_id = created["run_id"]
+        branch_id = created["viewer_branch_id"]
+        code, branch_list = _request(
+            "GET", f"{server.base_url}/run-branches?run_id={run_id}",
+        )
+        assert code == 200
+        revision_id = branch_list["run_branches"][0]["saved_head_revision_id"]
+        initial_detail_url = (
+            f"{server.base_url}/run-containers/{run_id}/branches/"
+            f"{branch_id}/saved-revisions/{revision_id}"
+        )
+        code, first = _request("GET", initial_detail_url)
+        assert code == 200
+        assert first["payload"]["run"]["run_calendar"] == expected
+        original_hash = first["content_hash"]
+
+        code, other = _request(
+            "POST", f"{server.base_url}/run-containers/{run_id}/branches",
+            {"source_branch_id": branch_id, "source_saved_revision_id": revision_id},
+        )
+        assert code == 201
+        other_id = other["branch_id"]
+        code, stage = _request(
+            "PUT",
+            f"{server.base_url}/run-containers/{run_id}/branches/{branch_id}/working-draft/viewer-branch",
+            {"viewer_branch_id": other_id, "expected_draft_version": 0},
+        )
+        assert code == 200
+        assert stage["status"] == "dirty"
+        code, saved = _request(
+            "POST",
+            f"{server.base_url}/run-containers/{run_id}/branches/{branch_id}/working-draft/save",
+            {"expected_draft_version": stage["draft_version"]},
+        )
+        assert code == 201
+        next_revision_id = saved["saved_revision"]["revision_id"]
+        code, next_detail = _request(
+            "GET",
+            f"{server.base_url}/run-containers/{run_id}/branches/{branch_id}/saved-revisions/{next_revision_id}",
+        )
+        assert code == 200
+        assert next_detail["payload"]["run"]["run_calendar"] == expected
+        assert next_detail["parent_revision_id"] == revision_id
+        code, unchanged = _request("GET", initial_detail_url)
+        assert code == 200
+        assert unchanged["content_hash"] == original_hash
+        assert unchanged["payload"] == first["payload"]
+
+    # Recreate the entire HTTP service and SQLite repository.
+    with ApiServer(database_url=database_url) as server:
+        code, reopened = _request("GET", f"{server.base_url}/run-containers/{run_id}")
+        assert code == 200
+        assert reopened["metadata_json"]["run_calendar"] == expected
+        assert reopened["viewer_branch_id"] == other_id
+        code, saved_again = _request(
+            "GET",
+            f"{server.base_url}/run-containers/{run_id}/branches/{branch_id}/saved-revisions/{next_revision_id}",
+        )
+        assert code == 200
+        assert saved_again["payload"] == next_detail["payload"]
+        assert saved_again["content_hash"] == next_detail["content_hash"]

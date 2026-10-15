@@ -99,6 +99,12 @@ def test_durable_start_disconnect_pause_resume_stop_and_exact_replay(
                 "GET", server.base_url + "/run-containers/full-simulation/tasks"
             )[1]
             assert inventory["tasks"][0]["task_id"] == ack["task_id"]
+            measured = inventory["tasks"][0]["progress_evidence"]
+            assert measured["kind"] == "live_branch"
+            assert measured["receipt_scope"] == "branch_current_week"
+            assert measured["committed_group_receipts_this_week"] == len(during["groups"])
+            assert measured["completed_slot_receipts_this_week"] >= 1
+            assert measured["weeks_advanced_since_start"] == 0
             assert inventory["tasks"][0]["heartbeat_health"] == "recent"
             assert "owner_token" not in json.dumps(inventory)
             pause = {
@@ -137,6 +143,12 @@ def test_durable_start_disconnect_pause_resume_stop_and_exact_replay(
         finally:
             gate.release.set()
         stopped = wait_task(server, root, ack["task_id"], {"stopped"})
+        summary = _request("GET", url + "/full-simulation/parents/" + command["command_id"] + "/summary")[1]["summary"]
+        assert stopped["progress_evidence"]["kind"] == "terminal_frozen"
+        assert stopped["progress_evidence"]["week"] == summary["end_week"]
+        assert stopped["current_week"] == summary["end_week"]
+        assert stopped["progress_evidence"]["committed_group_receipts_this_week"] is None
+        assert stopped["progress_evidence"]["completed_slot_receipts_this_week"] is None
         assert stopped["original_command"]["command_id"] == command["command_id"]
         assert _request("POST", url + "/full-simulation/tasks", start) == (202, ack)
         after = snapshot(factory, flow["run_id"], flow["branch_id"])

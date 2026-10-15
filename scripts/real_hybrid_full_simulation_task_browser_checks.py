@@ -246,6 +246,7 @@ def resume_original_full_simulation_to_advance_real_hybrid_week(
     No fabricated match, no direct storage writes and no Week Transition UI.
     """
     waiting = _task(request, simulation_scope, frozen["task_id"])
+    assert waiting["task_id"] == frozen["task_id"], waiting
     assert waiting["state"] == "awaiting_operator", waiting
     assert waiting["checkpoint"] == frozen["checkpoint"]
     assert waiting["revision"] == frozen["revision"]

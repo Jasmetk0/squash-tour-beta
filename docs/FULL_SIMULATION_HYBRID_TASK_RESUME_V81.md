@@ -14,7 +14,7 @@ Week 2. In a separate real Chromium Task Center view, an operator provides
 an audit label + reason and deliberately resumes the exact task. The server
 must adopt `target_reached` rather than trying to replay old group/knockout
 matches or alter the already published Saved Revision. It proves all three
-replay identities, unchanged Save preview, original task identity and
+replay identities, unchanged Saved head and Working Draft version, original task identity and
 unchanged state after the server process is restarted by the existing test.
 The test never patches the worker, seeds scores or synthesizes sporting data.
 
@@ -22,3 +22,7 @@ The test never patches the worker, seeds scores or synthesizes sporting data.
 Transition. It does **not** prove the original server task independently
 executes the Week Transition or covers every future season/50-year run.
 Independent full original-task Week Transition is the next integration gate.
+
+The immutable Saved head and Draft version are compared separately from the
+live Save-preview fingerprint: changing the audit target legitimately changes
+unsaved command/audit evidence without replaying sporting results.

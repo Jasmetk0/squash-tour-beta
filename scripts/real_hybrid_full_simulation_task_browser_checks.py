@@ -147,8 +147,13 @@ def resume_real_hybrid_task_at_explicit_week_two_target(
     assert len(before_replays["matches"]) == 3
     assert len({m["match_id"] for m in before_replays["matches"]}) == 3
     before_save = request("GET", simulation_scope + "/save/preview")
-    # The parent is not allowed to mutate already Saved sporting or ranking
-    # authority just to report that the chosen target was reached.
+    saved_revision_before = before_save["saved_head_revision_id"]
+    draft_version_before = before_save["draft_version"]
+    viewer = "/viewer/runs/" + quote(frozen["run_id"],safe="") + "/rankings/current"
+    published_before = request("GET", viewer)
+    # Target audit updates the pending parent receipt and may deliberately
+    # change the full *preview fingerprint*. It must not create another Saved
+    # Revision or alter the actual sporting/draft/ranking authorities.
     target = {
         "control_command_id": "real-hybrid-task-reviewed-target-week2",
         "target_command_id": frozen["parent_command_id"],
@@ -163,7 +168,10 @@ def resume_real_hybrid_task_at_explicit_week_two_target(
     assert retry["replayed"] is True
     assert retry["effective_target_week"] == target["target_week"]
     assert request("GET", simulation_scope + "/match-replays?limit=50") == before_replays
-    assert request("GET", simulation_scope + "/save/preview") == before_save
+    after_target = request("GET", simulation_scope + "/save/preview")
+    assert after_target["saved_head_revision_id"] == saved_revision_before
+    assert after_target["draft_version"] == draft_version_before
+    assert request("GET", viewer) == published_before
 
     # Real UI, deliberate operator + reason, original Task ID. No API bypass
     # or automatic approval after clicking target.
@@ -202,7 +210,10 @@ def resume_real_hybrid_task_at_explicit_week_two_target(
 
     assert request("GET",simulation_scope+"/position")["current_week"]==target["target_week"]
     assert request("GET",simulation_scope+"/match-replays?limit=50")==before_replays
-    assert request("GET",simulation_scope+"/save/preview")==before_save
+    final_preview = request("GET",simulation_scope+"/save/preview")
+    assert final_preview["saved_head_revision_id"] == saved_revision_before
+    assert final_preview["draft_version"] == draft_version_before
+    assert request("GET",viewer)==published_before
     history=request("GET",simulation_scope+"/full-simulation/history")
     assert any(item["command_id"]==frozen["parent_command_id"] and item["status"]=="target_reached"
                for item in history["items"]), history
@@ -214,7 +225,8 @@ def resume_real_hybrid_task_at_explicit_week_two_target(
         "target_revision":approved["target_revision"],
         "task_state":finished["state"],
         "target_replay_safe":True,
-        "no_additional_matches_or_unsaved_changes":True,
+        "no_additional_matches_or_saved_head_change":True,
+        "ranking_publication_identical":True,
         "original_full_simulation_target_reached":True,
         "operator_explicit_resume":True,
         "human_performed_week_transition":True,

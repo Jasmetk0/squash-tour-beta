@@ -50,6 +50,9 @@ from beta_engine.application.global_full_simulation_operations import (
 from beta_engine.application.run_branch_creation_service import (
     RunBranchCreationService,
 )
+from beta_engine.application.run_calendar_target_preview import (
+    preview_saved_run_calendar_target,
+)
 from beta_engine.application.run_container_creation_service import (
     RunContainerCreationService,
 )
@@ -796,6 +799,34 @@ def get_global_full_simulation_tasks(request: Request, runtime: ApiRuntime = Dep
         return inspect_tasks(runtime.repository._session_factory,observer_instance=request.app.state.full_simulation_worker.instance)
     except (KeyError, TypeError, ValueError) as exc:
         raise HTTPException(409, detail={"code":"full_simulation_task_conflict","message":str(exc)}) from exc
+
+
+@router.get("/{run_id}/branches/{branch_id}/calendar/target-preview")
+def get_run_calendar_target_preview(
+    run_id: str,
+    branch_id: str,
+    season_index: int = Query(ge=0),
+    week: int = Query(ge=1),
+    advance_weeks: int = Query(default=0, ge=0),
+    service: SimulationApiService = Depends(get_simulation_api_service),
+) -> dict:
+    """A persisted Saved-clock projection, NOT a sporting execution command."""
+
+    try:
+        with service.repository._session_factory() as session:
+            return preview_saved_run_calendar_target(
+                session, run_id=run_id, branch_id=branch_id,
+                season_index=season_index, week=week,
+                advance_weeks=advance_weeks,
+            )
+    except (KeyError, TypeError, ValueError) as exc:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail={
+                "code": "run_calendar_target_preview_conflict",
+                "message": str(exc),
+            },
+        ) from exc
 
 
 @router.get("/{run_id:path}", response_model=RunContainerResponse)

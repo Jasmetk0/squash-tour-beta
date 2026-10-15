@@ -18,7 +18,7 @@ const candidate=(overrides:Record<string,unknown>={})=>({
  new_slots:[{ordinal:3,group_id:'final',event_id:'e1',round_number:1}],
  read_only:true as const,automatic_rebase:false as const,...overrides
 })
-const scope=(overrides:Record<string,string|number>={})=>({
+const scope=(overrides:Partial<{runId:string;branchId:string;taskId:string;taskRevision:number}>={})=>({
  runId:'run',branchId:'branch',taskId:'task',taskRevision:1,...overrides
 })
 function mount(initial=scope()){

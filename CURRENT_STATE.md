@@ -1,3 +1,13 @@
+# Active follow-on: exact 2001/02 Calendar operator handoff (15 October 2026)
+
+Verified base `buuk` `1cce2b5af2fd3843959f0c0658d846b3c839665c` after merged #1487; no open PR at start. Current focused slice builds explicit, read-only Task Center navigation for a real current `week_preparation_required` checkpoint into the *same Run/Branch* Run Management with correctly preselected 2001/02 Calendar. The original blocked parent remains immutable; Calendar source authoring, copy, Save and task Resume all require their existing separate approvals. See [exact scope and limits](docs/SECOND_SEASON_CALENDAR_OPERATOR_HANDOFF_V81.md).
+
+**Pending after this slice:** verify actual blocker detail from the real post-#1484 Week 1, then author a real new-season Calendar with multiple Tournament Editions, complete their MatchEngine fixtures, and advance the SAME nonterminal server task beyond a concrete next-week target. A navigation handoff is not that sports acceptance.
+
+**Historical headings below:** earlier dated "candidate"/"active" notes record contemporaneous status, not an unmerged PR queue.
+
+---
+
 # Active integration — Task Center evidence and safe operator guidance (15 October 2026)
 
 After verified merge #1486, the base `buuk` is `f4430ada8dae54f99e4bc27790e240d8ce268d18`, with no other open PR at this task's start. This coherent frontend candidate distinguishes active server-task state from the last recorded driver checkpoint, reveals stored blocker IDs and detail without fabricating causes, guides changed Next Week schedules via *actual* read-only extension inspection instead of unconditional Stop, and correlates the exact original pending receipt with its owning server task in the global Task Center. It also repairs dark-surface contrast. The original receipts remain inspectable and read-only; no command/Save/worker/lease/sporting authority changes. Frontend component/mock tests and applicable real server-task browser screenshots are needed before merge.

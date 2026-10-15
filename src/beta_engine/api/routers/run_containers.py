@@ -20,6 +20,7 @@ from beta_engine.api.deps import (
 from beta_engine.api.schemas import (
     CreateRunBranchRequest,
     CreateRunContainerRequest,
+    RunCalendarCreationRequest,
     RunBranchResponse,
     RunContainerListResponse,
     RunContainerResponse,
@@ -52,6 +53,7 @@ from beta_engine.application.run_branch_creation_service import (
 )
 from beta_engine.application.run_calendar_target_preview import (
     preview_saved_run_calendar_target,
+    preview_run_calendar_configuration,
 )
 from beta_engine.application.run_container_creation_service import (
     RunContainerCreationService,
@@ -444,7 +446,10 @@ def create_run_container(
     service: RunContainerCreationService = Depends(get_run_container_creation_service),
 ) -> RunContainerResponse:
     try:
-        return _response(service.create_empty_run(display_name=payload.display_name))
+        return _response(service.create_empty_run(
+            display_name=payload.display_name,
+            calendar=payload.calendar.to_calendar() if payload.calendar is not None else None,
+        ))
     except RunDisplayNameConflictError as exc:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
@@ -459,6 +464,13 @@ def create_run_container(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)
         ) from exc
+
+
+@router.post("/calendar/creation-preview")
+def preview_run_calendar_creation(payload: RunCalendarCreationRequest):
+    """Pure calendar preview: no Run, draft, players or task is created."""
+
+    return preview_run_calendar_configuration(payload.to_calendar())
 
 
 @router.get("", response_model=RunContainerListResponse)

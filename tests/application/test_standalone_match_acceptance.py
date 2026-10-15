@@ -28,6 +28,7 @@ from beta_engine.infrastructure.db.models import (
     AuthoritativeSimulationCommandModel,
     InitialWorldStateModel,
     PlayerLifecycleWeekStateModel,
+    PlayerHealthWeekStateModel,
     PlayerSportingWeekStateModel,
     SimulationEventGroupModel,
     SimulationSlotModel,
@@ -158,6 +159,8 @@ def test_empty_run_two_manual_players_can_play_one_saved_standalone_match(tmp_pa
         assert session.query(SimulationEventGroupModel).count() == 1
         assert session.query(AuthoritativeSimulationCommandModel).count() == 1
 
+        assert session.query(PlayerHealthWeekStateModel).count() == 1
+
         # Operation-scoped modularity: this flow never creates Calendar/Tournament/Draw authority.
         assert session.query(AdoptedTournamentAuthorityModel).count() == 0
         assert session.query(WeekSimulationScheduleModel).count() == 0
@@ -183,6 +186,7 @@ def test_empty_run_two_manual_players_can_play_one_saved_standalone_match(tmp_pa
     assert "initial_world" in content
     assert "player_lifecycle" in content
     assert "player_sporting_state" in content
+    assert "player_health_state" in content
     assert "simulation_slot_match_state" in content
 
     restored_empty = RunSavedRevisionRestoreService(

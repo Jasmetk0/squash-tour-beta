@@ -133,6 +133,7 @@ def setup_run(page, base_url: str, artifacts: Path) -> str:
     click = lambda name: browser_click(page, name)
     check = lambda name: page.get_by_label(name, exact=True).check()
     page.goto(base_url + "/admin/runs/new")
+    page.get_by_role("combobox", name="Language / Jazyk").select_option("en")
     page.get_by_label("Unique Run name").fill("Browser Tournament Acceptance")
     click("Create isolated Run")
     page.get_by_role("heading", name="World and Calendar copies", exact=True).wait_for()

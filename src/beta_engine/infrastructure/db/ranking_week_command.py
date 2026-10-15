@@ -224,6 +224,12 @@ def stage_ranking_week_command(
                 )
             verify_ranking_command_inputs(receipt, snapshot, history)
             return snapshot
+        from beta_engine.application.run_calendar_read_authority import guard_versioned_sporting_write
+
+        guard_versioned_sporting_write(
+            session, run_id=context.run_id, branch_id=context.branch_id,
+            operation="Ranking preparation",
+        )
         if any(s.week == context.target_week for s in history):
             raise ValueError(
                 "Ranking target already staged by another command or pathway"

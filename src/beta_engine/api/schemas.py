@@ -26,6 +26,7 @@ from beta_engine.domain.run_branches import normalize_branch_display_name
 from beta_engine.domain.timezone_areas import TimezoneArea
 from beta_engine.domain.players.initial_pool import CustomInitialPoolPlayerCreate, InitialPoolPlayerUpdate
 from beta_engine.domain.run_containers import normalize_run_display_name
+from beta_engine.domain.calendar.run_calendar import RunCalendar
 
 
 class HealthResponse(BaseModel):
@@ -132,10 +133,55 @@ class RunIndexResponse(BaseModel):
     runs: list[RunIndexSummaryResponse] = Field(default_factory=list)
 
 
+class RunCalendarCreationRequest(BaseModel):
+    """Explicit new-Run inputs; one canonical horizon, no legacy reinterpretation.
+
+    The integer bounds are API/storage safety bounds, not a 50-season product
+    limit. Preview is constant-time and never allocates a week per input value.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    weeks_per_year: StrictInt = Field(ge=1, le=2**31 - 1)
+    season_start_year_week: StrictInt = Field(ge=1, le=2**31 - 1)
+    start_year: StrictInt = Field(ge=0, le=2**31 - 1)
+    season_count: StrictInt | None = Field(default=None, ge=1, le=2**31 - 1)
+    last_season_start_year: StrictInt | None = Field(default=None, ge=0, le=2**31 - 1)
+
+    @model_validator(mode="after")
+    def validate_clock(self) -> RunCalendarCreationRequest:
+        if (self.season_count is None) == (self.last_season_start_year is None):
+            raise ValueError("Specify either season_count or last_season_start_year")
+        self.to_calendar()
+        return self
+
+    def to_calendar(self) -> RunCalendar:
+        count = self.season_count
+        if count is None:
+            count = self.last_season_start_year - self.start_year + 1
+        if self.start_year + count - 1 > 2**31 - 1:
+            raise ValueError("Last season exceeds the supported storage range")
+        if count * self.weeks_per_year > 2**53 - 1:
+            raise ValueError("Run horizon exceeds the exact JSON week range")
+        return RunCalendar(
+            self.weeks_per_year, self.season_start_year_week, self.start_year, count
+        )
+
+
 class CreateRunContainerRequest(BaseModel):
-    """The sole user input required for a canonical empty pre-alpha Run."""
+    """Name-only creation stays valid; calendar is an explicit optional choice."""
+
+    model_config = ConfigDict(extra="forbid")
 
     display_name: str = Field(min_length=1, max_length=256)
+    calendar: RunCalendarCreationRequest | None = None
+
+    @field_validator("calendar", mode="before")
+    @classmethod
+    def reject_null_calendar(cls, value: object) -> object:
+        if value is None:
+            raise ValueError("Omit calendar for defaults; an explicit null is invalid")
+        return value
 
     @field_validator("display_name", mode="before")
     @classmethod

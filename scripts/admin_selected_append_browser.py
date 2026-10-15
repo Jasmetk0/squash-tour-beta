@@ -125,6 +125,7 @@ def acceptance(root: Path, *, port: int, base_url: str, chromium: str):
             try:
                 context, page = open_page(browser)
                 page.goto(base_url + "/admin/runs/new")
+                page.get_by_role("combobox", name="Language / Jazyk").select_option("en")
                 page.get_by_label("Unique Run name").fill("Selected Append Browser Acceptance")
                 browser_click(page, "Create isolated Run")
                 expect(page.get_by_role("heading", name="World and Calendar copies")).to_be_visible()

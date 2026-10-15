@@ -1,4 +1,6 @@
 import { isBoundaryTarget } from './fullSimulationBoundaryTargets'
+import { validateCalendarCreationPreview } from './runCalendarCreation'
+import type { RunCalendarCreationInput, RunCalendarCreationPreview } from './runCalendarCreation'
 import type {
   BootstrapNextSeasonPayload,
   BootstrapNextSeasonResponse,
@@ -966,11 +968,18 @@ export function listRuns(): Promise<RunsIndexResponse> {
 }
 
 /** Create an independent, initially empty Product Run with a saved initial revision. */
-export function createEmptyRunContainer(displayName: string): Promise<RunContainer> {
+export function createEmptyRunContainer(displayName: string, calendar?: RunCalendarCreationInput): Promise<RunContainer> {
   return request('/run-containers', {
     method: 'POST',
-    body: JSON.stringify({ display_name: displayName })
+    body: JSON.stringify({ display_name: displayName, ...(calendar ? {calendar} : {}) })
   })
+}
+
+export async function previewRunCalendarCreation(calendar: RunCalendarCreationInput): Promise<RunCalendarCreationPreview> {
+  const result = await request<unknown>('/run-containers/calendar/creation-preview', {
+    method: 'POST', body: JSON.stringify(calendar)
+  })
+  return validateCalendarCreationPreview(result, calendar)
 }
 
 export function listRunContainers(): Promise<RunContainerListResponse> {

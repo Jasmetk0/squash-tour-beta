@@ -120,7 +120,7 @@ def main() -> None:
             evidence["packages_registered"] = len({w["world_id"] for w in worlds})
 
             page.goto(base + "/admin/runs/new")
-            expect(page.get_by_role("heading", name="Create test Run")).to_be_visible()
+            expect(page.get_by_role("heading", name="Create Run", exact=True)).to_be_visible()
             page.get_by_label("Unique Run name").fill("Prealpha Shell Browser Run")
             page.get_by_role("button", name="Create isolated Run").click()
             expect(page.get_by_role("combobox", name="Admin active Run")).to_be_visible()
@@ -622,6 +622,50 @@ def main() -> None:
                 "no_current_world_or_players_fallback": True,
                 "world_and_saved_head_unchanged_on_read": True,
             }
+
+            # Real creation form -> pure preview -> immutable custom clock.
+            # This proves planning/persistence, never W52 sporting execution.
+            before_runs = page.request.get(args.api_url + "/run-containers").json()
+            page.goto(base + "/admin/runs/new")
+            page.get_by_label("Unique Run name", exact=True).fill("Earth Calendar Browser Acceptance")
+            page.get_by_label("Choose calendar and range", exact=True).check()
+            create_run = page.get_by_role("button", name="Create isolated Run", exact=True)
+            expect(create_run).to_be_disabled()
+            page.get_by_label("Calendar preset", exact=True).select_option("earth")
+            page.get_by_label("Start year", exact=True).fill("2030")
+            page.get_by_label("Number of seasons", exact=True).fill("3")
+            page.get_by_role("button", name="Review calendar", exact=True).click()
+            expect(page.get_by_text("Sporting simulation is not available", exact=False)).to_be_visible()
+            expect(create_run).to_be_enabled()
+            assert page.request.get(args.api_url + "/run-containers").json() == before_runs
+            page.get_by_label("Season Week 1 equals Year Week", exact=True).fill("35")
+            expect(create_run).to_be_disabled()
+            page.get_by_role("button", name="Review calendar", exact=True).click()
+            expect(page.locator("strong").filter(has_text="2032/2033")).to_be_visible()
+            page.screenshot(path=str(artifacts / "08-custom-calendar-review.png"), full_page=True)
+            create_run.click()
+            expect(page.get_by_role("heading", name="Earth Calendar Browser Acceptance", exact=True)).to_be_visible()
+            custom_url = page.url.split("?", 1)[0]
+            custom_id = custom_url.split("/admin/runs/", 1)[1].split("/", 1)[0]
+            stored = page.request.get(args.api_url + "/run-containers/" + custom_id).json()
+            expected_clock = {"schema_version": "run_calendar.v1", "weeks_per_year": 52,
+                              "season_start_year_week": 35, "start_year": 2030, "season_count": 3}
+            assert stored["metadata_json"]["run_calendar"] == expected_clock, stored
+            assert stored["mapped_simulation_run_count"] == 0, stored
+            custom_branches = page.request.get(args.api_url + "/run-branches", params={"run_id": custom_id}).json()["run_branches"]
+            custom_branch = custom_branches[0]
+            saved = page.request.get(args.api_url + "/run-containers/" + custom_id + "/branches/"
+                                     + custom_branch["branch_id"] + "/saved-revisions/"
+                                     + custom_branch["saved_head_revision_id"])
+            assert saved.ok and saved.json()["payload"]["run"]["run_calendar"] == expected_clock, saved.text()
+            page.reload()
+            tracks = page.locator(".run-home-progress__track")
+            expect(tracks.nth(0).locator("span")).to_have_count(3)
+            expect(tracks.nth(1).locator("span")).to_have_count(52)
+            page.screenshot(path=str(artifacts / "09-custom-calendar-reopened.png"), full_page=True)
+            evidence["custom_calendar_creation"] = {"run_id": custom_id, "saved_calendar": expected_clock,
+                "preview_did_not_create_run": True, "edits_require_new_preview": True,
+                "saved_revision_verified": True, "sporting_execution_claimed": False}
 
             page.get_by_role("link", name="Squash Engine global Home").click()
             expect(page.get_by_role("heading", name="Squash Engine Home")).to_be_visible()

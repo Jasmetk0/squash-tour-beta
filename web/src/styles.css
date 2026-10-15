@@ -1985,6 +1985,10 @@ textarea:focus-visible {
 
 .ranking-preparation { margin: 1rem 0; }
 .ranking-preparation fieldset { min-width: 0; margin: 0.8rem 0; padding: 1rem; border: 1px solid #cbd5e1; border-radius: 8px; }
+.run-calendar-creation { min-width: 0; margin: 1rem 0; padding: 1rem; border: 1px solid #516b90; border-radius: 10px; background: #172841; }
+.run-calendar-creation .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: .85rem; }
+.run-calendar-creation label { display: flex; flex-direction: column; gap: .35rem; }
+.run-calendar-creation input, .run-calendar-creation select { width: 100%; box-sizing: border-box; }
 .ranking-preparation legend { font-weight: 600; padding: 0 0.3rem; }
 .ranking-preparation textarea { min-height: 5rem; padding: 0.5rem; border: 1px solid #cbd5e1; border-radius: 8px; font: inherit; resize: vertical; }
 .ranking-preparation input, .ranking-preparation select, .ranking-preparation textarea { min-width: 0; }

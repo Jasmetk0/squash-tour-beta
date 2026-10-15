@@ -144,3 +144,21 @@ def require_supported_full_simulation_calendar(calendar: RunCalendar) -> None:
             "variable weeks, offset, start year or horizon require the "
             "authoritative transition and target migration"
         )
+
+
+def guard_versioned_sporting_write(
+    session: Session, *, run_id: str, branch_id: str, operation: str
+) -> None:
+    """Fence new explicit-clock Runs at the lower sporting write boundaries.
+
+    Legacy callers retain their existing validation and receipt contracts. New
+    v82 roots must prove a supported Saved clock before installing initial
+    sports, ranking candidates or match work. Data/package planning stays free
+    of this gate. Call after exact historical replay, before new writes.
+    """
+
+    run = session.get(RunContainerModel, run_id)
+    if run is not None and "run_calendar" in _json_object(run.metadata_json, label="Run metadata"):
+        require_supported_legacy_sporting_calendar(
+            session, run_id=run_id, branch_id=branch_id, operation=operation
+        )

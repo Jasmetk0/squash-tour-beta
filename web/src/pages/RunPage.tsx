@@ -22,7 +22,7 @@ import { RunInitialRankingPublicationPanel } from '../components/RunInitialRanki
 import { RunFirstTournamentPanel } from '../components/RunFirstTournamentPanel'
 import { useLanguage } from '../i18n/LanguageContext'
 import { formatApiError, isApiNotFound } from '../utils/apiErrors'
-import { RunHomeProgress } from './RunHomeProgress'
+import { RunHomeProgress, runHomeClock } from './RunHomeProgress'
 import { HomePlayerIdentityLink } from './HomePlayerIdentityLink'
 import { RunHomeRankingPanel } from './RunHomeRankingPanel'
 import { seasonOrdinal, weekOrdinal } from './runHomeModel'
@@ -273,8 +273,8 @@ export function RunPage(): JSX.Element {
     {branchError && <Unavailable message={branchError} />}
     {time.error && <Unavailable message={time.error} />}
     <RunHomeProgress season={time.presentSeason} week={time.presentWeek}
-      loading={branchLoading || time.isLoading}
-      unavailable={!verified} historical={false} locale={language}/>
+      loading={branchLoading || time.isLoading || containerQuery.isPending}
+      unavailable={!verified} historical={false} locale={language} clock={run ? runHomeClock(run.metadata_json) : null}/>
 
     <div className="run-home-columns">
       <SectionCard title={l.next}>

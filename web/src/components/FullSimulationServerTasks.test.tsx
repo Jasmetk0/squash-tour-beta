@@ -64,7 +64,7 @@ describe('server task UI (mock HTTP)',()=>{
   api.getServerTasks.mockResolvedValue([stale])
   open(language,<FullSimulationServerTasks runId="run" branchId="branch"/>)
   expect(await screen.findByRole('alert')).toHaveTextContent(language==='cs'
-    ? 'Původní příkaz nelze automaticky rozšířit'
+    ? 'Původní příkaz nesmí nové zápasy převzít automaticky'
     : 'The original command cannot silently absorb')
   expect(screen.queryByLabelText(language==='cs'?'Operátor úlohy':'Task operator')).toBeNull()
   expect(screen.queryByRole('button',{name:language==='cs'?'Výslovně pokračovat v serverové úloze':'Explicitly resume server task'})).toBeNull()
@@ -132,6 +132,55 @@ describe('server task UI (mock HTTP)',()=>{
   expect(screen.queryByLabelText(language==='cs'
     ?'Kontrola změněného týdenního rozpisu'
     :'Changed week schedule inspection')).toBeNull()
+  expect(api.continueServerTask).not.toHaveBeenCalled()
+ })
+
+ it.each(['cs','en'] as const)('shows actual driver detail and blockers at current operator checkpoint (%s)',async language=>{
+  const task={...taskExample(),state:'awaiting_operator',checkpoint:'week_preparation_required',
+   needs_operator_action:true,progress:{
+    schema_version:'authoritative_full_simulation_progress.v1',
+    checkpoint:'week_preparation_required',status:'blocked',
+    detail:'Missing real 2001/02 tournament configuration',blockers:['week_preparation_required','ranking_policy_missing']
+   }}
+  api.getServerTasks.mockResolvedValue([task])
+  open(language,<FullSimulationServerTasks runId="run" branchId="branch"/>)
+  expect(await screen.findByText(/Missing real 2001\/02 tournament configuration/)).toBeVisible()
+  const details=screen.getByText(language==='cs'
+   ? /Podklady serverového průchodu · Aktuální překážky/
+   : /Driver evidence · Current blockers/).closest('details')
+  expect(details).toHaveAttribute('open')
+  expect(details).toHaveTextContent('ranking_policy_missing')
+  expect(screen.getByText(language==='cs'?/Zkontrolujte přípravu týdne/:/Inspect this Branch’s week preparation/)).toBeVisible()
+  expect(api.continueServerTask).not.toHaveBeenCalled()
+ })
+ it.each(['cs','en'] as const)('does not mistake a historical checkpoint for a current blocker after task resumes (%s)',async language=>{
+  const task={...taskExample(),state:'active',checkpoint:'week_preparation_required',
+   needs_operator_action:false,progress:{
+    schema_version:'authoritative_full_simulation_progress.v1',checkpoint:'week_preparation_required',
+    status:'blocked',detail:'Historical preparation required',blockers:['week_preparation_required']
+   }}
+  api.getServerTasks.mockResolvedValue([task])
+  open(language,<FullSimulationServerTasks/>)
+  expect(await screen.findByText('task')).toBeVisible()
+  expect(screen.getByText(language==='cs'
+   ? 'Poslední zaznamenaný checkpoint (není aktuální překážkou)'
+   : 'Last recorded checkpoint (not a current blocker)')).toBeInTheDocument()
+  const details=screen.getByText(language==='cs'?'Podklady serverového průchodu':'Driver evidence').closest('details')
+  expect(details).not.toHaveAttribute('open')
+  expect(screen.queryByText(language==='cs'?/Zkontrolujte přípravu týdne/:/Inspect this Branch’s week preparation/)).toBeNull()
+  expect(screen.queryByRole('button',{name:language==='cs'?'Výslovně pokračovat v serverové úloze':'Explicitly resume server task'})).toBeNull()
+ })
+ it.each(['cs','en'] as const)('shows inspection-specific blocker rather than instructing unsafe Stop (%s)',async language=>{
+  const task={...taskExample(),state:'awaiting_operator',checkpoint:'week_schedule_review_required',needs_operator_action:true}
+  api.getServerTasks.mockResolvedValue([task])
+  weekReview.getNextWeekExtensionInspection.mockResolvedValue([{
+   command_id:'blocked-week',status:'blocked',reason:'append_only_prefix_mismatch',
+   new_slots:[]
+  }])
+  open(language,<FullSimulationServerTasks runId="run" branchId="branch"/>)
+  expect(await screen.findByText('append_only_prefix_mismatch')).toBeVisible()
+  expect(screen.queryByRole('button',{name:language==='cs'?'Výslovně schválit rozšíření týdne':'Explicitly approve week extension'})).toBeNull()
+  expect(screen.queryByText(/Stop that simulation|bezpečně ukončete původní simulaci/)).toBeNull()
   expect(api.continueServerTask).not.toHaveBeenCalled()
  })
 

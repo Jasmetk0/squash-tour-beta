@@ -1,7 +1,7 @@
 # Pre-alpha frontend V1 — approved Admin workflows
 
-Decision dates: 10–11 October 2026. Status: **approved product design; not implementation evidence**.
-Authority: Master v80 §§27.6, 27.9, 27.17–27.22, 17.6.1–17.6.2, 9.4–9.7 and 31.30–31.35; newer explicit user decisions prevail.
+Decision dates: 10–15 October 2026. Status: **approved product design; not implementation evidence**.
+Authority: Master v82 (calendar/range: §§3.2, 6.1, 6.9–6.12, 31.37) and preserved frontend §§27.6, 27.9, 27.17–27.22, 17.6.1–17.6.2, 9.4–9.7 and 31.30–31.35; newer explicit user decisions prevail.
 Older illustrative route trees are not an alternative source of authority.
 
 ## Appearance and context
@@ -55,7 +55,7 @@ Task Center, Notification Center and favorites are cross-page utilities; do not 
 ## Run Home composition
 
 - Top: Run/branch identity and unsaved-change state.
-- Full-width below: two segmented position indicators, exactly 50 seasons and 61 Season Weeks.
+- Full-width below: two segmented position indicators using the configured season horizon and W Season Weeks of the Run.
 - Left: **Next steps / Další postup** — actual upcoming simulation events, active/paused task and link to Simulation.
 - Right: **Needs attention / Vyžaduje pozornost** — concrete blockers/warnings and pending interventions, with direct links.
 - Below: **World activity / Dění ve světě** — factual results, ranking/health/talent/record changes and access to the latest simulation digest.
@@ -158,7 +158,7 @@ CI/browser evidence must identify the actual source and covered scope; mocks are
 
 ## 9.5 Budoucí profily — výslovná opt-in vrstva Adminu v77
 
-**[ROZHODNUTO PRO PRE-ALPHA; NOVĚJŠÍ VÝJIMKA Z v70]** Běžný seznam Players nadále výchozí zobrazuje pouze časově zpřístupněné hráče. Admin může zapnout `Zobrazit budoucí hráče` a uvidí všechny již skutečně vygenerované budoucí profily v dané branchi, i před 15. narozeninami nebo před narozením. Není tím povinné předgenerování všech 50 sezon ani generování dosud neexistujících dat při pouhém čtení.
+**[ROZHODNUTO PRO PRE-ALPHA; NOVĚJŠÍ VÝJIMKA Z v70]** Běžný seznam Players nadále výchozí zobrazuje pouze časově zpřístupněné hráče. Admin může zapnout `Zobrazit budoucí hráče` a uvidí všechny již skutečně vygenerované budoucí profily v dané branchi, i před 15. narozeninami nebo před narozením. Není tím povinné předgenerování všech sezon Runu ani generování dosud neexistujících dat při pouhém čtení.
 
 **[ROZHODNUTO PRO PRE-ALPHA]** Rozlišují se `Budoucí profil — ještě nenarozen`, `Budoucí prospect — ještě nezpřístupněn` a běžný Prospect/Tour stav po zpřístupnění. Profil ukáže datum/rok-week narození, plánované zpřístupnění, původ a skutečně dostupná generační data. Nenarozený hráč nedostane smyšlený současný OVR, únavu, výsledky ani jistou budoucí kariéru. Předpřipravené hodnoty pro 15 let jsou výslovně označené svým budoucím časem. Aktivace do světa zůstává na otevření týdne 15. narozenin před prvními sloty; opt-in viditelnost toto datum neposouvá.
 
@@ -213,7 +213,7 @@ Country rating history contract:
 
 **[ROZHODNUTO PRO PRE-ALPHA — COUNTRY TOURNAMENTS]** Turnaje země výchozí zobrazí aktuální sezonu. Sezonní oddíly dovolí scroll do minulosti a v Adminu i do již skutečně naplánované budoucnosti; `Aktuální sezona` vrátí na dnešní sezonu. Budoucí plán není budoucí výsledek a prohlížení neposouvá simulaci. Umístění země se čte z konkrétní Edition, protože místo série se může mezi ročníky měnit. Klik vede do společného detailu turnajové Edition.
 
-**[ROZHODNUTO PRO PRE-ALPHA — RUN CALENDAR]** Kalendář výchozí používá kompaktní weekový přehled 61 Season Weeks s turnajovými termíny/stavy, souběžné turnaje vedle sebe. Lze přepnout na běžný vyhledatelný/řaditelný seznam. Filtry zahrnují Tour, kategorii a zemi; klik otevírá Edition. Čtení kalendáře nemění globální simulační osu ani nevytváří výsledky.
+**[ROZHODNUTO PRO PRE-ALPHA — RUN CALENDAR]** Kalendář výchozí používá kompaktní weekový přehled W Season Weeks podle Runu s turnajovými termíny/stavy, souběžné turnaje vedle sebe. Lze přepnout na běžný vyhledatelný/řaditelný seznam. Filtry zahrnují Tour, kategorii a zemi; klik otevírá Edition. Čtení kalendáře nemění globální simulační osu ani nevytváří výsledky.
 
 **[ROZHODNUTO PRO PRE-ALPHA — TOURNAMENT EDITION]** Samostatná stránka má hlavičku s názvem, sezonou, místem a stavem; záložky `Přehled / Overview`, `Přihlášky a účastníci / Entries & Participants`, `Pavouk/skupiny / Draw & Groups`, `Program a zápasy / Schedule & Matches`, `Výsledky / Results`, `Nastavení / Settings`. Přehled ukáže skutečný stav a další požadovaný krok; účastníci přihlášky, kvalifikanty, WC, rezervy a dostupná zdůvodnění; formátový pohled pavouk/skupiny; program odehrané i plánované zápasy; výsledky skutečné umístění/body; nastavení pravidla, velikosti a organizační okna. Návrat zachová pozici kalendáře.
 
@@ -242,3 +242,13 @@ Master §§27.22 and 31.35 add approved pre-alpha target behavior; §35.37 and t
 - Exact statistical methodology, adaptive-stopping coverage, counts/minima/thresholds and performance calibration remain for implementation/tests; 10/20 million were examples, not mandatory limits. Unsupported estimates remain honestly unavailable or existing relative scores, not invented percentages.
 - Decision history stores the then-available estimate/status and actual AI/Admin choice without retroactive replacement. An optional admin note is separate from AI reasons and has no simulation effect.
 - The user skipped the question about a list of multiple waiting decisions: do not turn it into approved behavior. Preserve all existing pre-slot snapshot/simultaneity semantics; presenting decisions sequentially must not make same-slot inputs order-dependent.
+
+## Run calendar and horizon — approved v82 target (15 October 2026)
+
+Optional creation/settings fields: fixed W weeks per year/season, Season Week 1 → Year Week offset, start year, and either last season or season count (synchronized). Preview exact first/last season and year/week endpoints. Earth defaults to 52, FAX to 61 with offset 37; 50 FAX seasons can remain a preset. Name-only empty creation remains possible with defaults.
+
+After the first week starts, structural calendar/time basis is locked. Only horizon extension is supported, including after completion, shared by all Branches without moving any timeline or changing/starting existing tasks. The operator can always choose a shorter simulation goal. Before-start edits validate already prepared dependencies; never silently reinterpret them.
+
+Primary Admin time: season + Season Week; secondary: year + Year Week. Example Earth W=52, offset=35: Season 2000/2001 Week 19 = Year 2001 Week 1. Avoid identical duplicate labels when season equals year; preserve existing Viewer preferences separately. Calendar/planning can switch yearly/seasonal views of the same point.
+
+Import preview lists incompatible term/dependency changes with source → target values. The operator corrects or excludes affected tournaments; independent compatible selections can proceed. A FAX Week 58 is invalid in a 52-week target, never silently clamped/wrapped/rescaled. Existing Runs and historical views retain their versioned semantics. These are product targets; the current 61-week UI is not yet proof of v82 implementation.

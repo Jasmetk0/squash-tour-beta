@@ -4,7 +4,7 @@
 
 **Repository status:** subordinate repository-facing product/technical distillation; the full canonical Master is authoritative.
 **Master authority:** [`SQUASH_ENGINE_MASTER_VISION.md`](SQUASH_ENGINE_MASTER_VISION.md), with its current version declared inside. See `CURRENT_STATE.md` for implemented evidence.
-**Latest selected synchronization:** Master v80, approved pre-alpha frontend decisions of 10–12 October 2026; see `docs/PRE_ALPHA_FRONTEND_V1.md`. This is target design, not implementation evidence.
+**Latest selected synchronization:** Master v82, approved Run calendar/range decisions of 15 October 2026 plus preserved earlier pre-alpha frontend decisions; see `docs/PRE_ALPHA_FRONTEND_V1.md`. This is target design, not implementation evidence.
 **Synchronization rule:** this shorter repository distillation may lag details in the Master. It preserves still-valid earlier canon and records selected later decisions; synchronization must be additive unless the Master explicitly supersedes an older rule.
 
 > This constitution is a repository-facing distillation, not a lossless copy of the full Master Vision. A specified target does **not** imply that the repository already implements it. When a task depends on detail not stated here, use the latest audited Master or an explicit newer user decision rather than inventing the missing rule.
@@ -66,8 +66,8 @@ It is not merely a match generator.
 - men's squash only,
 - individual matches are singles only,
 - one-user local product; no user accounts, roles or login,
-- exactly 50 seasons, `2000/01–2049/50`,
-- exactly 61 Season Weeks per season,
+- configurable start year and season horizon (the 50-season 2000/01–2049/50 FAX reference remains a default/test configuration),
+- a Run-specific fixed W weeks in every calendar year and season; Earth default 52, FAX 61; no leap/variable-length years,
 - team competitions are composed of individual singles matches,
 - no women's tour or doubles,
 - coaches, support teams, agents and training centers are not separate simulated entities in the current version,
@@ -112,8 +112,8 @@ Viewer must never fabricate unavailable data or leak future results, hidden Admi
 
 **[DECIDED]** Run Home has two fixed segmented progress indicators:
 
-- position in the full 50-season Run,
-- position in the current 61-week season.
+- position in the configured season horizon of the Run,
+- position in the current W-week season.
 
 **[PROVISIONAL STRONG DIRECTION]** Full final Run Admin navigation remains open. Current working groups such as Home / World / Players / Tour / Rankings & Analytics / Simulation / History / Data / Settings must not be treated as final solely because they exist in a mockup or beta route tree.
 
@@ -153,7 +153,7 @@ Global search and `Ctrl+K` remain part of the shell.
 
 # 4. Run model
 
-**[DECIDED][ENGINE INVARIANT]** Every Run spans exactly 50 seasons `2000/01–2049/50`, each with exactly 61 Season Weeks.
+**[DECIDED FOR PRE-ALPHA v82][RUN CONFIG]** Each Run has its own fixed W weeks per year/season, offset, start year and horizon. Earth defaults to 52; FAX to 61 with offset 37. First/last season and date ranges preview from start year plus last season or season count. After the first week starts, calendar/time basis is locked; only horizon extension is supported. See Master §§3.2, 6.1, 6.9–6.12 and 31.37. This is target design, not an assertion that the legacy runtime already supports it.
 
 **[DECIDED]** A Run is an independent saved simulation world with stable identity/name and capacity for package snapshots/provenance, seasons, branches/history, players, tournaments, matches, rankings and simulation/configuration state. A newly created Run may contain none of that optional sporting content yet.
 
@@ -163,7 +163,7 @@ Global search and `Ctrl+K` remain part of the shell.
 
 **[DECIDED]** Every Run has a unique displayed name across active and archived Runs. An archived Run continues reserving its name. Technical identity is stable `run_id`.
 
-**[DECIDED FOR FIRST PRE-ALPHA]** A unique displayed name is the only user-supplied creation field. The engine assigns `run_id`, creates the empty `2000/01–2049/50` time frame and one neutral initial Viewer Branch, and persists the Run as a valid `Working` state. Description, Packages, players, calendar, rules and other content may be added later.
+**[DECIDED FOR FIRST PRE-ALPHA]** A unique displayed name is the only required manually entered creation field. Optional calendar/range inputs otherwise use valid defaults. The engine assigns `run_id`, creates the configured empty time frame and one neutral initial Viewer Branch, and persists the Run as a valid `Working` state. Description, Packages, players, calendar, rules and other content may be added later.
 
 **[DECIDED]** Creating a Run is also its first successful save. The same atomic operation creates one immutable, parentless Saved Revision for the initial Viewer Branch and one clean Working Draft based on that revision. The initial Saved Revision is a recoverable history version; it is not a checkpoint, simulation state or Package snapshot.
 
@@ -244,14 +244,14 @@ Explicit transfer of compatible configuration/manual changes between divergent b
 
 # 6. Time model
 
-**[DECIDED][ENGINE INVARIANT CURRENT VERSION]** FAX uses a calendar year of exactly 61 weeks. Exact calendar dates/days do not exist in the core world model; time is year + week.
+**[DECIDED v82]** Each Run uses a fixed W-week year and equally long season. FAX defaults to W=61; Earth to W=52. Exact civil dates/days do not exist in the core world model; Earth does not introduce ISO week 53. Time remains year + week.
 
 The engine distinguishes:
 
-- `Year Week` — 1–61 inside calendar year,
-- `Season Week` — 1–61 inside season.
+- `Year Week` — 1–W inside calendar year,
+- `Season Week` — 1–W inside season.
 
-**[DECIDED]** Every new calendar year begins as `Year Week 1` and `Season Week 26`. For season `2000/01`:
+**[DECIDED — FAX DEFAULT]** With W=61 and Season Week 1 at Year Week 37, every new calendar year begins as Year Week 1 and Season Week 26. Other Runs use their stored offset. FAX example season `2000/01`:
 
 - Season Week 1 = Year 2000, Year Week 37,
 - Season Week 25 = Year 2000, Year Week 61,
@@ -490,7 +490,7 @@ Exact slot taxonomy/count remains open.
 
 ## 11.3 Season Transition
 
-**[DECIDED FOR V1]** **Season Transition** is the special Season Week 61 → Week 1 extension of Week Transition, not another normal slot.
+**[DECIDED FOR V1]** **Season Transition** is the special last Season Week W → Week 1 extension of Week Transition, not another normal slot.
 
 It completes only when mandatory closing-season events are terminally resolved. A red issue blocks only the affected transition/operation and identifies the cause.
 
@@ -498,7 +498,7 @@ New seasonal policies activate atomically. Only explicit season-scoped state res
 
 A lightweight **Season Closure Marker** records closure rather than copying the entire world.
 
-**[DECIDED]** All 50 seasons can use efficient virtual **Inherited Plans**. Drafts/Tournament Editions materialize only when editing, confirmation, Season Transition or simulation needs them; explicit overrides are protected.
+**[DECIDED]** All seasons within the configured Run horizon can use efficient virtual **Inherited Plans**. Drafts/Tournament Editions materialize only when editing, confirmation, Season Transition or simulation needs them; explicit overrides are protected.
 
 ---
 
@@ -762,7 +762,7 @@ Exact algorithms, sampling thresholds, UI, retention, conflict handling, fulfill
 
 **[DECIDED FOR PRE-ALPHA v75]** Run sidebar: Home / World / Players / Tour / Rankings & Analytics / Simulation / History & Branches, with separate Run Management below. Run Management combines Run settings, overrides, package application, transfers/backups, validation and storage. Detailed subpages remain open.
 
-**[DECIDED FOR PRE-ALPHA v75]** Run Home combines identity/draft state, the fixed 50-season and 61-week indicators, Next steps on the left, Needs attention on the right, and World activity/digest below. Data must come from actual supported authorities; unavailable data cannot appear as a fabricated zero. Detailed metric/layout/historical-progress contracts remain open. See Master §27.17 and `docs/PRE_ALPHA_FRONTEND_V1.md`.
+**[DECIDED FOR PRE-ALPHA v75]** Run Home combines identity/draft state, the configured season-count and W-week indicators, Next steps on the left, Needs attention on the right, and World activity/digest below. Data must come from actual supported authorities; unavailable data cannot appear as a fabricated zero. Detailed metric/layout/historical-progress contracts remain open. See Master §27.17 and `docs/PRE_ALPHA_FRONTEND_V1.md`.
 
 Full Viewer navigation, Viewer reveal modes, exact MSA menu and many detailed Admin/Viewer layouts remain unresolved.
 
@@ -843,7 +843,7 @@ Master §§9.7, 27.21 and 31.34 approve configurable generator columns, explicit
 
 World now has an approved brief identity/year/provenance overview, three factual summaries (countries, population, countries with incomplete data) and a country table. The country profile has Overview / Population / Country Attributes / Players & Talent / Records / Tournaments. Season sections start at current season and permit past/future Admin browsing of actual stored plans without simulation or invented results. Records remain derived from historically eligible stored results.
 
-Run Calendar has a 61-week default view and ordinary list alternative. Edition detail has Overview / Entries & Participants / Draw & Groups / Schedule & Matches / Results / Settings. **Qualification/Main switching is only in Draw & Groups**; elsewhere the main section is first, qualification below, with scroll anchors rather than phase filters. Match detail has Overview / Statistics / Course & Replay; replay reads stored rally/event history and actual states, with no re-simulation or court animation. Simulation console preserves global nearest-slot/simultaneity/transition safeguards.
+Run Calendar has a Run-specific W-week default view and ordinary list alternative. Edition detail has Overview / Entries & Participants / Draw & Groups / Schedule & Matches / Results / Settings. **Qualification/Main switching is only in Draw & Groups**; elsewhere the main section is first, qualification below, with scroll anchors rather than phase filters. Match detail has Overview / Statistics / Course & Replay; replay reads stored rally/event history and actual states, with no re-simulation or court animation. Simulation console preserves global nearest-slot/simultaneity/transition safeguards.
 
 Official Ranking and Finals Race use their independently effective historical policies/snapshots; player names open profiles and points open a side panel of counted/excluded results, reasons and applicable expiry. Live Ranking remains deferred. No missing canonical OVR, mental state or history is invented. These approved layouts do not settle Player/Hybrid schemas or numerical calibration and are not proof of implementation. Current scoped evidence is Master §35.36 and the v79 checkpoint.
 
@@ -860,3 +860,16 @@ Master §§27.22 and 31.35 add approved pre-alpha target behavior; §35.37 and t
 - Exact statistical methodology, adaptive-stopping coverage, counts/minima/thresholds and performance calibration remain for implementation/tests; 10/20 million were examples, not mandatory limits. Unsupported estimates remain honestly unavailable or existing relative scores, not invented percentages.
 - Decision history stores the then-available estimate/status and actual AI/Admin choice without retroactive replacement. An optional admin note is separate from AI reasons and has no simulation effect.
 - The user skipped the question about a list of multiple waiting decisions: do not turn it into approved behavior. Preserve all existing pre-slot snapshot/simultaneity semantics; presenting decisions sequentially must not make same-slot inputs order-dependent.
+
+## Selected Master v82 calendar/range synchronization (15 October 2026)
+
+- Start year and season offset determine a single-year or crossing-year display label and exact first/last week. Calendar inputs are optional at creation; no mandatory World Package or global setup gate is introduced.
+- Calendar basis is shared by Branches. Branch sporting schedules/content can still diverge; they cannot change the frozen structural W/offset of an already started Run.
+- Extension, including from Completed, makes more seasons available to all Branches without moving their positions, generating future players/results, changing confirmed task goals, reopening terminal tasks or auto-starting work. Keep old closure/history immutable and perform continuation boundary work exactly once.
+- Pre-alpha Admin shows season/week primarily and calendar year/week secondarily, suppressing duplicate values. Calendar/planning can switch viewpoints without changing time.
+- Age/long-term development use 1/W of a year per week. More weekly update calls do not grant more annual maturation/training growth by themselves. Individual paths and genuine workload/health differences remain meaningful; exact curves and detailed training/deload scheduling remain calibration/later work.
+- Ranking results default to one Run year (W weeks), with existing explicit overrides. Entry and penalty rules stated in weeks retain the same default number of weeks. Other special policies are not globally rescaled.
+- Calendar imports preview conflicts and dependencies; correct dates or skip affected items, with explicit consent and no silent modulo/clamp/rescale. Compatible independent selections remain importable. Existing Runs do not adopt new Earth defaults.
+- Runtime still contains 61/2000–2049 assumptions. Versioned compatibility, transition/target integration and real acceptance must precede claims of working 52-week simulation. The 50-season FAX release acceptance remains a reference test, not a universal Run limit.
+
+The complete Master remains authoritative for details and preserved decisions outside this selected synchronization. Implementation evidence is in CURRENT_STATE and the v82 checkpoint; none of these product targets prove code completion.

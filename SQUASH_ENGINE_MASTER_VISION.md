@@ -2,8 +2,12 @@
 
 ## Kompletní průběžná specifikace a registr rozhodnutí
 
-**Verze dokumentu:** 81
-**Aktualizováno:** 14. 10. 2026 – konzole a ovládání simulace, sledování/předvolby, detaily zápasů, poznámky a AI testovací podklady; scoped audit po merge #1453
+**Verze dokumentu:** 82
+**Aktualizováno:** 15. 10. 2026 – vlastní pevný kalendář a rozsah každého Runu, Earth 52 / FAX 61, vývoj podle části roku, prodlužování a kompatibilita; scoped audit po merge #1488
+**Nová produktová rozhodnutí v82:** každý Run má vlastní pevný počet týdnů `W` v roce i sezoně a vlastní posun Season Week ↔ Year Week; Earth výchozí 52, FAX 61 se zachovaným začátkem v Year Week 37. Počáteční rok a poslední sezona nebo počet sezon jsou volitelné nastavení s přepočítaným náhledem. Po spuštění prvního týdne je kalendář uzamčený; konec lze pouze prodlužovat, společně pro všechny branche, bez automatické simulace, změny dosavadních cílů či předgenerování. Věk a dlouhodobý vývoj používají část roku, rankingové body výchozí jeden rok Runu; týdenní lhůty se nepřepočítávají plošně. Import řeší konfliktní termíny výslovně. Toto nahrazuje univerzální limit 50 × 61; referenční FAX release test všech 50 sezon zůstává. Detail 3.2, 6.1, 6.9–6.12 a 31.37. Jde o schválený cíl, nikoliv hotovou implementaci. Audit #1454–1488 a jeho hranice jsou v 35.39.
+
+**Historické číselné rámce:** starší datované souhrny a implementační důkazy níže mohou uvádět 50 sezon, 61 týdnů nebo rok 2000. Jako univerzální produktové omezení je nahrazuje v82; historické výsledky, testy a tehdejší význam jejich dat se nepřepisují.
+
 **Účel dokumentu:** jediný průběžný zdroj pravdy pro to, co má Squash Engine být, co už je rozhodnuté, jakým směrem se projekt ubírá, co se musí teprve dořešit a – v oddělené evidenční vrstvě – co je prokazatelně naprogramované a sloučené.
 
 Tento dokument primárně popisuje zamýšlený produkt. Samotná přítomnost produktového pravidla neznamená, že už je naprogramované. Ověřený stav kódu se od verze 51 zapisuje výhradně do samostatné kapitoly 35; implementace sama nikdy nevytváří ani nemění produktový canon.
@@ -192,7 +196,7 @@ Následující mapa určuje rozsah i tam, kde se značka neopakuje u každé jed
 
 | Oblast | Univerzální funkčnost enginu | Co může být jiné v jiném Runu |
 |---|---|---|
-| Run a čas | Runy, branche, historie, checkpointy a současný pevný kontrakt 50 sezon × 61 weeků | obsah jednotlivých sezon a jejich pravidla |
+| Run a čas | Runy, branche, historie, checkpointy, časové převody a pevný kalendář uvnitř rozehraného Runu | počet týdnů roku/sezony, jejich posun, počáteční rok, rozsah a obsah sezon; bezpečné prodloužení |
 | Produkt | Viewer/Admin, read-only Viewer, ukládání, audit, import/export a volitelný Package mechanismus | ručně vytvořený či z Packages zkopírovaný obsah Runu a jeho konkrétní skladba |
 | Hráči | identity, profily, historická data a lifecycle mechanismus | generační věk, vstup na Tour, retirement věk, comeback a další Player Lifecycle Policy |
 | Turnaje | Tournament Series/Edition, kalendářový a losovací mechanismus | kalendář, kategorie, kapacity, seedy, BYE, qualification, entry a draw policy |
@@ -382,36 +386,33 @@ Runový kontejner nese vlastní strukturální kořen a v průběhu práce můž
 - volitelný popis,
 - vlastní nezávislý obsah a konfiguraci, které mohou vzniknout ručně, z balíčků nebo kombinací obojího,
 - provenance všech případně použitých Packages a zachované nevyřešené reference,
-- pevný padesátisezonní časový rámec,
+- vlastní nakonfigurovaný časový rámec a kalendář,
 - branche a jejich historii,
 - hráče, turnaje, zápasy a rankingy,
 - checkpointy a metadata,
 - nastavení a simulační stav.
 
-## 3.2 Pevný rozsah Runu
+## 3.2 Vlastní kalendář a rozsah Runu — rozhodnutí v82
 
-**[ROZHODNUTO][ENGINE INVARIANT PRO SOUČASNOU VERZI]** Rozsah 50 sezon `2000/01–2049/50` a přesně 61 Season Weeks v každé sezoně platí pro každý Run, nikoliv pouze pro Official Run.
+**[ROZHODNUTO PRO PRE-ALPHA][RUN CONFIG]** Každý Run má vlastní kladný celočíselný počet týdnů `W`. Kalendářní rok i sportovní sezona mají v tomto Runu stejných `W` týdnů. Všechny roky a sezony mají stejnou délku; přestupné/delší roky a proměnlivá délka sezon nejsou součástí pre-alpha.
 
-**[ROZHODNUTO]** Každý Run vždy obsahuje přesně 50 sezon:
+**[ROZHODNUTO — VÝCHOZÍ HODNOTY]** Earth balíčky včetně FIFA Earth a ATP Earth nabízejí `W = 52`, FAX `W = 61`. FAX zachovává Season Week 1 = Year Week 37. Earth 52 znamená simulační rok, nikoliv implementaci přesných civilních dat či 53. ISO týdne. Počátek Earth sezony není tímto rozhodnutím univerzálně předepsán; nastaví jej Run/předvolba.
 
-- první sezona `2000/01`,
-- poslední sezona `2049/50`.
+**[ROZHODNUTO PRO PRE-ALPHA]** Uživatel nastaví počáteční rok a přiřazení Season Week 1 k Year Week `O`, kde `1 ≤ O ≤ W`. Rozsah zadá poslední sezonou **nebo** kladným počtem sezon; obě reprezentace se vzájemně přepočítávají. Náhled první i poslední sezony ukáže skutečný počáteční a koncový rok/týden. `O = 1` dovoluje označení sezony jediným rokem; jinak sezona překračuje kalendářní rok. Zobrazovací označení není důvod přepsat technická historická ID.
 
-**[ROZHODNUTO]** Po sezoně `2049/50` Run v současné verzi definitivně končí. Nelze pokračovat do `2050/51`.
+Příklad: `W = 52`, `O = 35`, počáteční rok 2000 a 50 sezon znamená první sezonu **2000/2001**, od Year Week 35 roku 2000 do Year Week 34 roku 2001, a poslední **2049/2050**. Pokud `O = 1`, první sezona je **2000**, týdny 1–52 roku 2000. Dosavadní rámec FAX 2000/01–2049/50 a 50 sezon může zůstat výchozí předvolbou, není univerzální limit.
 
-Toto pravidlo může být někdy v budoucnu vědomě změněno, ale nyní je platné.
+**[ROZHODNUTO PRO PRE-ALPHA]** Před spuštěním prvního týdne lze kalendář upravit; engine musí zkontrolovat již připravené závislosti, ukázat konflikty a potřebné změny. Nevytváří se nová povinná globální Setup/Start brána. Po spuštění prvního týdne se počet týdnů, posun a počáteční časový základ uzamknou. Zpětný převod rozehraného kalendáře není součástí pre-alpha.
 
-**[ROZHODNUTO]** Každá sezona obsahuje přesně 61 Season Weeks, číslovaných 1–61.
+**[ROZHODNUTO PRO PRE-ALPHA]** Po spuštění lze konec Runu pouze prodlužovat, i po dosažení původního konce. Zkracování není potřeba pro kratší test: ten nastaví konečný cíl konkrétní simulace. Prodloužení zpřístupní nové sezony všem branchím Runu, zachová jejich současný čas a historii a samo nic nesimuluje, nepředgeneruje hráče ani výsledky, nepřepisuje zmrazené cíle a nespustí již skončenou úlohu. Podrobnosti jsou v 6.10.
 
-**[ROZHODNUTO]** Mohou existovat týdny bez jediného turnaje.
-
-**[ROZHODNUTO]** Turnaj může trvat více než jeden týden.
+**[ROZHODNUTO]** Mohou existovat týdny bez jediného turnaje. Turnaj může trvat více týdnů; zákaz překročení sezonní hranice v 6.8 zůstává.
 
 ## 3.3 Vytvoření a zahájení Runu
 
 **[ROZHODNUTO][ENGINE INVARIANT]** Run lze vytvořit úplně prázdný, bez World Package, Category Package, Series Package, Calendar Package i Setup Package. Samotná nepřítomnost těchto dat je platným stavem rozpracovaného `Working` Runu, nikoliv chybou.
 
-**[ROZHODNUTO PRO PRVNÍ PRE-ALPHA VERZI]** Jediným povinným údajem, který při založení Runu zadává uživatel, je jeho jedinečný zobrazovaný název. Engine automaticky přidělí `run_id` a vytvoří prázdný časový rámec Runu; popis, Packages, hráči, kalendář, pravidla i ostatní obsah lze doplnit až později. Příklad: po zadání názvu `Test Run` může Run okamžitě existovat jako platný prázdný `Working` stav, i když v něm zatím nelze spustit žádnou sportovní simulaci.
+**[ROZHODNUTO PRO PRVNÍ PRE-ALPHA VERZI]** Jediným povinným ručně zadaným údajem při založení Runu zůstává jedinečný zobrazovaný název. Kalendář a rozsah lze při založení volitelně upravit; jinak se použijí platné výchozí hodnoty. Engine automaticky přidělí `run_id` a vytvoří prázdný časový rámec Runu z výchozího nebo výslovně zvoleného nastavení podle 3.2; popis, Packages, hráči, kalendář, pravidla i ostatní obsah lze doplnit až později. Příklad: po zadání názvu `Test Run` může Run okamžitě existovat jako platný prázdný `Working` stav, i když v něm zatím nelze spustit žádnou sportovní simulaci.
 
 **[ROZHODNUTO][ENGINE INVARIANT]** Samotné úspěšné založení Runu je současně jeho první úspěšné uložení. V jedné atomické bootstrap operaci vznikne identita Runu, jeho počáteční `Viewer Branch`, neměnná první `Saved Revision` bez rodičovské revize a čistý `Working Draft` založený právě na ní. Pokud selže kterákoliv část, nesmí zůstat částečně vytvořený Run, branch, revize ani draft.
 
@@ -497,16 +498,16 @@ Přesný UX tohoto postupu se ještě dořeší.
 
 ## 3.8 Dokončený Run
 
-**[ROZHODNUTO]** Po dokončení Weeku 61 sezony 2049/50 Run dál nepokračuje, ale zůstává normálně aktivní a dostupný ve Vieweru. Dokončení Run automaticky nearchivuje.
+**[ROZHODNUTO — UPŘESNĚNO v82]** Po dokončení posledního týdne aktuálně nastavené poslední sezony Run bez výslovného prodloužení dál nepokračuje, ale zůstává dostupný v Adminu a podle samostatného rozsahu Vieweru. Dokončení Run automaticky nearchivuje. Prodloužení podle 6.10 dovolí explicitní pokračování i po původním konci.
 
-**[ROZHODNUTO PRO PRVNÍ VERZI]** Poslední sezonní uzávěrka vytvoří `Season Closing Ranking`, sezonní souhrn a `Season Closure Marker` a potom označí Run jako `Completed`. Nevytváří neexistující Week 1 sezony 2050/51 ani nový Official Ranking této neexistující sezony.
+**[ROZHODNUTO PRO PRVNÍ VERZI]** Poslední sezonní uzávěrka vytvoří `Season Closing Ranking`, sezonní souhrn a `Season Closure Marker` a potom označí Run jako `Completed`. Nevytváří další Week 1 ani jeho Official Ranking za právě nastaveným koncem Runu. Pozdější explicitní prodloužení nepopírá ani nepřepisuje původní uloženou uzávěrku.
 
 **[ROZHODNUTO]** Z dokončeného Runu lze stále vytvářet nové branche z dřívějších uložených bodů a znovu simulovat alternativní historii.
 
 **[ROZHODNUTO]** Lifecycle Runu používá tři neblokující stavy:
 
 - `Working` – Run je od založení průběžně vytvářený nebo simulovaný a smí být obsahově neúplný,
-- `Completed` – dosáhl konce Weeku 61 sezony 2049/50, zůstává dostupný a lze z jeho historie vytvářet další branche,
+- `Completed` – dosáhl konce posledního týdne právě nastavené poslední sezony, zůstává dostupný a lze z jeho historie vytvářet další branche,
 - `Archived` – byl výslovně odložen mimo běžné aktivní nabídky a lze jej obnovit.
 
 Samostatný blokující lifecycle přechod `Setup → Active` neexistuje. Trvalé smazání není stav Runu, ale potvrzená operace dostupná až nad archivovaným lokálním Runem.
@@ -743,7 +744,7 @@ Konkrétní sezonní weeky a explicitní overrides tedy patří do Calendar Pack
 
 **[ROZHODNUTO PRO PRVNÍ PRE-ALPHA VERZI][ENGINE INVARIANT]** Dosavadní typy `World / Category / Series / Calendar / Setup Package` mohou vedle úplného obsahu deklarovat výslovně vybraný dílčí scope. Každý partial-scope import je ve výchozím stavu nedestruktivní: upraví pouze výslovně obsažené entity a neuvedený objekt sám o sobě nic nemaže ani nenahrazuje. Úplné nahrazení nebo odstranění musí být samostatná operace pro přesně označený scope, s preview dopadu a výslovným potvrzením. Příklad: Category Package obsahující jedinou Tour nepřímo nesmaže ostatní Tours ani neuvedené kategorie téže Tour.
 
-**[ROZHODNUTO]** Calendar Package může pokrýt právě jednu sezonu, libovolný výběr více sezon nebo všech 50 sezon. Smí pokrývat také jen vymezenou část sezony, například olympijské hry, jednu Tour nebo jednu Tournament Series.
+**[ROZHODNUTO]** Calendar Package může pokrýt právě jednu sezonu, libovolný výběr více sezon nebo všechny sezony nastaveného rozsahu Runu. Smí pokrývat také jen vymezenou část sezony, například olympijské hry, jednu Tour nebo jednu Tournament Series.
 
 **[ROZHODNUTO][ENGINE INVARIANT]** Sezona nebo věcný scope, který Calendar Package vůbec nezmiňuje, je `mimo rozsah balíčku`. Neznamená prázdný kalendář ani příkaz ke smazání existujících dat.
 
@@ -977,25 +978,22 @@ Nejde o jednu společnou vlastnost a vysoká hodnota nemá zaručit bezchybnou r
 
 # 6. Čas, sezony a aktuální bod historie
 
-**Rozsah kapitoly:** časový model, historický Viewer a pořadí událostí jsou funkčnost enginu. Rozsah 50 sezon × 61 weeků je výslovně současný Engine invariant pro všechny Runy; naplánovaný obsah weeků a případná interní procesní okna jsou stavem či konfigurací konkrétního Runu.
+**Rozsah kapitoly:** časový model, historický Viewer a pořadí událostí jsou funkčnost enginu. Délka roku/sezony, posun a rozsah jsou Run config podle 3.2; pevná délka uvnitř rozehraného Runu je invariant. Původní univerzální rámec 50 × 61 výslovně nahrazuje v82.
 
 ## 6.1 Časová identita
 
-**[ROZHODNUTO][ENGINE INVARIANT PRO SOUČASNOU VERZI]** Fiktivní svět FAX používá kalendářní rok o přesně 61 weecích. Přesná kalendářní data ani jednotlivé dny v datovém modelu neexistují; čas se zapisuje pouze pomocí roku a weeku.
+**[ROZHODNUTO PRO PRE-ALPHA]** Čas se nadále vyjadřuje rokem a týdnem; přesná civilní data ani jednotlivé kalendářní dny tímto nevznikají. `Year Week` i `Season Week` mají rozsah `1–W` podle kalendáře konkrétního Runu.
 
-**[ROZHODNUTO]** Engine rozlišuje dvě souběžná číslování:
+**[TECHNICKÝ DŮSLEDEK ROZHODNUTÉHO PŘEVODU]** Pro sezonu začínající v roce `Y`, Season Week `s` a nastavený počátek `O` platí: `k = O − 1 + s − 1`, `year = Y + floor(k / W)`, `year_week = 1 + (k mod W)`. Inverzní převod i absolutní týdenní vzdálenost používají tentýž kalendář; nelze je počítat různými globálními konstantami. Nejde o novou simulační náhodnost.
 
-- `Year Week` – pořadí weeku v kalendářním roce, vždy 1–61,
-- `Season Week` – pořadí weeku v sezoně, vždy 1–61.
+**[ROZHODNUTO — FAX DEFAULT]** FAX zachovává `W = 61`, `O = 37`; nový kalendářní rok tak začíná v Season Week 26. Například sezona `2000/01`:
 
-**[ROZHODNUTO]** Každý nový kalendářní rok začíná současně jako `Year Week 1` a `Season Week 26`. Z toho plyne například pro sezonu `2000/01`:
+- Season Week 1 = Year 2000, Year Week 37,
+- Season Week 25 = Year 2000, Year Week 61,
+- Season Week 26 = Year 2001, Year Week 1,
+- Season Week 61 = Year 2001, Year Week 36.
 
-- `Season Week 1` = `Year 2000, Year Week 37`,
-- `Season Week 25` = `Year 2000, Year Week 61`,
-- `Season Week 26` = `Year 2001, Year Week 1`,
-- `Season Week 61` = `Year 2001, Year Week 36`.
-
-**[ROZHODNUTO]** Narození hráče se ukládá jako `birth_year` a `birth_year_week`. Odpovídající sezona a `Season Week` se z těchto údajů jednoznačně dopočítají. Přesné kalendářní datum narození neexistuje.
+**[ROZHODNUTO]** Narození hráče se ukládá jako `birth_year` a `birth_year_week`, platné podle příslušného kalendáře. Sezona a Season Week se dopočítávají z těchto údajů a nastavení Runu. Přesné datum narození neexistuje. Import identity z jiného kalendáře nesmí potichu změnit datum/pořadí narození ani věk; potřebná transformace musí být viditelná v náhledu a výslovně potvrzená, nebo je postižená položka nekompatibilní.
 
 ## 6.2 Dokončený týden
 
@@ -1032,7 +1030,7 @@ Celý Viewer se potom chová, jako by právě nastal konec vybraného týdne:
 
 **[ROZHODNUTO]** Změna globální sezony/weeku pouze mění prohlížený časový kontext. Sama nikdy neposune, nevrátí, nepřepočítá ani jinak nezmění skutečný stav simulace.
 
-**[ROZHODNUTO V PRINCIPU]** Po otevření ovladač nabídne výběr sezony a Weeků 1–61, označí skutečný aktuální bod simulace a významové stavy dostupných weeků. Viewer dovolí pouze časové body, které smí podle kapitol 6.2 a 6.3 skutečně zobrazit; Admin může stejným ovladačem přejít také do podporovaného budoucího weeku kvůli plánování, aniž by jej vydával za již simulovanou současnost. Přesný grafický layout panelu se ještě může změnit.
+**[ROZHODNUTO V PRINCIPU]** Po otevření ovladač nabídne výběr sezony a Weeků 1–W podle kalendáře Runu, označí skutečný aktuální bod simulace a významové stavy dostupných weeků. Viewer dovolí pouze časové body, které smí podle kapitol 6.2 a 6.3 skutečně zobrazit; Admin může stejným ovladačem přejít také do podporovaného budoucího weeku kvůli plánování, aniž by jej vydával za již simulovanou současnost. Přesný grafický layout panelu se ještě může změnit.
 
 **[ROZHODNUTO]** Pod kompaktním season/week ovladačem je přímo viditelný stav jeho vztahu k současnému bodu:
 
@@ -1050,6 +1048,8 @@ Kliknutí na `PAST` ve Vieweru nebo na `PAST` či `FUTURE` v Adminu okamžitě v
 Přepnutí režimu nijak nemění vybraný historický bod ani data; mění pouze jeho formát zobrazení.
 
 **[ROZHODNUTO]** Výchozí režim je `Roční`. Uživatelova zvolená varianta se ukládá jako globální zobrazovací preference.
+
+**[ROZHODNUTO PRO PRE-ALPHA v82 — ADMIN]** Hlavní časový údaj je sezona + Season Week, vedle/pod ním je méně výrazný kalendářní rok + Year Week. Pokud jsou údaje totožné, není třeba je duplikovat. Kalendář/plánování nabízí sezonní a roční pohled na tentýž termín. Příklad Earth `W=52, O=35`: **Sezona 2000/2001 · týden 19**, doplňkově **Rok 2001 · týden 1**. Toto upřesňuje výchozí pre-alpha Admin zobrazení; samostatná dřívější preference Roční/Sezonní/Obojí budoucího Vieweru se neruší.
 
 ## 6.5 Week Transition
 
@@ -1141,11 +1141,11 @@ Globální model první verze nepředstírá přesné hodiny. `Simulation Slot` 
 
 ## 6.8 Season Transition
 
-**[ROZHODNUTO PRO PRVNÍ VERZI]** Přechod ze `Season Weeku 61` do `Season Weeku 1` následující sezony používá `Season Transition`. Nejde o druhé nezávislé hodiny ani o běžný Simulation Slot, ale o speciální sezonní rozšíření standardního Week Transitionu. Provede všechny běžné týdenní operace a navíc kontrolovaně uzavře starou a otevře novou sezonu.
+**[ROZHODNUTO PRO PRVNÍ VERZI]** Přechod z posledního `Season Weeku W` do `Season Weeku 1` následující sezony používá `Season Transition`. Nejde o druhé nezávislé hodiny ani o běžný Simulation Slot, ale o speciální sezonní rozšíření standardního Week Transitionu. Provede všechny běžné týdenní operace a navíc kontrolovaně uzavře starou a otevře novou sezonu.
 
 **[ROZHODNUTO PRO PRVNÍ VERZI]** Season Transition lze dokončit pouze tehdy, když všechny povinné události uzavírané sezony a jejich závislosti mají platný konečný stav. Nevyřešené finále, chybějící technické ukončení nebo jiný skutečný prerequisite vyvolá červený operation-scoped problém, který přesně označí blokující objekt a zastaví pouze přechod do nové sezony. Turnaj ani jinou povinnou událost nelze jen přeskočit.
 
-**[ROZHODNUTO PRO PRVNÍ PRE-ALPHA VERZI]** Jedna Tournament Edition nesmí překročit hranici `Season Week 61 → Season Week 1`. Plán, který by ji překračoval, je okamžitě červeně neplatný a nelze jej potvrdit ani uložit. Pokročilejší podpora přeshraničních Editions je mimo první verzi.
+**[ROZHODNUTO PRO PRVNÍ PRE-ALPHA VERZI]** Jedna Tournament Edition nesmí překročit hranici `Season Week W → Season Week 1`. Plán, který by ji překračoval, je okamžitě červeně neplatný a nelze jej potvrdit ani uložit. Pokročilejší podpora přeshraničních Editions je mimo první verzi.
 
 **[ROZHODNUTO PRO PRVNÍ VERZI]** Při otevření nové sezony se atomicky aktivují všechny časově verzované policy, kategorie, formáty a další změny naplánované s účinností od této sezony. Dokončená sezona zůstává navždy vyhodnocená podle tehdy platných pravidel; pozdější aktivace ji potichu nepřepočítá. Zpětná vědomá změna používá obecný history/branch workflow z kapitoly 7.
 
@@ -1159,23 +1159,55 @@ Globální model první verze nepředstírá přesné hodiny. `Simulation Slot` 
 
 **[ROZHODNUTO PRO PRVNÍ VERZI][ENGINE INVARIANT]** Season Transition je jeden atomický staging proces v tomto hlavním pořadí:
 
-1. ověřit úplnost Season Weeku 61 a zákaz Edition překračující sezonní hranici,
-2. podle odcházejících pravidel vytvořit `Season Closing Ranking` zahrnující i výsledky dokončené ve Weeku 61,
+1. ověřit úplnost posledního Season Weeku W a zákaz Edition překračující sezonní hranici,
+2. podle odcházejících pravidel vytvořit `Season Closing Ranking` zahrnující i výsledky dokončené v posledním Weeku W,
 3. zmrazit season-scoped statistiky do sezonního souhrnu a vytvořit `Season Closure Marker`,
-4. provést development za dokončený Week 61 a navazující Between-Week State Update podle odcházejících pravidel,
+4. provést development za dokončený poslední Week W a navazující Between-Week State Update podle odcházejících pravidel,
 5. aktivovat pravidla nové sezony a vynulovat nebo znovu inicializovat pouze výslovně season-scoped hodnoty,
 6. provést narozeniny, lifecycle a vznik prospectů při otevření Weeku 1,
 7. vytvořit `Official MSA Ranking – Week 1` podle nové Ranking Policy,
 8. vytvořit veřejné události a počáteční stav nové sezony,
 9. celý kandidátní stav zvalidovat a atomicky commitnout; při chybě se nezapíše žádná jeho část.
 
-U poslední sezony 2049/50 se po kroku 3 Run uzavře jako `Completed`: kroky 4–8 určené k otevření dalšího weeku se neprovedou a nevytváří se další sezona, její Week 1 ani nový Official Ranking. Krok 9 pouze zvaliduje a atomicky uloží toto konečné uzavření.
+U právě nastavené poslední sezony Runu se po kroku 3 Run uzavře jako `Completed`: kroky 4–8 určené k otevření dalšího weeku se neprovedou a nevytváří se další sezona, její Week 1 ani nový Official Ranking. Krok 9 pouze zvaliduje a atomicky uloží toto konečné uzavření.
 
 Season Transition nevyžaduje kompletně ručně připravený kalendář všech budoucích sezon. Validuje uzavíranou sezonu a právě otevíraný rozsah podle skutečných operation-scoped prerequisites; neúplná vzdálená budoucnost nesmí bezdůvodně blokovat přechod. Materializaci plánů a Tournament Editions nové sezony popisuje kapitola 13.3.
 
 **[ODLOŽENO]** Datové schéma Closure Markeru, podrobný katalog season-scoped hodnot, přesné pořadí navzájem nezávislých podkroků uvnitř výše uzavřených vrstev a konečný Season Transition UX. Hlavní devítikrokové pořadí už otevřené není.
 
 ---
+
+## 6.9 Věk, dlouhodobý vývoj a jednotky pravidel — v82
+
+**[ROZHODNUTO PRO PRE-ALPHA]** Jeden týden znamená pro stárnutí a dlouhodobou vývojovou křivku `1/W` roku. Earth 52 týdnů i FAX 61 týdnů představuje jeden rok věku. Samotný větší počet týdenních update příležitostí nesmí z FAX osmnáctiletého hráče udělat vývojový ekvivalent Earth dvaadvacetiletého.
+
+**[ROZHODNUTO]** Základ vývoje podle věku je společný; individuální potenciál, časné/pozdní dospívání a skutečné životní podmínky mohou vytvářet odlišnosti. Roční složka abstraktního tréninku se nesmí nechtěně násobit počtem update kroků. Použije se historicky verzovaný model s korektními jednotkami, nikoliv plošné dělení všech změn číslem W. Zápasová zátěž, akutní únava a pravidlo výslovně určené v týdnech nejsou automaticky roční koeficienty. Stejné roční podmínky neznamenají povinnost identických náhodných cest nebo identických atributů všech stejně starých hráčů.
+
+**[ROZHODNUTO — VÝCHOZÍ PRAVIDLA]** Platnost rankingových bodů je jeden rok daného Runu, tedy W týdnů, s již existujícím výslovným turnajovým override a historickou evidencí. Výchozí lhůty přihlášek a délky disciplinárních trestů v týdnech zůstávají stejné napříč kalendáři, pokud konkrétní policy neurčuje jinak. Přidělení bodů a okamžik jejich první publikace se nemění. PR a jiné zvláštní policy nejsou tímto plošně přepsané: rozlišit roční jednotku a explicitní počet týdnů.
+
+**[ODLOŽENO / K TESTOVÁNÍ]** Přesné vývojové křivky, koeficienty, statistická kalibrace a podrobné plánování tréninků/deloadů pro využití delšího kalendáře. Dosavadní abstraktní trénink ani existující zdravotní/recovery mechanismy se tím neruší. Kalendář nemůže přidávat vrozenou národní DNA ani obcházet individuální potenciál.
+
+## 6.10 Prodloužení Runu, branche a cíle simulace — v82
+
+**[ROZHODNUTO PRO PRE-ALPHA]** Výslovné prodloužení přidá možnost dalších sezon všem branchím stejného Runu. Nemění jejich současný bod, minulost ani pevný kalendář. Samo nevytváří budoucí hráče, výsledky ani plně materializované Tournament Editions; plánování nadále používá dosavadní lazy Inherited Plans.
+
+**[ROZHODNUTO]** Běžící a pozastavené úlohy zachovají svůj původně potvrzený cíl i tehdy, pokud jej uživatel zadal jako tehdejší konec Runu. Změna cíle je samostatná již podporovaná výslovná akce. Terminální úloha zůstává terminální, nesmí se znovu otevřít ani automaticky spustit; pokračování po jejím cíli použije nový příkaz. Neterminální pozastavená úloha se obnovuje pouze svým existujícím explicitním workflow.
+
+**[TECHNICKÁ BEZPEČNOST A AKCEPTACE]** Prodloužení je validovaný auditovaný zásah do Run metadat, chrání read-only zdroje, používá přesnou očekávanou verzi a nesmí závodit se zápisem simulace. Staré Saved Revisions, Closure Markers, rankingy, příkazy, jejich fingerprinty a tehdejší rozsah zůstanou neměnné. Prodloužení Completed Runu dovolí explicitní otevření nové sezony; návazné boundary kroky se provedou právě jednou bez opakované uzávěrky, duplicitních bodů, vývoje nebo recovery. Přesná implementace a schéma jsou technická práce, nikoliv hotový důkaz této schopnosti. Změna metadat neznamená implicitní sportovní Save nebo pokračování workeru.
+
+## 6.11 Balíčky a konfliktní kalendáře — v82
+
+**[ROZHODNUTO PRO PRE-ALPHA]** Balíček poskytuje výchozí kalendář/předvolbu pro nový Run. Po zkopírování zůstává nezávislý Run snapshot s provenance, nikoliv živé propojení. Pozdější použití Earth balíčku v rozehraném FAX Runu nepřepne kalendář na 52.
+
+**[ROZHODNUTO]** Při importu se před potvrzením zobrazí konfliktní termíny a návaznosti. Například FAX turnaj ve Weeku 58 nemá přímý slot v Earth roce s 52 týdny. Admin vybere platný nový termín nebo postiženou položku vynechá; závislosti přihlášek/kvalifikace se znovu validují. Ostatní nezávislé vybrané položky lze převzít podle již rozhodnutého partial importu. Žádný skrytý modulo převod, oříznutí nebo poměrové roztažení celého kalendáře. Nevyřešené konflikty blokují pouze dotčenou operaci/skupinu; provázaný batch zachová atomicitu. Přesný původní → nový náhled a výslovný souhlas zůstávají povinné.
+
+## 6.12 Kompatibilita starých Runů a implementační hranice — v82
+
+**[ROZHODNUTO / DŮSLEDEK HISTORICKÉ INTEGRITY]** Stávající Runy zachovají původní časový význam; dosavadní schéma používá 61 týdnů, FAX posun 37 a historicky uložený rozsah. Jejich načtení nesmí používat nové Earth defaulty ani přepsat původní data, revize či replay. Chybějící legacy metadata se interpretují explicitní verzovanou kompatibilní cestou, nikoliv tichým doplněním podle aktuálního balíčku. Chybná již přítomná metadata se nevydávají za chybějící.
+
+**[IMPLEMENTAČNÍ POŽADAVEK]** Prověřit časové výpočty v domain, persistence, Run bootstrapu/revizích, birth/age/generation/development, ročních podkladech zemí, termínech/entries, rankingových expiracích, přechodech, cílech Full Simulation, historii, importech a UI. Rok ročních world dat se bere z mapovaného Year, ne prostým přičtením season_index k 2000. Beze změny zůstává interpolation/fallback politika ratingů a populace. Zakázaná je pouhá globální náhrada čísla 61 nebo zpřístupnění nefunkčního 52týdenního přepínače.
+
+**[OTEVŘENO — TECHNICKÉ/KALIBRAČNÍ]** Přesné schéma/verze migrace, reprezentace časových jednotek a efektivní modelové koeficienty se vyřeší implementací a testy. Univerzální minimum/maximum nad rámec validních kladných hodnot nebylo produktově určeno; nepřebírat limit 50 nebo 61 jako údajně rozhodnutou horní hranici. Backend musí bezpečně validovat podporovaný rozsah bez falešného příslibu nekonečné simulace.
 
 # 7. Branch a checkpoint model
 
@@ -1425,7 +1457,7 @@ Počáteční kohorty se odvozují ze stejného Country Modelu V1 jako pozdějš
 **[ROZHODNUTO K TESTOVÁNÍ, NIKOLIV VOLBA FAX CANONU]** Před spuštěním prvního Weeku 1 lze nad stejným rosterem porovnat tři varianty počátečního Official Rankingu:
 
 1. **Výchozí přenesené body:** explicitní seed/baseline bodů a pořadí s vlastní provenance a pravidly jejich platnosti; bez vymyšlených turnajových výsledků.
-2. **Zjednodušená předsezona:** jednorázově vytvořená/simulovaná předhistorie turnajů, umístění a bodů. První vstupy se mohou založit na tehdejší síle hráčů, takže není nutné rekurzivně simulovat další a další předchozí sezony. Předhistorie je viditelně označená a není další sezonou v pevném 50sezonním rozsahu Runu.
+2. **Zjednodušená předsezona:** jednorázově vytvořená/simulovaná předhistorie turnajů, umístění a bodů. První vstupy se mohou založit na tehdejší síle hráčů, takže není nutné rekurzivně simulovat další a další předchozí sezony. Předhistorie je viditelně označená a není další sezonou v nastaveném rozsahu Runu.
 3. **Světová herní přestávka:** testovací scénář typu pandemie s mimořádnou společnou policy pro zmrazené pořadí/body a jejich přechod do běžného systému. Nejde o automatické individuální zdravotní PR pro každého hráče ani o rozhodnutou oficiální historii FAX.
 
 Výběr a regenerace těchto variant patří před start prvního Weeku 1. Po zahájení se pro jiné porovnání použije branch z předstartovního uloženého bodu. Finals Race začíná novou sezonu od nuly; předsezonní podklad Official Rankingu se do ní automaticky nepřevádí. Přesné body, expirace a přechodová matematika jednotlivých variant zůstávají kalibrací a konfigurovanou policy.
@@ -1522,7 +1554,7 @@ Pokud Tournament Ranking Snapshot předchází jeho vstupu na Tour, je pro danou
 
 ## 9.5 Budoucí profily — výslovná opt-in vrstva Adminu v77
 
-**[ROZHODNUTO PRO PRE-ALPHA; NOVĚJŠÍ VÝJIMKA Z v70]** Běžný seznam Players nadále výchozí zobrazuje pouze časově zpřístupněné hráče. Admin může zapnout `Zobrazit budoucí hráče` a uvidí všechny již skutečně vygenerované budoucí profily v dané branchi, i před 15. narozeninami nebo před narozením. Není tím povinné předgenerování všech 50 sezon ani generování dosud neexistujících dat při pouhém čtení.
+**[ROZHODNUTO PRO PRE-ALPHA; NOVĚJŠÍ VÝJIMKA Z v70]** Běžný seznam Players nadále výchozí zobrazuje pouze časově zpřístupněné hráče. Admin může zapnout `Zobrazit budoucí hráče` a uvidí všechny již skutečně vygenerované budoucí profily v dané branchi, i před 15. narozeninami nebo před narozením. Není tím povinné předgenerování všech sezon Runu ani generování dosud neexistujících dat při pouhém čtení.
 
 **[ROZHODNUTO PRO PRE-ALPHA]** Rozlišují se `Budoucí profil — ještě nenarozen`, `Budoucí prospect — ještě nezpřístupněn` a běžný Prospect/Tour stav po zpřístupnění. Profil ukáže datum/rok-week narození, plánované zpřístupnění, původ a skutečně dostupná generační data. Nenarozený hráč nedostane smyšlený současný OVR, únavu, výsledky ani jistou budoucí kariéru. Předpřipravené hodnoty pro 15 let jsou výslovně označené svým budoucím časem. Aktivace do světa zůstává na otevření týdne 15. narozenin před prvními sloty; opt-in viditelnost toto datum neposouvá.
 
@@ -1621,7 +1653,7 @@ Globální vyhledávání vždy ukáže Sporting Representation a rok narození.
 
 Výchozí režim je pouze celý věk. Zvolený režim se ukládá jako globální zobrazovací preference a používá se konzistentně všude, kde Viewer věk zobrazuje.
 
-**[ROZHODNUTO]** Desetinný věk se počítá jako celé roky plus počet weeků od posledních narozenin dělený 61. Zobrazuje pouze tolik desetinných míst, kolik je potřeba, nejvýše však tři; zbytečné koncové nuly se nezobrazují a hodnota se zaokrouhluje na nejbližší tisícinu.
+**[ROZHODNUTO]** Desetinný věk se počítá jako celé roky plus počet weeků od posledních narozenin dělený počtem týdnů roku `W` daného Runu. Zobrazuje pouze tolik desetinných míst, kolik je potřeba, nejvýše však tři; zbytečné koncové nuly se nezobrazují a hodnota se zaokrouhluje na nejbližší tisícinu.
 
 ## 10.3 Původ, Sporting Representation a zařazení do Tour
 
@@ -2165,7 +2197,7 @@ Zahájený zápas, který už nebude obnoven ani dohrán, se uzavře jako `ABN`:
 - ze šablony,
 - zkopírováním jiné sezony.
 
-**[ROZHODNUTO PRO PRVNÍ VERZI]** Uživatel může plánovat všech 50 sezon Runu, i když je nasimulovaný teprve Season 1 Week 1. Vzdálená budoucnost však nemusí být předem uložena jako desítky plných kopií stejného kalendáře.
+**[ROZHODNUTO PRO PRVNÍ VERZI]** Uživatel může plánovat všechny sezony nastaveného rozsahu Runu, i když je nasimulovaný teprve Season 1 Week 1. Vzdálená budoucnost však nemusí být předem uložena jako desítky plných kopií stejného kalendáře.
 
 **[ROZHODNUTO PRO PRVNÍ VERZI]** Opakující se Tournament Series se do budoucích sezon promítají jako úsporné virtuální `Inherited Plans`. Kalendářový pohled je může zobrazit ve stejných weecích jako předchozí aktivní ročník pomocí průhledného návrhu s odlišným, například přerušovaným, okrajem. Inherited Plan ještě není samostatnou fyzicky uloženou Tournament Edition, nemá vlastní stabilní `edition_plan_id` a nedědí výsledky, přihlášky, los ani odehrané zápasy.
 
@@ -3223,7 +3255,7 @@ Průběžný feed je pohled na právě relevantní momenty simulace, nikoliv ná
 
 **[ROZHODNUTO]** Naplánovaný bod lze před jeho dosažením změnit nebo zrušit. Volba `Bez předčasného zastavení` nechá úlohu doběhnout až do původně zvoleného cíle simulace. Task Center stále ukazuje původní rozsah, případný naplánovaný bod zastavení a právě zpracovávanou část.
 
-**[ROZHODNUTO PRO PRVNÍ VERZI]** Přechod po Season Weeku 61 používá rozhodnutý `Season Transition` z kapitoly 6.8. Simulace pokračuje do Weeku 1 další sezony pouze tehdy, pokud její zvolený rozsah sahá dál a všechny prerequisites přechodu jsou platně uzavřené.
+**[ROZHODNUTO PRO PRVNÍ VERZI]** Přechod po posledním Season Weeku `W` používá rozhodnutý `Season Transition` z kapitoly 6.8. Simulace pokračuje do Weeku 1 další sezony pouze tehdy, pokud její zvolený rozsah sahá dál a všechny prerequisites přechodu jsou platně uzavřené.
 
 **[ROZHODNUTO PRO PRVNÍ VERZI]** Každá operace nebo kauzálně či konfliktně propojená skupina, která společně mění více záznamů, používá vlastní transakční hranici. Engine nejprve vypočítá kandidátní výsledky do staging vrstvy, zvaliduje celý batch a teprve potom jej použije jako celek. Pokud například chyba vznikne až u hráče 431 jednoho společného entry batchu, nesmí z něj v autoritativním stavu zůstat potichu zapsaní hráči 1–430. Nezávislé skupiny téhož Simulation Slotu však podle kapitoly 6.6 smějí commitnout odděleně; chyba jedné již platný nezávislý commit nevrací.
 
@@ -3533,9 +3565,9 @@ Body se nepřičítají za každou jednotlivou výhru nebo kolo. Uvnitř každé
 
 ## 18.2 Platnost a počet výsledků
 
-**[ROZHODNUTO]** Každý turnaj má výchozí platnost bodů 61 weeků, tedy jeden squashový rok. Platnost se počítá od prvního weeku, ve kterém se body objeví v oficiálním rankingu.
+**[ROZHODNUTO — UPŘESNĚNO v82]** Každý turnaj má výchozí platnost bodů jeden rok daného Runu, tedy `W` týdnů (Earth 52, FAX 61). Platnost se počítá od prvního weeku, ve kterém se body objeví v oficiálním rankingu.
 
-Admin může tuto hodnotu u konkrétního turnaje ručně změnit. Jde o výjimečný override očekávaný přibližně u 0,1 % turnajů; engine na odchylku od 61 weeků výrazně upozorní, ale dovolí ji uložit.
+Admin může tuto hodnotu u konkrétního turnaje ručně změnit. Jde o výjimečný override očekávaný přibližně u 0,1 % turnajů; engine na odchylku od ročního defaultu daného Runu výrazně upozorní, ale dovolí ji uložit.
 
 **[ROZHODNUTO][OFFICIAL RUN DEFAULT]** První sezona Official Runu má výchozí `Best 15`: do rankingu se započítá nejvýše 15 nejlepších aktuálně platných turnajových výsledků hráče. Nejde o pevnou globální hodnotu enginu ani o hodnotu vnucenou všem sezonám.
 
@@ -3543,7 +3575,7 @@ Admin může tuto hodnotu u konkrétního turnaje ručně změnit. Jde o výjime
 
 **[ROZHODNUTO]** Žádný turnaj se nezapočítává povinně. Vždy se vyberou platné výsledky s nejvyšším počtem bodů.
 
-**[ROZHODNUTO]** Výjimkou z běžného výběru turnajových výsledků je `Disciplinary Zero`: povinná dočasná nulová rankingová položka, která po dobu `X` weeků zabírá právě jedno místo v Best N. `X` určuje závažnost provinění a Admin může výslednou délku ručně změnit. Po uplynutí vlastní doby nula automaticky zmizí a není navázaná na 61weekovou platnost výsledku konkrétního turnaje.
+**[ROZHODNUTO]** Výjimkou z běžného výběru turnajových výsledků je `Disciplinary Zero`: povinná dočasná nulová rankingová položka, která po dobu `X` weeků zabírá právě jedno místo v Best N. `X` určuje závažnost provinění a Admin může výslednou délku ručně změnit. Po uplynutí vlastní doby nula automaticky zmizí a není navázaná na roční ani overridden platnost výsledku konkrétního turnaje.
 
 **[ROZHODNUTO]** Více Disciplinary Zeros se skládá nezávisle. Každá zabírá vlastní místo v Best N, má vlastní effective/expiry dobu a opakované provinění se proto neztratí uvnitř jediné již aktivní nuly. Přesný okamžik účinnosti, délky podle provinění a vztah k samostatnému odečtu bodů jsou otevřenou disciplinární policy.
 
@@ -3696,7 +3728,7 @@ Tyto hranice a počty jsou součástí sezonní Protected Ranking Policy a lze j
 
 ### 18.5.1 Season Closing Ranking
 
-**[ROZHODNUTO PRO PRVNÍ VERZI]** Na konci každé sezony vznikne samostatný archivní `Season Closing Ranking`. Zahrne také výsledky dokončené v Season Weeku 61 a vypočítá se ještě podle odcházející sezonní Ranking Policy. Není totožný s Official Rankingem Weeku 1 následující sezony, který už používá novou policy.
+**[ROZHODNUTO PRO PRVNÍ VERZI]** Na konci každé sezony vznikne samostatný archivní `Season Closing Ranking`. Zahrne také výsledky dokončené v posledním Season Weeku W a vypočítá se ještě podle odcházející sezonní Ranking Policy. Není totožný s Official Rankingem Weeku 1 následující sezony, který už používá novou policy.
 
 Season Closing Ranking je přímo navázaný na `Season Closure Marker` a používá se v sezonním souhrnu. Nikdy se nepoužívá pro entries, seeding ani rozhodování hráčské AI a nezobrazuje se jako volba na běžných stránkách `Leaderboards`; Viewer jej ukáže pouze v souhrnu příslušné dokončené sezony.
 
@@ -4338,7 +4370,7 @@ Možné sekce z předchozího návrhu:
 
 - veškerý skutečný World, Category, Series a Calendar obsah Runu, jeho Package provenance a zachované unresolved reference,
 - informace o případném použití Setup Package; export Runu však není závislý na dostupnosti původních externích zdrojů,
-- všech 50 sezon,
+- všech sezon nastaveného rozsahu Runu,
 - všechny aktivní i archivované branche,
 - checkpointy,
 - hráče,
@@ -4863,7 +4895,7 @@ Přechod na globální Package stránku opustí Runový scope, ale nesmí zahodi
 
 **[ROZHODNUTO]** Hlavní stránka konkrétního Runu se v navigaci i hlavičce označuje `Home`. Nejde o globální `Squash Engine Home`: první patří vybranému Runu a aktivní branchi, druhá je kořenem celé aplikace bez Runového kontextu.
 
-**[ROZHODNUTO]** Run Home zobrazuje, ve které ze současných 50 sezon se Run nachází, a pod údajem používá segmentovaný ukazatel s jedním segmentem pro každou sezonu. Stejně zobrazuje současný week a druhý segmentovaný ukazatel s jedním segmentem pro každý z 61 weeků sezony. Současná pozice musí být na obou ukazatelích jednoznačně rozsvícená či jinak zvýrazněná.
+**[ROZHODNUTO]** Run Home zobrazuje, ve které sezoně nastaveného rozsahu se Run nachází, a pod údajem používá segmentovaný ukazatel s jedním segmentem pro každou sezonu. Stejně zobrazuje současný week a druhý segmentovaný ukazatel s jedním segmentem pro každý z W weeků sezony. Současná pozice musí být na obou ukazatelích jednoznačně rozsvícená či jinak zvýrazněná.
 
 **[PROZATÍMNÍ SMĚR]** Run Home může obsahovat soukromý Admin přehled poslední větší simulace nebo zvoleného období: důležité výsledky a změny, rekordy, překvapení, warnings, critical problémy a stav Future Locks. Jde o pracovní nástroj pro uživatele enginu, nikoliv o veřejně formulované zprávy pro diváky. Podrobný neblokující post-simulační digest popisuje kapitola 17.3.
 
@@ -4915,7 +4947,7 @@ Celý strom zůstává pouze silným směrem mimo konkrétní později schválen
 
 **[ROZHODNUTO]** Run `Home` má tuto obsahovou a orientační prostorovou skladbu:
 1. nahoře identita Runu/branche a stav neuložených změn;
-2. pod ní přes šířku dva segmentované ukazatele 50 sezon a 61 weeků;
+2. pod ní přes šířku dva segmentované ukazatele počtu sezon Runu a W týdnů sezony;
 3. vlevo `Další postup`: nejbližší simulační události, běžící/pozastavená úloha a odkaz do Simulation;
 4. vpravo `Vyžaduje pozornost`: konkrétní errors/warnings a čekající ruční rozhodnutí s přímými odkazy;
 5. níže `Dění ve světě`: stručné skutečné výsledky, rankingové změny, zdraví, talenty a rekordy s možností otevřít poslední simulační souhrn.
@@ -4980,7 +5012,7 @@ Akce zahrnují použití v Runu, vytvoření kopie a export v podporovaném rozs
 
 **[ROZHODNUTO PRO PRE-ALPHA — COUNTRY TOURNAMENTS]** Turnaje země výchozí zobrazí aktuální sezonu. Sezonní oddíly dovolí scroll do minulosti a v Adminu i do již skutečně naplánované budoucnosti; `Aktuální sezona` vrátí na dnešní sezonu. Budoucí plán není budoucí výsledek a prohlížení neposouvá simulaci. Umístění země se čte z konkrétní Edition, protože místo série se může mezi ročníky měnit. Klik vede do společného detailu turnajové Edition.
 
-**[ROZHODNUTO PRO PRE-ALPHA — RUN CALENDAR]** Kalendář výchozí používá kompaktní weekový přehled 61 Season Weeks s turnajovými termíny/stavy, souběžné turnaje vedle sebe. Lze přepnout na běžný vyhledatelný/řaditelný seznam. Filtry zahrnují Tour, kategorii a zemi; klik otevírá Edition. Čtení kalendáře nemění globální simulační osu ani nevytváří výsledky.
+**[ROZHODNUTO PRO PRE-ALPHA — RUN CALENDAR]** Kalendář výchozí používá kompaktní weekový přehled W Season Weeks podle Runu s turnajovými termíny/stavy, souběžné turnaje vedle sebe. Lze přepnout na běžný vyhledatelný/řaditelný seznam. Filtry zahrnují Tour, kategorii a zemi; klik otevírá Edition. Čtení kalendáře nemění globální simulační osu ani nevytváří výsledky.
 
 **[ROZHODNUTO PRO PRE-ALPHA — TOURNAMENT EDITION]** Samostatná stránka má hlavičku s názvem, sezonou, místem a stavem; záložky `Přehled / Overview`, `Přihlášky a účastníci / Entries & Participants`, `Pavouk/skupiny / Draw & Groups`, `Program a zápasy / Schedule & Matches`, `Výsledky / Results`, `Nastavení / Settings`. Přehled ukáže skutečný stav a další požadovaný krok; účastníci přihlášky, kvalifikanty, WC, rezervy a dostupná zdůvodnění; formátový pohled pavouk/skupiny; program odehrané i plánované zápasy; výsledky skutečné umístění/body; nastavení pravidla, velikosti a organizační okna. Návrat zachová pozici kalendáře.
 
@@ -5061,7 +5093,7 @@ Následující seznam je rychlá kontrola nejdůležitějších pravidel potvrze
 1. Engine dělá pouze mužský squash a jednotlivé zápasy jsou pouze dvouhry.
 2. Viewer je vždy read-only; změny patří pouze do Adminu.
 3. Produkt je pro jednoho uživatele bez účtů, rolí a přihlašování.
-4. Každý Run má přesně 50 sezon `2000/01–2049/50`, každá má 61 weeků a za poslední sezonu nelze pokračovat.
+4. Každý Run má vlastní pevný počet týdnů roku/sezony W a posun, počáteční rok a nastavený rozsah. Earth výchozí 52, FAX 61; po spuštění kalendář nelze měnit a konec lze pouze výslovně prodlužovat. Prodloužení platí pro všechny branche bez automatického startu či změny již potvrzených simulačních cílů. Detail 3.2/6.9–6.12.
 5. Mohou existovat prázdné weeky i neomezený počet souběžných turnajů.
 6. Run lze vytvořit úplně prázdný bez Package nebo Setup Package. Obsah může vzniknout ručně nebo jednorázovým importem volitelných balíčků kdykoliv později; absence blokuje pouze operaci, která daná data skutečně potřebuje.
 7. `Official FAX World` a `Official FAX Category Package` jsou nabízené Official Run defaulty, nikoliv povinné součásti Runu.
@@ -5092,7 +5124,7 @@ Následující seznam je rychlá kontrola nejdůležitějších pravidel potvrze
 32. Ukládá se přesné skóre jednotlivých setů a u každého zahájeného zápasu také celková skutečná délka v sekundách. W/O má délku `null`; RET, DQ a ABN po zahájení uchovají skutečně odehraný čas.
 33. Tournament Series si zachovává společnou historii přes trvalé `series_id`, i když turnaj změní název, kategorii, místo, week, formát nebo jiný sezonní parametr.
 34. Ranking se aktualizuje týdně a po každém dokončeném weeku vznikne během přechodu do dalšího weeku nový oficiální snapshot označený tímto novým weekem, i beze změny.
-35. Turnajové body se přidělí až po dokončení celého turnaje nebo jeho formálním terminálním uzavření jako Abandoned, poprvé se objeví v následujícím weeku a jejich výchozí platnost je 61 weeků; dočasné Suspended je neaktivuje a Admin může dobu platnosti konkrétního turnaje výjimečně změnit s varováním.
+35. Turnajové body se přidělí až po dokončení celého turnaje nebo jeho formálním terminálním uzavření jako Abandoned, poprvé se objeví v následujícím weeku a jejich výchozí platnost je jeden rok daného Runu (FAX 61 / Earth 52 týdnů); dočasné Suspended je neaktivuje a Admin může dobu platnosti konkrétního turnaje výjimečně změnit s varováním.
 36. První sezona Official Runu používá Best 15; v každé sezoně se podle jejího právě platného Best N vybírají nejvyšší platné bodové výsledky a žádný turnaj se nepočítá povinně. Při rovnosti bodů nevzniká sdílené pořadí: rozhodne skladba Best N výsledků, jejich recency, předchozí Official Ranking a nakonec stabilní reprodukovatelný token.
 37. Official Ranking je výchozí a Live Ranking dopočítává nejnovější uložený průběžný stav.
 38. Historické live rankingové snapshoty se neukládají; vypočítají se z autoritativních dat.
@@ -5175,7 +5207,7 @@ Následující seznam je rychlá kontrola nejdůležitějších pravidel potvrze
 115. Saved Views lze skrývat; nekompatibilní pohled zůstane ve správci s vysvětlením, ale nezobrazuje se v rychlé nabídce daného Runu.
 116. Viewer umožňuje zobrazit současný čas ročně, sezoně nebo oběma způsoby; výchozí je roční zobrazení.
 117. Věk lze zobrazit jako celé roky, roky a weeky nebo desetinně; výchozí jsou celé roky.
-118. Desetinný věk používá podle potřeby nejvýše tři desetinná místa a vychází z 61weekového roku.
+118. Desetinný věk používá podle potřeby nejvýše tři desetinná místa a vychází z počtu týdnů roku daného Runu.
 119. Engine umožňuje historickou změnu reprezentované země a v Official Runu jde o velmi výjimečnou událost. Konkrétní eligibility, 122weeková lhůta, počet změn, schvalování a abstraktní simulace zůstávají prozatímním modelem kapitol 10.3 a 29, nikoliv součástí tohoto pevného bodu.
 120. Výška i hmotnost jsou časově proměnlivé a historický Viewer vždy ukazuje hodnoty platné ve zvoleném weeku.
 121. Historický profil ukazuje věk i status hráče platný ve zvoleném weeku a neprozrazuje budoucí změny.
@@ -5247,7 +5279,7 @@ Následující seznam je rychlá kontrola nejdůležitějších pravidel potvrze
 187. Admin sidebar je kontextový: globální scope ukazuje globální správu, Runový scope Runové sekce, a obě sady nemíchá v jednom menu.
 188. Run Admin sidebar se při najetí dočasně vysune jako vrstva nad stránkou, při najetí na kategorii rozbalí její stránky svisle dolů, drží otevřenou nejvýše jednu kategorii a zvýrazňuje aktivní cestu.
 189. Sidebar lze připnout natrvalo; volba se na zařízení zapamatuje. Dočasné otevření má ochranné zpoždění proti nechtěnému zavření a automaticky ukáže kategorii současné stránky.
-190. Run Home má dva pevné segmentované ukazatele: 50 sezon celého Runu a 61 weeků současné sezony, vždy s jasně označenou aktuální pozicí.
+190. Run Home má dva segmentované ukazatele: nastavený počet sezon celého Runu a W týdnů současné sezony, vždy s jasně označenou aktuální pozicí.
 191. Engine důsledně odděluje World Event Log světových faktů, Audit Log změn dat a provenance, Task Center běžících či dokončených operací a Notification Center věcí vyžadujících Adminovu pozornost.
 192. World Event Log tvoří trvalou chronologickou historii konkrétní časové linie a dovoluje dohledat, jak a proč vznikl současný stav. Přečtení, skrytí nebo odstranění upozornění nikdy nesmaže jeho zdrojovou událost, audit, úlohu ani validaci.
 193. Notification Center přijímá automatická systémová upozornění a uživatelské watchlisty hráčů, zemí, turnajů, branchí a dalších podporovaných objektů s volitelnými triggery.
@@ -5263,9 +5295,9 @@ Následující seznam je rychlá kontrola nejdůležitějších pravidel potvrze
 203. Součástí každého Week Transitionu první verze je `Weekly Player Development Update`. Používá hráčův stav a historii známé nejpozději do konce právě skončeného weeku, nikdy však informace z nově otevíraného nebo budoucího weeku. Může atributy zlepšit, zhoršit nebo ponechat stejné a nové hodnoty platí od prvního slotu následujícího weeku. Únava, zdraví ani jiné kontinuální stavy se přechodem automaticky neresetují.
 204. Každý week první verze má jednu globální chronologickou osu s proměnlivým počtem Simulation Slots. Události stejného slotu jsou současné, používají společný vstupní snapshot a jejich technické pořadí nesmí změnit jejich vstupy; další slot začne až po platném vyřešení všech událostí současného slotu.
 205. `Simulate Next Slot` dokončí všechny zbývající události nejbližšího neuzavřeného globálního slotu. Dělené `Simulate Next Match` dovolí vybrat pouze jiný nevyřešený současný zápas bez nesplněné schedule dependency; pozdější zápas téhož Match Day Slotu nelze přeskočit, pokud musí číst následky dřívějšího.
-206. `Season Transition` je speciální rozšíření Week Transitionu při přechodu ze Season Weeku 61 do Weeku 1, nikoliv druhé hodiny ani normální slot. Dokončí se jen po platném terminálním vyřešení všech povinných událostí uzavírané sezony; červený problém blokuje pouze tento přechod a označí příčinu.
+206. `Season Transition` je speciální rozšíření Week Transitionu při přechodu z posledního Season Weeku `W` do Weeku 1, nikoliv druhé hodiny ani normální slot. Dokončí se jen po platném terminálním vyřešení všech povinných událostí uzavírané sezony; červený problém blokuje pouze tento přechod a označí příčinu.
 207. Nové sezonní policy se při Season Transitionu aktivují atomicky bez tichého přepočtu staré sezony. Resetují se pouze výslovně season-scoped hodnoty; kontinuální hráčské a historické stavy pokračují. Uzavření vytváří lehký `Season Closure Marker`, ne kopii světa.
-208. Všech 50 sezon lze plánovat dopředu pomocí úsporných virtuálních `Inherited Plans`; virtuální výskyt je před materializací adresovaný deterministickým klíčem a nemá ID. Uložený Plan dostane stabilní `edition_plan_id`, Edition odlišné `edition_id`; triggerem je editace, potvrzení, import, publication nebo první trvalá provozní potřeba včetně simulace či Season Transitionu.
+208. Všechny sezony nastaveného rozsahu Runu lze plánovat dopředu pomocí úsporných virtuálních `Inherited Plans`; virtuální výskyt je před materializací adresovaný deterministickým klíčem a nemá ID. Uložený Plan dostane stabilní `edition_plan_id`, Edition odlišné `edition_id`; triggerem je editace, potvrzení, import, publication nebo první trvalá provozní potřeba včetně simulace či Season Transitionu.
 209. Budoucí kalendář rozlišuje scopes `Only this Edition` a `From this season onward`. Druhý mění pouze zděděné budoucí plány; individuální overrides chrání impact preview. Budoucnost aktivní sezony je editovatelná a minulost používá obecný branch/history workflow.
 210. Tournament Edition má ze skutečných událostí odvozený hlavní lifecycle, detailní komponentní stavy a z nich vypočtený veřejný `Public Stage`. Viewer vidí jen tehdy veřejně důležité fáze, Admin také interní deadlines, freezes, dependencies a chyby.
 211. Neúplný Draft lze uložit. Chybějící pole neblokují nesouvisející práci, ale přechod do Scheduled, otevření entries, los nebo simulace vyžadují své platné prerequisites a případně zobrazí červený operation-scoped problém s opravou. Ranked Edition bez úplné bodové tabulky zůstává neveřejným Admin Draftem; prize money publikaci první verze neblokují.
@@ -5358,7 +5390,7 @@ Následující seznam je rychlá kontrola nejdůležitějších pravidel potvrze
 298. World, kategoriální systém, Series nebo kalendář ručně vytvořené v Runu lze vyexportovat jako nové nezávislé Packages s provenance a bez živého propojení se zdrojovým Runem.
 299. Competition System, Tour a Category používají stabilní číselná ID v rámci Category Package. ID se nerecykluje ani nekóduje pořadí; oddělené `display_order` a volitelný sportovní/tier rank používají jen entity, pro které dávají smysl.
 300. Tour může pod stejným ID měnit název, být deaktivována a reaktivována; skutečně nová Tour dostane nové ID. Hráči nejsou členy Tour, protože Tour organizuje soutěže a kategorie.
-301. Calendar Package může pokrýt jednu, více nebo všech 50 sezon i jen zvolenou část sezony, Tour či Series. Neuvedený scope je mimo balíček a nikdy sám neznamená prázdná data nebo příkaz ke smazání.
+301. Calendar Package může pokrýt jednu, více nebo všechny sezony nastaveného rozsahu Runu i jen zvolenou část sezony, Tour či Series. Neuvedený scope je mimo balíček a nikdy sám neznamená prázdná data nebo příkaz ke smazání.
 302. Výchozí import Calendar Package provádí merge přes preview. Úplné nahrazení je možné jen po výslovné volbě přesně vymezeného scope a nesmí odstranit nic mimo něj.
 303. Edition Plan ukládá cílovou sezonu, week či rozsah weeků a explicitní overrides. Zhmotněná Edition má samostatné `edition_id`, odkaz na `edition_plan_id` a nepřebírá výsledky, přihlášky ani losy staršího ročníku.
 304. Další sezonní plán standardně dědí efektivní hodnoty posledního existujícího ročníku či plánu stejné Series. Po vynechané sezoně se vychází z posledního skutečného ročníku, nikoliv z prázdné mezery.
@@ -5415,9 +5447,9 @@ Následující seznam je rychlá kontrola nejdůležitějších pravidel potvrze
 355. Development používá konečnou Form dokončeného weeku před jejím návratem k normálu a starou development policy; nová policy poprvé řídí vývoj nového weeku. Official Ranking nového weeku naproti tomu používá nově účinnou Ranking Policy.
 356. Rankingové body, pořadí a existující Official snapshoty jsou přímo read-only. Před každým novým snapshotem se provede povinný recompute z autoritativních vstupů; mismatch je červený a blokuje celý transition. Pozdější korekce se projeví v novém snapshotu, zatímco historie „jako by chyba nevznikla“ vyžaduje branch/regeneraci.
 357. Narozeniny a další lifecycle změny se provedou při otevření stejného `birth_year_week`; nový věk platí už pro jeho první sloty a Official Ranking daného weeku.
-358. Každou sezonu uzavírá samostatný archivní Season Closing Ranking podle odcházející policy včetně výsledků Weeku 61. Odkazuje na něj Closure Marker, zobrazuje se pouze v sezonním souhrnu a nikdy neřídí entries, seeding ani AI.
-359. Season Transition používá atomické pořadí `validace Weeku 61 → Closing Ranking → sezonní souhrn/Closure Marker → development a recovery staré sezony → aktivace nové sezony a reset jen season-scoped hodnot → lifecycle → Official Ranking Weeku 1 → veřejný stav → commit`. Sezonní statistiky se před resetem zmrazí, career statistiky a zbývající disciplína pokračují.
-360. Pre-alpha zakazuje jednu Tournament Edition přes hranici Season Week 61→1 jako okamžitou červenou validační chybu. Poslední sezona 2049/50 po Closing Rankingu, souhrnu a Closure Markeru označí Run Completed a nevytvoří neexistující další Week 1.
+358. Každou sezonu uzavírá samostatný archivní Season Closing Ranking podle odcházející policy včetně výsledků posledního Weeku `W`. Odkazuje na něj Closure Marker, zobrazuje se pouze v sezonním souhrnu a nikdy neřídí entries, seeding ani AI.
+359. Season Transition používá atomické pořadí `validace posledního Weeku W → Closing Ranking → sezonní souhrn/Closure Marker → development a recovery staré sezony → aktivace nové sezony a reset jen season-scoped hodnot → lifecycle → Official Ranking Weeku 1 → veřejný stav → commit`. Sezonní statistiky se před resetem zmrazí, career statistiky a zbývající disciplína pokračují.
+360. Pre-alpha zakazuje jednu Tournament Edition přes hranici Season Week W→1 jako okamžitou červenou validační chybu. Právě nastavená poslední sezona po Closing Rankingu, souhrnu a Closure Markeru označí Run Completed a bez výslovného prodloužení nevytvoří další Week 1.
 361. Atomickou jednotkou uvnitř Simulation Slotu je nezávislá událost nebo kauzálně či konfliktně propojená skupina, nikoliv automaticky celý slot. Nezávislé skupiny lze uložit samostatně, ale všechny nevyřešené skupiny čtou původní frozen slot-start snapshot a další slot čeká na jejich terminální stav.
 362. Výstup závislý jen na dokončené skupině se může po uložení zveřejnit okamžitě; agregát čeká na celý relevantní batch. Známý feeder se doplní ihned, neznámý zůstane placeholderem a navazující zápas čeká na všechny prerequisites i uzavření předchozího globálního slotu.
 363. Retry selhané skupiny se stejnými vstupy a verzí modelu zachová seed i kandidátní výsledek. Novou náhodnost vyvolá jen relevantní změna nebo výslovné `Resimulate`; hotové nezávislé skupiny se znovu nehází.
@@ -5656,7 +5688,7 @@ Každý očíslovaný bod této kapitoly je od verze 48a stabilní **široký ok
 62. Rivality a rekordy: automatická detekce dvojicových a skupinových rivalit, jejich vznik, zánik, překryvy, Manual Rivalry, přesná vazba na Scenario Direction a Viewer H2H UX. Rivalry Score je pouze slabý směr. U rekordů jsou rozhodnutá jejich četná kontextová zobrazení; jednotná výpočetní vrstva a úplná historie držitelů jsou jen slabým směrem.
 63. Prestiž turnajů: číselná škála, typické defaulty kategorií, automatické vstupy a tempo změn, Edition modifier, Admin lock/override, ochrana před zpětnou smyčkou a dopad na entry AI. Oddělený Tournament Appeal je pouze slabý směr; Admin přesná hodnota a Viewer slovní či pořadové zobrazení jsou běžným směrem.
 64. `Week Transition`, globální `Simulation Slots` a turnajové `Match Day Slots`: hlavní atomické pořadí Week Transitionu, frozen slot-start contract, jediná globální časová osa, účinnost procesních oken na hranici slotu a mapování jednoho Match Day Slotu na jeden či více navazujících globálních slotů jsou rozhodnuté. Otevřené zůstávají úplný katalog a matematika týdenních podkroků, datový formát snapshotu, detailní dependency graph, přesná klasifikace konfliktních skupin, pravidla jiných než zápasových událostí, optimalizace, rest minima, kapacity dnů a případné pozdější hodiny. Žádný pevný počet sedmi globálních slotů ani sedmi procesních oken rozhodnutý není.
-65. `Season Transition`, Season Builder a Edition Plans: hlavní atomické pořadí, Season Closing Ranking, zákaz Edition přes 61→1, materializační triggery/atomicita/conflict behavior, více Editions, nepřekryvnost a číslování podle prvního skutečného startu jsou rozhodnuté. Otevřené zůstávají schéma Closure Markeru, katalog season-scoped hodnot, pořadí nezávislých podkroků uvnitř uzavřených vrstev, konečný UX, verze šablon, layout všech 50 Inherited Plans, texty a pokročilé řešení konfliktů a opravy už materializovaného kalendáře.
+65. `Season Transition`, Season Builder a Edition Plans: hlavní atomické pořadí, Season Closing Ranking, zákaz Edition přes W→1, materializační triggery/atomicita/conflict behavior, více Editions, nepřekryvnost a číslování podle prvního skutečného startu jsou rozhodnuté. Otevřené zůstávají schéma Closure Markeru, katalog season-scoped hodnot, pořadí nezávislých podkroků uvnitř uzavřených vrstev, konečný UX, verze šablon, layout všech 50 Inherited Plans, texty a pokročilé řešení konfliktů a opravy už materializovaného kalendáře.
 66. Tournament Edition lifecycle a veřejná znalost: tři vrstvy stavů, úplná pre-alpha přechodová matice, doménové Admin akce, společný Viewer/AI announcement week, public version timing, Tournament/Emergency Update a 2×2 mimořádný stav jsou od v62 rozhodnuté. Otevřené zůstávají detailní UI, některé vyšší kompenzace, přesuny přes sezonu a šablony veřejných eventů; vlastní pravděpodobné očekávání pravidelných turnajů hráčskou AI je až směr dalších verzí.
 67. Entry historie a souběžná rozhodnutí: konečný status katalog `Tournament Entry/Application` včetně `Still Competing`, detailní Viewer označení předběžných listů, konkrétní portfolio optimalizace hráčské AI, staging datový model a chování při změně vstupů nebo verze algoritmu. Historický objekt, společný slot-start snapshot, společné přehodnocení turnajů a zveřejnění aktuálního seznamu po dokončeném konfliktním entry batchu jsou rozhodnuté. Od v50 je upřesněno, že tento konfliktní batch je atomický, ale nezávislé skupiny stejného globálního slotu mohou commitnout samostatně; retry při stejných vstupech drží stejný seed/výsledek. Přesné rozpoznání kauzálních hranic, faktory, váhy a chytrost AI zůstávají otevřené.
 68. Match Reconstruction: úplný katalog, kombinovatelnost a hard/preferred status constraints, feasibility a validační prahy, algoritmy přirozeného hledání, bezpečného early pruning, vynucení, nearest-distance a rozmanitosti kandidátů, výkonové rozpočty a warning prahy, přesný probability/naturalness model, kalibrace `δ / α`, provenance, konečný výchozí počet, retence preview/session a výslovně uložených alternativ, batch workflow a detailní Admin UI. Rozhodnuté jsou ručně uzamčené vstupy, nastavitelný počet kandidátů, oddělení Pre-match Form / Match Performance / Post-match Form, řaditelný kompaktní přehled s výchozím pořadím nalezení, úplný read-only detail, nový kandidát po simulačně významové editaci spuštěné tlačítkem, dočasná historie do potvrzení, autoritativní commit pouze vybraného validního kandidáta. Dřívější tři cesty při problému včetně forcing režimu jsou podle v71 odloženy k testování, nikoliv schválenou povinnou nabídkou. Statistické passy, Rare Event Accelerator a přesný obsah kompaktní karty jsou pouze směry podle kapitoly 17.9; princip a omezení forcing režimu zůstávají otevřené.
@@ -5733,12 +5765,12 @@ Pre-alpha zde znamená první funkční end-to-end verzi, která opakovaně zvl�
 
 30. **PAQ-030 [RESOLVED v56][PA0][PRODUCT] – Jaké je přesné pořadí událostí uvnitř jednoho globálního Simulation Slotu?** Odpověď pro první pre-alpha verzi: `Slot-Start Activation → Freeze Slot-Start Snapshot → Calculate to Staging → Resolve Conflicts → Validate and Commit → Publish Committed Outputs → Close Slot`. Po praktickém testování lze kontrakt vědomě vylepšit. Příklad: nejprve se z téhož snapshotu uzavře celý entry batch a teprve po jeho commitu se zveřejní entry list; závislý los patří do dalšího slotu.
 31. **PAQ-031 [RESOLVED v50][PA0][PRODUCT] – Jaké je úplné pořadí operací Week Transitionu?** Odpověď: preflight/staging → development z dokončeného weeku → Between-Week State Update → aktivace nové konfigurace → narozeniny/lifecycle → expirace/aktivace výsledků a korekce → jediný nový Official Ranking → veřejné události → validace a atomický commit. Podrobnosti jsou v kapitole 6.5.
-32. **PAQ-032 [RESOLVED v50][PA0][PRODUCT] – Jaké je úplné pořadí Season Transitionu a jeho atomického commitu?** Odpověď: validace Weeku 61 → Season Closing Ranking podle starých pravidel → sezonní souhrn a Closure Marker → development/recovery podle starých pravidel → aktivace nové sezony a reset jen season-scoped hodnot → lifecycle → Official Ranking Weeku 1 podle nových pravidel → veřejný stav → atomický commit. Poslední sezona skončí po uzávěrce jako Completed.
+32. **PAQ-032 [RESOLVED v50][PA0][PRODUCT] – Jaké je úplné pořadí Season Transitionu a jeho atomického commitu?** Odpověď: validace posledního Weeku W → Season Closing Ranking podle starých pravidel → sezonní souhrn a Closure Marker → development/recovery podle starých pravidel → aktivace nové sezony a reset jen season-scoped hodnot → lifecycle → Official Ranking Weeku 1 podle nových pravidel → veřejný stav → atomický commit. Poslední sezona skončí po uzávěrce jako Completed.
 33. **PAQ-033 [RESOLVED v50][PA0][TECH] – Jak se řeší závislé a nezávislé události se stejným slot-start snapshotem?** Odpověď: atomickou jednotkou je nezávislá událost nebo konfliktní/kauzální skupina. Nezávislé skupiny lze commitovat odděleně, ale všechny nevyřešené části čtou původní slot-start snapshot a další slot čeká na jejich terminální stav.
 34. **PAQ-034 [RESOLVED v57][PA0][PRODUCT] – Jaká je operation-scoped prerequisite matice všech podporovaných simulačních akcí?** Odpověď: matice je hierarchická podle cíle a kauzálních závislostí; širší rozsah dědí minima užších rozsahů, červená chyba blokuje vybranou hromadnou akci, ale ne nezávislou validní užší operaci, a Next Season/Full validují vzdálenou budoucnost progresivně. Konkrétní minima pro Rally/Game/Match/Slot/Round/Tournament/Week/Season/Full/Custom určuje kapitola 17.1. Příklad: chybějící body budoucího Ranked turnaje nezablokují samostatný platný zápas.
 35. **PAQ-035 [PA1][TECH] – Jak se dlouhá úloha pozastaví, bezpečně zastaví, obnoví po restartu a zobrazí v Task Centeru?** Příklad: zastavení po současném zápase nezanechá napůl zapsaný ranking.
 36. **PAQ-036 [RESOLVED v57][PA0][PRODUCT] – Jak se mapují globální Slots, entry/draw okna a denní Match Day Slots?** Odpověď: existuje jediná autoritativní globální osa Simulation Slots. Procesní okno začne na hranici konkrétního slotu, Match Day Slot se mapuje na jeden či více navazujících globálních slotů a scheduler topologicky umístí závislé události později, zatímco nezávislé turnaje mohou sdílet slot. Přesný počet časných oken a optimalizace zůstávají otevřené.
-37. **PAQ-037 [RESOLVED v50][PA1][PRODUCT] – Jak se pre-alpha zachová na konci weeku 61 poslední sezony?** Odpověď: vytvoří Season Closing Ranking, sezonní souhrn a Closure Marker, označí Run jako Completed a nevytvoří neexistující Week 1 ani sezonu 2050/51; starší body lze nadále prohlížet a větvit.
+37. **PAQ-037 [RESOLVED v50][PA1][PRODUCT] – Jak se pre-alpha zachová na konci posledního weeku W poslední nastavené sezony?** Odpověď: vytvoří Season Closing Ranking, sezonní souhrn a Closure Marker, označí Run jako Completed a bez výslovného prodloužení nevytvoří další Week 1 ani další sezonu; starší body lze nadále prohlížet a větvit.
 
 ## 31.8 Hráčský pool, generování a identita
 
@@ -6160,6 +6192,14 @@ Toto rozhodnutí upřesňuje UX otevřené části PAQ-119, nikoliv celý katalo
 **[AKCEPTAČNÍ CÍL]** Ověřit pause/resume/change-target/stop bez druhého losování nebo částečných autoritativních výsledků; bezpečné čtení za běhu, kontext Run/Branch při navigaci a pravidla souběhu; návrat po zavření karty bez duplicitní úlohy a bez automatického startu po restartu procesu; scope sledování/stop rules/předvoleb, deduplikaci událostí; zachování filtrů v detailu; předzápasový snapshot bez current fallback; poznámky mimo herní AI a explicitní export; izolaci diagnostických podkladů od zdrojového Runu. Vše v CS/EN a bez implicitního Save. Rozsah konkrétního PR ověřovat cíleně podle test policy, úplnou pre-alpha bránu při vydání.
 
 **[NEUZAVŘENO]** Nový A/B Lab layout nebyl potvrzen; skipped queue, matematika AI odhadů, realističnost a úrovně porovnání zůstávají v předchozím stavu. Nepřepisují se historické PAQ počty ani se neuzavírají implementací.
+
+## 31.37 Konsolidace kalendáře a rozsahu v82 (15. 10. 2026)
+
+**[ROZHODNUTO PRO PRE-ALPHA]** Vlastní pevný počet týdnů W v roce i sezoně; Earth 52 / FAX 61 jako výchozí hodnoty; nastavitelný posun a počáteční rok; konec zadaný poslední sezonou nebo počtem s náhledem; uzamčení kalendáře po spuštění prvního týdne; jen prodlužování rozehraného Runu, společné pro branche a bez automatické simulace/předgenerování/změny cílů; roční základ věku/vývoje a defaultní platnosti bodů; explicitní konflikty importu; Admin sezona hlavní + Year doplňkově. Podrobnosti v 3.2 a 6.1/6.9–6.12. Rozhodnutí nahrazuje starší univerzální 50 × 61, nikoliv historickou evidenci.
+
+**[AKCEPTAČNÍ CÍL]** Doložit FAX i Earth a další platný nestandardní W, offset 1 i sezony přes nový rok, hraniční narozeniny/věk, round-trip převody a boundary validaci, rankingovou expiraci po W týdnech a nezměněné explicitně týdenní lhůty; chybějící versus vadná legacy metadata; Save/reopen/restore/replay bez přepisu; prodloužení i Completed Runu napříč branchimi bez duplikace uzávěrky/developmentu či startu terminálních úloh; konfliktní import bez skrytého posunu. Nevyřešené části musí být jasně označené a nesmějí být prezentované jako funkční přepínač.
+
+**[ZACHOVÁNO — RELEASE TEST]** Povinný referenční FAX průchod **50 sezonami 2000/01–2049/50** z 31.28 zůstává konkrétní akceptační konfigurací, nikoliv univerzálním omezením Runu. Earth a nový kalendář vyžadují vlastní cílené integrační důkazy; řídký třízápasový průchod přes prázdné týdny není plná World Tour sezona, 1 000 hráčů / 80 Editions, kalibrace ani release. Přesné křivky a detailní trénink/deload zůstávají k testování/později; 157 PAQ ID a jejich historický počet se nepřepisují.
 
 # 32. Procentuální audit stavu specifikace
 
@@ -6933,6 +6973,18 @@ Ověřený `buuk`: `bf928bfcd3e9848c15762ac66860039b53bedaef`, merge #1453. Nov�
 
 Podrobná tabulka PR/HEAD/CI, důkazy a hranice: `docs/PRE_ALPHA_FRONTEND_CHECKPOINT_V81_2026_10_14.md`. Žádná aplikační implementace se tímto dokumentačním checkpointem nemění. Doporučené pořadí: opravit jazyk/terminologii → hybrid source do příštího oprávněného rankingu → více knockout kol → v81 konzole a ovládání nad skutečnou serverovou úlohou. Vše nové z 27.23 je zatím produktový kontrakt, nikoliv tvrzení o hotové funkčnosti.
 
+## 35.39 Integrační audit v82 — po #1488 (15. 10. 2026)
+
+Ověřený `buuk`: `b63f40387bed75812ae9f9585734a6226b93fda9`, merge #1488. Navazující #1454–1488 obsahují dokumentační v81, dříve auditované implementace #1455–1484 a nově přímo přezkoumané #1486–1488. #1485 je uzavřený **bez merge**, #1470/#1472 nejsou PR. Nové tři finální feature HEADy jsou v historii buuk a všech osm dostupných finálních PR workflow běhů uspělo. Při počáteční inventuře nebyl otevřený PR. Přehled a přesné důkazy: `docs/PRE_ALPHA_CHECKPOINT_V82_2026_10_15.md`.
+
+- #1455–1465 opravily starší jazyk/terminologii a doložily vícekolový hybrid, publikaci, Full Simulation pause/resume a lease fencing. #1466–1474 přidaly Stop, cíle, zmrazené souhrny a serverové úlohy s explicitní obnovou. #1475–1478 přidaly bezpečnou kontrolu změn rozpisu a hybridní operator checkpoints.
+- #1479–1484 rozšířily skutečný hybridní browser průchod: první task dokončil Week 2; druhý task přežil fyzický restart, dosáhl Week 61, po ručním Save a skutečném canonical Season Transitionu dosáhl Season index 1 Week 1. Poté čekal na `week_preparation_required`. Celkem jen tři skutečné zápasy, nikoliv celá naplněná sezona.
+- #1486 opravilo souhlas při změně scope/revize/fingerprintů/slotů a zmrazilo přesný request pro retry. Dodatečný izolovaný component repro odhalil zbývající případ: zrušit nejasný request při **nezměněných** podkladech ponechá původní souhlas a dovolí nový command ID bez nového zaškrtnutí. Změna podkladů už tento starý bug nereprodukuje; nejde o backend bypass ani prokázaný duplicitní zápis.
+- #1487 opravilo tmavý kontrast, zobrazilo skutečné blocker/detail podklady, odlišilo poslední checkpoint a propojilo pending receipt s jeho taskem. #1488 přidalo navigaci do přesného Run/Branch Calendar setup a Season Builderu. To je navigation-only; nový-season sporting acceptance ještě neproběhl. Část nových textů v RunPackageSetupPanel je stále jen anglická.
+- Zdrojově potvrzeno: Run bootstrap a time mapping stále používají pevný 2000–2049 / 61 / 37 a v některých validačních cestách jiné W výslovně odmítají. v82 je proto nový produktový požadavek a implementační backlog, ne dokončená schopnost. Starší workflow, fake-free sport, historie, determinismus a ochrana balíčků zůstávají povinné.
+
+Tento audit neprohlašuje kompletní backend/frontend, plnou regresi, celý naplněný Run ani realističnost. Zelená CI je důkaz pouze skutečně spuštěných scénářů. Další zadání a hospodárné rozdělení práce: `docs/PRE_ALPHA_NEXT_CHATGPT_TASK_V82_2026_10_15.md`.
+
 # 36. AI-Assisted Development / Development Operating Model
 
 **[ROZHODNUTO – PRACOVNÍ PROTOKOL, 12. 9. 2026]** Tato kapitola nahrazuje dřívější organizační instrukce, pokud jsou s ní v rozporu; nemění sportovní pravidla.
@@ -6941,7 +6993,7 @@ Podrobná tabulka PR/HEAD/CI, důkazy a hranice: `docs/PRE_ALPHA_FRONTEND_CHECKP
 
 - Uživatel je product owner / game designer: rozhoduje produktová pravidla, skutečné otevřené chování a schvaluje merge PR. Nemusí určovat architekturu, pořadí souborů, databázové změny nebo testovací strategii.
 - ChatGPT Work je technical lead: ověřuje GitHub, udržuje kontext, hodnotí závislosti, navrhuje jeden nejlepší další řez, aktualizuje Master a připravuje hotové zadání pro Codex.
-- Codex je preferované implementační prostředí: repository, kód, debugging, migrace, testy, build, integrační ověření, review a PR. Work a Codex nemají duplicitně implementovat stejný úkol. Při nedostupnosti nástroje agent pravdivě popíše hranici a dodá předatelné zadání; nesmí předstírat spuštění Codexu.
+- Codex je dostupné implementační prostředí pro repository, kód, debugging, migrace, testy, build, integrační ověření, review a PR; novější úsporný výchozí postup je v 36.8. Work a Codex nemají duplicitně implementovat stejný úkol. Při nedostupnosti nástroje agent pravdivě popíše hranici a dodá předatelné zadání; nesmí předstírat spuštění Codexu.
 - GitHub a aktuální kód/testy jsou zdrojem pravdy o implementaci. Tento Master je produktový canon a přenosná handoff paměť; statusové značky zůstávají oddělené od implementace.
 - Pořadí autority: novější explicitní uživatelské rozhodnutí → canonical Master → podřízená constitution → relevantní specifikace; stará dokumentace/kód jsou pouze historie či evidence. Technický a dokumentační drift agent opravuje sám. Nové sportovní pravidlo ani OPEN matematiku nesmí odvodit z existujícího defaultu.
 
@@ -6982,3 +7034,9 @@ Významné předání obsahuje: **Stav**, **Nejlepší další krok**, **Co mám
 
 Model je pracovní doporučení, nikoli sportovní canon ani trvale pevná verze: ověřit dostupnost v uživatelově klientu a aktuální oficiální dokumentaci, volit podle složitosti a nákladů. Běžná implementace nemá automaticky vyžadovat nejdražší režim. Review a relevantní finální HEAD kontroly zůstávají povinné bez ohledu na použitý model. Merge provádí pouze uživatel.
 
+
+## 36.8 Úsporná práce a pokračování při vyčerpání kreditů (15. 10. 2026)
+
+**[ROZHODNUTO — NOVĚJŠÍ PRACOVNÍ POKYN]** Primárně implementovat přímo nástroji pokračovacího ChatGPT chatu. Běžné opravy, frontend, dokumentace, čisté časové výpočty a obvyklé testy samy nevyžadují Codex. Kredity použít cíleně tam, kde pomohou s náročnou transakční kompatibilitou, historií, souběhem, recovery nebo těžkou regresí. Před delegací uvést konkrétní důvod, ohraničené zadání, dostupný model a reasoning; automaticky nevolit nejdražší režim. Modelová nabídka a spotřeba nejsou trvalý produktový canon.
+
+Při vyčerpání kreditů zachovat stejnou branch/PR a předat aktuální commit, změněné soubory, provedené/pending kontroly a nejbližší krok. ChatGPT pokračuje v téže práci dostupnými nástroji; nezačíná duplicitní implementaci ani druhý PR pro tutéž věc. Před každým PR vysvětlí funkční výsledek a po dokončení navazující řez. Relevantní finální HEAD kontroly, pravdivá evidence a uživatelův merge zůstávají beze změny. Neprohlašovat dostupnost nebo spuštění nástroje, který není k dispozici.

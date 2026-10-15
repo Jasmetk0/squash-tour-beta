@@ -1,3 +1,17 @@
+# Current audited baseline and new calendar target — Master v82 (15 October 2026)
+
+Verified `buuk`: **`b63f40387bed75812ae9f9585734a6226b93fda9`**, merged **#1488**. At audit start there were no open PRs. #1486–1488 are merged; all eight available final-head PR workflow runs passed. #1485 remains closed **without merge**. Older dated candidate/in-flight notes below are historical evidence, not the current queue.
+
+**Implemented:** exact-evidence consent revocation, dark/readable Task Center, actual driver blocker/detail evidence and last-checkpoint labels, parent-receipt/task correlation, exact Run/Branch Calendar/Season Builder navigation. The #1484 real sparse hybrid task crossed Week 61/explicit Save/canonical season boundary to Season index 1 Week 1, then awaited `week_preparation_required`; three real matches total. #1488 adds navigation, not completed second-season sports.
+
+**New product target, NOT implemented:** Master v82 allows Run-specific fixed W weeks/year and season, offset, start year, horizon and explicit extension; Earth default 52, FAX 61. Legacy runtime still has hard-coded bounds/mapping. Do not advertise working variable-calendar simulation or mutate old histories/source packages merely because the Master changed.
+
+**Next:** directly in ChatGPT, fix the reproduced unchanged-evidence Cancel → fresh request consent gap; then centralize the calendar contract with versioned legacy compatibility before exposing new settings or adding more 61-only logic. Carry Calendar/transition/age/development/ranking/import/UI changes through coherent bounded PRs with honest capability gates. Preserve and later extend the same-task second-season sports acceptance; do not equate missing configuration with an empty week. Use Codex only for a justified bounded hard integration/recovery task; continue the same PR directly if credits run out.
+
+Read [v82 audit](docs/PRE_ALPHA_CHECKPOINT_V82_2026_10_15.md), [approved calendar contract](SQUASH_ENGINE_MASTER_VISION.md) §§3.2/6.1/6.9–6.12/31.37, and [implementation handoff](docs/PRE_ALPHA_NEXT_CHATGPT_TASK_V82_2026_10_15.md). Full pre-alpha release/realism/scaling acceptance remains outstanding.
+
+---
+
 # Active follow-on: exact 2001/02 Calendar operator handoff (15 October 2026)
 
 Verified base `buuk` `1cce2b5af2fd3843959f0c0658d846b3c839665c` after merged #1487; no open PR at start. Current focused slice builds explicit, read-only Task Center navigation for a real current `week_preparation_required` checkpoint into the *same Run/Branch* Run Management with correctly preselected 2001/02 Calendar. The original blocked parent remains immutable; Calendar source authoring, copy, Save and task Resume all require their existing separate approvals. See [exact scope and limits](docs/SECOND_SEASON_CALENDAR_OPERATOR_HANDOFF_V81.md).

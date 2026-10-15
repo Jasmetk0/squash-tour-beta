@@ -41,6 +41,8 @@ Do not claim full integration from mocks or green smoke CI. For risky changes,
 perform a distinct adversarial review pass. Technical/documentation choices are
 autonomous; genuinely open product mechanics require the owner's decision.
 
+**Newer cost-saving workflow (Master v82 §36.8):** the continuation ChatGPT chat implements directly by default. Use Codex only for a justified bounded integration/concurrency/recovery task; choose the lightest adequate available model/effort. If credits run out, continue the same branch/PR with exact commit/test handoff. Do not duplicate work or require Codex for ordinary code/frontend/docs. This supersedes the older preferred-Codex role description above. The user still owns merge.
+
 Project map: `src/beta_engine/domain` pure rules; `application` commands/services;
 `infrastructure` persistence/adapters; `api/routers` HTTP; `web/src` Admin/Viewer;
 `tests` mirrors backend layers; `docs` contains scoped contracts. Legacy season
@@ -49,11 +51,11 @@ transactional consistency from similar names. Keep all protections below.
 
 ## Current canonical product rules
 
-- A Run is an independent saved world with exactly 50 seasons, `2000/01–2049/50`; every season has exactly 61 Season Weeks.
+- **Master v82 target (not yet runtime evidence):** each Run has its own fixed positive weeks-per-year/season W, season-to-year offset, start year and season horizon. Earth defaults to 52, FAX to 61 with Season Week 1 at Year Week 37. All years/seasons within a Run have equal W; no leap/longer years in pre-alpha. The former universal 50-season/61-week restriction is superseded; the reference FAX 50-season acceptance remains. Existing legacy Runs retain their original semantics.
 - Branches are equal alternative timelines inside a Run. Never introduce a privileged Main/Official branch concept.
 - Every Run has exactly one **Viewer Branch**. It only selects the timeline shown by Viewer; legacy `official_branch` technical names are migration debt, not product terminology.
 - Selecting a different Viewer Branch is an uncommitted Admin change in the active Branch's Working Draft. Viewer stays on the current saved selection until a confirmed Save atomically creates the new immutable Saved Revision and audit event, activates the selected Viewer Branch, and leaves a clean Working Draft based on the new revision.
-- A Run may be created completely empty. Its sole required user input in the first pre-alpha is a unique display name; the engine assigns `run_id`, creates its empty `2000/01–2049/50` time frame and keeps it in `Working`. Packages and sporting content are operation-scoped additions, not creation prerequisites.
+- A Run may be created completely empty. Its sole required user input in the first pre-alpha is a unique display name; the engine assigns `run_id`, creates an empty time frame using valid defaults or explicit optional calendar/range settings, and keeps it in `Working`. Packages and sporting content are operation-scoped additions, not creation prerequisites.
 - Creating that empty Run is itself its first successful save: the initial Viewer Branch points to one immutable, parentless Saved Revision and starts with a clean Working Draft based on it. This revision is recoverable history, not a checkpoint or simulation state.
 - Saved Revision history reads return the complete reachable lineage of the selected Branch, including shared pre-fork ancestry, and may expose a revision detail only when that revision is reachable through the supplied Run/Branch context. Reads are oldest-to-newest, fail closed on identity/hash/lineage corruption and never mutate Viewer, draft or revision state.
 - The initial Branch is named `Timeline 1`. Each later ordinary Branch proposes the first unused exact `Timeline N` name within the Run; the user may replace that proposal before creation, and every stored Branch name remains unique within its Run.
@@ -86,7 +88,10 @@ transactional consistency from similar names. Keep all protections below.
 
 - Week Transition is not a normal Simulation Slot. It prepares the next week's valid initial state from information known through the end of the completed week.
 - Weekly development must not use information from the newly opened or future week.
-- Season Transition is the special Week 61 → Week 1 rollover. It activates new seasonal policy atomically and resets only explicitly season-scoped state.
+- Age and long-term development use elapsed fractions of the Run year (1/W per week), not extra growth merely from more weekly updates. Annual ranking-result validity defaults to W; explicitly weekly entry/penalty durations retain their meaning. Do not globally rescale PR or all fatigue/recovery coefficients. Exact growth calibration and detailed training/deload scheduling remain open/deferred.
+- Before the first week starts, calendar edits require dependency validation. After it starts, W, offset and start-time basis are locked. The horizon may only be extended, including after completion, for all Branches without starting tasks, changing frozen targets or rewriting history. Terminal task controls stay terminal; continuation and Save are explicit.
+- Incompatible calendar imports require a reviewed source-to-target diff, corrected dates or exclusion; no silent clamping/modulo/proportional calendar conversion. New package defaults never reinterpret an existing Run. Historical states/replay must use their original versioned calendar semantics.
+- Season Transition is the special last Week W → Week 1 rollover according to the Run calendar. It activates new seasonal policy atomically and resets only explicitly season-scoped state.
 - Support operation-scoped validation. Missing unrelated future data must not block an otherwise valid local operation.
 - `Simulate Next Slot` resolves the nearest unresolved slot. `Simulate Next Match` may resolve one match inside that slot without changing the inputs of other simultaneous matches.
 - Keep editable world/competition content in validated config/data, not hard-coded logic.

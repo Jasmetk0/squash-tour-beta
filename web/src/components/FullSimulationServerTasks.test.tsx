@@ -184,4 +184,30 @@ describe('server task UI (mock HTTP)',()=>{
   expect(api.continueServerTask).not.toHaveBeenCalled()
  })
 
+ it.each(['cs','en'] as const)('offers a safe exact Branch new-season Calendar handoff only for current week preparation (%s)',async language=>{
+  const waiting={...taskExample(),state:'awaiting_operator',
+   checkpoint:'week_preparation_required',needs_operator_action:true,
+   current_week:{season_index:1,week:1},progress_evidence:{
+    ...taskExample().progress_evidence,
+    week:{season_index:1,week:1},weeks_advanced_since_start:61,
+   }}
+  api.getServerTasks.mockResolvedValue([waiting])
+  open(language,<FullSimulationServerTasks runId="run" branchId="branch"/>)
+  const link=await screen.findByRole('link',{name:language==='cs'
+   ?'Prověřit kalendář aktuální sezony ve správě Runu'
+   :'Review this season’s Calendar in Run Management'})
+  expect(link).toHaveAttribute('href','/admin/runs/run/manage?branch=branch&calendarSeason=2001-2002')
+  expect(screen.getByText(language==='cs'?/chybějící kalendář neznamená prázdný týden/:/absent Calendar means an empty week/)).toBeVisible()
+  expect(api.continueServerTask).not.toHaveBeenCalled()
+ })
+ it('does not suggest missing Calendar as cause when task has resumed or no preparation checkpoint',async()=>{
+  api.getServerTasks.mockResolvedValue([{
+   ...taskExample(),state:'active',checkpoint:'week_preparation_required',needs_operator_action:false,
+   current_week:{season_index:1,week:1}
+  }])
+  open('en',<FullSimulationServerTasks/>)
+  expect(await screen.findByText('task')).toBeVisible()
+  expect(screen.queryByRole('link',{name:'Review this season’s Calendar in Run Management'})).toBeNull()
+ })
+
 })

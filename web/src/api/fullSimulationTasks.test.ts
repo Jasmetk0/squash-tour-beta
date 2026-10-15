@@ -19,6 +19,29 @@ describe('server task HTTP contracts',()=>{
   if(kind==='duplicate')data.tasks.push(t)
   expect(()=>validateTasks(data,'run','branch')).toThrow('Invalid')
  })
+ it('rejects forged or mismatched measured task progress',()=>{
+  for(const invalid of [
+    {completed_slot_receipts_this_week:-1},
+    {committed_group_receipts_this_week:1.5},
+    {weeks_advanced_since_start:7},
+    {receipt_scope:null},
+    {kind:'terminal_frozen'},
+    {week:{season_index:1,week:1}}
+  ]){
+   const t=taskExample() as unknown as import('./fullSimulationTasks').ServerTask
+   t.progress_evidence={...t.progress_evidence,...invalid} as never
+   expect(()=>validateTasks({schema_version:'full_simulation_tasks.v1',tasks:[t]},'run','branch')).toThrow('Invalid')
+  }
+ })
+ it('accepts a frozen historical endpoint without invented match counts',()=>{
+  const t=taskExample() as unknown as import('./fullSimulationTasks').ServerTask
+  t.state='stopped'
+  t.current_week={season_index:0,week:2}
+  t.progress_evidence={...t.progress_evidence,kind:'terminal_frozen',week:t.current_week,
+   weeks_advanced_since_start:1,completed_slot_receipts_this_week:null,
+   committed_group_receipts_this_week:null,receipt_scope:null}
+  expect(validateTasks({schema_version:'full_simulation_tasks.v1',tasks:[t]},'run','branch')).toHaveLength(1)
+ })
  it('preserves exact start input for lost-response replay',async()=>{
   const command=taskExample().original_command;const requests:unknown[]=[]
   vi.spyOn(globalThis,'fetch').mockImplementation(async(_url,options)=>{

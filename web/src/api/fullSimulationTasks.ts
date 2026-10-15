@@ -10,6 +10,15 @@ export type ServerTask = {
   lease_expires_at_unix:number|null; checkpoint:string|null; progress:Record<string,unknown>|null
   effective_boundary_target?:BoundaryTarget|null
   current_week:{season_index:number;week:number}|null
+  progress_evidence:{
+    schema_version:'full_simulation_task_progress_evidence.v1'
+    kind:'live_branch'|'terminal_frozen'|'unavailable'
+    week:{season_index:number;week:number}|null
+    weeks_advanced_since_start:number|null
+    completed_slot_receipts_this_week:number|null
+    committed_group_receipts_this_week:number|null
+    receipt_scope:'branch_current_week'|null
+  }
   error:string|null; needs_operator_action:boolean; original_command:AuthoritativeFullSimulationCommandPayload
   events:{revision:number;previous:string|null;state:string;reason:string;at_unix:number;fingerprint:string}[]
 }
@@ -22,6 +31,27 @@ const id=(v:unknown):v is string=>typeof v==='string' && v.length>0
 const hash=(v:unknown)=>typeof v==='string' && /^[0-9a-f]{64}$/.test(v)
 const week=(v:unknown)=>{const w=v as {season_index:number;week:number};return !!w && Number.isInteger(w.season_index) && w.season_index>=0 && w.season_index<50 && Number.isInteger(w.week) && w.week>=1 && w.week<=61}
 const desired=['queued','active','paused','awaiting_operator','stopped','target_reached','complete','failed']
+function validProgress(t:ServerTask):boolean {
+  const p=t.progress_evidence
+  if(!p || p.schema_version!=='full_simulation_task_progress_evidence.v1' ||
+    !['live_branch','terminal_frozen','unavailable'].includes(p.kind) ||
+    !(p.week===null || week(p.week)) || !(t.current_week===null || week(t.current_week)) ||
+    (p.week===null)!==(t.current_week===null) ||
+    (p.week!==null && t.current_week!==null &&
+      (p.week.season_index!==t.current_week.season_index || p.week.week!==t.current_week.week)))return false
+  if(p.kind==='unavailable')return p.week===null && p.weeks_advanced_since_start===null &&
+    p.completed_slot_receipts_this_week===null && p.committed_group_receipts_this_week===null && p.receipt_scope===null
+  if(!p.week || !Number.isInteger(p.weeks_advanced_since_start) ||
+    p.weeks_advanced_since_start===null || p.weeks_advanced_since_start<0 ||
+    p.weeks_advanced_since_start!==(p.week.season_index*61+p.week.week-1 -
+      (t.original_command.expected_start_week.season_index*61+t.original_command.expected_start_week.week-1)))return false
+  if(p.kind==='terminal_frozen')return ['stopped','target_reached','complete'].includes(t.state) &&
+    p.receipt_scope===null && p.completed_slot_receipts_this_week===null && p.committed_group_receipts_this_week===null
+  return !['stopped','target_reached','complete'].includes(t.state) &&
+    p.receipt_scope==='branch_current_week' &&
+    Number.isInteger(p.completed_slot_receipts_this_week) && (p.completed_slot_receipts_this_week??-1)>=0 &&
+    Number.isInteger(p.committed_group_receipts_this_week) && (p.committed_group_receipts_this_week??-1)>=0
+}
 export function validateTasks(value:unknown,run?:string,branch?:string):ServerTask[] {
   const data=value as {schema_version:string;tasks:ServerTask[]}
   if(!data || data.schema_version!=='full_simulation_tasks.v1' || !Array.isArray(data.tasks))throw Error('Invalid server task collection')
@@ -43,7 +73,8 @@ export function validateTasks(value:unknown,run?:string,branch?:string):ServerTa
       t.events[t.events.length-1].state!==t.desired_state ||
       !t.original_command || t.original_command.command_id!==t.parent_command_id ||
       !id(t.original_command.operator_label) || !id(t.original_command.audit_reason) || !week(t.original_command.expected_start_week) ||
-      !hash(t.original_command.expected_position_fingerprint) || !hash(t.original_command.expected_preview_fingerprint) || !id(t.original_command.expected_revision_id)){throw Error('Invalid server task evidence')}
+      !hash(t.original_command.expected_position_fingerprint) || !hash(t.original_command.expected_preview_fingerprint) || !id(t.original_command.expected_revision_id) ||
+      !validProgress(t)){throw Error('Invalid server task evidence')}
     ids.add(t.task_id)
   }
   return data.tasks

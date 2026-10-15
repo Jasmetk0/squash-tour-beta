@@ -36,6 +36,22 @@ describe('server task UI (mock HTTP)',()=>{
   await screen.findByText('offline');fireEvent.click(screen.getByRole('button',{name:language==='cs'?'Zopakovat stejný požadavek':'Retry same request'}))
   await screen.findByText('task');expect(api.startServerTask.mock.calls[0]).toEqual(api.startServerTask.mock.calls[1])
  })
+ it.each(['cs','en'] as const)('labels current-week receipts and frozen historical Position honestly (%s)',async language=>{
+  const live=taskExample()
+  live.progress_evidence.completed_slot_receipts_this_week=1
+  live.progress_evidence.committed_group_receipts_this_week=2
+  const terminal={...taskExample(),task_id:'ended',state:'stopped',current_week:{season_index:0,week:2},
+    progress_evidence:{...taskExample().progress_evidence,kind:'terminal_frozen',week:{season_index:0,week:2},weeks_advanced_since_start:1,
+      completed_slot_receipts_this_week:null,committed_group_receipts_this_week:null,receipt_scope:null}}
+  api.getServerTasks.mockResolvedValue([live,terminal])
+  open(language,<FullSimulationServerTasks/>)
+  await screen.findByText('ended')
+  const matchLabels=language==='cs'?['Dokončené zápasové sloty: 1','Potvrzené zápasové skupiny: 2']:
+    ['Completed match slots: 1','Committed match groups: 2']
+  for(const label of matchLabels)expect(screen.getByText((_,element)=>element?.tagName==='P' && (element.textContent??'').includes(label))).toBeVisible()
+  expect(screen.getByText(language==='cs'?'Historický koncový týden uložený při ukončení':
+    'Historical end week, frozen at termination')).toBeVisible()
+ })
  it('shows offline read failure without displaying stale tasks as current',async()=>{
   api.getServerTasks.mockRejectedValue(Error('offline'));open('en',<FullSimulationServerTasks/>)
   expect(await screen.findByRole('alert')).toHaveTextContent('offline');expect(screen.queryByRole('link')).toBeNull()

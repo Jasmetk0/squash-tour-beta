@@ -1,3 +1,9 @@
+# Measured server-task progress — integration candidate, 15 October 2026
+
+Verified starting buuk `c667556fc5d9384a243bb6ff5442c508ca212799` (merge #1473). This candidate adds read-only, explicitly Branch-scoped actual current-week slot/group receipt counts to live Full Simulation tasks and frozen historical end week to stopped/target-reached tasks, without new sporting work or implicit Save. Missing terminal evidence is unavailable, never filled from today's Branch. [Contract](docs/FULL_SIMULATION_TASK_PROGRESS_V81.md). Targeted backend/TS/CS/EN and all required final-head CI still gate review; no full 50-season/pre-alpha acceptance claim.
+
+---
+
 # Precise Full Simulation boundaries — integration candidate, 15 October 2026
 
 Verified starting `buuk` `0691123aa421395732a5d6fb86eb7a35ba1df4f4` (merged #1471), no open PRs. **Candidate, not merged / not a release:** issue #1472 adds exact current-week global-slot targets, BEFORE canonical/frozen hybrid final and AFTER a validated Run/Branch-owned edition source. Existing server tasks, SQLite writer fencing and original command identity are reused. Versioned review/audit, exact old-request replay, separate effective target kind, CS/EN Admin/Task Center and immutable v2 terminal evidence are integrated. No implicit Save, guessed future scheduling, invented final or bypassed operator approval.

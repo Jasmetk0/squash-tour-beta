@@ -1,3 +1,9 @@
+# Read-only Task Center metrics — integration candidate, 15 October 2026
+
+After merged #1473, surface honest current-Branch-week committed slot/group counts on live Full Simulation tasks and immutable historical end weeks on terminal tasks. [Contract](docs/FULL_SIMULATION_TASK_PROGRESS_V81.md). Does not change the sporting engine, simulate future dynamically unplanned hybrid finals or claim full release. Next: safely re-review an already-frozen Next Week after separately approved hybrid knockout materialization, without silently changing child identities.
+
+---
+
 # Full Simulation precise boundaries — integration candidate, 15 October 2026
 
 Baseline `buuk` `0691123aa421395732a5d6fb86eb7a35ba1df4f4`, merged #1471. Current candidate for #1472 implements one coherent server-task slice: reviewed global BEFORE-slot, canonical/frozen-hybrid BEFORE-final and exact owned-source AFTER-edition targets; writer-lock revalidation, versioned audit/retry, CS/EN controls and frozen terminal evidence. Future/unfrozen boundaries are explicitly unavailable. Existing weekly/relative goals, manual Save/approvals and original command identity remain authoritative.

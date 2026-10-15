@@ -169,7 +169,19 @@ def acceptance(root: Path, *, port: int, base_url: str, chromium: str):
                 page.get_by_label("Approve InitialWorld adoption").check()
                 browser_click(page, "Adopt generated players")
                 page.get_by_label("Approve InitialWorld revision save").check()
-                browser_click(page, "Save InitialWorld revision")
+                # The adoption status already exists before Save. Wait for the
+                # actual committed Save receipt before capturing the read-only
+                # Saved HEAD invariant; navigation must not abort the request.
+                with page.expect_response(
+                    lambda response: response.url.endswith("/initial-world/save")
+                    and response.request.method == "POST" and response.status == 201
+                ) as save_response:
+                    browser_click(page, "Save InitialWorld revision")
+                saved_initial = save_response.value.json()
+                assert saved_initial["saved_revision"]["revision_id"]
+                expect(page.get_by_text(
+                    "First-season InitialWorld is saved and recoverable.", exact=False
+                )).to_be_visible()
                 expect(page.get_by_text("InitialWorld exists: 1000 players", exact=False)).to_be_visible()
                 roster_country = max(countries, key=lambda c: (countries[c], c))
                 assert countries[roster_country] > 25, "Country paging needs >25 saved players"

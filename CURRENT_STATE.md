@@ -1,3 +1,9 @@
+# Full Simulation reviewed-week schedule drift — integration candidate, 15 October 2026
+
+Baseline `buuk` `af0ea00b3e2236a500020c44ab70af4bcbfbdbab` after merged #1474, with no open PR. This focused safety candidate changes only the narrow existing Next Week schedule-fingerprint drift path as seen through Next Season and final-season Full Simulation. A pending server task now reports `week_schedule_review_required` (operator checkpoint) instead of generic failed-worker state; committed children, immutable command identity, global lease and Saved Revisions remain unchanged. **It does not** automatically extend the frozen command to new hybrid knockout slots; explicit authorized re-review is a separate follow-up. Targeted production HTTP/SQLite/task test uses a controlled exception at the authentic guard boundary, not a simulated genuine bracket mutation. Final-head CI is required before merge handoff. No pre-alpha or full-season release claim.
+
+---
+
 # Measured server-task progress — integration candidate, 15 October 2026
 
 Verified starting buuk `c667556fc5d9384a243bb6ff5442c508ca212799` (merge #1473). This candidate adds read-only, explicitly Branch-scoped actual current-week slot/group receipt counts to live Full Simulation tasks and frozen historical end week to stopped/target-reached tasks, without new sporting work or implicit Save. Missing terminal evidence is unavailable, never filled from today's Branch. [Contract](docs/FULL_SIMULATION_TASK_PROGRESS_V81.md). Targeted backend/TS/CS/EN and all required final-head CI still gate review; no full 50-season/pre-alpha acceptance claim.

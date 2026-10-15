@@ -437,3 +437,62 @@ def test_http_relative_full_target_real_sport_audit_and_safe_terminal_replay(tmp
         assert replay_after_terminal["requested_target_week"] == next_week
         assert replay_after_terminal["effective_target_week"] == base_week
         assert snapshot(factory, flow["run_id"], flow["branch_id"]) == after
+
+
+@pytest.mark.pr_critical
+def test_full_simulation_stale_frozen_week_requires_operator_review(
+    tmp_path, monkeypatch,
+):
+    """A changed frozen Next Week is a durable checkpoint, not a failed worker.
+
+    Simulate the narrow exception emitted by the genuine Next Week schedule
+    fingerprint guard. This test does not manufacture knockout sporting receipts.
+    """
+    from beta_engine.application.authoritative_run_simulation_driver import (
+        AuthoritativeRunSimulationDriver,
+    )
+    from tests.application.test_full_simulation_server_tasks import wait_task
+
+    server, factory, gate = make_server(tmp_path)
+    monkeypatch.setattr(routes, "_driver", gate.driver)
+    with server:
+        flow = initialize(server, tmp_path)
+        command = reviewed_command(server, flow, "stale-week-review")
+        url = server.base_url + flow["scope"]
+        before = snapshot(factory, flow["run_id"], flow["branch_id"])
+
+        def stale_review(self, child):
+            raise ValueError("Week Schedule changed during Next Week")
+
+        monkeypatch.setattr(
+            AuthoritativeRunSimulationDriver, "simulate_next_week", stale_review
+        )
+        status, started = _request(
+            "POST",
+            url + "/full-simulation/tasks",
+            {"request_id": "review-stale-week", "command": command},
+        )
+        assert status == 202, started
+        task = wait_task(
+            server, flow["scope"], started["task_id"],
+            {"awaiting_operator", "failed"},
+        )
+        assert task["state"] == "awaiting_operator", task
+        assert task["checkpoint"] == "week_schedule_review_required"
+        assert task["progress"]["blockers"] == ["week_schedule_review_required"]
+        assert "new knockout slots" in task["progress"]["detail"]
+        assert task["error"] is None
+        after = snapshot(factory, flow["run_id"], flow["branch_id"])
+        assert after["groups"] == before["groups"]
+        assert after["slots"] == before["slots"]
+        assert after["saved"] == before["saved"]
+        assert after["saved_head"] == before["saved_head"]
+        assert after["commands"][command["command_id"]]["status"] == "pending"
+
+        # Reading the Task Center cannot make the original command run again.
+        inventory = _request(
+            "GET", server.base_url + "/run-containers/full-simulation/tasks"
+        )
+        assert inventory[0] == 200, inventory
+        assert inventory[1]["tasks"][0]["state"] == "awaiting_operator"
+        assert snapshot(factory, flow["run_id"], flow["branch_id"]) == after

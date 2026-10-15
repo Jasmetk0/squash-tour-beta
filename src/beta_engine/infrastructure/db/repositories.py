@@ -51,6 +51,7 @@ from beta_engine.domain.run_revisions import (
     viewer_branch_saved_revision_payload,
     viewer_branch_selection_change,
 )
+from beta_engine.domain.calendar.run_calendar import RunCalendar
 from beta_engine.domain.run_branches import (
     first_available_timeline_name,
     normalize_branch_display_name,
@@ -2129,6 +2130,12 @@ class SimulationPersistenceRepository:
             raise ValueError(
                 "the first Saved Revision must be the parentless initial revision"
             )
+        # Explicit v82 metadata must match the immutable first save. Old roots
+        # without the field continue to validate their original payload/hash.
+        calendar_metadata = None
+        if "run_calendar" in run.metadata:
+            calendar = RunCalendar.from_metadata(run.metadata["run_calendar"])
+            calendar_metadata = calendar.to_metadata()
         expected_payload = initial_saved_revision_payload(
             run_id=run.run_id,
             display_name=run.display_name,
@@ -2138,6 +2145,7 @@ class SimulationPersistenceRepository:
             branch_id=branch.branch_id,
             branch_display_name=branch.display_name,
             branch_status=branch.status,
+            run_calendar_metadata=calendar_metadata,
         )
         expected_change_summary = initial_saved_revision_change_summary(
             display_name=run.display_name

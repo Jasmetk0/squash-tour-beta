@@ -62,7 +62,9 @@ jobs:
           cat "$RUNNER_TEMP/controls-vite.log"
           exit 1
       - name: Verify production HTTP/SQLite controls and expired/reclaimed executor fencing
-        run: python -m pytest tests/application/test_full_simulation_http_flow.py tests/application/test_full_simulation_invocation_lease.py tests/application/test_full_simulation_summary.py --maxfail=1
+        # Dedicated acceptance explicitly owns this complete focused selection;
+        # the ordinary PR changed-test filter must not deselect its regressions.
+        run: GITHUB_EVENT_NAME=full_simulation_acceptance python -m pytest tests/application/test_full_simulation_http_flow.py tests/application/test_full_simulation_invocation_lease.py tests/application/test_full_simulation_summary.py --maxfail=1
       - name: Native Admin Full Simulation controls in Chromium
         run: |
           python scripts/full_simulation_controls_browser.py \

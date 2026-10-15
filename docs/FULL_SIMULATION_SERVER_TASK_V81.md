@@ -152,7 +152,9 @@ with an uninterrupted server using an identical pre-task SQLite backup and
 original command. A test-only writer gate and controlled lease expiry bound the
 proof; they do not create outcomes, alter RNG or Save. JSON, screenshots, trace
 and process logs are preserved. Existing controls and Saved Group browser gates
-remain independent regressions.
+remain independent regressions. Dedicated Full Simulation workflows run their
+explicit focused backend selections without the ordinary changed-test filter,
+so unchanged regression modules cannot be silently deselected.
 
 This is a bounded lifecycle/recovery slice, not full-season/50-season acceptance
 or a pre-alpha release. Instant mid-match pause, event/intra-week targets, richer

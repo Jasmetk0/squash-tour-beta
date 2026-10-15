@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import pytest
 
+pytestmark = pytest.mark.pr_critical
+
 from beta_engine.domain.calendar import (
     calendar_position_to_season_week,
     parse_season_start_year,

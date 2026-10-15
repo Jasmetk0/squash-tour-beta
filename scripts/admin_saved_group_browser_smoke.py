@@ -538,6 +538,19 @@ def acceptance(
                     assert request("GET", viewer + "/history/0") == hybrid_ranking["historical_week_1"]
                     assert request("GET", viewer + "/history/1") == hybrid_ranking["official_week_2"]
                     assert request("GET", root_scope + "/authoritative-simulation/position")["current_week"] == {"season_index": 0, "week": 2}
+                    if hybrid_worker_transition:
+                        # Actual process death/restart must preserve the exact
+                        # terminal parent/task, not enqueue it for duplicate work.
+                        from real_hybrid_full_simulation_task_browser_checks import _task
+                        assert hybrid_task_handoff is not None and hybrid_task_completion is not None
+                        terminal = _task(request, simulation_scope, hybrid_task_handoff["task_id"])
+                        assert terminal["state"] == "target_reached", terminal
+                        assert terminal["parent_command_id"] == hybrid_task_handoff["parent_command_id"]
+                        assert terminal["original_command"]["command_id"] == hybrid_task_handoff["parent_command_id"]
+                        assert terminal["current_week"] == {"season_index": 0, "week": 2}
+                        assert terminal["needs_operator_action"] is False
+                        assert terminal["error"] is None
+                        assert request("GET", simulation_scope + "/position")["current_week"] == {"season_index": 0, "week": 2}
                     after_branches = request("GET", "/run-branches?run_id=" + quote(run_id, safe=""))["run_branches"]
                     assert next(item for item in after_branches if item["branch_id"] == branch_id)["saved_head_revision_id"] == hybrid_ranking["saved_week_2_revision"]
                     assert saved(hybrid_result["completed_saved_revision"]) == (

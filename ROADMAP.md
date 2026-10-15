@@ -1,3 +1,11 @@
+# Server task lifecycle — active integration candidate, 15 October 2026
+
+Baseline: merged #1469 on `buuk` `0f4d89dd8635f41f0d9b0cee2c831211a34a7fae`. Current candidate implements #1470: real server-owned Full Simulation, durable identity and global claim, CS/EN Admin + Task Center reconnect, truthful heartbeat/ownership observation, explicit stale-lease recovery and no automatic execution after restart. Existing canonical children, Save and approval checkpoints, targets and frozen summaries are reused.
+
+Required handoff: production TCP/file-backed SQLite tests; native closed-tab proof plus actual SIGKILL/new-process/explicit-recovery and uninterrupted equivalence; focused frontend/build, original controls and Saved Group browser gates, all green on final HEAD. [Contract and evidence](docs/FULL_SIMULATION_SERVER_TASK_V81.md). This is not a completed 50-season/pre-alpha release. Next coherent slice: supported event/intra-week arrival targets or richer measured status/metrics; tracking/notifications and full release gates remain separate. Historical roadmap follows unchanged.
+
+---
+
 # Active integration queue — frozen terminal summaries, 14 October 2026
 
 Verified `buuk` `e271ef07`, merge #1468; no open PR at start. Safe Stop, absolute weekly targets and relative week/season increments are already merged. **Current candidate:** atomically capture safe-Stop/reached-week summary with actual endpoint and command-owned completed tournament winners; display stored evidence in CS/EN History detail. Fix terminal retry drifting to a later Branch Position. Confirm real HTTP/SQLite, later explicit Save, corruption/wrong-scope denial and native Chromium; no implicit Save or invented historical fallback. [Evidence](docs/FULL_SIMULATION_TERMINAL_SUMMARY_V81.md).

@@ -43,7 +43,12 @@ def create_app(
     @asynccontextmanager
     async def lifespan(app: FastAPI):
         app.state.runtime = build_runtime(database_url=database_url)
-        yield
+        from beta_engine.application.full_simulation_tasks import FullSimulationTaskWorker
+        app.state.full_simulation_worker = FullSimulationTaskWorker(app.state.runtime.repository._session_factory)
+        try:
+            yield
+        finally:
+            app.state.full_simulation_worker.close()
 
     app = FastAPI(title="Squash Tour Beta Engine", version="0.1.0", lifespan=lifespan)
     app.add_middleware(

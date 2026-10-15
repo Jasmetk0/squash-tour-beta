@@ -3,7 +3,7 @@
 Legacy ``/runs`` remains the season-attempt API in R1.
 """
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status, Request
 
 from beta_engine.api.deps import (
     ApiRuntime,
@@ -787,6 +787,15 @@ def restore_saved_revision(
     ) as exc:
         _raise_saved_revision_restore_http_error(exc)
         raise AssertionError("unreachable")
+
+
+@router.get("/full-simulation/tasks")
+def get_global_full_simulation_tasks(request: Request, runtime: ApiRuntime = Depends(get_runtime)):
+    from beta_engine.application.full_simulation_tasks import inspect_tasks
+    try:
+        return inspect_tasks(runtime.repository._session_factory,observer_instance=request.app.state.full_simulation_worker.instance)
+    except (KeyError, TypeError, ValueError) as exc:
+        raise HTTPException(409, detail={"code":"full_simulation_task_conflict","message":str(exc)}) from exc
 
 
 @router.get("/{run_id:path}", response_model=RunContainerResponse)

@@ -1,10 +1,10 @@
 """Explicit Admin HTTP boundary for the authoritative Run simulation driver."""
 
 import json
-from typing import Annotated
+from typing import Annotated, Literal
 
-from fastapi import APIRouter, Depends, HTTPException
-from pydantic import ValidationError
+from fastapi import APIRouter, Depends, HTTPException, Request
+from pydantic import ValidationError, BaseModel, ConfigDict, Field, field_validator
 
 from beta_engine.api.deps import (
     ApiRuntime,
@@ -85,6 +85,7 @@ from beta_engine.application.pre_alpha_fax_acceptance_profile import (
     PreAlphaFaxAcceptanceProfile,
     PreAlphaFaxAcceptanceProfileService,
 )
+from beta_engine.application.full_simulation_tasks import inspect_tasks
 from beta_engine.domain.players.sporting import PlayerDevelopmentPolicy
 from beta_engine.domain.rankings.official import OfficialRankingPolicy, RankingWeek
 from beta_engine.domain.simulation_slots import WeekSimulationSchedule
@@ -1701,6 +1702,7 @@ def control_full_simulation(
     run_id: str,
     branch_id: str,
     payload: dict,
+    request: Request,
     runtime: Annotated[ApiRuntime, Depends(get_runtime)],
     matches: Annotated[SeasonMatchService, Depends(get_season_match_service)],
     awards: Annotated[
@@ -1711,7 +1713,10 @@ def control_full_simulation(
         command = AuthoritativeFullSimulationControlCommand.model_validate(
             {**payload, "run_id": run_id, "branch_id": branch_id}
         )
-        return _driver(runtime, matches, awards).control_full_simulation(command)
+        driver = _driver(runtime, matches, awards)
+        result = driver.control_full_simulation(command)
+        request.app.state.full_simulation_worker.acknowledge_idle_pause(driver,command)
+        return result
     except ValidationError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     except (KeyError, TypeError, ValueError) as exc:
@@ -2086,3 +2091,76 @@ def save(
         )
     except (ValueError, KeyError) as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+
+# Task mutation envelopes are deliberately strict: scope in an original command
+# must agree with the path, and unknown/reused request input fails closed.
+
+
+class FullSimulationTaskStart(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    request_id: str = Field(min_length=1, max_length=128)
+    command: dict
+
+    @field_validator("request_id")
+    @classmethod
+    def nonempty(cls, value):
+        if not value.strip():
+            raise ValueError("Task request ID must be nonempty")
+        return value.strip()
+
+
+class FullSimulationTaskContinue(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    request_id: str = Field(min_length=1, max_length=128)
+    action: Literal["resume", "recover"]
+    expected_revision: int = Field(ge=1, strict=True)
+    operator_label: str = Field(min_length=1, max_length=128)
+    audit_reason: str = Field(min_length=1, max_length=2000)
+
+    @field_validator("operator_label", "audit_reason", "request_id")
+    @classmethod
+    def nonempty(cls, value):
+        if not value.strip():
+            raise ValueError("Audit and request identifiers must be nonempty")
+        return value.strip()
+
+
+@router.post("/full-simulation/tasks", status_code=202)
+def start_full_simulation_task(run_id: str, branch_id: str, payload: FullSimulationTaskStart,
+        request: Request, runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+        matches: Annotated[SeasonMatchService, Depends(get_season_match_service)],
+        awards: Annotated[SeasonPointAwardsService, Depends(get_season_point_awards_service)]):
+    try:
+        for key, expected in (("run_id",run_id),("branch_id",branch_id)):
+            if key in payload.command and payload.command[key] != expected:
+                raise ValueError("Task original command scope mismatch")
+        command = AuthoritativeFullSimulationCommand.model_validate({**payload.command,"run_id":run_id,"branch_id":branch_id})
+        return request.app.state.full_simulation_worker.start(_driver(runtime,matches,awards),
+            run_id=run_id,branch_id=branch_id,request_id=payload.request_id,command=command)
+    except ValidationError as exc:
+        raise HTTPException(422, detail=str(exc)) from exc
+    except (KeyError,TypeError,ValueError) as exc:
+        raise HTTPException(409, detail={"code":"full_simulation_task_conflict","message":str(exc)}) from exc
+
+
+@router.get("/full-simulation/tasks")
+@router.get("/full-simulation/tasks/{task_id}")
+def get_full_simulation_tasks(run_id: str, branch_id: str,
+        runtime: Annotated[ApiRuntime, Depends(get_runtime)], request: Request, task_id: str | None = None):
+    try:
+        return inspect_tasks(runtime.repository._session_factory,run_id=run_id,branch_id=branch_id,task_id=task_id,observer_instance=request.app.state.full_simulation_worker.instance)
+    except (KeyError,TypeError,ValueError) as exc:
+        raise HTTPException(409, detail={"code":"full_simulation_task_conflict","message":str(exc)}) from exc
+
+
+@router.post("/full-simulation/tasks/{task_id}/continue", status_code=202)
+def continue_full_simulation_task(run_id: str, branch_id: str, task_id: str, payload: FullSimulationTaskContinue,
+        request: Request, runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+        matches: Annotated[SeasonMatchService, Depends(get_season_match_service)],
+        awards: Annotated[SeasonPointAwardsService, Depends(get_season_point_awards_service)]):
+    try:
+        return request.app.state.full_simulation_worker.continue_task(_driver(runtime,matches,awards),
+            run_id=run_id,branch_id=branch_id,task_id=task_id,**payload.model_dump())
+    except (KeyError,TypeError,ValueError) as exc:
+        raise HTTPException(409, detail={"code":"full_simulation_task_conflict","message":str(exc)}) from exc

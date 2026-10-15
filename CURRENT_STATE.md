@@ -1,3 +1,13 @@
+# Server-owned Full Simulation tasks — integration candidate, 15 October 2026
+
+Verified baseline `buuk` `0f4d89dd8635f41f0d9b0cee2c831211a34a7fae`, after merged #1469. **Candidate, not merged / not a release:** issue #1470 adds durable SQLite task identity, exact request replay, an application-lifecycle dispatcher above the existing driver, global lease reservation at Start and explicit crash recovery. Run Admin and Global Task Center expose CS/EN Start, committed progress/checkpoints, heartbeat evidence, exact scope reconnect and audited continuation. Save, Entry and Season/Final Transition approvals remain manual; startup and GET never restart tasks. The original reviewed command, sporting RNG/child identities and #1469 summaries remain authoritative.
+
+Evidence and guarantees: [server task v81](docs/FULL_SIMULATION_SERVER_TASK_V81.md). Local evidence: 66 distinct targeted backend cases across the selections, 83 frontend cases, final task contracts repeated, build/compile/new-module Ruff/diff checks. Native Chromium passed closed-page receipt growth, actual SIGKILL/new-process recovery, uninterrupted equivalence and Week-61 manual Save checkpoint with unchanged Saved history. Dedicated new/existing browser workflows and Fast CI must still be green on final HEAD before review handoff. Older candidate entries below are dated history; #1469 is now merged. No full-season/50-season or complete pre-alpha acceptance claim.
+
+**Next after this slice:** explicit event/intra-week targets or richer evidence-backed status/metrics; do not start a dependent second PR before this integration lands.
+
+---
+
 # Active integration candidate — frozen terminal summaries, 14 October 2026
 
 Verified base `buuk` `e271ef07` (merge #1468), no open PR at start. #1465–1468 are merged: safe Stop, weekly arrival targets and relative week/season targets are implemented. **New candidate, not merged / not a release:** new Stop and reached-week operations atomically preserve a fingerprinted terminal summary and exact Position. History detail reads actual start/end, original/effective target, reason, child-command count, terminal Saved Revision and validated tournament winners owned by the original child-command graph. Subsequent explicit Save/Branch work cannot rewrite the summary or terminal retry's endpoint. Unrecorded historical endpoints remain unavailable; no current-state fallback.

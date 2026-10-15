@@ -11,6 +11,7 @@ from beta_engine.application.full_simulation_summary import capture_terminal_sum
 
 import hashlib
 import json
+from contextlib import nullcontext
 from dataclasses import dataclass, replace
 from typing import Any, Callable, Literal
 
@@ -6577,91 +6578,52 @@ class AuthoritativeRunSimulationDriver:
         self, command: AuthoritativeFullSimulationControlCommand
     ) -> dict:
         """Idempotently pause/resume a durable parent using one audited control ID."""
-        key = (command.run_id, command.branch_id, command.target_command_id)
         with self.factory.begin() as session:
             session.execute(text("BEGIN IMMEDIATE"))
-            self._require_writable_scope(session, command.run_id, command.branch_id)
-            receipt = session.get(AuthoritativeSimulationCommandModel, key)
-            if receipt is None or receipt.status not in ("pending", "stopped"):
-                raise ValueError("Full Simulation control requires a pending or stopped parent")
-            frozen = json.loads(receipt.result_json)
-            if frozen.get("schema_version") != "authoritative_full_simulation_operation.v1":
-                raise ValueError("Full Simulation control target is not a parent")
-            state = frozen.get("control_state", "running")
-            if state not in ("running", "pause_requested", "paused", "stopped"):
-                raise ValueError("Full Simulation control state is corrupt")
-            events = frozen.get("control_events", [])
-            if not isinstance(events, list) or not all(
-                isinstance(event, dict) for event in events
+            return self.control_full_simulation_in_session(session, command)
+
+    def control_full_simulation_in_session(self, session, command):
+        """Canonical control shared by HTTP and atomic task continuation."""
+        key = (command.run_id, command.branch_id, command.target_command_id)
+        self._require_writable_scope(session, command.run_id, command.branch_id)
+        receipt = session.get(AuthoritativeSimulationCommandModel, key)
+        if receipt is None or receipt.status not in ("pending", "stopped"):
+            raise ValueError("Full Simulation control requires a pending or stopped parent")
+        frozen = json.loads(receipt.result_json)
+        if frozen.get("schema_version") != "authoritative_full_simulation_operation.v1":
+            raise ValueError("Full Simulation control target is not a parent")
+        state = frozen.get("control_state", "running")
+        if state not in ("running", "pause_requested", "paused", "stopped"):
+            raise ValueError("Full Simulation control state is corrupt")
+        events = frozen.get("control_events", [])
+        if not isinstance(events, list) or not all(
+            isinstance(event, dict) for event in events
+        ):
+            raise ValueError("Full Simulation control audit events are corrupt")
+        prior = [
+            event for event in events
+            if event.get("command_id") == command.control_command_id
+        ]
+        if len(prior) > 1:
+            raise ValueError("Duplicate Full Simulation control audit identity")
+        if any(e.get("command_id") == command.control_command_id
+               for e in frozen.get("target_events", [])):
+            raise ValueError("Full Simulation target control ID already exists")
+        if prior:
+            original = prior[0]
+            if (
+                original.get("action") != command.action
+                or original.get("operator_label") != command.operator_label
+                or original.get("audit_reason") != command.audit_reason
+                or original.get("state") not in (
+                    "pause_requested", "running", "stopped"
+                )
             ):
-                raise ValueError("Full Simulation control audit events are corrupt")
-            prior = [
-                event for event in events
-                if event.get("command_id") == command.control_command_id
-            ]
-            if len(prior) > 1:
-                raise ValueError("Duplicate Full Simulation control audit identity")
-            if any(e.get("command_id") == command.control_command_id
-                   for e in frozen.get("target_events", [])):
-                raise ValueError("Full Simulation target control ID already exists")
-            if prior:
-                original = prior[0]
-                if (
-                    original.get("action") != command.action
-                    or original.get("operator_label") != command.operator_label
-                    or original.get("audit_reason") != command.audit_reason
-                    or original.get("state") not in (
-                        "pause_requested", "running", "stopped"
-                    )
-                ):
-                    raise ValueError(
-                        "Full Simulation control ID was reused with different input"
-                    )
-                # This is the receipt for the original command, not a new
-                # transition. The present parent state may have advanced.
-                return {
-                    "schema_version": "authoritative_full_simulation_control_result.v1",
-                    "run_id": command.run_id,
-                    "branch_id": command.branch_id,
-                    "target_command_id": command.target_command_id,
-                    "control_command_id": command.control_command_id,
-                    "action": command.action,
-                    "control_state": original["state"],
-                    "observed_control_state": state,
-                    "replayed": True,
-                    "committed_child_work_persists": True,
-                }
-            if receipt.status == "stopped":
-                raise ValueError("Stopped Full Simulation cannot accept new controls")
-            if command.action == "pause":
-                if state != "running":
-                    raise ValueError("Full Simulation already has a pause request")
-                state = "pause_requested"
-            elif command.action == "resume":
-                if state != "paused":
-                    raise ValueError("Full Simulation resume requires acknowledged pause")
-                state = "running"
-            else:
-                # BEGIN IMMEDIATE waits for any in-flight child writer to finish.
-                # The next child is fenced; no partial result or automatic Save.
-                state = "stopped"
-                receipt.status = "stopped"
-            frozen["control_state"] = state
-            events.append({
-                "command_id": command.control_command_id,
-                "action": command.action,
-                "state": state,
-                "operator_label": command.operator_label,
-                "audit_reason": command.audit_reason,
-            })
-            frozen["control_events"] = events
-            if state == "stopped":
-                frozen["terminal_summary"] = capture_terminal_summary(
-                    session, receipt, frozen, self._position(
-                        session, command.run_id, command.branch_id, allow_missing_schedule=True))
-            receipt.result_json = json.dumps(
-                frozen, sort_keys=True, separators=(",", ":")
-            )
+                raise ValueError(
+                    "Full Simulation control ID was reused with different input"
+                )
+            # This is the receipt for the original command, not a new
+            # transition. The present parent state may have advanced.
             return {
                 "schema_version": "authoritative_full_simulation_control_result.v1",
                 "run_id": command.run_id,
@@ -6669,11 +6631,54 @@ class AuthoritativeRunSimulationDriver:
                 "target_command_id": command.target_command_id,
                 "control_command_id": command.control_command_id,
                 "action": command.action,
-                "control_state": state,
+                "control_state": original["state"],
                 "observed_control_state": state,
-                "replayed": False,
+                "replayed": True,
                 "committed_child_work_persists": True,
             }
+        if receipt.status == "stopped":
+            raise ValueError("Stopped Full Simulation cannot accept new controls")
+        if command.action == "pause":
+            if state != "running":
+                raise ValueError("Full Simulation already has a pause request")
+            state = "pause_requested"
+        elif command.action == "resume":
+            if state != "paused":
+                raise ValueError("Full Simulation resume requires acknowledged pause")
+            state = "running"
+        else:
+            # BEGIN IMMEDIATE waits for any in-flight child writer to finish.
+            # The next child is fenced; no partial result or automatic Save.
+            state = "stopped"
+            receipt.status = "stopped"
+        frozen["control_state"] = state
+        events.append({
+            "command_id": command.control_command_id,
+            "action": command.action,
+            "state": state,
+            "operator_label": command.operator_label,
+            "audit_reason": command.audit_reason,
+        })
+        frozen["control_events"] = events
+        if state == "stopped":
+            frozen["terminal_summary"] = capture_terminal_summary(
+                session, receipt, frozen, self._position(
+                    session, command.run_id, command.branch_id, allow_missing_schedule=True))
+        receipt.result_json = json.dumps(
+            frozen, sort_keys=True, separators=(",", ":")
+        )
+        return {
+            "schema_version": "authoritative_full_simulation_control_result.v1",
+            "run_id": command.run_id,
+            "branch_id": command.branch_id,
+            "target_command_id": command.target_command_id,
+            "control_command_id": command.control_command_id,
+            "action": command.action,
+            "control_state": state,
+            "observed_control_state": state,
+            "replayed": False,
+            "committed_child_work_persists": True,
+        }
 
     def _acknowledge_full_simulation_pause(
         self, *, command: AuthoritativeFullSimulationCommand,
@@ -6980,18 +6985,28 @@ class AuthoritativeRunSimulationDriver:
         }
 
     def simulate_full_simulation(
-        self, command: AuthoritativeFullSimulationCommand
+        self, command: AuthoritativeFullSimulationCommand, *, execution_lease_token: str | None = None
     ) -> dict:
         """Progress the current Run to final 2049/50 closure through canonical children."""
 
+        if execution_lease_token is None:
+            from beta_engine.infrastructure.db.models import FullSimulationTaskModel
+            with self.factory() as session:
+                task = session.scalar(select(FullSimulationTaskModel).where(
+                    FullSimulationTaskModel.run_id == command.run_id,
+                    FullSimulationTaskModel.branch_id == command.branch_id,
+                    FullSimulationTaskModel.parent_command_id == command.command_id))
+                if task is not None:
+                    raise ValueError("This Full Simulation belongs to a server task; use explicit task continuation")
+
         # Lease is held only for the real invocation, never for a durable
         # pending parent sitting idle between HTTP requests.
-        with full_simulation_invocation_lease(
+        with (nullcontext(execution_lease_token) if execution_lease_token else full_simulation_invocation_lease(
             self.factory,
             run_id=command.run_id,
             branch_id=command.branch_id,
             command_id=command.command_id,
-        ) as lease_token:
+        )) as lease_token:
             request_fp = fingerprint(
                 {
                     "mode": "full_simulation",
@@ -7063,6 +7078,178 @@ class AuthoritativeRunSimulationDriver:
             return result
 
 
+    def prepare_full_simulation(self, session, command, request_fp):
+        """Freeze the existing reviewed parent atomically with task/lease creation.
+
+        No child is executed here. The synchronous path uses the same authority.
+        """
+        key = (command.run_id, command.branch_id, command.command_id)
+        receipt = session.get(AuthoritativeSimulationCommandModel, key)
+        if receipt is not None:
+            if receipt.request_fingerprint != request_fp:
+                raise ValueError(
+                    "Full Simulation command ID already has a different request"
+                )
+            if receipt.status == "complete":
+                return json.loads(receipt.result_json)
+            if receipt.status == "stopped":
+                raise FullSimulationStopped("Full Simulation was stopped")
+            if receipt.status == "target_reached":
+                raise FullSimulationTargetReached("Full Simulation target was already reached")
+            if receipt.status != "pending":
+                raise ValueError(
+                    "Full Simulation command receipt has an invalid status"
+                )
+            frozen = json.loads(receipt.result_json)
+            if frozen.get("control_state", "running") in ("pause_requested", "paused"):
+                raise FullSimulationPauseRequested("Full Simulation pause requested")
+            completed = self._branch_final_closure_evidence(
+                session,
+                run_id=command.run_id,
+                branch_id=command.branch_id,
+            )
+            if completed is not None:
+                seasons = list(frozen["completed_seasons"])
+                if FINAL_WEEK.season_index not in seasons:
+                    seasons.append(FINAL_WEEK.season_index)
+                payload = {
+                    "schema_version": "authoritative_full_simulation_result.v1",
+                    "status": "complete",
+                    "run_id": command.run_id,
+                    "branch_id": command.branch_id,
+                    "start_week": frozen["start_week"],
+                    "final_week": frozen["final_week"],
+                    "completed_seasons": seasons,
+                    "completed_season_count": len(seasons),
+                    "season_child_command_ids": [
+                        item["command"]["command_id"]
+                        for _, item in sorted(
+                            frozen["season_children"].items(),
+                            key=lambda pair: int(pair[0]),
+                        )
+                    ],
+                    "final_week_child_command_ids": [
+                        item["command"]["command_id"]
+                        for _, item in sorted(
+                            frozen["final_week_children"].items(),
+                            key=lambda pair: int(pair[0]),
+                        )
+                    ],
+                    "final_empty_week_child_command_ids": [
+                        command_id
+                        for _, command_id in sorted(
+                            frozen["final_empty_week_children"].items(),
+                            key=lambda pair: int(pair[0]),
+                        )
+                    ],
+                    "final_week61_slot_child_command_ids": [
+                        item["command_id"]
+                        for _, item in sorted(
+                            frozen["final_week61_slot_children"].items(),
+                            key=lambda pair: int(pair[0]),
+                        )
+                    ],
+                    "run_status": COMPLETED_RUN_STATUS,
+                    "operator_label": command.operator_label,
+                    "audit_reason": command.audit_reason,
+                    **completed,
+                    "adoption": "committed",
+                }
+                receipt.status = "complete"
+                receipt.result_json = json.dumps(
+                    payload, sort_keys=True, separators=(",", ":")
+                )
+                session.flush()
+                return payload
+            self._require_writable_scope(
+                session, command.run_id, command.branch_id
+            )
+        else:
+            self._require_writable_scope(
+                session, command.run_id, command.branch_id
+            )
+            active = self._pending_full_simulation_command_ids(
+                session,
+                run_id=command.run_id,
+                branch_id=command.branch_id,
+            )
+            if active:
+                raise ValueError(
+                    "Full Simulation already has a pending parent for this "
+                    f"Run/Branch: {active[0]}. Resume or finish it before "
+                    "starting another Full Simulation."
+                )
+            before = self._position(
+                session,
+                command.run_id,
+                command.branch_id,
+                allow_missing_schedule=True,
+            )
+            if before.current_week != command.expected_start_week:
+                raise ValueError("Full Simulation reviewed start week is stale")
+            if (
+                before.position_fingerprint
+                != command.expected_position_fingerprint
+            ):
+                raise ValueError("Full Simulation reviewed Position is stale")
+            branch = session.get(RunBranchModel, command.branch_id)
+            if (
+                branch is None
+                or branch.saved_head_revision_id
+                != command.expected_revision_id
+            ):
+                raise ValueError(
+                    "Full Simulation reviewed Saved Revision is stale"
+                )
+            plan = self._full_simulation_plan(
+                session,
+                request=AuthoritativeFullSimulationPreviewRequest(
+                    command_id=command.command_id,
+                    run_id=command.run_id,
+                    branch_id=command.branch_id,
+                    operator_label=command.operator_label,
+                    audit_reason=command.audit_reason,
+                ),
+            )
+            if plan["preview_fingerprint"] != command.expected_preview_fingerprint:
+                raise ValueError("Full Simulation preview changed before commit")
+            frozen = {
+                "schema_version": "authoritative_full_simulation_operation.v1",
+                "run_id": command.run_id,
+                "branch_id": command.branch_id,
+                "start_week": plan["start_week"],
+                "final_week": plan["final_week"],
+                "initial_saved_revision_id": command.expected_revision_id,
+                "completed_seasons": [],
+                "control_state": "running",
+                "control_events": [],
+                "target_events": [],
+                "target_revision": 0,
+                "effective_target_week": plan["final_week"],
+                "season_children": {},
+                "final_completed_weeks": [],
+                "final_week_children": {},
+                "final_empty_week_children": {},
+                "final_week61_slot_children": {},
+                "final_boundary_saved_revision_id": None,
+                "final_boundary_position_fingerprint": None,
+                "resume_command": command.model_dump(mode="json"),
+                "review": plan,
+            }
+            session.add(
+                AuthoritativeSimulationCommandModel(
+                    run_id=command.run_id,
+                    branch_id=command.branch_id,
+                    command_id=command.command_id,
+                    request_fingerprint=request_fp,
+                    status="pending",
+                    result_json=json.dumps(
+                        frozen, sort_keys=True, separators=(",", ":")
+                    ),
+                )
+            )
+
+
     def _simulate_full_simulation_guarded(
         self,
         *,
@@ -7072,174 +7259,11 @@ class AuthoritativeRunSimulationDriver:
     ) -> dict:
         """Implementation executed beneath the invocation-local transaction fence."""
 
-        # A pending Full Simulation must be able to observe the external final
-        # closure after that command makes the Run non-writable.
         with self.factory.begin() as session:
             session.execute(text("BEGIN IMMEDIATE"))
-            receipt = session.get(AuthoritativeSimulationCommandModel, key)
-            if receipt is not None:
-                if receipt.request_fingerprint != request_fp:
-                    raise ValueError(
-                        "Full Simulation command ID already has a different request"
-                    )
-                if receipt.status == "complete":
-                    return json.loads(receipt.result_json)
-                if receipt.status == "stopped":
-                    raise FullSimulationStopped("Full Simulation was stopped")
-                if receipt.status == "target_reached":
-                    raise FullSimulationTargetReached("Full Simulation target was already reached")
-                if receipt.status != "pending":
-                    raise ValueError(
-                        "Full Simulation command receipt has an invalid status"
-                    )
-                frozen = json.loads(receipt.result_json)
-                if frozen.get("control_state", "running") in ("pause_requested", "paused"):
-                    raise FullSimulationPauseRequested("Full Simulation pause requested")
-                completed = self._branch_final_closure_evidence(
-                    session,
-                    run_id=command.run_id,
-                    branch_id=command.branch_id,
-                )
-                if completed is not None:
-                    seasons = list(frozen["completed_seasons"])
-                    if FINAL_WEEK.season_index not in seasons:
-                        seasons.append(FINAL_WEEK.season_index)
-                    payload = {
-                        "schema_version": "authoritative_full_simulation_result.v1",
-                        "status": "complete",
-                        "run_id": command.run_id,
-                        "branch_id": command.branch_id,
-                        "start_week": frozen["start_week"],
-                        "final_week": frozen["final_week"],
-                        "completed_seasons": seasons,
-                        "completed_season_count": len(seasons),
-                        "season_child_command_ids": [
-                            item["command"]["command_id"]
-                            for _, item in sorted(
-                                frozen["season_children"].items(),
-                                key=lambda pair: int(pair[0]),
-                            )
-                        ],
-                        "final_week_child_command_ids": [
-                            item["command"]["command_id"]
-                            for _, item in sorted(
-                                frozen["final_week_children"].items(),
-                                key=lambda pair: int(pair[0]),
-                            )
-                        ],
-                        "final_empty_week_child_command_ids": [
-                            command_id
-                            for _, command_id in sorted(
-                                frozen["final_empty_week_children"].items(),
-                                key=lambda pair: int(pair[0]),
-                            )
-                        ],
-                        "final_week61_slot_child_command_ids": [
-                            item["command_id"]
-                            for _, item in sorted(
-                                frozen["final_week61_slot_children"].items(),
-                                key=lambda pair: int(pair[0]),
-                            )
-                        ],
-                        "run_status": COMPLETED_RUN_STATUS,
-                        "operator_label": command.operator_label,
-                        "audit_reason": command.audit_reason,
-                        **completed,
-                        "adoption": "committed",
-                    }
-                    receipt.status = "complete"
-                    receipt.result_json = json.dumps(
-                        payload, sort_keys=True, separators=(",", ":")
-                    )
-                    session.flush()
-                    return payload
-                self._require_writable_scope(
-                    session, command.run_id, command.branch_id
-                )
-            else:
-                self._require_writable_scope(
-                    session, command.run_id, command.branch_id
-                )
-                active = self._pending_full_simulation_command_ids(
-                    session,
-                    run_id=command.run_id,
-                    branch_id=command.branch_id,
-                )
-                if active:
-                    raise ValueError(
-                        "Full Simulation already has a pending parent for this "
-                        f"Run/Branch: {active[0]}. Resume or finish it before "
-                        "starting another Full Simulation."
-                    )
-                before = self._position(
-                    session,
-                    command.run_id,
-                    command.branch_id,
-                    allow_missing_schedule=True,
-                )
-                if before.current_week != command.expected_start_week:
-                    raise ValueError("Full Simulation reviewed start week is stale")
-                if (
-                    before.position_fingerprint
-                    != command.expected_position_fingerprint
-                ):
-                    raise ValueError("Full Simulation reviewed Position is stale")
-                branch = session.get(RunBranchModel, command.branch_id)
-                if (
-                    branch is None
-                    or branch.saved_head_revision_id
-                    != command.expected_revision_id
-                ):
-                    raise ValueError(
-                        "Full Simulation reviewed Saved Revision is stale"
-                    )
-                plan = self._full_simulation_plan(
-                    session,
-                    request=AuthoritativeFullSimulationPreviewRequest(
-                        command_id=command.command_id,
-                        run_id=command.run_id,
-                        branch_id=command.branch_id,
-                        operator_label=command.operator_label,
-                        audit_reason=command.audit_reason,
-                    ),
-                )
-                if plan["preview_fingerprint"] != command.expected_preview_fingerprint:
-                    raise ValueError("Full Simulation preview changed before commit")
-                frozen = {
-                    "schema_version": "authoritative_full_simulation_operation.v1",
-                    "run_id": command.run_id,
-                    "branch_id": command.branch_id,
-                    "start_week": plan["start_week"],
-                    "final_week": plan["final_week"],
-                    "initial_saved_revision_id": command.expected_revision_id,
-                    "completed_seasons": [],
-                    "control_state": "running",
-                    "control_events": [],
-                    "target_events": [],
-                    "target_revision": 0,
-                    "effective_target_week": plan["final_week"],
-                    "season_children": {},
-                    "final_completed_weeks": [],
-                    "final_week_children": {},
-                    "final_empty_week_children": {},
-                    "final_week61_slot_children": {},
-                    "final_boundary_saved_revision_id": None,
-                    "final_boundary_position_fingerprint": None,
-                    "resume_command": command.model_dump(mode="json"),
-                    "review": plan,
-                }
-                session.add(
-                    AuthoritativeSimulationCommandModel(
-                        run_id=command.run_id,
-                        branch_id=command.branch_id,
-                        command_id=command.command_id,
-                        request_fingerprint=request_fp,
-                        status="pending",
-                        result_json=json.dumps(
-                            frozen, sort_keys=True, separators=(",", ":")
-                        ),
-                    )
-                )
+            existing = self.prepare_full_simulation(session, command, request_fp)
+            if existing is not None:
+                return existing
 
         for _ in range(128):
             branch_completed = False

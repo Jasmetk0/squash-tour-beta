@@ -1,3 +1,4 @@
+import { FullSimulationServerTasks } from '../components/FullSimulationServerTasks'
 import { useQuery } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
@@ -128,6 +129,7 @@ export function GlobalSimulationTaskCenterPage(): JSX.Element {
     <div className="page-intro">
       <h2>{text.title}</h2><p className="subtitle">{text.subtitle}</p>
     </div>
+    <FullSimulationServerTasks />
     <p className="status">{text.truth}</p>
     <div className="simulation-task-center__toolbar">
       <label>{text.search}

@@ -1,3 +1,4 @@
+import { BoundaryDescription } from '../components/FullSimulationBoundaryTargets'
 import { FullSimulationServerTasks } from '../components/FullSimulationServerTasks'
 import { useQuery } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
@@ -170,7 +171,7 @@ export function GlobalSimulationTaskCenterPage(): JSX.Element {
                   <span><b>{text.progress}:</b> {operation.completed_season_count}</span>
                   <span><b>{text.finalWeeks}:</b> {operation.final_completed_week_count}</span>
                   <span><b>{text.from}:</b> S{operation.start_week.season_index} W{operation.start_week.week}</span>
-                  <span><b>{text.target}:</b> S{operation.final_week.season_index} W{operation.final_week.week}</span>
+                  <span><b>{text.target}:</b> {operation.effective_boundary_target?<BoundaryDescription target={operation.effective_boundary_target}/>:<>S{(operation.effective_target_week??operation.final_week).season_index} W{(operation.effective_target_week??operation.final_week).week}</>}</span>
                 </div>
                 <p className="status">{text.worker} · {text.lease[operation.lease_state]}</p>
                 {(operation.run_read_only || operation.branch_read_only || operation.branch_status !== 'active')

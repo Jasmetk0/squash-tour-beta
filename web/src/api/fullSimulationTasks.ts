@@ -1,3 +1,5 @@
+import { isBoundaryTarget } from './fullSimulationBoundaryTargets'
+import type { BoundaryTarget } from './fullSimulationBoundaryTargets'
 import { ApiError } from './client'
 import type { AuthoritativeFullSimulationCommandPayload } from './types'
 
@@ -6,6 +8,7 @@ export type ServerTask = {
   parent_command_id:string; run_name:string; branch_name:string; revision:number
   desired_state:string; state:string; heartbeat_health:'recent'|'stale'|'inactive'; heartbeat_unix:number
   lease_expires_at_unix:number|null; checkpoint:string|null; progress:Record<string,unknown>|null
+  effective_boundary_target?:BoundaryTarget|null
   current_week:{season_index:number;week:number}|null
   error:string|null; needs_operator_action:boolean; original_command:AuthoritativeFullSimulationCommandPayload
   events:{revision:number;previous:string|null;state:string;reason:string;at_unix:number;fingerprint:string}[]
@@ -29,6 +32,7 @@ export function validateTasks(value:unknown,run?:string,branch?:string):ServerTa
       !Number.isInteger(t.revision) || t.revision<1 || !desired.includes(t.desired_state) ||
       ![...desired,'recoverable','pause_requested','ownership_unverified'].includes(t.state) || !['recent','stale','inactive'].includes(t.heartbeat_health) ||
       !Number.isInteger(t.heartbeat_unix) || t.heartbeat_unix<0 || typeof t.needs_operator_action!=='boolean' ||
+      (t.effective_boundary_target!=null && !isBoundaryTarget(t.effective_boundary_target)) ||
       !id(t.run_name) || !id(t.branch_name) || !(t.current_week===null || week(t.current_week)) ||
       !(t.lease_expires_at_unix===null || (Number.isInteger(t.lease_expires_at_unix) && t.lease_expires_at_unix>0)) ||
       !(t.progress===null || (typeof t.progress==='object' && !Array.isArray(t.progress))) ||

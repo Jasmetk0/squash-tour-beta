@@ -1,3 +1,11 @@
+# Full Simulation precise boundaries — integration candidate, 15 October 2026
+
+Baseline `buuk` `0691123aa421395732a5d6fb86eb7a35ba1df4f4`, merged #1471. Current candidate for #1472 implements one coherent server-task slice: reviewed global BEFORE-slot, canonical/frozen-hybrid BEFORE-final and exact owned-source AFTER-edition targets; writer-lock revalidation, versioned audit/retry, CS/EN controls and frozen terminal evidence. Future/unfrozen boundaries are explicitly unavailable. Existing weekly/relative goals, manual Save/approvals and original command identity remain authoritative.
+
+[Supported boundaries and acceptance](docs/FULL_SIMULATION_EVENT_SLOT_TARGETS_V81.md). Require final-head Fast CI plus dedicated Boundary Targets, original Controls/Server Tasks, Saved Group and applicable Hybrid regressions before handoff. Native canonical final/source, closed page and actual process-death recovery are scoped evidence, not full-season/50-season acceptance. Next coherent work: safe extension of frozen weekly reviews after hybrid topology materialization, then tracking/stop rules. Historical dated queue follows unchanged.
+
+---
+
 # Server task lifecycle — active integration candidate, 15 October 2026
 
 Baseline: merged #1469 on `buuk` `0f4d89dd8635f41f0d9b0cee2c831211a34a7fae`. Current candidate implements #1470: real server-owned Full Simulation, durable identity and global claim, CS/EN Admin + Task Center reconnect, truthful heartbeat/ownership observation, explicit stale-lease recovery and no automatic execution after restart. Existing canonical children, Save and approval checkpoints, targets and frozen summaries are reused.

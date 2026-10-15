@@ -19,6 +19,15 @@ from pydantic import Field, model_validator
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session, sessionmaker
 
+from beta_engine.application.full_simulation_boundary_targets import (
+    BoundaryUnavailable,
+    FullSimulationBoundaryTarget,
+    boundary_evidence,
+    boundary_options,
+    effective_boundary,
+    require_selection,
+)
+
 from beta_engine.application.calendar_package_run_adapter import CalendarPackageRunAdapter
 from beta_engine.application.world_package_run_adapter import WorldPackageRunAdapter
 from beta_engine.application.canonical_tournament_preparation import (
@@ -572,7 +581,7 @@ class AuthoritativeFullSimulationRelativeTarget(FrozenInput):
 
 
 class AuthoritativeFullSimulationRetargetCommand(FrozenInput):
-    """Exactly one absolute or relative target on the same durable parent."""
+    """Exactly one weekly, relative or precise target on the same durable parent."""
 
     control_command_id: str = Field(min_length=1, max_length=128)
     target_command_id: str = Field(min_length=1, max_length=128)
@@ -580,13 +589,14 @@ class AuthoritativeFullSimulationRetargetCommand(FrozenInput):
     branch_id: str
     target_week: RankingWeek | None = None
     relative_target: AuthoritativeFullSimulationRelativeTarget | None = None
+    boundary_target: FullSimulationBoundaryTarget | None = None
     operator_label: str = Field(min_length=1, max_length=128)
     audit_reason: str = Field(min_length=1, max_length=2000)
 
     @model_validator(mode="after")
     def trim_audit(self):
-        if (self.target_week is None) == (self.relative_target is None):
-            raise ValueError("Provide exactly one absolute target_week or relative_target")
+        if sum(v is not None for v in (self.target_week, self.relative_target, self.boundary_target)) != 1:
+            raise ValueError("Provide exactly one target_week, relative_target or boundary_target")
         operator, reason = self.operator_label.strip(), self.audit_reason.strip()
         if not operator or not reason:
             raise ValueError("Target change requires operator and audit reason")
@@ -6201,12 +6211,16 @@ class AuthoritativeRunSimulationDriver:
                         "pending Full Simulation reviewed contract is corrupt"
                     )
 
+                effective_boundary(frozen)
+                if any(e.get("boundary_target") is not None for e in frozen.get("target_events", [])):
+                    self._validate_full_target_audit(receipt, frozen)
                 operations.append(
                     {
                         "command": command.model_dump(mode="json"),
                         "review": parsed_review,
                         "control_state": frozen.get("control_state", "running"),
                         "effective_target_week": frozen.get("effective_target_week", frozen["final_week"]),
+                        "effective_boundary_target": (effective_boundary(frozen).model_dump(mode="json") if effective_boundary(frozen) else None),
                         "target_revision": frozen.get("target_revision", 0),
                         "completed_seasons": list(
                             frozen.get("completed_seasons", [])
@@ -6257,6 +6271,9 @@ class AuthoritativeRunSimulationDriver:
 
                 schema = payload.get("schema_version")
                 if schema == "authoritative_full_simulation_operation.v1":
+                    effective_boundary(payload)
+                    if any(e.get("boundary_target") is not None for e in payload.get("target_events", [])):
+                        self._validate_full_target_audit(receipt, payload)
                     resume_payload = payload.get("resume_command")
                     review = payload.get("review")
                     operator_label = None
@@ -6281,6 +6298,7 @@ class AuthoritativeRunSimulationDriver:
                             "start_week": start_week,
                             "final_week": final_week,
                             "effective_target_week": payload.get("effective_target_week", final_week),
+                            "effective_boundary_target": (effective_boundary(payload).model_dump(mode="json") if effective_boundary(payload) else None),
                             "target_revision": payload.get("target_revision", 0),
                             "completed_seasons": list(
                                 payload.get("completed_seasons", [])
@@ -6402,6 +6420,7 @@ class AuthoritativeRunSimulationDriver:
                     "start_week": review.get("start_week", payload.get("start_week")),
                     "final_week": review.get("final_week", payload.get("final_week")),
                     "effective_target_week": payload.get("effective_target_week", payload["final_week"]),
+                    "effective_boundary_target": (effective_boundary(payload).model_dump(mode="json") if effective_boundary(payload) else None),
                     "target_revision": payload.get("target_revision", 0),
                     "target_events": payload.get("target_events", []),
                     "initial_saved_revision_id": payload.get(
@@ -6486,6 +6505,53 @@ class AuthoritativeRunSimulationDriver:
             raise ValueError("Relative Full Simulation target exceeds the last Run week")
         return RankingWeek(season_index=ordinal // 61, week=ordinal % 61 + 1)
 
+    def inspect_full_simulation_boundary_options(self, *, run_id, branch_id, command_id):
+        with self.factory() as session:
+            session.execute(text("BEGIN IMMEDIATE"))
+            self._require_writable_scope(session, run_id, branch_id)
+            receipt = session.get(AuthoritativeSimulationCommandModel, (run_id, branch_id, command_id))
+            if receipt is None or receipt.status != "pending":
+                raise ValueError("Boundary review requires the exact pending Full Simulation parent")
+            frozen = json.loads(receipt.result_json)
+            self._validate_full_target_audit(receipt, frozen)
+            return boundary_options(self, session, run_id=run_id, branch_id=branch_id, parent_command_id=command_id)
+
+    @staticmethod
+    def _validate_full_target_audit(receipt, frozen):
+        if frozen.get("schema_version") != "authoritative_full_simulation_operation.v1":
+            raise ValueError("Target is not a Full Simulation parent")
+        original = AuthoritativeFullSimulationCommand.model_validate(frozen["resume_command"])
+        if ((original.run_id, original.branch_id, original.command_id) != (receipt.run_id, receipt.branch_id, receipt.command_id)
+                or receipt.request_fingerprint != fingerprint({"mode": "full_simulation", "command": original.model_dump(mode="json")})):
+            raise ValueError("Full Simulation original command identity is corrupt")
+        if frozen.get("final_week") != FINAL_WEEK.model_dump(mode="json") or frozen.get("start_week") != original.expected_start_week.model_dump(mode="json"):
+            raise ValueError("Full Simulation immutable range is corrupt")
+        effective_boundary(frozen)
+        events = frozen.get("target_events", [])
+        from beta_engine.application.global_full_simulation_operations import _valid_target_event
+        if (type(frozen.get("target_revision", 0)) is not int or len(events) != frozen.get("target_revision", 0)
+                or len({event.get("command_id") for event in events}) != len(events)
+                or any(not _valid_target_event(event, i) for i, event in enumerate(events, 1))):
+            raise ValueError("Full Simulation target audit is corrupt")
+        for event in events:
+            if event.get("boundary_target") is not None:
+                review = event["boundary_review"]
+                if (review["run_id"], review["branch_id"], review["parent_command_id"]) != (receipt.run_id, receipt.branch_id, receipt.command_id):
+                    raise ValueError("Boundary review scope is corrupt")
+        effective_boundary(frozen)
+
+    def _check_full_boundary_after_writer_lock(self, connection, frozen):
+        if not frozen.get("effective_boundary_target"):
+            effective_boundary(frozen)  # Also reject a missing effective selector.
+            return
+        # Joining an existing Connection does not own/commit its transaction.
+        with Session(bind=connection, join_transaction_mode="rollback_only") as session:
+            receipt = session.get(AuthoritativeSimulationCommandModel, (frozen["run_id"], frozen["branch_id"], frozen["resume_command"]["command_id"]))
+            self._validate_full_target_audit(receipt, frozen)
+            evidence = boundary_evidence(self, session, frozen, run_id=frozen["run_id"], branch_id=frozen["branch_id"])
+            if evidence is not None:
+                raise FullSimulationTargetReached("Selected precise boundary reached")
+
     def retarget_full_simulation(
         self, command: AuthoritativeFullSimulationRetargetCommand
     ) -> dict:
@@ -6499,6 +6565,7 @@ class AuthoritativeRunSimulationDriver:
             frozen = json.loads(receipt.result_json)
             if frozen.get("schema_version") != "authoritative_full_simulation_operation.v1":
                 raise ValueError("Target is not a Full Simulation parent")
+            self._validate_full_target_audit(receipt, frozen)
             events = frozen.get("target_events", [])
             controls = frozen.get("control_events", [])
             if not isinstance(events, list) or not isinstance(controls, list) or not all(
@@ -6519,7 +6586,8 @@ class AuthoritativeRunSimulationDriver:
                 # Never re-resolve a relative command on a lost HTTP response.
                 # Preserve backward replay compatibility for old absolute events.
                 if (
-                    event.get("relative_target") != requested_relative
+                    event.get("boundary_target") != (command.boundary_target.model_dump(mode="json") if command.boundary_target else None)
+                    or event.get("relative_target") != requested_relative
                     or (
                         command.target_week is not None
                         and event.get("target_week") != command.target_week.model_dump(mode="json")
@@ -6536,7 +6604,9 @@ class AuthoritativeRunSimulationDriver:
                 if frozen.get("control_state", "running") not in ("running", "pause_requested", "paused"):
                     raise ValueError("Full Simulation is no longer controllable")
                 current = self._current_week(session, command.run_id, command.branch_id)
+                boundary_review = require_selection(self, session, command) if command.boundary_target else None
                 resolved = (
+                    FINAL_WEEK if command.boundary_target is not None else
                     self._resolve_relative_full_target(current, command.relative_target)
                     if command.relative_target is not None else command.target_week
                 )
@@ -6550,14 +6620,33 @@ class AuthoritativeRunSimulationDriver:
                     "revision": len(events) + 1,
                     "applied_at_week": current.model_dump(mode="json"),
                 }
+                if boundary_review is not None:
+                    event["boundary_target"] = command.boundary_target.model_dump(mode="json")
+                    event["boundary_review"] = boundary_review
+                    event["boundary_review_fingerprint"] = fingerprint(boundary_review)
                 if requested_relative is not None:
                     event["relative_target"] = requested_relative
                 events.append(event)
                 frozen["target_events"] = events
                 frozen["target_revision"] = event["revision"]
                 frozen["effective_target_week"] = event["target_week"]
+                frozen["effective_boundary_target"] = event.get("boundary_target")
                 receipt.result_json = json.dumps(frozen, sort_keys=True, separators=(",", ":"))
                 replayed = False
+            if command.boundary_target is not None:
+                # Frozen acknowledgement survives later targets, Position, Save
+                # and terminal receipt changes. Do not re-resolve an old review.
+                response = {
+                    "schema_version": "authoritative_full_simulation_target_result.v2",
+                    "run_id": command.run_id, "branch_id": command.branch_id,
+                    "target_command_id": command.target_command_id,
+                    "control_command_id": command.control_command_id,
+                    "boundary_target": event["boundary_target"],
+                    "applied_revision": event["revision"],
+                    "review_fingerprint": event["boundary_review_fingerprint"],
+                    "committed_child_work_persists": True, "replayed": replayed,
+                }
+                return response
             return {
                 "schema_version": "authoritative_full_simulation_target_result.v1",
                 "run_id": command.run_id, "branch_id": command.branch_id,
@@ -6747,7 +6836,7 @@ class AuthoritativeRunSimulationDriver:
         self, command: AuthoritativeFullSimulationCommand,
         key: tuple[str, str, str], request_fp: str, lease_token: str,
     ) -> dict:
-        """Finalize a reached weekly boundary with no implicit Save."""
+        """Revalidate and capture a precise/week boundary under one writer lock."""
         with self.factory.begin() as session:
             session.execute(text("BEGIN IMMEDIATE"))
             require_invocation_lease_owner(session, token=lease_token)
@@ -6755,19 +6844,42 @@ class AuthoritativeRunSimulationDriver:
             if receipt is None or receipt.request_fingerprint != request_fp:
                 raise ValueError("Full Simulation target parent is missing or corrupt")
             frozen = json.loads(receipt.result_json)
+            if receipt.status == "stopped":
+                summary = stored_terminal_summary(receipt, frozen)
+                position = AuthoritativeSimulationPosition.model_validate_json(json.dumps(summary["position"]))
+                response = self._full_progress_payload(command=command, frozen=frozen, position=position,
+                    checkpoint="operator_stopped", detail="Stop committed before target completion; no implicit Save.")
+                response["status"] = "stopped"
+                return response
             if receipt.status != "target_reached":
-                if receipt.status != "pending" or frozen.get("control_state", "running") != "running":
+                if receipt.status != "pending":
                     raise ValueError("Full Simulation target is no longer executable")
+                self._validate_full_target_audit(receipt, frozen)
+                if frozen.get("control_state", "running") in ("pause_requested", "paused"):
+                    frozen["control_state"] = "paused"
+                    receipt.result_json = json.dumps(frozen, sort_keys=True, separators=(",", ":"))
+                    return self._full_progress_payload(command=command, frozen=frozen, checkpoint="operator_paused",
+                        detail="Pause committed before target completion. Resume the same parent explicitly.")
                 position = self._position(
                     session, command.run_id, command.branch_id, allow_missing_schedule=True
                 )
                 target = self._effective_full_target(frozen)
-                if (
+                precise = effective_boundary(frozen)
+                try:
+                    evidence = boundary_evidence(self, session, frozen, run_id=command.run_id, branch_id=command.branch_id) if precise else None
+                except BoundaryUnavailable as exc:
+                    return self._full_progress_payload(command=command, frozen=frozen, position=position,
+                        checkpoint="target_boundary_review_required", blockers=("target_boundary_unavailable",), detail=str(exc))
+                if (precise is not None and evidence is None) or (precise is None and (
                     frozen.get("target_revision", 0) < 1
                     or target.ordinal >= FINAL_WEEK.ordinal
                     or position.current_week.ordinal < target.ordinal
-                ):
-                    raise ValueError("Full Simulation target moved while closing; retry original command")
+                )):
+                    return self._full_progress_payload(command=command, frozen=frozen, position=position,
+                        checkpoint="target_changed_before_completion", blockers=("target_changed",),
+                        detail="Target changed before terminal commit. Explicitly continue the same task with its current target.")
+                if evidence is not None:
+                    frozen["target_trigger_evidence"] = evidence
                 frozen["target_reached_week"] = position.current_week.model_dump(mode="json")
                 frozen["control_state"] = "target_reached"
                 receipt.status = "target_reached"
@@ -6779,7 +6891,7 @@ class AuthoritativeRunSimulationDriver:
             response = self._full_progress_payload(
                 command=command, frozen=frozen, position=position,
                 checkpoint="operator_target_reached",
-                detail="Reached the start of the selected week; completed sport persists; no implicit Save.",
+                detail="Reached the selected committed boundary; completed sport persists; no implicit Save.",
             )
             response["status"] = "target_reached"
             return response
@@ -6916,6 +7028,7 @@ class AuthoritativeRunSimulationDriver:
             ),
             "final_week": frozen["final_week"],
             "effective_target_week": frozen.get("effective_target_week", frozen["final_week"]),
+            "effective_boundary_target": (effective_boundary(frozen).model_dump(mode="json") if effective_boundary(frozen) else None),
             "target_revision": frozen.get("target_revision", 0),
             "completed_seasons": list(frozen["completed_seasons"]),
             "completed_season_count": len(frozen["completed_seasons"]),
@@ -7025,11 +7138,13 @@ class AuthoritativeRunSimulationDriver:
                     before_transaction_check=(
                         self.full_simulation_before_transaction_check
                     ),
+                    after_writer_lock_check=self._check_full_boundary_after_writer_lock,
                 )
             )
             paused = False
             stopped = False
             target_reached = False
+            unavailable = None
             try:
                 result = self._simulate_full_simulation_guarded(
                     command=command, request_fp=request_fp, key=key,
@@ -7043,8 +7158,17 @@ class AuthoritativeRunSimulationDriver:
             except FullSimulationTargetReached:
                 target_reached = True
                 result = None
+            except BoundaryUnavailable as exc:
+                unavailable = str(exc)
+                result = None
             finally:
                 ACTIVE_FULL_SIMULATION_GUARD.reset(guard_token)
+            if unavailable:
+                with self.factory() as session:
+                    receipt = session.get(AuthoritativeSimulationCommandModel, key)
+                    frozen = json.loads(receipt.result_json)
+                    return self._full_progress_payload(command=command, frozen=frozen,
+                        checkpoint="target_boundary_review_required", blockers=("target_boundary_unavailable",), detail=unavailable)
             if stopped:
                 return self._stopped_full_simulation_progress(command, key, request_fp)
             if target_reached:

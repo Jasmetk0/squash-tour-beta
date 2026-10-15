@@ -1,15 +1,19 @@
+import { isBoundaryTarget } from './fullSimulationBoundaryTargets'
+import type { BoundaryTarget } from './fullSimulationBoundaryTargets'
 import { ApiError } from './client'
 import type { AuthoritativeRankingWeek } from './types'
 
 export type FullSimulationSummary = {
-  schema_version: 'full_simulation_terminal_summary.v1'
+  schema_version: 'full_simulation_terminal_summary.v1' | 'full_simulation_terminal_summary.v2'
   run_id: string; branch_id: string; command_id: string
   receipt_request_fingerprint: string; summary_fingerprint: string
   status: 'stopped' | 'target_reached'
   start_week: AuthoritativeRankingWeek; end_week: AuthoritativeRankingWeek
   original_final_week: AuthoritativeRankingWeek; effective_target_week: AuthoritativeRankingWeek
   target_revision: number; target_reached: boolean
-  reason: 'operator_stop' | 'week_target_reached'
+  effective_boundary_target?:BoundaryTarget
+  target_trigger_evidence?: {schema_version:string;target:BoundaryTarget;week:AuthoritativeRankingWeek;slot_ordinal?:number;slot_id?:string;group_ids?:string[];schedule_fingerprint:string;source_fingerprint?:string;source_command_id?:string;edition_id?:string;event_id?:string}|null
+  reason: 'operator_stop' | 'week_target_reached' | 'boundary_target_reached'
   terminal_control_command_id:string; terminal_operator_label:string; terminal_audit_reason:string
   initial_saved_revision_id: string; terminal_saved_revision_id: string
   persisted_child_command_count: number
@@ -47,15 +51,15 @@ export async function getFullSimulationSummary(runId:string, branchId:string, co
   }
   if (!data.available) return data
   const s = data.summary!
-  if (!s || s.schema_version !== 'full_simulation_terminal_summary.v1' || !scope(s) ||
+  if (!s || !['full_simulation_terminal_summary.v1','full_simulation_terminal_summary.v2'].includes(s.schema_version) || !scope(s) ||
     s.status !== data.status || !['stopped','target_reached'].includes(s.status) ||
     !hash(s.summary_fingerprint) || !hash(s.receipt_request_fingerprint) ||
     ![s.start_week,s.end_week,s.original_final_week,s.effective_target_week].every(validWeek) ||
     s.original_final_week.season_index !== 49 || s.original_final_week.week !== 61 ||
     ordinal(s.end_week) < ordinal(s.start_week) || ordinal(s.effective_target_week) < ordinal(s.start_week) ||
     s.target_reached !== (s.status === 'target_reached') ||
-    s.reason !== (s.target_reached ? 'week_target_reached' : 'operator_stop') ||
-    (s.target_reached && ordinal(s.end_week) < ordinal(s.effective_target_week)) ||
+    s.reason !== (s.target_reached ? (s.effective_boundary_target ? 'boundary_target_reached' : 'week_target_reached') : 'operator_stop') ||
+    (s.target_reached && !s.effective_boundary_target && ordinal(s.end_week) < ordinal(s.effective_target_week)) ||
     !Number.isInteger(s.target_revision) || s.target_revision < 0 ||
     !Number.isInteger(s.persisted_child_command_count) || s.persisted_child_command_count < 0 ||
     !id(s.initial_saved_revision_id) || !id(s.terminal_saved_revision_id) ||
@@ -73,5 +77,13 @@ export async function getFullSimulationSummary(runId:string, branchId:string, co
       !['ranking_changes','watched_events','notifications'].includes(v))) {
     throw new Error('Full Simulation terminal summary is invalid.')
   }
+  if(s.schema_version==='full_simulation_terminal_summary.v2'){
+    const b=s.effective_boundary_target;const e=s.target_trigger_evidence
+    if(!isBoundaryTarget(b) || (s.target_reached && (!e || e.schema_version!=='full_simulation_boundary_evidence.v1' ||
+      !isBoundaryTarget(e.target) || e.target.selector_fingerprint!==b.selector_fingerprint ||
+      !validWeek(e.week) || ordinal(e.week)!==ordinal(b.week) || ordinal(s.end_week)!==ordinal(b.week) ||
+      (b.kind==='after_tournament' ? !hash(e.source_fingerprint)||!id(e.source_command_id)||e.edition_id!==b.edition_id||e.event_id!==b.event_id :
+       e.slot_id!==b.slot_id||e.slot_ordinal!==b.slot_ordinal||e.schedule_fingerprint!==b.schedule_fingerprint||JSON.stringify(e.group_ids)!==JSON.stringify(b.group_ids)))))throw Error('Invalid precise terminal evidence')
+  }else if(s.effective_boundary_target || s.target_trigger_evidence)throw Error('Unexpected precise terminal evidence')
   return data
 }

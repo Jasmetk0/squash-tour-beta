@@ -1,0 +1,92 @@
+name: Pre-alpha Full Simulation Boundary Targets Browser
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/prealpha-full-simulation-boundary-targets-browser.yml'
+      - 'scripts/full_simulation_boundary_targets_browser.py'
+      - 'src/beta_engine/application/full_simulation_tasks.py'
+      - 'tests/application/test_full_simulation_boundary_targets.py'
+      - 'src/beta_engine/application/full_simulation_boundary_targets.py'
+      - 'web/src/api/fullSimulationBoundaryTargets*'
+      - 'web/src/components/FullSimulationBoundaryTargets*'
+      - 'web/src/api/fullSimulationTasks*'
+      - 'web/src/components/FullSimulationServerTasks*'
+      - 'src/beta_engine/main.py'
+      - 'src/beta_engine/infrastructure/db/models.py'
+      - 'tests/support/full_simulation_http_flow.py'
+      - 'tests/application/test_full_simulation_http_flow.py'
+      - 'tests/application/test_full_simulation_summary.py'
+      - 'src/beta_engine/application/full_simulation_summary.py'
+      - 'web/src/components/FullSimulationSummary.tsx'
+      - 'web/src/api/fullSimulationSummary.ts'
+      - 'src/beta_engine/infrastructure/db/full_simulation_execution_guard.py'
+      - 'src/beta_engine/infrastructure/db/full_simulation_invocation_lease.py'
+      - 'src/beta_engine/application/authoritative_run_simulation_driver.py'
+      - 'web/src/pages/AuthoritativeSimulationPanel.tsx'
+      - 'web/src/i18n/fullSimulationControlText.ts'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-pr-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+permissions:
+  contents: read
+
+jobs:
+  boundary-targets-browser:
+    name: Canonical BEFORE final / AFTER closure / closed page / CS-EN / frozen evidence
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: pyproject.toml
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: Install production engine and acceptance dependencies
+        run: python -m pip install -e . pytest playwright
+      - name: Install frontend
+        run: npm --prefix web ci
+      - name: Prepare Chromium
+        run: |
+          if [ -x /usr/bin/google-chrome ]; then
+            echo "CHROME_BIN=/usr/bin/google-chrome" >> "$GITHUB_ENV"
+          else
+            python -m playwright install --with-deps chromium
+            echo "CHROME_BIN=$(python -c 'from playwright.sync_api import sync_playwright; p=sync_playwright().start(); print(p.chromium.executable_path); p.stop()')" >> "$GITHUB_ENV"
+          fi
+      - name: Start frontend pointing at disposable FastAPI
+        run: |
+          VITE_API_BASE_URL=http://127.0.0.1:8023 npm --prefix web run dev -- --host 127.0.0.1 --port 5173 --strictPort > "$RUNNER_TEMP/boundary-targets-vite.log" 2>&1 &
+          for attempt in $(seq 1 90); do
+            if curl --fail --silent http://127.0.0.1:5173/ > /dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat "$RUNNER_TEMP/boundary-targets-vite.log"
+          exit 1
+      - name: Verify production HTTP/SQLite controls and expired/reclaimed executor fencing
+        # Dedicated acceptance explicitly owns this complete focused selection;
+        # the ordinary PR changed-test filter must not deselect its regressions.
+        run: GITHUB_EVENT_NAME=full_simulation_acceptance python -m pytest tests/application/test_full_simulation_boundary_targets.py tests/application/test_full_simulation_server_tasks.py tests/application/test_full_simulation_invocation_lease.py tests/application/test_full_simulation_summary.py --maxfail=1
+      - name: Native exact targets, closed page and immutable evidence in Chromium
+        run: |
+          python scripts/full_simulation_boundary_targets_browser.py \
+            --acceptance "$RUNNER_TEMP/full-simulation-boundary-targets" \
+            --port 8023 --base-url http://127.0.0.1:5173 --chromium "$CHROME_BIN"
+      - name: Preserve actual HTTP/SQLite and browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: full-simulation-boundary-targets-${{ github.run_id }}
+          path: |
+            ${{ runner.temp }}/full-simulation-boundary-targets/artifacts/
+            ${{ runner.temp }}/full-simulation-boundary-targets/process.log
+            ${{ runner.temp }}/boundary-targets-vite.log
+          if-no-files-found: error
+          retention-days: 7

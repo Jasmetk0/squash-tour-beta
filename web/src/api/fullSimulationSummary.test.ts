@@ -42,3 +42,17 @@ describe('Frozen Full Simulation summary HTTP contract',()=>{
     expect(await read(data)).toEqual(data)
   })
 })
+
+it('preserves v2 slot and owned-source terminal evidence and rejects mismatches',async()=>{
+ const {boundaryExample}=await import('./fullSimulationBoundaryTargets.fixture')
+ for(const kind of ['before_final','after_tournament'] as const){
+  const target=boundaryExample(kind)
+  const trigger={schema_version:'full_simulation_boundary_evidence.v1',target,week:target.week,schedule_fingerprint:target.schedule_fingerprint,
+   ...(kind==='before_final'?{slot_id:target.slot_id,slot_ordinal:target.slot_ordinal,group_ids:target.group_ids}:{edition_id:target.edition_id,event_id:target.event_id,source_fingerprint:'e'.repeat(64),source_command_id:'closure-command'})}
+  const base=summaryExample();const data={...base,status:'target_reached',summary:{...base.summary,schema_version:'full_simulation_terminal_summary.v2',status:'target_reached',reason:'boundary_target_reached',target_reached:true,target_revision:1,effective_boundary_target:target,target_trigger_evidence:trigger}}
+  vi.spyOn(globalThis,'fetch').mockResolvedValue(new Response(JSON.stringify(data)))
+  expect(await getFullSimulationSummary('run','branch','parent')).toEqual(data)
+  vi.spyOn(globalThis,'fetch').mockResolvedValue(new Response(JSON.stringify({...data,summary:{...data.summary,target_trigger_evidence:{...trigger,week:{season_index:0,week:2}}}})))
+  await expect(getFullSimulationSummary('run','branch','parent')).rejects.toThrow('Invalid precise terminal evidence')
+ }
+})

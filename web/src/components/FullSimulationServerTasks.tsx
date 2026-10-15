@@ -1,3 +1,4 @@
+import { BoundaryDescription } from './FullSimulationBoundaryTargets'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
@@ -47,6 +48,8 @@ export function StartServerTask({runId,branchId,command,disabled,onAccepted}:{ru
 }
 const checkpointGuidance = (checkpoint:string|null,language:'cs'|'en') => {
  const code=checkpoint??''
+ if(code==='target_changed_before_completion')return language==='cs'?'Cíl se změnil před konečným potvrzením dosažení. Výslovně pokračujte ve stejné úloze k jejímu aktuálnímu cíli.':'The target changed before completion was committed. Explicitly continue the same task toward its current target.'
+ if(code==='target_boundary_review_required')return language==='cs'?'Cílová hranice se změnila. Znovu prověřte kanonický plán a výslovně změňte cíl, pak pokračujte ve stejné úloze.':'The target boundary changed. Review the canonical schedule and explicitly change the target, then continue the same task.'
  if(code.includes('save_required'))return language==='cs'?'Proveďte výslovný Save v této větvi. Poté pokračujte ve stejné serverové úloze.':'Explicitly Save this Branch, then continue this same server task.'
  if(code.includes('review_required'))return language==='cs'?'Zkontrolujte a výslovně schvalte Season Transition nebo závěrečné uzavření Runu. Poté pokračujte ve stejné úloze.':'Review and explicitly approve the Season Transition or final Run closure, then continue the same task.'
  if(code==='entry_process_required')return language==='cs'?'Vyřešte aktuální Entry rozhodnutí v této větvi; úloha je za vás nepotvrdí.':'Resolve the current Entry decision in this Branch; the task will not approve it for you.'
@@ -65,6 +68,7 @@ function TaskCard({task}:{task:ServerTask}){
   <strong>{task.run_name} / {task.branch_name}</strong> · <span>{t[task.state as keyof typeof t]??task.state}</span>
   <p><code>{task.task_id}</code> · {t.original}: <code>{task.parent_command_id}</code></p>
   <p>{t.health}: {t[task.heartbeat_health]}{task.heartbeat_unix>0 && <> · {new Date(task.heartbeat_unix*1000).toLocaleString(language)}</>}</p>
+  {task.effective_boundary_target && <p><BoundaryDescription target={task.effective_boundary_target}/></p>}
   {task.current_week && <p>S{task.current_week.season_index} W{task.current_week.week}</p>}
   {task.checkpoint && <p>{t.checkpoint}: <code>{task.checkpoint}</code></p>}
   {task.error && <p role="alert">{task.error}</p>}

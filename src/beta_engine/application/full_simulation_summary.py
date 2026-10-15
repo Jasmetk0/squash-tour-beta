@@ -92,8 +92,11 @@ def capture_terminal_summary(session, receipt, frozen, position):
         if receipt.status != "stopped" or event.get("action") == "stop"), None)
     if terminal_event is None:
         raise ValueError("Full Simulation terminal audit is missing")
+    from beta_engine.application.full_simulation_boundary_targets import effective_boundary, validate_trigger
+    boundary = effective_boundary(frozen)
+    trigger = validate_trigger(frozen, frozen.get("target_trigger_evidence")) if boundary and receipt.status == "target_reached" else None
     summary = {
-        "schema_version": "full_simulation_terminal_summary.v1",
+        "schema_version": "full_simulation_terminal_summary.v2" if boundary else "full_simulation_terminal_summary.v1",
         "run_id": run_id, "branch_id": branch_id, "command_id": receipt.command_id,
         "receipt_request_fingerprint": receipt.request_fingerprint,
         "status": receipt.status,
@@ -102,7 +105,7 @@ def capture_terminal_summary(session, receipt, frozen, position):
         "original_final_week": frozen["final_week"],
         "effective_target_week": frozen.get("effective_target_week", frozen["final_week"]),
         "target_revision": frozen.get("target_revision", 0),
-        "reason": "operator_stop" if receipt.status == "stopped" else "week_target_reached",
+        "reason": "operator_stop" if receipt.status == "stopped" else ("boundary_target_reached" if boundary else "week_target_reached"),
         "target_reached": receipt.status == "target_reached",
         "terminal_control_command_id": terminal_event["command_id"],
         "terminal_operator_label": terminal_event["operator_label"],
@@ -114,6 +117,9 @@ def capture_terminal_summary(session, receipt, frozen, position):
         "position": position.model_dump(mode="json"),
         "unavailable_sections": ["ranking_changes", "watched_events", "notifications"],
     }
+    if boundary:
+        summary["effective_boundary_target"] = boundary.model_dump(mode="json")
+        summary["target_trigger_evidence"] = trigger
     return {**summary, "summary_fingerprint": fingerprint(summary)}
 
 
@@ -124,7 +130,7 @@ def stored_terminal_summary(receipt, frozen):
     if not isinstance(summary, dict):
         raise ValueError("Full Simulation terminal summary is corrupt")
     content = {k: v for k, v in summary.items() if k != "summary_fingerprint"}
-    if (summary.get("schema_version") != "full_simulation_terminal_summary.v1"
+    if (summary.get("schema_version") not in ("full_simulation_terminal_summary.v1", "full_simulation_terminal_summary.v2")
             or summary.get("summary_fingerprint") != fingerprint(content)
             or summary.get("run_id") != receipt.run_id
             or summary.get("branch_id") != receipt.branch_id
@@ -143,6 +149,18 @@ def stored_terminal_summary(receipt, frozen):
     ordinal = lambda v: v["season_index"] * 61 + v["week"] - 1
     position = AuthoritativeSimulationPosition.model_validate_json(json.dumps(summary.get("position")))
     reached = receipt.status == "target_reached"
+    from beta_engine.application.full_simulation_boundary_targets import effective_boundary, validate_trigger
+    boundary = effective_boundary(frozen)
+    if boundary:
+        if (summary.get("schema_version") != "full_simulation_terminal_summary.v2"
+                or summary.get("effective_boundary_target") != boundary.model_dump(mode="json")):
+            raise ValueError("Terminal boundary selector is corrupt")
+        if reached:
+            trigger = validate_trigger(frozen, summary.get("target_trigger_evidence"))
+            if trigger != frozen.get("target_trigger_evidence") or end != boundary.week.model_dump(mode="json"):
+                raise ValueError("Terminal boundary evidence is corrupt")
+    elif summary.get("schema_version") != "full_simulation_terminal_summary.v1":
+        raise ValueError("Unexpected terminal boundary schema")
     events = frozen.get("target_events", []) if reached else frozen.get("control_events", [])
     event = next((value for value in reversed(events) if reached or value.get("action") == "stop"), {})
     if (position.run_id != receipt.run_id or position.branch_id != receipt.branch_id
@@ -152,11 +170,11 @@ def stored_terminal_summary(receipt, frozen):
             or summary.get("target_revision") != frozen.get("target_revision", 0)
             or type(summary.get("target_reached")) is not bool
             or summary["target_reached"] != reached
-            or summary.get("reason") != ("week_target_reached" if reached else "operator_stop")
+            or summary.get("reason") != (("boundary_target_reached" if boundary else "week_target_reached") if reached else "operator_stop")
             or summary.get("terminal_control_command_id") != event.get("command_id")
             or summary.get("terminal_operator_label") != event.get("operator_label")
             or summary.get("terminal_audit_reason") != event.get("audit_reason")
-            or (reached and (end != frozen.get("target_reached_week") or ordinal(end) < ordinal(target)))
+            or (reached and (end != frozen.get("target_reached_week") or (not boundary and ordinal(end) < ordinal(target))))
             or type(summary.get("persisted_child_command_count")) is not int
             or summary["persisted_child_command_count"] < 0):
         raise ValueError("Full Simulation terminal summary chronology is corrupt")

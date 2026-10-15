@@ -1,3 +1,13 @@
+# Precise Full Simulation boundaries — integration candidate, 15 October 2026
+
+Verified starting `buuk` `0691123aa421395732a5d6fb86eb7a35ba1df4f4` (merged #1471), no open PRs. **Candidate, not merged / not a release:** issue #1472 adds exact current-week global-slot targets, BEFORE canonical/frozen hybrid final and AFTER a validated Run/Branch-owned edition source. Existing server tasks, SQLite writer fencing and original command identity are reused. Versioned review/audit, exact old-request replay, separate effective target kind, CS/EN Admin/Task Center and immutable v2 terminal evidence are integrated. No implicit Save, guessed future scheduling, invented final or bypassed operator approval.
+
+[Contract, supported/rejected cases and test evidence](docs/FULL_SIMULATION_EVENT_SLOT_TARGETS_V81.md). Production TCP/SQLite/MatchEngine tests exercise committed-prefix equivalence, real two-event transit chronology, retarget/replay, recovery and terminal-commit races. Native Chromium demonstrates actual canonical final/source, closed page, genuine process death/new-process explicit recovery and frozen summaries. Final-head CI remains required before handoff. Earlier candidate headings below are historical snapshots; #1469 and #1471 are merged.
+
+**Next:** safe versioned extension of a frozen Next Week after hybrid topology materializes, then evidence-based tracking/stop rules; complete pre-alpha release gates remain outstanding.
+
+---
+
 # Server-owned Full Simulation tasks — integration candidate, 15 October 2026
 
 Verified baseline `buuk` `0f4d89dd8635f41f0d9b0cee2c831211a34a7fae`, after merged #1469. **Candidate, not merged / not a release:** issue #1470 adds durable SQLite task identity, exact request replay, an application-lifecycle dispatcher above the existing driver, global lease reservation at Start and explicit crash recovery. Run Admin and Global Task Center expose CS/EN Start, committed progress/checkpoints, heartbeat evidence, exact scope reconnect and audited continuation. Save, Entry and Season/Final Transition approvals remain manual; startup and GET never restart tasks. The original reviewed command, sporting RNG/child identities and #1469 summaries remain authoritative.

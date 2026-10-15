@@ -20,6 +20,7 @@ class FullSimulationExecutionGuard:
     request_fingerprint: str
     execution_lease_token: str | None = None
     before_transaction_check: Callable[[], None] | None = None
+    after_writer_lock_check: Callable[[object, dict], None] | None = None
 
 
 class FullSimulationPauseRequested(Exception):
@@ -31,7 +32,7 @@ class FullSimulationStopped(Exception):
 
 
 class FullSimulationTargetReached(Exception):
-    """The effective start-of-week target was reached at a writer boundary."""
+    """The effective week, slot or edition target reached a safe writer boundary."""
 
 
 ACTIVE_FULL_SIMULATION_GUARD: ContextVar[
@@ -204,6 +205,8 @@ def _fence_full_simulation_after_sqlite_writer_lock(
             raise FullSimulationPauseRequested(
                 "Full Simulation pause requested after writer lock acquisition"
             )
+        if guard.after_writer_lock_check is not None:
+            guard.after_writer_lock_check(connection, frozen)
         # Query AFTER BEGIN IMMEDIATE: target and world Position cannot move
         # between this check and the following transaction's sporting writes.
         if frozen.get("target_revision", 0) > 0:

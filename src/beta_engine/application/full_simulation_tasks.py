@@ -221,6 +221,12 @@ def _parent(session, row, data):
         raise ValueError("Task parent status corrupt")
     if parent.status != "complete" and payload.get("resume_command") != data["command"]:
         raise ValueError("Task parent immutable command mismatch")
+    from beta_engine.application.full_simulation_boundary_targets import effective_boundary
+    effective_boundary(payload)
+    if payload.get("schema_version") == "authoritative_full_simulation_operation.v1" and any(
+            e.get("boundary_target") is not None for e in payload.get("target_events", [])):
+        from beta_engine.application.authoritative_run_simulation_driver import AuthoritativeRunSimulationDriver
+        AuthoritativeRunSimulationDriver._validate_full_target_audit(parent, payload)
     return parent, payload
 
 
@@ -300,6 +306,7 @@ def _project(session, row, observer_instance=None):
         "run_name": run.display_name,
         "branch_name": branch.display_name,
         "current_week": current_week,
+        "effective_boundary_target": frozen.get("effective_boundary_target"),
         "revision": data["revision"],
         "desired_state": data["state"],
         "state": state,

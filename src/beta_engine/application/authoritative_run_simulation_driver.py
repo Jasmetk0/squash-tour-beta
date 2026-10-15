@@ -5781,7 +5781,31 @@ class AuthoritativeRunSimulationDriver:
                     child = AuthoritativeWeekCommand.model_validate_json(
                         json.dumps(stored["command"])
                     )
-                    child_result = self.simulate_next_week(child)
+                    try:
+                        child_result = self.simulate_next_week(child)
+                    except ValueError as exc:
+                        if str(exc) != "Week Schedule changed during Next Week":
+                            raise
+                        with self.factory() as session:
+                            current = self._position(
+                                session,
+                                command.run_id,
+                                command.branch_id,
+                                allow_missing_schedule=True,
+                            )
+                        return self._season_progress_payload(
+                            command=command,
+                            frozen=frozen,
+                            position=current,
+                            checkpoint="week_schedule_review_required",
+                            blockers=("week_schedule_review_required",),
+                            detail=(
+                                "The Next Week child has an older frozen schedule. "
+                                "Committed sport remains intact, but this original "
+                                "review cannot silently include new knockout slots. "
+                                "Stop and review a new operation before continuing."
+                            ),
+                        )
                     if (
                         child_result.get("schema_version")
                         == "authoritative_week_progress.v1"
@@ -7809,7 +7833,32 @@ class AuthoritativeRunSimulationDriver:
                     child = AuthoritativeWeekCommand.model_validate_json(
                         json.dumps(stored["command"])
                     )
-                    child_result = self.simulate_next_week(child)
+                    try:
+                        child_result = self.simulate_next_week(child)
+                    except ValueError as exc:
+                        if str(exc) != "Week Schedule changed during Next Week":
+                            raise
+                        with self.factory() as session:
+                            current = self._position(
+                                session,
+                                command.run_id,
+                                command.branch_id,
+                                allow_missing_schedule=True,
+                            )
+                        return self._full_progress_payload(
+                            command=command,
+                            frozen=frozen,
+                            checkpoint="week_schedule_review_required",
+                            blockers=("week_schedule_review_required",),
+                            detail=(
+                                "The final-season Next Week child has an older "
+                                "frozen schedule. Committed sport remains intact, "
+                                "but this original review cannot silently include "
+                                "new knockout slots. Stop and review a new "
+                                "operation before continuing."
+                            ),
+                            position=current,
+                        )
                     if (
                         child_result.get("schema_version")
                         == "authoritative_week_progress.v1"

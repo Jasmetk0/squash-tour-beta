@@ -56,4 +56,18 @@ describe('server task UI (mock HTTP)',()=>{
   api.getServerTasks.mockRejectedValue(Error('offline'));open('en',<FullSimulationServerTasks/>)
   expect(await screen.findByRole('alert')).toHaveTextContent('offline');expect(screen.queryByRole('link')).toBeNull()
  })
+ it.each(['cs','en'] as const)('identifies changed reviewed weeks without offering unsafe task resume (%s)',async language=>{
+  const stale={...taskExample(),state:'awaiting_operator',checkpoint:'week_schedule_review_required',
+    needs_operator_action:true,error:null}
+  api.getServerTasks.mockResolvedValue([stale])
+  open(language,<FullSimulationServerTasks runId="run" branchId="branch"/>)
+  expect(await screen.findByRole('alert')).toHaveTextContent(language==='cs'
+    ? 'Původní příkaz nelze automaticky rozšířit'
+    : 'The original command cannot silently absorb')
+  expect(screen.queryByLabelText(language==='cs'?'Operátor úlohy':'Task operator')).toBeNull()
+  expect(screen.queryByRole('button',{name:language==='cs'?'Výslovně pokračovat v serverové úloze':'Explicitly resume server task'})).toBeNull()
+  expect(api.continueServerTask).not.toHaveBeenCalled()
+  expect(screen.getByRole('link').getAttribute('href')).toContain('branch=branch')
+ })
+
 })

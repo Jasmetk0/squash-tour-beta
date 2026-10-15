@@ -394,7 +394,10 @@ def prove_next_real_hybrid_week_from_restarted_saved_run(
     assert acknowledgement["parent_command_id"]==command["command_id"]
     assert acknowledgement["task_id"]!=frozen["task_id"]
     assert request("POST",simulation_scope+"/full-simulation/tasks",start,status=202)==acknowledgement
-    deadline=time.monotonic()+150
+    # The genuine long-running Full Simulation worker competes with multiple
+    # Chromium CI jobs. Do not misclassify a still-active canonical worker as
+    # broken solely because the shared runner ran slowly for 150 seconds.
+    deadline=time.monotonic()+420
     task=None
     while time.monotonic()<deadline:
         task=_task(request,simulation_scope,acknowledgement["task_id"])
@@ -402,7 +405,7 @@ def prove_next_real_hybrid_week_from_restarted_saved_run(
             break
         time.sleep(.15)
     else:
-        raise AssertionError("Second Full Simulation worker did not reach a canonical checkpoint")
+        raise AssertionError("Second Full Simulation worker did not reach a canonical checkpoint: "+str(task))
     assert task["state"] in ("awaiting_operator","target_reached","complete"),task
     assert task["parent_command_id"]==command["command_id"]
     assert task["original_command"]["command_id"]==command["command_id"]

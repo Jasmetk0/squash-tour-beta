@@ -94,3 +94,70 @@ def test_handoff_rejects_identity_drift_or_unproven_match_history(
     with pytest.raises(AssertionError):
         handoff(request=request, simulation_scope="/scope", frozen=frozen, artifacts=tmp_path)
     assert not (tmp_path / "hybrid-task-after-real-knockout.json").exists()
+
+
+@pytest.fixture
+def resume():
+    """Load the actual browser contract without requiring Playwright to import."""
+    path = Path(__file__).resolve().parents[2] / "scripts" / "real_hybrid_full_simulation_task_browser_checks.py"
+    spec = importlib.util.spec_from_file_location("hybrid_task_resume_browser", path)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module.resume_real_hybrid_task_at_explicit_week_two_target
+
+
+@pytest.mark.pr_critical
+@pytest.mark.parametrize("wrong", [
+    "task_state",
+    "task_checkpoint",
+    "task_id",
+    "parent_command_id",
+    "task_revision",
+    "week_not_published",
+    "missing_match",
+    "duplicate_match",
+])
+def test_original_hybrid_task_resume_never_approves_invalid_external_state(
+    tmp_path, resume, wrong
+):
+    """Real workflow must reject mismatch *before* POST target or UI interaction."""
+    frozen, task, matches = data()
+    position = {"current_week": {"season_index": 0, "week": 2}}
+    if wrong == "task_state":
+        task["state"] = "failed"
+    elif wrong == "task_checkpoint":
+        task["checkpoint"] = "week_preparation_required"
+    elif wrong == "task_id":
+        task["task_id"] = "another-task"
+    elif wrong == "parent_command_id":
+        task["parent_command_id"] = "another-full-parent"
+    elif wrong == "task_revision":
+        task["revision"] += 1
+    elif wrong == "week_not_published":
+        position["current_week"] = {"season_index": 0, "week": 1}
+    elif wrong == "missing_match":
+        matches.pop()
+    elif wrong == "duplicate_match":
+        matches[2]["match_id"] = matches[0]["match_id"]
+
+    operations = []
+
+    def request(method, path, *args, **kwargs):
+        operations.append((method, path))
+        assert method == "GET", "No mutation before fully verified real Week-2 sporting state"
+        if "/full-simulation/tasks/" in path:
+            return {"tasks": [task]}
+        if path.endswith("/position"):
+            return position
+        if path.endswith("/match-replays?limit=50"):
+            return {"matches": matches}
+        raise AssertionError(f"Unexpected read before guard: {path}")
+
+    with pytest.raises(AssertionError):
+        resume(
+            request=request, page=None, run_url="http://host/admin/runs/run",
+            simulation_scope="/scope", frozen=frozen, artifacts=tmp_path,
+        )
+    assert operations and all(method == "GET" for method, _ in operations)
+    assert not (tmp_path / "real-hybrid-original-task-terminal.json").exists()

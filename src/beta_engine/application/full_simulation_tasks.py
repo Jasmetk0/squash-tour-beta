@@ -14,7 +14,7 @@ from collections import deque
 from threading import Event, Lock, Thread
 from uuid import uuid4
 
-from sqlalchemy import select, text
+from sqlalchemy import func, select, text
 
 from beta_engine.application.authoritative_run_simulation_driver import (
     AuthoritativeFullSimulationCommand,
@@ -31,6 +31,8 @@ from beta_engine.infrastructure.db.models import (
     AuthoritativeSimulationCommandModel,
     FullSimulationExecutionLeaseModel,
     FullSimulationTaskModel,
+    SimulationEventGroupModel,
+    SimulationSlotModel,
     RunBranchModel,
     RunContainerModel,
 )
@@ -240,6 +242,71 @@ def _owned(lease, row, data, now):
     )
 
 
+def _progress_evidence(session, row, parent, frozen, command, branch_ordinal):
+    """Read-only current Branch receipts or immutable historical task position.
+
+    The live counts cover *all* persisted Branch receipts for the current week,
+    NOT work exclusively attributable to this Full Simulation task.
+    """
+    start = command.expected_start_week.ordinal
+    kind = "live_branch" if branch_ordinal is not None else "unavailable"
+    ordinal = branch_ordinal
+    if parent.status in ("stopped", "target_reached"):
+        from beta_engine.application.full_simulation_summary import stored_terminal_summary
+
+        summary = stored_terminal_summary(parent, frozen)
+        if summary is None:
+            kind, ordinal = "unavailable", None
+        else:
+            kind = "terminal_frozen"
+            end = summary["end_week"]
+            ordinal = end["season_index"] * 61 + end["week"] - 1
+    elif parent.status == "complete":
+        if (frozen.get("schema_version") != "authoritative_full_simulation_result.v1"
+                or frozen.get("run_id") != row.run_id
+                or frozen.get("branch_id") != row.branch_id
+                or frozen.get("start_week") != command.expected_start_week.model_dump(mode="json")
+                or frozen.get("final_week") != {"season_index": 49, "week": 61}):
+            raise ValueError("Complete Full Simulation terminal position is corrupt")
+        kind, ordinal = "terminal_frozen", 50 * 61 - 1
+    elif parent.status == "abandoned":
+        kind, ordinal = "unavailable", None
+
+    if ordinal is not None and not start <= ordinal < 50 * 61:
+        raise ValueError("Task Position precedes reviewed start or exceeds final Run week")
+    week = (
+        {"season_index": ordinal // 61, "week": ordinal % 61 + 1}
+        if ordinal is not None else None
+    )
+    slots = groups = None
+    if kind == "live_branch" and ordinal is not None:
+        slots = session.scalar(
+            select(func.count()).select_from(SimulationSlotModel).where(
+                SimulationSlotModel.run_id == row.run_id,
+                SimulationSlotModel.branch_id == row.branch_id,
+                SimulationSlotModel.week_ordinal == ordinal,
+                SimulationSlotModel.status == "complete",
+                SimulationSlotModel.terminal_checkpoint_json.is_not(None),
+            )
+        )
+        groups = session.scalar(
+            select(func.count()).select_from(SimulationEventGroupModel).where(
+                SimulationEventGroupModel.run_id == row.run_id,
+                SimulationEventGroupModel.branch_id == row.branch_id,
+                SimulationEventGroupModel.week_ordinal == ordinal,
+            )
+        )
+    return {
+        "schema_version": "full_simulation_task_progress_evidence.v1",
+        "kind": kind,
+        "week": week,
+        "weeks_advanced_since_start": ordinal - start if ordinal is not None else None,
+        "completed_slot_receipts_this_week": slots,
+        "committed_group_receipts_this_week": groups,
+        "receipt_scope": "branch_current_week" if kind == "live_branch" else None,
+    }
+
+
 def _project(session, row, observer_instance=None):
     data = _read(row)
     parent, frozen = _parent(session, row, data)
@@ -292,11 +359,9 @@ def _project(session, row, observer_instance=None):
             )
             .scalar()
         )
-    current_week = (
-        {"season_index": ordinal // 61, "week": ordinal % 61 + 1}
-        if ordinal is not None
-        else None
-    )
+    command = AuthoritativeFullSimulationCommand.model_validate(data["command"])
+    evidence = _progress_evidence(session, row, parent, frozen, command, ordinal)
+    current_week = evidence["week"]
     return {
         "schema_version": "full_simulation_task_view.v1",
         "task_id": row.task_id,
@@ -306,6 +371,7 @@ def _project(session, row, observer_instance=None):
         "run_name": run.display_name,
         "branch_name": branch.display_name,
         "current_week": current_week,
+        "progress_evidence": evidence,
         "effective_boundary_target": frozen.get("effective_boundary_target"),
         "revision": data["revision"],
         "desired_state": data["state"],

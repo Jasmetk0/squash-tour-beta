@@ -69,15 +69,20 @@ def start_real_group_handoff_task(
     assert request("GET", simulation_scope + "/position")["current_slot_kind"] == "match"
     # The real Admin task UI must explain the outstanding group authority,
     # never suggest it has auto-approved group or knockout sporting results.
-    page.goto(run_url + "/simulate?branch=" + quote(branch_id, safe=""))
-    page.get_by_role("combobox",name="Language / Jazyk").select_option("en")
-    # Task Center is the canonical cross-Run UI, regardless of current page.
-    page.goto(run_url.rsplit("/admin/runs/", 1)[0] + "/admin/operations")
-    task_region = page.get_by_role("region", name="Server simulation tasks")
-    expect(task_region).to_contain_text(accepted["task_id"],timeout=30000)
-    expect(task_region).to_contain_text("unresolved group phase")
-    expect(task_region).not_to_contain_text("Failed; inspect before recovery")
-    page.screenshot(path=str(artifacts / "real-hybrid-task-awaiting-group-review.png"),full_page=True)
+    # Keep Task Center's 2-second polling in an *independent tab*. Otherwise
+    # the original browser-smoke page carries polling requests into the Match
+    # Day navigation and its network-idle tracking can never settle.
+    task_page = page.context.new_page()
+    try:
+        task_page.goto(run_url.rsplit("/admin/runs/", 1)[0] + "/admin/operations")
+        task_page.get_by_role("combobox",name="Language / Jazyk").select_option("en")
+        task_region = task_page.get_by_role("region", name="Server simulation tasks")
+        expect(task_region).to_contain_text(accepted["task_id"],timeout=30000)
+        expect(task_region).to_contain_text("unresolved group phase")
+        expect(task_region).not_to_contain_text("Failed; inspect before recovery")
+        task_page.screenshot(path=str(artifacts / "real-hybrid-task-awaiting-group-review.png"),full_page=True)
+    finally:
+        task_page.close()
     frozen = {
         "task_id": accepted["task_id"],
         "parent_command_id": command["command_id"],

@@ -1,10 +1,13 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Iterator
+from dataclasses import replace
 
 import pytest
 from sqlalchemy import event, text
 
+from beta_engine.domain.calendar.run_calendar import RunCalendar
+from beta_engine.domain.run_revisions import initial_saved_revision_payload
 from beta_engine.application.run_container_creation_service import (
     RunContainerCreationService,
 )
@@ -48,6 +51,7 @@ def _id_factory(*values: str) -> Callable[[str], str]:
     return lambda _kind: next(identities)
 
 
+@pytest.mark.pr_critical
 @pytest.mark.smoke
 def test_empty_run_is_a_durable_product_root_with_one_viewer_branch(tmp_path) -> None:
     database_url = f"sqlite:///{tmp_path / 'empty-run.db'}"
@@ -74,6 +78,8 @@ def test_empty_run_is_a_durable_product_root_with_one_viewer_branch(tmp_path) ->
     assert created.timeline_start_season == RUN_TIMELINE_START_SEASON == 2000
     assert created.timeline_end_season == RUN_TIMELINE_END_SEASON == 2049
     assert created.viewer_branch_id == "branch-stable"
+    expected_calendar = RunCalendar.fax_default().to_metadata()
+    assert created.metadata == {"run_calendar": expected_calendar}
     assert created.mapped_simulation_run_count == 0
     assert repository.list_simulation_runs() == []
 
@@ -116,6 +122,7 @@ def test_empty_run_is_a_durable_product_root_with_one_viewer_branch(tmp_path) ->
             "timeline_start_season": 2000,
             "timeline_end_season": 2049,
             "viewer_branch_id": "branch-stable",
+            "run_calendar": expected_calendar,
         },
         "branch": {
             "branch_id": "branch-stable",
@@ -530,3 +537,52 @@ def test_bootstrap_preserves_legacy_duplicate_branch_names(tmp_path) -> None:
         }
     assert "forked_from_saved_revision_id" in branch_columns
     assert "uq_run_branches_run_display_name" not in branch_indexes
+
+
+@pytest.mark.pr_critical
+def test_persisted_calendar_is_locked_into_the_first_revision_and_legacy_payload_remains_unchanged(
+    tmp_path,
+) -> None:
+    repo = _repository(f"sqlite:///{tmp_path / 'versioned-calendar.db'}")
+    created = RunContainerCreationService(
+        repository=repo,
+        id_factory=_id_factory("calendar-run", "calendar-branch", "calendar-revision", "calendar-draft"),
+    ).create_empty_run(display_name="Calendar Run")
+    state = repo.get_branch_revision_state(branch_id="calendar-branch")
+    calendar_payload = RunCalendar.fax_default().to_metadata()
+    assert created.metadata["run_calendar"] == calendar_payload
+    assert state.saved_revision.payload["run"]["run_calendar"] == calendar_payload
+    assert repo.verify_branch_saved_revision_hash(revision_id="calendar-revision")
+
+    # Historical absent-calendar envelopes stay exactly as they were before v82.
+    old_payload = initial_saved_revision_payload(
+        run_id="legacy-run", display_name="Legacy", run_status="working",
+        timeline_start_season=2000, timeline_end_season=2049,
+        branch_id="legacy-branch", branch_display_name="Timeline 1",
+        branch_status="active",
+    )
+    assert "run_calendar" not in old_payload["run"]
+    assert old_payload["run"] == {
+        "run_id": "legacy-run", "display_name": "Legacy", "status": "working",
+        "timeline_start_season": 2000, "timeline_end_season": 2049,
+        "viewer_branch_id": "legacy-branch",
+    }
+
+    # An explicit broken clock is not interpreted as a legacy absent field.
+    branch = repo.get_run_branch(branch_id="calendar-branch")
+    draft = repo.get_branch_working_draft(branch_id="calendar-branch")
+    with pytest.raises(ValueError, match="metadata"):
+        repo.create_empty_run_container_atomically(
+            run=replace(created, metadata={"run_calendar": None}),
+            branch=branch, revision=state.saved_revision, working_draft=draft,
+        )
+    assert repo.get_run_container(run_id="calendar-run") == created
+    assert repo.verify_branch_saved_revision_hash(revision_id="calendar-revision")
+
+    # A new explicit calendar must match the legacy season-column horizon.
+    mismatched = RunCalendar.fax_default(start_year=2020).to_metadata()
+    with pytest.raises(ValueError, match="horizon"):
+        repo.create_empty_run_container_atomically(
+            run=replace(created, metadata={"run_calendar": mismatched}),
+            branch=branch, revision=state.saved_revision, working_draft=draft,
+        )

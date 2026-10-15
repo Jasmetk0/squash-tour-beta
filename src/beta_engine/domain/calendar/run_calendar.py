@@ -162,6 +162,46 @@ class RunCalendar:
             return None
         return RunCalendarPosition(index, week_zero + 1, calendar_year, year_week)
 
+    def ordinal(self, season_index: int, season_week: int) -> int:
+        """Zero-based elapsed Run weeks; does not use legacy RankingWeek.ordinal.
+
+        The current 61-week ranking ordinal is a historical implementation
+        detail. All new target arithmetic is explicitly scoped to this W.
+        """
+
+        self.season_to_calendar(season_index, season_week)
+        return season_index * self.weeks_per_year + season_week - 1
+
+    def position_at_ordinal(self, ordinal: int) -> RunCalendarPosition:
+        """Invert a Run week ordinal without wrapping or clamping its horizon."""
+
+        if (
+            type(ordinal) is not int
+            or not 0 <= ordinal < self.season_count * self.weeks_per_year
+        ):
+            raise ValueError("week ordinal is outside the Run horizon")
+        index, week_zero = divmod(ordinal, self.weeks_per_year)
+        return self.season_to_calendar(index, week_zero + 1)
+
+    def advance_weeks(
+        self, season_index: int, season_week: int, count: int
+    ) -> RunCalendarPosition:
+        """Return an in-horizon target; negative/overflow movement is invalid."""
+
+        if type(count) is not int or count < 0:
+            raise ValueError("advance_weeks count must be a non-negative integer")
+        return self.position_at_ordinal(self.ordinal(season_index, season_week) + count)
+
+    def remaining_weeks_including_current(
+        self, season_index: int, season_week: int
+    ) -> int:
+        """Number of distinct inclusive Run weeks left from this week."""
+
+        return (
+            self.season_count * self.weeks_per_year
+            - self.ordinal(season_index, season_week)
+        )
+
     def extend_to(self, season_count: int) -> RunCalendar:
         """Pure planning only; persistence/Completed continuation belongs elsewhere."""
 

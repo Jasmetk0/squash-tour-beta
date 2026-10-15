@@ -1,3 +1,9 @@
+# Full Simulation native worker real hybrid Week-1→2 acceptance (PR candidate 2026-10-15)
+
+Following merged #1480, new independent `--hybrid-worker-transition` Chromium/SQLite run creates an original pending Full Simulation task before MatchEngine group matches, pauses for actual Admin group standings/knockout approvals, then human freezes actual hybrid ranking authority only. After explicit idempotent week-2 target and native Task Center resumption, the **worker** (not Run Admin UI) must advance canonical world/Ranking Week 2, then *explicit Admin Save* publishes the identical Ranking fingerprint, exact 3 real match receipts and frozen historical Week 1. A separate human Saved Revision remains manual. All final-head checks required green. No mock sport or bypass.
+
+---
+
 # Real Full Simulation task resumes at verified Week 2 (PR candidate, 15 October 2026)
 
 Based on merged #1479. Browser creates an actual pending task before group matches, humans play all real hybrid MatchEngine matches, freeze ranking and manually publish Week 2, then operator changes that original task's target to already reached Week 2 and explicitly resumes it via native Task Center. Asserts terminal target_reached, deterministic target command replay, same parent/task, unchanged 3 sporting replays, unchanged Saved head/Draft revision and identical published Ranking, SQLite restart. See [contract](docs/FULL_SIMULATION_HYBRID_TASK_RESUME_V81.md). **Not** proof of task itself executing Week Transition, and not 50 seasons.

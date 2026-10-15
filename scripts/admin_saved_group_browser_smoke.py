@@ -42,6 +42,7 @@ def acceptance(
     hybrid_preparation: bool = False,
     hybrid_progression: bool = False,
     hybrid_multiround: bool = False,
+    hybrid_worker_transition: bool = False,
 ) -> None:
     if (root / "browser.sqlite").exists():
         raise ValueError("Saved group browser acceptance requires a fresh SQLite database")
@@ -374,8 +375,8 @@ def acceptance(
                 hybrid_ranking = None
                 hybrid_task_handoff = None
                 hybrid_task_completion = None
-                if hybrid_progression or hybrid_multiround:
-                    if hybrid_progression:
+                if hybrid_progression or hybrid_multiround or hybrid_worker_transition:
+                    if hybrid_progression or hybrid_worker_transition:
                         from real_hybrid_full_simulation_task_browser_checks import (
                             start_real_group_handoff_task,
                             assert_handoff_task_still_pending,
@@ -410,12 +411,28 @@ def acceptance(
                     assert saved(hybrid_result["completed_saved_revision"]) == (
                         hybrid_result["archived_edition"]
                     )
+                    if hybrid_worker_transition:
+                        from real_hybrid_full_simulation_task_browser_checks import (
+                            resume_original_full_simulation_to_advance_real_hybrid_week,
+                        )
+
+                        def worker_transition(**ranking_evidence):
+                            nonlocal hybrid_task_completion
+                            hybrid_task_completion = resume_original_full_simulation_to_advance_real_hybrid_week(
+                                request=request, page=page, run_url=run_url,
+                                simulation_scope=simulation_scope,
+                                frozen=hybrid_task_handoff, artifacts=artifacts,
+                                **ranking_evidence,
+                            )
+                    else:
+                        worker_transition = None
                     hybrid_ranking = publish_first_hybrid_official_week(
                         request=request,page=page,run_id=run_id,branch_id=branch_id,
                         run_url=run_url,root_scope=root_scope,event_id=EVENT_ID,
                         hybrid=hybrid_result,artifacts=artifacts,
+                        on_before_week_transition=worker_transition,
                     )
-                    if hybrid_task_handoff is not None:
+                    if hybrid_task_handoff is not None and not hybrid_worker_transition:
                         from real_hybrid_full_simulation_task_browser_checks import (
                             resume_real_hybrid_task_at_explicit_week_two_target,
                         )
@@ -521,6 +538,19 @@ def acceptance(
                     assert request("GET", viewer + "/history/0") == hybrid_ranking["historical_week_1"]
                     assert request("GET", viewer + "/history/1") == hybrid_ranking["official_week_2"]
                     assert request("GET", root_scope + "/authoritative-simulation/position")["current_week"] == {"season_index": 0, "week": 2}
+                    if hybrid_worker_transition:
+                        # Actual process death/restart must preserve the exact
+                        # terminal parent/task, not enqueue it for duplicate work.
+                        from real_hybrid_full_simulation_task_browser_checks import _task
+                        assert hybrid_task_handoff is not None and hybrid_task_completion is not None
+                        terminal = _task(request, simulation_scope, hybrid_task_handoff["task_id"])
+                        assert terminal["state"] == "target_reached", terminal
+                        assert terminal["parent_command_id"] == hybrid_task_handoff["parent_command_id"]
+                        assert terminal["original_command"]["command_id"] == hybrid_task_handoff["parent_command_id"]
+                        assert terminal["current_week"] == {"season_index": 0, "week": 2}
+                        assert terminal["needs_operator_action"] is False
+                        assert terminal["error"] is None
+                        assert request("GET", simulation_scope + "/position")["current_week"] == {"season_index": 0, "week": 2}
                     after_branches = request("GET", "/run-branches?run_id=" + quote(run_id, safe=""))["run_branches"]
                     assert next(item for item in after_branches if item["branch_id"] == branch_id)["saved_head_revision_id"] == hybrid_ranking["saved_week_2_revision"]
                     assert saved(hybrid_result["completed_saved_revision"]) == (
@@ -665,6 +695,8 @@ if __name__ == "__main__":
                         help="Serve ONLY: install exact-scope genuine MatchEngine test inputs")
     parser.add_argument("--hybrid-progression", action="store_true",
                         help="Play two real hybrid group matches and knockout final, freeze authorities, Save and restart")
+    parser.add_argument("--hybrid-worker-transition", action="store_true",
+                        help="Real group-to-knockout Full Simulation worker owns canonical Week Transition")
     parser.add_argument("--hybrid-multiround", action="store_true",
                         help="Two actual group matches, two semifinal MatchEngine games, winner-fed final, ranked Save/restart")
     parser.add_argument("--hybrid-preparation", action="store_true",
@@ -674,10 +706,12 @@ if __name__ == "__main__":
     parser.add_argument("--reconstruct-one-group-match", action="store_true",
                         help="Review/commit one natural MatchEngine candidate as a real canonical group Slot before Match Day 3")
     args = parser.parse_args()
-    if (args.hybrid_preparation or args.hybrid_progression or args.hybrid_multiround) and (
+    if (args.hybrid_preparation or args.hybrid_progression or args.hybrid_multiround or args.hybrid_worker_transition) and (
         args.complete_groups or args.reconstruct_one_group_match or args.cyclic_tie_browser
     ):
         parser.error("--hybrid-preparation is a frozen preparation and Save test, not completed hybrid closure")
+    if args.hybrid_worker_transition and (args.hybrid_progression or args.hybrid_multiround):
+        parser.error("--hybrid-worker-transition runs separately from the existing hybrid acceptance")
     if args.hybrid_multiround and (args.hybrid_progression or args.hybrid_preparation):
         parser.error("--hybrid-multiround is a standalone fully verified multi-round scenario")
     if args.cyclic_tie_browser and (args.complete_groups or args.reconstruct_one_group_match):
@@ -698,7 +732,8 @@ if __name__ == "__main__":
             complete_groups=args.complete_groups,
             reconstruct_one_group_match=args.reconstruct_one_group_match,
             cyclic_tie_browser=args.cyclic_tie_browser,
-            hybrid_preparation=args.hybrid_preparation or args.hybrid_progression or args.hybrid_multiround,
+            hybrid_preparation=args.hybrid_preparation or args.hybrid_progression or args.hybrid_multiround or args.hybrid_worker_transition,
             hybrid_progression=args.hybrid_progression,
             hybrid_multiround=args.hybrid_multiround,
+            hybrid_worker_transition=args.hybrid_worker_transition,
         )

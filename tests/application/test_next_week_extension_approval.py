@@ -302,23 +302,25 @@ def test_http_explicit_approval_atomic_audit_exact_replay_and_no_sport(tmp_path,
 
         # Inject only future knockout topology and Position to isolate approval
         # from the real MatchEngine (which is deliberately not executed).
+        # The driver is slotted; patch type methods only after genuine initial
+        # parent preview/freeze, and restore them automatically after the test.
         monkeypatch.setattr(
-            driver,"_position",
-            lambda session, run, branch, **kw: SimpleNamespace(
+            AuthoritativeRunSimulationDriver,"_position",
+            lambda self, session, run, branch, **kw: SimpleNamespace(
                 current_week=week,current_slot_kind="match",slot_ordinal=2
             ),
         )
         monkeypatch.setattr(
-            driver,"_schedule",
-            lambda session, run, branch, target_week: base,
+            AuthoritativeRunSimulationDriver,"_schedule",
+            lambda self, session, run, branch, target_week: base,
         )
         monkeypatch.setattr(
-            driver,"_execution_schedule",
-            lambda session, **kw: expanded,
+            AuthoritativeRunSimulationDriver,"_execution_schedule",
+            lambda self, session, **kw: expanded,
         )
         monkeypatch.setattr(
-            driver,"_hybrid_knockout_brackets_for_week",
-            lambda session, **kw: ((
+            AuthoritativeRunSimulationDriver,"_hybrid_knockout_brackets_for_week",
+            lambda self, session, **kw: ((
                 SimpleNamespace(event_id="hybrid"),
                 SimpleNamespace(event_id="hybrid",matches=(
                     SimpleNamespace(match_id="seed-final"),)),

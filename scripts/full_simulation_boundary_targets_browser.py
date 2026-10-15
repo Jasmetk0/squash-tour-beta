@@ -353,7 +353,10 @@ def acceptance(root, port, base_url, chromium):
                         + ack["task_id"]
                     )
                     card = page.locator('li[data-task-id="' + ack["task_id"] + '"]')
-                    card.locator("summary").click()
+                    card.get_by_text(
+                        "Stored terminal summary" if language == "en"
+                        else "Uložený závěrečný souhrn", exact=True
+                    ).click()
                     expect(card).to_contain_text(
                         "Selected target reached"
                         if language == "en"

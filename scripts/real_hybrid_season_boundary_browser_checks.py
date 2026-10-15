@@ -84,11 +84,26 @@ def approve_real_week61_save_and_resume_same_full_task(
         advance=page.get_by_role("button",name="Advance to next season",exact=True)
         expect(advance).to_be_enabled(timeout=30000)
         advance.click()
-        expect(page.get_by_text("New Saved Revision",exact=False)).to_be_visible(timeout=30000)
+        # Clicking a mutation button only starts an asynchronous HTTP call.
+        # A generic "New Saved Revision" string may already be present on
+        # another surface. Prove actual canonical commit from persisted world
+        # position, with bounded polling and preserved original parent.
+        rollover_deadline=time.monotonic()+120
+        rollover_position=None
+        while time.monotonic()<rollover_deadline:
+            rollover_position=request("GET",simulation_scope+"/position")
+            if rollover_position["current_week"]=={"season_index":1,"week":1}:
+                break
+            failure=page.get_by_text("Season Transition failed:",exact=False)
+            if failure.count()>0 and failure.is_visible():
+                raise AssertionError("Canonical Season Transition failed: "+failure.inner_text())
+            time.sleep(.2)
+        else:
+            raise AssertionError(
+                "Reviewed Season Transition was clicked but world did not advance: "
+                +str(rollover_position)
+            )
         actual_rollover=True
-        assert request("GET",simulation_scope+"/position")["current_week"]=={
-            "season_index":1,"week":1
-        }
     else:
         blockers=preflight["state_blockers"]+preflight["implementation_gaps"]
         assert blockers,preflight

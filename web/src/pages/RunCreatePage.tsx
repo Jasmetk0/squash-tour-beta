@@ -72,7 +72,7 @@ export function RunCreatePage(): JSX.Element {
         <label htmlFor="new-run-name">{t.name}</label>
         <input id="new-run-name" value={name} maxLength={256} required disabled={pending}
           autoComplete="off" onChange={event => setName(event.target.value)} />
-        <label><input type="checkbox" checked={custom} disabled={pending} onChange={event => {
+        <label className="checkbox-label"><input type="checkbox" checked={custom} disabled={pending} onChange={event => {
           setCustom(event.target.checked); setReview(null); setError(null)
         }} />{t.custom}</label>
         {custom ? <RunCalendarCreationForm disabled={pending} onReview={setReview} />

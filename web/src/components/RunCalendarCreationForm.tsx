@@ -76,7 +76,7 @@ export function RunCalendarCreationForm({ disabled, onReview }: {
     <legend>{t.title}</legend>
     <p className="status">{t.note}</p>
     <div className="form-grid">
-      <label>{t.preset}<select value={preset} onChange={e => {
+      <label>{t.preset}<select aria-label={t.preset} value={preset} onChange={e => {
         changed(); setPreset(e.target.value)
         if (e.target.value === 'fax') { setWeeks('61'); setOffset('37') }
         if (e.target.value === 'earth') { setWeeks('52'); setOffset('1') }
@@ -84,7 +84,7 @@ export function RunCalendarCreationForm({ disabled, onReview }: {
       <label>{t.weeks}<input type="number" min="1" step="1" value={weeks} onChange={e => {changed(); setWeeks(e.target.value); setPreset('custom')}} /></label>
       <label>{t.offset}<input type="number" min="1" step="1" value={offset} onChange={e => {changed(); setOffset(e.target.value); setPreset('custom')}} /></label>
       <label>{t.year}<input type="number" min="0" step="1" value={year} onChange={e => updateYear(e.target.value)} /></label>
-      <label>{t.horizon}<select value={mode} onChange={e => {changed(); setMode(e.target.value)}}><option value="count">{t.countMode}</option><option value="last">{t.lastMode}</option></select></label>
+      <label>{t.horizon}<select aria-label={t.horizon} value={mode} onChange={e => {changed(); setMode(e.target.value)}}><option value="count">{t.countMode}</option><option value="last">{t.lastMode}</option></select></label>
       {mode === 'count' ? <label>{t.count}<input type="number" min="1" step="1" value={count} onChange={e => {
         changed(); setCount(e.target.value); const total = integer(e.target.value)
         setLast(y !== null && total !== null && total > 0 ? String(y + total - 1) : '')

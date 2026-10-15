@@ -124,3 +124,112 @@ def assert_handoff_task_still_pending(*, request, simulation_scope, frozen, arti
         json.dumps(evidence,indent=2)
     )
     return evidence
+
+
+def resume_real_hybrid_task_at_explicit_week_two_target(
+    *, request, page, run_url, simulation_scope, frozen, artifacts,
+):
+    """End the same original task only after humans have published real Week 2.
+
+    No sports, ranking transition or Saved Revision is fabricated by the
+    target mutation. The human Run browser already approved the authoritative
+    tournament and Week Transition; this task continuation observes the
+    *reached* target and preserves all match/revision evidence.
+    """
+    waiting = _task(request, simulation_scope, frozen["task_id"])
+    assert waiting["state"] == "awaiting_operator", waiting
+    assert waiting["checkpoint"] == "group_phase_review_required", waiting
+    assert waiting["revision"] == frozen["revision"]
+    assert waiting["parent_command_id"] == frozen["parent_command_id"]
+    position = request("GET", simulation_scope + "/position")
+    assert position["current_week"] == {"season_index": 0, "week": 2}, position
+    before_replays = request("GET", simulation_scope + "/match-replays?limit=50")
+    assert len(before_replays["matches"]) == 3
+    assert len({m["match_id"] for m in before_replays["matches"]}) == 3
+    before_save = request("GET", simulation_scope + "/save/preview")
+    saved_revision_before = before_save["saved_head_revision_id"]
+    draft_version_before = before_save["draft_version"]
+    viewer = "/viewer/runs/" + quote(frozen["run_id"],safe="") + "/rankings/current"
+    published_before = request("GET", viewer)
+    # Target audit updates the pending parent receipt and may deliberately
+    # change the full *preview fingerprint*. It must not create another Saved
+    # Revision or alter the actual sporting/draft/ranking authorities.
+    target = {
+        "control_command_id": "real-hybrid-task-reviewed-target-week2",
+        "target_command_id": frozen["parent_command_id"],
+        "target_week": {"season_index": 0, "week": 2},
+        "operator_label": "Explicit hybrid task operator",
+        "audit_reason": "Finish unchanged original server task at verified real Week 2",
+    }
+    approved = request("POST", simulation_scope + "/full-simulation/target", target)
+    assert approved["effective_target_week"] == target["target_week"]
+    assert approved["target_revision"] >= 1
+    retry = request("POST", simulation_scope + "/full-simulation/target", target)
+    assert retry["replayed"] is True
+    assert retry["effective_target_week"] == target["target_week"]
+    assert request("GET", simulation_scope + "/match-replays?limit=50") == before_replays
+    after_target = request("GET", simulation_scope + "/save/preview")
+    assert after_target["saved_head_revision_id"] == saved_revision_before
+    assert after_target["draft_version"] == draft_version_before
+    assert request("GET", viewer) == published_before
+
+    # Real UI, deliberate operator + reason, original Task ID. No API bypass
+    # or automatic approval after clicking target.
+    from playwright.sync_api import expect
+
+    ui = page.context.new_page()
+    try:
+        ui.goto(run_url.rsplit("/admin/runs/", 1)[0] + "/admin/operations")
+        ui.get_by_role("combobox", name="Language / Jazyk").select_option("en")
+        tasks = ui.get_by_role("region", name="Server simulation tasks")
+        card = tasks.locator('li[data-task-id="'+frozen["task_id"]+'"]')
+        expect(card).to_have_count(1, timeout=30000)
+        expect(card.get_by_role("button",name="Explicitly resume server task")).to_be_visible()
+        card.get_by_label("Task operator",exact=True).fill("Explicit hybrid task operator")
+        card.get_by_label("Task audit reason",exact=True).fill(
+            "Review confirmed real Week-2 authority; terminate original task"
+        )
+        card.get_by_role("button",name="Explicitly resume server task").click()
+        deadline = time.monotonic()+90
+        while time.monotonic()<deadline:
+            finished = _task(request,simulation_scope,frozen["task_id"])
+            if finished["state"] in ("target_reached", "failed", "awaiting_operator"):
+                if finished["state"] != "awaiting_operator" or finished["revision"] > waiting["revision"]:
+                    break
+            time.sleep(.1)
+        else:
+            raise AssertionError("Original hybrid Full Simulation did not settle at Week-2 target")
+        assert finished["state"]=="target_reached", finished
+        assert finished["parent_command_id"]==frozen["parent_command_id"]
+        assert finished["original_command"]["command_id"]==frozen["parent_command_id"]
+        assert finished["current_week"]==target["target_week"]
+        expect(card).to_contain_text("Target reached", timeout=30000)
+        ui.screenshot(path=str(artifacts/"real-hybrid-original-task-target-reached.png"),full_page=True)
+    finally:
+        ui.close()
+
+    assert request("GET",simulation_scope+"/position")["current_week"]==target["target_week"]
+    assert request("GET",simulation_scope+"/match-replays?limit=50")==before_replays
+    final_preview = request("GET",simulation_scope+"/save/preview")
+    assert final_preview["saved_head_revision_id"] == saved_revision_before
+    assert final_preview["draft_version"] == draft_version_before
+    assert request("GET",viewer)==published_before
+    history=request("GET",simulation_scope+"/full-simulation/history")
+    assert any(item["command_id"]==frozen["parent_command_id"] and item["status"]=="target_reached"
+               for item in history["items"]), history
+    evidence={
+        "task_id":frozen["task_id"],
+        "parent_command_id":frozen["parent_command_id"],
+        "real_match_receipt_count":len(before_replays["matches"]),
+        "target_week":target["target_week"],
+        "target_revision":approved["target_revision"],
+        "task_state":finished["state"],
+        "target_replay_safe":True,
+        "no_additional_matches_or_saved_head_change":True,
+        "ranking_publication_identical":True,
+        "original_full_simulation_target_reached":True,
+        "operator_explicit_resume":True,
+        "human_performed_week_transition":True,
+    }
+    (artifacts/"real-hybrid-original-task-terminal.json").write_text(json.dumps(evidence,indent=2))
+    return evidence

@@ -1,3 +1,9 @@
+# Real Full Simulation task resumes at verified Week 2 (PR candidate, 15 October 2026)
+
+Based on merged #1479. Browser creates an actual pending task before group matches, humans play all real hybrid MatchEngine matches, freeze ranking and manually publish Week 2, then operator changes that original task's target to already reached Week 2 and explicitly resumes it via native Task Center. Asserts terminal target_reached, deterministic target command replay, same parent/task, unchanged 3 sporting replays, unchanged Saved head/Draft revision and identical published Ranking, SQLite restart. See [contract](docs/FULL_SIMULATION_HYBRID_TASK_RESUME_V81.md). **Not** proof of task itself executing Week Transition, and not 50 seasons.
+
+---
+
 # Real hybrid group-to-knockout handoff for a waiting Full Simulation — PR candidate, 15 October 2026
 
 `buuk` base `c0c8c82f5d676cc236033d3a94eea42a77ce3f4f` after merged #1478. The existing genuine Chromium+FastAPI+SQLite hybrid cup test now starts and inspects a real Full Simulation task *before* group Match Day; the task must wait with no sport, and the existing explicit two real group games + entrant/bracket + actual knockout final + ranking policy/Save/restart are reverified. Still waiting on human decisions at the end is intentional; explicit original-task resume through a week boundary remains another acceptance gate. [Proof](docs/FULL_SIMULATION_HYBRID_TASK_REAL_BROWSER_V81.md).

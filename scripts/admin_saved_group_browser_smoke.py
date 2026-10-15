@@ -373,6 +373,7 @@ def acceptance(
                 hybrid_result = None
                 hybrid_ranking = None
                 hybrid_task_handoff = None
+                hybrid_task_completion = None
                 if hybrid_progression or hybrid_multiround:
                     if hybrid_progression:
                         from real_hybrid_full_simulation_task_browser_checks import (
@@ -414,6 +415,15 @@ def acceptance(
                         run_url=run_url,root_scope=root_scope,event_id=EVENT_ID,
                         hybrid=hybrid_result,artifacts=artifacts,
                     )
+                    if hybrid_task_handoff is not None:
+                        from real_hybrid_full_simulation_task_browser_checks import (
+                            resume_real_hybrid_task_at_explicit_week_two_target,
+                        )
+                        hybrid_task_completion = resume_real_hybrid_task_at_explicit_week_two_target(
+                            request=request, page=page, run_url=run_url,
+                            simulation_scope=simulation_scope,
+                            frozen=hybrid_task_handoff, artifacts=artifacts,
+                        )
                     assert saved(revision) == expected
                     print("HYBRID BROWSER: two real group games, "
                           + ("two semifinals and final" if hybrid_multiround else "one final")
@@ -596,6 +606,7 @@ def acceptance(
                         completed["reconstructed_group_match"] if completed else None
                     ),
                     "hybrid_group_full_simulation_task":hybrid_task_handoff,
+                    "hybrid_full_simulation_terminal":hybrid_task_completion,
                     "hybrid_progression": ({
                         "completed_revision":hybrid_result["completed_saved_revision"],
                         "played_group_match_count":hybrid_result["real_group_matches"],

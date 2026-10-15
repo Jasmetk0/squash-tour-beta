@@ -119,7 +119,7 @@ def acceptance(
                     assert response.status == status, (
                         method, path, response.status, response.text()[:1600]
                     )
-                    return response.json() if status in (200, 201) else None
+                    return response.json() if status in (200, 201, 202) else None
 
                 branches = request(
                     "GET", "/run-branches?run_id=" + quote(run_id, safe=""),

@@ -73,6 +73,7 @@ import type { SourceType } from './SeasonBuilderPanels'
 import type { ApplyGuardChecklistItem, CreateOnlyApplyGuardSummaryItem, SeasonBuilderStatusSummaryItem } from './SeasonBuilderPanels'
 import type { SeasonBuilderApplyCommandContractRequest, SeasonBuilderApplyCreateOnlyCommandRequest, SeasonBuilderDryRunBuildRequest, SeasonBuilderFutureApplyRequestValidationPreviewResponse, SeasonBuilderPreflightRequest } from '../api/types'
 import { formatApiError } from '../utils/apiErrors'
+import { selectedBuilderSeason } from './seasonBuilderDeepLink'
 
 
 export function AdminSeasonBuilderPage(): JSX.Element {
@@ -155,8 +156,8 @@ export function AdminSeasonBuilderPage(): JSX.Element {
     if (!selectedTargetSeasonLabel && registry?.seasons.length) {
       // Only a literal available season in the canonical 50-year registry is
       // accepted. Deep-link selection changes no Calendar or Run authority.
-      const requested = registry.seasons.find(season => season.label === requestedSeason)
-      setSelectedTargetSeasonLabel(requested?.label ?? registry.seasons[0].label)
+      const requested = selectedBuilderSeason(requestedSeason, registry.seasons)
+      setSelectedTargetSeasonLabel(requested ?? registry.seasons[0].label)
     }
   }, [registry, requestedSeason, selectedTargetSeasonLabel])
 

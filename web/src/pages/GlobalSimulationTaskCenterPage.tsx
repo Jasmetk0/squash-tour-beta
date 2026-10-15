@@ -1,5 +1,5 @@
 import { BoundaryDescription } from '../components/FullSimulationBoundaryTargets'
-import { FullSimulationServerTasks } from '../components/FullSimulationServerTasks'
+import { FullSimulationServerTasks, useServerTasks } from '../components/FullSimulationServerTasks'
 import { useQuery } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
@@ -52,7 +52,11 @@ const copy = {
     },
     readonly: 'Jen pro čtení; možnost pokračovat musí ověřit cílový Run a větev.',
     inspect: 'Otevřít detail a ovládání',
-    runs: 'Otevřít seznam Runů'
+    runs: 'Otevřít seznam Runů',
+    receiptsTitle: 'Starší pending receipts · neznamenají další běžící workery',
+    linked: 'Tento původní příkaz už patří serverové úloze uvedené výše:',
+    linkedDetail: 'Zobrazit původní pending receipt',
+    distinction: 'Serverové úlohy mají vlastní stav, heartbeat a explicitní obnovu. Níže jsou samostatně uchované historické příkazy; záznam propojený s úlohou není další simulace.'
   },
   en: {
     title: 'Simulation Task Center',
@@ -92,7 +96,11 @@ const copy = {
     },
     readonly: 'Read-only: the exact Run and Branch must confirm whether resume is available.',
     inspect: 'Open detail and controls',
-    runs: 'Open Runs inventory'
+    runs: 'Open Runs inventory',
+    receiptsTitle: 'Older pending receipts · not additional running workers',
+    linked: 'This original command already belongs to the server task above:',
+    linkedDetail: 'Show original pending receipt',
+    distinction: 'Server tasks have their own status, heartbeat and explicit recovery. The separately persisted original commands below are historical evidence; a linked receipt is not a second simulation.'
   }
 } as const
 
@@ -109,6 +117,7 @@ export function GlobalSimulationTaskCenterPage(): JSX.Element {
   const text = copy[language]
   const [search, setSearch] = useState('')
   const [state, setState] = useState<OperationStateFilter>('all')
+  const serverTasks = useServerTasks()
   const inventory = useQuery({
     queryKey: ['global-full-simulation-operations'],
     queryFn: getGlobalFullSimulationOperations,
@@ -131,6 +140,8 @@ export function GlobalSimulationTaskCenterPage(): JSX.Element {
       <h2>{text.title}</h2><p className="subtitle">{text.subtitle}</p>
     </div>
     <FullSimulationServerTasks />
+    <h3>{text.receiptsTitle}</h3>
+    <p className="status">{text.distinction}</p>
     <p className="status">{text.truth}</p>
     <div className="simulation-task-center__toolbar">
       <label>{text.search}
@@ -157,22 +168,27 @@ export function GlobalSimulationTaskCenterPage(): JSX.Element {
       {inventory.data.pending_count === 0 ? <p className="status">{text.empty}</p>
         : operations.length === 0 ? <p className="status">{text.noMatches}</p>
           : <ul className="simulation-task-center__list" aria-label={text.title}>
-            {operations.map(operation => (
-              <li key={JSON.stringify([operation.run_id, operation.branch_id, operation.command_id])}
+            {operations.map(operation => {
+              const linkedTask = serverTasks.isSuccess ? serverTasks.data.find(task =>
+                task.run_id===operation.run_id && task.branch_id===operation.branch_id &&
+                task.parent_command_id===operation.command_id) : undefined
+              const receiptMetadata = <div className="simulation-task-center__metadata">
+                <span><b>{text.run}:</b> {operation.run_id}</span>
+                <span><b>{text.branch}:</b> {operation.branch_id}</span>
+                <span><b>{text.command}:</b> {operation.command_id}</span>
+                <span><b>{text.progress}:</b> {operation.completed_season_count}</span>
+                <span><b>{text.finalWeeks}:</b> {operation.final_completed_week_count}</span>
+                <span><b>{text.from}:</b> S{operation.start_week.season_index} W{operation.start_week.week}</span>
+                <span><b>{text.target}:</b> {operation.effective_boundary_target?<BoundaryDescription target={operation.effective_boundary_target}/>:<>S{(operation.effective_target_week??operation.final_week).season_index} W{(operation.effective_target_week??operation.final_week).week}</>}</span>
+              </div>
+              return <li key={JSON.stringify([operation.run_id, operation.branch_id, operation.command_id])}
                 className="simulation-task-center__item">
                 <div className="simulation-task-center__heading">
                   <strong>{operation.run_name} / {operation.branch_name}</strong>
                   <span className="status">{text.state[operation.control_state]}</span>
                 </div>
-                <div className="simulation-task-center__metadata">
-                  <span><b>{text.run}:</b> {operation.run_id}</span>
-                  <span><b>{text.branch}:</b> {operation.branch_id}</span>
-                  <span><b>{text.command}:</b> {operation.command_id}</span>
-                  <span><b>{text.progress}:</b> {operation.completed_season_count}</span>
-                  <span><b>{text.finalWeeks}:</b> {operation.final_completed_week_count}</span>
-                  <span><b>{text.from}:</b> S{operation.start_week.season_index} W{operation.start_week.week}</span>
-                  <span><b>{text.target}:</b> {operation.effective_boundary_target?<BoundaryDescription target={operation.effective_boundary_target}/>:<>S{(operation.effective_target_week??operation.final_week).season_index} W{(operation.effective_target_week??operation.final_week).week}</>}</span>
-                </div>
+                {linkedTask && <p className="status">{text.linked} <code>{linkedTask.task_id}</code></p>}
+                {linkedTask?<details><summary>{text.linkedDetail}</summary>{receiptMetadata}</details>:receiptMetadata}
                 <p className="status">{text.worker} · {text.lease[operation.lease_state]}</p>
                 {(operation.run_read_only || operation.branch_read_only || operation.branch_status !== 'active')
                   && <p className="status">{text.readonly}</p>}
@@ -183,7 +199,7 @@ export function GlobalSimulationTaskCenterPage(): JSX.Element {
                     rememberProductRun(operation.run_id)
                   }}>{text.inspect}</Link>
               </li>
-            ))}
+            })}
           </ul>}
     </>}
     <p><Link to="/admin/runs">{text.runs}</Link></p>

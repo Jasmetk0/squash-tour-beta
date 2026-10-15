@@ -89,10 +89,13 @@ def inspect_frozen_next_week_extension(
     if any(s.ordinal <= max(s.ordinal for s in base.slots) for s in new_slots):
         return outcome("blocked", "base_week_schedule_changed")
     try:
-        original_schedule = WeekSimulationSchedule.model_validate({
-            **current.model_dump(mode="json"),
-            "slots": [s.model_dump(mode="json") for s in original_slots],
-        })
+        original_schedule = WeekSimulationSchedule(
+            schema_version=current.schema_version,
+            run_id=current.run_id,
+            branch_id=current.branch_id,
+            week=current.week,
+            slots=original_slots,
+        )
     except ValueError:
         return outcome("blocked", "frozen_schedule_prefix_invalid")
     if original_schedule.fingerprint != old_fingerprint:

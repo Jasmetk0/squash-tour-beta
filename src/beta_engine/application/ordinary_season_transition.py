@@ -34,6 +34,9 @@ from beta_engine.application.season_transition_ranking import (
 from beta_engine.application.season_transition_sporting import (
     stage_season_transition_sporting,
 )
+from beta_engine.application.run_calendar_read_authority import (
+    require_supported_legacy_sporting_calendar,
+)
 from beta_engine.domain.rankings.official import FrozenInput, RankingWeek
 from beta_engine.domain.run_containers import (
     COMPLETED_RUN_STATUS,
@@ -380,6 +383,12 @@ def commit_ordinary_season_transition(
     if retry is not None:
         return retry
 
+    # Validate under the transaction writer boundary. Never reinterpret an
+    # already recorded FAX result or change exact historical retry semantics.
+    require_supported_legacy_sporting_calendar(
+        session, run_id=command.run_id, branch_id=command.branch_id,
+        operation="Season Transition",
+    )
     configuration = validate_season_transition_configuration(
         session,
         command.configuration,

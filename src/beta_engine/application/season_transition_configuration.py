@@ -5,6 +5,9 @@ from __future__ import annotations
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from beta_engine.application.run_calendar_read_authority import (
+    require_supported_legacy_sporting_calendar,
+)
 from beta_engine.domain.players.sporting import PlayerDevelopmentPolicy
 from beta_engine.domain.rankings.official import OfficialRankingPolicy, RankingWeek
 from beta_engine.domain.season_transition_configuration import (
@@ -54,6 +57,10 @@ def _current_boundary(
             "Season Transition configuration requires the current Saved Revision head"
         )
 
+    require_supported_legacy_sporting_calendar(
+        session, run_id=run_id, branch_id=branch_id,
+        operation="Season Transition",
+    )
     history = OfficialRankingCandidateStore(session).history(
         run_id=run_id,
         branch_id=branch_id,

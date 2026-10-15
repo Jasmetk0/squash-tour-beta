@@ -39,6 +39,6 @@ Earlier observed transient SQLite heartbeat `database is locked` during green #1
 
 ## Documentation integrity and implementation limits
 
-Master v82 updates current product chapters/registries, preserves all 36 chapters and all 157 historical PAQ IDs, keeps dated audit evidence, and distinguishes new decisions from implemented behavior. AGENTS, constitution, frontend contract, README, active CURRENT_STATE/ROADMAP headers and release-test wording are synchronized. No application code or built-in data is changed by this checkpoint.
+Master v82 updates current product chapters/registries, preserves all 36 chapters and all 157 historical PAQ IDs, keeps dated audit evidence, and distinguishes new decisions from implemented behavior. AGENTS, constitution, frontend contract, README, concise active CURRENT_STATE/ROADMAP and release-test wording are synchronized. The two formerly oversized active summaries retain pinned links to complete prior versions in Git; no historical commit is rewritten. No application code or built-in data is changed by this checkpoint.
 
 Focused PR tests follow `docs/PRE_ALPHA_TEST_POLICY.md`; a future release still requires complete regression, populated FAX season/50-season reference and explicit calendar compatibility acceptance. Exact growth curves, realism calibration and detailed training/deload scheduling remain open/deferred. This audit does not close all pre-alpha work.

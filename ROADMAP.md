@@ -1,3 +1,15 @@
+# Current integration milestone — operator-useful Task Center (15 October 2026)
+
+Verified `buuk` baseline after merged #1486: `f4430ada8dae54f99e4bc27790e240d8ce268d18`. The previous #1484 boundary evidence establishes only a sparse three-match real hybrid Week 61 → Season Transition, not a complete sporting season.
+
+**In-flight one-slice PR:** operator-useful Task Center, with readable dark cards, precise stored driver blockers and detail in CS/EN, no stale checkpoint falsely presented as current, conditional inspection-based append-only week extension advice, and linked original pending receipts shown as technical history rather than duplicate active tasks. Retain original task and exact controlled retry, manual Save, deterministic replay and immutable lineage. Required verification: targeted component tests and final-head CI; inspect real browser screenshots when artifacts are available.
+
+**Following milestone:** unblock the existing season-2001/02 `week_preparation_required` with a genuinely supported Admin configuration path, then prove advancement to the next concrete week with multiple real tournament editions and MatchEngine receipts, restart, ranking/history and manual Save. Do not add another near-duplicate sparse 3-match end-to-end test or claim full 50-season completion.
+
+**Historical roadmap below:** prior “active candidate” and “next PR” headers are archived at their original dates, not current outstanding work.
+
+---
+
 # Read-only Task Center metrics — integration candidate, 15 October 2026
 
 After merged #1473, surface honest current-Branch-week committed slot/group counts on live Full Simulation tasks and immutable historical end weeks on terminal tasks. [Contract](docs/FULL_SIMULATION_TASK_PROGRESS_V81.md). Does not change the sporting engine, simulate future dynamically unplanned hybrid finals or claim full release. Next: safely re-review an already-frozen Next Week after separately approved hybrid knockout materialization, without silently changing child identities.

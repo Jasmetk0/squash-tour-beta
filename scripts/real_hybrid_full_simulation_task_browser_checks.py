@@ -446,3 +446,103 @@ def prove_next_real_hybrid_week_from_restarted_saved_run(
         json.dumps(report,indent=2)
     )
     return report
+
+
+def prove_same_full_task_survives_second_restart(
+    *, request, page, run_url, simulation_scope,
+    initial_parent, continuing, official_week_two, artifacts,
+):
+    """Reopen *the same* nonterminal second Full Simulation task after restart.
+
+    Week 1's original command had a deliberately terminal target; the distinct
+    Week-2+ parent from the prior acceptance is the one being resumed here.
+    No new parent or sporting receipt is created.
+    """
+    assert initial_parent and continuing
+    task_id=continuing["second_full_simulation_task"]
+    parent_id=continuing["second_parent"]
+    observed=continuing["observed_week"]
+    assert continuing["start_week"]=={"season_index":0,"week":2}
+    assert observed["season_index"]*61+observed["week"]-1>=2
+
+    first=_task(request,simulation_scope,initial_parent["task_id"])
+    assert first["state"]=="target_reached",first
+    assert first["parent_command_id"]==initial_parent["parent_command_id"]
+    before=_task(request,simulation_scope,task_id)
+    assert before["task_id"]==task_id
+    assert before["parent_command_id"]==parent_id
+    assert before["original_command"]["command_id"]==parent_id
+    assert before["state"]==continuing["second_task_state"]=="awaiting_operator",before
+    assert before["checkpoint"]==continuing["second_task_checkpoint"]
+    assert before["current_week"]==observed
+
+    position=request("GET",simulation_scope+"/position")
+    assert position["current_week"]==observed
+    replay=request("GET",simulation_scope+"/match-replays?limit=50")
+    assert len(replay["matches"])==3
+    assert len({row["match_id"] for row in replay["matches"]})==3
+    saved_head=continuing["saved_week2_revision_preserved"]
+    assert request("GET",simulation_scope+"/save/preview")["saved_head_revision_id"]==saved_head
+    viewer="/viewer/runs/"+quote(initial_parent["run_id"],safe="")+"/rankings"
+    assert request("GET",viewer+"/current")==official_week_two
+
+    from playwright.sync_api import expect
+    operator=page.context.new_page()
+    try:
+        operator.goto(run_url.rsplit("/admin/runs/",1)[0]+"/admin/operations")
+        operator.get_by_role("combobox",name="Language / Jazyk").select_option("en")
+        region=operator.get_by_role("region",name="Server simulation tasks")
+        task_card=region.locator('li[data-task-id="'+task_id+'"]')
+        expect(task_card).to_have_count(1,timeout=30000)
+        expect(task_card).to_contain_text("Waiting for operator")
+        expect(region.locator('li[data-task-id="'+initial_parent["task_id"]+'"]')).to_have_count(1)
+        task_card.get_by_label("Task operator",exact=True).fill("Commissioner post-restart")
+        task_card.get_by_label("Task audit reason",exact=True).fill(
+            "Retry canonical unchanged parent after real SQLite restart"
+        )
+        task_card.get_by_role("button",name="Explicitly resume server task").click()
+        deadline=time.monotonic()+120
+        while time.monotonic()<deadline:
+            after=_task(request,simulation_scope,task_id)
+            if after["revision"]>before["revision"] and after["state"] in (
+                "awaiting_operator","target_reached","complete","failed"
+            ):
+                break
+            time.sleep(.1)
+        else:
+            raise AssertionError("Same Full Simulation task never settled after explicit restart recovery")
+        assert after["state"] in ("awaiting_operator","target_reached","complete"),after
+        assert after["task_id"]==task_id and after["parent_command_id"]==parent_id
+        assert after["original_command"]==before["original_command"]
+        assert after["revision"]>before["revision"]
+        operator.screenshot(path=str(artifacts/"same-full-task-after-restart.png"),full_page=True)
+    finally:
+        operator.close()
+    final_position=request("GET",simulation_scope+"/position")["current_week"]
+    old_ordinal=observed["season_index"]*61+observed["week"]-1
+    new_ordinal=final_position["season_index"]*61+final_position["week"]-1
+    assert new_ordinal>=old_ordinal
+    assert request("GET",simulation_scope+"/match-replays?limit=50")==replay
+    assert request("GET",simulation_scope+"/save/preview")["saved_head_revision_id"]==saved_head
+    assert request("GET",viewer+"/current")==official_week_two
+    assert _task(request,simulation_scope,initial_parent["task_id"])["state"]=="target_reached"
+    proof={
+        "original_terminal_parent":initial_parent["parent_command_id"],
+        "continued_parent":parent_id,
+        "task_id_before_restart":task_id,
+        "task_id_after_restart":after["task_id"],
+        "immutable_request_preserved":True,
+        "revision_before":before["revision"],
+        "revision_after":after["revision"],
+        "checkpoint_before":before["checkpoint"],
+        "checkpoint_after":after["checkpoint"],
+        "week_before":observed,
+        "week_after":final_position,
+        "additional_week_transition_observed":new_ordinal>old_ordinal,
+        "original_three_matches_unchanged":True,
+        "published_week_two_unchanged":True,
+    }
+    (artifacts/"same-parent-after-second-sqlite-restart.json").write_text(
+        json.dumps(proof,indent=2)
+    )
+    return proof

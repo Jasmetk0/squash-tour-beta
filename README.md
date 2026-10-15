@@ -8,7 +8,7 @@ For the current first-tournament Admin usability work, see [the first-tournament
 
 - **Viewer** is a historically faithful, read-only environment for fictional public websites; the primary current site is **MSA Squash**.
 - **Admin** creates, edits, validates, simulates, reconstructs, and audits data. **Global Admin** manages Runs and source Packages; **Run Admin** operates one Run and one active Admin branch in a selected time context.
-- A **Run** is an independent saved world spanning exactly 50 seasons, `2000/01–2049/50`. Every season contains exactly 61 Season Weeks.
+- A **Run** is an independent saved world. **Master v82 target:** its fixed weeks-per-year/season, offset, start year and horizon are configurable (Earth default 52; FAX 61). Calendar basis locks after the first week starts; the horizon may be extended. Current runtime still contains the legacy 50-season/61-week assumptions; see `CURRENT_STATE.md` for verified implementation, not target claims.
 - Branches are equal alternative timelines within a Run. There is no privileged Main or Official branch. Each Run has exactly one **Viewer Branch**, which only selects the timeline displayed by Viewer.
 - A Viewer Branch selection is first staged in Admin's Working Draft. Viewer remains on the saved selection until Save atomically creates a Saved Revision and audit event, activates the selection, and returns the editing Branch to a clean Working Draft.
 - A Run may start completely empty. In the first pre-alpha, its unique displayed name is the only user-supplied creation field; `run_id`, the fixed time frame, one neutral initial Viewer Branch, its first Saved Revision, and a clean Working Draft are created atomically.

@@ -40,10 +40,11 @@ paid around explicit release/checkpoint boundaries rather than on every small me
 
 The first pre-alpha release gate must at minimum include:
 
-- Official Run full-season continuity through Season Transition into next Season Week 1;
+- an editable copy of the versioned FAX reference template completing a full season through Season Transition into next Season Week 1; do not mutate protected built-in/Official sources;
 - empty Run -> two manual players -> one standalone match;
 - save/reopen/replay integrity required by those flows;
-- the complete regression suite, not only PR-selected tests.
+- the complete regression suite, not only PR-selected tests;
+- the preserved 50-season FAX reference acceptance and the Run-calendar/extension compatibility acceptance assigned by Master §§31.28 and 31.37. The reference 50 × 61 configuration is not a universal Run limit.
 
 Future release-specific checks may be added without changing this basic policy.
 

@@ -1,3 +1,9 @@
+# Next Week append-only review inspector — integration candidate, 15 October 2026
+
+Verified `buuk` `c1b4a429a3a6c2951913f64c064c48cc2a70fe4c`, merged #1475 and no open PR. This candidate introduces a **read-only** verification of an already frozen pending Next Week against a separately materialized canonical hybrid knockout suffix. Admin Task Center sees exact new global slots or a blocked reason, without mutating the original command, Save, sport, worker or ranking. **No continuation/re-review approval exists in this PR.** Pure contract tests and final-head CI gate review; real mid-flight hybrid mutation and browser acceptance remain a separate later slice. [Contract](docs/NEXT_WEEK_EXTENSION_INSPECTION_V81.md).
+
+---
+
 # Full Simulation reviewed-week schedule drift — integration candidate, 15 October 2026
 
 Baseline `buuk` `af0ea00b3e2236a500020c44ab70af4bcbfbdbab` after merged #1474, with no open PR. This focused safety candidate changes only the narrow existing Next Week schedule-fingerprint drift path as seen through Next Season and final-season Full Simulation. A pending server task now reports `week_schedule_review_required` (operator checkpoint) instead of generic failed-worker state; committed children, immutable command identity, global lease and Saved Revisions remain unchanged. **It does not** automatically extend the frozen command to new hybrid knockout slots; explicit authorized re-review is a separate follow-up. Targeted production HTTP/SQLite/task test uses a controlled exception at the authentic guard boundary, not a simulated genuine bracket mutation. Final-head CI is required before merge handoff. No pre-alpha or full-season release claim.

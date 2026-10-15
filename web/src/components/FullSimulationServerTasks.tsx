@@ -8,6 +8,7 @@ import type { AuthoritativeFullSimulationCommandPayload } from '../api/types'
 import { useLanguage } from '../i18n/LanguageContext'
 import { formatApiError } from '../utils/apiErrors'
 import { FullSimulationSummary } from './FullSimulationSummary'
+import { FullSimulationWeekScheduleReview } from './FullSimulationWeekScheduleReview'
 
 const copy={
  en:{title:'Server simulation tasks',start:'Start as server task',ack:'Server task accepted',refresh:'Refresh task evidence',
@@ -93,6 +94,7 @@ function TaskCard({task}:{task:ServerTask}){
    {pending && !mutation.isPending && <button type="button" onClick={()=>{setPending(null);mutation.reset();void client.invalidateQueries({queryKey:['server-simulation-tasks']})}}>{t.cancel}</button>}
   </>}</>}
   {mutation.error && <p role="alert">{formatApiError(mutation.error)}</p>}
+  {requiresNewWeekReview && <FullSimulationWeekScheduleReview runId={task.run_id} branchId={task.branch_id}/>}
   <Link to={`/admin/runs/${encodeURIComponent(task.run_id)}/simulate?branch=${encodeURIComponent(task.branch_id)}&task=${encodeURIComponent(task.task_id)}`}>{t.open}</Link>
   {terminal && <details><summary>{t.detail}</summary><FullSimulationSummary runId={task.run_id} branchId={task.branch_id} commandId={task.parent_command_id}/></details>}
  </li>

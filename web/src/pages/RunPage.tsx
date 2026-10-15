@@ -193,6 +193,9 @@ export function RunPage(): JSX.Element {
     ? Object.fromEntries(identitiesQuery.data!.players.map(player => [player.player_id, player])) : {}
   const identitiesMismatch = identitiesQuery.isSuccess && !identitiesValid
   const run = containerQuery.data?.run_id === runId ? containerQuery.data : null
+  const homeClock = run ? runHomeClock(run.metadata_json) : null
+  const sportingClockSupported = homeClock !== null && homeClock.weeks_per_year === 61
+    && homeClock.season_start_year_week === 37 && homeClock.start_year === 2000 && homeClock.season_count === 50
   const draft = draftQuery.data?.run_id === runId && draftQuery.data.branch_id === branchId ? draftQuery.data : null
   const position = positionQuery.data?.run_id === runId && positionQuery.data.branch_id === branchId ? positionQuery.data : null
   const pending = pendingQuery.data?.run_id === runId && pendingQuery.data.branch_id === branchId ? pendingQuery.data : null
@@ -274,7 +277,7 @@ export function RunPage(): JSX.Element {
     {time.error && <Unavailable message={time.error} />}
     <RunHomeProgress season={time.presentSeason} week={time.presentWeek}
       loading={branchLoading || time.isLoading || containerQuery.isPending}
-      unavailable={!verified} historical={false} locale={language} clock={run ? runHomeClock(run.metadata_json) : null}/>
+      unavailable={!verified} historical={false} locale={language} clock={homeClock}/>
 
     <div className="run-home-columns">
       <SectionCard title={l.next}>
@@ -400,10 +403,15 @@ export function RunPage(): JSX.Element {
         ? 'Existující nástroje k přípravě hráčů, rankingu a prvního turnaje. Ruční Save a potvrzovací kroky se nemění.'
         : 'Existing player, ranking and first-tournament preparation. Manual Save and confirmations are unchanged.'}</p>
       <RunPackageSetupPanel run={run!} branch={selectedBranch} />
+      {!sportingClockSupported && <p role="status">{language === 'cs'
+        ? 'Sportovní příprava pro tento kalendář zatím není dostupná. Můžeš plánovat a kopírovat balíčky; generování hráčů, ranking a turnaje vyžadují dokončení převodu kalendáře.'
+        : 'Sporting setup is unavailable for this calendar yet. Planning and package copies are available; player generation, ranking and tournaments require the remaining calendar migration.'}</p>}
+      {sportingClockSupported && <>
       <p><Link to={base + '/players/generate'}>{language === 'cs' ? 'Generovat hráče →' : 'Generate players →'}</Link></p>
       <RunInitialRankingSetupPanel run={run!} branch={selectedBranch} />
       <RunInitialRankingPublicationPanel run={run!} branch={selectedBranch} />
       <RunFirstTournamentPanel run={run!} branch={selectedBranch} />
+      </>}
     </section>}
     <p className="status">{viewerBranchId && branchId !== viewerBranchId
       ? (language === 'cs' ? 'Viewer ukazuje jinou uloženou branch. Tato stránka nemění Viewer Branch.' : 'Viewer is displaying another saved Branch. This page does not change it.')

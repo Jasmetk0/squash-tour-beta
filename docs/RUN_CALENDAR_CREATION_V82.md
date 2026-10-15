@@ -41,7 +41,9 @@ explicit server preview before creation. Editing/unmounting invalidates the
 review and late responses cannot restore stale consent. The create response must
 match the reviewed clock before navigation. The Home progress uses the stored
 Run calendar, keeps absent legacy metadata distinct from corrupt explicit data,
-and bounds rendering for large valid horizons.
+and bounds rendering for large valid horizons. Unsupported clocks retain package
+planning but Home explicitly withholds legacy year-2000 player/ranking/tournament
+setup panels instead of advertising those as ready.
 
 New explicit-clock Runs also fail closed at InitialWorld adoption, ranking
 candidate staging, standalone simulation and authoritative match slot/group

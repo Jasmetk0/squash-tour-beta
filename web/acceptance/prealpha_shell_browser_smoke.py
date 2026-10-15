@@ -662,6 +662,8 @@ def main() -> None:
             tracks = page.locator(".run-home-progress__track")
             expect(tracks.nth(0).locator("span")).to_have_count(3)
             expect(tracks.nth(1).locator("span")).to_have_count(52)
+            expect(page.get_by_text("Sporting setup is unavailable for this calendar", exact=False)).to_be_visible()
+            assert page.get_by_role("heading", name="Prepare initial ranking", exact=True).count() == 0
             page.screenshot(path=str(artifacts / "09-custom-calendar-reopened.png"), full_page=True)
             evidence["custom_calendar_creation"] = {"run_id": custom_id, "saved_calendar": expected_clock,
                 "preview_did_not_create_run": True, "edits_require_new_preview": True,

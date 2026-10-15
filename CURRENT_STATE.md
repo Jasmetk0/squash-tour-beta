@@ -1,3 +1,9 @@
+# Real hybrid week 2→later continuity after SQLite restart (PR candidate 2026-10-15)
+
+After merged #1481, a new independent real Chromium/SQLite acceptance starts with actual group and knockout MatchEngine sport; the first Full Simulation task itself transitions world Week 1→2 and operator Saves published Week 2. After real process death/restart, a *distinct second canonical Full Simulation parent* starts at the immutable Saved Week-2 Run and must advance at least to Week 3 without duplicate sport, rewriting Saved head or mutating Viewer Week 2. The already terminal first parent remains terminal and visible in Task Center. This is intentionally a new parent, because an explicitly target-reached terminal task cannot be reopened. Full 50-season self-sufficient completion is not claimed.
+
+---
+
 # Full Simulation native worker real hybrid Week-1→2 acceptance (PR candidate 2026-10-15)
 
 Following merged #1480, new independent `--hybrid-worker-transition` Chromium/SQLite run creates an original pending Full Simulation task before MatchEngine group matches, pauses for actual Admin group standings/knockout approvals, then human freezes actual hybrid ranking authority only. After explicit idempotent week-2 target and native Task Center resumption, the **worker** (not Run Admin UI) must advance canonical world/Ranking Week 2, then *explicit Admin Save* publishes the identical Ranking fingerprint, exact 3 real match receipts and frozen historical Week 1. A separate human Saved Revision remains manual. All final-head checks required green. No mock sport or bypass.

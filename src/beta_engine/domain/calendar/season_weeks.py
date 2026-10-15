@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from beta_engine.domain.calendar.run_calendar import validate_calendar_scale
 from beta_engine.domain.calendar.season_labels import long_season_label_from_start_year
 
 TOTAL_SEASON_WEEKS = 61
@@ -78,25 +79,24 @@ def _validate_mapping_inputs(
     season_start_year_week: int,
     weeks_per_calendar_year: int,
 ) -> None:
-    if weeks_per_calendar_year != DEFAULT_WEEKS_PER_CALENDAR_YEAR:
-        raise ValueError(
-            "weeks_per_calendar_year must be 61 for the current FAX calendar mapping"
-        )
-    if not 1 <= season_start_year_week <= weeks_per_calendar_year:
-        raise ValueError("season_start_year_week must be between 1 and 61")
-    if season_week is not None and not 1 <= season_week <= TOTAL_SEASON_WEEKS:
-        raise ValueError("season_week must be between 1 and 61")
+    validate_calendar_scale(
+        weeks_per_year=weeks_per_calendar_year,
+        season_start_year_week=season_start_year_week,
+    )
+    if season_week is not None and (
+        type(season_week) is not int or not 1 <= season_week <= weeks_per_calendar_year
+    ):
+        raise ValueError(f"season_week must be between 1 and {weeks_per_calendar_year}")
 
 
 def _validate_year_week(
     year_week: int, *, weeks_per_calendar_year: int = DEFAULT_WEEKS_PER_CALENDAR_YEAR
 ) -> None:
-    if weeks_per_calendar_year != DEFAULT_WEEKS_PER_CALENDAR_YEAR:
-        raise ValueError(
-            "weeks_per_calendar_year must be 61 for the current FAX calendar mapping"
-        )
-    if not 1 <= year_week <= weeks_per_calendar_year:
-        raise ValueError("year_week must be between 1 and 61")
+    validate_calendar_scale(
+        weeks_per_year=weeks_per_calendar_year, season_start_year_week=1
+    )
+    if type(year_week) is not int or not 1 <= year_week <= weeks_per_calendar_year:
+        raise ValueError(f"year_week must be between 1 and {weeks_per_calendar_year}")
 
 
 def season_week_to_year_week(season_week: int) -> int:
@@ -256,7 +256,7 @@ def calendar_position_to_season_week(
         weeks_per_calendar_year=weeks_per_calendar_year,
     )
     _validate_year_week(year_week, weeks_per_calendar_year=weeks_per_calendar_year)
-    season_week = year_week_to_season_week(year_week)
+    season_week = ((year_week - season_start_year_week) % weeks_per_calendar_year) + 1
     inferred_start_year = (
         calendar_year if year_week >= season_start_year_week else calendar_year - 1
     )
@@ -267,7 +267,7 @@ def calendar_position_to_season_week(
             calendar_year - legacy_start_year
         ) * weeks_per_calendar_year + year_week
         legacy_season_week = calendar_offset - season_start_year_week + 1
-        if 1 <= legacy_season_week <= TOTAL_SEASON_WEEKS:
+        if 1 <= legacy_season_week <= weeks_per_calendar_year:
             return legacy_season_week
         return None
 

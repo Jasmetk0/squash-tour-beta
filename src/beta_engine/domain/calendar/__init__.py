@@ -1,5 +1,13 @@
 """Calendar mapping helpers for deterministic season positioning."""
 
+from beta_engine.domain.calendar.run_calendar import (
+    CALENDAR_SCHEMA_VERSION,
+    LEGACY_FAX_CALENDAR_SCHEMA_VERSION,
+    RunCalendar,
+    RunCalendarPosition,
+    validate_calendar_scale,
+)
+
 from beta_engine.domain.calendar.season_weeks import (
     DEFAULT_SEASON_START_YEAR_WEEK,
     DEFAULT_WEEKS_PER_CALENDAR_YEAR,
@@ -20,6 +28,11 @@ from beta_engine.domain.calendar.season_weeks import (
 )
 
 __all__ = [
+    "CALENDAR_SCHEMA_VERSION",
+    "LEGACY_FAX_CALENDAR_SCHEMA_VERSION",
+    "RunCalendar",
+    "RunCalendarPosition",
+    "validate_calendar_scale",
     "DEFAULT_SEASON_START_YEAR_WEEK",
     "DEFAULT_WEEKS_PER_CALENDAR_YEAR",
     "DEFAULT_WEEKS_PER_SEASON",

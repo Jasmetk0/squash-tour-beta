@@ -11,6 +11,9 @@ from beta_engine.infrastructure.db.full_simulation_execution_guard import (
     require_pending_full_simulation_guard,
 )
 
+from beta_engine.application.run_calendar_read_authority import (
+    require_supported_legacy_sporting_calendar,
+)
 from beta_engine.application.authoritative_week_transition import (
     AuthoritativeWeekTransitionCommand,
     AuthoritativeWeekTransitionResult,
@@ -77,6 +80,13 @@ def week_transition_readiness_blockers(session, *, run_id, branch_id, completed_
     )
     if run is None or branch is None or draft is None or branch.run_id != run_id:
         return ("run_branch_scope_missing",)
+    try:
+        require_supported_legacy_sporting_calendar(
+            session, run_id=run_id, branch_id=branch_id,
+            operation="Week Transition",
+        )
+    except ValueError:
+        return ("run_calendar_execution_unsupported",)
     if run.read_only or branch.read_only or branch.status != "active":
         blockers.append("run_branch_not_writable")
     if draft.status != "clean":
@@ -500,6 +510,12 @@ def transition_in_transaction(session: Session, awards, command):
                 raise ValueError("Completed Week Transition player health is corrupt")
         return result
 
+    # Historical completed receipts above replay unchanged; all NEW writes
+    # must validate the exact saved Run clock inside their writer transaction.
+    require_supported_legacy_sporting_calendar(
+        session, run_id=command.run_id, branch_id=command.branch_id,
+        operation="Week Transition",
+    )
     run = session.get(RunContainerModel, command.run_id)
     branch = session.get(RunBranchModel, command.branch_id)
     draft = session.scalar(

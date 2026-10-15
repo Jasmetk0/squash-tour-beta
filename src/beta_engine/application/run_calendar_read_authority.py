@@ -99,6 +99,33 @@ def resolve_saved_run_calendar(
     return current_calendar
 
 
+def require_supported_legacy_sporting_calendar(
+    session: Session, *, run_id: str, branch_id: str, operation: str
+) -> RunCalendar:
+    """Protect 61-based authoritative writers from an unsupported Saved clock.
+
+    Use inside the SAME transaction as any subsequent authoritative write. The
+    existing historical FAX ordinal/replay semantics must not be reinterpreted
+    by a Run-local W52 planning clock before the writer migration is complete.
+    """
+
+    calendar = resolve_saved_run_calendar(
+        session, run_id=run_id, branch_id=branch_id
+    )
+    if (
+        calendar.weeks_per_year != 61
+        or calendar.season_start_year_week != 37
+        or calendar.start_year != 2000
+        or calendar.season_count != 50
+    ):
+        raise ValueError(
+            f"{operation} cannot execute this Run calendar yet: "
+            "the authoritative sporting/ranking writers still require "
+            "the historical FAX 61-week, 50-season calendar"
+        )
+    return calendar
+
+
 def require_supported_full_simulation_calendar(calendar: RunCalendar) -> None:
     """Fail closed until the sporting writer is truly W/horizon aware.
 

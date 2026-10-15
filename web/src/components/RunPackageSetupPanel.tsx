@@ -1,7 +1,7 @@
 import { acknowledgeSavedRunForm } from './RunNavigationSafeguard'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
-import { useLocation } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 
 import {
   confirmRunSourcePackage, getBranchWorkingDraft, getRunPackageState,
@@ -202,7 +202,7 @@ export function RunPackageSetupPanel({ run, branch }: {
     <p className="status">Use the existing Run/Branch Package authority. Preview is read-only, Confirm copies independent content to the Working Draft, and Save creates an immutable Saved Revision. Nothing is applied to the global source.</p>
     <p>Target: <strong>{run.display_name ?? 'Product Run'}</strong> · {branch?.display_name ?? 'No active timeline'}.</p>
     {!editable && <p role="alert" className="error">Select a writable Active Admin Branch with a Saved Revision. Protected Runs cannot import packages.</p>}
-    {requestedCalendarSeason&&<p role="status">Requested season: <strong>{requestedCalendarSeason}</strong>. Only a genuinely authored source Calendar can be previewed and copied. An absent source is not an empty week; its creation is a separate explicit Admin action in the Season Registry.</p>}
+    {requestedCalendarSeason&&<p role="status">Requested season: <strong>{requestedCalendarSeason}</strong>. Only a genuinely authored source Calendar can be previewed and copied. An absent source is not an empty week. <Link to={`/admin/seasons/build?season=${encodeURIComponent(requestedCalendarSeason.slice(0,4)+'/'+requestedCalendarSeason.slice(7))}`}>Open Season Builder to explicitly prepare its source</Link> before returning here to Preview, Confirm and Save.</p>}
     <label>Source kind{' '}
       <select aria-label="Source kind" value={kind} onChange={event => setKind(event.target.value as RunSourcePackageKind)}>
         <option value="world">World</option>

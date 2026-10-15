@@ -606,6 +606,27 @@ def acceptance(
                             saved_week_two_revision=hybrid_ranking["saved_week_2_revision"],
                             artifacts=artifacts,
                         )
+                        if hybrid_same_parent_restart:
+                            # Second physical backend death/restart after a full
+                            # task genuinely advanced beyond its Saved Week-2
+                            # start. The existing task must persist unchanged.
+                            context.tracing.stop(path=str(artifacts/"before-second-restart.zip"))
+                            context.close()
+                            process.terminate()
+                            process.wait(timeout=20)
+                            process = start()
+                            context, page = new_page(browser)
+                            from real_hybrid_full_simulation_task_browser_checks import (
+                                prove_same_full_task_survives_second_restart,
+                            )
+                            hybrid_same_parent_result = prove_same_full_task_survives_second_restart(
+                                request=request, page=page, run_url=run_url,
+                                simulation_scope=simulation_scope,
+                                initial_parent=hybrid_task_handoff,
+                                continuing=hybrid_second_week_result,
+                                official_week_two=hybrid_ranking["official_week_2"],
+                                artifacts=artifacts,
+                            )
                 if completed is not None:
                     assert saved(completed["revision"]) == completed["edition"], (
                         "Final saved group standings changed after SQLite restart"

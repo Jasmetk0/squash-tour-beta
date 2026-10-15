@@ -6,7 +6,7 @@ import {LanguageProvider} from '../i18n/LanguageContext'
 import {FullSimulationServerTasks,StartServerTask} from './FullSimulationServerTasks'
 import {taskExample} from '../api/fullSimulationTasks.fixture'
 const api=vi.hoisted(()=>({getServerTasks:vi.fn(),startServerTask:vi.fn(),continueServerTask:vi.fn()}))
-const weekReview=vi.hoisted(()=>({getNextWeekExtensionInspection:vi.fn()}))
+const weekReview=vi.hoisted(()=>({getNextWeekExtensionInspection:vi.fn(),approveNextWeekExtension:vi.fn()}))
 vi.mock('../api/fullSimulationWeekReview',()=>weekReview)
 vi.mock('../api/fullSimulationTasks',async importOriginal=>({...await importOriginal<object>(),...api}))
 vi.mock('./FullSimulationSummary',()=>({FullSimulationSummary:()=>null}))
@@ -77,7 +77,7 @@ describe('server task UI (mock HTTP)',()=>{
     needs_operator_action:true,error:null}
   api.getServerTasks.mockResolvedValue([stale])
   weekReview.getNextWeekExtensionInspection.mockResolvedValue([{
-    command_id:'old-week-child',status:'append_only_proven',new_slots:[
+    command_id:'old-week-child',status:'append_only_proven',receipt_fingerprint:'a'.repeat(64),current_schedule_fingerprint:'b'.repeat(64),new_slots:[
       {ordinal:4,group_id:'final',event_id:'event',round_number:1}
     ]
   }])
@@ -89,6 +89,36 @@ describe('server task UI (mock HTTP)',()=>{
   expect(weekReview.getNextWeekExtensionInspection).toHaveBeenCalledWith('run','branch')
   expect(screen.queryByRole('button',{name:language==='cs'
     ?'Výslovně pokračovat v serverové úloze':'Explicitly resume server task'})).toBeNull()
+  expect(api.continueServerTask).not.toHaveBeenCalled()
+ })
+
+ it.each(['cs','en'] as const)('requires audited consent before approving only the verified new suffix (%s)',async language=>{
+  const original={...taskExample(),state:'awaiting_operator',revision:1,
+    checkpoint:'week_schedule_review_required',needs_operator_action:true,error:null}
+  api.getServerTasks.mockResolvedValue([original])
+  weekReview.getNextWeekExtensionInspection.mockResolvedValue([{
+    command_id:'reviewed-week',status:'append_only_proven',receipt_fingerprint:'a'.repeat(64),
+    current_schedule_fingerprint:'b'.repeat(64),
+    new_slots:[{ordinal:3,group_id:'hybrid-final',event_id:'e1',round_number:1}]
+  }])
+  weekReview.approveNextWeekExtension.mockResolvedValue({schema_version:'next_week_extension_approval.v1',task_revision:2,replayed:false})
+  open(language,<FullSimulationServerTasks runId="run" branchId="branch"/>)
+  await screen.findByText('reviewed-week')
+  const approve=screen.getByRole('button',{name:language==='cs'?'Výslovně schválit rozšíření týdne':'Explicitly approve week extension'})
+  expect(approve).toBeDisabled()
+  fireEvent.change(screen.getByLabelText(language==='cs'?'Schvalující operátor':'Approving operator'),{target:{value:'Operator'}})
+  fireEvent.change(screen.getByLabelText(language==='cs'?'Důvod schválení':'Approval reason'),{target:{value:'Reviewed genuine suffix'}})
+  fireEvent.click(screen.getByLabelText(language==='cs'?/Potvrzuji, že stávající výsledky/:/I confirm that committed results/))
+  expect(approve).not.toBeDisabled()
+  fireEvent.click(approve)
+  await waitFor(()=>expect(weekReview.approveNextWeekExtension).toHaveBeenCalledTimes(1))
+  expect(weekReview.approveNextWeekExtension.mock.calls[0][2]).toMatchObject({
+    task_id:'task',expected_task_revision:1,target_week_command_id:'reviewed-week',
+    expected_receipt_fingerprint:'a'.repeat(64),
+    expected_current_schedule_fingerprint:'b'.repeat(64),
+    confirm_committed_work_is_immutable:true,operator_label:'Operator',
+    audit_reason:'Reviewed genuine suffix'
+  })
   expect(api.continueServerTask).not.toHaveBeenCalled()
  })
 

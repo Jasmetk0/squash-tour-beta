@@ -114,12 +114,13 @@ def season_week_to_year_week(season_week: int) -> int:
 
 
 def age_at_calendar_position(
-    *, birth_year: int, birth_year_week: int, calendar_year: int, year_week: int
+    *, birth_year: int, birth_year_week: int, calendar_year: int, year_week: int,
+    weeks_per_calendar_year: int = DEFAULT_WEEKS_PER_CALENDAR_YEAR,
 ) -> int:
-    """Return completed FAX years at an authoritative calendar position."""
+    """Return completed Run years at an authoritative calendar position."""
 
-    _validate_year_week(birth_year_week)
-    _validate_year_week(year_week)
+    _validate_year_week(birth_year_week, weeks_per_calendar_year=weeks_per_calendar_year)
+    _validate_year_week(year_week, weeks_per_calendar_year=weeks_per_calendar_year)
     if birth_year > calendar_year:
         raise ValueError("birth year cannot be after the current calendar year")
     age = calendar_year - birth_year - (year_week < birth_year_week)
@@ -129,25 +130,27 @@ def age_at_calendar_position(
 
 
 def birth_year_for_age_at_calendar_position(
-    *, age: int, birth_year_week: int, calendar_year: int, year_week: int
+    *, age: int, birth_year_week: int, calendar_year: int, year_week: int,
+    weeks_per_calendar_year: int = DEFAULT_WEEKS_PER_CALENDAR_YEAR,
 ) -> int:
     """Derive birth year after birth week is known, preserving an intended age."""
 
     if age < 0:
         raise ValueError("age must be non-negative")
-    _validate_year_week(birth_year_week)
-    _validate_year_week(year_week)
+    _validate_year_week(birth_year_week, weeks_per_calendar_year=weeks_per_calendar_year)
+    _validate_year_week(year_week, weeks_per_calendar_year=weeks_per_calendar_year)
     return calendar_year - age - (birth_year_week > year_week)
 
 
 def completed_weeks_at_calendar_position(
-    *, birth_year: int, birth_year_week: int, calendar_year: int, year_week: int
+    *, birth_year: int, birth_year_week: int, calendar_year: int, year_week: int,
+    weeks_per_calendar_year: int = DEFAULT_WEEKS_PER_CALENDAR_YEAR,
 ) -> int:
-    """Return absolute completed FAX weeks since the birth calendar position."""
-    _validate_year_week(birth_year_week)
-    _validate_year_week(year_week)
+    """Return completed Run weeks since the birth calendar position."""
+    _validate_year_week(birth_year_week, weeks_per_calendar_year=weeks_per_calendar_year)
+    _validate_year_week(year_week, weeks_per_calendar_year=weeks_per_calendar_year)
     weeks = (
-        (calendar_year - birth_year) * DEFAULT_WEEKS_PER_CALENDAR_YEAR
+        (calendar_year - birth_year) * weeks_per_calendar_year
         + year_week
         - birth_year_week
     )
@@ -281,13 +284,14 @@ def calendar_position_to_season_week(
 
 
 def birthday_15_calendar_position(
-    birth_year: int, birth_year_week: int
+    birth_year: int, birth_year_week: int, *,
+    weeks_per_calendar_year: int = DEFAULT_WEEKS_PER_CALENDAR_YEAR,
 ) -> Birthday15CalendarPosition:
     """Return the pure calendar position where a player turns 15."""
 
     if not isinstance(birth_year, int):
         raise ValueError("birth_year must be an integer")
-    _validate_year_week(birth_year_week)
+    _validate_year_week(birth_year_week, weeks_per_calendar_year=weeks_per_calendar_year)
     return Birthday15CalendarPosition(
         birth_year=birth_year,
         calendar_year=birth_year + PLAYER_15TH_BIRTHDAY_AGE,
@@ -296,13 +300,19 @@ def birthday_15_calendar_position(
 
 
 def birthday_15_season_position(
-    birth_year: int, birth_year_week: int
+    birth_year: int, birth_year_week: int, *,
+    weeks_per_calendar_year: int = DEFAULT_WEEKS_PER_CALENDAR_YEAR,
+    season_start_year_week: int = DEFAULT_SEASON_START_YEAR_WEEK,
 ) -> CalendarSeasonPosition:
     """Return the pure season position where a player turns 15."""
 
-    birthday = birthday_15_calendar_position(birth_year, birth_year_week)
+    birthday = birthday_15_calendar_position(
+        birth_year, birth_year_week, weeks_per_calendar_year=weeks_per_calendar_year
+    )
     position = calendar_position_to_season_week(
-        birthday.calendar_year, birthday.year_week
+        birthday.calendar_year, birthday.year_week,
+        weeks_per_calendar_year=weeks_per_calendar_year,
+        season_start_year_week=season_start_year_week,
     )
     assert isinstance(position, CalendarSeasonPosition)
     return position

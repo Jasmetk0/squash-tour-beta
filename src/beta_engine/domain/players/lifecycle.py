@@ -13,6 +13,7 @@ from beta_engine.domain.rankings.official import (
     OfficialRankingPlayer,
     RankingWeek,
 )
+from beta_engine.domain.calendar.run_calendar import validate_calendar_scale
 from beta_engine.domain.calendar.season_weeks import (
     age_at_calendar_position,
     season_week_to_calendar_position,
@@ -30,11 +31,18 @@ def derive_birth_year_from_age(season_start_year: int, age: int) -> int:
     return season_start_year - age
 
 
-def synthesize_birth_year_week(*, player_id: str, birth_year: int) -> int:
+def synthesize_birth_year_week(
+    *, player_id: str, birth_year: int, weeks_per_calendar_year: int = 61
+) -> int:
+    """Sample a new identity in the supplied year; never convert an old birthday.
+
+    The legacy default keeps the original hash material and modulo exactly.
+    """
+    validate_calendar_scale(weeks_per_year=weeks_per_calendar_year, season_start_year_week=1)
     digest = hashlib.blake2b(
         f"birth-year-week|{player_id}|{birth_year}".encode(), digest_size=8
     ).digest()
-    return int.from_bytes(digest, "big") % 61 + 1
+    return int.from_bytes(digest, "big") % weeks_per_calendar_year + 1
 
 
 class PlayerLifecycleIdentity(FrozenInput):

@@ -1,3 +1,13 @@
+# Active integration — Task Center evidence and safe operator guidance (15 October 2026)
+
+After verified merge #1486, the base `buuk` is `f4430ada8dae54f99e4bc27790e240d8ce268d18`, with no other open PR at this task's start. This coherent frontend candidate distinguishes active server-task state from the last recorded driver checkpoint, reveals stored blocker IDs and detail without fabricating causes, guides changed Next Week schedules via *actual* read-only extension inspection instead of unconditional Stop, and correlates the exact original pending receipt with its owning server task in the global Task Center. It also repairs dark-surface contrast. The original receipts remain inspectable and read-only; no command/Save/worker/lease/sporting authority changes. Frontend component/mock tests and applicable real server-task browser screenshots are needed before merge.
+
+**Next after this merge:** inspect concrete `week_preparation_required` reasons at 2001/02 Week 1 in actual HTTP/SQLite Admin acceptance, distinguish missing authoring from integration regression, and progress the existing server task through real sporting content. No complete World Tour season or 50-season claim.
+
+**Historical archive below:** earlier dated headings marked “PR candidate”, “Active candidate” or “next” describe snapshots at their writing time; cross-check them against the actual merged PRs and canonical code before assigning current work.
+
+---
+
 # Real hybrid week 2→later continuity after SQLite restart (PR candidate 2026-10-15)
 
 After merged #1481, a new independent real Chromium/SQLite acceptance starts with actual group and knockout MatchEngine sport; the first Full Simulation task itself transitions world Week 1→2 and operator Saves published Week 2. After real process death/restart, a *distinct second canonical Full Simulation parent* starts at the immutable Saved Week-2 Run and must advance at least to Week 3 without duplicate sport, rewriting Saved head or mutating Viewer Week 2. The already terminal first parent remains terminal and visible in Task Center. This is intentionally a new parent, because an explicitly target-reached terminal task cannot be reopened. Full 50-season self-sufficient completion is not claimed.

@@ -1,4 +1,8 @@
-vi.mock('../components/FullSimulationServerTasks',()=>({FullSimulationServerTasks:()=>null}))
+const linkedServerTasks=vi.hoisted(()=>({data:[] as {run_id:string;branch_id:string;parent_command_id:string;task_id:string}[]}))
+vi.mock('../components/FullSimulationServerTasks',()=>({
+ FullSimulationServerTasks:()=>null,
+ useServerTasks:()=>({isSuccess:true,data:linkedServerTasks.data})
+}))
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
@@ -71,6 +75,7 @@ function renderPage(): void {
 describe('global Full Simulation Task Center', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    linkedServerTasks.data=[]
     localStorage.clear()
     api.getGlobalFullSimulationOperations.mockResolvedValue(example)
   })
@@ -140,4 +145,21 @@ describe('global Full Simulation Task Center', () => {
     expect(screen.queryByText('Nejsou uložené žádné obnovitelné Full Simulation.')).not.toBeInTheDocument()
     expect(screen.getByRole('link', {name: 'Otevřít seznam Runů'})).toHaveAttribute('href', '/admin/runs')
   })
+ it('links an original pending receipt to its single server task and collapses duplicate metadata',async()=>{
+  linkedServerTasks.data=[{
+   run_id:'run-beta',branch_id:'b-two',parent_command_id:'other-command',task_id:'server-task-42'
+  }]
+  renderPage()
+  const list=await screen.findByRole('list',{name:'Centrum simulací'})
+  const beta=within(list).getByText('Beta world / B timeline').closest('li')!
+  expect(within(beta).getByText(/Tento původní příkaz už patří serverové úloze/)).toHaveTextContent('server-task-42')
+  const receipt=within(beta).getByText('Zobrazit původní pending receipt').closest('details')
+  expect(receipt).not.toHaveAttribute('open')
+  expect(receipt).toHaveTextContent('other-command')
+  expect(within(beta).getAllByRole('link',{name:'Otevřít detail a ovládání'})).toHaveLength(1)
+  const alpha=within(list).getByText('Alfa svět / A timeline').closest('li')!
+  expect(within(alpha).queryByText(/Tento původní příkaz už patří/)).toBeNull()
+  expect(within(alpha).getByText('Dokončené sezony:')).toBeVisible()
+ })
+
 })

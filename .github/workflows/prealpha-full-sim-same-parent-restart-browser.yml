@@ -2,7 +2,7 @@ name: Pre-alpha Full Simulation Same Parent Restart Browser
 on:
   pull_request:
     paths:
-      - '.github/workflows/prealpha-full-sim-real-hybrid-second-week-browser.yml'
+      - '.github/workflows/prealpha-full-sim-same-parent-restart-browser.yml'
       - 'scripts/admin_saved_group_browser_smoke.py'
       - 'web/src/pages/PlannedEventDetailPage.tsx'
       - 'web/src/components/GroupFormatSetupPanel.tsx'

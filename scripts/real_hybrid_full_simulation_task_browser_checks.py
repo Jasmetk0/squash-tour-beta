@@ -136,8 +136,6 @@ def resume_real_hybrid_task_at_explicit_week_two_target(
     tournament and Week Transition; this task continuation observes the
     *reached* target and preserves all match/revision evidence.
     """
-    from playwright.sync_api import expect
-
     waiting = _task(request, simulation_scope, frozen["task_id"])
     assert waiting["state"] == "awaiting_operator", waiting
     assert waiting["checkpoint"] == "group_phase_review_required", waiting
@@ -169,6 +167,8 @@ def resume_real_hybrid_task_at_explicit_week_two_target(
 
     # Real UI, deliberate operator + reason, original Task ID. No API bypass
     # or automatic approval after clicking target.
+    from playwright.sync_api import expect
+
     ui = page.context.new_page()
     try:
         ui.goto(run_url.rsplit("/admin/runs/", 1)[0] + "/admin/operations")

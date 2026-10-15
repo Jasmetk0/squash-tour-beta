@@ -21,6 +21,25 @@ export type BoundaryAck = {schema_version:'authoritative_full_simulation_target_
   review_fingerprint:string; committed_child_work_persists:true; replayed:boolean}
 const hash=(v:unknown)=>typeof v==='string' && /^[0-9a-f]{64}$/.test(v)
 const id=(v:unknown)=>typeof v==='string' && v.length>0
+// Source JSON field order may differ after SQLite serialization. Compare each
+// authoritative selector field instead of trusting only a copied hash string.
+const sameBoundary=(a:BoundaryTarget,b:BoundaryTarget)=>(
+  a.schema_version===b.schema_version &&
+  a.kind===b.kind &&
+  a.week.season_index===b.week.season_index &&
+  a.week.week===b.week.week &&
+  a.schedule_fingerprint===b.schedule_fingerprint &&
+  a.slot_ordinal===b.slot_ordinal &&
+  a.slot_id===b.slot_id &&
+  a.slot_kind===b.slot_kind &&
+  a.group_ids.length===b.group_ids.length &&
+  a.group_ids.every((v,i)=>v===b.group_ids[i]) &&
+  a.event_id===b.event_id &&
+  a.edition_id===b.edition_id &&
+  a.event_fingerprint===b.event_fingerprint &&
+  a.topology_fingerprint===b.topology_fingerprint &&
+  a.selector_fingerprint===b.selector_fingerprint
+)
 export function isBoundaryTarget(value:unknown):value is BoundaryTarget {
   const t=value as BoundaryTarget
   if(!t || t.schema_version!=='full_simulation_boundary_target.v1' ||
@@ -56,7 +75,8 @@ export async function setBoundaryTarget(run:string,branch:string,body:BoundaryRe
   const d=await response.json() as BoundaryAck
   if(!d || d.schema_version!=='authoritative_full_simulation_target_result.v2' || d.run_id!==run || d.branch_id!==branch ||
     d.target_command_id!==body.target_command_id || d.control_command_id!==body.control_command_id ||
-    !isBoundaryTarget(d.boundary_target) || d.boundary_target.selector_fingerprint!==body.boundary_target.selector_fingerprint ||
+    !isBoundaryTarget(d.boundary_target) || !isBoundaryTarget(body.boundary_target) ||
+    !sameBoundary(d.boundary_target,body.boundary_target) ||
     !Number.isInteger(d.applied_revision) || d.applied_revision<1 || !hash(d.review_fingerprint) ||
     d.committed_child_work_persists!==true || typeof d.replayed!=='boolean')throw Error('Invalid precise target acknowledgement')
   return d

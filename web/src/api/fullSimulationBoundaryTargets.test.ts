@@ -24,4 +24,30 @@ describe('precise target HTTP contract',()=>{
   fetcher.mockResolvedValue(new Response(JSON.stringify({...ack,target_command_id:'other'})))
   await expect(setBoundaryTarget('run','branch',body)).rejects.toThrow('Invalid precise target acknowledgement')
  })
+ it('rejects a valid-looking response with a substituted slot, topology or edition but the original selector hash',async()=>{
+  const body={control_command_id:'request',target_command_id:'parent',boundary_target:boundaryExample(),operator_label:'Operator',audit_reason:'Reason'}
+  const ack={schema_version:'authoritative_full_simulation_target_result.v2',run_id:'run',branch_id:'branch',target_command_id:'parent',control_command_id:'request',boundary_target:body.boundary_target,applied_revision:2,review_fingerprint:'e'.repeat(64),committed_child_work_persists:true,replayed:false}
+  const fetcher=vi.fn();vi.stubGlobal('fetch',fetcher)
+  const substitutions=[
+   {slot_ordinal:4},
+   {slot_id:'week-0:slot:4'},
+   {group_ids:['different-real-match']},
+   {week:{season_index:0,week:2}},
+   {topology_fingerprint:'f'.repeat(64)},
+   {event_id:'another-edition',edition_id:'another-edition'}
+  ]
+  for(const change of substitutions){
+   const target={...body.boundary_target,...change}
+   expect(isBoundaryTarget(target)).toBe(true)
+   fetcher.mockResolvedValue(new Response(JSON.stringify({...ack,boundary_target:target})))
+   await expect(setBoundaryTarget('run','branch',body)).rejects.toThrow('Invalid precise target acknowledgement')
+  }
+ })
+ it('accepts the exact selector despite harmless JSON property-order differences',async()=>{
+  const body={control_command_id:'request',target_command_id:'parent',boundary_target:boundaryExample(),operator_label:'Operator',audit_reason:'Reason'}
+  const reordered=Object.fromEntries(Object.entries(body.boundary_target).reverse())
+  const ack={schema_version:'authoritative_full_simulation_target_result.v2',run_id:'run',branch_id:'branch',target_command_id:'parent',control_command_id:'request',boundary_target:reordered,applied_revision:2,review_fingerprint:'e'.repeat(64),committed_child_work_persists:true,replayed:false}
+  vi.stubGlobal('fetch',vi.fn().mockResolvedValue(new Response(JSON.stringify(ack))))
+  await expect(setBoundaryTarget('run','branch',body)).resolves.toMatchObject({replayed:false,applied_revision:2})
+ })
 })

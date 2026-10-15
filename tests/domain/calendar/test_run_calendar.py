@@ -129,3 +129,51 @@ def test_invalid_positions_rejected_instead_of_wrap_or_clamp() -> None:
     for year, week in ((2030, 0), (2031, 53), (2031, True), (-1, 1)):
         with pytest.raises(ValueError):
             cal.calendar_to_season(year, week)
+
+
+@pytest.mark.parametrize(
+    ("calendar", "start", "step", "expected"),
+    [
+        (RunCalendar(52, 1, 2035, 3), (0, 52), 1, (1, 1, 2036, 1)),
+        (RunCalendar(52, 35, 2035, 3), (0, 18), 1, (0, 19, 2036, 1)),
+        (RunCalendar(52, 35, 2035, 3), (0, 52), 1, (1, 1, 2036, 35)),
+        (RunCalendar(61, 37, 2000, 50), (0, 25), 1, (0, 26, 2001, 1)),
+        (RunCalendar.legacy_fax(), (0, 61), 1, (1, 1, 2001, 37)),
+        (RunCalendar(7, 3, 2080, 2), (0, 7), 1, (1, 1, 2081, 3)),
+    ],
+)
+def test_run_scoped_week_targets_cross_calendar_and_season_boundaries(
+    calendar, start, step, expected,
+):
+    index, week = start
+    origin_ordinal = calendar.ordinal(index, week)
+    origin = calendar.position_at_ordinal(origin_ordinal)
+    assert (origin.season_index, origin.season_week) == start
+    target = calendar.advance_weeks(index, week, step)
+    assert (target.season_index, target.season_week, target.calendar_year, target.year_week) == expected
+    assert calendar.ordinal(target.season_index, target.season_week) == origin_ordinal + step
+    assert calendar.remaining_weeks_including_current(index, week) == (
+        calendar.season_count * calendar.weeks_per_year - origin_ordinal
+    )
+
+
+def test_run_scoped_ordinal_horizon_is_strict_not_modulo():
+    for calendar in (RunCalendar.earth_default(season_count=2),
+                     RunCalendar.fax_default(season_count=2)):
+        w = calendar.weeks_per_year
+        assert calendar.ordinal(0, 1) == 0
+        assert calendar.ordinal(1, w) == 2 * w - 1
+        assert calendar.position_at_ordinal(2 * w - 1).season_index == 1
+        assert calendar.remaining_weeks_including_current(1, w) == 1
+        assert calendar.advance_weeks(0, w, 1).season_week == 1
+        for index, week in [(-1, 1), (2, 1), (0, 0), (0, w + 1), (True, 1)]:
+            with pytest.raises(ValueError):
+                calendar.ordinal(index, week)
+        for bad in (-1, 2 * w, True, 1.5):
+            with pytest.raises(ValueError):
+                calendar.position_at_ordinal(bad)
+        for bad in (-1, True, 1.5):
+            with pytest.raises(ValueError):
+                calendar.advance_weeks(0, 1, bad)
+        with pytest.raises(ValueError, match="horizon"):
+            calendar.advance_weeks(1, w, 1)

@@ -5,10 +5,9 @@ from __future__ import annotations
 from collections.abc import Callable
 from dataclasses import dataclass
 
+from beta_engine.domain.calendar.run_calendar import RunCalendar
 from beta_engine.domain.run_containers import (
     INITIAL_BRANCH_DISPLAY_NAME,
-    RUN_TIMELINE_END_SEASON,
-    RUN_TIMELINE_START_SEASON,
     WORKING_RUN_STATUS,
     normalize_run_display_name,
 )
@@ -60,6 +59,10 @@ class RunContainerCreationService:
 
     def create_empty_run(self, *, display_name: str) -> RunContainerRecord:
         normalized_name = normalize_run_display_name(display_name)
+        # Keep currently supported FAX execution defaults until all W52
+        # authoritative paths are integrated; persist this clock explicitly.
+        calendar = RunCalendar.fax_default()
+        calendar_metadata = calendar.to_metadata()
         run_id = _validated_entity_id(self.id_factory("run"), kind="run")
         branch_id = _validated_entity_id(self.id_factory("branch"), kind="branch")
         revision_id = _validated_entity_id(
@@ -79,13 +82,13 @@ class RunContainerCreationService:
             config_version=None,
             config_fingerprint=None,
             global_seed=None,
-            timeline_start_season=RUN_TIMELINE_START_SEASON,
-            timeline_end_season=RUN_TIMELINE_END_SEASON,
+            timeline_start_season=calendar.start_year,
+            timeline_end_season=calendar.start_year + calendar.season_count - 1,
             # The legacy column is the current compatibility storage for the
             # canonical Viewer Branch pointer.
             official_branch_id=branch_id,
             status=WORKING_RUN_STATUS,
-            metadata={},
+            metadata={"run_calendar": calendar_metadata},
         )
         branch = RunBranchRecord(
             branch_id=branch_id,
@@ -105,11 +108,12 @@ class RunContainerCreationService:
             run_id=run_id,
             display_name=normalized_name,
             run_status=WORKING_RUN_STATUS,
-            timeline_start_season=RUN_TIMELINE_START_SEASON,
-            timeline_end_season=RUN_TIMELINE_END_SEASON,
+            timeline_start_season=calendar.start_year,
+            timeline_end_season=calendar.start_year + calendar.season_count - 1,
             branch_id=branch_id,
             branch_display_name=INITIAL_BRANCH_DISPLAY_NAME,
             branch_status="active",
+            run_calendar_metadata=calendar_metadata,
         )
         revision_change_summary = initial_saved_revision_change_summary(
             display_name=normalized_name

@@ -53,6 +53,7 @@ export function StartServerTask({runId,branchId,command,disabled,onAccepted}:{ru
 }
 const checkpointGuidance = (checkpoint:string|null,language:'cs'|'en') => {
  const code=checkpoint??''
+ if(code==='week_schedule_extension_approved')return language==='cs'?'Rozšířený rozpis je výslovně schválený. Pro pokračování stejné úlohy zadejte operátora a důvod; nic se nespustí automaticky.':'The extended week schedule was explicitly approved. Provide operator and reason to resume the same task; execution never starts automatically.'
  if(code==='week_schedule_review_required')return language==='cs'?'Rozpis týdne se po schválení změnil. Původní příkaz nelze automaticky rozšířit o další zápasy. V administraci bezpečně ukončete původní simulaci a spusťte nově schválenou.':'The reviewed week schedule has changed. The original command cannot silently absorb new knockout matches. Stop that simulation in Run Admin and start a newly reviewed operation.'
  if(code==='target_changed_before_completion')return language==='cs'?'Cíl se změnil před konečným potvrzením dosažení. Výslovně pokračujte ve stejné úloze k jejímu aktuálnímu cíli.':'The target changed before completion was committed. Explicitly continue the same task toward its current target.'
  if(code==='target_boundary_review_required')return language==='cs'?'Cílová hranice se změnila. Znovu prověřte kanonický plán a výslovně změňte cíl, pak pokračujte ve stejné úloze.':'The target boundary changed. Review the canonical schedule and explicitly change the target, then continue the same task.'
@@ -94,7 +95,7 @@ function TaskCard({task}:{task:ServerTask}){
    {pending && !mutation.isPending && <button type="button" onClick={()=>{setPending(null);mutation.reset();void client.invalidateQueries({queryKey:['server-simulation-tasks']})}}>{t.cancel}</button>}
   </>}</>}
   {mutation.error && <p role="alert">{formatApiError(mutation.error)}</p>}
-  {requiresNewWeekReview && <FullSimulationWeekScheduleReview runId={task.run_id} branchId={task.branch_id}/>}
+  {requiresNewWeekReview && <FullSimulationWeekScheduleReview runId={task.run_id} branchId={task.branch_id} taskId={task.task_id} taskRevision={task.revision}/>}
   <Link to={`/admin/runs/${encodeURIComponent(task.run_id)}/simulate?branch=${encodeURIComponent(task.branch_id)}&task=${encodeURIComponent(task.task_id)}`}>{t.open}</Link>
   {terminal && <details><summary>{t.detail}</summary><FullSimulationSummary runId={task.run_id} branchId={task.branch_id} commandId={task.parent_command_id}/></details>}
  </li>

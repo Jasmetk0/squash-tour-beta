@@ -1,3 +1,9 @@
+# Explicit approval of an appended Next Week knockout range — integration candidate, 15 October 2026
+
+Baseline `buuk` `139527a7eaadeb4cd6001a7c555fd8819078bce9`, merged #1476, no open PRs. Candidate adds a guarded, independently audited explicit approval of only proven append-only hybrid slots and allows a separately approved continuation of the original Full Simulation server task. Parent request fingerprint, committed child receipts, Saved Revision and sporting RNG are unchanged. Global lease, task/child lineage, CAS hashes, exact Position, and original completed prefix are checked inside SQLite writer lock. No automatic rebase, restart or Save. [Contract](docs/NEXT_WEEK_EXTENSION_APPROVAL_V81.md). Final-head CI and genuine end-to-end hybrid acceptance remain gates, not assumed results.
+
+---
+
 # Next Week append-only review inspector — integration candidate, 15 October 2026
 
 Verified `buuk` `c1b4a429a3a6c2951913f64c064c48cc2a70fe4c`, merged #1475 and no open PR. This candidate introduces a **read-only** verification of an already frozen pending Next Week against a separately materialized canonical hybrid knockout suffix. Admin Task Center sees exact new global slots or a blocked reason, without mutating the original command, Save, sport, worker or ranking. **No continuation/re-review approval exists in this PR.** Pure contract tests and final-head CI gate review; real mid-flight hybrid mutation and browser acceptance remain a separate later slice. [Contract](docs/NEXT_WEEK_EXTENSION_INSPECTION_V81.md).

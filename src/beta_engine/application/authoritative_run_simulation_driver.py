@@ -440,6 +440,35 @@ class AuthoritativeWeekPreviewRequest(FrozenInput):
         )
 
 
+
+class AuthoritativeWeekExtensionApproval(FrozenInput):
+    """Explicit, audit-linked same-parent append-only Next Week re-review."""
+
+    control_command_id: str = Field(min_length=1, max_length=128)
+    task_id: str = Field(min_length=1, max_length=128)
+    target_week_command_id: str = Field(min_length=1, max_length=128)
+    run_id: str
+    branch_id: str
+    expected_task_revision: int = Field(strict=True, ge=1)
+    expected_receipt_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    expected_current_schedule_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    operator_label: str = Field(min_length=1, max_length=128)
+    audit_reason: str = Field(min_length=1, max_length=2000)
+    confirm_committed_work_is_immutable: Literal[True]
+
+    @model_validator(mode="after")
+    def validate_audit(self):
+        if (
+            self.operator_label != self.operator_label.strip()
+            or self.audit_reason != self.audit_reason.strip()
+            or not self.operator_label.strip()
+            or not self.audit_reason.strip()
+        ):
+            raise ValueError("Extension approval requires trimmed audit operator and reason")
+        if self.control_command_id == self.target_week_command_id:
+            raise ValueError("Approval cannot reuse the target Week command ID")
+        return self
+
 class AuthoritativeWeekCommand(AuthoritativeWeekPreviewRequest):
     """Reviewed resumable orchestration through the next Week Transition."""
 
@@ -5048,11 +5077,17 @@ class AuthoritativeRunSimulationDriver:
                 result = inspect_frozen_next_week_extension(
                     frozen, current, base, hybrid_matches
                 )
+                if result["status"] == "append_only_proven" and not self._completed_frozen_week_children(
+                    session, run_id=run_id, branch_id=branch_id,
+                    command_id=receipt.command_id, frozen=frozen,
+                ):
+                    result = {**result, "status": "blocked", "reason": "original_child_receipts_incomplete", "new_slots": []}
                 if frozen.get("week") != week.model_dump(mode="json"):
                     result = {**result, "status": "blocked", "reason": "historical_week_not_current", "new_slots": []}
                 items.append({
                     "command_id": receipt.command_id,
                     "week": frozen["week"],
+                    "receipt_fingerprint": fingerprint(frozen),
                     **result,
                 })
             items.sort(key=lambda item: item["command_id"])
@@ -5063,6 +5098,250 @@ class AuthoritativeRunSimulationDriver:
                 "read_only": True,
                 "items": items,
             }
+
+
+    @staticmethod
+    def _completed_frozen_week_children(session, *, run_id, branch_id, command_id, frozen):
+        """All already frozen children must be canonical, not merely mentioned."""
+        for ordinal in frozen["target_slot_ordinals"]:
+            raw = frozen["child_commands"][str(ordinal)]
+            if raw is None:
+                return False
+            try:
+                child = AuthoritativeSimulationCommand.model_validate(raw)
+            except ValueError as exc:
+                raise ValueError("Frozen Next Week child payload is invalid") from exc
+            if (
+                child.run_id != run_id
+                or child.branch_id != branch_id
+                or child.command_id != AuthoritativeRunSimulationDriver._week_slot_child_command_id(
+                    command_id, ordinal
+                )
+            ):
+                raise ValueError("Frozen Next Week child identity is not canonical")
+            receipt = session.get(
+                AuthoritativeSimulationCommandModel,
+                (run_id, branch_id, child.command_id),
+            )
+            if (
+                receipt is None
+                or receipt.status != "complete"
+                or receipt.request_fingerprint
+                != fingerprint({"mode": "slot", "command": child.model_dump(mode="json")})
+            ):
+                return False
+        return True
+
+    def approve_next_week_extension(self, command: AuthoritativeWeekExtensionApproval) -> dict:
+        """Explicit one-shot CAS approval; does not execute a single sporting child."""
+        from beta_engine.application.full_simulation_tasks import (
+            _event as task_event, _parent as task_parent,
+            _read as read_task, _write as write_task,
+        )
+        from beta_engine.infrastructure.db.full_simulation_invocation_lease import LEASE_SCOPE
+        from beta_engine.infrastructure.db.models import (
+            FullSimulationExecutionLeaseModel,
+            FullSimulationTaskModel,
+        )
+        import time
+
+        request_fp = fingerprint({
+            "mode": "week_extension_approval",
+            "command": command.model_dump(mode="json"),
+        })
+        key = (command.run_id, command.branch_id, command.control_command_id)
+        with self.factory.begin() as session:
+            session.execute(text("BEGIN IMMEDIATE"))
+            prior = session.get(AuthoritativeSimulationCommandModel, key)
+            if prior is not None:
+                if prior.request_fingerprint != request_fp or prior.status != "complete":
+                    raise ValueError("Extension approval ID already has a different request")
+                result = json.loads(prior.result_json)
+                if result.get("schema_version") != "next_week_extension_approval.v1":
+                    raise ValueError("Extension approval receipt is corrupt")
+                return {**result, "replayed": True}
+
+            self._require_writable_scope(session, command.run_id, command.branch_id)
+            task_row = session.get(FullSimulationTaskModel, command.task_id)
+            if task_row is None or (task_row.run_id, task_row.branch_id) != (
+                command.run_id, command.branch_id
+            ):
+                raise ValueError("Full Simulation task scope mismatch")
+            task_data = read_task(task_row)
+            _, full_frozen = task_parent(session, task_row, task_data)
+            if (
+                task_data["revision"] != command.expected_task_revision
+                or task_data["state"] != "awaiting_operator"
+                or task_data["checkpoint"] != "week_schedule_review_required"
+            ):
+                raise ValueError("Task checkpoint/revision changed; refresh the review")
+            lease = session.get(FullSimulationExecutionLeaseModel, LEASE_SCOPE)
+            if lease is not None and lease.expires_at_unix > int(time.time()):
+                raise ValueError("Active Full Simulation lease prevents week re-review")
+
+            position = self._position(
+                session, command.run_id, command.branch_id,
+                allow_missing_schedule=True,
+            )
+            week = position.current_week
+            if week.week >= 61:
+                raise ValueError("Next Week extension requires an ordinary week")
+            if week.season_index == 49:
+                wrapped = full_frozen.get("final_week_children", {}).get(
+                    str(week.ordinal)
+                )
+            else:
+                season_link = full_frozen.get("season_children", {}).get(
+                    str(week.season_index)
+                )
+                if not isinstance(season_link, dict):
+                    raise ValueError("Full Simulation has no original season child")
+                season_command = AuthoritativeSeasonCommand.model_validate(
+                    season_link["command"]
+                )
+                if (
+                    season_command.run_id != command.run_id
+                    or season_command.branch_id != command.branch_id
+                ):
+                    raise ValueError("Nested season scope changed")
+                season_row = session.get(
+                    AuthoritativeSimulationCommandModel,
+                    (command.run_id, command.branch_id, season_command.command_id),
+                )
+                if (
+                    season_row is None
+                    or season_row.status != "pending"
+                    or season_row.request_fingerprint != fingerprint({
+                        "mode": "season",
+                        "command": season_command.model_dump(mode="json"),
+                    })
+                ):
+                    raise ValueError("Next Season child is no longer pending")
+                season_payload = json.loads(season_row.result_json)
+                wrapped = season_payload.get("week_children", {}).get(
+                    str(week.ordinal)
+                )
+            if not isinstance(wrapped, dict) or "command" not in wrapped:
+                raise ValueError("No exact original Next Week child is owned by this task")
+            week_command = AuthoritativeWeekCommand.model_validate(wrapped["command"])
+            if (
+                week_command.command_id != command.target_week_command_id
+                or week_command.run_id != command.run_id
+                or week_command.branch_id != command.branch_id
+                or week_command.expected_week != week
+            ):
+                raise ValueError("Re-reviewed Next Week is not this task's child")
+            week_key = (
+                command.run_id, command.branch_id, command.target_week_command_id
+            )
+            week_row = session.get(AuthoritativeSimulationCommandModel, week_key)
+            if (
+                week_row is None
+                or week_row.status != "pending"
+                or week_row.request_fingerprint != fingerprint({
+                    "mode": "week",
+                    "command": week_command.model_dump(mode="json"),
+                })
+            ):
+                raise ValueError("Original Next Week request identity changed")
+            frozen = json.loads(week_row.result_json)
+            if fingerprint(frozen) != command.expected_receipt_fingerprint:
+                raise ValueError("Next Week receipt changed after operator inspection")
+            branch = session.get(RunBranchModel, command.branch_id)
+            if (
+                branch is None
+                or branch.saved_head_revision_id != week_command.expected_revision_id
+            ):
+                raise ValueError("Saved Branch head changed after original review")
+            base_schedule = self._schedule(
+                session, command.run_id, command.branch_id, week,
+            )
+            current = self._execution_schedule(
+                session, run_id=command.run_id, branch_id=command.branch_id,
+                week=week, base_schedule=base_schedule,
+            )
+            hybrid_keys = {
+                (authority.event_id, match.match_id)
+                for _, authority in self._hybrid_knockout_brackets_for_week(
+                    session, run_id=command.run_id, branch_id=command.branch_id,
+                    week=week,
+                )
+                for match in authority.matches
+            }
+            proof = inspect_frozen_next_week_extension(
+                frozen, current, base_schedule, hybrid_keys,
+            )
+            if (
+                proof["status"] != "append_only_proven"
+                or proof["current_schedule_fingerprint"]
+                != command.expected_current_schedule_fingerprint
+            ):
+                raise ValueError("Append-only hybrid review is stale or not proven")
+            if not self._completed_frozen_week_children(
+                session, run_id=command.run_id, branch_id=command.branch_id,
+                command_id=command.target_week_command_id, frozen=frozen,
+            ):
+                raise ValueError("Original frozen child results are not all committed")
+            new_ordinals = [item["ordinal"] for item in proof["new_slots"]]
+            if (
+                position.current_slot_kind != "match"
+                or position.slot_ordinal != new_ordinals[0]
+            ):
+                raise ValueError("Sporting Position does not start at the new suffix")
+            old_fp = frozen["schedule_fingerprint"]
+            new_fp = current.fingerprint
+            event = {
+                "schema_version": "next_week_extension_approval_event.v1",
+                "control_command_id": command.control_command_id,
+                "old_schedule_fingerprint": old_fp,
+                "new_schedule_fingerprint": new_fp,
+                "old_target_slot_count": len(frozen["target_slot_ordinals"]),
+                "new_slot_ordinals": new_ordinals,
+                "operator_label": command.operator_label,
+                "audit_reason": command.audit_reason,
+                "task_id": command.task_id,
+                "task_revision_before": command.expected_task_revision,
+                "original_week_request_fingerprint": week_row.request_fingerprint,
+            }
+            event["fingerprint"] = fingerprint(event)
+            frozen.setdefault("schedule_extension_approvals", []).append(event)
+            frozen["schedule_fingerprint"] = new_fp
+            frozen["target_slot_ordinals"].extend(new_ordinals)
+            frozen["target_group_ids"].extend(
+                item["group_id"] for item in proof["new_slots"]
+            )
+            for ordinal in new_ordinals:
+                frozen["child_commands"][str(ordinal)] = None
+            week_row.result_json = json.dumps(
+                frozen, sort_keys=True, separators=(",", ":"),
+            )
+            task_data["checkpoint"] = "week_schedule_extension_approved"
+            task_event(task_data, "awaiting_operator", "explicit_week_extension_approved")
+            write_task(task_row, task_data)
+            result = {
+                "schema_version": "next_week_extension_approval.v1",
+                "control_command_id": command.control_command_id,
+                "task_id": command.task_id,
+                "week_command_id": command.target_week_command_id,
+                "old_schedule_fingerprint": old_fp,
+                "approved_schedule_fingerprint": new_fp,
+                "new_slot_ordinals": new_ordinals,
+                "task_revision": task_data["revision"],
+                "replayed": False,
+                "sport_executed": False,
+                "saved_revision_changed": False,
+                "approval_fingerprint": event["fingerprint"],
+            }
+            session.add(AuthoritativeSimulationCommandModel(
+                run_id=command.run_id,
+                branch_id=command.branch_id,
+                command_id=command.control_command_id,
+                request_fingerprint=request_fp,
+                status="complete",
+                result_json=json.dumps(result, sort_keys=True, separators=(",", ":")),
+            ))
+            session.flush()
+            return result
 
     def preview_next_week(self, request: AuthoritativeWeekPreviewRequest) -> dict:
         """Freeze the current week and its canonical transition prerequisites."""
@@ -5268,6 +5547,31 @@ class AuthoritativeRunSimulationDriver:
                     )
 
             self.simulate_next_slot(child)
+
+        # The final original group match can materialize a separately approved
+        # knockout bracket *after* every original frozen child has completed.
+        # Checking only at creation of new slot children misses that boundary
+        # and incorrectly reports ordinary Week Transition blockers.
+        with self.factory.begin() as session:
+            session.execute(text("BEGIN IMMEDIATE"))
+            self._require_writable_scope(session, command.run_id, command.branch_id)
+            parent = session.get(AuthoritativeSimulationCommandModel, key)
+            if parent is None or parent.request_fingerprint != request_fp:
+                raise ValueError("Week parent receipt disappeared")
+            if parent.status == "complete":
+                return json.loads(parent.result_json)
+            frozen_at_boundary = json.loads(parent.result_json)
+            if frozen_at_boundary.get("week_transition") is None:
+                schedule_at_boundary = self._execution_schedule(
+                    session, run_id=command.run_id, branch_id=command.branch_id,
+                    week=command.expected_week,
+                )
+                current_fingerprint = (
+                    schedule_at_boundary.fingerprint
+                    if schedule_at_boundary is not None else None
+                )
+                if current_fingerprint != frozen_at_boundary["schedule_fingerprint"]:
+                    raise ValueError("Week Schedule changed during Next Week")
 
         transition_payload = None
         transition_command_payload = None

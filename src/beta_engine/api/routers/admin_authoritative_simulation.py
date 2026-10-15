@@ -30,6 +30,7 @@ from beta_engine.application.authoritative_run_simulation_driver import (
     AuthoritativeTournamentCommand,
     AuthoritativeWeekPreviewRequest,
     AuthoritativeWeekCommand,
+    AuthoritativeWeekExtensionApproval,
     AuthoritativeSeasonPreviewRequest,
     AuthoritativeSeasonCommand,
     AuthoritativeFullSimulationPreviewRequest,
@@ -1467,6 +1468,35 @@ def simulate_next_tournament(
             status_code=409,
             detail={
                 "code": "authoritative_tournament_simulation_conflict",
+                "message": str(exc),
+            },
+        ) from exc
+
+
+@router.post("/next-week/extension-approve")
+def approve_next_week_extension(
+    run_id: str,
+    branch_id: str,
+    payload: dict,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+    matches: Annotated[SeasonMatchService, Depends(get_season_match_service)],
+    awards: Annotated[
+        SeasonPointAwardsService, Depends(get_season_point_awards_service)
+    ],
+):
+    """Only explicit Admin approval; never resume execution or Save."""
+    try:
+        command = AuthoritativeWeekExtensionApproval.model_validate(
+            {**payload, "run_id": run_id, "branch_id": branch_id}
+        )
+        return _driver(runtime, matches, awards).approve_next_week_extension(command)
+    except ValidationError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except (KeyError, TypeError, ValueError) as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "next_week_extension_approval_conflict",
                 "message": str(exc),
             },
         ) from exc

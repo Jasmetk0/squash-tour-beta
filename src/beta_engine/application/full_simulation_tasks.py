@@ -61,7 +61,7 @@ EDGES = {
         "failed",
     },
     "paused": {"queued"},
-    "awaiting_operator": {"queued", "paused"},
+    "awaiting_operator": {"queued", "paused", "awaiting_operator"},
     "failed": {"queued"},
     "stopped": set(),
     "target_reached": set(),

@@ -374,7 +374,7 @@ def acceptance(root, port, base_url, chromium):
                 assert (
                     waiting["needs_operator_action"]
                     and waiting["checkpoint"] == "season_transition_save_required"
-                )
+                ), waiting
                 assert all(
                     final["groups"][k] == v for k, v in before_kill["groups"].items()
                 )

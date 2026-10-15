@@ -5548,6 +5548,31 @@ class AuthoritativeRunSimulationDriver:
 
             self.simulate_next_slot(child)
 
+        # The final original group match can materialize a separately approved
+        # knockout bracket *after* every original frozen child has completed.
+        # Checking only at creation of new slot children misses that boundary
+        # and incorrectly reports ordinary Week Transition blockers.
+        with self.factory.begin() as session:
+            session.execute(text("BEGIN IMMEDIATE"))
+            self._require_writable_scope(session, command.run_id, command.branch_id)
+            parent = session.get(AuthoritativeSimulationCommandModel, key)
+            if parent is None or parent.request_fingerprint != request_fp:
+                raise ValueError("Week parent receipt disappeared")
+            if parent.status == "complete":
+                return json.loads(parent.result_json)
+            frozen_at_boundary = json.loads(parent.result_json)
+            if frozen_at_boundary.get("week_transition") is None:
+                schedule_at_boundary = self._execution_schedule(
+                    session, run_id=command.run_id, branch_id=command.branch_id,
+                    week=command.expected_week,
+                )
+                if (
+                    schedule_at_boundary is None
+                    or schedule_at_boundary.fingerprint
+                    != frozen_at_boundary["schedule_fingerprint"]
+                ):
+                    raise ValueError("Week Schedule changed during Next Week")
+
         transition_payload = None
         transition_command_payload = None
         with self.factory.begin() as session:

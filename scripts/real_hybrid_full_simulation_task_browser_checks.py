@@ -487,6 +487,7 @@ def prove_same_full_task_survives_second_restart(
     assert request("GET",viewer+"/current")==official_week_two
 
     from playwright.sync_api import expect
+    from playwright.sync_api import expect
     operator=page.context.new_page()
     try:
         operator.goto(run_url.rsplit("/admin/runs/",1)[0]+"/admin/operations")

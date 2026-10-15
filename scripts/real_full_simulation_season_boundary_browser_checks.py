@@ -10,7 +10,10 @@ import json
 import time
 from urllib.parse import quote
 
-from real_hybrid_full_simulation_task_browser_checks import _task
+def _task(request, scope, task_id):
+    result = request("GET", scope + "/full-simulation/tasks/" + quote(task_id, safe=""))
+    assert len(result["tasks"]) == 1
+    return result["tasks"][0]
 
 
 def approve_and_resume_same_full_parent_across_season(

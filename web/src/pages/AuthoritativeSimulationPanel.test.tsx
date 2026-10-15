@@ -1,3 +1,4 @@
+vi.mock('../components/FullSimulationServerTasks',()=>({FullSimulationServerTasks:()=>null,StartServerTask:()=>null,useServerTasks:()=>({data:[]})}))
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'

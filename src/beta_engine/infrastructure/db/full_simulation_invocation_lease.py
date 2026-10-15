@@ -36,33 +36,38 @@ def acquire_invocation_lease(
     run_id: str, branch_id: str, command_id: str,
 ) -> str:
     """Fail closed if any Full Simulation invocation currently owns the DB."""
-    token = uuid4().hex
     with factory.begin() as session:
         _start_writer(session)
-        now = int(time.time())
-        lease = session.get(FullSimulationExecutionLeaseModel, LEASE_SCOPE)
-        if lease is not None and lease.expires_at_unix > now:
-            raise ValueError(
-                "Another Full Simulation invocation holds the global execution "
-                f"lease for Run {lease.run_id}, Branch {lease.branch_id}; "
-                "retry after it finishes. A pending parent receipt alone "
-                "does not imply that its executor is active."
-            )
-        if lease is None:
-            session.add(FullSimulationExecutionLeaseModel(
-                lease_scope=LEASE_SCOPE,
-                owner_token=token, run_id=run_id, branch_id=branch_id,
-                command_id=command_id,
-                expires_at_unix=now + LEASE_SECONDS,
-            ))
-        else:
-            # Crash recovery: a now-expired holder is fenced by its old token.
-            lease.owner_token = token
-            lease.run_id = run_id
-            lease.branch_id = branch_id
-            lease.command_id = command_id
-            lease.expires_at_unix = now + LEASE_SECONDS
-        session.flush()
+        return acquire_in_session(session, run_id=run_id, branch_id=branch_id, command_id=command_id)
+
+
+def acquire_in_session(session, *, run_id, branch_id, command_id):
+    """Reserve the same global fence in the caller's SQLite writer transaction."""
+    token = uuid4().hex
+    now = int(time.time())
+    lease = session.get(FullSimulationExecutionLeaseModel, LEASE_SCOPE)
+    if lease is not None and lease.expires_at_unix > now:
+        raise ValueError(
+            "Another Full Simulation invocation holds the global execution "
+            f"lease for Run {lease.run_id}, Branch {lease.branch_id}; "
+            "retry after it finishes. A pending parent receipt alone "
+            "does not imply that its executor is active."
+        )
+    if lease is None:
+        session.add(FullSimulationExecutionLeaseModel(
+            lease_scope=LEASE_SCOPE,
+            owner_token=token, run_id=run_id, branch_id=branch_id,
+            command_id=command_id,
+            expires_at_unix=now + LEASE_SECONDS,
+        ))
+    else:
+        # Crash recovery: a now-expired holder is fenced by its old token.
+        lease.owner_token = token
+        lease.run_id = run_id
+        lease.branch_id = branch_id
+        lease.command_id = command_id
+        lease.expires_at_unix = now + LEASE_SECONDS
+    session.flush()
     return token
 
 
@@ -101,9 +106,10 @@ def release_invocation_lease(
 def full_simulation_invocation_lease(
     factory: sessionmaker[Session], *,
     run_id: str, branch_id: str, command_id: str,
+    existing_token: str | None = None, on_heartbeat=None,
 ) -> Iterator[str]:
     """Own the global writer lease only during this explicit HTTP invocation."""
-    token = acquire_invocation_lease(
+    token = existing_token or acquire_invocation_lease(
         factory, run_id=run_id, branch_id=branch_id, command_id=command_id,
     )
     stop = Event()
@@ -114,6 +120,8 @@ def full_simulation_invocation_lease(
                 if not renew_invocation_lease(factory, token=token):
                     _LOG.warning("Full Simulation invocation lease was reclaimed")
                     return
+                if on_heartbeat is not None:
+                    on_heartbeat()
             except Exception:
                 # A temporary SQLite writer lock may block renewal; the
                 # next child commit still checks owner token transactionally.

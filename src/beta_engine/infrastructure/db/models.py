@@ -1815,3 +1815,20 @@ class RunGeneratedPlayerProvenanceModel(Base):
     origin_quality_band: Mapped[str | None] = mapped_column(String(64), nullable=True)
     origin_override_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
     origin_season: Mapped[int | None] = mapped_column(Integer, nullable=True)
+
+
+class FullSimulationTaskModel(Base):
+    """Durable server task intent; execution ownership remains in the global lease."""
+
+    __tablename__ = "full_simulation_tasks"
+    __table_args__ = (
+        UniqueConstraint("run_id", "branch_id", "parent_command_id"),
+        UniqueConstraint("run_id", "branch_id", "start_request_id"),
+    )
+    task_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    run_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    branch_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    parent_command_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    start_request_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+    payload_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)

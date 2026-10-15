@@ -52,6 +52,23 @@ def _verify_invocation_lease(connection, token: str | None) -> None:
             "stale child work is fenced"
         )
 
+    # A task claim is durable authority, not merely an in-memory dispatcher.
+    # Validate it after BEGIN IMMEDIATE as well as at commit, so corrupt/reclaimed
+    # task events cannot authorize any subsequent sporting write.
+    task = connection.exec_driver_sql(
+        "SELECT t.task_id, t.run_id, t.branch_id, t.parent_command_id, "
+        "t.start_request_id, t.payload_json, t.payload_fingerprint "
+        "FROM full_simulation_tasks t JOIN full_simulation_execution_leases l "
+        "ON t.run_id=l.run_id AND t.branch_id=l.branch_id AND t.parent_command_id=l.command_id "
+        "WHERE l.lease_scope='all_runs' AND l.owner_token=?", (token,)
+    ).mappings().first()
+    if task is not None:
+        from types import SimpleNamespace
+        from beta_engine.application.full_simulation_tasks import _read
+        data = _read(SimpleNamespace(**dict(task)))
+        if data["owner_token"] != token or data["state"] != "active":
+            raise ValueError("Full Simulation task claim was revoked")
+
 
 def require_pending_full_simulation_guard(session: Session) -> None:
     """Require the active parent to remain pending inside the caller transaction."""

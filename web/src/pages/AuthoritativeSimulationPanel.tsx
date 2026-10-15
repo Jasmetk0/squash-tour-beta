@@ -1,3 +1,4 @@
+import { FullSimulationServerTasks, StartServerTask, useServerTasks } from '../components/FullSimulationServerTasks'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { useLanguage } from '../i18n/LanguageContext'
@@ -288,6 +289,8 @@ export function AuthoritativeSimulationPanel({
     useState<AuthoritativeSeasonPreview | null>(null)
   const [nextSeasonProgress, setNextSeasonProgress] =
     useState<AuthoritativeSeasonProgress | null>(null)
+  const serverTasks = useServerTasks(runId,branchId,enabled)
+  const serverTaskParents = new Set(serverTasks.data?.map(t=>t.parent_command_id)??[])
   const [fullSimulationCommandId, setFullSimulationCommandId] = useState(newCommandId)
   const [fullSimulationOperator, setFullSimulationOperator] = useState('')
   const [fullSimulationReason, setFullSimulationReason] = useState('')
@@ -3303,6 +3306,7 @@ export function AuthoritativeSimulationPanel({
             />{' '}
             I reviewed the current canonical position and Saved Revision head.
           </label>
+          <FullSimulationServerTasks runId={runId} branchId={branchId}/>
           {pendingFullSimulationQuery.data?.operations.length ? (
             <div>
               <h5>{C('Resumable Full Simulation parents')}</h5>
@@ -3327,18 +3331,18 @@ export function AuthoritativeSimulationPanel({
                     <button
                       type="button"
                       onClick={() => resumePendingFullSimulation(operation)}
-                      disabled={actionPending || operation.control_state !== 'running'}
+                      disabled={actionPending || operation.control_state !== 'running' || serverTaskParents.has(operation.command.command_id)}
                     >
                       {C('Resume this Full Simulation')}
                     </button>
-                    {operation.control_state === 'pause_requested' && (
+                    {operation.control_state === 'pause_requested' && !serverTaskParents.has(operation.command.command_id) && (
                       <button type="button" onClick={() =>
                         acknowledgeFullSimulationPauseMutation.mutate(operation)
                       } disabled={acknowledgeFullSimulationPauseMutation.isPending}>
                         {C('Acknowledge safe pause')}
                       </button>
                     )}
-                    {operation.control_state !== 'pause_requested' && (
+                    {operation.control_state !== 'pause_requested' && !(operation.control_state === 'paused' && serverTaskParents.has(operation.command.command_id)) && (
                       <button type="button" onClick={() => {
                         setFullSimulationControlCommandId(newCommandId())
                         setFullSimulationControlTarget({
@@ -4928,11 +4932,17 @@ export function AuthoritativeSimulationPanel({
                   ) : null}
                 </>
               ) : null}
+              <StartServerTask key={fullSimulationCommandId} runId={runId} branchId={branchId}
+                disabled={!confirmed || actionPending || serverTaskParents.has(fullSimulationCommandId)}
+                command={{command_id:fullSimulationCommandId,operator_label:fullSimulationOperator.trim(),audit_reason:fullSimulationReason.trim(),
+                  expected_start_week:fullSimulationReview.start_week,expected_position_fingerprint:fullSimulationReview.expected_position_fingerprint,
+                  expected_revision_id:fullSimulationReview.expected_revision_id,expected_preview_fingerprint:fullSimulationReview.preview_fingerprint}}
+                onAccepted={()=>{void refreshCanonicalSimulation()}} />
               <div className="quick-actions">
                 <button
                   type="button"
                   onClick={() => fullSimulationMutation.mutate()}
-                  disabled={!confirmed || actionPending}
+                  disabled={!confirmed || actionPending || serverTaskParents.has(fullSimulationCommandId)}
                 >
                   {fullSimulationProgress
                     ? 'Retry reviewed authoritative Full Simulation'

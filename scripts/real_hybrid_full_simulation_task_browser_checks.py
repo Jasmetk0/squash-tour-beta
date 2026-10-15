@@ -233,3 +233,110 @@ def resume_real_hybrid_task_at_explicit_week_two_target(
     }
     (artifacts/"real-hybrid-original-task-terminal.json").write_text(json.dumps(evidence,indent=2))
     return evidence
+
+
+def resume_original_full_simulation_to_advance_real_hybrid_week(
+    *, request, page, run_url, simulation_scope, frozen, artifacts,
+    expected_ranking_fingerprint, before_ranking, before_history,
+):
+    """Production worker, not Run Admin, performs the *real* hybrid Week Transition.
+
+    Exact original parent Task ID, true MatchEngine receipts and authoritative
+    ranking policy already exist. Operator narrows target BEFORE crossing week.
+    No fabricated match, no direct storage writes and no Week Transition UI.
+    """
+    from playwright.sync_api import expect
+
+    waiting = _task(request, simulation_scope, frozen["task_id"])
+    assert waiting["state"] == "awaiting_operator", waiting
+    assert waiting["checkpoint"] == frozen["checkpoint"]
+    assert waiting["revision"] == frozen["revision"]
+    assert waiting["parent_command_id"] == frozen["parent_command_id"]
+    before_position = request("GET", simulation_scope + "/position")
+    assert before_position["current_week"] == {"season_index":0,"week":1}, before_position
+    assert before_position["week_ready_for_transition"], before_position
+    replay_before = request("GET", simulation_scope + "/match-replays?limit=50")
+    assert len(replay_before["matches"]) == 3
+    assert len({m["match_id"] for m in replay_before["matches"]}) == 3
+    save_before = request("GET", simulation_scope + "/save/preview")
+    saved_head_before = save_before["saved_head_revision_id"]
+    assert saved_head_before
+
+    target={
+        "control_command_id":"hybrid-real-worker-target-week2",
+        "target_command_id":frozen["parent_command_id"],
+        "target_week":{"season_index":0,"week":2},
+        "operator_label":"Hybrid real worker Admin",
+        "audit_reason":"Explicitly end original Full Simulation at first real hybrid Week Transition",
+    }
+    changed=request("POST",simulation_scope+"/full-simulation/target",target)
+    assert changed["effective_target_week"]==target["target_week"],changed
+    assert changed["replayed"] is False
+    replay_target=request("POST",simulation_scope+"/full-simulation/target",target)
+    assert replay_target["replayed"] is True
+    assert replay_target["applied_revision"]==changed["applied_revision"]
+    assert request("GET",simulation_scope+"/position")["current_week"]==before_position["current_week"]
+    assert request("GET",simulation_scope+"/match-replays?limit=50")==replay_before
+    assert request("GET",simulation_scope+"/save/preview")["saved_head_revision_id"]==saved_head_before
+
+    operator_page=page.context.new_page()
+    try:
+        operator_page.goto(run_url.rsplit("/admin/runs/",1)[0]+"/admin/operations")
+        operator_page.get_by_role("combobox",name="Language / Jazyk").select_option("en")
+        tasks=operator_page.get_by_role("region",name="Server simulation tasks")
+        card=tasks.locator('li[data-task-id="'+frozen["task_id"]+'"]')
+        expect(card).to_have_count(1,timeout=30000)
+        expect(card).to_contain_text("Waiting for operator")
+        card.get_by_label("Task operator",exact=True).fill("Hybrid Week Transition commissioner")
+        card.get_by_label("Task audit reason",exact=True).fill(
+            "Run real, reviewed canonical Week Transition from original Full Simulation task"
+        )
+        card.get_by_role("button",name="Explicitly resume server task").click()
+        deadline=time.monotonic()+100
+        while time.monotonic()<deadline:
+            done=_task(request,simulation_scope,frozen["task_id"])
+            if done["state"] in ("target_reached","failed","recoverable"):
+                break
+            if done["state"]=="awaiting_operator" and done["revision"]>waiting["revision"]:
+                raise AssertionError("Original worker blocked at: "+str(done))
+            time.sleep(.1)
+        else:
+            raise AssertionError("Original worker failed to complete Week 1->2")
+        assert done["state"]=="target_reached",done
+        assert done["parent_command_id"]==frozen["parent_command_id"]
+        assert done["original_command"]["command_id"]==frozen["parent_command_id"]
+        assert done["current_week"]==target["target_week"]
+        expect(card).to_contain_text("Target reached",timeout=30000)
+        operator_page.screenshot(path=str(artifacts/"real-hybrid-worker-week2-target.png"),full_page=True)
+    finally:
+        operator_page.close()
+
+    advanced=request("GET",simulation_scope+"/position")
+    assert advanced["current_week"]==target["target_week"],advanced
+    assert request("GET",simulation_scope+"/match-replays?limit=50")==replay_before
+    # The authoritative worker's world transition publishes Official Week 2.
+    viewer="/viewer/runs/"+quote(frozen["run_id"],safe="")+"/rankings"
+    week2=request("GET",viewer+"/current")
+    assert week2["week_ordinal"]==1 and week2["week"]==2,week2
+    assert week2["snapshot_fingerprint"]==expected_ranking_fingerprint
+    history=request("GET",viewer+"/history")
+    assert history["publication_count"]==before_history["publication_count"]+1
+    assert request("GET",viewer+"/history/0")==before_ranking
+    assert request("GET",viewer+"/history/1")==week2
+    assert request("GET",simulation_scope+"/save/preview")["saved_head_revision_id"]==saved_head_before
+    proof={
+        "original_task_id":frozen["task_id"],
+        "original_parent_id":frozen["parent_command_id"],
+        "task_state":"target_reached",
+        "target_week":target["target_week"],
+        "target_command_replayed":True,
+        "worker_performed_week_transition":True,
+        "real_match_engine_replay_count":3,
+        "ranking_week2_fingerprint":week2["snapshot_fingerprint"],
+        "human_did_not_click_week_transition":True,
+        "saved_revision_unchanged_until_explicit_admin_save":True,
+    }
+    (artifacts/"hybrid-worker-week-transition-proof.json").write_text(
+        json.dumps(proof,indent=2)
+    )
+    return proof

@@ -12,6 +12,7 @@ from urllib.parse import quote
 def publish_first_hybrid_official_week(
     *, request, page, run_id: str, branch_id: str, run_url: str,
     root_scope: str, event_id: str, hybrid: dict, artifacts,
+    on_before_week_transition=None,
 ) -> dict:
     from playwright.sync_api import expect
 
@@ -117,22 +118,48 @@ def publish_first_hybrid_official_week(
 
     # A read-only preview must not publish the next week.
     assert request("GET", viewer + "/history") == original_history
-    page.get_by_role("button", name="Review derived Week Transition", exact=True).click()
-    expect(page.get_by_role(
-        "button", name="Confirm reviewed Week Transition", exact=True,
-    )).to_be_visible(timeout=30000)
-    expect(page.get_by_text("Tournament bindings")).to_be_visible()
-    page.get_by_role("button", name="Confirm reviewed Week Transition", exact=True).click()
-    expect(page.get_by_role(
-        "button", name="Save transitioned week",
-    )).to_be_enabled(timeout=30000)
-    page.get_by_role("button", name="Save transitioned week", exact=True).click()
-    # On successful Save the component clears its committed/review state;
-    # unlike a network-idle heuristic, removal of the review-only Save action
-    # establishes that the exact confirmed Save finished.
-    expect(page.get_by_role(
-        "button", name="Save transitioned week", exact=True,
-    )).to_have_count(0, timeout=30000)
+    if on_before_week_transition is None:
+        page.get_by_role("button", name="Review derived Week Transition", exact=True).click()
+        expect(page.get_by_role(
+            "button", name="Confirm reviewed Week Transition", exact=True,
+        )).to_be_visible(timeout=30000)
+        expect(page.get_by_text("Tournament bindings")).to_be_visible()
+        page.get_by_role("button", name="Confirm reviewed Week Transition", exact=True).click()
+        expect(page.get_by_role(
+            "button", name="Save transitioned week",
+        )).to_be_enabled(timeout=30000)
+        page.get_by_role("button", name="Save transitioned week", exact=True).click()
+        # Successful Save clears the frozen review. No idle-network heuristic.
+        expect(page.get_by_role(
+            "button", name="Save transitioned week", exact=True,
+        )).to_have_count(0, timeout=30000)
+    else:
+        # This branch is *actual Full Simulation server-worker* execution:
+        # the operator has reviewed the ranking authority only. The worker
+        # must produce the Week Transition from its original parent and the
+        # already frozen genuine hybrid sport. No Week Transition UI is clicked.
+        on_before_week_transition(
+            expected_ranking_fingerprint=expected_fingerprint,
+            before_ranking=initial,
+            before_history=original_history,
+        )
+        advanced = request("GET", simulation + "/position")
+        assert advanced["current_week"] == {"season_index": 0, "week": 2}, advanced
+        page.goto(run_url + "/simulate?branch=" + quote(branch_id, safe=""))
+        page.get_by_role("combobox", name="Language / Jazyk").select_option("en")
+        # Week Transition publishes authoritative world/ranking state. The
+        # separate explicit Saved Revision remains the Admin's decision.
+        after_worker_save = request("GET", simulation + "/save/preview")
+        if after_worker_save["has_unsaved_changes"]:
+            expect(page.get_by_role(
+                "button", name="Save authoritative simulation",
+            )).to_be_enabled(timeout=30000)
+            page.get_by_role(
+                "button", name="Save authoritative simulation", exact=True,
+            ).click()
+            expect(page.get_by_text(
+                "Saved as revision", exact=False,
+            )).to_be_visible(timeout=30000)
 
     # Read the actual public Saved Revision, not the unpublished candidate
     # or working-draft ranking. One player has one composed Edition result.

@@ -62,6 +62,8 @@ function WeekScheduleReviewContent(scope:ApprovalScope){
  const {language}=useLanguage()
  const queryClient=useQueryClient()
  const [frozenRequest,setFrozenRequest]=useState<FrozenApproval|null>(null)
+ // Cancellation ends this consent session, even when refreshed proof is identical.
+ const [consentGeneration,setConsentGeneration]=useState(0)
  const result=useQuery({
   queryKey:['next-week-extension-inspection',runId,branchId],
   queryFn:()=>getNextWeekExtensionInspection(runId,branchId),
@@ -88,7 +90,7 @@ function WeekScheduleReviewContent(scope:ApprovalScope){
      :item.status==='unchanged'?(cs?'Rozpis beze změny':'Schedule unchanged')
      :(cs?'Nelze bezpečně prokázat návaznost':'Append-only extension not proven')}</strong></p>
    {item.status==='append_only_proven'&&<ApprovalForm
-    key={weekExtensionConsentEvidence(scope,item)}
+    key={JSON.stringify([consentGeneration,weekExtensionConsentEvidence(scope,item)])}
     scope={scope} item={item} disabled={disabled}
     onApprove={body=>{
      if(disabled)return
@@ -106,6 +108,8 @@ function WeekScheduleReviewContent(scope:ApprovalScope){
     {cs?'Opakovat stejný požadavek':'Retry same request'}
    </button>
    <button type="button" onClick={()=>{
+    // A new command requires new operator input, reason and checked consent.
+    setConsentGeneration(generation=>generation+1)
     setFrozenRequest(null);mutation.reset();void result.refetch()
    }}>{cs?'Zrušit požadavek':'Cancel request'}</button>
   </>}

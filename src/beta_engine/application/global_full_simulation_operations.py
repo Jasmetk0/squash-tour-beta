@@ -50,6 +50,9 @@ def _valid_target_event(event: dict, index: int) -> bool:
         or event.get("target_week") != target
     ):
         return False
+    if event.get("boundary_target") is not None:
+        from beta_engine.application.full_simulation_boundary_targets import validate_boundary_event
+        return validate_boundary_event(event)
     relative = event.get("relative_target")
     if relative is None:
         return "relative_target" not in event  # legacy absolute events
@@ -232,6 +235,13 @@ def inspect_global_full_simulation_operations(factory) -> dict:
                 )
             ):
                 raise ValueError("Pending Full Simulation effective target audit is corrupt")
+            from beta_engine.application.full_simulation_boundary_targets import effective_boundary
+            boundary = effective_boundary(frozen)
+            for target_event in target_events:
+                if target_event.get("boundary_target") is not None:
+                    scope = target_event["boundary_review"]
+                    if (scope["run_id"], scope["branch_id"], scope["parent_command_id"]) != (receipt.run_id, receipt.branch_id, receipt.command_id):
+                        raise ValueError("Pending boundary target scope is corrupt")
             state = frozen.get("control_state", "running")
             if state not in {"running", "pause_requested", "paused"}:
                 raise ValueError("Pending Full Simulation control state is corrupt")
@@ -256,6 +266,7 @@ def inspect_global_full_simulation_operations(factory) -> dict:
                 "start_week": start,
                 "final_week": reviewed_final,
                 "effective_target_week": target,
+                "effective_boundary_target": boundary.model_dump(mode="json") if boundary else None,
                 "target_revision": target_revision,
                 "completed_season_count": season_count,
                 "final_completed_week_count": week_count,

@@ -1676,6 +1676,20 @@ def inspect_pending_full_simulations(
         ) from exc
 
 
+@router.get("/full-simulation/target-options")
+def inspect_full_simulation_target_options(
+    run_id: str, branch_id: str, command_id: str,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+    matches: Annotated[SeasonMatchService, Depends(get_season_match_service)],
+    awards: Annotated[SeasonPointAwardsService, Depends(get_season_point_awards_service)],
+):
+    try:
+        return _driver(runtime, matches, awards).inspect_full_simulation_boundary_options(
+            run_id=run_id, branch_id=branch_id, command_id=command_id)
+    except (ValueError, TypeError, KeyError) as exc:
+        raise HTTPException(status_code=409, detail={"code": "full_simulation_target_review_conflict", "message": str(exc)}) from exc
+
+
 @router.post("/full-simulation/target")
 def retarget_full_simulation(
     run_id: str, branch_id: str, payload: dict,

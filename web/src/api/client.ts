@@ -1,3 +1,4 @@
+import { isBoundaryTarget } from './fullSimulationBoundaryTargets'
 import type {
   BootstrapNextSeasonPayload,
   BootstrapNextSeasonResponse,
@@ -2341,6 +2342,7 @@ export async function getGlobalFullSimulationOperations(): Promise<GlobalFullSim
     const firstFinalWeek = validStart && operation.start_week.season_index === 49
       ? operation.start_week.week : 1
     if (
+      (operation.effective_boundary_target != null && !isBoundaryTarget(operation.effective_boundary_target)) ||
       !operation || typeof operation.run_id !== 'string' || !operation.run_id ||
       typeof operation.branch_id !== 'string' || !operation.branch_id ||
       typeof operation.command_id !== 'string' || !operation.command_id ||
@@ -2351,6 +2353,7 @@ export async function getGlobalFullSimulationOperations(): Promise<GlobalFullSim
       typeof operation.run_read_only !== 'boolean' ||
       typeof operation.branch_read_only !== 'boolean' ||
       seen.has(key) || seenParentScopes.has(scope) ||
+      (operation.effective_boundary_target != null && !isBoundaryTarget(operation.effective_boundary_target)) ||
       !['running', 'pause_requested', 'paused'].includes(operation.control_state) ||
       operation.worker_activity !== 'unknown' ||
       !Number.isSafeInteger(operation.completed_season_count) ||

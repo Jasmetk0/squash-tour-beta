@@ -1,3 +1,4 @@
+import { FullSimulationBoundaryTargets, BoundaryDescription } from '../components/FullSimulationBoundaryTargets'
 import { FullSimulationServerTasks, StartServerTask, useServerTasks } from '../components/FullSimulationServerTasks'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
@@ -3321,13 +3322,15 @@ export function AuthoritativeSimulationPanel({
                     {operation.review.start_week.week}
                     {' · '}{operation.completed_season_count} {C('completed season(s)')}
                     {' · '}{C('Original target')} S{operation.review.final_week.season_index} W{operation.review.final_week.week}
-                    {' · '}{C('Effective target')} S{(operation.effective_target_week ?? operation.review.final_week).season_index} W{(operation.effective_target_week ?? operation.review.final_week).week}
+                    {' · '}{!operation.effective_boundary_target && <>{C('Effective target')} S{(operation.effective_target_week ?? operation.review.final_week).season_index} W{(operation.effective_target_week ?? operation.review.final_week).week}</>}
                     {' · '}{C('Target revision')} {operation.target_revision ?? 0}
+                    {operation.effective_boundary_target && <p><BoundaryDescription target={operation.effective_boundary_target}/></p>}
                     {' · '}{operation.control_state === 'pause_requested'
                       ? C('Pausing…')
                       : operation.control_state === 'paused'
                         ? C('Paused')
                         : C('Authorized – invocation activity unverified')}
+                    <FullSimulationBoundaryTargets runId={runId} branchId={branchId} parentId={operation.command.command_id} onApplied={()=>{void refreshCanonicalSimulation()}}/>
                     <button
                       type="button"
                       onClick={() => resumePendingFullSimulation(operation)}
@@ -4872,7 +4875,7 @@ export function AuthoritativeSimulationPanel({
                     {fullSimulationProgress.checkpoint === 'operator_paused'
                       ? C('Full Simulation paused at a safe transaction boundary.')
                       : fullSimulationProgress.checkpoint === 'operator_target_reached'
-                        ? C('Full Simulation reached its weekly target. No implicit Save.')
+                        ? C(fullSimulationProgress.effective_boundary_target ? 'Full Simulation reached its selected boundary. No implicit Save.' : 'Full Simulation reached its weekly target. No implicit Save.')
                         : `Full Simulation paused at ${fullSimulationProgress.checkpoint}.`}
                     {fullSimulationProgress.current_week
                       ? ` ${C('Current')} S${fullSimulationProgress.current_week.season_index} W${fullSimulationProgress.current_week.week}.`

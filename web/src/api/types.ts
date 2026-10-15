@@ -1,3 +1,4 @@
+import type { BoundaryTarget } from './fullSimulationBoundaryTargets'
 export type HealthResponse = { status: 'ok' }
 
 export type SeasonRegistryEntry = {
@@ -2164,6 +2165,7 @@ export type AuthoritativeFullSimulationProgress = {
   start_week: AuthoritativeRankingWeek
   current_week: AuthoritativeRankingWeek | null
   final_week: AuthoritativeRankingWeek
+  effective_boundary_target?: BoundaryTarget | null
   effective_target_week?: AuthoritativeRankingWeek
   target_revision?: number
   completed_seasons: number[]
@@ -2224,6 +2226,7 @@ export type GlobalFullSimulationOperation = {
   control_state: 'running' | 'pause_requested' | 'paused'
   start_week: AuthoritativeRankingWeek
   final_week: AuthoritativeRankingWeek
+  effective_boundary_target?: BoundaryTarget | null
   effective_target_week?: AuthoritativeRankingWeek
   target_revision?: number
   completed_season_count: number
@@ -2245,6 +2248,7 @@ export type GlobalFullSimulationOperations = {
 
 export type AuthoritativeFullSimulationPendingOperation = {
   control_state: 'running' | 'pause_requested' | 'paused'
+  effective_boundary_target?: BoundaryTarget | null
   effective_target_week?: AuthoritativeRankingWeek
   target_revision?: number
   command: AuthoritativeFullSimulationCommandPayload
@@ -2337,6 +2341,7 @@ export type AuthoritativeFullSimulationHistoryItem = {
   command_id: string
   status: 'pending' | 'abandoned' | 'stopped' | 'target_reached' | 'complete'
   start_week: AuthoritativeRankingWeek | null
+  effective_boundary_target?: BoundaryTarget | null
   effective_target_week?: AuthoritativeRankingWeek
   target_revision?: number
   final_week: AuthoritativeRankingWeek | null
@@ -2373,6 +2378,7 @@ export type AuthoritativeFullSimulationParentDetail = {
   start_week: AuthoritativeRankingWeek | null
   final_week: AuthoritativeRankingWeek | null
   initial_saved_revision_id: string | null
+  effective_boundary_target?: BoundaryTarget | null
   effective_target_week?: AuthoritativeRankingWeek
   target_revision?: number
   target_events?: {command_id:string; target_week:AuthoritativeRankingWeek; revision:number; operator_label:string; audit_reason:string; applied_at_week:AuthoritativeRankingWeek}[]

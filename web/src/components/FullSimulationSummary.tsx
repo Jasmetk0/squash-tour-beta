@@ -1,3 +1,4 @@
+import { BoundaryDescription } from './FullSimulationBoundaryTargets'
 import { useQuery } from '@tanstack/react-query'
 import { getFullSimulationSummary } from '../api/fullSimulationSummary'
 import { useLanguage } from '../i18n/LanguageContext'
@@ -8,7 +9,7 @@ const copy = {
     unavailable:'No terminal summary was recorded for this operation. Its endpoint is unavailable.',
     truth:'Frozen when this operation ended. Later Branch work does not update this summary. Save remains explicit.',
     start:'Actual start',end:'Actual end',original:'Original target',target:'Effective target',reason:'Operator reason',
-    stopped:'Stopped by operator',reached:'Selected week target reached',children:'Persisted child commands',
+    stopped:'Stopped by operator',reached:'Selected target reached',children:'Persisted child commands',
     tournaments:'Completed tournaments owned by this operation',empty:'No completed tournament source is recorded for this operation.',
     champion:'Champion',finalist:'Finalist',saved:'Saved Revision at operation end',
     missing:'Ranking changes, watched events and notifications are unavailable in this summary.'},
@@ -16,7 +17,7 @@ const copy = {
     unavailable:'Pro tuto operaci nebyl zaznamenán závěrečný souhrn. Její koncový bod není dostupný.',
     truth:'Zachyceno při ukončení této operace. Pozdější práce ve větvi tento souhrn nemění. Save zůstává výslovný.',
     start:'Skutečný začátek',end:'Skutečný konec',original:'Původní cíl',target:'Efektivní cíl',reason:'Důvod operátora',
-    stopped:'Ukončeno operátorem',reached:'Dosažen vybraný týdenní cíl',children:'Uložené dílčí příkazy',
+    stopped:'Ukončeno operátorem',reached:'Dosažen vybraný cíl',children:'Uložené dílčí příkazy',
     tournaments:'Dokončené turnaje vlastněné touto operací',empty:'Pro tuto operaci není zaznamenán zdroj dokončeného turnaje.',
     champion:'Vítěz',finalist:'Finalista',saved:'Saved Revision při ukončení operace',
     missing:'Změny rankingu, sledované události a upozornění nejsou v tomto souhrnu dostupné.'}
@@ -42,7 +43,8 @@ export function FullSimulationSummary({runId,branchId,commandId}:{runId:string;b
         <dt>{t.start}</dt><dd>{week(s.start_week)}</dd>
         <dt>{t.end}</dt><dd>{week(s.end_week)}</dd>
         <dt>{t.original}</dt><dd>{week(s.original_final_week)}</dd>
-        <dt>{t.target}</dt><dd>{week(s.effective_target_week)}</dd>
+        <dt>{t.target}</dt><dd>{s.effective_boundary_target?<BoundaryDescription target={s.effective_boundary_target}/>:week(s.effective_target_week)}</dd>
+        {s.target_trigger_evidence?.source_fingerprint && <><dt>{language==='cs'?'Zdroj uzavření':'Closure source'}</dt><dd><code>{s.target_trigger_evidence.source_fingerprint}</code> · <code>{s.target_trigger_evidence.source_command_id}</code></dd></>}
         <dt>{t.children}</dt><dd>{s.persisted_child_command_count}</dd>
         <dt>{t.saved}</dt><dd><code>{s.terminal_saved_revision_id}</code></dd>
       </dl>

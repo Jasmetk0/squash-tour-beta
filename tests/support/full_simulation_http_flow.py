@@ -99,7 +99,7 @@ def snapshot(factory, run_id, branch_id):
         }
 
 
-def initialize(server, root):
+def initialize(server, root, *, additional_packages=()):
     # Reuse established input fixtures; all outputs below use normal HTTP.
     from test_authoritative_simulation_api import _install_owned_state, initial
     from beta_engine.infrastructure.db.player_lifecycle_state import get_lifecycle
@@ -109,7 +109,7 @@ def initialize(server, root):
     from tests.api.test_saved_revision_history_api import _create_run, _request
 
     run_id, branch_id, revision = _create_run(server, display_name="Full Simulation HTTP acceptance")
-    week = _install_owned_state(server, server.flow_package, run_id, branch_id)
+    week = _install_owned_state(server, server.flow_package, run_id, branch_id, additional_packages=additional_packages)
     with server.app.state.runtime.repository._session_factory.begin() as session:
         world = get_initial_world(session, run_id=run_id, branch_id=branch_id)
         put_health(session, bootstrap_health_state(run_id=run_id, branch_id=branch_id,

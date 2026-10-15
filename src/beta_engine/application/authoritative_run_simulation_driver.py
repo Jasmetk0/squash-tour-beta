@@ -10914,8 +10914,12 @@ class AuthoritativeRunSimulationDriver:
             allow_missing_schedule=True,
         )
         start_week = position.current_week
-        if start_week.ordinal > run_final_week.ordinal:
-            raise ValueError("Full Simulation current week is beyond the supported Run")
+        try:
+            run_calendar.ordinal(start_week.season_index, start_week.week)
+        except ValueError as exc:
+            raise ValueError(
+                "Full Simulation current week is beyond the supported Run"
+            ) from exc
 
         run = session.get(RunContainerModel, request.run_id)
         branch = session.get(RunBranchModel, request.branch_id)
@@ -10965,10 +10969,12 @@ class AuthoritativeRunSimulationDriver:
             "start_week": start_week.model_dump(mode="json"),
             "final_week": run_final_week.model_dump(mode="json"),
             "remaining_weeks_including_current": (
-                run_final_week.ordinal - start_week.ordinal + 1
+                run_calendar.remaining_weeks_including_current(
+                    start_week.season_index, start_week.week
+                )
             ),
             "remaining_seasons_including_current": (
-                run_final_week.season_index - start_week.season_index + 1
+                run_calendar.season_count - start_week.season_index
             ),
             "initial_action": initial_action,
             "initial_transition_blockers": list(position.transition_blockers),

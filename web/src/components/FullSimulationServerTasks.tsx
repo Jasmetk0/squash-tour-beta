@@ -52,6 +52,7 @@ export function StartServerTask({runId,branchId,command,disabled,onAccepted}:{ru
 }
 const checkpointGuidance = (checkpoint:string|null,language:'cs'|'en') => {
  const code=checkpoint??''
+ if(code==='week_schedule_review_required')return language==='cs'?'Rozpis týdne se po schválení změnil. Původní příkaz nelze automaticky rozšířit o další zápasy. V administraci bezpečně ukončete původní simulaci a spusťte nově schválenou.':'The reviewed week schedule has changed. The original command cannot silently absorb new knockout matches. Stop that simulation in Run Admin and start a newly reviewed operation.'
  if(code==='target_changed_before_completion')return language==='cs'?'Cíl se změnil před konečným potvrzením dosažení. Výslovně pokračujte ve stejné úloze k jejímu aktuálnímu cíli.':'The target changed before completion was committed. Explicitly continue the same task toward its current target.'
  if(code==='target_boundary_review_required')return language==='cs'?'Cílová hranice se změnila. Znovu prověřte kanonický plán a výslovně změňte cíl, pak pokračujte ve stejné úloze.':'The target boundary changed. Review the canonical schedule and explicitly change the target, then continue the same task.'
  if(code.includes('save_required'))return language==='cs'?'Proveďte výslovný Save v této větvi. Poté pokračujte ve stejné serverové úloze.':'Explicitly Save this Branch, then continue this same server task.'
@@ -63,6 +64,7 @@ function TaskCard({task}:{task:ServerTask}){
  const {language}=useLanguage();const t=copy[language];const client=useQueryClient()
  const [operator,setOperator]=useState('');const [reason,setReason]=useState('');const [pending,setPending]=useState<ContinueTask|null>(null)
  const action=task.state==='recoverable'||task.state==='failed'?'recover':'resume'
+ const requiresNewWeekReview=task.checkpoint==='week_schedule_review_required'
  const mutation=useMutation({mutationFn:(body:ContinueTask)=>continueServerTask(task,body),onSuccess:async()=>{
   setPending(null);setReason('');await client.invalidateQueries({queryKey:['server-simulation-tasks']});
   await client.invalidateQueries({queryKey:['authoritative-full-simulation-pending',task.run_id,task.branch_id]})
@@ -79,7 +81,9 @@ function TaskCard({task}:{task:ServerTask}){
   {task.progress_evidence.kind==='live_branch' && <p>{t.slots}: {task.progress_evidence.completed_slot_receipts_this_week} · {t.groups}: {task.progress_evidence.committed_group_receipts_this_week}</p>}
   {task.checkpoint && <p>{t.checkpoint}: <code>{task.checkpoint}</code></p>}
   {task.error && <p role="alert">{task.error}</p>}
-  {task.needs_operator_action && <><p>{t.manual}</p>{task.state==='awaiting_operator' && <p>{checkpointGuidance(task.checkpoint,language)}</p>}
+  {task.needs_operator_action && <>{requiresNewWeekReview
+   ? <p role="alert">{checkpointGuidance(task.checkpoint,language)}</p>
+   : <><p>{t.manual}</p>{task.state==='awaiting_operator' && <p>{checkpointGuidance(task.checkpoint,language)}</p>}
    <label>{t.operator}<input value={operator} disabled={!!pending} onChange={e=>setOperator(e.target.value)}/></label>
    <label>{t.reason}<input value={reason} disabled={!!pending} onChange={e=>setReason(e.target.value)}/></label>
    <button type="button" disabled={!operator.trim()||!reason.trim()||mutation.isPending} onClick={()=>{
@@ -87,7 +91,7 @@ function TaskCard({task}:{task:ServerTask}){
      setPending(body);mutation.mutate(body)
    }}>{pending?t.retry:action==='recover'?t.recover:t.resume}</button>
    {pending && !mutation.isPending && <button type="button" onClick={()=>{setPending(null);mutation.reset();void client.invalidateQueries({queryKey:['server-simulation-tasks']})}}>{t.cancel}</button>}
-  </>}
+  </>}</>}
   {mutation.error && <p role="alert">{formatApiError(mutation.error)}</p>}
   <Link to={`/admin/runs/${encodeURIComponent(task.run_id)}/simulate?branch=${encodeURIComponent(task.branch_id)}&task=${encodeURIComponent(task.task_id)}`}>{t.open}</Link>
   {terminal && <details><summary>{t.detail}</summary><FullSimulationSummary runId={task.run_id} branchId={task.branch_id} commandId={task.parent_command_id}/></details>}

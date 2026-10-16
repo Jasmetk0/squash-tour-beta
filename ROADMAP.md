@@ -1,18 +1,19 @@
 # Active calendar dependency path — Master v82
 
-Audited base: `buuk` `10dafd09295b4582c1031ad379ff67f289f3421e` after #1499.
-Merged #1490–1499 provide the consent fix, versioned Run clock, immutable initial
+Audited base: `buuk` `97e96210275a8f623df5193ca2991db6b3649383` after #1500.
+Merged #1490–1500 provide the consent fix, versioned Run clock, immutable initial
 Save, verified calendar reads/target math, usable custom-clock creation/Home,
-explicit age/birth helpers, legacy sporting gates and calendar-owned player previews.
+explicit age/birth helpers, legacy sporting gates, calendar-owned player previews
+and reviewed population confirmation with Save/fork/restore/restart.
 
-The current candidate adds reviewed population confirmation, actual versioned
-InitialWorld/lifecycle storage, explicit Save, fork/restore and restart through the
-existing Players → Generate page. Its `population_only` stage creates no Tour
-entry, health, ranking or sporting facts. This is **not W52 sporting execution**.
-Next: migrate health/annual development/ranking/transitions/targets, safe
-extension/imports and populated multi-season acceptance.
-See [current state](CURRENT_STATE.md), [population contract](docs/CALENDAR_INITIAL_WORLD_V82.md),
-[player preview contract](docs/CALENDAR_PLAYER_PREVIEW_V82.md)
+The current candidate adds a separate reviewed initial Health baseline for a
+saved population, explicit dirty Draft/manual Save, persistence and CS/EN controls.
+It introduces no invented Injury/Illness history or new health calibration.
+Legacy health editing stays blocked for this initial-only schema. This is **not
+W52 sporting execution**. Next: dated health events/annual development/ranking/
+transitions/targets, safe extension/imports and populated multi-season acceptance.
+See [current state](CURRENT_STATE.md), [health contract](docs/CALENDAR_INITIAL_HEALTH_V82.md),
+[population contract](docs/CALENDAR_INITIAL_WORLD_V82.md)
 and [v82 task](docs/PRE_ALPHA_NEXT_CHATGPT_TASK_V82_2026_10_15.md).
 
 ## Dependency path to the pre-alpha

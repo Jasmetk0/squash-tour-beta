@@ -5120,3 +5120,13 @@ export async function resolveAdminGroupStandingsTie(
     throw new Error('Group tie-resolution authority does not match this Run, Branch, Event and explicit ordered case.')
   return data
 }
+
+export function getCalendarInitialHealth(runId:string,branchId:string):Promise<unknown> {
+  return request(`/admin/runs/${encodeURIComponent(runId)}/branches/${encodeURIComponent(branchId)}/player-health/calendar-initial`)
+}
+export function reviewCalendarInitialHealth(runId:string,branchId:string,payload:import('./calendarInitialHealth').InitialHealthRequest):Promise<unknown> {
+  return request(`/admin/runs/${encodeURIComponent(runId)}/branches/${encodeURIComponent(branchId)}/player-health/calendar-initial/preview`, {method:'POST',body:JSON.stringify(payload)})
+}
+export function confirmCalendarInitialHealth(runId:string,branchId:string,review:import('./calendarInitialHealth').InitialHealthRequest,fingerprint:string):Promise<unknown> {
+  return request(`/admin/runs/${encodeURIComponent(runId)}/branches/${encodeURIComponent(branchId)}/player-health/calendar-initial`, {method:'POST',body:JSON.stringify({review,expected_health_fingerprint:fingerprint})})
+}

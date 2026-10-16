@@ -768,6 +768,37 @@ def main() -> None:
                                          + preview_branch["branch_id"] + "/saved-players").json()
             assert inventory["total"] == 1000
             page.screenshot(path=str(artifacts / "11-custom-calendar-population-saved.png"), full_page=True)
+            # Separate explicit health baseline; confirmation must not Save implicitly.
+            health_root = args.api_url + "/admin/runs/" + custom_id + "/branches/" + preview_branch["branch_id"] + "/player-health"
+            page.get_by_role("button", name="Review initial health", exact=True).click()
+            expect(page.get_by_role("button", name="Create initial health", exact=True)).to_be_disabled()
+            page.get_by_label("Confirm initial health", exact=True).check()
+            with page.expect_response(lambda response: response.request.method == "POST"
+                                      and response.url.endswith("/calendar-initial")) as health_created:
+                page.get_by_role("button", name="Create initial health", exact=True).click()
+            assert health_created.value.status == 201, health_created.value.text()
+            initial_health = health_created.value.json()
+            assert initial_health["saved_head_revision_id"] == saved_population["revision_id"]
+            assert initial_health["draft_status"] == "dirty" and not initial_health["saved"]
+            assert initial_health["state"]["week"]["calendar"] == expected_clock
+            assert len(initial_health["state"]["players"]) == 1000
+            assert all(not p["records"] and not p["permanent_consequences"] for p in initial_health["state"]["players"])
+            expect(page.get_by_role("button", name="Save initial health", exact=True)).to_be_disabled()
+            page.get_by_label("Confirm health Save", exact=True).check()
+            with page.expect_response(lambda response: response.request.method == "POST"
+                                      and response.url.endswith("/player-health/save")) as health_saved:
+                page.get_by_role("button", name="Save initial health", exact=True).click()
+            assert health_saved.value.status == 201, health_saved.value.text()
+            health_revision = health_saved.value.json()["saved_revision"]
+            assert health_revision["payload"]["content"]["player_health_state"]["fingerprint"] == initial_health["health_component_fingerprint"]
+            expect(page.get_by_text("Initial health is saved.", exact=True)).to_be_visible()
+            page.reload()
+            expect(page.get_by_text("Initial health is saved.", exact=True)).to_be_visible()
+            persisted_health = page.request.get(health_root + "/calendar-initial").json()
+            assert persisted_health["saved"] and persisted_health["state"] == initial_health["state"]
+            page.screenshot(path=str(artifacts / "13-custom-calendar-initial-health-saved.png"), full_page=True)
+            evidence["custom_calendar_initial_health"] = {"players":1000,"manual_save":True,
+                "saved_revision_id":health_revision["revision_id"],"reload_exact":True,"injury_history_created":False}
             page.get_by_role("link", name="Open player list", exact=False).click()
             expect(page.get_by_role("heading", name="Players", exact=True)).to_be_visible()
             expect(page.get_by_text(inventory["players"][0]["display_name"], exact=True)).to_be_visible()

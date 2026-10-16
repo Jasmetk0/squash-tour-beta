@@ -1,4 +1,4 @@
-"""Persistence, Saved Revision, restore, and fork support for canonical Health V1."""
+"""Persistence, Saved Revision, restore, and fork support for legacy Health V1 and calendar-owned initial health."""
 
 from __future__ import annotations
 
@@ -8,6 +8,10 @@ import json
 from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
+from beta_engine.domain.calendar.run_week_position import RunWeekPosition
+from beta_engine.domain.players.calendar_initial_health import (
+    CalendarInitialHealthState,
+)
 from beta_engine.domain.players.health import (
     PlayerHealthWeekState,
     bootstrap_health_state,
@@ -19,17 +23,27 @@ from beta_engine.infrastructure.db.models import PlayerHealthWeekStateModel
 PLAYER_HEALTH_COMPONENT_KEY = "player_health_state"
 
 
+def _parse_health_json(raw):
+    value = json.loads(raw)
+    if (
+        isinstance(value, dict)
+        and value.get("schema_version") == "calendar_initial_health_state.v1"
+    ):
+        return CalendarInitialHealthState.model_validate_json(raw)
+    return PlayerHealthWeekState.model_validate_json(raw)
+
+
 def _load(
     row: PlayerHealthWeekStateModel,
     run_id: str,
     branch_id: str,
-    week: RankingWeek,
-) -> PlayerHealthWeekState:
-    state = PlayerHealthWeekState.model_validate_json(row.payload_json)
+    week_ordinal: int,
+) -> PlayerHealthWeekState | CalendarInitialHealthState:
+    state = _parse_health_json(row.payload_json)
     if (state.run_id, state.branch_id, state.week.ordinal, state.fingerprint) != (
         run_id,
         branch_id,
-        week.ordinal,
+        week_ordinal,
         row.fingerprint,
     ):
         raise ValueError("Player health identity, week, or fingerprint mismatch")
@@ -41,16 +55,24 @@ def get_health(
     *,
     run_id: str,
     branch_id: str,
-    week: RankingWeek,
-) -> PlayerHealthWeekState | None:
+    week: RankingWeek | RunWeekPosition,
+) -> PlayerHealthWeekState | CalendarInitialHealthState | None:
     row = session.get(PlayerHealthWeekStateModel, (run_id, branch_id, week.ordinal))
-    return None if row is None else _load(row, run_id, branch_id, week)
+    if row is None:
+        return None
+    state = _load(row, run_id, branch_id, week.ordinal)
+    if isinstance(state, CalendarInitialHealthState):
+        if not isinstance(week, RunWeekPosition) or state.week != week:
+            raise ValueError("Calendar health requires its matching Run-owned position")
+    elif not isinstance(week, RankingWeek):
+        raise ValueError("Legacy health requires its historical RankingWeek")
+    return state
 
 
 def put_health(
     session: Session,
-    state: PlayerHealthWeekState,
-) -> PlayerHealthWeekState:
+    state: PlayerHealthWeekState | CalendarInitialHealthState,
+) -> PlayerHealthWeekState | CalendarInitialHealthState:
     current = get_health(
         session,
         run_id=state.run_id,
@@ -86,7 +108,9 @@ def put_health(
 
 def bootstrap_health(session: Session, world) -> PlayerHealthWeekState:
     if getattr(world, "schema_version", None) == "initial_world_state.v2":
-        raise ValueError("Calendar population requires a versioned Health bootstrap before sporting use")
+        raise ValueError(
+            "Calendar population requires a versioned Health bootstrap before sporting use"
+        )
     state = bootstrap_health_state(
         run_id=world.run_id,
         branch_id=world.branch_id,
@@ -163,12 +187,19 @@ def replace_health_head(
     head = rows[-1]
     if head.week_ordinal != state.week.ordinal:
         raise ValueError("Admin Health edit may replace only the current health head")
-    current = _load(head, state.run_id, state.branch_id, state.week)
+    current = _load(head, state.run_id, state.branch_id, state.week.ordinal)
+    if isinstance(current, CalendarInitialHealthState):
+        raise ValueError(
+            "Calendar initial health cannot be edited through the legacy Health writer"
+        )
     if current.fingerprint != expected_fingerprint:
         raise ValueError("Player health head changed since preview")
     if current.predecessor_fingerprint != state.predecessor_fingerprint:
         raise ValueError("Admin Health edit cannot rewrite predecessor history")
-    if current.source_initial_world_fingerprint != state.source_initial_world_fingerprint:
+    if (
+        current.source_initial_world_fingerprint
+        != state.source_initial_world_fingerprint
+    ):
         raise ValueError("Admin Health edit cannot rewrite InitialWorld provenance")
 
     head.fingerprint = state.fingerprint
@@ -208,10 +239,7 @@ def health_component(
             row,
             run_id,
             branch_id,
-            RankingWeek(
-                season_index=row.week_ordinal // 61,
-                week=row.week_ordinal % 61 + 1,
-            ),
+            row.week_ordinal,
         )
         for row in rows
     )
@@ -219,7 +247,10 @@ def health_component(
     return _component(states)
 
 
-def _component(states: tuple[PlayerHealthWeekState, ...] | list[PlayerHealthWeekState]):
+def _component(
+    states: tuple[PlayerHealthWeekState | CalendarInitialHealthState, ...]
+    | list[PlayerHealthWeekState | CalendarInitialHealthState],
+):
     body = [state.model_dump(mode="json") for state in states]
     return {
         "fingerprint": hashlib.sha256(
@@ -229,7 +260,14 @@ def _component(states: tuple[PlayerHealthWeekState, ...] | list[PlayerHealthWeek
     }
 
 
-def _validate_chain(states: tuple[PlayerHealthWeekState, ...]) -> None:
+def _validate_chain(
+    states: tuple[PlayerHealthWeekState | CalendarInitialHealthState, ...],
+) -> None:
+    if any(isinstance(state, CalendarInitialHealthState) for state in states):
+        if len(states) != 1 or not isinstance(states[0], CalendarInitialHealthState):
+            raise ValueError(
+                "Calendar initial health cannot contain a mixed or advanced history"
+            )
     ordinals = tuple(state.week.ordinal for state in states)
     if ordinals != tuple(sorted(set(ordinals))):
         raise ValueError("Player health state weeks are not unique and canonical")
@@ -260,22 +298,43 @@ def load_saved_health(
     *,
     run_id: str,
     branch_id: str,
-) -> tuple[PlayerHealthWeekState, ...] | None:
+) -> tuple[PlayerHealthWeekState | CalendarInitialHealthState, ...] | None:
     component = payload.get("content", {}).get(PLAYER_HEALTH_COMPONENT_KEY)
     if component is None:
         return None
     if not isinstance(component, dict) or set(component) != {"fingerprint", "states"}:
         raise ValueError("Invalid Saved Revision player-health component")
     states = tuple(
-        PlayerHealthWeekState.model_validate_json(json.dumps(state))
-        for state in component["states"]
+        _parse_health_json(json.dumps(state)) for state in component["states"]
     )
     _validate_chain(states)
     if _component(states)["fingerprint"] != component["fingerprint"] or any(
-        (state.run_id, state.branch_id) != (run_id, branch_id)
-        for state in states
+        (state.run_id, state.branch_id) != (run_id, branch_id) for state in states
     ):
         raise ValueError("Saved player-health identity or fingerprint mismatch")
+    if any(isinstance(state, CalendarInitialHealthState) for state in states):
+        from beta_engine.infrastructure.db.initial_world_state import (
+            load_saved_initial_world,
+        )
+        from beta_engine.infrastructure.db.player_lifecycle_state import (
+            load_saved_lifecycle,
+        )
+
+        world = load_saved_initial_world(payload, run_id=run_id, branch_id=branch_id)
+        life = load_saved_lifecycle(payload, run_id=run_id, branch_id=branch_id)
+        state = states[0]
+        if (
+            world is None
+            or world.schema_version != "initial_world_state.v2"
+            or state.week.calendar != world.run_calendar
+            or not life
+            or life[0].week != state.week
+            or tuple(p.player_id for p in state.players)
+            != tuple(p.player_id for p in life[0].players)
+        ):
+            raise ValueError(
+                "Saved calendar health differs from its population/calendar"
+            )
     return states
 
 
@@ -296,10 +355,10 @@ def remap_saved_health_component(
     if source is None:
         return None
 
-    remapped: list[PlayerHealthWeekState] = []
+    remapped: list[PlayerHealthWeekState | CalendarInitialHealthState] = []
     previous = None
     for state in source:
-        target = PlayerHealthWeekState.model_validate_json(
+        target = _parse_health_json(
             state.model_copy(
                 update={
                     "branch_id": target_branch_id,
@@ -369,10 +428,7 @@ def restore_saved_health(
             and len(target_lifecycle) == 1
             and target_lifecycle[0].week.ordinal == 0
         )
-        if (
-            world_clock is not None
-            and world_clock["current_ordinal"] > 0
-        ) or (
+        if (world_clock is not None and world_clock["current_ordinal"] > 0) or (
             target_world is None
             and target_ranking is not None
             and not opening_lifecycle
@@ -395,10 +451,7 @@ def restore_saved_health(
             row,
             run_id,
             branch_id,
-            RankingWeek(
-                season_index=row.week_ordinal // 61,
-                week=row.week_ordinal % 61 + 1,
-            ),
+            row.week_ordinal,
         )
         for row in rows
     )
@@ -416,7 +469,10 @@ def restore_saved_health(
     for state in target or ():
         put_health(session, state)
 
-    calendar_population = target_world is not None and target_world.schema_version == "initial_world_state.v2"
+    calendar_population = (
+        target_world is not None
+        and target_world.schema_version == "initial_world_state.v2"
+    )
     if target is None and target_lifecycle is not None and not calendar_population:
         opening = target_lifecycle[0]
         put_health(
@@ -427,9 +483,7 @@ def restore_saved_health(
                 source_initial_world_fingerprint=(
                     opening.source_initial_world_fingerprint
                 ),
-                player_ids=tuple(
-                    player.player_id for player in opening.players
-                ),
+                player_ids=tuple(player.player_id for player in opening.players),
             ),
         )
     elif target is None and target_world is not None and not calendar_population:

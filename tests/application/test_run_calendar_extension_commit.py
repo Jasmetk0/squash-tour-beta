@@ -216,3 +216,43 @@ def test_w80_completed_run_preserved_and_not_started(tmp_path):
             ) == RunCalendar(80, 40, 2040, 4)
     finally:
         engine.dispose()
+
+
+
+def test_historical_restore_and_fork_keep_old_revision_immutable(tmp_path):
+    engine, factory, repo = _setup(tmp_path)
+    try:
+        historical = repo.get_branch_saved_revision(revision_id="revision-1")
+        assert historical.payload["run"]["run_calendar"]["season_count"] == 50
+        _save(repo, _review(factory, repo, 52))
+        before_restore = repo.get_branch_revision_state(branch_id="branch-1")
+        restored = repo.restore_branch_saved_revision_atomically(
+            run_id="run-1", branch_id="branch-1",
+            target_saved_revision_id="revision-1",
+            expected_head_saved_revision_id=before_restore.saved_head_revision_id,
+            expected_draft_version=before_restore.working_draft.draft_version,
+            expected_current_viewer_branch_id="branch-1",
+            checkpoint_id="restore-checkpoint-old-clock",
+            restore_saved_revision_id="restore-revision-current-clock",
+            audit_event_id="restore-audit-current-clock",
+        )
+        assert restored.saved_revision.payload["run"]["run_calendar"]["season_count"] == 52
+        assert restored.saved_revision.parent_revision_id == before_restore.saved_head_revision_id
+        assert repo.get_branch_saved_revision(revision_id="revision-1") == historical
+        fork = RunBranchCreationService(repo, lambda kind: {
+            "branch": "fork-after-extension",
+            "working-draft": "fork-after-extension-draft",
+            "saved-revision": "fork-rebased-current-clock",
+        }[kind]).create_from_saved_revision(
+            run_id="run-1", source_branch_id="branch-1",
+            source_saved_revision_id="revision-1",
+            display_name="Historical source",
+        )
+        assert fork.saved_head_revision_id == "fork-rebased-current-clock"
+        with factory() as session:
+            assert resolve_saved_run_calendar(
+                session, run_id="run-1", branch_id="fork-after-extension"
+            ).season_count == 52
+        assert repo.get_branch_saved_revision(revision_id="revision-1") == historical
+    finally:
+        engine.dispose()

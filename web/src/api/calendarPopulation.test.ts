@@ -14,6 +14,17 @@ describe('calendar population authority boundary',()=>{
     const drift={...reviewed(request),pool_preview:{...preview(),preview_fingerprint:'f'.repeat(64)}}
     expect(()=>validateCalendarPopulationReview(drift,request,preview(),'run-a','branch-a',clock)).toThrow()
   })
+  it('accepts the full normalized generation request across independent HTTP JSON responses',()=>{
+    const full={...input,schema_version:'run_calendar_initial_pool_request.v2',country_code:null,
+      geographic_region:null,travel_region:null,country_quotas:[],naming_policy:'country_serial.v1'}
+    const raw={...preview(),request:full}
+    const outgoing={...request,generation:raw.request}
+    // Every real HTTP response creates new array/object identities.
+    const reply=JSON.parse(JSON.stringify({...reviewed(outgoing),pool_preview:raw}))
+    expect(validateCalendarPopulationReview(reply,outgoing,raw,'run-a','branch-a',clock)).toEqual(reply)
+    reply.pool_preview.request.country_quotas=[{country_code:'CZE',count:1}]
+    expect(()=>validateCalendarPopulationReview(reply,outgoing,raw,'run-a','branch-a',clock)).toThrow()
+  })
   it('refuses a foreign installed population or a birthday outside the Run calendar',()=>{
     expect(validateCalendarPopulation(population,'run-a','branch-a',clock)).toEqual(population)
     expect(()=>validateCalendarPopulation(population,'run-a','other',clock)).toThrow()

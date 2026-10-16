@@ -11,6 +11,8 @@ from dataclasses import asdict
 
 from sqlalchemy.orm import Session
 
+from beta_engine.infrastructure.db.models import RunBranchModel, BranchSavedRevisionModel
+
 from beta_engine.application.run_calendar_read_authority import (
     require_supported_full_simulation_calendar,
     resolve_saved_run_calendar,
@@ -113,6 +115,12 @@ def preview_saved_run_calendar_extension(
 
     original = resolve_saved_run_calendar(session, run_id=run_id, branch_id=branch_id)
     proposed = original.extend_to(new_season_count)
+    branch = session.get(RunBranchModel, branch_id)
+    if branch is None or branch.run_id != run_id or not branch.saved_head_revision_id:
+        raise ValueError("extension requires a matching Branch with a Saved head")
+    saved_head = session.get(BranchSavedRevisionModel, branch.saved_head_revision_id)
+    if saved_head is None or saved_head.run_id != run_id:
+        raise ValueError("extension Saved head is unavailable")
     old_last = original.season_to_calendar(
         original.season_count - 1, original.weeks_per_year
     )
@@ -129,6 +137,8 @@ def preview_saved_run_calendar_extension(
         "save_performed": False,
         "simulation_started": False,
         "all_branches_change_required": True,
+        "source_saved_head_revision_id": saved_head.revision_id,
+        "source_saved_head_content_hash": saved_head.content_hash,
         "historical_revisions_immutable": True,
         "original_calendar": original.to_metadata(),
         "proposed_calendar": proposed.to_metadata(),

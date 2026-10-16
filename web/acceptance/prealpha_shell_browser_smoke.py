@@ -829,6 +829,10 @@ def main() -> None:
             preview_record=next(p for p in reviewed_health["after_state"]["players"] if p["player_id"]==selected_player["player_id"])["records"][0]
             assert preview_record["onset_week"]=={"calendar":expected_clock,"season_index":0,"week":1}
             assert preview_record["recovery_window_max_weeks"]==6
+            health_url=args.api_url+"/admin/runs/"+custom_id+"/branches/"+preview_branch["branch_id"]+"/players/"+selected_player["player_id"]+"/health"
+            live_after_preview=page.request.get(health_url).json()
+            assert live_after_preview["player"]["records"]==[]
+            assert live_after_preview["health_component_fingerprint"]==initial_health["health_component_fingerprint"]
             expect(page.get_by_role("button", name="Confirm reviewed Health edit", exact=True)).to_be_disabled()
             page.get_by_label("Confirm Health changes", exact=True).check()
             with page.expect_response(lambda r:r.request.method=="POST" and r.url.endswith("/health")) as edited:

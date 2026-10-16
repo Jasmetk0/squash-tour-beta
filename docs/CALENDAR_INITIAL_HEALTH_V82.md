@@ -110,7 +110,10 @@ fresh confirmation after preview, then separate Save consent. Source, proof,
 scope or input changes revoke consent, including change-back and late responses.
 Mutation retry is disabled. After a lost confirmation/Save response the UI reads
 current authority; a retained exact confirmation retry requires new explicit
-approval. Save receipts must identify the actual scope, component and clean draft.
+approval. Save consent is available only after both reads settle and the Save proof matches
+the current Health component and Draft version. Save receipts must identify the
+actual scope, component and clean draft. Explicit localized select names support
+real browser and assistive-technology interaction.
 
 Saved capture/load, materialized fork and restore dispatch by exact state version.
 Old V1 and initial baseline JSON/hashes stay exact. New snapshot records, recurrence

@@ -199,6 +199,7 @@ describe('PlayerHealthAdminPanel', () => {
     expect(await screen.findByText(/Health edit committed to the Working Draft/)).toBeInTheDocument()
 
     await waitFor(() => expect(screen.getByRole('button', { name: 'Save Health Revision' })).toBeDisabled())
+    await waitFor(()=>expect(screen.getByRole('checkbox',{name:'Confirm Health Save'})).toBeEnabled())
     await userEvent.click(screen.getByRole('checkbox', { name:'Confirm Health Save' }))
     await waitFor(() => expect(screen.getByRole('button', { name: 'Save Health Revision' })).toBeEnabled())
     await userEvent.click(screen.getByRole('button', { name: 'Save Health Revision' }))
@@ -332,6 +333,7 @@ describe('PlayerHealthAdminPanel', () => {
     })
     renderPanel()
     await screen.findByRole('button',{name:'Edit current Health'})
+    await waitFor(()=>expect(screen.getByRole('checkbox',{name:'Confirm Health Save'})).toBeEnabled())
     await userEvent.click(screen.getByRole('checkbox',{name:'Confirm Health Save'}))
     const save=screen.getByRole('button',{name:'Save Health Revision'})
     await waitFor(()=>expect(save).toBeEnabled());await userEvent.click(save)
@@ -345,12 +347,26 @@ describe('PlayerHealthAdminPanel', () => {
     current={...view(1,1),health_component_fingerprint:'d'.repeat(64)};saveReady=true
     api.savePlayerHealthRevision.mockResolvedValue({saved_revision:{run_id:'run-a',branch_id:'branch-a',revision_id:'bad',payload:{content:{player_health_state:{fingerprint:'wrong'}}}}})
     renderPanel();await screen.findByRole('button',{name:'Edit current Health'})
+    await waitFor(()=>expect(screen.getByRole('checkbox',{name:'Confirm Health Save'})).toBeEnabled())
     await userEvent.click(screen.getByRole('checkbox',{name:'Confirm Health Save'}))
     const save=screen.getByRole('button',{name:'Save Health Revision'})
     await waitFor(()=>expect(save).toBeEnabled());await userEvent.click(save)
     expect(await screen.findByRole('alert')).toHaveTextContent('Save receipt differs')
     expect(screen.getByRole('checkbox',{name:'Confirm Health Save'})).not.toBeChecked()
     expect(screen.queryByText(/Health Saved Revision created/)).not.toBeInTheDocument()
+  })
+
+  it('enables Save consent only after the matching current proof arrives',async()=>{
+    current={...view(1,1),health_component_fingerprint:'d'.repeat(64)}
+    api.previewPlayerHealthSave.mockResolvedValue(savePreview(false,0))
+    const {client}=renderPanel()
+    const consent=await screen.findByRole('checkbox',{name:'Confirm Health Save'})
+    expect(consent).toBeDisabled()
+    await act(async()=>client.setQueryData(['admin-player-health-save','run-a','branch-a'],savePreview(true,1)))
+    await waitFor(()=>expect(consent).toBeEnabled())
+    await userEvent.click(consent)
+    expect(screen.getByRole('button',{name:'Save Health Revision'})).toBeEnabled()
+    expect(api.savePlayerHealthRevision).not.toHaveBeenCalled()
   })
 
 })

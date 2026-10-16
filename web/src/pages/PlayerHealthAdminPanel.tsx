@@ -275,6 +275,12 @@ export function PlayerHealthAdminPanel({
   })
 
   const current = healthQuery.isError ? undefined : healthQuery.data
+  const saveProof = savePreviewQuery.data
+  const saveReady = Boolean(current && saveProof && !healthQuery.isFetching && !savePreviewQuery.isFetching
+    && !healthQuery.isError && !savePreviewQuery.isError && !branchReadOnly && saveProof.can_save
+    && saveProof.run_id===runId && saveProof.branch_id===branchId
+    && saveProof.draft_version===current.draft_version
+    && saveProof.health_component_fingerprint===current.health_component_fingerprint)
   const [editing, setEditing] = useState(false)
   const [mode, setMode] = useState<AdminHealthEditMode>('current_state_correction')
   const [records, setRecords] = useState<RecordDraft[]>([])
@@ -464,7 +470,7 @@ export function PlayerHealthAdminPanel({
               {weekOrdinal(current.week) === 0 ? (
                 <label>
                   {t("Edit mode")}
-                  <select value={mode} disabled={Boolean(review) || previewMutation.isPending || commitMutation.isPending} onChange={event => setMode(event.target.value as AdminHealthEditMode)}>
+                  <select aria-label={t("Edit mode")} value={mode} disabled={Boolean(review) || previewMutation.isPending || commitMutation.isPending} onChange={event => setMode(event.target.value as AdminHealthEditMode)}>
                     <option value="pre_start_input">{t("Pre-start input")}</option>
                     <option value="current_state_correction">{t("Current-state correction")}</option>
                   </select>
@@ -477,9 +483,9 @@ export function PlayerHealthAdminPanel({
                   <fieldset key={record.record_id || index}>
                     <legend>{t("Record")} {index + 1}</legend>
                     <label>{t("Record ID")} <input value={record.record_id} maxLength={160} onChange={event => updateRecord(index, { record_id: event.target.value })} /></label>
-                    <label>{t("Type")} <select value={record.kind} onChange={event => updateRecord(index, { kind: event.target.value as PlayerHealthKind, recurrence_of_record_id: '' })}>{kindOptions.map(kind => <option key={kind} value={kind}>{t(kind)}</option>)}</select></label>
+                    <label>{t("Type")} <select aria-label={t("Type")} value={record.kind} onChange={event => updateRecord(index, { kind: event.target.value as PlayerHealthKind, recurrence_of_record_id: '' })}>{kindOptions.map(kind => <option key={kind} value={kind}>{t(kind)}</option>)}</select></label>
                     <label>{t("Condition key")} <input value={record.condition_key} maxLength={160} onChange={event => updateRecord(index, { condition_key: event.target.value })} /></label>
-                    <label>{t("Lifecycle")} <select value={record.lifecycle} onChange={event => updateRecord(index, { lifecycle: event.target.value as PlayerHealthLifecycle, ...(event.target.value === 'Recovered' ? {} : { recovered_season: '', recovered_week: '' }) })}>{lifecycleOptions.map(value => <option key={value} value={value}>{t(value)}</option>)}</select></label>
+                    <label>{t("Lifecycle")} <select aria-label={t("Lifecycle")} value={record.lifecycle} onChange={event => updateRecord(index, { lifecycle: event.target.value as PlayerHealthLifecycle, ...(event.target.value === 'Recovered' ? {} : { recovered_season: '', recovered_week: '' }) })}>{lifecycleOptions.map(value => <option key={value} value={value}>{t(value)}</option>)}</select></label>
                     <label>{t("Severity 0\u2013100")} <input type="number" min={0} max={100} step={1} value={record.severity} onChange={event => updateRecord(index, { severity: event.target.value })} /></label>
                     <label>{t("Affected domains (comma separated)")} <input value={record.domains} onChange={event => updateRecord(index, { domains: event.target.value })} /></label>
                     <label className="checkbox-label"><input type="checkbox" checked={record.started_before_run} disabled={mode === 'pre_start_input'} onChange={event => updateRecord(index, { started_before_run: event.target.checked, onset_season: event.target.checked ? '' : String(current.week.season_index + 1), onset_week: event.target.checked ? '' : String(current.week.week) })} />{t("Started before Run")}</label>
@@ -497,7 +503,7 @@ export function PlayerHealthAdminPanel({
                     ) : null}
                     <label>
                       {t("Recurrence of")}
-                      <select value={record.recurrence_of_record_id} onChange={event => updateRecord(index, { recurrence_of_record_id: event.target.value })}>
+                      <select aria-label={t("Recurrence of")} value={record.recurrence_of_record_id} onChange={event => updateRecord(index, { recurrence_of_record_id: event.target.value })}>
                         <option value="">{t("None")}</option>
                         {records.filter(candidate => candidate.record_id !== record.record_id && candidate.kind === record.kind).map(candidate => <option key={candidate.record_id} value={candidate.record_id}>{candidate.record_id}</option>)}
                       </select>
@@ -518,7 +524,7 @@ export function PlayerHealthAdminPanel({
                   <fieldset key={item.consequence_id || index}>
                     <legend>{t("Consequence")} {index + 1}</legend>
                     <label>{t("Consequence ID")} <input maxLength={160} value={item.consequence_id} onChange={event => updateConsequence(index, { consequence_id: event.target.value })} /></label>
-                    <label>{t("Recovered source record")} <select value={item.source_record_id} onChange={event => updateConsequence(index, { source_record_id: event.target.value })}><option value="">{t("Select source")}</option>{records.filter(record => record.lifecycle === 'Recovered').map(record => <option key={record.record_id} value={record.record_id}>{record.record_id}</option>)}</select></label>
+                    <label>{t("Recovered source record")} <select aria-label={t("Recovered source record")} value={item.source_record_id} onChange={event => updateConsequence(index, { source_record_id: event.target.value })}><option value="">{t("Select source")}</option>{records.filter(record => record.lifecycle === 'Recovered').map(record => <option key={record.record_id} value={record.record_id}>{record.record_id}</option>)}</select></label>
                     <label>{t("Affected domains (comma separated)")} <input value={item.domains} onChange={event => updateConsequence(index, { domains: event.target.value })} /></label>
                     <label>{t("Limitation severity 1\u2013100")} <input type="number" min={1} max={100} value={item.limitation_severity} onChange={event => updateConsequence(index, { limitation_severity: event.target.value })} /></label>
                     <label>{t("Provenance")} <textarea maxLength={1000} value={item.provenance} onChange={event => updateConsequence(index, { provenance: event.target.value })} /></label>
@@ -553,7 +559,7 @@ export function PlayerHealthAdminPanel({
                   <h4>{t('Complete change for this player')}</h4>
                   <p>{t('Before')}</p><HealthProfileReview profile={current.player} locale={locale}/>
                   <p>{t('After')}</p><HealthProfileReview profile={review.preview.after_state.players.find(p=>p.player_id===playerId)!} locale={locale}/>
-                  <label><input type="checkbox" aria-label={t('Confirm Health changes')} checked={confirmApproved} onChange={e=>setConfirmApproved(e.target.checked)}/>{t('I approve these reviewed Health changes.')}</label>
+                  <label className="checkbox-label"><input type="checkbox" aria-label={t('Confirm Health changes')} disabled={branchReadOnly || healthQuery.isFetching || savePreviewQuery.isFetching || commitMutation.isPending || review.epoch!==guard.current.epoch} checked={confirmApproved} onChange={e=>setConfirmApproved(e.target.checked)}/>{t('I approve these reviewed Health changes.')}</label>
                   <p>{t("Preview fingerprint:")} {review.preview.preview_fingerprint.slice(0, 16)}…</p>
                   <button type="button" disabled={!confirmApproved || branchReadOnly || healthQuery.isError || savePreviewQuery.isError || healthQuery.isFetching || savePreviewQuery.isFetching || commitMutation.isPending || review.epoch!==guard.current.epoch} onClick={() => commitMutation.mutate(review)}>{commitMutation.isError ? t('Retry exact Health commit') : t('Confirm reviewed Health edit')}</button>
                   <button type="button" disabled={commitMutation.isPending} onClick={() => { setReview(null); previewMutation.reset(); commitMutation.reset(); setReviewed(false);setConfirmApproved(false) }}>{t("Edit inputs and recalculate")}</button>
@@ -571,8 +577,8 @@ export function PlayerHealthAdminPanel({
             {savePreviewQuery.data ? (
               <>
                 <p>{savePreviewQuery.data.changed_since_saved_head ? t('Health differs from the current Saved Revision.') : t('Current Health is already captured by the Saved Revision.')}</p>
-                <label><input type="checkbox" aria-label={t('Confirm Health Save')} checked={saveApproved} onChange={e=>setSaveApproved(e.target.checked)}/>{t('Save this Health draft in a new revision.')}</label>
-                <button type="button" disabled={!saveApproved || branchReadOnly || healthQuery.isError || savePreviewQuery.isError || !savePreviewQuery.data.can_save || saveMutation.isPending || savePreviewQuery.isFetching || healthQuery.isFetching} onClick={() => saveMutation.mutate(guard.current.epoch)}>{t("Save Health Revision")}</button>
+                <label className="checkbox-label"><input type="checkbox" aria-label={t('Confirm Health Save')} disabled={!saveReady || saveMutation.isPending} checked={saveApproved} onChange={e=>setSaveApproved(e.target.checked)}/>{t('Save this Health draft in a new revision.')}</label>
+                <button type="button" disabled={!saveApproved || !saveReady || saveMutation.isPending} onClick={() => saveMutation.mutate(guard.current.epoch)}>{t("Save Health Revision")}</button>
               </>
             ) : null}
             {saveMutation.isPending ? <p role="status">{t("Saving Health Revision\u2026")}</p> : null}

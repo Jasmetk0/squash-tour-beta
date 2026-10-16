@@ -32,6 +32,7 @@ from beta_engine.infrastructure.db.models import (
     BranchRevisionAuditEventModel,
     BranchSavedRevisionModel,
     BranchWorkingDraftModel,
+    AuthoritativeSimulationCommandModel,
     FullSimulationExecutionLeaseModel,
     FullSimulationTaskModel,
     RunBranchModel,
@@ -243,6 +244,32 @@ def review_run_calendar_extension(
         if task_state not in TERMINAL:
             all_blockers.add("nonterminal_full_simulation_task")
 
+    # Durable legacy simulation commands can still own a pending frozen
+    # target without a server FullSimulationTaskModel. Those must not be
+    # reinterpreted by extending their Run while they remain pending.
+    pending_commands = session.scalars(
+        select(AuthoritativeSimulationCommandModel).where(
+            AuthoritativeSimulationCommandModel.run_id == run_id,
+            AuthoritativeSimulationCommandModel.status == "pending",
+        ).order_by(
+            AuthoritativeSimulationCommandModel.branch_id,
+            AuthoritativeSimulationCommandModel.command_id,
+        )
+    ).all()
+    if pending_commands:
+        all_blockers.add("pending_authoritative_simulation_command")
+    pending_command_evidence = [
+        {
+            "branch_id": item.branch_id,
+            "command_id": item.command_id,
+            "request_fingerprint": item.request_fingerprint,
+            "result_fingerprint": hashlib.sha256(
+                item.result_json.encode("utf-8")
+            ).hexdigest(),
+        }
+        for item in pending_commands
+    ]
+
     lease = session.scalars(select(FullSimulationExecutionLeaseModel)).all()
     live_leases = [
         {"run_id": x.run_id, "branch_id": x.branch_id,
@@ -267,6 +294,7 @@ def review_run_calendar_extension(
         "new_season_count": new_season_count,
         "branches": source,
         "frozen_tasks": frozen_tasks,
+        "pending_commands": pending_command_evidence,
         "active_leases": [x for x in live_leases if x["run_id"] == run_id],
     }
     return {
@@ -285,6 +313,7 @@ def review_run_calendar_extension(
         "added_seasons": proposed.season_count - current.season_count,
         "added_weeks": (proposed.season_count - current.season_count) * current.weeks_per_year,
         "frozen_task_count": len(frozen_tasks),
+        "pending_authoritative_command_count": len(pending_commands),
         "sporting_execution_unlocked": False,
     }
 

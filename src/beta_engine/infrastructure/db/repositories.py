@@ -3169,6 +3169,18 @@ class SimulationPersistenceRepository:
                         target_payload["run"]["run_calendar"] = RunCalendar.from_metadata(
                             _from_json(run.metadata_json)["run_calendar"]
                         ).to_metadata()
+                        population_component = source_content.get(INITIAL_WORLD_COMPONENT_KEY)
+                        if (
+                            isinstance(population_component, dict)
+                            and population_component.get("state", {}).get("schema_version")
+                            == "initial_world_state.v2"
+                        ):
+                            target_payload["run"]["run_calendar_content_origin"] = (
+                                source_revision.payload["run"].get(
+                                    "run_calendar_content_origin",
+                                    source_revision.payload["run"]["run_calendar"],
+                                )
+                            )
                     if RUN_PACKAGE_COMPONENT_KEY in source_content:
                         try:
                             remapped_packages = remap_saved_run_package_state(
@@ -5027,6 +5039,20 @@ class SimulationPersistenceRepository:
                             "Historical restore has incompatible Run calendar provenance"
                         )
                     payload["run"]["run_calendar"] = current_calendar.to_metadata()
+                    restored_population = target_content.get(INITIAL_WORLD_COMPONENT_KEY)
+                    if (
+                        isinstance(restored_population, dict)
+                        and restored_population.get("state", {}).get("schema_version")
+                        == "initial_world_state.v2"
+                    ):
+                        payload["run"]["run_calendar_content_origin"] = (
+                            target_revision.payload["run"].get(
+                                "run_calendar_content_origin",
+                                target_revision.payload["run"]["run_calendar"],
+                            )
+                        )
+                    else:
+                        payload["run"].pop("run_calendar_content_origin", None)
                 # A compatibility restore may have reconstructed lifecycle from an
                 # immutable legacy target. The new restore revision must describe
                 # the actual post-restore state, without rewriting that target.

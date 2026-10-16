@@ -1,15 +1,17 @@
 # Active calendar dependency path — Master v82
 
-Audited base: `buuk` `85966e03cf382d34e3375100809d6e1d924fc4df` after #1495.
-Merged #1490–1495 provide the consent fix, pure Run clock, explicit default
-persistence, verified calendar reads/target math and legacy writer gates.
+Audited base: `buuk` `643ee60868ee57cecfdc560e9079ac68f2bdda00` after #1498.
+Merged #1490–1498 provide the consent fix, versioned Run clock, immutable initial
+Save, verified calendar reads/target math, usable custom-clock creation/Home,
+explicit age/birth helpers and conservative legacy generation/sporting gates.
 
-Current PR candidate adds usable CS/EN custom clock/range creation, exact server
-preview and matching Home timeline, with actual HTTP/SQLite Save/fork/restart
-coverage and guarded legacy sporting writes. This is planning/storage support,
-**not W52 sporting execution**. Next: authoritative clock/ranking/annual-unit
-migration, safe extension/imports and genuine multi-season sports acceptance.
-See [current state](CURRENT_STATE.md), [creation contract](docs/RUN_CALENDAR_CREATION_V82.md)
+The current candidate makes actual calendar-owned initial-player previews usable
+from the existing Players → Generate page and real API. It preserves legacy
+adoption/replay and keeps new v2 previews read-only. This is **not W52 sporting
+execution**. Next: version InitialWorld/bootstrap/lifecycle/time positions, then
+annual development/ranking/transitions/targets, safe extension/imports and
+populated multi-season acceptance.
+See [current state](CURRENT_STATE.md), [player preview contract](docs/CALENDAR_PLAYER_PREVIEW_V82.md)
 and [v82 task](docs/PRE_ALPHA_NEXT_CHATGPT_TASK_V82_2026_10_15.md).
 
 ## Dependency path to the pre-alpha

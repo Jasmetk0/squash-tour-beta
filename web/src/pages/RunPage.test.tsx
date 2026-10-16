@@ -296,7 +296,7 @@ describe('Run Home V1 canonical projections', () => {
         season_start_year_week:35,start_year:2030,season_count:3}}
     })
     mount()
-    expect(await screen.findByText(/Sportovní příprava pro tento kalendář/)).toBeVisible()
+    expect(await screen.findByText(/náhled hráčů podle kalendáře Runu/)).toBeVisible()
     expect(screen.getByText('World and Calendar copies')).toBeVisible()
     expect(screen.queryByText('Ranking setup')).toBeNull()
     expect(screen.queryByText('First tournament setup')).toBeNull()

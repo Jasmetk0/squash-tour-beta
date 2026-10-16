@@ -396,21 +396,26 @@ def initial_pool_birth_year_weights(season_start_year: int) -> dict[int, float]:
 
 
 def initial_pool_effective_population_diagnostics(
-    country: Country, season_start_year: int
+    country: Country, season_start_year: int, *,
+    birth_year_weights: dict[int, float] | None = None,
+    population_resolver=None,
 ) -> InitialPoolPopulationWeightingDiagnostic:
     """Explain the weighted effective-population aggregate without mutating country data."""
 
     age_weights = initial_pool_age_weights()
-    birth_year_weights = initial_pool_birth_year_weights(season_start_year)
+    if population_resolver is None:
+        population_resolver = resolve_effective_population
+    if birth_year_weights is None:
+        birth_year_weights = initial_pool_birth_year_weights(season_start_year)
     source_type_weight_shares: dict[str, float] = {}
     estimated_weight_share = 0.0
     source_years: list[int] = []
     effective_population_quantity = sum(
-        resolve_effective_population(country, year).effective_population * weight
+        population_resolver(country, year).effective_population * weight
         for year, weight in birth_year_weights.items()
     )
     for year, weight in birth_year_weights.items():
-        resolved = resolve_effective_population(country, year)
+        resolved = population_resolver(country, year)
         source_type_weight_shares[resolved.source_type] = (
             source_type_weight_shares.get(resolved.source_type, 0.0) + weight
         )
@@ -721,7 +726,7 @@ class InitialPlayerPoolGenerator:
         del seed  # Allocation is deterministic and currently seed-independent; keep API unchanged.
         season_start_year = self._season_start_year(season)
         population_diagnostics = {
-            country.code: initial_pool_effective_population_diagnostics(
+            country.code: self._population_diagnostics(
                 country, season_start_year
             )
             for country in countries
@@ -793,7 +798,7 @@ class InitialPlayerPoolGenerator:
             SeedScope.SEASON, "initial_pool", season, country.code, sequence
         )
         development_environment = CountryTalentModel().development_environment(
-            country.at_rating_year(self._season_start_year(season))
+            self._country_at_year(country, self._season_start_year(season))
         )
         if min_age is None and max_age is None:
             # Preserve the previous unconditioned RNG stream exactly.
@@ -875,34 +880,13 @@ class InitialPlayerPoolGenerator:
             f"{country.name} {sequence}"
             if naming_policy == "country_serial.v1" else legacy_name
         )
-        birth_rng = rng.branch(SeedScope.SEASON, "fax_birth_year_week")
-        birth_week = birth_rng.randint(
-            1, DEFAULT_WEEKS_PER_CALENDAR_YEAR
-        )
-        from beta_engine.domain.calendar.season_weeks import (
-            birth_year_for_age_at_calendar_position,
-            season_week_to_calendar_position,
-        )
-
-        initial_position = season_week_to_calendar_position(season_start_year, 1)
-        # Opening-week fifteenth birthdays belong to intake, not the initial pool.
-        # Keep every other established player draw unchanged; only redistribute
-        # this boundary collision uniformly across the sixty eligible birth weeks.
-        if age == 15 and birth_week == initial_position.year_week:
-            birth_week = birth_rng.choice(tuple(
-                week for week in range(1, DEFAULT_WEEKS_PER_CALENDAR_YEAR + 1)
-                if week != initial_position.year_week
-            ))
-        birth_year = birth_year_for_age_at_calendar_position(
-            age=age,
-            birth_year_week=birth_week,
-            calendar_year=initial_position.calendar_year,
-            year_week=initial_position.year_week,
+        birth_year, birth_week = self._birth_identity(
+            rng=rng, age=age, season_start_year=season_start_year
         )
         fingerprint = hashlib.blake2b(
             f"{season}|{seed}|{country.code}|{sequence}".encode(), digest_size=8
         ).hexdigest()
-        return InitialPoolGeneratedPlayer(
+        return self._make_player(
             player_id=player_id,
             name=name,
             country_code=country.code,
@@ -927,6 +911,39 @@ class InitialPlayerPoolGenerator:
             created_for_season=season,
         )
 
+    def _make_player(self, **values) -> InitialPoolGeneratedPlayer:
+        return InitialPoolGeneratedPlayer(**values)
+
+    def _birth_identity(
+        self, *, rng: DeterministicRng, age: int, season_start_year: int,
+    ) -> tuple[int, int]:
+        """Historical birth stream; versioned generators override this boundary."""
+        birth_rng = rng.branch(SeedScope.SEASON, "fax_birth_year_week")
+        birth_week = birth_rng.randint(
+            1, DEFAULT_WEEKS_PER_CALENDAR_YEAR
+        )
+        from beta_engine.domain.calendar.season_weeks import (
+            birth_year_for_age_at_calendar_position,
+            season_week_to_calendar_position,
+        )
+
+        initial_position = season_week_to_calendar_position(season_start_year, 1)
+        # Opening-week fifteenth birthdays belong to intake, not the initial pool.
+        # Keep every other established player draw unchanged; only redistribute
+        # this boundary collision uniformly across the sixty eligible birth weeks.
+        if age == 15 and birth_week == initial_position.year_week:
+            birth_week = birth_rng.choice(tuple(
+                week for week in range(1, DEFAULT_WEEKS_PER_CALENDAR_YEAR + 1)
+                if week != initial_position.year_week
+            ))
+        birth_year = birth_year_for_age_at_calendar_position(
+            age=age,
+            birth_year_week=birth_week,
+            calendar_year=initial_position.calendar_year,
+            year_week=initial_position.year_week,
+        )
+        return birth_year, birth_week
+
     def _identity(self) -> PlayerIdentityConfig:
         return self.identity_config or PlayerIdentityConfig(
             given_names=list(DEFAULT_GIVEN_NAMES),
@@ -942,10 +959,10 @@ class InitialPlayerPoolGenerator:
             model = CountryTalentModel()
             return max(0.000001, sum(
                 cohort_weight * model.effective_squash_pool_weight(
-                    country.at_rating_year(year),
-                    resolve_effective_population(country, year).effective_population,
+                    self._country_at_year(country, year),
+                    self._population_at_year(country, year).effective_population,
                 )
-                for year, cohort_weight in initial_pool_birth_year_weights(season_start_year).items()
+                for year, cohort_weight in self._birth_year_weights(season_start_year).items()
             ))
         effective_quantity_population = self._effective_population_quantity(
             country, season_start_year
@@ -965,6 +982,20 @@ class InitialPlayerPoolGenerator:
     ) -> float:
         return initial_pool_effective_population_quantity(country, season_start_year)
 
+    def _birth_year_weights(self, season_start_year: int) -> dict[int, float]:
+        return initial_pool_birth_year_weights(season_start_year)
+
+    def _population_diagnostics(
+        self, country: Country, season_start_year: int,
+    ) -> InitialPoolPopulationWeightingDiagnostic:
+        return initial_pool_effective_population_diagnostics(country, season_start_year)
+
+    def _country_at_year(self, country: Country, year: int) -> Country:
+        return country.at_rating_year(year)
+
+    def _population_at_year(self, country: Country, year: int):
+        return resolve_effective_population(country, year)
+
     def _population_weighting_metadata(
         self,
         season: str,
@@ -973,7 +1004,7 @@ class InitialPlayerPoolGenerator:
     ) -> dict[str, int | str | list[InitialPoolPopulationWeightingDiagnostic]]:
         season_start_year = self._season_start_year(season)
         age_weights = initial_pool_age_weights()
-        birth_year_weights = initial_pool_birth_year_weights(season_start_year)
+        birth_year_weights = self._birth_year_weights(season_start_year)
         return {
             "population_weighting": "effective_population_birth_year_aggregate",
             "population_year_min": min(birth_year_weights),

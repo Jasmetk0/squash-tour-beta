@@ -22,14 +22,14 @@ from tests.application.test_run_package_review_acceptance import _confirm, _ids
 pytestmark = pytest.mark.pr_critical
 
 
-def _world(server, clock):
+def _world(server, clock, *, world_id="official_fax_world"):
     repo = server.app.state.runtime.repository
     RunContainerCreationService(repo, _ids("run", "branch", "r0", "draft")).create_empty_run(
         display_name="Generation clock", calendar=clock,
     )
     packages = RunPackageService(repo)
     adapter = WorldPackageRunAdapter(WorldPackageRegistryService())
-    copied = _confirm(packages, adapter.build_document("official_fax_world"),
+    copied = _confirm(packages, adapter.build_document(world_id),
                       command="copy", draft=0, state=None)
     RunWorkingDraftService(repo, _ids("r1", "save-audit")).save(
         run_id="run", branch_id="branch", expected_draft_version=copied.draft_version,

@@ -45,6 +45,24 @@ def resolve_effective_population(
     if not MIN_POPULATION_YEAR <= requested_year <= MAX_POPULATION_YEAR:
         raise ValueError("requested population year must be between 1954 and 2050")
 
+    return _resolve_population(country, requested_year)
+
+
+def resolve_population_for_calendar_year(
+    country: Country, requested_year: int,
+) -> EffectivePopulationResult:
+    """Run-calendar resolution with honest nearest/default provenance.
+
+    The old entrypoint keeps its historical input bounds. New calendar-owned
+    generation may request earlier/later cohorts without inventing observations.
+    """
+    if type(requested_year) is not int:
+        raise ValueError("requested population year must be an integer")
+    return _resolve_population(country, requested_year)
+
+
+def _resolve_population(country: Country, requested_year: int) -> EffectivePopulationResult:
+
     usable_population_by_year = _usable_population_by_year(country.population_by_year)
     exact_population = usable_population_by_year.get(requested_year)
     if exact_population is not None:

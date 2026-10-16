@@ -239,11 +239,32 @@ class CalendarInitialWorldAdoptionService:
             return None
         if world.schema_version != "initial_world_state.v2":
             raise ValueError("This Branch uses the existing legacy InitialWorld format")
-        if (
-            resolve_saved_run_calendar(session, run_id=run_id, branch_id=branch_id)
-            != world.run_calendar
-        ):
-            raise ValueError("Installed population differs from the saved Run clock")
+        clock = resolve_saved_run_calendar(
+            session, run_id=run_id, branch_id=branch_id
+        )
+        if clock != world.run_calendar:
+            # Run-wide extension never reschedules existing players. The
+            # historical population's original calendar is usable only if the
+            # current signed Saved head explicitly proves its origin, with
+            # identical W/offset/start and a monotone horizon increase.
+            from beta_engine.infrastructure.db.initial_world_state import (
+                load_saved_initial_world,
+            )
+            from beta_engine.infrastructure.db.models import RunBranchModel
+            branch = session.get(RunBranchModel, branch_id)
+            if branch is None or branch.run_id != run_id:
+                raise ValueError("Installed population Branch does not exist")
+            state = self.repository._validated_branch_revision_state_in_session(
+                session=session, branch=branch
+            )
+            saved_world = load_saved_initial_world(
+                state.saved_revision.payload,
+                run_id=run_id, branch_id=branch_id,
+            )
+            if saved_world is None or saved_world.fingerprint != world.fingerprint:
+                raise ValueError(
+                    "Installed population differs from Saved origin-clock provenance"
+                )
         expected = derive_calendar_bootstrap_lifecycle(world)
         lifecycle = get_lifecycle(
             session, run_id=run_id, branch_id=branch_id, week=expected.week

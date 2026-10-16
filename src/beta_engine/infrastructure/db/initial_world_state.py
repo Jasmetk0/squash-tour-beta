@@ -88,8 +88,27 @@ def load_saved_initial_world(
     ):
         raise ValueError("Saved initial-world identity or fingerprint mismatch")
     if state.schema_version == "initial_world_state.v2":
-        if payload.get("run", {}).get("run_calendar") != state.run_calendar.to_metadata():
-            raise ValueError("Saved calendar InitialWorld disagrees with the revision's Run clock")
+        run_snapshot = payload.get("run", {})
+        snapshot_calendar = run_snapshot.get("run_calendar")
+        population_origin = state.run_calendar.to_metadata()
+        if snapshot_calendar != population_origin:
+            # Run-wide horizon extension does not regenerate the original
+            # population. Only a hash-signed Saved Revision with the explicit
+            # *original population clock* may preserve the old component.
+            # W/offset/start never change; shortening is never permitted.
+            from beta_engine.domain.calendar.run_calendar import RunCalendar
+            origin = run_snapshot.get("run_calendar_content_origin")
+            if origin != population_origin:
+                raise ValueError("Saved calendar InitialWorld disagrees with the revision's Run clock")
+            current = RunCalendar.from_metadata(snapshot_calendar)
+            basis = RunCalendar.from_metadata(origin)
+            if (
+                current.weeks_per_year != basis.weeks_per_year
+                or current.season_start_year_week != basis.season_start_year_week
+                or current.start_year != basis.start_year
+                or current.season_count <= basis.season_count
+            ):
+                raise ValueError("Saved InitialWorld extension provenance has incompatible clocks")
         if payload.get("content", {}).get("player_lifecycle") is None:
             raise ValueError("Saved calendar InitialWorld has no lifecycle component")
     return state

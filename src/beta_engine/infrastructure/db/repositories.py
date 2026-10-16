@@ -2646,6 +2646,36 @@ class SimulationPersistenceRepository:
                 )
         return lineage
 
+    @staticmethod
+    def _requires_calendar_extension_rebase(run, source_payload: dict) -> bool:
+        """Historical fork sources must get a current-clock child; never rewrite source."""
+        metadata = _from_json(run.metadata_json)
+        if not isinstance(metadata, dict) or "run_calendar" not in metadata:
+            return False
+        current = RunCalendar.from_metadata(metadata["run_calendar"])
+        saved_run = source_payload.get("run")
+        if not isinstance(saved_run, dict):
+            raise SavedRevisionBranchForkConflictError("Historical fork Run snapshot is invalid")
+        if "run_calendar" not in saved_run:
+            # Do not automatically reinterpret truly legacy calendar payloads.
+            raise SavedRevisionBranchForkConflictError(
+                "Legacy calendar fork into versioned Run requires migration"
+            )
+        historical = RunCalendar.from_metadata(saved_run["run_calendar"])
+        if historical == current:
+            return False
+        if (
+            historical.schema_version != current.schema_version
+            or historical.weeks_per_year != current.weeks_per_year
+            or historical.season_start_year_week != current.season_start_year_week
+            or historical.start_year != current.start_year
+            or historical.season_count >= current.season_count
+        ):
+            raise SavedRevisionBranchForkConflictError(
+                "Historical fork calendar is not an earlier compatible Run horizon"
+            )
+        return True
+
     def saved_revision_requires_materialized_fork_root(
         self,
         *,
@@ -2694,7 +2724,10 @@ class SimulationPersistenceRepository:
                 raise SavedRevisionBranchForkConflictError(
                     "the source Saved Revision content is invalid"
                 )
-            return bool(
+            run = session.get(RunContainerModel, run_id)
+            if run is None:
+                raise SavedRevisionBranchForkConflictError("Run not found")
+            return self._requires_calendar_extension_rebase(run, source.payload) or bool(
                 {
                     RANKING_COMPONENT_KEY,
                     INITIAL_WORLD_COMPONENT_KEY,
@@ -2787,7 +2820,10 @@ class SimulationPersistenceRepository:
                 source_ranking = None
                 remapped_initial_world = None
                 source_initial_world = None
-                materialize_fork_root = bool(
+                historical_calendar_rebase = self._requires_calendar_extension_rebase(
+                    run, source_revision.payload
+                )
+                materialize_fork_root = historical_calendar_rebase or bool(
                     {
                         RANKING_COMPONENT_KEY,
                         INITIAL_WORLD_COMPONENT_KEY,
@@ -3129,6 +3165,22 @@ class SimulationPersistenceRepository:
                             source_revision.payload
                         ),
                     )
+                    if historical_calendar_rebase:
+                        target_payload["run"]["run_calendar"] = RunCalendar.from_metadata(
+                            _from_json(run.metadata_json)["run_calendar"]
+                        ).to_metadata()
+                        population_component = source_content.get(INITIAL_WORLD_COMPONENT_KEY)
+                        if (
+                            isinstance(population_component, dict)
+                            and population_component.get("state", {}).get("schema_version")
+                            == "initial_world_state.v2"
+                        ):
+                            target_payload["run"]["run_calendar_content_origin"] = (
+                                source_revision.payload["run"].get(
+                                    "run_calendar_content_origin",
+                                    source_revision.payload["run"]["run_calendar"],
+                                )
+                            )
                     if RUN_PACKAGE_COMPONENT_KEY in source_content:
                         try:
                             remapped_packages = remap_saved_run_package_state(
@@ -4966,6 +5018,41 @@ class SimulationPersistenceRepository:
                     ),
                     viewer_branch_id=restored_viewer_branch_id,
                 )
+                # A historical target can carry an older horizon. Restored content
+                # remains historical, while the *new* current head must use the
+                # Run's existing extended clock. Never alter the target bytes.
+                current_metadata = _from_json(run.metadata_json)
+                if isinstance(current_metadata, dict) and "run_calendar" in current_metadata:
+                    current_calendar = RunCalendar.from_metadata(current_metadata["run_calendar"])
+                    historical_calendar = (
+                        RunCalendar.from_metadata(target_revision.payload["run"]["run_calendar"])
+                        if "run_calendar" in target_revision.payload.get("run", {})
+                        else None
+                    )
+                    if historical_calendar is None or (
+                        historical_calendar.weeks_per_year != current_calendar.weeks_per_year
+                        or historical_calendar.season_start_year_week != current_calendar.season_start_year_week
+                        or historical_calendar.start_year != current_calendar.start_year
+                        or historical_calendar.season_count > current_calendar.season_count
+                    ):
+                        raise SavedRevisionRestoreUnsupportedError(
+                            "Historical restore has incompatible Run calendar provenance"
+                        )
+                    payload["run"]["run_calendar"] = current_calendar.to_metadata()
+                    restored_population = target_content.get(INITIAL_WORLD_COMPONENT_KEY)
+                    if (
+                        isinstance(restored_population, dict)
+                        and restored_population.get("state", {}).get("schema_version")
+                        == "initial_world_state.v2"
+                    ):
+                        payload["run"]["run_calendar_content_origin"] = (
+                            target_revision.payload["run"].get(
+                                "run_calendar_content_origin",
+                                target_revision.payload["run"]["run_calendar"],
+                            )
+                        )
+                    else:
+                        payload["run"].pop("run_calendar_content_origin", None)
                 # A compatibility restore may have reconstructed lifecycle from an
                 # immutable legacy target. The new restore revision must describe
                 # the actual post-restore state, without rewriting that target.

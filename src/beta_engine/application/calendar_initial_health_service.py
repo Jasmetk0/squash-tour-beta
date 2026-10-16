@@ -84,7 +84,9 @@ class CalendarInitialHealthService:
             or world.schema_version != "initial_world_state.v2"
             or saved_world is None
             or saved_world.fingerprint != world.fingerprint
-            or world.run_calendar != clock
+            # load_saved_initial_world already validates either the exact
+            # Run clock OR signed origin-clock provenance for an explicitly
+            # extended horizon. No historical population is regenerated.
         ):
             raise ValueError(
                 "Save the calendar-owned population before preparing initial health"

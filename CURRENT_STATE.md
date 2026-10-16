@@ -54,3 +54,7 @@ green evidence. The owner alone merges. Full populated sporting acceptance and
 50-season release gates remain; no realism/release claim from narrow smoke CI.
 
 Earlier evidence remains in Master chapter 35, Git history and the v82 checkpoint.
+
+## V83 all-Branch horizon extension implementation candidate
+
+The implementation branch adds a reviewed cohort fingerprint, explicit CS/EN consent and manual atomic Save across all Branches; per-Branch Saved heads, append-only audit, clean Working Draft baselines and a durable idempotent receipt. Historical population clocks have explicitly validated origin provenance. Existing sporting execution guards and frozen task targets stay unchanged. This is a **candidate until focused final-head CI/acceptance is green**, not a pre-alpha release or simulated future-season execution. Contract: [Run horizon extension](docs/RUN_CALENDAR_HORIZON_EXTENSION_V83.md).

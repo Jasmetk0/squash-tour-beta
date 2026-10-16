@@ -40,3 +40,9 @@ This active summary is intentionally short to avoid repeatedly loading hundreds 
 ## Extension dependency (candidate)
 
 Pure horizon extension now checks persistence/year and exact-JSON week limits before returning a plan. Still required before user-facing extension: explicit audited all-Branch transaction, historical Saved-head compatibility without rewriting revisions, stale/retry protections, separate consent/Save, frozen-target/terminal-task preservation, and real HTTP/SQLite/restart/CS-EN UI acceptance. Do not present pure planning as a usable Run-extension operation.
+
+## Calendar extension preview dependency
+
+A pure Saved-clock-backed read-only extension plan is available for integration into a later reviewed operation. Pending: cross-Branch versioned authority/Save semantics, atomic extension transaction and receipts, Completed continuation, retry/staleness and restart acceptance, and CS/EN Admin UI. The plan explicitly cannot commit changes.
+
+The read-only extension preview has a Run/Branch-scoped HTTP endpoint. UI consent and the multi-Branch transactional mutation are intentionally still absent; no automatic Save or task restart is implied.

@@ -11,6 +11,8 @@ from dataclasses import asdict
 
 from sqlalchemy.orm import Session
 
+from beta_engine.infrastructure.db.models import RunBranchModel, BranchSavedRevisionModel
+
 from beta_engine.application.run_calendar_read_authority import (
     require_supported_full_simulation_calendar,
     resolve_saved_run_calendar,
@@ -95,4 +97,58 @@ def preview_saved_run_calendar_target(
         "remaining_weeks_including_current": (
             calendar.remaining_weeks_including_current(season_index, week)
         ),
+    }
+
+
+def preview_saved_run_calendar_extension(
+    session: Session,
+    *,
+    run_id: str,
+    branch_id: str,
+    new_season_count: int,
+) -> dict:
+    """Inspect an extension using the hash-verified Saved clock without writes.
+
+    This is a planning contract, not authorization to change all Branch heads.
+    In particular, a proposed horizon must never replace old revision clocks.
+    """
+
+    original = resolve_saved_run_calendar(session, run_id=run_id, branch_id=branch_id)
+    proposed = original.extend_to(new_season_count)
+    branch = session.get(RunBranchModel, branch_id)
+    if branch is None or branch.run_id != run_id or not branch.saved_head_revision_id:
+        raise ValueError("extension requires a matching Branch with a Saved head")
+    saved_head = session.get(BranchSavedRevisionModel, branch.saved_head_revision_id)
+    if saved_head is None or saved_head.run_id != run_id:
+        raise ValueError("extension Saved head is unavailable")
+    old_last = original.season_to_calendar(
+        original.season_count - 1, original.weeks_per_year
+    )
+    new_first = proposed.season_to_calendar(original.season_count, 1)
+    new_last = proposed.season_to_calendar(
+        proposed.season_count - 1, proposed.weeks_per_year
+    )
+    return {
+        "schema_version": "run_calendar_extension_preview.v1",
+        "run_id": run_id,
+        "branch_id": branch_id,
+        "read_only": True,
+        "state_changed": False,
+        "save_performed": False,
+        "simulation_started": False,
+        "all_branches_change_required": True,
+        "source_saved_head_revision_id": saved_head.revision_id,
+        "source_saved_head_content_hash": saved_head.content_hash,
+        "historical_revisions_immutable": True,
+        "original_calendar": original.to_metadata(),
+        "proposed_calendar": proposed.to_metadata(),
+        "previous_last_week": _planned_week(original, old_last),
+        "first_added_week": _planned_week(proposed, new_first),
+        "new_last_week": _planned_week(proposed, new_last),
+        "added_seasons": proposed.season_count - original.season_count,
+        "added_weeks": (
+            (proposed.season_count - original.season_count) * original.weeks_per_year
+        ),
+        "commit_supported": False,
+        "limitations": ["extension_transaction_not_implemented"],
     }

@@ -71,3 +71,28 @@ def test_extension_preview_rejects_non_growth_and_historical_legacy(tmp_path):
                 )
     finally:
         engine.dispose()
+
+
+def test_extension_route_reads_real_sqlite_and_maps_conflict(tmp_path):
+    from types import SimpleNamespace
+    from fastapi import HTTPException
+    from beta_engine.api.routers.run_containers import preview_run_calendar_extension
+
+    engine, factory, repo = _setup(tmp_path)
+    try:
+        _signed_test_calendar(factory, RunCalendar(52, 35, 2030, 3))
+        runtime = SimpleNamespace(repository=SimpleNamespace(_session_factory=factory))
+        run_before = repo.get_run_container(run_id="run-1")
+        result = preview_run_calendar_extension(
+            "run-1", "branch-1", 4, runtime
+        )
+        assert result["added_weeks"] == 52
+        assert result["commit_supported"] is False
+        with pytest.raises(HTTPException) as exc:
+            preview_run_calendar_extension("run-1", "branch-1", 3, runtime)
+        assert exc.value.status_code == 409
+        assert exc.value.detail["code"] == "calendar_extension_preview_conflict"
+        assert repo.get_run_container(run_id="run-1") == run_before
+        assert repo.verify_branch_saved_revision_hash(revision_id="revision-1")
+    finally:
+        engine.dispose()

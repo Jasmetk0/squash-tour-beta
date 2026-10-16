@@ -6,8 +6,9 @@ import type { RunCalendarMetadata } from '../api/runCalendarCreation'
 import { runOwnedWorldIds } from '../api/runInitialWorldSetup'
 import { formatApiError } from '../utils/apiErrors'
 import './RunCalendarPlayerPreviewPanel.css'
+import {RunCalendarPopulationControls} from './RunCalendarPopulationControls'
 
-/** First v2 UI slice: new dates can be inspected; no adoption/Save authority. */
+/** Calendar preview plus separately reviewed adoption and explicit Save. */
 export function RunCalendarPlayerPreviewPanel({runId, branchId, head, clock, locale}: {
   runId: string; branchId: string; head: string; clock: RunCalendarMetadata; locale: 'cs' | 'en'
 }): JSX.Element {
@@ -29,6 +30,7 @@ export function RunCalendarPlayerPreviewPanel({runId, branchId, head, clock, loc
   const [pending, setPending] = useState(false)
   const [error, setError] = useState('')
   const [page, setPage] = useState(0)
+  const [hasWorld,setHasWorld] = useState(false)
   const scope = JSON.stringify([runId, branchId, head, clock, fingerprint, selected, seed, count, minAge, maxAge])
   const scopeRef = useRef(scope)
   scopeRef.current = scope
@@ -63,12 +65,14 @@ export function RunCalendarPlayerPreviewPanel({runId, branchId, head, clock, loc
   }
   return <section className="calendar-player-preview" data-run-navigation-readonly aria-label={cs ? 'Náhled hráčů podle kalendáře Runu' : 'Run calendar player preview'}>
     <p role="status">{cs
-      ? 'Náhled podle uloženého kalendáře Runu. Hráči se zatím nepřidají do Runu; uložení a simulace pro tento kalendář čekají na převod lifecycle a rankingu.'
-      : 'Preview using the saved Run calendar. Players cannot be added yet; adoption and simulation await the lifecycle and ranking migration.'}</p>
+      ? 'Vygeneruj náhled podle kalendáře Runu. Přidání hráčů vyžaduje samostatnou kontrolu a potvrzení; novou revizi vytvoří až ruční Save.'
+      : 'Generate a preview using the Run calendar. Adding players requires a separate review and confirmation; only an explicit Save creates a new revision.'}</p>
     {source.isPending && <p role="status">{cs ? 'Načítání balíčků…' : 'Loading packages…'}</p>}
     {source.error && <p role="alert">{formatApiError(source.error)}</p>}
     {source.isSuccess && !worlds.length && <p>{cs ? 'Nejdřív zkopíruj World Package do tohoto Runu.' : 'Copy a World Package into this Run first.'}</p>}
-    <form className="calendar-player-preview__form" onSubmit={e => {e.preventDefault(); void generate()}}>
+    <RunCalendarPopulationControls runId={runId} branchId={branchId} head={head} clock={clock}
+      packageFingerprint={fingerprint??null} pool={active} locale={locale} onInstalled={setHasWorld}/>
+    {!hasWorld && <form className="calendar-player-preview__form" onSubmit={e => {e.preventDefault(); void generate()}}>
       <label>{cs ? 'Svět' : 'World'}<select aria-label={cs ? 'Svět' : 'World'} value={selected}
         onChange={e => changed(setWorld, e.target.value)}>
         {!worlds.length && <option value="">—</option>}
@@ -81,7 +85,7 @@ export function RunCalendarPlayerPreviewPanel({runId, branchId, head, clock, loc
           value={value as string} onChange={e => changed(setter as (v: string) => void, e.target.value)}/></label>)}
       <button type="submit" disabled={!valid || !sourceValid || !selected || pending}>
         {pending ? (cs ? 'Generování…' : 'Generating…') : (cs ? 'Generovat náhled' : 'Generate preview')}</button>
-    </form>
+    </form>}
     {error && <p role="alert">{error}</p>}
     {active && <>
       <p>{cs ? 'Vygenerováno' : 'Generated'}: {active.result.players.length} · {clock.weeks_per_year} {cs ? 'týdnů za rok' : 'weeks per year'}</p>

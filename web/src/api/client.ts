@@ -375,6 +375,20 @@ export function previewRunCalendarPlayerPool(runId: string, branchId: string,
     {method: 'POST', body: JSON.stringify(input)})
 }
 
+export async function getRunCalendarPopulation(runId:string,branchId:string):Promise<unknown|null> {
+  try {return await request(`${runInitialWorldRoot(runId,branchId)}/calendar-adoption`)}
+  catch(e) {if(e instanceof ApiError && e.status===404)return null;throw e}
+}
+export function reviewRunCalendarPopulation(runId:string,branchId:string,
+  payload:import('./calendarPopulation').CalendarPopulationRequest):Promise<unknown> {
+  return request(`${runInitialWorldRoot(runId,branchId)}/calendar-adoption/preview`,{method:'POST',body:JSON.stringify(payload)})
+}
+export function confirmRunCalendarPopulation(runId:string,branchId:string,
+  review:import('./calendarPopulation').CalendarPopulationRequest,expectedFingerprint:string):Promise<unknown> {
+  return request(`${runInitialWorldRoot(runId,branchId)}/calendar-adoption`,{method:'POST',body:JSON.stringify({
+    review,expected_initial_world_fingerprint:expectedFingerprint})})
+}
+
 
 export function getInitialPlayerPool(season = '2000/2001'): Promise<InitialPoolResponse> {
   return request(`/admin/players/initial-pool?season=${encodeURIComponent(season)}`)

@@ -27,7 +27,8 @@ export function validateCalendarPoolPreview(value: unknown, runId: string, branc
     || p.preview_only !== true || p.adoption_supported !== false
     || p.run_package_state_fingerprint !== packageFingerprint || !hash(p.preview_fingerprint)
     || !p.run_calendar || Object.entries(clock).some(([k,v]) => p.run_calendar[k as keyof RunCalendarMetadata] !== v)
-    || !p.request || Object.entries(input).some(([k,v]) => p.request[k as keyof CalendarPoolInput] !== v)
+    || !p.request || Object.entries(input).some(([k,v]) =>
+      JSON.stringify(p.request[k as keyof CalendarPoolInput]) !== JSON.stringify(v))
     || !Array.isArray(p.limitations) || !p.limitations.length || p.limitations.some(v => typeof v !== 'string')
     || !Array.isArray(p.result?.players) || p.result.players.length !== input.target_pool_size) {
     throw Error('Calendar player preview does not match the selected Run, Branch or source')

@@ -6,6 +6,7 @@ import {clock, preview} from '../api/calendarInitialPool.fixture'
 
 const api=vi.hoisted(() => ({getRunPackageState:vi.fn(),previewRunCalendarPlayerPool:vi.fn()}))
 vi.mock('../api/client', () => api)
+vi.mock('./RunCalendarPopulationControls',()=>({RunCalendarPopulationControls:()=>null}))
 vi.mock('../utils/apiErrors', () => ({formatApiError:(e:unknown) => String(e)}))
 function mount(locale:'cs'|'en'='en') {
   return render(<QueryClientProvider client={new QueryClient({defaultOptions:{queries:{retry:false}}})}>
@@ -19,7 +20,7 @@ describe('calendar player preview UI', () => {
       package_versions:[{package_id:'earth',package_type:'World'}]}})
     api.previewRunCalendarPlayerPool.mockImplementation(async (_r,_b,input) => preview(input.target_pool_size))
   })
-  it('calls the actual v2 client, paginates identities and never offers adoption/Save',async () => {
+  it('calls the actual v2 preview client, paginates identities and invalidates edited input',async () => {
     mount()
     const button=await screen.findByRole('button',{name:'Generate preview'})
     await waitFor(() => expect(button).toBeEnabled())
@@ -30,7 +31,6 @@ describe('calendar player preview UI', () => {
     expect(screen.queryByText('Country 51')).not.toBeInTheDocument()
     fireEvent.click(screen.getByRole('button',{name:'Next'}))
     expect(screen.getByText('Country 51')).toBeInTheDocument()
-    expect(screen.queryByRole('button',{name:/save|adopt|confirm/i})).not.toBeInTheDocument()
     fireEvent.change(screen.getByLabelText('Seed'),{target:{value:'803'}})
     expect(screen.queryByRole('table')).not.toBeInTheDocument()
   })

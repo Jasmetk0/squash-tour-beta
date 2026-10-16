@@ -3,21 +3,29 @@
 from __future__ import annotations
 
 import json
+from typing import TYPE_CHECKING
+
 from sqlalchemy.orm import Session
 
-from beta_engine.application.initial_world import InitialWorldState
+from beta_engine.application.initial_world import (
+    InitialWorldState,
+    parse_initial_world_json,
+)
 from beta_engine.infrastructure.db.models import InitialWorldStateModel
+
+if TYPE_CHECKING:
+    from beta_engine.application.calendar_initial_world import CalendarInitialWorldState
 
 INITIAL_WORLD_COMPONENT_KEY = "initial_world"
 
 
 def get_initial_world(
     session: Session, *, run_id: str, branch_id: str
-) -> InitialWorldState | None:
+) -> InitialWorldState | CalendarInitialWorldState | None:
     row = session.get(InitialWorldStateModel, (run_id, branch_id))
     if row is None:
         return None
-    state = InitialWorldState.model_validate_json(row.payload_json)
+    state = parse_initial_world_json(row.payload_json)
     if (state.run_id, state.branch_id, state.fingerprint) != (
         run_id,
         branch_id,
@@ -27,7 +35,9 @@ def get_initial_world(
     return state
 
 
-def put_initial_world(session: Session, state: InitialWorldState) -> InitialWorldState:
+def put_initial_world(
+    session: Session, state: InitialWorldState | CalendarInitialWorldState
+) -> InitialWorldState | CalendarInitialWorldState:
     current = get_initial_world(session, run_id=state.run_id, branch_id=state.branch_id)
     if current is not None:
         if current.fingerprint == state.fingerprint:
@@ -64,19 +74,24 @@ def capture_saved_initial_world(
 
 def load_saved_initial_world(
     payload: dict, *, run_id: str, branch_id: str
-) -> InitialWorldState | None:
+) -> InitialWorldState | CalendarInitialWorldState | None:
     component = payload.get("content", {}).get(INITIAL_WORLD_COMPONENT_KEY)
     if component is None:
         return None
     if not isinstance(component, dict) or set(component) != {"fingerprint", "state"}:
         raise ValueError("Invalid Saved Revision initial-world component")
-    state = InitialWorldState.model_validate_json(json.dumps(component["state"]))
+    state = parse_initial_world_json(json.dumps(component["state"]))
     if (state.run_id, state.branch_id, state.fingerprint) != (
         run_id,
         branch_id,
         component["fingerprint"],
     ):
         raise ValueError("Saved initial-world identity or fingerprint mismatch")
+    if state.schema_version == "initial_world_state.v2":
+        if payload.get("run", {}).get("run_calendar") != state.run_calendar.to_metadata():
+            raise ValueError("Saved calendar InitialWorld disagrees with the revision's Run clock")
+        if payload.get("content", {}).get("player_lifecycle") is None:
+            raise ValueError("Saved calendar InitialWorld has no lifecycle component")
     return state
 
 
@@ -86,7 +101,7 @@ def remap_saved_initial_world_for_branch(
     run_id: str,
     source_branch_id: str,
     target_branch_id: str,
-) -> InitialWorldState:
+) -> InitialWorldState | CalendarInitialWorldState:
     """Validate and re-scope an owned InitialWorld for a materialized fork.
 
     Adoption fields are deliberately retained verbatim: they describe the historical
@@ -101,7 +116,7 @@ def remap_saved_initial_world_for_branch(
         raise ValueError("Saved Revision initial-world component is missing")
     if target_branch_id == source_branch_id:
         raise ValueError("Initial-world fork target must be a different Branch")
-    return InitialWorldState.model_validate_json(
+    return parse_initial_world_json(
         source.model_copy(update={"branch_id": target_branch_id}).model_dump_json()
     )
 

@@ -1,25 +1,31 @@
 """Persistence, bootstrap, transition and Saved Revision projection for lifecycle state."""
 
+from __future__ import annotations
+
 import hashlib
 import json
+from typing import TYPE_CHECKING
+
 from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
 from beta_engine.application.initial_world import InitialWorldState
+from beta_engine.domain.calendar.run_week_position import RunWeekPosition
+from beta_engine.domain.calendar.season_weeks import (
+    age_at_calendar_position,
+    season_week_to_calendar_position,
+)
+from beta_engine.domain.players.calendar_lifecycle import CalendarPlayerLifecycleState
 from beta_engine.domain.players.lifecycle import (
     PlayerLifecycleIdentity,
-    PlayerLifecycleWeekState,
     PlayerLifecyclePolicy,
+    PlayerLifecycleWeekState,
     advance_lifecycle,
 )
 from beta_engine.domain.players.tour_entry_projection import (
     project_lifecycle_tour_entries,
 )
 from beta_engine.domain.rankings.official import RankingWeek
-from beta_engine.domain.calendar.season_weeks import (
-    age_at_calendar_position,
-    season_week_to_calendar_position,
-)
 from beta_engine.infrastructure.db.models import (
     PlayerLifecycleWeekStateModel,
     RunProspectModel,
@@ -28,29 +34,47 @@ from beta_engine.infrastructure.db.player_tour_entry_triggers import (
     PlayerTourEntryTriggerStore,
 )
 
+if TYPE_CHECKING:
+    from beta_engine.application.calendar_initial_world import CalendarInitialWorldState
+
 PLAYER_LIFECYCLE_COMPONENT_KEY = "player_lifecycle"
 
 
-def _load(row, run_id, branch_id, week):
-    state = PlayerLifecycleWeekState.model_validate_json(row.payload_json)
+def _parse_lifecycle_json(raw):
+    value = json.loads(raw)
+    if isinstance(value, dict) and value.get("schema_version") == "player_lifecycle_calendar_state.v2":
+        return CalendarPlayerLifecycleState.model_validate_json(raw)
+    return PlayerLifecycleWeekState.model_validate_json(raw)
+
+
+def _load(row, run_id, branch_id, week_ordinal):
+    state = _parse_lifecycle_json(row.payload_json)
     if (state.run_id, state.branch_id, state.week.ordinal, state.fingerprint) != (
         run_id,
         branch_id,
-        week.ordinal,
+        week_ordinal,
         row.fingerprint,
     ):
         raise ValueError("Player lifecycle identity, week, or fingerprint mismatch")
     return state
 
 
-def get_lifecycle(session: Session, *, run_id: str, branch_id: str, week: RankingWeek):
+def get_lifecycle(session: Session, *, run_id: str, branch_id: str, week: RankingWeek | RunWeekPosition):
     row = session.get(PlayerLifecycleWeekStateModel, (run_id, branch_id, week.ordinal))
-    return None if row is None else _load(row, run_id, branch_id, week)
+    if row is None:
+        return None
+    state = _load(row, run_id, branch_id, week.ordinal)
+    if isinstance(state, CalendarPlayerLifecycleState):
+        if not isinstance(week, RunWeekPosition) or state.week != week:
+            raise ValueError("Calendar lifecycle requires the matching Run-owned position")
+    elif not isinstance(week, RankingWeek):
+        raise ValueError("Legacy lifecycle requires its historical RankingWeek")  # noqa: TRY004 — domain/API conflict
+    return state
 
 
 def put_lifecycle(
-    session: Session, state: PlayerLifecycleWeekState
-) -> PlayerLifecycleWeekState:
+    session: Session, state: PlayerLifecycleWeekState | CalendarPlayerLifecycleState
+) -> PlayerLifecycleWeekState | CalendarPlayerLifecycleState:
     current = get_lifecycle(
         session, run_id=state.run_id, branch_id=state.branch_id, week=state.week
     )
@@ -79,10 +103,19 @@ def put_lifecycle(
 
 
 def derive_bootstrap_lifecycle(
-    world: InitialWorldState,
+    world: InitialWorldState | CalendarInitialWorldState,
     policy: PlayerLifecyclePolicy | None = None,
-) -> PlayerLifecycleWeekState:
+) -> PlayerLifecycleWeekState | CalendarPlayerLifecycleState:
     """Pure Week-1 projection used for pristine-source checks and installation."""
+    from beta_engine.application.calendar_initial_world import (
+        CalendarInitialWorldState,
+        derive_calendar_bootstrap_lifecycle,
+    )
+
+    if isinstance(world, CalendarInitialWorldState):
+        if policy is not None and policy != world.lifecycle_policy:
+            raise ValueError("Calendar lifecycle policy differs from the adopted world")
+        return derive_calendar_bootstrap_lifecycle(world)
     week = RankingWeek(season_index=0, week=1)
     world_fingerprint = world.fingerprint
     players = []
@@ -129,7 +162,7 @@ def derive_bootstrap_lifecycle(
 
 def bootstrap_lifecycle(
     session: Session,
-    world: InitialWorldState,
+    world: InitialWorldState | CalendarInitialWorldState,
     policy: PlayerLifecyclePolicy | None = None,
 ):
     return put_lifecycle(session, derive_bootstrap_lifecycle(world, policy))
@@ -335,9 +368,7 @@ def capture_saved_lifecycle(session, payload, *, run_id, branch_id):
                 r,
                 run_id,
                 branch_id,
-                RankingWeek(
-                    season_index=r.week_ordinal // 61, week=r.week_ordinal % 61 + 1
-                ),
+                r.week_ordinal,
             )
             for r in rows
         ]
@@ -358,7 +389,7 @@ def load_saved_lifecycle(payload, *, run_id, branch_id):
     if not isinstance(component, dict) or set(component) != {"fingerprint", "states"}:
         raise ValueError("Invalid Saved Revision player-lifecycle component")
     states = tuple(
-        PlayerLifecycleWeekState.model_validate_json(json.dumps(s))
+        _parse_lifecycle_json(json.dumps(s))
         for s in component["states"]
     )
     body = [s.model_dump(mode="json") for s in states]
@@ -369,6 +400,21 @@ def load_saved_lifecycle(payload, *, run_id, branch_id):
         (s.run_id, s.branch_id) != (run_id, branch_id) for s in states
     ):
         raise ValueError("Saved player-lifecycle identity or fingerprint mismatch")
+    if any(isinstance(s, CalendarPlayerLifecycleState) for s in states):
+        if len(states) != 1 or not isinstance(states[0], CalendarPlayerLifecycleState):
+            raise ValueError("Calendar population lifecycle cannot contain a mixed legacy chain")
+        from beta_engine.infrastructure.db.initial_world_state import (
+            load_saved_initial_world,
+        )
+
+        world = load_saved_initial_world(payload, run_id=run_id, branch_id=branch_id)
+        state = states[0]
+        if world is None or world.schema_version != "initial_world_state.v2" or state.week.calendar != world.run_calendar:
+            raise ValueError("Saved calendar lifecycle differs from its InitialWorld clock")
+        if (state.policy != world.lifecycle_policy or
+            tuple((p.player_id, p.birth_year, p.birth_year_week, p.age, p.source_generation_fingerprint) for p in state.players) !=
+            tuple((p.player_id, p.birth_year, p.birth_year_week, p.age_years_at_season_start, p.source_generation_fingerprint) for p in world.players)):
+            raise ValueError("Saved calendar lifecycle differs from its InitialWorld players")
     for predecessor, target in zip(states, states[1:], strict=False):
         if (
             target.week.ordinal != predecessor.week.ordinal + 1
@@ -400,7 +446,7 @@ def remap_saved_lifecycle_component(
     remapped = []
     previous = None
     for state in source:
-        target = PlayerLifecycleWeekState.model_validate_json(
+        target = _parse_lifecycle_json(
             state.model_copy(
                 update={
                     "branch_id": target_branch_id,
@@ -468,9 +514,7 @@ def restore_saved_lifecycle(
             r,
             run_id,
             branch_id,
-            RankingWeek(
-                season_index=r.week_ordinal // 61, week=r.week_ordinal % 61 + 1
-            ),
+            r.week_ordinal,
         )
         for r in rows
     )

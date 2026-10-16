@@ -24,3 +24,6 @@
 .calendar-player-preview__table th { position: sticky; top: 0; background: #263d5a; white-space: nowrap; }
 .calendar-player-preview__table tbody tr:nth-child(even) { background: #192d46; }
 .calendar-player-preview__table :is(th, td):nth-child(n+3) { text-align: right; font-variant-numeric: tabular-nums; }
+.calendar-population-controls { margin: 1rem 0; }
+.calendar-population-approval { display: flex; align-items: center; gap: .5rem; margin: .7rem 0; }
+.calendar-population-approval input { width: auto; flex-shrink: 0; }

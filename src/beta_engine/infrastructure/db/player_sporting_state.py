@@ -286,6 +286,8 @@ def _legacy_group_value(player, group: str) -> int:
 
 def derive_bootstrap_sporting(world, policy: PlayerDevelopmentPolicy | None = None):
     """Pure deterministic projection of only the Run-owned source player facts."""
+    if getattr(world, "schema_version", None) == "initial_world_state.v2":
+        raise ValueError("Calendar population requires versioned annual development before sporting use")
     policy = policy or PlayerDevelopmentPolicy()
     players = []
     for player in world.players:
@@ -946,7 +948,7 @@ def restore_saved_sporting(
         put_completed_context(
             session, CompletedWeekSportingContext.model_validate_json(json.dumps(value))
         )
-    if target is None and target_world is not None:
+    if target is None and target_world is not None and target_world.schema_version != "initial_world_state.v2":
         from beta_engine.infrastructure.db.initial_world_state import get_initial_world
 
         world = get_initial_world(session, run_id=run_id, branch_id=branch_id)

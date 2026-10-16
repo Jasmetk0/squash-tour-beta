@@ -19,6 +19,10 @@ from beta_engine.application.season_player_bootstrap_service import (
     InitialPoolSeasonBootstrapService,
 )
 from beta_engine.application.run_package_service import RunPackageService
+from beta_engine.application.calendar_initial_world_adoption_service import (
+    CalendarInitialWorldAdoptionService, CalendarInitialWorldReviewRequest,
+    CalendarInitialWorldConfirmation,
+)
 from beta_engine.application.run_calendar_initial_pool_preview_service import (
     RunCalendarInitialPoolPreviewRequest, RunCalendarInitialPoolPreviewService,
 )
@@ -995,6 +999,55 @@ def preview_run_calendar_initial_pool(
     except (KeyError, ValueError) as exc:
         raise HTTPException(status_code=409, detail={
             "code": "run_calendar_initial_pool_preview_unavailable", "message": str(exc),
+        }) from exc
+
+
+@router.post("/runs/{run_id}/branches/{branch_id}/initial-world/calendar-adoption/preview")
+def review_calendar_initial_world(
+    run_id: str, branch_id: str, payload: CalendarInitialWorldReviewRequest,
+    runtime: ApiRuntime = Depends(get_runtime),
+    adapter: WorldPackageRunAdapter = Depends(get_world_package_run_adapter),
+):
+    try:
+        return CalendarInitialWorldAdoptionService(runtime.repository, adapter).review(
+            run_id=run_id, branch_id=branch_id, request=payload,
+        )
+    except (KeyError, ValueError) as exc:
+        raise HTTPException(status_code=409, detail={
+            "code": "calendar_population_review_conflict", "message": str(exc),
+        }) from exc
+
+
+@router.post("/runs/{run_id}/branches/{branch_id}/initial-world/calendar-adoption", status_code=201)
+def confirm_calendar_initial_world(
+    run_id: str, branch_id: str, payload: CalendarInitialWorldConfirmation,
+    runtime: ApiRuntime = Depends(get_runtime),
+    adapter: WorldPackageRunAdapter = Depends(get_world_package_run_adapter),
+):
+    try:
+        return CalendarInitialWorldAdoptionService(runtime.repository, adapter).confirm(
+            run_id=run_id, branch_id=branch_id, confirmation=payload,
+        )
+    except (KeyError, ValueError) as exc:
+        raise HTTPException(status_code=409, detail={
+            "code": "calendar_population_adoption_conflict", "message": str(exc),
+        }) from exc
+
+
+@router.get("/runs/{run_id}/branches/{branch_id}/initial-world/calendar-adoption")
+def read_calendar_initial_world(
+    run_id: str, branch_id: str, runtime: ApiRuntime = Depends(get_runtime),
+    adapter: WorldPackageRunAdapter = Depends(get_world_package_run_adapter),
+):
+    try:
+        return CalendarInitialWorldAdoptionService(runtime.repository, adapter).read(
+            run_id=run_id, branch_id=branch_id,
+        )
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail={
+            "code": "calendar_population_read_conflict", "message": str(exc),
         }) from exc
 
 

@@ -85,6 +85,8 @@ def put_health(
 
 
 def bootstrap_health(session: Session, world) -> PlayerHealthWeekState:
+    if getattr(world, "schema_version", None) == "initial_world_state.v2":
+        raise ValueError("Calendar population requires a versioned Health bootstrap before sporting use")
     state = bootstrap_health_state(
         run_id=world.run_id,
         branch_id=world.branch_id,
@@ -414,7 +416,8 @@ def restore_saved_health(
     for state in target or ():
         put_health(session, state)
 
-    if target is None and target_lifecycle is not None:
+    calendar_population = target_world is not None and target_world.schema_version == "initial_world_state.v2"
+    if target is None and target_lifecycle is not None and not calendar_population:
         opening = target_lifecycle[0]
         put_health(
             session,
@@ -429,7 +432,7 @@ def restore_saved_health(
                 ),
             ),
         )
-    elif target is None and target_world is not None:
+    elif target is None and target_world is not None and not calendar_population:
         from beta_engine.infrastructure.db.initial_world_state import get_initial_world
 
         world = get_initial_world(session, run_id=run_id, branch_id=branch_id)

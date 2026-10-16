@@ -65,7 +65,8 @@ describe('saved Run readiness panel', () => {
     })
     expect(screen.getByText('Připravenost této Branch')).toBeInTheDocument()
     expect(screen.getByText(/Před každou operací je stále nutná vlastní kontrola/)).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Doplnit Calendar Package →' })).toHaveAttribute('href', '/admin/runs/run-a/manage')
+    expect(screen.getAllByRole('link', { name: 'Doplnit Calendar Package →' })[0])
+      .toHaveAttribute('href', '/admin/runs/run-a/manage')
   })
 
   it('rejects alien and reordered readiness evidence', () => {

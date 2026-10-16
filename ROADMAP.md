@@ -1,22 +1,23 @@
-# Current audited baseline and new calendar target — Master v82 (15 October 2026)
+# Active calendar dependency path — Master v82
 
-Verified `buuk`: **`b63f40387bed75812ae9f9585734a6226b93fda9`**, merged **#1488**. At audit start there were no open PRs. #1486–1488 are merged; all eight available final-head PR workflow runs passed. #1485 remains closed **without merge**. Older dated candidate/in-flight notes below are historical evidence, not the current queue.
+Audited base: `buuk` `85966e03cf382d34e3375100809d6e1d924fc4df` after #1495.
+Merged #1490–1495 provide the consent fix, pure Run clock, explicit default
+persistence, verified calendar reads/target math and legacy writer gates.
 
-**Implemented:** exact-evidence consent revocation, dark/readable Task Center, actual driver blocker/detail evidence and last-checkpoint labels, parent-receipt/task correlation, exact Run/Branch Calendar/Season Builder navigation. The #1484 real sparse hybrid task crossed Week 61/explicit Save/canonical season boundary to Season index 1 Week 1, then awaited `week_preparation_required`; three real matches total. #1488 adds navigation, not completed second-season sports.
-
-**New product target, NOT implemented:** Master v82 allows Run-specific fixed W weeks/year and season, offset, start year, horizon and explicit extension; Earth default 52, FAX 61. Legacy runtime still has hard-coded bounds/mapping. Do not advertise working variable-calendar simulation or mutate old histories/source packages merely because the Master changed.
-
-**Next:** directly in ChatGPT, fix the reproduced unchanged-evidence Cancel → fresh request consent gap; then centralize the calendar contract with versioned legacy compatibility before exposing new settings or adding more 61-only logic. Carry Calendar/transition/age/development/ranking/import/UI changes through coherent bounded PRs with honest capability gates. Preserve and later extend the same-task second-season sports acceptance; do not equate missing configuration with an empty week. Use Codex only for a justified bounded hard integration/recovery task; continue the same PR directly if credits run out.
-
-Read [v82 audit](docs/PRE_ALPHA_CHECKPOINT_V82_2026_10_15.md), [approved calendar contract](SQUASH_ENGINE_MASTER_VISION.md) §§3.2/6.1/6.9–6.12/31.37, and [implementation handoff](docs/PRE_ALPHA_NEXT_CHATGPT_TASK_V82_2026_10_15.md). Full pre-alpha release/realism/scaling acceptance remains outstanding.
-
+Current PR candidate adds usable CS/EN custom clock/range creation, exact server
+preview and matching Home timeline, with actual HTTP/SQLite Save/fork/restart
+coverage and guarded legacy sporting writes. This is planning/storage support,
+**not W52 sporting execution**. Next: authoritative clock/ranking/annual-unit
+migration, safe extension/imports and genuine multi-season sports acceptance.
+See [current state](CURRENT_STATE.md), [creation contract](docs/RUN_CALENDAR_CREATION_V82.md)
+and [v82 task](docs/PRE_ALPHA_NEXT_CHATGPT_TASK_V82_2026_10_15.md).
 
 ## Dependency path to the pre-alpha
 
 | Order | Usable outcome | Default executor | Evidence needed |
 | --- | --- | --- | --- |
-| 1 | Cancelled uncertain approval cannot reuse consent for a fresh command | Direct ChatGPT | Focused real component regression; exact retry unchanged |
-| 2 | One calendar contract with legacy-compatible meaning, not scattered 61/2000 assumptions | Direct ChatGPT; bounded Codex only if needed for hard integration | Conversion boundaries, versioned validation and actual callers |
+| 1 (done #1490) | Cancelled uncertain approval cannot reuse consent for a fresh command | Direct ChatGPT | Focused real component regression; exact retry unchanged |
+| 2 (foundation #1491–1495) | One calendar contract with legacy-compatible meaning; migrate remaining sporting callers | Direct ChatGPT; bounded Codex only if needed for hard integration | Conversion boundaries, versioned validation and actual callers |
 | 3 | Stored Run calendars drive correct authoritative time/targets | Direct ChatGPT or justified Codex integration | Real SQLite/API, old hashes/replay, Week/Season boundaries and frozen targets |
 | 4 | Operator can configure/preview new Run range/calendar and explicitly extend it | Direct ChatGPT for UI; use existing validated backend commands | CS/EN preview, first-week lock, stale/conflict guards and Completed continuation |
 | 5 | Age/yearly development/ranking defaults/imports use correct units and provenance | Direct ChatGPT; targeted assistance for difficult migration | Annual-age consistency, exact W-week expiry, weekly rules preserved, no silent import conversion |

@@ -57,11 +57,16 @@ class RunContainerCreationService:
     repository: SimulationPersistenceRepository
     id_factory: EntityIdFactory
 
-    def create_empty_run(self, *, display_name: str) -> RunContainerRecord:
+    def create_empty_run(
+        self, *, display_name: str, calendar: RunCalendar | None = None
+    ) -> RunContainerRecord:
         normalized_name = normalize_run_display_name(display_name)
-        # Keep currently supported FAX execution defaults until all W52
-        # authoritative paths are integrated; persist this clock explicitly.
-        calendar = RunCalendar.fax_default()
+        # Creation stores a clock, not permission to execute sporting writers.
+        # Unsupported calendars remain planning-only behind the writer gates.
+        if calendar is None:
+            calendar = RunCalendar.fax_default()
+        if not isinstance(calendar, RunCalendar):
+            raise ValueError("calendar must be a validated RunCalendar")
         calendar_metadata = calendar.to_metadata()
         run_id = _validated_entity_id(self.id_factory("run"), kind="run")
         branch_id = _validated_entity_id(self.id_factory("branch"), kind="branch")

@@ -40,6 +40,7 @@ from beta_engine.infrastructure.db.models import (
     WeekSimulationScheduleModel,
 )
 from beta_engine.infrastructure.db.player_lifecycle_state import bootstrap_lifecycle
+from beta_engine.infrastructure.db.player_health_state import bootstrap_health
 from beta_engine.infrastructure.db.player_sporting_state import bootstrap_sporting
 
 
@@ -377,6 +378,12 @@ class StandaloneMatchService:
                     raise ValueError("Standalone command_id conflicts with an earlier request")
                 return StandaloneMatchState.model_validate_json(receipt.result_json)
 
+            from beta_engine.application.run_calendar_read_authority import guard_versioned_sporting_write
+
+            guard_versioned_sporting_write(
+                session, run_id=run_id, branch_id=branch_id,
+                operation="Standalone match simulation",
+            )
             self._ensure_operation_scope_is_empty(session, run_id=run_id, branch_id=branch_id)
             workspace = self._load_workspace(session, run_id=run_id, branch_id=branch_id)
             if workspace is None or len(workspace.players) != 2:
@@ -423,6 +430,7 @@ class StandaloneMatchService:
             )
             put_initial_world(session, world)
             bootstrap_lifecycle(session, world)
+            bootstrap_health(session, world)
             sporting = bootstrap_sporting(session, world)
 
             event = SimulationMatchEventPlan(

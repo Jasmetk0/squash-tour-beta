@@ -289,4 +289,17 @@ describe('Run Home V1 canonical projections', () => {
     expect(await screen.findByText('Simulation position identity mismatch')).toBeInTheDocument()
     expect(screen.queryByText('Hratelné zápasy: 2')).not.toBeInTheDocument()
   })
+  it('keeps custom calendar planning honest instead of offering legacy year-2000 sporting setup', async () => {
+    api.getRunContainer.mockResolvedValueOnce({
+      run_id:runId, display_name:'Earth planning', storage_kind:'custom_local', read_only:false,
+      metadata_json:{run_calendar:{schema_version:'run_calendar.v1',weeks_per_year:52,
+        season_start_year_week:35,start_year:2030,season_count:3}}
+    })
+    mount()
+    expect(await screen.findByText(/Sportovní příprava pro tento kalendář/)).toBeVisible()
+    expect(screen.getByText('World and Calendar copies')).toBeVisible()
+    expect(screen.queryByText('Ranking setup')).toBeNull()
+    expect(screen.queryByText('First tournament setup')).toBeNull()
+  })
+
 })

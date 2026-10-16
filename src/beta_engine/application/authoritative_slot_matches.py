@@ -603,6 +603,12 @@ class AuthoritativeSlotMatchExecutor:
             ):
                 raise ValueError("Simulation Slot retry conflicts with stored plan")
             return stored
+        from beta_engine.application.run_calendar_read_authority import guard_versioned_sporting_write
+
+        guard_versioned_sporting_write(
+            self.session, run_id=run_id, branch_id=branch_id,
+            operation="Match slot creation",
+        )
         entry_slot = self.session.get(
             RunEntryDecisionSlotAuthorityModel,
             (run_id, branch_id, week.ordinal, ordinal),
@@ -918,6 +924,12 @@ class AuthoritativeSlotMatchExecutor:
                 )
             return stored
 
+        from beta_engine.application.run_calendar_read_authority import guard_versioned_sporting_write
+
+        guard_versioned_sporting_write(
+            self.session, run_id=run_id, branch_id=branch_id,
+            operation="Match simulation",
+        )
         if plan.health_state_fingerprint is None:
             raise ValueError(
                 "uncompleted legacy Simulation Slot lacks frozen Health authority"
@@ -1142,6 +1154,12 @@ class AuthoritativeSlotMatchExecutor:
                 raise ValueError("existing event group is not the expected W/O receipt")
             return loaded
 
+        from beta_engine.application.run_calendar_read_authority import guard_versioned_sporting_write
+
+        guard_versioned_sporting_write(
+            self.session, run_id=authority.run_id, branch_id=authority.branch_id,
+            operation="Match walkover simulation",
+        )
         result = authority.result
         result_fp = fingerprint(
             {

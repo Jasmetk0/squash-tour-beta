@@ -26,6 +26,29 @@ def _planned_week(calendar: RunCalendar, position: RunCalendarPosition) -> dict:
     }
 
 
+def preview_run_calendar_configuration(calendar: RunCalendar) -> dict:
+    """Preview creation inputs without reading or creating any world state."""
+
+    try:
+        require_supported_full_simulation_calendar(calendar)
+    except ValueError:
+        supported = False
+    else:
+        supported = True
+    return {
+        "schema_version": "run_calendar_configuration_preview.v1",
+        "read_only": True,
+        "run_created": False,
+        "run_calendar": calendar.to_metadata(),
+        "first_week": _planned_week(calendar, calendar.season_to_calendar(0, 1)),
+        "last_week": _planned_week(calendar, calendar.season_to_calendar(
+            calendar.season_count - 1, calendar.weeks_per_year
+        )),
+        "sporting_calendar_supported": supported,
+        "limitations": [] if supported else ["sporting_calendar_execution_not_supported_yet"],
+    }
+
+
 def preview_saved_run_calendar_target(
     session: Session,
     *,

@@ -1517,6 +1517,16 @@ class SimulationPersistenceRepository:
                 raise ValueError(
                     "Initial-world adoption requires a writable active Run/Branch"
                 )
+            # Materializing a verified historical fork is not new adoption.
+            # Gate this command boundary, preserving exact existing retries.
+            current = get_initial_world(session, run_id=state.run_id, branch_id=state.branch_id)
+            if current is None:
+                from beta_engine.application.run_calendar_read_authority import guard_versioned_sporting_write
+
+                guard_versioned_sporting_write(
+                    session, run_id=state.run_id, branch_id=state.branch_id,
+                    operation="Initial world adoption",
+                )
             installed = put_initial_world(session, state)
             bootstrap_lifecycle(session, installed, lifecycle_policy)
             bootstrap_sporting(session, installed)

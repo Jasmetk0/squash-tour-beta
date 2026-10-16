@@ -51,6 +51,7 @@ from beta_engine.application.global_full_simulation_operations import (
 from beta_engine.application.run_branch_creation_service import (
     RunBranchCreationService,
 )
+from beta_engine.application.run_calendar_extension_readiness import inspect_run_calendar_extension_readiness
 from beta_engine.application.run_calendar_target_preview import (
     preview_saved_run_calendar_target,
     preview_saved_run_calendar_extension,
@@ -493,6 +494,25 @@ def preview_run_calendar_extension(
         raise HTTPException(
             status_code=409,
             detail={"code": "calendar_extension_preview_conflict", "message": str(exc)},
+        ) from exc
+
+
+@router.get("/{run_id}/calendar/extension-readiness")
+def inspect_calendar_extension_readiness(
+    run_id: str,
+    new_season_count: int = Query(ge=1, le=2**31 - 1),
+    runtime: ApiRuntime = Depends(get_runtime),
+):
+    """Read-only all-Branch Saved head audit, not an extension command."""
+    try:
+        with runtime.repository._session_factory() as session:
+            return inspect_run_calendar_extension_readiness(
+                session, run_id=run_id, new_season_count=new_season_count
+            )
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={"code": "calendar_extension_readiness_conflict", "message": str(exc)},
         ) from exc
 
 

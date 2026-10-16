@@ -52,6 +52,10 @@ from beta_engine.application.run_branch_creation_service import (
     RunBranchCreationService,
 )
 from beta_engine.application.run_calendar_extension_readiness import inspect_run_calendar_extension_readiness
+from beta_engine.application.run_calendar_extension_commit import (
+    review_run_calendar_extension, save_run_calendar_extension,
+)
+from pydantic import BaseModel, Field
 from beta_engine.application.run_calendar_target_preview import (
     preview_saved_run_calendar_target,
     preview_saved_run_calendar_extension,
@@ -516,6 +520,54 @@ def inspect_calendar_extension_readiness(
             status_code=409,
             detail={"code": "calendar_extension_readiness_conflict", "message": str(exc)},
         ) from exc
+
+
+class RunCalendarExtensionSaveRequest(BaseModel):
+    command_id: str = Field(min_length=1, max_length=128)
+    new_season_count: int = Field(ge=1, le=2**31 - 1)
+    review_fingerprint: str = Field(min_length=64, max_length=64)
+    explicit_confirmation: bool = False
+
+
+@router.get("/{run_id}/calendar/extension-review")
+def review_calendar_extension(
+    run_id: str,
+    new_season_count: int = Query(ge=1, le=2**31 - 1),
+    runtime: ApiRuntime = Depends(get_runtime),
+):
+    """Read-only reviewed all-Branch cohort and exact Save fingerprint."""
+    try:
+        with runtime.repository._session_factory() as session:
+            session.connection().exec_driver_sql("BEGIN")
+            return review_run_calendar_extension(
+                session, runtime.repository, run_id=run_id,
+                new_season_count=new_season_count,
+            )
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail={
+            "code": "calendar_extension_review_conflict", "message": str(exc)
+        }) from exc
+
+
+@router.post("/{run_id}/calendar/extension-save")
+def commit_calendar_extension(
+    run_id: str,
+    payload: RunCalendarExtensionSaveRequest,
+    runtime: ApiRuntime = Depends(get_runtime),
+):
+    """Manual explicit Save; no sporting task, player or simulation starts."""
+    try:
+        return save_run_calendar_extension(
+            runtime.repository, run_id=run_id,
+            command_id=payload.command_id,
+            new_season_count=payload.new_season_count,
+            review_fingerprint=payload.review_fingerprint,
+            explicit_confirmation=payload.explicit_confirmation,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail={
+            "code": "calendar_extension_save_conflict", "message": str(exc)
+        }) from exc
 
 
 @router.get("", response_model=RunContainerListResponse)

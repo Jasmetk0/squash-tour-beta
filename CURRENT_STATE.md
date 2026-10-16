@@ -56,3 +56,7 @@ Keep ordinary PR checks focused. Use Codex only for a bounded difficult integrat
 ## Earlier implementation history
 
 This active summary is intentionally short to avoid repeatedly loading hundreds of obsolete candidate notes. Complete pre-checkpoint evidence remains in the [pinned previous CURRENT_STATE.md](https://github.com/Jasmetk0/squash-tour-beta/blob/b63f40387bed75812ae9f9585734a6226b93fda9/CURRENT_STATE.md) and Git history. Those dated notes are evidence of their time, not an open PR queue. Master chapter 35 and the v82 checkpoint preserve the current audit boundaries.
+
+## Calendar horizon extension preflight hardening (candidate)
+
+The pure `RunCalendar.extend_to` planning helper now rejects extended horizons outside the same signed 32-bit timeline/count and exact JSON week-ordinal ranges enforced at Run creation. Focused boundary tests cover basis preservation, legacy refusal and overflow. This is **not** a writable extension command: no Run, Branch, Saved Revision, Draft, task or sporting state is changed by this helper. All-Branch atomic extension, historical revision compatibility, review/Save and Completed continuation remain pending.

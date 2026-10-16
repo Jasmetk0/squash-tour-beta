@@ -180,7 +180,17 @@ def review_run_calendar_extension(
                             session, payload=head.payload, run_id=run_id,
                             branch_id=branch.branch_id,
                         )
-                        if captured != saved_content:
+                        # Some existing normal-Save adapters synthesize a
+                        # canonical *empty* component on capture even when the
+                        # original Saved head intentionally omitted it.
+                        # Missing live rows are checked independently by the
+                        # complete component-coverage registry above. Compare
+                        # every previously Saved component exactly, without
+                        # treating synthesized no-op defaults as user edits.
+                        if any(
+                            captured.get(key) != value
+                            for key, value in saved_content.items()
+                        ):
                             blockers.append("unsaved_live_state_differs_from_saved_head")
                     except (TypeError, ValueError) as exc:
                         blockers.append("live_component_integrity: " + str(exc))

@@ -4,6 +4,8 @@ import pytest
 
 from beta_engine.domain.calendar.run_calendar import RunCalendar
 
+pytestmark = pytest.mark.pr_critical
+
 
 def test_extension_preserves_basis_and_original_clock():
     original = RunCalendar(52, 35, 2030, 3)

@@ -332,13 +332,22 @@ def save_run_calendar_extension(
         old_calendar = review["original_calendar"]
         metadata = _json_object(run.metadata_json, "Run metadata")
         metadata["run_calendar"] = proposed
+        # Freeze all verified source Branch states BEFORE changing any HEAD:
+        # a shared-history fork validates its ancestor Branch's current HEAD,
+        # so validating branch B after changing ancestor A would read a mixed
+        # in-transaction cohort. No partial cohort may influence later checks.
+        prepared_states = {
+            item["branch_id"]: repository._validated_branch_revision_state_in_session(
+                session=session,
+                branch=session.get(RunBranchModel, item["branch_id"]),
+            )
+            for item in review["branches"]
+        }
         updated_heads = []
         for source in review["branches"]:
             branch_id = source["branch_id"]
             branch = session.get(RunBranchModel, branch_id)
-            state = repository._validated_branch_revision_state_in_session(
-                session=session, branch=branch
-            )
+            state = prepared_states[branch_id]
             old = state.saved_revision
             draft = session.get(BranchWorkingDraftModel, state.working_draft.draft_id)
             new_revision_id = str(uuid5(

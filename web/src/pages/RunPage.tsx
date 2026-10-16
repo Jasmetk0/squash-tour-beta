@@ -10,6 +10,7 @@ import {
   getRunPackageState,
   getRunHomeActivity,
   getRunHomeRankingChanges,
+  getRunHomeReadiness,
   getSavedHomePlayerIdentities,
   listSavedRevisionHistory,
 } from '../api/client'
@@ -26,6 +27,7 @@ import { RunHomeProgress, runHomeClock } from './RunHomeProgress'
 import { RunCalendarExtensionInspection } from './RunCalendarExtensionInspection'
 import { HomePlayerIdentityLink } from './HomePlayerIdentityLink'
 import { RunHomeRankingPanel } from './RunHomeRankingPanel'
+import { RunHomeReadinessPanel } from './RunHomeReadinessPanel'
 import { seasonOrdinal, weekOrdinal } from './runHomeModel'
 
 const NEXT = {
@@ -143,6 +145,12 @@ export function RunPage(): JSX.Element {
     enabled: ready,
     retry: false
   })
+  const readinessQuery = useQuery({
+    queryKey: ['run-home-readiness', runId, branchId, selectedBranch?.saved_head_revision_id],
+    queryFn: () => getRunHomeReadiness(runId, branchId!),
+    enabled: ready && Boolean(selectedBranch?.saved_head_revision_id),
+    retry: false,
+  })
   const homeActivityQuery = useQuery({
     queryKey: ['run-home-activity', runId, branchId, selectedBranch?.saved_head_revision_id],
     queryFn: () => getRunHomeActivity(runId, branchId!),
@@ -176,6 +184,17 @@ export function RunPage(): JSX.Element {
     retry: false
   })
 
+  const readiness = readinessQuery.data?.run_id === runId
+    && readinessQuery.data.branch_id === branchId
+    && readinessQuery.data.saved_revision_id === selectedBranch?.saved_head_revision_id
+    && (!draft || readinessQuery.data.draft_version === draft.draft_version)
+    && (!homeClock || (
+      readinessQuery.data.current_calendar.weeks_per_year === homeClock.weeks_per_year
+      && readinessQuery.data.current_calendar.season_count === homeClock.season_count
+      && readinessQuery.data.current_calendar.start_year === homeClock.start_year
+      && readinessQuery.data.current_calendar.season_start_year_week === homeClock.season_start_year_week
+    )) ? readinessQuery.data : null
+  const readinessMismatch = readinessQuery.isSuccess && !readiness
   const homeActivity = homeActivityQuery.data?.run_id === runId
     && homeActivityQuery.data.branch_id === branchId
     && homeActivityQuery.data.saved_revision_id === selectedBranch?.saved_head_revision_id
@@ -217,6 +236,8 @@ export function RunPage(): JSX.Element {
     pendingQuery.error && !isApiNotFound(pendingQuery.error) ? formatApiError(pendingQuery.error) : null,
     revisionsQuery.error ? formatApiError(revisionsQuery.error) : null,
     homeActivityQuery.error ? formatApiError(homeActivityQuery.error) : null,
+    readinessQuery.error ? formatApiError(readinessQuery.error) : null,
+    readinessMismatch ? 'Saved readiness identity/HEAD/draft/calendar differs from selected Run.' : null,
     homeActivityMismatch ? 'Saved Home activity identity does not match selected Branch HEAD.' : null,
     rankingChangesQuery.error ? formatApiError(rankingChangesQuery.error) : null,
     rankingChangesMismatch ? 'Saved ranking changes identity does not match selected Branch HEAD.' : null,
@@ -280,6 +301,10 @@ export function RunPage(): JSX.Element {
       loading={branchLoading || time.isLoading || containerQuery.isPending}
       unavailable={!verified} historical={false} locale={language} clock={homeClock}/>
 
+    {ready && readinessQuery.isPending && <p role="status">{l.loading}</p>}
+    {ready && readiness && <RunHomeReadinessPanel
+      data={readiness} runId={runId} language={language}
+      refreshing={readinessQuery.isFetching} refresh={() => { void readinessQuery.refetch() }} />}
     <div className="run-home-columns">
       <SectionCard title={l.next}>
         {!verified && <p className="status">{branchLoading || containerQuery.isPending || time.isLoading ? l.loading : l.missing}</p>}

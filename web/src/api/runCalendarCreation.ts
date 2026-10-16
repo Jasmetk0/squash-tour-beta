@@ -69,3 +69,55 @@ export function validateCalendarCreationPreview(
   }
   return v
 }
+
+
+export type RunCalendarExtensionPreview = {
+  schema_version: 'run_calendar_extension_preview.v1'
+  run_id: string
+  branch_id: string
+  source_saved_head_revision_id: string
+  source_saved_head_content_hash: string
+  read_only: true
+  state_changed: false
+  save_performed: false
+  simulation_started: false
+  commit_supported: false
+  original_calendar: RunCalendarMetadata
+  proposed_calendar: RunCalendarMetadata
+  previous_last_week: PlannedWeek
+  first_added_week: PlannedWeek
+  new_last_week: PlannedWeek
+  added_seasons: number
+  added_weeks: number
+  limitations: string[]
+}
+
+export function validateExtensionPreview(
+  value: unknown, runId: string, branchId: string, requestedCount: number
+): RunCalendarExtensionPreview {
+  const v = value as RunCalendarExtensionPreview
+  if (!v || v.schema_version !== 'run_calendar_extension_preview.v1'
+    || v.run_id !== runId || v.branch_id !== branchId
+    || !v.source_saved_head_revision_id || !v.source_saved_head_content_hash
+    || v.read_only !== true || v.state_changed !== false
+    || v.save_performed !== false || v.simulation_started !== false || v.commit_supported !== false
+    || !v.original_calendar || !v.proposed_calendar
+    || v.proposed_calendar.season_count !== requestedCount
+    || v.original_calendar.schema_version !== 'run_calendar.v1'
+    || v.proposed_calendar.schema_version !== 'run_calendar.v1'
+    || v.original_calendar.start_year !== v.proposed_calendar.start_year
+    || v.original_calendar.weeks_per_year !== v.proposed_calendar.weeks_per_year
+    || v.original_calendar.season_start_year_week !== v.proposed_calendar.season_start_year_week
+    || !Number.isSafeInteger(v.added_weeks) || v.added_weeks <= 0
+    || v.added_seasons !== requestedCount - v.original_calendar.season_count
+    || v.added_weeks !== v.added_seasons * v.original_calendar.weeks_per_year
+    || v.previous_last_week?.season_index !== v.original_calendar.season_count - 1
+    || v.first_added_week?.season_index !== v.original_calendar.season_count
+    || v.first_added_week.season_week !== 1
+    || v.new_last_week?.season_index !== requestedCount - 1
+    || v.new_last_week.season_week !== v.proposed_calendar.weeks_per_year
+    || !Array.isArray(v.limitations) || !v.limitations.includes('extension_transaction_not_implemented')) {
+    throw Error('Invalid or mismatched Run calendar extension preview')
+  }
+  return v
+}

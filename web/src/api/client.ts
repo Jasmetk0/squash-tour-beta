@@ -1,5 +1,5 @@
 import { isBoundaryTarget } from './fullSimulationBoundaryTargets'
-import { validateCalendarCreationPreview } from './runCalendarCreation'
+import { validateCalendarCreationPreview, validateExtensionPreview } from './runCalendarCreation'
 import type { RunCalendarCreationInput, RunCalendarCreationPreview } from './runCalendarCreation'
 import type {
   BootstrapNextSeasonPayload,
@@ -5129,4 +5129,17 @@ export function reviewCalendarInitialHealth(runId:string,branchId:string,payload
 }
 export function confirmCalendarInitialHealth(runId:string,branchId:string,review:import('./calendarInitialHealth').InitialHealthRequest,fingerprint:string):Promise<unknown> {
   return request(`/admin/runs/${encodeURIComponent(runId)}/branches/${encodeURIComponent(branchId)}/player-health/calendar-initial`, {method:'POST',body:JSON.stringify({review,expected_health_fingerprint:fingerprint})})
+}
+
+
+/** Inspection only: no mutation, Save or sim task is permitted. */
+export async function previewRunCalendarExtension(
+  runId: string, branchId: string, newSeasonCount: number
+): Promise<import('./runCalendarCreation').RunCalendarExtensionPreview> {
+  if (!Number.isSafeInteger(newSeasonCount) || newSeasonCount < 1 || newSeasonCount > 2147483647) {
+    throw Error('Invalid proposed season count')
+  }
+  const path = '/run-containers/' + encodeURIComponent(runId) + '/branches/'
+    + encodeURIComponent(branchId) + '/calendar/extension-preview?new_season_count=' + newSeasonCount
+  return validateExtensionPreview(await request<unknown>(path), runId, branchId, newSeasonCount)
 }

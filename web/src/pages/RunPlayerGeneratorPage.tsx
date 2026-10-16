@@ -35,8 +35,8 @@ export function RunPlayerGeneratorPage(): JSX.Element {
       <p className="eyebrow">PRODUCT RUN · PLAYERS · GENERATE</p>
       <h2>{cs ? 'Generovat hráče' : 'Generate players'}</h2>
       <p className="subtitle">{!legacySupported && clock ? (cs
-        ? 'Generování na časové ose tohoto Runu. Zatím pouze náhled bez přidání hráčů.'
-        : 'Generate on this Run’s calendar. Currently preview only, without adding players.') : cs
+        ? 'Generování na časové ose tohoto Runu, kontrola hráčů, potvrzení a ruční Save.'
+        : 'Generate on this Run’s calendar, review players, confirm and Save explicitly.') : cs
         ? 'Jediný produkční generátor: automaticky podle světa nebo se závaznou zemí, regionem a věkem, náhled, potvrzení a ruční Save.'
         : 'One production generator: World-default or hard country/region/age conditions, preview, explicit confirmation and manual Save.'}</p>
     </div>

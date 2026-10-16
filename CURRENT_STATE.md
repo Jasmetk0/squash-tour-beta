@@ -1,32 +1,33 @@
 # Current calendar implementation — Master v82
 
-Verified base `buuk`: `643ee60868ee57cecfdc560e9079ac68f2bdda00`, merged #1498
-(16 October 2026). Fresh review confirms #1496, #1497 and #1498 are merged;
-no other PR was open at task start. Their final checks were green before handoff.
-Master v82 remains the canon; this task changes implementation, not product scope.
+Verified base `buuk`: `10dafd09295b4582c1031ad379ff67f289f3421e`, merged #1499
+(16 October 2026). Fresh review confirms #1499 merged and no other open PR at task
+start. Its final eight workflows succeeded before handoff. Master v82 remains the
+canon; this task changes implementation, not product scope.
 
 **Implemented on buuk:** consent cancellation fix; versioned Run clock and exact
 conversion/target planning; optional CS/EN custom calendar creation with immutable
 first Save and correct Home timeline; hash-verified selected-Saved clock authority;
 explicit age/birth unit helpers; guards on still-legacy generation and sporting
-writers. Archive/proposal reads preserve original data. Custom clocks are not yet
-sporting-ready. #1496 also fixed real standalone Health bootstrap and an acceptance
-Save/navigation race without weakening Saved-HEAD checks.
+writers. #1499 adds calendar-owned initial-player previews through the real API
+and Players → Generate, including actual Earth-package 1,000-player tests and the
+existing Shell browser acceptance. Raw previews remain read-only. Custom clocks
+are not yet sporting-ready.
 
-**Current candidate:** calendar-aware initial-player preview through the real Run
-API and the existing Players → Generate page. New v2 identities bind the actual
-clock, correct birthdays/ages/population cohorts and source-year diagnostics;
-v1 fingerprints and adoption/replay paths remain unchanged. A custom-clock
-preview is read-only and cannot add players or run sport. Actual Earth-package
-1,000-player HTTP/SQLite tests and the extended existing Shell browser scenario
-own the relevant acceptance. See [contract and verification](docs/CALENDAR_PLAYER_PREVIEW_V82.md).
+**Current candidate:** reviewed confirmation of a custom-calendar initial
+population, separate manual Save, restart, materialized fork and restore. Versioned
+InitialWorld/player/lifecycle DTOs store the actual Run clock and birth/age facts;
+legacy snapshots keep their schema and hashes. Lifecycle initialization is explicitly
+`population_only`: it creates no Tour entries, results, ranking, health or sporting
+history. Confirmation rechecks Saved head, clean draft and copied source under a
+writer lock; exact committed retries do not regenerate players. See
+[contract and verification](docs/CALENDAR_INITIAL_WORLD_V82.md).
 This candidate is not included in the base above until the user merges it.
 
-**Next:** version actual InitialWorld/bootstrap/lifecycle and the Run-local time
-position contract before accepting v2 players into authoritative state. Then
-migrate annual sporting development, ranking validity and transitions/frozen
-Full Simulation goals. Existing guards stay until each writer is proven. Custom
-prestart edits, all-Branch horizon extension and import compatibility remain.
+**Next:** migrate health and annual sporting development, ranking validity and
+authoritative transitions/frozen Full Simulation goals. Existing guards stay until
+each writer is proven. Custom prestart edits, all-Branch horizon extension and
+import compatibility remain. Population storage alone is not W52 sport support.
 
 Authority and long-term task:
 [Master](SQUASH_ENGINE_MASTER_VISION.md) §§3.2/6.1/6.9–6.12/31.37;

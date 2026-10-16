@@ -169,6 +169,8 @@ def derive_initial_ranking_inputs(
     state: InitialWorldState,
 ) -> tuple[OfficialRankingPolicy, tuple[OfficialRankingPlayer, ...]]:
     """Derive the only world-backed initial ranking inputs from owned state."""
+    if not isinstance(state, InitialWorldState):
+        raise ValueError("Calendar InitialWorld ranking initialization is not supported yet")
     if len(state.policies) != 1:
         raise ValueError("Exactly one first-season ranking policy is required")
     players = []
@@ -192,3 +194,13 @@ def derive_initial_ranking_inputs(
             )
         )
     return state.policies[0], tuple(players)
+
+
+def parse_initial_world_json(raw: str):
+    """Dispatch by stored version without adding defaults to historical payloads."""
+    value = json.loads(raw)
+    if isinstance(value, dict) and value.get("schema_version") == "initial_world_state.v2":
+        from beta_engine.application.calendar_initial_world import CalendarInitialWorldState
+
+        return CalendarInitialWorldState.model_validate_json(raw)
+    return InitialWorldState.model_validate_json(raw)

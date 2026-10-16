@@ -720,6 +720,63 @@ def main() -> None:
             evidence["custom_calendar_player_preview"] = {"player_count": 1000, "weeks_per_year": 52,
                 "saved_revision_unchanged": True, "preview_only": True, "paging_and_stale_reset": True}
 
+            # The same generator now supports a separately reviewed population
+            # adoption. No Save, Tour entry, result or time advance is implicit.
+            page.get_by_label("Player count", exact=True).fill("1000")
+            page.get_by_role("button", name="Generate preview", exact=True).click()
+            expect(page.get_by_role("table")).to_be_visible()
+            with page.expect_response(lambda response: response.url.endswith("/calendar-adoption/preview")) as population_review:
+                page.get_by_role("button", name="Review adding players", exact=True).click()
+            assert population_review.value.status == 200, population_review.value.text()
+            proposed = population_review.value.json()
+            assert proposed["player_count_before"] == 0 and proposed["player_count_after"] == 1000
+            pop_root = args.api_url + "/admin/players/runs/" + custom_id + "/branches/" + preview_branch["branch_id"] + "/initial-world"
+            assert page.request.get(pop_root + "/calendar-adoption").status == 404
+            expect(page.get_by_role("button", name="Add players to Run", exact=True)).to_be_disabled()
+            page.get_by_label("Confirm population adoption", exact=True).check()
+            with page.expect_response(lambda response: response.request.method == "POST"
+                                      and response.url.endswith("/calendar-adoption")) as population_added:
+                page.get_by_role("button", name="Add players to Run", exact=True).click()
+            assert population_added.value.status == 201, population_added.value.text()
+            installed_population = population_added.value.json()
+            assert installed_population["fingerprint"] == proposed["initial_world_fingerprint"]
+            assert installed_population["lifecycle_fingerprint"] == proposed["lifecycle_fingerprint"]
+            assert installed_population["state"]["run_calendar"] == expected_clock
+            unsaved_branch = page.request.get(args.api_url + "/run-branches", params={"run_id": custom_id}).json()["run_branches"][0]
+            assert unsaved_branch["saved_head_revision_id"] == preview_branch["saved_head_revision_id"]
+            expect(page.get_by_role("button", name="Save players", exact=True)).to_be_disabled()
+            page.get_by_label("Confirm population Save", exact=True).check()
+            with page.expect_response(lambda response: response.request.method == "POST"
+                                      and response.url.endswith("/initial-world/save")) as population_saved:
+                page.get_by_role("button", name="Save players", exact=True).click()
+            assert population_saved.value.status == 201, population_saved.value.text()
+            saved_population = population_saved.value.json()["saved_revision"]
+            content = saved_population["payload"]["content"]
+            assert len(content["initial_world"]["state"]["players"]) == 1000
+            assert content["initial_world"]["state"]["schema_version"] == "initial_world_state.v2"
+            life = content["player_lifecycle"]["states"][0]
+            assert life["week"]["calendar"] == expected_clock and life["initialization_stage"] == "population_only"
+            assert all("tour_entry_week" not in player for player in life["players"])
+            assert "player_health_state" not in content and "player_sporting" not in content
+            expect(page.get_by_text("Population is saved.", exact=True)).to_be_visible()
+            page.reload()
+            expect(page.get_by_role("heading", name="Players added to this Run", exact=True)).to_be_visible()
+            expect(page.get_by_text("Population is saved.", exact=True)).to_be_visible()
+            assert page.get_by_role("button", name="Generate preview", exact=True).count() == 0
+            assert page.request.get(pop_root + "/calendar-adoption").json() == installed_population
+            inventory = page.request.get(args.api_url + "/admin/runs/" + custom_id + "/branches/"
+                                         + preview_branch["branch_id"] + "/saved-players").json()
+            assert inventory["total"] == 1000
+            page.screenshot(path=str(artifacts / "11-custom-calendar-population-saved.png"), full_page=True)
+            page.get_by_role("link", name="Open player list", exact=False).click()
+            expect(page.get_by_role("heading", name="Players", exact=True)).to_be_visible()
+            expect(page.get_by_text(inventory["players"][0]["display_name"], exact=True)).to_be_visible()
+            page.screenshot(path=str(artifacts / "12-custom-calendar-saved-players.png"), full_page=True)
+            evidence["custom_calendar_population_adopt_save_reload"] = {"player_count":1000,
+                "saved_revision_id":saved_population["revision_id"],"weeks_per_year":52,
+                "adoption_did_not_save":True,"manual_save_verified":True,"population_only":True,
+                "saved_inventory_total":inventory["total"],"reload_exact":True}
+
             page.get_by_role("link", name="Squash Engine global Home").click()
             expect(page.get_by_role("heading", name="Squash Engine Home")).to_be_visible()
             assert page.get_by_role("combobox", name="Admin active Run").count() == 0

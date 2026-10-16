@@ -32,7 +32,7 @@ def _save(server, run_id, review, command_id="reviewed-run-wide"):
 def test_http_two_branches_review_save_history_retry_and_cold_restart(tmp_path):
     db = f"sqlite:///{tmp_path / 'reviewed-http.db'}"
     with ApiServer(database_url=db) as server:
-        code, run = _request("POST", _url(server, "").removesuffix("/calendar/"), {
+        code, run = _request("POST", f"{server.base_url}/run-containers", {
             "display_name": "Reviewed W52",
             "calendar": {
                 "weeks_per_year": 52, "season_start_year_week": 35,

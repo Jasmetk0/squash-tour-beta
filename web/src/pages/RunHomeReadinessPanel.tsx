@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import type { RunHomeReadiness, RunReadinessCode, RunReadinessStatus } from '../api/runHomeReadiness'
+import type { RunHomeReadiness, RunReadinessCode } from '../api/runHomeReadiness'
 
 const content = {
   cs: {
@@ -91,13 +91,13 @@ export function RunHomeReadinessPanel({
 }): JSX.Element {
   const l = content[language]
   const base = '/admin/runs/' + encodeURIComponent(runId)
-  const byCode = Object.fromEntries(data.items.map(item => [item.code, item])) as
-    Record<RunReadinessCode, { status: RunReadinessStatus; evidence_count: number }>
-  const next = ordered.find(code => {
-    const status = byCode[code].status
-    return status === 'missing' || status === 'candidate_only' || status === 'unsaved'
-  })
-  const draftDirty = byCode.working_draft.status === 'unsaved'
+  const next = ordered.find(code => data.items.some(
+    item => item.code === code && (item.status === 'missing'
+      || item.status === 'candidate_only' || item.status === 'unsaved')
+  ))
+  const draftDirty = data.items.some(
+    item => item.code === 'working_draft' && item.status === 'unsaved'
+  )
   return <section aria-label="Run saved readiness" className="run-home-status-block">
     <div className="actions">
       <h3>{l.heading}</h3>

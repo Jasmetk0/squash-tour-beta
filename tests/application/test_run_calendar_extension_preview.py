@@ -30,6 +30,8 @@ def test_extension_preview_uses_saved_clock_without_changing_database(tmp_path):
         assert result["save_performed"] is False
         assert result["simulation_started"] is False
         assert result["commit_supported"] is False
+        assert result["source_saved_head_revision_id"] == "revision-1"
+        assert result["source_saved_head_content_hash"] == revision_before.saved_revision.content_hash
         assert result["original_calendar"]["season_count"] == 3
         assert result["proposed_calendar"]["season_count"] == 5
         assert result["previous_last_week"]["season_index"] == 2

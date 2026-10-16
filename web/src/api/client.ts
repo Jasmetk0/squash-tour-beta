@@ -5143,3 +5143,33 @@ export async function previewRunCalendarExtension(
     + encodeURIComponent(branchId) + '/calendar/extension-preview?new_season_count=' + newSeasonCount
   return validateExtensionPreview(await request<unknown>(path), runId, branchId, newSeasonCount)
 }
+
+
+/** Read-only, all-Branch review bound to immutable heads and monotone draft versions. */
+export async function reviewRunCalendarExtension(
+  runId: string, newSeasonCount: number
+): Promise<import('./runCalendarExtension').CalendarExtensionReview> {
+  if (!Number.isSafeInteger(newSeasonCount) || newSeasonCount < 1 || newSeasonCount > 2147483647) {
+    throw Error('Invalid Run calendar extension horizon')
+  }
+  const { validateCalendarExtensionReview } = await import('./runCalendarExtension')
+  const endpoint = '/run-containers/' + encodeURIComponent(runId)
+    + '/calendar/extension-review?new_season_count=' + newSeasonCount
+  return validateCalendarExtensionReview(await request<unknown>(endpoint), runId, newSeasonCount)
+}
+
+/** Explicitly confirmed manual Save; never starts Full Simulation. */
+export async function saveRunCalendarExtension(
+  runId: string, payload: import('./runCalendarExtension').CalendarExtensionSaveRequest,
+): Promise<import('./runCalendarExtension').CalendarExtensionReceipt> {
+  if (!payload.explicit_confirmation || !payload.review_fingerprint
+    || !payload.command_id.trim() || !Number.isSafeInteger(payload.new_season_count)) {
+    throw Error('Invalid explicit Run extension Save command')
+  }
+  const { validateCalendarExtensionReceipt } = await import('./runCalendarExtension')
+  const endpoint = '/run-containers/' + encodeURIComponent(runId) + '/calendar/extension-save'
+  return validateCalendarExtensionReceipt(
+    await request<unknown>(endpoint, { method: 'POST', body: JSON.stringify(payload) }),
+    runId, payload,
+  )
+}

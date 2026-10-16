@@ -47,3 +47,7 @@ Pure horizon extension now checks persistence/year and exact-JSON week limits be
 A pure Saved-clock-backed read-only extension plan is available for integration into a later reviewed operation. Pending: cross-Branch versioned authority/Save semantics, atomic extension transaction and receipts, Completed continuation, retry/staleness and restart acceptance, and CS/EN Admin UI. The plan explicitly cannot commit changes.
 
 The read-only extension preview has a Run/Branch-scoped HTTP endpoint. UI consent and the multi-Branch transactional mutation are intentionally still absent; no automatic Save or task restart is implied.
+
+## V83 horizon extension implementation candidate
+
+A cohesive Run-wide review → explicit confirmation → single-transaction Save and restart-safe receipt is in the implementation branch. Historical revisions and population origins are preserved, and unsupported sporting writers remain fenced. This candidate becomes done only after all targeted SQLite/API/UI tests and final-head PR CI succeed. Separate W/horizon sporting time/transition migration and populated multi-season acceptance remain subsequent dependencies. See [extension contract](docs/RUN_CALENDAR_HORIZON_EXTENSION_V83.md).

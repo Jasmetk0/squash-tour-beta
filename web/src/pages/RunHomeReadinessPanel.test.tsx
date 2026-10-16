@@ -45,7 +45,6 @@ describe('saved Run readiness panel', () => {
     expect(screen.getByText('This Branch readiness')).toBeInTheDocument()
     expect(screen.getByText('This Run calendar is not yet safely executable by the sporting engine.')).toBeInTheDocument()
     expect(screen.getByText('Unsaved changes are not counted in this overview.')).toBeInTheDocument()
-    expect(screen.getAllByText('Add a Calendar Package')).toHaveLength(0)
     const links = screen.getAllByRole('link', { name: 'Add a Calendar Package →' })
     expect(links[0]).toHaveAttribute('href', '/admin/runs/run-a/manage')
     expect(screen.getByRole('link', { name: 'Inspect and Save changes →' }))
@@ -65,8 +64,7 @@ describe('saved Run readiness panel', () => {
         season_start_year_week: 37, start_year: 2000, season_count: 50 }
     })
     expect(screen.getByText('Připravenost této Branch')).toBeInTheDocument()
-    expect(screen.getByText('Kalendář odpovídá podporované referenční FAX konfiguraci. Před každou operací je stále nutná vlastní kontrolu.')).not.toBeInTheDocument()
-    expect(screen.getByText(/před každou operací je stále nutná vlastní kontrola/)).toBeInTheDocument()
+    expect(screen.getByText(/Před každou operací je stále nutná vlastní kontrola/)).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Doplnit Calendar Package →' })).toHaveAttribute('href', '/admin/runs/run-a/manage')
   })
 

@@ -1092,6 +1092,20 @@ class RunContainerModel(Base):
     metadata_json: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
 
 
+class RunCalendarExtensionReceiptModel(Base):
+    """Durable, idempotent Run-wide calendar Save receipt (no sporting task)."""
+
+    __tablename__ = "run_calendar_extension_receipts"
+
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    command_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    request_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    result_json: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[str] = mapped_column(
+        String(32), nullable=False, server_default=text("CURRENT_TIMESTAMP")
+    )
+
+
 class LegacySimulationRunMappingModel(Base):
     """One-to-one compatibility mapping from legacy season attempts to Runs."""
 

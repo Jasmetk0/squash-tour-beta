@@ -13,9 +13,6 @@ from sqlalchemy.orm import Session
 
 from beta_engine.domain.calendar.run_calendar import RunCalendar
 from beta_engine.domain.run_revisions import CONTENT_HASH_ALGORITHM, saved_revision_content_hash
-from beta_engine.infrastructure.db.models import (
-    BranchSavedRevisionModel, RunBranchModel, RunContainerModel,
-)
 
 
 def _json_object(raw: str, *, label: str) -> dict:
@@ -37,6 +34,12 @@ def resolve_saved_run_calendar(
     another Branch of the same Run. Hashes are verified from the ORIGINAL
     payload/schema/identity, not reconstructed from current defaults.
     """
+
+    # Loading db.models executes db.__init__, which imports sporting writers.
+    # Defer this boundary until the authority module has finished initializing.
+    from beta_engine.infrastructure.db.models import (
+        BranchSavedRevisionModel, RunBranchModel, RunContainerModel,
+    )
 
     run = session.get(RunContainerModel, run_id)
     branch = session.get(RunBranchModel, branch_id)
@@ -156,6 +159,10 @@ def guard_versioned_sporting_write(
     sports, ranking candidates or match work. Data/package planning stays free
     of this gate. Call after exact historical replay, before new writes.
     """
+
+    # Loading db.models executes db.__init__, which imports sporting writers.
+    # Defer this boundary until the authority module has finished initializing.
+    from beta_engine.infrastructure.db.models import RunContainerModel
 
     run = session.get(RunContainerModel, run_id)
     if run is not None and "run_calendar" in _json_object(run.metadata_json, label="Run metadata"):

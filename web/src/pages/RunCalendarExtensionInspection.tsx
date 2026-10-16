@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { previewRunCalendarExtension } from '../api/client'
 import type { RunCalendarExtensionPreview } from '../api/runCalendarCreation'
 import { formatApiError } from '../utils/apiErrors'
@@ -14,8 +14,17 @@ export function RunCalendarExtensionInspection({ runId, branchId, currentCount, 
   const valid = /^\d+$/.test(input) && Number.isSafeInteger(count)
     && count > currentCount && count <= 2147483647
   const cs = language === 'cs'
+  const source = JSON.stringify([runId, branchId, currentCount, input])
+  const currentSource = useRef(source)
+  currentSource.current = source
+  const requestSequence = useRef(0)
+  useEffect(() => { requestSequence.current += 1; setResult(null); setError(null); setBusy(false) }, [source])
+  useEffect(() => () => { requestSequence.current += 1 }, [])
   async function inspect() {
     if (!valid) return
+    const sequence = ++requestSequence.current
+    const requestedSource = source
+    const isCurrent = () => sequence === requestSequence.current && requestedSource === currentSource.current
     setBusy(true)
     setError(null)
     setResult(null)
@@ -24,11 +33,11 @@ export function RunCalendarExtensionInspection({ runId, branchId, currentCount, 
       if (preview.original_calendar.season_count !== currentCount) {
         throw Error('Run calendar changed since the page was loaded')
       }
-      setResult(preview)
+      if (isCurrent()) setResult(preview)
     } catch (err) {
-      setError(formatApiError(err))
+      if (isCurrent()) setError(formatApiError(err))
     } finally {
-      setBusy(false)
+      if (isCurrent()) setBusy(false)
     }
   }
   return <section aria-label="Run calendar extension inspection">

@@ -1,39 +1,41 @@
-# Current calendar implementation — Master v82
+# Current implementation — Master v83
 
-Verified base `buuk`: `2b472b287452b9faa00552ef0b74889e83cfc785`, merged #1501
-(16 October 2026). Task-start GitHub check found no open PR. The local tree was
-verified against that exact base. Master v82 remains the canon.
+Audited base `buuk`: `b51d88efba3977eaf14d165f9dd83b5927310c6c`, merged #1506
+(16 October 2026). Fresh GitHub and local fetch agree; no open PR at final audit.
+Master v83 records the new product decisions, not completed runtime features.
 
-**Implemented on buuk:** consent cancellation fix, versioned Run clock and target
-math, custom calendar creation/Home, Saved clock authority, age/birth helpers,
-legacy sporting guards, calendar-owned initial-player previews (#1499), reviewed
-population confirmation/Save/fork/restore/restart (#1500), and a separately reviewed
-fresh initial Health baseline with its own manual Save (#1501). Population lifecycle
-is `population_only`; the baseline has no Injury/Illness history. Neither enables
-custom-calendar sporting progression or calibrated initial health.
+**Implemented:** versioned Run calendar, optional CS/EN creation/Home and immutable
+first Save; exact Saved clock reads/target math; annual age/birth helpers;
+calendar-owned player preview, reviewed adoption and manual Save/fork/restore;
+initial health baseline (#1501), actual calendar-owned Injury/Illness Admin edits
+with receipts, Health Save and CS/EN saved-player panel (#1502). Sporting migration
+is incomplete and relevant guards remain.
 
-**Current candidate:** actual Run-owned Injury/Illness facts through the existing
-Admin health inspect → preview → explicit confirmation → separate Health Save.
-The real saved-player profile now exposes a CS/EN Health tab. Dates carry the exact
-Run calendar; recovery estimates remain explicit weeks. First effective confirmed
-edit converts a baseline to `player_health_calendar_state.v2`; old baseline/V1
-Saved payloads and hashes remain unchanged. Writer-lock proof checks, atomic
-health/receipt/dirty Draft, exact retry, materialized fork provenance and backward/
-forward restore/restart use the existing persistence mechanisms. Pure fact carry
-is tested across year/season boundaries without creating sporting state. See the
-[health contract](docs/CALENDAR_INITIAL_HEALTH_V82.md) for evidence and limitations.
-This candidate is not part of the base above until the owner merges it.
+**Horizon status:** #1503 validates plan bounds; #1504 exposes read-only Saved-clock
+extension preview; #1505 adds CS/EN Home inspection; #1506 inventories all Branch
+Saved heads. These are merged, not open candidates. Actual extension transaction,
+all-Branch snapshot migration/Save and Completed continuation are still absent.
 
-**Next:** annual sporting development, ranking validity and authoritative
-transitions/frozen Full Simulation goals. Existing guards stay until each writer
-is proven. Custom prestart edits, all-Branch horizon extension and import
-compatibility remain. Health fact editing is not W52 sporting execution or realism
-calibration.
+**Current checkpoint candidate:** Master v83 + fresh audit/handoff and targeted
+extension inspection fixes: stale frontend responses and an explicit SQLite read
+snapshot for the all-Branch readiness API, plus independent authority import repair. This candidate is not in the base above
+until the owner merges it. Checkpoint PR final-head CI is the verification source.
 
-Authority and long-term task:
-[Master](SQUASH_ENGINE_MASTER_VISION.md) §§3.2/6.1/6.9–6.12/31.37;
-[v82 checkpoint](docs/PRE_ALPHA_CHECKPOINT_V82_2026_10_15.md);
-[handoff](docs/PRE_ALPHA_NEXT_CHATGPT_TASK_V82_2026_10_15.md).
+**New targets:** optional resumable world preparation/readiness, Home guidance and
+selected Package export; initial population from the same historical 15-year-old
+cohorts as ongoing intake, simplified development to start, retirement filtering,
+world-derived count and exact reviewed prestart regeneration. These are not
+implemented merely by this checkpoint. Whether initial custom rule edits affect
+future intake is explicitly deferred. Calibration/performance require tests.
+
+**Next:** finish one usable reviewed all-Branch horizon extension and explicit Save
+flow rather than another inspection-only fragment. Then migrate annual sporting
+development, ranking validity, actual transitions and frozen goals as required.
+Health fact editing and range planning are not W52 sporting execution.
+
+Authority: [Master](SQUASH_ENGINE_MASTER_VISION.md) 9.8/31.38/35.40;
+[audit](docs/PRE_ALPHA_CHECKPOINT_V83_2026_10_16.md);
+[complete next task](docs/PRE_ALPHA_NEXT_CHATGPT_TASK_V83_2026_10_16.md).
 
 ## Verified boundaries to preserve
 
@@ -43,26 +45,12 @@ Authority and long-term task:
 - A82-01 was fixed in merged #1490; no duplicate authoritative work was established. A82-02 is incomplete touched localization. A82-03 is the new calendar integration gap. A82-04 is unfinished populated second-season acceptance. Details/tests are in the v82 checkpoint.
 - Exact growth/realism/statistical calibration, the canonical richer attribute migration and the rest of the complete pre-alpha scope are not finished. New calendar targets do not close older deferred/open product questions.
 
-## Current execution order
+## Working protocol
 
-1. Fresh-fetch buuk/open PRs; verify the v82 documentation merge and avoid overlapping work.
-2. Preserve merged #1490 consent/response-loss regressions; proceed to usable calendar creation.
-3. Inspect all actual time callers; centralize Run calendar/versioned legacy semantics, then propagate safely through persistence and authoritative transitions/targets.
-4. Build usable optional calendar/range Admin preview, age/annual/ranking/import integration and explicit horizon extension with relevant real persistence tests. Preserve valid default FAX operation throughout; unsupported migrated scopes must be honest.
-5. Extend the strongest real sports acceptance across genuine next-season tournaments, then work toward populated full-season/50-season release gates and calibrated realism.
+Implement directly in the ordinary continuation ChatGPT chat unless the owner
+explicitly requests paid Codex. Fresh-check base/open PRs; preserve concurrent
+work. Deliver one complete usable slice, exact historical state and final-head
+green evidence. The owner alone merges. Full populated sporting acceptance and
+50-season release gates remain; no realism/release claim from narrow smoke CI.
 
-Keep ordinary PR checks focused. Use Codex only for a bounded difficult integration after direct ChatGPT has gathered the concrete context; if credits end, continue the same branch/PR directly. Never merge on behalf of the user.
-
-## Earlier implementation history
-
-This active summary is intentionally short to avoid repeatedly loading hundreds of obsolete candidate notes. Complete pre-checkpoint evidence remains in the [pinned previous CURRENT_STATE.md](https://github.com/Jasmetk0/squash-tour-beta/blob/b63f40387bed75812ae9f9585734a6226b93fda9/CURRENT_STATE.md) and Git history. Those dated notes are evidence of their time, not an open PR queue. Master chapter 35 and the v82 checkpoint preserve the current audit boundaries.
-
-## Calendar horizon extension preflight hardening (candidate)
-
-The pure `RunCalendar.extend_to` planning helper now rejects extended horizons outside the same signed 32-bit timeline/count and exact JSON week-ordinal ranges enforced at Run creation. Focused boundary tests cover basis preservation, legacy refusal and overflow. This is **not** a writable extension command: no Run, Branch, Saved Revision, Draft, task or sporting state is changed by this helper. All-Branch atomic extension, historical revision compatibility, review/Save and Completed continuation remain pending.
-
-## Candidate: Saved-clock extension planning
-
-Added a read-only application function `preview_saved_run_calendar_extension` that uses the verified Run/Branch Saved calendar, validates a strictly larger horizon and returns both endpoints, first newly available week, added seasons/weeks and explicit non-commit limitations. A focused real SQLite test verifies no Run/Branch/Saved hash mutations. No API route, review consent, persistence command, multi-Branch migration or user-facing extension is claimed.
-
-The extension planning candidate now also exposes GET /run-containers/{run_id}/branches/{branch_id}/calendar/extension-preview?new_season_count=N, backed by the real SQLite Saved-clock authority. It is strictly read-only: no approval, Save or extension commit endpoint exists.
+Earlier evidence remains in Master chapter 35, Git history and the v82 checkpoint.

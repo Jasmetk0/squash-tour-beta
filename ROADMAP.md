@@ -1,21 +1,22 @@
-# Active calendar dependency path — Master v82
+# Active dependency path — Master v83
 
-Audited base: `buuk` `2b472b287452b9faa00552ef0b74889e83cfc785` after #1501.
-Merged #1490–1501 provide the consent fix, versioned clock/initial Save, Saved
-calendar authority, custom calendar/Home, age/birth helpers, legacy sporting
-guards, calendar-owned population adoption/Save/fork/restore and initial Health.
+Audited base: `buuk` `b51d88efba3977eaf14d165f9dd83b5927310c6c` after #1506.
+Calendar creation, exact Saved reads, age helpers, population adoption/Save and
+calendar-owned Health fact editing are merged. Horizon bounds/API/Home/all-Branch
+inspection are merged; the actual extension writer is not implemented.
 
-The current candidate adds Run-owned Injury/Illness dates and reviewed editing
-through the existing Admin service and real player-profile Health tab, separate
-manual Health Save and exact restart/fork/restore. It preserves legacy Health and
-#1501 baseline schemas/hashes. Recovery windows stay explicitly weekly. Pure
-calendar-aware fact carry has boundary tests; sporting progression remains guarded.
-This is **not W52 sporting execution or health realism calibration**.
-Next: annual development/ranking/transitions/targets, safe extension/imports and
-populated multi-season acceptance.
-See [current state](CURRENT_STATE.md), [health contract](docs/CALENDAR_INITIAL_HEALTH_V82.md),
-[population contract](docs/CALENDAR_INITIAL_WORLD_V82.md)
-and [v82 task](docs/PRE_ALPHA_NEXT_CHATGPT_TASK_V82_2026_10_15.md).
+**Next usable result:** reviewed all-Branch horizon extension with explicit Save,
+historical compatibility, restart/recovery and CS/EN controls. Complete the real
+operator flow before more standalone inspection fragments. Subsequent sporting
+migration still includes annual development, ranking validity, transitions and
+frozen Full Simulation goals, followed by populated multi-season acceptance.
+
+Master v83 adds world preparation/readiness and historical-cohort initial-world
+generation as decided targets. They do not replace unfinished calendar integration
+or imply calibrated realism. Initial custom-rule inheritance to future intake is
+explicitly deferred. See [current state](CURRENT_STATE.md),
+[v83 audit](docs/PRE_ALPHA_CHECKPOINT_V83_2026_10_16.md) and
+[next task](docs/PRE_ALPHA_NEXT_CHATGPT_TASK_V83_2026_10_16.md).
 
 ## Dependency path to the pre-alpha
 
@@ -24,7 +25,7 @@ and [v82 task](docs/PRE_ALPHA_NEXT_CHATGPT_TASK_V82_2026_10_15.md).
 | 1 (done #1490) | Cancelled uncertain approval cannot reuse consent for a fresh command | Direct ChatGPT | Focused real component regression; exact retry unchanged |
 | 2 (foundation #1491–1495) | One calendar contract with legacy-compatible meaning; migrate remaining sporting callers | Direct ChatGPT; bounded Codex only if needed for hard integration | Conversion boundaries, versioned validation and actual callers |
 | 3 | Stored Run calendars drive correct authoritative time/targets | Direct ChatGPT or justified Codex integration | Real SQLite/API, old hashes/replay, Week/Season boundaries and frozen targets |
-| 4 | Operator can configure/preview new Run range/calendar and explicitly extend it | Direct ChatGPT for UI; use existing validated backend commands | CS/EN preview, first-week lock, stale/conflict guards and Completed continuation |
+| 4 (creation/inspection merged; extension pending) | Operator can configure a Run calendar and explicitly extend it across Branches | Direct ChatGPT for UI; use existing validated backend commands | CS/EN preview, first-week lock, stale/conflict guards and Completed continuation |
 | 5 | Age/yearly development/ranking defaults/imports use correct units and provenance | Direct ChatGPT; targeted assistance for difficult migration | Annual-age consistency, exact W-week expiry, weekly rules preserved, no silent import conversion |
 | 6 | Same nonterminal task completes genuine sporting weeks in the following season | Direct ChatGPT or bounded difficult acceptance task | Multiple real Editions, real MatchEngine games, manual Save, restart/replay and concrete target |
 | 7 | Complete populated pre-alpha acceptance, then calibration | Choose per measured workload | Full regression and Master release gates; no inference from sparse fixtures |

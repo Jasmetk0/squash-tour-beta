@@ -69,3 +69,35 @@ def test_missing_second_branch_saved_head_blocks_future_commit(tmp_path):
         assert exc.value.status_code == 409
     finally:
         engine.dispose()
+
+
+def test_readiness_uses_one_explicit_sqlite_snapshot(tmp_path):
+    from sqlalchemy import event
+    engine, factory, repo = _setup(tmp_path)
+    statements = []
+    try:
+        _signed_test_calendar(factory, RunCalendar(52, 1, 2030, 3))
+        with factory.begin() as session:
+            run = session.get(RunContainerModel, 'run-1')
+            run.storage_kind = 'custom_local'
+            run.read_only = 0
+        def capture(_conn, _cursor, statement, _parameters, _context, _many):
+            statements.append(statement)
+        event.listen(engine, 'before_cursor_execute', capture)
+        runtime = SimpleNamespace(repository=SimpleNamespace(_session_factory=factory))
+        result = inspect_calendar_extension_readiness('run-1', 4, runtime)
+        assert result['branch_count'] == 1
+        assert statements[0] == 'BEGIN'
+        assert any('SELECT' in statement for statement in statements[1:])
+    finally:
+        engine.dispose()
+
+
+def test_calendar_authority_and_readiness_import_independently():
+    import subprocess
+    import sys
+    result = subprocess.run(
+        [sys.executable, "-c", "import beta_engine.application.run_calendar_extension_readiness"],
+        capture_output=True, text=True, check=False,
+    )
+    assert result.returncode == 0, result.stderr

@@ -184,17 +184,6 @@ export function RunPage(): JSX.Element {
     retry: false
   })
 
-  const readiness = readinessQuery.data?.run_id === runId
-    && readinessQuery.data.branch_id === branchId
-    && readinessQuery.data.saved_revision_id === selectedBranch?.saved_head_revision_id
-    && (!draft || readinessQuery.data.draft_version === draft.draft_version)
-    && (!homeClock || (
-      readinessQuery.data.current_calendar.weeks_per_year === homeClock.weeks_per_year
-      && readinessQuery.data.current_calendar.season_count === homeClock.season_count
-      && readinessQuery.data.current_calendar.start_year === homeClock.start_year
-      && readinessQuery.data.current_calendar.season_start_year_week === homeClock.season_start_year_week
-    )) ? readinessQuery.data : null
-  const readinessMismatch = readinessQuery.isSuccess && !readiness
   const homeActivity = homeActivityQuery.data?.run_id === runId
     && homeActivityQuery.data.branch_id === branchId
     && homeActivityQuery.data.saved_revision_id === selectedBranch?.saved_head_revision_id
@@ -217,6 +206,17 @@ export function RunPage(): JSX.Element {
   const sportingClockSupported = homeClock !== null && homeClock.weeks_per_year === 61
     && homeClock.season_start_year_week === 37 && homeClock.start_year === 2000 && homeClock.season_count === 50
   const draft = draftQuery.data?.run_id === runId && draftQuery.data.branch_id === branchId ? draftQuery.data : null
+  const readiness = readinessQuery.data?.run_id === runId
+    && readinessQuery.data.branch_id === branchId
+    && readinessQuery.data.saved_revision_id === selectedBranch?.saved_head_revision_id
+    && (!draft || readinessQuery.data.draft_version === draft.draft_version)
+    && (!homeClock || (
+      readinessQuery.data.current_calendar.weeks_per_year === homeClock.weeks_per_year
+      && readinessQuery.data.current_calendar.season_count === homeClock.season_count
+      && readinessQuery.data.current_calendar.start_year === homeClock.start_year
+      && readinessQuery.data.current_calendar.season_start_year_week === homeClock.season_start_year_week
+    )) ? readinessQuery.data : null
+  const readinessMismatch = readinessQuery.isSuccess && !readiness
   const position = positionQuery.data?.run_id === runId && positionQuery.data.branch_id === branchId ? positionQuery.data : null
   const pending = pendingQuery.data?.run_id === runId && pendingQuery.data.branch_id === branchId ? pendingQuery.data : null
   const simulationHistory = simulationHistoryQuery.data?.run_id === runId && simulationHistoryQuery.data.branch_id === branchId

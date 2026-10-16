@@ -31,7 +31,9 @@ horizons before generation/proposal writes, including Keep/edit requests, and
 compare the complete database dump before and after. Default FAX produces exact
 repeated previews; stored proposal reads stay byte-equivalent even when a test
 sentinel makes new generation unavailable. Default preview/Keep hashes were
-compared with the unchanged parent tree and pinned as regression evidence.
+compared with the unchanged parent tree in both Python 3.11 and 3.12. Player
+payload hashes are identical in this fixture and pinned; complete preview/Keep
+hash pairs pin both observed historical baselines.
 
 Isolated source/math tests inject an explicit legacy test preflight; actual
 repository tests use the production Saved-clock guard. Two old assertions that
@@ -43,3 +45,16 @@ Dependency: calendar creation/gates PR #1496, final parent
 No merge is performed by the assistant. Next: version the actual player
 generation/lifecycle time basis and propagate the Run clock, retaining old
 hashes/replay, before relaxing the corresponding generation/sporting guard.
+
+## Observed inherited runtime limitation
+
+The parent and this branch both produce the same full preview/Keep bytes within
+each tested Python version. Between 3.11 and 3.12 the fixture's population-weight
+float diagnostics differ at the last bits (for example 11999999.99999999 versus
+12000000.0), changing full preview hashes and the subsequent Keep request's
+source fingerprint. Its actual player payloads are identical. This is an
+observed inherited limit, not fixed or hidden by rounding old production data.
+A future versioned canonical-number/runtime contract must address cross-runtime
+proposal regeneration without rewriting historical snapshots or changing old
+sampling semantics silently. Stored historical inspection still reads the exact
+saved bytes. Do not claim cross-runtime regeneration equivalence from this PR.

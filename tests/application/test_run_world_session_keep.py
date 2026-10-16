@@ -340,9 +340,24 @@ def test_unmodified_one_pass_fingerprint_is_backwards_compatible():
     first_req = keep_request(origin, [origin.result.players[0].player_id])
     assert "keep_history" not in first_req.fingerprint_payload()
     assert set(first_req.fingerprint_payload()) == set(origin.request.fingerprint_payload())
-    # Captured from the unchanged parent tree before adding calendar preflight.
-    assert origin.preview_fingerprint == "cdeed76ab1bf79c264547d98d0b54ffe6ea39a54e9986259d220a77d7616163f"
-    assert preview(first_req).preview_fingerprint == "d2f9ba6f76208b370cbcad3ef125f0bb2d0cbf1553524393a5a28677ab439cda"
+    from beta_engine.domain.run_packages import canonical_hash
+
+    kept = preview(first_req)
+    # Both baselines were captured from the unchanged parent tree. This legacy
+    # population diagnostic has float-sum last-bit drift between Python 3.11
+    # and 3.12. Do not change production math or old hashes in a calendar gate.
+    assert canonical_hash([p.model_dump(mode="json") for p in origin.result.players]) == (
+        "64e29a64beb6a5997921f79c62293652699323ee66564ae6e73bb07a8ba30ea1"
+    )
+    assert canonical_hash([p.model_dump(mode="json") for p in kept.result.players]) == (
+        "3dd966d730529db0ad5ef4d2b482b20ea37b3afb01b4e20316a6f951babcd2cf"
+    )
+    assert (origin.preview_fingerprint, kept.preview_fingerprint) in {
+        ("eed9d371b9427363916be3c514f216c6e5e1cbd8925d4f0dc5b471f7ad26f91c",
+         "ea211fd44ecaea7253197f3ce0d2622ff397a91671d651ddd604ab59cb332bd5"),
+        ("cdeed76ab1bf79c264547d98d0b54ffe6ea39a54e9986259d220a77d7616163f",
+         "d2f9ba6f76208b370cbcad3ef125f0bb2d0cbf1553524393a5a28677ab439cda"),
+    }
 
 
 def test_repeatable_keep_preserves_edited_profile_and_source_fingerprint():

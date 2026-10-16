@@ -926,6 +926,9 @@ def main() -> None:
             assert initial_after_extension.status == 200, initial_after_extension.text()
             assert initial_after_extension.json()["saved"] is True
             assert initial_after_extension.json()["run_calendar"] == expected_clock
+            installed_after_extension = page.request.get(pop_root + "/calendar-adoption")
+            assert installed_after_extension.status == 200, installed_after_extension.text()
+            assert installed_after_extension.json() == installed_population
             page.get_by_role("combobox", name="Language / Jazyk").select_option("cs")
             expect(page.get_by_role("heading", name="Prodloužení horizontu Runu", exact=True)).to_be_visible()
             expect(page.get_by_role("button", name="Zkontrolovat všechny Branches", exact=True)).to_be_visible()

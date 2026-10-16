@@ -2,8 +2,11 @@
 
 ## Kompletní průběžná specifikace a registr rozhodnutí
 
-**Verze dokumentu:** 82
-**Aktualizováno:** 15. 10. 2026 – vlastní pevný kalendář a rozsah každého Runu, Earth 52 / FAX 61, vývoj podle části roku, prodlužování a kompatibilita; scoped audit po merge #1488
+**Verze dokumentu:** 83
+**Aktualizováno:** 16. 10. 2026 – příprava/připravenost Runu, balíčky z Runu, počáteční populace ze stejných generací jako běžný intake a předstartovní regenerace; audit po #1506.
+
+**Nová produktová rozhodnutí v83:** nepovinný průvodce přípravou světa a průběžná připravenost konkrétních operací (31.38); výchozí počáteční populace ze stejných patnáctiletých generací jako pokračující Run, zjednodušený dopočet do startu bez povinné detailní sportovní minulosti, vynechání již retired, počet odvozený ze světa, přesný náhled a selektivní regenerace před prvním týdnem (9.8). Historické Country vstupy a individuální variabilita zůstávají. Sdílení ručně upravených generačních pravidel s budoucím intakem je výslovně odloženo; automatický odhad/předgenerování, výkon a kalibrace nejsou tímto uzavřené. Výběrový export obsahu Runu využívá existující Package systém (31.38). Jde o rozhodnutý cíl, nikoliv tvrzení hotové implementace.
+
 **Nová produktová rozhodnutí v82:** každý Run má vlastní pevný počet týdnů `W` v roce i sezoně a vlastní posun Season Week ↔ Year Week; Earth výchozí 52, FAX 61 se zachovaným začátkem v Year Week 37. Počáteční rok a poslední sezona nebo počet sezon jsou volitelné nastavení s přepočítaným náhledem. Po spuštění prvního týdne je kalendář uzamčený; konec lze pouze prodlužovat, společně pro všechny branche, bez automatické simulace, změny dosavadních cílů či předgenerování. Věk a dlouhodobý vývoj používají část roku, rankingové body výchozí jeden rok Runu; týdenní lhůty se nepřepočítávají plošně. Import řeší konfliktní termíny výslovně. Toto nahrazuje univerzální limit 50 × 61; referenční FAX release test všech 50 sezon zůstává. Detail 3.2, 6.1, 6.9–6.12 a 31.37. Jde o schválený cíl, nikoliv hotovou implementaci. Audit #1454–1488 a jeho hranice jsou v 35.39.
 
 **Historické číselné rámce:** starší datované souhrny a implementační důkazy níže mohou uvádět 50 sezon, 61 týdnů nebo rok 2000. Jako univerzální produktové omezení je nahrazuje v82; historické výsledky, testy a tehdejší význam jejich dat se nepřepisují.
@@ -1462,7 +1465,7 @@ Počáteční kohorty se odvozují ze stejného Country Modelu V1 jako pozdějš
 
 Výběr a regenerace těchto variant patří před start prvního Weeku 1. Po zahájení se pro jiné porovnání použije branch z předstartovního uloženého bodu. Finals Race začíná novou sezonu od nuly; předsezonní podklad Official Rankingu se do ní automaticky nepřevádí. Přesné body, expirace a přechodová matematika jednotlivých variant zůstávají kalibrací a konfigurovanou policy.
 
-**[ROZHODNUTO PRO PRE-ALPHA v72]** Před prvním Weekem 1 není povinné simulovat minulost. Počátečnímu hráči lze zadat dřívější zranění, zhojený stav, trvalé omezení či zvýšené riziko recidivy jako označený předstartovní vstup se zdrojem. Nejde o důkaz odehraných zápasů nebo proběhlé simulace. Volitelné rankingové varianty výše zůstávají k testování. Samostatná ručně zadaná kariérní souhrnná minulost typu počet titulů či nejlepší ranking bez výsledkového podkladu není požadavkem pre-alpha; statistiky rozlišují doloženou historii od startu Runu a případný explicitní předstartovní podklad.
+**[ROZHODNUTO PRO PRE-ALPHA v72; UPŘESNĚNO v83/9.8]** Před prvním Weekem 1 není povinné simulovat detailní sportovní minulost. Zjednodušená příprava generací a jejich současného stavu podle 9.8 není simulací kompletních minulých zápasů a sezon. Počátečnímu hráči lze zadat dřívější zranění, zhojený stav, trvalé omezení či zvýšené riziko recidivy jako označený předstartovní vstup se zdrojem. Nejde o důkaz odehraných zápasů nebo proběhlé simulace. Volitelné rankingové varianty výše zůstávají k testování. Samostatná ručně zadaná kariérní souhrnná minulost typu počet titulů či nejlepší ranking bez výsledkového podkladu není požadavkem pre-alpha; statistiky rozlišují doloženou historii od startu Runu a případný explicitní předstartovní podklad.
 
 ## 9.2 Pravidelný příchod nových hráčů
 
@@ -1586,6 +1589,24 @@ Pokud Tournament Ranking Snapshot předchází jeho vstupu na Tour, je pro danou
 
 **[IMPLEMENTAČNÍ HRANICE]** Schválený cíl je obecný. Současná první-cohort implementace přidává pouze celý InitialWorld a není tímto zápisem změněna na obecný append ani na částečné nahrazení autoritativního světa. Rozšiřující transakční kontrakt musí být verzovaný, zdokumentovaný a ověřený; nerozhoduje nové sportovní mechaniky.
 
+
+## 9.8 Počáteční svět ze stejných generací jako Run — rozhodnutí v83
+
+**[ROZHODNUTO PRO PRE-ALPHA]** Výchozí počáteční populace používá stejný generační model patnáctiletých hráčů jako běžný intake v 9.2. Engine připraví potřebné předchozí generační ročníky a zjednodušeně dopočítá jejich individuální vývoj do přesného okamžiku startu Runu. Nejde o nezávislé náhodné přiřazení věku a atributů ani o plnou simulaci všech minulých sezon. Roční stáří a vývoj respektují skutečné W Runu podle v82.
+
+**[ROZHODNUTO]** Model používá historicky odpovídající populace a Country atributy, včetně dosavadního pravidla populace roku narození a podmínek vývoje v příslušných letech. Stejný model pro počáteční a nové generace neznamená použití dnešních podmínek pro všechny staré ročníky. Šest Country ratingů nadále ovlivňuje příležitosti/objevení/vývoj podle 5.3 a Country Model V1; nezavádí národní vrozený potenciál ani národní technickou či osobnostní DNA. Chybějící roky se řeší dosavadním interpolovaným modelem s provenance, ne vymyšlenou historií.
+
+**[ROZHODNUTO]** Generační příprava zohlední, kdo již do startu ukončil kariéru. Takoví hráči se do výchozího počátečního světa neuloží; lze ukázat agregované počty vyřazených. U současných hráčů zůstane jejich výchozí stav, identita a reprodukovatelné vstupy/seed/verze modelu. Detailní minulá data a profily vyřazených není nutné uchovávat. Hráči, kteří skončí až během Runu, z jeho historie nezmizí. Někteří počáteční ne-retired hráči ještě nemuseli vstoupit na Tour. Platí hranice dovršení 15 let před prvním týdnem v 9.1; intake prvního týdne se započítá zvlášť.
+
+**[ROZHODNUTO]** Engine z populací a historických Country podmínek doporučí očekávaný počet současných hráčů. Ve výchozí přirozené variantě konkrétní počet vyplyne z generací, variability a kariér do startu. Přesný počet lze výslovně zadat jako ruční podmínku dle 9.4; nesmí být vydáván za přirozený statistický výsledek. Minimum 1 000 v 9.1 zůstává požadavkem referenční FAX testovací šablony, není univerzálním počtem ani minimem každého Runu. Nedostatek vůči testovacímu cíli se přizná a řeší konfigurací/kalibrací; nejde o souhlas s tichým doplněním umělých hráčů.
+
+**[ROZHODNUTO]** Před začátkem prvního týdne lze opakovaně upravovat generační podmínky a regenerovat celý výchozí svět nebo vybrané země, generace a hráče. Zámky profilů a jednotlivých vlastností, práce se skupinami i stávající session mechanismy 9.3–9.7 zůstávají. Vybraná regenerace zachová nezahrnuté a zamčené části; rozpor nebo neproveditelná vazba se ukáže, nikoliv tiše poruší. Dopady na ranking, přihlášky a další obsah řeší dosavadní společný dependency/diff/review mechanismus. Toto je předstartovní příprava; pozdější změny patří do běžných auditovaných Admin zásahů.
+
+**[ROZHODNUTO]** Náhled ukazuje konkrétní hráče a jejich současný stav i souhrny podle zemí, věku a síly. Výslovné přijetí použije přesně tento zkontrolovaný výsledek bez nového losování; poté následuje ruční Save. Odmítnutý náhled není autoritativním světem. Nová varianta nebo změna podmínek je explicitní a ruší neplatný starý souhlas. Přirozený běžný intake během simulace nevyžaduje toto ruční schvalování každého ročníku.
+
+**[OTEVŘENO / NEJDŘÍV ZMĚŘIT]** Doba odhadu i přípravy konkrétní populace, paměť, správnost předgeneračního odhadu, přirozené kolísání, shoda historických ročníků a cena případného předgenerování. Automatický výpočet odhadu, jeho interval a technické spouštění/cache se nerozhodují před měřením; nevzniká druhý odlišný World/Custom generátor. Detailní kalibrace vývoje a retirementu zůstává k testování. Schválení společného modelu není důkaz, že výpočet už existuje nebo je realistický.
+
+**[ODLOŽENO NA VÝSLOVNOU ŽÁDOST UŽIVATELE]** Zda a jak se ručně upravená pravidla při počáteční přípravě použijí pro budoucí patnáctileté během Runu. Není schválený automatický přenos ani výchozí oddělení. Návrh balit konkrétní hráče nebo generační recept jako alternativní výchozí volby nebyl v této debatě potvrzen; obecná versionovaná konfigurace/Package provenance zůstává.
 
 # 10. Hráčský profil a identita
 
@@ -6201,6 +6222,20 @@ Toto rozhodnutí upřesňuje UX otevřené části PAQ-119, nikoliv celý katalo
 
 **[ZACHOVÁNO — RELEASE TEST]** Povinný referenční FAX průchod **50 sezonami 2000/01–2049/50** z 31.28 zůstává konkrétní akceptační konfigurací, nikoliv univerzálním omezením Runu. Earth a nový kalendář vyžadují vlastní cílené integrační důkazy; řídký třízápasový průchod přes prázdné týdny není plná World Tour sezona, 1 000 hráčů / 80 Editions, kalibrace ani release. Přesné křivky a detailní trénink/deload zůstávají k testování/později; 157 PAQ ID a jejich historický počet se nepřepisují.
 
+## 31.38 Příprava a připravenost Runu — rozhodnutí v83 (16. 10. 2026)
+
+**[ROZHODNUTO PRO PRE-ALPHA]** Vytvoření prázdného Runu vyžaduje pouze unikátní zobrazovaný název dle dosavadního kontraktu. Po vytvoření lze nepovinně otevřít `Připravit svět`. Jde o navigační pomoc využívající existující přidání balíčků, generování/import hráčů a konfiguraci světa, nikoliv druhý generátor nebo náhradu Match/Tournament Test Lab. Nezavádí nové typy Runu ani povinnost připravit vše pro nesouvisející operaci.
+
+**[ROZHODNUTO]** Přípravu lze opustit a později navázat. Postup vychází ze skutečného obsahu zvoleného Runu/branche; pozná i práci provedenou mimo průvodce. Kroky odlišují uložený obsah a neuložené změny a respektují stávající manual Save/recovery. Nezávislé označení kroku za „hotovo“ nesmí nahrazovat validaci skutečných podkladů.
+
+**[ROZHODNUTO]** Potřebné kroky a blokace se vyhodnocují podle konkrétní operace. Samostatné experimenty zajišťují již rozhodnuté Laby bez nutnosti Runu. Průvodce nepřidává paralelní „zápasový Run“ nebo „turnajový Run“. Chybějící obsah lze doplnit vhodnou existující akcí; u hráčů například generováním, importem nebo přidáním z balíčku. Před přidáním je přehled konkrétních změn a dopadů; žádná skrytá aktivace ani implicitní Save.
+
+**[ROZHODNUTO]** Po zahájení simulace zůstává dostupný přehled `Připravenost Runu`. Každá položka vysvětlí, co chybí a kterou konkrétní operaci to blokuje, a nabídne odkaz k nápravě. Chybějící nesouvisející data neblokují celý svět. Na Home je stručná sbalitelná karta s doporučeným dalším krokem a rozkliknutelnými podrobnostmi. Zelené „Připraveno“ vždy náleží vyhodnocenému rozsahu operací, nikoliv obecné garanci dokončeného enginu či realismu. Technicky nepodporovaná funkce se odliší od obsahu, který Admin může doplnit.
+
+**[ROZHODNUTO]** Vybraný připravený obsah Runu lze uložit jako vlastní Package přes stávající systém (3. kapitola). Náhled dovolí zvolit zahrnuté typy/části a ukáže jejich obsah a vazby; nevzniká živé propojení s původním Runem. Hráčská část může zachytit konkrétní hráče ve stavu k vybranému okamžiku. Přenos celé rozehrané časové osy s historií používá Branch/revision mechanismy, není tiše zaměněn za obsahový balíček. Konfliktní kalendáře, stabilní Package identity/provenance i chráněné zdroje řeší existující pravidla. Ukládání alternativního generačního receptu a jeho použití pro budoucí intake zůstává neuzavřené dle 9.8.
+
+**[ZACHOVÁNO]** Country diagnostika a Expected vs Generated z 5.3/9.2 zůstává. Nový předstartovní model a reálné časové náklady vyžadují měření; tento checkpoint nestanovuje nový výkonnostní limit, počet náhodných pokusů nebo číselnou křivku realismu. Neuzavírá jiné otevřené PAQ ani release brány.
+
 # 32. Procentuální audit stavu specifikace
 
 ## 32.1 Metodika
@@ -6984,6 +7019,17 @@ Ověřený `buuk`: `b63f40387bed75812ae9f9585734a6226b93fda9`, merge #1488. Nava
 - Zdrojově potvrzeno: Run bootstrap a time mapping stále používají pevný 2000–2049 / 61 / 37 a v některých validačních cestách jiné W výslovně odmítají. v82 je proto nový produktový požadavek a implementační backlog, ne dokončená schopnost. Starší workflow, fake-free sport, historie, determinismus a ochrana balíčků zůstávají povinné.
 
 Tento audit neprohlašuje kompletní backend/frontend, plnou regresi, celý naplněný Run ani realističnost. Zelená CI je důkaz pouze skutečně spuštěných scénářů. Další zadání a hospodárné rozdělení práce: `docs/PRE_ALPHA_NEXT_CHATGPT_TASK_V82_2026_10_15.md`.
+
+## 35.40 Integrační audit v83 — po #1506 (16. 10. 2026)
+
+Ověřený základ `buuk`: `b51d88efba3977eaf14d165f9dd83b5927310c6c`, merge #1506. #1501–1506 jsou mergnuté; při závěrečné inventuře nebyl otevřený PR. Audit kontroloval zdrojové změny a finální HEAD CI #1502–1506. Přesné hranice a navazující zadání: `docs/PRE_ALPHA_CHECKPOINT_V83_2026_10_16.md` a `docs/PRE_ALPHA_NEXT_CHATGPT_TASK_V83_2026_10_16.md`.
+
+- #1490–1500 postupně zavedly opravu souhlasu, versionovaný kalendář, vytvoření/čtení/náhled, roční věkové jednotky a calendar-owned preview → potvrzení → Save hráčské populace. Guardy na nemigrovaných sportovních cestách trvají.
+- #1501 přidalo výslovný počáteční zdravotní základ. #1502 doplnilo skutečné Injury/Illness fakty, datumy podle Runu, Admin editaci, receipts, manual Health Save, fork/restore/restart a CS/EN panel. Čistý carry faktů není automatické léčení ani povolení sportovního progression. Finální tři spuštěné workflow #1502 uspěly; nejde o plnou regresi ani důkaz realistických četností.
+- #1503 hlídá číselné limity plánovaného prodloužení. #1504 přidává read-only Saved-clock API náhled. #1505 jej zpřístupňuje CS/EN na Home. #1506 inventarizuje všechny Branch Saved heads a jejich clock/hash blokace. Finální workflow #1503/#1504/#1506: Fast CI success; #1505 všech osm spuštěných workflow success. Žádný z těchto kroků zatím neprovádí autoritativní prodloužení, all-Branch Save ani migraci horizon-dependent snapshotů.
+- Nová produktová pravidla 9.8/31.38 jsou schválený cíl. Stávající generátor nepředstavuje hotový realistický replay minulých ročníků s přirozeně odvozeným počtem přeživších ne-retired hráčů. Průvodce/připravenost a nové exportní UX nejsou hotové jen přítomností tohoto textu.
+
+V tomto checkpointu nalezené mezery extension inspection: opožděný frontendový výsledek po změně podkladů a chybějící explicitní SQLite read snapshot all-Branch API. Izolovaný test navíc odhalil kruhový import přes eager DB exporty a calendar guard; oprava odkládá modelové importy bez oslabení validace. Opravy a cílené regrese jsou součástí checkpointového PR, nikoliv výše uvedeného základu. Celý naplněný Run, detailní kalibrace a 50-sezonní release test zůstávají nedokončené. Žádné chráněné World Packages nebyly změněny.
 
 # 36. AI-Assisted Development / Development Operating Model
 

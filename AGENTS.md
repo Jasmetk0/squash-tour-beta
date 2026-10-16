@@ -51,6 +51,8 @@ transactional consistency from similar names. Keep all protections below.
 
 ## Current canonical product rules
 
+- **Master v83 targets (implementation still required):** initial population derives from the same historical 15-year-old cohort model as ongoing intake, with simplified development to Run start and pre-start retirement filtering, historical Country inputs, world-derived count and explicit preview/confirmation/Save. Prestart full/selected regeneration respects locks and normal dependency review. The reference FAX 1,000-player minimum remains. Initial custom-rule inheritance to future intake is explicitly deferred. Optional resumable preparation/readiness and selected Package export use existing operations; they do not duplicate Labs or grant sporting readiness. See Master 9.8/31.38.
+
 - **Master v82 target (not yet runtime evidence):** each Run has its own fixed positive weeks-per-year/season W, season-to-year offset, start year and season horizon. Earth defaults to 52, FAX to 61 with Season Week 1 at Year Week 37. All years/seasons within a Run have equal W; no leap/longer years in pre-alpha. The former universal 50-season/61-week restriction is superseded; the reference FAX 50-season acceptance remains. Existing legacy Runs retain their original semantics.
 - Branches are equal alternative timelines inside a Run. Never introduce a privileged Main/Official branch concept.
 - Every Run has exactly one **Viewer Branch**. It only selects the timeline shown by Viewer; legacy `official_branch` technical names are migration debt, not product terminology.

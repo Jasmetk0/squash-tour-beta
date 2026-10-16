@@ -506,6 +506,8 @@ def inspect_calendar_extension_readiness(
     """Read-only all-Branch Saved head audit, not an extension command."""
     try:
         with runtime.repository._session_factory() as session:
+            # Audit the entire Branch cohort in one actual SQLite read snapshot.
+            session.connection().exec_driver_sql("BEGIN")
             return inspect_run_calendar_extension_readiness(
                 session, run_id=run_id, new_season_count=new_season_count
             )

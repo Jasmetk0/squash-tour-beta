@@ -36,3 +36,7 @@ The protected FAX template is copied into disposable Runs. Preserve the 1,000-pl
 ## Earlier implementation history
 
 This active summary is intentionally short to avoid repeatedly loading hundreds of obsolete candidate notes. Complete pre-checkpoint evidence remains in the [pinned previous ROADMAP.md](https://github.com/Jasmetk0/squash-tour-beta/blob/b63f40387bed75812ae9f9585734a6226b93fda9/ROADMAP.md) and Git history. Those dated notes are evidence of their time, not an open PR queue. Master chapter 35 and the v82 checkpoint preserve the current audit boundaries.
+
+## Extension dependency (candidate)
+
+Pure horizon extension now checks persistence/year and exact-JSON week limits before returning a plan. Still required before user-facing extension: explicit audited all-Branch transaction, historical Saved-head compatibility without rewriting revisions, stale/retry protections, separate consent/Save, frozen-target/terminal-task preservation, and real HTTP/SQLite/restart/CS-EN UI acceptance. Do not present pure planning as a usable Run-extension operation.

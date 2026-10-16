@@ -922,6 +922,10 @@ def main() -> None:
             expect(page.locator(".run-home-progress__track").nth(0).locator("span")).to_have_count(5)
             expect(page.locator(".run-home-progress__track").nth(1).locator("span")).to_have_count(52)
             assert page.request.get(health_url).json()["player"]["records"] == [preview_record]
+            initial_after_extension = page.request.get(health_root + "/calendar-initial")
+            assert initial_after_extension.status == 200, initial_after_extension.text()
+            assert initial_after_extension.json()["saved"] is True
+            assert initial_after_extension.json()["run_calendar"] == expected_clock
             page.get_by_role("combobox", name="Language / Jazyk").select_option("cs")
             expect(page.get_by_role("heading", name="Prodloužení horizontu Runu", exact=True)).to_be_visible()
             expect(page.get_by_role("button", name="Zkontrolovat všechny Branches", exact=True)).to_be_visible()

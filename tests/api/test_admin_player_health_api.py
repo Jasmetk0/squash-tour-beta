@@ -137,6 +137,8 @@ def test_admin_health_http_preview_commit_retry_and_save(tmp_path) -> None:
         }
         status, preview = _request("POST", root + "/preview", payload)
         assert status == 200
+        unversioned = {key: value for key, value in payload.items() if key != "schema_version"}
+        assert _request("POST", root + "/preview", unversioned) == (200, preview)
         assert len(preview["preview_fingerprint"]) == 64
 
         status, committed = _request(

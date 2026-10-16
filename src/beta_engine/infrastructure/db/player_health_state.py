@@ -4,11 +4,13 @@ from __future__ import annotations
 
 import hashlib
 import json
+from itertools import pairwise
 
 from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
 from beta_engine.domain.calendar.run_week_position import RunWeekPosition
+from beta_engine.domain.players.calendar_health import CalendarHealthState
 from beta_engine.domain.players.calendar_initial_health import (
     CalendarInitialHealthState,
 )
@@ -30,6 +32,11 @@ def _parse_health_json(raw):
         and value.get("schema_version") == "calendar_initial_health_state.v1"
     ):
         return CalendarInitialHealthState.model_validate_json(raw)
+    if (
+        isinstance(value, dict)
+        and value.get("schema_version") == "player_health_calendar_state.v2"
+    ):
+        return CalendarHealthState.model_validate_json(raw)
     return PlayerHealthWeekState.model_validate_json(raw)
 
 
@@ -38,7 +45,7 @@ def _load(
     run_id: str,
     branch_id: str,
     week_ordinal: int,
-) -> PlayerHealthWeekState | CalendarInitialHealthState:
+) -> PlayerHealthWeekState | CalendarInitialHealthState | CalendarHealthState:
     state = _parse_health_json(row.payload_json)
     if (state.run_id, state.branch_id, state.week.ordinal, state.fingerprint) != (
         run_id,
@@ -56,12 +63,12 @@ def get_health(
     run_id: str,
     branch_id: str,
     week: RankingWeek | RunWeekPosition,
-) -> PlayerHealthWeekState | CalendarInitialHealthState | None:
+) -> PlayerHealthWeekState | CalendarInitialHealthState | CalendarHealthState | None:
     row = session.get(PlayerHealthWeekStateModel, (run_id, branch_id, week.ordinal))
     if row is None:
         return None
     state = _load(row, run_id, branch_id, week.ordinal)
-    if isinstance(state, CalendarInitialHealthState):
+    if isinstance(state, (CalendarInitialHealthState, CalendarHealthState)):
         if not isinstance(week, RunWeekPosition) or state.week != week:
             raise ValueError("Calendar health requires its matching Run-owned position")
     elif not isinstance(week, RankingWeek):
@@ -71,8 +78,8 @@ def get_health(
 
 def put_health(
     session: Session,
-    state: PlayerHealthWeekState | CalendarInitialHealthState,
-) -> PlayerHealthWeekState | CalendarInitialHealthState:
+    state: PlayerHealthWeekState | CalendarInitialHealthState | CalendarHealthState,
+) -> PlayerHealthWeekState | CalendarInitialHealthState | CalendarHealthState:
     current = get_health(
         session,
         run_id=state.run_id,
@@ -168,10 +175,10 @@ def transition_health(
 
 def replace_health_head(
     session: Session,
-    state: PlayerHealthWeekState,
+    state: PlayerHealthWeekState | CalendarHealthState,
     *,
     expected_fingerprint: str,
-) -> PlayerHealthWeekState:
+) -> PlayerHealthWeekState | CalendarHealthState:
     """Replace only the current Health head through an explicit audited Admin path."""
 
     rows = session.scalars(
@@ -188,10 +195,27 @@ def replace_health_head(
     if head.week_ordinal != state.week.ordinal:
         raise ValueError("Admin Health edit may replace only the current health head")
     current = _load(head, state.run_id, state.branch_id, state.week.ordinal)
+    calendar_current = isinstance(
+        current, (CalendarInitialHealthState, CalendarHealthState)
+    )
+    if calendar_current != isinstance(state, CalendarHealthState):
+        raise ValueError("Health writer cannot change calendar schema authority")
+    if current.week != state.week:
+        raise ValueError("Health writer cannot reinterpret the current time basis")
     if isinstance(current, CalendarInitialHealthState):
-        raise ValueError(
-            "Calendar initial health cannot be edited through the legacy Health writer"
-        )
+        if (
+            state.origin.baseline_fingerprint != current.fingerprint
+            or len(state.admin_edits) != 1
+        ):
+            raise ValueError(
+                "Calendar Health conversion must retain baseline provenance"
+            )
+    elif isinstance(current, CalendarHealthState):
+        if (
+            state.origin != current.origin
+            or state.admin_edits[:-1] != current.admin_edits
+        ):
+            raise ValueError("Calendar Health writer cannot rewrite edit provenance")
     if current.fingerprint != expected_fingerprint:
         raise ValueError("Player health head changed since preview")
     if current.predecessor_fingerprint != state.predecessor_fingerprint:
@@ -248,8 +272,10 @@ def health_component(
 
 
 def _component(
-    states: tuple[PlayerHealthWeekState | CalendarInitialHealthState, ...]
-    | list[PlayerHealthWeekState | CalendarInitialHealthState],
+    states: tuple[
+        PlayerHealthWeekState | CalendarInitialHealthState | CalendarHealthState, ...
+    ]
+    | list[PlayerHealthWeekState | CalendarInitialHealthState | CalendarHealthState],
 ):
     body = [state.model_dump(mode="json") for state in states]
     return {
@@ -261,17 +287,42 @@ def _component(
 
 
 def _validate_chain(
-    states: tuple[PlayerHealthWeekState | CalendarInitialHealthState, ...],
+    states: tuple[
+        PlayerHealthWeekState | CalendarInitialHealthState | CalendarHealthState, ...
+    ],
 ) -> None:
-    if any(isinstance(state, CalendarInitialHealthState) for state in states):
-        if len(states) != 1 or not isinstance(states[0], CalendarInitialHealthState):
-            raise ValueError(
-                "Calendar initial health cannot contain a mixed or advanced history"
+    calendar_states = [
+        s
+        for s in states
+        if isinstance(s, (CalendarInitialHealthState, CalendarHealthState))
+    ]
+    if calendar_states and len(calendar_states) != len(states):
+        raise ValueError("Calendar health cannot contain mixed legacy history")
+    if any(isinstance(s, CalendarInitialHealthState) for s in states[1:]):
+        raise ValueError("Initial health baseline must be the opening state")
+    if calendar_states and any(
+        s.week.calendar != states[0].week.calendar for s in states
+    ):
+        raise ValueError("Calendar Health chain cannot alias foreign calendars")
+    if calendar_states and (
+        states[0].week.ordinal != 0 or states[0].predecessor_fingerprint is not None
+    ):
+        raise ValueError("Calendar Health history requires its opening state")
+    for predecessor, target in pairwise(calendar_states):
+        if (
+            isinstance(target, CalendarHealthState)
+            and isinstance(predecessor, CalendarHealthState)
+            and (
+                target.origin != predecessor.origin
+                or target.admin_edits[: len(predecessor.admin_edits)]
+                != predecessor.admin_edits
             )
+        ):
+            raise ValueError("Calendar Health history cannot rewrite edit provenance")
     ordinals = tuple(state.week.ordinal for state in states)
     if ordinals != tuple(sorted(set(ordinals))):
         raise ValueError("Player health state weeks are not unique and canonical")
-    for predecessor, target in zip(states, states[1:], strict=False):
+    for predecessor, target in pairwise(states):
         if (
             target.week.ordinal != predecessor.week.ordinal + 1
             or target.predecessor_fingerprint != predecessor.fingerprint
@@ -298,7 +349,10 @@ def load_saved_health(
     *,
     run_id: str,
     branch_id: str,
-) -> tuple[PlayerHealthWeekState | CalendarInitialHealthState, ...] | None:
+) -> (
+    tuple[PlayerHealthWeekState | CalendarInitialHealthState | CalendarHealthState, ...]
+    | None
+):
     component = payload.get("content", {}).get(PLAYER_HEALTH_COMPONENT_KEY)
     if component is None:
         return None
@@ -312,7 +366,10 @@ def load_saved_health(
         (state.run_id, state.branch_id) != (run_id, branch_id) for state in states
     ):
         raise ValueError("Saved player-health identity or fingerprint mismatch")
-    if any(isinstance(state, CalendarInitialHealthState) for state in states):
+    if any(
+        isinstance(state, (CalendarInitialHealthState, CalendarHealthState))
+        for state in states
+    ):
         from beta_engine.infrastructure.db.initial_world_state import (
             load_saved_initial_world,
         )
@@ -322,19 +379,27 @@ def load_saved_health(
 
         world = load_saved_initial_world(payload, run_id=run_id, branch_id=branch_id)
         life = load_saved_lifecycle(payload, run_id=run_id, branch_id=branch_id)
-        state = states[0]
         if (
             world is None
             or world.schema_version != "initial_world_state.v2"
-            or state.week.calendar != world.run_calendar
             or not life
-            or life[0].week != state.week
-            or tuple(p.player_id for p in state.players)
-            != tuple(p.player_id for p in life[0].players)
         ):
-            raise ValueError(
-                "Saved calendar health differs from its population/calendar"
-            )
+            raise ValueError("Saved calendar health requires its population/lifecycle")
+        for state in states:
+            owned_life = next((item for item in life if item.week == state.week), None)
+            if (
+                state.week.calendar != world.run_calendar
+                or owned_life is None
+                or state.source_initial_world_fingerprint
+                != owned_life.source_initial_world_fingerprint
+                or tuple(p.player_id for p in state.players)
+                != tuple(p.player_id for p in owned_life.players)
+                or tuple(p.player_id for p in state.players)
+                != tuple(sorted(p.player_id for p in world.players))
+            ):
+                raise ValueError(
+                    "Saved calendar health differs from its population/calendar"
+                )
     return states
 
 
@@ -355,7 +420,9 @@ def remap_saved_health_component(
     if source is None:
         return None
 
-    remapped: list[PlayerHealthWeekState | CalendarInitialHealthState] = []
+    remapped: list[
+        PlayerHealthWeekState | CalendarInitialHealthState | CalendarHealthState
+    ] = []
     previous = None
     for state in source:
         target = _parse_health_json(

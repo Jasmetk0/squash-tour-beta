@@ -1,17 +1,18 @@
 # Active calendar dependency path — Master v82
 
-Audited base: `buuk` `97e96210275a8f623df5193ca2991db6b3649383` after #1500.
-Merged #1490–1500 provide the consent fix, versioned Run clock, immutable initial
-Save, verified calendar reads/target math, usable custom-clock creation/Home,
-explicit age/birth helpers, legacy sporting gates, calendar-owned player previews
-and reviewed population confirmation with Save/fork/restore/restart.
+Audited base: `buuk` `2b472b287452b9faa00552ef0b74889e83cfc785` after #1501.
+Merged #1490–1501 provide the consent fix, versioned clock/initial Save, Saved
+calendar authority, custom calendar/Home, age/birth helpers, legacy sporting
+guards, calendar-owned population adoption/Save/fork/restore and initial Health.
 
-The current candidate adds a separate reviewed initial Health baseline for a
-saved population, explicit dirty Draft/manual Save, persistence and CS/EN controls.
-It introduces no invented Injury/Illness history or new health calibration.
-Legacy health editing stays blocked for this initial-only schema. This is **not
-W52 sporting execution**. Next: dated health events/annual development/ranking/
-transitions/targets, safe extension/imports and populated multi-season acceptance.
+The current candidate adds Run-owned Injury/Illness dates and reviewed editing
+through the existing Admin service and real player-profile Health tab, separate
+manual Health Save and exact restart/fork/restore. It preserves legacy Health and
+#1501 baseline schemas/hashes. Recovery windows stay explicitly weekly. Pure
+calendar-aware fact carry has boundary tests; sporting progression remains guarded.
+This is **not W52 sporting execution or health realism calibration**.
+Next: annual development/ranking/transitions/targets, safe extension/imports and
+populated multi-season acceptance.
 See [current state](CURRENT_STATE.md), [health contract](docs/CALENDAR_INITIAL_HEALTH_V82.md),
 [population contract](docs/CALENDAR_INITIAL_WORLD_V82.md)
 and [v82 task](docs/PRE_ALPHA_NEXT_CHATGPT_TASK_V82_2026_10_15.md).

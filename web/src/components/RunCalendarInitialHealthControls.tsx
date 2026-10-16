@@ -46,8 +46,8 @@ export function RunCalendarInitialHealthControls({runId,branchId,head,clock,popu
     &&review.request.expected_draft_version===data.draft_version&&review.request.expected_saved_head===head
   return <section data-run-navigation-readonly aria-label={cs?'Počáteční zdravotní stav':'Initial health'}>
     <h3>{cs?'Počáteční zdravotní stav':'Initial health'}</h3>
-    <p>{cs?'Výslovně zvolený základ bez zranění, nemocí a zdravotní historie. Nejde o odhad realistického rozložení zdraví. Úpravy zranění a posouvání času pro vlastní kalendář budou doplněny později.':
-      'An explicitly chosen baseline without injuries, illnesses or health history. This is not an estimate of realistic health distribution. Injury editing and time progression for custom calendars will follow later.'}</p>
+    <p>{cs?'Výslovně zvolený základ bez zranění, nemocí a zdravotní historie. Nejde o odhad realistického rozložení zdraví. Zdravotní záznamy lze upravit na profilu hráče v záložce Zdraví. Posouvání času se doplní později.':
+      'An explicitly chosen baseline without injuries, illnesses or health history. This is not an estimate of realistic health distribution. Edit health records in the player profile Health tab. Time progression will follow later.'}</p>
     {(error||view.error)&&<p role="alert">{error||formatApiError(view.error)}</p>}
     {data&&!data.state&&<button disabled={busy||data.draft_status!=='clean'} onClick={()=>{setReview(null);setApproved(false);reviewing.mutate()}}>
       {cs?'Zkontrolovat zdravotní základ':'Review initial health'}</button>}
@@ -57,7 +57,7 @@ export function RunCalendarInitialHealthControls({runId,branchId,head,clock,popu
         {cs?'Chci vytvořit tento zdravotní základ.':'Create this initial health baseline.'}</label>
       <button disabled={!approved||busy} onClick={()=>review&&confirming.mutate(review)}>{cs?'Vytvořit zdravotní základ':'Create initial health'}</button>
     </>}
-    {data?.state&&(data.saved?<p role="status">{cs?'Zdravotní základ je uložený.':'Initial health is saved.'}</p>:<>
+    {data?.state?.schema_version==='player_health_calendar_state.v2' ? <p role="status">{cs?'Zdravotní základ byl rozšířen o potvrzené zdravotní záznamy. Otevři zdraví hráče.':'Health baseline has reviewed health records. Open player Health.'}</p> : data?.state&&(data.saved?<p role="status">{cs?'Zdravotní základ je uložený.':'Initial health is saved.'}</p>:<>
       <p role="status">{cs?'Zdravotní základ čeká na ruční uložení.':'Initial health is waiting for an explicit Save.'}</p>
       <label><input type="checkbox" aria-label={cs?'Potvrdit uložení zdraví':'Confirm health Save'} checked={saveApproved} onChange={e=>setSaveApproved(e.target.checked)}/>
         {cs?'Uložit zdravotní základ do nové revize.':'Save initial health in a new revision.'}</label>

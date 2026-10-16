@@ -15,7 +15,7 @@ export type InitialHealthState = {
 export type InitialHealthView = {
   schema_version:'calendar_initial_health_view.v1'; run_id:string;branch_id:string
   saved_head_revision_id:string;population_fingerprint:string;run_calendar:RunCalendarMetadata
-  player_count:number;state:InitialHealthState|null;health_fingerprint:string|null
+  player_count:number;state:InitialHealthState|import('./types').PlayerHealthWeekState|null;health_fingerprint:string|null
   health_component_fingerprint:string|null;saved:boolean;draft_version:number;draft_status:string
 }
 export type InitialHealthReview = {
@@ -42,7 +42,12 @@ export function validateInitialHealthView(value:unknown,run:string,branch:string
     ||v.player_count!==ids.length||!Number.isSafeInteger(v.draft_version)||v.draft_version<0
     ||!['clean','dirty'].includes(v.draft_status)||typeof v.saved!=='boolean')throw Error('Initial health proof changed; reload this Run')
   if(v.state){
-    validateInitialHealthState(v.state,run,branch,clock,ids)
+    if(v.state.schema_version==='player_health_calendar_state.v2') {
+      const s=v.state
+      if(s.run_id!==run||s.branch_id!==branch||!sameClock(s.week.calendar,clock)
+        ||s.week.season_index!==0||s.week.week!==1||!Array.isArray(s.players)
+        ||s.players.length!==ids.length||s.players.some((p,i)=>p.player_id!==ids[i]))throw Error('Health facts differ from this population')
+    } else validateInitialHealthState(v.state as InitialHealthState,run,branch,clock,ids)
     if(!hash(v.health_fingerprint)||!hash(v.health_component_fingerprint))throw Error('Initial health proof is missing')
   } else if(v.health_fingerprint!==null||v.health_component_fingerprint!==null||v.saved)throw Error('Unexpected initial health proof')
   return v

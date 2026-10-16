@@ -2934,6 +2934,7 @@ export type PlayerHealthKind = 'Injury' | 'Illness'
 export type PlayerHealthLifecycle = 'At Risk' | 'Active' | 'Recovering' | 'Recovered'
 
 export type PlayerHealthWeek = {
+  calendar?: import('./runCalendarCreation').RunCalendarMetadata
   season_index: number
   week: number
 }
@@ -2969,7 +2970,7 @@ export type PlayerHealthProfile = {
 }
 
 export type PlayerHealthWeekState = {
-  schema_version: 'player_health_week_state.v1'
+  schema_version: 'player_health_week_state.v1' | 'player_health_calendar_state.v2'
   run_id: string
   branch_id: string
   week: PlayerHealthWeek
@@ -2980,7 +2981,8 @@ export type PlayerHealthWeekState = {
 }
 
 export type AdminPlayerHealthView = {
-  schema_version: 'admin_health_current_view.v1'
+  schema_version: 'admin_health_current_view.v1' | 'admin_health_current_view.v2'
+  saved_head_revision_id?: string
   run_id: string
   branch_id: string
   week: PlayerHealthWeek
@@ -2993,7 +2995,6 @@ export type AdminPlayerHealthView = {
 export type AdminHealthEditMode = 'pre_start_input' | 'current_state_correction'
 
 export type AdminHealthEditRequest = {
-  schema_version: 'admin_health_edit_request.v1'
   command_id: string
   player_id: string
   mode: AdminHealthEditMode
@@ -3002,10 +3003,11 @@ export type AdminHealthEditRequest = {
   permanent_consequences: PermanentHealthConsequence[]
   audit_label: string
   audit_reason: string
-}
+} & ({schema_version: 'admin_health_edit_request.v1'} | {schema_version: 'admin_health_edit_request.v2'; expected_saved_head: string; expected_state_fingerprint: string})
 
 export type AdminHealthEditPreview = {
-  schema_version: 'admin_health_edit_preview.v1'
+  schema_version: 'admin_health_edit_preview.v1' | 'admin_health_edit_preview.v2'
+  saved_head_revision_id?: string
   run_id: string
   branch_id: string
   week: PlayerHealthWeek
@@ -3019,7 +3021,7 @@ export type AdminHealthEditPreview = {
 }
 
 export type AdminHealthEditResult = {
-  schema_version: 'admin_health_edit_result.v1'
+  schema_version: 'admin_health_edit_result.v1' | 'admin_health_edit_result.v2'
   run_id: string
   branch_id: string
   command_id: string

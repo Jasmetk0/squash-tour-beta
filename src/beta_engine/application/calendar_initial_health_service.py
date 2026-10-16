@@ -12,6 +12,7 @@ from beta_engine.application.calendar_initial_world import (
 from beta_engine.application.run_calendar_read_authority import (
     resolve_saved_run_calendar,
 )
+from beta_engine.domain.players.calendar_health import CalendarHealthState
 from beta_engine.domain.players.calendar_initial_health import (
     CalendarInitialHealthState,
 )
@@ -102,7 +103,7 @@ class CalendarInitialHealthService:
             session, run_id=run_id, branch_id=branch_id, week=expected.week
         )
         if health is not None and (
-            not isinstance(health, CalendarInitialHealthState)
+            not isinstance(health, (CalendarInitialHealthState, CalendarHealthState))
             or tuple(p.player_id for p in health.players)
             != tuple(p.player_id for p in life.players)
         ):
@@ -196,7 +197,8 @@ class CalendarInitialHealthService:
             request = confirmation.review
             if current is not None:
                 if (
-                    current.fingerprint != confirmation.expected_health_fingerprint
+                    not isinstance(current, CalendarInitialHealthState)
+                    or current.fingerprint != confirmation.expected_health_fingerprint
                     or current.request_fingerprint
                     != request.fingerprint(run_id, branch_id)
                 ):

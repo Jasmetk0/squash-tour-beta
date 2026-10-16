@@ -316,7 +316,27 @@ class AdminHealthEditService:
                 session, run_id=run_id, branch_id=branch_id
             )
             if state.week.calendar != clock:
-                raise ValueError("Admin Health calendar differs from Saved clock")
+                # A Run-wide horizon extension preserves historical opening-week
+                # Health and its population clock. The explicit Saved origin
+                # must pass the same strict W/offset/start and monotone-horizon
+                # validation as the signed InitialWorld component; never
+                # waive a current clock mismatch without that exact evidence.
+                from beta_engine.infrastructure.db.initial_world_state import (
+                    load_saved_initial_world,
+                )
+                saved_origin = load_saved_initial_world(
+                    revision.saved_revision.payload,
+                    run_id=run_id, branch_id=branch_id,
+                )
+                if (
+                    saved_origin is None
+                    or saved_origin.schema_version != "initial_world_state.v2"
+                    or saved_origin.run_calendar != state.week.calendar
+                ):
+                    raise ValueError(
+                        "Admin Health calendar differs from Saved clock "
+                        "and verified population origin"
+                    )
             # Validate the live facts against immutable population/lifecycle authority.
             component = health_component(session, run_id=run_id, branch_id=branch_id)
             payload = {

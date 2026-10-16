@@ -64,3 +64,5 @@ The pure `RunCalendar.extend_to` planning helper now rejects extended horizons o
 ## Candidate: Saved-clock extension planning
 
 Added a read-only application function `preview_saved_run_calendar_extension` that uses the verified Run/Branch Saved calendar, validates a strictly larger horizon and returns both endpoints, first newly available week, added seasons/weeks and explicit non-commit limitations. A focused real SQLite test verifies no Run/Branch/Saved hash mutations. No API route, review consent, persistence command, multi-Branch migration or user-facing extension is claimed.
+
+The extension planning candidate now also exposes GET /run-containers/{run_id}/branches/{branch_id}/calendar/extension-preview?new_season_count=N, backed by the real SQLite Saved-clock authority. It is strictly read-only: no approval, Save or extension commit endpoint exists.

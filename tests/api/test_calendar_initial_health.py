@@ -175,7 +175,7 @@ def test_review_confirm_save_fork_restore_restart(tmp_path, clock):
         ) == (200, copied)
 
 
-def test_stale_review_and_legacy_health_reads_fail_without_writes(tmp_path):
+def test_stale_review_and_calendar_inspect_without_writes(tmp_path):
     path = tmp_path / "stale.db"
     with ApiServer(database_url=f"sqlite:///{path}") as server:
         _, _, payload = setup(server, RunCalendar.earth_default())
@@ -204,7 +204,7 @@ def test_stale_review_and_legacy_health_reads_fail_without_writes(tmp_path):
             server.base_url
             + f"/admin/runs/run/branches/branch/players/{player}/health",
         )
-        assert code == 409, error
+        assert code == 200 and error["schema_version"] == "admin_health_current_view.v2", error
         assert _dump(path) == before
 
 

@@ -35,6 +35,7 @@ def main() -> None:
         context = browser.new_context(viewport={"width": 1440, "height": 980})
         page = context.new_page()
         page.set_default_timeout(30000)
+        expect.set_options(timeout=30000)
         page.on("pageerror", lambda error: errors.append(str(error)))
         page.on(
             "response",
@@ -803,6 +804,62 @@ def main() -> None:
             expect(page.get_by_role("heading", name="Players", exact=True)).to_be_visible()
             expect(page.get_by_text(inventory["players"][0]["display_name"], exact=True)).to_be_visible()
             page.screenshot(path=str(artifacts / "12-custom-calendar-saved-players.png"), full_page=True)
+            # Real Product Run player route: inspect -> preview -> approve -> confirm -> separate Save.
+            selected_player = inventory["players"][0]
+            page.get_by_role("link", name=selected_player["display_name"], exact=True).click()
+            page.get_by_role("tab", name="Health", exact=True).click()
+            expect(page.get_by_role("heading", name="Canonical Player Health", exact=True)).to_be_visible()
+            page.get_by_role("button", name="Edit current Health", exact=True).click()
+            page.get_by_label("Edit mode", exact=True).select_option("current_state_correction")
+            page.get_by_role("button", name="Add Health record", exact=True).click()
+            page.get_by_label("Condition key", exact=True).fill("browser-ankle")
+            page.get_by_label("Severity 0–100", exact=True).fill("24")
+            page.get_by_label("Affected domains (comma separated)", exact=True).fill("movement")
+            page.get_by_label("Recovery estimate min weeks", exact=True).fill("2")
+            page.get_by_label("Recovery estimate max weeks", exact=True).fill("6")
+            page.get_by_label("Provenance", exact=True).fill("Explicit observed opening-week ankle fact")
+            page.get_by_label("Operator label", exact=True).fill("Browser Admin")
+            page.get_by_label("Reason", exact=True).fill("Review known health fact with actual Run clock")
+            page.get_by_role("checkbox", name="I reviewed the complete current Health profile and this correction.", exact=True).check()
+            with page.expect_response(lambda r: r.request.method=="POST" and r.url.endswith("/health/preview")) as event_review:
+                page.get_by_role("button", name="Calculate Health preview", exact=True).click()
+            assert event_review.value.status==200, event_review.value.text()
+            reviewed_health=event_review.value.json()
+            assert reviewed_health["after_state"]["schema_version"]=="player_health_calendar_state.v2"
+            preview_record=next(p for p in reviewed_health["after_state"]["players"] if p["player_id"]==selected_player["player_id"])["records"][0]
+            assert preview_record["onset_week"]=={"calendar":expected_clock,"season_index":0,"week":1}
+            assert preview_record["recovery_window_max_weeks"]==6
+            health_url=args.api_url+"/admin/runs/"+custom_id+"/branches/"+preview_branch["branch_id"]+"/players/"+selected_player["player_id"]+"/health"
+            live_after_preview=page.request.get(health_url).json()
+            assert live_after_preview["player"]["records"]==[]
+            assert live_after_preview["health_component_fingerprint"]==initial_health["health_component_fingerprint"]
+            expect(page.get_by_role("button", name="Confirm reviewed Health edit", exact=True)).to_be_disabled()
+            page.get_by_label("Confirm Health changes", exact=True).check()
+            with page.expect_response(lambda r:r.request.method=="POST" and r.url.endswith("/health")) as edited:
+                page.get_by_role("button", name="Confirm reviewed Health edit", exact=True).click()
+            assert edited.value.status==200, edited.value.text()
+            branch_before_save=page.request.get(args.api_url+"/run-branches?run_id="+custom_id).json()
+            assert next(b for b in branch_before_save["run_branches"] if b["branch_id"]==preview_branch["branch_id"])["saved_head_revision_id"]==health_revision["revision_id"]
+            expect(page.get_by_role("button", name="Save Health Revision", exact=True)).to_be_disabled()
+            page.get_by_label("Confirm Health Save", exact=True).check()
+            with page.expect_response(lambda r:r.request.method=="POST" and r.url.endswith("/player-health/save")) as edited_saved:
+                page.get_by_role("button", name="Save Health Revision", exact=True).click()
+            assert edited_saved.value.status==201, edited_saved.value.text()
+            edited_revision=edited_saved.value.json()["saved_revision"]
+            edited_component=edited_revision["payload"]["content"]["player_health_state"]
+            assert edited_component["fingerprint"]==reviewed_health["after_component_fingerprint"]
+            expect(page.get_by_text("Current Health is already captured by the Saved Revision.",exact=True)).to_be_visible()
+            page.reload()
+            page.get_by_role("tab",name="Health",exact=True).click()
+            expect(page.get_by_text("browser-ankle",exact=True)).to_be_visible()
+            health_url=args.api_url+"/admin/runs/"+custom_id+"/branches/"+preview_branch["branch_id"]+"/players/"+selected_player["player_id"]+"/health"
+            reloaded_health=page.request.get(health_url).json()
+            assert reloaded_health["player"]["records"]==[preview_record]
+            assert reloaded_health["health_component_fingerprint"]==edited_component["fingerprint"]
+            page.screenshot(path=str(artifacts/"14-custom-calendar-health-edit-saved.png"),full_page=True)
+            evidence["custom_calendar_health_edit"]={"manual_save":True,"reload_exact":True,
+                "preview_did_not_write":True,"confirmation_did_not_save":True,
+                "saved_revision_id":edited_revision["revision_id"],"record":preview_record}
             evidence["custom_calendar_population_adopt_save_reload"] = {"player_count":1000,
                 "saved_revision_id":saved_population["revision_id"],"weeks_per_year":52,
                 "adoption_did_not_save":True,"manual_save_verified":True,"population_only":True,

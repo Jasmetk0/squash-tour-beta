@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 
 import { getSavedPlayerProfile } from '../api/client'
+import { PlayerHealthAdminPanel } from './PlayerHealthAdminPanel'
 import { SavedPlayerMatchesPanel } from './SavedPlayerMatchesPanel'
 import { useAdminBranch } from '../admin/AdminBranchContext'
 import { useAdminTime } from '../admin/AdminTimeContext'
@@ -14,7 +15,7 @@ export function SavedPlayerIdentityPage(): JSX.Element {
   const { runId = '', playerId = '' } = useParams()
   const { language } = useLanguage()
   const cs = language === 'cs'
-  const [tab, setTab] = useState<'overview' | 'attributes' | 'career'>('overview')
+  const [tab, setTab] = useState<'overview' | 'attributes' | 'career' | 'health'>('overview')
   const { selectedBranch, isLoading, error } = useAdminBranch()
   const time = useAdminTime()
   const branchId = selectedBranch?.run_id === runId ? selectedBranch.branch_id : null
@@ -34,7 +35,7 @@ export function SavedPlayerIdentityPage(): JSX.Element {
     <div className="page-intro">
       <p className="eyebrow">PRODUCT RUN · SAVED PLAYER PROFILE</p>
       <h2>{player?.display_name || playerId}</h2>
-      <p className="subtitle">{cs ? 'Sportovní přehled z uložené revize vybrané branche' : 'Sporting summary from the selected Branch Saved Revision'}</p>
+      <p className="subtitle">{tab==='health' ? (cs?'Současný zdravotní stav v Adminu':'Current Admin health state') : (cs ? 'Sportovní přehled z uložené revize vybrané branche' : 'Sporting summary from the selected Branch Saved Revision')}</p>
     </div>
     {time.mode !== 'present' ? <p className="status">{cs
       ? 'Historický profil pro tento checkpoint zatím není podporovaný. Současná data nevydáváme za historii.'
@@ -55,7 +56,13 @@ export function SavedPlayerIdentityPage(): JSX.Element {
               onClick={()=>setTab('attributes')}>{cs ? 'Atributy' : 'Attributes'}</button>
             <button type="button" role="tab" aria-selected={tab==='career'}
               onClick={()=>setTab('career')}>{cs ? 'Kariéra a výsledky' : 'Career & results'}</button>
+            <button type="button" role="tab" aria-selected={tab==='health'}
+              onClick={()=>setTab('health')}>{cs ? 'Zdraví' : 'Health'}</button>
           </div>
+          {tab==='health' && <section role="tabpanel" aria-label={cs?'Zdraví':'Health'}>
+            <PlayerHealthAdminPanel key={branchId+':'+savedHead+':'+playerId} runId={runId} branchId={branchId!}
+              savedHead={savedHead!} playerId={playerId} branchReadOnly={Boolean(selectedBranch?.read_only)} locale={language}/>
+          </section>}
           {tab==='overview' && <section role="tabpanel" aria-label={cs ? 'Přehled' : 'Overview'}>
           <div className="run-home-status-block">
             <p><strong>{cs ? 'Jméno' : 'Name'}:</strong> {player.display_name}</p>
@@ -109,7 +116,7 @@ export function SavedPlayerIdentityPage(): JSX.Element {
             runId={runId} branchId={branchId!} savedHead={savedHead!}
             playerId={playerId} locale={language} />
           </section>}
-          <p className="status">{cs
+          <p className="status">{tab==='health' ? (cs?'Zdraví zobrazuje současný pracovní stav v Adminu. Samostatné uložení vytvoří obnovitelnou revizi.':'Health shows the current Admin working state. A separate Save creates a recoverable revision.') : cs
             ? 'Zdroj: ověřená Saved Revision. Nezahrnuje nepublikované turnaje, legacy kariéru, atributy ani jinou branch.'
             : 'Source: verified Saved Revision. Excludes unpublished tournaments, legacy career, attributes and other Branches.'}</p>
         </>}

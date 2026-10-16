@@ -11,8 +11,8 @@ from beta_engine.api.deps import (
     get_runtime,
 )
 from beta_engine.application.admin_health_edit import (
-    AdminHealthEditRequest,
     AdminHealthEditService,
+    HealthEditRequest,
 )
 from beta_engine.application.calendar_initial_health_service import (
     CalendarInitialHealthConfirmation,
@@ -60,7 +60,7 @@ def preview_player_health_edit(
     run_id: str,
     branch_id: str,
     player_id: str,
-    payload: AdminHealthEditRequest,
+    payload: HealthEditRequest,
     runtime: ApiRuntime = Depends(get_runtime),
 ):
     if payload.player_id != player_id:
@@ -93,7 +93,7 @@ def commit_player_health_edit(
     run_id: str,
     branch_id: str,
     player_id: str,
-    payload: AdminHealthEditRequest,
+    payload: HealthEditRequest,
     expected_preview: str = Header(
         alias="X-Player-Health-Preview-Fingerprint",
         pattern=r"^[0-9a-f]{64}$",

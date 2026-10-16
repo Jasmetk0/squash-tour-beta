@@ -1,36 +1,34 @@
 # Current calendar implementation — Master v82
 
-Verified base `buuk`: `97e96210275a8f623df5193ca2991db6b3649383`, merged #1500
-(16 October 2026). Fresh review confirms #1500 merged and no other open PR at task
-start. Its final eight workflows succeeded before handoff. Master v82 remains the
-canon; this task changes implementation, not product scope.
+Verified base `buuk`: `2b472b287452b9faa00552ef0b74889e83cfc785`, merged #1501
+(16 October 2026). Task-start GitHub check found no open PR. The local tree was
+verified against that exact base. Master v82 remains the canon.
 
-**Implemented on buuk:** consent cancellation fix; versioned Run clock and exact
-conversion/target planning; optional CS/EN custom calendar creation with immutable
-first Save and correct Home timeline; hash-verified selected-Saved clock authority;
-explicit age/birth unit helpers; guards on still-legacy generation and sporting
-writers. #1499 adds calendar-owned initial-player previews; #1500 adds reviewed
-population confirmation, separate manual Save, restart, materialized fork and
-restore. InitialWorld/player/lifecycle DTOs store actual clock and birth/age facts.
-The `population_only` stage creates no Tour, ranking, health or sporting history.
-Actual Earth-package 1,000-player tests and Shell browser acceptance cover this
-population boundary. Custom clocks are not yet sporting-ready.
+**Implemented on buuk:** consent cancellation fix, versioned Run clock and target
+math, custom calendar creation/Home, Saved clock authority, age/birth helpers,
+legacy sporting guards, calendar-owned initial-player previews (#1499), reviewed
+population confirmation/Save/fork/restore/restart (#1500), and a separately reviewed
+fresh initial Health baseline with its own manual Save (#1501). Population lifecycle
+is `population_only`; the baseline has no Injury/Illness history. Neither enables
+custom-calendar sporting progression or calibrated initial health.
 
-**Current candidate:** explicit initial health for an already saved calendar-owned
-population. Players → Generate offers review, confirmation into Working Draft and
-a separate manual Health Save. The versioned baseline stores actual Run Week 1,
-empty Injury/Illness records, command/audit provenance and exact retry identity.
-Saved capture/fork/restore/restart understand it without rewriting old V1 history.
-It is an explicitly selected fresh baseline, not calibrated initial-health realism.
-Legacy health editing and time progression remain guarded. See
-[health contract](docs/CALENDAR_INITIAL_HEALTH_V82.md).
-This candidate is not included in the base above until the user merges it.
+**Current candidate:** actual Run-owned Injury/Illness facts through the existing
+Admin health inspect → preview → explicit confirmation → separate Health Save.
+The real saved-player profile now exposes a CS/EN Health tab. Dates carry the exact
+Run calendar; recovery estimates remain explicit weeks. First effective confirmed
+edit converts a baseline to `player_health_calendar_state.v2`; old baseline/V1
+Saved payloads and hashes remain unchanged. Writer-lock proof checks, atomic
+health/receipt/dirty Draft, exact retry, materialized fork provenance and backward/
+forward restore/restart use the existing persistence mechanisms. Pure fact carry
+is tested across year/season boundaries without creating sporting state. See the
+[health contract](docs/CALENDAR_INITIAL_HEALTH_V82.md) for evidence and limitations.
+This candidate is not part of the base above until the owner merges it.
 
-**Next:** calendar-owned dated health events and annual sporting development,
-ranking validity and authoritative transitions/frozen Full Simulation goals.
-Existing guards stay until each writer is proven. Custom prestart edits,
-all-Branch horizon extension and import compatibility remain. Initial population
-and health storage alone are not W52 sport support.
+**Next:** annual sporting development, ranking validity and authoritative
+transitions/frozen Full Simulation goals. Existing guards stay until each writer
+is proven. Custom prestart edits, all-Branch horizon extension and import
+compatibility remain. Health fact editing is not W52 sporting execution or realism
+calibration.
 
 Authority and long-term task:
 [Master](SQUASH_ENGINE_MASTER_VISION.md) §§3.2/6.1/6.9–6.12/31.37;

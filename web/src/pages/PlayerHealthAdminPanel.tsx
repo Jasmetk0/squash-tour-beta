@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import {
@@ -13,6 +13,7 @@ import type {
   AdminHealthEditPreview,
   AdminHealthEditRequest,
   PermanentHealthConsequence,
+  PlayerHealthProfile,
   PlayerHealthKind,
   PlayerHealthLifecycle,
   PlayerHealthRecord,
@@ -20,6 +21,10 @@ import type {
 } from '../api/types'
 import { SectionCard, SummaryPills } from '../components/RunScopedUi'
 import { formatApiError } from '../utils/apiErrors'
+import { healthClock, healthOrdinal as weekOrdinal, healthWeekLabel as weekLabel, parseHealthWeek, sameHealthWeek, validateHealthView, validateHealthReview } from '../api/healthCalendar'
+import { validateInitialHealthSave } from '../api/calendarInitialHealth'
+import { acknowledgeSavedRunForm } from '../components/RunNavigationSafeguard'
+import { healthIssue, healthText } from '../i18n/healthText'
 
 type RecordDraft = {
   record_id: string
@@ -49,14 +54,6 @@ type ConsequenceDraft = {
 
 const lifecycleOptions: PlayerHealthLifecycle[] = ['At Risk', 'Active', 'Recovering', 'Recovered']
 const kindOptions: PlayerHealthKind[] = ['Injury', 'Illness']
-
-function weekLabel(week: PlayerHealthWeek): string {
-  return `${2000 + week.season_index}/${String(2001 + week.season_index).slice(-2)} · Week ${week.week}`
-}
-
-function weekOrdinal(week: PlayerHealthWeek): number {
-  return week.season_index * 61 + week.week - 1
-}
 
 function seasonInput(week: PlayerHealthWeek | null): string {
   return week ? String(week.season_index + 1) : ''
@@ -98,15 +95,6 @@ function consequenceToDraft(consequence: PermanentHealthConsequence): Consequenc
 
 function canonicalDomains(value: string): string[] {
   return [...new Set(value.split(',').map(item => item.trim()).filter(Boolean))].sort()
-}
-
-function parseWeek(season: string, week: string): PlayerHealthWeek | null {
-  if (!season.trim() || !week.trim()) return null
-  const seasonNumber = Number(season)
-  const weekNumber = Number(week)
-  if (!Number.isInteger(seasonNumber) || seasonNumber < 1 || seasonNumber > 50) return null
-  if (!Number.isInteger(weekNumber) || weekNumber < 1 || weekNumber > 61) return null
-  return { season_index: seasonNumber - 1, week: weekNumber }
 }
 
 function newRecord(mode: AdminHealthEditMode, currentWeek: PlayerHealthWeek): RecordDraft {
@@ -163,12 +151,14 @@ function draftIssue(
     if (record.started_before_run) {
       if (record.onset_season || record.onset_week) return `Record ${record.record_id} started before the Run and cannot have an onset Week.`
     } else {
-      const onset = parseWeek(record.onset_season, record.onset_week)
+      const onset = parseHealthWeek(record.onset_season, record.onset_week, currentWeek)
       if (!onset) return `Record ${record.record_id} needs a valid onset season/week.`
       if (weekOrdinal(onset) > weekOrdinal(currentWeek)) return `Record ${record.record_id} onset cannot be in the future.`
     }
     if (record.lifecycle === 'Recovered') {
-      const recovered = parseWeek(record.recovered_season, record.recovered_week)
+      const recovered = parseHealthWeek(record.recovered_season, record.recovered_week, currentWeek)
+      if ((record.recovered_season || record.recovered_week) && !recovered) return `Record ${record.record_id} needs a valid recovered season/week.`
+      if (record.severity !== '0') return `Recovered record ${record.record_id} must have zero acute severity.`
       if (!record.started_before_run && !recovered) return `Recovered record ${record.record_id} needs a recovered season/week.`
       if (recovered && weekOrdinal(recovered) > weekOrdinal(currentWeek)) return `Record ${record.record_id} recovery cannot be in the future.`
     } else if (record.recovered_season || record.recovered_week) {
@@ -180,7 +170,7 @@ function draftIssue(
     if (hasMin && hasMax) {
       const min = Number(record.recovery_min)
       const max = Number(record.recovery_max)
-      if (!Number.isInteger(min) || !Number.isInteger(max) || min < 0 || max < min) return `Record ${record.record_id} has an invalid recovery window.`
+      if (!Number.isInteger(min) || !Number.isInteger(max) || min < 0 || max < min || max > 520) return `Record ${record.record_id} has an invalid recovery window.`
     }
     if (record.recurrence_of_record_id && record.recurrence_of_record_id === record.record_id) return `Record ${record.record_id} cannot recur from itself.`
   }
@@ -202,7 +192,7 @@ function draftIssue(
   return null
 }
 
-function buildRecord(record: RecordDraft): PlayerHealthRecord {
+function buildRecord(record: RecordDraft, currentWeek: PlayerHealthWeek): PlayerHealthRecord {
   const min = record.recovery_min.trim() ? Number(record.recovery_min) : null
   const max = record.recovery_max.trim() ? Number(record.recovery_max) : null
   return {
@@ -212,8 +202,8 @@ function buildRecord(record: RecordDraft): PlayerHealthRecord {
     lifecycle: record.lifecycle,
     severity: Number(record.severity),
     affected_domains: canonicalDomains(record.domains),
-    onset_week: record.started_before_run ? null : parseWeek(record.onset_season, record.onset_week),
-    recovered_week: record.lifecycle === 'Recovered' ? parseWeek(record.recovered_season, record.recovered_week) : null,
+    onset_week: record.started_before_run ? null : parseHealthWeek(record.onset_season, record.onset_week, currentWeek),
+    recovered_week: record.lifecycle === 'Recovered' ? parseHealthWeek(record.recovered_season, record.recovered_week, currentWeek) : null,
     started_before_run: record.started_before_run,
     recurrence_of_record_id: record.recurrence_of_record_id || null,
     recovery_window_min_weeks: min,
@@ -232,23 +222,49 @@ function buildConsequence(consequence: ConsequenceDraft): PermanentHealthConsequ
   }
 }
 
+function HealthProfileReview({profile,locale}:{profile:PlayerHealthProfile;locale:'cs'|'en'}):JSX.Element {
+  const t=(en:string)=>healthText(en,locale)
+  return <div>
+    {!profile.records.length&&<p>{t('No records. Add an Injury or Illness below.')}</p>}
+    {profile.records.map(r=><article key={r.record_id}>
+      <h5>{r.record_id}: {r.condition_key}</h5>
+      <p>{t(r.kind)} · {t(r.lifecycle)} · {t('Severity')}: {r.severity} · {t('Domains')}: {r.affected_domains.join(', ')}</p>
+      <p>{t('Origin')}: {r.started_before_run?t('Pre-start'):r.onset_week?weekLabel(r.onset_week,locale):'—'}
+        {' · '}{t('Recovered week')}: {r.recovered_week?weekLabel(r.recovered_week,locale):'—'}</p>
+      <p>{t('Recurrence of')}: {r.recurrence_of_record_id??'—'} · {t('Recovery estimate min weeks')}: {r.recovery_window_min_weeks??'—'}
+        {' · '}{t('Recovery estimate max weeks')}: {r.recovery_window_max_weeks??'—'}</p>
+      <p>{t('Provenance')}: {r.provenance}</p>
+    </article>)}
+    {profile.permanent_consequences.map(c=><article key={c.consequence_id}>
+      <h5>{t('Consequence')}: {c.consequence_id}</h5>
+      <p>{t('Source')}: {c.source_record_id} · {t('Severity')}: {c.limitation_severity} · {t('Domains')}: {c.affected_domains.join(', ')}</p>
+      <p>{t('Provenance')}: {c.provenance}</p>
+    </article>)}
+  </div>
+}
+
 export function PlayerHealthAdminPanel({
   runId,
   branchId,
   branchReadOnly,
-  playerId
+  playerId,
+  savedHead,
+  locale = 'en'
 }: {
   runId: string
   branchId: string
   branchReadOnly: boolean
   playerId: string
+  savedHead?: string
+  locale?: 'cs' | 'en'
 }): JSX.Element {
   const queryClient = useQueryClient()
-  const healthKey = ['admin-player-health', runId, branchId, playerId]
+  const t = (en: string) => healthText(en, locale)
+  const healthKey = ['admin-player-health', runId, branchId, playerId, savedHead]
   const saveKey = ['admin-player-health-save', runId, branchId]
   const healthQuery = useQuery({
     queryKey: healthKey,
-    queryFn: () => getAdminPlayerHealth(runId, branchId, playerId),
+    queryFn: async () => validateHealthView(await getAdminPlayerHealth(runId, branchId, playerId), runId, branchId, playerId, savedHead),
     retry: false
   })
   const savePreviewQuery = useQuery({
@@ -258,7 +274,13 @@ export function PlayerHealthAdminPanel({
     retry: false
   })
 
-  const current = healthQuery.data
+  const current = healthQuery.isError ? undefined : healthQuery.data
+  const saveProof = savePreviewQuery.data
+  const saveReady = Boolean(current && saveProof && !healthQuery.isFetching && !savePreviewQuery.isFetching
+    && !healthQuery.isError && !savePreviewQuery.isError && !branchReadOnly && saveProof.can_save
+    && saveProof.run_id===runId && saveProof.branch_id===branchId
+    && saveProof.draft_version===current.draft_version
+    && saveProof.health_component_fingerprint===current.health_component_fingerprint)
   const [editing, setEditing] = useState(false)
   const [mode, setMode] = useState<AdminHealthEditMode>('current_state_correction')
   const [records, setRecords] = useState<RecordDraft[]>([])
@@ -266,8 +288,18 @@ export function PlayerHealthAdminPanel({
   const [operator, setOperator] = useState('')
   const [reason, setReason] = useState('')
   const [reviewed, setReviewed] = useState(false)
-  const [review, setReview] = useState<{ request: AdminHealthEditRequest; preview: AdminHealthEditPreview } | null>(null)
+  const [review, setReview] = useState<{ request: AdminHealthEditRequest; preview: AdminHealthEditPreview; epoch: number } | null>(null)
+  const [confirmApproved, setConfirmApproved] = useState(false)
+  const [saveApproved, setSaveApproved] = useState(false)
   const [status, setStatus] = useState<string | null>(null)
+
+  const source = JSON.stringify([runId, branchId, playerId, savedHead, branchReadOnly,
+    current?.saved_head_revision_id, current?.state_fingerprint, current?.draft_version, healthQuery.isError, savePreviewQuery.isError,
+    savePreviewQuery.data?.draft_version, savePreviewQuery.data?.health_component_fingerprint,
+    mode, records, consequences, operator, reason])
+  const guard = useRef({source, epoch: 0})
+  if (guard.current.source !== source) guard.current = {source, epoch: guard.current.epoch + 1}
+  useEffect(() => {setReview(null);setReviewed(false);setConfirmApproved(false);setSaveApproved(false)}, [source])
 
   useEffect(() => {
     if (!current) return
@@ -281,7 +313,7 @@ export function PlayerHealthAdminPanel({
     setEditing(false)
     setReview(null)
     setReviewed(false)
-  }, [current?.state_fingerprint, current?.branch_id, current?.player.player_id])
+  }, [runId, branchId, playerId, savedHead, current?.state_fingerprint, current?.saved_head_revision_id, current?.draft_version])
 
   const issue = useMemo(
     () => current && editing
@@ -290,51 +322,58 @@ export function PlayerHealthAdminPanel({
     [consequences, current, editing, mode, operator, reason, records, reviewed]
   )
 
+  const refresh = async (run = runId, branch = branchId) => {
+    await Promise.all(['admin-player-health','admin-player-health-save','admin-run-branches',
+      'run-branches','saved-player-profile','saved-revision-history','calendar-initial-health','package-working-draft']
+      .map(key=>queryClient.invalidateQueries({queryKey:[key,run]})))
+    void branch
+  }
   const previewMutation = useMutation({
-    mutationFn: (request: AdminHealthEditRequest) => previewAdminPlayerHealthEdit(runId, branchId, playerId, request),
-    retry: false,
-    onSuccess: (preview, request) => {
-      setReview({ request, preview })
-      setStatus(null)
+    mutationFn: async ({request,epoch}: {request:AdminHealthEditRequest;epoch:number}) => {
+      if(!current)throw Error('Health source changed; reload this Run.')
+      const preview = validateHealthReview(await previewAdminPlayerHealthEdit(runId,branchId,playerId,request), request, current)
+      return {request,preview,epoch}
+    }, retry:false,
+    onSuccess: value => {
+      if(value.epoch===guard.current.epoch){setReview(value);setConfirmApproved(false);setStatus(null)}
     }
   })
   const commitMutation = useMutation({
-    mutationFn: () => {
-      if (!review) throw new Error('Calculate a reviewed Health preview first.')
-      return commitAdminPlayerHealthEdit(runId, branchId, playerId, review.request, review.preview.preview_fingerprint)
+    mutationFn: async (frozen: NonNullable<typeof review>) => {
+      if(!confirmApproved||frozen.epoch!==guard.current.epoch||branchReadOnly)throw Error('Health source changed; reload this Run.')
+      const result=await commitAdminPlayerHealthEdit(frozen.preview.run_id,frozen.preview.branch_id,frozen.request.player_id,frozen.request,frozen.preview.preview_fingerprint)
+      if(result.run_id!==runId||result.branch_id!==branchId||result.player_id!==playerId
+        ||result.command_id!==frozen.request.command_id||!sameHealthWeek(result.week,frozen.preview.week)
+        ||result.health_component_fingerprint!==frozen.preview.after_component_fingerprint)throw Error('Confirmed health differs from review.')
+      return result
+    }, retry:false,
+    onSuccess: async (result,frozen) => {
+      if(frozen.epoch===guard.current.epoch){
+        setStatus(t(result.already_applied?'This exact Health edit was already committed.':'Health edit committed to the Working Draft. Save a Health Revision to make it recoverable.'))
+        setReview(null);setEditing(false);setConfirmApproved(false)
+      }
+      await refresh(frozen.preview.run_id,frozen.preview.branch_id)
     },
-    retry: false,
-    onSuccess: async result => {
-      setStatus(result.already_applied ? 'This exact Health edit was already committed.' : 'Health edit committed to the Working Draft. Save a Health Revision to make it recoverable.')
-      setReview(null)
-      setEditing(false)
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: healthKey }),
-        queryClient.invalidateQueries({ queryKey: saveKey }),
-        queryClient.invalidateQueries({ queryKey: ['admin-run-branches', runId] })
-      ])
-    }
+    onError: async (_error,frozen) => {setConfirmApproved(false);await refresh(frozen.preview.run_id,frozen.preview.branch_id)}
   })
   const saveMutation = useMutation({
-    mutationFn: () => {
-      const preview = savePreviewQuery.data
-      if (!preview?.can_save) throw new Error('No reviewed Health Working Draft is ready to save.')
-      return savePlayerHealthRevision(runId, branchId, {
-        expected_draft_version: preview.draft_version,
-        expected_player_health_fingerprint: preview.health_component_fingerprint
-      })
-    },
-    retry: false,
-    onSuccess: async result => {
-      setStatus(`Health Saved Revision ${result.saved_revision.revision_id} created.`)
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: healthKey }),
-        queryClient.invalidateQueries({ queryKey: saveKey }),
-        queryClient.invalidateQueries({ queryKey: ['admin-run-branches', runId] }),
-        queryClient.invalidateQueries({ queryKey: ['saved-revision-history', runId, branchId] })
-      ])
-    }
+    mutationFn: async (epoch:number) => {
+      const proof=savePreviewQuery.data
+      if(epoch!==guard.current.epoch||healthQuery.isError||savePreviewQuery.isError||!saveApproved||!proof?.can_save||branchReadOnly||proof.run_id!==runId||proof.branch_id!==branchId
+        ||proof.draft_version!==current?.draft_version||proof.health_component_fingerprint!==current?.health_component_fingerprint)throw Error('Health Save proof changed.')
+      const result=await savePlayerHealthRevision(runId,branchId,{
+        expected_draft_version:proof.draft_version,expected_player_health_fingerprint:proof.health_component_fingerprint})
+      validateInitialHealthSave(result,runId,branchId,proof.health_component_fingerprint)
+      return {result,run:runId,branch:branchId,epoch}
+    },retry:false,
+    onSuccess:async ({result,run,branch,epoch})=>{
+      acknowledgeSavedRunForm(run,branch)
+      if(epoch===guard.current.epoch){setSaveApproved(false);setStatus(t('Health Saved Revision created.')+' '+result.saved_revision.revision_id)}
+      await refresh(run,branch)
+    },onError:async()=>{setSaveApproved(false);await refresh()}
   })
+
+  useEffect(()=>{setStatus(null)},[runId,branchId,playerId,savedHead])
 
   const beginEdit = () => {
     if (!current) return
@@ -351,17 +390,18 @@ export function PlayerHealthAdminPanel({
   const calculatePreview = () => {
     if (!current || issue) return
     const request: AdminHealthEditRequest = {
-      schema_version: 'admin_health_edit_request.v1',
+      ...(current.schema_version==='admin_health_current_view.v2' ? {schema_version:'admin_health_edit_request.v2' as const,expected_saved_head:current.saved_head_revision_id!,expected_state_fingerprint:current.state_fingerprint} : {schema_version:'admin_health_edit_request.v1' as const}),
       command_id: `admin-health-${crypto.randomUUID()}`,
       player_id: playerId,
       mode,
       expected_draft_version: current.draft_version,
-      records: records.map(buildRecord).sort((a, b) => a.record_id.localeCompare(b.record_id)),
+      records: records.map(record=>buildRecord(record,current.week)).sort((a, b) => a.record_id.localeCompare(b.record_id)),
       permanent_consequences: consequences.map(buildConsequence).sort((a, b) => a.consequence_id.localeCompare(b.consequence_id)),
       audit_label: operator.trim(),
       audit_reason: reason.trim()
     }
-    previewMutation.mutate(request)
+    setConfirmApproved(false)
+    previewMutation.mutate({request,epoch:guard.current.epoch})
   }
 
   const updateRecord = (index: number, patch: Partial<RecordDraft>) => {
@@ -372,28 +412,28 @@ export function PlayerHealthAdminPanel({
   }
 
   return (
-    <SectionCard title="Canonical Player Health">
-      {healthQuery.isPending ? <p role="status">Loading canonical Health state…</p> : null}
-      {healthQuery.isError ? <p role="alert">Health state unavailable: {formatApiError(healthQuery.error)}</p> : null}
+    <SectionCard title={t("Canonical Player Health")}>
+      {healthQuery.isPending ? <p role="status">{t("Loading canonical Health state\u2026")}</p> : null}
+      {healthQuery.isError ? <p role="alert">{t("Health state unavailable:")} {formatApiError(healthQuery.error)}</p> : null}
       {current ? (
         <>
           <SummaryPills
             items={[
-              { label: 'Branch', value: branchId },
-              { label: 'Week', value: weekLabel(current.week) },
-              { label: 'Health records', value: current.player.records.length },
-              { label: 'Permanent consequences', value: current.player.permanent_consequences.length },
-              { label: 'Draft version', value: current.draft_version }
+              { label: t('Branch'), value: branchId },
+              { label: t('Week'), value: weekLabel(current.week,locale) },
+              { label: t('Health records'), value: current.player.records.length },
+              { label: t('Permanent consequences'), value: current.player.permanent_consequences.length },
+              { label: t('Draft version'), value: current.draft_version }
             ]}
           />
-          <p className="status">State {current.state_fingerprint.slice(0, 12)} · component {current.health_component_fingerprint.slice(0, 12)}</p>
-          {branchReadOnly ? <p role="alert">The Active Admin Branch is read-only. Health can be inspected but not edited.</p> : null}
+          <p className="status">{t("State")} {current.state_fingerprint.slice(0, 12)} · component {current.health_component_fingerprint.slice(0, 12)}</p>
+          {branchReadOnly ? <p role="alert">{t("The Active Admin Branch is read-only. Health can be inspected but not edited.")}</p> : null}
           {!editing ? (
             <>
-              {current.player.records.length === 0 ? <p>No Injury or Illness records are present at this Week.</p> : (
+              {current.player.records.length === 0 ? <p>{t("No Injury or Illness records are present at this Week.")}</p> : (
                 <div className="table-scroll">
-                  <table aria-label="Current Health records">
-                    <thead><tr><th>ID</th><th>Type</th><th>Condition</th><th>Lifecycle</th><th>Severity</th><th>Domains</th><th>Origin</th></tr></thead>
+                  <table aria-label={t("Current Health records")}>
+                    <thead><tr><th>{t("ID")}</th><th>{t("Type")}</th><th>{t("Condition")}</th><th>{t("Lifecycle")}</th><th>{t("Severity")}</th><th>{t("Domains")}</th><th>{t("Origin")}</th></tr></thead>
                     <tbody>
                       {current.player.records.map(record => (
                         <tr key={record.record_id}>
@@ -403,7 +443,7 @@ export function PlayerHealthAdminPanel({
                           <td>{record.lifecycle}</td>
                           <td>{record.severity}</td>
                           <td>{record.affected_domains.join(', ')}</td>
-                          <td>{record.started_before_run ? 'Pre-start' : record.onset_week ? weekLabel(record.onset_week) : '—'}</td>
+                          <td>{record.started_before_run ? t('Pre-start') : record.onset_week ? weekLabel(record.onset_week,locale) : '—'}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -412,130 +452,136 @@ export function PlayerHealthAdminPanel({
               )}
               {current.player.permanent_consequences.length > 0 ? (
                 <div className="table-scroll">
-                  <table aria-label="Permanent Health consequences">
-                    <thead><tr><th>ID</th><th>Source</th><th>Severity</th><th>Domains</th></tr></thead>
+                  <table aria-label={t("Permanent Health consequences")}>
+                    <thead><tr><th>{t("ID")}</th><th>{t("Source")}</th><th>{t("Severity")}</th><th>{t("Domains")}</th></tr></thead>
                     <tbody>{current.player.permanent_consequences.map(item => (
                       <tr key={item.consequence_id}><td>{item.consequence_id}</td><td>{item.source_record_id}</td><td>{item.limitation_severity}</td><td>{item.affected_domains.join(', ')}</td></tr>
                     ))}</tbody>
                   </table>
                 </div>
               ) : null}
-              <button type="button" onClick={beginEdit} disabled={branchReadOnly}>Edit current Health</button>
+              <button type="button" onClick={beginEdit} disabled={branchReadOnly}>{t("Edit current Health")}</button>
             </>
           ) : (
-            <section aria-label="Edit current Player Health">
-              <h3>Reviewed Health edit</h3>
-              <p>This replaces the selected player's complete Health profile at the current authoritative Week. Historical predecessor state is not rewritten.</p>
+            <section aria-label={t("Edit current Player Health")}>
+              <p>{current.week.calendar ? `${t("Run calendar")}: W${current.week.calendar.weeks_per_year}, ${t("offset")} ${current.week.calendar.season_start_year_week}, ${healthClock(current.week).season_count} ${t("seasons")}` : t("Historical FAX calendar")}</p>
+              <h3>{t("Reviewed Health edit")}</h3>
+              <p>{t("This replaces the selected player's complete Health profile at the current authoritative Week. Historical predecessor state is not rewritten.")}</p>
               {weekOrdinal(current.week) === 0 ? (
                 <label>
-                  Edit mode
-                  <select value={mode} disabled={Boolean(review)} onChange={event => setMode(event.target.value as AdminHealthEditMode)}>
-                    <option value="pre_start_input">Pre-start input</option>
-                    <option value="current_state_correction">Current-state correction</option>
+                  {t("Edit mode")}
+                  <select aria-label={t("Edit mode")} value={mode} disabled={Boolean(review) || previewMutation.isPending || commitMutation.isPending} onChange={event => setMode(event.target.value as AdminHealthEditMode)}>
+                    <option value="pre_start_input">{t("Pre-start input")}</option>
+                    <option value="current_state_correction">{t("Current-state correction")}</option>
                   </select>
                 </label>
-              ) : <p>Mode: current-state correction</p>}
+              ) : <p>{t("Mode: current-state correction")}</p>}
               <fieldset disabled={Boolean(review) || previewMutation.isPending || commitMutation.isPending}>
-                <legend>Health records</legend>
-                {records.length === 0 ? <p>No records. Add an Injury or Illness below.</p> : null}
+                <legend>{t("Health records")}</legend>
+                {records.length === 0 ? <p>{t("No records. Add an Injury or Illness below.")}</p> : null}
                 {records.map((record, index) => (
                   <fieldset key={record.record_id || index}>
-                    <legend>Record {index + 1}</legend>
-                    <label>Record ID <input value={record.record_id} maxLength={160} onChange={event => updateRecord(index, { record_id: event.target.value })} /></label>
-                    <label>Type <select value={record.kind} onChange={event => updateRecord(index, { kind: event.target.value as PlayerHealthKind, recurrence_of_record_id: '' })}>{kindOptions.map(kind => <option key={kind}>{kind}</option>)}</select></label>
-                    <label>Condition key <input value={record.condition_key} maxLength={160} onChange={event => updateRecord(index, { condition_key: event.target.value })} /></label>
-                    <label>Lifecycle <select value={record.lifecycle} onChange={event => updateRecord(index, { lifecycle: event.target.value as PlayerHealthLifecycle, ...(event.target.value === 'Recovered' ? {} : { recovered_season: '', recovered_week: '' }) })}>{lifecycleOptions.map(value => <option key={value}>{value}</option>)}</select></label>
-                    <label>Severity 0–100 <input type="number" min={0} max={100} step={1} value={record.severity} onChange={event => updateRecord(index, { severity: event.target.value })} /></label>
-                    <label>Affected domains (comma separated) <input value={record.domains} onChange={event => updateRecord(index, { domains: event.target.value })} /></label>
-                    <label className="checkbox-label"><input type="checkbox" checked={record.started_before_run} disabled={mode === 'pre_start_input'} onChange={event => updateRecord(index, { started_before_run: event.target.checked, onset_season: event.target.checked ? '' : String(current.week.season_index + 1), onset_week: event.target.checked ? '' : String(current.week.week) })} />Started before Run</label>
+                    <legend>{t("Record")} {index + 1}</legend>
+                    <label>{t("Record ID")} <input value={record.record_id} maxLength={160} onChange={event => updateRecord(index, { record_id: event.target.value })} /></label>
+                    <label>{t("Type")} <select aria-label={t("Type")} value={record.kind} onChange={event => updateRecord(index, { kind: event.target.value as PlayerHealthKind, recurrence_of_record_id: '' })}>{kindOptions.map(kind => <option key={kind} value={kind}>{t(kind)}</option>)}</select></label>
+                    <label>{t("Condition key")} <input value={record.condition_key} maxLength={160} onChange={event => updateRecord(index, { condition_key: event.target.value })} /></label>
+                    <label>{t("Lifecycle")} <select aria-label={t("Lifecycle")} value={record.lifecycle} onChange={event => updateRecord(index, { lifecycle: event.target.value as PlayerHealthLifecycle, ...(event.target.value === 'Recovered' ? {} : { recovered_season: '', recovered_week: '' }) })}>{lifecycleOptions.map(value => <option key={value} value={value}>{t(value)}</option>)}</select></label>
+                    <label>{t("Severity 0\u2013100")} <input type="number" min={0} max={100} step={1} value={record.severity} onChange={event => updateRecord(index, { severity: event.target.value })} /></label>
+                    <label>{t("Affected domains (comma separated)")} <input value={record.domains} onChange={event => updateRecord(index, { domains: event.target.value })} /></label>
+                    <label className="checkbox-label"><input type="checkbox" checked={record.started_before_run} disabled={mode === 'pre_start_input'} onChange={event => updateRecord(index, { started_before_run: event.target.checked, onset_season: event.target.checked ? '' : String(current.week.season_index + 1), onset_week: event.target.checked ? '' : String(current.week.week) })} />{t("Started before Run")}</label>
                     {!record.started_before_run ? (
                       <>
-                        <label>Onset season (1–50) <input type="number" min={1} max={50} value={record.onset_season} onChange={event => updateRecord(index, { onset_season: event.target.value })} /></label>
-                        <label>Onset week <input type="number" min={1} max={61} value={record.onset_week} onChange={event => updateRecord(index, { onset_week: event.target.value })} /></label>
+                        <label>{t("Onset season")} <input type="number" min={1} max={healthClock(current.week).season_count} value={record.onset_season} onChange={event => updateRecord(index, { onset_season: event.target.value })} /></label>
+                        <label>{t("Onset week")} <input type="number" min={1} max={healthClock(current.week).weeks_per_year} value={record.onset_week} onChange={event => updateRecord(index, { onset_week: event.target.value })} /></label>
                       </>
                     ) : null}
                     {record.lifecycle === 'Recovered' ? (
                       <>
-                        <label>Recovered season (1–50) <input type="number" min={1} max={50} value={record.recovered_season} onChange={event => updateRecord(index, { recovered_season: event.target.value })} /></label>
-                        <label>Recovered week <input type="number" min={1} max={61} value={record.recovered_week} onChange={event => updateRecord(index, { recovered_week: event.target.value })} /></label>
+                        <label>{t("Recovered season")} <input type="number" min={1} max={healthClock(current.week).season_count} value={record.recovered_season} onChange={event => updateRecord(index, { recovered_season: event.target.value })} /></label>
+                        <label>{t("Recovered week")} <input type="number" min={1} max={healthClock(current.week).weeks_per_year} value={record.recovered_week} onChange={event => updateRecord(index, { recovered_week: event.target.value })} /></label>
                       </>
                     ) : null}
                     <label>
-                      Recurrence of
-                      <select value={record.recurrence_of_record_id} onChange={event => updateRecord(index, { recurrence_of_record_id: event.target.value })}>
-                        <option value="">None</option>
+                      {t("Recurrence of")}
+                      <select aria-label={t("Recurrence of")} value={record.recurrence_of_record_id} onChange={event => updateRecord(index, { recurrence_of_record_id: event.target.value })}>
+                        <option value="">{t("None")}</option>
                         {records.filter(candidate => candidate.record_id !== record.record_id && candidate.kind === record.kind).map(candidate => <option key={candidate.record_id} value={candidate.record_id}>{candidate.record_id}</option>)}
                       </select>
                     </label>
-                    <label>Recovery estimate min weeks <input type="number" min={0} max={520} value={record.recovery_min} onChange={event => updateRecord(index, { recovery_min: event.target.value })} /></label>
-                    <label>Recovery estimate max weeks <input type="number" min={0} max={520} value={record.recovery_max} onChange={event => updateRecord(index, { recovery_max: event.target.value })} /></label>
-                    <label>Provenance <textarea maxLength={1000} value={record.provenance} onChange={event => updateRecord(index, { provenance: event.target.value })} /></label>
-                    <button type="button" onClick={() => setRecords(old => old.filter((_, position) => position !== index))}>Remove record {index + 1}</button>
+                    <label>{t("Recovery estimate min weeks")} <input type="number" min={0} max={520} value={record.recovery_min} onChange={event => updateRecord(index, { recovery_min: event.target.value })} /></label>
+                    <label>{t("Recovery estimate max weeks")} <input type="number" min={0} max={520} value={record.recovery_max} onChange={event => updateRecord(index, { recovery_max: event.target.value })} /></label>
+                    <label>{t("Provenance")} <textarea maxLength={1000} value={record.provenance} onChange={event => updateRecord(index, { provenance: event.target.value })} /></label>
+                    <button type="button" onClick={() => setRecords(old => old.filter((_, position) => position !== index))}>{t("Remove record")} {index + 1}</button>
                   </fieldset>
                 ))}
-                <button type="button" onClick={() => setRecords(old => [...old, newRecord(mode, current.week)])}>Add Health record</button>
+                <button type="button" onClick={() => setRecords(old => [...old, newRecord(mode, current.week)])}>{t("Add Health record")}</button>
               </fieldset>
 
               <fieldset disabled={Boolean(review) || previewMutation.isPending || commitMutation.isPending}>
-                <legend>Permanent consequences</legend>
-                {consequences.length === 0 ? <p>No permanent consequences.</p> : null}
+                <legend>{t("Permanent consequences")}</legend>
+                {consequences.length === 0 ? <p>{t("No permanent consequences.")}</p> : null}
                 {consequences.map((item, index) => (
                   <fieldset key={item.consequence_id || index}>
-                    <legend>Consequence {index + 1}</legend>
-                    <label>Consequence ID <input maxLength={160} value={item.consequence_id} onChange={event => updateConsequence(index, { consequence_id: event.target.value })} /></label>
-                    <label>Recovered source record <select value={item.source_record_id} onChange={event => updateConsequence(index, { source_record_id: event.target.value })}><option value="">Select source</option>{records.filter(record => record.lifecycle === 'Recovered').map(record => <option key={record.record_id} value={record.record_id}>{record.record_id}</option>)}</select></label>
-                    <label>Affected domains (comma separated) <input value={item.domains} onChange={event => updateConsequence(index, { domains: event.target.value })} /></label>
-                    <label>Limitation severity 1–100 <input type="number" min={1} max={100} value={item.limitation_severity} onChange={event => updateConsequence(index, { limitation_severity: event.target.value })} /></label>
-                    <label>Provenance <textarea maxLength={1000} value={item.provenance} onChange={event => updateConsequence(index, { provenance: event.target.value })} /></label>
-                    <button type="button" onClick={() => setConsequences(old => old.filter((_, position) => position !== index))}>Remove consequence {index + 1}</button>
+                    <legend>{t("Consequence")} {index + 1}</legend>
+                    <label>{t("Consequence ID")} <input maxLength={160} value={item.consequence_id} onChange={event => updateConsequence(index, { consequence_id: event.target.value })} /></label>
+                    <label>{t("Recovered source record")} <select aria-label={t("Recovered source record")} value={item.source_record_id} onChange={event => updateConsequence(index, { source_record_id: event.target.value })}><option value="">{t("Select source")}</option>{records.filter(record => record.lifecycle === 'Recovered').map(record => <option key={record.record_id} value={record.record_id}>{record.record_id}</option>)}</select></label>
+                    <label>{t("Affected domains (comma separated)")} <input value={item.domains} onChange={event => updateConsequence(index, { domains: event.target.value })} /></label>
+                    <label>{t("Limitation severity 1\u2013100")} <input type="number" min={1} max={100} value={item.limitation_severity} onChange={event => updateConsequence(index, { limitation_severity: event.target.value })} /></label>
+                    <label>{t("Provenance")} <textarea maxLength={1000} value={item.provenance} onChange={event => updateConsequence(index, { provenance: event.target.value })} /></label>
+                    <button type="button" onClick={() => setConsequences(old => old.filter((_, position) => position !== index))}>{t("Remove consequence")} {index + 1}</button>
                   </fieldset>
                 ))}
-                <button type="button" onClick={() => setConsequences(old => [...old, newConsequence(records)])}>Add permanent consequence</button>
+                <button type="button" onClick={() => setConsequences(old => [...old, newConsequence(records)])}>{t("Add permanent consequence")}</button>
               </fieldset>
 
               <fieldset disabled={Boolean(review) || previewMutation.isPending || commitMutation.isPending}>
-                <legend>Audit and review</legend>
-                <label>Operator label <input maxLength={200} value={operator} onChange={event => setOperator(event.target.value)} /></label>
-                <label>Reason <textarea maxLength={2000} value={reason} onChange={event => setReason(event.target.value)} /></label>
-                <label className="checkbox-label"><input type="checkbox" checked={reviewed} onChange={event => setReviewed(event.target.checked)} />I reviewed the complete current Health profile and this correction.</label>
-                <button type="button" disabled={Boolean(issue)} onClick={calculatePreview}>Calculate Health preview</button>
-                <button type="button" onClick={() => { setEditing(false); setReview(null) }}>Cancel edit</button>
-                {issue ? <p className="status">{issue}</p> : null}
+                <legend>{t("Audit and review")}</legend>
+                <label>{t("Operator label")} <input maxLength={200} value={operator} onChange={event => setOperator(event.target.value)} /></label>
+                <label>{t("Reason")} <textarea maxLength={2000} value={reason} onChange={event => setReason(event.target.value)} /></label>
+                <label className="checkbox-label"><input type="checkbox" checked={reviewed} onChange={event => setReviewed(event.target.checked)} />{t("I reviewed the complete current Health profile and this correction.")}</label>
+                <button type="button" disabled={Boolean(issue)} onClick={calculatePreview}>{t("Calculate Health preview")}</button>
+                <button type="button" onClick={() => { setEditing(false); setReview(null) }}>{t("Cancel edit")}</button>
+                {issue ? <p className="status">{healthIssue(issue,locale)}</p> : null}
               </fieldset>
 
-              {previewMutation.isPending ? <p role="status">Calculating Health preview…</p> : null}
+              {previewMutation.isPending ? <p role="status">{t("Calculating Health preview\u2026")}</p> : null}
               {previewMutation.isError ? <p role="alert">{formatApiError(previewMutation.error)}</p> : null}
               {review ? (
-                <section aria-label="Health edit preview">
-                  <h3>Review Health preview</h3>
+                <section aria-label={t("Health edit preview")}>
+                  <h3>{t("Review Health preview")}</h3>
                   <SummaryPills items={[
-                    { label: 'Week', value: weekLabel(review.preview.week) },
-                    { label: 'Records after', value: review.preview.after_state.players.find(player => player.player_id === playerId)?.records.length ?? 0 },
-                    { label: 'Consequences after', value: review.preview.after_state.players.find(player => player.player_id === playerId)?.permanent_consequences.length ?? 0 },
-                    { label: 'Before', value: review.preview.before_state_fingerprint.slice(0, 12) },
-                    { label: 'After component', value: review.preview.after_component_fingerprint.slice(0, 12) }
+                    { label: t('Week'), value: weekLabel(review.preview.week,locale) },
+                    { label: t('Records after'), value: review.preview.after_state.players.find(player => player.player_id === playerId)?.records.length ?? 0 },
+                    { label: t('Consequences after'), value: review.preview.after_state.players.find(player => player.player_id === playerId)?.permanent_consequences.length ?? 0 },
+                    { label: t('Before'), value: review.preview.before_state_fingerprint.slice(0, 12) },
+                    { label: t('After component'), value: review.preview.after_component_fingerprint.slice(0, 12) }
                   ]} />
-                  <p>Preview fingerprint: {review.preview.preview_fingerprint.slice(0, 16)}…</p>
-                  <button type="button" disabled={commitMutation.isPending} onClick={() => commitMutation.mutate()}>{commitMutation.isError ? 'Retry exact Health commit' : 'Confirm reviewed Health edit'}</button>
-                  <button type="button" disabled={commitMutation.isPending} onClick={() => { setReview(null); previewMutation.reset(); commitMutation.reset(); setReviewed(false) }}>Edit inputs and recalculate</button>
-                  {commitMutation.isPending ? <p role="status">Committing Health edit…</p> : null}
-                  {commitMutation.isError ? <p role="alert">{formatApiError(commitMutation.error)} The reviewed request is retained for an exact retry.</p> : null}
+                  <h4>{t('Complete change for this player')}</h4>
+                  <p>{t('Before')}</p><HealthProfileReview profile={current.player} locale={locale}/>
+                  <p>{t('After')}</p><HealthProfileReview profile={review.preview.after_state.players.find(p=>p.player_id===playerId)!} locale={locale}/>
+                  <label className="checkbox-label"><input type="checkbox" aria-label={t('Confirm Health changes')} disabled={branchReadOnly || healthQuery.isFetching || savePreviewQuery.isFetching || commitMutation.isPending || review.epoch!==guard.current.epoch} checked={confirmApproved} onChange={e=>setConfirmApproved(e.target.checked)}/>{t('I approve these reviewed Health changes.')}</label>
+                  <p>{t("Preview fingerprint:")} {review.preview.preview_fingerprint.slice(0, 16)}…</p>
+                  <button type="button" disabled={!confirmApproved || branchReadOnly || healthQuery.isError || savePreviewQuery.isError || healthQuery.isFetching || savePreviewQuery.isFetching || commitMutation.isPending || review.epoch!==guard.current.epoch} onClick={() => commitMutation.mutate(review)}>{commitMutation.isError ? t('Retry exact Health commit') : t('Confirm reviewed Health edit')}</button>
+                  <button type="button" disabled={commitMutation.isPending} onClick={() => { setReview(null); previewMutation.reset(); commitMutation.reset(); setReviewed(false);setConfirmApproved(false) }}>{t("Edit inputs and recalculate")}</button>
+                  {commitMutation.isPending ? <p role="status">{t("Committing Health edit\u2026")}</p> : null}
+                  {commitMutation.isError ? <p role="alert">{formatApiError(commitMutation.error)} {t('No automatic write retry. Reload and inspect, or explicitly approve the exact retry.')}</p> : null}
                 </section>
               ) : null}
             </section>
           )}
 
-          <section aria-label="Save Player Health revision">
-            <h3>Save Health Revision</h3>
-            {savePreviewQuery.isPending ? <p role="status">Checking Health Save state…</p> : null}
-            {savePreviewQuery.isError ? <p role="alert">Health Save state unavailable: {formatApiError(savePreviewQuery.error)}</p> : null}
+          <section aria-label={t("Save Player Health revision")}>
+            <h3>{t("Save Health Revision")}</h3>
+            {savePreviewQuery.isPending ? <p role="status">{t("Checking Health Save state\u2026")}</p> : null}
+            {savePreviewQuery.isError ? <p role="alert">{t("Health Save state unavailable:")} {formatApiError(savePreviewQuery.error)}</p> : null}
             {savePreviewQuery.data ? (
               <>
-                <p>{savePreviewQuery.data.changed_since_saved_head ? 'Health differs from the current Saved Revision.' : 'Current Health is already captured by the Saved Revision.'}</p>
-                <button type="button" disabled={branchReadOnly || !savePreviewQuery.data.can_save || saveMutation.isPending} onClick={() => saveMutation.mutate()}>Save Health Revision</button>
+                <p>{savePreviewQuery.data.changed_since_saved_head ? t('Health differs from the current Saved Revision.') : t('Current Health is already captured by the Saved Revision.')}</p>
+                <label className="checkbox-label"><input type="checkbox" aria-label={t('Confirm Health Save')} disabled={!saveReady || saveMutation.isPending} checked={saveApproved} onChange={e=>setSaveApproved(e.target.checked)}/>{t('Save this Health draft in a new revision.')}</label>
+                <button type="button" disabled={!saveApproved || !saveReady || saveMutation.isPending} onClick={() => saveMutation.mutate(guard.current.epoch)}>{t("Save Health Revision")}</button>
               </>
             ) : null}
-            {saveMutation.isPending ? <p role="status">Saving Health Revision…</p> : null}
+            {saveMutation.isPending ? <p role="status">{t("Saving Health Revision\u2026")}</p> : null}
             {saveMutation.isError ? <p role="alert">{formatApiError(saveMutation.error)}</p> : null}
           </section>
           {status ? <p role="status">{status}</p> : null}

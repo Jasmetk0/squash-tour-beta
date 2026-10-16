@@ -5,6 +5,7 @@ import { validateCalendarPoolPreview, type CalendarPoolPreview } from '../api/ca
 import type { RunCalendarMetadata } from '../api/runCalendarCreation'
 import { runOwnedWorldIds } from '../api/runInitialWorldSetup'
 import { formatApiError } from '../utils/apiErrors'
+import './RunCalendarPlayerPreviewPanel.css'
 
 /** First v2 UI slice: new dates can be inspected; no adoption/Save authority. */
 export function RunCalendarPlayerPreviewPanel({runId, branchId, head, clock, locale}: {
@@ -60,14 +61,14 @@ export function RunCalendarPlayerPreviewPanel({runId, branchId, head, clock, loc
       if (token.current === thisToken) setPending(false)
     }
   }
-  return <section data-run-navigation-readonly aria-label={cs ? 'Náhled hráčů podle kalendáře Runu' : 'Run calendar player preview'}>
+  return <section className="calendar-player-preview" data-run-navigation-readonly aria-label={cs ? 'Náhled hráčů podle kalendáře Runu' : 'Run calendar player preview'}>
     <p role="status">{cs
       ? 'Náhled podle uloženého kalendáře Runu. Hráči se zatím nepřidají do Runu; uložení a simulace pro tento kalendář čekají na převod lifecycle a rankingu.'
       : 'Preview using the saved Run calendar. Players cannot be added yet; adoption and simulation await the lifecycle and ranking migration.'}</p>
     {source.isPending && <p role="status">{cs ? 'Načítání balíčků…' : 'Loading packages…'}</p>}
     {source.error && <p role="alert">{formatApiError(source.error)}</p>}
     {source.isSuccess && !worlds.length && <p>{cs ? 'Nejdřív zkopíruj World Package do tohoto Runu.' : 'Copy a World Package into this Run first.'}</p>}
-    <form onSubmit={e => {e.preventDefault(); void generate()}}>
+    <form className="calendar-player-preview__form" onSubmit={e => {e.preventDefault(); void generate()}}>
       <label>{cs ? 'Svět' : 'World'}<select aria-label={cs ? 'Svět' : 'World'} value={selected}
         onChange={e => changed(setWorld, e.target.value)}>
         {!worlds.length && <option value="">—</option>}
@@ -84,9 +85,10 @@ export function RunCalendarPlayerPreviewPanel({runId, branchId, head, clock, loc
     {error && <p role="alert">{error}</p>}
     {active && <>
       <p>{cs ? 'Vygenerováno' : 'Generated'}: {active.result.players.length} · {clock.weeks_per_year} {cs ? 'týdnů za rok' : 'weeks per year'}</p>
-      <div className="table-wrap"><table><thead><tr>{(cs
+      <div className="calendar-player-preview__table" role="region" tabIndex={0}
+        aria-label={cs ? 'Vygenerovaní hráči — náhled' : 'Generated players — preview'}><table><thead><tr>{(cs
         ? ['Jméno', 'Země', 'Rok narození', 'Týden narození', 'Věk', 'Schopnost', 'Potenciál']
-        : ['Name', 'Country', 'Birth year', 'Birth week', 'Age', 'Ability', 'Potential']).map(h => <th key={h}>{h}</th>)}</tr></thead>
+        : ['Name', 'Country', 'Birth year', 'Birth week', 'Age', 'Ability', 'Potential']).map(h => <th scope="col" key={h}>{h}</th>)}</tr></thead>
         <tbody>{active.result.players.slice(page * 50, (page + 1) * 50).map(p => <tr key={p.player_id}>
           <td>{p.name}</td><td>{p.country_code}</td><td>{p.birth_year}</td><td>{p.birth_year_week}</td>
           <td>{p.current_age_years}</td><td>{p.current_ability}</td><td>{p.potential_ability}</td>

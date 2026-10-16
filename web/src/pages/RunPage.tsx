@@ -23,6 +23,7 @@ import { RunFirstTournamentPanel } from '../components/RunFirstTournamentPanel'
 import { useLanguage } from '../i18n/LanguageContext'
 import { formatApiError, isApiNotFound } from '../utils/apiErrors'
 import { RunHomeProgress, runHomeClock } from './RunHomeProgress'
+import { RunCalendarExtensionInspection } from './RunCalendarExtensionInspection'
 import { HomePlayerIdentityLink } from './HomePlayerIdentityLink'
 import { RunHomeRankingPanel } from './RunHomeRankingPanel'
 import { seasonOrdinal, weekOrdinal } from './runHomeModel'
@@ -397,6 +398,10 @@ export function RunPage(): JSX.Element {
       <Link to={base + '/branches'}>{l.history} →</Link>
     </SectionCard>
 
+    {setupAllowed && ready && branchId && homeClock && <SectionCard title={language === 'cs' ? 'Horizont Runu' : 'Run horizon'}>
+      <RunCalendarExtensionInspection key={runId + ':' + branchId + ':' + homeClock.season_count}
+        runId={runId} branchId={branchId} currentCount={homeClock.season_count} language={language} />
+    </SectionCard>}
     {setupAllowed && <section className="run-home-setup" aria-label="Run content preparation">
       <h3>{l.setup}</h3>
       <p className="status">{language === 'cs'

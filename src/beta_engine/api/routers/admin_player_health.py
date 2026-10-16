@@ -14,6 +14,11 @@ from beta_engine.application.admin_health_edit import (
     AdminHealthEditRequest,
     AdminHealthEditService,
 )
+from beta_engine.application.calendar_initial_health_service import (
+    CalendarInitialHealthConfirmation,
+    CalendarInitialHealthRequest,
+    CalendarInitialHealthService,
+)
 from beta_engine.application.run_working_draft_service import RunWorkingDraftService
 from beta_engine.infrastructure.db.player_health_state import (
     PLAYER_HEALTH_COMPONENT_KEY,
@@ -198,4 +203,55 @@ def save_player_health(
         raise HTTPException(
             status_code=409,
             detail={"code": "player_health_save_conflict", "message": str(exc)},
+        ) from exc
+
+
+@router.get("/player-health/calendar-initial")
+def inspect_calendar_initial_health(
+    run_id: str, branch_id: str, runtime: ApiRuntime = Depends(get_runtime)
+):
+    try:
+        return CalendarInitialHealthService(runtime.repository).inspect(
+            run_id=run_id, branch_id=branch_id
+        )
+    except (KeyError, ValueError) as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={"code": "calendar_initial_health_unavailable", "message": str(exc)},
+        ) from exc
+
+
+@router.post("/player-health/calendar-initial/preview")
+def preview_calendar_initial_health(
+    run_id: str,
+    branch_id: str,
+    payload: CalendarInitialHealthRequest,
+    runtime: ApiRuntime = Depends(get_runtime),
+):
+    try:
+        return CalendarInitialHealthService(runtime.repository).preview(
+            run_id=run_id, branch_id=branch_id, request=payload
+        )
+    except (KeyError, ValueError) as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={"code": "calendar_initial_health_conflict", "message": str(exc)},
+        ) from exc
+
+
+@router.post("/player-health/calendar-initial", status_code=201)
+def confirm_calendar_initial_health(
+    run_id: str,
+    branch_id: str,
+    payload: CalendarInitialHealthConfirmation,
+    runtime: ApiRuntime = Depends(get_runtime),
+):
+    try:
+        return CalendarInitialHealthService(runtime.repository).confirm(
+            run_id=run_id, branch_id=branch_id, confirmation=payload
+        )
+    except (KeyError, ValueError) as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={"code": "calendar_initial_health_conflict", "message": str(exc)},
         ) from exc

@@ -8,6 +8,7 @@ import {validateCalendarPopulation,validateCalendarPopulationReview,validateCale
 import type {CalendarPoolPreview} from '../api/calendarInitialPool'
 import type {RunCalendarMetadata} from '../api/runCalendarCreation'
 import {formatApiError} from '../utils/apiErrors'
+import {RunCalendarInitialHealthControls} from './RunCalendarInitialHealthControls'
 import {acknowledgeSavedRunForm} from './RunNavigationSafeguard'
 
 export function RunCalendarPopulationControls({runId,branchId,head,clock,packageFingerprint,pool,locale,onInstalled}: {
@@ -103,6 +104,10 @@ export function RunCalendarPopulationControls({runId,branchId,head,clock,package
         <button disabled={!saveReady||!saveApproved} onClick={()=>saving.mutate()}>{cs?'Uložit hráče':'Save players'}</button>
       </>}
       {proofMatches && proof && !proof.has_unsaved_changes && <p role="status">{cs?'Populace je uložená.':'Population is saved.'}</p>}
+      {proof && proof.run_id===runId && proof.branch_id===branchId && proof.saved_head_revision_id===head
+        && proof.initial_world_fingerprint===world.fingerprint && !proof.has_unsaved_changes &&
+        <RunCalendarInitialHealthControls key={head+world.fingerprint} runId={runId} branchId={branchId} head={head}
+          clock={clock} population={world.fingerprint} playerIds={world.state.players.map(p=>p.player_id).sort()} locale={locale}/>}
       <p><Link to={'/admin/runs/'+encodeURIComponent(runId)+'/players'}>{cs?'Otevřít seznam hráčů':'Open player list'} →</Link></p>
     </> : <>
       {pool && <button disabled={!canReview} onClick={()=>{setReview(null);setApproved(false);reviewing.mutate()}}>

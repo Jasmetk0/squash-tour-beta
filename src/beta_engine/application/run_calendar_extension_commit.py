@@ -70,7 +70,11 @@ def _capture_live_content(session: Session, *, payload: dict, run_id: str, branc
     # an independent incomplete list of component fingerprints.
     from beta_engine.infrastructure.db import repositories as storage
 
-    copy = deepcopy(payload)
+    # Capture into a genuinely empty content container. Starting with
+    # deepcopy(saved_payload) would leave *deleted* live components present
+    # in the snapshot when their capture adapter returns without a write.
+    # A formerly Saved component missing from live state must block Save.
+    copy = {"content": {}}
     for capture in (
         storage.capture_saved_ranking_component,
         storage.capture_saved_initial_world,

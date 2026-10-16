@@ -287,6 +287,78 @@ def main() -> None:
             page.get_by_role("textbox", name="Player country").fill("CZE")
             evidence["canonical_saved_players_empty_and_shared_fork_fail_closed"] = True
             assert page.locator(".app-shell--admin").get_attribute("data-run-form-edited") is None
+            # V83: real browser review -> explicit consent -> all-Branch
+            # atomic Save on the *same* W52 Run with 1,000 saved players
+            # and preserved Health. These remain original opening-week facts.
+            old_health_revision_url = (args.api_url + "/run-containers/" + custom_id
+                + "/branches/" + preview_branch["branch_id"] + "/saved-revisions/"
+                + edited_revision["revision_id"])
+            old_health_snapshot = page.request.get(old_health_revision_url).json()
+            assert old_health_snapshot["content_hash"] == edited_revision["content_hash"]
+            page.goto(base + "/admin/runs/" + custom_id)
+            expect(page.get_by_role("heading", name="Extend Run horizon", exact=True)).to_be_visible()
+            assert page.get_by_role("button", name="Confirm & Save entire Run").count() == 0
+            page.get_by_label("New total season count", exact=True).fill("5")
+            with page.expect_response(lambda response: response.request.method == "GET"
+                                      and "/calendar/extension-review?" in response.url) as horizon_review_response:
+                page.get_by_role("button", name="Review all Branches", exact=True).click()
+            assert horizon_review_response.value.status == 200, horizon_review_response.value.text()
+            horizon_review = horizon_review_response.value.json()
+            assert horizon_review["can_save"], horizon_review
+            assert horizon_review["branch_count"] == len(custom_branches) == 1
+            assert horizon_review["original_calendar"] == expected_clock
+            assert horizon_review["proposed_calendar"]["season_count"] == 5
+            assert horizon_review["added_weeks"] == 104
+            save_extension = page.get_by_role("button", name="Confirm & Save entire Run", exact=True)
+            expect(save_extension).to_be_disabled()
+            page.get_by_role("checkbox", name="I confirm extension across every listed Branch and creation of new Saved Revisions.").check()
+            with page.expect_response(lambda response: response.request.method == "POST"
+                                      and response.url.endswith("/calendar/extension-save")) as horizon_saved:
+                save_extension.click()
+            assert horizon_saved.value.status == 200, horizon_saved.value.text()
+            horizon_receipt = horizon_saved.value.json()
+            assert horizon_receipt["saved"] and not horizon_receipt["simulation_started"]
+            assert horizon_receipt["branch_count"] == 1
+            assert horizon_receipt["previous_calendar"] == expected_clock
+            assert horizon_receipt["current_calendar"]["season_count"] == 5
+            new_head = horizon_receipt["branches"][0]
+            assert new_head["previous_saved_head_revision_id"] == edited_revision["revision_id"]
+            expect(page.get_by_text("Run horizon saved successfully", exact=True)).to_be_visible()
+            assert page.request.get(old_health_revision_url).json() == old_health_snapshot
+            new_snapshot = page.request.get(
+                args.api_url + "/run-containers/" + custom_id + "/branches/"
+                + preview_branch["branch_id"] + "/saved-revisions/"
+                + new_head["saved_revision_id"]
+            ).json()
+            assert new_snapshot["payload"]["run"]["run_calendar"] == horizon_receipt["current_calendar"]
+            assert new_snapshot["payload"]["run"]["run_calendar_content_origin"] == expected_clock
+            assert new_snapshot["payload"]["content"]["initial_world"] == old_health_snapshot["payload"]["content"]["initial_world"]
+            assert new_snapshot["payload"]["content"]["player_health_state"] == edited_component
+            assert new_snapshot["payload"]["content"]["player_lifecycle"] == old_health_snapshot["payload"]["content"]["player_lifecycle"]
+            # Run metadata and old population stay coherent over restart/reload.
+            page.get_by_role("button", name="Reload saved Run", exact=True).click()
+            expect(page.locator(".run-home-progress__track").nth(0).locator("span")).to_have_count(5)
+            expect(page.locator(".run-home-progress__track").nth(1).locator("span")).to_have_count(52)
+            assert page.request.get(health_url).json()["player"]["records"] == [preview_record]
+            page.get_by_role("combobox", name="Language / Jazyk").select_option("cs")
+            expect(page.get_by_role("heading", name="Prodloužení horizontu Runu", exact=True)).to_be_visible()
+            expect(page.get_by_role("button", name="Zkontrolovat všechny Branches", exact=True)).to_be_visible()
+            page.screenshot(path=str(artifacts / "15-custom-calendar-horizon-extended.png"), full_page=True)
+            page.get_by_role("combobox", name="Language / Jazyk").select_option("en")
+            evidence["custom_calendar_horizon_extension"] = {
+                "reviewed_all_branches": True,
+                "explicit_confirm_and_save": True,
+                "added_weeks": 104,
+                "preserved_initial_population": 1000,
+                "old_saved_revision_byte_identical": True,
+                "old_health_records_preserved": True,
+                "original_calendar_provenance": expected_clock,
+                "new_saved_head": new_head["saved_revision_id"],
+                "reload_run_seasons": 5,
+                "cs_en_admin_flow": True,
+                "simulation_started": False,
+            }
+
             page.get_by_role("link", name="Squash Engine global Home").click()
             expect(page.get_by_role("heading", name="Squash Engine Home")).to_be_visible()
             assert not dialogs, "Read-only Run filters must not prompt on clean exit"

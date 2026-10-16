@@ -209,4 +209,13 @@ class RunCalendar:
             raise ValueError("legacy calendar extension requires explicit migration")
         if type(season_count) is not int or season_count <= self.season_count:
             raise ValueError("extended season_count must exceed current horizon")
+        # Persisted timeline columns use signed 32-bit year/count bounds.
+        # Browser clients also require exact integer week ordinals. Apply
+        # creation's bounds before any application-layer extension write.
+        if season_count > 2**31 - 1:
+            raise ValueError("extended season_count exceeds the supported storage range")
+        if self.start_year + season_count - 1 > 2**31 - 1:
+            raise ValueError("extended last season exceeds the supported storage range")
+        if season_count * self.weeks_per_year > 2**53 - 1:
+            raise ValueError("extended Run horizon exceeds the exact JSON week range")
         return replace(self, season_count=season_count)

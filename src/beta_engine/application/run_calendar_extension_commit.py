@@ -350,6 +350,18 @@ def save_run_calendar_extension(
                 viewer_branch_id=run.official_branch_id,
             )
             payload["run"]["run_calendar"] = proposed
+            # Preserve the original population clock as explicit provenance,
+            # not as a claim that existing players have been regenerated.
+            old_run_snapshot = old.payload["run"]
+            previous_population_basis = old_run_snapshot.get(
+                "run_calendar_content_origin", old_run_snapshot.get("run_calendar")
+            )
+            initial_world = old.payload.get("content", {}).get("initial_world")
+            if (
+                isinstance(initial_world, dict)
+                and initial_world.get("state", {}).get("schema_version") == "initial_world_state.v2"
+            ):
+                payload["run"]["run_calendar_content_origin"] = previous_population_basis
             summary = {
                 "kind": EXTENSION_KIND,
                 "summary": "Explicitly saved Run horizon extension across all Branches",

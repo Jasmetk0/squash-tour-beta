@@ -133,3 +133,86 @@ def test_reused_command_id_different_intent_rejected(tmp_path):
         assert repo.get_run_container(run_id="run-1").timeline_end_season == 2050
     finally:
         engine.dispose()
+
+
+
+def test_new_branch_between_review_and_commit_is_conflict(tmp_path):
+    engine, factory, repo = _setup(tmp_path)
+    try:
+        review = _review(factory, repo, 51)
+        assert review["can_save"]
+        RunBranchCreationService(repo, lambda kind: {
+            "branch": "late-branch", "working-draft": "late-draft",
+        }[kind]).create_from_saved_revision(
+            run_id="run-1", source_branch_id="branch-1",
+            source_saved_revision_id="revision-1", display_name="Late branch",
+        )
+        with pytest.raises(ValueError, match="changed since review"):
+            _save(repo, review)
+        assert repo.get_run_container(run_id="run-1").timeline_end_season == 2049
+        assert repo.get_branch_revision_state(branch_id="late-branch").saved_revision.revision_id == "revision-1"
+    finally:
+        engine.dispose()
+
+
+def test_injected_second_branch_failure_rolls_back_everything(tmp_path, monkeypatch):
+    from beta_engine.application import run_calendar_extension_commit as subject
+
+    engine, factory, repo = _setup(tmp_path)
+    try:
+        RunBranchCreationService(repo, lambda kind: {
+            "branch": "branch-2", "working-draft": "draft-2",
+        }[kind]).create_from_saved_revision(
+            run_id="run-1", source_branch_id="branch-1",
+            source_saved_revision_id="revision-1", display_name="Alternative",
+        )
+        review = _review(factory, repo, 51)
+        assert review["can_save"], review["blockers"]
+        original = subject.saved_revision_content_hash
+        calls = []
+
+        def fail_second(**kwargs):
+            calls.append(kwargs["branch_id"])
+            if len(calls) == 2:
+                raise RuntimeError("injected failure during second Branch")
+            return original(**kwargs)
+
+        with monkeypatch.context() as patch:
+            patch.setattr(subject, "saved_revision_content_hash", fail_second)
+            with pytest.raises(RuntimeError, match="second Branch"):
+                _save(repo, review)
+        assert calls == ["branch-1", "branch-2"]
+        for branch_id in ("branch-1", "branch-2"):
+            state = repo.get_branch_revision_state(branch_id=branch_id)
+            assert state.saved_revision.revision_id == "revision-1"
+            assert state.working_draft.status == "clean"
+        with factory() as session:
+            assert session.query(RunCalendarExtensionReceiptModel).count() == 0
+        assert repo.get_run_container(run_id="run-1").timeline_end_season == 2049
+        assert _save(repo, review)["saved"]
+    finally:
+        engine.dispose()
+
+
+def test_w80_completed_run_preserved_and_not_started(tmp_path):
+    engine, factory, repo = _setup(tmp_path)
+    try:
+        _signed_test_calendar(factory, RunCalendar(80, 40, 2040, 2))
+        with factory.begin() as session:
+            run = session.get(__import__(
+                "beta_engine.infrastructure.db.models", fromlist=["RunContainerModel"]
+            ).RunContainerModel, "run-1")
+            run.status = "completed"
+        review = _review(factory, repo, 4)
+        assert review["can_save"], review["blockers"]
+        receipt = _save(repo, review)
+        assert receipt["current_calendar"]["weeks_per_year"] == 80
+        assert receipt["current_calendar"]["season_start_year_week"] == 40
+        assert receipt["simulation_started"] is False
+        assert repo.get_run_container(run_id="run-1").status == "completed"
+        with factory() as session:
+            assert resolve_saved_run_calendar(
+                session, run_id="run-1", branch_id="branch-1"
+            ) == RunCalendar(80, 40, 2040, 4)
+    finally:
+        engine.dispose()

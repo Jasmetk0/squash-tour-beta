@@ -53,6 +53,7 @@ from beta_engine.application.run_branch_creation_service import (
 )
 from beta_engine.application.run_calendar_target_preview import (
     preview_saved_run_calendar_target,
+    preview_saved_run_calendar_extension,
     preview_run_calendar_configuration,
 )
 from beta_engine.application.run_container_creation_service import (
@@ -471,6 +472,28 @@ def preview_run_calendar_creation(payload: RunCalendarCreationRequest):
     """Pure calendar preview: no Run, draft, players or task is created."""
 
     return preview_run_calendar_configuration(payload.to_calendar())
+
+
+@router.get("/{run_id}/branches/{branch_id}/calendar/extension-preview")
+def preview_run_calendar_extension(
+    run_id: str,
+    branch_id: str,
+    new_season_count: int = Query(ge=1, le=2**31 - 1),
+    runtime: ApiRuntime = Depends(get_runtime),
+):
+    """Read-only Saved calendar extension; does not approve or install it."""
+
+    try:
+        with runtime.repository._session_factory() as session:
+            return preview_saved_run_calendar_extension(
+                session, run_id=run_id, branch_id=branch_id,
+                new_season_count=new_season_count,
+            )
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={"code": "calendar_extension_preview_conflict", "message": str(exc)},
+        ) from exc
 
 
 @router.get("", response_model=RunContainerListResponse)

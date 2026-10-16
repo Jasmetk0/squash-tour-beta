@@ -256,3 +256,27 @@ def test_historical_restore_and_fork_keep_old_revision_immutable(tmp_path):
         assert repo.get_branch_saved_revision(revision_id="revision-1") == historical
     finally:
         engine.dispose()
+
+
+
+def test_pending_legacy_authoritative_command_blocks_even_without_server_task(tmp_path):
+    from beta_engine.infrastructure.db.models import AuthoritativeSimulationCommandModel
+
+    engine, factory, repo = _setup(tmp_path)
+    try:
+        with factory.begin() as session:
+            session.add(AuthoritativeSimulationCommandModel(
+                run_id="run-1", branch_id="branch-1",
+                command_id="legacy-parent", request_fingerprint="a" * 64,
+                status="pending", result_json='{"control_state":"paused"}',
+            ))
+        review = _review(factory, repo, 51)
+        assert review["can_save"] is False
+        assert "pending_authoritative_simulation_command" in review["blockers"]
+        assert review["pending_authoritative_command_count"] == 1
+        with pytest.raises(ValueError, match="blocked"):
+            _save(repo, review)
+        assert repo.get_branch_revision_state(branch_id="branch-1").saved_revision.revision_id == "revision-1"
+    finally:
+        engine.dispose()
+

@@ -92,7 +92,7 @@ def test_impossible_country_region_diagnosed_before_any_rng(country, region, fra
         world_package_id="saved-earth", season="2000/2001",
         seed=42, target_pool_size=30, country_code=country, region=region,
     )
-    service = RunWorldInitialPoolPreviewService(FakePackages(), FakeAdapter())
+    service = RunWorldInitialPoolPreviewService(FakePackages(), FakeAdapter(), calendar_guard=lambda *_: None)
     with pytest.raises(ValueError, match=fragment):
         service.preview(run_id="run-a", branch_id="branch-a", request=request)
 
@@ -109,7 +109,7 @@ def test_compatible_conditions_reach_the_existing_production_generator(monkeypat
             raise RuntimeError("production generator invoked")
 
     monkeypatch.setattr(preview_module, "InitialPlayerPoolGenerator", SpyProductionGenerator)
-    service = RunWorldInitialPoolPreviewService(FakePackages(), FakeAdapter())
+    service = RunWorldInitialPoolPreviewService(FakePackages(), FakeAdapter(), calendar_guard=lambda *_: None)
     request = RunWorldInitialPoolPreviewRequest(
         world_package_id="saved-earth", season="2000/2001",
         seed=4201, target_pool_size=30, country_code="CZE",
@@ -143,7 +143,7 @@ def test_typed_region_filters_production_candidates(monkeypatch, kind, label, ex
         **{kind: label},
     )
     with pytest.raises(RuntimeError, match="scoped production generator"):
-        RunWorldInitialPoolPreviewService(FakePackages(), FakeAdapter()).preview(
+        RunWorldInitialPoolPreviewService(FakePackages(), FakeAdapter(), calendar_guard=lambda *_: None).preview(
             run_id="run-a", branch_id="branch-a", request=request,
         )
     assert seen == [expected]
@@ -165,7 +165,7 @@ def test_same_label_geographic_travel_collision_and_legacy_replay(monkeypatch):
             seen.append([country.code for country in kwargs["countries"]])
             raise RuntimeError("scoped production generator")
     monkeypatch.setattr(preview_module, "InitialPlayerPoolGenerator", Spy)
-    service = RunWorldInitialPoolPreviewService(FakePackages(), CollisionAdapter())
+    service = RunWorldInitialPoolPreviewService(FakePackages(), CollisionAdapter(), calendar_guard=lambda *_: None)
     for kind, wanted in (("geographic_region", ["USA"]), ("travel_region", ["CZE"])):
         request = RunWorldInitialPoolPreviewRequest(
             world_package_id="saved-earth", seed=2, target_pool_size=2,
@@ -197,9 +197,13 @@ def test_legacy_request_fingerprint_excludes_new_unspecified_fields():
         world_package_id="saved-earth", season="2000/2001",
         seed=17, target_pool_size=2, region="SHARED",
     )
-    legacy = request.model_dump(mode="json")
-    for optional in ("geographic_region", "travel_region"):
-        legacy.pop(optional, None)
+    # Fixed pre-extension contract, not a projection of the implementation.
+    legacy = {
+        "world_package_id": "saved-earth", "season": "2000/2001", "seed": 17,
+        "target_pool_size": 2, "country_code": None, "region": "SHARED",
+        "min_age": None, "max_age": None, "keep_from_seed": None,
+        "keep_from_preview_fingerprint": None, "keep_player_ids": [],
+    }
     assert request.fingerprint_payload() == legacy
     command = RunWorldInitialWorldAdoptionRequest(
         command_id="keep-legacy", generation=request,

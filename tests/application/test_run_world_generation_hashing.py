@@ -7,6 +7,7 @@ import pytest
 
 from beta_engine.application.initial_world import InitialWorldState
 from beta_engine.application.run_package_service import RunPackageService
+from beta_engine.application.run_world_generation_calendar_guard import RunWorldGenerationCalendarGuard
 from beta_engine.application.run_world_initial_pool_preview_service import (
     RunWorldInitialPoolPreview,
     RunWorldInitialPoolPreviewRequest,
@@ -36,7 +37,7 @@ def test_thousand_player_initial_world_and_lifecycle_hash_shared_inputs_once():
     packages = RunPackageService(repository)
     _confirm(packages, adapter.build_document(OFFICIAL_FAX_WORLD_ID),
              command="apply", draft=0, state=None)
-    service = RunWorldInitialWorldService(RunWorldInitialPoolPreviewService(packages, adapter))
+    service = RunWorldInitialWorldService(RunWorldInitialPoolPreviewService(packages, adapter, RunWorldGenerationCalendarGuard(repository)))
     request = RunWorldInitialWorldAdoptionRequest(
         command_id="generate", audit_label="Hashing regression",
         audit_reason="Verify real thousand-player generation without repeated shared hashing",

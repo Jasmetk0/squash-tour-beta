@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Literal
 
@@ -344,6 +345,8 @@ class RunWorldInitialPoolPreview(BaseModel):
 class RunWorldInitialPoolPreviewService:
     package_service: RunPackageService
     world_adapter: WorldPackageRunAdapter
+    # Required dependency: no implicit unguarded fallback in new Run callers.
+    calendar_guard: Callable[[str, str], None]
 
     def preview(
         self,
@@ -353,6 +356,10 @@ class RunWorldInitialPoolPreviewService:
         request: RunWorldInitialPoolPreviewRequest,
         _preserved_players: list[InitialPoolGeneratedPlayer] | None = None,
     ) -> RunWorldInitialPoolPreview:
+        # All entrypoints (raw preview, Keep/edit sessions, adoption preflight
+        # and new saved proposals) use this boundary. A hidden Home link alone
+        # cannot stop a direct generator URL from showing misdated players.
+        self.calendar_guard(run_id, branch_id)
         if request.session_schema_version is not None:
             if _preserved_players is not None:
                 raise ValueError("Cannot inject Keep players into a versioned session")

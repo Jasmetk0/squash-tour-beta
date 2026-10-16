@@ -121,9 +121,12 @@ def get_calendar_package_run_adapter(request: Request) -> CalendarPackageRunAdap
 def get_run_world_initial_pool_preview_service(
     request: Request,
 ) -> RunWorldInitialPoolPreviewService:
+    from beta_engine.application.run_world_generation_calendar_guard import RunWorldGenerationCalendarGuard
+
     return RunWorldInitialPoolPreviewService(
         package_service=get_run_package_service(request),
         world_adapter=get_world_package_run_adapter(request),
+        calendar_guard=RunWorldGenerationCalendarGuard(get_runtime(request).repository),
     )
 
 

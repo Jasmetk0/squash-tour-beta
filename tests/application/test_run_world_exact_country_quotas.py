@@ -37,7 +37,7 @@ class ThreeCountryAdapter:
 
 
 def _preview(request):
-    return RunWorldInitialPoolPreviewService(Packages(), ThreeCountryAdapter()).preview(
+    return RunWorldInitialPoolPreviewService(Packages(), ThreeCountryAdapter(), calendar_guard=lambda *_: None).preview(
         run_id="run-one", branch_id="branch-one", request=request,
     )
 
@@ -98,7 +98,7 @@ def test_keep_reroll_preserves_identity_and_exact_country_quota():
     assert not any(p.locked for p in changed.result.players)
 
     adopted = RunWorldInitialWorldService(
-        RunWorldInitialPoolPreviewService(Packages(), ThreeCountryAdapter())
+        RunWorldInitialPoolPreviewService(Packages(), ThreeCountryAdapter(), calendar_guard=lambda *_: None)
     ).preview(run_id="run-one", branch_id="branch-one",
               request=RunWorldInitialWorldAdoptionRequest(
                   command_id="country-quota-reviewed-adopt", generation=changed.request,

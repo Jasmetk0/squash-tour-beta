@@ -10,7 +10,6 @@ from __future__ import annotations
 import hashlib
 import json
 import time
-from copy import deepcopy
 from uuid import NAMESPACE_URL, uuid5
 
 from sqlalchemy import select, text

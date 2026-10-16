@@ -11,20 +11,24 @@ first Saved Revision; hash-verified selected-Branch calendar reads; read-only
 calendar target preview for W52/W61; fail-closed guards on still-legacy
 Week/Season/Full Simulation execution. Other clocks are not sporting-ready.
 
-**Current PR candidate:** usable CS/EN optional calendar/range selection at empty
-Run creation, pure first/last-week server preview, exact reviewed request and
-stored-clock validation. Home reflects the chosen W/horizon. Real HTTP/SQLite
-acceptance covers W52/O1 and O35 through creation, Save, fork and restart.
-New clock creation also fences InitialWorld/ranking/standalone/match writes
-that still require legacy FAX. Default FAX adoption/replay remains supported;
-a pre-existing missing standalone Health bootstrap found by real acceptance is
-fixed. See [creation contract](docs/RUN_CALENDAR_CREATION_V82.md).
+**Open, verified PRs (not merged):** #1496 calendar creation/UI/Home and guarded
+sporting writes, final `6c8b2ed48e01ff927dca8995c84ac3308c90841d`, all 12 workflows
+green; #1497 explicit age/birth year units, final
+`76c3177b05997fce3332298bd0f7f63c706b04fa`, Fast CI green. Their combined local
+tree passed 135 focused backend tests. The 1,000-player browser Save race was
+traced to navigating before the Save response, fixed by awaiting the actual
+committed receipt, and then passed without weakening Saved-HEAD assertions.
 
-**Next:** calendar-aware authoritative/ranking/age/development integration and
-explicit extension/import workflows. Do not remove writer gates or claim a
-working W52 simulation from successful creation/planning. The candidate includes
-a real Chromium creation scenario in the existing Shell workflow; final-head
-checks must be green before it is offered for merge.
+**Current PR candidate (stacked on #1496):** generation preflight at the shared
+Run-owned preview service, so direct preview/Keep/edit/proposal routes cannot
+sample players under an unsupported saved clock. Archive reads remain exact,
+non-regenerating reads. See [generation gate](docs/PLAYER_GENERATION_CALENDAR_GATE_V82.md).
+
+**Next:** propagate the verified clock through actual generation/lifecycle,
+ranking/annual-development state and authoritative transition/target callers.
+The age helpers alone do not finish that migration. Keep unsupported clocks
+honestly planning-only until actual execution proves each boundary, then add
+explicit prestart edits, horizon extension and import compatibility workflows.
 
 Authority and long-term task:
 [Master](SQUASH_ENGINE_MASTER_VISION.md) §§3.2/6.1/6.9–6.12/31.37;

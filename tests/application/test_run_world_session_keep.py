@@ -38,7 +38,7 @@ class Adapter:
 
 
 def service():
-    return RunWorldInitialPoolPreviewService(Packages(), Adapter())
+    return RunWorldInitialPoolPreviewService(Packages(), Adapter(), calendar_guard=lambda *_: None)
 
 
 def source_request():
@@ -339,11 +339,10 @@ def test_unmodified_one_pass_fingerprint_is_backwards_compatible():
     origin = preview(source_request())
     first_req = keep_request(origin, [origin.result.players[0].player_id])
     assert "keep_history" not in first_req.fingerprint_payload()
-    assert first_req.fingerprint_payload() == {
-        key: value for key, value in first_req.model_dump(mode="json").items()
-        if key not in ("keep_history", "field_locks", "geographic_region", "travel_region", "country_quotas")
-    }
-    assert preview(first_req).preview_fingerprint == preview(first_req).preview_fingerprint
+    assert set(first_req.fingerprint_payload()) == set(origin.request.fingerprint_payload())
+    # Captured from the unchanged parent tree before adding calendar preflight.
+    assert origin.preview_fingerprint == "cdeed76ab1bf79c264547d98d0b54ffe6ea39a54e9986259d220a77d7616163f"
+    assert preview(first_req).preview_fingerprint == "d2f9ba6f76208b370cbcad3ef125f0bb2d0cbf1553524393a5a28677ab439cda"
 
 
 def test_repeatable_keep_preserves_edited_profile_and_source_fingerprint():

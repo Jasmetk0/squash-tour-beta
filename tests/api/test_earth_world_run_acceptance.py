@@ -22,6 +22,7 @@ from beta_engine.application.run_branch_creation_service import RunBranchCreatio
 from beta_engine.application.run_container_creation_service import RunContainerCreationService
 from beta_engine.application.run_package_service import RunPackageService
 from beta_engine.application.run_working_draft_service import RunWorkingDraftService
+from beta_engine.application.run_world_generation_calendar_guard import RunWorldGenerationCalendarGuard
 from beta_engine.application.run_world_initial_pool_preview_service import (
     RunWorldInitialPoolPreviewRequest,
     RunWorldInitialPoolPreviewService,
@@ -159,6 +160,7 @@ def _materialize_product_run(
     pool_service = RunWorldInitialPoolPreviewService(
         package_service=package_service,
         world_adapter=adapter,
+        calendar_guard=RunWorldGenerationCalendarGuard(package_service.repository),
     )
     initial_world_service = RunWorldInitialWorldService(
         preview_service=pool_service

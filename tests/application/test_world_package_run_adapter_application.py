@@ -8,6 +8,7 @@ import pytest
 from beta_engine.application.run_container_creation_service import RunContainerCreationService
 from beta_engine.application.run_package_service import RunPackageService
 from beta_engine.application.run_working_draft_service import RunWorkingDraftService
+from beta_engine.application.run_world_generation_calendar_guard import RunWorldGenerationCalendarGuard
 from beta_engine.application.run_world_initial_pool_preview_service import (
     RunWorldInitialPoolPreviewRequest,
     RunWorldInitialPoolPreviewService,
@@ -239,6 +240,7 @@ def test_run_owned_generation_config_drives_initial_pool_preview_without_live_so
     service = RunWorldInitialPoolPreviewService(
         package_service=package_service,
         world_adapter=adapter,
+        calendar_guard=RunWorldGenerationCalendarGuard(package_service.repository),
     )
     first = service.preview(
         run_id="run", branch_id="branch", request=request
@@ -293,6 +295,7 @@ def test_run_owned_generation_config_drives_initial_pool_preview_without_live_so
     reopened_service = RunWorldInitialPoolPreviewService(
         package_service=RunPackageService(_repo(url)),
         world_adapter=adapter,
+        calendar_guard=RunWorldGenerationCalendarGuard(_repo(url)),
     )
     reopened = reopened_service.preview(
         run_id="run", branch_id="branch", request=request

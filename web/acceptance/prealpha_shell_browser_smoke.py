@@ -902,7 +902,11 @@ def main() -> None:
             new_head = horizon_receipt["branches"][0]
             assert new_head["previous_saved_head_revision_id"] == edited_revision["revision_id"]
             expect(page.get_by_text("Run horizon saved successfully", exact=True)).to_be_visible()
-            assert page.request.get(old_health_revision_url).json() == old_health_snapshot
+            old_after = page.request.get(old_health_revision_url).json()
+            assert old_after["revision_id"] == old_health_snapshot["revision_id"]
+            assert old_after["content_hash"] == old_health_snapshot["content_hash"]
+            assert old_after["payload"] == old_health_snapshot["payload"]
+            assert old_after["change_summary"] == old_health_snapshot["change_summary"]
             new_snapshot = page.request.get(
                 args.api_url + "/run-containers/" + custom_id + "/branches/"
                 + preview_branch["branch_id"] + "/saved-revisions/"

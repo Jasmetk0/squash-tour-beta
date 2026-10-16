@@ -20,6 +20,9 @@ vi.mock('../components/RunInitialWorldSetupPanel',()=>({
   RunInitialWorldSetupPanel:({run,branch}:{run:{run_id:string},branch:{branch_id:string}})=>
     <output data-testid="production-generator">{run.run_id}/{branch.branch_id}</output>
 }))
+vi.mock('../components/RunCalendarPlayerPreviewPanel',()=>({
+  RunCalendarPlayerPreviewPanel:()=> <output data-testid="calendar-preview">Calendar preview only</output>
+}))
 function mount():void {
   render(<QueryClientProvider client={new QueryClient({defaultOptions:{queries:{retry:false}}})}>
     <MemoryRouter initialEntries={['/admin/runs/run-a/players/generate']}>
@@ -52,5 +55,19 @@ describe('single Run Players Generate entry',()=>{
     mount()
     expect(await screen.findByRole('alert')).toHaveTextContent('Select a valid Active Admin Branch')
     expect(screen.queryByTestId('production-generator')).not.toBeInTheDocument()
+  })
+  it('routes custom clocks to v2 preview without v1 adoption controls',async()=>{
+    api.getRunContainer.mockResolvedValue({run_id:'run-a', metadata_json:{run_calendar:{
+      schema_version:'run_calendar.v1',weeks_per_year:52,season_start_year_week:35,start_year:2030,season_count:3}}})
+    mount()
+    expect(await screen.findByTestId('calendar-preview')).toBeInTheDocument()
+    expect(screen.queryByTestId('production-generator')).not.toBeInTheDocument()
+  })
+  it('fails closed for an explicit malformed clock',async()=>{
+    api.getRunContainer.mockResolvedValue({run_id:'run-a', metadata_json:{run_calendar:null}})
+    mount()
+    expect(await screen.findByText('Run calendar is invalid.')).toBeInTheDocument()
+    expect(screen.queryByTestId('production-generator')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('calendar-preview')).not.toBeInTheDocument()
   })
 })

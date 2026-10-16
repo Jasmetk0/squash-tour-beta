@@ -19,6 +19,9 @@ from beta_engine.application.season_player_bootstrap_service import (
     InitialPoolSeasonBootstrapService,
 )
 from beta_engine.application.run_package_service import RunPackageService
+from beta_engine.application.run_calendar_initial_pool_preview_service import (
+    RunCalendarInitialPoolPreviewRequest, RunCalendarInitialPoolPreviewService,
+)
 from beta_engine.application.run_world_initial_pool_preview_service import (
     RunWorldInitialPoolPreviewRequest,
     RunWorldInitialPoolPreviewService,
@@ -974,6 +977,25 @@ def save_initial_world(
             status_code=409,
             detail={"code": "initial_world_save_conflict", "message": str(exc)},
         ) from exc
+
+
+@router.post(
+    "/runs/{run_id}/branches/{branch_id}/initial-pool/world-package/calendar-preview"
+)
+def preview_run_calendar_initial_pool(
+    run_id: str, branch_id: str, payload: RunCalendarInitialPoolPreviewRequest,
+    runtime: ApiRuntime = Depends(get_runtime),
+    adapter: WorldPackageRunAdapter = Depends(get_world_package_run_adapter),
+):
+    try:
+        preview = RunCalendarInitialPoolPreviewService(runtime.repository, adapter).preview(
+            run_id=run_id, branch_id=branch_id, request=payload,
+        )
+        return {**preview.model_dump(mode="json"), "preview_fingerprint": preview.preview_fingerprint}
+    except (KeyError, ValueError) as exc:
+        raise HTTPException(status_code=409, detail={
+            "code": "run_calendar_initial_pool_preview_unavailable", "message": str(exc),
+        }) from exc
 
 
 @router.post(

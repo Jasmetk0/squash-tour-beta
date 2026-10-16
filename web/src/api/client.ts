@@ -369,6 +369,12 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return JSON.parse(text) as T
 }
 
+export function previewRunCalendarPlayerPool(runId: string, branchId: string,
+  input: import('./calendarInitialPool').CalendarPoolInput): Promise<unknown> {
+  return request(`/admin/players/runs/${encodeURIComponent(runId)}/branches/${encodeURIComponent(branchId)}/initial-pool/world-package/calendar-preview`,
+    {method: 'POST', body: JSON.stringify(input)})
+}
+
 
 export function getInitialPlayerPool(season = '2000/2001'): Promise<InitialPoolResponse> {
   return request(`/admin/players/initial-pool?season=${encodeURIComponent(season)}`)

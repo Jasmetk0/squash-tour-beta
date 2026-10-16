@@ -1,34 +1,32 @@
 # Current calendar implementation — Master v82
 
-Verified base `buuk`: `85966e03cf382d34e3375100809d6e1d924fc4df`, merged #1495
-(15 October 2026). Review of #1490–1495 found all six merged and all available
-final-head workflows successful. #1489 Master v82 is merged. The former #1488
-baseline remains historical evidence, not the current implementation head.
+Verified base `buuk`: `643ee60868ee57cecfdc560e9079ac68f2bdda00`, merged #1498
+(16 October 2026). Fresh review confirms #1496, #1497 and #1498 are merged;
+no other PR was open at task start. Their final checks were green before handoff.
+Master v82 remains the canon; this task changes implementation, not product scope.
 
-**Implemented on buuk:** A82-01 fresh-consent cancellation fix; pure versioned
-Run calendar W/offset/start/horizon; explicit default calendar in new Run and
-first Saved Revision; hash-verified selected-Branch calendar reads; read-only
-calendar target preview for W52/W61; fail-closed guards on still-legacy
-Week/Season/Full Simulation execution. Other clocks are not sporting-ready.
+**Implemented on buuk:** consent cancellation fix; versioned Run clock and exact
+conversion/target planning; optional CS/EN custom calendar creation with immutable
+first Save and correct Home timeline; hash-verified selected-Saved clock authority;
+explicit age/birth unit helpers; guards on still-legacy generation and sporting
+writers. Archive/proposal reads preserve original data. Custom clocks are not yet
+sporting-ready. #1496 also fixed real standalone Health bootstrap and an acceptance
+Save/navigation race without weakening Saved-HEAD checks.
 
-**Open, verified PRs (not merged):** #1496 calendar creation/UI/Home and guarded
-sporting writes, final `6c8b2ed48e01ff927dca8995c84ac3308c90841d`, all 12 workflows
-green; #1497 explicit age/birth year units, final
-`76c3177b05997fce3332298bd0f7f63c706b04fa`, Fast CI green. Their combined local
-tree passed 135 focused backend tests. The 1,000-player browser Save race was
-traced to navigating before the Save response, fixed by awaiting the actual
-committed receipt, and then passed without weakening Saved-HEAD assertions.
+**Current candidate:** calendar-aware initial-player preview through the real Run
+API and the existing Players → Generate page. New v2 identities bind the actual
+clock, correct birthdays/ages/population cohorts and source-year diagnostics;
+v1 fingerprints and adoption/replay paths remain unchanged. A custom-clock
+preview is read-only and cannot add players or run sport. Actual Earth-package
+1,000-player HTTP/SQLite tests and the extended existing Shell browser scenario
+own the relevant acceptance. See [contract and verification](docs/CALENDAR_PLAYER_PREVIEW_V82.md).
+This candidate is not included in the base above until the user merges it.
 
-**Current PR candidate (stacked on #1496):** generation preflight at the shared
-Run-owned preview service, so direct preview/Keep/edit/proposal routes cannot
-sample players under an unsupported saved clock. Archive reads remain exact,
-non-regenerating reads. See [generation gate](docs/PLAYER_GENERATION_CALENDAR_GATE_V82.md).
-
-**Next:** propagate the verified clock through actual generation/lifecycle,
-ranking/annual-development state and authoritative transition/target callers.
-The age helpers alone do not finish that migration. Keep unsupported clocks
-honestly planning-only until actual execution proves each boundary, then add
-explicit prestart edits, horizon extension and import compatibility workflows.
+**Next:** version actual InitialWorld/bootstrap/lifecycle and the Run-local time
+position contract before accepting v2 players into authoritative state. Then
+migrate annual sporting development, ranking validity and transitions/frozen
+Full Simulation goals. Existing guards stay until each writer is proven. Custom
+prestart edits, all-Branch horizon extension and import compatibility remain.
 
 Authority and long-term task:
 [Master](SQUASH_ENGINE_MASTER_VISION.md) §§3.2/6.1/6.9–6.12/31.37;

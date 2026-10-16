@@ -6,6 +6,8 @@ import { getRunContainer } from '../api/client'
 import { useAdminBranch } from '../admin/AdminBranchContext'
 import { useAdminTime } from '../admin/AdminTimeContext'
 import { RunInitialWorldSetupPanel } from '../components/RunInitialWorldSetupPanel'
+import { RunCalendarPlayerPreviewPanel } from '../components/RunCalendarPlayerPreviewPanel'
+import { runHomeClock } from './RunHomeProgress'
 import { useLanguage } from '../i18n/LanguageContext'
 import { formatApiError } from '../utils/apiErrors'
 
@@ -25,11 +27,16 @@ export function RunPlayerGeneratorPage(): JSX.Element {
   const branch = selectedBranch?.run_id === runId ? selectedBranch : null
   const present = time.mode === 'present' && !time.isLoading && !time.error
   const canUse = run && branch && present && !branchLoading && !branchError
+  const clock = run ? runHomeClock(run.metadata_json) : null
+  const legacySupported = clock?.weeks_per_year === 61 && clock.season_start_year_week === 37
+    && clock.start_year === 2000 && clock.season_count === 50
   return <section className="panel run-home">
     <div className="page-intro">
       <p className="eyebrow">PRODUCT RUN · PLAYERS · GENERATE</p>
       <h2>{cs ? 'Generovat hráče' : 'Generate players'}</h2>
-      <p className="subtitle">{cs
+      <p className="subtitle">{!legacySupported && clock ? (cs
+        ? 'Generování na časové ose tohoto Runu. Zatím pouze náhled bez přidání hráčů.'
+        : 'Generate on this Run’s calendar. Currently preview only, without adding players.') : cs
         ? 'Jediný produkční generátor: automaticky podle světa nebo se závaznou zemí, regionem a věkem, náhled, potvrzení a ruční Save.'
         : 'One production generator: World-default or hard country/region/age conditions, preview, explicit confirmation and manual Save.'}</p>
     </div>
@@ -45,7 +52,12 @@ export function RunPlayerGeneratorPage(): JSX.Element {
       : 'Historical checkpoints are read-only. Generate only from the selected Branch current saved context.'}</p>}
     {!branchLoading && !branch && <p role="alert">{cs
       ? 'Vyber platnou aktivní branch.' : 'Select a valid Active Admin Branch.'}</p>}
-    {canUse && <RunInitialWorldSetupPanel
+    {canUse && !clock && <p role="alert">{cs ? 'Kalendář Runu není platný.' : 'Run calendar is invalid.'}</p>}
+    {canUse && clock && !legacySupported && branch.saved_head_revision_id && <RunCalendarPlayerPreviewPanel
+      key={runId + ':' + branch.branch_id + ':' + branch.saved_head_revision_id}
+      runId={runId} branchId={branch.branch_id} head={branch.saved_head_revision_id}
+      clock={{...clock, schema_version: 'run_calendar.v1'}} locale={language}/>}
+    {canUse && legacySupported && <RunInitialWorldSetupPanel
       key={runId + ':' + branch.branch_id + ':' + branch.saved_head_revision_id}
       run={run} branch={branch} locale={language} />}
   </section>

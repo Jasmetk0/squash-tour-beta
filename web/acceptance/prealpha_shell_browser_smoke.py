@@ -662,12 +662,63 @@ def main() -> None:
             tracks = page.locator(".run-home-progress__track")
             expect(tracks.nth(0).locator("span")).to_have_count(3)
             expect(tracks.nth(1).locator("span")).to_have_count(52)
-            expect(page.get_by_text("Sporting setup is unavailable for this calendar", exact=False)).to_be_visible()
+            expect(page.get_by_text("calendar-aware player previews are available", exact=False)).to_be_visible()
             assert page.get_by_role("heading", name="Prepare initial ranking", exact=True).count() == 0
             page.screenshot(path=str(artifacts / "09-custom-calendar-reopened.png"), full_page=True)
             evidence["custom_calendar_creation"] = {"run_id": custom_id, "saved_calendar": expected_clock,
                 "preview_did_not_create_run": True, "edits_require_new_preview": True,
                 "saved_revision_verified": True, "sporting_execution_claimed": False}
+
+            # Copy a real World into this W52 Run using the existing reviewed
+            # copy/explicit Save flow. No generated player is adopted here.
+            page.get_by_role("combobox", name="Source kind").select_option("world")
+            page.get_by_role("combobox", name="World source").select_option("official_fax_world")
+            page.get_by_role("button", name="Preview copy", exact=True).click()
+            expect(page.get_by_role("heading", name="Review proposed world copy", exact=True)).to_be_visible()
+            page.get_by_label("Confirm source copy", exact=True).check()
+            page.get_by_role("button", name="Confirm copy to Working Draft", exact=True).click()
+            page.get_by_label("Confirm save revision", exact=True).check()
+            with page.expect_response(lambda response: response.request.method == "POST"
+                                      and response.url.endswith("/working-draft/save")) as world_saved:
+                page.get_by_role("button", name="Save copied packages", exact=True).click()
+            assert world_saved.value.status == 201, world_saved.value.text()
+            save_receipt = world_saved.value.json()
+            assert save_receipt["working_draft"]["status"] == "clean"
+            preview_branch = page.request.get(args.api_url + "/run-branches", params={"run_id": custom_id}).json()["run_branches"][0]
+            assert preview_branch["saved_head_revision_id"] == save_receipt["saved_revision"]["revision_id"]
+            saved_before_preview = page.request.get(args.api_url + "/run-containers/" + custom_id + "/branches/"
+                + preview_branch["branch_id"] + "/saved-revisions/" + preview_branch["saved_head_revision_id"]).json()
+            page.reload()
+            page.get_by_role("link", name="Generate players →", exact=True).click()
+            expect(page.get_by_role("heading", name="Generate players", exact=True)).to_be_visible()
+            page.get_by_label("Player count", exact=True).fill("1000")
+            assert page.locator(".app-shell--admin").get_attribute("data-run-form-edited") is None
+            with page.expect_response(lambda response: response.url.endswith("/calendar-preview")) as generated:
+                page.get_by_role("button", name="Generate preview", exact=True).click()
+            assert generated.value.status == 200, generated.value.text()
+            generated_data = generated.value.json()
+            assert generated_data["run_calendar"] == expected_clock
+            assert generated_data["adoption_supported"] is False
+            assert len(generated_data["result"]["players"]) == 1000
+            assert all(player["birth_year_week"] <= 52 and player["created_for_season"] == "2030/2031"
+                       for player in generated_data["result"]["players"])
+            expect(page.get_by_role("table")).to_be_visible()
+            expect(page.get_by_role("row")).to_have_count(51)
+            page.get_by_role("button", name="Next", exact=True).click()
+            expect(page.get_by_text("2 / 20", exact=True)).to_be_visible()
+            assert page.get_by_role("button", name="Adopt reviewed InitialWorld").count() == 0
+            page.screenshot(path=str(artifacts / "10-custom-calendar-player-preview.png"), full_page=True)
+            # The real browser preview leaves the Saved owner/hash/content intact.
+            saved_after_preview = page.request.get(args.api_url + "/run-containers/" + custom_id + "/branches/"
+                + preview_branch["branch_id"] + "/saved-revisions/" + preview_branch["saved_head_revision_id"]).json()
+            assert saved_after_preview == saved_before_preview
+            page.get_by_label("Seed", exact=True).fill("803")
+            expect(page.get_by_role("table")).to_have_count(0)
+            assert page.locator(".app-shell--admin").get_attribute("data-run-form-edited") is None
+            page.reload()
+            expect(page.get_by_role("table")).to_have_count(0)
+            evidence["custom_calendar_player_preview"] = {"player_count": 1000, "weeks_per_year": 52,
+                "saved_revision_unchanged": True, "preview_only": True, "paging_and_stale_reset": True}
 
             page.get_by_role("link", name="Squash Engine global Home").click()
             expect(page.get_by_role("heading", name="Squash Engine Home")).to_be_visible()

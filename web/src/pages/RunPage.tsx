@@ -404,10 +404,10 @@ export function RunPage(): JSX.Element {
         : 'Existing player, ranking and first-tournament preparation. Manual Save and confirmations are unchanged.'}</p>
       <RunPackageSetupPanel run={run!} branch={selectedBranch} />
       {!sportingClockSupported && <p role="status">{language === 'cs'
-        ? 'Sportovní příprava pro tento kalendář zatím není dostupná. Můžeš plánovat a kopírovat balíčky; generování hráčů, ranking a turnaje vyžadují dokončení převodu kalendáře.'
-        : 'Sporting setup is unavailable for this calendar yet. Planning and package copies are available; player generation, ranking and tournaments require the remaining calendar migration.'}</p>}
+        ? 'Můžeš plánovat, kopírovat balíčky a prohlédnout náhled hráčů podle kalendáře Runu. Přidání hráčů, ranking a turnaje vyžadují dokončení převodu kalendáře.'
+        : 'Planning, package copies and calendar-aware player previews are available. Player adoption, ranking and tournaments require the remaining calendar migration.'}</p>}
+      {homeClock && <p><Link to={base + '/players/generate'}>{language === 'cs' ? 'Generovat hráče →' : 'Generate players →'}</Link></p>}
       {sportingClockSupported && <>
-      <p><Link to={base + '/players/generate'}>{language === 'cs' ? 'Generovat hráče →' : 'Generate players →'}</Link></p>
       <RunInitialRankingSetupPanel run={run!} branch={selectedBranch} />
       <RunInitialRankingPublicationPanel run={run!} branch={selectedBranch} />
       <RunFirstTournamentPanel run={run!} branch={selectedBranch} />

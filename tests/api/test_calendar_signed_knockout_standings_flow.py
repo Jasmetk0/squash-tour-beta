@@ -12,6 +12,7 @@ from tests.api.test_calendar_knockout_awards_flow import (
     saved_bracket, proposal,
 )
 from tests.api.test_calendar_opening_knockout_flow import base
+from tests.api.test_calendar_standalone_match_flow import prepare_saved_world
 from tests.api.test_saved_revision_history_api import ApiServer, _request
 
 pytestmark = pytest.mark.pr_critical
@@ -164,3 +165,69 @@ def test_exclusive_expiration_can_be_outside_short_run_horizon(tmp_path):
             "season_index": 1, "week": 2,
         }
         assert standings(server, head, 1, 1)[0] == 409
+
+
+def test_forked_saved_population_preserves_lifecycle_source_and_scores(tmp_path):
+    """A fork keeps the original lifecycle witness; never re-sign old history."""
+    with ApiServer(database_url=f"sqlite:///{tmp_path / 'forked-signed-score.sqlite'}") as server:
+        repository, original_head = prepare_saved_world(
+            server, RunCalendar(52, 1, 2030, 3),
+        )
+        status, fork = _request(
+            "POST", server.base_url + "/run-containers/run/branches",
+            {"source_branch_id": "branch",
+             "source_saved_revision_id": original_head,
+             "display_name": "Independently Scored Tour Branch"},
+        )
+        assert status == 201, fork
+        new_branch = fork["branch_id"]
+        target = (server.base_url + "/admin/runs/run/branches/"
+                  + new_branch + "/authoritative-simulation/calendar-opening-knockout")
+        status, inspected = _request("GET", target)
+        assert status == 200, inspected
+        ids = inspected["player_ids"]
+        command = {
+            "command_id": "fork-match",
+            "match_id": "fork-bracket",
+            "expected_saved_head": inspected["saved_head_revision_id"],
+            "expected_initial_world_fingerprint": inspected["initial_world_fingerprint"],
+            "entrant_ids": ids, "seed": 502,
+            "operator_label": "Admin", "audit_reason": "Play a real forked calendar bracket",
+        }
+        status, played = _request("POST", target + "/simulate", command)
+        assert status == 201, played
+        _, preview = _request("GET", target + "/save/preview")
+        status, first = _request("POST", target + "/save", {
+            "expected_draft_version": preview["draft_version"],
+            "expected_calendar_match_fingerprint": played["fingerprint"],
+        })
+        assert status == 201, first
+        bracket_head = first["saved_revision"]["revision_id"]
+        p = proposal(bracket_head, played["fingerprint"], 52)
+        status, reviewed = _request("POST", target + "/awards/review", p)
+        assert status == 200, reviewed
+        status, applied = _request("POST", target + "/awards/apply", {
+            "command_id": "fork-awards", "proposal": p,
+            "expected_preview_fingerprint": reviewed["preview_fingerprint"],
+            "explicit_confirmation": True,
+        })
+        assert status == 201, applied
+        _, second_preview = _request("GET", target + "/save/preview")
+        status, second = _request("POST", target + "/save", {
+            "expected_draft_version": second_preview["draft_version"],
+            "expected_calendar_match_fingerprint": applied["fingerprint"],
+        })
+        assert status == 201, second
+        scored_head = second["saved_revision"]["revision_id"]
+        from urllib.parse import quote
+        status, standings_view = _request(
+            "GET", target + "/standings?"
+            + "expected_saved_head=" + quote(scored_head, safe="")
+            + "&season_index=0&week=2",
+        )
+        assert status == 200, standings_view
+        assert sorted(r["as_of_counted_points"] for r in standings_view["rows"]) == [30, 30, 60, 100]
+        assert not standings_view["official_ready"]
+        assert repository.verify_branch_saved_revision_hash(revision_id=original_head)
+        assert repository.verify_branch_saved_revision_hash(revision_id=bracket_head)
+        assert repository.verify_branch_saved_revision_hash(revision_id=scored_head)

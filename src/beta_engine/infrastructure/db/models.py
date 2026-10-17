@@ -118,6 +118,45 @@ class OfficialRankingZeroVersionModel(Base):
     payload_json: Mapped[str] = mapped_column(Text, nullable=False)
 
 
+
+
+class StagedCalendarRankingResultVersionModel(Base):
+    """Unpublished calendar source evidence; never a Saved Revision or Official fact."""
+
+    __tablename__ = "staged_calendar_ranking_result_versions"
+    __table_args__ = (
+        CheckConstraint(
+            "effective_ordinal >= 0 AND effective_ordinal <= 9007199254740991",
+            name="ck_staged_calendar_ranking_result_week",
+        ),
+    )
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    edition_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    player_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    effective_ordinal: Mapped[int] = mapped_column(Integer, primary_key=True)
+    fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+class StagedCalendarRankingZeroVersionModel(Base):
+    """Unpublished disciplinary source evidence, isolated from historical FAX."""
+
+    __tablename__ = "staged_calendar_ranking_zero_versions"
+    __table_args__ = (
+        CheckConstraint(
+            "effective_ordinal >= 0 AND effective_ordinal <= 9007199254740991",
+            name="ck_staged_calendar_ranking_zero_week",
+        ),
+    )
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    zero_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    effective_ordinal: Mapped[int] = mapped_column(Integer, primary_key=True)
+    fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
 class OwnedTournamentRankingSourceModel(Base):
     """Immutable adopted tournament evidence owned by one Run/Branch."""
 

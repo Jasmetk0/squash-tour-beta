@@ -20,3 +20,37 @@ Actual publication needs additional cohesive migration of the authoritative resu
 ## Verification
 
 PR-critical tests cover W52/W61/W80 exact result expiry and publication, Season Week W → next Week 1 lineage, Week 80, effective/expiring disciplinary zero, Best N, prior tie-breaking, tour entry, retirement, legacy W61 row equivalence, row/clock/hash/identity tampering, duplicate/foreign/future data and read-only real SQLite Saved-head authority, including cold failure on corrupt Saved fingerprints. Fast CI final HEAD is required; broad release and full-season populated acceptance remain separate.
+
+
+## Calendar source history integration candidate (after #1511)
+
+A separately typed, **read-only** calendar source resolver now models
+`CalendarRankingResultVersion` and `CalendarRankingZeroVersion`, preserving
+corrected award and sanction lineages with exact effective weeks. Results
+cannot be backdated before their original first publication, completed dates,
+first-publication dates and result validity stay immutable across corrections.
+Discipline corrections may adjust the duration/decision but cannot restart the
+original effective week or alter the player/scope identity. Versions must be
+canonical, hash-linked, within the saved Run's W/horizon and non-overlapping.
+Resolving an earlier week ignores later corrections without rewriting history.
+
+The source manifest fingerprint includes only versions already effective as of
+the requested week and the immutable Run week basis; **horizon extension alone
+cannot change a historical source manifest hash**. New calendar candidates can
+chain from immutable snapshots created before a strict Run horizon extension
+when W, season offset and start year are identical. Decreasing horizon or
+rebasing invalidates that link; old serialized snapshots are not rewritten.
+
+The signed Saved-head application bridge validates the current Run clock and
+calculates the corrected read-only candidate plus a source manifest. **Important
+trust boundary:** callers must still load source versions from independently
+authenticated storage. The bridge validates structure/lineage, but it does not
+claim the caller's supplied version objects are real match receipts. No
+storage writer, ranking publication, historical legacy conversion, UI sporting
+switch, rank correction mutation, Week Transition or Full Simulation is enabled.
+
+Focused tests cover W52/W61/W80 correction timing, zero changes/expiry,
+as-of manifest stability across horizon extension, immutable predecessor
+compatibility and wrong-scope/hash/order/clock rejection, plus real signed-head
+SQLite non-mutation. Follow-up must bind this model to an authoritative versioned
+source store before enabling a publishing writer.

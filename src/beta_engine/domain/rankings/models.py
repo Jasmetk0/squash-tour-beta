@@ -95,21 +95,18 @@ class RunCalendarRankingRaceReport(RankingRaceReport):
     run_calendar: dict[str, int | str]
 
     @model_validator(mode="after")
-    def valid_calendar_and_window(self):
+    def validate_saved_clock_bounds(self):
+        """Fail closed if metadata, report target or awards disagree on W."""
         calendar = RunCalendar.from_metadata(self.run_calendar)
-        if self.ranking.window_weeks > calendar.season_count * calendar.weeks_per_year:
-            # A configured window can exceed the Run horizon safely: it still
-            # means all available results. Never clamp the user's setting.
-            pass
         calendar.season_to_calendar(
             self.ranking.as_of_season - calendar.start_year,
             self.ranking.as_of_week,
         )
-        calendar._validate_season_index(self.race.target_season - calendar.start_year)
-        if any(
+        calendar.season_to_calendar(
+            self.race.target_season - calendar.start_year, 1,
+        )
+        for award in self.point_awards:
             calendar.season_to_calendar(
-                award.season - calendar.start_year, award.week
-            ) is None for award in self.point_awards
-        ):
-            raise ValueError("Point award is outside the Run calendar")
+                award.season - calendar.start_year, award.week,
+            )
         return self

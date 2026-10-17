@@ -6,7 +6,7 @@ without launching paid Codex/agents. Refresh base and open PRs; avoid duplicate 
 
 | Order | Usable outcome | Current evidence / remaining work |
 | --- | --- | --- |
-| 0 | Consistent directly affected regression tests | A84-01 stale no-extension expectation fails; update it without weakening the newer correct extension behavior |
+| 0 | Consistent directly affected regression tests | A84-01 regression assertion repaired on this proposed branch for W52/61/80; joint ranking modules and final-HEAD CI must pass before merge |
 | 1 | Run calendar creation and reviewed all-Branch extension | Creation is merged; #1508 adds real atomic manual Save, immutable history, fork/restore compatibility and receipts. #1509 Home guide is merged. Actual sporting continuation remains separate |
 | 2 | Calendar-native real Run-owned match / main-only tournament, Save and replay | Existing W-aware ranking math and witnesses are foundations; real native W52/W80 match/Slot ownership and production Save/restart integration are missing |
 | 3 | Configured points, Official publication and actual Week/Season transitions | #1510–1519 candidates/staging/read adapters are merged, not official publication. New sources need Saved capture/restore/fork and authored configuration lineage |

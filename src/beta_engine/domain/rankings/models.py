@@ -106,8 +106,14 @@ class RunCalendarRankingRaceReport(RankingRaceReport):
         calendar.season_to_calendar(
             self.race.target_season - calendar.start_year, 1,
         )
+        cutoff = calendar.ordinal(
+            self.ranking.as_of_season - calendar.start_year,
+            self.ranking.as_of_week,
+        )
         for award in self.point_awards:
-            calendar.season_to_calendar(
+            ordinal = calendar.ordinal(
                 award.season - calendar.start_year, award.week,
             )
+            if ordinal > cutoff:
+                raise ValueError("Ranking report cannot contain future point awards")
         return self

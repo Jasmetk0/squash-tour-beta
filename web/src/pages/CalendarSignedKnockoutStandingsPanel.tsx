@@ -9,12 +9,14 @@ import { formatApiError } from '../utils/apiErrors'
 
 /** Read-only as-of one-event ranking evidence; never Official Tour Ranking. */
 export function CalendarSignedKnockoutStandingsPanel({
-  runId, branchId, view,
-}: { runId: string; branchId: string; view: KnockoutInspection }): JSX.Element {
+  runId, branchId, view, season, week, onPositionChange,
+}: {
+  runId: string; branchId: string; view: KnockoutInspection
+  season: number; week: number
+  onPositionChange: (position: { season: number; week: number }) => void
+}): JSX.Element {
   const { language } = useLanguage()
   const cs = language === 'cs'
-  const [season, setSeason] = useState(0)
-  const [week, setWeek] = useState(2)
   const [result, setResult] = useState<SignedKnockoutStandings | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
@@ -59,15 +61,16 @@ export function CalendarSignedKnockoutStandingsPanel({
       : 'Only the 4 Saved tournament entrants. NOT the Official Tour Ranking or an executed Week Transition. This is a hypothetical as-of point-validity view.'}</p>
     <label>{cs ? 'Sezona' : 'Season'}{' '}
       <select aria-label="Standings season" value={season} onChange={e => {
-        setSeason(Number(e.target.value))
-        if (Number(e.target.value) === 0 && week === 1) setWeek(2)
+        const next = Number(e.target.value)
+        onPositionChange({ season: next, week: next === 0 && week === 1 ? 2 : week })
       }}>
         {Array.from({ length: clock.season_count }, (_, i) =>
           <option key={i} value={i}>{i + 1}</option>)}
       </select>
     </label>
     <label>{cs ? 'Týden' : 'Week'}{' '}
-      <select aria-label="Standings week" value={week} onChange={e => setWeek(Number(e.target.value))}>
+      <select aria-label="Standings week" value={week} onChange={e =>
+        onPositionChange({ season, week: Number(e.target.value) })}>
         {Array.from({ length: clock.weeks_per_year }, (_, i) => i + 1)
           .filter(w => season !== 0 || w >= 2)
           .map(w => <option key={w} value={w}>{w}</option>)}

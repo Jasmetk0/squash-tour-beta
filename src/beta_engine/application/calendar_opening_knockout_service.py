@@ -22,6 +22,9 @@ from beta_engine.infrastructure.db.calendar_standalone_match_state import (
     CalendarOpeningKnockout, CalendarKnockoutMatch, load_match_rows,
     load_saved_calendar_match, put_match,
 )
+from beta_engine.infrastructure.db.calendar_knockout_awards_state import (
+    CalendarScoredOpeningKnockout,
+)
 
 
 class CalendarOpeningKnockoutCommand(FrozenInput):
@@ -86,17 +89,27 @@ class CalendarOpeningKnockoutService:
             rows = load_match_rows(session, run_id=run_id, branch_id=branch_id)
             if len(rows) > 1:
                 raise ValueError("Opening knockout cannot coexist with another calendar match")
-            if rows and not isinstance(rows[0], CalendarOpeningKnockout):
+            if rows and not isinstance(rows[0], (CalendarOpeningKnockout, CalendarScoredOpeningKnockout)):
                 raise ValueError("Standalone exhibition already owns this opening-week sporting slice")
-            match = rows[0] if rows else None
+            row = rows[0] if rows else None
+            match = row.knockout if isinstance(row, CalendarScoredOpeningKnockout) else row
             saved = load_saved_calendar_match(
                 revision.saved_revision.payload, run_id=run_id, branch_id=branch_id
             )
-            if saved is not None and (
-                not isinstance(saved, CalendarOpeningKnockout)
-                or match is None or saved.fingerprint != match.fingerprint
-            ):
-                raise ValueError("Saved knockout differs from live sporting state")
+            # An unsaved points preparation promotes *only* the live row. The
+            # old immutable Saved HEAD still describes the original knockout.
+            # All other hash/scope mismatches fail closed.
+            if saved is not None:
+                if row is None or not (
+                    type(saved) is type(row) and saved.fingerprint == row.fingerprint
+                    or isinstance(saved, CalendarOpeningKnockout)
+                    and isinstance(row, CalendarScoredOpeningKnockout)
+                    and saved.fingerprint == row.knockout.fingerprint
+                ):
+                    raise ValueError("Saved knockout differs from live sporting state")
+            is_saved = (saved is not None and row is not None
+                        and type(saved) is type(row)
+                        and saved.fingerprint == row.fingerprint)
             return {
                 "schema_version": "calendar_opening_knockout_inspection.v1",
                 "run_id": run_id, "branch_id": branch_id,
@@ -106,8 +119,16 @@ class CalendarOpeningKnockoutService:
                 "initial_world_fingerprint": world.fingerprint,
                 "player_ids": [p.player_id for p in world.players],
                 "knockout": match.model_dump(mode="json") if match else None,
-                "knockout_fingerprint": match.fingerprint if match else None,
-                "saved": saved is not None,
+                "knockout_fingerprint": row.fingerprint if row else None,
+                "saved": is_saved,
+                "prepared_points": (
+                    {"policy": row.policy.model_dump(mode="json"),
+                     "awards": [a.model_dump(mode="json") for a in row.awards],
+                     "first_publication_week": row.first_publication_week.model_dump(mode="json"),
+                     "publication_status": "prepared_not_official",
+                     "scored_fingerprint": row.fingerprint}
+                    if isinstance(row, CalendarScoredOpeningKnockout) else None
+                ),
             }
 
     def simulate(self, *, run_id: str, branch_id: str,
@@ -186,10 +207,13 @@ class CalendarOpeningKnockoutService:
         with self.repository._session_factory() as session:
             session.execute(text("BEGIN"))
             rows = load_match_rows(session, run_id=run_id, branch_id=branch_id)
-            match = next((r for r in rows
-                          if r.match_id == match_id and isinstance(r, CalendarOpeningKnockout)), None)
-            if match is None:
+            row = next((r for r in rows
+                        if r.match_id == match_id and isinstance(
+                            r, (CalendarOpeningKnockout, CalendarScoredOpeningKnockout)
+                        )), None)
+            if row is None:
                 raise KeyError("Calendar knockout not found")
+            match = row.knockout if isinstance(row, CalendarScoredOpeningKnockout) else row
             common = {
                 "run_id": run_id, "branch_id": branch_id,
                 "clock": match.week.calendar,
@@ -207,7 +231,7 @@ class CalendarOpeningKnockoutService:
                 if replayed.model_dump(mode="json") != played.model_dump(mode="json"):
                     raise ValueError("Knockout replay differs from original MatchEngine logs")
             return {
-                "match_id": match_id, "fingerprint": match.fingerprint,
+                "match_id": match_id, "fingerprint": row.fingerprint,
                 "winner_player_id": match.matches[2].result.winner_player_id,
                 "rally_counts": [len(m.result.rally_log.events) for m in match.matches],
                 "exact_replay": True,

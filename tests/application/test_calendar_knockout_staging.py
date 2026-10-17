@@ -146,11 +146,14 @@ def test_real_saved_sqlite_full_draw_w_to_next_season_ranking_and_restart(
                 table = {r.player_id:r.points for r in candidate.rows}
                 assert table["A"] == 100
                 assert table["C"] == 60
-                assert table["B"] == 30
-                assert table["D"] == 30
                 if draw == 8:
-                    assert table["E"] == 30
-                    assert table["G"] == 15
+                    assert table["B"] == 15
+                    assert table["D"] == 15
+                    assert table["E"] == 60
+                    assert table["G"] == 30
+                else:
+                    assert table["B"] == 30
+                    assert table["D"] == 30
                 assert len(manifest.results) == draw
                 assert {r.source_fingerprint for r in manifest.results} == {
                     proof.fingerprint,

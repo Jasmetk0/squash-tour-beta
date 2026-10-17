@@ -154,6 +154,25 @@ def exercise_calendar_knockout(page, *, base_url, api_url, artifacts,
     selector.select_option(branch_id)
     panel = page.locator('section[aria-label="Calendar native four-player knockout"]')
     expect(panel.get_by_text("Prepared points (not Official)")).to_be_visible()
+    rankings = panel.locator('section[aria-label="Signed calendar knockout as-of standings"]')
+    expect(rankings).to_be_visible()
+    expect(rankings.get_by_role("table", name="Signed tournament standings table")).to_be_visible(
+        timeout=120000
+    )
+    table = rankings.get_by_role("table", name="Signed tournament standings table")
+    expect(table.locator("tbody tr")).to_have_count(4)
+    points = [int(table.locator("tbody tr").nth(i).locator("td").nth(3).inner_text())
+              for i in range(4)]
+    assert points == [100, 60, 30, 30], points
+    # W52 point validity: Week 2 of Season 2 is the first expired week.
+    rankings.get_by_role("combobox", name="Standings season").select_option("1")
+    rankings.get_by_role("combobox", name="Standings week").select_option("2")
+    expect(rankings.get_by_text("Points have expired.", exact=False)).to_be_visible(timeout=120000)
+    expired = [int(table.locator("tbody tr").nth(i).locator("td").nth(3).inner_text())
+               for i in range(4)]
+    assert expired == [0, 0, 0, 0], expired
+    rankings.get_by_role("combobox", name="Standings season").select_option("0")
+    expect(rankings.get_by_text("Points are still within their validity period.", exact=False)).to_be_visible(timeout=120000)
     page.get_by_role("combobox", name="Language / Jazyk").select_option("cs")
     expect(panel.get_by_text("Připravené body (neoficiální)")).to_be_visible()
     page.get_by_role("combobox", name="Language / Jazyk").select_option("en")
@@ -172,4 +191,6 @@ def exercise_calendar_knockout(page, *, base_url, api_url, artifacts,
         "reviewed_prepared_points": True,
         "prepared_awards_manual_second_save": scored_revision,
         "points_unpublished": True,
+        "signed_as_of_scoreboard": True,
+        "exact_calendar_expiry": True,
     }

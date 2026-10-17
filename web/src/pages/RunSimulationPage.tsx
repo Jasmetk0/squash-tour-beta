@@ -32,6 +32,11 @@ export function RunSimulationPage(): JSX.Element {
   const [review, setReview] = useState<Review | null>(null)
   const [reason, setReason] = useState('')
   const [calendarSportingMode, setCalendarSportingMode] = useState<'knockout' | 'exhibition'>('knockout')
+  // Preserve a reviewed as-of week across transient eligibility/loading
+  // remounts, but never reuse it for a different Branch or immutable HEAD.
+  const [calendarStandingsByHead, setCalendarStandingsByHead] = useState<
+    Record<string, { season: number; week: number }>
+  >({})
   const [commandId, setCommandId] = useState(newCommandId)
   const [confirmed, setConfirmed] = useState(false)
   const [notice, setNotice] = useState<string | null>(null)
@@ -156,6 +161,15 @@ export function RunSimulationPage(): JSX.Element {
           <CalendarOpeningKnockoutPanel
             runId={runId} branchId={executionBranchId}
             savedHead={executionBranch.saved_head_revision_id}
+            standingsPosition={
+              calendarStandingsByHead[
+                [runId, executionBranchId, executionBranch.saved_head_revision_id].join('|')
+              ] ?? { season: 0, week: 2 }
+            }
+            onStandingsPositionChange={next => setCalendarStandingsByHead(current => ({
+              ...current,
+              [[runId, executionBranchId, executionBranch.saved_head_revision_id].join('|')]: next,
+            }))}
           />
         ) : (
           <CalendarStandaloneMatchPanel

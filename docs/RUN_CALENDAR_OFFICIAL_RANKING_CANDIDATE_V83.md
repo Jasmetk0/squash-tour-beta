@@ -82,3 +82,5 @@ public user-edit endpoint, interpret these rows as sporting state, or unlock
 Full Simulation. Future authoritative integration must migrate the trust
 boundary and Save/fork/restore/publication atomically. Staged candidates
 are only operator/developer inspection, not a production sporting write.
+
+**Saved HEAD pinning:** each staged source row records the exact immutable Saved Revision ID active at creation. Subsequent read and write refuse any row originating at a different Saved HEAD. A later legitimate user Save (including a production horizon extension creating a new Saved Revision) therefore fails closed until a reviewed rebase/materialization is implemented. Pure domain horizon continuity does not override this staging ownership barrier. This is deliberately not an automatic Save or fork migration.

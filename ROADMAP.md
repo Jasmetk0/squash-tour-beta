@@ -51,3 +51,7 @@ The read-only extension preview has a Run/Branch-scoped HTTP endpoint. UI consen
 ## V83 horizon extension implementation candidate
 
 A cohesive Run-wide review → explicit confirmation → single-transaction Save and restart-safe receipt is in the implementation branch. Historical revisions and population origins are preserved, and unsupported sporting writers remain fenced. This candidate becomes done only after all targeted SQLite/API/UI tests and final-head PR CI succeed. Separate W/horizon sporting time/transition migration and populated multi-season acceptance remain subsequent dependencies. See [extension contract](docs/RUN_CALENDAR_HORIZON_EXTENSION_V83.md).
+
+## Post #1508 — Saved-content readiness candidate
+
+#1508 merged and delivers actual audited all-Branch Run horizon Save. The current candidate builds a usable Admin Run Home readiness guide (saved World, Calendar, population, Health, published ranking, Working Draft, and task evidence) from an exact Branch Saved snapshot, with CS/EN action links and independent refresh. The guide does not bypass any sporting preflight. Subsequent calendar-dependent ranking validity, annual growth and true W52/W80 Week/Season writer migration are still required, followed by populated cross-season acceptance. See [Run Home readiness](docs/RUN_HOME_READINESS_V83.md).

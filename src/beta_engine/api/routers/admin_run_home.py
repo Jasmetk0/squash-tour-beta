@@ -39,12 +39,36 @@ from beta_engine.application.run_home_activity_read_model import (
 )
 from beta_engine.infrastructure.db.run_package_state import load_saved_run_package_state
 from beta_engine.infrastructure.db.saved_revision_rankings import load_saved_ranking_component
+from beta_engine.application.run_home_readiness import RunHomeReadiness, inspect_run_home_readiness
 
 
 router = APIRouter(
     prefix="/admin/runs/{run_id}/branches/{branch_id}",
     tags=["admin-run-home"],
 )
+
+
+@router.get("/home-readiness", response_model=RunHomeReadiness)
+def inspect_run_home_readiness_route(
+    run_id: str,
+    branch_id: str,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+) -> RunHomeReadiness:
+    """One fail-closed read transaction, bound to selected Branch Saved HEAD."""
+    try:
+        with runtime.repository._session_factory() as session:
+            session.connection().exec_driver_sql("BEGIN")
+            return inspect_run_home_readiness(
+                session, runtime.repository, run_id=run_id, branch_id=branch_id,
+            )
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail={
+            "code": "run_home_readiness_not_found", "message": str(exc),
+        }) from exc
+    except (ValueError, TypeError) as exc:
+        raise HTTPException(status_code=409, detail={
+            "code": "run_home_readiness_conflict", "message": str(exc),
+        }) from exc
 
 
 @router.get("/home-activity", response_model=RunHomeActivity)

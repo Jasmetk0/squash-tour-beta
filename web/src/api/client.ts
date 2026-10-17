@@ -5173,3 +5173,13 @@ export async function saveRunCalendarExtension(
     runId, payload,
   )
 }
+
+/** Read-only, Saved HEAD-scoped Run Home guidance; never grants sporting execution. */
+export async function getRunHomeReadiness(
+  runId: string, branchId: string,
+): Promise<import('./runHomeReadiness').RunHomeReadiness> {
+  const { validateRunHomeReadiness } = await import('./runHomeReadiness')
+  const path = '/admin/runs/' + encodeURIComponent(runId) + '/branches/'
+    + encodeURIComponent(branchId) + '/home-readiness'
+  return validateRunHomeReadiness(await request<unknown>(path), runId, branchId)
+}

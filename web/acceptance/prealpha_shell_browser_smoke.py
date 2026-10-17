@@ -653,6 +653,21 @@ def main() -> None:
                               "season_start_year_week": 35, "start_year": 2030, "season_count": 3}
             assert stored["metadata_json"]["run_calendar"] == expected_clock, stored
             assert stored["mapped_simulation_run_count"] == 0, stored
+            # V83: actual saved-readiness is not a simulation-start promise.
+            status_url = args.api_url + "/admin/runs/" + custom_id + "/branches/"
+            status_url += page.request.get(args.api_url + "/run-branches", params={"run_id": custom_id}).json()["run_branches"][0]["branch_id"] + "/home-readiness"
+            empty_readiness_response = page.request.get(status_url)
+            assert empty_readiness_response.status == 200, empty_readiness_response.text()
+            empty_readiness = empty_readiness_response.json()
+            assert empty_readiness["source"] == "validated_selected_branch_saved_head"
+            assert empty_readiness["simulation_started"] is False
+            assert empty_readiness["requires_operation_preflight"] is True
+            assert empty_readiness["sporting_calendar_supported_by_legacy_writers"] is False
+            assert [(item["code"], item["status"]) for item in empty_readiness["items"]][:3] == [
+                ("world", "missing"), ("calendar_package", "missing"), ("population", "missing")
+            ]
+            expect(page.get_by_text("This Branch readiness", exact=True)).to_be_visible()
+
             custom_branches = page.request.get(args.api_url + "/run-branches", params={"run_id": custom_id}).json()["run_branches"]
             custom_branch = custom_branches[0]
             saved = page.request.get(args.api_url + "/run-containers/" + custom_id + "/branches/"
@@ -917,6 +932,18 @@ def main() -> None:
             assert new_snapshot["payload"]["content"]["initial_world"] == old_health_snapshot["payload"]["content"]["initial_world"]
             assert new_snapshot["payload"]["content"]["player_health_state"] == edited_component
             assert new_snapshot["payload"]["content"]["player_lifecycle"] == old_health_snapshot["payload"]["content"]["player_lifecycle"]
+            saved_readiness_response = page.request.get(status_url)
+            assert saved_readiness_response.status == 200, saved_readiness_response.text()
+            saved_readiness = saved_readiness_response.json()
+            assert saved_readiness["saved_revision_id"] == new_head["saved_revision_id"]
+            assert saved_readiness["current_calendar"] == horizon_receipt["current_calendar"]
+            assert saved_readiness["sporting_calendar_supported_by_legacy_writers"] is False
+            assert saved_readiness["simulation_started"] is False
+            assert {item["code"]: item["status"] for item in saved_readiness["items"]}["population"] == "saved"
+            assert {item["code"]: item["status"] for item in saved_readiness["items"]}["health"] == "saved"
+            assert {item["code"]: item["evidence_count"] for item in saved_readiness["items"]}["population"] == 1000
+            assert {item["code"]: item["status"] for item in saved_readiness["items"]}["official_ranking"] == "missing"
+
             # Run metadata and old population stay coherent over restart/reload.
             page.get_by_role("button", name="Reload saved Run", exact=True).click()
             expect(page.locator(".run-home-progress__track").nth(0).locator("span")).to_have_count(5)

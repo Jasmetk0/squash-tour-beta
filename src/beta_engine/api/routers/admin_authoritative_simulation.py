@@ -67,6 +67,9 @@ from beta_engine.application.calendar_opening_knockout_service import (
 from beta_engine.application.calendar_knockout_award_service import (
     CalendarAwardProposal, CalendarAwardApplyCommand, CalendarKnockoutAwardService,
 )
+from beta_engine.application.calendar_signed_knockout_standings import (
+    CalendarSignedKnockoutStandingsService,
+)
 
 from beta_engine.application.prospect_bridge_inspection import inspect_prospect_bridge
 from beta_engine.application.pre_alpha_fax_acceptance_profile import (
@@ -1068,6 +1071,28 @@ def replay_calendar_opening_knockout(
 
 # Same immutable calendar sporting component/Save machinery as the v1
 # exhibition, so past Saved payloads are never rewritten or silently upgraded.
+@router.get("/calendar-opening-knockout/standings")
+def calendar_signed_knockout_standings(
+    run_id: str, branch_id: str, expected_saved_head: str,
+    season_index: int, week: int,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+):
+    """Read-only, as-of Signed event standings; not Official Ranking."""
+    try:
+        return CalendarSignedKnockoutStandingsService(runtime.repository).inspect(
+            run_id=run_id, branch_id=branch_id,
+            expected_saved_head=expected_saved_head,
+            season_index=season_index, week=week,
+        )
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except (ValueError, TypeError) as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={"code": "calendar_standings_not_eligible", "message": str(exc)},
+        ) from exc
+
+
 @router.post("/calendar-opening-knockout/awards/review")
 def review_calendar_knockout_awards(
     run_id: str, branch_id: str, payload: CalendarAwardProposal,

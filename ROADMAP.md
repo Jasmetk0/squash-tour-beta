@@ -146,3 +146,15 @@ candidate's points policy from a Saved Edition configuration. Before any
 Official sporting promotion: bind canonical Saved Edition/rules/points
 evidence, implement native W52/W80 Slot/Match ownership, restore/fork
 support, then the versioned Official Ranking and Week/Season publisher.
+
+
+## After #1518 — jointly attested knockout ranking candidate
+
+Read-only FAX W61 sources can cross-check real signed MatchEngine
+Simulation Slot receipts with independently signed Owned canonical
+Tournament Result and Point Award receipts. This eliminates caller-
+supplied point values in the bounded main-only candidate path.
+Remaining blockers: prove the original Signed Edition/Category authored
+configuration behind the canonical point authority; build real W-aware
+Slot/Match writers; integrate ranking Save/restore/fork and publication,
+then actual Week/Season/Full Simulation transition.

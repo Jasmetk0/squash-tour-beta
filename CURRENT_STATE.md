@@ -166,3 +166,18 @@ Critically W52/W80 actual sports remain fenced; only match provenance, **not
 point distribution**, is Saved-authenticated. This is not a Save writer,
 public ranking, Full Simulation unlock, or release checkpoint. Latest PR-head
 CI result controls whether owner may merge.
+
+
+## Post #1518 — dual Signed Saved matches+points authority candidate
+
+#1518 was merged; initial `buuk` was
+`0ebf633deb49b4a4b63d0907372ce3fc9f5a9fdf`, no competing PR.
+The new unmerged read-only slice proves that the same complete Edition
+exists in both signed Simulation Slot match history and Signed Ranking
+canonical Point Award history and in identical live SQLite sources.
+It validates per-match fingerprints, all players' award stages and
+amounts, exact authored table, eligibility/timing and a composed origin
+fingerprint. The scope is explicitly the historical W61 main-only
+knockout with v1/v2 canonical award authority. It does not Save,
+publish, simulate sport, authenticate earlier Category configuration or
+permit W52/W80 sporting writes. Final-head CI is required before merge.

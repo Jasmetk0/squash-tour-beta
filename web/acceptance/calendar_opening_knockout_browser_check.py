@@ -5,6 +5,7 @@ acceptance but forks a separate, earlier Saved population revision.
 """
 from __future__ import annotations
 
+import re
 from urllib.parse import quote
 
 from playwright.sync_api import expect
@@ -166,11 +167,18 @@ def exercise_calendar_knockout(page, *, base_url, api_url, artifacts,
     assert points == [100, 60, 30, 30], points
     # W52 point validity: Week 2 of Season 2 is the first expired week.
     rankings.get_by_role("combobox", name="Standings season").select_option("1")
+    expect(page).to_have_url(re.compile(r"[?&]score_season=1(?:&|$)"), timeout=30000)
     expect(rankings.get_by_role("combobox", name="Standings season")).to_have_value("1")
     rankings.get_by_role("combobox", name="Standings week").select_option("2")
     # Parent may briefly unmount the sporting controls during background
     # Run/Branch validation. The actual reviewed week must survive.
     expect(rankings.get_by_role("combobox", name="Standings season")).to_have_value("1")
+    expect(rankings.get_by_text("Points have expired.", exact=False)).to_be_visible(timeout=120000)
+    # The filter must survive a full browser reload and Branch re-selection,
+    # not merely a transient React rerender.
+    page.reload()
+    page.get_by_role("combobox", name="Admin active Branch").select_option(branch_id)
+    expect(rankings.get_by_role("combobox", name="Standings season")).to_have_value("1", timeout=120000)
     expect(rankings.get_by_text("Points have expired.", exact=False)).to_be_visible(timeout=120000)
     expired = [int(table.locator("tbody tr").nth(i).locator("td").nth(3).inner_text())
                for i in range(4)]

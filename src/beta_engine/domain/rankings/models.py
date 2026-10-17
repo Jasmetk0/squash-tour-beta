@@ -2,15 +2,24 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel, Field
+from typing import Literal
+
+from pydantic import BaseModel, Field, model_validator
+
+from beta_engine.domain.calendar.run_calendar import RunCalendar
 
 
 class CompletedTournamentPointsInput(BaseModel):
-    """Structured tournament payload used by ranking/race point resolution."""
+    """Structured tournament input; calendar-specific W is checked by the engine.
+
+    The DTO alone cannot authorize a Run week/year. Legacy callers without
+    an explicit clock remain restricted to historical >=1900, W61 boundaries
+    by RankingRaceEngine.
+    """
 
     event_id: str = Field(min_length=1)
-    season: int = Field(ge=1900)
-    week: int = Field(ge=1, le=61)
+    season: int = Field(ge=0)
+    week: int = Field(ge=1)
     template_id: str = Field(min_length=1)
     point_distribution_ref: str | None = None
     point_distribution: dict[str, int] | None = None
@@ -22,8 +31,8 @@ class TournamentPointAward(BaseModel):
     """Resolved point award for one player from one completed tournament."""
 
     event_id: str
-    season: int = Field(ge=1900)
-    week: int = Field(ge=1, le=61)
+    season: int = Field(ge=0)
+    week: int = Field(ge=1)
     template_id: str
     player_id: str
     finish: str
@@ -34,8 +43,8 @@ class RankedResultContribution(BaseModel):
     """Explainable contribution metadata for ranking/race standings."""
 
     event_id: str
-    season: int = Field(ge=1900)
-    week: int = Field(ge=1, le=61)
+    season: int = Field(ge=0)
+    week: int = Field(ge=1)
     finish: str
     points_awarded: int = Field(ge=0)
     active_in_rolling_window: bool
@@ -60,15 +69,15 @@ class PlayerRaceEntry(BaseModel):
 
 
 class RankingTable(BaseModel):
-    as_of_season: int = Field(ge=1900)
-    as_of_week: int = Field(ge=1, le=61)
+    as_of_season: int = Field(ge=0)
+    as_of_week: int = Field(ge=1)
     window_weeks: int = Field(ge=1)
     best_of_results: int = Field(ge=1)
     standings: list[PlayerRankingEntry] = Field(default_factory=list)
 
 
 class RaceTable(BaseModel):
-    target_season: int = Field(ge=1900)
+    target_season: int = Field(ge=0)
     standings: list[PlayerRaceEntry] = Field(default_factory=list)
 
 
@@ -76,3 +85,35 @@ class RankingRaceReport(BaseModel):
     point_awards: list[TournamentPointAward] = Field(default_factory=list)
     ranking: RankingTable
     race: RaceTable
+
+
+class RunCalendarRankingRaceReport(RankingRaceReport):
+    """Read-only report with explicit clock provenance; legacy reports unchanged."""
+
+    schema_version: Literal["run_calendar_ranking_race_report.v1"] = (
+        "run_calendar_ranking_race_report.v1"
+    )
+    run_calendar: dict[str, int | str]
+
+    @model_validator(mode="after")
+    def validate_saved_clock_bounds(self):
+        """Fail closed if metadata, report target or awards disagree on W."""
+        calendar = RunCalendar.from_metadata(self.run_calendar)
+        calendar.season_to_calendar(
+            self.ranking.as_of_season - calendar.start_year,
+            self.ranking.as_of_week,
+        )
+        calendar.season_to_calendar(
+            self.race.target_season - calendar.start_year, 1,
+        )
+        cutoff = calendar.ordinal(
+            self.ranking.as_of_season - calendar.start_year,
+            self.ranking.as_of_week,
+        )
+        for award in self.point_awards:
+            ordinal = calendar.ordinal(
+                award.season - calendar.start_year, award.week,
+            )
+            if ordinal > cutoff:
+                raise ValueError("Ranking report cannot contain future point awards")
+        return self

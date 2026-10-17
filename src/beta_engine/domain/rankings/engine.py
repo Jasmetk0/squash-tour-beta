@@ -5,7 +5,9 @@ from __future__ import annotations
 from collections import defaultdict
 from dataclasses import dataclass
 
+from beta_engine.domain.calendar.run_calendar import RunCalendar
 from beta_engine.domain.rankings.models import (
+    RunCalendarRankingRaceReport,
     CompletedTournamentPointsInput,
     PlayerRaceEntry,
     PlayerRankingEntry,
@@ -40,10 +42,48 @@ class RankingRaceEngine:
         as_of_season: int,
         as_of_week: int,
         target_season: int,
-        window_weeks: int = 61,
+        window_weeks: int | None = None,
         best_of_results: int = 12,
+        run_calendar: RunCalendar | None = None,
     ) -> RankingRaceReport:
-        awards = self.resolve_point_awards(completed_tournaments=completed_tournaments)
+        """Build a read-only ranking/Race report, with optional verified Run clock.
+
+        Existing callers retain exact legacy W61 semantics and output. New Run
+        callers MUST pass their historically effective saved calendar explicitly;
+        this report does not publish Official Ranking or start simulation.
+        """
+        if run_calendar is not None and run_calendar.schema_version != "run_calendar.v1":
+            raise ValueError("Explicit ranking calendar requires a versioned Run clock")
+        weeks_per_year = run_calendar.weeks_per_year if run_calendar else 61
+        if type(best_of_results) is not int or best_of_results < 1:
+            raise ValueError("best_of_results must be positive")
+        if window_weeks is None:
+            window_weeks = weeks_per_year
+        if type(window_weeks) is not int or window_weeks < 1:
+            raise ValueError("window_weeks must be positive")
+        self._check_week(season=as_of_season, week=as_of_week, calendar=run_calendar)
+        # Target season is a separate authored time choice, even with no input
+        # awards. Legacy targets retain the original >=1900 year boundary.
+        self._check_week(season=target_season, week=1, calendar=run_calendar)
+        if run_calendar is not None:
+            # Validate each actual source clock before future-event checks;
+            # malformed Week 53 on W52 is not a valid 'future' timestamp.
+            for item in completed_tournaments:
+                self._check_week(
+                    season=item.season, week=item.week, calendar=run_calendar,
+                )
+            current = self._week_key(as_of_season, as_of_week, weeks_per_year)
+            # Validate original tournament facts, not only awards: empty or
+            # unranked future results must never slip into a historical report.
+            if any(
+                self._week_key(t.season, t.week, weeks_per_year) > current
+                for t in completed_tournaments
+            ):
+                raise ValueError("Run calendar ranking report cannot include future tournaments")
+        awards = self.resolve_point_awards(
+            completed_tournaments=completed_tournaments,
+            run_calendar=run_calendar,
+        )
         ranking = self._build_ranking(
             awards=awards,
             as_of_season=as_of_season,
@@ -51,17 +91,26 @@ class RankingRaceEngine:
             window_weeks=window_weeks,
             best_of_results=best_of_results,
             target_season=target_season,
+            weeks_per_year=weeks_per_year,
         )
         race = self._build_race(awards=awards, target_season=target_season)
-        return RankingRaceReport(point_awards=awards, ranking=ranking, race=race)
+        if run_calendar is None:
+            return RankingRaceReport(point_awards=awards, ranking=ranking, race=race)
+        return RunCalendarRankingRaceReport(
+            point_awards=awards, ranking=ranking, race=race,
+            run_calendar=run_calendar.to_metadata(),
+        )
 
     def resolve_point_awards(
         self,
         *,
         completed_tournaments: list[CompletedTournamentPointsInput],
+        run_calendar: RunCalendar | None = None,
     ) -> list[TournamentPointAward]:
+        """Resolve points only for weeks valid in the explicit or legacy W clock."""
         awards: list[TournamentPointAward] = []
         for tournament in sorted(completed_tournaments, key=self._tournament_order_key):
+            self._check_week(season=tournament.season, week=tournament.week, calendar=run_calendar)
             point_distribution = self._resolve_point_distribution(tournament)
             for player_id, finish in self._extract_finishes(tournament):
                 points_key = FINISH_TO_POINTS_KEY.get(finish)
@@ -88,12 +137,16 @@ class RankingRaceEngine:
         window_weeks: int,
         best_of_results: int,
         target_season: int,
+        weeks_per_year: int,
     ) -> RankingTable:
         by_player: dict[str, list[TournamentPointAward]] = defaultdict(list)
-        as_of_key = self._week_key(as_of_season, as_of_week)
+        as_of_key = self._week_key(as_of_season, as_of_week, weeks_per_year)
 
         for award in awards:
-            if self._in_rolling_window(award=award, as_of_key=as_of_key, window_weeks=window_weeks):
+            if self._in_rolling_window(
+                award=award, as_of_key=as_of_key, window_weeks=window_weeks,
+                weeks_per_year=weeks_per_year,
+            ):
                 by_player[award.player_id].append(award)
 
         standings: list[PlayerRankingEntry] = []
@@ -228,11 +281,23 @@ class RankingRaceEngine:
         return None
 
     @staticmethod
-    def _week_key(season: int, week: int) -> int:
-        return season * 61 + week
+    def _check_week(*, season: int, week: int, calendar: RunCalendar | None) -> None:
+        if calendar is None:
+            # The unversioned legacy point-report interface remains W61.
+            if type(season) is not int or season < 1900 or type(week) is not int or not 1 <= week <= 61:
+                raise ValueError("Legacy ranking/race inputs require year >= 1900 and Week 1–61")
+        else:
+            calendar.season_to_calendar(season - calendar.start_year, week)
 
-    def _in_rolling_window(self, *, award: TournamentPointAward, as_of_key: int, window_weeks: int) -> bool:
-        delta = as_of_key - self._week_key(award.season, award.week)
+    @staticmethod
+    def _week_key(season: int, week: int, weeks_per_year: int = 61) -> int:
+        return season * weeks_per_year + week
+
+    def _in_rolling_window(
+        self, *, award: TournamentPointAward, as_of_key: int,
+        window_weeks: int, weeks_per_year: int = 61,
+    ) -> bool:
+        delta = as_of_key - self._week_key(award.season, award.week, weeks_per_year)
         return 0 <= delta < window_weeks
 
     @staticmethod

@@ -16,8 +16,12 @@ import { CalendarKnockoutAwardsPanel } from './CalendarKnockoutAwardsPanel'
 import { CalendarSignedKnockoutStandingsPanel } from './CalendarSignedKnockoutStandingsPanel'
 
 /** One real main-only 4-player opening-week bracket; no points or Week Transition. */
-export function CalendarOpeningKnockoutPanel({ runId, branchId, savedHead }: {
+export function CalendarOpeningKnockoutPanel({
+  runId, branchId, savedHead, standingsPosition, onStandingsPositionChange,
+}: {
   runId: string; branchId: string; savedHead: string
+  standingsPosition: { season: number; week: number }
+  onStandingsPositionChange: (next: { season: number; week: number }) => void
 }): JSX.Element {
   const { language } = useLanguage()
   const cs = language === 'cs'
@@ -207,6 +211,8 @@ export function CalendarOpeningKnockoutPanel({ runId, branchId, savedHead }: {
         </div>}
         {view.saved && view.prepared_points && <CalendarSignedKnockoutStandingsPanel
           runId={runId} branchId={branchId} view={view}
+          season={standingsPosition.season} week={standingsPosition.week}
+          onPositionChange={onStandingsPositionChange}
         />}
         {view.saved && !view.prepared_points && <CalendarKnockoutAwardsPanel
           runId={runId} branchId={branchId} view={view}

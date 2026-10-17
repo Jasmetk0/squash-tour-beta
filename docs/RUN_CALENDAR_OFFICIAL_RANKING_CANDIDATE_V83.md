@@ -264,3 +264,35 @@ The preview is not Official, and it does not write or authenticate W52/W80:
 their actual Match/Slot writer remains 61-based, and casting that persisted
 legacy week ordinal into W52/W80 would manufacture provenance. Full
 Save/restore/fork/publication still requires a reviewed native writer.
+
+
+## Saved Slot + canonical Owned point-award joint ranking source candidate (post #1518)
+
+The read-only `saved_slot_and_points_knockout_sources` cross-checks *both*
+independently stored immutable Saved components in one physical SQLite read
+snapshot: the completed real MatchEngine Simulation Slot/Group receipts and
+the canonical `ranking_preparation` Owned Tournament Result + Point Award
+authority. The underlying individual readers verify their Signed Saved head,
+component hashes, match/result/award provenance and exact live SQLite parity.
+
+The new bridge rejects a mismatch in any Saved tournament match receipt
+(including canonical match fingerprint, round, winner, loser and scoreline),
+unmatched player/award universe, finishing stage, per-player canonical award
+amount, canonical point-distribution table/source, ranking validity,
+completion and publication week. Full Main-only knockout v1/v2 canonical
+point authorities are required: no qualification, group, hybrid, closing-only
+or W/O/RET reinterpretation. The source manifest SHA-256 combines exact
+Signed Saved Revision content hash, complete MatchEngine witness root,
+canonical Owned source fingerprint and canonical Point Award/distribution
+fingerprints. Calendar candidate result sources use this NEW composite
+fingerprint; they do not rewrite legacy Saved/FAX source hashes. Restarted
+SQLite preview produces the same signed points without any sporting write.
+
+**Important authority boundary:** the canonical Signed Saved *point award
+authority* is authenticated as the snapshot the event was closed with;
+this adapter does not independently authenticate the earlier authored
+Event/Category configuration that supplied that authority, and the bracket
+geometry still originates with the caller (constrained by all stored
+competitive receipts). It is a read-only W61 candidate; no actual
+W52/W80 writers, Saved mutation, Viewer/Official publication or
+Week/Season Transition is unlocked.

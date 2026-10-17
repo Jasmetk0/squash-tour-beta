@@ -6,7 +6,7 @@ acceptance but forks a separate, earlier Saved population revision.
 from __future__ import annotations
 
 import re
-from urllib.parse import quote
+from urllib.parse import parse_qs, quote, urlsplit
 
 from playwright.sync_api import expect
 
@@ -168,6 +168,11 @@ def exercise_calendar_knockout(page, *, base_url, api_url, artifacts,
     # W52 point validity: Week 2 of Season 2 is the first expired week.
     rankings.get_by_role("button", name="View first expired week").click()
     expect(page).to_have_url(re.compile(r"[?&]score_season=1(?:&|$)"), timeout=30000)
+    source_context = parse_qs(urlsplit(page.url).query)["score_context"][0]
+    assert source_context == "|".join((run_id, branch_id, scored_revision)), (
+        "as-of scoring filter must bind the verified Signed Saved HEAD",
+        source_context, scored_revision,
+    )
     # Stable Run/Branch/Saved HEAD provenance drives the as-of review, without
     # select onchange races; the URL also survives a full browser reload.
     expect(rankings.get_by_role("spinbutton", name="Standings season number")).to_have_value("2")

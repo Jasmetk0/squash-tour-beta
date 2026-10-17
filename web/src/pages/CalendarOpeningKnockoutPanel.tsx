@@ -213,6 +213,9 @@ export function CalendarOpeningKnockoutPanel({
     <p className="status">{cs
       ? 'Season 1 Week 1 · skutečný BO5 pavouk. Po uložení lze připravit body; oficiální publikace a přechod týdne zatím chybí.'
       : 'Season 1 Week 1 · real BO5 bracket. Prepared points can be Saved afterwards; Official publication and Week Transition are not yet supported.'}</p>
+    {!view?.knockout && <p className="status">{cs
+      ? 'Nový pavouk používá provizorní počáteční stav (forma 100, rozehranost 100, únava 0) a po semifinále přenese změny do finále. Vstup atributů je zatím sedmipolová projekce populace.'
+      : 'New brackets use a provisional fresh baseline (form 100, sharpness 100, fatigue 0) and carry semifinal effects into the final. Attribute inputs remain the seven-value population projection.'}</p>}
     {status === 'loading' && <p>{cs ? 'Ověřuji Run…' : 'Inspecting Run…'}</p>}
     {status === 'blocked' && <p role="status">{cs ? 'Nedostupné: ' : 'Not available: '}{error}</p>}
     {view && status !== 'blocked' && <>
@@ -244,6 +247,23 @@ export function CalendarOpeningKnockoutPanel({
           {' · '}{match.result.rally_log.events.length} rallies
         </p>)}
         <p>{cs ? 'Šampion' : 'Champion'}: <strong>{view.knockout.matches[2].result.winner_player_id}</strong></p>
+        {view.knockout.sporting && <div aria-label="Knockout player state checkpoints">
+          <p className="status">{cs
+            ? 'Finalisté používají formu, rozehranost a dlouhodobou únavu po semifinále. Provizorní kalibrace; bez automatické regenerace, vývoje atributů a zdravotních změn.'
+            : 'Finalists consume post-semifinal form, sharpness and long-term fatigue. Provisional calibration; no automatic recovery, attribute development or Health changes.'}</p>
+          <table aria-label="Knockout player state table"><thead><tr>
+            <th>{cs ? 'Hráč' : 'Player'}</th><th>{cs ? 'Fáze' : 'Stage'}</th>
+            <th>{cs ? 'Forma' : 'Form'}</th><th>{cs ? 'Rozehranost' : 'Sharpness'}</th>
+            <th>{cs ? 'Dlouhodobá únava' : 'Long-term fatigue'}</th>
+          </tr></thead><tbody>
+            {(['initial', 'after_semifinals', 'terminal'] as const).flatMap(stage =>
+              view.knockout!.sporting![stage].map(player => <tr key={stage + player.player_id}>
+                <td>{player.player_id}</td><td>{stage === 'initial' ? (cs ? 'Před turnajem' : 'Before knockout')
+                  : stage === 'after_semifinals' ? (cs ? 'Po semifinále' : 'After semifinals') : (cs ? 'Po finále' : 'After final')}</td>
+                <td>{player.current_form}</td><td>{player.match_sharpness}</td><td>{player.long_term_fatigue}</td>
+              </tr>))}
+          </tbody></table>
+        </div>}
         <p>{cs ? 'Stav' : 'Status'}: {view.saved ? (cs ? 'Uloženo' : 'Saved') : (cs ? 'Neuloženo' : 'Unsaved')}</p>
         {view.prepared_points && <div aria-label="Calendar prepared knockout points">
           <p><strong>{cs ? 'Připravené body (neoficiální)' : 'Prepared points (not Official)'}</strong>

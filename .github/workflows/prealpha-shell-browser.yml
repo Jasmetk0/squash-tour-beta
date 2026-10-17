@@ -21,6 +21,8 @@ on:
       - 'web/src/api/calendarOpeningKnockout.ts'
       - 'src/beta_engine/application/calendar_standalone_match_service.py'
       - 'src/beta_engine/application/calendar_opening_knockout_service.py'
+      - 'src/beta_engine/domain/players/calendar_match_state.py'
+      - 'src/beta_engine/domain/simulation_slots.py'
       - 'src/beta_engine/application/calendar_knockout_award_service.py'
       - 'src/beta_engine/application/calendar_signed_knockout_standings.py'
       - 'src/beta_engine/application/run_calendar_extension_commit.py'

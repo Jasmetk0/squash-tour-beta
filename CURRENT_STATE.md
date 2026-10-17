@@ -1,8 +1,8 @@
 # Current implementation — Master v85
 
-Audited buuk `1fe5cb9080cd8cc84bd1002c393f720951020f0f` after merged #1525, 17 October 2026.
-#1520–1525 are merged; no open PR at audit. Refresh before new work.
-The v85 candidate contains new product canon plus the fixes below, not a release.
+Audited buuk `5ff872c5aa718d125dda92617e93f30c53b089b2` after merged #1526, 17 October 2026.
+#1520–1526 are merged; no open PR at task start. Refresh before new work.
+Master remains v85; this task changes sporting execution, not product decisions.
 
 **Merged and usable:** calendar creation/first Save, population and Health facts,
 all-Branch horizon extension (#1508), Saved Home readiness (#1509), calendar-aware
@@ -19,7 +19,7 @@ or an advanced clock. Population-only is not proven Tour entry. Match-containing
 fork remains blocked. Legacy W61 sporting guards remain on unsupported calendars,
 including extended reference horizons; no false Full Simulation unlock.
 
-**Current v85 fixes (candidate until owner merge):**
+**Merged v85 fixes (#1526):**
 - A85-01: include the new Saved native match component in extension live capture,
   enabling review/Save after native sport while preserving exact historical bytes.
 - A85-02: exact original knockout command retry works after scoring/Save/extension;
@@ -43,6 +43,18 @@ exceptional individual successes, grouped notifications, season summary with
 compact/detail national comparisons and previous/arbitrary-season comparison.
 Summaries do not themselves pause simulation. See Master 21.5/25.6.1/27.25/31.40.
 Thresholds/layout/calibration and deferred initial-rule inheritance remain open.
+
+**Current candidate:** new four-player knockouts use `calendar_opening_knockout.v2`.
+Both semifinals consume one frozen fresh operation baseline. Actual rally/timeline/
+stamina evidence changes form, sharpness and long-term fatigue; the final consumes
+post-semifinal state, and the embedded terminal checkpoint retains all four players.
+Save/points/extension/restore/restart carry this state under the existing immutable
+component. Admin CS/EN shows all three stages. Historical v1 JSON/hash/replay retain
+their original unchanged-input semantics. See
+[contract and verification](docs/CALENDAR_KNOCKOUT_SPORTING_STATE_V1.md).
+This is operation-owned state, **not** a full canonical 57-attribute/Health week
+owner. Seven-value attributes, fresh initial baseline and no between-round recovery
+remain explicit. No native calendar advance, Tour entry or Official publication.
 
 **Next:** implement true calendar-native canonical sporting/Health checkpoint
 ownership and full attribute projection, then historically configured points,

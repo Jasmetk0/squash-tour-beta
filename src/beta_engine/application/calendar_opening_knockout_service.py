@@ -1,7 +1,8 @@
 """Real four-entrant calendar-native main-only knockout, atomic with exact replay.
 
 Two semifinals read the identical frozen pre-slot population. Their winners
-feed the final, whose engine input is unchanged frozen participant data. This
+feed the final, which consumes the committed post-semifinal form/load state.
+Historical v1 evidence keeps its original frozen-player semantics. This
 bounded sporting writer creates no points, publication or week transition.
 """
 from __future__ import annotations
@@ -17,6 +18,10 @@ from beta_engine.domain.calendar.run_week_position import RunWeekPosition
 from beta_engine.domain.matches.match_engine import MatchEngine
 from beta_engine.domain.matches.models import MatchContext, MatchParticipantContext
 from beta_engine.domain.rankings.official import FrozenInput
+from beta_engine.domain.players.calendar_match_state import (
+    CalendarMatchStatePolicy, CalendarKnockoutSportingState,
+    participant_with_state, advance_played_slot,
+)
 from beta_engine.domain.run_packages import canonical_hash
 from beta_engine.infrastructure.db.calendar_standalone_match_state import (
     CalendarOpeningKnockout, CalendarKnockoutMatch, load_match_rows,
@@ -56,11 +61,12 @@ class CalendarOpeningKnockoutService:
     @staticmethod
     def _play(*, run_id: str, branch_id: str, clock, saved_head: str,
               world_fingerprint: str, pre_slot_anchor: str, root_id: str,
-              round_name: str, slot: int, seed: int, first, second) -> CalendarKnockoutMatch:
+              round_name: str, slot: int, seed: int, first, second,
+              first_context=None, second_context=None) -> CalendarKnockoutMatch:
         context = MatchContext(
             match_id=f"{root_id}-{round_name}",
-            player_a=MatchParticipantContext(player=first),
-            player_b=MatchParticipantContext(player=second),
+            player_a=first_context or MatchParticipantContext(player=first),
+            player_b=second_context or MatchParticipantContext(player=second),
             best_of=5, games_to=11, win_by=2,
         )
         anchor = canonical_hash({
@@ -184,16 +190,33 @@ class CalendarOpeningKnockoutService:
                 world_fingerprint=world.fingerprint,
                 pre_slot_anchor=pre_slot_anchor, root_id=command.match_id,
             )
+            policy = CalendarMatchStatePolicy()
+            initial = policy.initial_states(command.entrant_ids)
+            def context(player, states):
+                state = next(s for s in states if s.player_id == player.player_id)
+                return participant_with_state(player, state, policy)
             semi_a = self._play(**common, round_name="semifinal_1",
-                                slot=1, seed=command.seed, first=a, second=b)
+                                slot=1, seed=command.seed, first=a, second=b,
+                                first_context=context(a, initial), second_context=context(b, initial))
             semi_b = self._play(**common, round_name="semifinal_2",
-                                slot=1, seed=command.seed + 1, first=c, second=d)
+                                slot=1, seed=command.seed + 1, first=c, second=d,
+                                first_context=context(c, initial), second_context=context(d, initial))
+            after_semis, semi_effects = advance_played_slot(initial, (semi_a, semi_b), policy)
+            finalist_a = players[semi_a.result.winner_player_id]
+            finalist_b = players[semi_b.result.winner_player_id]
             final = self._play(
                 **common, round_name="final", slot=2, seed=command.seed + 2,
-                first=players[semi_a.result.winner_player_id],
-                second=players[semi_b.result.winner_player_id],
+                first=finalist_a, second=finalist_b,
+                first_context=context(finalist_a, after_semis),
+                second_context=context(finalist_b, after_semis),
             )
+            terminal, final_effects = advance_played_slot(after_semis, (final,), policy)
             knockout = CalendarOpeningKnockout(
+                schema_version="calendar_opening_knockout.v2",
+                sporting=CalendarKnockoutSportingState(
+                    policy=policy, initial=initial, after_semifinals=after_semis,
+                    terminal=terminal, effects=semi_effects + final_effects,
+                ),
                 run_id=run_id, branch_id=branch_id,
                 match_id=command.match_id, command_id=command.command_id,
                 request_fingerprint=request_fp,
@@ -232,7 +255,8 @@ class CalendarOpeningKnockoutService:
                 ctx = played.input_context
                 replayed = self._play(
                     **common, round_name=played.round, slot=played.slot,
-                    seed=played.seed, first=ctx.player_a.player, second=ctx.player_b.player
+                    seed=played.seed, first=ctx.player_a.player, second=ctx.player_b.player,
+                    first_context=ctx.player_a, second_context=ctx.player_b,
                 )
                 if replayed.model_dump(mode="json") != played.model_dump(mode="json"):
                     raise ValueError("Knockout replay differs from original MatchEngine logs")

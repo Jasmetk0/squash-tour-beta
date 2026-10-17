@@ -9,12 +9,13 @@ from __future__ import annotations
 import json
 from typing import Literal
 
-from pydantic import Field, model_validator
+from pydantic import Field, model_validator, model_serializer
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from beta_engine.domain.calendar.run_week_position import RunWeekPosition
 from beta_engine.domain.matches.models import MatchContext, MatchResult
+from beta_engine.domain.players.calendar_match_state import CalendarKnockoutSportingState
 from beta_engine.domain.rankings.official import FrozenInput
 from beta_engine.domain.run_packages import canonical_hash
 from beta_engine.infrastructure.db.models import CalendarStandaloneMatchModel
@@ -91,7 +92,7 @@ class CalendarKnockoutMatch(FrozenInput):
 
 class CalendarOpeningKnockout(FrozenInput):
     """One complete four-player main-only knockout, not ranking publication."""
-    schema_version: Literal["calendar_opening_knockout.v1"] = "calendar_opening_knockout.v1"
+    schema_version: Literal["calendar_opening_knockout.v1", "calendar_opening_knockout.v2"] = "calendar_opening_knockout.v1"
     run_id: str = Field(min_length=1)
     branch_id: str = Field(min_length=1)
     match_id: str = Field(min_length=1, max_length=128)  # Edition-scoped root ID.
@@ -106,6 +107,15 @@ class CalendarOpeningKnockout(FrozenInput):
     matches: tuple[CalendarKnockoutMatch, CalendarKnockoutMatch, CalendarKnockoutMatch]
     operator_label: str = Field(min_length=1)
     audit_reason: str = Field(min_length=1)
+
+    sporting: CalendarKnockoutSportingState | None = None
+
+    @model_serializer(mode="wrap")
+    def historical_shape(self, handler):
+        body = handler(self)
+        if self.schema_version == "calendar_opening_knockout.v1":
+            body.pop("sporting", None)
+        return body
 
     @model_validator(mode="after")
     def validate_bracket(self):
@@ -134,8 +144,19 @@ class CalendarOpeningKnockout(FrozenInput):
             finalist = (
                 final.input_context.player_a if semi is semi_a else final.input_context.player_b
             )
-            if original.model_dump(mode="json") != finalist.model_dump(mode="json"):
-                raise ValueError("Winner-fed final changes frozen player inputs")
+            if self.schema_version == "calendar_opening_knockout.v1":
+                if original.model_dump(mode="json") != finalist.model_dump(mode="json"):
+                    raise ValueError("Winner-fed final changes frozen player inputs")
+            elif original.player != finalist.player:
+                raise ValueError("Winner-fed final changes frozen player attributes")
+        if self.schema_version == "calendar_opening_knockout.v2":
+            if self.sporting is None:
+                raise ValueError("v2 knockout requires owned sporting checkpoints")
+            if set(p.player_id for p in self.sporting.initial) != set(self.entrant_ids):
+                raise ValueError("Sporting checkpoints differ from knockout entrants")
+            self.sporting.verify_matches(self.matches)
+        elif "sporting" in self.model_fields_set:
+            raise ValueError("Historical v1 knockout cannot carry v2 sporting state")
         if len({m.input_context.match_id for m in self.matches}) != 3:
             raise ValueError("Knockout match IDs must be distinct")
         return self
@@ -154,7 +175,7 @@ def _parse_calendar_match(serialized: str) -> CalendarMatchEvidence:
         raise ValueError("Malformed calendar match evidence")
     if raw.get("schema_version") == "calendar_standalone_match.v1":
         return CalendarStandaloneMatch.model_validate_json(serialized)
-    if raw.get("schema_version") == "calendar_opening_knockout.v1":
+    if raw.get("schema_version") in ("calendar_opening_knockout.v1", "calendar_opening_knockout.v2"):
         return CalendarOpeningKnockout.model_validate_json(serialized)
     if raw.get("schema_version") == "calendar_scored_opening_knockout.v1":
         # Delayed import avoids a circular dependency on the historical,

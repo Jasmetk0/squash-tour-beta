@@ -75,3 +75,14 @@ It adds a signed-clock read-only bridge but **not** a persistent authoritative
 source store or publication; non-FAX sporting writers remain fenced. Next
 migration requires a transactional Run-owned source store, publication and
 transition state (then actual Week/Season progress, development and acceptance).
+
+
+## After #1512 — unpublished calendar ranking sources SQLite candidate
+
+Persisted, versioned calendar result/zero staging and signed Saved-clock
+inspection bridge use new tables, not historic FAX ranking tables. Restart,
+conflict, rollback, tamper and stale-head tests cover the isolated component.
+**Still missing:** independently authenticated tournament source ingestion;
+Run/Branch immutable Saved Revision ownership; restore/fork integration;
+actual official ranking publication, writer and transition migration.
+Current rows must not leak to Viewer or be treated as official sporting facts.

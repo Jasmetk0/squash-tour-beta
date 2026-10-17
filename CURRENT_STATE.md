@@ -98,3 +98,16 @@ no UI or sporting W52/W80 enablement. See the revised scoped contract and
 focused real SQLite tests. Candidate only becomes merge-ready after final-head CI.
 
 **Saved HEAD pinning:** each staged source row records the exact immutable Saved Revision ID active at creation. Subsequent read and write refuse any row originating at a different Saved HEAD. A later legitimate user Save (including a production horizon extension creating a new Saved Revision) therefore fails closed until a reviewed rebase/materialization is implemented. Pure domain horizon continuity does not override this staging ownership barrier. This is deliberately not an automatic Save or fork migration.
+
+
+## Post #1513 — isolated source checkpoint bundle candidate
+
+Owner merged #1513; current `buuk` initially `8fc31604`, no open PR at
+start. New unmerged candidate implements a complete, independently hash-checked,
+origin-pinned staging bundle of calendar ranking result/correction and zero
+versions with transactional SQLite export/import, exact retries, restart,
+corruption, rollback and scope guards. This is preparation/recovery for
+future Saved component work, **not** Saved Revision capture, Branch
+fork/restore or authoritative sporting source ingestion. It does not enable
+W52/W80 Full Simulation. PR final-head tests and workflow status are the
+only merge-readiness authority.

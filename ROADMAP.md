@@ -86,3 +86,15 @@ conflict, rollback, tamper and stale-head tests cover the isolated component.
 Run/Branch immutable Saved Revision ownership; restore/fork integration;
 actual official ranking publication, writer and transition migration.
 Current rows must not leak to Viewer or be treated as official sporting facts.
+
+
+## After #1513 — staged source checkpoint bundle candidate
+
+A versioned exact-Saved-HEAD staging bundle allows internal W52/W61/W80
+ranking source histories to roundtrip SQLite with an independently verified
+fingerprint, all-or-nothing import into empty staging, and safe retry after
+process restart. It does not relax no-publication/legacy safeguards. Remaining
+dependency: verified canonical tournament evidence; Saved Revision
+component ownership and replay/restore/fork, then actual official
+publication and season/week writer migration. Do not mistake a recoverable
+staging bundle for a user Save.

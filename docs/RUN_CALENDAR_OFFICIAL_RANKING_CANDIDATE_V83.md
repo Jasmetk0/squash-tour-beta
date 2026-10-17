@@ -84,3 +84,36 @@ boundary and Save/fork/restore/publication atomically. Staged candidates
 are only operator/developer inspection, not a production sporting write.
 
 **Saved HEAD pinning:** each staged source row records the exact immutable Saved Revision ID active at creation. Subsequent read and write refuse any row originating at a different Saved HEAD. A later legitimate user Save (including a production horizon extension creating a new Saved Revision) therefore fails closed until a reviewed rebase/materialization is implemented. Pure domain horizon continuity does not override this staging ownership barrier. This is deliberately not an automatic Save or fork migration.
+
+
+## Immutable SQLite staging checkpoint bundle (post #1513)
+
+An internal versioned `calendar_ranking_source_staging_bundle.v1` combines
+the exact Run and Branch IDs, pinned Saved HEAD ID + validated immutable
+Saved content hash, full explicit RunCalendar and complete canonical
+hash-linked result/disciplinary-zero version histories. The canonical
+bundle SHA-256 covers all these fields. `load_calendar_ranking_source_bundle`
+requires an **externally supplied trusted expected SHA-256** as well as exact
+Run/Branch, Saved origin and Run calendar; the payload alone cannot authorize
+its own import. It fails closed on changed clock, horizon, origin, incorrect
+scope, invalid history, altered or omitted sources.
+
+The SQLite staging store offers `export_bundle` under physical `BEGIN`
+and `import_bundle` under the caller's `BEGIN IMMEDIATE`. Import validates
+the *entire* bundle before writing, installs only into an empty isolated
+staging store, permits byte-equivalent idempotent retries, and rejects
+partial or conflicting target histories rather than merging. It verifies the
+installed fingerprint inside the same caller transaction; errors roll back
+all rows. Restoring an unmodified bundle into an identically scoped clean
+SQLite database survives process restart. W52/W61/W80, zero corrections,
+historical as-of resolution, tampered rows/payloads and partial transaction
+failure are covered by real SQLite PR-critical tests.
+
+**NOT a product Save, Branch fork, restore operation or promotion to official
+sporting facts.** The bundle must not be embedded into new Saved Revisions or
+served through public UI without full component ownership/fork/restore,
+provenance and replay contracts. A new Saved HEAD, even after compatible Run
+extension, requires an explicit reviewed rebase path; copying a checkpoint
+from another Branch/Run is rejected. It is a bounded persistence/recovery
+building block, not a real tournament source importer or Full Simulation
+unlock.

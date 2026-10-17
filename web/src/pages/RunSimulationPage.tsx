@@ -11,6 +11,7 @@ import { BranchSimulationAction, executeBranchSimulation, newCommandId, simulati
 import { CurrentContextStrip, MetadataList, PageIntro, SectionCard } from '../components/RunScopedUi'
 import { formatApiError } from '../utils/apiErrors'
 import { AuthoritativeSimulationPanel } from './AuthoritativeSimulationPanel'
+import { CalendarStandaloneMatchPanel } from './CalendarStandaloneMatchPanel'
 
 type Review = { action: BranchSimulationAction; runId: string; branchId: string; head: string; state: BranchState; checkpointKind: string }
 type ExecutionSnapshot = Review & { auditReason: string; commandId: string; viewerBranchId: string | null }
@@ -142,6 +143,13 @@ export function RunSimulationPage(): JSX.Element {
       savedRevisionId={executionBranch?.saved_head_revision_id ?? null}
       blockedReason={canonicalEligibility}
     />
+    {!canonicalEligibility && executionBranchId && executionBranch?.saved_head_revision_id && (
+      <CalendarStandaloneMatchPanel
+        runId={runId}
+        branchId={executionBranchId}
+        savedHead={executionBranch.saved_head_revision_id}
+      />
+    )}
 
     {eligibility && <p role="alert" className="error">Legacy compatibility simulation blocked: {eligibility}</p>}
     <SectionCard title="Legacy compatibility simulation actions">

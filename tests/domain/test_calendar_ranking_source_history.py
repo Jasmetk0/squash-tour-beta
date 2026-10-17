@@ -132,7 +132,9 @@ def test_future_correction_is_invisible_and_old_manifest_hash_survives_extension
 
 @pytest.mark.parametrize("W", [52, 61, 80])
 def test_immutable_ranking_predecessor_can_cross_a_strict_horizon_extension(W):
-    original = RunCalendar(W, 1, 2030, 1)
+    # Keep the new target week in BOTH horizons: a rejection of the shortened
+    # clock must be due to lineage, not an out-of-range target week.
+    original = RunCalendar(W, 1, 2030, 2)
     extension = original.extend_to(3)
     p = (player(),)
     policy = OfficialRankingPolicy(policy_id="Best 1", best_n=1)

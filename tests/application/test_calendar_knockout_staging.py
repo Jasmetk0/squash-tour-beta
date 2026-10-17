@@ -231,8 +231,10 @@ def test_fingerprint_clock_and_strict_publication_boundaries():
                 expected_evidence_fingerprint=expected,
             )
     with pytest.raises(ValueError, match="publication must be after"):
-        CalendarKnockoutRankingEvidence(
-            **{**proof.model_dump(mode="json"),"first_publication_week": w(0,80)}
+        CalendarKnockoutRankingEvidence.model_validate_json(
+            proof.model_copy(
+                update={"first_publication_week": w(0, 80)}
+            ).model_dump_json()
         )
 
 

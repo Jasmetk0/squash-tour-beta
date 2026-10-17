@@ -56,8 +56,10 @@ may convert calendar positions to legacy 61-week ordinals.
 SQLite, 52-week and 80-week Run clocks, population adoption + manual Save,
 actual MatchEngine simulation, exact replay, command idempotency/conflict,
 manual match Save, immutable source HEAD and cold restart. This is a
-production backend vertical slice, not a browser UI or a full native
-sporting tournament. No CS/EN browser path or Week/Season Transition is
-claimed. Those must follow once persistent health/sporting week effects,
+production backend vertical slice, not a full native sporting tournament.
+A dedicated CS/EN Admin panel on the Run Simulation page now supports real
+match execution, exact replay, explicit review and manual Save; a Chromium
+end-to-end acceptance of this new panel is not yet claimed. Week/Season
+Transition must follow once persistent health/sporting week effects,
 slot simultaneity, tournament-owned results, point policy and transition
 writers share one validated RunCalendar authority.

@@ -96,3 +96,5 @@ These separate tables are **outside Saved Revision history and real publication*
 there is no matching authoritative source evidence/Save/fork/restore integration,
 no UI or sporting W52/W80 enablement. See the revised scoped contract and
 focused real SQLite tests. Candidate only becomes merge-ready after final-head CI.
+
+**Saved HEAD pinning:** each staged source row records the exact immutable Saved Revision ID active at creation. Subsequent read and write refuse any row originating at a different Saved HEAD. A later legitimate user Save (including a production horizon extension creating a new Saved Revision) therefore fails closed until a reviewed rebase/materialization is implemented. Pure domain horizon continuity does not override this staging ownership barrier. This is deliberately not an automatic Save or fork migration.

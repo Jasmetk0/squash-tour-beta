@@ -5222,3 +5222,38 @@ export function saveCalendarStandaloneMatch(runId: string, branchId: string,
     }),
   })
 }
+
+
+/** Run-calendar-native real four-player knockout, distinct from legacy W61 simulation. */
+function knockoutRoot(runId: string, branchId: string): string {
+  return authoritativeSimulationRoot(runId, branchId) + '/calendar-opening-knockout'
+}
+
+export function inspectCalendarOpeningKnockout(runId: string, branchId: string):
+  Promise<import('./calendarOpeningKnockout').KnockoutInspection> {
+  return request(knockoutRoot(runId, branchId))
+}
+export function simulateCalendarOpeningKnockout(runId: string, branchId: string,
+  command: import('./calendarOpeningKnockout').KnockoutCommand):
+  Promise<import('./calendarOpeningKnockout').KnockoutReceipt> {
+  return request(knockoutRoot(runId, branchId) + '/simulate', {
+    method: 'POST', body: JSON.stringify(command),
+  })
+}
+export function replayCalendarOpeningKnockout(runId: string, branchId: string, matchId: string):
+  Promise<import('./calendarOpeningKnockout').KnockoutReplay> {
+  return request(knockoutRoot(runId, branchId) + '/' + encodeURIComponent(matchId) + '/replay')
+}
+export function previewCalendarOpeningKnockoutSave(runId: string, branchId: string):
+  Promise<import('./calendarOpeningKnockout').KnockoutSavePreview> {
+  return request(knockoutRoot(runId, branchId) + '/save/preview')
+}
+export function saveCalendarOpeningKnockout(runId: string, branchId: string,
+  draftVersion: number, fingerprint: string): Promise<unknown> {
+  return request(knockoutRoot(runId, branchId) + '/save', {
+    method: 'POST', body: JSON.stringify({
+      expected_draft_version: draftVersion,
+      expected_calendar_match_fingerprint: fingerprint,
+    }),
+  })
+}

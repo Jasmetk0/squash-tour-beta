@@ -21,12 +21,15 @@ Saved canonical awards and/or real Saved Slot match receipts against live SQLite
 but only for reference FAX W61/offset37/start2000/50 seasons. No native W52/W80
 sporting publication, Saved ranking ownership or actual transition is thereby done.
 
-**Confirmed regression A84-01:** the old domain test
-`test_old_calendar_immutability_and_new_extension_remains_explicit` contradicts
-#1512's correct strict-extension behavior. Joint audit: 146/147 new backend tests
-pass, this one fails; isolated reproduction 1 failed/3 passed. Fix the stale test,
-retain extension support and old bytes/hashes, run both affected modules together.
-Do not call the backend completely green based on narrow final-HEAD CI subsets.
+**A84-01 regression repair (this PR; verification required):** the older
+`test_old_calendar_immutability_and_new_extension_remains_explicit` now expects
+the correct strict-extension predecessor behavior for W52/61/80. It checks
+preserved predecessor JSON/hash/clock, exact lineage, and rejection of horizon
+shrinkage, different W/offset/start, skipped weeks and legacy clocks. The
+production ranking implementation is unchanged. The v84 audit's 146/147
+pre-fix result remains historical evidence, not a current green claim. Run
+both directly related backend modules together and verify this PR's final HEAD
+before merge. Release regression remains a separate gate.
 
 **Next:** repair A84-01, then a usable calendar-native Run-owned real match/
 main-only tournament with production manual Save/replay/restart. Follow with

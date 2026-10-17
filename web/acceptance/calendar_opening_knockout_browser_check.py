@@ -167,11 +167,12 @@ def exercise_calendar_knockout(page, *, base_url, api_url, artifacts,
     assert points == [100, 60, 30, 30], points
     # W52 point validity: Week 2 of Season 2 is the first expired week.
     rankings.get_by_role("combobox", name="Standings season").select_option("1")
-    expect(page).to_have_url(re.compile(r"[?&]score_season=1(?:&|$)"), timeout=30000)
     expect(rankings.get_by_role("combobox", name="Standings season")).to_have_value("1")
     rankings.get_by_role("combobox", name="Standings week").select_option("2")
-    # Parent may briefly unmount the sporting controls during background
-    # Run/Branch validation. The actual reviewed week must survive.
+    rankings.get_by_role("button", name="Apply selected week").click()
+    expect(page).to_have_url(re.compile(r"[?&]score_season=1(?:&|$)"), timeout=30000)
+    # The reviewed period is now anchored to the URL and survives transient
+    # Branch refreshes as well as a full cold reload.
     expect(rankings.get_by_role("combobox", name="Standings season")).to_have_value("1")
     expect(rankings.get_by_text("Points have expired.", exact=False)).to_be_visible(timeout=120000)
     # The filter must survive a full browser reload and Branch re-selection,
@@ -184,6 +185,8 @@ def exercise_calendar_knockout(page, *, base_url, api_url, artifacts,
                for i in range(4)]
     assert expired == [0, 0, 0, 0], expired
     rankings.get_by_role("combobox", name="Standings season").select_option("0")
+    rankings.get_by_role("button", name="Apply selected week").click()
+    expect(page).to_have_url(re.compile(r"[?&]score_season=0(?:&|$)"), timeout=30000)
     expect(rankings.get_by_text("Points are still within their validity period.", exact=False)).to_be_visible(timeout=120000)
     page.get_by_role("combobox", name="Language / Jazyk").select_option("cs")
     expect(panel.get_by_text("Připravené body (neoficiální)")).to_be_visible()

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { inspectSignedCalendarKnockoutStandings } from '../api/client'
 import type {
   KnockoutInspection, SignedKnockoutStandings,
@@ -17,19 +17,13 @@ export function CalendarSignedKnockoutStandingsPanel({
 }): JSX.Element {
   const { language } = useLanguage()
   const cs = language === 'cs'
-  // Editing the form must not navigate or reload the Run/Branch context.
-  // Confirm a pair of positions as ONE reviewed read; the selected as-of
-  // position is then anchored in the URL by the parent Run Simulation page.
-  const [draftPeriod, setDraftPeriod] = useState({ season, week })
+  const seasonInput = useRef<HTMLInputElement>(null)
+  const weekInput = useRef<HTMLInputElement>(null)
   const [result, setResult] = useState<SignedKnockoutStandings | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const head = view.saved_head_revision_id
   const clock = view.run_calendar
-
-  useEffect(() => {
-    setDraftPeriod({ season, week })
-  }, [runId, branchId, head, season, week])
 
   useEffect(() => {
     let active = true
@@ -67,33 +61,46 @@ export function CalendarSignedKnockoutStandingsPanel({
     <p className="status">{cs
       ? 'Jen 4 účastníci tohoto uloženého turnaje. NENÍ to oficiální žebříček Tour ani skutečný přechod týdne. Bodová platnost je hypotetický pohled k vybranému týdnu.'
       : 'Only the 4 Saved tournament entrants. NOT the Official Tour Ranking or an executed Week Transition. This is a hypothetical as-of point-validity view.'}</p>
-    <label>{cs ? 'Sezona' : 'Season'}{' '}
-      <select aria-label="Standings season" value={draftPeriod.season} onChange={e => {
-        const next = Number(e.currentTarget.value)
-        setDraftPeriod(current => ({
-          season: next,
-          week: next === 0 && current.week === 1 ? 2 : current.week,
-        }))
-      }}>
-        {Array.from({ length: clock.season_count }, (_, i) =>
-          <option key={i} value={i}>{i + 1}</option>)}
-      </select>
-    </label>
-    <label>{cs ? 'Týden' : 'Week'}{' '}
-      <select aria-label="Standings week" value={draftPeriod.week}
-        onChange={e => setDraftPeriod(current => ({
-          ...current, week: Number(e.currentTarget.value),
-        }))}>
-        {Array.from({ length: clock.weeks_per_year }, (_, i) => i + 1)
-          .filter(w => draftPeriod.season !== 0 || w >= 2)
-          .map(w => <option key={w} value={w}>{w}</option>)}
-      </select>
-    </label>
-    <button type="button"
-      disabled={draftPeriod.season === season && draftPeriod.week === week}
-      onClick={() => onPositionChange(draftPeriod)}>
-      {cs ? 'Zobrazit zvolený týden' : 'Apply selected week'}
-    </button>
+    <form onSubmit={event => {
+      event.preventDefault()
+      const proposedSeason = Number(seasonInput.current?.value) - 1
+      const proposedWeek = Number(weekInput.current?.value)
+      if (!Number.isSafeInteger(proposedSeason)
+        || !Number.isSafeInteger(proposedWeek)
+        || proposedSeason < 0 || proposedSeason >= clock.season_count
+        || proposedWeek < 1 || proposedWeek > clock.weeks_per_year
+        || (proposedSeason === 0 && proposedWeek < 2)) {
+        setError(cs ? 'Zadaná sezona nebo týden není platný.' : 'Invalid season or week.')
+        return
+      }
+      onPositionChange({ season: proposedSeason, week: proposedWeek })
+    }}>
+      <label>{cs ? 'Sezona' : 'Season'}{' '}
+        <input key={'s|' + runId + '|' + branchId + '|' + head + '|' + season}
+          ref={seasonInput} aria-label="Standings season number"
+          type="number" min={1} max={clock.season_count} step={1}
+          defaultValue={season + 1} required />
+      </label>
+      <label>{cs ? 'Týden' : 'Week'}{' '}
+        <input key={'w|' + runId + '|' + branchId + '|' + head + '|' + week}
+          ref={weekInput} aria-label="Standings week number"
+          type="number" min={1} max={clock.weeks_per_year} step={1}
+          defaultValue={week} required />
+      </label>
+      <button type="submit">{cs ? 'Zobrazit zvolený týden' : 'Show selected week'}</button>
+    </form>
+    <div>
+      <button type="button"
+        disabled={season === 0 && week === 2}
+        onClick={() => onPositionChange({ season: 0, week: 2 })}>
+        {cs ? 'První týden platnosti' : 'View opening week'}
+      </button>
+      {clock.season_count > 1 && <button type="button"
+        disabled={season === 1 && week === 2}
+        onClick={() => onPositionChange({ season: 1, week: 2 })}>
+        {cs ? 'První týden po vypršení' : 'View first expired week'}
+      </button>}
+    </div>
     {busy && <p role="status">{cs ? 'Ověřuji uložená data…' : 'Verifying Signed Saved data…'}</p>}
     {error && <p role="alert" className="error">{error}</p>}
     {result && !busy && <>

@@ -67,6 +67,7 @@ def exercise_calendar_match(
     selector = page.get_by_role("combobox", name="Admin active Branch")
     expect(selector).to_be_visible()
     selector.select_option(branch_id)
+    page.get_by_role("button", name="Exhibition / Exhibice").click()
     expect(page.get_by_role(
         "heading", name="First real Run-calendar match", exact=True
     )).to_be_visible()
@@ -143,6 +144,7 @@ def exercise_calendar_match(
     reloaded_selector = page.get_by_role("combobox", name="Admin active Branch")
     expect(reloaded_selector).to_be_visible()
     reloaded_selector.select_option(branch_id)
+    page.get_by_role("button", name="Exhibition / Exhibice").click()
     expect(page.get_by_role(
         "heading", name="First real Run-calendar match", exact=True
     )).to_be_visible()

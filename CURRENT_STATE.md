@@ -70,3 +70,16 @@ Verified merge: #1509 is already on `buuk` (17 October 2026, `d8b71c63`); no ope
 ## Post-merge #1510 — versioned calendar Official Ranking candidate
 
 Verified current `buuk` `e852bd74` after owner merged #1510, no competing open PR. The candidate implementation adds a new **independent** W52/W61/W80 Official Ranking calculation schema with Best N, weekly expiry, disciplinary zero slots, Season Week W→next season Week 1 predecessor, deterministic tie-breaking, scoped hashes and a real Saved-Run HEAD read-only bridge. This is **not** a saved Official Ranking publication or a Full Simulation enablement. FAX historical ranking state and frozen tasks remain byte-identical; authoritative Week/Season Transition is still blocked for non-reference Run clocks. Full integration/calibration remain outstanding. See [candidate scope](docs/RUN_CALENDAR_OFFICIAL_RANKING_CANDIDATE_V83.md).
+
+
+## Post #1511 — calendar ranking source history integration candidate
+
+Verified owner merge #1511 on `buuk` `b8046825` (17 October 2026);
+no other open PR at the starting audit. The current *unmerged* candidate
+implements typed W52/W61/W80 result-correction and disciplinary-zero version
+resolution, immutable as-of source manifests, a real signed-Saved-clock
+read-only adapter and strict horizon-extension continuity for ranking
+predecessors. It does **not** persist those new source version types, publish
+official rankings, migrate legacy source stores or remove sporting guards.
+Final HEAD focused tests/CI are required before a merge-ready handoff.
+See [scope and limitations](docs/RUN_CALENDAR_OFFICIAL_RANKING_CANDIDATE_V83.md).

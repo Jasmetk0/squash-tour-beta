@@ -215,6 +215,7 @@ def test_witness_rejects_changed_match_result_and_receipt_and_wrong_bracket():
         )
     bad_result=first.result.model_copy(update={
         "winner_player_id":first.result.loser_player_id,
+        "loser_player_id":first.result.winner_player_id,
     })
     with pytest.raises(ValueError,match="winner disagrees"):
         CalendarEngineMatchWitness.model_validate_json(

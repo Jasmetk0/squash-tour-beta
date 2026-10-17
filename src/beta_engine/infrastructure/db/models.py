@@ -135,6 +135,7 @@ class StagedCalendarRankingResultVersionModel(Base):
     edition_id: Mapped[str] = mapped_column(String(128), primary_key=True)
     player_id: Mapped[str] = mapped_column(String(128), primary_key=True)
     effective_ordinal: Mapped[int] = mapped_column(Integer, primary_key=True)
+    saved_head_revision_id: Mapped[str] = mapped_column(String(128), nullable=False)
     fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
     payload_json: Mapped[str] = mapped_column(Text, nullable=False)
 
@@ -153,6 +154,7 @@ class StagedCalendarRankingZeroVersionModel(Base):
     branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
     zero_id: Mapped[str] = mapped_column(String(128), primary_key=True)
     effective_ordinal: Mapped[int] = mapped_column(Integer, primary_key=True)
+    saved_head_revision_id: Mapped[str] = mapped_column(String(128), nullable=False)
     fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
     payload_json: Mapped[str] = mapped_column(Text, nullable=False)
 

@@ -54,3 +54,31 @@ as-of manifest stability across horizon extension, immutable predecessor
 compatibility and wrong-scope/hash/order/clock rejection, plus real signed-head
 SQLite non-mutation. Follow-up must bind this model to an authoritative versioned
 source store before enabling a publishing writer.
+
+
+## SQLite unpublished source staging (next bounded vertical slice)
+
+`StagedCalendarRankingSourceStore` adds two **separate namespaced SQLite
+tables**, not the historical FAX `OfficialRankingResultVersionModel` or
+`OfficialRankingZeroVersionModel`. Callers explicitly start a physical SQLite
+read snapshot; writes require caller-owned `BEGIN IMMEDIATE`, then exactly
+validate the signed Run/Branch Saved HEAD, RunCalendar, input lineages and stored
+row identity/hash before appending. Unique composite keys enforce idempotent
+exact retries and reject same-effective-week conflicting edits. The caller owns
+commit/rollback; injected later failure leaves no partial staging record.
+Reads verify **all** corrections and zero decisions, including future-dated
+versions, and resolve an exact as-of source manifest before a read-only ranking
+preview. Data persists across process restart. Different W/offset/start-year
+Run clocks, stale heads, read-only scopes, forks without an ancestry materializer
+and already published legacy sporting branches fail closed.
+
+**Crucial limitation:** these are *unpublished internal staging* rows. They
+are deliberately **not** included in immutable Saved Revision components,
+restore, historical Saved diff, Branch forks, Viewer, World Events or
+authoritative ranking source provenance. The caller is still responsible for
+authenticating match/Edition/disciplinary receipts, and the recorded row hash
+is a corruption check, not an external authority signature. Do not add a
+public user-edit endpoint, interpret these rows as sporting state, or unlock
+Full Simulation. Future authoritative integration must migrate the trust
+boundary and Save/fork/restore/publication atomically. Staged candidates
+are only operator/developer inspection, not a production sporting write.

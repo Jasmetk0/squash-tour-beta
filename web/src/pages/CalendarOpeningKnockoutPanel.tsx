@@ -12,6 +12,7 @@ import { verifyKnockoutInspection } from '../api/calendarOpeningKnockout'
 import { newCommandId } from '../admin/branchSimulation'
 import { useLanguage } from '../i18n/LanguageContext'
 import { formatApiError } from '../utils/apiErrors'
+import { CalendarPopulationSportingPanel } from './CalendarPopulationSportingPanel'
 import { CalendarCanonicalInputsPanel } from './CalendarCanonicalInputsPanel'
 import { CalendarKnockoutAwardsPanel } from './CalendarKnockoutAwardsPanel'
 import { CalendarSignedKnockoutStandingsPanel } from './CalendarSignedKnockoutStandingsPanel'
@@ -273,6 +274,9 @@ export function CalendarOpeningKnockoutPanel({
           <p className="status">{cs ? 'Číselný vliv zdravotních omezení nebyl aplikován.' : 'Numeric Health limitation effects were not applied.'}</p>
         </div>}
         <p>{cs ? 'Šampion' : 'Champion'}: <strong>{view.knockout.matches[2].result.winner_player_id}</strong></p>
+        {view.population_sporting_checkpoint && <CalendarPopulationSportingPanel
+          runId={runId} branchId={branchId} head={view.saved_head_revision_id}
+          checkpoint={view.population_sporting_checkpoint} playerIds={view.player_ids} />}
         {view.knockout.sporting && <div aria-label="Knockout player state checkpoints">
           <p className="status">{cs
             ? 'Finalisté používají formu, rozehranost a dlouhodobou únavu po semifinále. Provizorní kalibrace; bez automatické regenerace, vývoje atributů a zdravotních změn.'

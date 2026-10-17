@@ -5295,3 +5295,10 @@ export function previewCalendarCanonicalKnockout(runId: string, branchId: string
   return request(knockoutRoot(runId, branchId) + '/canonical-preview',
     { method: 'POST', body: JSON.stringify(body) })
 }
+
+export function inspectCalendarSportingPlayer(runId: string, branchId: string, playerId: string,
+  head: string, checkpoint: string): Promise<import('./calendarOpeningKnockout').PopulationSportingPlayer> {
+  const params = new URLSearchParams({ expected_saved_head: head, expected_checkpoint_fingerprint: checkpoint })
+  return request(knockoutRoot(runId, branchId) + '/sporting-checkpoint/players/'
+    + encodeURIComponent(playerId) + '?' + params.toString())
+}

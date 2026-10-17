@@ -60,7 +60,7 @@ def test_saved_health_facts_enter_matches_without_implicit_penalty_and_survive_r
         status, played = _request('POST', base(server) + '/simulate', cmd)
         assert status == 201, played
         ko = played['knockout']
-        assert ko['schema_version'] == 'calendar_opening_knockout.v4'
+        assert ko['schema_version'] == 'calendar_opening_knockout.v5'
         source = ko['health_source']
         assert source['source_health_fingerprint'] == view['health_readiness']['source_health_fingerprint']
         injured = next(p for p in source['profiles'] if p['player_id'] == player['player']['player_id'])

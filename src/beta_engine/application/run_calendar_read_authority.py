@@ -126,6 +126,14 @@ def require_supported_legacy_sporting_calendar(
             "the authoritative sporting/ranking writers still require "
             "the historical FAX 61-week, 50-season calendar"
         )
+    # Numeric equality with reference FAX never grants legacy ownership of a
+    # native checkpoint. A later native transition must consume it explicitly.
+    from sqlalchemy import select
+    from beta_engine.infrastructure.db.models import CalendarPlayerSportingCheckpointModel
+    if session.scalar(select(CalendarPlayerSportingCheckpointModel.run_id).where(
+            CalendarPlayerSportingCheckpointModel.run_id == run_id,
+            CalendarPlayerSportingCheckpointModel.branch_id == branch_id).limit(1)) is not None:
+        raise ValueError(f"{operation} cannot reinterpret a native population sporting checkpoint as legacy FAX state")
     return calendar
 
 

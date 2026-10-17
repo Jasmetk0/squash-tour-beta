@@ -28,7 +28,7 @@ def test_preview_is_read_only_and_exact_canonical_source_is_played_saved_restart
             operator_label='Admin',audit_reason='Frozen 57-attribute projection')
         code,played=_request('POST',base(server)+'/simulate',cmd)
         assert code==201,played
-        ko=played['knockout'];assert ko['schema_version']=='calendar_opening_knockout.v4'
+        ko=played['knockout'];assert ko['schema_version']=='calendar_opening_knockout.v5'
         assert ko['canonical_source']==preview['source']
         assert all(len(p['canonical_attributes'])==57 for m in ko['matches'] for p in m['canonical_projections'])
         assert _request('POST',base(server)+'/simulate',cmd)==(201,played)

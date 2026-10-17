@@ -108,3 +108,16 @@ def test_57_values_affect_engine_projection_not_only_audit_payload():
     after=project_player(changed,**kwargs)
     assert dict(after.legacy_engine_values)['technique']>dict(before.legacy_engine_values)['technique']
     assert dict(after.legacy_engine_values)['movement']==dict(before.legacy_engine_values)['movement']
+
+
+def test_historical_v4_keeps_its_exact_pre_owner_json_hash_without_population_checkpoint():
+    from beta_engine.infrastructure.db.calendar_standalone_match_state import load_saved_calendar_match
+    knockout = canonical_bracket()
+    assert knockout.schema_version == 'calendar_opening_knockout.v4'
+    assert knockout.fingerprint == '102789489a426029ac49a3fbc34dd44b32c5334371433ac33713194510b8b53d'
+    payload = {'run': {'run_calendar': knockout.week.calendar.to_metadata()}, 'content': {
+        'calendar_standalone_match': {'fingerprint': knockout.fingerprint, 'state': knockout.model_dump(mode='json')},
+    }}
+    restored = load_saved_calendar_match(payload, run_id=knockout.run_id, branch_id=knockout.branch_id)
+    assert restored.model_dump_json() == knockout.model_dump_json()
+    assert set(payload['content']) == {'calendar_standalone_match'}

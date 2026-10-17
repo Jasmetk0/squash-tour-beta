@@ -1,0 +1,89 @@
+"""Atomic SQLite + Saved Revision ownership for native population sporting state."""
+import json
+
+from beta_engine.domain.players.calendar_sporting_checkpoint import (
+    CalendarSportingCheckpoint, build_calendar_sporting_checkpoint,
+)
+from beta_engine.infrastructure.db.models import CalendarPlayerSportingCheckpointModel
+
+COMPONENT_KEY = 'calendar_player_sporting_checkpoint'
+
+
+def load_checkpoint(session, *, run_id, branch_id):
+    row = session.get(CalendarPlayerSportingCheckpointModel, (run_id, branch_id))
+    if row is None:
+        return None
+    state = CalendarSportingCheckpoint.model_validate_json(row.payload_json)
+    if (state.run_id, state.branch_id, state.fingerprint) != (run_id, branch_id, row.fingerprint):
+        raise ValueError('Calendar sporting checkpoint SQLite identity/hash mismatch')
+    return state
+
+
+def put_checkpoint(session, state):
+    if session.get(CalendarPlayerSportingCheckpointModel, (state.run_id, state.branch_id)):
+        raise ValueError('Calendar sporting checkpoint already exists; cannot overwrite')
+    session.add(CalendarPlayerSportingCheckpointModel(
+        run_id=state.run_id, branch_id=state.branch_id,
+        fingerprint=state.fingerprint, payload_json=state.model_dump_json(),
+    ))
+    session.flush()
+
+
+def _knockout(evidence):
+    # Prepared points wrap rather than replace the original played authority.
+    return getattr(evidence, 'knockout', evidence)
+
+
+def verify_checkpoint(state, world, evidence):
+    from beta_engine.domain.players.calendar_engine_player import calendar_engine_player
+    knockout = _knockout(evidence)
+    required = knockout is not None and knockout.schema_version == 'calendar_opening_knockout.v5'
+    if not required:
+        if state is not None:
+            raise ValueError('Orphan calendar sporting checkpoint without its v5 played source')
+        return
+    if state is None or world is None:
+        raise ValueError('Played v5 knockout requires its complete population sporting checkpoint')
+    expected = build_calendar_sporting_checkpoint(world, knockout, calendar_engine_player)
+    if state != expected:
+        raise ValueError('Calendar sporting checkpoint differs from population and played terminal evidence')
+
+
+def saved_checkpoint(payload, evidence, *, run_id, branch_id):
+    from beta_engine.infrastructure.db.initial_world_state import load_saved_initial_world
+    component = payload.get('content', {}).get(COMPONENT_KEY)
+    state = None
+    if component is not None:
+        if not isinstance(component, dict) or set(component) != {'fingerprint', 'state'}:
+            raise ValueError('Malformed Saved calendar sporting checkpoint component')
+        state = CalendarSportingCheckpoint.model_validate_json(json.dumps(component['state']))
+        if (state.run_id, state.branch_id, state.fingerprint) != (run_id, branch_id, component['fingerprint']):
+            raise ValueError('Saved calendar sporting checkpoint identity/hash mismatch')
+    knockout = _knockout(evidence)
+    required = knockout is not None and knockout.schema_version == 'calendar_opening_knockout.v5'
+    world = load_saved_initial_world(payload, run_id=run_id, branch_id=branch_id) if required or state else None
+    verify_checkpoint(state, world, evidence)
+    return state
+
+
+def capture_checkpoint(session, payload, evidence, *, run_id, branch_id):
+    from beta_engine.infrastructure.db.initial_world_state import get_initial_world
+    state = load_checkpoint(session, run_id=run_id, branch_id=branch_id)
+    world = get_initial_world(session, run_id=run_id, branch_id=branch_id) if state or evidence else None
+    verify_checkpoint(state, world, evidence)
+    if state is not None:
+        payload['content'][COMPONENT_KEY] = {'fingerprint': state.fingerprint, 'state': state.model_dump(mode='json')}
+
+
+def restore_checkpoint(session, *, current_payload, target_payload, current, target, run_id, branch_id):
+    expected = saved_checkpoint(current_payload, current, run_id=run_id, branch_id=branch_id)
+    replacement = saved_checkpoint(target_payload, target, run_id=run_id, branch_id=branch_id)
+    live = load_checkpoint(session, run_id=run_id, branch_id=branch_id)
+    if live != expected:
+        raise ValueError('Live calendar sporting checkpoint differs from current Saved HEAD')
+    row = session.get(CalendarPlayerSportingCheckpointModel, (run_id, branch_id))
+    if row is not None:
+        session.delete(row)
+        session.flush()
+    if replacement is not None:
+        put_checkpoint(session, replacement)

@@ -38,7 +38,7 @@ export type KnockoutSportingState = {
   health_effects_applied: false; annual_development_applied: false
 }
 export type OpeningKnockout = {
-  schema_version: 'calendar_opening_knockout.v1' | 'calendar_opening_knockout.v2' | 'calendar_opening_knockout.v3' | 'calendar_opening_knockout.v4'
+  schema_version: 'calendar_opening_knockout.v1' | 'calendar_opening_knockout.v2' | 'calendar_opening_knockout.v3' | 'calendar_opening_knockout.v4' | 'calendar_opening_knockout.v5'
   run_id: string; branch_id: string; match_id: string
   week: { season_index: number; week: number; calendar: KnockoutInspection['run_calendar'] }
   entrant_ids: [string, string, string, string]
@@ -47,7 +47,19 @@ export type OpeningKnockout = {
   health_source?: KnockoutHealthSource
   canonical_source?: CanonicalKnockoutSource
 }
+export type PopulationSportingCheckpoint = {
+  schema_version: 'calendar_sporting_checkpoint.v1'; fingerprint: string
+  source_knockout_fingerprint: string; player_count: number; attribute_count: 57
+  phase: 'opening_week_after_knockout'; saved: boolean
+  annual_development_applied: false; health_effects_applied: false
+}
+export type PopulationSportingPlayer = {
+  schema_version: 'calendar_sporting_checkpoint_player.v1'; run_id: string; branch_id: string
+  saved_head_revision_id: string; checkpoint_fingerprint: string
+  player: KnockoutPlayerState & { attributes: [string, number][]; potential_ovr: number }
+}
 export type KnockoutInspection = {
+  population_sporting_checkpoint?: PopulationSportingCheckpoint | null
   schema_version: 'calendar_opening_knockout_inspection.v1'
   run_id: string; branch_id: string; saved_head_revision_id: string; draft_version: number
   run_calendar: { schema_version: string; weeks_per_year: number; season_start_year_week: number; start_year: number; season_count: number }
@@ -100,7 +112,7 @@ export function verifyKnockoutInspection(v: KnockoutInspection, runId: string, b
   }
   if (v.knockout) {
     const k = v.knockout, [a, b, f] = k.matches ?? []
-    if (!['calendar_opening_knockout.v1', 'calendar_opening_knockout.v2', 'calendar_opening_knockout.v3', 'calendar_opening_knockout.v4'].includes(k.schema_version)
+    if (!['calendar_opening_knockout.v1', 'calendar_opening_knockout.v2', 'calendar_opening_knockout.v3', 'calendar_opening_knockout.v4', 'calendar_opening_knockout.v5'].includes(k.schema_version)
       || k.run_id !== runId || k.branch_id !== branchId
       || k.week.season_index !== 0 || k.week.week !== 1
       || k.week.calendar.weeks_per_year !== v.run_calendar.weeks_per_year
@@ -133,7 +145,7 @@ export function verifyKnockoutInspection(v: KnockoutInspection, runId: string, b
     } else if (k.sporting !== undefined) {
       throw Error('Historical knockout cannot carry newer sporting checkpoints')
     }
-    if (k.schema_version === 'calendar_opening_knockout.v3' || (k.schema_version === 'calendar_opening_knockout.v4' && k.health_source)) {
+    if (k.schema_version === 'calendar_opening_knockout.v3' || (['calendar_opening_knockout.v4', 'calendar_opening_knockout.v5'].includes(k.schema_version) && k.health_source)) {
       const source = k.health_source
       if (!source || source.schema_version !== 'calendar_knockout_health_source.v1'
         || !['calendar_initial_health_state.v1', 'player_health_calendar_state.v2'].includes(source.source_health_schema)
@@ -155,7 +167,7 @@ export function verifyKnockoutInspection(v: KnockoutInspection, runId: string, b
     } else if (k.health_source !== undefined || k.matches.some(m => m.effective_health !== undefined)) {
       throw Error('Historical knockout cannot acquire newer Health inputs')
     }
-    if (k.schema_version === 'calendar_opening_knockout.v4') {
+    if (['calendar_opening_knockout.v4', 'calendar_opening_knockout.v5'].includes(k.schema_version)) {
       verifyCanonicalKnockoutSource(k.canonical_source!, v.initial_world_fingerprint, k.entrant_ids)
       if (!k.matches.every(m => m.canonical_projections?.length === 2
         && m.canonical_projections[0].player_id === m.input_context.player_a.player.player_id
@@ -168,6 +180,18 @@ export function verifyKnockoutInspection(v: KnockoutInspection, runId: string, b
     }
   } else if (v.saved || v.knockout_fingerprint !== null || v.prepared_points) {
     throw Error('Saved knockout component has no played result')
+  }
+  const checkpoint = v.population_sporting_checkpoint
+  if (v.knockout?.schema_version === 'calendar_opening_knockout.v5') {
+    if (!checkpoint || checkpoint.schema_version !== 'calendar_sporting_checkpoint.v1'
+      || !isHash(checkpoint.fingerprint) || !isHash(checkpoint.source_knockout_fingerprint)
+      || checkpoint.player_count !== v.player_ids.length || checkpoint.attribute_count !== 57
+      || checkpoint.phase !== 'opening_week_after_knockout' || checkpoint.saved !== v.saved
+      || checkpoint.annual_development_applied !== false || checkpoint.health_effects_applied !== false) {
+      throw Error('Played knockout lacks its complete population sporting checkpoint')
+    }
+  } else if (checkpoint != null) {
+    throw Error('Historical knockout cannot acquire a new population checkpoint')
   }
   if (v.health_readiness && (!isHash(v.health_readiness.source_health_fingerprint)
     || v.health_readiness.numeric_effect_applied !== false

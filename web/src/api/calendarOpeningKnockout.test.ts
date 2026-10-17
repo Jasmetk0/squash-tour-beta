@@ -111,3 +111,31 @@ describe('canonical v4 source response boundary', () => {
     expect(() => verifyKnockoutInspection(v, 'r', 'b', 'head')).toThrow()
   })
 })
+
+function populationFixture() {
+  const v = canonicalFixture()
+  v.knockout!.schema_version = 'calendar_opening_knockout.v5'
+  v.population_sporting_checkpoint = {
+    schema_version: 'calendar_sporting_checkpoint.v1', fingerprint: 'a'.repeat(64),
+    source_knockout_fingerprint: 'b'.repeat(64), player_count: 4, attribute_count: 57,
+    phase: 'opening_week_after_knockout', saved: true,
+    annual_development_applied: false, health_effects_applied: false,
+  }
+  return v
+}
+
+describe('v5 requires the persisted full-population owner', () => {
+  it('accepts the world owner with the correct population and Save state', () => {
+    const v = populationFixture()
+    expect(verifyKnockoutInspection(v, 'r', 'b', 'head')).toBe(v)
+  })
+  it.each(['missing', 'count', 'saved', 'historical', 'hash'])('rejects %s checkpoint', fault => {
+    const v = populationFixture()
+    if (fault === 'missing') delete v.population_sporting_checkpoint
+    if (fault === 'count') v.population_sporting_checkpoint!.player_count = 3
+    if (fault === 'saved') v.population_sporting_checkpoint!.saved = false
+    if (fault === 'historical') v.knockout!.schema_version = 'calendar_opening_knockout.v4'
+    if (fault === 'hash') v.population_sporting_checkpoint!.fingerprint = 'wrong'
+    expect(() => verifyKnockoutInspection(v, 'r', 'b', 'head')).toThrow()
+  })
+})

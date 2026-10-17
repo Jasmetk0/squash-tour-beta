@@ -83,7 +83,7 @@ def exercise_calendar_knockout(page, *, base_url, api_url, artifacts,
         play.click()
     assert response.value.status == 201, response.value.text()[:1200]
     played = response.value.json()
-    assert played['knockout']['schema_version'] == 'calendar_opening_knockout.v4'
+    assert played['knockout']['schema_version'] == 'calendar_opening_knockout.v5'
     assert played['knockout']['canonical_source'] == canonical_preview['source']
     assert all(len(p['canonical_attributes']) == 57 for m in played['knockout']['matches']
                for p in m['canonical_projections'])
@@ -106,6 +106,23 @@ def exercise_calendar_knockout(page, *, base_url, api_url, artifacts,
     assert matches[2]["result"]["player_a_id"] == matches[0]["result"]["winner_player_id"]
     assert matches[2]["result"]["player_b_id"] == matches[1]["result"]["winner_player_id"]
     expect(panel.get_by_text("Unsaved", exact=False)).to_be_visible()
+    population = panel.locator('section[aria-label="Population sporting checkpoint"]')
+    expect(population.get_by_role('heading', name='Population sporting checkpoint')).to_be_visible()
+    population_view = api('GET', root)['population_sporting_checkpoint']
+    assert population_view['player_count'] == len(initial['player_ids'])
+    assert population_view['player_count'] >= 1000 and population_view['attribute_count'] == 57
+    assert not population_view['saved']
+    outsider_id = next(pid for pid in initial['player_ids'] if pid not in played['knockout']['entrant_ids'])
+    population.get_by_role('combobox', name='Population player').select_option(outsider_id)
+    with page.expect_response(lambda r: r.request.method == 'GET'
+                              and '/sporting-checkpoint/players/' in r.url) as response:
+        population.get_by_role('button', name='Inspect stored sporting record').click()
+    assert response.value.status == 200, response.value.text()[:1200]
+    outsider = response.value.json()
+    assert outsider['player']['player_id'] == outsider_id and len(outsider['player']['attributes']) == 57
+    assert outsider['player']['long_term_fatigue'] == 0
+    expect(population.get_by_label('Population sporting player record').get_by_role('row')).to_have_count(58)
+
 
     with page.expect_response(lambda r:
             r.request.method == "GET" and r.url.endswith("/calendar-opening-knockout/replay")) as response:
@@ -125,6 +142,9 @@ def exercise_calendar_knockout(page, *, base_url, api_url, artifacts,
     assert revision != initial["saved_head_revision_id"]
     assert api("GET", root)["saved"] is True
     assert api("GET", root)['knockout']['sporting'] == sporting
+    saved_population = api('GET', root)['population_sporting_checkpoint']
+    assert saved_population['saved'] and saved_population['fingerprint'] == population_view['fingerprint']
+
 
     page.reload()
     selector = page.get_by_role("combobox", name="Admin active Branch")
@@ -137,6 +157,15 @@ def exercise_calendar_knockout(page, *, base_url, api_url, artifacts,
     assert api('GET', root)['knockout']['health_source'] == health_source
     assert api('GET', root)['knockout']['canonical_source'] == canonical_preview['source']
     expect(panel.get_by_text('Frozen attributes used when played.', exact=True)).to_be_visible()
+    population = panel.locator('section[aria-label="Population sporting checkpoint"]')
+    expect(population.get_by_role('heading', name='Population sporting checkpoint')).to_be_visible()
+    population.get_by_role('combobox', name='Population player').select_option(outsider_id)
+    with page.expect_response(lambda r: r.request.method == 'GET'
+                              and '/sporting-checkpoint/players/' in r.url) as response:
+        population.get_by_role('button', name='Inspect stored sporting record').click()
+    assert response.value.status == 200
+    assert response.value.json()['player'] == outsider['player']
+
     assert api("GET", root + "/calendar-opening-knockout/replay")["exact_replay"]
     page.get_by_role("combobox", name="Language / Jazyk").select_option("cs")
     expect(page.get_by_role(
@@ -292,6 +321,7 @@ def exercise_calendar_knockout(page, *, base_url, api_url, artifacts,
     assert current["saved"] and current["knockout_fingerprint"] == prepared["fingerprint"]
     assert current["run_calendar"]["season_count"] == new_count
     assert current["knockout"] == played["knockout"]
+    assert current["population_sporting_checkpoint"]["fingerprint"] == population_view["fingerprint"]
     assert api("GET", root + "/calendar-opening-knockout/replay")["exact_replay"]
     page.goto(base_url + "/admin/runs/" + enc(run_id) + "/simulate")
     page.get_by_role("combobox", name="Admin active Branch").select_option(branch_id)
@@ -308,6 +338,9 @@ def exercise_calendar_knockout(page, *, base_url, api_url, artifacts,
     page.screenshot(path=str(artifacts / "18-scored-knockout-horizon-extended.png"), full_page=True)
     return {
         "actual_match_engine_matches": 3,
+        "population_sporting_checkpoint_count": population_view["player_count"],
+        "nonparticipant_57_record_saved_reloaded_unchanged": True,
+        "population_checkpoint_preserved_after_extension": True,
         "same_pre_slot_semifinals": True,
         "winner_fed_final": True,
         "canonical_57_preview_read_only": True,

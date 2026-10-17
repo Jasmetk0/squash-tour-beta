@@ -13,6 +13,7 @@ from pathlib import Path
 from playwright.sync_api import expect, sync_playwright
 
 from calendar_standalone_match_browser_check import exercise_calendar_match
+from calendar_opening_knockout_browser_check import exercise_calendar_knockout
 
 
 def main() -> None:
@@ -289,6 +290,14 @@ def main() -> None:
             page.get_by_role("textbox", name="Player country").fill("CZE")
             evidence["canonical_saved_players_empty_and_shared_fork_fail_closed"] = True
             assert page.locator(".app-shell--admin").get_attribute("data-run-form-edited") is None
+            evidence["calendar_native_four_player_knockout"] = exercise_calendar_knockout(
+                page, base_url=base, api_url=args.api_url, artifacts=artifacts,
+                run_id=custom_id,
+                original_branch_id=preview_branch["branch_id"],
+                population_revision_id=saved_population["revision_id"],
+                original_clock=expected_clock,
+            )
+
             page.get_by_role("link", name="Squash Engine global Home").click()
             expect(page.get_by_role("heading", name="Squash Engine Home")).to_be_visible()
             assert not dialogs, "Read-only Run filters must not prompt on clean exit"

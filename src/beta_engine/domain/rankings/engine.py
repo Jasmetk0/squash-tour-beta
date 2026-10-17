@@ -66,6 +66,12 @@ class RankingRaceEngine:
         # awards. Legacy targets retain the original >=1900 year boundary.
         self._check_week(season=target_season, week=1, calendar=run_calendar)
         if run_calendar is not None:
+            # Validate each actual source clock before future-event checks;
+            # malformed Week 53 on W52 is not a valid 'future' timestamp.
+            for item in completed_tournaments:
+                self._check_week(
+                    season=item.season, week=item.week, calendar=run_calendar,
+                )
             current = self._week_key(as_of_season, as_of_week, weeks_per_year)
             # Validate original tournament facts, not only awards: empty or
             # unranked future results must never slip into a historical report.

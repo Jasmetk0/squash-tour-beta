@@ -279,3 +279,39 @@ def test_calendar_staging_requires_a_physical_sqlite_transaction(tmp_path):
                 StagedCalendarRankingSourceStore(session).history(**scope())
     finally:
         engine.dispose()
+
+
+def test_staged_sources_are_pinned_to_exact_origin_saved_head(tmp_path):
+    engine, factory, _ = _setup(tmp_path)
+    try:
+        _signed_test_calendar(factory, RunCalendar(52, 1, 2030, 3))
+        with factory.begin() as session:
+            session.connection().exec_driver_sql("BEGIN IMMEDIATE")
+            store = StagedCalendarRankingSourceStore(session)
+            store.append_result(rv(52), expected_saved_head_revision_id=HEAD)
+            store.append_zero(zv(W=52), expected_saved_head_revision_id=HEAD)
+        with factory.begin() as session:
+            row = session.get(StagedCalendarRankingResultVersionModel, (
+                RUN, BRANCH, "event", "p", 51,
+            ))
+            assert row.saved_head_revision_id == HEAD
+            row.saved_head_revision_id = "different-revision"
+        with factory() as session:
+            session.connection().exec_driver_sql("BEGIN")
+            with pytest.raises(ValueError, match="different Saved HEAD"):
+                StagedCalendarRankingSourceStore(session).history(**scope())
+        with factory.begin() as session:
+            session.get(StagedCalendarRankingResultVersionModel, (
+                RUN, BRANCH, "event", "p", 51,
+            )).saved_head_revision_id = HEAD
+            row = session.get(StagedCalendarRankingZeroVersionModel, (
+                RUN, BRANCH, "sanction", 52,
+            ))
+            assert row.saved_head_revision_id == HEAD
+            row.saved_head_revision_id = "different-revision"
+        with factory() as session:
+            session.connection().exec_driver_sql("BEGIN")
+            with pytest.raises(ValueError, match="different Saved HEAD"):
+                StagedCalendarRankingSourceStore(session).resolve(**scope(week=w(1, 1)))
+    finally:
+        engine.dispose()

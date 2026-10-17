@@ -134,9 +134,12 @@ def _setup_saved(tmp_path, *, saved=True, live=True, clock=None, saved_versions=
 
 
 def scope(**kwargs):
-    return dict(run_id=RUN, branch_id=BRANCH,
-                expected_saved_head_revision_id=HEAD,
-                edition_id="event", **kwargs)
+    args = dict(
+        run_id=RUN, branch_id=BRANCH,
+        expected_saved_head_revision_id=HEAD, edition_id="event",
+    )
+    args.update(kwargs)
+    return args
 
 
 def _read(factory, **kwargs):
@@ -145,8 +148,7 @@ def _read(factory, **kwargs):
         return saved_canonical_tournament_ranking_sources(session, **scope(**kwargs))
 
 
-@pytest.mark.parametrize("source_schema", ["v4"])
-def test_canonical_saved_tournament_bridge_real_sqlite_and_candidate_replay(tmp_path, source_schema):
+def test_canonical_saved_tournament_bridge_real_sqlite_and_candidate_replay(tmp_path):
     engine, factory, repo, source = _setup_saved(tmp_path)
     try:
         before = repo.get_branch_revision_state(branch_id=BRANCH)

@@ -131,6 +131,8 @@ class CalendarStandaloneMatchService:
                 raise ValueError("Saved calendar match differs from live match")
             if len(rows) > 1:
                 raise ValueError("Standalone calendar match v1 allows one completed match")
+            if rows and not isinstance(rows[0], CalendarStandaloneMatch):
+                raise ValueError("Opening knockout owns this sporting slice; use the knockout Admin view")
             return {
                 "schema_version": "calendar_standalone_match_inspection.v1",
                 "run_id": run_id,
@@ -157,7 +159,8 @@ class CalendarStandaloneMatchService:
             if existing:
                 match = existing[0]
                 if (
-                    len(existing) != 1 or match.command_id != command.command_id
+                    len(existing) != 1 or not isinstance(match, CalendarStandaloneMatch)
+                    or match.command_id != command.command_id
                     or match.request_fingerprint != request_fp
                 ):
                     raise ValueError("Standalone match already played; conflicting command")
@@ -218,6 +221,8 @@ class CalendarStandaloneMatchService:
             match = next((state for state in rows if state.match_id == match_id), None)
             if match is None:
                 raise KeyError("Calendar match not found")
+            if not isinstance(match, CalendarStandaloneMatch):
+                raise ValueError("This evidence is a tournament; use the knockout replay endpoint")
             # Re-run the actual MatchEngine, not a recomputed summary or
             # manually overwritten Saved payload.
             anchor = canonical_hash({

@@ -52,6 +52,8 @@ class RankingRaceEngine:
         callers MUST pass their historically effective saved calendar explicitly;
         this report does not publish Official Ranking or start simulation.
         """
+        if run_calendar is not None and run_calendar.schema_version != "run_calendar.v1":
+            raise ValueError("Explicit ranking calendar requires a versioned Run clock")
         weeks_per_year = run_calendar.weeks_per_year if run_calendar else 61
         if type(best_of_results) is not int or best_of_results < 1:
             raise ValueError("best_of_results must be positive")
@@ -64,14 +66,19 @@ class RankingRaceEngine:
             # Validate target even without any awards: Race cannot refer to a
             # season outside the Run or silently translate the calendar offset.
             run_calendar._validate_season_index(target_season - run_calendar.start_year)
+        if run_calendar is not None:
+            current = self._week_key(as_of_season, as_of_week, weeks_per_year)
+            # Validate original tournament facts, not only awards: empty or
+            # unranked future results must never slip into a historical report.
+            if any(
+                self._week_key(t.season, t.week, weeks_per_year) > current
+                for t in completed_tournaments
+            ):
+                raise ValueError("Run calendar ranking report cannot include future tournaments")
         awards = self.resolve_point_awards(
             completed_tournaments=completed_tournaments,
             run_calendar=run_calendar,
         )
-        if run_calendar is not None:
-            current = self._week_key(as_of_season, as_of_week, weeks_per_year)
-            if any(self._week_key(a.season, a.week, weeks_per_year) > current for a in awards):
-                raise ValueError("Run calendar ranking report cannot include future tournament awards")
         ranking = self._build_ranking(
             awards=awards,
             as_of_season=as_of_season,

@@ -1,5 +1,16 @@
 /** A bounded real four-player knockout. Not a ranking/points/Week Transition. */
+export type KnockoutHealthProfile = {
+  player_id: string; highest_current_severity: number; highest_permanent_limitation: number
+  numeric_effect_applied: false; numeric_calibration_required: boolean
+  current_records: { record_id: string; condition_key: string; severity: number }[]
+}
+export type KnockoutHealthSource = {
+  schema_version: 'calendar_knockout_health_source.v1'
+  source_health_schema: string; source_health_fingerprint: string
+  profiles: KnockoutHealthProfile[]; numeric_effect_applied: false
+}
 export type KnockoutMatch = {
+  effective_health?: { numeric_effect_applied: false; player_profiles: KnockoutHealthProfile[] }
   round: 'semifinal_1' | 'semifinal_2' | 'final'
   slot: 1 | 2
   seed: number
@@ -16,17 +27,22 @@ export type KnockoutSportingState = {
   health_effects_applied: false; annual_development_applied: false
 }
 export type OpeningKnockout = {
-  schema_version: 'calendar_opening_knockout.v1' | 'calendar_opening_knockout.v2'
+  schema_version: 'calendar_opening_knockout.v1' | 'calendar_opening_knockout.v2' | 'calendar_opening_knockout.v3'
   run_id: string; branch_id: string; match_id: string
   week: { season_index: number; week: number; calendar: KnockoutInspection['run_calendar'] }
   entrant_ids: [string, string, string, string]
   matches: [KnockoutMatch, KnockoutMatch, KnockoutMatch]
   sporting?: KnockoutSportingState
+  health_source?: KnockoutHealthSource
 }
 export type KnockoutInspection = {
   schema_version: 'calendar_opening_knockout_inspection.v1'
   run_id: string; branch_id: string; saved_head_revision_id: string; draft_version: number
   run_calendar: { schema_version: string; weeks_per_year: number; season_start_year_week: number; start_year: number; season_count: number }
+  health_readiness?: {
+    source_health_schema: string; source_health_fingerprint: string
+    limited_player_ids: string[]; numeric_effect_applied: false
+  } | null
   initial_world_fingerprint: string
   player_ids: string[]
   knockout: OpeningKnockout | null
@@ -72,7 +88,7 @@ export function verifyKnockoutInspection(v: KnockoutInspection, runId: string, b
   }
   if (v.knockout) {
     const k = v.knockout, [a, b, f] = k.matches ?? []
-    if (!['calendar_opening_knockout.v1', 'calendar_opening_knockout.v2'].includes(k.schema_version)
+    if (!['calendar_opening_knockout.v1', 'calendar_opening_knockout.v2', 'calendar_opening_knockout.v3'].includes(k.schema_version)
       || k.run_id !== runId || k.branch_id !== branchId
       || k.week.season_index !== 0 || k.week.week !== 1
       || k.week.calendar.weeks_per_year !== v.run_calendar.weeks_per_year
@@ -87,7 +103,7 @@ export function verifyKnockoutInspection(v: KnockoutInspection, runId: string, b
       || !k.matches.every(m => Array.isArray(m.result.rally_log?.events) && m.result.rally_log.events.length > 0)) {
       throw Error('Opening knockout is not a valid winner-fed three-match bracket')
     }
-    if (k.schema_version === 'calendar_opening_knockout.v2') {
+    if (k.schema_version !== 'calendar_opening_knockout.v1') {
       const state = k.sporting
       if (!state || state.schema_version !== 'calendar_knockout_sporting.v1'
         || state.health_effects_applied !== false || state.annual_development_applied !== false
@@ -105,8 +121,36 @@ export function verifyKnockoutInspection(v: KnockoutInspection, runId: string, b
     } else if (k.sporting !== undefined) {
       throw Error('Historical knockout cannot carry newer sporting checkpoints')
     }
+    if (k.schema_version === 'calendar_opening_knockout.v3') {
+      const source = k.health_source
+      if (!source || source.schema_version !== 'calendar_knockout_health_source.v1'
+        || !['calendar_initial_health_state.v1', 'player_health_calendar_state.v2'].includes(source.source_health_schema)
+        || !isHash(source.source_health_fingerprint) || source.numeric_effect_applied !== false
+        || !Array.isArray(source.profiles) || source.profiles.length !== 4
+        || new Set(source.profiles.map(p => p.player_id)).size !== 4
+        || !source.profiles.every(p => k.entrant_ids.includes(p.player_id)
+          && p.numeric_effect_applied === false && typeof p.numeric_calibration_required === 'boolean'
+          && Number.isInteger(p.highest_current_severity) && p.highest_current_severity >= 0 && p.highest_current_severity <= 100
+          && Number.isInteger(p.highest_permanent_limitation) && p.highest_permanent_limitation >= 0 && p.highest_permanent_limitation <= 100
+          && Array.isArray(p.current_records))
+        || !k.matches.every(m => m.effective_health?.numeric_effect_applied === false
+          && m.effective_health.player_profiles.length === 2
+          && m.effective_health.player_profiles.every(p => p.numeric_effect_applied === false)
+          && m.effective_health.player_profiles[0].player_id === m.input_context.player_a.player.player_id
+          && m.effective_health.player_profiles[1].player_id === m.input_context.player_b.player.player_id)) {
+        throw Error('Knockout Health does not match its Saved source and match participants')
+      }
+    } else if (k.health_source !== undefined || k.matches.some(m => m.effective_health !== undefined)) {
+      throw Error('Historical knockout cannot acquire newer Health inputs')
+    }
   } else if (v.saved || v.knockout_fingerprint !== null || v.prepared_points) {
     throw Error('Saved knockout component has no played result')
+  }
+  if (v.health_readiness && (!isHash(v.health_readiness.source_health_fingerprint)
+    || v.health_readiness.numeric_effect_applied !== false
+    || !Array.isArray(v.health_readiness.limited_player_ids)
+    || v.health_readiness.limited_player_ids.some(id => !v.player_ids.includes(id)))) {
+    throw Error('Knockout Health readiness has changed its population')
   }
   if (v.prepared_points) {
     const awards = v.prepared_points.awards

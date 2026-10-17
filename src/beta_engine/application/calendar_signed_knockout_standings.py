@@ -12,8 +12,8 @@ import json
 from pydantic import Field
 from sqlalchemy import text
 
-from beta_engine.application.calendar_standalone_match_service import (
-    CalendarStandaloneMatchService,
+from beta_engine.application.calendar_opening_knockout_service import (
+    CalendarOpeningKnockoutService,
 )
 from beta_engine.domain.calendar.run_week_position import RunWeekPosition
 from beta_engine.domain.rankings.official import FrozenInput
@@ -76,7 +76,7 @@ class CalendarSignedKnockoutStandingsService:
                 expected_saved_head: str, season_index: int, week: int) -> dict:
         with self.repository._session_factory() as session:
             session.execute(text("BEGIN"))
-            clock, revision, world = CalendarStandaloneMatchService(
+            clock, revision, world, _health = CalendarOpeningKnockoutService(
                 self.repository
             )._context(session, run_id=run_id, branch_id=branch_id)
             if revision.saved_head_revision_id != expected_saved_head:

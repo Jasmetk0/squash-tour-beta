@@ -992,7 +992,6 @@ def main() -> None:
                 page, base_url=base, api_url=args.api_url, artifacts=artifacts,
                 run_id=custom_id,
                 original_branch_id=preview_branch["branch_id"],
-                population_revision_id=saved_population["revision_id"],
                 original_clock=expected_clock,
             )
             assert evidence["calendar_native_four_player_knockout"][

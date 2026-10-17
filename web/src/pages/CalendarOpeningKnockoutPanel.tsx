@@ -220,6 +220,15 @@ export function CalendarOpeningKnockoutPanel({
     {status === 'blocked' && <p role="status">{cs ? 'Nedostupné: ' : 'Not available: '}{error}</p>}
     {view && status !== 'blocked' && <>
       <p className="status">W{view.run_calendar.weeks_per_year} · HEAD <code>{view.saved_head_revision_id}</code></p>
+      {view.health_readiness && <div aria-label="Saved knockout Health readiness">
+        <p>{cs ? 'Turnaj používá uložená zdravotní fakta.' : 'Knockout uses Saved Health facts.'}</p>
+        <p className="status">{cs
+          ? 'Číselný vliv omezení, léčení a rozhodování o nenastoupení nebo skreči zatím nejsou podporované.'
+          : 'Numeric limitation effects, healing and medical start/retirement decisions are not yet supported.'}</p>
+        {view.health_readiness.limited_player_ids.some(id => (view.knockout?.entrant_ids ?? entrants).includes(id)) && <p role="status">{cs
+          ? 'Pozor: vybraní hráči mají zdravotní omezení. Fakta zůstanou zaznamenaná, jejich číselný vliv se zatím nepočítá.'
+          : 'Warning: selected entrants have Health limitations. Facts remain recorded; their numeric effect is not yet calculated.'}</p>}
+      </div>}
       {!view.knockout && <>
         {entrants.map((player, index) => <label key={index}>
           {cs ? 'Hráč' : 'Player'} {index + 1}{' '}
@@ -246,6 +255,17 @@ export function CalendarOpeningKnockoutPanel({
           {' · '}{cs ? 'vítěz' : 'winner'}: <strong>{match.result.winner_player_id}</strong>
           {' · '}{match.result.rally_log.events.length} rallies
         </p>)}
+        {view.knockout.health_source && <div aria-label="Frozen knockout Health inputs">
+          <p>{cs ? 'Zdravotní fakta použitá při odehrání (pozdější úpravy je nemění)' : 'Health facts used when played (later edits do not change them)'}</p>
+          <table aria-label="Frozen knockout Health table"><thead><tr>
+            <th>{cs ? 'Hráč' : 'Player'}</th><th>{cs ? 'Omezení' : 'Conditions'}</th>
+            <th>{cs ? 'Závažnost' : 'Severity'}</th><th>{cs ? 'Trvalé omezení' : 'Permanent limitation'}</th>
+          </tr></thead><tbody>{view.knockout.health_source.profiles.map(profile => <tr key={profile.player_id}>
+            <td>{profile.player_id}</td><td>{profile.current_records.map(r => r.condition_key).join(', ') || '—'}</td>
+            <td>{profile.highest_current_severity}</td><td>{profile.highest_permanent_limitation}</td>
+          </tr>)}</tbody></table>
+          <p className="status">{cs ? 'Číselný vliv zdravotních omezení nebyl aplikován.' : 'Numeric Health limitation effects were not applied.'}</p>
+        </div>}
         <p>{cs ? 'Šampion' : 'Champion'}: <strong>{view.knockout.matches[2].result.winner_player_id}</strong></p>
         {view.knockout.sporting && <div aria-label="Knockout player state checkpoints">
           <p className="status">{cs

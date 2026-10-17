@@ -16,6 +16,8 @@ from sqlalchemy.orm import Session
 from beta_engine.domain.calendar.run_week_position import RunWeekPosition
 from beta_engine.domain.matches.models import MatchContext, MatchResult
 from beta_engine.domain.players.calendar_match_state import CalendarKnockoutSportingState
+from beta_engine.domain.players.calendar_knockout_health import CalendarKnockoutHealthSource, calendar_knockout_match_anchor
+from beta_engine.domain.matches.health import EffectiveMatchHealthSnapshot
 from beta_engine.domain.rankings.official import FrozenInput
 from beta_engine.domain.run_packages import canonical_hash
 from beta_engine.infrastructure.db.models import CalendarStandaloneMatchModel
@@ -72,6 +74,14 @@ class CalendarKnockoutMatch(FrozenInput):
     input_context: MatchContext
     result: MatchResult
     log_anchor_hash: str = Field(pattern=r"^[0-9a-f]{64}$")
+    effective_health: EffectiveMatchHealthSnapshot | None = None
+
+    @model_serializer(mode="wrap")
+    def historical_shape(self, handler):
+        body = handler(self)
+        if self.effective_health is None:
+            body.pop("effective_health", None)
+        return body
 
     @model_validator(mode="after")
     def verify_played_result(self):
@@ -92,7 +102,7 @@ class CalendarKnockoutMatch(FrozenInput):
 
 class CalendarOpeningKnockout(FrozenInput):
     """One complete four-player main-only knockout, not ranking publication."""
-    schema_version: Literal["calendar_opening_knockout.v1", "calendar_opening_knockout.v2"] = "calendar_opening_knockout.v1"
+    schema_version: Literal["calendar_opening_knockout.v1", "calendar_opening_knockout.v2", "calendar_opening_knockout.v3"] = "calendar_opening_knockout.v1"
     run_id: str = Field(min_length=1)
     branch_id: str = Field(min_length=1)
     match_id: str = Field(min_length=1, max_length=128)  # Edition-scoped root ID.
@@ -109,10 +119,13 @@ class CalendarOpeningKnockout(FrozenInput):
     audit_reason: str = Field(min_length=1)
 
     sporting: CalendarKnockoutSportingState | None = None
+    health_source: CalendarKnockoutHealthSource | None = None
 
     @model_serializer(mode="wrap")
     def historical_shape(self, handler):
         body = handler(self)
+        if self.schema_version != "calendar_opening_knockout.v3":
+            body.pop("health_source", None)
         if self.schema_version == "calendar_opening_knockout.v1":
             body.pop("sporting", None)
         return body
@@ -149,7 +162,7 @@ class CalendarOpeningKnockout(FrozenInput):
                     raise ValueError("Winner-fed final changes frozen player inputs")
             elif original.player != finalist.player:
                 raise ValueError("Winner-fed final changes frozen player attributes")
-        if self.schema_version == "calendar_opening_knockout.v2":
+        if self.schema_version in ("calendar_opening_knockout.v2", "calendar_opening_knockout.v3"):
             if self.sporting is None:
                 raise ValueError("v2 knockout requires owned sporting checkpoints")
             if set(p.player_id for p in self.sporting.initial) != set(self.entrant_ids):
@@ -157,6 +170,30 @@ class CalendarOpeningKnockout(FrozenInput):
             self.sporting.verify_matches(self.matches)
         elif "sporting" in self.model_fields_set:
             raise ValueError("Historical v1 knockout cannot carry v2 sporting state")
+        if self.schema_version == "calendar_opening_knockout.v3":
+            source = self.health_source
+            if source is None or set(p.player_id for p in source.profiles) != set(self.entrant_ids):
+                raise ValueError("Health-backed knockout requires exact entrant Health source")
+            original, current = source.source_week.calendar, self.week.calendar
+            if ((original.weeks_per_year, original.season_start_year_week, original.start_year)
+                    != (current.weeks_per_year, current.season_start_year_week, current.start_year)
+                    or original.season_count > current.season_count):
+                raise ValueError("Knockout Health source clock differs from played calendar")
+            for match in self.matches:
+                ctx = match.input_context
+                expected = source.for_players(ctx.player_a.player.player_id, ctx.player_b.player.player_id)
+                if match.effective_health != expected:
+                    raise ValueError("Played Health input differs from frozen Saved source")
+                anchor = calendar_knockout_match_anchor(
+                    run_id=self.run_id, branch_id=self.branch_id, clock=self.week.calendar,
+                    saved_head=self.source_saved_head, world_fingerprint=self.source_initial_world_fingerprint,
+                    pre_slot_anchor=self.pre_slot_anchor, round_name=match.round, slot=match.slot,
+                    context=ctx, seed=match.seed, effective_health=expected,
+                )
+                if match.log_anchor_hash != anchor or match.result.rally_log.input_snapshot_hash != anchor:
+                    raise ValueError("Health snapshot is detached from actual played log anchor")
+        elif "health_source" in self.model_fields_set or any(m.effective_health is not None for m in self.matches):
+            raise ValueError("Historical knockout cannot acquire newer Health inputs")
         if len({m.input_context.match_id for m in self.matches}) != 3:
             raise ValueError("Knockout match IDs must be distinct")
         return self
@@ -175,7 +212,7 @@ def _parse_calendar_match(serialized: str) -> CalendarMatchEvidence:
         raise ValueError("Malformed calendar match evidence")
     if raw.get("schema_version") == "calendar_standalone_match.v1":
         return CalendarStandaloneMatch.model_validate_json(serialized)
-    if raw.get("schema_version") in ("calendar_opening_knockout.v1", "calendar_opening_knockout.v2"):
+    if raw.get("schema_version") in ("calendar_opening_knockout.v1", "calendar_opening_knockout.v2", "calendar_opening_knockout.v3"):
         return CalendarOpeningKnockout.model_validate_json(serialized)
     if raw.get("schema_version") == "calendar_scored_opening_knockout.v1":
         # Delayed import avoids a circular dependency on the historical,

@@ -294,3 +294,40 @@ def test_mixed_source_or_partial_edition_never_silently_merges(tmp_path):
             assert saved==(versions[0],)
     finally:
         engine.dispose()
+
+
+def test_legacy_v1_knockout_staging_remains_byte_identical_after_shared_helper(tmp_path):
+    """This PR refactors the original staging command; guard that path as well."""
+    from beta_engine.application.calendar_knockout_staging import (
+        stage_calendar_knockout_ranking_results,
+    )
+    from tests.application.test_calendar_knockout_staging import ev
+    clock = RunCalendar(52, 1, 2030, 3)
+    engine, factory, _ = _setup(tmp_path)
+    try:
+        _signed_test_calendar(factory, clock)
+        original = ev(clock)
+        with factory.begin() as session:
+            session.connection().exec_driver_sql("BEGIN IMMEDIATE")
+            store = StagedCalendarRankingSourceStore(session)
+            saved = stage_calendar_knockout_ranking_results(
+                session, evidence=original,
+                expected_evidence_fingerprint=original.fingerprint,
+                expected_saved_head_revision_id=HEAD,
+            )
+            assert len(saved) == 4
+            assert stage_calendar_knockout_ranking_results(
+                session, evidence=original,
+                expected_evidence_fingerprint=original.fingerprint,
+                expected_saved_head_revision_id=HEAD,
+            ) == saved
+            actual, zeros = store.history(
+                run_id=RUN, branch_id=BRANCH,
+                expected_saved_head_revision_id=HEAD,
+            )
+            assert actual == saved and zeros == ()
+            assert {v.result.source_fingerprint for v in actual} == {
+                original.fingerprint,
+            }
+    finally:
+        engine.dispose()

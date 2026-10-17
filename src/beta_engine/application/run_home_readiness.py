@@ -17,6 +17,7 @@ from beta_engine.application.run_calendar_read_authority import resolve_saved_ru
 from beta_engine.domain.calendar.run_calendar import RunCalendar
 from beta_engine.domain.run_packages import PackageType
 from beta_engine.infrastructure.db.initial_world_state import load_saved_initial_world
+from beta_engine.infrastructure.db.calendar_standalone_match_state import load_saved_calendar_match
 from beta_engine.infrastructure.db.models import (
     FullSimulationTaskModel, RunBranchModel, RunContainerModel,
 )
@@ -84,6 +85,9 @@ def inspect_run_home_readiness(
         raise ValueError("This Branch still refers to unmaterialized inherited content")
 
     payload = revision.payload
+    saved_calendar_match = load_saved_calendar_match(
+        payload, run_id=run_id, branch_id=branch_id,
+    ) if revision.branch_id == branch_id else None
     packages = load_saved_run_package_state(
         payload, run_id=run_id, branch_id=branch_id,
     ) if revision.branch_id == branch_id else None
@@ -146,7 +150,7 @@ def inspect_run_home_readiness(
     statuses = [read_task(row)["state"] for row in tasks]
     supported = calendar == RunCalendar.fax_default()
     phase = "completed" if run.status == "completed" else (
-        "sporting_history" if events else "preparation"
+        "sporting_history" if events or saved_calendar_match is not None else "preparation"
     )
     return RunHomeReadiness(
         run_id=run_id, branch_id=branch_id,

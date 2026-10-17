@@ -89,6 +89,7 @@ def _capture_live_content(session: Session, *, payload: dict, run_id: str, branc
         storage.capture_saved_tour_entry_triggers,
         storage.capture_saved_sporting,
         storage.capture_saved_simulation_slots,
+        storage.capture_saved_calendar_match,
     ):
         capture(session, copy, run_id=run_id, branch_id=branch_id)
     storage.capture_saved_run_prospect_source(session, copy, run_id=run_id)

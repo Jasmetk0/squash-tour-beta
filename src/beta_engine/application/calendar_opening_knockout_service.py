@@ -145,6 +145,12 @@ class CalendarOpeningKnockoutService:
             rows = load_match_rows(session, run_id=run_id, branch_id=branch_id)
             if rows:
                 existing = rows[0]
+                # Point preparation wraps the immutable played command. An
+                # exact response-loss retry must still return its ORIGINAL
+                # receipt after scoring/Save/extension, never play it again
+                # or return the later scoring command's fingerprint.
+                if isinstance(existing, CalendarScoredOpeningKnockout):
+                    existing = existing.knockout
                 if (len(rows) != 1
                     or not isinstance(existing, CalendarOpeningKnockout)
                     or existing.command_id != command.command_id

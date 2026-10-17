@@ -1,7 +1,7 @@
 """Real Chromium four-player W52 opening-week MatchEngine and immutable Save.
 
 Uses the same disposable FastAPI/SQLite shell as the existing exhibition
-acceptance but forks a separate, earlier Saved population revision.
+acceptance, then extends the Run with all Saved sporting Branches intact.
 """
 from __future__ import annotations
 
@@ -205,6 +205,60 @@ def exercise_calendar_knockout(page, *, base_url, api_url, artifacts,
     after = api("GET", "/run-branches?run_id=" + enc(run_id))
     assert next(b for b in after["run_branches"]
                 if b["branch_id"] == original_branch_id)["saved_head_revision_id"] == head_before
+    # The same native sporting evidence must participate in the normal
+    # all-Branch extension flow; it must not be misclassified as unsaved.
+    old_score = api("GET", "/run-containers/" + enc(run_id) + "/branches/"
+                    + enc(branch_id) + "/saved-revisions/" + enc(scored_revision))
+    page.goto(base_url + "/admin/runs/" + enc(run_id))
+    page.get_by_role("combobox", name="Admin active Branch").select_option(branch_id)
+    extension = page.locator('section[aria-label="Run calendar extension inspection"]')
+    new_count = initial["run_calendar"]["season_count"] + 1
+    extension.get_by_label("New total season count", exact=True).fill(str(new_count))
+    with page.expect_response(lambda r: r.request.method == "GET"
+                              and "/calendar/extension-review?" in r.url,
+                              timeout=120000) as response:
+        extension.get_by_role("button", name="Review all Branches", exact=True).click()
+    assert response.value.status == 200, response.value.text()[:1200]
+    review = response.value.json()
+    assert review["can_save"], review
+    assert review["branch_count"] == len(after["run_branches"])
+    save_extension = extension.get_by_role("button", name="Confirm & Save entire Run", exact=True)
+    expect(save_extension).to_be_disabled()
+    extension.get_by_label(
+        "I confirm extension across every listed Branch and creation of new Saved Revisions."
+    ).check()
+    with page.expect_response(lambda r: r.request.method == "POST"
+                              and r.url.endswith("/calendar/extension-save"),
+                              timeout=120000) as response:
+        save_extension.click()
+    assert response.value.status == 200, response.value.text()[:1200]
+    receipt = response.value.json()
+    assert receipt["current_calendar"]["season_count"] == new_count
+    assert not receipt["simulation_started"] and not receipt["sporting_execution_unlocked"]
+    extended_head = next(b["saved_revision_id"] for b in receipt["branches"]
+                         if b["branch_id"] == branch_id)
+    old_after = api("GET", "/run-containers/" + enc(run_id) + "/branches/"
+                    + enc(branch_id) + "/saved-revisions/" + enc(scored_revision))
+    for field in ("revision_id", "content_hash", "payload", "change_summary"):
+        assert old_after[field] == old_score[field]
+    current = api("GET", root)
+    assert current["saved"] and current["knockout_fingerprint"] == prepared["fingerprint"]
+    assert current["run_calendar"]["season_count"] == new_count
+    assert current["knockout"] == played["knockout"]
+    assert api("GET", root + "/calendar-opening-knockout/replay")["exact_replay"]
+    page.goto(base_url + "/admin/runs/" + enc(run_id) + "/simulate")
+    page.get_by_role("combobox", name="Admin active Branch").select_option(branch_id)
+    rankings = page.locator('section[aria-label="Signed calendar knockout as-of standings"]')
+    expect(rankings.get_by_role("table", name="Signed tournament standings table")).to_be_visible(
+        timeout=120000
+    )
+    rankings.get_by_role("button", name="View first expired week").click()
+    expect(rankings.get_by_text("Points have expired.", exact=False)).to_be_visible(timeout=120000)
+    page.reload()
+    page.get_by_role("combobox", name="Admin active Branch").select_option(branch_id)
+    expect(rankings.get_by_text("Points have expired.", exact=False)).to_be_visible(timeout=120000)
+    assert api("GET", root)["saved_head_revision_id"] == extended_head
+    page.screenshot(path=str(artifacts / "18-scored-knockout-horizon-extended.png"), full_page=True)
     return {
         "actual_match_engine_matches": 3,
         "same_pre_slot_semifinals": True,
@@ -213,10 +267,14 @@ def exercise_calendar_knockout(page, *, base_url, api_url, artifacts,
         "cold_browser_reload": True,
         "exact_three_match_replay": True,
         "cs_en_browser": True,
-        "source_branch_unchanged": True,
+        "source_branch_unchanged_before_extension": True,
         "reviewed_prepared_points": True,
         "prepared_awards_manual_second_save": scored_revision,
         "points_unpublished": True,
         "signed_as_of_scoreboard": True,
         "exact_calendar_expiry": True,
+        "all_branch_extension_after_saved_sport": True,
+        "scored_history_byte_identical_after_extension": True,
+        "extended_scored_saved_head": extended_head,
+        "extended_replay_and_browser_reload": True,
     }

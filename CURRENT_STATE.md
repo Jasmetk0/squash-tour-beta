@@ -73,3 +73,23 @@ The joint new backend audit has the explicit A84-01 failure above. No new browse
 populated season, 50-season release or realism acceptance was performed here.
 Earlier evidence remains in Master chapter 35 and Git history; v84 replaces stale
 candidate appendices rather than preserving them as active instructions.
+
+## New implementation candidate — opening-week four-player knockout
+
+#1522 is merged on `buuk` at `f4e4b06eae162bf441b4e1ff279361115ed0ce05`.
+This candidate adds a real four-player W52/W80 opening-week main-only
+knockout with two independent frozen-input semifinal MatchEngine runs,
+winner-fed final, deterministic replay of three authoritative logs,
+normal atomic SQLite command receipt and existing explicit immutable
+Saved Revision capture/restart/restore. The original one-match exhibition
+schema remains loadable with unchanged bytes; the shared Saved calendar
+match component now explicitly discriminates the new bracket schema.
+CS/EN Run Simulation selector exposes the new operation.
+
+This is **not** a canonical tournament ranking writer, official point
+publication, developed 57-attribute sporting state or Week/Season
+Transition. One first-week operation per Branch remains the deliberate
+boundary; a match-containing Saved fork is still blocked. See
+[calendar opening knockout contract](docs/CALENDAR_OPENING_KNOCKOUT_V84.md).
+Verification and browser acceptance remain required on the candidate
+final HEAD, not assumed green.

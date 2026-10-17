@@ -251,14 +251,41 @@ def test_serialized_corruption_cannot_inject_ineligible_result_or_foreign_zero()
         CalendarOfficialRankingSnapshot.model_validate_json(json.dumps(raw))
 
 
-def test_old_calendar_immutability_and_new_extension_remains_explicit():
-    source = RunCalendar(52, 1, 2030, 2)
-    candidate = calc(source, w(1, 1))
+@pytest.mark.parametrize("W,offset", [(52, 1), (61, 37), (80, 37)])
+def test_old_calendar_immutability_and_new_extension_remains_explicit(W, offset):
+    source = RunCalendar(W, offset, 2030, 2)
+    original = calc(source, w(1, 1))
+    original_json = original.model_dump_json()
+    original_hash = original.fingerprint
+    extended_calendar = source.extend_to(3)
+
+    # A strict horizon extension permits the *next* week but creates a new
+    # candidate. The predecessor keeps its exact original bytes and clock.
+    successor = calc(extended_calendar, w(1, 2), previous=original)
+    assert successor.previous_fingerprint == original_hash
+    assert successor.run_calendar == extended_calendar.to_metadata()
+    assert successor.week == w(1, 2)
+    assert original.run_calendar == source.to_metadata()
+    assert original.model_dump_json() == original_json
+    assert original.fingerprint == original_hash
+    assert CalendarOfficialRankingSnapshot.model_validate_json(original_json) == original
+
+    # New candidates may not shorten a predecessor's recorded horizon, even
+    # when the calendar week itself would still fall inside that shorter Run.
     with pytest.raises(ValueError, match="preceding week"):
-        # The verified candidate has the OLD Saved clock identity; a different
-        # horizon must not silently reinterpret its lineage.
-        calc(source.extend_to(3), w(1, 2), previous=candidate)
-    assert candidate.run_calendar == source.to_metadata()
+        calc(source, w(1, 3), previous=successor)
+
+    # Neither a different W, season offset nor starting year is an extension.
+    for rebased in (
+        RunCalendar(W + 1, offset, 2030, 3),
+        RunCalendar(W, 2 if offset == 1 else 1, 2030, 3),
+        RunCalendar(W, offset, 2031, 3),
+    ):
+        with pytest.raises(ValueError, match="preceding week"):
+            calc(rebased, w(1, 2), previous=original)
+
+    with pytest.raises(ValueError, match="preceding week"):
+        calc(extended_calendar, w(1, 3), previous=original)
     with pytest.raises(ValueError, match="versioned"):
         calc(RunCalendar.legacy_fax(), w(0, 1))
 

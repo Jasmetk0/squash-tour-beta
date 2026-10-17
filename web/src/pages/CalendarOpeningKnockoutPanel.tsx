@@ -12,6 +12,7 @@ import { verifyKnockoutInspection } from '../api/calendarOpeningKnockout'
 import { newCommandId } from '../admin/branchSimulation'
 import { useLanguage } from '../i18n/LanguageContext'
 import { formatApiError } from '../utils/apiErrors'
+import { CalendarKnockoutAwardsPanel } from './CalendarKnockoutAwardsPanel'
 
 /** One real main-only 4-player opening-week bracket; no points or Week Transition. */
 export function CalendarOpeningKnockoutPanel({ runId, branchId, savedHead }: {
@@ -160,8 +161,8 @@ export function CalendarOpeningKnockoutPanel({ runId, branchId, savedHead }: {
   return <section className="panel" aria-label="Calendar native four-player knockout">
     <h3>{cs ? 'Skutečný čtyřčlenný pavouk podle Run kalendáře' : 'Real four-player Run-calendar knockout'}</h3>
     <p className="status">{cs
-      ? 'Season 1 Week 1 · dvě semifinále ve stejném slotu, finále s jejich vítězi. Skutečný MatchEngine, BO5 a úplné logy. Zatím bez bodů a přechodu týdne.'
-      : 'Season 1 Week 1 · two simultaneous semifinals, winner-fed final. Real BO5 MatchEngine and full logs. No points or week transition yet.'}</p>
+      ? 'Season 1 Week 1 · skutečný BO5 pavouk. Po uložení lze připravit body; oficiální publikace a přechod týdne zatím chybí.'
+      : 'Season 1 Week 1 · real BO5 bracket. Prepared points can be Saved afterwards; Official publication and Week Transition are not yet supported.'}</p>
     {status === 'loading' && <p>{cs ? 'Ověřuji Run…' : 'Inspecting Run…'}</p>}
     {status === 'blocked' && <p role="status">{cs ? 'Nedostupné: ' : 'Not available: '}{error}</p>}
     {view && status !== 'blocked' && <>
@@ -194,6 +195,26 @@ export function CalendarOpeningKnockoutPanel({ runId, branchId, savedHead }: {
         </p>)}
         <p>{cs ? 'Šampion' : 'Champion'}: <strong>{view.knockout.matches[2].result.winner_player_id}</strong></p>
         <p>{cs ? 'Stav' : 'Status'}: {view.saved ? (cs ? 'Uloženo' : 'Saved') : (cs ? 'Neuloženo' : 'Unsaved')}</p>
+        {view.prepared_points && <div aria-label="Calendar prepared knockout points">
+          <p><strong>{cs ? 'Připravené body (neoficiální)' : 'Prepared points (not Official)'}</strong>
+            {' · '}{view.prepared_points.policy.category_label}
+            {' · W'}{view.prepared_points.policy.validity_weeks}</p>
+          {view.prepared_points.awards.map(a => <p key={a.player_id}>
+            {a.player_id} · {a.reached_stage}: <strong>{a.main_points}</strong>
+          </p>)}
+          <p className="status">{cs ? 'Zveřejnění do oficiálního žebříčku až po nativním Week Transition.' : 'Official ranking publication requires native Week Transition.'}</p>
+        </div>}
+        {view.saved && !view.prepared_points && <CalendarKnockoutAwardsPanel
+          runId={runId} branchId={branchId} view={view}
+          onApplied={async () => {
+            const latest = await inspectCalendarOpeningKnockout(runId, branchId)
+            if (activeTarget.current === target) {
+              setView(verifyKnockoutInspection(latest, runId, branchId, savedHead))
+              setReplay(null); setReceipt(null)
+              setNotice(cs ? 'Body připraveny. Ručním Save je uložíš do nové revize.' : 'Points prepared. Use manual Save to create an immutable revision.')
+            }
+          }}
+        />}
         <button type="button" disabled={status === 'busy'} onClick={() => void doReplay()}>
           {cs ? 'Ověřit replay všech zápasů' : 'Verify all match replays'}</button>
         {replay && <p role="status">{cs ? 'Ověřeno' : 'Verified'} · {replay.rally_counts.join(' / ')} rallies</p>}

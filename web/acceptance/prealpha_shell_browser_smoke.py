@@ -12,6 +12,8 @@ from pathlib import Path
 
 from playwright.sync_api import expect, sync_playwright
 
+from calendar_standalone_match_browser_check import exercise_calendar_match
+
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
@@ -287,6 +289,16 @@ def main() -> None:
             page.get_by_role("textbox", name="Player country").fill("CZE")
             evidence["canonical_saved_players_empty_and_shared_fork_fail_closed"] = True
             assert page.locator(".app-shell--admin").get_attribute("data-run-form-edited") is None
+            # Genuine Run-calendar sporting/browser acceptance on a newly
+            # forked historical Saved population. No old branch/head mutation.
+            evidence["calendar_native_match_save_replay"] = exercise_calendar_match(
+                page, base_url=base, api_url=args.api_url, artifacts=artifacts,
+                run_id=custom_id,
+                original_branch_id=preview_branch["branch_id"],
+                population_revision_id=saved_population["revision_id"],
+                original_clock=expected_clock,
+            )
+
             page.get_by_role("link", name="Squash Engine global Home").click()
             expect(page.get_by_role("heading", name="Squash Engine Home")).to_be_visible()
             assert not dialogs, "Read-only Run filters must not prompt on clean exit"

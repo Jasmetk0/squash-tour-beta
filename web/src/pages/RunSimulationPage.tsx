@@ -19,7 +19,7 @@ type ExecutionSnapshot = Review & { auditReason: string; commandId: string; view
 
 export function RunSimulationPage(): JSX.Element {
   const { runId = '' } = useParams()
-  const [searchParams, setSearchParams] = useSearchParams()
+  const [searchParams] = useSearchParams()
   const queryClient = useQueryClient()
   const { selectedBranchId, selectedBranch, viewerBranchId, branches, isLoading: branchesLoading } = useAdminBranch()
   const requestedBranchId = searchParams.get('branch')?.trim() ?? ''
@@ -32,19 +32,6 @@ export function RunSimulationPage(): JSX.Element {
   const [review, setReview] = useState<Review | null>(null)
   const [reason, setReason] = useState('')
   const [calendarSportingMode, setCalendarSportingMode] = useState<'knockout' | 'exhibition'>('knockout')
-  // Query state survives route/provider remounts. It is valid only for
-  // this exact Run/Branch/Saved HEAD, so context changes cannot borrow
-  // another timeline's as-of ranking selection.
-  const scoreboardKey = [
-    runId, executionBranchId ?? '', executionBranch?.saved_head_revision_id ?? '',
-  ].join('|')
-  const scoreboardSameHead = searchParams.get('score_context') === scoreboardKey
-  const scoreboardSeason = scoreboardSameHead && /^(0|[1-9]\\d*)$/.test(
-    searchParams.get('score_season') ?? '',
-  ) ? Number(searchParams.get('score_season')) : 0
-  const scoreboardWeek = scoreboardSameHead && /^[1-9]\\d*$/.test(
-    searchParams.get('score_week') ?? '',
-  ) ? Number(searchParams.get('score_week')) : 2
   const [commandId, setCommandId] = useState(newCommandId)
   const [confirmed, setConfirmed] = useState(false)
   const [notice, setNotice] = useState<string | null>(null)
@@ -169,14 +156,6 @@ export function RunSimulationPage(): JSX.Element {
           <CalendarOpeningKnockoutPanel
             runId={runId} branchId={executionBranchId}
             savedHead={executionBranch.saved_head_revision_id}
-            standingsPosition={{ season: scoreboardSeason, week: scoreboardWeek }}
-            onStandingsPositionChange={next => setSearchParams(previous => {
-              const updated = new URLSearchParams(previous)
-              updated.set('score_context', scoreboardKey)
-              updated.set('score_season', String(next.season))
-              updated.set('score_week', String(next.week))
-              return updated
-            }, { replace: true })}
           />
         ) : (
           <CalendarStandaloneMatchPanel

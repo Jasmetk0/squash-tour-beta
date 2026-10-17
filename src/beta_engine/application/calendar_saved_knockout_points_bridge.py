@@ -188,23 +188,15 @@ def saved_slot_and_points_knockout_sources(
     stage_by_player = {
         bracket.matches[-1].winner_player_id: "champion",
     }
-    for m in bracket.matches:
-        # The earliest loss is a player's actual elimination.
-        stage_by_player[m.loser_player_id] = {
-            1: {2: "finalist", 4: "semifinal", 8: "quarterfinal",
-                16: "round_of_16", 32: "round_of_32", 64: "round_of_64",
-                128: "round_of_128"}[len(bracket.entrants_by_bracket_position)],
-            2: "finalist",
-        }.get(m.round_number, "finalist")
-    # For 2/4/8/.. entrants, the eliminated stage depends on active field
-    # size at that match's round, never on a fixed two-round assumption.
-    for m in bracket.matches:
-        remaining_size = len(bracket.entrants_by_bracket_position) // (2 ** (m.round_number - 1))
-        stage_by_player[m.loser_player_id] = {
+    # Elimination stages use the number of players still present at
+    # *that* round, not a fixed W61 or fixed 4-player stage mapping.
+    for match in bracket.matches:
+        active = len(bracket.entrants_by_bracket_position) // (2 ** (match.round_number - 1))
+        stage_by_player[match.loser_player_id] = {
             2: "finalist", 4: "semifinal", 8: "quarterfinal",
             16: "round_of_16", 32: "round_of_32", 64: "round_of_64",
             128: "round_of_128",
-        }[remaining_size]
+        }[active]
     dist = dict(awards.point_distribution)
     by_player = {a.player_id: a for a in awards.awards}
     saved_versions = {v.result.player_id: v for v in saved_sources}

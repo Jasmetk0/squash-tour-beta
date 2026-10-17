@@ -75,7 +75,12 @@ class CalendarKnockoutAwardService:
     def _prepared(*, clock, revision, knockout, run_id, branch_id,
                   proposal: CalendarAwardProposal) -> dict:
         awards = derive_knockout_prepared_awards(knockout, proposal.policy)
-        target = RunWeekPosition(calendar=clock, season_index=0, week=2)
+        # Historical point timing is frozen to the original played match clock.
+        # Run-wide strict horizon extension may grow season_count later,
+        # without altering any pre-extension Saved match or award identity.
+        target = RunWeekPosition(
+            calendar=knockout.week.calendar, season_index=0, week=2
+        )
         preview_fp = canonical_hash({
             "schema_version": "calendar_knockout_award_review.v1",
             "run_id": run_id, "branch_id": branch_id,
@@ -145,7 +150,7 @@ class CalendarKnockoutAwardService:
                 knockout_fingerprint=knockout.fingerprint,
                 policy=policy,
                 first_publication_week=RunWeekPosition(
-                    calendar=clock, season_index=0, week=2
+                    calendar=knockout.week.calendar, season_index=0, week=2
                 ),
                 awards=derive_knockout_prepared_awards(knockout, policy),
                 operator_label=command.proposal.operator_label,

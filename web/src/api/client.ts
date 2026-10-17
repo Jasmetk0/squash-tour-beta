@@ -5257,3 +5257,20 @@ export function saveCalendarOpeningKnockout(runId: string, branchId: string,
     }),
   })
 }
+
+
+/** Prepared, not Official, calendar knockout point evidence from Saved MatchEngine results. */
+export function reviewCalendarKnockoutAwards(runId: string, branchId: string,
+  proposal: import('./calendarOpeningKnockout').CalendarAwardProposal):
+  Promise<import('./calendarOpeningKnockout').CalendarAwardReview> {
+  return request(knockoutRoot(runId, branchId) + '/awards/review', {
+    method: 'POST', body: JSON.stringify(proposal),
+  })
+}
+export function applyCalendarKnockoutAwards(runId: string, branchId: string,
+  command: import('./calendarOpeningKnockout').CalendarAwardApplyCommand):
+  Promise<{ prepared: unknown; fingerprint: string }> {
+  return request(knockoutRoot(runId, branchId) + '/awards/apply', {
+    method: 'POST', body: JSON.stringify(command),
+  })
+}

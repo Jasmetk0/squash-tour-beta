@@ -152,3 +152,17 @@ It does **not** yet prove Saved Run-owned group admission, publish Official
 Ranking or change Full Simulation compatibility. The next required
 integration is a cross-check with Saved immutable Slot/Group match receipts,
 and ultimately W-aware sporting writers.
+
+
+## Post #1517 — signed Saved Simulation Slot match authenticity candidate
+
+#1517 merged, initial checked `buuk`:
+`6bc0206225b44f0f7a95b438f61b2f87eda9ce33`, no competing PR.
+A bounded read-only W61-only authority adapter now bridges a *real* completed
+Simulation Slot/group match receipt in Signed Saved history to a complete
+MatchEngine-witnessed four-player knockout candidate, with exact live group
+parity, group/slot checks, full event universe and restart/adversarial tests.
+Critically W52/W80 actual sports remain fenced; only match provenance, **not
+point distribution**, is Saved-authenticated. This is not a Save writer,
+public ranking, Full Simulation unlock, or release checkpoint. Latest PR-head
+CI result controls whether owner may merge.

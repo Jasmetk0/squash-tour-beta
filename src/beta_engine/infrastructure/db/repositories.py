@@ -3835,6 +3835,9 @@ class SimulationPersistenceRepository:
                 load_saved_run_package_state(
                     payload, run_id=model.run_id, branch_id=model.branch_id
                 )
+                load_saved_calendar_match(
+                    payload, run_id=model.run_id, branch_id=model.branch_id
+                )
         except (TypeError, ValueError) as exc:
             raise BranchRevisionStateConflictError(
                 f"Saved Revision {model.revision_id} has invalid ranking content: {exc}"

@@ -59,3 +59,7 @@ A cohesive Run-wide review → explicit confirmation → single-transaction Save
 ## Calendar-aware ranking point-report dependency candidate
 
 After merged #1509 (Saved Run Home readiness), the bounded next PR migrates the **non-authoritative RankingRaceEngine point report** from hardcoded W61 to explicit RunCalendar W52/W61/W80, default validity W, real signed Saved-clock input, and exact historical backward compatibility. This does **not** migrate Official Ranking publication, corrections/zeros, annual development or Week/Season Transition. Those remain blocked on non-reference calendars. See [scope and tests](docs/RUN_CALENDAR_RANKING_RACE_REPORT_V83.md).
+
+## Post #1510 — calendar Official Ranking candidate
+
+The next bounded slice migrates the *Official Ranking candidate calculation* into a separately versioned Run-clock-owned type, preserving FAX v1 publication bytes. It covers W52/W61/W80 eligibility, Best N, disciplinary zeros, tie order and explicit immutable Saved-head input in real SQLite, without introducing a false simulation or publication switch. The remaining integration path is **authoritative Official Ranking source/correction/publication & transitional state**, actual player development and real Week/Season Transition/Full Simulation, plus populated release scenarios. See [scope/limits](docs/RUN_CALENDAR_OFFICIAL_RANKING_CANDIDATE_V83.md).

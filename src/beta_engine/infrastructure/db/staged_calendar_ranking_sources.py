@@ -99,6 +99,7 @@ class StagedCalendarRankingSourceStore:
 
     def _load(
         self, *, run_id: str, branch_id: str, clock: RunCalendar,
+        expected_saved_head_revision_id: str,
     ) -> tuple[
         tuple[CalendarRankingResultVersion, ...],
         tuple[CalendarRankingZeroVersion, ...],
@@ -129,6 +130,8 @@ class StagedCalendarRankingSourceStore:
         results = []
         zeros = []
         for row in result_rows:
+            if row.saved_head_revision_id != expected_saved_head_revision_id:
+                raise ValueError("Staged result belongs to a different Saved HEAD; rebase is unsupported")
             version = CalendarRankingResultVersion.model_validate_json(row.payload_json)
             if (
                 (version.run_id, version.branch_id, version.result.edition_id,
@@ -141,6 +144,8 @@ class StagedCalendarRankingSourceStore:
                 raise ValueError("Stored calendar result source identity/hash mismatch")
             results.append(version)
         for row in zero_rows:
+            if row.saved_head_revision_id != expected_saved_head_revision_id:
+                raise ValueError("Staged zero belongs to a different Saved HEAD; rebase is unsupported")
             version = CalendarRankingZeroVersion.model_validate_json(row.payload_json)
             if (
                 (version.zero.run_id, version.zero.branch_id, version.zero.zero_id,
@@ -189,6 +194,7 @@ class StagedCalendarRankingSourceStore:
         )
         results, zeros = self._load(
             run_id=run_id, branch_id=branch_id, clock=clock,
+            expected_saved_head_revision_id=expected_saved_head_revision_id,
         )
         return resolve_calendar_ranking_sources(
             run_calendar=clock, run_id=run_id, branch_id=branch_id,
@@ -209,6 +215,7 @@ class StagedCalendarRankingSourceStore:
         )
         existing_results, zeros = self._load(
             run_id=version.run_id, branch_id=version.branch_id, clock=clock,
+            expected_saved_head_revision_id=expected_saved_head_revision_id,
         )
         for existing in existing_results:
             if (
@@ -241,6 +248,7 @@ class StagedCalendarRankingSourceStore:
             effective_ordinal=clock.ordinal(
                 version.effective_week.season_index, version.effective_week.week,
             ),
+            saved_head_revision_id=expected_saved_head_revision_id,
             fingerprint=version.fingerprint, payload_json=version.model_dump_json(),
         ))
         self.session.flush()
@@ -261,6 +269,7 @@ class StagedCalendarRankingSourceStore:
         )
         results, existing_zeros = self._load(
             run_id=zero.run_id, branch_id=zero.branch_id, clock=clock,
+            expected_saved_head_revision_id=expected_saved_head_revision_id,
         )
         for existing in existing_zeros:
             if (existing.zero.zero_id, existing.effective_week) == (
@@ -289,6 +298,7 @@ class StagedCalendarRankingSourceStore:
             effective_ordinal=clock.ordinal(
                 version.effective_week.season_index, version.effective_week.week,
             ),
+            saved_head_revision_id=expected_saved_head_revision_id,
             fingerprint=version.fingerprint, payload_json=version.model_dump_json(),
         ))
         self.session.flush()

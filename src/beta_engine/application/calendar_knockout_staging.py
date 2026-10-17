@@ -80,8 +80,8 @@ def _install_whole_edition(
     ):
         raise ValueError("Incomplete or foreign calendar Edition batch")
     existing, _ = store.history(
-        run_id=evidence.run_id,
-        branch_id=evidence.branch_id,
+        run_id=run_id,
+        branch_id=branch_id,
         expected_saved_head_revision_id=expected_saved_head_revision_id,
     )
     for_edition = tuple(
@@ -100,8 +100,8 @@ def _install_whole_edition(
             expected_saved_head_revision_id=expected_saved_head_revision_id,
         )
     installed, _ = store.history(
-        run_id=evidence.run_id,
-        branch_id=evidence.branch_id,
+        run_id=run_id,
+        branch_id=branch_id,
         expected_saved_head_revision_id=expected_saved_head_revision_id,
     )
     if tuple(v for v in installed if v.result.edition_id == edition_id) != versions:

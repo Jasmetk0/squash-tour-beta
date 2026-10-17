@@ -171,11 +171,11 @@ def test_legacy_W61_official_results_and_policies_remain_semantically_identical(
         main_points=100,
     )
     old = calculate_official_ranking(
-        run_id=RUN, branch_id=BRANCH, week=RankingWeek(season_index=1, week=60),
+        run_id=RUN, branch_id=BRANCH, week=RankingWeek(season_index=1, week=59),
         policy=POLICY, players=(old_player,), results=(legacy_result,),
     )
     new = calc(
-        calendar, w(1, 60),
+        calendar, w(1, 59),
         results=(r("a", "e", w(0, 59), w(0, 60)),),
     )
     assert [(row.player_id, row.points) for row in old.rows] == [

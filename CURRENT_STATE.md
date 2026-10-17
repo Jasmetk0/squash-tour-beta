@@ -111,3 +111,16 @@ future Saved component work, **not** Saved Revision capture, Branch
 fork/restore or authoritative sporting source ingestion. It does not enable
 W52/W80 Full Simulation. PR final-head tests and workflow status are the
 only merge-readiness authority.
+
+
+## Post #1514 — real signed tournament provenance inspection candidate
+
+#1514 merged on `buuk` before this candidate branch. The proposed adapter
+adds an actual **signed Saved Revision → canonical Owned tournament → W61
+calendar ranking candidate** path, validating both Saved and live SQLite
+source fingerprints and reusing the canonical result/point authority's award
+validation. It rejects unsaved, corrupt, mismatched or forked sources and
+non-FAX calendars. This is read-only candidate inspection, not tournament
+simulation, not W52/W80 support, not a new Saved component or official
+publication. New real SQLite/Saved tests cover positive and adversarial
+paths; required final-head CI controls merge readiness.

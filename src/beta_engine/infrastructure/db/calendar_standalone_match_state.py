@@ -113,7 +113,13 @@ def load_saved_calendar_match(payload: dict, *, run_id: str, branch_id: str) -> 
         return None
     if not isinstance(component, dict) or set(component) != {"fingerprint", "state"}:
         raise ValueError("Invalid Saved calendar standalone match component")
-    state = CalendarStandaloneMatch.model_validate(component["state"])
+    # MatchEngine rally/timeline objects contain enum-valued fields. Use the
+    # JSON validation boundary just as for the live SQLite row: strict frozen
+    # input models must decode serialized enum values, not treat dict strings
+    # as in-process Enum instances.
+    state = CalendarStandaloneMatch.model_validate_json(
+        json.dumps(component["state"])
+    )
     if (state.run_id, state.branch_id, state.fingerprint) != (
         run_id, branch_id, component["fingerprint"]
     ):

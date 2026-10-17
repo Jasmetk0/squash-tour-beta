@@ -63,3 +63,15 @@ After merged #1509 (Saved Run Home readiness), the bounded next PR migrates the 
 ## Post #1510 — calendar Official Ranking candidate
 
 The next bounded slice migrates the *Official Ranking candidate calculation* into a separately versioned Run-clock-owned type, preserving FAX v1 publication bytes. It covers W52/W61/W80 eligibility, Best N, disciplinary zeros, tie order and explicit immutable Saved-head input in real SQLite, without introducing a false simulation or publication switch. The remaining integration path is **authoritative Official Ranking source/correction/publication & transitional state**, actual player development and real Week/Season Transition/Full Simulation, plus populated release scenarios. See [scope/limits](docs/RUN_CALENDAR_OFFICIAL_RANKING_CANDIDATE_V83.md).
+
+
+## Post #1511 — calendar-aware ranking source history candidate
+
+#1511 merged: W52/W61/W80 read-only Official Ranking candidate and Saved-head
+gateway. The subsequent source-history candidate validates date-stable,
+hash-linked corrections and disciplinary-zero decisions in Run weeks, exact
+historical as-of resolution and continuity across **strict horizon extension**.
+It adds a signed-clock read-only bridge but **not** a persistent authoritative
+source store or publication; non-FAX sporting writers remain fenced. Next
+migration requires a transactional Run-owned source store, publication and
+transition state (then actual Week/Season progress, development and acceptance).

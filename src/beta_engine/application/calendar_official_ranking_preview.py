@@ -17,6 +17,12 @@ from beta_engine.domain.rankings.calendar_official import (
     CalendarRankingWeek,
     calculate_calendar_official_ranking,
 )
+from beta_engine.domain.rankings.calendar_source_history import (
+    CalendarRankingResultVersion,
+    CalendarRankingZeroVersion,
+    ResolvedCalendarRankingSources,
+    resolve_calendar_ranking_sources,
+)
 from beta_engine.domain.rankings.official import OfficialRankingPolicy
 from beta_engine.infrastructure.db.models import RunBranchModel
 
@@ -61,3 +67,43 @@ def preview_calendar_official_ranking_from_saved_run(
         previous=previous,
         disciplinary_zeros=disciplinary_zeros,
     )
+
+def preview_calendar_official_ranking_from_saved_source_versions(
+    session: Session,
+    *,
+    run_id: str,
+    branch_id: str,
+    expected_saved_head_revision_id: str,
+    week: CalendarRankingWeek,
+    policy: OfficialRankingPolicy,
+    players: tuple[CalendarRankingPlayer, ...],
+    result_versions: tuple[CalendarRankingResultVersion, ...],
+    zero_versions: tuple[CalendarRankingZeroVersion, ...] = (),
+    previous: CalendarOfficialRankingSnapshot | None = None,
+) -> tuple[CalendarOfficialRankingSnapshot, ResolvedCalendarRankingSources]:
+    """Read-only, fully dated correction/zero resolver on a verified Saved clock.
+
+    Caller owns a coherent read transaction AND must supply independently
+    authenticated source versions; the resolver verifies their ordered hash
+    lineage but is not a storage trust boundary. Neither result is Official.
+    """
+    if not expected_saved_head_revision_id:
+        raise ValueError("Expected Saved HEAD is required")
+    branch = session.get(RunBranchModel, branch_id)
+    if branch is None or branch.run_id != run_id:
+        raise ValueError("Run/Branch is unavailable for calendar ranking inspection")
+    if branch.saved_head_revision_id != expected_saved_head_revision_id:
+        raise ValueError("Calendar ranking inspection uses a stale Saved HEAD")
+    calendar = resolve_saved_run_calendar(
+        session, run_id=run_id, branch_id=branch_id,
+    )
+    resolved = resolve_calendar_ranking_sources(
+        run_calendar=calendar, run_id=run_id, branch_id=branch_id,
+        week=week, result_versions=result_versions, zero_versions=zero_versions,
+    )
+    candidate = calculate_calendar_official_ranking(
+        run_id=run_id, branch_id=branch_id, run_calendar=calendar,
+        week=week, policy=policy, players=players, results=resolved.results,
+        previous=previous, disciplinary_zeros=resolved.disciplinary_zeros,
+    )
+    return candidate, resolved

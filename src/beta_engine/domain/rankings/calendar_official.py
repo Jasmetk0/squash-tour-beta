@@ -194,9 +194,19 @@ def calculate_calendar_official_ranking(
     target = _ordinal(run_calendar, week)
     if previous is not None:
         previous = CalendarOfficialRankingSnapshot.model_validate_json(previous.model_dump_json())
+        previous_clock = RunCalendar.from_metadata(previous.run_calendar)
+        same_time_basis = (
+            previous_clock.schema_version == run_calendar.schema_version
+            and previous_clock.weeks_per_year == run_calendar.weeks_per_year
+            and previous_clock.season_start_year_week == run_calendar.season_start_year_week
+            and previous_clock.start_year == run_calendar.start_year
+        )
+        # A Run may be extended, never shortened or re-based. The old immutable
+        # candidate retains its exact original horizon and fingerprint.
         if (
             (previous.run_id, previous.branch_id) != (run_id, branch_id)
-            or previous.run_calendar != run_calendar.to_metadata()
+            or not same_time_basis
+            or previous_clock.season_count > run_calendar.season_count
             or _ordinal(run_calendar, previous.week) + 1 != target
         ):
             raise ValueError("Previous calendar ranking candidate must be exact preceding week and scope")

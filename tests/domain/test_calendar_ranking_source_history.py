@@ -149,8 +149,17 @@ def test_immutable_ranking_predecessor_can_cross_a_strict_horizon_extension(W):
     )
     assert current.previous_fingerprint == fingerprint
     assert previous.model_dump_json() == signed_original
+    assert previous.fingerprint == fingerprint
     assert previous.run_calendar == original.to_metadata()
     assert current.run_calendar == extension.to_metadata()
+    # An extended descendant cannot be silently reinterpreted as a
+    # predecessor on the old (shorter) Run clock.
+    with pytest.raises(ValueError, match="preceding week"):
+        calculate_calendar_official_ranking(
+            run_id=RUN, branch_id=BRANCH, run_calendar=original,
+            week=w(1, 2), policy=policy, players=p,
+            results=(result(W=W),), previous=current,
+        )
     with pytest.raises(ValueError, match="preceding week"):
         calculate_calendar_official_ranking(
             run_id=RUN, branch_id=BRANCH, run_calendar=original,

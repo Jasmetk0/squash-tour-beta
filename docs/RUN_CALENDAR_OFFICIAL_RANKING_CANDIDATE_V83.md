@@ -117,3 +117,37 @@ extension, requires an explicit reviewed rebase path; copying a checkpoint
 from another Branch/Run is rejected. It is a bounded persistence/recovery
 building block, not a real tournament source importer or Full Simulation
 unlock.
+
+
+## Signed Saved canonical tournament → W61 calendar ranking inspection
+
+`saved_canonical_tournament_ranking_sources` is a **read-only** compatibility
+bridge from actual persisted Run/Branch-owned canonical tournament authorities
+in the immutable `ranking_preparation` Saved Revision component to
+`CalendarRankingResultVersion` candidate records. It verifies the current
+Saved HEAD and full Saved content hash, the signed ranking component hash,
+exact Run/Branch and Edition identity, and identical live owned source hash.
+It reuses `prepare_canonical_tournament_ranking_sources` rather than
+recomputing or guessing tournament awards. All player result/award provenance
+is validated, and if Saved ranking result versions exist for that Edition,
+their initial versions must agree with the canonical projected awards.
+The preview service can calculate a deterministic read-only candidate
+from these sourced rows, including per-player points and effective dates.
+It mutates no SQLite records, Signed Save, staging bundle, Viewer or World Event.
+
+**Calendar compatibility gate:** this bridge is deliberately limited to
+the explicit canonical FAX Run clock W61, offset37, starting 2000, horizon 50.
+`TournamentRankingBinding` and existing canonical Result/Point Award authority
+still carry the **legacy `RankingWeek`** contract. Converting them into
+W52/W80 would falsely reinterpret signed historical dates. W52/W80, changed
+start year/horizon, Closing-only Week61 records, legacy compatibility-only
+Owned sources, fork inheritance without a dedicated materializer, unsaved
+Owned rows and a Saved/live mismatch fail closed.
+
+**Authority boundary:** Saved canonical tournament evidence is sufficient to
+prove its original event award amounts and proposed first publication timing
+for a *candidate inspection*, NOT to publish an Official Ranking or apply
+new corrections, zero decisions, Week/Season Transition or Full Simulation.
+A future calendar-native tournament authority and Save/restore/fork
+integration must be implemented before turning this read-only adapter into
+a non-FAX sporting writer.

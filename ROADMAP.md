@@ -98,3 +98,16 @@ dependency: verified canonical tournament evidence; Saved Revision
 component ownership and replay/restore/fork, then actual official
 publication and season/week writer migration. Do not mistake a recoverable
 staging bundle for a user Save.
+
+
+## After #1514 — canonical tournament provenance bridge candidate
+
+Signed and stored canonical W61 tournament authority evidence can now be
+independently checked and projected into a versioned calendar-aware
+read-only ranking candidate. Its live SQLite authority must match immutable
+Saved content and authored point award fingerprints. The bridge intentionally
+rejects W52/W80 and any original FAX date reinterpretation. Next blockers:
+build calendar-native tournament result/point authorities, durable source
+correction/discipline lineage in Saved with fork/restore ownership, then
+actual versioned ranking publication, Week/Season Transition, and safe
+Full Simulation runtime migration.

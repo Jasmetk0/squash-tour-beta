@@ -236,19 +236,19 @@ def test_serialized_corruption_cannot_inject_ineligible_result_or_foreign_zero()
     raw = candidate.model_dump(mode="json")
     raw["rows"][0]["points"] = 3
     with pytest.raises(ValidationError, match="points"):
-        CalendarOfficialRankingSnapshot.model_validate(raw)
+        CalendarOfficialRankingSnapshot.model_validate_json(json.dumps(raw))
     raw = candidate.model_dump(mode="json")
     raw["rows"][0]["counted_results"][0]["first_publication_week"]["week"] = 81
     with pytest.raises(ValidationError, match="season_week"):
-        CalendarOfficialRankingSnapshot.model_validate(raw)
+        CalendarOfficialRankingSnapshot.model_validate_json(json.dumps(raw))
     raw = candidate.model_dump(mode="json")
     raw["rows"][0]["disciplinary_zeros"][0]["branch_id"] = "foreign"
     with pytest.raises(ValidationError, match="scope|ineligible"):
-        CalendarOfficialRankingSnapshot.model_validate(raw)
+        CalendarOfficialRankingSnapshot.model_validate_json(json.dumps(raw))
     raw = candidate.model_dump(mode="json")
     raw["run_calendar"]["weeks_per_year"] = 52
     with pytest.raises(ValidationError, match="season_week"):
-        CalendarOfficialRankingSnapshot.model_validate(raw)
+        CalendarOfficialRankingSnapshot.model_validate_json(json.dumps(raw))
 
 
 def test_old_calendar_immutability_and_new_extension_remains_explicit():

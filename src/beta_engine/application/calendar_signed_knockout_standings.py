@@ -106,10 +106,15 @@ class CalendarSignedKnockoutStandingsService:
             lifecycle = load_saved_lifecycle(
                 revision.saved_revision.payload, run_id=run_id, branch_id=branch_id,
             )
+            # load_saved_lifecycle already verifies every player's signed birth
+            # identity/age, original time basis and policy against the Saved
+            # InitialWorld. A remapped fork preserves the source Branch's
+            # historical source_initial_world_fingerprint as provenance even
+            # though the new Branch's InitialWorld has a different hash.
+            # Never replace or re-sign that historical witness on reads.
             if (
                 lifecycle is None or len(lifecycle) != 1
                 or lifecycle[0].initialization_stage != "population_only"
-                or lifecycle[0].source_initial_world_fingerprint != world.fingerprint
             ):
                 raise ValueError("Standings require exact Saved population-only lifecycle evidence")
 

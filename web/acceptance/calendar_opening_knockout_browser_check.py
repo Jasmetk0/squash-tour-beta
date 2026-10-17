@@ -100,6 +100,56 @@ def exercise_calendar_knockout(page, *, base_url, api_url, artifacts,
     expect(panel.get_by_role("button", name="Ověřit replay všech zápasů")).to_be_visible()
     page.screenshot(path=str(artifacts / "17-calendar-real-knockout-saved.png"), full_page=True)
     page.get_by_role("combobox", name="Language / Jazyk").select_option("en")
+    # A second, separately confirmed sporting Save attaches prepared point
+    # evidence to the exact earlier Signed bracket; no fabricated winners.
+    awards = panel.locator('section[aria-label="Calendar knockout award preparation"]')
+    expect(awards).to_be_visible()
+    awards.get_by_label("Point policy audit reason").fill(
+        "Explicit operator-reviewed policy for Saved MatchEngine scores"
+    )
+    with page.expect_response(lambda r:
+            r.request.method == "POST" and r.url.endswith(
+                "/calendar-opening-knockout/awards/review"
+            )) as review_response:
+        awards.get_by_role("button", name="Review prepared point awards").click()
+    assert review_response.value.status == 200, review_response.value.text()[:1200]
+    reviewed = review_response.value.json()
+    assert reviewed["publication_status"] == "prepared_not_official"
+    assert sorted(a["main_points"] for a in reviewed["awards"]) == [30, 30, 60, 100]
+    awards.get_by_label("Confirm preparing points without Official publication.").check()
+    with page.expect_response(lambda r:
+            r.request.method == "POST" and r.url.endswith(
+                "/calendar-opening-knockout/awards/apply"
+            )) as apply_response:
+        awards.get_by_role("button", name="Apply prepared awards").click()
+    assert apply_response.value.status == 201, apply_response.value.text()[:1200]
+    prepared = apply_response.value.json()
+    assert prepared["prepared"]["knockout"] == played["knockout"]
+    now = api("GET", root)
+    assert now["saved"] is False
+    assert now["prepared_points"]["publication_status"] == "prepared_not_official"
+    assert now["knockout_fingerprint"] == prepared["fingerprint"]
+    panel.get_by_role("button", name="Review Save").click()
+    panel.get_by_label("Confirm new immutable Saved Revision.").check()
+    with page.expect_response(lambda r:
+            r.request.method == "POST" and r.url.endswith(
+                "/calendar-opening-knockout/save"
+            )) as second_save:
+        panel.get_by_role("button", name="Save knockout").click()
+    assert second_save.value.status == 201, second_save.value.text()[:1200]
+    scored_revision = second_save.value.json()["saved_revision"]["revision_id"]
+    assert scored_revision != revision
+    assert api("GET", root)["saved"] is True
+    assert api("GET", root + "/calendar-opening-knockout/replay")["exact_replay"]
+    page.reload()
+    selector = page.get_by_role("combobox", name="Admin active Branch")
+    expect(selector).to_be_visible()
+    selector.select_option(branch_id)
+    panel = page.locator('section[aria-label="Calendar native four-player knockout"]')
+    expect(panel.get_by_text("Prepared points (not Official)")).to_be_visible()
+    page.get_by_role("combobox", name="Language / Jazyk").select_option("cs")
+    expect(panel.get_by_text("Připravené body (neoficiální)")).to_be_visible()
+    page.get_by_role("combobox", name="Language / Jazyk").select_option("en")
     after = api("GET", "/run-branches?run_id=" + enc(run_id))
     assert next(b for b in after["run_branches"]
                 if b["branch_id"] == original_branch_id)["saved_head_revision_id"] == head_before
@@ -112,4 +162,7 @@ def exercise_calendar_knockout(page, *, base_url, api_url, artifacts,
         "exact_three_match_replay": True,
         "cs_en_browser": True,
         "source_branch_unchanged": True,
+        "reviewed_prepared_points": True,
+        "prepared_awards_manual_second_save": scored_revision,
+        "points_unpublished": True,
     }

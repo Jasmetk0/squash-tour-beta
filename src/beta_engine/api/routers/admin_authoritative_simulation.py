@@ -57,6 +57,10 @@ from beta_engine.application.standalone_match_service import (
     StandaloneMatchService,
     StandaloneMatchSimulateCommand,
 )
+from beta_engine.application.calendar_standalone_match_service import (
+    CalendarStandaloneMatchCommand,
+    CalendarStandaloneMatchService,
+)
 from beta_engine.application.prospect_bridge_inspection import inspect_prospect_bridge
 from beta_engine.application.pre_alpha_fax_acceptance_profile import (
     PreAlphaFaxAcceptanceProfileService,
@@ -916,6 +920,93 @@ def simulate_standalone_match(
             status_code=409,
             detail={"code": "standalone_match_simulation_conflict", "message": str(exc)},
         ) from exc
+
+
+@router.get("/calendar-standalone-match")
+def calendar_standalone_match_state(
+    run_id: str,
+    branch_id: str,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+):
+    try:
+        return CalendarStandaloneMatchService(runtime.repository).inspect(
+            run_id=run_id, branch_id=branch_id
+        )
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={"code": "calendar_match_state_conflict", "message": str(exc)},
+        ) from exc
+
+
+@router.post("/calendar-standalone-match/simulate", status_code=201)
+def simulate_calendar_standalone_match(
+    run_id: str,
+    branch_id: str,
+    payload: CalendarStandaloneMatchCommand,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+):
+    try:
+        return CalendarStandaloneMatchService(runtime.repository).simulate(
+            run_id=run_id, branch_id=branch_id, command=payload
+        )
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={"code": "calendar_match_simulation_conflict", "message": str(exc)},
+        ) from exc
+
+
+@router.get("/calendar-standalone-match/{match_id}/replay")
+def replay_calendar_standalone_match(
+    run_id: str,
+    branch_id: str,
+    match_id: str,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+):
+    try:
+        return CalendarStandaloneMatchService(runtime.repository).replay(
+            run_id=run_id, branch_id=branch_id, match_id=match_id
+        )
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={"code": "calendar_match_replay_conflict", "message": str(exc)},
+        ) from exc
+
+
+@router.get("/calendar-standalone-match/save/preview")
+def preview_calendar_standalone_match_save(
+    run_id: str, branch_id: str,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+):
+    try:
+        return runtime.repository.preview_calendar_match_save(
+            run_id=run_id, branch_id=branch_id
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+
+@router.post("/calendar-standalone-match/save", status_code=201)
+def save_calendar_standalone_match(
+    run_id: str, branch_id: str, payload: dict,
+    service: Annotated[RunWorkingDraftService, Depends(get_run_working_draft_service)],
+):
+    try:
+        return service.save_calendar_match(
+            run_id=run_id, branch_id=branch_id,
+            expected_draft_version=payload["expected_draft_version"],
+            expected_calendar_match_fingerprint=payload["expected_calendar_match_fingerprint"],
+        )
+    except (ValueError, KeyError) as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
 
 
 @router.post("/live-match/confirm")

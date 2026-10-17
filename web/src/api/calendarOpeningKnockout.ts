@@ -173,7 +173,7 @@ export function verifySignedKnockoutStandings(
   inspection: KnockoutInspection,
   seasonIndex: number, week: number,
 ): SignedKnockoutStandings {
-  const players = inspection.knockout?.entrant_ids ?? []
+  const players: string[] = inspection.knockout?.entrant_ids ?? []
   if (!input || input.schema_version !== 'calendar_signed_knockout_standings.v1'
     || input.run_id !== inspection.run_id
     || input.branch_id !== inspection.branch_id

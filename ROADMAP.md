@@ -134,3 +134,15 @@ score accounting. Yet its upstream authority remains caller-attested.
 Binding that witness to immutable Saved Run-owned match results and safely
 versioning Save/restore/fork/Week publication is still essential before
 considering it an authoritative sporting feature.
+
+
+## After #1517 — verified historical match receipts, not merely attested witnesses
+
+Read-only W61 knockout candidates may now be derived from real committed,
+Saved hash-authenticated Simulation Slot MatchEngine receipts with live-group
+identity parity. This removes the previous caller-only match-witness origin
+gap for the supported FAX four-player case, but **does not** verify the
+candidate's points policy from a Saved Edition configuration. Before any
+Official sporting promotion: bind canonical Saved Edition/rules/points
+evidence, implement native W52/W80 Slot/Match ownership, restore/fork
+support, then the versioned Official Ranking and Week/Season publisher.

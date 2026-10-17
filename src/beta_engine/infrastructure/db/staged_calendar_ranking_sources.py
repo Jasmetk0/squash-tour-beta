@@ -182,7 +182,10 @@ class StagedCalendarRankingSourceStore:
             run_id=run_id, branch_id=branch_id,
             expected_saved_head_revision_id=expected_saved_head_revision_id,
         )
-        return self._load(run_id=run_id, branch_id=branch_id, clock=clock)
+        return self._load(
+            run_id=run_id, branch_id=branch_id, clock=clock,
+            expected_saved_head_revision_id=expected_saved_head_revision_id,
+        )
 
     def resolve(
         self, *, run_id: str, branch_id: str,

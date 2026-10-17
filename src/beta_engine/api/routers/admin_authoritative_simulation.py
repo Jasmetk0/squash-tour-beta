@@ -64,6 +64,9 @@ from beta_engine.application.calendar_standalone_match_service import (
 from beta_engine.application.calendar_opening_knockout_service import (
     CalendarOpeningKnockoutCommand, CalendarOpeningKnockoutService,
 )
+from beta_engine.application.calendar_knockout_award_service import (
+    CalendarAwardProposal, CalendarAwardApplyCommand, CalendarKnockoutAwardService,
+)
 
 from beta_engine.application.prospect_bridge_inspection import inspect_prospect_bridge
 from beta_engine.application.pre_alpha_fax_acceptance_profile import (
@@ -1065,6 +1068,38 @@ def replay_calendar_opening_knockout(
 
 # Same immutable calendar sporting component/Save machinery as the v1
 # exhibition, so past Saved payloads are never rewritten or silently upgraded.
+@router.post("/calendar-opening-knockout/awards/review")
+def review_calendar_knockout_awards(
+    run_id: str, branch_id: str, payload: CalendarAwardProposal,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+):
+    try:
+        return CalendarKnockoutAwardService(runtime.repository).review(
+            run_id=run_id, branch_id=branch_id, proposal=payload,
+        )
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except (TypeError, ValueError) as exc:
+        raise HTTPException(status_code=409,
+                            detail={"code": "calendar_award_review_conflict", "message": str(exc)}) from exc
+
+
+@router.post("/calendar-opening-knockout/awards/apply", status_code=201)
+def apply_calendar_knockout_awards(
+    run_id: str, branch_id: str, payload: CalendarAwardApplyCommand,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+):
+    try:
+        return CalendarKnockoutAwardService(runtime.repository).apply(
+            run_id=run_id, branch_id=branch_id, command=payload,
+        )
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except (TypeError, ValueError) as exc:
+        raise HTTPException(status_code=409,
+                            detail={"code": "calendar_award_apply_conflict", "message": str(exc)}) from exc
+
+
 @router.get("/calendar-opening-knockout/save/preview")
 def preview_calendar_opening_knockout_save(
     run_id: str, branch_id: str,

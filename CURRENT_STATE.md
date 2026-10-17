@@ -93,3 +93,23 @@ boundary; a match-containing Saved fork is still blocked. See
 [calendar opening knockout contract](docs/CALENDAR_OPENING_KNOCKOUT_V84.md).
 Verification and browser acceptance remain required on the candidate
 final HEAD, not assumed green.
+
+## Next merged milestone and scored candidate (October 17, 2026)
+
+`buuk` is now `b76172a358d7b33ef1b0760b94ecd836647fcd67`
+after owner merge of #1523. The W52/W80 three-match real knockout,
+exact immutable Save/replay/restart, historical restore and CS/EN Chromium
+acceptance are merged (not Official tournament point publication).
+
+This new candidate builds a second real writable/Saved vertical slice:
+reviewed operator-authored knockout points derived from the exact previously
+Signed MatchEngine bracket; four placements, W-year validity, W2 proposed
+first publication, strict preview/confirm, exact receipt and a distinct
+second immutable manual Save. The input policy remains **operator-configured,
+not original Category/Edition authority**, and all points retain
+`prepared_not_official` status. No ranking transition writer, Week/Season
+Transition, World Events, viewer exposure or durable Full Simulation bridge
+is claimed. See `docs/CALENDAR_KNOCKOUT_PREPARED_AWARDS_V84.md`.
+
+Check final-head backend/frontend/Chromium results before calling it merge
+ready. Never rewrite historical Signed v1 match data or remove W61 guards.

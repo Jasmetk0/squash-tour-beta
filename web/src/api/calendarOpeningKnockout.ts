@@ -22,6 +22,13 @@ export type KnockoutInspection = {
   knockout: OpeningKnockout | null
   knockout_fingerprint: string | null
   saved: boolean
+  prepared_points: {
+    policy: CalendarAwardPolicy
+    awards: CalendarAwardEntry[]
+    first_publication_week: { season_index: number; week: number; calendar: KnockoutInspection['run_calendar'] }
+    publication_status: 'prepared_not_official'
+    scored_fingerprint: string
+  } | null
 }
 export type KnockoutCommand = {
   command_id: string; match_id: string; expected_saved_head: string
@@ -70,8 +77,60 @@ export function verifyKnockoutInspection(v: KnockoutInspection, runId: string, b
       || !k.matches.every(m => Array.isArray(m.result.rally_log?.events) && m.result.rally_log.events.length > 0)) {
       throw Error('Opening knockout is not a valid winner-fed three-match bracket')
     }
-  } else if (v.saved || v.knockout_fingerprint !== null) {
+  } else if (v.saved || v.knockout_fingerprint !== null || v.prepared_points) {
     throw Error('Saved knockout component has no played result')
   }
+  if (v.prepared_points) {
+    const awards = v.prepared_points.awards
+    if (!v.knockout || v.prepared_points.publication_status !== 'prepared_not_official'
+      || v.prepared_points.scored_fingerprint !== v.knockout_fingerprint
+      || !Array.isArray(awards) || awards.length !== 4
+      || new Set(awards.map(a => a.player_id)).size !== 4
+      || awards.some(a => !v.knockout!.entrant_ids.includes(a.player_id))
+      || v.prepared_points.first_publication_week.week !== 2
+      || v.prepared_points.first_publication_week.season_index !== 0) {
+      throw Error('Knockout points are not authenticated prepared ranking facts')
+    }
+  }
   return v
+}
+
+export type CalendarAwardPolicy = {
+  schema_version: 'calendar_knockout_point_policy.v1'
+  source_kind: 'admin_explicit_reviewed'
+  category_label: string
+  champion: number
+  finalist: number
+  semifinal: number
+  validity_weeks: number
+}
+export type CalendarAwardEntry = {
+  player_id: string
+  reached_stage: 'champion' | 'finalist' | 'semifinal'
+  main_points: number
+  source_knockout_fingerprint: string
+  source_policy_fingerprint: string
+}
+export type CalendarAwardProposal = {
+  expected_saved_head: string
+  expected_knockout_fingerprint: string
+  policy: CalendarAwardPolicy
+  operator_label: string
+  audit_reason: string
+}
+export type CalendarAwardReview = {
+  schema_version: 'calendar_knockout_award_review.v1'
+  run_id: string; branch_id: string; source_saved_head: string
+  source_knockout_fingerprint: string
+  first_publication_week: { season_index: number; week: number; calendar: KnockoutInspection['run_calendar'] }
+  policy_fingerprint: string
+  awards: CalendarAwardEntry[]
+  preview_fingerprint: string
+  publication_status: 'prepared_not_official'
+}
+export type CalendarAwardApplyCommand = {
+  command_id: string
+  proposal: CalendarAwardProposal
+  expected_preview_fingerprint: string
+  explicit_confirmation: true
 }

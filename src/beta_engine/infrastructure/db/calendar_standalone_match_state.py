@@ -156,6 +156,13 @@ def _parse_calendar_match(serialized: str) -> CalendarMatchEvidence:
         return CalendarStandaloneMatch.model_validate_json(serialized)
     if raw.get("schema_version") == "calendar_opening_knockout.v1":
         return CalendarOpeningKnockout.model_validate_json(serialized)
+    if raw.get("schema_version") == "calendar_scored_opening_knockout.v1":
+        # Delayed import avoids a circular dependency on the historical,
+        # byte-stable v1 tournament model.
+        from beta_engine.infrastructure.db.calendar_knockout_awards_state import (
+            CalendarScoredOpeningKnockout,
+        )
+        return CalendarScoredOpeningKnockout.model_validate_json(serialized)
     raise ValueError("Unknown calendar match evidence schema; refuse reinterpretation")
 
 
@@ -188,6 +195,31 @@ def put_match(session: Session, state: CalendarMatchEvidence) -> None:
         command_id=state.command_id, request_fingerprint=state.request_fingerprint,
         fingerprint=state.fingerprint, payload_json=state.model_dump_json(),
     ))
+    session.flush()
+
+
+def replace_saved_knockout_with_prepared_awards(
+    session: Session, *, original: CalendarOpeningKnockout, scored,
+) -> None:
+    """Atomic version promotion of one live row; never edits signed history."""
+    existing = load_match_rows(
+        session, run_id=original.run_id, branch_id=original.branch_id
+    )
+    if len(existing) != 1 or not isinstance(existing[0], CalendarOpeningKnockout):
+        raise ValueError("Prepared awards require one unmodified, unscored knockout row")
+    if existing[0].fingerprint != original.fingerprint:
+        raise ValueError("Knockout changed since reviewed award source")
+    if scored.knockout.fingerprint != original.fingerprint:
+        raise ValueError("Prepared awards refer to another knockout")
+    row = session.get(CalendarStandaloneMatchModel, (
+        original.run_id, original.branch_id, original.match_id
+    ))
+    if row is None:
+        raise ValueError("Prepared award source row disappeared")
+    row.command_id = scored.command_id
+    row.request_fingerprint = scored.request_fingerprint
+    row.fingerprint = scored.fingerprint
+    row.payload_json = scored.model_dump_json()
     session.flush()
 
 

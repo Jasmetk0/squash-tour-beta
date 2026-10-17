@@ -124,3 +124,17 @@ non-FAX calendars. This is read-only candidate inspection, not tournament
 simulation, not W52/W80 support, not a new Saved component or official
 publication. New real SQLite/Saved tests cover positive and adversarial
 paths; required final-head CI controls merge readiness.
+
+
+## After #1515 — calendar-native whole-tournament ranking staging candidate
+
+#1515 was verified merged into `buuk` (starting SHA
+`d2e62ac3a73ba06e85aa9a9701139d4d14415510`); no other PR open.
+New bounded feature adds W52/W61/W80 pure single-elimination knockout
+validation and authored-placement points projection, then an all-or-nothing
+full-Edition SQLite staging command and Saved-clock read-only ranking
+preview tests including Week W → next Season Week 1. It intentionally does
+**not** accept legacy FAX TournamentRankingBinding for W52/W80 and does
+not assert Run-authenticated match provenance. These are staging facts only,
+not a real match/result writer or Saved/Viewer publication. CI final HEAD
+must be green before owner merges.

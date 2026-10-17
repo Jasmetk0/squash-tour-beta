@@ -141,7 +141,7 @@ def exercise_calendar_match(
         "heading", name="First real Run-calendar match", exact=True
     )).to_be_visible()
     region = page.locator('section[aria-label="Calendar native standalone match"]')
-    expect(region.get_by_text("Saved", exact=False)).to_be_visible()
+    expect(region.get_by_text("Status: Saved", exact=False)).to_be_visible()
     assert api("GET", match_root)["match_fingerprint"] == played["fingerprint"]
     assert api("GET", match_root + "/calendar-opening-exhibition/replay")["exact_replay"]
     page.get_by_role("combobox", name="Language / Jazyk").select_option("cs")

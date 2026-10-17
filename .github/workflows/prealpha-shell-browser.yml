@@ -13,6 +13,9 @@ on:
     paths:
       - '.github/workflows/prealpha-shell-browser.yml'
       - 'web/acceptance/prealpha_shell_browser_smoke.py'
+      - 'web/acceptance/calendar_standalone_match_browser_check.py'
+      - 'web/src/pages/CalendarStandaloneMatchPanel.tsx'
+      - 'web/src/api/calendarStandaloneMatch.ts'
       - 'web/src/components/AdminNavigation.tsx'
       - 'web/src/components/AdminRunSelector.tsx'
       - 'web/src/components/AdminBranchSelector.tsx'

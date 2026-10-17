@@ -16,6 +16,7 @@ from beta_engine.application.calendar_standalone_match_service import (
 )
 from beta_engine.domain.calendar.run_week_position import RunWeekPosition
 from beta_engine.domain.rankings.official import FrozenInput
+from beta_engine.domain.rankings.calendar_official import CalendarRankingWeek
 from beta_engine.domain.run_packages import canonical_hash
 from beta_engine.infrastructure.db.calendar_knockout_awards_state import (
     CalendarScoredOpeningKnockout, derive_knockout_prepared_awards,
@@ -56,7 +57,7 @@ class SignedKnockoutStandings(FrozenInput):
     as_of: RunWeekPosition
     source_completed_week: RunWeekPosition
     proposed_first_publication_week: RunWeekPosition
-    expiration_week_exclusive: RunWeekPosition
+    expiration_week_exclusive: CalendarRankingWeek
     validity_weeks: int = Field(ge=1)
     rows: tuple[KnockoutStandingsRow, ...]
     points_in_period: bool
@@ -124,8 +125,10 @@ class CalendarSignedKnockoutStandingsService:
             if as_of.ordinal < first.ordinal:
                 raise ValueError("Signed event points are not eligible as of this week")
             expires_at_ordinal = first.ordinal + scored.policy.validity_weeks
-            expires_at = RunWeekPosition(
-                calendar=clock,
+            # The expiration can lie after the configured Run horizon.
+            # Keep the mathematical boundary without inventing a future
+            # executable week or extending the stored Run.
+            expires_at = CalendarRankingWeek(
                 season_index=expires_at_ordinal // clock.weeks_per_year,
                 week=expires_at_ordinal % clock.weeks_per_year + 1,
             )

@@ -29,7 +29,7 @@ class CalendarOpeningKnockoutCommand(FrozenInput):
     match_id: str = Field(min_length=1, max_length=100)
     expected_saved_head: str = Field(min_length=1, max_length=128)
     expected_initial_world_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
-    entrant_ids: tuple[str, str, str, str]
+    entrant_ids: list[str] = Field(min_length=4, max_length=4)
     seed: int
     operator_label: str = Field(min_length=1, max_length=160)
     audit_reason: str = Field(min_length=1, max_length=1000)
@@ -173,7 +173,7 @@ class CalendarOpeningKnockoutService:
                 source_saved_head=revision.saved_head_revision_id,
                 source_initial_world_fingerprint=world.fingerprint,
                 week=RunWeekPosition(calendar=clock, season_index=0, week=1),
-                seed=command.seed, entrant_ids=command.entrant_ids,
+                seed=command.seed, entrant_ids=tuple(command.entrant_ids),
                 pre_slot_anchor=pre_slot_anchor,
                 matches=(semi_a, semi_b, final),
                 operator_label=command.operator_label, audit_reason=command.audit_reason,

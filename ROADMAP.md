@@ -55,3 +55,7 @@ A cohesive Run-wide review → explicit confirmation → single-transaction Save
 ## Post #1508 — Saved-content readiness candidate
 
 #1508 merged and delivers actual audited all-Branch Run horizon Save. The current candidate builds a usable Admin Run Home readiness guide (saved World, Calendar, population, Health, published ranking, Working Draft, and task evidence) from an exact Branch Saved snapshot, with CS/EN action links and independent refresh. The guide does not bypass any sporting preflight. Subsequent calendar-dependent ranking validity, annual growth and true W52/W80 Week/Season writer migration are still required, followed by populated cross-season acceptance. See [Run Home readiness](docs/RUN_HOME_READINESS_V83.md).
+
+## Calendar-aware ranking point-report dependency candidate
+
+After merged #1509 (Saved Run Home readiness), the bounded next PR migrates the **non-authoritative RankingRaceEngine point report** from hardcoded W61 to explicit RunCalendar W52/W61/W80, default validity W, real signed Saved-clock input, and exact historical backward compatibility. This does **not** migrate Official Ranking publication, corrections/zeros, annual development or Week/Season Transition. Those remain blocked on non-reference calendars. See [scope and tests](docs/RUN_CALENDAR_RANKING_RACE_REPORT_V83.md).

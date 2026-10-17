@@ -61,6 +61,10 @@ from beta_engine.application.calendar_standalone_match_service import (
     CalendarStandaloneMatchCommand,
     CalendarStandaloneMatchService,
 )
+from beta_engine.application.calendar_opening_knockout_service import (
+    CalendarOpeningKnockoutCommand, CalendarOpeningKnockoutService,
+)
+
 from beta_engine.application.prospect_bridge_inspection import inspect_prospect_bridge
 from beta_engine.application.pre_alpha_fax_acceptance_profile import (
     PreAlphaFaxAcceptanceProfileService,
@@ -1006,6 +1010,97 @@ def save_calendar_standalone_match(
             expected_calendar_match_fingerprint=payload["expected_calendar_match_fingerprint"],
         )
     except (ValueError, KeyError) as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+
+
+@router.get("/calendar-opening-knockout")
+def calendar_opening_knockout_state(
+    run_id: str, branch_id: str,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+):
+    try:
+        return CalendarOpeningKnockoutService(runtime.repository).inspect(
+            run_id=run_id, branch_id=branch_id
+        )
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except (TypeError, ValueError) as exc:
+        raise HTTPException(status_code=409,
+                            detail={"code": "calendar_knockout_state_conflict", "message": str(exc)}) from exc
+
+
+@router.post("/calendar-opening-knockout/simulate", status_code=201)
+def simulate_calendar_opening_knockout(
+    run_id: str, branch_id: str,
+    payload: CalendarOpeningKnockoutCommand,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+):
+    try:
+        return CalendarOpeningKnockoutService(runtime.repository).simulate(
+            run_id=run_id, branch_id=branch_id, command=payload
+        )
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except (TypeError, ValueError) as exc:
+        raise HTTPException(status_code=409,
+                            detail={"code": "calendar_knockout_execution_conflict", "message": str(exc)}) from exc
+
+
+@router.get("/calendar-opening-knockout/{match_id}/replay")
+def replay_calendar_opening_knockout(
+    run_id: str, branch_id: str, match_id: str,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+):
+    try:
+        return CalendarOpeningKnockoutService(runtime.repository).replay(
+            run_id=run_id, branch_id=branch_id, match_id=match_id
+        )
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except (TypeError, ValueError) as exc:
+        raise HTTPException(status_code=409,
+                            detail={"code": "calendar_knockout_replay_conflict", "message": str(exc)}) from exc
+
+
+# Same immutable calendar sporting component/Save machinery as the v1
+# exhibition, so past Saved payloads are never rewritten or silently upgraded.
+@router.get("/calendar-opening-knockout/save/preview")
+def preview_calendar_opening_knockout_save(
+    run_id: str, branch_id: str,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+):
+    try:
+        view = CalendarOpeningKnockoutService(runtime.repository).inspect(
+            run_id=run_id, branch_id=branch_id
+        )
+        if view["knockout"] is None:
+            raise ValueError("No opening knockout to save")
+        return runtime.repository.preview_calendar_match_save(
+            run_id=run_id, branch_id=branch_id
+        )
+    except (KeyError, TypeError, ValueError) as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+
+@router.post("/calendar-opening-knockout/save", status_code=201)
+def save_calendar_opening_knockout(
+    run_id: str, branch_id: str, payload: dict,
+    service: Annotated[RunWorkingDraftService, Depends(get_run_working_draft_service)],
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+):
+    try:
+        view = CalendarOpeningKnockoutService(runtime.repository).inspect(
+            run_id=run_id, branch_id=branch_id
+        )
+        if view["knockout"] is None:
+            raise ValueError("No opening knockout to save")
+        return service.save_calendar_match(
+            run_id=run_id, branch_id=branch_id,
+            expected_draft_version=payload["expected_draft_version"],
+            expected_calendar_match_fingerprint=payload["expected_calendar_match_fingerprint"],
+        )
+    except (KeyError, TypeError, ValueError) as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
 
 

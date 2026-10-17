@@ -21,6 +21,9 @@ vi.mock('./AuthoritativeSimulationPanel', () => ({
 vi.mock('./CalendarStandaloneMatchPanel', () => ({
   CalendarStandaloneMatchPanel: () => <div aria-label="Calendar native standalone match" />,
 }))
+vi.mock('./CalendarOpeningKnockoutPanel', () => ({
+  CalendarOpeningKnockoutPanel: () => <div aria-label="Calendar native four-player knockout" />,
+}))
 
 
 const branch = (id: string, head: string, readOnly = false) => ({ branch_id: id, run_id: 'run-a', display_name: id === 'branch-a' ? 'Branch A' : 'Branch B', status: 'active', read_only: readOnly, branch_seed: 1, legacy_simulation_run_id: `legacy-${id}`, forked_from_branch_id: null, forked_from_checkpoint_id: null, head_checkpoint_id: head, is_official: id === 'branch-a' })

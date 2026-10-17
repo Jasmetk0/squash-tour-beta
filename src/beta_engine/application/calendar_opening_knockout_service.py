@@ -1,0 +1,214 @@
+"""Real four-entrant calendar-native main-only knockout, atomic with exact replay.
+
+Two semifinals read the identical frozen pre-slot population. Their winners
+feed the final, whose engine input is unchanged frozen participant data. This
+bounded sporting writer creates no points, publication or week transition.
+"""
+from __future__ import annotations
+
+from dataclasses import dataclass
+
+from pydantic import Field, model_validator
+from sqlalchemy import text
+
+from beta_engine.application.calendar_standalone_match_service import CalendarStandaloneMatchService
+from beta_engine.core import DeterministicRng
+from beta_engine.domain.calendar.run_week_position import RunWeekPosition
+from beta_engine.domain.matches.match_engine import MatchEngine
+from beta_engine.domain.matches.models import MatchContext, MatchParticipantContext
+from beta_engine.domain.rankings.official import FrozenInput
+from beta_engine.domain.run_packages import canonical_hash
+from beta_engine.infrastructure.db.calendar_standalone_match_state import (
+    CalendarOpeningKnockout, CalendarKnockoutMatch, load_match_rows,
+    load_saved_calendar_match, put_match,
+)
+
+
+class CalendarOpeningKnockoutCommand(FrozenInput):
+    command_id: str = Field(min_length=1, max_length=128)
+    match_id: str = Field(min_length=1, max_length=100)
+    expected_saved_head: str = Field(min_length=1, max_length=128)
+    expected_initial_world_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    entrant_ids: list[str] = Field(min_length=4, max_length=4)
+    seed: int
+    operator_label: str = Field(min_length=1, max_length=160)
+    audit_reason: str = Field(min_length=1, max_length=1000)
+
+    @model_validator(mode="after")
+    def distinct_entrants(self):
+        if len(set(self.entrant_ids)) != 4 or not all(self.entrant_ids):
+            raise ValueError("Opening knockout needs four different player IDs")
+        return self
+
+
+@dataclass(slots=True)
+class CalendarOpeningKnockoutService:
+    repository: object
+
+    def _context(self, session, *, run_id: str, branch_id: str):
+        return CalendarStandaloneMatchService(self.repository)._context(
+            session, run_id=run_id, branch_id=branch_id
+        )
+
+    @staticmethod
+    def _play(*, run_id: str, branch_id: str, clock, saved_head: str,
+              world_fingerprint: str, pre_slot_anchor: str, root_id: str,
+              round_name: str, slot: int, seed: int, first, second) -> CalendarKnockoutMatch:
+        context = MatchContext(
+            match_id=f"{root_id}-{round_name}",
+            player_a=MatchParticipantContext(player=first),
+            player_b=MatchParticipantContext(player=second),
+            best_of=5, games_to=11, win_by=2,
+        )
+        anchor = canonical_hash({
+            "schema_version": "calendar_opening_knockout_match_anchor.v1",
+            "run_id": run_id, "branch_id": branch_id,
+            "calendar": clock.to_metadata(), "week": [0, 1],
+            "saved_head": saved_head, "world_fingerprint": world_fingerprint,
+            "pre_slot_anchor": pre_slot_anchor, "round": round_name,
+            "slot": slot, "context": context.model_dump(mode="json"),
+            "seed": seed,
+        })
+        result = MatchEngine(DeterministicRng(seed)).simulate(
+            context, log_anchor_hash=anchor
+        )
+        return CalendarKnockoutMatch(
+            round=round_name, slot=slot, seed=seed,
+            input_context=context, result=result, log_anchor_hash=anchor,
+        )
+
+    def inspect(self, *, run_id: str, branch_id: str) -> dict:
+        with self.repository._session_factory() as session:
+            session.execute(text("BEGIN"))
+            clock, revision, world = self._context(
+                session, run_id=run_id, branch_id=branch_id
+            )
+            rows = load_match_rows(session, run_id=run_id, branch_id=branch_id)
+            if len(rows) > 1:
+                raise ValueError("Opening knockout cannot coexist with another calendar match")
+            if rows and not isinstance(rows[0], CalendarOpeningKnockout):
+                raise ValueError("Standalone exhibition already owns this opening-week sporting slice")
+            match = rows[0] if rows else None
+            saved = load_saved_calendar_match(
+                revision.saved_revision.payload, run_id=run_id, branch_id=branch_id
+            )
+            if saved is not None and (
+                not isinstance(saved, CalendarOpeningKnockout)
+                or match is None or saved.fingerprint != match.fingerprint
+            ):
+                raise ValueError("Saved knockout differs from live sporting state")
+            return {
+                "schema_version": "calendar_opening_knockout_inspection.v1",
+                "run_id": run_id, "branch_id": branch_id,
+                "run_calendar": clock.to_metadata(),
+                "saved_head_revision_id": revision.saved_head_revision_id,
+                "draft_version": revision.working_draft.draft_version,
+                "initial_world_fingerprint": world.fingerprint,
+                "player_ids": [p.player_id for p in world.players],
+                "knockout": match.model_dump(mode="json") if match else None,
+                "knockout_fingerprint": match.fingerprint if match else None,
+                "saved": saved is not None,
+            }
+
+    def simulate(self, *, run_id: str, branch_id: str,
+                 command: CalendarOpeningKnockoutCommand) -> dict:
+        request_fp = canonical_hash({
+            "run_id": run_id, "branch_id": branch_id,
+            "command": command.model_dump(mode="json"),
+        })
+        with self.repository._session_factory.begin() as session:
+            session.execute(text("BEGIN IMMEDIATE"))
+            clock, revision, world = self._context(
+                session, run_id=run_id, branch_id=branch_id
+            )
+            rows = load_match_rows(session, run_id=run_id, branch_id=branch_id)
+            if rows:
+                existing = rows[0]
+                if (len(rows) != 1
+                    or not isinstance(existing, CalendarOpeningKnockout)
+                    or existing.command_id != command.command_id
+                    or existing.request_fingerprint != request_fp):
+                    raise ValueError("Opening-week sporting evidence already exists")
+                return {"knockout": existing.model_dump(mode="json"),
+                        "fingerprint": existing.fingerprint}
+            if revision.saved_head_revision_id != command.expected_saved_head:
+                raise ValueError("Opening knockout Saved HEAD changed since review")
+            if world.fingerprint != command.expected_initial_world_fingerprint:
+                raise ValueError("Opening knockout Saved population changed since review")
+            roster = {p.player_id: p for p in world.players}
+            if any(player_id not in roster for player_id in command.entrant_ids):
+                raise ValueError("Knockout entrants must belong to Saved population")
+            players = {
+                player_id: CalendarStandaloneMatchService._engine_player(roster[player_id])
+                for player_id in command.entrant_ids
+            }
+            pre_slot_anchor = canonical_hash({
+                "schema_version": "calendar_opening_knockout_slot_snapshot.v1",
+                "run_id": run_id, "branch_id": branch_id,
+                "calendar": clock.to_metadata(), "week": [0, 1],
+                "source_saved_head": revision.saved_head_revision_id,
+                "initial_world": world.fingerprint,
+                "entrant_ids": command.entrant_ids,
+            })
+            a, b, c, d = (players[pid] for pid in command.entrant_ids)
+            common = dict(
+                run_id=run_id, branch_id=branch_id, clock=clock,
+                saved_head=revision.saved_head_revision_id,
+                world_fingerprint=world.fingerprint,
+                pre_slot_anchor=pre_slot_anchor, root_id=command.match_id,
+            )
+            semi_a = self._play(**common, round_name="semifinal_1",
+                                slot=1, seed=command.seed, first=a, second=b)
+            semi_b = self._play(**common, round_name="semifinal_2",
+                                slot=1, seed=command.seed + 1, first=c, second=d)
+            final = self._play(
+                **common, round_name="final", slot=2, seed=command.seed + 2,
+                first=players[semi_a.result.winner_player_id],
+                second=players[semi_b.result.winner_player_id],
+            )
+            knockout = CalendarOpeningKnockout(
+                run_id=run_id, branch_id=branch_id,
+                match_id=command.match_id, command_id=command.command_id,
+                request_fingerprint=request_fp,
+                source_saved_head=revision.saved_head_revision_id,
+                source_initial_world_fingerprint=world.fingerprint,
+                week=RunWeekPosition(calendar=clock, season_index=0, week=1),
+                seed=command.seed, entrant_ids=tuple(command.entrant_ids),
+                pre_slot_anchor=pre_slot_anchor,
+                matches=(semi_a, semi_b, final),
+                operator_label=command.operator_label, audit_reason=command.audit_reason,
+            )
+            put_match(session, knockout)
+            return {"knockout": knockout.model_dump(mode="json"),
+                    "fingerprint": knockout.fingerprint}
+
+    def replay(self, *, run_id: str, branch_id: str, match_id: str) -> dict:
+        with self.repository._session_factory() as session:
+            session.execute(text("BEGIN"))
+            rows = load_match_rows(session, run_id=run_id, branch_id=branch_id)
+            match = next((r for r in rows
+                          if r.match_id == match_id and isinstance(r, CalendarOpeningKnockout)), None)
+            if match is None:
+                raise KeyError("Calendar knockout not found")
+            common = {
+                "run_id": run_id, "branch_id": branch_id,
+                "clock": match.week.calendar,
+                "saved_head": match.source_saved_head,
+                "world_fingerprint": match.source_initial_world_fingerprint,
+                "pre_slot_anchor": match.pre_slot_anchor,
+                "root_id": match.match_id,
+            }
+            for played in match.matches:
+                ctx = played.input_context
+                replayed = self._play(
+                    **common, round_name=played.round, slot=played.slot,
+                    seed=played.seed, first=ctx.player_a.player, second=ctx.player_b.player
+                )
+                if replayed.model_dump(mode="json") != played.model_dump(mode="json"):
+                    raise ValueError("Knockout replay differs from original MatchEngine logs")
+            return {
+                "match_id": match_id, "fingerprint": match.fingerprint,
+                "winner_player_id": match.matches[2].result.winner_player_id,
+                "rally_counts": [len(m.result.rally_log.events) for m in match.matches],
+                "exact_replay": True,
+            }

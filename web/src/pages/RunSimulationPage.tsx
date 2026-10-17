@@ -12,6 +12,7 @@ import { CurrentContextStrip, MetadataList, PageIntro, SectionCard } from '../co
 import { formatApiError } from '../utils/apiErrors'
 import { AuthoritativeSimulationPanel } from './AuthoritativeSimulationPanel'
 import { CalendarStandaloneMatchPanel } from './CalendarStandaloneMatchPanel'
+import { CalendarOpeningKnockoutPanel } from './CalendarOpeningKnockoutPanel'
 
 type Review = { action: BranchSimulationAction; runId: string; branchId: string; head: string; state: BranchState; checkpointKind: string }
 type ExecutionSnapshot = Review & { auditReason: string; commandId: string; viewerBranchId: string | null }
@@ -30,6 +31,7 @@ export function RunSimulationPage(): JSX.Element {
   const time = useAdminTime()
   const [review, setReview] = useState<Review | null>(null)
   const [reason, setReason] = useState('')
+  const [calendarSportingMode, setCalendarSportingMode] = useState<'knockout' | 'exhibition'>('knockout')
   const [commandId, setCommandId] = useState(newCommandId)
   const [confirmed, setConfirmed] = useState(false)
   const [notice, setNotice] = useState<string | null>(null)
@@ -144,11 +146,24 @@ export function RunSimulationPage(): JSX.Element {
       blockedReason={canonicalEligibility}
     />
     {!canonicalEligibility && executionBranchId && executionBranch?.saved_head_revision_id && (
-      <CalendarStandaloneMatchPanel
-        runId={runId}
-        branchId={executionBranchId}
-        savedHead={executionBranch.saved_head_revision_id}
-      />
+      <section aria-label="Calendar sporting mode">
+        <p className="status">Run-calendar-native sporting · Choose one opening-week operation per Branch.</p>
+        <button type="button" disabled={calendarSportingMode === 'knockout'}
+          onClick={() => setCalendarSportingMode('knockout')}>4-player knockout / Pavouk</button>
+        <button type="button" disabled={calendarSportingMode === 'exhibition'}
+          onClick={() => setCalendarSportingMode('exhibition')}>Exhibition / Exhibice</button>
+        {calendarSportingMode === 'knockout' ? (
+          <CalendarOpeningKnockoutPanel
+            runId={runId} branchId={executionBranchId}
+            savedHead={executionBranch.saved_head_revision_id}
+          />
+        ) : (
+          <CalendarStandaloneMatchPanel
+            runId={runId} branchId={executionBranchId}
+            savedHead={executionBranch.saved_head_revision_id}
+          />
+        )}
+      </section>
     )}
 
     {eligibility && <p role="alert" className="error">Legacy compatibility simulation blocked: {eligibility}</p>}

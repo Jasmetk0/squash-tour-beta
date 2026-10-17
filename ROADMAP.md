@@ -25,3 +25,14 @@ and [full next task](docs/PRE_ALPHA_NEXT_CHATGPT_TASK_V84_2026_10_17.md).
 New product decisions live in Master 9.9/21.3.1/27.24/31.39; their existence does
 not establish runtime completion or resolve deferred initial-rule inheritance.
 Historical candidate notes and dated evidence remain in Git and Master chapter 35.
+
+## Candidate next vertical slice: real opening-week knockout
+
+Following merged #1522, the current candidate extends real calendar
+sporting to a full main-only four-player opening bracket, actual seeded
+MatchEngine semifinals/final, exact replay and immutable manual Save.
+This shares existing Saved capture/restore/restart while preserving
+legacy exhibition schema and sporting guards. It is **not** official
+tournament points, weekly publication or Week/Season Transition. Its
+candidate tests/CI and distinct Chromium acceptance must be verified
+before merge. Contract: [CALENDAR_OPENING_KNOCKOUT_V84.md](docs/CALENDAR_OPENING_KNOCKOUT_V84.md).

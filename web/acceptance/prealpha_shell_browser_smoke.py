@@ -13,6 +13,7 @@ from pathlib import Path
 from playwright.sync_api import expect, sync_playwright
 
 from calendar_standalone_match_browser_check import exercise_calendar_match
+from calendar_opening_knockout_browser_check import exercise_calendar_knockout
 
 
 def main() -> None:
@@ -980,6 +981,14 @@ def main() -> None:
             # Genuine Run-calendar sporting/browser acceptance on a newly
             # forked historical Saved population. No old branch/head mutation.
             evidence["calendar_native_match_save_replay"] = exercise_calendar_match(
+                page, base_url=base, api_url=args.api_url, artifacts=artifacts,
+                run_id=custom_id,
+                original_branch_id=preview_branch["branch_id"],
+                population_revision_id=saved_population["revision_id"],
+                original_clock=expected_clock,
+            )
+
+            evidence["calendar_native_four_player_knockout"] = exercise_calendar_knockout(
                 page, base_url=base, api_url=args.api_url, artifacts=artifacts,
                 run_id=custom_id,
                 original_branch_id=preview_branch["branch_id"],

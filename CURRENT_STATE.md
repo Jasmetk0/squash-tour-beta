@@ -83,3 +83,18 @@ predecessors. It does **not** persist those new source version types, publish
 official rankings, migrate legacy source stores or remove sporting guards.
 Final HEAD focused tests/CI are required before a merge-ready handoff.
 See [scope and limitations](docs/RUN_CALENDAR_OFFICIAL_RANKING_CANDIDATE_V83.md).
+
+
+## Post #1512 — unpublished SQLite source staging candidate
+
+#1512 merged to `buuk` and no competing open PR at inspection. This candidate
+adds real SQLite/restart durability and exact fingerprinted storage for
+calendar-aware ranking correction and zero *staging*, with internal
+`BEGIN IMMEDIATE` append, scope/Save-clock verification and read-only
+as-of replay. It refuses forks and already authoritative sporting branches.
+These separate tables are **outside Saved Revision history and real publication**:
+there is no matching authoritative source evidence/Save/fork/restore integration,
+no UI or sporting W52/W80 enablement. See the revised scoped contract and
+focused real SQLite tests. Candidate only becomes merge-ready after final-head CI.
+
+**Saved HEAD pinning:** each staged source row records the exact immutable Saved Revision ID active at creation. Subsequent read and write refuse any row originating at a different Saved HEAD. A later legitimate user Save (including a production horizon extension creating a new Saved Revision) therefore fails closed until a reviewed rebase/materialization is implemented. Pure domain horizon continuity does not override this staging ownership barrier. This is deliberately not an automatic Save or fork migration.

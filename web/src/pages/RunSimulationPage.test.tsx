@@ -12,6 +12,16 @@ const api = vi.hoisted(() => ({ getRunContainer: vi.fn(), getBranchState: vi.fn(
 vi.mock('../admin/AdminBranchContext', () => ({ useAdminBranch: () => context.value }))
 vi.mock('../admin/AdminTimeContext', () => ({ useAdminTime: () => context.time }))
 vi.mock('../api/client', () => api)
+/* RunSimulationPage verifies scope/legacy branching, not the internals of its
+ * independently tested authoritative and native calendar sporting panels.
+ * Rendering them here requires the whole app's API and LanguageProvider. */
+vi.mock('./AuthoritativeSimulationPanel', () => ({
+  AuthoritativeSimulationPanel: () => <h3>Canonical authoritative sporting simulation</h3>,
+}))
+vi.mock('./CalendarStandaloneMatchPanel', () => ({
+  CalendarStandaloneMatchPanel: () => <div aria-label="Calendar native standalone match" />,
+}))
+
 
 const branch = (id: string, head: string, readOnly = false) => ({ branch_id: id, run_id: 'run-a', display_name: id === 'branch-a' ? 'Branch A' : 'Branch B', status: 'active', read_only: readOnly, branch_seed: 1, legacy_simulation_run_id: `legacy-${id}`, forked_from_branch_id: null, forked_from_checkpoint_id: null, head_checkpoint_id: head, is_official: id === 'branch-a' })
 const state = (id: string, head: string) => ({ branch_id: id, run_id: 'run-a', head_checkpoint_id: head, current_season: id === 'branch-a' ? 2004 : 2005, current_week: id === 'branch-a' ? 17 : 18, current_event_id: `event-${id}`, current_event_sequence: 2, state_schema_version: '1', status: 'active', metadata_json: {} })

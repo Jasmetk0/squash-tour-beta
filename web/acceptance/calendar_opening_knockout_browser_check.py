@@ -125,6 +125,13 @@ def exercise_calendar_knockout(page, *, base_url, api_url, artifacts,
     assert apply_response.value.status == 201, apply_response.value.text()[:1200]
     prepared = apply_response.value.json()
     assert prepared["prepared"]["knockout"] == played["knockout"]
+    # Confirm completion of the UI's own Signed-HEAD inspection before
+    # issuing another API request. Concurrent heavyweight 1000-player
+    # inspections are not an acceptance requirement for this operation.
+    expect(panel.get_by_text("Prepared points (not Official)")).to_be_visible(
+        timeout=120000
+    )
+    expect(panel.get_by_text("Status: Unsaved", exact=False)).to_be_visible()
     now = api("GET", root)
     assert now["saved"] is False
     assert now["prepared_points"]["publication_status"] == "prepared_not_official"

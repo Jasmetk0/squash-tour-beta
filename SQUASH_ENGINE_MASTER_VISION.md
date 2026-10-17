@@ -2,8 +2,10 @@
 
 ## Kompletní průběžná specifikace a registr rozhodnutí
 
-**Verze dokumentu:** 83
-**Aktualizováno:** 16. 10. 2026 – příprava/připravenost Runu, balíčky z Runu, počáteční populace ze stejných generací jako běžný intake a předstartovní regenerace; audit po #1506.
+**Verze dokumentu:** 84
+**Aktualizováno:** 17. 10. 2026 – počáteční kvóty a diagnostika odchylek, lokální regenerace, rekordové žebříčky/filtry/uložené pohledy; audit PR #1508–1519.
+
+**Nová produktová rozhodnutí v84:** při celkovém počtu Automatic se přesné podmínky pro část světa promítnou do dotčené části a celkový počet se může změnit bez přerozdělení ostatních zemí. Selektivní regenerace zachovává konkrétní nedotčené hráče a atributy; společné konflikty se řeší výslovně. Diagnostika porovnává přirozené modelové očekávání s výsledkem, odlišuje vynucené odchylky od dalších neobvyklostí a nevymýšlí příčiny ani národnostní retirement bonus. Zastavený neúspěšný výpočet nepředstírá splnění přesné kvóty. Rekordy mají potvrzený výchozí katalog, historii držitelů i pořadí, kombinovatelné filtry a pojmenované Saved Views včetně pevných či průběžných období. Detaily 9.9, 21.3.1, 27.24 a 31.39. Numerická kalibrace, konkrétní solver i dědičnost počátečních pravidel do budoucího intake zůstávají v dosavadních otevřených/odložených statusech. Ověřená implementace je odděleně v 35.41; toto není vydání pre-alpha.
 
 **Nová produktová rozhodnutí v83:** nepovinný průvodce přípravou světa a průběžná připravenost konkrétních operací (31.38); výchozí počáteční populace ze stejných patnáctiletých generací jako pokračující Run, zjednodušený dopočet do startu bez povinné detailní sportovní minulosti, vynechání již retired, počet odvozený ze světa, přesný náhled a selektivní regenerace před prvním týdnem (9.8). Historické Country vstupy a individuální variabilita zůstávají. Sdílení ručně upravených generačních pravidel s budoucím intakem je výslovně odloženo; automatický odhad/předgenerování, výkon a kalibrace nejsou tímto uzavřené. Výběrový export obsahu Runu využívá existující Package systém (31.38). Jde o rozhodnutý cíl, nikoliv tvrzení hotové implementace.
 
@@ -1570,7 +1572,7 @@ Pokud Tournament Ranking Snapshot předchází jeho vstupu na Tour, je pro danou
 
 **[ROZHODNUTO PRO PRE-ALPHA]** Je-li celkový počet výslovně zadaný a podmínky určují jen část dávky, engine automaticky doplní zbývající hráče podle cílového světa a platných společných podmínek. Příklad: celkem 100, přesně 20 CZE a přesně 10 SVK v celé dávce → 70 zbývajících hráčů z ostatních způsobilých zemí. Doplnění nesmí přidat další CZE/SVK a porušit přesné celkové kvóty. UI ukazuje `100 celkem · 30 výslovně určených · 70 automaticky`. U překrývajících se podmínek se nesčítají jejich počty bez znalosti společných členů. Pokud zbývající způsobilá populace neexistuje nebo jsou kvóty rozporné, vznikne konflikt, nikoliv tichá změna zadání.
 
-**[OTEVŘENO]** Odvození celkového počtu při kombinaci částečných přesných kvót a celkového počtu ponechaného na Automatic nebylo tímto potvrzením rozhodnuto. Konkrétní společný solver, algoritmus podmíněné distribuce a numerická kalibrace zůstávají implementačním/kalibračním úkolem v mezích schváleného chování. UI nemá předstírat podporu dosud nepodporovaných podmínek.
+**[ROZHODNUTO PRO PRE-ALPHA v84]** Při částečných přesných kvótách a celkovém počtu Automatic platí 9.9: změní se dotčená část a skutečný celkový počet se může změnit; nedotčené země se kvůli zachování původního součtu nepřerozdělují. Konkrétní společný solver, algoritmus podmíněné distribuce a numerická kalibrace zůstávají implementačním/kalibračním úkolem v mezích schváleného chování. UI nemá předstírat podporu dosud nepodporovaných podmínek.
 
 **[ROZHODNUTO — DOČASNÝ DEFAULT PRO VÝVOJ PRE-ALPHA]** Nově generovaní hráči se zatím pojmenovávají názvem země a pořadovým číslem generování, například `Česko 1`, `Česko 2`, `Slovensko 1`. Číslování je nezávislé na řazení tabulky a navazuje při další dávce; Ponechat nezmění jméno již ponechaného hráče. Jde o dočasnou konvenci, která se může změnit ještě před vydáním pre-alpha. Nyní se nevyvíjejí ani nerešeršují realistické osobní jmenné databáze. Zobrazované jméno nenahrazuje stabilní `player_id`. Technická serializace do existujících jmenných polí, scope čítače, kolize a deterministické větvení se musí explicitně dokumentovat a ověřit; tento souhlas nepředepisuje nový globální identitní registr ani nepřepisuje importovaná/existující jména.
 
@@ -1607,6 +1609,20 @@ Pokud Tournament Ranking Snapshot předchází jeho vstupu na Tour, je pro danou
 **[OTEVŘENO / NEJDŘÍV ZMĚŘIT]** Doba odhadu i přípravy konkrétní populace, paměť, správnost předgeneračního odhadu, přirozené kolísání, shoda historických ročníků a cena případného předgenerování. Automatický výpočet odhadu, jeho interval a technické spouštění/cache se nerozhodují před měřením; nevzniká druhý odlišný World/Custom generátor. Detailní kalibrace vývoje a retirementu zůstává k testování. Schválení společného modelu není důkaz, že výpočet už existuje nebo je realistický.
 
 **[ODLOŽENO NA VÝSLOVNOU ŽÁDOST UŽIVATELE]** Zda a jak se ručně upravená pravidla při počáteční přípravě použijí pro budoucí patnáctileté během Runu. Není schválený automatický přenos ani výchozí oddělení. Návrh balit konkrétní hráče nebo generační recept jako alternativní výchozí volby nebyl v této debatě potvrzen; obecná versionovaná konfigurace/Package provenance zůstává.
+
+## 9.9 Přesné kvóty, odchylky a místní regenerace — rozhodnutí v84
+
+**[ROZHODNUTO PRO PRE-ALPHA]** Přesná podmínka pro část světa při celkovém počtu `Automatic` mění tuto část; celkový počet se přizpůsobí. Příklad: přirozeně 40 hráčů Bogemie, požadavek 80 → ostatní země zůstanou podle svého přirozeného zadání a součet může vzrůst o 40. Výslovný pevný celkový počet je jiná společná podmínka. Rozpor pevného součtu, dílčích kvót, zámků či dalších podmínek vyžaduje zobrazené řešení; žádná kvóta se potichu nezmění.
+
+**[ROZHODNUTO]** Při změně podmínek pouze pro zemi/generaci/vybranou část zůstanou konkrétní hráči a atributy mimo dotčenou oblast přesně stejní. Regenerují se jen dotčená část a nezbytné návaznosti. Závislosti a dopady na ranking/přihlášky se řeší stávajícím náhledem, diffem a potvrzením, nikoli skrytým přelosováním světa. Brání-li zachování ostatních společná podmínka, engine nejprve ukáže konflikt a nabídne explicitní řešení. Nejde o nově uloženou povinnost měnit nedotčené hráče ani o automatický zásah do existující sportovní historie.
+
+**[ROZHODNUTO]** Náhled porovná očekávané přirozené rozložení podle téhož světa/modelu se skutečným návrhem; velké odchylky zvýrazní. Přirozený modelový základ není zaručená empirická pravda ani povinný idealizovaný výsledek. Rozlišují se přímo zadané odchylky (`Vynuceno zadáním`) a další neobvyklosti výsledku. Pouhá neobvyklost není automatická chyba nebo nesplněná podmínka; dosavadní varování realističnosti a tvrdá validace zůstávají odlišné.
+
+**[ROZHODNUTO]** Větší počet současných hráčů může souviset s většími minulými ročníky a/nebo menším počtem individuálních retirementů. Přesná kvóta sama nezmění retirement pravidla pro danou národnost. Engine hledá přípustnou zjednodušenou realizaci minulosti při platném modelu a podmínkách; doložené atypické znaky umí vysvětlit. Konkrétní příčinu smí tvrdit jen tehdy, když ji dokládá výpočet. Výslovná změna generačních/kariérních pravidel je samostatný vstup a nezavádí národní vrozený potenciál.
+
+**[ROZHODNUTO]** Dlouhý výpočet vzácných podmínek lze zastavit a prohlédnout dosavadní nejlepší návrhy. Požadavek 80 a dosažených 73 zůstává nesplněným požadavkem; takový návrh nelze přijmout jako splňující 80. Pokračování s menším počtem vyžaduje výslovnou změnu zadání a novou validaci/přijetí. Zobrazený částečný výsledek není autoritativní svět a samotné zastavení nic nepřidá ani neuloží.
+
+**[OTEVŘENO / K TESTOVÁNÍ]** Efektivní solver, způsob měření neobvyklosti, limity výpočtu, statistická nejistota, konkrétní barevné prahy a číselné koeficienty. Nejde o schválení drahého rejection samplingu, přesných pravděpodobností vzácných světů ani povinného počtu pokusů. Odklad vztahu počátečních vlastních pravidel k budoucímu intake v 9.8 zůstává beze změny.
 
 # 10. Hráčský profil a identita
 
@@ -3944,7 +3960,19 @@ Vrozená náchylnost a vlastní recovery profil zůstávají samostatné; Financ
 - country records,
 - historické milníky.
 
-**[PROZATÍMNÍ, SLABÝ SMĚR]** Jednotná znovupoužitelná vrstva pro definice a výpočet rekordů i úplná historie držitelů — vytvoření, překonání, vyrovnání a předchozí spoludržitelé — jsou zatím pouze slabým směrem. Nemění to rozhodnutý kontrakt kapitoly 21.1, že zdrojem pravdy jsou autoritativní výsledky a historický Viewer nesmí použít budoucí data.
+**[ROZHODNUTO PRO PRE-ALPHA — ZPŘESNĚNO v71/v84]** Historie vytvoření, vyrovnání a překonání rekordů a jejich držitelů/spoludržitelů patří do pre-alpha; původní slabý status této historie je nahrazen. Jednotná znovupoužitelná výpočetní vrstva zůstává technickým směrem, nikoli předepsanou architekturou. Zdrojem pravdy jsou autoritativní výsledky podle 21.1; historický pohled nesmí použít budoucí data. Potvrzený základ a jeho hranice následují v 21.3.1.
+
+### 21.3.1 Výchozí rekordy a jejich pořadí — rozhodnutí v84
+
+**[ROZHODNUTO PRO PRE-ALPHA]** Rekordy se sledují pro svět, země i turnaje podle smyslu dané statistiky. Výchozí katalog: nejvíc titulů, finále a vyhraných zápasů; nejdelší vítězná série; nejmladší a nejstarší vítěz turnaje; nejvíc týdnů na prvním místě rankingu celkem i nepřetržitě; nejvyšší dosažený počet rankingových bodů. Je to rozšiřitelný základ, nikoli uzavřený úplný seznam. Uživatel může později přidávat další požadované rekordy/statistiky.
+
+**[ROZHODNUTO]** Započítávají se skutečně evidované autoritativní výsledky a rankingy dostupné do zvoleného bodu Runu/branche. Zjednodušená předstartovní minulost nevytvoří smyšlené tituly, zápasy ani kompletní rekordovou historii. Rekord ukáže pokryté období, například `Sledováno od sezóny…`; chybějící historie není nula a neúplný rozsah se nevydává za absolutní historický důkaz. Tímto se nerozhoduje nové importní schéma sportovních výsledků.
+
+**[ROZHODNUTO]** Vedle současné hodnoty a všech shodných držitelů má každý podporovaný rekord také žebříček dalších hráčů/výkonů a historii vyrovnání/překonání. Shodné hodnoty jsou sdílené pořadí, technické seřazení ID nedává sportovní přednost. Stručný přehled se rozklikne do historie a doložených podkladů. Například vývoj nejvyššího počtu titulů 12 → 15 → 18 obsahuje skutečné držitele i časy; nevytváří novou událost pro každý pouhý refresh.
+
+**[ROZHODNUTO]** Rekordy i jejich žebříčky používají společný výběr `Celá evidovaná historie / Sezona / Vlastní období` a více kombinovatelných filtrů; detaily v 27.24. U série se jasně rozliší úplná série a její část ve vybraném období. Bodové rekordy rozlišují změny bodovacích pravidel: vyšší bodová hodnota při jiné policy se sama neprohlašuje za lepší sportovní výkon. Konkrétní normalizovaný univerzální ukazatel výkonu tímto není zaveden.
+
+**[K TESTOVÁNÍ]** Přesné definice jednotlivých statistik, způsobilost nestandardních zápasových výsledků, sezónních/časových hranic, srovnatelnost policy a úplný budoucí katalog se doladí na funkčním enginu. Již rozhodnuté played/W/O/BYE a historické datové kontrakty se neruší. Zápis nového cíle není důkaz, že dnešní Country Records už podporují celý světový katalog, všechny filtry nebo Saved Views.
 
 ## 21.4 Awards
 
@@ -5105,6 +5133,15 @@ Akce zahrnují použití v Runu, vytvoření kopie a export v podporovaném rozs
 
 **[OTEVŘENO — NEPOTVRZENÝ POSLEDNÍ NÁVRH]** Návrh samostatného dvojpanelu Původní případ / Experimentální kopie v Test Labu a jeho konkrétní UX nebyl před žádostí o tento checkpoint potvrzen. Existující schválené kopírování scénářů a batch testování z 31.26 zůstává platné; nový layout se nesmí označit jako rozhodnutý. Také přeskočený seznam více čekajících rozhodnutí z 27.22 zůstává otevřený. Numerická kalibrace, definice významnosti událostí a přesná granularita nepodporovaných cílových bodů se nevymýšlejí.
 
+## 27.24 Rekordy, kombinovatelné filtry a Saved Views — rozhodnutí v84
+
+**[ROZHODNUTO PRO PRE-ALPHA]** Stručný rekord má dostupný žebříček a rozkliknutelnou historii držitelů/podkladů podle 21.3.1. Více filtrů lze kombinovat; například období, tour, kategorie, konkrétní turnaj, země, věková skupina nebo aktivní/retired hráči. Nejde o uzavřený seznam ani povinné nesmyslné filtry u každé metriky. Aktivní filtry i rozsah jsou viditelné, přehled/detail používají stejnou podmínku. Výsledek respektuje skutečná historická data a srovnatelnost pravidel, nikoliv zpětné přeznačení všech starých výsledků podle dnešního nastavení.
+
+**[ROZHODNUTO]** Vlastní filtrovaný pohled lze pojmenovat, uložit a znovu otevřít včetně filtrů a řazení. Využívá již schválený obecný koncept `Saved Views`, nikoliv druhý souběžný systém. Období může být pevné nebo průběžné, například vždy posledních pět sezon. Průběžné období se vyhodnocuje vůči zvolenému dostupnému simulačnímu kontextu, nesmí do minulého pohledu propašovat dnešní/budoucí výsledky. Uložený pohled je nastavení zobrazení; sám nesimuluje, nepřepisuje výsledky a neslouží jako sportovní snapshot.
+
+**[OTEVŘENO / PŘI TESTOVÁNÍ]** Přesný layout, kompletní nabídka filtrů a rekordů, jemné definice metrik a technická persistence Saved Views. Základní schválené chování se znovu nerozhoduje po každém filtru. Viewer zůstává mimo povinný první pre-alpha frontend; historické informační hranice se zachovávají.
+
+
 # 28. Přehled nyní pevně rozhodnutých základů
 
 Následující seznam je rychlá kontrola nejdůležitějších pravidel potvrzených v tomto konkrétním chatu:
@@ -5706,7 +5743,7 @@ Každý očíslovaný bod této kapitoly je od verze 48a stabilní **široký ok
 59. Konečná taxonomie původu dat a její skládání při kopírování, importu, větvení a regeneraci; dále provenance Forecast Session, sample indexu, seedu, Conditional Forecastu, pinu, materializované branche a counterfactual intervence. Stejně tak provenance Future Locks, jednotlivých vynucených kroků, přirozeně dosimulovaných detailů, splněných podmínek a případných Scenario Directions tak, aby Admin dokázal rekonstruovat zásah bez jeho prozrazení Vieweru.
 60. Přesná taxonomie, granularita, veřejnost, technické uložení a retence World Events; úplný katalog automatických upozornění, editor a rozsah watchlistů, možnosti ztišení, seskupovací klíče a časová okna, badge a řazení Notification Centeru, textové šablony a seskupování veřejných událostí do Viewer zpráv. Rozdělení World Event Log / Audit Log / Task Center / Notification Center, globální tři úrovně závažnosti, operation-scoped blokování, Admin zvonek, zákaz technických upozornění ve Vieweru, autoritativní vazba automatické MSA zprávy na veřejný World Event a announcement gating Tournament Edition jsou rozhodnuté. Otevřený zůstává přesný katalog Announcement, Tournament Update a Emergency Update událostí; `News Importance Score` je pouze slabý směr.
 61. Geografie a cestování: přesný počet a síť Travel Regions a Timezone Areas, jejich import a validace ve World Package, východní/západní koeficienty, křivka aklimatizace, prahy a matematika rozhodnutého `Low / Medium / High Travel Load`, přesná kontrola proveditelnosti navazujících weeků, vztah Travel Resilience a Jet Lag Resistance k výkonu a případný budoucí model polohy, Home Base, letů, tras, příjezdů, víz, publika a domácího efektu. Home Base byl pro současnou verzi výslovně přeskočen a absence automatického bonusu jen podle národnosti je zatím prozatímním směrem.
-62. Rivality a rekordy: automatická detekce dvojicových a skupinových rivalit, jejich vznik, zánik, překryvy, Manual Rivalry, přesná vazba na Scenario Direction a Viewer H2H UX. Rivalry Score je pouze slabý směr. U rekordů jsou rozhodnutá jejich četná kontextová zobrazení; jednotná výpočetní vrstva a úplná historie držitelů jsou jen slabým směrem.
+62. Rivality a rekordy: automatická detekce dvojicových a skupinových rivalit, jejich vznik, zánik, překryvy, Manual Rivalry, přesná vazba na Scenario Direction a Viewer H2H UX. Rivalry Score je pouze slabý směr. U rekordů jsou podle v71/v84 rozhodnuté kontexty, základní katalog, historie držitelů a žebříčky s filtry/Saved Views (21.3.1/27.24); otevřené zůstávají detailní formule a rozšířený katalog, jednotná výpočetní vrstva je technický směr.
 63. Prestiž turnajů: číselná škála, typické defaulty kategorií, automatické vstupy a tempo změn, Edition modifier, Admin lock/override, ochrana před zpětnou smyčkou a dopad na entry AI. Oddělený Tournament Appeal je pouze slabý směr; Admin přesná hodnota a Viewer slovní či pořadové zobrazení jsou běžným směrem.
 64. `Week Transition`, globální `Simulation Slots` a turnajové `Match Day Slots`: hlavní atomické pořadí Week Transitionu, frozen slot-start contract, jediná globální časová osa, účinnost procesních oken na hranici slotu a mapování jednoho Match Day Slotu na jeden či více navazujících globálních slotů jsou rozhodnuté. Otevřené zůstávají úplný katalog a matematika týdenních podkroků, datový formát snapshotu, detailní dependency graph, přesná klasifikace konfliktních skupin, pravidla jiných než zápasových událostí, optimalizace, rest minima, kapacity dnů a případné pozdější hodiny. Žádný pevný počet sedmi globálních slotů ani sedmi procesních oken rozhodnutý není.
 65. `Season Transition`, Season Builder a Edition Plans: hlavní atomické pořadí, Season Closing Ranking, zákaz Edition přes W→1, materializační triggery/atomicita/conflict behavior, více Editions, nepřekryvnost a číslování podle prvního skutečného startu jsou rozhodnuté. Otevřené zůstávají schéma Closure Markeru, katalog season-scoped hodnot, pořadí nezávislých podkroků uvnitř uzavřených vrstev, konečný UX, verze šablon, layout všech 50 Inherited Plans, texty a pokročilé řešení konfliktů a opravy už materializovaného kalendáře.
@@ -6189,21 +6226,21 @@ Toto rozhodnutí upřesňuje UX otevřené části PAQ-119, nikoliv celý katalo
 
 **[ROZHODNUTO PRO PRE-ALPHA]** Nový navazující blok uzavírá současné podmínky pro část stejné skupiny s jedním započítáním hráče, automatické doplnění při explicitním celkovém počtu se zachováním přesných celodávkových kvót, jednotlivé zámky vlastností/atributů náhledu, přesně uložitelný nedokončený návrh a rozložení samostatné generační stránky. Dočasné jméno je název země + pořadové číslo; před vydáním se může změnit. Detail 9.6 a 27.20.
 
-**[OTEVŘENO]** Libovolné vnořené/překrývající se populační skupiny nad tento konkrétní případ, Automatic total s dílčími přesnými kvótami, Player/Hybrid Package schema a přesná kalibrace zůstávají otevřené; konkrétní World přehled později schválil v79/27.21. Historické počty/ID PAQ se mechanicky nemění. Implementační audit je oddělený v 35.35; v78 není vydání pre-alpha ani potvrzení plné implementace.
+**[OTEVŘENO]** Libovolné vnořené/překrývající se populační skupiny nad tento konkrétní případ, Player/Hybrid Package schema a přesná kalibrace zůstávají otevřené; Automatic total s dílčími přesnými kvótami nově uzavírá v84/9.9; konkrétní World přehled později schválil v79/27.21. Historické počty/ID PAQ se mechanicky nemění. Implementační audit je oddělený v 35.35; v78 není vydání pre-alpha ani potvrzení plné implementace.
 
 
 ## 31.34 Konsolidace schváleného bloku v79 (11. 10. 2026)
 
 **[ROZHODNUTO PRO PRE-ALPHA]** Generační tabulka má nastavitelné sloupce a indikace manuálních hodnot/zámků; explicitní výběr pro hromadné úpravy s před/po a jedním session Undo; přidání celé dávky nebo konkrétních vybraných hráčů s opětovnou validací závazných podmínek. World dostává stručný přehled, country profil šest záložek včetně Records/Tournaments a sezonně scrollovatelný kalendář. Potvrzeny jsou Run Calendar, šest záložek Edition, tři záložky zápasu, uložený Replay, Simulation konzole a Official Ranking/Finals Race s klikacím rozpisem bodů. Přepínač kvalifikace/hlavní části je jen v Draw/Groups; jinde hlavní část první, kvalifikace níže a tlačítka pro scroll. Detail 9.7 a 27.21.
 
-**[STATUS]** Konkrétní World přehled již není OPEN; libovolné vnořené/překrývající se populační skupiny nad 9.6, Automatic total s částečnými přesnými kvótami, Player/Hybrid Package schema a numerická kalibrace zůstávají otevřené. Jde o konsolidaci produktu a scoped implementační audit v 35.36, nikoliv release gate, potvrzení plné implementace ani mechanickou změnu historických 157 PAQ ID/počtů.
+**[STATUS]** Konkrétní World přehled již není OPEN; libovolné vnořené/překrývající se populační skupiny nad 9.6, Player/Hybrid Package schema a numerická kalibrace zůstávají otevřené. Automatic total s částečnými přesnými kvótami nově uzavírá v84/9.9. Jde o konsolidaci produktu a scoped implementační audit v 35.36, nikoliv release gate, potvrzení plné implementace ani mechanickou změnu historických 157 PAQ ID/počtů.
 
 
 ## 31.35 Konsolidace schváleného bloku v80 (12. 10. 2026)
 
 **[ROZHODNUTO PRO PRE-ALPHA]** Rekordy zemí mají tematické skupiny, postranní detail včetně všech shodných držitelů a rozsah Celá historie / Sezona / Vlastní období. History & Branches má mapu nad Saved Revision tabulkou, oddělené prohlížení/aktivaci a postranní detail verzí; Compare je samostatná read-only stránka A/B. Simulation konzole má postranní nastavení více OR pravidel, jednu pauzu při více shodných důvodech, původní AI volbu a použít/pokračovat či použít/zůstat pozastaveno. Automatické diagnostické odhady AI voleb se mohou průběžně zpřesňovat, ukazují nejistotu, barvu kvality a detail, automaticky končí podle ověřené přesnosti nebo označeného limitu a nesmějí ovlivnit Run/RNG. Historie uchová skutečný tehdejší odhad/volbu a nepovinnou nesimulační poznámku admina. Detail v 27.22, vazba na 17.6.1–17.6.2.
 
-**[STATUS]** Kalibrace a statistická architektura odhadů, přesný katalog/formule rekordů a již odložené úrovně Compare se neuzavírají. Přeskočené zobrazení více čekajících rozhodnutí není schválené; simultaneita zůstává invariantem. Scoped audit PR #1385–1414 v 35.37 neprohlašuje pre-alpha release, úplnou regresi, celou sezonu/50 sezon ani realističnost. Zachovává všech 157 historických PAQ ID a nepřepočítává jejich registry.
+**[STATUS]** Kalibrace a statistická architektura odhadů, přesné formule/rozšířený katalog rekordů a již odložené úrovně Compare se neuzavírají. Výchozí katalog a rozšíření rekordového UX nově konkretizuje v84/21.3.1/27.24. Přeskočené zobrazení více čekajících rozhodnutí není schválené; simultaneita zůstává invariantem. Scoped audit PR #1385–1414 v 35.37 neprohlašuje pre-alpha release, úplnou regresi, celou sezonu/50 sezon ani realističnost. Zachovává všech 157 historických PAQ ID a nepřepočítává jejich registry.
 
 
 ## 31.36 Konsolidace schváleného bloku v81 (14. 10. 2026)
@@ -6235,6 +6272,14 @@ Toto rozhodnutí upřesňuje UX otevřené části PAQ-119, nikoliv celý katalo
 **[ROZHODNUTO]** Vybraný připravený obsah Runu lze uložit jako vlastní Package přes stávající systém (3. kapitola). Náhled dovolí zvolit zahrnuté typy/části a ukáže jejich obsah a vazby; nevzniká živé propojení s původním Runem. Hráčská část může zachytit konkrétní hráče ve stavu k vybranému okamžiku. Přenos celé rozehrané časové osy s historií používá Branch/revision mechanismy, není tiše zaměněn za obsahový balíček. Konfliktní kalendáře, stabilní Package identity/provenance i chráněné zdroje řeší existující pravidla. Ukládání alternativního generačního receptu a jeho použití pro budoucí intake zůstává neuzavřené dle 9.8.
 
 **[ZACHOVÁNO]** Country diagnostika a Expected vs Generated z 5.3/9.2 zůstává. Nový předstartovní model a reálné časové náklady vyžadují měření; tento checkpoint nestanovuje nový výkonnostní limit, počet náhodných pokusů nebo číselnou křivku realismu. Neuzavírá jiné otevřené PAQ ani release brány.
+
+## 31.39 Konsolidace rozhodnutí v84 (17. 10. 2026)
+
+**[ROZHODNUTO PRO PRE-ALPHA]** Novější kontrakt 9.9 uzavírá Automatic celkový počet s dílčími přesnými kvótami: mění se dotčená část, součet může vzrůst/poklesnout a ostatní konkrétní hráči se zachovávají. Pevný součet/zámky/závislosti se řeší výslovně. Diagnostika rozlišuje vynucené odchylky a další neobvyklosti, neprohlašuje modelový základ za empirickou pravdu a nevymýšlí příčiny nebo národní retirement pravidlo. Zastavený částečný výsledek nesplňuje nedosaženou přesnou kvótu.
+
+**[ROZHODNUTO PRO PRE-ALPHA]** 21.3.1/27.24 potvrzují rozšiřitelný základ světových/zemských/turnajových rekordů, skutečné pokrytí historie, držitele a historii jejich vyrovnání/překonávání, žebříčky, společná období, kombinovatelné filtry a pojmenované Saved Views s pevným/průběžným obdobím. Část tohoto kontraktu byla rozhodnutá již v71/v80 a zde se sjednocuje, nikoli znovu vydává za nové uzavření.
+
+**[STATUS]** Zachovává se všech 157 PAQ identit a jejich dosavadní číselná evidence; nové dílčí dohody nejsou kompletním uzavřením širokých kalibračních/technických položek. Podmíněný solver, přesné odchylky/pravděpodobnosti, retirement/vývoj, budoucí intake inheritance, úplný katalog metrik a detailní UX mají dosavadní otevřené/odložené hranice. Implementační audit 35.41 je oddělený; nezavádí nové produktové sportovní pravidlo ani neprohlašuje vydání pre-alpha.
 
 # 32. Procentuální audit stavu specifikace
 
@@ -7030,6 +7075,17 @@ Ověřený základ `buuk`: `b51d88efba3977eaf14d165f9dd83b5927310c6c`, merge #15
 - Nová produktová pravidla 9.8/31.38 jsou schválený cíl. Stávající generátor nepředstavuje hotový realistický replay minulých ročníků s přirozeně odvozeným počtem přeživších ne-retired hráčů. Průvodce/připravenost a nové exportní UX nejsou hotové jen přítomností tohoto textu.
 
 V tomto checkpointu nalezené mezery extension inspection: opožděný frontendový výsledek po změně podkladů a chybějící explicitní SQLite read snapshot all-Branch API. Izolovaný test navíc odhalil kruhový import přes eager DB exporty a calendar guard; oprava odkládá modelové importy bez oslabení validace. Opravy a cílené regrese jsou součástí checkpointového PR, nikoliv výše uvedeného základu. Celý naplněný Run, detailní kalibrace a 50-sezonní release test zůstávají nedokončené. Žádné chráněné World Packages nebyly změněny.
+
+## 35.41 Integrační audit v84 — po #1519 (17. 10. 2026)
+
+Ověřený `buuk`: `5dce12a07acb980882a5454485681f9eb7e5af79`. Všech 12 nových PR #1508–1519 je mergnutých; při inventuře nebylo otevřené PR. Zdrojový audit a skutečné finální HEAD CI jsou podrobně v `docs/PRE_ALPHA_CHECKPOINT_V84_2026_10_17.md`; další implementační zadání v `docs/PRE_ALPHA_NEXT_CHATGPT_TASK_V84_2026_10_17.md`. Dokumentační v84 nepřidává runtime opravu ani neprohlašuje release.
+
+- #1508 již obsahuje skutečné reviewed prodloužení horizontu všech Branches, výslovné potvrzení a atomický manual Save, nové revize/audit/receipt a historický origin-clock kontrakt. Původní formulace o chybějícím extension writeru v 35.40 je historická. Completed status a terminální tasky se nemění; sportovní pokračování není tímto hotové. #1509 přidává Saved-backed Home readiness, nikoliv oprávnění spustit sport.
+- #1510–1512 rozšiřují W52/61/80 rankingové výpočty/kandidáty, datované korekce/zeros a kontinuitu přes striktní horizon extension. #1513–1514 jsou durable SQLite staging a interní bundle, nikoliv Saved/publication/fork. #1516–1517 vážou celou main-only knockout evidenci a MatchEngine-shaped výsledky; caller provenance sama není autoritou Runu.
+- #1515/#1518/#1519 umí v omezené referenční FAX W61 konfiguraci ověřit canonical Saved result/award a skutečné Saved Simulation Slot/group výsledky vůči live SQLite. #1519 je spojuje, ale neprokazuje původní uloženou Category/Event konfiguraci ani normální W52 publication. Pozitivní testy používají produkční MatchEngine/capture, avšak testově ručně re-signují existující Saved fixture; nejsou důkazem běžného append-only uživatelského Save/replay toku.
+- Všechny spuštěné workflow na finálních HEAD uspěly (#1508 10, #1509 9, #1513 3, ostatní 1 Fast CI). Selektor ale nespouští celou regresi. Společný lokální audit 147 nových testů: 146 passed, 1 failed. A84-01 je starý test zakazující nově správně povolené navázání rankingu po striktní extension; samostatná reprodukce 1 failed/3 passed. Má se opravit očekávání při zachování starých hashů a ochrany proti změně časové základny, nikoliv vrátit správný produktový kontrakt. Frontend 21 testů a build prošly.
+
+Aktivní cesta je oprava A84-01 a skutečný calendar-native Run-owned sport se Save/restart, potom body/publication, Saved capture/restore/fork, Week/Season a Full Simulation. W52/W80 i prodloužený W61 nadále blokují nemigrované legacy sporting writers. Generační realističnost, plný katalog rekordů, naplněné sezonní/50-sezonní release průchody a kompletní regrese zůstávají nedokončené. Nové 9.9/21.3.1/27.24 jsou produktové cíle, nikoliv důkaz implementace.
 
 # 36. AI-Assisted Development / Development Operating Model
 

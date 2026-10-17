@@ -195,3 +195,20 @@ def test_extension_does_not_rewrite_historical_ranking_content():
     assert original.race == extended.race
     assert original.run_calendar["season_count"] == 2
     assert extended.run_calendar["season_count"] == 4
+
+
+def test_serialized_calendar_report_rejects_future_award_even_if_metadata_is_valid():
+    clock = RunCalendar(80, 37, 2030, 2)
+    result = report(clock, as_season=2030, as_week=79, inputs=[event(2030, 79)])
+    tampered = result.model_dump(mode="json")
+    tampered["point_awards"][0]["week"] = 80
+    with pytest.raises(ValidationError, match="future"):
+        RunCalendarRankingRaceReport.model_validate(tampered)
+
+
+def test_legacy_race_target_cannot_bypass_minimum_year_bound():
+    with pytest.raises(ValueError, match="Legacy"):
+        ENGINE.build_report(
+            completed_tournaments=[], as_of_season=2027, as_of_week=1,
+            target_season=0,
+        )

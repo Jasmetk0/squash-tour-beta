@@ -21,6 +21,9 @@ from beta_engine.infrastructure.db.definitive_wild_card_assignments import (
     DEFINITIVE_WILD_CARD_ASSIGNMENT_COMPONENT_KEY,
 )
 from beta_engine.infrastructure.db.initial_world_state import INITIAL_WORLD_COMPONENT_KEY
+from beta_engine.infrastructure.db.calendar_standalone_match_state import (
+    COMPONENT_KEY as CALENDAR_MATCH_COMPONENT_KEY,
+)
 from beta_engine.infrastructure.db.models import (
     AdoptedTournamentAuthorityModel,
     AuthoritativeSimulationCommandModel,
@@ -50,6 +53,7 @@ from beta_engine.infrastructure.db.models import (
     SimulationEventGroupModel,
     SimulationSlotModel,
     StandaloneMatchWorkspaceModel,
+    CalendarStandaloneMatchModel,
     TournamentApplicationSubmissionAuthorityModel,
     TournamentDrawAuthorityModel,
     TournamentDrawInputAuthorityModel,
@@ -149,6 +153,11 @@ COMPONENT_COVERAGE: tuple[SavedRevisionComponentCoverage, ...] = (
             AuthoritativeWeekTransitionReceiptModel,
             AuthoritativeWorldEventModel,
         ),
+    ),
+    SavedRevisionComponentCoverage(
+        component_key=CALENDAR_MATCH_COMPONENT_KEY,
+        label="played Run-calendar standalone match",
+        models=(CalendarStandaloneMatchModel,),
     ),
     SavedRevisionComponentCoverage(
         component_key=INITIAL_WORLD_COMPONENT_KEY,

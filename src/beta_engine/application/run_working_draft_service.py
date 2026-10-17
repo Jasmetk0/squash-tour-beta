@@ -332,3 +332,29 @@ class RunWorkingDraftService:
                 self.id_factory("revision-audit-event"), kind="revision audit event"
             ),
         )
+
+    def save_calendar_match(
+        self,
+        *,
+        run_id: str,
+        branch_id: str,
+        expected_draft_version: int,
+        expected_calendar_match_fingerprint: str,
+    ) -> ViewerBranchSaveResult:
+        if (
+            not isinstance(expected_calendar_match_fingerprint, str)
+            or len(expected_calendar_match_fingerprint) != 64
+        ):
+            raise ValueError("Expected calendar match fingerprint must be SHA-256")
+        return self.repository.save_viewer_branch_selection_atomically(
+            run_id=run_id,
+            branch_id=branch_id,
+            expected_draft_version=expected_draft_version,
+            expected_calendar_match_fingerprint=expected_calendar_match_fingerprint,
+            revision_id=_validated_entity_id(
+                self.id_factory("saved-revision"), kind="saved revision"
+            ),
+            audit_event_id=_validated_entity_id(
+                self.id_factory("revision-audit-event"), kind="revision audit event"
+            ),
+        )

@@ -31,8 +31,16 @@ pre-fix result remains historical evidence, not a current green claim. Run
 both directly related backend modules together and verify this PR's final HEAD
 before merge. Release regression remains a separate gate.
 
-**Next:** repair A84-01, then a usable calendar-native Run-owned real match/
-main-only tournament with production manual Save/replay/restart. Follow with
+**Next integration:** PR #1521 fixes A84-01. This proposed slice implements
+a calendar-native real standalone BO5 MatchEngine match from a Saved v2
+population, with exact SQLite receipt/replay and regular immutable manual Save
+on W52/W80. It does **not** migrate official Tournament/Slot/Health/57-attribute
+sporting effects, points or transitions. A CS/EN Admin panel is implemented;
+a real Chromium acceptance of that new panel is not yet proven. Forking from a
+match-containing Saved Revision is currently guarded; see
+[match contract](docs/CALENDAR_STANDALONE_MATCH_V84.md).
+
+Continue with native sporting state, main-only tournament, and
 real configured point publication, Saved capture/restore/fork, Week/Season
 Transition and Full Simulation migration. Prefer operational integration over
 more standalone source-attestation helpers. Exact task and reviewed limits:

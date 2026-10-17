@@ -254,6 +254,12 @@ from beta_engine.infrastructure.db.player_sporting_state import (
     remap_saved_sporting_component,
     restore_saved_sporting,
 )
+from beta_engine.infrastructure.db.calendar_standalone_match_state import (
+    COMPONENT_KEY as CALENDAR_MATCH_COMPONENT_KEY,
+    capture_saved_calendar_match,
+    load_saved_calendar_match,
+    restore_saved_calendar_match,
+)
 from beta_engine.infrastructure.db.simulation_slot_state import (
     COMPONENT_KEY as SIMULATION_SLOT_COMPONENT_KEY,
     capture_saved_simulation_slots,
@@ -3829,6 +3835,9 @@ class SimulationPersistenceRepository:
                 load_saved_run_package_state(
                     payload, run_id=model.run_id, branch_id=model.branch_id
                 )
+                load_saved_calendar_match(
+                    payload, run_id=model.run_id, branch_id=model.branch_id
+                )
         except (TypeError, ValueError) as exc:
             raise BranchRevisionStateConflictError(
                 f"Saved Revision {model.revision_id} has invalid ranking content: {exc}"
@@ -4962,6 +4971,21 @@ class SimulationPersistenceRepository:
                             f"Cannot restore player sporting state: {exc}"
                         ) from exc
                 if (
+                    CALENDAR_MATCH_COMPONENT_KEY in current_content
+                    or CALENDAR_MATCH_COMPONENT_KEY in target_content
+                ):
+                    try:
+                        restore_saved_calendar_match(
+                            session,
+                            current_payload=state.saved_revision.payload,
+                            target_payload=target_revision.payload,
+                            run_id=run_id, branch_id=branch_id,
+                        )
+                    except ValueError as exc:
+                        raise SavedRevisionRestoreUnsupportedError(
+                            f"Cannot restore calendar standalone match: {exc}"
+                        ) from exc
+                if (
                     SIMULATION_SLOT_COMPONENT_KEY in current_content
                     or SIMULATION_SLOT_COMPONENT_KEY in target_content
                 ):
@@ -5082,6 +5106,9 @@ class SimulationPersistenceRepository:
                 )
                 capture_saved_run_prospect_source(session, payload, run_id=run_id)
                 capture_saved_simulation_slots(
+                    session, payload, run_id=run_id, branch_id=branch_id
+                )
+                capture_saved_calendar_match(
                     session, payload, run_id=run_id, branch_id=branch_id
                 )
                 if SEASON_CLOSURE_COMPONENT_KEY in target_content:
@@ -5378,6 +5405,43 @@ class SimulationPersistenceRepository:
                 and branch.status == "active",
             }
 
+    def preview_calendar_match_save(self, *, run_id: str, branch_id: str) -> dict:
+        """Preview an actual Run-calendar MatchEngine result before manual Save."""
+        with self._session_factory.begin() as session:
+            session.execute(text("BEGIN"))
+            draft = self._viewer_branch_working_draft_in_session(
+                session=session, run_id=run_id, branch_id=branch_id
+            )
+            state = self._validated_branch_revision_state_in_session(
+                session=session, branch=session.get(RunBranchModel, branch_id)
+            )
+            payload = {"content": {}}
+            capture_saved_calendar_match(
+                session, payload, run_id=run_id, branch_id=branch_id
+            )
+            component = payload["content"].get(CALENDAR_MATCH_COMPONENT_KEY)
+            saved = state.saved_revision.payload["content"].get(
+                CALENDAR_MATCH_COMPONENT_KEY
+            )
+            changed = component is not None and component != saved
+            run = session.get(RunContainerModel, run_id)
+            branch = session.get(RunBranchModel, branch_id)
+            return {
+                "run_id": run_id,
+                "branch_id": branch_id,
+                "calendar_match_fingerprint": (
+                    component["fingerprint"] if component else None
+                ),
+                "saved_head_revision_id": state.saved_head_revision_id,
+                "draft_version": draft.draft_version,
+                "has_unsaved_changes": changed,
+                "can_save": changed
+                and draft.status == CLEAN_WORKING_DRAFT_STATUS
+                and not run.read_only
+                and not branch.read_only
+                and branch.status == "active",
+            }
+
     def preview_run_prospect_source_save(self, *, run_id: str, branch_id: str) -> dict:
         with self._session_factory.begin() as session:
             session.execute(text("BEGIN"))
@@ -5425,6 +5489,7 @@ class SimulationPersistenceRepository:
         expected_ranking_fingerprint: str | None = None,
         expected_initial_world_fingerprint: str | None = None,
         expected_simulation_fingerprint: str | None = None,
+        expected_calendar_match_fingerprint: str | None = None,
         expected_run_prospect_source_fingerprint: str | None = None,
         expected_run_package_fingerprint: str | None = None,
         expected_run_tournament_lab_draft_fingerprint: str | None = None,
@@ -5438,6 +5503,7 @@ class SimulationPersistenceRepository:
                 expected_ranking_fingerprint,
                 expected_initial_world_fingerprint,
                 expected_simulation_fingerprint,
+                expected_calendar_match_fingerprint,
                 expected_run_prospect_source_fingerprint,
                 expected_run_package_fingerprint,
                 expected_run_tournament_lab_draft_fingerprint,
@@ -5451,6 +5517,8 @@ class SimulationPersistenceRepository:
             revision_kind = "initial_world"
         elif expected_simulation_fingerprint is not None:
             revision_kind = "authoritative_simulation"
+        elif expected_calendar_match_fingerprint is not None:
+            revision_kind = "calendar_standalone_match"
         elif expected_run_prospect_source_fingerprint is not None:
             revision_kind = "run_prospect_source"
         elif expected_run_package_fingerprint is not None:
@@ -5651,6 +5719,9 @@ class SimulationPersistenceRepository:
                 capture_saved_simulation_slots(
                     session, payload, run_id=run_id, branch_id=branch_id
                 )
+                capture_saved_calendar_match(
+                    session, payload, run_id=run_id, branch_id=branch_id
+                )
                 summary = viewer_branch_saved_revision_change_summary(
                     previous_viewer_branch_id=saved_viewer_id,
                     viewer_branch_id=target_viewer_id,
@@ -5722,6 +5793,24 @@ class SimulationPersistenceRepository:
                         "kind": "authoritative_simulation",
                         "summary": "Saved authoritative simulation state",
                         "simulation_fingerprint": component["fingerprint"],
+                    }
+                elif expected_calendar_match_fingerprint is not None:
+                    component = payload["content"].get(CALENDAR_MATCH_COMPONENT_KEY)
+                    if (
+                        component is None
+                        or component["fingerprint"] != expected_calendar_match_fingerprint
+                    ):
+                        raise WorkingDraftConflictError(
+                            "Calendar match changed since Save preview"
+                        )
+                    if state.saved_revision.payload["content"].get(
+                        CALENDAR_MATCH_COMPONENT_KEY
+                    ) == component:
+                        raise WorkingDraftConflictError("Calendar match is already saved")
+                    summary = {
+                        "kind": "calendar_standalone_match",
+                        "summary": "Saved played Run-calendar MatchEngine result",
+                        "calendar_match_fingerprint": component["fingerprint"],
                     }
                 elif expected_run_prospect_source_fingerprint is not None:
                     component = payload["content"].get(

@@ -12,6 +12,8 @@ from pathlib import Path
 
 from playwright.sync_api import expect, sync_playwright
 
+from calendar_standalone_match_browser_check import exercise_calendar_match
+
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
@@ -974,6 +976,16 @@ def main() -> None:
                 "cs_en_admin_flow": True,
                 "simulation_started": False,
             }
+
+            # Genuine Run-calendar sporting/browser acceptance on a newly
+            # forked historical Saved population. No old branch/head mutation.
+            evidence["calendar_native_match_save_replay"] = exercise_calendar_match(
+                page, base_url=base, api_url=args.api_url, artifacts=artifacts,
+                run_id=custom_id,
+                original_branch_id=preview_branch["branch_id"],
+                population_revision_id=saved_population["revision_id"],
+                original_clock=expected_clock,
+            )
 
             page.get_by_role("link", name="Squash Engine global Home").click()
             expect(page.get_by_role("heading", name="Squash Engine Home")).to_be_visible()

@@ -1887,3 +1887,16 @@ class FullSimulationTaskModel(Base):
     start_request_id: Mapped[str] = mapped_column(String(128), nullable=False)
     payload_json: Mapped[str] = mapped_column(Text, nullable=False)
     payload_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+
+
+class CalendarStandaloneMatchModel(Base):
+    """Run-calendar-native played match; independent of historical W61 Slot keys."""
+
+    __tablename__ = "calendar_standalone_matches"
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    match_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    command_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    request_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)

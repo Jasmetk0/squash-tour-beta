@@ -13,6 +13,7 @@ import { newCommandId } from '../admin/branchSimulation'
 import { useLanguage } from '../i18n/LanguageContext'
 import { formatApiError } from '../utils/apiErrors'
 import { CalendarKnockoutAwardsPanel } from './CalendarKnockoutAwardsPanel'
+import { CalendarSignedKnockoutStandingsPanel } from './CalendarSignedKnockoutStandingsPanel'
 
 /** One real main-only 4-player opening-week bracket; no points or Week Transition. */
 export function CalendarOpeningKnockoutPanel({ runId, branchId, savedHead }: {
@@ -204,6 +205,9 @@ export function CalendarOpeningKnockoutPanel({ runId, branchId, savedHead }: {
           </p>)}
           <p className="status">{cs ? 'Zveřejnění do oficiálního žebříčku až po nativním Week Transition.' : 'Official ranking publication requires native Week Transition.'}</p>
         </div>}
+        {view.saved && view.prepared_points && <CalendarSignedKnockoutStandingsPanel
+          runId={runId} branchId={branchId} view={view}
+        />}
         {view.saved && !view.prepared_points && <CalendarKnockoutAwardsPanel
           runId={runId} branchId={branchId} view={view}
           onApplied={async () => {

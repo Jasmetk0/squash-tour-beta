@@ -99,7 +99,8 @@ def test_real_calendar_match_manual_save_restart_and_exact_engine_replay(tmp_pat
             revision_id=revision["revision_id"]
         )
         assert repository.verify_branch_saved_revision_hash(revision_id=saved_head)
-        assert _request("GET", base(server))[1]["saved"] is True
+        code, inspected = _request("GET", base(server))
+        assert code == 200 and inspected["saved"] is True, inspected
         code, second_preview = _request("GET", base(server) + "/save/preview")
         assert code == 200 and not second_preview["can_save"], second_preview
         assert _request("POST", base(server) + "/save",

@@ -240,7 +240,11 @@ def test_missing_engine_log_retirement_and_extra_result_are_rejected():
     with pytest.raises(ValueError,match="rally-logged"):
         CalendarEngineMatchWitness.model_validate_json(
             original.model_copy(update={
-                "result": original.result.model_copy(update={"rally_log":None}),
+                "result": original.result.model_copy(update={
+                    "rally_log":None,
+                    "timeline_log":None,
+                    "stamina_log":None,
+                }),
             }).model_dump_json()
         )
     with pytest.raises(ValueError,match="rally-logged"):

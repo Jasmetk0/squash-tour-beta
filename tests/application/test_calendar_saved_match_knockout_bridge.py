@@ -235,7 +235,7 @@ def test_saved_group_component_fingerprint_rejects_rehashed_revision_tamper(tmp_
     try:
         with factory.begin() as s:
             def alter(p):
-                p["content"]["simulation_slot_match_state"]["groups"][0]["result_fingerprint"]="f"*64
+                p["content"]["simulation_slot_match_state"]["fingerprint"]="f"*64
             _resign_saved(s,alter)
         with pytest.raises(ValueError,match="component fingerprint"):
             _read(factory,bracket)
@@ -296,6 +296,19 @@ def test_forked_branch_requires_separate_ancestry_proof(tmp_path):
         with factory.begin() as s:
             s.get(RunBranchModel,BRANCH).forked_from_branch_id="parent"
         with pytest.raises(ValueError,match="fork needs"):
+            _read(factory,bracket)
+    finally:
+        engine.dispose()
+
+
+def test_rehashed_saved_match_payload_still_rejects_invalid_group_receipt(tmp_path):
+    engine,factory,_,bracket,_=_setup_real_completed_saved(tmp_path)
+    try:
+        with factory.begin() as s:
+            def alter(p):
+                p["content"]["simulation_slot_match_state"]["groups"][0]["result_fingerprint"]="f"*64
+            _resign_saved(s,alter)
+        with pytest.raises(ValueError,match="persisted match input/result fingerprint mismatch"):
             _read(factory,bracket)
     finally:
         engine.dispose()

@@ -13,9 +13,12 @@ import { newCommandId } from '../admin/branchSimulation'
 import { useLanguage } from '../i18n/LanguageContext'
 import { formatApiError } from '../utils/apiErrors'
 import { CalendarKnockoutAwardsPanel } from './CalendarKnockoutAwardsPanel'
+import { CalendarSignedKnockoutStandingsPanel } from './CalendarSignedKnockoutStandingsPanel'
 
 /** One real main-only 4-player opening-week bracket; no points or Week Transition. */
-export function CalendarOpeningKnockoutPanel({ runId, branchId, savedHead }: {
+export function CalendarOpeningKnockoutPanel({
+  runId, branchId, savedHead,
+}: {
   runId: string; branchId: string; savedHead: string
 }): JSX.Element {
   const { language } = useLanguage()
@@ -38,6 +41,53 @@ export function CalendarOpeningKnockoutPanel({ runId, branchId, savedHead }: {
   const target = [runId, branchId, savedHead].join('|')
   const activeTarget = useRef(target)
   activeTarget.current = target
+
+  // A read-only Admin view preference must not navigate the entire Run
+  // shell: its router revalidation would transiently replace the active
+  // Branch context. Retain the selected week per TAB and exact real Signed
+  // Saved HEAD; neither Viewer nor sporting/Official writers consume this.
+  const scoresContext = [runId, branchId, view?.saved_head_revision_id ?? ''].join('|')
+  const [asOfPreference, setAsOfPreference] = useState<{
+    context: string; season: number; week: number
+  } | null>(null)
+  const asOfSeason = asOfPreference?.context === scoresContext
+    ? asOfPreference.season : 0
+  const asOfWeek = asOfPreference?.context === scoresContext
+    ? asOfPreference.week : 2
+  useEffect(() => {
+    if (!view?.saved || !view.prepared_points) return
+    const context = scoresContext
+    let position = { season: 0, week: 2 }
+    try {
+      const stored = window.sessionStorage.getItem('squash-calendar-asof:' + context)
+      if (stored) {
+        const data: unknown = JSON.parse(stored)
+        if (typeof data === 'object' && data !== null
+          && 'season' in data && 'week' in data
+          && typeof data.season === 'number' && typeof data.week === 'number'
+          && Number.isSafeInteger(data.season) && Number.isSafeInteger(data.week)
+          && data.season >= 0 && data.season < view.run_calendar.season_count
+          && data.week >= 1 && data.week <= view.run_calendar.weeks_per_year
+          && !(data.season === 0 && data.week === 1)) {
+          position = { season: data.season, week: data.week }
+        }
+      }
+    } catch {
+      // A disabled/invalid browser preference is not sporting authority.
+    }
+    setAsOfPreference({ context, ...position })
+  }, [scoresContext, view?.saved, view?.prepared_points?.scored_fingerprint])
+  const changeAsOf = (next: { season: number; week: number }) => {
+    if (!view?.saved || !view.prepared_points) return
+    const position = { context: scoresContext, ...next }
+    setAsOfPreference(position)
+    try {
+      window.sessionStorage.setItem('squash-calendar-asof:' + scoresContext,
+        JSON.stringify(next))
+    } catch {
+      // The in-memory selection is still valid for this mounted Admin panel.
+    }
+  }
 
   useEffect(() => {
     const current = ++token.current
@@ -204,6 +254,11 @@ export function CalendarOpeningKnockoutPanel({ runId, branchId, savedHead }: {
           </p>)}
           <p className="status">{cs ? 'Zveřejnění do oficiálního žebříčku až po nativním Week Transition.' : 'Official ranking publication requires native Week Transition.'}</p>
         </div>}
+        {view.saved && view.prepared_points && <CalendarSignedKnockoutStandingsPanel
+          runId={runId} branchId={branchId} view={view}
+          season={asOfSeason} week={asOfWeek}
+          onPositionChange={changeAsOf}
+        />}
         {view.saved && !view.prepared_points && <CalendarKnockoutAwardsPanel
           runId={runId} branchId={branchId} view={view}
           onApplied={async () => {

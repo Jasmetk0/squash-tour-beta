@@ -5,6 +5,7 @@ acceptance but forks a separate, earlier Saved population revision.
 """
 from __future__ import annotations
 
+import json
 from urllib.parse import quote
 
 from playwright.sync_api import expect
@@ -154,6 +155,50 @@ def exercise_calendar_knockout(page, *, base_url, api_url, artifacts,
     selector.select_option(branch_id)
     panel = page.locator('section[aria-label="Calendar native four-player knockout"]')
     expect(panel.get_by_text("Prepared points (not Official)")).to_be_visible()
+    rankings = panel.locator('section[aria-label="Signed calendar knockout as-of standings"]')
+    expect(rankings).to_be_visible()
+    expect(rankings.get_by_role("table", name="Signed tournament standings table")).to_be_visible(
+        timeout=120000
+    )
+    table = rankings.get_by_role("table", name="Signed tournament standings table")
+    expect(table.locator("tbody tr")).to_have_count(4)
+    points = [int(table.locator("tbody tr").nth(i).locator("td").nth(3).inner_text())
+              for i in range(4)]
+    assert points == [100, 60, 30, 30], points
+    # W52 point validity: Week 2 of Season 2 is the first expired week.
+    rankings.get_by_role("button", name="View first expired week").click()
+    source_context = "|".join((run_id, branch_id, scored_revision))
+    saved_period = page.evaluate(
+        "(scope) => window.sessionStorage.getItem('squash-calendar-asof:' + scope)",
+        source_context,
+    )
+    assert saved_period is not None and json.loads(saved_period) == {
+        "season": 1, "week": 2,
+    }, "as-of Admin state must bind the exact Signed Saved HEAD"
+    # The local selection never navigates the Product Run or edits sporting
+    # authority. Per-tab storage restores the same period after reload.
+    expect(rankings.get_by_role("spinbutton", name="Standings season number")).to_have_value("2")
+    expect(rankings.get_by_text("Points have expired.", exact=False)).to_be_visible(timeout=120000)
+    # The filter must survive a full browser reload and Branch re-selection,
+    # not merely a transient React rerender.
+    page.reload()
+    page.get_by_role("combobox", name="Admin active Branch").select_option(branch_id)
+    expect(rankings.get_by_role("spinbutton", name="Standings season number")).to_have_value("2", timeout=120000)
+    expect(rankings.get_by_text("Points have expired.", exact=False)).to_be_visible(timeout=120000)
+    expired = [int(table.locator("tbody tr").nth(i).locator("td").nth(3).inner_text())
+               for i in range(4)]
+    assert expired == [0, 0, 0, 0], expired
+    rankings.get_by_role("button", name="View opening week").click()
+    expect(rankings.get_by_role("spinbutton", name="Standings season number")).to_have_value("1")
+    expect(rankings.get_by_text("Points are still within their validity period.", exact=False)).to_be_visible(timeout=120000)
+    # Verify the general manual form too, not only the boundary shortcut.
+    rankings.get_by_role("spinbutton", name="Standings season number").fill("2")
+    rankings.get_by_role("spinbutton", name="Standings week number").fill("2")
+    rankings.get_by_role("button", name="Show selected week").click()
+    expect(rankings.get_by_role("spinbutton", name="Standings season number")).to_have_value("2")
+    expect(rankings.get_by_text("Points have expired.", exact=False)).to_be_visible(timeout=120000)
+    rankings.get_by_role("button", name="View opening week").click()
+    expect(rankings.get_by_text("Points are still within their validity period.", exact=False)).to_be_visible(timeout=120000)
     page.get_by_role("combobox", name="Language / Jazyk").select_option("cs")
     expect(panel.get_by_text("Připravené body (neoficiální)")).to_be_visible()
     page.get_by_role("combobox", name="Language / Jazyk").select_option("en")
@@ -172,4 +217,6 @@ def exercise_calendar_knockout(page, *, base_url, api_url, artifacts,
         "reviewed_prepared_points": True,
         "prepared_awards_manual_second_save": scored_revision,
         "points_unpublished": True,
+        "signed_as_of_scoreboard": True,
+        "exact_calendar_expiry": True,
     }

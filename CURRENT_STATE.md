@@ -113,3 +113,22 @@ is claimed. See `docs/CALENDAR_KNOCKOUT_PREPARED_AWARDS_V84.md`.
 
 Check final-head backend/frontend/Chromium results before calling it merge
 ready. Never rewrite historical Signed v1 match data or remove W61 guards.
+
+## Current candidate: exact Signed W52/W80 as-of tournament standings
+
+After owner merge of #1524 into `buuk` (at
+`5610776a1e1708a5f46bc7b2acf6fe7c4d537513`), the scored
+`calendar_scored_opening_knockout.v1` is durable behind two explicit Saves.
+This next candidate delivers a read-only, production SQLite-authenticated
+**one-event tournament scoreboard**, derived from those genuine signed
+matches/points at a user-selected Run season/week, with correct W-year
+expiry (S2W2), signed provenance, API and CS/EN browser controls.
+
+This remains **NOT** the Official Tour Ranking, not a published ranking
+snapshot and not a completed Week Transition. Explicit reasons:
+`population_only` lifecycle is not Tour entry, the operator-authored
+policy is not authenticated Category/Edition configuration, and no native
+W-aware transition has advanced the clock. No 1,000-player world ranking
+is fabricated. Older Saved payloads, legacy W61 writes and historical
+ranking are untouched. See `docs/CALENDAR_SIGNED_KNOCKOUT_STANDINGS_V84.md`.
+Final-HEAD checks and browser acceptance are required before merge handoff.

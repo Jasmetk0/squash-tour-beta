@@ -47,3 +47,13 @@ Category/Edition awards, Official Ranking publication or Week Transition.
 Contract: `docs/CALENDAR_KNOCKOUT_PREPARED_AWARDS_V84.md`. The subsequent
 integration must source historically effective configured Edition points and
 publish atomically during the actual calendar-native Week Transition.
+
+## Calendar-native Signed scored tournament standings
+
+Next dependency slice after owner merge #1524: read-only as-of W52/W80
+event scoreboard authenticated against exact Saved scored knockout,
+InitialWorld, population-only lifecycle, Saved HEAD and point policy.
+W2..next S W1 are within W-week validity; next S W2 is expiry.
+No invented Tour-entry dates or Official ranking publication, and no
+new sporting/Health/Week transition writer. See
+`docs/CALENDAR_SIGNED_KNOCKOUT_STANDINGS_V84.md`.

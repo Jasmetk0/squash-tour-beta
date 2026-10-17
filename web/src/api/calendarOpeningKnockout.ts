@@ -134,3 +134,65 @@ export type CalendarAwardApplyCommand = {
   expected_preview_fingerprint: string
   explicit_confirmation: true
 }
+
+export type SignedKnockoutStandingsRow = {
+  player_id: string
+  player_name: string
+  nationality: string
+  tournament_place: number
+  reached_stage: 'champion' | 'finalist' | 'semifinal'
+  awarded_main_points: number
+  as_of_counted_points: number
+  points_rank: number | null
+}
+export type SignedKnockoutStandings = {
+  schema_version: 'calendar_signed_knockout_standings.v1'
+  run_id: string
+  branch_id: string
+  saved_head_revision_id: string
+  saved_head_content_hash: string
+  source_knockout_fingerprint: string
+  scored_evidence_fingerprint: string
+  source_point_policy_fingerprint: string
+  source_initial_world_fingerprint: string
+  as_of: { calendar: KnockoutInspection['run_calendar']; season_index: number; week: number }
+  source_completed_week: { calendar: KnockoutInspection['run_calendar']; season_index: number; week: number }
+  proposed_first_publication_week: { calendar: KnockoutInspection['run_calendar']; season_index: number; week: number }
+  expiration_week_exclusive: { season_index: number; week: number }
+  validity_weeks: number
+  rows: SignedKnockoutStandingsRow[]
+  points_in_period: boolean
+  publication_status: 'not_official_no_week_transition'
+  official_ready: false
+  blockers: string[]
+  fingerprint: string
+}
+
+export function verifySignedKnockoutStandings(
+  input: SignedKnockoutStandings,
+  inspection: KnockoutInspection,
+  seasonIndex: number, week: number,
+): SignedKnockoutStandings {
+  const players: string[] = inspection.knockout?.entrant_ids ?? []
+  if (!input || input.schema_version !== 'calendar_signed_knockout_standings.v1'
+    || input.run_id !== inspection.run_id
+    || input.branch_id !== inspection.branch_id
+    || input.saved_head_revision_id !== inspection.saved_head_revision_id
+    || input.scored_evidence_fingerprint !== inspection.knockout_fingerprint
+    || input.as_of.season_index !== seasonIndex || input.as_of.week !== week
+    || input.as_of.calendar.weeks_per_year !== inspection.run_calendar.weeks_per_year
+    || !inspection.saved || !inspection.prepared_points
+    || input.publication_status !== 'not_official_no_week_transition'
+    || input.official_ready !== false
+    || !Array.isArray(input.blockers) || input.blockers.length < 3
+    || !Array.isArray(input.rows) || input.rows.length !== 4
+    || !/^[0-9a-f]{64}$/.test(input.fingerprint)
+    || !/^[0-9a-f]{64}$/.test(input.saved_head_content_hash)
+    || new Set(input.rows.map(r => r.player_id)).size !== 4
+    || input.rows.some(r => !players.includes(r.player_id) || !Number.isSafeInteger(r.as_of_counted_points))
+    || input.rows.some(r => r.as_of_counted_points !==
+      (input.points_in_period ? r.awarded_main_points : 0))) {
+    throw Error('Signed knockout standings do not match the selected Saved Run/Branch')
+  }
+  return input
+}

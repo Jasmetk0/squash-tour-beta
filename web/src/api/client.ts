@@ -5274,3 +5274,16 @@ export function applyCalendarKnockoutAwards(runId: string, branchId: string,
     method: 'POST', body: JSON.stringify(command),
   })
 }
+
+
+/** Trusted Signed event standings, never a published Official Ranking. */
+export function inspectSignedCalendarKnockoutStandings(
+  runId: string, branchId: string, expectedSavedHead: string,
+  seasonIndex: number, week: number,
+): Promise<import('./calendarOpeningKnockout').SignedKnockoutStandings> {
+  const params = new URLSearchParams({
+    expected_saved_head: expectedSavedHead,
+    season_index: String(seasonIndex), week: String(week),
+  })
+  return request(knockoutRoot(runId, branchId) + '/standings?' + params.toString())
+}

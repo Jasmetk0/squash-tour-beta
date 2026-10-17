@@ -194,7 +194,7 @@ def test_unsigned_or_unsaved_matched_event_never_becomes_source(tmp_path):
     engine,factory,_,bracket,_=_setup_real_completed_saved(tmp_path)
     try:
         with factory.begin() as s:
-            _resign_saved(s,lambda p:p["content"].pop("simulation_slots",None))
+            _resign_saved(s,lambda p:p["content"].pop("simulation_slot_match_state",None))
         with pytest.raises(ValueError,match="no completed match evidence"):
             _read(factory,bracket)
     finally:
@@ -235,7 +235,7 @@ def test_saved_group_component_fingerprint_rejects_rehashed_revision_tamper(tmp_
     try:
         with factory.begin() as s:
             def alter(p):
-                p["content"]["simulation_slots"]["groups"][0]["result_fingerprint"]="f"*64
+                p["content"]["simulation_slot_match_state"]["groups"][0]["result_fingerprint"]="f"*64
             _resign_saved(s,alter)
         with pytest.raises(ValueError,match="component fingerprint"):
             _read(factory,bracket)

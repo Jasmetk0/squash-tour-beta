@@ -5183,3 +5183,42 @@ export async function getRunHomeReadiness(
     + encodeURIComponent(branchId) + '/home-readiness'
   return validateRunHomeReadiness(await request<unknown>(path), runId, branchId)
 }
+
+/** Calendar-native isolated match: only saved v2 initial population, no legacy W61 writer. */
+function calendarMatchRoot(runId: string, branchId: string): string {
+  return authoritativeSimulationRoot(runId, branchId) + '/calendar-standalone-match'
+}
+
+export function inspectCalendarStandaloneMatch(runId: string, branchId: string):
+  Promise<import('./calendarStandaloneMatch').CalendarMatchView> {
+  return request(calendarMatchRoot(runId, branchId))
+}
+
+export function simulateCalendarStandaloneMatch(runId: string, branchId: string,
+  command: import('./calendarStandaloneMatch').CalendarMatchCommand):
+  Promise<import('./calendarStandaloneMatch').CalendarMatchReceipt> {
+  return request(calendarMatchRoot(runId, branchId) + '/simulate', {
+    method: 'POST', body: JSON.stringify(command),
+  })
+}
+
+export function replayCalendarStandaloneMatch(runId: string, branchId: string, matchId: string):
+  Promise<import('./calendarStandaloneMatch').CalendarMatchReplay> {
+  return request(calendarMatchRoot(runId, branchId) + '/' + encodeURIComponent(matchId) + '/replay')
+}
+
+export function previewCalendarStandaloneMatchSave(runId: string, branchId: string):
+  Promise<import('./calendarStandaloneMatch').CalendarMatchSavePreview> {
+  return request(calendarMatchRoot(runId, branchId) + '/save/preview')
+}
+
+export function saveCalendarStandaloneMatch(runId: string, branchId: string,
+  expectedDraftVersion: number, expectedMatchFingerprint: string): Promise<unknown> {
+  return request(calendarMatchRoot(runId, branchId) + '/save', {
+    method: 'POST',
+    body: JSON.stringify({
+      expected_draft_version: expectedDraftVersion,
+      expected_calendar_match_fingerprint: expectedMatchFingerprint,
+    }),
+  })
+}

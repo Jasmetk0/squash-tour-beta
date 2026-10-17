@@ -36,3 +36,14 @@ legacy exhibition schema and sporting guards. It is **not** official
 tournament points, weekly publication or Week/Season Transition. Its
 candidate tests/CI and distinct Chromium acceptance must be verified
 before merge. Contract: [CALENDAR_OPENING_KNOCKOUT_V84.md](docs/CALENDAR_OPENING_KNOCKOUT_V84.md).
+
+## New operational step: reviewed prepared knockout points
+
+After owner merge #1523, the proposed scoring candidate binds an authored
+operator point table and four exact stage placements to a previously Signed
+W52/W80 MatchEngine knockout. It uses a reviewed command and second genuine
+Saved Revision, with cold restart and historical restore. **Not** yet official
+Category/Edition awards, Official Ranking publication or Week Transition.
+Contract: `docs/CALENDAR_KNOCKOUT_PREPARED_AWARDS_V84.md`. The subsequent
+integration must source historically effective configured Edition points and
+publish atomically during the actual calendar-native Week Transition.

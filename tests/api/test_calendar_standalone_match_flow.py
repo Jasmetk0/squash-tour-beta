@@ -127,3 +127,98 @@ def test_calendar_match_refuses_missing_saved_world_and_foreign_scope(tmp_path):
         url = base(server)
         assert _request("GET", url)[0] == 409
         assert _request("GET", url + "/not-found/replay")[0] == 404
+
+
+def test_calendar_match_restore_removes_live_result_but_not_immutable_history(tmp_path):
+    path = tmp_path / "restore-calendar-match.db"
+    with ApiServer(database_url=f"sqlite:///{path}") as server:
+        repository, population_head = prepare_saved_world(server, RunCalendar.earth_default(start_year=2030, season_count=3))
+        _, inspected = _request("GET", base(server))
+        command = {
+            "command_id": "restore-play", "match_id": "one-exhibition",
+            "expected_saved_head": population_head,
+            "expected_initial_world_fingerprint": inspected["initial_world_fingerprint"],
+            "player_a_id": inspected["player_ids"][0],
+            "player_b_id": inspected["player_ids"][1],
+            "seed": 18,
+            "operator_label": "Admin",
+            "audit_reason": "Verify restored Saved revision is an earlier truthful history",
+        }
+        status, played = _request("POST", base(server) + "/simulate", command)
+        assert status == 201, played
+        status, preview = _request("GET", base(server) + "/save/preview")
+        assert status == 200 and preview["can_save"], preview
+        status, saved = _request("POST", base(server) + "/save", {
+            "expected_draft_version": preview["draft_version"],
+            "expected_calendar_match_fingerprint": played["fingerprint"],
+        })
+        assert status == 201, saved
+        played_head = saved["saved_revision"]["revision_id"]
+        restore_url = server.base_url + (
+            f"/run-containers/run/branches/branch/saved-revisions/{population_head}/restore"
+        )
+        status, preflight = _request("GET", restore_url + "-preflight")
+        assert status == 200 and preflight["can_restore"], preflight
+        assert preflight["saved_head_revision_id"] == played_head
+        request = {
+            "expected_head_saved_revision_id": played_head,
+            "expected_draft_version": preflight["draft_version"],
+            "expected_current_viewer_branch_id": "branch",
+            "explicit_confirmation": True,
+        }
+        assert _request("POST", restore_url, {**request, "explicit_confirmation": False})[0] == 409
+        status, restored = _request("POST", restore_url, request)
+        assert status == 201, restored
+        assert "calendar_standalone_match" not in restored["saved_revision"]["payload"]["content"]
+        status, after = _request("GET", base(server))
+        assert status == 200 and after["match"] is None, after
+        assert _request("GET", base(server) + "/one-exhibition/replay")[0] == 404
+        assert repository.verify_branch_saved_revision_hash(revision_id=population_head)
+        assert repository.verify_branch_saved_revision_hash(revision_id=played_head)
+        assert repository.verify_branch_saved_revision_hash(
+            revision_id=restored["saved_revision"]["revision_id"]
+        )
+
+
+def test_calendar_match_rejects_stale_source_and_detects_sqlite_tamper(tmp_path):
+    import json
+
+    from beta_engine.infrastructure.db.models import CalendarStandaloneMatchModel
+
+    path = tmp_path / "tamper-calendar-match.db"
+    with ApiServer(database_url=f"sqlite:///{path}") as server:
+        repo, head = prepare_saved_world(server, RunCalendar(80, 37, 2100, 3))
+        _, inspected = _request("GET", base(server))
+        command = {
+            "command_id": "tamper-play", "match_id": "unforgeable-match",
+            "expected_saved_head": head,
+            "expected_initial_world_fingerprint": inspected["initial_world_fingerprint"],
+            "player_a_id": inspected["player_ids"][0],
+            "player_b_id": inspected["player_ids"][1],
+            "seed": 811,
+            "operator_label": "Admin",
+            "audit_reason": "Attack stale, duplicate and forged sporting writes",
+        }
+        before = _dump(path)
+        for changed in (
+            {"expected_saved_head": "other-head"},
+            {"expected_initial_world_fingerprint": "0" * 64},
+            {"player_b_id": command["player_a_id"]},
+            {"player_b_id": "unknown-player"},
+        ):
+            assert _request("POST", base(server) + "/simulate", {**command, **changed})[0] == 409
+        assert _dump(path) == before
+        status, played = _request("POST", base(server) + "/simulate", command)
+        assert status == 201, played
+        with repo._session_factory.begin() as session:
+            row = session.get(
+                CalendarStandaloneMatchModel,
+                ("run", "branch", "unforgeable-match"),
+            )
+            assert row is not None
+            raw = json.loads(row.payload_json)
+            raw["seed"] += 1
+            row.payload_json = json.dumps(raw)
+        assert _request("GET", base(server))[0] == 409
+        assert _request("GET", base(server) + "/unforgeable-match/replay")[0] == 409
+        assert repo.verify_branch_saved_revision_hash(revision_id=head)

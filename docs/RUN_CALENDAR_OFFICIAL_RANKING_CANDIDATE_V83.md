@@ -151,3 +151,41 @@ new corrections, zero decisions, Week/Season Transition or Full Simulation.
 A future calendar-native tournament authority and Save/restore/fork
 integration must be implemented before turning this read-only adapter into
 a non-FAX sporting writer.
+
+
+## W-native complete knockout → whole-edition staging (post #1515)
+
+`CalendarKnockoutRankingEvidence` is a new, separately versioned **calendar-native
+preparation evidence** object: exact Run/Branch, Edition, explicit RunCalendar
+(W52/W61/W80 supported), completion/publication weeks, ordered power-of-two
+bracket entrants (up to 128), and the entire ordered winner/loser match tree.
+Every match must refer to precisely the two eligible players at its own
+round/position; the following round may only contain the winners from its
+two preceding matches. BYE/W/O/RET, missing matches, duplicate entrants,
+misordered rounds, impossible winners, incomplete/unranked distributions,
+fallback points and future/out-of-horizon publication fail closed.
+Authored finishing-stage point distribution covers precisely the actual
+placements. Deterministically projected `CalendarRankingResultVersion` rows
+have one source fingerprint across the full evidence, start at the first
+publication week and cannot fabricate corrected history or disciplinary zeros.
+
+`stage_calendar_knockout_ranking_results` validates the entire draw and an
+**independent caller-provided expected evidence fingerprint** against the
+Run's signed current Saved clock, then stages the entire Edition as one
+transaction-owned batch. Exact retries are read-only; an already partially
+populated, corrected or differently sourced Edition is rejected rather than
+silently merged. The caller must use `BEGIN IMMEDIATE` and own commit/rollback.
+A forced mid-Edition error leaves no rows, while completed staging survives
+restart and can drive the existing signed-clock read-only Official Ranking
+candidate in Week W → next Season Week 1. Full real SQLite coverage exercises
+W52, W61 and W80 and adversarial brackets.
+
+**Important:** this is **not** a simulation engine, nor proof that the
+supplied matches happened in the live Run. The external expected fingerprint
+and complete bracket checks are integrity/consistency conditions; they do
+not authenticate the result against an actual Run-owned Match Authority.
+The data is strictly unpublished staging, outside immutable Saved Revision
+capture/restore/fork, Viewer, World Event and the authoritative Week/Season
+Transition writer. No production W52/W80 sporting execution is unlocked.
+The next dependency is an actual calendar-native Run-owned match/result
+authority that can authenticate the completed evidence before staging.

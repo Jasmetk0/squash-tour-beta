@@ -7,6 +7,7 @@ been executed. This deliberately cannot grant publication or sporting time.
 from __future__ import annotations
 
 from dataclasses import dataclass
+import json
 
 from pydantic import Field
 from sqlalchemy import text
@@ -184,7 +185,9 @@ class CalendarSignedKnockoutStandingsService:
                 "official_ready": False,
                 "blockers": BLOCKERS,
             }
-            result = SignedKnockoutStandings(
-                **payload, fingerprint=canonical_hash(payload)
-            )
+            # FrozenInput is strict in Python: use the explicit JSON boundary
+            # for nested calendar positions and tuple-shaped signed rows.
+            result = SignedKnockoutStandings.model_validate_json(json.dumps({
+                **payload, "fingerprint": canonical_hash(payload),
+            }))
             return result.model_dump(mode="json")

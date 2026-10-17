@@ -189,3 +189,39 @@ capture/restore/fork, Viewer, World Event and the authoritative Week/Season
 Transition writer. No production W52/W80 sporting execution is unlocked.
 The next dependency is an actual calendar-native Run-owned match/result
 authority that can authenticate the completed evidence before staging.
+
+
+## Versioned MatchEngine witness source → W-aware ranking staging (post #1516)
+
+`CalendarEngineMatchWitness` introduces an independently fingerprinted
+**complete MatchEngine-result-shaped receipt** containing the frozen match
+input fingerprint, full serialized `MatchResult` with real rally events and
+the input/result receipt fingerprint computed using the production canonical
+algorithm. Validation rejects aborted/RET matches, missing rally logs,
+invalid set winners, unordered/post-terminal games, contradictory score
+totals, incorrect BO odd-game threshold, reused receipt identity, and
+tampering with the input/result fingerprint. Nested `MatchResult` validation
+also checks rally-log scores, result sets, timeline and stamina semantics.
+
+`CalendarEngineKnockoutEvidence` binds the entire existing W-aware valid
+full knockout bracket to exactly one engine witness per match in canonical
+round/position order. Winners, losers and winner-set scorelines must match
+the engine results exactly. Its independent SHA-256 covers every frozen
+rally event and match receipt as well as player placement/point rules.
+The new `prepare_calendar_engine_knockout_versions` projects the same
+correct initial Edition results as the v1 bracket route, but sets each
+source's fingerprint to the **complete MatchEngine witness root**, not
+merely a manually supplied list of winners. The associated staging command
+uses the existing whole-Edition, exactly idempotent SQLite transaction
+guard and signed Saved W52/W61/W80 clock; it does not rewrite any legacy
+FAX source hashes. Real seeded MatchEngine results exercise W52/W61/W80,
+SQLite restart and the last-week/next-season boundary.
+
+**Trust boundary remains explicit:** a model-valid MatchResult plus its
+frozen-input receipt is **not itself authenticated as a result actually
+committed by the Run's saved sporting writer**. The caller supplies an
+independently trusted expected witness root; its origin must eventually be
+cross-checked against immutable Saved Simulation Slot/group authorities
+before any sporting publication. This code remains internal unpublished
+staging. No public API, no official ranking, no W52/W80 Full Simulation
+unlock, no invented Qualification/W/O/RET treatment.

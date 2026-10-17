@@ -122,3 +122,15 @@ required: true Run-owned match authority/provenance binding (not only
 external fingerprints), qualification/group/hybrid/abnormal match
 resolution, Owned source Save/restore/fork integration, then official
 ranking/Week/Season publication and Full Simulation migration.
+
+
+## After #1516 — MatchEngine witness bridge candidate
+
+A new W52/W61/W80 whole-tournament source path can bind ranking points to
+complete actual MatchEngine-shaped rally/results receipts, rather than an
+unwitnessed manual winners-only bracket. It is deterministic,
+source-fingerprinted, transactionally staged and rejects invalid winner or
+score accounting. Yet its upstream authority remains caller-attested.
+Binding that witness to immutable Saved Run-owned match results and safely
+versioning Save/restore/fork/Week publication is still essential before
+considering it an authoritative sporting feature.

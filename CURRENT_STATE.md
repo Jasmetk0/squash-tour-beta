@@ -138,3 +138,17 @@ preview tests including Week W → next Season Week 1. It intentionally does
 not assert Run-authenticated match provenance. These are staging facts only,
 not a real match/result writer or Saved/Viewer publication. CI final HEAD
 must be green before owner merges.
+
+
+## Post #1516 — real MatchEngine result witness into W-aware staging candidate
+
+#1516 was merged before this change. New internal integration validates a
+full seeded MatchEngine `MatchResult`, with complete rally log, set-score
+consistency, full independent input/result fingerprint and an exact match
+against every knockout bracket edge. Its versioned root hash replaces an
+unproven winner-only source hash in W52/W61/W80 initial ranking-source
+staging; whole-Edition transactional SQLite replay and restart are covered.
+It does **not** yet prove Saved Run-owned group admission, publish Official
+Ranking or change Full Simulation compatibility. The next required
+integration is a cross-check with Saved immutable Slot/Group match receipts,
+and ultimately W-aware sporting writers.

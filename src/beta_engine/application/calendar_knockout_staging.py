@@ -51,14 +51,42 @@ def stage_calendar_knockout_ranking_results(
         evidence, run_calendar=calendar,
         expected_evidence_fingerprint=expected_evidence_fingerprint,
     )
+    return _install_whole_edition(
+        store, evidence.edition_id, versions,
+        run_id=evidence.run_id, branch_id=evidence.branch_id,
+        expected_saved_head_revision_id=expected_saved_head_revision_id,
+    )
+
+
+def _install_whole_edition(
+    store: StagedCalendarRankingSourceStore,
+    edition_id: str,
+    versions: tuple[CalendarRankingResultVersion, ...],
+    *,
+    run_id: str,
+    branch_id: str,
+    expected_saved_head_revision_id: str,
+) -> tuple[CalendarRankingResultVersion, ...]:
+    """One atomic Edition insert under the caller's already-held SQLite lock.
+
+    Shared by externally authored v1 evidence and richer MatchEngine witness
+    evidence. No internal commit. Each version must have the exact Edition and
+    the canonical full player population; conflicting/partial rows fail closed.
+    """
+    if not versions or any(
+        (v.run_id, v.branch_id, v.result.edition_id)
+        != (run_id, branch_id, edition_id)
+        for v in versions
+    ):
+        raise ValueError("Incomplete or foreign calendar Edition batch")
     existing, _ = store.history(
-        run_id=evidence.run_id,
-        branch_id=evidence.branch_id,
+        run_id=run_id,
+        branch_id=branch_id,
         expected_saved_head_revision_id=expected_saved_head_revision_id,
     )
     for_edition = tuple(
         version for version in existing
-        if version.result.edition_id == evidence.edition_id
+        if version.result.edition_id == edition_id
     )
     if for_edition:
         if for_edition != versions:
@@ -72,10 +100,10 @@ def stage_calendar_knockout_ranking_results(
             expected_saved_head_revision_id=expected_saved_head_revision_id,
         )
     installed, _ = store.history(
-        run_id=evidence.run_id,
-        branch_id=evidence.branch_id,
+        run_id=run_id,
+        branch_id=branch_id,
         expected_saved_head_revision_id=expected_saved_head_revision_id,
     )
-    if tuple(v for v in installed if v.result.edition_id == evidence.edition_id) != versions:
+    if tuple(v for v in installed if v.result.edition_id == edition_id) != versions:
         raise ValueError("Whole calendar knockout ranking source batch was not installed")
     return versions

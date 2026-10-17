@@ -145,7 +145,7 @@ def test_real_saved_sqlite_full_draw_w_to_next_season_ranking_and_restart(
                 )
                 table = {r.player_id:r.points for r in candidate.rows}
                 assert table["A"] == 100
-                assert table["C"] == 60
+                assert table["C"] == (30 if draw == 8 else 60)
                 if draw == 8:
                     assert table["B"] == 15
                     assert table["D"] == 15

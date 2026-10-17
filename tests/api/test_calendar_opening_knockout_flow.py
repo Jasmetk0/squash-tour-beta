@@ -115,3 +115,76 @@ def test_knockout_rejects_invalid_source_and_duplicate_players(tmp_path):
         })[0] == 409
         assert _request("GET", base(server) + "/save/preview")[0] == 409
         assert repository.verify_branch_saved_revision_hash(revision_id=head)
+
+
+def test_saved_knockout_restore_rewinds_live_evidence_not_signed_history(tmp_path):
+    with ApiServer(database_url=f"sqlite:///{tmp_path / 'knockout-restore.db'}") as server:
+        repository, old_head = prepare_saved_world(server, RunCalendar(52, 1, 2030, 3))
+        _, view = _request("GET", base(server))
+        command = {
+            "command_id": "restore-knockout", "match_id": "knockout-restore",
+            "expected_saved_head": old_head,
+            "expected_initial_world_fingerprint": view["initial_world_fingerprint"],
+            "entrant_ids": view["player_ids"], "seed": 773,
+            "operator_label": "Admin", "audit_reason": "Verify immutable tournament history",
+        }
+        status, played = _request("POST", base(server) + "/simulate", command)
+        assert status == 201, played
+        _, preview = _request("GET", base(server) + "/save/preview")
+        status, saved = _request("POST", base(server) + "/save", {
+            "expected_draft_version": preview["draft_version"],
+            "expected_calendar_match_fingerprint": played["fingerprint"],
+        })
+        assert status == 201, saved
+        played_head = saved["saved_revision"]["revision_id"]
+        restore_url = (server.base_url + "/run-containers/run/branches/branch/"
+                       f"saved-revisions/{old_head}/restore")
+        status, preflight = _request("GET", restore_url + "-preflight")
+        assert status == 200 and preflight["can_restore"], preflight
+        assert _request("POST", restore_url, {
+            "expected_head_saved_revision_id": played_head,
+            "expected_draft_version": preflight["draft_version"],
+            "expected_current_viewer_branch_id": "branch",
+            "explicit_confirmation": False,
+        })[0] == 409
+        status, restored = _request("POST", restore_url, {
+            "expected_head_saved_revision_id": played_head,
+            "expected_draft_version": preflight["draft_version"],
+            "expected_current_viewer_branch_id": "branch",
+            "explicit_confirmation": True,
+        })
+        assert status == 201, restored
+        status, view = _request("GET", base(server))
+        assert status == 200 and view["knockout"] is None, view
+        assert _request("GET", base(server) + "/knockout-restore/replay")[0] == 404
+        assert repository.verify_branch_saved_revision_hash(revision_id=old_head)
+        assert repository.verify_branch_saved_revision_hash(revision_id=played_head)
+        assert repository.verify_branch_saved_revision_hash(
+            revision_id=restored["saved_revision"]["revision_id"]
+        )
+
+
+def test_knockout_row_tamper_blocks_inspection_and_replay(tmp_path):
+    import json
+    from beta_engine.infrastructure.db.models import CalendarStandaloneMatchModel
+
+    with ApiServer(database_url=f"sqlite:///{tmp_path / 'knockout-tamper.db'}") as server:
+        repository, head = prepare_saved_world(server, RunCalendar(80, 37, 2100, 3))
+        _, view = _request("GET", base(server))
+        command = {
+            "command_id": "tamper-knockout", "match_id": "knockout-tamper",
+            "expected_saved_head": head,
+            "expected_initial_world_fingerprint": view["initial_world_fingerprint"],
+            "entrant_ids": view["player_ids"], "seed": 300,
+            "operator_label": "Admin", "audit_reason": "Detect corrupted bracket input",
+        }
+        assert _request("POST", base(server) + "/simulate", command)[0] == 201
+        with repository._session_factory.begin() as session:
+            row = session.get(CalendarStandaloneMatchModel, ("run", "branch", "knockout-tamper"))
+            assert row is not None
+            payload = json.loads(row.payload_json)
+            payload["matches"][2]["result"]["winner_player_id"] = "forged"
+            row.payload_json = json.dumps(payload)
+        assert _request("GET", base(server))[0] == 409
+        assert _request("GET", base(server) + "/knockout-tamper/replay")[0] == 409
+        assert repository.verify_branch_saved_revision_hash(revision_id=head)

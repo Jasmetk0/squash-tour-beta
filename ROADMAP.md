@@ -111,3 +111,14 @@ build calendar-native tournament result/point authorities, durable source
 correction/discipline lineage in Saved with fork/restore ownership, then
 actual versioned ranking publication, Week/Season Transition, and safe
 Full Simulation runtime migration.
+
+
+## After #1515 — first calendar-native main-draw source path
+
+Explicit complete single-elimination event evidence now has a W-aware,
+deterministic initial ranking-points projection and atomic Edition-wide
+staging, with actual SQLite Saved-calendar replay for W52/61/80. Still
+required: true Run-owned match authority/provenance binding (not only
+external fingerprints), qualification/group/hybrid/abnormal match
+resolution, Owned source Save/restore/fork integration, then official
+ranking/Week/Season publication and Full Simulation migration.

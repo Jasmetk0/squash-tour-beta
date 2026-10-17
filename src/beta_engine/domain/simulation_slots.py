@@ -397,14 +397,14 @@ def provisional_load_deltas(
     )
 
 
-def calculate_match_effects(
-    authoritative_input: AuthoritativeMatchInput,
-    result: MatchResult,
-    *,
-    result_fingerprint: str,
-    policy: MatchSportingEffectsPolicy,
-) -> tuple[PlayerMatchSportingEffect, PlayerMatchSportingEffect]:
-    """Derive effects from pre-match inputs and authoritative played evidence."""
+def derive_match_effect_values(player_projections, result: MatchResult, *,
+                               policy: MatchSportingEffectsPolicy) -> tuple[dict, ...]:
+    """Calendar-independent load/performance arithmetic; no temporal key conversion.
+
+    Inputs provide player_id, seven engine values, three modifiers and the
+    current form/sharpness/fatigue. The caller owns identity, dates and evidence.
+    This is the same provisional calibration used by legacy authoritative slots.
+    """
     if (
         result.rally_log is None
         or result.timeline_log is None
@@ -417,7 +417,7 @@ def calculate_match_effects(
     if rallies == 0:
         raise ValueError("pre-start abnormal result has no played sporting effect")
     total_points = {
-        projection.player_id: 0 for projection in authoritative_input.player_projections
+        projection.player_id: 0 for projection in player_projections
     }
     for event in result.rally_log.events:
         if event.score_mutations:
@@ -428,9 +428,9 @@ def calculate_match_effects(
         + p.form_modifier * 35
         + p.sharpness_modifier * 35
         + p.fatigue_modifier * 30
-        for p in authoritative_input.player_projections
+        for p in player_projections
     }
-    workload = {p.player_id: 0.0 for p in authoritative_input.player_projections}
+    workload = {p.player_id: 0.0 for p in player_projections}
     for transition in result.stamina_log.transitions:
         if transition.player_workloads:
             for item in transition.player_workloads:
@@ -439,7 +439,7 @@ def calculate_match_effects(
             for player_id in workload:
                 workload[player_id] += transition.workload_units
     effects = []
-    projections = {p.player_id: p for p in authoritative_input.player_projections}
+    projections = {p.player_id: p for p in player_projections}
     for player_id, projection in projections.items():
         opponent_id = next(pid for pid in projections if pid != player_id)
         expected = strengths[player_id] / (
@@ -468,33 +468,46 @@ def calculate_match_effects(
             policy.fatigue_max,
             max(policy.fatigue_min, projection.long_term_fatigue + fatigue_delta),
         )
-        effects.append(
-            PlayerMatchSportingEffect(
-                run_id=authoritative_input.run_id,
-                branch_id=authoritative_input.branch_id,
-                week=authoritative_input.week,
-                slot_id=authoritative_input.slot_id,
-                group_id=authoritative_input.group_id,
-                match_id=authoritative_input.match_id,
-                player_id=player_id,
-                pre_match_sporting_fingerprint=projection.source_sporting_fingerprint,
-                match_input_fingerprint=authoritative_input.fingerprint,
-                authoritative_result_fingerprint=result_fingerprint,
-                form_before=projection.current_form,
-                form_delta=form_after - projection.current_form,
-                form_after=form_after,
-                sharpness_before=projection.match_sharpness,
-                sharpness_delta=sharpness_after - projection.match_sharpness,
-                sharpness_after=sharpness_after,
-                fatigue_before=projection.long_term_fatigue,
-                fatigue_delta=fatigue_after - projection.long_term_fatigue,
-                fatigue_after=fatigue_after,
-                policy_id=policy.policy_id,
-                policy_fingerprint=policy.fingerprint,
-                provenance="authoritative rally/timeline/stamina logs and frozen pre-match expectation",
-            )
-        )
-    return tuple(effects)  # type: ignore[return-value]
+        effects.append({
+            "player_id": player_id,
+            "form_before": projection.current_form,
+            "form_delta": form_after - projection.current_form,
+            "form_after": form_after,
+            "sharpness_before": projection.match_sharpness,
+            "sharpness_delta": sharpness_after - projection.match_sharpness,
+            "sharpness_after": sharpness_after,
+            "fatigue_before": projection.long_term_fatigue,
+            "fatigue_delta": fatigue_after - projection.long_term_fatigue,
+            "fatigue_after": fatigue_after,
+        })
+    return tuple(effects)
+
+
+def calculate_match_effects(
+    authoritative_input: AuthoritativeMatchInput,
+    result: MatchResult,
+    *,
+    result_fingerprint: str,
+    policy: MatchSportingEffectsPolicy,
+) -> tuple[PlayerMatchSportingEffect, PlayerMatchSportingEffect]:
+    """Derive effects from pre-match inputs and authoritative played evidence."""
+    values = derive_match_effect_values(
+        authoritative_input.player_projections, result, policy=policy,
+    )
+    projections = {p.player_id: p for p in authoritative_input.player_projections}
+    return tuple(
+        PlayerMatchSportingEffect(
+            run_id=authoritative_input.run_id, branch_id=authoritative_input.branch_id,
+            week=authoritative_input.week, slot_id=authoritative_input.slot_id,
+            group_id=authoritative_input.group_id, match_id=authoritative_input.match_id,
+            pre_match_sporting_fingerprint=projections[value["player_id"]].source_sporting_fingerprint,
+            match_input_fingerprint=authoritative_input.fingerprint,
+            authoritative_result_fingerprint=result_fingerprint,
+            **value,
+            policy_id=policy.policy_id, policy_fingerprint=policy.fingerprint,
+            provenance="authoritative rally/timeline/stamina logs and frozen pre-match expectation",
+        ) for value in values
+    )  # type: ignore[return-value]
 
 
 class SimulationSlotPlan(FrozenInput):

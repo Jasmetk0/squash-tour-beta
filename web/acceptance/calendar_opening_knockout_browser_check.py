@@ -63,7 +63,17 @@ def exercise_calendar_knockout(page, *, base_url, api_url, artifacts,
         play.click()
     assert response.value.status == 201, response.value.text()[:1200]
     played = response.value.json()
+    assert played['knockout']['schema_version'] == 'calendar_opening_knockout.v2'
+    sporting = played['knockout']['sporting']
+    assert len(sporting['effects']) == 6
+    after_semis = {p['player_id']: p for p in sporting['after_semifinals']}
+    expect(panel.get_by_role('table', name='Knockout player state table')).to_be_visible()
+    expect(panel.get_by_role('table', name='Knockout player state table').get_by_role('row')).to_have_count(13)
     matches = played["knockout"]["matches"]
+    for ctx in (matches[2]['input_context']['player_a'], matches[2]['input_context']['player_b']):
+        pid = ctx['player']['player_id']
+        assert after_semis[pid]['long_term_fatigue'] > 0
+        assert ctx['fatigue_modifier'] == round(-after_semis[pid]['long_term_fatigue'] / 300, 6)
     assert len(matches) == 3 and [m["slot"] for m in matches] == [1, 1, 2]
     assert matches[2]["result"]["player_a_id"] == matches[0]["result"]["winner_player_id"]
     assert matches[2]["result"]["player_b_id"] == matches[1]["result"]["winner_player_id"]
@@ -86,6 +96,7 @@ def exercise_calendar_knockout(page, *, base_url, api_url, artifacts,
     revision = response.value.json()["saved_revision"]["revision_id"]
     assert revision != initial["saved_head_revision_id"]
     assert api("GET", root)["saved"] is True
+    assert api("GET", root)['knockout']['sporting'] == sporting
 
     page.reload()
     selector = page.get_by_role("combobox", name="Admin active Branch")
@@ -93,12 +104,14 @@ def exercise_calendar_knockout(page, *, base_url, api_url, artifacts,
     selector.select_option(branch_id)
     panel = page.locator('section[aria-label="Calendar native four-player knockout"]')
     expect(panel.get_by_text("Status: Saved", exact=False)).to_be_visible()
+    expect(panel.get_by_role('table', name='Knockout player state table')).to_be_visible()
     assert api("GET", root + "/calendar-opening-knockout/replay")["exact_replay"]
     page.get_by_role("combobox", name="Language / Jazyk").select_option("cs")
     expect(page.get_by_role(
         "heading", name="Skutečný čtyřčlenný pavouk podle Run kalendáře"
     )).to_be_visible()
     expect(panel.get_by_role("button", name="Ověřit replay všech zápasů")).to_be_visible()
+    expect(panel.get_by_role('columnheader', name='Dlouhodobá únava', exact=True)).to_be_visible()
     page.screenshot(path=str(artifacts / "17-calendar-real-knockout-saved.png"), full_page=True)
     page.get_by_role("combobox", name="Language / Jazyk").select_option("en")
     # A second, separately confirmed sporting Save attaches prepared point
@@ -148,6 +161,7 @@ def exercise_calendar_knockout(page, *, base_url, api_url, artifacts,
     scored_revision = second_save.value.json()["saved_revision"]["revision_id"]
     assert scored_revision != revision
     assert api("GET", root)["saved"] is True
+    assert api("GET", root)['knockout']['sporting'] == sporting
     assert api("GET", root + "/calendar-opening-knockout/replay")["exact_replay"]
     page.reload()
     selector = page.get_by_role("combobox", name="Admin active Branch")
@@ -263,6 +277,9 @@ def exercise_calendar_knockout(page, *, base_url, api_url, artifacts,
         "actual_match_engine_matches": 3,
         "same_pre_slot_semifinals": True,
         "winner_fed_final": True,
+        "post_semifinal_state_consumed_by_final": True,
+        "six_evidenced_player_effects": True,
+        "saved_player_checkpoints_cs_en": True,
         "saved_revision": revision,
         "cold_browser_reload": True,
         "exact_three_match_replay": True,

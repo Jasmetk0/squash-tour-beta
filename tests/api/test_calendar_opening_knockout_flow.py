@@ -36,7 +36,19 @@ def test_real_w52_w80_knockout_atomic_save_cold_replay_and_old_head(tmp_path, ca
         status, played = _request("POST", base(server) + "/simulate", command)
         assert status == 201, played
         bracket = played["knockout"]
-        assert bracket["schema_version"] == "calendar_opening_knockout.v1"
+        assert bracket["schema_version"] == "calendar_opening_knockout.v2"
+        sporting = bracket["sporting"]
+        assert len(sporting["effects"]) == 6
+        assert not sporting["health_effects_applied"]
+        after = {p["player_id"]: p for p in sporting["after_semifinals"]}
+        terminal = {p["player_id"]: p for p in sporting["terminal"]}
+        for ctx in (bracket["matches"][2]["input_context"]["player_a"], bracket["matches"][2]["input_context"]["player_b"]):
+            pid = ctx["player"]["player_id"]
+            assert after[pid]["long_term_fatigue"] > 0
+            assert ctx["fatigue_modifier"] == round(-after[pid]["long_term_fatigue"] / 300, 6)
+            assert terminal[pid]["long_term_fatigue"] >= after[pid]["long_term_fatigue"]
+        losers = {m["result"]["loser_player_id"] for m in bracket["matches"][:2]}
+        assert all(terminal[pid] == after[pid] for pid in losers)
         assert bracket["week"]["calendar"] == calendar.to_metadata()
         assert len(bracket["matches"]) == 3
         first, second, final = bracket["matches"]
@@ -188,3 +200,34 @@ def test_knockout_row_tamper_blocks_inspection_and_replay(tmp_path):
         assert _request("GET", base(server))[0] == 409
         assert _request("GET", base(server) + "/knockout-tamper/replay")[0] == 409
         assert repository.verify_branch_saved_revision_hash(revision_id=head)
+
+
+def test_rehashed_sporting_delta_corruption_blocks_read_replay_save_and_extension(tmp_path):
+    import json
+    from beta_engine.domain.run_packages import canonical_hash
+    from beta_engine.infrastructure.db.models import CalendarStandaloneMatchModel
+
+    with ApiServer(database_url=f"sqlite:///{tmp_path / 'effect-tamper.db'}") as server:
+        repo, head = prepare_saved_world(server, RunCalendar(52, 1, 2030, 3))
+        _, view = _request('GET', base(server))
+        status, played = _request('POST', base(server) + '/simulate', {
+            'command_id': 'effect-tamper', 'match_id': 'effect-tamper',
+            'expected_saved_head': head,
+            'expected_initial_world_fingerprint': view['initial_world_fingerprint'],
+            'entrant_ids': view['player_ids'], 'seed': 222,
+            'operator_label': 'Admin', 'audit_reason': 'Check semantic corruption',
+        })
+        assert status == 201, played
+        with repo._session_factory.begin() as session:
+            row = session.get(CalendarStandaloneMatchModel, ('run', 'branch', 'effect-tamper'))
+            raw = json.loads(row.payload_json)
+            raw['sporting']['terminal'][0]['current_form'] += 1
+            row.payload_json = json.dumps(raw)
+            row.fingerprint = canonical_hash(raw)
+        assert _request('GET', base(server))[0] == 409
+        assert _request('GET', base(server) + '/effect-tamper/replay')[0] == 409
+        assert _request('GET', base(server) + '/save/preview')[0] == 409
+        status, review = _request('GET', server.base_url
+            + '/run-containers/run/calendar/extension-review?new_season_count=4')
+        assert status == 200 and not review['can_save'], review
+        assert repo.verify_branch_saved_revision_hash(revision_id=head)

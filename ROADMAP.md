@@ -1,6 +1,6 @@
 # Active dependency path — Master v85
 
-Audited buuk `1fe5cb9080cd8cc84bd1002c393f720951020f0f` after #1525. All #1521–1525 merged,
+Audited buuk `5ff872c5aa718d125dda92617e93f30c53b089b2` after #1526. All #1521–1526 merged,
 all triggered final-head workflows green. Owner alone merges; refresh current work.
 
 | Order | Outcome | Status |
@@ -8,8 +8,8 @@ all triggered final-head workflows green. Owner alone merges; refresh current wo
 | 1 | Consistent ranking extension tests | A84-01 fixed in #1521 |
 | 2 | Real native opening match/knockout, manual Save/replay/restart | #1522–1523 merged; bounded first-week operation, compatibility attributes, no continued sporting effects |
 | 3 | Reviewed prepared points and as-of scoreboard | #1524–1525 merged; explicit operator policy, not Official Ranking or Week Transition |
-| 4 | Extension/retry/consent integration after actual Saved sport | Current v85 candidate A85-01–05, with new production API and existing Shell browser acceptance |
-| 5 | Canonical calendar sporting/Health state and full attribute projection | Next; preserve frozen inputs, source provenance and versioned history |
+| 4 | Extension/retry/consent integration after actual Saved sport | Merged #1526 A85-01–05; production API + actual Chromium acceptance green |
+| 5 | Canonical calendar sporting/Health state and full attribute projection | Current candidate adds actual form/sharpness/fatigue checkpoints between knockout rounds. Full canonical 57-attribute and Health ownership still next; preserve versioned history |
 | 6 | Tour entry + configured Edition points + Official publication + Week/Season Transition | Incomplete; do not mistake hypothetical W2 point eligibility for an advanced simulation |
 | 7 | Durable Full Simulation, populated multi-season and extended Completed continuation | Incomplete; preserve frozen targets, terminal tasks, explicit recovery and W-aware annual units |
 | 8 | Remaining full pre-alpha targets and release/realism gates | Historical-cohort generator, canonical attributes, AI, Labs, Records/milestones/summaries and complete Master scope; full regression, reference FAX season + 50 seasons and W52/W80 acceptance |

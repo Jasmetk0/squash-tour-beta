@@ -137,6 +137,12 @@ def exercise_calendar_match(
     assert "calendar_standalone_match" not in old_population["payload"]["content"]
 
     page.reload()
+    # Admin intentionally reopens on the Run's Viewer Branch. The earlier
+    # match was played on a distinct alternative, so explicitly reselect it
+    # instead of mistaking Viewer/Health state for lost match persistence.
+    reloaded_selector = page.get_by_role("combobox", name="Admin active Branch")
+    expect(reloaded_selector).to_be_visible()
+    reloaded_selector.select_option(branch_id)
     expect(page.get_by_role(
         "heading", name="First real Run-calendar match", exact=True
     )).to_be_visible()

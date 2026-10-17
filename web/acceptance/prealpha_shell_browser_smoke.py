@@ -995,6 +995,12 @@ def main() -> None:
                 population_revision_id=saved_population["revision_id"],
                 original_clock=expected_clock,
             )
+            assert evidence["calendar_native_four_player_knockout"][
+                "reviewed_prepared_points"
+            ], "real Saved knockout points were not reviewed/confirmed"
+            assert evidence["calendar_native_four_player_knockout"][
+                "points_unpublished"
+            ], "prepared points must not be represented as Official"
 
             page.get_by_role("link", name="Squash Engine global Home").click()
             expect(page.get_by_role("heading", name="Squash Engine Home")).to_be_visible()

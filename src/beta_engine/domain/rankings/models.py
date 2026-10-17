@@ -12,12 +12,13 @@ from beta_engine.domain.calendar.run_calendar import RunCalendar
 class CompletedTournamentPointsInput(BaseModel):
     """Structured tournament input; calendar-specific W is checked by the engine.
 
-    The DTO alone cannot authorize a Run week. Legacy callers without an
-    explicit clock are still capped at W61 inside RankingRaceEngine.
+    The DTO alone cannot authorize a Run week/year. Legacy callers without
+    an explicit clock remain restricted to historical >=1900, W61 boundaries
+    by RankingRaceEngine.
     """
 
     event_id: str = Field(min_length=1)
-    season: int = Field(ge=1900)
+    season: int = Field(ge=0)
     week: int = Field(ge=1)
     template_id: str = Field(min_length=1)
     point_distribution_ref: str | None = None
@@ -30,7 +31,7 @@ class TournamentPointAward(BaseModel):
     """Resolved point award for one player from one completed tournament."""
 
     event_id: str
-    season: int = Field(ge=1900)
+    season: int = Field(ge=0)
     week: int = Field(ge=1)
     template_id: str
     player_id: str
@@ -42,7 +43,7 @@ class RankedResultContribution(BaseModel):
     """Explainable contribution metadata for ranking/race standings."""
 
     event_id: str
-    season: int = Field(ge=1900)
+    season: int = Field(ge=0)
     week: int = Field(ge=1)
     finish: str
     points_awarded: int = Field(ge=0)
@@ -68,7 +69,7 @@ class PlayerRaceEntry(BaseModel):
 
 
 class RankingTable(BaseModel):
-    as_of_season: int = Field(ge=1900)
+    as_of_season: int = Field(ge=0)
     as_of_week: int = Field(ge=1)
     window_weeks: int = Field(ge=1)
     best_of_results: int = Field(ge=1)
@@ -76,7 +77,7 @@ class RankingTable(BaseModel):
 
 
 class RaceTable(BaseModel):
-    target_season: int = Field(ge=1900)
+    target_season: int = Field(ge=0)
     standings: list[PlayerRaceEntry] = Field(default_factory=list)
 
 

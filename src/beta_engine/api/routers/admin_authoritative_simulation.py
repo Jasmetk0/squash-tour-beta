@@ -62,7 +62,7 @@ from beta_engine.application.calendar_standalone_match_service import (
     CalendarStandaloneMatchService,
 )
 from beta_engine.application.calendar_opening_knockout_service import (
-    CalendarOpeningKnockoutCommand, CalendarOpeningKnockoutService,
+    CalendarOpeningKnockoutCommand, CalendarCanonicalPreviewCommand, CalendarOpeningKnockoutService,
 )
 from beta_engine.application.calendar_knockout_award_service import (
     CalendarAwardProposal, CalendarAwardApplyCommand, CalendarKnockoutAwardService,
@@ -1034,6 +1034,18 @@ def calendar_opening_knockout_state(
     except (TypeError, ValueError) as exc:
         raise HTTPException(status_code=409,
                             detail={"code": "calendar_knockout_state_conflict", "message": str(exc)}) from exc
+
+
+@router.post("/calendar-opening-knockout/canonical-preview")
+def preview_calendar_canonical_knockout(
+    run_id: str, branch_id: str, payload: CalendarCanonicalPreviewCommand,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+):
+    try:
+        return CalendarOpeningKnockoutService(runtime.repository).canonical_preview(
+            run_id=run_id, branch_id=branch_id, command=payload)
+    except (KeyError, TypeError, ValueError) as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
 
 
 @router.post("/calendar-opening-knockout/simulate", status_code=201)

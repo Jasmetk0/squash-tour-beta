@@ -78,3 +78,36 @@ describe('Saved Health in a played knockout', () => {
     expect(() => verifyKnockoutInspection(v, 'r', 'b', 'head')).toThrow()
   })
 })
+
+function canonicalFixture() {
+  const v = healthFixture(), k = v.knockout!
+  k.schema_version = 'calendar_opening_knockout.v4'
+  k.canonical_source = { schema_version: 'calendar_canonical_match_source.v1',
+    source_initial_world_fingerprint: v.initial_world_fingerprint, annual_development_applied: false,
+    players: k.entrant_ids.map(player_id => ({ player: { player_id, name: player_id } })),
+    records: k.entrant_ids.map(player_id => ({ player_id, potential_ovr: 150,
+      attributes: Array.from({ length: 57 }, (_, i) => [`attribute-${i}`, 100] as [string, number]),
+    })),
+  }
+  k.matches.forEach(m => { m.canonical_projections = [m.input_context.player_a, m.input_context.player_b].map(ctx => ({
+    player_id: ctx.player.player_id,
+    canonical_attributes: k.canonical_source!.records.find(r => r.player_id === ctx.player.player_id)!.attributes,
+  })) })
+  return v
+}
+
+describe('canonical v4 source response boundary', () => {
+  it('requires complete 57-attribute source and per-match participant projections', () => {
+    const v = canonicalFixture()
+    expect(verifyKnockoutInspection(v, 'r', 'b', 'head')).toBe(v)
+  })
+  it.each(['missing', 'foreign', 'attributes', 'projection', 'historical'])('rejects %s canonical input', fault => {
+    const v = canonicalFixture(), k = v.knockout!
+    if (fault === 'missing') delete k.canonical_source
+    if (fault === 'foreign') k.canonical_source!.source_initial_world_fingerprint = 'f'.repeat(64)
+    if (fault === 'attributes') k.canonical_source!.records[0].attributes.pop()
+    if (fault === 'projection') k.matches[0].canonical_projections!.reverse()
+    if (fault === 'historical') k.schema_version = 'calendar_opening_knockout.v3'
+    expect(() => verifyKnockoutInspection(v, 'r', 'b', 'head')).toThrow()
+  })
+})

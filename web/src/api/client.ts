@@ -5287,3 +5287,11 @@ export function inspectSignedCalendarKnockoutStandings(
   })
   return request(knockoutRoot(runId, branchId) + '/standings?' + params.toString())
 }
+
+
+export function previewCalendarCanonicalKnockout(runId: string, branchId: string,
+  body: { expected_saved_head: string; expected_initial_world_fingerprint: string; entrant_ids: string[] }):
+  Promise<import('./calendarOpeningKnockout').CanonicalKnockoutPreview> {
+  return request(knockoutRoot(runId, branchId) + '/canonical-preview',
+    { method: 'POST', body: JSON.stringify(body) })
+}

@@ -9,7 +9,18 @@ export type KnockoutHealthSource = {
   source_health_schema: string; source_health_fingerprint: string
   profiles: KnockoutHealthProfile[]; numeric_effect_applied: false
 }
+export type CanonicalKnockoutSource = {
+  schema_version: 'calendar_canonical_match_source.v1'
+  source_initial_world_fingerprint: string; annual_development_applied: false
+  players: { player: { player_id: string; name: string } }[]
+  records: { player_id: string; attributes: [string, number][]; potential_ovr: number }[]
+}
+export type CanonicalKnockoutPreview = {
+  schema_version: 'calendar_canonical_knockout_preview.v1'; run_id: string; branch_id: string
+  saved_head_revision_id: string; fingerprint: string; source: CanonicalKnockoutSource
+}
 export type KnockoutMatch = {
+  canonical_projections?: { player_id: string; canonical_attributes: [string, number][] }[]
   effective_health?: { numeric_effect_applied: false; player_profiles: KnockoutHealthProfile[] }
   round: 'semifinal_1' | 'semifinal_2' | 'final'
   slot: 1 | 2
@@ -27,13 +38,14 @@ export type KnockoutSportingState = {
   health_effects_applied: false; annual_development_applied: false
 }
 export type OpeningKnockout = {
-  schema_version: 'calendar_opening_knockout.v1' | 'calendar_opening_knockout.v2' | 'calendar_opening_knockout.v3'
+  schema_version: 'calendar_opening_knockout.v1' | 'calendar_opening_knockout.v2' | 'calendar_opening_knockout.v3' | 'calendar_opening_knockout.v4'
   run_id: string; branch_id: string; match_id: string
   week: { season_index: number; week: number; calendar: KnockoutInspection['run_calendar'] }
   entrant_ids: [string, string, string, string]
   matches: [KnockoutMatch, KnockoutMatch, KnockoutMatch]
   sporting?: KnockoutSportingState
   health_source?: KnockoutHealthSource
+  canonical_source?: CanonicalKnockoutSource
 }
 export type KnockoutInspection = {
   schema_version: 'calendar_opening_knockout_inspection.v1'
@@ -88,7 +100,7 @@ export function verifyKnockoutInspection(v: KnockoutInspection, runId: string, b
   }
   if (v.knockout) {
     const k = v.knockout, [a, b, f] = k.matches ?? []
-    if (!['calendar_opening_knockout.v1', 'calendar_opening_knockout.v2', 'calendar_opening_knockout.v3'].includes(k.schema_version)
+    if (!['calendar_opening_knockout.v1', 'calendar_opening_knockout.v2', 'calendar_opening_knockout.v3', 'calendar_opening_knockout.v4'].includes(k.schema_version)
       || k.run_id !== runId || k.branch_id !== branchId
       || k.week.season_index !== 0 || k.week.week !== 1
       || k.week.calendar.weeks_per_year !== v.run_calendar.weeks_per_year
@@ -121,7 +133,7 @@ export function verifyKnockoutInspection(v: KnockoutInspection, runId: string, b
     } else if (k.sporting !== undefined) {
       throw Error('Historical knockout cannot carry newer sporting checkpoints')
     }
-    if (k.schema_version === 'calendar_opening_knockout.v3') {
+    if (k.schema_version === 'calendar_opening_knockout.v3' || (k.schema_version === 'calendar_opening_knockout.v4' && k.health_source)) {
       const source = k.health_source
       if (!source || source.schema_version !== 'calendar_knockout_health_source.v1'
         || !['calendar_initial_health_state.v1', 'player_health_calendar_state.v2'].includes(source.source_health_schema)
@@ -142,6 +154,17 @@ export function verifyKnockoutInspection(v: KnockoutInspection, runId: string, b
       }
     } else if (k.health_source !== undefined || k.matches.some(m => m.effective_health !== undefined)) {
       throw Error('Historical knockout cannot acquire newer Health inputs')
+    }
+    if (k.schema_version === 'calendar_opening_knockout.v4') {
+      verifyCanonicalKnockoutSource(k.canonical_source!, v.initial_world_fingerprint, k.entrant_ids)
+      if (!k.matches.every(m => m.canonical_projections?.length === 2
+        && m.canonical_projections[0].player_id === m.input_context.player_a.player.player_id
+        && m.canonical_projections[1].player_id === m.input_context.player_b.player.player_id
+        && m.canonical_projections.every(p => p.canonical_attributes.length === 57))) {
+        throw Error('Played match lacks complete canonical player inputs')
+      }
+    } else if (k.canonical_source !== undefined || k.matches.some(m => m.canonical_projections !== undefined)) {
+      throw Error('Historical knockout cannot acquire v4 canonical inputs')
     }
   } else if (v.saved || v.knockout_fingerprint !== null || v.prepared_points) {
     throw Error('Saved knockout component has no played result')
@@ -267,4 +290,22 @@ export function verifySignedKnockoutStandings(
     throw Error('Signed knockout standings do not match the selected Saved Run/Branch')
   }
   return input
+}
+
+
+export function verifyCanonicalKnockoutSource(source: CanonicalKnockoutSource, world: string, entrants: readonly string[]) {
+  if (!source || source.schema_version !== 'calendar_canonical_match_source.v1'
+    || source.source_initial_world_fingerprint !== world || source.annual_development_applied !== false
+    || !Array.isArray(source.players) || source.players.length !== 4
+    || new Set(source.players.map(p => p.player.player_id)).size !== 4
+    || !source.players.every(p => entrants.includes(p.player.player_id))
+    || !Array.isArray(source.records) || source.records.length !== 4
+    || new Set(source.records.map(r => r.player_id)).size !== 4
+    || !source.records.every(r => entrants.includes(r.player_id)
+      && Array.isArray(r.attributes) && r.attributes.length === 57
+      && new Set(r.attributes.map(a => a[0])).size === 57
+      && r.attributes.every(a => typeof a[0] === 'string' && Number.isInteger(a[1]) && a[1] >= 0 && a[1] <= 200))) {
+    throw Error('Canonical source is incomplete or belongs to another population/entrant set')
+  }
+  return source
 }

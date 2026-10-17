@@ -46,11 +46,12 @@ class CalendarKnockoutHealthSource(FrozenInput):
 
 
 def calendar_knockout_match_anchor(*, run_id, branch_id, clock, saved_head,
-        world_fingerprint, pre_slot_anchor, round_name, slot, context, seed, effective_health=None):
+        world_fingerprint, pre_slot_anchor, round_name, slot, context, seed, effective_health=None, canonical_projections=None):
     """Historical neutral anchor stays byte-stable; Health input has a new version."""
     from beta_engine.domain.run_packages import canonical_hash
     body = {
-        'schema_version': ('calendar_opening_knockout_match_anchor.v2' if effective_health
+        'schema_version': ('calendar_opening_knockout_match_anchor.v3' if canonical_projections
+                           else 'calendar_opening_knockout_match_anchor.v2' if effective_health
                            else 'calendar_opening_knockout_match_anchor.v1'),
         'run_id': run_id, 'branch_id': branch_id,
         'calendar': clock.to_metadata(), 'week': [0, 1],
@@ -60,4 +61,6 @@ def calendar_knockout_match_anchor(*, run_id, branch_id, clock, saved_head,
     }
     if effective_health is not None:
         body['effective_health'] = effective_health.model_dump(mode='json')
+    if canonical_projections is not None:
+        body['canonical_projections'] = [p.model_dump(mode='json') for p in canonical_projections]
     return canonical_hash(body)

@@ -35,7 +35,8 @@ before merge. Release regression remains a separate gate.
 a calendar-native real standalone BO5 MatchEngine match from a Saved v2
 population, with exact SQLite receipt/replay and regular immutable manual Save
 on W52/W80. It does **not** migrate official Tournament/Slot/Health/57-attribute
-sporting effects, points, browser CS/EN or transitions. Forking from a
+sporting effects, points or transitions. A CS/EN Admin panel is implemented;
+a real Chromium acceptance of that new panel is not yet proven. Forking from a
 match-containing Saved Revision is currently guarded; see
 [match contract](docs/CALENDAR_STANDALONE_MATCH_V84.md).
 

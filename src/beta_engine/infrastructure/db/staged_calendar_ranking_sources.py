@@ -14,6 +14,11 @@ from sqlalchemy.orm import Session
 from beta_engine.application.run_calendar_read_authority import resolve_saved_run_calendar
 from beta_engine.domain.calendar.run_calendar import RunCalendar
 from beta_engine.domain.rankings.calendar_official import CalendarRankingWeek
+from beta_engine.domain.rankings.calendar_source_bundle import (
+    CalendarRankingSourceBundle,
+    load_calendar_ranking_source_bundle,
+)
+
 from beta_engine.domain.rankings.calendar_source_history import (
     CalendarRankingResultVersion,
     CalendarRankingZeroVersion,
@@ -23,6 +28,7 @@ from beta_engine.domain.rankings.calendar_source_history import (
 from beta_engine.infrastructure.db.models import (
     AuthoritativeWorldStateModel,
     PublishedOfficialRankingModel,
+    BranchSavedRevisionModel,
     RunBranchModel,
     RunContainerModel,
     StagedCalendarRankingResultVersionModel,
@@ -306,3 +312,108 @@ class StagedCalendarRankingSourceStore:
         ))
         self.session.flush()
         return version
+
+
+    def export_bundle(
+        self, *, run_id: str, branch_id: str,
+        expected_saved_head_revision_id: str,
+    ) -> CalendarRankingSourceBundle:
+        """Export exact validated staging rows, not Saved/public sporting facts.
+
+        The caller must persist the returned fingerprint INDEPENDENTLY from
+        exported JSON if a future import needs a trusted integrity check.
+        """
+        calendar = self._scope(
+            run_id=run_id, branch_id=branch_id,
+            expected_saved_head_revision_id=expected_saved_head_revision_id,
+        )
+        revision = self.session.get(
+            BranchSavedRevisionModel, expected_saved_head_revision_id,
+        )
+        if revision is None or revision.run_id != run_id:
+            raise ValueError("Calendar staging Saved origin is unavailable")
+        results, zeros = self._load(
+            run_id=run_id, branch_id=branch_id, clock=calendar,
+            expected_saved_head_revision_id=expected_saved_head_revision_id,
+        )
+        return CalendarRankingSourceBundle(
+            run_id=run_id, branch_id=branch_id,
+            saved_head_revision_id=expected_saved_head_revision_id,
+            saved_head_content_hash=revision.content_hash,
+            run_calendar=calendar.to_metadata(),
+            results=results, zeros=zeros,
+        )
+
+    def import_bundle(
+        self, payload_json: str, *, expected_fingerprint: str,
+        run_id: str, branch_id: str, expected_saved_head_revision_id: str,
+    ) -> CalendarRankingSourceBundle:
+        """Install only into completely empty *staging* under BEGIN IMMEDIATE.
+
+        Never merge a subset into another staging history. Exact imported
+        bytes/hash are an idempotent retry. An existing different bundle is
+        an explicit conflict. This changes no immutable Saved Revision,
+        Official Ranking publication, Viewer or simulation progress.
+        """
+        calendar = self._scope(
+            run_id=run_id, branch_id=branch_id,
+            expected_saved_head_revision_id=expected_saved_head_revision_id,
+            writing=True,
+        )
+        revision = self.session.get(
+            BranchSavedRevisionModel, expected_saved_head_revision_id,
+        )
+        if revision is None or revision.run_id != run_id:
+            raise ValueError("Calendar staging Saved origin is unavailable")
+        bundle = load_calendar_ranking_source_bundle(
+            payload_json,
+            expected_fingerprint=expected_fingerprint,
+            run_id=run_id, branch_id=branch_id,
+            saved_head_revision_id=expected_saved_head_revision_id,
+            saved_head_content_hash=revision.content_hash,
+            run_calendar=calendar,
+        )
+        existing = self.export_bundle(
+            run_id=run_id, branch_id=branch_id,
+            expected_saved_head_revision_id=expected_saved_head_revision_id,
+        )
+        if existing.fingerprint == bundle.fingerprint:
+            return existing
+        if existing.results or existing.zeros:
+            raise CalendarRankingStagingConflict(
+                "Calendar staging destination already contains different sources"
+            )
+        # The bundle was fully schema/lineage-validated before any mutation.
+        # All records share the *current* signed Saved HEAD and Run-local clock.
+        # No external row IDs or table names are accepted from bundle JSON.
+        for version in bundle.results:
+            self.session.add(StagedCalendarRankingResultVersionModel(
+                run_id=run_id, branch_id=branch_id,
+                edition_id=version.result.edition_id,
+                player_id=version.result.player_id,
+                effective_ordinal=calendar.ordinal(
+                    version.effective_week.season_index, version.effective_week.week,
+                ),
+                saved_head_revision_id=expected_saved_head_revision_id,
+                fingerprint=version.fingerprint,
+                payload_json=version.model_dump_json(),
+            ))
+        for version in bundle.zeros:
+            self.session.add(StagedCalendarRankingZeroVersionModel(
+                run_id=run_id, branch_id=branch_id,
+                zero_id=version.zero.zero_id,
+                effective_ordinal=calendar.ordinal(
+                    version.effective_week.season_index, version.effective_week.week,
+                ),
+                saved_head_revision_id=expected_saved_head_revision_id,
+                fingerprint=version.fingerprint,
+                payload_json=version.model_dump_json(),
+            ))
+        self.session.flush()
+        installed = self.export_bundle(
+            run_id=run_id, branch_id=branch_id,
+            expected_saved_head_revision_id=expected_saved_head_revision_id,
+        )
+        if installed.fingerprint != bundle.fingerprint:
+            raise ValueError("Calendar source bundle staging installation failed verification")
+        return installed

@@ -100,6 +100,14 @@ def test_real_calendar_match_manual_save_restart_and_exact_engine_replay(tmp_pat
             revision_id=revision["revision_id"]
         )
         assert repository.verify_branch_saved_revision_hash(revision_id=saved_head)
+        # The new branch-owned match provenance is deliberately not yet
+        # transferable; unlike a fork from the pre-match Saved head, forking
+        # the played match must fail closed rather than fabricate ownership.
+        fork_code, fork_error = _request(
+            "POST", server.base_url + "/run-containers/run/branches",
+            {"source_branch_id": "branch", "source_saved_revision_id": revision["revision_id"]},
+        )
+        assert fork_code == 409, fork_error
         code, inspected = _request("GET", base(server))
         assert code == 200 and inspected["saved"] is True, inspected
         code, second_preview = _request("GET", base(server) + "/save/preview")

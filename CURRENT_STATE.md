@@ -1,7 +1,7 @@
 # Current implementation — Master v85
 
-Audited buuk `f7a999e1661858742b50df1dbff775ae8e49687a` after merged #1527, 17 October 2026.
-#1520–1527 are merged; no open PR at task start. Refresh before new work.
+Audited buuk `dd1cc6ecb8a9ef348c843b0b461d62fc0c2c7416` after merged #1528, 17 October 2026.
+#1520–1528 are merged; no open PR at task start. Refresh before new work.
 Master remains v85; this task changes sporting execution, not product decisions.
 
 **Merged and usable:** calendar creation/first Save, population and Health facts,
@@ -56,7 +56,7 @@ This is operation-owned state, **not** a full canonical 57-attribute/Health week
 owner. Seven-value attributes, fresh initial baseline and no between-round recovery
 remain explicit. No native calendar advance, Tour entry or Official publication.
 
-**Current candidate:** a fully Saved calendar Health baseline/edited state no longer
+**Merged #1528:** a fully Saved calendar Health baseline/edited state no longer
 blocks the knockout. Health-backed play uses explicit `calendar_opening_knockout.v3`,
 freezing four participant Health profiles and source identity. Each actual match
 receives its participant-ordered `EffectiveMatchHealthSnapshot`; a v2 log anchor
@@ -67,6 +67,19 @@ Unsaved/missing/drifting/legacy Health still blocks. No automatic Health mutatio
 numeric injury penalty is invented; standalone exhibition retains its old guard.
 Historical v1/v2 bytes and semantics remain unchanged. See
 [implementation contract](docs/CALENDAR_KNOCKOUT_HEALTH_V1.md).
+
+**Current candidate:** new knockout writes use `calendar_opening_knockout.v4`.
+Four operation-owned `PlayerSportingRecord` inputs preserve all 57 attributes,
+potential provenance and an explicit existing provisional bootstrap policy.
+Every actual MatchEngine call consumes the existing versioned 57→engine projection;
+full per-player projections are frozen into a new v3 log anchor. Finalists consume
+post-semifinal form/load while their canonical attributes remain unchanged.
+Admin can preview the four exact sources read-only before play and inspect the
+frozen 57 values after Save/reload. v1/v2/v3 JSON/hash/replay remain intact.
+[Contract](docs/CALENDAR_CANONICAL_KNOCKOUT_V1.md) explains scope and verification.
+The initial pool still originates in seven-value calibration; this is a real
+57-backed match-input slice, **not** full world/week sporting ownership, historical
+cohort development, a native 57-dimensional rally formula or annual advancement.
 
 **Next:** implement true calendar-native canonical sporting/Health checkpoint
 ownership and full attribute projection, then historically configured points,

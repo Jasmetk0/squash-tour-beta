@@ -20,6 +20,7 @@ from beta_engine.domain.calendar.run_week_position import RunWeekPosition
 from beta_engine.domain.matches.match_engine import MatchEngine
 from beta_engine.domain.matches.models import MatchContext, MatchParticipantContext
 from beta_engine.domain.rankings.official import FrozenInput
+from beta_engine.domain.players.calendar_canonical_match import CalendarCanonicalMatchSource, canonical_participant
 from beta_engine.domain.players.calendar_match_state import (
     CalendarMatchStatePolicy, CalendarKnockoutSportingState,
     participant_with_state, advance_played_slot,
@@ -32,6 +33,12 @@ from beta_engine.infrastructure.db.calendar_standalone_match_state import (
 from beta_engine.infrastructure.db.calendar_knockout_awards_state import (
     CalendarScoredOpeningKnockout,
 )
+
+
+class CalendarCanonicalPreviewCommand(FrozenInput):
+    expected_saved_head: str = Field(min_length=1, max_length=128)
+    expected_initial_world_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    entrant_ids: list[str] = Field(min_length=4, max_length=4)
 
 
 class CalendarOpeningKnockoutCommand(FrozenInput):
@@ -68,7 +75,8 @@ class CalendarOpeningKnockoutService:
     def _play(*, run_id: str, branch_id: str, clock, saved_head: str,
               world_fingerprint: str, pre_slot_anchor: str, root_id: str,
               round_name: str, slot: int, seed: int, first, second,
-              first_context=None, second_context=None, effective_health=None) -> CalendarKnockoutMatch:
+              first_context=None, second_context=None, effective_health=None,
+              canonical_projections=None) -> CalendarKnockoutMatch:
         context = MatchContext(
             match_id=f"{root_id}-{round_name}",
             player_a=first_context or MatchParticipantContext(player=first),
@@ -79,7 +87,7 @@ class CalendarOpeningKnockoutService:
             run_id=run_id, branch_id=branch_id, clock=clock, saved_head=saved_head,
             world_fingerprint=world_fingerprint, pre_slot_anchor=pre_slot_anchor,
             round_name=round_name, slot=slot, context=context, seed=seed,
-            effective_health=effective_health,
+            effective_health=effective_health, canonical_projections=canonical_projections,
         )
         result = MatchEngine(DeterministicRng(seed)).simulate(
             context, log_anchor_hash=anchor, effective_match_health=effective_health,
@@ -87,8 +95,24 @@ class CalendarOpeningKnockoutService:
         return CalendarKnockoutMatch(
             round=round_name, slot=slot, seed=seed,
             input_context=context, result=result, log_anchor_hash=anchor,
-            effective_health=effective_health,
+            effective_health=effective_health, canonical_projections=canonical_projections,
         )
+
+    def canonical_preview(self, *, run_id, branch_id, command: CalendarCanonicalPreviewCommand):
+        with self.repository._session_factory() as session:
+            session.execute(text("BEGIN"))
+            _, revision, world, _ = self._context(session, run_id=run_id, branch_id=branch_id)
+            if (revision.saved_head_revision_id != command.expected_saved_head
+                    or world.fingerprint != command.expected_initial_world_fingerprint):
+                raise ValueError("Canonical preview source changed since inspection")
+            if load_match_rows(session, run_id=run_id, branch_id=branch_id):
+                raise ValueError("Played canonical inputs are already frozen in match history")
+            source = CalendarCanonicalMatchSource.from_population(
+                world, command.entrant_ids, CalendarStandaloneMatchService._engine_player)
+            return {"schema_version": "calendar_canonical_knockout_preview.v1",
+                "run_id": run_id, "branch_id": branch_id,
+                "saved_head_revision_id": revision.saved_head_revision_id,
+                "source": source.model_dump(mode="json"), "fingerprint": source.fingerprint}
 
     def inspect(self, *, run_id: str, branch_id: str) -> dict:
         with self.repository._session_factory() as session:
@@ -199,19 +223,24 @@ class CalendarOpeningKnockoutService:
                              if health is not None else None)
             def health_for(first, second):
                 return health_source.for_players(first.player_id, second.player_id) if health_source else None
+            canonical_source = CalendarCanonicalMatchSource.from_population(
+                world, command.entrant_ids, CalendarStandaloneMatchService._engine_player)
             policy = CalendarMatchStatePolicy()
             initial = policy.initial_states(command.entrant_ids)
+            def projections(first, second, states):
+                return tuple(canonical_source.project(p.player_id, states) for p in (first, second))
             def context(player, states):
-                state = next(s for s in states if s.player_id == player.player_id)
-                return participant_with_state(player, state, policy)
+                return canonical_participant(canonical_source.project(player.player_id, states))
             semi_a = self._play(**common, round_name="semifinal_1",
                                 slot=1, seed=command.seed, first=a, second=b,
                                 first_context=context(a, initial), second_context=context(b, initial),
-                                effective_health=health_for(a, b))
+                                effective_health=health_for(a, b),
+                                canonical_projections=projections(a, b, initial))
             semi_b = self._play(**common, round_name="semifinal_2",
                                 slot=1, seed=command.seed + 1, first=c, second=d,
                                 first_context=context(c, initial), second_context=context(d, initial),
-                                effective_health=health_for(c, d))
+                                effective_health=health_for(c, d),
+                                canonical_projections=projections(c, d, initial))
             after_semis, semi_effects = advance_played_slot(initial, (semi_a, semi_b), policy)
             finalist_a = players[semi_a.result.winner_player_id]
             finalist_b = players[semi_b.result.winner_player_id]
@@ -221,10 +250,12 @@ class CalendarOpeningKnockoutService:
                 first_context=context(finalist_a, after_semis),
                 second_context=context(finalist_b, after_semis),
                 effective_health=health_for(finalist_a, finalist_b),
+                canonical_projections=projections(finalist_a, finalist_b, after_semis),
             )
             terminal, final_effects = advance_played_slot(after_semis, (final,), policy)
             knockout = CalendarOpeningKnockout(
-                schema_version="calendar_opening_knockout.v3" if health_source else "calendar_opening_knockout.v2",
+                schema_version="calendar_opening_knockout.v4",
+                canonical_source=canonical_source,
                 **({"health_source": health_source} if health_source else {}),
                 sporting=CalendarKnockoutSportingState(
                     policy=policy, initial=initial, after_semifinals=after_semis,
@@ -271,6 +302,7 @@ class CalendarOpeningKnockoutService:
                     seed=played.seed, first=ctx.player_a.player, second=ctx.player_b.player,
                     first_context=ctx.player_a, second_context=ctx.player_b,
                     effective_health=played.effective_health,
+                    canonical_projections=played.canonical_projections,
                 )
                 if replayed.model_dump(mode="json") != played.model_dump(mode="json"):
                     raise ValueError("Knockout replay differs from original MatchEngine logs")

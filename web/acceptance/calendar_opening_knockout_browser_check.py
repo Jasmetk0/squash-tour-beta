@@ -62,6 +62,19 @@ def exercise_calendar_knockout(page, *, base_url, api_url, artifacts,
     expect(panel.get_by_text('Warning: selected entrants have Health limitations.', exact=False)).to_be_visible()
     ids = [entrants.nth(i).input_value() for i in range(4)]
     assert len(set(ids)) == 4 and set(ids).issubset(initial["player_ids"])
+    with page.expect_response(lambda r: r.request.method == 'POST'
+                              and r.url.endswith('/calendar-opening-knockout/canonical-preview')) as response:
+        panel.get_by_role('button', name='Preview 57 attributes', exact=True).click()
+    assert response.value.status == 200, response.value.text()[:1200]
+    canonical_preview = response.value.json()
+    assert all(len(p['attributes']) == 57 for p in canonical_preview['source']['records'])
+    assert api('GET', root)['knockout'] is None
+    assert api('GET', root)['saved_head_revision_id'] == initial['saved_head_revision_id']
+    first_id = canonical_preview['source']['records'][0]['player_id']
+    panel.get_by_text('57 attributes · ' + first_id, exact=True).click()
+    attribute_table = panel.get_by_role('table', name='Attributes ' + first_id, exact=True)
+    expect(attribute_table).to_be_visible()
+    expect(attribute_table.get_by_role('row')).to_have_count(58)
     panel.get_by_label("Audit reason").fill("Chromium real semifinals and winner-fed final")
     panel.get_by_label("Confirm playing all three matches.").check()
     expect(play).to_be_enabled()
@@ -70,7 +83,10 @@ def exercise_calendar_knockout(page, *, base_url, api_url, artifacts,
         play.click()
     assert response.value.status == 201, response.value.text()[:1200]
     played = response.value.json()
-    assert played['knockout']['schema_version'] == 'calendar_opening_knockout.v3'
+    assert played['knockout']['schema_version'] == 'calendar_opening_knockout.v4'
+    assert played['knockout']['canonical_source'] == canonical_preview['source']
+    assert all(len(p['canonical_attributes']) == 57 for m in played['knockout']['matches']
+               for p in m['canonical_projections'])
     health_source = played['knockout']['health_source']
     assert health_source['source_health_fingerprint'] == initial['health_readiness']['source_health_fingerprint']
     assert any(p['highest_current_severity'] > 0 for p in health_source['profiles'])
@@ -119,6 +135,8 @@ def exercise_calendar_knockout(page, *, base_url, api_url, artifacts,
     expect(panel.get_by_role('table', name='Knockout player state table')).to_be_visible()
     expect(panel.get_by_role('table', name='Frozen knockout Health table')).to_be_visible()
     assert api('GET', root)['knockout']['health_source'] == health_source
+    assert api('GET', root)['knockout']['canonical_source'] == canonical_preview['source']
+    expect(panel.get_by_text('Frozen attributes used when played.', exact=True)).to_be_visible()
     assert api("GET", root + "/calendar-opening-knockout/replay")["exact_replay"]
     page.get_by_role("combobox", name="Language / Jazyk").select_option("cs")
     expect(page.get_by_role(
@@ -292,6 +310,9 @@ def exercise_calendar_knockout(page, *, base_url, api_url, artifacts,
         "actual_match_engine_matches": 3,
         "same_pre_slot_semifinals": True,
         "winner_fed_final": True,
+        "canonical_57_preview_read_only": True,
+        "preview_source_exactly_played_and_saved": True,
+        "all_matches_consume_57_attribute_projections": True,
         "forked_from_saved_health_revision": head_before,
         "saved_health_source_consumed": health_source['source_health_fingerprint'],
         "health_input_bound_to_played_logs": True,

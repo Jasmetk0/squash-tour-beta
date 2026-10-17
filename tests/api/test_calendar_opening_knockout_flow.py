@@ -36,7 +36,7 @@ def test_real_w52_w80_knockout_atomic_save_cold_replay_and_old_head(tmp_path, ca
         status, played = _request("POST", base(server) + "/simulate", command)
         assert status == 201, played
         bracket = played["knockout"]
-        assert bracket["schema_version"] == "calendar_opening_knockout.v2"
+        assert bracket["schema_version"] == "calendar_opening_knockout.v4"
         sporting = bracket["sporting"]
         assert len(sporting["effects"]) == 6
         assert not sporting["health_effects_applied"]

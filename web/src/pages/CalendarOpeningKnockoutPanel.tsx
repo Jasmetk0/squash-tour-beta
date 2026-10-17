@@ -12,6 +12,7 @@ import { verifyKnockoutInspection } from '../api/calendarOpeningKnockout'
 import { newCommandId } from '../admin/branchSimulation'
 import { useLanguage } from '../i18n/LanguageContext'
 import { formatApiError } from '../utils/apiErrors'
+import { CalendarCanonicalInputsPanel } from './CalendarCanonicalInputsPanel'
 import { CalendarKnockoutAwardsPanel } from './CalendarKnockoutAwardsPanel'
 import { CalendarSignedKnockoutStandingsPanel } from './CalendarSignedKnockoutStandingsPanel'
 
@@ -214,12 +215,17 @@ export function CalendarOpeningKnockoutPanel({
       ? 'Season 1 Week 1 · skutečný BO5 pavouk. Po uložení lze připravit body; oficiální publikace a přechod týdne zatím chybí.'
       : 'Season 1 Week 1 · real BO5 bracket. Prepared points can be Saved afterwards; Official publication and Week Transition are not yet supported.'}</p>
     {!view?.knockout && <p className="status">{cs
-      ? 'Nový pavouk používá provizorní počáteční stav (forma 100, rozehranost 100, únava 0) a po semifinále přenese změny do finále. Vstup atributů je zatím sedmipolová projekce populace.'
-      : 'New brackets use a provisional fresh baseline (form 100, sharpness 100, fatigue 0) and carry semifinal effects into the final. Attribute inputs remain the seven-value population projection.'}</p>}
+      ? 'Nový pavouk používá provizorní počáteční stav (forma 100, rozehranost 100, únava 0) a po semifinále přenese změny do finále. Atributy používají verzovanou projekci 57 kanonických hodnot.'
+      : 'New brackets use a provisional fresh baseline (form 100, sharpness 100, fatigue 0) and carry semifinal effects into the final. Attribute inputs use a versioned projection of 57 canonical values.'}</p>}
     {status === 'loading' && <p>{cs ? 'Ověřuji Run…' : 'Inspecting Run…'}</p>}
     {status === 'blocked' && <p role="status">{cs ? 'Nedostupné: ' : 'Not available: '}{error}</p>}
     {view && status !== 'blocked' && <>
       <p className="status">W{view.run_calendar.weeks_per_year} · HEAD <code>{view.saved_head_revision_id}</code></p>
+      {(!view.knockout || view.knockout.canonical_source) && <CalendarCanonicalInputsPanel
+        runId={runId} branchId={branchId} head={view.saved_head_revision_id}
+        world={view.initial_world_fingerprint} entrants={view.knockout?.entrant_ids ?? entrants}
+        source={view.knockout?.canonical_source}
+      />}
       {view.health_readiness && <div aria-label="Saved knockout Health readiness">
         <p>{cs ? 'Turnaj používá uložená zdravotní fakta.' : 'Knockout uses Saved Health facts.'}</p>
         <p className="status">{cs

@@ -225,3 +225,42 @@ cross-checked against immutable Saved Simulation Slot/group authorities
 before any sporting publication. This code remains internal unpublished
 staging. No public API, no official ranking, no W52/W80 Full Simulation
 unlock, no invented Qualification/W/O/RET treatment.
+
+
+## Signed Saved Simulation Slot → verified W61 MatchEngine ranking candidate
+
+`saved_slot_verified_knockout_evidence` now reads actual **Run-owned,
+completed Simulation Slot match receipts** from the **immutable, hash-verified
+Saved Revision**, not caller-provided simulated outcomes. For one explicit
+fully completed main-only knockout Edition it:
+
+- verifies the exact Saved HEAD and the complete signed Saved Run clock,
+  and intentionally accepts only FAX W61/offset37/start2000/50 seasons;
+- validates the full Saved Simulation Slot component using the production
+  restore-grade loader (its own component fingerprint and slot/effect/replay
+  semantics);
+- requires every Edition match to belong to a complete Slot in the actual
+  completion week, with no extra, missing, W/O or duplicate event groups;
+- rebuilds every group receipt using the production `load_authoritative_group`
+  validator, matches all original command/input/result/payload columns
+  **exactly** against the corresponding live SQLite group, and rejects
+  live-only matches that were never captured into Saved;
+- builds the versioned MatchEngine witness **from saved authoritative input
+  and result fingerprints**, not independently supplied winner labels,
+  then validates all winners, set totals, logs and bracket progression;
+- exposes a purely read-only `preview_saved_slot_verified_knockout_ranking`
+  using existing Saved-calendar source-history/ranking readers.
+
+Real SQLite acceptance constructs a three-match tournament using the actual
+AuthoritativeSlotMatchExecutor, captures its real `simulation_slots` Saved
+component, verifies Signed Save/Live group integrity, reopens SQLite and
+reproduces a ranked candidate without writing. Negative tests cover missing
+Saved component, altered Saved component/revision hash, changed live receipt,
+cross-week match, fake winner, stale head, unsupported clocks and fork ancestry.
+
+**Scope:** this authenticates **match outcomes**, NOT the caller's authored
+point-distribution policy or canonical Edition schedule/entry authority.
+The preview is not Official, and it does not write or authenticate W52/W80:
+their actual Match/Slot writer remains 61-based, and casting that persisted
+legacy week ordinal into W52/W80 would manufacture provenance. Full
+Save/restore/fork/publication still requires a reviewed native writer.

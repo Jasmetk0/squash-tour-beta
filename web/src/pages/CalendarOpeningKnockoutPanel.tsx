@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
+import { useSearchParams } from 'react-router-dom'
 import {
   inspectCalendarOpeningKnockout, simulateCalendarOpeningKnockout,
   replayCalendarOpeningKnockout, previewCalendarOpeningKnockoutSave,
@@ -17,15 +18,14 @@ import { CalendarSignedKnockoutStandingsPanel } from './CalendarSignedKnockoutSt
 
 /** One real main-only 4-player opening-week bracket; no points or Week Transition. */
 export function CalendarOpeningKnockoutPanel({
-  runId, branchId, savedHead, standingsPosition, onStandingsPositionChange,
+  runId, branchId, savedHead,
 }: {
   runId: string; branchId: string; savedHead: string
-  standingsPosition: { season: number; week: number }
-  onStandingsPositionChange: (next: { season: number; week: number }) => void
 }): JSX.Element {
   const { language } = useLanguage()
   const cs = language === 'cs'
   const client = useQueryClient()
+  const [searchParams, setSearchParams] = useSearchParams()
   const [view, setView] = useState<KnockoutInspection | null>(null)
   const [entrants, setEntrants] = useState<[string, string, string, string]>(['', '', '', ''])
   const [seed, setSeed] = useState('522')
@@ -43,6 +43,31 @@ export function CalendarOpeningKnockoutPanel({
   const target = [runId, branchId, savedHead].join('|')
   const activeTarget = useRef(target)
   activeTarget.current = target
+
+  // Source-of-truth identity is the *verified* Signed Saved Head returned by
+  // this panel's production inspection, not the asynchronously refreshed
+  // Branch selector cache. The URL survives route remounts and is isolated
+  // across Run, Branch and newly Saved historical revisions.
+  const scoresContext = [runId, branchId, view?.saved_head_revision_id ?? ''].join('|')
+  const sameScoresHead = Boolean(
+    view && searchParams.get('score_context') === scoresContext
+  )
+  const asOfSeason = sameScoresHead && /^(0|[1-9]\\d*)$/.test(
+    searchParams.get('score_season') ?? '',
+  ) ? Number(searchParams.get('score_season')) : 0
+  const asOfWeek = sameScoresHead && /^[1-9]\\d*$/.test(
+    searchParams.get('score_week') ?? '',
+  ) ? Number(searchParams.get('score_week')) : 2
+  const changeAsOf = (next: { season: number; week: number }) => {
+    if (!view?.saved || !view.prepared_points) return
+    setSearchParams(previous => {
+      const updated = new URLSearchParams(previous)
+      updated.set('score_context', scoresContext)
+      updated.set('score_season', String(next.season))
+      updated.set('score_week', String(next.week))
+      return updated
+    }, { replace: true })
+  }
 
   useEffect(() => {
     const current = ++token.current
@@ -211,8 +236,8 @@ export function CalendarOpeningKnockoutPanel({
         </div>}
         {view.saved && view.prepared_points && <CalendarSignedKnockoutStandingsPanel
           runId={runId} branchId={branchId} view={view}
-          season={standingsPosition.season} week={standingsPosition.week}
-          onPositionChange={onStandingsPositionChange}
+          season={asOfSeason} week={asOfWeek}
+          onPositionChange={changeAsOf}
         />}
         {view.saved && !view.prepared_points && <CalendarKnockoutAwardsPanel
           runId={runId} branchId={branchId} view={view}

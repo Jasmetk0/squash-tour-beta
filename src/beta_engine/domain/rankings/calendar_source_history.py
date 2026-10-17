@@ -199,7 +199,15 @@ def resolve_calendar_ranking_sources(
             "run_id": run_id,
             "branch_id": branch_id,
             "week": week.model_dump(mode="json"),
-            "run_calendar": run_calendar.to_metadata(),
+            # Horizon growth cannot rewrite a historical as-of source manifest.
+            # Validation uses the whole current clock; identity uses only its
+            # stable week basis, since existing Runs cannot rebase it.
+            "calendar_basis": {
+                "schema_version": run_calendar.schema_version,
+                "weeks_per_year": run_calendar.weeks_per_year,
+                "season_start_year_week": run_calendar.season_start_year_week,
+                "start_year": run_calendar.start_year,
+            },
             "results": [v.model_dump(mode="json") for v in active_result_versions],
             "zeros": [v.model_dump(mode="json") for v in active_zero_versions],
         }),

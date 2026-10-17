@@ -2,8 +2,10 @@
 
 ## Kompletní průběžná specifikace a registr rozhodnutí
 
-**Verze dokumentu:** 84
-**Aktualizováno:** 17. 10. 2026 – počáteční kvóty a diagnostika odchylek, lokální regenerace, rekordové žebříčky/filtry/uložené pohledy; audit PR #1508–1519.
+**Verze dokumentu:** 85
+**Aktualizováno:** 17. 10. 2026 – osobní milníky, kariérní časová osa/souhrn, sledování zemí, sezonní přehledy a porovnání; audit #1521–1525 a návazná oprava sporting horizon flow.
+
+**Nová produktová rozhodnutí v85:** osobní milníky ze skutečné historie, kariérní časová osa a automatický kariérní souhrn při retirementu; běžná osobní upozornění jen u sledovaných hráčů. Sledování země zahrnuje společné úspěchy, významné úspěchy automaticky vybrané domácí špičky a mimořádné individuální události ostatních. Související upozornění se seskupují bez ztráty jednotlivých milníků v historii. Sezonní souhrn má stručný světový i relevantní zemský/hráčský přehled, detaily a porovnání s předchozí či jinou evidovanou sezonou; vzniká i při dlouhé simulaci a sám ji nezastaví. Detaily 21.5, 25.6.1, 27.25 a 31.40. Prahy významnosti a kritéria výběru/analytických označení se doladí na funkčním enginu; nejde o nový bodový koeficient zemí nebo novou sportovní autoritu. Implementace je odděleně v 35.42.
 
 **Nová produktová rozhodnutí v84:** při celkovém počtu Automatic se přesné podmínky pro část světa promítnou do dotčené části a celkový počet se může změnit bez přerozdělení ostatních zemí. Selektivní regenerace zachovává konkrétní nedotčené hráče a atributy; společné konflikty se řeší výslovně. Diagnostika porovnává přirozené modelové očekávání s výsledkem, odlišuje vynucené odchylky od dalších neobvyklostí a nevymýšlí příčiny ani národnostní retirement bonus. Zastavený neúspěšný výpočet nepředstírá splnění přesné kvóty. Rekordy mají potvrzený výchozí katalog, historii držitelů i pořadí, kombinovatelné filtry a pojmenované Saved Views včetně pevných či průběžných období. Detaily 9.9, 21.3.1, 27.24 a 31.39. Numerická kalibrace, konkrétní solver i dědičnost počátečních pravidel do budoucího intake zůstávají v dosavadních otevřených/odložených statusech. Ověřená implementace je odděleně v 35.41; toto není vydání pre-alpha.
 
@@ -3984,6 +3986,16 @@ Vrozená náchylnost a vlastní recovery profil zůstávají samostatné; Financ
 
 ---
 
+## 21.5 Osobní milníky a kariérní historie — rozhodnutí v85
+
+**[ROZHODNUTO PRO PRE-ALPHA]** Engine rozpoznává osobní milníky i tehdy, když nejde o světový rekord: například první titul, první vstup do TOP 100 nebo nové kariérní maximum v rankingu. Výchozí katalog je rozšiřitelný, nikoliv definitivní seznam. Milníky vycházejí ze skutečně evidovaných autoritativních událostí a odpovídají zvolenému historickému bodu/branchi. U neúplné minulosti se používá pravdivé označení, například `První evidovaný titul`; předstartovní zjednodušený vývoj nevyrábí nedoložené zápasy/tituly.
+
+**[ROZHODNUTO]** Hráčský profil má společnou časovou osu kariéry. Stručný přehled ukazuje důležité momenty, filtry zpřístupní podrobnosti. Příklady: vstup na Tour, rankingový průlom/maximum, titul, zranění, návrat a retirement. Klik otevře podporovaný podkladový turnaj, historický ranking nebo zdravotní událost. Časová osa čerpá z existujících záznamů, není dalším nezávislým zdrojem pravdy a netvoří události pouhým prohlížením. Osobní Admin poznámky se zřetelně odlišují od skutečných simulačních událostí a nemění chování AI.
+
+**[ROZHODNUTO]** Při ukončení kariéry vznikne automatický stručný kariérní souhrn, trvale dostupný z profilu s rozkliknutelnými detaily. Může obsahovat tituly/finále, nejlepší ranking, týdny na #1, nejúspěšnější sezonu a významné milníky. Použije jen doložená data a uvede pokryté období. Retirement během Runu hráče ani jeho historii nemaže. Upozornění na retirement podléhá pravidlům sledování/významnosti podle 25.6.1; existence souhrnu sama neznamená upozornění na každého hráče.
+
+**[K TESTOVÁNÍ]** Přesný katalog milníků, významnost, kritéria `nejúspěšnější sezony`, layout a výkon projekcí. Základní časová osa/souhrn je rozhodnutý cíl; empirická realističnost ani konkrétní numerické prahy nejsou tímto schválené nebo prokázané.
+
 # 22. Predikce
 
 **Status kapitoly:** hlavní Forecast systém, Future Locks, reprodukovatelné Forecast Sessions, adaptivní vizualizace, práce s jednotlivými scénáři, rare-event sampling a counterfactual analýza tvoří ucelený **silný směr**, nikoliv definitivně uzavřený matematický nebo produktový kontrakt. Je potvrzené, že se s nimi má při budoucím návrhu počítat; názvy, vzorce, znaménka, agregace, samplingové algoritmy, výkonové limity, přesné stránky a pořadí implementace se musí později znovu projednat. Podsekce výslovně označené jako běžný směr tento silný status nedědí; konkrétně jde o pracovní `Conflict Fork` a `Scenario Direction`.
@@ -4657,6 +4669,15 @@ Poznámka může mít vlastní text, barvu a symbol, včetně vlastního vykři�
 
 ---
 
+## 25.6.1 Milníky ve sledování hráčů a zemí — rozhodnutí v85
+
+**[ROZHODNUTO PRO PRE-ALPHA]** Běžné osobní milníky chodí do upozornění u sledovaných hráčů. V kariérní historii se evidují všem bez ohledu na sledování; ztišení nebo vypnutí upozornění nemaže historická fakta. Milníky se zapojují do existujícího systému Sledování/Notification Center, nikoliv druhého souběžného watchlistu. Sledování ani notifikace nemění sportovní rozhodnutí a samy nezastavují simulaci.
+
+**[ROZHODNUTO — UPŘESNĚNÍ SLEDOVÁNÍ ZEMĚ]** Sledování země zahrnuje společné úspěchy země, důležité úspěchy jejích nejlepších hráčů a velmi významné individuální události i u ostatních. Neznamená automatické upozornění na každý osobní milník všech reprezentantů. Nejlepší hráče vybírá engine automaticky a průběžně podle skutečného vývoje; nejde o povinný ruční seznam. Konkrétní kritéria/práhy domácí špičky a významnosti se doladí při testování; návrh vycházet z rankingu a doložených výsledků není novým předepsaným váženým skóre. Samostatné sledování hráče zůstává možné bez ohledu na jeho domácí pořadí.
+
+**[ROZHODNUTO]** Související upozornění se seskupují do přehledné karty s rozkliknutelnými detaily. Například první titul, vstup do TOP 100 a kariérní maximum související s jedním turnajem mohou tvořit jednu kartu. Jednotlivé doložené milníky zůstanou v historii samostatně dohledatelné. Dosavadní deduplikace události odpovídající více sledovacím pravidlům zůstává. Přesné seskupovací klíče/okna, pořadí a významnost jsou implementační/kalibrační detail, ne povinné zastavení nebo nový zdroj RNG.
+
+
 # 26. Velké samostatné soutěže
 
 **Rozsah celé kapitoly:** jde o obsah a výchozí kalendář **Official Runu**. Engine musí umět tyto soutěžní typy reprezentovat, ale jiný Run nemusí obsahovat žádnou z nich nebo může mít jiné názvy, cykly, formáty a kvalifikace.
@@ -5140,6 +5161,21 @@ Akce zahrnují použití v Runu, vytvoření kopie a export v podporovaném rozs
 **[ROZHODNUTO]** Vlastní filtrovaný pohled lze pojmenovat, uložit a znovu otevřít včetně filtrů a řazení. Využívá již schválený obecný koncept `Saved Views`, nikoliv druhý souběžný systém. Období může být pevné nebo průběžné, například vždy posledních pět sezon. Průběžné období se vyhodnocuje vůči zvolenému dostupnému simulačnímu kontextu, nesmí do minulého pohledu propašovat dnešní/budoucí výsledky. Uložený pohled je nastavení zobrazení; sám nesimuluje, nepřepisuje výsledky a neslouží jako sportovní snapshot.
 
 **[OTEVŘENO / PŘI TESTOVÁNÍ]** Přesný layout, kompletní nabídka filtrů a rekordů, jemné definice metrik a technická persistence Saved Views. Základní schválené chování se znovu nerozhoduje po každém filtru. Viewer zůstává mimo povinný první pre-alpha frontend; historické informační hranice se zachovávají.
+
+
+## 27.25 Kariérní a sezonní souhrny — rozhodnutí v85
+
+**[ROZHODNUTO PRO PRE-ALPHA]** Profil hráče zpřístupňuje časovou osu a kariérní souhrn podle 21.5. Stručný přehled má rozkliknutelné podrobnosti a odkazy na skutečné historické podklady. Žádná generativní formulace nemá nahrazovat výpočet nebo vymýšlet příčiny událostí.
+
+**[ROZHODNUTO]** Po každé dokončené sezoně vznikne zpětně dostupný sezonní souhrn světa a relevantních sledovaných hráčů/zemí. Příklady obsahu: konečná světová jednička, vítězové hlavních turnajů, výrazné vzestupy/propady, nové rekordy, debuty a retirementy. Označení typu `Největší průlom` musí mít vysvětlitelné kritérium, jehož přesná definice se doladí při testování. Souhrn čerpá ze skutečné historie k odpovídajícímu konci sezony; nepřenáší do starého souhrnu pozdější budoucí výsledky.
+
+**[ROZHODNUTO]** Hlavní stránka obsahuje zjednodušený přehled úspěšnosti zemí a hlavních změn, nikoliv nutně celou tabulku. Podrobné porovnání zemí je po rozkliknutí. Může ukázat počty titulů/finále, hráčů v TOP 10/100 a nejlepšího hráče s řazením a filtry podle tour/kategorie. Nevzniká jeden povinný bodový koeficient úspěšnosti země; porovnávají se konkrétní doložené výsledky. Přesné metriky a layout zůstávají rozšiřitelné.
+
+**[ROZHODNUTO]** Souhrn nabídne porovnání s minulou sezonou i s libovolnou jinou evidovanou sezonou. Stručné změny mohou být přímo v hlavním přehledu, kompletní tabulky a hráčské/turnajové podklady až v detailu. Při změně kategorií či pravidel se označí omezená srovnatelnost; stejný název metriky nesmí skrýt jiný význam. Neúplná nebo nesimulovaná minulost se nepovažuje za nulové výsledky.
+
+**[ROZHODNUTO]** Sezonní souhrny vzniknou i při dlouhé automatické simulaci bez zastavení; po pěti sezonách lze otevřít každý z pěti souhrnů. Souhrn sám simulaci nezastavuje. Případná pauza na konci sezony se řídí týmž existujícím systémem stop rules, nikoliv novým nesouvisejícím přepínačem. Souhrn ani jeho prohlížení nevytvářejí implicitní Save nebo sportovní události.
+
+**[K TESTOVÁNÍ]** Prahy významnosti, přesná kritéria výběru domácí špičky a sezónních analytických označení, detailní filtry a rozložení. Nejde o rozšíření pre-alpha na povinný Viewer, o plný systém Awards nebo dokončenou implementaci těchto nových souhrnů.
 
 
 # 28. Přehled nyní pevně rozhodnutých základů
@@ -6281,6 +6317,14 @@ Toto rozhodnutí upřesňuje UX otevřené části PAQ-119, nikoliv celý katalo
 
 **[STATUS]** Zachovává se všech 157 PAQ identit a jejich dosavadní číselná evidence; nové dílčí dohody nejsou kompletním uzavřením širokých kalibračních/technických položek. Podmíněný solver, přesné odchylky/pravděpodobnosti, retirement/vývoj, budoucí intake inheritance, úplný katalog metrik a detailní UX mají dosavadní otevřené/odložené hranice. Implementační audit 35.41 je oddělený; nezavádí nové produktové sportovní pravidlo ani neprohlašuje vydání pre-alpha.
 
+## 31.40 Konsolidace rozhodnutí v85 (17. 10. 2026)
+
+**[ROZHODNUTO PRO PRE-ALPHA]** Osobní milníky, společná kariérní časová osa a souhrn po retirementu podle 21.5. U neúplné historie se uvádí skutečné pokrytí/první evidovaná událost. Běžné osobní notifikace se týkají sledovaných hráčů; sledování země vybírá společné úspěchy, automaticky domácí špičku a mimořádné individuální události ostatních. Související upozornění se seskupují, historické jednotlivé milníky se neztrácejí (25.6.1).
+
+**[ROZHODNUTO PRO PRE-ALPHA]** Sezonní souhrn podle 27.25 má stručný hlavní přehled včetně zjednodušeného porovnání zemí; podrobnosti a kompletní tabulky jsou v detailu. Podporuje porovnání s předchozí či jinou evidovanou sezonou a vzniká i při dlouhé simulaci bez vlastní automatické pauzy. Nezavádí jednotný koeficient úspěšnosti zemí, fiktivní historii nebo druhou autoritu pro stop rules.
+
+**[STATUS]** Přesné prahy, kriteriální formule, katalogy a layout se doladí při testování. Základní potvrzené chování se znovu nerozhoduje po jednotlivých filtrech. Zachovává se všech 157 PAQ identit a historické registry; tato dílčí konsolidace neprohlašuje kompletní vyřešení širokých technických/kalibračních položek. Implementace/audit jsou výhradně v 35.42 a navazující evidenci.
+
 # 32. Procentuální audit stavu specifikace
 
 ## 32.1 Metodika
@@ -7086,6 +7130,18 @@ Ověřený `buuk`: `5dce12a07acb980882a5454485681f9eb7e5af79`. Všech 12 nových
 - Všechny spuštěné workflow na finálních HEAD uspěly (#1508 10, #1509 9, #1513 3, ostatní 1 Fast CI). Selektor ale nespouští celou regresi. Společný lokální audit 147 nových testů: 146 passed, 1 failed. A84-01 je starý test zakazující nově správně povolené navázání rankingu po striktní extension; samostatná reprodukce 1 failed/3 passed. Má se opravit očekávání při zachování starých hashů a ochrany proti změně časové základny, nikoliv vrátit správný produktový kontrakt. Frontend 21 testů a build prošly.
 
 Aktivní cesta je oprava A84-01 a skutečný calendar-native Run-owned sport se Save/restart, potom body/publication, Saved capture/restore/fork, Week/Season a Full Simulation. W52/W80 i prodloužený W61 nadále blokují nemigrované legacy sporting writers. Generační realističnost, plný katalog rekordů, naplněné sezonní/50-sezonní release průchody a kompletní regrese zůstávají nedokončené. Nové 9.9/21.3.1/27.24 jsou produktové cíle, nikoliv důkaz implementace.
+
+## 35.42 Integrační audit a opravy v85 — po #1525 (17. 10. 2026)
+
+Ověřený buuk `1fe5cb9080cd8cc84bd1002c393f720951020f0f`, merge #1525. Všech pět nových PR #1521–1525 je mergnutých; při inventuře nebylo otevřené PR. Zdrojový diff, finální HEAD CI a přesné hranice jsou v `docs/PRE_ALPHA_CHECKPOINT_V85_2026_10_17.md`. A84-01 již opravil #1521; původní failure ve v84 je historický důkaz, nikoliv aktuální stav.
+
+- #1522–1523 zavádějí skutečnou first-week exhibici nebo main-only čtyřčlenný pavouk v novém Run kalendáři, MatchEngine logs, produkční manual immutable Save, replay/restart a historický restore s CS/EN. Positive flow už ručně nepřepisuje Saved hash jako starší testové fixtures. Plné 57-attribute/Health sporting efekty a match-containing fork zůstávají nedokončené; kompatibilní projekce populace má sedm hodnot a finále používá stejný původní hráčský vstup.
+- #1524 přidává reviewed operator point policy a druhý Save skutečných awards. #1525 umožňuje Saved-backed hypotetickou W52/W80 platnost/expiraci bodů čtyř účastníků v čase. Nejde o Official Tour Ranking, pravý Tour entry ani skutečně provedený Week Transition; původní Category/Edition policy není ověřená. Žádný nový sportovní unlock se z toho neodvozuje.
+- Finální workflow: #1521 1, #1522 11, #1523–1525 po 9; všechna success. Lokální společný audit šesti relevantních backendových modulů: 53 passed. Nové v85 opravy mají samostatné cílené důkazy a finální CI, nikoliv domnělou plnou regresi.
+
+Tato větev opravuje A85-01 (extension capture přehlížel novou Saved native komponentu a blokoval validní Run), A85-02 (původní přesný knockout retry po scoring promotion), A85-03 (stale review/consent po změně HEAD), A85-04 (Home nerozpoznal Saved native historii) a A85-05 (neúplné path triggers stávajícího Shell browser gate). Nový produkční HTTP/SQLite test: 4 passed; frontend source-change/Home testy: 6 passed a build success. Nová Shell akceptace rozšiřuje skutečný scoped průchod o all-Branch extension po obodovaném turnaji a kontrolu historie, replay a reloadu; její úspěch se musí ověřit na finálním HEAD před předáním. Opravy jsou kandidát do owner merge, nikoliv součást výše uvedeného auditovaného základu.
+
+Master 21.5/25.6.1/27.25/31.40 jsou nové produktové cíle, ne důkaz hotových souhrnů nebo realističnosti. Dále chybí canonical native sporting/Health checkpoint, úplná atributová projekce, skutečné Tour entry, konfigurační point authority, Official publication a Week/Season/Full Simulation. Reference 50 sezon, naplněná release akceptace a plná regrese zůstávají samostatnou branou.
 
 # 36. AI-Assisted Development / Development Operating Model
 

@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 import { applyCalendarKnockoutAwards, reviewCalendarKnockoutAwards } from '../api/client'
 import type {
@@ -21,6 +21,7 @@ export function CalendarKnockoutAwardsPanel({ runId, branchId, view, onApplied }
   const [semifinal, setSemifinal] = useState('30')
   const [reason, setReason] = useState('')
   const [review, setReview] = useState<CalendarAwardReview | null>(null)
+  const [reviewTarget, setReviewTarget] = useState<string | null>(null)
   const [proposal, setProposal] = useState<CalendarAwardProposal | null>(null)
   const [confirmed, setConfirmed] = useState(false)
   const [busy, setBusy] = useState(false)
@@ -28,7 +29,11 @@ export function CalendarKnockoutAwardsPanel({ runId, branchId, view, onApplied }
   const commandId = useRef<string | null>(null)
   const target = [runId, branchId, view.saved_head_revision_id, view.knockout_fingerprint].join('|')
   const activeTarget = useRef(target)
-  activeTarget.current = target
+  const epoch = useRef(0)
+  if (activeTarget.current !== target) {
+    activeTarget.current = target
+    epoch.current += 1
+  }
 
   const numeric = [champion, finalist, semifinal]
   const pointValues = numeric.map(v => Number(v))
@@ -40,13 +45,20 @@ export function CalendarKnockoutAwardsPanel({ runId, branchId, view, onApplied }
     && reason.trim().length > 0 && reason.trim().length <= 1000
 
   const invalidate = () => {
-    setReview(null); setProposal(null); setConfirmed(false); commandId.current = null
+    setReview(null); setReviewTarget(null); setProposal(null); setConfirmed(false); commandId.current = null
     setError(null)
   }
+  useEffect(() => {
+    invalidate(); setBusy(false)
+  }, [target])
+  useEffect(() => () => { epoch.current += 1 }, [])
+  const currentReview = reviewTarget === target ? review : null
 
   const doReview = async () => {
     if (!valid || !view.saved || !view.knockout_fingerprint || busy) return
     const source = target
+    const requestEpoch = epoch.current
+    const isCurrent = () => activeTarget.current === source && epoch.current === requestEpoch
     const policy: CalendarAwardPolicy = {
       schema_version: 'calendar_knockout_point_policy.v1',
       source_kind: 'admin_explicit_reviewed', category_label: category.trim(),
@@ -61,7 +73,7 @@ export function CalendarKnockoutAwardsPanel({ runId, branchId, view, onApplied }
     setBusy(true); setError(null); setConfirmed(false)
     try {
       const result = await reviewCalendarKnockoutAwards(runId, branchId, proposed)
-      if (activeTarget.current !== source) return
+      if (!isCurrent()) return
       if (result.run_id !== runId || result.branch_id !== branchId
         || result.source_saved_head !== view.saved_head_revision_id
         || result.source_knockout_fingerprint !== view.knockout_fingerprint
@@ -71,37 +83,41 @@ export function CalendarKnockoutAwardsPanel({ runId, branchId, view, onApplied }
         || result.first_publication_week.calendar.weeks_per_year !== view.run_calendar.weeks_per_year) {
         throw Error('Point review does not match the selected Saved Run/Branch')
       }
-      setProposal(proposed); setReview(result)
+      setProposal(proposed); setReview(result); setReviewTarget(source)
     } catch (err) {
-      if (activeTarget.current === source) setError(formatApiError(err))
+      if (isCurrent()) setError(formatApiError(err))
     } finally {
-      if (activeTarget.current === source) setBusy(false)
+      if (isCurrent()) setBusy(false)
     }
   }
 
   const apply = async () => {
-    if (!review || !proposal || !confirmed || busy) return
+    if (!currentReview || !proposal || !confirmed || busy
+      || proposal.expected_saved_head !== view.saved_head_revision_id
+      || proposal.expected_knockout_fingerprint !== view.knockout_fingerprint) return
     const source = target
+    const requestEpoch = epoch.current
+    const isCurrent = () => activeTarget.current === source && epoch.current === requestEpoch
     commandId.current ??= newCommandId()
     setBusy(true); setError(null)
     try {
       const receipt = await applyCalendarKnockoutAwards(runId, branchId, {
         command_id: commandId.current, proposal,
-        expected_preview_fingerprint: review.preview_fingerprint,
+        expected_preview_fingerprint: currentReview.preview_fingerprint,
         explicit_confirmation: true,
       })
-      if (activeTarget.current !== source) return
+      if (!isCurrent()) return
       if (!/^[0-9a-f]{64}$/.test(receipt.fingerprint)) {
         throw Error('Prepared award receipt is invalid')
       }
       await onApplied()
-      if (activeTarget.current === source) {
-        setConfirmed(false); setReview(null); setProposal(null)
+      if (isCurrent()) {
+        setConfirmed(false); setReview(null); setReviewTarget(null); setProposal(null)
       }
     } catch (err) {
-      if (activeTarget.current === source) setError(formatApiError(err))
+      if (isCurrent()) setError(formatApiError(err))
     } finally {
-      if (activeTarget.current === source) setBusy(false)
+      if (isCurrent()) setBusy(false)
     }
   }
 
@@ -123,11 +139,11 @@ export function CalendarKnockoutAwardsPanel({ runId, branchId, view, onApplied }
     <label>{cs ? 'Důvod nastavení bodů' : 'Point policy audit reason'}
       <input value={reason} disabled={busy}
         onChange={e => { setReason(e.target.value); invalidate() }} /></label>
-    {!review && <button type="button" disabled={!valid || busy}
+    {!currentReview && <button type="button" disabled={!valid || busy}
       onClick={() => void doReview()}>{cs ? 'Zkontrolovat bodovou distribuci' : 'Review prepared point awards'}</button>}
-    {review && <>
+    {currentReview && <>
       <p className="status">{cs ? 'Návrh bodů z uložených výsledků:' : 'Points derived from Saved results:'}</p>
-      {review.awards.map(a => <p key={a.player_id}>
+      {currentReview.awards.map(a => <p key={a.player_id}>
         {a.player_id} · {a.reached_stage} · <strong>{a.main_points}</strong>
       </p>)}
       <label><input type="checkbox" checked={confirmed} disabled={busy}

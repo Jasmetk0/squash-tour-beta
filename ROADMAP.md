@@ -1,59 +1,24 @@
-# Active dependency path — Master v84
+# Active dependency path — Master v85
 
-Audited base: `buuk` `5dce12a07acb980882a5454485681f9eb7e5af79` after #1519.
-The owner alone merges. Default implementation is direct ordinary ChatGPT,
-without launching paid Codex/agents. Refresh base and open PRs; avoid duplicate work.
+Audited buuk `1fe5cb9080cd8cc84bd1002c393f720951020f0f` after #1525. All #1521–1525 merged,
+all triggered final-head workflows green. Owner alone merges; refresh current work.
 
-| Order | Usable outcome | Current evidence / remaining work |
+| Order | Outcome | Status |
 | --- | --- | --- |
-| 0 | Consistent directly affected regression tests | A84-01 regression assertion repaired on this proposed branch for W52/61/80; joint ranking modules and final-HEAD CI must pass before merge |
-| 1 | Run calendar creation and reviewed all-Branch extension | Creation is merged; #1508 adds real atomic manual Save, immutable history, fork/restore compatibility and receipts. #1509 Home guide is merged. Actual sporting continuation remains separate |
-| 2 | Calendar-native real Run-owned match / main-only tournament, Save and replay | Proposed v84 match slice executes one actual opening-week W52/W80 BO5 with MatchEngine, manual immutable Save and cold replay from Saved population; native tournament/Slot authority, 57-attribute sporting evolution and CS/EN browser remain missing |
-| 3 | Configured points, Official publication and actual Week/Season transitions | #1510–1519 candidates/staging/read adapters are merged, not official publication. New sources need Saved capture/restore/fork and authored configuration lineage |
-| 4 | Annual development/recovery and durable Full Simulation use real Run W | Age helpers exist; migrate actual weekly updates with 1/W year units, preserve weekly deadlines, frozen task targets, simultaneity and explicit recovery |
-| 5 | Populated multi-season acceptance and extended-horizon continuation | Prove real second-season sporting work and explicit work after Completed; preserve W61 reference and verify W52/W80/extended horizons |
-| 6 | Historical-cohort initial world and remaining complete pre-alpha scope | Master 9.8–9.9, preparation/export, canonical attributes, intake, AI, Records and Saved Views remain targets, not done by calendar candidates |
-| 7 | Release acceptance, then measured realism calibration | Full regression + all Master release gates; protected template copies, reference >=1,000 prestart nonretired players, 80 World Tour Editions/season and 50-season FAX acceptance |
+| 1 | Consistent ranking extension tests | A84-01 fixed in #1521 |
+| 2 | Real native opening match/knockout, manual Save/replay/restart | #1522–1523 merged; bounded first-week operation, compatibility attributes, no continued sporting effects |
+| 3 | Reviewed prepared points and as-of scoreboard | #1524–1525 merged; explicit operator policy, not Official Ranking or Week Transition |
+| 4 | Extension/retry/consent integration after actual Saved sport | Current v85 candidate A85-01–05, with new production API and existing Shell browser acceptance |
+| 5 | Canonical calendar sporting/Health state and full attribute projection | Next; preserve frozen inputs, source provenance and versioned history |
+| 6 | Tour entry + configured Edition points + Official publication + Week/Season Transition | Incomplete; do not mistake hypothetical W2 point eligibility for an advanced simulation |
+| 7 | Durable Full Simulation, populated multi-season and extended Completed continuation | Incomplete; preserve frozen targets, terminal tasks, explicit recovery and W-aware annual units |
+| 8 | Remaining full pre-alpha targets and release/realism gates | Historical-cohort generator, canonical attributes, AI, Labs, Records/milestones/summaries and complete Master scope; full regression, reference FAX season + 50 seasons and W52/W80 acceptance |
 
-Deliver coherent usable slices rather than another long sequence of read-only
-provenance fragments. An implementation may need internal domain/storage changes;
-do not publish unsupported operation buttons or strip legacy guards to fake progress.
-No direct Saved JSON/hash rewrites in positive production-flow acceptance.
+Current task should deliver usable authority integration, not more isolated
+provenance wrappers. Version migration must retain historical FAX bytes and
+semantics. Cross-Branch native match fork remains guarded until a true remap.
+Master v85 adds milestone/summary UX targets, not implemented sport or calibration.
 
-See [current state](CURRENT_STATE.md), [v84 audit](docs/PRE_ALPHA_CHECKPOINT_V84_2026_10_17.md)
-and [full next task](docs/PRE_ALPHA_NEXT_CHATGPT_TASK_V84_2026_10_17.md).
-New product decisions live in Master 9.9/21.3.1/27.24/31.39; their existence does
-not establish runtime completion or resolve deferred initial-rule inheritance.
-Historical candidate notes and dated evidence remain in Git and Master chapter 35.
-
-## Candidate next vertical slice: real opening-week knockout
-
-Following merged #1522, the current candidate extends real calendar
-sporting to a full main-only four-player opening bracket, actual seeded
-MatchEngine semifinals/final, exact replay and immutable manual Save.
-This shares existing Saved capture/restore/restart while preserving
-legacy exhibition schema and sporting guards. It is **not** official
-tournament points, weekly publication or Week/Season Transition. Its
-candidate tests/CI and distinct Chromium acceptance must be verified
-before merge. Contract: [CALENDAR_OPENING_KNOCKOUT_V84.md](docs/CALENDAR_OPENING_KNOCKOUT_V84.md).
-
-## New operational step: reviewed prepared knockout points
-
-After owner merge #1523, the proposed scoring candidate binds an authored
-operator point table and four exact stage placements to a previously Signed
-W52/W80 MatchEngine knockout. It uses a reviewed command and second genuine
-Saved Revision, with cold restart and historical restore. **Not** yet official
-Category/Edition awards, Official Ranking publication or Week Transition.
-Contract: `docs/CALENDAR_KNOCKOUT_PREPARED_AWARDS_V84.md`. The subsequent
-integration must source historically effective configured Edition points and
-publish atomically during the actual calendar-native Week Transition.
-
-## Calendar-native Signed scored tournament standings
-
-Next dependency slice after owner merge #1524: read-only as-of W52/W80
-event scoreboard authenticated against exact Saved scored knockout,
-InitialWorld, population-only lifecycle, Saved HEAD and point policy.
-W2..next S W1 are within W-week validity; next S W2 is expiry.
-No invented Tour-entry dates or Official ranking publication, and no
-new sporting/Health/Week transition writer. See
-`docs/CALENDAR_SIGNED_KNOCKOUT_STANDINGS_V84.md`.
+See [current state](CURRENT_STATE.md), [audit](docs/PRE_ALPHA_CHECKPOINT_V85_2026_10_17.md)
+and Master 35.42. Historical evidence and older task briefs remain in Git/docs;
+the old v84 instruction to repair A84-01 is already satisfied and is not a new task.

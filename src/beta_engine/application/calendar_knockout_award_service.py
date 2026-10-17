@@ -12,7 +12,7 @@ from typing import Literal
 from pydantic import Field
 from sqlalchemy import text
 
-from beta_engine.application.calendar_standalone_match_service import CalendarStandaloneMatchService
+from beta_engine.application.calendar_opening_knockout_service import CalendarOpeningKnockoutService
 from beta_engine.domain.calendar.run_week_position import RunWeekPosition
 from beta_engine.domain.rankings.official import FrozenInput
 from beta_engine.domain.run_packages import canonical_hash
@@ -47,7 +47,7 @@ class CalendarKnockoutAwardService:
 
     def _source(self, session, *, run_id: str, branch_id: str,
                 proposal: CalendarAwardProposal):
-        clock, revision, _ = CalendarStandaloneMatchService(
+        clock, revision, _, _health = CalendarOpeningKnockoutService(
             self.repository
         )._context(session, run_id=run_id, branch_id=branch_id)
         if revision.saved_head_revision_id != proposal.expected_saved_head:

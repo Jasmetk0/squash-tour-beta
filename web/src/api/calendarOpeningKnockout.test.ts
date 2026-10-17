@@ -47,3 +47,34 @@ describe('versioned knockout checkpoint response boundary', () => {
     expect(() => verifyKnockoutInspection(v, 'r', 'b', 'head')).toThrow()
   })
 })
+
+function healthFixture() {
+  const v = fixture(), k = v.knockout!
+  k.schema_version = 'calendar_opening_knockout.v3'
+  const profiles = k.entrant_ids.map(player_id => ({ player_id, highest_current_severity: 0,
+    highest_permanent_limitation: 0, numeric_effect_applied: false as const,
+    numeric_calibration_required: false, current_records: [],
+  }))
+  k.health_source = { schema_version: 'calendar_knockout_health_source.v1',
+    source_health_schema: 'calendar_initial_health_state.v1', source_health_fingerprint: 'f'.repeat(64),
+    profiles, numeric_effect_applied: false }
+  k.matches.forEach(m => { m.effective_health = { numeric_effect_applied: false,
+    player_profiles: [m.input_context.player_a, m.input_context.player_b].map(p => profiles.find(x => x.player_id === p.player.player_id)!),
+  } })
+  return v
+}
+
+describe('Saved Health in a played knockout', () => {
+  it('accepts descriptive Health without claiming numeric effects', () => {
+    const v = healthFixture()
+    expect(verifyKnockoutInspection(v, 'r', 'b', 'head')).toBe(v)
+  })
+  it.each(['missing', 'scope', 'order', 'version'])('rejects %s Health evidence', fault => {
+    const v = healthFixture(), k = v.knockout!
+    if (fault === 'missing') delete k.health_source
+    if (fault === 'scope') k.health_source!.profiles[0].player_id = 'foreign'
+    if (fault === 'order') k.matches[0].effective_health!.player_profiles.reverse()
+    if (fault === 'version') k.schema_version = 'calendar_opening_knockout.v2'
+    expect(() => verifyKnockoutInspection(v, 'r', 'b', 'head')).toThrow()
+  })
+})

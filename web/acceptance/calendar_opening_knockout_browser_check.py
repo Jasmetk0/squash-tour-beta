@@ -1,7 +1,7 @@
 """Real Chromium four-player W52 opening-week MatchEngine and immutable Save.
 
 Uses the same disposable FastAPI/SQLite shell as the existing exhibition
-acceptance, then extends the Run with all Saved sporting Branches intact.
+acceptance, forks verified Saved Health, then extends every sporting Branch.
 """
 from __future__ import annotations
 
@@ -13,7 +13,7 @@ from playwright.sync_api import expect
 
 def exercise_calendar_knockout(page, *, base_url, api_url, artifacts,
                                run_id, original_branch_id,
-                               population_revision_id, original_clock) -> dict:
+                               original_clock) -> dict:
     def enc(value):
         return quote(value, safe="")
 
@@ -31,7 +31,7 @@ def exercise_calendar_knockout(page, *, base_url, api_url, artifacts,
     head_before = original["saved_head_revision_id"]
     fork = api("POST", "/run-containers/" + enc(run_id) + "/branches", {
         "source_branch_id": original_branch_id,
-        "source_saved_revision_id": population_revision_id,
+        "source_saved_revision_id": head_before,
         "display_name": "Native Calendar Four Player Knockout",
     }, expected=201)
     branch_id = fork["branch_id"]
@@ -41,6 +41,8 @@ def exercise_calendar_knockout(page, *, base_url, api_url, artifacts,
     assert initial["knockout"] is None and initial["saved"] is False
     assert initial["run_calendar"]["weeks_per_year"] == original_clock["weeks_per_year"]
     assert len(initial["player_ids"]) >= 4
+    assert initial['health_readiness'] is not None
+    assert initial['health_readiness']['limited_player_ids']
 
     page.goto(base_url + "/admin/runs/" + enc(run_id) + "/simulate")
     selector = page.get_by_role("combobox", name="Admin active Branch")
@@ -53,6 +55,11 @@ def exercise_calendar_knockout(page, *, base_url, api_url, artifacts,
     expect(play).to_be_disabled()
     entrants = panel.get_by_role("combobox")
     expect(entrants).to_have_count(4)
+    limited = initial['health_readiness']['limited_player_ids'][0]
+    chosen = [limited] + [p for p in initial['player_ids'] if p != limited][:3]
+    for i, player in enumerate(chosen):
+        entrants.nth(i).select_option(player)
+    expect(panel.get_by_text('Warning: selected entrants have Health limitations.', exact=False)).to_be_visible()
     ids = [entrants.nth(i).input_value() for i in range(4)]
     assert len(set(ids)) == 4 and set(ids).issubset(initial["player_ids"])
     panel.get_by_label("Audit reason").fill("Chromium real semifinals and winner-fed final")
@@ -63,7 +70,12 @@ def exercise_calendar_knockout(page, *, base_url, api_url, artifacts,
         play.click()
     assert response.value.status == 201, response.value.text()[:1200]
     played = response.value.json()
-    assert played['knockout']['schema_version'] == 'calendar_opening_knockout.v2'
+    assert played['knockout']['schema_version'] == 'calendar_opening_knockout.v3'
+    health_source = played['knockout']['health_source']
+    assert health_source['source_health_fingerprint'] == initial['health_readiness']['source_health_fingerprint']
+    assert any(p['highest_current_severity'] > 0 for p in health_source['profiles'])
+    assert all(not p['numeric_effect_applied'] for p in health_source['profiles'])
+    expect(panel.get_by_role('table', name='Frozen knockout Health table')).to_be_visible()
     sporting = played['knockout']['sporting']
     assert len(sporting['effects']) == 6
     after_semis = {p['player_id']: p for p in sporting['after_semifinals']}
@@ -105,6 +117,8 @@ def exercise_calendar_knockout(page, *, base_url, api_url, artifacts,
     panel = page.locator('section[aria-label="Calendar native four-player knockout"]')
     expect(panel.get_by_text("Status: Saved", exact=False)).to_be_visible()
     expect(panel.get_by_role('table', name='Knockout player state table')).to_be_visible()
+    expect(panel.get_by_role('table', name='Frozen knockout Health table')).to_be_visible()
+    assert api('GET', root)['knockout']['health_source'] == health_source
     assert api("GET", root + "/calendar-opening-knockout/replay")["exact_replay"]
     page.get_by_role("combobox", name="Language / Jazyk").select_option("cs")
     expect(page.get_by_role(
@@ -112,6 +126,7 @@ def exercise_calendar_knockout(page, *, base_url, api_url, artifacts,
     )).to_be_visible()
     expect(panel.get_by_role("button", name="Ověřit replay všech zápasů")).to_be_visible()
     expect(panel.get_by_role('columnheader', name='Dlouhodobá únava', exact=True)).to_be_visible()
+    expect(panel.get_by_role('columnheader', name='Závažnost', exact=True)).to_be_visible()
     page.screenshot(path=str(artifacts / "17-calendar-real-knockout-saved.png"), full_page=True)
     page.get_by_role("combobox", name="Language / Jazyk").select_option("en")
     # A second, separately confirmed sporting Save attaches prepared point
@@ -277,6 +292,10 @@ def exercise_calendar_knockout(page, *, base_url, api_url, artifacts,
         "actual_match_engine_matches": 3,
         "same_pre_slot_semifinals": True,
         "winner_fed_final": True,
+        "forked_from_saved_health_revision": head_before,
+        "saved_health_source_consumed": health_source['source_health_fingerprint'],
+        "health_input_bound_to_played_logs": True,
+        "health_limitations_visible_without_numeric_effect": True,
         "post_semifinal_state_consumed_by_final": True,
         "six_evidenced_player_effects": True,
         "saved_player_checkpoints_cs_en": True,

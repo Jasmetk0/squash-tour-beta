@@ -71,7 +71,7 @@ class CalendarStandaloneMatchService:
             hidden_career_traits=profile.hidden_career_traits,
         )
 
-    def _context(self, session, *, run_id: str, branch_id: str):
+    def _context(self, session, *, run_id: str, branch_id: str, allow_calendar_health: bool = False):
         run = session.get(RunContainerModel, run_id)
         branch = session.get(RunBranchModel, branch_id)
         if run is None or branch is None or branch.run_id != run_id:
@@ -113,6 +113,10 @@ class CalendarStandaloneMatchService:
             SimulationSlotModel, PlayerSportingWeekStateModel,
             PlayerHealthWeekStateModel, AuthoritativeWorldStateModel,
         ):
+            if model is PlayerHealthWeekStateModel and allow_calendar_health:
+                # Only the knockout caller opts in and immediately validates
+                # the complete live/Saved calendar Health authority.
+                continue
             if session.scalar(select(model.run_id).where(
                 model.run_id == run_id, model.branch_id == branch_id
             ).limit(1)) is not None:

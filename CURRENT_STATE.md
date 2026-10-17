@@ -1,7 +1,7 @@
 # Current implementation — Master v85
 
-Audited buuk `5ff872c5aa718d125dda92617e93f30c53b089b2` after merged #1526, 17 October 2026.
-#1520–1526 are merged; no open PR at task start. Refresh before new work.
+Audited buuk `f7a999e1661858742b50df1dbff775ae8e49687a` after merged #1527, 17 October 2026.
+#1520–1527 are merged; no open PR at task start. Refresh before new work.
 Master remains v85; this task changes sporting execution, not product decisions.
 
 **Merged and usable:** calendar creation/first Save, population and Health facts,
@@ -44,7 +44,7 @@ compact/detail national comparisons and previous/arbitrary-season comparison.
 Summaries do not themselves pause simulation. See Master 21.5/25.6.1/27.25/31.40.
 Thresholds/layout/calibration and deferred initial-rule inheritance remain open.
 
-**Current candidate:** new four-player knockouts use `calendar_opening_knockout.v2`.
+**Merged #1527:** new four-player knockouts use `calendar_opening_knockout.v2`.
 Both semifinals consume one frozen fresh operation baseline. Actual rally/timeline/
 stamina evidence changes form, sharpness and long-term fatigue; the final consumes
 post-semifinal state, and the embedded terminal checkpoint retains all four players.
@@ -55,6 +55,18 @@ their original unchanged-input semantics. See
 This is operation-owned state, **not** a full canonical 57-attribute/Health week
 owner. Seven-value attributes, fresh initial baseline and no between-round recovery
 remain explicit. No native calendar advance, Tour entry or Official publication.
+
+**Current candidate:** a fully Saved calendar Health baseline/edited state no longer
+blocks the knockout. Health-backed play uses explicit `calendar_opening_knockout.v3`,
+freezing four participant Health profiles and source identity. Each actual match
+receives its participant-ordered `EffectiveMatchHealthSnapshot`; a v2 log anchor
+binds these facts to real rally evidence. Replay uses frozen facts even after later
+medical corrections. Points/Save/extension/restore share this validated authority.
+Admin shows current readiness, limitation warnings and original played facts in CS/EN.
+Unsaved/missing/drifting/legacy Health still blocks. No automatic Health mutation or
+numeric injury penalty is invented; standalone exhibition retains its old guard.
+Historical v1/v2 bytes and semantics remain unchanged. See
+[implementation contract](docs/CALENDAR_KNOCKOUT_HEALTH_V1.md).
 
 **Next:** implement true calendar-native canonical sporting/Health checkpoint
 ownership and full attribute projection, then historically configured points,

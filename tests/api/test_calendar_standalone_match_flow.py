@@ -12,6 +12,7 @@ from tests.api.test_calendar_initial_world_adoption import (
     confirm as population_confirm, root as population_root,
 )
 from tests.api.test_saved_revision_history_api import ApiServer, _request
+from tests.api.test_player_generation_calendar_gate import _dump
 
 pytestmark = pytest.mark.pr_critical
 

@@ -147,7 +147,9 @@ def test_bundle_loader_rejects_hash_scope_calendar_and_source_history_tamper(tmp
                 json.dumps(raw), **kwargs,
             )
         raw = json.loads(bundle.model_dump_json())
-        raw["results"][0]["result"]["main_points"] = 10000
+        # Altering the *terminal correction* keeps the linked predecessor
+        # valid, so the external bundle SHA (rather than lineage) detects it.
+        raw["results"][1]["result"]["main_points"] = 10000
         with pytest.raises(ValueError, match="fingerprint"):
             load_calendar_ranking_source_bundle(
                 json.dumps(raw), **kwargs,

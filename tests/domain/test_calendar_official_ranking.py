@@ -271,3 +271,65 @@ def test_fingerprint_and_rows_deterministic_under_input_order():
     second = calc(clock, w(0, 3), players=tuple(reversed(players)), results=tuple(reversed(facts)))
     assert first.fingerprint == second.fingerprint
     assert first.model_dump_json() == second.model_dump_json()
+
+
+@pytest.mark.parametrize("W", [52, 61, 80])
+def test_final_week_completed_edition_first_publishes_next_season(W):
+    clock = RunCalendar(W, 37 if W != 52 else 1, 2030, 3)
+    end = r("a", "final-week", w(0, W), w(1, 1), pts=150)
+    before = calc(clock, w(0, W), results=())
+    after = calc(clock, w(1, 1), results=(end,), previous=before)
+    assert before.rows[0].points == 0
+    assert after.rows[0].points == 150
+    assert after.rows[0].counted_results == (end,)
+    assert after.previous_fingerprint == before.fingerprint
+
+
+def test_multi_player_W61_ranking_bestN_and_disciplinary_zero_match_legacy():
+    """Differential test of exact ranking rows, Best N, previous rank tie and zeros."""
+    from beta_engine.domain.rankings.official import (
+        DisciplinaryZero, OfficialRankingPlayer,
+        OfficialRankingResult, RankingWeek, calculate_official_ranking,
+    )
+    clock = RunCalendar.fax_default()
+    policy = OfficialRankingPolicy(policy_id="best-two", best_n=2)
+    players = (p("a"), p("b"), p("c"))
+    result_data = (
+        ("a", "a1", 1, 2, 100), ("a", "a2", 3, 4, 75),
+        ("b", "b1", 1, 2, 100), ("b", "b2", 3, 4, 75),
+        ("c", "c1", 1, 2, 100),
+    )
+    facts = tuple(
+        r(name, event, w(0, completed), w(0, published), pts=pts)
+        for name, event, completed, published, pts in result_data
+    )
+    old_facts = tuple(OfficialRankingResult(
+        edition_id=event, player_id=name, source_fingerprint="f-"+event,
+        completed_week=RankingWeek(season_index=0, week=completed),
+        first_publication_week=RankingWeek(season_index=0, week=published),
+        main_points=pts,
+    ) for name, event, completed, published, pts in result_data)
+    zeros = (z("a", w(0, 3), duration=5),)
+    old_zeros = (DisciplinaryZero(
+        zero_id="zero", run_id=RUN, branch_id=BRANCH, player_id="a",
+        source_fingerprint="discipline",
+        effective_week=RankingWeek(season_index=0, week=3), duration_weeks=5,
+    ),)
+    new = calc(clock, w(0, 5), players=players, results=facts, zeros=zeros, policy=policy)
+    old = calculate_official_ranking(
+        run_id=RUN, branch_id=BRANCH,
+        week=RankingWeek(season_index=0, week=5), policy=policy,
+        players=tuple(OfficialRankingPlayer(
+            player_id=player.player_id,
+            tie_break_token=player.tie_break_token,
+            tour_entry_week=RankingWeek(season_index=0, week=1),
+        ) for player in players),
+        results=old_facts, disciplinary_zeros=old_zeros,
+    )
+    view = lambda snapshot: [
+        (row.rank, row.player_id, row.points,
+         tuple(result.edition_id for result in row.counted_results),
+         tuple(zero.zero_id for zero in row.disciplinary_zeros))
+        for row in snapshot.rows
+    ]
+    assert view(new) == view(old)

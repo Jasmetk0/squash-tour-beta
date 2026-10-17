@@ -107,3 +107,42 @@ def preview_calendar_official_ranking_from_saved_source_versions(
         previous=previous, disciplinary_zeros=resolved.disciplinary_zeros,
     )
     return candidate, resolved
+
+
+def preview_calendar_official_ranking_from_sqlite_staging(
+    session: Session,
+    *,
+    run_id: str,
+    branch_id: str,
+    expected_saved_head_revision_id: str,
+    week: CalendarRankingWeek,
+    policy: OfficialRankingPolicy,
+    players: tuple[CalendarRankingPlayer, ...],
+    previous: CalendarOfficialRankingSnapshot | None = None,
+) -> tuple[CalendarOfficialRankingSnapshot, ResolvedCalendarRankingSources]:
+    """Run-clock-verified replay of *unpublished* SQLite-staged source history.
+
+    The result is an inspectable candidate, NEVER an Official publication.
+    Source rows are explicitly outside Saved Revision/restore/fork ownership;
+    the future authoritative adapter must authenticate match/discipline facts
+    and atomically integrate them with Saved content before promotion.
+    """
+    from beta_engine.infrastructure.db.staged_calendar_ranking_sources import (
+        StagedCalendarRankingSourceStore,
+    )
+
+    staged = StagedCalendarRankingSourceStore(session).resolve(
+        run_id=run_id,
+        branch_id=branch_id,
+        expected_saved_head_revision_id=expected_saved_head_revision_id,
+        week=week,
+    )
+    calendar = resolve_saved_run_calendar(
+        session, run_id=run_id, branch_id=branch_id,
+    )
+    candidate = calculate_calendar_official_ranking(
+        run_id=run_id, branch_id=branch_id, run_calendar=calendar,
+        week=week, policy=policy, players=players, results=staged.results,
+        previous=previous, disciplinary_zeros=staged.disciplinary_zeros,
+    )
+    return candidate, staged

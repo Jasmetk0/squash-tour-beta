@@ -178,7 +178,10 @@ def test_calendar_match_restore_removes_live_result_but_not_immutable_history(tm
         assert _request("POST", restore_url, {**request, "explicit_confirmation": False})[0] == 409
         status, restored = _request("POST", restore_url, request)
         assert status == 201, restored
-        assert "calendar_standalone_match" not in restored["saved_revision"]["payload"]["content"]
+        restored_id = restored["saved_revision"]["revision_id"]
+        restored_revision = repository.get_branch_saved_revision(revision_id=restored_id)
+        assert restored_revision is not None
+        assert "calendar_standalone_match" not in restored_revision.payload["content"]
         status, after = _request("GET", base(server))
         assert status == 200 and after["match"] is None, after
         assert _request("GET", base(server) + "/one-exhibition/replay")[0] == 404

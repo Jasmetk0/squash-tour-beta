@@ -399,7 +399,7 @@ def decode_prevalidated_calendar_sources(payload: dict, *, run_id: str, branch_i
     if cp_raw is not None:
         if not isinstance(cp_raw, dict) or set(cp_raw) != {"fingerprint", "state"}:
             raise ValueError("Invalid prevalidated Saved sporting component")
-        checkpoint = CalendarSportingCheckpoint.model_validate(cp_raw["state"])
+        checkpoint = CalendarSportingCheckpoint.model_validate_json(json.dumps(cp_raw["state"]))
         if (checkpoint.run_id, checkpoint.branch_id, checkpoint.fingerprint) != (
             run_id, branch_id, cp_raw["fingerprint"]
         ):
@@ -410,7 +410,7 @@ def decode_prevalidated_calendar_sources(payload: dict, *, run_id: str, branch_i
     if tour_raw is not None:
         if not isinstance(tour_raw, dict) or set(tour_raw) != {"fingerprint", "state"}:
             raise ValueError("Invalid prevalidated Saved Tour component")
-        tour = CalendarTourState.model_validate(tour_raw["state"])
+        tour = CalendarTourState.model_validate_json(json.dumps(tour_raw["state"]))
         if (tour.run_id, tour.branch_id, tour.fingerprint) != (
             run_id, branch_id, tour_raw["fingerprint"]
         ):

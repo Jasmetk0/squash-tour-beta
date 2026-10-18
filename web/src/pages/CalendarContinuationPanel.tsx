@@ -85,7 +85,8 @@ export function CalendarContinuationPanel({ runId, branchId, head, onChange }: {
     {view && <>
       {view.limited_player_ids.some(p => p === a || p === b) && <p role="status">{cs ? 'Vybraný hráč má zdravotní omezení. Fakta vstupují do zápasu; číselné zdravotní účinky zatím nejsou kalibrované.' : 'A selected player has Health limitations. Facts enter the match; numeric Health effects remain uncalibrated.'}</p>}
       {(['a', 'b'] as const).map(side => <label key={side}>{side === 'a' ? (cs ? 'Navazující hráč A' : 'Continuation player A') : (cs ? 'Navazující hráč B' : 'Continuation player B')}
-        <select value={side === 'a' ? a : b} disabled={busy || !view.can_play} onChange={e => side === 'a' ? setA(e.target.value) : setB(e.target.value)}>
+        <select aria-label={side === 'a' ? (cs ? 'Navazující hráč A' : 'Continuation player A') : (cs ? 'Navazující hráč B' : 'Continuation player B')}
+          value={side === 'a' ? a : b} disabled={busy || !view.can_play} onChange={e => side === 'a' ? setA(e.target.value) : setB(e.target.value)}>
           {view.player_ids.map(p => <option key={p} value={p}>{p}</option>)}
         </select></label>)}
       <label>{cs ? 'Seed navazujícího zápasu' : 'Continuation seed'}<input value={seed} disabled={busy || !view.can_play} onChange={e => setSeed(e.target.value)} /></label>

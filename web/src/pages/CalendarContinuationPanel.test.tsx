@@ -25,6 +25,8 @@ describe('continuation interaction (HTTP boundary mocked)',()=>{
       source_saved_head:'head',source_checkpoint_fingerprint:fp,sequence:1,
       input_context:{player_a:{player:{player_id:'a'}},player_b:{player:{player_id:'b'}}},canonical_projections:[{long_term_fatigue:8},{long_term_fatigue:0}]}})
     render(panel()); await screen.findByLabelText('Continuation reason')
+    expect(screen.getByRole('combobox', {name:'Continuation player A'})).toHaveAccessibleName('Continuation player A')
+    expect(screen.getByRole('combobox', {name:'Continuation player B'})).toHaveAccessibleName('Continuation player B')
     fireEvent.change(screen.getByLabelText('Continuation reason'),{target:{value:'Continue actual state'}})
     expect(screen.getByRole('button',{name:'Play continuation match'})).toBeDisabled()
     fireEvent.click(screen.getByLabelText('Confirm playing from this Saved checkpoint.'))

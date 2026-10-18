@@ -57,9 +57,10 @@ def test_later_week_knockout_is_atomic_saved_replayable_and_recoverable(tmp_path
         assert view["sporting_week"]["week"] == 2 and view["saved"]
         source = command(view)
         before = _dump(path)
-        assert _request("POST", tournament_url(server), {
+        invalid_status, invalid_body = _request("POST", tournament_url(server), {
             **source, "expected_checkpoint_fingerprint": "f" * 64,
-        })[0] == 409
+        })
+        assert invalid_status == 409, invalid_body
         assert _dump(path) == before
 
         from beta_engine.application import calendar_followup_knockout_service as svc

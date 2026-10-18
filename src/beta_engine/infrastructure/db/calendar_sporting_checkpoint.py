@@ -48,9 +48,19 @@ def verify_checkpoint(state, world, evidence):
     from beta_engine.domain.players.calendar_continuation_match import append_continuation
     reserved_ids = {knockout.match_id, *(m.input_context.match_id for m in knockout.matches)}
     from beta_engine.domain.players.calendar_sporting_week import CalendarSportingWeekAdvance, append_sporting_week
+    from beta_engine.domain.players.calendar_followup_knockout import (
+        CalendarFollowupKnockout, append_followup_knockout,
+    )
     for entry in (*state.continuations, *state.week_events):
         if isinstance(entry, CalendarSportingWeekAdvance):
             expected = append_sporting_week(expected, world, knockout, entry)
+            continue
+        if isinstance(entry, CalendarFollowupKnockout):
+            if (entry.command_id == knockout.command_id
+                or any(m.match_id in reserved_ids or m.command_id == knockout.command_id
+                       for m in entry.matches)):
+                raise ValueError('Later knockout reuses original opening knockout identity')
+            expected = append_followup_knockout(expected, world, entry)
             continue
         if entry.match_id in reserved_ids or entry.command_id == knockout.command_id:
             raise ValueError('Continuation reuses original knockout identity')

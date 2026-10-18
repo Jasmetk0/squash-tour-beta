@@ -26,7 +26,7 @@ def test_saved_component_previews_validate_lineage_once(tmp_path, monkeypatch):
     calls = []
 
     def counted(*, session, branch, **kwargs):
-        calls.append((id(session), branch.branch_id))
+        calls.append((session, branch.branch_id))
         return original(session=session, branch=branch, **kwargs)
 
     monkeypatch.setattr(repository, "_validated_branch_revision_lineage_in_session", counted)
@@ -66,7 +66,7 @@ def test_save_reuses_reviewed_state_but_revalidates_after_commit(tmp_path, monke
     calls = []
 
     def counted(*, session, branch, **kwargs):
-        calls.append((id(session), branch.branch_id))
+        calls.append((session, branch.branch_id))
         return original(session=session, branch=branch, **kwargs)
 
     monkeypatch.setattr(repository, "_validated_branch_revision_lineage_in_session", counted)
@@ -80,4 +80,4 @@ def test_save_reuses_reviewed_state_but_revalidates_after_commit(tmp_path, monke
     # Service preflight, atomic Save, and post-commit response reload are three
     # separate transactions. Previously the atomic Save alone validated twice.
     assert len(calls) == 3
-    assert len({session_id for session_id, _ in calls}) == 3
+    assert len({id(session) for session, _ in calls}) == 3

@@ -65,3 +65,13 @@ Tour Entry, Official Ranking, Week/Season Transition or public clock.
 After this is verified/merged, next integrate configured Edition/Entry
 authorities and actual Official Week Transition over the Saved sporting
 owner, not another read-only standings approximation.
+
+
+**New milestone after merged #1536:** eight-player later-week native
+knockout under development, using seven real winner-fed MatchEngine
+matches, persistent v6 full-population sporting checkpoint, subsequent
+sporting-week development and exact Save/replay/restoration. It moves
+from demo four-player operations toward realistic playable draw sizes,
+but does not grant Tour status or automatically score the eight-player
+event. Follow-up integration still needs canonical configured Edition,
+Entrants, Points, Official publication and actual Week/Season Transition.

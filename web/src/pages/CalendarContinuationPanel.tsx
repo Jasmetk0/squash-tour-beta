@@ -362,9 +362,9 @@ export function CalendarContinuationPanel({ runId, branchId, head, onChange }: {
             : '—'
         }</td><td>{t.saved ? (cs ? 'Uloženo' : 'Saved') : (cs ? 'Neuloženo' : 'Unsaved')}</td></tr>)}
       </tbody></table>}
-      {view.tournaments?.at(-1)?.entrant_ids.length === 8
-        && view.tournaments.at(-1)?.prepared_points_status === 'prepared_not_official'
-        && !view.tournaments.at(-1)?.result_closed && <section aria-label="Native tournament result closure">
+      {view.tournaments?.[view.tournaments.length - 1]?.entrant_ids.length === 8
+        && view.tournaments[view.tournaments.length - 1]?.prepared_points_status === 'prepared_not_official'
+        && !view.tournaments[view.tournaments.length - 1]?.result_closed && <section aria-label="Native tournament result closure">
           <h5>{cs ? 'Uzavřít skutečné výsledky turnaje' : 'Close actual tournament results'}</h5>
           <p role="status">{cs ? 'Po ručním Save uzavře výsledky všech sedmi zápasů do ověřené historie hráčů. Připravené body se NESTANOU Official Ranking.' : 'After the separate manual Save, freeze all seven played matches into verified player results. Prepared points do NOT become Official Ranking.'}</p>
           <label><input type="checkbox" checked={closureConsent} disabled={busy || !view.can_play}

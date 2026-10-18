@@ -46,26 +46,26 @@ const closed = {
 const view: ContinuationView = {
   schema_version:'calendar_continuation_inspection.v1',
   run_id:'r',branch_id:'b',saved_head_revision_id:'saved',draft_version:2,
-  checkpoint_fingerprint:fp('g'),player_ids:['a','b','c','d','e','f','g','h'],
+  checkpoint_fingerprint:fp('1'),player_ids:['a','b','c','d','e','f','g','h'],
   saved:true,can_play:true,limited_player_ids:[],health_numeric_effect_applied:false,
   sporting_week:{calendar:{weeks_per_year:52,season_start_year_week:52,start_year:2030,season_count:3},season_index:0,week:2},
-  weekly_advance_count:1,weekly_advances:[{command_id:'wk',fingerprint:fp('h'),completed_week:1,target_week:2,saved:true}],
+  weekly_advance_count:1,weekly_advances:[{command_id:'wk',fingerprint:fp('2'),completed_week:1,target_week:2,saved:true}],
   matches,tournaments:[event],closures:[closed],
 }
 const command: NativeTournamentClosureCommand = {
   command_id:'close-draw',tournament_id:'draw',expected_saved_head:'saved',
-  expected_checkpoint_fingerprint:fp('g'),operator_label:'Admin',
+  expected_checkpoint_fingerprint:fp('1'),operator_label:'Admin',
   audit_reason:'Reviewed result closure',explicit_result_confirmation:true,
 }
 const receipt: NativeTournamentClosureReceipt = {
   schema_version:'calendar_native_tournament_closure_receipt.v1',
-  fingerprint:fp('f'),checkpoint_fingerprint:fp('i'),
+  fingerprint:fp('f'),checkpoint_fingerprint:fp('3'),
   official_ranking_published:false,
   publication_status:'native_result_closed_not_official',
   closure:{
-    ...closed,source_saved_head:'saved',source_checkpoint_fingerprint:fp('g'),
-    source_week_event_count:2,source_prepared_awards_fingerprint:fp('j'),
-    request_fingerprint:fp('k'),
+    ...closed,source_saved_head:'saved',source_checkpoint_fingerprint:fp('1'),
+    source_week_event_count:2,source_prepared_awards_fingerprint:fp('4'),
+    request_fingerprint:fp('5'),
   },
 }
 describe('signed played native result closure',()=>{
@@ -78,7 +78,7 @@ describe('signed played native result closure',()=>{
     expect(()=>verifyContinuation(altered,'r','b','saved')).toThrow('closed-result history changed')
     const alteredPoints={...view,closures:[{...closed,players:players.map((p,i)=>i===0?{...p,prepared_points:800}:p)}]}
     expect(()=>verifyContinuation(alteredPoints,'r','b','saved')).toThrow('closed-result history changed')
-    expect(()=>verifyNativeTournamentClosure({...receipt,closure:{...receipt.closure,source_tournament_fingerprint:fp('z')}},command,view))
+    expect(()=>verifyNativeTournamentClosure({...receipt,closure:{...receipt.closure,source_tournament_fingerprint:fp('6')}},command,view))
       .toThrow('does not match')
   })
   it('keeps an old unclosed eight-player event readable',()=>{

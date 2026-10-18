@@ -336,7 +336,58 @@ def exercise_calendar_knockout(page, *, base_url, api_url, artifacts,
     expect(rankings.get_by_text("Points have expired.", exact=False)).to_be_visible(timeout=120000)
     assert api("GET", root)["saved_head_revision_id"] == extended_head
     page.screenshot(path=str(artifacts / "18-scored-knockout-horizon-extended.png"), full_page=True)
+    # A genuinely new match consumes the Saved full-population checkpoint;
+    # the original tournament/points remain frozen and the week stays at 1.
+    continuation = page.locator('section[aria-label="Stateful calendar continuation"]')
+    expect(continuation.get_by_role('heading', name='Continue matches from Saved player state')).to_be_visible(timeout=120000)
+    champion = played['knockout']['matches'][-1]['result']['winner_player_id']
+    continuation.get_by_label('Continuation player A', exact=True).select_option(champion)
+    continuation.get_by_label('Continuation player B', exact=True).select_option(outsider_id)
+    continuation.get_by_label('Continuation reason', exact=True).fill('Continue with actual Saved fatigue and 57 attributes')
+    continuation.get_by_label('Confirm playing from this Saved checkpoint.', exact=True).check()
+    with page.expect_response(lambda r: r.request.method == 'POST'
+                              and r.url.endswith('/calendar-continuation/simulate'), timeout=120000) as response:
+        continuation.get_by_role('button', name='Play continuation match', exact=True).click()
+    assert response.value.status == 201, response.value.text()[:1200]
+    continued = response.value.json()
+    native_match = continued['match']
+    assert native_match['week']['week'] == 1 and native_match['week']['season_index'] == 0
+    assert native_match['week']['calendar']['season_count'] == new_count
+    assert native_match['source_checkpoint_fingerprint'] == population_view['fingerprint']
+    assert native_match['canonical_projections'][0]['long_term_fatigue'] > 0
+    assert native_match['canonical_projections'][1]['long_term_fatigue'] == 0
+    assert native_match['effective_health'] is not None and not native_match['effective_health']['numeric_effect_applied']
+    expect(continuation.get_by_text('Played, awaiting manual Save.', exact=True)).to_be_visible(timeout=120000)
+    expect(continuation.get_by_role('button', name='Play continuation match', exact=True)).to_be_disabled()
+    continuation.get_by_role('button', name='Review continuation Save', exact=True).click()
+    expect(continuation.get_by_role('button', name='Save continued state', exact=True)).to_be_disabled()
+    continuation.get_by_label('Confirm saving the continued state.', exact=True).check()
+    with page.expect_response(lambda r: r.request.method == 'POST'
+                              and r.url.endswith('/calendar-continuation/save'), timeout=120000) as response:
+        continuation.get_by_role('button', name='Save continued state', exact=True).click()
+    assert response.value.status == 201, response.value.text()[:1200]
+    continuation_revision = response.value.json()['saved_revision']['revision_id']
+    page.reload()
+    page.get_by_role('combobox', name='Admin active Branch').select_option(branch_id)
+    continuation = page.locator('section[aria-label="Stateful calendar continuation"]')
+    expect(continuation.get_by_role('table', name='Continued match history')).to_be_visible(timeout=120000)
+    expect(continuation.get_by_role('table', name='Continued match history').get_by_role('row')).to_have_count(2)
+    with page.expect_response(lambda r: r.request.method == 'GET' and '/calendar-continuation/' in r.url
+                              and r.url.endswith('/replay'), timeout=120000) as response:
+        continuation.get_by_role('button', name='Verify continuation replay', exact=True).click()
+    assert response.value.status == 200 and response.value.json()['exact_replay']
+    final_view = api('GET', root)
+    assert final_view['knockout'] == played['knockout']
+    assert final_view['saved_head_revision_id'] == continuation_revision
+    assert final_view['population_sporting_checkpoint']['continuation_count'] == 1
+    assert final_view['population_sporting_checkpoint']['fingerprint'] == continued['checkpoint_fingerprint']
+    assert final_view['population_sporting_checkpoint']['saved']
+    page.screenshot(path=str(artifacts / '19-stateful-continuation-saved-replayed.png'), full_page=True)
     return {
+        "continued_actual_match_count": 1,
+        "continued_match_consumes_prior_fatigue_and_57_attributes": True,
+        "continued_manual_save_reload_exact_replay": True,
+        "continued_original_knockout_unchanged": True,
         "actual_match_engine_matches": 3,
         "population_sporting_checkpoint_count": population_view["player_count"],
         "nonparticipant_57_record_saved_reloaded_unchanged": True,

@@ -47,8 +47,8 @@ export function CalendarPopulationSportingPanel({ runId, branchId, head, checkpo
     <p>{checkpoint.player_count} {cs ? 'hráčů · 57 atributů každého hráče' : 'players · 57 attributes per player'} · {checkpoint.saved
       ? (cs ? 'Uloženo' : 'Saved') : (cs ? 'Čeká na ruční Save' : 'Awaiting manual Save')}</p>
     <p className="status">{cs
-      ? 'Účastníci přebírají konečnou formu, rozehranost a únavu z turnaje. Ostatní hráči zůstávají beze změny na výchozím stavu. Týden se neposouvá a roční vývoj ani zdravotní účinky se zde nepočítají.'
-      : 'Entrants retain terminal form, sharpness and fatigue from the knockout. Other players retain their bootstrap state. This does not advance the week or calculate annual development or Health effects.'}</p>
+      ? 'Stav přebírá formu, rozehranost a únavu z odehraných zápasů. Hráči bez zápasu zůstávají na výchozím stavu. Týden se neposouvá a roční vývoj ani zdravotní účinky se zde nepočítají.'
+      : 'State retains form, sharpness and fatigue from played matches. Players without a match retain their bootstrap state. This does not advance the week or calculate annual development or Health effects.'}</p>
     <label>{cs ? 'Hráč populace' : 'Population player'}<select value={playerId} onChange={e => setSelected(e.target.value)}>
       {playerIds.map(id => <option key={id} value={id}>{id}</option>)}
     </select></label>

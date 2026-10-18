@@ -5302,3 +5302,23 @@ export function inspectCalendarSportingPlayer(runId: string, branchId: string, p
   return request(knockoutRoot(runId, branchId) + '/sporting-checkpoint/players/'
     + encodeURIComponent(playerId) + '?' + params.toString())
 }
+
+function continuationRoot(runId: string, branchId: string): string {
+  return authoritativeSimulationRoot(runId, branchId) + '/calendar-continuation'
+}
+export function inspectCalendarContinuation(runId: string, branchId: string): Promise<import('./calendarContinuation').ContinuationView> {
+  return request(continuationRoot(runId, branchId))
+}
+export function simulateCalendarContinuation(runId: string, branchId: string, command: import('./calendarContinuation').ContinuationCommand): Promise<import('./calendarContinuation').ContinuationReceipt> {
+  return request(continuationRoot(runId, branchId) + '/simulate', { method: 'POST', body: JSON.stringify(command) })
+}
+export function saveCalendarContinuation(runId: string, branchId: string, draft: number, fingerprint: string): Promise<unknown> {
+  return request(continuationRoot(runId, branchId) + '/save', { method: 'POST', body: JSON.stringify({
+    expected_draft_version: draft, expected_calendar_sporting_fingerprint: fingerprint,
+  }) })
+}
+export function replayCalendarContinuation(runId: string, branchId: string, matchId: string): Promise<{
+  match_id: string; fingerprint: string; winner_player_id: string; rally_count: number; exact_replay: boolean
+}> {
+  return request(continuationRoot(runId, branchId) + '/' + encodeURIComponent(matchId) + '/replay')
+}

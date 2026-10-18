@@ -5490,6 +5490,7 @@ class SimulationPersistenceRepository:
         expected_initial_world_fingerprint: str | None = None,
         expected_simulation_fingerprint: str | None = None,
         expected_calendar_match_fingerprint: str | None = None,
+        expected_calendar_sporting_fingerprint: str | None = None,
         expected_run_prospect_source_fingerprint: str | None = None,
         expected_run_package_fingerprint: str | None = None,
         expected_run_tournament_lab_draft_fingerprint: str | None = None,
@@ -5504,6 +5505,7 @@ class SimulationPersistenceRepository:
                 expected_initial_world_fingerprint,
                 expected_simulation_fingerprint,
                 expected_calendar_match_fingerprint,
+                expected_calendar_sporting_fingerprint,
                 expected_run_prospect_source_fingerprint,
                 expected_run_package_fingerprint,
                 expected_run_tournament_lab_draft_fingerprint,
@@ -5517,6 +5519,8 @@ class SimulationPersistenceRepository:
             revision_kind = "initial_world"
         elif expected_simulation_fingerprint is not None:
             revision_kind = "authoritative_simulation"
+        elif expected_calendar_sporting_fingerprint is not None:
+            revision_kind = "calendar_sporting_checkpoint"
         elif expected_calendar_match_fingerprint is not None:
             revision_kind = "calendar_standalone_match"
         elif expected_run_prospect_source_fingerprint is not None:
@@ -5793,6 +5797,17 @@ class SimulationPersistenceRepository:
                         "kind": "authoritative_simulation",
                         "summary": "Saved authoritative simulation state",
                         "simulation_fingerprint": component["fingerprint"],
+                    }
+                elif expected_calendar_sporting_fingerprint is not None:
+                    component = payload["content"].get("calendar_player_sporting_checkpoint")
+                    if component is None or component["fingerprint"] != expected_calendar_sporting_fingerprint:
+                        raise WorkingDraftConflictError("Population sporting checkpoint changed since Save review")
+                    if state.saved_revision.payload["content"].get("calendar_player_sporting_checkpoint") == component:
+                        raise WorkingDraftConflictError("Population sporting checkpoint is already saved")
+                    summary = {
+                        "kind": "calendar_sporting_checkpoint", "summary": "Saved continued calendar sporting state and played matches",
+                        "population_sporting_checkpoint_fingerprint": component["fingerprint"],
+                        "continuation_match_count": len(component["state"].get("continuations", [])),
                     }
                 elif expected_calendar_match_fingerprint is not None:
                     component = payload["content"].get(CALENDAR_MATCH_COMPONENT_KEY)

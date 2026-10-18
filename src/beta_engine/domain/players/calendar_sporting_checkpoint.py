@@ -6,9 +6,10 @@ remains in Health; no recovery, ageing or time advancement is implied.
 """
 from typing import Literal
 
-from pydantic import Field, model_validator
+from pydantic import Field, model_validator, model_serializer
 
 from beta_engine.domain.calendar.run_week_position import RunWeekPosition
+from beta_engine.domain.players.calendar_continuation_match import CalendarContinuationMatch
 from beta_engine.domain.players.calendar_canonical_match import CalendarCanonicalPlayerSource, CalendarCanonicalMatchSource
 from beta_engine.domain.players.sporting import PlayerSportingBootstrapPolicy, PlayerSportingRecord
 from beta_engine.domain.players.sporting_bootstrap import derive_bootstrap_record
@@ -17,11 +18,11 @@ from beta_engine.domain.run_packages import canonical_hash
 
 
 class CalendarSportingCheckpoint(FrozenInput):
-    schema_version: Literal['calendar_sporting_checkpoint.v1'] = 'calendar_sporting_checkpoint.v1'
+    schema_version: Literal['calendar_sporting_checkpoint.v1', 'calendar_sporting_checkpoint.v2'] = 'calendar_sporting_checkpoint.v1'
     run_id: str = Field(min_length=1)
     branch_id: str = Field(min_length=1)
     week: RunWeekPosition
-    phase: Literal['opening_week_after_knockout'] = 'opening_week_after_knockout'
+    phase: Literal['opening_week_after_knockout', 'opening_week_continued'] = 'opening_week_after_knockout'
     source_saved_head: str = Field(min_length=1)
     source_initial_world_fingerprint: str = Field(pattern=r'^[0-9a-f]{64}$')
     source_knockout_fingerprint: str = Field(pattern=r'^[0-9a-f]{64}$')
@@ -30,8 +31,22 @@ class CalendarSportingCheckpoint(FrozenInput):
     annual_development_applied: Literal[False] = False
     health_effects_applied: Literal[False] = False
 
+    continuations: tuple[CalendarContinuationMatch, ...] = ()
+
+    @model_serializer(mode='wrap')
+    def historical_shape(self, handler):
+        body = handler(self)
+        if self.schema_version == 'calendar_sporting_checkpoint.v1':
+            body.pop('continuations', None)
+        return body
+
     @model_validator(mode='after')
     def validate_checkpoint(self):
+        if self.schema_version == 'calendar_sporting_checkpoint.v1':
+            if 'continuations' in self.model_fields_set or self.phase != 'opening_week_after_knockout':
+                raise ValueError('Historical checkpoint cannot acquire continuation history')
+        elif not self.continuations or self.phase != 'opening_week_continued':
+            raise ValueError('Continued checkpoint requires actual match history')
         ids = tuple(p.player_id for p in self.players)
         if ids != tuple(sorted(set(ids))):
             raise ValueError('Calendar sporting checkpoint requires the sorted unique population')

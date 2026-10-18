@@ -1,7 +1,7 @@
 # Current implementation — Master v85
 
-Audited buuk `002d0c93c914895187eff8ed17f0782ff93ee19b` after merged #1529, 17 October 2026.
-#1520–1529 are merged; no open PR at task start. Refresh before new work.
+Audited buuk `3dd96c8b2d85d44cfbfa34c4a309fed1cd1e4eb0` after merged #1530, 18 October 2026.
+#1520–1530 are merged; no open PR at task start. Refresh before new work.
 Master remains v85; this task changes sporting execution, not product decisions.
 
 **Merged and usable:** calendar creation/first Save, population and Health facts,
@@ -12,8 +12,10 @@ MatchEngine logs, manual immutable Save, exact replay/restart/restore, reviewed
 operator-authored points with a second Save, and a hypothetical as-of one-event
 scoreboard with W-week expiry. Real W52 1,000-player Chromium acceptance passed.
 
-**Hard limits:** one native opening-week sporting operation per Branch. Seven-value
-population compatibility projection, no full canonical sporting/Health effects.
+**Hard limits:** one native opening knockout per Branch; the current candidate
+adds only explicit sequential exhibitions from its Saved checkpoint. Population
+source generation retains provisional seven-value calibration; numeric Health
+effects and annual development are incomplete.
 Prepared points and hypothetical future eligibility are not Official publication
 or an advanced clock. Population-only is not proven Tour entry. Match-containing
 fork remains blocked. Legacy W61 sporting guards remain on unsupported calendars,
@@ -81,7 +83,7 @@ The initial pool still originates in seven-value calibration; this is a real
 57-backed match-input slice, **not** full world/week sporting ownership, historical
 cohort development, a native 57-dimensional rally formula or annual advancement.
 
-**Current candidate:** new knockout writes use explicit v5 and atomically create
+**Merged #1530:** new knockout writes use explicit v5 and atomically create
 `calendar_sporting_checkpoint.v1`, a Run/Branch-owned native checkpoint containing
 all population players and all 57 attributes. Actual entrants retain terminal
 form/load; nonparticipants retain exact provisional bootstrap records. One manual
@@ -93,8 +95,19 @@ See [contract](docs/CALENDAR_POPULATION_SPORTING_CHECKPOINT_V1.md).
 This is real persisted population ownership, but still one opening operation per
 Branch: it does not itself implement a second event, development or an advanced week.
 
-**Next:** consume the native checkpoint in actual subsequent sporting/weekly
-operations without reinitializing form/load; add historically configured points,
+**Current candidate:** actual sequential opening-week exhibitions consume the
+Saved native full-population 57-attribute/form/load checkpoint. Explicit v2 stores
+an ordered match ledger and current population, with existing match effects applied
+to only two participants. Each new match requires Save of its predecessor; exact
+retries, independent manual Save, replay, restore/restart, Health and compatible
+horizon extension retain authority. CS/EN Admin supports play/Save/history/replay.
+See [contract](docs/CALENDAR_STATEFUL_CONTINUATION_V1.md). This removes the blanket
+one-operation limit for these bounded sequential exhibitions, not for additional
+Tour tournaments or weekly progression. No recovery/development/ageing or points
+are introduced; frozen v1–v5 tournament and v1 population bytes remain intact.
+
+**Next:** native weekly ownership/development and actual Week/Season Transition
+from the played terminal checkpoint; add historically configured points,
 Tour entry, Official publication and real Week/Season transitions/Full Simulation.
 Preserve historical schemas/hashes and manual Save; do not weaken guards or create
 another sequence of read-only candidate wrappers. Complete pre-alpha scope and

@@ -45,6 +45,12 @@ def verify_checkpoint(state, world, evidence):
     if state is None or world is None:
         raise ValueError('Played v5 knockout requires its complete population sporting checkpoint')
     expected = build_calendar_sporting_checkpoint(world, knockout, calendar_engine_player)
+    from beta_engine.domain.players.calendar_continuation_match import append_continuation
+    reserved_ids = {knockout.match_id, *(m.input_context.match_id for m in knockout.matches)}
+    for entry in state.continuations:
+        if entry.match_id in reserved_ids or entry.command_id == knockout.command_id:
+            raise ValueError('Continuation reuses original knockout identity')
+        expected = append_continuation(expected, world, entry)
     if state != expected:
         raise ValueError('Calendar sporting checkpoint differs from population and played terminal evidence')
 
@@ -63,6 +69,12 @@ def saved_checkpoint(payload, evidence, *, run_id, branch_id):
     required = knockout is not None and knockout.schema_version == 'calendar_opening_knockout.v5'
     world = load_saved_initial_world(payload, run_id=run_id, branch_id=branch_id) if required or state else None
     verify_checkpoint(state, world, evidence)
+    if state and state.continuations:
+        from beta_engine.domain.calendar.run_calendar import RunCalendar
+        clock = RunCalendar.from_metadata(payload['run']['run_calendar'])
+        last = state.continuations[-1].week.calendar
+        if (last.weeks_per_year, last.season_start_year_week, last.start_year) != (clock.weeks_per_year, clock.season_start_year_week, clock.start_year) or last.season_count > clock.season_count:
+            raise ValueError('Saved continuation clock exceeds its Run horizon')
     return state
 
 
@@ -87,3 +99,13 @@ def restore_checkpoint(session, *, current_payload, target_payload, current, tar
         session.flush()
     if replacement is not None:
         put_checkpoint(session, replacement)
+
+
+def replace_checkpoint(session, *, previous, successor):
+    live = load_checkpoint(session, run_id=previous.run_id, branch_id=previous.branch_id)
+    if live != previous or (successor.run_id, successor.branch_id) != (previous.run_id, previous.branch_id):
+        raise ValueError('Population sporting checkpoint changed before atomic replacement')
+    row = session.get(CalendarPlayerSportingCheckpointModel, (previous.run_id, previous.branch_id))
+    row.fingerprint = successor.fingerprint
+    row.payload_json = successor.model_dump_json()
+    session.flush()

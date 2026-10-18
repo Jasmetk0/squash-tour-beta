@@ -279,4 +279,66 @@ describe('continuation interaction (HTTP boundary mocked)',()=>{
     expect(api.simulateCalendarEightScoredFollowupKnockout).not.toHaveBeenCalled()
   })
 
+  it('requires fresh closure consent, closes the Saved result and leaves its Save explicit', async () => {
+    const rounds = [
+      ['qf1','a','b','a'], ['qf2','c','d','c'], ['qf3','e','f','e'], ['qf4','g','h','g'],
+      ['sf1','a','c','a'], ['sf2','e','g','e'], ['final','a','e','a'],
+    ] as const
+    const matches = rounds.map(([id,a,b,winner],i) => ({
+      match_id: 'draw:'+id, sequence: i+1, fingerprint: 'b'.repeat(64),
+      player_ids: [a,b] as [string,string], winner_player_id: winner, rally_count: 50, saved: true,
+    }))
+    const stages = ['champion','quarterfinal','semifinal','quarterfinal','finalist','quarterfinal','semifinal','quarterfinal'] as const
+    const players = ['a','b','c','d','e','f','g','h'].map((player_id,i) => ({
+      player_id, reached_stage: stages[i],
+      played_match_ids: matches.filter(m => m.player_ids.includes(player_id)).map(m => m.match_id),
+      wins: matches.filter(m => m.winner_player_id === player_id).length,
+      losses: player_id === 'a' ? 0 : 1,
+      prepared_points: ({champion:100,finalist:60,semifinal:30,quarterfinal:15})[stages[i]],
+    }))
+    const source: ContinuationView = {...view(), player_ids: players.map(p => p.player_id), matches,
+      sporting_week: {calendar:{weeks_per_year:52,season_start_year_week:52,start_year:2030,season_count:3},season_index:0,week:2},
+      weekly_advance_count:1, weekly_advances:[{command_id:'week',fingerprint:'e'.repeat(64),completed_week:1,target_week:2,saved:true}],
+      tournaments:[{tournament_id:'draw',command_id:'play-draw',fingerprint:'c'.repeat(64),week:2,
+        entrant_ids:players.map(p => p.player_id),winner_player_id:'a',match_ids:matches.map(m => m.match_id),saved:true,
+        scope:'sporting_exhibition_knockout_not_official',prepared_points_status:'prepared_not_official',
+        prepared_policy:{category_label:'Prepared only',champion:100,finalist:60,semifinal:30,quarterfinal:15,validity_weeks:52},
+        prepared_awards:players.map(p => ({player_id:p.player_id,reached_stage:p.reached_stage,main_points:p.prepared_points,
+          source_policy_fingerprint:'d'.repeat(64),source_tournament_fingerprint:'e'.repeat(64)})),
+        result_closed:false,result_closure_saved:false}],closures:[],
+    }
+    let after = source
+    api.inspectCalendarContinuation.mockImplementation(async () => after)
+    api.closeNativeCalendarTournamentResult.mockImplementation(async (_r,_b,command) => {
+      const closure = {command_id:command.command_id,tournament_id:'draw',fingerprint:'f'.repeat(64),
+        source_tournament_fingerprint:'c'.repeat(64),champion_player_id:'a',finalist_player_id:'e',
+        scope:'played_native_result_closed_not_official' as const,saved:false,players}
+      after = {...source,saved:false,can_play:false,checkpoint_fingerprint:'1'.repeat(64),
+        tournaments:source.tournaments!.map(t => ({...t,result_closed:true})),closures:[closure]}
+      return {schema_version:'calendar_native_tournament_closure_receipt.v1',
+        fingerprint:closure.fingerprint,checkpoint_fingerprint:after.checkpoint_fingerprint,
+        official_ranking_published:false,publication_status:'native_result_closed_not_official',
+        closure:{...closure,source_saved_head:command.expected_saved_head,
+          source_checkpoint_fingerprint:command.expected_checkpoint_fingerprint,
+          source_week_event_count:2,source_prepared_awards_fingerprint:'2'.repeat(64),request_fingerprint:'3'.repeat(64)}}
+    })
+    render(panel()); await screen.findByRole('button',{name:'Close native tournament result'})
+    const button = screen.getByRole('button',{name:'Close native tournament result'})
+    fireEvent.change(screen.getByLabelText('Continuation reason'),{target:{value:'Review seven actual results'}})
+    expect(button).toBeDisabled()
+    fireEvent.click(screen.getByLabelText('Confirm closing actual played results, NOT Official publication.'))
+    expect(button).toBeEnabled()
+    fireEvent.change(screen.getByLabelText('Continuation reason'),{target:{value:'Changed review'}})
+    expect(button).toBeDisabled()
+    fireEvent.click(screen.getByLabelText('Confirm closing actual played results, NOT Official publication.'))
+    fireEvent.click(button)
+    await screen.findByRole('table',{name:'Closed tournament results'})
+    expect(api.closeNativeCalendarTournamentResult).toHaveBeenCalledWith('r','b',expect.objectContaining({
+      expected_saved_head:'head',expected_checkpoint_fingerprint:fp,tournament_id:'draw',
+      explicit_result_confirmation:true,audit_reason:'Changed review',
+    }))
+    expect(api.saveCalendarContinuation).not.toHaveBeenCalled()
+    expect(screen.getByRole('button',{name:'Review continuation Save'})).toBeEnabled()
+    expect(screen.queryByRole('button',{name:'Close native tournament result'})).not.toBeInTheDocument()
+  })
 })

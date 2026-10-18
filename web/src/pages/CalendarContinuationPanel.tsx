@@ -39,7 +39,7 @@ export function CalendarContinuationPanel({ runId, branchId, head, onChange }: {
     return () => { epoch.current += 1 }
   }, [target, runId, branchId, head])
   useEffect(() => { commandId.current = null; weekCommandId.current = null; knockoutCommandId.current = null
-    setConsent(false); setKnockoutConsent(false); setWeekConsent(false); setWeekReview(null) }, [target, a, b, seed, reason, ...knockoutEntrants])
+    setConsent(false); setKnockoutConsent(false); setWeekConsent(false); setWeekReview(null) }, [target, a, b, seed, reason, knockoutEntrants.join('|')])
   const read = async () => verifyContinuation(await inspectCalendarContinuation(runId, branchId), runId, branchId, head)
   const perform = async (action: 'play' | 'review' | 'save' | 'replay' | 'week-review' | 'week-commit' | 'knockout', matchId?: string) => {
     if (!view || busy) return
@@ -69,7 +69,7 @@ export function CalendarContinuationPanel({ runId, branchId, head, onChange }: {
           || !view.sporting_week || view.sporting_week.week < 2
           || knockoutEntrants.length !== 4 || new Set(knockoutEntrants).size !== 4
           || knockoutEntrants.some(p => !view.player_ids.includes(p))
-          || !knockoutConsent || !reason.trim() || !/^-?\\d+$/.test(seed)
+          || !knockoutConsent || !reason.trim() || !/^-?\d+$/.test(seed)
           || !Number.isSafeInteger(Number(seed))) return
         knockoutCommandId.current ??= newCommandId()
         const command: FollowupKnockoutCommand = {
@@ -161,7 +161,7 @@ export function CalendarContinuationPanel({ runId, branchId, head, onChange }: {
           onChange={e => setKnockoutConsent(e.target.checked)} />{cs ? 'Potvrzuji odehrání všech tří zápasů z tohoto Save.' : 'Confirm playing all three matches from this Save.'}</label>
         <button disabled={busy || !knockoutConsent || !view.can_play
           || knockoutEntrants.length !== 4 || new Set(knockoutEntrants).size !== 4
-          || !reason.trim() || !/^-?\\d+$/.test(seed) || !Number.isSafeInteger(Number(seed))}
+          || !reason.trim() || !/^-?\d+$/.test(seed) || !Number.isSafeInteger(Number(seed))}
           onClick={() => void perform('knockout')}>{cs ? 'Odehrát další čtyřčlenný turnaj' : 'Play next four-player knockout'}</button>
       </section>}
       {view.sporting_week && <section aria-label="Sporting weekly preparation">

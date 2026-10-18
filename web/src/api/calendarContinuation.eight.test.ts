@@ -7,6 +7,10 @@ const view: ContinuationView = {
   saved_head_revision_id: 'head', draft_version: 1, checkpoint_fingerprint: hash('a'),
   player_ids: ['a','b','c','d','e','f','g','h'],
   saved: true, can_play: true, limited_player_ids: [], health_numeric_effect_applied: false,
+  sporting_week: {
+    calendar: {weeks_per_year: 52, season_start_year_week: 52, start_year: 2030, season_count: 3},
+    season_index: 0, week: 2,
+  },
   matches: [],
 }
 const cmd: FollowupEightCommand = {

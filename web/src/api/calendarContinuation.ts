@@ -4,7 +4,8 @@ export type ContinuationView = {
   player_ids: string[]; saved: boolean; can_play: boolean; limited_player_ids: string[]
   sporting_week?: { calendar: { weeks_per_year: number; season_start_year_week: number; start_year: number; season_count: number }; season_index: number; week: number } | null
   tournaments?: { tournament_id: string; command_id: string; fingerprint: string; week: number
-    entrant_ids: string[]; winner_player_id: string; match_ids: string[]; saved: boolean
+    entrant_ids: string[]; entrant_count?: number; match_count?: number
+    winner_player_id: string; match_ids: string[]; saved: boolean
     scope: 'sporting_exhibition_knockout_not_official'
     prepared_points_status?: 'not_prepared' | 'prepared_not_official'
     prepared_policy?: FollowupPointPolicy | null
@@ -44,8 +45,12 @@ export function verifyContinuation(v: ContinuationView, run: string, branch: str
       || (v.saved && !m.saved))) throw Error('Continuation source/history changed')
   if (v.tournaments && (!Array.isArray(v.tournaments) || v.tournaments.some(t =>
     !hash(t.fingerprint) || t.scope !== 'sporting_exhibition_knockout_not_official'
-    || t.entrant_ids.length !== 4 || new Set(t.entrant_ids).size !== 4
-    || t.entrant_ids.some(p => !v.player_ids.includes(p)) || t.match_ids.length !== 3
+    || ![4, 8].includes(t.entrant_ids.length)
+    || new Set(t.entrant_ids).size !== t.entrant_ids.length
+    || (t.entrant_count !== undefined && t.entrant_count !== t.entrant_ids.length)
+    || (t.match_count !== undefined && t.match_count !== t.match_ids.length)
+    || t.entrant_ids.some(p => !v.player_ids.includes(p))
+    || t.match_ids.length !== t.entrant_ids.length - 1
     || t.match_ids.some(id => !v.matches.some(m => m.match_id === id))
     || !t.entrant_ids.includes(t.winner_player_id) || typeof t.saved !== 'boolean'
     || (v.saved && !t.saved)
@@ -132,6 +137,7 @@ export type FollowupKnockoutReceipt = {
   prepared_awards?: FollowupPreparedAward[]
   prepared_policy_fingerprint?: string
   tournament: {
+    schema_version?: 'calendar_followup_knockout.v1' | 'calendar_followup_knockout.v2' | 'calendar_followup_knockout.v3'
     run_id: string; branch_id: string; command_id: string; tournament_id: string
     source_saved_head: string; source_checkpoint_fingerprint: string
     entrant_ids: string[]; matches: { match_id: string; sequence: number; fingerprint?: string
@@ -181,5 +187,46 @@ export function verifyFollowupKnockout(
   } else if (receipt.prepared_awards?.length || receipt.publication_status) {
     throw Error('Unscored knockout cannot gain prepared awards')
   }
+  return receipt
+}
+
+export type FollowupEightCommand = Omit<FollowupKnockoutCommand, 'entrant_ids'> & {
+  entrant_ids: [string, string, string, string, string, string, string, string]
+}
+
+/** Historical 4-player results use the separate v1/v2 verifier above. */
+export function verifyEightFollowupKnockout(
+  receipt: FollowupKnockoutReceipt, command: FollowupEightCommand, view: ContinuationView,
+): FollowupKnockoutReceipt {
+  const e = receipt?.tournament, hash = (x: unknown) => typeof x === 'string' && /^[0-9a-f]{64}$/.test(x)
+  const names = ['qf1', 'qf2', 'qf3', 'qf4', 'sf1', 'sf2', 'final']
+  if (!receipt || !e || receipt.schema_version !== 'calendar_followup_knockout_receipt.v1'
+    || e.schema_version !== 'calendar_followup_knockout.v3'
+    || receipt.official_ranking_published !== false
+    || receipt.scope !== 'sporting_exhibition_knockout_not_official'
+    || !!receipt.publication_status || !!receipt.prepared_awards?.length
+    || !hash(receipt.fingerprint) || !hash(receipt.checkpoint_fingerprint)
+    || e.run_id !== view.run_id || e.branch_id !== view.branch_id
+    || e.source_saved_head !== view.saved_head_revision_id
+    || e.source_checkpoint_fingerprint !== view.checkpoint_fingerprint
+    || e.tournament_id !== command.tournament_id || e.command_id !== command.command_id
+    || e.entrant_ids.length !== 8 || new Set(e.entrant_ids).size !== 8
+    || e.entrant_ids.some((p, i) => p !== command.entrant_ids[i])
+    || !Array.isArray(e.matches) || e.matches.length !== 7
+    || e.matches.some((m, i) => m.match_id !== command.tournament_id + ':' + names[i]
+      || m.sequence !== view.matches.length + i + 1)
+  ) throw Error('Eight-player tournament source changed')
+  const pairs = e.matches.map(m => [m.result.player_a_id, m.result.player_b_id])
+  const winners = e.matches.map(m => m.result.winner_player_id)
+  for (let i=0; i<4; i++) {
+    if (pairs[i][0] !== command.entrant_ids[2*i] || pairs[i][1] !== command.entrant_ids[2*i+1]) {
+      throw Error('Eight-player quarterfinal draw changed')
+    }
+  }
+  if (pairs[4][0] !== winners[0] || pairs[4][1] !== winners[1]
+    || pairs[5][0] !== winners[2] || pairs[5][1] !== winners[3]
+    || pairs[6][0] !== winners[4] || pairs[6][1] !== winners[5]
+    || receipt.winner_player_id !== winners[6] || !command.entrant_ids.includes(winners[6])
+  ) throw Error('Eight-player semifinal or final winner lineage changed')
   return receipt
 }

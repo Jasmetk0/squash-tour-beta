@@ -172,3 +172,22 @@ Saved owner; UI has independent CS/EN point confirmation and history.
 The real configured Tour Edition/Entry and Official publication remain
 next, not implicitly unlocked by prepared scoring. See
 `docs/CALENDAR_FOLLOWUP_PREPARED_POINTS_V1.md`.
+
+
+**Merged #1536, merge verified on 18 October 2026:** explicit operator-prepared
+scores for real *four-player* later-week knockouts use v2 tournament events
+and v5 full-population checkpoints, with independent confirmation, replay
+and manual immutable Save. They remain not Official Ranking; the owner
+chose to defer the aggregate post-merge test review. The latest verified
+buuk merge SHA at next-task start was `28365c3f98cdc6401ea6067d50a1daec94664444`.
+
+**In-progress native eight-player tournament slice:** new `calendar_followup_knockout.v3`
+adds one atomically played seven-match tournament (four qfs/two sfs/final)
+from the Saved 57-attribute population and exact player states.
+`calendar_sporting_checkpoint.v6` retains full history and weekly recovery;
+all older event/checkpoint schema bytes and sources remain immutable.
+Separate Run/Branch API, CS/EN eight-draw Admin, explicit seven-match consent,
+Saved history/replay/restart/restore and W52/W80 tests are included.
+Scoring is intentionally unavailable for eight-player exhibitions;
+configured Tour Entry, Official Ranking and full Week/Season Transition
+remain unimplemented. See `docs/CALENDAR_FOLLOWUP_EIGHT_KNOCKOUT_V1.md`.

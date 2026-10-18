@@ -5315,6 +5315,9 @@ export function simulateCalendarContinuation(runId: string, branchId: string, co
 export function simulateCalendarFollowupKnockout(runId: string, branchId: string, command: import('./calendarContinuation').FollowupKnockoutCommand): Promise<import('./calendarContinuation').FollowupKnockoutReceipt> {
   return request(continuationRoot(runId, branchId) + '/knockouts/simulate', { method: 'POST', body: JSON.stringify(command) })
 }
+export function simulateCalendarEightFollowupKnockout(runId: string, branchId: string, command: import('./calendarContinuation').FollowupEightCommand): Promise<import('./calendarContinuation').FollowupKnockoutReceipt> {
+  return request(continuationRoot(runId, branchId) + '/knockouts/simulate-eight', { method: 'POST', body: JSON.stringify(command) })
+}
 export function simulateCalendarScoredFollowupKnockout(runId: string, branchId: string, command: import('./calendarContinuation').FollowupScoredCommand): Promise<import('./calendarContinuation').FollowupKnockoutReceipt> {
   return request(continuationRoot(runId, branchId) + '/knockouts/simulate-scored', { method: 'POST', body: JSON.stringify(command) })
 }

@@ -34,7 +34,7 @@ def test_native_tour_save_validates_once_before_commit_and_rolls_back_on_error(
         execute(server, command(initial_view, "initialize", name="quick-initialize"))
         dirty = inspect(server)
         assert not dirty["saved"]
-        assert dirty["saved_head_revision_id"] == last_saved["saved_revision"]["revision_id"]
+        assert dirty["saved_head_revision_id"] == last_saved["revision_id"]
 
         # Deliberately break the ONE final snapshot verification, without
         # touching signed history, to prove validation still occurs before

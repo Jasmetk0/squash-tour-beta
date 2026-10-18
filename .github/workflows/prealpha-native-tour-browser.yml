@@ -30,7 +30,9 @@ jobs:
   browser:
     name: Native Tour W${{ matrix.width }} / ${{ matrix.players }} players
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    # A performance regression must fail promptly rather than consuming another
+    # 25-30 minute CI cycle. The full W80 scenario remains mandatory.
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:

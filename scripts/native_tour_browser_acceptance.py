@@ -230,7 +230,14 @@ def main():
                     "Actual browser acceptance over configured Edition and saved players"
                 )
                 check_errors()
-                return time.monotonic() - save_started
+                elapsed = time.monotonic() - save_started
+                if args.players >= 1000 and elapsed > 90:
+                    raise AssertionError(
+                        f"W80/1000 native Tour Save performance regression: "
+                        f"{elapsed:.1f}s (90s budget). Full sporting/Save "
+                        "verification must be optimized, not given a longer timeout."
+                    )
+                return elapsed
 
             def operation(label, container=None, *, save_after=True):
                 began = time.monotonic()

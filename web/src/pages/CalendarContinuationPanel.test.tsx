@@ -162,7 +162,8 @@ describe('continuation interaction (HTTP boundary mocked)',()=>{
     let after:ContinuationView=source
     api.inspectCalendarContinuation.mockImplementationOnce(async()=>source).mockImplementation(async()=>after)
     api.simulateCalendarScoredFollowupKnockout.mockImplementation(async(_r:string,_b:string,cmd:{
-      command_id:string;tournament_id:string;entrant_ids:string[]})=>{
+      command_id:string;tournament_id:string;entrant_ids:string[]
+      point_policy: { category_label:string; champion:number; finalist:number; semifinal:number; validity_weeks:number }})=>{
       const matchIds=['sf1','sf2','final'].map(s=>cmd.tournament_id+':'+s)
       const matches=[
         {match_id:matchIds[0],sequence:1,result:{player_a_id:'a',player_b_id:'b',winner_player_id:'a'}},
@@ -175,7 +176,8 @@ describe('continuation interaction (HTTP boundary mocked)',()=>{
       after={...source,saved:false,can_play:false,checkpoint_fingerprint:'b'.repeat(64),
         tournaments:[{tournament_id:cmd.tournament_id,command_id:cmd.command_id, fingerprint:'c'.repeat(64),
           week:2,entrant_ids:cmd.entrant_ids,winner_player_id:'a',match_ids:matchIds,saved:false,
-          scope:'sporting_exhibition_knockout_not_official',prepared_points_status:'prepared_not_official',prepared_awards:awards}],
+          scope:'sporting_exhibition_knockout_not_official',prepared_points_status:'prepared_not_official',
+          prepared_policy:cmd.point_policy,prepared_awards:awards}],
         matches:matches.map(m=>({match_id:m.match_id,sequence:m.sequence,fingerprint:'a'.repeat(64),
           player_ids:[m.result.player_a_id,m.result.player_b_id] as [string,string],
           winner_player_id:m.result.winner_player_id,rally_count:99,saved:false}))}

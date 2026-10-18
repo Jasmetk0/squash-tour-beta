@@ -243,20 +243,8 @@ def test_tour_restore_lifecycle_reuses_signed_inputs_but_checks_live(monkeypatch
 
     payload, original = _source_payload()
 
-    class Rows:
-        def order_by(self, *_args):
-            return self
-
-    class Session:
-        def scalars(self, _query):
-            return Rows()
-
-        def execute(self, _query):
-            pass
-
     # The validated inputs must NOT fold Saved life again, but SQLite must
     # still be independently read and compared before any restoration write.
-    loaded = []
     def fail_validation(*_a, **_k):
         raise AssertionError("Redundant full Signed lifecycle replay")
     monkeypatch.setattr(module, "load_saved_lifecycle", fail_validation)

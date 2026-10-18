@@ -233,17 +233,36 @@ def main():
                 review = panel.get_by_role("region", name="Tour command review")
                 expect(review).to_be_visible()
                 panel.get_by_label("Confirm Tour command").check()
-                with page.expect_response(
-                    lambda r: (
-                        r.request.method == "POST"
-                        and r.url.endswith("/calendar-tour/execute")
-                    )
-                ) as done:
+                # The authenticated post-command inspection can rebuild a long
+                # immutable sporting history. Await its actual response before
+                # asserting the Working Draft UI; a 30s auto-retry of a locator
+                # alone confuses slow but successful reads with missing controls.
+                with (
+                    page.expect_response(
+                        lambda r: (
+                            r.request.method == "GET"
+                            and r.url
+                            == api + "/admin/runs/run/branches/branch/calendar-tour"
+                        )
+                    ) as inspected,
+                    page.expect_response(
+                        lambda r: (
+                            r.request.method == "POST"
+                            and r.url.endswith("/calendar-tour/execute")
+                        )
+                    ) as done,
+                ):
                     panel.get_by_role(
                         "button", name="Execute confirmed operation", exact=True
                     ).click()
                 response = done.value
                 assert response.status == 201, response.text()
+                refreshed = inspected.value
+                assert refreshed.status == 200, refreshed.text()
+                refreshed_view = refreshed.json()
+                assert not refreshed_view["saved"], "The confirmed operation must remain an unsaved Working Draft"
+                assert refreshed_view["run_id"] == "run" and refreshed_view["branch_id"] == "branch"
+                assert refreshed_view["saved_head_revision_id"] == evidence["last_saved_head"]
                 expect(panel.get_by_label("Confirm Tour Save")).to_be_visible()
                 save()
                 evidence["operations"].append(
@@ -255,7 +274,7 @@ def main():
 
             def create(name, week):
                 details = panel.locator("details").first
-                if not details.get_attribute("open"):
+                if details.get_attribute("open") is None:
                     details.locator("summary").click()
                 panel.get_by_label("Tour Edition ID", exact=True).fill(name)
                 panel.get_by_label("Tour Edition name", exact=True).fill(
@@ -344,7 +363,7 @@ def main():
                 panel.get_by_role("complementary", name="Official point contributions")
             ).to_be_visible()
             details = panel.locator("details").last
-            if not details.get_attribute("open"):
+            if details.get_attribute("open") is None:
                 details.locator("summary").click()
             player = panel.get_by_label("Tour player state")
             player.select_option(player.locator("option").nth(1).get_attribute("value"))

@@ -156,18 +156,25 @@ class CalendarFollowupKnockoutService:
                 raise ValueError("Save the sporting checkpoint before the next knockout")
             if not state.week_events or state.week.ordinal < 1:
                 raise ValueError("Later knockout requires a Saved native sporting advance to Week 2 or later")
-            if (command.command_id in {
-                    opening.command_id,
-                    *(e.command_id for e in state.weekly_advances),
-                    *(e.command_id for e in state.played_continuations),
-                    *(e.command_id for e in state.closures),
-                } or command.tournament_id == opening.match_id):
+            reserved_commands = {
+                opening.command_id,
+                *(e.command_id for e in state.weekly_advances),
+                *(e.command_id for e in state.played_continuations),
+                *(e.command_id for e in state.tournaments),
+                *(e.command_id for e in state.closures),
+            }
+            if (command.command_id in reserved_commands or command.tournament_id == opening.match_id):
                 raise ValueError("Knockout identity collides with played history")
             reserved = {opening.match_id, *(m.input_context.match_id for m in opening.matches)}
             reserved.update(e.match_id for e in state.played_continuations)
             rounds = ROUNDS_EIGHT if isinstance(command, CalendarFollowupEightCommand) else ROUNDS
             if any(f"{command.tournament_id}:{suffix}" in reserved for suffix in rounds):
                 raise ValueError("Knockout match ID collides with played match history")
+            if any(f"{command.command_id}:{suffix}" in reserved_commands for suffix in rounds):
+                raise ValueError("Knockout nested command ID collides with sporting history")
+            if (isinstance(command, (CalendarFollowupEightScoredCommand, CalendarFollowupScoredCommand))
+                    and command.point_policy.validity_weeks != clock.weeks_per_year):
+                raise ValueError("Prepared point validity must equal the Run year W")
             prior = state
             results = []
             eight = isinstance(command, CalendarFollowupEightCommand)
@@ -223,8 +230,6 @@ class CalendarFollowupKnockoutService:
                 matches=tuple(results),
             )
             if isinstance(command, (CalendarFollowupEightScoredCommand, CalendarFollowupScoredCommand)):
-                if command.point_policy.validity_weeks != clock.weeks_per_year:
-                    raise ValueError("Prepared point validity must equal the Run year W")
                 version = "calendar_followup_knockout.v4" if eight else "calendar_followup_knockout.v2"
                 provisional = CalendarFollowupKnockout.model_construct(
                     **event_payload, schema_version=version,

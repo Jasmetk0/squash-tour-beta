@@ -7,11 +7,13 @@ from beta_engine.domain.calendar.run_calendar import RunCalendar
 from beta_engine.domain.run_packages import canonical_hash
 from beta_engine.infrastructure.db.calendar_sporting_checkpoint import COMPONENT_KEY
 from beta_engine.infrastructure.db.calendar_standalone_match_state import load_saved_calendar_match
-from tests.api.test_calendar_continuation_flow import root, save_continuation
+from tests.api.test_calendar_continuation_flow import command as match_command, root, save_continuation
 from tests.api.test_calendar_followup_eight_scored_knockout_flow import scored_url, scored_command
+from tests.api.test_calendar_followup_knockout_flow import command as knockout_command, tournament_url
 from tests.api.test_calendar_population_sporting_checkpoint import prepare, play, save, restore
 from tests.api.test_calendar_sporting_week_flow import advance, weekly_command
 from tests.api.test_saved_revision_history_api import ApiServer, _request
+from tests.api.test_player_generation_calendar_gate import _dump
 
 pytestmark = pytest.mark.pr_critical
 
@@ -22,7 +24,7 @@ def close_url(server):
 
 def close_command(view, tournament_id):
     return {
-        "command_id": "close-eight-native",
+        "command_id": "close-eight-native:sf1",
         "tournament_id": tournament_id,
         "expected_saved_head": view["saved_head_revision_id"],
         "expected_checkpoint_fingerprint": view["checkpoint_fingerprint"],
@@ -89,6 +91,15 @@ def test_close_native_eight_results_from_signed_saved_player_history(tmp_path, w
         assert repo.verify_branch_saved_revision_hash(revision_id=closure_save["revision_id"])
         assert _request("POST", close_url(server), command) == (201, closed)
 
+        # A later tournament root may have a different ID yet generate a nested
+        # command ID already owned by the closure. Reject the whole transaction.
+        _, closed_view = _request("GET", root(server))
+        before_collision = _dump(tmp_path / 'result-close.db')
+        assert _request("POST", tournament_url(server), knockout_command(
+            closed_view, command_id="close-eight-native", tournament_id="collision-draw",
+        ))[0] == 409
+        assert _dump(tmp_path / 'result-close.db') == before_collision
+
         for corruption in ("award", "wins", "wrong-origin", "unplayed-event", "downgrade"):
             forged = copy.deepcopy(closure_save["payload"])
             component = forged["content"][COMPONENT_KEY]
@@ -108,12 +119,22 @@ def test_close_native_eight_results_from_signed_saved_player_history(tmp_path, w
             with pytest.raises(ValueError):
                 load_saved_calendar_match(forged, run_id="run", branch_id="branch")
 
+        # A closure is part of the predecessor hash even though it adds no match
+        # or week event. Retrying a later exhibition must fold it in first.
+        _, present = _request("GET", root(server))
+        exhibition_command = match_command(present, *present["player_ids"][:2], name="after-closure")
+        code, exhibition = _request("POST", root(server) + "/simulate", exhibition_command)
+        assert code == 201, exhibition
+        assert _request("POST", root(server) + "/simulate", exhibition_command) == (201, exhibition)
+        exhibition_save = save_continuation(server, exhibition)
+        assert _request("POST", root(server) + "/simulate", exhibition_command) == (201, exhibition)
         _, present = _request("GET", root(server))
         next_week, _ = advance(server, weekly_command(present, name="week-after-closed"))
-        assert sum(n for _, n in next_week["advance"]["played_counts"]) == 14
+        assert sum(n for _, n in next_week["advance"]["played_counts"]) == 16
         final_save = save_continuation(server, next_week)
         assert final_save["payload"]["content"][COMPONENT_KEY]["state"]["schema_version"] == "calendar_sporting_checkpoint.v8"
         assert _request("POST", close_url(server), command) == (201, closed)
+        assert _request("POST", root(server) + "/simulate", exhibition_command) == (201, exhibition)
 
     with ApiServer(database_url=db) as restarted:
         _, restored = _request("GET", root(restarted))
@@ -121,9 +142,13 @@ def test_close_native_eight_results_from_signed_saved_player_history(tmp_path, w
         assert restored["closures"][-1]["saved"]
         assert restored["closures"][-1]["players"] == event["players"]
         assert _request("POST", close_url(restarted), command) == (201, closed)
+        assert _request("POST", root(restarted) + "/simulate", exhibition_command) == (201, exhibition)
+        assert _request("GET", root(restarted) + "/after-closure/replay")[1]["exact_replay"]
         restore(restarted, played_save["revision_id"])
         assert not _request("GET", root(restarted))[1]["closures"]
         restore(restarted, closure_save["revision_id"])
         assert _request("GET", root(restarted))[1]["closures"][-1]["saved"]
+        restore(restarted, exhibition_save["revision_id"])
+        assert _request("POST", root(restarted) + "/simulate", exhibition_command) == (201, exhibition)
         restore(restarted, final_save["revision_id"])
         assert _request("GET", root(restarted))[1]["sporting_week"]["week"] == 3

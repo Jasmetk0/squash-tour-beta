@@ -98,12 +98,16 @@ def derive_followup_awards(event) -> tuple[CalendarFollowupPreparedAward, ...]:
         raise ValueError("Prepared point placement disagrees with actual knockout field")
     if event.prepared_policy is None:
         raise ValueError("Prepared point policy is required")
+    # Every award shares the same immutable source. Serializing/hashing all
+    # seven rally logs again for EACH player dominates cold history validation.
+    sporting_fingerprint = event.sporting_fingerprint
+    policy_fingerprint = event.prepared_policy.fingerprint
     return tuple(
         CalendarFollowupPreparedAward(
             player_id=pid, reached_stage=stage,
             main_points=getattr(event.prepared_policy, stage),
-            source_tournament_fingerprint=event.sporting_fingerprint,
-            source_policy_fingerprint=event.prepared_policy.fingerprint,
+            source_tournament_fingerprint=sporting_fingerprint,
+            source_policy_fingerprint=policy_fingerprint,
         )
         for pid, stage in sorted(stages.items())
     )

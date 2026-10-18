@@ -166,6 +166,7 @@ def append_followup_knockout(checkpoint, world, event: CalendarFollowupKnockout)
             *(advance.command_id for advance in checkpoint.weekly_advances),
             *(entry.command_id for entry in checkpoint.played_continuations),
             *(tournament.command_id for tournament in checkpoint.tournaments),
+            *(closure.command_id for closure in checkpoint.closures),
         }
         or event.tournament_id in {
             tournament.tournament_id for tournament in checkpoint.tournaments

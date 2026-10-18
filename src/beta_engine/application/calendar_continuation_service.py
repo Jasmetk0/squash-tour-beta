@@ -103,9 +103,12 @@ class CalendarContinuationService:
         rows = load_match_rows(session, run_id=run_id, branch_id=branch_id)
         evidence = rows[0] if len(rows) == 1 else None
         from beta_engine.infrastructure.db.calendar_standalone_match_state import (
-            load_saved_calendar_match,
+            _parse_saved_calendar_match_evidence,
         )
-        saved_evidence = load_saved_calendar_match(revision.saved_revision.payload, run_id=run_id, branch_id=branch_id)
+        # Validate the coupled Saved owner exactly once, immediately below, in
+        # this transaction. load_saved_calendar_match already performs that
+        # same full fold and discards the checkpoint it has just verified.
+        saved_evidence = _parse_saved_calendar_match_evidence(revision.saved_revision.payload, run_id=run_id, branch_id=branch_id)
         saved = saved_checkpoint(revision.saved_revision.payload, saved_evidence,
             run_id=run_id, branch_id=branch_id)
         if saved is not None:
@@ -211,6 +214,9 @@ class CalendarContinuationService:
                     from beta_engine.domain.players.calendar_followup_knockout import (
                         CalendarFollowupKnockout, append_followup_knockout,
                     )
+                    from beta_engine.domain.players.calendar_tournament_closure import (
+                        append_native_tournament_closure,
+                    )
                     for entry in (*state.continuations, *state.week_events):
                         prefix = (
                             append_sporting_week(prefix, world, knockout, entry)
@@ -221,6 +227,13 @@ class CalendarContinuationService:
                         )
                         if getattr(entry, 'match_id', None) == existing.match_id:
                             break
+                        # Closures do not increment the week-event count, but
+                        # their v8 state belongs to every following predecessor.
+                        # Return the original match receipt before later events.
+                        for closure in state.closures:
+                            if (closure.source_week_event_count == len(prefix.week_events)
+                                    and closure not in prefix.closures):
+                                prefix = append_native_tournament_closure(prefix, closure)
                     return self._receipt(existing, prefix)
             if (saved is None or saved.fingerprint != state.fingerprint
                     or revision.saved_head_revision_id != command.expected_saved_head

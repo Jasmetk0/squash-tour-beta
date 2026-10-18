@@ -1,7 +1,9 @@
 # Current implementation — Master v85
 
-Checked buuk `f200d9898b41431439501a9b559529900135adf7` after merged #1532, 18 October 2026.
-#1520–1532 are merged; no open PR at this performance task start. Refresh before further work.
+Audit base: buuk `4df7580c5548fbb27b0f7ee1a28ce6b3af5f71bd`, after owner-merged #1539, 18 October 2026.
+#1533–1539 are merged. The current repair follows a code/CI review of all seven PRs.
+Earlier in-progress paragraphs below are chronological history; this audit supersedes their status.
+See [review and regression scope](docs/NATIVE_PR_AUDIT_2026_10_18.md).
 Master remains v85; this task changes sporting execution, not product decisions.
 
 **Merged and usable:** calendar creation/first Save, population and Health facts,
@@ -12,10 +14,11 @@ MatchEngine logs, manual immutable Save, exact replay/restart/restore, reviewed
 operator-authored points with a second Save, and a hypothetical as-of one-event
 scoreboard with W-week expiry. Real W52 1,000-player Chromium acceptance passed.
 
-**Hard limits:** one native opening knockout per Branch; the current candidate
-adds only explicit sequential exhibitions from its Saved checkpoint. Population
-source generation retains provisional seven-value calibration; numeric Health
-effects and annual development are incomplete.
+**Hard limits:** one native opening knockout establishes each Branch sporting owner;
+Saved continuations, sporting-only weekly development, later four/eight-player
+knockouts, prepared awards and native result closure now follow that owner.
+Population source generation retains provisional seven-value calibration; numeric
+Health effects and complete historical development remain incomplete.
 Prepared points and hypothetical future eligibility are not Official publication
 or an advanced clock. Population-only is not proven Tour entry. Match-containing
 fork remains blocked. Legacy W61 sporting guards remain on unsupported calendars,
@@ -218,7 +221,7 @@ v1–v6 semantics preserved. Its frontend build passed; some final-head
 backend and browser workflow checks were still outstanding when the owner
 merged.
 
-**Current native result-closure candidate:** a *new Saved sporting write*
+**Merged #1539 native result closure (CI reviewed separately below):** a *new Saved sporting write*
 freezes per-player played-match IDs, win/loss counters, placement and existing
 prepared points from the actual seven logged MatchEngine results into
 `calendar_native_tournament_closure.v1`, backed by sporting checkpoint v8.
@@ -228,3 +231,30 @@ are included. This closes genuine native sporting result evidence, but is
 NOT yet a configured Tour Edition/Entry, published Official Ranking or full
 Week/Season Transition. Contract:
 `docs/CALENDAR_NATIVE_SAVED_RESULT_CLOSURE_V1.md`.
+
+
+**Post-merge audit repair (#1533–1539):** restore closure events at their original
+boundaries when reconstructing an exact standalone-match retry. Reserve closure
+command identities in both continuation/tournament reducers and reject generated
+nested-command collisions before playing. Check W-valid point policy before
+expensive MatchEngine work. Client inspection/receipts derive all four/eight-player
+placements from actual winner-fed draws, and the closure UI respects the backend's
+latest-event/current-week restriction. Historical schema bytes and sporting scope
+are unchanged.
+
+#1538 Fast CI actually failed on a 120-second HTTP timeout at the final W52
+Saved restore (job 117676449651), despite eight green browser workflows. #1539
+contains performance changes but its changed-test selection does not rerun that
+#1538 module. The audit therefore runs both affected real W52/W80 API modules
+explicitly; final repair-head CI must finish green before handoff. Existing browser
+smokes do not exercise the new four/eight-player/closure UI end to end.
+
+The extended repair regression subsequently exposed a >120-second first read
+after restart with the longer post-closure match history. Scoped profiling found
+eight identical full-tournament hashes per award derivation and a duplicate Saved
+checkpoint fold inside continuation context. These are now computed/validated
+once within the same operation; no cross-request cache or integrity bypass is
+added. Profiled cold inspection of the same copied nine-revision history fell
+from 130.96s to 74.34s. New focused regressions preserve four/eight-player award
+facts and fail-closed malformed Saved validation; final-head real regressions
+remain the handoff gate. See the audit for evidence and scope.

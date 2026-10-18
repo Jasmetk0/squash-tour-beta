@@ -108,7 +108,7 @@ def test_scored_later_knockout_authentic_points_save_and_recovery(tmp_path, widt
         assert inspection["tournaments"][-1]["prepared_points_status"] == "prepared_not_official"
         for match in played["tournament"]["matches"]:
             assert _request("GET", root(restarted) + f"/{match['match_id']}/replay")[1]["exact_replay"]
-        assert _request("POST", scored_url.replace(str(server.port), str(restarted.port)), request)[0] == 201
+        assert _request("POST", tournament_url(restarted).replace("/simulate", "/simulate-scored"), request)[0] == 201
         restore(restarted, saved["revision_id"])
         assert _request("GET", root(restarted))[1]["sporting_week"]["week"] == 2
         restore(restarted, final_saved["revision_id"])

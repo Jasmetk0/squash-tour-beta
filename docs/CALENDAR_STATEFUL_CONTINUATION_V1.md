@@ -68,7 +68,8 @@ or horizon extension never changes a prior match's frozen Health input.
 
 `GET …/calendar-continuation/{match_id}/replay` reruns the real MatchEngine with
 its original seed, context, log anchor and Health facts and compares the complete
-result. It does not mutate population or history. Replay selection uses an explicit
+result. It does not mutate population or history and does not require current
+medical changes to be Saved or permission to start a new sporting command. Replay selection uses an explicit
 UI action distinct from the event ID (including IDs named `save` or `play`).
 
 ## Admin and verification

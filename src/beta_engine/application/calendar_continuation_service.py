@@ -146,7 +146,14 @@ class CalendarContinuationService:
     def replay(self, *, run_id, branch_id, match_id):
         with self.repository._session_factory() as session:
             session.execute(text('BEGIN'))
-            *_, state, saved, evidence = self._context(session, run_id=run_id, branch_id=branch_id)
+            # Historical replay consumes frozen authority, never current medical
+            # readiness or permission to start another sporting command.
+            from beta_engine.infrastructure.db.calendar_sporting_checkpoint import verify_checkpoint
+            from beta_engine.infrastructure.db.initial_world_state import get_initial_world
+            state = load_checkpoint(session, run_id=run_id, branch_id=branch_id)
+            rows = load_match_rows(session, run_id=run_id, branch_id=branch_id)
+            world = get_initial_world(session, run_id=run_id, branch_id=branch_id)
+            verify_checkpoint(state, world, rows[0] if len(rows) == 1 else None)
             entry = next((e for e in state.continuations if e.match_id == match_id), None) if state else None
             if entry is None:
                 raise KeyError('Calendar continuation match not found')

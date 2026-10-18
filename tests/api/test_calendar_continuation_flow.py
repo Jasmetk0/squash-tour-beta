@@ -167,6 +167,9 @@ def test_saved_health_change_and_horizon_extension_do_not_rewrite_continued_matc
         correction = edit_request(current); correction.update(command_id='continued-medical-correction', mode='current_state_correction')
         correction['records'][0]['severity'] = 40
         assert commit(health_url, correction, review(health_url, correction))[0] == 200
+        # Frozen historical replay is independent of unsaved current medicine.
+        assert _request('GET', root(server) + '/after-ko/replay')[1]['exact_replay']
+        assert _request('GET', root(server))[0] == 409  # new-play readiness stays guarded
         save_health(server)
         assert _request('GET', root(server) + '/after-ko/replay')[1]['exact_replay']
         code, checked = extension(server, 4); assert code == 200 and checked['can_save'], checked

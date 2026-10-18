@@ -320,9 +320,15 @@ def capture_tour(session, payload, *, run_id, branch_id):
             raise ValueError("Tour Save lacks its coupled current lifecycle")
 
 
-def restore_tour(session, *, current_payload, target_payload, run_id, branch_id):
-    current = saved_tour(current_payload, run_id=run_id, branch_id=branch_id)
-    target = saved_tour(target_payload, run_id=run_id, branch_id=branch_id)
+def restore_tour(session, *, current_payload, target_payload, run_id, branch_id,
+                 _validated_states=None):
+    if _validated_states is None:
+        current = saved_tour(current_payload, run_id=run_id, branch_id=branch_id)
+        target = saved_tour(target_payload, run_id=run_id, branch_id=branch_id)
+    else:
+        # Only accepted from the same transaction's authenticated Saved lineage.
+        # The exact live Tour must still match its previously signed owner.
+        current, target = _validated_states
     if load_tour(session, run_id=run_id, branch_id=branch_id) != current:
         raise ValueError("Live Tour differs from current Saved HEAD")
     row = session.get(CalendarTourAuthorityModel, (run_id, branch_id))

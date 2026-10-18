@@ -381,7 +381,9 @@ def decode_prevalidated_calendar_sources(payload: dict, *, run_id: str, branch_i
     through repository._validated_branch_revision_state_in_session. That gate
     checks the signed hash, identity, ancestry and all sporting/Tour components;
     its content-digest keyed validation cache invalidates on any byte mutation.
-    Never use this helper for raw history, Viewer, Save, restore or unknown JSON.
+    Use only for an authenticated Admin read or an atomically validated restore
+    which has just checked BOTH immutable source payloads. Never use with raw
+    history, public Viewer, Save, or unknown/unvalidated JSON.
     Re-parse and re-check each source's scope/fingerprint; the only work elided
     here is a second full MatchEngine/ranking fold of the very same Signed bytes.
     """
@@ -469,18 +471,23 @@ def load_saved_calendar_sources(payload: dict, *, run_id: str, branch_id: str, _
 
 def restore_saved_calendar_match(
     session: Session, *, current_payload: dict, target_payload: dict,
-    run_id: str, branch_id: str,
+    run_id: str, branch_id: str, _validated_saved_sources=None,
 ) -> None:
-    # Each revision is validated exactly once by restore_checkpoint below.
-    # Its verification reconstructs the complete 57-attribute player roster
-    # and all signed MatchEngine results; do not redundantly do the same
-    # expensive reconstruction in load_saved_calendar_match first.
-    current = _parse_saved_calendar_match_evidence(
-        current_payload, run_id=run_id, branch_id=branch_id,
-    )
-    target = _parse_saved_calendar_match_evidence(
-        target_payload, run_id=run_id, branch_id=branch_id,
-    )
+    # Ordinary callers keep strict full Saved source verification.
+    # The repository restore coordinator may pass decoded inputs ONLY after
+    # authenticating both exact Saved Revision payloads in the same transaction.
+    # This avoids repeated source folds while preserving live-owner checks and
+    # the independent post-restore capture/revalidation.
+    if _validated_saved_sources is None:
+        current = _parse_saved_calendar_match_evidence(
+            current_payload, run_id=run_id, branch_id=branch_id,
+        )
+        target = _parse_saved_calendar_match_evidence(
+            target_payload, run_id=run_id, branch_id=branch_id,
+        )
+    else:
+        current, _current_checkpoint, _current_tour = _validated_saved_sources[0]
+        target, _target_checkpoint, _target_tour = _validated_saved_sources[1]
     live = load_match_rows(session, run_id=run_id, branch_id=branch_id)
     if tuple(s.fingerprint for s in live) != (
         (current.fingerprint,) if current else ()
@@ -489,9 +496,17 @@ def restore_saved_calendar_match(
     from beta_engine.infrastructure.db.calendar_sporting_checkpoint import restore_checkpoint
     from beta_engine.infrastructure.db.calendar_tour import restore_tour
     restore_tour(session, current_payload=current_payload, target_payload=target_payload,
-                 run_id=run_id, branch_id=branch_id)
+                 run_id=run_id, branch_id=branch_id,
+                 _validated_states=(
+                     (_validated_saved_sources[0][2], _validated_saved_sources[1][2])
+                     if _validated_saved_sources is not None else None
+                 ))
     restore_checkpoint(session, current_payload=current_payload, target_payload=target_payload,
-                       current=current, target=target, run_id=run_id, branch_id=branch_id)
+                       current=current, target=target, run_id=run_id, branch_id=branch_id,
+                       _validated_states=(
+                           (_validated_saved_sources[0][1], _validated_saved_sources[1][1])
+                           if _validated_saved_sources is not None else None
+                       ))
     for state in live:
         session.delete(session.get(CalendarStandaloneMatchModel, (run_id, branch_id, state.match_id)))
     session.flush()

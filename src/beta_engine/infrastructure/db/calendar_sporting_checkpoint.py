@@ -132,9 +132,15 @@ def capture_checkpoint(session, payload, evidence, *, run_id, branch_id):
         payload['content'][COMPONENT_KEY] = {'fingerprint': state.fingerprint, 'state': state.model_dump(mode='json')}
 
 
-def restore_checkpoint(session, *, current_payload, target_payload, current, target, run_id, branch_id):
-    expected = saved_checkpoint(current_payload, current, run_id=run_id, branch_id=branch_id)
-    replacement = saved_checkpoint(target_payload, target, run_id=run_id, branch_id=branch_id)
+def restore_checkpoint(session, *, current_payload, target_payload, current, target, run_id, branch_id,
+                       _validated_states=None):
+    if _validated_states is None:
+        expected = saved_checkpoint(current_payload, current, run_id=run_id, branch_id=branch_id)
+        replacement = saved_checkpoint(target_payload, target, run_id=run_id, branch_id=branch_id)
+    else:
+        # The restore coordinator already verified these exact signed snapshots
+        # before beginning any live-state mutation. Always check the live owner.
+        expected, replacement = _validated_states
     live = load_checkpoint(session, run_id=run_id, branch_id=branch_id)
     if live != expected:
         raise ValueError('Live calendar sporting checkpoint differs from current Saved HEAD')

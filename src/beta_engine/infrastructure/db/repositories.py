@@ -4597,11 +4597,18 @@ class SimulationPersistenceRepository:
                     )
 
                 try:
+                    # Both reads walk the same immutable revision lineage.
+                    # Share content-scoped source proofs only within this
+                    # transaction; every stored revision still authenticates
+                    # bytes, signature, identity and ancestry.
+                    source_proofs = {}
                     state = self._validated_branch_revision_state_in_session(
-                        session=session, branch=branch
+                        session=session, branch=branch,
+                        sporting_component_proofs=source_proofs,
                     )
                     lineage = self._validated_branch_revision_lineage_in_session(
-                        session=session, branch=branch
+                        session=session, branch=branch,
+                        sporting_component_proofs=source_proofs,
                     )
                 except BranchRevisionStateConflictError as exc:
                     raise SavedRevisionRestoreConflictError(str(exc)) from exc
@@ -4992,11 +4999,31 @@ class SimulationPersistenceRepository:
                     or CALENDAR_MATCH_COMPONENT_KEY in target_content
                 ):
                     try:
+                        # These EXACT immutable payloads have just passed the
+                        # complete repository lineage validation above. Decode
+                        # their authenticated source hashes without replaying
+                        # the same sporting/Official results another 4 times
+                        # across the subordinate restore adapters. Live SQLite
+                        # source equality and post-restore capture stay strict.
+                        from beta_engine.infrastructure.db.calendar_standalone_match_state import (
+                            decode_prevalidated_calendar_sources,
+                        )
+
+                        source_pair = (
+                            decode_prevalidated_calendar_sources(
+                                saved_payload, run_id=run_id, branch_id=branch_id
+                            )
+                            for saved_payload in (
+                                state.saved_revision.payload,
+                                target_revision.payload,
+                            )
+                        )
                         restore_saved_calendar_match(
                             session,
                             current_payload=state.saved_revision.payload,
                             target_payload=target_revision.payload,
                             run_id=run_id, branch_id=branch_id,
+                            _validated_saved_sources=tuple(source_pair),
                         )
                     except ValueError as exc:
                         raise SavedRevisionRestoreUnsupportedError(

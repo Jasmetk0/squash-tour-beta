@@ -75,3 +75,14 @@ from demo four-player operations toward realistic playable draw sizes,
 but does not grant Tour status or automatically score the eight-player
 event. Follow-up integration still needs canonical configured Edition,
 Entrants, Points, Official publication and actual Week/Season Transition.
+
+
+**After #1537 merged:** a genuine eight-player / seven-MatchEngine
+later-week tournament operates on saved player state with replay,
+restore and W52/W80 weekly continuation. The next scoped feature
+provides explicit **prepared** awards for all 8 resulting placements
+as a distinct v4 event/v7 checkpoint, protected by separate consent,
+recomputed canonical fingerprints and full player history. These
+points remain outside Official Tour Rankings; canonical Edition and
+Entry provenance, full official Week Transition and actual public
+publication are the next major integration targets.

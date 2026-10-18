@@ -30,7 +30,7 @@ from beta_engine.domain.run_packages import canonical_hash
 
 
 class CalendarSportingCheckpoint(FrozenInput):
-    schema_version: Literal['calendar_sporting_checkpoint.v1', 'calendar_sporting_checkpoint.v2', 'calendar_sporting_checkpoint.v3', 'calendar_sporting_checkpoint.v4', 'calendar_sporting_checkpoint.v5'] = 'calendar_sporting_checkpoint.v1'
+    schema_version: Literal['calendar_sporting_checkpoint.v1', 'calendar_sporting_checkpoint.v2', 'calendar_sporting_checkpoint.v3', 'calendar_sporting_checkpoint.v4', 'calendar_sporting_checkpoint.v5', 'calendar_sporting_checkpoint.v6'] = 'calendar_sporting_checkpoint.v1'
     run_id: str = Field(min_length=1)
     branch_id: str = Field(min_length=1)
     week: RunWeekPosition
@@ -51,7 +51,7 @@ class CalendarSportingCheckpoint(FrozenInput):
         body = handler(self)
         if self.schema_version == 'calendar_sporting_checkpoint.v1':
             body.pop('continuations', None)
-        if self.schema_version not in {'calendar_sporting_checkpoint.v3', 'calendar_sporting_checkpoint.v4', 'calendar_sporting_checkpoint.v5'}:
+        if self.schema_version not in {'calendar_sporting_checkpoint.v3', 'calendar_sporting_checkpoint.v4', 'calendar_sporting_checkpoint.v5', 'calendar_sporting_checkpoint.v6'}:
             body.pop('week_events', None)
         return body
 
@@ -62,7 +62,7 @@ class CalendarSportingCheckpoint(FrozenInput):
                 raise ValueError('Historical checkpoint cannot acquire continuation history')
         elif self.schema_version == 'calendar_sporting_checkpoint.v2' and (not self.continuations or self.phase != 'opening_week_continued'):
             raise ValueError('Continued checkpoint requires actual match history')
-        if self.schema_version not in {'calendar_sporting_checkpoint.v3', 'calendar_sporting_checkpoint.v4', 'calendar_sporting_checkpoint.v5'}:
+        if self.schema_version not in {'calendar_sporting_checkpoint.v3', 'calendar_sporting_checkpoint.v4', 'calendar_sporting_checkpoint.v5', 'calendar_sporting_checkpoint.v6'}:
             if 'week_events' in self.model_fields_set or self.annual_development_applied:
                 raise ValueError('Historical checkpoint cannot acquire weekly development')
         elif (not self.week_events or not isinstance(self.week_events[0], CalendarSportingWeekAdvance)
@@ -79,15 +79,25 @@ class CalendarSportingCheckpoint(FrozenInput):
                     and event.schema_version == 'calendar_followup_knockout.v2'
                     for event in self.week_events)):
             raise ValueError('Checkpoint v4 cannot gain prepared-scored knockout evidence')
-        if (self.schema_version == 'calendar_sporting_checkpoint.v5'
+        if (self.schema_version == 'calendar_sporting_checkpoint.v5', 'calendar_sporting_checkpoint.v6'
             and not any(isinstance(event, CalendarFollowupKnockout)
                         and event.schema_version == 'calendar_followup_knockout.v2'
                         for event in self.week_events)):
             raise ValueError('Checkpoint v5 requires actual prepared-scored knockout evidence')
+        if (self.schema_version in {'calendar_sporting_checkpoint.v3', 'calendar_sporting_checkpoint.v4', 'calendar_sporting_checkpoint.v5'}
+            and any(isinstance(event, CalendarFollowupKnockout)
+                    and event.schema_version == 'calendar_followup_knockout.v3'
+                    for event in self.week_events)):
+            raise ValueError('Historical checkpoint cannot gain eight-player knockout history')
+        if (self.schema_version == 'calendar_sporting_checkpoint.v6'
+            and not any(isinstance(event, CalendarFollowupKnockout)
+                        and event.schema_version == 'calendar_followup_knockout.v3'
+                        for event in self.week_events)):
+            raise ValueError('Checkpoint v6 needs an actual eight-player tournament')
         ids = tuple(p.player_id for p in self.players)
         if ids != tuple(sorted(set(ids))):
             raise ValueError('Calendar sporting checkpoint requires the sorted unique population')
-        if self.schema_version not in {'calendar_sporting_checkpoint.v3', 'calendar_sporting_checkpoint.v4', 'calendar_sporting_checkpoint.v5'} and (self.week.season_index, self.week.week) != (0, 1):
+        if self.schema_version not in {'calendar_sporting_checkpoint.v3', 'calendar_sporting_checkpoint.v4', 'calendar_sporting_checkpoint.v5', 'calendar_sporting_checkpoint.v6'} and (self.week.season_index, self.week.week) != (0, 1):
             raise ValueError('Checkpoint v1 does not advance the opening week')
         if self.bootstrap_policy != PlayerSportingBootstrapPolicy():
             raise ValueError('Unknown calendar sporting bootstrap calibration')

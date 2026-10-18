@@ -18,10 +18,11 @@ from beta_engine.domain.run_packages import canonical_hash
 
 
 ROUNDS = ("sf1", "sf2", "final")
+ROUNDS_EIGHT = ("qf1", "qf2", "qf3", "qf4", "sf1", "sf2", "final")
 
 
 class CalendarFollowupKnockout(FrozenInput):
-    schema_version: Literal["calendar_followup_knockout.v1", "calendar_followup_knockout.v2"] = "calendar_followup_knockout.v1"
+    schema_version: Literal["calendar_followup_knockout.v1", "calendar_followup_knockout.v2", "calendar_followup_knockout.v3"] = "calendar_followup_knockout.v1"
     run_id: str = Field(min_length=1)
     branch_id: str = Field(min_length=1)
     tournament_id: str = Field(min_length=1, max_length=94)
@@ -30,11 +31,11 @@ class CalendarFollowupKnockout(FrozenInput):
     source_checkpoint_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
     week: RunWeekPosition
     seed: int
-    entrant_ids: tuple[str, str, str, str]
+    entrant_ids: tuple[str, ...] = Field(min_length=4, max_length=8)
     operator_label: str = Field(min_length=1, max_length=160)
     audit_reason: str = Field(min_length=1, max_length=1000)
     request_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
-    matches: tuple[CalendarContinuationMatch, CalendarContinuationMatch, CalendarContinuationMatch]
+    matches: tuple[CalendarContinuationMatch, ...] = Field(min_length=3, max_length=7)
     prepared_policy: CalendarFollowupPointPolicy | None = None
     prepared_awards: tuple[CalendarFollowupPreparedAward, ...] = ()
     scope: Literal["sporting_exhibition_knockout_not_official"] = (
@@ -44,16 +45,22 @@ class CalendarFollowupKnockout(FrozenInput):
     @model_serializer(mode="wrap")
     def historical_shape(self, handler):
         body = handler(self)
-        if self.schema_version == "calendar_followup_knockout.v1":
+        if self.schema_version in {"calendar_followup_knockout.v1", "calendar_followup_knockout.v3"}:
             body.pop("prepared_policy", None)
             body.pop("prepared_awards", None)
         return body
 
     @model_validator(mode="after")
     def validate_bracket(self):
-        if len(set(self.entrant_ids)) != 4 or self.week.ordinal < 1:
-            raise ValueError("Later-week knockout requires four distinct players after Week 1")
-        for index, (match, suffix) in enumerate(zip(self.matches, ROUNDS, strict=True)):
+        eight = self.schema_version == "calendar_followup_knockout.v3"
+        expected_field = 8 if eight else 4
+        rounds = ROUNDS_EIGHT if eight else ROUNDS
+        if (len(self.entrant_ids) != expected_field
+            or len(set(self.entrant_ids)) != expected_field
+            or len(self.matches) != len(rounds)
+            or self.week.ordinal < 1):
+            raise ValueError("Later knockout field, bracket or sporting week is invalid")
+        for index, (match, suffix) in enumerate(zip(self.matches, rounds, strict=True)):
             if (
                 match.schema_version != "calendar_continuation_match.v2"
                 or (match.run_id, match.branch_id) != (self.run_id, self.branch_id)
@@ -66,15 +73,32 @@ class CalendarFollowupKnockout(FrozenInput):
                 or match.audit_reason != self.audit_reason
             ):
                 raise ValueError("Knockout match identity or frozen execution input mismatch")
-        semia, semib, final = self.matches
         def players(match):
             return (match.result.player_a_id, match.result.player_b_id)
-        if (players(semia) != self.entrant_ids[:2]
-            or players(semib) != self.entrant_ids[2:]
-            or players(final) != (
-                semia.result.winner_player_id, semib.result.winner_player_id
-            )):
-            raise ValueError("Knockout final must consume actual semifinal winners")
+        if eight:
+            quarters, semis, final = self.matches[:4], self.matches[4:6], self.matches[6]
+            correct = all(
+                players(quarter) == tuple(self.entrant_ids[2*i:2*i+2])
+                for i, quarter in enumerate(quarters)
+            ) and all(
+                players(semi) == (
+                    quarters[2*i].result.winner_player_id,
+                    quarters[2*i+1].result.winner_player_id,
+                ) for i, semi in enumerate(semis)
+            ) and players(final) == (
+                semis[0].result.winner_player_id, semis[1].result.winner_player_id
+            )
+        else:
+            semia, semib, final = self.matches
+            correct = (
+                players(semia) == self.entrant_ids[:2]
+                and players(semib) == self.entrant_ids[2:]
+                and players(final) == (
+                    semia.result.winner_player_id, semib.result.winner_player_id
+                )
+            )
+        if not correct:
+            raise ValueError("Knockout next round must consume actual preceding winners")
         request = dict(
             command_id=self.command_id,
             tournament_id=self.tournament_id,
@@ -123,7 +147,7 @@ def append_followup_knockout(checkpoint, world, event: CalendarFollowupKnockout)
     if (
         checkpoint.schema_version not in {
             "calendar_sporting_checkpoint.v3", "calendar_sporting_checkpoint.v4",
-            "calendar_sporting_checkpoint.v5",
+            "calendar_sporting_checkpoint.v5", "calendar_sporting_checkpoint.v6",
         }
         or not checkpoint.week_events
         or (checkpoint.run_id, checkpoint.branch_id) != (event.run_id, event.branch_id)
@@ -145,10 +169,15 @@ def append_followup_knockout(checkpoint, world, event: CalendarFollowupKnockout)
     for match in event.matches:
         intermediate = append_continuation(intermediate, world, match)
     successor = checkpoint.model_copy(update={
-        "schema_version": ("calendar_sporting_checkpoint.v5"
-                           if checkpoint.schema_version == "calendar_sporting_checkpoint.v5"
-                           or event.schema_version == "calendar_followup_knockout.v2"
-                           else "calendar_sporting_checkpoint.v4"),
+        "schema_version": (
+            "calendar_sporting_checkpoint.v6"
+            if checkpoint.schema_version == "calendar_sporting_checkpoint.v6"
+            or event.schema_version == "calendar_followup_knockout.v3"
+            else "calendar_sporting_checkpoint.v5"
+            if checkpoint.schema_version == "calendar_sporting_checkpoint.v5"
+            or event.schema_version == "calendar_followup_knockout.v2"
+            else "calendar_sporting_checkpoint.v4"
+        ),
         "players": intermediate.players,
         "week_events": checkpoint.week_events + (event,),
     })

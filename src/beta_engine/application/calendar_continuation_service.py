@@ -60,6 +60,39 @@ class CalendarContinuationCommand(FrozenInput):
         return self
 
 
+def play_continuation_match(*, state, world, health, clock, run_id, branch_id, command):
+    """Execute and rebuild one real MatchEngine match inside caller-owned transaction.
+
+    The caller separately checks Saved HEAD and permissions before calling this
+    reducer. This helper is shared by standalone and atomic tournament execution.
+    """
+    request_fp = canonical_hash({'run_id': run_id, 'branch_id': branch_id, 'command': command.model_dump(mode='json')})
+    ids = (command.player_a_id, command.player_b_id)
+    projections = continuation_projections(state, world, ids)
+    ctx = MatchContext(match_id=command.match_id,
+        player_a=canonical_participant(projections[0]), player_b=canonical_participant(projections[1]),
+        best_of=5, games_to=11, win_by=2)
+    medical = None
+    if health:
+        profiles = {p.player_id: p for p in health.players}
+        medical = EffectiveMatchHealthSnapshot(player_profiles=tuple(project_player_health(profiles[pid]) for pid in ids))
+    inputs = dict(schema_version=('calendar_continuation_match.v2' if state.week_events else 'calendar_continuation_match.v1'), run_id=run_id, branch_id=branch_id,
+        week=RunWeekPosition(calendar=clock, season_index=state.week.season_index, week=state.week.week), sequence=len(state.played_continuations) + 1,
+        command_id=command.command_id, match_id=command.match_id,
+        source_saved_head=command.expected_saved_head, source_checkpoint_fingerprint=state.fingerprint,
+        seed=command.seed, operator_label=command.operator_label, audit_reason=command.audit_reason,
+        request_fingerprint=request_fp, input_context=ctx, canonical_projections=projections,
+        projection_policy=CanonicalMatchInputProjectionPolicy(), state_policy=CalendarMatchStatePolicy(),
+        source_health_fingerprint=health.fingerprint if health else None, effective_health=medical)
+    anchor = continuation_anchor(SimpleNamespace(**inputs))
+    result = MatchEngine(DeterministicRng(command.seed)).simulate(ctx, log_anchor_hash=anchor, effective_match_health=medical)
+    _, effects = continuation_effects(state, ctx, result, inputs['state_policy'])
+    entry = CalendarContinuationMatch(**inputs, result=result, effects=effects, log_anchor_hash=anchor)
+    successor = append_continuation(state, world, entry)
+    replace_checkpoint(session, previous=state, successor=successor)
+    return entry, successor
+
+
 @dataclass(slots=True)
 class CalendarContinuationService:
     repository: object
@@ -101,6 +134,19 @@ class CalendarContinuationService:
                 'run_calendar': clock.to_metadata(),
                 'sporting_week': RunWeekPosition(calendar=clock, season_index=state.week.season_index, week=state.week.week).model_dump(mode='json') if state else None,
                 'weekly_advance_count': len(state.weekly_advances) if state else 0,
+                'tournaments': [{
+                    'tournament_id': event.tournament_id,
+                    'command_id': event.command_id,
+                    'fingerprint': event.fingerprint,
+                    'week': event.week.week,
+                    'entrant_ids': list(event.entrant_ids),
+                    'winner_player_id': event.matches[-1].result.winner_player_id,
+                    'match_ids': [match.match_id for match in event.matches],
+                    'saved': bool(saved and any(
+                        original.fingerprint == event.fingerprint for original in saved.tournaments
+                    )),
+                    'scope': event.scope,
+                } for event in state.tournaments] if state else [],
                 'weekly_advances': [{'command_id':e.command_id,'fingerprint':e.fingerprint,'completed_week':e.completed_week.week,'target_week':e.target_week.week,'saved':bool(saved and any(s.fingerprint == e.fingerprint for s in saved.weekly_advances))} for e in state.weekly_advances] if state else [],
                 'health_numeric_effect_applied': False,
                 'limited_player_ids': [p.player_id for p in health.players if project_player_health(p).numeric_calibration_required] if health else [],
@@ -120,17 +166,33 @@ class CalendarContinuationService:
             if state is None:
                 raise ValueError('First play and Save a v5 opening knockout to establish population sporting authority')
             knockout = getattr(evidence, 'knockout', evidence)
+            # Nested matches are owned by an atomic tournament command. Their
+            # identities must never be replayed as independent exhibition writes.
+            if any(
+                existing.command_id == command.command_id
+                or existing.match_id == command.match_id
+                for event in state.tournaments for existing in event.matches
+            ):
+                raise ValueError('Tournament matches cannot be reissued as individual exhibitions')
             for existing in state.played_continuations:
                 if existing.command_id == command.command_id or existing.match_id == command.match_id:
                     if existing.command_id != command.command_id or existing.request_fingerprint != request_fp:
                         raise ValueError('Continuation command/match ID already used with different input')
                     prefix = build_calendar_sporting_checkpoint(world, knockout, calendar_engine_player)
                     from beta_engine.domain.players.calendar_sporting_week import (
-                        CalendarSportingWeekAdvance,
-                        append_sporting_week,
+                        CalendarSportingWeekAdvance, append_sporting_week,
+                    )
+                    from beta_engine.domain.players.calendar_followup_knockout import (
+                        CalendarFollowupKnockout, append_followup_knockout,
                     )
                     for entry in (*state.continuations, *state.week_events):
-                        prefix = (append_sporting_week(prefix, world, knockout, entry) if isinstance(entry, CalendarSportingWeekAdvance) else append_continuation(prefix, world, entry))
+                        prefix = (
+                            append_sporting_week(prefix, world, knockout, entry)
+                            if isinstance(entry, CalendarSportingWeekAdvance)
+                            else append_followup_knockout(prefix, world, entry)
+                            if isinstance(entry, CalendarFollowupKnockout)
+                            else append_continuation(prefix, world, entry)
+                        )
                         if getattr(entry, 'match_id', None) == existing.match_id:
                             break
                     return self._receipt(existing, prefix)
@@ -142,28 +204,10 @@ class CalendarContinuationService:
                 raise ValueError('Command identity already used by sporting week advance')
             if command.match_id in {knockout.match_id, *(m.input_context.match_id for m in knockout.matches)} or command.command_id == knockout.command_id:
                 raise ValueError('Continuation cannot reuse the original knockout identity')
-            ids = (command.player_a_id, command.player_b_id)
-            projections = continuation_projections(state, world, ids)
-            ctx = MatchContext(match_id=command.match_id,
-                player_a=canonical_participant(projections[0]), player_b=canonical_participant(projections[1]),
-                best_of=5, games_to=11, win_by=2)
-            medical = None
-            if health:
-                profiles = {p.player_id: p for p in health.players}
-                medical = EffectiveMatchHealthSnapshot(player_profiles=tuple(project_player_health(profiles[pid]) for pid in ids))
-            inputs = dict(schema_version=('calendar_continuation_match.v2' if state.week_events else 'calendar_continuation_match.v1'), run_id=run_id, branch_id=branch_id,
-                week=RunWeekPosition(calendar=clock, season_index=state.week.season_index, week=state.week.week), sequence=len(state.played_continuations) + 1,
-                command_id=command.command_id, match_id=command.match_id,
-                source_saved_head=revision.saved_head_revision_id, source_checkpoint_fingerprint=state.fingerprint,
-                seed=command.seed, operator_label=command.operator_label, audit_reason=command.audit_reason,
-                request_fingerprint=request_fp, input_context=ctx, canonical_projections=projections,
-                projection_policy=CanonicalMatchInputProjectionPolicy(), state_policy=CalendarMatchStatePolicy(),
-                source_health_fingerprint=health.fingerprint if health else None, effective_health=medical)
-            anchor = continuation_anchor(SimpleNamespace(**inputs))
-            result = MatchEngine(DeterministicRng(command.seed)).simulate(ctx, log_anchor_hash=anchor, effective_match_health=medical)
-            _, effects = continuation_effects(state, ctx, result, inputs['state_policy'])
-            entry = CalendarContinuationMatch(**inputs, result=result, effects=effects, log_anchor_hash=anchor)
-            successor = append_continuation(state, world, entry)
+            entry, successor = play_continuation_match(
+                state=state, world=world, health=health, clock=clock,
+                run_id=run_id, branch_id=branch_id, command=command,
+            )
             replace_checkpoint(session, previous=state, successor=successor)
             return self._receipt(entry, successor)
 

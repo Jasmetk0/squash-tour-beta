@@ -320,7 +320,11 @@ def test_configured_tour_two_weeks_real_matches_rankings_and_restart(
         from tests.api.test_calendar_sporting_horizon_extension import extend, extension
 
         code, review = extension(server, 4)
-        assert code == 200 and review["can_save"], review
+        assert code == 200, review
+        # Extension blockers are authoritative. Surface their exact identifiers
+        # rather than a 20+ field, truncated response when this long integration
+        # fails: we must diagnose a genuine source mismatch, not bypass it.
+        assert review["can_save"], review["blockers"]
         assert extend(server, review)[0] == 200
         edition(server, "second", 8)
         second_transition, _ = execute(

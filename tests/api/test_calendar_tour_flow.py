@@ -372,13 +372,18 @@ def test_configured_tour_two_weeks_real_matches_rankings_and_restart(
         from beta_engine.domain.run_packages import canonical_hash
         from beta_engine.infrastructure.db.models import CalendarTourAuthorityModel
 
-        for damage in ("point_table", "receipt"):
+        for damage in ("point_table", "receipt", "pre_play_provenance"):
             with _repo._session_factory.begin() as session:
                 row = session.get(CalendarTourAuthorityModel, ("run", "branch"))
                 original = (row.payload_json, row.fingerprint)
                 corrupt = json.loads(row.payload_json)
                 if damage == "point_table":
                     corrupt["editions"][0]["edition"]["point_table"]["champion"] = 999
+                elif damage == "pre_play_provenance":
+                    # Rehashing the disposable live row must NOT let an
+                    # attacker rewrite the original Signed draw's creation
+                    # anchor, even when its field and draw stay identical.
+                    corrupt["editions"][0]["created_saved_head"] = "forged-origin"
                 else:
                     receipt = next(
                         r

@@ -397,6 +397,12 @@ def verify_tour_origins(session, state):
             or frozen.submissions != authority.submissions
             or frozen.field != authority.field
             or frozen.draw != authority.draw
+            # All immutable pre-play provenance, including the exact frozen
+            # ranking binding and creation source, must remain identical.
+            # It is not enough that the seeded draw happens to look equal.
+            or frozen.execution_fingerprint != authority.execution_fingerprint
+            or frozen.draw_seed != authority.draw_seed
+            or frozen.draw_command_id != authority.draw_command_id
         ):
             raise ValueError(
                 "Edition/draw authority did not exist in the pre-play Saved revision"

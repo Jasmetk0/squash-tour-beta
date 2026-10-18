@@ -86,3 +86,14 @@ recomputed canonical fingerprints and full player history. These
 points remain outside Official Tour Rankings; canonical Edition and
 Entry provenance, full official Week Transition and actual public
 publication are the next major integration targets.
+
+
+**After merged #1538:** a real eight-player scored tournament writes
+exact W-valid prepared points for QF/SF/final/title into Saved v7; these
+remain provisional. Current v8 candidate adds **actual persisted tournament
+result closure**: per-player 7-match win/loss/effective placement ledger,
+frozen source/awards, independent Admin confirmation, explicit manual Save,
+restart/restore and W52/W80 replay. This establishes genuine sporting facts
+for future integration, not a read-only candidate. Next integrate configured
+Edition/approved Entry and authoritative Official publication into native
+Week Transition. No automatic promotion of prepared scores.

@@ -8,7 +8,7 @@ export type ContinuationView = {
     winner_player_id: string; match_ids: string[]; saved: boolean
     scope: 'sporting_exhibition_knockout_not_official'
     prepared_points_status?: 'not_prepared' | 'prepared_not_official'
-    prepared_policy?: FollowupPointPolicy | null
+    prepared_policy?: FollowupPointPolicy | FollowupEightPointPolicy | null
     prepared_awards?: FollowupPreparedAward[]
   }[]
   weekly_advance_count?: number
@@ -59,16 +59,27 @@ export function verifyContinuation(v: ContinuationView, run: string, branch: str
     const prepared = t.prepared_points_status === 'prepared_not_official'
     if (!prepared) return !!t.prepared_policy || !!t.prepared_awards?.length
     const policy = t.prepared_policy, awards = t.prepared_awards
-    if (!policy || !awards || awards.length !== 4
+    const eight = t.entrant_ids.length === 8
+    const qfPoints = 'quarterfinal' in (policy ?? {}) ? (policy as FollowupEightPointPolicy).quarterfinal : undefined
+    const pointValues: Record<string, number> = policy
+      ? {champion: policy.champion, finalist: policy.finalist,
+         semifinal: policy.semifinal, ...(eight ? {quarterfinal: qfPoints ?? -1} : {})}
+      : {}
+    if (!policy || !awards || awards.length !== t.entrant_ids.length
+      || policy.schema_version !== (eight ? 'calendar_followup_point_policy.v2' : 'calendar_followup_point_policy.v1')
       || !Number.isSafeInteger(policy.validity_weeks) || policy.validity_weeks !== v.sporting_week?.calendar.weeks_per_year
       || !Number.isSafeInteger(policy.champion) || !Number.isSafeInteger(policy.finalist) || !Number.isSafeInteger(policy.semifinal)
-      || policy.champion <= policy.semifinal || policy.champion < policy.finalist || policy.finalist < policy.semifinal
-      || new Set(awards.map(a => a.player_id)).size !== 4
+      || policy.champion <= (eight ? (qfPoints ?? -1) : policy.semifinal)
+      || policy.champion < policy.finalist || policy.finalist < policy.semifinal
+      || (eight && (!Number.isSafeInteger(qfPoints) || qfPoints! < 0 || policy.semifinal < qfPoints!))
+      || new Set(awards.map(a => a.player_id)).size !== t.entrant_ids.length
       || awards.some(a => !t.entrant_ids.includes(a.player_id) || !hash(a.source_policy_fingerprint)
-        || !hash(a.source_tournament_fingerprint) || a.main_points !== policy[a.reached_stage])
+        || !hash(a.source_tournament_fingerprint) || !(a.reached_stage in pointValues)
+        || a.main_points !== pointValues[a.reached_stage])
       || awards.filter(a => a.reached_stage === 'champion').length !== 1
       || awards.filter(a => a.reached_stage === 'finalist').length !== 1
       || awards.filter(a => a.reached_stage === 'semifinal').length !== 2
+      || awards.filter(a => a.reached_stage === 'quarterfinal').length !== (eight ? 4 : 0)
       || awards.find(a => a.reached_stage === 'champion')?.player_id !== t.winner_player_id
     ) return true
     return new Set(awards.map(a => a.source_tournament_fingerprint)).size !== 1
@@ -117,8 +128,14 @@ export type FollowupPointPolicy = {
   source_kind?: 'admin_explicit_reviewed'
   category_label: string; champion: number; finalist: number; semifinal: number; validity_weeks: number
 }
+export type FollowupEightPointPolicy = {
+  schema_version?: 'calendar_followup_point_policy.v2'
+  source_kind?: 'admin_explicit_reviewed'
+  category_label: string
+  champion: number; finalist: number; semifinal: number; quarterfinal: number; validity_weeks: number
+}
 export type FollowupPreparedAward = {
-  player_id: string; reached_stage: 'champion' | 'finalist' | 'semifinal'
+  player_id: string; reached_stage: 'champion' | 'finalist' | 'semifinal' | 'quarterfinal'
   main_points: number; source_tournament_fingerprint: string; source_policy_fingerprint: string
 }
 export type FollowupKnockoutCommand = {
@@ -137,7 +154,7 @@ export type FollowupKnockoutReceipt = {
   prepared_awards?: FollowupPreparedAward[]
   prepared_policy_fingerprint?: string
   tournament: {
-    schema_version?: 'calendar_followup_knockout.v1' | 'calendar_followup_knockout.v2' | 'calendar_followup_knockout.v3'
+    schema_version?: 'calendar_followup_knockout.v1' | 'calendar_followup_knockout.v2' | 'calendar_followup_knockout.v3' | 'calendar_followup_knockout.v4'
     run_id: string; branch_id: string; command_id: string; tournament_id: string
     source_saved_head: string; source_checkpoint_fingerprint: string
     entrant_ids: string[]; matches: { match_id: string; sequence: number; fingerprint?: string
@@ -193,18 +210,22 @@ export function verifyFollowupKnockout(
 export type FollowupEightCommand = Omit<FollowupKnockoutCommand, 'entrant_ids'> & {
   entrant_ids: [string, string, string, string, string, string, string, string]
 }
+export type FollowupEightScoredCommand = FollowupEightCommand & {
+  point_policy: FollowupEightPointPolicy; explicit_point_confirmation: true
+}
 
 /** Historical 4-player results use the separate v1/v2 verifier above. */
 export function verifyEightFollowupKnockout(
-  receipt: FollowupKnockoutReceipt, command: FollowupEightCommand, view: ContinuationView,
+  receipt: FollowupKnockoutReceipt, command: FollowupEightCommand | FollowupEightScoredCommand, view: ContinuationView,
 ): FollowupKnockoutReceipt {
   const e = receipt?.tournament, hash = (x: unknown) => typeof x === 'string' && /^[0-9a-f]{64}$/.test(x)
   const names = ['qf1', 'qf2', 'qf3', 'qf4', 'sf1', 'sf2', 'final']
+  const scored = 'point_policy' in command
   if (!receipt || !e || receipt.schema_version !== 'calendar_followup_knockout_receipt.v1'
-    || e.schema_version !== 'calendar_followup_knockout.v3'
+    || e.schema_version !== (scored ? 'calendar_followup_knockout.v4' : 'calendar_followup_knockout.v3')
     || receipt.official_ranking_published !== false
     || receipt.scope !== 'sporting_exhibition_knockout_not_official'
-    || !!receipt.publication_status || !!receipt.prepared_awards?.length
+    || (!scored && (!!receipt.publication_status || !!receipt.prepared_awards?.length))
     || !hash(receipt.fingerprint) || !hash(receipt.checkpoint_fingerprint)
     || e.run_id !== view.run_id || e.branch_id !== view.branch_id
     || e.source_saved_head !== view.saved_head_revision_id
@@ -228,5 +249,40 @@ export function verifyEightFollowupKnockout(
     || pairs[6][0] !== winners[4] || pairs[6][1] !== winners[5]
     || receipt.winner_player_id !== winners[6] || !command.entrant_ids.includes(winners[6])
   ) throw Error('Eight-player semifinal or final winner lineage changed')
+  if (scored) {
+    const policy = command.point_policy, awards = receipt.prepared_awards
+    const expected: Record<string, number> = {
+      champion: policy.champion, finalist: policy.finalist,
+      semifinal: policy.semifinal, quarterfinal: policy.quarterfinal,
+    }
+    const placements = [
+      ...e.matches.slice(0, 4).map(m => [m.result.player_a_id === m.result.winner_player_id
+        ? m.result.player_b_id : m.result.player_a_id, 'quarterfinal']),
+      ...e.matches.slice(4, 6).map(m => [m.result.player_a_id === m.result.winner_player_id
+        ? m.result.player_b_id : m.result.player_a_id, 'semifinal']),
+      [e.matches[6].result.player_a_id === winners[6]
+        ? e.matches[6].result.player_b_id : e.matches[6].result.player_a_id, 'finalist'],
+      [winners[6], 'champion'],
+    ]
+    if (receipt.publication_status !== 'prepared_not_official'
+      || !hash(receipt.prepared_policy_fingerprint)
+      || !awards || awards.length !== 8
+      || !policy.category_label.trim()
+      || !Number.isSafeInteger(policy.validity_weeks)
+      || policy.validity_weeks !== view.sporting_week?.calendar.weeks_per_year
+      || ![policy.champion, policy.finalist, policy.semifinal, policy.quarterfinal]
+        .every(n => Number.isSafeInteger(n) && n >= 0 && n <= 1000000)
+      || policy.champion <= policy.quarterfinal
+      || policy.champion < policy.finalist || policy.finalist < policy.semifinal
+      || policy.semifinal < policy.quarterfinal
+      || placements.some(([playerId, stage]) => !awards.some(a => a.player_id === playerId
+        && a.reached_stage === stage && a.main_points === expected[stage]))
+      || new Set(awards.map(a => a.player_id)).size !== 8
+      || new Set(awards.map(a => a.source_policy_fingerprint)).size !== 1
+      || new Set(awards.map(a => a.source_tournament_fingerprint)).size !== 1
+      || awards.some(a => !hash(a.source_tournament_fingerprint)
+        || a.source_policy_fingerprint !== receipt.prepared_policy_fingerprint)
+    ) throw Error('Eight-player prepared awards differ from the played knockout')
+  }
   return receipt
 }

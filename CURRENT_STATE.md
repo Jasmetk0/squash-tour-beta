@@ -191,3 +191,20 @@ Saved history/replay/restart/restore and W52/W80 tests are included.
 Scoring is intentionally unavailable for eight-player exhibitions;
 configured Tour Entry, Official Ranking and full Week/Season Transition
 remain unimplemented. See `docs/CALENDAR_FOLLOWUP_EIGHT_KNOCKOUT_V1.md`.
+
+
+**Merged #1537 (checked 18 Oct 2026):** seven genuine winner-fed
+MatchEngine matches from the Saved W52/W80 sporting owner now form an
+eight-player native later-week knockout, with an explicit v3 event / v6
+checkpoint, complete replay/restore and manual Save. Nine final-head
+workflow checks were green before the owner merged it into `buuk`.
+
+**Under construction:** a *separate* confirmed eight-player prepared
+point award operation, deriving 8 canonical player awards across
+champion/finalist/semifinal/quarterfinal from the actual played
+v3-style bracket. This writes v4 scored tournament/v7 Saved sporting
+checkpoint, retaining historical v1–v6 JSON/hash semantics and existing
+four-player scoring unchanged. Independent CS/EN confirmation, point
+table and signed result history are included. No Official Tour Entry,
+ranking publication or complete Week/Season Transition is claimed.
+See `docs/CALENDAR_EIGHT_PREPARED_AWARDS_V1.md`.

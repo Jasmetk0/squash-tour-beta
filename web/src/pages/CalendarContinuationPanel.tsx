@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { previewCalendarSportingWeek, commitCalendarSportingWeek, inspectCalendarContinuation, simulateCalendarContinuation, simulateCalendarFollowupKnockout, saveCalendarContinuation, replayCalendarContinuation } from '../api/client'
-import { verifyFollowupKnockout, type FollowupKnockoutCommand, verifySportingWeek, type SportingWeekCommand, type SportingWeekPreview, verifyContinuation, type ContinuationView, type ContinuationReceipt } from '../api/calendarContinuation'
+import { previewCalendarSportingWeek, commitCalendarSportingWeek, inspectCalendarContinuation, simulateCalendarContinuation, simulateCalendarFollowupKnockout, simulateCalendarScoredFollowupKnockout, saveCalendarContinuation, replayCalendarContinuation } from '../api/client'
+import { verifyFollowupKnockout, type FollowupKnockoutCommand, type FollowupScoredCommand, verifySportingWeek, type SportingWeekCommand, type SportingWeekPreview, verifyContinuation, type ContinuationView, type ContinuationReceipt } from '../api/calendarContinuation'
 import { newCommandId } from '../admin/branchSimulation'
 import { useLanguage } from '../i18n/LanguageContext'
 import { formatApiError } from '../utils/apiErrors'
@@ -17,6 +17,12 @@ export function CalendarContinuationPanel({ runId, branchId, head, onChange }: {
   const [consent, setConsent] = useState(false), [saveConsent, setSaveConsent] = useState(false)
   const [knockoutEntrants, setKnockoutEntrants] = useState<string[]>([])
   const [knockoutConsent, setKnockoutConsent] = useState(false)
+  const [preparePoints, setPreparePoints] = useState(false)
+  const [pointConsent, setPointConsent] = useState(false)
+  const [category, setCategory] = useState('Operator-reviewed exhibition')
+  const [championPoints, setChampionPoints] = useState('100')
+  const [finalistPoints, setFinalistPoints] = useState('60')
+  const [semiPoints, setSemiPoints] = useState('30')
   const knockoutCommandId = useRef<string | null>(null)
   const [review, setReview] = useState<ContinuationView | null>(null), [receipt, setReceipt] = useState<ContinuationReceipt | null>(null)
   const [busy, setBusy] = useState(false), [error, setError] = useState<string | null>(null), [notice, setNotice] = useState<string | null>(null)
@@ -27,7 +33,7 @@ export function CalendarContinuationPanel({ runId, branchId, head, onChange }: {
   useEffect(() => {
     const stamp = epoch.current
     setWeekReview(null); setWeekConsent(false); setView(null); setReview(null); setReceipt(null); setConsent(false); setSaveConsent(false)
-    setKnockoutConsent(false); knockoutCommandId.current = null
+    setKnockoutConsent(false); setPointConsent(false); knockoutCommandId.current = null
     setError(null); setNotice(null); setBusy(true)
     void inspectCalendarContinuation(runId, branchId).then(v => {
       if (epoch.current !== stamp || current.current !== target) return
@@ -39,7 +45,7 @@ export function CalendarContinuationPanel({ runId, branchId, head, onChange }: {
     return () => { epoch.current += 1 }
   }, [target, runId, branchId, head])
   useEffect(() => { commandId.current = null; weekCommandId.current = null; knockoutCommandId.current = null
-    setConsent(false); setKnockoutConsent(false); setWeekConsent(false); setWeekReview(null) }, [target, a, b, seed, reason, knockoutEntrants.join('|')])
+    setConsent(false); setKnockoutConsent(false); setPointConsent(false); setWeekConsent(false); setWeekReview(null) }, [target, a, b, seed, reason, knockoutEntrants.join('|'), preparePoints, category, championPoints, finalistPoints, semiPoints])
   const read = async () => verifyContinuation(await inspectCalendarContinuation(runId, branchId), runId, branchId, head)
   const perform = async (action: 'play' | 'review' | 'save' | 'replay' | 'week-review' | 'week-commit' | 'knockout', matchId?: string) => {
     if (!view || busy) return
@@ -69,7 +75,7 @@ export function CalendarContinuationPanel({ runId, branchId, head, onChange }: {
           || !view.sporting_week || view.sporting_week.week < 2
           || knockoutEntrants.length !== 4 || new Set(knockoutEntrants).size !== 4
           || knockoutEntrants.some(p => !view.player_ids.includes(p))
-          || !knockoutConsent || !reason.trim() || !/^-?\d+$/.test(seed)
+          || !knockoutConsent || (preparePoints && !pointConsent) || !reason.trim() || !/^-?\d+$/.test(seed)
           || !Number.isSafeInteger(Number(seed))) return
         knockoutCommandId.current ??= newCommandId()
         const command: FollowupKnockoutCommand = {
@@ -79,8 +85,22 @@ export function CalendarContinuationPanel({ runId, branchId, head, onChange }: {
           entrant_ids: knockoutEntrants as [string, string, string, string],
           seed: Number(seed), operator_label: 'Admin', audit_reason: reason.trim(),
         }
+        const values = [championPoints, finalistPoints, semiPoints].map(Number)
+        const goodPoints = [championPoints, finalistPoints, semiPoints].every(n => /^\\d+$/.test(n) && Number.isSafeInteger(Number(n)) && Number(n) <= 1000000)
+          && values[0] >= values[1] && values[1] >= values[2] && values[0] > values[2]
+        if (preparePoints && (!goodPoints || !category.trim())) return
+        const scored: FollowupScoredCommand = {
+          ...command,
+          point_policy: {category_label: category.trim(), champion: values[0],
+            finalist: values[1], semifinal: values[2],
+            validity_weeks: view.sporting_week.calendar.weeks_per_year},
+          explicit_point_confirmation: true,
+        }
         const played = verifyFollowupKnockout(
-          await simulateCalendarFollowupKnockout(runId, branchId, command), command, view,
+          preparePoints
+            ? await simulateCalendarScoredFollowupKnockout(runId, branchId, scored)
+            : await simulateCalendarFollowupKnockout(runId, branchId, command),
+          preparePoints ? scored : command, view,
         )
         if (!valid()) return
         const latest = await read(); if (!valid()) return
@@ -89,7 +109,7 @@ export function CalendarContinuationPanel({ runId, branchId, head, onChange }: {
           || last?.fingerprint !== played.fingerprint
           || latest.matches.length !== view.matches.length + 3)
           throw Error('Knockout sporting owner changed after play')
-        setView(latest); setKnockoutConsent(false); setReceipt(null)
+        setView(latest); setKnockoutConsent(false); setPointConsent(false); setReceipt(null)
         setReview(null); setSaveConsent(false); onChange()
       } else if (action === 'play') {
         if (!consent || !view.can_play || !view.checkpoint_fingerprint || a === b || !reason.trim()

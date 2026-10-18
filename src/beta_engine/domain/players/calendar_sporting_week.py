@@ -246,7 +246,9 @@ def append_sporting_week(checkpoint, world, knockout, event):
         checkpoint.model_copy(
             update={
                 "schema_version": (
-                    "calendar_sporting_checkpoint.v6"
+                    "calendar_sporting_checkpoint.v7"
+                    if checkpoint.schema_version == "calendar_sporting_checkpoint.v7"
+                    else "calendar_sporting_checkpoint.v6"
                     if checkpoint.schema_version == "calendar_sporting_checkpoint.v6"
                     else "calendar_sporting_checkpoint.v5"
                     if checkpoint.schema_version == "calendar_sporting_checkpoint.v5"

@@ -5806,8 +5806,23 @@ class SimulationPersistenceRepository:
                     # Official ranking transitions, lifecycle/Entry history and
                     # source fingerprints. Pre-play Saved origins were checked
                     # by capture_tour. Failure rolls back the entire Save.
+                    from beta_engine.infrastructure.db.calendar_standalone_match_state import (
+                        decode_prevalidated_calendar_sources,
+                    )
+                    # The existing Saved HEAD was fully authenticated by
+                    # _viewer_branch_working_draft_in_session inside THIS
+                    # transaction. Its exact sporting source is now a trusted
+                    # prefix; the new Save must still replay every NEW event and
+                    # compare the full successor state byte-for-byte.
+                    _saved_evidence, signed_prefix, _saved_tour = (
+                        decode_prevalidated_calendar_sources(
+                            state.saved_revision.payload,
+                            run_id=run_id, branch_id=branch_id,
+                        )
+                    )
                     load_saved_calendar_sources(
-                        payload, run_id=run_id, branch_id=branch_id
+                        payload, run_id=run_id, branch_id=branch_id,
+                        _verified_saved_prefix=signed_prefix,
                     )
                 summary = viewer_branch_saved_revision_change_summary(
                     previous_viewer_branch_id=saved_viewer_id,

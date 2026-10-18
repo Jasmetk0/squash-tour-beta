@@ -434,7 +434,9 @@ def load_saved_calendar_match(payload: dict, *, run_id: str, branch_id: str, _sp
         _sporting_component_proofs=_sporting_component_proofs)[0]
 
 
-def load_saved_calendar_sources(payload: dict, *, run_id: str, branch_id: str, _sporting_component_proofs=None):
+def load_saved_calendar_sources(payload: dict, *, run_id: str, branch_id: str,
+                                _sporting_component_proofs=None,
+                                _verified_saved_prefix=None):
     """Return the coupled sources, sharing only exact transaction-local proofs."""
     from beta_engine.infrastructure.db.calendar_sporting_checkpoint import saved_checkpoint
     # Exact content-addressed proof reuse is private to a single validated
@@ -462,7 +464,8 @@ def load_saved_calendar_sources(payload: dict, *, run_id: str, branch_id: str, _
             if root_proofs is not None:
                 root_proofs[root_key] = state
         checkpoint = saved_checkpoint(payload, state, run_id=run_id, branch_id=branch_id,
-            _prefix_proofs=_sporting_component_proofs.setdefault('_prefixes',{}) if _sporting_component_proofs is not None else None)
+            _prefix_proofs=_sporting_component_proofs.setdefault('_prefixes',{}) if _sporting_component_proofs is not None else None,
+            _verified_saved_prefix=_verified_saved_prefix)
         if key is not None:
             _sporting_component_proofs[key] = (state,checkpoint)
     else:

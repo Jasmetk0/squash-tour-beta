@@ -50,6 +50,25 @@ export function verifyContinuation(v: ContinuationView, run: string, branch: str
     || !t.entrant_ids.includes(t.winner_player_id) || typeof t.saved !== 'boolean'
     || (v.saved && !t.saved)
   ))) throw Error('Later knockout source/history changed')
+  if (v.tournaments?.some(t => {
+    const prepared = t.prepared_points_status === 'prepared_not_official'
+    if (!prepared) return !!t.prepared_policy || !!t.prepared_awards?.length
+    const policy = t.prepared_policy, awards = t.prepared_awards
+    if (!policy || !awards || awards.length !== 4
+      || !Number.isSafeInteger(policy.validity_weeks) || policy.validity_weeks !== v.sporting_week?.calendar.weeks_per_year
+      || !Number.isSafeInteger(policy.champion) || !Number.isSafeInteger(policy.finalist) || !Number.isSafeInteger(policy.semifinal)
+      || policy.champion <= policy.semifinal || policy.champion < policy.finalist || policy.finalist < policy.semifinal
+      || new Set(awards.map(a => a.player_id)).size !== 4
+      || awards.some(a => !t.entrant_ids.includes(a.player_id) || !hash(a.source_policy_fingerprint)
+        || !hash(a.source_tournament_fingerprint) || a.main_points !== policy[a.reached_stage])
+      || awards.filter(a => a.reached_stage === 'champion').length !== 1
+      || awards.filter(a => a.reached_stage === 'finalist').length !== 1
+      || awards.filter(a => a.reached_stage === 'semifinal').length !== 2
+      || awards.find(a => a.reached_stage === 'champion')?.player_id !== t.winner_player_id
+    ) return true
+    return new Set(awards.map(a => a.source_tournament_fingerprint)).size !== 1
+      || new Set(awards.map(a => a.source_policy_fingerprint)).size !== 1
+  })) throw Error('Prepared knockout award history changed')
   if (v.sporting_week) {
     const w = v.sporting_week
     if (!Number.isSafeInteger(w.week) || w.week < 1 || w.week > w.calendar.weeks_per_year

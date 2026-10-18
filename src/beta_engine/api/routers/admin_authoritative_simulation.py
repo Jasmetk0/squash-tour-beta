@@ -2585,7 +2585,7 @@ def commit_calendar_sporting_week(run_id: str, branch_id: str, payload: Calendar
 # Full three-match native sporting knockout from a Saved week-2+ checkpoint.
 # Results and fatigue are real; Tour points/public Official time are not published.
 from beta_engine.application.calendar_followup_knockout_service import (
-    CalendarFollowupKnockoutCommand, CalendarFollowupKnockoutService,
+    CalendarFollowupKnockoutCommand, CalendarFollowupScoredCommand, CalendarFollowupKnockoutService,
 )
 
 
@@ -2602,4 +2602,21 @@ def simulate_calendar_followup_knockout(
         raise HTTPException(
             status_code=409,
             detail={"code": "calendar_followup_knockout_conflict", "message": str(exc)},
+        ) from exc
+
+
+@router.post("/calendar-continuation/knockouts/simulate-scored", status_code=201)
+def simulate_scored_calendar_followup_knockout(
+    run_id: str, branch_id: str, payload: CalendarFollowupScoredCommand,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+):
+    """Explicit operator-reviewed *prepared* points, never Official publication."""
+    try:
+        return CalendarFollowupKnockoutService(runtime.repository).simulate(
+            run_id=run_id, branch_id=branch_id, command=payload,
+        )
+    except (KeyError, TypeError, ValueError) as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={"code": "calendar_followup_scored_knockout_conflict", "message": str(exc)},
         ) from exc

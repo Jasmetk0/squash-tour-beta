@@ -5312,6 +5312,9 @@ export function inspectCalendarContinuation(runId: string, branchId: string): Pr
 export function simulateCalendarContinuation(runId: string, branchId: string, command: import('./calendarContinuation').ContinuationCommand): Promise<import('./calendarContinuation').ContinuationReceipt> {
   return request(continuationRoot(runId, branchId) + '/simulate', { method: 'POST', body: JSON.stringify(command) })
 }
+export function simulateCalendarFollowupKnockout(runId: string, branchId: string, command: import('./calendarContinuation').FollowupKnockoutCommand): Promise<import('./calendarContinuation').FollowupKnockoutReceipt> {
+  return request(continuationRoot(runId, branchId) + '/knockouts/simulate', { method: 'POST', body: JSON.stringify(command) })
+}
 export function saveCalendarContinuation(runId: string, branchId: string, draft: number, fingerprint: string): Promise<unknown> {
   return request(continuationRoot(runId, branchId) + '/save', { method: 'POST', body: JSON.stringify({
     expected_draft_version: draft, expected_calendar_sporting_fingerprint: fingerprint,

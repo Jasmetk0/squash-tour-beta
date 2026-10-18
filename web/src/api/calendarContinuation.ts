@@ -3,6 +3,9 @@ export type ContinuationView = {
   saved_head_revision_id: string; draft_version: number; checkpoint_fingerprint: string | null
   player_ids: string[]; saved: boolean; can_play: boolean; limited_player_ids: string[]
   sporting_week?: { calendar: { weeks_per_year: number; season_start_year_week: number; start_year: number; season_count: number }; season_index: number; week: number } | null
+  tournaments?: { tournament_id: string; command_id: string; fingerprint: string; week: number
+    entrant_ids: string[]; winner_player_id: string; match_ids: string[]; saved: boolean
+    scope: 'sporting_exhibition_knockout_not_official' }[]
   weekly_advance_count?: number
   weekly_advances?: { command_id: string; fingerprint: string; completed_week: number; target_week: number; saved: boolean }[]
   health_numeric_effect_applied: false
@@ -35,6 +38,14 @@ export function verifyContinuation(v: ContinuationView, run: string, branch: str
       || m.player_ids.some(p => !v.player_ids.includes(p)) || !m.player_ids.includes(m.winner_player_id)
       || !Number.isSafeInteger(m.rally_count) || m.rally_count < 1 || typeof m.saved !== 'boolean'
       || (v.saved && !m.saved))) throw Error('Continuation source/history changed')
+  if (v.tournaments && (!Array.isArray(v.tournaments) || v.tournaments.some(t =>
+    !hash(t.fingerprint) || t.scope !== 'sporting_exhibition_knockout_not_official'
+    || t.entrant_ids.length !== 4 || new Set(t.entrant_ids).size !== 4
+    || t.entrant_ids.some(p => !v.player_ids.includes(p)) || t.match_ids.length !== 3
+    || t.match_ids.some(id => !v.matches.some(m => m.match_id === id))
+    || !t.entrant_ids.includes(t.winner_player_id) || typeof t.saved !== 'boolean'
+    || (v.saved && !t.saved)
+  ))) throw Error('Later knockout source/history changed')
   if (v.sporting_week) {
     const w = v.sporting_week
     if (!Number.isSafeInteger(w.week) || w.week < 1 || w.week > w.calendar.weeks_per_year
@@ -71,4 +82,47 @@ export function verifySportingWeek(v: SportingWeekPreview, command: SportingWeek
     || new Set(v.changes.map(c => c.player_id)).size !== v.changes.length || v.changes.some(c => !source.player_ids.includes(c.player_id))
     || !Number.isSafeInteger(v.attribute_change_count) || v.attribute_change_count < 0) throw Error('Weekly preview source changed')
   return v
+}
+
+export type FollowupKnockoutCommand = {
+  command_id: string; tournament_id: string; expected_saved_head: string
+  expected_checkpoint_fingerprint: string; entrant_ids: [string, string, string, string]
+  seed: number; operator_label: string; audit_reason: string
+}
+export type FollowupKnockoutReceipt = {
+  schema_version: 'calendar_followup_knockout_receipt.v1'; fingerprint: string
+  checkpoint_fingerprint: string; winner_player_id: string; official_ranking_published: false
+  scope: 'sporting_exhibition_knockout_not_official'
+  tournament: {
+    run_id: string; branch_id: string; command_id: string; tournament_id: string
+    source_saved_head: string; source_checkpoint_fingerprint: string
+    entrant_ids: string[]; matches: { match_id: string; sequence: number; fingerprint?: string
+      result: { winner_player_id: string; player_a_id: string; player_b_id: string } }[]
+  }
+}
+export function verifyFollowupKnockout(
+  receipt: FollowupKnockoutReceipt, command: FollowupKnockoutCommand, view: ContinuationView,
+): FollowupKnockoutReceipt {
+  const e = receipt?.tournament
+  const fingerprint = (s: unknown) => typeof s === 'string' && /^[0-9a-f]{64}$/.test(s)
+  const matchIds = ['sf1', 'sf2', 'final'].map(s => command.tournament_id + ':' + s)
+  if (!receipt || !e || receipt.schema_version !== 'calendar_followup_knockout_receipt.v1'
+    || receipt.scope !== 'sporting_exhibition_knockout_not_official'
+    || receipt.official_ranking_published !== false || !fingerprint(receipt.fingerprint)
+    || !fingerprint(receipt.checkpoint_fingerprint) || e.run_id !== view.run_id
+    || e.branch_id !== view.branch_id || e.source_saved_head !== view.saved_head_revision_id
+    || e.source_checkpoint_fingerprint !== view.checkpoint_fingerprint
+    || e.command_id !== command.command_id || e.tournament_id !== command.tournament_id
+    || e.entrant_ids.length !== 4 || e.entrant_ids.some((p, i) => p !== command.entrant_ids[i])
+    || !Array.isArray(e.matches) || e.matches.length !== 3
+    || e.matches.some((m, i) => m.match_id !== matchIds[i] || m.sequence !== view.matches.length + i + 1)
+    || e.matches[0].result.player_a_id !== command.entrant_ids[0]
+    || e.matches[0].result.player_b_id !== command.entrant_ids[1]
+    || e.matches[1].result.player_a_id !== command.entrant_ids[2]
+    || e.matches[1].result.player_b_id !== command.entrant_ids[3]
+    || e.matches[2].result.player_a_id !== e.matches[0].result.winner_player_id
+    || e.matches[2].result.player_b_id !== e.matches[1].result.winner_player_id
+    || receipt.winner_player_id !== e.matches[2].result.winner_player_id
+  ) throw Error('Later knockout result differs from frozen Saved source or semifinal winners')
+  return receipt
 }

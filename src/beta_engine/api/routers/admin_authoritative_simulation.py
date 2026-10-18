@@ -2580,3 +2580,26 @@ def commit_calendar_sporting_week(run_id: str, branch_id: str, payload: Calendar
         return CalendarSportingWeekService(runtime.repository).commit(run_id=run_id,branch_id=branch_id,request=payload)
     except (KeyError,TypeError,ValueError) as exc:
         raise HTTPException(status_code=409,detail=str(exc)) from exc
+
+
+# Full three-match native sporting knockout from a Saved week-2+ checkpoint.
+# Results and fatigue are real; Tour points/public Official time are not published.
+from beta_engine.application.calendar_followup_knockout_service import (
+    CalendarFollowupKnockoutCommand, CalendarFollowupKnockoutService,
+)
+
+
+@router.post("/calendar-continuation/knockouts/simulate", status_code=201)
+def simulate_calendar_followup_knockout(
+    run_id: str, branch_id: str, payload: CalendarFollowupKnockoutCommand,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+):
+    try:
+        return CalendarFollowupKnockoutService(runtime.repository).simulate(
+            run_id=run_id, branch_id=branch_id, command=payload,
+        )
+    except (KeyError, TypeError, ValueError) as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={"code": "calendar_followup_knockout_conflict", "message": str(exc)},
+        ) from exc

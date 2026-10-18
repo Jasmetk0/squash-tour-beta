@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { LanguageProvider } from '../i18n/LanguageContext'
 import { CalendarContinuationPanel } from './CalendarContinuationPanel'
 import type { ContinuationView } from '../api/calendarContinuation'
-const api = vi.hoisted(() => ({ inspectCalendarContinuation: vi.fn(), simulateCalendarContinuation: vi.fn(),
+const api = vi.hoisted(() => ({ inspectCalendarContinuation: vi.fn(), simulateCalendarContinuation: vi.fn(), simulateCalendarFollowupKnockout: vi.fn(),
   previewCalendarSportingWeek: vi.fn(), commitCalendarSportingWeek: vi.fn(), saveCalendarContinuation: vi.fn(), replayCalendarContinuation: vi.fn(), ApiError: class ApiError extends Error {} }))
 vi.mock('../api/client', () => api)
 const fp = 'a'.repeat(64)
@@ -111,6 +111,47 @@ describe('continuation interaction (HTTP boundary mocked)',()=>{
     fireEvent.change(screen.getByLabelText('Continuation reason'),{target:{value:'Changed'}})
     expect(screen.queryByRole('button',{name:'Prepare sporting week'})).not.toBeInTheDocument()
     expect(api.commitCalendarSportingWeek).not.toHaveBeenCalled()
+  })
+
+
+  it('plays a real later-week four-person bracket from the exact Saved source and requires consent', async()=>{
+    const w={calendar:{weeks_per_year:52,season_start_year_week:52,start_year:2030,season_count:3},season_index:0,week:2}
+    const source:ContinuationView={...view(),player_ids:['a','b','c','d'],sporting_week:w,
+      weekly_advance_count:1, weekly_advances:[{command_id:'advance',fingerprint:'e'.repeat(64),completed_week:1,target_week:2,saved:true}],tournaments:[]}
+    let after:ContinuationView=source
+    api.inspectCalendarContinuation.mockImplementationOnce(async()=>source).mockImplementation(async()=>after)
+    api.simulateCalendarFollowupKnockout.mockImplementation(async(_r:string,_b:string,cmd:{
+      command_id:string;tournament_id:string;expected_saved_head:string;expected_checkpoint_fingerprint:string;entrant_ids:string[]})=>{
+      const ids=['sf1','sf2','final'].map(s=>cmd.tournament_id+':'+s)
+      const stages=[
+        {match_id:ids[0],sequence:1,result:{player_a_id:'a',player_b_id:'b',winner_player_id:'a'}},
+        {match_id:ids[1],sequence:2,result:{player_a_id:'c',player_b_id:'d',winner_player_id:'c'}},
+        {match_id:ids[2],sequence:3,result:{player_a_id:'a',player_b_id:'c',winner_player_id:'a'}},
+      ]
+      after={...source,saved:false,can_play:false,checkpoint_fingerprint:'b'.repeat(64),
+        tournaments:[{tournament_id:cmd.tournament_id,command_id:cmd.command_id,
+          fingerprint:'c'.repeat(64),week:2,entrant_ids:cmd.entrant_ids,
+          winner_player_id:'a',match_ids:ids,saved:false,scope:'sporting_exhibition_knockout_not_official'}],
+        matches:stages.map(m=>({match_id:m.match_id,sequence:m.sequence,
+          fingerprint:'d'.repeat(64),player_ids:[m.result.player_a_id,m.result.player_b_id] as [string,string],
+          winner_player_id:m.result.winner_player_id,rally_count:99,saved:false}))}
+      return {schema_version:'calendar_followup_knockout_receipt.v1',fingerprint:'c'.repeat(64),
+        checkpoint_fingerprint:'b'.repeat(64),winner_player_id:'a',official_ranking_published:false,
+        scope:'sporting_exhibition_knockout_not_official',
+        tournament:{run_id:'r',branch_id:'b',source_saved_head:'head',source_checkpoint_fingerprint:fp,
+          command_id:cmd.command_id,tournament_id:cmd.tournament_id,entrant_ids:cmd.entrant_ids,matches:stages}}
+    })
+    render(panel());await screen.findByRole('button',{name:'Play next four-player knockout'})
+    fireEvent.change(screen.getByLabelText('Continuation reason'),{target:{value:'Actual next knockout'}})
+    expect(screen.getByRole('button',{name:'Play next four-player knockout'})).toBeDisabled()
+    fireEvent.click(screen.getByLabelText('Confirm playing all three matches from this Save.'))
+    fireEvent.click(screen.getByRole('button',{name:'Play next four-player knockout'}))
+    await screen.findByRole('table',{name:'Later-week knockout history'})
+    expect(api.simulateCalendarFollowupKnockout).toHaveBeenCalledWith('r','b',expect.objectContaining({
+      expected_saved_head:'head',expected_checkpoint_fingerprint:fp,entrant_ids:['a','b','c','d'],
+    }))
+    expect(screen.getAllByRole('button',{name:'Verify continuation replay'})).toHaveLength(3)
+    expect(screen.getByRole('button',{name:'Review continuation Save'})).toBeEnabled()
   })
 
 })

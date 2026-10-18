@@ -89,7 +89,6 @@ def play_continuation_match(*, state, world, health, clock, run_id, branch_id, c
     _, effects = continuation_effects(state, ctx, result, inputs['state_policy'])
     entry = CalendarContinuationMatch(**inputs, result=result, effects=effects, log_anchor_hash=anchor)
     successor = append_continuation(state, world, entry)
-    replace_checkpoint(session, previous=state, successor=successor)
     return entry, successor
 
 

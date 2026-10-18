@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { verifyEightFollowupKnockout, type ContinuationView, type FollowupEightCommand, type FollowupKnockoutReceipt } from './calendarContinuation'
+import { verifyEightFollowupKnockout, type ContinuationView, type FollowupEightCommand, type FollowupEightScoredCommand, type FollowupKnockoutReceipt } from './calendarContinuation'
 
 const hash = (value: string) => value.repeat(64)
 const view: ContinuationView = {
@@ -49,4 +49,45 @@ describe('native eight-player knockout receipt proof', () => {
     expect(() => verifyEightFollowupKnockout({...receipt,official_ranking_published:true as false},cmd,view)).toThrow('source changed')
     expect(() => verifyEightFollowupKnockout({...receipt,publication_status:'prepared_not_official'},cmd,view)).toThrow('source changed')
   })
+  const scored: FollowupEightScoredCommand = {
+    ...cmd, point_policy: {
+      category_label: 'Reviewed eight-player exhibition', champion: 100, finalist: 60,
+      semifinal: 30, quarterfinal: 15, validity_weeks: 52,
+    }, explicit_point_confirmation: true,
+  }
+  const scoredReceipt: FollowupKnockoutReceipt = {
+    ...receipt, tournament: {...receipt.tournament, schema_version:'calendar_followup_knockout.v4'},
+    publication_status: 'prepared_not_official', prepared_policy_fingerprint: hash('d'),
+    prepared_awards: [
+      ['a', 'quarterfinal', 15], ['b', 'quarterfinal', 15],
+      ['c', 'champion', 100], ['d', 'quarterfinal', 15],
+      ['e', 'finalist', 60], ['f', 'quarterfinal', 15],
+      ['g', 'semifinal', 30], ['h', 'semifinal', 30],
+    ].map(([player_id, reached_stage, main_points]) => ({
+      player_id: player_id as string,
+      reached_stage: reached_stage as 'champion'|'finalist'|'semifinal'|'quarterfinal',
+      main_points: main_points as number,
+      source_policy_fingerprint: hash('d'), source_tournament_fingerprint: hash('f'),
+    })),
+  }
+  it('recognizes exactly eight score records without declaring them Official', () => {
+    expect(verifyEightFollowupKnockout(scoredReceipt, scored, view)).toBe(scoredReceipt)
+  })
+  it('rejects manipulated prepared points, policy fingerprint and placement', () => {
+    const awards = scoredReceipt.prepared_awards!
+    expect(() => verifyEightFollowupKnockout({...scoredReceipt,
+      prepared_awards: awards.map((a,i)=>i===0 ? {...a,main_points:999} : a)}, scored, view))
+      .toThrow('prepared awards differ')
+    expect(() => verifyEightFollowupKnockout({...scoredReceipt,
+      prepared_awards: awards.map((a,i)=>i===0 ? {...a,source_policy_fingerprint:hash('e')} : a)}, scored, view))
+      .toThrow('prepared awards differ')
+    expect(() => verifyEightFollowupKnockout({...scoredReceipt,
+      prepared_awards: awards.map((a,i)=>i===2 ? {...a,reached_stage:'semifinal' as const} : a)}, scored, view))
+      .toThrow('prepared awards differ')
+  })
+  it('refuses scored v4 receipt on unscored v3 command and vice versa', () => {
+    expect(() => verifyEightFollowupKnockout(scoredReceipt, cmd, view)).toThrow('source changed')
+    expect(() => verifyEightFollowupKnockout(receipt, scored, view)).toThrow('source changed')
+  })
+
 })

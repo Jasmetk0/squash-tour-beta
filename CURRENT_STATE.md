@@ -1,5 +1,17 @@
 # Current implementation — Master v85
 
+Current integration base verified 18 October 2026: `buuk`
+`44c782870391d45d39b05cf00fa1edd6e938e6a6`, owner-merged #1540.
+The earlier audits below remain historical evidence, not the current branch tip.
+
+**Candidate in implementation:** configured native Edition → production Entry →
+approved field/draw → actual 57-backed MatchEngine → frozen Edition points →
+atomic native Week Transition/lifecycle/Official ranking, with separate manual
+Save and CS/EN Admin. See [authority and scope contract](docs/CALENDAR_CONFIGURED_TOUR_V1.md).
+Final API/browser/recovery/performance checks are pending; this candidate is not
+merge-ready or a complete pre-alpha release. Existing match-fork, Season Transition,
+numeric Health, intake-source and external correction/discipline guards remain.
+
 Audit base: buuk `4df7580c5548fbb27b0f7ee1a28ce6b3af5f71bd`, after owner-merged #1539, 18 October 2026.
 #1533–1539 are merged. The current repair follows a code/CI review of all seven PRs.
 Earlier in-progress paragraphs below are chronological history; this audit supersedes their status.

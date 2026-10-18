@@ -9,10 +9,17 @@ from beta_engine.infrastructure.db.models import CalendarPlayerSportingCheckpoin
 COMPONENT_KEY = 'calendar_player_sporting_checkpoint'
 
 
-def load_checkpoint(session, *, run_id, branch_id):
+def load_checkpoint(session, *, run_id, branch_id, _verified_source=None):
     row = session.get(CalendarPlayerSportingCheckpointModel, (run_id, branch_id))
     if row is None:
         return None
+    if (_verified_source is not None
+        and (_verified_source.run_id,_verified_source.branch_id)==(run_id,branch_id)
+        and row.fingerprint==_verified_source.fingerprint
+        and row.payload_json==_verified_source.model_dump_json()):
+        # Exact bytes of an already authenticated Saved source in this read
+        # transaction. A changed live row always takes the strict parser below.
+        return _verified_source
     state = CalendarSportingCheckpoint.model_validate_json(row.payload_json)
     if (state.run_id, state.branch_id, state.fingerprint) != (run_id, branch_id, row.fingerprint):
         raise ValueError('Calendar sporting checkpoint SQLite identity/hash mismatch')
@@ -34,7 +41,7 @@ def _knockout(evidence):
     return getattr(evidence, 'knockout', evidence)
 
 
-def verify_checkpoint(state, world, evidence):
+def verify_checkpoint(state, world, evidence, *, _prefix_proofs=None):
     from beta_engine.domain.players.calendar_engine_player import calendar_engine_player
     knockout = _knockout(evidence)
     required = knockout is not None and knockout.schema_version == 'calendar_opening_knockout.v5'
@@ -44,7 +51,15 @@ def verify_checkpoint(state, world, evidence):
         return
     if state is None or world is None:
         raise ValueError('Played v5 knockout requires its complete population sporting checkpoint')
+    proof_scope=None
+    if _prefix_proofs is not None:
+        proof_scope=(world.fingerprint,knockout.fingerprint)
+        verified=_prefix_proofs.get((*proof_scope,state.fingerprint))
+        if verified is not None and verified==state:
+            return
     expected = build_calendar_sporting_checkpoint(world, knockout, calendar_engine_player)
+    if proof_scope is not None:
+        _prefix_proofs[(*proof_scope,expected.fingerprint)]=expected
     from beta_engine.domain.players.calendar_continuation_match import append_continuation
     reserved_ids = {knockout.match_id, *(m.input_context.match_id for m in knockout.matches)}
     from beta_engine.domain.players.calendar_sporting_week import CalendarSportingWeekAdvance, append_sporting_week
@@ -75,13 +90,15 @@ def verify_checkpoint(state, world, evidence):
         if index in closures_by_count and index not in closed_counts:
             expected = append_native_tournament_closure(expected, closures_by_count[index])
             closed_counts.add(index)
+        if proof_scope is not None:
+            _prefix_proofs[(*proof_scope,expected.fingerprint)]=expected
     if closed_counts != set(closures_by_count):
         raise ValueError('Native result closure has no matching sporting event')
     if state != expected:
         raise ValueError('Calendar sporting checkpoint differs from population and played terminal evidence')
 
 
-def saved_checkpoint(payload, evidence, *, run_id, branch_id):
+def saved_checkpoint(payload, evidence, *, run_id, branch_id, _prefix_proofs=None):
     from beta_engine.infrastructure.db.initial_world_state import load_saved_initial_world
     component = payload.get('content', {}).get(COMPONENT_KEY)
     state = None
@@ -94,7 +111,7 @@ def saved_checkpoint(payload, evidence, *, run_id, branch_id):
     knockout = _knockout(evidence)
     required = knockout is not None and knockout.schema_version == 'calendar_opening_knockout.v5'
     world = load_saved_initial_world(payload, run_id=run_id, branch_id=branch_id) if required or state else None
-    verify_checkpoint(state, world, evidence)
+    verify_checkpoint(state, world, evidence,_prefix_proofs=_prefix_proofs)
     if state:
         from beta_engine.domain.calendar.run_calendar import RunCalendar
         clock = RunCalendar.from_metadata(payload['run']['run_calendar'])

@@ -9,6 +9,7 @@ from typing import Literal
 from pydantic import Field, model_validator
 
 from beta_engine.domain.players.tour_entry import PlayerTourEntryTrigger
+from beta_engine.domain.calendar.run_week_position import RunWeekPosition
 from beta_engine.domain.rankings.official import FrozenInput, RankingWeek
 from beta_engine.domain.tournaments.entry_field import (
     EntryWindow,
@@ -24,7 +25,7 @@ class TournamentApplicationSubmissionAuthority(FrozenInput):
     and cannot revoke the fact that a valid Tour application was submitted.
     """
 
-    schema_version: Literal["tournament_application_submission_authority.v1"] = (
+    schema_version: Literal["tournament_application_submission_authority.v1", "tournament_application_submission_authority.v2"] = (
         "tournament_application_submission_authority.v1"
     )
     application_id: str = Field(min_length=1, max_length=256)
@@ -33,12 +34,18 @@ class TournamentApplicationSubmissionAuthority(FrozenInput):
     event_id: str = Field(min_length=1)
     player_id: str = Field(min_length=1)
     entry_window: EntryWindow
-    submission_week: RankingWeek
+    submission_week: RankingWeek | RunWeekPosition
     decision_slot_ordinal: int = Field(ge=1)
     nr_tie_break_token: str = Field(min_length=1)
     validation_authority_id: str = Field(min_length=1, max_length=256)
     validation_authority_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
     provenance: str = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def calendar_version(self):
+        if self.schema_version.endswith(".v2") != isinstance(self.submission_week, RunWeekPosition):
+            raise ValueError("Application calendar requires explicit v2 authority")
+        return self
 
     @property
     def decision_position(self) -> tuple[int, int]:
@@ -58,6 +65,7 @@ class TournamentApplicationSubmissionAuthority(FrozenInput):
         """Project this valid submission into the canonical first-entry contract."""
 
         return PlayerTourEntryTrigger(
+            schema_version=("player_tour_entry_trigger.v2" if isinstance(self.submission_week, RunWeekPosition) else "player_tour_entry_trigger.v1"),
             run_id=self.run_id,
             branch_id=self.branch_id,
             player_id=self.player_id,
@@ -93,12 +101,12 @@ class TournamentApplicationSubmissionBatchAuthority(FrozenInput):
     only; it never creates sporting priority between simultaneous applications.
     """
 
-    schema_version: Literal["tournament_application_submission_batch.v1"] = (
+    schema_version: Literal["tournament_application_submission_batch.v1", "tournament_application_submission_batch.v2"] = (
         "tournament_application_submission_batch.v1"
     )
     run_id: str = Field(min_length=1)
     branch_id: str = Field(min_length=1)
-    submission_week: RankingWeek
+    submission_week: RankingWeek | RunWeekPosition
     decision_slot_ordinal: int = Field(ge=1)
     submissions: tuple[TournamentApplicationSubmissionAuthority, ...] = Field(
         min_length=1
@@ -106,6 +114,8 @@ class TournamentApplicationSubmissionBatchAuthority(FrozenInput):
 
     @model_validator(mode="after")
     def validate_batch(self):
+        if self.schema_version.endswith(".v2") != isinstance(self.submission_week, RunWeekPosition):
+            raise ValueError("Application batch calendar requires explicit v2")
         if any(
             (item.run_id, item.branch_id)
             != (self.run_id, self.branch_id)
@@ -135,6 +145,7 @@ class TournamentApplicationSubmissionBatchAuthority(FrozenInput):
         canonical = tuple(sorted(submissions, key=lambda item: item.application_id))
         first = canonical[0]
         return cls(
+            schema_version=("tournament_application_submission_batch.v2" if isinstance(first.submission_week, RunWeekPosition) else "tournament_application_submission_batch.v1"),
             run_id=first.run_id,
             branch_id=first.branch_id,
             submission_week=first.submission_week,

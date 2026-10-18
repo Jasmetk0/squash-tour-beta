@@ -7,6 +7,8 @@ import json
 from typing import Literal
 
 from pydantic import Field, model_validator
+from beta_engine.domain.rankings.calendar_official import CalendarOfficialRankingSnapshot
+from beta_engine.domain.calendar.run_week_position import RunWeekPosition
 
 from beta_engine.domain.rankings.official import (
     FrozenInput,
@@ -18,18 +20,28 @@ from beta_engine.domain.rankings.official import (
 class TournamentRankingSnapshotAuthority(FrozenInput):
     """One event-scoped ranking snapshot used across its Entry/Draw process."""
 
-    schema_version: Literal["tournament_ranking_snapshot_authority.v1"] = (
+    schema_version: Literal["tournament_ranking_snapshot_authority.v1", "tournament_ranking_snapshot_authority.v2"] = (
         "tournament_ranking_snapshot_authority.v1"
     )
     run_id: str = Field(min_length=1)
     branch_id: str = Field(min_length=1)
     event_id: str = Field(min_length=1)
-    ranking_week: RankingWeek
-    ranking_snapshot: OfficialRankingSnapshot
+    ranking_week: RankingWeek | RunWeekPosition
+    ranking_snapshot: OfficialRankingSnapshot | CalendarOfficialRankingSnapshot
     adopted_by_command_id: str = Field(min_length=1, max_length=128)
 
     @model_validator(mode="after")
     def validate_scope_and_week(self) -> "TournamentRankingSnapshotAuthority":
+        if self.schema_version.endswith(".v2") != isinstance(self.ranking_snapshot, CalendarOfficialRankingSnapshot):
+            raise ValueError("Calendar ranking binding requires explicit v2")
+        if isinstance(self.ranking_week, RunWeekPosition):
+            if (self.ranking_snapshot.run_id, self.ranking_snapshot.branch_id,
+                self.ranking_snapshot.week.season_index, self.ranking_snapshot.week.week,
+                self.ranking_snapshot.run_calendar) != (self.run_id, self.branch_id,
+                self.ranking_week.season_index, self.ranking_week.week,
+                self.ranking_week.calendar.to_metadata()):
+                raise ValueError("Calendar ranking binding scope/time mismatch")
+            return self
         if (
             self.ranking_snapshot.run_id,
             self.ranking_snapshot.branch_id,

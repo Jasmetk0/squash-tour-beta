@@ -15,7 +15,9 @@ from beta_engine.domain.calendar.season_weeks import (
     age_at_calendar_position,
     season_week_to_calendar_position,
 )
-from beta_engine.domain.players.calendar_lifecycle import CalendarPlayerLifecycleState
+from beta_engine.domain.players.calendar_lifecycle import (
+    CalendarPlayerLifecycleState, CalendarTourLifecycleState, calendar_lifecycle_history,
+)
 from beta_engine.domain.players.lifecycle import (
     PlayerLifecycleIdentity,
     PlayerLifecyclePolicy,
@@ -44,6 +46,8 @@ def _parse_lifecycle_json(raw):
     value = json.loads(raw)
     if isinstance(value, dict) and value.get("schema_version") == "player_lifecycle_calendar_state.v2":
         return CalendarPlayerLifecycleState.model_validate_json(raw)
+    if isinstance(value, dict) and value.get("schema_version") == "player_lifecycle_calendar_state.v3":
+        return CalendarTourLifecycleState.model_validate_json(raw)
     return PlayerLifecycleWeekState.model_validate_json(raw)
 
 
@@ -64,7 +68,7 @@ def get_lifecycle(session: Session, *, run_id: str, branch_id: str, week: Rankin
     if row is None:
         return None
     state = _load(row, run_id, branch_id, week.ordinal)
-    if isinstance(state, CalendarPlayerLifecycleState):
+    if isinstance(state, (CalendarPlayerLifecycleState, CalendarTourLifecycleState)):
         if not isinstance(week, RunWeekPosition) or state.week != week:
             raise ValueError("Calendar lifecycle requires the matching Run-owned position")
     elif not isinstance(week, RankingWeek):
@@ -401,7 +405,9 @@ def load_saved_lifecycle(payload, *, run_id, branch_id):
     ):
         raise ValueError("Saved player-lifecycle identity or fingerprint mismatch")
     if any(isinstance(s, CalendarPlayerLifecycleState) for s in states):
-        if len(states) != 1 or not isinstance(states[0], CalendarPlayerLifecycleState):
+        if not isinstance(states[0], CalendarPlayerLifecycleState) or any(
+            not isinstance(s, CalendarTourLifecycleState) for s in states[1:]
+        ):
             raise ValueError("Calendar population lifecycle cannot contain a mixed legacy chain")
         from beta_engine.infrastructure.db.initial_world_state import (
             load_saved_initial_world,
@@ -415,6 +421,17 @@ def load_saved_lifecycle(payload, *, run_id, branch_id):
             tuple((p.player_id, p.birth_year, p.birth_year_week, p.age, p.source_generation_fingerprint) for p in state.players) !=
             tuple((p.player_id, p.birth_year, p.birth_year_week, p.age_years_at_season_start, p.source_generation_fingerprint) for p in world.players)):
             raise ValueError("Saved calendar lifecycle differs from its InitialWorld players")
+        if len(states)>1:
+            from beta_engine.domain.tournaments.calendar_tour import CalendarTourState
+            tour_component=payload.get('content',{}).get('calendar_tour_authority')
+            if not tour_component:
+                raise ValueError('Native lifecycle progression requires its Tour owner')
+            tour=CalendarTourState.model_validate_json(json.dumps(tour_component['state']))
+            expected=calendar_lifecycle_history(state,tour.week,tuple(s for a in tour.editions for s in a.submissions))
+            if states!=expected or states[-1].fingerprint!=tour.lifecycle_fingerprint:
+                raise ValueError('Native lifecycle history differs from actual births, policy or Tour entry')
+    elif any(isinstance(s,CalendarTourLifecycleState) for s in states):
+        raise ValueError('Native lifecycle history lacks its v2 population bootstrap')
     for predecessor, target in zip(states, states[1:], strict=False):
         if (
             target.week.ordinal != predecessor.week.ordinal + 1

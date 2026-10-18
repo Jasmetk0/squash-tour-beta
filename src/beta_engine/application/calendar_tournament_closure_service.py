@@ -86,6 +86,8 @@ class CalendarNativeTournamentClosureService:
                     return self._receipt(
                         previous, self._original_successor(state, world, opening, previous),
                     )
+            from beta_engine.infrastructure.db.calendar_tour import require_exhibition_timeline
+            require_exhibition_timeline(session, run_id, branch_id)
             if (saved is None or saved.fingerprint != state.fingerprint
                     or revision.saved_head_revision_id != command.expected_saved_head
                     or state.fingerprint != command.expected_checkpoint_fingerprint):

@@ -25,6 +25,7 @@ from beta_engine.infrastructure.db.calendar_standalone_match_state import (
     COMPONENT_KEY as CALENDAR_MATCH_COMPONENT_KEY,
 )
 from beta_engine.infrastructure.db.models import (
+    CalendarTourAuthorityModel,
     AdoptedTournamentAuthorityModel,
     AuthoritativeSimulationCommandModel,
     AuthoritativeWeekTransitionReceiptModel,
@@ -136,6 +137,11 @@ class SavedRevisionRunScopedReferenceCoverage:
 
 
 COMPONENT_COVERAGE: tuple[SavedRevisionComponentCoverage, ...] = (
+    SavedRevisionComponentCoverage(
+        component_key='calendar_tour_authority',
+        label='Run-calendar configured Tour and Official ranking',
+        models=(CalendarTourAuthorityModel,),
+    ),
     SavedRevisionComponentCoverage(
         component_key=RANKING_COMPONENT_KEY,
         label="complete ranking preparation state",

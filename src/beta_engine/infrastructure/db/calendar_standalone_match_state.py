@@ -323,6 +323,8 @@ def capture_saved_calendar_match(session: Session, payload: dict, *, run_id: str
     from beta_engine.infrastructure.db.calendar_sporting_checkpoint import capture_checkpoint
     capture_checkpoint(session, payload, states[0] if len(states) == 1 else None,
                        run_id=run_id, branch_id=branch_id)
+    from beta_engine.infrastructure.db.calendar_tour import capture_tour
+    capture_tour(session, payload, run_id=run_id, branch_id=branch_id)
     if states:
         # Exactly one operation-scoped completed standalone match in this slice.
         if len(states) != 1:
@@ -372,14 +374,48 @@ def _parse_saved_calendar_match_evidence(payload: dict, *, run_id: str, branch_i
     return state
 
 
-def load_saved_calendar_match(payload: dict, *, run_id: str, branch_id: str) -> CalendarMatchEvidence | None:
+def load_saved_calendar_match(payload: dict, *, run_id: str, branch_id: str, _sporting_component_proofs=None) -> CalendarMatchEvidence | None:
     """Validate both the played MatchEngine evidence and the full Saved owner."""
-    state = _parse_saved_calendar_match_evidence(
-        payload, run_id=run_id, branch_id=branch_id,
-    )
+    return load_saved_calendar_sources(payload,run_id=run_id,branch_id=branch_id,
+        _sporting_component_proofs=_sporting_component_proofs)[0]
+
+
+def load_saved_calendar_sources(payload: dict, *, run_id: str, branch_id: str, _sporting_component_proofs=None):
+    """Return the coupled sources, sharing only exact transaction-local proofs."""
     from beta_engine.infrastructure.db.calendar_sporting_checkpoint import saved_checkpoint
-    saved_checkpoint(payload, state, run_id=run_id, branch_id=branch_id)
-    return state
+    # Exact content-addressed proof reuse is private to a single validated
+    # lineage walk. Never retain it across requests/transactions. Tour authority
+    # remains independently validated for each revision even on a sporting hit.
+    key = None
+    verified = None
+    if _sporting_component_proofs is not None:
+        content = payload.get('content', {})
+        key = canonical_hash({'run_id':run_id,'branch_id':branch_id,'run':payload.get('run'),
+            'components':{k:content.get(k) for k in ('initial_world','calendar_standalone_match','calendar_player_sporting_checkpoint')}})
+        verified = _sporting_component_proofs.get(key)
+    if verified is None:
+        root_key = None
+        root_proofs = None
+        if _sporting_component_proofs is not None:
+            root_proofs = _sporting_component_proofs.setdefault('_opening_roots', {})
+            root_key = canonical_hash({'run_id':run_id,'branch_id':branch_id,
+                'run':payload.get('run'),
+                'match':payload.get('content',{}).get('calendar_standalone_match')})
+        if root_proofs is not None and root_key in root_proofs:
+            state = root_proofs[root_key]
+        else:
+            state = _parse_saved_calendar_match_evidence(payload,run_id=run_id,branch_id=branch_id)
+            if root_proofs is not None:
+                root_proofs[root_key] = state
+        checkpoint = saved_checkpoint(payload, state, run_id=run_id, branch_id=branch_id,
+            _prefix_proofs=_sporting_component_proofs.setdefault('_prefixes',{}) if _sporting_component_proofs is not None else None)
+        if key is not None:
+            _sporting_component_proofs[key] = (state,checkpoint)
+    else:
+        state,checkpoint = verified
+    from beta_engine.infrastructure.db.calendar_tour import saved_tour
+    tour=saved_tour(payload, run_id=run_id, branch_id=branch_id, checkpoint=checkpoint)
+    return state,checkpoint,tour
 
 
 def restore_saved_calendar_match(
@@ -402,6 +438,9 @@ def restore_saved_calendar_match(
     ):
         raise ValueError("Live calendar match differs from current Saved head")
     from beta_engine.infrastructure.db.calendar_sporting_checkpoint import restore_checkpoint
+    from beta_engine.infrastructure.db.calendar_tour import restore_tour
+    restore_tour(session, current_payload=current_payload, target_payload=target_payload,
+                 run_id=run_id, branch_id=branch_id)
     restore_checkpoint(session, current_payload=current_payload, target_payload=target_payload,
                        current=current, target=target, run_id=run_id, branch_id=branch_id)
     for state in live:

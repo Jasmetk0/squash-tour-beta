@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes, useParams } from 'react-router-dom'
 import { ViewerProductRunRouteBoundary } from './viewer/ViewerProductRunRouteContext'
+import { CalendarTourPage } from './pages/CalendarTourPage'
 
 import { Layout } from './components/Layout'
 import { GlobalSimulationTaskCenterPage } from './pages/GlobalSimulationTaskCenterPage'
@@ -192,6 +193,7 @@ export default function App(): JSX.Element {
         <Route path="admin/runs/:runId/events" element={<EventsPage />} />
         <Route path="admin/runs/:runId/calendar" element={<SeasonCalendarPage />} />
         <Route path="admin/runs/:runId/tour/calendar" element={<SavedTourCalendarPage />} />
+        <Route path="admin/runs/:runId/tour/editions" element={<CalendarTourPage />} />
         <Route path="admin/runs/:runId/tour/calendar/:eventId" element={<SavedTourEditionPage />} />
         <Route path="admin/runs/:runId/tour/calendar/:eventId/matches/:matchId" element={<SavedTourMatchDetailPage />} />
         <Route path="admin/runs/:runId/weeks/:week" element={<WeekDetailPage />} />

@@ -2484,6 +2484,7 @@ class SimulationPersistenceRepository:
         session: Session,
         model: BranchSavedRevisionModel,
         materialize_payload: bool = True,
+        sporting_component_proofs: dict | None = None,
     ) -> BranchSavedRevisionRecord:
         """Load one immutable revision and validate its stored owner and hash."""
 
@@ -2504,7 +2505,8 @@ class SimulationPersistenceRepository:
         with self._revision_validation_lock:
             verified = self._revision_validation_cache.get(signature)
         revision = (
-            self._to_branch_saved_revision(model, validate_components=verified is None)
+            self._to_branch_saved_revision(model, validate_components=verified is None,
+                sporting_component_proofs=sporting_component_proofs)
             if materialize_payload or verified is None
             else verified
         )
@@ -2553,6 +2555,7 @@ class SimulationPersistenceRepository:
         branch: RunBranchModel,
         visiting_branch_ids: frozenset[str] = frozenset(),
         payload_revision_ids: frozenset[str] | None = None,
+        sporting_component_proofs: dict | None = None,
     ) -> list[BranchSavedRevisionRecord]:
         """Validate every ancestor; retain only requested payloads for internal reads.
 
@@ -2576,6 +2579,9 @@ class SimulationPersistenceRepository:
         lineage: list[BranchSavedRevisionRecord] = []
         visited_revision_ids: set[str] = set()
         current_model: BranchSavedRevisionModel | None = head_model
+        # Local to one lineage walk; raw bytes/hash/identity still verify for
+        # EVERY revision, including those sharing exact sporting components.
+        sporting_component_proofs = sporting_component_proofs if sporting_component_proofs is not None else {}
         while current_model is not None:
             if current_model.revision_id in visited_revision_ids:
                 raise BranchRevisionStateConflictError(
@@ -2585,6 +2591,7 @@ class SimulationPersistenceRepository:
             current = self._validated_saved_revision_in_session(
                 session=session,
                 model=current_model,
+                sporting_component_proofs=sporting_component_proofs,
                 materialize_payload=(
                     payload_revision_ids is None
                     or current_model.revision_id in payload_revision_ids
@@ -3815,6 +3822,7 @@ class SimulationPersistenceRepository:
         model: BranchSavedRevisionModel,
         *,
         validate_components: bool = True,
+        sporting_component_proofs: dict | None = None,
     ) -> BranchSavedRevisionRecord:
         try:
             payload = _from_json(model.payload_json)
@@ -3836,7 +3844,8 @@ class SimulationPersistenceRepository:
                     payload, run_id=model.run_id, branch_id=model.branch_id
                 )
                 load_saved_calendar_match(
-                    payload, run_id=model.run_id, branch_id=model.branch_id
+                    payload, run_id=model.run_id, branch_id=model.branch_id,
+                    _sporting_component_proofs=sporting_component_proofs,
                 )
         except (TypeError, ValueError) as exc:
             raise BranchRevisionStateConflictError(
@@ -3972,12 +3981,13 @@ class SimulationPersistenceRepository:
             )
 
     def _validated_branch_revision_state_in_session(
-        self, *, session: Session, branch: RunBranchModel
+        self, *, session: Session, branch: RunBranchModel, sporting_component_proofs: dict | None = None
     ) -> BranchRevisionStateRecord:
         revision = self._validated_branch_revision_lineage_in_session(
             session=session,
             branch=branch,
             payload_revision_ids=frozenset({branch.saved_head_revision_id}),
+            sporting_component_proofs=sporting_component_proofs,
         )[0]
         draft_model = session.execute(
             select(BranchWorkingDraftModel).where(
@@ -5493,6 +5503,7 @@ class SimulationPersistenceRepository:
         expected_simulation_fingerprint: str | None = None,
         expected_calendar_match_fingerprint: str | None = None,
         expected_calendar_sporting_fingerprint: str | None = None,
+        expected_calendar_tour_fingerprint: str | None = None,
         expected_run_prospect_source_fingerprint: str | None = None,
         expected_run_package_fingerprint: str | None = None,
         expected_run_tournament_lab_draft_fingerprint: str | None = None,
@@ -5508,6 +5519,7 @@ class SimulationPersistenceRepository:
                 expected_simulation_fingerprint,
                 expected_calendar_match_fingerprint,
                 expected_calendar_sporting_fingerprint,
+                expected_calendar_tour_fingerprint,
                 expected_run_prospect_source_fingerprint,
                 expected_run_package_fingerprint,
                 expected_run_tournament_lab_draft_fingerprint,
@@ -5521,6 +5533,8 @@ class SimulationPersistenceRepository:
             revision_kind = "initial_world"
         elif expected_simulation_fingerprint is not None:
             revision_kind = "authoritative_simulation"
+        elif expected_calendar_tour_fingerprint is not None:
+            revision_kind = "calendar_tour_authority"
         elif expected_calendar_sporting_fingerprint is not None:
             revision_kind = "calendar_sporting_checkpoint"
         elif expected_calendar_match_fingerprint is not None:
@@ -5798,6 +5812,13 @@ class SimulationPersistenceRepository:
                         "summary": "Saved authoritative simulation state",
                         "simulation_fingerprint": component["fingerprint"],
                     }
+                elif expected_calendar_tour_fingerprint is not None:
+                    component = payload["content"].get("calendar_tour_authority")
+                    if component is None or component["fingerprint"] != expected_calendar_tour_fingerprint:
+                        raise WorkingDraftConflictError("Tour authority changed since Save review")
+                    if state.saved_revision.payload["content"].get("calendar_tour_authority") == component:
+                        raise WorkingDraftConflictError("Tour authority is already saved")
+                    summary = {"kind":"calendar_tour_authority", "summary":"Saved configured Tour, sporting state and Official ranking", "tour_fingerprint":component["fingerprint"]}
                 elif expected_calendar_sporting_fingerprint is not None:
                     component = payload["content"].get("calendar_player_sporting_checkpoint")
                     if component is None or component["fingerprint"] != expected_calendar_sporting_fingerprint:
@@ -6109,6 +6130,8 @@ class SimulationPersistenceRepository:
                 if isinstance(saved_world, dict)
                 else None
             )
+            from beta_engine.infrastructure.db.calendar_tour import saved_tour
+            native_tour = saved_tour(revision.payload,run_id=product_run_id,branch_id=component_branch_id)
             context = ViewerOfficialRunContext(
                 product_run_id=container.run_id,
                 product_run_display_name=container.display_name or container.run_id,
@@ -6126,11 +6149,14 @@ class SimulationPersistenceRepository:
                 head_checkpoint_id=checkpoint.checkpoint_id if checkpoint else None,
                 head_checkpoint_kind=checkpoint.kind if checkpoint else None,
                 current_season=(
+                    native_tour.week.calendar.start_year+native_tour.week.season_index
+                    if native_tour else
                     2000 + public_ordinal // 61
                     if isinstance(public_ordinal, int)
                     else None
                 ),
                 current_week=(
+                    native_tour.week.week if native_tour else
                     public_ordinal % 61 + 1 if isinstance(public_ordinal, int) else None
                 ),
                 current_event_id=None,

@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useRef, useState } from 'react'
-import { useParams, useSearchParams } from 'react-router-dom'
+import { Link, useParams, useSearchParams } from 'react-router-dom'
 
 import { getBranchCheckpoint, getBranchState, getRunContainer, getRunPackageState } from '../api/client'
 import type { AdminBranchExecutionResponse, BranchState } from '../api/types'
@@ -147,6 +147,7 @@ export function RunSimulationPage(): JSX.Element {
     />
     {!canonicalEligibility && executionBranchId && executionBranch?.saved_head_revision_id && (
       <section aria-label="Calendar sporting mode">
+        <Link to={`/admin/runs/${encodeURIComponent(runId)}/tour/editions`}>Tour · Edition / Week Transition</Link>
         <p className="status">Run-calendar-native sporting · Choose one opening-week operation per Branch.</p>
         <button type="button" disabled={calendarSportingMode === 'knockout'}
           onClick={() => setCalendarSportingMode('knockout')}>4-player knockout / Pavouk</button>

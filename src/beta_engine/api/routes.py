@@ -1,6 +1,8 @@
 """API route registration."""
 
 from fastapi import APIRouter
+from beta_engine.api.routers.admin_calendar_tour import router as admin_calendar_tour_router
+from beta_engine.api.routers.viewer_calendar_tour import router as viewer_calendar_tour_router
 
 from beta_engine.api.routers.admin_ranking_candidates import router as admin_ranking_candidates_router
 from beta_engine.api.routers.admin_week_transitions import router as admin_week_transitions_router
@@ -68,6 +70,8 @@ from beta_engine.api.routers.viewer_tournament_history import router as viewer_t
 from beta_engine.api.routers.prospects import router as prospects_router
 
 router = APIRouter()
+router.include_router(admin_calendar_tour_router)
+router.include_router(viewer_calendar_tour_router)
 router.include_router(admin_authoritative_simulation_router)
 router.include_router(admin_tournament_entry_fields_router)
 router.include_router(admin_tournament_ranking_snapshots_router)

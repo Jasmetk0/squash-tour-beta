@@ -113,6 +113,11 @@ def inspect_run_home_readiness(
     population_count = len(population.players) if population else 0
     publication = (ranking.authoritative_transition_state or {}).get("publications", []) if ranking else []
     events = (ranking.authoritative_transition_state or {}).get("events", []) if ranking else []
+    from beta_engine.infrastructure.db.calendar_tour import saved_tour
+    native_tour=saved_tour(payload,run_id=run_id,branch_id=branch_id)
+    if native_tour:
+        publication=list(native_tour.rankings)
+        events=list(native_tour.transitions)
     # A candidate Ranking is NOT an adopted/published initial Ranking.
     draft = state.working_draft
     items = (

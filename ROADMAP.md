@@ -1,5 +1,13 @@
 # Active dependency path — Master v85
 
+Latest verified base: owner-merged #1540, `buuk`
+`44c782870391d45d39b05cf00fa1edd6e938e6a6` (18 October 2026).
+Current coherent candidate joins native configured Edition/production Entry,
+actual matches and frozen awards to lifecycle and Official Week Transition,
+manual Save/recovery and CS/EN Admin. Final acceptance is pending. See
+[implementation contract](docs/CALENDAR_CONFIGURED_TOUR_V1.md). Older paragraphs
+below are chronological milestones, not instructions to repeat those slices.
+
 Checked buuk `f200d9898b41431439501a9b559529900135adf7` after #1532. All #1521–1532 merged;
 #1532 final-head CI/browser checks are green. Owner alone merges; refresh current work.
 

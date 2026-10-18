@@ -20,7 +20,7 @@ from beta_engine.domain.players.calendar_engine_player import calendar_engine_pl
 from beta_engine.domain.players.calendar_followup_points import (CalendarFollowupPointPolicy, derive_followup_awards)
 from beta_engine.domain.players.calendar_followup_knockout import (
     CalendarFollowupKnockout,
-    ROUNDS,
+    ROUNDS, ROUNDS_EIGHT,
     append_followup_knockout,
 )
 from beta_engine.domain.players.calendar_sporting_checkpoint import (
@@ -55,6 +55,24 @@ class CalendarFollowupScoredCommand(CalendarFollowupKnockoutCommand):
     """Separate opted-in point command; v1 command fingerprint stays byte-compatible."""
     point_policy: CalendarFollowupPointPolicy
     explicit_point_confirmation: Literal[True]
+
+
+class CalendarFollowupEightCommand(FrozenInput):
+    """Seven real matches in a single eight-player, later-week knockout."""
+    command_id: str = Field(min_length=1, max_length=120)
+    tournament_id: str = Field(min_length=1, max_length=94)
+    expected_saved_head: str = Field(min_length=1, max_length=128)
+    expected_checkpoint_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    entrant_ids: list[str] = Field(min_length=8, max_length=8)
+    seed: int
+    operator_label: str = Field(min_length=1, max_length=160)
+    audit_reason: str = Field(min_length=1, max_length=1000)
+
+    @model_validator(mode="after")
+    def distinct(self):
+        if len(set(self.entrant_ids)) != 8 or any(not p.strip() for p in self.entrant_ids):
+            raise ValueError("Eight-player knockout requires eight distinct nonempty entrants")
+        return self
 
 
 @dataclass(slots=True)
@@ -92,7 +110,7 @@ class CalendarFollowupKnockoutService:
             receipt["publication_status"] = "prepared_not_official"
         return receipt
 
-    def simulate(self, *, run_id, branch_id, command: CalendarFollowupKnockoutCommand | CalendarFollowupScoredCommand):
+    def simulate(self, *, run_id, branch_id, command: CalendarFollowupKnockoutCommand | CalendarFollowupScoredCommand | CalendarFollowupEightCommand):
         request_fp = canonical_hash({
             "run_id": run_id, "branch_id": branch_id,
             "command": command.model_dump(mode="json"),
@@ -132,19 +150,33 @@ class CalendarFollowupKnockoutService:
                 raise ValueError("Knockout identity collides with played history")
             reserved = {opening.match_id, *(m.input_context.match_id for m in opening.matches)}
             reserved.update(e.match_id for e in state.played_continuations)
-            if any(f"{command.tournament_id}:{suffix}" in reserved for suffix in ROUNDS):
+            rounds = ROUNDS_EIGHT if isinstance(command, CalendarFollowupEightCommand) else ROUNDS
+            if any(f"{command.tournament_id}:{suffix}" in reserved for suffix in rounds):
                 raise ValueError("Knockout match ID collides with played match history")
             prior = state
             results = []
-            pairings = (
-                command.entrant_ids[:2],
-                command.entrant_ids[2:],
-            )
-            for index, suffix in enumerate(ROUNDS):
-                participants = (
-                    pairings[index] if index < 2
-                    else (results[0].result.winner_player_id, results[1].result.winner_player_id)
-                )
+            eight = isinstance(command, CalendarFollowupEightCommand)
+            for index, suffix in enumerate(rounds):
+                if eight and index < 4:
+                    participants = command.entrant_ids[2*index:2*index+2]
+                elif eight and index < 6:
+                    start = (index - 4) * 2
+                    participants = (
+                        results[start].result.winner_player_id,
+                        results[start + 1].result.winner_player_id,
+                    )
+                elif eight:
+                    participants = (
+                        results[4].result.winner_player_id,
+                        results[5].result.winner_player_id,
+                    )
+                elif index < 2:
+                    participants = command.entrant_ids[2*index:2*index+2]
+                else:
+                    participants = (
+                        results[0].result.winner_player_id,
+                        results[1].result.winner_player_id,
+                    )
                 inner = CalendarContinuationCommand(
                     command_id=f"{command.command_id}:{suffix}",
                     match_id=f"{command.tournament_id}:{suffix}",
@@ -175,7 +207,11 @@ class CalendarFollowupKnockoutService:
                 request_fingerprint=request_fp,
                 matches=tuple(results),
             )
-            if isinstance(command, CalendarFollowupScoredCommand):
+            if eight:
+                event = CalendarFollowupKnockout(
+                    **event_payload, schema_version="calendar_followup_knockout.v3",
+                )
+            elif isinstance(command, CalendarFollowupScoredCommand):
                 if command.point_policy.validity_weeks != clock.weeks_per_year:
                     raise ValueError("Prepared point validity must equal the Run year W")
                 provisional = CalendarFollowupKnockout.model_construct(

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { previewCalendarSportingWeek, commitCalendarSportingWeek, inspectCalendarContinuation, simulateCalendarContinuation, simulateCalendarFollowupKnockout, simulateCalendarScoredFollowupKnockout, simulateCalendarEightFollowupKnockout, saveCalendarContinuation, replayCalendarContinuation } from '../api/client'
-import { verifyFollowupKnockout, verifyEightFollowupKnockout, type FollowupEightCommand, type FollowupKnockoutCommand, type FollowupScoredCommand, verifySportingWeek, type SportingWeekCommand, type SportingWeekPreview, verifyContinuation, type ContinuationView, type ContinuationReceipt } from '../api/calendarContinuation'
+import { previewCalendarSportingWeek, commitCalendarSportingWeek, inspectCalendarContinuation, simulateCalendarContinuation, simulateCalendarFollowupKnockout, simulateCalendarScoredFollowupKnockout, simulateCalendarEightFollowupKnockout, simulateCalendarEightScoredFollowupKnockout, saveCalendarContinuation, replayCalendarContinuation } from '../api/client'
+import { verifyFollowupKnockout, verifyEightFollowupKnockout, type FollowupEightCommand, type FollowupEightScoredCommand, type FollowupKnockoutCommand, type FollowupScoredCommand, verifySportingWeek, type SportingWeekCommand, type SportingWeekPreview, verifyContinuation, type ContinuationView, type ContinuationReceipt } from '../api/calendarContinuation'
 import { newCommandId } from '../admin/branchSimulation'
 import { useLanguage } from '../i18n/LanguageContext'
 import { formatApiError } from '../utils/apiErrors'
@@ -19,6 +19,9 @@ export function CalendarContinuationPanel({ runId, branchId, head, onChange }: {
   const [knockoutConsent, setKnockoutConsent] = useState(false)
   const [eightEntrants, setEightEntrants] = useState<string[]>([])
   const [eightConsent, setEightConsent] = useState(false)
+  const [eightPreparePoints, setEightPreparePoints] = useState(false)
+  const [eightPointConsent, setEightPointConsent] = useState(false)
+  const [quarterPoints, setQuarterPoints] = useState('15')
   const eightCommandId = useRef<string | null>(null)
   const [preparePoints, setPreparePoints] = useState(false)
   const [pointConsent, setPointConsent] = useState(false)
@@ -36,7 +39,7 @@ export function CalendarContinuationPanel({ runId, branchId, head, onChange }: {
   useEffect(() => {
     const stamp = epoch.current
     setWeekReview(null); setWeekConsent(false); setView(null); setReview(null); setReceipt(null); setConsent(false); setSaveConsent(false)
-    setKnockoutConsent(false); setEightConsent(false); setPointConsent(false); knockoutCommandId.current = null; eightCommandId.current = null
+    setKnockoutConsent(false); setEightConsent(false); setEightPointConsent(false); setPointConsent(false); knockoutCommandId.current = null; eightCommandId.current = null
     setError(null); setNotice(null); setBusy(true)
     void inspectCalendarContinuation(runId, branchId).then(v => {
       if (epoch.current !== stamp || current.current !== target) return
@@ -49,7 +52,7 @@ export function CalendarContinuationPanel({ runId, branchId, head, onChange }: {
     return () => { epoch.current += 1 }
   }, [target, runId, branchId, head])
   useEffect(() => { commandId.current = null; weekCommandId.current = null; knockoutCommandId.current = null; eightCommandId.current = null
-    setConsent(false); setKnockoutConsent(false); setEightConsent(false); setPointConsent(false); setWeekConsent(false); setWeekReview(null) }, [target, a, b, seed, reason, knockoutEntrants.join('|'), eightEntrants.join('|'), preparePoints, category, championPoints, finalistPoints, semiPoints])
+    setConsent(false); setKnockoutConsent(false); setEightConsent(false); setEightPointConsent(false); setPointConsent(false); setWeekConsent(false); setWeekReview(null) }, [target, a, b, seed, reason, knockoutEntrants.join('|'), eightEntrants.join('|'), preparePoints, eightPreparePoints, category, championPoints, finalistPoints, semiPoints, quarterPoints])
   const read = async () => verifyContinuation(await inspectCalendarContinuation(runId, branchId), runId, branchId, head)
   const perform = async (action: 'play' | 'review' | 'save' | 'replay' | 'week-review' | 'week-commit' | 'knockout' | 'knockout-eight', matchId?: string) => {
     if (!view || busy) return
@@ -79,7 +82,7 @@ export function CalendarContinuationPanel({ runId, branchId, head, onChange }: {
           || !view.sporting_week || view.sporting_week.week < 2
           || eightEntrants.length !== 8 || new Set(eightEntrants).size !== 8
           || eightEntrants.some(p => !view.player_ids.includes(p))
-          || !eightConsent || !reason.trim() || !/^-?\d+$/.test(seed)
+          || !eightConsent || (eightPreparePoints && !eightPointConsent) || !reason.trim() || !/^-?\d+$/.test(seed)
           || !Number.isSafeInteger(Number(seed))) return
         eightCommandId.current ??= newCommandId()
         const command: FollowupEightCommand = {
@@ -89,8 +92,24 @@ export function CalendarContinuationPanel({ runId, branchId, head, onChange }: {
           entrant_ids: eightEntrants as FollowupEightCommand['entrant_ids'],
           seed: Number(seed), operator_label: 'Admin', audit_reason: reason.trim(),
         }
+        const pointFields = [championPoints, finalistPoints, semiPoints, quarterPoints]
+        const validPointFields = pointFields.every(n => /^\d+$/.test(n)
+          && Number.isSafeInteger(Number(n)) && Number(n) <= 1000000)
+        const [champion, finalist, semifinal, quarterfinal] = pointFields.map(Number)
+        if (eightPreparePoints && (!validPointFields || !category.trim()
+          || champion < finalist || finalist < semifinal || semifinal < quarterfinal
+          || champion === quarterfinal)) return
+        const scored: FollowupEightScoredCommand = {
+          ...command, point_policy: {
+            category_label: category.trim(), champion, finalist, semifinal, quarterfinal,
+            validity_weeks: view.sporting_week.calendar.weeks_per_year,
+          }, explicit_point_confirmation: true,
+        }
         const played = verifyEightFollowupKnockout(
-          await simulateCalendarEightFollowupKnockout(runId, branchId, command), command, view,
+          eightPreparePoints
+            ? await simulateCalendarEightScoredFollowupKnockout(runId, branchId, scored)
+            : await simulateCalendarEightFollowupKnockout(runId, branchId, command),
+          eightPreparePoints ? scored : command, view,
         )
         if (!valid()) return
         const latest = await read(); if (!valid()) return
@@ -99,7 +118,7 @@ export function CalendarContinuationPanel({ runId, branchId, head, onChange }: {
           || last?.fingerprint !== played.fingerprint
           || latest.matches.length !== view.matches.length + 7)
           throw Error('Eight-player sporting owner changed after play')
-        setView(latest); setEightConsent(false); setReceipt(null)
+        setView(latest); setEightConsent(false); setEightPointConsent(false); setReceipt(null)
         setReview(null); setSaveConsent(false); onChange()
       } else if (action === 'knockout') {
         if (!view.can_play || !view.saved || !view.checkpoint_fingerprint
@@ -242,16 +261,40 @@ export function CalendarContinuationPanel({ runId, branchId, head, onChange }: {
               {view.player_ids.map(p => <option key={p} value={p}>{p}</option>)}
             </select>
           </label>)}
+          <label><input type="checkbox" checked={eightPreparePoints}
+            disabled={busy || !view.can_play} onChange={e => setEightPreparePoints(e.target.checked)} />
+            {cs ? 'Připravit osmičlenné bodování (NE Official Ranking)' : 'Prepare eight-player points (NOT Official Ranking)'}
+          </label>
+          {eightPreparePoints && <>
+            <p role="status">{cs ? 'Ruční bodová tabulka pro všech 8 hráčů, platná W týdnů. Není to oficiální žebříček.' : 'Operator-authored points for all eight players, W-week validity. Not Official Ranking.'}</p>
+            <label>{cs ? 'Označení kategorie bodování' : 'Points category label'}<input value={category} disabled={busy} onChange={e => setCategory(e.target.value)} /></label>
+            {([['Champion',championPoints,setChampionPoints],['Finalist',finalistPoints,setFinalistPoints],['Semifinalist',semiPoints,setSemiPoints],['Quarterfinalist',quarterPoints,setQuarterPoints]] as const).map(([stage,points,setPoints]) => <label key={stage}>
+              {cs ? ({Champion:'Vítěz',Finalist:'Finalista',Semifinalist:'Semifinalista',Quarterfinalist:'Čtvrtfinalista'} as Record<string,string>)[stage] : stage}
+              <input type="number" min="0" max="1000000" value={points} disabled={busy}
+                onChange={e => setPoints(e.target.value)} />
+            </label>)}
+            <label><input type="checkbox" checked={eightPointConsent} disabled={busy}
+              onChange={e => setEightPointConsent(e.target.checked)} />
+              {cs ? 'Potvrzuji připravené body pro osm hráčů, nikoliv Official publikaci.' : 'Confirm eight-player prepared awards, NOT Official publication.'}
+            </label>
+          </>}
           <label><input type="checkbox" checked={eightConsent}
             disabled={busy || !view.can_play || new Set(eightEntrants).size !== 8}
             onChange={e => setEightConsent(e.target.checked)} />
             {cs ? 'Potvrzuji sedm skutečných zápasů ze současného uloženého stavu.' : 'Confirm all seven real matches from the current Saved checkpoint.'}
           </label>
-          <button disabled={busy || !view.can_play || !eightConsent || eightEntrants.length !== 8
+          <button disabled={busy || !view.can_play || !eightConsent
+            || (eightPreparePoints && (!eightPointConsent || !category.trim()
+              || ![championPoints, finalistPoints, semiPoints, quarterPoints].every(n => /^\d+$/.test(n) && Number.isSafeInteger(Number(n)) && Number(n) <= 1000000)
+              || Number(championPoints) < Number(finalistPoints) || Number(finalistPoints) < Number(semiPoints)
+              || Number(semiPoints) < Number(quarterPoints) || Number(championPoints) === Number(quarterPoints)))
+            || eightEntrants.length !== 8
             || new Set(eightEntrants).size !== 8 || !reason.trim()
             || !/^-?\d+$/.test(seed) || !Number.isSafeInteger(Number(seed))}
             onClick={() => void perform('knockout-eight')}>
-            {cs ? 'Odehrát osmičlenný turnaj' : 'Play eight-player knockout'}
+            {eightPreparePoints
+              ? (cs ? 'Odehrát osmičlenný bodovaný turnaj' : 'Play eight-player prepared-points knockout')
+              : (cs ? 'Odehrát osmičlenný turnaj' : 'Play eight-player knockout')}
           </button>
         </>}
       </section>}

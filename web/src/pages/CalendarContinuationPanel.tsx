@@ -80,7 +80,7 @@ export function CalendarContinuationPanel({ runId, branchId, head, onChange }: {
         if (latest.checkpoint_fingerprint !== r.checkpoint_fingerprint || latest.sporting_week?.week !== r.advance.target_week.week) throw Error('Weekly owner changed after preparation')
         setView(latest); setWeekReview(null); setWeekConsent(false); setReceipt(null); setReview(null); setSaveConsent(false); setConsent(false); onChange()
       } else if (action === 'close-result') {
-        const tournament = view.tournaments?.[view.tournaments.length - 1]
+        const tournament = view.tournaments?.[(view.tournaments?.length ?? 0) - 1]
         if (!view.can_play || !view.saved || !view.checkpoint_fingerprint
           || !closureConsent || !reason.trim() || !tournament
           || tournament.entrant_ids.length !== 8
@@ -232,6 +232,7 @@ export function CalendarContinuationPanel({ runId, branchId, head, onChange }: {
     } catch (e) { if (valid()) setError(formatApiError(e)) }
     finally { if (valid()) setBusy(false) }
   }
+  const latestTournament = view?.tournaments?.[(view?.tournaments?.length ?? 0) - 1]
   const canPlay = view?.can_play && a !== b && a && b && consent && reason.trim() && /^-?\d+$/.test(seed) && Number.isSafeInteger(Number(seed))
   return <section aria-label="Stateful calendar continuation">
     <h4>{cs ? 'Navazující zápasy z uloženého stavu' : 'Continue matches from Saved player state'}</h4>
@@ -362,9 +363,9 @@ export function CalendarContinuationPanel({ runId, branchId, head, onChange }: {
             : '—'
         }</td><td>{t.saved ? (cs ? 'Uloženo' : 'Saved') : (cs ? 'Neuloženo' : 'Unsaved')}</td></tr>)}
       </tbody></table>}
-      {view.tournaments?.[view.tournaments.length - 1]?.entrant_ids.length === 8
-        && view.tournaments[view.tournaments.length - 1]?.prepared_points_status === 'prepared_not_official'
-        && !view.tournaments[view.tournaments.length - 1]?.result_closed && <section aria-label="Native tournament result closure">
+      {latestTournament?.entrant_ids.length === 8
+        && latestTournament.prepared_points_status === 'prepared_not_official'
+        && !latestTournament.result_closed && <section aria-label="Native tournament result closure">
           <h5>{cs ? 'Uzavřít skutečné výsledky turnaje' : 'Close actual tournament results'}</h5>
           <p role="status">{cs ? 'Po ručním Save uzavře výsledky všech sedmi zápasů do ověřené historie hráčů. Připravené body se NESTANOU Official Ranking.' : 'After the separate manual Save, freeze all seven played matches into verified player results. Prepared points do NOT become Official Ranking.'}</p>
           <label><input type="checkbox" checked={closureConsent} disabled={busy || !view.can_play}

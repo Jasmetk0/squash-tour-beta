@@ -123,11 +123,16 @@ def saved_checkpoint(payload, evidence, *, run_id, branch_id, _prefix_proofs=Non
     return state
 
 
-def capture_checkpoint(session, payload, evidence, *, run_id, branch_id):
+def capture_checkpoint(session, payload, evidence, *, run_id, branch_id,
+                       _defer_full_verification: bool = False):
     from beta_engine.infrastructure.db.initial_world_state import get_initial_world
     state = load_checkpoint(session, run_id=run_id, branch_id=branch_id)
     world = get_initial_world(session, run_id=run_id, branch_id=branch_id) if state or evidence else None
-    verify_checkpoint(state, world, evidence)
+    # Only the native Tour Save coordinator may defer this replay. It then
+    # authenticates the complete freshly captured revision once, atomically,
+    # before any Saved Revision is inserted or the Branch pointer moves.
+    if not _defer_full_verification:
+        verify_checkpoint(state, world, evidence)
     if state is not None:
         payload['content'][COMPONENT_KEY] = {'fingerprint': state.fingerprint, 'state': state.model_dump(mode='json')}
 

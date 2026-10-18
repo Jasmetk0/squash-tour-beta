@@ -292,7 +292,8 @@ def saved_tour(payload, *, run_id, branch_id, checkpoint=None):
     return state
 
 
-def capture_tour(session, payload, *, run_id, branch_id):
+def capture_tour(session, payload, *, run_id, branch_id,
+                 _defer_full_verification: bool = False):
     from beta_engine.infrastructure.db.calendar_sporting_checkpoint import (
         load_checkpoint,
     )
@@ -300,11 +301,14 @@ def capture_tour(session, payload, *, run_id, branch_id):
     state = load_tour(session, run_id=run_id, branch_id=branch_id)
     from beta_engine.infrastructure.db.initial_world_state import get_initial_world
 
-    verify_tour(
-        state,
-        load_checkpoint(session, run_id=run_id, branch_id=branch_id),
-        get_initial_world(session, run_id=run_id, branch_id=branch_id),
-    )
+    if not _defer_full_verification:
+        verify_tour(
+            state,
+            load_checkpoint(session, run_id=run_id, branch_id=branch_id),
+            get_initial_world(session, run_id=run_id, branch_id=branch_id),
+        )
+    # The standalone Saved component validator does not inspect pre-play
+    # origin revisions. This independent live-origin guard is always required.
     verify_tour_origins(session, state)
     if state:
         payload["content"][COMPONENT_KEY] = {
@@ -315,9 +319,10 @@ def capture_tour(session, payload, *, run_id, branch_id):
             load_saved_lifecycle,
         )
 
-        life = load_saved_lifecycle(payload, run_id=run_id, branch_id=branch_id)
-        if not life or life[-1].fingerprint != state.lifecycle_fingerprint:
-            raise ValueError("Tour Save lacks its coupled current lifecycle")
+        if not _defer_full_verification:
+            life = load_saved_lifecycle(payload, run_id=run_id, branch_id=branch_id)
+            if not life or life[-1].fingerprint != state.lifecycle_fingerprint:
+                raise ValueError("Tour Save lacks its coupled current lifecycle")
 
 
 def restore_tour(session, *, current_payload, target_payload, run_id, branch_id,

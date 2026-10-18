@@ -233,7 +233,30 @@ def main():
             def operation(label, container=None, *, save_after=True):
                 began = time.monotonic()
                 source = container or panel
-                source.get_by_role("button", name=label, exact=True).click()
+                # Some actual sporting transition previews must rebuild the
+                # full signed lineage and all player effects. Observe the
+                # production HTTP result, not only a 30-second UI animation.
+                # This is an acceptance observation bound, NOT a change to an
+                # application/network timeout or permission to skip integrity.
+                preview_start = time.monotonic()
+                with page.expect_response(
+                    lambda r: (
+                        r.request.method == "POST"
+                        and r.url.endswith("/calendar-tour/preview")
+                    ),
+                    timeout=180000,
+                ) as preview_response:
+                    source.get_by_role("button", name=label, exact=True).click()
+                preview_http = preview_response.value
+                preview_seconds = time.monotonic() - preview_start
+                evidence.setdefault("preview_seconds", []).append(
+                    {"operation": label, "seconds": preview_seconds}
+                )
+                if preview_http.status != 200:
+                    raise AssertionError(
+                        f"{label} preview failed after {preview_seconds:.1f}s "
+                        f"with HTTP {preview_http.status}: {preview_http.text()[:1600]}"
+                    )
                 review = panel.get_by_role("region", name="Tour command review")
                 expect(review).to_be_visible()
                 panel.get_by_label("Confirm Tour command").check()

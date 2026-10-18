@@ -520,10 +520,19 @@ def remap_saved_lifecycle_component(
 
 
 def restore_saved_lifecycle(
-    session, *, current_payload, target_payload, run_id, branch_id
+    session, *, current_payload, target_payload, run_id, branch_id,
+    _validated_states=None,
 ):
-    expected = load_saved_lifecycle(current_payload, run_id=run_id, branch_id=branch_id)
-    target = load_saved_lifecycle(target_payload, run_id=run_id, branch_id=branch_id)
+    if _validated_states is None:
+        expected = load_saved_lifecycle(current_payload, run_id=run_id, branch_id=branch_id)
+        target = load_saved_lifecycle(target_payload, run_id=run_id, branch_id=branch_id)
+    else:
+        # Used solely for both Tour-bearing revisions authenticated by the
+        # repository's Signed ancestry gate in this same restore transaction.
+        # The original validator fully rebuilt each exact Saved Tour lifecycle.
+        # The live SQLite rows are still loaded/checked below, and newly
+        # captured restored state is independently verified before commit.
+        expected, target = _validated_states
     target_world = None
     if target is None:
         from beta_engine.infrastructure.db.initial_world_state import (

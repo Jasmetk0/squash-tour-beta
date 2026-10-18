@@ -4856,12 +4856,38 @@ class SimulationPersistenceRepository:
                     or PLAYER_LIFECYCLE_COMPONENT_KEY in target_content
                 ):
                     try:
+                        # Both Tour-bearing revisions were authenticated
+                        # during the complete Saved lineage validation above:
+                        # saved_tour validates its coupled lifecycle against
+                        # actual births and Entry. Decode the same immutable
+                        # lifecycle without re-simulating the entire cohort
+                        # history again on a restore. Legacy/non-Tour snapshots
+                        # retain the strict original adapter path.
+                        tour_lifecycle_sources = None
+                        if (
+                            "calendar_tour_authority" in current_content
+                            and "calendar_tour_authority" in target_content
+                        ):
+                            from beta_engine.infrastructure.db.player_lifecycle_state import (
+                                decode_prevalidated_lifecycle,
+                            )
+
+                            tour_lifecycle_sources = tuple(
+                                decode_prevalidated_lifecycle(
+                                    source, run_id=run_id, branch_id=branch_id
+                                )
+                                for source in (
+                                    state.saved_revision.payload,
+                                    target_revision.payload,
+                                )
+                            )
                         restore_saved_lifecycle(
                             session,
                             current_payload=state.saved_revision.payload,
                             target_payload=target_revision.payload,
                             run_id=run_id,
                             branch_id=branch_id,
+                            _validated_states=tour_lifecycle_sources,
                         )
                     except ValueError as exc:
                         raise SavedRevisionRestoreUnsupportedError(

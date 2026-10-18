@@ -235,3 +235,47 @@ def test_verified_restore_dispatch_preserves_strict_default(monkeypatch):
     )
     assert decoded == ["original", "original"]
     assert restored == [("tour", None), ("checkpoint", None)]
+
+
+def test_tour_restore_lifecycle_reuses_signed_inputs_but_checks_live(monkeypatch):
+    from tests.infrastructure.test_player_lifecycle_fork_remap import _source_payload
+    from beta_engine.infrastructure.db import player_lifecycle_state as module
+
+    payload, original = _source_payload()
+
+    class Rows:
+        def order_by(self, *_args):
+            return self
+
+    class Session:
+        def scalars(self, _query):
+            return Rows()
+
+        def execute(self, _query):
+            pass
+
+    # The validated inputs must NOT fold Saved life again, but SQLite must
+    # still be independently read and compared before any restoration write.
+    loaded = []
+    def fail_validation(*_a, **_k):
+        raise AssertionError("Redundant full Signed lifecycle replay")
+    monkeypatch.setattr(module, "load_saved_lifecycle", fail_validation)
+    monkeypatch.setattr(module, "_load", fail_validation)
+
+    class GoodSession:
+        def scalars(self, _query):
+            class Result:
+                def order_by(self, *_args):
+                    return self
+                def all(self):
+                    return []
+            return Result()
+
+    # A missing live historical row must block the optimized restore rather
+    # than quietly accepting the supplied signed component.
+    with pytest.raises(ValueError, match="Live player lifecycle differs"):
+        module.restore_saved_lifecycle(
+            GoodSession(), current_payload=payload, target_payload=payload,
+            run_id="run", branch_id="source",
+            _validated_states=(original, original),
+        )

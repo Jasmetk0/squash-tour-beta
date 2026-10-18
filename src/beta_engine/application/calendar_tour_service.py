@@ -69,6 +69,8 @@ from beta_engine.infrastructure.db.player_lifecycle_state import (
 )
 from beta_engine.infrastructure.db.player_lifecycle_state import (
     load_saved_lifecycle,
+    decode_prevalidated_lifecycle,
+    get_lifecycle,
     put_lifecycle,
 )
 from beta_engine.infrastructure.db.tournament_application_submissions import (
@@ -192,12 +194,12 @@ class CalendarTourService:
         if state != signed or checkpoint != saved:
             verify_tour(state, checkpoint, world)
         verify_tour_origins(session, state)
-        signed_life = (
-            load_saved_lifecycle(
-                revision.saved_revision.payload, run_id=run_id, branch_id=branch_id
-            )
-            if state is None
-            else None
+        # The exact Saved HEAD has been fully authenticated in _context's
+        # repository lineage walk. Comparing immutable Saved lifecycle bytes
+        # to independently parsed live rows is sufficient for unchanged Tour
+        # state; a changed Working Draft still gets the full birth/Entry fold.
+        signed_life = decode_prevalidated_lifecycle(
+            revision.saved_revision.payload, run_id=run_id, branch_id=branch_id
         )
         from beta_engine.infrastructure.db.models import PlayerLifecycleWeekStateModel
 
@@ -213,7 +215,9 @@ class CalendarTourService:
             )
         )
         expected_life = (
-            _lifecycle_history(world, state.week, state) if state else signed_life
+            signed_life
+            if state is None or (state == signed and checkpoint == saved)
+            else _lifecycle_history(world, state.week, state)
         )
         if live_life != expected_life or (
             state and live_life[-1].fingerprint != state.lifecycle_fingerprint
@@ -241,8 +245,15 @@ class CalendarTourService:
             session.execute(text("BEGIN"))
             ctx, state, signed = self._context(session, run_id, branch_id)
             _clock, rev, world, _health, cp, saved, _ = ctx
+            # _context verified the full live lifecycle against its Saved
+            # owner (or rebuilt an unsaved one). Read the authenticated current
+            # row instead of replaying every historical birth/Entry week again.
             lifecycle = (
-                _lifecycle_history(world, state.week, state)[-1] if state else None
+                get_lifecycle(
+                    session, run_id=run_id, branch_id=branch_id, week=state.week
+                )
+                if state
+                else None
             )
             identities = (
                 {p.player_id: p for p in lifecycle.players} if lifecycle else {}

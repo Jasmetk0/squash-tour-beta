@@ -108,3 +108,34 @@ def test_prevalidated_decoder_rechecks_source_identity_and_fingerprint():
         storage.decode_prevalidated_calendar_sources(
             corrupt, run_id=checkpoint.run_id, branch_id=checkpoint.branch_id
         )
+
+
+def test_prevalidated_lifecycle_decodes_verified_scope_without_replaying_history():
+    from tests.infrastructure.test_player_lifecycle_fork_remap import _source_payload
+    from beta_engine.infrastructure.db.player_lifecycle_state import (
+        decode_prevalidated_lifecycle,
+    )
+
+    payload, expected = _source_payload()
+    assert decode_prevalidated_lifecycle(
+        payload, run_id="run", branch_id="source"
+    ) == expected
+    assert decode_prevalidated_lifecycle(
+        {"content": {}}, run_id="run", branch_id="source"
+    ) is None
+    with pytest.raises(ValueError, match="identity/hash"):
+        decode_prevalidated_lifecycle(
+            payload, run_id="run", branch_id="other"
+        )
+    damaged = deepcopy(payload)
+    damaged["content"]["player_lifecycle"]["fingerprint"] = "0" * 64
+    with pytest.raises(ValueError, match="identity/hash"):
+        decode_prevalidated_lifecycle(
+            damaged, run_id="run", branch_id="source"
+        )
+    damaged = deepcopy(payload)
+    damaged["content"]["player_lifecycle"]["states"][1]["predecessor_fingerprint"] = "wrong"
+    with pytest.raises(ValueError, match="identity/hash"):
+        decode_prevalidated_lifecycle(
+            damaged, run_id="run", branch_id="source"
+        )

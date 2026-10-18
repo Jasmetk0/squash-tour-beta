@@ -51,6 +51,37 @@ def _parse_lifecycle_json(raw):
     return PlayerLifecycleWeekState.model_validate_json(raw)
 
 
+def decode_prevalidated_lifecycle(payload, *, run_id, branch_id):
+    """Decode the immutable Saved lifecycle AFTER repository lineage validation.
+
+    Only the calendar Tour request path calls this with its already signed and
+    component-verified HEAD in the same transaction. The full Saved validator
+    independently rebuilds the birth/Entry chain on cache misses. Here, recheck
+    all serialized identities and the aggregate component hash, but do not
+    recompute the same historical lifecycle chain on every Admin read/preview.
+    A changed Signed payload invalidates the repository's byte-digest cache.
+    Never use this shortcut for unknown snapshots, restore, or an unsaved Tour.
+    """
+    component = payload.get("content", {}).get(PLAYER_LIFECYCLE_COMPONENT_KEY)
+    if component is None:
+        return None
+    if not isinstance(component, dict) or set(component) != {"fingerprint", "states"}:
+        raise ValueError("Invalid prevalidated lifecycle component")
+    raw = component["states"]
+    if not isinstance(raw, list) or not raw:
+        raise ValueError("Prevalidated lifecycle component has no states")
+    states = tuple(_parse_lifecycle_json(json.dumps(s)) for s in raw)
+    body = [s.model_dump(mode="json") for s in states]
+    digest = hashlib.sha256(
+        json.dumps(body, sort_keys=True, separators=(",", ":")).encode()
+    ).hexdigest()
+    if digest != component["fingerprint"] or any(
+        (s.run_id, s.branch_id) != (run_id, branch_id) for s in states
+    ):
+        raise ValueError("Prevalidated lifecycle identity/hash mismatch")
+    return states
+
+
 def _load(row, run_id, branch_id, week_ordinal):
     state = _parse_lifecycle_json(row.payload_json)
     if (state.run_id, state.branch_id, state.week.ordinal, state.fingerprint) != (

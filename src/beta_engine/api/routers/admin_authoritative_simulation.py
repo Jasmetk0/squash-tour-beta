@@ -2654,3 +2654,26 @@ def simulate_eight_scored_calendar_followup_knockout(
             status_code=409,
             detail={"code": "calendar_followup_eight_scored_conflict", "message": str(exc)},
         ) from exc
+
+
+# Native real-result closure records signed player match counters as a Saved
+# sporting fact. It never authenticates Tour Entry or publishes Official Rankings.
+from beta_engine.application.calendar_tournament_closure_service import (
+    CalendarNativeTournamentClosureService, CalendarNativeTournamentClosureCommand,
+)
+
+
+@router.post("/calendar-continuation/knockouts/close-result", status_code=201)
+def close_native_tournament_result(
+    run_id: str, branch_id: str, payload: CalendarNativeTournamentClosureCommand,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+):
+    try:
+        return CalendarNativeTournamentClosureService(runtime.repository).close(
+            run_id=run_id, branch_id=branch_id, command=payload,
+        )
+    except (KeyError, TypeError, ValueError) as exc:
+        raise HTTPException(status_code=409, detail={
+            "code": "calendar_native_tournament_closure_conflict",
+            "message": str(exc),
+        }) from exc

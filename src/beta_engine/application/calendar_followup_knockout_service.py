@@ -6,6 +6,7 @@ An exact command retry reconstructs the original post-tournament fingerprint.
 from dataclasses import dataclass
 
 from pydantic import Field, model_validator
+from typing import Literal
 from sqlalchemy import text
 
 from beta_engine.application.calendar_continuation_service import (
@@ -16,6 +17,7 @@ from beta_engine.application.calendar_continuation_service import (
 from beta_engine.domain.calendar.run_week_position import RunWeekPosition
 from beta_engine.domain.players.calendar_continuation_match import append_continuation
 from beta_engine.domain.players.calendar_engine_player import calendar_engine_player
+from beta_engine.domain.players.calendar_followup_points import (CalendarFollowupPointPolicy, derive_followup_awards)
 from beta_engine.domain.players.calendar_followup_knockout import (
     CalendarFollowupKnockout,
     ROUNDS,
@@ -49,6 +51,12 @@ class CalendarFollowupKnockoutCommand(FrozenInput):
         return self
 
 
+class CalendarFollowupScoredCommand(CalendarFollowupKnockoutCommand):
+    """Separate opted-in point command; v1 command fingerprint stays byte-compatible."""
+    point_policy: CalendarFollowupPointPolicy
+    explicit_point_confirmation: Literal[True]
+
+
 @dataclass(slots=True)
 class CalendarFollowupKnockoutService:
     repository: object
@@ -69,7 +77,7 @@ class CalendarFollowupKnockoutService:
 
     @staticmethod
     def _receipt(event, successor):
-        return {
+        receipt = {
             "schema_version": "calendar_followup_knockout_receipt.v1",
             "tournament": event.model_dump(mode="json"),
             "fingerprint": event.fingerprint,
@@ -78,8 +86,13 @@ class CalendarFollowupKnockoutService:
             "scope": event.scope,
             "official_ranking_published": False,
         }
+        if event.schema_version == "calendar_followup_knockout.v2":
+            receipt["prepared_awards"] = [a.model_dump(mode="json") for a in event.prepared_awards]
+            receipt["prepared_policy_fingerprint"] = event.prepared_policy.fingerprint
+            receipt["publication_status"] = "prepared_not_official"
+        return receipt
 
-    def simulate(self, *, run_id, branch_id, command: CalendarFollowupKnockoutCommand):
+    def simulate(self, *, run_id, branch_id, command: CalendarFollowupKnockoutCommand | CalendarFollowupScoredCommand):
         request_fp = canonical_hash({
             "run_id": run_id, "branch_id": branch_id,
             "command": command.model_dump(mode="json"),
@@ -148,7 +161,7 @@ class CalendarFollowupKnockoutService:
                     run_id=run_id, branch_id=branch_id, command=inner,
                 )
                 results.append(entry)
-            event = CalendarFollowupKnockout(
+            event_payload = dict(
                 run_id=run_id, branch_id=branch_id,
                 tournament_id=command.tournament_id,
                 command_id=command.command_id,
@@ -162,6 +175,20 @@ class CalendarFollowupKnockoutService:
                 request_fingerprint=request_fp,
                 matches=tuple(results),
             )
+            if isinstance(command, CalendarFollowupScoredCommand):
+                if command.point_policy.validity_weeks != clock.weeks_per_year:
+                    raise ValueError("Prepared point validity must equal the Run year W")
+                provisional = CalendarFollowupKnockout.model_construct(
+                    **event_payload, schema_version="calendar_followup_knockout.v2",
+                    prepared_policy=command.point_policy,
+                )
+                event = CalendarFollowupKnockout.model_validate_json(
+                    provisional.model_copy(update={
+                        "prepared_awards": derive_followup_awards(provisional),
+                    }).model_dump_json()
+                )
+            else:
+                event = CalendarFollowupKnockout(**event_payload)
             successor = append_followup_knockout(state, world, event)
             if successor.players != prior.players:
                 raise ValueError("Knockout terminal population differs from real match sequence")

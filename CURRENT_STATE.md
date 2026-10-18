@@ -208,3 +208,23 @@ four-player scoring unchanged. Independent CS/EN confirmation, point
 table and signed result history are included. No Official Tour Entry,
 ranking publication or complete Week/Season Transition is claimed.
 See `docs/CALENDAR_EIGHT_PREPARED_AWARDS_V1.md`.
+
+
+**After owner-merged #1538 (verified on 18 Oct 2026):** genuine
+seven-MatchEngine-game native eight-player knockout now supports four
+winner-fed finishing stages and exactly eight review-confirmed prepared
+award records, with immutable sporting checkpoint v7 and all earlier
+v1–v6 semantics preserved. Its frontend build passed; some final-head
+backend and browser workflow checks were still outstanding when the owner
+merged.
+
+**Current native result-closure candidate:** a *new Saved sporting write*
+freezes per-player played-match IDs, win/loss counters, placement and existing
+prepared points from the actual seven logged MatchEngine results into
+`calendar_native_tournament_closure.v1`, backed by sporting checkpoint v8.
+Distinct explicit confirmation and manual Save, SQLite atomicity, exact
+retry/restart/restore, later W-aware advances, tamper checks and CS/EN Admin
+are included. This closes genuine native sporting result evidence, but is
+NOT yet a configured Tour Edition/Entry, published Official Ranking or full
+Week/Season Transition. Contract:
+`docs/CALENDAR_NATIVE_SAVED_RESULT_CLOSURE_V1.md`.

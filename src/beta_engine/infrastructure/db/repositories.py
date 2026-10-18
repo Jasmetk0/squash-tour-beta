@@ -4035,7 +4035,13 @@ class SimulationPersistenceRepository:
         session: Session,
         run_id: str,
         branch_id: str,
-    ) -> ViewerBranchWorkingDraftRecord:
+        include_revision_state: bool = False,
+    ) -> (
+        ViewerBranchWorkingDraftRecord
+        | tuple[ViewerBranchWorkingDraftRecord, BranchRevisionStateRecord]
+    ):
+        # One validated DB snapshot can serve both the draft and its Saved HEAD.
+        # Never reuse this across transactions or HTTP requests.
         run = session.get(RunContainerModel, run_id)
         if run is None:
             raise WorkingDraftNotFoundError(f"Run {run_id!r} was not found")
@@ -4087,7 +4093,7 @@ class SimulationPersistenceRepository:
             raise WorkingDraftConflictError(
                 f"Run {run_id!r} has no coherent current Viewer Branch"
             )
-        return ViewerBranchWorkingDraftRecord(
+        result = ViewerBranchWorkingDraftRecord(
             run_id=run_id,
             branch_id=branch_id,
             draft_id=state.working_draft.draft_id,
@@ -4099,6 +4105,7 @@ class SimulationPersistenceRepository:
             change_count=state.working_draft.change_count,
             draft_version=state.working_draft.draft_version,
         )
+        return (result, state) if include_revision_state else result
 
     def get_viewer_branch_working_draft(
         self, *, run_id: str, branch_id: str
@@ -5301,15 +5308,14 @@ class SimulationPersistenceRepository:
 
         with self._session_factory.begin() as session:
             session.execute(text("BEGIN"))
-            draft = self._viewer_branch_working_draft_in_session(
-                session=session, run_id=run_id, branch_id=branch_id
+            draft, state = self._viewer_branch_working_draft_in_session(
+                session=session, run_id=run_id, branch_id=branch_id,
+                include_revision_state=True,
             )
             ranking = capture_ranking_revision_state(
                 session, run_id=run_id, branch_id=branch_id
             )
-            state = self._validated_branch_revision_state_in_session(
-                session=session, branch=session.get(RunBranchModel, branch_id)
-            )
+
             saved = load_saved_ranking_component(
                 state.saved_revision.payload, run_id=run_id, branch_id=branch_id
             )
@@ -5340,15 +5346,14 @@ class SimulationPersistenceRepository:
     def preview_initial_world_save(self, *, run_id: str, branch_id: str) -> dict:
         with self._session_factory.begin() as session:
             session.execute(text("BEGIN"))
-            draft = self._viewer_branch_working_draft_in_session(
-                session=session, run_id=run_id, branch_id=branch_id
+            draft, state = self._viewer_branch_working_draft_in_session(
+                session=session, run_id=run_id, branch_id=branch_id,
+                include_revision_state=True,
             )
             world = get_initial_world(session, run_id=run_id, branch_id=branch_id)
             if world is None:
                 raise ValueError("Initial world has not been adopted")
-            state = self._validated_branch_revision_state_in_session(
-                session=session, branch=session.get(RunBranchModel, branch_id)
-            )
+
             saved = load_saved_initial_world(
                 state.saved_revision.payload, run_id=run_id, branch_id=branch_id
             )
@@ -5372,12 +5377,11 @@ class SimulationPersistenceRepository:
     def preview_simulation_save(self, *, run_id: str, branch_id: str) -> dict:
         with self._session_factory.begin() as session:
             session.execute(text("BEGIN"))
-            draft = self._viewer_branch_working_draft_in_session(
-                session=session, run_id=run_id, branch_id=branch_id
+            draft, state = self._viewer_branch_working_draft_in_session(
+                session=session, run_id=run_id, branch_id=branch_id,
+                include_revision_state=True,
             )
-            state = self._validated_branch_revision_state_in_session(
-                session=session, branch=session.get(RunBranchModel, branch_id)
-            )
+
             payload = {"content": {}}
             capture_saved_simulation_slots(
                 session, payload, run_id=run_id, branch_id=branch_id
@@ -5409,12 +5413,11 @@ class SimulationPersistenceRepository:
         """Preview an actual Run-calendar MatchEngine result before manual Save."""
         with self._session_factory.begin() as session:
             session.execute(text("BEGIN"))
-            draft = self._viewer_branch_working_draft_in_session(
-                session=session, run_id=run_id, branch_id=branch_id
+            draft, state = self._viewer_branch_working_draft_in_session(
+                session=session, run_id=run_id, branch_id=branch_id,
+                include_revision_state=True,
             )
-            state = self._validated_branch_revision_state_in_session(
-                session=session, branch=session.get(RunBranchModel, branch_id)
-            )
+
             payload = {"content": {}}
             capture_saved_calendar_match(
                 session, payload, run_id=run_id, branch_id=branch_id
@@ -5445,12 +5448,11 @@ class SimulationPersistenceRepository:
     def preview_run_prospect_source_save(self, *, run_id: str, branch_id: str) -> dict:
         with self._session_factory.begin() as session:
             session.execute(text("BEGIN"))
-            draft = self._viewer_branch_working_draft_in_session(
-                session=session, run_id=run_id, branch_id=branch_id
+            draft, state = self._viewer_branch_working_draft_in_session(
+                session=session, run_id=run_id, branch_id=branch_id,
+                include_revision_state=True,
             )
-            state = self._validated_branch_revision_state_in_session(
-                session=session, branch=session.get(RunBranchModel, branch_id)
-            )
+
             live = capture_run_prospect_source_snapshot(session, run_id=run_id)
             saved = load_saved_run_prospect_source(
                 state.saved_revision.payload,
@@ -5538,8 +5540,9 @@ class SimulationPersistenceRepository:
         try:
             with self._session_factory.begin() as session:
                 session.execute(text("BEGIN IMMEDIATE"))
-                draft = self._viewer_branch_working_draft_in_session(
-                    session=session, run_id=run_id, branch_id=branch_id
+                draft, state = self._viewer_branch_working_draft_in_session(
+                    session=session, run_id=run_id, branch_id=branch_id,
+                    include_revision_state=True,
                 )
                 run = session.get(RunContainerModel, run_id)
                 branch = session.get(RunBranchModel, branch_id)
@@ -5599,9 +5602,6 @@ class SimulationPersistenceRepository:
                     )
 
                 try:
-                    state = self._validated_branch_revision_state_in_session(
-                        session=session, branch=branch
-                    )
                     saved_viewer_id = saved_viewer_branch_id(
                         state.saved_revision.payload
                     )

@@ -1,7 +1,7 @@
 # Current implementation — Master v85
 
-Audited buuk `642617430b66853285415ac6690d89165e2c47e2` after merged #1531, 18 October 2026.
-#1520–1531 are merged; no open PR at task start. Refresh before new work.
+Checked buuk `f200d9898b41431439501a9b559529900135adf7` after merged #1532, 18 October 2026.
+#1520–1532 are merged; no open PR at this performance task start. Refresh before further work.
 Master remains v85; this task changes sporting execution, not product decisions.
 
 **Merged and usable:** calendar creation/first Save, population and Health facts,
@@ -116,7 +116,7 @@ reference 50-season acceptance remain in Master; never mutate protected sources.
 Owner alone merges. Work directly in the continuation ChatGPT/environment, no
 paid Codex/agents unless explicitly requested. Avoid concurrent duplicate work.
 
-**Current candidate:** native sporting-week preparation advances the explicit
+**Merged #1532:** native sporting-week preparation advances the explicit
 exhibition sporting owner from completed terminal records, with annual attribute
 exposure 1/W and existing weekly Form/sharpness/fatigue updates. Reviewed preview,
 explicit consent and separate manual Save precede actual later-week exhibitions
@@ -124,5 +124,15 @@ from those stored 57 attributes. Ordered v3 owner history retains old hashes and
 supports replay/restart/restore/extension. This does not advance the legacy/public
 clock or implement Official Ranking, lifecycle/intake, Health healing, Season
 Transition or full nine-step Week Transition. The end of season remains blocked.
-See [scope and validation](docs/CALENDAR_NATIVE_SPORTING_WEEK_V1.md). Final latest-head
-CI/browser evidence belongs to the PR; do not infer release readiness from this note.
+See [scope and validation](docs/CALENDAR_NATIVE_SPORTING_WEEK_V1.md). Final-head CI and actual 1,000-player Chromium acceptance passed on #1532
+(9d2d6a9a3b802999597b32fff4677d504ec25afb). This does not satisfy the
+full pre-alpha release gate.
+
+**Next focused performance repair (pending PR verification):** manual Save and several
+Save reviews currently call the same authoritative branch lineage validation twice
+inside a single SQLite transaction. Reusing the already validated Saved HEAD in
+those specific transactions avoids duplicate traversal without weakening raw-byte
+hash, component, scope, lineage, draft, or concurrent-writer checks. Verification
+must still run afresh on every distinct request/transaction; no public history
+validation or persisted revision semantics are changed. This is a bounded
+performance reduction, not a claimed end-to-end latency fix or Tour integration.

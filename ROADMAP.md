@@ -1,7 +1,7 @@
 # Active dependency path — Master v85
 
-Audited buuk `642617430b66853285415ac6690d89165e2c47e2` after #1531. All #1521–1531 merged,
-all triggered final-head workflows green. Owner alone merges; refresh current work.
+Checked buuk `f200d9898b41431439501a9b559529900135adf7` after #1532. All #1521–1532 merged;
+#1532 final-head CI/browser checks are green. Owner alone merges; refresh current work.
 
 | Order | Outcome | Status |
 | --- | --- | --- |
@@ -23,9 +23,16 @@ See [current state](CURRENT_STATE.md), [audit](docs/PRE_ALPHA_CHECKPOINT_V85_202
 and Master 35.42. Historical evidence and older task briefs remain in Git/docs;
 the old v84 instruction to repair A84-01 is already satisfied and is not a new task.
 
-Current weekly candidate delivers a usable **sporting-only exhibition timeline**:
+Merged #1532 delivers a usable **sporting-only exhibition timeline**:
 review/confirm/Save native W-aware development and weekly recovery, then actual
 later-week matches from the persisted owner. It remains a substep of item 6, not a
 complete Week Transition. Next integrate native Official results/ranking, lifecycle/
 intake/Health and public time atomically before unlocking Tour/Full Simulation or
 Season rollover. Preserve the v3 timeline and historical v1/v2 bytes.
+
+**Near-term performance gate (under review):** eliminate a duplicate Saved-lineage
+validation inside each Save/preview transaction, retaining full per-request
+verification and corrupted-history rejection. After this bounded change, profile
+real 1,000-player Save review and avoid weakening Saved verification for speed.
+The next functional milestone remains an integrated native Official Tour/Week
+Transition, not another standalone provenance/read-only feature.

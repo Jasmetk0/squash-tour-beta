@@ -187,6 +187,7 @@ def main():
                     raise AssertionError(errors.all_text_contents())
 
             def save():
+                save_started = time.monotonic()
                 panel.get_by_label("Confirm Tour Save").check()
                 with (
                     page.expect_response(
@@ -229,6 +230,7 @@ def main():
                     "Actual browser acceptance over configured Edition and saved players"
                 )
                 check_errors()
+                return time.monotonic() - save_started
 
             def operation(label, container=None, *, save_after=True):
                 began = time.monotonic()
@@ -264,6 +266,7 @@ def main():
                 # immutable sporting history. Await its actual response before
                 # asserting the Working Draft UI; a 30s auto-retry of a locator
                 # alone confuses slow but successful reads with missing controls.
+                commit_started = time.monotonic()
                 with (
                     page.expect_response(
                         lambda r: (
@@ -291,8 +294,14 @@ def main():
                 assert refreshed_view["run_id"] == "run" and refreshed_view["branch_id"] == "branch"
                 assert refreshed_view["saved_head_revision_id"] == evidence["last_saved_head"]
                 expect(panel.get_by_label("Confirm Tour Save")).to_be_visible()
-                if save_after:
-                    save()
+                commit_refresh_seconds = time.monotonic() - commit_started
+                save_seconds = save() if save_after else None
+                evidence.setdefault("phase_seconds", []).append({
+                    "operation": label,
+                    "preview_http": preview_seconds,
+                    "commit_and_live_inspection": commit_refresh_seconds,
+                    "manual_save_and_saved_inspection": save_seconds,
+                })
                 evidence["operations"].append(
                     {"operation": label, "seconds": time.monotonic() - began}
                 )

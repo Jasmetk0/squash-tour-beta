@@ -244,7 +244,11 @@ def append_sporting_week(checkpoint, world, knockout, event):
     return CalendarSportingCheckpoint.model_validate_json(
         checkpoint.model_copy(
             update={
-                "schema_version": "calendar_sporting_checkpoint.v3",
+                "schema_version": (
+                    "calendar_sporting_checkpoint.v4"
+                    if checkpoint.schema_version == "calendar_sporting_checkpoint.v4"
+                    else "calendar_sporting_checkpoint.v3"
+                ),
                 "phase": "sporting_week_active",
                 "week": event.target_week,
                 "players": recovered,

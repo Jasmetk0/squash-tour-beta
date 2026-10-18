@@ -139,3 +139,99 @@ def test_prevalidated_lifecycle_decodes_verified_scope_without_replaying_history
         decode_prevalidated_lifecycle(
             damaged, run_id="run", branch_id="source"
         )
+
+
+def test_verified_restore_skips_repeating_signed_checkpoint_fold(monkeypatch):
+    # Only the repository coordinator may provide already authenticated Saved
+    # sources. The adapter must still match its independent live SQLite owner.
+    from beta_engine.infrastructure.db import calendar_sporting_checkpoint as sporting
+    from tests.domain.test_calendar_native_checkpoint_compatibility import initial
+
+    source = initial()
+    deleted = []
+    installed = []
+    row = object()
+
+    class Session:
+        def get(self, _model, _key):
+            return row
+
+        def delete(self, item):
+            deleted.append(item)
+
+        def flush(self):
+            pass
+
+    def must_not_revalidate(*_args, **_kwargs):
+        raise AssertionError("Saved sporting replay repeated after source validation")
+
+    monkeypatch.setattr(sporting, "saved_checkpoint", must_not_revalidate)
+    monkeypatch.setattr(sporting, "load_checkpoint", lambda *_a, **_k: source)
+    monkeypatch.setattr(sporting, "put_checkpoint", lambda _s, state: installed.append(state))
+    sporting.restore_checkpoint(
+        Session(), current_payload={}, target_payload={},
+        current=None, target=None, run_id=source.run_id, branch_id=source.branch_id,
+        _validated_states=(source, source),
+    )
+    assert deleted == [row]
+    assert installed == [source]
+
+
+def test_verified_restore_skips_duplicate_saved_tour_replay(monkeypatch):
+    from beta_engine.infrastructure.db import calendar_tour as tour
+
+    class Session:
+        def get(self, _model, _key):
+            return None
+
+        def flush(self):
+            pass
+
+    def must_not_revalidate(*_args, **_kwargs):
+        raise AssertionError("Signed Tour validation was repeated after lineage gate")
+
+    monkeypatch.setattr(tour, "saved_tour", must_not_revalidate)
+    monkeypatch.setattr(tour, "load_tour", lambda *_a, **_k: None)
+    tour.restore_tour(
+        Session(), current_payload={}, target_payload={},
+        run_id="run", branch_id="branch", _validated_states=(None, None),
+    )
+
+
+def test_verified_restore_dispatch_preserves_strict_default(monkeypatch):
+    from beta_engine.infrastructure.db import calendar_standalone_match_state as match
+
+    decoded = []
+    restored = []
+
+    class Session:
+        def flush(self):
+            pass
+
+    def decode(_payload, **_scope):
+        decoded.append("original")
+        return None
+
+    monkeypatch.setattr(match, "_parse_saved_calendar_match_evidence", decode)
+    monkeypatch.setattr(match, "load_match_rows", lambda *_a, **_k: ())
+    monkeypatch.setattr(
+        "beta_engine.infrastructure.db.calendar_tour.restore_tour",
+        lambda *_a, **kw: restored.append(("tour", kw.get("_validated_states"))),
+    )
+    monkeypatch.setattr(
+        "beta_engine.infrastructure.db.calendar_sporting_checkpoint.restore_checkpoint",
+        lambda *_a, **kw: restored.append(("checkpoint", kw.get("_validated_states"))),
+    )
+    match.restore_saved_calendar_match(
+        Session(), current_payload={}, target_payload={},
+        run_id="r", branch_id="b",
+        _validated_saved_sources=((None, None, None), (None, None, None)),
+    )
+    assert decoded == []
+    assert restored == [("tour", (None, None)), ("checkpoint", (None, None))]
+    restored.clear()
+    match.restore_saved_calendar_match(
+        Session(), current_payload={}, target_payload={}, run_id="r", branch_id="b",
+    )
+    assert decoded == ["original", "original"]
+    assert restored == [("tour", None), ("checkpoint", None)]

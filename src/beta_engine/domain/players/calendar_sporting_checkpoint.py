@@ -98,7 +98,7 @@ class CalendarSportingCheckpoint(FrozenInput):
                         and event.schema_version == 'calendar_followup_knockout.v3'
                         for event in self.week_events)):
             raise ValueError('Checkpoint v6 needs an actual eight-player tournament')
-        if (self.schema_version != 'calendar_sporting_checkpoint.v7'
+        if (self.schema_version not in {'calendar_sporting_checkpoint.v7', 'calendar_sporting_checkpoint.v8'}
             and any(isinstance(event, CalendarFollowupKnockout)
                     and event.schema_version == 'calendar_followup_knockout.v4'
                     for event in self.week_events)):

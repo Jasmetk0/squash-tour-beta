@@ -140,7 +140,7 @@ class CalendarTourService:
         )
         from beta_engine.infrastructure.db.calendar_standalone_match_state import (
             load_match_rows,
-            load_saved_calendar_sources,
+            decode_prevalidated_calendar_sources,
         )
 
         proofs = {}
@@ -159,11 +159,15 @@ class CalendarTourService:
         )
         rows = load_match_rows(session, run_id=run_id, branch_id=branch_id)
         evidence = rows[0] if len(rows) == 1 else None
-        saved_evidence, saved, signed = load_saved_calendar_sources(
+        # CalendarStandaloneMatchService._context has just authenticated this
+        # exact Saved HEAD via the repository's signed lineage validator. The
+        # latter either strictly folds all sporting/Tour sources or reuses an
+        # identical-byte verified signature. Do not fold the same 14 real matches
+        # and all ranking publications a second time on every Admin operation.
+        saved_evidence, saved, signed = decode_prevalidated_calendar_sources(
             revision.saved_revision.payload,
             run_id=run_id,
             branch_id=branch_id,
-            _sporting_component_proofs=proofs,
         )
         checkpoint = load_checkpoint(
             session, run_id=run_id, branch_id=branch_id, _verified_source=saved

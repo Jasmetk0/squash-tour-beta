@@ -374,6 +374,55 @@ def _parse_saved_calendar_match_evidence(payload: dict, *, run_id: str, branch_i
     return state
 
 
+def decode_prevalidated_calendar_sources(payload: dict, *, run_id: str, branch_id: str):
+    """Decode an ALREADY authenticated Saved HEAD without a redundant replay.
+
+    INTERNAL ONLY: its caller MUST first pass these exact immutable payload bytes
+    through repository._validated_branch_revision_state_in_session. That gate
+    checks the signed hash, identity, ancestry and all sporting/Tour components;
+    its content-digest keyed validation cache invalidates on any byte mutation.
+    Never use this helper for raw history, Viewer, Save, restore or unknown JSON.
+    Re-parse and re-check each source's scope/fingerprint; the only work elided
+    here is a second full MatchEngine/ranking fold of the very same Signed bytes.
+    """
+    evidence = _parse_saved_calendar_match_evidence(
+        payload, run_id=run_id, branch_id=branch_id
+    )
+    from beta_engine.domain.players.calendar_sporting_checkpoint import (
+        CalendarSportingCheckpoint,
+    )
+    from beta_engine.domain.tournaments.calendar_tour import CalendarTourState
+
+    content = payload.get("content", {})
+    cp_raw = content.get("calendar_player_sporting_checkpoint")
+    checkpoint = None
+    if cp_raw is not None:
+        if not isinstance(cp_raw, dict) or set(cp_raw) != {"fingerprint", "state"}:
+            raise ValueError("Invalid prevalidated Saved sporting component")
+        checkpoint = CalendarSportingCheckpoint.model_validate(cp_raw["state"])
+        if (checkpoint.run_id, checkpoint.branch_id, checkpoint.fingerprint) != (
+            run_id, branch_id, cp_raw["fingerprint"]
+        ):
+            raise ValueError("Prevalidated Saved sporting scope/hash changed")
+
+    tour_raw = content.get("calendar_tour_authority")
+    tour = None
+    if tour_raw is not None:
+        if not isinstance(tour_raw, dict) or set(tour_raw) != {"fingerprint", "state"}:
+            raise ValueError("Invalid prevalidated Saved Tour component")
+        tour = CalendarTourState.model_validate(tour_raw["state"])
+        if (tour.run_id, tour.branch_id, tour.fingerprint) != (
+            run_id, branch_id, tour_raw["fingerprint"]
+        ):
+            raise ValueError("Prevalidated Saved Tour scope/hash changed")
+        if checkpoint is None or (
+            tour.checkpoint_fingerprint != checkpoint.fingerprint
+            or tour.week.ordinal != checkpoint.week.ordinal
+        ):
+            raise ValueError("Prevalidated Saved Tour sporting owner changed")
+    return evidence, checkpoint, tour
+
+
 def load_saved_calendar_match(payload: dict, *, run_id: str, branch_id: str, _sporting_component_proofs=None) -> CalendarMatchEvidence | None:
     """Validate both the played MatchEngine evidence and the full Saved owner."""
     return load_saved_calendar_sources(payload,run_id=run_id,branch_id=branch_id,

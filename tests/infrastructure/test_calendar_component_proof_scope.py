@@ -77,3 +77,34 @@ def test_live_source_reuse_requires_exact_saved_bytes_and_owner():
     row.payload_json = checkpoint.model_dump_json()
     with pytest.raises(ValueError, match="identity/hash"):
         load_checkpoint(session, **{**scope, "branch_id": "foreign"})
+
+
+def test_prevalidated_decoder_rechecks_source_identity_and_fingerprint():
+    # The production service may only call this *after* its full Saved HEAD
+    # validator. This local check ensures its lightweight decoder still detects
+    # a different Run/Branch or altered signed component bytes.
+    from tests.domain.test_calendar_native_checkpoint_compatibility import initial
+
+    checkpoint = initial()
+    payload = {
+        "content": {
+            "calendar_player_sporting_checkpoint": {
+                "fingerprint": checkpoint.fingerprint,
+                "state": checkpoint.model_dump(mode="json"),
+            }
+        }
+    }
+    evidence, saved, tour = storage.decode_prevalidated_calendar_sources(
+        payload, run_id=checkpoint.run_id, branch_id=checkpoint.branch_id
+    )
+    assert evidence is None and tour is None and saved == checkpoint
+    with pytest.raises(ValueError, match="scope/hash"):
+        storage.decode_prevalidated_calendar_sources(
+            payload, run_id=checkpoint.run_id, branch_id="foreign"
+        )
+    corrupt = deepcopy(payload)
+    corrupt["content"]["calendar_player_sporting_checkpoint"]["fingerprint"] = "f" * 64
+    with pytest.raises(ValueError, match="scope/hash"):
+        storage.decode_prevalidated_calendar_sources(
+            corrupt, run_id=checkpoint.run_id, branch_id=checkpoint.branch_id
+        )

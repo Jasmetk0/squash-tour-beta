@@ -471,7 +471,41 @@ def load_saved_calendar_sources(payload: dict, *, run_id: str, branch_id: str,
     else:
         state,checkpoint = verified
     from beta_engine.infrastructure.db.calendar_tour import saved_tour
-    tour=saved_tour(payload, run_id=run_id, branch_id=branch_id, checkpoint=checkpoint)
+    # The validation scope is ONE caller-owned Signed lineage walk. Many
+    # successive revisions retain exactly the same native Tour and lifecycle
+    # despite changing unrelated working or simulation components. Parsing
+    # 1,000-player lifecycle and replaying every historical ranking for each
+    # identical source adds seconds per revision after a physical restart.
+    #
+    # The proof cache keys the complete canonical inputs used by saved_tour:
+    # run clock, world, played root, sporting, Tour and lifecycle. No cache
+    # survives the request, and _validated_saved_revision_in_session still
+    # independently checks every revision's signature, owner, bytes and ancestry.
+    tour_proofs = (
+        _sporting_component_proofs.setdefault("_verified_tour_sources", {})
+        if _sporting_component_proofs is not None else None
+    )
+    tour_key = None
+    if tour_proofs is not None:
+        content = payload.get("content", {})
+        tour_key = canonical_hash({
+            "run_id": run_id,
+            "branch_id": branch_id,
+            "run": payload.get("run"),
+            "world": content.get("initial_world"),
+            "played_root": content.get("calendar_standalone_match"),
+            "sporting": content.get("calendar_player_sporting_checkpoint"),
+            "tour": content.get("calendar_tour_authority"),
+            "lifecycle": content.get("player_lifecycle"),
+        })
+    if tour_proofs is not None and tour_key in tour_proofs:
+        tour = tour_proofs[tour_key]
+    else:
+        tour = saved_tour(
+            payload, run_id=run_id, branch_id=branch_id, checkpoint=checkpoint
+        )
+        if tour_proofs is not None:
+            tour_proofs[tour_key] = tour
     return state,checkpoint,tour
 
 

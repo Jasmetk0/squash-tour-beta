@@ -62,7 +62,7 @@ class CalendarSportingCheckpoint(FrozenInput):
                 raise ValueError('Historical checkpoint cannot acquire continuation history')
         elif self.schema_version == 'calendar_sporting_checkpoint.v2' and (not self.continuations or self.phase != 'opening_week_continued'):
             raise ValueError('Continued checkpoint requires actual match history')
-        if self.schema_version not in {'calendar_sporting_checkpoint.v3', 'calendar_sporting_checkpoint.v4'}:
+        if self.schema_version not in {'calendar_sporting_checkpoint.v3', 'calendar_sporting_checkpoint.v4', 'calendar_sporting_checkpoint.v5'}:
             if 'week_events' in self.model_fields_set or self.annual_development_applied:
                 raise ValueError('Historical checkpoint cannot acquire weekly development')
         elif (not self.week_events or not isinstance(self.week_events[0], CalendarSportingWeekAdvance)
@@ -87,7 +87,7 @@ class CalendarSportingCheckpoint(FrozenInput):
         ids = tuple(p.player_id for p in self.players)
         if ids != tuple(sorted(set(ids))):
             raise ValueError('Calendar sporting checkpoint requires the sorted unique population')
-        if self.schema_version not in {'calendar_sporting_checkpoint.v3', 'calendar_sporting_checkpoint.v4'} and (self.week.season_index, self.week.week) != (0, 1):
+        if self.schema_version not in {'calendar_sporting_checkpoint.v3', 'calendar_sporting_checkpoint.v4', 'calendar_sporting_checkpoint.v5'} and (self.week.season_index, self.week.week) != (0, 1):
             raise ValueError('Checkpoint v1 does not advance the opening week')
         if self.bootstrap_policy != PlayerSportingBootstrapPolicy():
             raise ValueError('Unknown calendar sporting bootstrap calibration')

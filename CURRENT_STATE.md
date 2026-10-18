@@ -155,3 +155,20 @@ semantics). Later-week bracket wiring alone is insufficient to authenticate
 a fabricated standalone final result or future Official award. Add targeted
 tamper and unchanged-result tests; do not change stored hash/serialization
 or pretend that the full Tour publication bridge is complete.
+
+
+**Merged #1535:** logged MatchEngine results now reject a declared winner
+contradicting their real scored sets; retirements require the non-retired
+player to win. Three focused PR-critical tampering regressions and final CI
+are green. This protects subsequent bracket placements without changing
+historical match serialization.
+
+**In-progress next PR:** a separate explicit scored native later-week
+knockout command derives four *prepared*, not Official, point awards
+from three actual MatchEngine results. V2 sporting tournament event + v5
+population checkpoint keep older v1/v2/v3/v4 bytes untouched. W-valid
+operator-authored policy is saved and replayable with the same manually
+Saved owner; UI has independent CS/EN point confirmation and history.
+The real configured Tour Edition/Entry and Official publication remain
+next, not implicitly unlocked by prepared scoring. See
+`docs/CALENDAR_FOLLOWUP_PREPARED_POINTS_V1.md`.

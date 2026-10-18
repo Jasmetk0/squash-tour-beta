@@ -145,6 +145,16 @@ class CalendarContinuationService:
                         original.fingerprint == event.fingerprint for original in saved.tournaments
                     )),
                     'scope': event.scope,
+                    'prepared_points_status': (
+                        'prepared_not_official' if event.schema_version == 'calendar_followup_knockout.v2'
+                        else 'not_prepared'
+                    ),
+                    'prepared_policy': (
+                        event.prepared_policy.model_dump(mode='json') if event.prepared_policy else None
+                    ),
+                    'prepared_awards': [
+                        award.model_dump(mode='json') for award in event.prepared_awards
+                    ],
                 } for event in state.tournaments] if state else [],
                 'weekly_advances': [{'command_id':e.command_id,'fingerprint':e.fingerprint,'completed_week':e.completed_week.week,'target_week':e.target_week.week,'saved':bool(saved and any(s.fingerprint == e.fingerprint for s in saved.weekly_advances))} for e in state.weekly_advances] if state else [],
                 'health_numeric_effect_applied': False,

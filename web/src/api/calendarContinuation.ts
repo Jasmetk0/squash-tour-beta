@@ -5,7 +5,11 @@ export type ContinuationView = {
   sporting_week?: { calendar: { weeks_per_year: number; season_start_year_week: number; start_year: number; season_count: number }; season_index: number; week: number } | null
   tournaments?: { tournament_id: string; command_id: string; fingerprint: string; week: number
     entrant_ids: string[]; winner_player_id: string; match_ids: string[]; saved: boolean
-    scope: 'sporting_exhibition_knockout_not_official' }[]
+    scope: 'sporting_exhibition_knockout_not_official'
+    prepared_points_status?: 'not_prepared' | 'prepared_not_official'
+    prepared_policy?: FollowupPointPolicy | null
+    prepared_awards?: FollowupPreparedAward[]
+  }[]
   weekly_advance_count?: number
   weekly_advances?: { command_id: string; fingerprint: string; completed_week: number; target_week: number; saved: boolean }[]
   health_numeric_effect_applied: false
@@ -46,6 +50,25 @@ export function verifyContinuation(v: ContinuationView, run: string, branch: str
     || !t.entrant_ids.includes(t.winner_player_id) || typeof t.saved !== 'boolean'
     || (v.saved && !t.saved)
   ))) throw Error('Later knockout source/history changed')
+  if (v.tournaments?.some(t => {
+    const prepared = t.prepared_points_status === 'prepared_not_official'
+    if (!prepared) return !!t.prepared_policy || !!t.prepared_awards?.length
+    const policy = t.prepared_policy, awards = t.prepared_awards
+    if (!policy || !awards || awards.length !== 4
+      || !Number.isSafeInteger(policy.validity_weeks) || policy.validity_weeks !== v.sporting_week?.calendar.weeks_per_year
+      || !Number.isSafeInteger(policy.champion) || !Number.isSafeInteger(policy.finalist) || !Number.isSafeInteger(policy.semifinal)
+      || policy.champion <= policy.semifinal || policy.champion < policy.finalist || policy.finalist < policy.semifinal
+      || new Set(awards.map(a => a.player_id)).size !== 4
+      || awards.some(a => !t.entrant_ids.includes(a.player_id) || !hash(a.source_policy_fingerprint)
+        || !hash(a.source_tournament_fingerprint) || a.main_points !== policy[a.reached_stage])
+      || awards.filter(a => a.reached_stage === 'champion').length !== 1
+      || awards.filter(a => a.reached_stage === 'finalist').length !== 1
+      || awards.filter(a => a.reached_stage === 'semifinal').length !== 2
+      || awards.find(a => a.reached_stage === 'champion')?.player_id !== t.winner_player_id
+    ) return true
+    return new Set(awards.map(a => a.source_tournament_fingerprint)).size !== 1
+      || new Set(awards.map(a => a.source_policy_fingerprint)).size !== 1
+  })) throw Error('Prepared knockout award history changed')
   if (v.sporting_week) {
     const w = v.sporting_week
     if (!Number.isSafeInteger(w.week) || w.week < 1 || w.week > w.calendar.weeks_per_year
@@ -84,15 +107,30 @@ export function verifySportingWeek(v: SportingWeekPreview, command: SportingWeek
   return v
 }
 
+export type FollowupPointPolicy = {
+  schema_version?: 'calendar_followup_point_policy.v1'
+  source_kind?: 'admin_explicit_reviewed'
+  category_label: string; champion: number; finalist: number; semifinal: number; validity_weeks: number
+}
+export type FollowupPreparedAward = {
+  player_id: string; reached_stage: 'champion' | 'finalist' | 'semifinal'
+  main_points: number; source_tournament_fingerprint: string; source_policy_fingerprint: string
+}
 export type FollowupKnockoutCommand = {
   command_id: string; tournament_id: string; expected_saved_head: string
   expected_checkpoint_fingerprint: string; entrant_ids: [string, string, string, string]
   seed: number; operator_label: string; audit_reason: string
 }
+export type FollowupScoredCommand = FollowupKnockoutCommand & {
+  point_policy: FollowupPointPolicy; explicit_point_confirmation: true
+}
 export type FollowupKnockoutReceipt = {
   schema_version: 'calendar_followup_knockout_receipt.v1'; fingerprint: string
   checkpoint_fingerprint: string; winner_player_id: string; official_ranking_published: false
   scope: 'sporting_exhibition_knockout_not_official'
+  publication_status?: 'prepared_not_official'
+  prepared_awards?: FollowupPreparedAward[]
+  prepared_policy_fingerprint?: string
   tournament: {
     run_id: string; branch_id: string; command_id: string; tournament_id: string
     source_saved_head: string; source_checkpoint_fingerprint: string
@@ -101,7 +139,7 @@ export type FollowupKnockoutReceipt = {
   }
 }
 export function verifyFollowupKnockout(
-  receipt: FollowupKnockoutReceipt, command: FollowupKnockoutCommand, view: ContinuationView,
+  receipt: FollowupKnockoutReceipt, command: FollowupKnockoutCommand | FollowupScoredCommand, view: ContinuationView,
 ): FollowupKnockoutReceipt {
   const e = receipt?.tournament
   const fingerprint = (s: unknown) => typeof s === 'string' && /^[0-9a-f]{64}$/.test(s)
@@ -124,5 +162,24 @@ export function verifyFollowupKnockout(
     || e.matches[2].result.player_b_id !== e.matches[1].result.winner_player_id
     || receipt.winner_player_id !== e.matches[2].result.winner_player_id
   ) throw Error('Later knockout result differs from frozen Saved source or semifinal winners')
+  if ('point_policy' in command) {
+    const awards = receipt.prepared_awards
+    const values = command.point_policy
+    if (receipt.publication_status !== 'prepared_not_official'
+      || !fingerprint(receipt.prepared_policy_fingerprint)
+      || !Array.isArray(awards) || awards.length !== 4
+      || awards.some(a => !fingerprint(a.source_tournament_fingerprint)
+        || a.source_policy_fingerprint !== receipt.prepared_policy_fingerprint
+        || !command.entrant_ids.includes(a.player_id)
+        || a.main_points !== values[a.reached_stage])
+      || new Set(awards.map(a => a.player_id)).size !== 4
+      || awards.filter(a => a.reached_stage === 'champion').length !== 1
+      || awards.filter(a => a.reached_stage === 'finalist').length !== 1
+      || awards.filter(a => a.reached_stage === 'semifinal').length !== 2
+      || awards.find(a => a.reached_stage === 'champion')?.player_id !== receipt.winner_player_id
+    ) throw Error('Prepared points disagree with the actual played knockout')
+  } else if (receipt.prepared_awards?.length || receipt.publication_status) {
+    throw Error('Unscored knockout cannot gain prepared awards')
+  }
   return receipt
 }

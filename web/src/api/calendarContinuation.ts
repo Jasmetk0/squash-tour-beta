@@ -375,7 +375,7 @@ export function verifyNativeTournamentClosure(
     || closure.command_id !== command.command_id || closure.tournament_id !== command.tournament_id
     || closure.source_saved_head !== command.expected_saved_head
     || closure.source_checkpoint_fingerprint !== command.expected_checkpoint_fingerprint
-    || closure.source_tournament_fingerprint !== matches?.fingerprint
+    || !matches || closure.source_tournament_fingerprint !== matches.fingerprint
     || closure.champion_player_id !== matches.winner_player_id
     || !Array.isArray(closure.players) || closure.players.length !== 8
     || !validHash(closure.source_prepared_awards_fingerprint)

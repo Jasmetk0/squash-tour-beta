@@ -178,6 +178,9 @@ class CalendarSportingWeekService:
                     from beta_engine.domain.players.calendar_sporting_checkpoint import (
                         build_calendar_sporting_checkpoint,
                     )
+                    from beta_engine.domain.players.calendar_followup_knockout import (
+                        CalendarFollowupKnockout, append_followup_knockout,
+                    )
 
                     knockout = getattr(evidence, "knockout", evidence)
                     prefix = build_calendar_sporting_checkpoint(
@@ -189,6 +192,8 @@ class CalendarSportingWeekService:
                         prefix = (
                             append_sporting_week(prefix, world, knockout, event)
                             if isinstance(event, CalendarSportingWeekAdvance)
+                            else append_followup_knockout(prefix, world, event)
+                            if isinstance(event, CalendarFollowupKnockout)
                             else append_continuation(prefix, world, event)
                         )
                     from types import SimpleNamespace

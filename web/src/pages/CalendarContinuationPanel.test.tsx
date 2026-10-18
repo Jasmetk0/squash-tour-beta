@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { LanguageProvider } from '../i18n/LanguageContext'
 import { CalendarContinuationPanel } from './CalendarContinuationPanel'
 import type { ContinuationView } from '../api/calendarContinuation'
-const api = vi.hoisted(() => ({ inspectCalendarContinuation: vi.fn(), simulateCalendarContinuation: vi.fn(), simulateCalendarFollowupKnockout: vi.fn(), simulateCalendarScoredFollowupKnockout: vi.fn(), simulateCalendarEightFollowupKnockout: vi.fn(),
+const api = vi.hoisted(() => ({ inspectCalendarContinuation: vi.fn(), simulateCalendarContinuation: vi.fn(), simulateCalendarFollowupKnockout: vi.fn(), simulateCalendarScoredFollowupKnockout: vi.fn(), simulateCalendarEightFollowupKnockout: vi.fn(), simulateCalendarEightScoredFollowupKnockout: vi.fn(),
   previewCalendarSportingWeek: vi.fn(), commitCalendarSportingWeek: vi.fn(), saveCalendarContinuation: vi.fn(), replayCalendarContinuation: vi.fn(), ApiError: class ApiError extends Error {} }))
 vi.mock('../api/client', () => api)
 const fp = 'a'.repeat(64)
@@ -251,6 +251,32 @@ describe('continuation interaction (HTTP boundary mocked)',()=>{
     }))
     expect(screen.getAllByRole('button',{name:'Verify continuation replay'})).toHaveLength(7)
     expect(screen.getByRole('button',{name:'Review continuation Save'})).toBeEnabled()
+  })
+
+  it('requires a second, invalidated consent for eight-person point awards', async () => {
+    const w={calendar:{weeks_per_year:80,season_start_year_week:80,start_year:2030,season_count:3},season_index:0,week:2}
+    api.inspectCalendarContinuation.mockResolvedValue({...view(),
+      player_ids:['a','b','c','d','e','f','g','h'],sporting_week:w,weekly_advance_count:1,
+      weekly_advances:[{command_id:'w2',fingerprint:'b'.repeat(64),completed_week:1,target_week:2,saved:true}],
+      tournaments:[],
+    })
+    render(panel());await screen.findByRole('button',{name:'Play eight-player knockout'})
+    fireEvent.change(screen.getByLabelText('Continuation reason'),{target:{value:'Reviewed eight-player prepared awards'}})
+    fireEvent.click(screen.getByLabelText('Prepare eight-player points (NOT Official Ranking)'))
+    fireEvent.click(screen.getByLabelText('Confirm all seven real matches from the current Saved checkpoint.'))
+    const scoredButton=screen.getByRole('button',{name:'Play eight-player prepared-points knockout'})
+    expect(scoredButton).toBeDisabled()
+    expect(screen.getByLabelText('Quarterfinalist')).toHaveValue(15)
+    fireEvent.click(screen.getByLabelText('Confirm eight-player prepared awards, NOT Official publication.'))
+    expect(scoredButton).toBeEnabled()
+    fireEvent.change(screen.getByLabelText('Quarterfinalist'),{target:{value:'40'}})
+    expect(screen.getByLabelText('Confirm eight-player prepared awards, NOT Official publication.')).not.toBeChecked()
+    expect(scoredButton).toBeDisabled()
+    fireEvent.change(screen.getByLabelText('Quarterfinalist'),{target:{value:'15'}})
+    fireEvent.click(screen.getByLabelText('Confirm all seven real matches from the current Saved checkpoint.'))
+    fireEvent.click(screen.getByLabelText('Confirm eight-player prepared awards, NOT Official publication.'))
+    expect(scoredButton).toBeEnabled()
+    expect(api.simulateCalendarEightScoredFollowupKnockout).not.toHaveBeenCalled()
   })
 
 })

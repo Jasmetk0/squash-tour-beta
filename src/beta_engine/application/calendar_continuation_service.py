@@ -148,7 +148,7 @@ class CalendarContinuationService:
                     )),
                     'scope': event.scope,
                     'prepared_points_status': (
-                        'prepared_not_official' if event.schema_version == 'calendar_followup_knockout.v2'
+                        'prepared_not_official' if event.schema_version in {'calendar_followup_knockout.v2', 'calendar_followup_knockout.v4'}
                         else 'not_prepared'
                     ),
                     'prepared_policy': (

@@ -2548,9 +2548,37 @@ def save_calendar_continuation(run_id: str, branch_id: str, payload: dict,
     service: Annotated[RunWorkingDraftService, Depends(get_run_working_draft_service)],
     runtime: Annotated[ApiRuntime, Depends(get_runtime)]):
     try:
-        view = CalendarContinuationService(runtime.repository).inspect(run_id=run_id, branch_id=branch_id)
-        if (not view['matches'] and not view['weekly_advance_count']) or view['saved']:
-            raise ValueError('No unsaved continuation matches')
+        # The authoritative Save below independently verifies the current
+        # immutable Saved lineage, exact requested fingerprint and complete
+        # 57-attribute/MatchEngine sporting replay before committing.
+        # Re-running the full continuation inspection *ahead* of that Save
+        # duplicates the expensive seven-match replay in a second transaction.
+        # This is only a fast UI precondition guard, never a trust shortcut.
+        from beta_engine.infrastructure.db.calendar_sporting_checkpoint import (
+            load_checkpoint, COMPONENT_KEY as SPORTING_COMPONENT_KEY,
+        )
+        from beta_engine.infrastructure.db.models import (
+            RunBranchModel, BranchSavedRevisionModel,
+        )
+        import json
+        with runtime.repository._session_factory() as session:
+            session.execute(text('BEGIN'))
+            current = load_checkpoint(session, run_id=run_id, branch_id=branch_id)
+            branch = session.get(RunBranchModel, branch_id)
+            revision = (
+                session.get(BranchSavedRevisionModel, branch.saved_head_revision_id)
+                if branch is not None and branch.run_id == run_id
+                and branch.saved_head_revision_id else None
+            )
+            if current is None or revision is None or (
+                not current.played_continuations and not current.weekly_advances
+            ):
+                raise ValueError('No unsaved continuation matches')
+            saved_fp = json.loads(revision.payload_json).get(
+                'content', {},
+            ).get(SPORTING_COMPONENT_KEY, {}).get('fingerprint')
+            if current.fingerprint == saved_fp:
+                raise ValueError('No unsaved continuation matches')
         return service.save_calendar_sporting_checkpoint(run_id=run_id, branch_id=branch_id,
             expected_draft_version=payload['expected_draft_version'],
             expected_calendar_sporting_fingerprint=payload['expected_calendar_sporting_fingerprint'])

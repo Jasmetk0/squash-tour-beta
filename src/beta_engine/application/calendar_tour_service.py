@@ -68,7 +68,6 @@ from beta_engine.infrastructure.db.player_lifecycle_state import (
     _load as load_lifecycle_row,
 )
 from beta_engine.infrastructure.db.player_lifecycle_state import (
-    load_saved_lifecycle,
     decode_prevalidated_lifecycle,
     get_lifecycle,
     put_lifecycle,

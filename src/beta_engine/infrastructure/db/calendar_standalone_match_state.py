@@ -334,11 +334,14 @@ def capture_saved_calendar_match(session: Session, payload: dict, *, run_id: str
         }
 
 
-def load_saved_calendar_match(payload: dict, *, run_id: str, branch_id: str) -> CalendarMatchEvidence | None:
+def _parse_saved_calendar_match_evidence(payload: dict, *, run_id: str, branch_id: str) -> CalendarMatchEvidence | None:
+    """Validate original signed MatchEngine evidence, not the sporting checkpoint.
+
+    Restore calls the full Saved sporting verifier itself immediately below, in
+    the same transaction; avoid performing that entire 7-match replay twice.
+    """
     component = payload.get("content", {}).get(COMPONENT_KEY)
     if component is None:
-        from beta_engine.infrastructure.db.calendar_sporting_checkpoint import saved_checkpoint
-        saved_checkpoint(payload, None, run_id=run_id, branch_id=branch_id)
         return None
     if not isinstance(component, dict) or set(component) != {"fingerprint", "state"}:
         raise ValueError("Invalid Saved calendar standalone match component")
@@ -366,6 +369,14 @@ def load_saved_calendar_match(payload: dict, *, run_id: str, branch_id: str) -> 
             or current.season_count <= original.season_count
         ):
             raise ValueError("Saved calendar match clock cannot be reinterpreted")
+    return state
+
+
+def load_saved_calendar_match(payload: dict, *, run_id: str, branch_id: str) -> CalendarMatchEvidence | None:
+    """Validate both the played MatchEngine evidence and the full Saved owner."""
+    state = _parse_saved_calendar_match_evidence(
+        payload, run_id=run_id, branch_id=branch_id,
+    )
     from beta_engine.infrastructure.db.calendar_sporting_checkpoint import saved_checkpoint
     saved_checkpoint(payload, state, run_id=run_id, branch_id=branch_id)
     return state
@@ -375,8 +386,16 @@ def restore_saved_calendar_match(
     session: Session, *, current_payload: dict, target_payload: dict,
     run_id: str, branch_id: str,
 ) -> None:
-    current = load_saved_calendar_match(current_payload, run_id=run_id, branch_id=branch_id)
-    target = load_saved_calendar_match(target_payload, run_id=run_id, branch_id=branch_id)
+    # Each revision is validated exactly once by restore_checkpoint below.
+    # Its verification reconstructs the complete 57-attribute player roster
+    # and all signed MatchEngine results; do not redundantly do the same
+    # expensive reconstruction in load_saved_calendar_match first.
+    current = _parse_saved_calendar_match_evidence(
+        current_payload, run_id=run_id, branch_id=branch_id,
+    )
+    target = _parse_saved_calendar_match_evidence(
+        target_payload, run_id=run_id, branch_id=branch_id,
+    )
     live = load_match_rows(session, run_id=run_id, branch_id=branch_id)
     if tuple(s.fingerprint for s in live) != (
         (current.fingerprint,) if current else ()

@@ -64,11 +64,15 @@ class CalendarOpeningKnockoutService:
 
     def _context(self, session, *, run_id: str, branch_id: str):
         clock, revision, world = CalendarStandaloneMatchService(self.repository)._context(
-            session, run_id=run_id, branch_id=branch_id, allow_calendar_health=True,
+            session, run_id=run_id, branch_id=branch_id, allow_calendar_health=True, allow_calendar_sporting=True,
         )
         health = saved_knockout_health(
             session, revision=revision, run_id=run_id, branch_id=branch_id,
         )
+        from beta_engine.infrastructure.db.calendar_sporting_checkpoint import load_checkpoint, verify_checkpoint
+        rows = load_match_rows(session, run_id=run_id, branch_id=branch_id)
+        checkpoint = load_checkpoint(session, run_id=run_id, branch_id=branch_id)
+        verify_checkpoint(checkpoint, world, rows[0] if len(rows) == 1 else None)
         return clock, revision, world, health
 
     @staticmethod
@@ -144,7 +148,20 @@ class CalendarOpeningKnockoutService:
             is_saved = (saved is not None and row is not None
                         and type(saved) is type(row)
                         and saved.fingerprint == row.fingerprint)
+            from beta_engine.infrastructure.db.calendar_sporting_checkpoint import load_checkpoint
+            checkpoint = load_checkpoint(session, run_id=run_id, branch_id=branch_id)
             return {
+                "population_sporting_checkpoint": ({
+                    "schema_version": checkpoint.schema_version,
+                    "fingerprint": checkpoint.fingerprint,
+                    "source_knockout_fingerprint": checkpoint.source_knockout_fingerprint,
+                    "player_count": len(checkpoint.players),
+                    "attribute_count": 57,
+                    "phase": checkpoint.phase,
+                    "annual_development_applied": False,
+                    "health_effects_applied": False,
+                    "saved": is_saved,
+                } if checkpoint else None),
                 "schema_version": "calendar_opening_knockout_inspection.v1",
                 "run_id": run_id, "branch_id": branch_id,
                 "run_calendar": clock.to_metadata(),
@@ -164,6 +181,26 @@ class CalendarOpeningKnockoutService:
                      "scored_fingerprint": row.fingerprint}
                     if isinstance(row, CalendarScoredOpeningKnockout) else None
                 ),
+            }
+
+    def checkpoint_player(self, *, run_id, branch_id, player_id, expected_saved_head, expected_checkpoint_fingerprint):
+        from beta_engine.infrastructure.db.calendar_sporting_checkpoint import load_checkpoint
+        with self.repository._session_factory() as session:
+            session.execute(text("BEGIN"))
+            _, revision, _, _ = self._context(session, run_id=run_id, branch_id=branch_id)
+            checkpoint = load_checkpoint(session, run_id=run_id, branch_id=branch_id)
+            if (revision.saved_head_revision_id != expected_saved_head or checkpoint is None
+                    or checkpoint.fingerprint != expected_checkpoint_fingerprint):
+                raise ValueError("Population sporting checkpoint source changed since inspection")
+            player = next((p for p in checkpoint.players if p.player_id == player_id), None)
+            if player is None:
+                raise KeyError("Player is not in this population sporting checkpoint")
+            return {
+                "schema_version": "calendar_sporting_checkpoint_player.v1",
+                "run_id": run_id, "branch_id": branch_id,
+                "saved_head_revision_id": revision.saved_head_revision_id,
+                "checkpoint_fingerprint": checkpoint.fingerprint,
+                "player": player.model_dump(mode="json"),
             }
 
     def simulate(self, *, run_id: str, branch_id: str,
@@ -254,7 +291,7 @@ class CalendarOpeningKnockoutService:
             )
             terminal, final_effects = advance_played_slot(after_semis, (final,), policy)
             knockout = CalendarOpeningKnockout(
-                schema_version="calendar_opening_knockout.v4",
+                schema_version="calendar_opening_knockout.v5",
                 canonical_source=canonical_source,
                 **({"health_source": health_source} if health_source else {}),
                 sporting=CalendarKnockoutSportingState(
@@ -272,7 +309,11 @@ class CalendarOpeningKnockoutService:
                 matches=(semi_a, semi_b, final),
                 operator_label=command.operator_label, audit_reason=command.audit_reason,
             )
+            from beta_engine.domain.players.calendar_sporting_checkpoint import build_calendar_sporting_checkpoint
+            from beta_engine.infrastructure.db.calendar_sporting_checkpoint import put_checkpoint
+            checkpoint = build_calendar_sporting_checkpoint(world, knockout, CalendarStandaloneMatchService._engine_player)
             put_match(session, knockout)
+            put_checkpoint(session, checkpoint)
             return {"knockout": knockout.model_dump(mode="json"),
                     "fingerprint": knockout.fingerprint}
 

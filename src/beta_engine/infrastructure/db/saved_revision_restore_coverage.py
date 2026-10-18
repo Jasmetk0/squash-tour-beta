@@ -53,7 +53,7 @@ from beta_engine.infrastructure.db.models import (
     SimulationEventGroupModel,
     SimulationSlotModel,
     StandaloneMatchWorkspaceModel,
-    CalendarStandaloneMatchModel,
+    CalendarStandaloneMatchModel, CalendarPlayerSportingCheckpointModel,
     TournamentApplicationSubmissionAuthorityModel,
     TournamentDrawAuthorityModel,
     TournamentDrawInputAuthorityModel,
@@ -153,6 +153,11 @@ COMPONENT_COVERAGE: tuple[SavedRevisionComponentCoverage, ...] = (
             AuthoritativeWeekTransitionReceiptModel,
             AuthoritativeWorldEventModel,
         ),
+    ),
+    SavedRevisionComponentCoverage(
+        component_key='calendar_player_sporting_checkpoint',
+        label='calendar-native population sporting checkpoint',
+        models=(CalendarPlayerSportingCheckpointModel,),
     ),
     SavedRevisionComponentCoverage(
         component_key=CALENDAR_MATCH_COMPONENT_KEY,

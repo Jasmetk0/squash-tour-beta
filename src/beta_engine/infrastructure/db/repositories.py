@@ -5812,6 +5812,9 @@ class SimulationPersistenceRepository:
                         "summary": "Saved played Run-calendar MatchEngine result",
                         "calendar_match_fingerprint": component["fingerprint"],
                     }
+                    sporting_checkpoint = payload["content"].get("calendar_player_sporting_checkpoint")
+                    if sporting_checkpoint is not None:
+                        summary["population_sporting_checkpoint_fingerprint"] = sporting_checkpoint["fingerprint"]
                 elif expected_run_prospect_source_fingerprint is not None:
                     component = payload["content"].get(
                         RUN_PROSPECT_SOURCE_COMPONENT_KEY

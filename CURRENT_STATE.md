@@ -1,7 +1,7 @@
 # Current implementation — Master v85
 
-Audited buuk `dd1cc6ecb8a9ef348c843b0b461d62fc0c2c7416` after merged #1528, 17 October 2026.
-#1520–1528 are merged; no open PR at task start. Refresh before new work.
+Audited buuk `002d0c93c914895187eff8ed17f0782ff93ee19b` after merged #1529, 17 October 2026.
+#1520–1529 are merged; no open PR at task start. Refresh before new work.
 Master remains v85; this task changes sporting execution, not product decisions.
 
 **Merged and usable:** calendar creation/first Save, population and Health facts,
@@ -68,7 +68,7 @@ numeric injury penalty is invented; standalone exhibition retains its old guard.
 Historical v1/v2 bytes and semantics remain unchanged. See
 [implementation contract](docs/CALENDAR_KNOCKOUT_HEALTH_V1.md).
 
-**Current candidate:** new knockout writes use `calendar_opening_knockout.v4`.
+**Merged #1529:** new knockout writes use `calendar_opening_knockout.v4`.
 Four operation-owned `PlayerSportingRecord` inputs preserve all 57 attributes,
 potential provenance and an explicit existing provisional bootstrap policy.
 Every actual MatchEngine call consumes the existing versioned 57→engine projection;
@@ -81,8 +81,20 @@ The initial pool still originates in seven-value calibration; this is a real
 57-backed match-input slice, **not** full world/week sporting ownership, historical
 cohort development, a native 57-dimensional rally formula or annual advancement.
 
-**Next:** implement true calendar-native canonical sporting/Health checkpoint
-ownership and full attribute projection, then historically configured points,
+**Current candidate:** new knockout writes use explicit v5 and atomically create
+`calendar_sporting_checkpoint.v1`, a Run/Branch-owned native checkpoint containing
+all population players and all 57 attributes. Actual entrants retain terminal
+form/load; nonparticipants retain exact provisional bootstrap records. One manual
+Save and immutable hash cover both match evidence and the population owner.
+Saved validation, restore/restart and horizon capture authenticate the coupled
+components; historical v1–v4 remain unchanged and are not retroactively upgraded.
+Admin CS/EN can inspect any stored record, including players outside the draw.
+See [contract](docs/CALENDAR_POPULATION_SPORTING_CHECKPOINT_V1.md).
+This is real persisted population ownership, but still one opening operation per
+Branch: it does not itself implement a second event, development or an advanced week.
+
+**Next:** consume the native checkpoint in actual subsequent sporting/weekly
+operations without reinitializing form/load; add historically configured points,
 Tour entry, Official publication and real Week/Season transitions/Full Simulation.
 Preserve historical schemas/hashes and manual Save; do not weaken guards or create
 another sequence of read-only candidate wrappers. Complete pre-alpha scope and

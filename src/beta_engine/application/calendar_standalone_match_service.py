@@ -16,7 +16,7 @@ from beta_engine.core import DeterministicRng
 from beta_engine.domain.calendar.run_week_position import RunWeekPosition
 from beta_engine.domain.matches.match_engine import MatchEngine
 from beta_engine.domain.matches.models import MatchContext, MatchParticipantContext
-from beta_engine.domain.players.models import Player
+from beta_engine.domain.players.calendar_engine_player import calendar_engine_player
 from beta_engine.domain.rankings.official import FrozenInput
 from beta_engine.domain.run_packages import canonical_hash
 from beta_engine.infrastructure.db.calendar_standalone_match_state import (
@@ -28,7 +28,7 @@ from beta_engine.infrastructure.db.initial_world_state import (
 from beta_engine.infrastructure.db.models import (
     RunContainerModel, RunBranchModel, SimulationSlotModel,
     PlayerSportingWeekStateModel, PlayerHealthWeekStateModel,
-    AuthoritativeWorldStateModel,
+    AuthoritativeWorldStateModel, CalendarPlayerSportingCheckpointModel,
 )
 
 
@@ -48,30 +48,9 @@ class CalendarStandaloneMatchCommand(FrozenInput):
 class CalendarStandaloneMatchService:
     repository: object
 
-    @staticmethod
-    def _engine_player(profile) -> Player:
-        # v2 initial population is currently seven-value, rather than a
-        # sporting 57-attribute week state. The conversion is an explicit
-        # compatibility projection, not claims of completed development.
-        a = profile.attributes
-        return Player(
-            player_id=profile.player_id,
-            name=profile.name,
-            age=profile.age_years_at_season_start,
-            nationality=profile.nationality,
-            technique=max(1, min(99, a.technique)),
-            movement=max(1, min(99, a.movement)),
-            physical=max(1, min(99, a.physical)),
-            mental=max(1, min(99, a.mental)),
-            consistency=max(1, min(99, a.consistency)),
-            clutch=max(1, min(99, a.clutch)),
-            recovery=max(1, min(99, a.recovery)),
-            play_style=profile.play_style,
-            archetype=profile.archetype,
-            hidden_career_traits=profile.hidden_career_traits,
-        )
+    _engine_player = staticmethod(calendar_engine_player)
 
-    def _context(self, session, *, run_id: str, branch_id: str, allow_calendar_health: bool = False):
+    def _context(self, session, *, run_id: str, branch_id: str, allow_calendar_health: bool = False, allow_calendar_sporting: bool = False):
         run = session.get(RunContainerModel, run_id)
         branch = session.get(RunBranchModel, branch_id)
         if run is None or branch is None or branch.run_id != run_id:
@@ -110,12 +89,13 @@ class CalendarStandaloneMatchService:
         # Do not pretend that non-neutral injuries, sporting effects or a
         # different temporal owner can be consumed before their W migration.
         for model in (
-            SimulationSlotModel, PlayerSportingWeekStateModel,
+            SimulationSlotModel, PlayerSportingWeekStateModel, CalendarPlayerSportingCheckpointModel,
             PlayerHealthWeekStateModel, AuthoritativeWorldStateModel,
         ):
-            if model is PlayerHealthWeekStateModel and allow_calendar_health:
+            if (model is PlayerHealthWeekStateModel and allow_calendar_health
+                    or model is CalendarPlayerSportingCheckpointModel and allow_calendar_sporting):
                 # Only the knockout caller opts in and immediately validates
-                # the complete live/Saved calendar Health authority.
+                # the complete native Health and population sporting authority.
                 continue
             if session.scalar(select(model.run_id).where(
                 model.run_id == run_id, model.branch_id == branch_id

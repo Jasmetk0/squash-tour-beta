@@ -1048,6 +1048,23 @@ def preview_calendar_canonical_knockout(
         raise HTTPException(status_code=409, detail=str(exc)) from exc
 
 
+@router.get("/calendar-opening-knockout/sporting-checkpoint/players/{player_id}")
+def calendar_sporting_checkpoint_player(
+    run_id: str, branch_id: str, player_id: str,
+    expected_saved_head: str, expected_checkpoint_fingerprint: str,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+):
+    try:
+        return CalendarOpeningKnockoutService(runtime.repository).checkpoint_player(
+            run_id=run_id, branch_id=branch_id, player_id=player_id,
+            expected_saved_head=expected_saved_head,
+            expected_checkpoint_fingerprint=expected_checkpoint_fingerprint)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except (TypeError, ValueError) as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+
 @router.post("/calendar-opening-knockout/simulate", status_code=201)
 def simulate_calendar_opening_knockout(
     run_id: str, branch_id: str,

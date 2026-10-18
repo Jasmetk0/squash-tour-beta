@@ -267,3 +267,83 @@ def test_tour_restore_lifecycle_reuses_signed_inputs_but_checks_live(monkeypatch
             run_id="run", branch_id="source",
             _validated_states=(original, original),
         )
+
+
+def test_trusted_saved_sporting_prefix_replays_only_new_event(monkeypatch):
+    # Save cannot bypass an existing suffix: its new MatchEngine event MUST be
+    # replayed, but a fully authenticated existing Saved head is not replayed
+    # from an initial cohort of 1,000 players on every subsequent Save.
+    from types import SimpleNamespace
+
+    from beta_engine.infrastructure.db import calendar_sporting_checkpoint as cp
+    from beta_engine.domain.players import calendar_continuation_match as cont
+    from tests.domain.test_calendar_native_checkpoint_compatibility import initial
+
+    signed = initial()
+    world = SimpleNamespace(fingerprint=signed.source_initial_world_fingerprint)
+    opening = SimpleNamespace(
+        fingerprint=signed.source_knockout_fingerprint,
+        schema_version="calendar_opening_knockout.v5",
+        match_id="opening-root",
+        command_id="opening-command",
+        matches=(),
+    )
+    new_event = SimpleNamespace(match_id="new-match", command_id="new-command")
+    successor = signed.model_copy(
+        update={"continuations": signed.continuations + (new_event,)}
+    )
+
+    replayed = []
+
+    def no_bootstrap(*_args, **_kwargs):
+        raise AssertionError("Trusted predecessor must not rebuild 1,000 players")
+
+    def replay_only_new(prior, _world, event):
+        replayed.append((prior, event))
+        return successor
+
+    monkeypatch.setattr(cp, "build_calendar_sporting_checkpoint", no_bootstrap)
+    monkeypatch.setattr(cont, "append_continuation", replay_only_new)
+    cp.verify_checkpoint(
+        successor, world, opening, _verified_saved_prefix=signed,
+    )
+    assert replayed == [(signed, new_event)]
+    replayed.clear()
+    cp.verify_checkpoint(signed, world, opening, _verified_saved_prefix=signed)
+    assert not replayed
+
+    # Existing events must remain byte-identical. A changed historical prefix
+    # never earns the optimization; the independent full verifier must run.
+    forged = signed.model_copy(update={"source_saved_head": "forged-anchor"})
+    with pytest.raises(AssertionError, match="must not rebuild"):
+        cp.verify_checkpoint(
+            successor, world, opening, _verified_saved_prefix=forged,
+        )
+
+
+def test_trusted_prefix_rejects_tampered_successor_even_after_suffix_replay(monkeypatch):
+    from types import SimpleNamespace
+
+    from beta_engine.infrastructure.db import calendar_sporting_checkpoint as cp
+    from beta_engine.domain.players import calendar_continuation_match as cont
+    from tests.domain.test_calendar_native_checkpoint_compatibility import initial
+
+    signed = initial()
+    world = SimpleNamespace(fingerprint=signed.source_initial_world_fingerprint)
+    opening = SimpleNamespace(
+        fingerprint=signed.source_knockout_fingerprint,
+        schema_version="calendar_opening_knockout.v5",
+        match_id="opening-root", command_id="opening-command", matches=(),
+    )
+    event = SimpleNamespace(match_id="new", command_id="new")
+    correctly_replayed = signed.model_copy(update={
+        "continuations": signed.continuations + (event,),
+    })
+    forged = correctly_replayed.model_copy(update={"players": signed.players[1:]})
+    monkeypatch.setattr(
+        cp, "build_calendar_sporting_checkpoint",
+        lambda *_a: (_ for _ in ()).throw(AssertionError("Unexpected full replay")),
+    )
+    monkeypatch.setattr(cont, "append_continuation", lambda *_a: correctly_replayed)
+    with pytest.raises(ValueError, match="differs from population"):
+        cp.verify_checkpoint(forged, world, opening, _verified_saved_prefix=signed)

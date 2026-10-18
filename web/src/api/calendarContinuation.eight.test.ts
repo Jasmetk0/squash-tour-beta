@@ -59,10 +59,10 @@ describe('native eight-player knockout receipt proof', () => {
     ...receipt, tournament: {...receipt.tournament, schema_version:'calendar_followup_knockout.v4'},
     publication_status: 'prepared_not_official', prepared_policy_fingerprint: hash('d'),
     prepared_awards: [
-      ['a', 'quarterfinal', 15], ['b', 'quarterfinal', 15],
+      ['a', 'semifinal', 30], ['b', 'quarterfinal', 15],
       ['c', 'champion', 100], ['d', 'quarterfinal', 15],
       ['e', 'finalist', 60], ['f', 'quarterfinal', 15],
-      ['g', 'semifinal', 30], ['h', 'semifinal', 30],
+      ['g', 'semifinal', 30], ['h', 'quarterfinal', 15],
     ].map(([player_id, reached_stage, main_points]) => ({
       player_id: player_id as string,
       reached_stage: reached_stage as 'champion'|'finalist'|'semifinal'|'quarterfinal',

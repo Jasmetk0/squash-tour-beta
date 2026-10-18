@@ -98,6 +98,10 @@ exact original-match/component/prefix proofs reused only inside one lineage walk
 batched intermediate tournament states strictly validated before the final write.
 Raw revision bytes, hash, scope, ancestry, source fold and live owner checks remain.
 No runtime HTTP timeout is increased and no SQL/hash repair is part of acceptance.
+The new Tour Save API returns an identity/hash receipt rather than transferring
+the entire population and all rally logs back to the browser. The ordinary Save
+still captures, validates and retains the full immutable payload. Admin updates
+shared HEAD from that confirmed receipt and performs one full post-Save read.
 Navigation reads expose current native clock metadata without repeating an
 operation's full sporting preflight. Commands, full inspection and Saved/public
 reads retain that verification. Compatible horizon extension preserves each

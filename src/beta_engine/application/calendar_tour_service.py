@@ -762,6 +762,16 @@ class CalendarTourService:
                 raise ValueError(
                     "Current executor supports full Ranked main-only 4/8 fields"
                 )
+            policy_type = (
+                CalendarFollowupEightPointPolicy
+                if edition.main_entrant_count == 8
+                else CalendarFollowupPointPolicy
+            )
+            policy_type(
+                category_label=edition.edition_id,
+                validity_weeks=edition.validity_weeks,
+                **edition.point_table,
+            )
             if any(
                 a.edition.week.ordinal == edition.week.ordinal
                 and not (

@@ -96,8 +96,37 @@ def save(
     service: Annotated[RunWorkingDraftService, Depends(get_run_working_draft_service)],
 ):
     try:
-        return service.save_calendar_tour(
+        result = service.save_calendar_tour(
             run_id=run_id, branch_id=branch_id, **payload.model_dump()
         )
+        # Save still captures and authenticates the complete immutable payload.
+        # This command receipt needs its identity/hash, not another transfer of
+        # every population snapshot and rally log. History/detail owns that read.
+        revision = result.saved_revision
+        return {
+            "schema_version": "calendar_tour_save_receipt.v1",
+            "run_id": result.run_id,
+            "branch_id": result.branch_id,
+            "viewer_branch_id": result.viewer_branch_id,
+            "previous_viewer_branch_id": result.previous_viewer_branch_id,
+            "saved_revision": {
+                key: getattr(revision, key)
+                for key in (
+                    "revision_id",
+                    "run_id",
+                    "branch_id",
+                    "sequence",
+                    "parent_revision_id",
+                    "kind",
+                    "payload_schema_version",
+                    "content_hash_algorithm",
+                    "content_hash",
+                    "created_at",
+                    "change_summary",
+                )
+            },
+            "working_draft": result.working_draft,
+            "audit_event": result.audit_event,
+        }
     except (KeyError, ValueError, TypeError) as exc:
         raise conflict(exc) from exc

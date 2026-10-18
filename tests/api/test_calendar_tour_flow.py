@@ -79,6 +79,9 @@ def save_tour(server):
         },
     )
     assert code == 201, result
+    assert result["schema_version"] == "calendar_tour_save_receipt.v1"
+    assert "payload" not in result["saved_revision"]
+    assert len(json.dumps(result)) < 16000
     assert inspect(server)["saved"]
     return result["saved_revision"]
 
@@ -275,6 +278,10 @@ def test_configured_tour_two_weeks_real_matches_rankings_and_restart(
             == 1098
         )
         assert transition["impact"]["target_ranking_policy"]["best_n"] == 1
+        before_save = _request(
+            "GET", server.base_url + "/viewer/runs/run/calendar-tour"
+        )[1]
+        assert before_save["official_ranking"]["week"]["week"] == 4
         assert sorted(r["points"] for r in transition["impact"]["ranking"]["rows"]) == [
             15,
             15,
@@ -368,6 +375,8 @@ def test_configured_tour_two_weeks_real_matches_rankings_and_restart(
     with ApiServer(database_url=db) as restarted:
         assert inspect(restarted)["saved"]
         assert inspect(restarted)["state"]["week"]["week"] == 6
+        code, replayed = _request("GET", root(restarted) + "/first:final/replay")
+        assert code == 200 and replayed["exact_replay"], replayed
         assert _request("POST", tour_url(restarted) + "/execute", request) == (
             201,
             transition,
@@ -376,3 +385,8 @@ def test_configured_tour_two_weeks_real_matches_rankings_and_restart(
         assert not inspect(restarted)["state"]["editions"]
         restore(restarted, final["revision_id"])
         assert inspect(restarted)["state"]["week"]["week"] == 6
+        for edition_id in ("first", "second"):
+            code, replayed = _request(
+                "GET", root(restarted) + f"/{edition_id}:final/replay"
+            )
+            assert code == 200 and replayed["exact_replay"], replayed

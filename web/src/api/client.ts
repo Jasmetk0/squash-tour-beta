@@ -351,7 +351,7 @@ export function previewCalendarTour(run:string,branch:string,command:import('./c
 export function executeCalendarTour(run:string,branch:string,command:import('./calendarTour').TourCommand,preview:string):Promise<unknown> {
   return request(calendarTourRoot(run,branch)+'/execute',{method:'POST',body:JSON.stringify({command,expected_preview_fingerprint:preview,explicit_confirmation:true})})
 }
-export function saveCalendarTour(run:string,branch:string,version:number,fingerprint:string):Promise<unknown> {
+export function saveCalendarTour(run:string,branch:string,version:number,fingerprint:string):Promise<import('./calendarTour').TourSaveReceipt> {
   return request(calendarTourRoot(run,branch)+'/save',{method:'POST',body:JSON.stringify({expected_draft_version:version,expected_calendar_tour_fingerprint:fingerprint})})
 }
 

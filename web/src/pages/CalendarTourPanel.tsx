@@ -6,6 +6,7 @@ import {validateTourView,validateTourPreview,type TourView,type TourPreview,type
 import {newCommandId} from '../admin/branchSimulation'
 import {useLanguage} from '../i18n/LanguageContext'
 import {formatApiError} from '../utils/apiErrors'
+import type {RunBranchListResponse} from '../api/types'
 
 const actionLabels={approve:['Zkontrolovat schválení','Review approval'],draw:['Zkontrolovat los','Review draw'],play:['Zkontrolovat odehrání','Review play'],'confirm-result':['Zkontrolovat výsledky','Review results']}
 const stageLabels:Record<string,string>={champion:'Vítěz',finalist:'Finalista',semifinal:'Semifinále',quarterfinal:'Čtvrtfinále'}
@@ -46,10 +47,22 @@ export function CalendarTourPanel({runId,branchId,head}:{runId:string;branchId:s
     try {
       if(action==='save'){
         if(!saveConsent||!view.tour_fingerprint)return
-        await saveCalendarTour(runId,branchId,view.draft_version,view.tour_fingerprint)
+        const saved=await saveCalendarTour(runId,branchId,view.draft_version,view.tour_fingerprint)
         if(!valid())return
-        const next=await read();if(!valid())return
-        invalidate();setView(next);void client.invalidateQueries();return
+        if(saved.schema_version!=='calendar_tour_save_receipt.v1'||saved.run_id!==runId||saved.branch_id!==branchId||saved.saved_revision.run_id!==runId||saved.saved_revision.branch_id!==branchId||!/^[0-9a-f]{64}$/.test(saved.saved_revision.content_hash))throw Error('Tour Save source scope is invalid')
+        invalidate()
+        const key=['admin-run-branches',runId]
+        const branches=client.getQueryData<RunBranchListResponse>(key)
+        if(branches?.run_branches.some(b=>b.branch_id===branchId&&b.run_id===runId)){
+          // The confirmed Save already supplies the new authoritative HEAD.
+          // Updating the shared selection starts ONE full read in the effect,
+          // instead of loading the same large history before and after HEAD.
+          setView(null)
+          client.setQueryData<RunBranchListResponse>(key,{...branches,run_branches:branches.run_branches.map(b=>b.branch_id===branchId?{...b,saved_head_revision_id:saved.saved_revision.revision_id}:b)})
+          void client.invalidateQueries();return
+        }
+        const next=await read();if(epoch.current===stamp)setView(next)
+        return
       }
       if(action==='commit'){
         if(!review||!consent)return

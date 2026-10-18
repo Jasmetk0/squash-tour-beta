@@ -40,6 +40,11 @@ def stop_process(process):
     except subprocess.TimeoutExpired:
         os.killpg(process.pid, signal.SIGKILL)
         process.wait(timeout=10)
+    # npm can exit before its Vite child finishes handling SIGTERM.
+    try:
+        os.killpg(process.pid, signal.SIGKILL)
+    except ProcessLookupError:
+        pass
 
 
 def main():
@@ -179,18 +184,36 @@ def main():
 
             def save():
                 panel.get_by_label("Confirm Tour Save").check()
-                with page.expect_response(
-                    lambda r: (
-                        r.request.method == "POST"
-                        and r.url.endswith("/calendar-tour/save")
-                    )
-                ) as done:
+                with (
+                    page.expect_response(
+                        lambda r: (
+                            r.request.method == "GET"
+                            and r.url
+                            == api + "/admin/runs/run/branches/branch/calendar-tour"
+                        )
+                    ) as loaded_context,
+                    page.expect_response(
+                        lambda r: (
+                            r.request.method == "POST"
+                            and r.url.endswith("/calendar-tour/save")
+                        )
+                    ) as done,
+                ):
                     panel.get_by_role(
                         "button", name="Manual Tour Save", exact=True
                     ).click()
                 response = done.value
                 assert response.status == 201, response.text()
                 saved_head = response.json()["saved_revision"]["revision_id"]
+                loaded = loaded_context.value
+                assert loaded.status == 200, loaded.text()
+                saved_view = loaded.json()
+                assert saved_view["saved_head_revision_id"] == saved_head
+                evidence["last_saved_head"] = saved_head
+                evidence["last_checkpoint_fingerprint"] = saved_view[
+                    "checkpoint_fingerprint"
+                ]
+                evidence["last_tour_fingerprint"] = saved_view["tour_fingerprint"]
                 # Saving invalidates the shared Branch HEAD and remounts the panel.
                 expect(panel.get_by_label("Tour operation reason")).to_be_visible()
                 expect(panel).to_have_attribute("data-active-head", saved_head)
@@ -297,6 +320,14 @@ def main():
             ) as reloaded:
                 page.reload()
             assert reloaded.value.status == 200, reloaded.value.text()
+            reopened = reloaded.value.json()
+            assert reopened["saved"]
+            assert reopened["saved_head_revision_id"] == evidence["last_saved_head"]
+            assert (
+                reopened["checkpoint_fingerprint"]
+                == evidence["last_checkpoint_fingerprint"]
+            )
+            assert reopened["tour_fingerprint"] == evidence["last_tour_fingerprint"]
             expect(panel.get_by_role("button", name="Refresh state")).to_be_enabled()
             evidence["restart_ready_seconds"] = time.monotonic() - cold_started
             panel.get_by_label("Tour operation reason").fill(

@@ -16,6 +16,7 @@ from beta_engine.domain.players.calendar_canonical_match import (
 from beta_engine.domain.players.calendar_continuation_match import (
     CalendarContinuationMatch,
 )
+from beta_engine.domain.players.calendar_followup_knockout import CalendarFollowupKnockout
 from beta_engine.domain.players.calendar_sporting_week import (
     CalendarSportingWeekAdvance,
 )
@@ -29,7 +30,7 @@ from beta_engine.domain.run_packages import canonical_hash
 
 
 class CalendarSportingCheckpoint(FrozenInput):
-    schema_version: Literal['calendar_sporting_checkpoint.v1', 'calendar_sporting_checkpoint.v2', 'calendar_sporting_checkpoint.v3'] = 'calendar_sporting_checkpoint.v1'
+    schema_version: Literal['calendar_sporting_checkpoint.v1', 'calendar_sporting_checkpoint.v2', 'calendar_sporting_checkpoint.v3', 'calendar_sporting_checkpoint.v4'] = 'calendar_sporting_checkpoint.v1'
     run_id: str = Field(min_length=1)
     branch_id: str = Field(min_length=1)
     week: RunWeekPosition
@@ -43,14 +44,14 @@ class CalendarSportingCheckpoint(FrozenInput):
     health_effects_applied: Literal[False] = False
 
     continuations: tuple[CalendarContinuationMatch, ...] = ()
-    week_events: tuple[CalendarSportingWeekAdvance | CalendarContinuationMatch, ...] = ()
+    week_events: tuple[CalendarSportingWeekAdvance | CalendarContinuationMatch | CalendarFollowupKnockout, ...] = ()
 
     @model_serializer(mode='wrap')
     def historical_shape(self, handler):
         body = handler(self)
         if self.schema_version == 'calendar_sporting_checkpoint.v1':
             body.pop('continuations', None)
-        if self.schema_version != 'calendar_sporting_checkpoint.v3':
+        if self.schema_version not in {'calendar_sporting_checkpoint.v3', 'calendar_sporting_checkpoint.v4'}:
             body.pop('week_events', None)
         return body
 
@@ -61,16 +62,22 @@ class CalendarSportingCheckpoint(FrozenInput):
                 raise ValueError('Historical checkpoint cannot acquire continuation history')
         elif self.schema_version == 'calendar_sporting_checkpoint.v2' and (not self.continuations or self.phase != 'opening_week_continued'):
             raise ValueError('Continued checkpoint requires actual match history')
-        if self.schema_version != 'calendar_sporting_checkpoint.v3':
+        if self.schema_version not in {'calendar_sporting_checkpoint.v3', 'calendar_sporting_checkpoint.v4'}:
             if 'week_events' in self.model_fields_set or self.annual_development_applied:
                 raise ValueError('Historical checkpoint cannot acquire weekly development')
         elif (not self.week_events or not isinstance(self.week_events[0], CalendarSportingWeekAdvance)
                 or self.phase != 'sporting_week_active' or not self.annual_development_applied):
             raise ValueError('Weekly checkpoint requires an actual ordered sporting advance')
+        if (self.schema_version == 'calendar_sporting_checkpoint.v3'
+            and any(isinstance(event, CalendarFollowupKnockout) for event in self.week_events)):
+            raise ValueError('Historical v3 checkpoint cannot gain a later-week knockout')
+        if (self.schema_version == 'calendar_sporting_checkpoint.v4'
+            and not any(isinstance(event, CalendarFollowupKnockout) for event in self.week_events)):
+            raise ValueError('Checkpoint v4 requires actual later-week knockout evidence')
         ids = tuple(p.player_id for p in self.players)
         if ids != tuple(sorted(set(ids))):
             raise ValueError('Calendar sporting checkpoint requires the sorted unique population')
-        if self.schema_version != 'calendar_sporting_checkpoint.v3' and (self.week.season_index, self.week.week) != (0, 1):
+        if self.schema_version not in {'calendar_sporting_checkpoint.v3', 'calendar_sporting_checkpoint.v4'} and (self.week.season_index, self.week.week) != (0, 1):
             raise ValueError('Checkpoint v1 does not advance the opening week')
         if self.bootstrap_policy != PlayerSportingBootstrapPolicy():
             raise ValueError('Unknown calendar sporting bootstrap calibration')
@@ -78,11 +85,23 @@ class CalendarSportingCheckpoint(FrozenInput):
 
     @property
     def played_continuations(self):
-        return self.continuations + tuple(e for e in self.week_events if isinstance(e, CalendarContinuationMatch))
+        return self.continuations + tuple(
+            match
+            for event in self.week_events
+            for match in (
+                event.matches if isinstance(event, CalendarFollowupKnockout)
+                else (event,) if isinstance(event, CalendarContinuationMatch)
+                else ()
+            )
+        )
 
     @property
     def weekly_advances(self):
         return tuple(e for e in self.week_events if isinstance(e, CalendarSportingWeekAdvance))
+
+    @property
+    def tournaments(self):
+        return tuple(e for e in self.week_events if isinstance(e, CalendarFollowupKnockout))
 
     @property
     def fingerprint(self):

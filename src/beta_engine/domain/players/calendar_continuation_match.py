@@ -148,6 +148,7 @@ def append_continuation(checkpoint, world, entry):
             or entry.sequence != len(prior) + 1 or entry.source_checkpoint_fingerprint != checkpoint.fingerprint
             or any(e.command_id == entry.command_id or e.match_id == entry.match_id for e in prior)
             or any(e.command_id == entry.command_id for e in checkpoint.weekly_advances)
+            or any(e.command_id == entry.command_id for e in checkpoint.tournaments)
             or entry.week.ordinal != checkpoint.week.ordinal
             or (checkpoint.week_events and entry.schema_version != 'calendar_continuation_match.v2')
             or (not checkpoint.week_events and entry.schema_version != 'calendar_continuation_match.v1')

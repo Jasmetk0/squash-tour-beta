@@ -2560,7 +2560,7 @@ def save_calendar_continuation(run_id: str, branch_id: str, payload: dict,
         from beta_engine.infrastructure.db.models import (
             RunBranchModel, BranchSavedRevisionModel,
         )
-        import json
+        from sqlalchemy import text
         with runtime.repository._session_factory() as session:
             session.execute(text('BEGIN'))
             current = load_checkpoint(session, run_id=run_id, branch_id=branch_id)

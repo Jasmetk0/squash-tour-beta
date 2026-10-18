@@ -5,25 +5,41 @@ from types import SimpleNamespace
 from pydantic import Field, model_validator
 from sqlalchemy import text
 
-from beta_engine.application.calendar_opening_knockout_service import CalendarOpeningKnockoutService
+from beta_engine.application.calendar_opening_knockout_service import (
+    CalendarOpeningKnockoutService,
+)
 from beta_engine.core import DeterministicRng
 from beta_engine.domain.calendar.run_week_position import RunWeekPosition
-from beta_engine.domain.matches.models import MatchContext
+from beta_engine.domain.matches.health import (
+    EffectiveMatchHealthSnapshot,
+    project_player_health,
+)
 from beta_engine.domain.matches.match_engine import MatchEngine
-from beta_engine.domain.matches.health import EffectiveMatchHealthSnapshot, project_player_health
+from beta_engine.domain.matches.models import MatchContext
 from beta_engine.domain.players.calendar_canonical_match import canonical_participant
 from beta_engine.domain.players.calendar_continuation_match import (
-    CalendarContinuationMatch, continuation_anchor, continuation_projections,
-    continuation_effects, append_continuation,
+    CalendarContinuationMatch,
+    append_continuation,
+    continuation_anchor,
+    continuation_effects,
+    continuation_projections,
 )
-from beta_engine.domain.players.calendar_match_state import CalendarMatchStatePolicy
 from beta_engine.domain.players.calendar_engine_player import calendar_engine_player
-from beta_engine.domain.players.calendar_sporting_checkpoint import build_calendar_sporting_checkpoint
+from beta_engine.domain.players.calendar_match_state import CalendarMatchStatePolicy
+from beta_engine.domain.players.calendar_sporting_checkpoint import (
+    build_calendar_sporting_checkpoint,
+)
 from beta_engine.domain.rankings.official import FrozenInput
 from beta_engine.domain.run_packages import canonical_hash
 from beta_engine.domain.simulation_slots import CanonicalMatchInputProjectionPolicy
-from beta_engine.infrastructure.db.calendar_sporting_checkpoint import load_checkpoint, saved_checkpoint, replace_checkpoint
-from beta_engine.infrastructure.db.calendar_standalone_match_state import load_match_rows
+from beta_engine.infrastructure.db.calendar_sporting_checkpoint import (
+    load_checkpoint,
+    replace_checkpoint,
+    saved_checkpoint,
+)
+from beta_engine.infrastructure.db.calendar_standalone_match_state import (
+    load_match_rows,
+)
 
 
 class CalendarContinuationCommand(FrozenInput):
@@ -54,7 +70,9 @@ class CalendarContinuationService:
         checkpoint = load_checkpoint(session, run_id=run_id, branch_id=branch_id)
         rows = load_match_rows(session, run_id=run_id, branch_id=branch_id)
         evidence = rows[0] if len(rows) == 1 else None
-        from beta_engine.infrastructure.db.calendar_standalone_match_state import load_saved_calendar_match
+        from beta_engine.infrastructure.db.calendar_standalone_match_state import (
+            load_saved_calendar_match,
+        )
         saved_evidence = load_saved_calendar_match(revision.saved_revision.payload, run_id=run_id, branch_id=branch_id)
         saved = saved_checkpoint(revision.saved_revision.payload, saved_evidence,
             run_id=run_id, branch_id=branch_id)
@@ -81,14 +99,17 @@ class CalendarContinuationService:
                 'saved': bool(state and saved and state.fingerprint == saved.fingerprint),
                 'can_play': bool(state and saved and state.fingerprint == saved.fingerprint),
                 'run_calendar': clock.to_metadata(),
+                'sporting_week': RunWeekPosition(calendar=clock, season_index=state.week.season_index, week=state.week.week).model_dump(mode='json') if state else None,
+                'weekly_advance_count': len(state.weekly_advances) if state else 0,
+                'weekly_advances': [{'command_id':e.command_id,'fingerprint':e.fingerprint,'completed_week':e.completed_week.week,'target_week':e.target_week.week,'saved':bool(saved and any(s.fingerprint == e.fingerprint for s in saved.weekly_advances))} for e in state.weekly_advances] if state else [],
                 'health_numeric_effect_applied': False,
                 'limited_player_ids': [p.player_id for p in health.players if project_player_health(p).numeric_calibration_required] if health else [],
                 'matches': [{
-                    'match_id': e.match_id, 'sequence': e.sequence, 'fingerprint': e.fingerprint,
+                    'match_id': e.match_id, 'sequence': e.sequence, 'week': e.week.week, 'fingerprint': e.fingerprint,
                     'player_ids': [e.input_context.player_a.player.player_id, e.input_context.player_b.player.player_id],
                     'winner_player_id': e.result.winner_player_id, 'rally_count': len(e.result.rally_log.events),
-                    'saved': bool(saved and i < len(saved.continuations) and saved.continuations[i].fingerprint == e.fingerprint),
-                } for i, e in enumerate(state.continuations)] if state else [],
+                    'saved': bool(saved and i < len(saved.played_continuations) and saved.played_continuations[i].fingerprint == e.fingerprint),
+                } for i, e in enumerate(state.played_continuations)] if state else [],
             }
 
     def simulate(self, *, run_id, branch_id, command: CalendarContinuationCommand):
@@ -99,18 +120,26 @@ class CalendarContinuationService:
             if state is None:
                 raise ValueError('First play and Save a v5 opening knockout to establish population sporting authority')
             knockout = getattr(evidence, 'knockout', evidence)
-            for index, existing in enumerate(state.continuations):
+            for existing in state.played_continuations:
                 if existing.command_id == command.command_id or existing.match_id == command.match_id:
                     if existing.command_id != command.command_id or existing.request_fingerprint != request_fp:
                         raise ValueError('Continuation command/match ID already used with different input')
                     prefix = build_calendar_sporting_checkpoint(world, knockout, calendar_engine_player)
-                    for entry in state.continuations[:index + 1]:
-                        prefix = append_continuation(prefix, world, entry)
+                    from beta_engine.domain.players.calendar_sporting_week import (
+                        CalendarSportingWeekAdvance,
+                        append_sporting_week,
+                    )
+                    for entry in (*state.continuations, *state.week_events):
+                        prefix = (append_sporting_week(prefix, world, knockout, entry) if isinstance(entry, CalendarSportingWeekAdvance) else append_continuation(prefix, world, entry))
+                        if getattr(entry, 'match_id', None) == existing.match_id:
+                            break
                     return self._receipt(existing, prefix)
             if (saved is None or saved.fingerprint != state.fingerprint
                     or revision.saved_head_revision_id != command.expected_saved_head
                     or state.fingerprint != command.expected_checkpoint_fingerprint):
                 raise ValueError('Save the current checkpoint and review its exact Saved HEAD before a new match')
+            if any(e.command_id == command.command_id for e in state.weekly_advances):
+                raise ValueError('Command identity already used by sporting week advance')
             if command.match_id in {knockout.match_id, *(m.input_context.match_id for m in knockout.matches)} or command.command_id == knockout.command_id:
                 raise ValueError('Continuation cannot reuse the original knockout identity')
             ids = (command.player_a_id, command.player_b_id)
@@ -122,8 +151,8 @@ class CalendarContinuationService:
             if health:
                 profiles = {p.player_id: p for p in health.players}
                 medical = EffectiveMatchHealthSnapshot(player_profiles=tuple(project_player_health(profiles[pid]) for pid in ids))
-            inputs = dict(run_id=run_id, branch_id=branch_id,
-                week=RunWeekPosition(calendar=clock, season_index=0, week=1), sequence=len(state.continuations) + 1,
+            inputs = dict(schema_version=('calendar_continuation_match.v2' if state.week_events else 'calendar_continuation_match.v1'), run_id=run_id, branch_id=branch_id,
+                week=RunWeekPosition(calendar=clock, season_index=state.week.season_index, week=state.week.week), sequence=len(state.played_continuations) + 1,
                 command_id=command.command_id, match_id=command.match_id,
                 source_saved_head=revision.saved_head_revision_id, source_checkpoint_fingerprint=state.fingerprint,
                 seed=command.seed, operator_label=command.operator_label, audit_reason=command.audit_reason,
@@ -148,13 +177,17 @@ class CalendarContinuationService:
             session.execute(text('BEGIN'))
             # Historical replay consumes frozen authority, never current medical
             # readiness or permission to start another sporting command.
-            from beta_engine.infrastructure.db.calendar_sporting_checkpoint import verify_checkpoint
-            from beta_engine.infrastructure.db.initial_world_state import get_initial_world
+            from beta_engine.infrastructure.db.calendar_sporting_checkpoint import (
+                verify_checkpoint,
+            )
+            from beta_engine.infrastructure.db.initial_world_state import (
+                get_initial_world,
+            )
             state = load_checkpoint(session, run_id=run_id, branch_id=branch_id)
             rows = load_match_rows(session, run_id=run_id, branch_id=branch_id)
             world = get_initial_world(session, run_id=run_id, branch_id=branch_id)
             verify_checkpoint(state, world, rows[0] if len(rows) == 1 else None)
-            entry = next((e for e in state.continuations if e.match_id == match_id), None) if state else None
+            entry = next((e for e in state.played_continuations if e.match_id == match_id), None) if state else None
             if entry is None:
                 raise KeyError('Calendar continuation match not found')
             result = MatchEngine(DeterministicRng(entry.seed)).simulate(entry.input_context,

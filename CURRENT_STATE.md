@@ -1,7 +1,7 @@
 # Current implementation — Master v85
 
-Audited buuk `3dd96c8b2d85d44cfbfa34c4a309fed1cd1e4eb0` after merged #1530, 18 October 2026.
-#1520–1530 are merged; no open PR at task start. Refresh before new work.
+Audited buuk `642617430b66853285415ac6690d89165e2c47e2` after merged #1531, 18 October 2026.
+#1520–1531 are merged; no open PR at task start. Refresh before new work.
 Master remains v85; this task changes sporting execution, not product decisions.
 
 **Merged and usable:** calendar creation/first Save, population and Health facts,
@@ -95,7 +95,7 @@ See [contract](docs/CALENDAR_POPULATION_SPORTING_CHECKPOINT_V1.md).
 This is real persisted population ownership, but still one opening operation per
 Branch: it does not itself implement a second event, development or an advanced week.
 
-**Current candidate:** actual sequential opening-week exhibitions consume the
+**Merged #1531:** actual sequential opening-week exhibitions consume the
 Saved native full-population 57-attribute/form/load checkpoint. Explicit v2 stores
 an ordered match ledger and current population, with existing match effects applied
 to only two participants. Each new match requires Save of its predecessor; exact
@@ -115,3 +115,14 @@ reference 50-season acceptance remain in Master; never mutate protected sources.
 
 Owner alone merges. Work directly in the continuation ChatGPT/environment, no
 paid Codex/agents unless explicitly requested. Avoid concurrent duplicate work.
+
+**Current candidate:** native sporting-week preparation advances the explicit
+exhibition sporting owner from completed terminal records, with annual attribute
+exposure 1/W and existing weekly Form/sharpness/fatigue updates. Reviewed preview,
+explicit consent and separate manual Save precede actual later-week exhibitions
+from those stored 57 attributes. Ordered v3 owner history retains old hashes and
+supports replay/restart/restore/extension. This does not advance the legacy/public
+clock or implement Official Ranking, lifecycle/intake, Health healing, Season
+Transition or full nine-step Week Transition. The end of season remains blocked.
+See [scope and validation](docs/CALENDAR_NATIVE_SPORTING_WEEK_V1.md). Final latest-head
+CI/browser evidence belongs to the PR; do not infer release readiness from this note.

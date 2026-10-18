@@ -73,7 +73,7 @@ class CalendarOpeningKnockoutService:
         rows = load_match_rows(session, run_id=run_id, branch_id=branch_id)
         checkpoint = load_checkpoint(session, run_id=run_id, branch_id=branch_id)
         verify_checkpoint(checkpoint, world, rows[0] if len(rows) == 1 else None)
-        if checkpoint and checkpoint.continuations and checkpoint.continuations[-1].week.calendar.season_count > clock.season_count:
+        if checkpoint and max([checkpoint.week.calendar.season_count, *(e.week.calendar.season_count for e in checkpoint.played_continuations)]) > clock.season_count:
             raise ValueError('Continued sporting checkpoint refers to an unavailable Run horizon')
         return clock, revision, world, health
 
@@ -160,10 +160,10 @@ class CalendarOpeningKnockoutService:
                     "player_count": len(checkpoint.players),
                     "attribute_count": 57,
                     "phase": checkpoint.phase,
-                    "annual_development_applied": False,
+                    "annual_development_applied": checkpoint.annual_development_applied,
                     "health_effects_applied": False,
                     "saved": (revision.saved_revision.payload.get('content', {}).get('calendar_player_sporting_checkpoint', {}).get('fingerprint') == checkpoint.fingerprint),
-                    "continuation_count": len(checkpoint.continuations),
+                    "continuation_count": len(checkpoint.played_continuations),
                 } if checkpoint else None),
                 "schema_version": "calendar_opening_knockout_inspection.v1",
                 "run_id": run_id, "branch_id": branch_id,

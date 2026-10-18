@@ -1,43 +1,57 @@
 """Calendar-native population checkpoint after a real opening knockout.
 
-This is persisted world authority, not a weekly-development calculation. The
-bootstrap remains the explicit existing provisional adapter. Medical authority
-remains in Health; no recovery, ageing or time advancement is implied.
+Historical v1/v2 retain exact opening-week bytes. Explicit v3 adds an ordered
+sporting-only weekly ledger and subsequent exhibitions. It does not own the
+Official Week Transition, Health healing or lifecycle. The bootstrap is provisional.
 """
 from typing import Literal
 
-from pydantic import Field, model_validator, model_serializer
+from pydantic import Field, model_serializer, model_validator
 
 from beta_engine.domain.calendar.run_week_position import RunWeekPosition
-from beta_engine.domain.players.calendar_continuation_match import CalendarContinuationMatch
-from beta_engine.domain.players.calendar_canonical_match import CalendarCanonicalPlayerSource, CalendarCanonicalMatchSource
-from beta_engine.domain.players.sporting import PlayerSportingBootstrapPolicy, PlayerSportingRecord
+from beta_engine.domain.players.calendar_canonical_match import (
+    CalendarCanonicalMatchSource,
+    CalendarCanonicalPlayerSource,
+)
+from beta_engine.domain.players.calendar_continuation_match import (
+    CalendarContinuationMatch,
+)
+from beta_engine.domain.players.calendar_sporting_week import (
+    CalendarSportingWeekAdvance,
+)
+from beta_engine.domain.players.sporting import (
+    PlayerSportingBootstrapPolicy,
+    PlayerSportingRecord,
+)
 from beta_engine.domain.players.sporting_bootstrap import derive_bootstrap_record
 from beta_engine.domain.rankings.official import FrozenInput
 from beta_engine.domain.run_packages import canonical_hash
 
 
 class CalendarSportingCheckpoint(FrozenInput):
-    schema_version: Literal['calendar_sporting_checkpoint.v1', 'calendar_sporting_checkpoint.v2'] = 'calendar_sporting_checkpoint.v1'
+    schema_version: Literal['calendar_sporting_checkpoint.v1', 'calendar_sporting_checkpoint.v2', 'calendar_sporting_checkpoint.v3'] = 'calendar_sporting_checkpoint.v1'
     run_id: str = Field(min_length=1)
     branch_id: str = Field(min_length=1)
     week: RunWeekPosition
-    phase: Literal['opening_week_after_knockout', 'opening_week_continued'] = 'opening_week_after_knockout'
+    phase: Literal['opening_week_after_knockout', 'opening_week_continued', 'sporting_week_active'] = 'opening_week_after_knockout'
     source_saved_head: str = Field(min_length=1)
     source_initial_world_fingerprint: str = Field(pattern=r'^[0-9a-f]{64}$')
     source_knockout_fingerprint: str = Field(pattern=r'^[0-9a-f]{64}$')
     bootstrap_policy: PlayerSportingBootstrapPolicy = PlayerSportingBootstrapPolicy()
     players: tuple[PlayerSportingRecord, ...] = Field(min_length=4)
-    annual_development_applied: Literal[False] = False
+    annual_development_applied: bool = False
     health_effects_applied: Literal[False] = False
 
     continuations: tuple[CalendarContinuationMatch, ...] = ()
+    week_events: tuple[CalendarSportingWeekAdvance | CalendarContinuationMatch, ...] = ()
 
     @model_serializer(mode='wrap')
     def historical_shape(self, handler):
         body = handler(self)
         if self.schema_version == 'calendar_sporting_checkpoint.v1':
             body.pop('continuations', None)
+        if self.schema_version != 'calendar_sporting_checkpoint.v3':
+            body.pop('week_events', None)
         return body
 
     @model_validator(mode='after')
@@ -45,16 +59,30 @@ class CalendarSportingCheckpoint(FrozenInput):
         if self.schema_version == 'calendar_sporting_checkpoint.v1':
             if 'continuations' in self.model_fields_set or self.phase != 'opening_week_after_knockout':
                 raise ValueError('Historical checkpoint cannot acquire continuation history')
-        elif not self.continuations or self.phase != 'opening_week_continued':
+        elif self.schema_version == 'calendar_sporting_checkpoint.v2' and (not self.continuations or self.phase != 'opening_week_continued'):
             raise ValueError('Continued checkpoint requires actual match history')
+        if self.schema_version != 'calendar_sporting_checkpoint.v3':
+            if 'week_events' in self.model_fields_set or self.annual_development_applied:
+                raise ValueError('Historical checkpoint cannot acquire weekly development')
+        elif (not self.week_events or not isinstance(self.week_events[0], CalendarSportingWeekAdvance)
+                or self.phase != 'sporting_week_active' or not self.annual_development_applied):
+            raise ValueError('Weekly checkpoint requires an actual ordered sporting advance')
         ids = tuple(p.player_id for p in self.players)
         if ids != tuple(sorted(set(ids))):
             raise ValueError('Calendar sporting checkpoint requires the sorted unique population')
-        if (self.week.season_index, self.week.week) != (0, 1):
+        if self.schema_version != 'calendar_sporting_checkpoint.v3' and (self.week.season_index, self.week.week) != (0, 1):
             raise ValueError('Checkpoint v1 does not advance the opening week')
         if self.bootstrap_policy != PlayerSportingBootstrapPolicy():
             raise ValueError('Unknown calendar sporting bootstrap calibration')
         return self
+
+    @property
+    def played_continuations(self):
+        return self.continuations + tuple(e for e in self.week_events if isinstance(e, CalendarContinuationMatch))
+
+    @property
+    def weekly_advances(self):
+        return tuple(e for e in self.week_events if isinstance(e, CalendarSportingWeekAdvance))
 
     @property
     def fingerprint(self):

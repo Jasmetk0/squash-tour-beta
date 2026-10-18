@@ -1,24 +1,35 @@
-"""Sequential opening-week exhibitions consuming actual owned sporting records.
+"""Sequential exhibitions consuming actual owned sporting records.
 
-No recovery, development, ranking award or implicit Week Transition. Each event
+No implicit recovery, development, ranking award or Week Transition. Each event
 reads one frozen population checkpoint, then applies existing match effects.
 """
-from typing import Literal
 from types import SimpleNamespace
+from typing import Literal
+
 from pydantic import Field, model_validator
 
 from beta_engine.domain.calendar.run_week_position import RunWeekPosition
-from beta_engine.domain.matches.models import MatchContext, MatchResult
 from beta_engine.domain.matches.health import EffectiveMatchHealthSnapshot
+from beta_engine.domain.matches.models import MatchContext, MatchResult
 from beta_engine.domain.players.calendar_canonical_match import canonical_participant
-from beta_engine.domain.players.calendar_match_state import CalendarMatchPlayerState, CalendarMatchStatePolicy, CalendarMatchEffect, advance_played_slot
+from beta_engine.domain.players.calendar_match_state import (
+    CalendarMatchEffect,
+    CalendarMatchPlayerState,
+    CalendarMatchStatePolicy,
+    advance_played_slot,
+)
+from beta_engine.domain.players.calendar_sporting_week import age_in_run_years
 from beta_engine.domain.rankings.official import FrozenInput
 from beta_engine.domain.run_packages import canonical_hash
-from beta_engine.domain.simulation_slots import CanonicalPlayerMatchProjection, CanonicalMatchInputProjectionPolicy, project_player
+from beta_engine.domain.simulation_slots import (
+    CanonicalMatchInputProjectionPolicy,
+    CanonicalPlayerMatchProjection,
+    project_player,
+)
 
 
 class CalendarContinuationMatch(FrozenInput):
-    schema_version: Literal['calendar_continuation_match.v1'] = 'calendar_continuation_match.v1'
+    schema_version: Literal['calendar_continuation_match.v1', 'calendar_continuation_match.v2'] = 'calendar_continuation_match.v1'
     run_id: str
     branch_id: str
     week: RunWeekPosition
@@ -45,8 +56,8 @@ class CalendarContinuationMatch(FrozenInput):
     def validate_evidence(self):
         ctx, result = self.input_context, self.result
         ids = (ctx.player_a.player.player_id, ctx.player_b.player.player_id)
-        if self.week.ordinal != 0 or len(set(ids)) != 2:
-            raise ValueError('Continuation is a distinct-player opening-week exhibition')
+        if (self.schema_version == 'calendar_continuation_match.v1' and self.week.ordinal != 0) or len(set(ids)) != 2:
+            raise ValueError('Continuation needs distinct players and a schema-compatible sporting week')
         if (ctx.match_id != self.match_id or result.match_id != self.match_id
                 or (result.player_a_id, result.player_b_id) != ids
                 or {result.winner_player_id, result.loser_player_id} != set(ids)
@@ -83,7 +94,7 @@ class CalendarContinuationMatch(FrozenInput):
 
 def continuation_anchor(value):
     return canonical_hash({
-        'schema_version': 'calendar_continuation_match_anchor.v1',
+        'schema_version': ('calendar_continuation_match_anchor.v1' if getattr(value, 'schema_version', 'calendar_continuation_match.v1') == 'calendar_continuation_match.v1' else 'calendar_continuation_match_anchor.v2'),
         'run_id': value.run_id, 'branch_id': value.branch_id,
         'week': value.week.model_dump(mode='json'), 'sequence': value.sequence,
         'request_fingerprint': value.request_fingerprint,
@@ -107,8 +118,8 @@ def continuation_projections(checkpoint, world, ids, policy=None):
     fp = checkpoint.fingerprint
     return tuple(project_player(records[pid], source_sporting_fingerprint=fp, policy=policy,
         profile_source_fingerprint=profiles[pid].source_generation_fingerprint,
-        profile_provenance='Saved native population sporting checkpoint; no recovery or annual development',
-        age=profiles[pid].age_years_at_season_start, name=profiles[pid].name,
+        profile_provenance=('Saved native population sporting checkpoint; no recovery or annual development' if checkpoint.week.ordinal == 0 else 'Saved native sporting-week checkpoint; provisional annual development and weekly recovery'),
+        age=(profiles[pid].age_years_at_season_start if checkpoint.week.ordinal == 0 else int(age_in_run_years(profiles[pid], checkpoint.week))), name=profiles[pid].name,
         nationality=profiles[pid].nationality, play_style=profiles[pid].play_style,
         archetype=profiles[pid].archetype, hidden_career_traits=profiles[pid].hidden_career_traits) for pid in ids)
 
@@ -127,13 +138,19 @@ def continuation_effects(checkpoint, context, result, policy):
 
 def append_continuation(checkpoint, world, entry):
     """Rebuild the exact successor, preserving every unaffected player record."""
-    from beta_engine.domain.players.calendar_sporting_checkpoint import CalendarSportingCheckpoint
-    prior = checkpoint.continuations
-    previous_clock = prior[-1].week.calendar if prior else checkpoint.week.calendar
+    from beta_engine.domain.players.calendar_sporting_checkpoint import (
+        CalendarSportingCheckpoint,
+    )
+    prior = checkpoint.played_continuations
+    previous_clock = checkpoint.week.calendar if checkpoint.week_events else (prior[-1].week.calendar if prior else checkpoint.week.calendar)
     current = entry.week.calendar
     if ((entry.run_id, entry.branch_id) != (checkpoint.run_id, checkpoint.branch_id)
             or entry.sequence != len(prior) + 1 or entry.source_checkpoint_fingerprint != checkpoint.fingerprint
             or any(e.command_id == entry.command_id or e.match_id == entry.match_id for e in prior)
+            or any(e.command_id == entry.command_id for e in checkpoint.weekly_advances)
+            or entry.week.ordinal != checkpoint.week.ordinal
+            or (checkpoint.week_events and entry.schema_version != 'calendar_continuation_match.v2')
+            or (not checkpoint.week_events and entry.schema_version != 'calendar_continuation_match.v1')
             or (current.weeks_per_year, current.season_start_year_week, current.start_year)
                 != (previous_clock.weeks_per_year, previous_clock.season_start_year_week, previous_clock.start_year)
             or current.season_count < previous_clock.season_count):
@@ -150,6 +167,10 @@ def append_continuation(checkpoint, world, entry):
         'match_sharpness': by_id[p.player_id].match_sharpness,
         'long_term_fatigue': by_id[p.player_id].long_term_fatigue,
     }) if p.player_id in by_id else p for p in checkpoint.players)
+    if checkpoint.week_events:
+        return CalendarSportingCheckpoint.model_validate_json(checkpoint.model_copy(update={
+            'players': players, 'week': entry.week, 'week_events': checkpoint.week_events + (entry,),
+        }).model_dump_json())
     return CalendarSportingCheckpoint.model_validate_json(checkpoint.model_copy(update={
         'schema_version': 'calendar_sporting_checkpoint.v2', 'phase': 'opening_week_continued',
         'players': players, 'continuations': prior + (entry,),

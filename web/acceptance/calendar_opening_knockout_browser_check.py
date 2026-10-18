@@ -383,8 +383,90 @@ def exercise_calendar_knockout(page, *, base_url, api_url, artifacts,
     assert final_view['population_sporting_checkpoint']['fingerprint'] == continued['checkpoint_fingerprint']
     assert final_view['population_sporting_checkpoint']['saved']
     page.screenshot(path=str(artifacts / '19-stateful-continuation-saved-replayed.png'), full_page=True)
+    # Prepare and Save the real sporting owner for W2, then consume it in a
+    # real MatchEngine call through the Admin UI. This is not Official transition.
+    continuation_api = root.rsplit('/', 1)[0] + '/calendar-continuation'
+    continuation.get_by_label('Continuation reason', exact=True).fill('Prepare sporting W2 after the completed exhibition week')
+    with page.expect_response(lambda r: r.request.method == 'POST'
+                              and r.url.endswith('/calendar-sporting-week/preview'), timeout=120000) as response:
+        continuation.get_by_role('button', name='Review sporting week preparation', exact=True).click()
+    assert response.value.status == 200, response.value.text()[:1200]
+    weekly_preview = response.value.json()
+    assert weekly_preview['player_count'] == 1000
+    assert weekly_preview['advance']['scope'] == 'sporting_only_exhibition_timeline'
+    assert weekly_preview['advance']['completed_week']['week'] == 1
+    assert weekly_preview['advance']['target_week']['week'] == 2
+    assert api('GET', continuation_api)['sporting_week']['week'] == 1  # read-only review
+    expect(continuation.get_by_role('button', name='Prepare sporting week', exact=True)).to_be_disabled()
+    continuation.get_by_label('Confirm this sporting-only weekly preparation.', exact=True).check()
+    with page.expect_response(lambda r: r.request.method == 'POST'
+                              and r.url.endswith('/calendar-sporting-week/commit'), timeout=120000) as response:
+        continuation.get_by_role('button', name='Prepare sporting week', exact=True).click()
+    assert response.value.status == 201, response.value.text()[:1200]
+    assert response.value.json() == weekly_preview
+    expect(continuation.get_by_text('Sporting preparation awaiting manual Save.', exact=True)).to_be_visible(timeout=120000)
+    expect(continuation.get_by_role('button', name='Play continuation match', exact=True)).to_be_disabled()
+    continuation.get_by_role('button', name='Review continuation Save', exact=True).click()
+    # A source-authenticated review validates the complete 1,000-player ledger;
+    # wait for its response before consent, as in the original Save flow above.
+    expect(continuation.get_by_role('button', name='Save continued state', exact=True)).to_be_disabled(timeout=120000)
+    continuation.get_by_label('Confirm saving the continued state.', exact=True).check()
+    with page.expect_response(lambda r: r.request.method == 'POST'
+                              and r.url.endswith('/calendar-continuation/save'), timeout=120000) as response:
+        continuation.get_by_role('button', name='Save continued state', exact=True).click()
+    assert response.value.status == 201, response.value.text()[:1200]
+    weekly_saved = response.value.json()['saved_revision']
+    weekly_owner = weekly_saved['payload']['content']['calendar_player_sporting_checkpoint']['state']
+    assert weekly_owner['schema_version'] == 'calendar_sporting_checkpoint.v3'
+    assert weekly_owner['week']['week'] == 2 and weekly_owner['annual_development_applied']
+    assert weekly_owner['players'] and len(weekly_owner['players']) == 1000
+    page.reload()
+    page.get_by_role('combobox', name='Admin active Branch').select_option(branch_id)
+    continuation = page.locator('section[aria-label="Stateful calendar continuation"]')
+    expect(continuation.get_by_role('table', name='Sporting week history')).to_be_visible(timeout=120000)
+    continuation.get_by_label('Continuation player A', exact=True).select_option(champion)
+    continuation.get_by_label('Continuation player B', exact=True).select_option(outsider_id)
+    continuation.get_by_label('Continuation reason', exact=True).fill('Play W2 using actually Saved development and recovered fatigue')
+    continuation.get_by_label('Confirm playing from this Saved checkpoint.', exact=True).check()
+    with page.expect_response(lambda r: r.request.method == 'POST'
+                              and r.url.endswith('/calendar-continuation/simulate'), timeout=120000) as response:
+        continuation.get_by_role('button', name='Play continuation match', exact=True).click()
+    assert response.value.status == 201, response.value.text()[:1200]
+    second_continued = response.value.json()
+    assert second_continued['match']['schema_version'] == 'calendar_continuation_match.v2'
+    assert second_continued['match']['week']['week'] == 2
+    records = {p['player_id']: p for p in weekly_owner['players']}
+    for p in second_continued['match']['canonical_projections']:
+        assert p['canonical_attributes'] == records[p['player_id']]['attributes']
+        assert p['long_term_fatigue'] == records[p['player_id']]['long_term_fatigue']
+        assert p['current_form'] == records[p['player_id']]['current_form']
+    expect(continuation.get_by_text('Played, awaiting manual Save.', exact=True)).to_be_visible(timeout=120000)
+    continuation.get_by_role('button', name='Review continuation Save', exact=True).click()
+    # A source-authenticated review validates the complete 1,000-player ledger;
+    # wait for its response before consent, as in the original Save flow above.
+    expect(continuation.get_by_role('button', name='Save continued state', exact=True)).to_be_disabled(timeout=120000)
+    continuation.get_by_label('Confirm saving the continued state.', exact=True).check()
+    with page.expect_response(lambda r: r.request.method == 'POST'
+                              and r.url.endswith('/calendar-continuation/save'), timeout=120000) as response:
+        continuation.get_by_role('button', name='Save continued state', exact=True).click()
+    assert response.value.status == 201, response.value.text()[:1200]
+    page.reload()
+    page.get_by_role('combobox', name='Admin active Branch').select_option(branch_id)
+    continuation = page.locator('section[aria-label="Stateful calendar continuation"]')
+    expect(continuation.get_by_role('table', name='Continued match history').get_by_role('row')).to_have_count(3, timeout=120000)
+    with page.expect_response(lambda r: r.request.method == 'GET' and '/calendar-continuation/' in r.url
+                              and r.url.endswith('/replay'), timeout=120000) as response:
+        continuation.get_by_role('button', name='Verify continuation replay', exact=True).last.click()
+    assert response.value.status == 200 and response.value.json()['exact_replay']
+    assert api('GET', root)['knockout'] == played['knockout']
+    assert api('GET', continuation_api)['sporting_week']['week'] == 2
+    page.screenshot(path=str(artifacts / '20-native-sporting-week-two-saved-replayed.png'), full_page=True)
     return {
-        "continued_actual_match_count": 1,
+        "sporting_week_preparation_1000_players_saved_reloaded": True,
+        "week_two_actual_match_consumes_developed_recovered_checkpoint": True,
+        "week_two_actual_match_saved_reloaded_exact_replay": True,
+        "official_transition_and_health_healing_not_claimed": True,
+        "continued_actual_match_count": 2,
         "continued_match_consumes_prior_fatigue_and_57_attributes": True,
         "continued_manual_save_reload_exact_replay": True,
         "continued_original_knockout_unchanged": True,

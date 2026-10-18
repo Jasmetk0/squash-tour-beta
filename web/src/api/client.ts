@@ -5322,3 +5322,10 @@ export function replayCalendarContinuation(runId: string, branchId: string, matc
 }> {
   return request(continuationRoot(runId, branchId) + '/' + encodeURIComponent(matchId) + '/replay')
 }
+
+export function previewCalendarSportingWeek(runId: string, branchId: string, command: import('./calendarContinuation').SportingWeekCommand): Promise<import('./calendarContinuation').SportingWeekPreview> {
+  return request(authoritativeSimulationRoot(runId, branchId) + '/calendar-sporting-week/preview', { method: 'POST', body: JSON.stringify(command) })
+}
+export function commitCalendarSportingWeek(runId: string, branchId: string, command: import('./calendarContinuation').SportingWeekCommand, fingerprint: string): Promise<import('./calendarContinuation').SportingWeekPreview> {
+  return request(authoritativeSimulationRoot(runId, branchId) + '/calendar-sporting-week/commit', { method: 'POST', body: JSON.stringify({command, expected_preview_fingerprint: fingerprint, explicit_confirmation: true}) })
+}

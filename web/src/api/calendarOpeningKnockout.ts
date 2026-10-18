@@ -48,10 +48,10 @@ export type OpeningKnockout = {
   canonical_source?: CanonicalKnockoutSource
 }
 export type PopulationSportingCheckpoint = {
-  schema_version: 'calendar_sporting_checkpoint.v1' | 'calendar_sporting_checkpoint.v2'; continuation_count?: number; fingerprint: string
+  schema_version: 'calendar_sporting_checkpoint.v1' | 'calendar_sporting_checkpoint.v2' | 'calendar_sporting_checkpoint.v3'; continuation_count?: number; fingerprint: string
   source_knockout_fingerprint: string; player_count: number; attribute_count: 57
-  phase: 'opening_week_after_knockout' | 'opening_week_continued'; saved: boolean
-  annual_development_applied: false; health_effects_applied: false
+  phase: 'opening_week_after_knockout' | 'opening_week_continued' | 'sporting_week_active'; saved: boolean
+  annual_development_applied: boolean; health_effects_applied: false
 }
 export type PopulationSportingPlayer = {
   schema_version: 'calendar_sporting_checkpoint_player.v1'; run_id: string; branch_id: string
@@ -183,14 +183,14 @@ export function verifyKnockoutInspection(v: KnockoutInspection, runId: string, b
   }
   const checkpoint = v.population_sporting_checkpoint
   if (v.knockout?.schema_version === 'calendar_opening_knockout.v5') {
-    if (!checkpoint || !['calendar_sporting_checkpoint.v1', 'calendar_sporting_checkpoint.v2'].includes(checkpoint.schema_version)
+    if (!checkpoint || !['calendar_sporting_checkpoint.v1', 'calendar_sporting_checkpoint.v2', 'calendar_sporting_checkpoint.v3'].includes(checkpoint.schema_version)
       || !isHash(checkpoint.fingerprint) || !isHash(checkpoint.source_knockout_fingerprint)
       || checkpoint.player_count !== v.player_ids.length || checkpoint.attribute_count !== 57
-      || !['opening_week_after_knockout', 'opening_week_continued'].includes(checkpoint.phase) || typeof checkpoint.saved !== 'boolean'
+      || !['opening_week_after_knockout', 'opening_week_continued', 'sporting_week_active'].includes(checkpoint.phase) || typeof checkpoint.saved !== 'boolean'
       || (checkpoint.schema_version === 'calendar_sporting_checkpoint.v1' && checkpoint.phase !== 'opening_week_after_knockout')
       || (checkpoint.schema_version === 'calendar_sporting_checkpoint.v2' && (checkpoint.phase !== 'opening_week_continued'
         || !Number.isSafeInteger(checkpoint.continuation_count) || checkpoint.continuation_count! < 1))
-      || checkpoint.annual_development_applied !== false || checkpoint.health_effects_applied !== false) {
+      || (checkpoint.schema_version === 'calendar_sporting_checkpoint.v3' ? (checkpoint.phase !== 'sporting_week_active' || checkpoint.annual_development_applied !== true) : checkpoint.annual_development_applied !== false) || checkpoint.health_effects_applied !== false) {
       throw Error('Played knockout lacks its complete population sporting checkpoint')
     }
   } else if (checkpoint != null) {

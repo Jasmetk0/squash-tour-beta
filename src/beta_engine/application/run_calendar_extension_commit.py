@@ -10,6 +10,7 @@ from __future__ import annotations
 import hashlib
 import json
 import time
+from copy import deepcopy
 from uuid import NAMESPACE_URL, uuid5
 
 from sqlalchemy import select, text
@@ -74,7 +75,12 @@ def _capture_live_content(session: Session, *, payload: dict, run_id: str, branc
     # deepcopy(saved_payload) would leave *deleted* live components present
     # in the snapshot when their capture adapter returns without a write.
     # A formerly Saved component missing from live state must block Save.
-    copy = {"content": {}}
+    # Keep the authenticated revision Run envelope, but capture every live
+    # component into an EMPTY content container. The calendar InitialWorld,
+    # sporting checkpoint and Tour validators need that historical W/offset/
+    # horizon (and extension provenance) to authenticate their frozen sources.
+    # Never mutate the caller's immutable Saved payload during read-only review.
+    copy = {"run": deepcopy(payload["run"]), "content": {}}
     for capture in (
         storage.capture_saved_ranking_component,
         storage.capture_saved_initial_world,

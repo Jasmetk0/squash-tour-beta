@@ -163,6 +163,16 @@ def edition(server, name, size=8):
             server,
             command(inspect(server), action, name=name + ":" + action, edition_id=name),
         )
+    assert not inspect(server)["saved"]
+    # The approved field and draw may share one Working Draft, but the actual
+    # MatchEngine must never consume them until an explicit canonical Save.
+    code, blocked = _request(
+        "POST",
+        tour_url(server) + "/preview",
+        command(inspect(server), "play", name=name + ":unsaved-play", edition_id=name),
+    )
+    assert code == 409, blocked
+    assert "Manual Save" in blocked["detail"]["message"]
     save_tour(server)
     for action in ("play", "confirm-result"):
         execute(

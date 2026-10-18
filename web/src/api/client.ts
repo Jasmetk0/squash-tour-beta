@@ -5315,6 +5315,9 @@ export function simulateCalendarContinuation(runId: string, branchId: string, co
 export function simulateCalendarFollowupKnockout(runId: string, branchId: string, command: import('./calendarContinuation').FollowupKnockoutCommand): Promise<import('./calendarContinuation').FollowupKnockoutReceipt> {
   return request(continuationRoot(runId, branchId) + '/knockouts/simulate', { method: 'POST', body: JSON.stringify(command) })
 }
+export function simulateCalendarScoredFollowupKnockout(runId: string, branchId: string, command: import('./calendarContinuation').FollowupScoredCommand): Promise<import('./calendarContinuation').FollowupKnockoutReceipt> {
+  return request(continuationRoot(runId, branchId) + '/knockouts/simulate-scored', { method: 'POST', body: JSON.stringify(command) })
+}
 export function saveCalendarContinuation(runId: string, branchId: string, draft: number, fingerprint: string): Promise<unknown> {
   return request(continuationRoot(runId, branchId) + '/save', { method: 'POST', body: JSON.stringify({
     expected_draft_version: draft, expected_calendar_sporting_fingerprint: fingerprint,

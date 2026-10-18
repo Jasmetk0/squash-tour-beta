@@ -47,7 +47,11 @@ def verify_checkpoint(state, world, evidence):
     expected = build_calendar_sporting_checkpoint(world, knockout, calendar_engine_player)
     from beta_engine.domain.players.calendar_continuation_match import append_continuation
     reserved_ids = {knockout.match_id, *(m.input_context.match_id for m in knockout.matches)}
-    for entry in state.continuations:
+    from beta_engine.domain.players.calendar_sporting_week import CalendarSportingWeekAdvance, append_sporting_week
+    for entry in (*state.continuations, *state.week_events):
+        if isinstance(entry, CalendarSportingWeekAdvance):
+            expected = append_sporting_week(expected, world, knockout, entry)
+            continue
         if entry.match_id in reserved_ids or entry.command_id == knockout.command_id:
             raise ValueError('Continuation reuses original knockout identity')
         expected = append_continuation(expected, world, entry)
@@ -69,10 +73,12 @@ def saved_checkpoint(payload, evidence, *, run_id, branch_id):
     required = knockout is not None and knockout.schema_version == 'calendar_opening_knockout.v5'
     world = load_saved_initial_world(payload, run_id=run_id, branch_id=branch_id) if required or state else None
     verify_checkpoint(state, world, evidence)
-    if state and state.continuations:
+    if state:
         from beta_engine.domain.calendar.run_calendar import RunCalendar
         clock = RunCalendar.from_metadata(payload['run']['run_calendar'])
-        last = state.continuations[-1].week.calendar
+        last = state.week.calendar
+        if state.continuations and not state.week_events:
+            last = state.continuations[-1].week.calendar
         if (last.weeks_per_year, last.season_start_year_week, last.start_year) != (clock.weeks_per_year, clock.season_start_year_week, clock.start_year) or last.season_count > clock.season_count:
             raise ValueError('Saved continuation clock exceeds its Run horizon')
     return state

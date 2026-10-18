@@ -2549,10 +2549,34 @@ def save_calendar_continuation(run_id: str, branch_id: str, payload: dict,
     runtime: Annotated[ApiRuntime, Depends(get_runtime)]):
     try:
         view = CalendarContinuationService(runtime.repository).inspect(run_id=run_id, branch_id=branch_id)
-        if not view['matches'] or view['saved']:
+        if (not view['matches'] and not view['weekly_advance_count']) or view['saved']:
             raise ValueError('No unsaved continuation matches')
         return service.save_calendar_sporting_checkpoint(run_id=run_id, branch_id=branch_id,
             expected_draft_version=payload['expected_draft_version'],
             expected_calendar_sporting_fingerprint=payload['expected_calendar_sporting_fingerprint'])
     except (KeyError, TypeError, ValueError) as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+
+# Sporting-only preparation; full Official Week/Season Transition remains guarded.
+from beta_engine.application.calendar_sporting_week_service import (
+    CalendarSportingWeekService, CalendarSportingWeekCommand, CalendarSportingWeekCommit,
+)
+
+
+@router.post("/calendar-sporting-week/preview")
+def preview_calendar_sporting_week(run_id: str, branch_id: str, payload: CalendarSportingWeekCommand,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)]):
+    try:
+        return CalendarSportingWeekService(runtime.repository).preview(run_id=run_id,branch_id=branch_id,command=payload)
+    except (KeyError,TypeError,ValueError) as exc:
+        raise HTTPException(status_code=409,detail=str(exc)) from exc
+
+
+@router.post("/calendar-sporting-week/commit", status_code=201)
+def commit_calendar_sporting_week(run_id: str, branch_id: str, payload: CalendarSportingWeekCommit,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)]):
+    try:
+        return CalendarSportingWeekService(runtime.repository).commit(run_id=run_id,branch_id=branch_id,request=payload)
+    except (KeyError,TypeError,ValueError) as exc:
+        raise HTTPException(status_code=409,detail=str(exc)) from exc

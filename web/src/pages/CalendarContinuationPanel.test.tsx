@@ -5,7 +5,7 @@ import { LanguageProvider } from '../i18n/LanguageContext'
 import { CalendarContinuationPanel } from './CalendarContinuationPanel'
 import type { ContinuationView } from '../api/calendarContinuation'
 const api = vi.hoisted(() => ({ inspectCalendarContinuation: vi.fn(), simulateCalendarContinuation: vi.fn(),
-  saveCalendarContinuation: vi.fn(), replayCalendarContinuation: vi.fn(), ApiError: class ApiError extends Error {} }))
+  previewCalendarSportingWeek: vi.fn(), commitCalendarSportingWeek: vi.fn(), saveCalendarContinuation: vi.fn(), replayCalendarContinuation: vi.fn(), ApiError: class ApiError extends Error {} }))
 vi.mock('../api/client', () => api)
 const fp = 'a'.repeat(64)
 const view = (head='head'): ContinuationView => ({ schema_version:'calendar_continuation_inspection.v1',
@@ -69,4 +69,48 @@ describe('continuation interaction (HTTP boundary mocked)',()=>{
     expect(api.saveCalendarContinuation).not.toHaveBeenCalled()
     expect(screen.queryByRole('button',{name:'Save continued state'})).not.toBeInTheDocument()
   })
+  it('reviews a sporting week without mutation, requires separate consent and manual Save',async()=>{
+    const w={calendar:{weeks_per_year:52,season_start_year_week:52,start_year:2030,season_count:3},season_index:0,week:1}
+    const before={...view(),sporting_week:w,weekly_advance_count:0,weekly_advances:[]}
+    const after={...before,sporting_week:{...w,week:2},checkpoint_fingerprint:'d'.repeat(64),saved:false,can_play:false,
+      weekly_advance_count:1,weekly_advances:[{command_id:'advance',fingerprint:'e'.repeat(64),completed_week:1,target_week:2,saved:false}]}
+    api.inspectCalendarContinuation.mockResolvedValueOnce(before).mockResolvedValue(after)
+    api.previewCalendarSportingWeek.mockImplementation((_r,_b,c)=>Promise.resolve({schema_version:'calendar_sporting_week_preview.v1',
+      preview_fingerprint:'f'.repeat(64),advance_fingerprint:'e'.repeat(64),checkpoint_fingerprint:'d'.repeat(64),
+      player_count:3,changed_player_count:0,attribute_change_count:0,changes:[],advance:{run_id:'r',branch_id:'b',
+        command_id:c.command_id,source_saved_head:'head',source_checkpoint_fingerprint:fp,completed_week:w,target_week:{...w,week:2},
+        policy:{policy_id:'calendar-annual-development.provisional.v1'},scope:'sporting_only_exhibition_timeline'}}))
+    api.commitCalendarSportingWeek.mockImplementation(async()=>api.previewCalendarSportingWeek.mock.results[0].value)
+    render(panel());await screen.findByRole('button',{name:'Review sporting week preparation'})
+    fireEvent.change(screen.getByLabelText('Continuation reason'),{target:{value:'Prepare another sporting week'}})
+    fireEvent.click(screen.getByRole('button',{name:'Review sporting week preparation'}))
+    await screen.findByText('Changed players / attributes: 0 / 0')
+    expect(api.commitCalendarSportingWeek).not.toHaveBeenCalled()
+    expect(screen.getByRole('button',{name:'Prepare sporting week'})).toBeDisabled()
+    fireEvent.click(screen.getByLabelText('Confirm this sporting-only weekly preparation.'))
+    fireEvent.click(screen.getByRole('button',{name:'Prepare sporting week'}))
+    await screen.findByText('Sporting preparation awaiting manual Save.')
+    expect(api.commitCalendarSportingWeek).toHaveBeenCalledWith('r','b',expect.objectContaining({expected_saved_head:'head',expected_checkpoint_fingerprint:fp}),'f'.repeat(64))
+    expect(api.saveCalendarContinuation).not.toHaveBeenCalled()
+    expect(screen.getByRole('button',{name:'Play continuation match'})).toBeDisabled()
+    expect(screen.getByRole('button',{name:'Review continuation Save'})).toBeEnabled()
+  })
+  it('clears weekly consent and preview when the reason changes',async()=>{
+    const w={calendar:{weeks_per_year:52,season_start_year_week:1,start_year:2030,season_count:3},season_index:0,week:1}
+    api.inspectCalendarContinuation.mockResolvedValue({...view(),sporting_week:w,weekly_advance_count:0,weekly_advances:[]})
+    api.previewCalendarSportingWeek.mockImplementation((_r,_b,c)=>Promise.resolve({schema_version:'calendar_sporting_week_preview.v1',
+      preview_fingerprint:'f'.repeat(64),advance_fingerprint:'e'.repeat(64),checkpoint_fingerprint:'d'.repeat(64),
+      player_count:3,changed_player_count:0,attribute_change_count:0,changes:[],advance:{run_id:'r',branch_id:'b',command_id:c.command_id,
+        source_saved_head:'head',source_checkpoint_fingerprint:fp,completed_week:w,target_week:{...w,week:2},
+        policy:{policy_id:'calendar-annual-development.provisional.v1'},scope:'sporting_only_exhibition_timeline'}}))
+    render(panel());await screen.findByLabelText('Continuation reason')
+    fireEvent.change(screen.getByLabelText('Continuation reason'),{target:{value:'First'}})
+    fireEvent.click(screen.getByRole('button',{name:'Review sporting week preparation'}))
+    await screen.findByLabelText('Confirm this sporting-only weekly preparation.')
+    fireEvent.click(screen.getByLabelText('Confirm this sporting-only weekly preparation.'))
+    fireEvent.change(screen.getByLabelText('Continuation reason'),{target:{value:'Changed'}})
+    expect(screen.queryByRole('button',{name:'Prepare sporting week'})).not.toBeInTheDocument()
+    expect(api.commitCalendarSportingWeek).not.toHaveBeenCalled()
+  })
+
 })

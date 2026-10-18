@@ -5807,7 +5807,8 @@ class SimulationPersistenceRepository:
                     summary = {
                         "kind": "calendar_sporting_checkpoint", "summary": "Saved continued calendar sporting state and played matches",
                         "population_sporting_checkpoint_fingerprint": component["fingerprint"],
-                        "continuation_match_count": len(component["state"].get("continuations", [])),
+                        "continuation_match_count": len(component["state"].get("continuations", [])) + sum(e.get("schema_version", "").startswith("calendar_continuation_match.") for e in component["state"].get("week_events", [])),
+                        "sporting_week_advance_count": sum(e.get("schema_version") == "calendar_sporting_week_advance.v1" for e in component["state"].get("week_events", [])),
                     }
                 elif expected_calendar_match_fingerprint is not None:
                     component = payload["content"].get(CALENDAR_MATCH_COMPONENT_KEY)

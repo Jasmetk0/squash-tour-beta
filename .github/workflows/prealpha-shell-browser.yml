@@ -32,6 +32,8 @@ on:
       - 'web/src/pages/CalendarContinuationPanel.tsx'
       - 'web/src/api/calendarContinuation.ts'
       - 'src/beta_engine/domain/players/calendar_continuation_match.py'
+      - 'src/beta_engine/domain/players/calendar_sporting_week.py'
+      - 'src/beta_engine/application/calendar_sporting_week_service.py'
       - 'src/beta_engine/application/calendar_continuation_service.py'
       - 'src/beta_engine/domain/players/sporting_bootstrap.py'
       - 'web/src/pages/CalendarCanonicalInputsPanel.tsx'

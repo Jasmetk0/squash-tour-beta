@@ -347,6 +347,18 @@ def effective_policy(state, week):
     )
 
 
+def lifecycle_calendars(state):
+    """Retain the exact clock originally effective at each generated boundary."""
+    initial = RunCalendar.from_metadata(state.rankings[0].run_calendar)
+    transitions = {
+        t.target_week.ordinal: t.target_week.calendar for t in state.transitions
+    }
+    return {
+        ordinal: transitions.get(ordinal, initial)
+        for ordinal in range(1, state.week.ordinal + 1)
+    }
+
+
 def edition_results(authority, event):
     """One authoritative result per player; immutable Edition table is the source."""
     played_fingerprint = event.fingerprint

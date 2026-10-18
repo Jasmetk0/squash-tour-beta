@@ -66,9 +66,9 @@ export function CalendarTourPanel({runId,branchId,head}:{runId:string;branchId:s
       let data:Record<string,unknown>={}
       if(action==='create-edition'){
         if(!view.state)return
-        const date={...view.state.week,week:Number(week)}
+        const date={...view.state.week,calendar:view.run_calendar??view.state.week.calendar,week:Number(week)}
         const table=Object.fromEntries(Object.entries(points).filter(([k])=>size===8||k!=='quarterfinal').map(([k,v])=>[k,Number(v)]))
-        data={edition_id:editionId,name,week:date,announcement_week:{...view.state.week,week:view.state.week.week+1},start_slot:Number(slot),main_entrant_count:size,ranked:true,point_table:table,validity_weeks:date.calendar.weeks_per_year}
+        data={edition_id:editionId,name,week:date,announcement_week:{...date,week:view.state.week.week+1},start_slot:Number(slot),main_entrant_count:size,ranked:true,point_table:table,validity_weeks:date.calendar.weeks_per_year}
       } else if(action==='submit') data={player_ids:selected}
       const command:TourCommand={action,command_id:newCommandId(),edition_id:id,expected_saved_head:view.saved_head_revision_id,expected_checkpoint_fingerprint:view.checkpoint_fingerprint,expected_tour_fingerprint:view.tour_fingerprint,seed:Number(seed),operator_label:'Admin',audit_reason:reason.trim(),data}
       const checked=validateTourPreview(await previewCalendarTour(runId,branchId,command),command,runId,branchId)

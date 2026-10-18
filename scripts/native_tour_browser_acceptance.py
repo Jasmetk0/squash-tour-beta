@@ -288,8 +288,17 @@ def main():
             server = backend()
             assert server.pid != first_pid
             evidence["backend_pids"] = [first_pid, server.pid]
-            page.reload()
+            cold_started = time.monotonic()
+            with page.expect_response(
+                lambda r: (
+                    r.request.method == "GET"
+                    and r.url == api + "/admin/runs/run/branches/branch/calendar-tour"
+                )
+            ) as reloaded:
+                page.reload()
+            assert reloaded.value.status == 200, reloaded.value.text()
             expect(panel.get_by_role("button", name="Refresh state")).to_be_enabled()
+            evidence["restart_ready_seconds"] = time.monotonic() - cold_started
             panel.get_by_label("Tour operation reason").fill(
                 "Continue the next tournament after a physical backend restart"
             )

@@ -21,6 +21,7 @@ from beta_engine.application.calendar_sporting_week_service import (
     CalendarSportingWeekCommand,
     CalendarSportingWeekService,
 )
+from beta_engine.domain.calendar.run_week_position import RunWeekPosition
 from beta_engine.domain.players.calendar_followup_points import (
     CalendarFollowupEightPointPolicy,
     CalendarFollowupPointPolicy,
@@ -47,6 +48,7 @@ from beta_engine.domain.tournaments.calendar_tour import (
     calculate_tour_ranking,
     edition_results,
     effective_policy,
+    lifecycle_calendars,
     ranking_week,
 )
 from beta_engine.domain.tournaments.entry_field import TournamentEntryFieldResolver
@@ -84,6 +86,7 @@ def _lifecycle_history(world, week, state):
         derive_calendar_bootstrap_lifecycle(world),
         week,
         tuple(s for a in state.editions for s in a.submissions) if state else (),
+        effective_calendars=lifecycle_calendars(state) if state else None,
     )
 
 
@@ -305,6 +308,7 @@ class CalendarTourService:
                 "branch_id": branch_id,
                 "saved_head_revision_id": rev.saved_head_revision_id,
                 "draft_version": rev.working_draft.draft_version,
+                "run_calendar": _clock.to_metadata(),
                 "checkpoint_fingerprint": cp.fingerprint if cp else None,
                 "tour_fingerprint": state.fingerprint if state else None,
                 "saved": bool(state and signed == state and cp == saved),
@@ -666,7 +670,7 @@ class CalendarTourService:
         retired = tuple(p.player_id for p in lifecycle.players if p.status == "retired")
         ranking = calculate_tour_ranking(state, cp, target=target, retired=retired)
         return {
-            "completed_week": cp.week.model_dump(mode="json"),
+            "completed_week": prepared["advance"]["completed_week"],
             "target_week": target.model_dump(mode="json"),
             "development_policy": policy.development.model_dump(mode="json"),
             "target_ranking_policy": effective_policy(state, target).ranking.model_dump(
@@ -710,12 +714,15 @@ class CalendarTourService:
                 raise ValueError(
                     "Native intake source requires calendar materialization before Tour initialization"
                 )
-            life = _lifecycle_history(world, cp.week, None)
+            effective_week = RunWeekPosition(
+                calendar=clock, season_index=cp.week.season_index, week=cp.week.week
+            )
+            life = _lifecycle_history(world, effective_week, None)
             if persist:
                 for item in life:
                     put_lifecycle(session, item)
             policy = CalendarTourPolicy(
-                effective_week=cp.week,
+                effective_week=effective_week,
                 ranking=OfficialRankingPolicy(
                     policy_id="native-tour.initial.v1",
                     best_n=command.data.get("best_n", 15),
@@ -733,7 +740,7 @@ class CalendarTourService:
             state = CalendarTourState(
                 run_id=cp.run_id,
                 branch_id=cp.branch_id,
-                week=cp.week,
+                week=effective_week,
                 checkpoint_fingerprint=cp.fingerprint,
                 lifecycle_fingerprint=life[-1].fingerprint,
                 policies=(policy,),
@@ -843,7 +850,9 @@ class CalendarTourService:
             }
             transition = CalendarTourTransition(
                 command_id=command.command_id,
-                completed_week=cp.week,
+                completed_week=RunWeekPosition.model_validate_json(
+                    json.dumps(impact["completed_week"])
+                ),
                 target_week=successor.week,
                 sporting_advance_fingerprint=impact["sporting"]["advance_fingerprint"],
                 ranking_fingerprint=ranking.fingerprint,
@@ -912,7 +921,7 @@ class CalendarTourService:
                                 event_id=authority.edition.edition_id,
                                 player_id=pid,
                                 entry_window="main",
-                                submission_week=cp.week,
+                                submission_week=authority.edition.week,
                                 decision_slot_ordinal=slot,
                                 nr_tie_break_token=canonical_hash(
                                     {

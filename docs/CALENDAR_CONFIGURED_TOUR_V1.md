@@ -98,6 +98,12 @@ exact original-match/component/prefix proofs reused only inside one lineage walk
 batched intermediate tournament states strictly validated before the final write.
 Raw revision bytes, hash, scope, ancestry, source fold and live owner checks remain.
 No runtime HTTP timeout is increased and no SQL/hash repair is part of acceptance.
+Navigation reads expose current native clock metadata without repeating an
+operation's full sporting preflight. Commands, full inspection and Saved/public
+reads retain that verification. Compatible horizon extension preserves each
+historical lifecycle boundary's original calendar and predecessor hash; only the
+new boundary uses the extended horizon. Rehashed corrupt receipt projections
+must fail as source conflicts rather than returning a successful retry.
 
 ## Verification status
 

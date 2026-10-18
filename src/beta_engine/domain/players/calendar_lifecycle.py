@@ -217,15 +217,18 @@ def advance_calendar_lifecycle(predecessor, target, submissions=()):
     )
 
 
-def calendar_lifecycle_history(bootstrap, target, submissions=()):
+def calendar_lifecycle_history(
+    bootstrap, target, submissions=(), *, effective_calendars=None
+):
     states = [bootstrap]
     for ordinal in range(1, target.ordinal + 1):
-        position = target.calendar.position_at_ordinal(ordinal)
+        calendar = (effective_calendars or {}).get(ordinal, target.calendar)
+        position = calendar.position_at_ordinal(ordinal)
         states.append(
             advance_calendar_lifecycle(
                 states[-1],
                 RunWeekPosition(
-                    calendar=target.calendar,
+                    calendar=calendar,
                     season_index=position.season_index,
                     week=position.season_week,
                 ),

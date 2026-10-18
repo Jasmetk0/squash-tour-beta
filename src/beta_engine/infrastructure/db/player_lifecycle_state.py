@@ -422,12 +422,13 @@ def load_saved_lifecycle(payload, *, run_id, branch_id):
             tuple((p.player_id, p.birth_year, p.birth_year_week, p.age_years_at_season_start, p.source_generation_fingerprint) for p in world.players)):
             raise ValueError("Saved calendar lifecycle differs from its InitialWorld players")
         if len(states)>1:
-            from beta_engine.domain.tournaments.calendar_tour import CalendarTourState
+            from beta_engine.domain.tournaments.calendar_tour import CalendarTourState, lifecycle_calendars
             tour_component=payload.get('content',{}).get('calendar_tour_authority')
             if not tour_component:
                 raise ValueError('Native lifecycle progression requires its Tour owner')
             tour=CalendarTourState.model_validate_json(json.dumps(tour_component['state']))
-            expected=calendar_lifecycle_history(state,tour.week,tuple(s for a in tour.editions for s in a.submissions))
+            expected=calendar_lifecycle_history(state,tour.week,tuple(s for a in tour.editions for s in a.submissions),
+                effective_calendars=lifecycle_calendars(tour))
             if states!=expected or states[-1].fingerprint!=tour.lifecycle_fingerprint:
                 raise ValueError('Native lifecycle history differs from actual births, policy or Tour entry')
     elif any(isinstance(s,CalendarTourLifecycleState) for s in states):

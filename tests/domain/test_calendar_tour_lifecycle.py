@@ -120,3 +120,42 @@ def test_official_development_stops_for_already_retired_players_without_changing
         cp.players,
     )
     assert develop_and_recover(cp, world, **args)[1] != cp.players
+
+
+def test_horizon_extension_preserves_every_original_lifecycle_hash():
+    from beta_engine.domain.players.calendar_lifecycle import calendar_lifecycle_history
+
+    clock = RunCalendar(52, 35, 2030, 3)
+    baseline = CalendarPlayerLifecycleState(
+        run_id="r",
+        branch_id="b",
+        week=RunWeekPosition(calendar=clock, season_index=0, week=1),
+        players=(
+            CalendarPlayerLifecycleIdentity(
+                player_id="p",
+                birth_year=2010,
+                birth_year_week=34,
+                age=20,
+                source_generation_fingerprint="a" * 64,
+            ),
+        ),
+        source_initial_world_fingerprint="b" * 64,
+        policy=PlayerLifecyclePolicy(
+            policy_id="stored", automatic_retirement_age=46, provenance="Stored"
+        ),
+    )
+    old = calendar_lifecycle_history(
+        baseline, RunWeekPosition(calendar=clock, season_index=0, week=2)
+    )
+    extended = RunCalendar(52, 35, 2030, 5)
+    current = calendar_lifecycle_history(
+        baseline,
+        RunWeekPosition(calendar=extended, season_index=0, week=3),
+        effective_calendars={1: clock},
+    )
+    assert current[:2] == old
+    assert tuple(s.fingerprint for s in current[:2]) == tuple(
+        s.fingerprint for s in old
+    )
+    assert current[-1].predecessor_fingerprint == old[-1].fingerprint
+    assert current[-1].week.calendar == extended

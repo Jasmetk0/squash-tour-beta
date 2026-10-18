@@ -159,6 +159,9 @@ def verify_tour(state, checkpoint, world=None):
         receipt = next(
             (r for r in state.receipts if r.command_id == transition.command_id), None
         )
+        impact = receipt.result.get("impact") if receipt else None
+        if not isinstance(impact, dict):
+            raise TypeError("Tour transition receipt lacks its authoritative impact")
         if (
             receipt is None
             or receipt.result.get("impact", {}).get("ranking")
@@ -196,6 +199,15 @@ def verify_tour(state, checkpoint, world=None):
             != effective_policy(state, transition.completed_week).development
         ):
             raise ValueError("Official transition lacks coupled development evidence")
+        sporting = impact.get("sporting")
+        if (
+            not isinstance(sporting, dict)
+            or sporting.get("advance") != event.model_dump(mode="json")
+            or sporting.get("advance_fingerprint") != event.fingerprint
+        ):
+            raise ValueError(
+                "Tour transition receipt differs from actual sporting development"
+            )
         if world is not None:
             from beta_engine.domain.players.calendar_sporting_week import (
                 age_in_run_years,

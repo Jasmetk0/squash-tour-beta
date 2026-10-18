@@ -310,6 +310,11 @@ def test_configured_tour_two_weeks_real_matches_rankings_and_restart(
             == 409
         )
         assert inspect(server)["state"]["week"]["week"] == 5
+        from tests.api.test_calendar_sporting_horizon_extension import extend, extension
+
+        code, review = extension(server, 4)
+        assert code == 200 and review["can_save"], review
+        assert extend(server, review)[0] == 200
         edition(server, "second", 8)
         second_transition, _ = execute(
             server, command(inspect(server), "transition", name="week5-to6")
@@ -338,19 +343,28 @@ def test_configured_tour_two_weeks_real_matches_rankings_and_restart(
         from beta_engine.domain.run_packages import canonical_hash
         from beta_engine.infrastructure.db.models import CalendarTourAuthorityModel
 
-        with _repo._session_factory.begin() as session:
-            row = session.get(CalendarTourAuthorityModel, ("run", "branch"))
-            original = (row.payload_json, row.fingerprint)
-            corrupt = json.loads(row.payload_json)
-            corrupt["editions"][0]["edition"]["point_table"]["champion"] = 999
-            row.payload_json = json.dumps(corrupt)
-            row.fingerprint = canonical_hash(corrupt)
-        try:
-            assert _request("GET", tour_url(server))[0] == 409
-        finally:
+        for damage in ("point_table", "receipt"):
             with _repo._session_factory.begin() as session:
                 row = session.get(CalendarTourAuthorityModel, ("run", "branch"))
-                row.payload_json, row.fingerprint = original
+                original = (row.payload_json, row.fingerprint)
+                corrupt = json.loads(row.payload_json)
+                if damage == "point_table":
+                    corrupt["editions"][0]["edition"]["point_table"]["champion"] = 999
+                else:
+                    receipt = next(
+                        r
+                        for r in corrupt["receipts"]
+                        if r["result"]["action"] == "transition"
+                    )
+                    receipt["result"]["impact"] = None
+                row.payload_json = json.dumps(corrupt)
+                row.fingerprint = canonical_hash(corrupt)
+            try:
+                assert _request("GET", tour_url(server))[0] == 409
+            finally:
+                with _repo._session_factory.begin() as session:
+                    row = session.get(CalendarTourAuthorityModel, ("run", "branch"))
+                    row.payload_json, row.fingerprint = original
     with ApiServer(database_url=db) as restarted:
         assert inspect(restarted)["saved"]
         assert inspect(restarted)["state"]["week"]["week"] == 6

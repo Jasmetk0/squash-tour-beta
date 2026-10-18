@@ -14,7 +14,7 @@ Master remains v85. This is correctness/verification work, not new product polic
 | #1536 | Four-player prepared awards | Nine workflows green; [Fast CI](https://github.com/Jasmetk0/squash-tour-beta/actions/runs/39122141534) |
 | #1537 | Seven-match eight-player knockout | Nine workflows green; [Fast CI](https://github.com/Jasmetk0/squash-tour-beta/actions/runs/39123570024) |
 | #1538 | Eight-player prepared awards | Eight browser workflows green; [Fast CI failed](https://github.com/Jasmetk0/squash-tour-beta/actions/runs/39127751386) |
-| #1539 | Signed per-player native result closure; validation performance | Eight browser workflows green; [Fast CI](https://github.com/Jasmetk0/squash-tour-beta/actions/runs/39132765526) was still running at audit start |
+| #1539 | Signed per-player native result closure; validation performance | All nine workflows eventually green; [Fast CI](https://github.com/Jasmetk0/squash-tour-beta/actions/runs/39132765526) finished during this audit |
 
 #1538's failed backend job `117676449651` reached the final W52 historical
 restore, then exceeded the real HTTP client's 120-second request timeout.
@@ -41,6 +41,19 @@ need explicit post-merge regression execution.
 4. **Closure availability:** a previous scored tournament remained actionable
    after a later exhibition/week even though the server rejects that action.
    Offer closure only while it is the latest sporting event in its played week.
+5. **Cold restart latency:** the extended real regression passed retries/Save/week
+   progression but then exceeded 120 seconds on the first read after restart.
+   Profiling found each eight-player award derivation serialized/hashed the same
+   complete tournament eight times. Compute immutable shared source/policy hashes
+   once per derivation, without retaining them across calls. Continuation context
+   also now parses original evidence and immediately performs its coupled Saved
+   checkpoint verification once, instead of performing that same fold twice.
+
+On one copied real eight-player, nine-revision history with a post-closure
+exhibition and Week 3, a fresh-repository `cProfile` inspection fell from
+130.96 to 74.34 seconds. The full-tournament award hash property was read 240
+times before, 25 after. This is a scoped diagnostic, not a general latency SLA;
+source objects, all deep validation and historical checks remain unchanged.
 
 ## Verification and limits
 
@@ -48,6 +61,14 @@ The four-player client regressions were reproduced red before the repair:
 swapped finalist awards and a non-participant semifinal winner both passed
 the former guard. The focused frontend API/component suite and build validate
 the repair without claiming a production browser journey.
+
+The original scored-eight HTTP/SQLite module passed both W52/W80 on the audited
+post-merge base, including #1538's failing final restore. The extended closure
+test then exposed the additional cold-read timeout above; final repair-head
+W52/W80 closure regressions must pass with that longer history. Focused tests
+assert one source hash per four/eight-player derivation, unchanged awards, and
+one coupled Saved verification per continuation context, including fail-closed
+rejection of malformed Saved sporting content.
 
 The real result-closure API regression covers immediate retry, Save, a later
 week, cold restart, exact rally replay and backward/forward restore of the new

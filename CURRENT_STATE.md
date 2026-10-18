@@ -248,3 +248,13 @@ contains performance changes but its changed-test selection does not rerun that
 #1538 module. The audit therefore runs both affected real W52/W80 API modules
 explicitly; final repair-head CI must finish green before handoff. Existing browser
 smokes do not exercise the new four/eight-player/closure UI end to end.
+
+The extended repair regression subsequently exposed a >120-second first read
+after restart with the longer post-closure match history. Scoped profiling found
+eight identical full-tournament hashes per award derivation and a duplicate Saved
+checkpoint fold inside continuation context. These are now computed/validated
+once within the same operation; no cross-request cache or integrity bypass is
+added. Profiled cold inspection of the same copied nine-revision history fell
+from 130.96s to 74.34s. New focused regressions preserve four/eight-player award
+facts and fail-closed malformed Saved validation; final-head real regressions
+remain the handoff gate. See the audit for evidence and scope.

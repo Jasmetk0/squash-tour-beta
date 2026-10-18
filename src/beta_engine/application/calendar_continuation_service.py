@@ -103,9 +103,12 @@ class CalendarContinuationService:
         rows = load_match_rows(session, run_id=run_id, branch_id=branch_id)
         evidence = rows[0] if len(rows) == 1 else None
         from beta_engine.infrastructure.db.calendar_standalone_match_state import (
-            load_saved_calendar_match,
+            _parse_saved_calendar_match_evidence,
         )
-        saved_evidence = load_saved_calendar_match(revision.saved_revision.payload, run_id=run_id, branch_id=branch_id)
+        # Validate the coupled Saved owner exactly once, immediately below, in
+        # this transaction. load_saved_calendar_match already performs that
+        # same full fold and discards the checkpoint it has just verified.
+        saved_evidence = _parse_saved_calendar_match_evidence(revision.saved_revision.payload, run_id=run_id, branch_id=branch_id)
         saved = saved_checkpoint(revision.saved_revision.payload, saved_evidence,
             run_id=run_id, branch_id=branch_id)
         if saved is not None:

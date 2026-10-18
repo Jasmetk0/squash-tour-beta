@@ -4,6 +4,7 @@ The optimization never persists verification between HTTP requests: each new
 transaction still checks the stored revision bytes, metadata and component hash.
 """
 import json
+from types import SimpleNamespace
 
 import pytest
 
@@ -81,3 +82,34 @@ def test_save_reuses_reviewed_state_but_revalidates_after_commit(tmp_path, monke
     # separate transactions. Previously the atomic Save alone validated twice.
     assert len(calls) == 3
     assert len({id(session) for session, _ in calls}) == 3
+
+
+@pytest.mark.parametrize("malformed", [False, True])
+def test_continuation_context_verifies_the_coupled_saved_owner_once(monkeypatch, malformed):
+    from beta_engine.application import calendar_continuation_service as continuation
+    from beta_engine.infrastructure.db import calendar_sporting_checkpoint as sporting
+
+    payload = {"content": {}}
+    if malformed:
+        payload["content"][sporting.COMPONENT_KEY] = {"fingerprint": "f" * 64, "state": {}}
+    revision = SimpleNamespace(saved_revision=SimpleNamespace(payload=payload))
+    monkeypatch.setattr(continuation.CalendarOpeningKnockoutService, "_context",
+                        lambda *_args, **_kw: (None, revision, None, None))
+    monkeypatch.setattr(continuation, "load_checkpoint", lambda *_args, **_kw: None)
+    monkeypatch.setattr(continuation, "load_match_rows", lambda *_args, **_kw: ())
+    original = sporting.saved_checkpoint
+    calls = []
+
+    def counted(*args, **kwargs):
+        calls.append(1)
+        return original(*args, **kwargs)
+
+    monkeypatch.setattr(sporting, "saved_checkpoint", counted)
+    monkeypatch.setattr(continuation, "saved_checkpoint", counted)
+    service = continuation.CalendarContinuationService(object())
+    if malformed:
+        with pytest.raises(ValueError):
+            service._context(None, run_id="r", branch_id="b")
+    else:
+        assert service._context(None, run_id="r", branch_id="b")[4:6] == (None, None)
+    assert len(calls) == 1

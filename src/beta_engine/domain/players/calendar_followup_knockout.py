@@ -156,7 +156,7 @@ def append_followup_knockout(checkpoint, world, event: CalendarFollowupKnockout)
         checkpoint.schema_version not in {
             "calendar_sporting_checkpoint.v3", "calendar_sporting_checkpoint.v4",
             "calendar_sporting_checkpoint.v5", "calendar_sporting_checkpoint.v6",
-            "calendar_sporting_checkpoint.v7",
+            "calendar_sporting_checkpoint.v7", "calendar_sporting_checkpoint.v8",
         }
         or not checkpoint.week_events
         or (checkpoint.run_id, checkpoint.branch_id) != (event.run_id, event.branch_id)
@@ -179,7 +179,9 @@ def append_followup_knockout(checkpoint, world, event: CalendarFollowupKnockout)
         intermediate = append_continuation(intermediate, world, match)
     successor = checkpoint.model_copy(update={
         "schema_version": (
-            "calendar_sporting_checkpoint.v7"
+            "calendar_sporting_checkpoint.v8"
+            if checkpoint.schema_version == "calendar_sporting_checkpoint.v8"
+            else "calendar_sporting_checkpoint.v7"
             if checkpoint.schema_version == "calendar_sporting_checkpoint.v7"
             or event.schema_version == "calendar_followup_knockout.v4"
             else "calendar_sporting_checkpoint.v6"

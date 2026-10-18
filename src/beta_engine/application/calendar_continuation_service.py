@@ -226,7 +226,7 @@ class CalendarContinuationService:
                     or revision.saved_head_revision_id != command.expected_saved_head
                     or state.fingerprint != command.expected_checkpoint_fingerprint):
                 raise ValueError('Save the current checkpoint and review its exact Saved HEAD before a new match')
-            if any(e.command_id == command.command_id for e in state.weekly_advances):
+            if any(e.command_id == command.command_id for e in (*state.weekly_advances, *state.closures)):
                 raise ValueError('Command identity already used by sporting week advance')
             if command.match_id in {knockout.match_id, *(m.input_context.match_id for m in knockout.matches)} or command.command_id == knockout.command_id:
                 raise ValueError('Continuation cannot reuse the original knockout identity')

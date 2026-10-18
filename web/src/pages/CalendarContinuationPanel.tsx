@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { previewCalendarSportingWeek, commitCalendarSportingWeek, inspectCalendarContinuation, simulateCalendarContinuation, simulateCalendarFollowupKnockout, simulateCalendarScoredFollowupKnockout, saveCalendarContinuation, replayCalendarContinuation } from '../api/client'
-import { verifyFollowupKnockout, type FollowupKnockoutCommand, type FollowupScoredCommand, verifySportingWeek, type SportingWeekCommand, type SportingWeekPreview, verifyContinuation, type ContinuationView, type ContinuationReceipt } from '../api/calendarContinuation'
+import { previewCalendarSportingWeek, commitCalendarSportingWeek, inspectCalendarContinuation, simulateCalendarContinuation, simulateCalendarFollowupKnockout, simulateCalendarScoredFollowupKnockout, simulateCalendarEightFollowupKnockout, saveCalendarContinuation, replayCalendarContinuation } from '../api/client'
+import { verifyFollowupKnockout, verifyEightFollowupKnockout, type FollowupEightCommand, type FollowupKnockoutCommand, type FollowupScoredCommand, verifySportingWeek, type SportingWeekCommand, type SportingWeekPreview, verifyContinuation, type ContinuationView, type ContinuationReceipt } from '../api/calendarContinuation'
 import { newCommandId } from '../admin/branchSimulation'
 import { useLanguage } from '../i18n/LanguageContext'
 import { formatApiError } from '../utils/apiErrors'
@@ -17,6 +17,9 @@ export function CalendarContinuationPanel({ runId, branchId, head, onChange }: {
   const [consent, setConsent] = useState(false), [saveConsent, setSaveConsent] = useState(false)
   const [knockoutEntrants, setKnockoutEntrants] = useState<string[]>([])
   const [knockoutConsent, setKnockoutConsent] = useState(false)
+  const [eightEntrants, setEightEntrants] = useState<string[]>([])
+  const [eightConsent, setEightConsent] = useState(false)
+  const eightCommandId = useRef<string | null>(null)
   const [preparePoints, setPreparePoints] = useState(false)
   const [pointConsent, setPointConsent] = useState(false)
   const [category, setCategory] = useState('Operator-reviewed exhibition')
@@ -33,21 +36,22 @@ export function CalendarContinuationPanel({ runId, branchId, head, onChange }: {
   useEffect(() => {
     const stamp = epoch.current
     setWeekReview(null); setWeekConsent(false); setView(null); setReview(null); setReceipt(null); setConsent(false); setSaveConsent(false)
-    setKnockoutConsent(false); setPointConsent(false); knockoutCommandId.current = null
+    setKnockoutConsent(false); setEightConsent(false); setPointConsent(false); knockoutCommandId.current = null; eightCommandId.current = null
     setError(null); setNotice(null); setBusy(true)
     void inspectCalendarContinuation(runId, branchId).then(v => {
       if (epoch.current !== stamp || current.current !== target) return
       const checked = verifyContinuation(v, runId, branchId, head)
       setView(checked); setA(checked.player_ids[0] ?? ''); setB(checked.player_ids[1] ?? '')
       setKnockoutEntrants(checked.player_ids.slice(0, 4))
+      setEightEntrants(checked.player_ids.slice(0, 8))
     }).catch(e => { if (epoch.current === stamp && current.current === target) setError(formatApiError(e)) })
       .finally(() => { if (epoch.current === stamp && current.current === target) setBusy(false) })
     return () => { epoch.current += 1 }
   }, [target, runId, branchId, head])
-  useEffect(() => { commandId.current = null; weekCommandId.current = null; knockoutCommandId.current = null
-    setConsent(false); setKnockoutConsent(false); setPointConsent(false); setWeekConsent(false); setWeekReview(null) }, [target, a, b, seed, reason, knockoutEntrants.join('|'), preparePoints, category, championPoints, finalistPoints, semiPoints])
+  useEffect(() => { commandId.current = null; weekCommandId.current = null; knockoutCommandId.current = null; eightCommandId.current = null
+    setConsent(false); setKnockoutConsent(false); setEightConsent(false); setPointConsent(false); setWeekConsent(false); setWeekReview(null) }, [target, a, b, seed, reason, knockoutEntrants.join('|'), eightEntrants.join('|'), preparePoints, category, championPoints, finalistPoints, semiPoints])
   const read = async () => verifyContinuation(await inspectCalendarContinuation(runId, branchId), runId, branchId, head)
-  const perform = async (action: 'play' | 'review' | 'save' | 'replay' | 'week-review' | 'week-commit' | 'knockout', matchId?: string) => {
+  const perform = async (action: 'play' | 'review' | 'save' | 'replay' | 'week-review' | 'week-commit' | 'knockout' | 'knockout-eight', matchId?: string) => {
     if (!view || busy) return
     const stamp = epoch.current, from = target
     const valid = () => epoch.current === stamp && current.current === from
@@ -70,6 +74,33 @@ export function CalendarContinuationPanel({ runId, branchId, head, onChange }: {
         const latest = await read(); if (!valid()) return
         if (latest.checkpoint_fingerprint !== r.checkpoint_fingerprint || latest.sporting_week?.week !== r.advance.target_week.week) throw Error('Weekly owner changed after preparation')
         setView(latest); setWeekReview(null); setWeekConsent(false); setReceipt(null); setReview(null); setSaveConsent(false); setConsent(false); onChange()
+      } else if (action === 'knockout-eight') {
+        if (!view.can_play || !view.saved || !view.checkpoint_fingerprint
+          || !view.sporting_week || view.sporting_week.week < 2
+          || eightEntrants.length !== 8 || new Set(eightEntrants).size !== 8
+          || eightEntrants.some(p => !view.player_ids.includes(p))
+          || !eightConsent || !reason.trim() || !/^-?\d+$/.test(seed)
+          || !Number.isSafeInteger(Number(seed))) return
+        eightCommandId.current ??= newCommandId()
+        const command: FollowupEightCommand = {
+          command_id: eightCommandId.current,
+          tournament_id: 'eight-' + eightCommandId.current,
+          expected_saved_head: head, expected_checkpoint_fingerprint: view.checkpoint_fingerprint,
+          entrant_ids: eightEntrants as FollowupEightCommand['entrant_ids'],
+          seed: Number(seed), operator_label: 'Admin', audit_reason: reason.trim(),
+        }
+        const played = verifyEightFollowupKnockout(
+          await simulateCalendarEightFollowupKnockout(runId, branchId, command), command, view,
+        )
+        if (!valid()) return
+        const latest = await read(); if (!valid()) return
+        const last = latest.tournaments?.[latest.tournaments.length - 1]
+        if (latest.checkpoint_fingerprint !== played.checkpoint_fingerprint
+          || last?.fingerprint !== played.fingerprint
+          || latest.matches.length !== view.matches.length + 7)
+          throw Error('Eight-player sporting owner changed after play')
+        setView(latest); setEightConsent(false); setReceipt(null)
+        setReview(null); setSaveConsent(false); onChange()
       } else if (action === 'knockout') {
         if (!view.can_play || !view.saved || !view.checkpoint_fingerprint
           || !view.sporting_week || view.sporting_week.week < 2
@@ -200,6 +231,29 @@ export function CalendarContinuationPanel({ runId, branchId, head, onChange }: {
           || knockoutEntrants.length !== 4 || new Set(knockoutEntrants).size !== 4
           || !reason.trim() || !/^-?\d+$/.test(seed) || !Number.isSafeInteger(Number(seed))}
           onClick={() => void perform('knockout')}>{cs ? 'Odehrát další čtyřčlenný turnaj' : 'Play next four-player knockout'}</button>
+        {view.player_ids.length >= 8 && <>
+          <h5>{cs ? 'Osmičlenný vyřazovací turnaj' : 'Eight-player knockout'}</h5>
+          <p className="status">{cs ? 'Čtyři čtvrtfinále, dvě semifinále, finále. Sedm skutečně odehraných zápasů v jedné operaci. Po odehrání je nutný ruční Save; bez Official Tour bodů.' : 'Four quarterfinals, two semifinals and a final. Seven actual MatchEngine matches in one operation; manual Save required afterward. No Official Tour points.'}</p>
+          {Array.from({length: 8}, (_, index) => <label key={index}>
+            {cs ? 'Pozice v pavouku' : 'Bracket position'} {index + 1}
+            <select aria-label={(cs ? 'Pozice v pavouku' : 'Bracket position') + ' ' + (index + 1)}
+              disabled={busy || !view.can_play} value={eightEntrants[index] ?? ''}
+              onChange={e => setEightEntrants(old => old.map((p, i) => i === index ? e.target.value : p))}>
+              {view.player_ids.map(p => <option key={p} value={p}>{p}</option>)}
+            </select>
+          </label>)}
+          <label><input type="checkbox" checked={eightConsent}
+            disabled={busy || !view.can_play || new Set(eightEntrants).size !== 8}
+            onChange={e => setEightConsent(e.target.checked)} />
+            {cs ? 'Potvrzuji sedm skutečných zápasů ze současného uloženého stavu.' : 'Confirm all seven real matches from the current Saved checkpoint.'}
+          </label>
+          <button disabled={busy || !view.can_play || !eightConsent || eightEntrants.length !== 8
+            || new Set(eightEntrants).size !== 8 || !reason.trim()
+            || !/^-?\d+$/.test(seed) || !Number.isSafeInteger(Number(seed))}
+            onClick={() => void perform('knockout-eight')}>
+            {cs ? 'Odehrát osmičlenný turnaj' : 'Play eight-player knockout'}
+          </button>
+        </>}
       </section>}
       {view.sporting_week && <section aria-label="Sporting weekly preparation">
         <h5>{cs ? 'Příprava dalšího sportovního týdne' : 'Prepare next sporting week'}</h5>
@@ -227,7 +281,7 @@ export function CalendarContinuationPanel({ runId, branchId, head, onChange }: {
       </>}
       {receipt && <p>{cs ? 'Použitá únava A / B' : 'Consumed fatigue A / B'}: {receipt.match.canonical_projections.map(p => p.long_term_fatigue).join(' / ')}</p>}
       {!!view.tournaments?.length && <table aria-label="Later-week knockout history"><thead><tr><th>{cs ? 'Turnaj' : 'Tournament'}</th><th>{cs ? 'Vítěz' : 'Winner'}</th><th>{cs ? 'Týden' : 'Week'}</th><th>{cs ? 'Připravené body (neoficiální)' : 'Prepared points (unofficial)'}</th><th>Save</th></tr></thead><tbody>
-        {view.tournaments.map(t => <tr key={t.fingerprint}><td>{t.tournament_id}</td><td>{t.winner_player_id}</td><td>{t.week}</td><td>{
+        {view.tournaments.map(t => <tr key={t.fingerprint}><td>{t.tournament_id} · {t.entrant_ids.length} {cs ? 'hráčů' : 'players'}</td><td>{t.winner_player_id}</td><td>{t.week}</td><td>{
           t.prepared_points_status === 'prepared_not_official'
             ? (t.prepared_awards ?? []).map(a => `${a.player_id}: ${a.main_points}`).join(' · ')
             : '—'

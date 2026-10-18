@@ -109,13 +109,13 @@ def continuation_anchor(value):
     })
 
 
-def continuation_projections(checkpoint, world, ids, policy=None):
+def continuation_projections(checkpoint, world, ids, policy=None, *, source_fingerprint=None):
     policy = policy or CanonicalMatchInputProjectionPolicy()
     records = {p.player_id: p for p in checkpoint.players}
     profiles = {p.player_id: p for p in world.players}
     if len(set(ids)) != 2 or not set(ids) <= records.keys() or not set(ids) <= profiles.keys():
         raise ValueError('Continuation players must belong to the owned population')
-    fp = checkpoint.fingerprint
+    fp = source_fingerprint if source_fingerprint is not None else checkpoint.fingerprint
     return tuple(project_player(records[pid], source_sporting_fingerprint=fp, policy=policy,
         profile_source_fingerprint=profiles[pid].source_generation_fingerprint,
         profile_provenance=('Saved native population sporting checkpoint; no recovery or annual development' if checkpoint.week.ordinal == 0 else 'Saved native sporting-week checkpoint; provisional annual development and weekly recovery'),
@@ -136,16 +136,23 @@ def continuation_effects(checkpoint, context, result, policy):
         (SimpleNamespace(input_context=context, result=result),), policy)
 
 
-def append_continuation(checkpoint, world, entry):
-    """Rebuild the exact successor, preserving every unaffected player record."""
+def append_continuation(checkpoint, world, entry, *, _defer_checkpoint_validation=False):
+    """Rebuild exact successor, preserving every unaffected player record.
+
+    The only batching caller is append_followup_knockout: every actual match
+    still authenticates its frozen predecessor hash, projection and effects;
+    that caller validates the *complete* tournament checkpoint once at the end.
+    Ordinary standalone replay continues strict validation per match.
+    """
     from beta_engine.domain.players.calendar_sporting_checkpoint import (
         CalendarSportingCheckpoint,
     )
     prior = checkpoint.played_continuations
     previous_clock = checkpoint.week.calendar if checkpoint.week_events else (prior[-1].week.calendar if prior else checkpoint.week.calendar)
     current = entry.week.calendar
+    predecessor_fingerprint = checkpoint.fingerprint
     if ((entry.run_id, entry.branch_id) != (checkpoint.run_id, checkpoint.branch_id)
-            or entry.sequence != len(prior) + 1 or entry.source_checkpoint_fingerprint != checkpoint.fingerprint
+            or entry.sequence != len(prior) + 1 or entry.source_checkpoint_fingerprint != predecessor_fingerprint
             or any(e.command_id == entry.command_id or e.match_id == entry.match_id for e in prior)
             or any(e.command_id == entry.command_id for e in checkpoint.weekly_advances)
             or any(e.command_id == entry.command_id for e in checkpoint.tournaments)
@@ -157,7 +164,7 @@ def append_continuation(checkpoint, world, entry):
             or current.season_count < previous_clock.season_count):
         raise ValueError('Continuation predecessor, identity, order or calendar changed')
     ids = (entry.input_context.player_a.player.player_id, entry.input_context.player_b.player.player_id)
-    if entry.canonical_projections != continuation_projections(checkpoint, world, ids, entry.projection_policy):
+    if entry.canonical_projections != continuation_projections(checkpoint, world, ids, entry.projection_policy, source_fingerprint=predecessor_fingerprint):
         raise ValueError('Continuation projection does not consume its actual preceding 57-attribute checkpoint')
     terminal, effects = continuation_effects(checkpoint, entry.input_context, entry.result, entry.state_policy)
     if entry.effects != effects:
@@ -169,10 +176,16 @@ def append_continuation(checkpoint, world, entry):
         'long_term_fatigue': by_id[p.player_id].long_term_fatigue,
     }) if p.player_id in by_id else p for p in checkpoint.players)
     if checkpoint.week_events:
-        return CalendarSportingCheckpoint.model_validate_json(checkpoint.model_copy(update={
+        successor = checkpoint.model_copy(update={
             'players': players, 'week': entry.week, 'week_events': checkpoint.week_events + (entry,),
-        }).model_dump_json())
-    return CalendarSportingCheckpoint.model_validate_json(checkpoint.model_copy(update={
-        'schema_version': 'calendar_sporting_checkpoint.v2', 'phase': 'opening_week_continued',
-        'players': players, 'continuations': prior + (entry,),
-    }).model_dump_json())
+        })
+    else:
+        successor = checkpoint.model_copy(update={
+            'schema_version': 'calendar_sporting_checkpoint.v2', 'phase': 'opening_week_continued',
+            'players': players, 'continuations': prior + (entry,),
+        })
+    if _defer_checkpoint_validation:
+        # Only the seven-match tournament reducer opts in, and it must strictly
+        # validate its terminal v4/v6/v7/v8 checkpoint before any write or Save.
+        return successor
+    return CalendarSportingCheckpoint.model_validate_json(successor.model_dump_json())

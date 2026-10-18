@@ -44,7 +44,7 @@ of the existing provisional development calibration: reference 18 bp/week at W61
 becomes 1098 bp/year; reference Form influence 4 becomes 244 annually. The yearly
 threshold is divided by W with integer arithmetic. Whole increments plus a
 remainder draw preserve expected annual exposure even for very small W, subject
-to attribute boundaries and the provisional potential ceiling. This is not a
+to attribute boundaries and the provisional potential-based growth cutoff. This is not a
 claim of empirically calibrated development curves or identical random paths.
 
 Age uses stored birth year/week and the native calendar offset, not a universal
@@ -101,4 +101,8 @@ match replay and population-record inspection expose the actually stored state.
   continuation acceptance with weekly review, confirmation, separate Save/reload,
   actual W2 match consuming saved developed/recovered inputs and exact replay.
 
-Final latest-head CI/browser evidence is recorded in the PR after completion.
+The expanded browser flow waits for the complete source-authenticated Save review
+before consent (120 seconds, matching existing request/review waits). Its workflow
+has 25 minutes for the expanded end-to-end acceptance; it does not skip the prior
+Run/Health/knockout/extension steps. Final latest-head CI/browser evidence is
+recorded in the PR after completion.

@@ -407,6 +407,9 @@ def exercise_calendar_knockout(page, *, base_url, api_url, artifacts,
     expect(continuation.get_by_text('Sporting preparation awaiting manual Save.', exact=True)).to_be_visible(timeout=120000)
     expect(continuation.get_by_role('button', name='Play continuation match', exact=True)).to_be_disabled()
     continuation.get_by_role('button', name='Review continuation Save', exact=True).click()
+    # A source-authenticated review validates the complete 1,000-player ledger;
+    # wait for its response before consent, as in the original Save flow above.
+    expect(continuation.get_by_role('button', name='Save continued state', exact=True)).to_be_disabled(timeout=120000)
     continuation.get_by_label('Confirm saving the continued state.', exact=True).check()
     with page.expect_response(lambda r: r.request.method == 'POST'
                               and r.url.endswith('/calendar-continuation/save'), timeout=120000) as response:
@@ -439,6 +442,9 @@ def exercise_calendar_knockout(page, *, base_url, api_url, artifacts,
         assert p['current_form'] == records[p['player_id']]['current_form']
     expect(continuation.get_by_text('Played, awaiting manual Save.', exact=True)).to_be_visible(timeout=120000)
     continuation.get_by_role('button', name='Review continuation Save', exact=True).click()
+    # A source-authenticated review validates the complete 1,000-player ledger;
+    # wait for its response before consent, as in the original Save flow above.
+    expect(continuation.get_by_role('button', name='Save continued state', exact=True)).to_be_disabled(timeout=120000)
     continuation.get_by_label('Confirm saving the continued state.', exact=True).check()
     with page.expect_response(lambda r: r.request.method == 'POST'
                               and r.url.endswith('/calendar-continuation/save'), timeout=120000) as response:

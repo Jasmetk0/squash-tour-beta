@@ -176,6 +176,10 @@ def main():
             panel.get_by_label("Tour operation reason").fill(
                 "Actual browser acceptance over configured Edition and saved players"
             )
+            # The pre-Tour fixture already has an immutable Saved HEAD, before
+            # any Tour-specific Save populates the receipt evidence.
+            evidence["last_saved_head"] = panel.get_attribute("data-saved-head")
+            assert evidence["last_saved_head"]
 
             def check_errors():
                 errors = panel.get_by_role("alert")

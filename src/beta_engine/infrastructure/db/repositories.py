@@ -258,6 +258,7 @@ from beta_engine.infrastructure.db.calendar_standalone_match_state import (
     COMPONENT_KEY as CALENDAR_MATCH_COMPONENT_KEY,
     capture_saved_calendar_match,
     load_saved_calendar_match,
+    load_saved_calendar_sources,
     restore_saved_calendar_match,
 )
 from beta_engine.infrastructure.db.simulation_slot_state import (
@@ -5604,6 +5605,7 @@ class SimulationPersistenceRepository:
             revision_kind = VIEWER_BRANCH_SELECTION_SAVED_REVISION_KIND
         previous_current_viewer_id = ""
         target_viewer_id = ""
+        verified_native_save_receipt = None
         try:
             with self._session_factory.begin() as session:
                 session.execute(text("BEGIN IMMEDIATE"))
@@ -5791,8 +5793,22 @@ class SimulationPersistenceRepository:
                     session, payload, run_id=run_id, branch_id=branch_id
                 )
                 capture_saved_calendar_match(
-                    session, payload, run_id=run_id, branch_id=branch_id
+                    session, payload, run_id=run_id, branch_id=branch_id,
+                    _defer_full_verification=(
+                        expected_calendar_tour_fingerprint is not None
+                    ),
                 )
+                if expected_calendar_tour_fingerprint is not None:
+                    # A native Tour Save captures live rows first, then runs the
+                    # COMPLETE source verifier exactly once on that final
+                    # in-transaction payload. The source fold authenticates
+                    # MatchEngine events, 57-attribute population checkpoints,
+                    # Official ranking transitions, lifecycle/Entry history and
+                    # source fingerprints. Pre-play Saved origins were checked
+                    # by capture_tour. Failure rolls back the entire Save.
+                    load_saved_calendar_sources(
+                        payload, run_id=run_id, branch_id=branch_id
+                    )
                 summary = viewer_branch_saved_revision_change_summary(
                     previous_viewer_branch_id=saved_viewer_id,
                     viewer_branch_id=target_viewer_id,
@@ -6065,12 +6081,41 @@ class SimulationPersistenceRepository:
                     )
                 )
                 session.flush()
+                if expected_calendar_tour_fingerprint is not None:
+                    # This exact just-inserted Signed payload was fully
+                    # authenticated above BEFORE committing. Build the Save
+                    # receipt from the flushed SQL row rather than re-running
+                    # the same expensive entire sporting/lifecycle replay
+                    # immediately after commit. Normal independent history,
+                    # Viewer and restore reads still perform full validation.
+                    new_row = session.get(BranchSavedRevisionModel, revision_id)
+                    verified_native_save_receipt = self._to_branch_saved_revision(
+                        new_row, validate_components=False
+                    )
+                    if (
+                        verified_native_save_receipt.content_hash_algorithm
+                        != CONTENT_HASH_ALGORITHM
+                        or verified_native_save_receipt.content_hash
+                        != _saved_revision_record_content_hash(
+                            verified_native_save_receipt
+                        )
+                        or (verified_native_save_receipt.run_id,
+                            verified_native_save_receipt.branch_id)
+                        != (run_id, branch_id)
+                    ):
+                        raise WorkingDraftConflictError(
+                            "Native Tour Save receipt has inconsistent immutable revision bytes"
+                        )
         except IntegrityError as exc:
             raise WorkingDraftIdentityConflictError(
                 "generated Saved Revision or audit event identity collided"
             ) from exc
 
-        revision = self.get_branch_saved_revision(revision_id=revision_id)
+        revision = (
+            verified_native_save_receipt
+            if verified_native_save_receipt is not None
+            else self.get_branch_saved_revision(revision_id=revision_id)
+        )
         audit = self.get_branch_revision_audit_event(audit_event_id=audit_event_id)
         if revision is None or audit is None:  # pragma: no cover
             raise RuntimeError("saved revision result could not be reloaded")

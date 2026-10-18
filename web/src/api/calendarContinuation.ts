@@ -66,7 +66,8 @@ export function verifyContinuation(v: ContinuationView, run: string, branch: str
          semifinal: policy.semifinal, ...(eight ? {quarterfinal: qfPoints ?? -1} : {})}
       : {}
     if (!policy || !awards || awards.length !== t.entrant_ids.length
-      || policy.schema_version !== (eight ? 'calendar_followup_point_policy.v2' : 'calendar_followup_point_policy.v1')
+      || (policy.schema_version !== undefined
+        && policy.schema_version !== (eight ? 'calendar_followup_point_policy.v2' : 'calendar_followup_point_policy.v1'))
       || !Number.isSafeInteger(policy.validity_weeks) || policy.validity_weeks !== v.sporting_week?.calendar.weeks_per_year
       || !Number.isSafeInteger(policy.champion) || !Number.isSafeInteger(policy.finalist) || !Number.isSafeInteger(policy.semifinal)
       || policy.champion <= (eight ? (qfPoints ?? -1) : policy.semifinal)

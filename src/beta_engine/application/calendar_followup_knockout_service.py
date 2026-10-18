@@ -160,6 +160,7 @@ class CalendarFollowupKnockoutService:
                     opening.command_id,
                     *(e.command_id for e in state.weekly_advances),
                     *(e.command_id for e in state.played_continuations),
+                    *(e.command_id for e in state.closures),
                 } or command.tournament_id == opening.match_id):
                 raise ValueError("Knockout identity collides with played history")
             reserved = {opening.match_id, *(m.input_context.match_id for m in opening.matches)}

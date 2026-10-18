@@ -46,5 +46,9 @@ jobs:
         # Full native integration stays mandatory. Fast CI must not run this
         # 20+ minute case serially before reporting useful targeted feedback.
         run: |
-          python -m pytest tests/api/test_calendar_tour_flow.py \
+          # The PR conftest selects changed test *modules* by default.
+          # This dedicated gate must run its original full acceptance even
+          # when only production Tour logic changed in this PR.
+          GITHUB_EVENT_NAME=native_tour_api_acceptance \
+            python -m pytest tests/api/test_calendar_tour_flow.py \
             -vv --maxfail=1 --durations=10

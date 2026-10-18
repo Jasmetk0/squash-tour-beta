@@ -63,7 +63,13 @@ jobs:
             echo "CHROME_BIN=$(python -c 'from playwright.sync_api import sync_playwright; p=sync_playwright().start(); print(p.chromium.executable_path); p.stop()')" >> "$GITHUB_ENV"
           fi
       - name: Configured Editions, real matches, manual Save and physical restart
-        run: python scripts/native_tour_browser_acceptance.py --root work/native-tour --width ${{ matrix.width }} --offset ${{ matrix.offset }} --players ${{ matrix.players }}
+        # Fail with explicit exit 124 BEFORE GitHub cancels the entire job at
+        # its outer deadline. Upload progress.json on failure for diagnostics.
+        run: |
+          timeout --signal=TERM --kill-after=10s 18m \
+            python scripts/native_tour_browser_acceptance.py \
+              --root work/native-tour --width ${{ matrix.width }} \
+              --offset ${{ matrix.offset }} --players ${{ matrix.players }}
       - uses: actions/upload-artifact@v4
         if: always()
         with:

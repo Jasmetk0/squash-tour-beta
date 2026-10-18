@@ -196,6 +196,13 @@ class CalendarSportingWeekService:
                             if isinstance(event, CalendarFollowupKnockout)
                             else append_continuation(prefix, world, event)
                         )
+                        from beta_engine.domain.players.calendar_tournament_closure import (
+                            append_native_tournament_closure,
+                        )
+                        for closure in state.closures:
+                            if (closure.source_week_event_count == len(prefix.week_events)
+                                    and closure not in prefix.closures):
+                                prefix = append_native_tournament_closure(prefix, closure)
                     from types import SimpleNamespace
 
                     original, _ = self._preview(

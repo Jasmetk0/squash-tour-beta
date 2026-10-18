@@ -37,7 +37,7 @@ class CalendarFollowupKnockoutCommand(FrozenInput):
     tournament_id: str = Field(min_length=1, max_length=94)
     expected_saved_head: str = Field(min_length=1, max_length=128)
     expected_checkpoint_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
-    entrant_ids: tuple[str, str, str, str]
+    entrant_ids: list[str] = Field(min_length=4, max_length=4)
     seed: int
     operator_label: str = Field(min_length=1, max_length=160)
     audit_reason: str = Field(min_length=1, max_length=1000)
@@ -156,7 +156,7 @@ class CalendarFollowupKnockoutService:
                 source_checkpoint_fingerprint=state.fingerprint,
                 week=RunWeekPosition(calendar=clock, season_index=state.week.season_index, week=state.week.week),
                 seed=command.seed,
-                entrant_ids=command.entrant_ids,
+                entrant_ids=tuple(command.entrant_ids),
                 operator_label=command.operator_label,
                 audit_reason=command.audit_reason,
                 request_fingerprint=request_fp,

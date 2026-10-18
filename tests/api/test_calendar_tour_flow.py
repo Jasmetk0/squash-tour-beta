@@ -24,7 +24,11 @@ from tests.api.test_calendar_population_sporting_checkpoint import (
 from tests.api.test_calendar_sporting_week_flow import advance, weekly_command
 from tests.api.test_saved_revision_history_api import ApiServer, _request
 
-pytestmark = pytest.mark.pr_critical
+# Long, full production HTTP/SQLite two-tournament/restart/restore acceptance.
+# This module is run by prealpha-native-tour-api.yml, in parallel with Fast CI,
+# and remains included in the complete Full Test Suite. Do not downgrade its
+# signed-history, rollback, real-MatchEngine or negative-integrity assertions.
+pytestmark = pytest.mark.smoke
 
 
 def tour_url(server):

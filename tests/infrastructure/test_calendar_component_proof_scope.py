@@ -347,3 +347,86 @@ def test_trusted_prefix_rejects_tampered_successor_even_after_suffix_replay(monk
     monkeypatch.setattr(cont, "append_continuation", lambda *_a: correctly_replayed)
     with pytest.raises(ValueError, match="differs from population"):
         cp.verify_checkpoint(forged, world, opening, _verified_saved_prefix=signed)
+
+
+def test_signed_tour_proof_is_transaction_local_and_exactly_content_addressed(
+    monkeypatch,
+):
+    from beta_engine.infrastructure.db import calendar_standalone_match_state as storage
+
+    calls = []
+    original = storage.load_saved_calendar_sources
+    from beta_engine.infrastructure.db import calendar_tour
+
+    def counted_tour(payload, *, run_id, branch_id, checkpoint):
+        calls.append((run_id, branch_id, payload.get("run")))
+        return None
+
+    monkeypatch.setattr(calendar_tour, "saved_tour", counted_tour)
+    payload = {
+        "run": {"run_calendar": {"weeks_per_year": 52}},
+        "content": {},
+    }
+    proofs = {}
+    for _ in range(3):
+        assert storage.load_saved_calendar_sources(
+            payload, run_id="r", branch_id="b",
+            _sporting_component_proofs=proofs,
+        ) == (None, None, None)
+    assert len(calls) == 1
+
+    # Revisions with unrelated changes still share the exact Tour proof.
+    unrelated = deepcopy(payload)
+    unrelated["content"]["unrelated_component"] = {"change": True}
+    storage.load_saved_calendar_sources(
+        unrelated, run_id="r", branch_id="b",
+        _sporting_component_proofs=proofs,
+    )
+    assert len(calls) == 1
+
+    # Tour validation depends on the world, lifecycle, run clock, sporting and
+    # Tour state. Each change invalidates the key within the same transaction.
+    for key, val in (
+        ("player_lifecycle", {"states": []}),
+        ("calendar_tour_authority", {"state": {}}),
+        ("initial_world", {"state": {}}),
+    ):
+        changed = deepcopy(payload)
+        changed["content"][key] = val
+        # Mock the sporting decoder to isolate the *Tour* proof, so malformed
+        # test fixtures are never mistaken for authenticated production input.
+        with monkeypatch.context() as patched:
+            patched.setattr(
+                storage, "saved_checkpoint",
+                lambda *a, **k: None,
+                raising=False,
+            )
+            patched.setattr(
+                storage, "_parse_saved_calendar_match_evidence",
+                lambda *a, **k: None,
+            )
+            if key == "initial_world":
+                from beta_engine.infrastructure.db import calendar_sporting_checkpoint
+                patched.setattr(calendar_sporting_checkpoint, "saved_checkpoint",
+                                lambda *a, **k: None)
+            elif key == "calendar_tour_authority":
+                # Avoid parsing deliberately malformed Tour bytes; the
+                # downstream validator is stubbed for cache-key proof only.
+                pass
+            elif key == "player_lifecycle":
+                pass
+            storage.load_saved_calendar_sources(
+                changed, run_id="r", branch_id="b",
+                _sporting_component_proofs=proofs,
+            )
+    assert len(calls) == 4
+    storage.load_saved_calendar_sources(
+        payload, run_id="r", branch_id="other",
+        _sporting_component_proofs=proofs,
+    )
+    assert len(calls) == 5
+    storage.load_saved_calendar_sources(
+        payload, run_id="r", branch_id="b",
+        _sporting_component_proofs={},
+    )
+    assert len(calls) == 6

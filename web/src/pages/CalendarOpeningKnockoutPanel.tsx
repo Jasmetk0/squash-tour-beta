@@ -12,6 +12,7 @@ import { verifyKnockoutInspection } from '../api/calendarOpeningKnockout'
 import { newCommandId } from '../admin/branchSimulation'
 import { useLanguage } from '../i18n/LanguageContext'
 import { formatApiError } from '../utils/apiErrors'
+import { CalendarContinuationPanel } from './CalendarContinuationPanel'
 import { CalendarPopulationSportingPanel } from './CalendarPopulationSportingPanel'
 import { CalendarCanonicalInputsPanel } from './CalendarCanonicalInputsPanel'
 import { CalendarKnockoutAwardsPanel } from './CalendarKnockoutAwardsPanel'
@@ -274,6 +275,13 @@ export function CalendarOpeningKnockoutPanel({
           <p className="status">{cs ? 'Číselný vliv zdravotních omezení nebyl aplikován.' : 'Numeric Health limitation effects were not applied.'}</p>
         </div>}
         <p>{cs ? 'Šampion' : 'Champion'}: <strong>{view.knockout.matches[2].result.winner_player_id}</strong></p>
+        {view.saved && view.population_sporting_checkpoint && <CalendarContinuationPanel
+          runId={runId} branchId={branchId} head={view.saved_head_revision_id} onChange={() => {
+            const from = target, stamp = token.current
+            void inspectCalendarOpeningKnockout(runId, branchId).then(v => {
+              if (activeTarget.current === from && token.current === stamp) setView(verifyKnockoutInspection(v, runId, branchId, savedHead))
+            }).catch(e => { if (activeTarget.current === from && token.current === stamp) setError(formatApiError(e)) })
+          }} />}
         {view.population_sporting_checkpoint && <CalendarPopulationSportingPanel
           runId={runId} branchId={branchId} head={view.saved_head_revision_id}
           checkpoint={view.population_sporting_checkpoint} playerIds={view.player_ids} />}

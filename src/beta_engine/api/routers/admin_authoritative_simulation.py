@@ -61,6 +61,7 @@ from beta_engine.application.calendar_standalone_match_service import (
     CalendarStandaloneMatchCommand,
     CalendarStandaloneMatchService,
 )
+from beta_engine.application.calendar_continuation_service import CalendarContinuationService, CalendarContinuationCommand
 from beta_engine.application.calendar_opening_knockout_service import (
     CalendarOpeningKnockoutCommand, CalendarCanonicalPreviewCommand, CalendarOpeningKnockoutService,
 )
@@ -2508,3 +2509,50 @@ def continue_full_simulation_task(run_id: str, branch_id: str, task_id: str, pay
             run_id=run_id,branch_id=branch_id,task_id=task_id,**payload.model_dump())
     except (KeyError,TypeError,ValueError) as exc:
         raise HTTPException(409, detail={"code":"full_simulation_task_conflict","message":str(exc)}) from exc
+
+
+# Continued sporting owner: real matches, explicit Save, no week advancement.
+
+
+@router.get("/calendar-continuation")
+def inspect_calendar_continuation(run_id: str, branch_id: str,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)]):
+    try:
+        return CalendarContinuationService(runtime.repository).inspect(run_id=run_id, branch_id=branch_id)
+    except (KeyError, TypeError, ValueError) as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+
+@router.post("/calendar-continuation/simulate", status_code=201)
+def simulate_calendar_continuation(run_id: str, branch_id: str, payload: CalendarContinuationCommand,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)]):
+    try:
+        return CalendarContinuationService(runtime.repository).simulate(run_id=run_id, branch_id=branch_id, command=payload)
+    except (KeyError, TypeError, ValueError) as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+
+@router.get("/calendar-continuation/{match_id}/replay")
+def replay_calendar_continuation(run_id: str, branch_id: str, match_id: str,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)]):
+    try:
+        return CalendarContinuationService(runtime.repository).replay(run_id=run_id, branch_id=branch_id, match_id=match_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except (TypeError, ValueError) as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+
+@router.post("/calendar-continuation/save", status_code=201)
+def save_calendar_continuation(run_id: str, branch_id: str, payload: dict,
+    service: Annotated[RunWorkingDraftService, Depends(get_run_working_draft_service)],
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)]):
+    try:
+        view = CalendarContinuationService(runtime.repository).inspect(run_id=run_id, branch_id=branch_id)
+        if not view['matches'] or view['saved']:
+            raise ValueError('No unsaved continuation matches')
+        return service.save_calendar_sporting_checkpoint(run_id=run_id, branch_id=branch_id,
+            expected_draft_version=payload['expected_draft_version'],
+            expected_calendar_sporting_fingerprint=payload['expected_calendar_sporting_fingerprint'])
+    except (KeyError, TypeError, ValueError) as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc

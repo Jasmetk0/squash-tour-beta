@@ -1,6 +1,6 @@
 # Active dependency path — Master v85
 
-Audited buuk `002d0c93c914895187eff8ed17f0782ff93ee19b` after #1529. All #1521–1529 merged,
+Audited buuk `3dd96c8b2d85d44cfbfa34c4a309fed1cd1e4eb0` after #1530. All #1521–1530 merged,
 all triggered final-head workflows green. Owner alone merges; refresh current work.
 
 | Order | Outcome | Status |
@@ -9,7 +9,7 @@ all triggered final-head workflows green. Owner alone merges; refresh current wo
 | 2 | Real native opening match/knockout, manual Save/replay/restart | #1522–1523 merged; bounded first-week operation, compatibility attributes, no continued sporting effects |
 | 3 | Reviewed prepared points and as-of scoreboard | #1524–1525 merged; explicit operator policy, not Official Ranking or Week Transition |
 | 4 | Extension/retry/consent integration after actual Saved sport | Merged #1526 A85-01–05; production API + actual Chromium acceptance green |
-| 5 | Canonical calendar sporting/Health state and full attribute projection | Merged #1527 form/load, #1528 Saved Health, #1529 frozen 57-attribute match inputs and actual 57→engine projection. Current candidate persists full-population native 57-attribute ownership with terminal played state and coupled Save/restore. Subsequent sporting use, cohort development, numeric Health and Week/Season transitions remain incomplete |
+| 5 | Canonical calendar sporting/Health state and full attribute projection | Merged #1527 form/load, #1528 Saved Health, #1529 frozen 57-attribute match inputs and actual 57→engine projection. Merged #1530 persists full-population native 57-attribute ownership and terminal played state. Current candidate uses that Saved state for repeatable actual sequential exhibitions, per-match effects and separate immutable Save/replay/restore. Weekly transitions, cohort development and numeric Health effects remain incomplete |
 | 6 | Tour entry + configured Edition points + Official publication + Week/Season Transition | Incomplete; do not mistake hypothetical W2 point eligibility for an advanced simulation |
 | 7 | Durable Full Simulation, populated multi-season and extended Completed continuation | Incomplete; preserve frozen targets, terminal tasks, explicit recovery and W-aware annual units |
 | 8 | Remaining full pre-alpha targets and release/realism gates | Historical-cohort generator, canonical attributes, AI, Labs, Records/milestones/summaries and complete Master scope; full regression, reference FAX season + 50 seasons and W52/W80 acceptance |

@@ -129,13 +129,21 @@ describe('v5 requires the persisted full-population owner', () => {
     const v = populationFixture()
     expect(verifyKnockoutInspection(v, 'r', 'b', 'head')).toBe(v)
   })
-  it.each(['missing', 'count', 'saved', 'historical', 'hash'])('rejects %s checkpoint', fault => {
+  it.each(['missing', 'count', 'saved_type', 'historical', 'hash'])('rejects %s checkpoint', fault => {
     const v = populationFixture()
     if (fault === 'missing') delete v.population_sporting_checkpoint
     if (fault === 'count') v.population_sporting_checkpoint!.player_count = 3
-    if (fault === 'saved') v.population_sporting_checkpoint!.saved = false
+    if (fault === 'saved_type') v.population_sporting_checkpoint!.saved = undefined as unknown as boolean
     if (fault === 'historical') v.knockout!.schema_version = 'calendar_opening_knockout.v4'
     if (fault === 'hash') v.population_sporting_checkpoint!.fingerprint = 'wrong'
     expect(() => verifyKnockoutInspection(v, 'r', 'b', 'head')).toThrow()
   })
+})
+
+
+it('distinguishes a Saved original knockout from a changed live continued checkpoint', () => {
+  const v = populationFixture()
+  v.population_sporting_checkpoint = { ...v.population_sporting_checkpoint!,
+    schema_version: 'calendar_sporting_checkpoint.v2', phase: 'opening_week_continued', continuation_count: 1, saved: false }
+  expect(verifyKnockoutInspection(v, 'r', 'b', 'head')).toBe(v)
 })

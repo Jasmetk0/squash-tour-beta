@@ -223,6 +223,7 @@ def append_sporting_week(checkpoint, world, knockout, event):
             *(e.command_id for e in checkpoint.played_continuations),
             *(e.command_id for e in checkpoint.weekly_advances),
             *(e.command_id for e in checkpoint.tournaments),
+            *(e.command_id for e in checkpoint.closures),
         }
         or event.played_counts != played_counts(checkpoint, knockout)
     ):

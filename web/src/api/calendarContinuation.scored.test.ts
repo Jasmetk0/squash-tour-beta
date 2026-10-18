@@ -63,4 +63,18 @@ describe('prepared-scored real knockout response boundary', () => {
     const { point_policy: _p, explicit_point_confirmation: _c, ...historical } = command
     expect(() => verifyFollowupKnockout(receipt, historical, view)).toThrow('Unscored knockout cannot gain')
   })
+  it('rejects swapping a semifinal loser and the actual finalist with matching points', () => {
+    const forged = {...receipt, prepared_awards: receipt.prepared_awards!.map(a =>
+      a.player_id === 'b' ? {...a, reached_stage: 'finalist' as const, main_points: 60}
+        : a.player_id === 'c' ? {...a, reached_stage: 'semifinal' as const, main_points: 30} : a)}
+    expect(() => verifyFollowupKnockout(forged, command, view)).toThrow('Prepared points disagree')
+  })
+  it('rejects a non-participant winner even when the next pairing follows it', () => {
+    const {point_policy: _p, explicit_point_confirmation: _c, ...unscored} = command
+    const forged = {...receipt, prepared_awards: undefined, publication_status: undefined,
+      tournament: {...receipt.tournament, matches: receipt.tournament.matches.map((m, i) =>
+        i === 0 ? {...m, result: {...m.result, winner_player_id: 'd'}}
+          : i === 2 ? {...m, result: {...m.result, player_a_id: 'd'}} : m)}}
+    expect(() => verifyFollowupKnockout(forged, unscored, view)).toThrow('played participants')
+  })
 })

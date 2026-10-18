@@ -57,6 +57,51 @@ export type ContinuationReceipt = {
     result: { winner_player_id: string }; input_context: { player_a: { player: { player_id: string } }; player_b: { player: { player_id: string } } }
     canonical_projections: { player_id: string; current_form: number; match_sharpness: number; long_term_fatigue: number }[] }
 }
+
+// Derive every placement from the ordered, winner-fed bracket. Counting stages
+// alone cannot distinguish the actual finalist from a relabelled semifinalist.
+function playedKnockoutPlacements(entrants: string[], results: {
+  player_a_id: string; player_b_id: string; winner_player_id: string
+}[]) {
+  if (![4, 8].includes(entrants.length) || new Set(entrants).size !== entrants.length
+    || results.length !== entrants.length - 1) return null
+  const placements = new Map<string, FollowupPreparedAward['reached_stage']>()
+  let remaining = entrants, index = 0
+  while (remaining.length > 1) {
+    const winners: string[] = []
+    for (let i = 0; i < remaining.length; i += 2) {
+      const result = results[index++], pair = remaining.slice(i, i + 2)
+      if (!result || result.player_a_id !== pair[0] || result.player_b_id !== pair[1]
+        || !pair.includes(result.winner_player_id)) return null
+      placements.set(pair.find(id => id !== result.winner_player_id)!,
+        remaining.length === 2 ? 'finalist' : remaining.length === 4 ? 'semifinal' : 'quarterfinal')
+      winners.push(result.winner_player_id)
+    }
+    remaining = winners
+  }
+  placements.set(remaining[0], 'champion')
+  return placements
+}
+
+function inspectedKnockoutPlacements(t: NonNullable<ContinuationView['tournaments']>[number], view: ContinuationView) {
+  const matches = t.match_ids.map(id => view.matches.find(m => m.match_id === id))
+  if (matches.some(m => !m) || new Set(t.match_ids).size !== t.match_ids.length) return null
+  return playedKnockoutPlacements(t.entrant_ids, matches.map(m => ({
+    player_a_id: m!.player_ids[0], player_b_id: m!.player_ids[1], winner_player_id: m!.winner_player_id,
+  })))
+}
+
+export function latestClosableNativeTournament(view: ContinuationView) {
+  const tournament = view.tournaments?.[view.tournaments.length - 1]
+  // The server closes only the latest sporting event, in its played week.
+  // A later exhibition or week advance makes this historical result ineligible.
+  return tournament?.entrant_ids.length === 8
+    && tournament.prepared_points_status === 'prepared_not_official'
+    && !tournament.result_closed && tournament.week === view.sporting_week?.week
+    && tournament.match_ids[tournament.match_ids.length - 1]
+      === view.matches[view.matches.length - 1]?.match_id ? tournament : null
+}
+
 export function verifyContinuation(v: ContinuationView, run: string, branch: string, head: string) {
   const hash = (s: unknown) => typeof s === 'string' && /^[0-9a-f]{64}$/.test(s)
   if (!v || v.schema_version !== 'calendar_continuation_inspection.v1' || v.run_id !== run || v.branch_id !== branch
@@ -85,10 +130,14 @@ export function verifyContinuation(v: ContinuationView, run: string, branch: str
     || !t.entrant_ids.includes(t.winner_player_id) || typeof t.saved !== 'boolean'
     || (v.saved && !t.saved)
   ))) throw Error('Later knockout source/history changed')
+  if (v.tournaments?.some(t => inspectedKnockoutPlacements(t, v)?.get(t.winner_player_id) !== 'champion')) {
+    throw Error('Later knockout played participants or winner lineage changed')
+  }
   if (v.tournaments?.some(t => {
     const prepared = t.prepared_points_status === 'prepared_not_official'
     if (!prepared) return !!t.prepared_policy || !!t.prepared_awards?.length
     const policy = t.prepared_policy, awards = t.prepared_awards
+    const placements = inspectedKnockoutPlacements(t, v)!
     const eight = t.entrant_ids.length === 8
     const qfPoints = 'quarterfinal' in (policy ?? {}) ? (policy as FollowupEightPointPolicy).quarterfinal : undefined
     const pointValues: Record<string, number> = policy
@@ -106,7 +155,7 @@ export function verifyContinuation(v: ContinuationView, run: string, branch: str
       || new Set(awards.map(a => a.player_id)).size !== t.entrant_ids.length
       || awards.some(a => !t.entrant_ids.includes(a.player_id) || !hash(a.source_policy_fingerprint)
         || !hash(a.source_tournament_fingerprint) || !(a.reached_stage in pointValues)
-        || a.main_points !== pointValues[a.reached_stage])
+        || a.main_points !== pointValues[a.reached_stage] || placements.get(a.player_id) !== a.reached_stage)
       || awards.filter(a => a.reached_stage === 'champion').length !== 1
       || awards.filter(a => a.reached_stage === 'finalist').length !== 1
       || awards.filter(a => a.reached_stage === 'semifinal').length !== 2
@@ -258,6 +307,8 @@ export function verifyFollowupKnockout(
     || e.matches[2].result.player_b_id !== e.matches[1].result.winner_player_id
     || receipt.winner_player_id !== e.matches[2].result.winner_player_id
   ) throw Error('Later knockout result differs from frozen Saved source or semifinal winners')
+  const placements = playedKnockoutPlacements(command.entrant_ids, e.matches.map(m => m.result))
+  if (!placements) throw Error('Later knockout result differs from played participants')
   if ('point_policy' in command) {
     const awards = receipt.prepared_awards
     const values = command.point_policy
@@ -268,6 +319,7 @@ export function verifyFollowupKnockout(
         || a.source_policy_fingerprint !== receipt.prepared_policy_fingerprint
         || !command.entrant_ids.includes(a.player_id)
         || a.reached_stage === 'quarterfinal'
+        || placements.get(a.player_id) !== a.reached_stage
         || a.main_points !== values[a.reached_stage as 'champion' | 'finalist' | 'semifinal'])
       || new Set(awards.map(a => a.player_id)).size !== 4
       || awards.filter(a => a.reached_stage === 'champion').length !== 1
@@ -323,6 +375,9 @@ export function verifyEightFollowupKnockout(
     || pairs[6][0] !== winners[4] || pairs[6][1] !== winners[5]
     || receipt.winner_player_id !== winners[6] || !command.entrant_ids.includes(winners[6])
   ) throw Error('Eight-player semifinal or final winner lineage changed')
+  if (!playedKnockoutPlacements(command.entrant_ids, e.matches.map(m => m.result))) {
+    throw Error('Eight-player played participants or winner lineage changed')
+  }
   if (scored) {
     const policy = command.point_policy, awards = receipt.prepared_awards
     const expected: Record<string, number> = {

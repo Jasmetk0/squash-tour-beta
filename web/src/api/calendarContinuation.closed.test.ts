@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
-  verifyContinuation, verifyNativeTournamentClosure,
+  latestClosableNativeTournament, verifyContinuation, verifyNativeTournamentClosure,
   type ContinuationView, type NativeTournamentClosureCommand,
   type NativeTournamentClosureReceipt,
 } from './calendarContinuation'
@@ -85,5 +85,23 @@ describe('signed played native result closure',()=>{
     const existing={...event,result_closed:false,result_closure_saved:false}
     const old={...view,tournaments:[existing],closures:[]}
     expect(verifyContinuation(old,'r','b','saved')).toBe(old)
+  })
+  it('offers closure only while the scored tournament is the latest sporting event', () => {
+    const existing = {...event, result_closed: false, result_closure_saved: false}
+    const open = {...view, tournaments: [existing], closures: []}
+    expect(latestClosableNativeTournament(open)).toBe(existing)
+    expect(latestClosableNativeTournament(view)).toBeNull()
+    expect(latestClosableNativeTournament({...open, sporting_week: {...view.sporting_week!, week: 3}})).toBeNull()
+    expect(latestClosableNativeTournament({...open, matches: [...matches, {
+      ...matches[0], match_id: 'later-exhibition', sequence: 8,
+    }]})).toBeNull()
+  })
+  it('rejects a finalist swap even before result closure', () => {
+    const old = {...event, result_closed: false, result_closure_saved: false,
+      prepared_awards: event.prepared_awards.map(a =>
+        a.player_id === 'b' ? {...a, reached_stage: 'finalist' as const, main_points: 60}
+          : a.player_id === 'e' ? {...a, reached_stage: 'quarterfinal' as const, main_points: 15} : a)}
+    expect(() => verifyContinuation({...view, tournaments: [old], closures: []}, 'r', 'b', 'saved'))
+      .toThrow('Prepared knockout award history changed')
   })
 })

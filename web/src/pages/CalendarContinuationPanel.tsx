@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { previewCalendarSportingWeek, commitCalendarSportingWeek, inspectCalendarContinuation, simulateCalendarContinuation, simulateCalendarFollowupKnockout, simulateCalendarScoredFollowupKnockout, simulateCalendarEightFollowupKnockout, simulateCalendarEightScoredFollowupKnockout, closeNativeCalendarTournamentResult, saveCalendarContinuation, replayCalendarContinuation } from '../api/client'
-import { verifyFollowupKnockout, verifyEightFollowupKnockout, verifyNativeTournamentClosure, type NativeTournamentClosureCommand, type FollowupEightCommand, type FollowupEightScoredCommand, type FollowupKnockoutCommand, type FollowupScoredCommand, verifySportingWeek, type SportingWeekCommand, type SportingWeekPreview, verifyContinuation, type ContinuationView, type ContinuationReceipt } from '../api/calendarContinuation'
+import { latestClosableNativeTournament, verifyFollowupKnockout, verifyEightFollowupKnockout, verifyNativeTournamentClosure, type NativeTournamentClosureCommand, type FollowupEightCommand, type FollowupEightScoredCommand, type FollowupKnockoutCommand, type FollowupScoredCommand, verifySportingWeek, type SportingWeekCommand, type SportingWeekPreview, verifyContinuation, type ContinuationView, type ContinuationReceipt } from '../api/calendarContinuation'
 import { newCommandId } from '../admin/branchSimulation'
 import { useLanguage } from '../i18n/LanguageContext'
 import { formatApiError } from '../utils/apiErrors'
@@ -80,7 +80,7 @@ export function CalendarContinuationPanel({ runId, branchId, head, onChange }: {
         if (latest.checkpoint_fingerprint !== r.checkpoint_fingerprint || latest.sporting_week?.week !== r.advance.target_week.week) throw Error('Weekly owner changed after preparation')
         setView(latest); setWeekReview(null); setWeekConsent(false); setReceipt(null); setReview(null); setSaveConsent(false); setConsent(false); onChange()
       } else if (action === 'close-result') {
-        const tournament = view.tournaments?.[(view.tournaments?.length ?? 0) - 1]
+        const tournament = latestClosableNativeTournament(view)
         if (!view.can_play || !view.saved || !view.checkpoint_fingerprint
           || !closureConsent || !reason.trim() || !tournament
           || tournament.entrant_ids.length !== 8
@@ -232,7 +232,7 @@ export function CalendarContinuationPanel({ runId, branchId, head, onChange }: {
     } catch (e) { if (valid()) setError(formatApiError(e)) }
     finally { if (valid()) setBusy(false) }
   }
-  const latestTournament = view?.tournaments?.[(view?.tournaments?.length ?? 0) - 1]
+  const latestTournament = view ? latestClosableNativeTournament(view) : null
   const canPlay = view?.can_play && a !== b && a && b && consent && reason.trim() && /^-?\d+$/.test(seed) && Number.isSafeInteger(Number(seed))
   return <section aria-label="Stateful calendar continuation">
     <h4>{cs ? 'Navazující zápasy z uloženého stavu' : 'Continue matches from Saved player state'}</h4>

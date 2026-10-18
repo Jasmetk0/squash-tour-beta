@@ -139,6 +139,8 @@ class CalendarContinuationService:
                     'fingerprint': event.fingerprint,
                     'week': event.week.week,
                     'entrant_ids': list(event.entrant_ids),
+                    'entrant_count': len(event.entrant_ids),
+                    'match_count': len(event.matches),
                     'winner_player_id': event.matches[-1].result.winner_player_id,
                     'match_ids': [match.match_id for match in event.matches],
                     'saved': bool(saved and any(

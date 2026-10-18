@@ -136,3 +136,22 @@ hash, component, scope, lineage, draft, or concurrent-writer checks. Verificatio
 must still run afresh on every distinct request/transaction; no public history
 validation or persisted revision semantics are changed. This is a bounded
 performance reduction, not a claimed end-to-end latency fix or Tour integration.
+
+
+**Merged #1533–1534 (verified 18 October 2026):** #1533 removes a
+duplicate Saved ancestry walk within eligible Save/review transactions
+without weakening per-transaction validation. #1534 adds actual later-week
+four-player exhibition knockouts on the Saved v4 sporting owner: three
+MatchEngine matches execute atomically, the final consumes semifinal state,
+and all three retain replay, immutable Saved history, restart/restore,
+exact retry and horizon-extension compatibility. These events are explicitly
+**not** configured Tour Editions, Official points, public Week Transition
+or Official Ranking. No open PR existed at this checkpoint before the
+current integrity change.
+
+**In-progress correctness gate after #1534:** validate a logged match's
+top-level winner against signed played-set tallies (with proper retirement
+semantics). Later-week bracket wiring alone is insufficient to authenticate
+a fabricated standalone final result or future Official award. Add targeted
+tamper and unchanged-result tests; do not change stored hash/serialization
+or pretend that the full Tour publication bridge is complete.

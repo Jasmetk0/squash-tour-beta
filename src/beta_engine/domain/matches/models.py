@@ -202,6 +202,41 @@ class MatchResult(BaseModel):
                 raise ValueError(
                     "match sets_won does not match authoritative rally log"
                 )
+        # Match winner/placement authority must also follow the scored sets.
+        # Rally hashes validate individual points, but an altered top-level
+        # winner otherwise becomes an incorrect tournament finalist/champion
+        # even when the underlying immutable point log is unchanged.
+        participants = {self.player_a_id, self.player_b_id}
+        counted_sets = {self.player_a_id: 0, self.player_b_id: 0}
+        for played_set in self.sets:
+            if (
+                played_set.winner_player_id not in participants
+                or played_set.loser_player_id not in participants
+                or played_set.winner_player_id == played_set.loser_player_id
+            ):
+                raise ValueError("set winner/loser must be the two match participants")
+            counted_sets[played_set.winner_player_id] += 1
+        if self.sets_won != counted_sets:
+            raise ValueError("match sets_won contradicts the played set winners")
+        if (
+            self.winner_player_id not in participants
+            or self.loser_player_id not in participants
+            or self.winner_player_id == self.loser_player_id
+        ):
+            raise ValueError("match winner/loser must be the two participants")
+        if self.termination_reason == MatchTerminationReason.COMPLETED:
+            if (
+                self.retired_player_id is not None
+                or counted_sets[self.winner_player_id] != self.best_of // 2 + 1
+                or counted_sets[self.winner_player_id] <= counted_sets[self.loser_player_id]
+            ):
+                raise ValueError("completed match winner contradicts actual scored sets")
+        elif (
+            self.retired_player_id != self.loser_player_id
+            or self.retired_player_id not in participants
+        ):
+            # A retirement winner need not be leading in played sets.
+            raise ValueError("retirement match winner must be the non-retired player")
         if self.timeline_log is not None:
             timeline = self.timeline_log
             self.rally_log.validate_rules_timeline(timeline)

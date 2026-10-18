@@ -53,3 +53,15 @@ safely feed later native tournament/ranking consumers. After this fix,
 the functional next step is a coherent Edition + entry + configured
 point-authority + publication/Week Transition slice rather than another
 hypothetical standings wrapper.
+
+
+**After #1535:** completed-MatchEngine winner labels now validate against
+actual scored set history and retirement semantics. Current candidate adds
+explicitly reviewed **prepared** points to real later-week native
+knockouts as a versioned v2 event/v5 sporting checkpoint. This closes
+the gap between real placements and an inspectable saved point
+distribution; it does NOT authenticate a configured Tour Edition,
+Tour Entry, Official Ranking, Week/Season Transition or public clock.
+After this is verified/merged, next integrate configured Edition/Entry
+authorities and actual Official Week Transition over the Saved sporting
+owner, not another read-only standings approximation.

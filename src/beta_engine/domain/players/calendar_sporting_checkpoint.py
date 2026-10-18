@@ -79,7 +79,7 @@ class CalendarSportingCheckpoint(FrozenInput):
                     and event.schema_version == 'calendar_followup_knockout.v2'
                     for event in self.week_events)):
             raise ValueError('Checkpoint v4 cannot gain prepared-scored knockout evidence')
-        if (self.schema_version == 'calendar_sporting_checkpoint.v5', 'calendar_sporting_checkpoint.v6'
+        if (self.schema_version == 'calendar_sporting_checkpoint.v5'
             and not any(isinstance(event, CalendarFollowupKnockout)
                         and event.schema_version == 'calendar_followup_knockout.v2'
                         for event in self.week_events)):

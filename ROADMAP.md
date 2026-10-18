@@ -36,3 +36,20 @@ verification and corrupted-history rejection. After this bounded change, profile
 real 1,000-player Save review and avoid weakening Saved verification for speed.
 The next functional milestone remains an integrated native Official Tour/Week
 Transition, not another standalone provenance/read-only feature.
+
+
+**Latest native sporting execution:** #1533 (single transaction lineage
+reuse) and #1534 (atomic Saved later-week four-player exhibition knockouts)
+are merged. Later sporting weeks now support both actual individual
+exhibitions and new winner-fed tournaments on the same owned population,
+with manual Save, exact replay and recovery. This is *not* a real Tour
+Edition/Entry/official point source and does not advance the public Week
+Transition. Preserve that separation through all subsequent ranking work.
+
+**Immediate correctness prerequisite:** logged MatchEngine results must
+authenticate their declared match winner against actual signed set wins,
+including distinct retirement semantics, before these result labels can
+safely feed later native tournament/ranking consumers. After this fix,
+the functional next step is a coherent Edition + entry + configured
+point-authority + publication/Week Transition slice rather than another
+hypothetical standings wrapper.

@@ -51,20 +51,32 @@ def verify_checkpoint(state, world, evidence):
     from beta_engine.domain.players.calendar_followup_knockout import (
         CalendarFollowupKnockout, append_followup_knockout,
     )
+    from beta_engine.domain.players.calendar_tournament_closure import (
+        append_native_tournament_closure,
+    )
+    closures_by_count = {entry.source_week_event_count: entry for entry in state.closures}
+    if len(closures_by_count) != len(state.closures):
+        raise ValueError('Native tournament result closure has duplicate event boundaries')
+    closed_counts = set()
     for entry in (*state.continuations, *state.week_events):
         if isinstance(entry, CalendarSportingWeekAdvance):
             expected = append_sporting_week(expected, world, knockout, entry)
-            continue
-        if isinstance(entry, CalendarFollowupKnockout):
+        elif isinstance(entry, CalendarFollowupKnockout):
             if (entry.command_id == knockout.command_id
                 or any(m.match_id in reserved_ids or m.command_id == knockout.command_id
                        for m in entry.matches)):
                 raise ValueError('Later knockout reuses original opening knockout identity')
             expected = append_followup_knockout(expected, world, entry)
-            continue
-        if entry.match_id in reserved_ids or entry.command_id == knockout.command_id:
-            raise ValueError('Continuation reuses original knockout identity')
-        expected = append_continuation(expected, world, entry)
+        else:
+            if entry.match_id in reserved_ids or entry.command_id == knockout.command_id:
+                raise ValueError('Continuation reuses original knockout identity')
+            expected = append_continuation(expected, world, entry)
+        index = len(expected.week_events)
+        if index in closures_by_count and index not in closed_counts:
+            expected = append_native_tournament_closure(expected, closures_by_count[index])
+            closed_counts.add(index)
+    if closed_counts != set(closures_by_count):
+        raise ValueError('Native result closure has no matching sporting event')
     if state != expected:
         raise ValueError('Calendar sporting checkpoint differs from population and played terminal evidence')
 

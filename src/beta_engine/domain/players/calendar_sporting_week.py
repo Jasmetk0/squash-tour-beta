@@ -223,6 +223,7 @@ def append_sporting_week(checkpoint, world, knockout, event):
             *(e.command_id for e in checkpoint.played_continuations),
             *(e.command_id for e in checkpoint.weekly_advances),
             *(e.command_id for e in checkpoint.tournaments),
+            *(e.command_id for e in checkpoint.closures),
         }
         or event.played_counts != played_counts(checkpoint, knockout)
     ):
@@ -246,7 +247,9 @@ def append_sporting_week(checkpoint, world, knockout, event):
         checkpoint.model_copy(
             update={
                 "schema_version": (
-                    "calendar_sporting_checkpoint.v7"
+                    "calendar_sporting_checkpoint.v8"
+                    if checkpoint.schema_version == "calendar_sporting_checkpoint.v8"
+                    else "calendar_sporting_checkpoint.v7"
                     if checkpoint.schema_version == "calendar_sporting_checkpoint.v7"
                     else "calendar_sporting_checkpoint.v6"
                     if checkpoint.schema_version == "calendar_sporting_checkpoint.v6"

@@ -1,3 +1,31 @@
+export type NativeTournamentClosedPlayer = {
+  player_id: string; reached_stage: 'quarterfinal' | 'semifinal' | 'finalist' | 'champion'
+  played_match_ids: string[]; wins: number; losses: number; prepared_points: number
+}
+export type NativeTournamentClosureSummary = {
+  command_id: string; tournament_id: string; fingerprint: string
+  champion_player_id: string; finalist_player_id: string
+  source_tournament_fingerprint: string; saved: boolean
+  scope: 'played_native_result_closed_not_official'
+  players: NativeTournamentClosedPlayer[]
+}
+export type NativeTournamentClosureCommand = {
+  command_id: string; tournament_id: string
+  expected_saved_head: string; expected_checkpoint_fingerprint: string
+  operator_label: string; audit_reason: string; explicit_result_confirmation: true
+}
+export type NativeTournamentClosureReceipt = {
+  schema_version: 'calendar_native_tournament_closure_receipt.v1'
+  closure: NativeTournamentClosureSummary & {
+    source_saved_head: string; source_checkpoint_fingerprint: string
+    source_week_event_count: number; source_prepared_awards_fingerprint: string
+    request_fingerprint: string
+  }
+  fingerprint: string; checkpoint_fingerprint: string
+  official_ranking_published: false
+  publication_status: 'native_result_closed_not_official'
+}
+
 export type ContinuationView = {
   schema_version: 'calendar_continuation_inspection.v1'; run_id: string; branch_id: string
   saved_head_revision_id: string; draft_version: number; checkpoint_fingerprint: string | null
@@ -6,11 +34,13 @@ export type ContinuationView = {
   tournaments?: { tournament_id: string; command_id: string; fingerprint: string; week: number
     entrant_ids: string[]; entrant_count?: number; match_count?: number
     winner_player_id: string; match_ids: string[]; saved: boolean
+    result_closed?: boolean; result_closure_saved?: boolean
     scope: 'sporting_exhibition_knockout_not_official'
     prepared_points_status?: 'not_prepared' | 'prepared_not_official'
     prepared_policy?: FollowupPointPolicy | FollowupEightPointPolicy | null
     prepared_awards?: FollowupPreparedAward[]
   }[]
+  closures?: NativeTournamentClosureSummary[]
   weekly_advance_count?: number
   weekly_advances?: { command_id: string; fingerprint: string; completed_week: number; target_week: number; saved: boolean }[]
   health_numeric_effect_applied: false
@@ -86,6 +116,48 @@ export function verifyContinuation(v: ContinuationView, run: string, branch: str
     return new Set(awards.map(a => a.source_tournament_fingerprint)).size !== 1
       || new Set(awards.map(a => a.source_policy_fingerprint)).size !== 1
   })) throw Error('Prepared knockout award history changed')
+  const closures = v.closures ?? []
+  if (!Array.isArray(closures)
+    || new Set(closures.map(c => c.tournament_id)).size !== closures.length
+    || new Set(closures.map(c => c.command_id)).size !== closures.length
+    || closures.some(c => {
+      const event = v.tournaments?.find(t => t.tournament_id === c.tournament_id)
+      if (!event || event.entrant_ids.length !== 8 || event.match_ids.length !== 7
+        || event.prepared_points_status !== 'prepared_not_official'
+        || event.scope !== 'sporting_exhibition_knockout_not_official'
+        || !hash(c.fingerprint) || c.source_tournament_fingerprint !== event.fingerprint
+        || c.scope !== 'played_native_result_closed_not_official'
+        || c.champion_player_id !== event.winner_player_id
+        || (v.saved && !c.saved) || c.players.length !== 8) return true
+      const results = event.match_ids.map(id => v.matches.find(m => m.match_id === id))
+      if (results.some(m => !m)) return true
+      const counters = new Map(event.entrant_ids.map(id => [id, {wins: 0, losses: 0, ids: [] as string[]}]))
+      const rounds: Record<string, string> = {}
+      results.forEach((m, i) => {
+        if (!m) return
+        const loser = m.player_ids.find(id => id !== m.winner_player_id)!
+        counters.get(m.winner_player_id)?.ids.push(m.match_id)
+        counters.get(loser)?.ids.push(m.match_id)
+        counters.get(m.winner_player_id)!.wins++
+        counters.get(loser)!.losses++
+        rounds[loser] = i < 4 ? 'quarterfinal' : i < 6 ? 'semifinal' : 'finalist'
+      })
+      rounds[event.winner_player_id] = 'champion'
+      const awarded = new Map(event.prepared_awards?.map(a => [a.player_id, a]) ?? [])
+      const finishers = c.players.map(p => p.player_id)
+      return finishers.join('|') !== [...finishers].sort().join('|')
+        || new Set(finishers).size !== 8
+        || c.players.some(p => {
+          const counts = counters.get(p.player_id), a = awarded.get(p.player_id)
+          return !counts || !a || p.reached_stage !== rounds[p.player_id]
+            || p.reached_stage !== a.reached_stage || p.prepared_points !== a.main_points
+            || p.wins !== counts.wins || p.losses !== counts.losses
+            || p.played_match_ids.join('|') !== counts.ids.join('|')
+        })
+        || c.finalist_player_id !== results[6]!.player_ids.find(id => id !== results[6]!.winner_player_id)
+    })
+    || v.tournaments?.some(t => !!t.result_closed !== closures.some(c => c.tournament_id === t.tournament_id))
+  ) throw Error('Native tournament closed-result history changed')
   if (v.sporting_week) {
     const w = v.sporting_week
     if (!Number.isSafeInteger(w.week) || w.week < 1 || w.week > w.calendar.weeks_per_year
@@ -286,5 +358,28 @@ export function verifyEightFollowupKnockout(
         || a.source_policy_fingerprint !== receipt.prepared_policy_fingerprint)
     ) throw Error('Eight-player prepared awards differ from the played knockout')
   }
+  return receipt
+}
+
+export function verifyNativeTournamentClosure(
+  receipt: NativeTournamentClosureReceipt,
+  command: NativeTournamentClosureCommand, view: ContinuationView,
+): NativeTournamentClosureReceipt {
+  const closure = receipt?.closure, matches = view.tournaments?.find(t => t.tournament_id === command.tournament_id)
+  const validHash = (s: unknown) => typeof s === 'string' && /^[0-9a-f]{64}$/.test(s)
+  if (!receipt || receipt.schema_version !== 'calendar_native_tournament_closure_receipt.v1'
+    || receipt.official_ranking_published !== false
+    || receipt.publication_status !== 'native_result_closed_not_official'
+    || !validHash(receipt.fingerprint) || !validHash(receipt.checkpoint_fingerprint)
+    || !closure || closure.scope !== 'played_native_result_closed_not_official'
+    || closure.command_id !== command.command_id || closure.tournament_id !== command.tournament_id
+    || closure.source_saved_head !== command.expected_saved_head
+    || closure.source_checkpoint_fingerprint !== command.expected_checkpoint_fingerprint
+    || !matches || closure.source_tournament_fingerprint !== matches.fingerprint
+    || closure.champion_player_id !== matches.winner_player_id
+    || !Array.isArray(closure.players) || closure.players.length !== 8
+    || !validHash(closure.source_prepared_awards_fingerprint)
+    || !validHash(closure.request_fingerprint)
+  ) throw Error('Native tournament result closure does not match Saved sporting evidence')
   return receipt
 }

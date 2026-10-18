@@ -156,7 +156,7 @@ def append_followup_knockout(checkpoint, world, event: CalendarFollowupKnockout)
         checkpoint.schema_version not in {
             "calendar_sporting_checkpoint.v3", "calendar_sporting_checkpoint.v4",
             "calendar_sporting_checkpoint.v5", "calendar_sporting_checkpoint.v6",
-            "calendar_sporting_checkpoint.v7",
+            "calendar_sporting_checkpoint.v7", "calendar_sporting_checkpoint.v8",
         }
         or not checkpoint.week_events
         or (checkpoint.run_id, checkpoint.branch_id) != (event.run_id, event.branch_id)
@@ -174,12 +174,22 @@ def append_followup_knockout(checkpoint, world, event: CalendarFollowupKnockout)
     ):
         raise ValueError("Knockout source/roster or identity differs from Saved sporting state")
 
+    # Each match still verifies source fingerprint, 57-attribute projections,
+    # deterministic winner-fed identities and post-match player effects.
+    # The intermediate seven-match prefixes are not externally persisted.
+    # Validating/serializing the whole 1,000-player + match-log checkpoint on
+    # EVERY round causes pathological Save/recovery latencies; validate once
+    # after the complete atomic tournament is assembled below.
     intermediate = checkpoint
     for match in event.matches:
-        intermediate = append_continuation(intermediate, world, match)
+        intermediate = append_continuation(
+            intermediate, world, match, _defer_checkpoint_validation=True,
+        )
     successor = checkpoint.model_copy(update={
         "schema_version": (
-            "calendar_sporting_checkpoint.v7"
+            "calendar_sporting_checkpoint.v8"
+            if checkpoint.schema_version == "calendar_sporting_checkpoint.v8"
+            else "calendar_sporting_checkpoint.v7"
             if checkpoint.schema_version == "calendar_sporting_checkpoint.v7"
             or event.schema_version == "calendar_followup_knockout.v4"
             else "calendar_sporting_checkpoint.v6"

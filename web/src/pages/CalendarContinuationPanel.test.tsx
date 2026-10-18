@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { LanguageProvider } from '../i18n/LanguageContext'
 import { CalendarContinuationPanel } from './CalendarContinuationPanel'
 import type { ContinuationView } from '../api/calendarContinuation'
-const api = vi.hoisted(() => ({ inspectCalendarContinuation: vi.fn(), simulateCalendarContinuation: vi.fn(), simulateCalendarFollowupKnockout: vi.fn(), simulateCalendarScoredFollowupKnockout: vi.fn(), simulateCalendarEightFollowupKnockout: vi.fn(), simulateCalendarEightScoredFollowupKnockout: vi.fn(),
+const api = vi.hoisted(() => ({ inspectCalendarContinuation: vi.fn(), simulateCalendarContinuation: vi.fn(), simulateCalendarFollowupKnockout: vi.fn(), simulateCalendarScoredFollowupKnockout: vi.fn(), simulateCalendarEightFollowupKnockout: vi.fn(), simulateCalendarEightScoredFollowupKnockout: vi.fn(), closeNativeCalendarTournamentResult: vi.fn(),
   previewCalendarSportingWeek: vi.fn(), commitCalendarSportingWeek: vi.fn(), saveCalendarContinuation: vi.fn(), replayCalendarContinuation: vi.fn(), ApiError: class ApiError extends Error {} }))
 vi.mock('../api/client', () => api)
 const fp = 'a'.repeat(64)

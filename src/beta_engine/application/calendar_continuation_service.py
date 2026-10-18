@@ -147,6 +147,10 @@ class CalendarContinuationService:
                         original.fingerprint == event.fingerprint for original in saved.tournaments
                     )),
                     'scope': event.scope,
+                    'result_closed': any(c.tournament_id == event.tournament_id for c in state.closures),
+                    'result_closure_saved': bool(saved and any(
+                        c.tournament_id == event.tournament_id for c in saved.closures
+                    )),
                     'prepared_points_status': (
                         'prepared_not_official' if event.schema_version in {'calendar_followup_knockout.v2', 'calendar_followup_knockout.v4'}
                         else 'not_prepared'
@@ -158,6 +162,17 @@ class CalendarContinuationService:
                         award.model_dump(mode='json') for award in event.prepared_awards
                     ],
                 } for event in state.tournaments] if state else [],
+                'closures': [{
+                    'command_id': e.command_id,
+                    'tournament_id': e.tournament_id,
+                    'fingerprint': e.fingerprint,
+                    'champion_player_id': e.champion_player_id,
+                    'finalist_player_id': e.finalist_player_id,
+                    'source_tournament_fingerprint': e.source_tournament_fingerprint,
+                    'players': [p.model_dump(mode='json') for p in e.players],
+                    'scope': e.scope,
+                    'saved': bool(saved and any(s.fingerprint == e.fingerprint for s in saved.closures)),
+                } for e in state.closures] if state else [],
                 'weekly_advances': [{'command_id':e.command_id,'fingerprint':e.fingerprint,'completed_week':e.completed_week.week,'target_week':e.target_week.week,'saved':bool(saved and any(s.fingerprint == e.fingerprint for s in saved.weekly_advances))} for e in state.weekly_advances] if state else [],
                 'health_numeric_effect_applied': False,
                 'limited_player_ids': [p.player_id for p in health.players if project_player_health(p).numeric_calibration_required] if health else [],
@@ -211,7 +226,7 @@ class CalendarContinuationService:
                     or revision.saved_head_revision_id != command.expected_saved_head
                     or state.fingerprint != command.expected_checkpoint_fingerprint):
                 raise ValueError('Save the current checkpoint and review its exact Saved HEAD before a new match')
-            if any(e.command_id == command.command_id for e in state.weekly_advances):
+            if any(e.command_id == command.command_id for e in (*state.weekly_advances, *state.closures)):
                 raise ValueError('Command identity already used by sporting week advance')
             if command.match_id in {knockout.match_id, *(m.input_context.match_id for m in knockout.matches)} or command.command_id == knockout.command_id:
                 raise ValueError('Continuation cannot reuse the original knockout identity')

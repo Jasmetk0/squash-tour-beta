@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { previewCalendarSportingWeek, commitCalendarSportingWeek, inspectCalendarContinuation, simulateCalendarContinuation, simulateCalendarFollowupKnockout, simulateCalendarScoredFollowupKnockout, simulateCalendarEightFollowupKnockout, simulateCalendarEightScoredFollowupKnockout, saveCalendarContinuation, replayCalendarContinuation } from '../api/client'
-import { verifyFollowupKnockout, verifyEightFollowupKnockout, type FollowupEightCommand, type FollowupEightScoredCommand, type FollowupKnockoutCommand, type FollowupScoredCommand, verifySportingWeek, type SportingWeekCommand, type SportingWeekPreview, verifyContinuation, type ContinuationView, type ContinuationReceipt } from '../api/calendarContinuation'
+import { previewCalendarSportingWeek, commitCalendarSportingWeek, inspectCalendarContinuation, simulateCalendarContinuation, simulateCalendarFollowupKnockout, simulateCalendarScoredFollowupKnockout, simulateCalendarEightFollowupKnockout, simulateCalendarEightScoredFollowupKnockout, closeNativeCalendarTournamentResult, saveCalendarContinuation, replayCalendarContinuation } from '../api/client'
+import { verifyFollowupKnockout, verifyEightFollowupKnockout, verifyNativeTournamentClosure, type NativeTournamentClosureCommand, type FollowupEightCommand, type FollowupEightScoredCommand, type FollowupKnockoutCommand, type FollowupScoredCommand, verifySportingWeek, type SportingWeekCommand, type SportingWeekPreview, verifyContinuation, type ContinuationView, type ContinuationReceipt } from '../api/calendarContinuation'
 import { newCommandId } from '../admin/branchSimulation'
 import { useLanguage } from '../i18n/LanguageContext'
 import { formatApiError } from '../utils/apiErrors'
@@ -23,6 +23,8 @@ export function CalendarContinuationPanel({ runId, branchId, head, onChange }: {
   const [eightPointConsent, setEightPointConsent] = useState(false)
   const [quarterPoints, setQuarterPoints] = useState('15')
   const eightCommandId = useRef<string | null>(null)
+  const closureCommandId = useRef<string | null>(null)
+  const [closureConsent, setClosureConsent] = useState(false)
   const [preparePoints, setPreparePoints] = useState(false)
   const [pointConsent, setPointConsent] = useState(false)
   const [category, setCategory] = useState('Operator-reviewed exhibition')
@@ -39,7 +41,7 @@ export function CalendarContinuationPanel({ runId, branchId, head, onChange }: {
   useEffect(() => {
     const stamp = epoch.current
     setWeekReview(null); setWeekConsent(false); setView(null); setReview(null); setReceipt(null); setConsent(false); setSaveConsent(false)
-    setKnockoutConsent(false); setEightConsent(false); setEightPointConsent(false); setPointConsent(false); knockoutCommandId.current = null; eightCommandId.current = null
+    setKnockoutConsent(false); setEightConsent(false); setEightPointConsent(false); setClosureConsent(false); setPointConsent(false); knockoutCommandId.current = null; eightCommandId.current = null; closureCommandId.current = null
     setError(null); setNotice(null); setBusy(true)
     void inspectCalendarContinuation(runId, branchId).then(v => {
       if (epoch.current !== stamp || current.current !== target) return
@@ -51,10 +53,10 @@ export function CalendarContinuationPanel({ runId, branchId, head, onChange }: {
       .finally(() => { if (epoch.current === stamp && current.current === target) setBusy(false) })
     return () => { epoch.current += 1 }
   }, [target, runId, branchId, head])
-  useEffect(() => { commandId.current = null; weekCommandId.current = null; knockoutCommandId.current = null; eightCommandId.current = null
-    setConsent(false); setKnockoutConsent(false); setEightConsent(false); setEightPointConsent(false); setPointConsent(false); setWeekConsent(false); setWeekReview(null) }, [target, a, b, seed, reason, knockoutEntrants.join('|'), eightEntrants.join('|'), preparePoints, eightPreparePoints, category, championPoints, finalistPoints, semiPoints, quarterPoints])
+  useEffect(() => { commandId.current = null; weekCommandId.current = null; knockoutCommandId.current = null; eightCommandId.current = null; closureCommandId.current = null
+    setConsent(false); setKnockoutConsent(false); setEightConsent(false); setEightPointConsent(false); setClosureConsent(false); setPointConsent(false); setWeekConsent(false); setWeekReview(null) }, [target, a, b, seed, reason, knockoutEntrants.join('|'), eightEntrants.join('|'), preparePoints, eightPreparePoints, category, championPoints, finalistPoints, semiPoints, quarterPoints])
   const read = async () => verifyContinuation(await inspectCalendarContinuation(runId, branchId), runId, branchId, head)
-  const perform = async (action: 'play' | 'review' | 'save' | 'replay' | 'week-review' | 'week-commit' | 'knockout' | 'knockout-eight', matchId?: string) => {
+  const perform = async (action: 'play' | 'review' | 'save' | 'replay' | 'week-review' | 'week-commit' | 'knockout' | 'knockout-eight' | 'close-result', matchId?: string) => {
     if (!view || busy) return
     const stamp = epoch.current, from = target
     const valid = () => epoch.current === stamp && current.current === from
@@ -77,6 +79,36 @@ export function CalendarContinuationPanel({ runId, branchId, head, onChange }: {
         const latest = await read(); if (!valid()) return
         if (latest.checkpoint_fingerprint !== r.checkpoint_fingerprint || latest.sporting_week?.week !== r.advance.target_week.week) throw Error('Weekly owner changed after preparation')
         setView(latest); setWeekReview(null); setWeekConsent(false); setReceipt(null); setReview(null); setSaveConsent(false); setConsent(false); onChange()
+      } else if (action === 'close-result') {
+        const tournament = view.tournaments?.[(view.tournaments?.length ?? 0) - 1]
+        if (!view.can_play || !view.saved || !view.checkpoint_fingerprint
+          || !closureConsent || !reason.trim() || !tournament
+          || tournament.entrant_ids.length !== 8
+          || tournament.prepared_points_status !== 'prepared_not_official'
+          || tournament.result_closed) return
+        closureCommandId.current ??= newCommandId()
+        const command: NativeTournamentClosureCommand = {
+          command_id: closureCommandId.current,
+          tournament_id: tournament.tournament_id,
+          expected_saved_head: head,
+          expected_checkpoint_fingerprint: view.checkpoint_fingerprint,
+          operator_label: 'Admin', audit_reason: reason.trim(),
+          explicit_result_confirmation: true,
+        }
+        const closed = verifyNativeTournamentClosure(
+          await closeNativeCalendarTournamentResult(runId, branchId, command),
+          command, view,
+        )
+        if (!valid()) return
+        const latest = await read(); if (!valid()) return
+        const entry = latest.closures?.find(c => c.tournament_id === tournament.tournament_id)
+        if (latest.checkpoint_fingerprint !== closed.checkpoint_fingerprint
+          || entry?.fingerprint !== closed.fingerprint
+          || latest.matches.length !== view.matches.length
+          || !latest.tournaments?.find(t => t.tournament_id === tournament.tournament_id)?.result_closed
+        ) throw Error('Native result closure differs from sporting owner')
+        setView(latest); setClosureConsent(false); setReceipt(null)
+        setReview(null); setSaveConsent(false); onChange()
       } else if (action === 'knockout-eight') {
         if (!view.can_play || !view.saved || !view.checkpoint_fingerprint
           || !view.sporting_week || view.sporting_week.week < 2
@@ -200,6 +232,7 @@ export function CalendarContinuationPanel({ runId, branchId, head, onChange }: {
     } catch (e) { if (valid()) setError(formatApiError(e)) }
     finally { if (valid()) setBusy(false) }
   }
+  const latestTournament = view?.tournaments?.[(view?.tournaments?.length ?? 0) - 1]
   const canPlay = view?.can_play && a !== b && a && b && consent && reason.trim() && /^-?\d+$/.test(seed) && Number.isSafeInteger(Number(seed))
   return <section aria-label="Stateful calendar continuation">
     <h4>{cs ? 'Navazující zápasy z uloženého stavu' : 'Continue matches from Saved player state'}</h4>
@@ -329,6 +362,25 @@ export function CalendarContinuationPanel({ runId, branchId, head, onChange }: {
             ? (t.prepared_awards ?? []).map(a => `${a.player_id}: ${a.main_points}`).join(' · ')
             : '—'
         }</td><td>{t.saved ? (cs ? 'Uloženo' : 'Saved') : (cs ? 'Neuloženo' : 'Unsaved')}</td></tr>)}
+      </tbody></table>}
+      {latestTournament?.entrant_ids.length === 8
+        && latestTournament.prepared_points_status === 'prepared_not_official'
+        && !latestTournament.result_closed && <section aria-label="Native tournament result closure">
+          <h5>{cs ? 'Uzavřít skutečné výsledky turnaje' : 'Close actual tournament results'}</h5>
+          <p role="status">{cs ? 'Po ručním Save uzavře výsledky všech sedmi zápasů do ověřené historie hráčů. Připravené body se NESTANOU Official Ranking.' : 'After the separate manual Save, freeze all seven played matches into verified player results. Prepared points do NOT become Official Ranking.'}</p>
+          <label><input type="checkbox" checked={closureConsent} disabled={busy || !view.can_play}
+            onChange={e => setClosureConsent(e.target.checked)} />
+            {cs ? 'Potvrzuji uzavření odehraného turnaje, nikoliv oficiální publikaci.' : 'Confirm closing actual played results, NOT Official publication.'}
+          </label>
+          <button disabled={busy || !view.can_play || !closureConsent || !reason.trim()}
+            onClick={() => void perform('close-result')}>
+            {cs ? 'Uzavřít výsledky turnaje' : 'Close native tournament result'}
+          </button>
+        </section>}
+      {!!view.closures?.length && <table aria-label="Closed tournament results"><thead><tr><th>{cs ? 'Turnaj' : 'Tournament'}</th><th>{cs ? 'Vítěz' : 'Champion'}</th><th>{cs ? 'Hráči / výsledky' : 'Players / results'}</th><th>Save</th></tr></thead><tbody>
+        {view.closures.map(c => <tr key={c.fingerprint}><td>{c.tournament_id}</td><td>{c.champion_player_id}</td><td>
+          {c.players.map(p => `${p.player_id} (${p.wins}W/${p.losses}L, ${p.prepared_points}p)`).join(' · ')}
+        </td><td>{c.saved ? (cs ? 'Uloženo' : 'Saved') : (cs ? 'Neuloženo' : 'Unsaved')}</td></tr>)}
       </tbody></table>}
       {view.matches.length > 0 && <table aria-label="Continued match history"><thead><tr><th>{cs ? 'Zápas' : 'Match'}</th><th>{cs ? 'Vítěz' : 'Winner'}</th><th>Save</th><th>Replay</th></tr></thead>
         <tbody>{view.matches.map(m => <tr key={m.match_id}><td>{m.sequence} · {m.match_id}</td><td>{m.winner_player_id}</td><td>{m.saved ? (cs ? 'Uloženo' : 'Saved') : (cs ? 'Neuloženo' : 'Unsaved')}</td>

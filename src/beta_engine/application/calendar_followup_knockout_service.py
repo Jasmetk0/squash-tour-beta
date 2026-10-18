@@ -97,6 +97,14 @@ class CalendarFollowupKnockoutService:
             )
             if historical is event:
                 return prefix
+            from beta_engine.domain.players.calendar_tournament_closure import (
+                append_native_tournament_closure,
+            )
+            for closure in state.closures:
+                if closure.source_week_event_count == len(prefix.week_events) and (
+                    closure not in prefix.closures
+                ):
+                    prefix = append_native_tournament_closure(prefix, closure)
         raise ValueError("Knockout event is absent from its Saved event history")
 
     @staticmethod
@@ -152,6 +160,7 @@ class CalendarFollowupKnockoutService:
                     opening.command_id,
                     *(e.command_id for e in state.weekly_advances),
                     *(e.command_id for e in state.played_continuations),
+                    *(e.command_id for e in state.closures),
                 } or command.tournament_id == opening.match_id):
                 raise ValueError("Knockout identity collides with played history")
             reserved = {opening.match_id, *(m.input_context.match_id for m in opening.matches)}

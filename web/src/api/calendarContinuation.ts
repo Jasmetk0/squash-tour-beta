@@ -195,7 +195,8 @@ export function verifyFollowupKnockout(
       || awards.some(a => !fingerprint(a.source_tournament_fingerprint)
         || a.source_policy_fingerprint !== receipt.prepared_policy_fingerprint
         || !command.entrant_ids.includes(a.player_id)
-        || a.main_points !== values[a.reached_stage])
+        || a.reached_stage === 'quarterfinal'
+        || a.main_points !== values[a.reached_stage as 'champion' | 'finalist' | 'semifinal'])
       || new Set(awards.map(a => a.player_id)).size !== 4
       || awards.filter(a => a.reached_stage === 'champion').length !== 1
       || awards.filter(a => a.reached_stage === 'finalist').length !== 1

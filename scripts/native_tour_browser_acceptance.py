@@ -226,7 +226,7 @@ def main():
                 )
                 check_errors()
 
-            def operation(label, container=None):
+            def operation(label, container=None, *, save_after=True):
                 began = time.monotonic()
                 source = container or panel
                 source.get_by_role("button", name=label, exact=True).click()
@@ -264,7 +264,8 @@ def main():
                 assert refreshed_view["run_id"] == "run" and refreshed_view["branch_id"] == "branch"
                 assert refreshed_view["saved_head_revision_id"] == evidence["last_saved_head"]
                 expect(panel.get_by_label("Confirm Tour Save")).to_be_visible()
-                save()
+                if save_after:
+                    save()
                 evidence["operations"].append(
                     {"operation": label, "seconds": time.monotonic() - began}
                 )
@@ -301,9 +302,12 @@ def main():
                 )
                 ids = options.evaluate_all("(xs)=>xs.slice(0,8).map(x=>x.value)")
                 edition.get_by_label("Tour applicants " + name).select_option(ids)
-                operation("Review applications", edition)
-                for label in ["Review approval", "Review draw", "Review play"]:
-                    operation(label, edition)
+                # Production Entry/field/draw authority can be staged as one
+                # Working Draft, but the MatchEngine still requires a Saved draw.
+                operation("Review applications", edition, save_after=False)
+                operation("Review approval", edition, save_after=False)
+                operation("Review draw", edition)
+                operation("Review play", edition)
                 expect(
                     edition.get_by_role("table", name="Played matches " + name).locator(
                         "tbody tr"

@@ -155,8 +155,16 @@ def edition(server, name, size=8):
             data={"player_ids": [p["player_id"] for p in view["players"][:size]]},
         ),
     )
+    # Applications, field approval and draw are one non-sporting draft,
+    # avoiding redundant full Saved-lineage traversals. Playing still
+    # requires this canonical draw to be signed by an explicit Save.
+    for action in ("approve", "draw"):
+        execute(
+            server,
+            command(inspect(server), action, name=name + ":" + action, edition_id=name),
+        )
     save_tour(server)
-    for action in ("approve", "draw", "play", "confirm-result"):
+    for action in ("play", "confirm-result"):
         execute(
             server,
             command(inspect(server), action, name=name + ":" + action, edition_id=name),

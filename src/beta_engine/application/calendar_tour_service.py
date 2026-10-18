@@ -390,7 +390,12 @@ class CalendarTourService:
             raise ValueError(
                 "Source HEAD or sporting/Tour input changed; Save and review again"
             )
-        if state != signed:
+        # Non-sporting configuration can be reviewed and staged together in
+        # one Working Draft. Playing a real match, confirming its result and
+        # advancing the public week must still start from an immutable Save.
+        if state != signed and command.action in (
+            "play", "confirm-result", "transition"
+        ):
             raise ValueError(
                 "Manual Save of the configured Tour authority is required first"
             )
@@ -1016,7 +1021,7 @@ class CalendarTourService:
             elif command.action == "draw":
                 if authority.field is None or authority.draw:
                     raise ValueError(
-                        "Draw requires a Saved approved field and no existing draw"
+                        "Draw requires an approved field and no existing draw"
                     )
                 draw = build_draw(authority, command.command_id, command.seed)
                 authority = authority.model_copy(

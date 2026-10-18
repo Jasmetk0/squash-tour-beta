@@ -40,9 +40,10 @@ sizes through 128; this executor supports full main-only 4/8-player knockouts.
 The Admin offers those supported sizes. Announcement becomes public only through
 its actual Week Transition and must precede operations by a complete week.
 
-Submit validated applications through the production writer, Save, approve the
-canonical field, Save, build the seeded canonical draw, Save, play the actual
-MatchEngine tournament, Save, independently confirm results, and Save again.
+Submit validated applications through the production writer, approve the
+canonical field, and build the seeded canonical draw in one Working Draft.
+Explicitly Save the full draft before playing the actual MatchEngine tournament;
+then Save the played result, independently confirm its awards, and Save again.
 Every new operation reviews exact HEAD, sporting and Tour inputs and requires
 explicit consent. There is no automatic Save. The last match feeds its actual
 winner into subsequent rounds. Original rally logs, projected 57-attribute sources

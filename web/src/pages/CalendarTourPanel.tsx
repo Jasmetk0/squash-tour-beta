@@ -91,11 +91,11 @@ export function CalendarTourPanel({runId,branchId,head}:{runId:string;branchId:s
     finally{if(epoch.current===stamp&&current.current===scope)setBusy(false)}
   }
   const names=new Map(view?.players.map(p=>[p.player_id,p.name])??[])
-  const ready=Boolean(view?.saved&&!busy&&reason.trim()&&/^-?\d+$/.test(seed)&&Number.isSafeInteger(Number(seed)))
+  const ready=Boolean(view&&!busy&&reason.trim()&&/^-?\d+$/.test(seed)&&Number.isSafeInteger(Number(seed))&&(view.saved||view.state))
   const latest=view?.state?.rankings[view.state.rankings.length-1]
   return <section className="panel" aria-label="Configured native Tour" data-active-head={head} data-saved-head={view?.saved_head_revision_id}>
     <h2>{cs?'Tour · Edition a oficiální týden':'Tour · Editions and Official week'}</h2>
-    <p>{cs?'Přihlášky → schválený field → los → skutečné zápasy → výsledky → Week Transition. Každý krok ukládejte ručně.':'Applications → approved field → draw → actual matches → results → Week Transition. Save each step manually.'}</p>
+    <p>{cs?'Přihlášky, schválení a los lze připravit v jednom Working Draft. Před zápasy, potvrzením výsledků a Week Transition proveďte ruční Save.':'Applications, approval and draw can share one Working Draft. Save manually before matches, result confirmation and Week Transition.'}</p>
     {error&&<p role="alert" className="error">{error}</p>}{notice&&<p role="status">{notice}</p>}
     {!view&&<p>{cs?'Načítání autorit…':'Loading authorities…'}</p>}
     {view&&<>
@@ -119,13 +119,13 @@ export function CalendarTourPanel({runId,branchId,head}:{runId:string;branchId:s
           <button disabled={!ready||!editionId.trim()||!name.trim()} onClick={()=>void perform('create-edition')}>{cs?'Zkontrolovat novou Edition':'Review new Edition'}</button>
         </details>
         {view.state.editions.map(a=>{
-          const id=a.edition.edition_id,active=a.edition.week.week===view.state!.week.week
+          const id=a.edition.edition_id,active=a.edition.week.week===view.state!.week.week&&a.edition.week.season_index===view.state!.week.season_index
           const next: keyof typeof actionLabels=!a.field?'approve':!a.draw?'draw':!a.tournament_fingerprint?'play':'confirm-result'
           return <section key={id} aria-label={`Edition ${id}`}>
             <h3>{a.edition.name} · W{a.edition.week.week}</h3>
             <p>{cs?'Přihlášky':'Applications'}: {a.submissions.length} · {cs?'Schválení':'Approved'}: {a.field?.direct_main_player_ids.length??0} · {a.result_confirmed?(cs?'Výsledky potvrzeny':'Results confirmed'):a.tournament_fingerprint?(cs?'Odehráno':'Played'):a.draw?(cs?'Vylosováno':'Drawn'):(cs?'Příprava':'Preparation')}</p>
             <p>{cs?'Bodová tabulka':'Point table'}: {Object.entries(a.edition.point_table).map(([k,v])=>`${cs?stageLabels[k]:k} ${v}`).join(' · ')}</p>
-            {!a.field&&active&&<><select multiple aria-label={`Tour applicants ${id}`} value={selected} onChange={e=>{setSelected(Array.from(e.target.selectedOptions,o=>o.value));invalidate()}}>{view.players.filter(p=>!a.submissions.some(s=>s.player_id===p.player_id)).map(p=><option key={p.player_id} value={p.player_id}>{p.name}</option>)}</select>
+            {!a.field&&active&&<><select multiple aria-label={`Tour applicants ${id}`} value={selected} onChange={e=>{setSelected(Array.from(e.target.selectedOptions,o=>o.value));invalidate()}}>{view.players.filter(p=>p.status!=='retired'&&!a.submissions.some(s=>s.player_id===p.player_id)).map(p=><option key={p.player_id} value={p.player_id}>{p.name}</option>)}</select>
               <button disabled={!ready||!selected.length} onClick={()=>void perform('submit',id)}>{cs?'Zkontrolovat přihlášky':'Review applications'}</button></>}
             {a.field&&<p>{cs?'Schválený field':'Approved field'}: {a.field.direct_main_player_ids.map(p=>names.get(p)??p).join(', ')}</p>}
             {a.draw&&<ol>{a.draw.main.slots.map(s=><li key={s.slot_index}>{names.get(s.player_id)??s.player_id}</li>)}</ol>}
@@ -133,7 +133,7 @@ export function CalendarTourPanel({runId,branchId,head}:{runId:string;branchId:s
               <table aria-label={`Played matches ${id}`}><thead><tr><th>Slot</th><th>{cs?'Zápas':'Match'}</th><th>{cs?'Vítěz':'Winner'}</th><th>{cs?'Rally':'Rallies'}</th></tr></thead><tbody>{view.edition_evidence[id].matches.map(m=><tr key={m.match_id}><td>{m.slot}</td><td>{names.get(m.player_a_id)} / {names.get(m.player_b_id)}</td><td>{names.get(m.winner_player_id)}</td><td>{m.rally_count}</td></tr>)}</tbody></table>
               <table aria-label={`Edition results ${id}`}><thead><tr><th>{cs?'Hráč':'Player'}</th><th>{cs?'Výsledek':'Result'}</th><th>{cs?'Body':'Points'}</th></tr></thead><tbody>{view.edition_evidence[id].results.map(r=><tr key={r.player_id}><td>{names.get(r.player_id)}</td><td>{cs?stageLabels[r.stage]:r.stage}</td><td>{r.main_points}</td></tr>)}</tbody></table>
             </>}
-            {active&&!a.result_confirmed&&<button disabled={!ready} onClick={()=>void perform(next,id)}>{actionLabels[next][cs?0:1]}</button>}
+            {active&&!a.result_confirmed&&<button disabled={!ready||(!view.saved&&(next==='play'||next==='confirm-result'))} onClick={()=>void perform(next,id)}>{actionLabels[next][cs?0:1]}</button>}
             {a.tournament_fingerprint&&<button disabled={busy} onClick={()=>{
               const stamp=epoch.current;setBusy(true)
               void replayCalendarContinuation(runId,branchId,`${id}:final`).then(r=>{if(epoch.current===stamp)setNotice(`${cs?'Přesný replay':'Exact replay'}: ${r.exact_replay}`)}).catch(e=>{if(epoch.current===stamp)setError(formatApiError(e))}).finally(()=>{if(epoch.current===stamp)setBusy(false)})
@@ -142,7 +142,7 @@ export function CalendarTourPanel({runId,branchId,head}:{runId:string;branchId:s
         })}
         <h3>{cs?'Připravenost týdne':'Week readiness'}</h3>
         {view.transition_blockers.length?<ul>{view.transition_blockers.map(b=><li key={b}>{b.startsWith('edition_not_terminal:')?`${cs?'Edition není dokončena':'Edition is not complete'}: ${b.slice(21)}`:blockerLabels[b]?.[cs?0:1]??b}</li>)}</ul>:<p>{cs?'Povinné Edition dokončeny.':'Mandatory Editions completed.'}</p>}
-        <button disabled={!ready||view.transition_blockers.length>0} onClick={()=>void perform('transition')}>{cs?'Zkontrolovat Week Transition':'Review Week Transition'}</button>
+        <button disabled={!ready||!view.saved||view.transition_blockers.length>0} onClick={()=>void perform('transition')}>{cs?'Zkontrolovat Week Transition':'Review Week Transition'}</button>
         {latest&&<><h3>{cs?'Oficiální ranking':'Official ranking'} · W{latest.week.week} · Best {latest.policy.best_n}</h3>
           <p>{view.saved?(cs?'Publikováno v Saved Revision.':'Published in Saved revision.'):(cs?'Kandidát ve Working Draft; Viewer stále čte poslední Saved Revision.':'Working Draft candidate; Viewer still reads the last Saved revision.')}</p>
           <table><thead><tr><th>#</th><th>{cs?'Hráč':'Player'}</th><th>{cs?'Body':'Points'}</th></tr></thead><tbody>{latest.rows.map(r=><tr key={r.player_id}><td>{r.rank}</td><td>{names.get(r.player_id)??r.player_id}</td><td><button onClick={()=>setContributions(view.contributions?.[r.player_id]??r.counted_results)}>{r.points}</button></td></tr>)}</tbody></table></>}

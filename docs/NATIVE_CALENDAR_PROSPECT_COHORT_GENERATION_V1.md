@@ -34,16 +34,27 @@ branches can see the same underlying world-derived deterministic source.
 
 ### Limitations and safety
 
-The preview **does not write** the Run-scoped prospect source, mutate a
-Working Draft, Save or activate a player. The review explicitly returns
-`materialization_supported=false` and `native_tour_activation_supported=false`.
+The preview **does not write** any source, Working Draft, Saved history
+or Tour state. The separate
+`POST .../intake/native-calendar/materialize` command requires the exact
+review fingerprint, current Saved HEAD, explicit confirmation and audit reason.
+Inside one `BEGIN IMMEDIATE` SQLite transaction it rechecks the full
+Saved Run clock, Branch permission/HEAD, saved-versus-live World Package,
+original shared prospect-source fingerprint, InitialWorld identities and
+existing/activated prospect conflicts before inserting the exact reviewed
+57-attribute records. This is an atomic Run-scoped source write, **not**
+lifecycle activation, and it never automatically saves a revision.
 
-Future explicit commit needs revalidation of the review within one SQLite writer
-transaction (Run clock, Saved HEAD, live Package source, conflicting shared
-prospects and any activated lifecycle identities), followed by an explicit
-manual source Save. Subsequent native target-week lifecycle + 57-attribute
-sporting + Health + ranking + Entry + replay is still required; no existing
-Tour intake guard was removed.
+A later manual `prospect-source/save` creates immutable Saved evidence.
+Until then a further preview/confirmation on the same Branch fails closed
+because its shared live source no longer matches Saved HEAD. Retry with an
+outdated review cannot duplicate, rewrite or silently mix generations.
+After Save an identical confirmed review is idempotent, while incompatible
+review policies/conflicts require a separate explicit resolution.
+
+The response still declares `native_tour_activation_supported=false`.
+Subsequent native target-week lifecycle + 57-attribute sporting + Health +
+ranking + Entry + replay is required; no Tour intake guard was removed.
 
 Fast CI tests exercise full real HTTP/SQLite Saved World W52/O1, W52/O35,
 W61/O37 and W80/O15 generation, 57-attribute cross-section evidence,

@@ -539,3 +539,73 @@ def test_intake_summary_retains_zero_output_countries_and_pre_generation_expecta
     assert all(row.materialized_count == 0 for row in zero_rows)
     assert all(sum(row.expected_band_counts.values()) == pytest.approx(0.0) for row in zero_rows)
     assert all(sum(row.generated_band_counts.values()) == 0 for row in zero_rows)
+
+def test_materialization_overwrite_rollback_is_atomic_when_stale_delete_fails(tmp_path):
+    """Late SQLite failure must roll back both changed rows and stale removal."""
+    repository, engine = _repository(tmp_path)
+    original = _record()
+    stale = _record(prospect_id="stale-same-country", display_name="Stale")
+    repository.upsert_run_prospects([original, stale])
+    replacement = _record(display_name="Updated")
+
+    # Abort the final DELETE after SQLAlchemy has already flushed the UPDATE.
+    with engine.begin() as conn:
+        conn.execute(text("""
+            CREATE TRIGGER reject_stale_delete BEFORE DELETE ON run_prospects
+            WHEN OLD.prospect_id = 'stale-same-country'
+            BEGIN SELECT RAISE(ABORT, 'injected stale delete failure'); END
+        """))
+    from beta_engine.application.run_prospect_cohort_reconcile import (
+        reconcile_run_prospect_cohort,
+    )
+
+    with pytest.raises(Exception, match="injected stale delete failure"):
+        reconcile_run_prospect_cohort(
+            repository,
+            run_id=original.run_id,
+            season_start_year=original.season_start_year,
+            expected=[replacement],
+            scope_country_codes={"EGY"},
+            source_type=original.source_type,
+            profile_version=original.profile_version,
+            cohort_policy_version=original.cohort_policy_version,
+            overwrite=True,
+        )
+    assert repository.get_run_prospect(
+        run_id=original.run_id, prospect_id=original.prospect_id
+    ) == original
+    assert repository.get_run_prospect(
+        run_id=stale.run_id, prospect_id=stale.prospect_id
+    ) == stale
+
+
+def test_atomic_prospect_reconcile_is_idempotent_and_rejects_foreign_year(tmp_path):
+    repository, _ = _repository(tmp_path)
+    from beta_engine.application.run_prospect_cohort_reconcile import (
+        RunProspectCohortConflictError, reconcile_run_prospect_cohort,
+    )
+    original = _record()
+    options = dict(
+        run_id=original.run_id, season_start_year=original.season_start_year,
+        expected=[original], scope_country_codes={"EGY"},
+        source_type=original.source_type, profile_version=original.profile_version,
+        cohort_policy_version=original.cohort_policy_version, overwrite=False,
+    )
+    assert reconcile_run_prospect_cohort(repository, **options) == (1, 0, 0, 1)
+    assert reconcile_run_prospect_cohort(repository, **options) == (0, 1, 0, 1)
+
+    colliding = _record(
+        prospect_id="collision-in-other-season", season_start_year=2028,
+    )
+    repository.upsert_run_prospects([colliding])
+    with pytest.raises(RunProspectCohortConflictError) as exc:
+        reconcile_run_prospect_cohort(
+            repository, **(options | {
+                "expected": [_record(prospect_id=colliding.prospect_id)],
+            })
+        )
+    assert exc.value.conflicts == [colliding.prospect_id]
+    assert repository.get_run_prospect(
+        run_id=colliding.run_id, prospect_id=colliding.prospect_id
+    ) == colliding
+

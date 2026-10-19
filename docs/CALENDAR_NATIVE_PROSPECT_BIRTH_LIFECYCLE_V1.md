@@ -24,6 +24,14 @@ Entry processing for original players plus sorted new, active, entry-free
 fingerprint and embedded birth evidence. Historical v2/v3 models, hashes,
 and old branch snapshots are unchanged. Subsequent v4 steps retain entrants.
 
+The same birth event can now produce a **complete proposed sporting population**:
+all previously-owned 57-attribute records are retained unchanged and newborns
+receive their canonical 57-attribute profiles plus the checkpoint's stored
+provisional form/sharpness/fatigue defaults. The application validates the
+staged sporting ID set against the v4 lifecycle and returns its deterministic
+SHA-256 alongside the birth-event and lifecycle digests. It still does not
+persist a sporting checkpoint or Health state.
+
 The Admin's Saved-authenticated
 `GET /admin/runs/{run_id}/branches/{branch_id}/calendar-tour/prospect-intake/preflight`
 now additionally reports the exact **proposed** v4 roster fingerprint, birth

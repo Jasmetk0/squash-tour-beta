@@ -22,6 +22,25 @@ does not wait for a second serial execution of the same expensive flow.
 
 ## Pull-request development
 
+### Isolated native Tour API-client edits
+
+Six legacy hybrid/Full Simulation browser workflows also watch the shared
+`web/src/api/client.ts`. A native Tour wrapper edit formerly triggered all six,
+even when no legacy hybrid execution path changed. Their bounded selector now
+uses the TypeScript parser and the actual PR base/tested Git tree to recognize
+only isolated `inspect/preview/execute/saveCalendarTour*` function declarations.
+Every shared client declaration must be unchanged. Production consumers in both
+trees must preserve the native page's exclusive use; namespace/dynamic consumers,
+extra subsystem changes, missing Git evidence or unfamiliar syntax run the full
+browser. Manual dispatch and selector/workflow/dependency edits also run it.
+
+These are **scoped-out unrelated scenarios**, not evidence that their browser
+tests executed. Every decision records its reason and compared commits in the
+workflow summary. The original commands, assertions, timeouts and artifact uploads
+remain in place when selected. The native Tour API, season API and W52/W61/W80
+browser workflows are outside this exception and remain mandatory as before.
+See [implementation and measured scope](CI_NATIVE_TOUR_BROWSER_SCOPE.md).
+
 During ordinary pre-alpha construction:
 
 - run only the tests that are relevant to the code changed by the pull request;

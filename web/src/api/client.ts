@@ -346,7 +346,7 @@ export function inspectNativeTourProspectIntake(run:string,branch:string):Promis
   return request(calendarTourRoot(run,branch)+'/prospect-intake/preflight')
 }
 /** Signed read-only 15yo sporting review: never creates any athlete. */
-export function previewNativeTourBirthSporting(
+export function previewCalendarTourNativeBirthSporting(
   run:string,branch:string,payload:import('./calendarTour').NativeSportingBirthPreviewRequest,
 ):Promise<import('./calendarTour').NativeSportingBirthPreflight> {
   return request(calendarTourRoot(run,branch)+'/prospect-intake/sporting-preflight',{

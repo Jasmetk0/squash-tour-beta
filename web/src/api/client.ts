@@ -342,6 +342,11 @@ const calendarTourRoot = (run:string,branch:string) => `/admin/runs/${encodeURIC
 export function inspectCalendarTour(run:string,branch:string,signal?:AbortSignal):Promise<import('./calendarTour').TourView> {
   return request(calendarTourRoot(run,branch),{signal})
 }
+export function inspectCalendarTourRecords(run:string,branch:string,asOf:number,from:number,country:string|null=null):Promise<import('./calendarTour').TourCareerRecords> {
+  const query=new URLSearchParams({as_of_season_index:String(asOf),from_season_index:String(from)})
+  if(country!==null)query.set('country_code',country)
+  return request(calendarTourRoot(run,branch)+'/records?'+query.toString())
+}
 export function inspectCalendarTourSeason(run:string,branch:string,season:number,compare:number|null=null):Promise<import('./calendarTour').TourSeasonComparison> {
   const query=compare===null?'':`?compare_to=${encodeURIComponent(compare)}`
   return request(calendarTourRoot(run,branch)+'/seasons/'+encodeURIComponent(season)+query)

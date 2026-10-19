@@ -59,3 +59,34 @@ application chronological sealing, no-before-birth and no-future Entry,
 foreign provenance, rehashed birth forgery, missing v4 birth, distinct
 NR tie-break, horizon extension and complete JSON proof replay are tested
 as focused `pr_critical` domain cases.
+
+## Coupled Official Ranking adoption proof
+
+The same read-only PR also provides
+`calculate_native_ranking_from_signed_lifecycle` and the fingerprinted
+`calendar_native_ranking_adoption_proof.v1`. It first requires the entire
+birth/Entry history to replay exactly, then projects the *actual* canonical
+`CalendarRankingPlayer` population from its first-entry dates and NR tokens.
+A new 15-year-old is not ranked simply because a lifecycle/sporting record
+exists. Only a real submitted Entry gives a token; that player can first
+appear in a later week's ranking according to the existing ranking kernel.
+Retired players remain a known historic identity but are not classified.
+
+The adapter uses the **existing deterministic Best N Official Ranking
+calculator**, including previous rank/tie-break, result and disciplinary zero
+rules. A supplied previously published Saved ranking must belong to the
+exact immediately preceding Run week and cannot claim anyone unadmitted
+to the population or entered after that publication. A supplied target
+publication is compared to the entire recalculated candidate, not merely
+the caller's declared hash.
+
+The proof carries separately the input lifecycle-replay fingerprint,
+previous ranking, resulting candidate, original verified result/zero
+fingerprints and exactly classified vs not-entered athlete identities.
+Results and previous ranking must be independently validated by the
+future Signed Tour coordinator; this projection does not invent winners,
+points, Entry, match evidence, or publishing permissions.
+
+The focus tests demonstrate real W52/W61/W80 birthday boundaries,
+never-entered zero ranking population, zero-point first real entrant,
+exact deterministic replay and source/NR/previous publication tamper rejection.

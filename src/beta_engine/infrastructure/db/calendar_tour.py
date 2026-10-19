@@ -150,7 +150,10 @@ def verify_tour(state, checkpoint, world=None):
     if {
         e.command_id
         for e in checkpoint.weekly_advances
-        if e.schema_version.endswith(".v2")
+        if e.schema_version in {
+            "calendar_sporting_week_advance.v2",
+            "calendar_sporting_week_advance.v3",
+        }
     } != {t.command_id for t in state.transitions}:
         raise ValueError(
             "Official sporting advances and Week Transition receipts differ"
@@ -175,7 +178,12 @@ def verify_tour(state, checkpoint, world=None):
                 "Tour transition receipt differs from authoritative publication"
             )
         expected_public = {
-            "kind": "week_transition_completed",
+            "kind": (
+                "season_transition_completed"
+                if transition.completed_week.season_index
+                != transition.target_week.season_index
+                else "week_transition_completed"
+            ),
             "week": transition.target_week.model_dump(mode="json"),
             "ranking_fingerprint": transition.ranking_fingerprint,
             "source_command_id": transition.command_id,
@@ -192,7 +200,12 @@ def verify_tour(state, checkpoint, world=None):
         event = advances.get(transition.command_id)
         if (
             event is None
-            or event.schema_version != "calendar_sporting_week_advance.v2"
+            or event.schema_version != (
+                "calendar_sporting_week_advance.v3"
+                if transition.completed_week.season_index
+                != transition.target_week.season_index
+                else "calendar_sporting_week_advance.v2"
+            )
             or event.fingerprint != transition.sporting_advance_fingerprint
             or event.target_week != transition.target_week
             or event.policy

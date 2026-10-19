@@ -201,7 +201,7 @@ def test_confirmed_native_cohort_persists_exact_source_only_until_manual_save(tm
         )
         code, save_review = _request("GET", source_route + "/preview")
         assert code == 200, save_review
-        assert save_review["unsaved_source_change"]
+        assert save_review["has_unsaved_changes"] and save_review["can_save"]
         code, saved = _request("POST", source_route, {
             "expected_draft_version": save_review["draft_version"],
             "expected_run_prospect_source_fingerprint":

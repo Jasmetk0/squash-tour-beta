@@ -3,7 +3,7 @@
 Unlike a preview-only count, this constructs the complete immutable target
 lifecycle. No Tour writer is called, and historical lifecycle v3 stays byte stable.
 """
-from copy import deepcopy
+import json
 from types import SimpleNamespace
 
 import pytest
@@ -226,12 +226,12 @@ def test_collisions_foreign_scope_and_tampered_birth_receipts_rejected():
     payload = event.model_dump(mode="json")
     payload["births"][0]["source_record_fingerprint"] = "0" * 64
     with pytest.raises(ValueError, match="proof"):
-        CalendarProspectBirthEvent.model_validate(payload)
+        CalendarProspectBirthEvent.model_validate_json(json.dumps(payload))
     successor = advance_calendar_lifecycle_with_prospects(predecessor, event)
     changed = successor.model_dump(mode="json")
     changed["players"][-1]["source_generation_fingerprint"] = "0" * 64
     with pytest.raises(ValueError, match="signed birth"):
-        CalendarTourLifecycleIntakeState.model_validate(changed)
+        CalendarTourLifecycleIntakeState.model_validate_json(json.dumps(changed))
 
 
 def test_source_with_empty_next_week_yields_versioned_no_birth_step():

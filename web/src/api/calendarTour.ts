@@ -55,3 +55,32 @@ export function validateTourSeasonComparison(v:TourSeasonComparison,run:string,b
     throw Error('Saved Season Summary source or requested comparison changed')
   return v
 }
+
+export type TourRecordMetric='titles'|'finals'|'awarded_points'
+export type TourCareerRecords={
+  schema_version:'calendar_tour_signed_records_response.v1';run_id:string;branch_id:string
+  saved_head_revision_id:string;source_tour_fingerprint:string
+  as_of_season_index:number;from_season_index:number
+  country_code:string|null;leaderboard_limit:number
+  completed_seasons:number[];completed_edition_count:number
+  source_seasons:{season_index:number;season_label:string;boundary_command_id:string;completed_edition_count:number;source_tour_fingerprint:string;published_ranking_fingerprint:string}[]
+  records:{
+    record_id:string;scope:'player'|'country';metric:TourRecordMetric
+    value:number
+    holders:{entity_id:string;label:string;country_code:string;titles:number;finals:number;awarded_points:number}[]
+    holder_history:{season_index:number;season_label:string;record_value:number;holder_ids:string[];change:'established'|'improved'|'tied';boundary_command_id:string}[]
+    leaderboard:{entity_id:string;label:string;country_code:string;titles:number;finals:number;awarded_points:number;rank:number}[]
+    leaderboard_total:number
+  }[]
+}
+export function validateTourCareerRecords(v:TourCareerRecords,run:string,branch:string,head:string,asOf:number,from:number,country:string|null):TourCareerRecords{
+  if(v.schema_version!=='calendar_tour_signed_records_response.v1'
+    ||v.run_id!==run||v.branch_id!==branch||v.saved_head_revision_id!==head
+    ||v.as_of_season_index!==asOf||v.from_season_index!==from||v.country_code!==country
+    ||!Array.isArray(v.completed_seasons)||!v.completed_seasons.includes(asOf)
+    ||!Array.isArray(v.source_seasons)||!Array.isArray(v.records)
+    ||v.records.length!==6
+    ||v.records.some(r=>!Array.isArray(r.holders)||!Array.isArray(r.holder_history)||!Array.isArray(r.leaderboard)))
+    throw Error('Signed Career Records source, request, or metric catalog changed')
+  return v
+}

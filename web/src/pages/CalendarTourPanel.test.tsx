@@ -7,7 +7,7 @@ import {LanguageProvider} from '../i18n/LanguageContext'
 import {CalendarTourPanel} from './CalendarTourPanel'
 import type {TourCommand,TourPreview,TourView} from '../api/calendarTour'
 
-const api=vi.hoisted(()=>({inspectCalendarTour:vi.fn(),previewCalendarTour:vi.fn(),executeCalendarTour:vi.fn(),saveCalendarTour:vi.fn(),replayCalendarContinuation:vi.fn(),inspectCalendarTourSeason:vi.fn()}))
+const api=vi.hoisted(()=>({inspectCalendarTour:vi.fn(),previewCalendarTour:vi.fn(),executeCalendarTour:vi.fn(),saveCalendarTour:vi.fn(),replayCalendarContinuation:vi.fn(),inspectCalendarTourSeason:vi.fn(),inspectCalendarTourRecords:vi.fn()}))
 vi.mock('../api/client',()=>api)
 const view=(run='r',branch='b'):TourView=>({schema_version:'calendar_tour_inspection.v1',run_id:run,branch_id:branch,saved_head_revision_id:'head',draft_version:1,checkpoint_fingerprint:'a'.repeat(64),tour_fingerprint:null,saved:false,can_initialize:true,players:[],transition_blockers:['tour_authority_missing'],season_transition_blockers:['tour_authority_missing'],saved_completed_seasons:[],edition_evidence:{},state:null})
 const panel=(run='r',branch='b')=><QueryClientProvider client={new QueryClient()}><MemoryRouter><LanguageProvider><CalendarTourPanel runId={run} branchId={branch} head="head"/></LanguageProvider></MemoryRouter></QueryClientProvider>
@@ -174,6 +174,53 @@ describe('configured Tour consent (HTTP boundary mocked)',()=>{
     await screen.findByLabelText('Tour operation reason')
     expect(screen.queryByLabelText('Signed season')).not.toBeInTheDocument()
     expect(api.inspectCalendarTourSeason).not.toHaveBeenCalled()
+  })
+
+
+  it('reads only Signed career records with selected national and historical filters',async()=>{
+    const calendar={schema_version:'run_calendar.v1',weeks_per_year:4,season_start_year_week:2,start_year:2030,season_count:3}
+    api.inspectCalendarTour.mockResolvedValue({...view(),saved:true,saved_completed_seasons:[0,1],tour_fingerprint:'c'.repeat(64),
+      state:{week:{calendar,season_index:2,week:1},editions:[],rankings:[],transitions:[]}})
+    const item=(scope:'player'|'country',metric:'titles'|'finals'|'awarded_points')=>({
+      record_id:`native_tour.${scope}.${metric}.v1`,scope,metric,value:metric==='titles'?2:0,
+      holders:metric==='titles'?[{entity_id:'player-a',label:'Alpha',country_code:'CZE',titles:2,finals:0,awarded_points:230}]:[],
+      holder_history:metric==='titles'?[{season_index:1,season_label:'S2',record_value:2,holder_ids:['player-a'],change:'improved',boundary_command_id:'close-1'}]:[],
+      leaderboard:metric==='titles'?[{entity_id:'player-a',label:'Alpha',country_code:'CZE',titles:2,finals:0,awarded_points:230,rank:1}]:[],
+      leaderboard_total:metric==='titles'?1:0
+    })
+    api.inspectCalendarTourRecords.mockResolvedValue({
+      schema_version:'calendar_tour_signed_records_response.v1',run_id:'r',branch_id:'b',
+      saved_head_revision_id:'head',source_tour_fingerprint:'c'.repeat(64),
+      as_of_season_index:1,from_season_index:0,country_code:'CZE',leaderboard_limit:20,
+      completed_seasons:[0,1],completed_edition_count:2,source_seasons:[],
+      records:(['player','country'] as const).flatMap(scope=>(['titles','finals','awarded_points'] as const).map(metric=>item(scope,metric)))
+    })
+    render(panel())
+    await screen.findByLabelText('Records as of season')
+    fireEvent.change(screen.getByLabelText('Records country'),{target:{value:'cze'}})
+    expect((screen.getByLabelText('Records country') as HTMLInputElement).value).toBe('CZE')
+    fireEvent.click(screen.getByRole('button',{name:'Load historical records'}))
+    await screen.findByLabelText('Verified career records')
+    expect(screen.getByLabelText('Verified career records')).toHaveTextContent('CZE')
+    expect(screen.getByLabelText('Verified career records')).toHaveTextContent('Alpha')
+    expect(api.inspectCalendarTourRecords).toHaveBeenCalledWith('r','b',1,0,'CZE')
+    expect(api.saveCalendarTour).not.toHaveBeenCalled()
+  })
+  it('rejects stale Signed record reads from the wrong immutable Saved HEAD',async()=>{
+    const calendar={schema_version:'run_calendar.v1',weeks_per_year:4,season_start_year_week:2,start_year:2030,season_count:3}
+    api.inspectCalendarTour.mockResolvedValue({...view(),saved:true,saved_completed_seasons:[0],
+      tour_fingerprint:'c'.repeat(64),state:{week:{calendar,season_index:1,week:1},editions:[],rankings:[],transitions:[]}})
+    api.inspectCalendarTourRecords.mockResolvedValue({
+      schema_version:'calendar_tour_signed_records_response.v1',run_id:'r',branch_id:'b',
+      saved_head_revision_id:'foreign',source_tour_fingerprint:'c'.repeat(64),
+      as_of_season_index:0,from_season_index:0,country_code:null,leaderboard_limit:20,
+      completed_seasons:[0],completed_edition_count:0,source_seasons:[],records:[]
+    })
+    render(panel())
+    await screen.findByLabelText('Records as of season')
+    fireEvent.click(screen.getByRole('button',{name:'Load historical records'}))
+    await screen.findByRole('alert')
+    expect(screen.queryByLabelText('Verified career records')).not.toBeInTheDocument()
   })
 
 })

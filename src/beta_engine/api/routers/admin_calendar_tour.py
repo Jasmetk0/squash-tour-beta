@@ -2,7 +2,7 @@
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, ConfigDict, Field
 
 from beta_engine.api.deps import ApiRuntime, get_run_working_draft_service, get_runtime
@@ -32,6 +32,23 @@ def inspect(
     try:
         return CalendarTourService(runtime.repository).inspect(
             run_id=run_id, branch_id=branch_id
+        )
+    except (KeyError, ValueError, TypeError) as exc:
+        raise conflict(exc) from exc
+
+
+@router.get("/seasons/{season_index}")
+def season_summary(
+    run_id: str,
+    branch_id: str,
+    season_index: int,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+    compare_to: int | None = Query(default=None, ge=0),
+):
+    try:
+        return CalendarTourService(runtime.repository).season_summary(
+            run_id=run_id, branch_id=branch_id,
+            season_index=season_index, compare_to=compare_to,
         )
     except (KeyError, ValueError, TypeError) as exc:
         raise conflict(exc) from exc

@@ -155,7 +155,7 @@ def advance_native_health_week(
     ):
         raise ValueError("Native v3 Health rejects missing or unsourced newcomers")
     by_id = {
-        p.player_id: CalendarHealthProfile.model_validate(p.model_dump(mode="json"))
+        p.player_id: CalendarHealthProfile.model_validate_json(p.model_dump_json())
         for p in previous_health.players
     }
     for pid in births:

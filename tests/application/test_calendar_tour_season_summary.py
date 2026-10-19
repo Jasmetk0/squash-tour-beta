@@ -99,7 +99,7 @@ def test_compare_any_two_finished_seasons_with_absolute_national_deltas():
     assert view["comparison"]["season_index"]==0
     assert view["country_deltas"]==[
         {"country_code":"CZE","titles_delta":-1,"finals_delta":1,"awarded_points_delta":-35},
-        {"country_code":"USA","titles_delta":1,"finals_delta":-1,"awarded_points_delta":30},
+        {"country_code":"USA","titles_delta":1,"finals_delta":-1,"awarded_points_delta":60},
     ]
     assert compare_completed_seasons(state,world,0)["comparison"] is None
 

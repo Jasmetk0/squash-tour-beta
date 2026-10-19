@@ -7,6 +7,9 @@ import hashlib
 import json
 
 from beta_engine.application.run_weekly_intake_cohort_preview_service import RunWeeklyIntakeCohortPreviewService
+from beta_engine.application.run_prospect_cohort_reconcile import (
+    RunProspectCohortConflictError, reconcile_run_prospect_cohort,
+)
 from beta_engine.domain.players.prospect_sporting_profile import (
     DEFAULT_PROSPECT_SPORTING_PROFILE_POLICY,
     materialize_prospect_sporting_profile,
@@ -131,64 +134,32 @@ class RunProspectMaterializationService:
             )
 
         scope_country_codes = self._scope_country_codes(preview)
-        existing_for_season = self.repository.list_run_prospects(
-            run_id=run_id,
-            season_start_year=preview.season_start_year,
-            limit=None,
-        )
-        existing_by_id = {record.prospect_id: record for record in existing_for_season}
-        expected_by_id = {record.prospect_id: record for record in expected}
-        expected_ids = set(expected_by_id)
-        existing_in_scope = [
-            record
-            for record in existing_for_season
-            if record.source_type == SOURCE_TYPE
-            and record.profile_version == PROFILE_VERSION
-            and record.cohort_policy_version == COHORT_POLICY_VERSION
-            and record.country_code in scope_country_codes
-        ]
-        payload_conflicts = [
-            record.prospect_id
-            for record in expected
-            if record.prospect_id in existing_by_id and existing_by_id[record.prospect_id] != record
-        ]
-        stale_records = [record for record in existing_in_scope if record.prospect_id not in expected_ids]
-        conflicts = sorted(set(payload_conflicts + [record.prospect_id for record in stale_records]))
-        if conflicts and not overwrite:
-            raise RunProspectMaterializationConflictError(conflicts)
-        if overwrite and conflicts:
-            activated_conflicts = sorted(
-                self.repository.list_activated_run_prospect_ids(
+        try:
+            created_count, existing_count, conflict_count, persisted_count = (
+                reconcile_run_prospect_cohort(
+                    self.repository,
                     run_id=run_id,
-                    prospect_ids=conflicts,
+                    season_start_year=preview.season_start_year,
+                    expected=expected,
+                    scope_country_codes=scope_country_codes,
+                    source_type=SOURCE_TYPE,
+                    profile_version=PROFILE_VERSION,
+                    cohort_policy_version=COHORT_POLICY_VERSION,
+                    overwrite=overwrite,
                 )
             )
-            if activated_conflicts:
-                raise RunProspectMaterializationConflictError(activated_conflicts)
-
-        to_upsert = [record for record in expected if overwrite or record.prospect_id not in existing_by_id]
-        self.repository.upsert_run_prospects(to_upsert)
-        if overwrite:
-            self.repository.delete_run_prospects_by_ids(
-                run_id=run_id,
-                prospect_ids=[record.prospect_id for record in stale_records],
-            )
-        existing_count = len(expected) - len([r for r in expected if r.prospect_id not in existing_by_id])
-        created_count = len([r for r in expected if r.prospect_id not in existing_by_id])
-        if overwrite:
-            created_count = len([r for r in expected if r.prospect_id not in existing_by_id])
-        persisted_expected_ids = expected_ids
-        persisted = [record for record in self.repository.list_run_prospects(run_id=run_id, season_start_year=preview.season_start_year, limit=None) if record.prospect_id in persisted_expected_ids]
+        except RunProspectCohortConflictError as exc:
+            raise RunProspectMaterializationConflictError(exc.conflicts) from exc
         country_totals: dict[tuple[str, str | None], int] = {}
         week_totals: dict[int, int] = {}
         for record in expected:
             country_totals[(record.country_code, record.country_name)] = country_totals.get((record.country_code, record.country_name), 0) + 1
             week_totals[record.season_week] = week_totals.get(record.season_week, 0) + 1
-        already = len(expected) == existing_count and not conflicts
+        already = len(expected) == existing_count and conflict_count == 0
         return MaterializeRunProspectsResult(
             run_id=preview.run_id, world_id=preview.world_id, season=preview.season, season_start_year=preview.season_start_year,
             annual_target=preview.annual_target, requested_prospect_count=len(expected), created_count=created_count,
-            existing_count=existing_count, skipped_count=existing_count, conflict_count=len(conflicts), total_persisted_for_scope=len(persisted),
+            existing_count=existing_count, skipped_count=existing_count, conflict_count=conflict_count, total_persisted_for_scope=persisted_count,
             weeks_materialized=[MaterializedRunProspectWeekTotal(season_week=week, materialized_count=count) for week, count in sorted(week_totals.items())],
             country_totals=[MaterializedRunProspectCountryTotal(country_code=code, country_name=name, materialized_count=count) for (code, name), count in sorted(country_totals.items())],
             already_materialized=already,

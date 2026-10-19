@@ -118,6 +118,7 @@ def _activate_prospect(
         )
 
 
+@pytest.mark.pr_critical
 def test_repository_rejects_mutating_or_deleting_activated_prospect_metadata(tmp_path):
     repository, _ = _repository(tmp_path)
     record = _record()
@@ -256,6 +257,7 @@ def test_materialize_15yo_cohort_generates_deterministic_records_and_canonical_p
     assert ger_summary.forecast_count == result.requested_prospect_count
 
 
+@pytest.mark.pr_critical
 def test_materialize_15yo_cohort_is_idempotent_and_detects_conflicts(tmp_path):
     repository, _ = _repository(tmp_path)
     repository.upsert_simulation_run(SimulationRunInfo(run_id="run-i", season=2027, seed=1))
@@ -281,6 +283,7 @@ def test_materialize_15yo_cohort_is_idempotent_and_detects_conflicts(tmp_path):
     assert repository.get_run_prospect(run_id="run-i", prospect_id=record.prospect_id).display_name != "Tampered Prospect"
 
 
+@pytest.mark.pr_critical
 def test_materialization_overwrite_cannot_rewrite_activated_prospect(tmp_path):
     repository, engine = _repository(tmp_path)
     repository.upsert_simulation_run(
@@ -330,6 +333,7 @@ def test_materialization_overwrite_cannot_rewrite_activated_prospect(tmp_path):
     )
 
 
+@pytest.mark.pr_critical
 def test_materialization_policy_conflict_removes_only_stale_scope_records_on_overwrite(tmp_path):
     repository, _ = _repository(tmp_path)
     repository.upsert_simulation_run(SimulationRunInfo(run_id="run-policy", season=2027, seed=1))
@@ -540,6 +544,7 @@ def test_intake_summary_retains_zero_output_countries_and_pre_generation_expecta
     assert all(sum(row.expected_band_counts.values()) == pytest.approx(0.0) for row in zero_rows)
     assert all(sum(row.generated_band_counts.values()) == 0 for row in zero_rows)
 
+@pytest.mark.pr_critical
 def test_materialization_overwrite_rollback_is_atomic_when_stale_delete_fails(tmp_path):
     """Late SQLite failure must roll back both changed rows and stale removal."""
     repository, engine = _repository(tmp_path)
@@ -579,6 +584,7 @@ def test_materialization_overwrite_rollback_is_atomic_when_stale_delete_fails(tm
     ) == stale
 
 
+@pytest.mark.pr_critical
 def test_atomic_prospect_reconcile_is_idempotent_and_rejects_foreign_year(tmp_path):
     repository, _ = _repository(tmp_path)
     from beta_engine.application.run_prospect_cohort_reconcile import (

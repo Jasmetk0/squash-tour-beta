@@ -180,7 +180,7 @@ def inspect_native_prospect_intake(
         if snapshot is not None and state is not None and review["due"] and not review["problems"]:
             from beta_engine.domain.players.calendar_prospect_birth import (
                 NATIVE_SOURCE_TYPE, advance_calendar_lifecycle_with_prospects,
-                build_calendar_prospect_birth_event,
+                build_calendar_prospect_birth_event, project_native_birth_sporting_roster,
             )
             from beta_engine.infrastructure.db.player_lifecycle_state import get_lifecycle
 
@@ -205,6 +205,11 @@ def inspect_native_prospect_intake(
                 )
                 if len(event.births) != len(review["due"]):
                     raise ValueError("Native birth evidence differs from the verified due cohort")
+                sporting_roster = project_native_birth_sporting_roster(
+                    predecessor=predecessor, checkpoint=checkpoint, event=event,
+                )
+                if len(sporting_roster) != len(proposed.players):
+                    raise ValueError("Native birth sporting proposal differs from lifecycle")
                 review["lifecycle_admission_projection"] = {
                     "schema_version": "native_tour_lifecycle_admission_projection.v1",
                     "birth_event_fingerprint": event.fingerprint,
@@ -213,6 +218,10 @@ def inspect_native_prospect_intake(
                     "proposed_lifecycle_schema": proposed.schema_version,
                     "birth_count": len(event.births),
                     "projected_population_count": len(proposed.players),
+                    "proposed_sporting_fingerprint": canonical_hash([
+                        person.model_dump(mode="json") for person in sporting_roster
+                    ]),
+                    "proposed_sporting_population_count": len(sporting_roster),
                     "sporting_health_saved_activation_supported": False,
                 }
                 review.pop("preflight_fingerprint")

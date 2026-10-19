@@ -102,6 +102,7 @@ class CalendarTourCommand(FrozenInput):
         "confirm-result",
         "policy",
         "transition",
+        "season-transition",
     ]
     command_id: str = Field(min_length=1, max_length=100)
     expected_saved_head: str = Field(min_length=1)
@@ -369,6 +370,12 @@ class CalendarTourService:
                 )
                 if state
                 else ["tour_authority_missing"],
+                "season_transition_blockers": self._transition_blockers(
+                    state, ctx, session, _checkpoint_fingerprint=checkpoint_fingerprint,
+                    season=True,
+                )
+                if state
+                else ["tour_authority_missing"],
             }
 
     def player(self, *, run_id, branch_id, player_id):
@@ -419,7 +426,7 @@ class CalendarTourService:
         # one Working Draft. Playing a real match, confirming its result and
         # advancing the public week must still start from an immutable Save.
         if state != signed and command.action in (
-            "play", "confirm-result", "transition"
+            "play", "confirm-result", "transition", "season-transition"
         ):
             raise ValueError(
                 "Manual Save of the configured Tour authority is required first"
@@ -439,10 +446,16 @@ class CalendarTourService:
         reserved.add(root.command_id)
         if command.command_id in reserved:
             raise ValueError("Command ID collides with existing sporting history")
-        if state and command.action == "transition":
-            blockers = self._transition_blockers(state, ctx, session)
+        if state and command.action in {"transition", "season-transition"}:
+            season = command.action == "season-transition"
+            blockers = self._transition_blockers(
+                state, ctx, session, season=season,
+            )
             if blockers:
-                raise ValueError("Week Transition blocked: " + ", ".join(blockers))
+                raise ValueError(
+                    ("Season Transition" if season else "Week Transition")
+                    + " blocked: " + ", ".join(blockers)
+                )
         authority = None
         if command.edition_id:
             authority = (
@@ -526,7 +539,7 @@ class CalendarTourService:
             "edition": authority.model_dump(mode="json") if authority else None,
         }
         successor = None
-        if command.action == "transition":
+        if command.action in {"transition", "season-transition"}:
             candidate, successor = self._transition_candidate(ctx, state, command)
             preview["impact"] = candidate
         else:
@@ -599,10 +612,15 @@ class CalendarTourService:
             return result
 
     @staticmethod
-    def _transition_blockers(state, ctx, session=None, *, _checkpoint_fingerprint=None):
+    def _transition_blockers(state, ctx, session=None, *, _checkpoint_fingerprint=None, season=False):
         clock, _rev, _world, health, cp, _saved, _evidence = ctx
         blockers = []
-        if cp.week.week >= clock.weeks_per_year:
+        if season:
+            if cp.week.week != clock.weeks_per_year:
+                blockers.append("season_transition_requires_last_week")
+            if cp.week.season_index + 1 >= clock.season_count:
+                blockers.append("season_transition_horizon_exhausted")
+        elif cp.week.week >= clock.weeks_per_year:
             blockers.append("season_transition_required")
         if health is None:
             blockers.append("saved_health_baseline_missing")
@@ -697,6 +715,7 @@ class CalendarTourService:
             sporting_cmd,
             policy=policy.development,
             official=True,
+            season=command.action == "season-transition",
         )
         target = successor.week
         lifecycle = _lifecycle_history(world, target, state)[-1]
@@ -862,7 +881,7 @@ class CalendarTourService:
                     )
                 }
             )
-        elif command.action == "transition":
+        elif command.action in {"transition", "season-transition"}:
             impact, successor = transition_candidate
             replace_checkpoint(session, previous=cp, successor=successor)
             _fault_injection_point("after_development_write")
@@ -882,7 +901,11 @@ class CalendarTourService:
             )
             put_lifecycle(session, lifecycle)
             event = {
-                "kind": "week_transition_completed",
+                "kind": (
+                    "season_transition_completed"
+                    if command.action == "season-transition"
+                    else "week_transition_completed"
+                ),
                 "week": successor.week.model_dump(mode="json"),
                 "ranking_fingerprint": ranking.fingerprint,
                 "source_command_id": command.command_id,
@@ -907,6 +930,11 @@ class CalendarTourService:
             )
             state = state.model_copy(
                 update={
+                    "schema_version": (
+                        "calendar_tour_authority.v2"
+                        if command.action == "season-transition"
+                        else state.schema_version
+                    ),
                     "week": successor.week,
                     "slot_cursor": 0,
                     "checkpoint_fingerprint": successor.fingerprint,

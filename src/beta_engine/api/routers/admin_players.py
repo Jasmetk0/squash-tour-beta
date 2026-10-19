@@ -26,6 +26,9 @@ from beta_engine.application.calendar_initial_world_adoption_service import (
 from beta_engine.application.run_calendar_initial_pool_preview_service import (
     RunCalendarInitialPoolPreviewRequest, RunCalendarInitialPoolPreviewService,
 )
+from beta_engine.application.native_calendar_cohort_service import (
+    NativeCalendarCohortRequest, NativeCalendarCohortService,
+)
 from beta_engine.application.run_world_initial_pool_preview_service import (
     RunWorldInitialPoolPreviewRequest,
     RunWorldInitialPoolPreviewService,
@@ -1001,6 +1004,24 @@ def preview_run_calendar_initial_pool(
             "code": "run_calendar_initial_pool_preview_unavailable", "message": str(exc),
         }) from exc
 
+
+
+@router.post("/runs/{run_id}/branches/{branch_id}/intake/native-calendar/preview")
+def preview_native_calendar_cohort(
+    run_id: str, branch_id: str, payload: NativeCalendarCohortRequest,
+    runtime: ApiRuntime = Depends(get_runtime),
+    adapter: WorldPackageRunAdapter = Depends(get_world_package_run_adapter),
+):
+    """Prepare genuine W-aware 15-year-old profiles without modifying shared Run state."""
+    try:
+        return NativeCalendarCohortService(runtime.repository, adapter).preview(
+            run_id=run_id, branch_id=branch_id, request=payload,
+        )
+    except (KeyError, ValueError) as exc:
+        raise HTTPException(status_code=409, detail={
+            "code": "native_calendar_cohort_preview_unavailable",
+            "message": str(exc),
+        }) from exc
 
 @router.post("/runs/{run_id}/branches/{branch_id}/initial-world/calendar-adoption/preview")
 def review_calendar_initial_world(

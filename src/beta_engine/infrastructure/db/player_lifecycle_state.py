@@ -467,7 +467,21 @@ def load_saved_lifecycle(payload, *, run_id, branch_id):
             if not tour_component:
                 raise ValueError('Native lifecycle progression requires its Tour owner')
             tour=CalendarTourState.model_validate_json(json.dumps(tour_component['state']))
-            if tour.week != states[-1].week or states[-1].fingerprint != tour.lifecycle_fingerprint:
+            # A strict Run-horizon extension keeps historical lifecycle
+            # week/calendar bytes unchanged even if the Tour's current clock
+            # has an extended season_count. Compare the time basis and ordinal,
+            # never demand that an old immutable state adopt the new horizon.
+            life_head = states[-1].week
+            old_clock, tour_clock = life_head.calendar, tour.week.calendar
+            if (
+                life_head.ordinal != tour.week.ordinal
+                or (old_clock.weeks_per_year,
+                    old_clock.season_start_year_week, old_clock.start_year)
+                != (tour_clock.weeks_per_year,
+                    tour_clock.season_start_year_week, tour_clock.start_year)
+                or old_clock.season_count > tour_clock.season_count
+                or states[-1].fingerprint != tour.lifecycle_fingerprint
+            ):
                 raise ValueError('Native lifecycle head differs from its Saved Tour owner')
             submissions=tuple(s for a in tour.editions for s in a.submissions)
             if any(isinstance(s, CalendarTourLifecycleIntakeState) for s in states[1:]):

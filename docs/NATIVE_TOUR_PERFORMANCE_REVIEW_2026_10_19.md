@@ -1,6 +1,6 @@
 # Native Tour performance review — 19 October 2026
 
-Scope: #1542 over #1541, starting at 4ee5b826. Owner alone merges.
+Scope: #1542 includes #1541 and targets buuk, starting at 4ee5b826. Owner alone merges.
 
 ## Reproduced defects
 
@@ -29,6 +29,13 @@ was discarded. No changes to lineage ordering or historical schema remain.
   earning that proof. Future reads still rehash actual SQL bytes and owners.
   Controlled commit failure publishes nothing; tampering after success fails.
 
+- Unsaved live Tour inspections also rebuilt their entire old sporting history
+  instead of anchoring it to the just-authenticated previous Saved source.
+  Apply the existing guarded prefix verifier here too: validate every new event,
+  compare the complete successor and fall back to full replay on divergence.
+  Real HTTP regression reproduces the missing prefix, verifies a subsequent
+  weekly transition and rejects a rehashed forged live successor.
+
 ## Repair and invariants
 
 Single-flight locks are bounded and protect the existing exact-byte validation
@@ -44,7 +51,7 @@ The full W52/W61/W80 matrix and real HTTP/SQLite acceptance remain mandatory.
 
 ## Validation
 
-58 focused backend tests passed: concurrent cold proof sharing and failure,
+58 focused backend tests and 15 original Tour integration regressions passed: concurrent cold proof sharing and failure,
 post-proof corruption, reordered mapping content and live tampering, existing
 component proof scope, Save lineage, history, restore/fork and historical hashes.
 An additional real HTTP/SQLite regression covers the native Save fold count,

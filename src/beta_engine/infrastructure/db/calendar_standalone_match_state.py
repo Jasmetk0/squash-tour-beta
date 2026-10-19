@@ -386,7 +386,9 @@ def decode_prevalidated_calendar_sources(payload: dict, *, run_id: str, branch_i
     its content-digest keyed validation cache invalidates on any byte mutation.
     Use only for an authenticated Admin read or an atomically validated restore
     which has just checked BOTH immutable source payloads. Never use with raw
-    history, public Viewer, Save, or unknown/unvalidated JSON.
+    history, public Viewer, a new/unverified Save candidate, or unknown JSON.
+    A Save coordinator may decode its authenticated PREVIOUS Saved HEAD as a
+    prefix; it must still fully validate the new candidate and every new event.
     Re-parse and re-check each source's scope/fingerprint; the only work elided
     here is a second full MatchEngine/ranking fold of the very same Signed bytes.
     """

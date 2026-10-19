@@ -185,7 +185,12 @@ class CalendarTourService:
         # independent Opening + Continuation + Tour folds of identical inputs.
         # A distinct unsaved owner still receives its own complete verification.
         if checkpoint != saved:
-            verify_checkpoint(checkpoint, world, evidence)
+            # This exact Saved predecessor was authenticated above, just as in
+            # the Save coordinator. Rebuild the complete NEW live suffix and
+            # compare the full successor; divergence falls back to full replay.
+            verify_checkpoint(
+                checkpoint, world, evidence, _verified_saved_prefix=saved,
+            )
         if checkpoint and checkpoint.week.calendar.season_count > clock.season_count:
             raise ValueError("Native sporting owner exceeds the available Run horizon")
         context = (clock, revision, world, health, checkpoint, saved, evidence)

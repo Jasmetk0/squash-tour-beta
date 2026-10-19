@@ -1,10 +1,10 @@
 # Performance review — 19 October 2026 (verification pending)
 
-Repair follows #1542 head `4ee5b826`, stacked on #1541. The previous head's
+Repair follows #1542 head `4ee5b826`, including #1541; consolidated into #1542 targeting buuk. The previous head's
 Fast CI, API acceptance and Shell Browser passed, but Native Tour W80/1000
 failed its first post-restart inspection at the unchanged 120-second bound.
 
-Three reproducible causes are addressed: concurrent cold requests duplicated
+Four reproducible causes are addressed: concurrent cold requests duplicated
 full validation of identical Saved revisions; and live checkpoint proof reuse
 compared JSON insertion order, which changes for maps such as `sets_won`
 after canonical Saved serialization. A bounded per-signature single-flight
@@ -14,10 +14,14 @@ Every request still verifies its live owner and altered bytes invalidate proof.
 Native Tour Save also publishes its already complete exact-byte metadata proof
 only after successful commit, avoiding a second full replay in its response.
 Rollback publishes no proof; other component, scope and content checks remain.
+An unsaved Tour owner now also uses its authenticated Saved predecessor to
+verify every newly appended event and the full successor, falling back to the
+original full replay if any prefix/source identity differs.
 
-58 focused tests pass, including concurrent corrupted-source rejection,
+58 focused tests and 15 original Tour integration regressions pass, including concurrent corrupted-source rejection,
 independent response payloads, mapping-order reuse, actual HTTP Save rollback,
-one post-commit source fold, historical restore/fork
+one post-commit source fold, real live-week suffix reuse and rehashed forged
+successor rejection, historical restore/fork
 and original hash compatibility. Required final-head browser/API/CI checks
 remain pending; this is not a merge-ready or pre-alpha release claim.
 

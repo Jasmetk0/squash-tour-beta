@@ -65,6 +65,38 @@ def test_native_save_reuses_verified_bytes_only_after_commit(tmp_path, monkeypat
         assert any(key[0] == new_head for key in proofs)
         assert all(not proof.payload for proof in proofs.values())
         assert inspect(server)['saved']
+        # After a real transition, the unsaved live owner differs from Saved.
+        # Its already authenticated predecessor must anchor suffix validation
+        # instead of replaying all older matches again on every Admin read.
+        from beta_engine.infrastructure.db import calendar_sporting_checkpoint
+        original_verify = calendar_sporting_checkpoint.verify_checkpoint
+        prefixes = []
+
+        def verify_live(state, world, evidence, **kwargs):
+            if state is not None and state.week.week == 3:
+                prefixes.append(kwargs.get('_verified_saved_prefix'))
+            return original_verify(state, world, evidence, **kwargs)
+
+        monkeypatch.setattr(calendar_sporting_checkpoint, 'verify_checkpoint', verify_live)
+        execute(server, command(inspect(server), 'transition', name='live-week3'))
+        assert not inspect(server)['saved']
+        assert prefixes and all(prefix is not None and prefix.week.week == 2
+                                for prefix in prefixes)
+        # A rehashed forged successor still fails against the authenticated
+        # prefix and the independently replayed real weekly suffix.
+        import json
+        from beta_engine.domain.run_packages import canonical_hash
+        from beta_engine.infrastructure.db.models import CalendarPlayerSportingCheckpointModel
+        with repository._session_factory.begin() as session:
+            row = session.get(CalendarPlayerSportingCheckpointModel, ('run', 'branch'))
+            original_row = row.payload_json, row.fingerprint
+            raw = json.loads(row.payload_json)
+            raw['players'][0]['current_form'] += 1
+            row.payload_json, row.fingerprint = json.dumps(raw), canonical_hash(raw)
+        assert _request('GET', tour_url(server))[0] == 409
+        with repository._session_factory.begin() as session:
+            row = session.get(CalendarPlayerSportingCheckpointModel, ('run', 'branch'))
+            row.payload_json, row.fingerprint = original_row
         # Even a freshly published proof cannot authenticate changed SQL bytes.
         with repository._session_factory.begin() as session:
             row = session.get(BranchSavedRevisionModel, new_head)

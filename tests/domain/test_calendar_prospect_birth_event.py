@@ -247,3 +247,61 @@ def test_source_with_empty_next_week_yields_versioned_no_birth_step():
     projected = advance_calendar_lifecycle_with_prospects(predecessor, event)
     assert len(projected.players) == 1
     assert projected.birth_event.fingerprint == event.fingerprint
+
+
+def test_birth_sporting_roster_keeps_exact_prior_57_attribute_state():
+    from beta_engine.domain.players.calendar_prospect_birth import (
+        project_native_birth_sporting_roster,
+    )
+    from beta_engine.domain.players.sporting import (
+        PlayerSportingRecord, PlayerSportingBootstrapPolicy,
+    )
+
+    clock = RunCalendar(52, 35, 2030, 3)
+    predecessor = lifecycle(clock, week(clock, 0, 1))
+    target = week(clock, 0, 2)
+    event = build_calendar_prospect_birth_event(
+        predecessor=predecessor, target=target,
+        source=source(birth_row(target)), world_package_id="world",
+    )
+    older = materialize_prospect_sporting_profile(
+        player_id="existing", profile_seed="old-profile",
+        development_seed="old-development", potential_seed="old-potential",
+    )
+    frozen = PlayerSportingRecord(
+        player_id="existing", attributes=older.attributes,
+        potential_ovr=older.potential_ovr,
+        potential_identity=older.potential_identity,
+        potential_provenance=older.potential_provenance,
+        development_timing=older.development_timing,
+        current_form=111, long_term_form_norm=97,
+        match_sharpness=80, long_term_fatigue=12,
+    )
+    checkpoint = SimpleNamespace(
+        run_id="r", branch_id="b", week=predecessor.week,
+        players=(frozen,), bootstrap_policy=PlayerSportingBootstrapPolicy(),
+    )
+    original = frozen.model_dump_json()
+    staged = project_native_birth_sporting_roster(
+        predecessor=predecessor, checkpoint=checkpoint, event=event,
+    )
+    assert [r.player_id for r in staged] == ["existing", "prospect-1"]
+    assert staged[0] == frozen and frozen.model_dump_json() == original
+    added = staged[1]
+    assert added.attributes == event.births[0].sporting_profile.attributes
+    assert added.potential_identity == event.births[0].sporting_profile.potential_identity
+    assert added.current_form == checkpoint.bootstrap_policy.default_form
+    assert added.match_sharpness == checkpoint.bootstrap_policy.default_match_sharpness
+    assert added.long_term_fatigue == checkpoint.bootstrap_policy.default_fatigue
+    assert len(added.attributes) == 57
+    assert canonical_hash([p.model_dump(mode="json") for p in staged]) == canonical_hash(
+        [p.model_dump(mode="json") for p in project_native_birth_sporting_roster(
+            predecessor=predecessor, checkpoint=checkpoint, event=event,
+        )]
+    )
+    with pytest.raises(ValueError, match="identities"):
+        project_native_birth_sporting_roster(
+            predecessor=predecessor,
+            checkpoint=SimpleNamespace(**(checkpoint.__dict__ | {"players": ()})),
+            event=event,
+        )

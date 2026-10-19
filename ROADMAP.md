@@ -1,3 +1,26 @@
+# Active next-pre-alpha dependency path — 19 October 2026
+
+**Merged:** #1543 replay optimization and #1545 native Season Transition
+(`buuk` = `9adfa2205fd5f420f9fe59682217ac5f65b7ef13`).
+Already working in bounded native configured Tour: real MatchEngine,
+Entry, immutable award/ranking, Official Week/Season Transition, explicit
+Admin consent, manual Save and signed restore. No Full Simulation claim.
+
+**Immediate candidate:** allow an Edition to be announced in the final
+week of a season and genuinely executed in the first week of the next.
+Make CS/EN planning W-aware (52/61/80), reject invalid horizon/stale
+planning, and preserve v10 checkpoint replay through actual match results.
+Prove real HTTP/SQLite next-season tournament/Official ranking/public
+Viewer/restart/forgery behavior. Do not merge before final-head CI.
+
+**Subsequent blockers:** independently authenticated numeric Health
+authority and healing, intake/prospect materialization, correction and
+discipline, match-containing branch replay/remap, Full Simulation worker
+and season-end summary/records. Complete 50×61 FAX endurance and all Master
+§31 release gates remain necessary.
+
+## Historical roadmap decisions (retained)
+
 # Active dependency path — Master v85 (19 October 2026)
 
 **Owner-merged #1543:** `buuk`

@@ -4,6 +4,7 @@ import {useQueryClient} from '@tanstack/react-query'
 import {inspectCalendarTour,inspectCalendarTourPlayer,previewCalendarTour,executeCalendarTour,saveCalendarTour,replayCalendarContinuation} from '../api/client'
 import {validateTourView,validateTourPreview,type TourView,type TourPreview,type TourCommand,type TourAction,type TourContribution,type TourPlayer} from '../api/calendarTour'
 import {newCommandId} from '../admin/branchSimulation'
+import {tourWeekOffset,scheduleTourEdition} from '../api/nativeTourCalendar'
 import {useLanguage} from '../i18n/LanguageContext'
 import {formatApiError} from '../utils/apiErrors'
 import type {RunBranchListResponse} from '../api/types'
@@ -23,7 +24,7 @@ export function CalendarTourPanel({runId,branchId,head}:{runId:string;branchId:s
   const [consent,setConsent]=useState(false),[saveConsent,setSaveConsent]=useState(false)
   const [reason,setReason]=useState(''),[seed,setSeed]=useState('231')
   const [name,setName]=useState(''),[editionId,setEditionId]=useState(''),[size,setSize]=useState(8)
-  const [week,setWeek]=useState(''),[slot,setSlot]=useState('1')
+  const [season,setSeason]=useState(''),[week,setWeek]=useState(''),[slot,setSlot]=useState('1')
   const [points,setPoints]=useState({champion:'100',finalist:'60',semifinal:'30',quarterfinal:'15'})
   const [selected,setSelected]=useState<string[]>([]),[contributions,setContributions]=useState<TourContribution[]|null>(null)
   const [notice,setNotice]=useState<string|null>(null)
@@ -37,7 +38,13 @@ export function CalendarTourPanel({runId,branchId,head}:{runId:string;branchId:s
     let active=true
     const valid=()=>active&&epoch.current===stamp
     setView(null);setError(null);setReview(null);setConsent(false);setSaveConsent(false);setSelected([]);setContributions(null);setNotice(null);setPlayer('');setPlayerDetail(null);detailRequest.current++;setBusy(true)
-    void read(controller.signal).then(v=>{if(valid()){setView(v);setWeek(String((v.state?.week.week??2)+2))}})
+    void read(controller.signal).then(v=>{if(valid()){
+      setView(v)
+      const clock=v.state?{...v.state.week,calendar:v.run_calendar??v.state.week.calendar}:null
+      const first=clock?tourWeekOffset(clock,2):null
+      setSeason(first?String(first.season_index+1):'')
+      setWeek(first?String(first.week):'')
+    }})
       .catch(e=>{if(valid())setError(formatApiError(e))})
       .finally(()=>{if(valid())setBusy(false)})
     return()=>{active=false;controller.abort()}
@@ -83,9 +90,11 @@ export function CalendarTourPanel({runId,branchId,head}:{runId:string;branchId:s
       let data:Record<string,unknown>={}
       if(action==='create-edition'){
         if(!view.state)return
-        const date={...view.state.week,calendar:view.run_calendar??view.state.week.calendar,week:Number(week)}
+        const current={...view.state.week,calendar:view.run_calendar??view.state.week.calendar}
+        const schedule=scheduleTourEdition(current,Number(season)-1,Number(week))
+        if(!schedule)throw Error(cs?'Turnaj musí být platně naplánován alespoň dva týdny dopředu v rámci Runu.':'Edition must be scheduled at least two weeks ahead, inside the Run horizon.')
         const table=Object.fromEntries(Object.entries(points).filter(([k])=>size===8||k!=='quarterfinal').map(([k,v])=>[k,Number(v)]))
-        data={edition_id:editionId,name,week:date,announcement_week:{...date,week:view.state.week.week+1},start_slot:Number(slot),main_entrant_count:size,ranked:true,point_table:table,validity_weeks:date.calendar.weeks_per_year}
+        data={edition_id:editionId,name,week:schedule.week,announcement_week:schedule.announcement_week,start_slot:Number(slot),main_entrant_count:size,ranked:true,point_table:table,validity_weeks:current.calendar.weeks_per_year}
       } else if(action==='submit') data={player_ids:selected}
       const command:TourCommand={action,command_id:newCommandId(),edition_id:id,expected_saved_head:view.saved_head_revision_id,expected_checkpoint_fingerprint:view.checkpoint_fingerprint,expected_tour_fingerprint:view.tour_fingerprint,seed:Number(seed),operator_label:'Admin',audit_reason:reason.trim(),data}
       const checked=validateTourPreview(await previewCalendarTour(runId,branchId,command),command,runId,branchId)
@@ -97,6 +106,8 @@ export function CalendarTourPanel({runId,branchId,head}:{runId:string;branchId:s
   const names=new Map(view?.players.map(p=>[p.player_id,p.name])??[])
   const ready=Boolean(view&&!busy&&reason.trim()&&/^-?\d+$/.test(seed)&&Number.isSafeInteger(Number(seed))&&(view.saved||view.state))
   const latest=view?.state?.rankings[view.state.rankings.length-1]
+  const clock=view?.state?{...view.state.week,calendar:view.run_calendar??view.state.week.calendar}:null
+  const plannedEdition=clock?scheduleTourEdition(clock,Number(season)-1,Number(week)):null
   return <section className="panel" aria-label="Configured native Tour" data-active-head={head} data-saved-head={view?.saved_head_revision_id}>
     <h2>{cs?'Tour · Edition a oficiální týden':'Tour · Editions and Official week'}</h2>
     <p>{cs?'Přihlášky, schválení a los lze připravit v jednom Working Draft. Před zápasy, potvrzením výsledků a Week Transition proveďte ruční Save.':'Applications, approval and draw can share one Working Draft. Save manually before matches, result confirmation and Week Transition.'}</p>
@@ -115,18 +126,20 @@ export function CalendarTourPanel({runId,branchId,head}:{runId:string;branchId:s
         <details><summary>{cs?'Nová Tournament Edition':'New Tournament Edition'}</summary>
           <label>ID<input aria-label="Tour Edition ID" value={editionId} onChange={e=>{setEditionId(e.target.value);invalidate()}}/></label>
           <label>{cs?'Název':'Name'}<input aria-label="Tour Edition name" value={name} onChange={e=>{setName(e.target.value);invalidate()}}/></label>
-          <label>{cs?'Týden':'Week'}<input aria-label="Tour Edition week" type="number" value={week} onChange={e=>{setWeek(e.target.value);invalidate()}}/></label>
+          <label>{cs?'Sezóna (pořadové číslo)':'Season number'}<input aria-label="Tour Edition season" type="number" min="1" max={clock?.calendar.season_count} value={season} onChange={e=>{setSeason(e.target.value);invalidate()}}/></label>
+          <label>{cs?'Týden v sezóně':'Week in season'}<input aria-label="Tour Edition week" type="number" min="1" max={clock?.calendar.weeks_per_year} value={week} onChange={e=>{setWeek(e.target.value);invalidate()}}/></label>
+          {plannedEdition?<p>{cs?'Oznámení v':'Announcement at'} S{plannedEdition.announcement_week.season_index+1}/W{plannedEdition.announcement_week.week} · {cs?'Turnaj':'Edition'} S{plannedEdition.week.season_index+1}/W{plannedEdition.week.week}</p>:<p role="status">{cs?'Vyberte termín alespoň dva týdny dopředu a uvnitř horizontu Runu.':'Choose a date at least two weeks ahead within the Run horizon.'}</p>}
           <label>{cs?'První globální slot':'First global slot'}<input aria-label="Tour Edition slot" type="number" value={slot} onChange={e=>{setSlot(e.target.value);invalidate()}}/></label>
           <label>{cs?'Účastníci':'Participants'}<select aria-label="Tour Edition size" value={size} onChange={e=>{setSize(Number(e.target.value));invalidate()}}><option>8</option><option>4</option></select></label>
           {Object.entries(points).filter(([k])=>size===8||k!=='quarterfinal').map(([stage,value])=><label key={stage}>{cs?stageLabels[stage]:stage}<input aria-label={`Tour points ${stage}`} type="number" value={value} onChange={e=>{setPoints({...points,[stage]:e.target.value});invalidate()}}/></label>)}
           <p>{cs?'Platnost bodů':'Point validity'}: {view.state.week.calendar.weeks_per_year} {cs?'týdnů od prvního oficiálního rankingu':'weeks from first Official ranking'}</p>
-          <button disabled={!ready||!editionId.trim()||!name.trim()} onClick={()=>void perform('create-edition')}>{cs?'Zkontrolovat novou Edition':'Review new Edition'}</button>
+          <button disabled={!ready||!plannedEdition||!editionId.trim()||!name.trim()} onClick={()=>void perform('create-edition')}>{cs?'Zkontrolovat novou Edition':'Review new Edition'}</button>
         </details>
         {view.state.editions.map(a=>{
           const id=a.edition.edition_id,active=a.edition.week.week===view.state!.week.week&&a.edition.week.season_index===view.state!.week.season_index
           const next: keyof typeof actionLabels=!a.field?'approve':!a.draw?'draw':!a.tournament_fingerprint?'play':'confirm-result'
           return <section key={id} aria-label={`Edition ${id}`}>
-            <h3>{a.edition.name} · W{a.edition.week.week}</h3>
+            <h3>{a.edition.name} · S{a.edition.week.season_index+1}/W{a.edition.week.week}</h3>
             <p>{cs?'Přihlášky':'Applications'}: {a.submissions.length} · {cs?'Schválení':'Approved'}: {a.field?.direct_main_player_ids.length??0} · {a.result_confirmed?(cs?'Výsledky potvrzeny':'Results confirmed'):a.tournament_fingerprint?(cs?'Odehráno':'Played'):a.draw?(cs?'Vylosováno':'Drawn'):(cs?'Příprava':'Preparation')}</p>
             <p>{cs?'Bodová tabulka':'Point table'}: {Object.entries(a.edition.point_table).map(([k,v])=>`${cs?stageLabels[k]:k} ${v}`).join(' · ')}</p>
             {!a.field&&active&&<><select multiple aria-label={`Tour applicants ${id}`} value={selected} onChange={e=>{setSelected(Array.from(e.target.selectedOptions,o=>o.value));invalidate()}}>{view.players.filter(p=>p.status!=='retired'&&!a.submissions.some(s=>s.player_id===p.player_id)).map(p=><option key={p.player_id} value={p.player_id}>{p.name}</option>)}</select>

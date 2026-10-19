@@ -1,3 +1,31 @@
+## Current verified baseline and next-season Edition follow-up (19 October 2026)
+
+**Merged status:** PR #1545 was owner-merged into `buuk` at
+`9adfa2205fd5f420f9fe59682217ac5f65b7ef13` after all its
+required final-head tests passed (Fast CI, Shell browser, native W52/W61/W80
+browsers and real Native Tour HTTP/SQLite acceptance). Earlier statements
+below about #1545 being a candidate remain historical provenance.
+
+**New unmerged implementation candidate:** cross-season Tournament Edition
+planning/replay after Season Transition. The previous Admin interface simply
+added 2 to the season week, making W+1/W+2 invalid at the boundary; the
+sporting tournament reducer also rejected the new authenticated v10
+checkpoint after a rollover. The follow-up adds a pure W-aware date/ordinal
+adapter, explicit Season/Week selection, scheduled announcement at next real
+Week Transition, no outside-horizon plans, and acceptance of configured
+tournaments on v10 without downgrading v10 history to v9. New real HTTP/SQLite
+tests require a future Edition announced in season 1 Week W, actually played
+and confirmed in season 2 Week 1, followed by a real season 2 Week 2 Official
+ranking, manual Saves, Signed Viewer publication, restart and rejection of a
+rehashed forged announcement. W52 / FAX W61 offset 37 / W80 UI date contracts
+are independently asserted.
+
+**This new follow-up is not yet verified or merged.** Existing Full Simulation,
+unsupported Health/intake, match-containing Branch fork/remap, multi-season
+endurance and complete 50×61 pre-alpha release acceptance remain blocked.
+
+## Historical #1545 development contract (retained)
+
 # Native configured Tour Season Transition V1 — candidate (19 October 2026)
 
 ## Code scope and dependency

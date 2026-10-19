@@ -168,6 +168,7 @@ def append_followup_knockout(checkpoint, world, event: CalendarFollowupKnockout)
             "calendar_sporting_checkpoint.v5", "calendar_sporting_checkpoint.v6",
             "calendar_sporting_checkpoint.v7", "calendar_sporting_checkpoint.v8",
             "calendar_sporting_checkpoint.v9",
+            "calendar_sporting_checkpoint.v10",
         }
         or not checkpoint.week_events
         or (checkpoint.run_id, checkpoint.branch_id) != (event.run_id, event.branch_id)
@@ -199,8 +200,10 @@ def append_followup_knockout(checkpoint, world, event: CalendarFollowupKnockout)
         )
     successor = checkpoint.model_copy(update={
         "schema_version": (
-            "calendar_sporting_checkpoint.v9"
-            if checkpoint.schema_version=="calendar_sporting_checkpoint.v9" or event.schema_version=="calendar_followup_knockout.v5"
+            "calendar_sporting_checkpoint.v10"
+            if checkpoint.schema_version == "calendar_sporting_checkpoint.v10"
+            else "calendar_sporting_checkpoint.v9"
+            if checkpoint.schema_version == "calendar_sporting_checkpoint.v9" or event.schema_version == "calendar_followup_knockout.v5"
             else
             "calendar_sporting_checkpoint.v8"
             if checkpoint.schema_version == "calendar_sporting_checkpoint.v8"

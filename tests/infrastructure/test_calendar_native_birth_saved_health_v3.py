@@ -68,7 +68,7 @@ def test_real_saved_birth_health_and_signed_lifecycle_roundtrip(monkeypatch,widt
     ("wrong_life_fingerprint","actual Signed lifecycle"),
     ("forged_predecessor","predecessor chain"),
     ("duplicate_id","unique sorted"),
-    ("foreign_branch","identity or fingerprint mismatch"),
+    ("foreign_branch","foreign birthday event"),
     ("out_of_scope_birth","population/calendar"),
 ])
 def test_actual_saved_replay_rejects_health_forgery(monkeypatch,attack,reason):
@@ -104,11 +104,11 @@ def test_actual_saved_replay_rejects_health_forgery(monkeypatch,attack,reason):
     elif attack=="foreign_branch":
         target["branch_id"]="other"
     elif attack=="out_of_scope_birth":
-        target["players"][0]["player_id"]="zzz"
+        target["players"][0]["player_id"]="aa"
     component["fingerprint"]=_component([
         _parse_health_json(json.dumps(row))
         for row in component["states"]
-    ])["fingerprint"] if attack not in {"duplicate_id","old_player_modified"} else component["fingerprint"]
+    ])["fingerprint"] if attack not in {"duplicate_id"} else component["fingerprint"]
     with pytest.raises(ValueError,match=reason):
         load_saved_health(payload,run_id="r",branch_id="b")
 

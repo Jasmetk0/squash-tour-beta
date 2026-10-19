@@ -63,7 +63,7 @@ def test_real_saved_birth_health_and_signed_lifecycle_roundtrip(monkeypatch,widt
 @pytest.mark.parametrize("attack,reason",[
     ("missing_health_birth","requires its Signed native Health transition"),
     ("forged_birth_event","Native birth source generation proof is invalid"),
-    ("forged_health_player","differs from actual Signed birthdays"),
+    ("forged_health_player","population/calendar"),
     ("missing_player","population/calendar"),
     ("old_player_modified","differs from actual Signed birthdays"),
     ("wrong_life_fingerprint","actual Signed lifecycle"),

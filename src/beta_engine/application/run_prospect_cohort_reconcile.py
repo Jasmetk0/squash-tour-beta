@@ -72,9 +72,10 @@ def reconcile_run_prospect_cohort(
                 RunProspectModel.season_start_year == season_start_year,
             )
         ).scalars().all()
+        live_by_id = {item.prospect_id: item for item in live}
         existing = {
-            item.prospect_id: repository._to_run_prospect_record(item)
-            for item in live
+            player_id: repository._to_run_prospect_record(item)
+            for player_id, item in live_by_id.items()
         }
         wanted = set(ids)
         foreign_year_ids = set(session.execute(
@@ -112,9 +113,7 @@ def reconcile_run_prospect_cohort(
         existing_count = len(wanted & existing.keys())
         created_count = len(expected) - existing_count
         for record in expected:
-            current = next(
-                (row for row in live if row.prospect_id == record.prospect_id), None
-            )
+            current = live_by_id.get(record.prospect_id)
             if current is None:
                 session.add(RunProspectModel(
                     run_id=run_id, prospect_id=record.prospect_id,

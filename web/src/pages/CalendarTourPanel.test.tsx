@@ -7,7 +7,7 @@ import {LanguageProvider} from '../i18n/LanguageContext'
 import {CalendarTourPanel} from './CalendarTourPanel'
 import type {TourCommand,TourPreview,TourView} from '../api/calendarTour'
 
-const api=vi.hoisted(()=>({inspectCalendarTour:vi.fn(),previewCalendarTour:vi.fn(),executeCalendarTour:vi.fn(),saveCalendarTour:vi.fn(),replayCalendarContinuation:vi.fn(),inspectCalendarTourSeason:vi.fn(),inspectCalendarTourRecords:vi.fn(),inspectNativeTourProspectIntake:vi.fn(),previewNativeTourBirthSporting:vi.fn()}))
+const api=vi.hoisted(()=>({inspectCalendarTour:vi.fn(),previewCalendarTour:vi.fn(),executeCalendarTour:vi.fn(),saveCalendarTour:vi.fn(),replayCalendarContinuation:vi.fn(),inspectCalendarTourSeason:vi.fn(),inspectCalendarTourRecords:vi.fn(),inspectNativeTourProspectIntake:vi.fn(),previewCalendarTourNativeBirthSporting:vi.fn()}))
 vi.mock('../api/client',()=>({...api,ApiError:class ApiError extends Error { status=400 }}))
 const view=(run='r',branch='b'):TourView=>({schema_version:'calendar_tour_inspection.v1',run_id:run,branch_id:branch,saved_head_revision_id:'head',draft_version:1,checkpoint_fingerprint:'a'.repeat(64),tour_fingerprint:null,saved:false,can_initialize:true,players:[],transition_blockers:['tour_authority_missing'],season_transition_blockers:['tour_authority_missing'],saved_completed_seasons:[],edition_evidence:{},state:null})
 const panel=(run='r',branch='b')=><QueryClientProvider client={new QueryClient()}><MemoryRouter><LanguageProvider><CalendarTourPanel runId={run} branchId={branch} head="head"/></LanguageProvider></MemoryRouter></QueryClientProvider>
@@ -305,7 +305,7 @@ describe('Signed 15yo sporting review (Admin-only read, never a commit)',()=>{
       state:{week:{calendar,season_index:0,week:2},editions:[],rankings:[],transitions:[]},
     })
     api.inspectNativeTourProspectIntake.mockResolvedValue(source())
-    api.previewNativeTourBirthSporting.mockResolvedValue(signed())
+    api.previewCalendarTourNativeBirthSporting.mockResolvedValue(signed())
   })
   it('reviews actual Signed 8→9 birthday sporting without any Execute or Save',async()=>{
     render(panel())
@@ -317,7 +317,7 @@ describe('Signed 15yo sporting review (Admin-only read, never a commit)',()=>{
     expect(data).toHaveTextContent('Players: 8 → 9')
     expect(data).toHaveTextContent('Played last week: 4')
     expect(data).toHaveTextContent('No write. Actual newborn activation remains disabled.')
-    expect(api.previewNativeTourBirthSporting).toHaveBeenCalledWith('r','b',{
+    expect(api.previewCalendarTourNativeBirthSporting).toHaveBeenCalledWith('r','b',{
       expected_saved_head:'head',expected_checkpoint_fingerprint:hex('a'),
       expected_tour_fingerprint:hex('c'),seed:231,
     })
@@ -325,7 +325,7 @@ describe('Signed 15yo sporting review (Admin-only read, never a commit)',()=>{
     expect(api.executeCalendarTour).not.toHaveBeenCalled()
   })
   it('rejects forged server roster despite syntactically valid model hashes',async()=>{
-    api.previewNativeTourBirthSporting.mockResolvedValue({
+    api.previewCalendarTourNativeBirthSporting.mockResolvedValue({
       ...signed(),sporting_week_projection:{...signed().sporting_week_projection,new_population_count:100},
     })
     render(panel())
@@ -338,7 +338,7 @@ describe('Signed 15yo sporting review (Admin-only read, never a commit)',()=>{
   })
   it('drops a pending Signed birth proposal immediately after seed edit',async()=>{
     let resolve!:(value:unknown)=>void
-    api.previewNativeTourBirthSporting.mockReturnValue(new Promise(r=>{resolve=r}))
+    api.previewCalendarTourNativeBirthSporting.mockReturnValue(new Promise(r=>{resolve=r}))
     render(panel())
     fireEvent.click(await screen.findByRole('button',{name:'Check next-week prospects'}))
     await screen.findByText(/New Prospect/)
@@ -358,6 +358,6 @@ describe('Signed 15yo sporting review (Admin-only read, never a commit)',()=>{
     fireEvent.click(await screen.findByRole('button',{name:'Check next-week prospects'}))
     await screen.findByText(/New Prospect/)
     expect(screen.getByRole('button',{name:'Review newborn sporting development'})).toBeDisabled()
-    expect(api.previewNativeTourBirthSporting).not.toHaveBeenCalled()
+    expect(api.previewCalendarTourNativeBirthSporting).not.toHaveBeenCalled()
   })
 })

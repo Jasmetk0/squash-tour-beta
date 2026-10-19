@@ -35,11 +35,12 @@ jobs:
       - run: python -m pip install -e . pytest
       - name: Signed sporting eight-match HTTP + SQLite profile
         env:
-          GITHUB_EVENT_NAME: native_sporting_profile
           SPORTING_TEST_WIDTH: ${{ matrix.width }}
         run: |
           git rev-parse HEAD
-          python - <<'PY'
+          # GitHub protects its GITHUB_* environment keys at step scope.
+          # The inline command override bypasses PR-only pytest selection.
+          GITHUB_EVENT_NAME=native_sporting_profile python - <<'PY'
           import functools
           import json
           import os

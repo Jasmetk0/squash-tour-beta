@@ -93,3 +93,15 @@ after clicking, before waiting for the pause commit. Await the actual HTTP 200
 `pause_requested` ACK before release, preserving the real pause, continuation,
 page-close and SIGKILL assertions. No production control or lease fence is weakened.
 Final-head browser verification remains mandatory after this harness repair.
+
+The next consolidated W61 browser exposed a separate stale-read race after
+restart. Its next-response listener caught an older Saved inspection during a
+new unsaved command. The panel also lacked cleanup for the superseded initial
+StrictMode effect: a deterministic mocked-boundary regression reproduced an
+old response overwriting current state and clearing a newer command's busy flag.
+Abort the superseded fetch and ignore all of that effect's callbacks. Correlate
+browser reads with requests issued after the actual write ACK; retain the same
+response timeout and all unsaved/owner/hash assertions. The frontend regression
+fails before this repair and passes after it; the local frontend build passes.
+The real local Server Tasks browser also completed page close, safe pause,
+actual SIGKILL, explicit recovery and uninterrupted sporting equivalence.

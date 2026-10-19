@@ -1,4 +1,5 @@
 import {act,fireEvent,render,screen} from '@testing-library/react'
+import {StrictMode} from 'react'
 import {QueryClient,QueryClientProvider,useQuery} from '@tanstack/react-query'
 import {MemoryRouter} from 'react-router-dom'
 import {beforeEach,describe,expect,it,vi} from 'vitest'
@@ -39,6 +40,24 @@ describe('configured Tour consent (HTTP boundary mocked)',()=>{
     await act(async()=>resolve(preview(cmd)))
     expect(screen.queryByLabelText('Confirm Tour command')).not.toBeInTheDocument()
     expect(api.executeCalendarTour).not.toHaveBeenCalled()
+  })
+  it('ignores a superseded StrictMode read while a newer command is pending',async()=>{
+    let oldRead!:(v:TourView)=>void,finishPreview!:(v:TourPreview)=>void,command!:TourCommand
+    api.inspectCalendarTour.mockReturnValueOnce(new Promise(r=>{oldRead=r}))
+      .mockImplementation((r,b)=>Promise.resolve(view(r,b)))
+    api.previewCalendarTour.mockImplementation((_r,_b,c)=>{command=c;return new Promise(r=>{finishPreview=r})})
+    render(<StrictMode>{panel()}</StrictMode>)
+    await screen.findByLabelText('Tour operation reason')
+    expect(api.inspectCalendarTour.mock.calls[0][2].aborted).toBe(true)
+    expect(api.inspectCalendarTour.mock.calls[1][2].aborted).toBe(false)
+    fireEvent.change(screen.getByLabelText('Tour operation reason'),{target:{value:'Current review'}})
+    fireEvent.click(screen.getByRole('button',{name:'Review Tour initialization'}))
+    expect(screen.getByRole('button',{name:'Refresh state'})).toBeDisabled()
+    await act(async()=>oldRead({...view(),can_initialize:false}))
+    expect(screen.getByRole('button',{name:'Refresh state'})).toBeDisabled()
+    await act(async()=>finishPreview(preview(command)))
+    await screen.findByLabelText('Confirm Tour command')
+    expect(screen.getByRole('button',{name:'Review Tour initialization'})).toBeEnabled()
   })
   it('does not revive responses after switching Run A→B→A',async()=>{
     let resolve!:(v:TourView)=>void

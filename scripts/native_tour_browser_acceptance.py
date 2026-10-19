@@ -191,31 +191,52 @@ def main():
                 if errors.count():
                     raise AssertionError(errors.all_text_contents())
 
+            def confirmed_write_and_read(suffix, click):
+                # A slow pre-command read (e.g. StrictMode/restart mount) may
+                # finish during the next write. Observe the request ISSUED
+                # after the actual commit ACK, not the next arbitrary response.
+                acknowledged = False
+                followup_requests = set()
+
+                def is_write(response):
+                    return (response.request.method == "POST"
+                            and response.url.endswith(suffix))
+
+                def observe(response):
+                    nonlocal acknowledged
+                    if is_write(response):
+                        acknowledged = True
+
+                def observe_request(request):
+                    if (acknowledged and request.method == "GET"
+                        and request.url == api + "/admin/runs/run/branches/branch/calendar-tour"):
+                        followup_requests.add(request)
+
+                page.on("response", observe)
+                page.on("request", observe_request)
+                try:
+                    # Retain the existing response timeout, including backend
+                    # processing, rather than timing only request dispatch.
+                    with page.expect_response(
+                        lambda response: response.request in followup_requests
+                    ) as next_read:
+                        with page.expect_response(is_write) as written:
+                            click()
+                        assert written.value.status == 201, written.value.text()
+                    return written.value, next_read.value
+                finally:
+                    page.remove_listener("response", observe)
+                    page.remove_listener("request", observe_request)
+
             def save():
                 save_started = time.monotonic()
                 panel.get_by_label("Confirm Tour Save").check()
-                with (
-                    page.expect_response(
-                        lambda r: (
-                            r.request.method == "GET"
-                            and r.url
-                            == api + "/admin/runs/run/branches/branch/calendar-tour"
-                        )
-                    ) as loaded_context,
-                    page.expect_response(
-                        lambda r: (
-                            r.request.method == "POST"
-                            and r.url.endswith("/calendar-tour/save")
-                        )
-                    ) as done,
-                ):
-                    panel.get_by_role(
-                        "button", name="Manual Tour Save", exact=True
-                    ).click()
-                response = done.value
+                response, loaded = confirmed_write_and_read(
+                    "/calendar-tour/save",
+                    lambda: panel.get_by_role("button", name="Manual Tour Save", exact=True).click(),
+                )
                 assert response.status == 201, response.text()
                 saved_head = response.json()["saved_revision"]["revision_id"]
-                loaded = loaded_context.value
                 assert loaded.status == 200, loaded.text()
                 saved_view = loaded.json()
                 assert saved_view["saved_head_revision_id"] == saved_head
@@ -280,27 +301,11 @@ def main():
                 # asserting the Working Draft UI; a 30s auto-retry of a locator
                 # alone confuses slow but successful reads with missing controls.
                 commit_started = time.monotonic()
-                with (
-                    page.expect_response(
-                        lambda r: (
-                            r.request.method == "GET"
-                            and r.url
-                            == api + "/admin/runs/run/branches/branch/calendar-tour"
-                        )
-                    ) as inspected,
-                    page.expect_response(
-                        lambda r: (
-                            r.request.method == "POST"
-                            and r.url.endswith("/calendar-tour/execute")
-                        )
-                    ) as done,
-                ):
-                    panel.get_by_role(
-                        "button", name="Execute confirmed operation", exact=True
-                    ).click()
-                response = done.value
+                response, refreshed = confirmed_write_and_read(
+                    "/calendar-tour/execute",
+                    lambda: panel.get_by_role("button", name="Execute confirmed operation", exact=True).click(),
+                )
                 assert response.status == 201, response.text()
-                refreshed = inspected.value
                 assert refreshed.status == 200, refreshed.text()
                 refreshed_view = refreshed.json()
                 assert not refreshed_view["saved"], "The confirmed operation must remain an unsaved Working Draft"

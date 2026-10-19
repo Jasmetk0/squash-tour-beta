@@ -30,13 +30,17 @@ export function CalendarTourPanel({runId,branchId,head}:{runId:string;branchId:s
   const [player,setPlayer]=useState(''),[playerDetail,setPlayerDetail]=useState<TourPlayer|null>(null)
   const detailRequest=useRef(0)
   const invalidate=()=>{inputs.current++;setReview(null);setConsent(false);setSaveConsent(false);setPlayerDetail(null);detailRequest.current++}
-  const read=async()=>validateTourView(await inspectCalendarTour(runId,branchId),runId,branchId)
+  const read=async(signal?:AbortSignal)=>validateTourView(await inspectCalendarTour(runId,branchId,signal),runId,branchId)
   useEffect(()=>{
     const stamp=epoch.current
+    const controller=new AbortController()
+    let active=true
+    const valid=()=>active&&epoch.current===stamp
     setView(null);setError(null);setReview(null);setConsent(false);setSaveConsent(false);setSelected([]);setContributions(null);setNotice(null);setPlayer('');setPlayerDetail(null);detailRequest.current++;setBusy(true)
-    void read().then(v=>{if(epoch.current===stamp){setView(v);setWeek(String((v.state?.week.week??2)+2))}})
-      .catch(e=>{if(epoch.current===stamp)setError(formatApiError(e))})
-      .finally(()=>{if(epoch.current===stamp)setBusy(false)})
+    void read(controller.signal).then(v=>{if(valid()){setView(v);setWeek(String((v.state?.week.week??2)+2))}})
+      .catch(e=>{if(valid())setError(formatApiError(e))})
+      .finally(()=>{if(valid())setBusy(false)})
+    return()=>{active=false;controller.abort()}
   },[scope])
   const perform=async(action:TourAction|'commit'|'save'|'refresh',id:string|null=null)=>{
     if(!view)return

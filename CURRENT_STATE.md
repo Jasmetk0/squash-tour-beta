@@ -37,6 +37,15 @@ The Server Tasks browser released its next writer before awaiting the pause HTTP
 commit, racing/starving the control writer. It now requires its real ACK first.
 These follow-up changes still require final-head CI/browser verification.
 
+The subsequent W61 browser also exposed an initial-read race after restart:
+StrictMode's superseded effect could overwrite the current view and clear a
+new command's busy state. A deterministic frontend regression reproduces it.
+Effect cleanup now aborts that fetch and ignores all superseded callbacks.
+The browser correlates follow-up reads with requests issued after the actual
+write ACK, retaining its response timeout and unsaved/identity/hash assertions.
+The real local Server Tasks browser passed pause, page close, SIGKILL, explicit
+recovery and uninterrupted equivalence. New final-head checks remain required.
+
 # Current implementation — Master v85
 
 Current integration base verified 18 October 2026: `buuk`

@@ -12,6 +12,7 @@ from beta_engine.application.calendar_tour_service import (
     CalendarTourService,
 )
 from beta_engine.application.run_working_draft_service import RunWorkingDraftService
+from beta_engine.application.calendar_native_prospect_intake import inspect_native_prospect_intake
 
 router = APIRouter(
     prefix="/admin/runs/{run_id}/branches/{branch_id}/calendar-tour",
@@ -32,6 +33,19 @@ def inspect(
     try:
         return CalendarTourService(runtime.repository).inspect(
             run_id=run_id, branch_id=branch_id
+        )
+    except (KeyError, ValueError, TypeError) as exc:
+        raise conflict(exc) from exc
+
+
+@router.get("/prospect-intake/preflight")
+def native_prospect_intake_preflight(
+    run_id: str, branch_id: str,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+):
+    try:
+        return inspect_native_prospect_intake(
+            runtime.repository, run_id=run_id, branch_id=branch_id,
         )
     except (KeyError, ValueError, TypeError) as exc:
         raise conflict(exc) from exc

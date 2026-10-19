@@ -1,3 +1,27 @@
+# Pre-alpha development path — 19 October 2026
+
+**Owner-merged #1546:** `buuk` =
+`bb38e5a17e6a9b667c8f47287fb992d8e00ee3be`. Real native configured
+Tour now crosses seasons, executes authentic next-season Editions and
+publishes rankings without historical v10 sporting downgrades; original
+required API and browser gates were green.
+
+**Current candidate:** independent Saved-only historical Season Summary:
+national titles/placements/awards, genuine player and Edition winners,
+arbitrary completed-season comparison and CS/EN Admin/Viewer controls.
+No historical Saved mutation, parallel execution or fabricated points.
+See [bounded contract](docs/CALENDAR_NATIVE_SIGNED_SEASON_SUMMARY_V1.md).
+Must pass Fast CI, real signed HTTP/SQLite and W52/W61/W80 browser
+gates before owner merge.
+
+**Further dependencies:** season Records + notices calibrated under Master
+v85, numeric Health / recovered permanent effects, annual intake and
+initial age-cohort derivation, correction/discipline, protected
+match-bearing Branch remap, Full Simulation and full 50×61 reference
+release acceptance.
+
+## Earlier roadmap checkpoints (retained)
+
 # Active next-pre-alpha dependency path — 19 October 2026
 
 **Merged:** #1543 replay optimization and #1545 native Season Transition

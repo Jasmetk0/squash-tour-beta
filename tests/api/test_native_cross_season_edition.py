@@ -81,6 +81,18 @@ def test_real_cross_season_edition_preannounce_play_rank_and_saved_viewer(
         assert ready["state"]["week"]["week"]==1
         assert ready["state"]["editions"][0]["edition"]["week"]==date
         assert ready["state"]["rankings"][-1]["rows"]==[]
+        # Only the completed *saved* season is available. The current
+        # season and any future season must remain invisible in Admin/Viewer.
+        admin_season=tour_url(server)+"/seasons/0"
+        viewer_season=viewer+"/seasons/0"
+        code,empty_admin=_request("GET",admin_season)
+        assert code==200,empty_admin
+        assert empty_admin["selected"]["completed_edition_count"]==0
+        code,empty_viewer=_request("GET",viewer_season)
+        assert code==200,empty_viewer
+        assert empty_viewer["selected"]["countries"]==[]
+        assert _request("GET",viewer+"/seasons/1")[0]==409
+        assert _request("GET",tour_url(server)+"/seasons/1")[0]==409
         # Real Entry approvals, Saved draw, MatchEngine, frozen awards
         # and confirmed results must work after the season boundary.
         edition(server,"season2-cup",size=4)
@@ -98,6 +110,31 @@ def test_real_cross_season_edition_preannounce_play_rank_and_saved_viewer(
         assert any(e["edition_id"]=="season2-cup" and e["completed"] for e in post_public["editions"])
         saved=repo.get_branch_saved_revision(revision_id=ranked["saved_head_revision_id"])
         assert saved_tour(saved.payload,run_id="run",branch_id="branch") is not None
+        # Publish more real Official weeks and close season two. This
+        # admits the *actual* Season 2 match awards into signed historical
+        # country comparisons instead of fabricated synthetic ranking data.
+        _advance(server,"transition","season2-week2-to-week3")
+        _advance(server,"transition","season2-week3-to-week4")
+        _advance(server,"season-transition","season2-to-season3")
+        country_url=tour_url(server)+"/seasons/1?compare_to=0"
+        code,comparison=_request("GET",country_url)
+        assert code==200,comparison
+        assert comparison["selected"]["completed_edition_count"]==1
+        assert comparison["comparison"]["completed_edition_count"]==0
+        assert comparison["selected"]["editions"][0]["edition_id"]=="season2-cup"
+        assert comparison["selected"]["editions"][0]["champion_name"]
+        assert sum(c["titles"] for c in comparison["selected"]["countries"])==1
+        assert sum(c["finals"] for c in comparison["selected"]["countries"])==1
+        assert sum(c["awarded_points"] for c in comparison["selected"]["countries"])==220
+        assert sum(c["titles_delta"] for c in comparison["country_deltas"])==1
+        code,public_comparison=_request(
+            "GET", viewer+"/seasons/1?compare_to=0"
+        )
+        assert code==200,public_comparison
+        assert public_comparison["selected"]==comparison["selected"]
+        assert public_comparison["country_deltas"]==comparison["country_deltas"]
+        assert _request("GET",viewer+"/seasons/2")[0]==409
+        assert _request("GET",tour_url(server)+"/seasons/2")[0]==409
         planned_original=repo.get_branch_saved_revision(
             revision_id=planned_save["revision_id"]
         )
@@ -112,9 +149,14 @@ def test_real_cross_season_edition_preannounce_play_rank_and_saved_viewer(
     with ApiServer(database_url=db) as restarted:
         fresh=inspect(restarted)
         assert fresh["saved"]
-        assert fresh["state"]["week"]["season_index"]==1
-        assert fresh["state"]["week"]["week"]==2
-        assert fresh["state"]["rankings"][-1]["rows"]==rows
+        assert fresh["state"]["week"]["season_index"]==2
+        assert fresh["state"]["week"]["week"]==1
+        status,restarted_summary=_request(
+            "GET", restarted.base_url+"/viewer/runs/run/calendar-tour/seasons/1?compare_to=0"
+        )
+        assert status==200,restarted_summary
+        assert restarted_summary["selected"]==comparison["selected"]
+        assert restarted_summary["country_deltas"]==comparison["country_deltas"]
         status,published=_request("GET",restarted.base_url+"/viewer/runs/run/calendar-tour")
         assert status==200,published
-        assert published["official_ranking"]["rows"]==rows
+        assert published["official_ranking"]["week"]["season_index"]==2

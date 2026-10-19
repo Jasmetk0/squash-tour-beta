@@ -1,8 +1,8 @@
 import {useEffect,useRef,useState} from 'react'
 import {Link} from 'react-router-dom'
 import {useQueryClient} from '@tanstack/react-query'
-import {inspectCalendarTour,inspectCalendarTourPlayer,previewCalendarTour,executeCalendarTour,saveCalendarTour,replayCalendarContinuation,inspectCalendarTourSeason,inspectCalendarTourRecords} from '../api/client'
-import {validateTourView,validateTourPreview,validateTourSeasonComparison,validateTourCareerRecords,type TourCareerRecords,type TourSeasonComparison,type TourView,type TourPreview,type TourCommand,type TourAction,type TourContribution,type TourPlayer} from '../api/calendarTour'
+import {inspectCalendarTour,inspectCalendarTourPlayer,previewCalendarTour,executeCalendarTour,saveCalendarTour,replayCalendarContinuation,inspectCalendarTourSeason,inspectCalendarTourRecords,inspectNativeTourProspectIntake} from '../api/client'
+import {validateTourView,validateTourPreview,validateTourSeasonComparison,validateTourCareerRecords,validateNativeProspectIntake,type NativeProspectIntakePreflight,type TourCareerRecords,type TourSeasonComparison,type TourView,type TourPreview,type TourCommand,type TourAction,type TourContribution,type TourPlayer} from '../api/calendarTour'
 import {newCommandId} from '../admin/branchSimulation'
 import {tourWeekOffset,scheduleTourEdition} from '../api/nativeTourCalendar'
 import {useLanguage} from '../i18n/LanguageContext'
@@ -29,19 +29,20 @@ export function CalendarTourPanel({runId,branchId,head}:{runId:string;branchId:s
   const [selected,setSelected]=useState<string[]>([]),[contributions,setContributions]=useState<TourContribution[]|null>(null)
   const [notice,setNotice]=useState<string|null>(null)
   const [player,setPlayer]=useState(''),[playerDetail,setPlayerDetail]=useState<TourPlayer|null>(null)
-  const detailRequest=useRef(0),seasonReadRequest=useRef(0),careerReadRequest=useRef(0)
+  const detailRequest=useRef(0),seasonReadRequest=useRef(0),careerReadRequest=useRef(0),intakeReadRequest=useRef(0)
+  const [intakeReport,setIntakeReport]=useState<NativeProspectIntakePreflight|null>(null)
   const [historySeason,setHistorySeason]=useState(''),[comparisonSeason,setComparisonSeason]=useState('')
   const [seasonReport,setSeasonReport]=useState<TourSeasonComparison|null>(null)
   const [recordAsOf,setRecordAsOf]=useState(''),[recordStart,setRecordStart]=useState('0'),[recordCountry,setRecordCountry]=useState('')
   const [careerRecords,setCareerRecords]=useState<TourCareerRecords|null>(null)
-  const invalidate=()=>{inputs.current++;setReview(null);setConsent(false);setSaveConsent(false);setPlayerDetail(null);detailRequest.current++;setSeasonReport(null);seasonReadRequest.current++;setCareerRecords(null);careerReadRequest.current++}
+  const invalidate=()=>{inputs.current++;setReview(null);setConsent(false);setSaveConsent(false);setPlayerDetail(null);detailRequest.current++;setSeasonReport(null);seasonReadRequest.current++;setCareerRecords(null);careerReadRequest.current++;setIntakeReport(null);intakeReadRequest.current++}
   const read=async(signal?:AbortSignal)=>validateTourView(await inspectCalendarTour(runId,branchId,signal),runId,branchId)
   useEffect(()=>{
     const stamp=epoch.current
     const controller=new AbortController()
     let active=true
     const valid=()=>active&&epoch.current===stamp
-    setView(null);setError(null);setReview(null);setConsent(false);setSaveConsent(false);setSelected([]);setContributions(null);setNotice(null);setPlayer('');setPlayerDetail(null);detailRequest.current++;setSeasonReport(null);seasonReadRequest.current++;setCareerRecords(null);careerReadRequest.current++;setBusy(true)
+    setView(null);setError(null);setReview(null);setConsent(false);setSaveConsent(false);setSelected([]);setContributions(null);setNotice(null);setPlayer('');setPlayerDetail(null);detailRequest.current++;setSeasonReport(null);seasonReadRequest.current++;setCareerRecords(null);careerReadRequest.current++;setIntakeReport(null);intakeReadRequest.current++;setBusy(true)
     void read(controller.signal).then(v=>{if(valid()){
       setView(v)
       const clock=v.state?{...v.state.week,calendar:v.run_calendar??v.state.week.calendar}:null
@@ -154,6 +155,18 @@ export function CalendarTourPanel({runId,branchId,head}:{runId:string;branchId:s
       if(epoch.current===stamp&&current.current===scope)setBusy(false)
     }
   }
+  const loadNativeIntake=async()=>{
+    if(!view||!view.checkpoint_fingerprint)return
+    const stamp=epoch.current,headAtRequest=view.saved_head_revision_id,checkpoint=view.checkpoint_fingerprint
+    const requestId=++intakeReadRequest.current
+    setBusy(true);setError(null);setIntakeReport(null)
+    try{
+      const checked=validateNativeProspectIntake(await inspectNativeTourProspectIntake(runId,branchId),runId,branchId,headAtRequest,checkpoint)
+      if(epoch.current!==stamp||current.current!==scope||intakeReadRequest.current!==requestId)return
+      setIntakeReport(checked)
+    }catch(e){if(epoch.current===stamp&&current.current===scope&&intakeReadRequest.current===requestId)setError(formatApiError(e))}
+    finally{if(epoch.current===stamp&&current.current===scope)setBusy(false)}
+  }
   const names=new Map(view?.players.map(p=>[p.player_id,p.name])??[])
   const ready=Boolean(view&&!busy&&reason.trim()&&/^-?\d+$/.test(seed)&&Number.isSafeInteger(Number(seed))&&(view.saved||view.state))
   const latest=view?.state?.rankings[view.state.rankings.length-1]
@@ -166,6 +179,17 @@ export function CalendarTourPanel({runId,branchId,head}:{runId:string;branchId:s
     {!view&&<p>{cs?'Načítání autorit…':'Loading authorities…'}</p>}
     {view&&<>
       <p>{cs?'Stav':'State'}: {view.saved?'Saved':'Working Draft'} · {view.state&&`${cs?'Týden':'Week'} ${view.state.week.week}/${view.state.week.calendar.weeks_per_year}`}</p>
+      {view.state&&<section aria-label="Next-week prospect intake preflight">
+        <h3>{cs?'Prospect intake – další týden':'Prospect intake – next week'}</h3>
+        <p>{cs?'Kontrola ověřeného Saved zdroje; žádná aktivace hráčů.':'Verified Saved source only; no player activation.'}</p>
+        <button disabled={busy} onClick={()=>void loadNativeIntake()}>{cs?'Prověřit patnáctileté prospecty':'Check next-week prospects'}</button>
+        {intakeReport&&<div aria-label="Verified next-week prospect intake">
+          <p>{cs?'Cílový týden':'Target week'}: S{intakeReport.target_week.season_index+1}/W{intakeReport.target_week.week} · {cs?'Připravení':'Ready'}: {intakeReport.due_count} · {cs?'Nesrovnalosti':'Problems'}: {intakeReport.problems.length}</p>
+          {intakeReport.due.map(player=><p key={player.player_id}>{player.display_name} · {player.country_code} · <code>{player.player_id}</code></p>)}
+          {intakeReport.problems.map(issue=><p key={issue.prospect_id+issue.code}>{issue.prospect_id}: {issue.code}</p>)}
+          <p>{cs?'Nativní aktivace je stále zablokovaná do propojení lifecycle, Health a sportovního stavu.':'Native activation stays disabled until lifecycle, Health and sporting state are coupled.'}</p>
+        </div>}
+      </section>}
       <label>{cs?'Důvod operace':'Operation reason'}<input aria-label="Tour operation reason" value={reason} onChange={e=>{setReason(e.target.value);invalidate()}}/></label>
       <label>{cs?'Seed simulace':'Simulation seed'}<input aria-label="Tour seed" value={seed} onChange={e=>{setSeed(e.target.value);invalidate()}}/></label>
       <button disabled={busy} onClick={()=>void perform('refresh')}>{cs?'Obnovit stav':'Refresh state'}</button>

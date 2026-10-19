@@ -28,7 +28,7 @@ from beta_engine.domain.players.calendar_match_state import (
 from beta_engine.domain.run_packages import canonical_hash
 from beta_engine.infrastructure.db.calendar_standalone_match_state import (
     CalendarOpeningKnockout, CalendarKnockoutMatch, load_match_rows,
-    load_saved_calendar_match, put_match,
+    put_match,
 )
 from beta_engine.infrastructure.db.calendar_knockout_awards_state import (
     CalendarScoredOpeningKnockout,
@@ -154,11 +154,14 @@ class CalendarOpeningKnockoutService:
     def canonical_preview(self, *, run_id, branch_id, command: CalendarCanonicalPreviewCommand):
         with self.repository._session_factory() as session:
             session.execute(text("BEGIN"))
-            _, revision, world, _ = self._context(session, run_id=run_id, branch_id=branch_id)
+            _, revision, world, _, _, rows, _, _ = self._context(
+                session, run_id=run_id, branch_id=branch_id,
+                _include_sporting_sources=True,
+            )
             if (revision.saved_head_revision_id != command.expected_saved_head
                     or world.fingerprint != command.expected_initial_world_fingerprint):
                 raise ValueError("Canonical preview source changed since inspection")
-            if load_match_rows(session, run_id=run_id, branch_id=branch_id):
+            if rows:
                 raise ValueError("Played canonical inputs are already frozen in match history")
             source = CalendarCanonicalMatchSource.from_population(
                 world, command.entrant_ids, CalendarStandaloneMatchService._engine_player)
@@ -170,46 +173,47 @@ class CalendarOpeningKnockoutService:
     def inspect(self, *, run_id: str, branch_id: str) -> dict:
         with self.repository._session_factory() as session:
             session.execute(text("BEGIN"))
-            clock, revision, world, health = self._context(
-                session, run_id=run_id, branch_id=branch_id
+            clock, revision, world, health, checkpoint, rows, _, saved = self._context(
+                session, run_id=run_id, branch_id=branch_id,
+                _include_sporting_sources=True,
             )
-            rows = load_match_rows(session, run_id=run_id, branch_id=branch_id)
             if len(rows) > 1:
                 raise ValueError("Opening knockout cannot coexist with another calendar match")
             if rows and not isinstance(rows[0], (CalendarOpeningKnockout, CalendarScoredOpeningKnockout)):
                 raise ValueError("Standalone exhibition already owns this opening-week sporting slice")
             row = rows[0] if rows else None
             match = row.knockout if isinstance(row, CalendarScoredOpeningKnockout) else row
-            saved = load_saved_calendar_match(
-                revision.saved_revision.payload, run_id=run_id, branch_id=branch_id
+            row_fingerprint = row.fingerprint if row else None
+            saved_fingerprint = (
+                row_fingerprint if saved is row
+                else saved.fingerprint if saved else None
             )
             # An unsaved points preparation promotes *only* the live row. The
             # old immutable Saved HEAD still describes the original knockout.
             # All other hash/scope mismatches fail closed.
             if saved is not None:
                 if row is None or not (
-                    type(saved) is type(row) and saved.fingerprint == row.fingerprint
+                    type(saved) is type(row) and saved_fingerprint == row_fingerprint
                     or isinstance(saved, CalendarOpeningKnockout)
                     and isinstance(row, CalendarScoredOpeningKnockout)
-                    and saved.fingerprint == row.knockout.fingerprint
+                    and saved_fingerprint == row.knockout.fingerprint
                 ):
                     raise ValueError("Saved knockout differs from live sporting state")
             is_saved = (saved is not None and row is not None
                         and type(saved) is type(row)
-                        and saved.fingerprint == row.fingerprint)
-            from beta_engine.infrastructure.db.calendar_sporting_checkpoint import load_checkpoint
-            checkpoint = load_checkpoint(session, run_id=run_id, branch_id=branch_id)
+                        and saved_fingerprint == row_fingerprint)
+            checkpoint_fingerprint = checkpoint.fingerprint if checkpoint else None
             return {
                 "population_sporting_checkpoint": ({
                     "schema_version": checkpoint.schema_version,
-                    "fingerprint": checkpoint.fingerprint,
+                    "fingerprint": checkpoint_fingerprint,
                     "source_knockout_fingerprint": checkpoint.source_knockout_fingerprint,
                     "player_count": len(checkpoint.players),
                     "attribute_count": 57,
                     "phase": checkpoint.phase,
                     "annual_development_applied": checkpoint.annual_development_applied,
                     "health_effects_applied": False,
-                    "saved": (revision.saved_revision.payload.get('content', {}).get('calendar_player_sporting_checkpoint', {}).get('fingerprint') == checkpoint.fingerprint),
+                    "saved": (revision.saved_revision.payload.get('content', {}).get('calendar_player_sporting_checkpoint', {}).get('fingerprint') == checkpoint_fingerprint),
                     "continuation_count": len(checkpoint.played_continuations),
                 } if checkpoint else None),
                 "schema_version": "calendar_opening_knockout_inspection.v1",
@@ -220,7 +224,7 @@ class CalendarOpeningKnockoutService:
                 "initial_world_fingerprint": world.fingerprint,
                 "player_ids": [p.player_id for p in world.players],
                 "knockout": match.model_dump(mode="json") if match else None,
-                "knockout_fingerprint": row.fingerprint if row else None,
+                "knockout_fingerprint": row_fingerprint,
                 "saved": is_saved,
                 "health_readiness": health_readiness(health),
                 "prepared_points": (
@@ -228,17 +232,18 @@ class CalendarOpeningKnockoutService:
                      "awards": [a.model_dump(mode="json") for a in row.awards],
                      "first_publication_week": row.first_publication_week.model_dump(mode="json"),
                      "publication_status": "prepared_not_official",
-                     "scored_fingerprint": row.fingerprint}
+                     "scored_fingerprint": row_fingerprint}
                     if isinstance(row, CalendarScoredOpeningKnockout) else None
                 ),
             }
 
     def checkpoint_player(self, *, run_id, branch_id, player_id, expected_saved_head, expected_checkpoint_fingerprint):
-        from beta_engine.infrastructure.db.calendar_sporting_checkpoint import load_checkpoint
         with self.repository._session_factory() as session:
             session.execute(text("BEGIN"))
-            _, revision, _, _ = self._context(session, run_id=run_id, branch_id=branch_id)
-            checkpoint = load_checkpoint(session, run_id=run_id, branch_id=branch_id)
+            _, revision, _, _, checkpoint, _, _, _ = self._context(
+                session, run_id=run_id, branch_id=branch_id,
+                _include_sporting_sources=True,
+            )
             if (revision.saved_head_revision_id != expected_saved_head or checkpoint is None
                     or checkpoint.fingerprint != expected_checkpoint_fingerprint):
                 raise ValueError("Population sporting checkpoint source changed since inspection")

@@ -98,6 +98,7 @@ class WeeklyIntakePlanner:
         population_year: int,
         target_intake_count: int,
         population_resolver: Callable[[Country, int], EffectivePopulationResult] = resolve_effective_population,
+        country_rating_resolver: Callable[[Country, int], Country] | None = None,
     ) -> list[WeeklyIntakeCountryAllocation]:
         if not countries or target_intake_count == 0:
             return []
@@ -110,7 +111,9 @@ class WeeklyIntakePlanner:
             # popularity and access. Do not clamp small positive weights to 1:
             # doing so would erase authored differences for small squash nations.
             weight = talent_model.effective_squash_pool_weight(
-                country.at_rating_year(population_year), resolved.effective_population
+                (country_rating_resolver(country, population_year) if country_rating_resolver
+                 else country.at_rating_year(population_year)),
+                resolved.effective_population
             )
             rows.append((country.code, resolved, weight))
 

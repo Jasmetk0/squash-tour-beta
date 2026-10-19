@@ -37,7 +37,10 @@ def test_after_season_knockout_retains_exact_original_checkpoint_version(
         tournaments=(),closures=(),players=(SimpleNamespace(player_id="p"),),
     )
     previous.model_copy=lambda *,update: SimpleNamespace(
-        model_dump_json=lambda:json.dumps(update)
+        model_dump_json=lambda:json.dumps({
+            'schema_version':update['schema_version'],
+            'event_count':len(update['week_events']),
+        })
     )
     event=SimpleNamespace(
         schema_version=event_version,run_id="r",branch_id="b",
@@ -52,7 +55,7 @@ def test_after_season_knockout_retains_exact_original_checkpoint_version(
     )
     result=followup.append_followup_knockout(previous,object(),event)
     assert result["schema_version"]==expected
-    assert result["week_events"][-1] is not None
+    assert result["event_count"]==2
 
 
 def test_season_reducer_rejects_foreign_sources_before_replay(monkeypatch):

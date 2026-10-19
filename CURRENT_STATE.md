@@ -1,3 +1,29 @@
+# Integration checkpoint — 19 October 2026 (verified merge and new candidate)
+
+**Verified `buuk`:** owner-merged PR #1545 at
+`9adfa2205fd5f420f9fe59682217ac5f65b7ef13`. Its final-head
+Fast CI, Shell browser, Native Tour W52/W61/W80 browser and real SQLite
+Tour acceptance passed. Native W→next-season Week 1 Season Transition,
+signed sporting v3/checkpoint v10/Tour v2, manual Save, lifecycle and
+historically effective Best N ranking are now **merged** within the
+bounded configured Tour.
+
+**Active independent candidate:** complete the immediate next-season
+Edition continuation. The old Admin scheduling form could emit invalid W+2
+at a season boundary; the v10 configured Tour knockout replay needed to
+preserve v10 rather than reject/downgrade it. This branch adds horizon-aware
+season/week Edition dates and actual next-season tournament HTTP/SQLite
+acceptance. These changes remain **unverified and unmerged** until
+all required final-head gates succeed. See
+[Season Transition contract](docs/CALENDAR_NATIVE_SEASON_TRANSITION_V1.md).
+
+**Still unsupported:** numeric Health/healing, automatic native prospect
+intake, staged disciplinary/correction materialization, protected match
+fork/remap, full season summary system and complete 50×61 pre-alpha gates.
+Full Simulation is NOT unlocked.
+
+## Earlier checkpoint history (retained)
+
 # Current integration checkpoint — 19 October 2026
 
 **Verified base:** owner merged #1543 into `buuk` as

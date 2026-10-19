@@ -137,6 +137,8 @@ def verify_calendar_native_birth_history(
             or not isinstance(sub.submission_week, RunWeekPosition)
         ):
             raise ValueError("Native replay requires scoped, calendar-owned real Tour Entry evidence")
+        if sub.submission_week.ordinal > states[-1].week.ordinal:
+            raise ValueError("Native replay contains a future Tour Entry outside owned history")
         if sub.application_id in seen_applications:
             raise ValueError("Native replay has a duplicate Tour application identity")
         seen_applications.add(sub.application_id)

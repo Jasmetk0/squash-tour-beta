@@ -51,6 +51,35 @@ def native_prospect_intake_preflight(
         raise conflict(exc) from exc
 
 
+class NativeSportingBirthPreviewRequest(BaseModel):
+    """Read-only, stale-HEAD-checked review; never an activation command."""
+
+    model_config = ConfigDict(extra="forbid", strict=True)
+    expected_saved_head: str = Field(min_length=1)
+    expected_checkpoint_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    expected_tour_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    seed: int
+
+
+@router.post("/prospect-intake/sporting-preflight")
+def native_prospect_sporting_preflight(
+    run_id: str,
+    branch_id: str,
+    payload: NativeSportingBirthPreviewRequest,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+):
+    try:
+        return inspect_native_prospect_intake(
+            runtime.repository, run_id=run_id, branch_id=branch_id,
+            development_seed=payload.seed,
+            expected_saved_head=payload.expected_saved_head,
+            expected_checkpoint_fingerprint=payload.expected_checkpoint_fingerprint,
+            expected_tour_fingerprint=payload.expected_tour_fingerprint,
+        )
+    except (KeyError, ValueError, TypeError) as exc:
+        raise conflict(exc) from exc
+
+
 @router.get("/records")
 def signed_career_records(
     run_id: str,

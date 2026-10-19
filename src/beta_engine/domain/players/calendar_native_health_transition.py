@@ -113,6 +113,12 @@ def advance_native_health_week(
     if (
         new.ordinal != old.ordinal + 1
         or previous_health.week.ordinal != old.ordinal
+        or (previous_health.week.calendar.weeks_per_year,
+            previous_health.week.calendar.season_start_year_week,
+            previous_health.week.calendar.start_year)
+        != (old.calendar.weeks_per_year, old.calendar.season_start_year_week,
+            old.calendar.start_year)
+        or previous_health.week.calendar.season_count > new.calendar.season_count
         or (old.calendar.weeks_per_year, old.calendar.season_start_year_week,
             old.calendar.start_year)
         != (new.calendar.weeks_per_year, new.calendar.season_start_year_week,

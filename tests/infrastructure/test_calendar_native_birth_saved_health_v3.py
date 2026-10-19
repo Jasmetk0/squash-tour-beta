@@ -154,3 +154,94 @@ def test_one_newcomer_receives_no_fake_previous_week_health_and_further_carry_is
     assert tuple(p.player_id for p in later.players)==("born","existing")
     assert later.source_lifecycle_fingerprint==next_life.fingerprint
     assert later.origin==birth.origin
+
+
+def test_health_accepts_strict_extension_without_rewriting_saved_origin(monkeypatch):
+    """Production Saved loaders must accept old World and a newer native clock."""
+    from beta_engine.domain.tournaments.calendar_tour import CalendarTourState
+    from tests.infrastructure.test_calendar_native_v4_saved_lifecycle import _digest
+    from beta_engine.domain.run_packages import canonical_hash
+    from beta_engine.infrastructure.db.run_prospect_source_state import load_saved_run_prospect_source
+
+    payload, life, _ = _signed_fixture(monkeypatch)
+    original_clock = life[0].week.calendar
+    extended = RunCalendar(
+        original_clock.weeks_per_year, original_clock.season_start_year_week,
+        original_clock.start_year, original_clock.season_count + 2,
+    )
+    target = week(extended, 0, 2)
+    event = build_calendar_prospect_birth_event(
+        predecessor=life[0], target=target,
+        source=load_saved_run_prospect_source(payload, run_id="r"), world_package_id="world",
+    )
+    successor = advance_calendar_lifecycle_with_prospects(life[0], event)
+    payload["content"]["player_lifecycle"] = {
+        "fingerprint": _digest((life[0], successor)),
+        "states": [s.model_dump(mode="json") for s in (life[0], successor)],
+    }
+    tour = CalendarTourState.model_validate_json(json.dumps(payload["content"]["calendar_tour_authority"]["state"]))
+    # The real Tour keeps historical clocks and explicitly extends its head.
+    tour = tour.model_copy(update={
+        "week": target, "lifecycle_fingerprint": successor.fingerprint,
+    })
+    payload["content"]["calendar_tour_authority"]["state"] = tour.model_dump(mode="json")
+    initial = health_for(life[0])
+    health = advance_native_health_week(
+        previous_health=initial, previous_lifecycle=life[0], next_lifecycle=successor,
+    )
+    payload["content"]["player_health_state"] = _component((initial, health))
+    before = canonical_hash(payload)
+    assert load_saved_health(payload, run_id="r", branch_id="b") == (initial, health)
+    assert health.week.calendar.season_count == extended.season_count
+    assert initial.week.calendar == original_clock
+    assert canonical_hash(payload) == before
+
+
+@pytest.mark.parametrize("damage", ["width", "offset", "year", "horizon"])
+def test_same_ordinal_health_cannot_alias_a_foreign_calendar(damage):
+    from tests.domain.test_calendar_prospect_birth_event import lifecycle
+    clock = RunCalendar(61, 37, 2030, 3)
+    life = lifecycle(clock, week(clock, 0, 1))
+    successor = advance_calendar_lifecycle(life, week(clock, 0, 2))
+    changes = {"width": (52, 37, 2030, 3), "offset": (61, 36, 2030, 3),
+               "year": (61, 37, 2029, 3), "horizon": (61, 37, 2030, 4)}
+    forged = health_for(life).model_copy(update={"week": week(RunCalendar(*changes[damage]), 0, 1)})
+    with pytest.raises(ValueError, match="exact consecutive Signed lifecycle"):
+        advance_native_health_week(
+            previous_health=forged, previous_lifecycle=life, next_lifecycle=successor,
+        )
+
+
+def test_native_v3_admin_downgrade_is_rejected_before_sqlite_mutation(monkeypatch, tmp_path):
+    from beta_engine.domain.players.calendar_health import CalendarHealthState, CalendarHealthEditEvidence
+    from beta_engine.infrastructure.db.engine import DatabaseSettings, create_sqlite_engine, create_session_factory
+    from beta_engine.infrastructure.db.models import PlayerHealthWeekStateModel
+    from beta_engine.infrastructure.db.player_health_state import put_health, replace_health_head, get_health
+
+    _, life, _ = _signed_fixture(monkeypatch)
+    initial = health_for(life[0])
+    health = advance_native_health_week(
+        previous_health=initial, previous_lifecycle=life[0], next_lifecycle=life[1],
+    )
+    edit = CalendarHealthEditEvidence(
+        command_id="attempt-v2-edit", request_fingerprint="a"*64,
+        before_state_fingerprint=health.fingerprint, source_run_id="r", source_branch_id="b",
+        player_id="existing", mode="current_state_correction", audit_label="Admin",
+        audit_reason="Explicit correction cannot erase birth authority",
+    )
+    attempted = CalendarHealthState(
+        **{k: getattr(health,k) for k in ("run_id","branch_id","week","players",
+            "source_initial_world_fingerprint","predecessor_fingerprint","origin")},
+        admin_edits=(edit,), stage_provenance="admin-current-correction",
+    )
+    engine = create_sqlite_engine(DatabaseSettings(url=f"sqlite:///{tmp_path / 'v3-edit.db'}"))
+    PlayerHealthWeekStateModel.__table__.create(engine)
+    try:
+        with create_session_factory(engine).begin() as session:
+            put_health(session, initial)
+            put_health(session, health)
+            with pytest.raises(ValueError, match="versioned Admin correction authority"):
+                replace_health_head(session, attempted, expected_fingerprint=health.fingerprint)
+            assert get_health(session, run_id="r", branch_id="b", week=health.week) == health
+    finally:
+        engine.dispose()

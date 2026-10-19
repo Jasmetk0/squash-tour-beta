@@ -203,6 +203,11 @@ def replace_health_head(
     if head.week_ordinal != state.week.ordinal:
         raise ValueError("Admin Health edit may replace only the current health head")
     current = _load(head, state.run_id, state.branch_id, state.week.ordinal)
+    if isinstance(current, CalendarNativeHealthTransitionState):
+        # v2 edits cannot retain the natural transition's lifecycle/birth proof.
+        # Keep the authenticated v3 state intact until a versioned correction
+        # and replay contract exists for that authority.
+        raise ValueError("Native v3 Health requires versioned Admin correction authority")
     calendar_current = isinstance(
         current, (CalendarInitialHealthState, CalendarHealthState, CalendarNativeHealthTransitionState)
     )
@@ -323,6 +328,8 @@ def _validate_chain(
     ):
         raise ValueError("Calendar Health history requires its opening state")
     for predecessor, target in pairwise(calendar_states):
+        if target.week.calendar.season_count < predecessor.week.calendar.season_count:
+            raise ValueError("Calendar Health history cannot contract its horizon")
         if isinstance(target, CalendarNativeHealthTransitionState):
             if (not isinstance(predecessor, (
                 CalendarInitialHealthState, CalendarHealthState,
@@ -424,8 +431,9 @@ def load_saved_health(
                 != (world.run_calendar.weeks_per_year,
                     world.run_calendar.season_start_year_week,
                     world.run_calendar.start_year)
-                or state.week.calendar.season_count > world.run_calendar.season_count
                 or owned_life is None
+                or state.week.calendar.season_count < world.run_calendar.season_count
+                or state.week.calendar.season_count > owned_life.week.calendar.season_count
                 or state.source_initial_world_fingerprint
                 != owned_life.source_initial_world_fingerprint
                 or tuple(p.player_id for p in state.players)

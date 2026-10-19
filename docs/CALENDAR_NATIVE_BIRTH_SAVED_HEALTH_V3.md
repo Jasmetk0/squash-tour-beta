@@ -29,6 +29,8 @@ The real Saved Health component loader now parses v3 and:
 - refuses a v4 life birth without matching v3 Health on the exact birth week;
 - permits a strictly extended horizon to retain earlier immutable clock
   fingerprints;
+- refuses a v3-to-v2 Admin downgrade until a versioned correction preserves the natural lifecycle/birth proof;
+- checks predecessor Health calendar identity as well as the week ordinal;
 - refuses old-style branch remapping of v3 because Signed birth events
   bind original Branch identities.
 
@@ -46,7 +48,8 @@ does not perform healing, publish Entry or award ranking points.
 ## Test evidence
 
 The focused PR-critical suite uses the actual Saved Health loader and
-the #1558 real Signed birth/Tour/InitialWorld fixture for W52, W61 and W80;
+the #1558 Signed birth/Tour fixture (its InitialWorld lookup is stubbed; this
+is a Saved parser/replay test, not a complete Tour writer integration) for W52, W61 and W80;
 it checks exact JSON replay, byte-stable source, unsafe fork rejection,
 fake newborn or dropped original, forged birth hash, wrong original
 Health, wrong lifecycle owner and fake predecessor. It also covers later

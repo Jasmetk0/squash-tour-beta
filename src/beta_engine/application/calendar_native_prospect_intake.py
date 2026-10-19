@@ -134,6 +134,10 @@ def preview_native_prospect_intake(
 
 def inspect_native_prospect_intake(
     repository, *, run_id: str, branch_id: str,
+    development_seed: int | None = None,
+    expected_saved_head: str | None = None,
+    expected_checkpoint_fingerprint: str | None = None,
+    expected_tour_fingerprint: str | None = None,
 ) -> dict:
     """Authenticate Run/Branch HEAD, live sporting owner, and shared source.
 
@@ -153,6 +157,17 @@ def inspect_native_prospect_intake(
             session, run_id, branch_id,
         )
         clock, revision, world, _health, checkpoint, _saved, _evidence = context
+        if development_seed is not None:
+            if type(development_seed) is not int:
+                raise ValueError("Native sporting review requires an explicit integer seed")
+            if state is None or state != _signed or checkpoint != _saved:
+                raise ValueError("Native sporting review requires the exact Saved Tour and checkpoint")
+            if (
+                revision.saved_head_revision_id != expected_saved_head
+                or checkpoint.fingerprint != expected_checkpoint_fingerprint
+                or state.fingerprint != expected_tour_fingerprint
+            ):
+                raise ValueError("Native sporting review source HEAD or Tour changed since the request")
         if checkpoint is None or world is None:
             raise ValueError("Native prospect intake requires a sporting checkpoint")
         if (checkpoint.week.calendar.weeks_per_year,
@@ -230,6 +245,51 @@ def inspect_native_prospect_intake(
                     "ranking_and_entry_adoption_supported": False,
                     "sporting_health_saved_activation_supported": False,
                 }
+                if development_seed is not None:
+                    from beta_engine.domain.players.calendar_native_sporting_intake import (
+                        combine_signed_admission_with_sporting_week,
+                    )
+                    from beta_engine.domain.players.calendar_sporting_week import (
+                        played_counts,
+                    )
+                    from beta_engine.domain.tournaments.calendar_tour import (
+                        effective_policy,
+                    )
+
+                    # These are the actual, fully Signed completed-week matches.
+                    # Never allow caller-provided fabricated play counts or policy.
+                    counts = played_counts(
+                        checkpoint, getattr(_evidence, "knockout", _evidence),
+                    )
+                    policy = effective_policy(state, checkpoint.week).development
+                    proposed = combine_signed_admission_with_sporting_week(
+                        admission=bundle, checkpoint=checkpoint,
+                        predecessor=predecessor, seed=development_seed,
+                        policy=policy, played_counts=counts,
+                    )
+                    sport = proposed.sporting_week
+                    review["sporting_week_projection"] = {
+                        "schema_version": "native_tour_sporting_week_preflight.v1",
+                        "completed_week": sport.completed_week.model_dump(mode="json"),
+                        "target_week": sport.target_week.model_dump(mode="json"),
+                        "seed": sport.seed,
+                        "development_policy": sport.policy.model_dump(mode="json"),
+                        "played_counts_fingerprint": canonical_hash(sport.played_counts),
+                        "played_player_count": sum(n > 0 for _, n in sport.played_counts),
+                        "old_population_count": len(sport.completed_players),
+                        "new_population_count": len(sport.target_players),
+                        "developed_players_fingerprint": sport.developed_players_fingerprint,
+                        "recovered_players_fingerprint": sport.recovered_players_fingerprint,
+                        "target_players_fingerprint": sport.target_players_fingerprint,
+                        "sporting_birth_advance_fingerprint": sport.fingerprint,
+                        "signed_admission_week_fingerprint": proposed.fingerprint,
+                        "source_saved_head": revision.saved_head_revision_id,
+                        "signed_writer_supported": False,
+                    }
                 review.pop("preflight_fingerprint")
                 review["preflight_fingerprint"] = canonical_hash(review)
+        if development_seed is not None and "sporting_week_projection" not in review:
+            raise ValueError(
+                "Native sporting review requires one complete due, Signed birth cohort"
+            )
         return review

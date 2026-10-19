@@ -14,6 +14,8 @@ on:
       - 'src/beta_engine/domain/rankings/calendar_official.py'
       - 'src/beta_engine/application/calendar_tour_service.py'
       - 'src/beta_engine/application/calendar_standalone_match_service.py'
+      - 'src/beta_engine/application/calendar_opening_knockout_service.py'
+      - 'src/beta_engine/application/calendar_continuation_service.py'
       - 'src/beta_engine/infrastructure/db/calendar_tour.py'
       - 'src/beta_engine/infrastructure/db/calendar_standalone_match_state.py'
       - 'src/beta_engine/infrastructure/db/calendar_sporting_checkpoint.py'

@@ -17,7 +17,7 @@ def main():
     from scripts.native_tour_browser_acceptance import stop_process, wait_http
     from tests.api.test_calendar_native_birth_week_execution import sign_prospects
     from tests.api.test_calendar_tour_flow import setup
-    from tests.api.test_saved_revision_history_api import ApiServer, _free_port
+    from tests.api.test_saved_revision_history_api import ApiServer
 
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", type=Path)
@@ -25,6 +25,7 @@ def main():
         "--chromium", default=os.environ.get("CHROME_BIN", "/usr/bin/chromium")
     )
     args = parser.parse_args()
+    expect.set_options(timeout=30000)
     root = args.root or Path(tempfile.mkdtemp(prefix="native-birth-browser-"))
     root.mkdir(parents=True, exist_ok=True)
     if (root / "tour.sqlite").exists():
@@ -35,7 +36,9 @@ def main():
         clock = RunCalendar(2, 2, 2030, 2)
         repo, _ = setup(server, clock, 8)
         signed = sign_prospects(server, repo, clock, target_week=1, target_season=1)
-        web_port = _free_port()
+        # Match the application's real allowed development origin. Arbitrary
+        # ports are deliberately not allowed by its existing CORS policy.
+        web_port = 5173
         web = f"http://127.0.0.1:{web_port}"
         with (root / "frontend.log").open("w") as log:
             frontend = subprocess.Popen(

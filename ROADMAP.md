@@ -1,9 +1,10 @@
 # Pre-alpha dependency path — honest native birth capability
 
 Current stack adds the confirmed birth writer #1565 after #1564, then the current
-read-only runtime capability/Admin slice. #1565's five new production HTTP cases
-are green, but its original full native gates are still pending at this checkpoint.
-No pending candidate is merge-ready; owner alone merges.
+read-only runtime capability/Admin slice. All applicable #1565 final-head gates
+are green, including original full native HTTP/season/browser acceptance. The
+readiness candidate remains pending its corrected real browser and final-head
+checks; owner alone merges.
 
 Current capability work reports real guarded next action, actual native population,
 Save/terminal blockers and exact clocks without granting execution authority. It

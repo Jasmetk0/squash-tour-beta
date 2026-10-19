@@ -95,10 +95,23 @@ def _capture_live_content(session: Session, *, payload: dict, run_id: str, branc
         storage.capture_saved_tour_entry_triggers,
         storage.capture_saved_sporting,
         storage.capture_saved_simulation_slots,
-        storage.capture_saved_calendar_match,
     ):
         capture(session, copy, run_id=run_id, branch_id=branch_id)
     storage.capture_saved_run_prospect_source(session, copy, run_id=run_id)
+    native_birth = (
+        payload.get("content", {}).get("calendar_player_sporting_checkpoint", {})
+        .get("state", {}).get("schema_version")
+        == "calendar_sporting_checkpoint.v11"
+    )
+    storage.capture_saved_calendar_match(
+        session, copy, run_id=run_id, branch_id=branch_id,
+        _defer_full_verification=native_birth,
+    )
+    if native_birth:
+        # A v11 source cannot be verified in isolation before its Tour/source
+        # owners have been captured. The complete live aggregate is still
+        # authenticated before exact Saved-content equality can permit extension.
+        storage.load_saved_calendar_sources(copy, run_id=run_id, branch_id=branch_id)
     return copy["content"]
 
 

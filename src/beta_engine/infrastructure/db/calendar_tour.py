@@ -3,10 +3,10 @@
 import json
 
 from beta_engine.domain.tournaments.calendar_tour import (
-    CalendarTourState,
     calculate_tour_ranking,
     edition_results,
     effective_policy,
+    parse_tour_json,
 )
 from beta_engine.infrastructure.db.models import CalendarTourAuthorityModel
 
@@ -24,7 +24,7 @@ def load_tour(session, *, run_id, branch_id):
     row = session.get(CalendarTourAuthorityModel, (run_id, branch_id))
     if row is None:
         return None
-    state = CalendarTourState.model_validate_json(row.payload_json)
+    state = parse_tour_json(row.payload_json)
     if (state.run_id, state.branch_id, state.fingerprint) != (
         run_id,
         branch_id,
@@ -35,7 +35,7 @@ def load_tour(session, *, run_id, branch_id):
 
 
 def put_tour(session, state):
-    state = CalendarTourState.model_validate_json(state.model_dump_json())
+    state = parse_tour_json(state.model_dump_json())
     row = session.get(CalendarTourAuthorityModel, (state.run_id, state.branch_id))
     if row is None:
         row = CalendarTourAuthorityModel(run_id=state.run_id, branch_id=state.branch_id)
@@ -45,9 +45,21 @@ def put_tour(session, state):
     session.flush()
 
 
-def verify_tour(state, checkpoint, world=None):
-    if checkpoint is not None and checkpoint.schema_version == "calendar_sporting_checkpoint.v11":
-        raise ValueError("Native birth checkpoint requires coupled Tour transition receipt authority")
+def verify_tour(state, checkpoint, world=None, *, _native_payload=None):
+    if (
+        checkpoint is not None
+        and checkpoint.schema_version == "calendar_sporting_checkpoint.v11"
+    ):
+        if _native_payload is None:
+            raise ValueError(
+                "Native birth checkpoint requires coupled Tour transition receipt authority"
+            )
+        from beta_engine.infrastructure.db.calendar_native_tour import (
+            verify_native_tour,
+        )
+
+        verify_native_tour(state, checkpoint, world, payload=_native_payload)
+        return
     if state is None:
         if checkpoint and (
             any(e.schema_version.endswith(".v2") for e in checkpoint.weekly_advances)
@@ -152,7 +164,8 @@ def verify_tour(state, checkpoint, world=None):
     if {
         e.command_id
         for e in checkpoint.weekly_advances
-        if e.schema_version in {
+        if e.schema_version
+        in {
             "calendar_sporting_week_advance.v2",
             "calendar_sporting_week_advance.v3",
         }
@@ -202,7 +215,8 @@ def verify_tour(state, checkpoint, world=None):
         event = advances.get(transition.command_id)
         if (
             event is None
-            or event.schema_version != (
+            or event.schema_version
+            != (
                 "calendar_sporting_week_advance.v3"
                 if transition.completed_week.season_index
                 != transition.target_week.season_index
@@ -265,7 +279,7 @@ def saved_tour(payload, *, run_id, branch_id, checkpoint=None):
         return None
     if not isinstance(component, dict) or set(component) != {"state", "fingerprint"}:
         raise ValueError("Malformed Saved native Tour component")
-    state = CalendarTourState.model_validate_json(json.dumps(component["state"]))
+    state = parse_tour_json(json.dumps(component["state"]))
     if (state.run_id, state.branch_id, state.fingerprint) != (
         run_id,
         branch_id,
@@ -273,16 +287,14 @@ def saved_tour(payload, *, run_id, branch_id, checkpoint=None):
     ):
         raise ValueError("Saved native Tour identity/hash mismatch")
     if checkpoint is None:
-        from beta_engine.domain.players.calendar_sporting_checkpoint import (
-            CalendarSportingCheckpoint,
+        from beta_engine.infrastructure.db.calendar_sporting_checkpoint import (
+            parse_checkpoint_json,
         )
 
         raw = payload.get("content", {}).get("calendar_player_sporting_checkpoint")
         if raw is None:
             raise ValueError("Saved Tour lacks sporting checkpoint")
-        checkpoint = CalendarSportingCheckpoint.model_validate_json(
-            json.dumps(raw["state"])
-        )
+        checkpoint = parse_checkpoint_json(json.dumps(raw["state"]))
         if checkpoint.fingerprint != raw["fingerprint"]:
             raise ValueError("Saved sporting owner fingerprint mismatch")
     from beta_engine.infrastructure.db.initial_world_state import (
@@ -293,6 +305,7 @@ def saved_tour(payload, *, run_id, branch_id, checkpoint=None):
         state,
         checkpoint,
         load_saved_initial_world(payload, run_id=run_id, branch_id=branch_id),
+        _native_payload=payload,
     )
     from beta_engine.infrastructure.db.player_lifecycle_state import (
         load_saved_lifecycle,
@@ -307,8 +320,9 @@ def saved_tour(payload, *, run_id, branch_id, checkpoint=None):
     return state
 
 
-def capture_tour(session, payload, *, run_id, branch_id,
-                 _defer_full_verification: bool = False):
+def capture_tour(
+    session, payload, *, run_id, branch_id, _defer_full_verification: bool = False
+):
     from beta_engine.infrastructure.db.calendar_sporting_checkpoint import (
         load_checkpoint,
     )
@@ -340,8 +354,15 @@ def capture_tour(session, payload, *, run_id, branch_id,
                 raise ValueError("Tour Save lacks its coupled current lifecycle")
 
 
-def restore_tour(session, *, current_payload, target_payload, run_id, branch_id,
-                 _validated_states=None):
+def restore_tour(
+    session,
+    *,
+    current_payload,
+    target_payload,
+    run_id,
+    branch_id,
+    _validated_states=None,
+):
     if _validated_states is None:
         current = saved_tour(current_payload, run_id=run_id, branch_id=branch_id)
         target = saved_tour(target_payload, run_id=run_id, branch_id=branch_id)
@@ -384,6 +405,66 @@ def verify_tour_origins(session, state):
             raise ValueError("Tour source Saved lineage is missing or foreign")
         revision_id = row.parent_revision_id
 
+    if state.schema_version == "calendar_tour_authority.v3":
+        first_source = None
+        for index, receipt in enumerate(
+            state.receipts[len(state.native_root_tour.receipts) :]
+        ):
+            command = receipt.request.get("command", {})
+            source_id = command.get("expected_saved_head")
+            row = session.get(BranchSavedRevisionModel, source_id)
+            if (
+                source_id not in reachable
+                or row is None
+                or (row.run_id, row.branch_id) != (state.run_id, state.branch_id)
+            ):
+                raise ValueError("Native transition Saved origin is missing or foreign")
+            payload = json.loads(row.payload_json)
+            content = payload.get("content", {})
+            tour = content.get(COMPONENT_KEY, {})
+            cp = content.get("calendar_player_sporting_checkpoint", {})
+            if tour.get("fingerprint") != command.get(
+                "expected_tour_fingerprint"
+            ) or cp.get("fingerprint") != command.get(
+                "expected_checkpoint_fingerprint"
+            ):
+                raise ValueError(
+                    "Native command does not own its actual Saved Tour/checkpoint"
+                )
+            from beta_engine.infrastructure.db.run_prospect_source_state import (
+                load_saved_run_prospect_source,
+            )
+
+            source = load_saved_run_prospect_source(payload, run_id=state.run_id)
+            if source is None:
+                raise ValueError(
+                    "Native transition Saved origin lacks its prospect source"
+                )
+            if index == 0:
+                from beta_engine.infrastructure.db.player_health_state import (
+                    load_saved_health,
+                )
+
+                first_source = source.fingerprint
+                if (
+                    source_id != state.native_root_saved_head
+                    or parse_tour_json(json.dumps(tour["state"]))
+                    != state.native_root_tour
+                    or len(
+                        load_saved_health(
+                            payload, run_id=state.run_id, branch_id=state.branch_id
+                        )
+                    )
+                    != state.native_root_health_state_count
+                ):
+                    raise ValueError(
+                        "Native root differs from its actual immutable Saved authority"
+                    )
+            elif source.fingerprint != first_source:
+                raise ValueError(
+                    "Native source changes require historical source epochs"
+                )
+
     for authority in state.editions:
         if not authority.played_saved_head:
             continue
@@ -399,11 +480,7 @@ def verify_tour_origins(session, state):
         ):
             raise ValueError("Edition played origin is missing or foreign")
         component = json.loads(row.payload_json).get("content", {}).get(COMPONENT_KEY)
-        origin = (
-            CalendarTourState.model_validate_json(json.dumps(component["state"]))
-            if component
-            else None
-        )
+        origin = parse_tour_json(json.dumps(component["state"])) if component else None
         frozen = (
             next(
                 (

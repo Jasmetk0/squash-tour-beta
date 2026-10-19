@@ -412,7 +412,7 @@ def decode_prevalidated_calendar_sources(payload: dict, *, run_id: str, branch_i
         payload, run_id=run_id, branch_id=branch_id
     )
     from beta_engine.infrastructure.db.calendar_sporting_checkpoint import parse_checkpoint_json
-    from beta_engine.domain.tournaments.calendar_tour import CalendarTourState
+    from beta_engine.domain.tournaments.calendar_tour import parse_tour_json
 
     content = payload.get("content", {})
     cp_raw = content.get("calendar_player_sporting_checkpoint")
@@ -433,7 +433,7 @@ def decode_prevalidated_calendar_sources(payload: dict, *, run_id: str, branch_i
     if tour_raw is not None:
         if not isinstance(tour_raw, dict) or set(tour_raw) != {"fingerprint", "state"}:
             raise ValueError("Invalid prevalidated Saved Tour component")
-        tour = CalendarTourState.model_validate_json(json.dumps(tour_raw["state"]))
+        tour = parse_tour_json(json.dumps(tour_raw["state"]))
         if (tour.run_id, tour.branch_id, tour.fingerprint) != (
             run_id, branch_id, tour_raw["fingerprint"]
         ):
@@ -464,8 +464,16 @@ def load_saved_calendar_sources(payload: dict, *, run_id: str, branch_id: str,
     verified = None
     if _sporting_component_proofs is not None:
         content = payload.get('content', {})
+        raw_checkpoint = content.get('calendar_player_sporting_checkpoint') or {}
+        raw_checkpoint_state = raw_checkpoint.get('state') if isinstance(raw_checkpoint,dict) else None
+        native_dependencies = (
+            {k:content.get(k) for k in ('calendar_tour_authority','player_lifecycle','player_health_state','run_prospect_source')}
+            if isinstance(raw_checkpoint_state,dict) and raw_checkpoint_state.get('schema_version') == 'calendar_sporting_checkpoint.v11'
+            else {}
+        )
         key = canonical_hash({'run_id':run_id,'branch_id':branch_id,'run':payload.get('run'),
-            'components':{k:content.get(k) for k in ('initial_world','calendar_standalone_match','calendar_player_sporting_checkpoint')}})
+            'components':{k:content.get(k) for k in ('initial_world','calendar_standalone_match','calendar_player_sporting_checkpoint')},
+            'native_dependencies':native_dependencies})
         verified = _sporting_component_proofs.get(key)
     if verified is None:
         root_key = None
@@ -515,6 +523,8 @@ def load_saved_calendar_sources(payload: dict, *, run_id: str, branch_id: str,
             "sporting": content.get("calendar_player_sporting_checkpoint"),
             "tour": content.get("calendar_tour_authority"),
             "lifecycle": content.get("player_lifecycle"),
+            "health": content.get("player_health_state"),
+            "prospects": content.get("run_prospect_source"),
         })
     if tour_proofs is not None and tour_key in tour_proofs:
         tour = tour_proofs[tour_key]

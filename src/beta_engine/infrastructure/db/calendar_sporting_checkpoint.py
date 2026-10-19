@@ -66,8 +66,11 @@ def verify_checkpoint(state, world, evidence, *, _prefix_proofs=None,
     if isinstance(state, CalendarNativeSportingCheckpoint):
         if _native_inputs is None:
             raise ValueError('Checkpoint v11 requires its complete Signed native inputs')
+        prefix = (_verified_saved_prefix.source_checkpoint
+                  if isinstance(_verified_saved_prefix, CalendarNativeSportingCheckpoint)
+                  else _verified_saved_prefix)
         verify_checkpoint(state.source_checkpoint, world, evidence,
-                          _prefix_proofs=_prefix_proofs)
+                          _prefix_proofs=_prefix_proofs, _verified_saved_prefix=prefix)
         verify_native_sporting_checkpoint(
             state, world_package_id=world.world_package_id,
             knockout=_knockout(evidence), **_native_inputs,
@@ -183,7 +186,7 @@ def saved_checkpoint(payload, evidence, *, run_id, branch_id, _prefix_proofs=Non
     world = load_saved_initial_world(payload, run_id=run_id, branch_id=branch_id) if required or state else None
     native_inputs = None
     if state is not None and state.schema_version == 'calendar_sporting_checkpoint.v11':
-        from beta_engine.domain.tournaments.calendar_tour import CalendarTourState, effective_policy
+        from beta_engine.domain.tournaments.calendar_tour import parse_tour_json, effective_policy
         from beta_engine.infrastructure.db.player_lifecycle_state import load_saved_lifecycle
         from beta_engine.infrastructure.db.player_health_state import load_saved_health
         from beta_engine.infrastructure.db.run_prospect_source_state import load_saved_run_prospect_source
@@ -191,7 +194,7 @@ def saved_checkpoint(payload, evidence, *, run_id, branch_id, _prefix_proofs=Non
         raw_tour = payload.get('content', {}).get('calendar_tour_authority')
         if not isinstance(raw_tour, dict) or set(raw_tour) != {'fingerprint', 'state'}:
             raise ValueError('Checkpoint v11 requires its Signed Tour policy authority')
-        tour = CalendarTourState.model_validate_json(json.dumps(raw_tour['state']))
+        tour = parse_tour_json(json.dumps(raw_tour['state']))
         if (tour.fingerprint != raw_tour['fingerprint']
                 or (tour.run_id, tour.branch_id) != (run_id, branch_id)
                 or tour.week != state.week

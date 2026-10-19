@@ -458,7 +458,7 @@ def load_saved_lifecycle(payload, *, run_id, branch_id):
             tuple((p.player_id, p.birth_year, p.birth_year_week, p.age_years_at_season_start, p.source_generation_fingerprint) for p in world.players)):
             raise ValueError("Saved calendar lifecycle differs from its InitialWorld players")
         if len(states)>1:
-            from beta_engine.domain.tournaments.calendar_tour import CalendarTourState, lifecycle_calendars
+            from beta_engine.domain.tournaments.calendar_tour import parse_tour_json, lifecycle_calendars
             from beta_engine.domain.players.calendar_prospect_birth import (
                 CalendarTourLifecycleIntakeState,
             )
@@ -466,7 +466,7 @@ def load_saved_lifecycle(payload, *, run_id, branch_id):
             tour_component=payload.get('content',{}).get('calendar_tour_authority')
             if not tour_component:
                 raise ValueError('Native lifecycle progression requires its Tour owner')
-            tour=CalendarTourState.model_validate_json(json.dumps(tour_component['state']))
+            tour=parse_tour_json(json.dumps(tour_component['state']))
             # A strict Run-horizon extension keeps historical lifecycle
             # week/calendar bytes unchanged even if the Tour's current clock
             # has an extended season_count. Compare the time basis and ordinal,

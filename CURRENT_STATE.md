@@ -1,3 +1,22 @@
+# Performance review — 19 October 2026 (verification pending)
+
+Repair follows #1542 head `4ee5b826`, stacked on #1541. The previous head's
+Fast CI, API acceptance and Shell Browser passed, but Native Tour W80/1000
+failed its first post-restart inspection at the unchanged 120-second bound.
+
+Two reproducible causes are addressed: concurrent cold requests duplicated
+full validation of identical Saved revisions; and live checkpoint proof reuse
+compared JSON insertion order, which changes for maps such as `sets_won`
+after canonical Saved serialization. A bounded per-signature single-flight
+now shares only successful existing metadata proofs; live reuse hashes the
+actual decoded row against the authenticated source's canonical fingerprint.
+Every request still verifies its live owner and altered bytes invalidate proof.
+
+57 focused tests pass, including concurrent corrupted-source rejection,
+independent response payloads, mapping-order reuse, historical restore/fork
+and original hash compatibility. Required final-head browser/API/CI checks
+remain pending; this is not a merge-ready or pre-alpha release claim.
+
 # Current implementation — Master v85
 
 Current integration base verified 18 October 2026: `buuk`

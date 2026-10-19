@@ -78,4 +78,5 @@ jobs:
             work/native-tour/*.json
             work/native-tour/*.png
             work/native-tour/*.log
+            work/native-tour/*.sqlite*
           retention-days: 14

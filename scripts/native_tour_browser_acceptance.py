@@ -6,12 +6,14 @@ No SQL repair, hash rewrite or MatchEngine mock is used.
 """
 
 import argparse
+import faulthandler
 import json
 import os
 import signal
 import subprocess
 import sys
 import time
+import traceback
 from pathlib import Path
 from urllib.request import urlopen
 
@@ -74,6 +76,9 @@ def main():
 
         from beta_engine.main import create_app
 
+        faulthandler.enable()
+        if hasattr(signal, "SIGUSR1"):
+            faulthandler.register(signal.SIGUSR1, all_threads=True)
         uvicorn.run(
             create_app(database_url=db),
             host="127.0.0.1",
@@ -241,6 +246,7 @@ def main():
 
             def operation(label, container=None, *, save_after=True):
                 began = time.monotonic()
+                print(f"Native Tour: {label} started", flush=True)
                 source = container or panel
                 # Some actual sporting transition previews must rebuild the
                 # full signed lineage and all player effects. Observe the
@@ -313,6 +319,7 @@ def main():
                     {"operation": label, "seconds": time.monotonic() - began}
                 )
                 (root / "progress.json").write_text(json.dumps(evidence, indent=2))
+                print(f"Native Tour: {label} completed in {time.monotonic() - began:.2f}s", flush=True)
 
             operation("Review Tour initialization")
 
@@ -438,6 +445,17 @@ def main():
             evidence["total_seconds"] = time.monotonic() - started
             (root / "evidence.json").write_text(json.dumps(evidence, indent=2))
             browser.close()
+    except BaseException:
+        # Preserve the blocked production thread's stack and disposable state;
+        # a timeout must be diagnosable without another full fixture run.
+        (root / "failure.json").write_text(json.dumps({
+            **evidence, "elapsed_seconds": time.monotonic() - started,
+            "traceback": traceback.format_exc(),
+        }, indent=2))
+        if server.poll() is None and hasattr(signal, "SIGUSR1"):
+            os.kill(server.pid, signal.SIGUSR1)
+            time.sleep(0.1)
+        raise
     finally:
         for process in (server, frontend):
             stop_process(process)

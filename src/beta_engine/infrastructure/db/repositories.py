@@ -1461,6 +1461,10 @@ class SimulationPersistenceRepository:
         # including a rewritten content hash, invalidates the proof.
         self._revision_validation_cache: dict[tuple, BranchSavedRevisionRecord] = {}
         self._revision_validation_lock = Lock()
+        # Bounded single-flight locks prevent concurrent cold Admin reads from
+        # replaying the same exact immutable revision at the same time. Proofs
+        # still contain metadata only and are keyed by every stored byte.
+        self._revision_validation_work_locks = tuple(Lock() for _ in range(32))
 
     def prepare_official_ranking(
         self,
@@ -2503,6 +2507,21 @@ class SimulationPersistenceRepository:
             hashlib.sha256(model.payload_json.encode()).digest(),
             hashlib.sha256(model.change_summary_json.encode()).digest(),
         )
+        work_lock = self._revision_validation_work_locks[
+            hash(signature) % len(self._revision_validation_work_locks)
+        ]
+        with work_lock:
+            return self._validate_saved_revision_once(
+                session=session, model=model, signature=signature,
+                materialize_payload=materialize_payload,
+                sporting_component_proofs=sporting_component_proofs,
+            )
+
+    def _validate_saved_revision_once(
+        self, *, session, model, signature, materialize_payload,
+        sporting_component_proofs,
+    ):
+        """One exact-byte validation in flight; every waiter still checks owner."""
         with self._revision_validation_lock:
             verified = self._revision_validation_cache.get(signature)
         revision = (

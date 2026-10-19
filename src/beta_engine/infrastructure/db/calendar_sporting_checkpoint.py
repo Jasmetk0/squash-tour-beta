@@ -14,12 +14,17 @@ def load_checkpoint(session, *, run_id, branch_id, _verified_source=None):
     if row is None:
         return None
     if (_verified_source is not None
-        and (_verified_source.run_id,_verified_source.branch_id)==(run_id,branch_id)
-        and row.fingerprint==_verified_source.fingerprint
-        and row.payload_json==_verified_source.model_dump_json()):
-        # Exact bytes of an already authenticated Saved source in this read
-        # transaction. A changed live row always takes the strict parser below.
-        return _verified_source
+        and (_verified_source.run_id,_verified_source.branch_id)==(run_id,branch_id)):
+        from beta_engine.domain.run_packages import canonical_hash
+
+        expected = _verified_source.fingerprint
+        if (row.fingerprint == expected
+            and canonical_hash(json.loads(row.payload_json)) == expected):
+            # Saved serialization sorts mapping keys (e.g. sets_won), while
+            # live MatchEngine JSON retains insertion order. Compare the same
+            # canonical content hash, not order-sensitive JSON text. Hash every
+            # live byte's decoded value; never trust only its stored hash column.
+            return _verified_source
     state = CalendarSportingCheckpoint.model_validate_json(row.payload_json)
     if (state.run_id, state.branch_id, state.fingerprint) != (run_id, branch_id, row.fingerprint):
         raise ValueError('Calendar sporting checkpoint SQLite identity/hash mismatch')

@@ -110,6 +110,37 @@ def test_prevalidated_decoder_rechecks_source_identity_and_fingerprint():
         )
 
 
+def test_live_proof_reuse_accepts_mapping_order_but_hashes_actual_values(monkeypatch):
+    import json
+    from types import SimpleNamespace
+    from beta_engine.domain.players.calendar_sporting_checkpoint import CalendarSportingCheckpoint
+    from beta_engine.infrastructure.db.calendar_sporting_checkpoint import load_checkpoint
+    from tests.domain.test_calendar_native_checkpoint_compatibility import initial
+
+    checkpoint = initial()
+    raw = json.loads(checkpoint.model_dump_json())
+    row = SimpleNamespace(payload_json=json.dumps(raw, sort_keys=True),
+                          fingerprint=checkpoint.fingerprint)
+    session = SimpleNamespace(get=lambda *_a: row)
+    scope = dict(run_id=checkpoint.run_id, branch_id=checkpoint.branch_id,
+                 _verified_source=checkpoint)
+    original = CalendarSportingCheckpoint.model_validate_json
+    calls = []
+
+    def strict_parse(*args, **kwargs):
+        calls.append(1)
+        return original(*args, **kwargs)
+
+    monkeypatch.setattr(CalendarSportingCheckpoint, 'model_validate_json', strict_parse)
+    assert load_checkpoint(session, **scope) is checkpoint
+    assert calls == [], 'Reordered equivalent mappings must not repeat the full parser'
+    raw['players'][0]['current_form'] += 1
+    row.payload_json = json.dumps(raw, sort_keys=True)
+    with pytest.raises(ValueError, match='identity/hash'):
+        load_checkpoint(session, **scope)
+    assert calls == [1]
+
+
 def test_prevalidated_lifecycle_decodes_verified_scope_without_replaying_history():
     from tests.infrastructure.test_player_lifecycle_fork_remap import _source_payload
     from beta_engine.infrastructure.db.player_lifecycle_state import (

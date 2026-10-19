@@ -9,6 +9,10 @@ on:
       - 'web/src/components/GroupFormatSetupPanel.tsx'
       - 'web/src/api/tournamentGroupFormats.ts'
       - 'web/src/api/client.ts'
+      - 'web/scripts/ciHybridBrowserImpact.mjs'
+      - 'web/scripts/ciHybridBrowserImpact.test.mjs'
+      - 'web/package.json'
+      - 'web/package-lock.json'
       - 'web/src/components/HybridKnockoutProgressionPanel.tsx'
       - 'web/src/api/tournamentHybridKnockout.ts'
       - 'web/src/api/tournamentHybridRanking.ts'
@@ -42,11 +46,18 @@ jobs:
           node-version: '20'
           cache: npm
           cache-dependency-path: web/package-lock.json
-      - name: Install production engine and Chromium driver
-        run: python -m pip install -e . playwright
       - name: Install frontend
         run: npm --prefix web ci
+      - name: Verify conservative browser selection
+        id: impact
+        run: |
+          node --test web/scripts/ciHybridBrowserImpact.test.mjs
+          node web/scripts/ciHybridBrowserImpact.mjs '.github/workflows/prealpha-hybrid-multiround-browser.yml'
+      - name: Install production engine and Chromium driver
+        if: steps.impact.outputs.run_browser == 'true'
+        run: python -m pip install -e . playwright
       - name: Prepare Chromium
+        if: steps.impact.outputs.run_browser == 'true'
         run: |
           if [ -x /usr/bin/google-chrome ]; then
             echo "CHROME_BIN=/usr/bin/google-chrome" >> "$GITHUB_ENV"
@@ -55,6 +66,7 @@ jobs:
             echo "CHROME_BIN=$(python -c 'from playwright.sync_api import sync_playwright; p=sync_playwright().start(); print(p.chromium.executable_path); p.stop()')" >> "$GITHUB_ENV"
           fi
       - name: Start frontend pointing at disposable FastAPI
+        if: steps.impact.outputs.run_browser == 'true'
         run: |
           VITE_API_BASE_URL=http://127.0.0.1:8019 npm --prefix web run dev -- --host 127.0.0.1 --port 5173 --strictPort > "$RUNNER_TEMP/hybrid-vite.log" 2>&1 &
           for attempt in $(seq 1 90); do
@@ -64,6 +76,7 @@ jobs:
           cat "$RUNNER_TEMP/hybrid-vite.log"
           exit 1
       - name: Real two-semifinal MatchEngine tournament, winner-fed final, Official Week-2 and restart
+        if: steps.impact.outputs.run_browser == 'true'
         run: |
           python scripts/admin_saved_group_browser_smoke.py \
             --acceptance "$RUNNER_TEMP/hybrid-multiround-run" \
@@ -72,7 +85,7 @@ jobs:
             --base-url http://127.0.0.1:5173 \
             --chromium "$CHROME_BIN"
       - name: Preserve screenshots and process restart evidence
-        if: always()
+        if: always() && steps.impact.outputs.run_browser == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: hybrid-multiround-browser-${{ github.run_id }}

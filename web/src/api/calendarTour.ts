@@ -11,14 +11,14 @@ export type TourEdition = {
   draw:{main:{slots:{slot_index:number;player_id:string}[]}}|null
   tournament_fingerprint:string|null;result_confirmed:boolean
 }
-export type TourView = {schema_version:'calendar_tour_inspection.v1';run_id:string;branch_id:string;saved_head_revision_id:string;draft_version:number;run_calendar?:TourWeek['calendar'];checkpoint_fingerprint:string|null;tour_fingerprint:string|null;saved:boolean;can_initialize:boolean;players:{player_id:string;name:string;status?:string}[];transition_blockers:string[];contributions?:Record<string,TourContribution[]>;edition_evidence:Record<string,{results:(TourResult&{stage:string})[];matches:{match_id:string;slot:number;player_a_id:string;player_b_id:string;winner_player_id:string;rally_count:number}[]}>;state:null|{week:TourWeek;editions:TourEdition[];rankings:TourRanking[];transitions:{public_event:Record<string,unknown>}[]}}
-export type TourAction = 'initialize'|'create-edition'|'submit'|'approve'|'draw'|'play'|'confirm-result'|'policy'|'transition'
+export type TourView = {schema_version:'calendar_tour_inspection.v1';run_id:string;branch_id:string;saved_head_revision_id:string;draft_version:number;run_calendar?:TourWeek['calendar'];checkpoint_fingerprint:string|null;tour_fingerprint:string|null;saved:boolean;can_initialize:boolean;players:{player_id:string;name:string;status?:string}[];transition_blockers:string[];season_transition_blockers:string[];contributions?:Record<string,TourContribution[]>;edition_evidence:Record<string,{results:(TourResult&{stage:string})[];matches:{match_id:string;slot:number;player_a_id:string;player_b_id:string;winner_player_id:string;rally_count:number}[]}>;state:null|{week:TourWeek;editions:TourEdition[];rankings:TourRanking[];transitions:{public_event:Record<string,unknown>}[]}}
+export type TourAction = 'initialize'|'create-edition'|'submit'|'approve'|'draw'|'play'|'confirm-result'|'policy'|'transition'|'season-transition'
 export type TourCommand = {action:TourAction;command_id:string;expected_saved_head:string;expected_checkpoint_fingerprint:string;expected_tour_fingerprint:string|null;edition_id:string|null;seed:number;operator_label:string;audit_reason:string;data:Record<string,unknown>}
 export type TourPreview = {schema_version:'calendar_tour_command_preview.v1';run_id:string;branch_id:string;command:TourCommand;preview_fingerprint:string;impact:{ranking?:TourRanking;sporting?:{changed_player_count:number;attribute_change_count:number;changes?:{player_id:string;changed_attributes:number;form_before:number;form_after:number;sharpness_before:number;sharpness_after:number;fatigue_before:number;fatigue_after:number}[]};target_week?:TourWeek;approved_field?:TourEdition['field'];draw?:TourEdition['draw'];results?:TourResult[];entrant_ids?:string[];point_table?:Record<string,number>}}
 
 export function validateTourView(v:TourView,run:string,branch:string):TourView {
   if (v.schema_version!=='calendar_tour_inspection.v1'||v.run_id!==run||v.branch_id!==branch
-    ||!v.saved_head_revision_id||!Array.isArray(v.players)||!Array.isArray(v.transition_blockers)
+    ||!v.saved_head_revision_id||!Array.isArray(v.players)||!Array.isArray(v.transition_blockers)||!Array.isArray(v.season_transition_blockers)
     ||(v.state&&(!v.tour_fingerprint||!v.state.week||!Array.isArray(v.state.editions)||!Array.isArray(v.state.rankings)))) throw Error('Tour source scope is invalid')
   return v
 }

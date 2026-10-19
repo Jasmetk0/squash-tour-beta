@@ -1,3 +1,30 @@
+# Current integration checkpoint — 19 October 2026
+
+**Verified base:** owner merged #1543 into `buuk` as
+`63a489b6857cece922a98e597ee225a8deb07119`. #1543 completed
+its final-head Fast CI, Native Tour browser W52/W61/W80 and Shell browser,
+real HTTP/SQLite Tour acceptance and matched W52/W80 replay benchmarks.
+The W52 eight-match HTTP scenario improved 375.065→325.369 s (13.25%);
+W80 improved 343.488→273.330 s (20.43%); timings describe those CI runs,
+not performance SLAs. The preceding configured Edition/Entry, real matches,
+Official **Week** Transition and manual Save are therefore merged.
+
+**Active candidate — PR #1545 / issue #1544:** bounded native configured
+Tour Season Transition W→next-season Week 1, versioned sporting v3/checkpoint
+v10/Tour v2, historically effective next-season ranking, atomic preview/
+confirmation, separate manual Save, lifecycle linkage and CS/EN Admin.
+[Contract and limits](docs/CALENDAR_NATIVE_SEASON_TRANSITION_V1.md).
+This implementation is **not verified or merge-ready yet**; final-head
+domain, real HTTP/SQLite season boundary, original full Tour API, browser and
+recovery gates must pass. Do not treat a candidate as merged or full pre-alpha.
+
+**Still unsupported:** numeric Health/healing, native prospect intake,
+external correction/disciplinary authority, protected match-containing Branch
+fork/remap, full season-closing summaries/records and Full Simulation.
+These guards are not relaxed by the bounded season action.
+
+## Prior checkpoint and historical implementation evidence (retained)
+
 # Verified integration state — 19 October 2026
 
 The current `buuk` HEAD is `2d5e5a9f21cb288639421f78e19cb3ca489cab02`,

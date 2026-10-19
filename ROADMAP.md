@@ -1,3 +1,24 @@
+# Active dependency path — Master v85 (19 October 2026)
+
+**Owner-merged #1543:** `buuk`
+`63a489b6857cece922a98e597ee225a8deb07119`. Actual Tour
+Edition/Entry/MatchEngine/result/Official Week Transition, real Save/replay,
+restart/restore and scoped Opening/Continuation optimization are complete
+within their documented bounds. Matched W52/W80 eight-match real HTTP
+scenarios improved by 13.25% and 20.43%; this is not a multi-fold SLA.
+
+**Next candidate #1545** (issue #1544): genuinely versioned native
+W→next-season Week 1 Tour authority, coupled final-week sporting,
+historical Best N, Official ranking, public event, CS/EN consent,
+atomic commit, manual Save, restart, rollback and tamper controls.
+The candidate is **not merged** until all original final-head acceptance
+and new crossing tests pass. See
+[season boundary contract](docs/CALENDAR_NATIVE_SEASON_TRANSITION_V1.md).
+Remaining numeric Health/intake/correction and Full Simulation are still
+explicitly unsupported. Full 50×61 release gate is not waived.
+
+## Previous roadmap checkpoints (historical evidence)
+
 # Active dependency path — Master v85
 
 **Verified 19 October 2026:** `buuk` =

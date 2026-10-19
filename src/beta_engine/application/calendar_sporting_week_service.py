@@ -47,7 +47,7 @@ class CalendarSportingWeekCommit(FrozenInput):
 class CalendarSportingWeekService:
     repository: object
 
-    def _preview(self, clock, revision, world, state, saved, evidence, command, *, policy=None, official=False):
+    def _preview(self, clock, revision, world, state, saved, evidence, command, *, policy=None, official=False, season=False):
         if (
             state is None
             or saved is None
@@ -58,7 +58,12 @@ class CalendarSportingWeekService:
             raise ValueError(
                 "Save the terminal sporting state and review its exact HEAD before weekly preparation"
             )
-        if state.week.week == clock.weeks_per_year:
+        if season:
+            if not official or state.week.week != clock.weeks_per_year:
+                raise ValueError("Native season rollover requires an Official terminal Week W")
+            if state.week.season_index + 1 >= clock.season_count:
+                raise ValueError("Native Season Transition exceeds the Run horizon")
+        elif state.week.week == clock.weeks_per_year:
             raise ValueError(
                 "Season Transition remains unsupported on this exhibition timeline"
             )
@@ -67,7 +72,9 @@ class CalendarSportingWeekService:
             calendar=clock, season_index=state.week.season_index, week=state.week.week
         )
         target = RunWeekPosition(
-            calendar=clock, season_index=completed.season_index, week=completed.week + 1
+            calendar=clock,
+            season_index=completed.season_index + (1 if season else 0),
+            week=1 if season else completed.week + 1,
         )
         policy = policy or CalendarAnnualDevelopmentPolicy()
         counts = played_counts(state, knockout)
@@ -81,8 +88,16 @@ class CalendarSportingWeekService:
             official=official,
         )
         event = CalendarSportingWeekAdvance(
-            schema_version=("calendar_sporting_week_advance.v2" if official else "calendar_sporting_week_advance.v1"),
-            scope=("configured_tour_week_transition" if official else "sporting_only_exhibition_timeline"),
+            schema_version=(
+                "calendar_sporting_week_advance.v3" if season
+                else "calendar_sporting_week_advance.v2" if official
+                else "calendar_sporting_week_advance.v1"
+            ),
+            scope=(
+                "configured_tour_season_transition" if season
+                else "configured_tour_week_transition" if official
+                else "sporting_only_exhibition_timeline"
+            ),
             run_id=state.run_id,
             branch_id=state.branch_id,
             command_id=command.command_id,

@@ -9,7 +9,7 @@ import type {TourCommand,TourPreview,TourView} from '../api/calendarTour'
 
 const api=vi.hoisted(()=>({inspectCalendarTour:vi.fn(),previewCalendarTour:vi.fn(),executeCalendarTour:vi.fn(),saveCalendarTour:vi.fn(),replayCalendarContinuation:vi.fn()}))
 vi.mock('../api/client',()=>api)
-const view=(run='r',branch='b'):TourView=>({schema_version:'calendar_tour_inspection.v1',run_id:run,branch_id:branch,saved_head_revision_id:'head',draft_version:1,checkpoint_fingerprint:'a'.repeat(64),tour_fingerprint:null,saved:false,can_initialize:true,players:[],transition_blockers:['tour_authority_missing'],edition_evidence:{},state:null})
+const view=(run='r',branch='b'):TourView=>({schema_version:'calendar_tour_inspection.v1',run_id:run,branch_id:branch,saved_head_revision_id:'head',draft_version:1,checkpoint_fingerprint:'a'.repeat(64),tour_fingerprint:null,saved:false,can_initialize:true,players:[],transition_blockers:['tour_authority_missing'],season_transition_blockers:['tour_authority_missing'],edition_evidence:{},state:null})
 const panel=(run='r',branch='b')=><QueryClientProvider client={new QueryClient()}><MemoryRouter><LanguageProvider><CalendarTourPanel runId={run} branchId={branch} head="head"/></LanguageProvider></MemoryRouter></QueryClientProvider>
 const preview=(c:TourCommand):TourPreview=>({schema_version:'calendar_tour_command_preview.v1',run_id:'r',branch_id:'b',command:c,preview_fingerprint:'f'.repeat(64),impact:{}})
 
@@ -85,4 +85,28 @@ describe('configured Tour consent (HTTP boundary mocked)',()=>{
     expect(api.inspectCalendarTour).toHaveBeenCalledTimes(2)
     expect(api.saveCalendarTour).toHaveBeenCalledTimes(1)
   })
+  it('reviews and explicitly confirms a terminal Season Transition without implicit Save',async()=>{
+    const calendar={schema_version:'run_calendar.v1',weeks_per_year:4,season_start_year_week:2,start_year:2030,season_count:3}
+    const terminal:TourView={...view(),tour_fingerprint:'c'.repeat(64),saved:true,
+      transition_blockers:['season_transition_required'],season_transition_blockers:[],
+      state:{week:{calendar,season_index:0,week:4},editions:[],rankings:[],transitions:[]}}
+    api.inspectCalendarTour.mockResolvedValue(terminal)
+    api.previewCalendarTour.mockImplementation((_r,_b,c)=>Promise.resolve(preview(c)))
+    api.executeCalendarTour.mockResolvedValue({})
+    render(panel())
+    await screen.findByRole('button',{name:'Review Season Transition'})
+    expect(screen.getByRole('button',{name:'Review Week Transition'})).toBeDisabled()
+    fireEvent.change(screen.getByLabelText('Tour operation reason'),{target:{value:'End of season 2030'}})
+    fireEvent.click(screen.getByRole('button',{name:'Review Season Transition'}))
+    await screen.findByLabelText('Confirm Tour command')
+    const passed=api.previewCalendarTour.mock.calls[0][2] as TourCommand
+    expect(passed.action).toBe('season-transition')
+    expect(screen.getByRole('button',{name:'Execute confirmed operation'})).toBeDisabled()
+    fireEvent.click(screen.getByLabelText('Confirm Tour command'))
+    fireEvent.click(screen.getByRole('button',{name:'Execute confirmed operation'}))
+    await act(async()=>{})
+    expect(api.executeCalendarTour).toHaveBeenCalledOnce()
+    expect(api.saveCalendarTour).not.toHaveBeenCalled()
+  })
+
 })

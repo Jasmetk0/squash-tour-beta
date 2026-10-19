@@ -1,3 +1,21 @@
+# Configured native Tour integration (merged bounded V1, Master v85)
+
+**Verified status, 19 October 2026:** implementation merged into `buuk`
+via PR #1542, merge `2d5e5a9f21cb288639421f78e19cb3ca489cab02`.
+#1542 includes #1541. All 14 required workflows completed successfully on
+head `096246987e7520121447f6565e63a0e711eaa1d9`:
+42 backend critical tests / 140.67 s, W80/1,000-player browser / 14:42,
+full real HTTP/SQLite Tour API acceptance / 16:41. Timings are from
+specific runs and not future performance guarantees. The original
+implementation/verification contract and historical candidate prose below
+are retained to document development; the current merged status prevails.
+
+**Still unsupported:** native Season Transition, match-containing fork/remap,
+unresolved numeric Health/healing, intake and correction/disciplinary
+authorities, and complete pre-alpha / Full Simulation release.
+
+## Historical implementation contract (original pre-merge text)
+
 # Configured native Tour integration (candidate, Master v85)
 
 Base: owner-merged #1540, `44c782870391d45d39b05cf00fa1edd6e938e6a6`.

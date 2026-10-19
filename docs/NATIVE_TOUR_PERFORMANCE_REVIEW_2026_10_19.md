@@ -1,6 +1,32 @@
 # Native Tour performance review — 19 October 2026
 
-Scope: #1542 includes #1541 and targets buuk, starting at 4ee5b826. Owner alone merges.
+**Final verification:** #1542 (including #1541) was merged to `buuk` on
+19 October 2026, merge SHA `2d5e5a9f21cb288639421f78e19cb3ca489cab02`.
+All 14 required workflows passed on final implementation head
+`096246987e7520121447f6565e63a0e711eaa1d9`. The historical pending
+and failed intermediate runs below remain evidence of the repair process.
+Final durations: 42 backend critical tests in 140.67 s, W80/1,000 browser
+14:42, full HTTP/SQLite Tour acceptance 16:41.
+
+**Next bounded change (not yet benchmarked):** Opening/Continuation context
+used to parse live SQLite match/checkpoint again and rebuild Saved sporting
+history after the already authenticated Saved lineage walk. The native Tour
+context already demonstrates safe exact-byte prevalidation and suffix
+verification. The follow-up candidate adapts that existing mechanism to
+Opening, and passes Opening's checked sources directly to Continuation.
+The expected per-call reduction is from two live decodes to one and removal
+of a second full Saved checkpoint fold; real timing improvements remain
+to be measured on comparable cold/warm HTTP/SQLite workloads.
+For unchanged Saved state the second full sporting replay can be skipped
+only after hashing actual live JSON and comparing all physical owner/hash
+fields; changed Working state still verifies its new suffix, falling back
+to full replay if the authenticated prefix differs. Unrelated saved scope,
+rollback, historical signatures, all tournament outcomes, and previous
+evidence remain unchanged. No final-head acceptance for this follow-up
+is claimed here.
+
+Scope of the original review: #1542 included #1541 and originally targeted
+`buuk`, starting at `4ee5b826`. Owner alone merges.
 
 ## Reproduced defects
 

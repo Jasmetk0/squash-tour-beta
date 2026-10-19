@@ -84,32 +84,148 @@ def test_save_reuses_reviewed_state_but_revalidates_after_commit(tmp_path, monke
     assert len({id(session) for session, _ in calls}) == 3
 
 
-@pytest.mark.parametrize("malformed", [False, True])
-def test_continuation_context_verifies_the_coupled_saved_owner_once(monkeypatch, malformed):
+@pytest.mark.parametrize("has_saved_checkpoint", [False, True])
+def test_continuation_reuses_already_verified_opening_sources(monkeypatch, has_saved_checkpoint):
     from beta_engine.application import calendar_continuation_service as continuation
-    from beta_engine.infrastructure.db import calendar_sporting_checkpoint as sporting
 
-    payload = {"content": {}}
-    if malformed:
-        payload["content"][sporting.COMPONENT_KEY] = {"fingerprint": "f" * 64, "state": {}}
-    revision = SimpleNamespace(saved_revision=SimpleNamespace(payload=payload))
-    monkeypatch.setattr(continuation.CalendarOpeningKnockoutService, "_context",
-                        lambda *_args, **_kw: (None, revision, None, None))
-    monkeypatch.setattr(continuation, "load_checkpoint", lambda *_args, **_kw: None)
-    monkeypatch.setattr(continuation, "load_match_rows", lambda *_args, **_kw: ())
-    original = sporting.saved_checkpoint
-    calls = []
+    checkpoint = SimpleNamespace(fingerprint="c" * 64)
+    signed = checkpoint if has_saved_checkpoint else None
+    evidence = SimpleNamespace(fingerprint="m" * 64)
+    revision = SimpleNamespace(saved_revision=SimpleNamespace(payload={"content": {}}))
+    opening_calls = []
 
-    def counted(*args, **kwargs):
-        calls.append(1)
-        return original(*args, **kwargs)
+    def opening_context(*_args, **kwargs):
+        opening_calls.append(kwargs)
+        return (
+            None, revision, None, None, checkpoint, (evidence,),
+            signed, evidence if has_saved_checkpoint else None,
+        )
 
-    monkeypatch.setattr(sporting, "saved_checkpoint", counted)
-    monkeypatch.setattr(continuation, "saved_checkpoint", counted)
+    monkeypatch.setattr(
+        continuation.CalendarOpeningKnockoutService, "_context", opening_context,
+    )
+
+    def forbidden_repeat(*_args, **_kwargs):
+        raise AssertionError("Continuation must reuse Opening's checked sources")
+
+    monkeypatch.setattr(continuation, "load_checkpoint", forbidden_repeat)
+    monkeypatch.setattr(continuation, "load_match_rows", forbidden_repeat)
     service = continuation.CalendarContinuationService(object())
-    if malformed:
-        with pytest.raises(ValueError):
+    result = service._context(None, run_id="r", branch_id="b")
+
+    assert result[1] is revision
+    assert result[4] is checkpoint
+    assert result[5] is signed
+    assert result[6] is evidence
+    assert opening_calls == [{
+        "run_id": "r", "branch_id": "b", "_include_sporting_sources": True,
+    }]
+
+
+@pytest.mark.parametrize("live_state", ["same", "unsaved", "missing", "changed-root"])
+def test_opening_context_reuses_authenticated_saved_only_if_live_matches(
+    monkeypatch, live_state,
+):
+    from beta_engine.application import calendar_opening_knockout_service as opening
+    from beta_engine.infrastructure.db import calendar_sporting_checkpoint as sporting
+    from beta_engine.infrastructure.db import calendar_standalone_match_state as matches
+
+    clock = SimpleNamespace(season_count=3)
+    revision = SimpleNamespace(saved_revision=SimpleNamespace(payload={"content": {}}))
+    world = object()
+    root = SimpleNamespace(fingerprint="m" * 64)
+    signed_checkpoint = SimpleNamespace(
+        fingerprint="s" * 64,
+        week=SimpleNamespace(calendar=SimpleNamespace(season_count=3)),
+        played_continuations=(),
+    )
+    changed_checkpoint = SimpleNamespace(
+        fingerprint="u" * 64,
+        week=signed_checkpoint.week,
+        played_continuations=(),
+    )
+    live_checkpoint = (
+        changed_checkpoint if live_state == "unsaved"
+        else None if live_state == "missing"
+        else signed_checkpoint
+    )
+    live_root = (
+        SimpleNamespace(fingerprint="f" * 64)
+        if live_state == "changed-root" else root
+    )
+
+    monkeypatch.setattr(
+        opening.CalendarStandaloneMatchService, "_context",
+        lambda *_args, **_kw: (clock, revision, world),
+    )
+    monkeypatch.setattr(opening, "saved_knockout_health", lambda *_args, **_kw: None)
+    monkeypatch.setattr(
+        matches, "decode_prevalidated_calendar_sources",
+        lambda *_args, **_kw: (root, signed_checkpoint, None),
+    )
+
+    def load_rows(*_args, **kwargs):
+        assert kwargs["_verified_source"] is root
+        return (live_root,)
+
+    def load_sporting(*_args, **kwargs):
+        assert kwargs["_verified_source"] is signed_checkpoint
+        return live_checkpoint
+
+    monkeypatch.setattr(opening, "load_match_rows", load_rows)
+    monkeypatch.setattr(sporting, "load_checkpoint", load_sporting)
+    folds = []
+
+    def verify(*_args, **kwargs):
+        folds.append(kwargs)
+        assert kwargs["_verified_saved_prefix"] is signed_checkpoint
+
+    monkeypatch.setattr(sporting, "verify_checkpoint", verify)
+    service = opening.CalendarOpeningKnockoutService(object())
+
+    if live_state in {"missing", "changed-root"}:
+        with pytest.raises(ValueError, match="Saved history"):
             service._context(None, run_id="r", branch_id="b")
+        assert not folds
     else:
-        assert service._context(None, run_id="r", branch_id="b")[4:6] == (None, None)
-    assert len(calls) == 1
+        values = service._context(
+            None, run_id="r", branch_id="b", _include_sporting_sources=True,
+        )
+        assert values[4] is live_checkpoint
+        assert values[5] == (live_root,)
+        assert values[6] is signed_checkpoint
+        assert values[7] is root
+        assert len(folds) == (1 if live_state == "unsaved" else 0)
+
+
+def test_opening_without_saved_checkpoint_still_verifies_live_owner(monkeypatch):
+    from beta_engine.application import calendar_opening_knockout_service as opening
+    from beta_engine.infrastructure.db import calendar_sporting_checkpoint as sporting
+    from beta_engine.infrastructure.db import calendar_standalone_match_state as matches
+
+    clock = SimpleNamespace(season_count=3)
+    revision = SimpleNamespace(saved_revision=SimpleNamespace(payload={"content": {}}))
+    monkeypatch.setattr(
+        opening.CalendarStandaloneMatchService, "_context",
+        lambda *_args, **_kw: (clock, revision, object()),
+    )
+    monkeypatch.setattr(opening, "saved_knockout_health", lambda *_args, **_kw: None)
+    monkeypatch.setattr(
+        matches, "decode_prevalidated_calendar_sources",
+        lambda *_args, **_kw: (None, None, None),
+    )
+    monkeypatch.setattr(opening, "load_match_rows", lambda *_args, **_kw: (object(),))
+    monkeypatch.setattr(sporting, "load_checkpoint", lambda *_args, **_kw: None)
+    checks = []
+
+    def required_fold(*args, **kwargs):
+        checks.append((args, kwargs))
+        raise ValueError("Played v5 knockout requires its complete population sporting checkpoint")
+
+    monkeypatch.setattr(sporting, "verify_checkpoint", required_fold)
+    with pytest.raises(ValueError, match="requires its complete population"):
+        opening.CalendarOpeningKnockoutService(object())._context(
+            None, run_id="r", branch_id="b",
+        )
+    assert len(checks) == 1
+    assert checks[0][1]["_verified_saved_prefix"] is None

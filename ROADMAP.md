@@ -1,5 +1,32 @@
 # Active dependency path — Master v85
 
+**Verified 19 October 2026:** `buuk` =
+`2d5e5a9f21cb288639421f78e19cb3ca489cab02`; owner-merged #1542
+includes #1541. All 14 required workflows passed on final implementation
+head `096246987e7520121447f6565e63a0e711eaa1d9`.
+Configured native Tour now has production Entry, approved field/draw,
+genuine MatchEngine outcomes, frozen awards, lifecycle, Official Week
+Transition, separate manual Saved revisions and authenticated recovery.
+This is **merged and bounded**, not a pending candidate or a pre-alpha release.
+
+**Current engineering dependency:** reduce real replay/restore/Save latency.
+A separate candidate branch targets duplicate authenticated sporting-source
+reconstruction in Opening/Continuation; measurement and final-head tests
+are pending. Keep the merged #1542 final-head measurements as the baseline,
+not evidence for the new change. Profile real cold/warm HTTP/SQLite and
+the W52/W80 eight-knockout cases; reject tampered bytes, rehashed forgeries,
+foreign scope, rollback and stale transactions. Preserve deadlines/population.
+
+**Next product dependency after performance gates:** native W→next-season
+Week 1 Season Transition, with historically effective policies/ranking,
+player/sporting continuity, exact consent, atomic commit, manual Save,
+restart/retry/rollback and CS/EN controls. Do not unlock unsupported Health,
+intake or Full Simulation by removing guards.
+
+## Historical roadmap (milestones retained for provenance)
+
+# Active dependency path — Master v85
+
 Latest verified base: owner-merged #1540, `buuk`
 `44c782870391d45d39b05cf00fa1edd6e938e6a6` (18 October 2026).
 Current coherent candidate joins native configured Edition/production Entry,

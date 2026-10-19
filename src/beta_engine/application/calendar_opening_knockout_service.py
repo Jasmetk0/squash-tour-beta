@@ -62,7 +62,8 @@ class CalendarOpeningKnockoutCommand(FrozenInput):
 class CalendarOpeningKnockoutService:
     repository: object
 
-    def _context(self, session, *, run_id: str, branch_id: str):
+    def _context(self, session, *, run_id: str, branch_id: str,
+                 _include_sporting_sources: bool = False):
         clock, revision, world = CalendarStandaloneMatchService(self.repository)._context(
             session, run_id=run_id, branch_id=branch_id, allow_calendar_health=True, allow_calendar_sporting=True,
         )
@@ -70,11 +71,57 @@ class CalendarOpeningKnockoutService:
             session, revision=revision, run_id=run_id, branch_id=branch_id,
         )
         from beta_engine.infrastructure.db.calendar_sporting_checkpoint import load_checkpoint, verify_checkpoint
-        rows = load_match_rows(session, run_id=run_id, branch_id=branch_id)
-        checkpoint = load_checkpoint(session, run_id=run_id, branch_id=branch_id)
-        verify_checkpoint(checkpoint, world, rows[0] if len(rows) == 1 else None)
+        from beta_engine.infrastructure.db.calendar_standalone_match_state import (
+            decode_prevalidated_calendar_sources,
+        )
+
+        # The repository _context has already authenticated the exact Saved
+        # HEAD, including the full original MatchEngine and sporting fold.
+        # Decode these signed sources without replaying that same history.
+        # Do not use this helper on an unvalidated payload or across requests.
+        signed_match, signed_checkpoint, _ = decode_prevalidated_calendar_sources(
+            revision.saved_revision.payload, run_id=run_id, branch_id=branch_id,
+        )
+        # Even when a signed source is available, the loaders MUST hash the
+        # actual live SQLite JSON and verify its physical scope/hash columns.
+        rows = load_match_rows(
+            session, run_id=run_id, branch_id=branch_id,
+            _verified_source=signed_match,
+        )
+        checkpoint = load_checkpoint(
+            session, run_id=run_id, branch_id=branch_id,
+            _verified_source=signed_checkpoint,
+        )
+        evidence = rows[0] if len(rows) == 1 else None
+        if signed_checkpoint is not None and (
+            checkpoint is None
+            or getattr(evidence, 'knockout', evidence)
+            != getattr(signed_match, 'knockout', signed_match)
+        ):
+            raise ValueError('Live sporting owner or original knockout differs from Saved history')
+
+        # Exact Saved live state is authenticated above. A changed Working
+        # sporting owner must still verify EVERY newly appended event, with
+        # a full replay fallback when its Saved prefix cannot be proved.
+        # In particular, an unsaved v5 root with no checkpoint must still
+        # fail rather than bypassing the orphan/missing-owner check.
+        if not (
+            signed_checkpoint is not None
+            and checkpoint == signed_checkpoint
+        ):
+            verify_checkpoint(
+                checkpoint, world, evidence,
+                _verified_saved_prefix=signed_checkpoint,
+            )
         if checkpoint and max([checkpoint.week.calendar.season_count, *(e.week.calendar.season_count for e in checkpoint.played_continuations)]) > clock.season_count:
             raise ValueError('Continued sporting checkpoint refers to an unavailable Run horizon')
+        if _include_sporting_sources:
+            # Continuation requires the same validated SQLite sources. Do not
+            # parse and fold them again in a second nested _context.
+            return (
+                clock, revision, world, health, checkpoint, rows,
+                signed_checkpoint, signed_match,
+            )
         return clock, revision, world, health
 
     @staticmethod

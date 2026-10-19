@@ -1,5 +1,6 @@
 """Real Signed Saved native Health history, including authentic 15yo newcomer."""
 import json
+import hashlib
 
 import pytest
 
@@ -61,7 +62,7 @@ def test_real_saved_birth_health_and_signed_lifecycle_roundtrip(monkeypatch,widt
 
 @pytest.mark.parametrize("attack,reason",[
     ("missing_health_birth","requires its Signed native Health transition"),
-    ("forged_birth_event","foreign birthday|actual Signed birthdays"),
+    ("forged_birth_event","Native birth source generation proof is invalid"),
     ("forged_health_player","differs from actual Signed birthdays"),
     ("missing_player","population/calendar"),
     ("old_player_modified","differs from actual Signed birthdays"),
@@ -105,10 +106,12 @@ def test_actual_saved_replay_rejects_health_forgery(monkeypatch,attack,reason):
         target["branch_id"]="other"
     elif attack=="out_of_scope_birth":
         target["players"][0]["player_id"]="aa"
-    component["fingerprint"]=_component([
-        _parse_health_json(json.dumps(row))
-        for row in component["states"]
-    ])["fingerprint"] if attack not in {"duplicate_id"} else component["fingerprint"]
+    # Recompute even deliberately corrupt model data from the raw canonical
+    # JSON so this test reaches the native Saved validator instead of failing
+    # on an old, trivially incorrect outer SHA-256.
+    component["fingerprint"]=hashlib.sha256(json.dumps(
+        component["states"],sort_keys=True,separators=(",",":"),
+    ).encode()).hexdigest()
     with pytest.raises(ValueError,match=reason):
         load_saved_health(payload,run_id="r",branch_id="b")
 

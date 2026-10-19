@@ -32,6 +32,9 @@ the original native Tour/season/browser gates, not their replacement. The birth
 module is `smoke`, excluded from Fast CI's tiny `pr_critical` selection, but remains
 in both its dedicated production gate and the Full Test Suite. Do not weaken
 rollback, Signed replay, Viewer isolation, restart, restore or corruption checks.
+Native runtime capability changes additionally run their real HTTP readiness
+scenario and the separate `Native birth readiness / real Chromium` gate. This
+must execute against the actual backend; mocked UI tests/build do not replace it.
 
 ### Isolated native Tour API-client edits
 

@@ -339,6 +339,9 @@ import type {
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000'
 
 const calendarTourRoot = (run:string,branch:string) => `/admin/runs/${encodeURIComponent(run)}/branches/${encodeURIComponent(branch)}/calendar-tour`
+export function inspectCalendarTourTransitionReadiness(run:string,branch:string,signal?:AbortSignal):Promise<unknown> {
+  return request(calendarTourRoot(run,branch)+'/prospect-intake/transition-readiness',{signal})
+}
 export function inspectCalendarTour(run:string,branch:string,signal?:AbortSignal):Promise<import('./calendarTour').TourView> {
   return request(calendarTourRoot(run,branch),{signal})
 }

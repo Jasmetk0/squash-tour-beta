@@ -5562,6 +5562,14 @@ class SimulationPersistenceRepository:
             )
             run = session.get(RunContainerModel, run_id)
             branch = session.get(RunBranchModel, branch_id)
+            from beta_engine.infrastructure.db.run_prospect_source_state import (
+                native_birth_requires_source_epochs,
+            )
+            blockers = (
+                ["native_prospect_source_epochs_required"]
+                if changed and native_birth_requires_source_epochs(session, run_id=run_id)
+                else []
+            )
             return {
                 "run_id": run_id,
                 "branch_id": branch_id,
@@ -5572,7 +5580,9 @@ class SimulationPersistenceRepository:
                 "saved_head_revision_id": state.saved_head_revision_id,
                 "draft_version": draft.draft_version,
                 "has_unsaved_changes": changed,
+                "blockers": blockers,
                 "can_save": changed
+                and not blockers
                 and draft.status == CLEAN_WORKING_DRAFT_STATUS
                 and not run.read_only
                 and not branch.read_only
@@ -5664,6 +5674,14 @@ class SimulationPersistenceRepository:
                         f"expected draft version {expected_draft_version}, "
                         f"found {draft.draft_version}"
                     )
+                if expected_run_prospect_source_fingerprint is not None:
+                    from beta_engine.infrastructure.db.run_prospect_source_state import (
+                        native_birth_requires_source_epochs,
+                    )
+                    if native_birth_requires_source_epochs(session, run_id=run_id):
+                        raise WorkingDraftConflictError(
+                            "native_prospect_source_epochs_required"
+                        )
                 staged_component_dirty = (
                     (
                         expected_run_package_fingerprint is not None

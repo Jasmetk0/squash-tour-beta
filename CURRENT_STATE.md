@@ -1,3 +1,26 @@
+# Native birth runtime capability candidate — 19 October 2026
+
+**Published writer:** #1565 `ca447c2` has green Fast CI and all five new real
+birth Week/Season scenarios (Earth, FAX, W80 extension, short-year Season boundary
+and actual pre-birth Edition awards). Its original full native Tour/season/browser
+gates remain pending at this checkpoint; it is NOT yet certified merge-ready.
+Earlier #1560/#1562/#1563/#1564 heads were green. Owner alone merges;
+`buuk` remains `14e27846898500aaffc6462878c45aa03792147f`.
+
+**Current dependent slice:** real runtime transition readiness, distinct from
+older read-only component preflight; exact owner/clock capability, unsaved/terminal
+responses, CS/EN Admin, stale-result rejection and disabled unsupported post-birth
+competition. Run-shared incompatible source Save reports its existing epoch
+blocker in preview and rejects forced writes transactionally. See
+[contract and bounded evidence](docs/CALENDAR_NATIVE_TRANSITION_READINESS_V1.md).
+Actual local Chromium is missing; its added real browser gate must pass in CI.
+This slice is not merge-ready before its final-head checks complete.
+
+Post-birth competition, immutable historical source epochs, protected forks,
+numeric Health, remaining Master scope and full release acceptance stay open.
+
+## Earlier checkpoint history (retained)
+
 # Confirmed native birth Week/Season candidate — 19 October 2026
 
 **Verified stack:** #1560 `db84d65`, #1562 `095a365`, #1563 `b263ed0` and

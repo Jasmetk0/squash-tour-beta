@@ -160,6 +160,12 @@ def build_calendar_prospect_birth_event(
             raise ValueError("Native source has an invalid Run calendar birth date")
         position = clock.calendar_to_season(birth_year + 15, birth_week)
         if position is None:
+            # A real source row claiming a season owned by this Run cannot
+            # escape validation by placing its birthday outside the horizon.
+            if row.get("season_start_year") in range(
+                clock.start_year, clock.start_year + clock.season_count
+            ):
+                raise ValueError("Native source birth date differs from its Run week")
             continue
         if (
             row.get("season_start_year") != clock.start_year + position.season_index

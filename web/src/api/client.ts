@@ -345,6 +345,14 @@ export function inspectCalendarTour(run:string,branch:string,signal?:AbortSignal
 export function inspectNativeTourProspectIntake(run:string,branch:string):Promise<import('./calendarTour').NativeProspectIntakePreflight> {
   return request(calendarTourRoot(run,branch)+'/prospect-intake/preflight')
 }
+/** Signed read-only 15yo sporting review: never creates any athlete. */
+export function previewNativeTourBirthSporting(
+  run:string,branch:string,payload:import('./calendarTour').NativeSportingBirthPreviewRequest,
+):Promise<import('./calendarTour').NativeSportingBirthPreflight> {
+  return request(calendarTourRoot(run,branch)+'/prospect-intake/sporting-preflight',{
+    method:'POST',body:JSON.stringify(payload),
+  })
+}
 export function inspectCalendarTourRecords(run:string,branch:string,asOf:number,from:number,country:string|null=null):Promise<import('./calendarTour').TourCareerRecords> {
   const query=new URLSearchParams({as_of_season_index:String(asOf),from_season_index:String(from)})
   if(country!==null)query.set('country_code',country)

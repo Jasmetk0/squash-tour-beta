@@ -236,7 +236,7 @@ class CalendarTourTransition(FrozenInput):
 
 
 class CalendarTourState(FrozenInput):
-    schema_version: Literal["calendar_tour_authority.v1"] = "calendar_tour_authority.v1"
+    schema_version: Literal["calendar_tour_authority.v1", "calendar_tour_authority.v2"] = "calendar_tour_authority.v1"
     run_id: str
     branch_id: str
     week: RunWeekPosition
@@ -328,8 +328,31 @@ class CalendarTourState(FrozenInput):
                     != transition.target_week.calendar
                 ):
                     raise ValueError(
-                        "Week Transition chronology differs from Official history"
+                        "Week/Season Transition chronology differs from Official history"
                     )
+                crosses = (
+                    transition.completed_week.week
+                    == transition.completed_week.calendar.weeks_per_year
+                    and transition.target_week.week == 1
+                    and transition.target_week.season_index
+                    == transition.completed_week.season_index + 1
+                )
+                if crosses and self.schema_version != "calendar_tour_authority.v2":
+                    raise ValueError("Historical Tour v1 cannot gain a Season Transition")
+                if not crosses and transition.completed_week.season_index != transition.target_week.season_index:
+                    raise ValueError("Official Tour cannot skip a season")
+                if transition.public_event.get("kind") != (
+                    "season_transition_completed" if crosses else "week_transition_completed"
+                ):
+                    raise ValueError("Native transition kind disagrees with Run calendar")
+        if (
+            self.schema_version == "calendar_tour_authority.v2"
+            and not any(
+                t.completed_week.season_index != t.target_week.season_index
+                for t in self.transitions
+            )
+        ):
+            raise ValueError("Tour v2 requires an actual Season Transition")
         if self.rankings[0].rows or self.rankings[0].previous_fingerprint is not None:
             raise ValueError("Native Tour must start with its empty initial ranking")
         if self.rankings[-1].week != ranking_week(self.week):

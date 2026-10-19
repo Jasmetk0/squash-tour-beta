@@ -100,7 +100,7 @@ def project_native_birth_health(*, health, event: CalendarProspectBirthEvent, pr
         raise ValueError("Native birth cannot bypass unsupported active Health healing")
     previous = tuple(health.players)
     proposed = tuple(sorted(
-        (*previous, *(CalendarHealthProfile(player_id=b.player_id) for b in event.births)),
+        (*previous, *(PlayerHealthProfile(player_id=b.player_id) for b in event.births)),
         key=lambda p: p.player_id,
     ))
     return CalendarProspectHealthProjection(

@@ -183,7 +183,11 @@ def test_saved_lifecycle_v4_rejects_tampered_source_event_or_tour(
     elif attack == "foreign_branch":
         content["player_lifecycle"]["states"][-1]["branch_id"] = "foreign"
     elif attack == "v4_wrong_birth":
-        content["player_lifecycle"]["states"][-1]["players"][-1]["source_generation_fingerprint"] = "0" * 64
+        birth = next(
+            person for person in content["player_lifecycle"]["states"][-1]["players"]
+            if person["player_id"] == "born"
+        )
+        birth["source_generation_fingerprint"] = "0" * 64
     if attack in {"foreign_branch", "v4_wrong_birth"}:
         content["player_lifecycle"]["fingerprint"] = hashlib.sha256(json.dumps(
             content["player_lifecycle"]["states"], sort_keys=True, separators=(",", ":"),

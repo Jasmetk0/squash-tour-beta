@@ -35,7 +35,6 @@ from beta_engine.domain.simulation_slots import CanonicalMatchInputProjectionPol
 from beta_engine.infrastructure.db.calendar_sporting_checkpoint import (
     load_checkpoint,
     replace_checkpoint,
-    saved_checkpoint,
 )
 from beta_engine.infrastructure.db.calendar_standalone_match_state import (
     load_match_rows,
@@ -98,27 +97,18 @@ class CalendarContinuationService:
     repository: object
 
     def _context(self, session, *, run_id, branch_id):
-        clock, revision, world, health = CalendarOpeningKnockoutService(self.repository)._context(
-            session, run_id=run_id, branch_id=branch_id)
-        checkpoint = load_checkpoint(session, run_id=run_id, branch_id=branch_id)
-        rows = load_match_rows(session, run_id=run_id, branch_id=branch_id)
-        evidence = rows[0] if len(rows) == 1 else None
-        from beta_engine.infrastructure.db.calendar_standalone_match_state import (
-            _parse_saved_calendar_match_evidence,
+        (
+            clock, revision, world, health, checkpoint, rows,
+            saved, _saved_evidence,
+        ) = CalendarOpeningKnockoutService(self.repository)._context(
+            session, run_id=run_id, branch_id=branch_id,
+            _include_sporting_sources=True,
         )
-        # Validate the coupled Saved owner exactly once, immediately below, in
-        # this transaction. load_saved_calendar_match already performs that
-        # same full fold and discards the checkpoint it has just verified.
-        saved_evidence = _parse_saved_calendar_match_evidence(revision.saved_revision.payload, run_id=run_id, branch_id=branch_id)
-        saved = saved_checkpoint(revision.saved_revision.payload, saved_evidence,
-            run_id=run_id, branch_id=branch_id)
-        if saved is not None:
-            root = getattr(evidence, 'knockout', evidence)
-            saved_root = getattr(saved_evidence, 'knockout', saved_evidence)
-            if checkpoint is None or root is None or root.fingerprint != saved_root.fingerprint:
-                raise ValueError('Live sporting owner or original knockout differs from Saved history')
-
-        # Unsaved initial knockout has no Saved owner yet; inspection is allowed.
+        # The opening context verified the complete live SQLite sporting
+        # owner against its authenticated Saved root (or validated its unsaved
+        # suffix). Re-reading the same large checkpoint, match rows and Saved
+        # fold here used to double that work inside a single HTTP transaction.
+        evidence = rows[0] if len(rows) == 1 else None
         return clock, revision, world, health, checkpoint, saved, evidence
 
     def inspect(self, *, run_id, branch_id):

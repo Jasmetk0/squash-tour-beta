@@ -12,6 +12,7 @@ from beta_engine.domain.calendar.run_calendar import RunCalendar
 from beta_engine.domain.calendar.run_week_position import RunWeekPosition
 from beta_engine.domain.players.calendar_lifecycle import (
     CalendarPlayerLifecycleIdentity, CalendarPlayerLifecycleState,
+    calendar_lifecycle_history,
 )
 from beta_engine.domain.players.calendar_prospect_birth import (
     CalendarProspectBirthEvent, CalendarTourLifecycleIntakeState,
@@ -31,13 +32,14 @@ def week(clock, index, number):
 
 
 def lifecycle(clock, current):
-    opening = current.calendar_position
+    start = week(clock, 0, 1)
+    opening = start.calendar_position
     # Existing older player has the exact current birthday; age matches policy.
     from beta_engine.domain.calendar.season_weeks import age_at_calendar_position
     birth_year = opening.calendar_year - 22
     birth_week = opening.year_week
     return CalendarPlayerLifecycleState(
-        run_id="r", branch_id="b", week=current,
+        run_id="r", branch_id="b", week=start,
         players=(CalendarPlayerLifecycleIdentity(
             player_id="existing", birth_year=birth_year,
             birth_year_week=birth_week,
@@ -53,7 +55,22 @@ def lifecycle(clock, current):
             policy_id="stored", automatic_retirement_age=46,
             provenance="Original saved World age threshold",
         ),
-    )
+    ) if current.ordinal == 0 else calendar_lifecycle_history(
+        CalendarPlayerLifecycleState(
+            run_id="r", branch_id="b", week=start,
+            players=(CalendarPlayerLifecycleIdentity(
+                player_id="existing", birth_year=birth_year,
+                birth_year_week=birth_week, age=22,
+                source_generation_fingerprint="a" * 64,
+            ),),
+            source_initial_world_fingerprint="b" * 64,
+            policy=PlayerLifecyclePolicy(
+                policy_id="stored", automatic_retirement_age=46,
+                provenance="Original saved World age threshold",
+            ),
+        ),
+        current,
+    )[-1]
 
 
 def birth_row(target, pid="prospect-1"):

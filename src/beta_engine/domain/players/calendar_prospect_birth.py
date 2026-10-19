@@ -270,3 +270,49 @@ def advance_calendar_lifecycle_with_prospects(
         policy=advanced.policy,
         birth_event=event,
     )
+
+
+def project_native_birth_sporting_roster(
+    *, predecessor, checkpoint, event: CalendarProspectBirthEvent,
+) -> tuple:
+    """Pure canonical 57-attribute sporting *proposal* for an exact birth event.
+
+    It retains every historical sporting record byte-for-byte and creates
+    entrants from their original prepared 57-attribute profile, using the
+    checkpoint's persisted provisional bootstrap defaults. Does NOT install
+    a checkpoint or claim Health/Saved activation.
+    """
+    from beta_engine.domain.players.sporting import PlayerSportingRecord
+
+    if (
+        (checkpoint.run_id, checkpoint.branch_id)
+        != (event.run_id, event.branch_id)
+        or checkpoint.week != predecessor.week
+        or event.predecessor_fingerprint != predecessor.fingerprint
+        or event.target_week.ordinal != checkpoint.week.ordinal + 1
+    ):
+        raise ValueError("Native birth sporting proposal has a foreign predecessor")
+    original_ids = tuple(person.player_id for person in predecessor.players)
+    sporting_ids = tuple(person.player_id for person in checkpoint.players)
+    if original_ids != sporting_ids:
+        raise ValueError("Native birth sporting proposal disagrees with lifecycle identities")
+    if any(b.player_id in sporting_ids for b in event.births):
+        raise ValueError("Native birth sporting proposal duplicates an existing athlete")
+    policy = checkpoint.bootstrap_policy
+    newborns = tuple(
+        PlayerSportingRecord(
+            player_id=b.player_id,
+            attributes=b.sporting_profile.attributes,
+            potential_ovr=b.sporting_profile.potential_ovr,
+            potential_identity=b.sporting_profile.potential_identity,
+            potential_provenance=b.sporting_profile.potential_provenance,
+            development_timing=b.sporting_profile.development_timing,
+            current_form=policy.default_form,
+            long_term_form_norm=policy.default_form_norm,
+            match_sharpness=policy.default_match_sharpness,
+            long_term_fatigue=policy.default_fatigue,
+            health_state="unsupported",
+        )
+        for b in event.births
+    )
+    return tuple(sorted((*checkpoint.players, *newborns), key=lambda p: p.player_id))

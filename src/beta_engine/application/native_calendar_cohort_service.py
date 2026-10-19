@@ -10,6 +10,10 @@ from dataclasses import asdict, dataclass
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
+
+from beta_engine.application.run_prospect_cohort_reconcile import (
+    RunProspectCohortConflictError, reconcile_run_prospect_cohort,
+)
 from sqlalchemy import text
 
 from beta_engine.application.run_prospect_materialization_service import (
@@ -36,6 +40,16 @@ from beta_engine.infrastructure.db.repositories import (
 NATIVE_COHORT_POLICY = "native_calendar_15yo_cohort_v1"
 NATIVE_COHORT_SOURCE = "native_calendar_15yo_cohort"
 MAX_NATIVE_ANNUAL_TARGET = 2000
+
+
+class NativeCalendarCohortConfirmation(BaseModel):
+    model_config = ConfigDict(frozen=True, extra="forbid", strict=True)
+    request: "NativeCalendarCohortRequest"
+    expected_saved_head: str = Field(min_length=1)
+    expected_review_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    explicit_confirmation: Literal[True]
+    audit_label: str = Field(min_length=1, max_length=160)
+    audit_reason: str = Field(min_length=10, max_length=1000)
 
 
 class NativeCalendarCohortRequest(BaseModel):
@@ -229,6 +243,12 @@ class NativeCalendarCohortService:
             live = get_run_package_state(session, run_id=run_id, branch_id=branch_id)
             if saved is None or live is None or saved != live:
                 raise ValueError("Native cohort requires the exact Saved World Package state")
+            from beta_engine.infrastructure.db.run_prospect_source_state import (
+                validate_live_run_prospect_source_against_saved,
+            )
+            existing_source = validate_live_run_prospect_source_against_saved(
+                session, json.loads(revision.payload_json), run_id=run_id,
+            )
             head = branch.saved_head_revision_id
         projection = self.world_adapter.project_countries(saved, package_id=request.world_package_id)
         countries = list(projection.countries)
@@ -247,6 +267,9 @@ class NativeCalendarCohortService:
             "run_id": run_id, "branch_id": branch_id,
             "saved_head_revision_id": head,
             "saved_run_package_fingerprint": saved.fingerprint,
+            "previous_run_prospect_source_fingerprint": (
+                existing_source.fingerprint if existing_source else None
+            ),
             "world_country_content_fingerprint": projection.content_fingerprint,
             "run_calendar": clock.to_metadata(),
             "request": request.model_dump(mode="json"),
@@ -269,7 +292,135 @@ class NativeCalendarCohortService:
                 for row in cohort.records[:5]
             ],
             "preview_only": True,
-            "materialization_supported": False,
+            "materialization_supported": True,
+            "requires_manual_source_save_after_materialization": True,
             "native_tour_activation_supported": False,
         }
         return {**response, "review_fingerprint": canonical_hash(response)}
+
+    def materialize(
+        self, *, run_id: str, branch_id: str,
+        confirmation: NativeCalendarCohortConfirmation,
+    ) -> dict:
+        """Explicit review-then-commit with a single locked SQLite authority check.
+
+        A previous shared Run source must already be Saved on this Branch.
+        Once modified, another cohort needs the user to Save this source first.
+        """
+        from beta_engine.application.run_calendar_read_authority import resolve_saved_run_calendar
+        from beta_engine.infrastructure.db.models import (
+            BranchSavedRevisionModel, RunBranchModel, RunContainerModel,
+        )
+        from beta_engine.infrastructure.db.run_package_state import (
+            get_run_package_state, load_saved_run_package_state,
+        )
+        from beta_engine.infrastructure.db.run_prospect_source_state import (
+            validate_live_run_prospect_source_against_saved,
+        )
+        import json
+
+        if not confirmation.audit_label.strip() or not confirmation.audit_reason.strip():
+            raise ValueError("Cohort materialization requires an explicit audit reason")
+        reviewed = self.preview(
+            run_id=run_id, branch_id=branch_id, request=confirmation.request,
+        )
+        if (confirmation.expected_review_fingerprint != reviewed["review_fingerprint"]
+            or confirmation.expected_saved_head != reviewed["saved_head_revision_id"]):
+            raise ValueError("Native cohort review is stale; recheck the current Saved World")
+        request = confirmation.request
+        head = reviewed["saved_head_revision_id"]
+        clock_proof = reviewed["run_calendar"]
+        package_proof = reviewed["saved_run_package_fingerprint"]
+        source_proof = reviewed["previous_run_prospect_source_fingerprint"]
+
+        # Build the complete exact reviewed cohort. World content is copied from
+        # the Saved source, not from any mutable source-package directory.
+        with self.repository._session_factory() as session:
+            session.execute(text("BEGIN"))
+            revision = session.get(BranchSavedRevisionModel, head)
+            if revision is None:
+                raise ValueError("Reviewed Saved World head is missing")
+            saved = load_saved_run_package_state(
+                json.loads(revision.payload_json), run_id=run_id, branch_id=branch_id,
+            )
+        if saved is None or saved.fingerprint != package_proof:
+            raise ValueError("Reviewed Saved World Package has changed")
+        projection = self.world_adapter.project_countries(
+            saved, package_id=request.world_package_id,
+        )
+        if projection.content_fingerprint != reviewed["world_country_content_fingerprint"]:
+            raise ValueError("Reviewed World countries have changed")
+        countries = list(projection.countries)
+        if request.country_code:
+            countries = [country for country in countries if country.code == request.country_code]
+        clock = RunCalendar.from_metadata(clock_proof)
+        cohort = build_native_calendar_cohort(
+            clock=clock, run_id=run_id, world_id=request.world_package_id,
+            season_index=request.season_index, countries=countries,
+            base_annual_intake_target=request.base_annual_intake_target,
+            country_content_fingerprint=projection.content_fingerprint,
+        )
+        if cohort.content_fingerprint != reviewed["record_content_fingerprint"]:
+            raise ValueError("Reviewed prospect generation is not deterministic")
+
+        def guard(session):
+            fresh = resolve_saved_run_calendar(
+                session, run_id=run_id, branch_id=branch_id,
+            )
+            branch = session.get(RunBranchModel, branch_id)
+            run = session.get(RunContainerModel, run_id)
+            if (
+                fresh.to_metadata() != clock_proof
+                or branch is None or branch.saved_head_revision_id != head
+                or branch.read_only or branch.status != "active"
+                or run is None or run.read_only
+                or (run.world_id is not None and run.world_id != request.world_package_id)
+            ):
+                raise ValueError("Run clock, Saved head, or writable Branch changed")
+            revision = session.get(BranchSavedRevisionModel, head)
+            if revision is None:
+                raise ValueError("Native cohort Saved Revision is missing")
+            payload = json.loads(revision.payload_json)
+            fixed = load_saved_run_package_state(
+                payload, run_id=run_id, branch_id=branch_id,
+            )
+            live = get_run_package_state(session, run_id=run_id, branch_id=branch_id)
+            if fixed is None or live is None or fixed != live or fixed.fingerprint != package_proof:
+                raise ValueError("Native cohort World Package changed during confirmation")
+            previous = validate_live_run_prospect_source_against_saved(
+                session, payload, run_id=run_id,
+            )
+            if (previous.fingerprint if previous else None) != source_proof:
+                raise ValueError("Shared Run prospect source changed during confirmation")
+            # Do not create a historical duplicate identity inside the original
+            # population. Future lifecycle activation will separately enforce
+            # the same target-week identity check.
+            from beta_engine.infrastructure.db.initial_world_state import get_initial_world
+            world = get_initial_world(session, run_id=run_id, branch_id=branch_id)
+            if world is not None:
+                player_ids = {player.player_id for player in world.players}
+                if any(item.prospect_id in player_ids for item in cohort.records):
+                    raise ValueError("Prospect identity collides with InitialWorld")
+
+        created, existing, conflicting, persisted = reconcile_run_prospect_cohort(
+            self.repository,
+            run_id=run_id, season_start_year=cohort.season_start_year,
+            expected=list(cohort.records),
+            scope_country_codes=set(cohort.country_counts),
+            source_type=NATIVE_COHORT_SOURCE, profile_version=PROFILE_VERSION,
+            cohort_policy_version=NATIVE_COHORT_POLICY,
+            overwrite=False, authority_guard=guard,
+        )
+        return {
+            "schema_version": "native_calendar_cohort_materialization.v1",
+            "run_id": run_id, "branch_id": branch_id,
+            "saved_head_revision_id": head,
+            "review_fingerprint": reviewed["review_fingerprint"],
+            "record_content_fingerprint": cohort.content_fingerprint,
+            "created_count": created, "existing_count": existing,
+            "conflict_count": conflicting, "persisted_count": persisted,
+            "requires_manual_source_save": True,
+            "native_tour_activation_supported": False,
+            "audit_label": confirmation.audit_label.strip(),
+            "audit_reason": confirmation.audit_reason.strip(),
+        }

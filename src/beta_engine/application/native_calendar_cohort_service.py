@@ -43,6 +43,18 @@ NATIVE_COHORT_SOURCE = "native_calendar_15yo_cohort"
 MAX_NATIVE_ANNUAL_TARGET = 2000
 
 
+def _calendar_rated_country(country: Country, year: int) -> Country:
+    """Existing country-rating v3 currently accepts only 1954–2050.
+
+    For calendar-owned births outside that range, use a marked nearest
+    supported endpoint rather than extending a historical observation.
+    Legacy FAX intake still calls its unchanged default resolver.
+    """
+    if country.rating_history is None:
+        return country
+    return country.at_rating_year(min(2050, max(1954, year)))
+
+
 class NativeCalendarCohortConfirmation(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid", strict=True)
     request: "NativeCalendarCohortRequest"
@@ -129,6 +141,7 @@ def build_native_calendar_cohort(
         allocations = planner._allocate_countries(
             countries=ordered, population_year=birth_year, target_intake_count=volume,
             population_resolver=resolve_population_for_calendar_year,
+            country_rating_resolver=_calendar_rated_country,
         )
         if sum(a.allocated_count for a in allocations) != volume:
             raise ValueError("Country allocation does not conserve native weekly cohort")
@@ -177,6 +190,11 @@ def build_native_calendar_cohort(
                             "source_type": allocation.population_source_type,
                             "source_year": allocation.population_source_year,
                             "is_estimated": allocation.is_population_estimated,
+                        },
+                        "country_rating_evidence": {
+                            "requested_year": birth_year,
+                            "effective_year": min(2050, max(1954, birth_year)),
+                            "is_estimated": birth_year < 1954 or birth_year > 2050,
                         },
                     },
                     development_json={

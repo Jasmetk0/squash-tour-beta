@@ -1,3 +1,23 @@
+# Pre-alpha dependency path — native sporting checkpoint candidate
+
+The latest heads of #1560, #1562 and #1563 are green, but owner merge is pending.
+Keep their stack explicit: #1562 precedes #1563; retarget after owner merge.
+
+The current candidate builds on #1563: v11 preserves the old sporting root,
+persists/replays native weekly birth/development stages, binds exact lifecycle
+and Health history and exposes the verified component through the existing real
+Admin preflight. [Contract](docs/CALENDAR_NATIVE_SPORTING_CHECKPOINT_V11.md).
+Its own CI remains a prerequisite to owner merge.
+
+Next implement the coupled confirmed Tour writer and receipts, then manual Save,
+real rollback/restart/restore, first Entry/ranking adoption and post-birth matches.
+Preserve historical source epochs before adding future annual prospect records;
+the current replay uses one unchanged Signed source snapshot. Continue protected
+fork re-signing and the remaining Master §31 scope without treating green bounded
+component tests as a pre-alpha release or Full Simulation certification.
+
+## Earlier roadmap checkpoints (retained)
+
 # Pre-alpha dependency path — native intake checkpoint, 19 October 2026
 
 **Merged through #1561:** `buuk` =

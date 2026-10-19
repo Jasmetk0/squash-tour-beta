@@ -294,12 +294,28 @@ def inspect_native_prospect_intake(
                     health_history_fingerprint = canonical_hash([
                         h.model_dump(mode="json") for h in prepared_health
                     ])
+                    from beta_engine.domain.players.calendar_native_sporting_checkpoint import (
+                        append_native_sporting_week, verify_native_sporting_checkpoint,
+                    )
+                    prepared_checkpoint = append_native_sporting_week(
+                        checkpoint, sport, lifecycle_fingerprint=bundle.lifecycle.fingerprint,
+                        health_fingerprint=target_health.fingerprint,
+                        health_history_fingerprint=health_history_fingerprint,
+                    )
+                    verify_native_sporting_checkpoint(
+                        prepared_checkpoint, lifecycle=(*signed_life, bundle.lifecycle),
+                        health=prepared_health, source=snapshot,
+                        world_package_id=world.world_package_id,
+                        knockout=getattr(_evidence, "knockout", _evidence),
+                        policy_for_week=lambda week: effective_policy(state, week).development,
+                    )
                     prepared_transition_fingerprint = canonical_hash({
-                        "schema_version": "native_tour_prepared_birth_transition.v1",
+                        "schema_version": "native_tour_prepared_birth_transition.v2",
                         "source_saved_head": revision.saved_head_revision_id,
                         "admission_week_fingerprint": proposed.fingerprint,
                         "health_history_fingerprint": health_history_fingerprint,
                         "target_health_fingerprint": target_health.fingerprint,
+                        "target_checkpoint_fingerprint": prepared_checkpoint.fingerprint,
                     })
                     review["sporting_week_projection"] = {
                         "schema_version": "native_tour_sporting_week_preflight.v1",
@@ -317,6 +333,14 @@ def inspect_native_prospect_intake(
                         "sporting_birth_advance_fingerprint": sport.fingerprint,
                         "signed_admission_week_fingerprint": proposed.fingerprint,
                         "source_saved_head": revision.saved_head_revision_id,
+                        "durable_sporting": {
+                            "schema_version": prepared_checkpoint.schema_version,
+                            "checkpoint_fingerprint": prepared_checkpoint.fingerprint,
+                            "source_checkpoint_fingerprint": checkpoint.fingerprint,
+                            "native_week_count": len(prepared_checkpoint.native_weeks),
+                            "target_lifecycle_fingerprint": bundle.lifecycle.fingerprint,
+                            "target_health_fingerprint": target_health.fingerprint,
+                        },
                         "durable_health": {
                             "schema_version": "native_tour_health_history_preflight.v1",
                             "target_health_schema": target_health.schema_version,

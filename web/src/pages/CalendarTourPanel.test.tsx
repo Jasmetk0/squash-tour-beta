@@ -17,7 +17,7 @@ describe('configured Tour consent (HTTP boundary mocked)',()=>{
   beforeEach(()=>{vi.clearAllMocks();localStorage.setItem('squash-engine-language-v1','en');api.inspectCalendarTour.mockImplementation((r,b)=>Promise.resolve(view(r,b)))})
   it('renders verified next-week prospect source without writing to Tour',async()=>{
     const calendar={schema_version:'run_calendar.v1',weeks_per_year:52,season_start_year_week:35,start_year:2030,season_count:3}
-    api.inspectCalendarTour.mockResolvedValue({...view(),saved:true,checkpoint_fingerprint:'a'.repeat(64),state:{week:{calendar,season_index:0,week:2},editions:[],rankings:[],transitions:[]}})
+    api.inspectCalendarTour.mockResolvedValue({...view(),saved:true,tour_fingerprint:'c'.repeat(64),checkpoint_fingerprint:'a'.repeat(64),state:{week:{calendar,season_index:0,week:2},editions:[],rankings:[],transitions:[]}})
     api.inspectNativeTourProspectIntake.mockResolvedValue({schema_version:'native_tour_prospect_intake_preflight.v1',run_id:'r',branch_id:'b',saved_head_revision_id:'head',checkpoint_fingerprint:'a'.repeat(64),preflight_fingerprint:'f'.repeat(64),source_fingerprint:'c'.repeat(64),target_week:{season_index:0,week:3},due:[{player_id:'new-prospect',display_name:'Young Player',country_code:'CZE',profile_fingerprint:'d'.repeat(64)}],due_count:1,problems:[],blocked:true,native_activation_supported:false})
     render(panel());await screen.findByRole('button',{name:'Check next-week prospects'})
     fireEvent.click(screen.getByRole('button',{name:'Check next-week prospects'}))

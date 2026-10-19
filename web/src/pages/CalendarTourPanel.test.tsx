@@ -7,9 +7,9 @@ import {LanguageProvider} from '../i18n/LanguageContext'
 import {CalendarTourPanel} from './CalendarTourPanel'
 import type {TourCommand,TourPreview,TourView} from '../api/calendarTour'
 
-const api=vi.hoisted(()=>({inspectCalendarTour:vi.fn(),previewCalendarTour:vi.fn(),executeCalendarTour:vi.fn(),saveCalendarTour:vi.fn(),replayCalendarContinuation:vi.fn()}))
+const api=vi.hoisted(()=>({inspectCalendarTour:vi.fn(),previewCalendarTour:vi.fn(),executeCalendarTour:vi.fn(),saveCalendarTour:vi.fn(),replayCalendarContinuation:vi.fn(),inspectCalendarTourSeason:vi.fn()}))
 vi.mock('../api/client',()=>api)
-const view=(run='r',branch='b'):TourView=>({schema_version:'calendar_tour_inspection.v1',run_id:run,branch_id:branch,saved_head_revision_id:'head',draft_version:1,checkpoint_fingerprint:'a'.repeat(64),tour_fingerprint:null,saved:false,can_initialize:true,players:[],transition_blockers:['tour_authority_missing'],season_transition_blockers:['tour_authority_missing'],edition_evidence:{},state:null})
+const view=(run='r',branch='b'):TourView=>({schema_version:'calendar_tour_inspection.v1',run_id:run,branch_id:branch,saved_head_revision_id:'head',draft_version:1,checkpoint_fingerprint:'a'.repeat(64),tour_fingerprint:null,saved:false,can_initialize:true,players:[],transition_blockers:['tour_authority_missing'],season_transition_blockers:['tour_authority_missing'],saved_completed_seasons:[],edition_evidence:{},state:null})
 const panel=(run='r',branch='b')=><QueryClientProvider client={new QueryClient()}><MemoryRouter><LanguageProvider><CalendarTourPanel runId={run} branchId={branch} head="head"/></LanguageProvider></MemoryRouter></QueryClientProvider>
 const preview=(c:TourCommand):TourPreview=>({schema_version:'calendar_tour_command_preview.v1',run_id:'r',branch_id:'b',command:c,preview_fingerprint:'f'.repeat(64),impact:{}})
 
@@ -143,6 +143,37 @@ describe('configured Tour consent (HTTP boundary mocked)',()=>{
     fireEvent.change(screen.getByLabelText('Tour Edition name'),{target:{value:'Bad Cup'}})
     expect(screen.getByRole('button',{name:'Review new Edition'})).toBeDisabled()
     expect(api.previewCalendarTour).not.toHaveBeenCalled()
+  })
+
+
+  it('shows only Saved completed seasons and validates provenance before rendering',async()=>{
+    const calendar={schema_version:'run_calendar.v1',weeks_per_year:4,season_start_year_week:2,start_year:2030,season_count:3}
+    const complete={...view(),tour_fingerprint:'c'.repeat(64),saved:true,saved_completed_seasons:[0],
+      state:{week:{calendar,season_index:1,week:1},editions:[],rankings:[],transitions:[]}}
+    api.inspectCalendarTour.mockResolvedValue(complete)
+    const summary={schema_version:'native_tour_signed_season_summary.v1',run_id:'r',branch_id:'b',source_tour_fingerprint:'c'.repeat(64),
+      season_index:0,season_label:'2030/2031',weeks_per_season:4,boundary_command_id:'season-1',next_season_index:1,
+      completed_edition_count:1,countries:[{country_code:'CZE',titles:1,finals:0,semifinals:1,quarterfinals:0,awarded_points:130,distinct_players:2,edition_appearances:1}],
+      editions:[{edition_id:'cup',name:'Cup',week:3,champion_player_id:'a',champion_name:'Alpha',champion_country:'CZE',finalist_player_id:'b',finalist_name:'Beta',finalist_country:'USA',source_tournament_fingerprint:'d'.repeat(64)}],
+      players:[],last_week_published_ranking:{week:4,source_fingerprint:'e'.repeat(64),top_players:[]}}
+    api.inspectCalendarTourSeason.mockResolvedValue({schema_version:'calendar_tour_season_comparison.v1',run_id:'r',branch_id:'b',saved_head_revision_id:'head',selected:summary,comparison:null,country_deltas:[]})
+    render(panel())
+    await screen.findByLabelText('Signed season')
+    fireEvent.click(screen.getByRole('button',{name:'Load season summary'}))
+    await screen.findByLabelText('Verified season summary')
+    expect(screen.getByLabelText('Country season comparison')).toHaveTextContent('CZE')
+    expect(screen.getByLabelText('Country season comparison')).toHaveTextContent('130')
+    expect(api.inspectCalendarTourSeason).toHaveBeenCalledWith('r','b',0,null)
+    expect(api.saveCalendarTour).not.toHaveBeenCalled()
+  })
+  it('does not present an unsaved or pending season as Signed history',async()=>{
+    const calendar={schema_version:'run_calendar.v1',weeks_per_year:4,season_start_year_week:2,start_year:2030,season_count:3}
+    api.inspectCalendarTour.mockResolvedValue({...view(),saved:false,saved_completed_seasons:[],tour_fingerprint:'c'.repeat(64),
+      state:{week:{calendar,season_index:1,week:1},editions:[],rankings:[],transitions:[]}})
+    render(panel())
+    await screen.findByLabelText('Tour operation reason')
+    expect(screen.queryByLabelText('Signed season')).not.toBeInTheDocument()
+    expect(api.inspectCalendarTourSeason).not.toHaveBeenCalled()
   })
 
 })

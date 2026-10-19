@@ -3,13 +3,16 @@
 from __future__ import annotations
 
 import math
+from typing import Callable
 
 from pydantic import BaseModel, ConfigDict, Field, computed_field
 
 from beta_engine.domain.calendar import parse_season_start_year, season_week_to_calendar_position
 from beta_engine.domain.calendar.season_weeks import PLAYER_15TH_BIRTHDAY_AGE
 from beta_engine.domain.countries import Country, CountryTalentModel
-from beta_engine.domain.countries.population_resolver import resolve_effective_population
+from beta_engine.domain.countries.population_resolver import (
+    EffectivePopulationResult, resolve_effective_population,
+)
 
 
 class WeeklyIntakeCountryAllocation(BaseModel):
@@ -94,6 +97,7 @@ class WeeklyIntakePlanner:
         countries: list[Country],
         population_year: int,
         target_intake_count: int,
+        population_resolver: Callable[[Country, int], EffectivePopulationResult] = resolve_effective_population,
     ) -> list[WeeklyIntakeCountryAllocation]:
         if not countries or target_intake_count == 0:
             return []
@@ -101,7 +105,7 @@ class WeeklyIntakePlanner:
         talent_model = CountryTalentModel()
         rows = []
         for country in sorted(countries, key=lambda item: item.code):
-            resolved = resolve_effective_population(country, population_year)
+            resolved = population_resolver(country, population_year)
             # V1 country allocation samples from effective population,
             # popularity and access. Do not clamp small positive weights to 1:
             # doing so would erase authored differences for small squash nations.

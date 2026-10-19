@@ -37,6 +37,27 @@ def inspect(
         raise conflict(exc) from exc
 
 
+@router.get("/records")
+def signed_career_records(
+    run_id: str,
+    branch_id: str,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+    as_of_season_index: int | None = Query(default=None, ge=0),
+    from_season_index: int = Query(default=0, ge=0),
+    country_code: str | None = Query(default=None),
+    leaderboard_limit: int = Query(default=20, ge=1, le=100),
+):
+    try:
+        return CalendarTourService(runtime.repository).records(
+            run_id=run_id, branch_id=branch_id,
+            as_of_season_index=as_of_season_index,
+            from_season_index=from_season_index,
+            country_code=country_code, leaderboard_limit=leaderboard_limit,
+        )
+    except (KeyError, ValueError, TypeError) as exc:
+        raise conflict(exc) from exc
+
+
 @router.get("/seasons/{season_index}")
 def season_summary(
     run_id: str,

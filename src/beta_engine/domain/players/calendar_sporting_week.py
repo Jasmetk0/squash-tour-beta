@@ -29,7 +29,7 @@ class CalendarAnnualDevelopmentPolicy(FrozenInput):
 
 
 class CalendarSportingWeekAdvance(FrozenInput):
-    schema_version: Literal["calendar_sporting_week_advance.v1", "calendar_sporting_week_advance.v2"] = (
+    schema_version: Literal["calendar_sporting_week_advance.v1", "calendar_sporting_week_advance.v2", "calendar_sporting_week_advance.v3"] = (
         "calendar_sporting_week_advance.v1"
     )
     run_id: str = Field(min_length=1)
@@ -47,7 +47,7 @@ class CalendarSportingWeekAdvance(FrozenInput):
     played_counts: tuple[tuple[str, int], ...]
     developed_players_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
     recovered_players_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
-    scope: Literal["sporting_only_exhibition_timeline", "configured_tour_week_transition"] = (
+    scope: Literal["sporting_only_exhibition_timeline", "configured_tour_week_transition", "configured_tour_season_transition"] = (
         "sporting_only_exhibition_timeline"
     )
 
@@ -56,11 +56,18 @@ class CalendarSportingWeekAdvance(FrozenInput):
         if (
             self.completed_week.calendar != self.target_week.calendar
             or self.target_week.ordinal != self.completed_week.ordinal + 1
-            or self.target_week.season_index != self.completed_week.season_index
         ):
-            raise ValueError(
-                "Sporting advance requires consecutive weeks within one season; Season Transition is unsupported"
-            )
+            raise ValueError("Sporting advance must own consecutive Run-calendar weeks")
+        season_crossing = (
+            self.completed_week.week == self.completed_week.calendar.weeks_per_year
+            and self.target_week.week == 1
+            and self.target_week.season_index == self.completed_week.season_index + 1
+        )
+        if self.schema_version == "calendar_sporting_week_advance.v3":
+            if not season_crossing or self.scope != "configured_tour_season_transition":
+                raise ValueError("Native Season Transition v3 requires exactly W -> next Season Week 1")
+        elif self.target_week.season_index != self.completed_week.season_index:
+            raise ValueError("Historical sporting week versions cannot cross a season boundary")
         if self.schema_version.endswith(".v1") and (self.policy != CalendarAnnualDevelopmentPolicy()
                 or self.scope != "sporting_only_exhibition_timeline"):
             raise ValueError("Unknown native annual development calibration")
@@ -244,7 +251,7 @@ def append_sporting_week(checkpoint, world, knockout, event):
         seed=event.seed,
         policy=event.policy,
         counts=event.played_counts,
-        official=event.schema_version=='calendar_sporting_week_advance.v2',
+        official=event.schema_version in {'calendar_sporting_week_advance.v2', 'calendar_sporting_week_advance.v3'},
     )
     if (records_fingerprint(developed), records_fingerprint(recovered)) != (
         event.developed_players_fingerprint,
@@ -255,7 +262,10 @@ def append_sporting_week(checkpoint, world, knockout, event):
         checkpoint.model_copy(
             update={
                 "schema_version": (
-                    "calendar_sporting_checkpoint.v9"
+                    "calendar_sporting_checkpoint.v10"
+                    if (event.schema_version == "calendar_sporting_week_advance.v3"
+                        or checkpoint.schema_version == "calendar_sporting_checkpoint.v10")
+                    else "calendar_sporting_checkpoint.v9"
                     if checkpoint.schema_version == "calendar_sporting_checkpoint.v9"
                     else
                     "calendar_sporting_checkpoint.v8"

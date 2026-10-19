@@ -107,3 +107,63 @@ export function validateNativeProspectIntake(v:NativeProspectIntakePreflight,run
     throw Error('Native prospect intake source or Run Week changed')
   return v
 }
+
+/** Strong client check for the POST *read-only* native birth/Health/sporting review.
+ * The server still owns proof of real Signed inputs and played matches. */
+export type NativeSportingBirthPreviewRequest={
+  expected_saved_head:string
+  expected_checkpoint_fingerprint:string
+  expected_tour_fingerprint:string
+  seed:number
+}
+export type NativeSportingBirthPreflight=NativeProspectIntakePreflight&{
+  sporting_week_projection:{
+    schema_version:'native_tour_sporting_week_preflight.v1'
+    seed:number
+    source_saved_head:string
+    played_player_count:number
+    old_population_count:number
+    new_population_count:number
+    played_counts_fingerprint:string
+    developed_players_fingerprint:string
+    recovered_players_fingerprint:string
+    target_players_fingerprint:string
+    sporting_birth_advance_fingerprint:string
+    signed_admission_week_fingerprint:string
+    completed_week:{season_index:number;week:number}
+    target_week:{season_index:number;week:number}
+    signed_writer_supported:false
+  }
+}
+export function validateNativeSportingBirthPreflight(
+  value:NativeSportingBirthPreflight,
+  run:string,branch:string,request:NativeSportingBirthPreviewRequest,
+):NativeSportingBirthPreflight {
+  const v=validateNativeProspectIntake(
+    value,run,branch,request.expected_saved_head,request.expected_checkpoint_fingerprint,
+  )
+  const s=v.sporting_week_projection
+  const hash=(h:unknown)=>typeof h==='string'&&/^[0-9a-f]{64}$/.test(h)
+  if(!s||s.schema_version!=='native_tour_sporting_week_preflight.v1'
+    ||v.native_activation_supported!==false||v.blocked!==true
+    ||v.problems.length!==0||v.due_count<1
+    ||s.signed_writer_supported!==false
+    ||s.source_saved_head!==request.expected_saved_head||s.seed!==request.seed
+    ||!Number.isSafeInteger(s.seed)
+    ||!Number.isSafeInteger(s.old_population_count)||s.old_population_count<1
+    ||s.new_population_count!==s.old_population_count+v.due_count
+    ||!Number.isSafeInteger(s.played_player_count)
+    ||s.played_player_count<0||s.played_player_count>s.old_population_count
+    ||!hash(s.played_counts_fingerprint)
+    ||!hash(s.developed_players_fingerprint)
+    ||!hash(s.recovered_players_fingerprint)
+    ||!hash(s.target_players_fingerprint)
+    ||!hash(s.sporting_birth_advance_fingerprint)
+    ||!hash(s.signed_admission_week_fingerprint)
+    ||!s.target_week||s.target_week.season_index!==v.target_week.season_index
+    ||s.target_week.week!==v.target_week.week
+    ||!s.completed_week||!Number.isSafeInteger(s.completed_week.season_index)
+    ||!Number.isSafeInteger(s.completed_week.week))
+    throw Error('Signed native sporting birth proposal differs from saved input or Run clock')
+  return v
+}

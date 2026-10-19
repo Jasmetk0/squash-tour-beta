@@ -223,4 +223,37 @@ describe('configured Tour consent (HTTP boundary mocked)',()=>{
     expect(screen.queryByLabelText('Verified career records')).not.toBeInTheDocument()
   })
 
+  it.each([
+    ['season','filter','resolve'],['season','reason','reject'],
+    ['records','filter','resolve'],['records','reason','reject'],
+  ])('releases busy after a superseded %s read (%s / %s)',async(kind,edit,outcome)=>{
+    const calendar={schema_version:'run_calendar.v1',weeks_per_year:4,season_start_year_week:2,start_year:2030,season_count:3}
+    api.inspectCalendarTour.mockResolvedValue({...view(),saved:true,saved_completed_seasons:[0,1],tour_fingerprint:'c'.repeat(64),
+      state:{week:{calendar,season_index:2,week:1},editions:[],rankings:[],transitions:[]}})
+    let resolve!:(v:unknown)=>void,reject!:(e:Error)=>void
+    const deferred=new Promise((ok,no)=>{resolve=ok;reject=no})
+    if(kind==='season')api.inspectCalendarTourSeason.mockReturnValueOnce(deferred)
+    else api.inspectCalendarTourRecords.mockReturnValueOnce(deferred)
+    render(panel())
+    await screen.findByLabelText('Records as of season')
+    fireEvent.click(screen.getByRole('button',{name:kind==='season'?'Load season summary':'Load historical records'}))
+    expect(screen.getByRole('button',{name:'Refresh state'})).toBeDisabled()
+    if(edit==='reason')fireEvent.change(screen.getByLabelText('Tour operation reason'),{target:{value:'Changed during read'}})
+    else if(kind==='season')fireEvent.change(screen.getByLabelText('Signed season'),{target:{value:'0'}})
+    else fireEvent.change(screen.getByLabelText('Records country'),{target:{value:'CZE'}})
+    const response=kind==='season'?{
+      schema_version:'calendar_tour_season_comparison.v1',run_id:'r',branch_id:'b',saved_head_revision_id:'head',
+      selected:{season_index:1,run_id:'r',branch_id:'b',countries:[],editions:[]},comparison:null,country_deltas:[],
+    }:{
+      schema_version:'calendar_tour_signed_records_response.v1',run_id:'r',branch_id:'b',saved_head_revision_id:'head',
+      as_of_season_index:1,from_season_index:0,country_code:null,completed_seasons:[0,1],source_seasons:[],
+      records:Array.from({length:6},()=>({holders:[],holder_history:[],leaderboard:[]})),
+    }
+    await act(async()=>{if(outcome==='reject')reject(Error('obsolete failure'));else resolve(response)})
+    expect(screen.getByRole('button',{name:'Refresh state'})).toBeEnabled()
+    expect(screen.queryByLabelText(kind==='season'?'Verified season summary':'Verified career records')).not.toBeInTheDocument()
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+    expect(api.executeCalendarTour).not.toHaveBeenCalled()
+    expect(api.saveCalendarTour).not.toHaveBeenCalled()
+  })
 })

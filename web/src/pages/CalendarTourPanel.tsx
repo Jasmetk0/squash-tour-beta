@@ -127,7 +127,9 @@ export function CalendarTourPanel({runId,branchId,head}:{runId:string;branchId:s
     }catch(e){
       if(epoch.current===stamp&&current.current===scope&&seasonReadRequest.current===requestId)setError(formatApiError(e))
     }finally{
-      if(epoch.current===stamp&&current.current===scope&&seasonReadRequest.current===requestId)setBusy(false)
+      // Input edits revoke the result, but do not start another operation.
+      // The completed read must still release busy within its original scope.
+      if(epoch.current===stamp&&current.current===scope)setBusy(false)
     }
   }
   const loadCareerRecords=async()=>{
@@ -149,7 +151,7 @@ export function CalendarTourPanel({runId,branchId,head}:{runId:string;branchId:s
     }catch(e){
       if(epoch.current===stamp&&current.current===scope&&careerReadRequest.current===requestId)setError(formatApiError(e))
     }finally{
-      if(epoch.current===stamp&&current.current===scope&&careerReadRequest.current===requestId)setBusy(false)
+      if(epoch.current===stamp&&current.current===scope)setBusy(false)
     }
   }
   const names=new Map(view?.players.map(p=>[p.player_id,p.name])??[])

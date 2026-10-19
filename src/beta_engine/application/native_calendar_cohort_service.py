@@ -14,7 +14,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from beta_engine.application.run_prospect_cohort_reconcile import (
     RunProspectCohortConflictError, reconcile_run_prospect_cohort,
 )
-from sqlalchemy import text
+from sqlalchemy import select, text
 
 from beta_engine.application.run_prospect_materialization_service import (
     PROFILE_VERSION, _stable_seed,
@@ -275,6 +275,12 @@ class NativeCalendarCohortService:
             existing_source = validate_live_run_prospect_source_against_saved(
                 session, json.loads(revision.payload_json), run_id=run_id,
             )
+            other_branch = session.scalar(
+                select(RunBranchModel.branch_id).where(
+                    RunBranchModel.run_id == run_id,
+                    RunBranchModel.branch_id != branch_id,
+                ).limit(1)
+            )
             head = branch.saved_head_revision_id
         projection = self.world_adapter.project_countries(saved, package_id=request.world_package_id)
         countries = list(projection.countries)
@@ -318,7 +324,11 @@ class NativeCalendarCohortService:
                 for row in cohort.records[:5]
             ],
             "preview_only": True,
-            "materialization_supported": True,
+            "materialization_supported": other_branch is None,
+            "materialization_blocker": (
+                None if other_branch is None
+                else "shared_source_requires_coordinated_branch_confirmation"
+            ),
             "requires_manual_source_save_after_materialization": True,
             "native_tour_activation_supported": False,
         }
@@ -395,6 +405,17 @@ class NativeCalendarCohortService:
             )
             branch = session.get(RunBranchModel, branch_id)
             run = session.get(RunContainerModel, run_id)
+            sibling_branch = session.scalar(
+                select(RunBranchModel.branch_id).where(
+                    RunBranchModel.run_id == run_id,
+                    RunBranchModel.branch_id != branch_id,
+                ).limit(1)
+            )
+            if sibling_branch is not None:
+                raise ValueError(
+                    "Shared Run prospect source requires coordinated confirmation "
+                    "across multiple Branches; materialization is not yet supported"
+                )
             if (
                 fresh.to_metadata() != clock_proof
                 or branch is None or branch.saved_head_revision_id != head

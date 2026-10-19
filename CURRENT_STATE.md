@@ -1,3 +1,26 @@
+# Frozen pre-birth match replay candidate — 19 October 2026
+
+**Verified:** #1565 `ca447c2` has every applicable final-head check green and is
+ready for owner review. The corrected #1566 head `effeb11` has green Fast CI,
+frontend build, all six new native HTTP scenarios and its real Chromium birth/
+57-attribute/explicit Save/Viewer scenario. That screenshot was visually inspected;
+its remaining long native/legacy gates are still pending at this checkpoint.
+Neither candidate was merged by the assistant. `buuk` is unchanged at the last
+verified `14e2784`.
+
+**Current dependent fix:** historical continuation/final replay recognizes a v11
+owner only through its unchanged, actually Signed pre-birth root. It authenticates
+Run/Branch lineage and rejects rehashed root divergence without consuming today's
+Health or granting mutation readiness. Original MatchEngine inputs, complete
+result/log comparison, native provenance and ordinary old responses are preserved.
+See [contract and tests](docs/CALENDAR_NATIVE_HISTORICAL_MATCH_REPLAY_V1.md).
+This candidate still requires its own final-head verification.
+
+No post-birth new competition, source epochs, numeric Health, protected fork or
+release certification is implied. These remain the main integration blockers.
+
+## Earlier checkpoint history (retained)
+
 # Native birth runtime capability candidate — 19 October 2026
 
 **Published writer:** #1565 `ca447c2` has all applicable final-head gates green:

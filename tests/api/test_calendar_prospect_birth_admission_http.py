@@ -62,6 +62,11 @@ def test_saved_native_birth_week_projects_full_v4_successor_without_any_admissio
         stage = verified["lifecycle_admission_projection"]
         assert stage["birth_count"] == 1
         assert stage["proposed_lifecycle_schema"] == "player_lifecycle_calendar_state.v4"
+        assert stage["proposed_health_population_count"] == 9
+        assert len(stage["source_health_fingerprint"]) == 64
+        assert len(stage["proposed_health_fingerprint"]) == 64
+        assert len(stage["admission_bundle_fingerprint"]) == 64
+        assert stage["ranking_and_entry_adoption_supported"] is False
         assert stage["projected_population_count"] == 9
         assert len(stage["birth_event_fingerprint"]) == 64
         assert len(stage["proposed_lifecycle_fingerprint"]) == 64

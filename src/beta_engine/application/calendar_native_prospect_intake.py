@@ -178,9 +178,9 @@ def inspect_native_prospect_intake(
         # is Saved/verified, the Tour owns this week and the due cohort is clean.
         # No new player, lifecycle row, sporting or Health state is persisted.
         if snapshot is not None and state is not None and review["due"] and not review["problems"]:
-            from beta_engine.domain.players.calendar_prospect_birth import (
-                NATIVE_SOURCE_TYPE, advance_calendar_lifecycle_with_prospects,
-                build_calendar_prospect_birth_event, project_native_birth_sporting_roster,
+            from beta_engine.domain.players.calendar_prospect_birth import NATIVE_SOURCE_TYPE
+            from beta_engine.domain.players.calendar_prospect_admission_bundle import (
+                build_native_prospect_admission_bundle,
             )
             from beta_engine.infrastructure.db.player_lifecycle_state import get_lifecycle
 
@@ -202,33 +202,32 @@ def inspect_native_prospect_intake(
                     season_index=next_position.season_index,
                     week=next_position.season_week,
                 )
-                event = build_calendar_prospect_birth_event(
-                    predecessor=predecessor, target=target, source=snapshot,
+                bundle = build_native_prospect_admission_bundle(
+                    predecessor=predecessor, checkpoint=checkpoint,
+                    health=_health, source=snapshot, target=target,
                     world_package_id=world.world_package_id,
+                    saved_head_revision_id=revision.saved_head_revision_id,
+                    submissions=tuple(s for a in state.editions for s in a.submissions),
                 )
-                proposed = advance_calendar_lifecycle_with_prospects(
-                    predecessor, event,
-                    tuple(s for a in state.editions for s in a.submissions),
-                )
-                if len(event.births) != len(review["due"]):
+                if len(bundle.event.births) != len(review["due"]):
                     raise ValueError("Native birth evidence differs from the verified due cohort")
-                sporting_roster = project_native_birth_sporting_roster(
-                    predecessor=predecessor, checkpoint=checkpoint, event=event,
-                )
-                if len(sporting_roster) != len(proposed.players):
-                    raise ValueError("Native birth sporting proposal differs from lifecycle")
                 review["lifecycle_admission_projection"] = {
                     "schema_version": "native_tour_lifecycle_admission_projection.v1",
-                    "birth_event_fingerprint": event.fingerprint,
+                    "birth_event_fingerprint": bundle.event.fingerprint,
                     "predecessor_lifecycle_fingerprint": predecessor.fingerprint,
-                    "proposed_lifecycle_fingerprint": proposed.fingerprint,
-                    "proposed_lifecycle_schema": proposed.schema_version,
-                    "birth_count": len(event.births),
-                    "projected_population_count": len(proposed.players),
+                    "proposed_lifecycle_fingerprint": bundle.lifecycle.fingerprint,
+                    "proposed_lifecycle_schema": bundle.lifecycle.schema_version,
+                    "birth_count": len(bundle.event.births),
+                    "projected_population_count": len(bundle.lifecycle.players),
                     "proposed_sporting_fingerprint": canonical_hash([
-                        person.model_dump(mode="json") for person in sporting_roster
+                        person.model_dump(mode="json") for person in bundle.sporting
                     ]),
-                    "proposed_sporting_population_count": len(sporting_roster),
+                    "proposed_sporting_population_count": len(bundle.sporting),
+                    "source_health_fingerprint": bundle.health.source_health_fingerprint,
+                    "proposed_health_fingerprint": bundle.health.fingerprint,
+                    "proposed_health_population_count": len(bundle.health.proposed_profiles),
+                    "admission_bundle_fingerprint": bundle.fingerprint,
+                    "ranking_and_entry_adoption_supported": False,
                     "sporting_health_saved_activation_supported": False,
                 }
                 review.pop("preflight_fingerprint")

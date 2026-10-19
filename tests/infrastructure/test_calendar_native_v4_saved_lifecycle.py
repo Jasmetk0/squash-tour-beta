@@ -171,7 +171,7 @@ def test_saved_lifecycle_v4_rejects_tampered_source_event_or_tour(
             run_id="r", records=tuple(content["run_prospect_source"]["records"]),
         )
     elif attack == "source_extra_due":
-        raw = birth_row(states[-1].week, pid="extra")
+        raw = birth_row(states[-1].week, pid="z-extra")
         content["run_prospect_source"]["records"].append(raw)
         content["run_prospect_source"]["fingerprint"] = _fingerprint(
             run_id="r", records=tuple(content["run_prospect_source"]["records"]),

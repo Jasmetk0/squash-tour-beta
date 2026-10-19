@@ -447,6 +447,17 @@ def _saved_revision_record_content_hash(
     )
 
 
+def _saved_revision_validation_signature(model: BranchSavedRevisionModel) -> tuple:
+    """Bind a metadata-only proof to the complete physical revision bytes."""
+    return (
+        model.revision_id, model.run_id, model.branch_id, model.sequence,
+        model.parent_revision_id, model.kind, model.payload_schema_version,
+        model.content_hash_algorithm, model.content_hash, model.created_at,
+        hashlib.sha256(model.payload_json.encode()).digest(),
+        hashlib.sha256(model.change_summary_json.encode()).digest(),
+    )
+
+
 @dataclass(frozen=True)
 class BranchWorkingDraftRecord:
     draft_id: str
@@ -2493,20 +2504,7 @@ class SimulationPersistenceRepository:
     ) -> BranchSavedRevisionRecord:
         """Load one immutable revision and validate its stored owner and hash."""
 
-        signature = (
-            model.revision_id,
-            model.run_id,
-            model.branch_id,
-            model.sequence,
-            model.parent_revision_id,
-            model.kind,
-            model.payload_schema_version,
-            model.content_hash_algorithm,
-            model.content_hash,
-            model.created_at,
-            hashlib.sha256(model.payload_json.encode()).digest(),
-            hashlib.sha256(model.change_summary_json.encode()).digest(),
-        )
+        signature = _saved_revision_validation_signature(model)
         work_lock = self._revision_validation_work_locks[
             hash(signature) % len(self._revision_validation_work_locks)
         ]
@@ -2559,6 +2557,11 @@ class SimulationPersistenceRepository:
             raise BranchRevisionStateConflictError(
                 f"Saved Revision {revision.revision_id} failed content integrity validation"
             )
+        metadata = self._remember_validated_revision(signature, revision)
+        return revision if materialize_payload else metadata
+
+    def _remember_validated_revision(self, signature, revision):
+        """Retain only proof metadata after all source and identity checks pass."""
         metadata = replace(revision, payload={}, change_summary={})
         with self._revision_validation_lock:
             self._revision_validation_cache[signature] = metadata
@@ -2566,7 +2569,7 @@ class SimulationPersistenceRepository:
                 self._revision_validation_cache.pop(
                     next(iter(self._revision_validation_cache))
                 )
-        return revision if materialize_payload else metadata
+        return metadata
 
     def _validated_branch_revision_lineage_in_session(
         self,
@@ -5625,6 +5628,7 @@ class SimulationPersistenceRepository:
         previous_current_viewer_id = ""
         target_viewer_id = ""
         verified_native_save_receipt = None
+        verified_native_save_signature = None
         try:
             with self._session_factory.begin() as session:
                 session.execute(text("BEGIN IMMEDIATE"))
@@ -6126,6 +6130,8 @@ class SimulationPersistenceRepository:
                     verified_native_save_receipt = self._to_branch_saved_revision(
                         new_row, validate_components=False
                     )
+                    saved_run = verified_native_save_receipt.payload.get("run")
+                    saved_branch = verified_native_save_receipt.payload.get("branch")
                     if (
                         verified_native_save_receipt.content_hash_algorithm
                         != CONTENT_HASH_ALGORITHM
@@ -6136,15 +6142,43 @@ class SimulationPersistenceRepository:
                         or (verified_native_save_receipt.run_id,
                             verified_native_save_receipt.branch_id)
                         != (run_id, branch_id)
+                        or not isinstance(saved_run, dict)
+                        or saved_run.get("run_id") != run_id
+                        or not isinstance(saved_branch, dict)
+                        or saved_branch.get("branch_id") != branch_id
+                        or verified_native_save_receipt.sequence < 1
+                        or not verified_native_save_receipt.kind.strip()
                     ):
                         raise WorkingDraftConflictError(
                             "Native Tour Save receipt has inconsistent immutable revision bytes"
                         )
+                    # The coupled sporting/Tour sources above have already
+                    # passed the complete verifier. Authenticate the remaining
+                    # components checked by _to_branch_saved_revision as well,
+                    # so this exact row earns the same existing proof only IF
+                    # the surrounding transaction commits successfully.
+                    load_saved_ranking_component(
+                        verified_native_save_receipt.payload,
+                        run_id=run_id, branch_id=branch_id,
+                    )
+                    load_saved_run_package_state(
+                        verified_native_save_receipt.payload,
+                        run_id=run_id, branch_id=branch_id,
+                    )
+                    verified_native_save_signature = _saved_revision_validation_signature(new_row)
         except IntegrityError as exc:
             raise WorkingDraftIdentityConflictError(
                 "generated Saved Revision or audit event identity collided"
             ) from exc
 
+        if verified_native_save_signature is not None:
+            # This is AFTER successful transaction exit, never a rolled-back
+            # or merely staged row. The response's independent draft reload
+            # still rehashes actual stored bytes/metadata and checks ancestry
+            # and owner; it need not replay the just-verified sources again.
+            self._remember_validated_revision(
+                verified_native_save_signature, verified_native_save_receipt,
+            )
         revision = (
             verified_native_save_receipt
             if verified_native_save_receipt is not None

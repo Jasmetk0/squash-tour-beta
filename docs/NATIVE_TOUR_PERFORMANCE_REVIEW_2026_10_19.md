@@ -21,6 +21,14 @@ Scope: #1542 over #1541, starting at 4ee5b826. Owner alone merges.
 A chronological-walk experiment did not provide the required improvement and
 was discarded. No changes to lineage ordering or historical schema remain.
 
+- A third HTTP regression reproduced full verification happening again in
+  the Save response immediately after commit, although the exact captured
+  source had just passed full verification. Publish its existing metadata-only
+  exact-byte proof only after successful transaction exit. Explicitly validate
+  all remaining ranking/package components, scope and signed content before
+  earning that proof. Future reads still rehash actual SQL bytes and owners.
+  Controlled commit failure publishes nothing; tampering after success fails.
+
 ## Repair and invariants
 
 Single-flight locks are bounded and protect the existing exact-byte validation
@@ -36,9 +44,11 @@ The full W52/W61/W80 matrix and real HTTP/SQLite acceptance remain mandatory.
 
 ## Validation
 
-57 focused backend tests passed: concurrent cold proof sharing and failure,
+58 focused backend tests passed: concurrent cold proof sharing and failure,
 post-proof corruption, reordered mapping content and live tampering, existing
 component proof scope, Save lineage, history, restore/fork and historical hashes.
+An additional real HTTP/SQLite regression covers the native Save fold count,
+commit failure, successful retry and changed stored bytes after publication.
 The concurrency failure was separately reproduced against the unmodified source
 outside pytest's automatic src-path override.
 

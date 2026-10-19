@@ -11,6 +11,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: native-sporting-profile-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   matched-sporting-replay:
     name: "Eight-match W${{ matrix.width }} / ${{ matrix.version }}"

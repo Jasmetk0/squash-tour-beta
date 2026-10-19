@@ -115,36 +115,52 @@ class CalendarContinuationService:
         with self.repository._session_factory() as session:
             session.execute(text('BEGIN'))
             clock, revision, world, health, state, saved, _ = self._context(session, run_id=run_id, branch_id=branch_id)
+            # These are already authenticated immutable sources from this read
+            # transaction. Hash each distinct object once for presentation;
+            # no proof or decoded state survives the operation. Integrity still
+            # comes from _context's actual-byte/live-owner checks above.
+            fingerprints = {}
+
+            def fingerprint(source):
+                key = id(source)
+                if key not in fingerprints:
+                    fingerprints[key] = source.fingerprint
+                return fingerprints[key]
+
+            state_fingerprint = fingerprint(state) if state else None
+            is_saved = bool(state and saved and state_fingerprint == fingerprint(saved))
+            saved_tournaments = {fingerprint(e) for e in saved.tournaments} if saved else set()
+            saved_closures = {fingerprint(e) for e in saved.closures} if saved else set()
+            saved_advances = {fingerprint(e) for e in saved.weekly_advances} if saved else set()
+            closed_tournaments = {e.tournament_id for e in state.closures} if state else set()
+            saved_closed_tournaments = {e.tournament_id for e in saved.closures} if saved else set()
+            saved_matches = saved.played_continuations if saved else ()
             return {
                 'schema_version': 'calendar_continuation_inspection.v1',
                 'run_id': run_id, 'branch_id': branch_id,
                 'saved_head_revision_id': revision.saved_head_revision_id,
                 'draft_version': revision.working_draft.draft_version,
                 'player_ids': [p.player_id for p in world.players],
-                'checkpoint_fingerprint': state.fingerprint if state else None,
-                'saved': bool(state and saved and state.fingerprint == saved.fingerprint),
-                'can_play': bool(state and saved and state.fingerprint == saved.fingerprint),
+                'checkpoint_fingerprint': state_fingerprint,
+                'saved': is_saved,
+                'can_play': is_saved,
                 'run_calendar': clock.to_metadata(),
                 'sporting_week': RunWeekPosition(calendar=clock, season_index=state.week.season_index, week=state.week.week).model_dump(mode='json') if state else None,
                 'weekly_advance_count': len(state.weekly_advances) if state else 0,
                 'tournaments': [{
                     'tournament_id': event.tournament_id,
                     'command_id': event.command_id,
-                    'fingerprint': event.fingerprint,
+                    'fingerprint': fingerprint(event),
                     'week': event.week.week,
                     'entrant_ids': list(event.entrant_ids),
                     'entrant_count': len(event.entrant_ids),
                     'match_count': len(event.matches),
                     'winner_player_id': event.matches[-1].result.winner_player_id,
                     'match_ids': [match.match_id for match in event.matches],
-                    'saved': bool(saved and any(
-                        original.fingerprint == event.fingerprint for original in saved.tournaments
-                    )),
+                    'saved': fingerprint(event) in saved_tournaments,
                     'scope': event.scope,
-                    'result_closed': any(c.tournament_id == event.tournament_id for c in state.closures),
-                    'result_closure_saved': bool(saved and any(
-                        c.tournament_id == event.tournament_id for c in saved.closures
-                    )),
+                    'result_closed': event.tournament_id in closed_tournaments,
+                    'result_closure_saved': event.tournament_id in saved_closed_tournaments,
                     'prepared_points_status': (
                         'prepared_not_official' if event.schema_version in {'calendar_followup_knockout.v2', 'calendar_followup_knockout.v4'}
                         else 'not_prepared'
@@ -159,22 +175,22 @@ class CalendarContinuationService:
                 'closures': [{
                     'command_id': e.command_id,
                     'tournament_id': e.tournament_id,
-                    'fingerprint': e.fingerprint,
+                    'fingerprint': fingerprint(e),
                     'champion_player_id': e.champion_player_id,
                     'finalist_player_id': e.finalist_player_id,
                     'source_tournament_fingerprint': e.source_tournament_fingerprint,
                     'players': [p.model_dump(mode='json') for p in e.players],
                     'scope': e.scope,
-                    'saved': bool(saved and any(s.fingerprint == e.fingerprint for s in saved.closures)),
+                    'saved': fingerprint(e) in saved_closures,
                 } for e in state.closures] if state else [],
-                'weekly_advances': [{'command_id':e.command_id,'fingerprint':e.fingerprint,'completed_week':e.completed_week.week,'target_week':e.target_week.week,'saved':bool(saved and any(s.fingerprint == e.fingerprint for s in saved.weekly_advances))} for e in state.weekly_advances] if state else [],
+                'weekly_advances': [{'command_id':e.command_id,'fingerprint':fingerprint(e),'completed_week':e.completed_week.week,'target_week':e.target_week.week,'saved':fingerprint(e) in saved_advances} for e in state.weekly_advances] if state else [],
                 'health_numeric_effect_applied': False,
                 'limited_player_ids': [p.player_id for p in health.players if project_player_health(p).numeric_calibration_required] if health else [],
                 'matches': [{
-                    'match_id': e.match_id, 'sequence': e.sequence, 'week': e.week.week, 'fingerprint': e.fingerprint,
+                    'match_id': e.match_id, 'sequence': e.sequence, 'week': e.week.week, 'fingerprint': fingerprint(e),
                     'player_ids': [e.input_context.player_a.player.player_id, e.input_context.player_b.player.player_id],
                     'winner_player_id': e.result.winner_player_id, 'rally_count': len(e.result.rally_log.events),
-                    'saved': bool(saved and i < len(saved.played_continuations) and saved.played_continuations[i].fingerprint == e.fingerprint),
+                    'saved': bool(i < len(saved_matches) and fingerprint(saved_matches[i]) == fingerprint(e)),
                 } for i, e in enumerate(state.played_continuations)] if state else [],
             }
 

@@ -88,6 +88,23 @@ def reconcile_run_prospect_cohort(
         if foreign_year_ids:
             raise RunProspectCohortConflictError(sorted(foreign_year_ids))
 
+        # "Overwrite" may regenerate this producer's cohort, but must not
+        # hijack a different source, World, country or frozen policy that
+        # happens to reuse a caller-supplied prospect ID.
+        foreign_source_ids = set()
+        for item in expected:
+            prior = existing.get(item.prospect_id)
+            if prior is not None and (
+                prior.world_id != item.world_id
+                or prior.country_code != item.country_code
+                or prior.source_type != source_type
+                or prior.profile_version != profile_version
+                or prior.cohort_policy_version != cohort_policy_version
+            ):
+                foreign_source_ids.add(item.prospect_id)
+        if foreign_source_ids:
+            raise RunProspectCohortConflictError(sorted(foreign_source_ids))
+
         stale_ids = {
             item.prospect_id for item in live
             if item.country_code in scope_country_codes

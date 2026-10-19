@@ -10,7 +10,7 @@ unchanged. The production writer now takes one SQLite BEGIN IMMEDIATE
 transaction and computes source-policy/stale-record conflicts and activated
 identity protections **inside** it, then upserts and removes only the
 reviewed Run/season/country/source scope. It rejects colliding IDs already
-owned by a different season and returns counts from that committed transaction.
+owned by a different season, World, country, profile or source policy and returns counts from that committed transaction.
 Original prospect profile, seed, snapshot and Saved Revision schemas do not
 change. Immutable activated rows remain protected.
 

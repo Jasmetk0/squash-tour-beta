@@ -615,3 +615,34 @@ def test_atomic_prospect_reconcile_is_idempotent_and_rejects_foreign_year(tmp_pa
         run_id=colliding.run_id, prospect_id=colliding.prospect_id
     ) == colliding
 
+
+@pytest.mark.pr_critical
+@pytest.mark.parametrize("changed", [
+    {"source_type": "imported_other_source"},
+    {"world_id": "other-world"},
+    {"country_code": "USA"},
+    {"profile_version": "unrelated-profile"},
+    {"cohort_policy_version": "unrelated-policy"},
+])
+def test_atomic_overwrite_never_hijacks_foreign_prospect_identity(tmp_path, changed):
+    repository, _ = _repository(tmp_path)
+    from beta_engine.application.run_prospect_cohort_reconcile import (
+        RunProspectCohortConflictError, reconcile_run_prospect_cohort,
+    )
+    canonical = _record()
+    foreign = _record(**changed)
+    repository.upsert_run_prospects([foreign])
+    with pytest.raises(RunProspectCohortConflictError) as error:
+        reconcile_run_prospect_cohort(
+            repository, run_id=canonical.run_id,
+            season_start_year=canonical.season_start_year,
+            expected=[canonical], scope_country_codes={"EGY"},
+            source_type=canonical.source_type,
+            profile_version=canonical.profile_version,
+            cohort_policy_version=canonical.cohort_policy_version,
+            overwrite=True,
+        )
+    assert error.value.conflicts == [canonical.prospect_id]
+    assert repository.get_run_prospect(
+        run_id=foreign.run_id, prospect_id=foreign.prospect_id,
+    ) == foreign

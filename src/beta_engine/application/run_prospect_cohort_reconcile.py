@@ -7,7 +7,10 @@ a different Run, season, country scope or source policy.
 """
 from __future__ import annotations
 
+from typing import Callable
+
 from sqlalchemy import func, select, text
+from sqlalchemy.orm import Session
 
 from beta_engine.infrastructure.db.models import RunProspectModel
 from beta_engine.infrastructure.db.repositories import (
@@ -44,6 +47,7 @@ def reconcile_run_prospect_cohort(
     season_start_year: int, expected: list[RunProspectRecord],
     scope_country_codes: set[str], source_type: str, profile_version: str,
     cohort_policy_version: str, overwrite: bool,
+    authority_guard: Callable[[Session], None] | None = None,
 ) -> tuple[int, int, int, int]:
     """Return created/existing/conflicting/persisted counts, or roll back all.
 
@@ -66,6 +70,8 @@ def reconcile_run_prospect_cohort(
 
     with repository._session_factory.begin() as session:
         session.execute(text("BEGIN IMMEDIATE"))
+        if authority_guard is not None:
+            authority_guard(session)
         live = session.execute(
             select(RunProspectModel).where(
                 RunProspectModel.run_id == run_id,

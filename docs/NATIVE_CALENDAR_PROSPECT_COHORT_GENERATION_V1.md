@@ -52,6 +52,15 @@ outdated review cannot duplicate, rewrite or silently mix generations.
 After Save an identical confirmed review is idempotent, while incompatible
 review policies/conflicts require a separate explicit resolution.
 
+A shared Run prospect source could otherwise invalidate a different Branch's
+immutable Saved HEAD. Until coordinated multi-Branch confirmation is
+implemented, materialization refuses a Run that has **any sibling Branch**
+inside the same SQLite transaction. Preview remains read-only and explicitly
+returns `materialization_supported=false` with the exact blocker code.
+The restriction applies equally to every Branch; it does not invent an
+Official/Main Branch privilege. A real two-Branch HTTP/SQLite regression
+proves that the rejected command changes no rows or Saved history.
+
 The response still declares `native_tour_activation_supported=false`.
 Subsequent native target-week lifecycle + 57-attribute sporting + Health +
 ranking + Entry + replay is required; no Tour intake guard was removed.

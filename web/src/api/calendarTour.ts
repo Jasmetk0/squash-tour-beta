@@ -140,12 +140,13 @@ export type NativeSportingBirthPreflight=NativeProspectIntakePreflight&{
 export function validateNativeSportingBirthPreflight(
   value:NativeSportingBirthPreflight,
   run:string,branch:string,request:NativeSportingBirthPreviewRequest,current:TourWeek,
+  targetCalendar:TourWeek['calendar']=current.calendar,
 ):NativeSportingBirthPreflight {
   const v=validateNativeProspectIntake(
     value,run,branch,request.expected_saved_head,request.expected_checkpoint_fingerprint,
   )
   const s=value.sporting_week_projection
-  const target=tourWeekOffset(current,1)
+  const target=tourWeekOffset({...current,calendar:targetCalendar},1)
   const sameWeek=(actual:TourWeek|undefined,expected:TourWeek|null)=>Boolean(
     actual&&expected&&actual.season_index===expected.season_index&&actual.week===expected.week
     &&actual.calendar&&(['schema_version','weeks_per_year','season_start_year_week','start_year','season_count'] as const)

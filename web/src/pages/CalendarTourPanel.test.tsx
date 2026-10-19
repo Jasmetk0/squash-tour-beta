@@ -336,6 +336,25 @@ describe('Signed 15yo sporting review (Admin-only read, never a commit)',()=>{
     expect(screen.queryByLabelText('Verified read-only native sporting review')).not.toBeInTheDocument()
     expect(api.executeCalendarTour).not.toHaveBeenCalled()
   })
+  it('reviews an extended Run without rewriting the historical completed week',async()=>{
+    const extended={...calendar,season_count:5}
+    api.inspectCalendarTour.mockResolvedValue({
+      ...view(),saved:true,tour_fingerprint:hex('c'),run_calendar:extended,
+      state:{week:{calendar,season_index:0,week:2},editions:[],rankings:[],transitions:[]},
+    })
+    const response=signed()
+    response.target_week={...target,calendar:extended}
+    response.sporting_week_projection.target_week=response.target_week
+    api.inspectNativeTourProspectIntake.mockResolvedValue({...source(),target_week:response.target_week})
+    api.previewCalendarTourNativeBirthSporting.mockResolvedValue(response)
+    render(panel())
+    fireEvent.click(await screen.findByRole('button',{name:'Check next-week prospects'}))
+    await screen.findByText(/New Prospect/)
+    fireEvent.click(screen.getByRole('button',{name:'Review newborn sporting development'}))
+    await screen.findByLabelText('Verified read-only native sporting review')
+    expect(api.executeCalendarTour).not.toHaveBeenCalled()
+    expect(api.saveCalendarTour).not.toHaveBeenCalled()
+  })
   it.each(['completed-week','target-week','calendar'])(
     'rejects a valid-hash sporting response for another %s',async(damage)=>{
       const response=signed()

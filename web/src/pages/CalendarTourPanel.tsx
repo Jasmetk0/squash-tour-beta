@@ -186,7 +186,7 @@ export function CalendarTourPanel({runId,branchId,head}:{runId:string;branchId:s
     try {
       const result=validateNativeSportingBirthPreflight(
         await previewCalendarTourNativeBirthSporting(runId,branchId,request),
-        runId,branchId,request,view.state.week,
+        runId,branchId,request,view.state.week,view.run_calendar??view.state.week.calendar,
       )
       if(epoch.current!==stamp||current.current!==scope||inputs.current!==inputsAtRequest
         ||intakeReadRequest.current!==requestId)return

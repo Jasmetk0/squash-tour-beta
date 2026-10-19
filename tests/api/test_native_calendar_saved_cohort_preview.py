@@ -254,3 +254,40 @@ def test_native_confirmation_rejects_stale_review_and_empty_consent(tmp_path):
             assert code == 422, error
         assert _dump(path) == before
         assert repo.count_run_prospects(run_id="run") == 0
+
+
+def test_multi_branch_shared_run_source_never_changes_one_branch_behind_another(tmp_path):
+    """No partial Run-scope prospect source write against sibling Saved lineage."""
+    path = tmp_path / "shared-cohort-branches.db"
+    with ApiServer(database_url=f"sqlite:///{path}") as server:
+        repo, _ = _world(server, RunCalendar(52, 35, 2030, 3))
+        code, fork = _request(
+            "POST", server.base_url + "/run-containers/run/branches",
+            {"source_branch_id": "branch", "source_saved_revision_id": "r1"},
+        )
+        assert code == 201, fork
+        command = {
+            "world_package_id": "official_fax_world", "season_index": 0,
+            "base_annual_intake_target": 8, "country_code": "GER",
+        }
+        code, review = _request("POST", url(server), command)
+        assert code == 200, review
+        assert review["materialization_supported"] is False
+        assert review["materialization_blocker"] == "shared_source_requires_coordinated_branch_confirmation"
+        before = _dump(path)
+        code, response = _request(
+            "POST", url(server).replace("/preview", "/materialize"),
+            {
+                "request": command,
+                "expected_saved_head": review["saved_head_revision_id"],
+                "expected_review_fingerprint": review["review_fingerprint"],
+                "explicit_confirmation": True,
+                "audit_label": "Admin",
+                "audit_reason": "Reject unsafe mutation across sibling Branch state",
+            },
+        )
+        assert code == 409, response
+        assert "coordinated" in response["detail"]["message"]
+        assert repo.count_run_prospects(run_id="run") == 0
+        assert _dump(path) == before
+        assert repo.verify_branch_saved_revision_hash(revision_id="r1")

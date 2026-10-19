@@ -86,3 +86,24 @@ export function validateTourCareerRecords(v:TourCareerRecords,run:string,branch:
     throw Error('Signed Career Records source, request, or metric catalog changed')
   return v
 }
+
+export type NativeProspectIntakePreflight={
+  schema_version:'native_tour_prospect_intake_preflight.v1'
+  run_id:string;branch_id:string;saved_head_revision_id:string
+  checkpoint_fingerprint:string;source_fingerprint:string|null;preflight_fingerprint:string
+  target_week:{season_index:number;week:number}
+  due:{player_id:string;display_name:string;country_code:string;profile_fingerprint:string}[]
+  due_count:number;problems:{prospect_id:string;code:string}[]
+  blocked:boolean;native_activation_supported:false
+}
+export function validateNativeProspectIntake(v:NativeProspectIntakePreflight,run:string,branch:string,head:string,checkpoint:string):NativeProspectIntakePreflight {
+  if(v.schema_version!=='native_tour_prospect_intake_preflight.v1'
+    ||v.run_id!==run||v.branch_id!==branch||v.saved_head_revision_id!==head
+    ||v.checkpoint_fingerprint!==checkpoint||!/^[0-9a-f]{64}$/.test(v.preflight_fingerprint)
+    ||v.native_activation_supported!==false||!Array.isArray(v.due)
+    ||!Array.isArray(v.problems)||v.due_count!==v.due.length
+    ||!v.target_week||!Number.isInteger(v.target_week.week)
+    ||!Number.isInteger(v.target_week.season_index))
+    throw Error('Native prospect intake source or Run Week changed')
+  return v
+}

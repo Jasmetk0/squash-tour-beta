@@ -29,3 +29,8 @@ missing sources, future/past cohorts, age/calendar corruption, foreign
 identity and missing/mismatched canonical profile. Production HTTP integration
 and authenticated cross-Branch Saved source failure are subsequent acceptance
 gates, not claimed by pure tests.
+
+The configured Admin Tour panel now exposes a CS/EN read-only button and
+exact-week due/blocked identities after an explicit fetch. It never Saves,
+commits or grants native activation. Result scope is checked against current
+Saved HEAD and checkpoint before display; stale Run/Branch responses are ignored.

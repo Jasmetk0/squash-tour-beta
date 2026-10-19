@@ -61,3 +61,35 @@ outside pytest's automatic src-path override.
 
 Required workflow checks on the final repair head must finish before handoff.
 Full pre-alpha release gates and unsupported sporting mechanics are unchanged.
+
+## Follow-up from the complete consolidated check set
+
+Head `fd8dbb41` passed 12 of 14 workflows. The real Native Tour API acceptance
+passed in about 14 minutes; the reviewed original run took 22+ minutes.
+W52/W61 passed; W80 reached Week 6 after both actual Editions and restart, but
+the unchanged 18-minute process bound expired during final evidence reads.
+Do not treat that failed large browser gate as green.
+
+Further bounded optimizations:
+
+- Checkpoint event union dispatch now selects the one disjoint required shape
+  before validation. Every event model still validates its fields, schema,
+  rally logs and hashes. Historical omitted default version tags still work.
+  A copied real W6/1000 checkpoint preserved its exact fingerprint; ordinary
+  union parsing took roughly 2.5–3s versus 1.4–1.9s with direct dispatch in
+  local diagnostics. This is not a general latency SLA.
+- Already authenticated played roots may be reused only after hashing the
+  actual decoded live row and checking every physical identity/hash column.
+  Changed content/metadata falls back to strict parsing. Reordered map keys
+  remain harmless. No parsed payload cache survives the current request.
+- Reuse locally computed checkpoint hashes inside the decoder and the single
+  inspection response. A profiled repeated inspection of the same earlier
+  copied W5/1000 state fell from 7.8s to 6.5s, with identical source hashes.
+
+The other failure was the existing Server Tasks browser. Trace showed its pause
+fetch unresolved, while backend logs showed `database is locked` in the control
+writer and heartbeat. The harness released its genuine next-child gate directly
+after clicking, before waiting for the pause commit. Await the actual HTTP 200
+`pause_requested` ACK before release, preserving the real pause, continuation,
+page-close and SIGKILL assertions. No production control or lease fence is weakened.
+Final-head browser verification remains mandatory after this harness repair.

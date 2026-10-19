@@ -158,8 +158,6 @@ class CalendarTourService:
         health = saved_knockout_health(
             session, revision=revision, run_id=run_id, branch_id=branch_id
         )
-        rows = load_match_rows(session, run_id=run_id, branch_id=branch_id)
-        evidence = rows[0] if len(rows) == 1 else None
         # CalendarStandaloneMatchService._context has just authenticated this
         # exact Saved HEAD via the repository's signed lineage validator. The
         # latter either strictly folds all sporting/Tour sources or reuses an
@@ -170,6 +168,11 @@ class CalendarTourService:
             run_id=run_id,
             branch_id=branch_id,
         )
+        rows = load_match_rows(
+            session, run_id=run_id, branch_id=branch_id,
+            _verified_source=saved_evidence,
+        )
+        evidence = rows[0] if len(rows) == 1 else None
         checkpoint = load_checkpoint(
             session, run_id=run_id, branch_id=branch_id, _verified_source=saved
         )
@@ -249,6 +252,7 @@ class CalendarTourService:
             session.execute(text("BEGIN"))
             ctx, state, signed = self._context(session, run_id, branch_id)
             _clock, rev, world, _health, cp, saved, _ = ctx
+            checkpoint_fingerprint = cp.fingerprint if cp else None
             # _context verified the full live lifecycle against its Saved
             # owner (or rebuilt an unsaved one). Read the authenticated current
             # row instead of replaying every historical birth/Entry week again.
@@ -328,7 +332,7 @@ class CalendarTourService:
                 "saved_head_revision_id": rev.saved_head_revision_id,
                 "draft_version": rev.working_draft.draft_version,
                 "run_calendar": _clock.to_metadata(),
-                "checkpoint_fingerprint": cp.fingerprint if cp else None,
+                "checkpoint_fingerprint": checkpoint_fingerprint,
                 "tour_fingerprint": state.fingerprint if state else None,
                 "saved": bool(state and signed == state and cp == saved),
                 "can_initialize": state is None
@@ -360,7 +364,9 @@ class CalendarTourService:
                 "state": state.model_dump(mode="json") if state else None,
                 "edition_evidence": evidence,
                 "contributions": contributions,
-                "transition_blockers": self._transition_blockers(state, ctx, session)
+                "transition_blockers": self._transition_blockers(
+                    state, ctx, session, _checkpoint_fingerprint=checkpoint_fingerprint
+                )
                 if state
                 else ["tour_authority_missing"],
             }
@@ -593,7 +599,7 @@ class CalendarTourService:
             return result
 
     @staticmethod
-    def _transition_blockers(state, ctx, session=None):
+    def _transition_blockers(state, ctx, session=None, *, _checkpoint_fingerprint=None):
         clock, _rev, _world, health, cp, _saved, _evidence = ctx
         blockers = []
         if cp.week.week >= clock.weeks_per_year:
@@ -612,7 +618,11 @@ class CalendarTourService:
                 and not authority.result_confirmed
             ):
                 blockers.append("edition_not_terminal:" + authority.edition.edition_id)
-        if state.checkpoint_fingerprint != cp.fingerprint:
+        checkpoint_fingerprint = (
+            cp.fingerprint if _checkpoint_fingerprint is None
+            else _checkpoint_fingerprint
+        )
+        if state.checkpoint_fingerprint != checkpoint_fingerprint:
             blockers.append("sporting_owner_drift")
         if session is not None:
             from beta_engine.infrastructure.db.models import (

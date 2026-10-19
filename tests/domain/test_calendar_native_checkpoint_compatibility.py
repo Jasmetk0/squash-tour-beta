@@ -33,3 +33,36 @@ def test_neither_historical_v1_nor_empty_v2_can_silently_claim_continued_state(d
     if damage == 'explicit_empty_ledger': raw['continuations'] = []
     else: raw.update(schema_version='calendar_sporting_checkpoint.v2', phase='opening_week_continued')
     with pytest.raises(ValueError): CalendarSportingCheckpoint.model_validate_json(json.dumps(raw))
+
+
+def test_week_event_dispatch_preserves_default_version_and_rejects_invalid_shapes():
+    from pydantic import TypeAdapter
+    from beta_engine.domain.players.calendar_sporting_week import CalendarSportingWeekAdvance
+    from beta_engine.domain.run_packages import canonical_hash
+
+    checkpoint = initial()
+    command = dict(command_id='advance', expected_saved_head='head',
+                   expected_checkpoint_fingerprint=checkpoint.fingerprint, seed=1,
+                   operator_label='Admin', audit_reason='Historical input compatibility')
+    event = CalendarSportingWeekAdvance(
+        run_id=checkpoint.run_id, branch_id=checkpoint.branch_id,
+        command_id=command['command_id'], source_saved_head='head',
+        source_checkpoint_fingerprint=checkpoint.fingerprint,
+        completed_week=checkpoint.week,
+        target_week=checkpoint.week.model_copy(update={'week': 2}), seed=1,
+        operator_label=command['operator_label'], audit_reason=command['audit_reason'],
+        request_fingerprint=canonical_hash(dict(run_id=checkpoint.run_id,
+            branch_id=checkpoint.branch_id, command=command)),
+        played_counts=(), developed_players_fingerprint='a'*64,
+        recovered_players_fingerprint='b'*64,
+    )
+    adapter = TypeAdapter(CalendarSportingCheckpoint.model_fields['week_events'].annotation)
+    raw = event.model_dump(mode='json')
+    assert adapter.validate_json(json.dumps([raw])) == (event,)
+    raw.pop('schema_version')
+    assert adapter.validate_json(json.dumps([raw])) == (event,)
+    for changed in ({**raw, 'schema_version': 'unknown.v99'},
+                    {**raw, 'match_id': 'mislabelled'},
+                    {**raw, 'target_week': raw['completed_week']}):
+        with pytest.raises(ValueError):
+            adapter.validate_json(json.dumps([changed]))

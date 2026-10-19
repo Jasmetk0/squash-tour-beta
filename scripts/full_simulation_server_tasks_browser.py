@@ -277,7 +277,17 @@ def acceptance(root, port, base_url, chromium):
                 page.get_by_label("Full Simulation control audit reason").fill(
                     "Pause second real match"
                 )
-                page.get_by_role("button", name="Request pause", exact=True).click()
+                # A click dispatches fetch but does not await its commit. Keep
+                # the genuine next writer gated until the control ACK arrives;
+                # otherwise it can race the pause and starve its SQLite writer.
+                with page.expect_response(
+                    lambda r: r.request.method == "POST"
+                    and r.url.endswith("/full-simulation/control")
+                ) as pause_response:
+                    page.get_by_role("button", name="Request pause", exact=True).click()
+                pause_ack = pause_response.value
+                assert pause_ack.status == 200, pause_ack.text()
+                assert pause_ack.json()["control_state"] == "pause_requested"
                 request("POST", "/__test/task-gate/release")
                 wait(
                     lambda: (

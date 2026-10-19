@@ -4,9 +4,9 @@ Historical v1/v2 retain exact opening-week bytes. Explicit v3 adds an ordered
 sporting-only weekly ledger and subsequent exhibitions. It does not own the
 Official Week Transition, Health healing or lifecycle. The bootstrap is provisional.
 """
-from typing import Literal
+from typing import Annotated, Literal
 
-from pydantic import Field, model_serializer, model_validator
+from pydantic import Discriminator, Field, Tag, model_serializer, model_validator
 
 from beta_engine.domain.calendar.run_week_position import RunWeekPosition
 from beta_engine.domain.players.calendar_canonical_match import (
@@ -30,6 +30,23 @@ from beta_engine.domain.rankings.official import FrozenInput
 from beta_engine.domain.run_packages import canonical_hash
 
 
+def _sporting_event_kind(value):
+    # These event shapes have disjoint required fields. Dispatch directly rather
+    # than validating large rally logs through every union alternative. Shape
+    # dispatch also preserves historical inputs omitting the default schema tag;
+    # each selected model still validates its own version and every field.
+    if isinstance(value, dict):
+        return ('knockout' if 'tournament_id' in value else
+                'match' if 'match_id' in value else 'week')
+    if isinstance(value, CalendarFollowupKnockout):
+        return 'knockout'
+    if isinstance(value, CalendarContinuationMatch):
+        return 'match'
+    if isinstance(value, CalendarSportingWeekAdvance):
+        return 'week'
+    return None
+
+
 class CalendarSportingCheckpoint(FrozenInput):
     schema_version: Literal['calendar_sporting_checkpoint.v1', 'calendar_sporting_checkpoint.v2', 'calendar_sporting_checkpoint.v3', 'calendar_sporting_checkpoint.v4', 'calendar_sporting_checkpoint.v5', 'calendar_sporting_checkpoint.v6', 'calendar_sporting_checkpoint.v7', 'calendar_sporting_checkpoint.v8', 'calendar_sporting_checkpoint.v9'] = 'calendar_sporting_checkpoint.v1'
     run_id: str = Field(min_length=1)
@@ -45,7 +62,12 @@ class CalendarSportingCheckpoint(FrozenInput):
     health_effects_applied: Literal[False] = False
 
     continuations: tuple[CalendarContinuationMatch, ...] = ()
-    week_events: tuple[CalendarSportingWeekAdvance | CalendarContinuationMatch | CalendarFollowupKnockout, ...] = ()
+    week_events: tuple[Annotated[
+        Annotated[CalendarSportingWeekAdvance, Tag('week')]
+        | Annotated[CalendarContinuationMatch, Tag('match')]
+        | Annotated[CalendarFollowupKnockout, Tag('knockout')],
+        Discriminator(_sporting_event_kind),
+    ], ...] = ()
     closures: tuple[CalendarNativeTournamentClosure, ...] = ()
 
     @model_serializer(mode='wrap')

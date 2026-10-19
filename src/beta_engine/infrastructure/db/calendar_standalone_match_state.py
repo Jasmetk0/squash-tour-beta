@@ -261,7 +261,8 @@ def _parse_calendar_match(serialized: str) -> CalendarMatchEvidence:
     raise ValueError("Unknown calendar match evidence schema; refuse reinterpretation")
 
 
-def load_match_rows(session: Session, *, run_id: str, branch_id: str) -> tuple[CalendarMatchEvidence, ...]:
+def load_match_rows(session: Session, *, run_id: str, branch_id: str,
+                    _verified_source=None) -> tuple[CalendarMatchEvidence, ...]:
     rows = session.scalars(
         select(CalendarStandaloneMatchModel)
         .where(CalendarStandaloneMatchModel.run_id == run_id,
@@ -270,6 +271,21 @@ def load_match_rows(session: Session, *, run_id: str, branch_id: str) -> tuple[C
     ).all()
     states = []
     for row in rows:
+        if _verified_source is not None:
+            source = _verified_source
+            expected = source.fingerprint
+            if (
+                (source.run_id, source.branch_id, source.match_id, source.command_id,
+                 source.request_fingerprint, expected)
+                == (run_id, branch_id, row.match_id, row.command_id,
+                    row.request_fingerprint, row.fingerprint)
+                and canonical_hash(json.loads(row.payload_json)) == expected
+            ):
+                # The caller authenticated this exact Saved root in its current
+                # transaction. Hash actual live values and all physical scope
+                # columns; never trust only the stored fingerprint column.
+                states.append(source)
+                continue
         state = _parse_calendar_match(row.payload_json)
         if (
             (state.run_id, state.branch_id, state.match_id, state.command_id,
@@ -403,11 +419,13 @@ def decode_prevalidated_calendar_sources(payload: dict, *, run_id: str, branch_i
     content = payload.get("content", {})
     cp_raw = content.get("calendar_player_sporting_checkpoint")
     checkpoint = None
+    checkpoint_fingerprint = None
     if cp_raw is not None:
         if not isinstance(cp_raw, dict) or set(cp_raw) != {"fingerprint", "state"}:
             raise ValueError("Invalid prevalidated Saved sporting component")
         checkpoint = CalendarSportingCheckpoint.model_validate_json(json.dumps(cp_raw["state"]))
-        if (checkpoint.run_id, checkpoint.branch_id, checkpoint.fingerprint) != (
+        checkpoint_fingerprint = checkpoint.fingerprint
+        if (checkpoint.run_id, checkpoint.branch_id, checkpoint_fingerprint) != (
             run_id, branch_id, cp_raw["fingerprint"]
         ):
             raise ValueError("Prevalidated Saved sporting scope/hash changed")
@@ -423,7 +441,7 @@ def decode_prevalidated_calendar_sources(payload: dict, *, run_id: str, branch_i
         ):
             raise ValueError("Prevalidated Saved Tour scope/hash changed")
         if checkpoint is None or (
-            tour.checkpoint_fingerprint != checkpoint.fingerprint
+            tour.checkpoint_fingerprint != checkpoint_fingerprint
             or tour.week.ordinal != checkpoint.week.ordinal
         ):
             raise ValueError("Prevalidated Saved Tour sporting owner changed")

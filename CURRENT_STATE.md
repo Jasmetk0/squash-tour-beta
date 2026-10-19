@@ -25,6 +25,18 @@ successor rejection, historical restore/fork
 and original hash compatibility. Required final-head browser/API/CI checks
 remain pending; this is not a merge-ready or pre-alpha release claim.
 
+Follow-up on `fd8dbb41`: 12/14 workflows passed, including Native Tour API
+(about 14 minutes), Shell and W52/W61 browsers. W80 completed all sporting
+operations but hit the unchanged 18-minute outer bound during final evidence.
+Further repair dispatches checkpoint events by their disjoint required shape
+instead of repeatedly validating large logs through every union alternative;
+default version omission and all selected-model validators remain supported.
+Tour reads also avoid two repeated checkpoint hashes and reuse an authenticated
+played root only after hashing actual live values and checking all row identities.
+The Server Tasks browser released its next writer before awaiting the pause HTTP
+commit, racing/starving the control writer. It now requires its real ACK first.
+These follow-up changes still require final-head CI/browser verification.
+
 # Current implementation — Master v85
 
 Current integration base verified 18 October 2026: `buuk`

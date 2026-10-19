@@ -141,6 +141,47 @@ def test_live_proof_reuse_accepts_mapping_order_but_hashes_actual_values(monkeyp
     assert calls == [1]
 
 
+@pytest.mark.parametrize('damage', [None, 'content', 'fingerprint', 'command_id',
+                                    'match_id', 'request_fingerprint', 'branch'])
+def test_live_played_root_reuses_only_exact_saved_content_and_columns(monkeypatch, damage):
+    import json
+    from types import SimpleNamespace
+    from tests.domain.test_calendar_canonical_match import canonical_bracket
+
+    source = canonical_bracket()
+    row = SimpleNamespace(
+        payload_json=json.dumps(source.model_dump(mode='json'), sort_keys=True),
+        fingerprint=source.fingerprint, match_id=source.match_id,
+        command_id=source.command_id, request_fingerprint=source.request_fingerprint,
+    )
+    session = SimpleNamespace(scalars=lambda _query: SimpleNamespace(all=lambda: [row]))
+    scope = dict(run_id=source.run_id, branch_id=source.branch_id,
+                 _verified_source=source)
+    calls = []
+    original = storage._parse_calendar_match
+
+    def strict_parse(*args):
+        calls.append(1)
+        return original(*args)
+
+    monkeypatch.setattr(storage, '_parse_calendar_match', strict_parse)
+    if damage == 'content':
+        raw = json.loads(row.payload_json)
+        raw['audit_reason'] += ' changed'
+        row.payload_json = json.dumps(raw)
+    elif damage == 'branch':
+        scope['branch_id'] = 'foreign'
+    elif damage is not None:
+        setattr(row, damage, 'changed')
+    if damage is None:
+        assert storage.load_match_rows(session, **scope)[0] is source
+        assert calls == []
+    else:
+        with pytest.raises(ValueError):
+            storage.load_match_rows(session, **scope)
+        assert calls == [1], 'Changed content/physical columns must reach strict validation'
+
+
 def test_prevalidated_lifecycle_decodes_verified_scope_without_replaying_history():
     from tests.infrastructure.test_player_lifecycle_fork_remap import _source_payload
     from beta_engine.infrastructure.db.player_lifecycle_state import (

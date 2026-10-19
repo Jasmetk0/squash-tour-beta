@@ -1,3 +1,27 @@
+# Current verified integration — 19 October 2026
+
+**Merged:** PR #1546 into `buuk` at
+`bb38e5a17e6a9b667c8f47287fb992d8e00ee3be`. Bounded native
+W→next Season Week 1 and genuine next-season Editions/Entry/MatchEngine,
+ranking, public announcement, manual Save and full signed restore are
+production code. The final-head Fast CI, native HTTP/SQLite and W52/W61/W80
+browser acceptance all passed. These are NOT a full multi-season release.
+
+**Active independent candidate:** read-only Signed Season Summary. Consume
+only the actual previously validated Tour/MatchEngine receipts and Saved
+InitialWorld nationality, count actual Edition titles/finals/award points,
+show completed seasons in CS/EN Admin and Saved Viewer, compare any two
+recorded seasons, reject Working/future/foreign/tampered history. This
+candidate is not merged or approved until its real final-head tests pass;
+see [bounded summary contract](docs/CALENDAR_NATIVE_SIGNED_SEASON_SUMMARY_V1.md).
+
+**Still unsupported:** numeric Health, native prospect intake,
+correction/disciplinary sources, match-fork remap, complete season record
+catalog/notifications, Full Simulation and complete 50×61 reference
+release gate.
+
+## Earlier checkpoint history (retained)
+
 # Integration checkpoint — 19 October 2026 (verified merge and new candidate)
 
 **Verified `buuk`:** owner-merged PR #1545 at

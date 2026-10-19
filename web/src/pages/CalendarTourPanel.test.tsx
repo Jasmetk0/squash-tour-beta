@@ -277,7 +277,7 @@ describe('configured Tour consent (HTTP boundary mocked)',()=>{
 describe('Signed 15yo sporting review (Admin-only read, never a commit)',()=>{
   const hex=(c:string)=>c.repeat(64)
   const calendar={schema_version:'run_calendar.v1',weeks_per_year:52,season_start_year_week:35,start_year:2030,season_count:3}
-  const target={season_index:0,week:3}
+  const target={calendar,season_index:0,week:3}
   const source=()=>({
     schema_version:'native_tour_prospect_intake_preflight.v1',
     run_id:'r',branch_id:'b',saved_head_revision_id:'head',
@@ -294,7 +294,7 @@ describe('Signed 15yo sporting review (Admin-only read, never a commit)',()=>{
       played_counts_fingerprint:hex('1'),developed_players_fingerprint:hex('2'),
       recovered_players_fingerprint:hex('3'),target_players_fingerprint:hex('4'),
       sporting_birth_advance_fingerprint:hex('5'),signed_admission_week_fingerprint:hex('6'),
-      completed_week:{season_index:0,week:2},target_week:target,signed_writer_supported:false,
+      completed_week:{calendar,season_index:0,week:2},target_week:target,signed_writer_supported:false,
     },
   })
   beforeEach(()=>{
@@ -336,6 +336,26 @@ describe('Signed 15yo sporting review (Admin-only read, never a commit)',()=>{
     expect(screen.queryByLabelText('Verified read-only native sporting review')).not.toBeInTheDocument()
     expect(api.executeCalendarTour).not.toHaveBeenCalled()
   })
+  it.each(['completed-week','target-week','calendar'])(
+    'rejects a valid-hash sporting response for another %s',async(damage)=>{
+      const response=signed()
+      if(damage==='completed-week')response.sporting_week_projection.completed_week.week=1
+      if(damage==='target-week'){
+        response.target_week={...target,week:4}
+        response.sporting_week_projection.target_week=response.target_week
+      }
+      if(damage==='calendar')response.sporting_week_projection.completed_week.calendar={...calendar,weeks_per_year:61}
+      api.previewCalendarTourNativeBirthSporting.mockResolvedValue(response)
+      render(panel())
+      fireEvent.click(await screen.findByRole('button',{name:'Check next-week prospects'}))
+      await screen.findByText(/New Prospect/)
+      fireEvent.click(screen.getByRole('button',{name:'Review newborn sporting development'}))
+      await screen.findByRole('alert')
+      expect(screen.queryByLabelText('Verified read-only native sporting review')).not.toBeInTheDocument()
+      expect(api.executeCalendarTour).not.toHaveBeenCalled()
+      expect(api.saveCalendarTour).not.toHaveBeenCalled()
+    },
+  )
   it('drops a pending Signed birth proposal immediately after seed edit',async()=>{
     let resolve!:(value:unknown)=>void
     api.previewCalendarTourNativeBirthSporting.mockReturnValue(new Promise(r=>{resolve=r}))

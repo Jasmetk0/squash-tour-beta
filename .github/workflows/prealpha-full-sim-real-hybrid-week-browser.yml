@@ -43,6 +43,10 @@ jobs:
           python-version: '3.11'
           cache: pip
           cache-dependency-path: pyproject.toml
+      # The impact selector may skip pip installation altogether. setup-python's
+      # post-job cache save still executes, so its pip cache path must exist.
+      - name: Initialize pip cache for selector-only jobs
+        run: mkdir -p "$HOME/.cache/pip"
       - uses: actions/setup-node@v4
         with:
           node-version: '20'

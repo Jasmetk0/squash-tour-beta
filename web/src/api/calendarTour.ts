@@ -1,3 +1,5 @@
+import {tourWeekOffset} from './nativeTourCalendar'
+
 export type TourWeek = {calendar:{schema_version:string;weeks_per_year:number;season_start_year_week:number;start_year:number;season_count:number};season_index:number;week:number}
 export type TourResult = {edition_id:string;player_id:string;main_points:number;qualification_points:number;source_fingerprint:string;validity_weeks:number;completed_week:{season_index:number;week:number};first_publication_week:{season_index:number;week:number}}
 export type TourContribution = TourResult & {status?:string}
@@ -130,19 +132,25 @@ export type NativeSportingBirthPreflight=NativeProspectIntakePreflight&{
     target_players_fingerprint:string
     sporting_birth_advance_fingerprint:string
     signed_admission_week_fingerprint:string
-    completed_week:{season_index:number;week:number}
-    target_week:{season_index:number;week:number}
+    completed_week:TourWeek
+    target_week:TourWeek
     signed_writer_supported:false
   }
 }
 export function validateNativeSportingBirthPreflight(
   value:NativeSportingBirthPreflight,
-  run:string,branch:string,request:NativeSportingBirthPreviewRequest,
+  run:string,branch:string,request:NativeSportingBirthPreviewRequest,current:TourWeek,
 ):NativeSportingBirthPreflight {
   const v=validateNativeProspectIntake(
     value,run,branch,request.expected_saved_head,request.expected_checkpoint_fingerprint,
   )
   const s=value.sporting_week_projection
+  const target=tourWeekOffset(current,1)
+  const sameWeek=(actual:TourWeek|undefined,expected:TourWeek|null)=>Boolean(
+    actual&&expected&&actual.season_index===expected.season_index&&actual.week===expected.week
+    &&actual.calendar&&(['schema_version','weeks_per_year','season_start_year_week','start_year','season_count'] as const)
+      .every(key=>actual.calendar[key]===expected.calendar[key]),
+  )
   const hash=(h:unknown)=>typeof h==='string'&&/^[0-9a-f]{64}$/.test(h)
   if(!s||s.schema_version!=='native_tour_sporting_week_preflight.v1'
     ||v.native_activation_supported!==false||v.blocked!==true
@@ -162,8 +170,7 @@ export function validateNativeSportingBirthPreflight(
     ||!hash(s.signed_admission_week_fingerprint)
     ||!s.target_week||s.target_week.season_index!==v.target_week.season_index
     ||s.target_week.week!==v.target_week.week
-    ||!s.completed_week||!Number.isSafeInteger(s.completed_week.season_index)
-    ||!Number.isSafeInteger(s.completed_week.week))
+    ||!sameWeek(s.completed_week,current)||!sameWeek(s.target_week,target))
     throw Error('Signed native sporting birth proposal differs from saved input or Run clock')
   return value
 }

@@ -1,8 +1,8 @@
 import {useEffect,useRef,useState} from 'react'
 import {Link} from 'react-router-dom'
 import {useQueryClient} from '@tanstack/react-query'
-import {inspectCalendarTour,inspectCalendarTourPlayer,previewCalendarTour,executeCalendarTour,saveCalendarTour,replayCalendarContinuation} from '../api/client'
-import {validateTourView,validateTourPreview,type TourView,type TourPreview,type TourCommand,type TourAction,type TourContribution,type TourPlayer} from '../api/calendarTour'
+import {inspectCalendarTour,inspectCalendarTourPlayer,previewCalendarTour,executeCalendarTour,saveCalendarTour,replayCalendarContinuation,inspectCalendarTourSeason} from '../api/client'
+import {validateTourView,validateTourPreview,validateTourSeasonComparison,type TourSeasonComparison,type TourView,type TourPreview,type TourCommand,type TourAction,type TourContribution,type TourPlayer} from '../api/calendarTour'
 import {newCommandId} from '../admin/branchSimulation'
 import {tourWeekOffset,scheduleTourEdition} from '../api/nativeTourCalendar'
 import {useLanguage} from '../i18n/LanguageContext'
@@ -29,21 +29,25 @@ export function CalendarTourPanel({runId,branchId,head}:{runId:string;branchId:s
   const [selected,setSelected]=useState<string[]>([]),[contributions,setContributions]=useState<TourContribution[]|null>(null)
   const [notice,setNotice]=useState<string|null>(null)
   const [player,setPlayer]=useState(''),[playerDetail,setPlayerDetail]=useState<TourPlayer|null>(null)
-  const detailRequest=useRef(0)
-  const invalidate=()=>{inputs.current++;setReview(null);setConsent(false);setSaveConsent(false);setPlayerDetail(null);detailRequest.current++}
+  const detailRequest=useRef(0),seasonReadRequest=useRef(0)
+  const [historySeason,setHistorySeason]=useState(''),[comparisonSeason,setComparisonSeason]=useState('')
+  const [seasonReport,setSeasonReport]=useState<TourSeasonComparison|null>(null)
+  const invalidate=()=>{inputs.current++;setReview(null);setConsent(false);setSaveConsent(false);setPlayerDetail(null);detailRequest.current++;setSeasonReport(null);seasonReadRequest.current++}
   const read=async(signal?:AbortSignal)=>validateTourView(await inspectCalendarTour(runId,branchId,signal),runId,branchId)
   useEffect(()=>{
     const stamp=epoch.current
     const controller=new AbortController()
     let active=true
     const valid=()=>active&&epoch.current===stamp
-    setView(null);setError(null);setReview(null);setConsent(false);setSaveConsent(false);setSelected([]);setContributions(null);setNotice(null);setPlayer('');setPlayerDetail(null);detailRequest.current++;setBusy(true)
+    setView(null);setError(null);setReview(null);setConsent(false);setSaveConsent(false);setSelected([]);setContributions(null);setNotice(null);setPlayer('');setPlayerDetail(null);detailRequest.current++;setSeasonReport(null);seasonReadRequest.current++;setBusy(true)
     void read(controller.signal).then(v=>{if(valid()){
       setView(v)
       const clock=v.state?{...v.state.week,calendar:v.run_calendar??v.state.week.calendar}:null
       const first=clock?tourWeekOffset(clock,2):null
       setSeason(first?String(first.season_index+1):'')
       setWeek(first?String(first.week):'')
+      setHistorySeason(v.saved_completed_seasons.length?String(v.saved_completed_seasons[v.saved_completed_seasons.length-1]):'')
+      setComparisonSeason('')
     }})
       .catch(e=>{if(valid())setError(formatApiError(e))})
       .finally(()=>{if(valid())setBusy(false)})
@@ -102,6 +106,25 @@ export function CalendarTourPanel({runId,branchId,head}:{runId:string;branchId:s
       setReview(checked);setConsent(false)
     }catch(e){if(valid()){invalidate();setError(formatApiError(e))}}
     finally{if(epoch.current===stamp&&current.current===scope)setBusy(false)}
+  }
+  const loadSeasonReport=async()=>{
+    if(!view||!view.saved_completed_seasons.includes(Number(historySeason)))return
+    const stamp=epoch.current,headAtRequest=view.saved_head_revision_id
+    const requestId=++seasonReadRequest.current
+    const compared=comparisonSeason===''?null:Number(comparisonSeason)
+    setBusy(true);setError(null);setSeasonReport(null)
+    try{
+      const answer=validateTourSeasonComparison(
+        await inspectCalendarTourSeason(runId,branchId,Number(historySeason),compared),
+        runId,branchId,headAtRequest,Number(historySeason),compared,
+      )
+      if(epoch.current!==stamp||current.current!==scope||seasonReadRequest.current!==requestId)return
+      setSeasonReport(answer)
+    }catch(e){
+      if(epoch.current===stamp&&current.current===scope&&seasonReadRequest.current===requestId)setError(formatApiError(e))
+    }finally{
+      if(epoch.current===stamp&&current.current===scope&&seasonReadRequest.current===requestId)setBusy(false)
+    }
   }
   const names=new Map(view?.players.map(p=>[p.player_id,p.name])??[])
   const ready=Boolean(view&&!busy&&reason.trim()&&/^-?\d+$/.test(seed)&&Number.isSafeInteger(Number(seed))&&(view.saved||view.state))
@@ -165,6 +188,34 @@ export function CalendarTourPanel({runId,branchId,head}:{runId:string;branchId:s
           <p>{cs?'Závěrečný týden sezóny se dokončí podle uložených pravidel. Ranking nové sezóny využije účinnou sezónní politiku a skutečně odehrané výsledky.':'The final week uses its saved rules. The next season ranking uses its effective policy and actual played results.'}</p>
           {view.season_transition_blockers.length>0&&<ul>{view.season_transition_blockers.map(b=><li key={b}>{b.startsWith('edition_not_terminal:')?b:blockerLabels[b]?.[cs?0:1]??b}</li>)}</ul>}
           <button disabled={!ready||!view.saved||view.season_transition_blockers.length>0} onClick={()=>void perform('season-transition')}>{cs?'Zkontrolovat Season Transition':'Review Season Transition'}</button>
+        </section>}
+        {view.saved_completed_seasons.length>0&&<section aria-label="Saved native season summaries">
+          <h3>{cs?'Uložená historie sezón':'Saved season history'}</h3>
+          <p>{cs?'Pouze dokončené sezóny z ověřené Saved Revision. Udělené body nejsou totéž co aktuální Official Ranking.':'Only completed seasons from the verified Saved Revision. Awarded points differ from current Official Ranking points.'}</p>
+          <label>{cs?'Sezóna':'Season'}<select aria-label="Signed season" value={historySeason} onChange={e=>{setHistorySeason(e.target.value);setSeasonReport(null);seasonReadRequest.current++}}>
+            {view.saved_completed_seasons.map(index=><option key={index} value={index}>S{index+1}</option>)}
+          </select></label>
+          <label>{cs?'Porovnat s':'Compare with'}<select aria-label="Signed comparison season" value={comparisonSeason} onChange={e=>{setComparisonSeason(e.target.value);setSeasonReport(null);seasonReadRequest.current++}}>
+            <option value="">{cs?'Bez porovnání':'No comparison'}</option>
+            {view.saved_completed_seasons.filter(index=>index!==Number(historySeason)).map(index=><option key={index} value={index}>S{index+1}</option>)}
+          </select></label>
+          <button disabled={busy||!historySeason} onClick={()=>void loadSeasonReport()}>{cs?'Načíst přehled sezóny':'Load season summary'}</button>
+          {seasonReport&&<div aria-label="Verified season summary">
+            <p><strong>{cs?'Sezóna':'Season'} {seasonReport.selected.season_label}</strong> · {seasonReport.selected.completed_edition_count} {cs?'dokončených turnajů':'completed Editions'} · Saved HEAD <code>{seasonReport.saved_head_revision_id}</code></p>
+            <table aria-label="Country season comparison"><thead><tr><th>{cs?'Země':'Country'}</th><th>{cs?'Tituly':'Titles'}</th><th>{cs?'Finále':'Finals'}</th><th>{cs?'Udělené body':'Awarded points'}</th>{seasonReport.comparison&&<th>{cs?'Rozdíl titulů / bodů':'Delta titles / points'}</th>}</tr></thead>
+              <tbody>{seasonReport.selected.countries.map(row=>{
+                const change=seasonReport.country_deltas.find(x=>x.country_code===row.country_code)
+                return <tr key={row.country_code}><td>{row.country_code}</td><td>{row.titles}</td><td>{row.finals}</td><td>{row.awarded_points}</td>{seasonReport.comparison&&<td>{change?.titles_delta??0} / {change?.awarded_points_delta??0}</td>}</tr>
+              })}</tbody></table>
+            {seasonReport.comparison&&<p>{cs?'Srovnání proti sezóně':'Compared with season'} {seasonReport.comparison.season_label}. {cs?'Země přítomné pouze ve srovnávané sezóně':'Countries present only in the comparison season'}: {seasonReport.country_deltas.filter(r=>!seasonReport.selected.countries.some(c=>c.country_code===r.country_code)).map(r=>r.country_code).join(', ')||'—'}</p>}
+            <details><summary>{cs?'Turnaje a finalisté':'Editions and finalists'}</summary>
+              {seasonReport.selected.editions.map(e=><p key={e.edition_id}>{e.name} · W{e.week}: {e.champion_name} ({e.champion_country}) / {e.finalist_name} ({e.finalist_country})</p>)}
+            </details>
+            <details><summary>{cs?'Jednotliví hráči':'Individual players'}</summary>
+              <table><thead><tr><th>{cs?'Hráč':'Player'}</th><th>{cs?'Země':'Country'}</th><th>{cs?'Tituly':'Titles'}</th><th>{cs?'Body':'Points'}</th></tr></thead><tbody>{seasonReport.selected.players.map(p=><tr key={p.player_id}><td>{p.name}</td><td>{p.country_code}</td><td>{p.titles}</td><td>{p.awarded_points}</td></tr>)}</tbody></table>
+            </details>
+            <p>{cs?'Poslední ranking publikovaný v sezóně':'Last ranking published within the season'}: W{seasonReport.selected.last_week_published_ranking.week}</p>
+          </div>}
         </section>}
         {latest&&<><h3>{cs?'Oficiální ranking':'Official ranking'} · W{latest.week.week} · Best {latest.policy.best_n}</h3>
           <p>{view.saved?(cs?'Publikováno v Saved Revision.':'Published in Saved revision.'):(cs?'Kandidát ve Working Draft; Viewer stále čte poslední Saved Revision.':'Working Draft candidate; Viewer still reads the last Saved revision.')}</p>

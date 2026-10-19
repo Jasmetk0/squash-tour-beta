@@ -22,6 +22,7 @@ from beta_engine.application.run_prospect_materialization_service import (
 from beta_engine.application.world_package_run_adapter import WorldPackageRunAdapter
 from beta_engine.domain.calendar.run_calendar import RunCalendar
 from beta_engine.domain.countries import Country
+from beta_engine.domain.countries.population_resolver import resolve_population_for_calendar_year
 from beta_engine.domain.players.intake_volume_policy import IntakeVolumePolicy
 from beta_engine.domain.players.prospect_sporting_profile import (
     DEFAULT_PROSPECT_SPORTING_PROFILE_POLICY,
@@ -127,6 +128,7 @@ def build_native_calendar_cohort(
         birth_year = position.calendar_year - 15
         allocations = planner._allocate_countries(
             countries=ordered, population_year=birth_year, target_intake_count=volume,
+            population_resolver=resolve_population_for_calendar_year,
         )
         if sum(a.allocated_count for a in allocations) != volume:
             raise ValueError("Country allocation does not conserve native weekly cohort")
@@ -170,6 +172,12 @@ def build_native_calendar_cohort(
                         "canonical_sporting_profile": sporting.model_dump(mode="json"),
                         "canonical_sporting_profile_fingerprint": fingerprint,
                         "materialization_policy": source_policy,
+                        "country_population_evidence": {
+                            "requested_year": birth_year,
+                            "source_type": allocation.population_source_type,
+                            "source_year": allocation.population_source_year,
+                            "is_estimated": allocation.is_population_estimated,
+                        },
                     },
                     development_json={
                         "schema_version": PROFILE_VERSION,

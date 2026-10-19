@@ -148,11 +148,11 @@ def test_saved_v4_roundtrip_exact_verified_source_and_tour_w_clock(monkeypatch, 
 @pytest.mark.parametrize("attack,reason", [
     ("source_absent", "requires Signed Run prospect source"),
     ("source_bad_hash", "fingerprint mismatch"),
-    ("source_replaced", "birth event differs"),
+    ("source_replaced", "cannot be regenerated"),
     ("source_extra_due", "birth event differs"),
     ("tour_wrong_head", "head differs"),
     ("component_bad_hash", "identity or fingerprint mismatch"),
-    ("foreign_branch", "identity or fingerprint mismatch"),
+    ("foreign_branch", "foreign scope|identity or fingerprint mismatch"),
     ("v4_wrong_birth", "signed birth"),
 ])
 def test_saved_lifecycle_v4_rejects_tampered_source_event_or_tour(

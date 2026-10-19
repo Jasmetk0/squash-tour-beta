@@ -1,3 +1,27 @@
+# Pre-alpha dependency path — 19 October 2026 (after #1547 merge)
+
+**Owner-merged #1547:** `buuk` =
+`93a3f946e86af8265b8e7539d6c6ffcd174f3282`.
+Native configured Tour now offers real Signed completed-season
+historical reviews and country Award comparisons in addition to
+genuine multi-season Season Transition/Edition/MatchEngine/Official
+Ranking, manual Save and restore. This remains bounded runtime.
+
+**New PR candidate:** minimum extensible Signed career Records:
+country/player titles, finalist finishes and historical Edition-awarded
+points, true co-holder timelines, leaderboards, exact Saved Branch,
+temporal snapshots, fixed inclusive windows and country filters.
+[Contract](docs/CALENDAR_NATIVE_SIGNED_RECORDS_V1.md). Keep the
+final-head fast and real HTTP/SQLite / W52/W61/W80 acceptance mandatory.
+
+**Next blockers:** full general Master Records catalog, rolling and
+persisted Saved Views, Health/healing, annual native intake and
+historical initial 15-year-old cohort, correction/discipline,
+match-bearing Branch fork replay/remap, Full Simulation and complete
+pre-alpha reference 50×61 / full suite acceptance.
+
+## Earlier roadmap checkpoints (retained)
+
 # Pre-alpha development path — 19 October 2026
 
 **Owner-merged #1546:** `buuk` =

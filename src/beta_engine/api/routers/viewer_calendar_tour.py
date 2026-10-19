@@ -14,6 +14,50 @@ from beta_engine.infrastructure.db.calendar_tour import saved_tour
 router = APIRouter(tags=["viewer-calendar-tour"])
 
 
+@router.get("/viewer/runs/{run_id}/calendar-tour/records")
+def read_signed_career_records(
+    run_id: str,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+    as_of_season_index: int | None = Query(default=None, ge=0),
+    from_season_index: int = Query(default=0, ge=0),
+    country_code: str | None = Query(default=None),
+    leaderboard_limit: int = Query(default=20, ge=1, le=100),
+):
+    from beta_engine.application.calendar_tour_signed_records import (
+        signed_tour_records,
+    )
+    from beta_engine.infrastructure.db.initial_world_state import (
+        load_saved_initial_world,
+    )
+
+    try:
+        snapshot = runtime.repository.get_viewer_saved_revision_snapshot(
+            product_run_id=run_id,
+        )
+        payload = snapshot.revision.payload
+        state = saved_tour(
+            payload, run_id=run_id, branch_id=snapshot.revision.branch_id,
+        )
+        if state is None:
+            raise ValueError("Signed career records need a Saved native Tour")
+        world = load_saved_initial_world(
+            payload, run_id=run_id, branch_id=state.branch_id,
+        )
+        return {
+            **signed_tour_records(
+                state, world, as_of_season_index=as_of_season_index,
+                from_season_index=from_season_index,
+                country_code=country_code, leaderboard_limit=leaderboard_limit,
+            ),
+            "schema_version": "calendar_tour_signed_records_response.v1",
+            "saved_head_revision_id": snapshot.revision.revision_id,
+        }
+    except ViewerOfficialRunContextNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except (KeyError, ValueError, TypeError, ViewerOfficialRunContextConflictError) as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+
 @router.get("/viewer/runs/{run_id}/calendar-tour/seasons/{season_index}")
 def read_signed_season_summary(
     run_id: str,

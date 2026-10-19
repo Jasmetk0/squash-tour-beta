@@ -1,8 +1,8 @@
 import {useEffect,useRef,useState} from 'react'
 import {Link} from 'react-router-dom'
 import {useQueryClient} from '@tanstack/react-query'
-import {inspectCalendarTour,inspectCalendarTourPlayer,previewCalendarTour,executeCalendarTour,saveCalendarTour,replayCalendarContinuation,inspectCalendarTourSeason} from '../api/client'
-import {validateTourView,validateTourPreview,validateTourSeasonComparison,type TourSeasonComparison,type TourView,type TourPreview,type TourCommand,type TourAction,type TourContribution,type TourPlayer} from '../api/calendarTour'
+import {inspectCalendarTour,inspectCalendarTourPlayer,previewCalendarTour,executeCalendarTour,saveCalendarTour,replayCalendarContinuation,inspectCalendarTourSeason,inspectCalendarTourRecords} from '../api/client'
+import {validateTourView,validateTourPreview,validateTourSeasonComparison,validateTourCareerRecords,type TourCareerRecords,type TourSeasonComparison,type TourView,type TourPreview,type TourCommand,type TourAction,type TourContribution,type TourPlayer} from '../api/calendarTour'
 import {newCommandId} from '../admin/branchSimulation'
 import {tourWeekOffset,scheduleTourEdition} from '../api/nativeTourCalendar'
 import {useLanguage} from '../i18n/LanguageContext'
@@ -29,17 +29,19 @@ export function CalendarTourPanel({runId,branchId,head}:{runId:string;branchId:s
   const [selected,setSelected]=useState<string[]>([]),[contributions,setContributions]=useState<TourContribution[]|null>(null)
   const [notice,setNotice]=useState<string|null>(null)
   const [player,setPlayer]=useState(''),[playerDetail,setPlayerDetail]=useState<TourPlayer|null>(null)
-  const detailRequest=useRef(0),seasonReadRequest=useRef(0)
+  const detailRequest=useRef(0),seasonReadRequest=useRef(0),careerReadRequest=useRef(0)
   const [historySeason,setHistorySeason]=useState(''),[comparisonSeason,setComparisonSeason]=useState('')
   const [seasonReport,setSeasonReport]=useState<TourSeasonComparison|null>(null)
-  const invalidate=()=>{inputs.current++;setReview(null);setConsent(false);setSaveConsent(false);setPlayerDetail(null);detailRequest.current++;setSeasonReport(null);seasonReadRequest.current++}
+  const [recordAsOf,setRecordAsOf]=useState(''),[recordStart,setRecordStart]=useState('0'),[recordCountry,setRecordCountry]=useState('')
+  const [careerRecords,setCareerRecords]=useState<TourCareerRecords|null>(null)
+  const invalidate=()=>{inputs.current++;setReview(null);setConsent(false);setSaveConsent(false);setPlayerDetail(null);detailRequest.current++;setSeasonReport(null);seasonReadRequest.current++;setCareerRecords(null);careerReadRequest.current++}
   const read=async(signal?:AbortSignal)=>validateTourView(await inspectCalendarTour(runId,branchId,signal),runId,branchId)
   useEffect(()=>{
     const stamp=epoch.current
     const controller=new AbortController()
     let active=true
     const valid=()=>active&&epoch.current===stamp
-    setView(null);setError(null);setReview(null);setConsent(false);setSaveConsent(false);setSelected([]);setContributions(null);setNotice(null);setPlayer('');setPlayerDetail(null);detailRequest.current++;setSeasonReport(null);seasonReadRequest.current++;setBusy(true)
+    setView(null);setError(null);setReview(null);setConsent(false);setSaveConsent(false);setSelected([]);setContributions(null);setNotice(null);setPlayer('');setPlayerDetail(null);detailRequest.current++;setSeasonReport(null);seasonReadRequest.current++;setCareerRecords(null);careerReadRequest.current++;setBusy(true)
     void read(controller.signal).then(v=>{if(valid()){
       setView(v)
       const clock=v.state?{...v.state.week,calendar:v.run_calendar??v.state.week.calendar}:null
@@ -48,6 +50,8 @@ export function CalendarTourPanel({runId,branchId,head}:{runId:string;branchId:s
       setWeek(first?String(first.week):'')
       setHistorySeason(v.saved_completed_seasons.length?String(v.saved_completed_seasons[v.saved_completed_seasons.length-1]):'')
       setComparisonSeason('')
+      setRecordAsOf(v.saved_completed_seasons.length?String(v.saved_completed_seasons[v.saved_completed_seasons.length-1]):'')
+      setRecordStart('0');setRecordCountry('')
     }})
       .catch(e=>{if(valid())setError(formatApiError(e))})
       .finally(()=>{if(valid())setBusy(false)})
@@ -123,7 +127,31 @@ export function CalendarTourPanel({runId,branchId,head}:{runId:string;branchId:s
     }catch(e){
       if(epoch.current===stamp&&current.current===scope&&seasonReadRequest.current===requestId)setError(formatApiError(e))
     }finally{
-      if(epoch.current===stamp&&current.current===scope&&seasonReadRequest.current===requestId)setBusy(false)
+      // Input edits revoke the result, but do not start another operation.
+      // The completed read must still release busy within its original scope.
+      if(epoch.current===stamp&&current.current===scope)setBusy(false)
+    }
+  }
+  const loadCareerRecords=async()=>{
+    if(!view||!view.saved_completed_seasons.includes(Number(recordAsOf))
+      ||!view.saved_completed_seasons.includes(Number(recordStart))
+      ||Number(recordStart)>Number(recordAsOf)
+      ||(recordCountry!==''&&!/^[A-Z]{3}$/.test(recordCountry)))return
+    const stamp=epoch.current,headAtRequest=view.saved_head_revision_id
+    const requestId=++careerReadRequest.current
+    const filtered=recordCountry===''?null:recordCountry
+    setBusy(true);setError(null);setCareerRecords(null)
+    try{
+      const answer=validateTourCareerRecords(
+        await inspectCalendarTourRecords(runId,branchId,Number(recordAsOf),Number(recordStart),filtered),
+        runId,branchId,headAtRequest,Number(recordAsOf),Number(recordStart),filtered,
+      )
+      if(epoch.current!==stamp||current.current!==scope||careerReadRequest.current!==requestId)return
+      setCareerRecords(answer)
+    }catch(e){
+      if(epoch.current===stamp&&current.current===scope&&careerReadRequest.current===requestId)setError(formatApiError(e))
+    }finally{
+      if(epoch.current===stamp&&current.current===scope)setBusy(false)
     }
   }
   const names=new Map(view?.players.map(p=>[p.player_id,p.name])??[])
@@ -215,6 +243,31 @@ export function CalendarTourPanel({runId,branchId,head}:{runId:string;branchId:s
               <table><thead><tr><th>{cs?'Hráč':'Player'}</th><th>{cs?'Země':'Country'}</th><th>{cs?'Tituly':'Titles'}</th><th>{cs?'Body':'Points'}</th></tr></thead><tbody>{seasonReport.selected.players.map(p=><tr key={p.player_id}><td>{p.name}</td><td>{p.country_code}</td><td>{p.titles}</td><td>{p.awarded_points}</td></tr>)}</tbody></table>
             </details>
             <p>{cs?'Poslední ranking publikovaný v sezóně':'Last ranking published within the season'}: W{seasonReport.selected.last_week_published_ranking.week}</p>
+          </div>}
+        </section>}
+        {view.saved_completed_seasons.length>0&&<section aria-label="Signed career records">
+          <h3>{cs?'Historické rekordy a rekordmani':'Historical records and holders'}</h3>
+          <p>{cs?'Výhradně dokončené a uložené sezóny. Rekordy ze skutečných turnajů, nikoli aktuální body v Official Rankingu. Shoda na čele znamená více rekordmanů.':'Completed Saved seasons only. Real Edition records, not current Official Ranking points. Ties retain all record holders.'}</p>
+          <label>{cs?'Konec období':'Period ends at'}<select aria-label="Records as of season" value={recordAsOf} onChange={e=>{setRecordAsOf(e.target.value);if(Number(recordStart)>Number(e.target.value))setRecordStart('0');setCareerRecords(null);careerReadRequest.current++}}>
+            {view.saved_completed_seasons.map(i=><option key={i} value={i}>S{i+1}</option>)}
+          </select></label>
+          <label>{cs?'Začátek období':'Period begins at'}<select aria-label="Records from season" value={recordStart} onChange={e=>{setRecordStart(e.target.value);setCareerRecords(null);careerReadRequest.current++}}>
+            {view.saved_completed_seasons.filter(i=>i<=Number(recordAsOf)).map(i=><option key={i} value={i}>S{i+1}</option>)}
+          </select></label>
+          <label>{cs?'Země (ISO-3, nepovinné)':'Country (ISO-3, optional)'}<input aria-label="Records country" maxLength={3} placeholder="CZE" value={recordCountry} onChange={e=>{setRecordCountry(e.target.value.trim().toUpperCase());setCareerRecords(null);careerReadRequest.current++}}/></label>
+          <button disabled={busy||!recordAsOf||!view.saved_completed_seasons.includes(Number(recordStart))||(recordCountry!==''&&!/^[A-Z]{3}$/.test(recordCountry))} onClick={()=>void loadCareerRecords()}>{cs?'Načíst historické rekordy':'Load historical records'}</button>
+          {careerRecords&&<div aria-label="Verified career records">
+            <p><strong>{cs?'Období':'Period'} S{careerRecords.from_season_index+1}–S{careerRecords.as_of_season_index+1}</strong> · {careerRecords.completed_edition_count} {cs?'dokončených turnajů':'completed Editions'} · {cs?'Filtr':'Filter'} {careerRecords.country_code??(cs?'všechny země':'all countries')} · Saved HEAD <code>{careerRecords.saved_head_revision_id}</code></p>
+            {careerRecords.records.map(entry=>{
+              const name=entry.metric==='titles'?(cs?'Tituly':'Titles'):entry.metric==='finals'?(cs?'Finálové účasti bez titulu':'Runner-up finishes'):(cs?'Udělené body z turnajů':'Original Edition awarded points')
+              return <details key={entry.record_id}>
+                <summary>{entry.scope==='player'?(cs?'Hráči':'Players'):(cs?'Země':'Countries')} · {name} · {cs?'Rekord':'Record'}: {entry.value} · {cs?'Rekordmani':'Holders'}: {entry.holders.map(h=>h.label).join(', ')||'—'}</summary>
+                <table aria-label={entry.record_id}><thead><tr><th>#</th><th>{cs?'Jméno / země':'Name / country'}</th><th>{cs?'Země':'Country'}</th><th>{cs?'Hodnota':'Value'}</th></tr></thead>
+                  <tbody>{entry.leaderboard.map(h=><tr key={h.entity_id}><td>{h.rank}</td><td>{h.label}</td><td>{h.country_code}</td><td>{h[entry.metric]}</td></tr>)}</tbody></table>
+                <p>{cs?'Historie rekordmanů – ke konci uložené sezóny':'Record-holder history at each Saved season closure'}</p>
+                {entry.holder_history.map(change=><p key={change.season_index}>S{change.season_index+1}: {change.record_value} · {change.holder_labels.join(', ')} · {change.change} · <code>{change.boundary_command_id}</code></p>)}
+              </details>
+            })}
           </div>}
         </section>}
         {latest&&<><h3>{cs?'Oficiální ranking':'Official ranking'} · W{latest.week.week} · Best {latest.policy.best_n}</h3>

@@ -1,3 +1,32 @@
+# Current verified integration and next records candidate — 19 October 2026
+
+**Verified owner merge:** PR #1547 to `buuk` at
+`93a3f946e86af8265b8e7539d6c6ffcd174f3282`. The production
+bounded native Tour now publishes Signed completed-season summaries,
+country/Edition/player actual awards, historical Admin/Viewer season
+comparison, and the existing genuine next-season MatchEngine/Entry,
+Official Ranking, Save, restore and Season Transition. 13 GitHub checks
+were successful; original native full HTTP/SQLite Signed Restore reported
+`1 passed in 1159.23s` in its job log even though GitHub's workflow
+status was stale during the last inspection. Owner performed the merge.
+
+**New independent candidate:** Signed native career Records projection;
+six extensible country/player titles, runner-up and Edition-awarded-point
+metrics with co-holder chronological history, inclusive fixed season
+window, optional country filter, CS/EN Admin, Selected Viewer Saved
+Branch, historical cutoff/negative guard and restart equivalence.
+[Full bounded contract](docs/CALENDAR_NATIVE_SIGNED_RECORDS_V1.md).
+This candidate is NOT merged or green until its latest-head Fast CI,
+real HTTP/SQLite and native browser gates pass.
+
+**Remaining unsupported:** full Master §31.39 Records catalog,
+persistent Saved Views, rolling period presets, numeric Health and
+healing, automatic native intake, correction/discipline, protected
+match-fork remap, Full Simulation and complete 50×61 reference release
+certification.
+
+## Earlier checkpoint history (retained)
+
 # Current verified integration — 19 October 2026
 
 **Merged:** PR #1546 into `buuk` at

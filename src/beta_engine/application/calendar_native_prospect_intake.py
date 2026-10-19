@@ -149,7 +149,7 @@ def inspect_native_prospect_intake(
 
     with repository._session_factory() as session:
         session.execute(text("BEGIN"))
-        context, _tour, _signed = CalendarTourService(repository)._context(
+        context, state, _signed = CalendarTourService(repository)._context(
             session, run_id, branch_id,
         )
         clock, revision, world, _health, checkpoint, _saved, _evidence = context
@@ -164,7 +164,7 @@ def inspect_native_prospect_intake(
         snapshot = validate_live_run_prospect_source_against_saved(
             session, revision.saved_revision.payload, run_id=run_id,
         )
-        return preview_native_prospect_intake(
+        review = preview_native_prospect_intake(
             current=checkpoint.week, run_id=run_id, branch_id=branch_id,
             saved_head_revision_id=revision.saved_head_revision_id,
             checkpoint_fingerprint=checkpoint.fingerprint,
@@ -173,3 +173,48 @@ def inspect_native_prospect_intake(
             initial_player_ids={p.player_id for p in world.players},
             current_player_ids={p.player_id for p in checkpoint.players},
         )
+        # The real Tour still blocks native source activation. Stage a complete
+        # versioned birth+57-attribute lifecycle successor only when the source
+        # is Saved/verified, the Tour owns this week and the due cohort is clean.
+        # No new player, lifecycle row, sporting or Health state is persisted.
+        if snapshot is not None and state is not None and review["due"] and not review["problems"]:
+            from beta_engine.domain.players.calendar_prospect_birth import (
+                NATIVE_SOURCE_TYPE, advance_calendar_lifecycle_with_prospects,
+                build_calendar_prospect_birth_event,
+            )
+            from beta_engine.infrastructure.db.player_lifecycle_state import get_lifecycle
+
+            due_ids = {item["player_id"] for item in review["due"]}
+            due_rows = [row for row in snapshot.records if row["prospect_id"] in due_ids]
+            if all(row.get("source_type") == NATIVE_SOURCE_TYPE for row in due_rows):
+                if state.week != checkpoint.week:
+                    raise ValueError("Tour week differs from native intake sporting owner")
+                predecessor = get_lifecycle(
+                    session, run_id=run_id, branch_id=branch_id, week=state.week,
+                )
+                if predecessor is None:
+                    raise ValueError("Native intake lifecycle predecessor is missing")
+                target = RunWeekPosition.model_validate(review["target_week"])
+                event = build_calendar_prospect_birth_event(
+                    predecessor=predecessor, target=target, source=snapshot,
+                    world_package_id=world.world_package_id,
+                )
+                proposed = advance_calendar_lifecycle_with_prospects(
+                    predecessor, event,
+                    tuple(s for a in state.editions for s in a.submissions),
+                )
+                if len(event.births) != len(review["due"]):
+                    raise ValueError("Native birth evidence differs from the verified due cohort")
+                review["lifecycle_admission_projection"] = {
+                    "schema_version": "native_tour_lifecycle_admission_projection.v1",
+                    "birth_event_fingerprint": event.fingerprint,
+                    "predecessor_lifecycle_fingerprint": predecessor.fingerprint,
+                    "proposed_lifecycle_fingerprint": proposed.fingerprint,
+                    "proposed_lifecycle_schema": proposed.schema_version,
+                    "birth_count": len(event.births),
+                    "projected_population_count": len(proposed.players),
+                    "sporting_health_saved_activation_supported": False,
+                }
+                review.pop("preflight_fingerprint")
+                review["preflight_fingerprint"] = canonical_hash(review)
+        return review

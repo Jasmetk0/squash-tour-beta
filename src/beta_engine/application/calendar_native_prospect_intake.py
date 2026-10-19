@@ -16,7 +16,7 @@ from beta_engine.domain.run_packages import canonical_hash
 def preview_native_prospect_intake(
     *, current: RunWeekPosition, run_id: str, branch_id: str,
     saved_head_revision_id: str, checkpoint_fingerprint: str,
-    source, initial_player_ids: set[str], current_player_ids: set[str],
+    world_package_id: str, source, initial_player_ids: set[str], current_player_ids: set[str],
 ) -> dict:
     """Plan the exact next transition from one immutable Saved source snapshot.
 
@@ -70,6 +70,9 @@ def preview_native_prospect_intake(
             problems.append({"prospect_id": pid, "code": "source_calendar_disagreement"})
             continue
         if birth_position != position:
+            continue
+        if row.get("world_id") != world_package_id:
+            problems.append({"prospect_id": pid, "code": "foreign_world_package"})
             continue
         if row.get("status") != "prospect":
             problems.append({"prospect_id": pid, "code": "unsupported_lifecycle_status"})
@@ -165,6 +168,7 @@ def inspect_native_prospect_intake(
             current=checkpoint.week, run_id=run_id, branch_id=branch_id,
             saved_head_revision_id=revision.saved_head_revision_id,
             checkpoint_fingerprint=checkpoint.fingerprint,
+            world_package_id=world.world_package_id,
             source=snapshot,
             initial_player_ids={p.player_id for p in world.players},
             current_player_ids={p.player_id for p in checkpoint.players},

@@ -24,7 +24,7 @@ class SignedSource:
 def source_at(clock, target, *, pid="prospect-1", prepared=True, **overrides):
     actual = target.calendar_position
     row = dict(
-        prospect_id=pid, display_name="New Athlete",
+        prospect_id=pid, world_id="world", display_name="New Athlete",
         country_code="CZE", status="prospect",
         birth_year=actual.calendar_year - 15,
         birth_year_week=actual.year_week,
@@ -62,7 +62,8 @@ def preflight(clock, current, source):
     return preview_native_prospect_intake(
         current=current, run_id="run", branch_id="branch",
         saved_head_revision_id="saved-head", checkpoint_fingerprint="c" * 64,
-        source=source, initial_player_ids={"initial-player"},
+        source=source, world_package_id="world",
+        initial_player_ids={"initial-player"},
         current_player_ids={"initial-player"},
     )
 
@@ -112,6 +113,7 @@ def test_past_and_future_birthdays_are_not_preemptively_activated():
     ({"age": 16}, "source_calendar_disagreement"),
     ({"country_code": "XX"}, "country_identity_invalid"),
     ({"status": "retired"}, "unsupported_lifecycle_status"),
+    ({"world_id": "foreign-world"}, "foreign_world_package"),
 ])
 def test_incompatible_birth_or_source_fails_closed(damage, code):
     clock = RunCalendar(52, 35, 2030, 3)

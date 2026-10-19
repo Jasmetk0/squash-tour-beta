@@ -25,9 +25,12 @@ def test_native_intake_preflight_requires_signed_shared_source_and_never_activat
         assert empty["target_week"]["week"] == 3
 
         template = _record()
+        world = repo.get_initial_world(run_id="run", branch_id="branch")
+        assert world is not None
         record = RunProspectRecord(**(
             template.__dict__ | {
-                "run_id": "run", "prospect_id": "intake-prospect",
+                "run_id": "run", "world_id": world.world_package_id,
+                "prospect_id": "intake-prospect",
                 "season_start_year": 2030, "season_label": "2030",
                 "season_week": 3, "calendar_year": 2030,
                 "year_week": 3, "birth_year": 2015, "birth_year_week": 3,

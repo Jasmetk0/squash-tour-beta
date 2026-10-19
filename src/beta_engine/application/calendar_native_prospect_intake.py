@@ -194,7 +194,14 @@ def inspect_native_prospect_intake(
                 )
                 if predecessor is None:
                     raise ValueError("Native intake lifecycle predecessor is missing")
-                target = RunWeekPosition.model_validate(review["target_week"])
+                next_position = checkpoint.week.calendar.position_at_ordinal(
+                    checkpoint.week.ordinal + 1,
+                )
+                target = RunWeekPosition(
+                    calendar=checkpoint.week.calendar,
+                    season_index=next_position.season_index,
+                    week=next_position.season_week,
+                )
                 event = build_calendar_prospect_birth_event(
                     predecessor=predecessor, target=target, source=snapshot,
                     world_package_id=world.world_package_id,

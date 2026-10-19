@@ -1,7 +1,7 @@
 import {useEffect,useRef,useState} from 'react'
 import {Link} from 'react-router-dom'
 import {useQueryClient} from '@tanstack/react-query'
-import {inspectCalendarTour,inspectCalendarTourPlayer,previewCalendarTour,executeCalendarTour,saveCalendarTour,replayCalendarContinuation,inspectCalendarTourSeason,inspectCalendarTourRecords,inspectNativeTourProspectIntake,previewNativeTourBirthSporting} from '../api/client'
+import {inspectCalendarTour,inspectCalendarTourPlayer,previewCalendarTour,executeCalendarTour,saveCalendarTour,replayCalendarContinuation,inspectCalendarTourSeason,inspectCalendarTourRecords,inspectNativeTourProspectIntake,previewCalendarTourNativeBirthSporting} from '../api/client'
 import {validateTourView,validateTourPreview,validateTourSeasonComparison,validateTourCareerRecords,validateNativeProspectIntake,validateNativeSportingBirthPreflight,type NativeSportingBirthPreflight,type NativeProspectIntakePreflight,type TourCareerRecords,type TourSeasonComparison,type TourView,type TourPreview,type TourCommand,type TourAction,type TourContribution,type TourPlayer} from '../api/calendarTour'
 import {newCommandId} from '../admin/branchSimulation'
 import {tourWeekOffset,scheduleTourEdition} from '../api/nativeTourCalendar'
@@ -185,7 +185,7 @@ export function CalendarTourPanel({runId,branchId,head}:{runId:string;branchId:s
     setBusy(true);setError(null);setBirthSportingReport(null)
     try {
       const result=validateNativeSportingBirthPreflight(
-        await previewNativeTourBirthSporting(runId,branchId,request),
+        await previewCalendarTourNativeBirthSporting(runId,branchId,request),
         runId,branchId,request,
       )
       if(epoch.current!==stamp||current.current!==scope||inputs.current!==inputsAtRequest

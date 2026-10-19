@@ -93,6 +93,14 @@ def test_real_cross_season_edition_preannounce_play_rank_and_saved_viewer(
         assert empty_viewer["selected"]["countries"]==[]
         assert _request("GET",viewer+"/seasons/1")[0]==409
         assert _request("GET",tour_url(server)+"/seasons/1")[0]==409
+        # Signed S1 closure is visible without inventing a first-year Cup.
+        # S2 remains invisible until its *actual* terminal Saved transition.
+        code,early_records=_request("GET",viewer+"/records")
+        assert code==200,early_records
+        assert early_records["as_of_season_index"]==0
+        assert early_records["completed_edition_count"]==0
+        assert all(record["value"]==0 for record in early_records["records"])
+        assert _request("GET",viewer+"/records?as_of_season_index=1")[0]==409
         # Real Entry approvals, Saved draw, MatchEngine, frozen awards
         # and confirmed results must work after the season boundary.
         edition(server,"season2-cup",size=4)
@@ -135,6 +143,40 @@ def test_real_cross_season_edition_preannounce_play_rank_and_saved_viewer(
         assert public_comparison["country_deltas"]==comparison["country_deltas"]
         assert _request("GET",viewer+"/seasons/2")[0]==409
         assert _request("GET",tour_url(server)+"/seasons/2")[0]==409
+        records_url=tour_url(server)+"/records"
+        code,complete_records=_request(
+            "GET",records_url+"?as_of_season_index=1"
+        )
+        assert code==200,complete_records
+        assert complete_records["completed_seasons"]==[0,1]
+        assert complete_records["completed_edition_count"]==1
+        player_titles=next(r for r in complete_records["records"]
+                           if r["record_id"]=="native_tour.player.titles.v1")
+        assert player_titles["value"]==1
+        assert len(player_titles["holders"])==1
+        assert len(player_titles["holder_history"])==1
+        assert player_titles["holder_history"][0]["season_index"]==1
+        country_titles=next(r for r in complete_records["records"]
+                            if r["record_id"]=="native_tour.country.titles.v1")
+        assert country_titles["value"]==1
+        assert sum(r["value"] for r in complete_records["records"]
+                   if r["scope"]=="country" and r["metric"]=="titles")==1
+        code,public_records=_request("GET",viewer+"/records")
+        assert code==200,public_records
+        assert public_records==complete_records
+        code,first_year=_request("GET",viewer+"/records?as_of_season_index=0")
+        assert code==200,first_year
+        assert first_year["completed_edition_count"]==0
+        assert all(r["value"]==0 for r in first_year["records"])
+        assert _request("GET",viewer+"/records?as_of_season_index=2")[0]==409
+        assert _request("GET",records_url+"?from_season_index=2")[0]==409
+        champion_country=player_titles["holders"][0]["country_code"]
+        code,filtered=_request("GET",viewer+"/records?country_code="+champion_country)
+        assert code==200,filtered
+        assert filtered["country_code"]==champion_country
+        assert all(row["country_code"]==champion_country
+                   for record in filtered["records"]
+                   for row in record["leaderboard"])
         planned_original=repo.get_branch_saved_revision(
             revision_id=planned_save["revision_id"]
         )
@@ -157,6 +199,12 @@ def test_real_cross_season_edition_preannounce_play_rank_and_saved_viewer(
         assert status==200,restarted_summary
         assert restarted_summary["selected"]==comparison["selected"]
         assert restarted_summary["country_deltas"]==comparison["country_deltas"]
+        code,restarted_records=_request(
+            "GET",restarted.base_url+"/viewer/runs/run/calendar-tour/records"
+        )
+        assert code==200,restarted_records
+        assert restarted_records==complete_records
+
         status,published=_request("GET",restarted.base_url+"/viewer/runs/run/calendar-tour")
         assert status==200,published
         assert published["official_ranking"]["week"]["season_index"]==2

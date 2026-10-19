@@ -248,6 +248,29 @@ class CalendarTourService:
                 )
         return context, state, signed
 
+    def season_summary(self, *, run_id, branch_id, season_index, compare_to=None):
+        """Read only an already authenticated Saved Tour, never the Working candidate."""
+        from beta_engine.application.calendar_tour_season_summary import (
+            compare_completed_seasons,
+        )
+
+        with self.repository._session_factory() as session:
+            session.execute(text("BEGIN"))
+            ctx, _working, signed = self._context(session, run_id, branch_id)
+            _clock, rev, world, _health, _checkpoint, _saved, _evidence = ctx
+            if signed is None or world is None:
+                raise ValueError("Season summary requires a Saved configured Tour")
+            summary = compare_completed_seasons(
+                signed, world, season_index, compare_to,
+            )
+            return {
+                "schema_version": "calendar_tour_season_comparison.v1",
+                "run_id": run_id,
+                "branch_id": branch_id,
+                "saved_head_revision_id": rev.saved_head_revision_id,
+                **summary,
+            }
+
     def inspect(self, *, run_id, branch_id):
         with self.repository._session_factory() as session:
             session.execute(text("BEGIN"))
@@ -333,6 +356,13 @@ class CalendarTourService:
                 "saved_head_revision_id": rev.saved_head_revision_id,
                 "draft_version": rev.working_draft.draft_version,
                 "run_calendar": _clock.to_metadata(),
+                "saved_completed_seasons": (
+                    __import__(
+                        "beta_engine.application.calendar_tour_season_summary",
+                        fromlist=["completed_season_indices"],
+                    ).completed_season_indices(signed)
+                    if signed else ()
+                ),
                 "checkpoint_fingerprint": checkpoint_fingerprint,
                 "tour_fingerprint": state.fingerprint if state else None,
                 "saved": bool(state and signed == state and cp == saved),

@@ -328,6 +328,9 @@ def _validate_chain(
     ):
         raise ValueError("Calendar Health history requires its opening state")
     for predecessor, target in pairwise(calendar_states):
+        if (isinstance(predecessor, CalendarNativeHealthTransitionState)
+                and not isinstance(target, CalendarNativeHealthTransitionState)):
+            raise ValueError("Native v3 Health history cannot downgrade its transition authority")
         if target.week.calendar.season_count < predecessor.week.calendar.season_count:
             raise ValueError("Calendar Health history cannot contract its horizon")
         if isinstance(target, CalendarNativeHealthTransitionState):
@@ -389,11 +392,21 @@ def load_saved_health(
     tuple[PlayerHealthWeekState | CalendarInitialHealthState | CalendarHealthState | CalendarNativeHealthTransitionState, ...]
     | None
 ):
-    component = payload.get("content", {}).get(PLAYER_HEALTH_COMPONENT_KEY)
+    content = payload.get("content", {})
+    component = content.get(PLAYER_HEALTH_COMPONENT_KEY)
     if component is None:
+        lifecycle = content.get("player_lifecycle", {})
+        if isinstance(lifecycle, dict) and any(
+            isinstance(state, dict)
+            and state.get("schema_version") == "player_lifecycle_calendar_state.v4"
+            for state in lifecycle.get("states", ())
+        ):
+            raise ValueError("Saved v4 lifecycle requires its Signed native Health transition")
         return None
     if not isinstance(component, dict) or set(component) != {"fingerprint", "states"}:
         raise ValueError("Invalid Saved Revision player-health component")
+    if not isinstance(component["states"], list) or not component["states"]:
+        raise ValueError("Saved Health component requires a nonempty state history")
     states = tuple(
         _parse_health_json(json.dumps(state)) for state in component["states"]
     )

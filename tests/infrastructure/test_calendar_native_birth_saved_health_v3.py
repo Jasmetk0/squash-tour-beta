@@ -245,3 +245,37 @@ def test_native_v3_admin_downgrade_is_rejected_before_sqlite_mutation(monkeypatc
             assert get_health(session, run_id="r", branch_id="b", week=health.week) == health
     finally:
         engine.dispose()
+
+
+@pytest.mark.parametrize("damage", ["absent", "empty"])
+def test_saved_birth_cannot_omit_the_entire_health_authority(monkeypatch,damage):
+    payload, life, _ = _signed_fixture(monkeypatch)
+    if damage=="empty":
+        payload["content"]["player_health_state"]=_component(())
+    with pytest.raises(ValueError,match="Signed native Health|nonempty state history"):
+        load_saved_health(payload,run_id="r",branch_id="b")
+
+
+def test_saved_chain_cannot_downgrade_a_natural_v3_week_to_legacy_admin_v2():
+    from beta_engine.domain.players.calendar_health import CalendarHealthState,CalendarHealthEditEvidence
+    from beta_engine.infrastructure.db.player_health_state import _validate_chain
+    from tests.domain.test_calendar_prospect_birth_event import lifecycle
+    clock=RunCalendar(52,35,2030,3)
+    first=lifecycle(clock,week(clock,0,1))
+    second=advance_calendar_lifecycle(first,week(clock,0,2))
+    baseline=health_for(first)
+    health=advance_native_health_week(previous_health=baseline,
+        previous_lifecycle=first,next_lifecycle=second)
+    forged=CalendarHealthState(
+        **{key:getattr(health,key) for key in ("run_id","branch_id","players",
+            "source_initial_world_fingerprint","origin")},
+        week=week(clock,0,3),predecessor_fingerprint=health.fingerprint,
+        admin_edits=(CalendarHealthEditEvidence(
+            command_id="invented-edit",request_fingerprint="a"*64,
+            before_state_fingerprint=health.fingerprint,source_run_id="r",source_branch_id="b",
+            player_id="existing",mode="current_state_correction",audit_label="Admin",
+            audit_reason="Cannot replace signed natural authority with v2",
+        ),),stage_provenance="forged-after-v3",
+    )
+    with pytest.raises(ValueError,match="cannot downgrade"):
+        _validate_chain((baseline,health,forged))

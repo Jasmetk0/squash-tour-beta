@@ -261,7 +261,8 @@ def _parse_calendar_match(serialized: str) -> CalendarMatchEvidence:
     raise ValueError("Unknown calendar match evidence schema; refuse reinterpretation")
 
 
-def load_match_rows(session: Session, *, run_id: str, branch_id: str) -> tuple[CalendarMatchEvidence, ...]:
+def load_match_rows(session: Session, *, run_id: str, branch_id: str,
+                    _verified_source=None) -> tuple[CalendarMatchEvidence, ...]:
     rows = session.scalars(
         select(CalendarStandaloneMatchModel)
         .where(CalendarStandaloneMatchModel.run_id == run_id,
@@ -270,6 +271,21 @@ def load_match_rows(session: Session, *, run_id: str, branch_id: str) -> tuple[C
     ).all()
     states = []
     for row in rows:
+        if _verified_source is not None:
+            source = _verified_source
+            expected = source.fingerprint
+            if (
+                (source.run_id, source.branch_id, source.match_id, source.command_id,
+                 source.request_fingerprint, expected)
+                == (run_id, branch_id, row.match_id, row.command_id,
+                    row.request_fingerprint, row.fingerprint)
+                and canonical_hash(json.loads(row.payload_json)) == expected
+            ):
+                # The caller authenticated this exact Saved root in its current
+                # transaction. Hash actual live values and all physical scope
+                # columns; never trust only the stored fingerprint column.
+                states.append(source)
+                continue
         state = _parse_calendar_match(row.payload_json)
         if (
             (state.run_id, state.branch_id, state.match_id, state.command_id,
@@ -318,11 +334,16 @@ def replace_saved_knockout_with_prepared_awards(
     session.flush()
 
 
-def capture_saved_calendar_match(session: Session, payload: dict, *, run_id: str, branch_id: str) -> None:
+def capture_saved_calendar_match(session: Session, payload: dict, *, run_id: str, branch_id: str,
+                                 _defer_full_verification: bool = False) -> None:
     states = load_match_rows(session, run_id=run_id, branch_id=branch_id)
     from beta_engine.infrastructure.db.calendar_sporting_checkpoint import capture_checkpoint
     capture_checkpoint(session, payload, states[0] if len(states) == 1 else None,
-                       run_id=run_id, branch_id=branch_id)
+                       run_id=run_id, branch_id=branch_id,
+                       _defer_full_verification=_defer_full_verification)
+    from beta_engine.infrastructure.db.calendar_tour import capture_tour
+    capture_tour(session, payload, run_id=run_id, branch_id=branch_id,
+                 _defer_full_verification=_defer_full_verification)
     if states:
         # Exactly one operation-scoped completed standalone match in this slice.
         if len(states) != 1:
@@ -372,38 +393,180 @@ def _parse_saved_calendar_match_evidence(payload: dict, *, run_id: str, branch_i
     return state
 
 
-def load_saved_calendar_match(payload: dict, *, run_id: str, branch_id: str) -> CalendarMatchEvidence | None:
-    """Validate both the played MatchEngine evidence and the full Saved owner."""
-    state = _parse_saved_calendar_match_evidence(
-        payload, run_id=run_id, branch_id=branch_id,
+def decode_prevalidated_calendar_sources(payload: dict, *, run_id: str, branch_id: str):
+    """Decode an ALREADY authenticated Saved HEAD without a redundant replay.
+
+    INTERNAL ONLY: its caller MUST first pass these exact immutable payload bytes
+    through repository._validated_branch_revision_state_in_session. That gate
+    checks the signed hash, identity, ancestry and all sporting/Tour components;
+    its content-digest keyed validation cache invalidates on any byte mutation.
+    Use only for an authenticated Admin read or an atomically validated restore
+    which has just checked BOTH immutable source payloads. Never use with raw
+    history, public Viewer, a new/unverified Save candidate, or unknown JSON.
+    A Save coordinator may decode its authenticated PREVIOUS Saved HEAD as a
+    prefix; it must still fully validate the new candidate and every new event.
+    Re-parse and re-check each source's scope/fingerprint; the only work elided
+    here is a second full MatchEngine/ranking fold of the very same Signed bytes.
+    """
+    evidence = _parse_saved_calendar_match_evidence(
+        payload, run_id=run_id, branch_id=branch_id
     )
+    from beta_engine.domain.players.calendar_sporting_checkpoint import (
+        CalendarSportingCheckpoint,
+    )
+    from beta_engine.domain.tournaments.calendar_tour import CalendarTourState
+
+    content = payload.get("content", {})
+    cp_raw = content.get("calendar_player_sporting_checkpoint")
+    checkpoint = None
+    checkpoint_fingerprint = None
+    if cp_raw is not None:
+        if not isinstance(cp_raw, dict) or set(cp_raw) != {"fingerprint", "state"}:
+            raise ValueError("Invalid prevalidated Saved sporting component")
+        checkpoint = CalendarSportingCheckpoint.model_validate_json(json.dumps(cp_raw["state"]))
+        checkpoint_fingerprint = checkpoint.fingerprint
+        if (checkpoint.run_id, checkpoint.branch_id, checkpoint_fingerprint) != (
+            run_id, branch_id, cp_raw["fingerprint"]
+        ):
+            raise ValueError("Prevalidated Saved sporting scope/hash changed")
+
+    tour_raw = content.get("calendar_tour_authority")
+    tour = None
+    if tour_raw is not None:
+        if not isinstance(tour_raw, dict) or set(tour_raw) != {"fingerprint", "state"}:
+            raise ValueError("Invalid prevalidated Saved Tour component")
+        tour = CalendarTourState.model_validate_json(json.dumps(tour_raw["state"]))
+        if (tour.run_id, tour.branch_id, tour.fingerprint) != (
+            run_id, branch_id, tour_raw["fingerprint"]
+        ):
+            raise ValueError("Prevalidated Saved Tour scope/hash changed")
+        if checkpoint is None or (
+            tour.checkpoint_fingerprint != checkpoint_fingerprint
+            or tour.week.ordinal != checkpoint.week.ordinal
+        ):
+            raise ValueError("Prevalidated Saved Tour sporting owner changed")
+    return evidence, checkpoint, tour
+
+
+def load_saved_calendar_match(payload: dict, *, run_id: str, branch_id: str, _sporting_component_proofs=None) -> CalendarMatchEvidence | None:
+    """Validate both the played MatchEngine evidence and the full Saved owner."""
+    return load_saved_calendar_sources(payload,run_id=run_id,branch_id=branch_id,
+        _sporting_component_proofs=_sporting_component_proofs)[0]
+
+
+def load_saved_calendar_sources(payload: dict, *, run_id: str, branch_id: str,
+                                _sporting_component_proofs=None,
+                                _verified_saved_prefix=None):
+    """Return the coupled sources, sharing only exact transaction-local proofs."""
     from beta_engine.infrastructure.db.calendar_sporting_checkpoint import saved_checkpoint
-    saved_checkpoint(payload, state, run_id=run_id, branch_id=branch_id)
-    return state
+    # Exact content-addressed proof reuse is private to a single validated
+    # lineage walk. Never retain it across requests/transactions. Tour authority
+    # remains independently validated for each revision even on a sporting hit.
+    key = None
+    verified = None
+    if _sporting_component_proofs is not None:
+        content = payload.get('content', {})
+        key = canonical_hash({'run_id':run_id,'branch_id':branch_id,'run':payload.get('run'),
+            'components':{k:content.get(k) for k in ('initial_world','calendar_standalone_match','calendar_player_sporting_checkpoint')}})
+        verified = _sporting_component_proofs.get(key)
+    if verified is None:
+        root_key = None
+        root_proofs = None
+        if _sporting_component_proofs is not None:
+            root_proofs = _sporting_component_proofs.setdefault('_opening_roots', {})
+            root_key = canonical_hash({'run_id':run_id,'branch_id':branch_id,
+                'run':payload.get('run'),
+                'match':payload.get('content',{}).get('calendar_standalone_match')})
+        if root_proofs is not None and root_key in root_proofs:
+            state = root_proofs[root_key]
+        else:
+            state = _parse_saved_calendar_match_evidence(payload,run_id=run_id,branch_id=branch_id)
+            if root_proofs is not None:
+                root_proofs[root_key] = state
+        checkpoint = saved_checkpoint(payload, state, run_id=run_id, branch_id=branch_id,
+            _prefix_proofs=_sporting_component_proofs.setdefault('_prefixes',{}) if _sporting_component_proofs is not None else None,
+            _verified_saved_prefix=_verified_saved_prefix)
+        if key is not None:
+            _sporting_component_proofs[key] = (state,checkpoint)
+    else:
+        state,checkpoint = verified
+    from beta_engine.infrastructure.db.calendar_tour import saved_tour
+    # The validation scope is ONE caller-owned Signed lineage walk. Many
+    # successive revisions retain exactly the same native Tour and lifecycle
+    # despite changing unrelated working or simulation components. Parsing
+    # 1,000-player lifecycle and replaying every historical ranking for each
+    # identical source adds seconds per revision after a physical restart.
+    #
+    # The proof cache keys the complete canonical inputs used by saved_tour:
+    # run clock, world, played root, sporting, Tour and lifecycle. No cache
+    # survives the request, and _validated_saved_revision_in_session still
+    # independently checks every revision's signature, owner, bytes and ancestry.
+    tour_proofs = (
+        _sporting_component_proofs.setdefault("_verified_tour_sources", {})
+        if _sporting_component_proofs is not None else None
+    )
+    tour_key = None
+    if tour_proofs is not None:
+        content = payload.get("content", {})
+        tour_key = canonical_hash({
+            "run_id": run_id,
+            "branch_id": branch_id,
+            "run": payload.get("run"),
+            "world": content.get("initial_world"),
+            "played_root": content.get("calendar_standalone_match"),
+            "sporting": content.get("calendar_player_sporting_checkpoint"),
+            "tour": content.get("calendar_tour_authority"),
+            "lifecycle": content.get("player_lifecycle"),
+        })
+    if tour_proofs is not None and tour_key in tour_proofs:
+        tour = tour_proofs[tour_key]
+    else:
+        tour = saved_tour(
+            payload, run_id=run_id, branch_id=branch_id, checkpoint=checkpoint
+        )
+        if tour_proofs is not None:
+            tour_proofs[tour_key] = tour
+    return state,checkpoint,tour
 
 
 def restore_saved_calendar_match(
     session: Session, *, current_payload: dict, target_payload: dict,
-    run_id: str, branch_id: str,
+    run_id: str, branch_id: str, _validated_saved_sources=None,
 ) -> None:
-    # Each revision is validated exactly once by restore_checkpoint below.
-    # Its verification reconstructs the complete 57-attribute player roster
-    # and all signed MatchEngine results; do not redundantly do the same
-    # expensive reconstruction in load_saved_calendar_match first.
-    current = _parse_saved_calendar_match_evidence(
-        current_payload, run_id=run_id, branch_id=branch_id,
-    )
-    target = _parse_saved_calendar_match_evidence(
-        target_payload, run_id=run_id, branch_id=branch_id,
-    )
+    # Ordinary callers keep strict full Saved source verification.
+    # The repository restore coordinator may pass decoded inputs ONLY after
+    # authenticating both exact Saved Revision payloads in the same transaction.
+    # This avoids repeated source folds while preserving live-owner checks and
+    # the independent post-restore capture/revalidation.
+    if _validated_saved_sources is None:
+        current = _parse_saved_calendar_match_evidence(
+            current_payload, run_id=run_id, branch_id=branch_id,
+        )
+        target = _parse_saved_calendar_match_evidence(
+            target_payload, run_id=run_id, branch_id=branch_id,
+        )
+    else:
+        current, _current_checkpoint, _current_tour = _validated_saved_sources[0]
+        target, _target_checkpoint, _target_tour = _validated_saved_sources[1]
     live = load_match_rows(session, run_id=run_id, branch_id=branch_id)
     if tuple(s.fingerprint for s in live) != (
         (current.fingerprint,) if current else ()
     ):
         raise ValueError("Live calendar match differs from current Saved head")
     from beta_engine.infrastructure.db.calendar_sporting_checkpoint import restore_checkpoint
+    from beta_engine.infrastructure.db.calendar_tour import restore_tour
+    restore_tour(session, current_payload=current_payload, target_payload=target_payload,
+                 run_id=run_id, branch_id=branch_id,
+                 _validated_states=(
+                     (_validated_saved_sources[0][2], _validated_saved_sources[1][2])
+                     if _validated_saved_sources is not None else None
+                 ))
     restore_checkpoint(session, current_payload=current_payload, target_payload=target_payload,
-                       current=current, target=target, run_id=run_id, branch_id=branch_id)
+                       current=current, target=target, run_id=run_id, branch_id=branch_id,
+                       _validated_states=(
+                           (_validated_saved_sources[0][1], _validated_saved_sources[1][1])
+                           if _validated_saved_sources is not None else None
+                       ))
     for state in live:
         session.delete(session.get(CalendarStandaloneMatchModel, (run_id, branch_id, state.match_id)))
     session.flush()

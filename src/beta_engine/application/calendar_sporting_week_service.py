@@ -47,7 +47,7 @@ class CalendarSportingWeekCommit(FrozenInput):
 class CalendarSportingWeekService:
     repository: object
 
-    def _preview(self, clock, revision, world, state, saved, evidence, command):
+    def _preview(self, clock, revision, world, state, saved, evidence, command, *, policy=None, official=False):
         if (
             state is None
             or saved is None
@@ -69,7 +69,7 @@ class CalendarSportingWeekService:
         target = RunWeekPosition(
             calendar=clock, season_index=completed.season_index, week=completed.week + 1
         )
-        policy = CalendarAnnualDevelopmentPolicy()
+        policy = policy or CalendarAnnualDevelopmentPolicy()
         counts = played_counts(state, knockout)
         developed, recovered = develop_and_recover(
             state,
@@ -78,8 +78,11 @@ class CalendarSportingWeekService:
             seed=command.seed,
             policy=policy,
             counts=counts,
+            official=official,
         )
         event = CalendarSportingWeekAdvance(
+            schema_version=("calendar_sporting_week_advance.v2" if official else "calendar_sporting_week_advance.v1"),
+            scope=("configured_tour_week_transition" if official else "sporting_only_exhibition_timeline"),
             run_id=state.run_id,
             branch_id=state.branch_id,
             command_id=command.command_id,
@@ -151,6 +154,7 @@ class CalendarSportingWeekService:
             )
         with self.repository._session_factory.begin() as session:
             session.execute(text("BEGIN IMMEDIATE"))
+            from beta_engine.infrastructure.db.calendar_tour import require_exhibition_timeline
             clock, revision, world, _, state, saved, evidence = (
                 CalendarContinuationService(self.repository)._context(
                     session, run_id=run_id, branch_id=branch_id
@@ -225,6 +229,7 @@ class CalendarSportingWeekService:
                             "Sporting advance identity reused with different command/review"
                         )
                     return original
+            require_exhibition_timeline(session, run_id, branch_id)
             preview, successor = self._preview(
                 clock, revision, world, state, saved, evidence, cmd
             )

@@ -29,7 +29,7 @@ class CalendarAnnualDevelopmentPolicy(FrozenInput):
 
 
 class CalendarSportingWeekAdvance(FrozenInput):
-    schema_version: Literal["calendar_sporting_week_advance.v1"] = (
+    schema_version: Literal["calendar_sporting_week_advance.v1", "calendar_sporting_week_advance.v2"] = (
         "calendar_sporting_week_advance.v1"
     )
     run_id: str = Field(min_length=1)
@@ -47,7 +47,7 @@ class CalendarSportingWeekAdvance(FrozenInput):
     played_counts: tuple[tuple[str, int], ...]
     developed_players_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
     recovered_players_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
-    scope: Literal["sporting_only_exhibition_timeline"] = (
+    scope: Literal["sporting_only_exhibition_timeline", "configured_tour_week_transition"] = (
         "sporting_only_exhibition_timeline"
     )
 
@@ -61,8 +61,11 @@ class CalendarSportingWeekAdvance(FrozenInput):
             raise ValueError(
                 "Sporting advance requires consecutive weeks within one season; Season Transition is unsupported"
             )
-        if self.policy != CalendarAnnualDevelopmentPolicy():
+        if self.schema_version.endswith(".v1") and (self.policy != CalendarAnnualDevelopmentPolicy()
+                or self.scope != "sporting_only_exhibition_timeline"):
             raise ValueError("Unknown native annual development calibration")
+        if self.schema_version.endswith(".v2") and self.scope != "configured_tour_week_transition":
+            raise ValueError("Native v2 development belongs to an Official Week Transition")
         if tuple(p for p, _ in self.played_counts) != tuple(
             sorted({p for p, _ in self.played_counts})
         ) or any(type(n) is not int or n < 0 for _, n in self.played_counts):
@@ -116,7 +119,7 @@ def played_counts(checkpoint, knockout):
     return tuple(sorted(counts.items()))
 
 
-def develop_and_recover(checkpoint, world, *, completed_week, seed, policy, counts):
+def develop_and_recover(checkpoint, world, *, completed_week, seed, policy, counts, official=False):
     """Two pure stages consuming only end-of-completed-week facts."""
     if completed_week.ordinal != checkpoint.week.ordinal:
         raise ValueError("Development cannot use a future or skipped week")
@@ -131,6 +134,10 @@ def develop_and_recover(checkpoint, world, *, completed_week, seed, policy, coun
     developed, recovered = [], []
     count_by_id = dict(counts)
     for player in checkpoint.players:
+        if official and age_in_run_years(profiles[player.player_id],completed_week)>=world.lifecycle_policy.automatic_retirement_age:
+            developed.append(player)
+            recovered.append(player)
+            continue
         age = age_in_run_years(
             profiles[player.player_id], completed_week
         ) - old.timing_shift(player.development_timing)
@@ -237,6 +244,7 @@ def append_sporting_week(checkpoint, world, knockout, event):
         seed=event.seed,
         policy=event.policy,
         counts=event.played_counts,
+        official=event.schema_version=='calendar_sporting_week_advance.v2',
     )
     if (records_fingerprint(developed), records_fingerprint(recovered)) != (
         event.developed_players_fingerprint,
@@ -247,6 +255,9 @@ def append_sporting_week(checkpoint, world, knockout, event):
         checkpoint.model_copy(
             update={
                 "schema_version": (
+                    "calendar_sporting_checkpoint.v9"
+                    if checkpoint.schema_version == "calendar_sporting_checkpoint.v9"
+                    else
                     "calendar_sporting_checkpoint.v8"
                     if checkpoint.schema_version == "calendar_sporting_checkpoint.v8"
                     else "calendar_sporting_checkpoint.v7"

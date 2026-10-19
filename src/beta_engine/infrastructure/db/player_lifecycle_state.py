@@ -15,7 +15,9 @@ from beta_engine.domain.calendar.season_weeks import (
     age_at_calendar_position,
     season_week_to_calendar_position,
 )
-from beta_engine.domain.players.calendar_lifecycle import CalendarPlayerLifecycleState
+from beta_engine.domain.players.calendar_lifecycle import (
+    CalendarPlayerLifecycleState, CalendarTourLifecycleState, calendar_lifecycle_history,
+)
 from beta_engine.domain.players.lifecycle import (
     PlayerLifecycleIdentity,
     PlayerLifecyclePolicy,
@@ -44,7 +46,40 @@ def _parse_lifecycle_json(raw):
     value = json.loads(raw)
     if isinstance(value, dict) and value.get("schema_version") == "player_lifecycle_calendar_state.v2":
         return CalendarPlayerLifecycleState.model_validate_json(raw)
+    if isinstance(value, dict) and value.get("schema_version") == "player_lifecycle_calendar_state.v3":
+        return CalendarTourLifecycleState.model_validate_json(raw)
     return PlayerLifecycleWeekState.model_validate_json(raw)
+
+
+def decode_prevalidated_lifecycle(payload, *, run_id, branch_id):
+    """Decode the immutable Saved lifecycle AFTER repository lineage validation.
+
+    Only the calendar Tour request path calls this with its already signed and
+    component-verified HEAD in the same transaction. The full Saved validator
+    independently rebuilds the birth/Entry chain on cache misses. Here, recheck
+    all serialized identities and the aggregate component hash, but do not
+    recompute the same historical lifecycle chain on every Admin read/preview.
+    A changed Signed payload invalidates the repository's byte-digest cache.
+    Never use this shortcut for unknown snapshots, restore, or an unsaved Tour.
+    """
+    component = payload.get("content", {}).get(PLAYER_LIFECYCLE_COMPONENT_KEY)
+    if component is None:
+        return None
+    if not isinstance(component, dict) or set(component) != {"fingerprint", "states"}:
+        raise ValueError("Invalid prevalidated lifecycle component")
+    raw = component["states"]
+    if not isinstance(raw, list) or not raw:
+        raise ValueError("Prevalidated lifecycle component has no states")
+    states = tuple(_parse_lifecycle_json(json.dumps(s)) for s in raw)
+    body = [s.model_dump(mode="json") for s in states]
+    digest = hashlib.sha256(
+        json.dumps(body, sort_keys=True, separators=(",", ":")).encode()
+    ).hexdigest()
+    if digest != component["fingerprint"] or any(
+        (s.run_id, s.branch_id) != (run_id, branch_id) for s in states
+    ):
+        raise ValueError("Prevalidated lifecycle identity/hash mismatch")
+    return states
 
 
 def _load(row, run_id, branch_id, week_ordinal):
@@ -64,7 +99,7 @@ def get_lifecycle(session: Session, *, run_id: str, branch_id: str, week: Rankin
     if row is None:
         return None
     state = _load(row, run_id, branch_id, week.ordinal)
-    if isinstance(state, CalendarPlayerLifecycleState):
+    if isinstance(state, (CalendarPlayerLifecycleState, CalendarTourLifecycleState)):
         if not isinstance(week, RunWeekPosition) or state.week != week:
             raise ValueError("Calendar lifecycle requires the matching Run-owned position")
     elif not isinstance(week, RankingWeek):
@@ -401,7 +436,9 @@ def load_saved_lifecycle(payload, *, run_id, branch_id):
     ):
         raise ValueError("Saved player-lifecycle identity or fingerprint mismatch")
     if any(isinstance(s, CalendarPlayerLifecycleState) for s in states):
-        if len(states) != 1 or not isinstance(states[0], CalendarPlayerLifecycleState):
+        if not isinstance(states[0], CalendarPlayerLifecycleState) or any(
+            not isinstance(s, CalendarTourLifecycleState) for s in states[1:]
+        ):
             raise ValueError("Calendar population lifecycle cannot contain a mixed legacy chain")
         from beta_engine.infrastructure.db.initial_world_state import (
             load_saved_initial_world,
@@ -415,6 +452,18 @@ def load_saved_lifecycle(payload, *, run_id, branch_id):
             tuple((p.player_id, p.birth_year, p.birth_year_week, p.age, p.source_generation_fingerprint) for p in state.players) !=
             tuple((p.player_id, p.birth_year, p.birth_year_week, p.age_years_at_season_start, p.source_generation_fingerprint) for p in world.players)):
             raise ValueError("Saved calendar lifecycle differs from its InitialWorld players")
+        if len(states)>1:
+            from beta_engine.domain.tournaments.calendar_tour import CalendarTourState, lifecycle_calendars
+            tour_component=payload.get('content',{}).get('calendar_tour_authority')
+            if not tour_component:
+                raise ValueError('Native lifecycle progression requires its Tour owner')
+            tour=CalendarTourState.model_validate_json(json.dumps(tour_component['state']))
+            expected=calendar_lifecycle_history(state,tour.week,tuple(s for a in tour.editions for s in a.submissions),
+                effective_calendars=lifecycle_calendars(tour))
+            if states!=expected or states[-1].fingerprint!=tour.lifecycle_fingerprint:
+                raise ValueError('Native lifecycle history differs from actual births, policy or Tour entry')
+    elif any(isinstance(s,CalendarTourLifecycleState) for s in states):
+        raise ValueError('Native lifecycle history lacks its v2 population bootstrap')
     for predecessor, target in zip(states, states[1:], strict=False):
         if (
             target.week.ordinal != predecessor.week.ordinal + 1
@@ -471,10 +520,19 @@ def remap_saved_lifecycle_component(
 
 
 def restore_saved_lifecycle(
-    session, *, current_payload, target_payload, run_id, branch_id
+    session, *, current_payload, target_payload, run_id, branch_id,
+    _validated_states=None,
 ):
-    expected = load_saved_lifecycle(current_payload, run_id=run_id, branch_id=branch_id)
-    target = load_saved_lifecycle(target_payload, run_id=run_id, branch_id=branch_id)
+    if _validated_states is None:
+        expected = load_saved_lifecycle(current_payload, run_id=run_id, branch_id=branch_id)
+        target = load_saved_lifecycle(target_payload, run_id=run_id, branch_id=branch_id)
+    else:
+        # Used solely for both Tour-bearing revisions authenticated by the
+        # repository's Signed ancestry gate in this same restore transaction.
+        # The original validator fully rebuilt each exact Saved Tour lifecycle.
+        # The live SQLite rows are still loaded/checked below, and newly
+        # captured restored state is independently verified before commit.
+        expected, target = _validated_states
     target_world = None
     if target is None:
         from beta_engine.infrastructure.db.initial_world_state import (

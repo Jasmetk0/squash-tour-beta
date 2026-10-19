@@ -64,6 +64,7 @@ export function SavedTourCalendarPage():JSX.Element{
     requestedBranch&&branch&&requestedBranch!==branch?(cs?'Nesouhlasí vybraná Branch.':'Selected Branch does not match the link.'):
     requestedRevision!==null&&!revision?(cs?'Chybí ID revize.':'Revision ID is missing.'):null))
   return <section className="panel">
+    <Link to={`/admin/runs/${encodeURIComponent(runId)}/tour/editions`}>{cs?'Spravovat nativní Edition a oficiální týden':'Manage native Editions and Official week'}</Link>
     <div className="page-intro"><p className="eyebrow">RUN → TOUR → CALENDAR</p>
       <h2>{cs?'Uložený sezonní kalendář':'Saved season calendar'}</h2>
       <p>{cs?'Jen neměnná Saved Revision; neuložené plány ani checkpointy nepoužíváme.':

@@ -6,7 +6,8 @@ import hashlib
 import json
 from typing import Literal
 
-from pydantic import Field
+from pydantic import Field, model_validator
+from beta_engine.domain.calendar.run_week_position import RunWeekPosition
 
 from beta_engine.domain.rankings.official import FrozenInput, RankingWeek
 
@@ -31,7 +32,7 @@ class PlayerTourEntryTrigger(FrozenInput):
     snapshot.
     """
 
-    schema_version: Literal["player_tour_entry_trigger.v1"] = (
+    schema_version: Literal["player_tour_entry_trigger.v1", "player_tour_entry_trigger.v2"] = (
         "player_tour_entry_trigger.v1"
     )
     run_id: str = Field(min_length=1)
@@ -39,11 +40,17 @@ class PlayerTourEntryTrigger(FrozenInput):
     player_id: str = Field(min_length=1)
     event_id: str = Field(min_length=1)
     trigger_kind: TourEntryTriggerKind
-    trigger_week: RankingWeek
+    trigger_week: RankingWeek | RunWeekPosition
     decision_slot_ordinal: int = Field(ge=1)
     source_evidence_id: str = Field(min_length=1, max_length=256)
     source_evidence_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
     provenance: str = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def calendar_version(self):
+        if (self.schema_version.endswith(".v2")) != isinstance(self.trigger_week, RunWeekPosition):
+            raise ValueError("Tour-entry calendar requires explicit v2 authority")
+        return self
 
     @property
     def tour_entry_week(self) -> RankingWeek:

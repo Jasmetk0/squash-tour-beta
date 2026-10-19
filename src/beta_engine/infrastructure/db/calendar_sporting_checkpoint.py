@@ -9,10 +9,22 @@ from beta_engine.infrastructure.db.models import CalendarPlayerSportingCheckpoin
 COMPONENT_KEY = 'calendar_player_sporting_checkpoint'
 
 
-def load_checkpoint(session, *, run_id, branch_id):
+def load_checkpoint(session, *, run_id, branch_id, _verified_source=None):
     row = session.get(CalendarPlayerSportingCheckpointModel, (run_id, branch_id))
     if row is None:
         return None
+    if (_verified_source is not None
+        and (_verified_source.run_id,_verified_source.branch_id)==(run_id,branch_id)):
+        from beta_engine.domain.run_packages import canonical_hash
+
+        expected = _verified_source.fingerprint
+        if (row.fingerprint == expected
+            and canonical_hash(json.loads(row.payload_json)) == expected):
+            # Saved serialization sorts mapping keys (e.g. sets_won), while
+            # live MatchEngine JSON retains insertion order. Compare the same
+            # canonical content hash, not order-sensitive JSON text. Hash every
+            # live byte's decoded value; never trust only its stored hash column.
+            return _verified_source
     state = CalendarSportingCheckpoint.model_validate_json(row.payload_json)
     if (state.run_id, state.branch_id, state.fingerprint) != (run_id, branch_id, row.fingerprint):
         raise ValueError('Calendar sporting checkpoint SQLite identity/hash mismatch')
@@ -34,7 +46,8 @@ def _knockout(evidence):
     return getattr(evidence, 'knockout', evidence)
 
 
-def verify_checkpoint(state, world, evidence):
+def verify_checkpoint(state, world, evidence, *, _prefix_proofs=None,
+                      _verified_saved_prefix=None):
     from beta_engine.domain.players.calendar_engine_player import calendar_engine_player
     knockout = _knockout(evidence)
     required = knockout is not None and knockout.schema_version == 'calendar_opening_knockout.v5'
@@ -44,7 +57,39 @@ def verify_checkpoint(state, world, evidence):
         return
     if state is None or world is None:
         raise ValueError('Played v5 knockout requires its complete population sporting checkpoint')
-    expected = build_calendar_sporting_checkpoint(world, knockout, calendar_engine_player)
+    proof_scope=None
+    if _prefix_proofs is not None:
+        proof_scope=(world.fingerprint,knockout.fingerprint)
+        verified=_prefix_proofs.get((*proof_scope,state.fingerprint))
+        if verified is not None and verified==state:
+            return
+    # A trusted, fully validated Saved HEAD can anchor a new checkpoint.
+    # Only the newly appended events then need replay. Never trust a prefix
+    # from an unvalidated JSON body or across branches/worlds/knockouts.
+    # The caller must authenticate the exact previous Saved Revision first.
+    prefix = _verified_saved_prefix
+    if prefix is not None and not (
+        (prefix.run_id, prefix.branch_id) == (state.run_id, state.branch_id)
+        and prefix.source_saved_head == state.source_saved_head
+        and prefix.source_initial_world_fingerprint == world.fingerprint
+        and prefix.source_knockout_fingerprint == knockout.fingerprint
+        and prefix.bootstrap_policy == state.bootstrap_policy
+        and prefix.continuations == state.continuations[:len(prefix.continuations)]
+        and prefix.week_events == state.week_events[:len(prefix.week_events)]
+        and prefix.closures == state.closures[:len(prefix.closures)]
+    ):
+        prefix = None
+    if prefix is not None:
+        expected = prefix
+        suffix = (
+            *state.continuations[len(prefix.continuations):],
+            *state.week_events[len(prefix.week_events):],
+        )
+    else:
+        expected = build_calendar_sporting_checkpoint(world, knockout, calendar_engine_player)
+        suffix = (*state.continuations, *state.week_events)
+    if proof_scope is not None:
+        _prefix_proofs[(*proof_scope,expected.fingerprint)]=expected
     from beta_engine.domain.players.calendar_continuation_match import append_continuation
     reserved_ids = {knockout.match_id, *(m.input_context.match_id for m in knockout.matches)}
     from beta_engine.domain.players.calendar_sporting_week import CalendarSportingWeekAdvance, append_sporting_week
@@ -57,8 +102,22 @@ def verify_checkpoint(state, world, evidence):
     closures_by_count = {entry.source_week_event_count: entry for entry in state.closures}
     if len(closures_by_count) != len(state.closures):
         raise ValueError('Native tournament result closure has duplicate event boundaries')
-    closed_counts = set()
-    for entry in (*state.continuations, *state.week_events):
+    closed_counts = (
+        {entry.source_week_event_count for entry in prefix.closures}
+        if prefix is not None else set()
+    )
+    # A closure can be committed at the existing saved event boundary without
+    # another MatchEngine event (e.g. Admin confirmation after actual results).
+    if (
+        prefix is not None
+        and len(expected.week_events) in closures_by_count
+        and len(expected.week_events) not in closed_counts
+    ):
+        expected = append_native_tournament_closure(
+            expected, closures_by_count[len(expected.week_events)]
+        )
+        closed_counts.add(len(expected.week_events))
+    for entry in suffix:
         if isinstance(entry, CalendarSportingWeekAdvance):
             expected = append_sporting_week(expected, world, knockout, entry)
         elif isinstance(entry, CalendarFollowupKnockout):
@@ -75,13 +134,16 @@ def verify_checkpoint(state, world, evidence):
         if index in closures_by_count and index not in closed_counts:
             expected = append_native_tournament_closure(expected, closures_by_count[index])
             closed_counts.add(index)
+        if proof_scope is not None:
+            _prefix_proofs[(*proof_scope,expected.fingerprint)]=expected
     if closed_counts != set(closures_by_count):
         raise ValueError('Native result closure has no matching sporting event')
     if state != expected:
         raise ValueError('Calendar sporting checkpoint differs from population and played terminal evidence')
 
 
-def saved_checkpoint(payload, evidence, *, run_id, branch_id):
+def saved_checkpoint(payload, evidence, *, run_id, branch_id, _prefix_proofs=None,
+                     _verified_saved_prefix=None):
     from beta_engine.infrastructure.db.initial_world_state import load_saved_initial_world
     component = payload.get('content', {}).get(COMPONENT_KEY)
     state = None
@@ -94,7 +156,8 @@ def saved_checkpoint(payload, evidence, *, run_id, branch_id):
     knockout = _knockout(evidence)
     required = knockout is not None and knockout.schema_version == 'calendar_opening_knockout.v5'
     world = load_saved_initial_world(payload, run_id=run_id, branch_id=branch_id) if required or state else None
-    verify_checkpoint(state, world, evidence)
+    verify_checkpoint(state, world, evidence, _prefix_proofs=_prefix_proofs,
+        _verified_saved_prefix=_verified_saved_prefix)
     if state:
         from beta_engine.domain.calendar.run_calendar import RunCalendar
         clock = RunCalendar.from_metadata(payload['run']['run_calendar'])
@@ -106,18 +169,29 @@ def saved_checkpoint(payload, evidence, *, run_id, branch_id):
     return state
 
 
-def capture_checkpoint(session, payload, evidence, *, run_id, branch_id):
+def capture_checkpoint(session, payload, evidence, *, run_id, branch_id,
+                       _defer_full_verification: bool = False):
     from beta_engine.infrastructure.db.initial_world_state import get_initial_world
     state = load_checkpoint(session, run_id=run_id, branch_id=branch_id)
     world = get_initial_world(session, run_id=run_id, branch_id=branch_id) if state or evidence else None
-    verify_checkpoint(state, world, evidence)
+    # Only the native Tour Save coordinator may defer this replay. It then
+    # authenticates the complete freshly captured revision once, atomically,
+    # before any Saved Revision is inserted or the Branch pointer moves.
+    if not _defer_full_verification:
+        verify_checkpoint(state, world, evidence)
     if state is not None:
         payload['content'][COMPONENT_KEY] = {'fingerprint': state.fingerprint, 'state': state.model_dump(mode='json')}
 
 
-def restore_checkpoint(session, *, current_payload, target_payload, current, target, run_id, branch_id):
-    expected = saved_checkpoint(current_payload, current, run_id=run_id, branch_id=branch_id)
-    replacement = saved_checkpoint(target_payload, target, run_id=run_id, branch_id=branch_id)
+def restore_checkpoint(session, *, current_payload, target_payload, current, target, run_id, branch_id,
+                       _validated_states=None):
+    if _validated_states is None:
+        expected = saved_checkpoint(current_payload, current, run_id=run_id, branch_id=branch_id)
+        replacement = saved_checkpoint(target_payload, target, run_id=run_id, branch_id=branch_id)
+    else:
+        # The restore coordinator already verified these exact signed snapshots
+        # before beginning any live-state mutation. Always check the live owner.
+        expected, replacement = _validated_states
     live = load_checkpoint(session, run_id=run_id, branch_id=branch_id)
     if live != expected:
         raise ValueError('Live calendar sporting checkpoint differs from current Saved HEAD')

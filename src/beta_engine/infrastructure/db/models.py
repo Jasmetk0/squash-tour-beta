@@ -1902,6 +1902,15 @@ class CalendarStandaloneMatchModel(Base):
     payload_json: Mapped[str] = mapped_column(Text, nullable=False)
 
 
+class CalendarTourAuthorityModel(Base):
+    """Working native Tour authority; publication is exclusively its Saved component."""
+    __tablename__ = 'calendar_tour_authorities'
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
 class CalendarPlayerSportingCheckpointModel(Base):
     """Native Run calendar authority, separate from legacy FAX sporting weeks."""
     __tablename__ = 'calendar_player_sporting_checkpoints'

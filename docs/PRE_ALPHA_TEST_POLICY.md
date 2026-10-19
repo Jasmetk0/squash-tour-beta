@@ -3,6 +3,23 @@
 This file records the current engineering test policy for Squash Engine pre-alpha work.
 It is an implementation/development policy, not sporting product canon.
 
+## Native Tour long-running acceptance gate
+
+The production HTTP/SQLite configured-Tour scenario runs in the dedicated
+`Pre-alpha Native Tour API Acceptance` workflow, in parallel with Fast CI,
+when the native Tour, Saved restore, persistence, relevant player/ranking domain,
+API or test code changes. It includes two real tournaments, Manual Save,
+extension, atomic rollback, replay, restart, historical restore and corruption
+rejection. The test remains part of the Full Test Suite.
+
+This acceptance is **not optional** for relevant PRs: neither green Fast CI nor
+the native Chromium browser matrix substitutes for a failed/pending native Tour
+API acceptance. Never remove its negative checks or declare a PR merge-ready
+until all three relevant gates are green on the *same latest commit*.
+Unlike the HTTP acceptance workflow, Fast CI's `pr_critical` selector must
+exclude this full 20+ minute production lifecycle scenario, so fast feedback
+does not wait for a second serial execution of the same expensive flow.
+
 ## Pull-request development
 
 During ordinary pre-alpha construction:

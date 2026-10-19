@@ -4,6 +4,7 @@ Uses the existing MatchEngine and weekly owner, not a second player database.
 An exact command retry reconstructs the original post-tournament fingerprint.
 """
 from dataclasses import dataclass
+from contextlib import nullcontext
 
 from pydantic import Field, model_validator
 from typing import Literal
@@ -118,20 +119,25 @@ class CalendarFollowupKnockoutService:
             "scope": event.scope,
             "official_ranking_published": False,
         }
-        if event.schema_version in {"calendar_followup_knockout.v2", "calendar_followup_knockout.v4"}:
+        if event.schema_version in {"calendar_followup_knockout.v2", "calendar_followup_knockout.v4", "calendar_followup_knockout.v5"}:
             receipt["prepared_awards"] = [a.model_dump(mode="json") for a in event.prepared_awards]
             receipt["prepared_policy_fingerprint"] = event.prepared_policy.fingerprint
             receipt["publication_status"] = "prepared_not_official"
         return receipt
 
-    def simulate(self, *, run_id, branch_id, command: CalendarFollowupKnockoutCommand | CalendarFollowupScoredCommand | CalendarFollowupEightCommand | CalendarFollowupEightScoredCommand):
+    def simulate(self, *, run_id, branch_id, command: CalendarFollowupKnockoutCommand | CalendarFollowupScoredCommand | CalendarFollowupEightCommand | CalendarFollowupEightScoredCommand, _tour_session=None, _tour_context=None, _edition_authority_fingerprint=None):
+        if _edition_authority_fingerprint is not None and _tour_session is None:
+            raise ValueError("Configured Edition requires its caller-owned Tour transaction")
         request_fp = canonical_hash({
             "run_id": run_id, "branch_id": branch_id,
             "command": command.model_dump(mode="json"),
+            **({"edition_authority_fingerprint":_edition_authority_fingerprint} if _edition_authority_fingerprint else {}),
         })
-        with self.repository._session_factory.begin() as session:
-            session.execute(text("BEGIN IMMEDIATE"))
-            clock, revision, world, health, state, saved, evidence = (
+        with (nullcontext(_tour_session) if _tour_session is not None else self.repository._session_factory.begin()) as session:
+            if _tour_session is None:
+                session.execute(text("BEGIN IMMEDIATE"))
+                from beta_engine.infrastructure.db.calendar_tour import require_exhibition_timeline
+            clock, revision, world, health, state, saved, evidence = _tour_context if _tour_session is not None and _tour_context is not None else (
                 CalendarContinuationService(self.repository)._context(
                     session, run_id=run_id, branch_id=branch_id
                 )
@@ -148,6 +154,8 @@ class CalendarFollowupKnockoutService:
                         raise ValueError("Knockout identity reused with different inputs")
                     successor = self._historical_successor(state, world, opening, existing)
                     return self._receipt(existing, successor)
+            if _tour_session is None:
+                require_exhibition_timeline(session, run_id, branch_id)
             if (
                 saved is None or saved.fingerprint != state.fingerprint
                 or command.expected_saved_head != revision.saved_head_revision_id
@@ -173,7 +181,7 @@ class CalendarFollowupKnockoutService:
             if any(f"{command.command_id}:{suffix}" in reserved_commands for suffix in rounds):
                 raise ValueError("Knockout nested command ID collides with sporting history")
             if (isinstance(command, (CalendarFollowupEightScoredCommand, CalendarFollowupScoredCommand))
-                    and command.point_policy.validity_weeks != clock.weeks_per_year):
+                    and _edition_authority_fingerprint is None and command.point_policy.validity_weeks != clock.weeks_per_year):
                 raise ValueError("Prepared point validity must equal the Run year W")
             prior = state
             results = []
@@ -213,6 +221,7 @@ class CalendarFollowupKnockoutService:
                 entry, prior = play_continuation_match(
                     state=prior, world=world, health=health, clock=clock,
                     run_id=run_id, branch_id=branch_id, command=inner,
+                    _defer_checkpoint_validation=True,
                 )
                 results.append(entry)
             event_payload = dict(
@@ -230,7 +239,9 @@ class CalendarFollowupKnockoutService:
                 matches=tuple(results),
             )
             if isinstance(command, (CalendarFollowupEightScoredCommand, CalendarFollowupScoredCommand)):
-                version = "calendar_followup_knockout.v4" if eight else "calendar_followup_knockout.v2"
+                version = "calendar_followup_knockout.v5" if _edition_authority_fingerprint else "calendar_followup_knockout.v4" if eight else "calendar_followup_knockout.v2"
+                if _edition_authority_fingerprint:
+                    event_payload.update(edition_authority_fingerprint=_edition_authority_fingerprint,scope="configured_tour_knockout")
                 provisional = CalendarFollowupKnockout.model_construct(
                     **event_payload, schema_version=version,
                     prepared_policy=command.point_policy,

@@ -258,6 +258,7 @@ from beta_engine.infrastructure.db.calendar_standalone_match_state import (
     COMPONENT_KEY as CALENDAR_MATCH_COMPONENT_KEY,
     capture_saved_calendar_match,
     load_saved_calendar_match,
+    load_saved_calendar_sources,
     restore_saved_calendar_match,
 )
 from beta_engine.infrastructure.db.simulation_slot_state import (
@@ -443,6 +444,17 @@ def _saved_revision_record_content_hash(
         payload_schema_version=revision.payload_schema_version,
         payload=revision.payload,
         change_summary=revision.change_summary,
+    )
+
+
+def _saved_revision_validation_signature(model: BranchSavedRevisionModel) -> tuple:
+    """Bind a metadata-only proof to the complete physical revision bytes."""
+    return (
+        model.revision_id, model.run_id, model.branch_id, model.sequence,
+        model.parent_revision_id, model.kind, model.payload_schema_version,
+        model.content_hash_algorithm, model.content_hash, model.created_at,
+        hashlib.sha256(model.payload_json.encode()).digest(),
+        hashlib.sha256(model.change_summary_json.encode()).digest(),
     )
 
 
@@ -1460,6 +1472,10 @@ class SimulationPersistenceRepository:
         # including a rewritten content hash, invalidates the proof.
         self._revision_validation_cache: dict[tuple, BranchSavedRevisionRecord] = {}
         self._revision_validation_lock = Lock()
+        # Bounded single-flight locks prevent concurrent cold Admin reads from
+        # replaying the same exact immutable revision at the same time. Proofs
+        # still contain metadata only and are keyed by every stored byte.
+        self._revision_validation_work_locks = tuple(Lock() for _ in range(32))
 
     def prepare_official_ranking(
         self,
@@ -2484,27 +2500,31 @@ class SimulationPersistenceRepository:
         session: Session,
         model: BranchSavedRevisionModel,
         materialize_payload: bool = True,
+        sporting_component_proofs: dict | None = None,
     ) -> BranchSavedRevisionRecord:
         """Load one immutable revision and validate its stored owner and hash."""
 
-        signature = (
-            model.revision_id,
-            model.run_id,
-            model.branch_id,
-            model.sequence,
-            model.parent_revision_id,
-            model.kind,
-            model.payload_schema_version,
-            model.content_hash_algorithm,
-            model.content_hash,
-            model.created_at,
-            hashlib.sha256(model.payload_json.encode()).digest(),
-            hashlib.sha256(model.change_summary_json.encode()).digest(),
-        )
+        signature = _saved_revision_validation_signature(model)
+        work_lock = self._revision_validation_work_locks[
+            hash(signature) % len(self._revision_validation_work_locks)
+        ]
+        with work_lock:
+            return self._validate_saved_revision_once(
+                session=session, model=model, signature=signature,
+                materialize_payload=materialize_payload,
+                sporting_component_proofs=sporting_component_proofs,
+            )
+
+    def _validate_saved_revision_once(
+        self, *, session, model, signature, materialize_payload,
+        sporting_component_proofs,
+    ):
+        """One exact-byte validation in flight; every waiter still checks owner."""
         with self._revision_validation_lock:
             verified = self._revision_validation_cache.get(signature)
         revision = (
-            self._to_branch_saved_revision(model, validate_components=verified is None)
+            self._to_branch_saved_revision(model, validate_components=verified is None,
+                sporting_component_proofs=sporting_component_proofs)
             if materialize_payload or verified is None
             else verified
         )
@@ -2537,6 +2557,11 @@ class SimulationPersistenceRepository:
             raise BranchRevisionStateConflictError(
                 f"Saved Revision {revision.revision_id} failed content integrity validation"
             )
+        metadata = self._remember_validated_revision(signature, revision)
+        return revision if materialize_payload else metadata
+
+    def _remember_validated_revision(self, signature, revision):
+        """Retain only proof metadata after all source and identity checks pass."""
         metadata = replace(revision, payload={}, change_summary={})
         with self._revision_validation_lock:
             self._revision_validation_cache[signature] = metadata
@@ -2544,7 +2569,7 @@ class SimulationPersistenceRepository:
                 self._revision_validation_cache.pop(
                     next(iter(self._revision_validation_cache))
                 )
-        return revision if materialize_payload else metadata
+        return metadata
 
     def _validated_branch_revision_lineage_in_session(
         self,
@@ -2553,6 +2578,7 @@ class SimulationPersistenceRepository:
         branch: RunBranchModel,
         visiting_branch_ids: frozenset[str] = frozenset(),
         payload_revision_ids: frozenset[str] | None = None,
+        sporting_component_proofs: dict | None = None,
     ) -> list[BranchSavedRevisionRecord]:
         """Validate every ancestor; retain only requested payloads for internal reads.
 
@@ -2576,6 +2602,9 @@ class SimulationPersistenceRepository:
         lineage: list[BranchSavedRevisionRecord] = []
         visited_revision_ids: set[str] = set()
         current_model: BranchSavedRevisionModel | None = head_model
+        # Local to one lineage walk; raw bytes/hash/identity still verify for
+        # EVERY revision, including those sharing exact sporting components.
+        sporting_component_proofs = sporting_component_proofs if sporting_component_proofs is not None else {}
         while current_model is not None:
             if current_model.revision_id in visited_revision_ids:
                 raise BranchRevisionStateConflictError(
@@ -2585,6 +2614,7 @@ class SimulationPersistenceRepository:
             current = self._validated_saved_revision_in_session(
                 session=session,
                 model=current_model,
+                sporting_component_proofs=sporting_component_proofs,
                 materialize_payload=(
                     payload_revision_ids is None
                     or current_model.revision_id in payload_revision_ids
@@ -3815,6 +3845,7 @@ class SimulationPersistenceRepository:
         model: BranchSavedRevisionModel,
         *,
         validate_components: bool = True,
+        sporting_component_proofs: dict | None = None,
     ) -> BranchSavedRevisionRecord:
         try:
             payload = _from_json(model.payload_json)
@@ -3836,7 +3867,8 @@ class SimulationPersistenceRepository:
                     payload, run_id=model.run_id, branch_id=model.branch_id
                 )
                 load_saved_calendar_match(
-                    payload, run_id=model.run_id, branch_id=model.branch_id
+                    payload, run_id=model.run_id, branch_id=model.branch_id,
+                    _sporting_component_proofs=sporting_component_proofs,
                 )
         except (TypeError, ValueError) as exc:
             raise BranchRevisionStateConflictError(
@@ -3972,12 +4004,13 @@ class SimulationPersistenceRepository:
             )
 
     def _validated_branch_revision_state_in_session(
-        self, *, session: Session, branch: RunBranchModel
+        self, *, session: Session, branch: RunBranchModel, sporting_component_proofs: dict | None = None
     ) -> BranchRevisionStateRecord:
         revision = self._validated_branch_revision_lineage_in_session(
             session=session,
             branch=branch,
             payload_revision_ids=frozenset({branch.saved_head_revision_id}),
+            sporting_component_proofs=sporting_component_proofs,
         )[0]
         draft_model = session.execute(
             select(BranchWorkingDraftModel).where(
@@ -4587,11 +4620,18 @@ class SimulationPersistenceRepository:
                     )
 
                 try:
+                    # Both reads walk the same immutable revision lineage.
+                    # Share content-scoped source proofs only within this
+                    # transaction; every stored revision still authenticates
+                    # bytes, signature, identity and ancestry.
+                    source_proofs = {}
                     state = self._validated_branch_revision_state_in_session(
-                        session=session, branch=branch
+                        session=session, branch=branch,
+                        sporting_component_proofs=source_proofs,
                     )
                     lineage = self._validated_branch_revision_lineage_in_session(
-                        session=session, branch=branch
+                        session=session, branch=branch,
+                        sporting_component_proofs=source_proofs,
                     )
                 except BranchRevisionStateConflictError as exc:
                     raise SavedRevisionRestoreConflictError(str(exc)) from exc
@@ -4839,12 +4879,38 @@ class SimulationPersistenceRepository:
                     or PLAYER_LIFECYCLE_COMPONENT_KEY in target_content
                 ):
                     try:
+                        # Both Tour-bearing revisions were authenticated
+                        # during the complete Saved lineage validation above:
+                        # saved_tour validates its coupled lifecycle against
+                        # actual births and Entry. Decode the same immutable
+                        # lifecycle without re-simulating the entire cohort
+                        # history again on a restore. Legacy/non-Tour snapshots
+                        # retain the strict original adapter path.
+                        tour_lifecycle_sources = None
+                        if (
+                            "calendar_tour_authority" in current_content
+                            and "calendar_tour_authority" in target_content
+                        ):
+                            from beta_engine.infrastructure.db.player_lifecycle_state import (
+                                decode_prevalidated_lifecycle,
+                            )
+
+                            tour_lifecycle_sources = tuple(
+                                decode_prevalidated_lifecycle(
+                                    source, run_id=run_id, branch_id=branch_id
+                                )
+                                for source in (
+                                    state.saved_revision.payload,
+                                    target_revision.payload,
+                                )
+                            )
                         restore_saved_lifecycle(
                             session,
                             current_payload=state.saved_revision.payload,
                             target_payload=target_revision.payload,
                             run_id=run_id,
                             branch_id=branch_id,
+                            _validated_states=tour_lifecycle_sources,
                         )
                     except ValueError as exc:
                         raise SavedRevisionRestoreUnsupportedError(
@@ -4982,11 +5048,31 @@ class SimulationPersistenceRepository:
                     or CALENDAR_MATCH_COMPONENT_KEY in target_content
                 ):
                     try:
+                        # These EXACT immutable payloads have just passed the
+                        # complete repository lineage validation above. Decode
+                        # their authenticated source hashes without replaying
+                        # the same sporting/Official results another 4 times
+                        # across the subordinate restore adapters. Live SQLite
+                        # source equality and post-restore capture stay strict.
+                        from beta_engine.infrastructure.db.calendar_standalone_match_state import (
+                            decode_prevalidated_calendar_sources,
+                        )
+
+                        source_pair = (
+                            decode_prevalidated_calendar_sources(
+                                saved_payload, run_id=run_id, branch_id=branch_id
+                            )
+                            for saved_payload in (
+                                state.saved_revision.payload,
+                                target_revision.payload,
+                            )
+                        )
                         restore_saved_calendar_match(
                             session,
                             current_payload=state.saved_revision.payload,
                             target_payload=target_revision.payload,
                             run_id=run_id, branch_id=branch_id,
+                            _validated_saved_sources=tuple(source_pair),
                         )
                     except ValueError as exc:
                         raise SavedRevisionRestoreUnsupportedError(
@@ -5493,6 +5579,7 @@ class SimulationPersistenceRepository:
         expected_simulation_fingerprint: str | None = None,
         expected_calendar_match_fingerprint: str | None = None,
         expected_calendar_sporting_fingerprint: str | None = None,
+        expected_calendar_tour_fingerprint: str | None = None,
         expected_run_prospect_source_fingerprint: str | None = None,
         expected_run_package_fingerprint: str | None = None,
         expected_run_tournament_lab_draft_fingerprint: str | None = None,
@@ -5508,6 +5595,7 @@ class SimulationPersistenceRepository:
                 expected_simulation_fingerprint,
                 expected_calendar_match_fingerprint,
                 expected_calendar_sporting_fingerprint,
+                expected_calendar_tour_fingerprint,
                 expected_run_prospect_source_fingerprint,
                 expected_run_package_fingerprint,
                 expected_run_tournament_lab_draft_fingerprint,
@@ -5521,6 +5609,8 @@ class SimulationPersistenceRepository:
             revision_kind = "initial_world"
         elif expected_simulation_fingerprint is not None:
             revision_kind = "authoritative_simulation"
+        elif expected_calendar_tour_fingerprint is not None:
+            revision_kind = "calendar_tour_authority"
         elif expected_calendar_sporting_fingerprint is not None:
             revision_kind = "calendar_sporting_checkpoint"
         elif expected_calendar_match_fingerprint is not None:
@@ -5537,6 +5627,8 @@ class SimulationPersistenceRepository:
             revision_kind = VIEWER_BRANCH_SELECTION_SAVED_REVISION_KIND
         previous_current_viewer_id = ""
         target_viewer_id = ""
+        verified_native_save_receipt = None
+        verified_native_save_signature = None
         try:
             with self._session_factory.begin() as session:
                 session.execute(text("BEGIN IMMEDIATE"))
@@ -5724,8 +5816,37 @@ class SimulationPersistenceRepository:
                     session, payload, run_id=run_id, branch_id=branch_id
                 )
                 capture_saved_calendar_match(
-                    session, payload, run_id=run_id, branch_id=branch_id
+                    session, payload, run_id=run_id, branch_id=branch_id,
+                    _defer_full_verification=(
+                        expected_calendar_tour_fingerprint is not None
+                    ),
                 )
+                if expected_calendar_tour_fingerprint is not None:
+                    # A native Tour Save captures live rows first, then runs the
+                    # COMPLETE source verifier exactly once on that final
+                    # in-transaction payload. The source fold authenticates
+                    # MatchEngine events, 57-attribute population checkpoints,
+                    # Official ranking transitions, lifecycle/Entry history and
+                    # source fingerprints. Pre-play Saved origins were checked
+                    # by capture_tour. Failure rolls back the entire Save.
+                    from beta_engine.infrastructure.db.calendar_standalone_match_state import (
+                        decode_prevalidated_calendar_sources,
+                    )
+                    # The existing Saved HEAD was fully authenticated by
+                    # _viewer_branch_working_draft_in_session inside THIS
+                    # transaction. Its exact sporting source is now a trusted
+                    # prefix; the new Save must still replay every NEW event and
+                    # compare the full successor state byte-for-byte.
+                    _saved_evidence, signed_prefix, _saved_tour = (
+                        decode_prevalidated_calendar_sources(
+                            state.saved_revision.payload,
+                            run_id=run_id, branch_id=branch_id,
+                        )
+                    )
+                    load_saved_calendar_sources(
+                        payload, run_id=run_id, branch_id=branch_id,
+                        _verified_saved_prefix=signed_prefix,
+                    )
                 summary = viewer_branch_saved_revision_change_summary(
                     previous_viewer_branch_id=saved_viewer_id,
                     viewer_branch_id=target_viewer_id,
@@ -5798,6 +5919,13 @@ class SimulationPersistenceRepository:
                         "summary": "Saved authoritative simulation state",
                         "simulation_fingerprint": component["fingerprint"],
                     }
+                elif expected_calendar_tour_fingerprint is not None:
+                    component = payload["content"].get("calendar_tour_authority")
+                    if component is None or component["fingerprint"] != expected_calendar_tour_fingerprint:
+                        raise WorkingDraftConflictError("Tour authority changed since Save review")
+                    if state.saved_revision.payload["content"].get("calendar_tour_authority") == component:
+                        raise WorkingDraftConflictError("Tour authority is already saved")
+                    summary = {"kind":"calendar_tour_authority", "summary":"Saved configured Tour, sporting state and Official ranking", "tour_fingerprint":component["fingerprint"]}
                 elif expected_calendar_sporting_fingerprint is not None:
                     component = payload["content"].get("calendar_player_sporting_checkpoint")
                     if component is None or component["fingerprint"] != expected_calendar_sporting_fingerprint:
@@ -5991,12 +6119,71 @@ class SimulationPersistenceRepository:
                     )
                 )
                 session.flush()
+                if expected_calendar_tour_fingerprint is not None:
+                    # This exact just-inserted Signed payload was fully
+                    # authenticated above BEFORE committing. Build the Save
+                    # receipt from the flushed SQL row rather than re-running
+                    # the same expensive entire sporting/lifecycle replay
+                    # immediately after commit. Normal independent history,
+                    # Viewer and restore reads still perform full validation.
+                    new_row = session.get(BranchSavedRevisionModel, revision_id)
+                    verified_native_save_receipt = self._to_branch_saved_revision(
+                        new_row, validate_components=False
+                    )
+                    saved_run = verified_native_save_receipt.payload.get("run")
+                    saved_branch = verified_native_save_receipt.payload.get("branch")
+                    if (
+                        verified_native_save_receipt.content_hash_algorithm
+                        != CONTENT_HASH_ALGORITHM
+                        or verified_native_save_receipt.content_hash
+                        != _saved_revision_record_content_hash(
+                            verified_native_save_receipt
+                        )
+                        or (verified_native_save_receipt.run_id,
+                            verified_native_save_receipt.branch_id)
+                        != (run_id, branch_id)
+                        or not isinstance(saved_run, dict)
+                        or saved_run.get("run_id") != run_id
+                        or not isinstance(saved_branch, dict)
+                        or saved_branch.get("branch_id") != branch_id
+                        or verified_native_save_receipt.sequence < 1
+                        or not verified_native_save_receipt.kind.strip()
+                    ):
+                        raise WorkingDraftConflictError(
+                            "Native Tour Save receipt has inconsistent immutable revision bytes"
+                        )
+                    # The coupled sporting/Tour sources above have already
+                    # passed the complete verifier. Authenticate the remaining
+                    # components checked by _to_branch_saved_revision as well,
+                    # so this exact row earns the same existing proof only IF
+                    # the surrounding transaction commits successfully.
+                    load_saved_ranking_component(
+                        verified_native_save_receipt.payload,
+                        run_id=run_id, branch_id=branch_id,
+                    )
+                    load_saved_run_package_state(
+                        verified_native_save_receipt.payload,
+                        run_id=run_id, branch_id=branch_id,
+                    )
+                    verified_native_save_signature = _saved_revision_validation_signature(new_row)
         except IntegrityError as exc:
             raise WorkingDraftIdentityConflictError(
                 "generated Saved Revision or audit event identity collided"
             ) from exc
 
-        revision = self.get_branch_saved_revision(revision_id=revision_id)
+        if verified_native_save_signature is not None:
+            # This is AFTER successful transaction exit, never a rolled-back
+            # or merely staged row. The response's independent draft reload
+            # still rehashes actual stored bytes/metadata and checks ancestry
+            # and owner; it need not replay the just-verified sources again.
+            self._remember_validated_revision(
+                verified_native_save_signature, verified_native_save_receipt,
+            )
+        revision = (
+            verified_native_save_receipt
+            if verified_native_save_receipt is not None
+            else self.get_branch_saved_revision(revision_id=revision_id)
+        )
         audit = self.get_branch_revision_audit_event(audit_event_id=audit_event_id)
         if revision is None or audit is None:  # pragma: no cover
             raise RuntimeError("saved revision result could not be reloaded")
@@ -6109,6 +6296,8 @@ class SimulationPersistenceRepository:
                 if isinstance(saved_world, dict)
                 else None
             )
+            from beta_engine.infrastructure.db.calendar_tour import saved_tour
+            native_tour = saved_tour(revision.payload,run_id=product_run_id,branch_id=component_branch_id)
             context = ViewerOfficialRunContext(
                 product_run_id=container.run_id,
                 product_run_display_name=container.display_name or container.run_id,
@@ -6126,11 +6315,14 @@ class SimulationPersistenceRepository:
                 head_checkpoint_id=checkpoint.checkpoint_id if checkpoint else None,
                 head_checkpoint_kind=checkpoint.kind if checkpoint else None,
                 current_season=(
+                    native_tour.week.calendar.start_year+native_tour.week.season_index
+                    if native_tour else
                     2000 + public_ordinal // 61
                     if isinstance(public_ordinal, int)
                     else None
                 ),
                 current_week=(
+                    native_tour.week.week if native_tour else
                     public_ordinal % 61 + 1 if isinstance(public_ordinal, int) else None
                 ),
                 current_event_id=None,

@@ -60,7 +60,7 @@ class CalendarContinuationCommand(FrozenInput):
         return self
 
 
-def play_continuation_match(*, state, world, health, clock, run_id, branch_id, command):
+def play_continuation_match(*, state, world, health, clock, run_id, branch_id, command, _defer_checkpoint_validation=False):
     """Execute and rebuild one real MatchEngine match inside caller-owned transaction.
 
     The caller separately checks Saved HEAD and permissions before calling this
@@ -68,7 +68,8 @@ def play_continuation_match(*, state, world, health, clock, run_id, branch_id, c
     """
     request_fp = canonical_hash({'run_id': run_id, 'branch_id': branch_id, 'command': command.model_dump(mode='json')})
     ids = (command.player_a_id, command.player_b_id)
-    projections = continuation_projections(state, world, ids)
+    source_fingerprint=state.fingerprint
+    projections = continuation_projections(state, world, ids,source_fingerprint=source_fingerprint)
     ctx = MatchContext(match_id=command.match_id,
         player_a=canonical_participant(projections[0]), player_b=canonical_participant(projections[1]),
         best_of=5, games_to=11, win_by=2)
@@ -79,7 +80,7 @@ def play_continuation_match(*, state, world, health, clock, run_id, branch_id, c
     inputs = dict(schema_version=('calendar_continuation_match.v2' if state.week_events else 'calendar_continuation_match.v1'), run_id=run_id, branch_id=branch_id,
         week=RunWeekPosition(calendar=clock, season_index=state.week.season_index, week=state.week.week), sequence=len(state.played_continuations) + 1,
         command_id=command.command_id, match_id=command.match_id,
-        source_saved_head=command.expected_saved_head, source_checkpoint_fingerprint=state.fingerprint,
+        source_saved_head=command.expected_saved_head, source_checkpoint_fingerprint=source_fingerprint,
         seed=command.seed, operator_label=command.operator_label, audit_reason=command.audit_reason,
         request_fingerprint=request_fp, input_context=ctx, canonical_projections=projections,
         projection_policy=CanonicalMatchInputProjectionPolicy(), state_policy=CalendarMatchStatePolicy(),
@@ -88,7 +89,7 @@ def play_continuation_match(*, state, world, health, clock, run_id, branch_id, c
     result = MatchEngine(DeterministicRng(command.seed)).simulate(ctx, log_anchor_hash=anchor, effective_match_health=medical)
     _, effects = continuation_effects(state, ctx, result, inputs['state_policy'])
     entry = CalendarContinuationMatch(**inputs, result=result, effects=effects, log_anchor_hash=anchor)
-    successor = append_continuation(state, world, entry)
+    successor = append_continuation(state, world, entry,_defer_checkpoint_validation=_defer_checkpoint_validation)
     return entry, successor
 
 
@@ -191,6 +192,7 @@ class CalendarContinuationService:
         request_fp = canonical_hash({'run_id': run_id, 'branch_id': branch_id, 'command': command.model_dump(mode='json')})
         with self.repository._session_factory.begin() as session:
             session.execute(text('BEGIN IMMEDIATE'))
+            from beta_engine.infrastructure.db.calendar_tour import require_exhibition_timeline
             clock, revision, world, health, state, saved, evidence = self._context(session, run_id=run_id, branch_id=branch_id)
             if state is None:
                 raise ValueError('First play and Save a v5 opening knockout to establish population sporting authority')
@@ -235,6 +237,7 @@ class CalendarContinuationService:
                                     and closure not in prefix.closures):
                                 prefix = append_native_tournament_closure(prefix, closure)
                     return self._receipt(existing, prefix)
+            require_exhibition_timeline(session, run_id, branch_id)
             if (saved is None or saved.fingerprint != state.fingerprint
                     or revision.saved_head_revision_id != command.expected_saved_head
                     or state.fingerprint != command.expected_checkpoint_fingerprint):

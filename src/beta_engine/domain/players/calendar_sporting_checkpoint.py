@@ -4,9 +4,9 @@ Historical v1/v2 retain exact opening-week bytes. Explicit v3 adds an ordered
 sporting-only weekly ledger and subsequent exhibitions. It does not own the
 Official Week Transition, Health healing or lifecycle. The bootstrap is provisional.
 """
-from typing import Literal
+from typing import Annotated, Literal
 
-from pydantic import Field, model_serializer, model_validator
+from pydantic import Discriminator, Field, Tag, model_serializer, model_validator
 
 from beta_engine.domain.calendar.run_week_position import RunWeekPosition
 from beta_engine.domain.players.calendar_canonical_match import (
@@ -30,8 +30,25 @@ from beta_engine.domain.rankings.official import FrozenInput
 from beta_engine.domain.run_packages import canonical_hash
 
 
+def _sporting_event_kind(value):
+    # These event shapes have disjoint required fields. Dispatch directly rather
+    # than validating large rally logs through every union alternative. Shape
+    # dispatch also preserves historical inputs omitting the default schema tag;
+    # each selected model still validates its own version and every field.
+    if isinstance(value, dict):
+        return ('knockout' if 'tournament_id' in value else
+                'match' if 'match_id' in value else 'week')
+    if isinstance(value, CalendarFollowupKnockout):
+        return 'knockout'
+    if isinstance(value, CalendarContinuationMatch):
+        return 'match'
+    if isinstance(value, CalendarSportingWeekAdvance):
+        return 'week'
+    return None
+
+
 class CalendarSportingCheckpoint(FrozenInput):
-    schema_version: Literal['calendar_sporting_checkpoint.v1', 'calendar_sporting_checkpoint.v2', 'calendar_sporting_checkpoint.v3', 'calendar_sporting_checkpoint.v4', 'calendar_sporting_checkpoint.v5', 'calendar_sporting_checkpoint.v6', 'calendar_sporting_checkpoint.v7', 'calendar_sporting_checkpoint.v8'] = 'calendar_sporting_checkpoint.v1'
+    schema_version: Literal['calendar_sporting_checkpoint.v1', 'calendar_sporting_checkpoint.v2', 'calendar_sporting_checkpoint.v3', 'calendar_sporting_checkpoint.v4', 'calendar_sporting_checkpoint.v5', 'calendar_sporting_checkpoint.v6', 'calendar_sporting_checkpoint.v7', 'calendar_sporting_checkpoint.v8', 'calendar_sporting_checkpoint.v9'] = 'calendar_sporting_checkpoint.v1'
     run_id: str = Field(min_length=1)
     branch_id: str = Field(min_length=1)
     week: RunWeekPosition
@@ -45,17 +62,22 @@ class CalendarSportingCheckpoint(FrozenInput):
     health_effects_applied: Literal[False] = False
 
     continuations: tuple[CalendarContinuationMatch, ...] = ()
-    week_events: tuple[CalendarSportingWeekAdvance | CalendarContinuationMatch | CalendarFollowupKnockout, ...] = ()
+    week_events: tuple[Annotated[
+        Annotated[CalendarSportingWeekAdvance, Tag('week')]
+        | Annotated[CalendarContinuationMatch, Tag('match')]
+        | Annotated[CalendarFollowupKnockout, Tag('knockout')],
+        Discriminator(_sporting_event_kind),
+    ], ...] = ()
     closures: tuple[CalendarNativeTournamentClosure, ...] = ()
 
     @model_serializer(mode='wrap')
     def historical_shape(self, handler):
         body = handler(self)
-        if self.schema_version != 'calendar_sporting_checkpoint.v8':
+        if self.schema_version not in {'calendar_sporting_checkpoint.v8', 'calendar_sporting_checkpoint.v9'}:
             body.pop('closures', None)
         if self.schema_version == 'calendar_sporting_checkpoint.v1':
             body.pop('continuations', None)
-        if self.schema_version not in {'calendar_sporting_checkpoint.v3', 'calendar_sporting_checkpoint.v4', 'calendar_sporting_checkpoint.v5', 'calendar_sporting_checkpoint.v6', 'calendar_sporting_checkpoint.v7', 'calendar_sporting_checkpoint.v8'}:
+        if self.schema_version not in {'calendar_sporting_checkpoint.v3', 'calendar_sporting_checkpoint.v4', 'calendar_sporting_checkpoint.v5', 'calendar_sporting_checkpoint.v6', 'calendar_sporting_checkpoint.v7', 'calendar_sporting_checkpoint.v8', 'calendar_sporting_checkpoint.v9'}:
             body.pop('week_events', None)
         return body
 
@@ -66,7 +88,7 @@ class CalendarSportingCheckpoint(FrozenInput):
                 raise ValueError('Historical checkpoint cannot acquire continuation history')
         elif self.schema_version == 'calendar_sporting_checkpoint.v2' and (not self.continuations or self.phase != 'opening_week_continued'):
             raise ValueError('Continued checkpoint requires actual match history')
-        if self.schema_version not in {'calendar_sporting_checkpoint.v3', 'calendar_sporting_checkpoint.v4', 'calendar_sporting_checkpoint.v5', 'calendar_sporting_checkpoint.v6', 'calendar_sporting_checkpoint.v7', 'calendar_sporting_checkpoint.v8'}:
+        if self.schema_version not in {'calendar_sporting_checkpoint.v3', 'calendar_sporting_checkpoint.v4', 'calendar_sporting_checkpoint.v5', 'calendar_sporting_checkpoint.v6', 'calendar_sporting_checkpoint.v7', 'calendar_sporting_checkpoint.v8', 'calendar_sporting_checkpoint.v9'}:
             if 'week_events' in self.model_fields_set or self.annual_development_applied:
                 raise ValueError('Historical checkpoint cannot acquire weekly development')
         elif (not self.week_events or not isinstance(self.week_events[0], CalendarSportingWeekAdvance)
@@ -98,7 +120,7 @@ class CalendarSportingCheckpoint(FrozenInput):
                         and event.schema_version == 'calendar_followup_knockout.v3'
                         for event in self.week_events)):
             raise ValueError('Checkpoint v6 needs an actual eight-player tournament')
-        if (self.schema_version not in {'calendar_sporting_checkpoint.v7', 'calendar_sporting_checkpoint.v8'}
+        if (self.schema_version not in {'calendar_sporting_checkpoint.v7', 'calendar_sporting_checkpoint.v8', 'calendar_sporting_checkpoint.v9'}
             and any(isinstance(event, CalendarFollowupKnockout)
                     and event.schema_version == 'calendar_followup_knockout.v4'
                     for event in self.week_events)):
@@ -108,19 +130,22 @@ class CalendarSportingCheckpoint(FrozenInput):
                         and event.schema_version == 'calendar_followup_knockout.v4'
                         for event in self.week_events)):
             raise ValueError('Checkpoint v7 requires real scored eight-player knockout evidence')
-        if self.schema_version == 'calendar_sporting_checkpoint.v8':
+        if self.schema_version in {'calendar_sporting_checkpoint.v8', 'calendar_sporting_checkpoint.v9'}:
             ids = [c.tournament_id for c in self.closures]
             commands = [c.command_id for c in self.closures]
-            if (not ids or len(set(ids)) != len(ids)
+            if ((self.schema_version == 'calendar_sporting_checkpoint.v8' and not ids) or len(set(ids)) != len(ids)
                     or len(set(commands)) != len(commands)
                     or any(c.source_week_event_count > len(self.week_events) for c in self.closures)):
                 raise ValueError('Native sporting v8 requires unique, already played tournament closures')
         elif self.closures:
             raise ValueError('Historical sporting owner cannot gain native result closures')
+        configured = any(isinstance(e, CalendarFollowupKnockout) and e.schema_version == 'calendar_followup_knockout.v5' for e in self.week_events)
+        if (self.schema_version == 'calendar_sporting_checkpoint.v9') != configured:
+            raise ValueError('Configured Tour event requires explicit population checkpoint v9')
         ids = tuple(p.player_id for p in self.players)
         if ids != tuple(sorted(set(ids))):
             raise ValueError('Calendar sporting checkpoint requires the sorted unique population')
-        if self.schema_version not in {'calendar_sporting_checkpoint.v3', 'calendar_sporting_checkpoint.v4', 'calendar_sporting_checkpoint.v5', 'calendar_sporting_checkpoint.v6', 'calendar_sporting_checkpoint.v7', 'calendar_sporting_checkpoint.v8'} and (self.week.season_index, self.week.week) != (0, 1):
+        if self.schema_version not in {'calendar_sporting_checkpoint.v3', 'calendar_sporting_checkpoint.v4', 'calendar_sporting_checkpoint.v5', 'calendar_sporting_checkpoint.v6', 'calendar_sporting_checkpoint.v7', 'calendar_sporting_checkpoint.v8', 'calendar_sporting_checkpoint.v9'} and (self.week.season_index, self.week.week) != (0, 1):
             raise ValueError('Checkpoint v1 does not advance the opening week')
         if self.bootstrap_policy != PlayerSportingBootstrapPolicy():
             raise ValueError('Unknown calendar sporting bootstrap calibration')

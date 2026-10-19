@@ -359,6 +359,14 @@ class RunWorkingDraftService:
             ),
         )
 
+    def save_calendar_tour(self, *, run_id, branch_id, expected_draft_version, expected_calendar_tour_fingerprint):
+        return self.repository.save_viewer_branch_selection_atomically(
+            run_id=run_id, branch_id=branch_id, expected_draft_version=expected_draft_version,
+            expected_calendar_tour_fingerprint=expected_calendar_tour_fingerprint,
+            revision_id=_validated_entity_id(self.id_factory("saved-revision"), kind="saved revision"),
+            audit_event_id=_validated_entity_id(self.id_factory("revision-audit-event"), kind="revision audit event"),
+        )
+
     def save_calendar_sporting_checkpoint(
         self,
         *,

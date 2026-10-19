@@ -1,4 +1,64 @@
+# Performance review — 19 October 2026 (verification pending)
+
+Repair follows #1542 head `4ee5b826`, including #1541; consolidated into #1542 targeting buuk. The previous head's
+Fast CI, API acceptance and Shell Browser passed, but Native Tour W80/1000
+failed its first post-restart inspection at the unchanged 120-second bound.
+
+Four reproducible causes are addressed: concurrent cold requests duplicated
+full validation of identical Saved revisions; and live checkpoint proof reuse
+compared JSON insertion order, which changes for maps such as `sets_won`
+after canonical Saved serialization. A bounded per-signature single-flight
+now shares only successful existing metadata proofs; live reuse hashes the
+actual decoded row against the authenticated source's canonical fingerprint.
+Every request still verifies its live owner and altered bytes invalidate proof.
+Native Tour Save also publishes its already complete exact-byte metadata proof
+only after successful commit, avoiding a second full replay in its response.
+Rollback publishes no proof; other component, scope and content checks remain.
+An unsaved Tour owner now also uses its authenticated Saved predecessor to
+verify every newly appended event and the full successor, falling back to the
+original full replay if any prefix/source identity differs.
+
+58 focused tests and 15 original Tour integration regressions pass, including concurrent corrupted-source rejection,
+independent response payloads, mapping-order reuse, actual HTTP Save rollback,
+one post-commit source fold, real live-week suffix reuse and rehashed forged
+successor rejection, historical restore/fork
+and original hash compatibility. Required final-head browser/API/CI checks
+remain pending; this is not a merge-ready or pre-alpha release claim.
+
+Follow-up on `fd8dbb41`: 12/14 workflows passed, including Native Tour API
+(about 14 minutes), Shell and W52/W61 browsers. W80 completed all sporting
+operations but hit the unchanged 18-minute outer bound during final evidence.
+Further repair dispatches checkpoint events by their disjoint required shape
+instead of repeatedly validating large logs through every union alternative;
+default version omission and all selected-model validators remain supported.
+Tour reads also avoid two repeated checkpoint hashes and reuse an authenticated
+played root only after hashing actual live values and checking all row identities.
+The Server Tasks browser released its next writer before awaiting the pause HTTP
+commit, racing/starving the control writer. It now requires its real ACK first.
+These follow-up changes still require final-head CI/browser verification.
+
+The subsequent W61 browser also exposed an initial-read race after restart:
+StrictMode's superseded effect could overwrite the current view and clear a
+new command's busy state. A deterministic frontend regression reproduces it.
+Effect cleanup now aborts that fetch and ignores all superseded callbacks.
+The browser correlates follow-up reads with requests issued after the actual
+write ACK, retaining its response timeout and unsaved/identity/hash assertions.
+The real local Server Tasks browser passed pause, page close, SIGKILL, explicit
+recovery and uninterrupted equivalence. New final-head checks remain required.
+
 # Current implementation — Master v85
+
+Current integration base verified 18 October 2026: `buuk`
+`44c782870391d45d39b05cf00fa1edd6e938e6a6`, owner-merged #1540.
+The earlier audits below remain historical evidence, not the current branch tip.
+
+**Candidate in implementation:** configured native Edition → production Entry →
+approved field/draw → actual 57-backed MatchEngine → frozen Edition points →
+atomic native Week Transition/lifecycle/Official ranking, with separate manual
+Save and CS/EN Admin. See [authority and scope contract](docs/CALENDAR_CONFIGURED_TOUR_V1.md).
+Final API/browser/recovery/performance checks are pending; this candidate is not
+merge-ready or a complete pre-alpha release. Existing match-fork, Season Transition,
+numeric Health, intake-source and external correction/discipline guards remain.
 
 Audit base: buuk `4df7580c5548fbb27b0f7ee1a28ce6b3af5f71bd`, after owner-merged #1539, 18 October 2026.
 #1533–1539 are merged. The current repair follows a code/CI review of all seven PRs.

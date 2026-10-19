@@ -22,7 +22,7 @@ ROUNDS_EIGHT = ("qf1", "qf2", "qf3", "qf4", "sf1", "sf2", "final")
 
 
 class CalendarFollowupKnockout(FrozenInput):
-    schema_version: Literal["calendar_followup_knockout.v1", "calendar_followup_knockout.v2", "calendar_followup_knockout.v3", "calendar_followup_knockout.v4"] = "calendar_followup_knockout.v1"
+    schema_version: Literal["calendar_followup_knockout.v1", "calendar_followup_knockout.v2", "calendar_followup_knockout.v3", "calendar_followup_knockout.v4", "calendar_followup_knockout.v5"] = "calendar_followup_knockout.v1"
     run_id: str = Field(min_length=1)
     branch_id: str = Field(min_length=1)
     tournament_id: str = Field(min_length=1, max_length=94)
@@ -38,13 +38,16 @@ class CalendarFollowupKnockout(FrozenInput):
     matches: tuple[CalendarContinuationMatch, ...] = Field(min_length=3, max_length=7)
     prepared_policy: CalendarFollowupPointPolicy | CalendarFollowupEightPointPolicy | None = None
     prepared_awards: tuple[CalendarFollowupPreparedAward, ...] = ()
-    scope: Literal["sporting_exhibition_knockout_not_official"] = (
+    edition_authority_fingerprint: str | None = Field(default=None,pattern=r"^[0-9a-f]{64}$")
+    scope: Literal["sporting_exhibition_knockout_not_official", "configured_tour_knockout"] = (
         "sporting_exhibition_knockout_not_official"
     )
 
     @model_serializer(mode="wrap")
     def historical_shape(self, handler):
         body = handler(self)
+        if self.schema_version != "calendar_followup_knockout.v5":
+            body.pop("edition_authority_fingerprint", None)
         if self.schema_version in {"calendar_followup_knockout.v1", "calendar_followup_knockout.v3"}:
             body.pop("prepared_policy", None)
             body.pop("prepared_awards", None)
@@ -52,7 +55,13 @@ class CalendarFollowupKnockout(FrozenInput):
 
     @model_validator(mode="after")
     def validate_bracket(self):
-        eight = self.schema_version in {"calendar_followup_knockout.v3", "calendar_followup_knockout.v4"}
+        configured=self.schema_version=="calendar_followup_knockout.v5"
+        if configured:
+            if not self.edition_authority_fingerprint or self.scope!="configured_tour_knockout":
+                raise ValueError("Configured tournament requires its pre-existing Edition/Entry/draw authority")
+        elif self.edition_authority_fingerprint is not None or self.scope!="sporting_exhibition_knockout_not_official":
+            raise ValueError("Historical exhibition cannot acquire Tour Edition authority")
+        eight = len(self.entrant_ids)==8 if configured else self.schema_version in {"calendar_followup_knockout.v3", "calendar_followup_knockout.v4"}
         expected_field = 8 if eight else 4
         rounds = ROUNDS_EIGHT if eight else ROUNDS
         if (len(self.entrant_ids) != expected_field
@@ -109,15 +118,15 @@ class CalendarFollowupKnockout(FrozenInput):
             operator_label=self.operator_label,
             audit_reason=self.audit_reason,
         )
-        if self.schema_version in {"calendar_followup_knockout.v2", "calendar_followup_knockout.v4"}:
+        if self.schema_version in {"calendar_followup_knockout.v2", "calendar_followup_knockout.v4", "calendar_followup_knockout.v5"}:
             needed_type = (
                 CalendarFollowupEightPointPolicy
-                if self.schema_version == "calendar_followup_knockout.v4"
+                if eight
                 else CalendarFollowupPointPolicy
             )
             if (
                 not isinstance(self.prepared_policy, needed_type)
-                or self.prepared_policy.validity_weeks != self.week.calendar.weeks_per_year
+                or (not configured and self.prepared_policy.validity_weeks != self.week.calendar.weeks_per_year)
             ):
                 raise ValueError("Scored knockout requires matching W-valid prepared point policy")
             request["point_policy"] = self.prepared_policy.model_dump(mode="json")
@@ -128,6 +137,7 @@ class CalendarFollowupKnockout(FrozenInput):
             raise ValueError("Unscored knockout cannot acquire prepared points")
         if self.request_fingerprint != canonical_hash({
             "run_id": self.run_id, "branch_id": self.branch_id, "command": request,
+            **({"edition_authority_fingerprint":self.edition_authority_fingerprint} if configured else {}),
         }):
             raise ValueError("Knockout root request fingerprint mismatch")
         return self
@@ -157,6 +167,7 @@ def append_followup_knockout(checkpoint, world, event: CalendarFollowupKnockout)
             "calendar_sporting_checkpoint.v3", "calendar_sporting_checkpoint.v4",
             "calendar_sporting_checkpoint.v5", "calendar_sporting_checkpoint.v6",
             "calendar_sporting_checkpoint.v7", "calendar_sporting_checkpoint.v8",
+            "calendar_sporting_checkpoint.v9",
         }
         or not checkpoint.week_events
         or (checkpoint.run_id, checkpoint.branch_id) != (event.run_id, event.branch_id)
@@ -188,6 +199,9 @@ def append_followup_knockout(checkpoint, world, event: CalendarFollowupKnockout)
         )
     successor = checkpoint.model_copy(update={
         "schema_version": (
+            "calendar_sporting_checkpoint.v9"
+            if checkpoint.schema_version=="calendar_sporting_checkpoint.v9" or event.schema_version=="calendar_followup_knockout.v5"
+            else
             "calendar_sporting_checkpoint.v8"
             if checkpoint.schema_version == "calendar_sporting_checkpoint.v8"
             else "calendar_sporting_checkpoint.v7"

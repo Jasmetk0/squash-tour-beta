@@ -338,6 +338,23 @@ import type {
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000'
 
+const calendarTourRoot = (run:string,branch:string) => `/admin/runs/${encodeURIComponent(run)}/branches/${encodeURIComponent(branch)}/calendar-tour`
+export function inspectCalendarTour(run:string,branch:string,signal?:AbortSignal):Promise<import('./calendarTour').TourView> {
+  return request(calendarTourRoot(run,branch),{signal})
+}
+export function inspectCalendarTourPlayer(run:string,branch:string,player:string):Promise<import('./calendarTour').TourPlayer> {
+  return request(calendarTourRoot(run,branch)+'/players/'+encodeURIComponent(player))
+}
+export function previewCalendarTour(run:string,branch:string,command:import('./calendarTour').TourCommand):Promise<import('./calendarTour').TourPreview> {
+  return request(calendarTourRoot(run,branch)+'/preview',{method:'POST',body:JSON.stringify(command)})
+}
+export function executeCalendarTour(run:string,branch:string,command:import('./calendarTour').TourCommand,preview:string):Promise<unknown> {
+  return request(calendarTourRoot(run,branch)+'/execute',{method:'POST',body:JSON.stringify({command,expected_preview_fingerprint:preview,explicit_confirmation:true})})
+}
+export function saveCalendarTour(run:string,branch:string,version:number,fingerprint:string):Promise<import('./calendarTour').TourSaveReceipt> {
+  return request(calendarTourRoot(run,branch)+'/save',{method:'POST',body:JSON.stringify({expected_draft_version:version,expected_calendar_tour_fingerprint:fingerprint})})
+}
+
 class ApiError extends Error {
   status: number
 

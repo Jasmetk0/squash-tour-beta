@@ -50,7 +50,7 @@ class CalendarStandaloneMatchService:
 
     _engine_player = staticmethod(calendar_engine_player)
 
-    def _context(self, session, *, run_id: str, branch_id: str, allow_calendar_health: bool = False, allow_calendar_sporting: bool = False):
+    def _context(self, session, *, run_id: str, branch_id: str, allow_calendar_health: bool = False, allow_calendar_sporting: bool = False, _sporting_component_proofs=None):
         run = session.get(RunContainerModel, run_id)
         branch = session.get(RunBranchModel, branch_id)
         if run is None or branch is None or branch.run_id != run_id:
@@ -66,6 +66,7 @@ class CalendarStandaloneMatchService:
             raise ValueError("Calendar match requires versioned Run calendar")
         state = self.repository._validated_branch_revision_state_in_session(
             session=session, branch=branch,
+            sporting_component_proofs=_sporting_component_proofs,
         )
         if state.working_draft.status != "clean":
             raise ValueError("Save or discard pending Working Draft before calendar match")

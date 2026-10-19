@@ -109,4 +109,40 @@ describe('configured Tour consent (HTTP boundary mocked)',()=>{
     expect(api.saveCalendarTour).not.toHaveBeenCalled()
   })
 
+
+  it('plans and explicitly reviews next-season Edition without crossing the Run horizon',async()=>{
+    const calendar={schema_version:'run_calendar.v1',weeks_per_year:52,season_start_year_week:1,start_year:2030,season_count:3}
+    const state={week:{calendar,season_index:0,week:51},editions:[],rankings:[],transitions:[]}
+    api.inspectCalendarTour.mockResolvedValue({...view(),state,tour_fingerprint:'c'.repeat(64),saved:true})
+    api.previewCalendarTour.mockImplementation((_r,_b,c)=>Promise.resolve(preview(c)))
+    render(panel())
+    await screen.findByLabelText('Tour Edition season')
+    expect((screen.getByLabelText('Tour Edition season') as HTMLInputElement).value).toBe('2')
+    expect((screen.getByLabelText('Tour Edition week') as HTMLInputElement).value).toBe('1')
+    fireEvent.change(screen.getByLabelText('Tour operation reason'),{target:{value:'Real next-season calendar'}})
+    fireEvent.change(screen.getByLabelText('Tour Edition ID'),{target:{value:'new-season-cup'}})
+    fireEvent.change(screen.getByLabelText('Tour Edition name'),{target:{value:'Season 2 Cup'}})
+    fireEvent.click(screen.getByRole('button',{name:'Review new Edition'}))
+    await screen.findByLabelText('Confirm Tour command')
+    const cmd=api.previewCalendarTour.mock.calls[0][2] as TourCommand
+    expect(cmd.action).toBe('create-edition')
+    const scheduled=cmd.data.week as {season_index:number;week:number}
+    const announcement=cmd.data.announcement_week as {season_index:number;week:number}
+    expect(scheduled).toMatchObject({season_index:1,week:1})
+    expect(announcement).toMatchObject({season_index:0,week:52})
+    expect(api.saveCalendarTour).not.toHaveBeenCalled()
+  })
+  it('prevents Edition review when the future Run horizon has no two available weeks',async()=>{
+    const calendar={schema_version:'run_calendar.v1',weeks_per_year:52,season_start_year_week:1,start_year:2030,season_count:1}
+    api.inspectCalendarTour.mockResolvedValue({...view(),tour_fingerprint:'c'.repeat(64),saved:true,
+      state:{week:{calendar,season_index:0,week:51},editions:[],rankings:[],transitions:[]}})
+    render(panel())
+    await screen.findByLabelText('Tour Edition season')
+    fireEvent.change(screen.getByLabelText('Tour operation reason'),{target:{value:'End of horizon'}})
+    fireEvent.change(screen.getByLabelText('Tour Edition ID'),{target:{value:'bad-cup'}})
+    fireEvent.change(screen.getByLabelText('Tour Edition name'),{target:{value:'Bad Cup'}})
+    expect(screen.getByRole('button',{name:'Review new Edition'})).toBeDisabled()
+    expect(api.previewCalendarTour).not.toHaveBeenCalled()
+  })
+
 })

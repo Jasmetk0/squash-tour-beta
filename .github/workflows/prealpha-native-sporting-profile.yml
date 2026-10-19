@@ -1,0 +1,89 @@
+name: Native Sporting Context Profile
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/prealpha-native-sporting-profile.yml'
+      - 'src/beta_engine/application/calendar_opening_knockout_service.py'
+      - 'src/beta_engine/application/calendar_continuation_service.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  matched-sporting-replay:
+    name: "Eight-match W${{ matrix.width }} / ${{ matrix.version }}"
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        width: [52, 80]
+        version: [baseline, candidate]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Run the EXACT SAME original HTTP/SQLite fixture at the merged
+          # baseline and proposed PR head, on the same runner class.
+          ref: ${{ matrix.version == 'baseline' && github.event.pull_request.base.sha || github.event.pull_request.head.sha }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: pyproject.toml
+      - run: python -m pip install -e . pytest
+      - name: Signed sporting eight-match HTTP + SQLite profile
+        env:
+          GITHUB_EVENT_NAME: native_sporting_profile
+          SPORTING_TEST_WIDTH: ${{ matrix.width }}
+        run: |
+          git rev-parse HEAD
+          python - <<'PY'
+          import functools
+          import json
+          import os
+          import time
+          from collections import defaultdict
+          import pytest
+          from beta_engine.application import calendar_opening_knockout_service as opening
+          from beta_engine.application import calendar_continuation_service as continuation
+          from beta_engine.infrastructure.db import calendar_sporting_checkpoint as checkpoint
+          from beta_engine.infrastructure.db import calendar_standalone_match_state as matches
+
+          stats = defaultdict(lambda: [0, 0.0])
+          for module, name, label in (
+              (opening, 'load_match_rows', 'opening.live_match_read'),
+              (continuation, 'load_match_rows', 'continuation.live_match_read'),
+              (continuation, 'load_checkpoint', 'continuation.live_checkpoint_read'),
+              (checkpoint, 'load_checkpoint', 'checkpoint.live_read'),
+              (checkpoint, 'saved_checkpoint', 'checkpoint.saved_full_fold'),
+              (checkpoint, 'verify_checkpoint', 'checkpoint.sporting_fold'),
+              (matches, '_parse_saved_calendar_match_evidence', 'match.saved_parse'),
+          ):
+              original = getattr(module, name)
+              def measured(*args, __original=original, __label=label, **kwargs):
+                  began = time.perf_counter()
+                  try:
+                      return __original(*args, **kwargs)
+                  finally:
+                      record = stats[__label]
+                      record[0] += 1
+                      record[1] += time.perf_counter() - began
+              setattr(module, name, functools.wraps(original)(measured))
+
+          width = os.environ['SPORTING_TEST_WIDTH']
+          node = ('tests/api/test_calendar_followup_eight_knockout_flow.py'
+                  '::test_real_eight_knockout_save_replay_week_and_restore[' + width + ']')
+          started = time.perf_counter()
+          outcome = pytest.main([node, '-vv', '-s', '--maxfail=1', '--durations=5'])
+          report = {
+              'scenario': node,
+              'elapsed_s': round(time.perf_counter() - started, 3),
+              'exit_code': int(outcome),
+              'operations': {k: {'calls': v[0], 'inclusive_s': round(v[1], 3)}
+                             for k, v in sorted(stats.items())},
+          }
+          print('SPORTING_CONTEXT_PROFILE=' + json.dumps(report, sort_keys=True), flush=True)
+          raise SystemExit(int(outcome))
+          PY

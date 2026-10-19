@@ -91,11 +91,12 @@ def test_actual_saved_replay_rejects_health_forgery(monkeypatch,attack,reason):
     elif attack=="missing_player":
         target["players"]=target["players"][:-1]
     elif attack=="old_player_modified":
-        target["players"][1]["records"]=[{
-            "record_id":"fake-record","kind":"Injury","condition_key":"arm",
-            "lifecycle":"Active","severity":10,"affected_domains":["arm"],
-            "started_before_run":True,"provenance":"forged",
-        }]
+        from beta_engine.domain.players.calendar_health import CalendarHealthRecord
+        target["players"][1]["records"]=[CalendarHealthRecord(
+            record_id="fake-record",kind="Injury",condition_key="arm",
+            lifecycle="Active",severity=10,affected_domains=("arm",),
+            started_before_run=True,provenance="forged",
+        ).model_dump(mode="json")]
     elif attack=="wrong_life_fingerprint":
         target["source_lifecycle_fingerprint"]="0"*64
     elif attack=="forged_predecessor":

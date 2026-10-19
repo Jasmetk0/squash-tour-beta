@@ -27,7 +27,7 @@ from beta_engine.application.run_calendar_initial_pool_preview_service import (
     RunCalendarInitialPoolPreviewRequest, RunCalendarInitialPoolPreviewService,
 )
 from beta_engine.application.native_calendar_cohort_service import (
-    NativeCalendarCohortRequest, NativeCalendarCohortService,
+    NativeCalendarCohortRequest, NativeCalendarCohortConfirmation, NativeCalendarCohortService,
 )
 from beta_engine.application.run_world_initial_pool_preview_service import (
     RunWorldInitialPoolPreviewRequest,
@@ -1022,6 +1022,23 @@ def preview_native_calendar_cohort(
             "code": "native_calendar_cohort_preview_unavailable",
             "message": str(exc),
         }) from exc
+
+@router.post("/runs/{run_id}/branches/{branch_id}/intake/native-calendar/materialize", status_code=201)
+def materialize_native_calendar_cohort(
+    run_id: str, branch_id: str, payload: NativeCalendarCohortConfirmation,
+    runtime: ApiRuntime = Depends(get_runtime),
+    adapter: WorldPackageRunAdapter = Depends(get_world_package_run_adapter),
+):
+    try:
+        return NativeCalendarCohortService(runtime.repository, adapter).materialize(
+            run_id=run_id, branch_id=branch_id, confirmation=payload,
+        )
+    except (KeyError, ValueError) as exc:
+        raise HTTPException(status_code=409, detail={
+            "code": "native_calendar_cohort_materialization_conflict",
+            "message": str(exc),
+        }) from exc
+
 
 @router.post("/runs/{run_id}/branches/{branch_id}/initial-world/calendar-adoption/preview")
 def review_calendar_initial_world(

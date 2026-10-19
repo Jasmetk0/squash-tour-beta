@@ -184,7 +184,7 @@ describe('configured Tour consent (HTTP boundary mocked)',()=>{
     const item=(scope:'player'|'country',metric:'titles'|'finals'|'awarded_points')=>({
       record_id:`native_tour.${scope}.${metric}.v1`,scope,metric,value:metric==='titles'?2:0,
       holders:metric==='titles'?[{entity_id:'player-a',label:'Alpha',country_code:'CZE',titles:2,finals:0,awarded_points:230}]:[],
-      holder_history:metric==='titles'?[{season_index:1,season_label:'S2',record_value:2,holder_ids:['player-a'],change:'improved',boundary_command_id:'close-1'}]:[],
+      holder_history:metric==='titles'?[{season_index:1,season_label:'S2',record_value:2,holder_ids:['player-b'],holder_labels:['Former Champion'],change:'improved',boundary_command_id:'close-1'}]:[],
       leaderboard:metric==='titles'?[{entity_id:'player-a',label:'Alpha',country_code:'CZE',titles:2,finals:0,awarded_points:230,rank:1}]:[],
       leaderboard_total:metric==='titles'?1:0
     })
@@ -203,6 +203,8 @@ describe('configured Tour consent (HTTP boundary mocked)',()=>{
     await screen.findByLabelText('Verified career records')
     expect(screen.getByLabelText('Verified career records')).toHaveTextContent('CZE')
     expect(screen.getByLabelText('Verified career records')).toHaveTextContent('Alpha')
+    // Former record-holder identity remains readable after the lead changes.
+    expect(screen.getByLabelText('Verified career records')).toHaveTextContent('Former Champion')
     expect(api.inspectCalendarTourRecords).toHaveBeenCalledWith('r','b',1,0,'CZE')
     expect(api.saveCalendarTour).not.toHaveBeenCalled()
   })

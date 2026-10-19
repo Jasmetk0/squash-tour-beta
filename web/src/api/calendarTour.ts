@@ -68,7 +68,7 @@ export type TourCareerRecords={
     record_id:string;scope:'player'|'country';metric:TourRecordMetric
     value:number
     holders:{entity_id:string;label:string;country_code:string;titles:number;finals:number;awarded_points:number}[]
-    holder_history:{season_index:number;season_label:string;record_value:number;holder_ids:string[];change:'established'|'improved'|'tied';boundary_command_id:string}[]
+    holder_history:{season_index:number;season_label:string;record_value:number;holder_ids:string[];holder_labels:string[];change:'established'|'improved'|'tied';boundary_command_id:string}[]
     leaderboard:{entity_id:string;label:string;country_code:string;titles:number;finals:number;awarded_points:number;rank:number}[]
     leaderboard_total:number
   }[]
@@ -80,7 +80,9 @@ export function validateTourCareerRecords(v:TourCareerRecords,run:string,branch:
     ||!Array.isArray(v.completed_seasons)||!v.completed_seasons.includes(asOf)
     ||!Array.isArray(v.source_seasons)||!Array.isArray(v.records)
     ||v.records.length!==6
-    ||v.records.some(r=>!Array.isArray(r.holders)||!Array.isArray(r.holder_history)||!Array.isArray(r.leaderboard)))
+    ||v.records.some(r=>!Array.isArray(r.holders)||!Array.isArray(r.holder_history)||!Array.isArray(r.leaderboard)
+      ||r.holder_history.some(h=>!Array.isArray(h.holder_labels)||h.holder_labels.length!==h.holder_ids.length
+        ||h.holder_labels.some(name=>typeof name!=='string'||name.length===0))))
     throw Error('Signed Career Records source, request, or metric catalog changed')
   return v
 }

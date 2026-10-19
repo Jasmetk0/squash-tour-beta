@@ -79,7 +79,7 @@ def signed_tour_records(
         raise ValueError("Records leaderboard limit must be between 1 and 100")
     if country_code is not None and (
         not isinstance(country_code, str)
-        or len(country_code) != 3 or not country_code.isalpha()
+        or len(country_code) != 3 or not country_code.isascii() or not country_code.isalpha()
         or country_code != country_code.upper()
     ):
         raise ValueError("Records filter requires uppercase three-letter country")
@@ -152,6 +152,12 @@ def signed_tour_records(
                     "season_label": summary["season_label"],
                     "record_value": maximum,
                     "holder_ids": list(holders),
+                    # Preserve historical display identity even after the
+                    # record changes hands in a later Signed season.
+                    "holder_labels": [
+                        _empty(eid, scope=scope, identities=identities)["label"]
+                        for eid in holders
+                    ],
                     "change": (
                         "established" if prior_maximum == 0
                         else "improved" if maximum > prior_maximum

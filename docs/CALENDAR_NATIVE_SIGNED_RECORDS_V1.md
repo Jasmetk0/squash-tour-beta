@@ -70,7 +70,10 @@ closure**, not a fictional match date, with `established`,
 `improved` or `tied` and the immutable Season Transition command ID.
 Within the fixed selected period, `from` resets cumulative totals
 and the record history: it does not pretend previous-year totals or
-record lineage remain inside a later fixed window.
+record lineage remain inside a later fixed window. Each holder-history event
+includes the as-of holder labels alongside stable IDs, so former holders remain
+human-readable even if a later season's record is held by different players.
+Backend ISO-3 filters use ASCII A–Z, matching the existing Admin input guard.
 
 CS/EN Admin can select inclusive period and optional ISO-3 country,
 then explicitly request all 6 metrics, their ordered leaderboards,

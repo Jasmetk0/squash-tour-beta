@@ -265,7 +265,7 @@ export function CalendarTourPanel({runId,branchId,head}:{runId:string;branchId:s
                 <table aria-label={entry.record_id}><thead><tr><th>#</th><th>{cs?'Jméno / země':'Name / country'}</th><th>{cs?'Země':'Country'}</th><th>{cs?'Hodnota':'Value'}</th></tr></thead>
                   <tbody>{entry.leaderboard.map(h=><tr key={h.entity_id}><td>{h.rank}</td><td>{h.label}</td><td>{h.country_code}</td><td>{h[entry.metric]}</td></tr>)}</tbody></table>
                 <p>{cs?'Historie rekordmanů – ke konci uložené sezóny':'Record-holder history at each Saved season closure'}</p>
-                {entry.holder_history.map(change=><p key={change.season_index}>S{change.season_index+1}: {change.record_value} · {change.holder_ids.map(id=>entry.holders.find(h=>h.entity_id===id)?.label??id).join(', ')} · {change.change} · <code>{change.boundary_command_id}</code></p>)}
+                {entry.holder_history.map(change=><p key={change.season_index}>S{change.season_index+1}: {change.record_value} · {change.holder_labels.join(', ')} · {change.change} · <code>{change.boundary_command_id}</code></p>)}
               </details>
             })}
           </div>}

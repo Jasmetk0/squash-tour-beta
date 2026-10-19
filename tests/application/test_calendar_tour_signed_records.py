@@ -32,12 +32,20 @@ def test_two_closed_seasons_preserve_tied_titles_and_true_awards():
         (0, "established", ["player-a"]),
         (1, "tied", ["player-a", "player-b"]),
     ]
+    names = {p.player_id: p.name for p in world.players}
+    assert [event["holder_labels"] for event in titles["holder_history"]] == [
+        [names["player-a"]], [names["player-a"], names["player-b"]],
+    ]
     assert [row["rank"] for row in titles["leaderboard"]] == [1, 1]
     points = record(result, "player", "awarded_points")
     assert points["value"] == 180
     assert points["holders"][0]["entity_id"] == "player-b"
     assert points["leaderboard"][0]["awarded_points"] == 180
     assert points["holder_history"][-1]["change"] == "improved"
+    # The former holder must remain identifiable by name after losing the lead.
+    assert points["holders"][0]["entity_id"] == "player-b"
+    assert points["holder_history"][0]["holder_ids"] == ["player-a"]
+    assert points["holder_history"][0]["holder_labels"] == [names["player-a"]]
     national = record(result, "country", "titles")
     assert {p["entity_id"] for p in national["holders"]} == {"CZE", "USA"}
     assert record(result, "country", "awarded_points")["value"] == 240
@@ -101,6 +109,7 @@ def test_no_completed_edition_does_not_create_zero_point_fake_records():
     {"from_season_index": 1, "as_of_season_index": 0},
     {"from_season_index": True},
     {"country_code": "cze"},
+    {"country_code": "ČŘÁ"},
     {"country_code": "CZE-1"},
     {"leaderboard_limit": 0},
     {"leaderboard_limit": 101},

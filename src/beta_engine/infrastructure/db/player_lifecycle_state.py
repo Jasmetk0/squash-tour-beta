@@ -48,6 +48,11 @@ def _parse_lifecycle_json(raw):
         return CalendarPlayerLifecycleState.model_validate_json(raw)
     if isinstance(value, dict) and value.get("schema_version") == "player_lifecycle_calendar_state.v3":
         return CalendarTourLifecycleState.model_validate_json(raw)
+    if isinstance(value, dict) and value.get("schema_version") == "player_lifecycle_calendar_state.v4":
+        from beta_engine.domain.players.calendar_prospect_birth import (
+            CalendarTourLifecycleIntakeState,
+        )
+        return CalendarTourLifecycleIntakeState.model_validate_json(raw)
     return PlayerLifecycleWeekState.model_validate_json(raw)
 
 
@@ -454,14 +459,42 @@ def load_saved_lifecycle(payload, *, run_id, branch_id):
             raise ValueError("Saved calendar lifecycle differs from its InitialWorld players")
         if len(states)>1:
             from beta_engine.domain.tournaments.calendar_tour import CalendarTourState, lifecycle_calendars
+            from beta_engine.domain.players.calendar_prospect_birth import (
+                CalendarTourLifecycleIntakeState,
+            )
+
             tour_component=payload.get('content',{}).get('calendar_tour_authority')
             if not tour_component:
                 raise ValueError('Native lifecycle progression requires its Tour owner')
             tour=CalendarTourState.model_validate_json(json.dumps(tour_component['state']))
-            expected=calendar_lifecycle_history(state,tour.week,tuple(s for a in tour.editions for s in a.submissions),
-                effective_calendars=lifecycle_calendars(tour))
-            if states!=expected or states[-1].fingerprint!=tour.lifecycle_fingerprint:
-                raise ValueError('Native lifecycle history differs from actual births, policy or Tour entry')
+            if tour.week != states[-1].week or states[-1].fingerprint != tour.lifecycle_fingerprint:
+                raise ValueError('Native lifecycle head differs from its Saved Tour owner')
+            submissions=tuple(s for a in tour.editions for s in a.submissions)
+            if any(isinstance(s, CalendarTourLifecycleIntakeState) for s in states[1:]):
+                from beta_engine.domain.players.calendar_native_birth_replay import (
+                    verify_calendar_native_birth_history,
+                )
+                from beta_engine.infrastructure.db.run_prospect_source_state import (
+                    load_saved_run_prospect_source,
+                )
+                source=load_saved_run_prospect_source(payload, run_id=run_id)
+                if source is None:
+                    raise ValueError('Native v4 lifecycle requires Signed Run prospect source')
+                # Do not trust self-attested v4 birth hashes: replay every W/O
+                # birthday and genuine first Entry from the original World.
+                # Historical v2/v3 bytes remain exactly as Saved.
+                verify_calendar_native_birth_history(
+                    states=states, source=source,
+                    world_package_id=world.world_package_id,
+                    submissions=submissions,
+                )
+            else:
+                expected=calendar_lifecycle_history(
+                    state, tour.week, submissions,
+                    effective_calendars=lifecycle_calendars(tour),
+                )
+                if states!=expected:
+                    raise ValueError('Native lifecycle history differs from actual births, policy or Tour entry')
     elif any(isinstance(s,CalendarTourLifecycleState) for s in states):
         raise ValueError('Native lifecycle history lacks its v2 population bootstrap')
     for predecessor, target in zip(states, states[1:], strict=False):
@@ -491,6 +524,17 @@ def remap_saved_lifecycle_component(
     )
     if source is None:
         return None
+
+    # v4 fingerprints bind BOTH the original Branch and the source generation
+    # event's predecessor. A simple branch_id rewrite would fabricate births
+    # and violate Saved history. Fork needs dedicated authenticated re-signing.
+    from beta_engine.domain.players.calendar_prospect_birth import (
+        CalendarTourLifecycleIntakeState,
+    )
+    if any(isinstance(state, CalendarTourLifecycleIntakeState) for state in source):
+        raise ValueError(
+            "Native v4 lifecycle fork requires full source/Entry/event re-signing"
+        )
 
     remapped = []
     previous = None

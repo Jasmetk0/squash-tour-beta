@@ -180,7 +180,10 @@ def inspect_native_prospect_intake(
             session, revision.saved_revision.payload, run_id=run_id,
         )
         review = preview_native_prospect_intake(
-            current=checkpoint.week, run_id=run_id, branch_id=branch_id,
+            # The current Run horizon may be strictly extended while every
+            # historical checkpoint/lifecycle byte retains its original clock.
+            current=checkpoint.week.model_copy(update={"calendar": clock}),
+            run_id=run_id, branch_id=branch_id,
             saved_head_revision_id=revision.saved_head_revision_id,
             checkpoint_fingerprint=checkpoint.fingerprint,
             world_package_id=world.world_package_id,
@@ -209,11 +212,11 @@ def inspect_native_prospect_intake(
                 )
                 if predecessor is None:
                     raise ValueError("Native intake lifecycle predecessor is missing")
-                next_position = checkpoint.week.calendar.position_at_ordinal(
+                next_position = clock.position_at_ordinal(
                     checkpoint.week.ordinal + 1,
                 )
                 target = RunWeekPosition(
-                    calendar=checkpoint.week.calendar,
+                    calendar=clock,
                     season_index=next_position.season_index,
                     week=next_position.season_week,
                 )

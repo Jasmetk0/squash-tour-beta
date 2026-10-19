@@ -36,7 +36,10 @@ completed-week play counts. `sporting_week_projection.durable_health` reports:
 The response returns compact hashes/counts rather than copying every player in
 every historical week into HTTP. Changing the development seed changes the
 combined transition proof while leaving deterministic Health carry unchanged.
-The existing read-only API schema remains backward compatible.
+The existing read-only API schema remains backward compatible. Strict Run
+horizon extensions use the current Run calendar for the target while retaining
+the exact frozen completed checkpoint/lifecycle calendar. Admin validates both
+clocks separately; extending the horizon never rewrites old Saved bytes.
 
 This is **preparation exposed through the production read-only route**, not the
 native Tour's atomic writer. It never inserts Health/lifecycle/players, modifies
@@ -52,5 +55,6 @@ birthdays, exact prefix resumption, retained active injury/Admin facts, and
 adversarial inputs. The production HTTP/SQLite test exercises real opening
 matches, Signed source Save, seed changes, stale proof rejection, non-mutation,
 SQLite process restart and rejection of recomputed but unsaved live Health.
-Its final matrix uses W52/O1, W61/O37 and W80/O80 with eight original players.
+Its final matrix uses W52/O1, W61/O37 and W80/O80 with eight original players;
+the W80 case extends the Run from three to five seasons after actual matches.
 These tests do not claim an end-to-end persisted birth transition.

@@ -20,6 +20,12 @@ def test_saved_native_birth_week_projects_full_v4_successor_without_any_admissio
         repo, _ = setup(server, clock, 8)
         world = repo.get_initial_world(run_id="run", branch_id="branch")
         assert world is not None
+        if width == 80:
+            from tests.api.test_calendar_sporting_horizon_extension import extend, extension
+            code, extended_review = extension(server, 5)
+            assert code == 200 and extended_review["can_save"], extended_review
+            assert extend(server, extended_review)[0] == 200
+        expected_horizon = 5 if width == 80 else clock.season_count
         new = source_at(
             clock, RunWeekPosition(calendar=clock, season_index=0, week=3),
             pid="native-new-15yo",
@@ -60,6 +66,7 @@ def test_saved_native_birth_week_projects_full_v4_successor_without_any_admissio
         code, verified = _request("GET", preflight_url)
         assert code == 200, verified
         assert verified["due_count"] == 1 and verified["problems"] == []
+        assert verified["target_week"]["calendar"]["season_count"] == expected_horizon
         stage = verified["lifecycle_admission_projection"]
         assert stage["birth_count"] == 1
         assert stage["proposed_lifecycle_schema"] == "player_lifecycle_calendar_state.v4"
@@ -88,6 +95,8 @@ def test_saved_native_birth_week_projects_full_v4_successor_without_any_admissio
         status, seeded_review = _request("POST", seeded_url, cmd)
         assert status == 200, seeded_review
         sporting = seeded_review["sporting_week_projection"]
+        assert sporting["completed_week"]["calendar"]["season_count"] == clock.season_count
+        assert sporting["target_week"]["calendar"]["season_count"] == expected_horizon
         assert sporting["old_population_count"] == 8
         assert sporting["new_population_count"] == 9
         assert sporting["seed"] == 927

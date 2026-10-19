@@ -20,7 +20,9 @@ The owner alone merges; neither candidate is certified by this document.
 **Current dependent implementation:** complete missing Health weeks from the
 verified Saved prefix, then bind the target v3 Health component to the real
 Signed birthday/sporting preflight. The HTTP response exposes compact backfill
-counts and full-chain/combined transition fingerprints. No database/Draft/Save
+counts and full-chain/combined transition fingerprints. Its target uses the
+current extended Run horizon while completed historical clocks remain frozen.
+No database/Draft/Save
 mutation or activation is added. See
 [complete Health preparation](docs/CALENDAR_NATIVE_HEALTH_PREPARATION_V1.md).
 This branch depends on the corrected #1562; its required final-head CI remains

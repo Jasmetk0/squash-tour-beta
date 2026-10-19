@@ -21,6 +21,7 @@ from beta_engine.application.calendar_sporting_week_service import (
     CalendarSportingWeekCommand,
     CalendarSportingWeekService,
 )
+from beta_engine.application.calendar_tour_signed_records import signed_tour_records
 from beta_engine.application.calendar_tour_season_summary import (
     completed_season_indices,
     compare_completed_seasons,
@@ -251,6 +252,28 @@ class CalendarTourService:
                     "Tour submissions differ from production Entry authority"
                 )
         return context, state, signed
+
+    def records(
+        self, *, run_id, branch_id, as_of_season_index=None,
+        from_season_index=0, country_code=None, leaderboard_limit=20,
+    ):
+        """Read only the authenticated Saved Tour, not newer Working changes."""
+        with self.repository._session_factory() as session:
+            session.execute(text("BEGIN"))
+            ctx, _working, signed = self._context(session, run_id, branch_id)
+            _clock, rev, world, _health, _checkpoint, _saved, _evidence = ctx
+            if signed is None or world is None:
+                raise ValueError("Native Records require a Saved configured Tour")
+            report = signed_tour_records(
+                signed, world, as_of_season_index=as_of_season_index,
+                from_season_index=from_season_index, country_code=country_code,
+                leaderboard_limit=leaderboard_limit,
+            )
+            return {
+                **report,
+                "schema_version": "calendar_tour_signed_records_response.v1",
+                "saved_head_revision_id": rev.saved_head_revision_id,
+            }
 
     def season_summary(self, *, run_id, branch_id, season_index, compare_to=None):
         """Read only an already authenticated Saved Tour, never the Working candidate."""

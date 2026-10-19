@@ -12,9 +12,10 @@ from tests.api.test_saved_revision_history_api import ApiServer, _request
 pytestmark = pytest.mark.pr_critical
 
 
-def test_saved_native_birth_week_projects_full_v4_successor_without_any_admission(tmp_path):
+@pytest.mark.parametrize("width,offset", [(52,1),(61,37),(80,80)])
+def test_saved_native_birth_week_projects_full_v4_successor_without_any_admission(tmp_path,width,offset):
     database_url = f"sqlite:///{tmp_path / 'native-birth-v4.db'}"
-    clock = RunCalendar(4, 1, 2030, 3)
+    clock = RunCalendar(width, offset, 2030, 3)
     with ApiServer(database_url=database_url) as server:
         repo, _ = setup(server, clock, 8)
         world = repo.get_initial_world(run_id="run", branch_id="branch")
@@ -95,6 +96,15 @@ def test_saved_native_birth_week_projects_full_v4_successor_without_any_admissio
         assert sporting["signed_writer_supported"] is False
         assert sporting["source_saved_head"] == cmd["expected_saved_head"]
         assert sporting["played_player_count"] <= 8
+        durable = sporting["durable_health"]
+        assert durable["target_health_schema"] == "player_health_calendar_state.v3"
+        assert durable["saved_state_count"] == 1
+        assert durable["prepared_state_count"] == 3
+        assert durable["backfilled_week_count"] == 1
+        assert durable["source_health_week"]["week"] == 1
+        assert durable["source_health_head_fingerprint"] == stage["source_health_fingerprint"]
+        for field in ("target_health_fingerprint", "health_history_fingerprint", "prepared_transition_fingerprint"):
+            assert len(durable[field]) == 64
         assert seeded_review["blocked"] and not seeded_review["native_activation_supported"]
         assert _request("POST", seeded_url, cmd) == (200, seeded_review)
         mutated_seed = _request("POST", seeded_url, {**cmd, "seed": 928})
@@ -102,6 +112,9 @@ def test_saved_native_birth_week_projects_full_v4_successor_without_any_admissio
         assert mutated_seed[1]["sporting_week_projection"][
             "signed_admission_week_fingerprint"
         ] != sporting["signed_admission_week_fingerprint"]
+        changed = mutated_seed[1]["sporting_week_projection"]["durable_health"]
+        assert changed["prepared_transition_fingerprint"] != durable["prepared_transition_fingerprint"]
+        assert changed["health_history_fingerprint"] == durable["health_history_fingerprint"]
         for key, wrong in (
             ("expected_saved_head", "foreign-revision"),
             ("expected_checkpoint_fingerprint", "0" * 64),
@@ -121,6 +134,28 @@ def test_saved_native_birth_week_projects_full_v4_successor_without_any_admissio
         assert _request(
             "GET", tour_url(restarted) + "/prospect-intake/preflight",
         ) == (200, verified)
+        assert _request(
+            "POST", tour_url(restarted) + "/prospect-intake/sporting-preflight", cmd,
+        ) == (200, seeded_review)
+
+        from beta_engine.domain.players.calendar_initial_health import CalendarInitialHealthState
+        from beta_engine.infrastructure.db.models import PlayerHealthWeekStateModel
+
+        with repo._session_factory.begin() as session:
+            row = session.get(PlayerHealthWeekStateModel, ("run", "branch", 0))
+            raw, fingerprint = row.payload_json, row.fingerprint
+            state = CalendarInitialHealthState.model_validate_json(raw)
+            changed = state.model_copy(update={"audit_reason":"unsaved forged Health source"})
+            row.payload_json, row.fingerprint = changed.model_dump_json(), changed.fingerprint
+        try:
+            rejected, _ = _request(
+                "POST", tour_url(restarted) + "/prospect-intake/sporting-preflight", cmd,
+            )
+            assert rejected == 409
+        finally:
+            with repo._session_factory.begin() as session:
+                row = session.get(PlayerHealthWeekStateModel, ("run", "branch", 0))
+                row.payload_json, row.fingerprint = raw, fingerprint
         assert _request(
             "POST", tour_url(restarted) + "/prospect-intake/sporting-preflight", cmd,
         ) == (200, seeded_review)

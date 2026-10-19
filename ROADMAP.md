@@ -1,3 +1,34 @@
+# Pre-alpha dependency path — native intake checkpoint, 19 October 2026
+
+**Merged through #1561:** `buuk` =
+`14e27846898500aaffc6462878c45aa03792147f`. Signed Records, atomic prospect
+materialization and bounded W-aware native birth/source/lifecycle/sporting
+proposals and Saved lifecycle verification are now merged. They complement the
+existing actual configured Tour, MatchEngine, Entry, ranking, manual Save,
+Season Transition and signed restore; births still cannot execute in that Tour.
+
+**Current dependency order:**
+
+1. Validate corrected #1560 UI and #1562 Health v3 on their actual latest CI
+   heads; owner merges. The #1560 legacy-browser cleanup fix #1561 is merged.
+2. Review the dependent complete Health preparation: retain the Saved prefix,
+   backfill exact natural weeks and bind full Health evidence into the actual
+   seed-locked Signed sporting preflight. Required HTTP/SQLite and native gates
+   remain mandatory. [Contract](docs/CALENDAR_NATIVE_HEALTH_PREPARATION_V1.md).
+3. Version/replay the native sporting birth checkpoint, then integrate the
+   atomic writer and true first Entry/ranking adoption, manual Save, failure
+   rollback, restart and protected match/birth Branch remap.
+4. Continue historical initial-cohort preparation, numeric Health only with
+   explicit calibration authority, discipline/corrections, complete Records,
+   Saved Views, milestones/notifications and Full Simulation integration.
+5. Run the complete Master §31 release acceptance including reference 50×61
+   endurance and the full suite before declaring a pre-alpha release.
+
+These are implementation dependencies, not new product decisions or evidence
+that any open candidate is green/merged. Preserve the older checkpoint history.
+
+## Earlier roadmap checkpoints (retained)
+
 # Pre-alpha dependency path — 19 October 2026 (after #1547 merge)
 
 **Owner-merged #1547:** `buuk` =

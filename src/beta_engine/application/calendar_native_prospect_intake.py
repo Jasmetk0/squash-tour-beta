@@ -268,6 +268,36 @@ def inspect_native_prospect_intake(
                         policy=policy, played_counts=counts,
                     )
                     sport = proposed.sporting_week
+                    from beta_engine.domain.players.calendar_native_health_transition import (
+                        prepare_native_health_history,
+                    )
+                    from beta_engine.infrastructure.db.player_health_state import load_saved_health
+                    from beta_engine.infrastructure.db.player_lifecycle_state import load_saved_lifecycle
+
+                    payload = revision.saved_revision.payload
+                    saved_health = load_saved_health(payload, run_id=run_id, branch_id=branch_id)
+                    signed_life = load_saved_lifecycle(payload, run_id=run_id, branch_id=branch_id)
+                    if not signed_life or signed_life[-1] != predecessor:
+                        raise ValueError("Native Health review requires exact current Signed lifecycle")
+                    prepared_health = prepare_native_health_history(
+                        saved_health=saved_health or (), signed_lifecycle=signed_life,
+                        next_lifecycle=bundle.lifecycle,
+                    )
+                    target_health = prepared_health[-1]
+                    if canonical_hash([p.model_dump(mode="json") for p in target_health.players]) != canonical_hash(
+                        [p.model_dump(mode="json") for p in bundle.health.proposed_profiles]
+                    ):
+                        raise ValueError("Durable Health differs from the Signed admission population")
+                    health_history_fingerprint = canonical_hash([
+                        h.model_dump(mode="json") for h in prepared_health
+                    ])
+                    prepared_transition_fingerprint = canonical_hash({
+                        "schema_version": "native_tour_prepared_birth_transition.v1",
+                        "source_saved_head": revision.saved_head_revision_id,
+                        "admission_week_fingerprint": proposed.fingerprint,
+                        "health_history_fingerprint": health_history_fingerprint,
+                        "target_health_fingerprint": target_health.fingerprint,
+                    })
                     review["sporting_week_projection"] = {
                         "schema_version": "native_tour_sporting_week_preflight.v1",
                         "completed_week": sport.completed_week.model_dump(mode="json"),
@@ -284,6 +314,18 @@ def inspect_native_prospect_intake(
                         "sporting_birth_advance_fingerprint": sport.fingerprint,
                         "signed_admission_week_fingerprint": proposed.fingerprint,
                         "source_saved_head": revision.saved_head_revision_id,
+                        "durable_health": {
+                            "schema_version": "native_tour_health_history_preflight.v1",
+                            "target_health_schema": target_health.schema_version,
+                            "source_health_head_fingerprint": saved_health[-1].fingerprint,
+                            "source_health_week": saved_health[-1].week.model_dump(mode="json"),
+                            "saved_state_count": len(saved_health),
+                            "prepared_state_count": len(prepared_health),
+                            "backfilled_week_count": len(prepared_health) - len(saved_health) - 1,
+                            "target_health_fingerprint": target_health.fingerprint,
+                            "health_history_fingerprint": health_history_fingerprint,
+                            "prepared_transition_fingerprint": prepared_transition_fingerprint,
+                        },
                         "signed_writer_supported": False,
                     }
                 review.pop("preflight_fingerprint")

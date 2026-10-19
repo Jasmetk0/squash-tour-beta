@@ -142,7 +142,7 @@ export function validateNativeSportingBirthPreflight(
   const v=validateNativeProspectIntake(
     value,run,branch,request.expected_saved_head,request.expected_checkpoint_fingerprint,
   )
-  const s=v.sporting_week_projection
+  const s=value.sporting_week_projection
   const hash=(h:unknown)=>typeof h==='string'&&/^[0-9a-f]{64}$/.test(h)
   if(!s||s.schema_version!=='native_tour_sporting_week_preflight.v1'
     ||v.native_activation_supported!==false||v.blocked!==true
@@ -165,5 +165,5 @@ export function validateNativeSportingBirthPreflight(
     ||!s.completed_week||!Number.isSafeInteger(s.completed_week.season_index)
     ||!Number.isSafeInteger(s.completed_week.week))
     throw Error('Signed native sporting birth proposal differs from saved input or Run clock')
-  return v
+  return value
 }

@@ -106,9 +106,11 @@ def test_entry_is_only_sealed_on_week_after_real_post_birth_submission():
         submissions=(first_entry,),
     )
     assert review.submission_fingerprints == (first_entry.fingerprint,)
-    assert states[1].players[-1].tour_entry_week is None
-    assert states[2].players[-1].tour_entry_week == at(clock, 1)
-    assert states[2].players[-1].tie_break_token == "first-stable-token"
+    born_week = next(p for p in states[1].players if p.player_id == "born")
+    entered_week = next(p for p in states[2].players if p.player_id == "born")
+    assert born_week.tour_entry_week is None
+    assert entered_week.tour_entry_week == at(clock, 1)
+    assert entered_week.tie_break_token == "first-stable-token"
     assert review.admitted_player_ids == ("born",)
 
     forbidden = submission(at(clock, 0))
@@ -229,3 +231,46 @@ def test_corrupted_history_gap_and_noncanonical_proof_are_rejected():
     payload["birth_event_fingerprints"] = []
     with pytest.raises(ValueError, match="incomplete"):
         CalendarNativeBirthReplayProof.model_validate_json(json.dumps(payload))
+
+
+def test_official_ranking_appears_only_after_actual_tour_entry_next_week():
+    """Real pre-alpha Official Ranking kernel, no made-up newborn registration."""
+    from types import SimpleNamespace
+    from beta_engine.domain.tournaments.calendar_tour import ranking_players, ranking_week
+    from beta_engine.domain.rankings.calendar_official import calculate_calendar_official_ranking
+    from beta_engine.domain.rankings.official import OfficialRankingPolicy
+
+    clock = RunCalendar(61, 37, 2030, 3)
+    snapshot = source(birth_row(at(clock, 1), "born"))
+    actual = submission(at(clock, 1))
+    states = history(clock, snapshot, last=2, entries=(actual,))
+    authority = SimpleNamespace(run_id="r", branch_id="b")
+    none = ranking_players(authority, ())
+    assert none == ()
+    policy = OfficialRankingPolicy(policy_id="native-prospect-test-ranking", best_n=15)
+    before = calculate_calendar_official_ranking(
+        run_id="r", branch_id="b", run_calendar=clock,
+        week=ranking_week(at(clock, 1)), policy=policy,
+        players=none, results=(),
+    )
+    assert before.rows == ()
+    registered = ranking_players(authority, (actual,))
+    assert len(registered) == 1
+    assert registered[0].player_id == "born"
+    same_week = calculate_calendar_official_ranking(
+        run_id="r", branch_id="b", run_calendar=clock,
+        week=ranking_week(at(clock, 1)), policy=policy,
+        players=registered, results=(),
+    )
+    assert same_week.rows == ()
+    following = calculate_calendar_official_ranking(
+        run_id="r", branch_id="b", run_calendar=clock,
+        week=ranking_week(at(clock, 2)), policy=policy,
+        players=registered, results=(), previous=same_week,
+    )
+    assert [(p.player_id, p.points) for p in following.rows] == [("born", 0)]
+    assert following.rows[0].counted_results == ()
+    assert verify_calendar_native_birth_history(
+        states=states, source=snapshot, world_package_id="world",
+        submissions=(actual,),
+    ).admitted_player_ids == ("born",)

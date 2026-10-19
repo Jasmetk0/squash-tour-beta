@@ -1,3 +1,34 @@
+# Verified integration state — 19 October 2026
+
+The current `buuk` HEAD is `2d5e5a9f21cb288639421f78e19cb3ca489cab02`,
+owner-merged PR #1542 (including #1541). The complete configured native Tour
+implementation is merged, **not pending**. Its final implementation head
+`096246987e7520121447f6565e63a0e711eaa1d9` passed all 14 required
+workflows, including the 42-test critical backend gate (140.67 seconds),
+the W80/1,000-player Chromium scenario (14:42) and real HTTP/SQLite native
+Tour acceptance (16:41). These are measured runs, not universal speed guarantees.
+See the merged PR evidence and
+[performance review](docs/NATIVE_TOUR_PERFORMANCE_REVIEW_2026_10_19.md).
+
+**Usable bounded path:** versioned Run/Branch and manual immutable Save;
+configured native Tour Edition, production Entry, approved field/draw,
+real MatchEngine and full-population sporting state, frozen result awards,
+lifecycle, Official Week Transition and CS/EN Admin; authentic Saved
+history, replay/restart/restore, signed component scope and negative checks.
+
+**Remaining limitations:** native Season Transition is not yet integrated;
+match-containing fork/remap, numeric Health/healing, intake and correction/
+disciplinary authorities are not complete. Full Simulation and pre-alpha
+release acceptance remain blocked. Do not bypass those guards.
+
+**Active optimization candidate on separate branch:** reuse fully authenticated
+Saved sporting sources across Opening/Continuation contexts while rechecking
+physical SQLite bytes and owners. Its new timings, tamper regressions and
+final-head CI/browser/API gates are **not yet verified**; it must not be
+described as merge-ready. Avoid overlapping work on this branch.
+
+## Historical #1542 development notes (superseded by verified merge above)
+
 # Performance review — 19 October 2026 (verification pending)
 
 Repair follows #1542 head `4ee5b826`, including #1541; consolidated into #1542 targeting buuk. The previous head's

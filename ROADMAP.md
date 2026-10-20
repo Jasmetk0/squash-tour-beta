@@ -1,3 +1,34 @@
+# Pre-alpha dependency path — actual buuk integration correction, 20 October 2026
+
+**Verified target:** `buuk` = `51dae9f56bdcf021422dd6696652a13681f503c5`.
+Only #1562 reached it; the merged flags on dependent #1563–#1567 and combined
+UI #1560 did not integrate their trees into `buuk`.
+
+**Current single proposed PR (issue #1568):** normal ancestry-preserving merge
+from current `buuk` of preserved source `b12e53566dd45e313444eec3c49380f2d33bfb06`.
+The pure merge is `11cb239db30b9cb4b791b2ba36052b9cba3ccdb2`, with exact
+combined source tree `4f24a4f3da6692cfd18b42369624b3cfcecd8262` and all seven
+required source heads reachable. Only this roadmap and current-state correction
+follow that merge; the completed runtime implementation is preserved.
+See [full ancestry and validation boundary](CURRENT_STATE.md).
+
+Keep the integration PR draft until all applicable checks on its latest head
+are green, including genuine birth/readiness and original full native Signed
+HTTP/SQLite, Season API, real birth/Tour Chromium and relevant recovery gates.
+Distinguish executed tests from unrelated selector skips. Prior source checks
+cannot certify the integration head. The owner alone merges into `buuk`, using
+a merge commit to retain the required source ancestry; proposed integration is
+not an owner-merged result.
+
+After integration, continue post-intake Edition/Entry/match authority and
+immutable historical source epochs, then numeric Health with authorized
+calibration, protected forks, remaining Master scope and full pre-alpha release
+acceptance including 50×61. The bounded confirmed birthday writer, explicit
+manual Save, historical replay and both Admin review panels introduce no new
+sporting decision and do not unlock Full Simulation or release certification.
+
+## Earlier roadmap checkpoints (retained)
+
 # Pre-alpha dependency path — frozen historical replay
 
 #1565 has all applicable final-head checks green. The corrected readiness/Admin

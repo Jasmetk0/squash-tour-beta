@@ -1,3 +1,68 @@
+# Native intake integration correction — 20 October 2026
+
+**Actual remote baseline:** `buuk` is
+`51dae9f56bdcf021422dd6696652a13681f503c5` (owner-merged #1562).
+Reverified for issue #1568 with no open PRs at task start. Although #1563–#1567
+and #1560 show merged, their dependent feature-branch merges did not reach
+`buuk`. The older checkpoints below describe development evidence, not proof
+that those changes were integrated into the target branch.
+
+**Proposed integration, not an owner merge:** branch
+`fix/native-intake-integration-buuk-1568` starts at that actual `buuk` and
+normally merges preserved source
+`b12e53566dd45e313444eec3c49380f2d33bfb06` from
+`feat/native-birth-historical-replay-20261019`. Pure merge commit
+`11cb239db30b9cb4b791b2ba36052b9cba3ccdb2` has tree
+`4f24a4f3da6692cfd18b42369624b3cfcecd8262`, exactly identical to the preserved
+source and combined UI head `9cd7319882c17798a3326fa09575acbef7ef1483`.
+No runtime, test, workflow or historical Signed bytes were reimplemented or
+changed by this correction. The subsequent correction changes only
+`CURRENT_STATE.md` and `ROADMAP.md`; all earlier checkpoint history is retained.
+
+**Verified ancestry:** `git merge-base --is-ancestor <source> HEAD` succeeds
+for every required source head, as well as both merge parents:
+
+| Source | Required source head |
+| --- | --- |
+| #1562 Health (already in buuk) | `095a365248c380aac9560c15f38ef01c5b98fe73` |
+| #1563 complete Health preparation | `b263ed0ab5f28f192ad1647e49d7ff43a6d4ff35` |
+| #1564 sporting checkpoint v11 | `c9838912f87a99ca60b9d9e6b1f1d251d498db44` |
+| #1565 atomic confirmed birth writer | `ca447c2eaa3e41edb499583459dde71acb143fbb` |
+| #1566 runtime readiness/Admin | `effeb11eb8a7605f8f27cea332cddb883eb0a9f7` |
+| #1567 frozen historical match replay | `f3dbad847df044b199f4f6b98a02ee1efd80f46b` |
+| #1560 combined Admin UI | `9cd7319882c17798a3326fa09575acbef7ef1483` |
+
+**Composed bounded behavior:** explicit confirmed 15-year-old intake atomically
+stages full Health history, lifecycle, sporting v11, ranking/public transition
+and Tour v3 receipts. Separate manual Save publishes an immutable revision;
+exact retry, rollback, restart/restore, strict calendar extension and frozen
+pre-birth match replay retain their original authorities. Both CS/EN Admin
+panels coexist with stale-response protection; post-intake competition stays
+disabled. See the [birth execution](docs/CALENDAR_NATIVE_BIRTH_WEEK_EXECUTION_V1.md),
+[readiness](docs/CALENDAR_NATIVE_TRANSITION_READINESS_V1.md) and
+[historical replay](docs/CALENDAR_NATIVE_HISTORICAL_MATCH_REPLAY_V1.md) contracts.
+
+**New-head validation boundary:** prior source greens are historical evidence
+only. The integration PR must stay draft until its latest head passes focused
+local checks, Fast CI, all six real birth/readiness HTTP/SQLite cases, original
+full native HTTP/SQLite Signed restore, Season API, real birth Chromium,
+W52/W61/W80-1000 Tour Chromium and every other applicable browser/recovery gate.
+Inspect actual logs, including the process-level acceptance event override;
+a deselected mandatory case is not a pass. Report selector-scoped unrelated
+legacy scenarios separately from executed browsers. Final SHA/results belong
+in the PR evidence; this document does not claim pending CI has passed.
+A separate adversarial pass must check live/Saved ownership, Signed bytes and
+actual PR branch/HEAD/base identity before handoff. Only the owner merges,
+explicitly into `buuk`; preserve ancestry with a merge commit rather than
+squash/rebase. This correction itself is not merged by the assistant.
+
+**Still unfinished:** post-intake competition, immutable historical prospect
+source epochs, numeric Health/healing, protected fork/re-signing, remaining
+Master scope and full pre-alpha release/50×61 certification. Master and sporting
+product decisions are unchanged. No Full Simulation or release unlock.
+
+## Earlier checkpoint history (retained)
+
 # Frozen pre-birth match replay candidate — 19 October 2026
 
 **Verified:** #1565 `ca447c2` has every applicable final-head check green and is

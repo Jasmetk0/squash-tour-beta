@@ -68,7 +68,14 @@ def native_transition_readiness(
             runtime.repository, run_id=run_id, branch_id=branch_id
         )
     except (KeyError, ValueError, TypeError) as exc:
-        raise conflict(exc) from exc
+        _logger.warning("Transition readiness conflict", exc_info=True)
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "calendar_tour_conflict",
+                "message": "Transition readiness conflicts with the current Run state",
+            },
+        ) from exc
     except HTTPException:
         raise
     except Exception as exc:

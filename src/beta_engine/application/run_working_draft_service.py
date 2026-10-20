@@ -218,6 +218,7 @@ class RunWorkingDraftService:
         branch_id: str,
         expected_draft_version: int,
         expected_run_prospect_source_fingerprint: str,
+        expected_saved_head_revision_id: str | None = None,
     ) -> ViewerBranchSaveResult:
         if (
             not isinstance(expected_run_prospect_source_fingerprint, str)
@@ -235,6 +236,7 @@ class RunWorkingDraftService:
             expected_run_prospect_source_fingerprint=(
                 expected_run_prospect_source_fingerprint
             ),
+            expected_saved_head_revision_id=expected_saved_head_revision_id,
             revision_id=_validated_entity_id(
                 self.id_factory("saved-revision"), kind="saved revision"
             ),

@@ -63,13 +63,16 @@ class WorldPackageRegistryService:
   normalized=_canonical_world_id(world_id)
   if normalized is None: return None
   parent=self.world_packages_root if normalized in BUILT_IN_WORLD_IDS else self.world_packages_root/'custom'
-  path=parent/normalized
-  # A directory link could otherwise make a valid ID escape the package root.
-  if path.is_symlink() or parent.is_symlink(): return None
-  try:
-   if not path.resolve().is_relative_to(parent.resolve()): return None
-  except (OSError,RuntimeError): return None
-  return path if path.is_dir() else None
+  if parent.is_symlink() or not parent.is_dir(): return None
+  # Select an actual child discovered from the trusted root; never append a
+  # URL-provided name to a filesystem path, even after format validation.
+  for candidate in parent.iterdir():
+   if candidate.name != normalized or candidate.is_symlink() or not candidate.is_dir(): continue
+   try:
+    if candidate.resolve().parent != parent.resolve(): continue
+   except (OSError,RuntimeError): continue
+   return candidate
+  return None
  def package_paths(self,world_id):
   path=self.package_dir(world_id); return self._paths_for_dir(path) if path else None
  def official_paths(self): return self.package_paths(OFFICIAL_FAX_WORLD_ID) or {}

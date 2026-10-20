@@ -552,6 +552,32 @@ export type CreateRunBranchFromSavedRevisionRequest = {
   source_branch_id: string
   source_saved_revision_id: string
   display_name?: string
+  review?: {
+    command_id: string
+    expected_preview_fingerprint: string
+    explicit_confirmation: true
+  }
+}
+
+export type SavedRevisionBranchReview = {
+  schema_version: 'saved_revision_branch_review.v1'
+  run_id: string
+  source_branch_id: string
+  source_revision_branch_id: string
+  source_saved_revision_id: string
+  source_content_hash: string
+  source_head_revision_id: string
+  viewer_branch_id: string | null
+  target_display_name: string
+  preview_fingerprint: string
+  can_create: boolean
+  blockers: { code: string; message: string; components?: string[] }[]
+  saved_week: { season_index: number; week: number } | null
+  saved_player_count: number
+  saved_match_count: number
+  saved_ranking_count: number
+  prospect_source_schema: string | null
+  components: string[]
 }
 
 export type ViewerBranchWorkingDraft = {

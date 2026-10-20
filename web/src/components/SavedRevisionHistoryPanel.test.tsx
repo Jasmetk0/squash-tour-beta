@@ -16,6 +16,7 @@ const api = vi.hoisted(() => {
     ApiError,
     compareSavedRevisions: vi.fn(),
     createRunBranchFromSavedRevision: vi.fn(),
+    previewRunBranchFromSavedRevision: vi.fn(),
     getSavedRevision: vi.fn(),
     getSavedRevisionRecoveryActivity: vi.fn(),
     getSavedRevisionRestorePreflight: vi.fn(),
@@ -184,6 +185,15 @@ beforeEach(() => {
     forked_from_branch_id: branch.branch_id,
     forked_from_saved_revision_id: 'revision-one'
   })
+  api.previewRunBranchFromSavedRevision.mockImplementation(async (runId, request) => ({
+    schema_version: 'saved_revision_branch_review.v1',
+    run_id: runId, source_branch_id: request.source_branch_id,
+    source_saved_revision_id: request.source_saved_revision_id,
+    source_content_hash: 'hash-one', source_head_revision_id: 'revision-two',
+    viewer_branch_id: 'branch-two', target_display_name: request.display_name ?? 'Timeline 2',
+    preview_fingerprint: 'a'.repeat(64), can_create: true, blockers: [],
+    saved_player_count: 0, saved_match_count: 0, saved_ranking_count: 0, saved_week: null
+  }))
   api.restoreSavedRevision.mockResolvedValue({
     run_id: run.run_id,
     branch_id: branch.branch_id,
@@ -402,7 +412,11 @@ describe('SavedRevisionHistoryPanel', () => {
     expect(api.createRunBranchFromSavedRevision).toHaveBeenCalledWith(run.run_id, {
       source_branch_id: branch.branch_id,
       source_saved_revision_id: 'revision-one',
-      display_name: 'Alternative history'
+      display_name: 'Alternative history',
+      review: {
+        command_id: expect.any(String), expected_preview_fingerprint: 'a'.repeat(64),
+        explicit_confirmation: true
+      }
     })
     expect(await screen.findByLabelText('Saved Revision Branch result')).toHaveTextContent(
       'The Viewer Branch was not changed.'
@@ -420,6 +434,71 @@ describe('SavedRevisionHistoryPanel', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Cancel Branch creation' }))
     expect(screen.queryByRole('alertdialog', { name: 'Review new Branch creation' })).not.toBeInTheDocument()
     expect(api.createRunBranchFromSavedRevision).not.toHaveBeenCalled()
+  })
+
+  it.each(['en', 'cs'] as const)('shows native authority blockers before confirmation in %s', async language => {
+    locale.current = language
+    api.previewRunBranchFromSavedRevision.mockImplementation(async (runId, request) => ({
+      run_id: runId, source_branch_id: request.source_branch_id,
+      source_saved_revision_id: request.source_saved_revision_id,
+      source_content_hash: 'hash-one', source_head_revision_id: 'revision-two',
+      viewer_branch_id: 'branch-two', target_display_name: 'Timeline 2',
+      preview_fingerprint: 'a'.repeat(64), can_create: false,
+      saved_player_count: 5, saved_match_count: 3, saved_ranking_count: 2, saved_week: null,
+      blockers: [{ code: 'unsupported_fork_components',
+        message: 'Branch creation cannot safely remap these Saved components',
+        components: ['calendar_tour_authority'] }]
+    }))
+    renderPanel()
+    await userEvent.click(await screen.findByRole('button', { name: language === 'en' ? /Revision 1:/ : /Revize 1:/ }))
+    await userEvent.click(screen.getByRole('button', { name: language === 'en' ? 'Review new Branch creation' : 'Zkontrolovat vytvoření nové větve' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent(language === 'en'
+      ? 'Native Tour history, results and rankings' : 'Historie native Tour, výsledky a rankingy')
+    expect(screen.getByRole('checkbox', { name: language === 'en' ? 'Confirm new Branch creation' : 'Potvrdit vytvoření nové větve' })).toBeDisabled()
+    expect(api.createRunBranchFromSavedRevision).not.toHaveBeenCalled()
+  })
+
+  it('refuses a mismatched server review even when its can_create flag is true', async () => {
+    api.previewRunBranchFromSavedRevision.mockResolvedValue({
+      run_id: 'foreign', source_branch_id: branch.branch_id,
+      source_saved_revision_id: 'revision-one', source_content_hash: 'hash-one',
+      source_head_revision_id: 'revision-two', viewer_branch_id: 'branch-two',
+      can_create: true, blockers: [], preview_fingerprint: 'a'.repeat(64)
+    })
+    renderPanel()
+    await userEvent.click(await screen.findByRole('button', { name: /Revision 1:/ }))
+    await userEvent.click(screen.getByRole('button', { name: 'Review new Branch creation' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('inconsistent')
+    expect(screen.getByRole('checkbox', { name: 'Confirm new Branch creation' })).toBeDisabled()
+    expect(api.createRunBranchFromSavedRevision).not.toHaveBeenCalled()
+  })
+
+  it('keeps confirmation disabled while authoritative server review is pending', async () => {
+    api.previewRunBranchFromSavedRevision.mockReturnValue(new Promise(() => {}))
+    renderPanel()
+    await userEvent.click(await screen.findByRole('button', { name: /Revision 1:/ }))
+    await userEvent.click(screen.getByRole('button', { name: 'Review new Branch creation' }))
+    expect(screen.getByRole('checkbox', { name: 'Confirm new Branch creation' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Confirm new Branch creation' })).toBeDisabled()
+    expect(api.createRunBranchFromSavedRevision).not.toHaveBeenCalled()
+  })
+
+  it('retries an uncertain response with the identical command and frozen review', async () => {
+    api.createRunBranchFromSavedRevision.mockRejectedValueOnce(new Error('Connection lost after submit'))
+    renderPanel()
+    await userEvent.click(await screen.findByRole('button', { name: /Revision 1:/ }))
+    await userEvent.click(screen.getByRole('button', { name: 'Review new Branch creation' }))
+    const checkbox = screen.getByRole('checkbox', { name: 'Confirm new Branch creation' })
+    await waitFor(() => expect(checkbox).toBeEnabled())
+    expect(checkbox.closest('[data-run-navigation-readonly]')).not.toBeNull()
+    await userEvent.click(checkbox)
+    await userEvent.click(screen.getByRole('button', { name: 'Confirm new Branch creation' }))
+    const retry = await screen.findByRole('button', { name: 'Check or retry the same Branch creation command' })
+    const firstRequest = api.createRunBranchFromSavedRevision.mock.calls[0]
+    await userEvent.click(retry)
+    await waitFor(() => expect(api.createRunBranchFromSavedRevision).toHaveBeenCalledTimes(2))
+    expect(api.createRunBranchFromSavedRevision.mock.calls[1]).toEqual(firstRequest)
+    expect(await screen.findByLabelText('Saved Revision Branch result')).toBeVisible()
   })
 
   it('blocks confirmation if the proposed name changes after the exact revision was reviewed', async () => {

@@ -36,6 +36,32 @@ class RunBranchCreationService:
     repository: SimulationPersistenceRepository
     id_factory: EntityIdFactory
 
+    def preview(
+        self, *, run_id, source_branch_id, source_saved_revision_id, display_name=None
+    ):
+        from beta_engine.infrastructure.db.saved_revision_branch_review import (
+            review_in_session,
+        )
+
+        name = (
+            None
+            if display_name is None
+            else normalize_branch_display_name(display_name)
+        )
+        with self.repository._session_factory() as session:
+            # One consistent SQLite snapshot for lineage, Viewer and naming.
+            from sqlalchemy import text
+
+            session.execute(text("BEGIN"))
+            return review_in_session(
+                self.repository,
+                session,
+                run_id=run_id,
+                source_branch_id=source_branch_id,
+                source_revision_id=source_saved_revision_id,
+                display_name=name,
+            )
+
     def create_from_saved_revision(
         self,
         *,
@@ -43,12 +69,23 @@ class RunBranchCreationService:
         source_branch_id: str,
         source_saved_revision_id: str,
         display_name: str | None = None,
+        review: dict | None = None,
     ) -> RunBranchRecord:
         normalized_name = (
             None
             if display_name is None
             else normalize_branch_display_name(display_name)
         )
+        if review is not None:
+            existing = self.repository.get_reviewed_branch_creation_result(
+                run_id=run_id,
+                source_branch_id=source_branch_id,
+                source_revision_id=source_saved_revision_id,
+                display_name=normalized_name,
+                review=review,
+            )
+            if existing is not None:
+                return existing
         branch_id = _validated_entity_id(self.id_factory("branch"), kind="branch")
         working_draft_id = _validated_entity_id(
             self.id_factory("working-draft"), kind="working draft"
@@ -71,4 +108,5 @@ class RunBranchCreationService:
             working_draft_id=working_draft_id,
             requested_display_name=normalized_name,
             materialized_fork_revision_id=materialized_fork_revision_id,
+            review=review,
         )

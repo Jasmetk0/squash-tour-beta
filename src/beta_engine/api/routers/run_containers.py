@@ -600,6 +600,23 @@ def list_global_full_simulation_operations(
         ) from exc
 
 
+@router.post("/{run_id}/branches/preview")
+def preview_run_branch(
+    run_id: str, payload: CreateRunBranchRequest,
+    service: RunBranchCreationService = Depends(get_run_branch_creation_service),
+) -> dict:
+    try:
+        return service.preview(
+            run_id=run_id, source_branch_id=payload.source_branch_id,
+            source_saved_revision_id=payload.source_saved_revision_id,
+            display_name=payload.display_name,
+        )
+    except SavedRevisionBranchForkNotFoundError as exc:
+        raise HTTPException(404, detail={"code": "saved_revision_branch_source_not_found", "message": str(exc)}) from exc
+    except SavedRevisionBranchForkConflictError as exc:
+        raise HTTPException(409, detail={"code": "saved_revision_branch_conflict", "message": str(exc)}) from exc
+
+
 @router.post(
     "/{run_id}/branches",
     response_model=RunBranchResponse,
@@ -616,6 +633,7 @@ def create_run_branch(
             source_branch_id=payload.source_branch_id,
             source_saved_revision_id=payload.source_saved_revision_id,
             display_name=payload.display_name,
+            review=payload.review.model_dump() if payload.review else None,
         )
     except SavedRevisionBranchForkNotFoundError as exc:
         raise HTTPException(

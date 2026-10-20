@@ -1,0 +1,76 @@
+name: Saved Revision Branch Review
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/saved-revision-branch-review.yml'
+      - 'src/beta_engine/application/run_branch_creation_service.py'
+      - 'src/beta_engine/infrastructure/db/saved_revision_branch_review.py'
+      - 'src/beta_engine/infrastructure/db/repositories.py'
+      - 'src/beta_engine/infrastructure/db/models.py'
+      - 'src/beta_engine/api/routers/run_containers.py'
+      - 'src/beta_engine/api/schemas.py'
+      - 'web/src/components/SavedRevisionHistoryPanel*'
+      - 'web/src/api/client.ts'
+      - 'web/src/api/types.ts'
+      - 'web/src/i18n/historyText.ts'
+      - 'tests/api/test_saved_revision_branch_review_api.py'
+      - 'tests/api/test_native_saved_branch_review.py'
+      - 'scripts/saved_revision_branch_review_browser.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: saved-branch-review-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  http-sqlite:
+    name: Saved Branch review / actual HTTP SQLite
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -e . pytest
+      - name: Review, confirmed create, retry, rollback, restart and native refusal
+        run: |
+          GITHUB_EVENT_NAME=saved_branch_review_acceptance \
+            python -m pytest tests/api/test_saved_revision_branch_review_api.py \
+              tests/api/test_native_saved_branch_review.py -vv --maxfail=1 --durations=5
+
+  chromium:
+    name: Saved Branch review / real Chromium CS EN
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: python -m pip install -e . pytest playwright
+      - run: npm --prefix web ci
+      - name: Explicit confirmation and native blockers in the actual Admin
+        env:
+          CHROME_BIN: /usr/bin/google-chrome
+        run: |
+          if [ ! -x "$CHROME_BIN" ]; then
+            python -m playwright install --with-deps chromium
+            export CHROME_BIN=$(python -c 'from playwright.sync_api import sync_playwright; p=sync_playwright().start(); print(p.chromium.executable_path); p.stop()')
+          fi
+          python scripts/saved_revision_branch_review_browser.py --root work/saved-branch-review
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: saved-branch-review-${{ github.run_id }}
+          path: work/saved-branch-review/*
+          retention-days: 14

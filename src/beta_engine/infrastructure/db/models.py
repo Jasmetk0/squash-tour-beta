@@ -1431,6 +1431,17 @@ class BranchCheckpointModel(Base):
     payload_json: Mapped[str] = mapped_column(Text, nullable=False)
 
 
+class SavedRevisionBranchCommandModel(Base):
+    """Atomic retry receipt for the existing Saved Revision Branch writer."""
+
+    __tablename__ = "saved_revision_branch_commands"
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    command_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    request_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    branch_id: Mapped[str] = mapped_column(String(128), nullable=False, unique=True)
+    result_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
 class BranchForkCommandModel(Base):
     """Durable idempotency record for one atomic internal Branch fork."""
 

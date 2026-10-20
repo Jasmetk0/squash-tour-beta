@@ -216,12 +216,19 @@ class RunContainerListResponse(BaseModel):
     run_containers: list[RunContainerResponse] = Field(default_factory=list)
 
 
+class SavedRevisionBranchConfirmation(BaseModel):
+    command_id: str = Field(min_length=1, max_length=128)
+    expected_preview_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    explicit_confirmation: Literal[True]
+
+
 class CreateRunBranchRequest(BaseModel):
     """Create a timeline from one immutable Saved Revision."""
 
     source_branch_id: str = Field(min_length=1, max_length=128)
     source_saved_revision_id: str = Field(min_length=1, max_length=128)
     display_name: str | None = Field(default=None, min_length=1, max_length=256)
+    review: SavedRevisionBranchConfirmation | None = None
 
     @field_validator("display_name", mode="before")
     @classmethod

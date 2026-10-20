@@ -1,3 +1,47 @@
+# Saved Revision Branch review — incomplete native fork candidate, 20 October 2026
+
+**Verified integration base:** `buuk` is
+`428ef8b75de4dd7dc980f307c6a2ffd31d4e4ec0`, owner-merged #1575.
+Remote history and the GitHub PR metadata agree; no PR was open at task start.
+The prior candidate/unmerged checkpoints below remain historical evidence.
+
+**Main requested behavior is still incomplete:** creating a Branch from a
+match-bearing native Saved Revision remains deliberately blocked. Real HTTP/SQLite
+reproduction identifies `calendar_standalone_match`,
+`calendar_player_sporting_checkpoint` and `calendar_tour_authority` as missing
+fork coverage. Actual native admission adds the existing v4 lifecycle and v3
+Health source/Entry/transition authority guards. Removing these guards or
+rehashing rewritten history would not provide valid fork authority.
+
+**Current implementation candidate:** the existing Saved Revision Branch writer
+now has a read-only server review, a compact historical summary and known
+blockers, a server-checked confirmation bound to the source/head/Viewer/name
+inventory, and an atomic durable retry receipt. CS/EN History exposes blockers
+before confirmation, retries an uncertain request with the same command and
+opens the created supported Branch. Opening the review never starts simulation
+or saves a draft. The original unreviewed API remains compatible; it retains
+all existing full writer guards. See [contract](docs/SAVED_REVISION_BRANCH_REVIEW.md).
+
+**Local evidence:** production HTTP/SQLite checks exercise confirmed supported
+creation, source integrity, concurrent exact retry, changed-input collision,
+stale review, late receipt rollback, independent Manual Save and physical
+restart. A separate native HTTP/SQLite scenario tests original real matches,
+before/after actual admission and v2 prospect epochs, unchanged historical
+Saved bytes, replay and source restore. It proves the native refusal remains
+safe, **not** a successful native fork. Frontend component/build and actual
+Chromium evidence are recorded with the PR; only completed runs count.
+Latest-head hosted CI remains a separate requirement.
+
+**Next work on this same objective:** authenticate a source-bound native fork
+root; preserve the original historical MatchEngine inputs/results/log anchors
+and prospect epochs; establish target-owned current lifecycle, Health, sporting
+and Tour continuation without rewriting the source. Then prove independent
+play/Save/restart/restore of both Branches. This candidate must not be presented
+as completion of that task or as pre-alpha/Full Simulation readiness. Only the
+owner merges.
+
+---
+
 # Canonical Admin entry-point recovery — 20 October 2026
 
 **Verified integrated base:** `buuk` `5615a293df881d4bbde8819234269b174f21713e`

@@ -1121,6 +1121,16 @@ export function createRunBranchFromSavedRevision(
   })
 }
 
+export function previewRunBranchFromSavedRevision(
+  runId: string,
+  payload: CreateRunBranchFromSavedRevisionRequest
+): Promise<import('./types').SavedRevisionBranchReview> {
+  return request(`/run-containers/${encodeURIComponent(runId)}/branches/preview`, {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  })
+}
+
 export function getBranchWorkingDraft(
   runId: string,
   branchId: string

@@ -1,3 +1,26 @@
+# Native Saved Revision branching — incomplete candidate, 20 October 2026
+
+Verified `buuk`: `428ef8b75de4dd7dc980f307c6a2ffd31d4e4ec0` (#1575 owner merge).
+Real match-bearing native fork still returns HTTP 409. Its three native Saved
+components lack authenticated fork handling; post-admission lifecycle and Health
+have additional intentional source-authority guards.
+
+The current single-PR candidate improves the **existing** Branch creation path:
+server review and historical summary, CS/EN blockers, explicit server-bound
+confirmation, atomic durable exact retries and transition into a supported
+created Branch. Native guards and all Signed source bytes remain intact.
+[Contract and verification boundary](docs/SAVED_REVISION_BRANCH_REVIEW.md).
+
+The next implementation is still the original integration goal: a source-bound
+native historical root with unchanged rally logs, full target current-state
+ownership, epoch-correct replay, independent real continuation/Manual Save,
+rollback and restart/restore of both Branches, followed by the actual native
+Admin browser flow. Before/after-admission refusal tests do not satisfy that
+acceptance. Do not unlock Full Simulation or imply a pre-alpha release.
+Earlier checkpoint history follows unchanged.
+
+---
+
 # Canonical Admin entry-point recovery — 20 October 2026
 
 **Verified integrated base:** `buuk` `5615a293df881d4bbde8819234269b174f21713e`

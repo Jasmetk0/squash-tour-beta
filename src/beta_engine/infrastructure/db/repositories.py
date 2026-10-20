@@ -12,6 +12,12 @@ from sqlalchemy import Engine, Select, func, select, text, update
 from sqlalchemy.exc import IntegrityError, OperationalError
 from sqlalchemy.orm import Session, sessionmaker
 
+from beta_engine.infrastructure.db.saved_revision_branch_review import (
+    request_fingerprint as branch_creation_request_fingerprint,
+    review_in_session as review_branch_creation_in_session,
+    unsupported_fork_content,
+)
+
 from beta_engine.application.season_models import (
     RaceSnapshot,
     RankingSnapshot,
@@ -104,6 +110,7 @@ from beta_engine.infrastructure.db.models import (
     RankingSnapshotModel,
     RunGeneratedPlayerProvenanceModel,
     RunContainerModel,
+    SavedRevisionBranchCommandModel,
     RunBranchModel,
     RunProspectModel,
     RunTalentCountryAllocationModel,
@@ -2774,6 +2781,42 @@ class SimulationPersistenceRepository:
                 & set(content)
             )
 
+    def _reviewed_branch_creation_result_in_session(
+        self, session, *, run_id, source_branch_id, source_revision_id,
+        display_name, review,
+    ):
+        fingerprint = branch_creation_request_fingerprint(
+            run_id=run_id, source_branch_id=source_branch_id,
+            source_revision_id=source_revision_id, display_name=display_name,
+            review=review,
+        )
+        receipt = session.get(SavedRevisionBranchCommandModel, (run_id, review["command_id"]))
+        if receipt is None:
+            return None
+        if receipt.request_fingerprint != fingerprint:
+            raise SavedRevisionBranchForkConflictError(
+                "Branch creation command id was already used with different inputs"
+            )
+        try:
+            result = RunBranchRecord(**_from_json(receipt.result_json))
+        except (ValueError, TypeError) as exc:
+            raise SavedRevisionBranchForkConflictError("Branch creation receipt is corrupt") from exc
+        owner = session.get(RunBranchModel, receipt.branch_id)
+        if (
+            result.run_id != run_id or result.branch_id != receipt.branch_id
+            or result.forked_from_branch_id != source_branch_id
+            or result.forked_from_saved_revision_id != source_revision_id
+            or owner is None or owner.run_id != run_id
+            or owner.forked_from_branch_id != source_branch_id
+            or owner.forked_from_saved_revision_id != source_revision_id
+        ):
+            raise SavedRevisionBranchForkConflictError("Branch creation receipt has a foreign or missing owner")
+        return result
+
+    def get_reviewed_branch_creation_result(self, **kwargs):
+        with self._session_factory() as session:
+            return self._reviewed_branch_creation_result_in_session(session, **kwargs)
+
     def create_branch_from_saved_revision_atomically(
         self,
         *,
@@ -2784,6 +2827,7 @@ class SimulationPersistenceRepository:
         working_draft_id: str,
         requested_display_name: str | None,
         materialized_fork_revision_id: str | None = None,
+        review: dict | None = None,
     ) -> RunBranchRecord:
         """Create one timeline from an immutable Saved Revision.
 
@@ -2801,6 +2845,32 @@ class SimulationPersistenceRepository:
         created_display_name: str | None = None
         try:
             with self._session_factory.begin() as session:
+                # Serialize the inventory review with identity/name reservation.
+                session.execute(text("BEGIN IMMEDIATE"))
+                if review is not None:
+                    if review.get("explicit_confirmation") is not True:
+                        raise SavedRevisionBranchForkConflictError("Explicit confirmation is required")
+                    previous = self._reviewed_branch_creation_result_in_session(
+                        session, run_id=run_id, source_branch_id=source_branch_id,
+                        source_revision_id=source_revision_id,
+                        display_name=requested_display_name, review=review,
+                    )
+                    if previous is not None:
+                        return previous
+                    current_review = review_branch_creation_in_session(
+                        self, session, run_id=run_id, source_branch_id=source_branch_id,
+                        source_revision_id=source_revision_id,
+                        display_name=requested_display_name,
+                    )
+                    if current_review["preview_fingerprint"] != review.get("expected_preview_fingerprint"):
+                        raise SavedRevisionBranchForkConflictError(
+                            "Branch creation review is stale; inspect the current source and Branch inventory"
+                        )
+                    if not current_review["can_create"]:
+                        raise SavedRevisionBranchForkConflictError(
+                            "Branch creation is blocked: " + "; ".join(
+                                b["message"] for b in current_review["blockers"])
+                        )
                 run = session.get(RunContainerModel, run_id)
                 if run is None:
                     raise SavedRevisionBranchForkNotFoundError(
@@ -2874,7 +2944,6 @@ class SimulationPersistenceRepository:
                         raise SavedRevisionBranchForkConflictError(
                             "Branch-owned world fork requires a materialized fork revision id"
                         )
-                    fork_safe_empty_components: set[str] = set()
                     empty_component_loaders = (
                         (
                             RUN_ENTRY_DECISION_SLOT_COMPONENT_KEY,
@@ -2900,32 +2969,12 @@ class SimulationPersistenceRepository:
                     for component_key, loader in empty_component_loaders:
                         if component_key not in source_content:
                             continue
-                        loaded = loader(
+                        loader(
                             source_revision.payload,
                             run_id=run_id,
                             branch_id=source_branch_id,
                         )
-                        if loaded == ():
-                            fork_safe_empty_components.add(component_key)
-
-                    unsupported_content = set(source_content) - {
-                        INITIAL_WORLD_COMPONENT_KEY,
-                        RANKING_COMPONENT_KEY,
-                        RUN_PROSPECT_SOURCE_COMPONENT_KEY,
-                        PLAYER_LIFECYCLE_COMPONENT_KEY,
-                        PLAYER_HEALTH_COMPONENT_KEY,
-                        PLAYER_SPORTING_COMPONENT_KEY,
-                        SIMULATION_SLOT_COMPONENT_KEY,
-                        RUN_ENTRY_DECISION_SLOT_COMPONENT_KEY,
-                        APPLICATION_VALIDATION_SLOT_COMPONENT_KEY,
-                        TOURNAMENT_APPLICATION_SUBMISSION_COMPONENT_KEY,
-                        DEFINITIVE_WILD_CARD_ASSIGNMENT_COMPONENT_KEY,
-                        PLAYER_TOUR_ENTRY_COMPONENT_KEY,
-                        RUN_PACKAGE_COMPONENT_KEY,
-                        RUN_TOURNAMENT_LAB_DRAFT_COMPONENT_KEY,
-                        SEASON_CLOSURE_COMPONENT_KEY,
-                        *fork_safe_empty_components,
-                    }
+                    unsupported_content = unsupported_fork_content(source_content)
                     if unsupported_content:
                         raise SavedRevisionBranchForkConflictError(
                             "ranking-bearing fork currently cannot remap additional "
@@ -3821,6 +3870,19 @@ class SimulationPersistenceRepository:
                         )
                     )
                     session.flush()
+                if review is not None:
+                    created_model = session.get(RunBranchModel, branch_id)
+                    result = self._to_run_branch(created_model, official_branch_id=run.official_branch_id)
+                    session.add(SavedRevisionBranchCommandModel(
+                        run_id=run_id, command_id=review["command_id"], branch_id=branch_id,
+                        request_fingerprint=branch_creation_request_fingerprint(
+                            run_id=run_id, source_branch_id=source_branch_id,
+                            source_revision_id=source_revision_id,
+                            display_name=requested_display_name, review=review,
+                        ),
+                        result_json=_to_json(result.__dict__),
+                    ))
+                    session.flush()
         except IntegrityError as exc:
             message = str(exc.orig).lower()
             if (
@@ -3835,6 +3897,8 @@ class SimulationPersistenceRepository:
                 "generated Branch or Working Draft identity collided with existing data"
             ) from exc
 
+        if review is not None:
+            return result
         created = self.get_run_branch(branch_id=branch_id)
         if created is None:  # pragma: no cover - protects against adapter corruption
             raise RuntimeError(f"created Branch {branch_id!r} could not be loaded")

@@ -172,11 +172,11 @@ def test_configuration_loader_rejects_non_regular_directory(tmp_path) -> None:
 
 def test_custom_config_path_needs_explicit_trusted_root(tmp_path) -> None:
     external = tmp_path / "external.json"
-    external.write_text('{"templates": []}')
+    external.write_text(json.dumps(load_tournament_templates_config().model_dump(mode="json")))
     with pytest.raises(ValueError, match="trusted root"):
         load_tournament_templates_config(path=external)
     config = load_tournament_templates_config(path=external, trusted_root=tmp_path)
-    assert config.templates == []
+    assert len(config.templates) >= 4
 
 
 def test_custom_config_path_cannot_escape_explicit_trusted_root(tmp_path) -> None:

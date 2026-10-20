@@ -183,3 +183,83 @@ def advance_native_health_week(
         source_lifecycle_fingerprint=next_lifecycle.fingerprint,
         birth_event=event, origin=origin, admin_edits=edits,
     )
+
+
+def prepare_native_health_history(
+    *, saved_health: tuple[NativeHealthPredecessor, ...],
+    signed_lifecycle: tuple[NativeLifecycle, ...],
+    next_lifecycle: CalendarTourLifecycleState | CalendarTourLifecycleIntakeState,
+) -> tuple[NativeHealthPredecessor, ...]:
+    """Preserve a verified Saved prefix and prepare every missing natural Week.
+
+    The caller must authenticate Saved Health and the complete Signed lifecycle
+    (including the Run source/actual Entry). This does not manufacture earlier
+    injuries, apply healing or write SQLite. Each omitted Health week is an
+    exact fact carry against its own historical lifecycle; the new birthday is
+    admitted only at the final target, never retroactively in the backfill.
+    """
+    if not saved_health or not signed_lifecycle:
+        raise ValueError("Native Health preparation requires Saved Health and full lifecycle")
+    first = signed_lifecycle[0]
+    if not isinstance(first, CalendarPlayerLifecycleState) or first.week.ordinal != 0:
+        raise ValueError("Native Health preparation requires the original lifecycle")
+    previous = None
+    for ordinal, life in enumerate(signed_lifecycle):
+        if (
+            life.week.ordinal != ordinal
+            or (life.run_id, life.branch_id) != (first.run_id, first.branch_id)
+            or life.source_initial_world_fingerprint != first.source_initial_world_fingerprint
+            or (life.week.calendar.weeks_per_year, life.week.calendar.season_start_year_week,
+                life.week.calendar.start_year)
+            != (first.week.calendar.weeks_per_year, first.week.calendar.season_start_year_week,
+                first.week.calendar.start_year)
+            or (previous is not None and (
+                life.predecessor_fingerprint != previous.fingerprint
+                or life.week.calendar.season_count < previous.week.calendar.season_count
+            ))
+        ):
+            raise ValueError("Native Health preparation has incomplete/foreign lifecycle history")
+        previous = life
+    if len(saved_health) > len(signed_lifecycle) or saved_health[-1].week.ordinal >= len(signed_lifecycle):
+        raise ValueError("Native Health preparation cannot use future Health")
+    for ordinal, health in enumerate(saved_health):
+        life = signed_lifecycle[ordinal]
+        if ordinal and (
+            isinstance(health, CalendarInitialHealthState)
+            or (isinstance(saved_health[ordinal-1], CalendarNativeHealthTransitionState)
+                and not isinstance(health, CalendarNativeHealthTransitionState))
+        ):
+            raise ValueError("Native Health preparation cannot downgrade its Saved authority")
+        if (
+            health.week.ordinal != ordinal
+            or (health.run_id, health.branch_id) != (first.run_id, first.branch_id)
+            or health.source_initial_world_fingerprint != first.source_initial_world_fingerprint
+            or tuple(p.player_id for p in health.players) != tuple(p.player_id for p in life.players)
+            or (health.week.calendar.weeks_per_year,
+                health.week.calendar.season_start_year_week, health.week.calendar.start_year)
+            != (life.week.calendar.weeks_per_year,
+                life.week.calendar.season_start_year_week, life.week.calendar.start_year)
+            or health.week.calendar.season_count > life.week.calendar.season_count
+            or health.week.calendar.season_count < first.week.calendar.season_count
+            or (ordinal == 0 and health.predecessor_fingerprint is not None)
+            or (ordinal > 0 and (
+                health.predecessor_fingerprint != saved_health[ordinal-1].fingerprint
+                or health.week.calendar.season_count < saved_health[ordinal-1].week.calendar.season_count
+            ))
+        ):
+            raise ValueError("Native Health preparation differs from its exact Saved prefix")
+        if isinstance(health, CalendarNativeHealthTransitionState) and (
+            ordinal == 0 or health != advance_native_health_week(
+                previous_health=saved_health[ordinal-1],
+                previous_lifecycle=signed_lifecycle[ordinal-1], next_lifecycle=life,
+            )
+        ):
+            raise ValueError("Native Health preparation has forged natural Health history")
+    prepared = list(saved_health)
+    for life in (*signed_lifecycle[len(saved_health):], next_lifecycle):
+        predecessor = signed_lifecycle[prepared[-1].week.ordinal]
+        prepared.append(advance_native_health_week(
+            previous_health=prepared[-1], previous_lifecycle=predecessor,
+            next_lifecycle=life,
+        ))
+    return tuple(prepared)

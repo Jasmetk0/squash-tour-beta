@@ -1,3 +1,44 @@
+# Native intake integration checkpoint — 19 October 2026
+
+**Verified owner-merged baseline:** `buuk` =
+`14e27846898500aaffc6462878c45aa03792147f` (CI cleanup #1561).
+Since the earlier #1547 checkpoint, #1548 merged Signed career Records;
+#1550 reduced duplicate authenticated inspection replay; #1551 added atomic
+Run prospect materialization; #1552–#1559 added native cohort generation,
+Saved-source birthday preflight, full 57-attribute birth/lifecycle proposals,
+birth/Entry history validation, W-aware completed-week sporting development,
+Saved v4 lifecycle parsing and the real seed-locked Admin HTTP preflight.
+These staged/reader capabilities do **not** mean automatic native intake works.
+
+**Reviewed open candidates:** #1560 Admin CS/EN sporting review and #1562
+natural Health v3/Saved replay. Review found missing exact frontend week binding,
+a rejected valid horizon extension and possible v3-to-v2 Admin proof loss.
+Corrections are on their respective branches; check their latest heads, not
+superseded CI. #1560 now targets `buuk` and includes merged #1561 cleanup.
+The owner alone merges; neither candidate is certified by this document.
+
+**Current dependent implementation:** complete missing Health weeks from the
+verified Saved prefix, then bind the target v3 Health component to the real
+Signed birthday/sporting preflight. The HTTP response exposes compact backfill
+counts and full-chain/combined transition fingerprints. Its target uses the
+current extended Run horizon while completed historical clocks remain frozen.
+No database/Draft/Save
+mutation or activation is added. See
+[complete Health preparation](docs/CALENDAR_NATIVE_HEALTH_PREPARATION_V1.md).
+This branch depends on the corrected #1562; its required final-head CI remains
+necessary before owner merge. Master product decisions are unchanged.
+
+**Next integration blocker:** native sporting checkpoint birth ledger/replay,
+then one guarded atomic Week/Season writer for sporting + full Health + v4
+lifecycle + genuine Entry/ranking/Tour receipts, followed by real rollback,
+Save/restart/restore and protected fork re-signing. Do not remove existing intake
+refusals merely because projections and schemas are available. Full Simulation,
+numeric Health/healing, correction/discipline, historical initial cohort,
+complete Records/Saved Views/notifications and the full Master §31 release gates
+remain unfinished. No pre-alpha release or full 50×61 certification is claimed.
+
+## Earlier checkpoint history (retained)
+
 # Current verified integration and next records candidate — 19 October 2026
 
 **Verified owner merge:** PR #1547 to `buuk` at

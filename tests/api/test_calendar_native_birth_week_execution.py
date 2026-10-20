@@ -345,28 +345,44 @@ def test_native_birth_week_is_atomic_signed_and_recoverable(
                 potential_json=future["potential"],
             )
             repo.upsert_run_prospects([future_record])
-            try:
-                source_url = (
-                    restarted.base_url
-                    + "/admin/runs/run/branches/branch/authoritative-simulation/prospect-source/save"
-                )
-                code, review = _request("GET", source_url + "/preview")
-                assert code == 200 and not review["can_save"], review
-                assert review["blockers"] == ["native_prospect_source_epochs_required"]
-                before = _dump(path)
-                code, rejected = _request(
-                    "POST",
-                    source_url,
-                    {
-                        "expected_draft_version": review["draft_version"],
-                        "expected_run_prospect_source_fingerprint": review[
-                            "run_prospect_source_fingerprint"
-                        ],
-                    },
-                )
-                assert code == 409, rejected
-                assert _dump(path) == before
-            finally:
+            from beta_engine.infrastructure.db.run_prospect_source_state import (
+                load_saved_run_prospect_source,
+                RUN_PROSPECT_EPOCH_SCHEMA,
+            )
+            source_url = (
+                restarted.base_url
+                + "/admin/runs/run/branches/branch/authoritative-simulation/prospect-source/save"
+            )
+            prior = repo.get_branch_saved_revision(revision_id=after["revision_id"])
+            historic_source = load_saved_run_prospect_source(prior.payload, run_id="run")
+            before = _dump(path)
+            code, review = _request("GET", source_url + "/preview")
+            assert code == 200 and review["can_save"] and not review["blockers"], review
+            assert _dump(path) == before
+            code, saved_epoch = _request(
+                "POST", source_url,
+                {
+                    "expected_draft_version": review["draft_version"],
+                    "expected_run_prospect_source_fingerprint": review[
+                        "run_prospect_source_fingerprint"
+                    ],
+                    "expected_saved_head_revision_id": review["saved_head_revision_id"],
+                },
+            )
+            assert code == 201, saved_epoch
+            next_saved = repo.get_branch_saved_revision(
+                revision_id=saved_epoch["saved_revision"]["revision_id"]
+            )
+            historic_versions = load_saved_run_prospect_source(
+                next_saved.payload, run_id="run",
+            )
+            assert historic_versions.schema_version == RUN_PROSPECT_EPOCH_SCHEMA
+            assert historic_versions.for_week(2).fingerprint == historic_source.fingerprint
+            assert historic_versions.for_week(5).fingerprint != historic_source.fingerprint
+            assert repo.get_branch_saved_revision(
+                revision_id=after["revision_id"]
+            ).content_hash == prior.content_hash
+            with pytest.raises(ValueError, match="immutable"):
                 repo.delete_run_prospects_by_ids(
                     run_id="run", prospect_ids=[future_record.prospect_id]
                 )

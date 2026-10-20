@@ -15,7 +15,11 @@ def _load_json(path: str | Path) -> dict:
     paths remain supported for offline configuration validation and tests.
     """
     source = Path(path)
-    if source.suffix.lower() != ".json" or source.is_symlink():
+    # These paths are configured by application wiring, not selected by an
+    # HTTP client. Still reject traversal and redirection at every level.
+    if source.suffix.lower() != ".json" or ".." in source.parts:
+        raise ValueError("configuration must be a regular JSON file without traversal")
+    if any(component.is_symlink() for component in (source, *source.parents)):
         raise ValueError("configuration must be a regular JSON file, not a symlink")
     if not source.is_file():
         raise FileNotFoundError(f"configuration file is unavailable: {source}")

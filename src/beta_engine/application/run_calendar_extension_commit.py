@@ -97,7 +97,22 @@ def _capture_live_content(session: Session, *, payload: dict, run_id: str, branc
         storage.capture_saved_simulation_slots,
     ):
         capture(session, copy, run_id=run_id, branch_id=branch_id)
-    storage.capture_saved_run_prospect_source(session, copy, run_id=run_id)
+    # Unlike a fresh v1 catalog, the Signed prospect authority can now be a
+    # v2 epoch chain. Never infer a new source from the latest shared Run rows
+    # during an all-Branch horizon extension: keep each Branch's exact binding.
+    # Validate the current live Run is compatible with the entire Signed
+    # immutable prefix before carrying it forward unchanged.
+    from beta_engine.infrastructure.db.run_prospect_source_state import (
+        RUN_PROSPECT_SOURCE_COMPONENT_KEY,
+        validate_live_run_prospect_source_against_saved,
+    )
+    signed = validate_live_run_prospect_source_against_saved(
+        session, payload, run_id=run_id,
+    )
+    if signed is not None:
+        copy["content"][RUN_PROSPECT_SOURCE_COMPONENT_KEY] = deepcopy(
+            payload["content"][RUN_PROSPECT_SOURCE_COMPONENT_KEY]
+        )
     native_birth = (
         payload.get("content", {}).get("calendar_player_sporting_checkpoint", {})
         .get("state", {}).get("schema_version")

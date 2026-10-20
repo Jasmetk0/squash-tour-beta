@@ -6,6 +6,7 @@ on:
       - '.github/workflows/prealpha-native-tour-api.yml'
       - 'tests/api/test_calendar_tour_flow.py'
       - 'tests/api/test_calendar_native_birth_week_execution.py'
+      - 'tests/api/native_birth_historical_replay_case.py'
       - 'tests/api/test_calendar_native_transition_readiness_http.py'
       - 'tests/api/test_calendar_population_sporting_checkpoint.py'
       - 'tests/infrastructure/test_calendar_component_proof_scope.py'
@@ -17,6 +18,7 @@ on:
       - 'src/beta_engine/domain/rankings/calendar_official.py'
       - 'src/beta_engine/application/calendar_tour_service.py'
       - 'src/beta_engine/application/calendar_native_tour_context.py'
+      - 'src/beta_engine/application/calendar_native_historical_replay.py'
       - 'src/beta_engine/application/calendar_native_transition_readiness.py'
       - 'src/beta_engine/application/run_calendar_extension_commit.py'
       - 'src/beta_engine/application/calendar_standalone_match_service.py'
@@ -59,12 +61,16 @@ jobs:
       - name: Birth, rollback, exact retry, manual Save, restart and restore
         env:
           BIRTH_CASE: ${{ matrix.case }}
-          GITHUB_EVENT_NAME: native_birth_week_acceptance
         run: |
+          # GitHub reserves GITHUB_* variables: step env cannot override them.
+          # Pass this only to pytest so its changed-module PR filter cannot
+          # deselect an unchanged mandatory acceptance case.
           if [ "$BIRTH_CASE" = readiness ]; then
-            python -m pytest tests/api/test_calendar_native_transition_readiness_http.py -vv --maxfail=1 --durations=6
+            GITHUB_EVENT_NAME=native_birth_week_acceptance \
+              python -m pytest tests/api/test_calendar_native_transition_readiness_http.py -vv --maxfail=1 --durations=6
           else
-            python -m pytest tests/api/test_calendar_native_birth_week_execution.py -k "$BIRTH_CASE" -vv --maxfail=1 --durations=6
+            GITHUB_EVENT_NAME=native_birth_week_acceptance \
+              python -m pytest tests/api/test_calendar_native_birth_week_execution.py -k "$BIRTH_CASE" -vv --maxfail=1 --durations=6
           fi
 
   native-tour-api:

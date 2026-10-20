@@ -43,7 +43,7 @@ checks physical lifecycle identity/hash before trusting a native row.
 ## Evidence and remaining gates
 
 - Production HTTP/SQLite: W2/O2 birth, read-only database dumps, unsaved/Saved
-  states, physical API restart, foreign scope and actual terminal horizon.
+  states, fresh API/database reopen, foreign scope and actual terminal horizon.
 - Existing real birthday/recovery case: activated metadata protection, incompatible
   future-source preview refusal and forced Save rollback.
 - Real SQLite guard component: another Branch, foreign Run isolation and corrupt

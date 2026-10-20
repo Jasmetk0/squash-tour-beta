@@ -278,7 +278,19 @@ class CalendarContinuationService:
             state = load_checkpoint(session, run_id=run_id, branch_id=branch_id)
             rows = load_match_rows(session, run_id=run_id, branch_id=branch_id)
             world = get_initial_world(session, run_id=run_id, branch_id=branch_id)
-            verify_checkpoint(state, world, rows[0] if len(rows) == 1 else None)
+            from beta_engine.domain.players.calendar_native_sporting_checkpoint import (
+                CalendarNativeSportingCheckpoint,
+            )
+            native = isinstance(state, CalendarNativeSportingCheckpoint)
+            if native:
+                from beta_engine.application.calendar_native_historical_replay import (
+                    authenticated_pre_birth_root,
+                )
+                state = authenticated_pre_birth_root(self.repository, session, state)
+            verify_checkpoint(
+                state, world, rows[0] if len(rows) == 1 else None,
+                _verified_saved_prefix=state if native else None,
+            )
             entry = next((e for e in state.played_continuations if e.match_id == match_id), None) if state else None
             if entry is None:
                 raise KeyError('Calendar continuation match not found')
@@ -286,5 +298,12 @@ class CalendarContinuationService:
                 log_anchor_hash=entry.log_anchor_hash, effective_match_health=entry.effective_health)
             if result.model_dump(mode='json') != entry.result.model_dump(mode='json'):
                 raise ValueError('Continuation replay disagrees with the original MatchEngine history')
-            return {'match_id': match_id, 'fingerprint': entry.fingerprint,
+            response = {'match_id': match_id, 'fingerprint': entry.fingerprint,
                 'winner_player_id': result.winner_player_id, 'rally_count': len(result.rally_log.events), 'exact_replay': True}
+            if native:
+                response.update(
+                    historical_owner_scope='pre_native_birth_checkpoint',
+                    historical_root_checkpoint_fingerprint=state.fingerprint,
+                    match_source_checkpoint_fingerprint=entry.source_checkpoint_fingerprint,
+                )
+            return response

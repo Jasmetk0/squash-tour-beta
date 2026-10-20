@@ -374,8 +374,15 @@ def test_native_birth_week_is_atomic_signed_and_recoverable(
 
 
 def test_native_birth_preserves_actual_edition_entry_awards_and_match_counts(tmp_path):
+    from tests.api.native_birth_historical_replay_case import (
+        exercise_historical_replay,
+        replay_url,
+    )
+
     clock = RunCalendar(52, 1, 2030, 3)
-    with ApiServer(database_url=f"sqlite:///{tmp_path / 'ranked-birth.db'}") as server:
+    path = tmp_path / "ranked-birth.db"
+    database_url = f"sqlite:///{path}"
+    with ApiServer(database_url=database_url) as server:
         repo, _ = setup(server, clock, 8)
         create_edition(server, "before-birthday", size=4)
         for n in (3, 4):
@@ -394,8 +401,21 @@ def test_native_birth_preserves_actual_edition_entry_awards_and_match_counts(tmp
         assert len(rows) == 4
         assert "born-native-15" not in {r["player_id"] for r in rows}
         assert max(r["points"] for r in rows) == 100
+        code, working_replay = _request("GET", replay_url(server))
+        assert code == 200 and working_replay["exact_replay"], working_replay
+        assert not inspect(server)["saved"]
         saved = save_tour(server)
         raw = repo.get_branch_saved_revision(revision_id=saved["revision_id"]).payload
         cp = raw["content"]["calendar_player_sporting_checkpoint"]["state"]
         assert any(n > 0 for _, n in cp["native_weeks"][0]["advance"]["played_counts"])
         assert repo.verify_branch_saved_revision_hash(revision_id=saved["revision_id"])
+        expected_replay = exercise_historical_replay(server, repo, path)
+        assert expected_replay == working_replay
+        execute(
+            server,
+            command(inspect(server), "transition", name="after-birthday-final-replay"),
+        )
+        save_tour(server)
+        assert _request("GET", replay_url(server)) == (200, expected_replay)
+    with ApiServer(database_url=database_url) as restarted:
+        assert _request("GET", replay_url(restarted)) == (200, expected_replay)

@@ -1,3 +1,30 @@
+# Frozen pre-birth match replay candidate — 19 October 2026
+
+**Verified:** #1565 `ca447c2` has every applicable final-head check green and is
+ready for owner review. The corrected #1566 head `effeb11` has green Fast CI,
+frontend build, all six new native HTTP scenarios and its real Chromium birth/
+57-attribute/explicit Save/Viewer scenario. That screenshot was visually inspected;
+all remaining native/legacy gates have now passed on the same `effeb11` head.
+Neither candidate was merged by the assistant. `buuk` is unchanged at the last
+verified `14e2784`.
+
+**Current dependent fix:** historical continuation/final replay recognizes a v11
+owner only through its unchanged, actually Signed pre-birth root. It authenticates
+Run/Branch lineage and rejects rehashed root divergence without consuming today's
+Health or granting mutation readiness. Original MatchEngine inputs, complete
+result/log comparison, native provenance and ordinary old responses are preserved.
+See [contract and tests](docs/CALENDAR_NATIVE_HISTORICAL_MATCH_REPLAY_V1.md).
+The initial replay head passed its actual match-replay and browser gates, but the
+mandatory readiness job deselected its unchanged test: GitHub's reserved event
+variable ignored a step-level override. The workflow now passes the acceptance
+event directly to pytest, as the original native Tour gate already does. This
+fix must pass its own final-head gates; no acceptance assertion or timeout changed.
+
+No post-birth new competition, source epochs, numeric Health, protected fork or
+release certification is implied. These remain the main integration blockers.
+
+## Earlier checkpoint history (retained)
+
 # Native birth runtime capability candidate — 19 October 2026
 
 **Published writer:** #1565 `ca447c2` has all applicable final-head gates green:

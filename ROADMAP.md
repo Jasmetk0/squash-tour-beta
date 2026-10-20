@@ -1,3 +1,20 @@
+# Pre-alpha dependency path — frozen historical replay
+
+#1565 has all applicable final-head checks green. The corrected readiness/Admin
+#1566 has passed its actual new Chromium, all six new HTTP cases and remaining
+long native/legacy gates on corrected head `effeb11`. Owner alone merges.
+
+Current dependent work repairs old confirmed match replay after a native birthday,
+using the actual Signed pre-birth root and frozen match/Health inputs, independent
+of current medical readiness. [Contract](docs/CALENDAR_NATIVE_HISTORICAL_MATCH_REPLAY_V1.md).
+Its own full relevant final-head gates remain required.
+
+Next: actual post-birth competition and historical prospect-source epochs, then
+remaining Master scope and full release acceptance. Bounded replay is not a
+Full Simulation unlock or pre-alpha release claim.
+
+## Earlier roadmap checkpoints (retained)
+
 # Pre-alpha dependency path — honest native birth capability
 
 Current stack adds the confirmed birth writer #1565 after #1564, then the current

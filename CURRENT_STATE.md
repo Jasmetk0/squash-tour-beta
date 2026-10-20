@@ -4,7 +4,7 @@
 ready for owner review. The corrected #1566 head `effeb11` has green Fast CI,
 frontend build, all six new native HTTP scenarios and its real Chromium birth/
 57-attribute/explicit Save/Viewer scenario. That screenshot was visually inspected;
-its remaining long native/legacy gates are still pending at this checkpoint.
+all remaining native/legacy gates have now passed on the same `effeb11` head.
 Neither candidate was merged by the assistant. `buuk` is unchanged at the last
 verified `14e2784`.
 
@@ -14,7 +14,11 @@ Run/Branch lineage and rejects rehashed root divergence without consuming today'
 Health or granting mutation readiness. Original MatchEngine inputs, complete
 result/log comparison, native provenance and ordinary old responses are preserved.
 See [contract and tests](docs/CALENDAR_NATIVE_HISTORICAL_MATCH_REPLAY_V1.md).
-This candidate still requires its own final-head verification.
+The initial replay head passed its actual match-replay and browser gates, but the
+mandatory readiness job deselected its unchanged test: GitHub's reserved event
+variable ignored a step-level override. The workflow now passes the acceptance
+event directly to pytest, as the original native Tour gate already does. This
+fix must pass its own final-head gates; no acceptance assertion or timeout changed.
 
 No post-birth new competition, source epochs, numeric Health, protected fork or
 release certification is implied. These remain the main integration blockers.

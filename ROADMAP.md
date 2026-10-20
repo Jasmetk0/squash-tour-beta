@@ -1,8 +1,8 @@
 # Pre-alpha dependency path — frozen historical replay
 
 #1565 has all applicable final-head checks green. The corrected readiness/Admin
-#1566 has passed its actual new Chromium and all six new HTTP cases; remaining
-long native/legacy gates still need their final-head results. Owner alone merges.
+#1566 has passed its actual new Chromium, all six new HTTP cases and remaining
+long native/legacy gates on corrected head `effeb11`. Owner alone merges.
 
 Current dependent work repairs old confirmed match replay after a native birthday,
 using the actual Signed pre-birth root and frozen match/Health inputs, independent

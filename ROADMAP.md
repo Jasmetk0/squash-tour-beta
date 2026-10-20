@@ -1,3 +1,24 @@
+# Prospect epochs historical authority candidate — 20 October 2026
+
+**Verified base:** `buuk` `59309089663f7a5bd62d4bbbb23329da70215f5b`
+(owner-merged #1569 and #1570; no open PR at task start).
+One direct-to-`buuk` candidate implements versioned future Run prospect
+source epochs while keeping the shared catalog, equal Branches,
+v1 Signed snapshots and historical match/replay outcomes unchanged.
+Real materialization remains separate from manual Saved publication; only
+real Week/Season Transition admits players. The existing Admin flow gets
+CS/EN future-cohort review, confirmation and source Save. Full contract:
+[RUN_PROSPECT_SOURCE_EPOCHS_V2](docs/RUN_PROSPECT_SOURCE_EPOCHS_V2.md).
+
+**Not yet integration/release evidence.** The newly added short-year real
+HTTP/SQLite full birth→MatchEngine→next cohort→restart/restore scenario and
+real Chromium workflow, existing Earth/FAX/native Tour acceptance and
+negative cases must pass on the final PR head. No owner merge or full pre-alpha
+release follows merely from creating this candidate. A future checkpoint
+must still cover 50×61 and all outstanding Master requirements.
+
+## Previous development checkpoints (retained)
+
 # Post-admission competition candidate — 20 October 2026
 
 **Verified integration base:** `buuk` `0b82cd96fadd9d402ac8e3ad70383a36cd0d5199`,

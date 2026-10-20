@@ -213,3 +213,46 @@ def test_registry_json_load_blocks_symlinked_subdirectory(tmp_path: Path) -> Non
     registry = WorldPackageRegistryService(world_packages_root=package_root)
     with pytest.raises(ValueError, match="symlink"):
         registry._read_json(package_root / "custom" / "world.json")
+
+
+
+def test_history_file_reader_rejects_linked_package_root(tmp_path: Path) -> None:
+    from beta_engine.infrastructure.world_package_storage import _safe_package_owned_file
+
+    root = tmp_path / "real_package"
+    root.mkdir()
+    (root / "rating.json").write_text("{}")
+    alias = tmp_path / "package_alias"
+    try:
+        alias.symlink_to(root, target_is_directory=True)
+    except (OSError, NotImplementedError):
+        pytest.skip("directory symlinks are not available on this platform")
+    with pytest.raises(ValueError, match="package root must not be a symlink"):
+        _safe_package_owned_file(alias, "rating.json")
+
+
+def test_externalized_history_write_rejects_linked_generation_parent(
+    tmp_path: Path, monkeypatch
+) -> None:
+    from types import SimpleNamespace
+    from beta_engine.domain.countries.rating_history import RATING_SCALE_V2
+
+    store = WorldPackageCountryStore(tmp_path / "world")
+    store.package_root.mkdir()
+    target = tmp_path / "outside"
+    target.mkdir()
+    (target / "country_histories").mkdir()
+    try:
+        (store.package_root / "generation").symlink_to(target, target_is_directory=True)
+    except (OSError, NotImplementedError):
+        pytest.skip("directory symlinks are not available on this platform")
+    monkeypatch.setattr(
+        WorldPackageCountryStore,
+        "load_country",
+        lambda self, code: SimpleNamespace(
+            code=code, rating_scale=RATING_SCALE_V2, rating_history=object()
+        ),
+    )
+    with pytest.raises(ValueError, match="destination uses a symlink"):
+        store.externalize_rating_history("AAA")
+    assert not list((target / "country_histories").iterdir())

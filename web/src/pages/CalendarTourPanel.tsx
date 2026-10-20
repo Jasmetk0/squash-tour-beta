@@ -200,8 +200,9 @@ export function CalendarTourPanel({runId,branchId,head}:{runId:string;branchId:s
     }
   }
   const names=new Map(view?.players.map(p=>[p.player_id,p.name])??[])
-  const ready=Boolean(view&&!busy&&reason.trim()&&/^-?\d+$/.test(seed)&&Number.isSafeInteger(Number(seed))&&(view.saved||view.state))
-  const nativeOnly=Boolean(view?.state&&'schema_version' in view.state&&view.state.schema_version==='calendar_tour_authority.v3')
+  const ready=Boolean(view&&!busy&&reason.trim()&&/^-?\d+$/.test(seed)&&Number.isSafeInteger(Number(seed))&&(view.saved||view.state)&&view.sporting_saved!==false)
+  const nativePopulation=Boolean(view?.state&&'schema_version' in view.state&&['calendar_tour_authority.v3','calendar_tour_authority.v4'].includes(String(view.state.schema_version)))
+  const nativeOnly=Boolean(view?.state&&'schema_version' in view.state&&view.state.schema_version==='calendar_tour_authority.v3'&&view.post_birth_competition_supported!==true)
   const latest=view?.state?.rankings[view.state.rankings.length-1]
   const clock=view?.state?{...view.state.week,calendar:view.run_calendar??view.state.week.calendar}:null
   const plannedEdition=clock?scheduleTourEdition(clock,Number(season)-1,Number(week)):null
@@ -212,7 +213,7 @@ export function CalendarTourPanel({runId,branchId,head}:{runId:string;branchId:s
     {!view&&<p>{cs?'Načítání autorit…':'Loading authorities…'}</p>}
     {view&&<>
       <p>{cs?'Stav':'State'}: {view.saved?'Saved':'Working Draft'} · {view.state&&`${cs?'Týden':'Week'} ${view.state.week.week}/${view.state.week.calendar.weeks_per_year}`}</p>
-      {view.state&&!nativeOnly&&<section aria-label="Next-week prospect intake preflight">
+      {view.state&&!nativePopulation&&<section aria-label="Next-week prospect intake preflight">
         <h3>{cs?'Prospect intake – další týden':'Prospect intake – next week'}</h3>
         <p>{cs?'Kontrola ověřeného Saved zdroje; žádná aktivace hráčů.':'Verified Saved source only; no player activation.'}</p>
         <button disabled={busy} onClick={()=>void loadNativeIntake()}>{cs?'Prověřit patnáctileté prospecty':'Check next-week prospects'}</button>

@@ -30,10 +30,10 @@ from beta_engine.domain.run_revisions import (
     viewer_branch_saved_revision_payload,
 )
 from beta_engine.infrastructure.db.models import (
+    AuthoritativeSimulationCommandModel,
     BranchRevisionAuditEventModel,
     BranchSavedRevisionModel,
     BranchWorkingDraftModel,
-    AuthoritativeSimulationCommandModel,
     FullSimulationExecutionLeaseModel,
     FullSimulationTaskModel,
     RunBranchModel,
@@ -101,7 +101,7 @@ def _capture_live_content(session: Session, *, payload: dict, run_id: str, branc
     native_birth = (
         payload.get("content", {}).get("calendar_player_sporting_checkpoint", {})
         .get("state", {}).get("schema_version")
-        == "calendar_sporting_checkpoint.v11"
+        in {"calendar_sporting_checkpoint.v11", "calendar_sporting_checkpoint.v12"}
     )
     storage.capture_saved_calendar_match(
         session, copy, run_id=run_id, branch_id=branch_id,
@@ -244,7 +244,8 @@ def review_run_calendar_extension(
             "draft_changes": draft.changes if draft else None,
         })
 
-    from beta_engine.application.full_simulation_tasks import _read as read_task, TERMINAL
+    from beta_engine.application.full_simulation_tasks import TERMINAL
+    from beta_engine.application.full_simulation_tasks import _read as read_task
 
     frozen_tasks = []
     for task in session.scalars(

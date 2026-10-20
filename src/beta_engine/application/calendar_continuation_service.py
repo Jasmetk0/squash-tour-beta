@@ -198,7 +198,9 @@ class CalendarContinuationService:
         request_fp = canonical_hash({'run_id': run_id, 'branch_id': branch_id, 'command': command.model_dump(mode='json')})
         with self.repository._session_factory.begin() as session:
             session.execute(text('BEGIN IMMEDIATE'))
-            from beta_engine.infrastructure.db.calendar_tour import require_exhibition_timeline
+            from beta_engine.infrastructure.db.calendar_tour import (
+                require_exhibition_timeline,
+            )
             clock, revision, world, health, state, saved, evidence = self._context(session, run_id=run_id, branch_id=branch_id)
             if state is None:
                 raise ValueError('First play and Save a v5 opening knockout to establish population sporting authority')
@@ -216,11 +218,13 @@ class CalendarContinuationService:
                     if existing.command_id != command.command_id or existing.request_fingerprint != request_fp:
                         raise ValueError('Continuation command/match ID already used with different input')
                     prefix = build_calendar_sporting_checkpoint(world, knockout, calendar_engine_player)
-                    from beta_engine.domain.players.calendar_sporting_week import (
-                        CalendarSportingWeekAdvance, append_sporting_week,
-                    )
                     from beta_engine.domain.players.calendar_followup_knockout import (
-                        CalendarFollowupKnockout, append_followup_knockout,
+                        CalendarFollowupKnockout,
+                        append_followup_knockout,
+                    )
+                    from beta_engine.domain.players.calendar_sporting_week import (
+                        CalendarSportingWeekAdvance,
+                        append_sporting_week,
                     )
                     from beta_engine.domain.players.calendar_tournament_closure import (
                         append_native_tournament_closure,
@@ -282,6 +286,28 @@ class CalendarContinuationService:
                 CalendarNativeSportingCheckpoint,
             )
             native = isinstance(state, CalendarNativeSportingCheckpoint)
+            if state is not None and state.schema_version == 'calendar_sporting_checkpoint.v12':
+                if any(e.match_id == match_id for e in state.source_checkpoint.played_continuations):
+                    native = True
+                else:
+                    from beta_engine.infrastructure.db.calendar_standalone_match_state import (
+                        decode_prevalidated_calendar_sources,
+                    )
+                    from beta_engine.infrastructure.db.models import RunBranchModel
+                    branch = session.get(RunBranchModel,branch_id)
+                    if branch is None or branch.run_id != run_id:
+                        raise KeyError('Native replay Run/Branch not found')
+                    revision = self.repository._validated_branch_revision_lineage_in_session(session=session,branch=branch,payload_revision_ids=frozenset({branch.saved_head_revision_id}))[0]
+                    _,signed,_ = decode_prevalidated_calendar_sources(revision.payload,run_id=run_id,branch_id=branch_id)
+                    if signed != state:
+                        raise ValueError('Save native competition before historical replay')
+                    entry = next((e for e in state.played_continuations if e.match_id == match_id),None)
+                    if entry is None:
+                        raise KeyError('Native competition match not found')
+                    result = MatchEngine(DeterministicRng(entry.seed)).simulate(entry.input_context,log_anchor_hash=entry.log_anchor_hash,effective_match_health=entry.effective_health)
+                    if result.model_dump(mode='json') != entry.result.model_dump(mode='json'):
+                        raise ValueError('Native competition replay differs from actual MatchEngine')
+                    return {'match_id':match_id,'fingerprint':entry.fingerprint,'winner_player_id':result.winner_player_id,'rally_count':len(result.rally_log.events),'exact_replay':True,'historical_owner_scope':'native_competition_checkpoint','match_source_checkpoint_fingerprint':entry.source_checkpoint_fingerprint}
             if native:
                 from beta_engine.application.calendar_native_historical_replay import (
                     authenticated_pre_birth_root,

@@ -9,19 +9,27 @@ from __future__ import annotations
 import json
 from typing import Literal
 
-from pydantic import Field, model_validator, model_serializer
+from pydantic import Field, model_serializer, model_validator
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from beta_engine.domain.calendar.run_week_position import RunWeekPosition
-from beta_engine.domain.matches.models import MatchContext, MatchResult
-from beta_engine.domain.players.calendar_match_state import CalendarKnockoutSportingState
-from beta_engine.domain.players.calendar_knockout_health import CalendarKnockoutHealthSource, calendar_knockout_match_anchor
 from beta_engine.domain.matches.health import EffectiveMatchHealthSnapshot
-from beta_engine.domain.players.calendar_canonical_match import CalendarCanonicalMatchSource, canonical_participant
-from beta_engine.domain.simulation_slots import CanonicalPlayerMatchProjection
+from beta_engine.domain.matches.models import MatchContext, MatchResult
+from beta_engine.domain.players.calendar_canonical_match import (
+    CalendarCanonicalMatchSource,
+    canonical_participant,
+)
+from beta_engine.domain.players.calendar_knockout_health import (
+    CalendarKnockoutHealthSource,
+    calendar_knockout_match_anchor,
+)
+from beta_engine.domain.players.calendar_match_state import (
+    CalendarKnockoutSportingState,
+)
 from beta_engine.domain.rankings.official import FrozenInput
 from beta_engine.domain.run_packages import canonical_hash
+from beta_engine.domain.simulation_slots import CanonicalPlayerMatchProjection
 from beta_engine.infrastructure.db.models import CalendarStandaloneMatchModel
 
 COMPONENT_KEY = "calendar_standalone_match"
@@ -337,7 +345,9 @@ def replace_saved_knockout_with_prepared_awards(
 def capture_saved_calendar_match(session: Session, payload: dict, *, run_id: str, branch_id: str,
                                  _defer_full_verification: bool = False) -> None:
     states = load_match_rows(session, run_id=run_id, branch_id=branch_id)
-    from beta_engine.infrastructure.db.calendar_sporting_checkpoint import capture_checkpoint
+    from beta_engine.infrastructure.db.calendar_sporting_checkpoint import (
+        capture_checkpoint,
+    )
     capture_checkpoint(session, payload, states[0] if len(states) == 1 else None,
                        run_id=run_id, branch_id=branch_id,
                        _defer_full_verification=_defer_full_verification)
@@ -411,8 +421,10 @@ def decode_prevalidated_calendar_sources(payload: dict, *, run_id: str, branch_i
     evidence = _parse_saved_calendar_match_evidence(
         payload, run_id=run_id, branch_id=branch_id
     )
-    from beta_engine.infrastructure.db.calendar_sporting_checkpoint import parse_checkpoint_json
     from beta_engine.domain.tournaments.calendar_tour import parse_tour_json
+    from beta_engine.infrastructure.db.calendar_sporting_checkpoint import (
+        parse_checkpoint_json,
+    )
 
     content = payload.get("content", {})
     cp_raw = content.get("calendar_player_sporting_checkpoint")
@@ -456,7 +468,9 @@ def load_saved_calendar_sources(payload: dict, *, run_id: str, branch_id: str,
                                 _sporting_component_proofs=None,
                                 _verified_saved_prefix=None):
     """Return the coupled sources, sharing only exact transaction-local proofs."""
-    from beta_engine.infrastructure.db.calendar_sporting_checkpoint import saved_checkpoint
+    from beta_engine.infrastructure.db.calendar_sporting_checkpoint import (
+        saved_checkpoint,
+    )
     # Exact content-addressed proof reuse is private to a single validated
     # lineage walk. Never retain it across requests/transactions. Tour authority
     # remains independently validated for each revision even on a sporting hit.
@@ -468,7 +482,7 @@ def load_saved_calendar_sources(payload: dict, *, run_id: str, branch_id: str,
         raw_checkpoint_state = raw_checkpoint.get('state') if isinstance(raw_checkpoint,dict) else None
         native_dependencies = (
             {k:content.get(k) for k in ('calendar_tour_authority','player_lifecycle','player_health_state','run_prospect_source')}
-            if isinstance(raw_checkpoint_state,dict) and raw_checkpoint_state.get('schema_version') == 'calendar_sporting_checkpoint.v11'
+            if isinstance(raw_checkpoint_state,dict) and raw_checkpoint_state.get('schema_version') in {'calendar_sporting_checkpoint.v11', 'calendar_sporting_checkpoint.v12'}
             else {}
         )
         key = canonical_hash({'run_id':run_id,'branch_id':branch_id,'run':payload.get('run'),
@@ -530,7 +544,8 @@ def load_saved_calendar_sources(payload: dict, *, run_id: str, branch_id: str,
         tour = tour_proofs[tour_key]
     else:
         tour = saved_tour(
-            payload, run_id=run_id, branch_id=branch_id, checkpoint=checkpoint
+            payload, run_id=run_id, branch_id=branch_id, checkpoint=checkpoint,
+            **({"_verified_competition":checkpoint} if checkpoint is not None and checkpoint.schema_version == "calendar_sporting_checkpoint.v12" else {}),
         )
         if tour_proofs is not None:
             tour_proofs[tour_key] = tour
@@ -561,7 +576,9 @@ def restore_saved_calendar_match(
         (current.fingerprint,) if current else ()
     ):
         raise ValueError("Live calendar match differs from current Saved head")
-    from beta_engine.infrastructure.db.calendar_sporting_checkpoint import restore_checkpoint
+    from beta_engine.infrastructure.db.calendar_sporting_checkpoint import (
+        restore_checkpoint,
+    )
     from beta_engine.infrastructure.db.calendar_tour import restore_tour
     restore_tour(session, current_payload=current_payload, target_payload=target_payload,
                  run_id=run_id, branch_id=branch_id,

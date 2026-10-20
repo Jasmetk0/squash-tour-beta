@@ -2,7 +2,8 @@
 import json
 
 from beta_engine.domain.players.calendar_sporting_checkpoint import (
-    CalendarSportingCheckpoint, build_calendar_sporting_checkpoint,
+    CalendarSportingCheckpoint,
+    build_calendar_sporting_checkpoint,
 )
 from beta_engine.infrastructure.db.models import CalendarPlayerSportingCheckpointModel
 
@@ -10,11 +11,18 @@ COMPONENT_KEY = 'calendar_player_sporting_checkpoint'
 
 
 def parse_checkpoint_json(raw):
-    from beta_engine.domain.players.calendar_native_sporting_checkpoint import CalendarNativeSportingCheckpoint
+    from beta_engine.domain.players.calendar_native_sporting_checkpoint import (
+        CalendarNativeSportingCheckpoint,
+    )
 
     body = json.loads(raw)
     if not isinstance(body, dict):
         raise ValueError('Calendar sporting checkpoint must be a versioned object')
+    if body.get('schema_version') == 'calendar_sporting_checkpoint.v12':
+        from beta_engine.domain.players.calendar_native_competition import (
+            CalendarNativeCompetitionCheckpoint,
+        )
+        return CalendarNativeCompetitionCheckpoint.model_validate_json(raw)
     model = (CalendarNativeSportingCheckpoint
              if body.get('schema_version') == 'calendar_sporting_checkpoint.v11'
              else CalendarSportingCheckpoint)
@@ -61,7 +69,8 @@ def _knockout(evidence):
 def verify_checkpoint(state, world, evidence, *, _prefix_proofs=None,
                       _verified_saved_prefix=None, _native_inputs=None):
     from beta_engine.domain.players.calendar_native_sporting_checkpoint import (
-        CalendarNativeSportingCheckpoint, verify_native_sporting_checkpoint,
+        CalendarNativeSportingCheckpoint,
+        verify_native_sporting_checkpoint,
     )
     if isinstance(state, CalendarNativeSportingCheckpoint):
         if _native_inputs is None:
@@ -118,11 +127,17 @@ def verify_checkpoint(state, world, evidence, *, _prefix_proofs=None,
         suffix = (*state.continuations, *state.week_events)
     if proof_scope is not None:
         _prefix_proofs[(*proof_scope,expected.fingerprint)]=expected
-    from beta_engine.domain.players.calendar_continuation_match import append_continuation
+    from beta_engine.domain.players.calendar_continuation_match import (
+        append_continuation,
+    )
     reserved_ids = {knockout.match_id, *(m.input_context.match_id for m in knockout.matches)}
-    from beta_engine.domain.players.calendar_sporting_week import CalendarSportingWeekAdvance, append_sporting_week
     from beta_engine.domain.players.calendar_followup_knockout import (
-        CalendarFollowupKnockout, append_followup_knockout,
+        CalendarFollowupKnockout,
+        append_followup_knockout,
+    )
+    from beta_engine.domain.players.calendar_sporting_week import (
+        CalendarSportingWeekAdvance,
+        append_sporting_week,
     )
     from beta_engine.domain.players.calendar_tournament_closure import (
         append_native_tournament_closure,
@@ -172,7 +187,9 @@ def verify_checkpoint(state, world, evidence, *, _prefix_proofs=None,
 
 def saved_checkpoint(payload, evidence, *, run_id, branch_id, _prefix_proofs=None,
                      _verified_saved_prefix=None):
-    from beta_engine.infrastructure.db.initial_world_state import load_saved_initial_world
+    from beta_engine.infrastructure.db.initial_world_state import (
+        load_saved_initial_world,
+    )
     component = payload.get('content', {}).get(COMPONENT_KEY)
     state = None
     if component is not None:
@@ -181,15 +198,28 @@ def saved_checkpoint(payload, evidence, *, run_id, branch_id, _prefix_proofs=Non
         state = parse_checkpoint_json(json.dumps(component['state']))
         if (state.run_id, state.branch_id, state.fingerprint) != (run_id, branch_id, component['fingerprint']):
             raise ValueError('Saved calendar sporting checkpoint identity/hash mismatch')
+    if state is not None and state.schema_version == 'calendar_sporting_checkpoint.v12':
+        from beta_engine.infrastructure.db.calendar_native_competition import (
+            verify_competition_payload,
+        )
+        verify_competition_payload(payload, state, evidence)
+        return state
     knockout = _knockout(evidence)
     required = knockout is not None and knockout.schema_version == 'calendar_opening_knockout.v5'
     world = load_saved_initial_world(payload, run_id=run_id, branch_id=branch_id) if required or state else None
     native_inputs = None
     if state is not None and state.schema_version == 'calendar_sporting_checkpoint.v11':
-        from beta_engine.domain.tournaments.calendar_tour import parse_tour_json, effective_policy
-        from beta_engine.infrastructure.db.player_lifecycle_state import load_saved_lifecycle
+        from beta_engine.domain.tournaments.calendar_tour import (
+            effective_policy,
+            parse_tour_json,
+        )
         from beta_engine.infrastructure.db.player_health_state import load_saved_health
-        from beta_engine.infrastructure.db.run_prospect_source_state import load_saved_run_prospect_source
+        from beta_engine.infrastructure.db.player_lifecycle_state import (
+            load_saved_lifecycle,
+        )
+        from beta_engine.infrastructure.db.run_prospect_source_state import (
+            load_saved_run_prospect_source,
+        )
 
         raw_tour = payload.get('content', {}).get('calendar_tour_authority')
         if not isinstance(raw_tour, dict) or set(raw_tour) != {'fingerprint', 'state'}:

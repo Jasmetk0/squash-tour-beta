@@ -24,6 +24,13 @@ describe('native capability (HTTP mocked; no execution authority)',()=>{
     expect(result).toHaveTextContent('only natural transitions')
     expect(screen.queryByRole('button',{name:/Execute|Save/})).not.toBeInTheDocument()
   })
+  it('validates the versioned native competition capability and rejects invented scope (component)',()=>{
+    const v={...view(),state:{...view().state!,schema_version:'calendar_tour_authority.v4'}}
+    const modern:NativeTransitionReadiness={...report(v),schema_version:'native_tour_transition_readiness.v2',current_scope:'native_competition',target_scope:'native_competition',post_birth_competition_supported:true}
+    expect(validateNativeTransitionReadiness(modern,v)).toBe(modern)
+    expect(()=>validateNativeTransitionReadiness({...modern,post_birth_competition_supported:false},v)).toThrow()
+    expect(()=>validateNativeTransitionReadiness({...modern,current_scope:'configured_tour'},v)).toThrow()
+  })
   it.each(['saved_head_revision_id','checkpoint_fingerprint','tour_fingerprint','run_id','branch_id'] as const)('rejects changed %s',key=>{
     expect(()=>validateNativeTransitionReadiness({...report(),[key]:'foreign'},view())).toThrow()
   })

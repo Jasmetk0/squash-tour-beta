@@ -9,20 +9,25 @@ from typing import Literal
 from pydantic import Field, model_serializer, model_validator
 
 from beta_engine.domain.calendar.run_week_position import RunWeekPosition
-from beta_engine.domain.players.calendar_followup_points import (CalendarFollowupPointPolicy, CalendarFollowupEightPointPolicy, CalendarFollowupPreparedAward, derive_followup_awards)
 from beta_engine.domain.players.calendar_continuation_match import (
-    CalendarContinuationMatch, append_continuation,
+    CalendarContinuationMatch,
+    append_continuation,
+)
+from beta_engine.domain.players.calendar_followup_points import (
+    CalendarFollowupEightPointPolicy,
+    CalendarFollowupPointPolicy,
+    CalendarFollowupPreparedAward,
+    derive_followup_awards,
 )
 from beta_engine.domain.rankings.official import FrozenInput
 from beta_engine.domain.run_packages import canonical_hash
-
 
 ROUNDS = ("sf1", "sf2", "final")
 ROUNDS_EIGHT = ("qf1", "qf2", "qf3", "qf4", "sf1", "sf2", "final")
 
 
 class CalendarFollowupKnockout(FrozenInput):
-    schema_version: Literal["calendar_followup_knockout.v1", "calendar_followup_knockout.v2", "calendar_followup_knockout.v3", "calendar_followup_knockout.v4", "calendar_followup_knockout.v5"] = "calendar_followup_knockout.v1"
+    schema_version: Literal["calendar_followup_knockout.v1", "calendar_followup_knockout.v2", "calendar_followup_knockout.v3", "calendar_followup_knockout.v4", "calendar_followup_knockout.v5", "calendar_followup_knockout.v6"] = "calendar_followup_knockout.v1"
     run_id: str = Field(min_length=1)
     branch_id: str = Field(min_length=1)
     tournament_id: str = Field(min_length=1, max_length=94)
@@ -46,7 +51,7 @@ class CalendarFollowupKnockout(FrozenInput):
     @model_serializer(mode="wrap")
     def historical_shape(self, handler):
         body = handler(self)
-        if self.schema_version != "calendar_followup_knockout.v5":
+        if self.schema_version not in {"calendar_followup_knockout.v5", "calendar_followup_knockout.v6"}:
             body.pop("edition_authority_fingerprint", None)
         if self.schema_version in {"calendar_followup_knockout.v1", "calendar_followup_knockout.v3"}:
             body.pop("prepared_policy", None)
@@ -55,7 +60,7 @@ class CalendarFollowupKnockout(FrozenInput):
 
     @model_validator(mode="after")
     def validate_bracket(self):
-        configured=self.schema_version=="calendar_followup_knockout.v5"
+        configured=self.schema_version in {"calendar_followup_knockout.v5", "calendar_followup_knockout.v6"}
         if configured:
             if not self.edition_authority_fingerprint or self.scope!="configured_tour_knockout":
                 raise ValueError("Configured tournament requires its pre-existing Edition/Entry/draw authority")
@@ -118,7 +123,7 @@ class CalendarFollowupKnockout(FrozenInput):
             operator_label=self.operator_label,
             audit_reason=self.audit_reason,
         )
-        if self.schema_version in {"calendar_followup_knockout.v2", "calendar_followup_knockout.v4", "calendar_followup_knockout.v5"}:
+        if self.schema_version in {"calendar_followup_knockout.v2", "calendar_followup_knockout.v4", "calendar_followup_knockout.v5", "calendar_followup_knockout.v6"}:
             needed_type = (
                 CalendarFollowupEightPointPolicy
                 if eight
@@ -160,8 +165,12 @@ def append_followup_knockout(checkpoint, world, event: CalendarFollowupKnockout)
     must reproduce from the actual predecessor population. The event is *one*
     ledger entry, preserving its future Edition/point-award provenance boundary.
     """
-    from beta_engine.domain.players.calendar_sporting_checkpoint import CalendarSportingCheckpoint
+    from beta_engine.domain.players.calendar_sporting_checkpoint import (
+        CalendarSportingCheckpoint,
+    )
 
+    if event.schema_version == "calendar_followup_knockout.v6":
+        raise ValueError("Native competition v6 requires its v12 owned ledger")
     if (
         checkpoint.schema_version not in {
             "calendar_sporting_checkpoint.v3", "calendar_sporting_checkpoint.v4",

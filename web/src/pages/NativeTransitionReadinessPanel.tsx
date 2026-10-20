@@ -35,6 +35,7 @@ export function NativeTransitionReadinessPanel({view,disabled}:{view:TourView;di
       {report.target_week?<p>{cs?'Cíl':'Target'}: S{report.target_week.season_index+1}/W{report.target_week.week}</p>:<p>{cs?'Konec horizontu Runu; nejprve jej prodlužte.':'Run horizon exhausted; extend it first.'}</p>}
       {report.due.map(p=><p key={p.player_id}>{cs?'Nový hráč':'New player'}: {p.display_name} · {p.country_code}</p>)}
       {report.blockers.map(b=><p key={b}>{b==='manual_save_required'?(cs?'Nejprve proveďte ruční Save.':'Manual Save is required first.'):b}</p>)}
+      {report.target_scope==='native_competition'&&<p>{cs?'Po přijetí hráče a manuálním Save lze připravit novou Edition, přihlášky, los a skutečné zápasy.':'After admission and manual Save, new Editions, Entry, draws and real matches are available.'}</p>}
       {report.target_scope==='native_natural_transitions'&&<p>{cs?'Po narození jsou zatím podporovány jen přirozené přechody. Nové turnaje, přihlášky a zápasy ještě nejsou podporovány.':'After birth, only natural transitions are currently supported. New Editions, Entry and matches are not supported yet.'}</p>}
       <small>HEAD <code>{report.saved_head_revision_id}</code> · <code>{report.readiness_fingerprint}</code></small>
     </div>}

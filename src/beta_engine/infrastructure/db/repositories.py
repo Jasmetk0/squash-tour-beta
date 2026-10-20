@@ -5204,7 +5204,7 @@ class SimulationPersistenceRepository:
                 native_birth_restore = (
                     target_content.get("calendar_player_sporting_checkpoint", {})
                     .get("state", {}).get("schema_version")
-                    == "calendar_sporting_checkpoint.v11"
+                    in {"calendar_sporting_checkpoint.v11", "calendar_sporting_checkpoint.v12"}
                 )
                 capture_saved_calendar_match(
                     session, payload, run_id=run_id, branch_id=branch_id,
@@ -5857,7 +5857,7 @@ class SimulationPersistenceRepository:
                     or (
                         live_calendar_owner is not None
                         and live_calendar_owner.schema_version
-                        == "calendar_sporting_checkpoint.v11"
+                        in {"calendar_sporting_checkpoint.v11", "calendar_sporting_checkpoint.v12"}
                     )
                 )
                 capture_saved_calendar_match(

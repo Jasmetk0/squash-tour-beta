@@ -55,3 +55,44 @@ class CalendarNativeTourState(CalendarTourState):
                 "Native Tour v3 supports natural Week/Season transitions only"
             )
         return self
+
+
+class CalendarNativeCompetitionTourState(CalendarTourState):
+    schema_version: Literal["calendar_tour_authority.v4"] = "calendar_tour_authority.v4"
+    competition_root_tour: CalendarNativeTourState
+    competition_root_saved_head: str = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def unchanged_competition_root(self):
+        root = self.competition_root_tour
+        if (
+            (self.run_id, self.branch_id) != (root.run_id, root.branch_id)
+            or self.week.ordinal < root.week.ordinal
+            or self.receipts[: len(root.receipts)] != root.receipts
+            or self.transitions[: len(root.transitions)] != root.transitions
+            or self.rankings[: len(root.rankings)] != root.rankings
+            or self.policies != root.policies
+        ):
+            raise ValueError(
+                "Native competition cannot rewrite its historical Tour root"
+            )
+        extra = self.receipts[len(root.receipts) :]
+        if (
+            extra
+            and extra[0].request.get("command", {}).get("expected_saved_head")
+            != self.competition_root_saved_head
+        ):
+            raise ValueError("Native competition lacks its actual Saved root")
+        return self
+
+
+def competition_tour(state, saved_head):
+    if isinstance(state, CalendarNativeCompetitionTourState):
+        return state
+    values = {key: getattr(state, key) for key in CalendarTourState.model_fields}
+    values.update(
+        schema_version="calendar_tour_authority.v4",
+        competition_root_tour=state,
+        competition_root_saved_head=saved_head,
+    )
+    return CalendarNativeCompetitionTourState.model_construct(**values)

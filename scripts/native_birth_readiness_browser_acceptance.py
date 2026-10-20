@@ -88,7 +88,7 @@ def main():
                     expect(
                         capability.get_by_label("Verified transition readiness result")
                     ).to_contain_text("S2/W1")
-                    expect(capability).to_contain_text("only natural transitions")
+                    expect(capability).to_contain_text("new Editions, Entry, draws and real matches")
                     viewer_url = server.base_url + "/viewer/runs/run/calendar-tour"
                     public_before = context.request.get(viewer_url).json()
                     assert public_before["saved_revision_id"] == signed["revision_id"]

@@ -33,7 +33,7 @@ def test_native_readiness_tracks_actual_writer_without_component_false_blockers(
         before = _dump(path)
         code, view = _request("GET", url)
         assert code == 200, view
-        assert view["schema_version"] == "native_tour_transition_readiness.v1"
+        assert view["schema_version"] == "native_tour_transition_readiness.v2"
         assert view["can_preview_transition"] and view["blockers"] == []
         assert view["action"] == "season-transition"
         assert (
@@ -41,7 +41,7 @@ def test_native_readiness_tracks_actual_writer_without_component_false_blockers(
         )
         assert view["admitted_population_count"] == 0
         assert view["current_scope"] == "configured_tour"
-        assert view["target_scope"] == "native_natural_transitions"
+        assert view["target_scope"] == "native_competition"
         assert (
             view["command_preview_required"] and view["explicit_confirmation_required"]
         )
@@ -66,8 +66,8 @@ def test_native_readiness_tracks_actual_writer_without_component_false_blockers(
         assert unsaved["blockers"] == ["manual_save_required"]
         assert unsaved["admitted_population_count"] == 1 and unsaved["due_count"] == 0
         assert unsaved["source_problems"] == []
-        assert unsaved["current_scope"] == "native_natural_transitions"
-        assert not unsaved["post_birth_competition_supported"]
+        assert unsaved["current_scope"] == "native_competition"
+        assert unsaved["post_birth_competition_supported"]
         assert not unsaved["source_epoch_changes_supported"]
         assert _dump(path) == before
         saved = save_tour(server)

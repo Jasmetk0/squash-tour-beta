@@ -901,7 +901,7 @@ class CalendarTourService:
                         build_calendar_prospect_birth_event(
                             predecessor=life,
                             target=target,
-                            source=source,
+                            source=source.for_week(target.ordinal),
                             world_package_id=_world.world_package_id,
                         )
                 except ValueError:

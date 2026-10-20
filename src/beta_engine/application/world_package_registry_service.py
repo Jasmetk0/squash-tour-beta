@@ -16,7 +16,7 @@ OFFICIAL_FAX_WORLD_VERSION='v1'
 DEFAULT_WORLD_PACKAGES_ROOT=Path('config/world_packages')
 REQUIRED_WORLD_PACKAGE_FILES=('world.json','countries/index.json','geography/continents.json','geography/regions.json','geography/travel_regions.json')
 # IDs are directory components, including when received from an HTTP route.
-_WORLD_ID = re.compile(r"[a-z0-9][a-z0-9_]{2,63}\\Z", re.ASCII)
+_WORLD_ID = re.compile(r"[a-z0-9][a-z0-9_]{2,63}", re.ASCII)
 
 
 def _canonical_world_id(value: str) -> str | None:

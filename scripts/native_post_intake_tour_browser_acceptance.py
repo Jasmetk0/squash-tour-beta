@@ -5,6 +5,7 @@ import json
 import os
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -153,9 +154,12 @@ def main():
 
                     def operation(label, container=None, save_after=True):
                         source = container or panel
+                        began = time.monotonic()
+                        print(f"Native post-intake: {label} started", flush=True)
                         public = context.request.get(
                             server.base_url + "/viewer/runs/run/calendar-tour"
                         ).json()
+                        preview_started = time.monotonic()
                         with page.expect_response(
                             lambda r: (
                                 r.request.method == "POST"
@@ -164,6 +168,8 @@ def main():
                         ) as review:
                             source.get_by_role("button", name=label, exact=True).click()
                         assert review.value.status == 200, review.value.text()
+                        preview_seconds = time.monotonic() - preview_started
+                        commit_started = time.monotonic()
                         panel.get_by_label("Confirm Tour command").check()
                         receipt, view = write(
                             "/calendar-tour/execute",
@@ -171,6 +177,7 @@ def main():
                                 "button", name="Execute confirmed operation", exact=True
                             ).click(),
                         )
+                        commit_seconds = time.monotonic() - commit_started
                         assert not view["saved"]
                         assert (
                             context.request.get(
@@ -178,13 +185,28 @@ def main():
                             ).json()
                             == public
                         )
+                        save_started = time.monotonic()
                         if save_after:
                             save()
+                        save_seconds = (
+                            time.monotonic() - save_started if save_after else None
+                        )
                         evidence["operations"].append(
-                            {"operation": label, "receipt": receipt["command_id"]}
+                            {
+                                "operation": label,
+                                "receipt": receipt["command_id"],
+                                "preview_seconds": preview_seconds,
+                                "commit_and_inspection_seconds": commit_seconds,
+                                "save_and_inspection_seconds": save_seconds,
+                                "total_seconds": time.monotonic() - began,
+                            }
                         )
                         (root / "evidence.json").write_text(
                             json.dumps(evidence, indent=2)
+                        )
+                        print(
+                            f"Native post-intake: {label} completed in {time.monotonic() - began:.2f}s",
+                            flush=True,
                         )
 
                     fresh_reason()

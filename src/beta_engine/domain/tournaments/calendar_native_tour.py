@@ -77,9 +77,10 @@ class CalendarNativeCompetitionTourState(CalendarTourState):
                 "Native competition cannot rewrite its historical Tour root"
             )
         extra = self.receipts[len(root.receipts) :]
-        if (
-            extra
-            and extra[0].request.get("command", {}).get("expected_saved_head")
+        first_command = extra[0].request.get("command") if extra else None
+        if extra and (
+            not isinstance(first_command, dict)
+            or first_command.get("expected_saved_head")
             != self.competition_root_saved_head
         ):
             raise ValueError("Native competition lacks its actual Saved root")

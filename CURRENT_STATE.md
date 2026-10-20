@@ -13,10 +13,12 @@ CS/EN Admin exposes real capability and preserves explicit consent/Save and
 stale-response guards. See [contract](docs/CALENDAR_NATIVE_POST_INTAKE_COMPETITION_V1.md).
 
 **Verification boundary:** local initial complete HTTP/SQLite flow passed;
-focused domain/frontend checks and production web build passed. Expanded
-Earth/FAX/extension/rollback/tamper cases, real Chromium and all applicable
-latest-commit CI gates are required before handoff. This candidate is not yet
-merged or merge-ready. Only the owner merges; no dependency PR chain.
+focused domain/frontend checks and production web build passed. The expanded
+local Earth/FAX scenarios (including rollback/tamper) and actual post-admission
+Chromium path also passed. Final-head extension and all applicable CI gates
+remain the handoff authority, recorded in the PR. This candidate has not been
+owner-merged; local evidence does not substitute for latest-commit green checks.
+Only the owner merges; no dependency PR chain.
 
 **Remaining limits:** unchanged Signed prospect source (no historical epochs),
 legacy-only prospect style/archetype/career metadata explicitly unavailable,

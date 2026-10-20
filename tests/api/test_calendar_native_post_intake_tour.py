@@ -358,6 +358,7 @@ def test_admitted_player_plays_real_edition_and_saved_history(
             for model, attack in (
                 (CalendarTourAuthorityModel, "receipt"),
                 (CalendarTourAuthorityModel, "saved_origin"),
+                (CalendarTourAuthorityModel, "malformed_command"),
                 (CalendarPlayerSportingCheckpointModel, "played_counts"),
             ):
                 with repo._session_factory.begin() as session:
@@ -370,6 +371,9 @@ def test_admitted_player_plays_real_edition_and_saved_history(
                         ] = "0" * 64
                     elif attack == "saved_origin":
                         body["competition_root_saved_head"] = initial["revision_id"]
+                    elif attack == "malformed_command":
+                        first_new = len(body["competition_root_tour"]["receipts"])
+                        body["receipts"][first_new]["request"]["command"] = []
                     else:
                         body["events"][-1]["advance"]["played_counts"][0][1] += 1
                     row.payload_json = json.dumps(body)

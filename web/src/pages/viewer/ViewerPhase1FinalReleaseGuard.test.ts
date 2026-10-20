@@ -1,12 +1,18 @@
+import { readFileSync } from 'fs'
+import { resolve } from 'path'
 import { describe, expect, it } from 'vitest'
 
 import appSource from '../../App.tsx?raw'
 import { viewerAppRoutePaths } from '../../test/viewerAppRouteSource'
-import manualQaSource from '../../../../docs/viewer_phase_1_manual_qa.md?raw'
 import readModelIntegrationGuardSource from './ViewerReadModelRouteIntegration.test.tsx?raw'
 import runScopedFinalGuardSource from './ViewerRunScopedModuleFinalGuard.test.ts?raw'
 import shellNavigationFinalGuardSource from './ViewerShellNavigationSourceGuard.test.ts?raw'
 import topLevelFinalGuardSource from './ViewerTopLevelRouteSourceGuard.test.ts?raw'
+
+// Repository documentation is test data, not a dev-server asset outside web/.
+const manualQaSource = readFileSync(
+  resolve(process.cwd(), '../docs/viewer_phase_1_manual_qa.md'), 'utf8'
+)
 
 const finalGuardSources: Record<string, string> = {
   'ViewerRunScopedModuleFinalGuard.test.ts': runScopedFinalGuardSource,

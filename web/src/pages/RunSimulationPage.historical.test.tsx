@@ -10,10 +10,15 @@ import { RunSimulationPage } from './RunSimulationPage'
 
 const api = vi.hoisted(() => ({
   ApiError: class ApiError extends Error {},
-  getRunContainer: vi.fn(), listRunBranches: vi.fn(), getBranchState: vi.fn(), listBranchCheckpoints: vi.fn(), getBranchCheckpoint: vi.fn(),
+  getRunContainer: vi.fn(), listRunBranches: vi.fn(), getBranchState: vi.fn(), listBranchCheckpoints: vi.fn(), getBranchCheckpoint: vi.fn(), getRunPackageState: vi.fn(),
   simulateNextMatchOnBranch: vi.fn(), simulateNextRoundOnBranch: vi.fn(), simulateNextWeekOnBranch: vi.fn(), simulateNextTournamentOnBranch: vi.fn(), simulateFullSeasonOnBranch: vi.fn(), simulateWorldTourFinalsOnBranch: vi.fn(),
 }))
 vi.mock('../api/client', () => api)
+// Component contract: real router/Branch/Time providers and legacy command
+// boundary; native/authoritative panels have their own tests and API contracts.
+vi.mock('./AuthoritativeSimulationPanel', () => ({ AuthoritativeSimulationPanel: () => <div /> }))
+vi.mock('./CalendarStandaloneMatchPanel', () => ({ CalendarStandaloneMatchPanel: () => <div /> }))
+vi.mock('./CalendarOpeningKnockoutPanel', () => ({ CalendarOpeningKnockoutPanel: () => <div /> }))
 
 const oldCheckpoint = { checkpoint_id: 'cp-old', run_id: 'run-a', branch_id: 'branch-a', parent_checkpoint_id: null, sequence: 10, kind: 'completed_week', season: 2005, week: 31, event_id: 'event-old', event_sequence: 31, command_id: 'old-command', command_kind: 'simulate_week', command_boundary: 'after', config_version: null, config_fingerprint: null, world_id: 'world', world_fingerprint: null, global_seed: 1, branch_seed: 1, seed_namespace: {}, payload_schema_version: '1', content_hash_algorithm: 'sha256', content_hash: 'old-hash', payload: {} }
 const headCheckpoint = (id: string) => ({ ...oldCheckpoint, checkpoint_id: id, sequence: id === 'cp-head' ? 11 : 12, kind: 'current_state_capture', season: 2007, week: id === 'cp-head' ? 42 : 43, event_id: 'event-head' })
@@ -25,6 +30,7 @@ function renderSimulation(): void {
 
 beforeEach(() => {
   vi.clearAllMocks()
+  api.getRunPackageState.mockResolvedValue({ state: null, fingerprint: null })
   let advanced = false
   api.getRunContainer.mockResolvedValue({ run_id: 'run-a', display_name: 'Run A', status: 'active', read_only: false, storage_kind: 'custom_local', official_branch_id: 'branch-a' })
   api.listRunBranches.mockImplementation(async () => ({ run_branches: [{ branch_id: 'branch-a', run_id: 'run-a', display_name: 'Branch A', status: 'active', read_only: false, branch_seed: 1, legacy_simulation_run_id: 'legacy-a', forked_from_branch_id: null, forked_from_checkpoint_id: null, head_checkpoint_id: advanced ? 'cp-new' : 'cp-head', metadata_json: {}, is_official: true }] }))
@@ -34,7 +40,7 @@ beforeEach(() => {
   api.simulateNextMatchOnBranch.mockImplementation(async () => { advanced = true; return { product_run_id: 'run-a', branch_id: 'branch-a', legacy_simulation_run_id: 'legacy-a', previous_head_checkpoint_id: 'cp-head', new_head_checkpoint_id: 'cp-new', official_branch_changed: false, simulation_result: { mode: 'simulate_next_match' } } })
 })
 
-describe('RunSimulationPage historical Time integration', () => {
+describe('RunSimulationPage historical Time component contract', () => {
   it('keeps Present simulation eligible when checkpoint history listing fails', async () => {
     api.listBranchCheckpoints.mockRejectedValue(new Error('checkpoint history unavailable'))
     renderSimulation()

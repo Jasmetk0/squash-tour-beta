@@ -115,6 +115,13 @@ export function MatchTestLabPage(): JSX.Element {
     try { return JSON.parse(scenarioText) as MatchLabScenario } catch { return null }
   }, [scenarioText])
 
+  // A saved Test Session runs by fingerprint, not by the editable textarea.
+  // Keep that boundary visible so a changed seed/profile is never silently ignored.
+  const sessionHasUnsavedChanges = Boolean(selectedSession && (
+    sessionName !== selectedSession.display_name
+    || JSON.stringify(parsedPreview) !== JSON.stringify(selectedSession.scenario)
+  ))
+
   const runMutation = useMutation({
     mutationFn: async ({ scenario, seeds }: { scenario: MatchLabScenario; seeds: number[] }) => {
       if (selectedSession) {
@@ -171,13 +178,20 @@ export function MatchTestLabPage(): JSX.Element {
     }
   })
 
-  const parseScenario = (): MatchLabScenario => JSON.parse(scenarioText) as MatchLabScenario
+  const parseScenario = (): MatchLabScenario => {
+    try { return JSON.parse(scenarioText) as MatchLabScenario }
+    catch { throw new Error('Invalid scenario JSON. Check the syntax before running or saving.') }
+  }
 
   const submit = (event: FormEvent) => {
     event.preventDefault()
     setLocalError(null)
     runMutation.reset()
-    try { runMutation.mutate({ scenario: parseScenario(), seeds: parseSeeds(batchText) }) }
+    try {
+      const scenario = parseScenario()
+      if (sessionHasUnsavedChanges) throw new Error('Save Test Session changes before running this scenario.')
+      runMutation.mutate({ scenario, seeds: parseSeeds(batchText) })
+    }
     catch (error) { setLocalError(error instanceof Error ? error.message : String(error)) }
   }
 
@@ -283,8 +297,9 @@ export function MatchTestLabPage(): JSX.Element {
           <input aria-label="Match Lab batch seeds" value={batchText} onChange={(e) => setBatchText(e.target.value)} placeholder="100, 101, 102" />
         </label>
         {selectedSession ? <button type="button" onClick={save} disabled={saveMutation.isPending}>Save Test Session</button> : null}
-        <button type="submit" disabled={runMutation.isPending}>{runMutation.isPending ? 'Running…' : selectedSession ? 'Run Test Session' : 'Run scenario'}</button>
-        {localError ? <p className="error">{localError}</p> : null}
+        <button type="submit" disabled={runMutation.isPending || saveMutation.isPending || sessionHasUnsavedChanges}>{runMutation.isPending ? 'Running…' : selectedSession ? 'Run Test Session' : 'Run scenario'}</button>
+        {sessionHasUnsavedChanges ? <p role="status">Unsaved Test Session changes. Save before running.</p> : null}
+        {localError ? <p role="alert" className="error">{localError}</p> : null}
         {saveMutation.isError ? <p className="error">Save failed: {String(saveMutation.error)}</p> : null}
         {runMutation.isError ? <p className="error">Lab failed: {String(runMutation.error)}</p> : null}
         <p className="status">Scenario: {parsedPreview?.scenario_id ?? 'invalid JSON'} · seed {parsedPreview?.seed ?? '—'}</p>

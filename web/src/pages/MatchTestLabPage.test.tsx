@@ -1,4 +1,4 @@
-import { fireEvent, screen, within } from '@testing-library/react'
+import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -108,7 +108,9 @@ describe('MatchTestLabPage', () => {
     await user.click(screen.getByRole('button', { name: 'Run scenario' }))
 
     expect(api.runMatchTestLab).not.toHaveBeenCalled()
-    expect(screen.getByText("Expected property name or '}' in JSON at position 1")).toBeInTheDocument()
+    expect(screen.getByRole('alert')).toHaveTextContent('Invalid scenario JSON. Check the syntax before running or saving.')
+    expect(editor).toHaveValue('{bad json')
+    expect(api.runMatchLabSession).not.toHaveBeenCalled()
   })
 
   it('creates an isolated editable Test Session from a read-only built-in', async () => {
@@ -143,8 +145,13 @@ describe('MatchTestLabPage', () => {
       }
     }
     api.getMatchLabBuiltInScenarios.mockResolvedValue([builtIn])
+    const updated = {
+      ...created, version: 2, session_fingerprint: '9'.repeat(64),
+      scenario: { ...created.scenario, seed: 999 }
+    }
     api.createMatchLabSession.mockResolvedValue(created)
-    api.getMatchLabSessions.mockResolvedValueOnce([]).mockResolvedValue([created])
+    api.updateMatchLabSession.mockResolvedValue(updated)
+    api.getMatchLabSessions.mockResolvedValueOnce([]).mockResolvedValueOnce([created]).mockResolvedValue([updated])
 
     renderWithRoute(<MatchTestLabPage />, '/admin/labs/match')
 
@@ -160,9 +167,21 @@ describe('MatchTestLabPage', () => {
     )
     expect(await screen.findByDisplayValue('Standard even match — Test Session')).toBeInTheDocument()
 
+    fireEvent.change(screen.getByLabelText('Match Lab scenario JSON'), { target: { value: '{bad json' } })
+    await user.click(screen.getByRole('button', { name: 'Save Test Session' }))
+    expect(screen.getByRole('alert')).toHaveTextContent('Invalid scenario JSON.')
+    expect(api.updateMatchLabSession).not.toHaveBeenCalled()
+
     fireEvent.change(screen.getByLabelText('Match Lab scenario JSON'), {
       target: { value: JSON.stringify({ ...created.scenario, seed: 999 }) }
     })
+    expect(screen.getByRole('button', { name: 'Run Test Session' })).toBeDisabled()
+    expect(screen.getByRole('status')).toHaveTextContent('Unsaved Test Session changes.')
+    expect(api.runMatchLabSession).not.toHaveBeenCalled()
+    // Enter/programmatic form submission must enforce the same saved boundary.
+    fireEvent.submit(screen.getByRole('button', { name: 'Run Test Session' }).closest('form')!)
+    expect(screen.getByRole('alert')).toHaveTextContent('Save Test Session changes before running this scenario.')
+    expect(api.runMatchLabSession).not.toHaveBeenCalled()
     await user.click(screen.getByRole('button', { name: 'Save Test Session' }))
 
     expect(api.updateMatchLabSession).toHaveBeenCalledWith(
@@ -172,6 +191,14 @@ describe('MatchTestLabPage', () => {
         scenario: expect.objectContaining({ seed: 999 })
       })
     )
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Run Test Session' })).toBeEnabled())
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+    expect(screen.queryByText('Unsaved Test Session changes. Save before running.')).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Run Test Session' }))
+    expect(api.runMatchLabSession).toHaveBeenCalledWith('session-1', {
+      expected_session_fingerprint: '9'.repeat(64), batch_seeds: []
+    })
+    expect(api.runMatchTestLab).not.toHaveBeenCalled()
   })
 
 

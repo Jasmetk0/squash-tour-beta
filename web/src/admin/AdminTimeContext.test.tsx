@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { MemoryRouter, useNavigate } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { AdminBranchProvider } from './AdminBranchContext'
@@ -17,18 +18,49 @@ const checkpoint = (id: string, branchId: string, sequence: number, season: numb
 
 function Probe(): JSX.Element {
   const time = useAdminTime()
+  const navigate = useNavigate()
   return <>
+    <button type="button" onClick={() => navigate('/admin/runs/run-a?branch=branch-b')}>Open Branch B deep link</button>
     <output aria-label="time probe">{JSON.stringify(time)}</output>
     <button type="button" onClick={() => time.selectCheckpoint('foreign-checkpoint')}>Select foreign checkpoint</button>
   </>
 }
 
-function renderTime(client = new QueryClient({ defaultOptions: { queries: { retry: false } } })): QueryClient {
-  render(<QueryClientProvider client={client}><AdminBranchProvider runId="run-a"><AdminTimeProvider><AdminBranchSelector /><AdminTimeControl /><Probe /></AdminTimeProvider></AdminBranchProvider></QueryClientProvider>)
+function renderTime(client = new QueryClient({ defaultOptions: { queries: { retry: false } } }), route = '/admin/runs/run-a'): QueryClient {
+  render(<QueryClientProvider client={client}><MemoryRouter initialEntries={[route]}><AdminBranchProvider runId="run-a"><AdminTimeProvider><AdminBranchSelector /><AdminTimeControl /><Probe /></AdminTimeProvider></AdminBranchProvider></MemoryRouter></QueryClientProvider>)
   return client
 }
 
 describe('AdminTimeProvider', () => {
+  it('derives Time from a validated Branch deep link instead of the Viewer Branch', async () => {
+    renderTime(undefined, '/admin/runs/run-a?branch=branch-b')
+    await waitFor(() => expect(screen.getByLabelText('Admin view time')).toHaveTextContent('Present · S2007 · W42'))
+    expect(screen.getByLabelText('time probe')).toHaveTextContent('"branchId":"branch-b"')
+    expect(api.getBranchState).toHaveBeenCalledWith('branch-b')
+    expect(api.getBranchState).not.toHaveBeenCalledWith('branch-a')
+  })
+
+  it('keeps Time unavailable for a foreign Branch deep link without querying another Branch', async () => {
+    renderTime(undefined, '/admin/runs/run-a?branch=foreign')
+    await screen.findByText(/Requested Admin Branch "foreign" does not belong to this Run/)
+    expect(screen.getByLabelText('Admin view time')).toHaveTextContent('Unavailable')
+    expect(screen.getByLabelText('time probe')).toHaveTextContent('"isAvailable":false')
+    expect(api.getBranchState).not.toHaveBeenCalled()
+    expect(api.listBranchCheckpoints).not.toHaveBeenCalled()
+  })
+
+  it('clears Past when a router deep link changes the Active Branch', async () => {
+    renderTime()
+    await screen.findByRole('option', { name: /#100/ })
+    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Admin Time context' }), 'cp-old')
+    expect(screen.getByLabelText('Admin view time')).toHaveTextContent('Past · S2003 · W31')
+    await userEvent.click(screen.getByRole('button', { name: 'Open Branch B deep link' }))
+    await waitFor(() => expect(screen.getByLabelText('Admin view time')).toHaveTextContent('Present · S2007 · W42'))
+    expect(screen.getByRole('combobox', { name: 'Admin Time context' })).toHaveValue('present')
+    expect(screen.getByLabelText('time probe')).toHaveTextContent('"viewCheckpointId":"cp-42"')
+    expect(screen.getByLabelText('time probe')).not.toHaveTextContent('cp-old')
+  })
+
   beforeEach(() => {
     vi.clearAllMocks()
     api.getRunContainer.mockResolvedValue({ run_id: 'run-a', official_branch_id: 'branch-a' })

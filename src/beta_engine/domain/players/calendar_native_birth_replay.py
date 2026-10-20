@@ -169,7 +169,7 @@ def verify_calendar_native_birth_history(
         event = build_calendar_prospect_birth_event(
             predecessor=all_previous,
             target=current.week,
-            source=source,
+            source=source.for_week(current.week.ordinal),
             world_package_id=world_package_id,
         )
         if isinstance(current, CalendarTourLifecycleIntakeState):

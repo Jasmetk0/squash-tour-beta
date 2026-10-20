@@ -101,7 +101,7 @@ def test_real_run_future_epoch_preserves_matched_tour_and_admits_next_year_after
         actual, exact_retry = execute(server, command(
             inspect(server), "play", edition_id="epoch-cup", name="epoch:play",
         ))
-        assert actual["impact"]
+        assert actual["schema_version"]
         play_saved = save_tour(server)
         past_match_payload = repo.get_branch_saved_revision(
             revision_id=play_saved["revision_id"]

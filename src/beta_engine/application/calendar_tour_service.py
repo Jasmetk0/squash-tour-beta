@@ -803,10 +803,12 @@ class CalendarTourService:
                     week=cp.week,
                 ),
                 health=health,
-                source=native_inputs[1]
-                if native_inputs is not None
-                else load_saved_run_prospect_source(
-                    revision.saved_revision.payload, run_id=state.run_id
+                source=(
+                    native_inputs[1].for_week(cp.week.ordinal)
+                    if native_inputs is not None
+                    else load_saved_run_prospect_source(
+                        revision.saved_revision.payload, run_id=state.run_id
+                    ).for_week(cp.week.ordinal)
                 ),
                 clock=clock,
                 authority=authority,
@@ -901,7 +903,7 @@ class CalendarTourService:
                         build_calendar_prospect_birth_event(
                             predecessor=life,
                             target=target,
-                            source=source,
+                            source=source.for_week(target.ordinal),
                             world_package_id=_world.world_package_id,
                         )
                 except ValueError:

@@ -5558,18 +5558,20 @@ class SimulationPersistenceRepository:
                 run_id=run_id,
             )
             changed = live is not None and (
-                saved is None or saved.fingerprint != live.fingerprint
+                saved is None or saved.records != live.records
             )
             run = session.get(RunContainerModel, run_id)
             branch = session.get(RunBranchModel, branch_id)
-            from beta_engine.infrastructure.db.run_prospect_source_state import (
-                native_birth_requires_source_epochs,
-            )
-            blockers = (
-                ["native_prospect_source_epochs_required"]
-                if changed and native_birth_requires_source_epochs(session, run_id=run_id)
-                else []
-            )
+            blockers = []
+            if changed:
+                try:
+                    examined = json.loads(json.dumps(state.saved_revision.payload))
+                    capture_saved_run_prospect_source(
+                        session, examined, run_id=run_id, branch_id=branch_id,
+                        allow_append=True,
+                    )
+                except (ValueError, KeyError, TypeError) as exc:
+                    blockers = [str(exc)]
             return {
                 "run_id": run_id,
                 "branch_id": branch_id,
@@ -5604,6 +5606,7 @@ class SimulationPersistenceRepository:
         expected_calendar_sporting_fingerprint: str | None = None,
         expected_calendar_tour_fingerprint: str | None = None,
         expected_run_prospect_source_fingerprint: str | None = None,
+        expected_saved_head_revision_id: str | None = None,
         expected_run_package_fingerprint: str | None = None,
         expected_run_tournament_lab_draft_fingerprint: str | None = None,
         expected_player_health_fingerprint: str | None = None,
@@ -5674,14 +5677,14 @@ class SimulationPersistenceRepository:
                         f"expected draft version {expected_draft_version}, "
                         f"found {draft.draft_version}"
                     )
-                if expected_run_prospect_source_fingerprint is not None:
-                    from beta_engine.infrastructure.db.run_prospect_source_state import (
-                        native_birth_requires_source_epochs,
+                if (
+                    expected_run_prospect_source_fingerprint is not None
+                    and expected_saved_head_revision_id is not None
+                    and expected_saved_head_revision_id != state.saved_head_revision_id
+                ):
+                    raise WorkingDraftConflictError(
+                        "Reviewed prospect source Saved HEAD changed"
                     )
-                    if native_birth_requires_source_epochs(session, run_id=run_id):
-                        raise WorkingDraftConflictError(
-                            "native_prospect_source_epochs_required"
-                        )
                 staged_component_dirty = (
                     (
                         expected_run_package_fingerprint is not None
@@ -5842,7 +5845,10 @@ class SimulationPersistenceRepository:
                 capture_saved_sporting(
                     session, payload, run_id=run_id, branch_id=branch_id
                 )
-                capture_saved_run_prospect_source(session, payload, run_id=run_id)
+                capture_saved_run_prospect_source(
+                    session, payload, run_id=run_id, branch_id=branch_id,
+                    allow_append=expected_run_prospect_source_fingerprint is not None,
+                )
                 capture_saved_simulation_slots(
                     session, payload, run_id=run_id, branch_id=branch_id
                 )
@@ -6006,10 +6012,12 @@ class SimulationPersistenceRepository:
                     component = payload["content"].get(
                         RUN_PROSPECT_SOURCE_COMPONENT_KEY
                     )
+                    live_source = capture_run_prospect_source_snapshot(
+                        session, run_id=run_id,
+                    )
                     if (
-                        component is None
-                        or component["fingerprint"]
-                        != expected_run_prospect_source_fingerprint
+                        component is None or live_source is None
+                        or live_source.fingerprint != expected_run_prospect_source_fingerprint
                     ):
                         raise WorkingDraftConflictError(
                             "Run prospect source changed since preview"
@@ -6027,7 +6035,7 @@ class SimulationPersistenceRepository:
                         "kind": "run_prospect_source",
                         "summary": "Saved Run prospect source",
                         "run_prospect_source_fingerprint": component["fingerprint"],
-                        "prospect_count": len(component["records"]),
+                        "prospect_count": len(live_source.records),
                     }
                 elif expected_run_package_fingerprint is not None:
                     component = payload["content"].get(RUN_PACKAGE_COMPONENT_KEY)
@@ -11384,9 +11392,12 @@ class SimulationPersistenceRepository:
                         run_id=changed_run_id,
                         prospect_ids=changed_ids,
                     )
+                    protected |= self._signed_run_prospect_ids_in_session(
+                        session, run_id=changed_run_id, prospect_ids=changed_ids,
+                    )
                     if protected:
                         raise ValueError(
-                            "Lifecycle-activated Run prospect metadata is immutable"
+                            "Saved or lifecycle-activated Run prospect metadata is immutable"
                         )
                 for model, payload in pending_updates:
                     for key, value in payload.items():
@@ -11404,9 +11415,12 @@ class SimulationPersistenceRepository:
                 run_id=run_id,
                 prospect_ids=set(prospect_ids),
             )
+            protected |= self._signed_run_prospect_ids_in_session(
+                session, run_id=run_id, prospect_ids=set(prospect_ids),
+            )
             if protected:
                 raise ValueError(
-                    "Lifecycle-activated Run prospect metadata is immutable"
+                    "Saved or lifecycle-activated Run prospect metadata is immutable"
                 )
             session.query(RunProspectModel).filter(
                 RunProspectModel.run_id == run_id,
@@ -11454,6 +11468,49 @@ class SimulationPersistenceRepository:
                 self._to_run_prospect_record(model)
                 for model in session.execute(statement).scalars().all()
             ]
+
+    @classmethod
+    def _signed_run_prospect_ids_in_session(
+        cls, session: Session, *, run_id: str, prospect_ids: set[str],
+    ) -> set[str]:
+        """No historic Signed prospect identity may be mutated before its birth.
+
+        Called only for writes to pre-existing rows or deletes, not for
+        append-only materialization. Every immutable Saved Revision is checked
+        (not only the current Branch HEAD, which can move on restore).
+        """
+        if not prospect_ids:
+            return set()
+        from beta_engine.infrastructure.db.run_prospect_source_state import (
+            load_saved_run_prospect_source,
+        )
+
+        found: set[str] = set()
+        models = session.scalars(
+            select(BranchSavedRevisionModel)
+            .where(BranchSavedRevisionModel.run_id == run_id)
+            .order_by(BranchSavedRevisionModel.sequence.desc())
+        )
+        for model in models:
+            revision = cls._to_branch_saved_revision(
+                model, validate_components=False,
+            )
+            if (
+                revision.content_hash_algorithm != CONTENT_HASH_ALGORITHM
+                or revision.content_hash != _saved_revision_record_content_hash(revision)
+            ):
+                raise ValueError("Historic Signed prospect source revision is corrupted")
+            source = load_saved_run_prospect_source(
+                revision.payload, run_id=run_id,
+            )
+            if source is not None:
+                found.update(
+                    row["prospect_id"] for row in source.records
+                    if row["prospect_id"] in prospect_ids
+                )
+                if found == prospect_ids:
+                    break
+        return found
 
     @staticmethod
     def _activated_run_prospect_ids_in_session(

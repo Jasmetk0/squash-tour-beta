@@ -272,22 +272,58 @@ def test_multi_branch_shared_run_source_never_changes_one_branch_behind_another(
         }
         code, review = _request("POST", url(server), command)
         assert code == 200, review
-        assert review["materialization_supported"] is False
-        assert review["materialization_blocker"] == "shared_source_requires_coordinated_branch_confirmation"
+        assert review["materialization_supported"] is True
+        assert review["materialization_blocker"] is None
+        sibling = repo.get_run_branch(branch_id=fork["branch_id"])
+        sibling_head = sibling.saved_head_revision_id
+        sibling_before = repo.get_branch_saved_revision(revision_id=sibling_head)
+        original_before = repo.get_branch_saved_revision(revision_id="r1")
         before = _dump(path)
-        code, response = _request(
+        assert _request("POST", url(server), command) == (200, review)
+        assert _dump(path) == before  # preview does not publish anything
+        confirmation = {
+            "request": command,
+            "expected_saved_head": review["saved_head_revision_id"],
+            "expected_review_fingerprint": review["review_fingerprint"],
+            "explicit_confirmation": True,
+            "audit_label": "Admin",
+            "audit_reason": "Append real prospects without switching sibling Signed source",
+        }
+        code, forged = _request(
             "POST", url(server).replace("/preview", "/materialize"),
-            {
-                "request": command,
-                "expected_saved_head": review["saved_head_revision_id"],
-                "expected_review_fingerprint": review["review_fingerprint"],
-                "explicit_confirmation": True,
-                "audit_label": "Admin",
-                "audit_reason": "Reject unsafe mutation across sibling Branch state",
-            },
+            {**confirmation, "expected_review_fingerprint": "0" * 64},
         )
-        assert code == 409, response
-        assert "coordinated" in response["detail"]["message"]
-        assert repo.count_run_prospects(run_id="run") == 0
+        assert code == 409, forged
         assert _dump(path) == before
+        code, receipt = _request(
+            "POST", url(server).replace("/preview", "/materialize"), confirmation,
+        )
+        assert code == 201, receipt
+        assert repo.count_run_prospects(run_id="run") == review["prepared_profile_count"]
+        assert repo.get_branch_saved_revision(revision_id=sibling_head) == sibling_before
+        assert repo.get_branch_saved_revision(revision_id="r1") == original_before
+        source_url = server.base_url + (
+            "/admin/runs/run/branches/branch/authoritative-simulation/prospect-source/save"
+        )
+        code, source_review = _request("GET", source_url + "/preview")
+        assert code == 200 and source_review["can_save"], source_review
+        code, signed = _request("POST", source_url, {
+            "expected_draft_version": source_review["draft_version"],
+            "expected_run_prospect_source_fingerprint": source_review[
+                "run_prospect_source_fingerprint"
+            ],
+            "expected_saved_head_revision_id": source_review["saved_head_revision_id"],
+        })
+        assert code == 201, signed
+        from beta_engine.infrastructure.db.run_prospect_source_state import (
+            load_saved_run_prospect_source,
+        )
+        current = repo.get_branch_saved_revision(
+            revision_id=signed["saved_revision"]["revision_id"]
+        )
+        source = load_saved_run_prospect_source(current.payload, run_id="run")
+        assert source is not None and len(source.records) == review["prepared_profile_count"]
+        assert "run_prospect_source" not in sibling_before.payload["content"]
+        assert repo.get_branch_saved_revision(revision_id=sibling_head) == sibling_before
+        assert repo.verify_branch_saved_revision_hash(revision_id=sibling_head)
         assert repo.verify_branch_saved_revision_hash(revision_id="r1")

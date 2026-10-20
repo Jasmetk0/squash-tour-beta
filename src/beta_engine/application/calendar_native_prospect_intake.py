@@ -42,7 +42,7 @@ def preview_native_prospect_intake(
 
     problems: list[dict[str, str]] = []
     due: list[dict] = []
-    rows = source.records if source is not None else ()
+    rows = source.for_week(target_ordinal).records if source is not None else ()
     ids = [row.get("prospect_id") for row in rows]
     if any(type(pid) is not str or not pid for pid in ids) or ids != sorted(set(ids)):
         raise ValueError("Saved Run prospect identities are not canonical")
@@ -117,7 +117,7 @@ def preview_native_prospect_intake(
         "run_id": run_id,
         "branch_id": branch_id,
         "saved_head_revision_id": saved_head_revision_id,
-        "source_fingerprint": source.fingerprint if source is not None else None,
+        "source_fingerprint": source.for_week(target_ordinal).fingerprint if source is not None else None,
         "checkpoint_fingerprint": checkpoint_fingerprint,
         "current_week": current.model_dump(mode="json"),
         "target_week": target.model_dump(mode="json"),
@@ -203,7 +203,7 @@ def inspect_native_prospect_intake(
             from beta_engine.infrastructure.db.player_lifecycle_state import get_lifecycle
 
             due_ids = {item["player_id"] for item in review["due"]}
-            due_rows = [row for row in snapshot.records if row["prospect_id"] in due_ids]
+            due_rows = [row for row in snapshot.for_week(checkpoint.week.ordinal + 1).records if row["prospect_id"] in due_ids]
             if all(row.get("source_type") == NATIVE_SOURCE_TYPE for row in due_rows):
                 if state.week != checkpoint.week:
                     raise ValueError("Tour week differs from native intake sporting owner")
@@ -222,7 +222,7 @@ def inspect_native_prospect_intake(
                 )
                 bundle = build_native_prospect_admission_bundle(
                     predecessor=predecessor, checkpoint=checkpoint,
-                    health=_health, source=snapshot, target=target,
+                    health=_health, source=snapshot.for_week(target.ordinal), target=target,
                     world_package_id=world.world_package_id,
                     saved_head_revision_id=revision.saved_head_revision_id,
                     submissions=tuple(s for a in state.editions for s in a.submissions),

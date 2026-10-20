@@ -27,6 +27,14 @@ on:
       - 'src/beta_engine/application/calendar_continuation_service.py'
       - 'src/beta_engine/infrastructure/db/calendar_tour.py'
       - 'src/beta_engine/infrastructure/db/calendar_native_tour.py'
+      - 'src/beta_engine/infrastructure/db/calendar_native_competition.py'
+      - 'src/beta_engine/application/native_calendar_cohort_service.py'
+      - 'src/beta_engine/application/calendar_native_prospect_intake.py'
+      - 'src/beta_engine/application/run_working_draft_service.py'
+      - 'src/beta_engine/api/routers/admin_authoritative_simulation.py'
+      - 'src/beta_engine/api/routers/admin_players.py'
+      - 'tests/api/test_native_prospect_source_epochs_http.py'
+      - 'tests/infrastructure/test_run_prospect_source_epochs.py'
       - 'src/beta_engine/infrastructure/db/calendar_standalone_match_state.py'
       - 'src/beta_engine/infrastructure/db/calendar_sporting_checkpoint.py'
       - 'src/beta_engine/infrastructure/db/player_lifecycle_state.py'
@@ -97,6 +105,24 @@ jobs:
           GITHUB_EVENT_NAME=native_post_intake_acceptance \
             python -m pytest tests/api/test_calendar_native_post_intake_tour.py \
             -k "$TOUR_CASE" -vv --maxfail=1 --durations=8
+
+  native-source-epochs:
+    name: Native future source epochs / actual Tour and MatchEngine / SQLite
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: pyproject.toml
+      - run: python -m pip install -e . pytest
+      - name: Complete verified future-year source, match, restore chain
+        run: |
+          GITHUB_EVENT_NAME=native_prospect_epoch_acceptance \
+            python -m pytest tests/api/test_native_prospect_source_epochs_http.py \
+            -vv --maxfail=1 --durations=10
 
   native-tour-api:
     name: Native Tour signed restore / real HTTP / SQLite

@@ -127,11 +127,16 @@ def reconcile_run_prospect_cohort(
         if conflicting_ids and not overwrite:
             raise RunProspectCohortConflictError(sorted(conflicting_ids))
         if conflicting_ids:
+            # Neither overwritten identities nor stale deletes may rewrite
+            # unborn players already frozen into any historic Saved Revision.
+            signed = repository._signed_run_prospect_ids_in_session(
+                session, run_id=run_id, prospect_ids=conflicting_ids,
+            )
             activated = repository._activated_run_prospect_ids_in_session(
                 session, run_id=run_id, prospect_ids=conflicting_ids,
             )
-            if activated:
-                raise RunProspectCohortConflictError(sorted(activated))
+            if signed or activated:
+                raise RunProspectCohortConflictError(sorted(signed | activated))
 
         existing_count = len(wanted & existing.keys())
         created_count = len(expected) - existing_count

@@ -462,6 +462,7 @@ def verify_tour_origins(session, state):
                 )
             from beta_engine.infrastructure.db.run_prospect_source_state import (
                 load_saved_run_prospect_source,
+                validate_run_prospect_source_extension,
             )
 
             source = load_saved_run_prospect_source(payload, run_id=state.run_id)
@@ -474,7 +475,7 @@ def verify_tour_origins(session, state):
                     load_saved_health,
                 )
 
-                first_source = source.fingerprint
+                first_source = source
                 if (
                     source_id != state.native_root_saved_head
                     or parse_tour_json(json.dumps(tour["state"]))
@@ -489,14 +490,13 @@ def verify_tour_origins(session, state):
                     raise ValueError(
                         "Native root differs from its actual immutable Saved authority"
                     )
-            elif source.fingerprint != first_source:
-                raise ValueError(
-                    "Native source changes require historical source epochs"
-                )
+            else:
+                validate_run_prospect_source_extension(first_source, source)
+                first_source = source
 
     if state.schema_version == "calendar_tour_authority.v4":
         verify_tour_origins(session, state.competition_root_tour)
-        source_fingerprint = None
+        previous_source = None
         for index, receipt in enumerate(
             state.receipts[len(state.competition_root_tour.receipts) :]
         ):
@@ -557,13 +557,14 @@ def verify_tour_origins(session, state):
                 )
             from beta_engine.infrastructure.db.run_prospect_source_state import (
                 load_saved_run_prospect_source,
+                validate_run_prospect_source_extension,
             )
 
             source = load_saved_run_prospect_source(payload, run_id=state.run_id)
             if source is None:
                 raise ValueError("Native competition lacks Signed prospect source")
             if index == 0:
-                source_fingerprint = source.fingerprint
+                previous_source = source
                 if (
                     source_id != state.competition_root_saved_head
                     or origin != state.competition_root_tour
@@ -571,10 +572,9 @@ def verify_tour_origins(session, state):
                     raise ValueError(
                         "Native competition root differs from actual Saved origin"
                     )
-            elif source.fingerprint != source_fingerprint:
-                raise ValueError(
-                    "Native source changes require historical source epochs"
-                )
+            else:
+                validate_run_prospect_source_extension(previous_source, source)
+                previous_source = source
 
     for authority in state.editions:
         if not authority.played_saved_head:

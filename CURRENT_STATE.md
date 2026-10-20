@@ -1,3 +1,28 @@
+# Native future prospect source epochs v2 — unmerged candidate, 20 October 2026
+
+**Integration baseline verified:** `buuk` `59309089663f7a5bd62d4bbbb23329da70215f5b`
+includes owner-merges #1569 and #1570; no open PR at start.
+This new **single-PR candidate** adds append-only historically Signed Run
+prospect sources after genuine admission and competition, with a dedicated
+CS/EN Admin review/materialize/manual Save and preserved v1 signatures.
+Strict per-week v1/v2 native transition, replay and restore selection replaces
+the old `native_prospect_source_epochs_required` blanket Save blocker.
+See [contract](docs/RUN_PROSPECT_SOURCE_EPOCHS_V2.md).
+
+**Important:** this paragraph records candidate code, not owner-merged
+production or green tests. Required targeted HTTP/SQLite, real Chromium,
+existing native Tour/birth/recovery and browser workflows must pass on the
+**latest PR commit** before merge can be recommended. Historical API
+acceptance is deliberately separate from Fast CI; no 50×61 full release suite
+runs automatically for this PR. Earlier audited checkpoints remain below.
+
+**Remaining pre-alpha work:** historic prospect edits/deletions stay forbidden,
+numeric Health/policy, full cross-Branch coverage, career AI and other Master
+scope are not completed. The actual full pre-alpha release gate remains
+separate and unexecuted by this implementation candidate.
+
+---
+
 # Post-admission competition candidate — 20 October 2026
 
 **Verified integration base:** `buuk` `0b82cd96fadd9d402ac8e3ad70383a36cd0d5199`,

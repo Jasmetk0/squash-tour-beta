@@ -2403,6 +2403,9 @@ def save_run_prospect_source(
             expected_run_prospect_source_fingerprint=payload[
                 "expected_run_prospect_source_fingerprint"
             ],
+            expected_saved_head_revision_id=payload.get(
+                "expected_saved_head_revision_id"
+            ),
         )
     except (ValueError, KeyError) as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc

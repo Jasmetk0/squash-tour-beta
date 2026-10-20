@@ -13,7 +13,8 @@ from pydantic import Field, model_validator
 
 from beta_engine.domain.calendar.run_week_position import RunWeekPosition
 from beta_engine.domain.players.calendar_lifecycle import (
-    CalendarPlayerLifecycleState, CalendarTourLifecycleState,
+    CalendarPlayerLifecycleState,
+    CalendarTourLifecycleState,
     advance_calendar_lifecycle,
 )
 from beta_engine.domain.players.calendar_prospect_birth import (
@@ -169,7 +170,7 @@ def verify_calendar_native_birth_history(
         event = build_calendar_prospect_birth_event(
             predecessor=all_previous,
             target=current.week,
-            source=source,
+            source=source.for_week(current.week.ordinal),
             world_package_id=world_package_id,
         )
         if isinstance(current, CalendarTourLifecycleIntakeState):
@@ -204,7 +205,10 @@ def verify_calendar_native_birth_history(
                 raise ValueError("Native replay Tour Entry uses an unadmitted athlete")
     return CalendarNativeBirthReplayProof(
         run_id=first.run_id, branch_id=first.branch_id,
-        source_run_prospect_fingerprint=source.fingerprint,
+        # Proofs bind the v1 snapshot effective at their own last week. Later
+        # append-only epochs must not change a previously confirmed receipt;
+        # earlier snapshots remain bound by the replayed birth-event hashes.
+        source_run_prospect_fingerprint=source.for_week(states[-1].week.ordinal).fingerprint,
         source_world_package_id=world_package_id,
         source_initial_world_fingerprint=first.source_initial_world_fingerprint,
         last_week=states[-1].week,

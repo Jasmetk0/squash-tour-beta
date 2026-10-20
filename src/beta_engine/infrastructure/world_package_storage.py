@@ -117,6 +117,8 @@ def _safe_package_owned_file(root: Path, relative_path: str) -> Path:
     relative = Path(relative_path)
     if relative.is_absolute() or any(part in {"", ".", ".."} for part in relative.parts):
         raise ValueError(f"unsafe rating history path {relative_path!r}")
+    if root.is_symlink():
+        raise ValueError("rating history package root must not be a symlink")
     root_resolved = root.resolve()
     cursor = root
     for part in relative.parts:
@@ -360,7 +362,12 @@ class WorldPackageCountryStore:
         country = self.load_country(code)
         if country.rating_scale != RATING_SCALE_V2 or country.rating_history is None:
             raise ValueError(f"country {code!r} has no V2 rating history to externalize")
-        history_root = self.package_root / "generation" / "country_histories"
+        generation_root = self.package_root / "generation"
+        history_root = generation_root / "country_histories"
+        # Avoid writing through a linked generation parent, including when
+        # country histories themselves are still an ordinary directory.
+        if generation_root.is_symlink() or history_root.is_symlink():
+            raise ValueError("rating history destination uses a symlink")
         history_path = history_root / f"{country.code}.json"
         _write_json_atomic(history_path, country.rating_history.model_dump(mode="json"))
         context_path = self._country_root(country.code) / "attributes" / "rating_context.json"
@@ -445,6 +452,8 @@ class WorldPackageCountryStore:
         shutil.rmtree(self._delete_backup(backup))
 
     def _restore_index(self, original: bytes) -> None:
+        if self.countries_root.is_symlink():
+            raise ValueError("country index directory must not be a symlink")
         with tempfile.NamedTemporaryFile("wb", dir=self.index_path.parent, prefix=".index.json.", delete=False) as fh:
             fh.write(original)
             temporary = Path(fh.name)

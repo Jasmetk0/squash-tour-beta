@@ -134,7 +134,7 @@ def _effective_birth_ordinal(row: dict, clock) -> int:
         or row.get("age") != 15
     ):
         raise ValueError("New prospect source disagrees with Saved Run calendar")
-    return position.ordinal
+    return position.season_index * clock.weeks_per_year + position.season_week - 1
 
 
 def _canonical_json(value: object) -> str:

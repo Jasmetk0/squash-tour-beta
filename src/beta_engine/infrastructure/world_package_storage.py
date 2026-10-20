@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import math
+import re
 import shutil
 import tempfile
 from dataclasses import dataclass
@@ -95,6 +96,9 @@ class CountryPopulation(BaseModel):
 
 
 def _read_object(path: Path) -> dict[str, Any]:
+    # Metadata must not be redirected through package-controlled symlinks.
+    if path.is_symlink() or path.parent.is_symlink():
+        raise ValueError(f"{path} must not be a symlink or inside a symlinked directory")
     try:
         value = json.loads(path.read_text(encoding="utf-8"))
     except FileNotFoundError as exc:
@@ -113,6 +117,8 @@ def _safe_package_owned_file(root: Path, relative_path: str) -> Path:
     relative = Path(relative_path)
     if relative.is_absolute() or any(part in {"", ".", ".."} for part in relative.parts):
         raise ValueError(f"unsafe rating history path {relative_path!r}")
+    if root.is_symlink():
+        raise ValueError("rating history package root must not be a symlink")
     root_resolved = root.resolve()
     cursor = root
     for part in relative.parts:
@@ -130,12 +136,16 @@ def _safe_package_owned_file(root: Path, relative_path: str) -> Path:
     return resolved
 
 def _write_json_atomic(path: Path, payload: object) -> None:
+    if path.is_symlink() or path.parent.is_symlink():
+        raise ValueError(f"{path} must not be a symlink or inside a symlinked directory")
     path.parent.mkdir(parents=True, exist_ok=True)
     with tempfile.NamedTemporaryFile("w", encoding="utf-8", dir=path.parent, prefix=f".{path.name}.", delete=False) as fh:
         json.dump(payload, fh, indent=2, sort_keys=False)
         fh.write("\n")
         temporary = Path(fh.name)
     try:
+        if path.is_symlink() or path.parent.is_symlink():
+            raise ValueError(f"{path} became a symlink during write")
         temporary.replace(path)
     finally:
         temporary.unlink(missing_ok=True)
@@ -161,6 +171,46 @@ class WorldPackageCountryStore:
     def __post_init__(self) -> None:
         self.package_root = Path(self.package_root)
 
+    def _country_root(self, code: str) -> Path:
+        # Never use a country identifier as an unchecked filesystem component.
+        if not isinstance(code, str) or re.fullmatch(r"[A-Z]{3}", code, re.ASCII) is None:
+            raise ValueError(f"invalid country code {code!r}")
+        root = self.countries_root
+        candidate = root / code
+        if self.package_root.is_symlink() or root.is_symlink() or candidate.is_symlink():
+            raise ValueError(f"country directory must not be a symlink: {code!r}")
+        if (candidate / "attributes").is_symlink():
+            raise ValueError(f"country attributes directory must not be a symlink: {code!r}")
+        if not candidate.resolve().is_relative_to(root.resolve()):
+            raise ValueError(f"country directory escapes package root: {code!r}")
+        return candidate
+
+    def _delete_backup(self, backup: Path) -> Path:
+        """Select a generated country-deletion backup within the owned directory.
+
+        A caller-provided pathname is only compared lexically. No filesystem
+        lookup or deletion is performed through it; the returned path comes
+        from an actual, verified child of the trusted countries directory.
+        """
+        if not isinstance(backup, Path):
+            raise ValueError("invalid country deletion backup location")
+        root = self.countries_root
+        if (
+            self.package_root.is_symlink()
+            or root.is_symlink()
+            or ".." in backup.parts
+            or backup.parent not in (root, root.absolute())
+            or re.fullmatch(r"[.][A-Z]{3}-delete-backup-[A-Za-z0-9_-]+", backup.name) is None
+        ):
+            raise ValueError("invalid country deletion backup location")
+        for entry in root.iterdir():
+            if entry.name != backup.name:
+                continue
+            if entry.is_symlink() or not entry.is_dir() or entry.resolve().parent != root.resolve():
+                raise ValueError("invalid country deletion backup location")
+            return entry
+        raise FileNotFoundError("country deletion backup no longer exists")
+
     @property
     def countries_root(self) -> Path:
         return self.package_root / "countries"
@@ -170,6 +220,10 @@ class WorldPackageCountryStore:
         return self.countries_root / "index.json"
 
     def load_index(self) -> CountriesIndex:
+        # This entry point also serves callers that bypass the package
+        # registry, so enforce the trusted root before reading index.json.
+        if self.package_root.is_symlink() or self.countries_root.is_symlink():
+            raise ValueError("country index package root must not be a symlink")
         index = CountriesIndex.model_validate(_read_object(self.index_path))
         if index.schema_version != COUNTRIES_INDEX_SCHEMA:
             raise ValueError(f"{self.index_path} has unsupported schema_version {index.schema_version!r}")
@@ -196,7 +250,7 @@ class WorldPackageCountryStore:
         raise ValueError(f"{canonical} is missing and no supported legacy fallback exists")
 
     def load_country(self, code: str) -> Country:
-        country_root = self.countries_root / code
+        country_root = self._country_root(code)
         identity_path = country_root / "country.json"
         identity = CountryIdentity.model_validate(_read_object(identity_path))
         if identity.schema_version != COUNTRY_IDENTITY_SCHEMA:
@@ -282,7 +336,7 @@ class WorldPackageCountryStore:
         return sorted(countries, key=lambda country: country["code"])
 
     def write_country(self, country: Country) -> None:
-        root = self.countries_root / country.code
+        root = self._country_root(country.code)
         identity = {"schema_version": COUNTRY_IDENTITY_SCHEMA, **country.model_dump(mode="json", include={"code", "name", "flag_asset", "notes"})}
         _write_json_atomic(root / "country.json", identity)
         if country.population_by_year is not None:
@@ -326,10 +380,15 @@ class WorldPackageCountryStore:
         country = self.load_country(code)
         if country.rating_scale != RATING_SCALE_V2 or country.rating_history is None:
             raise ValueError(f"country {code!r} has no V2 rating history to externalize")
-        history_root = self.package_root / "generation" / "country_histories"
+        generation_root = self.package_root / "generation"
+        history_root = generation_root / "country_histories"
+        # Avoid writing through a linked generation parent, including when
+        # country histories themselves are still an ordinary directory.
+        if generation_root.is_symlink() or history_root.is_symlink():
+            raise ValueError("rating history destination uses a symlink")
         history_path = history_root / f"{country.code}.json"
         _write_json_atomic(history_path, country.rating_history.model_dump(mode="json"))
-        context_path = self.countries_root / country.code / "attributes" / "rating_context.json"
+        context_path = self._country_root(country.code) / "attributes" / "rating_context.json"
         _write_json_atomic(context_path, {
             "schema_version": "country_rating_context.v2",
             "rating_scale": country.rating_scale,
@@ -337,14 +396,14 @@ class WorldPackageCountryStore:
             "rating_effective_year": country.rating_effective_year,
         })
         for name in (*COUNTRY_GAME_ATTRIBUTE_NAMES, "court_count"):
-            (self.countries_root / country.code / "attributes" / f"{name}.json").unlink(missing_ok=True)
+            (self._country_root(country.code) / "attributes" / f"{name}.json").unlink(missing_ok=True)
         if self.load_country(country.code) != country:
             raise ValueError(f"externalized country {country.code} did not round-trip")
 
     def create_country(self, country: Country) -> bytes:
         """Create one country and update the index, returning exact old index bytes."""
         index = self.load_index()
-        live = self.countries_root / country.code
+        live = self._country_root(country.code)
         if country.code in index.country_codes or live.exists():
             raise FileExistsError(f"country {country.code!r} already exists")
         original = self.index_path.read_bytes()
@@ -373,13 +432,13 @@ class WorldPackageCountryStore:
             shutil.rmtree(stage, ignore_errors=True)
 
     def rollback_create(self, code: str, original_index: bytes) -> None:
-        shutil.rmtree(self.countries_root / code, ignore_errors=True)
+        shutil.rmtree(self._country_root(code), ignore_errors=True)
         self._restore_index(original_index)
 
     def delete_country(self, code: str) -> tuple[bytes, Path]:
         """Stage deletion of one country. Caller must finalize or roll it back."""
         index = self.load_index()
-        live = self.countries_root / code
+        live = self._country_root(code)
         if code not in index.country_codes or not live.is_dir():
             raise FileNotFoundError(f"country {code!r} does not exist")
         original = self.index_path.read_bytes()
@@ -400,16 +459,36 @@ class WorldPackageCountryStore:
             raise
 
     def rollback_delete(self, code: str, original_index: bytes, backup: Path) -> None:
+        backup = self._delete_backup(backup)
+        self._country_root(code)
         self._restore_index(original_index)
-        live = self.countries_root / code
+        live = self._country_root(code)
         if backup.exists() and not live.exists():
             backup.rename(live)
 
-    @staticmethod
-    def finalize_delete(backup: Path) -> None:
-        shutil.rmtree(backup)
+    def finalize_delete(self, backup: Path) -> None:
+        """Delete only a verified, existing backup child of this country store.
+
+        Selecting the actual entry from the trusted directory listing avoids
+        performing destructive operations directly on a caller-supplied Path.
+        """
+        validated = self._delete_backup(backup)
+        for entry in self.countries_root.iterdir():
+            if entry.name != validated.name:
+                continue
+            if (
+                entry.is_symlink()
+                or not entry.is_dir()
+                or entry.resolve().parent != self.countries_root.resolve()
+            ):
+                raise ValueError("invalid country deletion backup location")
+            shutil.rmtree(entry)
+            return
+        raise FileNotFoundError("country deletion backup no longer exists")
 
     def _restore_index(self, original: bytes) -> None:
+        if self.countries_root.is_symlink():
+            raise ValueError("country index directory must not be a symlink")
         with tempfile.NamedTemporaryFile("wb", dir=self.index_path.parent, prefix=".index.json.", delete=False) as fh:
             fh.write(original)
             temporary = Path(fh.name)
@@ -418,13 +497,30 @@ class WorldPackageCountryStore:
         finally:
             temporary.unlink(missing_ok=True)
 
+    def _replacement_backup(self, code: str) -> Path:
+        # Replacement cleanup is destructive: never follow attacker-planted
+        # links in the normally-unused .CODE-backup staging directory.
+        self._country_root(code)
+        backup = self.countries_root / f".{code}-backup"
+        if (
+            self.package_root.is_symlink()
+            or self.countries_root.is_symlink()
+            or backup.parent != self.countries_root
+            or backup.is_symlink()
+            or (backup.exists() and not backup.is_dir())
+        ):
+            raise ValueError("invalid country replacement backup directory")
+        return backup
+
     def replace_country(self, country: Country) -> None:
         """Atomically replace one indexed country, restoring the live copy on failure."""
         if country.code not in self.load_index().country_codes:
             raise ValueError(f"country {country.code!r} does not exist")
-        live = self.countries_root / country.code
+        live = self._country_root(country.code)
+        # Validate all possible cleanup targets *before* creating staging.
+        # A rejected linked backup must leave no temporary directory behind.
+        backup = self._replacement_backup(country.code)
         stage = Path(tempfile.mkdtemp(prefix=f".{country.code}-stage-", dir=self.countries_root))
-        backup = self.countries_root / f".{country.code}-backup"
         staged_store = WorldPackageCountryStore(stage)
         try:
             staged_store.countries_root.mkdir(parents=True)
@@ -451,7 +547,7 @@ class WorldPackageCountryStore:
         if code not in self.load_index().country_codes:
             raise ValueError(f"country {code!r} does not exist")
         payload = CountryPopulation(default_year=default_year, values_by_year=values_by_year)
-        path = self.countries_root / code / "attributes" / "population.json"
+        path = self._country_root(code) / "attributes" / "population.json"
         original = path.read_bytes()
         current = CountryPopulation.model_validate(_read_object(path))
         if current.model_dump() == payload.model_dump():
@@ -470,7 +566,7 @@ class WorldPackageCountryStore:
 
     def restore_population(self, country_code: str, original: bytes) -> None:
         """Restore exact population bytes using an atomic promotion."""
-        path = self.countries_root / country_code.upper() / "attributes" / "population.json"
+        path = self._country_root(country_code.upper()) / "attributes" / "population.json"
         with tempfile.NamedTemporaryFile("wb", dir=path.parent, prefix=f".{path.name}.", delete=False) as fh:
             fh.write(original)
             temporary = Path(fh.name)

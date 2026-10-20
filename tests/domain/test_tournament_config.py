@@ -80,7 +80,7 @@ def test_required_tournament_fields_are_validated(tmp_path) -> None:
     )
 
     with pytest.raises(ValidationError):
-        load_tournament_templates_config(path=bad_template_path)
+        load_tournament_templates_config(path=bad_template_path, trusted_root=tmp_path)
 
 
 def test_tournament_template_config_rejects_duplicate_template_ids(tmp_path) -> None:
@@ -111,3 +111,113 @@ def test_tournament_template_config_rejects_duplicate_template_ids(tmp_path) -> 
     result = service.validate_current_dataset()
     assert result.ok is False
     assert "duplicate template_id" in result.errors[0].message
+
+
+@pytest.mark.parametrize("season", ["../../private", True, -1, 0, 10000])
+def test_calendar_season_cannot_be_untrusted_path_component(season) -> None:
+    with pytest.raises(ValueError, match="season must be an integer"):
+        load_season_calendar(season=season)
+
+
+def test_config_loader_rejects_symlink_source(tmp_path) -> None:
+    source = tmp_path / "data.json"
+    source.write_text("{}")
+    link = tmp_path / "external.json"
+    try:
+        link.symlink_to(source)
+    except (OSError, NotImplementedError):
+        pytest.skip("file symlinks not supported")
+    with pytest.raises(ValueError, match="not a symlink"):
+        load_tournament_templates_config(path=link, trusted_root=tmp_path)
+
+
+def test_configuration_loader_rejects_traversal_even_to_json(tmp_path) -> None:
+    inner = tmp_path / "inner"
+    inner.mkdir()
+    source = tmp_path / "config.json"
+    source.write_text("{}")
+    with pytest.raises(ValueError, match="without traversal"):
+        load_tournament_templates_config(path=inner / ".." / "config.json", trusted_root=tmp_path)
+
+
+def test_configuration_loader_rejects_symlinked_parent(tmp_path) -> None:
+    source = tmp_path / "real"
+    source.mkdir()
+    (source / "config.json").write_text("{}")
+    alias = tmp_path / "alias"
+    try:
+        alias.symlink_to(source, target_is_directory=True)
+    except (OSError, NotImplementedError):
+        pytest.skip("directory symlinks not supported")
+    with pytest.raises(ValueError, match="symlink"):
+        load_tournament_templates_config(path=alias / "config.json", trusted_root=tmp_path)
+
+
+
+@pytest.mark.parametrize("path", [
+    "../../secrets.json", "/etc/passwd", "config/calendar/other.json",
+    "config/tournament_templates/../../private.json",
+])
+def test_untrusted_string_config_paths_rejected_before_filesystem_access(path: str) -> None:
+    with pytest.raises(ValueError, match="unrecognized configuration path"):
+        load_tournament_templates_config(path=path)
+
+
+def test_configuration_loader_rejects_non_regular_directory(tmp_path) -> None:
+    directory = tmp_path / "directory.json"
+    directory.mkdir()
+    with pytest.raises(ValueError, match="regular JSON file"):
+        load_tournament_templates_config(path=directory, trusted_root=tmp_path)
+
+
+def test_custom_config_path_needs_explicit_trusted_root(tmp_path) -> None:
+    external = tmp_path / "external.json"
+    external.write_text(json.dumps(load_tournament_templates_config().model_dump(mode="json")))
+    with pytest.raises(ValueError, match="trusted root"):
+        load_tournament_templates_config(path=external)
+    config = load_tournament_templates_config(path=external, trusted_root=tmp_path)
+    assert len(config.templates) >= 4
+
+
+def test_custom_config_path_cannot_escape_explicit_trusted_root(tmp_path) -> None:
+    allowed = tmp_path / "allowed"
+    allowed.mkdir()
+    outside = tmp_path / "outside.json"
+    outside.write_text('{"templates": []}')
+    with pytest.raises(ValueError, match="trusted root"):
+        load_tournament_templates_config(path=outside, trusted_root=allowed)
+
+
+def test_custom_trusted_root_does_not_override_symlink_checks(tmp_path) -> None:
+    outside = tmp_path / "external.json"
+    outside.write_text('{"templates": []}')
+    root = tmp_path / "allowed"
+    root.mkdir()
+    linked = root / "linked.json"
+    try:
+        linked.symlink_to(outside)
+    except (OSError, NotImplementedError):
+        pytest.skip("file symlinks not supported")
+    with pytest.raises(ValueError, match="symlink"):
+        load_tournament_templates_config(path=linked, trusted_root=root)
+
+
+
+def test_config_loader_rejects_symlinked_nested_directory(tmp_path) -> None:
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    (outside / "data.json").write_text("{}")
+    root = tmp_path / "allowed"
+    root.mkdir()
+    alias = root / "subdir"
+    try:
+        alias.symlink_to(outside, target_is_directory=True)
+    except (OSError, NotImplementedError):
+        pytest.skip("directory symlinks not supported")
+    with pytest.raises(ValueError, match="symlink"):
+        load_tournament_templates_config(path=alias / "data.json", trusted_root=root)
+
+
+def test_config_loader_rejects_missing_file_inside_trusted_root(tmp_path) -> None:
+    with pytest.raises(FileNotFoundError, match="unavailable"):
+        load_tournament_templates_config(path=tmp_path / "absent.json", trusted_root=tmp_path)

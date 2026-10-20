@@ -1,6 +1,7 @@
 """Explicit Admin HTTP boundary for the authoritative Run simulation driver."""
 
 import json
+import logging
 from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -110,6 +111,26 @@ router = APIRouter(
     prefix="/admin/runs/{run_id}/branches/{branch_id}/authoritative-simulation",
     tags=["admin-authoritative-simulation"],
 )
+_logger = logging.getLogger(__name__)
+
+
+def _safe_simulation_conflict_message(exc: Exception) -> str:
+    """Do not disclose unknown exception details to HTTP clients."""
+    message = str(exc)
+    if "lease ownership was lost" in message:
+        return "Full Simulation lease ownership was lost"
+    if "global execution lease" in message:
+        return "Another operation holds the global execution lease"
+    return "Simulation request conflicts with the current Run state"
+
+
+def _internal_simulation_failure(operation: str) -> HTTPException:
+    # Keep implementation details in server logs, never in an HTTP response.
+    _logger.exception("Unhandled %s failure", operation)
+    return HTTPException(
+        status_code=500,
+        detail={"code": "internal_simulation_error", "message": "Internal simulation failure"},
+    )
 
 
 @router.get(
@@ -1910,9 +1931,13 @@ def simulate_next_season(
             status_code=409,
             detail={
                 "code": "authoritative_season_simulation_conflict",
-                "message": str(exc),
+                "message": _safe_simulation_conflict_message(exc),
             },
         ) from exc
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise _internal_simulation_failure("next-season execution") from exc
 
 
 @router.get("/full-simulation/parents/{command_id}/summary")
@@ -2018,7 +2043,11 @@ def inspect_full_simulation_target_options(
         return _driver(runtime, matches, awards).inspect_full_simulation_boundary_options(
             run_id=run_id, branch_id=branch_id, command_id=command_id)
     except (ValueError, TypeError, KeyError) as exc:
-        raise HTTPException(status_code=409, detail={"code": "full_simulation_target_review_conflict", "message": str(exc)}) from exc
+        raise HTTPException(status_code=409, detail={"code": "full_simulation_target_review_conflict", "message": _safe_simulation_conflict_message(exc)}) from exc
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise _internal_simulation_failure("full-simulation boundary inspection") from exc
 
 
 @router.post("/full-simulation/target")
@@ -2329,9 +2358,13 @@ def simulate_full_simulation(
             status_code=409,
             detail={
                 "code": "authoritative_full_simulation_conflict",
-                "message": str(exc),
+                "message": _safe_simulation_conflict_message(exc),
             },
         ) from exc
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise _internal_simulation_failure("full-simulation execution") from exc
 
 
 @router.post("/simulate-next-slot")

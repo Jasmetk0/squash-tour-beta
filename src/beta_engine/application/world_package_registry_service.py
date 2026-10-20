@@ -1,6 +1,6 @@
 """Discovery and semantic fingerprinting for canonical World Packages."""
 from __future__ import annotations
-import hashlib, json
+import hashlib, json, re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -15,6 +15,15 @@ OFFICIAL_FAX_WORLD_DESCRIPTION='Built-in official FAX squash world package.'
 OFFICIAL_FAX_WORLD_VERSION='v1'
 DEFAULT_WORLD_PACKAGES_ROOT=Path('config/world_packages')
 REQUIRED_WORLD_PACKAGE_FILES=('world.json','countries/index.json','geography/continents.json','geography/regions.json','geography/travel_regions.json')
+# IDs are directory components, including when received from an HTTP route.
+_WORLD_ID = re.compile(r"[a-z0-9][a-z0-9_]{2,63}", re.ASCII)
+
+
+def _canonical_world_id(value: str) -> str | None:
+    if not isinstance(value, str):
+        return None
+    normalized = value.strip().lower()
+    return normalized if _WORLD_ID.fullmatch(normalized) else None
 
 @dataclass(frozen=True)
 class WorldPackageStorageSummary:
@@ -31,7 +40,8 @@ class WorldPackageRegistryService:
  def list_packages(self):
   result=[]
   for world_id in BUILT_IN_WORLD_IDS:
-   if (self.world_packages_root/world_id).is_dir(): result.append(self._build(self.world_packages_root/world_id, world_id, True))
+   path=self.package_dir(world_id)
+   if path is not None: result.append(self._build(path, world_id, True))
   seen={x.world_id for x in result}
   for path in self._custom_package_dirs():
    try: record=self._build(path,path.name,False)
@@ -39,19 +49,36 @@ class WorldPackageRegistryService:
    if record.world_id not in seen: result.append(record); seen.add(record.world_id)
   return result
  def get_package(self,world_id):
-  normalized=world_id.strip().lower()
-  path=(self.world_packages_root/normalized) if normalized in BUILT_IN_WORLD_IDS else (self.world_packages_root/'custom'/normalized)
-  if not path.is_dir(): return None
+  normalized=_canonical_world_id(world_id)
+  if normalized is None: return None
+  path=self.package_dir(normalized)
+  if path is None: return None
   try:return self._build(path,normalized,normalized in BUILT_IN_WORLD_IDS)
   except Exception:return None
- def get_official_package(self): return self._build(self.world_packages_root/OFFICIAL_FAX_WORLD_ID,OFFICIAL_FAX_WORLD_ID,True)
+ def get_official_package(self):
+  path=self.package_dir(OFFICIAL_FAX_WORLD_ID)
+  if path is None: raise ValueError("official World Package directory is unavailable")
+  return self._build(path,OFFICIAL_FAX_WORLD_ID,True)
  def package_dir(self,world_id):
-  normalized=world_id.strip().lower(); path=(self.world_packages_root/normalized) if normalized in BUILT_IN_WORLD_IDS else self.world_packages_root/'custom'/normalized
-  return path if path.is_dir() else None
+  normalized=_canonical_world_id(world_id)
+  if normalized is None: return None
+  parent=self.world_packages_root if normalized in BUILT_IN_WORLD_IDS else self.world_packages_root/'custom'
+  if parent.is_symlink() or not parent.is_dir(): return None
+  # Select an actual child discovered from the trusted root; never append a
+  # URL-provided name to a filesystem path, even after format validation.
+  for candidate in parent.iterdir():
+   if candidate.name != normalized or candidate.is_symlink() or not candidate.is_dir(): continue
+   try:
+    if candidate.resolve().parent != parent.resolve(): continue
+   except (OSError,RuntimeError): continue
+   return candidate
+  return None
  def package_paths(self,world_id):
   path=self.package_dir(world_id); return self._paths_for_dir(path) if path else None
  def official_paths(self): return self.package_paths(OFFICIAL_FAX_WORLD_ID) or {}
  def _build(self,path,expected,builtin):
+  safe_path=self.package_dir(expected)
+  if safe_path is None or path != safe_path: raise ValueError("World Package path escapes its registered directory")
   if not all((path/name).is_file() for name in REQUIRED_WORLD_PACKAGE_FILES): raise ValueError(f'{path} is incomplete')
   m=self._read_json(path/'world.json')
   if m.get('world_id')!=expected: raise ValueError('world_id mismatch')
@@ -113,13 +140,21 @@ class WorldPackageRegistryService:
     }
   return payload
  def _custom_package_dirs(self):
-  root=self.world_packages_root/'custom'; return sorted((p for p in root.iterdir() if p.is_dir()),key=lambda p:p.name) if root.is_dir() else []
+  root=self.world_packages_root/'custom'
+  if self.world_packages_root.is_symlink() or not root.is_dir() or root.is_symlink(): return []
+  return sorted((p for p in root.iterdir() if _canonical_world_id(p.name) == p.name and p.is_dir() and not p.is_symlink()),key=lambda p:p.name)
  def _paths_for_dir(self,p): return {'package_root':p,'world':p/'world.json','countries_root':p/'countries','countries_index':p/'countries/index.json','continents':p/'geography/continents.json','regions':p/'geography/regions.json','travel_regions':p/'geography/travel_regions.json','timezone_areas':p/'geography/timezone_areas.json'}
  def _storage_summary(self,p):
   q=self._paths_for_dir(p); return WorldPackageStorageSummary(*(str(q[k]) for k in ('package_root','world','countries_root','countries_index')) ,str(p/'geography'),*(str(q[k]) for k in ('continents','regions','travel_regions','timezone_areas')))
  def _read_json(self,p):
-  value=json.loads(p.read_text());
-  if not isinstance(value,dict): raise ValueError(f'{p} must contain object')
-  return value
+  # Every registry JSON read is confined to the configured World Packages root.
+  # The shared resolver rejects absolute paths, traversal and linked components.
+  source=Path(p)
+  try:
+   relative=source.relative_to(self.world_packages_root).as_posix()
+  except ValueError as exc:
+   raise ValueError("World Package metadata is outside the registered root") from exc
+  trusted=safe_package_file(self.world_packages_root,relative)
+  return load_json_object(trusted)
  def _items(self,p,k):
   value=self._read_json(p).get(k,[]); return value if isinstance(value,list) else []

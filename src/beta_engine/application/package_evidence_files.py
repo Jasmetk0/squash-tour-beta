@@ -36,6 +36,9 @@ def safe_package_file(root: Path, relative_path: str) -> Path:
     if relative.is_absolute() or any(part in {"", ".", ".."} for part in relative.parts):
         raise ValueError(f"unsafe package evidence path {relative_path!r}")
 
+    # The package root itself must not be redirected before the walk.
+    if root.is_symlink():
+        raise ValueError("package evidence root must not be a symlink")
     root_resolved = root.resolve()
     cursor = root
     for part in relative.parts:

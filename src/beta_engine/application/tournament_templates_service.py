@@ -154,7 +154,7 @@ class TournamentTemplatesConfigService:
         )
 
     def _load(self) -> TournamentTemplatesConfig:
-        config = load_tournament_templates_config(self.config_path)
+        config = load_tournament_templates_config(self.config_path, trusted_root=self.config_path.parent)
         self._ensure_unique_template_ids(config.templates)
         return config
 

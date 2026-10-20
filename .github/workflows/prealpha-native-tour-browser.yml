@@ -5,6 +5,8 @@ on:
     paths:
       - '.github/workflows/prealpha-native-tour-browser.yml'
       - 'scripts/native_tour_browser_acceptance.py'
+      - 'scripts/native_birth_readiness_browser_acceptance.py'
+      - 'src/beta_engine/application/calendar_native_transition_readiness.py'
       - 'tests/api/test_calendar_tour_flow.py'
       - 'src/beta_engine/**/calendar_tour*'
       - 'src/beta_engine/**/calendar_*knockout*'
@@ -15,6 +17,8 @@ on:
       - 'src/beta_engine/infrastructure/db/repositories.py'
       - 'src/beta_engine/infrastructure/db/calendar_standalone_match_state.py'
       - 'web/src/pages/CalendarTour*'
+      - 'web/src/pages/NativeTransitionReadiness*'
+      - 'web/src/api/nativeTransitionReadiness.ts'
       - 'web/src/api/calendarTour.ts'
       - 'web/src/api/client.ts'
   workflow_dispatch:
@@ -27,6 +31,40 @@ permissions:
   contents: read
 
 jobs:
+  birth-readiness:
+    name: Native birth readiness / real Chromium
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: pyproject.toml
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: python -m pip install -e '.[dev]' playwright
+      - run: npm --prefix web ci
+      - name: Native birth, explicit Save and unchanged pre-Save Viewer
+        env:
+          CHROME_BIN: /usr/bin/google-chrome
+        run: |
+          if [ ! -x "$CHROME_BIN" ]; then
+            python -m playwright install --with-deps chromium
+            export CHROME_BIN=$(python -c 'from playwright.sync_api import sync_playwright; p=sync_playwright().start(); print(p.chromium.executable_path); p.stop()')
+          fi
+          timeout --signal=TERM --kill-after=10s 8m python scripts/native_birth_readiness_browser_acceptance.py --root work/native-birth-readiness
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: native-birth-readiness-${{ github.run_id }}
+          path: work/native-birth-readiness/*
+          retention-days: 14
+
   browser:
     name: Native Tour W${{ matrix.width }} / ${{ matrix.players }} players
     runs-on: ubuntu-latest

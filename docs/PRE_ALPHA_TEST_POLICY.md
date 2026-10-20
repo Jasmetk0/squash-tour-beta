@@ -22,6 +22,20 @@ does not wait for a second serial execution of the same expensive flow.
 
 ## Pull-request development
 
+### Confirmed native birth acceptance
+
+Changes to the coupled native birth/Tour writer also require the dedicated
+`Native birth Week/Season` HTTP/SQLite matrix in the native Tour API workflow.
+Earth, FAX, extended W80, short-year Season boundary and real pre-birth Edition
+Entry/award scenarios run independently in parallel. This is mandatory alongside
+the original native Tour/season/browser gates, not their replacement. The birth
+module is `smoke`, excluded from Fast CI's tiny `pr_critical` selection, but remains
+in both its dedicated production gate and the Full Test Suite. Do not weaken
+rollback, Signed replay, Viewer isolation, restart, restore or corruption checks.
+Native runtime capability changes additionally run their real HTTP readiness
+scenario and the separate `Native birth readiness / real Chromium` gate. This
+must execute against the actual backend; mocked UI tests/build do not replace it.
+
 ### Isolated native Tour API-client edits
 
 Six legacy hybrid/Full Simulation browser workflows also watch the shared

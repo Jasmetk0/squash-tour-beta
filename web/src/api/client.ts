@@ -339,11 +339,22 @@ import type {
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000'
 
 const calendarTourRoot = (run:string,branch:string) => `/admin/runs/${encodeURIComponent(run)}/branches/${encodeURIComponent(branch)}/calendar-tour`
+export function inspectCalendarTourTransitionReadiness(run:string,branch:string,signal?:AbortSignal):Promise<unknown> {
+  return request(calendarTourRoot(run,branch)+'/prospect-intake/transition-readiness',{signal})
+}
 export function inspectCalendarTour(run:string,branch:string,signal?:AbortSignal):Promise<import('./calendarTour').TourView> {
   return request(calendarTourRoot(run,branch),{signal})
 }
 export function inspectNativeTourProspectIntake(run:string,branch:string):Promise<import('./calendarTour').NativeProspectIntakePreflight> {
   return request(calendarTourRoot(run,branch)+'/prospect-intake/preflight')
+}
+/** Signed read-only 15yo sporting review: never creates any athlete. */
+export function previewCalendarTourNativeBirthSporting(
+  run:string,branch:string,payload:import('./calendarTour').NativeSportingBirthPreviewRequest,
+):Promise<import('./calendarTour').NativeSportingBirthPreflight> {
+  return request(calendarTourRoot(run,branch)+'/prospect-intake/sporting-preflight',{
+    method:'POST',body:JSON.stringify(payload),
+  })
 }
 export function inspectCalendarTourRecords(run:string,branch:string,asOf:number,from:number,country:string|null=null):Promise<import('./calendarTour').TourCareerRecords> {
   const query=new URLSearchParams({as_of_season_index:String(asOf),from_season_index:String(from)})

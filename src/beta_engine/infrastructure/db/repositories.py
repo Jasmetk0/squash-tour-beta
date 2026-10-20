@@ -5201,9 +5201,22 @@ class SimulationPersistenceRepository:
                 capture_saved_simulation_slots(
                     session, payload, run_id=run_id, branch_id=branch_id
                 )
-                capture_saved_calendar_match(
-                    session, payload, run_id=run_id, branch_id=branch_id
+                native_birth_restore = (
+                    target_content.get("calendar_player_sporting_checkpoint", {})
+                    .get("state", {}).get("schema_version")
+                    == "calendar_sporting_checkpoint.v11"
                 )
+                capture_saved_calendar_match(
+                    session, payload, run_id=run_id, branch_id=branch_id,
+                    _defer_full_verification=native_birth_restore,
+                )
+                if native_birth_restore:
+                    # Capture every coupled live owner first, then authenticate
+                    # the COMPLETE post-restore aggregate before any revision or
+                    # pointer is published. No bare v11 capture is authority.
+                    load_saved_calendar_sources(
+                        payload, run_id=run_id, branch_id=branch_id
+                    )
                 if SEASON_CLOSURE_COMPONENT_KEY in target_content:
                     try:
                         rebind_saved_revision_season_closure(
@@ -5549,6 +5562,14 @@ class SimulationPersistenceRepository:
             )
             run = session.get(RunContainerModel, run_id)
             branch = session.get(RunBranchModel, branch_id)
+            from beta_engine.infrastructure.db.run_prospect_source_state import (
+                native_birth_requires_source_epochs,
+            )
+            blockers = (
+                ["native_prospect_source_epochs_required"]
+                if changed and native_birth_requires_source_epochs(session, run_id=run_id)
+                else []
+            )
             return {
                 "run_id": run_id,
                 "branch_id": branch_id,
@@ -5559,7 +5580,9 @@ class SimulationPersistenceRepository:
                 "saved_head_revision_id": state.saved_head_revision_id,
                 "draft_version": draft.draft_version,
                 "has_unsaved_changes": changed,
+                "blockers": blockers,
                 "can_save": changed
+                and not blockers
                 and draft.status == CLEAN_WORKING_DRAFT_STATUS
                 and not run.read_only
                 and not branch.read_only
@@ -5651,6 +5674,14 @@ class SimulationPersistenceRepository:
                         f"expected draft version {expected_draft_version}, "
                         f"found {draft.draft_version}"
                     )
+                if expected_run_prospect_source_fingerprint is not None:
+                    from beta_engine.infrastructure.db.run_prospect_source_state import (
+                        native_birth_requires_source_epochs,
+                    )
+                    if native_birth_requires_source_epochs(session, run_id=run_id):
+                        raise WorkingDraftConflictError(
+                            "native_prospect_source_epochs_required"
+                        )
                 staged_component_dirty = (
                     (
                         expected_run_package_fingerprint is not None
@@ -5815,13 +5846,25 @@ class SimulationPersistenceRepository:
                 capture_saved_simulation_slots(
                     session, payload, run_id=run_id, branch_id=branch_id
                 )
+                from beta_engine.infrastructure.db.calendar_sporting_checkpoint import (
+                    load_checkpoint,
+                )
+                live_calendar_owner = load_checkpoint(
+                    session, run_id=run_id, branch_id=branch_id
+                )
+                verify_coupled_calendar = (
+                    expected_calendar_tour_fingerprint is not None
+                    or (
+                        live_calendar_owner is not None
+                        and live_calendar_owner.schema_version
+                        == "calendar_sporting_checkpoint.v11"
+                    )
+                )
                 capture_saved_calendar_match(
                     session, payload, run_id=run_id, branch_id=branch_id,
-                    _defer_full_verification=(
-                        expected_calendar_tour_fingerprint is not None
-                    ),
+                    _defer_full_verification=verify_coupled_calendar,
                 )
-                if expected_calendar_tour_fingerprint is not None:
+                if verify_coupled_calendar:
                     # A native Tour Save captures live rows first, then runs the
                     # COMPLETE source verifier exactly once on that final
                     # in-transaction payload. The source fold authenticates
@@ -11430,6 +11473,15 @@ class SimulationPersistenceRepository:
         )
         for payload_json in session.execute(statement).scalars():
             payload = json.loads(payload_json)
+            if payload.get("schema_version") == "player_lifecycle_calendar_state.v4":
+                from beta_engine.infrastructure.db.player_lifecycle_state import (
+                    _parse_lifecycle_json,
+                )
+                native_life = _parse_lifecycle_json(payload_json)
+                found.update(
+                    b.player_id for b in native_life.birth_event.births
+                    if b.player_id in prospect_ids
+                )
             players = payload.get("players", [])
             if not isinstance(players, list):
                 continue

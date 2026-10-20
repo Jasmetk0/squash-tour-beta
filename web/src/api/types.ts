@@ -2531,12 +2531,14 @@ export type RunProspectSourceSavePreview = {
   saved_head_revision_id: string
   draft_version: number
   has_unsaved_changes: boolean
+  blockers: string[]
   can_save: boolean
 }
 
 export type RunProspectSourceSavePayload = {
   expected_draft_version: number
   expected_run_prospect_source_fingerprint: string
+  expected_saved_head_revision_id?: string
 }
 
 export type RunProspectSourceSaveResponse = AuthoritativeSimulationSaveResponse

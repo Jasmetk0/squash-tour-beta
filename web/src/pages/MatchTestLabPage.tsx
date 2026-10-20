@@ -171,7 +171,10 @@ export function MatchTestLabPage(): JSX.Element {
     }
   })
 
-  const parseScenario = (): MatchLabScenario => JSON.parse(scenarioText) as MatchLabScenario
+  const parseScenario = (): MatchLabScenario => {
+    try { return JSON.parse(scenarioText) as MatchLabScenario }
+    catch { throw new Error('Invalid scenario JSON. Check the syntax before running or saving.') }
+  }
 
   const submit = (event: FormEvent) => {
     event.preventDefault()
@@ -284,7 +287,7 @@ export function MatchTestLabPage(): JSX.Element {
         </label>
         {selectedSession ? <button type="button" onClick={save} disabled={saveMutation.isPending}>Save Test Session</button> : null}
         <button type="submit" disabled={runMutation.isPending}>{runMutation.isPending ? 'Running…' : selectedSession ? 'Run Test Session' : 'Run scenario'}</button>
-        {localError ? <p className="error">{localError}</p> : null}
+        {localError ? <p role="alert" className="error">{localError}</p> : null}
         {saveMutation.isError ? <p className="error">Save failed: {String(saveMutation.error)}</p> : null}
         {runMutation.isError ? <p className="error">Lab failed: {String(runMutation.error)}</p> : null}
         <p className="status">Scenario: {parsedPreview?.scenario_id ?? 'invalid JSON'} · seed {parsedPreview?.seed ?? '—'}</p>

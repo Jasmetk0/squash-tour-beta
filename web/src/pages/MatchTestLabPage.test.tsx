@@ -108,7 +108,9 @@ describe('MatchTestLabPage', () => {
     await user.click(screen.getByRole('button', { name: 'Run scenario' }))
 
     expect(api.runMatchTestLab).not.toHaveBeenCalled()
-    expect(screen.getByText("Expected property name or '}' in JSON at position 1")).toBeInTheDocument()
+    expect(screen.getByRole('alert')).toHaveTextContent('Invalid scenario JSON. Check the syntax before running or saving.')
+    expect(editor).toHaveValue('{bad json')
+    expect(api.runMatchLabSession).not.toHaveBeenCalled()
   })
 
   it('creates an isolated editable Test Session from a read-only built-in', async () => {
@@ -159,6 +161,11 @@ describe('MatchTestLabPage', () => {
       expect.anything()
     )
     expect(await screen.findByDisplayValue('Standard even match — Test Session')).toBeInTheDocument()
+
+    fireEvent.change(screen.getByLabelText('Match Lab scenario JSON'), { target: { value: '{bad json' } })
+    await user.click(screen.getByRole('button', { name: 'Save Test Session' }))
+    expect(screen.getByRole('alert')).toHaveTextContent('Invalid scenario JSON.')
+    expect(api.updateMatchLabSession).not.toHaveBeenCalled()
 
     fireEvent.change(screen.getByLabelText('Match Lab scenario JSON'), {
       target: { value: JSON.stringify({ ...created.scenario, seed: 999 }) }

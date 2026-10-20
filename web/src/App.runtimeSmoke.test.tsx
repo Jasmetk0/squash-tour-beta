@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { cleanup, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import * as api from './api/client'
 import App from './App'
@@ -19,6 +19,12 @@ function renderAppAt(route: string): void {
   )
 }
 
+beforeEach(() => {
+  localStorage.clear()
+  vi.spyOn(api, 'listRunContainers').mockResolvedValue({ run_containers: [] })
+  vi.spyOn(api, 'listWorldPackages').mockResolvedValue({ packages: [] })
+})
+
 afterEach(() => {
   cleanup()
   vi.restoreAllMocks()
@@ -33,8 +39,10 @@ describe('App runtime smoke', () => {
 
     renderAppAt('/')
 
-    expect(screen.getByRole('heading', { name: 'Squash Tour Beta Engine', level: 2 })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /Browse the generated squash world/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Squash Engine – Domů', level: 2 })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Vytvořit Run +' })).toHaveAttribute('href', '/admin/runs/new')
+    expect(screen.queryByLabelText('Admin active Branch')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('Admin view time')).not.toBeInTheDocument()
   })
 
   it('renders the admin simulate route when remembered-run storage is unavailable', () => {
@@ -61,8 +69,12 @@ describe('App runtime smoke', () => {
 
     renderAppAt('/admin/runs/new')
 
-    expect(screen.getByRole('heading', { name: 'Dashboard', level: 2 })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /Create and open run/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Vytvořit Run', level: 2 })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Vytvořit samostatný Run' })).toBeDisabled()
+    fireEvent.change(screen.getByLabelText('Language / Jazyk'), { target: { value: 'en' } })
+    expect(screen.getByRole('heading', { name: 'Create Run', level: 2 })).toBeInTheDocument()
+    fireEvent.change(screen.getByLabelText('Unique Run name'), { target: { value: 'Private browsing world' } })
+    expect(screen.getByRole('button', { name: 'Create isolated Run' })).toBeEnabled()
   })
 
   it('renders the Viewer match odds deferred route with an active run without runtime module errors', async () => {

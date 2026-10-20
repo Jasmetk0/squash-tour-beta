@@ -1,3 +1,26 @@
+# Integrated baseline and focused frontend recovery — 20 October 2026
+
+**Verified integration baseline:** `buuk` `7301d34b86db833bf710d84f1dd387ffe90c938c`
+contains owner-merged #1571 (future prospect source epochs, including historical
+replay/prefix validation and reload recovery fixes) and #1572 (frontend dependency
+advisories). Both feature heads completed their applicable CI before owner merge.
+The earlier candidate paragraphs below are retained historical checkpoints.
+
+**Current candidate:** restore routed Admin Time and historical-view component
+checks, current global Home/empty Run private-storage smoke coverage, and stable
+accessible malformed-JSON feedback in Match Lab. Add these focused contracts to
+Fast CI so unrelated UI work cannot silently break them again. No backend writer,
+Saved signature, simulation policy or numeric Health calibration changes.
+
+**Validation pending on this candidate's latest head.** Local execution is
+unavailable; GitHub Actions must supply the build/component evidence. The previous
+exploratory full frontend run had 107 pre-existing failing tests; this bounded
+repair must not be presented as a green full frontend suite or a 50×61 release
+certification. Remaining legacy Viewer tests and the complete Master acceptance
+remain follow-up work.
+
+---
+
 # Prospect epochs historical authority candidate — 20 October 2026
 
 **Verified base:** `buuk` `59309089663f7a5bd62d4bbbb23329da70215f5b`

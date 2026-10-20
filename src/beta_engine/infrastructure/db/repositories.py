@@ -11392,9 +11392,12 @@ class SimulationPersistenceRepository:
                         run_id=changed_run_id,
                         prospect_ids=changed_ids,
                     )
+                    protected |= self._signed_run_prospect_ids_in_session(
+                        session, run_id=changed_run_id, prospect_ids=changed_ids,
+                    )
                     if protected:
                         raise ValueError(
-                            "Lifecycle-activated Run prospect metadata is immutable"
+                            "Saved or lifecycle-activated Run prospect metadata is immutable"
                         )
                 for model, payload in pending_updates:
                     for key, value in payload.items():
@@ -11412,9 +11415,12 @@ class SimulationPersistenceRepository:
                 run_id=run_id,
                 prospect_ids=set(prospect_ids),
             )
+            protected |= self._signed_run_prospect_ids_in_session(
+                session, run_id=run_id, prospect_ids=set(prospect_ids),
+            )
             if protected:
                 raise ValueError(
-                    "Lifecycle-activated Run prospect metadata is immutable"
+                    "Saved or lifecycle-activated Run prospect metadata is immutable"
                 )
             session.query(RunProspectModel).filter(
                 RunProspectModel.run_id == run_id,
@@ -11462,6 +11468,49 @@ class SimulationPersistenceRepository:
                 self._to_run_prospect_record(model)
                 for model in session.execute(statement).scalars().all()
             ]
+
+    @classmethod
+    def _signed_run_prospect_ids_in_session(
+        cls, session: Session, *, run_id: str, prospect_ids: set[str],
+    ) -> set[str]:
+        """No historic Signed prospect identity may be mutated before its birth.
+
+        Called only for writes to pre-existing rows or deletes, not for
+        append-only materialization. Every immutable Saved Revision is checked
+        (not only the current Branch HEAD, which can move on restore).
+        """
+        if not prospect_ids:
+            return set()
+        from beta_engine.infrastructure.db.run_prospect_source_state import (
+            load_saved_run_prospect_source,
+        )
+
+        found: set[str] = set()
+        models = session.scalars(
+            select(BranchSavedRevisionModel)
+            .where(BranchSavedRevisionModel.run_id == run_id)
+            .order_by(BranchSavedRevisionModel.sequence.desc())
+        )
+        for model in models:
+            revision = cls._to_branch_saved_revision(
+                model, validate_components=False,
+            )
+            if (
+                revision.content_hash_algorithm != CONTENT_HASH_ALGORITHM
+                or revision.content_hash != _saved_revision_record_content_hash(revision)
+            ):
+                raise ValueError("Historic Signed prospect source revision is corrupted")
+            source = load_saved_run_prospect_source(
+                revision.payload, run_id=run_id,
+            )
+            if source is not None:
+                found.update(
+                    row["prospect_id"] for row in source.records
+                    if row["prospect_id"] in prospect_ids
+                )
+                if found == prospect_ids:
+                    break
+        return found
 
     @staticmethod
     def _activated_run_prospect_ids_in_session(

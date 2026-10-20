@@ -11,10 +11,18 @@ The older routed Admin regression suite is updated to canonical global Home,
 Product Run inventory and canonical Viewer source boundaries. Its existing
 196 cases are retained; missing mocks and obsolete expectations are repaired.
 
-Validation is pending GitHub Actions on the latest candidate head. Local execution
-is still unavailable. This is a frontend/component correction; it neither changes
-backend writers nor certifies the complete frontend suite or pre-alpha release.
-Remaining stale Viewer-specific regressions and full Master acceptance remain.
+**Hosted implementation evidence:** `41c6bfa070aab13b3723fe3bd10da79816641a36`
+passed the 192-test critical baseline and 202 changed-file component tests,
+including all 196 retained routed cases. Four runtime smoke cases overlap the
+sets; these are not 394 distinct tests. TypeScript/Vite build and all three
+CodeQL analyses passed; the PR comparison reported no new alerts. The complete
+frontend CI job took 68 seconds. Backend tests were correctly outside this diff.
+
+This closing documentation commit preserves the tested implementation; its own
+latest-head CI must also pass before review readiness. Local execution is still
+unavailable. These are component/build results, not real HTTP/browser integration,
+a green complete frontend suite or pre-alpha release certification. Remaining
+stale Viewer-specific regressions and full Master acceptance remain.
 
 ---
 

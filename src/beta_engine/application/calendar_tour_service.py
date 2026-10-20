@@ -963,7 +963,7 @@ class CalendarTourService:
                 state=state,
                 checkpoint=cp,
                 world=world,
-                source=source,
+                source=source.for_week(cp.week.ordinal + 1),
                 lifecycle=load_saved_lifecycle(
                     rev.saved_revision.payload,
                     run_id=state.run_id,

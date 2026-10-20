@@ -84,7 +84,10 @@ def inspect_native_transition_readiness(repository, *, run_id, branch_id):
             "saved_head_revision_id": revision.saved_head_revision_id,
             "checkpoint_fingerprint": checkpoint.fingerprint,
             "tour_fingerprint": state.fingerprint if state else None,
-            "source_fingerprint": source.for_week(target.ordinal).fingerprint if source else None,
+            "source_fingerprint": (
+                source.for_week(target.ordinal).fingerprint
+                if source is not None and target is not None else None
+            ),
             "health_fingerprint": health.fingerprint if health else None,
             "run_calendar": clock.to_metadata(),
             "completed_week": checkpoint.week.model_dump(mode="json"),

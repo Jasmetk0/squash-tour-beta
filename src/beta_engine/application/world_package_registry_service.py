@@ -144,8 +144,16 @@ class WorldPackageRegistryService:
  def _storage_summary(self,p):
   q=self._paths_for_dir(p); return WorldPackageStorageSummary(*(str(q[k]) for k in ('package_root','world','countries_root','countries_index')) ,str(p/'geography'),*(str(q[k]) for k in ('continents','regions','travel_regions','timezone_areas')))
  def _read_json(self,p):
-  value=json.loads(p.read_text());
-  if not isinstance(value,dict): raise ValueError(f'{p} must contain object')
+  # Every registry JSON read is confined to the configured World Packages root.
+  # The shared resolver rejects absolute paths, traversal and linked components.
+  source=Path(p)
+  try:
+   relative=source.relative_to(self.world_packages_root).as_posix()
+  except ValueError as exc:
+   raise ValueError("World Package metadata is outside the registered root") from exc
+  trusted=safe_package_file(self.world_packages_root,relative)
+  value=json.loads(trusted.read_text(encoding='utf-8'))
+  if not isinstance(value,dict): raise ValueError(f'{source} must contain object')
   return value
  def _items(self,p,k):
   value=self._read_json(p).get(k,[]); return value if isinstance(value,list) else []

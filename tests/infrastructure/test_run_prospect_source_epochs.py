@@ -14,9 +14,41 @@ from beta_engine.infrastructure.db.run_prospect_source_state import (
     _fingerprint,
     _snapshot_component,
     load_saved_run_prospect_source,
+    validate_run_prospect_source_extension,
 )
 
 pytestmark = pytest.mark.pr_critical
+
+
+def test_receipt_origins_require_exact_monotonic_source_history():
+    """Component boundary; genuine Saved lineage remains an independent guard."""
+    from dataclasses import replace
+
+    clock = RunCalendar.earth_default(start_year=2030, season_count=3)
+    first = _snapshot(_row(clock, 0, 2, "a"))
+    second = _snapshot(*first.records, _row(clock, 1, 4, "b"))
+    third = _snapshot(*second.records, _row(clock, 2, 4, "c"))
+
+    def chain(entries):
+        raw = _epoch_component(entries, "run")
+        return load_saved_run_prospect_source({
+            "run": {"run_calendar": clock.to_metadata()},
+            "content": {RUN_PROSPECT_SOURCE_COMPONENT_KEY: raw},
+        }, run_id="run")
+
+    v2 = chain(((0, first), (8, second)))
+    v3 = chain((*v2.epochs, (60, third)))
+    for before, after in ((first, first), (first, v2), (v2, v2), (v2, v3)):
+        validate_run_prospect_source_extension(before, after)
+    for before, after in (
+        (first, second),  # A new v1 snapshot drops historical authority.
+        (v2, first), (v3, v2),  # Neither downgrade nor truncation is an append.
+        (v2, chain(((0, first), (9, second)))),  # Old activation cannot move.
+        (v2, chain(((0, first), (8, third)))),  # Old epoch cannot be replaced.
+        (first, replace(first, run_id="foreign")),
+    ):
+        with pytest.raises(ValueError, match="exact historical source epoch prefix"):
+            validate_run_prospect_source_extension(before, after)
 
 
 def _row(clock, season, week, identity):

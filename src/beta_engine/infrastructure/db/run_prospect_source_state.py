@@ -83,6 +83,20 @@ class RunProspectSourceEpochs:
 RunProspectSource = RunProspectSourceSnapshot | RunProspectSourceEpochs
 
 
+def validate_run_prospect_source_extension(
+    previous: RunProspectSource, current: RunProspectSource,
+) -> None:
+    """Authenticated receipt origins may keep or append exact historical epochs.
+
+    Both inputs must already have passed the strict Saved component parser.
+    A newer v1 snapshot alone cannot prove preservation of historical sources.
+    """
+    before = previous.epochs if isinstance(previous, RunProspectSourceEpochs) else ((0, previous),)
+    after = current.epochs if isinstance(current, RunProspectSourceEpochs) else ((0, current),)
+    if previous.run_id != current.run_id or after[:len(before)] != before:
+        raise ValueError("Native source changes require an exact historical source epoch prefix")
+
+
 def _snapshot_component(snapshot: RunProspectSourceSnapshot) -> dict:
     return {
         "schema_version": snapshot.schema_version,

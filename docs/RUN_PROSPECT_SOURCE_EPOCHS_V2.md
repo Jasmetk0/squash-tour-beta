@@ -48,8 +48,16 @@ source for every week.
 
 The weekly reducer receives the complete epoch chain: only the current birth
 event selects one effective snapshot. Ranking's complete lifecycle replay keeps
-the chain so every earlier birthday uses its original fingerprint. Execution,
+the chain so every earlier birthday uses its original fingerprint. A lifecycle
+replay proof binds the v1 snapshot effective at its own last week, with earlier
+snapshots bound by the replayed birth-event hashes; appending a future epoch
+cannot change a previously confirmed ranking-adoption proof. Execution,
 v3 Tour replay and v4 competition replay share this same boundary.
+
+The independent Saved-origin guard accepts a later source only when its parsed
+epoch chain preserves every preceding source and activation ordinal as an exact
+prefix. It rejects a replacement v1, altered prior epoch, downgrade or truncated
+chain; actual Saved Run/Branch ownership and reachable lineage remain required.
 
 The native Week/Season Transition is still the **only** operation that
 actually activates a 15-year-old and may create official ranked/entered

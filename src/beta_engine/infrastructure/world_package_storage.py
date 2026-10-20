@@ -96,6 +96,9 @@ class CountryPopulation(BaseModel):
 
 
 def _read_object(path: Path) -> dict[str, Any]:
+    # Metadata must not be redirected through package-controlled symlinks.
+    if path.is_symlink() or path.parent.is_symlink():
+        raise ValueError(f"{path} must not be a symlink or inside a symlinked directory")
     try:
         value = json.loads(path.read_text(encoding="utf-8"))
     except FileNotFoundError as exc:
@@ -131,12 +134,16 @@ def _safe_package_owned_file(root: Path, relative_path: str) -> Path:
     return resolved
 
 def _write_json_atomic(path: Path, payload: object) -> None:
+    if path.is_symlink() or path.parent.is_symlink():
+        raise ValueError(f"{path} must not be a symlink or inside a symlinked directory")
     path.parent.mkdir(parents=True, exist_ok=True)
     with tempfile.NamedTemporaryFile("w", encoding="utf-8", dir=path.parent, prefix=f".{path.name}.", delete=False) as fh:
         json.dump(payload, fh, indent=2, sort_keys=False)
         fh.write("\n")
         temporary = Path(fh.name)
     try:
+        if path.is_symlink() or path.parent.is_symlink():
+            raise ValueError(f"{path} became a symlink during write")
         temporary.replace(path)
     finally:
         temporary.unlink(missing_ok=True)
@@ -170,6 +177,8 @@ class WorldPackageCountryStore:
         candidate = root / code
         if root.is_symlink() or candidate.is_symlink():
             raise ValueError(f"country directory must not be a symlink: {code!r}")
+        if (candidate / "attributes").is_symlink():
+            raise ValueError(f"country attributes directory must not be a symlink: {code!r}")
         if not candidate.resolve().is_relative_to(root.resolve()):
             raise ValueError(f"country directory escapes package root: {code!r}")
         return candidate

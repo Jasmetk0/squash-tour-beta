@@ -144,3 +144,34 @@ def test_country_deletion_backup_rejects_linked_countries_root(tmp_path: Path) -
     with pytest.raises(ValueError, match="backup location"):
         store.finalize_delete(store.countries_root / backup.name)
     assert (backup / "sentinel").read_text() == "keep"
+
+
+
+def test_country_attributes_directory_symlink_is_rejected(tmp_path: Path) -> None:
+    store = WorldPackageCountryStore(tmp_path / "world")
+    root = store.countries_root / "AAA"
+    root.mkdir(parents=True)
+    outside = tmp_path / "external_attributes"
+    outside.mkdir()
+    (outside / "population.json").write_text('{"safe": true}')
+    try:
+        (root / "attributes").symlink_to(outside, target_is_directory=True)
+    except (OSError, NotImplementedError):
+        pytest.skip("directory symlinks are not available on this platform")
+    with pytest.raises(ValueError, match="attributes directory must not be a symlink"):
+        store.load_country("AAA")
+    assert (outside / "population.json").read_text() == '{"safe": true}'
+
+
+def test_country_index_file_symlink_is_rejected(tmp_path: Path) -> None:
+    store = WorldPackageCountryStore(tmp_path / "world")
+    store.countries_root.mkdir(parents=True)
+    outside = tmp_path / "external_index.json"
+    outside.write_text('{"country_codes": ["AAA"]}')
+    try:
+        store.index_path.symlink_to(outside)
+    except (OSError, NotImplementedError):
+        pytest.skip("file symlinks are not available on this platform")
+    with pytest.raises(ValueError, match="symlink"):
+        store.load_index()
+    assert outside.read_text() == '{"country_codes": ["AAA"]}'

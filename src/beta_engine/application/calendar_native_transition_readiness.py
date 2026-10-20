@@ -54,7 +54,7 @@ def inspect_native_transition_readiness(repository, *, run_id, branch_id):
                     event = build_calendar_prospect_birth_event(
                         predecessor=life,
                         target=target,
-                        source=source,
+                        source=source.for_week(target.ordinal),
                         world_package_id=world.world_package_id,
                     )
                     names = {

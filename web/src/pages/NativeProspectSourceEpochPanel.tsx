@@ -76,7 +76,7 @@ export function NativeProspectSourceEpochPanel({
           expected_saved_head_revision_id:head,
         })
         if(!valid())return
-        if(receipt.saved_revision?.run_id!==runId||receipt.saved_revision?.branch_id!==branchId)
+        if(!receipt.saved_revision?.revision_id||!receipt.saved_revision?.content_hash)
           throw Error('Saved prospect source has a foreign Run/Branch')
         invalidate();setMaterialized(false)
         setNotice(cs?'Nová verze prospect zdroje byla uložena; hráče přijme až Week/Season Transition.':

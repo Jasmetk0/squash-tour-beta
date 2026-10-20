@@ -86,7 +86,7 @@ def verify_native_tour(state, checkpoint, world, *, payload):
             state=previous,
             checkpoint=cp,
             world=world,
-            source=source,
+            source=source.for_week(entry.advance.target_week.ordinal),
             lifecycle=life[: cp.week.ordinal + 1],
             health=health[:count],
             clock=entry.advance.target_week.calendar,

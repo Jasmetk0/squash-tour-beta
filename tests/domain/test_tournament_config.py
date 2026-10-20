@@ -111,3 +111,21 @@ def test_tournament_template_config_rejects_duplicate_template_ids(tmp_path) -> 
     result = service.validate_current_dataset()
     assert result.ok is False
     assert "duplicate template_id" in result.errors[0].message
+
+
+@pytest.mark.parametrize("season", ["../../private", True, -1, 0, 10000])
+def test_calendar_season_cannot_be_untrusted_path_component(season) -> None:
+    with pytest.raises(ValueError, match="season must be an integer"):
+        load_season_calendar(season=season)
+
+
+def test_config_loader_rejects_symlink_source(tmp_path) -> None:
+    source = tmp_path / "data.json"
+    source.write_text("{}")
+    link = tmp_path / "external.json"
+    try:
+        link.symlink_to(source)
+    except (OSError, NotImplementedError):
+        pytest.skip("file symlinks not supported")
+    with pytest.raises(ValueError, match="not a symlink"):
+        load_tournament_templates_config(path=link)

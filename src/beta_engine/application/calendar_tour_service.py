@@ -161,9 +161,6 @@ class CalendarTourService:
             allow_calendar_sporting=True,
             _sporting_component_proofs=proofs,
         )
-        health = saved_knockout_health(
-            session, revision=revision, run_id=run_id, branch_id=branch_id
-        )
         # CalendarStandaloneMatchService._context has just authenticated this
         # exact Saved HEAD via the repository's signed lineage validator. The
         # latter either strictly folds all sporting/Tour sources or reuses an
@@ -175,7 +172,9 @@ class CalendarTourService:
             branch_id=branch_id,
         )
         rows = load_match_rows(
-            session, run_id=run_id, branch_id=branch_id,
+            session,
+            run_id=run_id,
+            branch_id=branch_id,
             _verified_source=saved_evidence,
         )
         evidence = rows[0] if len(rows) == 1 else None
@@ -193,18 +192,44 @@ class CalendarTourService:
         # The exact same Saved and live owner needs one full sporting fold, not
         # independent Opening + Continuation + Tour folds of identical inputs.
         # A distinct unsaved owner still receives its own complete verification.
-        if checkpoint != saved:
+        from beta_engine.domain.players.calendar_native_sporting_checkpoint import (
+            CalendarNativeSportingCheckpoint,
+        )
+
+        native = isinstance(checkpoint, CalendarNativeSportingCheckpoint)
+        state = load_tour(session, run_id=run_id, branch_id=branch_id)
+        if native:
+            from beta_engine.application.calendar_native_tour_context import (
+                native_working_context,
+            )
+
+            health = native_working_context(
+                session,
+                revision=revision,
+                checkpoint=checkpoint,
+                saved=saved,
+                state=state,
+                signed=signed,
+                evidence=evidence,
+            )
+        else:
+            health = saved_knockout_health(
+                session, revision=revision, run_id=run_id, branch_id=branch_id
+            )
+        if checkpoint != saved and not native:
             # This exact Saved predecessor was authenticated above, just as in
             # the Save coordinator. Rebuild the complete NEW live suffix and
             # compare the full successor; divergence falls back to full replay.
             verify_checkpoint(
-                checkpoint, world, evidence, _verified_saved_prefix=saved,
+                checkpoint,
+                world,
+                evidence,
+                _verified_saved_prefix=saved,
             )
         if checkpoint and checkpoint.week.calendar.season_count > clock.season_count:
             raise ValueError("Native sporting owner exceeds the available Run horizon")
         context = (clock, revision, world, health, checkpoint, saved, evidence)
-        state = load_tour(session, run_id=run_id, branch_id=branch_id)
-        if state != signed or checkpoint != saved:
+        if not native and (state != signed or checkpoint != saved):
             verify_tour(state, checkpoint, world)
         verify_tour_origins(session, state)
         # The exact Saved HEAD has been fully authenticated in _context's
@@ -230,6 +255,8 @@ class CalendarTourService:
         expected_life = (
             signed_life
             if state is None or (state == signed and checkpoint == saved)
+            else live_life
+            if native
             else _lifecycle_history(world, state.week, state)
         )
         if live_life != expected_life or (
@@ -254,8 +281,14 @@ class CalendarTourService:
         return context, state, signed
 
     def records(
-        self, *, run_id, branch_id, as_of_season_index=None,
-        from_season_index=0, country_code=None, leaderboard_limit=20,
+        self,
+        *,
+        run_id,
+        branch_id,
+        as_of_season_index=None,
+        from_season_index=0,
+        country_code=None,
+        leaderboard_limit=20,
     ):
         """Read only the authenticated Saved Tour, not newer Working changes."""
         with self.repository._session_factory() as session:
@@ -265,8 +298,11 @@ class CalendarTourService:
             if signed is None or world is None:
                 raise ValueError("Native Records require a Saved configured Tour")
             report = signed_tour_records(
-                signed, world, as_of_season_index=as_of_season_index,
-                from_season_index=from_season_index, country_code=country_code,
+                signed,
+                world,
+                as_of_season_index=as_of_season_index,
+                from_season_index=from_season_index,
+                country_code=country_code,
                 leaderboard_limit=leaderboard_limit,
             )
             return {
@@ -284,7 +320,10 @@ class CalendarTourService:
             if signed is None or world is None:
                 raise ValueError("Season summary requires a Saved configured Tour")
             summary = compare_completed_seasons(
-                signed, world, season_index, compare_to,
+                signed,
+                world,
+                season_index,
+                compare_to,
             )
             return {
                 "schema_version": "calendar_tour_season_comparison.v1",
@@ -314,6 +353,23 @@ class CalendarTourService:
                 {p.player_id: p for p in lifecycle.players} if lifecycle else {}
             )
             sporting = {p.player_id: p for p in cp.players} if cp else {}
+            names = {p.player_id: p.name for p in world.players}
+            if identities.keys() - names.keys():
+                from beta_engine.infrastructure.db.run_prospect_source_state import (
+                    load_saved_run_prospect_source,
+                )
+
+                source = load_saved_run_prospect_source(
+                    rev.saved_revision.payload, run_id=run_id
+                )
+                names.update(
+                    {
+                        r["prospect_id"]: r.get("display_name") or r["prospect_id"]
+                        for r in source.records
+                        if r["prospect_id"] in identities
+                    }
+                )
+            population = tuple(identities) if identities else tuple(names)
             evidence = {}
             contributions = {}
             if state and cp:
@@ -380,8 +436,7 @@ class CalendarTourService:
                 "draft_version": rev.working_draft.draft_version,
                 "run_calendar": _clock.to_metadata(),
                 "saved_completed_seasons": (
-                    completed_season_indices(signed)
-                    if signed else ()
+                    completed_season_indices(signed) if signed else ()
                 ),
                 "checkpoint_fingerprint": checkpoint_fingerprint,
                 "tour_fingerprint": state.fingerprint if state else None,
@@ -392,25 +447,27 @@ class CalendarTourService:
                 and cp.week.week >= 2,
                 "players": [
                     {
-                        "player_id": p.player_id,
-                        "name": p.name,
-                        "age": identities[p.player_id].age
-                        if p.player_id in identities
-                        else p.age_years_at_season_start,
-                        "status": identities[p.player_id].status
-                        if p.player_id in identities
+                        "player_id": pid,
+                        "name": names[pid],
+                        "age": identities[pid].age
+                        if pid in identities
+                        else next(
+                            p.age_years_at_season_start
+                            for p in world.players
+                            if p.player_id == pid
+                        ),
+                        "status": identities[pid].status
+                        if pid in identities
                         else "active",
-                        "form": sporting[p.player_id].current_form
-                        if p.player_id in sporting
+                        "form": sporting[pid].current_form if pid in sporting else None,
+                        "sharpness": sporting[pid].match_sharpness
+                        if pid in sporting
                         else None,
-                        "sharpness": sporting[p.player_id].match_sharpness
-                        if p.player_id in sporting
-                        else None,
-                        "fatigue": sporting[p.player_id].long_term_fatigue
-                        if p.player_id in sporting
+                        "fatigue": sporting[pid].long_term_fatigue
+                        if pid in sporting
                         else None,
                     }
-                    for p in world.players
+                    for pid in population
                 ],
                 "state": state.model_dump(mode="json") if state else None,
                 "edition_evidence": evidence,
@@ -421,7 +478,10 @@ class CalendarTourService:
                 if state
                 else ["tour_authority_missing"],
                 "season_transition_blockers": self._transition_blockers(
-                    state, ctx, session, _checkpoint_fingerprint=checkpoint_fingerprint,
+                    state,
+                    ctx,
+                    session,
+                    _checkpoint_fingerprint=checkpoint_fingerprint,
                     season=True,
                 )
                 if state
@@ -441,7 +501,13 @@ class CalendarTourService:
                 raise KeyError(
                     "Player does not belong to this Run/Branch sporting owner"
                 )
-            life = _lifecycle_history(ctx[2], state.week, state)[-1] if state else None
+            life = (
+                get_lifecycle(
+                    session, run_id=run_id, branch_id=branch_id, week=state.week
+                )
+                if state
+                else None
+            )
             identity = (
                 next((p for p in life.players if p.player_id == player_id), None)
                 if life
@@ -476,7 +542,10 @@ class CalendarTourService:
         # one Working Draft. Playing a real match, confirming its result and
         # advancing the public week must still start from an immutable Save.
         if state != signed and command.action in (
-            "play", "confirm-result", "transition", "season-transition"
+            "play",
+            "confirm-result",
+            "transition",
+            "season-transition",
         ):
             raise ValueError(
                 "Manual Save of the configured Tour authority is required first"
@@ -486,6 +555,18 @@ class CalendarTourService:
         if command.action == "initialize" and (state is not None or cp.week.week < 2):
             raise ValueError(
                 "Native Tour requires one Saved population and Week 2+ sporting checkpoint"
+            )
+        from beta_engine.domain.players.calendar_native_sporting_checkpoint import (
+            CalendarNativeSportingCheckpoint,
+        )
+
+        if isinstance(cp, CalendarNativeSportingCheckpoint) and (
+            command.action not in {"transition", "season-transition"}
+            or command.data
+            or command.edition_id
+        ):
+            raise ValueError(
+                "Native birth Tour currently supports natural Week/Season transitions only"
             )
         # All native writes share the identity namespace, including nested matches.
         reserved = {
@@ -499,12 +580,16 @@ class CalendarTourService:
         if state and command.action in {"transition", "season-transition"}:
             season = command.action == "season-transition"
             blockers = self._transition_blockers(
-                state, ctx, session, season=season,
+                state,
+                ctx,
+                session,
+                season=season,
             )
             if blockers:
                 raise ValueError(
                     ("Season Transition" if season else "Week Transition")
-                    + " blocked: " + ", ".join(blockers)
+                    + " blocked: "
+                    + ", ".join(blockers)
                 )
         authority = None
         if command.edition_id:
@@ -590,7 +675,9 @@ class CalendarTourService:
         }
         successor = None
         if command.action in {"transition", "season-transition"}:
-            candidate, successor = self._transition_candidate(ctx, state, command)
+            candidate, successor = self._transition_candidate(
+                session, ctx, state, command
+            )
             preview["impact"] = candidate
         else:
             if command.action == "play":
@@ -659,10 +746,17 @@ class CalendarTourService:
             )
             put_tour(session, successor)
             _fault_injection_point("after_tour_write")
+            if preview["impact"].get("native_transition"):
+                # Reject any coupled-write discrepancy before this transaction
+                # commits, not on the next inspection or eventual manual Save.
+                self._context(session, run_id, branch_id)
+                _fault_injection_point("after_native_replay")
             return result
 
     @staticmethod
-    def _transition_blockers(state, ctx, session=None, *, _checkpoint_fingerprint=None, season=False):
+    def _transition_blockers(
+        state, ctx, session=None, *, _checkpoint_fingerprint=None, season=False
+    ):
         clock, _rev, _world, health, cp, _saved, _evidence = ctx
         blockers = []
         if season:
@@ -687,7 +781,8 @@ class CalendarTourService:
             ):
                 blockers.append("edition_not_terminal:" + authority.edition.edition_id)
         checkpoint_fingerprint = (
-            cp.fingerprint if _checkpoint_fingerprint is None
+            cp.fingerprint
+            if _checkpoint_fingerprint is None
             else _checkpoint_fingerprint
         )
         if state.checkpoint_fingerprint != checkpoint_fingerprint:
@@ -707,9 +802,40 @@ class CalendarTourService:
                 )
                 is not None
             ):
-                blockers.append(
-                    "intake_source_requires_native_calendar_materialization"
+                from beta_engine.infrastructure.db.run_prospect_source_state import (
+                    validate_live_run_prospect_source_against_saved,
                 )
+                from beta_engine.domain.players.calendar_prospect_birth import (
+                    build_calendar_prospect_birth_event,
+                )
+
+                try:
+                    source = validate_live_run_prospect_source_against_saved(
+                        session, _rev.saved_revision.payload, run_id=state.run_id
+                    )
+                    if cp.week.ordinal + 1 < clock.season_count * clock.weeks_per_year:
+                        position = clock.position_at_ordinal(cp.week.ordinal + 1)
+                        target = RunWeekPosition(
+                            calendar=clock,
+                            season_index=position.season_index,
+                            week=position.season_week,
+                        )
+                        life = get_lifecycle(
+                            session,
+                            run_id=state.run_id,
+                            branch_id=state.branch_id,
+                            week=cp.week,
+                        )
+                        build_calendar_prospect_birth_event(
+                            predecessor=life,
+                            target=target,
+                            source=source,
+                            world_package_id=_world.world_package_id,
+                        )
+                except ValueError:
+                    blockers.append(
+                        "intake_source_requires_native_calendar_materialization"
+                    )
             if (
                 session.scalar(
                     select(StagedCalendarRankingZeroVersionModel.run_id)
@@ -744,8 +870,48 @@ class CalendarTourService:
                 blockers.append("ranking_source_requires_edition_binding_or_correction")
         return blockers
 
-    def _transition_candidate(self, ctx, state, command):
+    def _transition_candidate(self, session, ctx, state, command):
         clock, rev, world, health, cp, saved, evidence = ctx
+        from beta_engine.infrastructure.db.run_prospect_source_state import (
+            validate_live_run_prospect_source_against_saved,
+        )
+        from beta_engine.infrastructure.db.player_lifecycle_state import (
+            load_saved_lifecycle,
+        )
+        from beta_engine.infrastructure.db.player_health_state import load_saved_health
+        from beta_engine.domain.tournaments.calendar_native_tour_week import (
+            prepare_native_tour_week,
+        )
+
+        source = validate_live_run_prospect_source_against_saved(
+            session, rev.saved_revision.payload, run_id=state.run_id
+        )
+        if source is not None:
+            native = prepare_native_tour_week(
+                state=state,
+                checkpoint=cp,
+                world=world,
+                source=source,
+                lifecycle=load_saved_lifecycle(
+                    rev.saved_revision.payload,
+                    run_id=state.run_id,
+                    branch_id=state.branch_id,
+                ),
+                health=load_saved_health(
+                    rev.saved_revision.payload,
+                    run_id=state.run_id,
+                    branch_id=state.branch_id,
+                ),
+                clock=clock,
+                knockout=getattr(evidence, "knockout", evidence),
+                command=command.model_dump(mode="json"),
+            )
+            if native is not None:
+                if command.data or command.edition_id is not None:
+                    raise ValueError(
+                        "Native birth transition cannot contain Edition or extra command data"
+                    )
+                return native
         policy = effective_policy(state, cp.week)
         sporting_cmd = CalendarSportingWeekCommand(
             command_id=command.command_id,
@@ -942,14 +1108,22 @@ class CalendarTourService:
             ranking = CalendarOfficialRankingSnapshot.model_validate_json(
                 json.dumps(impact["ranking"])
             )
-            from beta_engine.domain.players.calendar_lifecycle import (
-                CalendarTourLifecycleState,
+            from beta_engine.infrastructure.db.player_lifecycle_state import (
+                _parse_lifecycle_json,
             )
 
-            lifecycle = CalendarTourLifecycleState.model_validate_json(
-                json.dumps(impact["lifecycle"])
-            )
+            lifecycle = _parse_lifecycle_json(json.dumps(impact["lifecycle"]))
+            if impact.get("native_transition"):
+                from beta_engine.infrastructure.db.player_health_state import (
+                    _parse_health_json,
+                    put_health,
+                )
+
+                for raw in impact["health_states"]:
+                    put_health(session, _parse_health_json(json.dumps(raw)))
+                _fault_injection_point("after_health_write")
             put_lifecycle(session, lifecycle)
+            _fault_injection_point("after_lifecycle_write")
             event = {
                 "kind": (
                     "season_transition_completed"
@@ -973,26 +1147,50 @@ class CalendarTourService:
                 target_week=successor.week,
                 sporting_advance_fingerprint=impact["sporting"]["advance_fingerprint"],
                 ranking_fingerprint=ranking.fingerprint,
-                health_fingerprint=health.fingerprint,
+                health_fingerprint=impact["health_fingerprint"],
                 ages=impact["ages"],
                 retired_player_ids=impact["retired_player_ids"],
                 public_event=event,
             )
-            state = state.model_copy(
-                update={
-                    "schema_version": (
-                        "calendar_tour_authority.v2"
-                        if command.action == "season-transition"
-                        else state.schema_version
+            updates = {
+                "schema_version": (
+                    "calendar_tour_authority.v3"
+                    if impact.get("native_transition")
+                    else "calendar_tour_authority.v2"
+                    if command.action == "season-transition"
+                    else state.schema_version
+                ),
+                "week": successor.week,
+                "slot_cursor": 0,
+                "checkpoint_fingerprint": successor.fingerprint,
+                "lifecycle_fingerprint": lifecycle.fingerprint,
+                "rankings": state.rankings + (ranking,),
+                "transitions": state.transitions + (transition,),
+            }
+            if impact.get("native_transition"):
+                from beta_engine.domain.tournaments.calendar_native_tour import (
+                    CalendarNativeTourState,
+                )
+
+                values = {key: getattr(state, key) for key in type(state).model_fields}
+                values.update(updates)
+                values.update(
+                    schema_version="calendar_tour_authority.v3",
+                    native_root_tour=getattr(state, "native_root_tour", state),
+                    native_root_saved_head=getattr(
+                        state, "native_root_saved_head", command.expected_saved_head
                     ),
-                    "week": successor.week,
-                    "slot_cursor": 0,
-                    "checkpoint_fingerprint": successor.fingerprint,
-                    "lifecycle_fingerprint": lifecycle.fingerprint,
-                    "rankings": state.rankings + (ranking,),
-                    "transitions": state.transitions + (transition,),
-                }
-            )
+                    native_root_health_state_count=getattr(
+                        state,
+                        "native_root_health_state_count",
+                        impact["source_health_state_count"],
+                    ),
+                )
+                # Receipt is attached immediately below in execute, before the
+                # strict persisted v3 validator sees this staged aggregate.
+                state = CalendarNativeTourState.model_construct(**values)
+            else:
+                state = state.model_copy(update=updates)
             result["impact"] = impact
             _fault_injection_point("after_ranking_and_public_event_staging")
         else:

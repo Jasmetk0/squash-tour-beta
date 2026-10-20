@@ -10,7 +10,10 @@ from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
 from beta_engine.domain.calendar.run_week_position import RunWeekPosition
-from beta_engine.domain.players.calendar_health import CalendarHealthState
+from beta_engine.domain.players.calendar_health import CalendarHealthState, CalendarHealthOrigin
+from beta_engine.domain.players.calendar_native_health_transition import (
+    CalendarNativeHealthTransitionState, advance_native_health_week,
+)
 from beta_engine.domain.players.calendar_initial_health import (
     CalendarInitialHealthState,
 )
@@ -37,6 +40,11 @@ def _parse_health_json(raw):
         and value.get("schema_version") == "player_health_calendar_state.v2"
     ):
         return CalendarHealthState.model_validate_json(raw)
+    if (
+        isinstance(value, dict)
+        and value.get("schema_version") == "player_health_calendar_state.v3"
+    ):
+        return CalendarNativeHealthTransitionState.model_validate_json(raw)
     return PlayerHealthWeekState.model_validate_json(raw)
 
 
@@ -45,7 +53,7 @@ def _load(
     run_id: str,
     branch_id: str,
     week_ordinal: int,
-) -> PlayerHealthWeekState | CalendarInitialHealthState | CalendarHealthState:
+) -> PlayerHealthWeekState | CalendarInitialHealthState | CalendarHealthState | CalendarNativeHealthTransitionState:
     state = _parse_health_json(row.payload_json)
     if (state.run_id, state.branch_id, state.week.ordinal, state.fingerprint) != (
         run_id,
@@ -63,12 +71,12 @@ def get_health(
     run_id: str,
     branch_id: str,
     week: RankingWeek | RunWeekPosition,
-) -> PlayerHealthWeekState | CalendarInitialHealthState | CalendarHealthState | None:
+) -> PlayerHealthWeekState | CalendarInitialHealthState | CalendarHealthState | CalendarNativeHealthTransitionState | None:
     row = session.get(PlayerHealthWeekStateModel, (run_id, branch_id, week.ordinal))
     if row is None:
         return None
     state = _load(row, run_id, branch_id, week.ordinal)
-    if isinstance(state, (CalendarInitialHealthState, CalendarHealthState)):
+    if isinstance(state, (CalendarInitialHealthState, CalendarHealthState, CalendarNativeHealthTransitionState)):
         if not isinstance(week, RunWeekPosition) or state.week != week:
             raise ValueError("Calendar health requires its matching Run-owned position")
     elif not isinstance(week, RankingWeek):
@@ -78,8 +86,8 @@ def get_health(
 
 def put_health(
     session: Session,
-    state: PlayerHealthWeekState | CalendarInitialHealthState | CalendarHealthState,
-) -> PlayerHealthWeekState | CalendarInitialHealthState | CalendarHealthState:
+    state: PlayerHealthWeekState | CalendarInitialHealthState | CalendarHealthState | CalendarNativeHealthTransitionState,
+) -> PlayerHealthWeekState | CalendarInitialHealthState | CalendarHealthState | CalendarNativeHealthTransitionState:
     current = get_health(
         session,
         run_id=state.run_id,
@@ -195,8 +203,13 @@ def replace_health_head(
     if head.week_ordinal != state.week.ordinal:
         raise ValueError("Admin Health edit may replace only the current health head")
     current = _load(head, state.run_id, state.branch_id, state.week.ordinal)
+    if isinstance(current, CalendarNativeHealthTransitionState):
+        # v2 edits cannot retain the natural transition's lifecycle/birth proof.
+        # Keep the authenticated v3 state intact until a versioned correction
+        # and replay contract exists for that authority.
+        raise ValueError("Native v3 Health requires versioned Admin correction authority")
     calendar_current = isinstance(
-        current, (CalendarInitialHealthState, CalendarHealthState)
+        current, (CalendarInitialHealthState, CalendarHealthState, CalendarNativeHealthTransitionState)
     )
     if calendar_current != isinstance(state, CalendarHealthState):
         raise ValueError("Health writer cannot change calendar schema authority")
@@ -273,9 +286,9 @@ def health_component(
 
 def _component(
     states: tuple[
-        PlayerHealthWeekState | CalendarInitialHealthState | CalendarHealthState, ...
+        PlayerHealthWeekState | CalendarInitialHealthState | CalendarHealthState | CalendarNativeHealthTransitionState, ...
     ]
-    | list[PlayerHealthWeekState | CalendarInitialHealthState | CalendarHealthState],
+    | list[PlayerHealthWeekState | CalendarInitialHealthState | CalendarHealthState | CalendarNativeHealthTransitionState],
 ):
     body = [state.model_dump(mode="json") for state in states]
     return {
@@ -288,20 +301,26 @@ def _component(
 
 def _validate_chain(
     states: tuple[
-        PlayerHealthWeekState | CalendarInitialHealthState | CalendarHealthState, ...
+        PlayerHealthWeekState | CalendarInitialHealthState | CalendarHealthState | CalendarNativeHealthTransitionState, ...
     ],
 ) -> None:
     calendar_states = [
         s
         for s in states
-        if isinstance(s, (CalendarInitialHealthState, CalendarHealthState))
+        if isinstance(s, (CalendarInitialHealthState, CalendarHealthState, CalendarNativeHealthTransitionState))
     ]
     if calendar_states and len(calendar_states) != len(states):
         raise ValueError("Calendar health cannot contain mixed legacy history")
     if any(isinstance(s, CalendarInitialHealthState) for s in states[1:]):
         raise ValueError("Initial health baseline must be the opening state")
     if calendar_states and any(
-        s.week.calendar != states[0].week.calendar for s in states
+        (s.week.calendar.weeks_per_year, s.week.calendar.season_start_year_week,
+         s.week.calendar.start_year)
+        != (states[0].week.calendar.weeks_per_year,
+            states[0].week.calendar.season_start_year_week,
+            states[0].week.calendar.start_year)
+        or s.week.calendar.season_count < states[0].week.calendar.season_count
+        for s in states
     ):
         raise ValueError("Calendar Health chain cannot alias foreign calendars")
     if calendar_states and (
@@ -309,6 +328,26 @@ def _validate_chain(
     ):
         raise ValueError("Calendar Health history requires its opening state")
     for predecessor, target in pairwise(calendar_states):
+        if (isinstance(predecessor, CalendarNativeHealthTransitionState)
+                and not isinstance(target, CalendarNativeHealthTransitionState)):
+            raise ValueError("Native v3 Health history cannot downgrade its transition authority")
+        if target.week.calendar.season_count < predecessor.week.calendar.season_count:
+            raise ValueError("Calendar Health history cannot contract its horizon")
+        if isinstance(target, CalendarNativeHealthTransitionState):
+            if (not isinstance(predecessor, (
+                CalendarInitialHealthState, CalendarHealthState,
+                CalendarNativeHealthTransitionState,
+            ))
+                or target.origin != (
+                    CalendarHealthOrigin.from_baseline(predecessor)
+                    if isinstance(predecessor, CalendarInitialHealthState)
+                    else predecessor.origin
+                )
+                or target.admin_edits != (
+                    () if isinstance(predecessor, CalendarInitialHealthState)
+                    else predecessor.admin_edits
+                )):
+                raise ValueError("Native v3 Health cannot rewrite baseline/Admin history")
         if (
             isinstance(target, CalendarHealthState)
             and isinstance(predecessor, CalendarHealthState)
@@ -350,14 +389,24 @@ def load_saved_health(
     run_id: str,
     branch_id: str,
 ) -> (
-    tuple[PlayerHealthWeekState | CalendarInitialHealthState | CalendarHealthState, ...]
+    tuple[PlayerHealthWeekState | CalendarInitialHealthState | CalendarHealthState | CalendarNativeHealthTransitionState, ...]
     | None
 ):
-    component = payload.get("content", {}).get(PLAYER_HEALTH_COMPONENT_KEY)
+    content = payload.get("content", {})
+    component = content.get(PLAYER_HEALTH_COMPONENT_KEY)
     if component is None:
+        lifecycle = content.get("player_lifecycle", {})
+        if isinstance(lifecycle, dict) and any(
+            isinstance(state, dict)
+            and state.get("schema_version") == "player_lifecycle_calendar_state.v4"
+            for state in lifecycle.get("states", ())
+        ):
+            raise ValueError("Saved v4 lifecycle requires its Signed native Health transition")
         return None
     if not isinstance(component, dict) or set(component) != {"fingerprint", "states"}:
         raise ValueError("Invalid Saved Revision player-health component")
+    if not isinstance(component["states"], list) or not component["states"]:
+        raise ValueError("Saved Health component requires a nonempty state history")
     states = tuple(
         _parse_health_json(json.dumps(state)) for state in component["states"]
     )
@@ -367,7 +416,7 @@ def load_saved_health(
     ):
         raise ValueError("Saved player-health identity or fingerprint mismatch")
     if any(
-        isinstance(state, (CalendarInitialHealthState, CalendarHealthState))
+        isinstance(state, (CalendarInitialHealthState, CalendarHealthState, CalendarNativeHealthTransitionState))
         for state in states
     ):
         from beta_engine.infrastructure.db.initial_world_state import (
@@ -385,21 +434,56 @@ def load_saved_health(
             or not life
         ):
             raise ValueError("Saved calendar health requires its population/lifecycle")
-        for state in states:
-            owned_life = next((item for item in life if item.week == state.week), None)
+        life_by_ordinal = {item.week.ordinal: item for item in life}
+        for index, state in enumerate(states):
+            owned_life = life_by_ordinal.get(state.week.ordinal)
             if (
-                state.week.calendar != world.run_calendar
+                (state.week.calendar.weeks_per_year,
+                 state.week.calendar.season_start_year_week,
+                 state.week.calendar.start_year)
+                != (world.run_calendar.weeks_per_year,
+                    world.run_calendar.season_start_year_week,
+                    world.run_calendar.start_year)
                 or owned_life is None
+                or state.week.calendar.season_count < world.run_calendar.season_count
+                or state.week.calendar.season_count > owned_life.week.calendar.season_count
                 or state.source_initial_world_fingerprint
                 != owned_life.source_initial_world_fingerprint
                 or tuple(p.player_id for p in state.players)
                 != tuple(p.player_id for p in owned_life.players)
-                or tuple(p.player_id for p in state.players)
-                != tuple(sorted(p.player_id for p in world.players))
             ):
                 raise ValueError(
                     "Saved calendar health differs from its population/calendar"
                 )
+            if isinstance(state, CalendarNativeHealthTransitionState):
+                if index == 0 or owned_life.fingerprint != state.source_lifecycle_fingerprint:
+                    raise ValueError("Native v3 Health lacks its actual Signed lifecycle")
+                previous_life = life_by_ordinal.get(state.week.ordinal - 1)
+                if previous_life is None or advance_native_health_week(
+                    previous_health=states[index - 1],
+                    previous_lifecycle=previous_life,
+                    next_lifecycle=owned_life,
+                ) != state:
+                    raise ValueError("Native v3 Health differs from actual Signed birthdays")
+            elif tuple(p.player_id for p in state.players) != tuple(
+                sorted(p.player_id for p in world.players)
+            ):
+                raise ValueError(
+                    "Historical calendar Health cannot contain newer birth identities"
+                )
+        # A signed v4 birth may never be accompanied by a pre-birth Health
+        # baseline or a legacy v2 state that omits the new identity.
+        from beta_engine.domain.players.calendar_prospect_birth import (
+            CalendarTourLifecycleIntakeState,
+        )
+        for life_state in life:
+            if isinstance(life_state, CalendarTourLifecycleIntakeState) and not any(
+                isinstance(h, CalendarNativeHealthTransitionState)
+                and h.week.ordinal == life_state.week.ordinal
+                and h.birth_event == life_state.birth_event
+                for h in states
+            ):
+                raise ValueError("Saved v4 lifecycle requires its Signed native Health transition")
     return states
 
 
@@ -420,8 +504,11 @@ def remap_saved_health_component(
     if source is None:
         return None
 
+    if any(isinstance(state, CalendarNativeHealthTransitionState) for state in source):
+        raise ValueError("Native v3 Health fork requires signed source/event re-authority")
+
     remapped: list[
-        PlayerHealthWeekState | CalendarInitialHealthState | CalendarHealthState
+        PlayerHealthWeekState | CalendarInitialHealthState | CalendarHealthState | CalendarNativeHealthTransitionState
     ] = []
     previous = None
     for state in source:

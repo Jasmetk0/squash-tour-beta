@@ -24,8 +24,22 @@ describe('configured Tour consent (HTTP boundary mocked)',()=>{
     const section=await screen.findByLabelText('Verified next-week prospect intake')
     expect(section).toHaveTextContent('Young Player')
     expect(section).toHaveTextContent('S1/W3')
-    expect(section).toHaveTextContent('Native activation stays disabled')
+    expect(section).toHaveTextContent('This component check does not activate players')
     expect(api.saveCalendarTour).not.toHaveBeenCalled()
+    expect(api.executeCalendarTour).not.toHaveBeenCalled()
+  })
+  it('keeps unsupported competition disabled on a real v3 authority shape',async()=>{
+    const calendar={schema_version:'run_calendar.v1',weeks_per_year:52,season_start_year_week:1,start_year:2030,season_count:3}
+    api.inspectCalendarTour.mockResolvedValue({...view(),saved:true,tour_fingerprint:'b'.repeat(64),transition_blockers:[],state:{schema_version:'calendar_tour_authority.v3',week:{calendar,season_index:0,week:3},editions:[],rankings:[],transitions:[]}})
+    render(panel());await screen.findByLabelText('Tour operation reason')
+    fireEvent.click(screen.getByText('New Tournament Edition'))
+    fireEvent.change(screen.getByLabelText('Tour operation reason'),{target:{value:'Reviewed'}})
+    fireEvent.change(screen.getByLabelText('Tour Edition ID'),{target:{value:'new-edition'}})
+    fireEvent.change(screen.getByLabelText('Tour Edition name'),{target:{value:'Unsupported'}})
+    expect(screen.getByRole('button',{name:'Review new Edition'})).toBeDisabled()
+    expect(screen.queryByRole('button',{name:'Check next-week prospects'})).not.toBeInTheDocument()
+    expect(screen.getByRole('button',{name:'Check transition capability'})).toBeEnabled()
+    expect(screen.getByRole('button',{name:'Review Week Transition'})).toBeEnabled()
     expect(api.executeCalendarTour).not.toHaveBeenCalled()
   })
   it('requires separate explicit command consent and never saves automatically',async()=>{
@@ -316,7 +330,7 @@ describe('Signed 15yo sporting review (Admin-only read, never a commit)',()=>{
     const data=await screen.findByLabelText('Verified read-only native sporting review')
     expect(data).toHaveTextContent('Players: 8 → 9')
     expect(data).toHaveTextContent('Played last week: 4')
-    expect(data).toHaveTextContent('No write. Actual newborn activation remains disabled.')
+    expect(data).toHaveTextContent('No write. Activation requires the ordinary Week/Season Transition review and confirmation.')
     expect(api.previewCalendarTourNativeBirthSporting).toHaveBeenCalledWith('r','b',{
       expected_saved_head:'head',expected_checkpoint_fingerprint:hex('a'),
       expected_tour_fingerprint:hex('c'),seed:231,

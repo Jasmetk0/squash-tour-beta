@@ -6,6 +6,7 @@ import {validateTourView,validateTourPreview,validateTourSeasonComparison,valida
 import {newCommandId} from '../admin/branchSimulation'
 import {tourWeekOffset,scheduleTourEdition} from '../api/nativeTourCalendar'
 import {useLanguage} from '../i18n/LanguageContext'
+import {NativeTransitionReadinessPanel} from './NativeTransitionReadinessPanel'
 import {formatApiError} from '../utils/apiErrors'
 import type {RunBranchListResponse} from '../api/types'
 
@@ -200,6 +201,7 @@ export function CalendarTourPanel({runId,branchId,head}:{runId:string;branchId:s
   }
   const names=new Map(view?.players.map(p=>[p.player_id,p.name])??[])
   const ready=Boolean(view&&!busy&&reason.trim()&&/^-?\d+$/.test(seed)&&Number.isSafeInteger(Number(seed))&&(view.saved||view.state))
+  const nativeOnly=Boolean(view?.state&&'schema_version' in view.state&&view.state.schema_version==='calendar_tour_authority.v3')
   const latest=view?.state?.rankings[view.state.rankings.length-1]
   const clock=view?.state?{...view.state.week,calendar:view.run_calendar??view.state.week.calendar}:null
   const plannedEdition=clock?scheduleTourEdition(clock,Number(season)-1,Number(week)):null
@@ -210,7 +212,7 @@ export function CalendarTourPanel({runId,branchId,head}:{runId:string;branchId:s
     {!view&&<p>{cs?'Načítání autorit…':'Loading authorities…'}</p>}
     {view&&<>
       <p>{cs?'Stav':'State'}: {view.saved?'Saved':'Working Draft'} · {view.state&&`${cs?'Týden':'Week'} ${view.state.week.week}/${view.state.week.calendar.weeks_per_year}`}</p>
-      {view.state&&<section aria-label="Next-week prospect intake preflight">
+      {view.state&&!nativeOnly&&<section aria-label="Next-week prospect intake preflight">
         <h3>{cs?'Prospect intake – další týden':'Prospect intake – next week'}</h3>
         <p>{cs?'Kontrola ověřeného Saved zdroje; žádná aktivace hráčů.':'Verified Saved source only; no player activation.'}</p>
         <button disabled={busy} onClick={()=>void loadNativeIntake()}>{cs?'Prověřit patnáctileté prospecty':'Check next-week prospects'}</button>
@@ -218,7 +220,7 @@ export function CalendarTourPanel({runId,branchId,head}:{runId:string;branchId:s
           <p>{cs?'Cílový týden':'Target week'}: S{intakeReport.target_week.season_index+1}/W{intakeReport.target_week.week} · {cs?'Připravení':'Ready'}: {intakeReport.due_count} · {cs?'Nesrovnalosti':'Problems'}: {intakeReport.problems.length}</p>
           {intakeReport.due.map(player=><p key={player.player_id}>{player.display_name} · {player.country_code} · <code>{player.player_id}</code></p>)}
           {intakeReport.problems.map(issue=><p key={issue.prospect_id+issue.code}>{issue.prospect_id}: {issue.code}</p>)}
-          <p>{cs?'Nativní aktivace je stále zablokovaná do propojení lifecycle, Health a sportovního stavu.':'Native activation stays disabled until lifecycle, Health and sporting state are coupled.'}</p>
+          <p>{cs?'Tato kontrola komponenty hráče neaktivuje. Aktuální možnosti najdete ve Skutečné připravenosti přechodu; provedení vyžaduje běžnou kontrolu Week/Season Transition a potvrzení.':'This component check does not activate players. See Actual transition readiness; execution requires the ordinary Week/Season Transition review and confirmation.'}</p>
           {intakeReport.due_count>0&&intakeReport.problems.length===0&&<>
             <p>{cs?'Sportovní náhled používá seed simulace uvedený níže a ověřená data ze Saved. Nic neukládá.':'Sporting review uses the simulation seed below and verified Saved data. It never writes.'}</p>
             <button disabled={busy||!view.saved||!view.tour_fingerprint||!view.checkpoint_fingerprint
@@ -230,7 +232,7 @@ export function CalendarTourPanel({runId,branchId,head}:{runId:string;branchId:s
             <p>{cs?'Seed':'Seed'}: {birthSportingReport.sporting_week_projection.seed} · {cs?'Hráči':'Players'}: {birthSportingReport.sporting_week_projection.old_population_count} → {birthSportingReport.sporting_week_projection.new_population_count} · {cs?'Aktivní v minulém týdnu':'Played last week'}: {birthSportingReport.sporting_week_projection.played_player_count}</p>
             <p>{cs?'Výsledná sportovní populace':'Resulting sporting population'}: <code>{birthSportingReport.sporting_week_projection.target_players_fingerprint.slice(0,16)}</code></p>
             <p>{cs?'Spojený podpis Health + lifecycle + sporting':'Combined Health + lifecycle + sporting proof'}: <code>{birthSportingReport.sporting_week_projection.signed_admission_week_fingerprint.slice(0,16)}</code></p>
-            <p>{cs?'Bez zápisu. Skutečná aktivace nových hráčů zůstává zablokovaná.':'No write. Actual newborn activation remains disabled.'}</p>
+            <p>{cs?'Bez zápisu. Aktivace vyžaduje běžnou kontrolu Week/Season Transition a potvrzení.':'No write. Activation requires the ordinary Week/Season Transition review and confirmation.'}</p>
           </section>}
         </div>}
       </section>}
@@ -242,6 +244,7 @@ export function CalendarTourPanel({runId,branchId,head}:{runId:string;branchId:s
         <button disabled={busy||!view.can_initialize||!reason.trim()} onClick={()=>void perform('initialize')}>{cs?'Zkontrolovat zahájení Tour':'Review Tour initialization'}</button>
       </>}
       {view.state&&<>
+        {nativeOnly&&<p role="status">{cs?'Nativní příjem hráčů: zatím pouze přirozené Week/Season Transition. Nové turnajové operace ještě nejsou podporovány.':'Native intake: natural Week/Season Transitions only for now. New competition operations are not supported yet.'}</p>}
         <details><summary>{cs?'Nová Tournament Edition':'New Tournament Edition'}</summary>
           <label>ID<input aria-label="Tour Edition ID" value={editionId} onChange={e=>{setEditionId(e.target.value);invalidate()}}/></label>
           <label>{cs?'Název':'Name'}<input aria-label="Tour Edition name" value={name} onChange={e=>{setName(e.target.value);invalidate()}}/></label>
@@ -252,7 +255,7 @@ export function CalendarTourPanel({runId,branchId,head}:{runId:string;branchId:s
           <label>{cs?'Účastníci':'Participants'}<select aria-label="Tour Edition size" value={size} onChange={e=>{setSize(Number(e.target.value));invalidate()}}><option>8</option><option>4</option></select></label>
           {Object.entries(points).filter(([k])=>size===8||k!=='quarterfinal').map(([stage,value])=><label key={stage}>{cs?stageLabels[stage]:stage}<input aria-label={`Tour points ${stage}`} type="number" value={value} onChange={e=>{setPoints({...points,[stage]:e.target.value});invalidate()}}/></label>)}
           <p>{cs?'Platnost bodů':'Point validity'}: {view.state.week.calendar.weeks_per_year} {cs?'týdnů od prvního oficiálního rankingu':'weeks from first Official ranking'}</p>
-          <button disabled={!ready||!plannedEdition||!editionId.trim()||!name.trim()} onClick={()=>void perform('create-edition')}>{cs?'Zkontrolovat novou Edition':'Review new Edition'}</button>
+          <button disabled={nativeOnly||!ready||!plannedEdition||!editionId.trim()||!name.trim()} onClick={()=>void perform('create-edition')}>{cs?'Zkontrolovat novou Edition':'Review new Edition'}</button>
         </details>
         {view.state.editions.map(a=>{
           const id=a.edition.edition_id,active=a.edition.week.week===view.state!.week.week&&a.edition.week.season_index===view.state!.week.season_index
@@ -262,14 +265,14 @@ export function CalendarTourPanel({runId,branchId,head}:{runId:string;branchId:s
             <p>{cs?'Přihlášky':'Applications'}: {a.submissions.length} · {cs?'Schválení':'Approved'}: {a.field?.direct_main_player_ids.length??0} · {a.result_confirmed?(cs?'Výsledky potvrzeny':'Results confirmed'):a.tournament_fingerprint?(cs?'Odehráno':'Played'):a.draw?(cs?'Vylosováno':'Drawn'):(cs?'Příprava':'Preparation')}</p>
             <p>{cs?'Bodová tabulka':'Point table'}: {Object.entries(a.edition.point_table).map(([k,v])=>`${cs?stageLabels[k]:k} ${v}`).join(' · ')}</p>
             {!a.field&&active&&<><select multiple aria-label={`Tour applicants ${id}`} value={selected} onChange={e=>{setSelected(Array.from(e.target.selectedOptions,o=>o.value));invalidate()}}>{view.players.filter(p=>p.status!=='retired'&&!a.submissions.some(s=>s.player_id===p.player_id)).map(p=><option key={p.player_id} value={p.player_id}>{p.name}</option>)}</select>
-              <button disabled={!ready||!selected.length} onClick={()=>void perform('submit',id)}>{cs?'Zkontrolovat přihlášky':'Review applications'}</button></>}
+              <button disabled={nativeOnly||!ready||!selected.length} onClick={()=>void perform('submit',id)}>{cs?'Zkontrolovat přihlášky':'Review applications'}</button></>}
             {a.field&&<p>{cs?'Schválený field':'Approved field'}: {a.field.direct_main_player_ids.map(p=>names.get(p)??p).join(', ')}</p>}
             {a.draw&&<ol>{a.draw.main.slots.map(s=><li key={s.slot_index}>{names.get(s.player_id)??s.player_id}</li>)}</ol>}
             {view.edition_evidence[id]&&<>
               <table aria-label={`Played matches ${id}`}><thead><tr><th>Slot</th><th>{cs?'Zápas':'Match'}</th><th>{cs?'Vítěz':'Winner'}</th><th>{cs?'Rally':'Rallies'}</th></tr></thead><tbody>{view.edition_evidence[id].matches.map(m=><tr key={m.match_id}><td>{m.slot}</td><td>{names.get(m.player_a_id)} / {names.get(m.player_b_id)}</td><td>{names.get(m.winner_player_id)}</td><td>{m.rally_count}</td></tr>)}</tbody></table>
               <table aria-label={`Edition results ${id}`}><thead><tr><th>{cs?'Hráč':'Player'}</th><th>{cs?'Výsledek':'Result'}</th><th>{cs?'Body':'Points'}</th></tr></thead><tbody>{view.edition_evidence[id].results.map(r=><tr key={r.player_id}><td>{names.get(r.player_id)}</td><td>{cs?stageLabels[r.stage]:r.stage}</td><td>{r.main_points}</td></tr>)}</tbody></table>
             </>}
-            {active&&!a.result_confirmed&&<button disabled={!ready||(!view.saved&&(next==='play'||next==='confirm-result'))} onClick={()=>void perform(next,id)}>{actionLabels[next][cs?0:1]}</button>}
+            {active&&!a.result_confirmed&&<button disabled={nativeOnly||!ready||(!view.saved&&(next==='play'||next==='confirm-result'))} onClick={()=>void perform(next,id)}>{actionLabels[next][cs?0:1]}</button>}
             {a.tournament_fingerprint&&<button disabled={busy} onClick={()=>{
               const stamp=epoch.current;setBusy(true)
               void replayCalendarContinuation(runId,branchId,`${id}:final`).then(r=>{if(epoch.current===stamp)setNotice(`${cs?'Přesný replay':'Exact replay'}: ${r.exact_replay}`)}).catch(e=>{if(epoch.current===stamp)setError(formatApiError(e))}).finally(()=>{if(epoch.current===stamp)setBusy(false)})
@@ -277,6 +280,7 @@ export function CalendarTourPanel({runId,branchId,head}:{runId:string;branchId:s
           </section>
         })}
         <h3>{cs?'Připravenost týdne':'Week readiness'}</h3>
+        <NativeTransitionReadinessPanel view={view} disabled={busy}/>
         {view.transition_blockers.length?<ul>{view.transition_blockers.map(b=><li key={b}>{b.startsWith('edition_not_terminal:')?`${cs?'Edition není dokončena':'Edition is not complete'}: ${b.slice(21)}`:blockerLabels[b]?.[cs?0:1]??b}</li>)}</ul>:<p>{cs?'Povinné Edition dokončeny.':'Mandatory Editions completed.'}</p>}
         <button disabled={!ready||!view.saved||view.transition_blockers.length>0} onClick={()=>void perform('transition')}>{cs?'Zkontrolovat Week Transition':'Review Week Transition'}</button>
         {view.state.week.week===view.state.week.calendar.weeks_per_year&&<section aria-label="Native Season Transition readiness">
@@ -357,6 +361,7 @@ export function CalendarTourPanel({runId,branchId,head}:{runId:string;branchId:s
         <Link to={`/admin/runs/${encodeURIComponent(runId)}/branches?branch=${encodeURIComponent(branchId)}`}>{cs?'Uložená historie a obnova':'Saved history and restore'}</Link>
       </>}
       {review&&<section aria-label="Tour command review"><h3>{cs?'Kontrola operace':'Operation review'}: {review.command.action}</h3>
+        {'admitted_player_ids' in review.impact&&Array.isArray(review.impact.admitted_player_ids)&&review.impact.admitted_player_ids.length>0&&<p>{cs?'Nově přijímaní hráči':'Newly admitted players'}: {review.impact.admitted_player_ids.join(', ')}</p>}
         <p>HEAD: <code>{review.command.expected_saved_head}</code></p>
         {review.command.action==='create-edition'&&<p>{String(review.command.data.name)} · W{String((review.command.data.week as {week:number}).week)} · {cs?'Účastníci':'Participants'}: {String(review.command.data.main_entrant_count)} · {Object.entries(review.command.data.point_table as Record<string,number>).map(([k,v])=>`${cs?stageLabels[k]:k} ${v}`).join(' · ')}</p>}
         {review.command.action==='submit'&&<p>{cs?'Přihlášky':'Applications'}: {(review.command.data.player_ids as string[]).map(id=>names.get(id)??id).join(', ')}</p>}

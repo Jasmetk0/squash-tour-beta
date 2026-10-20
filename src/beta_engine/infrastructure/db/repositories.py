@@ -6035,7 +6035,7 @@ class SimulationPersistenceRepository:
                         "kind": "run_prospect_source",
                         "summary": "Saved Run prospect source",
                         "run_prospect_source_fingerprint": component["fingerprint"],
-                        "prospect_count": len(component["records"]),
+                        "prospect_count": len(live_source.records),
                     }
                 elif expected_run_package_fingerprint is not None:
                     component = payload["content"].get(RUN_PACKAGE_COMPONENT_KEY)

@@ -123,6 +123,9 @@ export function NativeProspectSourceEpochPanel({
     {materialized&&<p>{cs?'Nové záznamy čekají na manuální Save.':'New records require manual source Save.'}</p>}
     {(materialized||saveReview)&&<button disabled={busy} onClick={()=>void run('reviewSave')}>
       {cs?'3. Zkontrolovat uložení nové verze':'3. Review source-epoch Save'}</button>}
+    {saveReview&&saveReview.blockers?.length>0&&<p role="alert">{cs?
+      'Uložení je nyní blokováno. Všechny dříve uložené záznamy musejí zůstat beze změny a nový ročník musí mít narozeniny až v budoucím týdnu všech větví.':
+      'Source Save is blocked. Previously Signed records must stay unchanged and new cohort birthdays must occur after completed weeks on every Branch.'}</p>}
     {saveReview?.saved_head_revision_id===head&&<div aria-label="Reviewed prospect source Save">
       <p>{cs?'Celkem prospectů':'Total prospects'}: {saveReview.prospect_count} · {cs?'Neuložené změny':'Unsaved changes'}: {String(saveReview.has_unsaved_changes)}</p>
       <p>{cs?'Zdroj':'Source'}: <code>{saveReview.run_prospect_source_fingerprint?.slice(0,16)}</code> · HEAD <code>{head}</code></p>

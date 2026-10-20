@@ -8,7 +8,8 @@ The earlier candidate paragraphs below are retained historical checkpoints.
 
 **Current candidate:** restore routed Admin Time and historical-view component
 checks, current global Home/empty Run private-storage smoke coverage, and stable
-accessible malformed-JSON feedback in Match Lab. Add these focused contracts to
+accessible malformed-JSON feedback in Match Lab. Unsaved session edits now visibly
+block running an older saved scenario until an explicit successful session Save. Add these focused contracts to
 Fast CI so unrelated UI work cannot silently break them again. No backend writer,
 Saved signature, simulation policy or numeric Health calibration changes.
 

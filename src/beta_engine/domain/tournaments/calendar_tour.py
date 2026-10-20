@@ -5,6 +5,7 @@ never acquire an Edition or become ranking sources through this adapter.
 """
 
 import itertools
+import json
 from typing import Literal
 
 from pydantic import Field, model_validator
@@ -337,7 +338,7 @@ class CalendarTourState(FrozenInput):
                     and transition.target_week.season_index
                     == transition.completed_week.season_index + 1
                 )
-                if crosses and self.schema_version != "calendar_tour_authority.v2":
+                if crosses and self.schema_version == "calendar_tour_authority.v1":
                     raise ValueError("Historical Tour v1 cannot gain a Season Transition")
                 if not crosses and transition.completed_week.season_index != transition.target_week.season_index:
                     raise ValueError("Official Tour cannot skip a season")
@@ -368,6 +369,14 @@ def effective_policy(state, week):
     return next(
         p for p in reversed(state.policies) if p.effective_week.ordinal <= week.ordinal
     )
+
+
+def parse_tour_json(raw):
+    body = json.loads(raw)
+    if isinstance(body, dict) and body.get("schema_version") == "calendar_tour_authority.v3":
+        from beta_engine.domain.tournaments.calendar_native_tour import CalendarNativeTourState
+        return CalendarNativeTourState.model_validate_json(raw)
+    return CalendarTourState.model_validate_json(raw)
 
 
 def lifecycle_calendars(state):

@@ -1,3 +1,22 @@
+# Pre-alpha dependency path — confirmed native birth candidate
+
+#1560, #1562, #1563 and #1564 have green final-head applicable checks; only the
+owner merges. Dependency order remains #1562 → #1563 → #1564 → the current birth
+writer candidate. #1560 is the independent Admin read-only sporting review.
+
+The current slice adds actual confirmed atomic natural Week/Season birth,
+complete Health/lifecycle/sporting/ranking/Tour receipts and independent replay,
+manual Save and post-restore validation. Its real HTTP/SQLite birthday, rollback,
+restart/restore and Entry/awards scenarios are mandatory alongside existing native
+Tour/season/browser gates. [Bounded contract](docs/CALENDAR_NATIVE_BIRTH_WEEK_EXECUTION_V1.md).
+Its own final-head CI is not yet certified.
+
+Next integrate post-birth Edition/Entry/matches and versioned source epochs for
+later annual additions; do not bypass these explicit guards. Continue protected
+fork/re-signing, remaining Master scope and full pre-alpha release acceptance.
+
+## Earlier roadmap checkpoints (retained)
+
 # Pre-alpha dependency path — native sporting checkpoint candidate
 
 The latest heads of #1560, #1562 and #1563 are green, but owner merge is pending.

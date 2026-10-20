@@ -37,9 +37,15 @@ the full Health history. HTTP remains compact; it does not ship every record.
 
 ## Explicit remaining boundary
 
+**Dependent implementation update:** the separate
+[confirmed native Tour writer](CALENDAR_NATIVE_BIRTH_WEEK_EXECUTION_V1.md)
+adds genuine v3 receipts and complete atomic natural Week/Season execution.
+The component-only scope and test evidence below describe the original v11
+checkpoint slice; they do not authorize a bare checkpoint without that writer.
+
 This is a durable, replayable **component**, not an atomic live Tour birth writer.
-The existing Tour verifier explicitly refuses v11 until confirmed Tour transition
-receipts and all associated writers are integrated. The preflight remains read
+The Tour verifier refuses a bare v11 without confirmed Tour transition receipts
+and all associated writers. The preflight remains read
 only; it does not Save, create Entry, rank a newborn or publish public events.
 Whole Signed Revision activation must not be inferred from component acceptance.
 

@@ -85,6 +85,26 @@ class CalendarNativeSportingCheckpoint(FrozenInput):
         return self.source_checkpoint.bootstrap_policy
 
     @property
+    def tournaments(self):
+        return self.source_checkpoint.tournaments
+
+    @property
+    def week_events(self):
+        return self.source_checkpoint.week_events
+
+    @property
+    def continuations(self):
+        return self.source_checkpoint.continuations
+
+    @property
+    def closures(self):
+        return self.source_checkpoint.closures
+
+    @property
+    def played_continuations(self):
+        return self.source_checkpoint.played_continuations
+
+    @property
     def fingerprint(self):
         return canonical_hash(self.model_dump(mode="json"))
 

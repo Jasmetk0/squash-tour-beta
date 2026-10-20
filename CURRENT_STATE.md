@@ -1,3 +1,30 @@
+# Confirmed native birth Week/Season candidate — 19 October 2026
+
+**Verified stack:** #1560 `db84d65`, #1562 `095a365`, #1563 `b263ed0` and
+#1564 `c983891` have green final-head applicable checks and are ready for owner
+review. #1564 includes real native Tour HTTP/SQLite Signed restore, season API,
+Shell and W52/W61/W80 browser acceptance. Nothing was merged by the assistant;
+`buuk` remains `14e27846898500aaffc6462878c45aa03792147f`.
+
+**Current dependent candidate:** the ordinary explicitly confirmed Tour Week/
+Season command now atomically stages checkpoint v11, complete natural Health,
+birth/lifecycle, genuine Entry-gated ranking, public event and Tour v3 receipts.
+It independently replays actual live rows before commit; manual Save remains
+separate. Restore verifies the full captured post-restore aggregate. Native
+receipt origins must really own their referenced Saved Tour/checkpoint; proof
+reuse includes the additional native dependencies. See
+[bounded execution contract](docs/CALENDAR_NATIVE_BIRTH_WEEK_EXECUTION_V1.md).
+This candidate is not merge-ready until its own final-head gates pass.
+
+**Next blockers:** post-birth Edition/Entry/match/policy operations remain
+deliberately blocked; v3 currently permits natural transitions only. More annual
+prospects require historical source epochs, not changes to the current single
+Signed source snapshot. Protected fork re-signing, v3 Health corrections,
+historical initial population, remaining Records/notifications, Full Simulation
+and Master release gates are still unfinished. No release or 50×61 claim.
+
+## Earlier checkpoint history (retained)
+
 # Native sporting checkpoint candidate — 19 October 2026
 
 **Verified latest open heads:** #1560 `db84d65`, #1562 `095a365` and #1563

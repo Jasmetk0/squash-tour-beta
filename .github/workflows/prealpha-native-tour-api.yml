@@ -5,18 +5,23 @@ on:
     paths:
       - '.github/workflows/prealpha-native-tour-api.yml'
       - 'tests/api/test_calendar_tour_flow.py'
+      - 'tests/api/test_calendar_native_birth_week_execution.py'
       - 'tests/api/test_calendar_population_sporting_checkpoint.py'
       - 'tests/infrastructure/test_calendar_component_proof_scope.py'
       - 'src/beta_engine/api/routers/admin_calendar_tour.py'
       - 'src/beta_engine/api/routers/viewer_calendar_tour.py'
       - 'src/beta_engine/domain/tournaments/calendar_tour.py'
+      - 'src/beta_engine/domain/tournaments/calendar_native_tour*.py'
       - 'src/beta_engine/domain/players/calendar_*'
       - 'src/beta_engine/domain/rankings/calendar_official.py'
       - 'src/beta_engine/application/calendar_tour_service.py'
+      - 'src/beta_engine/application/calendar_native_tour_context.py'
+      - 'src/beta_engine/application/run_calendar_extension_commit.py'
       - 'src/beta_engine/application/calendar_standalone_match_service.py'
       - 'src/beta_engine/application/calendar_opening_knockout_service.py'
       - 'src/beta_engine/application/calendar_continuation_service.py'
       - 'src/beta_engine/infrastructure/db/calendar_tour.py'
+      - 'src/beta_engine/infrastructure/db/calendar_native_tour.py'
       - 'src/beta_engine/infrastructure/db/calendar_standalone_match_state.py'
       - 'src/beta_engine/infrastructure/db/calendar_sporting_checkpoint.py'
       - 'src/beta_engine/infrastructure/db/player_lifecycle_state.py'
@@ -32,6 +37,28 @@ permissions:
   contents: read
 
 jobs:
+  native-birth-week:
+    name: Native birth Week/Season / ${{ matrix.case }} / real SQLite
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        case: [earth, fax, extended, short_year, preserves_actual]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: pyproject.toml
+      - run: python -m pip install -e . pytest
+      - name: Birth, rollback, exact retry, manual Save, restart and restore
+        env:
+          BIRTH_CASE: ${{ matrix.case }}
+          GITHUB_EVENT_NAME: native_birth_week_acceptance
+        run: python -m pytest tests/api/test_calendar_native_birth_week_execution.py -k "$BIRTH_CASE" -vv --maxfail=1 --durations=6
+
   native-tour-api:
     name: Native Tour signed restore / real HTTP / SQLite
     runs-on: ubuntu-latest

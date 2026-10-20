@@ -17,7 +17,6 @@ from tests.api.test_calendar_native_birth_week_execution import sign_prospects
 from tests.api.test_calendar_population_sporting_checkpoint import restore
 from tests.api.test_calendar_tour_flow import (
     command,
-    create_edition,
     execute,
     inspect,
     save_tour,
@@ -100,7 +99,28 @@ def test_admitted_player_plays_real_edition_and_saved_history(
             code, review = extension(server, 5)
             assert code == 200 and review["can_save"], review
             assert extend(server, review)[0] == 200
-        create_edition(server, "after-intake", size=4)
+        view = inspect(server)
+        week = {**view["state"]["week"], "calendar": view["run_calendar"]}
+        execute(
+            server,
+            command(
+                view,
+                "create-edition",
+                name="after-intake:create",
+                data={
+                    "edition_id": "after-intake",
+                    "name": "Post-admission Tour",
+                    "week": {**week, "week": 5},
+                    "announcement_week": {**week, "week": 4},
+                    "start_slot": 1,
+                    "main_entrant_count": 4,
+                    "ranked": True,
+                    "validity_weeks": width,
+                    "point_table": {"champion": 100, "finalist": 60, "semifinal": 30},
+                },
+            ),
+        )
+        save_tour(server)
         for week in (4, 5):
             execute(
                 server,

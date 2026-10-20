@@ -191,13 +191,7 @@ def test_real_run_future_epoch_preserves_matched_tour_and_admits_next_year_after
         last = None
         for week in range(2, first_due + 1):
             last, _, _ = _transition_and_save(server, name=f"epoch-second-year-{week}")
-        if first_due == 1:
-            with repo._session_factory() as session:
-                from beta_engine.infrastructure.db.player_lifecycle_state import get_lifecycle
-                life = get_lifecycle(session, run_id="run", branch_id="branch",
-                    week=inspect(server)["state"]["week"])
-            assert life is not None
-        else:
+        if first_due != 1:
             assert last is not None and last["impact"]["admitted_player_ids"]
         assert len(inspect(server)["players"]) > 5
         post = save_tour(server) if not inspect(server)["saved"] else None

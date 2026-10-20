@@ -1,0 +1,113 @@
+"""Regression checks for the World Package filesystem trust boundary.
+
+CodeQL #14-#33: external identifiers must never select or delete paths
+outside their owning package, even when directories are symlinks.
+"""
+from pathlib import Path
+
+import pytest
+
+from beta_engine.application.package_evidence_files import safe_package_file
+from beta_engine.application.world_package_registry_service import WorldPackageRegistryService
+from beta_engine.infrastructure.world_package_storage import WorldPackageCountryStore
+
+
+pytestmark = pytest.mark.pr_critical
+
+
+@pytest.mark.parametrize("world_id", [
+    "..", "../custom", "../../secrets", "/tmp/escape",
+    "custom/valid", "custom\\\\valid", "a"*65, "", ".", "space id",
+])
+def test_world_package_identifiers_cannot_escape_registry(tmp_path: Path, world_id: str) -> None:
+    registry = WorldPackageRegistryService(world_packages_root=tmp_path / "packages")
+    assert registry.get_package(world_id) is None
+    assert registry.package_dir(world_id) is None
+
+
+def test_world_package_registry_rejects_link_to_external_directory(tmp_path: Path) -> None:
+    registry_root = tmp_path / "packages"
+    (registry_root / "custom").mkdir(parents=True)
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    link = registry_root / "custom" / "unsafe_link"
+    try:
+        link.symlink_to(outside, target_is_directory=True)
+    except (OSError, NotImplementedError):
+        pytest.skip("directory symlinks are not available on this platform")
+    registry = WorldPackageRegistryService(world_packages_root=registry_root)
+    assert registry.package_dir("unsafe_link") is None
+    assert registry.get_package("unsafe_link") is None
+    assert registry.list_packages() == []
+
+
+@pytest.mark.parametrize("code", [
+    "..", "../AAA", "/tmp/AAA", "AAA/../../", "aaA", "ABC123", "", "AB",
+])
+def test_country_directory_rejects_untrusted_identifiers(tmp_path: Path, code: str) -> None:
+    store = WorldPackageCountryStore(tmp_path / "world")
+    with pytest.raises(ValueError, match="invalid country code"):
+        store._country_root(code)
+
+
+def test_country_directory_rejects_symlink(tmp_path: Path) -> None:
+    store = WorldPackageCountryStore(tmp_path / "world")
+    store.countries_root.mkdir(parents=True)
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    try:
+        (store.countries_root / "AAA").symlink_to(outside, target_is_directory=True)
+    except (OSError, NotImplementedError):
+        pytest.skip("directory symlinks are not available on this platform")
+    with pytest.raises(ValueError, match="symlink"):
+        store._country_root("AAA")
+
+
+def test_finalize_delete_rejects_outside_or_linked_backup(tmp_path: Path) -> None:
+    store = WorldPackageCountryStore(tmp_path / "world")
+    store.countries_root.mkdir(parents=True)
+    outside = tmp_path / ".AAA-delete-backup-unsafe"
+    outside.mkdir()
+    (outside / "sentinel.txt").write_text("untouched")
+    with pytest.raises(ValueError, match="backup location"):
+        store.finalize_delete(outside)
+    assert (outside / "sentinel.txt").read_text() == "untouched"
+    fake = store.countries_root / ".AAA-delete-backup-unsafe"
+    try:
+        fake.symlink_to(outside, target_is_directory=True)
+    except (OSError, NotImplementedError):
+        pytest.skip("directory symlinks are not available on this platform")
+    with pytest.raises(ValueError, match="backup location"):
+        store.finalize_delete(fake)
+    assert (outside / "sentinel.txt").read_text() == "untouched"
+
+
+def test_generated_country_backup_is_deletable(tmp_path: Path) -> None:
+    store = WorldPackageCountryStore(tmp_path / "world")
+    store.countries_root.mkdir(parents=True)
+    backup = store.countries_root / ".AAA-delete-backup-abcdef123"
+    backup.mkdir()
+    (backup / "country.json").write_text("{}")
+    store.finalize_delete(backup)
+    assert not backup.exists()
+
+
+def test_package_evidence_rejects_traversal_and_symlink(tmp_path: Path) -> None:
+    root = tmp_path / "package"
+    root.mkdir()
+    nested = root / "generation"
+    nested.mkdir()
+    (nested / "source.json").write_text("{}")
+    assert safe_package_file(root, "generation/source.json") == (nested / "source.json").resolve()
+    for name in ("../outside.json", "/etc/passwd", r"generation\\\\..\\\\outside", "generation/../outside"):
+        with pytest.raises(ValueError):
+            safe_package_file(root, name)
+    outside = tmp_path / "secret.json"
+    outside.write_text("{}")
+    link = nested / "link.json"
+    try:
+        link.symlink_to(outside)
+    except (OSError, NotImplementedError):
+        pytest.skip("file symlinks are not available on this platform")
+    with pytest.raises(ValueError, match="symlink"):
+        safe_package_file(root, "generation/link.json")

@@ -176,7 +176,8 @@ def verify_native_sporting_checkpoint(state, *, lifecycle, health, source,
         ):
             raise ValueError("Native checkpoint differs from actual Signed lifecycle/Health")
         event = build_calendar_prospect_birth_event(
-            predecessor=predecessor, target=stored.target_week, source=source,
+            predecessor=predecessor, target=stored.target_week,
+            source=source.for_week(stored.target_week.ordinal),
             world_package_id=world_package_id,
         )
         if event.births and getattr(target, "birth_event", None) != event:

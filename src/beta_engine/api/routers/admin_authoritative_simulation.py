@@ -1,6 +1,7 @@
 """Explicit Admin HTTP boundary for the authoritative Run simulation driver."""
 
 import json
+import logging
 from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -110,6 +111,16 @@ router = APIRouter(
     prefix="/admin/runs/{run_id}/branches/{branch_id}/authoritative-simulation",
     tags=["admin-authoritative-simulation"],
 )
+_logger = logging.getLogger(__name__)
+
+
+def _internal_simulation_failure(operation: str) -> HTTPException:
+    # Keep implementation details in server logs, never in an HTTP response.
+    _logger.exception("Unhandled %s failure", operation)
+    return HTTPException(
+        status_code=500,
+        detail={"code": "internal_simulation_error", "message": "Internal simulation failure"},
+    )
 
 
 @router.get(
@@ -1913,6 +1924,10 @@ def simulate_next_season(
                 "message": str(exc),
             },
         ) from exc
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise _internal_simulation_failure("next-season execution") from exc
 
 
 @router.get("/full-simulation/parents/{command_id}/summary")
@@ -2019,6 +2034,10 @@ def inspect_full_simulation_target_options(
             run_id=run_id, branch_id=branch_id, command_id=command_id)
     except (ValueError, TypeError, KeyError) as exc:
         raise HTTPException(status_code=409, detail={"code": "full_simulation_target_review_conflict", "message": str(exc)}) from exc
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise _internal_simulation_failure("full-simulation boundary inspection") from exc
 
 
 @router.post("/full-simulation/target")
@@ -2332,6 +2351,10 @@ def simulate_full_simulation(
                 "message": str(exc),
             },
         ) from exc
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise _internal_simulation_failure("full-simulation execution") from exc
 
 
 @router.post("/simulate-next-slot")

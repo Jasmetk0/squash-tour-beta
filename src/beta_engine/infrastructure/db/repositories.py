@@ -5562,9 +5562,6 @@ class SimulationPersistenceRepository:
             )
             run = session.get(RunContainerModel, run_id)
             branch = session.get(RunBranchModel, branch_id)
-            from beta_engine.infrastructure.db.run_prospect_source_state import (
-                native_birth_requires_source_epochs,
-            )
             blockers = []
             if changed:
                 try:

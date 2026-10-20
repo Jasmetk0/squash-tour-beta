@@ -12,7 +12,7 @@ import hashlib
 import json
 from dataclasses import dataclass
 
-from sqlalchemy import func, select
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from beta_engine.infrastructure.db.models import (
@@ -117,6 +117,22 @@ def _added_records(previous: RunProspectSourceSnapshot, current: RunProspectSour
         raise ValueError("Previously Saved Run prospects cannot be edited or deleted")
     previous_ids = {row["prospect_id"] for row in previous.records}
     return tuple(row for row in current.records if row["prospect_id"] not in previous_ids)
+
+
+def highest_authenticated_run_week(session: Session, *, run_id: str, branch_id: str | None = None) -> int:
+    """Reject corrupted sibling ownership instead of trusting an aggregate MAX."""
+    from beta_engine.infrastructure.db.player_lifecycle_state import _load
+
+    query = select(PlayerLifecycleWeekStateModel).where(
+        PlayerLifecycleWeekStateModel.run_id == run_id
+    )
+    if branch_id is not None:
+        query = query.where(PlayerLifecycleWeekStateModel.branch_id == branch_id)
+    highest = 0
+    for row in session.scalars(query):
+        _load(row, run_id, row.branch_id, row.week_ordinal)
+        highest = max(highest, row.week_ordinal)
+    return highest
 
 
 def _effective_birth_ordinal(row: dict, clock) -> int:
@@ -266,21 +282,11 @@ def capture_saved_run_prospect_source(
     from beta_engine.domain.calendar.run_calendar import RunCalendar
 
     clock = RunCalendar.from_metadata(payload["run"]["run_calendar"])
-    current = session.scalar(
-        select(func.max(PlayerLifecycleWeekStateModel.week_ordinal)).where(
-            PlayerLifecycleWeekStateModel.run_id == run_id,
-            PlayerLifecycleWeekStateModel.branch_id == branch_id,
-        )
-    )
-    activation = (current if current is not None else 0) + 1
-    # A shared Run may have multiple branches at different weeks. A new source
-    # must not create a birthday in ANY already completed Run week.
-    furthest = session.scalar(
-        select(func.max(PlayerLifecycleWeekStateModel.week_ordinal)).where(
-            PlayerLifecycleWeekStateModel.run_id == run_id
-        )
-    )
-    furthest = furthest if furthest is not None else 0
+    activation = highest_authenticated_run_week(
+        session, run_id=run_id, branch_id=branch_id,
+    ) + 1
+    # Authenticated sibling histories are independent owners of past birthdays.
+    furthest = highest_authenticated_run_week(session, run_id=run_id)
     for row in additions:
         birth = _effective_birth_ordinal(row, clock)
         if birth < activation or birth <= furthest:

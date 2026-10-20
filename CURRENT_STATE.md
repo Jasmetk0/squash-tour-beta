@@ -1,3 +1,218 @@
+# Native intake integration correction — 20 October 2026
+
+**Actual remote baseline:** `buuk` is
+`51dae9f56bdcf021422dd6696652a13681f503c5` (owner-merged #1562).
+Reverified for issue #1568 with no open PRs at task start. Although #1563–#1567
+and #1560 show merged, their dependent feature-branch merges did not reach
+`buuk`. The older checkpoints below describe development evidence, not proof
+that those changes were integrated into the target branch.
+
+**Proposed integration, not an owner merge:** branch
+`fix/native-intake-integration-buuk-1568` starts at that actual `buuk` and
+normally merges preserved source
+`b12e53566dd45e313444eec3c49380f2d33bfb06` from
+`feat/native-birth-historical-replay-20261019`. Pure merge commit
+`11cb239db30b9cb4b791b2ba36052b9cba3ccdb2` has tree
+`4f24a4f3da6692cfd18b42369624b3cfcecd8262`, exactly identical to the preserved
+source and combined UI head `9cd7319882c17798a3326fa09575acbef7ef1483`.
+No runtime, test, workflow or historical Signed bytes were reimplemented or
+changed by this correction. The subsequent correction changes only
+`CURRENT_STATE.md` and `ROADMAP.md`; all earlier checkpoint history is retained.
+
+**Verified ancestry:** `git merge-base --is-ancestor <source> HEAD` succeeds
+for every required source head, as well as both merge parents:
+
+| Source | Required source head |
+| --- | --- |
+| #1562 Health (already in buuk) | `095a365248c380aac9560c15f38ef01c5b98fe73` |
+| #1563 complete Health preparation | `b263ed0ab5f28f192ad1647e49d7ff43a6d4ff35` |
+| #1564 sporting checkpoint v11 | `c9838912f87a99ca60b9d9e6b1f1d251d498db44` |
+| #1565 atomic confirmed birth writer | `ca447c2eaa3e41edb499583459dde71acb143fbb` |
+| #1566 runtime readiness/Admin | `effeb11eb8a7605f8f27cea332cddb883eb0a9f7` |
+| #1567 frozen historical match replay | `f3dbad847df044b199f4f6b98a02ee1efd80f46b` |
+| #1560 combined Admin UI | `9cd7319882c17798a3326fa09575acbef7ef1483` |
+
+**Composed bounded behavior:** explicit confirmed 15-year-old intake atomically
+stages full Health history, lifecycle, sporting v11, ranking/public transition
+and Tour v3 receipts. Separate manual Save publishes an immutable revision;
+exact retry, rollback, restart/restore, strict calendar extension and frozen
+pre-birth match replay retain their original authorities. Both CS/EN Admin
+panels coexist with stale-response protection; post-intake competition stays
+disabled. See the [birth execution](docs/CALENDAR_NATIVE_BIRTH_WEEK_EXECUTION_V1.md),
+[readiness](docs/CALENDAR_NATIVE_TRANSITION_READINESS_V1.md) and
+[historical replay](docs/CALENDAR_NATIVE_HISTORICAL_MATCH_REPLAY_V1.md) contracts.
+
+**New-head validation boundary:** prior source greens are historical evidence
+only. The integration PR must stay draft until its latest head passes focused
+local checks, Fast CI, all six real birth/readiness HTTP/SQLite cases, original
+full native HTTP/SQLite Signed restore, Season API, real birth Chromium,
+W52/W61/W80-1000 Tour Chromium and every other applicable browser/recovery gate.
+Inspect actual logs, including the process-level acceptance event override;
+a deselected mandatory case is not a pass. Report selector-scoped unrelated
+legacy scenarios separately from executed browsers. Final SHA/results belong
+in the PR evidence; this document does not claim pending CI has passed.
+A separate adversarial pass must check live/Saved ownership, Signed bytes and
+actual PR branch/HEAD/base identity before handoff. Only the owner merges,
+explicitly into `buuk`; preserve ancestry with a merge commit rather than
+squash/rebase. This correction itself is not merged by the assistant.
+
+**Still unfinished:** post-intake competition, immutable historical prospect
+source epochs, numeric Health/healing, protected fork/re-signing, remaining
+Master scope and full pre-alpha release/50×61 certification. Master and sporting
+product decisions are unchanged. No Full Simulation or release unlock.
+
+## Earlier checkpoint history (retained)
+
+# Frozen pre-birth match replay candidate — 19 October 2026
+
+**Verified:** #1565 `ca447c2` has every applicable final-head check green and is
+ready for owner review. The corrected #1566 head `effeb11` has green Fast CI,
+frontend build, all six new native HTTP scenarios and its real Chromium birth/
+57-attribute/explicit Save/Viewer scenario. That screenshot was visually inspected;
+all remaining native/legacy gates have now passed on the same `effeb11` head.
+Neither candidate was merged by the assistant. `buuk` is unchanged at the last
+verified `14e2784`.
+
+**Current dependent fix:** historical continuation/final replay recognizes a v11
+owner only through its unchanged, actually Signed pre-birth root. It authenticates
+Run/Branch lineage and rejects rehashed root divergence without consuming today's
+Health or granting mutation readiness. Original MatchEngine inputs, complete
+result/log comparison, native provenance and ordinary old responses are preserved.
+See [contract and tests](docs/CALENDAR_NATIVE_HISTORICAL_MATCH_REPLAY_V1.md).
+The initial replay head passed its actual match-replay and browser gates, but the
+mandatory readiness job deselected its unchanged test: GitHub's reserved event
+variable ignored a step-level override. The workflow now passes the acceptance
+event directly to pytest, as the original native Tour gate already does. This
+fix must pass its own final-head gates; no acceptance assertion or timeout changed.
+
+No post-birth new competition, source epochs, numeric Health, protected fork or
+release certification is implied. These remain the main integration blockers.
+
+## Earlier checkpoint history (retained)
+
+# Native birth runtime capability candidate — 19 October 2026
+
+**Published writer:** #1565 `ca447c2` has all applicable final-head gates green:
+Fast CI, all five new real birthday cases, full native HTTP/SQLite Signed restore,
+Season API, Shell and W52/W61/W80-1000 browser acceptance. It is ready for owner
+review, not merged.
+Earlier #1560/#1562/#1563/#1564 heads were green. Owner alone merges;
+`buuk` remains `14e27846898500aaffc6462878c45aa03792147f`.
+
+**Current dependent slice:** real runtime transition readiness, distinct from
+older read-only component preflight; exact owner/clock capability, unsaved/terminal
+responses, CS/EN Admin, stale-result rejection and disabled unsupported post-birth
+competition. Run-shared incompatible source Save reports its existing epoch
+blocker in preview and rejects forced writes transactionally. See
+[contract and bounded evidence](docs/CALENDAR_NATIVE_TRANSITION_READINESS_V1.md).
+Actual local Chromium is missing; its added real browser gate must pass in CI.
+The first CI browser attempt used a random Vite port outside the application's
+allowed CORS origins and failed before Tour mount; the test harness now uses the
+existing allowed 5173 origin. Product CORS rules are unchanged. Check the corrected
+head, not the superseded failed run.
+This slice is not merge-ready before its final-head checks complete.
+
+Post-birth competition, immutable historical source epochs, protected forks,
+numeric Health, remaining Master scope and full release acceptance stay open.
+
+## Earlier checkpoint history (retained)
+
+# Confirmed native birth Week/Season candidate — 19 October 2026
+
+**Verified stack:** #1560 `db84d65`, #1562 `095a365`, #1563 `b263ed0` and
+#1564 `c983891` have green final-head applicable checks and are ready for owner
+review. #1564 includes real native Tour HTTP/SQLite Signed restore, season API,
+Shell and W52/W61/W80 browser acceptance. Nothing was merged by the assistant;
+`buuk` remains `14e27846898500aaffc6462878c45aa03792147f`.
+
+**Current dependent candidate:** the ordinary explicitly confirmed Tour Week/
+Season command now atomically stages checkpoint v11, complete natural Health,
+birth/lifecycle, genuine Entry-gated ranking, public event and Tour v3 receipts.
+It independently replays actual live rows before commit; manual Save remains
+separate. Restore verifies the full captured post-restore aggregate. Native
+receipt origins must really own their referenced Saved Tour/checkpoint; proof
+reuse includes the additional native dependencies. See
+[bounded execution contract](docs/CALENDAR_NATIVE_BIRTH_WEEK_EXECUTION_V1.md).
+This candidate is not merge-ready until its own final-head gates pass.
+
+**Next blockers:** post-birth Edition/Entry/match/policy operations remain
+deliberately blocked; v3 currently permits natural transitions only. More annual
+prospects require historical source epochs, not changes to the current single
+Signed source snapshot. Protected fork re-signing, v3 Health corrections,
+historical initial population, remaining Records/notifications, Full Simulation
+and Master release gates are still unfinished. No release or 50×61 claim.
+
+## Earlier checkpoint history (retained)
+
+# Native sporting checkpoint candidate — 19 October 2026
+
+**Verified latest open heads:** #1560 `db84d65`, #1562 `095a365` and #1563
+`b263ed0` have completed all their applicable checks successfully. This includes
+the long native HTTP/SQLite acceptance, Shell and W52/W61/W80 browser gates as
+applicable; legacy hybrid checks on #1560 were scoped out by their selectors,
+not executed sporting scenarios. The owner has not merged these PRs; `buuk`
+remains `14e27846898500aaffc6462878c45aa03792147f`.
+
+**Current dependent candidate:** durable sporting checkpoint v11 preserves the
+complete historical root and records exact native birth/week stages. Production
+SQLite parsing/replacement/restore and Saved component verification independently
+rebuild the native ledger against Signed source, lifecycle, Health and effective
+Tour development policy. The real Admin preflight now reports this checkpoint's
+fingerprint, bound into the versioned combined transition proof. See
+[checkpoint contract and evidence](docs/CALENDAR_NATIVE_SPORTING_CHECKPOINT_V11.md).
+This candidate is not merged or certified until its own final-head gates pass.
+
+**Next blocker remains the coupled live writer:** explicit command/confirmation,
+Tour receipts, all-domain atomic Week/Season execution, manual Save and genuine
+Entry/ranking adoption. Whole Tour validation explicitly refuses a bare v11
+component. Native post-birth match evidence, historical prospect-source epochs
+for later annual additions, protected fork re-signing and v3 Health corrections
+remain necessary. Existing Master release gates and unsupported mechanics stay
+unchanged. No full live intake or pre-alpha release is claimed.
+
+## Earlier checkpoint history (retained)
+
+# Native intake integration checkpoint — 19 October 2026
+
+**Verified owner-merged baseline:** `buuk` =
+`14e27846898500aaffc6462878c45aa03792147f` (CI cleanup #1561).
+Since the earlier #1547 checkpoint, #1548 merged Signed career Records;
+#1550 reduced duplicate authenticated inspection replay; #1551 added atomic
+Run prospect materialization; #1552–#1559 added native cohort generation,
+Saved-source birthday preflight, full 57-attribute birth/lifecycle proposals,
+birth/Entry history validation, W-aware completed-week sporting development,
+Saved v4 lifecycle parsing and the real seed-locked Admin HTTP preflight.
+These staged/reader capabilities do **not** mean automatic native intake works.
+
+**Reviewed open candidates:** #1560 Admin CS/EN sporting review and #1562
+natural Health v3/Saved replay. Review found missing exact frontend week binding,
+a rejected valid horizon extension and possible v3-to-v2 Admin proof loss.
+Corrections are on their respective branches; check their latest heads, not
+superseded CI. #1560 now targets `buuk` and includes merged #1561 cleanup.
+The owner alone merges; neither candidate is certified by this document.
+
+**Current dependent implementation:** complete missing Health weeks from the
+verified Saved prefix, then bind the target v3 Health component to the real
+Signed birthday/sporting preflight. The HTTP response exposes compact backfill
+counts and full-chain/combined transition fingerprints. Its target uses the
+current extended Run horizon while completed historical clocks remain frozen.
+No database/Draft/Save
+mutation or activation is added. See
+[complete Health preparation](docs/CALENDAR_NATIVE_HEALTH_PREPARATION_V1.md).
+This branch depends on the corrected #1562; its required final-head CI remains
+necessary before owner merge. Master product decisions are unchanged.
+
+**Next integration blocker:** native sporting checkpoint birth ledger/replay,
+then one guarded atomic Week/Season writer for sporting + full Health + v4
+lifecycle + genuine Entry/ranking/Tour receipts, followed by real rollback,
+Save/restart/restore and protected fork re-signing. Do not remove existing intake
+refusals merely because projections and schemas are available. Full Simulation,
+numeric Health/healing, correction/discipline, historical initial cohort,
+complete Records/Saved Views/notifications and the full Master §31 release gates
+remain unfinished. No pre-alpha release or full 50×61 certification is claimed.
+
+## Earlier checkpoint history (retained)
+
 # Current verified integration and next records candidate — 19 October 2026
 
 **Verified owner merge:** PR #1547 to `buuk` at

@@ -9,6 +9,18 @@ from beta_engine.infrastructure.db.models import CalendarPlayerSportingCheckpoin
 COMPONENT_KEY = 'calendar_player_sporting_checkpoint'
 
 
+def parse_checkpoint_json(raw):
+    from beta_engine.domain.players.calendar_native_sporting_checkpoint import CalendarNativeSportingCheckpoint
+
+    body = json.loads(raw)
+    if not isinstance(body, dict):
+        raise ValueError('Calendar sporting checkpoint must be a versioned object')
+    model = (CalendarNativeSportingCheckpoint
+             if body.get('schema_version') == 'calendar_sporting_checkpoint.v11'
+             else CalendarSportingCheckpoint)
+    return model.model_validate_json(raw)
+
+
 def load_checkpoint(session, *, run_id, branch_id, _verified_source=None):
     row = session.get(CalendarPlayerSportingCheckpointModel, (run_id, branch_id))
     if row is None:
@@ -25,7 +37,7 @@ def load_checkpoint(session, *, run_id, branch_id, _verified_source=None):
             # canonical content hash, not order-sensitive JSON text. Hash every
             # live byte's decoded value; never trust only its stored hash column.
             return _verified_source
-    state = CalendarSportingCheckpoint.model_validate_json(row.payload_json)
+    state = parse_checkpoint_json(row.payload_json)
     if (state.run_id, state.branch_id, state.fingerprint) != (run_id, branch_id, row.fingerprint):
         raise ValueError('Calendar sporting checkpoint SQLite identity/hash mismatch')
     return state
@@ -47,7 +59,23 @@ def _knockout(evidence):
 
 
 def verify_checkpoint(state, world, evidence, *, _prefix_proofs=None,
-                      _verified_saved_prefix=None):
+                      _verified_saved_prefix=None, _native_inputs=None):
+    from beta_engine.domain.players.calendar_native_sporting_checkpoint import (
+        CalendarNativeSportingCheckpoint, verify_native_sporting_checkpoint,
+    )
+    if isinstance(state, CalendarNativeSportingCheckpoint):
+        if _native_inputs is None:
+            raise ValueError('Checkpoint v11 requires its complete Signed native inputs')
+        prefix = (_verified_saved_prefix.source_checkpoint
+                  if isinstance(_verified_saved_prefix, CalendarNativeSportingCheckpoint)
+                  else _verified_saved_prefix)
+        verify_checkpoint(state.source_checkpoint, world, evidence,
+                          _prefix_proofs=_prefix_proofs, _verified_saved_prefix=prefix)
+        verify_native_sporting_checkpoint(
+            state, world_package_id=world.world_package_id,
+            knockout=_knockout(evidence), **_native_inputs,
+        )
+        return
     from beta_engine.domain.players.calendar_engine_player import calendar_engine_player
     knockout = _knockout(evidence)
     required = knockout is not None and knockout.schema_version == 'calendar_opening_knockout.v5'
@@ -150,19 +178,41 @@ def saved_checkpoint(payload, evidence, *, run_id, branch_id, _prefix_proofs=Non
     if component is not None:
         if not isinstance(component, dict) or set(component) != {'fingerprint', 'state'}:
             raise ValueError('Malformed Saved calendar sporting checkpoint component')
-        state = CalendarSportingCheckpoint.model_validate_json(json.dumps(component['state']))
+        state = parse_checkpoint_json(json.dumps(component['state']))
         if (state.run_id, state.branch_id, state.fingerprint) != (run_id, branch_id, component['fingerprint']):
             raise ValueError('Saved calendar sporting checkpoint identity/hash mismatch')
     knockout = _knockout(evidence)
     required = knockout is not None and knockout.schema_version == 'calendar_opening_knockout.v5'
     world = load_saved_initial_world(payload, run_id=run_id, branch_id=branch_id) if required or state else None
+    native_inputs = None
+    if state is not None and state.schema_version == 'calendar_sporting_checkpoint.v11':
+        from beta_engine.domain.tournaments.calendar_tour import parse_tour_json, effective_policy
+        from beta_engine.infrastructure.db.player_lifecycle_state import load_saved_lifecycle
+        from beta_engine.infrastructure.db.player_health_state import load_saved_health
+        from beta_engine.infrastructure.db.run_prospect_source_state import load_saved_run_prospect_source
+
+        raw_tour = payload.get('content', {}).get('calendar_tour_authority')
+        if not isinstance(raw_tour, dict) or set(raw_tour) != {'fingerprint', 'state'}:
+            raise ValueError('Checkpoint v11 requires its Signed Tour policy authority')
+        tour = parse_tour_json(json.dumps(raw_tour['state']))
+        if (tour.fingerprint != raw_tour['fingerprint']
+                or (tour.run_id, tour.branch_id) != (run_id, branch_id)
+                or tour.week != state.week
+                or tour.checkpoint_fingerprint != state.fingerprint):
+            raise ValueError('Native checkpoint differs from its Signed Tour owner')
+        native_inputs = dict(
+            lifecycle=load_saved_lifecycle(payload, run_id=run_id, branch_id=branch_id),
+            health=load_saved_health(payload, run_id=run_id, branch_id=branch_id),
+            source=load_saved_run_prospect_source(payload, run_id=run_id),
+            policy_for_week=lambda week: effective_policy(tour, week).development,
+        )
     verify_checkpoint(state, world, evidence, _prefix_proofs=_prefix_proofs,
-        _verified_saved_prefix=_verified_saved_prefix)
+        _verified_saved_prefix=_verified_saved_prefix, _native_inputs=native_inputs)
     if state:
         from beta_engine.domain.calendar.run_calendar import RunCalendar
         clock = RunCalendar.from_metadata(payload['run']['run_calendar'])
         last = state.week.calendar
-        if state.continuations and not state.week_events:
+        if isinstance(state, CalendarSportingCheckpoint) and state.continuations and not state.week_events:
             last = state.continuations[-1].week.calendar
         if (last.weeks_per_year, last.season_start_year_week, last.start_year) != (clock.weeks_per_year, clock.season_start_year_week, clock.start_year) or last.season_count > clock.season_count:
             raise ValueError('Saved continuation clock exceeds its Run horizon')

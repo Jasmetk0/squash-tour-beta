@@ -1,3 +1,140 @@
+# Pre-alpha dependency path — actual buuk integration correction, 20 October 2026
+
+**Verified target:** `buuk` = `51dae9f56bdcf021422dd6696652a13681f503c5`.
+Only #1562 reached it; the merged flags on dependent #1563–#1567 and combined
+UI #1560 did not integrate their trees into `buuk`.
+
+**Current single proposed PR (issue #1568):** normal ancestry-preserving merge
+from current `buuk` of preserved source `b12e53566dd45e313444eec3c49380f2d33bfb06`.
+The pure merge is `11cb239db30b9cb4b791b2ba36052b9cba3ccdb2`, with exact
+combined source tree `4f24a4f3da6692cfd18b42369624b3cfcecd8262` and all seven
+required source heads reachable. Only this roadmap and current-state correction
+follow that merge; the completed runtime implementation is preserved.
+See [full ancestry and validation boundary](CURRENT_STATE.md).
+
+Keep the integration PR draft until all applicable checks on its latest head
+are green, including genuine birth/readiness and original full native Signed
+HTTP/SQLite, Season API, real birth/Tour Chromium and relevant recovery gates.
+Distinguish executed tests from unrelated selector skips. Prior source checks
+cannot certify the integration head. The owner alone merges into `buuk`, using
+a merge commit to retain the required source ancestry; proposed integration is
+not an owner-merged result.
+
+After integration, continue post-intake Edition/Entry/match authority and
+immutable historical source epochs, then numeric Health with authorized
+calibration, protected forks, remaining Master scope and full pre-alpha release
+acceptance including 50×61. The bounded confirmed birthday writer, explicit
+manual Save, historical replay and both Admin review panels introduce no new
+sporting decision and do not unlock Full Simulation or release certification.
+
+## Earlier roadmap checkpoints (retained)
+
+# Pre-alpha dependency path — frozen historical replay
+
+#1565 has all applicable final-head checks green. The corrected readiness/Admin
+#1566 has passed its actual new Chromium, all six new HTTP cases and remaining
+long native/legacy gates on corrected head `effeb11`. Owner alone merges.
+
+Current dependent work repairs old confirmed match replay after a native birthday,
+using the actual Signed pre-birth root and frozen match/Health inputs, independent
+of current medical readiness. [Contract](docs/CALENDAR_NATIVE_HISTORICAL_MATCH_REPLAY_V1.md).
+Its own full relevant final-head gates remain required.
+
+Next: actual post-birth competition and historical prospect-source epochs, then
+remaining Master scope and full release acceptance. Bounded replay is not a
+Full Simulation unlock or pre-alpha release claim.
+
+## Earlier roadmap checkpoints (retained)
+
+# Pre-alpha dependency path — honest native birth capability
+
+Current stack adds the confirmed birth writer #1565 after #1564, then the current
+read-only runtime capability/Admin slice. All applicable #1565 final-head gates
+are green, including original full native HTTP/season/browser acceptance. The
+readiness candidate remains pending its corrected real browser and final-head
+checks; owner alone merges.
+
+Current capability work reports real guarded next action, actual native population,
+Save/terminal blockers and exact clocks without granting execution authority. It
+also exposes the existing source-epoch limitation before an incompatible Save.
+[Contract](docs/CALENDAR_NATIVE_TRANSITION_READINESS_V1.md).
+
+Next priorities remain genuine post-birth Edition/Entry/match authority and
+immutable source epochs for later annual data, then remaining Master integration
+and full release gates. Do not unlock Full Simulation from bounded readiness.
+
+## Earlier roadmap checkpoints (retained)
+
+# Pre-alpha dependency path — confirmed native birth candidate
+
+#1560, #1562, #1563 and #1564 have green final-head applicable checks; only the
+owner merges. Dependency order remains #1562 → #1563 → #1564 → the current birth
+writer candidate. #1560 is the independent Admin read-only sporting review.
+
+The current slice adds actual confirmed atomic natural Week/Season birth,
+complete Health/lifecycle/sporting/ranking/Tour receipts and independent replay,
+manual Save and post-restore validation. Its real HTTP/SQLite birthday, rollback,
+restart/restore and Entry/awards scenarios are mandatory alongside existing native
+Tour/season/browser gates. [Bounded contract](docs/CALENDAR_NATIVE_BIRTH_WEEK_EXECUTION_V1.md).
+Its own final-head CI is not yet certified.
+
+Next integrate post-birth Edition/Entry/matches and versioned source epochs for
+later annual additions; do not bypass these explicit guards. Continue protected
+fork/re-signing, remaining Master scope and full pre-alpha release acceptance.
+
+## Earlier roadmap checkpoints (retained)
+
+# Pre-alpha dependency path — native sporting checkpoint candidate
+
+The latest heads of #1560, #1562 and #1563 are green, but owner merge is pending.
+Keep their stack explicit: #1562 precedes #1563; retarget after owner merge.
+
+The current candidate builds on #1563: v11 preserves the old sporting root,
+persists/replays native weekly birth/development stages, binds exact lifecycle
+and Health history and exposes the verified component through the existing real
+Admin preflight. [Contract](docs/CALENDAR_NATIVE_SPORTING_CHECKPOINT_V11.md).
+Its own CI remains a prerequisite to owner merge.
+
+Next implement the coupled confirmed Tour writer and receipts, then manual Save,
+real rollback/restart/restore, first Entry/ranking adoption and post-birth matches.
+Preserve historical source epochs before adding future annual prospect records;
+the current replay uses one unchanged Signed source snapshot. Continue protected
+fork re-signing and the remaining Master §31 scope without treating green bounded
+component tests as a pre-alpha release or Full Simulation certification.
+
+## Earlier roadmap checkpoints (retained)
+
+# Pre-alpha dependency path — native intake checkpoint, 19 October 2026
+
+**Merged through #1561:** `buuk` =
+`14e27846898500aaffc6462878c45aa03792147f`. Signed Records, atomic prospect
+materialization and bounded W-aware native birth/source/lifecycle/sporting
+proposals and Saved lifecycle verification are now merged. They complement the
+existing actual configured Tour, MatchEngine, Entry, ranking, manual Save,
+Season Transition and signed restore; births still cannot execute in that Tour.
+
+**Current dependency order:**
+
+1. Validate corrected #1560 UI and #1562 Health v3 on their actual latest CI
+   heads; owner merges. The #1560 legacy-browser cleanup fix #1561 is merged.
+2. Review the dependent complete Health preparation: retain the Saved prefix,
+   backfill exact natural weeks and bind full Health evidence into the actual
+   seed-locked Signed sporting preflight. Required HTTP/SQLite and native gates
+   remain mandatory. [Contract](docs/CALENDAR_NATIVE_HEALTH_PREPARATION_V1.md).
+3. Version/replay the native sporting birth checkpoint, then integrate the
+   atomic writer and true first Entry/ranking adoption, manual Save, failure
+   rollback, restart and protected match/birth Branch remap.
+4. Continue historical initial-cohort preparation, numeric Health only with
+   explicit calibration authority, discipline/corrections, complete Records,
+   Saved Views, milestones/notifications and Full Simulation integration.
+5. Run the complete Master §31 release acceptance including reference 50×61
+   endurance and the full suite before declaring a pre-alpha release.
+
+These are implementation dependencies, not new product decisions or evidence
+that any open candidate is green/merged. Preserve the older checkpoint history.
+
+## Earlier roadmap checkpoints (retained)
+
 # Pre-alpha dependency path — 19 October 2026 (after #1547 merge)
 
 **Owner-merged #1547:** `buuk` =

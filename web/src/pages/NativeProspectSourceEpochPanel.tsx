@@ -121,8 +121,8 @@ export function NativeProspectSourceEpochPanel({
         onClick={()=>void run('materialize')}>{cs?'2. Vytvořit nové budoucí prospecty':'2. Materialize future prospects'}</button>
     </div>}
     {materialized&&<p>{cs?'Nové záznamy čekají na manuální Save.':'New records require manual source Save.'}</p>}
-    {(materialized||saveReview)&&<button disabled={busy} onClick={()=>void run('reviewSave')}>
-      {cs?'3. Zkontrolovat uložení nové verze':'3. Review source-epoch Save'}</button>}
+    <button disabled={busy} onClick={()=>void run('reviewSave')}>
+      {cs?'3. Zkontrolovat uložení nové verze':'3. Review source-epoch Save'}</button>
     {saveReview&&saveReview.blockers?.length>0&&<p role="alert">{cs?
       'Uložení je nyní blokováno. Všechny dříve uložené záznamy musejí zůstat beze změny a nový ročník musí mít narozeniny až v budoucím týdnu všech větví.':
       'Source Save is blocked. Previously Signed records must stay unchanged and new cohort birthdays must occur after completed weeks on every Branch.'}</p>}

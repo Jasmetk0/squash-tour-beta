@@ -37,6 +37,11 @@ other-Branch catalog additions do not implicitly upgrade their Saved HEAD.
 
 ## Actual native transition and replay
 
+The Admin panel's source-Save review remains available after a reload or an
+interrupted materialization response. Recovery reads the persisted shared
+catalog, requires a fresh preview and explicit Save consent, and never
+materializes duplicate records or saves automatically.
+
 On preparation and historical verification for week `t`, select
 `saved_source.for_week(t)` (most recent epoch starting at or before `t`).
 This gives the **original v1 snapshot fingerprint** to deterministic

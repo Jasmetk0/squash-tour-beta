@@ -20,6 +20,16 @@ Unlike the HTTP acceptance workflow, Fast CI's `pr_critical` selector must
 exclude this full 20+ minute production lifecycle scenario, so fast feedback
 does not wait for a second serial execution of the same expensive flow.
 
+## Native post-admission competition acceptance
+
+Changes to native post-admission competition also require all three real
+HTTP/SQLite cases in `test_calendar_native_post_intake_tour.py` (Earth, FAX,
+extended) and `native_post_intake_tour_browser_acceptance.py` with real Chromium.
+The dedicated jobs pass their own process-level acceptance event so the ordinary
+changed-module PR filter cannot deselect an unchanged mandatory case. They do
+not replace the original full native Tour/season API, birth cases or browser
+matrix. Fast CI stays focused; no 50-season release suite is added to ordinary PRs.
+
 ## Pull-request development
 
 ### Confirmed native birth acceptance

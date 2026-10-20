@@ -48,6 +48,26 @@ def put_tour(session, state):
 def verify_tour(state, checkpoint, world=None, *, _native_payload=None):
     if (
         checkpoint is not None
+        and checkpoint.schema_version == "calendar_sporting_checkpoint.v12"
+    ):
+        if _native_payload is None:
+            raise ValueError("Native competition requires its complete Signed payload")
+        from beta_engine.infrastructure.db.calendar_native_competition import (
+            verify_competition_payload,
+        )
+
+        component = _native_payload.get("content", {}).get(COMPONENT_KEY, {})
+        if (
+            state is None
+            or state.checkpoint_fingerprint != checkpoint.fingerprint
+            or state.fingerprint != component.get("fingerprint")
+            or state.model_dump(mode="json") != component.get("state")
+        ):
+            raise ValueError("Native competition lacks its coupled Tour owner")
+        verify_competition_payload(_native_payload, checkpoint)
+        return
+    if (
+        checkpoint is not None
         and checkpoint.schema_version == "calendar_sporting_checkpoint.v11"
     ):
         if _native_payload is None:
@@ -272,7 +292,9 @@ def verify_tour(state, checkpoint, world=None, *, _native_payload=None):
             )
 
 
-def saved_tour(payload, *, run_id, branch_id, checkpoint=None):
+def saved_tour(
+    payload, *, run_id, branch_id, checkpoint=None, _verified_competition=None
+):
     component = payload.get("content", {}).get(COMPONENT_KEY)
     if component is None:
         verify_tour(None, checkpoint)
@@ -301,12 +323,19 @@ def saved_tour(payload, *, run_id, branch_id, checkpoint=None):
         load_saved_initial_world,
     )
 
-    verify_tour(
-        state,
-        checkpoint,
-        load_saved_initial_world(payload, run_id=run_id, branch_id=branch_id),
-        _native_payload=payload,
-    )
+    if (
+        checkpoint is not _verified_competition
+        or checkpoint is None
+        or checkpoint.schema_version != "calendar_sporting_checkpoint.v12"
+    ):
+        verify_tour(
+            state,
+            checkpoint,
+            load_saved_initial_world(payload, run_id=run_id, branch_id=branch_id),
+            _native_payload=payload,
+        )
+    elif state.checkpoint_fingerprint != checkpoint.fingerprint:
+        raise ValueError("Verified native competition differs from coupled Tour")
     from beta_engine.infrastructure.db.player_lifecycle_state import (
         load_saved_lifecycle,
     )
@@ -461,6 +490,88 @@ def verify_tour_origins(session, state):
                         "Native root differs from its actual immutable Saved authority"
                     )
             elif source.fingerprint != first_source:
+                raise ValueError(
+                    "Native source changes require historical source epochs"
+                )
+
+    if state.schema_version == "calendar_tour_authority.v4":
+        verify_tour_origins(session, state.competition_root_tour)
+        source_fingerprint = None
+        for index, receipt in enumerate(
+            state.receipts[len(state.competition_root_tour.receipts) :]
+        ):
+            command = receipt.request["command"]
+            source_id = command["expected_saved_head"]
+            row = session.get(BranchSavedRevisionModel, source_id)
+            if (
+                source_id not in reachable
+                or row is None
+                or (row.run_id, row.branch_id) != (state.run_id, state.branch_id)
+            ):
+                raise ValueError(
+                    "Native competition Saved origin is missing or foreign"
+                )
+            payload = json.loads(row.payload_json)
+            content = payload.get("content", {})
+            raw = content.get(COMPONENT_KEY, {})
+            cp = content.get("calendar_player_sporting_checkpoint", {})
+            origin = parse_tour_json(json.dumps(raw.get("state")))
+            from beta_engine.domain.calendar.run_calendar import RunCalendar
+
+            source_clock = RunCalendar.from_metadata(payload["run"]["run_calendar"])
+            if (
+                command["action"] == "create-edition"
+                and command["data"]["week"]["calendar"] != source_clock.to_metadata()
+            ):
+                raise ValueError(
+                    "Native Edition calendar did not exist in its actual Saved origin"
+                )
+            if (
+                command["action"] in {"transition", "season-transition"}
+                and receipt.result["impact"]["target_week"]["calendar"]
+                != source_clock.to_metadata()
+            ):
+                raise ValueError(
+                    "Native transition horizon did not exist in its actual Saved origin"
+                )
+            if cp.get("fingerprint") != command["expected_checkpoint_fingerprint"]:
+                raise ValueError(
+                    "Native competition does not own its actual Saved checkpoint"
+                )
+            if (
+                command["action"]
+                in {"play", "confirm-result", "transition", "season-transition"}
+                and raw.get("fingerprint") != command["expected_tour_fingerprint"]
+            ):
+                raise ValueError(
+                    "Native competition requires its actual Saved Tour authority"
+                )
+            # Configuration may share one Working Draft, but its Saved base must
+            # already own a prefix of the actual confirmed predecessor receipts.
+            previous_receipts = state.receipts[
+                : len(state.competition_root_tour.receipts) + index
+            ]
+            if origin.receipts != previous_receipts[: len(origin.receipts)]:
+                raise ValueError(
+                    "Native competition Saved origin is not its preceding history"
+                )
+            from beta_engine.infrastructure.db.run_prospect_source_state import (
+                load_saved_run_prospect_source,
+            )
+
+            source = load_saved_run_prospect_source(payload, run_id=state.run_id)
+            if source is None:
+                raise ValueError("Native competition lacks Signed prospect source")
+            if index == 0:
+                source_fingerprint = source.fingerprint
+                if (
+                    source_id != state.competition_root_saved_head
+                    or origin != state.competition_root_tour
+                ):
+                    raise ValueError(
+                        "Native competition root differs from actual Saved origin"
+                    )
+            elif source.fingerprint != source_fingerprint:
                 raise ValueError(
                     "Native source changes require historical source epochs"
                 )

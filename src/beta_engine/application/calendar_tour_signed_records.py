@@ -7,10 +7,9 @@ are co-holders; history is stamped at closure, NOT fabricated at match time.
 """
 from __future__ import annotations
 
-from collections import defaultdict
-
 from beta_engine.application.calendar_tour_season_summary import (
     completed_season_indices,
+    native_tour_identities,
     native_tour_season_summary,
 )
 
@@ -93,9 +92,7 @@ def signed_tour_records(
     if from_season_index > as_of_season_index or from_season_index not in closed:
         raise ValueError("Records period start is not a Signed completed season")
 
-    identities = {p.player_id: p for p in world.players}
-    if len(identities) != len(world.players):
-        raise ValueError("Records initial world contains duplicate identities")
+    identities = native_tour_identities(state, world)
     totals = {"player": {}, "country": {}}
     histories = {(scope, field): [] for scope, field in METRICS}
     previous = {(scope, field): (0, ()) for scope, field in METRICS}

@@ -1,3 +1,33 @@
+# Post-admission competition candidate — 20 October 2026
+
+**Verified integration base:** `buuk` `0b82cd96fadd9d402ac8e3ad70383a36cd0d5199`,
+owner merge #1569; no open PRs at task start. The entire preserved intake stack
+is integrated. Earlier integration-candidate paragraphs below are history.
+
+**Independent implementation candidate:** one PR directly into `buuk` adds
+Tour v4 / checkpoint v12 / tournament v6 after actual Signed admission and
+manual Save: genuine current-population Entry/draw, original 57-backed
+MatchEngine and Health, confirmed Edition points/ranking, actual next-week
+match counts, complete command/history replay and Save/restart/restore.
+CS/EN Admin exposes real capability and preserves explicit consent/Save and
+stale-response guards. See [contract](docs/CALENDAR_NATIVE_POST_INTAKE_COMPETITION_V1.md).
+
+**Verification boundary:** local initial complete HTTP/SQLite flow passed;
+focused domain/frontend checks and production web build passed. The expanded
+local Earth/FAX scenarios (including rollback/tamper) and actual post-admission
+Chromium path also passed. Final-head extension and all applicable CI gates
+remain the handoff authority, recorded in the PR. This candidate has not been
+owner-merged; local evidence does not substitute for latest-commit green checks.
+Only the owner merges; no dependency PR chain.
+
+**Remaining limits:** unchanged Signed prospect source (no historical epochs),
+legacy-only prospect style/archetype/career metadata explicitly unavailable,
+post-admission policy edits, numeric Health/healing, protected forks,
+cross-Edition simultaneity, remaining Master scope and full pre-alpha/50×61
+release certification. Full Simulation stays blocked. Product canon unchanged.
+
+## Earlier checkpoint history (retained)
+
 # Native intake integration correction — 20 October 2026
 
 **Actual remote baseline:** `buuk` is

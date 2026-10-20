@@ -8,6 +8,7 @@ publishes a new ranking, or interprets prepared awards as ranking totals.
 from __future__ import annotations
 
 from collections import defaultdict
+from types import SimpleNamespace
 
 
 def _completed_boundary(state, season_index):
@@ -40,6 +41,20 @@ def completed_season_indices(state):
     )
 
 
+def native_tour_identities(state, world):
+    players = {p.player_id: p for p in world.players}
+    if len(players) != len(world.players):
+        raise ValueError("Season summary lacks unique saved national identities")
+    # Native participants have no replacement InitialWorld profile. Their
+    # names/nationality are frozen by the authenticated actual match projection.
+    if getattr(state,"schema_version",None) == "calendar_tour_authority.v4":
+        for receipt in state.receipts:
+            for pid, identity in receipt.result.get("played", {}).get("participant_identities", {}).items():
+                if pid not in players:
+                    players[pid] = SimpleNamespace(**identity)
+    return players
+
+
 def native_tour_season_summary(state, world, season_index):
     """Pure national comparison and actual Edition placements; no inferred wins.
 
@@ -50,9 +65,7 @@ def native_tour_season_summary(state, world, season_index):
     if (state.run_id, state.branch_id) != (world.run_id, world.branch_id):
         raise ValueError("Season summary requires the same signed Run/Branch world")
     boundary = _completed_boundary(state, season_index)
-    players = {p.player_id: p for p in world.players}
-    if len(players) != len(world.players):
-        raise ValueError("Season summary lacks unique saved national identities")
+    players = native_tour_identities(state, world)
     per_country = defaultdict(lambda: {
         "titles": 0, "finals": 0, "semifinals": 0,
         "quarterfinals": 0, "awarded_points": 0,

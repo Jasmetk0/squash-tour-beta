@@ -76,9 +76,9 @@ def inspect_native_transition_readiness(repository, *, run_id, branch_id):
                     )
         else:
             blockers.append("run_horizon_exhausted")
-        native = checkpoint.schema_version == "calendar_sporting_checkpoint.v11"
+        native = checkpoint.schema_version in {"calendar_sporting_checkpoint.v11", "calendar_sporting_checkpoint.v12"}
         body = {
-            "schema_version": "native_tour_transition_readiness.v1",
+            "schema_version": "native_tour_transition_readiness.v2",
             "run_id": run_id,
             "branch_id": branch_id,
             "saved_head_revision_id": revision.saved_head_revision_id,
@@ -96,13 +96,13 @@ def inspect_native_transition_readiness(repository, *, run_id, branch_id):
             "due": due,
             "due_count": len(due),
             "admitted_population_count": len(checkpoint.players) - len(world.players),
-            "current_scope": "native_natural_transitions"
+            "current_scope": "native_competition"
             if native
             else "configured_tour",
-            "target_scope": "native_natural_transitions"
+            "target_scope": "native_competition"
             if native or due
             else "configured_tour",
-            "post_birth_competition_supported": False,
+            "post_birth_competition_supported": True,
             "source_epoch_changes_supported": False,
             "command_preview_required": True,
             "explicit_confirmation_required": True,

@@ -11,10 +11,15 @@ from typing import Literal
 from pydantic import Field, model_validator
 
 from beta_engine.domain.players.calendar_native_sporting_intake import (
-    CalendarNativeSportingBirthAdvance, project_native_sporting_birth_advance,
+    CalendarNativeSportingBirthAdvance,
+    project_native_sporting_birth_advance,
 )
-from beta_engine.domain.players.calendar_prospect_birth import build_calendar_prospect_birth_event
-from beta_engine.domain.players.calendar_sporting_checkpoint import CalendarSportingCheckpoint
+from beta_engine.domain.players.calendar_prospect_birth import (
+    build_calendar_prospect_birth_event,
+)
+from beta_engine.domain.players.calendar_sporting_checkpoint import (
+    CalendarSportingCheckpoint,
+)
 from beta_engine.domain.players.calendar_sporting_week import played_counts
 from beta_engine.domain.rankings.official import FrozenInput
 from beta_engine.domain.run_packages import canonical_hash
@@ -111,6 +116,12 @@ class CalendarNativeSportingCheckpoint(FrozenInput):
 
 def append_native_sporting_week(previous, advance, *, lifecycle_fingerprint,
                                health_fingerprint, health_history_fingerprint):
+    from beta_engine.domain.players.calendar_native_competition import (
+        CalendarNativeCompetitionCheckpoint,
+    )
+    if isinstance(previous, CalendarNativeCompetitionCheckpoint):
+        entry = CalendarNativeSportingWeek(advance=advance,lifecycle_fingerprint=lifecycle_fingerprint,health_fingerprint=health_fingerprint,health_history_fingerprint=health_history_fingerprint)
+        return previous.model_copy(update={"events":previous.events+(entry,)})
     if isinstance(previous, CalendarNativeSportingCheckpoint):
         root, history = previous.source_checkpoint, previous.native_weeks
     elif isinstance(previous, CalendarSportingCheckpoint):

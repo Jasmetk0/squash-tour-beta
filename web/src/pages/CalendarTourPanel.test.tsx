@@ -42,6 +42,23 @@ describe('configured Tour consent (HTTP boundary mocked)',()=>{
     expect(screen.getByRole('button',{name:'Review Week Transition'})).toBeEnabled()
     expect(api.executeCalendarTour).not.toHaveBeenCalled()
   })
+  it('reviews a new Edition after real native capability without auto executing or saving (component)',async()=>{
+    const calendar={schema_version:'run_calendar.v1',weeks_per_year:52,season_start_year_week:1,start_year:2030,season_count:3}
+    api.inspectCalendarTour.mockResolvedValue({...view(),saved:true,sporting_saved:true,post_birth_competition_supported:true,tour_fingerprint:'b'.repeat(64),transition_blockers:[],state:{schema_version:'calendar_tour_authority.v3',week:{calendar,season_index:0,week:3},editions:[],rankings:[],transitions:[]}})
+    api.previewCalendarTour.mockImplementation((_r,_b,c)=>Promise.resolve(preview(c)))
+    render(panel());await screen.findByLabelText('Tour operation reason')
+    fireEvent.click(screen.getByText('New Tournament Edition'))
+    fireEvent.change(screen.getByLabelText('Tour operation reason'),{target:{value:'Review genuine admitted population'}})
+    fireEvent.change(screen.getByLabelText('Tour Edition ID'),{target:{value:'native-new'}})
+    fireEvent.change(screen.getByLabelText('Tour Edition name'),{target:{value:'Admitted Tour'}})
+    expect(screen.getByRole('button',{name:'Review new Edition'})).toBeEnabled()
+    fireEvent.click(screen.getByRole('button',{name:'Review new Edition'}))
+    await screen.findByLabelText('Confirm Tour command')
+    expect(api.previewCalendarTour.mock.calls[0][2].action).toBe('create-edition')
+    expect(api.executeCalendarTour).not.toHaveBeenCalled()
+    expect(api.saveCalendarTour).not.toHaveBeenCalled()
+    expect(screen.queryByRole('button',{name:'Check next-week prospects'})).not.toBeInTheDocument()
+  })
   it('requires separate explicit command consent and never saves automatically',async()=>{
     api.previewCalendarTour.mockImplementation((_r,_b,c)=>Promise.resolve(preview(c)))
     api.executeCalendarTour.mockResolvedValue({})

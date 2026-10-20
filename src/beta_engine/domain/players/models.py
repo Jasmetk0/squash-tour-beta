@@ -5,6 +5,7 @@ from __future__ import annotations
 from pydantic import BaseModel, Field
 
 from beta_engine.domain.calendar import DEFAULT_WEEKS_PER_CALENDAR_YEAR
+
 MIN_RUNTIME_PLAYER_AGE = 15
 MAX_RUNTIME_PLAYER_AGE = 46  # legacy DTO bound, not authoritative lifecycle policy
 
@@ -36,4 +37,4 @@ class Player(BaseModel):
     recovery: int = Field(ge=1, le=99)
     play_style: str
     archetype: str
-    hidden_career_traits: HiddenCareerTraits
+    hidden_career_traits: HiddenCareerTraits | None

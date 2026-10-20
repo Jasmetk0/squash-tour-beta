@@ -2,6 +2,9 @@
 
 from beta_engine.domain.calendar.run_week_position import RunWeekPosition
 from beta_engine.domain.players.calendar_lifecycle import advance_calendar_lifecycle
+from beta_engine.domain.players.calendar_native_competition import (
+    CalendarNativeCompetitionCheckpoint,
+)
 from beta_engine.domain.players.calendar_native_health_transition import (
     prepare_native_health_history,
 )
@@ -52,7 +55,7 @@ def prepare_native_tour_week(
         world_package_id=world.world_package_id,
     )
     if not event.births and not isinstance(
-        checkpoint, CalendarNativeSportingCheckpoint
+        checkpoint, (CalendarNativeSportingCheckpoint, CalendarNativeCompetitionCheckpoint)
     ):
         return None
     submissions = tuple(s for a in state.editions for s in a.submissions)
@@ -64,7 +67,7 @@ def prepare_native_tour_week(
     prepared_health = prepare_native_health_history(
         saved_health=health, signed_lifecycle=lifecycle, next_lifecycle=successor_life
     )
-    counts = (
+    counts = played_counts(checkpoint, knockout) if isinstance(checkpoint, CalendarNativeCompetitionCheckpoint) else (
         tuple((p.player_id, 0) for p in checkpoint.players)
         if isinstance(checkpoint, CalendarNativeSportingCheckpoint)
         else played_counts(checkpoint, knockout)

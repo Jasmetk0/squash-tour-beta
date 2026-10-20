@@ -171,7 +171,7 @@ class CanonicalPlayerMatchProjection(FrozenInput):
     nationality: str
     play_style: str
     archetype: str
-    hidden_career_traits: HiddenCareerTraits
+    hidden_career_traits: HiddenCareerTraits | None
 
     @property
     def fingerprint(self) -> str:
@@ -190,7 +190,7 @@ def project_player(
     nationality: str,
     play_style: str,
     archetype: str,
-    hidden_career_traits: HiddenCareerTraits,
+    hidden_career_traits: HiddenCareerTraits | None,
 ) -> CanonicalPlayerMatchProjection:
     values = dict(record.attributes)
 
@@ -519,7 +519,7 @@ class SimulationSlotPlan(FrozenInput):
     ordinal: int = Field(ge=1)
     ordered_dependency_ids: tuple[str, ...] = ()
     group_ids: tuple[str, ...]
-    match_events: tuple["SimulationMatchEventPlan", ...]
+    match_events: tuple[SimulationMatchEventPlan, ...]
     slot_start_fingerprint: str
     health_state_fingerprint: str | None = None
     provenance: str

@@ -67,7 +67,13 @@ def native_working_context(
     )
     if (
         verified != checkpoint
-        or saved_tour(payload, run_id=run_id, branch_id=branch_id, checkpoint=verified)
+        or saved_tour(
+            payload,
+            run_id=run_id,
+            branch_id=branch_id,
+            checkpoint=verified,
+            **({"_verified_competition":verified} if verified is not None and verified.schema_version == "calendar_sporting_checkpoint.v12" else {}),
+        )
         != state
     ):
         raise ValueError(

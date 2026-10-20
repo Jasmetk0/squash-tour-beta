@@ -3,11 +3,11 @@
 Uses the existing MatchEngine and weekly owner, not a second player database.
 An exact command retry reconstructs the original post-tournament fingerprint.
 """
-from dataclasses import dataclass
 from contextlib import nullcontext
+from dataclasses import dataclass
+from typing import Literal
 
 from pydantic import Field, model_validator
-from typing import Literal
 from sqlalchemy import text
 
 from beta_engine.application.calendar_continuation_service import (
@@ -18,21 +18,29 @@ from beta_engine.application.calendar_continuation_service import (
 from beta_engine.domain.calendar.run_week_position import RunWeekPosition
 from beta_engine.domain.players.calendar_continuation_match import append_continuation
 from beta_engine.domain.players.calendar_engine_player import calendar_engine_player
-from beta_engine.domain.players.calendar_followup_points import (CalendarFollowupPointPolicy, CalendarFollowupEightPointPolicy, derive_followup_awards)
 from beta_engine.domain.players.calendar_followup_knockout import (
+    ROUNDS,
+    ROUNDS_EIGHT,
     CalendarFollowupKnockout,
-    ROUNDS, ROUNDS_EIGHT,
     append_followup_knockout,
+)
+from beta_engine.domain.players.calendar_followup_points import (
+    CalendarFollowupEightPointPolicy,
+    CalendarFollowupPointPolicy,
+    derive_followup_awards,
 )
 from beta_engine.domain.players.calendar_sporting_checkpoint import (
     build_calendar_sporting_checkpoint,
 )
 from beta_engine.domain.players.calendar_sporting_week import (
-    CalendarSportingWeekAdvance, append_sporting_week,
+    CalendarSportingWeekAdvance,
+    append_sporting_week,
 )
 from beta_engine.domain.rankings.official import FrozenInput
 from beta_engine.domain.run_packages import canonical_hash
-from beta_engine.infrastructure.db.calendar_sporting_checkpoint import replace_checkpoint
+from beta_engine.infrastructure.db.calendar_sporting_checkpoint import (
+    replace_checkpoint,
+)
 
 
 class CalendarFollowupKnockoutCommand(FrozenInput):
@@ -119,7 +127,7 @@ class CalendarFollowupKnockoutService:
             "scope": event.scope,
             "official_ranking_published": False,
         }
-        if event.schema_version in {"calendar_followup_knockout.v2", "calendar_followup_knockout.v4", "calendar_followup_knockout.v5"}:
+        if event.schema_version in {"calendar_followup_knockout.v2", "calendar_followup_knockout.v4", "calendar_followup_knockout.v5", "calendar_followup_knockout.v6"}:
             receipt["prepared_awards"] = [a.model_dump(mode="json") for a in event.prepared_awards]
             receipt["prepared_policy_fingerprint"] = event.prepared_policy.fingerprint
             receipt["publication_status"] = "prepared_not_official"
@@ -136,7 +144,9 @@ class CalendarFollowupKnockoutService:
         with (nullcontext(_tour_session) if _tour_session is not None else self.repository._session_factory.begin()) as session:
             if _tour_session is None:
                 session.execute(text("BEGIN IMMEDIATE"))
-                from beta_engine.infrastructure.db.calendar_tour import require_exhibition_timeline
+                from beta_engine.infrastructure.db.calendar_tour import (
+                    require_exhibition_timeline,
+                )
             clock, revision, world, health, state, saved, evidence = _tour_context if _tour_session is not None and _tour_context is not None else (
                 CalendarContinuationService(self.repository)._context(
                     session, run_id=run_id, branch_id=branch_id

@@ -138,6 +138,12 @@ jobs:
         if: needs.changes.outputs.backend_core == 'true'
         run: |
           python -m pytest -m pr_critical --maxfail=1 --durations=10
+      # Config loader tests are deliberately not all marked pr_critical:
+      # keep the general selector small, but execute these lightweight
+      # path-boundary regressions explicitly when backend code changes.
+      - name: Run tournament configuration security regression
+        if: needs.changes.outputs.backend_core == 'true'
+        run: python -m pytest tests/domain/test_tournament_config.py --maxfail=1 --durations=10
       - name: Generate Earth realism audit
         if: needs.changes.outputs.earth_realism == 'true'
         run: |

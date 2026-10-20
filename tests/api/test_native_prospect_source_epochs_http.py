@@ -206,7 +206,15 @@ def test_real_run_future_epoch_preserves_matched_tour_and_admits_next_year_after
         assert historic.content_hash == signed_match_hash
         assert repo.verify_branch_saved_revision_hash(revision_id=play_saved["revision_id"])
         assert repo.verify_branch_saved_revision_hash(revision_id=awarded_save["revision_id"])
+        replay_url = tour_url(restarted).replace(
+            "/calendar-tour",
+            "/authoritative-simulation/calendar-continuation/epoch-cup:final/replay",
+        )
+        status, historic_replay = _request("GET", replay_url)
+        assert status == 200, historic_replay
         restored = restore(restarted, awarded_save["revision_id"])
+        status, restored_replay = _request("GET", replay_url)
+        assert status == 200, restored_replay
         source = load_saved_run_prospect_source(restored["payload"], run_id="run")
         assert source.schema_version == "run_prospect_source_snapshot.v1"
         assert source.fingerprint == original_source.fingerprint

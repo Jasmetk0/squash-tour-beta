@@ -30,19 +30,40 @@ def _load_json(path: str | Path, *, trusted_root: Path | None = None) -> dict:
     if any(component.is_symlink() for component in (source, *source.parents)):
         raise ValueError("configuration must be a regular JSON file, not a symlink")
 
-    # By default, paths must remain inside the application's config tree.
-    # Off-tree files require an explicit root supplied by trusted application
-    # wiring, rather than accepting an arbitrary absolute Path from a caller.
+    # Off-tree paths require a root supplied by trusted application wiring.
+    # Check lexical containment BEFORE touching the requested file. Resolving
+    # user-provided paths before containment checks itself performs filesystem
+    # lookups and does not remove the dangerous input-to-open dependency.
     root = Path("config") if trusted_root is None else Path(trusted_root)
-    root_resolved = root.resolve()
-    resolved = source.resolve()
-    if not resolved.is_relative_to(root_resolved):
-        raise ValueError("configuration path must be within its trusted root")
-
-    # Open the validated, canonical path, not the original input expression.
-    # O_NOFOLLOW prevents final-component link swaps at open time.
+    if ".." in root.parts or any(component.is_symlink() for component in (root, *root.parents)):
+        raise ValueError("configuration trusted root must not be a symlink or contain traversal")
+    base = root.absolute()
     try:
-        handle = os.open(resolved, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0))
+        components = source.absolute().relative_to(base).parts
+    except ValueError as exc:
+        raise ValueError("configuration path must be within its trusted root") from exc
+    if not components:
+        raise ValueError("configuration must be a regular JSON file")
+
+    # Select the actual filesystem entries from the trusted directory. Input
+    # components are only used for equality checks, not passed to the opener.
+    directory = base
+    for component in components[:-1]:
+        child = next((entry for entry in directory.iterdir() if entry.name == component), None)
+        if child is None:
+            raise FileNotFoundError(f"configuration file is unavailable: {source}")
+        if child.is_symlink() or not child.is_dir():
+            raise ValueError("configuration directory must not be a symlink")
+        directory = child
+    selected = next((entry for entry in directory.iterdir() if entry.name == components[-1]), None)
+    if selected is None:
+        raise FileNotFoundError(f"configuration file is unavailable: {source}")
+    if selected.is_symlink():
+        raise ValueError("configuration must be a regular JSON file, not a symlink")
+
+    # O_NOFOLLOW guards the final entry against a link swap at open time.
+    try:
+        handle = os.open(selected, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0))
     except FileNotFoundError as exc:
         raise FileNotFoundError(f"configuration file is unavailable: {source}") from exc
     try:

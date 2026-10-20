@@ -1,8 +1,8 @@
 import {useEffect,useRef,useState} from 'react'
 import {Link} from 'react-router-dom'
 import {useQueryClient} from '@tanstack/react-query'
-import {inspectCalendarTour,inspectCalendarTourPlayer,previewCalendarTour,executeCalendarTour,saveCalendarTour,replayCalendarContinuation,inspectCalendarTourSeason,inspectCalendarTourRecords,inspectNativeTourProspectIntake} from '../api/client'
-import {validateTourView,validateTourPreview,validateTourSeasonComparison,validateTourCareerRecords,validateNativeProspectIntake,type NativeProspectIntakePreflight,type TourCareerRecords,type TourSeasonComparison,type TourView,type TourPreview,type TourCommand,type TourAction,type TourContribution,type TourPlayer} from '../api/calendarTour'
+import {inspectCalendarTour,inspectCalendarTourPlayer,previewCalendarTour,executeCalendarTour,saveCalendarTour,replayCalendarContinuation,inspectCalendarTourSeason,inspectCalendarTourRecords,inspectNativeTourProspectIntake,previewCalendarTourNativeBirthSporting} from '../api/client'
+import {validateTourView,validateTourPreview,validateTourSeasonComparison,validateTourCareerRecords,validateNativeProspectIntake,validateNativeSportingBirthPreflight,type NativeSportingBirthPreflight,type NativeProspectIntakePreflight,type TourCareerRecords,type TourSeasonComparison,type TourView,type TourPreview,type TourCommand,type TourAction,type TourContribution,type TourPlayer} from '../api/calendarTour'
 import {newCommandId} from '../admin/branchSimulation'
 import {tourWeekOffset,scheduleTourEdition} from '../api/nativeTourCalendar'
 import {useLanguage} from '../i18n/LanguageContext'
@@ -32,18 +32,19 @@ export function CalendarTourPanel({runId,branchId,head}:{runId:string;branchId:s
   const [player,setPlayer]=useState(''),[playerDetail,setPlayerDetail]=useState<TourPlayer|null>(null)
   const detailRequest=useRef(0),seasonReadRequest=useRef(0),careerReadRequest=useRef(0),intakeReadRequest=useRef(0)
   const [intakeReport,setIntakeReport]=useState<NativeProspectIntakePreflight|null>(null)
+  const [birthSportingReport,setBirthSportingReport]=useState<NativeSportingBirthPreflight|null>(null)
   const [historySeason,setHistorySeason]=useState(''),[comparisonSeason,setComparisonSeason]=useState('')
   const [seasonReport,setSeasonReport]=useState<TourSeasonComparison|null>(null)
   const [recordAsOf,setRecordAsOf]=useState(''),[recordStart,setRecordStart]=useState('0'),[recordCountry,setRecordCountry]=useState('')
   const [careerRecords,setCareerRecords]=useState<TourCareerRecords|null>(null)
-  const invalidate=()=>{inputs.current++;setReview(null);setConsent(false);setSaveConsent(false);setPlayerDetail(null);detailRequest.current++;setSeasonReport(null);seasonReadRequest.current++;setCareerRecords(null);careerReadRequest.current++;setIntakeReport(null);intakeReadRequest.current++}
+  const invalidate=()=>{inputs.current++;setReview(null);setConsent(false);setSaveConsent(false);setPlayerDetail(null);detailRequest.current++;setSeasonReport(null);seasonReadRequest.current++;setCareerRecords(null);careerReadRequest.current++;setIntakeReport(null);setBirthSportingReport(null);intakeReadRequest.current++}
   const read=async(signal?:AbortSignal)=>validateTourView(await inspectCalendarTour(runId,branchId,signal),runId,branchId)
   useEffect(()=>{
     const stamp=epoch.current
     const controller=new AbortController()
     let active=true
     const valid=()=>active&&epoch.current===stamp
-    setView(null);setError(null);setReview(null);setConsent(false);setSaveConsent(false);setSelected([]);setContributions(null);setNotice(null);setPlayer('');setPlayerDetail(null);detailRequest.current++;setSeasonReport(null);seasonReadRequest.current++;setCareerRecords(null);careerReadRequest.current++;setIntakeReport(null);intakeReadRequest.current++;setBusy(true)
+    setView(null);setError(null);setReview(null);setConsent(false);setSaveConsent(false);setSelected([]);setContributions(null);setNotice(null);setPlayer('');setPlayerDetail(null);detailRequest.current++;setSeasonReport(null);seasonReadRequest.current++;setCareerRecords(null);careerReadRequest.current++;setIntakeReport(null);setBirthSportingReport(null);intakeReadRequest.current++;setBusy(true)
     void read(controller.signal).then(v=>{if(valid()){
       setView(v)
       const clock=v.state?{...v.state.week,calendar:v.run_calendar??v.state.week.calendar}:null
@@ -160,13 +161,43 @@ export function CalendarTourPanel({runId,branchId,head}:{runId:string;branchId:s
     if(!view||!view.checkpoint_fingerprint)return
     const stamp=epoch.current,headAtRequest=view.saved_head_revision_id,checkpoint=view.checkpoint_fingerprint
     const requestId=++intakeReadRequest.current
-    setBusy(true);setError(null);setIntakeReport(null)
+    setBusy(true);setError(null);setIntakeReport(null);setBirthSportingReport(null)
     try{
       const checked=validateNativeProspectIntake(await inspectNativeTourProspectIntake(runId,branchId),runId,branchId,headAtRequest,checkpoint)
       if(epoch.current!==stamp||current.current!==scope||intakeReadRequest.current!==requestId)return
       setIntakeReport(checked)
     }catch(e){if(epoch.current===stamp&&current.current===scope&&intakeReadRequest.current===requestId)setError(formatApiError(e))}
     finally{if(epoch.current===stamp&&current.current===scope)setBusy(false)}
+  }
+  const loadNativeBirthSporting=async()=>{
+    if(!view?.saved||!view.state||!view.tour_fingerprint||!view.checkpoint_fingerprint
+      ||!intakeReport||intakeReport.due_count<1||intakeReport.problems.length>0
+      ||intakeReport.saved_head_revision_id!==view.saved_head_revision_id
+      ||intakeReport.checkpoint_fingerprint!==view.checkpoint_fingerprint
+      ||!/^-?\d+$/.test(seed)||!Number.isSafeInteger(Number(seed)))return
+    const stamp=epoch.current,inputsAtRequest=inputs.current
+    const requestId=++intakeReadRequest.current
+    const request={
+      expected_saved_head:view.saved_head_revision_id,
+      expected_checkpoint_fingerprint:view.checkpoint_fingerprint,
+      expected_tour_fingerprint:view.tour_fingerprint,
+      seed:Number(seed),
+    }
+    setBusy(true);setError(null);setBirthSportingReport(null)
+    try {
+      const result=validateNativeSportingBirthPreflight(
+        await previewCalendarTourNativeBirthSporting(runId,branchId,request),
+        runId,branchId,request,view.state.week,view.run_calendar??view.state.week.calendar,
+      )
+      if(epoch.current!==stamp||current.current!==scope||inputs.current!==inputsAtRequest
+        ||intakeReadRequest.current!==requestId)return
+      setBirthSportingReport(result)
+    }catch(e){
+      if(epoch.current===stamp&&current.current===scope&&inputs.current===inputsAtRequest
+        &&intakeReadRequest.current===requestId)setError(formatApiError(e))
+    }finally{
+      if(epoch.current===stamp&&current.current===scope)setBusy(false)
+    }
   }
   const names=new Map(view?.players.map(p=>[p.player_id,p.name])??[])
   const ready=Boolean(view&&!busy&&reason.trim()&&/^-?\d+$/.test(seed)&&Number.isSafeInteger(Number(seed))&&(view.saved||view.state))
@@ -190,6 +221,19 @@ export function CalendarTourPanel({runId,branchId,head}:{runId:string;branchId:s
           {intakeReport.due.map(player=><p key={player.player_id}>{player.display_name} · {player.country_code} · <code>{player.player_id}</code></p>)}
           {intakeReport.problems.map(issue=><p key={issue.prospect_id+issue.code}>{issue.prospect_id}: {issue.code}</p>)}
           <p>{cs?'Tato kontrola komponenty hráče neaktivuje. Aktuální možnosti najdete ve Skutečné připravenosti přechodu; provedení vyžaduje běžnou kontrolu Week/Season Transition a potvrzení.':'This component check does not activate players. See Actual transition readiness; execution requires the ordinary Week/Season Transition review and confirmation.'}</p>
+          {intakeReport.due_count>0&&intakeReport.problems.length===0&&<>
+            <p>{cs?'Sportovní náhled používá seed simulace uvedený níže a ověřená data ze Saved. Nic neukládá.':'Sporting review uses the simulation seed below and verified Saved data. It never writes.'}</p>
+            <button disabled={busy||!view.saved||!view.tour_fingerprint||!view.checkpoint_fingerprint
+              ||!/^[-]?\d+$/.test(seed)||!Number.isSafeInteger(Number(seed))}
+              onClick={()=>void loadNativeBirthSporting()}>{cs?'Prověřit sportovní vývoj narozených hráčů':'Review newborn sporting development'}</button>
+          </>}
+          {birthSportingReport&&<section aria-label="Verified read-only native sporting review">
+            <h4>{cs?'Ověřený sportovní přechod (pouze náhled)':'Verified sporting transition (review only)'}</h4>
+            <p>{cs?'Seed':'Seed'}: {birthSportingReport.sporting_week_projection.seed} · {cs?'Hráči':'Players'}: {birthSportingReport.sporting_week_projection.old_population_count} → {birthSportingReport.sporting_week_projection.new_population_count} · {cs?'Aktivní v minulém týdnu':'Played last week'}: {birthSportingReport.sporting_week_projection.played_player_count}</p>
+            <p>{cs?'Výsledná sportovní populace':'Resulting sporting population'}: <code>{birthSportingReport.sporting_week_projection.target_players_fingerprint.slice(0,16)}</code></p>
+            <p>{cs?'Spojený podpis Health + lifecycle + sporting':'Combined Health + lifecycle + sporting proof'}: <code>{birthSportingReport.sporting_week_projection.signed_admission_week_fingerprint.slice(0,16)}</code></p>
+            <p>{cs?'Bez zápisu. Aktivace vyžaduje běžnou kontrolu Week/Season Transition a potvrzení.':'No write. Activation requires the ordinary Week/Season Transition review and confirmation.'}</p>
+          </section>}
         </div>}
       </section>}
       <label>{cs?'Důvod operace':'Operation reason'}<input aria-label="Tour operation reason" value={reason} onChange={e=>{setReason(e.target.value);invalidate()}}/></label>

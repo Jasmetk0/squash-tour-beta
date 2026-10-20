@@ -5606,6 +5606,7 @@ class SimulationPersistenceRepository:
         expected_calendar_sporting_fingerprint: str | None = None,
         expected_calendar_tour_fingerprint: str | None = None,
         expected_run_prospect_source_fingerprint: str | None = None,
+        expected_saved_head_revision_id: str | None = None,
         expected_run_package_fingerprint: str | None = None,
         expected_run_tournament_lab_draft_fingerprint: str | None = None,
         expected_player_health_fingerprint: str | None = None,
@@ -5675,6 +5676,14 @@ class SimulationPersistenceRepository:
                     raise WorkingDraftVersionConflictError(
                         f"expected draft version {expected_draft_version}, "
                         f"found {draft.draft_version}"
+                    )
+                if (
+                    expected_run_prospect_source_fingerprint is not None
+                    and expected_saved_head_revision_id is not None
+                    and expected_saved_head_revision_id != state.saved_head_revision_id
+                ):
+                    raise WorkingDraftConflictError(
+                        "Reviewed prospect source Saved HEAD changed"
                     )
                 staged_component_dirty = (
                     (

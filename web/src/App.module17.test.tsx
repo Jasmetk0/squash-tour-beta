@@ -13,6 +13,10 @@ const api = vi.hoisted(() => ({
   getRunStatusSummary: vi.fn(),
   listRuns: vi.fn(),
   listRunContainers: vi.fn(),
+  getGlobalFullSimulationOperations: vi.fn(),
+  getViewerTournamentHistory: vi.fn(),
+  listViewerOfficialRankingHistory: vi.fn(),
+  getViewerFinalsRace: vi.fn(),
   getViewerOfficialRunContext: vi.fn(),
   listCountries: vi.fn(),
   getCountriesMetadata: vi.fn(),
@@ -291,7 +295,12 @@ function editableCountryDetail() {
 describe('Module 17 pages through routes', () => {
   beforeEach(() => {
     localStorage.clear()
+    localStorage.setItem('squash-engine-language-v1', 'en')
     vi.clearAllMocks()
+    api.getGlobalFullSimulationOperations.mockResolvedValue({ schema_version: 'global_full_simulation_operations.v1', visibility: 'durable_receipts_only', operations: [], pending_count: 0, legacy_pending_count: 0 })
+    api.getViewerTournamentHistory.mockImplementation(async (id: string) => ({ schema_version: 'viewer_tournament_history.v1', product_run_id: id, viewer_branch_id: 'branch-' + id, tournament_count: 0, published_result_count: 0, tournaments: [] }))
+    api.listViewerOfficialRankingHistory.mockImplementation(async (id: string) => ({ schema_version: 'viewer_official_ranking_history.v1', product_run_id: id, viewer_branch_id: 'branch-' + id, public_head_ordinal: 0, publication_count: 0, publications: [] }))
+    api.getViewerFinalsRace.mockImplementation(async (id: string) => ({ schema_version: 'viewer_finals_race_history.v1', product_run_id: id, viewer_branch_id: 'branch-' + id, latest_target_season_index: null, publications: [] }))
     api.listRuns.mockResolvedValue({ runs: [] })
     api.listRunContainers.mockResolvedValue({ run_containers: [] })
     api.getViewerOfficialRunContext.mockImplementation((productRunId: string) => Promise.resolve(viewerOfficialContext(productRunId, productRunId === 'product-run-a' ? 'legacy-run-a' : `legacy-${productRunId}`)))
@@ -882,18 +891,24 @@ describe('Module 17 pages through routes', () => {
     )
   })
 
-  it('renders the Phase 1 landing page at root', async () => {
+  it('opens global Home at root without activating a remembered Run', async () => {
+    localStorage.setItem('beta_engine:last_run_id', 'remembered-run')
     renderAppAt('/')
-    expect(await screen.findByText('Choose how you want to use the deterministic FAX squash world.')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /Browse the generated squash world/i })).toHaveAttribute('href', '/viewer')
-    expect(screen.getByRole('link', { name: /Build, validate, and simulate the world/i })).toHaveAttribute('href', '/admin')
+    expect(await screen.findByRole('heading', { name: 'Squash Engine Home' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Create Run +' })).toHaveAttribute('href', '/admin/runs/new')
+    expect(screen.queryByLabelText('Admin active Branch')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('Admin view time')).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /remembered-run/ })).not.toBeInTheDocument()
   })
 
-  it('renders the Admin Engine dashboard route', async () => {
+  it('renders global Home with canonical package, lab and Run entry points', async () => {
     renderAppAt('/admin')
-    expect(await screen.findByRole('heading', { name: 'Admin Engine Dashboard' })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Simulate' })).toHaveAttribute('href', '/admin/simulate')
-    expect(screen.getByRole('link', { name: 'Tour & Seasons' })).toHaveAttribute('href', '/admin/tour-seasons')
+    expect(await screen.findByRole('heading', { name: 'Squash Engine Home' })).toBeInTheDocument()
+    const entryLinks = screen.getAllByRole('link')
+    for (const path of ['/admin/runs', '/admin/packages', '/admin/labs']) {
+      expect(entryLinks.some(link => link.getAttribute('href') === path)).toBe(true)
+    }
+    expect(screen.queryByLabelText('Admin active Branch')).not.toBeInTheDocument()
   })
 
   it('renders Simulate launcher overview concepts without fake results table', async () => {
@@ -909,8 +924,12 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByText('Next Round')).toBeInTheDocument()
     expect(screen.getByText('Next Tournament')).toBeInTheDocument()
     expect(screen.getByText('Next Week')).toBeInTheDocument()
-    expect(screen.getByText('Full Season (regular season only)')).toBeInTheDocument()
-    expect(screen.getByText('World Tour Finals (explicit separate command)')).toBeInTheDocument()
+    expect(screen.getByText('Next Slot')).toBeInTheDocument()
+    expect(screen.getByText('Next Match Day')).toBeInTheDocument()
+    expect(screen.getByText('Next Season')).toBeInTheDocument()
+    expect(screen.getByText('Full Simulation')).toBeInTheDocument()
+    expect(screen.getByText(/Each command is checked against the saved state/)).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Simulation Task Center' })).toHaveAttribute('href', '/admin/operations')
     expect(screen.queryByRole('table')).not.toBeInTheDocument()
   })
 
@@ -3410,15 +3429,15 @@ describe('Module 17 pages through routes', () => {
     api.listRuns.mockResolvedValueOnce({ runs: [] })
     renderAppAt('/viewer')
     expect(await screen.findByRole('heading', { name: /MSA Squash/, level: 2 })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Featured Tournament Hero' })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Other Tournaments This Week' })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Ranking snapshots' })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Race snapshots' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Latest Completed Tournament' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Season Schedule' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Official Ranking Publications' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'World Tour Finals Race' })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Viewer hub links' })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'What this hub does not infer' })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Featured Matches' })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Predictions & Upset Watch' })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Storylines' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'History' })).toBeInTheDocument()
   })
 
   it('renders the Viewer MSA home route with active run status links without duplicate run navigation', async () => {
@@ -3448,13 +3467,13 @@ describe('Module 17 pages through routes', () => {
     renderAppAt('/viewer')
     expect(await screen.findByRole('heading', { name: /MSA Squash/, level: 2 })).toBeInTheDocument()
     expect(screen.getAllByText(/legacy-run-1/)[0]).toBeInTheDocument()
-    expect(api.getRun).toHaveBeenCalledWith('legacy-run-1')
-    expect(api.getRunStatusSummary).toHaveBeenCalledWith('legacy-run-1')
-    expect(api.listEvents).toHaveBeenCalledWith('legacy-run-1')
-    expect(api.listRankingSnapshots).toHaveBeenCalledWith('legacy-run-1')
-    expect(api.listRaceSnapshots).toHaveBeenCalledWith('legacy-run-1')
-    expect(api.getRunActivity).toHaveBeenCalledWith('legacy-run-1')
-    expect(api.getFinalsSummary).toHaveBeenCalledWith('legacy-run-1')
+    expect(api.getViewerOfficialRunContext).toHaveBeenCalledWith('product-run-1')
+    expect(api.getViewerTournamentHistory).toHaveBeenCalledWith('product-run-1')
+    expect(api.listViewerOfficialRankingHistory).toHaveBeenCalledWith('product-run-1')
+    expect(api.getViewerFinalsRace).toHaveBeenCalledWith('product-run-1')
+    for (const legacyReader of [api.getRun, api.getRunStatusSummary, api.listEvents, api.listRankingSnapshots, api.listRaceSnapshots, api.getRunActivity, api.getFinalsSummary]) {
+      expect(legacyReader).not.toHaveBeenCalled()
+    }
     expect(screen.getByRole('link', { name: 'Active Run Rankings' })).toHaveAttribute('href', '/viewer/runs/product-run-1/rankings')
     expect(screen.queryByRole('navigation', { name: 'Viewer active run quick links' })).not.toBeInTheDocument()
     const runHrefs = screen.getAllByRole('link').map((link) => link.getAttribute('href')).filter((href) => href?.startsWith('/viewer/runs/'))
@@ -3634,7 +3653,10 @@ describe('Module 17 pages through routes', () => {
   it('renders runs browser route', async () => {
     api.listRuns.mockResolvedValueOnce({ runs: [] })
     renderAppAt('/runs')
-    expect(await screen.findByRole('heading', { name: 'Runs browser' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Runs' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Create empty Run' })).toHaveAttribute('href', '/admin/runs/new')
+    expect(api.listRunContainers).toHaveBeenCalled()
+    expect(api.listRuns).not.toHaveBeenCalled()
   })
 
   it('renders activity route', async () => {

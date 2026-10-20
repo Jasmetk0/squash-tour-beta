@@ -1,3 +1,23 @@
+# Canonical Admin entry-point recovery — 20 October 2026
+
+**Verified integrated base:** `buuk` `5615a293df881d4bbde8819234269b174f21713e`
+is the owner's merge of #1573. No PRs were open at this task's start.
+
+**Current candidate:** bilingual global Simulation guidance now points to the
+Run inventory and Task Center, lists current authoritative scope names and
+explains capability blockers and explicit manual Save. It does not pick a
+remembered Run, create commands or promise native Full Simulation readiness.
+The older routed Admin regression suite is updated to canonical global Home,
+Product Run inventory and canonical Viewer source boundaries. Its existing
+196 cases are retained; missing mocks and obsolete expectations are repaired.
+
+Validation is pending GitHub Actions on the latest candidate head. Local execution
+is still unavailable. This is a frontend/component correction; it neither changes
+backend writers nor certifies the complete frontend suite or pre-alpha release.
+Remaining stale Viewer-specific regressions and full Master acceptance remain.
+
+---
+
 # Integrated baseline and focused frontend recovery — 20 October 2026
 
 **Verified integration baseline:** `buuk` `7301d34b86db833bf710d84f1dd387ffe90c938c`

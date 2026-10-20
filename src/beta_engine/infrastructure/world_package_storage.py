@@ -449,7 +449,24 @@ class WorldPackageCountryStore:
             backup.rename(live)
 
     def finalize_delete(self, backup: Path) -> None:
-        shutil.rmtree(self._delete_backup(backup))
+        """Delete only a verified, existing backup child of this country store.
+
+        Selecting the actual entry from the trusted directory listing avoids
+        performing destructive operations directly on a caller-supplied Path.
+        """
+        validated = self._delete_backup(backup)
+        for entry in self.countries_root.iterdir():
+            if entry.name != validated.name:
+                continue
+            if (
+                entry.is_symlink()
+                or not entry.is_dir()
+                or entry.resolve().parent != self.countries_root.resolve()
+            ):
+                raise ValueError("invalid country deletion backup location")
+            shutil.rmtree(entry)
+            return
+        raise FileNotFoundError("country deletion backup no longer exists")
 
     def _restore_index(self, original: bytes) -> None:
         if self.countries_root.is_symlink():

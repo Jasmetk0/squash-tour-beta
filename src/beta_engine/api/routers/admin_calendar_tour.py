@@ -1,6 +1,7 @@
 """Production Admin boundary for configured Run-calendar Tour execution."""
 
 from typing import Annotated
+import logging
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, ConfigDict, Field
@@ -18,6 +19,7 @@ router = APIRouter(
     prefix="/admin/runs/{run_id}/branches/{branch_id}/calendar-tour",
     tags=["admin-calendar-tour"],
 )
+_logger = logging.getLogger(__name__)
 
 
 def conflict(exc):
@@ -67,6 +69,14 @@ def native_transition_readiness(
         )
     except (KeyError, ValueError, TypeError) as exc:
         raise conflict(exc) from exc
+    except HTTPException:
+        raise
+    except Exception as exc:
+        _logger.exception("Unhandled native transition readiness failure")
+        raise HTTPException(
+            status_code=500,
+            detail={"code": "internal_calendar_tour_error", "message": "Internal transition readiness failure"},
+        ) from exc
 
 
 class NativeSportingBirthPreviewRequest(BaseModel):

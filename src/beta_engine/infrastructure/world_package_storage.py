@@ -178,7 +178,8 @@ class WorldPackageCountryStore:
         """Only a generated, direct child country deletion backup is disposable."""
         path = Path(backup)
         if (
-            path.is_symlink()
+            self.countries_root.is_symlink()
+            or path.is_symlink()
             or path.parent.resolve() != self.countries_root.resolve()
             or re.fullmatch(r"[.][A-Z]{3}-delete-backup-[A-Za-z0-9_-]+", path.name) is None
         ):
@@ -353,7 +354,7 @@ class WorldPackageCountryStore:
         history_root = self.package_root / "generation" / "country_histories"
         history_path = history_root / f"{country.code}.json"
         _write_json_atomic(history_path, country.rating_history.model_dump(mode="json"))
-        context_path = self.countries_root / country.code / "attributes" / "rating_context.json"
+        context_path = self._country_root(country.code) / "attributes" / "rating_context.json"
         _write_json_atomic(context_path, {
             "schema_version": "country_rating_context.v2",
             "rating_scale": country.rating_scale,
@@ -361,7 +362,7 @@ class WorldPackageCountryStore:
             "rating_effective_year": country.rating_effective_year,
         })
         for name in (*COUNTRY_GAME_ATTRIBUTE_NAMES, "court_count"):
-            (self.countries_root / country.code / "attributes" / f"{name}.json").unlink(missing_ok=True)
+            (self._country_root(country.code) / "attributes" / f"{name}.json").unlink(missing_ok=True)
         if self.load_country(country.code) != country:
             raise ValueError(f"externalized country {country.code} did not round-trip")
 

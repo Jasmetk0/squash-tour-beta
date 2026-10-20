@@ -117,3 +117,41 @@ def test_v2_rejects_retroactive_and_rewritten_or_deleted_source_even_if_rehashed
     )
     with pytest.raises(ValueError, match="edited or deleted"):
         load(changed_old)
+
+
+def test_initial_cohort_cannot_be_backfilled_after_first_genuine_week(tmp_path):
+    """Real SQLite lifecycle input; a component guard, not HTTP acceptance."""
+    from types import SimpleNamespace
+    from beta_engine.application.native_calendar_cohort_service import (
+        _validate_future_source_cohort,
+    )
+    from beta_engine.infrastructure.db.engine import (
+        DatabaseSettings, create_session_factory, create_sqlite_engine,
+    )
+    from beta_engine.infrastructure.db.models import PlayerLifecycleWeekStateModel
+    from beta_engine.infrastructure.db.player_lifecycle_state import put_lifecycle
+    from tests.domain.test_calendar_native_sporting_checkpoint import prepared
+
+    _, context = prepared()
+    initial, next_week = context["lifecycle"][:2]
+    engine = create_sqlite_engine(
+        DatabaseSettings(url=f"sqlite:///{tmp_path / 'retro-birth.db'}")
+    )
+    PlayerLifecycleWeekStateModel.__table__.create(engine)
+    sessions = create_session_factory(engine)
+    try:
+        with sessions.begin() as session:
+            put_lifecycle(session, initial)
+            put_lifecycle(session, next_week)
+        clock = initial.week.calendar
+        old_birthday = _row(
+            clock, next_week.week.season_index, next_week.week.week, "late-record",
+        )
+        with sessions() as session, pytest.raises(ValueError, match="already completed"):
+            _validate_future_source_cohort(
+                session, run_id=initial.run_id, clock=clock,
+                records=(SimpleNamespace(**old_birthday),),
+                has_prior_source=False,
+            )
+    finally:
+        engine.dispose()

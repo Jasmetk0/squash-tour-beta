@@ -6,6 +6,10 @@ name: Full Test Suite
 on:
   workflow_dispatch:
 
+# The suite only checks out and reads repository content; no write token needed.
+permissions:
+  contents: read
+
 concurrency:
   group: full-tests-${{ github.run_id }}
   cancel-in-progress: false

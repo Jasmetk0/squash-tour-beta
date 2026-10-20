@@ -48,10 +48,12 @@ def prepare_native_tour_week(
         raise ValueError(
             "Native transition requires the exact current Signed lifecycle"
         )
+    # A birthday consumes one effective snapshot; ranking replays ALL earlier
+    # lifecycle weeks and must retain the complete immutable source epoch chain.
     event = build_calendar_prospect_birth_event(
         predecessor=lifecycle[-1],
         target=target,
-        source=source,
+        source=source.for_week(target.ordinal),
         world_package_id=world.world_package_id,
     )
     if not event.births and not isinstance(

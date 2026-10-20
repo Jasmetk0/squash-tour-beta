@@ -46,6 +46,11 @@ and next-week readiness. Do not compute old events from the latest chain
 snapshot. A supported v1-only Saved Revision resolves to its unchanged v1
 source for every week.
 
+The weekly reducer receives the complete epoch chain: only the current birth
+event selects one effective snapshot. Ranking's complete lifecycle replay keeps
+the chain so every earlier birthday uses its original fingerprint. Execution,
+v3 Tour replay and v4 competition replay share this same boundary.
+
 The native Week/Season Transition is still the **only** operation that
 actually activates a 15-year-old and may create official ranked/entered
 players. Generator preview reads a hash-verified Saved World Package and

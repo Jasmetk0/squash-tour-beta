@@ -411,9 +411,7 @@ def decode_prevalidated_calendar_sources(payload: dict, *, run_id: str, branch_i
     evidence = _parse_saved_calendar_match_evidence(
         payload, run_id=run_id, branch_id=branch_id
     )
-    from beta_engine.domain.players.calendar_sporting_checkpoint import (
-        CalendarSportingCheckpoint,
-    )
+    from beta_engine.infrastructure.db.calendar_sporting_checkpoint import parse_checkpoint_json
     from beta_engine.domain.tournaments.calendar_tour import CalendarTourState
 
     content = payload.get("content", {})
@@ -423,7 +421,7 @@ def decode_prevalidated_calendar_sources(payload: dict, *, run_id: str, branch_i
     if cp_raw is not None:
         if not isinstance(cp_raw, dict) or set(cp_raw) != {"fingerprint", "state"}:
             raise ValueError("Invalid prevalidated Saved sporting component")
-        checkpoint = CalendarSportingCheckpoint.model_validate_json(json.dumps(cp_raw["state"]))
+        checkpoint = parse_checkpoint_json(json.dumps(cp_raw["state"]))
         checkpoint_fingerprint = checkpoint.fingerprint
         if (checkpoint.run_id, checkpoint.branch_id, checkpoint_fingerprint) != (
             run_id, branch_id, cp_raw["fingerprint"]

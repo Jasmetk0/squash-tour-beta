@@ -1,3 +1,31 @@
+# Native sporting checkpoint candidate — 19 October 2026
+
+**Verified latest open heads:** #1560 `db84d65`, #1562 `095a365` and #1563
+`b263ed0` have completed all their applicable checks successfully. This includes
+the long native HTTP/SQLite acceptance, Shell and W52/W61/W80 browser gates as
+applicable; legacy hybrid checks on #1560 were scoped out by their selectors,
+not executed sporting scenarios. The owner has not merged these PRs; `buuk`
+remains `14e27846898500aaffc6462878c45aa03792147f`.
+
+**Current dependent candidate:** durable sporting checkpoint v11 preserves the
+complete historical root and records exact native birth/week stages. Production
+SQLite parsing/replacement/restore and Saved component verification independently
+rebuild the native ledger against Signed source, lifecycle, Health and effective
+Tour development policy. The real Admin preflight now reports this checkpoint's
+fingerprint, bound into the versioned combined transition proof. See
+[checkpoint contract and evidence](docs/CALENDAR_NATIVE_SPORTING_CHECKPOINT_V11.md).
+This candidate is not merged or certified until its own final-head gates pass.
+
+**Next blocker remains the coupled live writer:** explicit command/confirmation,
+Tour receipts, all-domain atomic Week/Season execution, manual Save and genuine
+Entry/ranking adoption. Whole Tour validation explicitly refuses a bare v11
+component. Native post-birth match evidence, historical prospect-source epochs
+for later annual additions, protected fork re-signing and v3 Health corrections
+remain necessary. Existing Master release gates and unsupported mechanics stay
+unchanged. No full live intake or pre-alpha release is claimed.
+
+## Earlier checkpoint history (retained)
+
 # Native intake integration checkpoint — 19 October 2026
 
 **Verified owner-merged baseline:** `buuk` =

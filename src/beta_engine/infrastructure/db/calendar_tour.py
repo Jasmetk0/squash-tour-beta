@@ -46,6 +46,8 @@ def put_tour(session, state):
 
 
 def verify_tour(state, checkpoint, world=None):
+    if checkpoint is not None and checkpoint.schema_version == "calendar_sporting_checkpoint.v11":
+        raise ValueError("Native birth checkpoint requires coupled Tour transition receipt authority")
     if state is None:
         if checkpoint and (
             any(e.schema_version.endswith(".v2") for e in checkpoint.weekly_advances)

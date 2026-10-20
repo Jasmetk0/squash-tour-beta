@@ -105,6 +105,11 @@ def test_saved_native_birth_week_projects_full_v4_successor_without_any_admissio
         assert sporting["signed_writer_supported"] is False
         assert sporting["source_saved_head"] == cmd["expected_saved_head"]
         assert sporting["played_player_count"] <= 8
+        native = sporting["durable_sporting"]
+        assert native["schema_version"] == "calendar_sporting_checkpoint.v11"
+        assert native["source_checkpoint_fingerprint"] == cmd["expected_checkpoint_fingerprint"]
+        assert native["native_week_count"] == 1
+        assert native["target_lifecycle_fingerprint"] == stage["proposed_lifecycle_fingerprint"]
         durable = sporting["durable_health"]
         assert durable["target_health_schema"] == "player_health_calendar_state.v3"
         assert durable["saved_state_count"] == 1
@@ -114,6 +119,7 @@ def test_saved_native_birth_week_projects_full_v4_successor_without_any_admissio
         assert durable["source_health_head_fingerprint"] == stage["source_health_fingerprint"]
         for field in ("target_health_fingerprint", "health_history_fingerprint", "prepared_transition_fingerprint"):
             assert len(durable[field]) == 64
+        assert native["target_health_fingerprint"] == durable["target_health_fingerprint"]
         assert seeded_review["blocked"] and not seeded_review["native_activation_supported"]
         assert _request("POST", seeded_url, cmd) == (200, seeded_review)
         mutated_seed = _request("POST", seeded_url, {**cmd, "seed": 928})
@@ -138,6 +144,8 @@ def test_saved_native_birth_week_projects_full_v4_successor_without_any_admissio
         assert repo.verify_branch_saved_revision_hash(
             revision_id=saved["saved_revision"]["revision_id"]
         )
+        from tests.api.native_birth_checkpoint_case import exercise_checkpoint_component
+        exercise_checkpoint_component(repo, world, seeded_review, tmp_path)
 
     with ApiServer(database_url=database_url) as restarted:
         assert _request(

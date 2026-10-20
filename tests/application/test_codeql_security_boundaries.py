@@ -175,3 +175,41 @@ def test_country_index_file_symlink_is_rejected(tmp_path: Path) -> None:
     with pytest.raises(ValueError, match="symlink"):
         store.load_index()
     assert outside.read_text() == '{"country_codes": ["AAA"]}'
+
+
+
+def test_registry_json_load_blocks_external_and_symlink_sources(tmp_path: Path) -> None:
+    package_root = tmp_path / "world_packages"
+    package_root.mkdir()
+    outside = tmp_path / "private.json"
+    outside.write_text('{"secret": "must-not-load"}')
+    registry = WorldPackageRegistryService(world_packages_root=package_root)
+    with pytest.raises(ValueError, match="outside the registered root"):
+        registry._read_json(outside)
+    nested = package_root / "custom"
+    nested.mkdir()
+    link = nested / "outside.json"
+    try:
+        link.symlink_to(outside)
+    except (OSError, NotImplementedError):
+        pytest.skip("file symlinks are not available on this platform")
+    with pytest.raises(ValueError, match="symlink"):
+        registry._read_json(link)
+    real_file = nested / "real.json"
+    real_file.write_text('{"authorized": true}')
+    assert registry._read_json(real_file) == {"authorized": True}
+
+
+def test_registry_json_load_blocks_symlinked_subdirectory(tmp_path: Path) -> None:
+    package_root = tmp_path / "world_packages"
+    package_root.mkdir()
+    outside_dir = tmp_path / "outside"
+    outside_dir.mkdir()
+    (outside_dir / "world.json").write_text('{"secret": "outside"}')
+    try:
+        (package_root / "custom").symlink_to(outside_dir, target_is_directory=True)
+    except (OSError, NotImplementedError):
+        pytest.skip("directory symlinks are not available on this platform")
+    registry = WorldPackageRegistryService(world_packages_root=package_root)
+    with pytest.raises(ValueError, match="symlink"):
+        registry._read_json(package_root / "custom" / "world.json")

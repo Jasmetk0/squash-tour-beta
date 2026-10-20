@@ -10,7 +10,7 @@ from pathlib import Path
 from beta_engine.domain.tournaments import SeasonCalendar, TournamentTemplatesConfig
 
 
-def _load_json(path: str | Path) -> dict:
+def _load_json(path: str | Path, *, trusted_root: Path | None = None) -> dict:
     """Load a configuration file chosen by trusted application wiring.
 
     This is not a file browser for user-supplied HTTP paths. Optional custom
@@ -30,10 +30,19 @@ def _load_json(path: str | Path) -> dict:
     if any(component.is_symlink() for component in (source, *source.parents)):
         raise ValueError("configuration must be a regular JSON file, not a symlink")
 
-    # Opening with O_NOFOLLOW and fstat avoids the two separate filesystem
-    # probes and fails closed if a file is swapped for a symlink at open time.
+    # By default, paths must remain inside the application's config tree.
+    # Off-tree files require an explicit root supplied by trusted application
+    # wiring, rather than accepting an arbitrary absolute Path from a caller.
+    root = Path("config") if trusted_root is None else Path(trusted_root)
+    root_resolved = root.resolve()
+    resolved = source.resolve()
+    if not resolved.is_relative_to(root_resolved):
+        raise ValueError("configuration path must be within its trusted root")
+
+    # Open the validated, canonical path, not the original input expression.
+    # O_NOFOLLOW prevents final-component link swaps at open time.
     try:
-        handle = os.open(source, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0))
+        handle = os.open(resolved, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0))
     except FileNotFoundError as exc:
         raise FileNotFoundError(f"configuration file is unavailable: {source}") from exc
     try:
@@ -49,13 +58,17 @@ def _load_json(path: str | Path) -> dict:
 
 def load_tournament_templates_config(
     path: str | Path = "config/tournament_templates/mvp_templates.json",
+    *,
+    trusted_root: Path | None = None,
 ) -> TournamentTemplatesConfig:
-    return TournamentTemplatesConfig.model_validate(_load_json(path))
+    return TournamentTemplatesConfig.model_validate(_load_json(path, trusted_root=trusted_root))
 
 
 def load_season_calendar(
     path: str | Path = "config/calendar/season_2027.json",
     season: int | None = None,
+    *,
+    trusted_root: Path | None = None,
 ) -> SeasonCalendar:
     requested_season = season
     # A season is an integer selector, never a pathname component from a string.
@@ -68,7 +81,7 @@ def load_season_calendar(
         if season_path.exists():
             return SeasonCalendar.model_validate(_load_json(season_path))
 
-    calendar = SeasonCalendar.model_validate(_load_json(path))
+    calendar = SeasonCalendar.model_validate(_load_json(path, trusted_root=trusted_root))
     if requested_season is None or calendar.season == requested_season:
         return calendar
 

@@ -129,3 +129,25 @@ def test_config_loader_rejects_symlink_source(tmp_path) -> None:
         pytest.skip("file symlinks not supported")
     with pytest.raises(ValueError, match="not a symlink"):
         load_tournament_templates_config(path=link)
+
+
+def test_configuration_loader_rejects_traversal_even_to_json(tmp_path) -> None:
+    inner = tmp_path / "inner"
+    inner.mkdir()
+    source = tmp_path / "config.json"
+    source.write_text("{}")
+    with pytest.raises(ValueError, match="without traversal"):
+        load_tournament_templates_config(path=inner / ".." / "config.json")
+
+
+def test_configuration_loader_rejects_symlinked_parent(tmp_path) -> None:
+    source = tmp_path / "real"
+    source.mkdir()
+    (source / "config.json").write_text("{}")
+    alias = tmp_path / "alias"
+    try:
+        alias.symlink_to(source, target_is_directory=True)
+    except (OSError, NotImplementedError):
+        pytest.skip("directory symlinks not supported")
+    with pytest.raises(ValueError, match="symlink"):
+        load_tournament_templates_config(path=alias / "config.json")

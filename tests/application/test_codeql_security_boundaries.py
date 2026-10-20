@@ -256,3 +256,30 @@ def test_externalized_history_write_rejects_linked_generation_parent(
     with pytest.raises(ValueError, match="destination uses a symlink"):
         store.externalize_rating_history("AAA")
     assert not list((target / "country_histories").iterdir())
+
+
+def test_registry_discovers_only_actual_child_directories(tmp_path: Path) -> None:
+    root = tmp_path / "world_packages"
+    allowed = root / "custom" / "valid_world"
+    allowed.mkdir(parents=True)
+    registry = WorldPackageRegistryService(world_packages_root=root)
+    assert registry.package_dir("VALID_WORLD") == allowed
+    assert registry.package_dir("../valid_world") is None
+    assert registry.package_dir("custom/valid_world") is None
+
+
+def test_finalize_delete_keeps_other_backup_directories(tmp_path: Path) -> None:
+    store = WorldPackageCountryStore(tmp_path / "world")
+    store.countries_root.mkdir(parents=True)
+    wanted = store.countries_root / ".AAA-delete-backup-abcdef123"
+    keep = store.countries_root / ".BBB-delete-backup-abcdef123"
+    wanted.mkdir()
+    keep.mkdir()
+    (wanted / "data").write_text("delete")
+    (keep / "data").write_text("keep")
+    store.finalize_delete(wanted)
+    assert not wanted.exists()
+    assert (keep / "data").read_text() == "keep"
+    with pytest.raises(FileNotFoundError):
+        store.finalize_delete(wanted)
+    assert (keep / "data").read_text() == "keep"

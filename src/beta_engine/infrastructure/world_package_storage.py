@@ -180,7 +180,7 @@ class WorldPackageCountryStore:
         if (
             path.is_symlink()
             or path.parent.resolve() != self.countries_root.resolve()
-            or re.fullmatch(r"\\.[A-Z]{3}-delete-backup-[A-Za-z0-9_-]+", path.name) is None
+            or re.fullmatch(r"[.][A-Z]{3}-delete-backup-[A-Za-z0-9_-]+", path.name) is None
         ):
             raise ValueError("invalid country deletion backup location")
         return path

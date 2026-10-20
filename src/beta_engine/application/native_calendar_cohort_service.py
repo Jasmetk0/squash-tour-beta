@@ -47,11 +47,12 @@ def _validate_future_source_cohort(session, *, run_id, clock, records, has_prior
     from beta_engine.infrastructure.db.run_prospect_source_state import (
         _effective_birth_ordinal, highest_authenticated_run_week,
     )
-    if not has_prior_source:
-        # Preserve v1 initial-cohort semantics, including the opening week.
-        return
-
     furthest = highest_authenticated_run_week(session, run_id=run_id)
+    if not has_prior_source and furthest == 0:
+        # Preserve v1 initial-cohort semantics only while the Run has not
+        # advanced. Once a real week has completed, an unsigned opening
+        # cohort must never backfill an already elapsed birthday.
+        return
     if any(
         _effective_birth_ordinal({
             "birth_year": row.birth_year, "birth_year_week": row.birth_year_week,

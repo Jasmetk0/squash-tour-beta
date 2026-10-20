@@ -1,3 +1,30 @@
+# Native birth runtime capability candidate — 19 October 2026
+
+**Published writer:** #1565 `ca447c2` has all applicable final-head gates green:
+Fast CI, all five new real birthday cases, full native HTTP/SQLite Signed restore,
+Season API, Shell and W52/W61/W80-1000 browser acceptance. It is ready for owner
+review, not merged.
+Earlier #1560/#1562/#1563/#1564 heads were green. Owner alone merges;
+`buuk` remains `14e27846898500aaffc6462878c45aa03792147f`.
+
+**Current dependent slice:** real runtime transition readiness, distinct from
+older read-only component preflight; exact owner/clock capability, unsaved/terminal
+responses, CS/EN Admin, stale-result rejection and disabled unsupported post-birth
+competition. Run-shared incompatible source Save reports its existing epoch
+blocker in preview and rejects forced writes transactionally. See
+[contract and bounded evidence](docs/CALENDAR_NATIVE_TRANSITION_READINESS_V1.md).
+Actual local Chromium is missing; its added real browser gate must pass in CI.
+The first CI browser attempt used a random Vite port outside the application's
+allowed CORS origins and failed before Tour mount; the test harness now uses the
+existing allowed 5173 origin. Product CORS rules are unchanged. Check the corrected
+head, not the superseded failed run.
+This slice is not merge-ready before its final-head checks complete.
+
+Post-birth competition, immutable historical source epochs, protected forks,
+numeric Health, remaining Master scope and full release acceptance stay open.
+
+## Earlier checkpoint history (retained)
+
 # Confirmed native birth Week/Season candidate — 19 October 2026
 
 **Verified stack:** #1560 `db84d65`, #1562 `095a365`, #1563 `b263ed0` and

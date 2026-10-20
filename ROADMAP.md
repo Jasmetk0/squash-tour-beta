@@ -1,3 +1,22 @@
+# Pre-alpha dependency path — honest native birth capability
+
+Current stack adds the confirmed birth writer #1565 after #1564, then the current
+read-only runtime capability/Admin slice. All applicable #1565 final-head gates
+are green, including original full native HTTP/season/browser acceptance. The
+readiness candidate remains pending its corrected real browser and final-head
+checks; owner alone merges.
+
+Current capability work reports real guarded next action, actual native population,
+Save/terminal blockers and exact clocks without granting execution authority. It
+also exposes the existing source-epoch limitation before an incompatible Save.
+[Contract](docs/CALENDAR_NATIVE_TRANSITION_READINESS_V1.md).
+
+Next priorities remain genuine post-birth Edition/Entry/match authority and
+immutable source epochs for later annual data, then remaining Master integration
+and full release gates. Do not unlock Full Simulation from bounded readiness.
+
+## Earlier roadmap checkpoints (retained)
+
 # Pre-alpha dependency path — confirmed native birth candidate
 
 #1560, #1562, #1563 and #1564 have green final-head applicable checks; only the

@@ -351,7 +351,8 @@ def test_native_birth_week_is_atomic_signed_and_recoverable(
                     + "/admin/runs/run/branches/branch/authoritative-simulation/prospect-source/save"
                 )
                 code, review = _request("GET", source_url + "/preview")
-                assert code == 200 and review["can_save"], review
+                assert code == 200 and not review["can_save"], review
+                assert review["blockers"] == ["native_prospect_source_epochs_required"]
                 before = _dump(path)
                 code, rejected = _request(
                     "POST",

@@ -8,17 +8,38 @@ the shared Run source still matches before any Branch mutation can occur.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 import hashlib
 import json
+from dataclasses import dataclass
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from beta_engine.infrastructure.db.models import RunProspectModel
+from beta_engine.infrastructure.db.models import (
+    PlayerLifecycleWeekStateModel,
+    RunProspectModel,
+)
 
 RUN_PROSPECT_SOURCE_COMPONENT_KEY = "run_prospect_source"
 RUN_PROSPECT_SOURCE_SCHEMA = "run_prospect_source_snapshot.v1"
+
+
+def native_birth_requires_source_epochs(session, *, run_id):
+    """Run-shared source changes cannot invalidate another Branch's birth proof."""
+    for row in session.scalars(
+        select(PlayerLifecycleWeekStateModel).where(
+            PlayerLifecycleWeekStateModel.run_id == run_id
+        )
+    ):
+        if (
+            json.loads(row.payload_json).get("schema_version")
+            == "player_lifecycle_calendar_state.v4"
+        ):
+            from beta_engine.infrastructure.db.player_lifecycle_state import _load
+
+            _load(row, run_id, row.branch_id, row.week_ordinal)
+            return True
+    return False
 
 
 @dataclass(frozen=True)
@@ -81,11 +102,15 @@ def capture_run_prospect_source_snapshot(
     *,
     run_id: str,
 ) -> RunProspectSourceSnapshot | None:
-    models = session.execute(
-        select(RunProspectModel)
-        .where(RunProspectModel.run_id == run_id)
-        .order_by(RunProspectModel.prospect_id.asc())
-    ).scalars().all()
+    models = (
+        session.execute(
+            select(RunProspectModel)
+            .where(RunProspectModel.run_id == run_id)
+            .order_by(RunProspectModel.prospect_id.asc())
+        )
+        .scalars()
+        .all()
+    )
     if not models:
         return None
 
@@ -98,7 +123,9 @@ def capture_run_prospect_source_snapshot(
                 f"Run prospect {model.prospect_id!r} contains malformed persisted JSON"
             ) from exc
         if not isinstance(record["profile"], dict):
-            raise ValueError(f"Run prospect {model.prospect_id!r} profile must be an object")
+            raise ValueError(
+                f"Run prospect {model.prospect_id!r} profile must be an object"
+            )
         if not isinstance(record["development"], dict):
             raise ValueError(
                 f"Run prospect {model.prospect_id!r} development must be an object"
@@ -108,7 +135,9 @@ def capture_run_prospect_source_snapshot(
                 f"Run prospect {model.prospect_id!r} potential must be an object"
             )
         if not isinstance(record["traits"], dict):
-            raise ValueError(f"Run prospect {model.prospect_id!r} traits must be an object")
+            raise ValueError(
+                f"Run prospect {model.prospect_id!r} traits must be an object"
+            )
         records.append(record)
 
     frozen = tuple(records)

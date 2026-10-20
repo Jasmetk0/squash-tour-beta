@@ -51,6 +51,24 @@ def native_prospect_intake_preflight(
         raise conflict(exc) from exc
 
 
+@router.get("/prospect-intake/transition-readiness")
+def native_transition_readiness(
+    run_id: str,
+    branch_id: str,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+):
+    from beta_engine.application.calendar_native_transition_readiness import (
+        inspect_native_transition_readiness,
+    )
+
+    try:
+        return inspect_native_transition_readiness(
+            runtime.repository, run_id=run_id, branch_id=branch_id
+        )
+    except (KeyError, ValueError, TypeError) as exc:
+        raise conflict(exc) from exc
+
+
 class NativeSportingBirthPreviewRequest(BaseModel):
     """Read-only, stale-HEAD-checked review; never an activation command."""
 

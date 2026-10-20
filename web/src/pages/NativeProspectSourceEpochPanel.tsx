@@ -2,9 +2,9 @@ import {useEffect,useRef,useState} from 'react'
 import {useQueryClient} from '@tanstack/react-query'
 import {
   previewFutureNativeProspects, materializeFutureNativeProspects,
-  previewRunProspectSourceSave, saveRunProspectSource,
   type NativeFutureCohortRequest, type NativeFutureCohortPreview,
-} from '../api/client'
+} from '../api/nativeFutureProspects'
+import {previewRunProspectSourceSave,saveRunProspectSource} from '../api/client'
 import type {RunProspectSourceSavePreview} from '../api/types'
 import {useLanguage} from '../i18n/LanguageContext'
 import {formatApiError} from '../utils/apiErrors'

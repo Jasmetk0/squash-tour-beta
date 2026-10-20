@@ -26,7 +26,7 @@ function Probe(): JSX.Element {
   </>
 }
 
-function renderTime(client = new QueryClient({ defaultOptions: { queries: { retry: false } } } }), route = '/admin/runs/run-a'): QueryClient {
+function renderTime(client = new QueryClient({ defaultOptions: { queries: { retry: false } } }), route = '/admin/runs/run-a'): QueryClient {
   render(<QueryClientProvider client={client}><MemoryRouter initialEntries={[route]}><AdminBranchProvider runId="run-a"><AdminTimeProvider><AdminBranchSelector /><AdminTimeControl /><Probe /></AdminTimeProvider></AdminBranchProvider></MemoryRouter></QueryClientProvider>)
   return client
 }

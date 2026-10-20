@@ -31,6 +31,8 @@ def fixture():
         ),
         edition=SimpleNamespace(
             edition_id="native-event",
+            start_slot=1,
+            main_entrant_count=4,
             validity_weeks=52,
             point_table={"champion": 100, "finalist": 60, "semifinal": 30},
         ),

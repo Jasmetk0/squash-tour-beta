@@ -384,6 +384,10 @@ class CalendarTourService:
                     )
                     if event is None or not a.tournament_fingerprint:
                         continue
+                    from beta_engine.domain.players.calendar_native_competition import (
+                        native_match_slot,
+                    )
+
                     evidence[a.edition.edition_id] = {
                         "results": [
                             {**r.model_dump(mode="json"), "stage": award.reached_stage}
@@ -396,7 +400,10 @@ class CalendarTourService:
                         "matches": [
                             {
                                 "match_id": m.match_id,
-                                "slot": a.edition.start_slot + 3 + i,
+                                "slot": native_match_slot(a, i)
+                                if event.schema_version
+                                == "calendar_followup_knockout.v6"
+                                else a.edition.start_slot + 3 + i,
                                 "player_a_id": m.result.player_a_id,
                                 "player_b_id": m.result.player_b_id,
                                 "winner_player_id": m.result.winner_player_id,

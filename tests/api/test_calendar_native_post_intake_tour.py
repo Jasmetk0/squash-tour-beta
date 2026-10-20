@@ -228,6 +228,9 @@ def test_admitted_player_plays_real_edition_and_saved_history(
         assert code == 201, played
         assert _request("POST", tour_url(server) + "/execute", request) == (201, played)
         assert _request("GET", viewer_url) == public_before
+        played_slots = inspect(server)["edition_evidence"]["after-intake"]["matches"]
+        assert played_slots[0]["slot"] == played_slots[1]["slot"]
+        assert played_slots[-1]["slot"] > played_slots[0]["slot"]
         played_save = save_tour(server)
         raw = repo.get_branch_saved_revision(
             revision_id=played_save["revision_id"]

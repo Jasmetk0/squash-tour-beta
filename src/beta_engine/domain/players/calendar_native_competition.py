@@ -218,6 +218,17 @@ def native_projections(checkpoint, world, lifecycle, source, ids):
     return tuple(projections)
 
 
+def native_match_slot(authority, index):
+    """The Edition's play slots, with one common frozen snapshot per round."""
+    eight = authority.edition.main_entrant_count == 8
+    round_index = (
+        (0 if index < 4 else 1 if index < 6 else 2)
+        if eight
+        else (0 if index < 2 else 1)
+    )
+    return authority.edition.start_slot + 3 + round_index
+
+
 def play_native_tournament(
     *,
     checkpoint,
@@ -300,6 +311,8 @@ def play_native_tournament(
                     {
                         "checkpoint": initial.fingerprint,
                         "round": start,
+                        "slot": native_match_slot(authority, index),
+                        "edition_authority_fingerprint": authority.execution_fingerprint,
                         "players": [p.model_dump(mode="json") for p in prior_players],
                     }
                 ),

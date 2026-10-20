@@ -114,8 +114,15 @@ def birth_row(target, pid="prospect-1"):
     }
 
 
+class _NativeSourceFixture(SimpleNamespace):
+    """Component-only v1 source; production replay still requires strict Signed parse."""
+
+    def for_week(self, ordinal: int):
+        return self
+
+
 def source(*rows):
-    return SimpleNamespace(
+    return _NativeSourceFixture(
         run_id="r", records=tuple(sorted(rows, key=lambda p: p["prospect_id"])),
         fingerprint="f" * 64,
     )

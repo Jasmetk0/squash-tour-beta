@@ -119,7 +119,7 @@ def main():
                     assert component.schema_version == "run_prospect_source_epochs.v2"
                     assert component.for_week(2).fingerprint == old.fingerprint
                     assert component.for_week(3).fingerprint != old.fingerprint
-                    assert repo.verify_branch_saved_revision_hash(revision_id)
+                    assert repo.verify_branch_saved_revision_hash(revision_id=revision_id)
                     assert not errors, errors
                     page.screenshot(path=str(root / "future-source-epoch.png"), full_page=True)
                     browser.close()

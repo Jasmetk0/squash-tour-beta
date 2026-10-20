@@ -14,7 +14,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from beta_engine.application.run_prospect_cohort_reconcile import (
     RunProspectCohortConflictError, reconcile_run_prospect_cohort,
 )
-from sqlalchemy import select, text
+from sqlalchemy import func, select, text
 
 from beta_engine.application.run_prospect_materialization_service import (
     PROFILE_VERSION, _stable_seed,
@@ -41,6 +41,48 @@ from beta_engine.infrastructure.db.repositories import (
 NATIVE_COHORT_POLICY = "native_calendar_15yo_cohort_v1"
 NATIVE_COHORT_SOURCE = "native_calendar_15yo_cohort"
 MAX_NATIVE_ANNUAL_TARGET = 2000
+
+def _validate_future_source_cohort(session, *, run_id, clock, records):
+    """Shared catalog cannot add birthdays to ANY already completed Branch."""
+    from beta_engine.infrastructure.db.models import PlayerLifecycleWeekStateModel
+    from beta_engine.infrastructure.db.run_prospect_source_state import (
+        _effective_birth_ordinal,
+    )
+
+    furthest = session.scalar(
+        select(func.max(PlayerLifecycleWeekStateModel.week_ordinal)).where(
+            PlayerLifecycleWeekStateModel.run_id == run_id
+        )
+    )
+    furthest = furthest if furthest is not None else 0
+    if any(
+        _effective_birth_ordinal({
+            "birth_year": row.birth_year, "birth_year_week": row.birth_year_week,
+            "season_start_year": row.season_start_year,
+            "season_week": row.season_week, "calendar_year": row.calendar_year,
+            "year_week": row.year_week, "age": row.age,
+        }, clock) <= furthest
+        for row in records
+    ):
+        raise ValueError(
+            "A new prospect birthday is already completed on another Branch"
+        )
+
+
+def _require_clean_shared_source(session, *, run_id, saved_source):
+    from beta_engine.infrastructure.db.run_prospect_source_state import (
+        capture_run_prospect_source_snapshot,
+    )
+    live = capture_run_prospect_source_snapshot(session, run_id=run_id)
+    if (live is None) != (saved_source is None) or (
+        live is not None and live.records != saved_source.records
+    ):
+        raise ValueError(
+            "Shared Run prospect catalog has unsaved additions; Save the source "
+            "on this Branch before preparing another cohort"
+        )
+
+
 
 
 def _calendar_rated_country(country: Country, year: int) -> Country:
@@ -275,11 +317,8 @@ class NativeCalendarCohortService:
             existing_source = validate_live_run_prospect_source_against_saved(
                 session, json.loads(revision.payload_json), run_id=run_id,
             )
-            other_branch = session.scalar(
-                select(RunBranchModel.branch_id).where(
-                    RunBranchModel.run_id == run_id,
-                    RunBranchModel.branch_id != branch_id,
-                ).limit(1)
+            _require_clean_shared_source(
+                session, run_id=run_id, saved_source=existing_source,
             )
             head = branch.saved_head_revision_id
         projection = self.world_adapter.project_countries(saved, package_id=request.world_package_id)
@@ -294,6 +333,11 @@ class NativeCalendarCohortService:
             base_annual_intake_target=request.base_annual_intake_target,
             country_content_fingerprint=projection.content_fingerprint,
         )
+        with self.repository._session_factory() as session:
+            session.execute(text("BEGIN"))
+            _validate_future_source_cohort(
+                session, run_id=run_id, clock=clock, records=cohort.records,
+            )
         response = {
             "schema_version": "native_calendar_cohort_preview.v1",
             "run_id": run_id, "branch_id": branch_id,
@@ -324,11 +368,8 @@ class NativeCalendarCohortService:
                 for row in cohort.records[:5]
             ],
             "preview_only": True,
-            "materialization_supported": other_branch is None,
-            "materialization_blocker": (
-                None if other_branch is None
-                else "shared_source_requires_coordinated_branch_confirmation"
-            ),
+            "materialization_supported": True,
+            "materialization_blocker": None,
             "requires_manual_source_save_after_materialization": True,
             "native_tour_activation_supported": False,
         }
@@ -405,17 +446,6 @@ class NativeCalendarCohortService:
             )
             branch = session.get(RunBranchModel, branch_id)
             run = session.get(RunContainerModel, run_id)
-            sibling_branch = session.scalar(
-                select(RunBranchModel.branch_id).where(
-                    RunBranchModel.run_id == run_id,
-                    RunBranchModel.branch_id != branch_id,
-                ).limit(1)
-            )
-            if sibling_branch is not None:
-                raise ValueError(
-                    "Shared Run prospect source requires coordinated confirmation "
-                    "across multiple Branches; materialization is not yet supported"
-                )
             if (
                 fresh.to_metadata() != clock_proof
                 or branch is None or branch.saved_head_revision_id != head
@@ -439,6 +469,12 @@ class NativeCalendarCohortService:
             )
             if (previous.fingerprint if previous else None) != source_proof:
                 raise ValueError("Shared Run prospect source changed during confirmation")
+            _require_clean_shared_source(
+                session, run_id=run_id, saved_source=previous,
+            )
+            _validate_future_source_cohort(
+                session, run_id=run_id, clock=fresh, records=cohort.records,
+            )
             # Do not create a historical duplicate identity inside the original
             # population. Future lifecycle activation will separately enforce
             # the same target-week identity check.

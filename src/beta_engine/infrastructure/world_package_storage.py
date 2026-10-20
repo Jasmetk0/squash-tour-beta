@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import math
+import re
 import shutil
 import tempfile
 from dataclasses import dataclass
@@ -161,6 +162,29 @@ class WorldPackageCountryStore:
     def __post_init__(self) -> None:
         self.package_root = Path(self.package_root)
 
+    def _country_root(self, code: str) -> Path:
+        # Never use a country identifier as an unchecked filesystem component.
+        if not isinstance(code, str) or re.fullmatch(r"[A-Z]{3}", code, re.ASCII) is None:
+            raise ValueError(f"invalid country code {code!r}")
+        root = self.countries_root
+        candidate = root / code
+        if root.is_symlink() or candidate.is_symlink():
+            raise ValueError(f"country directory must not be a symlink: {code!r}")
+        if not candidate.resolve().is_relative_to(root.resolve()):
+            raise ValueError(f"country directory escapes package root: {code!r}")
+        return candidate
+
+    def _delete_backup(self, backup: Path) -> Path:
+        """Only a generated, direct child country deletion backup is disposable."""
+        path = Path(backup)
+        if (
+            path.is_symlink()
+            or path.parent.resolve() != self.countries_root.resolve()
+            or re.fullmatch(r"\\.[A-Z]{3}-delete-backup-[A-Za-z0-9_-]+", path.name) is None
+        ):
+            raise ValueError("invalid country deletion backup location")
+        return path
+
     @property
     def countries_root(self) -> Path:
         return self.package_root / "countries"
@@ -196,7 +220,7 @@ class WorldPackageCountryStore:
         raise ValueError(f"{canonical} is missing and no supported legacy fallback exists")
 
     def load_country(self, code: str) -> Country:
-        country_root = self.countries_root / code
+        country_root = self._country_root(code)
         identity_path = country_root / "country.json"
         identity = CountryIdentity.model_validate(_read_object(identity_path))
         if identity.schema_version != COUNTRY_IDENTITY_SCHEMA:
@@ -282,7 +306,7 @@ class WorldPackageCountryStore:
         return sorted(countries, key=lambda country: country["code"])
 
     def write_country(self, country: Country) -> None:
-        root = self.countries_root / country.code
+        root = self._country_root(country.code)
         identity = {"schema_version": COUNTRY_IDENTITY_SCHEMA, **country.model_dump(mode="json", include={"code", "name", "flag_asset", "notes"})}
         _write_json_atomic(root / "country.json", identity)
         if country.population_by_year is not None:
@@ -344,7 +368,7 @@ class WorldPackageCountryStore:
     def create_country(self, country: Country) -> bytes:
         """Create one country and update the index, returning exact old index bytes."""
         index = self.load_index()
-        live = self.countries_root / country.code
+        live = self._country_root(country.code)
         if country.code in index.country_codes or live.exists():
             raise FileExistsError(f"country {country.code!r} already exists")
         original = self.index_path.read_bytes()
@@ -373,13 +397,13 @@ class WorldPackageCountryStore:
             shutil.rmtree(stage, ignore_errors=True)
 
     def rollback_create(self, code: str, original_index: bytes) -> None:
-        shutil.rmtree(self.countries_root / code, ignore_errors=True)
+        shutil.rmtree(self._country_root(code), ignore_errors=True)
         self._restore_index(original_index)
 
     def delete_country(self, code: str) -> tuple[bytes, Path]:
         """Stage deletion of one country. Caller must finalize or roll it back."""
         index = self.load_index()
-        live = self.countries_root / code
+        live = self._country_root(code)
         if code not in index.country_codes or not live.is_dir():
             raise FileNotFoundError(f"country {code!r} does not exist")
         original = self.index_path.read_bytes()
@@ -400,14 +424,15 @@ class WorldPackageCountryStore:
             raise
 
     def rollback_delete(self, code: str, original_index: bytes, backup: Path) -> None:
+        backup = self._delete_backup(backup)
+        self._country_root(code)
         self._restore_index(original_index)
-        live = self.countries_root / code
+        live = self._country_root(code)
         if backup.exists() and not live.exists():
             backup.rename(live)
 
-    @staticmethod
-    def finalize_delete(backup: Path) -> None:
-        shutil.rmtree(backup)
+    def finalize_delete(self, backup: Path) -> None:
+        shutil.rmtree(self._delete_backup(backup))
 
     def _restore_index(self, original: bytes) -> None:
         with tempfile.NamedTemporaryFile("wb", dir=self.index_path.parent, prefix=".index.json.", delete=False) as fh:
@@ -422,7 +447,7 @@ class WorldPackageCountryStore:
         """Atomically replace one indexed country, restoring the live copy on failure."""
         if country.code not in self.load_index().country_codes:
             raise ValueError(f"country {country.code!r} does not exist")
-        live = self.countries_root / country.code
+        live = self._country_root(country.code)
         stage = Path(tempfile.mkdtemp(prefix=f".{country.code}-stage-", dir=self.countries_root))
         backup = self.countries_root / f".{country.code}-backup"
         staged_store = WorldPackageCountryStore(stage)
@@ -451,7 +476,7 @@ class WorldPackageCountryStore:
         if code not in self.load_index().country_codes:
             raise ValueError(f"country {code!r} does not exist")
         payload = CountryPopulation(default_year=default_year, values_by_year=values_by_year)
-        path = self.countries_root / code / "attributes" / "population.json"
+        path = self._country_root(code) / "attributes" / "population.json"
         original = path.read_bytes()
         current = CountryPopulation.model_validate(_read_object(path))
         if current.model_dump() == payload.model_dump():
@@ -470,7 +495,7 @@ class WorldPackageCountryStore:
 
     def restore_population(self, country_code: str, original: bytes) -> None:
         """Restore exact population bytes using an atomic promotion."""
-        path = self.countries_root / country_code.upper() / "attributes" / "population.json"
+        path = self._country_root(country_code.upper()) / "attributes" / "population.json"
         with tempfile.NamedTemporaryFile("wb", dir=path.parent, prefix=f".{path.name}.", delete=False) as fh:
             fh.write(original)
             temporary = Path(fh.name)

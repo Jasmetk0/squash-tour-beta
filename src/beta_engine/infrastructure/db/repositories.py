@@ -5558,18 +5558,23 @@ class SimulationPersistenceRepository:
                 run_id=run_id,
             )
             changed = live is not None and (
-                saved is None or saved.fingerprint != live.fingerprint
+                saved is None or saved.records != live.records
             )
             run = session.get(RunContainerModel, run_id)
             branch = session.get(RunBranchModel, branch_id)
             from beta_engine.infrastructure.db.run_prospect_source_state import (
                 native_birth_requires_source_epochs,
             )
-            blockers = (
-                ["native_prospect_source_epochs_required"]
-                if changed and native_birth_requires_source_epochs(session, run_id=run_id)
-                else []
-            )
+            blockers = []
+            if changed:
+                try:
+                    examined = json.loads(json.dumps(state.saved_revision.payload))
+                    capture_saved_run_prospect_source(
+                        session, examined, run_id=run_id, branch_id=branch_id,
+                        allow_append=True,
+                    )
+                except (ValueError, KeyError, TypeError) as exc:
+                    blockers = [str(exc)]
             return {
                 "run_id": run_id,
                 "branch_id": branch_id,
@@ -5674,14 +5679,6 @@ class SimulationPersistenceRepository:
                         f"expected draft version {expected_draft_version}, "
                         f"found {draft.draft_version}"
                     )
-                if expected_run_prospect_source_fingerprint is not None:
-                    from beta_engine.infrastructure.db.run_prospect_source_state import (
-                        native_birth_requires_source_epochs,
-                    )
-                    if native_birth_requires_source_epochs(session, run_id=run_id):
-                        raise WorkingDraftConflictError(
-                            "native_prospect_source_epochs_required"
-                        )
                 staged_component_dirty = (
                     (
                         expected_run_package_fingerprint is not None
@@ -5842,7 +5839,10 @@ class SimulationPersistenceRepository:
                 capture_saved_sporting(
                     session, payload, run_id=run_id, branch_id=branch_id
                 )
-                capture_saved_run_prospect_source(session, payload, run_id=run_id)
+                capture_saved_run_prospect_source(
+                    session, payload, run_id=run_id, branch_id=branch_id,
+                    allow_append=expected_run_prospect_source_fingerprint is not None,
+                )
                 capture_saved_simulation_slots(
                     session, payload, run_id=run_id, branch_id=branch_id
                 )
@@ -6006,10 +6006,12 @@ class SimulationPersistenceRepository:
                     component = payload["content"].get(
                         RUN_PROSPECT_SOURCE_COMPONENT_KEY
                     )
+                    live_source = capture_run_prospect_source_snapshot(
+                        session, run_id=run_id,
+                    )
                     if (
-                        component is None
-                        or component["fingerprint"]
-                        != expected_run_prospect_source_fingerprint
+                        component is None or live_source is None
+                        or live_source.fingerprint != expected_run_prospect_source_fingerprint
                     ):
                         raise WorkingDraftConflictError(
                             "Run prospect source changed since preview"

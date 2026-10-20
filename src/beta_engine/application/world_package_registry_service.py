@@ -155,8 +155,6 @@ class WorldPackageRegistryService:
   except ValueError as exc:
    raise ValueError("World Package metadata is outside the registered root") from exc
   trusted=safe_package_file(self.world_packages_root,relative)
-  value=json.loads(trusted.read_text(encoding='utf-8'))
-  if not isinstance(value,dict): raise ValueError(f'{source} must contain object')
-  return value
+  return load_json_object(trusted)
  def _items(self,p,k):
   value=self._read_json(p).get(k,[]); return value if isinstance(value,list) else []

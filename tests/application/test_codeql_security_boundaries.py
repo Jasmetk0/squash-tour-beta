@@ -283,3 +283,33 @@ def test_finalize_delete_keeps_other_backup_directories(tmp_path: Path) -> None:
     with pytest.raises(FileNotFoundError):
         store.finalize_delete(wanted)
     assert (keep / "data").read_text() == "keep"
+
+
+
+def test_country_package_root_symlink_is_rejected(tmp_path: Path) -> None:
+    genuine = tmp_path / "genuine_world"
+    (genuine / "countries" / "AAA").mkdir(parents=True)
+    alias = tmp_path / "alias_world"
+    try:
+        alias.symlink_to(genuine, target_is_directory=True)
+    except (OSError, NotImplementedError):
+        pytest.skip("directory symlinks are not available on this platform")
+    store = WorldPackageCountryStore(alias)
+    with pytest.raises(ValueError, match="symlink"):
+        store._country_root("AAA")
+    with pytest.raises(ValueError, match="backup location"):
+        store.finalize_delete(alias / "countries" / ".AAA-delete-backup-abcdef")
+
+
+def test_deletion_backup_rejects_noncanonical_parent_alias(tmp_path: Path) -> None:
+    store = WorldPackageCountryStore(tmp_path / "world")
+    store.countries_root.mkdir(parents=True)
+    backup = store.countries_root / ".AAA-delete-backup-abcdef"
+    backup.mkdir()
+    (backup / "sentinel").write_text("keep")
+    # A lexical '..' component must not become acceptable merely because
+    # resolving the path would point back into the country directory.
+    wrong_parent = store.countries_root / "scratch" / ".." / backup.name
+    with pytest.raises(ValueError, match="backup location"):
+        store.finalize_delete(wrong_parent)
+    assert (backup / "sentinel").read_text() == "keep"

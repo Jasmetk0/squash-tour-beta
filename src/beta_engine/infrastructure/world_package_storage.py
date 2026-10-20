@@ -177,7 +177,7 @@ class WorldPackageCountryStore:
             raise ValueError(f"invalid country code {code!r}")
         root = self.countries_root
         candidate = root / code
-        if root.is_symlink() or candidate.is_symlink():
+        if self.package_root.is_symlink() or root.is_symlink() or candidate.is_symlink():
             raise ValueError(f"country directory must not be a symlink: {code!r}")
         if (candidate / "attributes").is_symlink():
             raise ValueError(f"country attributes directory must not be a symlink: {code!r}")
@@ -189,9 +189,12 @@ class WorldPackageCountryStore:
         """Only a generated, direct child country deletion backup is disposable."""
         path = Path(backup)
         if (
-            self.countries_root.is_symlink()
+            self.package_root.is_symlink()
+            or self.countries_root.is_symlink()
             or path.is_symlink()
-            or path.parent.resolve() != self.countries_root.resolve()
+            # Require the *exact* parent path produced by mkdtemp.  Resolving
+            # a caller-supplied parent would also admit aliases and traversal.
+            or path.parent != self.countries_root
             or re.fullmatch(r"[.][A-Z]{3}-delete-backup-[A-Za-z0-9_-]+", path.name) is None
         ):
             raise ValueError("invalid country deletion backup location")

@@ -186,23 +186,30 @@ class WorldPackageCountryStore:
         return candidate
 
     def _delete_backup(self, backup: Path) -> Path:
-        """Only a generated, direct child country deletion backup is disposable."""
-        path = Path(backup)
-        # tempfile.mkdtemp() returns an absolute pathname on Python 3.12+
-        # even if dir= received a relative pathname. Accept precisely those
-        # two lexical forms without resolving a caller-supplied alias or '..'.
-        parent = path.parent
-        expected_parent = self.countries_root
+        """Select a generated country-deletion backup within the owned directory.
+
+        A caller-provided pathname is only compared lexically. No filesystem
+        lookup or deletion is performed through it; the returned path comes
+        from an actual, verified child of the trusted countries directory.
+        """
+        if not isinstance(backup, Path):
+            raise ValueError("invalid country deletion backup location")
+        root = self.countries_root
         if (
             self.package_root.is_symlink()
-            or expected_parent.is_symlink()
-            or ".." in path.parts
-            or path.is_symlink()
-            or parent not in (expected_parent, expected_parent.absolute())
-            or re.fullmatch(r"[.][A-Z]{3}-delete-backup-[A-Za-z0-9_-]+", path.name) is None
+            or root.is_symlink()
+            or ".." in backup.parts
+            or backup.parent not in (root, root.absolute())
+            or re.fullmatch(r"[.][A-Z]{3}-delete-backup-[A-Za-z0-9_-]+", backup.name) is None
         ):
             raise ValueError("invalid country deletion backup location")
-        return path
+        for entry in root.iterdir():
+            if entry.name != backup.name:
+                continue
+            if entry.is_symlink() or not entry.is_dir() or entry.resolve().parent != root.resolve():
+                raise ValueError("invalid country deletion backup location")
+            return entry
+        raise FileNotFoundError("country deletion backup no longer exists")
 
     @property
     def countries_root(self) -> Path:

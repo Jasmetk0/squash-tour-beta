@@ -151,3 +151,20 @@ def test_configuration_loader_rejects_symlinked_parent(tmp_path) -> None:
         pytest.skip("directory symlinks not supported")
     with pytest.raises(ValueError, match="symlink"):
         load_tournament_templates_config(path=alias / "config.json")
+
+
+
+@pytest.mark.parametrize("path", [
+    "../../secrets.json", "/etc/passwd", "config/calendar/other.json",
+    "config/tournament_templates/../../private.json",
+])
+def test_untrusted_string_config_paths_rejected_before_filesystem_access(path: str) -> None:
+    with pytest.raises(ValueError, match="unrecognized configuration path"):
+        load_tournament_templates_config(path=path)
+
+
+def test_configuration_loader_rejects_non_regular_directory(tmp_path) -> None:
+    directory = tmp_path / "directory.json"
+    directory.mkdir()
+    with pytest.raises(ValueError, match="regular JSON file"):
+        load_tournament_templates_config(path=directory)

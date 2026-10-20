@@ -431,3 +431,21 @@ def test_failed_replacement_backup_validation_leaves_no_staging(tmp_path: Path) 
     assert store.index_path.read_bytes() == original_index
     assert store.load_country("AAA") == original_country
     assert (external / "sentinel").read_text() == "keep"
+
+
+
+def test_delete_backup_accepts_only_discovered_child(tmp_path: Path) -> None:
+    store = WorldPackageCountryStore(tmp_path / "world")
+    store.countries_root.mkdir(parents=True)
+    real = store.countries_root / ".AAA-delete-backup-token1"
+    real.mkdir()
+    (real / "marker").write_text("backed-up")
+    assert store._delete_backup(real) == real
+    assert store._delete_backup(real.absolute()) == real
+    for attempted in (
+        store.countries_root / "subdir" / ".." / real.name,
+        tmp_path / "elsewhere" / real.name,
+    ):
+        with pytest.raises(ValueError, match="backup location"):
+            store._delete_backup(attempted)
+    assert (real / "marker").read_text() == "backed-up"

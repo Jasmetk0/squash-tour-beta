@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import json
+import os
+import stat
 from pathlib import Path
 
 from beta_engine.domain.tournaments import SeasonCalendar, TournamentTemplatesConfig
@@ -14,17 +16,35 @@ def _load_json(path: str | Path) -> dict:
     This is not a file browser for user-supplied HTTP paths. Optional custom
     paths remain supported for offline configuration validation and tests.
     """
+    # Strings are accepted only for the shipping, application-owned configs.
+    # Explicit Path overrides are reserved for trusted application wiring
+    # (such as offline validation and isolated tests), not HTTP path inputs.
+    if isinstance(path, str) and path not in {
+        "config/tournament_templates/mvp_templates.json",
+        "config/calendar/season_2027.json",
+    }:
+        raise ValueError("unrecognized configuration path")
     source = Path(path)
-    # These paths are configured by application wiring, not selected by an
-    # HTTP client. Still reject traversal and redirection at every level.
     if source.suffix.lower() != ".json" or ".." in source.parts:
         raise ValueError("configuration must be a regular JSON file without traversal")
     if any(component.is_symlink() for component in (source, *source.parents)):
         raise ValueError("configuration must be a regular JSON file, not a symlink")
-    if not source.is_file():
-        raise FileNotFoundError(f"configuration file is unavailable: {source}")
-    with source.open("r", encoding="utf-8") as fh:
-        return json.load(fh)
+
+    # Opening with O_NOFOLLOW and fstat avoids the two separate filesystem
+    # probes and fails closed if a file is swapped for a symlink at open time.
+    try:
+        handle = os.open(source, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0))
+    except FileNotFoundError as exc:
+        raise FileNotFoundError(f"configuration file is unavailable: {source}") from exc
+    try:
+        if not stat.S_ISREG(os.fstat(handle).st_mode):
+            raise ValueError("configuration must be a regular JSON file")
+        with os.fdopen(handle, "r", encoding="utf-8") as fh:
+            handle = -1
+            return json.load(fh)
+    finally:
+        if handle != -1:
+            os.close(handle)
 
 
 def load_tournament_templates_config(

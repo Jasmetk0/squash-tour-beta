@@ -178,6 +178,10 @@ describe('MatchTestLabPage', () => {
     expect(screen.getByRole('button', { name: 'Run Test Session' })).toBeDisabled()
     expect(screen.getByRole('status')).toHaveTextContent('Unsaved Test Session changes.')
     expect(api.runMatchLabSession).not.toHaveBeenCalled()
+    // Enter/programmatic form submission must enforce the same saved boundary.
+    fireEvent.submit(screen.getByRole('button', { name: 'Run Test Session' }).closest('form')!)
+    expect(screen.getByRole('alert')).toHaveTextContent('Save Test Session changes before running this scenario.')
+    expect(api.runMatchLabSession).not.toHaveBeenCalled()
     await user.click(screen.getByRole('button', { name: 'Save Test Session' }))
 
     expect(api.updateMatchLabSession).toHaveBeenCalledWith(

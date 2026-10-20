@@ -33,7 +33,7 @@ afterEach(() => {
 })
 
 describe('App runtime smoke', () => {
-  it('renders the landing route when localStorage reads are unavailable', () => {
+  it('opens global Home from the root route when localStorage reads are unavailable', () => {
     vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
       throw new Error('localStorage unavailable')
     })

@@ -13,12 +13,19 @@ block running an older saved scenario until an explicit successful session Save.
 Fast CI so unrelated UI work cannot silently break them again. No backend writer,
 Saved signature, simulation policy or numeric Health calibration changes.
 
-**Validation pending on this candidate's latest head.** Local execution is
-unavailable; GitHub Actions must supply the build/component evidence. The previous
-exploratory full frontend run had 107 pre-existing failing tests; this bounded
-repair must not be presented as a green full frontend suite or a 50×61 release
-certification. Remaining legacy Viewer tests and the complete Master acceptance
-remain follow-up work.
+**Hosted validation evidence:** implementation head `5a08e44bfea69921d717405866de7c534a384641`
+passed 192 critical component tests (14 files), the 24 changed-file component tests
+(4 files), TypeScript/Vite build, all three CodeQL analyses and its no-new-alert
+comparison. The final test/docs refinement also checks direct form submission;
+latest-head CI is required before review readiness. Local execution is unavailable.
+The backend job compiled source and generated the existing Earth realism audit;
+it did not run pytest for this frontend/workflow-only diff.
+
+The earlier exploratory full frontend run had 107 pre-existing failing tests.
+This bounded repair covers the failing Admin Time, historical simulation, runtime
+smoke and Match Lab contracts; the remaining full-suite failures were not recounted.
+It is not a green full frontend suite or 50×61 release certification. Remaining
+legacy Viewer tests and complete Master acceptance remain follow-up work.
 
 ---
 

@@ -14,7 +14,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from beta_engine.application.run_prospect_cohort_reconcile import (
     RunProspectCohortConflictError, reconcile_run_prospect_cohort,
 )
-from sqlalchemy import func, select, text
+from sqlalchemy import select, text
 
 from beta_engine.application.run_prospect_materialization_service import (
     PROFILE_VERSION, _stable_seed,
@@ -44,20 +44,14 @@ MAX_NATIVE_ANNUAL_TARGET = 2000
 
 def _validate_future_source_cohort(session, *, run_id, clock, records, has_prior_source=True):
     """Shared catalog cannot add birthdays to ANY already completed Branch."""
-    from beta_engine.infrastructure.db.models import PlayerLifecycleWeekStateModel
     from beta_engine.infrastructure.db.run_prospect_source_state import (
-        _effective_birth_ordinal,
+        _effective_birth_ordinal, highest_authenticated_run_week,
     )
     if not has_prior_source:
         # Preserve v1 initial-cohort semantics, including the opening week.
         return
 
-    furthest = session.scalar(
-        select(func.max(PlayerLifecycleWeekStateModel.week_ordinal)).where(
-            PlayerLifecycleWeekStateModel.run_id == run_id
-        )
-    )
-    furthest = furthest if furthest is not None else 0
+    furthest = highest_authenticated_run_week(session, run_id=run_id)
     if any(
         _effective_birth_ordinal({
             "birth_year": row.birth_year, "birth_year_week": row.birth_year_week,

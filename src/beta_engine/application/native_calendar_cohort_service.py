@@ -42,12 +42,15 @@ NATIVE_COHORT_POLICY = "native_calendar_15yo_cohort_v1"
 NATIVE_COHORT_SOURCE = "native_calendar_15yo_cohort"
 MAX_NATIVE_ANNUAL_TARGET = 2000
 
-def _validate_future_source_cohort(session, *, run_id, clock, records):
+def _validate_future_source_cohort(session, *, run_id, clock, records, has_prior_source=True):
     """Shared catalog cannot add birthdays to ANY already completed Branch."""
     from beta_engine.infrastructure.db.models import PlayerLifecycleWeekStateModel
     from beta_engine.infrastructure.db.run_prospect_source_state import (
         _effective_birth_ordinal,
     )
+    if not has_prior_source:
+        # Preserve v1 initial-cohort semantics, including the opening week.
+        return
 
     furthest = session.scalar(
         select(func.max(PlayerLifecycleWeekStateModel.week_ordinal)).where(
@@ -337,6 +340,7 @@ class NativeCalendarCohortService:
             session.execute(text("BEGIN"))
             _validate_future_source_cohort(
                 session, run_id=run_id, clock=clock, records=cohort.records,
+                has_prior_source=existing_source is not None,
             )
         response = {
             "schema_version": "native_calendar_cohort_preview.v1",
@@ -474,6 +478,7 @@ class NativeCalendarCohortService:
             )
             _validate_future_source_cohort(
                 session, run_id=run_id, clock=fresh, records=cohort.records,
+                has_prior_source=previous is not None,
             )
             # Do not create a historical duplicate identity inside the original
             # population. Future lifecycle activation will separately enforce

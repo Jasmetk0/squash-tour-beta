@@ -42,7 +42,7 @@ def preview_native_prospect_intake(
 
     problems: list[dict[str, str]] = []
     due: list[dict] = []
-    rows = source.records if source is not None else ()
+    rows = source.for_week(target_ordinal).records if source is not None else ()
     ids = [row.get("prospect_id") for row in rows]
     if any(type(pid) is not str or not pid for pid in ids) or ids != sorted(set(ids)):
         raise ValueError("Saved Run prospect identities are not canonical")

@@ -313,3 +313,35 @@ def test_deletion_backup_rejects_noncanonical_parent_alias(tmp_path: Path) -> No
     with pytest.raises(ValueError, match="backup location"):
         store.finalize_delete(wrong_parent)
     assert (backup / "sentinel").read_text() == "keep"
+
+
+
+def test_country_index_refuses_symlinked_package_root(tmp_path: Path) -> None:
+    genuine = tmp_path / "source_package"
+    (genuine / "countries").mkdir(parents=True)
+    (genuine / "countries" / "index.json").write_text(
+        '{"schema_version":"world_package_countries_index.v1","country_codes":["AAA"]}'
+    )
+    alias = tmp_path / "linked_package"
+    try:
+        alias.symlink_to(genuine, target_is_directory=True)
+    except (OSError, NotImplementedError):
+        pytest.skip("directory symlinks are not available on this platform")
+    with pytest.raises(ValueError, match="root must not be a symlink"):
+        WorldPackageCountryStore(alias).load_index()
+
+
+def test_country_replacement_cannot_delete_symlinked_backup(tmp_path: Path) -> None:
+    store = WorldPackageCountryStore(tmp_path / "world")
+    store.countries_root.mkdir(parents=True)
+    external = tmp_path / "external_dir"
+    external.mkdir()
+    (external / "sentinel").write_text("untouched")
+    linked_backup = store.countries_root / ".AAA-backup"
+    try:
+        linked_backup.symlink_to(external, target_is_directory=True)
+    except (OSError, NotImplementedError):
+        pytest.skip("directory symlinks are not available on this platform")
+    with pytest.raises(ValueError, match="invalid country replacement backup"):
+        store._replacement_backup("AAA")
+    assert (external / "sentinel").read_text() == "untouched"

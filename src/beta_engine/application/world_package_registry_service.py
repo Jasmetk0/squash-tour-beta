@@ -141,7 +141,7 @@ class WorldPackageRegistryService:
   return payload
  def _custom_package_dirs(self):
   root=self.world_packages_root/'custom'
-  if not root.is_dir() or root.is_symlink(): return []
+  if self.world_packages_root.is_symlink() or not root.is_dir() or root.is_symlink(): return []
   return sorted((p for p in root.iterdir() if _canonical_world_id(p.name) == p.name and p.is_dir() and not p.is_symlink()),key=lambda p:p.name)
  def _paths_for_dir(self,p): return {'package_root':p,'world':p/'world.json','countries_root':p/'countries','countries_index':p/'countries/index.json','continents':p/'geography/continents.json','regions':p/'geography/regions.json','travel_regions':p/'geography/travel_regions.json','timezone_areas':p/'geography/timezone_areas.json'}
  def _storage_summary(self,p):

@@ -209,6 +209,10 @@ class WorldPackageCountryStore:
         return self.countries_root / "index.json"
 
     def load_index(self) -> CountriesIndex:
+        # This entry point also serves callers that bypass the package
+        # registry, so enforce the trusted root before reading index.json.
+        if self.package_root.is_symlink() or self.countries_root.is_symlink():
+            raise ValueError("country index package root must not be a symlink")
         index = CountriesIndex.model_validate(_read_object(self.index_path))
         if index.schema_version != COUNTRIES_INDEX_SCHEMA:
             raise ValueError(f"{self.index_path} has unsupported schema_version {index.schema_version!r}")
@@ -482,13 +486,28 @@ class WorldPackageCountryStore:
         finally:
             temporary.unlink(missing_ok=True)
 
+    def _replacement_backup(self, code: str) -> Path:
+        # Replacement cleanup is destructive: never follow attacker-planted
+        # links in the normally-unused .CODE-backup staging directory.
+        self._country_root(code)
+        backup = self.countries_root / f".{code}-backup"
+        if (
+            self.package_root.is_symlink()
+            or self.countries_root.is_symlink()
+            or backup.parent != self.countries_root
+            or backup.is_symlink()
+            or (backup.exists() and not backup.is_dir())
+        ):
+            raise ValueError("invalid country replacement backup directory")
+        return backup
+
     def replace_country(self, country: Country) -> None:
         """Atomically replace one indexed country, restoring the live copy on failure."""
         if country.code not in self.load_index().country_codes:
             raise ValueError(f"country {country.code!r} does not exist")
         live = self._country_root(country.code)
         stage = Path(tempfile.mkdtemp(prefix=f".{country.code}-stage-", dir=self.countries_root))
-        backup = self.countries_root / f".{country.code}-backup"
+        backup = self._replacement_backup(country.code)
         staged_store = WorldPackageCountryStore(stage)
         try:
             staged_store.countries_root.mkdir(parents=True)

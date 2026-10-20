@@ -1,3 +1,31 @@
+# Canonical Admin entry-point recovery — 20 October 2026
+
+**Verified integrated base:** `buuk` `5615a293df881d4bbde8819234269b174f21713e`
+is the owner's merge of #1573. No PRs were open at this task's start.
+
+**Current candidate:** bilingual global Simulation guidance now points to the
+Run inventory and Task Center, lists current authoritative scope names and
+explains capability blockers and explicit manual Save. It does not pick a
+remembered Run, create commands or promise native Full Simulation readiness.
+The older routed Admin regression suite is updated to canonical global Home,
+Product Run inventory and canonical Viewer source boundaries. Its existing
+196 cases are retained; missing mocks and obsolete expectations are repaired.
+
+**Hosted implementation evidence:** `41c6bfa070aab13b3723fe3bd10da79816641a36`
+passed the 192-test critical baseline and 202 changed-file component tests,
+including all 196 retained routed cases. Four runtime smoke cases overlap the
+sets; these are not 394 distinct tests. TypeScript/Vite build and all three
+CodeQL analyses passed; the PR comparison reported no new alerts. The complete
+frontend CI job took 68 seconds. Backend tests were correctly outside this diff.
+
+This closing documentation commit preserves the tested implementation; its own
+latest-head CI must also pass before review readiness. Local execution is still
+unavailable. These are component/build results, not real HTTP/browser integration,
+a green complete frontend suite or pre-alpha release certification. Remaining
+stale Viewer-specific regressions and full Master acceptance remain.
+
+---
+
 # Integrated baseline and focused frontend recovery — 20 October 2026
 
 **Verified integration baseline:** `buuk` `7301d34b86db833bf710d84f1dd387ffe90c938c`

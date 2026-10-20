@@ -8,11 +8,19 @@ import { ApplyResponseValidationPreviewPanel, ApplyResponseVsTargetValidationCom
 
 const api = vi.hoisted(() => ({
   getHealth: vi.fn(),
+  getRunWeeklyIntakeCohortSeasonPreview: vi.fn(),
+  getRunProspectTalentSummary: vi.fn(),
+  listRunProspects: vi.fn(),
+  materializeRunProspects: vi.fn(),
   createRun: vi.fn(),
   getRun: vi.fn(),
   getRunStatusSummary: vi.fn(),
   listRuns: vi.fn(),
   listRunContainers: vi.fn(),
+  getGlobalFullSimulationOperations: vi.fn(),
+  getViewerTournamentHistory: vi.fn(),
+  listViewerOfficialRankingHistory: vi.fn(),
+  getViewerFinalsRace: vi.fn(),
   getViewerOfficialRunContext: vi.fn(),
   listCountries: vi.fn(),
   getCountriesMetadata: vi.fn(),
@@ -37,7 +45,7 @@ const api = vi.hoisted(() => ({
   deleteWorldPackageCountry: vi.fn(),
   getWorldPackageGeography: vi.fn(),
   replaceWorldPackageTimezoneAreas: vi.fn(),
-  cloneOfficialWorldPackage: vi.fn(),
+  cloneWorldPackage: vi.fn(),
   getLatestRollover: vi.fn(),
   getRolloverBySeason: vi.fn(),
   getPlayerTransitions: vi.fn(),
@@ -291,13 +299,18 @@ function editableCountryDetail() {
 describe('Module 17 pages through routes', () => {
   beforeEach(() => {
     localStorage.clear()
+    localStorage.setItem('squash-engine-language-v1', 'en')
     vi.clearAllMocks()
+    api.getGlobalFullSimulationOperations.mockResolvedValue({ schema_version: 'global_full_simulation_operations.v1', visibility: 'durable_receipts_only', operations: [], pending_count: 0, legacy_pending_count: 0 })
+    api.getViewerTournamentHistory.mockImplementation(async (id: string) => ({ schema_version: 'viewer_tournament_history.v1', product_run_id: id, viewer_branch_id: 'branch-' + id, tournament_count: 0, published_result_count: 0, tournaments: [] }))
+    api.listViewerOfficialRankingHistory.mockImplementation(async (id: string) => ({ schema_version: 'viewer_official_ranking_history.v1', product_run_id: id, viewer_branch_id: 'branch-' + id, public_head_ordinal: 0, publication_count: 0, publications: [] }))
+    api.getViewerFinalsRace.mockImplementation(async (id: string) => ({ schema_version: 'viewer_finals_race_history.v1', product_run_id: id, viewer_branch_id: 'branch-' + id, latest_target_season_index: null, publications: [] }))
     api.listRuns.mockResolvedValue({ runs: [] })
     api.listRunContainers.mockResolvedValue({ run_containers: [] })
     api.getViewerOfficialRunContext.mockImplementation((productRunId: string) => Promise.resolve(viewerOfficialContext(productRunId, productRunId === 'product-run-a' ? 'legacy-run-a' : `legacy-${productRunId}`)))
     api.listWorldPackages.mockResolvedValue({ packages: [{ world_id: 'official_fax_world', name: 'Official FAX World', description: 'Built-in official FAX squash world package.', type: 'official', status: 'active', source: 'built_in', editable: false, deletable: false, archivable: false, version: 'v1', fingerprint: 'abcdef1234567890fedcba0987654321', country_count: 4, manual_override_count: 2, continent_count: 2, region_count: 3, travel_region_count: 4, used_by_run_count: null, validation_status: 'valid', storage: { countries_path: 'config/worlds/official_fax_world/countries.json', manual_player_overrides_path: 'config/world/manual_player_overrides.json', world_metadata_path: 'config/worlds/official_fax_world/world.json', continents_path: 'config/worlds/official_fax_world/continents.json', regions_path: 'config/worlds/official_fax_world/regions.json', travel_regions_path: 'config/worlds/official_fax_world/travel_regions.json' } }] })
     api.getWorldPackage.mockResolvedValue({ world_id: 'official_fax_world', name: 'Official FAX World', description: 'Built-in official FAX squash world package.', type: 'official', status: 'active', source: 'built_in', editable: false, deletable: false, archivable: false, version: 'v1', fingerprint: 'abcdef1234567890fedcba0987654321', country_count: 4, manual_override_count: 2, continent_count: 2, region_count: 3, travel_region_count: 4, used_by_run_count: null, validation_status: 'valid', storage: { countries_path: 'config/worlds/official_fax_world/countries.json', manual_player_overrides_path: 'config/world/manual_player_overrides.json', world_metadata_path: 'config/worlds/official_fax_world/world.json', continents_path: 'config/worlds/official_fax_world/continents.json', regions_path: 'config/worlds/official_fax_world/regions.json', travel_regions_path: 'config/worlds/official_fax_world/travel_regions.json' } })
-    api.cloneOfficialWorldPackage.mockResolvedValue({ ok: true, dry_run: true, source_world_id: 'official_fax_world', new_world_id: 'my_custom_world', target_path: 'config/worlds/custom/my_custom_world', created_files: ['world.json'], package: null, validation: null, errors: [] })
+    api.cloneWorldPackage.mockResolvedValue({ ok: true, dry_run: true, source_world_id: 'official_fax_world', new_world_id: 'my_custom_world', target_path: 'config/worlds/custom/my_custom_world', created_files: ['world.json'], package: null, validation: null, errors: [] })
     api.getWorldPackageValidation.mockResolvedValue({ world_id: 'official_fax_world', status: 'warnings', error_count: 0, warning_count: 1, info_count: 6, checks: [{ code: 'world_metadata_valid', severity: 'info', status: 'passed', message: 'world.json is present and declares official_fax_world.', path: 'config/worlds/official_fax_world/world.json', field: 'world_id' }] })
     api.getWorldPackageCountries.mockResolvedValue({ world_id: 'official_fax_world', world_name: 'Official FAX World', type: 'official', source: 'built_in', read_only: true, country_count: 4, source_path: 'config/worlds/official_fax_world/countries.json', countries: [{ code: 'GER', name: 'Germanica', flag_asset: null, region: 'EUROPE', population: 169702055, area_km2: 870516, default_population_year: 2020, default_population: 169702055, population_by_year: { '2020': 169702055 }, squash_access: 5, squash_popularity: 3, squash_tradition: 3, development_quality: 5, competition_quality: 4, elite_support: 5, court_count: 1800, travel_region: 'EUROPE', notes: 'Analog of a huge Germany and all German lands unified into one state.' }, { code: 'BOG', name: 'Bogemia', flag_asset: null, region: 'EUROPE', population: 48566934, area_km2: 237528, default_population_year: 2020, default_population: 48566934, population_by_year: { '2020': 48566934 }, squash_access: 4, squash_popularity: 2, squash_tradition: 2, development_quality: 4, competition_quality: 3, elite_support: 4, court_count: 520, travel_region: 'EUROPE', notes: null }, { code: 'HUN', name: 'Hungarica', flag_asset: null, region: 'EUROPE', population: 32407718, area_km2: 368441, default_population_year: 2020, default_population: 32407718, population_by_year: { '2020': 32407718 }, squash_access: 3, squash_popularity: 2, squash_tradition: 2, development_quality: 3, competition_quality: 2.5, elite_support: 3, court_count: 360, travel_region: 'EUROPE', notes: null }, { code: 'POL', name: 'Polandia', flag_asset: null, region: 'EUROPE', population: 31584129, area_km2: 296910, default_population_year: 2020, default_population: 31584129, population_by_year: { '2020': 31584129 }, squash_access: 4, squash_popularity: 2, squash_tradition: 2, development_quality: 4, competition_quality: 3, elite_support: 4, court_count: 430, travel_region: 'EUROPE', notes: null }] })
     api.getWorldPackageGeography.mockResolvedValue({ world_id: 'official_fax_world', continents: [{ code: 'EUR', name: 'Europe' }], regions: [{ code: 'EUROPE', name: 'Europe', continent_code: 'EUR' }], travel_regions: [{ code: 'EUROPE', name: 'Europe', description: null }], timezone_areas: [], timezone_areas_authored: false })
@@ -882,18 +895,24 @@ describe('Module 17 pages through routes', () => {
     )
   })
 
-  it('renders the Phase 1 landing page at root', async () => {
+  it('opens global Home at root without activating a remembered Run', async () => {
+    localStorage.setItem('beta_engine:last_run_id', 'remembered-run')
     renderAppAt('/')
-    expect(await screen.findByText('Choose how you want to use the deterministic FAX squash world.')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /Browse the generated squash world/i })).toHaveAttribute('href', '/viewer')
-    expect(screen.getByRole('link', { name: /Build, validate, and simulate the world/i })).toHaveAttribute('href', '/admin')
+    expect(await screen.findByRole('heading', { name: 'Squash Engine Home' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Create Run +' })).toHaveAttribute('href', '/admin/runs/new')
+    expect(screen.queryByLabelText('Admin active Branch')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('Admin view time')).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /remembered-run/ })).not.toBeInTheDocument()
   })
 
-  it('renders the Admin Engine dashboard route', async () => {
+  it('renders global Home with canonical package, lab and Run entry points', async () => {
     renderAppAt('/admin')
-    expect(await screen.findByRole('heading', { name: 'Admin Engine Dashboard' })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Simulate' })).toHaveAttribute('href', '/admin/simulate')
-    expect(screen.getByRole('link', { name: 'Tour & Seasons' })).toHaveAttribute('href', '/admin/tour-seasons')
+    expect(await screen.findByRole('heading', { name: 'Squash Engine Home' })).toBeInTheDocument()
+    const entryLinks = screen.getAllByRole('link')
+    for (const path of ['/admin/runs', '/admin/packages', '/admin/labs']) {
+      expect(entryLinks.some(link => link.getAttribute('href') === path)).toBe(true)
+    }
+    expect(screen.queryByLabelText('Admin active Branch')).not.toBeInTheDocument()
   })
 
   it('renders Simulate launcher overview concepts without fake results table', async () => {
@@ -909,8 +928,12 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByText('Next Round')).toBeInTheDocument()
     expect(screen.getByText('Next Tournament')).toBeInTheDocument()
     expect(screen.getByText('Next Week')).toBeInTheDocument()
-    expect(screen.getByText('Full Season (regular season only)')).toBeInTheDocument()
-    expect(screen.getByText('World Tour Finals (explicit separate command)')).toBeInTheDocument()
+    expect(screen.getByText('Next Slot')).toBeInTheDocument()
+    expect(screen.getByText('Next Match Day')).toBeInTheDocument()
+    expect(screen.getByText('Next Season')).toBeInTheDocument()
+    expect(screen.getByText('Full Simulation')).toBeInTheDocument()
+    expect(screen.getByText(/Each command is checked against the saved state/)).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Simulation Task Center' })).toHaveAttribute('href', '/admin/operations')
     expect(screen.queryByRole('table')).not.toBeInTheDocument()
   })
 
@@ -2985,12 +3008,16 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByRole('link', { name: /Talent Intake/i })).toHaveAttribute('href', '/admin/players/intake')
   })
 
-  it('renders Talent Intake shell route with workflow steps and no fake table data', async () => {
+  it('requires an explicit Run before previewing or materializing Talent Intake', async () => {
+    localStorage.setItem('beta_engine:last_run_id', 'remembered-run')
     renderAppAt('/admin/players/intake')
     expect(await screen.findByRole('heading', { name: 'Talent Intake' })).toBeInTheDocument()
-    expect(screen.getByText('Select Season')).toBeInTheDocument()
-    expect(screen.getByText('Generate Preview')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Season preview' })).toBeInTheDocument()
+    expect(screen.getByRole('textbox', { name: 'Run ID' })).toHaveValue('')
+    expect(screen.getByText('Enter a Run ID to load its locked world and current season intake preview.')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Confirm materialization' })).not.toBeInTheDocument()
     expect(screen.queryByRole('table')).not.toBeInTheDocument()
+    for (const reader of [api.getRunWeeklyIntakeCohortSeasonPreview, api.listRunProspects, api.getRunProspectTalentSummary, api.materializeRunProspects]) expect(reader).not.toHaveBeenCalled()
   })
 
   it('renders world hub cards for Countries and Talent Preview', async () => {
@@ -3041,7 +3068,7 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByText('custom_config')).toBeInTheDocument()
     expect(screen.getByText('Deletable')).toBeInTheDocument()
     expect(screen.getByText('Archivable')).toBeInTheDocument()
-    expect(screen.getByText(/Custom World mutation actions are not implemented yet/i)).toBeInTheDocument()
+    expect(screen.getByText(/Custom clones are independent editable sources; existing Runs keep their own saved snapshots/i)).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /create|edit|delete|archive|clone|import|export/i })).not.toBeInTheDocument()
   })
 
@@ -3313,15 +3340,16 @@ describe('Module 17 pages through routes', () => {
   it('renders Clone Official World section for Official World detail', async () => {
     renderAppAt('/admin/world/library/official_fax_world')
 
-    expect(await screen.findByRole('heading', { name: 'Clone Official World' })).toBeInTheDocument()
-    expect(screen.getByText(/does not edit Official FAX World and does not affect existing runs/i)).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Clone Built-in World' })).toBeInTheDocument()
+    expect(screen.getByText(/The built-in source and existing Runs are never changed/i)).toBeInTheDocument()
+    expect(screen.getByText(/complete package tree, including historical rating evidence/i)).toBeInTheDocument()
     expect(screen.getByPlaceholderText('my_custom_world')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Preview clone' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Create Custom World' })).toBeInTheDocument()
   })
 
   it('previews Official World clone with dry_run true and shows no-write result', async () => {
-    api.cloneOfficialWorldPackage.mockResolvedValueOnce({ ok: true, dry_run: true, source_world_id: 'official_fax_world', new_world_id: 'my_custom_world', target_path: 'config/worlds/custom/my_custom_world', created_files: ['world.json', 'countries.json'], package: null, validation: null, errors: [] })
+    api.cloneWorldPackage.mockResolvedValueOnce({ ok: true, dry_run: true, source_world_id: 'official_fax_world', new_world_id: 'my_custom_world', target_path: 'config/worlds/custom/my_custom_world', created_files: ['world.json', 'countries.json'], package: null, validation: null, errors: [] })
     renderAppAt('/admin/world/library/official_fax_world')
 
     fireEvent.change(await screen.findByPlaceholderText('my_custom_world'), { target: { value: 'my_custom_world' } })
@@ -3329,21 +3357,21 @@ describe('Module 17 pages through routes', () => {
     fireEvent.change(screen.getByPlaceholderText('Custom world cloned from Official FAX World.'), { target: { value: 'Custom world cloned from Official FAX World.' } })
     fireEvent.click(screen.getByRole('button', { name: 'Preview clone' }))
 
-    await waitFor(() => expect(api.cloneOfficialWorldPackage.mock.calls[0][0]).toEqual({ new_world_id: 'my_custom_world', name: 'My Custom World', description: 'Custom world cloned from Official FAX World.', dry_run: true }))
+    await waitFor(() => expect(api.cloneWorldPackage).toHaveBeenCalledWith('official_fax_world', { new_world_id: 'my_custom_world', name: 'My Custom World', description: 'Custom world cloned from Official FAX World.', dry_run: true }))
     expect(await screen.findByText(/no files were written/i)).toBeInTheDocument()
     expect(screen.getByText('config/worlds/custom/my_custom_world')).toBeInTheDocument()
     expect(screen.getByText('countries.json')).toBeInTheDocument()
   })
 
   it('creates Official World clone with dry_run false and shows package, validation, and detail link', async () => {
-    api.cloneOfficialWorldPackage.mockResolvedValueOnce({ ok: true, dry_run: false, source_world_id: 'official_fax_world', new_world_id: 'my_custom_world', target_path: 'config/worlds/custom/my_custom_world', created_files: ['world.json'], package: { world_id: 'my_custom_world', name: 'My Custom World', description: 'Custom world package.', type: 'custom', status: 'active', source: 'custom_config', editable: true, deletable: true, archivable: true, version: 'v1', fingerprint: '1234567890abcdef1234567890abcdef', country_count: 4, manual_override_count: 2, continent_count: 2, region_count: 3, travel_region_count: 4, used_by_run_count: null, validation_status: 'valid', storage: { countries_path: 'config/worlds/custom/my_custom_world/countries.json', manual_player_overrides_path: 'config/worlds/custom/my_custom_world/manual_player_overrides.json' } }, validation: { world_id: 'my_custom_world', status: 'valid', error_count: 0, warning_count: 0, info_count: 6, checks: [] }, errors: [] })
+    api.cloneWorldPackage.mockResolvedValueOnce({ ok: true, dry_run: false, source_world_id: 'official_fax_world', new_world_id: 'my_custom_world', target_path: 'config/worlds/custom/my_custom_world', created_files: ['world.json'], package: { world_id: 'my_custom_world', name: 'My Custom World', description: 'Custom world package.', type: 'custom', status: 'active', source: 'custom_config', editable: true, deletable: true, archivable: true, version: 'v1', fingerprint: '1234567890abcdef1234567890abcdef', country_count: 4, manual_override_count: 2, continent_count: 2, region_count: 3, travel_region_count: 4, used_by_run_count: null, validation_status: 'valid', storage: { countries_path: 'config/worlds/custom/my_custom_world/countries.json', manual_player_overrides_path: 'config/worlds/custom/my_custom_world/manual_player_overrides.json' } }, validation: { world_id: 'my_custom_world', status: 'valid', error_count: 0, warning_count: 0, info_count: 6, checks: [] }, errors: [] })
     renderAppAt('/admin/world/library/official_fax_world')
 
     fireEvent.change(await screen.findByPlaceholderText('my_custom_world'), { target: { value: 'my_custom_world' } })
     fireEvent.change(screen.getByPlaceholderText('My Custom World'), { target: { value: 'My Custom World' } })
     fireEvent.click(screen.getByRole('button', { name: 'Create Custom World' }))
 
-    await waitFor(() => expect(api.cloneOfficialWorldPackage.mock.calls[0][0]).toEqual(expect.objectContaining({ dry_run: false })))
+    await waitFor(() => expect(api.cloneWorldPackage).toHaveBeenCalledWith('official_fax_world', expect.objectContaining({ new_world_id: 'my_custom_world', dry_run: false })))
     expect(await screen.findByText(/Custom World package created/i)).toBeInTheDocument()
     expect(screen.getByLabelText('Created package summary')).toHaveTextContent('custom_config')
     expect(screen.getByLabelText('Created package summary')).toHaveTextContent('4 countries')
@@ -3352,7 +3380,7 @@ describe('Module 17 pages through routes', () => {
   })
 
   it('displays structured clone errors when clone response is not ok', async () => {
-    api.cloneOfficialWorldPackage.mockResolvedValueOnce({ ok: false, dry_run: true, source_world_id: 'official_fax_world', new_world_id: 'Bad World', target_path: 'config/worlds/custom/Bad World', created_files: [], package: null, validation: null, errors: [{ field: 'new_world_id', message: 'lowercase letters, numbers, underscores only' }] })
+    api.cloneWorldPackage.mockResolvedValueOnce({ ok: false, dry_run: true, source_world_id: 'official_fax_world', new_world_id: 'Bad World', target_path: 'config/worlds/custom/Bad World', created_files: [], package: null, validation: null, errors: [{ field: 'new_world_id', message: 'lowercase letters, numbers, underscores only' }] })
     renderAppAt('/admin/world/library/official_fax_world')
 
     fireEvent.change(await screen.findByPlaceholderText('my_custom_world'), { target: { value: 'Bad World' } })
@@ -3364,7 +3392,7 @@ describe('Module 17 pages through routes', () => {
   })
 
   it('displays formatted API errors for clone network failures', async () => {
-    api.cloneOfficialWorldPackage.mockRejectedValueOnce(new api.ApiError('clone unavailable', 500))
+    api.cloneWorldPackage.mockRejectedValueOnce(new api.ApiError('clone unavailable', 500))
     renderAppAt('/admin/world/library/official_fax_world')
 
     fireEvent.change(await screen.findByPlaceholderText('my_custom_world'), { target: { value: 'my_custom_world' } })
@@ -3410,15 +3438,15 @@ describe('Module 17 pages through routes', () => {
     api.listRuns.mockResolvedValueOnce({ runs: [] })
     renderAppAt('/viewer')
     expect(await screen.findByRole('heading', { name: /MSA Squash/, level: 2 })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Featured Tournament Hero' })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Other Tournaments This Week' })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Ranking snapshots' })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Race snapshots' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Latest Completed Tournament' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Season Schedule' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Official Ranking Publications' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'World Tour Finals Race' })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Viewer hub links' })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'What this hub does not infer' })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Featured Matches' })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Predictions & Upset Watch' })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Storylines' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'History' })).toBeInTheDocument()
   })
 
   it('renders the Viewer MSA home route with active run status links without duplicate run navigation', async () => {
@@ -3448,13 +3476,13 @@ describe('Module 17 pages through routes', () => {
     renderAppAt('/viewer')
     expect(await screen.findByRole('heading', { name: /MSA Squash/, level: 2 })).toBeInTheDocument()
     expect(screen.getAllByText(/legacy-run-1/)[0]).toBeInTheDocument()
-    expect(api.getRun).toHaveBeenCalledWith('legacy-run-1')
-    expect(api.getRunStatusSummary).toHaveBeenCalledWith('legacy-run-1')
-    expect(api.listEvents).toHaveBeenCalledWith('legacy-run-1')
-    expect(api.listRankingSnapshots).toHaveBeenCalledWith('legacy-run-1')
-    expect(api.listRaceSnapshots).toHaveBeenCalledWith('legacy-run-1')
-    expect(api.getRunActivity).toHaveBeenCalledWith('legacy-run-1')
-    expect(api.getFinalsSummary).toHaveBeenCalledWith('legacy-run-1')
+    expect(api.getViewerOfficialRunContext).toHaveBeenCalledWith('product-run-1')
+    expect(api.getViewerTournamentHistory).toHaveBeenCalledWith('product-run-1')
+    expect(api.listViewerOfficialRankingHistory).toHaveBeenCalledWith('product-run-1')
+    expect(api.getViewerFinalsRace).toHaveBeenCalledWith('product-run-1')
+    for (const legacyReader of [api.getRun, api.getRunStatusSummary, api.listEvents, api.listRankingSnapshots, api.listRaceSnapshots, api.getRunActivity, api.getFinalsSummary]) {
+      expect(legacyReader).not.toHaveBeenCalled()
+    }
     expect(screen.getByRole('link', { name: 'Active Run Rankings' })).toHaveAttribute('href', '/viewer/runs/product-run-1/rankings')
     expect(screen.queryByRole('navigation', { name: 'Viewer active run quick links' })).not.toBeInTheDocument()
     const runHrefs = screen.getAllByRole('link').map((link) => link.getAttribute('href')).filter((href) => href?.startsWith('/viewer/runs/'))
@@ -3634,7 +3662,10 @@ describe('Module 17 pages through routes', () => {
   it('renders runs browser route', async () => {
     api.listRuns.mockResolvedValueOnce({ runs: [] })
     renderAppAt('/runs')
-    expect(await screen.findByRole('heading', { name: 'Runs browser' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Runs' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Create empty Run' })).toHaveAttribute('href', '/admin/runs/new')
+    expect(api.listRunContainers).toHaveBeenCalled()
+    expect(api.listRuns).not.toHaveBeenCalled()
   })
 
   it('renders activity route', async () => {

@@ -53,8 +53,8 @@ describe('App runtime smoke', () => {
 
     renderAppAt('/admin/simulate')
 
-    expect(screen.getByRole('heading', { name: 'Simulate', level: 2 })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Open Runs' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Simulace', level: 2 })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Otevřít Runy' })).toBeInTheDocument()
   })
 
   it('renders the admin create-run route when remembered-run storage is unavailable', () => {

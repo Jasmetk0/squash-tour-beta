@@ -9,7 +9,17 @@ from beta_engine.domain.tournaments import SeasonCalendar, TournamentTemplatesCo
 
 
 def _load_json(path: str | Path) -> dict:
-    with Path(path).open("r", encoding="utf-8") as fh:
+    """Load a configuration file chosen by trusted application wiring.
+
+    This is not a file browser for user-supplied HTTP paths. Optional custom
+    paths remain supported for offline configuration validation and tests.
+    """
+    source = Path(path)
+    if source.suffix.lower() != ".json" or source.is_symlink():
+        raise ValueError("configuration must be a regular JSON file, not a symlink")
+    if not source.is_file():
+        raise FileNotFoundError(f"configuration file is unavailable: {source}")
+    with source.open("r", encoding="utf-8") as fh:
         return json.load(fh)
 
 
@@ -24,8 +34,13 @@ def load_season_calendar(
     season: int | None = None,
 ) -> SeasonCalendar:
     requested_season = season
+    # A season is an integer selector, never a pathname component from a string.
+    if requested_season is not None and (
+        type(requested_season) is not int or not 1 <= requested_season <= 9999
+    ):
+        raise ValueError("season must be an integer between 1 and 9999")
     if requested_season is not None:
-        season_path = Path(f"config/calendar/season_{requested_season}.json")
+        season_path = Path("config/calendar") / f"season_{requested_season:d}.json"
         if season_path.exists():
             return SeasonCalendar.model_validate(_load_json(season_path))
 

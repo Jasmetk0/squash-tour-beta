@@ -188,13 +188,17 @@ class WorldPackageCountryStore:
     def _delete_backup(self, backup: Path) -> Path:
         """Only a generated, direct child country deletion backup is disposable."""
         path = Path(backup)
+        # tempfile.mkdtemp() returns an absolute pathname on Python 3.12+
+        # even if dir= received a relative pathname. Accept precisely those
+        # two lexical forms without resolving a caller-supplied alias or '..'.
+        parent = path.parent
+        expected_parent = self.countries_root
         if (
             self.package_root.is_symlink()
-            or self.countries_root.is_symlink()
+            or expected_parent.is_symlink()
+            or ".." in path.parts
             or path.is_symlink()
-            # Require the *exact* parent path produced by mkdtemp.  Resolving
-            # a caller-supplied parent would also admit aliases and traversal.
-            or path.parent != self.countries_root
+            or parent not in (expected_parent, expected_parent.absolute())
             or re.fullmatch(r"[.][A-Z]{3}-delete-backup-[A-Za-z0-9_-]+", path.name) is None
         ):
             raise ValueError("invalid country deletion backup location")
@@ -506,8 +510,10 @@ class WorldPackageCountryStore:
         if country.code not in self.load_index().country_codes:
             raise ValueError(f"country {country.code!r} does not exist")
         live = self._country_root(country.code)
-        stage = Path(tempfile.mkdtemp(prefix=f".{country.code}-stage-", dir=self.countries_root))
+        # Validate all possible cleanup targets *before* creating staging.
+        # A rejected linked backup must leave no temporary directory behind.
         backup = self._replacement_backup(country.code)
+        stage = Path(tempfile.mkdtemp(prefix=f".{country.code}-stage-", dir=self.countries_root))
         staged_store = WorldPackageCountryStore(stage)
         try:
             staged_store.countries_root.mkdir(parents=True)

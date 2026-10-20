@@ -7,6 +7,7 @@ from pathlib import Path
 
 import pytest
 
+from beta_engine.domain.countries import CountriesConfig, Country
 from beta_engine.application.package_evidence_files import safe_package_file
 from beta_engine.application.world_package_registry_service import WorldPackageRegistryService
 from beta_engine.infrastructure.world_package_storage import WorldPackageCountryStore
@@ -345,3 +346,88 @@ def test_country_replacement_cannot_delete_symlinked_backup(tmp_path: Path) -> N
     with pytest.raises(ValueError, match="invalid country replacement backup"):
         store._replacement_backup("AAA")
     assert (external / "sentinel").read_text() == "untouched"
+
+
+
+def _country_for_relative_root(code: str) -> Country:
+    return Country(
+        code=code, name="Country " + code, region="EUROPE",
+        population=1_234_567, squash_popularity=4, squash_access=3,
+        development_quality=5, competition_quality=4,
+        elite_support=3, squash_tradition=2,
+    )
+
+
+def _relative_root_store(tmp_path: Path, monkeypatch) -> WorldPackageCountryStore:
+    monkeypatch.chdir(tmp_path)
+    store = WorldPackageCountryStore(Path("relative_world"))
+    store.replace_dataset(
+        CountriesConfig(
+            dataset_status="test",
+            countries=[_country_for_relative_root("AAA"), _country_for_relative_root("BBB")],
+        )
+    )
+    return store
+
+
+def test_relative_package_root_country_delete_and_rollback(tmp_path: Path, monkeypatch) -> None:
+    import sys
+    store = _relative_root_store(tmp_path, monkeypatch)
+    original_index = store.index_path.read_bytes()
+    original_country = store.load_country("AAA")
+
+    index_backup, backup = store.delete_country("AAA")
+    assert index_backup == original_index
+    if sys.version_info >= (3, 12):
+        assert backup.is_absolute(), "Python 3.12+ mkdtemp must return an absolute path"
+    assert backup.is_dir()
+    assert not (store.countries_root / "AAA").exists()
+
+    store.rollback_delete("AAA", index_backup, backup)
+    assert store.index_path.read_bytes() == original_index
+    assert store.load_country("AAA") == original_country
+    assert not backup.exists()
+
+
+def test_relative_package_root_country_delete_and_finalize(tmp_path: Path, monkeypatch) -> None:
+    store = _relative_root_store(tmp_path, monkeypatch)
+    _, backup = store.delete_country("AAA")
+    store.finalize_delete(backup)
+    assert not backup.exists()
+    assert "AAA" not in store.load_index().country_codes
+    assert "BBB" in store.load_index().country_codes
+
+
+def test_relative_root_rejects_alias_backup_even_if_it_points_inside(tmp_path: Path, monkeypatch) -> None:
+    store = _relative_root_store(tmp_path, monkeypatch)
+    backup = store.countries_root / ".AAA-delete-backup-abcdef"
+    backup.mkdir()
+    (backup / "sentinel").write_text("keep")
+    path_with_alias = store.countries_root.absolute() / "somewhere" / ".." / backup.name
+    with pytest.raises(ValueError, match="backup location"):
+        store.finalize_delete(path_with_alias)
+    assert (backup / "sentinel").read_text() == "keep"
+
+
+def test_failed_replacement_backup_validation_leaves_no_staging(tmp_path: Path) -> None:
+    store = WorldPackageCountryStore(tmp_path / "world")
+    store.replace_dataset(CountriesConfig(dataset_status="test", countries=[
+        _country_for_relative_root("AAA"), _country_for_relative_root("BBB"),
+    ]))
+    external = tmp_path / "outside"
+    external.mkdir()
+    (external / "sentinel").write_text("keep")
+    link = store.countries_root / ".AAA-backup"
+    try:
+        link.symlink_to(external, target_is_directory=True)
+    except (OSError, NotImplementedError):
+        pytest.skip("directory symlinks are not available on this platform")
+
+    original_index = store.index_path.read_bytes()
+    original_country = store.load_country("AAA")
+    with pytest.raises(ValueError, match="invalid country replacement backup"):
+        store.replace_country(original_country)
+    assert not list(store.countries_root.glob(".AAA-stage-*"))
+    assert store.index_path.read_bytes() == original_index
+    assert store.load_country("AAA") == original_country
+    assert (external / "sentinel").read_text() == "keep"

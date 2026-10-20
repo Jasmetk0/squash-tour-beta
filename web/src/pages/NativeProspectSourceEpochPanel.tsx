@@ -34,7 +34,7 @@ export function NativeProspectSourceEpochPanel({
   },[scope])
   const invalidate=()=>{
     serial.current++;setReview(null);setSaveReview(null);setConsent(false)
-    setSaveConsent(false);setNotice(null);setError(null)
+    setSaveConsent(false);setNotice(null);setError(null);setBusy(false)
   }
   const requestBody=():NativeFutureCohortRequest=>({
     schema_version:'native_calendar_cohort_request.v1',
@@ -113,7 +113,7 @@ export function NativeProspectSourceEpochPanel({
       {review.first_prepared_prospects.map(p=><p key={p.prospect_id}>{p.prospect_id} · {p.country_code} · W{p.season_week}</p>)}
       {!review.materialization_supported&&<p role="alert">{review.materialization_blocker}</p>}
       <label>{cs?'Důvod potvrzení (alespoň 10 znaků)':'Confirmation reason (at least 10 characters)'}
-        <textarea value={reason} disabled={busy} onChange={e=>{invalidate();setReason(e.target.value)}}/></label>
+        <textarea value={reason} disabled={busy} onChange={e=>{setReason(e.target.value);setConsent(false)}}/></label>
       <label><input type="checkbox" checked={consent} disabled={busy} onChange={e=>setConsent(e.target.checked)}/>
         {cs?'Výslovně potvrzuji vytvoření nových záznamů (bez přijetí hráčů).':
           'I explicitly confirm creating new records (without admitting players).'}</label>

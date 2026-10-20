@@ -125,3 +125,22 @@ def test_package_evidence_rejects_symlink_root(tmp_path: Path) -> None:
         pytest.skip("directory symlinks are not available on this platform")
     with pytest.raises(ValueError, match="root must not be a symlink"):
         safe_package_file(link, "world.json")
+
+
+
+def test_country_deletion_backup_rejects_linked_countries_root(tmp_path: Path) -> None:
+    outside = tmp_path / "external_countries"
+    outside.mkdir()
+    backup = outside / ".AAA-delete-backup-abcdef"
+    backup.mkdir()
+    (backup / "sentinel").write_text("keep")
+    root = tmp_path / "world"
+    root.mkdir()
+    try:
+        (root / "countries").symlink_to(outside, target_is_directory=True)
+    except (OSError, NotImplementedError):
+        pytest.skip("directory symlinks are not available on this platform")
+    store = WorldPackageCountryStore(root)
+    with pytest.raises(ValueError, match="backup location"):
+        store.finalize_delete(store.countries_root / backup.name)
+    assert (backup / "sentinel").read_text() == "keep"

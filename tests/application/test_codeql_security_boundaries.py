@@ -111,3 +111,17 @@ def test_package_evidence_rejects_traversal_and_symlink(tmp_path: Path) -> None:
         pytest.skip("file symlinks are not available on this platform")
     with pytest.raises(ValueError, match="symlink"):
         safe_package_file(root, "generation/link.json")
+
+
+
+def test_package_evidence_rejects_symlink_root(tmp_path: Path) -> None:
+    root = tmp_path / "real_package"
+    root.mkdir()
+    (root / "world.json").write_text("{}")
+    link = tmp_path / "alias_package"
+    try:
+        link.symlink_to(root, target_is_directory=True)
+    except (OSError, NotImplementedError):
+        pytest.skip("directory symlinks are not available on this platform")
+    with pytest.raises(ValueError, match="root must not be a symlink"):
+        safe_package_file(link, "world.json")

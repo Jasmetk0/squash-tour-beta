@@ -275,6 +275,15 @@ export function TournamentTestLabPage(): JSX.Element {
     }
   })
 
+  const editScenario = (value: string) => {
+    setScenarioText(value)
+    setLocalError(null)
+    inspectMutation.reset()
+    runMutation.reset()
+    runDraftPreviewMutation.reset()
+    runDraftApplyMutation.reset()
+  }
+
   const useBuiltIn = (scenario: TournamentLabScenario) => {
     setSelectedSessionId(null)
     setScenarioText(JSON.stringify(scenario, null, 2))
@@ -367,7 +376,13 @@ export function TournamentTestLabPage(): JSX.Element {
         <select
           aria-label="Open Tournament Test Session"
           value={selectedSessionId ?? ''}
-          onChange={(event) => setSelectedSessionId(event.target.value || null)}
+          onChange={(event) => {
+            setSelectedSessionId(event.target.value || null)
+            inspectMutation.reset()
+            runMutation.reset()
+            runDraftPreviewMutation.reset()
+            runDraftApplyMutation.reset()
+          }
         >
           <option value="">Portable scratch scenario</option>
           {sessions.data?.map((item) => <option key={item.session_id} value={item.session_id}>
@@ -486,7 +501,7 @@ export function TournamentTestLabPage(): JSX.Element {
         <textarea
           aria-label="Tournament Lab scenario JSON"
           value={scenarioText}
-          onChange={(event) => setScenarioText(event.target.value)}
+          onChange={(event) => editScenario(event.target.value)}
           rows={30}
           style={{ width: '100%', fontFamily: 'monospace' }}
           placeholder="Load a built-in scenario or paste tournament_test_lab_scenario.v1 JSON."
@@ -495,7 +510,7 @@ export function TournamentTestLabPage(): JSX.Element {
           <input
             aria-label="Tournament Lab batch match seeds"
             value={batchText}
-            onChange={(event) => setBatchText(event.target.value)}
+            onChange={(event) => { setBatchText(event.target.value); runMutation.reset() }}
             placeholder="100, 101, 102"
           />
         </label>

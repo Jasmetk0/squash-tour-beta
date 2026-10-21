@@ -612,11 +612,37 @@ def main() -> None:
             expect(page.get_by_role("table", name="Run World countries")).to_be_visible()
             page.get_by_role("combobox", name="World Saved Revision").select_option(newer_head)
             expect(page.get_by_role("table", name="Run World countries")).to_be_visible()
-            page.goto(history_url + "/world/countries/" + codes[0]
-                      + "?year=2010&tab=players&revision=" + newer_head)
+            # Use the real in-app country link instead of a cross-document
+            # page.goto: an active SPA can have a beforeunload dialog that
+            # detaches Chrome's page while Playwright is accepting it.
+            page.get_by_role("table", name="Run World countries").locator(
+                f'a[href*="/world/countries/{codes[0]}"]'
+            ).click()
+            expect(page.get_by_role("region", name="Run World country detail")).to_be_visible()
+            page.get_by_role("combobox", name="World data year").select_option("2010")
+            page.wait_for_function(
+                "() => new URLSearchParams(location.search).get('year') === '2010'"
+            )
+            page.get_by_role("navigation", name="Country detail sections").get_by_role(
+                "link", name="Players & Talent"
+            ).click()
+            page.wait_for_function(
+                """revision => {
+                    const p = new URLSearchParams(location.search);
+                    return p.get('revision') === revision &&
+                        p.get('year') === '2010' && p.get('tab') === 'players';
+                }""",
+                arg=newer_head,
+            )
             expect(page.get_by_role("region", name="Historical country roster unavailable")).to_be_visible()
             assert page.get_by_role("table", name="Saved country roster").count() == 0
-            page.goto(history_url + "/world?year=2000&revision=" + old_head)
+            page.get_by_role("link", name="Back to countries").click()
+            expect(page.get_by_role("table", name="Run World countries")).to_be_visible()
+            page.get_by_role("combobox", name="World data year").select_option("2000")
+            page.wait_for_function(
+                "() => new URLSearchParams(location.search).get('year') === '2000'"
+            )
+            page.get_by_role("combobox", name="World Saved Revision").select_option(old_head)
             expect(page.get_by_role("alert").filter(
                 has_text="The selected Saved Revision has no saved Run World component"
             )).to_be_visible()

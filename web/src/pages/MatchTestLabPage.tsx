@@ -53,6 +53,17 @@ function parseSeeds(value: string): number[] {
 }
 
 function ResultPanels({ data }: { data: MatchLabResult }): JSX.Element {
+  const [winnerFilter, setWinnerFilter] = useState('all')
+  const winners = useMemo(() =>
+    Array.from(new Set(data.results.map(result => result.winner_player_id))).sort(),
+    [data.results]
+  )
+  // Never apply a previous batch's winner filter to a different batch accidentally.
+  const activeFilter = winnerFilter === 'all' || winners.includes(winnerFilter) ? winnerFilter : 'all'
+  const displayed = activeFilter === 'all'
+    ? data.results
+    : data.results.filter(result => result.winner_player_id === activeFilter)
+
   return <>
     <SectionCard title="Compatibility & isolation">
       <SummaryPills items={[
@@ -79,10 +90,17 @@ function ResultPanels({ data }: { data: MatchLabResult }): JSX.Element {
       <p>Wins: {Object.entries(data.diagnostics.wins_by_player).map(([player, wins]) => `${player}: ${wins}`).join(' · ')}</p>
     </SectionCard>
     <SectionCard title="Replayable results">
+      <label>Filter results by winner
+        <select aria-label="Match Lab winner filter" value={activeFilter} onChange={event => setWinnerFilter(event.target.value)}>
+          <option value="all">All winners</option>
+          {winners.map(winner => <option key={winner} value={winner}>{winner}</option>)}
+        </select>
+      </label>
+      <p className="status">Showing {displayed.length} of {data.results.length} results · Batch diagnostics above include all matches.</p>
       <table aria-label="Match Lab results"><thead><tr>
         <th>Seed</th><th>Winner</th><th>Sets</th><th>Set scores (A-B)</th><th>Rallies</th><th>Elapsed</th><th>Result fingerprint</th>
       </tr></thead><tbody>
-        {data.results.map((result) => <tr key={result.seed}>
+        {displayed.map((result) => <tr key={result.seed}>
           <td>{result.seed}</td><td>{result.winner_player_id}</td>
           <td>{Object.entries(result.sets_won).map(([player, sets]) => `${player} ${sets}`).join(' / ')}</td>
           <td>{result.set_scores.join(', ')}</td><td>{result.rally_count}</td><td>{result.elapsed_seconds.toFixed(1)} s</td>

@@ -382,7 +382,7 @@ export function TournamentTestLabPage(): JSX.Element {
             runMutation.reset()
             runDraftPreviewMutation.reset()
             runDraftApplyMutation.reset()
-          }
+          }}
         >
           <option value="">Portable scratch scenario</option>
           {sessions.data?.map((item) => <option key={item.session_id} value={item.session_id}>

@@ -13,6 +13,8 @@ export function RunManagementPage(): JSX.Element {
   const query = useQuery({ queryKey: ['run-container', runId], queryFn: () => getRunContainer(runId), enabled: Boolean(runId), retry: false })
   const base = '/admin/runs/' + encodeURIComponent(runId)
   const activeBranch = selectedBranch?.run_id === runId ? selectedBranch : null
+  const run = query.data?.run_id === runId ? query.data : null
+  const runMismatch = Boolean(query.data && !run)
   return <section className="panel">
     <div className="page-intro"><h2>{t('Run Management')}</h2><p className="subtitle">
       {language === 'cs' ? 'Správa uloženého Runu a jeho nezávislých dat. Nejde o globální zdrojové balíčky.' :
@@ -20,8 +22,11 @@ export function RunManagementPage(): JSX.Element {
     </p></div>
     {query.isPending && <p role="status">{t('Loading')}</p>}
     {query.isError && <p role="alert" className="error">{formatApiError(query.error)}</p>}
-    {query.data && <>
-      <p className="status">{query.data.display_name || runId} · {query.data.status} · {query.data.read_only
+    {runMismatch && <p role="alert" className="error">{language === 'cs'
+      ? 'Server vrátil jiný Run. Editační ovládání zůstává skryté.'
+      : 'The server returned another Run. Editing controls remain hidden.'}</p>}
+    {run && <>
+      <p className="status">{run.display_name || runId} · {run.status} · {run.read_only
         ? (language === 'cs' ? 'Pouze ke čtení' : 'Read-only')
         : (language === 'cs' ? 'Upravitelný' : 'Editable')}</p>
       <p className="status">{language === 'cs' ? 'Vybraná Branch' : 'Selected Branch'}: {
@@ -32,8 +37,8 @@ export function RunManagementPage(): JSX.Element {
           : (language === 'cs' ? 'Nedostupná' : 'Unavailable')
       }</p>
       <p><Link to={base}>{language === 'cs' ? 'Otevřít přehled Runu' : 'Open Run overview'} →</Link></p>
-      {query.data.storage_kind === 'custom_local' && !query.data.read_only &&
-        <RunPackageSetupPanel run={query.data} branch={activeBranch} />}
+      {run.storage_kind === 'custom_local' && !run.read_only &&
+        <RunPackageSetupPanel run={run} branch={activeBranch} />}
     </>}
     <div className="home-entry-grid">
       <article className="home-entry"><h3>{language === 'cs' ? 'Validace a diagnostika' : 'Validation & diagnostics'}</h3>

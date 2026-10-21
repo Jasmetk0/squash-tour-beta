@@ -47,7 +47,7 @@ def native_tour_identities(state, world):
         raise ValueError("Season summary lacks unique saved national identities")
     # Native participants have no replacement InitialWorld profile. Their
     # names/nationality are frozen by the authenticated actual match projection.
-    if getattr(state,"schema_version",None) == "calendar_tour_authority.v4":
+    if getattr(state,"schema_version",None) in {"calendar_tour_authority.v4", "native_fork_tour.v1"}:
         for receipt in state.receipts:
             for pid, identity in receipt.result.get("played", {}).get("participant_identities", {}).items():
                 if pid not in players:

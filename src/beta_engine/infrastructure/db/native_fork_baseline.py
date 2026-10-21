@@ -22,7 +22,42 @@ from beta_engine.infrastructure.db.player_health_state import load_saved_health
 from beta_engine.infrastructure.db.player_lifecycle_state import load_saved_lifecycle
 
 
-def _project(source, binding, *, source_branch_id, target_branch_id):
+def _project(
+    source,
+    binding,
+    *,
+    source_branch_id,
+    target_branch_id,
+    repository=None,
+    session=None,
+):
+    if repository is not None:
+        from beta_engine.application.native_fork_runtime_reducer import source_inputs
+
+        inputs = source_inputs(source, repository, session)
+        if any(
+            getattr(inputs, k, None) is None
+            for k in ("world", "lifecycle", "health", "checkpoint", "tour")
+        ):
+            raise ValueError(
+                "Native fork baseline requires the complete initialized Saved Tour"
+            )
+        calendar = RunCalendar.from_metadata(source.payload["run"]["run_calendar"])
+        p = calendar.position_at_ordinal(inputs.tour.week.ordinal)
+        week = RunWeekPosition(
+            calendar=calendar, season_index=p.season_index, week=p.season_week
+        )
+        return project_native_fork_baseline(
+            binding=binding,
+            selected_source_branch_id=source_branch_id,
+            target_branch_id=target_branch_id,
+            week=week,
+            world_fingerprint=inputs.world.fingerprint,
+            lifecycle=inputs.lifecycle,
+            health=inputs.health,
+            checkpoint=inputs.checkpoint,
+            tour=inputs.tour,
+        )
     world = load_saved_initial_world(
         source.payload,
         run_id=source.run_id,
@@ -109,6 +144,8 @@ def prepare_native_fork_baseline_in_session(
         binding,
         source_branch_id=source_branch_id,
         target_branch_id=target_branch_id,
+        repository=repository,
+        session=session,
     )
 
 
@@ -144,6 +181,14 @@ def verify_native_fork_baseline_in_session(
         target.forked_from_saved_revision_id,
     ) != (run_id, source_branch_id, source_revision_id):
         raise ValueError("Native fork baseline target has a different declared origin")
+    from beta_engine.infrastructure.db.native_fork_runtime_state import _proofs
+
+    memo = _proofs.get()
+    # A completed actual-source proof is shared ONLY inside this transaction.
+    # Caller scope and the actual target origin were independently checked above.
+    key = ("complete_native_baseline", id(session), baseline.model_dump_json())
+    if memo is not None and key in memo:
+        return baseline
     source = resolve_native_fork_source_binding(
         repository,
         session,
@@ -155,9 +200,13 @@ def verify_native_fork_baseline_in_session(
         baseline.source_binding,
         source_branch_id=source_branch_id,
         target_branch_id=target_branch_id,
+        repository=repository,
+        session=session,
     )
     if expected != baseline:
         raise ValueError(
             "Native fork baseline current facts differ from actual Saved authority"
         )
+    if memo is not None:
+        memo[key] = baseline
     return baseline

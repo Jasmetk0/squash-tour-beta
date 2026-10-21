@@ -170,6 +170,26 @@ def review_in_session(
         raise SavedRevisionBranchForkConflictError(
             "Native historical execution sources failed validation"
         ) from exc
+    if native_source is not None:
+        try:
+            if branch.status != "active":
+                raise ValueError("Native fork source Branch is not active")
+            from beta_engine.infrastructure.db.native_fork_baseline import _project
+            from beta_engine.application.native_fork_runtime_reducer import initial_runtime, source_inputs
+            probe = _project(source, native_source, source_branch_id=source_branch_id, target_branch_id="native-review-" + source.content_hash[:32], repository=repository, session=session)
+            initial_runtime(probe, "native-review-root", source_inputs(source, repository, session))
+            if set(content) - FORK_CONTENT_KEYS - {"calendar_player_sporting_checkpoint", "calendar_tour_authority", "calendar_standalone_match", "native_fork_baseline", "native_fork_runtime"}:
+                raise ValueError("Native fork contains unsupported additional components")
+            allowed = {"unsupported_fork_components", "native_birth_fork_authority_required", "native_health_fork_authority_required"}
+            blockers = [b for b in blockers if b["code"] not in allowed]
+        except (ValueError, TypeError, KeyError) as exc:
+            blockers.append({"code": "native_runtime_not_ready", "message": str(exc)})
+    if source.payload_schema_version == "native_fork_saved_root.v2":
+        from beta_engine.infrastructure.db.native_fork_runtime_state import load_runtime
+        from beta_engine.application.native_fork_runtime_reducer import source_inputs
+        runtime = load_runtime(source.payload)
+        inputs = source_inputs(source, repository, session)
+        evidence, checkpoint, tour_state = inputs.opening, inputs.checkpoint, runtime.tour
     knockout = getattr(evidence, "knockout", evidence)
     match_ids = {m.input_context.match_id for m in getattr(knockout, "matches", ())} | {
         m.match_id for m in getattr(checkpoint, "played_continuations", ())
@@ -179,6 +199,10 @@ def review_in_session(
     cp = content.get("calendar_player_sporting_checkpoint", {}).get("state", {})
     tour = content.get("calendar_tour_authority", {}).get("state", {})
     life = content.get("player_lifecycle", {}).get("states", [])
+    if source.payload_schema_version == "native_fork_saved_root.v2":
+        cp = {"week": runtime.week.model_dump(mode="json")}
+        tour = runtime.tour.model_dump(mode="json")
+        life = [{"players": [p.model_dump(mode="json") for p in runtime.lifecycle.players]}]
     result = {
         "schema_version": "saved_revision_branch_review.v1",
         "run_id": run_id,

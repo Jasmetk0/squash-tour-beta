@@ -50,8 +50,16 @@ def install_native_fork_baseline_in_session(
     display_name,
     expected_source_head,
     expected_viewer_branch_id,
+    runtime=None,
 ):
     """Install or exactly retry one pending root, never overwrite a live target."""
+    status = "active" if runtime is not None else PENDING_STATUS
+    if runtime is not None and (
+        runtime.baseline != baseline
+        or runtime.root_saved_revision_id != revision_id
+        or runtime.journal
+    ):
+        raise ValueError("Native activation runtime differs from its installation")
     for value in (revision_id, draft_id, audit_event_id, baseline.branch_id):
         if (
             not isinstance(value, str)
@@ -73,6 +81,8 @@ def install_native_fork_baseline_in_session(
         "expected_source_head": expected_source_head,
         "expected_viewer_branch_id": expected_viewer_branch_id,
     }
+    if runtime is not None:
+        request["runtime_fingerprint"] = runtime.fingerprint
     receipt = {"request_fingerprint": canonical_hash(request), "request": request}
     existing = session.get(BranchSavedRevisionModel, revision_id)
     if existing is not None:
@@ -100,8 +110,8 @@ def install_native_fork_baseline_in_session(
             )
             or target is None
             or target.saved_head_revision_id != revision_id
-            or target.status != PENDING_STATUS
-            or not target.read_only
+            or target.status != status
+            or bool(target.read_only) != (runtime is None)
             or target.display_name != display_name
             or draft is None
             or (
@@ -126,7 +136,7 @@ def install_native_fork_baseline_in_session(
             )
             or state is None
             or state.run_id != baseline.run_id
-            or state.status != PENDING_STATUS
+            or state.status != status
         ):
             raise ValueError(
                 "Native fork installation receipt conflicts with existing state"
@@ -198,7 +208,7 @@ def install_native_fork_baseline_in_session(
         - 1,
         branch_id=baseline.branch_id,
         branch_display_name=display_name,
-        branch_status=PENDING_STATUS,
+        branch_status=status,
         forked_from_branch_id=baseline.selected_source_branch_id,
         forked_from_saved_revision_id=source.revision_id,
         viewer_branch_id=run.official_branch_id,
@@ -209,12 +219,22 @@ def install_native_fork_baseline_in_session(
             "fingerprint": baseline.fingerprint,
         }
     }
+    if runtime is not None:
+        from beta_engine.infrastructure.db.native_fork_runtime_state import (
+            KEY,
+            component,
+        )
+
+        payload["content"][KEY] = component(runtime)
+        prospects = source.payload["content"].get("run_prospect_source")
+        if prospects is not None:
+            payload["content"]["run_prospect_source"] = prospects
     summary = {
         "kind": EVENT_KIND,
         "source_saved_revision_id": source.revision_id,
         "source_branch_id": baseline.selected_source_branch_id,
         "baseline_fingerprint": baseline.fingerprint,
-        "continuation_ready": False,
+        "continuation_ready": runtime is not None,
     }
     values = {
         "revision_id": revision_id,
@@ -223,7 +243,9 @@ def install_native_fork_baseline_in_session(
         "sequence": source.sequence + 1,
         "parent_revision_id": source.revision_id,
         "kind": BRANCH_FORK_MATERIALIZED_SAVED_REVISION_KIND,
-        "payload_schema_version": PAYLOAD_SCHEMA,
+        "payload_schema_version": "native_fork_saved_root.v2"
+        if runtime is not None
+        else PAYLOAD_SCHEMA,
     }
     row = BranchSavedRevisionModel(
         **values,
@@ -240,8 +262,8 @@ def install_native_fork_baseline_in_session(
                 branch_id=baseline.branch_id,
                 run_id=baseline.run_id,
                 display_name=display_name,
-                status=PENDING_STATUS,
-                read_only=1,
+                status=status,
+                read_only=int(runtime is None),
                 forked_from_branch_id=baseline.selected_source_branch_id,
                 forked_from_saved_revision_id=source.revision_id,
                 saved_head_revision_id=revision_id,
@@ -250,7 +272,7 @@ def install_native_fork_baseline_in_session(
             BranchStateModel(
                 branch_id=baseline.branch_id,
                 run_id=baseline.run_id,
-                status=PENDING_STATUS,
+                status=status,
             ),
             BranchWorkingDraftModel(
                 draft_id=draft_id,

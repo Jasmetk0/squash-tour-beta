@@ -40,7 +40,7 @@ export function validateNativeTransitionReadiness(raw:unknown,view:TourView):Nat
     ||new Set(v.due.map(p=>p.player_id)).size!==v.due.length
     ||!Number.isSafeInteger(v.admitted_population_count)||v.admitted_population_count<0
     ||!['configured_tour',nativeScope].includes(v.current_scope)
-    ||(version!==undefined&&v.current_scope!==(['calendar_tour_authority.v3','calendar_tour_authority.v4'].includes(String(version))?nativeScope:'configured_tour'))
+    ||(version!==undefined&&v.current_scope!==(['calendar_tour_authority.v3','calendar_tour_authority.v4','native_fork_tour.v1'].includes(String(version))?nativeScope:'configured_tour'))
     ||v.target_scope!==((v.current_scope===nativeScope||v.due_count>0)?nativeScope:'configured_tour')
     ||v.command_preview_required!==true||v.explicit_confirmation_required!==true||v.manual_save_required!==true
     ||v.simulation_started!==false||v.post_birth_competition_supported!==modern||v.source_epoch_changes_supported!==false

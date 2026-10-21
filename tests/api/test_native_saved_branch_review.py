@@ -1,7 +1,4 @@
-"""Real native HTTP/SQLite review; unsupported historical re-authority stays blocked.
-
-This is evidence of the remaining fork gap, not successful native Branch support.
-"""
+"""Actual historical source authority and non-mutating native creation review."""
 
 import json
 
@@ -69,21 +66,21 @@ def test_native_matched_birth_and_epoch_reviews_preserve_actual_saved_history(tm
         serialized_baselines = {}
         preparation = NativeForkBaselinePreparationService(repo)
 
-        def check(revision_id, expected_codes):
+        def check(revision_id, _previous_blocker_codes):
             before = _dump(path)
             source, review = preview(server, "run", "branch", revision_id)
-            assert not review["can_create"]
+            assert review["can_create"], review["blockers"]
             assert review["saved_match_count"] >= 3
             assert review["source_revision_branch_id"] == "branch"
-            assert expected_codes <= {b["code"] for b in review["blockers"]}
+            assert review["blockers"] == []
             assert _dump(path) == before
             assert (
                 _request(
                     "POST",
                     server.base_url + "/run-containers/run/branches",
-                    confirmed(source, review, "blocked-" + revision_id),
+                    confirmed(source, review, "blocked-" + revision_id) | {"review": {**confirmed(source, review)["review"], "explicit_confirmation": False}},
                 )[0]
-                == 409
+                == 422
             )
             assert _dump(path) == before
             current = repo.get_branch_saved_revision(revision_id=revision_id)
@@ -379,7 +376,7 @@ def test_native_matched_birth_and_epoch_reviews_preserve_actual_saved_history(tm
             assert repo.get_branch_saved_revision(revision_id=revision_id) == snapshot
             assert saved_bytes(repo, revision_id) == immutable_bytes[revision_id]
             before = _dump(path)
-            assert not preview(restarted, "run", "branch", revision_id)[1]["can_create"]
+            assert preview(restarted, "run", "branch", revision_id)[1]["can_create"]
             assert _dump(path) == before
             baseline = NativeForkBaseline.model_validate_json(
                 serialized_baselines[revision_id]

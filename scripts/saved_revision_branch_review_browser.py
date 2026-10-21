@@ -1,7 +1,4 @@
-"""Real Chromium/HTTP/SQLite reviewed Branch creation and native blockers.
-
-This does not claim a native match-bearing fork succeeds: that remains blocked.
-"""
+"""Actual Chromium/HTTP/SQLite reviewed native fork creation and continuation."""
 
 import argparse
 import json
@@ -141,8 +138,10 @@ def main():
                         ]
                         == branch
                     )
-                    # The same production history screen must refuse native sport
-                    # before it offers an enabled confirmation, in both locales.
+                    native_created = []
+                    # Real native Saved sources now create independent active
+                    # timelines. Exercise reviewed creation, Week Transition and
+                    # explicit Save/reload through the actual Admin in CS/EN.
                     for language, title, button, check_label in (
                         (
                             "en",
@@ -162,29 +161,123 @@ def main():
                             language,
                         )
                         page.goto(f"{web}/admin/runs/run/branches?branch=branch")
-                        # Open the exact immutable matched source, not a legacy checkpoint.
                         page.get_by_role(
                             "button", name=native_head["revision_id"], exact=False
                         ).click()
                         before = _dump(path)
                         page.get_by_role("button", name=button, exact=True).click()
                         native_dialog = page.get_by_role("alertdialog", name=title)
-                        expect(native_dialog.get_by_role("alert")).to_contain_text(
-                            "Native sporting history"
+                        native_check = native_dialog.get_by_role(
+                            "checkbox", name=check_label
+                        )
+                        expect(native_check).to_be_enabled()
+                        native_confirm = native_dialog.get_by_role(
+                            "button", name=check_label, exact=True
+                        )
+                        expect(native_confirm).to_be_disabled()
+                        assert _dump(path) == before
+                        native_check.check()
+                        with page.expect_response(
+                            lambda r: (
+                                r.request.method == "POST"
+                                and r.url.endswith("/run-containers/run/branches")
+                            )
+                        ) as response:
+                            native_confirm.click()
+                        native_branch = response.value.json()
+                        assert response.value.status == 201, native_branch
+                        native_created.append(native_branch["branch_id"])
+                        expect(
+                            page.get_by_label(
+                                "Saved Revision Branch result"
+                                if language == "en"
+                                else "Výsledek vytvoření větve z uložené revize"
+                            )
+                        ).to_be_visible()
+                        page.get_by_role(
+                            "link",
+                            name="Open created Branch in Admin"
                             if language == "en"
-                            else "Sportovní historie native Runu"
+                            else "Otevřít vytvořenou větev v Adminu",
+                        ).click()
+                        page.goto(
+                            f"{web}/admin/runs/run/tour/editions?branch={native_branch['branch_id']}"
+                        )
+                        tour = page.get_by_role("region", name="Configured native Tour")
+                        expect(tour).to_be_visible()
+                        tour.get_by_label("Tour operation reason").fill(
+                            "Reviewed independent native fork browser continuation"
+                        )
+                        tour.get_by_role(
+                            "button",
+                            name="Review Week Transition"
+                            if language == "en"
+                            else "Zkontrolovat Week Transition",
+                            exact=True,
+                        ).click()
+                        tour.get_by_label("Confirm Tour command").check()
+                        with page.expect_response(
+                            lambda r: (
+                                r.request.method == "POST"
+                                and r.url.endswith("/calendar-tour/execute")
+                            )
+                        ) as execution:
+                            tour.get_by_role(
+                                "button",
+                                name="Execute confirmed operation"
+                                if language == "en"
+                                else "Provést potvrzenou operaci",
+                                exact=True,
+                            ).click()
+                        assert execution.value.status == 201, execution.value.text()
+                        tour.get_by_label("Confirm Tour Save").check()
+                        with page.expect_response(
+                            lambda r: (
+                                r.request.method == "POST"
+                                and r.url.endswith("/calendar-tour/save")
+                            )
+                        ) as saved_response:
+                            tour.get_by_role(
+                                "button",
+                                name="Manual Tour Save"
+                                if language == "en"
+                                else "Ruční Save Tour",
+                                exact=True,
+                            ).click()
+                        assert saved_response.value.status == 201, (
+                            saved_response.value.text()
+                        )
+                        page.reload()
+                        tour.get_by_label("Tour operation reason").fill(
+                            "Continue after reloaded explicit Save"
                         )
                         expect(
-                            native_dialog.get_by_role("checkbox", name=check_label)
-                        ).to_be_disabled()
-                        expect(
-                            native_dialog.get_by_role(
-                                "button", name=check_label, exact=True
+                            tour.get_by_role(
+                                "button",
+                                name="Review Week Transition"
+                                if language == "en"
+                                else "Zkontrolovat Week Transition",
+                                exact=True,
                             )
-                        ).to_be_disabled()
-                        assert _dump(path) == before
+                        ).to_be_enabled()
+                        code, view = _request(
+                            "GET",
+                            server.base_url
+                            + f"/admin/runs/run/branches/{native_branch['branch_id']}/calendar-tour",
+                        )
+                        assert (
+                            code == 200
+                            and view["saved"]
+                            and view["state"]["week"]["week"] == 3
+                        ), view
+                        assert (
+                            _request("GET", server.base_url + "/run-containers/run")[1][
+                                "viewer_branch_id"
+                            ]
+                            == "branch"
+                        )
                         page.screenshot(
-                            path=str(root / f"native-blocker-{language}.png"),
+                            path=str(root / f"native-created-saved-{language}.png"),
                             full_page=True,
                         )
                     assert (
@@ -200,13 +293,14 @@ def main():
                                 "created_branch": created["branch_id"],
                                 "source_revision": revision,
                                 "native_source_revision": native_head["revision_id"],
-                                "native_fork_supported": False,
+                                "native_fork_supported": True,
+                                "native_created_branches": native_created,
                                 "checks": [
                                     "explicit review/cancel/confirm",
                                     "read-only preview",
                                     "open created Branch",
                                     "Viewer isolation",
-                                    "native blocker EN/CS",
+                                    "native create, transition, Manual Save and reload EN/CS",
                                 ],
                             },
                             indent=2,
@@ -215,6 +309,15 @@ def main():
                     browser.close()
             finally:
                 stop_process(frontend)
+                # Closing Chromium cancels its HTTP clients, not synchronous
+                # backend work already running. Drain the real API before Python
+                # tears down native libraries on the daemon server thread.
+                server.server.should_exit = True
+                server.thread.join(timeout=30)
+                if server.thread.is_alive():
+                    raise RuntimeError(
+                        "Browser API did not drain during bounded shutdown"
+                    )
 
 
 if __name__ == "__main__":

@@ -13,9 +13,6 @@ from beta_engine.domain.native_fork_source import (
     NativeForkSourceBinding,
 )
 from beta_engine.domain.run_packages import canonical_hash
-from beta_engine.infrastructure.db.calendar_standalone_match_state import (
-    decode_prevalidated_calendar_sources,
-)
 from beta_engine.infrastructure.db.calendar_tour import verify_tour_origins
 from beta_engine.infrastructure.db.initial_world_state import load_saved_initial_world
 from beta_engine.infrastructure.db.models import BranchSavedRevisionModel
@@ -61,11 +58,61 @@ def bind_prevalidated_native_fork_source(repository, session, *, source, lineage
     same Branch is still forbidden. Referenced rows are reloaded and authenticated
     so this function never authorizes caller-supplied model hashes or metadata.
     """
-    evidence, checkpoint, tour = decode_prevalidated_calendar_sources(
-        source.payload,
-        run_id=source.run_id,
-        branch_id=source.branch_id,
-    )
+    if source.payload_schema_version == "native_fork_saved_root.v2":
+        from beta_engine.infrastructure.db.native_fork_runtime_state import load_runtime
+
+        runtime = load_runtime(source.payload)
+        ids = {
+            runtime.baseline.source_binding.source.revision_id,
+            runtime.root_saved_revision_id,
+        }
+        ids.update(e.request["command"]["expected_saved_head"] for e in runtime.journal)
+        ids.discard(source.revision_id)
+        prefix = {r.revision_id: r for r in lineage if r.sequence < source.sequence}
+        if not ids <= prefix.keys():
+            raise ValueError(
+                "Native fork execution source is outside its actual Saved past"
+            )
+        historical = []
+        for revision_id in sorted(ids):
+            row = session.get(BranchSavedRevisionModel, revision_id)
+            if row is None or row.run_id != source.run_id:
+                raise ValueError("Native fork execution source is missing or foreign")
+            actual = repository._validated_saved_revision_in_session(
+                session=session, model=row
+            )
+            if actual.content_hash != prefix[revision_id].content_hash:
+                raise ValueError(
+                    "Native fork execution source differs from reachable lineage"
+                )
+            historical.append(
+                NativeForkSavedSource(
+                    revision_id=revision_id,
+                    branch_id=actual.branch_id,
+                    content_hash=actual.content_hash,
+                )
+            )
+        return NativeForkSourceBinding(
+            run_id=source.run_id,
+            source=NativeForkSavedSource(
+                revision_id=source.revision_id,
+                branch_id=source.branch_id,
+                content_hash=source.content_hash,
+            ),
+            components=tuple(
+                NativeForkComponentSource(key=k, content_hash=canonical_hash(v))
+                for k, v in sorted(source.payload["content"].items())
+            ),
+            historical_sources=tuple(historical),
+        )
+    if "calendar_standalone_match" not in source.payload.get("content", {}):
+        return None
+    # Reuse typed original inputs already proved in this read transaction.
+    # This does not cache an authority across requests or replace actual origins.
+    from beta_engine.application.native_fork_runtime_reducer import source_inputs
+
+    inputs = source_inputs(source, repository, session)
+    evidence, checkpoint, tour = inputs.opening, inputs.checkpoint, inputs.tour
     if evidence is None:
         if checkpoint is not None or tour is not None:
             raise ValueError("Native fork has orphan sporting/Tour authority")

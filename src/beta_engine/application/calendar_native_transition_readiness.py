@@ -14,6 +14,9 @@ from beta_engine.infrastructure.db.run_prospect_source_state import (
 
 
 def inspect_native_transition_readiness(repository, *, run_id, branch_id):
+    from beta_engine.application.native_fork_runtime_service import is_native_fork, NativeForkRuntimeService
+    if is_native_fork(repository, run_id, branch_id):
+        return NativeForkRuntimeService(repository).readiness(run_id=run_id, branch_id=branch_id)
     from beta_engine.application.calendar_tour_service import CalendarTourService
 
     service = CalendarTourService(repository)

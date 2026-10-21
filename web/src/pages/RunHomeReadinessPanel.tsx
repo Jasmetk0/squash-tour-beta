@@ -35,6 +35,10 @@ const content = {
     checklist: 'Zobrazit kontrolu uložených podkladů',
     attentionCount: 'položky k prověření',
     details: 'Technický původ a hranice',
+    branch: 'Vybraná Branch',
+    calendar: 'Kalendář Runu',
+    weeks: 'týdnů za sezónu',
+    seasons: 'sezón',
     revision: 'Uložená revize HEAD',
     draftVersion: 'Verze pracovního návrhu',
   },
@@ -71,6 +75,10 @@ const content = {
     checklist: 'Show saved-foundation checks',
     attentionCount: 'items needing attention',
     details: 'Technical provenance and limits',
+    branch: 'Selected Branch',
+    calendar: 'Run calendar',
+    weeks: 'weeks per season',
+    seasons: 'seasons',
     revision: 'Saved Revision HEAD',
     draftVersion: 'Working Draft version',
   }
@@ -138,6 +146,8 @@ export function RunHomeReadinessPanel({
       : <p className="status">{l.allSaved}</p>}
     <details>
       <summary>{l.details}</summary>
+      <p>{l.branch}: <code>{data.branch_id}</code></p>
+      <p>{l.calendar}: {data.current_calendar.weeks_per_year} {l.weeks} · {data.current_calendar.season_count} {l.seasons}</p>
       <p>{l.revision}: <code>{data.saved_revision_id}</code></p>
       <p>SHA256: <code>{data.saved_revision_content_hash}</code></p>
       <p>{l.draftVersion}: {data.draft_version}</p>

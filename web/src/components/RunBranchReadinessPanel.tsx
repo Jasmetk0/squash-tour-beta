@@ -122,10 +122,11 @@ export function RunBranchReadinessPanel({ run, branches }: BranchReadinessPanelP
   })
 
   return (
-    <SectionCard title="Branch operating status">
+    <SectionCard title="Legacy Branch simulation status">
       <p className="status">
-        Read-only status from each Branch's own Saved Revision and authoritative simulation position.
-        A Week Transition indicator does not authorize other simulation actions; open the Branch to review their preflights.
+        This view checks the legacy FAX 50-season, 61-week simulation position and each Branch's Saved Revision.
+        A missing legacy position does not prove that a native Run-calendar operation is unavailable.
+        Every action needs its own Branch-specific preflight; this view never starts a simulation.
       </p>
       <button type="button" onClick={() => {
         void Promise.all([
@@ -156,7 +157,7 @@ export function RunBranchReadinessPanel({ run, branches }: BranchReadinessPanelP
             : positionQuery.error
               ? `Authoritative position unavailable: ${formatApiError(positionQuery.error)}`
               : !position
-                ? 'Authoritative position has a mismatched or invalid Run, Branch, or week identity.'
+                ? 'Legacy simulation position does not match this Run, Branch, or its 50-season / 61-week bounds.'
                 : null
         const revisionWarning = !branch.saved_head_revision_id
           ? null

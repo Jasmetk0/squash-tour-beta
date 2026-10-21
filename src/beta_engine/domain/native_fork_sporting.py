@@ -112,6 +112,43 @@ class NativeForkSportingCheckpoint(FrozenInput):
         return self
 
 
+
+class NativeForkSportingSaveCandidate(FrozenInput):
+    """Immutable proposed Saved descendant, not an actual persisted revision.
+
+    A writer must authenticate the current source, HEAD, Working Draft and
+    match replay anew inside its atomic transaction before persisting it.
+    """
+
+    schema_version: Literal["native_fork_sporting_save_candidate.v1"] = (
+        "native_fork_sporting_save_candidate.v1"
+    )
+    run_id: str = Field(min_length=1, max_length=128)
+    branch_id: str = Field(min_length=1, max_length=128)
+    parent_saved_revision_id: str = Field(min_length=1, max_length=128)
+    draft_id: str = Field(min_length=1, max_length=128)
+    draft_version: int = Field(ge=1)
+    checkpoint: NativeForkSportingCheckpoint
+
+    @model_validator(mode="after")
+    def coherent_first_descendant(self):
+        if (
+            not self.checkpoint.steps
+            or self.checkpoint.run_id != self.run_id
+            or self.checkpoint.branch_id != self.branch_id
+            or self.checkpoint.root_saved_revision_id != self.parent_saved_revision_id
+            or self.draft_version
+            != self.checkpoint.steps[-1].draft_version_before + 1
+        ):
+            raise ValueError(
+                "Native fork Save candidate needs an exact played target root and draft"
+            )
+        return self
+
+    @property
+    def fingerprint(self):
+        return canonical_hash(self.model_dump(mode="json"))
+
 def play_native_fork_match(checkpoint, command, *, draft_version, world, prospects):
     """Pure real MatchEngine execution; the caller authenticates actual DB sources."""
     if (

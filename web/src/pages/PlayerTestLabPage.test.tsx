@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react'
+import { fireEvent, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -195,4 +195,49 @@ describe('PlayerTestLabPage', () => {
     expect(screen.getByRole('table', { name: 'Player Lab active timeline' })).toBeInTheDocument()
     expect(screen.getByRole('table', { name: 'Player Lab idle timeline' })).toBeInTheDocument()
   })
+  it('formats valid JSON and clears stale results when the scenario is edited or reloaded', async () => {
+    const user = userEvent.setup()
+    renderWithRoute(<PlayerTestLabPage />, '/admin/labs/player')
+    await screen.findByText('Development activity baseline')
+    const editor = screen.getByRole('textbox', { name: 'Player Lab scenario JSON' })
+
+    fireEvent.change(editor, { target: { value: JSON.stringify(scenario) } })
+    await user.click(screen.getByRole('button', { name: 'Format JSON' }))
+    expect(editor).toHaveValue(JSON.stringify(scenario, null, 2))
+
+    await user.click(screen.getByRole('button', { name: 'Run scenario' }))
+    expect(await screen.findByRole('table', { name: 'Player Lab active timeline' })).toBeInTheDocument()
+
+    fireEvent.change(editor, { target: { value: '{}' } })
+    expect(screen.queryByRole('table', { name: 'Player Lab active timeline' })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Run scenario' })).toBeDisabled()
+    expect(screen.getByText(/invalid \/ incomplete JSON/)).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Load scenario' }))
+    expect(screen.getByRole('button', { name: 'Run scenario' })).toBeEnabled()
+    expect(screen.queryByRole('table', { name: 'Player Lab active timeline' })).not.toBeInTheDocument()
+  })
+
+  it('does not overwrite an intentionally emptied editor with the built-in baseline', async () => {
+    renderWithRoute(<PlayerTestLabPage />, '/admin/labs/player')
+    await screen.findByText('Development activity baseline')
+    const editor = screen.getByRole('textbox', { name: 'Player Lab scenario JSON' })
+    fireEvent.change(editor, { target: { value: '' } })
+    expect(editor).toHaveValue('')
+    expect(screen.getByRole('button', { name: 'Run scenario' })).toBeDisabled()
+    expect(editor).toHaveValue('')
+  })
+
+  it('does not read an invalid variants value as a valid scenario', async () => {
+    renderWithRoute(<PlayerTestLabPage />, '/admin/labs/player')
+    await screen.findByText('Development activity baseline')
+    const editor = screen.getByRole('textbox', { name: 'Player Lab scenario JSON' })
+    fireEvent.change(editor, { target: { value: JSON.stringify({
+      schema_version: 'player_test_lab_scenario.v1', scenario_id: 'partial', variants: null
+    }) } })
+    expect(screen.getByRole('button', { name: 'Run scenario' })).toBeDisabled()
+    expect(screen.getByText(/invalid \/ incomplete JSON/)).toBeInTheDocument()
+    expect(api.runPlayerTestLab).not.toHaveBeenCalled()
+  })
+
 })

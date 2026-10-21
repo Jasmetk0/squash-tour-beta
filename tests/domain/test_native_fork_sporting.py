@@ -15,6 +15,7 @@ from beta_engine.domain.native_fork_source import (
 )
 from beta_engine.domain.native_fork_sporting import (
     NativeForkSportingCheckpoint,
+    NativeForkSportingSaveCandidate,
     play_native_fork_match,
     verify_native_fork_sporting,
 )
@@ -233,3 +234,36 @@ def test_fork_match_rejects_stale_foreign_or_unsupported_inputs(case):
         play_native_fork_match(
             cp, cmd, draft_version=version, world=world, prospects=prospects
         )
+
+
+def test_fork_save_candidate_binds_exact_played_head_draft_and_roundtrips():
+    cp, world, prospects, _ = fixture()
+    played = play_native_fork_match(
+        cp, command(cp), draft_version=3, world=world, prospects=prospects
+    )
+    candidate = NativeForkSportingSaveCandidate(
+        run_id=cp.run_id,
+        branch_id=cp.branch_id,
+        parent_saved_revision_id=cp.root_saved_revision_id,
+        draft_id="fork-draft",
+        draft_version=4,
+        checkpoint=played,
+    )
+    assert candidate.checkpoint == played
+    assert candidate.fingerprint == NativeForkSportingSaveCandidate.model_validate_json(
+        candidate.model_dump_json()
+    ).fingerprint
+    assert len(candidate.fingerprint) == 64
+    assert candidate.fingerprint != candidate.model_copy(
+        update={"draft_id": "other-draft"}
+    ).fingerprint
+    original = candidate.model_dump(mode="json")
+    for changed in (
+        {"run_id": "foreign-run"},
+        {"branch_id": "foreign-branch"},
+        {"parent_saved_revision_id": "foreign-root"},
+        {"draft_version": 5},
+        {"checkpoint": cp.model_dump(mode="json")},
+    ):
+        with pytest.raises(ValueError, match="exact played target root and draft"):
+            NativeForkSportingSaveCandidate.model_validate(original | changed)

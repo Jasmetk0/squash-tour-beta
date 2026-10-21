@@ -1,3 +1,22 @@
+# Native fork typed sporting Save candidate — 21 October 2026
+
+The internal read-only Save preflight now returns a strict versioned candidate
+containing **complete** independently played match evidence, target/parent
+Saved identity and exact Working Draft identity/version. The candidate's
+canonical fingerprint is included in the Save review. A source-foreign,
+empty or stale candidate fails structural checks, while actual SQLite
+preflight still authenticates and replays original historical facts. New
+pure and integrated assertions cover deterministic roundtrip, rejection of
+foreign/stale inputs, non-mutation and invalidation by a later match.
+
+**Not implemented:** persistent Saved descendants, writer-side
+reauthentication, Manual Save/Restore, Tour/lifecycle/Health/Entry integration,
+public native Branch activation or Viewer selection. All old guards remain.
+The new code is not merge-ready until its focused and latest-head hosted
+tests pass, and the full native fork objective remains incomplete.
+
+---
+
 # Native fork read-only sporting Save preflight — 21 October 2026
 
 An internal `NativeForkSportingService.preview_save` now reviews the

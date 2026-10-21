@@ -21,6 +21,7 @@ import type {
   TournamentLabSession
 } from '../api/types'
 import { PageIntro, SectionCard, SummaryPills } from '../components/RunScopedUi'
+import { prettyLabJson } from '../components/LabJson'
 import { LabNavigation } from '../components/LabNavigation'
 import { newCommandId } from '../admin/branchSimulation'
 
@@ -299,6 +300,14 @@ export function TournamentTestLabPage(): JSX.Element {
     runDraftApplyMutation.reset()
   }
 
+  const formatScenario = () => {
+    try {
+      editScenario(prettyLabJson(scenarioText))
+    } catch (error) {
+      setLocalError(error instanceof Error ? error.message : String(error))
+    }
+  }
+
   const useBuiltIn = (scenario: TournamentLabScenario) => {
     setSelectedSessionId(null)
     setScenarioText(JSON.stringify(scenario, null, 2))
@@ -408,6 +417,10 @@ export function TournamentTestLabPage(): JSX.Element {
           </option>)}
         </select>
       </label>
+      {sessions.isLoading ? <p role="status">Loading saved Tournament Test Sessions…</p> : null}
+      {sessions.isError ? <p role="alert" className="error">Saved Tournament Test Sessions unavailable.</p> : null}
+      {sessions.isSuccess && sessions.data.length === 0
+        ? <p className="status">No saved Tournament Test Sessions yet. Scratch mode remains available.</p> : null}
       {selectedSession ? <SummaryPills items={[
         { label: 'Session', value: selectedSession.display_name },
         { label: 'Version', value: selectedSession.version },
@@ -538,6 +551,7 @@ export function TournamentTestLabPage(): JSX.Element {
             placeholder="100, 101, 102"
           />
         </label>
+        <button type="button" onClick={formatScenario} disabled={runMutation.isPending || saveMutation.isPending}>Format JSON</button>
         {selectedSession ? <button type="button" onClick={save} disabled={saveMutation.isPending || !scenarioText}>
           {saveMutation.isPending ? 'Saving…' : 'Save Test Session'}
         </button> : null}

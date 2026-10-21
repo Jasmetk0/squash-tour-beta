@@ -21,6 +21,7 @@ import type {
   TournamentLabSession
 } from '../api/types'
 import { PageIntro, SectionCard, SummaryPills } from '../components/RunScopedUi'
+import { LabNavigation } from '../components/LabNavigation'
 import { newCommandId } from '../admin/branchSimulation'
 
 function parseSeeds(value: string): number[] {
@@ -326,6 +327,7 @@ export function TournamentTestLabPage(): JSX.Element {
       subtitle="Global isolated tournament sandbox with persistent editable Test Sessions over shared Tournament Format, canonical Draw authority and production Match Engine kernels."
     />
 
+    <LabNavigation active="tournament" />
     <SectionCard title="Isolation boundary">
       <p>
         Tournament Lab Sessions exist outside Runs. Inspect/Run remain isolated; only the separate reviewed

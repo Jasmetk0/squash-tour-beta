@@ -1,4 +1,5 @@
 import {InitialPopulationComparisonPanel} from '../components/InitialPopulationComparisonPanel'
+import { LabNavigation } from '../components/LabNavigation'
 import { FormEvent, useEffect, useMemo, useRef, useState } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
 
@@ -123,6 +124,7 @@ export function PlayerTestLabPage(): JSX.Element {
       subtitle="Global isolated development sandbox using the same canonical weekly sporting kernels as Product Runs."
     />
 
+    <LabNavigation active="player" />
     <InitialPopulationComparisonPanel />
 
     <SectionCard title="Safety boundary">

@@ -283,6 +283,20 @@ describe('TournamentTestLabPage', () => {
     expect(api.runTournamentTestLab).not.toHaveBeenCalled()
   })
 
+  it('manually refreshes Tournament Test Sessions without simulating or saving a session', async () => {
+    const user = userEvent.setup()
+    api.getTournamentLabSessions.mockResolvedValueOnce([]).mockResolvedValue([{
+      session_id: 'new-session', display_name: 'Fresh Tournament Session', version: 2
+    }])
+    renderWithRoute(<TournamentTestLabPage />, '/admin/labs/tournament')
+    expect(await screen.findByText('No saved Tournament Test Sessions yet. Scratch mode remains available.')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Refresh Test Sessions' }))
+    expect(await screen.findByRole('option', { name: 'Fresh Tournament Session · v2' })).toBeInTheDocument()
+    expect(api.getTournamentLabSessions).toHaveBeenCalledTimes(2)
+    expect(api.runTournamentTestLab).not.toHaveBeenCalled()
+    expect(api.createTournamentLabSession).not.toHaveBeenCalled()
+  })
+
   it('formats scratch Tournament JSON and distinguishes unavailable sessions from no sessions', async () => {
     const user = userEvent.setup()
     api.getTournamentLabSessions.mockRejectedValue(new Error('Backend unavailable'))

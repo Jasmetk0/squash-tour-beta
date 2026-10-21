@@ -131,6 +131,29 @@ describe('MatchTestLabPage', () => {
     expect(api.runMatchTestLab).not.toHaveBeenCalled()
   })
 
+  it('formats scratch JSON without running and reports a missing saved-session inventory honestly', async () => {
+    const user = userEvent.setup()
+    renderWithRoute(<MatchTestLabPage />, '/admin/labs/match')
+    expect(await screen.findByText('No saved Match Test Sessions yet. Scratch mode remains available.')).toBeInTheDocument()
+    const editor = screen.getByRole('textbox', { name: 'Match Lab scenario JSON' })
+    const compact = JSON.stringify(JSON.parse((editor as HTMLTextAreaElement).value))
+    fireEvent.change(editor, { target: { value: compact } })
+    await user.click(screen.getByRole('button', { name: 'Format JSON' }))
+    expect(editor).toHaveValue(JSON.stringify(JSON.parse(compact), null, 2))
+    expect(api.runMatchTestLab).not.toHaveBeenCalled()
+    fireEvent.change(editor, { target: { value: 'null' } })
+    await user.click(screen.getByRole('button', { name: 'Format JSON' }))
+    expect(screen.getByRole('alert')).toHaveTextContent('A Lab scenario must be a JSON object.')
+    expect(editor).toHaveValue('null')
+  })
+
+  it('reports an unavailable saved Match Test Session list rather than claiming no saved sessions', async () => {
+    api.getMatchLabSessions.mockRejectedValue(new Error('Backend unavailable'))
+    renderWithRoute(<MatchTestLabPage />, '/admin/labs/match')
+    expect(await screen.findByRole('alert')).toHaveTextContent('Saved Match Test Sessions unavailable.')
+    expect(screen.queryByText('No saved Match Test Sessions yet. Scratch mode remains available.')).not.toBeInTheDocument()
+  })
+
   it('rejects malformed local JSON before calling the API', async () => {
     const user = userEvent.setup()
     renderWithRoute(<MatchTestLabPage />, '/admin/labs/match')

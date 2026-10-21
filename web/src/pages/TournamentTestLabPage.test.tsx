@@ -230,6 +230,25 @@ describe('TournamentTestLabPage', () => {
     expect(screen.getByText('Scenario: edited-proposal')).toBeInTheDocument()
   })
 
+  it('rejects empty or unsafe match seed tokens before a Tournament Lab request', async () => {
+    const user = userEvent.setup()
+    renderWithRoute(<TournamentTestLabPage />, '/admin/labs/tournament')
+    await user.click(await screen.findByRole('button', { name: 'Load scratch copy' }))
+    fireEvent.change(screen.getByRole('textbox', { name: 'Tournament Lab batch match seeds' }), {
+      target: { value: '3, ' }
+    })
+    await user.click(screen.getByRole('button', { name: 'Run tournament scenario' }))
+    expect(screen.getByText('Batch match seeds must be comma-separated integers.')).toBeInTheDocument()
+    expect(api.runTournamentTestLab).not.toHaveBeenCalled()
+
+    fireEvent.change(screen.getByRole('textbox', { name: 'Tournament Lab batch match seeds' }), {
+      target: { value: '9007199254740992' }
+    })
+    await user.click(screen.getByRole('button', { name: 'Run tournament scenario' }))
+    expect(screen.getByText('Batch match seeds must be comma-separated integers.')).toBeInTheDocument()
+    expect(api.runTournamentTestLab).not.toHaveBeenCalled()
+  })
+
   it('shows structured incompatibility instead of fabricating a tournament result', async () => {
     const user = userEvent.setup()
     const blocked = {

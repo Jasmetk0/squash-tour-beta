@@ -99,9 +99,9 @@ const gate = (branchId: string) => ({
   current_position_fingerprint: 'a'.repeat(64),
   current_blocker_code: 'application_validation_policy_unresolved'
 })
-function render(branches: RunBranch[] = [baseBranch, alternative], activeRun = run) {
+function render(branches: RunBranch[] = [baseBranch, alternative], activeRun = run, locale: 'cs' | 'en' = 'en') {
   return renderWithRoute(
-    <RunBranchReadinessPanel run={activeRun} branches={branches} />,
+    <RunBranchReadinessPanel run={activeRun} branches={branches} locale={locale} />,
     '/admin/runs/run%2Fa/branches'
   )
 }
@@ -136,6 +136,27 @@ describe('RunBranchReadinessPanel', () => {
     expect(api.getAuthoritativeSimulationPosition).toHaveBeenCalledWith('run/a', 'fork #2')
     expect(api.getSavedRevision).toHaveBeenCalledWith('run/a', 'fork #2', 'save-two')
     expect(api.getPreAlphaFaxEntryValidationPolicyGate).not.toHaveBeenCalled()
+  })
+
+  it('shows Czech Branch metadata, warnings and action labels without changing scoped requests', async () => {
+    render([baseBranch], run, 'cs')
+    const card = await screen.findByLabelText('Stav branche original')
+    expect(screen.getByText('Stav starší simulace pro jednotlivé branche')).toBeInTheDocument()
+    await waitFor(() => expect(within(card).getByText('2001/2002')).toBeInTheDocument())
+    expect(within(card).getByText('Sezóna')).toBeInTheDocument()
+    expect(within(card).getByText('Týden')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Obnovit stav branchí' })).toBeInTheDocument()
+    expect(within(card).getByRole('link', { name: 'Otevřít kontrolu simulace a dostupných akcí' }))
+      .toHaveAttribute('href', '/admin/runs/run%2Fa/simulate?branch=original')
+    expect(api.getAuthoritativeSimulationPosition).toHaveBeenCalledWith('run/a', 'original')
+  })
+
+  it('explains missing saved HEAD in Czech without offering an executable link', async () => {
+    render([{ ...baseBranch, saved_head_revision_id: null }], run, 'cs')
+    const card = await screen.findByLabelText('Stav branche original')
+    expect(within(card).getByText(/Branch nemá uloženou hlavní revizi/)).toBeInTheDocument()
+    expect(within(card).getByText(/Bez uložené revize nelze zkontrolovat/)).toBeInTheDocument()
+    expect(within(card).queryByRole('link')).not.toBeInTheDocument()
   })
 
   it('never replaces a mismatched authoritative position with legacy season/week data', async () => {

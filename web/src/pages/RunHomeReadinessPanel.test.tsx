@@ -40,13 +40,17 @@ function mount(locale: 'cs' | 'en' = 'en', values = data) {
 }
 
 describe('saved Run readiness panel', () => {
-  it('displays actionable missing content, explicit sporting limitation and refresh', () => {
+  it('keeps the next action visible and collapses the detailed readiness checklist', () => {
     const refresh = mount()
     expect(screen.getByText('This Branch readiness')).toBeInTheDocument()
-    expect(screen.getByText('This Run calendar is not yet safely executable by the sporting engine.')).toBeInTheDocument()
+    expect(screen.getByText(/This calendar is not supported by the legacy FAX simulation path/)).toHaveClass('status')
     expect(screen.getByText('Unsaved changes are not counted in this overview.')).toBeInTheDocument()
     const links = screen.getAllByRole('link', { name: 'Add a Calendar Package →' })
     expect(links[0]).toHaveAttribute('href', '/admin/runs/run-a/manage')
+    const checklist = screen.getByText('Show saved-foundation checks (6)')
+    expect(checklist).toBeVisible()
+    expect(screen.queryByRole('link', { name: 'Inspect and Save changes →' })).not.toBeInTheDocument()
+    fireEvent.click(checklist)
     expect(screen.getByRole('link', { name: 'Inspect and Save changes →' }))
       .toHaveAttribute('href', '/admin/runs/run-a/branches')
     expect(screen.getByText('Saved transitions:', { exact: false })).not.toBeVisible()
@@ -64,6 +68,7 @@ describe('saved Run readiness panel', () => {
         season_start_year_week: 37, start_year: 2000, season_count: 50 }
     })
     expect(screen.getByText('Připravenost této Branch')).toBeInTheDocument()
+    expect(screen.getByText('Zobrazit kontrolu uložených podkladů (6)')).toBeVisible()
     expect(screen.getByText(/Před každou operací je stále nutná vlastní kontrola/)).toBeInTheDocument()
     expect(screen.getAllByRole('link', { name: 'Doplnit Calendar Package →' })[0])
       .toHaveAttribute('href', '/admin/runs/run-a/manage')

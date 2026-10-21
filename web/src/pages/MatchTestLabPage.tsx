@@ -12,6 +12,7 @@ import {
 } from '../api/client'
 import type { MatchLabRequest, MatchLabResult, MatchLabScenario, MatchLabSession } from '../api/types'
 import { PageIntro, SectionCard, SummaryPills } from '../components/RunScopedUi'
+import { LabNavigation } from '../components/LabNavigation'
 
 const traits = {
   potential_ceiling: 90, growth_curve: 'balanced', professionalism: 0.7, ambition: 0.7,
@@ -205,6 +206,7 @@ export function MatchTestLabPage(): JSX.Element {
   return <section className="panel">
     <PageIntro title="Match Test Lab" subtitle="Global isolated sandbox for built-in baselines, editable Test Sessions and portable replayable Match Engine scenarios." />
 
+    <LabNavigation active="match" />
     <SectionCard title="Safety boundary">
       <p>Built-in scenarios are read-only. <strong>New Test Session</strong> creates an independent editable copy outside every Run and Branch; copied provenance is data only, never a live link.</p>
       <SummaryPills items={[

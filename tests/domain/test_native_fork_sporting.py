@@ -1,5 +1,6 @@
 """Pure independent match reducers; SQLite tests prove actual source authority."""
 
+import json
 from types import SimpleNamespace
 
 import pytest
@@ -266,4 +267,4 @@ def test_fork_save_candidate_binds_exact_played_head_draft_and_roundtrips():
         {"checkpoint": cp.model_dump(mode="json")},
     ):
         with pytest.raises(ValueError, match="exact played target root and draft"):
-            NativeForkSportingSaveCandidate.model_validate(original | changed)
+            NativeForkSportingSaveCandidate.model_validate_json(json.dumps(original | changed))

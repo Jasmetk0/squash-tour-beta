@@ -13,6 +13,7 @@ from beta_engine.application.calendar_continuation_service import (
 )
 from beta_engine.domain.native_fork_sporting import (
     NativeForkSportingCheckpoint,
+    NativeForkSportingSaveCandidate,
     play_native_fork_match,
     verify_native_fork_sporting,
 )
@@ -206,9 +207,21 @@ class NativeForkSportingService:
                 "match_count": len(checkpoint.steps),
                 "last_match_fingerprint": checkpoint.steps[-1].match.fingerprint,
             }
+            candidate = NativeForkSportingSaveCandidate(
+                run_id=run_id,
+                branch_id=branch_id,
+                parent_saved_revision_id=state.saved_head_revision_id,
+                draft_id=draft.draft_id,
+                draft_version=draft.draft_version,
+                checkpoint=checkpoint,
+            )
+            # This binds all complete actual match evidence, not just a count.
+            # No writer accepts the candidate yet; never report it as saved.
+            review["candidate_fingerprint"] = candidate.fingerprint
             return {
                 "review": review,
                 "review_fingerprint": canonical_hash(review),
+                "candidate": candidate,
                 "saved": False,
             }
 

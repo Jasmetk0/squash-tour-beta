@@ -8,6 +8,12 @@ import type { PlayerLabResult, PlayerLabScenario } from '../api/types'
 import { PageIntro, SectionCard, SummaryPills } from '../components/RunScopedUi'
 
 function ResultPanels({ data }: { data: PlayerLabResult }): JSX.Element {
+  const [variantFilter, setVariantFilter] = useState('all')
+  const [weekLimit, setWeekLimit] = useState<'all' | '10' | '25'>('all')
+  const selectedVariant = data.variants.some(variant => variant.variant_id === variantFilter) ? variantFilter : 'all'
+  const visibleVariants = selectedVariant === 'all'
+    ? data.variants : data.variants.filter(variant => variant.variant_id === selectedVariant)
+
   return <>
     <SectionCard title="Compatibility & isolation">
       <SummaryPills items={[
@@ -22,7 +28,40 @@ function ResultPanels({ data }: { data: PlayerLabResult }): JSX.Element {
       <ul>{data.compatibility.warnings.map((warning) => <li key={warning}>{warning}</li>)}</ul>
     </SectionCard>
 
-    {data.variants.map((variant) => <SectionCard key={variant.variant_id} title={variant.display_name}>
+    <SectionCard title="Compare variant outcomes">
+      <p className="status">All saved Lab variants are included. Filters below change only the displayed timelines.</p>
+      {data.variants.length > 0 ? <table aria-label="Player Lab variant comparison">
+        <thead><tr><th>Variant</th><th>Snapshots</th><th>Final OVR</th><th>Final sharpness</th><th>Final fatigue</th><th>Final state</th></tr></thead>
+        <tbody>{data.variants.map(variant => {
+          const last = variant.snapshots[variant.snapshots.length - 1]
+          return <tr key={variant.variant_id}>
+            <td>{variant.display_name}</td><td>{variant.snapshots.length}</td>
+            <td>{last?.ovr ?? '—'}</td><td>{last?.match_sharpness ?? '—'}</td>
+            <td>{last?.long_term_fatigue ?? '—'}</td>
+            <td><code>{variant.final_state_fingerprint.slice(0, 12)}</code></td>
+          </tr>
+        })}</tbody>
+      </table> : <p className="status">No variant results were returned.</p>}
+    </SectionCard>
+
+    <SectionCard title="Timeline display options">
+      <label>Show variants
+        <select aria-label="Player Lab variant filter" value={selectedVariant} onChange={event => setVariantFilter(event.target.value)}>
+          <option value="all">All variants</option>
+          {data.variants.map(variant => <option key={variant.variant_id} value={variant.variant_id}>{variant.display_name}</option>)}
+        </select>
+      </label>
+      <label>Timeline weeks
+        <select aria-label="Player Lab timeline limit" value={weekLimit} onChange={event => setWeekLimit(event.target.value as typeof weekLimit)}>
+          <option value="all">All snapshots</option>
+          <option value="10">Last 10 snapshots</option>
+          <option value="25">Last 25 snapshots</option>
+        </select>
+      </label>
+      <p className="status">Showing {visibleVariants.length} of {data.variants.length} variants. Filters do not recalculate development.</p>
+    </SectionCard>
+
+    {visibleVariants.map((variant) => <SectionCard key={variant.variant_id} title={variant.display_name}>
       <SummaryPills items={[
         { label: 'Variant', value: variant.variant_id },
         { label: 'Final OVR', value: variant.snapshots[variant.snapshots.length - 1]?.ovr ?? '—' },
@@ -32,12 +71,15 @@ function ResultPanels({ data }: { data: PlayerLabResult }): JSX.Element {
         { label: 'Health numeric effect', value: variant.snapshots[variant.snapshots.length - 1]?.health_projection.numeric_effect_applied ? 'active' : 'not calibrated' },
         { label: 'Final state', value: variant.final_state_fingerprint.slice(0, 12) }
       ]} />
+      <p className="status">
+        Showing {weekLimit === 'all' ? variant.snapshots.length : Math.min(variant.snapshots.length, Number(weekLimit))} of {variant.snapshots.length} saved snapshots.
+      </p>
       <table aria-label={`Player Lab ${variant.variant_id} timeline`}>
         <thead><tr>
           <th>Week</th><th>Age</th><th>Matches</th><th>OVR</th><th>Potential</th>
           <th>Form</th><th>Sharpness</th><th>Fatigue</th><th>Health severity</th><th>Health domains</th><th>Changed attrs</th><th>Δ attributes</th>
         </tr></thead>
-        <tbody>{variant.snapshots.map((snapshot) => <tr key={snapshot.state_fingerprint}>
+        <tbody>{(weekLimit === 'all' ? variant.snapshots : variant.snapshots.slice(-Number(weekLimit))).map((snapshot) => <tr key={snapshot.state_fingerprint}>
           <td>S{snapshot.week.season_index + 1} W{snapshot.week.week}</td>
           <td>{snapshot.age}</td>
           <td>{snapshot.completed_competitive_matches}</td>

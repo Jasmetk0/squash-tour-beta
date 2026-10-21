@@ -334,6 +334,36 @@ describe('TournamentTestLabPage', () => {
   })
 
 
+  it('does not run a saved Tournament Session or preview a Run proposal with unsaved JSON', async () => {
+    const user = userEvent.setup()
+    const saved = {
+      schema_version: 'tournament_test_lab_session.v1',
+      session_id: 'guarded-session',
+      display_name: 'Saved baseline',
+      version: 1,
+      session_fingerprint: '1'.repeat(64),
+      scenario
+    }
+    api.getTournamentLabSessions.mockResolvedValue([saved])
+    renderWithRoute(<TournamentTestLabPage />, '/admin/labs/tournament')
+    await user.selectOptions(await screen.findByRole('combobox', { name: 'Open Tournament Test Session' }), saved.session_id)
+    expect(await screen.findByDisplayValue(saved.display_name)).toBeInTheDocument()
+    const run = screen.getByRole('button', { name: 'Run Test Session' })
+    expect(run).toBeEnabled()
+
+    fireEvent.change(screen.getByRole('textbox', { name: 'Tournament Lab scenario JSON' }), {
+      target: { value: JSON.stringify({ ...scenario, draw_seed: 987 }) }
+    })
+    expect(run).toBeDisabled()
+    expect(screen.getByText('Unsaved Tournament Test Session changes. Save before running or reviewing a Run proposal.')).toBeInTheDocument()
+    fireEvent.change(screen.getByRole('textbox', { name: 'Tournament Lab target Run ID' }), { target: { value: 'run-a' } })
+    fireEvent.change(screen.getByRole('textbox', { name: 'Tournament Lab target Branch ID' }), { target: { value: 'branch-a' } })
+    fireEvent.change(screen.getByRole('textbox', { name: 'Tournament Lab target event ID' }), { target: { value: 'event-a' } })
+    expect(screen.getByRole('button', { name: 'Preview Run draft' })).toBeDisabled()
+    expect(api.runTournamentLabSession).not.toHaveBeenCalled()
+    expect(api.runTournamentTestLab).not.toHaveBeenCalled()
+  })
+
   it('renders resolved group standings and hybrid knockout evidence', async () => {
     const user = userEvent.setup()
     const groupResult = {

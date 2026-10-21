@@ -150,6 +150,20 @@ describe('MatchTestLabPage', () => {
     expect(api.runMatchTestLab).not.toHaveBeenCalled()
   })
 
+  it('manually refreshes Match Test Session inventory without modifying or running any session', async () => {
+    const user = userEvent.setup()
+    api.getMatchLabSessions.mockResolvedValueOnce([]).mockResolvedValue([{
+      session_id: 'new-session', display_name: 'Fresh Match Session', version: 1
+    }])
+    renderWithRoute(<MatchTestLabPage />, '/admin/labs/match')
+    expect(await screen.findByText('No saved Match Test Sessions yet. Scratch mode remains available.')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Refresh Test Sessions' }))
+    expect(await screen.findByRole('option', { name: 'Fresh Match Session · v1' })).toBeInTheDocument()
+    expect(api.getMatchLabSessions).toHaveBeenCalledTimes(2)
+    expect(api.runMatchTestLab).not.toHaveBeenCalled()
+    expect(api.createMatchLabSession).not.toHaveBeenCalled()
+  })
+
   it('formats scratch JSON without running and reports a missing saved-session inventory honestly', async () => {
     const user = userEvent.setup()
     renderWithRoute(<MatchTestLabPage />, '/admin/labs/match')

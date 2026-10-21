@@ -15,6 +15,9 @@ from beta_engine.application.native_fork_baseline_installation import (
 from beta_engine.application.native_fork_baseline_preparation import (
     NativeForkBaselinePreparationService,
 )
+from beta_engine.application.native_fork_sporting_service import (
+    NativeForkSportingService,
+)
 from beta_engine.domain.calendar.run_calendar import RunCalendar
 from beta_engine.domain.native_fork_baseline import NativeForkBaseline
 from beta_engine.domain.run_revisions import canonical_json
@@ -34,6 +37,7 @@ from beta_engine.infrastructure.db.repositories import (
 from tests.api.test_calendar_tour_flow import setup
 from tests.api.test_player_generation_calendar_gate import _dump
 from tests.api.test_saved_revision_history_api import ApiServer, _request
+from tests.support.native_fork_sporting import exercise_native_fork_sporting
 
 pytestmark = pytest.mark.smoke
 
@@ -240,3 +244,52 @@ def test_native_root_installation_rollback_retry_restart_and_source_integrity(tm
             session.get(RunBranchModel, "branch").saved_head_revision_id = source_id
         assert repo.get_branch_saved_revision(revision_id="native-root") == root
         assert _dump(path) == installed
+        sporting = exercise_native_fork_sporting(repo, path, branch_id="native-target")
+
+    with ApiServer(database_url=url) as server:
+        repo = server.app.state.runtime.repository
+        service = NativeForkSportingService(repo)
+        view = service.inspect(run_id="run", branch_id="native-target")
+        assert view["checkpoint"] == sporting["checkpoint"]
+        assert view["draft_version"] == sporting["draft_version"]
+        before = _dump(path)
+        assert service.execute(**sporting["first_request"]) == sporting["first_receipt"]
+        assert _dump(path) == before
+        for change in (
+            {"explicit_confirmation": False},
+            {"expected_draft_version": view["draft_version"] - 1},
+        ):
+            with pytest.raises(ValueError):
+                service.discard(
+                    **(
+                        {
+                            "run_id": "run",
+                            "branch_id": "native-target",
+                            "expected_draft_version": view["draft_version"],
+                            "explicit_confirmation": True,
+                        }
+                        | change
+                    )
+                )
+            assert _dump(path) == before
+        service.discard(
+            run_id="run",
+            branch_id="native-target",
+            expected_draft_version=view["draft_version"],
+            explicit_confirmation=True,
+        )
+        discarded = service.inspect(run_id="run", branch_id="native-target")
+        assert discarded["saved"] and not discarded["checkpoint"].steps
+        assert discarded["checkpoint"].baseline == sporting["checkpoint"].baseline
+        assert discarded["draft_version"] == view["draft_version"] + 1
+        with pytest.raises(ValueError, match="stale"):
+            service.execute(**sporting["first_request"])
+        assert (
+            tuple(
+                line
+                for line in _dump(path)
+                if not line.startswith(sporting["draft_prefix"])
+            )
+            == sporting["other_rows"]
+        )
+        assert repo.get_branch_saved_revision(revision_id="native-root") == root

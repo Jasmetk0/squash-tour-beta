@@ -9,8 +9,10 @@ on:
       - 'src/beta_engine/infrastructure/db/saved_revision_branch_review.py'
       - 'src/beta_engine/domain/native_fork_source.py'
       - 'src/beta_engine/domain/native_fork_baseline.py'
+      - 'src/beta_engine/domain/native_fork_sporting.py'
       - 'src/beta_engine/application/native_fork_baseline_preparation.py'
       - 'src/beta_engine/application/native_fork_baseline_installation.py'
+      - 'src/beta_engine/application/native_fork_sporting_service.py'
       - 'src/beta_engine/infrastructure/db/native_fork_baseline.py'
       - 'src/beta_engine/infrastructure/db/native_fork_installation.py'
       - 'src/beta_engine/infrastructure/db/native_fork_saved_root.py'
@@ -28,10 +30,13 @@ on:
       - 'tests/api/test_native_saved_branch_review.py'
       - 'tests/domain/test_native_fork_source.py'
       - 'tests/domain/test_native_fork_baseline.py'
+      - 'tests/domain/test_native_fork_sporting.py'
       - 'tests/api/test_native_fork_baseline_preparation.py'
       - 'tests/api/test_native_fork_baseline_installation.py'
+      - 'tests/api/test_native_fork_sporting_birth.py'
       - 'tests/infrastructure/test_native_fork_saved_root.py'
       - 'tests/support/native_fork_baseline.py'
+      - 'tests/support/native_fork_sporting.py'
       - 'scripts/saved_revision_branch_review_browser.py'
   workflow_dispatch:
 
@@ -62,6 +67,7 @@ jobs:
               tests/api/test_native_saved_branch_review.py \
               tests/api/test_native_fork_baseline_preparation.py \
               tests/domain/test_native_fork_baseline.py \
+              tests/domain/test_native_fork_sporting.py \
               tests/infrastructure/test_native_fork_saved_root.py -vv --maxfail=1 --durations=5
 
   native-baseline-installation:
@@ -75,10 +81,27 @@ jobs:
         with:
           python-version: '3.11'
       - run: python -m pip install -e . pytest
-      - name: Real native source, rollback, concurrent retry, restart and tamper
+      - name: Real native source, atomic baseline and independent match draft recovery
         run: |
           GITHUB_EVENT_NAME=saved_branch_review_acceptance \
             python -m pytest tests/api/test_native_fork_baseline_installation.py \
+              -vv --maxfail=1 --durations=5
+
+  native-fork-born-draft:
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
+    name: Native fork / born-player draft and historical sources
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -e . pytest
+      - name: Born player, later source epoch, independent original advancement and restart
+        run: |
+          GITHUB_EVENT_NAME=saved_branch_review_acceptance \
+            python -m pytest tests/api/test_native_fork_sporting_birth.py \
               -vv --maxfail=1 --durations=5
 
   chromium:

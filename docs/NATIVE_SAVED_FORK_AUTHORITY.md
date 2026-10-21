@@ -1,7 +1,8 @@
 # Native Saved fork: historical source authority
 
-This implements source authority, target-baseline preparation and **internal atomic
-baseline persistence**, not independent target continuation. Native
+This implements source authority, target-baseline preparation, internal atomic
+baseline persistence and **independent same-week match drafts**. Full public
+native continuation is still incomplete. Native
 creation still returns its existing blockers. The original MatchEngine inputs,
 results, rally anchors, lifecycle admissions, Health and prospect epochs retain
 their original Branch identities. A new source reference never authorizes writes
@@ -97,7 +98,7 @@ The pure component parser alone does not grant database/source authority.
 
 The target is deliberately `preparing_native_fork` and read-only, with no live
 sporting/lifecycle/Health/Tour runtime rows. Existing active-Branch, read-only and
-unsupported-content guards prevent execution, Manual Save, restore and Viewer
+unsupported-content guards prevent public execution, Manual Save, restore and Viewer
 selection. Public native creation stays blocked; no endpoint exposes this staging
 installer. A stored root is **not** evidence of independent simulation readiness.
 
@@ -110,9 +111,58 @@ source cycles. The separate
 acceptance job runs in parallel with the longer birth/epoch scenario; neither is
 added to Draft Fast CI.
 
+## Independent sporting draft (internal only)
+
+`NativeForkSportingCheckpoint` version `native_fork_sporting.v1` records new,
+target-owned same-week exhibition matches over the exact authenticated baseline.
+Each event has its own target Saved-root reference, current-checkpoint hash,
+sequence, command/seed/audit reason, canonical 57-attribute projections, actual
+MatchEngine rally/timeline/stamina logs and existing provisional match effects.
+The next match consumes the previous match's Form/sharpness/fatigue. Attributes,
+potential, original lifecycle and Health facts remain exact; no implicit recovery,
+birth, development, Tour points, time advance or old-history remapping occurs.
+
+Biography comes from the real original Saved population or its historically
+effective Saved prospect source, including born players without legacy-only
+biography. Health comes from the actual original source week. Numeric Health
+limitations remain blocked for the affected match rather than invented or healed.
+
+The internal `NativeForkSportingService` accepts only the specific pending,
+read-only target in a writable custom Run. It does not grant writes on ordinary
+read-only/active Branches and has no public route. Preview is read-only; execution
+requires explicit confirmation and matching draft/command/candidate fingerprints.
+It stores one typed logical sporting bundle in the target Working Draft, with a
+new version, timestamp and dirty status. A clean target can start from the root;
+unrelated draft changes cannot be absorbed into this format.
+
+Every dirty inspection independently rebuilds each new match from actual source
+facts with the real MatchEngine. Parsing/rehashed projections, a valid-looking
+rally anchor or a model fingerprint alone cannot authenticate changed biography
+or sporting facts. Exact/concurrent retries return the original command receipt,
+including after later matches and restart; conflicting retries/stale confirmation
+are rejected. An explicitly confirmed discard clears only the unsaved bundle,
+advances the draft version and leaves Saved history/Viewer/original runtime intact.
+
+This is persisted **Working Draft** continuation, not a Manual Save or a public
+fork. Receipts explicitly report `saved: false`. Ordinary Saved history still
+shows the immutable fork root; the draft has a separate internal versioned reader.
+There is no Saved descendant, restore integration, Tour scheduling/awards or
+public activation yet. Unsupported generic Save/Viewer controls remain blocked.
+
+Real integration uses production HTTP/MatchEngine sources and the actual internal
+application/SQLite service. It verifies concurrent first execution, injected write
+failure, exact/conflicting retry, two sequential matches, complete source-row
+preservation, source corruption, fully rehashed false biography, restart and
+discard. A separate born-player fixture proves historical prospect epochs and
+independent actual original Week Transition/Save after the target's matches.
+It runs in its own parallel acceptance job, keeping the original long source
+acceptance unchanged. Pure W7/W52/W61/W80 contracts cover exact state/replay and
+stale/foreign/retired/unknown/unsupported-Health/duplicate input rejection.
+
 ## Required next boundary
 
-The pending target baseline must be activated atomically with its continuation authority
+The sporting draft needs explicit Saved descendants and restore/recovery, then
+the pending target baseline must be activated atomically with its continuation authority
 for sporting, lifecycle, Health, Entry and Tour. New execution adapters must
 reference this authenticated original root while giving every **new** command a
 target-owned predecessor. Do not insert the baseline into old same-owner history

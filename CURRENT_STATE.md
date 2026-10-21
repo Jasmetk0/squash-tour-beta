@@ -1,3 +1,36 @@
+# Native fork independent sporting draft — 21 October 2026
+
+The internal pending fork now executes genuine same-week MatchEngine exhibitions
+and persists its own versioned Working Draft. New matches consume exact current
+57-attribute records and prior Form/sharpness/fatigue, with original lifecycle,
+Health and historically effective Saved biography/prospect sources. Every dirty
+read replays the new events against actual sources. Original histories/runtime,
+Saved HEAD and Viewer remain unchanged; no neutral bootstrap, healing, ranking
+award or old-owner remapping is introduced.
+
+Preview/confirmation, stale checks, exact/concurrent/conflicting retries, write
+failure, restart and explicit discard have real application/SQLite coverage over
+production HTTP/MatchEngine sources. A born-player target remains at Week 3 while
+the original actually transitions/Saves Week 4; both survive restart independently.
+Fully rehashed false biography and changed original source rows fail closed.
+
+**Local evidence:** 138 focused regressions passed in 65.36s; expanded actual
+baseline/match-draft/restart/discard integration passed in 105.14s (109.18s total).
+The separate historical born-player/epoch/independent-original integration passed
+in 125.17s (129.17s total). Original source/birth/post-match/epoch assertions also
+passed in a combined local run with another historical draft check. New code and
+tests pass Ruff/compile checks. The born-draft acceptance runs as a separate job
+alongside the preserved original source gate; heavy Draft skips remain non-passes.
+See [contract and exact limits](docs/NATIVE_SAVED_FORK_AUTHORITY.md).
+
+**Remaining:** Manual Save/restore of the new sporting draft, joined versioned
+lifecycle/Health/Entry/Tour continuation and atomic public activation, followed by
+independent real two-Branch Tour play/Save/restart/restore and native Chromium
+creation. Public native create/Save/Viewer activation remain blocked; the internal
+match draft reports `saved: false`. This Draft PR is still incomplete.
+
+---
+
 # Native fork atomic baseline persistence — 21 October 2026
 
 The internal installer now persists an authenticated, target-owned Saved root,

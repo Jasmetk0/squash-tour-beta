@@ -5,6 +5,9 @@ import pytest
 from beta_engine.application.native_fork_baseline_preparation import (
     NativeForkBaselinePreparationService,
 )
+from beta_engine.application.native_fork_sporting_service import (
+    NativeForkSportingService,
+)
 from beta_engine.infrastructure.db.models import RunContainerModel
 from tests.api.test_player_generation_calendar_gate import _dump
 from tests.api.test_saved_revision_history_api import ApiServer, _create_run
@@ -49,3 +52,23 @@ def test_native_baseline_preparation_rejects_metadata_conflicts_without_writes(
             service.prepare(**valid)
         assert _dump(path) == before
         assert repo.get_run_branch(branch_id="unused-target") is None
+
+
+def test_native_fork_sporting_service_cannot_write_ordinary_or_foreign_branches(
+    tmp_path,
+):
+    path = tmp_path / "sporting-guards.db"
+    with ApiServer(database_url=f"sqlite:///{path}") as server:
+        run, branch, _ = _create_run(server, display_name="Ordinary branch")
+        other, foreign_branch, _ = _create_run(server, display_name="Foreign branch")
+        service = NativeForkSportingService(server.app.state.runtime.repository)
+        before = _dump(path)
+        for run_id, branch_id in (
+            (run, branch),
+            (run, foreign_branch),
+            (other, branch),
+            ("missing", branch),
+        ):
+            with pytest.raises(ValueError):
+                service.inspect(run_id=run_id, branch_id=branch_id)
+            assert _dump(path) == before

@@ -1,3 +1,19 @@
+# Native fork own played Working Draft — 21 October 2026
+
+The pending target now has a versioned same-week sporting checkpoint and its own
+persisted match draft. Actual MatchEngine execution/replay, all 57 current values,
+original Health/biography, confirmation/retry/concurrency, restart and discard are
+covered. A real born-player fork keeps its state while the original independently
+advances/Saves another week. Historical source epochs and existing bytes remain
+unchanged; rehashed false biography is rejected against actual source replay.
+
+Next is explicit Manual Save/restore for this draft, then joined native
+lifecycle/Health/Entry/Tour continuation and atomic public activation. The public
+native fork is still blocked; an internal unsaved draft is not release or merge
+readiness. [Boundary and evidence](docs/NATIVE_SAVED_FORK_AUTHORITY.md).
+
+---
+
 # Native fork pending root persisted — 21 October 2026
 
 The internal kernel now atomically installs the authenticated native baseline,

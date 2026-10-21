@@ -64,6 +64,10 @@ function CompatibilityPanel({ compatibility }: { compatibility: TournamentLabCom
 
 function TournamentResultPanels({ data }: { data: TournamentLabResult }): JSX.Element {
   const firstRun = data.runs[0]
+  const [statusFilter, setStatusFilter] = useState('all')
+  const statuses = useMemo(() => Array.from(new Set(firstRun?.match_results.map(row => row.status) ?? [])).sort(), [firstRun])
+  const activeFilter = statusFilter === 'all' || statuses.includes(statusFilter) ? statusFilter : 'all'
+  const displayedMatches = firstRun?.match_results.filter(row => activeFilter === 'all' || row.status === activeFilter) ?? []
   return <>
     <CompatibilityPanel compatibility={data.compatibility} />
     <SectionCard title="Replay identity">
@@ -152,9 +156,16 @@ function TournamentResultPanels({ data }: { data: TournamentLabResult }): JSX.El
         { label: 'Group stage', value: firstRun.group_stage ? 'yes' : 'no' },
         { label: 'BYE advances', value: firstRun.bye_advance_count }
       ]} />
+      <label>Filter first-run matches by status
+        <select aria-label="Tournament Lab match status filter" value={activeFilter} onChange={event => setStatusFilter(event.target.value)}>
+          <option value="all">All match statuses</option>
+          {statuses.map(status => <option key={status} value={status}>{status}</option>)}
+        </select>
+      </label>
+      <p className="status">Showing {displayedMatches.length} of {firstRun.match_results.length} first-run matches · Batch totals remain unchanged.</p>
       <table aria-label="Tournament Lab match results">
         <thead><tr><th>Round</th><th>Node</th><th>Players</th><th>Status</th><th>Winner</th><th>Score</th><th>Rallies</th></tr></thead>
-        <tbody>{firstRun.match_results.map((row) => <tr key={row.node_id}>
+        <tbody>{displayedMatches.map((row) => <tr key={row.node_id}>
           <td>{row.round_number}</td>
           <td>{row.node_id}</td>
           <td>{row.player_a_id ?? 'BYE'} vs {row.player_b_id ?? 'BYE'}</td>

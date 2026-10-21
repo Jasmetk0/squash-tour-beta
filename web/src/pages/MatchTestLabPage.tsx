@@ -136,12 +136,19 @@ export function MatchTestLabPage(): JSX.Element {
     }
   })
 
+  const editScenario = (value: string) => {
+    setScenarioText(value)
+    setLocalError(null)
+    runMutation.reset()
+  }
+
   const createMutation = useMutation({
     mutationFn: createMatchLabSession,
     onSuccess: async (created) => {
       await sessions.refetch()
       setSelectedSessionId(created.session_id)
       setScenarioText(JSON.stringify(created.scenario, null, 2))
+      runMutation.reset()
       setSessionName(created.display_name)
     }
   })
@@ -157,6 +164,7 @@ export function MatchTestLabPage(): JSX.Element {
       await sessions.refetch()
       setSelectedSessionId(updated.session_id)
       setScenarioText(JSON.stringify(updated.scenario, null, 2))
+      runMutation.reset()
     }
   })
 
@@ -176,6 +184,7 @@ export function MatchTestLabPage(): JSX.Element {
       await sessions.refetch()
       setSelectedSessionId(updated.session_id)
       setScenarioText(JSON.stringify(updated.scenario, null, 2))
+      runMutation.reset()
     }
   })
 
@@ -232,7 +241,10 @@ export function MatchTestLabPage(): JSX.Element {
 
     <SectionCard title="Test Sessions">
       <label>Open Test Session
-        <select aria-label="Open Match Test Session" value={selectedSessionId ?? ''} onChange={(e) => setSelectedSessionId(e.target.value || null)}>
+        <select aria-label="Open Match Test Session" value={selectedSessionId ?? ''} onChange={(e) => {
+          setSelectedSessionId(e.target.value || null)
+          runMutation.reset()
+        }}>
           <option value="">Portable scratch scenario</option>
           {sessions.data?.map((item) => <option key={item.session_id} value={item.session_id}>{item.display_name} · v{item.version}</option>)}
         </select>
@@ -293,10 +305,10 @@ export function MatchTestLabPage(): JSX.Element {
         {selectedSession ? <label>Session name
           <input aria-label="Match Lab session name" value={sessionName} onChange={(e) => setSessionName(e.target.value)} />
         </label> : null}
-        <textarea aria-label="Match Lab scenario JSON" value={scenarioText} onChange={(e) => setScenarioText(e.target.value)}
+        <textarea aria-label="Match Lab scenario JSON" value={scenarioText} onChange={(e) => editScenario(e.target.value)}
           rows={28} style={{ width: '100%', fontFamily: 'monospace' }} />
         <label>Batch seeds (optional, comma-separated; max 100)
-          <input aria-label="Match Lab batch seeds" value={batchText} onChange={(e) => setBatchText(e.target.value)} placeholder="100, 101, 102" />
+          <input aria-label="Match Lab batch seeds" value={batchText} onChange={(e) => { setBatchText(e.target.value); runMutation.reset() }} placeholder="100, 101, 102" />
         </label>
         {selectedSession ? <button type="button" onClick={save} disabled={saveMutation.isPending}>Save Test Session</button> : null}
         <button type="submit" disabled={runMutation.isPending || saveMutation.isPending || sessionHasUnsavedChanges}>{runMutation.isPending ? 'Running…' : selectedSession ? 'Run Test Session' : 'Run scenario'}</button>

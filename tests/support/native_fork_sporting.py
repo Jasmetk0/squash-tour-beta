@@ -138,7 +138,7 @@ def exercise_native_fork_sporting(repo, path, *, branch_id, player_pair=None):
         with pytest.raises(ValueError, match="stale"):
             service.preview_save(**(save_review_args | stale))
     assert _dump(path) == before_review
-    assert other_rows() == original_rows    assert not after_one["saved"]
+    assert other_rows() == original_rows
     assert other_rows() == original_rows
     assert (
         repo.get_branch_saved_revision_history(run_id="run", branch_id="branch")
@@ -180,7 +180,7 @@ def exercise_native_fork_sporting(repo, path, *, branch_id, player_pair=None):
     assert fresh_save_review["review_fingerprint"] != reviewed_save["review_fingerprint"]
     assert fresh_save_review["saved"] is False
 
-    # The first receipt remains exact even after a later command was applied.    # The first receipt remains exact even after a later command was applied.
+    # The first receipt remains exact even after a later command was applied.
     before = _dump(path)
     assert service.execute(**confirmed) == receipts[0]
     for change in (

@@ -146,6 +146,9 @@ class CalendarNativeCompetitionCheckpoint(FrozenInput):
 
 
 def competition_checkpoint(checkpoint):
+    from beta_engine.domain.native_fork_runtime import ForkCompetitionView
+    if isinstance(checkpoint, ForkCompetitionView):
+        return checkpoint
     if isinstance(checkpoint, CalendarNativeCompetitionCheckpoint):
         return checkpoint
     return CalendarNativeCompetitionCheckpoint(

@@ -8,6 +8,7 @@ concurrency:
 
 on:
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
     paths:
       - '.github/workflows/prealpha-selected-append-browser.yml'
       - 'scripts/admin_selected_append_browser.py'
@@ -20,6 +21,8 @@ permissions:
 
 jobs:
   selected-append:
+    # Draft work gets Fast CI; review/manual runs retain full acceptance.
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     name: Real Add Selected, SQLite Save, history and backend restart
     runs-on: ubuntu-latest
     timeout-minutes: 25

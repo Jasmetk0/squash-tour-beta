@@ -133,7 +133,7 @@ function checkConsumers(files) {
 function exactWorkflowPaths(workflow) {
   // All six supported workflows have exact, single-quoted path entries.
   // A new YAML shape/glob must first gain explicit support; uncertainty runs.
-  const block = workflow.match(/^  pull_request:\n    paths:\n((?:      - '[^'\n]+'\n)+)  workflow_dispatch:/m)
+  const block = workflow.match(/^  pull_request:\n(?:    types: \[opened, synchronize, reopened, ready_for_review\]\n)?    paths:\n((?:      - '[^'\n]+'\n)+)  workflow_dispatch:/m)
   if (!block) throw new Error('Unknown workflow path-filter structure')
   const paths = [...block[1].matchAll(/      - '([^'\n]+)'/g)].map(m => m[1])
   if (!paths.includes(CLIENT) || paths.some(p => /[*?!\[\]{}]/.test(p))) {

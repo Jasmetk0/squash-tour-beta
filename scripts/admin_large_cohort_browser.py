@@ -109,6 +109,7 @@ def acceptance(root: Path, *, port: int, base_url: str, chromium: str):
                 page.get_by_role("combobox", name="Language / Jazyk").select_option("en")
                 run_url = page.url
                 page.get_by_label("Source kind").select_option("world")
+                page.get_by_label("World source").focus()
                 page.get_by_label("World source").select_option("official_fax_world")
                 browser_click(page, "Preview copy")
                 page.get_by_label("Confirm source copy").check()
@@ -178,10 +179,12 @@ def acceptance(root: Path, *, port: int, base_url: str, chromium: str):
                 ) as save_response:
                     browser_click(page, "Save InitialWorld revision")
                 saved_initial = save_response.value.json()
-                assert saved_initial["saved_revision"]["revision_id"]
-                expect(page.get_by_text(
-                    "First-season InitialWorld is saved and recoverable.", exact=False
-                )).to_be_visible()
+                saved_revision_id = saved_initial["saved_revision"]["revision_id"]
+                assert saved_revision_id, "Manual Save returned no immutable Saved Revision"
+                assert saved_initial["working_draft"]["base_saved_revision_id"] == saved_revision_id
+                assert saved_initial["working_draft"]["status"] == "clean"
+                # The transient Save notice is reset when HEAD changes; check
+                # the durable receipt and the reloaded Run-owned population instead.
                 expect(page.get_by_text("InitialWorld exists: 1000 players", exact=False)).to_be_visible()
                 roster_country = max(countries, key=lambda c: (countries[c], c))
                 assert countries[roster_country] > 25, "Country paging needs >25 saved players"

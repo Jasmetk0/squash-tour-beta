@@ -3,6 +3,62 @@
 This file records the current engineering test policy for Squash Engine pre-alpha work.
 It is an implementation/development policy, not sporting product canon.
 
+## Native fork iteration and unrelated catalog work — 21 October 2026
+
+The real public native fork scenario runs in its own parallel Ready/manual job,
+including birth, actual MatchEngine, independent Saved histories, points,
+restore/restart, nested forks, Viewer and strict extension. Fast CI also includes
+the small v2 format guards. Neither replaces existing original-source and native
+Tour acceptance; skipped Draft gates remain non-passes.
+
+Run overview defers the large global World source catalog until the Admin uses
+that selector. The dedicated Package setup still loads it normally. Browser
+scenarios that actually copy a World source focus that selector before selection;
+Branch-only navigation no longer triggers unrelated Earth catalog computation.
+The registry also reuses its one freshly validated country config when computing
+that same response's semantic fingerprint. There is no cross-request country
+cache or change to fingerprint values. Browser shutdown explicitly drains its
+real API thread and reports a bounded teardown failure instead of leaving native
+work running during interpreter destruction.
+
+## Draft feedback and review acceptance — 21 October 2026
+
+During implementation, keep the PR in Draft. Fast CI and CodeQL still run on
+each applicable push. The dedicated pre-alpha API/browser and Earth acceptance
+jobs defer expensive execution while the PR is Draft; their skipped checks are
+**not integration evidence and do not permit merge**. Local focused tests remain
+required for changed behavior.
+
+Marking the PR Ready for review triggers `ready_for_review` on every relevant
+acceptance workflow. The existing path filters, scenarios, negative checks,
+timeouts and artifacts remain unchanged. Subsequent commits to a ready PR run
+those gates again. Manual `workflow_dispatch` always executes acceptance, even
+on a Draft branch. Before merge, inspect the latest SHA and require all relevant
+acceptance jobs to have actually executed successfully; Draft skips never satisfy
+that gate. Full release/checkpoint regression remains mandatory separately.
+
+Batch changes and local fixes before publishing a stable review candidate. Do
+not toggle Draft merely to hide a failure, bypass branch protection, or cancel
+a required final acceptance. Configuration-only or documentation-only follow-up
+commits still follow the latest-head rule; prepare their evidence before pushing.
+
+Explicit test-file commands in PR automation must bypass the changed-module
+collection filter for that process, using the existing acceptance event convention.
+Otherwise an unchanged requested file can be deselected and pytest exits with 5.
+
+### Separate shell contracts from population scale
+
+The Shell browser uses 64 real players for navigation, Health, original matches,
+points, horizon extension and Save/replay contracts. Its existing assertions and
+real production stack remain; only the fixture cardinality is parameterized. The
+separate large-cohort browser still verifies 1,000 actual players, Adopt/Save,
+ranking and restart, and the native W80 browser still uses 1,000 players. Neither
+large-population gate is removed or made optional for its relevant ready PRs.
+
+For an internal release/checkpoint, also run the complete Shell scenario with
+`--population-size 1000`. This is available directly alongside the 64-player
+iteration mode; it is not a claimed 1,000-player pass when only 64 executed.
+
 ## Native Tour long-running acceptance gate
 
 The production HTTP/SQLite configured-Tour scenario runs in the dedicated

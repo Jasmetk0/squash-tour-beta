@@ -8,6 +8,7 @@ concurrency:
 
 on:
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
     paths:
       - '.github/workflows/prealpha-large-initial-cohort-browser.yml'
       - 'scripts/admin_large_cohort_browser.py'
@@ -21,6 +22,8 @@ permissions:
 
 jobs:
   large-cohort:
+    # Draft work gets Fast CI; review/manual runs retain full acceptance.
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     name: Real 1000 players UI, SQLite Save and restart
     runs-on: ubuntu-latest
     timeout-minutes: 30

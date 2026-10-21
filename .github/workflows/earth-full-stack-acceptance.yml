@@ -6,6 +6,7 @@ name: Earth Full-Stack Acceptance
 on:
   workflow_dispatch:
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
     paths:
       - '.github/workflows/earth-full-stack-acceptance.yml'
 
@@ -14,6 +15,8 @@ permissions:
 
 jobs:
   earth-three-week:
+    # Draft work gets Fast CI; review/manual runs retain full acceptance.
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     name: ${{ matrix.world_id }} — 1000 players, 3 weeks, fork
     runs-on: ubuntu-latest
     timeout-minutes: 300

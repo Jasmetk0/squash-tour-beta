@@ -41,9 +41,10 @@ function seasonKey(value: string): boolean {
   return supportedCalendarSeason(value) !== null
 }
 
-export function RunPackageSetupPanel({ run, branch }: {
+export function RunPackageSetupPanel({ run, branch, loadSourceCatalog = true }: {
   run: RunContainer
   branch: RunBranch | null
+  loadSourceCatalog?: boolean
 }): JSX.Element {
   const queryClient = useQueryClient()
   const {search} = useLocation()
@@ -60,6 +61,7 @@ export function RunPackageSetupPanel({ run, branch }: {
     Boolean(branchId && branch?.status === 'active' && !branch.read_only && head)
   const [kind, setKind] = useState<RunSourcePackageKind>(requestedCalendarSeason?'calendar':'world')
   const [worldId, setWorldId] = useState('')
+  const [catalogRequested, setCatalogRequested] = useState(false)
   const [calendarSeason, setCalendarSeason] = useState(requestedCalendarSeason??'2000-2001')
   const [review, setReview] = useState<Review | null>(null)
   const [approved, setApproved] = useState(false)
@@ -82,6 +84,7 @@ export function RunPackageSetupPanel({ run, branch }: {
   const worldQuery = useQuery({
     queryKey: ['admin-world-packages'],
     queryFn: listWorldPackages,
+    enabled: loadSourceCatalog || catalogRequested,
     retry: false
   })
   const draftQuery = useQuery({
@@ -210,7 +213,9 @@ export function RunPackageSetupPanel({ run, branch }: {
       </select>
     </label>
     {kind === 'world' ? <label>World source{' '}
-      <select aria-label="World source" value={sourceId} onChange={event => setWorldId(event.target.value)}>
+      <select aria-label="World source" value={sourceId} onFocus={() => setCatalogRequested(true)}
+        onPointerDown={() => setCatalogRequested(true)} onChange={event => setWorldId(event.target.value)}>
+        {!worldQuery.data && <option value="">{worldQuery.isFetching ? 'Loading World sources…' : 'Choose a World source'}</option>}
         {candidates.map(pkg => <option value={pkg.world_id} key={pkg.world_id}>{pkg.name}</option>)}
       </select>
     </label> : <label>Calendar source season (YYYY-YYYY){' '}

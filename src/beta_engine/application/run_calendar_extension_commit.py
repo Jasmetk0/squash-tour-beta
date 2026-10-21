@@ -67,6 +67,12 @@ def _json_object(raw: str, label: str) -> dict:
 
 
 def _capture_live_content(session: Session, *, payload: dict, run_id: str, branch_id: str) -> dict:
+    if "native_fork_runtime" in payload.get("content", {}):
+        # The caller has authenticated this complete Saved aggregate and requires
+        # a clean draft. Its live authority IS this aggregate, not missing legacy
+        # per-component rows; its Signed prospect binding is independent of later
+        # edits to the original Branch's Run catalog.
+        return deepcopy(payload["content"])
     # Use exactly the established normal Save capture adapters; do not create
     # an independent incomplete list of component fingerprints.
     from beta_engine.infrastructure.db import repositories as storage
@@ -458,19 +464,20 @@ def save_run_calendar_extension(
                 "after_calendar": proposed,
                 "affected_branches": review["branch_count"],
             }
+            schema = old.payload_schema_version if old.payload_schema_version == "native_fork_saved_root.v2" else RUN_SAVED_REVISION_PAYLOAD_SCHEMA_VERSION
             sequence = old.sequence + 1
             revision_hash = saved_revision_content_hash(
                 revision_id=new_revision_id, run_id=run_id, branch_id=branch_id,
                 sequence=sequence, parent_revision_id=old.revision_id,
                 kind=EXTENSION_KIND,
-                payload_schema_version=RUN_SAVED_REVISION_PAYLOAD_SCHEMA_VERSION,
+                payload_schema_version=schema,
                 payload=payload, change_summary=summary,
             )
             session.add(BranchSavedRevisionModel(
                 revision_id=new_revision_id, run_id=run_id, branch_id=branch_id,
                 sequence=sequence, parent_revision_id=old.revision_id,
                 kind=EXTENSION_KIND,
-                payload_schema_version=RUN_SAVED_REVISION_PAYLOAD_SCHEMA_VERSION,
+                payload_schema_version=schema,
                 content_hash_algorithm=CONTENT_HASH_ALGORITHM,
                 content_hash=revision_hash,
                 payload_json=canonical_json(payload),

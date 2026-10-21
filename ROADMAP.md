@@ -1,3 +1,130 @@
+# Native Saved forks: public continuation implemented — 21 October 2026
+
+The public reviewed writer now installs an active independent v2 native Branch
+with authenticated original history, its own current lifecycle/Health/Tour and
+new Entry, MatchEngine, development/ranking and Week/Season commands. Manual
+Save/linear restore, restart, nested forks, Signed Viewer selection/publication
+and strict Run horizon envelopes use that versioned aggregate. Original sources
+and later original-Branch prospect epochs are never silently remapped/substituted.
+
+Duplicate proof work is removed within transactions. Completed immutable proofs
+can be reused only after freshly checking the full physical SQLite dependency
+graph; target self-hashes alone never authorize reuse. Run overview also defers
+unneeded large World catalogs, and each actual registry response loads its
+country config once without changing fingerprints.
+
+**Local candidate evidence:** complete public HTTP/SQLite birth, real matches,
+points, restore/restart, nested/concurrent forks, source corruption, Viewer and
+strict extension passed in 574.15s. Real Chromium CS/EN create/transition/Save/
+reload now exits cleanly. Focused checks: 101 passed in 42.68s; 77 Package/security
+checks passed in 2.66s; 35 Package-guard regressions passed in 10.83s; 70 frontend
+tests and production build passed. Actual-source and born-player regressions
+passed (2 tests in 496.02s); private baseline/install checks passed (15 tests in
+92.50s). Final command-namespace and no-stage Package guards also passed.
+Latest-head hosted acceptance still requires verification; no merge readiness
+is claimed here yet.
+Fast CI/CodeQL continue during Draft;
+relevant Ready/manual acceptance must execute on the exact final commit.
+See [current contract and explicit limits](docs/NATIVE_SAVED_FORK_AUTHORITY.md).
+This supersedes earlier public-blocking implementation notes below; the private
+pending v1 staging path itself stays read-only and covered.
+
+---
+
+# Native fork own played Working Draft — 21 October 2026
+
+The pending target now has a versioned same-week sporting checkpoint and its own
+persisted match draft. Actual MatchEngine execution/replay, all 57 current values,
+original Health/biography, confirmation/retry/concurrency, restart and discard are
+covered. A real born-player fork keeps its state while the original independently
+advances/Saves another week. Historical source epochs and existing bytes remain
+unchanged; rehashed false biography is rejected against actual source replay.
+
+Next is explicit Manual Save/restore for this draft, then joined native
+lifecycle/Health/Entry/Tour continuation and atomic public activation. The public
+native fork is still blocked; an internal unsaved draft is not release or merge
+readiness. [Boundary and evidence](docs/NATIVE_SAVED_FORK_AUTHORITY.md).
+
+---
+
+# Native fork pending root persisted — 21 October 2026
+
+The internal kernel now atomically installs the authenticated native baseline,
+target Saved root, clean draft and audit/receipt. Normal Saved detail/history
+reads validate actual original sources on warm/cold reads; rollback, concurrent
+first attempts, retry, restart, source tamper and downgrade protection have real
+SQLite coverage. Source history and Viewer remain unchanged.
+
+Targets stay pending/read-only, with no public staging endpoint or continuation
+runtime. Next is versioned independent continuation plus atomic activation,
+then actual separate play/Save/restart/restore and native Chromium creation.
+Public native creation remains blocked. [Contract](docs/NATIVE_SAVED_FORK_AUTHORITY.md).
+
+---
+
+# Native target baseline preparation — 21 October 2026
+
+Typed target current facts now have a deterministic preparation/reverification
+service over real authenticated Saved sources. It preserves original historical
+owners, complete 57-attribute/current/Health values and actual Health source dates.
+It neither reserves a Branch identifier nor installs runtime state.
+
+Next is atomic installation plus dedicated versioned continuation adapters and
+actual independent Branch play/Save/restart/restore. Native creation remains
+blocked until that integration passes. [Contract](docs/NATIVE_SAVED_FORK_AUTHORITY.md).
+
+---
+
+# Native historical source binding — 21 October 2026
+
+Source-side authority for the native fork is implemented: exact original Saved
+owner/revision/component bindings, actual pre-play population/Health, original
+Tour/Entry/draw command sources and historical-prefix verification. Persisted
+references must be reauthenticated against real reachable records; hashing a new
+reference is insufficient. [Boundary](docs/NATIVE_SAVED_FORK_AUTHORITY.md).
+
+Next is the target-owned native baseline and independent continuation writer;
+native creation is still blocked until its full real acceptance passes. This is
+not pre-alpha or Full Simulation readiness.
+
+---
+
+# Draft feedback / review acceptance — 21 October 2026
+
+PR #1576 follow-up repairs explicit-test deselection and Shell dialog/header
+regressions. Dedicated expensive acceptance is deferred during Draft iteration,
+then executes on Ready for review, ready-PR pushes or manual dispatch. Fast CI
+and CodeQL continue during development; skipped Draft jobs never certify merge.
+
+The source-bound native historical fork and independent actual continuation
+remain the original incomplete integration objective below. No native guard was
+removed and no Full Simulation or pre-alpha release is claimed.
+
+---
+
+# Native Saved Revision branching — incomplete candidate, 20 October 2026
+
+Verified `buuk`: `428ef8b75de4dd7dc980f307c6a2ffd31d4e4ec0` (#1575 owner merge).
+Real match-bearing native fork still returns HTTP 409. Its three native Saved
+components lack authenticated fork handling; post-admission lifecycle and Health
+have additional intentional source-authority guards.
+
+The current single-PR candidate improves the **existing** Branch creation path:
+server review and historical summary, CS/EN blockers, explicit server-bound
+confirmation, atomic durable exact retries and transition into a supported
+created Branch. Native guards and all Signed source bytes remain intact.
+[Contract and verification boundary](docs/SAVED_REVISION_BRANCH_REVIEW.md).
+
+The next implementation is still the original integration goal: a source-bound
+native historical root with unchanged rally logs, full target current-state
+ownership, epoch-correct replay, independent real continuation/Manual Save,
+rollback and restart/restore of both Branches, followed by the actual native
+Admin browser flow. Before/after-admission refusal tests do not satisfy that
+acceptance. Do not unlock Full Simulation or imply a pre-alpha release.
+Earlier checkpoint history follows unchanged.
+
+---
+
 # Canonical Admin entry-point recovery — 20 October 2026
 
 **Verified integrated base:** `buuk` `5615a293df881d4bbde8819234269b174f21713e`
@@ -471,3 +598,10 @@ restart/restore and W52/W80 replay. This establishes genuine sporting facts
 for future integration, not a read-only candidate. Next integrate configured
 Edition/approved Entry and authoritative Official publication into native
 Week Transition. No automatic promotion of prepared scores.
+
+
+Shell performance follow-up: its real population fixture now defaults to 64,
+with all existing scenario assertions parameterized. The separate 1,000-player
+cohort and native W80/1,000-player gates remain unchanged. Internal checkpoint
+Shell scale is explicitly available via `--population-size 1000`; a 64-player
+Shell pass is not represented as a large-population pass.

@@ -269,6 +269,9 @@ class CalendarContinuationService:
                 'checkpoint_fingerprint': checkpoint.fingerprint}
 
     def replay(self, *, run_id, branch_id, match_id):
+        from beta_engine.application.native_fork_runtime_service import is_native_fork, NativeForkRuntimeService
+        if is_native_fork(self.repository, run_id, branch_id):
+            return NativeForkRuntimeService(self.repository).replay(run_id=run_id, branch_id=branch_id, match_id=match_id)
         with self.repository._session_factory() as session:
             session.execute(text('BEGIN'))
             # Historical replay consumes frozen authority, never current medical

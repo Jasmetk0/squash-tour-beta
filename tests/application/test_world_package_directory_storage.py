@@ -706,3 +706,25 @@ def test_legacy_missing_timezone_layer_is_visible_consistent_info(tmp_path: Path
     assert result is not None and result.status == "valid"
     check = next(item for item in result.checks if item.code == "timezone_areas_unavailable")
     assert (check.severity, check.status) == ("info", "passed")
+
+
+@pytest.mark.pr_critical
+def test_registry_uses_one_current_country_read_without_changing_semantic_fingerprint(tmp_path, monkeypatch):
+    root = tmp_path / "packages"
+    shutil.copytree("config/world_packages/official_fax_world", root / "official_fax_world")
+    registry = WorldPackageRegistryService(world_packages_root=root)
+    expected = registry._fingerprint(root / "official_fax_world")
+    original = WorldPackageCountryStore.load_config
+    calls = []
+    def counted(store):
+        calls.append(store.package_root)
+        return original(store)
+    monkeypatch.setattr(WorldPackageCountryStore, "load_config", counted)
+    record = registry.get_official_package()
+    assert len(calls) == 1 and record.fingerprint == expected
+    attribute = root / "official_fax_world/countries/GER/attributes/squash_popularity.json"
+    value = json.loads(attribute.read_text())
+    value["value"] = 4 if value["value"] != 4 else 5
+    attribute.write_text(json.dumps(value))
+    assert registry.get_official_package().fingerprint != expected
+    assert len(calls) == 2

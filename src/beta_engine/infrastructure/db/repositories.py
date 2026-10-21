@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+from contextvars import ContextVar
 from dataclasses import dataclass, replace
 from threading import Lock
 from typing import Callable, Literal
@@ -11,6 +12,19 @@ from typing import Callable, Literal
 from sqlalchemy import Engine, Select, func, select, text, update
 from sqlalchemy.exc import IntegrityError, OperationalError
 from sqlalchemy.orm import Session, sessionmaker
+
+from beta_engine.infrastructure.db.native_fork_saved_root import (
+    PAYLOAD_SCHEMA as NATIVE_FORK_PAYLOAD_SCHEMA,
+    PENDING_STATUS as NATIVE_FORK_PENDING_STATUS,
+    load_native_fork_saved_root,
+    verify_native_fork_saved_root,
+)
+
+from beta_engine.infrastructure.db.saved_revision_branch_review import (
+    request_fingerprint as branch_creation_request_fingerprint,
+    review_in_session as review_branch_creation_in_session,
+    unsupported_fork_content,
+)
 
 from beta_engine.application.season_models import (
     RaceSnapshot,
@@ -104,6 +118,7 @@ from beta_engine.infrastructure.db.models import (
     RankingSnapshotModel,
     RunGeneratedPlayerProvenanceModel,
     RunContainerModel,
+    SavedRevisionBranchCommandModel,
     RunBranchModel,
     RunProspectModel,
     RunTalentCountryAllocationModel,
@@ -316,6 +331,10 @@ from beta_engine.infrastructure.db.checkpoint_boundaries import (
     BRANCH_CHECKPOINT_KIND_SEASON_ROLLOVER,
     BRANCH_CHECKPOINT_KIND_BOOTSTRAP_START,
     BRANCH_CHECKPOINT_KIND_WEEK_COMPLETED,
+)
+
+_active_saved_revision_proofs: ContextVar[frozenset[tuple[int, str]]] = ContextVar(
+    "active_saved_revision_proofs", default=frozenset()
 )
 
 SnapshotKind = Literal["tournament", "week"]
@@ -2494,7 +2513,12 @@ class SimulationPersistenceRepository:
                 official_branch_id=container.official_branch_id if container else None,
             )
 
-    def _validated_saved_revision_in_session(
+    def _validated_saved_revision_in_session(self, **kwargs):
+        from beta_engine.infrastructure.db.native_fork_runtime_state import native_read_proof_scope
+        with native_read_proof_scope():
+            return self._validated_saved_revision_core_in_session(**kwargs)
+
+    def _validated_saved_revision_core_in_session(
         self,
         *,
         session: Session,
@@ -2508,12 +2532,55 @@ class SimulationPersistenceRepository:
         work_lock = self._revision_validation_work_locks[
             hash(signature) % len(self._revision_validation_work_locks)
         ]
-        with work_lock:
-            return self._validate_saved_revision_once(
-                session=session, model=model, signature=signature,
-                materialize_payload=materialize_payload,
-                sporting_component_proofs=sporting_component_proofs,
+        key = (id(self), model.revision_id)
+        active = _active_saved_revision_proofs.get()
+        if key in active:
+            raise BranchRevisionStateConflictError(
+                "Saved Revision source authority contains a cycle"
             )
+        from beta_engine.infrastructure.db.native_fork_runtime_state import _proofs
+        memo = _proofs.get()
+        proof_key = (id(session), signature, materialize_payload)
+        if proof_key in memo:
+            return memo[proof_key]
+        token = _active_saved_revision_proofs.set(active | {key})
+        try:
+            if model.payload_schema_version == "native_fork_saved_root.v2":
+                from beta_engine.infrastructure.db.native_fork_runtime_state import actual_dependency_signature
+                dependency_signature = actual_dependency_signature(session, model)
+                with self._revision_validation_lock:
+                    complete = dependency_signature in getattr(self, "_native_dependency_proofs", {})
+                if complete:
+                    # The cache proves COMPLETE actual dependency bytes, owners,
+                    # topology and source reachability, not just this row's hash.
+                    # Reparse JSON for isolation; never share mutable payloads.
+                    revision = self._to_branch_saved_revision(model, validate_components=False, validate_native_root=False)
+                    if not materialize_payload:
+                        revision = replace(revision, payload={}, change_summary={})
+                    memo[proof_key] = revision
+                    return revision
+            with work_lock:
+                revision = self._validate_saved_revision_once(
+                    session=session, model=model, signature=signature,
+                    materialize_payload=materialize_payload,
+                    sporting_component_proofs=sporting_component_proofs,
+                )
+            # Source resolution can validate other revisions. Never hold a stripe
+            # lock here: unrelated source/target signatures may share that lock.
+            baseline = load_native_fork_saved_root(revision)
+            if baseline is not None:
+                verify_native_fork_saved_root(
+                    self, session, revision=revision, baseline=baseline
+                )
+                memo[(id(session), signature, True)] = revision
+                if not materialize_payload:
+                    revision = replace(revision, payload={}, change_summary={})
+            memo[proof_key] = revision
+            return revision
+        except (TypeError, ValueError) as exc:
+            raise BranchRevisionStateConflictError(str(exc)) from exc
+        finally:
+            _active_saved_revision_proofs.reset(token)
 
     def _validate_saved_revision_once(
         self, *, session, model, signature, materialize_payload,
@@ -2532,6 +2599,12 @@ class SimulationPersistenceRepository:
         if owner is None or owner.run_id != revision.run_id:
             raise BranchRevisionStateConflictError(
                 f"Saved Revision {revision.revision_id} has no coherent owning Branch"
+            )
+        if owner.status == NATIVE_FORK_PENDING_STATUS and (
+            revision.payload_schema_version != NATIVE_FORK_PAYLOAD_SCHEMA
+        ):
+            raise BranchRevisionStateConflictError(
+                "Pending native fork has no authenticated baseline root"
             )
         if verified is not None:
             return revision
@@ -2557,12 +2630,18 @@ class SimulationPersistenceRepository:
             raise BranchRevisionStateConflictError(
                 f"Saved Revision {revision.revision_id} failed content integrity validation"
             )
+        # This root depends on other physical rows. Its own bytes alone cannot
+        # certify source integrity; reauthenticate outside the work lock each time.
+        if load_native_fork_saved_root(revision) is not None:
+            return revision
         metadata = self._remember_validated_revision(signature, revision)
         return revision if materialize_payload else metadata
 
     def _remember_validated_revision(self, signature, revision):
         """Retain only proof metadata after all source and identity checks pass."""
         metadata = replace(revision, payload={}, change_summary={})
+        if load_native_fork_saved_root(revision) is not None:
+            return metadata
         with self._revision_validation_lock:
             self._revision_validation_cache[signature] = metadata
             if len(self._revision_validation_cache) > 128:
@@ -2571,7 +2650,12 @@ class SimulationPersistenceRepository:
                 )
         return metadata
 
-    def _validated_branch_revision_lineage_in_session(
+    def _validated_branch_revision_lineage_in_session(self, **kwargs):
+        from beta_engine.infrastructure.db.native_fork_runtime_state import native_read_proof_scope
+        with native_read_proof_scope():
+            return self._validated_branch_revision_lineage_core_in_session(**kwargs)
+
+    def _validated_branch_revision_lineage_core_in_session(
         self,
         *,
         session: Session,
@@ -2765,6 +2849,7 @@ class SimulationPersistenceRepository:
                 raise SavedRevisionBranchForkConflictError("Run not found")
             return self._requires_calendar_extension_rebase(run, source.payload) or bool(
                 {
+                    "native_fork_runtime",
                     RANKING_COMPONENT_KEY,
                     INITIAL_WORLD_COMPONENT_KEY,
                     RUN_PACKAGE_COMPONENT_KEY,
@@ -2773,6 +2858,48 @@ class SimulationPersistenceRepository:
                 }
                 & set(content)
             )
+
+    def _reviewed_branch_creation_result_in_session(
+        self, session, *, run_id, source_branch_id, source_revision_id,
+        display_name, review,
+    ):
+        fingerprint = branch_creation_request_fingerprint(
+            run_id=run_id, source_branch_id=source_branch_id,
+            source_revision_id=source_revision_id, display_name=display_name,
+            review=review,
+        )
+        receipt = session.get(SavedRevisionBranchCommandModel, (run_id, review["command_id"]))
+        if receipt is None:
+            return None
+        if receipt.request_fingerprint != fingerprint:
+            raise SavedRevisionBranchForkConflictError(
+                "Branch creation command id was already used with different inputs"
+            )
+        try:
+            result = RunBranchRecord(**_from_json(receipt.result_json))
+        except (ValueError, TypeError) as exc:
+            raise SavedRevisionBranchForkConflictError("Branch creation receipt is corrupt") from exc
+        owner = session.get(RunBranchModel, receipt.branch_id)
+        if (
+            result.run_id != run_id or result.branch_id != receipt.branch_id
+            or result.forked_from_branch_id != source_branch_id
+            or result.forked_from_saved_revision_id != source_revision_id
+            or owner is None or owner.run_id != run_id
+            or owner.forked_from_branch_id != source_branch_id
+            or owner.forked_from_saved_revision_id != source_revision_id
+        ):
+            raise SavedRevisionBranchForkConflictError("Branch creation receipt has a foreign or missing owner")
+        root = session.get(BranchSavedRevisionModel, result.saved_head_revision_id)
+        if root is None or root.run_id != run_id:
+            raise SavedRevisionBranchForkConflictError("Branch creation receipt has no actual Saved root")
+        if root.payload_schema_version == "native_fork_saved_root.v2":
+            self._validated_saved_revision_in_session(session=session, model=root)
+        return result
+
+    def get_reviewed_branch_creation_result(self, **kwargs):
+        with self._session_factory() as session:
+            session.execute(text("BEGIN"))
+            return self._reviewed_branch_creation_result_in_session(session, **kwargs)
 
     def create_branch_from_saved_revision_atomically(
         self,
@@ -2784,6 +2911,7 @@ class SimulationPersistenceRepository:
         working_draft_id: str,
         requested_display_name: str | None,
         materialized_fork_revision_id: str | None = None,
+        review: dict | None = None,
     ) -> RunBranchRecord:
         """Create one timeline from an immutable Saved Revision.
 
@@ -2801,6 +2929,32 @@ class SimulationPersistenceRepository:
         created_display_name: str | None = None
         try:
             with self._session_factory.begin() as session:
+                # Serialize the inventory review with identity/name reservation.
+                session.execute(text("BEGIN IMMEDIATE"))
+                if review is not None:
+                    if review.get("explicit_confirmation") is not True:
+                        raise SavedRevisionBranchForkConflictError("Explicit confirmation is required")
+                    previous = self._reviewed_branch_creation_result_in_session(
+                        session, run_id=run_id, source_branch_id=source_branch_id,
+                        source_revision_id=source_revision_id,
+                        display_name=requested_display_name, review=review,
+                    )
+                    if previous is not None:
+                        return previous
+                    current_review = review_branch_creation_in_session(
+                        self, session, run_id=run_id, source_branch_id=source_branch_id,
+                        source_revision_id=source_revision_id,
+                        display_name=requested_display_name,
+                    )
+                    if current_review["preview_fingerprint"] != review.get("expected_preview_fingerprint"):
+                        raise SavedRevisionBranchForkConflictError(
+                            "Branch creation review is stale; inspect the current source and Branch inventory"
+                        )
+                    if not current_review["can_create"]:
+                        raise SavedRevisionBranchForkConflictError(
+                            "Branch creation is blocked: " + "; ".join(
+                                b["message"] for b in current_review["blockers"])
+                        )
                 run = session.get(RunContainerModel, run_id)
                 if run is None:
                     raise SavedRevisionBranchForkNotFoundError(
@@ -2852,6 +3006,30 @@ class SimulationPersistenceRepository:
                         "the source Saved Revision content is invalid"
                     )
 
+                if {"calendar_player_sporting_checkpoint", "native_fork_runtime"} & source_content.keys() and review is not None and current_review.get("native_source_binding") is not None:
+                    from beta_engine.domain.run_packages import canonical_hash
+                    from beta_engine.infrastructure.db.native_fork_baseline import prepare_native_fork_baseline_in_session
+                    from beta_engine.infrastructure.db.native_fork_installation import install_native_fork_baseline_in_session
+                    from beta_engine.application.native_fork_runtime_reducer import initial_runtime, source_inputs
+                    if materialized_fork_revision_id is None:
+                        raise SavedRevisionBranchForkConflictError("Native fork requires its own Saved root")
+                    baseline = prepare_native_fork_baseline_in_session(self, session,
+                        run_id=run_id, source_branch_id=source_branch_id,
+                        source_revision_id=source_revision_id, target_branch_id=branch_id)
+                    runtime = initial_runtime(baseline, materialized_fork_revision_id, source_inputs(source_revision, self, session))
+                    install_native_fork_baseline_in_session(self, session, baseline=baseline,
+                        revision_id=materialized_fork_revision_id, draft_id=working_draft_id,
+                        audit_event_id="native-fork-" + canonical_hash({"root": materialized_fork_revision_id}),
+                        display_name=current_review["target_display_name"],
+                        expected_source_head=current_review["source_head_revision_id"],
+                        expected_viewer_branch_id=current_review["viewer_branch_id"], runtime=runtime)
+                    result = self._to_run_branch(session.get(RunBranchModel, branch_id), official_branch_id=run.official_branch_id)
+                    session.add(SavedRevisionBranchCommandModel(run_id=run_id, command_id=review["command_id"], branch_id=branch_id,
+                        request_fingerprint=branch_creation_request_fingerprint(run_id=run_id, source_branch_id=source_branch_id,
+                            source_revision_id=source_revision_id, display_name=requested_display_name, review=review), result_json=_to_json(result.__dict__)))
+                    session.flush()
+                    return result
+
                 remapped_ranking = None
                 source_ranking = None
                 remapped_initial_world = None
@@ -2874,7 +3052,6 @@ class SimulationPersistenceRepository:
                         raise SavedRevisionBranchForkConflictError(
                             "Branch-owned world fork requires a materialized fork revision id"
                         )
-                    fork_safe_empty_components: set[str] = set()
                     empty_component_loaders = (
                         (
                             RUN_ENTRY_DECISION_SLOT_COMPONENT_KEY,
@@ -2900,32 +3077,12 @@ class SimulationPersistenceRepository:
                     for component_key, loader in empty_component_loaders:
                         if component_key not in source_content:
                             continue
-                        loaded = loader(
+                        loader(
                             source_revision.payload,
                             run_id=run_id,
                             branch_id=source_branch_id,
                         )
-                        if loaded == ():
-                            fork_safe_empty_components.add(component_key)
-
-                    unsupported_content = set(source_content) - {
-                        INITIAL_WORLD_COMPONENT_KEY,
-                        RANKING_COMPONENT_KEY,
-                        RUN_PROSPECT_SOURCE_COMPONENT_KEY,
-                        PLAYER_LIFECYCLE_COMPONENT_KEY,
-                        PLAYER_HEALTH_COMPONENT_KEY,
-                        PLAYER_SPORTING_COMPONENT_KEY,
-                        SIMULATION_SLOT_COMPONENT_KEY,
-                        RUN_ENTRY_DECISION_SLOT_COMPONENT_KEY,
-                        APPLICATION_VALIDATION_SLOT_COMPONENT_KEY,
-                        TOURNAMENT_APPLICATION_SUBMISSION_COMPONENT_KEY,
-                        DEFINITIVE_WILD_CARD_ASSIGNMENT_COMPONENT_KEY,
-                        PLAYER_TOUR_ENTRY_COMPONENT_KEY,
-                        RUN_PACKAGE_COMPONENT_KEY,
-                        RUN_TOURNAMENT_LAB_DRAFT_COMPONENT_KEY,
-                        SEASON_CLOSURE_COMPONENT_KEY,
-                        *fork_safe_empty_components,
-                    }
+                    unsupported_content = unsupported_fork_content(source_content)
                     if unsupported_content:
                         raise SavedRevisionBranchForkConflictError(
                             "ranking-bearing fork currently cannot remap additional "
@@ -3821,6 +3978,19 @@ class SimulationPersistenceRepository:
                         )
                     )
                     session.flush()
+                if review is not None:
+                    created_model = session.get(RunBranchModel, branch_id)
+                    result = self._to_run_branch(created_model, official_branch_id=run.official_branch_id)
+                    session.add(SavedRevisionBranchCommandModel(
+                        run_id=run_id, command_id=review["command_id"], branch_id=branch_id,
+                        request_fingerprint=branch_creation_request_fingerprint(
+                            run_id=run_id, source_branch_id=source_branch_id,
+                            source_revision_id=source_revision_id,
+                            display_name=requested_display_name, review=review,
+                        ),
+                        result_json=_to_json(result.__dict__),
+                    ))
+                    session.flush()
         except IntegrityError as exc:
             message = str(exc.orig).lower()
             if (
@@ -3835,6 +4005,8 @@ class SimulationPersistenceRepository:
                 "generated Branch or Working Draft identity collided with existing data"
             ) from exc
 
+        if review is not None:
+            return result
         created = self.get_run_branch(branch_id=branch_id)
         if created is None:  # pragma: no cover - protects against adapter corruption
             raise RuntimeError(f"created Branch {branch_id!r} could not be loaded")
@@ -3846,6 +4018,7 @@ class SimulationPersistenceRepository:
         *,
         validate_components: bool = True,
         sporting_component_proofs: dict | None = None,
+        validate_native_root: bool = True,
     ) -> BranchSavedRevisionRecord:
         try:
             payload = _from_json(model.payload_json)
@@ -3874,7 +4047,7 @@ class SimulationPersistenceRepository:
             raise BranchRevisionStateConflictError(
                 f"Saved Revision {model.revision_id} has invalid ranking content: {exc}"
             ) from exc
-        return BranchSavedRevisionRecord(
+        revision = BranchSavedRevisionRecord(
             revision_id=model.revision_id,
             run_id=model.run_id,
             branch_id=model.branch_id,
@@ -3888,6 +4061,12 @@ class SimulationPersistenceRepository:
             change_summary=change_summary,
             created_at=model.created_at,
         )
+        try:
+            if validate_native_root:
+                load_native_fork_saved_root(revision)
+        except (TypeError, ValueError) as exc:
+            raise BranchRevisionStateConflictError(str(exc)) from exc
+        return revision
 
     @staticmethod
     def _to_branch_working_draft(
@@ -3920,19 +4099,27 @@ class SimulationPersistenceRepository:
         self, *, revision_id: str
     ) -> BranchSavedRevisionRecord | None:
         with self._session_factory() as session:
+            session.execute(text("BEGIN"))
             model = session.get(BranchSavedRevisionModel, revision_id)
-            return self._to_branch_saved_revision(model) if model is not None else None
+            return (
+                self._validated_saved_revision_in_session(session=session, model=model)
+                if model is not None else None
+            )
 
     def list_branch_saved_revisions(
         self, *, branch_id: str
     ) -> list[BranchSavedRevisionRecord]:
         with self._session_factory() as session:
+            session.execute(text("BEGIN"))
             models = session.execute(
                 select(BranchSavedRevisionModel)
                 .where(BranchSavedRevisionModel.branch_id == branch_id)
                 .order_by(BranchSavedRevisionModel.sequence)
             ).scalars()
-            return [self._to_branch_saved_revision(model) for model in models]
+            return [
+                self._validated_saved_revision_in_session(session=session, model=model)
+                for model in models
+            ]
 
     def get_branch_saved_revision_history(
         self, *, run_id: str, branch_id: str
@@ -3940,6 +4127,7 @@ class SimulationPersistenceRepository:
         """Return the complete reachable lineage after validating every revision."""
 
         with self._session_factory() as session:
+            session.execute(text("BEGIN"))
             run = session.get(RunContainerModel, run_id)
             if run is None:
                 raise SavedRevisionHistoryNotFoundError(f"Run {run_id!r} was not found")
@@ -3994,6 +4182,7 @@ class SimulationPersistenceRepository:
         """Load the coherent Saved Revision/Working Draft boundary for a Branch."""
 
         with self._session_factory() as session:
+            session.execute(text("BEGIN"))
             branch = session.get(RunBranchModel, branch_id)
             if branch is None:
                 raise BranchRevisionStateNotFoundError(
@@ -4091,15 +4280,16 @@ class SimulationPersistenceRepository:
             if state.working_draft.status == CLEAN_WORKING_DRAFT_STATUS:
                 proposed_viewer_id = saved_viewer_id
             else:
-                if (
-                    state.working_draft.draft_schema_version
-                    != RUN_WORKING_DRAFT_SCHEMA_VERSION
-                ):
+                if state.working_draft.draft_schema_version == "native_fork_runtime_draft.v1":
+                    from beta_engine.application.native_fork_runtime_service import NativeForkRuntimeService
+                    NativeForkRuntimeService(self)._context(session, run_id, branch_id)
+                elif state.working_draft.draft_schema_version != RUN_WORKING_DRAFT_SCHEMA_VERSION:
                     raise ValueError("dirty Working Draft uses an unsupported schema")
                 component_change_kinds = {
                     "run_package_state",
                     "run_tournament_lab_drafts",
                     "player_health_state",
+                    "native_fork_runtime",
                 }
                 viewer_changes = [
                     change
@@ -4144,6 +4334,7 @@ class SimulationPersistenceRepository:
         self, *, run_id: str, branch_id: str
     ) -> ViewerBranchWorkingDraftRecord:
         with self._session_factory() as session:
+            session.execute(text("BEGIN"))
             return self._viewer_branch_working_draft_in_session(
                 session=session, run_id=run_id, branch_id=branch_id
             )
@@ -4184,6 +4375,8 @@ class SimulationPersistenceRepository:
                 )
 
             draft_model = session.get(BranchWorkingDraftModel, draft.draft_id)
+            if draft_model.status == "dirty" and draft_model.draft_schema_version == "native_fork_runtime_draft.v1":
+                raise WorkingDraftConflictError("Save or discard native Tour changes before changing Viewer Branch")
             existing_changes = _from_json(draft_model.changes_json)
             component_changes = [
                 change
@@ -4366,6 +4559,12 @@ class SimulationPersistenceRepository:
         review aid and stale-prevention contract, not permission to skip confirm-time
         validation.
         """
+        from beta_engine.application.native_fork_runtime_service import is_native_fork, NativeForkRuntimeService
+        if is_native_fork(self, run_id, branch_id):
+            try:
+                return NativeForkRuntimeService(self).preview_restore(run_id=run_id, branch_id=branch_id, target_saved_revision_id=target_saved_revision_id)
+            except ValueError as exc:
+                raise SavedRevisionRestoreConflictError(str(exc)) from exc
 
         with self._session_factory.begin() as session:
             session.execute(text("BEGIN"))
@@ -4591,6 +4790,12 @@ class SimulationPersistenceRepository:
         audit_event_id: str,
     ) -> BranchSavedRevisionRestoreResult:
         """Restore one reachable snapshot while preserving a linear full history."""
+        from beta_engine.application.native_fork_runtime_service import is_native_fork, NativeForkRuntimeService
+        if is_native_fork(self, run_id, branch_id):
+            try:
+                return NativeForkRuntimeService(self).restore(run_id=run_id, branch_id=branch_id, target_saved_revision_id=target_saved_revision_id, expected_head_saved_revision_id=expected_head_saved_revision_id, expected_draft_version=expected_draft_version, expected_current_viewer_branch_id=expected_current_viewer_branch_id, checkpoint_id=checkpoint_id, restore_saved_revision_id=restore_saved_revision_id, audit_event_id=audit_event_id)
+            except ValueError as exc:
+                raise SavedRevisionRestoreConflictError(str(exc)) from exc
 
         previous_head_revision_id = ""
         previous_viewer_branch_id = ""
@@ -5612,6 +5817,18 @@ class SimulationPersistenceRepository:
         expected_player_health_fingerprint: str | None = None,
     ) -> ViewerBranchSaveResult:
         """Commit one dirty draft as revision, audit, Viewer pointer, and clean draft."""
+        from beta_engine.application.native_fork_runtime_service import is_native_fork, NativeForkRuntimeService
+        if is_native_fork(self, run_id, branch_id):
+            unsupported = [value for value in (expected_ranking_fingerprint, expected_initial_world_fingerprint, expected_simulation_fingerprint, expected_calendar_match_fingerprint, expected_calendar_sporting_fingerprint, expected_run_prospect_source_fingerprint, expected_run_package_fingerprint, expected_run_tournament_lab_draft_fingerprint, expected_player_health_fingerprint) if value is not None]
+            if unsupported:
+                raise WorkingDraftConflictError("Use the complete native fork Tour Save")
+            try:
+                return NativeForkRuntimeService(self).save(run_id=run_id, branch_id=branch_id,
+                    expected_draft_version=expected_draft_version, expected_calendar_tour_fingerprint=expected_calendar_tour_fingerprint,
+                    revision_id=revision_id, audit_event_id=audit_event_id,
+                    expected_saved_head_revision_id=expected_saved_head_revision_id)
+            except ValueError as exc:
+                raise WorkingDraftConflictError(str(exc)) from exc
 
         component_only = any(
             fingerprint is not None

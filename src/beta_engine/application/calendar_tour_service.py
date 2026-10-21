@@ -291,6 +291,9 @@ class CalendarTourService:
         leaderboard_limit=20,
     ):
         """Read only the authenticated Saved Tour, not newer Working changes."""
+        from beta_engine.application.native_fork_runtime_service import is_native_fork, NativeForkRuntimeService
+        if is_native_fork(self.repository, run_id, branch_id):
+            return NativeForkRuntimeService(self.repository).report(run_id=run_id, branch_id=branch_id, kind="records", as_of_season_index=as_of_season_index, from_season_index=from_season_index, country_code=country_code, leaderboard_limit=leaderboard_limit)
         with self.repository._session_factory() as session:
             session.execute(text("BEGIN"))
             ctx, _working, signed = self._context(session, run_id, branch_id)
@@ -313,6 +316,9 @@ class CalendarTourService:
 
     def season_summary(self, *, run_id, branch_id, season_index, compare_to=None):
         """Read only an already authenticated Saved Tour, never the Working candidate."""
+        from beta_engine.application.native_fork_runtime_service import is_native_fork, NativeForkRuntimeService
+        if is_native_fork(self.repository, run_id, branch_id):
+            return NativeForkRuntimeService(self.repository).report(run_id=run_id, branch_id=branch_id, kind="summary", season_index=season_index, compare_to=compare_to)
         with self.repository._session_factory() as session:
             session.execute(text("BEGIN"))
             ctx, _working, signed = self._context(session, run_id, branch_id)
@@ -334,6 +340,9 @@ class CalendarTourService:
             }
 
     def inspect(self, *, run_id, branch_id):
+        from beta_engine.application.native_fork_runtime_service import is_native_fork, NativeForkRuntimeService
+        if is_native_fork(self.repository, run_id, branch_id):
+            return NativeForkRuntimeService(self.repository).inspect(run_id=run_id, branch_id=branch_id)
         with self.repository._session_factory() as session:
             session.execute(text("BEGIN"))
             ctx, state, signed = self._context(session, run_id, branch_id)
@@ -505,6 +514,9 @@ class CalendarTourService:
             }
 
     def player(self, *, run_id, branch_id, player_id):
+        from beta_engine.application.native_fork_runtime_service import is_native_fork, NativeForkRuntimeService
+        if is_native_fork(self.repository, run_id, branch_id):
+            return NativeForkRuntimeService(self.repository).player(run_id=run_id, branch_id=branch_id, player_id=player_id)
         with self.repository._session_factory() as session:
             session.execute(text("BEGIN"))
             ctx, state, _signed = self._context(session, run_id, branch_id)
@@ -716,11 +728,17 @@ class CalendarTourService:
         return preview, ctx, state, authority, successor
 
     def preview(self, *, run_id, branch_id, command):
+        from beta_engine.application.native_fork_runtime_service import is_native_fork, NativeForkRuntimeService
+        if is_native_fork(self.repository, run_id, branch_id):
+            return NativeForkRuntimeService(self.repository).preview(run_id=run_id, branch_id=branch_id, command=command)
         with self.repository._session_factory() as session:
             session.execute(text("BEGIN"))
             return self._prepare(session, run_id, branch_id, command)[0]
 
     def execute(self, *, run_id, branch_id, request):
+        from beta_engine.application.native_fork_runtime_service import is_native_fork, NativeForkRuntimeService
+        if is_native_fork(self.repository, run_id, branch_id):
+            return NativeForkRuntimeService(self.repository).execute(run_id=run_id, branch_id=branch_id, request=request)
         command = request.command
         with self.repository._session_factory.begin() as session:
             session.execute(text("BEGIN IMMEDIATE"))
@@ -1253,7 +1271,7 @@ class CalendarTourService:
             updates = {
                 "schema_version": (
                     "calendar_tour_authority.v4"
-                    if state.schema_version == "calendar_tour_authority.v4"
+                    if state.schema_version in {"calendar_tour_authority.v4", "native_fork_tour.v1"}
                     else "calendar_tour_authority.v3"
                     if impact.get("native_transition")
                     else "calendar_tour_authority.v2"
@@ -1326,7 +1344,7 @@ class CalendarTourService:
                         "Select distinct player IDs for the application batch"
                     )
                 native_competition = (
-                    state.schema_version == "calendar_tour_authority.v4"
+                    state.schema_version in {"calendar_tour_authority.v4", "native_fork_tour.v1"}
                 )
                 owned = {
                     p.player_id: p
@@ -1505,7 +1523,7 @@ class CalendarTourService:
                         persist=persist,
                         native_inputs=_native_inputs,
                     )
-                    if state.schema_version == "calendar_tour_authority.v4"
+                    if state.schema_version in {"calendar_tour_authority.v4", "native_fork_tour.v1"}
                     else CalendarFollowupKnockoutService(self.repository).simulate(
                         run_id=state.run_id,
                         branch_id=state.branch_id,

@@ -178,4 +178,17 @@ describe('canonical World / Calendar setup in Run Home', () => {
     expect(api.saveRunPackageWorkingDraft).not.toHaveBeenCalled()
   })
 
+  it('defers the full World catalog on Run overview until source selection is used', async () => {
+    renderWithRoute(<RunPackageSetupPanel run={run as RunContainer} branch={branch as RunBranch} loadSourceCatalog={false} />, "/admin/runs/test-product-run")
+    await waitFor(() => expect(api.getBranchWorkingDraft).toHaveBeenCalled())
+    expect(api.listWorldPackages).not.toHaveBeenCalled()
+    const select = screen.getByRole('combobox', { name: 'World source' })
+    await userEvent.click(select)
+    await waitFor(() => expect(api.listWorldPackages).toHaveBeenCalledTimes(1))
+    await userEvent.selectOptions(select, 'atp_earth')
+    expect(select).toHaveValue('atp_earth')
+    expect(api.confirmRunSourcePackage).not.toHaveBeenCalled()
+    expect(api.saveRunPackageWorkingDraft).not.toHaveBeenCalled()
+  })
+
 })

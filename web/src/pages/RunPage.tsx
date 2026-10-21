@@ -432,7 +432,7 @@ export function RunPage(): JSX.Element {
       <p className="status">{language === 'cs'
         ? 'Existující nástroje k přípravě hráčů, rankingu a prvního turnaje. Ruční Save a potvrzovací kroky se nemění.'
         : 'Existing player, ranking and first-tournament preparation. Manual Save and confirmations are unchanged.'}</p>
-      <RunPackageSetupPanel run={run!} branch={selectedBranch} />
+      <RunPackageSetupPanel run={run!} branch={selectedBranch} loadSourceCatalog={false} />
       {!sportingClockSupported && <p role="status">{language === 'cs'
         ? 'Můžeš plánovat, kopírovat balíčky a prohlédnout náhled hráčů podle kalendáře Runu, potvrdit je a ručně uložit. Zápasy, ranking a posouvání času pro tento kalendář zatím nejsou dostupné.'
         : 'Planning, package copies and calendar-aware player previews are available, with reviewed adoption and explicit Save. Matches, ranking and time progression are not yet available for this calendar.'}</p>}

@@ -2,6 +2,7 @@ name: Native Sporting Context Profile
 
 on:
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
     paths:
       - '.github/workflows/prealpha-native-sporting-profile.yml'
       - 'src/beta_engine/application/calendar_opening_knockout_service.py'
@@ -17,6 +18,8 @@ concurrency:
 
 jobs:
   matched-sporting-replay:
+    # Draft work gets Fast CI; review/manual runs retain full acceptance.
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     name: "Eight-match W${{ matrix.width }} / ${{ matrix.version }}"
     runs-on: ubuntu-latest
     timeout-minutes: 20

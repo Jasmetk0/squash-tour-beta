@@ -77,6 +77,17 @@ def verify_positive_world_country(
                     if item["source_entity_id"] == country_code), None)
     assert country and country["payload"]["code"] == country_code
 
+    # React Router applies setSearchParams asynchronously after select_option.
+    # Await the exact two URL parameters instead of racing navigation.
+    def expect_country_query(year: str) -> None:
+        page.wait_for_function(
+            """({year, country}) => {
+                const params = new URL(window.location.href).searchParams;
+                return params.get('year') === year && params.get('q') === country;
+            }""",
+            arg={"year": year, "country": country_code},
+        )
+
     # Read the World and country detail from the actual persisted World copy,
     # not a mocked source response or the global Package Library.
     page.goto(run_url + f"/world?year=2000&q={country_code}")
@@ -87,7 +98,7 @@ def verify_positive_world_country(
     expect(page.get_by_role("region", name="Run World country detail")).to_be_visible()
     assert country_code in page.url and "q=" + country_code in page.url
     page.get_by_role("combobox", name="World data year").select_option("2010")
-    assert "year=2010" in page.url and "q=" + country_code in page.url
+    expect_country_query("2010")
     navigation = page.get_by_role("navigation", name="Country detail sections")
     navigation.get_by_role("link", name="Population").click()
     expect(page.get_by_role("region", name="Country population history")).to_be_visible()
@@ -99,7 +110,7 @@ def verify_positive_world_country(
         rating_table.get_by_text("historical", exact=False).count() > 0
     ), "Country rating source provenance was not explained"
     page.get_by_role("link", name="Back to countries").click()
-    assert "q=" + country_code in page.url and "year=2010" in page.url
+    expect_country_query("2010")
     expect(page.get_by_role("table", name="Run World countries").locator("tbody tr")).to_have_count(1)
 
     roster_ids: list[str] = []

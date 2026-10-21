@@ -409,7 +409,7 @@ def restore_tour(
         put_tour(session, target)
 
 
-def verify_tour_origins(session, state):
+def verify_tour_origins(session, state, *, _reachable_revision_ids=None):
     """Each played event must reference a Signed revision already owning its draw."""
     if state is None:
         return
@@ -433,6 +433,11 @@ def verify_tour_origins(session, state):
         if row is None or row.run_id != state.run_id:
             raise ValueError("Tour source Saved lineage is missing or foreign")
         revision_id = row.parent_revision_id
+
+    if _reachable_revision_ids is not None:
+        # A historical fork may only inherit authorities already present at its
+        # selected Saved boundary, even when the original Branch has moved on.
+        reachable.intersection_update(_reachable_revision_ids)
 
     if state.schema_version == "calendar_tour_authority.v3":
         first_source = None
@@ -495,7 +500,10 @@ def verify_tour_origins(session, state):
                 first_source = source
 
     if state.schema_version == "calendar_tour_authority.v4":
-        verify_tour_origins(session, state.competition_root_tour)
+        verify_tour_origins(
+            session, state.competition_root_tour,
+            _reachable_revision_ids=_reachable_revision_ids,
+        )
         previous_source = None
         for index, receipt in enumerate(
             state.receipts[len(state.competition_root_tour.receipts) :]

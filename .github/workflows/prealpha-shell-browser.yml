@@ -10,6 +10,7 @@ concurrency:
 
 on:
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
     paths:
       - '.github/workflows/prealpha-shell-browser.yml'
       - 'web/acceptance/prealpha_shell_browser_smoke.py'
@@ -77,6 +78,8 @@ permissions:
 
 jobs:
   browser:
+    # Draft work gets Fast CI; review/manual runs retain full acceptance.
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
@@ -125,6 +128,7 @@ jobs:
       - name: Real Product Run browser acceptance
         run: |
           python web/acceptance/prealpha_shell_browser_smoke.py \
+            --population-size 64 \
             --base-url http://127.0.0.1:5173 \
             --artifacts "$RUNNER_TEMP/prealpha-shell-artifacts"
       - name: Preserve browser evidence

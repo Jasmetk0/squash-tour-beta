@@ -13,7 +13,7 @@ from playwright.sync_api import expect
 
 def exercise_calendar_knockout(page, *, base_url, api_url, artifacts,
                                run_id, original_branch_id,
-                               original_clock) -> dict:
+                               original_clock, population_size=1000) -> dict:
     def enc(value):
         return quote(value, safe="")
 
@@ -110,7 +110,7 @@ def exercise_calendar_knockout(page, *, base_url, api_url, artifacts,
     expect(population.get_by_role('heading', name='Population sporting checkpoint')).to_be_visible()
     population_view = api('GET', root)['population_sporting_checkpoint']
     assert population_view['player_count'] == len(initial['player_ids'])
-    assert population_view['player_count'] >= 1000 and population_view['attribute_count'] == 57
+    assert population_view['player_count'] == population_size and population_view['attribute_count'] == 57
     assert not population_view['saved']
     outsider_id = next(pid for pid in initial['player_ids'] if pid not in played['knockout']['entrant_ids'])
     population.get_by_role('combobox', name='Population player').select_option(outsider_id)
@@ -392,7 +392,7 @@ def exercise_calendar_knockout(page, *, base_url, api_url, artifacts,
         continuation.get_by_role('button', name='Review sporting week preparation', exact=True).click()
     assert response.value.status == 200, response.value.text()[:1200]
     weekly_preview = response.value.json()
-    assert weekly_preview['player_count'] == 1000
+    assert weekly_preview['player_count'] == population_size
     assert weekly_preview['advance']['scope'] == 'sporting_only_exhibition_timeline'
     assert weekly_preview['advance']['completed_week']['week'] == 1
     assert weekly_preview['advance']['target_week']['week'] == 2
@@ -419,7 +419,7 @@ def exercise_calendar_knockout(page, *, base_url, api_url, artifacts,
     weekly_owner = weekly_saved['payload']['content']['calendar_player_sporting_checkpoint']['state']
     assert weekly_owner['schema_version'] == 'calendar_sporting_checkpoint.v3'
     assert weekly_owner['week']['week'] == 2 and weekly_owner['annual_development_applied']
-    assert weekly_owner['players'] and len(weekly_owner['players']) == 1000
+    assert weekly_owner['players'] and len(weekly_owner['players']) == population_size
     page.reload()
     page.get_by_role('combobox', name='Admin active Branch').select_option(branch_id)
     continuation = page.locator('section[aria-label="Stateful calendar continuation"]')
@@ -462,7 +462,7 @@ def exercise_calendar_knockout(page, *, base_url, api_url, artifacts,
     assert api('GET', continuation_api)['sporting_week']['week'] == 2
     page.screenshot(path=str(artifacts / '20-native-sporting-week-two-saved-replayed.png'), full_page=True)
     return {
-        "sporting_week_preparation_1000_players_saved_reloaded": True,
+        "sporting_week_preparation_saved_reloaded": True,
         "week_two_actual_match_consumes_developed_recovered_checkpoint": True,
         "week_two_actual_match_saved_reloaded_exact_replay": True,
         "official_transition_and_health_healing_not_claimed": True,

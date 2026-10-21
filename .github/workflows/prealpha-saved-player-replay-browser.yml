@@ -8,6 +8,7 @@ concurrency:
 
 on:
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
     paths:
       - '.github/workflows/prealpha-saved-player-replay-browser.yml'
       - 'scripts/admin_first_tournament_smoke.py'
@@ -30,6 +31,8 @@ permissions:
 
 jobs:
   browser:
+    # Draft work gets Fast CI; review/manual runs retain full acceptance.
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     name: Real saved tournament replay after restart
     runs-on: ubuntu-latest
     timeout-minutes: 30

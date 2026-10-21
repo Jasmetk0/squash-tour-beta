@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom'
 import {
   compareSavedRevisions,
   createRunBranchFromSavedRevision,
+  previewRunBranchFromSavedRevision,
   getSavedRevision,
   getSavedRevisionRecoveryActivity,
   getSavedRevisionRestorePreflight,
@@ -25,6 +26,7 @@ import {useLanguage} from '../i18n/LanguageContext'
 import {historyText} from '../i18n/historyText'
 
 type ForkReview = {
+  commandId: string
   runId: string
   sourceBranchId: string
   sourceBranchName: string
@@ -34,6 +36,8 @@ type ForkReview = {
   targetDisplayName: string | null
   viewerBranchId: string | null
 }
+
+type ForkCreationRequest = ForkReview & { previewFingerprint: string }
 
 type RestoreReview = {
   expectedHeadSavedRevisionId: string
@@ -53,6 +57,14 @@ function revisionSummary(detail: SavedRevisionHistoryDetail): string {
   return typeof summary === 'string' && summary.trim() ? summary : detail.kind
 }
 
+function forkComponentLabel(key: string): string {
+  return ({
+    calendar_player_sporting_checkpoint: 'Native sporting history',
+    calendar_standalone_match: 'Original match inputs and logs',
+    calendar_tour_authority: 'Native Tour history, results and rankings'
+  } as Record<string, string>)[key] ?? 'Unsupported saved content'
+}
+
 export function SavedRevisionHistoryPanel({
   runId,
   run,
@@ -67,6 +79,7 @@ export function SavedRevisionHistoryPanel({
   const [newBranchName, setNewBranchName] = useState('')
   const [forkReview, setForkReview] = useState<ForkReview | null>(null)
   const [forkConfirmed, setForkConfirmed] = useState(false)
+  const [forkConfirmationFingerprint, setForkConfirmationFingerprint] = useState('')
   const [restoreReview, setRestoreReview] = useState<RestoreReview | null>(null)
   const [typedConfirmation, setTypedConfirmation] = useState('')
   const [restoreConfirmed, setRestoreConfirmed] = useState(false)
@@ -198,16 +211,24 @@ export function SavedRevisionHistoryPanel({
 
   const createBranchMutation = useMutation({
     // Submit the exact frozen source revision and name reviewed by the Admin.
-    mutationFn: (review: ForkReview) => createRunBranchFromSavedRevision(review.runId, {
+    mutationFn: (review: ForkCreationRequest) => createRunBranchFromSavedRevision(review.runId, {
       source_branch_id: review.sourceBranchId,
       source_saved_revision_id: review.sourceRevisionId,
+      review: {
+        command_id: review.commandId,
+        expected_preview_fingerprint: review.previewFingerprint,
+        explicit_confirmation: true
+      },
       ...(review.targetDisplayName ? { display_name: review.targetDisplayName } : {})
     }),
     onSuccess: async () => {
       setForkReview(null)
       setForkConfirmed(false)
       setNewBranchName('')
-      await queryClient.invalidateQueries({ queryKey: ['run-branches', runId] })
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['run-branches', runId] }),
+        queryClient.invalidateQueries({ queryKey: ['admin-run-branches', runId] })
+      ])
     },
     onError: async () => {
       setForkReview(null)
@@ -260,6 +281,26 @@ export function SavedRevisionHistoryPanel({
   })
 
   const viewerBranchId = run.viewer_branch_id ?? run.official_branch_id
+  const forkPreflightQuery = useQuery({
+    queryKey: ['saved-revision-branch-review', forkReview],
+    queryFn: () => previewRunBranchFromSavedRevision(forkReview!.runId, {
+      source_branch_id: forkReview!.sourceBranchId,
+      source_saved_revision_id: forkReview!.sourceRevisionId,
+      ...(forkReview!.targetDisplayName ? { display_name: forkReview!.targetDisplayName } : {})
+    }),
+    enabled: Boolean(forkReview),
+    retry: false
+  })
+  const forkPreflight = forkPreflightQuery.data
+  const forkPreflightIsCurrent = Boolean(forkPreflight && forkReview &&
+    !forkPreflightQuery.isError && !forkPreflightQuery.isFetching &&
+    forkPreflight.run_id === forkReview.runId &&
+    forkPreflight.source_branch_id === forkReview.sourceBranchId &&
+    forkPreflight.source_saved_revision_id === forkReview.sourceRevisionId &&
+    forkPreflight.source_content_hash === forkReview.sourceRevisionHash &&
+    forkPreflight.source_head_revision_id === forkReview.sourceHeadRevisionId &&
+    forkPreflight.viewer_branch_id === forkReview.viewerBranchId &&
+    (!forkReview.targetDisplayName || forkPreflight.target_display_name === forkReview.targetDisplayName))
   const forkReady = Boolean(
     detailIdentityIsValid &&
       selectedEntry &&
@@ -283,7 +324,9 @@ export function SavedRevisionHistoryPanel({
       forkReview.targetDisplayName === (newBranchName.trim() || null) &&
       forkReview.viewerBranchId === viewerBranchId
   )
-  const canConfirmFork = forkReviewStillCurrent && forkConfirmed && !createBranchMutation.isPending
+  const canConfirmFork = forkReviewStillCurrent && forkPreflightIsCurrent &&
+    forkPreflight?.can_create && forkConfirmed &&
+    forkConfirmationFingerprint === forkPreflight.preview_fingerprint && !createBranchMutation.isPending
 
   let restoreBlocker: string | null = null
   if (!detailIdentityIsValid) restoreBlocker = T('Open a valid Saved Revision preview first.')
@@ -339,6 +382,7 @@ export function SavedRevisionHistoryPanel({
   function openForkReview(): void {
     if (!forkReady || !branch || !history || !detail) return
     setForkReview({
+      commandId: crypto.randomUUID(),
       runId,
       sourceBranchId: branchId,
       sourceBranchName: branch.display_name,
@@ -400,6 +444,7 @@ export function SavedRevisionHistoryPanel({
         <label>
           {T("History Branch")}
           <select
+            data-run-navigation-readonly
             aria-label={T("Saved Revision history Branch")}
             value={branchId}
             onChange={(event) => selectBranch(event.target.value)}
@@ -588,6 +633,7 @@ export function SavedRevisionHistoryPanel({
 
                 <div className="saved-revision-actions">
                   <form
+                    data-run-navigation-readonly
                     onSubmit={(event) => {
                       event.preventDefault()
                       openForkReview()
@@ -715,7 +761,7 @@ export function SavedRevisionHistoryPanel({
 
       {forkReview && (
         <div className="restore-dialog-backdrop">
-          <section role="alertdialog" aria-modal="true" className="restore-dialog" aria-label={T("Review new Branch creation")}>
+          <section role="alertdialog" aria-modal="true" className="restore-dialog branch-creation-review" aria-label={T("Review new Branch creation")} data-run-navigation-readonly>
             <h4>{T("Review new Branch creation")}</h4>
             <p>{T("This creates a separate Branch from the saved history below. It does not rewind or modify the source Branch or switch the Viewer Branch.")}</p>
             <MetadataList items={[
@@ -727,6 +773,22 @@ export function SavedRevisionHistoryPanel({
               { label: T("New Branch name"), value: forkReview.targetDisplayName ?? T("First unused Timeline N") },
               { label: T("Viewer Branch stays"), value: forkReview.viewerBranchId ?? T("None") }
             ]} />
+            {forkPreflightQuery.isFetching && <p className="status">{T('Checking Branch creation...')}</p>}
+            {forkPreflightQuery.error && <p role="alert" className="error">{formatApiError(forkPreflightQuery.error)}</p>}
+            {forkPreflight && !forkPreflightIsCurrent && !forkPreflightQuery.isFetching && <p role="alert" className="error">{T('Branch creation review is inconsistent. Close and review again.')}</p>}
+            {forkPreflightIsCurrent && forkPreflight && <>
+              <MetadataList items={[
+                { label: T('Proposed Branch name'), value: forkPreflight.target_display_name },
+                { label: T('Saved players'), value: forkPreflight.saved_player_count },
+                { label: T('Saved matches'), value: forkPreflight.saved_match_count },
+                { label: T('Saved ranking snapshots'), value: forkPreflight.saved_ranking_count },
+                { label: T('Saved sporting week'), value: forkPreflight.saved_week ? `${forkPreflight.saved_week.season_index + 1} / ${forkPreflight.saved_week.week}` : T('None') }
+              ]} />
+              <p>{T('Creating a Branch does not start simulation. Further changes require a separate Manual Save.')}</p>
+              {forkPreflight.blockers.map(blocker => <p key={blocker.code} role="alert" className="error">
+                {T(blocker.message)}{blocker.components?.length ? `: ${blocker.components.map(key => T(forkComponentLabel(key))).join(', ')}` : ''}
+              </p>)}
+            </>}
             {!forkReviewStillCurrent && (
               <p className="error">{T("The Branch, revision, Viewer Branch or proposed name changed. Close this review and inspect the latest history.")}</p>
             )}
@@ -734,16 +796,21 @@ export function SavedRevisionHistoryPanel({
               <input
                 type="checkbox"
                 aria-label={T("Confirm new Branch creation")}
-                checked={forkConfirmed}
-                onChange={(event) => setForkConfirmed(event.target.checked)}
-                disabled={!forkReviewStillCurrent || createBranchMutation.isPending}
+                checked={forkConfirmed && forkConfirmationFingerprint === forkPreflight?.preview_fingerprint}
+                onChange={(event) => {
+                  setForkConfirmed(event.target.checked)
+                  setForkConfirmationFingerprint(forkPreflight?.preview_fingerprint ?? '')
+                }}
+                disabled={!forkReviewStillCurrent || !forkPreflightIsCurrent || !forkPreflight?.can_create || createBranchMutation.isPending}
               />
               {T('I reviewed the exact source revision and understand this creates an independent Branch without changing the Viewer Branch.')}
             </label>
             <div className="saved-revision-actions">
               <button type="button" disabled={createBranchMutation.isPending} onClick={closeForkReview}>{T("Cancel Branch creation")}</button>
               <button type="button" disabled={!canConfirmFork} onClick={() => {
-                if (forkReview && canConfirmFork) createBranchMutation.mutate(forkReview)
+                if (forkReview && forkPreflight && canConfirmFork) createBranchMutation.mutate({
+                  ...forkReview, previewFingerprint: forkPreflight.preview_fingerprint
+                })
               }}>
                 {createBranchMutation.isPending ? T("Creating Branch...") : T("Confirm new Branch creation")}
               </button>
@@ -753,12 +820,18 @@ export function SavedRevisionHistoryPanel({
       )}
 
       {createBranchMutation.error && (
-        <p className="error">{T("Branch creation result is uncertain; review the refreshed Branch list before retrying.")} {formatApiError(createBranchMutation.error)}</p>
+        <div>
+          <p className="error">{T("Branch creation result is uncertain; review the refreshed Branch list before retrying.")} {formatApiError(createBranchMutation.error)}</p>
+          <button type="button" disabled={createBranchMutation.isPending} onClick={() => {
+            if (createBranchMutation.variables) createBranchMutation.mutate(createBranchMutation.variables)
+          }}>{T('Check or retry the same Branch creation command')}</button>
+        </div>
       )}
       {createBranchMutation.data && (
         <p className="status" aria-label={T("Saved Revision Branch result")}>
           {T("Created Branch")} {createBranchMutation.data.display_name} ({createBranchMutation.data.branch_id})
           {T('from Saved Revision')} {createBranchMutation.variables?.sourceRevisionId ?? T('the reviewed revision')}. {T('The Viewer Branch was not changed.')}
+          {' '}<Link to={`/admin/runs/${encodeURIComponent(runId)}?branch=${encodeURIComponent(createBranchMutation.data.branch_id)}`}>{T('Open created Branch in Admin')}</Link>
         </p>
       )}
       {restoreNotice && <p className="error">{restoreNotice}</p>}

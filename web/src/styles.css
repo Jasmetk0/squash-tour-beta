@@ -218,6 +218,14 @@ button {
   z-index: 1000;
 }
 
+.branch-creation-review .kv-grid > div {
+  min-width: 0;
+}
+
+.branch-creation-review .kv-grid dd {
+  overflow-wrap: anywhere;
+}
+
 .restore-dialog h4 {
   margin-top: 0;
   color: #991b1b;

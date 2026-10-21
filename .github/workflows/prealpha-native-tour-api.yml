@@ -2,6 +2,7 @@ name: Pre-alpha Native Tour API Acceptance
 
 on:
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
     paths:
       - '.github/workflows/prealpha-native-tour-api.yml'
       - 'tests/api/test_calendar_tour_flow.py'
@@ -52,6 +53,8 @@ permissions:
 
 jobs:
   native-birth-week:
+    # Draft work gets Fast CI; review/manual runs retain full acceptance.
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     name: Native birth Week/Season / ${{ matrix.case }} / real SQLite
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -83,6 +86,8 @@ jobs:
           fi
 
   native-post-intake:
+    # Draft work gets Fast CI; review/manual runs retain full acceptance.
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     name: Native post-intake Tour / ${{ matrix.case }} / real HTTP SQLite
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -107,6 +112,8 @@ jobs:
             -k "$TOUR_CASE" -vv --maxfail=1 --durations=8
 
   native-source-epochs:
+    # Draft work gets Fast CI; review/manual runs retain full acceptance.
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     name: Native future source epochs / actual Tour and MatchEngine / SQLite
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -125,6 +132,8 @@ jobs:
             -vv --maxfail=1 --durations=10
 
   native-tour-api:
+    # Draft work gets Fast CI; review/manual runs retain full acceptance.
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     name: Native Tour signed restore / real HTTP / SQLite
     runs-on: ubuntu-latest
     timeout-minutes: 45

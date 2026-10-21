@@ -1030,8 +1030,21 @@ def main() -> None:
             evidence["browser_errors"] = errors
             print("PREALPHA_SHELL_BROWSER_PASSED", json.dumps(evidence), flush=True)
         except Exception:
-            page.screenshot(path=str(artifacts / "failure.png"), full_page=True)
-            (artifacts / "failure.txt").write_text(page.locator("body").inner_text())
+            # Best-effort diagnostics must never hide the original browser failure.
+            try:
+                page.screenshot(path=str(artifacts / "failure.png"), full_page=True, timeout=5000)
+            except Exception as artifact_error:
+                (artifacts / "failure-screenshot-error.txt").write_text(
+                    f"{type(artifact_error).__name__}: {artifact_error}"
+                )
+            try:
+                (artifacts / "failure.txt").write_text(
+                    page.locator("body").inner_text(timeout=5000)
+                )
+            except Exception as artifact_error:
+                (artifacts / "failure-body-error.txt").write_text(
+                    f"{type(artifact_error).__name__}: {artifact_error}"
+                )
             raise
         finally:
             (artifacts / "evidence.json").write_text(

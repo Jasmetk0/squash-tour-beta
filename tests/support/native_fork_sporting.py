@@ -15,6 +15,7 @@ from beta_engine.application.native_fork_sporting_service import (
 )
 from beta_engine.domain.native_fork_sporting import (
     NativeForkSportingCheckpoint,
+    NativeForkSportingSaveCandidate,
     play_native_fork_match,
 )
 from beta_engine.domain.run_revisions import canonical_json
@@ -130,6 +131,16 @@ def exercise_native_fork_sporting(repo, path, *, branch_id, player_pair=None):
     assert reviewed_save["review"]["saved_head_revision_id"] == initial.root_saved_revision_id
     assert reviewed_save["review"]["checkpoint_fingerprint"] == after_one["checkpoint"].fingerprint
     assert len(reviewed_save["review_fingerprint"]) == 64
+    candidate = reviewed_save["candidate"]
+    assert isinstance(candidate, NativeForkSportingSaveCandidate)
+    assert candidate.checkpoint == after_one["checkpoint"]
+    assert candidate.parent_saved_revision_id == initial.root_saved_revision_id
+    assert candidate.draft_version == after_one["draft_version"]
+    assert candidate.fingerprint == reviewed_save["review"]["candidate_fingerprint"]
+    assert (
+        NativeForkSportingSaveCandidate.model_validate_json(candidate.model_dump_json())
+        == candidate
+    )
     for stale in (
         {"expected_saved_head": "other-head"},
         {"expected_draft_version": after_one["draft_version"] - 1},
@@ -179,6 +190,10 @@ def exercise_native_fork_sporting(repo, path, *, branch_id, player_pair=None):
     assert fresh_save_review["review"]["match_count"] == 2
     assert fresh_save_review["review_fingerprint"] != reviewed_save["review_fingerprint"]
     assert fresh_save_review["saved"] is False
+    assert fresh_save_review["candidate"].checkpoint == reviewed_two["checkpoint"]
+    assert (
+        fresh_save_review["candidate"].fingerprint != candidate.fingerprint
+    )
 
     # The first receipt remains exact even after a later command was applied.
     before = _dump(path)

@@ -56,6 +56,8 @@ describe('saved Run readiness panel', () => {
     expect(screen.getByText('Saved transitions:', { exact: false })).not.toBeVisible()
     fireEvent.click(screen.getByText('Technical provenance and limits'))
     expect(screen.getByText('Saved transitions:', { exact: false })).toBeVisible()
+    expect(screen.getByText('Selected Branch:', { exact: false })).toHaveTextContent('branch-a')
+    expect(screen.getByText('Run calendar:', { exact: false })).toHaveTextContent('52 weeks per season · 3 seasons')
     fireEvent.click(screen.getByRole('button', { name: 'Refresh inspection' }))
     expect(refresh).toHaveBeenCalledTimes(1)
   })

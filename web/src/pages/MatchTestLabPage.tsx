@@ -42,8 +42,10 @@ const defaultScenario: MatchLabScenario = {
 function parseSeeds(value: string): number[] {
   const trimmed = value.trim()
   if (!trimmed) return []
-  const seeds = trimmed.split(',').map((part) => Number(part.trim()))
-  if (seeds.some((seed) => !Number.isInteger(seed))) throw new Error('Batch seeds must be comma-separated integers.')
+  const parts = trimmed.split(',').map((part) => part.trim())
+  const seeds = parts.map(Number)
+  if (parts.some((part) => !/^[+-]?\\d+$/.test(part))
+    || seeds.some((seed) => !Number.isSafeInteger(seed))) throw new Error('Batch seeds must be comma-separated integers.')
   if (new Set(seeds).size !== seeds.length) throw new Error('Batch seeds must be unique.')
   if (seeds.length > 100) throw new Error('At most 100 batch seeds are supported.')
   return seeds

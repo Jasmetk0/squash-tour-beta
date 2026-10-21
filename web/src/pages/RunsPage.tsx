@@ -15,6 +15,7 @@ const messages = {
     create: 'Vytvořit prázdný Run', search: 'Hledat Run', placeholder: 'Název nebo ID Runu',
     openRun: 'Otevřít Run', refreshRuns: 'Obnovit seznam Runů', refreshingRuns: 'Obnovuji seznam Runů…',
     visibility: 'Typ Runu', allRuns: 'Všechny Runy', editableOnly: 'Pouze upravitelné', protectedOnly: 'Pouze chráněné',
+    visibleCount: 'Zobrazeno', resetFilters: 'Zrušit filtry',
     empty: 'Zatím žádné uložené Runy.', noResults: 'Žádný Run neodpovídá hledání.',
     loading: 'Načítám uložené Runy…', error: 'Přehled Runů není dostupný',
     protected: 'Chráněný zdroj', editable: 'Upravitelný', branches: 'Větve',
@@ -40,6 +41,7 @@ const messages = {
     create: 'Create empty Run', search: 'Search Runs', placeholder: 'Run name or ID',
     openRun: 'Open Run', refreshRuns: 'Refresh Run list', refreshingRuns: 'Refreshing Run list…',
     visibility: 'Run type', allRuns: 'All Runs', editableOnly: 'Editable only', protectedOnly: 'Protected only',
+    visibleCount: 'Showing', resetFilters: 'Clear filters',
     empty: 'No saved Runs yet.', noResults: 'No Runs match your search.',
     loading: 'Loading saved Runs…', error: 'Runs inventory unavailable',
     protected: 'Protected source', editable: 'Editable', branches: 'Branches',
@@ -202,10 +204,13 @@ export function RunsPage(): JSX.Element {
         <option value="editable">{l.editableOnly}</option>
         <option value="protected">{l.protectedOnly}</option>
       </select></label>
+      {(query || visibility !== 'all') && <button type="button" onClick={() => { setQuery(''); setVisibility('all') }}>{l.resetFilters}</button>}
       <button type="button" disabled={runsQuery.isFetching} onClick={() => { void runsQuery.refetch() }}>{runsQuery.isFetching ? l.refreshingRuns : l.refreshRuns}</button>
       <Link className="button-link" to="/admin/runs/new">{l.create}</Link>
     </div>
     {runsQuery.isPending && <p role="status">{l.loading}</p>}
+    {runsQuery.isSuccess && runsQuery.data.run_containers.length > 0 &&
+      <p className="status">{l.visibleCount}: {runs.length} / {runsQuery.data.run_containers.length}</p>}
     {runsQuery.isError && <p role="alert" className="error">{l.error}: {formatApiError(runsQuery.error)}</p>}
     {runsQuery.isSuccess && runsQuery.data.run_containers.length === 0 && <p>{l.empty}</p>}
     {runsQuery.isSuccess && runsQuery.data.run_containers.length > 0 && runs.length === 0 && <p>{l.noResults}</p>}

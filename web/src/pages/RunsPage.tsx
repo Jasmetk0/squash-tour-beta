@@ -13,6 +13,8 @@ const messages = {
   cs: {
     title: 'Runy', subtitle: 'Nezávislé uložené světy a jejich skutečné větve. Výběr větve mění pouze kontext Adminu.',
     create: 'Vytvořit prázdný Run', search: 'Hledat Run', placeholder: 'Název nebo ID Runu',
+    openRun: 'Otevřít Run', refreshRuns: 'Obnovit seznam Runů', refreshingRuns: 'Obnovuji seznam Runů…',
+    visibility: 'Typ Runu', allRuns: 'Všechny Runy', editableOnly: 'Pouze upravitelné', protectedOnly: 'Pouze chráněné',
     empty: 'Zatím žádné uložené Runy.', noResults: 'Žádný Run neodpovídá hledání.',
     loading: 'Načítám uložené Runy…', error: 'Přehled Runů není dostupný',
     protected: 'Chráněný zdroj', editable: 'Upravitelný', branches: 'Větve',
@@ -36,6 +38,8 @@ const messages = {
   en: {
     title: 'Runs', subtitle: 'Independent saved worlds and their actual Branches. Selecting a Branch changes Admin context only.',
     create: 'Create empty Run', search: 'Search Runs', placeholder: 'Run name or ID',
+    openRun: 'Open Run', refreshRuns: 'Refresh Run list', refreshingRuns: 'Refreshing Run list…',
+    visibility: 'Run type', allRuns: 'All Runs', editableOnly: 'Editable only', protectedOnly: 'Protected only',
     empty: 'No saved Runs yet.', noResults: 'No Runs match your search.',
     loading: 'Loading saved Runs…', error: 'Runs inventory unavailable',
     protected: 'Protected source', editable: 'Editable', branches: 'Branches',
@@ -113,6 +117,10 @@ function RunRow({ run }: { run: RunContainer }): JSX.Element {
         <small className="status">{run.run_id} · {run.read_only ? l.protected : l.editable} · {run.status}</small>
       </div>
       <div className="runs-canonical-row__actions">
+        <Link to={`/admin/runs/${encodeURIComponent(run.run_id)}`} onClick={() => {
+          writeLastRunId(run.run_id)
+          rememberProductRun(run.run_id)
+        }}>{l.openRun}</Link>
         <Link to={`/admin/runs/${encodeURIComponent(run.run_id)}/branches`} onClick={() => {
           writeLastRunId(run.run_id)
           rememberProductRun(run.run_id)
@@ -130,6 +138,7 @@ export function RunsPage(): JSX.Element {
   const { language } = useLanguage()
   const l = messages[language]
   const [query, setQuery] = useState('')
+  const [visibility, setVisibility] = useState<'all' | 'editable' | 'protected'>('all')
   const runsQuery = useQuery({
     queryKey: ['canonical-run-containers'],
     queryFn: listRunContainers,
@@ -142,8 +151,9 @@ export function RunsPage(): JSX.Element {
     refetchInterval: 10000
   })
   const runs = useMemo(() => runsQuery.data?.run_containers.filter(run => (
-    `${run.display_name ?? ''} ${run.run_id}`.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase())
-  )) ?? [], [runsQuery.data, query])
+    `${run.display_name ?? ''} ${run.run_id}`.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()) &&
+    (visibility === 'all' || (visibility === 'protected' ? run.read_only : !run.read_only))
+  )) ?? [], [runsQuery.data, query, visibility])
 
   return <section className="panel runs-canonical">
     <div className="page-intro"><h2>{l.title}</h2><p className="subtitle">{l.subtitle}</p></div>
@@ -187,13 +197,19 @@ export function RunsPage(): JSX.Element {
     </section>
     <div className="runs-canonical-toolbar">
       <label>{l.search}<input type="search" value={query} onChange={event => setQuery(event.target.value)} placeholder={l.placeholder} /></label>
+      <label>{l.visibility}<select value={visibility} onChange={event => setVisibility(event.target.value as typeof visibility)}>
+        <option value="all">{l.allRuns}</option>
+        <option value="editable">{l.editableOnly}</option>
+        <option value="protected">{l.protectedOnly}</option>
+      </select></label>
+      <button type="button" disabled={runsQuery.isFetching} onClick={() => { void runsQuery.refetch() }}>{runsQuery.isFetching ? l.refreshingRuns : l.refreshRuns}</button>
       <Link className="button-link" to="/admin/runs/new">{l.create}</Link>
     </div>
     {runsQuery.isPending && <p role="status">{l.loading}</p>}
     {runsQuery.isError && <p role="alert" className="error">{l.error}: {formatApiError(runsQuery.error)}</p>}
     {runsQuery.isSuccess && runsQuery.data.run_containers.length === 0 && <p>{l.empty}</p>}
     {runsQuery.isSuccess && runsQuery.data.run_containers.length > 0 && runs.length === 0 && <p>{l.noResults}</p>}
-    <ul className="runs-canonical-list" aria-label="Product Runs">{runs.map(run => <RunRow key={run.run_id} run={run} />)}</ul>
+    <ul className="runs-canonical-list" aria-label={language === 'cs' ? 'Product Runy' : 'Product Runs'}>{runs.map(run => <RunRow key={run.run_id} run={run} />)}</ul>
     <div className="runs-legacy-entry">
       <p className="status">{l.legacyNote}</p>
       <Link to="/admin/legacy-runs">{l.legacy}</Link>

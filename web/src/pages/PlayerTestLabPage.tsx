@@ -185,8 +185,13 @@ export function PlayerTestLabPage(): JSX.Element {
     </SectionCard>
 
     <SectionCard title="Built-in read-only scenarios">
-      {builtIns.isLoading ? <p className="status">Loading built-in scenarios…</p> : null}
-      {builtIns.isError ? <p className="error">Built-in Player Lab scenarios unavailable.</p> : null}
+      <button type="button" disabled={builtIns.isFetching} onClick={() => { void builtIns.refetch() }}>
+        {builtIns.isFetching ? 'Refreshing Player Lab scenarios…' : 'Refresh built-in scenarios'}
+      </button>
+      {builtIns.isLoading ? <p role="status">Loading built-in scenarios…</p> : null}
+      {builtIns.isError ? <p role="alert" className="error">Built-in Player Lab scenarios unavailable.</p> : null}
+      {builtIns.isSuccess && builtIns.data.length === 0
+        ? <p className="status">No built-in Player Lab scenarios are available.</p> : null}
       {builtIns.data?.map((item) => <article key={item.scenario_id}>
         <strong>{item.display_name}</strong>
         <p>{item.description}</p>

@@ -249,6 +249,25 @@ describe('TournamentTestLabPage', () => {
     expect(api.runTournamentTestLab).not.toHaveBeenCalled()
   })
 
+  it('formats scratch Tournament JSON and distinguishes unavailable sessions from no sessions', async () => {
+    const user = userEvent.setup()
+    api.getTournamentLabSessions.mockRejectedValue(new Error('Backend unavailable'))
+    renderWithRoute(<TournamentTestLabPage />, '/admin/labs/tournament')
+    expect(await screen.findByRole('alert')).toHaveTextContent('Saved Tournament Test Sessions unavailable.')
+    expect(screen.queryByText('No saved Tournament Test Sessions yet. Scratch mode remains available.')).not.toBeInTheDocument()
+    await user.click(await screen.findByRole('button', { name: 'Load scratch copy' }))
+    const editor = screen.getByRole('textbox', { name: 'Tournament Lab scenario JSON' })
+    const compact = JSON.stringify(scenario)
+    fireEvent.change(editor, { target: { value: compact } })
+    await user.click(screen.getByRole('button', { name: 'Format JSON' }))
+    expect(editor).toHaveValue(JSON.stringify(scenario, null, 2))
+    expect(api.runTournamentTestLab).not.toHaveBeenCalled()
+    fireEvent.change(editor, { target: { value: '[]' } })
+    await user.click(screen.getByRole('button', { name: 'Format JSON' }))
+    expect(screen.getByText('A Lab scenario must be a JSON object.')).toBeInTheDocument()
+    expect(editor).toHaveValue('[]')
+  })
+
   it('shows structured incompatibility instead of fabricating a tournament result', async () => {
     const user = userEvent.setup()
     const blocked = {

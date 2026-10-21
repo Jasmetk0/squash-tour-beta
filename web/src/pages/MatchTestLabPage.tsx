@@ -269,6 +269,9 @@ export function MatchTestLabPage(): JSX.Element {
     </SectionCard>
 
     <SectionCard title="Test Sessions">
+      <button type="button" disabled={sessions.isFetching} onClick={() => { void sessions.refetch() }}>
+        {sessions.isFetching ? 'Refreshing Test Sessions…' : 'Refresh Test Sessions'}
+      </button>
       <label>Open Test Session
         <select aria-label="Open Match Test Session" value={selectedSessionId ?? ''} onChange={(e) => {
           setSelectedSessionId(e.target.value || null)

@@ -20,7 +20,7 @@ function movementText(change: RunHomeRankingChange, locale: 'cs' | 'en'): string
 
 export function RunHomeRankingPanel({ data, locale, runId = data.run_id, identities = {} }: Props): JSX.Element {
   const cs = locale === 'cs'
-  return <section className="run-home-ranking" aria-label="Saved weekly ranking changes">
+  return <section className="run-home-ranking" aria-label={cs ? 'Uložené týdenní změny žebříčku' : 'Saved weekly ranking changes'}>
     <h4>{cs ? 'Změny žebříčku · publikované týdny' : 'Ranking movement · published weeks'}</h4>
     {data.status === 'unpublished' && <p className="status">{cs
       ? 'V této branchi zatím není uložená publikace Official Rankingu.'

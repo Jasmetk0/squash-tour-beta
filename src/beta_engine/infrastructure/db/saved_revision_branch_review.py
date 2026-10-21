@@ -158,6 +158,18 @@ def review_in_session(
         run_id=run_id,
         branch_id=source.branch_id,
     )
+    from beta_engine.infrastructure.db.native_fork_source import (
+        bind_prevalidated_native_fork_source,
+    )
+
+    try:
+        native_source = bind_prevalidated_native_fork_source(
+            repository, session, source=source, lineage=lineage,
+        )
+    except (TypeError, ValueError, KeyError) as exc:
+        raise SavedRevisionBranchForkConflictError(
+            "Native historical execution sources failed validation"
+        ) from exc
     knockout = getattr(evidence, "knockout", evidence)
     match_ids = {m.input_context.match_id for m in getattr(knockout, "matches", ())} | {
         m.match_id for m in getattr(checkpoint, "played_continuations", ())
@@ -178,6 +190,10 @@ def review_in_session(
         "viewer_branch_id": run.official_branch_id,
         "target_display_name": name,
         "components": sorted(content),
+        "native_source_binding": (
+            {**native_source.model_dump(mode="json"), "fingerprint": native_source.fingerprint}
+            if native_source is not None else None
+        ),
         "saved_week": tour.get("week") or cp.get("week"),
         "saved_player_count": len(life[-1].get("players", [])) if life else 0,
         "saved_match_count": len(match_ids),

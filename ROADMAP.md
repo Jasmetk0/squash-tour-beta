@@ -1,3 +1,17 @@
+# Native historical source binding — 21 October 2026
+
+Source-side authority for the native fork is implemented: exact original Saved
+owner/revision/component bindings, actual pre-play population/Health, original
+Tour/Entry/draw command sources and historical-prefix verification. Persisted
+references must be reauthenticated against real reachable records; hashing a new
+reference is insufficient. [Boundary](docs/NATIVE_SAVED_FORK_AUTHORITY.md).
+
+Next is the target-owned native baseline and independent continuation writer;
+native creation is still blocked until its full real acceptance passes. This is
+not pre-alpha or Full Simulation readiness.
+
+---
+
 # Draft feedback / review acceptance — 21 October 2026
 
 PR #1576 follow-up repairs explicit-test deselection and Shell dialog/header

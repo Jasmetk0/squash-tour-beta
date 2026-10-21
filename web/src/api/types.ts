@@ -578,6 +578,14 @@ export type SavedRevisionBranchReview = {
   saved_ranking_count: number
   prospect_source_schema: string | null
   components: string[]
+  native_source_binding?: {
+    schema_version: 'native_fork_source_binding.v1'
+    run_id: string
+    source: { revision_id: string; branch_id: string; content_hash: string }
+    components: { key: string; content_hash: string }[]
+    historical_sources: { revision_id: string; branch_id: string; content_hash: string }[]
+    fingerprint: string
+  } | null
 }
 
 export type ViewerBranchWorkingDraft = {

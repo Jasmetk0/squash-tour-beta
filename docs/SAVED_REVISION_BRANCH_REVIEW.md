@@ -109,3 +109,10 @@ with all existing scenario assertions parameterized. The separate 1,000-player
 cohort and native W80/1,000-player gates remain unchanged. Internal checkpoint
 Shell scale is explicitly available via `--population-size 1000`; a 64-player
 Shell pass is not represented as a large-population pass.
+# Native historical source binding
+
+The review now includes an authenticated `native_source_binding` for played
+native sources. It preserves actual original owners and binds real earlier
+execution sources, including pre-play population/Health and native Tour roots.
+This is preparation for target-owned continuation; native creation remains
+blocked. See [authority contract](NATIVE_SAVED_FORK_AUTHORITY.md).

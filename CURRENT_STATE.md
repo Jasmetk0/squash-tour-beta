@@ -1,3 +1,29 @@
+# Native fork historical source authority — 21 October 2026
+
+PR #1576 now has an explicit immutable source binding, resolved against the actual
+authenticated Saved ancestry. Branch review verifies original pre-play population
+and Health, original Tour/Edition/command sources, and a strict historical cutoff
+propagated into nested native roots. Recomputed reference hashes do not authorize
+changed source components, a different original owner, or an unreachable revision.
+No original match input/log, admission or prospect epoch is rewritten; review
+remains read-only. See [source authority contract](docs/NATIVE_SAVED_FORK_AUTHORITY.md).
+
+**Completed local evidence:** 52 distinct focused tests across source contracts,
+real Branch review HTTP/SQLite, existing Branch creation and CI phase policy.
+The expanded native scenario includes a real configured post-birth tournament,
+before/after admission and source epochs, original byte preservation, tampered
+reference rejection, source corruption, unreachable sibling history, restart
+and restore. Its 16-test source/review selection took 386.81 seconds. Actual
+Chromium CS/EN review, safe native refusal and Viewer isolation passed; TypeScript
+and production build passed. These are local source-side results, not successful
+target continuation or final-head hosted acceptance.
+
+**Still incomplete:** the target-owned native fork baseline and independent
+continuation writer. Existing native create guards remain. The PR is an unfinished
+implementation, not a merge recommendation or native fork completion.
+
+---
+
 # PR #1576 follow-up — 21 October 2026
 
 The owner requested takeover of the interrupted branch and shorter development

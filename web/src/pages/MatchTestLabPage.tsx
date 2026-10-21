@@ -12,6 +12,7 @@ import {
 } from '../api/client'
 import type { MatchLabRequest, MatchLabResult, MatchLabScenario, MatchLabSession } from '../api/types'
 import { PageIntro, SectionCard, SummaryPills } from '../components/RunScopedUi'
+import { prettyLabJson } from '../components/LabJson'
 import { LabNavigation } from '../components/LabNavigation'
 
 const traits = {
@@ -144,6 +145,14 @@ export function MatchTestLabPage(): JSX.Element {
     runMutation.reset()
   }
 
+  const formatScenario = () => {
+    try {
+      editScenario(prettyLabJson(scenarioText))
+    } catch (error) {
+      setLocalError(error instanceof Error ? error.message : String(error))
+    }
+  }
+
   const createMutation = useMutation({
     mutationFn: createMatchLabSession,
     onSuccess: async (created) => {
@@ -251,6 +260,10 @@ export function MatchTestLabPage(): JSX.Element {
           {sessions.data?.map((item) => <option key={item.session_id} value={item.session_id}>{item.display_name} · v{item.version}</option>)}
         </select>
       </label>
+      {sessions.isLoading ? <p role="status">Loading saved Match Test Sessions…</p> : null}
+      {sessions.isError ? <p role="alert" className="error">Saved Match Test Sessions unavailable.</p> : null}
+      {sessions.isSuccess && sessions.data.length === 0
+        ? <p className="status">No saved Match Test Sessions yet. Scratch mode remains available.</p> : null}
       {selectedSession ? <SummaryPills items={[
         { label: 'Session', value: selectedSession.display_name },
         { label: 'Version', value: selectedSession.version },
@@ -312,6 +325,7 @@ export function MatchTestLabPage(): JSX.Element {
         <label>Batch seeds (optional, comma-separated; max 100)
           <input aria-label="Match Lab batch seeds" value={batchText} onChange={(e) => { setBatchText(e.target.value); runMutation.reset() }} placeholder="100, 101, 102" />
         </label>
+        <button type="button" onClick={formatScenario} disabled={runMutation.isPending || saveMutation.isPending}>Format JSON</button>
         {selectedSession ? <button type="button" onClick={save} disabled={saveMutation.isPending}>Save Test Session</button> : null}
         <button type="submit" disabled={runMutation.isPending || saveMutation.isPending || sessionHasUnsavedChanges}>{runMutation.isPending ? 'Running…' : selectedSession ? 'Run Test Session' : 'Run scenario'}</button>
         {sessionHasUnsavedChanges ? <p role="status">Unsaved Test Session changes. Save before running.</p> : null}

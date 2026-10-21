@@ -1,5 +1,5 @@
 import {InitialPopulationComparisonPanel} from '../components/InitialPopulationComparisonPanel'
-import { FormEvent, useEffect, useMemo, useState } from 'react'
+import { FormEvent, useEffect, useMemo, useRef, useState } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
 
 import { getPlayerLabBuiltInScenarios, runPlayerTestLab } from '../api/client'
@@ -63,21 +63,46 @@ export function PlayerTestLabPage(): JSX.Element {
   })
   const [scenarioText, setScenarioText] = useState('')
   const [localError, setLocalError] = useState<string | null>(null)
+  const initialScenarioHandled = useRef(false)
 
   useEffect(() => {
-    if (!scenarioText && builtIns.data?.[0]) {
+    if (!initialScenarioHandled.current && builtIns.data?.[0]) {
+      initialScenarioHandled.current = true
       setScenarioText(JSON.stringify(builtIns.data[0].scenario, null, 2))
     }
-  }, [builtIns.data, scenarioText])
+  }, [builtIns.data])
 
+  // This is an editor preview only. The API remains authoritative for full validation.
   const parsedPreview = useMemo(() => {
-    try { return scenarioText ? JSON.parse(scenarioText) as PlayerLabScenario : null }
-    catch { return null }
+    try {
+      const value: unknown = scenarioText.trim() ? JSON.parse(scenarioText) : null
+      if (!value || typeof value !== 'object' || Array.isArray(value)) return null
+      const candidate = value as Partial<PlayerLabScenario>
+      return candidate.schema_version === 'player_test_lab_scenario.v1'
+        && typeof candidate.scenario_id === 'string' && candidate.scenario_id.length > 0
+        && Array.isArray(candidate.variants)
+        ? candidate as PlayerLabScenario : null
+    } catch { return null }
   }, [scenarioText])
 
   const runMutation = useMutation({
     mutationFn: (scenario: PlayerLabScenario) => runPlayerTestLab({ scenario })
   })
+
+  const editScenario = (value: string) => {
+    initialScenarioHandled.current = true
+    setScenarioText(value)
+    setLocalError(null)
+    runMutation.reset()
+  }
+
+  const formatScenario = () => {
+    if (!parsedPreview) {
+      setLocalError('Enter a valid Player Lab scenario before formatting.')
+      return
+    }
+    editScenario(JSON.stringify(parsedPreview, null, 2))
+  }
 
   const submit = (event: FormEvent) => {
     event.preventDefault()
@@ -85,7 +110,8 @@ export function PlayerTestLabPage(): JSX.Element {
     runMutation.reset()
     try {
       if (!scenarioText.trim()) throw new Error('Load or enter a Player Lab scenario first.')
-      runMutation.mutate(JSON.parse(scenarioText) as PlayerLabScenario)
+      if (!parsedPreview) throw new Error('Player Lab scenario must contain its schema, ID and variants.')
+      runMutation.mutate(parsedPreview)
     } catch (error) {
       setLocalError(error instanceof Error ? error.message : String(error))
     }
@@ -121,7 +147,7 @@ export function PlayerTestLabPage(): JSX.Element {
         <strong>{item.display_name}</strong>
         <p>{item.description}</p>
         <p className="status"><code>{item.scenario_fingerprint.slice(0, 12)}</code> · read-only baseline</p>
-        <button type="button" onClick={() => setScenarioText(JSON.stringify(item.scenario, null, 2))}>
+        <button type="button" onClick={() => editScenario(JSON.stringify(item.scenario, null, 2))}>
           Load scenario
         </button>
       </article>)}
@@ -132,17 +158,20 @@ export function PlayerTestLabPage(): JSX.Element {
         <textarea
           aria-label="Player Lab scenario JSON"
           value={scenarioText}
-          onChange={(event) => setScenarioText(event.target.value)}
+          onChange={(event) => editScenario(event.target.value)}
           rows={30}
           style={{ width: '100%', fontFamily: 'monospace' }}
         />
+        <button type="button" onClick={formatScenario} disabled={runMutation.isPending || !parsedPreview}>
+          Format JSON
+        </button>{' '}
         <button type="submit" disabled={runMutation.isPending || !parsedPreview}>
           {runMutation.isPending ? 'Running…' : 'Run scenario'}
         </button>
         {localError ? <p className="error">{localError}</p> : null}
         {runMutation.isError ? <p className="error">Player Lab failed: {String(runMutation.error)}</p> : null}
         <p className="status">
-          Scenario: {parsedPreview?.scenario_id ?? 'invalid JSON'} · variants {parsedPreview?.variants.length ?? '—'}
+          Scenario: {parsedPreview?.scenario_id ?? 'invalid / incomplete JSON'} · variants {parsedPreview?.variants.length ?? '—'}
         </p>
       </SectionCard>
     </form>

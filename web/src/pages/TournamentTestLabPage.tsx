@@ -410,6 +410,9 @@ export function TournamentTestLabPage(): JSX.Element {
     </SectionCard>
 
     <SectionCard title="Tournament Test Sessions">
+      <button type="button" disabled={sessions.isFetching} onClick={() => { void sessions.refetch() }}>
+        {sessions.isFetching ? 'Refreshing Test Sessions…' : 'Refresh Test Sessions'}
+      </button>
       <label>Open Test Session
         <select
           aria-label="Open Tournament Test Session"

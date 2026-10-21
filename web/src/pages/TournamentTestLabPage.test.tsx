@@ -384,7 +384,8 @@ describe('TournamentTestLabPage', () => {
     }
     api.getTournamentLabSessions.mockResolvedValue([saved])
     renderWithRoute(<TournamentTestLabPage />, '/admin/labs/tournament')
-    await user.selectOptions(await screen.findByRole('combobox', { name: 'Open Tournament Test Session' }), saved.session_id)
+    await screen.findByRole('option', { name: 'Saved baseline · v1' })
+    await user.selectOptions(screen.getByRole('combobox', { name: 'Open Tournament Test Session' }), saved.session_id)
     expect(await screen.findByDisplayValue(saved.display_name)).toBeInTheDocument()
     const run = screen.getByRole('button', { name: 'Run Test Session' })
     expect(run).toBeEnabled()

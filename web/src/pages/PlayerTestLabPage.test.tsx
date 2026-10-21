@@ -268,6 +268,31 @@ describe('PlayerTestLabPage', () => {
     expect(screen.queryByRole('table', { name: 'Player Lab active timeline' })).not.toBeInTheDocument()
   })
 
+  it('refreshes an empty built-in list without running the Player development engine', async () => {
+    const user = userEvent.setup()
+    api.getPlayerLabBuiltInScenarios.mockResolvedValueOnce([]).mockResolvedValue([{
+      scenario_id: scenario.scenario_id,
+      display_name: 'Development activity baseline',
+      description: 'Shared-kernel development comparison.',
+      read_only: true,
+      scenario_fingerprint: 'a'.repeat(64),
+      scenario
+    }])
+    renderWithRoute(<PlayerTestLabPage />, '/admin/labs/player')
+    expect(await screen.findByText('No built-in Player Lab scenarios are available.')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Refresh built-in scenarios' }))
+    expect(await screen.findByText('Development activity baseline')).toBeInTheDocument()
+    expect(api.getPlayerLabBuiltInScenarios).toHaveBeenCalledTimes(2)
+    expect(api.runPlayerTestLab).not.toHaveBeenCalled()
+  })
+
+  it('shows a failed Player Lab built-in fetch as an error, not an empty list', async () => {
+    api.getPlayerLabBuiltInScenarios.mockRejectedValue(new Error('No connection'))
+    renderWithRoute(<PlayerTestLabPage />, '/admin/labs/player')
+    expect(await screen.findByRole('alert')).toHaveTextContent('Built-in Player Lab scenarios unavailable.')
+    expect(screen.queryByText('No built-in Player Lab scenarios are available.')).not.toBeInTheDocument()
+  })
+
   it('does not overwrite an intentionally emptied editor with the built-in baseline', async () => {
     renderWithRoute(<PlayerTestLabPage />, '/admin/labs/player')
     await screen.findByText('Development activity baseline')

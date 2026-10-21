@@ -33,6 +33,7 @@ const content = {
     },
     allSaved: 'Vybrané podklady jsou uloženy. Sportovní operace stále vyžadují samostatné ověření.',
     checklist: 'Zobrazit kontrolu uložených podkladů',
+    attentionCount: 'položky k prověření',
     details: 'Technický původ a hranice',
     revision: 'Uložená revize HEAD',
     draftVersion: 'Verze pracovního návrhu',
@@ -68,6 +69,7 @@ const content = {
     },
     allSaved: 'The selected foundations are saved. Sporting operations still require a separate preflight.',
     checklist: 'Show saved-foundation checks',
+    attentionCount: 'items needing attention',
     details: 'Technical provenance and limits',
     revision: 'Saved Revision HEAD',
     draftVersion: 'Working Draft version',
@@ -104,6 +106,9 @@ export function RunHomeReadinessPanel({
   const draftDirty = data.items.some(
     item => item.code === 'working_draft' && item.status === 'unsaved'
   )
+  const attentionCount = data.items.filter(item =>
+    item.status === 'missing' || item.status === 'candidate_only' || item.status === 'unsaved'
+  ).length
   return <section aria-label={language === 'cs' ? 'Připravenost Runu' : 'Run saved readiness'} className="run-home-status-block">
     <div className="actions">
       <h3>{l.heading}</h3>
@@ -111,15 +116,15 @@ export function RunHomeReadinessPanel({
     </div>
     <p className="status">{l.explanation} · {l.phase[data.phase]}</p>
     <details className="run-home-readiness-checklist">
-      <summary>{l.checklist} ({data.items.length})</summary>
+      <summary>{l.checklist} ({data.items.length}){attentionCount > 0 ? ` · ${attentionCount} ${l.attentionCount}` : ''}</summary>
       <ul className="run-home-feed" aria-label={language === 'cs' ? 'Kontrola uložených podkladů' : 'Saved preparation checks'}>
-      {data.items.map(item => <li key={item.code}>
-        <span><strong>{l.item[item.code]}</strong>
-          <small>{l.status[item.status]} · {item.evidence_count}</small>
-        </span>
-        {(item.status === 'missing' || item.status === 'candidate_only' || item.status === 'unsaved') &&
-          <Link to={base + href[item.code]}>{l.action[item.code]} →</Link>}
-      </li>)}
+        {data.items.map(item => <li key={item.code}>
+          <span><strong>{l.item[item.code]}</strong>
+            <small>{l.status[item.status]} · {item.evidence_count}</small>
+          </span>
+          {(item.status === 'missing' || item.status === 'candidate_only' || item.status === 'unsaved') &&
+            <Link to={base + href[item.code]}>{l.action[item.code]} →</Link>}
+        </li>)}
       </ul>
     </details>
     {draftDirty && <p className="error">{l.drafted}</p>}

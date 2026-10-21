@@ -66,6 +66,17 @@ describe('Run Management saved context', () => {
     expect(screen.queryByText(/Foreign Timeline/)).not.toBeInTheDocument()
   })
 
+  it('hides editing controls when the API returns a different Run identity', async () => {
+    mocks.getRunContainer.mockResolvedValue({
+      run_id: 'other-run', display_name: 'Foreign Run',
+      storage_kind: 'custom_local', read_only: false, status: 'active'
+    })
+    mount()
+    expect(await screen.findByRole('alert')).toHaveTextContent('Server vrátil jiný Run.')
+    expect(screen.queryByText('Foreign Run')).not.toBeInTheDocument()
+    expect(screen.queryByText('Run-owned package setup')).not.toBeInTheDocument()
+  })
+
   it('keeps read-only Runs free of package editing controls', async () => {
     mocks.getRunContainer.mockResolvedValue({
       run_id: 'run/with space', display_name: 'Protected Run',

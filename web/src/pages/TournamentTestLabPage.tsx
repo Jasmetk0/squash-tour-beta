@@ -65,7 +65,10 @@ function CompatibilityPanel({ compatibility }: { compatibility: TournamentLabCom
 function TournamentResultPanels({ data }: { data: TournamentLabResult }): JSX.Element {
   const firstRun = data.runs[0]
   const [statusFilter, setStatusFilter] = useState('all')
-  const statuses = useMemo(() => Array.from(new Set(firstRun?.match_results.map(row => row.status) ?? [])).sort(), [firstRun])
+  const statuses = useMemo<string[]>(
+    () => Array.from(new Set(firstRun?.match_results.map(row => row.status) ?? [])).sort(),
+    [firstRun]
+  )
   const activeFilter = statusFilter === 'all' || statuses.includes(statusFilter) ? statusFilter : 'all'
   const displayedMatches = firstRun?.match_results.filter(row => activeFilter === 'all' || row.status === activeFilter) ?? []
   return <>

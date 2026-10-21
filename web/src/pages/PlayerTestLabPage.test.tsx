@@ -1,4 +1,4 @@
-import { fireEvent, screen } from '@testing-library/react'
+import { fireEvent, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -195,6 +195,56 @@ describe('PlayerTestLabPage', () => {
     expect(screen.getByRole('table', { name: 'Player Lab active timeline' })).toBeInTheDocument()
     expect(screen.getByRole('table', { name: 'Player Lab idle timeline' })).toBeInTheDocument()
   })
+  it('compares all Player Lab variants while filtering visible timelines without rerunning development', async () => {
+    const user = userEvent.setup()
+    renderWithRoute(<PlayerTestLabPage />, '/admin/labs/player')
+    await screen.findByText('Development activity baseline')
+    await user.click(screen.getByRole('button', { name: 'Run scenario' }))
+    const comparison = await screen.findByRole('table', { name: 'Player Lab variant comparison' })
+    expect(within(comparison).getAllByRole('row')).toHaveLength(3)
+    expect(screen.getByRole('table', { name: 'Player Lab active timeline' })).toBeInTheDocument()
+    expect(screen.getByRole('table', { name: 'Player Lab idle timeline' })).toBeInTheDocument()
+    await user.selectOptions(screen.getByRole('combobox', { name: 'Player Lab variant filter' }), 'idle')
+    expect(screen.queryByRole('table', { name: 'Player Lab active timeline' })).not.toBeInTheDocument()
+    expect(screen.getByRole('table', { name: 'Player Lab idle timeline' })).toBeInTheDocument()
+    expect(within(comparison).getAllByRole('row')).toHaveLength(3)
+    expect(screen.getByText('Showing 1 of 2 variants. Filters do not recalculate development.')).toBeInTheDocument()
+    await user.selectOptions(screen.getByRole('combobox', { name: 'Player Lab variant filter' }), 'all')
+    expect(screen.getByRole('table', { name: 'Player Lab active timeline' })).toBeInTheDocument()
+    expect(api.runPlayerTestLab).toHaveBeenCalledTimes(1)
+  })
+
+  it('shows the last ten saved snapshots without changing final variant metrics', async () => {
+    const user = userEvent.setup()
+    const snapshots = Array.from({ length: 12 }, (_, index) => ({
+      ...result.variants[0].snapshots[0],
+      week: { season_index: 0, week: index + 1 },
+      ovr: 90 + index,
+      state_fingerprint: String(index).padStart(64, '0')
+    }))
+    api.runPlayerTestLab.mockResolvedValue({
+      ...result,
+      variants: [{
+        ...result.variants[0],
+        snapshots
+      }]
+    })
+    renderWithRoute(<PlayerTestLabPage />, '/admin/labs/player')
+    await screen.findByText('Development activity baseline')
+    await user.click(screen.getByRole('button', { name: 'Run scenario' }))
+    const timeline = await screen.findByRole('table', { name: 'Player Lab active timeline' })
+    expect(within(timeline).getAllByRole('row')).toHaveLength(13)
+    const comparison = screen.getByRole('table', { name: 'Player Lab variant comparison' })
+    expect(within(comparison).getByRole('cell', { name: '101' })).toBeInTheDocument()
+    await user.selectOptions(screen.getByRole('combobox', { name: 'Player Lab timeline limit' }), '10')
+    expect(within(timeline).getAllByRole('row')).toHaveLength(11)
+    expect(within(timeline).queryByRole('cell', { name: 'S1 W1' })).not.toBeInTheDocument()
+    expect(within(timeline).getByRole('cell', { name: 'S1 W12' })).toBeInTheDocument()
+    expect(screen.getByText('Showing 10 of 12 saved snapshots.')).toBeInTheDocument()
+    expect(within(comparison).getByRole('cell', { name: '101' })).toBeInTheDocument()
+    expect(api.runPlayerTestLab).toHaveBeenCalledTimes(1)
+  })
+
   it('formats valid JSON and clears stale results when the scenario is edited or reloaded', async () => {
     const user = userEvent.setup()
     renderWithRoute(<PlayerTestLabPage />, '/admin/labs/player')

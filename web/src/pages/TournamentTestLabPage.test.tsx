@@ -213,6 +213,23 @@ describe('TournamentTestLabPage', () => {
     expect(screen.getByRole('table', { name: 'Tournament Lab assertions' })).toBeInTheDocument()
   })
 
+  it('hides previous inspection and run evidence when the editable scenario changes', async () => {
+    const user = userEvent.setup()
+    renderWithRoute(<TournamentTestLabPage />, '/admin/labs/tournament')
+    await user.click(await screen.findByRole('button', { name: 'Load scratch copy' }))
+    await user.click(screen.getByRole('button', { name: 'Inspect compatibility' }))
+    expect(await screen.findByText('No compatibility issues.')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Run tournament scenario' }))
+    expect(await screen.findByRole('table', { name: 'Tournament Lab match results' })).toBeInTheDocument()
+
+    fireEvent.change(screen.getByLabelText('Tournament Lab scenario JSON'), {
+      target: { value: JSON.stringify({ ...scenario, scenario_id: 'edited-proposal' }) }
+    })
+    expect(screen.queryByRole('table', { name: 'Tournament Lab match results' })).not.toBeInTheDocument()
+    expect(screen.queryByText('No compatibility issues.')).not.toBeInTheDocument()
+    expect(screen.getByText('Scenario: edited-proposal')).toBeInTheDocument()
+  })
+
   it('shows structured incompatibility instead of fabricating a tournament result', async () => {
     const user = userEvent.setup()
     const blocked = {

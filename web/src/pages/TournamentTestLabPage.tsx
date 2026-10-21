@@ -207,6 +207,10 @@ export function TournamentTestLabPage(): JSX.Element {
       return null
     }
   }, [scenarioText])
+  const sessionHasUnsavedChanges = Boolean(selectedSession && (
+    sessionName !== selectedSession.display_name ||
+    JSON.stringify(parsedScenario) !== JSON.stringify(selectedSession.scenario)
+  ))
 
   const inspectMutation = useMutation({
     mutationFn: inspectTournamentLabScenario
@@ -259,6 +263,10 @@ export function TournamentTestLabPage(): JSX.Element {
       setSelectedSessionId(created.session_id)
       setScenarioText(JSON.stringify(created.scenario, null, 2))
       setSessionName(created.display_name)
+      inspectMutation.reset()
+      runMutation.reset()
+      runDraftPreviewMutation.reset()
+      runDraftApplyMutation.reset()
     }
   })
   const saveMutation = useMutation({
@@ -272,6 +280,11 @@ export function TournamentTestLabPage(): JSX.Element {
       await sessions.refetch()
       setSelectedSessionId(updated.session_id)
       setScenarioText(JSON.stringify(updated.scenario, null, 2))
+      setSessionName(updated.display_name)
+      inspectMutation.reset()
+      runMutation.reset()
+      runDraftPreviewMutation.reset()
+      runDraftApplyMutation.reset()
     }
   })
 
@@ -320,6 +333,9 @@ export function TournamentTestLabPage(): JSX.Element {
     setLocalError(null)
     try {
       const scenario = JSON.parse(scenarioText) as TournamentLabScenario
+      if (sessionHasUnsavedChanges) {
+        throw new Error('Save Test Session changes before running this tournament.')
+      }
       const payload: TournamentLabRequest = {
         scenario,
         batch_match_seeds: parseSeeds(batchText)
@@ -444,7 +460,8 @@ export function TournamentTestLabPage(): JSX.Element {
           !targetRunId.trim() ||
           !targetBranchId.trim() ||
           !targetEventId.trim() ||
-          runDraftPreviewMutation.isPending
+          runDraftPreviewMutation.isPending ||
+          sessionHasUnsavedChanges
         }
         onClick={() => runDraftPreviewMutation.mutate({
           runId: targetRunId.trim(),
@@ -469,7 +486,7 @@ export function TournamentTestLabPage(): JSX.Element {
         </ul> : null}
         <button
           type="button"
-          disabled={!runDraftPreviewMutation.data.ready_for_draft || runDraftApplyMutation.isPending}
+          disabled={!runDraftPreviewMutation.data.ready_for_draft || runDraftApplyMutation.isPending || sessionHasUnsavedChanges}
           onClick={() => runDraftApplyMutation.mutate(runDraftPreviewMutation.data)}
         >
           {runDraftApplyMutation.isPending ? 'Applying reviewed proposal…' : 'Apply to Run Working Draft'}
@@ -496,7 +513,12 @@ export function TournamentTestLabPage(): JSX.Element {
     <form onSubmit={submit}>
       <SectionCard title={selectedSession ? 'Editable Tournament Test Session' : 'Portable Tournament Lab scenario JSON'}>
         {selectedSession ? <label>Session name
-          <input aria-label="Tournament Lab session name" value={sessionName} onChange={(event) => setSessionName(event.target.value)} />
+          <input aria-label="Tournament Lab session name" value={sessionName} onChange={(event) => {
+            setSessionName(event.target.value)
+            runMutation.reset()
+            runDraftPreviewMutation.reset()
+            runDraftApplyMutation.reset()
+          }} />
         </label> : null}
         <textarea
           aria-label="Tournament Lab scenario JSON"
@@ -520,9 +542,10 @@ export function TournamentTestLabPage(): JSX.Element {
         <button type="button" onClick={inspect} disabled={!scenarioText || inspectMutation.isPending}>
           {inspectMutation.isPending ? 'Inspecting…' : 'Inspect compatibility'}
         </button>
-        <button type="submit" disabled={!scenarioText || runMutation.isPending}>
+        <button type="submit" disabled={!scenarioText || runMutation.isPending || sessionHasUnsavedChanges}>
           {runMutation.isPending ? 'Running…' : selectedSession ? 'Run Test Session' : 'Run tournament scenario'}
         </button>
+        {sessionHasUnsavedChanges ? <p role="status">Unsaved Tournament Test Session changes. Save before running or reviewing a Run proposal.</p> : null}
         {localError ? <p className="error">{localError}</p> : null}
         {inspectMutation.isError ? <p className="error">Inspection failed: {String(inspectMutation.error)}</p> : null}
         {createMutation.isError ? <p className="error">Session creation failed: {String(createMutation.error)}</p> : null}

@@ -29,7 +29,7 @@ function parseSeeds(value: string): number[] {
   if (!trimmed) return []
   const parts = trimmed.split(',').map((part) => part.trim())
   const seeds = parts.map(Number)
-  if (parts.some((part) => !/^[+-]?\\d+$/.test(part))
+  if (parts.some((part) => !/^[+-]?\d+$/.test(part))
     || seeds.some((seed) => !Number.isSafeInteger(seed))) {
     throw new Error('Batch match seeds must be comma-separated integers.')
   }

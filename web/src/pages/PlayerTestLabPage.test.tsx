@@ -236,6 +236,8 @@ describe('PlayerTestLabPage', () => {
     expect(within(timeline).getAllByRole('row')).toHaveLength(13)
     const comparison = screen.getByRole('table', { name: 'Player Lab variant comparison' })
     expect(within(comparison).getByRole('cell', { name: '101' })).toBeInTheDocument()
+    expect(within(comparison).getByRole('cell', { name: '+11' })).toBeInTheDocument()
+    expect(screen.getByText(/Changes compare first and last recorded snapshots/)).toBeInTheDocument()
     await user.selectOptions(screen.getByRole('combobox', { name: 'Player Lab timeline limit' }), '10')
     expect(within(timeline).getAllByRole('row')).toHaveLength(11)
     expect(within(timeline).queryByRole('cell', { name: 'S1 W1' })).not.toBeInTheDocument()

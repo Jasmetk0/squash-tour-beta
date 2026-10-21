@@ -1,3 +1,29 @@
+# Native fork target baseline preparation — 21 October 2026
+
+The same PR now prepares a typed, target-owned current baseline from authenticated
+native Saved sources. Lifecycle identities/policy, full sporting values and
+Health facts/actual source week remain exact; original Tour/ranking and historical
+events retain source identities. Read-only verification independently rebuilds
+the facts and checks caller-supplied expected command scope. Target identifiers
+are not reserved and no Branch/runtime rows are installed by this preparation.
+See [contract and current limits](docs/NATIVE_SAVED_FORK_AUTHORITY.md).
+
+**Local evidence:** 66 focused fast tests passed in 16.64 seconds; the expanded
+real native Saved scenario passed in 410.90 seconds (67 distinct cases combined).
+Preparation and JSON reauthentication cover pre/post-birth, real post-birth
+matches, source epochs and server restart without SQLite changes. Rehashed
+sporting/Health/policy/ranking facts, wrong command target and existing target
+origins are rejected. W7/W52/W61/W80 and older Health facts/compatible horizon
+dates have separate pure contracts. This is baseline preparation evidence, not
+persisted target creation or independent runtime continuation.
+
+**Remaining original objective:** atomically install the baseline and integrate
+versioned sporting/lifecycle/Health/Entry/Tour continuation, then prove independent
+actual play/Save/restart/restore of both Branches and successful native browser
+creation. Public native creation remains blocked; this is not merge readiness.
+
+---
+
 # Native fork historical source authority — 21 October 2026
 
 PR #1576 now has an explicit immutable source binding, resolved against the actual

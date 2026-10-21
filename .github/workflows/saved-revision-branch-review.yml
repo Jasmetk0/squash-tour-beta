@@ -8,6 +8,9 @@ on:
       - 'src/beta_engine/application/run_branch_creation_service.py'
       - 'src/beta_engine/infrastructure/db/saved_revision_branch_review.py'
       - 'src/beta_engine/domain/native_fork_source.py'
+      - 'src/beta_engine/domain/native_fork_baseline.py'
+      - 'src/beta_engine/application/native_fork_baseline_preparation.py'
+      - 'src/beta_engine/infrastructure/db/native_fork_baseline.py'
       - 'src/beta_engine/infrastructure/db/native_fork_source.py'
       - 'src/beta_engine/infrastructure/db/calendar_tour.py'
       - 'src/beta_engine/infrastructure/db/repositories.py'
@@ -21,6 +24,9 @@ on:
       - 'tests/api/test_saved_revision_branch_review_api.py'
       - 'tests/api/test_native_saved_branch_review.py'
       - 'tests/domain/test_native_fork_source.py'
+      - 'tests/domain/test_native_fork_baseline.py'
+      - 'tests/api/test_native_fork_baseline_preparation.py'
+      - 'tests/support/native_fork_baseline.py'
       - 'scripts/saved_revision_branch_review_browser.py'
   workflow_dispatch:
 
@@ -48,7 +54,9 @@ jobs:
         run: |
           GITHUB_EVENT_NAME=saved_branch_review_acceptance \
             python -m pytest tests/api/test_saved_revision_branch_review_api.py \
-              tests/api/test_native_saved_branch_review.py -vv --maxfail=1 --durations=5
+              tests/api/test_native_saved_branch_review.py \
+              tests/api/test_native_fork_baseline_preparation.py \
+              tests/domain/test_native_fork_baseline.py -vv --maxfail=1 --durations=5
 
   chromium:
     # Draft work gets Fast CI; review/manual runs retain full acceptance.

@@ -7,8 +7,13 @@ import json
 
 import pytest
 
+from beta_engine.application.native_fork_baseline_preparation import (
+    NativeForkBaselinePreparationService,
+)
 from beta_engine.domain.calendar.run_calendar import RunCalendar
+from beta_engine.domain.native_fork_baseline import NativeForkBaseline
 from beta_engine.domain.native_fork_source import NativeForkSourceBinding
+from beta_engine.domain.players.calendar_health import CalendarHealthRecord
 from beta_engine.domain.run_packages import canonical_hash
 from beta_engine.infrastructure.db.models import (
     BranchSavedRevisionModel,
@@ -36,6 +41,11 @@ from tests.api.test_native_prospect_source_epochs_http import (
 from tests.api.test_player_generation_calendar_gate import _dump
 from tests.api.test_saved_revision_branch_review_api import confirmed, preview
 from tests.api.test_saved_revision_history_api import ApiServer, _request
+from tests.support.native_fork_baseline import (
+    assert_native_baseline_facts,
+    baseline_scope,
+    roundtrip_verify_native_baseline,
+)
 
 pytestmark = pytest.mark.smoke
 
@@ -56,6 +66,8 @@ def test_native_matched_birth_and_epoch_reviews_preserve_actual_saved_history(tm
         snapshots = {}
         immutable_bytes = {}
         bindings = {}
+        serialized_baselines = {}
+        preparation = NativeForkBaselinePreparationService(repo)
 
         def check(revision_id, expected_codes):
             before = _dump(path)
@@ -99,6 +111,18 @@ def test_native_matched_birth_and_epoch_reviews_preserve_actual_saved_history(tm
                 )
                 assert resolved == current
             snapshots.setdefault(revision_id, current)
+            if revision_id not in serialized_baselines:
+                baseline = preparation.prepare(
+                    run_id="run",
+                    source_branch_id="branch",
+                    source_revision_id=revision_id,
+                    target_branch_id="prepared-" + revision_id,
+                )
+                assert_native_baseline_facts(baseline, current)
+                roundtrip_verify_native_baseline(preparation, baseline)
+                serialized_baselines[revision_id] = baseline.model_dump_json()
+                assert repo.get_run_branch(branch_id=baseline.branch_id) is None
+                assert _dump(path) == before
             immutable_bytes.setdefault(revision_id, saved_bytes(repo, revision_id))
             assert current == snapshots[revision_id]
             assert saved_bytes(repo, revision_id) == immutable_bytes[revision_id]
@@ -186,6 +210,68 @@ def test_native_matched_birth_and_epoch_reviews_preserve_actual_saved_history(tm
         # A recomputed, self-consistent reference hash never authorizes changed
         # component bytes, another revision, or a foreign original owner.
         binding = bindings[born]
+        original_baseline = NativeForkBaseline.model_validate_json(
+            serialized_baselines[born]
+        )
+        sport = original_baseline.sporting_players[0]
+        person = original_baseline.health_players[0]
+        added_record = CalendarHealthRecord(
+            record_id="invented-health",
+            kind="Injury",
+            condition_key="forged-input",
+            lifecycle="Active",
+            severity=1,
+            affected_domains=("movement",),
+            onset_week=original_baseline.week,
+            provenance="Deliberately forged current fact",
+        )
+        altered_baselines = (
+            original_baseline.model_copy(
+                update={
+                    "sporting_players": (
+                        sport.model_copy(
+                            update={"current_form": (sport.current_form + 1) % 201}
+                        ),
+                        *original_baseline.sporting_players[1:],
+                    )
+                }
+            ),
+            original_baseline.model_copy(
+                update={
+                    "health_players": (
+                        person.model_copy(update={"records": (added_record,)}),
+                        *original_baseline.health_players[1:],
+                    )
+                }
+            ),
+            original_baseline.model_copy(
+                update={
+                    "lifecycle_policy": original_baseline.lifecycle_policy.model_copy(
+                        update={"policy_id": "forged-current-policy"}
+                    )
+                }
+            ),
+            original_baseline.model_copy(
+                update={"source_ranking_fingerprint": "0" * 64}
+            ),
+        )
+        for forged in altered_baselines:
+            # These are well-formed, self-consistently hashed baselines. Only
+            # comparison with actual Saved authority rejects the changed facts.
+            decoded = NativeForkBaseline.model_validate_json(forged.model_dump_json())
+            assert decoded.fingerprint != original_baseline.fingerprint
+            before = _dump(path)
+            with pytest.raises(ValueError, match="differ from actual Saved"):
+                preparation.verify(decoded, **baseline_scope(original_baseline))
+            assert _dump(path) == before
+        with pytest.raises(ValueError, match="command scope"):
+            preparation.verify(
+                original_baseline,
+                **(
+                    baseline_scope(original_baseline)
+                    | {"target_branch_id": "another-target"}
+                ),
+            )
         with repo._session_factory() as session:
             lineage = repo._validated_branch_revision_lineage_in_session(
                 session=session,
@@ -199,6 +285,23 @@ def test_native_matched_birth_and_epoch_reviews_preserve_actual_saved_history(tm
             {"source_branch_id": "branch", "source_saved_revision_id": empty_origin},
         )
         assert status == 201, unrelated
+        before = _dump(path)
+        with pytest.raises(ValueError, match="already in use"):
+            preparation.prepare(
+                **(
+                    baseline_scope(original_baseline)
+                    | {"target_branch_id": unrelated["branch_id"]}
+                )
+            )
+        assert _dump(path) == before
+        redirected = NativeForkBaseline.model_validate_json(
+            original_baseline.model_copy(
+                update={"branch_id": unrelated["branch_id"]}
+            ).model_dump_json()
+        )
+        with pytest.raises(ValueError, match="different declared origin"):
+            preparation.verify(redirected, **baseline_scope(redirected))
+        assert _dump(path) == before
         with (
             repo._session_factory() as session,
             pytest.raises(ValueError, match="not reachable"),
@@ -277,6 +380,14 @@ def test_native_matched_birth_and_epoch_reviews_preserve_actual_saved_history(tm
             assert saved_bytes(repo, revision_id) == immutable_bytes[revision_id]
             before = _dump(path)
             assert not preview(restarted, "run", "branch", revision_id)[1]["can_create"]
+            assert _dump(path) == before
+            baseline = NativeForkBaseline.model_validate_json(
+                serialized_baselines[revision_id]
+            )
+            roundtrip_verify_native_baseline(
+                NativeForkBaselinePreparationService(repo), baseline
+            )
+            assert_native_baseline_facts(baseline, snapshot)
             assert _dump(path) == before
             with repo._session_factory() as session:
                 assert (

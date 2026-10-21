@@ -1,3 +1,16 @@
+# Native target baseline preparation — 21 October 2026
+
+Typed target current facts now have a deterministic preparation/reverification
+service over real authenticated Saved sources. It preserves original historical
+owners, complete 57-attribute/current/Health values and actual Health source dates.
+It neither reserves a Branch identifier nor installs runtime state.
+
+Next is atomic installation plus dedicated versioned continuation adapters and
+actual independent Branch play/Save/restart/restore. Native creation remains
+blocked until that integration passes. [Contract](docs/NATIVE_SAVED_FORK_AUTHORITY.md).
+
+---
+
 # Native historical source binding — 21 October 2026
 
 Source-side authority for the native fork is implemented: exact original Saved

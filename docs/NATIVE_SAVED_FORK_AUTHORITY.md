@@ -176,6 +176,25 @@ older review. Actual Manual Save/restore, target-owned Saved descendants,
 continuation and public activation remain blocked until independently
 implemented and tested.
 
+## Typed first sporting Saved descendant candidate (not committed)
+
+The internal read-only `preview_save` now constructs
+`native_fork_sporting_save_candidate.v1` after authenticating the pending
+root, original historical sources, current dirty Working Draft and full
+MatchEngine replay. This frozen candidate carries the entire new sporting
+checkpoint, exact target Run/Branch and draft identity/version, and the
+immutable parent Saved root. Its canonical fingerprint is bound into the
+existing Save review fingerprint. Empty histories, foreign owners, changed
+parent or mismatched draft versions are rejected on deserialization.
+A later played match changes the candidate fingerprint.
+
+The candidate is **not a Saved Revision**. No API endpoint, mutation, storage
+writer, activation or restore consumes it. A later atomic writer must verify
+the candidate, its source dependencies and expected state again under a
+write transaction; a stored/replayed hash alone cannot grant authority.
+Focused pure and real SQLite regression assertions cover the candidate
+boundary. Hosted checks for this latest change are pending.
+
 ## Required next boundary
 
 The sporting draft needs explicit Saved descendants and restore/recovery, then

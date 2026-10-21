@@ -99,6 +99,25 @@ describe('MatchTestLabPage', () => {
     expect(screen.getByText(/LAB-B: 1/)).toBeInTheDocument()
   })
 
+  it('filters Match Lab batch results by winner without changing diagnostics or rerunning the API', async () => {
+    const user = userEvent.setup()
+    renderWithRoute(<MatchTestLabPage />, '/admin/labs/match')
+    await user.click(screen.getByRole('button', { name: 'Run scenario' }))
+    const table = await screen.findByRole('table', { name: 'Match Lab results' })
+    const winnerFilter = screen.getByRole('combobox', { name: 'Match Lab winner filter' })
+    expect(within(table).getAllByRole('row')).toHaveLength(3)
+    expect(screen.getByText('Showing 2 of 2 results · Batch diagnostics above include all matches.')).toBeInTheDocument()
+    await user.selectOptions(winnerFilter, 'LAB-A')
+    expect(within(table).getAllByRole('row')).toHaveLength(2)
+    expect(within(table).getByRole('cell', { name: '100' })).toBeInTheDocument()
+    expect(within(table).queryByRole('cell', { name: '101' })).not.toBeInTheDocument()
+    expect(screen.getByText('Showing 1 of 2 results · Batch diagnostics above include all matches.')).toBeInTheDocument()
+    expect(screen.getByText('Wins: LAB-A: 1 · LAB-B: 1')).toBeInTheDocument()
+    await user.selectOptions(winnerFilter, 'all')
+    expect(within(table).getAllByRole('row')).toHaveLength(3)
+    expect(api.runMatchTestLab).toHaveBeenCalledTimes(1)
+  })
+
   it('clears previous Match Lab results when the current scenario or batch seeds change', async () => {
     const user = userEvent.setup()
     renderWithRoute(<MatchTestLabPage />, '/admin/labs/match')

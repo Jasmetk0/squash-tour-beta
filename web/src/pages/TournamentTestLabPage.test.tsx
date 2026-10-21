@@ -213,6 +213,40 @@ describe('TournamentTestLabPage', () => {
     expect(screen.getByRole('table', { name: 'Tournament Lab assertions' })).toBeInTheDocument()
   })
 
+  it('filters first-run matches by status without changing Tournament batch diagnostics', async () => {
+    const user = userEvent.setup()
+    api.runTournamentTestLab.mockResolvedValue({
+      ...result,
+      runs: [{
+        ...result.runs[0],
+        match_results: [
+          ...result.runs[0].match_results,
+          {
+            ...result.runs[0].match_results[0],
+            node_id: 'R1-BYE', status: 'bye', winner_player_id: 'P2',
+            set_scores: [], rally_count: 0
+          }
+        ]
+      }]
+    })
+    renderWithRoute(<TournamentTestLabPage />, '/admin/labs/tournament')
+    await user.click(await screen.findByRole('button', { name: 'Load scratch copy' }))
+    await user.click(screen.getByRole('button', { name: 'Run tournament scenario' }))
+    const table = await screen.findByRole('table', { name: 'Tournament Lab match results' })
+    expect(within(table).getAllByRole('row')).toHaveLength(3)
+    expect(screen.getByText('Showing 2 of 2 first-run matches · Batch totals remain unchanged.')).toBeInTheDocument()
+    const filter = screen.getByRole('combobox', { name: 'Tournament Lab match status filter' })
+    await user.selectOptions(filter, 'bye')
+    expect(within(table).getAllByRole('row')).toHaveLength(2)
+    expect(within(table).getByRole('cell', { name: 'R1-BYE' })).toBeInTheDocument()
+    expect(within(table).queryByRole('cell', { name: 'R1-M1' })).not.toBeInTheDocument()
+    expect(screen.getByText('Showing 1 of 2 first-run matches · Batch totals remain unchanged.')).toBeInTheDocument()
+    expect(screen.getByText('Champions: P1: 2')).toBeInTheDocument()
+    await user.selectOptions(filter, 'all')
+    expect(within(table).getAllByRole('row')).toHaveLength(3)
+    expect(api.runTournamentTestLab).toHaveBeenCalledTimes(1)
+  })
+
   it('hides previous inspection and run evidence when the editable scenario changes', async () => {
     const user = userEvent.setup()
     renderWithRoute(<TournamentTestLabPage />, '/admin/labs/tournament')

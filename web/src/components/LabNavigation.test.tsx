@@ -13,13 +13,13 @@ describe('direct Test Lab navigation', () => {
     expect(within(nav).getByRole('link', { name: 'Match Lab' })).toHaveAttribute('href', '/admin/labs/match')
     expect(within(nav).getByRole('link', { name: 'Player Lab' })).toHaveAttribute('href', '/admin/labs/player')
     expect(within(nav).queryByRole('link', { name: 'Tournament Lab' })).not.toBeInTheDocument()
-    expect(within(nav).getByText('Tournament Lab')).toHaveAttribute('aria-current', 'page')
+    expect(within(nav).getByText('Tournament Lab').closest('[aria-current]')).toHaveAttribute('aria-current', 'page')
   })
 
   it('marks Player Lab as active without linking to its current page', () => {
     renderWithRoute(<LabNavigation active="player" />, '/admin/labs/player')
     const nav = screen.getByRole('navigation', { name: 'Test Lab navigation' })
-    expect(within(nav).getByText('Player Lab')).toHaveAttribute('aria-current', 'page')
+    expect(within(nav).getByText('Player Lab').closest('[aria-current]')).toHaveAttribute('aria-current', 'page')
     expect(within(nav).getByRole('link', { name: 'Tournament Lab' })).toHaveAttribute('href', '/admin/labs/tournament')
   })
 })

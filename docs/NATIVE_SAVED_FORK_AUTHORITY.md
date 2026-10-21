@@ -159,6 +159,23 @@ It runs in its own parallel acceptance job, keeping the original long source
 acceptance unchanged. Pure W7/W52/W61/W80 contracts cover exact state/replay and
 stale/foreign/retired/unknown/unsupported-Health/duplicate input rejection.
 
+## Read-only sporting Save review (internal only)
+
+The pending target now supports a **read-only** `preview_save` preflight for
+its played match Working Draft. This is an internal application method, not a
+public route or a Saved descendant writer. It authenticates the actual pending
+root and original sources, replays the entire new MatchEngine history, requires
+a nonempty dirty match draft, and fences the request by current Saved HEAD,
+Working Draft version and complete sporting checkpoint fingerprint.
+
+The deterministic `native_fork_sporting_save_review.v1` review binds the
+target Run/Branch, immutable source-root ID, current HEAD, draft identity and
+version, terminal match fingerprint and match count. It does not write any row;
+the response explicitly reports `saved: false`. A later match invalidates the
+older review. Actual Manual Save/restore, target-owned Saved descendants,
+continuation and public activation remain blocked until independently
+implemented and tested.
+
 ## Required next boundary
 
 The sporting draft needs explicit Saved descendants and restore/recovery, then

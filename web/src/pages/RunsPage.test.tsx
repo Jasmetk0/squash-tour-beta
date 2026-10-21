@@ -83,6 +83,13 @@ describe('canonical Runs inventory', () => {
     await userEvent.selectOptions(visibility, 'editable')
     expect(screen.getByText('Sandbox One')).toBeInTheDocument()
     expect(screen.queryByText('Another world')).not.toBeInTheDocument()
+    expect(screen.getByText('Zobrazeno: 1 / 2')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Zrušit filtry' }))
+    expect(screen.getByText('Sandbox One')).toBeInTheDocument()
+    expect(screen.getByText('Another world')).toBeInTheDocument()
+    expect(screen.getByText('Zobrazeno: 2 / 2')).toBeInTheDocument()
+    expect(screen.getByRole('searchbox', { name: 'Hledat Run' })).toHaveValue('')
+    expect(visibility).toHaveValue('all')
   })
 
   it('refreshes the Run inventory only when explicitly asked', async () => {

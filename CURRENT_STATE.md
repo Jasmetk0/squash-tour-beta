@@ -1,3 +1,19 @@
+# Native fork read-only sporting Save preflight — 21 October 2026
+
+An internal `NativeForkSportingService.preview_save` now reviews the
+authenticated, replayed, nonempty dirty match draft and binds current Saved
+HEAD, Working Draft version and full checkpoint fingerprint in a deterministic
+review token. Clean drafts and stale inputs are rejected; fresh matches
+invalidate older reviews. The preflight is read-only and explicitly returns
+`saved: false`, with no public endpoint, Saved descendant, restore, Viewer
+activation or pending-Branch permission changes.
+
+Focused actual-SQLite integration assertions were added to the existing native
+fork draft exercise. Hosted results for this change are still required; no
+successful latest-head acceptance is claimed until those jobs run.
+
+---
+
 # Native fork independent sporting draft — 21 October 2026
 
 The internal pending fork now executes genuine same-week MatchEngine exhibitions

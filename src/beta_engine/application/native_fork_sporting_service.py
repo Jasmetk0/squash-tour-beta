@@ -165,6 +165,53 @@ class NativeForkSportingService:
                 "saved": not checkpoint.steps,
             }
 
+    def preview_save(
+        self,
+        *,
+        run_id,
+        branch_id,
+        expected_saved_head,
+        expected_draft_version,
+        expected_checkpoint_fingerprint,
+    ):
+        """Read-only authenticated review for a future native fork Manual Save.
+
+        This is not a Save endpoint or permission to activate the pending Branch.
+        Actual source rows and the entire match draft are replay-verified by
+        _context before the review fingerprint is computed.
+        """
+        with self.repository._session_factory() as session:
+            session.execute(text("BEGIN"))
+            state, checkpoint, _, _ = self._context(
+                session, run_id=run_id, branch_id=branch_id
+            )
+            draft = state.working_draft
+            if draft.status != DIRTY_WORKING_DRAFT_STATUS or not checkpoint.steps:
+                raise ValueError("Native fork Save review requires a dirty played draft")
+            if expected_saved_head != state.saved_head_revision_id:
+                raise ValueError("Native fork Save review has a stale Saved HEAD")
+            if expected_draft_version != draft.draft_version:
+                raise ValueError("Native fork Save review has a stale Working Draft")
+            if expected_checkpoint_fingerprint != checkpoint.fingerprint:
+                raise ValueError("Native fork Save review has a stale sporting checkpoint")
+            review = {
+                "schema_version": "native_fork_sporting_save_review.v1",
+                "run_id": run_id,
+                "branch_id": branch_id,
+                "root_saved_revision_id": checkpoint.root_saved_revision_id,
+                "saved_head_revision_id": state.saved_head_revision_id,
+                "draft_id": draft.draft_id,
+                "draft_version": draft.draft_version,
+                "checkpoint_fingerprint": checkpoint.fingerprint,
+                "match_count": len(checkpoint.steps),
+                "last_match_fingerprint": checkpoint.steps[-1].match.fingerprint,
+            }
+            return {
+                "review": review,
+                "review_fingerprint": canonical_hash(review),
+                "saved": False,
+            }
+
     def preview(self, *, run_id, branch_id, command, expected_draft_version):
         with self.repository._session_factory() as session:
             session.execute(text("BEGIN"))

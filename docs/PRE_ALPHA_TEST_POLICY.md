@@ -3,6 +3,24 @@
 This file records the current engineering test policy for Squash Engine pre-alpha work.
 It is an implementation/development policy, not sporting product canon.
 
+## Native fork iteration and unrelated catalog work — 21 October 2026
+
+The real public native fork scenario runs in its own parallel Ready/manual job,
+including birth, actual MatchEngine, independent Saved histories, points,
+restore/restart, nested forks, Viewer and strict extension. Fast CI also includes
+the small v2 format guards. Neither replaces existing original-source and native
+Tour acceptance; skipped Draft gates remain non-passes.
+
+Run overview defers the large global World source catalog until the Admin uses
+that selector. The dedicated Package setup still loads it normally. Browser
+scenarios that actually copy a World source focus that selector before selection;
+Branch-only navigation no longer triggers unrelated Earth catalog computation.
+The registry also reuses its one freshly validated country config when computing
+that same response's semantic fingerprint. There is no cross-request country
+cache or change to fingerprint values. Browser shutdown explicitly drains its
+real API thread and reports a bounded teardown failure instead of leaving native
+work running during interpreter destruction.
+
 ## Draft feedback and review acceptance — 21 October 2026
 
 During implementation, keep the PR in Draft. Fast CI and CodeQL still run on

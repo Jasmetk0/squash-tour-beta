@@ -8,6 +8,11 @@ from typing import Literal
 
 from sqlalchemy import select, text, update
 
+from beta_engine.domain.run_containers import (
+    COMPLETED_RUN_STATUS,
+    LEGACY_ACTIVE_RUN_STATUS,
+    WORKING_RUN_STATUS,
+)
 from beta_engine.domain.run_packages import (
     AppliedPackageVersion,
     CanonicalPackageDocument,
@@ -22,12 +27,8 @@ from beta_engine.domain.run_revisions import (
     DIRTY_WORKING_DRAFT_STATUS,
     RUN_WORKING_DRAFT_SCHEMA_VERSION,
 )
-from beta_engine.domain.run_containers import (
-    COMPLETED_RUN_STATUS,
-    LEGACY_ACTIVE_RUN_STATUS,
-    WORKING_RUN_STATUS,
-)
 from beta_engine.infrastructure.db.models import (
+    BranchSavedRevisionModel,
     BranchWorkingDraftModel,
     RunBranchModel,
     RunContainerModel,
@@ -109,6 +110,12 @@ def _preview_receipt_evidence(
         "invalid": list(preview.invalid),
         "conflicts": list(preview.conflicts),
     }
+
+
+def _require_component_authority(session, branch) -> None:
+    head = session.get(BranchSavedRevisionModel, branch.saved_head_revision_id)
+    if head is not None and head.payload_schema_version == "native_fork_saved_root.v2":
+        raise RunPackageConflictError("Package component editing is not supported by this versioned native fork runtime; no changes were staged")
 
 
 def _require_writable(run, branch) -> None:
@@ -198,6 +205,7 @@ class RunPackageService:
         document: CanonicalPackageDocument,
     ) -> PackagePreview:
         _, branch, draft = self._context(session, run_id, branch_id)
+        _require_component_authority(session, branch)
         state = get_run_package_state(session, run_id=run_id, branch_id=branch_id)
         entities = state.entities if state else ()
         current = {(e.source_package_id, e.source_entity_id): e for e in entities}
@@ -381,6 +389,7 @@ class RunPackageService:
                 )
             run, branch, draft = self._context(session, run_id, branch_id)
             _require_writable(run, branch)
+            _require_component_authority(session, branch)
             preview = self._preview(
                 session, run_id=run_id, branch_id=branch_id, document=document
             )
@@ -427,9 +436,7 @@ class RunPackageService:
                         hard.append(conflict)
                     continue
                 if not (
-                    conflict.endswith("source_history_divergence")
-                    or conflict.endswith("divergent_ancestry")
-                    or conflict.endswith("package_type_changed")
+                    conflict.endswith(("source_history_divergence", "divergent_ancestry", "package_type_changed"))
                 ):
                     continue
                 package_id = conflict.split("@", 1)[0].split(":", 1)[0]
@@ -709,6 +716,7 @@ class RunPackageService:
             ):
                 raise RunPackageConflictError("Run Package edit is stale")
             _require_writable(run, branch)
+            _require_component_authority(session, branch)
             found = False
             entities = []
             for entity in state.entities:

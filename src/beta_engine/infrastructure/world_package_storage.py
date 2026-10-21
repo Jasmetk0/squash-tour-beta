@@ -325,9 +325,11 @@ class WorldPackageCountryStore:
         index = self.load_index()
         return CountriesConfig(dataset_status=index.dataset_status, countries=[self.load_country(code) for code in index.country_codes])
 
-    def semantic_payload(self) -> list[dict[str, Any]]:
+    def semantic_payload(self, config: CountriesConfig | None = None) -> list[dict[str, Any]]:
+        # A registry read already owns one validated config. Reuse it inside that
+        # operation; later requests still read current files, with no stale cache.
         countries = []
-        for country in self.load_config().countries:
+        for country in (config if config is not None else self.load_config()).countries:
             payload = country.model_dump(mode="json")
             # Preserve pre-Timezone-Area fingerprints until an assignment is authored.
             if payload.get("timezone_area") is None:

@@ -134,6 +134,7 @@ def acceptance(root: Path, *, port: int, base_url: str, chromium: str):
 
                 # First build an ordinary, genuinely saved World and 32-player InitialWorld.
                 page.get_by_label("Source kind").select_option("world")
+                page.get_by_label("World source").focus()
                 page.get_by_label("World source").select_option("official_fax_world")
                 browser_click(page, "Preview copy")
                 page.get_by_label("Confirm source copy").check()

@@ -587,6 +587,7 @@ def main() -> None:
             assert old_head and history_branch
 
             page.get_by_label("Source kind").select_option("world")
+            page.get_by_label("World source").focus()
             page.get_by_label("World source").select_option("official_fax_world")
             page.get_by_role("button", name="Preview copy").click()
             page.get_by_label("Confirm source copy").check()
@@ -725,6 +726,7 @@ def main() -> None:
             # Copy a real World into this W52 Run using the existing reviewed
             # copy/explicit Save flow. No generated player is adopted here.
             page.get_by_role("combobox", name="Source kind").select_option("world")
+            page.get_by_role("combobox", name="World source").focus()
             page.get_by_role("combobox", name="World source").select_option("official_fax_world")
             page.get_by_role("button", name="Preview copy", exact=True).click()
             expect(page.get_by_role("heading", name="Review proposed world copy", exact=True)).to_be_visible()

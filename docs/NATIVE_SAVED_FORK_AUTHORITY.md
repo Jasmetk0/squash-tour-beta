@@ -1,12 +1,66 @@
-# Native Saved fork: historical source authority
+# Native Saved fork authority
 
-This implements source authority, target-baseline preparation, internal atomic
-baseline persistence and **independent same-week match drafts**. Full public
-native continuation is still incomplete. Native
-creation still returns its existing blockers. The original MatchEngine inputs,
-results, rally anchors, lifecycle admissions, Health and prospect epochs retain
-their original Branch identities. A new source reference never authorizes writes
-to that original Branch.
+## Public continuation (v2)
+
+The reviewed public Branch writer now creates an active, independently usable
+native Branch from a complete initialized Saved Tour. `native_fork_saved_root.v2`
+contains an authenticated original baseline, a distinct versioned target runtime,
+and the selected Saved prospect authority. It does not copy old matches, birth
+admissions, Health or ranking events under a new historical owner.
+
+The target owns its current lifecycle/Health/ranking projections and new commands.
+It uses the existing production Entry/field/draw and rally-level MatchEngine,
+W-aware development and ranking kernels. Commands require source-bound review
+and explicit confirmation. Configuration may share one Working Draft; actual
+play, result confirmation and Week/Season Transition require its prior Manual
+Save. Saves append immutable complete aggregates and audit together; restore
+appends linear recovery history with a pre-restore checkpoint. Viewer selection
+remains a separate explicit Saved change. Nested forks bind the actual selected
+parent aggregate and retain all earlier original authorities.
+
+A strict Run horizon extension preserves old runtime/event bytes and extends the
+Saved Run envelope for every Branch. The next explicit command consumes the
+calendar in its actual Saved predecessor. W/offset/start never change, and no
+extension starts simulation or silently substitutes a future prospect catalog.
+
+### Proofs and performance
+
+A context-local proof memo removes duplicate parsing/validation inside one read
+transaction. Immutable Saved prefix reuse receives a bounded completed-proof
+cache only after full actual-source validation. Every lookup rebuilds its
+physical dependency graph from real SQLite rows: complete stored bytes (hashed
+independently of the rows' declared hashes), owners/origins, parent topology and
+source-Branch reachability. Any changed/missing dependency invalidates reuse.
+The cache is process-local, retains digest keys only, and never shares mutable
+payload dictionaries. Cold/restarted reads still rebuild the full proof; warm
+source corruption and fully rehashed false target facts must fail closed.
+Source dependency resolution happens outside stripe locks, with cycle guards.
+
+### Current limits
+
+The inherited source must have a complete initialized Tour. An Edition with
+submitted applications must be finished and confirmed before branching, or the
+Admin must select an earlier Saved source; adopting an unfinished Entry/draw
+would need another versioned projection. Original native executor limits remain:
+Ranked main-only fields of 4/8 and explicit rejection of unsupported numeric
+Health effects. No healing/calibration, speculative biography or new disciplinary
+mechanic is invented. The selected Signed prospect source stays independent of
+later original-Branch source epochs; authoring a new fork-local epoch is separate
+future work. Generic Package component authoring is explicitly blocked before staging on this aggregate; use its native Tour operations. These are operation-specific blockers, not a pre-alpha release claim.
+
+Real public HTTP/SQLite acceptance covers creation/concurrent retry, birthdays,
+independent originals, actual matches and points, Manual Save rollback, restore,
+restart, nested forks, Viewer, extension and actual-source corruption. The CS/EN
+Chromium acceptance creates active native Branches, transitions, Saves and reloads.
+Merge still requires successful relevant checks on the exact final commit.
+
+## Retained internal v1 stages
+
+The following sections describe the earlier preparation/staging/private match
+path. Those v1 targets remain pending and read-only; they are not the new public
+v2 continuation path. Statements below about native creation remaining blocked
+record the older implementation boundary, superseded above for supported v2
+sources. Existing v1 integrity and rollback coverage remains in place.
 
 ## Implemented boundary
 

@@ -114,13 +114,28 @@ class Tour:
         return ids
 
 
-def fork(server, source_id, *, branch="branch", name="native-fork"):
+def fork(server, source_id, *, branch="branch", name="native-fork", concurrent=False):
     source, review = preview(server, "run", branch, source_id)
     assert review["can_create"], review["blockers"]
     request = confirmed(source, review, name)
-    code, result = _request(
-        "POST", server.base_url + "/run-containers/run/branches", request
-    )
+    if concurrent:
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            attempts = list(
+                pool.map(
+                    lambda _: _request(
+                        "POST",
+                        server.base_url + "/run-containers/run/branches",
+                        request,
+                    ),
+                    range(2),
+                )
+            )
+        assert attempts[0] == attempts[1]
+        code, result = attempts[0]
+    else:
+        code, result = _request(
+            "POST", server.base_url + "/run-containers/run/branches", request
+        )
     assert code == 201, result
     assert not result["read_only"] and result["status"] == "active"
     assert _request(
@@ -141,12 +156,42 @@ def test_public_native_fork_birth_matches_save_restore_restart_and_independence(
         original = Tour(server, "branch")
         original_saved = original.view()
         before = _dump(path)
-        created = fork(server, source["revision_id"])
+        created = fork(server, source["revision_id"], concurrent=True)
         target_id, root_id = created["branch_id"], created["saved_head_revision_id"]
         # Existing rows are byte-for-byte untouched by creation; only new rows.
         assert set(before) <= set(_dump(path))
         target = Tour(server, target_id)
         assert target.view()["players"] == original_saved["players"]
+        from beta_engine.application.native_fork_runtime_reducer import source_inputs
+
+        historical = source_inputs(
+            repo.get_branch_saved_revision(revision_id=source["revision_id"])
+        )
+        reserved_command = (
+            *historical.checkpoint.week_events,
+            *historical.checkpoint.continuations,
+            *historical.checkpoint.closures,
+        )[0].command_id
+        assert (
+            _request(
+                "POST",
+                target.url + "/preview",
+                command(target.view(), "transition", name=reserved_command),
+            )[0]
+            == 409
+        )
+        from beta_engine.application.run_package_service import (
+            RunPackageConflictError,
+            RunPackageService,
+        )
+        from tests.application.test_run_package_snapshot import doc
+
+        package_before = _dump(path)
+        with pytest.raises(RunPackageConflictError, match="native fork runtime"):
+            RunPackageService(repo).preview(
+                run_id="run", branch_id=target_id, document=doc()
+            )
+        assert _dump(path) == package_before
         request = target.prepare("transition", "fork-birthday")
         with ThreadPoolExecutor(max_workers=2) as pool:
             results = list(
@@ -332,6 +377,14 @@ def test_public_native_fork_birth_matches_save_restore_restart_and_independence(
             ]
             == "branch"
         )
+        assert (
+            _request(
+                "POST",
+                draft_url + "/save",
+                {"expected_draft_version": staged["draft_version"] - 1},
+            )[0]
+            == 409
+        )
         code, saved_viewer = _request(
             "POST",
             draft_url + "/save",
@@ -355,7 +408,7 @@ def test_public_native_fork_birth_matches_save_restore_restart_and_independence(
         code, review = _review(server, "run", 4)
         assert code == 200 and review["can_save"], review
         code, extended = _save(server, "run", review, "native-all-branch-extension")
-        assert code == 201, extended
+        assert code == 200, extended
         assert target.view()["run_calendar"]["season_count"] == 4
         target.advance("fork-after-extension")
         extended_view = target.view()

@@ -145,6 +145,7 @@ def setup_run(page, base_url: str, artifacts: Path) -> str:
     for kind in ("world", "calendar"):
         page.get_by_label("Source kind").select_option(kind)
         if kind == "world":
+            page.get_by_label("World source").focus()
             page.get_by_label("World source").select_option("official_fax_world")
         click("Preview copy")
         check("Confirm source copy")

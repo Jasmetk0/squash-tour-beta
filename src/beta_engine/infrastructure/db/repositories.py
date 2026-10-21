@@ -4561,7 +4561,10 @@ class SimulationPersistenceRepository:
         """
         from beta_engine.application.native_fork_runtime_service import is_native_fork, NativeForkRuntimeService
         if is_native_fork(self, run_id, branch_id):
-            return NativeForkRuntimeService(self).preview_restore(run_id=run_id, branch_id=branch_id, target_saved_revision_id=target_saved_revision_id)
+            try:
+                return NativeForkRuntimeService(self).preview_restore(run_id=run_id, branch_id=branch_id, target_saved_revision_id=target_saved_revision_id)
+            except ValueError as exc:
+                raise SavedRevisionRestoreConflictError(str(exc)) from exc
 
         with self._session_factory.begin() as session:
             session.execute(text("BEGIN"))
@@ -4789,7 +4792,10 @@ class SimulationPersistenceRepository:
         """Restore one reachable snapshot while preserving a linear full history."""
         from beta_engine.application.native_fork_runtime_service import is_native_fork, NativeForkRuntimeService
         if is_native_fork(self, run_id, branch_id):
-            return NativeForkRuntimeService(self).restore(run_id=run_id, branch_id=branch_id, target_saved_revision_id=target_saved_revision_id, expected_head_saved_revision_id=expected_head_saved_revision_id, expected_draft_version=expected_draft_version, expected_current_viewer_branch_id=expected_current_viewer_branch_id, checkpoint_id=checkpoint_id, restore_saved_revision_id=restore_saved_revision_id, audit_event_id=audit_event_id)
+            try:
+                return NativeForkRuntimeService(self).restore(run_id=run_id, branch_id=branch_id, target_saved_revision_id=target_saved_revision_id, expected_head_saved_revision_id=expected_head_saved_revision_id, expected_draft_version=expected_draft_version, expected_current_viewer_branch_id=expected_current_viewer_branch_id, checkpoint_id=checkpoint_id, restore_saved_revision_id=restore_saved_revision_id, audit_event_id=audit_event_id)
+            except ValueError as exc:
+                raise SavedRevisionRestoreConflictError(str(exc)) from exc
 
         previous_head_revision_id = ""
         previous_viewer_branch_id = ""
@@ -5816,10 +5822,13 @@ class SimulationPersistenceRepository:
             unsupported = [value for value in (expected_ranking_fingerprint, expected_initial_world_fingerprint, expected_simulation_fingerprint, expected_calendar_match_fingerprint, expected_calendar_sporting_fingerprint, expected_run_prospect_source_fingerprint, expected_run_package_fingerprint, expected_run_tournament_lab_draft_fingerprint, expected_player_health_fingerprint) if value is not None]
             if unsupported:
                 raise WorkingDraftConflictError("Use the complete native fork Tour Save")
-            return NativeForkRuntimeService(self).save(run_id=run_id, branch_id=branch_id,
-                expected_draft_version=expected_draft_version, expected_calendar_tour_fingerprint=expected_calendar_tour_fingerprint,
-                revision_id=revision_id, audit_event_id=audit_event_id,
-                expected_saved_head_revision_id=expected_saved_head_revision_id)
+            try:
+                return NativeForkRuntimeService(self).save(run_id=run_id, branch_id=branch_id,
+                    expected_draft_version=expected_draft_version, expected_calendar_tour_fingerprint=expected_calendar_tour_fingerprint,
+                    revision_id=revision_id, audit_event_id=audit_event_id,
+                    expected_saved_head_revision_id=expected_saved_head_revision_id)
+            except ValueError as exc:
+                raise WorkingDraftConflictError(str(exc)) from exc
 
         component_only = any(
             fingerprint is not None

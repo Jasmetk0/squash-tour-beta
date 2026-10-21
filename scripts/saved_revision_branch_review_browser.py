@@ -315,6 +315,8 @@ def main():
                 server.server.should_exit = True
                 server.thread.join(timeout=30)
                 if server.thread.is_alive():
+                    import faulthandler
+                    faulthandler.dump_traceback()
                     raise RuntimeError(
                         "Browser API did not drain during bounded shutdown"
                     )

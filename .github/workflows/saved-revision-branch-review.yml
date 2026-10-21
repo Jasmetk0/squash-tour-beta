@@ -28,6 +28,9 @@ on:
       - 'src/beta_engine/infrastructure/db/models.py'
       - 'src/beta_engine/api/routers/run_containers.py'
       - 'src/beta_engine/api/schemas.py'
+      - 'web/src/pages/RunPage.tsx'
+      - 'web/src/components/RunPackageSetupPanel*'
+      - 'src/beta_engine/application/run_package_service.py'
       - 'web/src/components/SavedRevisionHistoryPanel*'
       - 'web/src/api/client.ts'
       - 'web/src/api/types.ts'
@@ -80,7 +83,9 @@ jobs:
     if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     name: Native fork / public Tour Save restore and restart
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    # The complete local cold/restart/Viewer/extension scenario took 574s;
+    # allow installation overhead without making this a per-push Draft check.
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5

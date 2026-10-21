@@ -455,6 +455,9 @@ def prepare_command(runtime, command, sources, *, saved_head, draft_version, is_
         | {m.command_id for m in cp.played_continuations}
         | {sources.opening.command_id}
     )
+    reserved.update(
+        event.command_id for event in (*cp.week_events, *cp.continuations, *cp.closures)
+    )
     reserved.update(getattr(sources, "inherited_command_ids", ()))
     if command.command_id in reserved:
         raise ValueError("Command ID collides with existing sporting history")

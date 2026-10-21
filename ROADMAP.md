@@ -1,3 +1,36 @@
+# Native Saved forks: public continuation implemented — 21 October 2026
+
+The public reviewed writer now installs an active independent v2 native Branch
+with authenticated original history, its own current lifecycle/Health/Tour and
+new Entry, MatchEngine, development/ranking and Week/Season commands. Manual
+Save/linear restore, restart, nested forks, Signed Viewer selection/publication
+and strict Run horizon envelopes use that versioned aggregate. Original sources
+and later original-Branch prospect epochs are never silently remapped/substituted.
+
+Duplicate proof work is removed within transactions. Completed immutable proofs
+can be reused only after freshly checking the full physical SQLite dependency
+graph; target self-hashes alone never authorize reuse. Run overview also defers
+unneeded large World catalogs, and each actual registry response loads its
+country config once without changing fingerprints.
+
+**Local candidate evidence:** complete public HTTP/SQLite birth, real matches,
+points, restore/restart, nested/concurrent forks, source corruption, Viewer and
+strict extension passed in 574.15s. Real Chromium CS/EN create/transition/Save/
+reload now exits cleanly. Focused checks: 101 passed in 42.68s; 77 Package/security
+checks passed in 2.66s; 35 Package-guard regressions passed in 10.83s; 70 frontend
+tests and production build passed. Actual-source and born-player regressions
+passed (2 tests in 496.02s); private baseline/install checks passed (15 tests in
+92.50s). Final command-namespace and no-stage Package guards also passed.
+Latest-head hosted acceptance still requires verification; no merge readiness
+is claimed here yet.
+Fast CI/CodeQL continue during Draft;
+relevant Ready/manual acceptance must execute on the exact final commit.
+See [current contract and explicit limits](docs/NATIVE_SAVED_FORK_AUTHORITY.md).
+This supersedes earlier public-blocking implementation notes below; the private
+pending v1 staging path itself stays read-only and covered.
+
+---
+
 # Native fork own played Working Draft — 21 October 2026
 
 The pending target now has a versioned same-week sporting checkpoint and its own

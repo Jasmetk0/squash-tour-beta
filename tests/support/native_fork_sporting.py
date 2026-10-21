@@ -60,6 +60,18 @@ def exercise_native_fork_sporting(repo, path, *, branch_id, player_pair=None):
             audit_reason="Actual independent native fork draft test",
         )
 
+    # A new pending root has no played draft and cannot be reviewed for Save.
+    clean_snapshot = _dump(path)
+    with pytest.raises(ValueError, match="dirty played draft"):
+        service.preview_save(
+            run_id="run",
+            branch_id=branch_id,
+            expected_saved_head=initial.root_saved_revision_id,
+            expected_draft_version=view["draft_version"],
+            expected_checkpoint_fingerprint=initial.fingerprint,
+        )
+    assert _dump(path) == clean_snapshot
+
     first = command(initial, 1)
     request = {
         "run_id": "run",
@@ -101,6 +113,32 @@ def exercise_native_fork_sporting(repo, path, *, branch_id, player_pair=None):
     assert after_one["checkpoint"] == preview["checkpoint"]
     assert after_one["draft_version"] == view["draft_version"] + 1
     assert not after_one["saved"]
+    # Save review must authenticate the actual played draft, bind the exact
+    # current Saved HEAD/version/fingerprint and never change SQLite.
+    save_review_args = {
+        "run_id": "run",
+        "branch_id": branch_id,
+        "expected_saved_head": initial.root_saved_revision_id,
+        "expected_draft_version": after_one["draft_version"],
+        "expected_checkpoint_fingerprint": after_one["checkpoint"].fingerprint,
+    }
+    before_review = _dump(path)
+    reviewed_save = service.preview_save(**save_review_args)
+    assert reviewed_save == service.preview_save(**save_review_args)
+    assert reviewed_save["saved"] is False
+    assert reviewed_save["review"]["match_count"] == 1
+    assert reviewed_save["review"]["saved_head_revision_id"] == initial.root_saved_revision_id
+    assert reviewed_save["review"]["checkpoint_fingerprint"] == after_one["checkpoint"].fingerprint
+    assert len(reviewed_save["review_fingerprint"]) == 64
+    for stale in (
+        {"expected_saved_head": "other-head"},
+        {"expected_draft_version": after_one["draft_version"] - 1},
+        {"expected_checkpoint_fingerprint": "0" * 64},
+    ):
+        with pytest.raises(ValueError, match="stale"):
+            service.preview_save(**(save_review_args | stale))
+    assert _dump(path) == before_review
+    assert other_rows() == original_rows    assert not after_one["saved"]
     assert other_rows() == original_rows
     assert (
         repo.get_branch_saved_revision_history(run_id="run", branch_id="branch")
@@ -129,7 +167,20 @@ def exercise_native_fork_sporting(repo, path, *, branch_id, player_pair=None):
     assert (
         receipt_two["checkpoint_fingerprint"] == reviewed_two["checkpoint"].fingerprint
     )
-    # The first receipt remains exact even after a later command was applied.
+    # A later played match invalidates the earlier Save review.
+    with pytest.raises(ValueError, match="stale"):
+        service.preview_save(**save_review_args)
+    fresh_save_review = service.preview_save(
+        **(save_review_args | {
+            "expected_draft_version": receipt_two["draft_version"],
+            "expected_checkpoint_fingerprint": reviewed_two["checkpoint"].fingerprint,
+        })
+    )
+    assert fresh_save_review["review"]["match_count"] == 2
+    assert fresh_save_review["review_fingerprint"] != reviewed_save["review_fingerprint"]
+    assert fresh_save_review["saved"] is False
+
+    # The first receipt remains exact even after a later command was applied.    # The first receipt remains exact even after a later command was applied.
     before = _dump(path)
     assert service.execute(**confirmed) == receipts[0]
     for change in (
